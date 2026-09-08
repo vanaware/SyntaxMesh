@@ -1,0 +1,50 @@
+{
+   "name": "@vanaware/syntaxmesh",
+   "version": "0.0.1-xxxxxxxx",
+   "exports": "./esbuild.ts",
+   "description": "Gerenciamento de Projetos com Linguagem Descritiva.",
+   "author": "Vanaware",
+   "license": "MIT",
+   "workspace": [
+     "./pacotes/worker-db",
+     "./pacotes/server",
+     "./pacotes/ui",
+     "./pacotes/utils",
+     "./pacotes/service-worker"
+   ],
+   "catalog": {
+    "esbuild": "0.24.0",
+    "wrangler": "^4.123.0"
+  },
+   // ⚙️ Configurações Rigorosas do Compilador TypeScript (FASE 4)
+   "compilerOptions": {
+     "lib": ["dom", "dom.iterable", "dom.asynciterable", "esnext", "deno.ns", "deno.unstable"],
+     "jsx": "react-jsx",
+     "jsxImportSource": "preact",
+     "strict": true,
+     "noImplicitAny": true,
+     "noUncheckedIndexedAccess": true
+   },
+   // 📦 Gerenciamento de Dependências
+   "imports": {
+     "@std/fs": "jsr:@std/fs@^1",
+     "@std/path": "jsr:@std/path@^1",
+     "esbuild": "npm:esbuild",
+     "@deno/esbuild-plugin": "jsr:@deno/esbuild-plugin@^1.2.1"
+   },
+   // 🛠️ Scripts de Automação
+   "tasks": {
+     "test": "deno test --allow-env --allow-net tests/",
+     "check": "deno check exports/export.ts src/**/*.ts src/**/*.tsx tests/**/*.ts",
+     "tests": "deno task check && deno task test",
+     "dev": "deno task --cwd pacotes/server dev",
+     "start": "deno task --cwd pacotes/server start",
+     "export": "deno run --allow-read --allow-write ./export.ts",
+     "build": "deno run -A ./esbuild.ts",
+     "build:deno": "deno run --unstable-bundle -A ./build.ts",
+     "taskjuggler": "tj3 --no-color --debug "
+   },
+   "nodeModulesDir": "auto",
+   "vendor": true,
+   "allowScripts": ["npm:esbuild@0.24.0"]
+ }

@@ -1,0 +1,248 @@
+{
+  "modelProviders": {
+    "gemini": [
+      {
+        "id": "gemini-3.8-flash",
+        "name": "gemini-3.8-flash",
+        "baseUrl": "https://generativelanguage.googleapis.com",
+        "envKey": "GEMINI_API_KEY",
+        "generationConfig": {
+          "extra_body": {
+            "enable_thinking": true
+          }
+        }
+      },
+      {
+        "id": "gemini-3.7-flash",
+        "name": "gemini-3.7-flash",
+        "baseUrl": "https://generativelanguage.googleapis.com",
+        "envKey": "GEMINI_API_KEY",
+        "generationConfig": {
+          "extra_body": {
+            "enable_thinking": true
+          }
+        }
+      },
+      {
+        "id": "gemini-3.6-flash",
+        "name": "gemini-3.6-flash",
+        "baseUrl": "https://generativelanguage.googleapis.com",
+        "envKey": "GEMINI_API_KEY",
+        "generationConfig": {
+          "extra_body": {
+            "enable_thinking": true
+          }
+        }
+      },
+      {
+        "id": "gemini-flash-lite-latest",
+        "name": "gemini-flash-lite-latest",
+        "baseUrl": "https://generativelanguage.googleapis.com",
+        "envKey": "GEMINI_API_KEY",
+        "generationConfig": {
+          "extra_body": {
+            "enable_thinking": false
+          }
+        }
+      },
+      {
+        "id": "gemini-2.5-pro",
+        "name": "gemini-2.5-pro",
+        "baseUrl": "https://generativelanguage.googleapis.com",
+        "envKey": "GEMINI_API_KEY",
+        "generationConfig": {
+          "extra_body": {
+            "enable_thinking": true
+          }
+        }
+      },
+      {
+        "id": "gemini-3.1-flash-lite-image",
+        "name": "gemini-3.1-flash-lite-image",
+        "baseUrl": "https://generativelanguage.googleapis.com",
+        "envKey": "GEMINI_API_KEY",
+        "generationConfig": {
+          "modalities": {
+            "image": true
+          },
+          "extra_body": {
+            "enable_thinking": true
+          }
+        }
+      },
+      {
+        "id": "gemma-4-26b-a4b-it",
+        "name": "gemma-4-26b-a4b-it",
+        "baseUrl": "https://generativelanguage.googleapis.com",
+        "envKey": "GEMINI_API_KEY",
+        "generationConfig": {
+          "extra_body": {
+            "enable_thinking": true
+          }
+        }
+      },
+      {
+        "id": "gemma-4-31b-it",
+        "name": "gemma-4-31b-it",
+        "baseUrl": "https://generativelanguage.googleapis.com",
+        "envKey": "GEMINI_API_KEY",
+        "generationConfig": {
+          "extra_body": {
+            "enable_thinking": true
+          }
+        }
+      }
+    ],
+    "openai": [
+      {
+        "id": "gemini-pro-latest",
+        "name": "Gemini Pro Latest",
+        "baseUrl": "https://generativelanguage.googleapis.com/v1beta/openai/",
+        "envKey": "GEMINI_API_KEY",
+        "generation_config" : {
+          "temperature": 1,
+          "max_output_tokens": 65536,
+          "top_p": 0.95,
+          "thinking_level": "high"
+        }
+      },
+      {
+        "id": "nvidia/nemotron-3-super-120b-a12b:free",
+        "name": "nvidia/nemotron-3-super-120b-a12b:free",
+        "baseUrl": "https://openrouter.ai/api/v1",
+        "envKey": "OPENROUTER_API_KEY",
+        "generationConfig": {
+          "customHeaders": {
+            "HTTP-Referer": "https://github.com/QwenLM/qwen-code.git",
+            "X-OpenRouter-Title": "Qwen Code"
+          }
+        }
+      },
+      {
+        "id": "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "name": "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "baseUrl": "https://openrouter.ai/api/v1",
+        "envKey": "OPENROUTER_API_KEY",
+        "generationConfig": {
+          "customHeaders": {
+            "HTTP-Referer": "https://github.com/QwenLM/qwen-code.git",
+            "X-OpenRouter-Title": "Qwen Code"
+          }
+        }
+      },
+      {
+        "id": "nvidia/nemotron-3.5-content-safety:free",
+        "name": "nvidia/nemotron-3.5-content-safety:free",
+        "baseUrl": "https://openrouter.ai/api/v1",
+        "envKey": "OPENROUTER_API_KEY",
+        "generationConfig": {
+          "customHeaders": {
+            "HTTP-Referer": "https://github.com/QwenLM/qwen-code.git",
+            "X-OpenRouter-Title": "Qwen Code"
+          }
+        }
+      },
+      {
+        "id": "nvidia/nemotron-3.5-lightning:free",
+        "name": "nvidia/nemotron-3.5-lightning:free",
+        "baseUrl": "https://openrouter.ai/api/v1",
+        "envKey": "OPENROUTER_API_KEY",
+        "generationConfig": {
+          "customHeaders": {
+            "HTTP-Referer": "https://github.com/QwenLM/qwen-code.git",
+            "X-OpenRouter-Title": "Qwen Code"
+          }
+        }
+      },
+      {
+        "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+        "name": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+        "baseUrl": "https://openrouter.ai/api/v1",
+        "envKey": "OPENROUTER_API_KEY",
+        "generationConfig": {
+          "customHeaders": {
+            "HTTP-Referer": "https://github.com/QwenLM/qwen-code.git",
+            "X-OpenRouter-Title": "Qwen Code"
+          }
+        }
+      },
+      {
+        "id": "openrouter/free",
+        "name": "openrouter/free",
+        "baseUrl": "https://openrouter.ai/api/v1",
+        "envKey": "OPENROUTER_API_KEY",
+        "generationConfig": {
+          "customHeaders": {
+            "HTTP-Referer": "https://github.com/QwenLM/qwen-code.git",
+            "X-OpenRouter-Title": "Qwen Code"
+          }
+        }
+      },
+      {
+        "id": "qwen3.8-flash",
+        "name": "qwen3.8-flash",
+        "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+        "envKey": "DASHSCOPE_API_KEY"
+      },
+      {
+        "id": "qwen3.7-flash",
+        "name": "qwen3.7-flash",
+        "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+        "envKey": "DASHSCOPE_API_KEY"
+      },
+      {
+        "id": "qwen3.7-flash-2026-07-15",
+        "name": "qwen3.7-flash-2026-07-15",
+        "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+        "envKey": "DASHSCOPE_API_KEY"
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Agent",
+      "send_message",
+      "Bash(*)"
+    ]
+  },
+  "$version": 4,
+  "model": {
+    "name": "gemini-3.8-flash",
+    "baseUrl": "https://generativelanguage.googleapis.com"
+  },
+  "modelFallbacks": "gemini-pro-latest,nvidia/nemotron-3-ultra-550b-a55b:free,nvidia/nemotron-3-super-120b-a12b:free",
+  "fastModel": "gemini-flash-lite-latest",
+  "compactionModel": "gemma-4-31b-it",
+  "advisorModel": "gemini-3.8-flash",
+  "imageModel": "gemini-3.1-flash-lite-image",
+  "security": {
+    "auth": {
+      "selectedType": "gemini"
+    }
+  },
+  "providerMetadata": {
+    "alibabaStandard": {
+      "version": "eb53d39c7be9f3c3ca90c14d53d77cfb62386a817dc8bb366ae21b755b2d47f7",
+      "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
+    },
+    "openrouter": {
+      "version": "6ac6b64cdf1c6eab3ad7b69d0a718a5cae0d3e4eb8d11f74471f49c929a9a702",
+      "baseUrl": "https://openrouter.ai/api/v1",
+      "ignoredVersion": "b535a56063f3c09af610b3f4341d2c09a87af03d330317c7ba650c290630147f"
+    }
+  },
+  "context": {
+    "fileName": ["PROJECT.md", "QWEN.md"],
+    "includeDirectories": ["docs"],
+    "loadFromIncludeDirectories": true,
+    "fileFiltering": {
+      "respectGitIgnore": true,
+      "enableRecursiveFileSearch": true
+    }
+  },
+  "general": {
+      "terminalBell": true,
+      "preventSystemSleep": true,
+      "chatRecording": true
+  }
+}
