@@ -1,0 +1,59 @@
+project prj "Tracking Progress" "1.0" 2024-10-01 - 2024-10-31 {
+  timeformat "%Y-%m-%d"
+
+  # IMPORTANT: 'now' simulates the current date.
+  # We assume we are in the middle of the project (Oct 15th).
+  now 2024-10-15
+  currency "USD"
+}
+
+/* 1. Resources */
+resource dev "Developer" {
+  rate 400.0
+}
+
+/* 2. Tasks (The Plan) */
+task project "Software Project" {
+
+  task t1 "Requirements" {
+    # This task was scheduled for the first week
+    start 2024-10-01
+    effort 5d
+    allocate dev
+
+    # Method A: Simple Completion
+    # We simply state this task is 100% finished.
+    complete 100
+  }
+
+  task t2 "Implementation" {
+    # This task starts after t1
+    depends !t1
+    effort 10d
+    allocate dev
+
+    # Journal entries help document *why* things happened
+    journalentry 2024-10-10 "Started implementation phase"
+  }
+}
+
+/* 3. Tracking Actuals (The Reality) */
+# We use 'supplement' to add bookings to the resource defined above.
+# This simulates importing a timesheet.
+supplement resource dev {
+
+  # Syntax: booking <task_id> <start> - <end>
+  # 'dev' worked 3 days on 't2' so far.
+  booking project.t2 2024-10-08-09:00 - 2024-10-08-17:00
+  booking project.t2 2024-10-09-09:00 - 2024-10-09-17:00
+  booking project.t2 2024-10-10-09:00 - 2024-10-10-17:00
+}
+
+/* 4. Status Report */
+taskreport "StatusReport" {
+  formats html
+  headline "Project Status Report (as of 2024-10-15)"
+
+  # FIX: Flatten the column list. Do not nest columns inside 'chart'.
+  columns bsi, name, start, end, effort, effortdone, effortleft, complete, status, chart
+}

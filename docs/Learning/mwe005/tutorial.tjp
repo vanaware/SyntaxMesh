@@ -1,0 +1,79 @@
+project prj "Scheduling Project" "1.0" 2024-09-01 - 2024-09-30 {
+  timeformat "%Y-%m-%d"
+  now 2024-09-01
+  currency "USD"
+
+  /* 1. Global Working Hours */
+  # Define a standard 9-5 workday inside the project block
+  workinghours mon - fri 9:00 - 12:00, 13:00 - 17:00
+  workinghours sat, sun off
+}
+
+/* FIX: 'vacation' must be outside the project block */
+# A project-wide holiday (no one works)
+vacation "Labor Day" 2024-09-02
+
+/* 3. Resources */
+resource team "Team" {
+
+  resource alice "Alice (Full Time)" {
+    # Alice uses the global default (Mon-Fri 9-5)
+  }
+
+  resource bob "Bob (Part Time)" {
+    # FIX: 'shift' is deprecated. Define specific workinghours directly.
+    # This overrides the global default for Bob.
+    workinghours mon, tue, wed 9:00 - 13:00
+    workinghours thu, fri off
+  }
+}
+
+/* 4. Tasks with Priorities */
+task deliverable "Feature Release" {
+
+  /* High Priority Task: Must happen first/fastest */
+  task urgent "Urgent Core" {
+    priority 1000        # Highest priority (1000)
+    effort 3d
+    allocate alice
+  }
+
+  /* Low Priority Task: Only happens when Alice is free */
+  task filler "Documentation" {
+    priority 100         # Low priority
+    effort 2d
+    allocate alice
+
+    # Even though this task could technically start now,
+    # Alice is busy with "Urgent Core". TJ will delay this
+    # until the high-priority task is done.
+  }
+
+  /* Part-time Task: Will take longer in calendar days */
+  task side "Side Project" {
+    effort 12h           # 12 hours of work
+    allocate bob
+
+    # Since Bob only works 4 hours/day, Mon-Wed,
+    # this 12h task will span 3 calendar working days
+    # (or more if a weekend/holiday intervenes).
+  }
+}
+
+/* 5. Calendar Report (Visualizing the Schedule) */
+taskreport "Schedule" {
+  formats html
+  headline "Project Schedule"
+
+  # 'daily' column shows a grid for every day
+  columns bsi, name, start, end, daily
+}
+
+/* 6. Resource Schedule */
+resourcereport "ResourceSchedule" {
+  formats html
+  headline "Who is working when?"
+
+  # See exactly which hours are booked
+  columns name, weekly, daily
+}

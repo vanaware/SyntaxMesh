@@ -1,0 +1,40 @@
+project prj "Data Export" "1.0" 2024-11-01 - 2024-11-30 {
+  timeformat "%Y-%m-%d"
+  now 2024-11-01
+  currency "USD"
+}
+
+resource dev "Developer"
+
+task project "Export Demo" {
+  task t1 "Design" {
+    start 2024-11-01
+    effort 3d
+    allocate dev
+  }
+
+  task t2 "Implementation" {
+    depends !t1
+    effort 5d
+    allocate dev
+  }
+
+  task t3 "Meeting" {
+    depends !t2
+    effort 4h
+    allocate dev
+  }
+}
+
+/* 1. CSV Report (For Excel/Spreadsheets) */
+taskreport "ExportCSV" {
+  formats csv
+  columns id, name, start, end, effort
+}
+
+/* 2. iCalendar Report (For Outlook/Google Calendar) */
+icalreport "ExportCalendar" {
+  # We will export all tasks.
+  # Note: The 'hidetask' filter is removed to ensure compatibility.
+  hidetask 0
+}

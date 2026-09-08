@@ -1,0 +1,82 @@
+project prj "Cost & Resource Project" "1.0" 2024-08-01 - 2024-08-31 {
+  timeformat "%Y-%m-%d"
+  now 2024-08-01
+  currency "USD"
+}
+
+/* 1. Accounts */
+account cost "Project Expenses" {
+  account salaries "Salaries"
+}
+
+account rev "Project Revenue"
+
+/* 2. Resources with Rates */
+resource dev "Developers" {
+  resource alice "Alice" {
+    rate 400.0
+  }
+  resource bob "Bob" {
+    rate 300.0
+  }
+}
+
+/* 3. The Project Tasks */
+task project "Paid Project" {
+
+  /* All tasks charge their calculated labor cost to 'salaries' */
+  chargeset salaries
+
+  task t1 "Specification" {
+    effort 2d
+    allocate alice
+  }
+
+  task t2 "Development" {
+    effort 5d
+    allocate bob
+    depends !t1
+  }
+
+  /* Task 3: The actual work */
+  task t3 "Delivery Work" {
+    effort 1d
+    allocate alice, bob
+    depends !t2
+  }
+
+  /* Task 4: The Payment Event */
+  task t4 "Payment Received" {
+    milestone
+    depends !t3
+
+    /* Switch the account bucket for this specific task to 'rev' */
+    chargeset rev
+
+    /* Book a fixed amount upon completion */
+    charge 5000.0 onend
+  }
+}
+
+/* 4. Financial Report */
+accountreport "PnL" {
+  formats html
+  headline "Profit and Loss Statement"
+
+  /* FIX: 'total' is removed.
+     'monthly' shows the data for each month.
+     'balance cost rev' calculates Revenue - Cost for those cells. */
+  columns name, monthly
+
+  balance cost rev
+}
+
+/* 5. Resource Usage Report */
+resourcereport "Resources" {
+  formats html
+  headline "Resource Costs"
+  columns name, effort, cost, revenue
+
+  /* FIX: Define the balance so TJ knows how to compute the cost/revenue columns */
+  balance cost rev
+}

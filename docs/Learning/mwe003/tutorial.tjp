@@ -1,0 +1,54 @@
+project prj "Hierarchical Project" "1.0" 2024-07-01 - 2024-07-31 {
+  timeformat "%Y-%m-%d"
+  now 2024-07-01
+}
+
+/* 1. Hierarchical Resources */
+resource team "Development Team" {
+  resource alice "Alice"
+  resource bob "Bob"
+}
+
+/* 2. Hierarchical Tasks (WBS) */
+task deliverable "Software Release 1.0" {
+
+  /* Phase 1: Preparation */
+  task phase1 "Preparation" {
+
+    task t1 "Requirements" {
+      effort 3d
+      allocate alice
+    }
+
+    task t2 "Architecture" {
+      effort 2d
+      allocate bob
+      depends !t1   # The '!' means "look for 't1' inside the current parent (phase1)"
+    }
+  }
+
+  /* Key Event: Milestone */
+  task m1 "Design Approved" {
+    milestone       # Zero duration, just a marker
+    depends !phase1 # Waits for the entire phase1 to finish
+  }
+
+  /* Phase 2: Execution */
+  task phase2 "Implementation" {
+    depends !m1     # Wait for approval
+
+    task t3 "Coding" {
+      effort 5d
+      allocate alice, bob
+    }
+  }
+}
+
+/* 3. Hierarchical Report */
+taskreport "WBS" {
+  formats html
+  headline "Work Breakdown Structure"
+
+  # 'bsi' (Breakdown Structure Index) shows the hierarchy numbers (1.1, 1.2, etc.)
+  columns bsi, name, start, end, effort, chart
+}

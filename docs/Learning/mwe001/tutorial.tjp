@@ -1,0 +1,38 @@
+/* 1. Project Header: ID, Name, Version, and Timeframe */
+project prj "My First Project" "1.0" 2024-06-01 - 2024-06-30 {
+  timeformat "%Y-%m-%d"
+  now 2024-06-01
+}
+
+/* 2. Resources: Who is doing the work? */
+resource dev "Foad"
+
+/* 3. Tasks: What needs to be done? */
+task main "Main Project" {
+  
+  task t1 "Design Phase" {
+    effort 2d       # Takes 2 days of work
+    allocate dev    # Assigned to Foad
+  }
+
+  task t2 "Implementation" {
+    effort 3d
+    allocate dev
+    depends !t1     # Cannot start until t1 is finished
+  }
+
+  task t3 "Testing" {
+    effort 1d
+    allocate dev
+    depends !t2     # Cannot start until t2 is finished
+  }
+}
+
+/* 4. Reports: Define what you want to see */
+taskreport "Plan" {
+  formats html
+  headline "My Project Gantt Chart"
+  
+  # The 'chart' column generates the visual Gantt bars
+  columns bsi { title 'WBS' }, name, start, end, chart
+}

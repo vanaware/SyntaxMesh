@@ -1,0 +1,49 @@
+project migration "Project" "1.0" 2024-07-15 - 2024-08-15 {
+  now 2024-07-15
+  timeformat "%Y-%m-%d"
+  numberformat "-" "" "." "," 2
+  workinghours mon - fri 8:00 - 12:00, 13:00 - 17:00
+}
+
+# Resource with detailed configuration
+resource dev "Developer"
+
+# Task hierarchy with dependencies
+task project_root "Project Root" {
+  task phase1 "Phase 1" {
+    task p1s1 "Task 1.1" {
+      effort 1d
+      allocate dev
+    }
+    task p1s2 "Task 1.2" {
+      depends !p1s1
+      effort 2d
+      allocate dev
+    }
+  }
+
+  task phase2 "Phase 2" {
+    depends !phase1
+    task p2s1 "Task 2.1" {
+      effort 1d
+      allocate dev
+    }
+  }
+}
+
+# Report that causes the issue (Chart column)
+taskreport "tasks" {
+  headline "Task Plan"
+  formats html
+  columns name, start, end, chart  # This column caused the error in 3.8.1
+  hideresource 0
+}
+
+# Resource report that may also cause issues (Calendar view)
+resourcereport "resources" {
+  headline "Resource Allocation"
+  formats html
+  columns name, weekly  # Calendar view caused issues in 3.8.1
+  loadunit days
+  hidetask 0
+}

@@ -1,0 +1,70 @@
+project prj "Scenario Planning" "1.0" 2024-12-01 - 2024-12-31 {
+  timeformat "%Y-%m-%d"
+  now 2024-12-01
+  currency "USD"
+
+  /* 1. Define Scenarios (Hierarchical) */
+  # FIX: Only ONE top-level scenario allowed.
+  scenario baseline "Original Plan" {
+
+    # 'delayed' is a sub-scenario. It inherits everything from 'baseline'.
+    scenario delayed "Delayed Reality" {
+    }
+  }
+}
+
+resource dev "Developer"
+
+/* 2. Tasks with Scenario-Specific Data */
+task project "Scenario Demo" {
+
+  task t1 "Design" {
+    allocate dev
+    start 2024-12-01
+
+    # FIX: No prefix needed for the top-level scenario ('baseline')
+    effort 5d
+
+    # Specific override for the 'delayed' scenario
+    delayed:effort 8d
+  }
+
+  task t2 "Implementation" {
+    allocate dev
+    depends !t1
+    effort 10d
+  }
+}
+
+/* 3. Comparison Reports */
+
+# Report A: Showing the Baseline
+taskreport "PlanView" {
+  formats html
+  headline "Original Plan (Baseline)"
+  columns bsi, name, start, end, effort, chart
+
+  # Show the top-level scenario
+  scenarios baseline
+}
+
+# Report B: Showing the Delay
+taskreport "DelayedView" {
+  formats html
+  headline "Delayed Reality"
+  columns bsi, name, start, end, effort, chart
+
+  # Show the sub-scenario
+  scenarios delayed
+}
+
+# Report C: The Comparison
+taskreport "Comparison" {
+  formats html
+  headline "Baseline vs. Delay Comparison"
+
+  # FIX: Compare parent and child scenarios
+  scenarios baseline, delayed
+
+  columns bsi, name, start, end, effort, chart
+}
