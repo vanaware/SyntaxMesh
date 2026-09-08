@@ -1,0 +1,12 @@
+- Preact;
+- Signals;
+- BeerCSS;
+- shell;
+- project explorer;
+- editor;
+- feedback do parser;
+- Gantt visual;
+- relatórios;
+- seleção de idioma;
+- tema;
+- responsividade.

@@ -2378,4 +2378,3 @@ A arquitetura central será:
 **Nome oficial do projeto: SyntaxMesh.**
 
 **Objetivo:** construir primeiro um motor sólido e testável; depois uma aplicação completa em cima dele.
-

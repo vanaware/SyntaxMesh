@@ -1,0 +1,5 @@
+- TODO 1.1 — Criar projeto Deno;
+- TODO 1.2 — Estrutura de diretórios;
+- TODO 1.3 — Core independente;
+- TODO 1.4 — Pipeline de qualidade;
+- TODO 1.5 — Documentação inicial.

@@ -1,0 +1,355 @@
+/* src/styles.css */
+
+/* ==========================================================================
+   1. CLASSES DE FONTES LOCAIS (Self-Hosted Material Symbols)
+   ========================================================================== */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ==========================================================================
+   2. VARIÁVEIS DE TEMA (Material Design 3) - LIGHT MODE & DARK MODE
+   ========================================================================== */
+
+/* Tema Claro (Padrão) */
+:root, [data-theme="light"] {
+  color-scheme: light;
+  --md-sys-color-primary: #006c4f;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #8cf0cf;
+  --md-sys-color-on-primary-container: #002114;
+  --md-sys-color-secondary: #4a6357;
+  --md-sys-color-on-secondary: #ffffff;
+  --md-sys-color-secondary-container: #cce8d8;
+  --md-sys-color-on-secondary-container: #082015;
+  --md-sys-color-error: #ba1a1a;
+  --md-sys-color-on-error: #ffffff;
+  --md-sys-color-error-container: #ffdad6;
+  --md-sys-color-on-error-container: #410002;
+  --md-sys-color-background: #fbfcf9;
+  --md-sys-color-on-background: #191c1a;
+  --md-sys-color-surface: #fbfcf9;
+  --md-sys-color-on-surface: #191c1a;
+  --md-sys-color-surface-variant: #dbe4dd;
+  --md-sys-color-on-surface-variant: #404842;
+  
+  --md-sys-color-surface-container-lowest: #ffffff;
+  --md-sys-color-surface-container: #f3f4f1;
+  --md-sys-color-surface-container-high: #e8e9e6;
+
+  --md-sys-color-outline: #707873;
+  --md-sys-color-outline-variant: #e0e0e0;
+  
+  /* Cores específicas do Chat */
+  --chat-bubble-out-bg: #d9fdd3;
+  --chat-bubble-out-text: #111111;
+  --chat-bubble-meta: rgba(0,0,0,0.55);
+}
+
+/* Tema Escuro (Forçado via Atributo) */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --md-sys-color-primary: #6dd3b4;
+  --md-sys-color-on-primary: #003828;
+  --md-sys-color-primary-container: #00513b;
+  --md-sys-color-on-primary-container: #8cf0cf;
+  --md-sys-color-secondary: #b1ccbe;
+  --md-sys-color-on-secondary: #1d352a;
+  --md-sys-color-secondary-container: #334b3f;
+  --md-sys-color-on-secondary-container: #cce8d8;
+  --md-sys-color-error: #ffb4ab;
+  --md-sys-color-on-error: #690005;
+  --md-sys-color-error-container: #93000a;
+  --md-sys-color-on-error-container: #ffdad6;
+  --md-sys-color-background: #191c1a;
+  --md-sys-color-on-background: #e1e3df;
+  --md-sys-color-surface: #191c1a;
+  --md-sys-color-on-surface: #e1e3df;
+  --md-sys-color-surface-variant: #404842;
+  --md-sys-color-on-surface-variant: #bfc9c2;
+  
+  --md-sys-color-surface-container-lowest: #0e110f;
+  --md-sys-color-surface-container: #1e201e;
+  --md-sys-color-surface-container-high: #282b29;
+
+  --md-sys-color-outline: #89938c;
+  --md-sys-color-outline-variant: #2d312f;
+
+  /* Cores específicas do Chat */
+  --chat-bubble-out-bg: #005c4b;
+  --chat-bubble-out-text: #ffffff;
+  --chat-bubble-meta: rgba(255,255,255,0.7);
+}
+
+/* Tema Escuro (Via OS - Preferência de Sistema) */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --md-sys-color-primary: #6dd3b4;
+    --md-sys-color-on-primary: #003828;
+    --md-sys-color-primary-container: #00513b;
+    --md-sys-color-on-primary-container: #8cf0cf;
+    --md-sys-color-secondary: #b1ccbe;
+    --md-sys-color-on-secondary: #1d352a;
+    --md-sys-color-secondary-container: #334b3f;
+    --md-sys-color-on-secondary-container: #cce8d8;
+    --md-sys-color-error: #ffb4ab;
+    --md-sys-color-on-error: #690005;
+    --md-sys-color-error-container: #93000a;
+    --md-sys-color-on-error-container: #ffdad6;
+    --md-sys-color-background: #191c1a;
+    --md-sys-color-on-background: #e1e3df;
+    --md-sys-color-surface: #191c1a;
+    --md-sys-color-on-surface: #e1e3df;
+    --md-sys-color-surface-variant: #404842;
+    --md-sys-color-on-surface-variant: #bfc9c2;
+    
+    --md-sys-color-surface-container-lowest: #0e110f;
+    --md-sys-color-surface-container: #1e201e;
+    --md-sys-color-surface-container-high: #282b29;
+
+    --md-sys-color-outline: #89938c;
+    --md-sys-color-outline-variant: #2d312f;
+
+    --chat-bubble-out-bg: #005c4b;
+    --chat-bubble-out-text: #ffffff;
+    --chat-bubble-meta: rgba(255,255,255,0.7);
+  }
+}
+
+/* 🔥 OVERRIDES DE SEGURANÇA PARA COMPONENTES MD3 */
+md-menu, md-outlined-select {
+  --md-menu-container-color: var(--md-sys-color-surface-container);
+}
+
+/* ==========================================================================
+   3. RESET E TIPOGRAFIA BASE
+   ========================================================================== */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100vw;
+  background-color: var(--md-sys-color-background);
+  color: var(--md-sys-color-on-background);
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  body { overflow-y: auto; }
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-top: 0;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+h1 { font-size: 1.8rem; margin-bottom: 0.25rem; color: var(--md-sys-color-primary); }
+h2 { font-size: 1.25rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+p { margin-top: 0; }
+
+md-icon, .material-symbols-outlined {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  overflow: visible !important;
+  vertical-align: middle;
+}
+md-icon-button { flex-shrink: 0 !important; }
+
+/* ==========================================================================
+   4. ESTRUTURA DE LAYOUT APP (Estilo Compacto)
+   ========================================================================== */
+#app-root {
+  display: flex;
+  height: 100vh;
+  height: 100dvh;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.app-sidebar {
+  width: 30%;
+  min-width: 320px;
+  max-width: 400px; 
+  border-right: 1px solid var(--md-sys-color-outline-variant);
+  display: flex;
+  flex-direction: column;
+  background: var(--md-sys-color-surface);
+  height: 100%;
+  z-index: 10;
+}
+
+.sidebar-header {
+  padding: 8px 16px; 
+  background: var(--md-sys-color-surface-variant);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  flex-shrink: 0;
+  height: 60px; 
+}
+
+.sidebar-content {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 8px; 
+  background-color: var(--md-sys-color-background);
+  box-sizing: border-box;
+}
+
+.app-main {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: var(--md-sys-color-surface-container-lowest);
+  overflow: hidden;
+}
+
+.chat-header {
+  padding: 8px 16px; 
+  background: var(--md-sys-color-surface-variant);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 60px; 
+  flex-shrink: 0;
+}
+
+.chat-messages {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px; 
+}
+
+.chat-input-area {
+  padding: 12px 16px; 
+  background: var(--md-sys-color-surface);
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  flex-shrink: 0;
+}
+
+.back-button { display: none; }
+
+@media (max-width: 768px) {
+  #app-root { height: 100dvh; }
+  .app-sidebar, .app-main {
+    width: 100%; max-width: 100%; height: 100dvh;
+    position: absolute; top: 0; left: 0;
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  }
+  .view-mode-list .app-main { transform: translateX(100%); }
+  .view-mode-list .app-sidebar { transform: translateX(0); }
+  .view-mode-chat .app-sidebar { transform: translateX(-30%); opacity: 0; pointer-events: none; }
+  .view-mode-chat .app-main { transform: translateX(0); }
+  .back-button { display: inline-flex; }
+}
+
+/* ==========================================================================
+   5. COMPONENTES INTERNOS (Cards, inputs, blocos)
+   ========================================================================== */
+
+/* 🔥 ARQUITETURA: Removida a borda lateral grossa. Aplicado o estilo "Outlined Card" do Material 3 */
+.container {
+  background: var(--md-sys-color-surface);
+  padding: 16px; 
+  border-radius: 12px; 
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  margin-bottom: 16px; 
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+md-list-item {
+  border-radius: 6px;
+  margin-bottom: 2px;
+  background: var(--md-sys-color-surface);
+  overflow: visible !important; 
+}
+
+label {
+  display: block; font-weight: 500; margin-bottom: 4px;
+  color: var(--md-sys-color-on-surface-variant); font-size: 0.85rem;
+}
+
+/* ==========================================================================
+   6. BALÕES DE CHAT E STATUS
+   ========================================================================== */
+.chat-bubble-wrapper {
+  display: flex; width: 100%; margin-bottom: 4px; 
+}
+
+.chat-bubble-wrapper.in { justify-content: flex-start; }
+.chat-bubble-wrapper.out { justify-content: flex-end; }
+
+.chat-bubble {
+  max-width: 85%;
+  padding: 6px 10px; 
+  border-radius: 8px; 
+  position: relative;
+  box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+  word-wrap: break-word;
+  user-select: none;
+}
+
+.chat-bubble.in {
+  background-color: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  border-top-left-radius: 2px;
+}
+
+.chat-bubble.out {
+  background-color: var(--chat-bubble-out-bg);
+  color: var(--chat-bubble-out-text);
+  border-top-right-radius: 2px;
+}
+
+.chat-bubble-text { font-size: 0.9rem; line-height: 1.4; margin-bottom: 0px; }
+
+.chat-bubble-meta {
+  display: flex; justify-content: flex-end; align-items: center; gap: 4px;
+  font-size: 0.65rem; color: var(--md-sys-color-on-surface-variant);
+  margin-top: 2px; margin-bottom: -2px;
+}
+
+.chat-bubble.out .chat-bubble-meta { color: var(--chat-bubble-meta); }
+.status-icon { font-size: 0.7rem; letter-spacing: -2px; }
+
+/* ==========================================================================
+   7. PAINEL DE DEBUG E ANIMAÇÕES
+   ========================================================================== */
+#debugPanel {
+  background: #1e1e1e; color: #d4d4d4;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.75rem; padding: 12px; border-radius: 8px;
+  max-height: 300px; overflow-y: auto; white-space: pre-wrap;
+  word-break: break-word; border: 1px solid #333;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }

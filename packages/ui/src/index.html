@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>loco</title>
+  
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" href="./favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
+  <meta name="application-name" content="loco" />
+  
+<!-- 🔥 ARQUITETURA: Injeção Direta para Bypass do Bundler -->
+  <style>
+    /* Fonte Self-Hosted para Privacidade e Suporte Offline Garantido */
+    /* Mantido no HTML apenas o mapeamento do arquivo físico (.woff2) para que o bundler do Deno não tente resolvê-lo */
+    @font-face {
+      font-family: 'Material Symbols Outlined';
+      font-style: normal;
+      font-weight: 100 700;
+      src: url('./fonts/material-symbols-outlined.woff2') format('woff2');
+    }
+  </style>
+  <script src="./app.js" type="module" crossorigin></script>
+  <link rel="stylesheet" crossorigin href="./app.css">
+</head>
+<body>
+  <div id="app"></div>
+  <script src="./webtorrent.min.js" type="text/javascript" data-bundle="false" data-ignore="true"></script>
+</body>
+</html>

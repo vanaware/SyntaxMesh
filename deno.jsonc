@@ -6,11 +6,11 @@
    "author": "Vanaware",
    "license": "MIT",
    "workspace": [
-     "./pacotes/worker-db",
-     "./pacotes/server",
-     "./pacotes/ui",
-     "./pacotes/utils",
-     "./pacotes/service-worker"
+     "./packages/worker-db",
+     "./packages/server",
+     "./packages/ui",
+     "./packages/utils",
+     "./packages/service-worker"
    ],
    "catalog": {
     "esbuild": "0.24.0",

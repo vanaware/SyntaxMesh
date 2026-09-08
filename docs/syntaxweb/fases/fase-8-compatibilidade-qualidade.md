@@ -1,0 +1,10 @@
+- corpus de exemplos;
+- testes de compatibilidade;
+- golden tests;
+- conformidade multilíngue;
+- performance;
+- segurança;
+- regressão;
+- cross-browser;
+- build de produção;
+- release.

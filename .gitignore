@@ -6,3 +6,6 @@ coverage/
 .env
 
 docs/taskjuggler/
+
+node_modules/
+vendor/
