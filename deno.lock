@@ -3,11 +3,15 @@
   "specifiers": {
     "jsr:@deno/esbuild-plugin@^1.2.1": "1.2.1",
     "jsr:@deno/loader@~0.3.10": "0.3.14",
+    "jsr:@std/assert@*": "1.0.19",
+    "jsr:@std/assert@^1.0.19": "1.0.19",
     "jsr:@std/fs@1": "1.0.24",
+    "jsr:@std/internal@^1.0.12": "1.0.14",
     "jsr:@std/internal@^1.0.14": "1.0.14",
     "jsr:@std/path@1": "1.1.6",
     "jsr:@std/path@^1.1.1": "1.1.6",
     "jsr:@std/path@^1.1.5": "1.1.6",
+    "jsr:@std/testing@*": "1.0.20",
     "npm:@cloudflare/workers-types@*": "5.20260830.1",
     "npm:esbuild@*": "0.28.1",
     "npm:esbuild@~0.25.5": "0.25.12",
@@ -25,10 +29,16 @@
     "@deno/loader@0.3.14": {
       "integrity": "97bc63a6cc2d27a60bcdc953f588c5213331d866d44212eebb24cebfb9b011ca"
     },
+    "@std/assert@1.0.19": {
+      "integrity": "eaada96ee120cb980bc47e040f82814d786fe8162ecc53c91d8df60b8755991e",
+      "dependencies": [
+        "jsr:@std/internal@^1.0.12"
+      ]
+    },
     "@std/fs@1.0.24": {
       "integrity": "f3061b45b81673a2bece689da041df32d174be064c89eb6397fb5718d3fb7877",
       "dependencies": [
-        "jsr:@std/internal",
+        "jsr:@std/internal@^1.0.14",
         "jsr:@std/path@^1.1.5"
       ]
     },
@@ -38,7 +48,14 @@
     "@std/path@1.1.6": {
       "integrity": "c68485c2a4dfbb5ae3cc74fae4e8c4e5d874cf8a8ed12927917235c758b46cbe",
       "dependencies": [
-        "jsr:@std/internal"
+        "jsr:@std/internal@^1.0.14"
+      ]
+    },
+    "@std/testing@1.0.20": {
+      "integrity": "21380ed438672762e4ec549cbf4fe41c5b68f5598773a30b64abe7375513e721",
+      "dependencies": [
+        "jsr:@std/assert@^1.0.19",
+        "jsr:@std/internal@^1.0.14"
       ]
     }
   },
@@ -770,6 +787,14 @@
         "youch-core"
       ]
     }
+  },
+  "remote": {
+    "https://esm.sh/fake-indexeddb@6.2.5/auto?bundle": "5e84e55c44afc6727ae2aa1767080cb7846f5fcc1186a59ec2834ca38f3b277f",
+    "https://esm.sh/fake-indexeddb@6.2.5/denonext/auto.bundle.mjs": "b644a663f77a878555ff6fcffb8c96b13f58c3b254673cc8ddf7d47d5583a38f",
+    "https://esm.sh/fflate@0.8.2/es2022/fflate.mjs": "84afaa7491d754b566dd8608dcc784e7fdd4f0342e2c5b0bd1442e77782ec1a2",
+    "https://esm.sh/fflate@0.8.2?target=es2022": "c127de9122b64d0866c6988baf5d7b21d6a1aca3989e8828f9c7f27029081b0c",
+    "https://esm.sh/idb-keyval@6.2.1": "5d100f5a349dbff1e6b4889580c12e35b68b1388cbc117d11a90d7768f20be4f",
+    "https://esm.sh/idb-keyval@6.2.1/denonext/idb-keyval.mjs": "82bb3b0e594a5f57d4b017f4a6d1c038d6fe6d88a197e8e0cc445db144b15da7"
   },
   "workspace": {
     "dependencies": [

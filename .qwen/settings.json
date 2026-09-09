@@ -2,13 +2,40 @@
   "modelProviders": {
     "gemini": [
       {
+        "id": "gemini-pro-latest",
+        "name": "Gemini Pro Latest",
+        "baseUrl": "https://generativelanguage.googleapis.com",
+        "envKey": "GEMINI_API_KEY",
+        "generationConfig": {
+          "enableCacheControl": true,
+          "timeout": 180000,
+          "maxRetries": 5,
+          "retryInitialDelayMs": 3000,
+          "retryMaxDelayMs": 60000,
+          "contextWindowSize": 128000,
+          "samplingParams": {
+            "temperature": 0.2,
+            "top_p": 0.95,
+            "max_tokens": 8192
+          }
+        }
+      },
+      {
         "id": "gemini-3.8-flash",
         "name": "gemini-3.8-flash",
         "baseUrl": "https://generativelanguage.googleapis.com",
         "envKey": "GEMINI_API_KEY",
         "generationConfig": {
-          "extra_body": {
-            "enable_thinking": true
+          "enableCacheControl": true,
+          "timeout": 180000,
+          "maxRetries": 5,
+          "retryInitialDelayMs": 3000,
+          "retryMaxDelayMs": 60000,
+          "contextWindowSize": 128000,
+          "samplingParams": {
+            "temperature": 0.2,
+            "top_p": 0.95,
+            "max_tokens": 8192
           }
         }
       },
@@ -18,8 +45,16 @@
         "baseUrl": "https://generativelanguage.googleapis.com",
         "envKey": "GEMINI_API_KEY",
         "generationConfig": {
-          "extra_body": {
-            "enable_thinking": true
+          "enableCacheControl": true,
+          "timeout": 180000,
+          "maxRetries": 5,
+          "retryInitialDelayMs": 3000,
+          "retryMaxDelayMs": 60000,
+          "contextWindowSize": 128000,
+          "samplingParams": {
+            "temperature": 0.2,
+            "top_p": 0.95,
+            "max_tokens": 8192
           }
         }
       },
@@ -29,8 +64,16 @@
         "baseUrl": "https://generativelanguage.googleapis.com",
         "envKey": "GEMINI_API_KEY",
         "generationConfig": {
-          "extra_body": {
-            "enable_thinking": true
+          "enableCacheControl": true,
+          "timeout": 180000,
+          "maxRetries": 5,
+          "retryInitialDelayMs": 3000,
+          "retryMaxDelayMs": 60000,
+          "contextWindowSize": 128000,
+          "samplingParams": {
+            "temperature": 0.2,
+            "top_p": 0.95,
+            "max_tokens": 8192
           }
         }
       },
@@ -40,8 +83,16 @@
         "baseUrl": "https://generativelanguage.googleapis.com",
         "envKey": "GEMINI_API_KEY",
         "generationConfig": {
-          "extra_body": {
-            "enable_thinking": false
+          "enableCacheControl": true,
+          "timeout": 180000,
+          "maxRetries": 5,
+          "retryInitialDelayMs": 3000,
+          "retryMaxDelayMs": 60000,
+          "contextWindowSize": 128000,
+          "samplingParams": {
+            "temperature": 0.2,
+            "top_p": 0.95,
+            "max_tokens": 8192
           }
         }
       },
@@ -51,8 +102,16 @@
         "baseUrl": "https://generativelanguage.googleapis.com",
         "envKey": "GEMINI_API_KEY",
         "generationConfig": {
-          "extra_body": {
-            "enable_thinking": true
+          "enableCacheControl": true,
+          "timeout": 180000,
+          "maxRetries": 5,
+          "retryInitialDelayMs": 3000,
+          "retryMaxDelayMs": 60000,
+          "contextWindowSize": 128000,
+          "samplingParams": {
+            "temperature": 0.2,
+            "top_p": 0.95,
+            "max_tokens": 8192
           }
         }
       },
@@ -62,11 +121,19 @@
         "baseUrl": "https://generativelanguage.googleapis.com",
         "envKey": "GEMINI_API_KEY",
         "generationConfig": {
+          "enableCacheControl": true,
           "modalities": {
             "image": true
           },
-          "extra_body": {
-            "enable_thinking": true
+          "timeout": 180000,
+          "maxRetries": 5,
+          "retryInitialDelayMs": 3000,
+          "retryMaxDelayMs": 60000,
+          "contextWindowSize": 65536,
+          "samplingParams": {
+            "temperature": 0.2,
+            "top_p": 0.95,
+            "max_tokens": 8192
           }
         }
       },
@@ -76,8 +143,16 @@
         "baseUrl": "https://generativelanguage.googleapis.com",
         "envKey": "GEMINI_API_KEY",
         "generationConfig": {
-          "extra_body": {
-            "enable_thinking": true
+          "enableCacheControl": true,
+          "timeout": 180000,
+          "maxRetries": 5,
+          "retryInitialDelayMs": 3000,
+          "retryMaxDelayMs": 60000,
+          "contextWindowSize": 128000,
+          "samplingParams": {
+            "temperature": 0.2,
+            "top_p": 0.95,
+            "max_tokens": 8192
           }
         }
       },
@@ -87,8 +162,16 @@
         "baseUrl": "https://generativelanguage.googleapis.com",
         "envKey": "GEMINI_API_KEY",
         "generationConfig": {
-          "extra_body": {
-            "enable_thinking": true
+          "enableCacheControl": true,
+          "timeout": 180000,
+          "maxRetries": 5,
+          "retryInitialDelayMs": 3000,
+          "retryMaxDelayMs": 60000,
+          "contextWindowSize": 128000,
+          "samplingParams": {
+            "temperature": 0.2,
+            "top_p": 0.95,
+            "max_tokens": 8192
           }
         }
       }
@@ -96,25 +179,51 @@
     "openai": [
       {
         "id": "gemini-pro-latest",
-        "name": "Gemini Pro Latest",
+        "name": "Openai - Gemini Pro Latest",
         "baseUrl": "https://generativelanguage.googleapis.com/v1beta/openai/",
         "envKey": "GEMINI_API_KEY",
-        "generation_config" : {
-          "temperature": 1,
-          "max_output_tokens": 65536,
-          "top_p": 0.95,
-          "thinking_level": "high"
+        "generationConfig": {
+          "enableCacheControl": true,
+          "timeout": 180000,
+          "maxRetries": 5,
+          "retryInitialDelayMs": 3000,
+          "retryMaxDelayMs": 60000,
+          "contextWindowSize": 128000,
+          "samplingParams": {
+            "temperature": 0.2,
+            "top_p": 0.95,
+            "max_tokens": 8192
+          }
         }
-      },
+      }, 
       {
         "id": "nvidia/nemotron-3-super-120b-a12b:free",
         "name": "nvidia/nemotron-3-super-120b-a12b:free",
         "baseUrl": "https://openrouter.ai/api/v1",
         "envKey": "OPENROUTER_API_KEY",
         "generationConfig": {
+          "enableCacheControl": true,
           "customHeaders": {
             "HTTP-Referer": "https://github.com/QwenLM/qwen-code.git",
             "X-OpenRouter-Title": "Qwen Code"
+          },
+          "timeout": 300000,
+          "streamIdleTimeoutMs": 600000,
+          "maxRetries": 5,
+          "retryInitialDelayMs": 5000,
+          "retryMaxDelayMs": 60000,
+          "contextWindowSize": 128000,
+          "extra_body": {
+            "transforms": ["middle-out"],
+            "provider": {
+              "allow_fallbacks": true,
+              "sort": "throughput"
+            }
+          },
+          "samplingParams": {
+            "temperature": 0.2,
+            "top_p": 0.95,
+            "max_tokens": 8192
           }
         }
       },
@@ -124,9 +233,28 @@
         "baseUrl": "https://openrouter.ai/api/v1",
         "envKey": "OPENROUTER_API_KEY",
         "generationConfig": {
+          "enableCacheControl": true,
           "customHeaders": {
             "HTTP-Referer": "https://github.com/QwenLM/qwen-code.git",
             "X-OpenRouter-Title": "Qwen Code"
+          },
+          "timeout": 300000,
+          "streamIdleTimeoutMs": 600000,
+          "maxRetries": 5,
+          "retryInitialDelayMs": 5000,
+          "retryMaxDelayMs": 60000,
+          "contextWindowSize": 128000,
+          "extra_body": {
+            "transforms": ["middle-out"],
+            "provider": {
+              "allow_fallbacks": true,
+              "sort": "throughput"
+            }
+          },
+          "samplingParams": {
+            "temperature": 0.2,
+            "top_p": 0.95,
+            "max_tokens": 8192
           }
         }
       },
@@ -136,9 +264,28 @@
         "baseUrl": "https://openrouter.ai/api/v1",
         "envKey": "OPENROUTER_API_KEY",
         "generationConfig": {
+          "enableCacheControl": true,
           "customHeaders": {
             "HTTP-Referer": "https://github.com/QwenLM/qwen-code.git",
             "X-OpenRouter-Title": "Qwen Code"
+          },
+          "timeout": 300000,
+          "streamIdleTimeoutMs": 600000,
+          "maxRetries": 5,
+          "retryInitialDelayMs": 5000,
+          "retryMaxDelayMs": 60000,
+          "contextWindowSize": 128000,
+          "extra_body": {
+            "transforms": ["middle-out"],
+            "provider": {
+              "allow_fallbacks": true,
+              "sort": "throughput"
+            }
+          },
+          "samplingParams": {
+            "temperature": 0.2,
+            "top_p": 0.95,
+            "max_tokens": 8192
           }
         }
       },
@@ -148,9 +295,28 @@
         "baseUrl": "https://openrouter.ai/api/v1",
         "envKey": "OPENROUTER_API_KEY",
         "generationConfig": {
+          "enableCacheControl": true,
           "customHeaders": {
             "HTTP-Referer": "https://github.com/QwenLM/qwen-code.git",
             "X-OpenRouter-Title": "Qwen Code"
+          },
+          "timeout": 300000,
+          "streamIdleTimeoutMs": 600000,
+          "maxRetries": 5,
+          "retryInitialDelayMs": 5000,
+          "retryMaxDelayMs": 60000,
+          "contextWindowSize": 128000,
+          "extra_body": {
+            "transforms": ["middle-out"],
+            "provider": {
+              "allow_fallbacks": true,
+              "sort": "throughput"
+            }
+          },
+          "samplingParams": {
+            "temperature": 0.2,
+            "top_p": 0.95,
+            "max_tokens": 8192
           }
         }
       },
@@ -160,9 +326,28 @@
         "baseUrl": "https://openrouter.ai/api/v1",
         "envKey": "OPENROUTER_API_KEY",
         "generationConfig": {
+          "enableCacheControl": true,
           "customHeaders": {
             "HTTP-Referer": "https://github.com/QwenLM/qwen-code.git",
             "X-OpenRouter-Title": "Qwen Code"
+          },
+          "timeout": 300000,
+          "streamIdleTimeoutMs": 600000,
+          "maxRetries": 5,
+          "retryInitialDelayMs": 5000,
+          "retryMaxDelayMs": 60000,
+          "contextWindowSize": 128000,
+          "extra_body": {
+            "transforms": ["middle-out"],
+            "provider": {
+              "allow_fallbacks": true,
+              "sort": "throughput"
+            }
+          },
+          "samplingParams": {
+            "temperature": 0.2,
+            "top_p": 0.95,
+            "max_tokens": 8192
           }
         }
       },
@@ -172,29 +357,121 @@
         "baseUrl": "https://openrouter.ai/api/v1",
         "envKey": "OPENROUTER_API_KEY",
         "generationConfig": {
+          "enableCacheControl": true,
           "customHeaders": {
             "HTTP-Referer": "https://github.com/QwenLM/qwen-code.git",
             "X-OpenRouter-Title": "Qwen Code"
+          },
+          "timeout": 300000,
+          "streamIdleTimeoutMs": 600000,
+          "maxRetries": 5,
+          "retryInitialDelayMs": 5000,
+          "retryMaxDelayMs": 60000,
+          "contextWindowSize": 128000,
+          "extra_body": {
+            "transforms": ["middle-out"],
+            "provider": {
+              "allow_fallbacks": true,
+              "sort": "throughput"
+            }
+          },
+          "samplingParams": {
+            "temperature": 0.2,
+            "top_p": 0.95,
+            "max_tokens": 8192
           }
         }
       },
       {
-        "id": "qwen3.8-flash",
-        "name": "qwen3.8-flash",
+        "id": "qwen3-coder-flash",
+        "name": "Qwen3 Coder Flash (DashScope Free)",
         "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
-        "envKey": "DASHSCOPE_API_KEY"
+        "envKey": "DASHSCOPE_API_KEY",
+        "generationConfig": {
+          "timeout": 180000,
+          "maxRetries": 5,
+          "retryInitialDelayMs": 3000,
+          "retryMaxDelayMs": 60000,
+          "contextWindowSize": 128000,
+          "samplingParams": {
+            "temperature": 0.2,
+            "top_p": 0.95,
+            "max_tokens": 8192
+          }
+        }
       },
       {
-        "id": "qwen3.7-flash",
-        "name": "qwen3.7-flash",
+        "id": "qwen3-next-80b-a3b-instruct",
+        "name": "Qwen3 Next 80B A3B (DashScope Free)",
         "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
-        "envKey": "DASHSCOPE_API_KEY"
+        "envKey": "DASHSCOPE_API_KEY",
+        "generationConfig": {
+          "timeout": 180000,
+          "maxRetries": 5,
+          "retryInitialDelayMs": 3000,
+          "retryMaxDelayMs": 60000,
+          "contextWindowSize": 128000,
+          "samplingParams": {
+            "temperature": 0.2,
+            "top_p": 0.95,
+            "max_tokens": 8192
+          }
+        }
       },
       {
-        "id": "qwen3.7-flash-2026-07-15",
-        "name": "qwen3.7-flash-2026-07-15",
+        "id": "qwen3-max-preview",
+        "name": "Qwen3 Max Preview (DashScope Free)",
         "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
-        "envKey": "DASHSCOPE_API_KEY"
+        "envKey": "DASHSCOPE_API_KEY",
+        "generationConfig": {
+          "timeout": 300000,
+          "maxRetries": 5,
+          "retryInitialDelayMs": 5000,
+          "retryMaxDelayMs": 60000,
+          "contextWindowSize": 128000,
+          "samplingParams": {
+            "temperature": 0.2,
+            "top_p": 0.95,
+            "max_tokens": 8192
+          }
+        }
+      },
+      {
+        "id": "qwen-flash",
+        "name": "Qwen Flash (DashScope Free)",
+        "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+        "envKey": "DASHSCOPE_API_KEY",
+        "generationConfig": {
+          "timeout": 120000,
+          "maxRetries": 3,
+          "retryInitialDelayMs": 2000,
+          "retryMaxDelayMs": 30000,
+          "contextWindowSize": 128000,
+          "samplingParams": {
+            "temperature": 0.2,
+            "top_p": 0.95,
+            "max_tokens": 4096
+          }
+        }
+      },
+      {
+        "id": "qwen3-vl-flash",
+        "name": "Qwen3 VL Flash (DashScope Free)",
+        "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+        "envKey": "DASHSCOPE_API_KEY",
+        "generationConfig": {
+          "modalities": { "image": true },
+          "timeout": 180000,
+          "maxRetries": 5,
+          "retryInitialDelayMs": 3000,
+          "retryMaxDelayMs": 60000,
+          "contextWindowSize": 128000,
+          "samplingParams": {
+            "temperature": 0.2,
+            "top_p": 0.95,
+            "max_tokens": 8192
+          }
+        }
       }
     ]
   },
@@ -207,8 +484,22 @@
   },
   "$version": 4,
   "model": {
-    "name": "openrouter/free",
-    "baseUrl": "https://openrouter.ai/api/v1"
+    "name": "qwen3-next-80b-a3b-instruct",
+    "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+    "reasoningEffort": "high",
+    "generationConfig": {
+      "enableCacheControl": true,
+      "timeout": 180000,
+      "maxRetries": 5,
+      "retryInitialDelayMs": 3000,
+      "retryMaxDelayMs": 60000,
+      "contextWindowSize": 128000,
+      "samplingParams": {
+        "temperature": 0.2,
+        "top_p": 0.95,
+        "max_tokens": 8192
+      }
+    }
   },
   "modelFallbacks": "gemini-pro-latest,nvidia/nemotron-3-ultra-550b-a55b:free,nvidia/nemotron-3-super-120b-a12b:free",
   "fastModel": "gemini-flash-lite-latest",
@@ -232,17 +523,22 @@
     }
   },
   "context": {
-    "fileName": ["CURRENT.md"],
-    "includeDirectories": ["docs/syntaxmesh/"],
+    "fileName": [
+      "CURRENT.md"
+    ],
+    "includeDirectories": [
+      "docs/syntaxmesh/"
+    ],
     "loadFromIncludeDirectories": true,
+    "autoCompactThreshold": 0.65,
     "fileFiltering": {
       "respectGitIgnore": true,
       "enableRecursiveFileSearch": true
     }
   },
   "general": {
-      "terminalBell": true,
-      "preventSystemSleep": true,
-      "chatRecording": true
+    "terminalBell": true,
+    "preventSystemSleep": true,
+    "chatRecording": true
   }
 }
