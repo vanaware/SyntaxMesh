@@ -15,6 +15,8 @@ export * from "./resources/mod.ts";
 export * from "./scenarios/mod.ts";
 export * from "./expressions/mod.ts";
 export * from "./validation/mod.ts";
+export * from "./time/duration.ts";
+export * from "./time/effort.ts";
 
 // ============================================================================
 // Tipos principais do Core

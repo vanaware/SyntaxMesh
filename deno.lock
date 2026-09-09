@@ -4,6 +4,7 @@
     "jsr:@deno/esbuild-plugin@^1.2.1": "1.2.1",
     "jsr:@deno/loader@~0.3.10": "0.3.14",
     "jsr:@std/assert@*": "1.0.19",
+    "jsr:@std/assert@1": "1.0.19",
     "jsr:@std/assert@^1.0.19": "1.0.19",
     "jsr:@std/fs@1": "1.0.24",
     "jsr:@std/internal@^1.0.12": "1.0.14",
@@ -12,6 +13,7 @@
     "jsr:@std/path@^1.1.1": "1.1.6",
     "jsr:@std/path@^1.1.5": "1.1.6",
     "jsr:@std/testing@*": "1.0.20",
+    "jsr:@std/testing@1": "1.0.20",
     "npm:@cloudflare/workers-types@*": "5.20260830.1",
     "npm:esbuild@*": "0.28.1",
     "npm:esbuild@~0.25.5": "0.25.12",
@@ -804,6 +806,22 @@
       "npm:esbuild@*"
     ],
     "members": {
+      "packages/core": {
+        "dependencies": [
+          "jsr:@std/assert@1",
+          "jsr:@std/testing@1"
+        ]
+      },
+      "packages/parser": {
+        "dependencies": [
+          "jsr:@std/assert@1"
+        ]
+      },
+      "packages/report": {
+        "dependencies": [
+          "jsr:@std/assert@1"
+        ]
+      },
       "packages/server": {
         "dependencies": [
           "jsr:@negrel/webpush@0.5",
@@ -821,6 +839,11 @@
           "jsr:@std/fs@1",
           "jsr:@std/http@1",
           "jsr:@std/path@1"
+        ]
+      },
+      "packages/storage": {
+        "dependencies": [
+          "jsr:@std/assert@1"
         ]
       },
       "packages/ui": {
