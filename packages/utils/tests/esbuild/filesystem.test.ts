@@ -215,7 +215,7 @@ describe("listAssetsForCache", () => {
 describe("copyStaticFiles", () => {
   it("copia publicdir para distdir", async () => {
     const { dir: publicDir, cleanup: cleanupPublic } = await withFileStructure({
-      "manifest.json": `{ "name": "Loco", "version": "1.0.0" }`,
+      "manifest.json": `{ "name": "SyntaxMesh", "version": "1.0.0" }`,
       "icon.png": "png",
     });
 
@@ -311,7 +311,7 @@ describe("copyStaticFiles", () => {
 
   it("preserva manifest.json sem version quando não há campo", async () => {
     const { dir: publicDir, cleanup: cleanupPublic } = await withFileStructure({
-      "manifest.json": `{ "name": "Loco" }`,
+      "manifest.json": `{ "name": "SyntaxMesh" }`,
     });
 
     const { dir: distDir, cleanup: cleanupDist } = await withFileStructure({});
@@ -327,7 +327,7 @@ describe("copyStaticFiles", () => {
       await copyStaticFiles(config, "3.0.0");
 
       const manifest = JSON.parse(await readText(join(distDir, "manifest.json")));
-      assertEquals(manifest.name, "Loco");
+      assertEquals(manifest.name, "SyntaxMesh");
       assertEquals(manifest.version, "3.0.0");
     } finally {
       await cleanupPublic();

@@ -35,14 +35,14 @@
    // 🛠️ Scripts de Automação
    "tasks": {
      "test": "deno test --allow-env --allow-net tests/",
-     "check": "deno check exports/export.ts src/**/*.ts src/**/*.tsx tests/**/*.ts",
+     "check": "deno check build.ts esbuild.ts export.ts tests/**/*.ts",
      "tests": "deno task check && deno task test",
-     "dev": "deno task --cwd pacotes/server dev",
-     "start": "deno task --cwd pacotes/server start",
+     "dev": "deno task --cwd packages/server dev",
+     "start": "deno task --cwd packages/server start",
      "export": "deno run --allow-read --allow-write ./export.ts",
      "build": "deno run -A ./esbuild.ts",
      "build:deno": "deno run --unstable-bundle -A ./build.ts",
-     "taskjuggler": "tj3 --no-color --debug "
+     "taskjuggler": "tj3 --no-color "
    },
    "nodeModulesDir": "auto",
    "vendor": true,

@@ -2,7 +2,7 @@
 import { internalAPI } from "./db.ts";
 import type { DbStoreOptions, OpfsStoreOptions } from "./db.ts";
 
-import { APP_VERSION } from "@loco/utils/config";
+import { APP_VERSION } from "@syntaxmesh/utils/config";
 
 console.log(`[DB] 🌌 Worker-db carregado (v${APP_VERSION}).`);
 

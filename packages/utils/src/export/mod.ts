@@ -1,7 +1,7 @@
 /// <reference lib="deno.ns" />
 
 /**
- * @module @loco/utils/export
+ * @module @syntaxmesh/utils/export
  * @description Utilitários genéricos para consolidação de contexto para IAs.
  * Contém apenas tipos, funções puras e constantes reutilizáveis.
  * As configurações específicas do projeto ficam no script de execução.

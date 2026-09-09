@@ -17,7 +17,7 @@ sw.addEventListener("activate", (event) => {
 sw.addEventListener("message", async (event) => {
   if (event.data && event.data.type === "RUN_SW_DEMO") {
     try {
-      const msgStore = db("LOCO_DATA", "messages", "MSG_");
+      const msgStore = db("SYNTAXMESH_DATA", "messages", "MSG_");
 
       const insertedId = await msgStore.set("auto", {
         senderId: "system_sw",

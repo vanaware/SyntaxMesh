@@ -2,8 +2,8 @@
 import { signal, computed } from "@preact/signals";
 import { useEffect } from "preact/hooks";
 import type { JSX } from "preact";
-import { buscarChave, salvarChave, criarStore } from "@loco/utils/db";
-import { DB_NAMES } from "@loco/utils/config";
+import { buscarChave, salvarChave, criarStore } from "@syntaxmesh/utils/db";
+import { DB_NAMES } from "@syntaxmesh/utils/config";
 
 export interface DebugLogEntry {
   id: string;
@@ -14,10 +14,10 @@ export interface DebugLogEntry {
   details?: unknown;
 }
 
-const DEBUG_CONFIG_KEY = "loco_debug_enabled";
+const DEBUG_CONFIG_KEY = "syntaxmesh_debug_enabled";
 const DEBUG_LOG_PREFIX = "debug_log_";
 const MAX_LOGS = 200;
-const DEBUG_CHANNEL_NAME = "loco_debug_channel";
+const DEBUG_CHANNEL_NAME = "syntaxmesh_debug_channel";
 
 const storeConfigDB = criarStore(DB_NAMES.CONFIG);
 
@@ -100,7 +100,7 @@ const debugChannel = new BroadcastChannel(DEBUG_CHANNEL_NAME);
 debugChannel.onmessage = (event) => {
   if (!isDebugEnabled.value) return;
 
-  if (event.data && event.data.type === "LOCO_DEBUG_LOG") {
+  if (event.data && event.data.type === "SYNTAXMESH_DEBUG_LOG") {
     const entry: DebugLogEntry = event.data.entry;
     if (entry && entry.id) {
       const updated = [entry, ...debugLogs.value].slice(0, MAX_LOGS);

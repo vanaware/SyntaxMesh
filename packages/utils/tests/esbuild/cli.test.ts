@@ -2,7 +2,7 @@
 
 import { describe, it } from "@std/testing/bdd";
 import { assertEquals } from "@std/assert";
-import { parseArgs } from "@loco/utils/build";
+import { parseArgs } from "@syntaxmesh/utils/build";
 import type { GlobalTargetConfig } from "../../src/interfaces/mod.ts";
 
 // Helper para criar config mínima

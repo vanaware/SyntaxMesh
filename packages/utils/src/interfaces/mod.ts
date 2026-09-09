@@ -205,13 +205,13 @@ export type DenoBundlePackageHandling = "bundle" | "external";
  * diretamente, sem uso de Omit ou herança de outras interfaces.
  *
  * Seções:
- * 1. Pipeline Loco: Pré/pós processamento (cleanup, cópia de estáticos)
+ * 1. Pipeline SyntaxMesh: Pré/pós processamento (cleanup, cópia de estáticos)
  * 2. Deno.bundle Options: Propriedades passadas para Deno.bundle()
- * 3. Extensões Loco: Define customizado e opções extras
+ * 3. Extensões SyntaxMesh: Define customizado e opções extras
  */
 export interface DenoBundleTargetConfig {
   // ==========================================================================
-  // 🔄 PIPELINE LOCO (Pré/Pós Build)
+  // 🔄 PIPELINE SYNTAXMESH (Pré/Pós Build)
   // ==========================================================================
 
   /** Diretório fonte (onde estão os arquivos de entrada) */
@@ -300,7 +300,7 @@ export interface DenoBundleTargetConfig {
   external?: string[];
 
   // ==========================================================================
-  // 🔧 EXTENSÕES LOCO (pré-processamento customizado)
+  // 🔧 EXTENSÕES SYNTAXMESH (pré-processamento customizado)
   // ==========================================================================
 
   /**
@@ -313,7 +313,7 @@ export interface DenoBundleTargetConfig {
    * ```typescript
    * define: {
    *   "__DEBUG__": "false",
-   *   "__API_URL__": '"https://api.loco.app"'
+   *   "__API_URL__": '"https://api.syntaxmesh.app"'
    * }
    * ```
    */

@@ -5,7 +5,7 @@ declare const __GENERATED_ASSETS__: string[];
 
 import { APP_VERSION } from "@syntaxmesh/utils/config";
 
-const CACHE_NAME = `loco-proto-cache-v${APP_VERSION}`;
+const CACHE_NAME = `syntaxmesh-proto-cache-v${APP_VERSION}`;
 const ASSETS_TO_CACHE: string[] = typeof __GENERATED_ASSETS__ !== "undefined" ? __GENERATED_ASSETS__ : [];
 
 /**

@@ -87,7 +87,7 @@ describe("extractVersionFromContent", () => {
   it("extrai versão de JSONC com comentários", () => {
     const content = `{
       // Comentário
-      "name": "loco",
+      "name": "syntaxmesh",
       "version": "2.0.0", /* inline */
     }`;
     assertEquals(extractVersionFromContent(content), "2.0.0");
@@ -100,7 +100,7 @@ describe("extractVersionFromContent", () => {
   });
   it("retorna null quando não há versão", () => {
     assertEquals(
-      extractVersionFromContent(`{ "name": "loco" }`),
+      extractVersionFromContent(`{ "name": "syntaxmesh" }`),
       null
     );
   });
@@ -116,13 +116,13 @@ describe("extractVersionFromContent", () => {
 describe("replaceVersionInContent", () => {
   it("substitui versão preservando o resto", () => {
     const content = `{
-      "name": "@loco/app",
+      "name": "@syntaxmesh/app",
       "version": "1.0.0-old",
       "imports": {}
     }`;
     const result = replaceVersionInContent(content, "2.0.0-new");
     assertStringIncludes(result, `"version": "2.0.0-new"`);
-    assertStringIncludes(result, `"name": "@loco/app"`);
+    assertStringIncludes(result, `"name": "@syntaxmesh/app"`);
     assertStringIncludes(result, `"imports"`);
   });
   it("substitui apenas a primeira ocorrência", () => {
@@ -156,7 +156,7 @@ describe("currentVersion (integração)", () => {
     const { path, cleanup } = await withTempDenoJsonc("1.0.0", { version: undefined });
     try {
       // Reescreve sem version
-      await Deno.writeTextFile(path, `{ "name": "loco" }`);
+      await Deno.writeTextFile(path, `{ "name": "syntaxmesh" }`);
       let errorMessage = "";
       try {
         await currentVersion(path);
@@ -184,13 +184,13 @@ describe("incrementVersion (integração)", () => {
   });
   it("preserva outras propriedades do JSON", async () => {
     const { path, cleanup } = await withTempDenoJsonc("0.0.1", {
-      name: "@loco/app",
+      name: "@syntaxmesh/app",
       imports: { preact: "https://esm.sh/preact" },
     });
     try {
       await incrementVersion("0.0.1", path, "x");
       const content = await Deno.readTextFile(path);
-      assertStringIncludes(content, `"name": "@loco/app"`);
+      assertStringIncludes(content, `"name": "@syntaxmesh/app"`);
       assertStringIncludes(content, `"preact"`);
     } finally {
       await cleanup();

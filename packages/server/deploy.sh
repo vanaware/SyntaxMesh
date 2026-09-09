@@ -45,7 +45,7 @@ if [ -z "$MESSAGE" ]; then
 fi
 
 echo "============================================================"
-echo "🚀 INICIANDO DEPLOY LOCO"
+echo "🚀 INICIANDO DEPLOY SYNTAXMESH"
 echo "============================================================"
 echo "📌 Versão completa: $FULL_VERSION"
 echo "🏷️  Tag alvo: $TAG_NAME"
@@ -111,8 +111,8 @@ elif [ "$AT" = "cloudflare" ]; then
 
   echo ""
   echo "🔐 3/4 - Injetando Segredos (Secrets) no Cloudflare Pages..."
-  # Injeção do segredo explicitamente para o projeto Cloudflare Pages chamado "loco"
-  echo "$EXTRACTED_PRIVATE_KEY" | deno run -A wrangler pages secret put SERVER_PRIVATE_KEY --project-name loco
+  # Injeção do segredo explicitamente para o projeto Cloudflare Pages chamado "syntaxmesh"
+  echo "$EXTRACTED_PRIVATE_KEY" | deno run -A wrangler pages secret put SERVER_PRIVATE_KEY --project-name syntaxmesh
   echo "✅ SERVER_PRIVATE_KEY atualizado com segurança no Pages."
 
   echo ""

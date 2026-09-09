@@ -1,6 +1,6 @@
-# 🗄️ Loco PWA - Worker-DB
+# 🗄️ SyntaxMesh PWA - Worker-DB
 
-O **Worker-DB** é o coração da arquitetura *Offline-First* do Loco PWA. Ele provê uma interface unificada, tipada e de altíssima performance para interagir com as APIs de persistência nativas dos navegadores modernos (`IndexedDB`, `LocalStorage` e `Origin Private File System - OPFS`).
+O **Worker-DB** é o coração da arquitetura *Offline-First* do SyntaxMesh PWA. Ele provê uma interface unificada, tipada e de altíssima performance para interagir com as APIs de persistência nativas dos navegadores modernos (`IndexedDB`, `LocalStorage` e `Origin Private File System - OPFS`).
 
 Para garantir que a interface de usuário (UI) nunca congele, mesmo durante operações massivas de criptografia E2EE ou I/O de arquivos pesados, **todo o processamento de banco de dados e arquivos ocorre em uma thread separada (Web Worker)**.
 
@@ -27,7 +27,7 @@ import { db } from "./mod.ts";
 db.init();
 
 // Cria uma instância focada (Database, Store, Prefixo)
-const msgStore = db("LOCO_DATA", "messages", "MSG_");
+const msgStore = db("SYNTAXMESH_DATA", "messages", "MSG_");
 
 // CRUD Básico
 const id = await msgStore.set("auto", { text: "Olá", status: "pending" }); // Retorna MSG_xxx
@@ -54,7 +54,7 @@ O `ls()` segue exatamente os mesmos padrões e assinaturas do `db()`, mas de for
 ```ts
 import { ls } from "./mod.ts";
 
-const prefStore = ls("LOCO_PREF_");
+const prefStore = ls("SYNTAXMESH_PREF_");
 
 // Uso imediato (Síncrono)
 prefStore.set("config", { theme: "dark" });
@@ -77,7 +77,7 @@ A joia da coroa. O `opfs()` **herda tudo do `db()**`, mas estende a API para man
 import { opfs } from "./mod.ts";
 
 // Parâmetros: DB, Store, Prefixo de ID, Sub-pasta OPFS base
-const drive = opfs("LOCO_FILES", "attachments", "ATT_", "chats");
+const drive = opfs("SYNTAXMESH_FILES", "attachments", "ATT_", "chats");
 
 ```
 

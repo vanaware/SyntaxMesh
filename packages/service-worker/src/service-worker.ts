@@ -3,7 +3,7 @@
 declare const self: ServiceWorkerGlobalScope;
 
 import { initializeSwEventAdapter } from "./sw/event-adapter.ts";
-import { APP_VERSION } from "@loco/utils/config";
+import { APP_VERSION } from "@syntaxmesh/utils/config";
 
 console.log(`[SW] 🌌 Service Worker orquestrador carregado (v${APP_VERSION}).`);
 

@@ -1,6 +1,6 @@
 /// <reference lib="deno.ns" />
 /**
- * @module @loco/utils/build/bundle
+ * @module @syntaxmesh/utils/build/bundle
  * @description Funções específicas para o motor Deno.bundle (API nativa --unstable-bundle).
  *
  * Estratégia de Define:

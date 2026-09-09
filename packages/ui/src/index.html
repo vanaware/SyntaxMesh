@@ -2,32 +2,25 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>loco</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SyntaxMesh</title>
+
+  <!-- Favicon SVG Inline -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔒</text></svg>">
+
+  <!-- BeerCSS Framework v5.0.3 (CSS + Custom Elements JS) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/beercss@5.0.3/dist/cdn/beer.min.css" />
+  <script type="module" src="https://cdn.jsdelivr.net/npm/beercss@5.0.3/dist/cdn/beer.min.js"></script>
   
-  <link rel="manifest" href="./manifest.json">
-  <link rel="icon" href="./favicon.ico" sizes="any" />
-  <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
-  <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png" />
-  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
-  <meta name="application-name" content="loco" />
-  
-<!-- 🔥 ARQUITETURA: Injeção Direta para Bypass do Bundler -->
-  <style>
-    /* Fonte Self-Hosted para Privacidade e Suporte Offline Garantido */
-    /* Mantido no HTML apenas o mapeamento do arquivo físico (.woff2) para que o bundler do Deno não tente resolvê-lo */
-    @font-face {
-      font-family: 'Material Symbols Outlined';
-      font-style: normal;
-      font-weight: 100 700;
-      src: url('./fonts/material-symbols-outlined.woff2') format('woff2');
-    }
-  </style>
-  <script src="./app.js" type="module" crossorigin></script>
-  <link rel="stylesheet" crossorigin href="./app.css">
+  <!-- Material Dynamic Colors -->
+  <script type="module" src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.4/dist/cdn/material-dynamic-colors.min.js"></script>
+
+  <!-- Material Dynamic Fonts -->
+  <script type="module" src="https://cdn.jsdelivr.net/npm/material-dynamic-fonts@0.0.3/dist/cdn/material-dynamic-fonts.min.js?font=Material Symbols Outlined&selector=i"></script>
+
 </head>
-<body>
+<body class="light">
   <div id="app"></div>
-  <script src="./webtorrent.min.js" type="text/javascript" data-bundle="false" data-ignore="true"></script>
+  <script type="module" src="/main.js"></script>
 </body>
 </html>

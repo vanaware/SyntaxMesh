@@ -131,11 +131,11 @@ describe("buildEsbuildOptions", () => {
       try {
         const config = makeConfig(dir, {
           banner: {
-            js: "/* Loco v__APP_VERSION__ */\n",
+            js: "/* SyntaxMesh v__APP_VERSION__ */\n",
           },
         });
         const options = await buildEsbuildOptions("ui", config, "2.0.0");
-        assertStringIncludes(options.banner.js, "Loco v2.0.0");
+        assertStringIncludes(options.banner.js, "SyntaxMesh v2.0.0");
       } finally {
         await cleanup();
       }

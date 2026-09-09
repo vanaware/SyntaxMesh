@@ -1,6 +1,6 @@
 import { db, ls } from "../src/fake/fake-mod.ts";
 
-interface LocoMessage {
+interface SyntaxMeshMessage {
   _id?: string;
   senderId: string;
   recipientId: string;
@@ -16,12 +16,12 @@ interface UserPreferences {
   activeChatId: string | null;
 }
 
-async function runLocoDbDemo() {
-  console.log("🚀 [Loco PWA] Iniciando demonstração do WORKER-DB...\n");
+async function runSyntaxMeshDbDemo() {
+  console.log("🚀 [SyntaxMesh PWA] Iniciando demonstração do WORKER-DB...\n");
   ls().clear();
 
   console.log("📦 1. LocalStorage - Criando itens com _id 'auto'...");
-  const prefStore = ls("LOCO_PREF_");
+  const prefStore = ls("SYNTAXMESH_PREF_");
 
   const autoKey1 = prefStore.set<UserPreferences>({ _id: "auto", theme: "dark", notificationsEnabled: true, activeChatId: "chat_1" });
   const autoKey2 = prefStore.set<UserPreferences>({ _id: "auto", theme: "light", notificationsEnabled: false, activeChatId: null });
@@ -31,22 +31,22 @@ async function runLocoDbDemo() {
   console.log(`   --> Recuperando Item 2:`, prefStore.get(autoKey2));
 
   console.log("\n🔒 2. LocalStorage - Testando Isolamento de Prefixos...");
-  const authStore = ls("LOCO_AUTH_");
+  const authStore = ls("SYNTAXMESH_AUTH_");
   authStore.set("session_token", { token: "abc-123", active: true });
-  console.log(`   --> Total de itens em LOCO_PREF_ (Preferências): ${prefStore.keys().length}`);
-  console.log(`   --> Total de itens em LOCO_AUTH_ (Autenticação): ${authStore.keys().length}`);
+  console.log(`   --> Total de itens em SYNTAXMESH_PREF_ (Preferências): ${prefStore.keys().length}`);
+  console.log(`   --> Total de itens em SYNTAXMESH_AUTH_ (Autenticação): ${authStore.keys().length}`);
 
   console.log("\n🌍 3. LocalStorage - Visão Global (Sem prefixo)...");
   const globalStore = ls(); 
   const allKeys = globalStore.keys();
   console.log(`   --> Total de itens armazenados em TODA a aplicação: ${allKeys.length}`);
-  console.log(`   --> Realizando leitura global do token:`, globalStore.get("LOCO_AUTH_session_token"));
+  console.log(`   --> Realizando leitura global do token:`, globalStore.get("SYNTAXMESH_AUTH_session_token"));
 
   console.log("\n💬 4. IndexedDB Worker - Enfileirando Mensagens Offline...");
-  const msgStore = db("LOCO_DATA", "messages", "MSG_");
+  const msgStore = db("SYNTAXMESH_DATA", "messages", "MSG_");
   await msgStore.clear();
 
-  const msgId1 = await msgStore.set<LocoMessage>({
+  const msgId1 = await msgStore.set<SyntaxMeshMessage>({
     _id: "auto",
     senderId: "user_alice",
     recipientId: "user_bob",
@@ -58,21 +58,21 @@ async function runLocoDbDemo() {
   console.log(`   --> Mensagens injetadas no IndexedDB. Keys geradas: ${msgId1}`);
 
   console.log("\n⚙️ 5. IndexedDB Worker - Mutações Assíncronas...");
-  const pendingCount = await msgStore.query<LocoMessage, number>((items) => {
+  const pendingCount = await msgStore.query<SyntaxMeshMessage, number>((items) => {
     return items.filter((m) => m.status === "pending").length;
   });
   console.log(`   --> Total pendente (calculado remotamente): ${pendingCount}`);
 
-  await msgStore.setSome<LocoMessage>(
+  await msgStore.setSome<SyntaxMeshMessage>(
     (items) => items.filter((m) => m.status === "pending"),
     (item) => ({ ...item, status: "sent" })
   );
 
-  const updatedMessages = await msgStore.values<LocoMessage>();
+  const updatedMessages = await msgStore.values<SyntaxMeshMessage>();
   console.log("   --> Estado das mensagens após envio simulado:", updatedMessages);
 
   db.terminate();
   console.log("\n✅ Demonstração finalizada. Worker encerrado.");
 }
 
-runLocoDbDemo();
+runSyntaxMeshDbDemo();

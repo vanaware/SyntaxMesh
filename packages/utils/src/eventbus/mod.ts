@@ -2,7 +2,7 @@
 // exportado como @syntaxmesh/utils/eventbus
 
 /**
- * Barramento de Eventos Interno do Loco.
+ * Barramento de Eventos Interno do SyntaxMesh.
  * Substitui a necessidade de espalhar addEventListener customizados pela aplicação.
  * Garante tipagem estrita entre emissores e receptores.
  * 

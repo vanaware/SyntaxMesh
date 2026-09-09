@@ -15,7 +15,7 @@ Deno.test({
     const folderKey = await drive.set("auto", { owner: "Satoshi", permissions: "read-only", seeders: 5 });
 
     const encoder = new TextEncoder();
-    const file1 = new Blob([encoder.encode("Loco PWA Rocks!")], { type: "text/plain" });
+    const file1 = new Blob([encoder.encode("SyntaxMesh PWA Rocks!")], { type: "text/plain" });
     const file2 = new Blob([encoder.encode("Offline First")], { type: "text/plain" });
 
     await drive.addFile(folderKey, file1, "doc1.txt");

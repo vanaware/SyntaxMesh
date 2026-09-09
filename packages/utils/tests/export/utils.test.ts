@@ -339,7 +339,7 @@ describe("gerarCabecalho", () => {
     const config = makeConfig({ incluiVersao: true });
     const resultado = gerarCabecalho(config, "ui", "1.2.3");
     assertStringIncludes(resultado, "[v1.2.3]");
-    assertStringIncludes(resultado, "Loco [v1.2.3]");
+    assertStringIncludes(resultado, "SyntaxMesh [v1.2.3]");
   });
 
   it("não inclui versão quando incluiVersao é false", () => {

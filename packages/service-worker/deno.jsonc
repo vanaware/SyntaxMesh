@@ -1,5 +1,5 @@
 {
-   "name": "@loco/service-worker",
+   "name": "@syntaxmesh/service-worker",
    "compilerOptions": {
      "lib": ["dom", "dom.iterable", "dom.asynciterable", "esnext", "deno.ns", "webworker"],
      "strict": true,

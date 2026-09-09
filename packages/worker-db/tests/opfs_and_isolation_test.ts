@@ -71,7 +71,7 @@ Deno.test({
     await store.clear();
 
     await store.set("k1", { text: "Hello OPFS DB" });
-    await store.set("k2", { text: "Loco PWA" });
+    await store.set("k2", { text: "SyntaxMesh PWA" });
 
     const recordKey = "meus_snapshots_db";
     const fileNamePath = await store.backupToOpfs(recordKey, "meu_backup_db.json");

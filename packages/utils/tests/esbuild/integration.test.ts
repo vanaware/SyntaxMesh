@@ -13,7 +13,7 @@ describe("processTarget (integração)", () => {
       "dummy.ts": "// dummy",
     });
     const { dir: publicDir, cleanup: cleanupPublic } = await withFileStructure({
-      "manifest.json": `{ "name": "Loco", "version": "1.0.0" }`,
+      "manifest.json": `{ "name": "SyntaxMesh", "version": "1.0.0" }`,
     });
     const { dir: distDir, cleanup: cleanupDist } = await withFileStructure({
       "old-file.js": "should be deleted",

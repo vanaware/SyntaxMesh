@@ -207,8 +207,8 @@
   },
   "$version": 4,
   "model": {
-    "name": "gemini-3.8-flash",
-    "baseUrl": "https://generativelanguage.googleapis.com"
+    "name": "openrouter/free",
+    "baseUrl": "https://openrouter.ai/api/v1"
   },
   "modelFallbacks": "gemini-pro-latest,nvidia/nemotron-3-ultra-550b-a55b:free,nvidia/nemotron-3-super-120b-a12b:free",
   "fastModel": "gemini-flash-lite-latest",
@@ -217,7 +217,7 @@
   "imageModel": "gemini-3.1-flash-lite-image",
   "security": {
     "auth": {
-      "selectedType": "gemini"
+      "selectedType": "openai"
     }
   },
   "providerMetadata": {
@@ -232,8 +232,8 @@
     }
   },
   "context": {
-    "fileName": ["PROJECT.md", "QWEN.md"],
-    "includeDirectories": ["docs"],
+    "fileName": ["CURRENT.md"],
+    "includeDirectories": ["docs/syntaxmesh/"],
     "loadFromIncludeDirectories": true,
     "fileFiltering": {
       "respectGitIgnore": true,

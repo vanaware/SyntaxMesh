@@ -2,7 +2,7 @@
 
 import { describe, it } from "@std/testing/bdd";
 import { assertEquals } from "@std/assert";
-import { isSafePath } from "@loco/utils/build";
+import { isSafePath } from "@syntaxmesh/utils/build";
 
 describe("isSafePath", () => {
   describe("paths seguros", () => {

@@ -24,7 +24,7 @@ const buildWithDenoPlugin = (options: any): Promise<any> => {
 };
 
 // ============================================================================
-// 📦 CONFIGURAÇÃO DECLARATIVA DE BUILDS (específica do Loco)
+// 📦 CONFIGURAÇÃO DECLARATIVA DE BUILDS (específica do SyntaxMesh)
 // ============================================================================
 const CONFIG: GlobalTargetConfig = {
   // ------------------------------------------------------------------
@@ -54,7 +54,7 @@ const CONFIG: GlobalTargetConfig = {
     keepNames: true,
     splitting: false,
     banner: {
-      js: `/* Loco v__APP_VERSION__ */\n`,
+      js: `/* SyntaxMesh v__APP_VERSION__ */\n`,
     },
   },
   workerdb: {
@@ -77,7 +77,7 @@ const CONFIG: GlobalTargetConfig = {
     keepNames: true,
     splitting: false,
     banner: {
-      js: `/* Loco v__APP_VERSION__ */\n`,
+      js: `/* SyntaxMesh v__APP_VERSION__ */\n`,
     },
   },
   sw: {
@@ -100,7 +100,7 @@ const CONFIG: GlobalTargetConfig = {
     keepNames: true,
     splitting: false,
     banner: {
-      js: `/* Loco v__APP_VERSION__ */\n`,
+      js: `/* SyntaxMesh v__APP_VERSION__ */\n`,
     },
   },
   // ------------------------------------------------------------------
@@ -127,7 +127,7 @@ const CONFIG: GlobalTargetConfig = {
     // 🔥 CORREÇÃO: outfile agora é RELATIVO ao distdir
     outfile: "app.js",
     banner: {
-      js: `/* Loco v__APP_VERSION__ */\n`,
+      js: `/* SyntaxMesh v__APP_VERSION__ */\n`,
     },
   }
 };

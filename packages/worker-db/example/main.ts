@@ -1,7 +1,7 @@
 // ## Arquivo: monorepo/worker-db/example/main.ts
 import { db, ls, opfs } from "../src/mod-main.ts";
 
-interface LocoMessage {
+interface SyntaxMeshMessage {
   _id?: string;
   senderId: string;
   recipientId: string;
@@ -35,18 +35,18 @@ function log(msg: string, data?: any) {
 }
 
 async function runRealWorldTests() {
-  log("🚀 INICIANDO DEMONSTRAÇÃO AVANÇADA DO LOCO PWA (AMBIENTE REAL)\n");
+  log("🚀 INICIANDO DEMONSTRAÇÃO AVANÇADA DO SYNTAXMESH PWA (AMBIENTE REAL)\n");
   
   ls().clear();
   db.init();
 
   log("📦 1. LocalStorage - Escopos e Prefixos...");
-  const prefStore = ls("LOCO_PREF_");
+  const prefStore = ls("SYNTAXMESH_PREF_");
   prefStore.set<UserPreferences>({ _id: "auto", theme: "dark", notificationsEnabled: true, activeChatId: "chat_1" });
   log(`   --> Total de chaves isoladas de Preferências: ${prefStore.keys().length}`);
 
   log("\n💬 2. IndexedDB Worker - Populando Fila de Mensagens...");
-  const msgStore = db("LOCO_DATA", "messages", "MSG_");
+  const msgStore = db("SYNTAXMESH_DATA", "messages", "MSG_");
   await msgStore.clear();
 
   const now = Date.now();
@@ -57,7 +57,7 @@ async function runRealWorldTests() {
   log(`   --> Total de mensagens injetadas com UUIDs gerados com sucesso: ${(await msgStore.keys()).length}`);
 
   log("\n📊 3. IndexedDB Worker - Análises e Agregações Remotas (query)...");
-  const stats = await msgStore.query<LocoMessage, any>((items) => ({
+  const stats = await msgStore.query<SyntaxMeshMessage, any>((items) => ({
     totalPending: items.filter(i => i.status === "pending").length,
   }));
   log(`   --> Estatísticas processadas no Worker:`, stats);
@@ -65,7 +65,7 @@ async function runRealWorldTests() {
   log("\n💾 4. Origin Private File System (OPFS) - Backup via opfs() com basePath 'backup'...");
   
   // Instância OPFS dedicada exclusivamente a gerenciar a pasta física global '/backup'
-  const backupDrive = opfs("LOCO_DATA", "messages", "MSG_", "backup");
+  const backupDrive = opfs("SYNTAXMESH_DATA", "messages", "MSG_", "backup");
   const RECORD_BACKUP_KEY = "mensagens_app";
 
   // Limpa arquivos antigos da record-key de backup usando a API unificada do OPFS

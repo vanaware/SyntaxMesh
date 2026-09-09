@@ -1,8 +1,8 @@
 {
   "start_url": "./index.html",
   "scope": "./",
-  "name": "loco",
-  "short_name": "loco",
+  "name": "SyntaxMesh",
+  "short_name": "SyntaxMesh",
   "lang": "pt-BR",
   "icons": [
     {
