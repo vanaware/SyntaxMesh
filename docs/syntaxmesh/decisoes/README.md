@@ -63,5 +63,6 @@ O que foi decidido? Seja específico e acionável.
 | 005 | Stack: TypeScript + Deno + Browser only | Aceito | 2026-09-08 |
 | 006 | Build pipeline: deno task build / dev / export / taskjuggler | Aceito | 2026-09-08 |
 | 007 | Workspace Deno com packages independentes | Aceito | 2026-09-08 |
+| 008 | Biblioteca de testes: `@std/testing/bdd` padrão | Aceito | 2026-09-08 |
 
 > **Nota:** Manter esta tabela atualizada manualmente ou via script ao adicionar novos ADRs.

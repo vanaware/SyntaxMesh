@@ -87,3 +87,41 @@ deno fmt --check
 ```
 
 sem erros.
+
+---
+
+## Convenção de biblioteca de testes
+
+O projeto usa **BDD com `describe`/`it`** da biblioteca `@std/testing/bdd` como padrão para todos os testes.
+
+**Estilo padrão do projeto:**
+
+```ts
+import { describe, it } from "@std/testing/bdd";
+import { assertEquals, assert, assertNotEquals } from "@std/assert";
+
+describe("myFeature", () => {
+  it("should do something", () => {
+    assertEquals(actual, expected);
+  });
+});
+```
+
+**Por quê este estilo?**
+
+- Padrão amplamente reconhecido em JS/TS
+- Agrupa testes por funcionalidade (`describe`)
+- Testes nomeados com `it` são claros e auto-documentáveis
+- Funciona com `Deno.test` internamente
+
+### Biblioteca de assertions
+
+Usa-se `@std/assert` para todas as validações:
+
+```ts
+import { assertEquals, assert, assertNotEquals } from "@std/assert";
+```
+
+### Nota sobre `Deno.test()` direta
+
+Existem testes (ex: `packages/worker-db/tests/`) usando `Deno.test({ name, fn })` diretamente sem `describe`/`it`. Este é um estilo válido mas **não é o padrão adotado**. Novos testes devem usar `describe`/`it`.
