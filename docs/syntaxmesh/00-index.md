@@ -43,3 +43,4 @@
   * mwe001/ a mwe009/ - exemplos incrementais de funcionalidades (básico, hierarquia, finanças, scheduling, tracking, export, cenários, macros)
   * README.md - guia de instalação, lições aprendidas e referência de sintaxe do TaskJuggler v3.8.4
 - docs/syntaxmesh/decisoes/ => ADRs (Architecture Decision Records) de decisões arquitetônicas do projeto
+- docs/BeerCSS/ => diretório com guia de como usar o beercss material design elements

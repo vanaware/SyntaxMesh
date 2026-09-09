@@ -6,6 +6,10 @@
    "author": "Vanaware",
    "license": "MIT",
    "workspace": [
+     "./packages/core",
+     "./packages/parser",
+     "./packages/report",
+     "./packages/storage",
      "./packages/worker-db",
      "./packages/server",
      "./packages/ui",
