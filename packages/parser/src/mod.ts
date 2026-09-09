@@ -1,7 +1,7 @@
 /// <reference lib="deno.ns" />
 
 // ============================================================================
-// 📦 @syntaxmesh/parser - Parser de Linguagem de Planejamento
+// 📝 @syntaxmesh/parser — Parser Multilíngue para SyntaxMesh
 // ============================================================================
 // Este módulo converte arquivos .tjp (TaskJuggler-inspired) em AST canônico
 // e modelo Core. O Parser produz apenas:
@@ -11,11 +11,10 @@
 // Ele NÃO contém lógica de UI, Preact, BeerCSS, DOM.
 //
 // ARQUITETURA: Parser não pode conter lógica de UI.
-export * from "./lexer/mod.ts";
-export * from "./parser/mod.ts";
-export * from "./ast/mod.ts";
-export * from "./semantic/mod.ts";
-export * from "./language/mod.ts";
+export * from "./lexer/token.ts";
+export * from "./lexer/lexer.ts";
+export * from "./ast/ast.ts";
+export * from "./parser/parser.ts";
 
 // ============================================================================
 // Tipos de diagnóstico
@@ -35,3 +34,26 @@ export interface DiagnosticList {
   hasErrors: boolean;
   hasWarnings: boolean;
 }
+
+/**
+ * Função convenience para parsing rápido
+ */
+export function parse(input: string, language?: "en" | "pt" | "es") {
+  const langDef = language ? LANGUAGE_DEFINITIONS[language] : LANGUAGE_DEFINITIONS.en;
+  const lexer = new Lexer(input, langDef);
+  const tokens = lexer.tokenize();
+  
+  if (tokens.errors.length > 0) {
+    return {
+      ast: null,
+      errors: tokens.errors,
+      warnings: [],
+      language: tokens.language,
+    };
+  }
+
+  const parser = new Parser(tokens.tokens, langDef);
+  return parser.parse();
+}
+
+export { Lexer, Parser, LANGUAGE_DEFINITIONS } from "./lexer/lexer.ts";

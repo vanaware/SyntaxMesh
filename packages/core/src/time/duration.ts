@@ -26,8 +26,8 @@ export function parseDuration(input: string): Duration {
     throw new Error(`Formato de duração inválido: ${input}. Use formato como "8h", "2d", "1w"`);
   }
 
-  const value = parseInt(match[1], 10);
-  const unitChar = match[2].toLowerCase();
+  const value = parseInt(match[1]!, 10);
+  const unitChar = match[2]!.toLowerCase();
 
   let unit: TimeUnit;
   switch (unitChar) {

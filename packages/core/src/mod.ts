@@ -29,6 +29,7 @@ export interface Project {
   resources: Resource[];
   scenarios: Scenario[];
   calendar: CalendarConfig;
+  startDate?: Date;
 }
 
 export interface Task {

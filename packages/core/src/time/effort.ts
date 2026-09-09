@@ -24,8 +24,8 @@ export function parseEffort(input: string): Effort {
     throw new Error(`Formato de esforço inválido: ${input}. Use formato como "8h", "2d", "1w"`);
   }
 
-  const value = parseInt(match[1], 10);
-  const unitChar = match[2].toLowerCase();
+  const value = parseInt(match[1]!, 10);
+  const unitChar = match[2]!.toLowerCase();
 
   let unit: "hours" | "days" | "weeks";
   switch (unitChar) {

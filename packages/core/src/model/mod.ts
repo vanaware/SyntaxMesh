@@ -49,6 +49,7 @@ export interface Project {
   name: string;
   description?: string;
   tasks: Task[];
+  startDate?: Date;
   createdAt: Date;
   updatedAt: Date;
 }

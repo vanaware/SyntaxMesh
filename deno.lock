@@ -13,6 +13,7 @@
     "jsr:@std/path@^1.1.1": "1.1.6",
     "jsr:@std/path@^1.1.5": "1.1.6",
     "jsr:@std/testing@*": "1.0.20",
+    "jsr:@std/testing@0.224": "0.224.0",
     "jsr:@std/testing@1": "1.0.20",
     "npm:@cloudflare/workers-types@*": "5.20260830.1",
     "npm:esbuild@*": "0.28.1",
@@ -52,6 +53,9 @@
       "dependencies": [
         "jsr:@std/internal@^1.0.14"
       ]
+    },
+    "@std/testing@0.224.0": {
+      "integrity": "371b8a929aa7132240d5dd766a439be8f780ef5c176ab194e0bcab72370c761e"
     },
     "@std/testing@1.0.20": {
       "integrity": "21380ed438672762e4ec549cbf4fe41c5b68f5598773a30b64abe7375513e721",
@@ -814,7 +818,8 @@
       },
       "packages/parser": {
         "dependencies": [
-          "jsr:@std/assert@1"
+          "jsr:@std/assert@1",
+          "jsr:@std/testing@0.224"
         ]
       },
       "packages/report": {

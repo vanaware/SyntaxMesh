@@ -140,7 +140,7 @@ describe("Scheduler", () => {
       const result = schedule(project);
       assertEquals(result.hasCycles, true);
       assertEquals(result.errors.length, 1);
-      assert(result.errors[0].includes("Ciclo detectado"));
+      assert(!!result.errors[0] && result.errors[0].includes("Ciclo detectado"));
       assertEquals(result.tasks.length, 0); // Não deve agendar tarefas com ciclos
     });
 

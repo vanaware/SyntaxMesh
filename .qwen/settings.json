@@ -383,48 +383,6 @@
         }
       },
       {
-        "id": "qwen3-coder-flash-2025-07-28",
-        "name": "Qwen3 Coder Flash (DashScope)",
-        "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
-        "envKey": "DASHSCOPE_API_KEY",
-        "generationConfig": {
-          "timeout": 180000,
-          "maxRetries": 5,
-          "retryInitialDelayMs": 3000,
-          "retryMaxDelayMs": 60000,
-          "contextWindowSize": 128000,
-          "samplingParams": { "temperature": 0.2, "top_p": 0.95, "max_tokens": 8192 }
-        }
-      },
-      {
-        "id": "qwen3.6-flash",
-        "name": "Qwen3.6 Flash (DashScope)",
-        "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
-        "envKey": "DASHSCOPE_API_KEY",
-        "generationConfig": {
-          "timeout": 180000,
-          "maxRetries": 5,
-          "retryInitialDelayMs": 3000,
-          "retryMaxDelayMs": 60000,
-          "contextWindowSize": 128000,
-          "samplingParams": { "temperature": 0.2, "top_p": 0.95, "max_tokens": 8192 }
-        }
-      },
-      {
-        "id": "qwen3.5-flash",
-        "name": "Qwen3.5 Flash (DashScope)",
-        "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
-        "envKey": "DASHSCOPE_API_KEY",
-        "generationConfig": {
-          "timeout": 180000,
-          "maxRetries": 5,
-          "retryInitialDelayMs": 3000,
-          "retryMaxDelayMs": 60000,
-          "contextWindowSize": 128000,
-          "samplingParams": { "temperature": 0.2, "top_p": 0.95, "max_tokens": 8192 }
-        }
-      },
-      {
         "id": "qwen-flash-2025-07-28",
         "name": "Qwen Flash (DashScope)",
         "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
@@ -661,7 +619,7 @@
   },
   "$version": 4,
   "model": {
-    "name": "qwen3-coder-flash-2025-07-28",
+    "name": "qwen-max",
     "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
     "reasoningEffort": "high",
     "generationConfig": {
