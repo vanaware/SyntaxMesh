@@ -4,6 +4,7 @@
 // 🔤 Lexer — Analisador léxico para SyntaxMesh
 // ============================================================================
 
+import { ENGLISH } from '../language/definitions.ts';
 import { type Token, createToken, EOF, type TokenType } from "./token.ts";
 
 export type { Token, TokenType };
@@ -55,97 +56,107 @@ export interface LanguageKeywords {
  * Definição completa de um idioma
  */
 export interface LanguageDefinition {
-  code: string; // código do idioma (ex: "en", "pt", "es")
-  name: string; // nome legível (ex: "English", "Português", "Español")
-  keywords: LanguageKeywords;
-  timeUnits: Record<string, string>; // mapeamento de unidades (ex: {"h": "hours", "d": "days"})
+  id: string;
+  name: string;
+  keywords: Record<string, string[]>;
+  units: Record<string, string[]>;
 }
 
 /**
  * Definições de idiomas suportados
  */
 export const LANGUAGE_DEFINITIONS: Record<string, LanguageDefinition> = {
-  en: {
-    code: "en",
-    name: "English",
+  'en': {
+    id: 'en',
+    name: 'English',
     keywords: {
-      language: "language",
-      project: "project",
-      task: "task",
-      resource: "resource",
-      calendar: "calendar",
-      scenario: "scenario",
-      effort: "effort",
-      duration: "duration",
-      depends: "depends",
-      starts: "starts",
-      ends: "ends",
-      from: "from",
-      to: "to",
-      and: "and",
-      or: "or",
+      project: ['project'],
+      task: ['task'],
+      resource: ['resource'],
+      depends: ['depends'],
+      effort: ['effort'],
+      duration: ['duration'],
+      scenario: ['scenario']
     },
-    timeUnits: {
-      h: "hours",
-      d: "days",
-      w: "weeks",
-      m: "minutes",
-    },
+    units: {
+      hour: ['h', 'hr', 'hour'],
+      day: ['d', 'day'],
+      week: ['w', 'wk', 'week']
+    }
   },
-  pt: {
-    code: "pt",
-    name: "Português",
+  'pt-BR': {
+    id: 'pt-BR',
+    name: 'Português (Brasil)',
     keywords: {
-      language: "idioma",
-      project: "projeto",
-      task: "tarefa",
-      resource: "recurso",
-      calendar: "calendário",
-      scenario: "cenário",
-      effort: "esforço",
-      duration: "duração",
-      depends: "depende",
-      starts: "inicia",
-      ends: "termina",
-      from: "de",
-      to: "até",
-      and: "e",
-      or: "ou",
+      project: ['projeto'],
+      task: ['tarefa'],
+      resource: ['recurso'],
+      account: ['conta'],
+      scenario: ['cenário'],
+      shift: ['turno'],
+      supplement: ['suplemento'],
+      macro: ['macro'],
+      taskreport: ['relatório_tarefa'],
+      resourcereport: ['relatório_recurso'],
+      accountreport: ['relatório_conta'],
+      textreport: ['relatório_texto'],
+      tracereport: ['relatório_rastro'],
+      timesheetreport: ['relatório_folha_ponto'],
+      statussheetreport: ['relatório_status'],
+      nikureport: ['relatório_niku'],
+      icalreport: ['relatório_ical'],
+      export: ['exportar'],
+      tagfile: ['arquivo_tag'],
+      journalentry: ['entrada_diário'],
+      timesheet: ['folha_ponto'],
+      statussheet: ['status_sheet'],
+      booking: ['reserva'],
+      currency: ['moeda'],
+      currencyformat: ['formato_moeda'],
+      dailyworkinghours: ['horas_trabalho_diárias'],
+      yearlyworkingdays: ['dias_trabalho_anuais'],
+      weekstartsmonday: ['semana_inicia_segunda'],
+      weekstartssunday: ['semana_inicia_domingo'],
+      timezone: ['fuso_horário'],
+      timingresolution: ['resolução_tempo'],
+      shorttimeformat: ['formato_tempo_curto'],
+      timeformat: ['formato_tempo'],
+      outputdir: ['diretório_saida'],
+      trackingscenario: ['cenário_rastreamento'],
+      alertlevels: ['níveis_alerta'],
+      numberformat: ['formato_número'],
+      markdate: ['data_marca'],
+      now: ['agora'],
+      journalattributes: ['atributos_diário'],
+      journalmode: ['modo_diário'],
+      workinghours: ['horas_trabalho'],
+      length: ['comprimento'],
+      effortdone: ['esforço_realizado'],
+      effortleft: ['esforço_restante'],
+      complete: ['completo'],
+      priority: ['prioridade'],
+      milestone: ['marco'],
+      scheduled: ['agendado'],
+      scheduling: ['agendamento'],
+      schedulingmode: ['modo_agendamento'],
+      depends: ['depende'],
+      precedes: ['precede'],
+      responsible: ['responsável'],
+      allocate: ['alocar'],
+      charge: ['cobrar'],
+      chargeset: ['conjunto_cobrança'],
+      limits: ['limites'],
+      period: ['período']
     },
-    timeUnits: {
-      h: "horas",
-      d: "dias",
-      w: "semanas",
-      m: "minutos",
-    },
-  },
-  es: {
-    code: "es",
-    name: "Español",
-    keywords: {
-      language: "idioma",
-      project: "proyecto",
-      task: "tarea",
-      resource: "recurso",
-      calendar: "calendario",
-      scenario: "escenario",
-      effort: "esfuerzo",
-      duration: "duración",
-      depends: "depende",
-      starts: "comienza",
-      ends: "termina",
-      from: "de",
-      to: "hasta",
-      and: "y",
-      or: "o",
-    },
-    timeUnits: {
-      h: "horas",
-      d: "días",
-      w: "semanas",
-      m: "minutos",
-    },
-  },
+    units: {
+      hour: ['h', 'hora', 'horas'],
+      day: ['d', 'dia', 'dias'],
+      week: ['sem', 'semana', 'semanas'],
+      month: ['m', 'mês', 'meses'],
+      year: ['y', 'ano', 'anos'],
+      minute: ['min', 'minuto', 'minutos']
+    }
+  }
 };
 
 /**
@@ -174,7 +185,7 @@ export interface LexResult {
 export class Lexer {
   private state: LexerState;
 
-  constructor(input: string, language: LanguageDefinition = LANGUAGE_DEFINITIONS.en) {
+  constructor(input: string, language: LanguageDefinition = ENGLISH) {
     this.state = {
       input,
       position: 0,
@@ -207,7 +218,7 @@ export class Lexer {
 
     tokens.push(EOF);
 
-    return { tokens, errors, language: this.state.currentLanguage.code };
+    return { tokens, errors, language: this.state.currentLanguage.id };
   }
 
   /**
@@ -404,17 +415,22 @@ export class Lexer {
     const value = this.state.input.slice(start, this.state.position).toLowerCase();
 
     // Verifica se é uma palavra-chave no idioma atual
-    const keywordMap = this.state.currentLanguage.keywords;
-    for (const [type, keyword] of Object.entries(keywordMap)) {
-      if (keyword.toLowerCase() === value) {
-        return createToken(type.toUpperCase() as TokenType, value, start, startLine, startColumn);
+    for (const [type, keywords] of Object.entries(this.state.currentLanguage.keywords)) {
+      if (Array.isArray(keywords)) {
+        if (keywords.some(k => k.toLowerCase() === value)) {
+          return createToken(type.toUpperCase() as TokenType, value, start, startLine, startColumn);
+        }
+      } else if (typeof keywords === 'string') {
+        if ((keywords as string).toLowerCase() === value) {
+          return createToken(type.toUpperCase() as TokenType, value, start, startLine, startColumn);
+        }
       }
     }
 
     // Verifica se é uma unidade de tempo
-    for (const [abbr, unit] of Object.entries(this.state.currentLanguage.timeUnits)) {
-      if (abbr.toLowerCase() === value) {
-        return createToken("TIME_UNIT", value, start, startLine, startColumn);
+    for (const [unitType, unitValues] of Object.entries(this.state.currentLanguage.units)) {
+      if (Array.isArray(unitValues) && unitValues.some(u => u.toLowerCase() === value)) {
+        return createToken("UNIT", value, start, startLine, startColumn);
       }
     }
 

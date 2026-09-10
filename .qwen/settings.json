@@ -383,62 +383,6 @@
         }
       },
       {
-        "id": "qwen-flash-2025-07-28",
-        "name": "Qwen Flash (DashScope)",
-        "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
-        "envKey": "DASHSCOPE_API_KEY",
-        "generationConfig": {
-          "timeout": 120000,
-          "maxRetries": 3,
-          "retryInitialDelayMs": 2000,
-          "retryMaxDelayMs": 30000,
-          "contextWindowSize": 128000,
-          "samplingParams": { "temperature": 0.2, "top_p": 0.95, "max_tokens": 4096 }
-        }
-      },
-      {
-        "id": "qwen3-max-2025-09-23",
-        "name": "Qwen3 Max (DashScope)",
-        "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
-        "envKey": "DASHSCOPE_API_KEY",
-        "generationConfig": {
-          "timeout": 300000,
-          "maxRetries": 5,
-          "retryInitialDelayMs": 5000,
-          "retryMaxDelayMs": 60000,
-          "contextWindowSize": 128000,
-          "samplingParams": { "temperature": 0.2, "top_p": 0.95, "max_tokens": 8192 }
-        }
-      },
-      {
-        "id": "qwen-max",
-        "name": "Qwen Max (DashScope)",
-        "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
-        "envKey": "DASHSCOPE_API_KEY",
-        "generationConfig": {
-          "timeout": 300000,
-          "maxRetries": 5,
-          "retryInitialDelayMs": 5000,
-          "retryMaxDelayMs": 60000,
-          "contextWindowSize": 128000,
-          "samplingParams": { "temperature": 0.2, "top_p": 0.95, "max_tokens": 8192 }
-        }
-      },
-      {
-        "id": "qwq-plus",
-        "name": "QwQ Plus Reasoning (DashScope)",
-        "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
-        "envKey": "DASHSCOPE_API_KEY",
-        "generationConfig": {
-          "timeout": 300000,
-          "maxRetries": 5,
-          "retryInitialDelayMs": 5000,
-          "retryMaxDelayMs": 60000,
-          "contextWindowSize": 128000,
-          "samplingParams": { "temperature": 0.2, "top_p": 0.95, "max_tokens": 8192 }
-        }
-      },
-      {
         "id": "qwen-plus-latest",
         "name": "Qwen Plus Latest (DashScope)",
         "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
@@ -619,7 +563,7 @@
   },
   "$version": 4,
   "model": {
-    "name": "qwen-max",
+    "name": "qwen3-vl-flash-2026-01-22",
     "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
     "reasoningEffort": "high",
     "generationConfig": {

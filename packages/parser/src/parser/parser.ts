@@ -4,7 +4,8 @@
 // 📝 Parser — Analisador sintático para SyntaxMesh
 // ============================================================================
 
-import { type Token, EOF, Lexer, type LanguageDefinition, LANGUAGE_DEFINITIONS } from "../lexer/lexer.ts";
+import { type Token, EOF, Lexer, type LanguageDefinition } from "../lexer/lexer.ts";
+import { ENGLISH, PORTUGUESE } from '../language/definitions.ts';
 import {
   type ProjectNode,
   type TaskNode,
@@ -39,13 +40,23 @@ export class Parser {
   private errors: string[];
   private warnings: string[];
   private currentLanguage: LanguageDefinition;
+  private unitMap: Record<string, string> = {};
 
-  constructor(tokens: Token[], language: LanguageDefinition = LANGUAGE_DEFINITIONS.en) {
-    this.tokens = tokens;
+  constructor(input: string, language: LanguageDefinition = ENGLISH) {
+    const lexer = new Lexer(input, language);
+    const lexResult = lexer.tokenize();
+    this.tokens = lexResult.tokens;
     this.current = 0;
-    this.errors = [];
+    this.errors = lexResult.errors;
     this.warnings = [];
     this.currentLanguage = language;
+
+    // Build unit map from current language
+    for (const [unitType, unitValues] of Object.entries(language.units)) {
+      for (const unitValue of unitValues) {
+        this.unitMap[unitValue.toLowerCase()] = unitType;
+      }
+    }
   }
 
   /**
@@ -53,16 +64,14 @@ export class Parser {
    */
   parse(): ParseResult {
     // Verifica se há diretiva de idioma
-    let languageCode = "en";
+    let languageId = this.currentLanguage.id;
 
     if (this.peek().type === "LANGUAGE") {
       const langDirective = this.parseLanguageDirective();
       if (langDirective) {
-        languageCode = langDirective.languageCode;
-        const def = LANGUAGE_DEFINITIONS[langDirective.languageCode];
-        if (def) {
-          this.currentLanguage = def;
-        }
+        // For now, we don't support changing language within a file
+        // In the future, we can implement this by looking up the language definition
+        this.warn("Directiva de idioma não suportada no momento. Usando idioma padrão.");
       }
     }
 
@@ -73,7 +82,7 @@ export class Parser {
         ast: project,
         errors: this.errors,
         warnings: this.warnings,
-        language: languageCode,
+        language: this.currentLanguage.id,
       };
     }
 
@@ -82,7 +91,7 @@ export class Parser {
       ast: null,
       errors: this.errors,
       warnings: this.warnings,
-      language: languageCode,
+      language: this.currentLanguage.id,
     };
   }
 
@@ -107,14 +116,18 @@ export class Parser {
    * Retorna o token atual
    */
   private peek(): Token {
-    return this.tokens[this.current];
+    const token = this.tokens[this.current];
+    if (!token) throw new Error('Unexpected end of input');
+    return token;
   }
 
   /**
    * Retorna o token anterior
    */
   private previous(): Token {
-    return this.tokens[this.current - 1];
+    const token = this.tokens[this.current - 1];
+    if (!token) throw new Error('Unexpected previous token');
+    return token;
   }
 
   /**
@@ -216,7 +229,7 @@ export class Parser {
 
     return {
       type: "Project",
-      language: this.currentLanguage.code,
+      language: this.currentLanguage.id,
       name,
       tasks,
       resources,
@@ -282,21 +295,23 @@ export class Parser {
     const valueToken = this.expect("NUMBER", "Esperado número para duração").value;
     const unitToken = this.expect("TIME_UNIT", "Esperado unidade de tempo").value;
 
-    // Mapeia unidade abreviada para canônica
-    const unitMap: Record<string, "minutes" | "hours" | "days" | "weeks" | "months"> = {
-      m: "minutes",
-      h: "hours",
-      d: "days",
-      w: "weeks",
-      mo: "months",
-    };
+    // Mapeia unidade abreviada para canônica usando o mapa do idioma
+    const canonicalUnit = this.unitMap[unitToken.toLowerCase()] || "hours";
 
-    const unit = unitMap[unitToken.toLowerCase()] || "hours";
+    // Convert to the expected format in the AST (e.g., 'day' -> 'days')
+    let finalUnit = canonicalUnit;
+    if (canonicalUnit === 'day') {
+      finalUnit = 'days';
+    } else if (canonicalUnit === 'hour') {
+      finalUnit = 'hours';
+    } else if (canonicalUnit === 'minute') {
+      finalUnit = 'minutes';
+    }
 
     return {
       type: "Duration",
       value: parseFloat(valueToken),
-      unit,
+      unit: finalUnit,
       position: 0,
       line: 1,
       column: 1,

@@ -1,6 +1,6 @@
-## Fase 1 - Fundação
+# Fase 1 - Fundação
 
-✅ **Concluída**
+## ✅ Concluída
 
 A fase de fundação do projeto SyntaxMesh foi completamente implementada e validada. Todos os requisitos foram atendidos conforme as diretrizes arquitetônicas e de desenvolvimento definidas no projeto.
 
@@ -47,5 +47,3 @@ deno fmt --check
 ### Próximos passos
 
 A fase 1 está concluída. A fase 2 também foi implementada com sucesso. O próximo passo é avançar para a Fase 3 - Parser Multilíngue, documentada em `docs/syntaxmesh/fases/fase-3-parser-multilingue.md`.
-
-Já está instalado o app taskjuggler original que pode ser executado como: `tj3 <options>`
