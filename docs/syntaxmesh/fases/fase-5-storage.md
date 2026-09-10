@@ -1,7 +1,0 @@
-- IndexedDB via `idb-keyval`;
-- OPFS;
-- CRUD de projetos;
-- importação;
-- exportação;
-- autosave;
-- recuperação.

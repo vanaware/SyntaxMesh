@@ -1,5 +1,0 @@
-- manifest;
-- service worker;
-- offline;
-- atualização;
-- Web Worker para Core/Scheduler.

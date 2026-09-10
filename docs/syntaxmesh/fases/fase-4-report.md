@@ -1,9 +1,0 @@
-- modelo de relatório;
-- colunas;
-- linhas;
-- filtros;
-- agrupamentos;
-- Gantt;
-- JSON;
-- CSV;
-- HTML.

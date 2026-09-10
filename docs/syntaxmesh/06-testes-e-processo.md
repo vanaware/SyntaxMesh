@@ -25,7 +25,7 @@ Próxima tarefa
 Comandos principais:
 
 ```bash
-deno test
+deno test -P
 deno lint
 deno fmt --check
 ```
@@ -35,7 +35,7 @@ Durante desenvolvimento:
 ```bash
 deno fmt
 deno lint
-deno test
+deno test -P
 ```
 
 ---
@@ -81,7 +81,7 @@ Integração
 Critério:
 
 ```bash
-deno test
+deno test -P
 deno lint
 deno fmt --check
 ```

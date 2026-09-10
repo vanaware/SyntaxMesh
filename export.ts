@@ -34,6 +34,11 @@ export type ModoExportacao =
   | 'parser'
   | 'ui'
   | 'docs'
+  | 'decisoes'
+  | 'fases'
+  | 'engine'
+  | 'learning'
+  | 'source'
   | 'server'
   | 'workerdb'
   | 'utils'
@@ -63,7 +68,7 @@ export const CONFIGURACOES: Record<ModoExportacao, ExportConfig> = {
     arquivoSaida: 'snapshots/docs.md',
     extensoesPermitidas: ['.md', '.txt',],
     pastaBase: './',
-    subpastasPermitidas: ['docs',],
+    subpastasPermitidas: ['docs/syntaxmesh',],
     arquivosRaizPermitidos: [
       'readme.md',
       'readme',
@@ -72,9 +77,71 @@ export const CONFIGURACOES: Record<ModoExportacao, ExportConfig> = {
       'license.txt',
       '.tool-versions',
     ],
-    incluiVersao: true,
+    incluiVersao: false,
     instrucaoCustomizada:
       'O texto abaixo contém a DOCUMENTAÇÃO e diretrizes arquiteturais do projeto.',
+    default: false, // ✅ Roda por padrão
+  },
+  decisoes: {
+    arquivoSaida: 'snapshots/decisoes.md',
+    extensoesPermitidas: ['.md', '.txt',],
+    pastaBase: './docs/syntaxmesh',
+    subpastasPermitidas: ['decisoes',],
+    arquivosRaizPermitidos: [
+      '03-arquitetura.md',
+      '01-visao.md',
+      '09-regras-para-ia.md'
+    ],
+    incluiVersao: false,
+    instrucaoCustomizada:
+      'O texto abaixo contém a DOCUMENTAÇÃO de Decisões arquitetônicas fundamentais como ADRs (Architecture Decision Record).',
+    default: false, // ✅ Roda por padrão
+  },
+  fases: {
+    arquivoSaida: 'snapshots/fases.md',
+    extensoesPermitidas: ['.md', '.txt',],
+    pastaBase: './docs/syntaxmesh',
+    subpastasPermitidas: ['fases',],
+    arquivosRaizPermitidos: [
+      '06-testes-e-processo.md',
+      '07-roadmap.md'
+    ],
+    incluiVersao: false,
+    instrucaoCustomizada:
+      'O texto abaixo contém o planejamento do projeto dividido em fases e com TODO list planejado.',
+    default: false, // ✅ Roda por padrão
+  },
+  engine: {
+    arquivoSaida: 'snapshots/engine.md',
+    extensoesPermitidas: ['.md', '.txt',],
+    pastaBase: './docs',
+    subpastasPermitidas: ['tj3-engine',],
+    arquivosRaizPermitidos: [],
+    incluiVersao: false,
+    instrucaoCustomizada:
+      'O texto abaixo contém um blueprint investigativo de como funciona o motor do projeto taskjuggler, analisando seu código fonte.',
+    default: false, // ✅ Roda por padrão
+  },
+  source: {
+    arquivoSaida: 'snapshots/source.md',
+    extensoesPermitidas: ['.rb'],
+    pastaBase: './docs/taskjuggler',
+    subpastasPermitidas: ['lib/taskjuggler'],
+    arquivosRaizPermitidos: [],
+    incluiVersao: false,
+    instrucaoCustomizada:
+      'O texto abaixo contém um snapshot do código fonte do projeto taskjuggler, em ruby.',
+    default: false, // ✅ Roda por padrão
+  },
+learning: {
+    arquivoSaida: 'snapshots/learning.md',
+    extensoesPermitidas: ['.tjp', '.md'],
+    pastaBase: './docs',
+    subpastasPermitidas: ['Learning'],
+    arquivosRaizPermitidos: ['README.md'],
+    incluiVersao: false,
+    instrucaoCustomizada:
+      'O texto abaixo contém um snapshot de arquivos de projetos do taskjuggler, para treinamento.',
     default: false, // ✅ Roda por padrão
   },
   server: {
