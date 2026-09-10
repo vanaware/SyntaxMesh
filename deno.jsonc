@@ -1,6 +1,6 @@
 {
    "name": "@vanaware/syntaxmesh",
-   "version": "0.0.1-xxxxxxxx",
+   "version": "0.0.2-mtvrt8od",
    "exports": "./esbuild.ts",
    "description": "Gerenciamento de Projetos com Linguagem Descritiva.",
    "author": "Vanaware",
@@ -38,8 +38,8 @@
    },
    // 🛠️ Scripts de Automação
    "tasks": {
-     "test": "deno test --allow-env --allow-net tests/",
-     "check": "deno check build.ts esbuild.ts export.ts tests/**/*.ts",
+     "test": "deno test -A tests/**/*test.ts packages/**/tests/**/*test.ts",
+     "check": "deno check build.ts esbuild.ts export.ts tests/**/*test.ts packages/**/tests/**/*test.ts packages/**/src/**/*.ts",
      "tests": "deno task check && deno task test",
      "dev": "deno task --cwd packages/server dev",
      "start": "deno task --cwd packages/server start",
@@ -50,5 +50,79 @@
    },
    "nodeModulesDir": "auto",
    "vendor": true,
-   "allowScripts": ["npm:esbuild@0.24.0"]
+   "allowScripts": ["npm:esbuild@0.24.0"],
+   "lint": {
+    "rules": {
+      "tags": ["recommended"],
+      "include": ["ban-untagged-todo"],
+      "exclude": ["no-unused-vars"]
+    },
+    "include": [
+      "build.ts",
+      "esbuild.ts",
+      "export.ts",
+      "examples/**/*.{ts,tsx}",
+      "packages/**/src/**/*.{ts,tsx}",
+      "tests/**/*test.ts",
+      "packages/**/tests/**/*test.ts"
+    ],
+    "exclude": [
+      "packages/server/build/", 
+      "packages/worker-db/build/"
+    ]
+  },
+  "test": {
+    "permissions": {
+      "read": true,
+      "write": true,
+      "net": true,
+      "env": true,
+      "sys": true,
+      "run": true,
+      "ffi": true,
+      "import": true
+    },
+    "include": [
+      "tests/**/*test.ts",
+      "packages/**/tests/**/*test.ts"
+    ],
+    "exclude": [
+      "packages/server/build/", 
+      "packages/worker-db/build/",
+      "build.ts",
+      "esbuild.ts",
+      "export.ts",
+      "examples/**/*.{ts,tsx}",
+      "packages/**/src/**/*.{ts,tsx}"
+    ]
+  },
+  "fmt": {
+    "useTabs": false,
+    "lineWidth": 100,
+    "indentWidth": 2,
+    "semiColons": true,
+    "singleQuote": true,
+    "proseWrap": "preserve",
+    "trailingCommas": "always",
+    "json.trailingCommas": "never",
+    "operatorPosition": "maintain",
+    "jsx.bracketPosition": "sameLine",
+    "jsx.forceNewLinesSurroundingContent": true,
+    "jsx.multiLineParens": "always",
+    "newLineKind": "lf",
+        "include": [
+      "build.ts",
+      "esbuild.ts",
+      "export.ts",
+      "examples/**/*.{ts,tsx}",
+      "packages/**/src/**/*.{ts,tsx}",
+      "tests/**/*test.ts",
+      "packages/**/tests/**/*test.ts"
+    ],
+    "exclude": [
+      "packages/server/build/", 
+      "packages/worker-db/build/"
+    ]
+  },
+  "unstable": ["bundle"]
  }

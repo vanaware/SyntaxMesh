@@ -72,7 +72,7 @@ export function createToken(
   line: number,
   column: number,
 ): Token {
-  return { type, value, position, line, column };
+  return { type, value, position, line, column, };
 }
 
 /**

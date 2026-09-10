@@ -38,7 +38,7 @@ export interface Task {
   dependencies: string[];
   start?: Date;
   end?: Date;
-  status?: "pending" | "in-progress" | "completed";
+  status?: 'pending' | 'in-progress' | 'completed';
 }
 
 /**
@@ -57,7 +57,7 @@ export interface Project {
 /**
  * Cria uma nova instância de Projeto
  */
-export function createProject(name: string, description?: string): Project {
+export function createProject(name: string, description?: string,): Project {
   const now = new Date();
   return {
     id: createProjectId(),

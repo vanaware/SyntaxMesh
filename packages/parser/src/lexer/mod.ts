@@ -54,7 +54,7 @@ export function createToken(
   line: number = 1,
   column: number = 1,
 ): Token {
-  return { type, value, line, column };
+  return { type, value, line, column, };
 }
 
 /**

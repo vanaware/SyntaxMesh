@@ -4,17 +4,17 @@
 // 📦 Report HTML — Exportador de relatório para HTML
 // ============================================================================
 
-import type { Report } from "../model/mod.ts";
+import type { Report, } from '../model/mod.ts';
 
 /**
  * Exporta relatório completo para página HTML
  */
-export function exportToHtml(report: Report): string {
+export function exportToHtml(report: Report,): string {
   let html = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>${escapeHtml(report.name)}</title>
+  <title>${escapeHtml(report.name,)}</title>
   <style>
     table { border-collapse: collapse; width: 100%; }
     th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
@@ -23,11 +23,11 @@ export function exportToHtml(report: Report): string {
   </style>
 </head>
 <body>
-  <h1>${escapeHtml(report.name)}</h1>
+  <h1>${escapeHtml(report.name,)}</h1>
   <table>
     <thead>
       <tr>
-        ${report.columns.map((col) => `<th>${escapeHtml(col.label)}</th>`).join("\n        ")}
+        ${report.columns.map((col,) => `<th>${escapeHtml(col.label,)}</th>`).join('\n        ',)}
       </tr>
     </thead>
     <tbody>
@@ -37,8 +37,8 @@ export function exportToHtml(report: Report): string {
     html += `      <tr>\n`;
     for (const col of report.columns) {
       const value = row.values[col.field];
-      const display = col.formatter ? col.formatter(value) : String(value ?? "");
-      html += `        <td>${escapeHtml(display)}</td>\n`;
+      const display = col.formatter ? col.formatter(value,) : String(value ?? '',);
+      html += `        <td>${escapeHtml(display,)}</td>\n`;
     }
     html += `      </tr>\n`;
   }
@@ -54,11 +54,11 @@ export function exportToHtml(report: Report): string {
 /**
  * Escapa caracteres HTML para segurança
  */
-function escapeHtml(text: string): string {
+function escapeHtml(text: string,): string {
   return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+    .replace(/&/g, '&amp;',)
+    .replace(/</g, '&lt;',)
+    .replace(/>/g, '&gt;',)
+    .replace(/"/g, '&quot;',)
+    .replace(/'/g, '&#039;',);
 }

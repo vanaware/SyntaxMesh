@@ -12,27 +12,27 @@ export class LanguageRegistry {
     return LanguageRegistry.instance;
   }
 
-  register(language: LanguageDefinition): void {
-    this.languages.set(language.id, language);
+  register(language: LanguageDefinition,): void {
+    this.languages.set(language.id, language,);
     if (!this.defaultLanguageId) {
       this.defaultLanguageId = language.id;
     }
   }
 
-  getLanguage(id: string): LanguageDefinition | undefined {
-    return this.languages.get(id);
+  getLanguage(id: string,): LanguageDefinition | undefined {
+    return this.languages.get(id,);
   }
 
-  setDefault(id: string): void {
-    if (this.languages.has(id)) {
+  setDefault(id: string,): void {
+    if (this.languages.has(id,)) {
       this.defaultLanguageId = id;
     }
   }
 
   getDefault(): LanguageDefinition {
-    const lang = this.languages.get(this.defaultLanguageId || 'en');
+    const lang = this.languages.get(this.defaultLanguageId || "en",);
     if (!lang) {
-      throw new Error('No language registered');
+      throw new Error("No language registered",);
     }
     return lang;
   }

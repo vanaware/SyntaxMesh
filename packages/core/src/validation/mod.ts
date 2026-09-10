@@ -18,7 +18,7 @@ export interface ValidationResult {
 export interface ValidationError {
   field: string;
   message: string;
-  severity: "error" | "warning";
+  severity: 'error' | 'warning';
 }
 
 /**
@@ -28,10 +28,10 @@ export function addError(
   result: ValidationResult,
   field: string,
   message: string,
-  severity: "error" | "warning" = "error",
+  severity: 'error' | 'warning' = 'error',
 ): void {
-  result.errors.push({ field, message, severity });
-  if (severity === "error") {
+  result.errors.push({ field, message, severity, },);
+  if (severity === 'error') {
     result.isValid = false;
   }
 }

@@ -7,7 +7,7 @@
 /**
  * Um recurso pode ser pessoa, equipamento ou material
  */
-export type ResourceCategory = "person" | "equipment" | "material";
+export type ResourceCategory = 'person' | 'equipment' | 'material';
 
 /**
  * Tipo básico de recurso

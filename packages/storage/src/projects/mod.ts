@@ -4,7 +4,7 @@
 // 📦 Storage Projects — Gerenciamento de projetos em armazenamento persistente
 // ============================================================================
 
-import type { Project } from "@syntaxmesh/core";
+import type { Project, } from '@syntaxmesh/core';
 
 /**
  * Projeto armazenado com metadados de versão
@@ -23,14 +23,14 @@ export interface StoredProject {
 export class ProjectService {
   private store: ReturnType<typeof createStore>;
 
-  constructor(store: ReturnType<typeof createStore>) {
+  constructor(store: ReturnType<typeof createStore>,) {
     this.store = store;
   }
 
   /**
    * Salva um projeto no armazenamento
    */
-  async save(project: StoredProject): Promise<void> {
+  async save(project: StoredProject,): Promise<void> {
     // TODO: Implementar integração real com IndexedDB/OPFS
     void project;
     void this.store;
@@ -39,7 +39,7 @@ export class ProjectService {
   /**
    * Carrega um projeto pelo ID
    */
-  async load(id: string): Promise<StoredProject | null> {
+  async load(id: string,): Promise<StoredProject | null> {
     // TODO: Implementar carregamento real
     void id;
     return null;
@@ -56,7 +56,7 @@ export class ProjectService {
   /**
    * Remove um projeto pelo ID
    */
-  async remove(id: string): Promise<void> {
+  async remove(id: string,): Promise<void> {
     // TODO: Implementar remoção real
     void id;
   }

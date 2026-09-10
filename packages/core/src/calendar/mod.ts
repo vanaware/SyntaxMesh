@@ -31,22 +31,22 @@ export interface WorkingHours {
  * Calendário padrão: Segunda a Sexta, 8h às 18h
  */
 export const DEFAULT_CALENDAR: CalendarConfig = {
-  name: "padrao",
-  workingDays: [1, 2, 3, 4, 5], // Segunda a Sexta
-  workingHours: { start: 8, end: 18 },
+  name: 'padrao',
+  workingDays: [1, 2, 3, 4, 5,], // Segunda a Sexta
+  workingHours: { start: 8, end: 18, },
   holidays: [],
 };
 
 /**
  * Verifica se um dia é útil
  */
-export function isWorkingDay(date: Date, config: CalendarConfig): boolean {
+export function isWorkingDay(date: Date, config: CalendarConfig,): boolean {
   const dayOfWeek = date.getDay();
-  if (!config.workingDays.includes(dayOfWeek as Weekday)) {
+  if (!config.workingDays.includes(dayOfWeek as Weekday,)) {
     return false;
   }
   for (const holiday of config.holidays) {
-    if (isSameDay(date, holiday)) {
+    if (isSameDay(date, holiday,)) {
       return false;
     }
   }
@@ -56,7 +56,7 @@ export function isWorkingDay(date: Date, config: CalendarConfig): boolean {
 /**
  * Compara duas datas por dia/mês/ano
  */
-export function isSameDay(a: Date, b: Date): boolean {
+export function isSameDay(a: Date, b: Date,): boolean {
   return (
     a.getFullYear() === b.getFullYear() &&
     a.getMonth() === b.getMonth() &&

@@ -1,3 +1,1 @@
-import { JSX } from "preact";
-
-
+import { JSX, } from 'preact';

@@ -2,79 +2,79 @@
 /// <reference lib="webworker" />
 declare const self: ServiceWorkerGlobalScope;
 
-import { EventBus } from "@syntaxmesh/utils/eventbus";
-import { APP_VERSION } from "@syntaxmesh/utils/config";
-import { addDebugLog } from "@syntaxmesh/utils/debug";
+import { EventBus, } from '@syntaxmesh/utils/eventbus';
+import { APP_VERSION, } from '@syntaxmesh/utils/config';
+import { addDebugLog, } from '@syntaxmesh/utils/debug';
 
 // === HANDLERS NATIVOS EXISTENTES (INFRAESTRUTURA) ===
-import { handleInstall, handleActivate, handleCacheFetch } from "./cache.ts";
+import { handleActivate, handleCacheFetch, handleInstall, } from './cache.ts';
 
 /**
  * Inicializa a Fronteira de Eventos do Service Worker.
  * Este é o ÚNICO ponto onde addEventListener nativos devem ser registrados no SW.
  */
 export function initializeSwEventAdapter() {
-  addDebugLog(`[SW-ADAPTER] 🌌 Inicializando Adaptador de Eventos do SW (v${APP_VERSION}).`);
+  addDebugLog(`[SW-ADAPTER] 🌌 Inicializando Adaptador de Eventos do SW (v${APP_VERSION}).`,);
 
   // ==========================================
   // 1. LIFECYCLE EVENTS
   // ==========================================
-  self.addEventListener('install', (event) => {
-    handleInstall(event);
-  });
+  self.addEventListener('install', (event,) => {
+    handleInstall(event,);
+  },);
 
-  self.addEventListener('activate', (event) => {
-    handleActivate(event);
-  });
+  self.addEventListener('activate', (event,) => {
+    handleActivate(event,);
+  },);
 
   // ==========================================
   // 2. FETCH EVENT
   // ==========================================
-  self.addEventListener('fetch', (event: FetchEvent) => {
-    const cachePromise = handleCacheFetch(event);
+  self.addEventListener('fetch', (event: FetchEvent,) => {
+    const cachePromise = handleCacheFetch(event,);
     event.respondWith(
-      cachePromise.then(response => {
-        if (response) return response; 
-        return fetch(event.request);
-      })
+      cachePromise.then((response,) => {
+        if (response) return response;
+        return fetch(event.request,);
+      },),
     );
-  });
+  },);
 
   // ==========================================
   // 3. MESSAGE EVENT (A MÁGICA DO EVENTBUS)
   // ==========================================
-  self.addEventListener('message', (event: ExtendableMessageEvent) => {
+  self.addEventListener('message', (event: ExtendableMessageEvent,) => {
     if (!event.data) return;
-    const { type, payload } = event.data;
+    const { type, payload, } = event.data;
 
     if (type === 'PING_SW_VERSION') {
       if (event.ports && event.ports[0]) {
-        event.ports[0].postMessage({ type: 'PONG_SW_VERSION', version: APP_VERSION });
+        event.ports[0].postMessage({ type: 'PONG_SW_VERSION', version: APP_VERSION, },);
       }
       return;
     }
-  });
+  },);
 
-  self.addEventListener('online', (event: any) => {
+  self.addEventListener('online', (event: any,) => {
     // ✅ Chave exata do EventMap
-    EventBus.emit('syntaxmesh:network:online');
-    handleOnline(event);
-  });
+    EventBus.emit('syntaxmesh:network:online',);
+    handleOnline(event,);
+  },);
 
-  self.addEventListener('offline', (event: any) => {
+  self.addEventListener('offline', (event: any,) => {
     // ✅ Chave exata do EventMap
-    EventBus.emit('syntaxmesh:network:offline');
-  });
+    EventBus.emit('syntaxmesh:network:offline',);
+  },);
 
-  addDebugLog(`[SW-ADAPTER] ✅ Adaptador de Eventos inicializado e listeners nativos acoplados.`);
+  addDebugLog(`[SW-ADAPTER] ✅ Adaptador de Eventos inicializado e listeners nativos acoplados.`,);
 }
 
 /**
  * Helper para broadcast de mensagens para todas as janelas/abas do app.
  */
-async function broadcastToClients(message: any) {
+async function broadcastToClients(message: any,) {
   if (typeof self !== 'undefined' && self.clients && typeof self.clients.matchAll === 'function') {
-    const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    clients.forEach(client => client.postMessage(message));
+    const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true, },);
+    clients.forEach((client,) => client.postMessage(message,));
   }
 }

@@ -12,9 +12,9 @@
 //
 // O restante do código não deve depender diretamente desta biblioteca,
 // usando em vez disso o wrapper @syntaxmesh/worker-db para isolamento.
-export * from "./indexeddb/mod.ts";
-export * from "./opfs/mod.ts";
-export * from "./projects/mod.ts";
+export * from './indexeddb/mod.ts';
+export * from './opfs/mod.ts';
+export * from './projects/mod.ts';
 
 // ============================================================================
 // Configurações de persistência
@@ -24,9 +24,9 @@ export * from "./projects/mod.ts";
  * Interface genérica para armazenamento chave-valor
  */
 export interface KeyValueStore {
-  get<T>(key: string): Promise<T | undefined>;
-  set<T>(key: string, value: T): Promise<void>;
-  del(key: string): Promise<void>;
+  get<T,>(key: string,): Promise<T | undefined>;
+  set<T,>(key: string, value: T,): Promise<void>;
+  del(key: string,): Promise<void>;
   keys(): Promise<string[]>;
 }
 

@@ -17,10 +17,10 @@ export interface OpfsFileHandle {
  * Interface para operações de arquivo no OPFS
  */
 export interface OpfsStore {
-  readFile(path: string): Promise<Blob>;
-  writeFile(path: string, data: Blob): Promise<void>;
-  deleteFile(path: string): Promise<void>;
-  listFiles(directory?: string): Promise<OpfsFileHandle[]>;
+  readFile(path: string,): Promise<Blob>;
+  writeFile(path: string, data: Blob,): Promise<void>;
+  deleteFile(path: string,): Promise<void>;
+  listFiles(directory?: string,): Promise<OpfsFileHandle[]>;
 }
 
 /**
@@ -37,7 +37,7 @@ export async function createStore(): Promise<OpfsStore | null> {
  */
 export function isOpfsAvailable(): boolean {
   // @ts-ignore - FileSystemHandle pode não estar definido em todos os ambientes
-  return typeof window !== "undefined" &&
-    "showDirectoryPicker" in window ||
-    "credentials" in navigator;
+  return typeof window !== 'undefined' &&
+      'showDirectoryPicker' in window ||
+    'credentials' in navigator;
 }

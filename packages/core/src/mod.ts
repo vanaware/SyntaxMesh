@@ -7,16 +7,16 @@
 // independente de DOM, armazenamento ou interface de usuário.
 //
 // ARQUITETURA: Core não pode importar DOM, Preact, BeerCSS, IndexedDB, OPFS.
-export * from "./model/mod.ts";
-export * from "./calendar/mod.ts";
-export * from "./scheduling/mod.ts";
-export * from "./accounting/mod.ts";
-export * from "./resources/mod.ts";
-export * from "./scenarios/mod.ts";
-export * from "./expressions/mod.ts";
-export * from "./validation/mod.ts";
-export * from "./time/duration.ts";
-export * from "./time/effort.ts";
+export * from './model/mod.ts';
+export * from './calendar/mod.ts';
+export * from './scheduling/mod.ts';
+export * from './accounting/mod.ts';
+export * from './resources/mod.ts';
+export * from './scenarios/mod.ts';
+export * from './expressions/mod.ts';
+export * from './validation/mod.ts';
+export * from './time/duration.ts';
+export * from './time/effort.ts';
 
 // ============================================================================
 // Tipos principais do Core
@@ -43,7 +43,7 @@ export interface Task {
   predecessors?: string[]; // IDs de tarefas predecessoras
   start?: Date;
   end?: Date;
-  status?: "pending" | "in-progress" | "completed";
+  status?: 'pending' | 'in-progress' | 'completed';
 }
 
 export interface Resource {
@@ -70,4 +70,4 @@ export interface CalendarConfig {
 export type Effort = string; // ex: "10d", "5h", "2w"
 export type Duration = string; // ex: "10d", "5h", "2w"
 
-export type Availability = "full-time" | "part-time" | "custom";
+export type Availability = 'full-time' | 'part-time' | 'custom';

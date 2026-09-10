@@ -1,6 +1,6 @@
 // src/utils/id-utils.ts
 
-export type WithId<T> = T & { _id: string };
+export type WithId<T,> = T & { _id: string };
 
 /**
  * Gera um identificador único curto seguro.
@@ -9,11 +9,14 @@ export type WithId<T> = T & { _id: string };
  */
 export function gerarId(): string {
   if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-    const array = new Uint8Array(12);
-    crypto.getRandomValues(array);
-    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('').substring(0, 12);
+    const array = new Uint8Array(12,);
+    crypto.getRandomValues(array,);
+    return Array.from(array, (byte,) => byte.toString(16,).padStart(2, '0',),).join('',).substring(
+      0,
+      12,
+    );
   }
-  return Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
+  return Date.now().toString(36,) + Math.random().toString(36,).substring(2, 8,);
 }
 
 /**
@@ -21,43 +24,47 @@ export function gerarId(): string {
  * @param {string} id
  * @returns {boolean}
  */
-export function validarId(id: string): boolean {
+export function validarId(id: string,): boolean {
   return typeof id === 'string' && id.length > 0 && id.length <= 24;
 }
 
-export function gerarIdComPrefixo(prefix: string): string {
+export function gerarIdComPrefixo(prefix: string,): string {
   return `${prefix}${gerarId()}`;
 }
 
 // Injeta dinamicamente o '_id' sem o prefixo ao LER do banco/localStorage
-export function formatDbItem(key: IDBValidKey, val: any, prefix = ""): any {
-  if (!val || typeof val !== "object" || Array.isArray(val)) return val;
-  const keyStr = String(key);
-  const _id = prefix && keyStr.startsWith(prefix) ? keyStr.slice(prefix.length) : keyStr;
-  return { _id, ...val };
+export function formatDbItem(key: IDBValidKey, val: any, prefix = '',): any {
+  if (!val || typeof val !== 'object' || Array.isArray(val,)) return val;
+  const keyStr = String(key,);
+  const _id = prefix && keyStr.startsWith(prefix,) ? keyStr.slice(prefix.length,) : keyStr;
+  return { _id, ...val, };
 }
 
 // Prepara a chave final e limpa o '_id' do objeto gravado
-export function prepareForSave(key: string | undefined | null, val: any, prefix = ""): { key: string; cleanVal: any } {
-  let rawId = val && typeof val === "object" ? val._id : undefined;
-  
-  if (rawId === "auto") {
+export function prepareForSave(
+  key: string | undefined | null,
+  val: any,
+  prefix = '',
+): { key: string; cleanVal: any } {
+  let rawId = val && typeof val === 'object' ? val._id : undefined;
+
+  if (rawId === 'auto') {
     rawId = gerarId();
   }
 
   // Intercepta a chave informada como "auto" via parâmetro direto ou tupla do setMany
-  let processKey = key === "auto" ? gerarId() : key;
+  let processKey = key === 'auto' ? gerarId() : key;
 
-  let finalKey = processKey || "";
+  let finalKey = processKey || '';
 
   if (rawId) {
-    if (prefix && rawId.startsWith(prefix)) {
+    if (prefix && rawId.startsWith(prefix,)) {
       finalKey = rawId;
     } else {
       finalKey = prefix ? `${prefix}${rawId}` : rawId;
     }
   } else if (processKey) {
-    if (prefix && processKey.startsWith(prefix)) {
+    if (prefix && processKey.startsWith(prefix,)) {
       finalKey = processKey;
     } else {
       finalKey = prefix ? `${prefix}${processKey}` : processKey;
@@ -65,13 +72,13 @@ export function prepareForSave(key: string | undefined | null, val: any, prefix 
   }
 
   if (!finalKey) {
-    throw new Error("Uma chave (key) ou um atributo '_id' no objeto deve ser fornecido.");
+    throw new Error("Uma chave (key) ou um atributo '_id' no objeto deve ser fornecido.",);
   }
 
-  if (val && typeof val === "object" && !Array.isArray(val) && "_id" in val) {
+  if (val && typeof val === 'object' && !Array.isArray(val,) && '_id' in val) {
     const { _id: _, ...cleanVal } = val;
-    return { key: finalKey, cleanVal };
+    return { key: finalKey, cleanVal, };
   }
 
-  return { key: finalKey, cleanVal: val };
+  return { key: finalKey, cleanVal: val, };
 }

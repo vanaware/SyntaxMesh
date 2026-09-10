@@ -115,6 +115,7 @@ deno task --config ~/github/syntaxmesh/deno.jsonc build
 deno task --config ~/github/syntaxmesh/deno.jsonc dev
 deno task --config ~/github/syntaxmesh/deno.jsonc export
 deno task --config ~/github/syntaxmesh/deno.jsonc taskjuggler
+deno task --config ~/github/syntaxmesh/deno.jsonc tests
 ```
 
 **Uso dentro do diretório do projeto:**

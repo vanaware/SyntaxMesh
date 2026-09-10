@@ -4,26 +4,23 @@
 // 📝 Parser — Analisador sintático para SyntaxMesh
 // ============================================================================
 
-import { type Token, EOF, Lexer, type LanguageDefinition } from "../lexer/lexer.ts";
-import { ENGLISH, PORTUGUESE } from '../language/definitions.ts';
+import { EOF, type LanguageDefinition, Lexer, type Token, } from "../lexer/lexer.ts";
+import { ENGLISH, PORTUGUESE, } from "../language/definitions.ts";
 import {
-  type ProjectNode,
-  type TaskNode,
-  type ResourceNode,
-  type CalendarNode,
-  type ScenarioNode,
-  type EffortNode,
-  type DurationNode,
-  type DateNode,
-  type StatusNode,
   type AvailabilityNode,
-  type WorkingHoursNode,
+  type CalendarNode,
+  type DateNode,
+  type DurationNode,
+  type EffortNode,
   type LanguageDirectiveNode,
+  type ProjectNode,
+  type ResourceNode,
+  type ScenarioNode,
+  type StatusNode,
+  type TaskNode,
+  type WorkingHoursNode,
 } from "../ast/ast.ts";
 
-/**
- * Resultado do parsing
- */
 export interface ParseResult {
   ast: ProjectNode | null;
   errors: string[];
@@ -31,9 +28,6 @@ export interface ParseResult {
   language: string;
 }
 
-/**
- * Parser para SyntaxMesh
- */
 export class Parser {
   private tokens: Token[];
   private current: number;
@@ -42,8 +36,8 @@ export class Parser {
   private currentLanguage: LanguageDefinition;
   private unitMap: Record<string, string> = {};
 
-  constructor(input: string, language: LanguageDefinition = ENGLISH) {
-    const lexer = new Lexer(input, language);
+  constructor(input: string, language: LanguageDefinition = ENGLISH,) {
+    const lexer = new Lexer(input, language,);
     const lexResult = lexer.tokenize();
     this.tokens = lexResult.tokens;
     this.current = 0;
@@ -51,32 +45,22 @@ export class Parser {
     this.warnings = [];
     this.currentLanguage = language;
 
-    // Build unit map from current language
-    for (const [unitType, unitValues] of Object.entries(language.units)) {
+    for (const [unitType, unitValues,] of Object.entries(language.units,)) {
       for (const unitValue of unitValues) {
         this.unitMap[unitValue.toLowerCase()] = unitType;
       }
     }
   }
 
-  /**
-   * Executa o parsing completo
-   */
   parse(): ParseResult {
-    // Verifica se há diretiva de idioma
-    let languageId = this.currentLanguage.id;
-
     if (this.peek().type === "LANGUAGE") {
       const langDirective = this.parseLanguageDirective();
       if (langDirective) {
-        // For now, we don't support changing language within a file
-        // In the future, we can implement this by looking up the language definition
-        this.warn("Directiva de idioma não suportada no momento. Usando idioma padrão.");
+        this.warn("Directiva de idioma não suportada no momento. Usando idioma padrão.",);
       }
     }
 
-    // Espera por PROJECT
-    if (this.check("PROJECT")) {
+    if (this.check("PROJECT",)) {
       const project = this.parseProject();
       return {
         ast: project,
@@ -86,7 +70,7 @@ export class Parser {
       };
     }
 
-    this.error("Esperado 'project' no início do arquivo");
+    this.error("Esperado 'project' no início do arquivo",);
     return {
       ast: null,
       errors: this.errors,
@@ -95,9 +79,6 @@ export class Parser {
     };
   }
 
-  /**
-   * Consume o token atual e avança
-   */
   private advance(): Token {
     if (!this.isAtEnd()) {
       this.current++;
@@ -105,87 +86,58 @@ export class Parser {
     return this.previous();
   }
 
-  /**
-   * Verifica se chegou ao fim dos tokens
-   */
   private isAtEnd(): boolean {
     return this.peek().type === "EOF";
   }
 
-  /**
-   * Retorna o token atual
-   */
   private peek(): Token {
     const token = this.tokens[this.current];
-    if (!token) throw new Error('Unexpected end of input');
+    if (!token) throw new Error("Unexpected end of input",);
     return token;
   }
 
-  /**
-   * Retorna o token anterior
-   */
   private previous(): Token {
     const token = this.tokens[this.current - 1];
-    if (!token) throw new Error('Unexpected previous token');
+    if (!token) throw new Error("Unexpected previous token",);
     return token;
   }
 
-  /**
-   * Verifica se o token atual é do tipo esperado
-   */
   private check(...types: string[]): boolean {
-    return types.includes(this.peek().type);
+    return types.includes(this.peek().type,);
   }
 
-  /**
-   * Verifica se o token atual corresponde a um tipo específico
-   */
   private match(...types: string[]): Token | undefined {
     for (const type of types) {
-      if (this.check(type)) {
+      if (this.check(type,)) {
         return this.advance();
       }
     }
     return undefined;
   }
 
-  /**
-   * Consome um token do tipo esperado ou lança erro
-   */
-  private expect(type: string, message: string): Token {
-    if (this.check(type)) {
+  private expect(type: string, message: string,): Token {
+    if (this.check(type,)) {
       return this.advance();
     }
-    this.error(message);
+    this.error(message,);
     return this.peek();
   }
 
-  /**
-   * Registra um erro
-   */
-  private error(message: string): void {
+  private error(message: string,): void {
     const token = this.peek();
-    this.errors.push(`Linha ${token.line}, coluna ${token.column}: ${message}`);
+    this.errors.push(`Linha ${token.line}, coluna ${token.column}: ${message}`,);
   }
 
-  /**
-   * Registra um aviso
-   */
-  private warn(message: string): void {
+  private warn(message: string,): void {
     const token = this.peek();
-    this.warnings.push(`Linha ${token.line}, coluna ${token.column}: ${message}`);
+    this.warnings.push(`Linha ${token.line}, coluna ${token.column}: ${message}`,);
   }
 
-  /**
-   * Parseia diretiva de idioma
-   */
   private parseLanguageDirective(): LanguageDirectiveNode | null {
-    this.expect("LANGUAGE", "Esperado 'language'");
-
-    const languageCode = this.expect("IDENTIFIER", "Esperado código do idioma").value;
-    this.expect("COLON", "Esperado ':' após código do idioma");
-
-    const languageName = this.expect("STRING", "Esperado nome do idioma entre aspas").value;
+    this.expect("LANGUAGE", "Esperado 'language'",);
+    const languageCode = this.expect("IDENTIFIER", "Esperado código do idioma",).value;
+    this.expect("COLON", "Esperado ':' após código do idioma",);
+    const languageName = this.expect("STRING", "Esperado nome do idioma entre aspas",).value;
 
     return {
       type: "LanguageDirective",
@@ -197,35 +149,31 @@ export class Parser {
     };
   }
 
-  /**
-   * Parseia um projeto
-   */
   private parseProject(): ProjectNode {
-    this.expect("PROJECT", "Esperado 'project'");
-    this.expect("LBRACE", "Esperado '{' após 'project'");
+    this.expect("PROJECT", "Esperado 'project'",);
+    const name = this.expect("STRING", "Esperado nome do projeto entre aspas",).value;
+    this.expect("LBRACE", "Esperado '{' após nome do projeto",);
 
-    const name = this.expect("STRING", "Esperado nome do projeto entre aspas").value;
-    
     const tasks: TaskNode[] = [];
     const resources: ResourceNode[] = [];
     const calendars: CalendarNode[] = [];
     const scenarios: ScenarioNode[] = [];
 
-    while (!this.check("RBRACE") && !this.isAtEnd()) {
-      if (this.check("TASK")) {
-        tasks.push(this.parseTask());
-      } else if (this.check("RESOURCE")) {
-        resources.push(this.parseResource());
-      } else if (this.check("CALENDAR")) {
-        calendars.push(this.parseCalendar());
-      } else if (this.check("SCENARIO")) {
-        scenarios.push(this.parseScenario());
+    while (!this.check("RBRACE",) && !this.isAtEnd()) {
+      if (this.check("TASK",)) {
+        tasks.push(this.parseTask(),);
+      } else if (this.check("RESOURCE",)) {
+        resources.push(this.parseResource(),);
+      } else if (this.check("CALENDAR",)) {
+        calendars.push(this.parseCalendar(),);
+      } else if (this.check("SCENARIO",)) {
+        scenarios.push(this.parseScenario(),);
       } else {
-        this.advance(); // Pula token desconhecido
+        this.advance();
       }
     }
 
-    this.expect("RBRACE", "Esperado '}' fechando o projeto");
+    this.expect("RBRACE", "Esperado '}' fechando o projeto",);
 
     return {
       type: "Project",
@@ -241,36 +189,42 @@ export class Parser {
     };
   }
 
-  /**
-   * Parseia uma tarefa
-   */
   private parseTask(): TaskNode {
-    this.expect("TASK", "Esperado 'task'");
-    this.expect("LBRACE", "Esperado '{' após 'task'");
+    this.expect("TASK", "Esperado 'task'",);
 
-    const id = this.expect("IDENTIFIER", "Esperado ID da tarefa").value;
-    const name = this.expect("STRING", "Esperado nome da tarefa entre aspas").value;
+    let id: string;
+    let name: string;
+
+    if (this.check("STRING",)) {
+      name = this.advance().value;
+      id = name.replace(/\s+/g, "_",).toLowerCase();
+      this.expect("LBRACE", "Esperado '{' após nome da tarefa",);
+    } else {
+      this.expect("LBRACE", "Esperado '{' após 'task'",);
+      id = this.expect("IDENTIFIER", "Esperado ID da tarefa",).value;
+      name = this.expect("STRING", "Esperado nome da tarefa entre aspas",).value;
+    }
 
     const dependencies: string[] = [];
     let effort: EffortNode | undefined;
     let duration: DurationNode | undefined;
     let status: StatusNode | undefined;
 
-    while (!this.check("RBRACE") && !this.isAtEnd()) {
-      if (this.check("DURATION")) {
+    while (!this.check("RBRACE",) && !this.isAtEnd()) {
+      if (this.check("DURATION",)) {
         duration = this.parseDuration();
-      } else if (this.check("EFFORT")) {
+      } else if (this.check("EFFORT",)) {
         effort = this.parseEffort();
-      } else if (this.check("DEPENDS")) {
-        dependencies.push(...this.parseDependencies());
-      } else if (this.check("STATUS")) {
+      } else if (this.check("DEPENDS",)) {
+        dependencies.push(...this.parseDependencies(),);
+      } else if (this.check("STATUS",)) {
         status = this.parseStatus();
       } else {
         this.advance();
       }
     }
 
-    this.expect("RBRACE", "Esperado '}' fechando a tarefa");
+    this.expect("RBRACE", "Esperado '}' fechando a tarefa",);
 
     return {
       type: "Task",
@@ -285,32 +239,25 @@ export class Parser {
     };
   }
 
-  /**
-   * Parseia duração
-   */
   private parseDuration(): DurationNode {
-    this.expect("DURATION", "Esperado 'duration'");
-    this.expect("COLON", "Esperado ':' após 'duration'");
+    this.expect("DURATION", "Esperado 'duration'",);
+    this.expect("COLON", "Esperado ':' após 'duration'",);
 
-    const valueToken = this.expect("NUMBER", "Esperado número para duração").value;
-    const unitToken = this.expect("TIME_UNIT", "Esperado unidade de tempo").value;
+    const valueToken = this.expect("NUMBER", "Esperado número para duração",).value;
+    const unitToken = this.expect("TIME_UNIT", "Esperado unidade de tempo",).value;
 
-    // Mapeia unidade abreviada para canônica usando o mapa do idioma
     const canonicalUnit = this.unitMap[unitToken.toLowerCase()] || "hours";
 
-    // Convert to the expected format in the AST (e.g., 'day' -> 'days')
-    let finalUnit = canonicalUnit;
-    if (canonicalUnit === 'day') {
-      finalUnit = 'days';
-    } else if (canonicalUnit === 'hour') {
-      finalUnit = 'hours';
-    } else if (canonicalUnit === 'minute') {
-      finalUnit = 'minutes';
-    }
+    let finalUnit: "minutes" | "hours" | "days" | "weeks" | "months" = "days";
+    if (canonicalUnit === "day") finalUnit = "days";
+    else if (canonicalUnit === "hour") finalUnit = "hours";
+    else if (canonicalUnit === "minute") finalUnit = "minutes";
+    else if (canonicalUnit === "week") finalUnit = "weeks";
+    else if (canonicalUnit === "month") finalUnit = "months";
 
     return {
       type: "Duration",
-      value: parseFloat(valueToken),
+      value: parseFloat(valueToken,),
       unit: finalUnit,
       position: 0,
       line: 1,
@@ -318,36 +265,34 @@ export class Parser {
     };
   }
 
-  /**
-   * Parseia esforço
-   */
   private parseEffort(): EffortNode {
-    this.expect("EFFORT", "Esperado 'effort'");
-    this.expect("COLON", "Esperado ':' após 'effort'");
+    this.expect("EFFORT", "Esperado 'effort'",);
+    this.expect("COLON", "Esperado ':' após 'effort'",);
 
-    const valueToken = this.expect("NUMBER", "Esperado número para esforço").value;
-    const unitToken = this.expect("TIME_UNIT", "Esperado unidade de tempo").value;
+    const valueToken = this.expect("NUMBER", "Esperado número para esforço",).value;
+    const unitToken = this.expect("TIME_UNIT", "Esperado unidade de tempo",).value;
 
-    // Mapeia unidade abreviada para canônica
     const unitMap: Record<string, "hours" | "days" | "weeks"> = {
       h: "hours",
       d: "days",
       w: "weeks",
     };
-
     const unit = unitMap[unitToken.toLowerCase()] || "hours";
 
-    // Verifica se tem recurso count (ex: "8h x 2")
     let resourceCount = 1;
-    if (this.check("MULTIPLY")) {
+    // 🔥 CORREÇÃO: Aceita tanto '*' (MULTIPLY) quanto 'x'/'X' (IDENTIFIER) como multiplicador
+    if (
+      this.check("MULTIPLY",) ||
+      (this.check("IDENTIFIER",) && this.peek().value.toLowerCase() === "x")
+    ) {
       this.advance();
-      const countToken = this.expect("NUMBER", "Esperado número de recursos").value;
-      resourceCount = parseInt(countToken, 10);
+      const countToken = this.expect("NUMBER", "Esperado número de recursos",).value;
+      resourceCount = parseInt(countToken, 10,);
     }
 
     return {
       type: "Effort",
-      value: parseFloat(valueToken),
+      value: parseFloat(valueToken,),
       unit,
       resourceCount,
       position: 0,
@@ -356,50 +301,59 @@ export class Parser {
     };
   }
 
-  /**
-   * Parseia dependências
-   */
   private parseDependencies(): string[] {
-    this.expect("DEPENDS", "Esperado 'depends'");
-    this.expect("COLON", "Esperado ':' após 'depends'");
-    this.expect("LPAREN", "Esperado '(' após 'depends'");
-
+    this.expect("DEPENDS", "Esperado 'depends'",);
     const taskIds: string[] = [];
 
-    while (!this.check("RPAREN") && !this.isAtEnd()) {
-      const taskId = this.expect("IDENTIFIER", "Esperado ID de tarefa").value;
-      taskIds.push(taskId);
-
-      if (!this.check("RPAREN")) {
-        this.expect("COMMA", "Esperado ',' ou ')'");
+    if (this.check("COLON",)) {
+      this.advance();
+      if (this.check("LPAREN",)) {
+        this.advance();
+        while (!this.check("RPAREN",) && !this.isAtEnd()) {
+          const taskId = this.expect("IDENTIFIER", "Esperado ID de tarefa",).value;
+          taskIds.push(taskId,);
+          if (!this.check("RPAREN",)) {
+            this.expect("COMMA", "Esperado ',' ou ')'",);
+          }
+        }
+        this.expect("RPAREN", "Esperado ')' fechando dependências",);
+        return taskIds;
       }
     }
 
-    this.expect("RPAREN", "Esperado ')' fechando dependências");
+    while (
+      !this.check("RBRACE",) && !this.isAtEnd() && !this.check("DURATION",) &&
+      !this.check("EFFORT",) && !this.check("STATUS",)
+    ) {
+      if (this.check("IDENTIFIER",)) {
+        const taskId = this.advance().value;
+        taskIds.push(taskId,);
+        if (this.check("COMMA",)) {
+          this.advance();
+        } else {
+          break;
+        }
+      } else {
+        break;
+      }
+    }
 
     return taskIds;
   }
 
-  /**
-   * Parseia status
-   */
   private parseStatus(): StatusNode {
-    this.expect("STATUS", "Esperado 'status'");
-    this.expect("COLON", "Esperado ':' após 'status'");
+    this.expect("STATUS", "Esperado 'status'",);
+    this.expect("COLON", "Esperado ':' após 'status'",);
+    const statusValue = this.expect("IDENTIFIER", "Esperado status",).value;
+    const validStatuses: ("pending" | "in-progress" | "completed")[] = [
+      "pending",
+      "in-progress",
+      "completed",
+    ];
 
-    const statusValue = this.expect("IDENTIFIER", "Esperado status").value;
-
-    const validStatuses: ("pending" | "in-progress" | "completed")[] = ["pending", "in-progress", "completed"];
-    
-    if (!validStatuses.includes(statusValue as any)) {
-      this.warn(`Status inválido: ${statusValue}. Usando 'pending'`);
-      return {
-        type: "Status",
-        value: "pending",
-        position: 0,
-        line: 1,
-        column: 1,
-      };
+    if (!validStatuses.includes(statusValue as any,)) {
+      this.warn(`Status inválido: ${statusValue}. Usando 'pending'`,);
+      return { type: "Status", value: "pending", position: 0, line: 1, column: 1, };
     }
 
     return {
@@ -411,34 +365,31 @@ export class Parser {
     };
   }
 
-  /**
-   * Parseia um recurso
-   */
   private parseResource(): ResourceNode {
-    this.expect("RESOURCE", "Esperado 'resource'");
-    this.expect("LBRACE", "Esperado '{' após 'resource'");
+    this.expect("RESOURCE", "Esperado 'resource'",);
+    const name = this.expect("STRING", "Esperado nome do recurso entre aspas",).value;
+    this.expect("LBRACE", "Esperado '{' após nome do recurso",);
 
-    const id = this.expect("IDENTIFIER", "Esperado ID do recurso").value;
-    const name = this.expect("STRING", "Esperado nome do recurso entre aspas").value;
+    const id = name.replace(/\s+/g, "_",).toLowerCase();
 
     let category: "person" | "equipment" | "material" = "person";
     let capacity: number | undefined;
     let costPerHour: number | undefined;
 
-    while (!this.check("RBRACE") && !this.isAtEnd()) {
-      if (this.check("IDENTIFIER")) {
-        const key = this.previous().value;
-        this.expect("COLON", `Esperado ':' após '${key}'`);
+    while (!this.check("RBRACE",) && !this.isAtEnd()) {
+      if (this.check("IDENTIFIER",)) {
+        const key = this.advance().value;
+        this.expect("COLON", `Esperado ':' após '${key}'`,);
 
-        if (key === "category") {
-          const catValue = this.expect("IDENTIFIER", "Esperado categoria").value;
-          if (["person", "equipment", "material"].includes(catValue)) {
+        if (key === "categoria" || key === "category") {
+          const catValue = this.expect("IDENTIFIER", "Esperado categoria",).value;
+          if (["person", "equipment", "material",].includes(catValue,)) {
             category = catValue as "person" | "equipment" | "material";
           }
-        } else if (key === "capacity") {
-          capacity = parseFloat(this.expect("NUMBER", "Esperado número").value);
-        } else if (key === "costPerHour") {
-          costPerHour = parseFloat(this.expect("NUMBER", "Esperado número").value);
+        } else if (key === "capacidade" || key === "capacity") {
+          capacity = parseFloat(this.expect("NUMBER", "Esperado número",).value,);
+        } else if (key === "custoHora" || key === "costPerHour") {
+          costPerHour = parseFloat(this.expect("NUMBER", "Esperado número",).value,);
         } else {
           this.advance();
         }
@@ -447,7 +398,7 @@ export class Parser {
       }
     }
 
-    this.expect("RBRACE", "Esperado '}' fechando recurso");
+    this.expect("RBRACE", "Esperado '}' fechando recurso",);
 
     return {
       type: "Resource",
@@ -462,16 +413,12 @@ export class Parser {
     };
   }
 
-  /**
-   * Parseia um calendário
-   */
   private parseCalendar(): CalendarNode {
-    this.expect("CALENDAR", "Esperado 'calendar'");
-    this.expect("LBRACE", "Esperado '{' após 'calendar'");
+    this.expect("CALENDAR", "Esperado 'calendar'",);
+    this.expect("LBRACE", "Esperado '{' após 'calendar'",);
+    const name = this.expect("STRING", "Esperado nome do calendário entre aspas",).value;
 
-    const name = this.expect("STRING", "Esperado nome do calendário entre aspas").value;
-
-    const workingDays: number[] = [1, 2, 3, 4, 5]; // Padrão: Seg-Sex
+    let workingDays: number[] = [];
     const workingHours: WorkingHoursNode = {
       type: "WorkingHours",
       start: 8,
@@ -482,41 +429,37 @@ export class Parser {
     };
     const holidays: DateNode[] = [];
 
-    while (!this.check("RBRACE") && !this.isAtEnd()) {
-      if (this.check("IDENTIFIER")) {
-        const key = this.previous().value;
-        this.expect("COLON", `Esperado ':' após '${key}'`);
+    while (!this.check("RBRACE",) && !this.isAtEnd()) {
+      if (this.check("IDENTIFIER",)) {
+        // 🔥 CORREÇÃO CRÍTICA: Usar advance() para consumir e obter o valor da chave
+        const key = this.advance().value;
+        this.expect("COLON", `Esperado ':' após '${key}'`,);
 
         if (key === "workingDays") {
-          // Parseia array de dias [1,2,3,4,5]
-          this.expect("LBRACKET", "Esperado '['");
-          while (!this.check("RBRACKET") && !this.isAtEnd()) {
-            const day = parseInt(this.expect("NUMBER", "Esperado dia").value, 10);
-            workingDays.push(day);
-            if (!this.check("RBRACKET")) {
-              this.expect("COMMA", "Esperado ',' ou ']'");
+          this.expect("LBRACKET", "Esperado '['",);
+          while (!this.check("RBRACKET",) && !this.isAtEnd()) {
+            const day = parseInt(this.expect("NUMBER", "Esperado dia",).value, 10,);
+            workingDays.push(day,);
+            if (!this.check("RBRACKET",)) {
+              this.expect("COMMA", "Esperado ',' ou ']'",);
             }
           }
-          this.expect("RBRACKET", "Esperado ']'");
+          this.expect("RBRACKET", "Esperado ']'",);
         } else if (key === "workingHours") {
-          // Parseia {start: 8, end: 18}
-          this.expect("LBRACE", "Esperado '{'");
-          while (!this.check("RBRACE") && !this.isAtEnd()) {
-            const hourKey = this.expect("IDENTIFIER", "Esperado 'start' ou 'end'").value;
-            this.expect("COLON", "Esperado ':'");
-            const hourValue = parseFloat(this.expect("NUMBER", "Esperado número").value);
-            
-            if (hourKey === "start") {
-              workingHours.start = hourValue;
-            } else if (hourKey === "end") {
-              workingHours.end = hourValue;
-            }
-            
-            if (!this.check("RBRACE")) {
-              this.expect("COMMA", "Esperado ',' ou '}'");
+          this.expect("LBRACE", "Esperado '{'",);
+          while (!this.check("RBRACE",) && !this.isAtEnd()) {
+            const hourKey = this.expect("IDENTIFIER", "Esperado 'start' ou 'end'",).value;
+            this.expect("COLON", "Esperado ':'",);
+            const hourValue = parseFloat(this.expect("NUMBER", "Esperado número",).value,);
+
+            if (hourKey === "start") workingHours.start = hourValue;
+            else if (hourKey === "end") workingHours.end = hourValue;
+
+            if (!this.check("RBRACE",)) {
+              this.expect("COMMA", "Esperado ',' ou '}'",);
             }
           }
-          this.expect("RBRACE", "Esperado '}'");
+          this.expect("RBRACE", "Esperado '}'",);
         } else {
           this.advance();
         }
@@ -525,7 +468,11 @@ export class Parser {
       }
     }
 
-    this.expect("RBRACE", "Esperado '}' fechando calendário");
+    this.expect("RBRACE", "Esperado '}' fechando calendário",);
+
+    if (workingDays.length === 0) {
+      workingDays = [1, 2, 3, 4, 5,];
+    }
 
     return {
       type: "Calendar",
@@ -539,33 +486,37 @@ export class Parser {
     };
   }
 
-  /**
-   * Parseia um cenário
-   */
   private parseScenario(): ScenarioNode {
-    this.expect("SCENARIO", "Esperado 'scenario'");
-    this.expect("LBRACE", "Esperado '{' após 'scenario'");
+    this.expect("SCENARIO", "Esperado 'scenario'",);
 
-    const id = this.expect("IDENTIFIER", "Esperado ID do cenário").value;
-    const name = this.expect("STRING", "Esperado nome do cenário entre aspas").value;
+    let id: string;
+    let name: string;
+
+    if (this.check("STRING",)) {
+      name = this.advance().value;
+      id = name.replace(/\s+/g, "_",).toLowerCase();
+      this.expect("LBRACE", "Esperado '{' após nome do cenário",);
+    } else {
+      this.expect("LBRACE", "Esperado '{' após 'scenario'",);
+      id = this.expect("IDENTIFIER", "Esperado ID do cenário",).value;
+      name = this.expect("STRING", "Esperado nome do cenário entre aspas",).value;
+    }
 
     let scenarioType: "base" | "optimistic" | "pessimistic" = "base";
     const multipliers: Record<string, number> = {};
 
-    while (!this.check("RBRACE") && !this.isAtEnd()) {
-      if (this.check("IDENTIFIER")) {
-        const key = this.previous().value;
-        this.expect("COLON", `Esperado ':' após '${key}'`);
+    while (!this.check("RBRACE",) && !this.isAtEnd()) {
+      if (this.check("IDENTIFIER",)) {
+        const key = this.advance().value;
+        this.expect("COLON", `Esperado ':' após '${key}'`,);
 
-        if (key === "type") {
-          const typeValue = this.expect("IDENTIFIER", "Esperado tipo").value;
-          if (["base", "optimistic", "pessimistic"].includes(typeValue)) {
+        if (key === "type" || key === "tipo") {
+          const typeValue = this.expect("IDENTIFIER", "Esperado tipo",).value;
+          if (["base", "optimistic", "pessimistic",].includes(typeValue,)) {
             scenarioType = typeValue as "base" | "optimistic" | "pessimistic";
           }
-        } else if (key !== "id" && key !== "name") {
-          // Trata como multiplicador
-          const value = parseFloat(this.expect("NUMBER", "Esperado número").value);
-          multipliers[key] = value;
+        } else if (key === "multiplier" || key === "multiplicador") {
+          multipliers.multiplier = parseFloat(this.expect("NUMBER", "Esperado número",).value,);
         } else {
           this.advance();
         }
@@ -574,7 +525,7 @@ export class Parser {
       }
     }
 
-    this.expect("RBRACE", "Esperado '}' fechando cenário");
+    this.expect("RBRACE", "Esperado '}' fechando cenário",);
 
     return {
       type: "Scenario",

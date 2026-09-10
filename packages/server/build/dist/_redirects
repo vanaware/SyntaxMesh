@@ -1,0 +1,21 @@
+# ==============================================================================
+# 1. BYPASS DE FUNCTIONS / API (Passthrough)
+# ==============================================================================
+# Regras explícitas para impedir que o SPA Fallback engula nossas rotas de backend.
+# A Cloudflare repassará essas rotas diretamente para a camada de Serverless Functions.
+
+/ping         /ping         200
+/publickey    /publickey    200
+/push         /push         200
+
+# Se você quiser liberar uma pasta inteira (ex: /api/), use o operador splat:
+# /api/*      /api/:splat   200
+
+# ==============================================================================
+# 2. SPA FALLBACK (Roteamento do Preact)
+# ==============================================================================
+# Qualquer rota requisitada que não seja as listadas acima, nem um arquivo 
+# físico (imagem, css, js), será redirecionada internamente para o index.html.
+# Isso permite que o roteador do lado do cliente (Preact) assuma o controle.
+
+/*            /index.html   200

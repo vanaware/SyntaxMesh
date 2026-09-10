@@ -7,7 +7,7 @@
 /**
  * Tipo de cenário
  */
-export type ScenarioType = "base" | "optimistic" | "pessimistic";
+export type ScenarioType = 'base' | 'optimistic' | 'pessimistic';
 
 /**
  * Definição de um cenário
@@ -30,21 +30,23 @@ export function compareScenarios(
 ): ComparisonResult {
   const changes: ComparisonChange[] = [];
 
-  for (const key of Object.keys(base.multipliers)) {
+  for (const key of Object.keys(base.multipliers,)) {
     const baseValue = base.multipliers[key];
     const alternateValue = alternate.multipliers[key];
-    if (baseValue !== undefined && alternateValue !== undefined &&
-      baseValue !== alternateValue) {
+    if (
+      baseValue !== undefined && alternateValue !== undefined &&
+      baseValue !== alternateValue
+    ) {
       changes.push({
         field: key,
         baseValue,
         alternateValue,
         difference: alternateValue - baseValue,
-      });
+      },);
     }
   }
 
-  return { base, alternate, changes };
+  return { base, alternate, changes, };
 }
 
 /**

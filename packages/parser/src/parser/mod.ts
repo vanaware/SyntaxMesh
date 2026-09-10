@@ -4,7 +4,7 @@
 // 📦 Parser — Análise sintática do .tjp
 // ============================================================================
 
-import { TokenType, Token, EOF_TOKEN } from "../lexer/mod.ts";
+import { EOF_TOKEN, Token, TokenType, } from "../lexer/mod.ts";
 
 /**
  * Parser básico que transforma tokens em AST
@@ -17,7 +17,7 @@ export interface Parser {
 /**
  * Cria uma nova instância de parser
  */
-export function createParser(tokens: Token[]): Parser {
+export function createParser(tokens: Token[],): Parser {
   return {
     tokens,
     current: 0,
@@ -27,7 +27,7 @@ export function createParser(tokens: Token[]): Parser {
 /**
  * Verifica se o token atual é do tipo esperado
  */
-export function check(parser: Parser, type: TokenType): boolean {
+export function check(parser: Parser, type: TokenType,): boolean {
   const token = parser.tokens[parser.current];
   if (!token) {
     return false;
@@ -38,8 +38,8 @@ export function check(parser: Parser, type: TokenType): boolean {
 /**
  * Avança o parser para o próximo token
  */
-export function advance(parser: Parser): Token {
-  if (!isAtEnd(parser)) {
+export function advance(parser: Parser,): Token {
+  if (!isAtEnd(parser,)) {
     const token = parser.tokens[parser.current];
     parser.current++;
     return token ?? EOF_TOKEN;
@@ -50,20 +50,20 @@ export function advance(parser: Parser): Token {
 /**
  * Verifica se o parser está no final dos tokens
  */
-export function isAtEnd(parser: Parser): boolean {
+export function isAtEnd(parser: Parser,): boolean {
   return parser.current >= parser.tokens.length;
 }
 
 /**
  * Consome o token atual ou lança erro se não corresponder
  */
-export function match<T extends TokenType[]>(
+export function match<T extends TokenType[],>(
   parser: Parser,
   ...types: T
 ): Token | undefined {
   for (const type of types) {
-    if (check(parser, type)) {
-      return advance(parser);
+    if (check(parser, type,)) {
+      return advance(parser,);
     }
   }
   return undefined;

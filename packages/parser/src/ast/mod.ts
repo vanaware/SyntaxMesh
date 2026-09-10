@@ -52,8 +52,8 @@ export function createAstNode(
   return {
     type,
     location: options?.location || {
-      start: { line: 0, column: 0 },
-      end: { line: 0, column: 0 },
+      start: { line: 0, column: 0, },
+      end: { line: 0, column: 0, },
     },
     children: options?.children,
     attributes: options?.attributes,

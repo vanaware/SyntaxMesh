@@ -45,16 +45,16 @@ export const GRAMMAR_RULES: Record<string, GrammarRule> = {
   depends: {
     name: "depends",
     pattern: /^depends\s+"([^"]+)"\s*$/,
-    description: "Dependência de tarefa (ex: depends \"Tarefa A\")",
+    description: 'Dependência de tarefa (ex: depends "Tarefa A")',
   },
 };
 
 /**
  * Verifica se uma linha corresponde a alguma regra gramatical
  */
-export function matchLine(line: string): GrammarRule | null {
-  for (const rule of Object.values(GRAMMAR_RULES)) {
-    if (rule.pattern.test(line)) {
+export function matchLine(line: string,): GrammarRule | null {
+  for (const rule of Object.values(GRAMMAR_RULES,)) {
+    if (rule.pattern.test(line,)) {
       return rule;
     }
   }

@@ -8,9 +8,9 @@
  * Operações básicas de IndexedDB abstraídas
  */
 export interface KeyValueStore {
-  get<T>(key: string): Promise<T | undefined>;
-  set<T>(key: string, value: T): Promise<void>;
-  del(key: string): Promise<void>;
+  get<T,>(key: string,): Promise<T | undefined>;
+  set<T,>(key: string, value: T,): Promise<void>;
+  del(key: string,): Promise<void>;
   keys(): Promise<string[]>;
 }
 
@@ -25,13 +25,13 @@ export async function createStore(
   // TODO: Implementar integração real com @syntaxmesh/worker-db
   // Por enquanto, retorna um stub que lança erro se chamado
   const notImplemented = (): never => {
-    throw new Error("IndexedDB não implementado — requer ambiente browser");
+    throw new Error('IndexedDB não implementado — requer ambiente browser',);
   };
 
   return {
-    get: () => Promise.resolve(undefined),
+    get: () => Promise.resolve(undefined,),
     set: () => Promise.resolve(),
     del: () => Promise.resolve(),
-    keys: () => Promise.resolve([]),
+    keys: () => Promise.resolve([],),
   };
 }

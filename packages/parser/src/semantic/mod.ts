@@ -4,8 +4,8 @@
 // 📦 Semantic — Análise semântica e validação
 // ============================================================================
 
-import type { AstNode } from "../ast/mod.ts";
-import type { Diagnostic } from "../mod.ts";
+import type { AstNode, } from "../ast/mod.ts";
+import type { Diagnostic, } from "../mod.ts";
 
 /**
  * Tabela de símbolos para referência de IDs/nomes
@@ -32,7 +32,7 @@ export function insertSymbol(
   type: string,
   node: AstNode,
 ): void {
-  table.entries.set(name, { type, node });
+  table.entries.set(name, { type, node, },);
 }
 
 /**
@@ -42,7 +42,7 @@ export function lookupSymbol(
   table: SymbolTable,
   name: string,
 ): { type: string; node: AstNode } | undefined {
-  return table.entries.get(name);
+  return table.entries.get(name,);
 }
 
 /**

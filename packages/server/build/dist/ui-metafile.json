@@ -1,0 +1,27 @@
+{
+  "inputs": {
+    "packages/ui/src/app.tsx": {
+      "bytes": 119,
+      "imports": []
+    }
+  },
+  "outputs": {
+    "packages/server/build/dist/app.js.map": {
+      "imports": [],
+      "exports": [],
+      "inputs": {},
+      "bytes": 93
+    },
+    "packages/server/build/dist/app.js": {
+      "imports": [],
+      "exports": [],
+      "entryPoint": "packages/ui/src/app.tsx",
+      "inputs": {
+        "packages/ui/src/app.tsx": {
+          "bytesInOutput": 0
+        }
+      },
+      "bytes": 66
+    }
+  }
+}

@@ -7,7 +7,7 @@
 /**
  * Operadores matemáticos suportados
  */
-export type ArithmeticOperator = "+" | "-" | "*" | "/";
+export type ArithmeticOperator = '+' | '-' | '*' | '/';
 
 /**
  * Representa uma expressão simples
@@ -21,22 +21,22 @@ export interface Expression {
 /**
  * Avalia uma expressão aritmética básica
  */
-export function evaluate(expression: Expression): number {
-  const { left, operator, right } = expression;
+export function evaluate(expression: Expression,): number {
+  const { left, operator, right, } = expression;
 
   switch (operator) {
-    case "+":
+    case '+':
       return left + right;
-    case "-":
+    case '-':
       return left - right;
-    case "*":
+    case '*':
       return left * right;
-    case "/":
+    case '/':
       if (right === 0) {
-        throw new Error("Divisão por zero");
+        throw new Error('Divisão por zero',);
       }
       return left / right;
     default:
-      throw new Error(`Operador desconhecido: ${operator}`);
+      throw new Error(`Operador desconhecido: ${operator}`,);
   }
 }

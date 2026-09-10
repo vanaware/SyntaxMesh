@@ -11,7 +11,7 @@
 // 📦 TIPOS E INTERFACES
 // ============================================================================
 
-import type { ExportConfig } from "../interfaces/mod.ts";
+import type { ExportConfig, } from '../interfaces/mod.ts';
 
 // ============================================================================
 // 🛠️ FUNÇÕES UTILITÁRIAS PURAS
@@ -22,31 +22,31 @@ import type { ExportConfig } from "../interfaces/mod.ts";
  * - Converte barras invertadas em barras normais
  * - Converte para minúsculas
  */
-export function normalizarCaminho(caminho: string): string {
-  return caminho.replace(/\\/g, "/").toLowerCase();
+export function normalizarCaminho(caminho: string,): string {
+  return caminho.replace(/\\/g, '/',).toLowerCase();
 }
 
 /**
  * Normaliza um caminho para comparação de prefixos.
  * Além da normalização básica, remove o prefixo "./" se presente.
- * 
+ *
  * Exemplo:
  * - "./monorepo/ui/tests" → "monorepo/ui/tests"
  * - "monorepo/server" → "monorepo/server"
  * - "./" → ""
  * - "." → ""
  */
-function normalizarPrefixo(caminho: string): string {
-  let normalized = caminho.replace(/\\/g, "/").toLowerCase();
+function normalizarPrefixo(caminho: string,): string {
+  let normalized = caminho.replace(/\\/g, '/',).toLowerCase();
   // Remove ./ prefixo
-  if (normalized === "./" || normalized === ".") {
-    return "";
+  if (normalized === './' || normalized === '.') {
+    return '';
   }
-  if (normalized.startsWith("./")) {
-    normalized = normalized.substring(2);
+  if (normalized.startsWith('./',)) {
+    normalized = normalized.substring(2,);
   }
   // Remove trailing slash para comparação
-  normalized = normalized.replace(/\/$/, "");
+  normalized = normalized.replace(/\/$/, '',);
   return normalized;
 }
 
@@ -59,29 +59,29 @@ function normalizarPrefixo(caminho: string): string {
  * - Texto com ``` → "````" (4 crases)
  * - Texto com ````` → "``````" (6 crases)
  */
-export function calcularCraseWrapper(texto: string): string {
-  const matches = texto.match(/`+/g);
-  if (!matches) return "```";
-  const maiorSequencia = Math.max(...matches.map(m => m.length));
-  const tamanhoNecessario = Math.max(3, maiorSequencia + 1);
-  return "`".repeat(tamanhoNecessario);
+export function calcularCraseWrapper(texto: string,): string {
+  const matches = texto.match(/`+/g,);
+  if (!matches) return '```';
+  const maiorSequencia = Math.max(...matches.map((m,) => m.length),);
+  const tamanhoNecessario = Math.max(3, maiorSequencia + 1,);
+  return '`'.repeat(tamanhoNecessario,);
 }
 
 /**
  * Mapeia extensões de arquivo para a sintaxe de highlight do markdown.
  */
-export function mapearExtensao(caminhoRelativo: string): string {
-  const ext = caminhoRelativo.split(".").pop()?.toLowerCase() || "";
+export function mapearExtensao(caminhoRelativo: string,): string {
+  const ext = caminhoRelativo.split('.',).pop()?.toLowerCase() || '';
   const mapa: Record<string, string> = {
-    manifest: "json",
-    jsonc: "json",
-    yml: "yaml",
-    sh: "bash",
-    env: "properties",
+    manifest: 'json',
+    jsonc: 'json',
+    yml: 'yaml',
+    sh: 'bash',
+    env: 'properties',
   };
 
   // Casos especiais
-  if (caminhoRelativo.includes(".env")) return "properties";
+  if (caminhoRelativo.includes('.env',)) return 'properties';
 
   return mapa[ext] || ext;
 }
@@ -103,12 +103,12 @@ export function mapearExtensao(caminhoRelativo: string): string {
  */
 export function deveIncluirArquivo(
   caminhoRelativo: string,
-  config: ExportConfig
+  config: ExportConfig,
 ): boolean {
-  const caminhoNormalizado = normalizarCaminho(caminhoRelativo);
+  const caminhoNormalizado = normalizarCaminho(caminhoRelativo,);
 
   // 🔒 Proteção anti-loop: nunca inclui arquivos da pasta exports/
-  if (caminhoNormalizado.startsWith("exports/")) {
+  if (caminhoNormalizado.startsWith('exports/',)) {
     return false;
   }
 
@@ -118,45 +118,44 @@ export function deveIncluirArquivo(
     config.caminhosAdicionaisPermitidos.length > 0
   ) {
     const correspondeAdicional = config.caminhosAdicionaisPermitidos.some(
-      (caminhoExtra) => {
-        const extraNormalizado = normalizarCaminho(caminhoExtra);
+      (caminhoExtra,) => {
+        const extraNormalizado = normalizarCaminho(caminhoExtra,);
         return (
           caminhoNormalizado === extraNormalizado ||
-          caminhoNormalizado.startsWith(extraNormalizado + "/")
+          caminhoNormalizado.startsWith(extraNormalizado + '/',)
         );
-      }
+      },
     );
 
     if (correspondeAdicional) {
       return config.extensoesPermitidas.some(
-        (ext) =>
-          caminhoNormalizado.endsWith(ext) || caminhoNormalizado === ext
+        (ext,) => caminhoNormalizado.endsWith(ext,) || caminhoNormalizado === ext,
       );
     }
   }
 
   // 🔍 Verifica se está dentro de pastaBase
   // 🔥 CORREÇÃO: Usa normalizarPrefixo que remove "./" para comparação consistente
-  const prefixoBase = normalizarPrefixo(config.pastaBase);
-  const prefixoBaseComBarra = prefixoBase !== "" ? prefixoBase + "/" : "";
+  const prefixoBase = normalizarPrefixo(config.pastaBase,);
+  const prefixoBaseComBarra = prefixoBase !== '' ? prefixoBase + '/' : '';
 
-  if (prefixoBaseComBarra !== "" && !caminhoNormalizado.startsWith(prefixoBaseComBarra)) {
+  if (prefixoBaseComBarra !== '' && !caminhoNormalizado.startsWith(prefixoBaseComBarra,)) {
     return false;
   }
 
   // 🔍 Extrai o caminho relativo dentro de pastaBase
-  const caminhoInterno = prefixoBaseComBarra !== ""
-    ? caminhoNormalizado.substring(prefixoBaseComBarra.length)
+  const caminhoInterno = prefixoBaseComBarra !== ''
+    ? caminhoNormalizado.substring(prefixoBaseComBarra.length,)
     : caminhoNormalizado;
 
   // 🔥 CORREÇÃO: Verifica se está NA RAIZ (não tem / no caminhoInterno)
   // Arquivos na raiz precisam estar explicitamente em arquivosRaizPermitidos
-  const estaNaRaiz = !caminhoInterno.includes("/");
+  const estaNaRaiz = !caminhoInterno.includes('/',);
 
   if (estaNaRaiz) {
     // Verifica se está na lista de arquivos raiz permitidos (case insensitive)
     return config.arquivosRaizPermitidos.some(
-      (raiz) => normalizarCaminho(raiz) === caminhoInterno
+      (raiz,) => normalizarCaminho(raiz,) === caminhoInterno,
     );
   }
 
@@ -167,19 +166,19 @@ export function deveIncluirArquivo(
     // Vazio = permite varrer TODAS as subpastas
     emSubpastaPermitida = true;
   } else {
-    emSubpastaPermitida = config.subpastasPermitidas.some((sub) => {
-      const subNormalizada = normalizarCaminho(sub) + "/";
+    emSubpastaPermitida = config.subpastasPermitidas.some((sub,) => {
+      const subNormalizada = normalizarCaminho(sub,) + '/';
       return (
-        caminhoInterno.startsWith(subNormalizada) ||
-        caminhoInterno === normalizarCaminho(sub)
+        caminhoInterno.startsWith(subNormalizada,) ||
+        caminhoInterno === normalizarCaminho(sub,)
       );
-    });
+    },);
   }
 
   if (emSubpastaPermitida) {
     if (config.extensoesPermitidas.length === 0) return true;
     return config.extensoesPermitidas.some(
-      (ext) => caminhoNormalizado.endsWith(ext) || caminhoNormalizado === ext
+      (ext,) => caminhoNormalizado.endsWith(ext,) || caminhoNormalizado === ext,
     );
   }
 
@@ -196,9 +195,9 @@ export function deveIncluirArquivo(
 export function gerarCabecalho(
   config: ExportConfig,
   modo: string,
-  versaoApp: string
+  versaoApp: string,
 ): string {
-  const versaoDisplay = config.incluiVersao ? `[v${versaoApp}] ` : "";
+  const versaoDisplay = config.incluiVersao ? `[v${versaoApp}] ` : '';
 
   return `> **INSTRUÇÃO PARA A IA:** 
 > ${config.instrucaoCustomizada}
@@ -222,10 +221,10 @@ Gerado automaticamente em: ${new Date().toLocaleString()}
  */
 export function formatarArquivoMarkdown(
   caminhoRelativo: string,
-  conteudo: string
+  conteudo: string,
 ): string {
-  const extensaoMarkdown = mapearExtensao(caminhoRelativo);
-  const wrapperCrasis = calcularCraseWrapper(conteudo);
+  const extensaoMarkdown = mapearExtensao(caminhoRelativo,);
+  const wrapperCrasis = calcularCraseWrapper(conteudo,);
 
   let resultado = `## Arquivo: \`${caminhoRelativo}\`\n\n`;
   resultado += `${wrapperCrasis}${extensaoMarkdown}\n`;

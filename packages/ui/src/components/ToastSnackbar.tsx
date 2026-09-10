@@ -1,5 +1,5 @@
 // src/components/ToastSnackbar.tsx
-import { toastState } from '../stores/state.ts';
+import { toastState, } from '../stores/state.ts';
 
 export function ToastSnackbar() {
   const state = toastState.value;
@@ -21,7 +21,8 @@ export function ToastSnackbar() {
   }
 
   return (
-    <div style={`
+    <div
+      style={`
       position: fixed;
       bottom: 24px;
       left: 50%;
@@ -39,9 +40,10 @@ export function ToastSnackbar() {
       max-width: 90vw;
       width: auto;
       animation: fadeIn 0.25s cubic-bezier(0.2, 0, 0, 1);
-    `}>
-      <md-icon style="font-size: 1.2rem; flex-shrink: 0;">{iconName}</md-icon>
-      <span style="word-break: break-word; line-height: 1.3;">{state.message}</span>
+    `}
+    >
+      <md-icon style='font-size: 1.2rem; flex-shrink: 0;'>{iconName}</md-icon>
+      <span style='word-break: break-word; line-height: 1.3;'>{state.message}</span>
     </div>
   );
 }

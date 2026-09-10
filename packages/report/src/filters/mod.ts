@@ -4,19 +4,19 @@
 // 📦 Report Filters — Filtros de relatório
 // ============================================================================
 
-import type { Report, ReportFilter } from "../model/mod.ts";
+import type { Report, ReportFilter, } from '../model/mod.ts';
 
 /**
  * Aplica filtros a uma lista de linhas de relatório
  */
-export function applyFilters(report: Report, rows: unknown[]): unknown[] {
+export function applyFilters(report: Report, rows: unknown[],): unknown[] {
   let result = rows;
 
   for (const filter of report.filters) {
-    result = result.filter((row) => {
+    result = result.filter((row,) => {
       const value = (row as Record<string, unknown>)[filter.field];
-      return matchesFilter(value, filter);
-    });
+      return matchesFilter(value, filter,);
+    },);
   }
 
   return result;
@@ -30,22 +30,22 @@ function matchesFilter(
   filter: ReportFilter,
 ): boolean {
   switch (filter.operator) {
-    case "eq":
+    case 'eq':
       return value === filter.value;
-    case "neq":
+    case 'neq':
       return value !== filter.value;
-    case "gt":
-      return typeof value === "number" && typeof filter.value === "number"
+    case 'gt':
+      return typeof value === 'number' && typeof filter.value === 'number'
         ? value > filter.value
         : false;
-    case "lt":
-      return typeof value === "number" && typeof filter.value === "number"
+    case 'lt':
+      return typeof value === 'number' && typeof filter.value === 'number'
         ? value < filter.value
         : false;
-    case "contains":
-      return typeof value === "string" &&
-        typeof filter.value === "string"
-        ? value.includes(filter.value)
+    case 'contains':
+      return typeof value === 'string' &&
+          typeof filter.value === 'string'
+        ? value.includes(filter.value,)
         : false;
     default:
       return true;

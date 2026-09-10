@@ -16,23 +16,24 @@ npm install webtorrent
 ## Quick Example
 
 ```js
-const client = new WebTorrent()
+const client = new WebTorrent();
 
-const torrentId = 'magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F&xs=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2Fsintel.torrent'
+const torrentId =
+  'magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F&xs=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2Fsintel.torrent';
 
-const controller = await navigator.serviceWorker.register('./sw.min.js', { scope: './' })
-await navigator.serviceWorker.ready
-client.createServer({ controller })
+const controller = await navigator.serviceWorker.register('./sw.min.js', { scope: './', },);
+await navigator.serviceWorker.ready;
+client.createServer({ controller, },);
 
-client.add(torrentId, torrent => {
+client.add(torrentId, (torrent,) => {
   // Torrents can contain many files. Let's use the .mp4 file
-  const file = torrent.files.find(file => {
-    return file.name.endsWith('.mp4')
-  })
+  const file = torrent.files.find((file,) => {
+    return file.name.endsWith('.mp4',);
+  },);
 
   // Display the file by adding it to the DOM. Supports video, audio, image, etc. files
-  file.streamTo(document.querySelector('video'))
-})
+  file.streamTo(document.querySelector('video',),);
+},);
 ```
 
 # WebTorrent API
@@ -92,14 +93,16 @@ For `opts.natUpnp`, if set to `true`, a temporary mapping is used, if set to `pe
 For `opts.seedOutgoingConnections`, if set `true`, outgoing connections will be established while seeding, otherwise, only inbound connections will be responded to.
 
 For `downloadLimit` and `uploadLimit` the possible values can be:
-  - `> 0`. The client will set the throttle at that speed
-  - `0`. The client will block any data from being downloaded or uploaded
-  - `-1`. The client will is disable the throttling and use the whole bandwidth available
+
+- `> 0`. The client will set the throttle at that speed
+- `0`. The client will block any data from being downloaded or uploaded
+- `-1`. The client will is disable the throttling and use the whole bandwidth available
 
 For `secure` the possible values can be:
-  - `0`. RC4 encryption is disabled.
-  - `1`. RC4 encryption is enabled for handshake only. Has close to 0 performance impact.
-  - `2`. RC4 encryption is enabled for handshake and payload. Consider using `--openssl-legacy-provider` for a native RC4 implementation, which offers much better performance than the JS version.
+
+- `0`. RC4 encryption is disabled.
+- `1`. RC4 encryption is enabled for handshake only. Has close to 0 performance impact.
+- `2`. RC4 encryption is enabled for handshake and payload. Consider using `--openssl-legacy-provider` for a native RC4 implementation, which offers much better performance than the JS version.
 
 ## `client.add(torrentId, [opts], [function ontorrent (torrent) {}])`
 
@@ -112,7 +115,7 @@ Start downloading a new torrent.
 - info hash (hex string or Uint8Array)
 - parsed torrent (from [parse-torrent](https://github.com/webtorrent/parse-torrent))
 - http/https url to a torrent file (string)
-- filesystem path to a torrent file (string) *(Node.js only)*
+- filesystem path to a torrent file (string) _(Node.js only)_
 
 If `opts` is specified, then the default options (shown below) will be overridden.
 
@@ -151,14 +154,14 @@ just want the file data, then use `ontorrent` or the 'torrent' event.
 If you provide `opts.store`, it will be called as
 `opts.store(chunkLength, storeOpts)` with:
 
-* `storeOpts` - custom `storeOpts` specified in `opts`
-* `storeOpts.length` - size of all the files in the torrent
-* `storeOpts.files` - an array of torrent file objects
-* `storeOpts.torrent` - the torrent instance being stored
-* `storeOpts.path` - path to the store, based on `opts.path`
-* `storeOpts.name` - the info hash of the torrent instance being stored
-* `storeOpts.addUID` - boolean which tells the store if it should include an UID in it's file paths
-* `storeOpts.rootDir` - *(browser only)* [FileSystemDirectoryHandle](https://developer.mozilla.org/en-US/docs/Web/API/FileSystemDirectoryHandle) - if supported by the browser, allows the user to specify a custom directory to stores the files in, retaining the torrent's folder and file structure
+- `storeOpts` - custom `storeOpts` specified in `opts`
+- `storeOpts.length` - size of all the files in the torrent
+- `storeOpts.files` - an array of torrent file objects
+- `storeOpts.torrent` - the torrent instance being stored
+- `storeOpts.path` - path to the store, based on `opts.path`
+- `storeOpts.name` - the info hash of the torrent instance being stored
+- `storeOpts.addUID` - boolean which tells the store if it should include an UID in it's file paths
+- `storeOpts.rootDir` - _(browser only)_ [FileSystemDirectoryHandle](https://developer.mozilla.org/en-US/docs/Web/API/FileSystemDirectoryHandle) - if supported by the browser, allows the user to specify a custom directory to stores the files in, retaining the torrent's folder and file structure
 
 **Note (browser only):** If you don't want to retain data across sessions, make sure to manually destroy the torrent store when the page closes (More on how below). This has to happen on the `beforeunload` event at latest, in order for the data to be removed. [About page lifecycles.](https://developers.google.com/web/updates/2018/07/page-lifecycle-api)
 
@@ -171,8 +174,8 @@ Start seeding a new torrent.
 `input` can be any of the following:
 
 - filesystem path to file or folder
- (string) *(Node.js only)*
-- W3C [FileList](https://developer.mozilla.org/en-US/docs/Web/API/FileList) object (basically an array of `File` objects) *(browser only)*
+  (string) _(Node.js only)_
+- W3C [FileList](https://developer.mozilla.org/en-US/docs/Web/API/FileList) object (basically an array of `File` objects) _(browser only)_
 - W3C [File](https://developer.mozilla.org/en-US/docs/Web/API/File)/[Blob](https://developer.mozilla.org/en-US/docs/Web/API/Blob) object (from an `<input>` or drag and drop)
 - typed array or array of numbers
 - Node [Buffer](https://nodejs.org/api/buffer.html) object
@@ -202,9 +205,9 @@ the name is included in the object. For Uint8Array or Readable stream types, a `
 can be set on the object, like this:
 
 ```js
-const buf = new Uint8Array('Some file content')
-buf.name = 'Some file name'
-client.seed(buf, cb)
+const buf = new Uint8Array('Some file content',);
+buf.name = 'Some file name';
+client.seed(buf, cb,);
 ```
 
 ## `client.on('add', function (torrent) {})`
@@ -280,50 +283,50 @@ Sets the maximum speed at which the client uploads the torrents, in bytes/sec.
 `rate` must be bigger or equal than zero, or `-1` to disable the upload throttle and
 use the whole bandwidth of the connection.
 
-
 ## `client.createServer([opts], force)`
 
 Create an http server to serve the contents of this torrent, dynamically fetching the needed torrent pieces to satisfy http requests. Range requests are supported.
 If `opts` is specified, it can have the following properties:
+
 ```js
 {
-  origin: String // Allow requests from specific origin. `false` for same-origin. [default: '*']
-  hostname: String // If specified, only allow requests whose `Host` header matches this hostname. Note that you should not specify the port since this is automatically determined by the server. Ex: `localhost` [default: `undefined`]. NodeJS only.
-  path: String // Allows to overwrite the default `/webtorrent` base path. [default: '/webtorrent']. NodeJS only.
-  controller: ServiceWorkerRegistration // Accepts an existing service worker registration [await navigator.serviceWorker.getRegistration()]. Browser only. Required!
+  origin: String; // Allow requests from specific origin. `false` for same-origin. [default: '*']
+  hostname: String; // If specified, only allow requests whose `Host` header matches this hostname. Note that you should not specify the port since this is automatically determined by the server. Ex: `localhost` [default: `undefined`]. NodeJS only.
+  path: String; // Allows to overwrite the default `/webtorrent` base path. [default: '/webtorrent']. NodeJS only.
+  controller: ServiceWorkerRegistration; // Accepts an existing service worker registration [await navigator.serviceWorker.getRegistration()]. Browser only. Required!
 }
 ```
 
 If `force` is specified, it can force WebTorrent to use a specific implementation for enviorments which run both Node and Browser like NW.js or Electron. Allowed values:
+
 ```js
-'browser' || 'node'
+'browser' || 'node';
 ```
 
 Visiting the root of the server `/` won't show anything. Visiting `/webtorrent/` will list all torrents. Access individual torrents at `/webtorrent/<infohash>` where `infohash` is the hash of the torrent. To acceess individual files, go to `/webtorrent/<infoHash>/<filepath>` where filepath is the file's path in the torrent.
 
-
 Here is a usage example for Node.js:
 
 ```js
-const client = new WebTorrent()
-const magnetURI = 'magnet: ...'
+const client = new WebTorrent();
+const magnetURI = 'magnet: ...';
 
-const instance = client.createServer()
-instance.server.listen(0) // start the server listening to a port
+const instance = client.createServer();
+instance.server.listen(0,); // start the server listening to a port
 // 0 automatically finds an open port instead of forcing a potentially used one
-client.add(magnetURI, torrent => {
+client.add(magnetURI, (torrent,) => {
   // create HTTP server for this torrent
 
-  const url = torrent.files[0].streamURL
-  console.log(url)
+  const url = torrent.files[0].streamURL;
+  console.log(url,);
   // visit http://localhost:<port>/webtorrent/ to see a list of torrents
 
   // access individual torrents at http://localhost:<port>/webtorrent/<infoHash> where infoHash is the hash of the torrent
-})
+},);
 
 // later, cleanup...
-instance.close()
-client.destroy()
+instance.close();
+client.destroy();
 ```
 
 In browser needs either [this worker](https://github.com/webtorrent/webtorrent/blob/master/sw.min.js) to be used, or have [this functionality](https://github.com/webtorrent/webtorrent/blob/master/lib/worker.js) implemented.
@@ -331,25 +334,26 @@ In browser needs either [this worker](https://github.com/webtorrent/webtorrent/b
 Here is a user example for browser:
 
 ```js
-const client = new WebTorrent()
-const magnetURI = 'magnet: ...'
-const player = document.querySelector('video')
+const client = new WebTorrent();
+const magnetURI = 'magnet: ...';
+const player = document.querySelector('video',);
 
-const controller = await navigator.serviceWorker.register('./sw.min.js', { scope: './' })
-await navigator.serviceWorker.ready
-client.createServer({ controller })
+const controller = await navigator.serviceWorker.register('./sw.min.js', { scope: './', },);
+await navigator.serviceWorker.ready;
+client.createServer({ controller, },);
 
-client.add(magnetURI, torrent => {
-  const url = torrent.files[0].streamURL
-  console.log(url)
+client.add(magnetURI, (torrent,) => {
+  const url = torrent.files[0].streamURL;
+  console.log(url,);
   // visit <origin>/webtorrent/ to see a list of torrents, where origin is the worker registration scope.
   // access individual torrents at /webtorrent/<infoHash> where infoHash is the hash of the torrent
-})
+},);
 
 // later, cleanup...
-client._server.close()
-client.destroy()
+client._server.close();
+client.destroy();
 ```
+
 Needs either [this worker](https://github.com/webtorrent/webtorrent/blob/master/sw.min.js) to be used, or have [this functionality](https://github.com/webtorrent/webtorrent/blob/master/lib/worker.js) implemented.
 
 # Torrent API
@@ -402,11 +406,11 @@ Time remaining for download to complete (in milliseconds).
 
 ## `torrent.received`
 
-Total bytes received from peers (*including* invalid data).
+Total bytes received from peers (_including_ invalid data).
 
 ## `torrent.downloaded`
 
-Total *verified* bytes received from peers.
+Total _verified_ bytes received from peers.
 
 ## `torrent.uploaded`
 
@@ -532,7 +536,6 @@ Deprioritizes a range of previously selected pieces.
 Marks a range of pieces as critical priority to be downloaded ASAP. From `start` to `end`
 (both inclusive).
 
-
 ## `torrent.pause()`
 
 Temporarily stop connecting to new peers. Note that this does not pause new incoming
@@ -585,7 +588,7 @@ afterwards. Therefore, always listen for errors in both places
 
 ## `torrent.on('idle', function () {})`
 
-Emitted when the torrent has no more active selections to download, and starts idling 
+Emitted when the torrent has no more active selections to download, and starts idling
 or seeding. This can happen when a file is fully downloaded, or when the desired pieces
 have been downloaded.
 
@@ -597,11 +600,11 @@ Here is a usage example:
 
 ```js
 torrent.on('done', () => {
-  console.log('torrent finished downloading')
-  for (const file of torrent.files) { 
+  console.log('torrent finished downloading',);
+  for (const file of torrent.files) {
     // do something with file
   }
-})
+},);
 ```
 
 ## `torrent.on('download', function (bytes) {})`
@@ -610,12 +613,12 @@ Emitted whenever data is downloaded. Useful for reporting the current torrent st
 instance:
 
 ```js
-torrent.on('download', bytes => {
-  console.log('just downloaded: ' + bytes)
-  console.log('total downloaded: ' + torrent.downloaded)
-  console.log('download speed: ' + torrent.downloadSpeed)
-  console.log('progress: ' + torrent.progress)
-})
+torrent.on('download', (bytes,) => {
+  console.log('just downloaded: ' + bytes,);
+  console.log('total downloaded: ' + torrent.downloaded,);
+  console.log('download speed: ' + torrent.downloadSpeed,);
+  console.log('progress: ' + torrent.progress,);
+},);
 ```
 
 ## `torrent.on('upload', function (bytes) {})`
@@ -632,12 +635,12 @@ node.js-style duplex stream to the remote peer. This event can be used to specif
 Here is a usage example:
 
 ```js
-import MyExtension from './my-extension'
+import MyExtension from './my-extension';
 
-torrent1.on('wire', (wire, addr) => {
-  console.log('connected to peer with address ' + addr)
-  wire.use(MyExtension)
-})
+torrent1.on('wire', (wire, addr,) => {
+  console.log('connected to peer with address ' + addr,);
+  wire.use(MyExtension,);
+},);
 ```
 
 See the `bittorrent-protocol`
@@ -658,15 +661,15 @@ Webtorrent Files closely mimic W3C [Files](https://developer.mozilla.org/en-US/d
 
 ## `file.name`
 
-File name, as specified by the torrent. *Example: 'some-filename.txt'*
+File name, as specified by the torrent. _Example: 'some-filename.txt'_
 
 ## `file.path`
 
-File path, as specified by the torrent. *Example: 'some-folder/some-filename.txt'*
+File path, as specified by the torrent. _Example: 'some-folder/some-filename.txt'_
 
 ## `file.length` or `file.size`
 
-File length (in bytes), as specified by the torrent. *Example: 12345*
+File length (in bytes), as specified by the torrent. _Example: 12345_
 
 ## `file.type`
 
@@ -674,7 +677,7 @@ Mime type of the file, falls back to `application/octet-stream` if the type is n
 
 ## `file.downloaded`
 
-Total *verified* bytes received from peers, for this file.
+Total _verified_ bytes received from peers, for this file.
 
 ## `file.progress`
 
@@ -762,9 +765,10 @@ You can pass `opts` to get only a part of an ArrayBuffer.
 ```
 
 ```js
-const data = await file.arrayBuffer()
-console.log(data) // ArrayBuffer { [Uint8Contents]: <00 62 00 01>, byteLength: 4 }
+const data = await file.arrayBuffer();
+console.log(data,); // ArrayBuffer { [Uint8Contents]: <00 62 00 01>, byteLength: 4 }
 ```
+
 ## `blob = await file.blob(opts)`
 
 Get a W3C `Blob` object which contains the file data.
@@ -779,55 +783,58 @@ You can pass `opts` to get only a part of an Blob.
   end: endByte
 }
 ```
-## `file.streamTo(elem)` *(browser only)*
+
+## `file.streamTo(elem)` _(browser only)_
 
 Requires `client.createServer` to be ran beforehand. Sets the element source to the file's streaming URL. Supports streaming, seeking and all browser codecs and containers.
 
 Support table:
-|Containers|Chromium|Mobile Chromium|Edge|Chrome|Firefox|
-|-|:-:|:-:|:-:|:-:|:-:|
-|3g2|✓|✓|✓|✓|✓|
-|3gp|✓|✓|✓|✓|✘|
-|avi|✘|✘|✘|✘|✘|
-|m2ts|✘|✘|✓**|✘|✘|
-|m4v etc.|✓*|✓*|✓*|✓*|✓*|
-|mp4|✓|✓|✓|✓|✓|
-|mpeg|✘|✘|✘|✘|✘|
-|mov|✓|✓|✓|✓|✓|
-|ogm ogv|✓|✓|✓|✓|✓|
-|webm|✓|✓|✓|✓|✓|
-|mkv|✓|✓|✓|✓|✘|
 
-\* Container might be supported, but the container's codecs might not be.  
-\*\* Documented as working, but can't reproduce.  
+| Containers | Chromium | Mobile Chromium | Edge | Chrome | Firefox |
+| ---------- | :------: | :-------------: | :--: | :----: | :-----: |
+| 3g2        |    ✓     |        ✓        |  ✓   |   ✓    |    ✓    |
+| 3gp        |    ✓     |        ✓        |  ✓   |   ✓    |    ✘    |
+| avi        |    ✘     |        ✘        |  ✘   |   ✘    |    ✘    |
+| m2ts       |    ✘     |        ✘        | ✓**  |   ✘    |    ✘    |
+| m4v etc.   |    ✓*    |       ✓*        |  ✓*  |   ✓*   |   ✓*    |
+| mp4        |    ✓     |        ✓        |  ✓   |   ✓    |    ✓    |
+| mpeg       |    ✘     |        ✘        |  ✘   |   ✘    |    ✘    |
+| mov        |    ✓     |        ✓        |  ✓   |   ✓    |    ✓    |
+| ogm ogv    |    ✓     |        ✓        |  ✓   |   ✓    |    ✓    |
+| webm       |    ✓     |        ✓        |  ✓   |   ✓    |    ✓    |
+| mkv        |    ✓     |        ✓        |  ✓   |   ✓    |    ✘    |
 
-|Video Codecs|Chromium|Mobile Chromium|Edge|Chrome|Firefox|
-|-|:-:|:-:|:-:|:-:|:-:|
-|AV1|✓|✓|✓|✓|✓|
-|H.263|✘|✘|✘|✘|✘|
-|H.264|✓|✓|✓|✓|✓|
-|H.265|✘|✘|✓*|✓|✘|
-|MPEG-2/4|✘|✘|✘|✘|✘|
-|Theora|✓|✘|✓|✓|✓|
-|VP8/9|✓|✓|✓|✓|✓|
+\* Container might be supported, but the container's codecs might not be.\
+\*\* Documented as working, but can't reproduce.
+
+| Video Codecs | Chromium | Mobile Chromium | Edge | Chrome | Firefox |
+| ------------ | :------: | :-------------: | :--: | :----: | :-----: |
+| AV1          |    ✓     |        ✓        |  ✓   |   ✓    |    ✓    |
+| H.263        |    ✘     |        ✘        |  ✘   |   ✘    |    ✘    |
+| H.264        |    ✓     |        ✓        |  ✓   |   ✓    |    ✓    |
+| H.265        |    ✘     |        ✘        |  ✓*  |   ✓    |    ✘    |
+| MPEG-2/4     |    ✘     |        ✘        |  ✘   |   ✘    |    ✘    |
+| Theora       |    ✓     |        ✘        |  ✓   |   ✓    |    ✓    |
+| VP8/9        |    ✓     |        ✓        |  ✓   |   ✓    |    ✓    |
 
 \* Requires MSStore extension which you can get by opening this link `ms-windows-store://pdp/?ProductId=9n4wgh0z6vhq` while using Edge.
 
-|Audio Codecs|Chromium|Mobile Chromium|Edge|Chrome|Firefox|
-|-|:-:|:-:|:-:|:-:|:-:|
-|AAC|✓|✓|✓|✓|✓|
-|AC3|✘|✘|✓|✘|✘|
-|DTS|✘|✘|✘|✘|✘|
-|EAC3|✘|✘|✓|✘|✘|
-|FLAC|✓|✓*|✓|✓|✓|
-|MP3|✓|✓|✓|✓|✓|
-|Opus|✓|✓|✓|✓|✓|
-|TrueHD|✘|✘|✘|✘|✘|
-|Vorbis|✓|✓|✓|✓|✓*|
+| Audio Codecs | Chromium | Mobile Chromium | Edge | Chrome | Firefox |
+| ------------ | :------: | :-------------: | :--: | :----: | :-----: |
+| AAC          |    ✓     |        ✓        |  ✓   |   ✓    |    ✓    |
+| AC3          |    ✘     |        ✘        |  ✓   |   ✘    |    ✘    |
+| DTS          |    ✘     |        ✘        |  ✘   |   ✘    |    ✘    |
+| EAC3         |    ✘     |        ✘        |  ✓   |   ✘    |    ✘    |
+| FLAC         |    ✓     |       ✓*        |  ✓   |   ✓    |    ✓    |
+| MP3          |    ✓     |        ✓        |  ✓   |   ✓    |    ✓    |
+| Opus         |    ✓     |        ✓        |  ✓   |   ✓    |    ✓    |
+| TrueHD       |    ✘     |        ✘        |  ✘   |   ✘    |    ✘    |
+| Vorbis       |    ✓     |        ✓        |  ✓   |   ✓    |   ✓*    |
 
 \* Might not work in some video containers.
 
 Since container and codec support is browser dependent these values might change over time.
+
 ## `file.streamURL`
 
 Requires `client.createServer` to be ran beforehand.
@@ -837,30 +844,30 @@ Returns the URL of the file which is recognized by the HTTP server.
 This method is useful both for servers which run WebTorrent or client apps. A few examples:
 
 ```js
-const url = file.streamURL
+const url = file.streamURL;
 
 // create download link
-if (err) throw err
-const a = document.createElement('a')
-a.target = "_blank"
-a.href = url
-a.textContent = 'Download ' + file.name
-document.body.append(a)
+if (err) throw err;
+const a = document.createElement('a',);
+a.target = '_blank';
+a.href = url;
+a.textContent = 'Download ' + file.name;
+document.body.append(a,);
 
 // render an image on a canvas
-const canvas = document.getElementById('canvas')
-const ctx = canvas.getContext('2d')
-const img = new Image()
-const loaded = new Promise(resolve => img.onload = resolve)
-img.src = url
-await loaded
-ctx.drawImage(img)
+const canvas = document.getElementById('canvas',);
+const ctx = canvas.getContext('2d',);
+const img = new Image();
+const loaded = new Promise((resolve,) => img.onload = resolve);
+img.src = url;
+await loaded;
+ctx.drawImage(img,);
 
 // send the file URL to another device on the network which can then display the file remotely [nodejs only]
-import networkAddress from 'network-address'
+import networkAddress from 'network-address';
 
-const networkURL = `http://${networkAddress()}:${client._server.port}${url}`
-sendRemote(networkURL)
+const networkURL = `http://${networkAddress()}:${client._server.port}${url}`;
+sendRemote(networkURL,);
 ```
 
 ## `file.on('stream', function ({ stream, file, req }, function pipeCallback) {})`
@@ -870,6 +877,7 @@ This is advanced functionality.
 Emitted every time when the HTTP server creates a new read stream. For example every time the user seeks a video. This allows you to find out what parts of the file the browser is requesting, and how it's requesting them. Additionally it allows you to manipulate the data that's being streamed.
 
 Yields an object with 3 values and a function:
+
 - object - information about the request,
   - `stream` - a [readable stream](https://nodejs.org/api/stream.html#stream_class_stream_readable) which the user can manipulate,
   - `file` - the file object that's being streamed,
@@ -877,14 +885,15 @@ Yields an object with 3 values and a function:
 - function - if you pipe the `stream`, use this function to callback the piped stream **synchronously!** Otherwise the playback is likely to break.
 
 Example usage:
+
 ```js
-file.on('stream', ({ stream, file, req }, cb) => {
-  if (req.destination === 'audio' && file.name.endsWith('.dts')) {
-    const transcoder = new SomeAudioTranscoder()
-    cb(transcoder)
+file.on('stream', ({ stream, file, req, }, cb,) => {
+  if (req.destination === 'audio' && file.name.endsWith('.dts',)) {
+    const transcoder = new SomeAudioTranscoder();
+    cb(transcoder,);
     // do other things
   }
-})
+},);
 ```
 
 ## `file.on('iterator', function ({ stream, file, req }, function transformCallback) {})`
@@ -894,6 +903,7 @@ This is advanced functionality.
 Same as with the `stream` event this is emitted by the HTTP server when it creates an async iterator for the file's data. This is used for very low-level manipulation of the incoming data and they way it's generated for example you could potentially accelerate how fast and how much data is pulled from the torrent.
 
 Yields an object with 3 values and a function:
+
 - object - information about the request,
   - `iterator` - an [async iterator](https://devdocs.io/javascript/global_objects/symbol/asynciterator) which the user can manipulate,
   - `file` - the file object that's being streamed,
@@ -901,16 +911,18 @@ Yields an object with 3 values and a function:
 - function - if you wish to transform the `iterator`, use this function to callback the transformed iterator **synchronously!** Otherwise the playback is likely to break.
 
 Example usage:
-```js
-import par from 'it-parallel'
 
-file.on('iterator', ({ iterator, file, req }, cb) => {
-  const transform = par(iterator, { concurrency: 5, ordered: true })
-  cb(transform)
-})
+```js
+import par from 'it-parallel';
+
+file.on('iterator', ({ iterator, file, req, }, cb,) => {
+  const transform = par(iterator, { concurrency: 5, ordered: true, },);
+  cb(transform,);
+},);
 ```
 
 ## `file.includes(piece)`
+
 Check if the piece number contains this file's data.
 
 ## `file.on('done', function () {})`
@@ -921,11 +933,11 @@ Emitted when the file has been downloaded.
 
 ## `piece.length`
 
-Piece length (in bytes). *Example: 12345*
+Piece length (in bytes). _Example: 12345_
 
 ## `piece.missing`
 
-Piece missing length (in bytes). *Example: 100*
+Piece missing length (in bytes). _Example: 100_
 
 # Wire API
 

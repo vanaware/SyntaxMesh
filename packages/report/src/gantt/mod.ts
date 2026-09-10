@@ -20,7 +20,7 @@ export interface GanttTask {
 /**
  * Escala temporal do Gantt
  */
-export type GanttScale = "day" | "week" | "month";
+export type GanttScale = 'day' | 'week' | 'month';
 
 /**
  * Configuração do gráfico Gantt
@@ -35,7 +35,7 @@ export interface GanttConfig {
 /**
  * Converte configuração Gantt em SVG base
  */
-export function generateGanttSvg(config: GanttConfig): string {
+export function generateGanttSvg(config: GanttConfig,): string {
   const totalHeight = config.tasks.length * config.heightPerRow + 40;
 
   return `<?xml version="1.0" encoding="UTF-8"?>

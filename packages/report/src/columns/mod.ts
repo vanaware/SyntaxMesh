@@ -4,16 +4,16 @@
 // 📦 Report Columns — Construtores de colunas padronizadas
 // ============================================================================
 
-import type { ReportColumn } from "../model/mod.ts";
+import type { ReportColumn, } from '../model/mod.ts';
 
 /**
  * Coluna padrão "Name"
  */
 export function nameColumn(): ReportColumn {
   return {
-    id: "name",
-    label: "Name",
-    field: "name",
+    id: 'name',
+    label: 'Name',
+    field: 'name',
   };
 }
 
@@ -22,14 +22,14 @@ export function nameColumn(): ReportColumn {
  */
 export function startColumn(): ReportColumn {
   return {
-    id: "start",
-    label: "Start",
-    field: "startDate",
-    formatter: (value: unknown) => {
+    id: 'start',
+    label: 'Start',
+    field: 'startDate',
+    formatter: (value: unknown,) => {
       if (value instanceof Date) {
         return value.toLocaleDateString();
       }
-      return String(value ?? "");
+      return String(value ?? '',);
     },
   };
 }
@@ -39,14 +39,14 @@ export function startColumn(): ReportColumn {
  */
 export function endColumn(): ReportColumn {
   return {
-    id: "end",
-    label: "End",
-    field: "endDate",
-    formatter: (value: unknown) => {
+    id: 'end',
+    label: 'End',
+    field: 'endDate',
+    formatter: (value: unknown,) => {
       if (value instanceof Date) {
         return value.toLocaleDateString();
       }
-      return String(value ?? "");
+      return String(value ?? '',);
     },
   };
 }
@@ -55,5 +55,5 @@ export function endColumn(): ReportColumn {
  * Retorna lista de colunas padrão para relatório de tarefas
  */
 export function defaultColumns(): ReportColumn[] {
-  return [nameColumn(), startColumn(), endColumn()];
+  return [nameColumn(), startColumn(), endColumn(),];
 }

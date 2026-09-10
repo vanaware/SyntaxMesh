@@ -35,14 +35,17 @@ export interface DiagnosticList {
   hasWarnings: boolean;
 }
 
+import { Parser, } from "./parser/parser.ts";
+import { LANGUAGE_DEFINITIONS, Lexer, } from "./lexer/lexer.ts";
+
 /**
  * Função convenience para parsing rápido
  */
-export function parse(input: string, language?: "en" | "pt" | "es") {
+export function parse(input: string, language?: "en" | "pt" | "es",) {
   const langDef = language ? LANGUAGE_DEFINITIONS[language] : LANGUAGE_DEFINITIONS.en;
-  const lexer = new Lexer(input, langDef);
+  const lexer = new Lexer(input, langDef,);
   const tokens = lexer.tokenize();
-  
+
   if (tokens.errors.length > 0) {
     return {
       ast: null,
@@ -52,8 +55,9 @@ export function parse(input: string, language?: "en" | "pt" | "es") {
     };
   }
 
-  const parser = new Parser(tokens.tokens, langDef);
+  const parser = new Parser(input, langDef,);
   return parser.parse();
 }
 
-export { Lexer, Parser, LANGUAGE_DEFINITIONS } from "./lexer/lexer.ts";
+export { Lexer, Parser, };
+export { LANGUAGE_DEFINITIONS, };

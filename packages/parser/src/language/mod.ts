@@ -35,26 +35,26 @@ export class LanguageRegistry {
   /**
    * Registra um novo idioma no registo
    */
-  register(language: LanguageDefinition): void {
-    this.languages.set(language.id, language);
+  register(language: LanguageDefinition,): void {
+    this.languages.set(language.id, language,);
   }
 
   /**
    * Obtém a definição de um idioma pelo ID
    */
-  get(id: string): LanguageDefinition | undefined {
-    return this.languages.get(id);
+  get(id: string,): LanguageDefinition | undefined {
+    return this.languages.get(id,);
   }
 
   /**
    * Resolve uma keyword para sua forma canônica
    */
-  resolve(languageId: string, word: string): CanonicalKeyword | null {
-    const lang = this.languages.get(languageId);
+  resolve(languageId: string, word: string,): CanonicalKeyword | null {
+    const lang = this.languages.get(languageId,);
     if (!lang) return null;
 
-    for (const [canonical, variants] of Object.entries(lang.keywords)) {
-      if (variants.includes(word.toLowerCase())) {
+    for (const [canonical, variants,] of Object.entries(lang.keywords,)) {
+      if (variants.includes(word.toLowerCase(),)) {
         return canonical as CanonicalKeyword;
       }
     }
@@ -65,7 +65,7 @@ export class LanguageRegistry {
    * Lista todos os IDs de idiomas registrados
    */
   listIds(): string[] {
-    return Array.from(this.languages.keys());
+    return Array.from(this.languages.keys(),);
   }
 }
 
@@ -79,46 +79,46 @@ export function createDefaultLanguages(): LanguageRegistry {
     id: "en",
     name: "English",
     keywords: {
-      project: ["project"],
-      task: ["task"],
-      resource: ["resource"],
-      depends: ["depends"],
-      effort: ["effort"],
-      duration: ["duration"],
-      report: ["report"],
-      language: ["language"],
+      project: ["project",],
+      task: ["task",],
+      resource: ["resource",],
+      depends: ["depends",],
+      effort: ["effort",],
+      duration: ["duration",],
+      report: ["report",],
+      language: ["language",],
     },
-  });
+  },);
 
   registry.register({
     id: "pt-BR",
     name: "Português (Brasil)",
     keywords: {
-      project: ["projeto"],
-      task: ["tarefa"],
-      resource: ["recurso"],
-      depends: ["depende"],
-      effort: ["esforço"],
-      duration: ["duração"],
-      report: ["relatório"],
-      language: ["idioma"],
+      project: ["projeto",],
+      task: ["tarefa",],
+      resource: ["recurso",],
+      depends: ["depende",],
+      effort: ["esforço",],
+      duration: ["duração",],
+      report: ["relatório",],
+      language: ["idioma",],
     },
-  });
+  },);
 
   registry.register({
     id: "es",
     name: "Español",
     keywords: {
-      project: ["proyecto"],
-      task: ["tarea"],
-      resource: ["recurso"],
-      depends: ["depende"],
-      effort: ["esfuerzo"],
-      duration: ["duración"],
-      report: ["informe"],
-      language: ["lenguaje"],
+      project: ["proyecto",],
+      task: ["tarea",],
+      resource: ["recurso",],
+      depends: ["depende",],
+      effort: ["esfuerzo",],
+      duration: ["duración",],
+      report: ["informe",],
+      language: ["lenguaje",],
     },
-  });
+  },);
 
   return registry;
 }

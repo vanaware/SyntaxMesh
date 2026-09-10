@@ -11,7 +11,7 @@ export interface ReportColumn {
   id: string;
   label: string;
   field: string;
-  formatter?: (value: unknown) => string;
+  formatter?: (value: unknown,) => string;
 }
 
 /**
@@ -20,7 +20,7 @@ export interface ReportColumn {
 export interface ReportFilter {
   id: string;
   field: string;
-  operator: "eq" | "neq" | "gt" | "lt" | "contains";
+  operator: 'eq' | 'neq' | 'gt' | 'lt' | 'contains';
   value: unknown;
 }
 
@@ -46,7 +46,7 @@ export interface ReportRow {
 /**
  * Cria um novo relatório vazio
  */
-export function createReport(name: string): Report {
+export function createReport(name: string,): Report {
   return {
     id: crypto.randomUUID(),
     name,
