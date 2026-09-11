@@ -711,8 +711,8 @@
   },
   "$version": 4,
   "model": {
-    "name": "openrouter/free",
-    "baseUrl": "https://openrouter.ai/api/v1",
+    "name": "qwen3.6-flash-2026-04-16",
+    "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
     "reasoningEffort": "high",
     "generationConfig": {
       "enableCacheControl": true,

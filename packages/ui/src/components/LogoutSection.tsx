@@ -68,8 +68,8 @@ export function LogoutSection() {
       setTimeout(() => {
         window.location.href = window.location.pathname;
       }, 1000,);
-    } catch (erro: any) {
-      status.value = `❌ Erro: ${erro.message}`;
+    } catch (erro: unknown) {
+      status.value = `❌ Erro: ${(erro as Error).message}`;
       executando.value = false;
     }
   };

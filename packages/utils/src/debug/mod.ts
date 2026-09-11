@@ -28,7 +28,7 @@ function getDebugChannel(): BroadcastChannel | null {
  */
 export function addDebugLog(
   typeOrMsg: string,
-  moduleOrDetails?: any,
+  moduleOrDetails?: unknown,
   message?: string,
   details?: unknown,
 ): void {

@@ -1,6 +1,14 @@
 import { assert, assertEquals, assertNotEquals, } from '@std/assert';
 import { ls, } from '../src/fake/fake-mod.ts';
 
+type DbItem = {
+  _id: string;
+  name?: string;
+  type?: string;
+  age?: number;
+  v?: number;
+};
+
 Deno.test({
   name: "LS Simple - Gestão de _id ('auto', '0990', com prefixo)",
   fn() {
@@ -15,7 +23,7 @@ Deno.test({
     );
 
     // O _id retornado no objeto deve ter o prefixo removido pelo formatDbItem
-    const fetchedAuto = store.get<any>(autoKey,);
+    const fetchedAuto = store.get(autoKey) as DbItem;
     assert(fetchedAuto !== undefined,);
     assertNotEquals(
       fetchedAuto._id,
@@ -30,14 +38,14 @@ Deno.test({
     assertEquals(customKey, 'LS_PRE_0990',);
 
     // A busca aceita tanto a chave simples quanto a formatada (resolveKey cuida disso)
-    const fetchedCustom = store.get<any>('0990',);
+    const fetchedCustom = store.get('0990') as DbItem;
     assertEquals(fetchedCustom._id, '0990',);
     assertEquals(fetchedCustom.name, 'Item Fixo',);
 
     // 3. Salvando passando um objeto que já possui o prefixo no _id
     const keyPref = store.set({ _id: 'LS_PRE_0991', name: 'Item Fixo 2', type: 'user', },);
     assertEquals(keyPref, 'LS_PRE_0991',);
-    const fetchedPref = store.get<any>('0991',);
+    const fetchedPref = store.get('0991') as DbItem;
     assertEquals(fetchedPref.name, 'Item Fixo 2',);
 
     store.clear();
@@ -52,14 +60,14 @@ Deno.test({
 
     // Create / Read
     store.set('user1', { name: 'Carlos', age: 30, },);
-    let user = store.get<any>('user1',);
+    let user = store.get('user1') as DbItem;
     assertEquals(user.name, 'Carlos',);
 
     // Update Parcial (Patch)
     const patchedUser = store.patch('user1', { age: 31, },);
     assertEquals(patchedUser.age, 31,);
 
-    user = store.get<any>('user1',);
+    user = store.get('user1') as DbItem;
     assertEquals(user.age, 31,);
 
     // Operações em Lote (setMany, getMany)
@@ -68,7 +76,7 @@ Deno.test({
       ['user3', { name: 'Beatriz', },],
     ],);
 
-    const users = store.getMany<any>(['user1', 'user2', 'user3',],);
+    const users = store.getMany(['user1', 'user2', 'user3',]) as DbItem[];
     assertEquals(users.length, 3,);
     assertEquals(users[1]?.name, 'Ana',);
 
@@ -77,13 +85,13 @@ Deno.test({
     assertEquals(allKeys.length, 3,);
     assert(allKeys.includes('LS_CRUD_user1',),);
 
-    const allValues = store.values<any>();
+    const allValues = store.values() as DbItem[];
     assertEquals(allValues.length, 3,);
-    assert(allValues.some((v: any,) => v._id === 'user2' && v.name === 'Ana'),); // Valida se formatDbItem agiu nos values
+    assert(allValues.some((v) => v._id === 'user2' && v.name === 'Ana'),); // Valida se formatDbItem agiu nos values
 
-    const allEntries = store.entries<any>();
+    const allEntries = store.entries() as [string, DbItem][];
     assertEquals(allEntries.length, 3,);
-    const firstEntry = allEntries.find(([k,]: [string, any,],) => k === 'LS_CRUD_user3');
+    const firstEntry = allEntries.find(([k,]) => k === 'LS_CRUD_user3');
     assert(firstEntry !== undefined,);
     assertEquals(firstEntry[1].name, 'Beatriz',);
 
@@ -115,9 +123,9 @@ Deno.test({
     const exported = store.exportLS();
     assertEquals(exported, mockData,);
 
-    const values = store.values<any>();
+    const values = store.values() as DbItem[];
     assertEquals(values.length, 2,);
-    assertEquals(values.find((i: any,) => i._id === 'k1')?.v, 1,);
+    assertEquals(values.find((i) => i._id === 'k1')?.v, 1,);
 
     store.clear();
   },

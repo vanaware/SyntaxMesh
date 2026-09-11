@@ -107,7 +107,8 @@ export async function registrarServiceWorker(): Promise<ServiceWorkerRegistratio
 
     return readyReg;
   } catch (err: unknown) {
-    addDebugLog('❌ Erro ao registrar Service Worker: ' + (err?.message || String(err,)),);
-    throw new Error(`Falha ao registrar Service Worker: ${err?.message || String(err,)}`,);
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    addDebugLog('❌ Erro ao registrar Service Worker: ' + errorMessage);
+    throw new Error(`Falha ao registrar Service Worker: ${errorMessage}`);
   }
 }

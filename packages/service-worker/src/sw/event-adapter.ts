@@ -55,13 +55,13 @@ export function initializeSwEventAdapter() {
     }
   },);
 
-  self.addEventListener('online', (event: ExtendableMessageEvent,) => {
+  self.addEventListener('online', (event: Event) => {
     // ✅ Chave exata do EventMap
     EventBus.emit('syntaxmesh:network:online',);
     //handleOnline(event,);
   },);
 
-  self.addEventListener('offline', (event: ExtendableMessageEvent,) => {
+  self.addEventListener('offline', (event: Event) => {
     // ✅ Chave exata do EventMap
     EventBus.emit('syntaxmesh:network:offline',);
   },);

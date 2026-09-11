@@ -38,7 +38,7 @@ async function resolvePath(filePath: string, create = false,) {
   return { dir: curr, fileName, };
 }
 
-export async function writeJsonToOpfs(filePath: string, data: any,): Promise<string> {
+export async function writeJsonToOpfs(filePath: string, data: unknown,): Promise<string> {
   const { dir, fileName, } = await resolvePath(filePath, true,);
   const fileHandle = await dir.getFileHandle(fileName, { create: true, },);
   const writable = await fileHandle.createWritable();
@@ -47,7 +47,7 @@ export async function writeJsonToOpfs(filePath: string, data: any,): Promise<str
   return filePath;
 }
 
-export async function readJsonFromOpfs(filePath: string,): Promise<any> {
+export async function readJsonFromOpfs(filePath: string,): Promise<unknown> {
   const { dir, fileName, } = await resolvePath(filePath, false,);
   const fileHandle = await dir.getFileHandle(fileName,);
   const file = await fileHandle.getFile();

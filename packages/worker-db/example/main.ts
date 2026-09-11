@@ -21,7 +21,7 @@ interface UserPreferences {
 const appElement = document.getElementById('app',);
 const logElement = document.getElementById('log-output',);
 
-function log(msg: string, data?: any,) {
+function log(msg: string, data?: unknown,) {
   const dataStr = data ? `\n  ↳ ${JSON.stringify(data, null, 2,)}` : '';
   const fullText = `${msg}${dataStr}\n`;
 
@@ -80,7 +80,7 @@ async function runRealWorldTests() {
   );
 
   log('\n📊 3. IndexedDB Worker - Análises e Agregações Remotas (query)...',);
-  const stats = await msgStore.query<SyntaxMeshMessage, any>((items,) => ({
+  const stats = await msgStore.query<SyntaxMeshMessage, unknown>((items) => ({
     totalPending: items.filter((i,) => i.status === 'pending').length,
   }));
   log(`   --> Estatísticas processadas no Worker:`, stats,);

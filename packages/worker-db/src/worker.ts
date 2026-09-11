@@ -64,7 +64,7 @@ self.onmessage = async (e: MessageEvent,) => {
       case 'PATCH': {
         let patchOrFn;
         if (args.fnStr) {
-          patchOrFn = new Function('prev', 'ctx', `return (${args.fnStr})(prev, ctx);`,) as any;
+          patchOrFn = new Function('prev', 'ctx', `return (${args.fnStr})(prev, ctx);`,) as unknown;
         } else {
           patchOrFn = args.patch;
         }
@@ -72,17 +72,17 @@ self.onmessage = async (e: MessageEvent,) => {
         break;
       }
       case 'QUERY': {
-        const fn = new Function('items', 'ctx', `return (${args.fnStr})(items, ctx);`,) as any;
+        const fn = new Function('items', 'ctx', `return (${args.fnStr})(items, ctx);`,) as (items: { _id: string; }[], ctx?: any) => { _id: string; }[];
         result = await internalAPI.query(fn, args.context, dbOpts,);
         break;
       }
       case 'GET_SOME': {
-        const fn = new Function('items', 'ctx', `return (${args.fnStr})(items, ctx);`,) as any;
+        const fn = new Function('items', 'ctx', `return (${args.fnStr})(items, ctx);`,) as (items: { _id: string; }[], ctx?: any) => { _id: string; }[];
         result = await internalAPI.getSome(fn, args.context, dbOpts,);
         break;
       }
       case 'DEL_SOME': {
-        const fn = new Function('items', 'ctx', `return (${args.fnStr})(items, ctx);`,) as any;
+        const fn = new Function('items', 'ctx', `return (${args.fnStr})(items, ctx);`,) as (items: { _id: string; }[], ctx?: any) => { _id: string; }[];
         result = await internalAPI.delSome(fn, args.context, dbOpts,);
         break;
       }
@@ -91,12 +91,12 @@ self.onmessage = async (e: MessageEvent,) => {
           'items',
           'ctx',
           `return (${args.selectFnStr})(items, ctx);`,
-        ) as any;
+        ) as (items: { _id: string; }[], ctx?: any) => { _id: string; }[];
         const updateFn = new Function(
           'item',
           'ctx',
           `return (${args.updateFnStr})(item, ctx);`,
-        ) as any;
+        ) as (item: { _id: string; }, ctx?: any) => { _id: string; };
         result = await internalAPI.setSome(selectFn, updateFn, args.context, dbOpts,);
         break;
       }
