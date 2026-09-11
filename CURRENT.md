@@ -11,4 +11,8 @@ Implementar a tarefa (docs/syntaxmesh/fases/):
 - docs/syntaxmesh/fases/fase-2-tempo-geometria.md
 - docs/syntaxmesh/fases/fase-2-tempo-geometria-tarefas.md
 
-IMPORTANTE: para testes veja a decisão de qual biblioteca e estilo de teste fazer no arquivo: docs/syntaxmesh/decisoes/008-biblioteca-de-testes-std-testing-bdd-padrao.md
+IMPORTANTE
+* para testes veja a decisão de qual biblioteca e estilo de teste fazer no arquivo: docs/syntaxmesh/decisoes/008-biblioteca-de-testes-std-testing-bdd-padrao.md
+* arquivos de documentação na raiz da pasta docs/syntaxmesh, podem estar desatualizados, e podem ser atualizados para manter coerencia com o plano em docs/syntaxmesh/fases
+* arquivos da pasta docs/tj3-engine foram usados para elaborar o plano em docs/syntaxmesh/fases mas podem estar desatualizados também por conta da evolução do projeto e podem ser atualizados se precisar tambem
+

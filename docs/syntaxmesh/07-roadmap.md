@@ -1,23 +1,49 @@
 # Plano geral
 
-O desenvolvimento será dividido em oito fases:
+O desenvolvimento será dividido em 21 fases:
 
 ```text
-FASE 1  Fundação
+FASE 1  Fundação e Workspace Deno
    ↓
-FASE 2  Core
+FASE 2  Tempo e Geometria (Core)
    ↓
 FASE 3  Parser + Linguagem
    ↓
 FASE 4  Reports
    ↓
-FASE 5  Storage
+FASE 5  Storage (utils + worker-db)
    ↓
-FASE 6  PWA
+FASE 6  PWA (Service Worker)
    ↓
-FASE 7  Interface
+FASE 7  Interface (UI)
    ↓
 FASE 8  Compatibilidade e Qualidade
+   ↓
+FASE 9  Core: Modelos (Project, Task, Resource, etc.)
+   ↓
+FASE 10 Core: Calendário e Tempo
+   ↓
+FASE 11 Core: Scheduling e Algoritmos
+   ↓
+FASE 12 Core: Recursos e Contabilidade
+   ↓
+FASE 13 Core: Cenários e Validação
+   ↓
+FASE 14 Parser: Lexer e Tokens
+   ↓
+FASE 15 Parser: Gramática e AST
+   ↓
+FASE 16 Parser: Análise Semântica
+   ↓
+FASE 17 Parser: Multi-idioma
+   ↓
+FASE 18 Report: Modelos e Filtros
+   ↓
+FASE 19 Report: Gantt e Exportação
+   ↓
+FASE 20 Storage: Persistência e Transferência
+   ↓
+FASE 21 Documentação e Manual do Usuário
 ```
 
 ## Roadmap resumido
@@ -30,16 +56,16 @@ FASE 8  Compatibilidade e Qualidade
      ENGINE                           APP
         │                                │
         ▼                                ▼
-     FASE 1                           FASE 6
-     Fundação                         PWA
+     FASE 1                           FASE 7
+     Fundação                         Interface
         │                                │
         ▼                                ▼
-     FASE 2                           FASE 7
-     Core                              UI
-        │
-        ▼
-     FASE 3
-     Parser
+     FASE 2                           FASE 8
+     Core                              Compatibilidade
+        │                                │
+        ▼                                ▼
+     FASE 3                           FASE 9+
+     Parser                            (Core detalhado)
      Multilingual
         │
         ▼
@@ -52,9 +78,8 @@ FASE 8  Compatibilidade e Qualidade
         │
         └───────────────┐
                         ▼
-                     FASE 8
-              Compatibilidade
-                e Qualidade
+                     FASE 6
+              PWA / Service Worker
 ```
 
 ---

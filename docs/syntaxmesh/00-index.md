@@ -27,13 +27,26 @@
 | docs/syntaxmesh/09-regras-para-ia.md | Regras de Ouro |
 | docs/syntaxmesh/10-futuro.md | Planos de melhorias |
 | docs/syntaxmesh/fases/fase-1-fundacao.md | Trabalhar na arquitetura geral |
-| docs/syntaxmesh/fases/fase-2-core.md | Trabalhar no @syntaxmesh/core |
+| docs/syntaxmesh/fases/fase-2-tempo-geometria.md | Trabalhar no @syntaxmesh/core (tempo e geometria) |
 | docs/syntaxmesh/fases/fase-3-parser-multilingue.md | Trabalhar no @syntaxmesh/parser |
 | docs/syntaxmesh/fases/fase-4-report.md | Trabalhar no @syntaxmesh/report |
 | docs/syntaxmesh/fases/fase-5-storage.md | Trabalhar no @syntaxmesh/utils com @syntaxmesh/worker-db |
 | docs/syntaxmesh/fases/fase-6-pwa.md | Trabalhar no @syntaxmesh/service-worker |
 | docs/syntaxmesh/fases/fase-7-interface.md | Trabalhar no @syntaxmesh/ui |
-| docs/syntaxmesh/fases/fase-8-compatibilidade-qualidade.md | Trabalhar nos testes intergados ./tests |
+| docs/syntaxmesh/fases/fase-8-compatibilidade-qualidade.md | Trabalhar nos testes integrados ./tests |
+| docs/syntaxmesh/fases/fase-9-core-modelos.md | Trabalhar nos modelos do Core |
+| docs/syntaxmesh/fases/fase-10-core-calendario.md | Trabalhar no calendário e tempo do Core |
+| docs/syntaxmesh/fases/fase-11-core-scheduling.md | Trabalhar no scheduling do Core |
+| docs/syntaxmesh/fases/fase-12-core-recursos.md | Trabalhar em recursos e contabilidade do Core |
+| docs/syntaxmesh/fases/fase-13-core-cenarios.md | Trabalhar em cenários e validação do Core |
+| docs/syntaxmesh/fases/fase-14-parser-lexer.md | Trabalhar no lexer e tokens do Parser |
+| docs/syntaxmesh/fases/fase-15-parser-gramatica.md | Trabalhar na gramática e AST do Parser |
+| docs/syntaxmesh/fases/fase-16-parser-semantica.md | Trabalhar na análise semântica do Parser |
+| docs/syntaxmesh/fases/fase-17-parser-multilingue.md | Trabalhar no suporte multi-idioma do Parser |
+| docs/syntaxmesh/fases/fase-18-report-modelos.md | Trabalhar nos modelos e filtros do Report |
+| docs/syntaxmesh/fases/fase-19-report-gantt.md | Trabalhar no Gantt e exportação do Report |
+| docs/syntaxmesh/fases/fase-20-storage-persistencia.md | Trabalhar na persistência e transferência do Storage |
+| docs/syntaxmesh/fases/fase-21-documentacao.md | Trabalhar na documentação do usuário |
 
 ## Docs de Referência
 

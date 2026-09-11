@@ -18,7 +18,7 @@ export function initializeUiEventAdapter() {
   addDebugLog(`[UI-ADAPTER] 🌌 Inicializando Adaptador de Eventos da UI.`,);
 
   // 1. Traduz postMessage do SW -> EventBus da UI
-  navigator.serviceWorker.addEventListener('message', (event,) => {
+  navigator.serviceWorker.addEventListener('message', (event: MessageEvent,) => {
     if (!event.data) return;
     const { type, payload, } = event.data;
 
@@ -106,7 +106,7 @@ export async function registrarServiceWorker(): Promise<ServiceWorkerRegistratio
     }
 
     return readyReg;
-  } catch (err: any) {
+  } catch (err: unknown) {
     addDebugLog('❌ Erro ao registrar Service Worker: ' + (err?.message || String(err,)),);
     throw new Error(`Falha ao registrar Service Worker: ${err?.message || String(err,)}`,);
   }

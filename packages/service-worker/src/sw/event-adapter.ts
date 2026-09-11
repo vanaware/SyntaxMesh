@@ -55,13 +55,13 @@ export function initializeSwEventAdapter() {
     }
   },);
 
-  self.addEventListener('online', (event: any,) => {
+  self.addEventListener('online', (event: ExtendableMessageEvent,) => {
     // ✅ Chave exata do EventMap
     EventBus.emit('syntaxmesh:network:online',);
     //handleOnline(event,);
   },);
 
-  self.addEventListener('offline', (event: any,) => {
+  self.addEventListener('offline', (event: ExtendableMessageEvent,) => {
     // ✅ Chave exata do EventMap
     EventBus.emit('syntaxmesh:network:offline',);
   },);
@@ -72,7 +72,7 @@ export function initializeSwEventAdapter() {
 /**
  * Helper para broadcast de mensagens para todas as janelas/abas do app.
  */
-async function broadcastToClients(message: any,) {
+async function broadcastToClients(message: unknown,) {
   if (typeof self !== 'undefined' && self.clients && typeof self.clients.matchAll === 'function') {
     const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true, },);
     clients.forEach((client,) => client.postMessage(message,));

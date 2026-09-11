@@ -140,6 +140,8 @@
   },
   "unstable": ["bundle"],
   "exclude": [
+      ".qwen/",
+      ".vscode/",
       "packages/server/build/", 
       "packages/worker-db/build/",
       "vendor",

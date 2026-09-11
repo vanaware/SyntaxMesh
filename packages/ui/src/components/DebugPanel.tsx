@@ -1,3 +1,4 @@
+// deno-lint-ignore-file -- arquivo de exemplo
 // src/components/DebugPanel.tsx
 
 // @ts-nocheck : arquivo exemplo

@@ -1,4 +1,4 @@
-// TODO IA: no novo worker-db, função ls(), "id" deverá ser "_id" para debug
+// TODO IA: no novo worker-db, função ls(), "id" deverá ser "_id" para debug @djones
 export interface DebugLogPayload {
   id: string;
   timestamp: string;
@@ -144,8 +144,7 @@ export interface TargetConfig {
    * Os plugins definidos aqui são mesclados com quaisquer plugins
    * injetados externamente pelo orquestrador de build.
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  plugins?: any[];
+  plugins?: unknown[];
 }
 
 export interface GlobalTargetConfig {

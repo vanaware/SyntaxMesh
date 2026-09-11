@@ -4,7 +4,7 @@ import type { DbStoreOptions, OpfsFileInfo, OpfsStoreOptions, } from './db.ts';
 
 let workerInstance: Worker | null = null;
 let currentWorkerPath: string | URL = './worker-db.js';
-const pendingRequests = new Map<string, { resolve: Function; reject: Function }>();
+const pendingRequests = new Map<string, { resolve: (value: unknown) => void; reject: (reason?: unknown) => void }>();
 
 function getWorker(workerPath?: string | URL,): Worker {
   if (workerPath) {
@@ -54,10 +54,10 @@ function terminateWorker() {
   }
 }
 
-function exec<T,>(command: string, args: Record<string, any> = {},): Promise<T> {
-  return new Promise((resolve, reject,) => {
+function exec<T,>(command: string, args: Record<string, unknown> = {},): Promise<T> {
+  return new Promise<T>((resolve, reject,) => {
     const requestId = gerarId();
-    pendingRequests.set(requestId, { resolve, reject, },);
+    pendingRequests.set(requestId, { resolve: resolve as (value: unknown) => void, reject, },);
     try {
       getWorker().postMessage({ requestId, command, args, },);
     } catch (err) {
@@ -85,7 +85,7 @@ const globalDbAPI = {
     const newVal = updater(currentVal,);
     await exec<void>('SET', { key, val: newVal, ...opts, },);
   },
-  patch: <T extends Record<string, any>, C = any,>(
+  patch: <T extends Record<string, unknown>, C = unknown,>(
     key: string,
     patchOrFn: Partial<T> | ((prev: WithId<T>, ctx: C,) => T | Partial<T>),
     context?: C,
@@ -103,7 +103,7 @@ const globalDbAPI = {
   delete: (key: string, opts?: DbStoreOptions,) => exec<void>('DELETE', { key, ...opts, },),
   getMany: <T,>(keys: string[], opts?: DbStoreOptions,) =>
     exec<(WithId<T> | undefined)[]>('GET_MANY', { keys, ...opts, },),
-  setMany: (entries: [string, any,][], opts?: DbStoreOptions,) =>
+  setMany: (entries: [string, unknown,][], opts?: DbStoreOptions,) =>
     exec<void>('SET_MANY', { entries, ...opts, },),
   deleteMany: (keys: string[], opts?: DbStoreOptions,) =>
     exec<void>('DEL_MANY', { keys, ...opts, },),
@@ -111,23 +111,23 @@ const globalDbAPI = {
   values: <T,>(opts?: DbStoreOptions,) => exec<T[]>('VALUES', { ...opts, },),
   entries: <T,>(opts?: DbStoreOptions,) => exec<[string, T,][]>('ENTRIES', { ...opts, },),
   clear: (opts?: DbStoreOptions,) => exec<void>('CLEAR', { ...opts, },),
-  query: <T, R, C = any,>(
+  query: <T, R, C = unknown,>(
     fn: (items: WithId<T>[], ctx: C,) => R,
     context?: C,
     opts?: DbStoreOptions,
   ): Promise<R> => exec<R>('QUERY', { fnStr: fn.toString(), context, ...opts, },),
-  getSome: <T, C = any,>(
+  getSome: <T, C = unknown,>(
     fn: (items: WithId<T>[], ctx: C,) => WithId<T>[],
     context?: C,
     opts?: DbStoreOptions,
   ): Promise<WithId<T>[]> =>
     exec<WithId<T>[]>('GET_SOME', { fnStr: fn.toString(), context, ...opts, },),
-  delSome: <T, C = any,>(
+  delSome: <T, C = unknown,>(
     fn: (items: WithId<T>[], ctx: C,) => WithId<T>[],
     context?: C,
     opts?: DbStoreOptions,
   ): Promise<void> => exec<void>('DEL_SOME', { fnStr: fn.toString(), context, ...opts, },),
-  setSome: <T, C = any,>(
+  setSome: <T, C = unknown,>(
     selectFn: (items: WithId<T>[], ctx: C,) => WithId<T>[],
     updateFn: (item: WithId<T>, ctx: C,) => WithId<T>,
     context?: C,
@@ -139,8 +139,8 @@ const globalDbAPI = {
       context,
       ...opts,
     },),
-  exportDB: (opts?: DbStoreOptions,) => exec<Record<string, any>>('EXPORT', { ...opts, },),
-  importDB: (data: Record<string, any>, clearFirst = false, opts?: DbStoreOptions,) =>
+  exportDB: (opts?: DbStoreOptions,) => exec<Record<string, unknown>>('EXPORT', { ...opts, },),
+  importDB: (data: Record<string, unknown>, clearFirst = false, opts?: DbStoreOptions,) =>
     exec<void>('IMPORT', { data, clearFirst, ...opts, },),
   backupToOpfs: (key: string, fileName?: string, opts?: DbStoreOptions,) =>
     exec<string>('BACKUP_OPFS', { key, fileName, ...opts, },),
@@ -159,35 +159,35 @@ function createScopedDb(dbName?: string, storeName = 'keyval', prefix = '',) {
   return {
     get: <T,>(key: string,) => globalDbAPI.get<T>(key, opts,),
     set: <T,>(keyOrVal: string | T, val?: T,) =>
-      globalDbAPI.set<T>(keyOrVal as any, val as any, opts,),
+      globalDbAPI.set<T>(keyOrVal, val, opts,),
     update: <T,>(key: string, updater: (val: WithId<T> | undefined,) => T,) =>
       globalDbAPI.update<T>(key, updater, opts,),
-    patch: <T extends Record<string, any>, C = any,>(
+    patch: <T extends Record<string, unknown>, C = unknown,>(
       key: string,
       patchOrFn: Partial<T> | ((prev: WithId<T>, ctx: C,) => T | Partial<T>),
       context?: C,
     ) => globalDbAPI.patch<T, C>(key, patchOrFn, context, opts,),
     delete: (key: string,) => globalDbAPI.delete(key, opts,),
     getMany: <T,>(keys: string[],) => globalDbAPI.getMany<T>(keys, opts,),
-    setMany: (entries: [string, any,][],) => globalDbAPI.setMany(entries, opts,),
+    setMany: (entries: [string, unknown,][],) => globalDbAPI.setMany(entries, opts,),
     deleteMany: (keys: string[],) => globalDbAPI.deleteMany(keys, opts,),
     keys: () => globalDbAPI.keys(opts,),
     values: <T,>() => globalDbAPI.values<T>(opts,),
     entries: <T,>() => globalDbAPI.entries<T>(opts,),
     clear: () => globalDbAPI.clear(opts,),
-    query: <T, R, C = any,>(fn: (items: WithId<T>[], ctx: C,) => R, context?: C,) =>
+    query: <T, R, C = unknown,>(fn: (items: WithId<T>[], ctx: C,) => R, context?: C,) =>
       globalDbAPI.query<T, R, C>(fn, context, opts,),
-    getSome: <T, C = any,>(fn: (items: WithId<T>[], ctx: C,) => WithId<T>[], context?: C,) =>
+    getSome: <T, C = unknown,>(fn: (items: WithId<T>[], ctx: C,) => WithId<T>[], context?: C,) =>
       globalDbAPI.getSome<T, C>(fn, context, opts,),
-    delSome: <T, C = any,>(fn: (items: WithId<T>[], ctx: C,) => WithId<T>[], context?: C,) =>
+    delSome: <T, C = unknown,>(fn: (items: WithId<T>[], ctx: C,) => WithId<T>[], context?: C,) =>
       globalDbAPI.delSome<T, C>(fn, context, opts,),
-    setSome: <T, C = any,>(
+    setSome: <T, C = unknown,>(
       selectFn: (items: WithId<T>[], ctx: C,) => WithId<T>[],
       updateFn: (item: WithId<T>, ctx: C,) => WithId<T>,
       context?: C,
     ) => globalDbAPI.setSome<T, C>(selectFn, updateFn, context, opts,),
     exportDB: () => globalDbAPI.exportDB(opts,),
-    importDB: (data: Record<string, any>, clearFirst = false,) =>
+    importDB: (data: Record<string, unknown>, clearFirst = false,) =>
       globalDbAPI.importDB(data, clearFirst, opts,),
     backupToOpfs: (key: string, fileName?: string,) =>
       globalDbAPI.backupToOpfs(key, fileName, opts,),

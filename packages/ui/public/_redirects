@@ -4,9 +4,9 @@
 # Regras explícitas para impedir que o SPA Fallback engula nossas rotas de backend.
 # A Cloudflare repassará essas rotas diretamente para a camada de Serverless Functions.
 
-/ping         /ping         200
-/publickey    /publickey    200
-/push         /push         200
+# /ping         /ping         200
+# /publickey    /publickey    200
+# /push         /push         200
 
 # Se você quiser liberar uma pasta inteira (ex: /api/), use o operador splat:
 # /api/*      /api/:splat   200

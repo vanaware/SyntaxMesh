@@ -249,7 +249,7 @@ export const globalSwDbAPI = {
       throw new Error('A função injetada em DEL_SOME deve retornar um Array.',);
     }
 
-    const keysToDelete: string[] = selectedItems.map((item: unknown,) => {
+    const keysToDelete: string[] = selectedItems.map((item: WithId<T>,) => {
       if (!item || item._id === undefined) {
         throw new Error("Os itens retornados em DEL_SOME precisam conter a propriedade '_id'.",);
       }
@@ -275,7 +275,7 @@ export const globalSwDbAPI = {
       throw new Error('A função de seleção em SET_SOME deve retornar um Array.',);
     }
 
-    const entriesToSet: [string, unknown,][] = selectedItems.map((item: unknown,) => {
+    const entriesToSet: [string, unknown,][] = selectedItems.map((item: WithId<T>,) => {
       if (!item || item._id === undefined) {
         throw new Error("Os itens selecionados no SET_SOME precisam conter a propriedade '_id'.",);
       }
@@ -467,7 +467,7 @@ export const globalSwOpfsAPI = {
     const zippedData = zipSync(filesRecord,);
     const zipFileHandle = await dir.getFileHandle(zipName, { create: true, },);
     const w = await zipFileHandle.createWritable();
-    await w.write(new Blob([zippedData as Uint8Array,],),);
+    await w.write(new Blob([zippedData as BlobPart,],),);
     await w.close();
 
     if (deleteOriginals) {
@@ -491,7 +491,7 @@ export const globalSwOpfsAPI = {
       if (!name.includes('/',)) {
         const fh = await dir.getFileHandle(name, { create: true, },);
         const w = await fh.createWritable();
-        await w.write(new Blob([data as Uint8Array,],),);
+        await w.write(new Blob([data as BlobPart,],),);
         await w.close();
       }
     }
@@ -516,7 +516,7 @@ export const globalSwOpfsAPI = {
 
     const newZippedData = zipSync(currentZipData,);
     const w = await zipFileHandle.createWritable();
-    await w.write(new Blob([newZippedData as Uint8Array,],),);
+    await w.write(new Blob([newZippedData as BlobPart,],),);
     await w.close();
   },
 
@@ -536,7 +536,7 @@ export const globalSwOpfsAPI = {
 
     const newZippedData = zipSync(currentZipData,);
     const w = await zipFileHandle.createWritable();
-    await w.write(new Blob([newZippedData as Uint8Array,],),);
+    await w.write(new Blob([newZippedData as BlobPart,],),);
     await w.close();
   },
 };
@@ -549,7 +549,7 @@ export function createScopedDb(dbName?: string, storeName = 'keyval', prefix = '
   return {
     get: <T,>(key: string,) => globalSwDbAPI.get<T>(key, opts,),
     set: <T,>(keyOrVal: string | T, val?: T,) =>
-      globalSwDbAPI.set<T>(keyOrVal as any, val as any, opts,),
+      globalSwDbAPI.set<T>(keyOrVal, val, opts,),
     update: <T,>(key: string, updater: (val: WithId<T> | undefined,) => T,) =>
       globalSwDbAPI.update<T>(key, updater, opts,),
     patch: <T extends Record<string, unknown>, C = unknown,>(

@@ -52,9 +52,16 @@ SyntaxMesh
 │
 ├── core
 ├── parser
+├── language
+├── richtext
+├── markdown
 ├── report
 ├── storage
-└── app
+├── worker-db
+├── utils
+├── service-worker
+├── ui
+└── server
 ```
 
 ### Core
@@ -471,6 +478,29 @@ export class LanguageRegistry {
 #### `en.ts`, `pt-BR.ts`, `es.ts`
 
 Cada arquivo contém apenas um idioma.
+
+
+### Divisão detalhada de RichText e Markdown
+
+```text
+packages/richtext/src
+├── mod.ts
+├── parser.ts
+├── serializer.ts
+└── types.ts
+
+packages/markdown/src
+├── mod.ts
+├── parser.ts
+├── serializer.ts
+└── types.ts
+```
+
+O `@syntaxmesh/richtext` implementa o formato RichText do TaskJuggler (similar a MediaWiki markup) para compatibilidade com arquivos `.tjp` existentes.
+
+O `@syntaxmesh/markdown` implementa o formato Markdown como formato going-forward para conteúdo nativo do SyntaxMesh.
+
+Ambos coexistem. O RichText será depreciado lentamente em favor do Markdown para novos projetos. Conversores entre os formatos serão implementados em fases futuras.
 
 
 ## Estrutura de diretórios

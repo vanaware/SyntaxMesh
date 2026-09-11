@@ -12,8 +12,8 @@ export interface LsStoreOptions {
   prefix?: string;
 }
 
-function getAllPrefixedEntries(prefix = '',): [string, any,][] {
-  const entries: [string, any,][] = [];
+function getAllPrefixedEntries(prefix = '',): [string, unknown,][] {
+  const entries: [string, unknown,][] = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i,);
     if (key && (!prefix || key.startsWith(prefix,))) {
@@ -54,7 +54,7 @@ function createScopedLs(prefix = '',) {
 
     set: <T,>(keyOrVal: string | T, val?: T,): string => {
       let key: string | undefined;
-      let targetVal: any;
+      let targetVal: unknown;
 
       if (typeof keyOrVal === 'string') {
         key = keyOrVal;
@@ -69,13 +69,13 @@ function createScopedLs(prefix = '',) {
       return finalKey;
     },
 
-    patch: <T extends Record<string, any>, C = any,>(
+    patch: <T extends Record<string, unknown>, C = unknown,>(
       key: string,
       patchOrFn: Partial<T> | ((prev: WithId<T>, ctx?: C,) => T | Partial<T>),
       context?: C,
     ): WithId<T> => {
       const current = createScopedLs(prefix,).get<T>(key,) || ({} as WithId<T>);
-      let updated: any;
+      let updated: unknown;
 
       if (typeof patchOrFn === 'function') {
         updated = patchOrFn(current, context,);
@@ -97,7 +97,7 @@ function createScopedLs(prefix = '',) {
       return keys.map((k,) => api.get<T>(k,));
     },
 
-    setMany: (entries: [string, any,][],): void => {
+    setMany: (entries: [string, unknown,][],): void => {
       const api = createScopedLs(prefix,);
       entries.forEach(([k, v,],) => api.set(k, v,));
     },
@@ -123,7 +123,7 @@ function createScopedLs(prefix = '',) {
     },
 
     entries: <T,>(): [string, T,][] => {
-      return getAllPrefixedEntries(prefix,);
+      return getAllPrefixedEntries(prefix,) as [string, T,][];
     },
 
     clear: (): void => {
@@ -135,12 +135,12 @@ function createScopedLs(prefix = '',) {
       keysToRemove.forEach((k,) => localStorage.removeItem(k,));
     },
 
-    query: <T, R, C = any,>(fn: (items: WithId<T>[], ctx?: C,) => R, context?: C,): R => {
+    query: <T, R, C = unknown,>(fn: (items: WithId<T>[], ctx?: C,) => R, context?: C,): R => {
       const items = getFormattedItems<T>(prefix,);
       return fn(items, context,);
     },
 
-    getSome: <T, C = any,>(
+    getSome: <T, C = unknown,>(
       fn: (items: WithId<T>[], ctx?: C,) => WithId<T>[],
       context?: C,
     ): WithId<T>[] => {
@@ -152,7 +152,7 @@ function createScopedLs(prefix = '',) {
       return selected;
     },
 
-    delSome: <T, C = any,>(
+    delSome: <T, C = unknown,>(
       fn: (items: WithId<T>[], ctx?: C,) => WithId<T>[],
       context?: C,
     ): void => {
@@ -170,7 +170,7 @@ function createScopedLs(prefix = '',) {
       },);
     },
 
-    setSome: <T, C = any,>(
+    setSome: <T, C = unknown,>(
       selectFn: (items: WithId<T>[], ctx?: C,) => WithId<T>[],
       updateFn: (item: WithId<T>, ctx?: C,) => WithId<T>,
       context?: C,
@@ -192,12 +192,12 @@ function createScopedLs(prefix = '',) {
 
     // --- MÉTODOS DE EXPORTAÇÃO / IMPORTAÇÃO ---
 
-    exportLS: (): Record<string, any> => {
+    exportLS: (): Record<string, unknown> => {
       const allEntries = getAllPrefixedEntries(prefix,);
       return Object.fromEntries(allEntries,);
     },
 
-    importLS: (data: Record<string, any>, clearFirst = false,): void => {
+    importLS: (data: Record<string, unknown>, clearFirst = false,): void => {
       const api = createScopedLs(prefix,);
       if (clearFirst) api.clear();
       Object.entries(data,).forEach(([k, v,],) => api.set(k, v,));

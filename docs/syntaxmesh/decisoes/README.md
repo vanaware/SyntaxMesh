@@ -67,5 +67,8 @@ O que foi decidido? Seja específico e acionável.
 | 009 | Novos pacotes: language, richtext, markdown | Aceito | 2026-09-10 |
 | 010 | Testes de integração para validação do workspace | Aceito | 2026-09-10 |
 | 011 | Configuração do deno.jsonc para Fase 1 | Aceito | 2026-09-10 |
+| 012 | RichText mantido, Markdown futuro | Aceito | 2026-09-11 |
+| 013 | worker-db centraliza storage | Aceito | 2026-09-11 |
+| 014 | Port fiel do TaskJuggler | Aceito | 2026-09-11 |
 
 > **Nota:** Manter esta tabela atualizada manualmente ou via script ao adicionar novos ADRs.
