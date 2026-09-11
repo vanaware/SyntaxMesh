@@ -711,8 +711,8 @@
   },
   "$version": 4,
   "model": {
-    "name": "gemini-3.8-flash",
-    "baseUrl": "https://generativelanguage.googleapis.com",
+    "name": "openrouter/free",
+    "baseUrl": "https://openrouter.ai/api/v1",
     "reasoningEffort": "high",
     "generationConfig": {
       "enableCacheControl": true,
@@ -735,7 +735,7 @@
   "imageModel": "gemini-3.1-flash-lite-image",
   "security": {
     "auth": {
-      "selectedType": "gemini"
+      "selectedType": "openai"
     }
   },
   "providerMetadata": {
@@ -755,7 +755,7 @@
       "CURRENT.md"
     ],
     "includeDirectories": [
-      "docs/syntaxmesh/"
+      "docs/syntaxmesh/fases"
     ],
     "loadFromIncludeDirectories": true,
     "autoCompactThreshold": 0.65,

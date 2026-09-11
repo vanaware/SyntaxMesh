@@ -68,7 +68,7 @@ export const CONFIGURACOES: Record<ModoExportacao, ExportConfig> = {
     arquivoSaida: 'snapshots/docs.md',
     extensoesPermitidas: ['.md', '.txt',],
     pastaBase: './',
-    subpastasPermitidas: ['docs/syntaxmesh',],
+    subpastasPermitidas: ['docs', 'docs/syntaxmesh',],
     arquivosRaizPermitidos: [
       'readme.md',
       'readme',

@@ -14,11 +14,21 @@
      "./packages/server",
      "./packages/ui",
      "./packages/utils",
-     "./packages/service-worker"
+     "./packages/service-worker",
+     "./packages/language",
+     "./packages/richtext",
+     "./packages/markdown"
    ],
    "catalog": {
     "esbuild": "0.24.0",
-    "wrangler": "^4.123.0"
+    "wrangler": "^4.123.0",
+    "@std/assert": "@std/assert@^1",
+    "@std/testing": "@std/testing@^1",
+    "@std/fs": "@std/fs@^1",
+    "@std/path": "@std/path@^1",
+    "@std/collections": "@std/collections@^1",
+    "preact": "preact@^10",
+    "idb-keyval": "idb-keyval@^6"
   },
    // ⚙️ Configurações Rigorosas do Compilador TypeScript (FASE 4)
    "compilerOptions": {
@@ -33,6 +43,9 @@
    "imports": {
      "@std/fs": "jsr:@std/fs@^1",
      "@std/path": "jsr:@std/path@^1",
+     "@std/assert": "jsr:@std/assert@^1",
+     "@std/testing/bdd": "jsr:@std/testing@^1/bdd",
+     "@std/collections": "jsr:@std/collections@^1",
      "esbuild": "npm:esbuild",
      "@deno/esbuild-plugin": "jsr:@deno/esbuild-plugin@^1.2.1"
    },
@@ -40,8 +53,11 @@
    "tasks": {
      "test": "deno test -P",
      "lint": "deno lint",
-     "fmt": "deno fmt --check",
+     "fmt": "deno fmt",
      "check": "deno check build.ts esbuild.ts export.ts tests/**/*test.ts packages/**/tests/**/*test.ts packages/**/src/**/*.{ts,tsx}",
+     "fmt-check": "deno fmt --check",
+     "lint-fix": "deno lint --fix",
+     "check-all": "deno task check && deno task lint && deno task fmt --check && deno task test",
      "tests": "deno task check && deno task test",
      "dev": "deno task --cwd packages/server dev",
      "start": "deno task --cwd packages/server start",
@@ -96,10 +112,10 @@
   },
   "fmt": {
     "useTabs": false,
-    "lineWidth": 100,
+    "lineWidth": 80,
     "indentWidth": 2,
     "semiColons": true,
-    "singleQuote": true,
+    "singleQuote": false,
     "proseWrap": "preserve",
     "trailingCommas": "always",
     "json.trailingCommas": "never",
@@ -108,7 +124,7 @@
     "jsx.forceNewLinesSurroundingContent": true,
     "jsx.multiLineParens": "always",
     "newLineKind": "lf",
-        "include": [
+    "include": [
       "build.ts",
       "esbuild.ts",
       "export.ts",

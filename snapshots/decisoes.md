@@ -8,7 +8,7 @@
 
 # Contexto Exportado do Projeto SyntaxMesh - Modo: DECISOES
 
-Gerado automaticamente em: 9/10/2026, 6:22:47 PM
+Gerado automaticamente em: 9/10/2026, 10:50:42 PM
 
 ---
 
@@ -753,81 +753,6 @@ tests/integration/
 
 ---
 
-## Arquivo: `docs/syntaxmesh/decisoes/README.md`
-
-````md
-# Decisões Arquitetônicas (ADR)
-
-Este diretório armazena **Architecture Decision Records (ADRs)** — decisões técnicas importantes que afetam a arquitetura, design ou processo do SyntaxMesh.
-
-## Quando criar um ADR
-
-Crie um ADR quando a decisão:
-
-- Afeta múltiplos pacotes ou camadas (Core, Parser, Report, Storage, UI)
-- Envolve trade-offs não triviais (performance vs. simplicidade, compatibilidade vs. inovação)
-- Define convenções que outros desenvolvedores devem seguir
-- Resolve um bug difícil ou comportamento inesperado
-- Introduz ou remove uma dependência significativa
-- Altera o formato de dados, API pública ou contrato entre módulos
-
-## Formato do arquivo
-
-Nome: `NNN-titulo-kebab-case.md` (ex: `001-core-independente-do-dom.md`)
-
-Estrutura:
-
-```markdown
-# Título da Decisão
-
-## Contexto
-
-Qual o problema ou oportunidade que motivou esta decisão?
-Quais foram as alternativas consideradas?
-
-## Decisão
-
-O que foi decidido? Seja específico e acionável.
-
-## Consequências
-
-### Positivas
-- Benefício 1
-- Benefício 2
-
-### Negativas / Riscos
-- Custo/Trade-off 1
-- Mitigação planejada
-
-### Neutras / Observações
-- Detalhe de implementação
-- Referência a issues, PRs ou discussões relacionadas
-
----
-
-**Status:** Aceito / Proposto / Obsoleto / Substituído por NNN
-**Data:** YYYY-MM-DD
-**Autor(es):** Nome(s)
-```
-
-## Lista de ADRs
-
-| ID | Título | Status | Data |
-|---|---|---|---|
-| 001 | Core independente de DOM e Storage | Aceito | 2026-09-08 |
-| 002 | Parser isolado da lógica de UI | Aceito | 2026-09-08 |
-| 003 | Storage não contamina Core | Aceito | 2026-09-08 |
-| 004 | Idioma não contamina Core (AST canônica) | Aceito | 2026-09-08 |
-| 005 | Stack: TypeScript + Deno + Browser only | Aceito | 2026-09-08 |
-| 006 | Build pipeline: deno task build / dev / export / taskjuggler | Aceito | 2026-09-08 |
-| 007 | Workspace Deno com packages independentes | Aceito | 2026-09-08 |
-| 008 | Biblioteca de testes: `@std/testing/bdd` padrão | Aceito | 2026-09-08 |
-
-> **Nota:** Manter esta tabela atualizada manualmente ou via script ao adicionar novos ADRs.
-````
-
----
-
 ## Arquivo: `docs/syntaxmesh/decisoes/001-core-independente-do-dom.md`
 
 ````md
@@ -1339,6 +1264,246 @@ describe("myFeature", () => {
 **Status:** Aceito  
 **Data:** 2026-09-08  
 **Autor(es):** Vanaware (desenvolvedor do projeto)
+````
+
+---
+
+## Arquivo: `docs/syntaxmesh/decisoes/009-novos-pacotes-language-richtext-markdown.md`
+
+```md
+# Novos pacotes: language, richtext, markdown
+
+## Contexto
+
+Durante a Fase 1 (Fundação e Workspace Deno), identificamos três novos pacotes essenciais que estavam ausentes da estrutura monorepo:
+
+- `language`: Processamento de linguagem e análise léxica
+- `richtext`: Manipulação de rich text e formatação
+- `markdown`: Conversão e processamento de Markdown
+
+Esses pacotes são necessários para suportar as funcionalidades principais do SyntaxMesh, mas não estavam presentes no workspace inicial.
+
+## Decisão
+
+Criar três novos pacotes no workspace Deno:
+
+1. **@syntaxmesh/language** - Processamento de linguagem, análise léxica e construção de AST
+2. **@syntaxmesh/richtext** - Manipulação de rich text, formatação e estruturas de conteúdo
+3. **@syntaxmesh/markdown** - Conversão de Markdown para rich text e processamento de sintaxe
+
+Cada pacote terá:
+- `deno.jsonc` com configuração adequada
+- `mod.ts` como ponto de entrada
+- Testes unitários e de integração
+- Dependências apropriadas
+
+## Consequências
+
+### Positivas
+- Estrutura modular completa com todos os pacotes necessários
+- Cada pacote pode evoluir independentemente
+- Melhor separação de preocupações
+- Suporte completo para processamento de linguagem, rich text e Markdown
+
+### Negativas / Riscos
+- Aumento da complexidade do workspace (12 pacotes no total)
+- Mais arquivos de configuração para manter
+- Possível duplicação de código entre pacotes relacionados
+
+### Neutras / Observações
+- Pacotes criados com configurações mínimas para permitir desenvolvimento rápido
+- Testes de integração criados para validar a estrutura do workspace
+- ADR 007 (Workspace Deno com packages independentes) validado com esta expansão
+
+---
+
+**Status:** Aceito
+**Data:** 2026-09-10
+**Autor(es):** Qwen Code
+```
+
+---
+
+## Arquivo: `docs/syntaxmesh/decisoes/010-testes-de-integracao-para-valida-o-do-workspace.md`
+
+```md
+# Testes de integração para validação do workspace
+
+## Contexto
+
+Após a expansão do workspace com três novos pacotes (language, richtext, markdown), identificamos a necessidade de testes de integração robustos que validem:
+
+1. A estrutura completa do workspace Deno
+2. A regra de isolamento do Core (ADR 001)
+3. A funcionalidade básica de importação de todos os pacotes principais
+
+Esses testes garantem que o workspace funcione como um todo coeso e que as decisões arquitetônicas sejam respeitadas.
+
+## Decisão
+
+Criar três testes de integração no diretório `tests/integration/`:
+
+1. **workspace_test.ts** - Valida que todos os pacotes esperados estão presentes e têm configurações adequadas
+2. **core_isolation_test.ts** - Verifica que o Core respeita a regra de isolamento (sem DOM, Preact, BeerCSS, IndexedDB, OPFS, window, document, navigator, localStorage)
+3. **smoke_test.ts** - Testa a importação básica de todos os pacotes principais para garantir que estão funcionais
+
+Esses testes seguem o padrão BDD (@std/testing/bdd) conforme definido no ADR 008.
+
+## Consequências
+
+### Positivas
+- Validação automatizada da estrutura do workspace
+- Garantia de que as regras de isolamento do Core são respeitadas
+- Verificação rápida da saúde do sistema (smoke test)
+- Testes de integração que crescem com o workspace
+
+### Negativas / Riscos
+- Testes de integração podem ser mais lentos que testes unitários
+- Manutenção de testes que validam estrutura em vez de comportamento
+- Possível necessidade de atualizações quando novos pacotes são adicionados
+
+### Neutras / Observações
+- Testes seguem o padrão BDD para consistência
+- Testes são independentes e podem ser executados em qualquer ordem
+- Testes documentam as decisões arquitetônicas (ADR 001, ADR 007, ADR 008)
+
+---
+
+**Status:** Aceito
+**Data:** 2026-09-10
+**Autor(es):** Qwen Code
+```
+
+---
+
+## Arquivo: `docs/syntaxmesh/decisoes/011-configura-o-do-deno-jsonc-para-fase-1.md`
+
+```md
+# Configuração do deno.jsonc para Fase 1
+
+## Contexto
+
+A configuração do deno.jsonc no root do projeto precisava ser atualizada para suportar as necessidades da Fase 1 (Fundação e Workspace Deno). Requisitos específicos incluíam:
+
+1. Adicionar três novos pacotes (language, richtext, markdown) ao workspace
+2. Incluir catálogo de dependências para todas as bibliotecas padrão (@std/assert, @std/testing, @std/fs, @std/path, @std/collections)
+3. Adicionar dependências para preact e idb-keyval
+4. Atualizar as configurações de lint e fmt para corresponder às especificações da Fase 1
+5. Adicionar tarefa `check-all` para validação completa
+6. Corrigir configurações de lineWidth (80) e singleQuote (false) no fmt
+
+## Decisão
+
+Atualizar o deno.jsonc raiz com as seguintes mudanças:
+
+1. **Workspace**: Adicionar `language`, `richtext`, `markdown` aos pacotes listados
+2. **Catálogo**: Adicionar entradas para @std/assert, @std/testing, @std/fs, @std/path, @std/collections, preact e idb-keyval
+3. **Imports**: Adicionar @std/assert, @std/testing/bdd e @std/collections às importações
+4. **Tasks**: Adicionar `fmt-check`, `lint-fix` e `check-all` (que combina check + lint + fmt + test)
+5. **Fmt**: Corrigir lineWidth para 80, singleQuote para false, e atualizar include/exclude padrões
+6. **Lint**: Manter configuração existente com regras recomendadas
+
+## Consequências
+
+### Positivas
+- Workspace completo com todos os pacotes necessários
+- Configuração consistente com especificações da Fase 1
+- Validação completa através da tarefa check-all
+- Formatação e linting padronizados
+
+### Negativas / Riscos
+- Atualização da configuração pode afetar pipelines de CI existentes
+- Mais dependências no catálogo aumentam tempo de resolução
+- Tarefa check-all pode demorar mais para executar
+
+### Neutras / Observações
+- Configuração segue as especificações exatas da Fase 1
+- Manutenção do estilo e formatação consistentes
+- Suporte para desenvolvimento rápido com tarefas úteis
+
+---
+
+**Status:** Aceito
+**Data:** 2026-09-10
+**Autor(es):** Qwen Code
+```
+
+---
+
+## Arquivo: `docs/syntaxmesh/decisoes/README.md`
+
+````md
+# Decisões Arquitetônicas (ADR)
+
+Este diretório armazena **Architecture Decision Records (ADRs)** — decisões técnicas importantes que afetam a arquitetura, design ou processo do SyntaxMesh.
+
+## Quando criar um ADR
+
+Crie um ADR quando a decisão:
+
+- Afeta múltiplos pacotes ou camadas (Core, Parser, Report, Storage, UI)
+- Envolve trade-offs não triviais (performance vs. simplicidade, compatibilidade vs. inovação)
+- Define convenções que outros desenvolvedores devem seguir
+- Resolve um bug difícil ou comportamento inesperado
+- Introduz ou remove uma dependência significativa
+- Altera o formato de dados, API pública ou contrato entre módulos
+
+## Formato do arquivo
+
+Nome: `NNN-titulo-kebab-case.md` (ex: `001-core-independente-do-dom.md`)
+
+Estrutura:
+
+```markdown
+# Título da Decisão
+
+## Contexto
+
+Qual o problema ou oportunidade que motivou esta decisão?
+Quais foram as alternativas consideradas?
+
+## Decisão
+
+O que foi decidido? Seja específico e acionável.
+
+## Consequências
+
+### Positivas
+- Benefício 1
+- Benefício 2
+
+### Negativas / Riscos
+- Custo/Trade-off 1
+- Mitigação planejada
+
+### Neutras / Observações
+- Detalhe de implementação
+- Referência a issues, PRs ou discussões relacionadas
+
+---
+
+**Status:** Aceito / Proposto / Obsoleto / Substituído por NNN
+**Data:** YYYY-MM-DD
+**Autor(es):** Nome(s)
+```
+
+## Lista de ADRs
+
+| ID | Título | Status | Data |
+|---|---|---|---|
+| 001 | Core independente de DOM e Storage | Aceito | 2026-09-08 |
+| 002 | Parser isolado da lógica de UI | Aceito | 2026-09-08 |
+| 003 | Storage não contamina Core | Aceito | 2026-09-08 |
+| 004 | Idioma não contamina Core (AST canônica) | Aceito | 2026-09-08 |
+| 005 | Stack: TypeScript + Deno + Browser only | Aceito | 2026-09-08 |
+| 006 | Build pipeline: deno task build / dev / export / taskjuggler | Aceito | 2026-09-08 |
+| 007 | Workspace Deno com packages independentes | Aceito | 2026-09-08 |
+| 008 | Biblioteca de testes: `@std/testing/bdd` padrão | Aceito | 2026-09-08 |
+| 009 | Novos pacotes: language, richtext, markdown | Aceito | 2026-09-10 |
+| 010 | Testes de integração para validação do workspace | Aceito | 2026-09-10 |
+| 011 | Configuração do deno.jsonc para Fase 1 | Aceito | 2026-09-10 |
+
+> **Nota:** Manter esta tabela atualizada manualmente ou via script ao adicionar novos ADRs.
 ````
 
 ---

@@ -54,7 +54,7 @@ function getCustomStore(dbName?: string, storeName = 'keyval',): UseStore | unde
   return storeCache.get(cacheKey,);
 }
 
-function formatDbEntries(rawEntries: [IDBValidKey, any,][], prefix?: string,) {
+function formatDbEntries(rawEntries: [IDBValidKey, unknown,][], prefix?: string,) {
   let items = rawEntries;
   if (prefix) items = items.filter(([k,],) => typeof k === 'string' && k.startsWith(prefix,));
   return items.map(([k, v,],) => formatDbItem(k, v, prefix,));
@@ -87,7 +87,7 @@ export const globalSwDbAPI = {
     opts?: DbStoreOptions,
   ): Promise<string> => {
     let keyToSave: string | undefined;
-    let valToSave: any;
+    let valToSave: unknown;
     let options: DbStoreOptions = opts || {};
     if (typeof keyOrVal !== 'string') {
       keyToSave = undefined;
@@ -113,7 +113,7 @@ export const globalSwDbAPI = {
     await globalSwDbAPI.set(key, newVal, opts,);
   },
 
-  patch: async <T extends Record<string, any>, C = any,>(
+  patch: async <T extends Record<string, unknown>, C = unknown,>(
     key: string,
     patchOrFn: Partial<T> | ((prev: WithId<T>, ctx?: C,) => T | Partial<T>),
     context?: C,
@@ -123,7 +123,7 @@ export const globalSwDbAPI = {
     const rawKey = opts?.prefix && !key.startsWith(opts.prefix,) ? `${opts.prefix}${key}` : key;
     const current = (await get(rawKey, store,)) || {};
 
-    let updated: any;
+    let updated: unknown;
     if (typeof patchOrFn === 'function') {
       updated = patchOrFn(formatDbItem(rawKey, current, opts?.prefix,) as WithId<T>, context,);
     } else {
@@ -154,9 +154,9 @@ export const globalSwDbAPI = {
     );
   },
 
-  setMany: async (entriesList: [string, any,][], opts?: DbStoreOptions,): Promise<void> => {
+  setMany: async (entriesList: [string, unknown,][], opts?: DbStoreOptions,): Promise<void> => {
     const store = getCustomStore(opts?.dbName, opts?.storeName,);
-    const entriesToSet: [string, any,][] = entriesList.map(([k, v,],) => {
+    const entriesToSet: [string, unknown,][] = entriesList.map(([k, v,],) => {
       const { key, cleanVal, } = prepareForSave(k, v, opts?.prefix,);
       return [key, cleanVal,];
     },);
@@ -209,7 +209,7 @@ export const globalSwDbAPI = {
     }
   },
 
-  query: async <T, R, C = any,>(
+  query: async <T, R, C = unknown,>(
     fn: (items: WithId<T>[], ctx?: C,) => R,
     context?: C,
     opts?: DbStoreOptions,
@@ -220,7 +220,7 @@ export const globalSwDbAPI = {
     return fn(formattedItems as WithId<T>[], context,);
   },
 
-  getSome: async <T, C = any,>(
+  getSome: async <T, C = unknown,>(
     fn: (items: WithId<T>[], ctx?: C,) => WithId<T>[],
     context?: C,
     opts?: DbStoreOptions,
@@ -235,7 +235,7 @@ export const globalSwDbAPI = {
     return selectedItems;
   },
 
-  delSome: async <T, C = any,>(
+  delSome: async <T, C = unknown,>(
     fn: (items: WithId<T>[], ctx?: C,) => WithId<T>[],
     context?: C,
     opts?: DbStoreOptions,
@@ -249,7 +249,7 @@ export const globalSwDbAPI = {
       throw new Error('A função injetada em DEL_SOME deve retornar um Array.',);
     }
 
-    const keysToDelete: string[] = selectedItems.map((item: any,) => {
+    const keysToDelete: string[] = selectedItems.map((item: unknown,) => {
       if (!item || item._id === undefined) {
         throw new Error("Os itens retornados em DEL_SOME precisam conter a propriedade '_id'.",);
       }
@@ -260,7 +260,7 @@ export const globalSwDbAPI = {
     await delMany(keysToDelete, store,);
   },
 
-  setSome: async <T, C = any,>(
+  setSome: async <T, C = unknown,>(
     selectFn: (items: WithId<T>[], ctx?: C,) => WithId<T>[],
     updateFn: (item: WithId<T>, ctx?: C,) => WithId<T>,
     context?: C,
@@ -275,7 +275,7 @@ export const globalSwDbAPI = {
       throw new Error('A função de seleção em SET_SOME deve retornar um Array.',);
     }
 
-    const entriesToSet: [string, any,][] = selectedItems.map((item: any,) => {
+    const entriesToSet: [string, unknown,][] = selectedItems.map((item: unknown,) => {
       if (!item || item._id === undefined) {
         throw new Error("Os itens selecionados no SET_SOME precisam conter a propriedade '_id'.",);
       }
@@ -286,7 +286,7 @@ export const globalSwDbAPI = {
     await setMany(entriesToSet, store,);
   },
 
-  exportDB: async (opts?: DbStoreOptions,): Promise<Record<string, any>> => {
+  exportDB: async (opts?: DbStoreOptions,): Promise<Record<string, unknown>> => {
     const store = getCustomStore(opts?.dbName, opts?.storeName,);
     const allEntries = await entries(store,);
     const filtered = opts?.prefix
@@ -296,14 +296,14 @@ export const globalSwDbAPI = {
   },
 
   importDB: async (
-    data: Record<string, any>,
+    data: Record<string, unknown>,
     clearFirst = false,
     opts?: DbStoreOptions,
   ): Promise<void> => {
     const store = getCustomStore(opts?.dbName, opts?.storeName,);
     if (clearFirst) await globalSwDbAPI.clear(opts,);
 
-    const entriesToImport: [string, any,][] = Object.entries(data,).map(([k, v,],) => {
+    const entriesToImport: [string, unknown,][] = Object.entries(data,).map(([k, v,],) => {
       const { key, cleanVal, } = prepareForSave(k, v, opts?.prefix,);
       return [key, cleanVal,];
     },);
@@ -348,7 +348,7 @@ export const globalSwDbAPI = {
     const store = getCustomStore(opts?.dbName, opts?.storeName,);
     if (clearFirst) await globalSwDbAPI.clear(opts,);
 
-    const entriesToImport: [string, any,][] = Object.entries(data,).map(([k, v,],) => {
+    const entriesToImport: [string, unknown,][] = Object.entries(data,).map(([k, v,],) => {
       const { key, cleanVal, } = prepareForSave(k, v, opts?.prefix,);
       return [key, cleanVal,];
     },);
@@ -363,7 +363,7 @@ export const globalSwOpfsAPI = {
     const rawKey = opts?.prefix && !key.startsWith(opts.prefix,) ? `${opts.prefix}${key}` : key;
     const dir = await getRecordDir(opts?.basePath, rawKey, true,);
     const filesList = [];
-    // @ts-ignore
+    // @ts-ignore: Deno API for directory entries
     for await (const [name, handle,] of dir.entries()) {
       if (handle.kind === 'file') {
         const file = await handle.getFile();
@@ -456,7 +456,7 @@ export const globalSwOpfsAPI = {
     const dir = await getRecordDir(opts?.basePath, rawKey, false,);
     const filesRecord: Record<string, Uint8Array> = {};
 
-    // @ts-ignore
+    // @ts-ignore: Deno API for directory entries
     for await (const [name, handle,] of dir.entries()) {
       if (handle.kind === 'file' && (!filesToZip || filesToZip.includes(name,))) {
         const f = await handle.getFile();
@@ -467,7 +467,7 @@ export const globalSwOpfsAPI = {
     const zippedData = zipSync(filesRecord,);
     const zipFileHandle = await dir.getFileHandle(zipName, { create: true, },);
     const w = await zipFileHandle.createWritable();
-    await w.write(new Blob([zippedData as any,],),);
+    await w.write(new Blob([zippedData as Uint8Array,],),);
     await w.close();
 
     if (deleteOriginals) {
@@ -491,7 +491,7 @@ export const globalSwOpfsAPI = {
       if (!name.includes('/',)) {
         const fh = await dir.getFileHandle(name, { create: true, },);
         const w = await fh.createWritable();
-        await w.write(new Blob([data as any,],),);
+        await w.write(new Blob([data as Uint8Array,],),);
         await w.close();
       }
     }
@@ -516,7 +516,7 @@ export const globalSwOpfsAPI = {
 
     const newZippedData = zipSync(currentZipData,);
     const w = await zipFileHandle.createWritable();
-    await w.write(new Blob([newZippedData as any,],),);
+    await w.write(new Blob([newZippedData as Uint8Array,],),);
     await w.close();
   },
 
@@ -536,7 +536,7 @@ export const globalSwOpfsAPI = {
 
     const newZippedData = zipSync(currentZipData,);
     const w = await zipFileHandle.createWritable();
-    await w.write(new Blob([newZippedData as any,],),);
+    await w.write(new Blob([newZippedData as Uint8Array,],),);
     await w.close();
   },
 };
@@ -552,32 +552,32 @@ export function createScopedDb(dbName?: string, storeName = 'keyval', prefix = '
       globalSwDbAPI.set<T>(keyOrVal as any, val as any, opts,),
     update: <T,>(key: string, updater: (val: WithId<T> | undefined,) => T,) =>
       globalSwDbAPI.update<T>(key, updater, opts,),
-    patch: <T extends Record<string, any>, C = any,>(
+    patch: <T extends Record<string, unknown>, C = unknown,>(
       key: string,
       patchOrFn: Partial<T> | ((prev: WithId<T>, ctx?: C,) => T | Partial<T>),
       context?: C,
     ) => globalSwDbAPI.patch<T, C>(key, patchOrFn, context, opts,),
     delete: (key: string,) => globalSwDbAPI.delete(key, opts,),
     getMany: <T,>(keys: string[],) => globalSwDbAPI.getMany<T>(keys, opts,),
-    setMany: (entries: [string, any,][],) => globalSwDbAPI.setMany(entries, opts,),
+    setMany: (entries: [string, unknown,][],) => globalSwDbAPI.setMany(entries, opts,),
     deleteMany: (keys: string[],) => globalSwDbAPI.deleteMany(keys, opts,),
     keys: () => globalSwDbAPI.keys(opts,),
     values: <T,>() => globalSwDbAPI.values<T>(opts,),
     entries: <T,>() => globalSwDbAPI.entries<T>(opts,),
     clear: () => globalSwDbAPI.clear(opts,),
-    query: <T, R, C = any,>(fn: (items: WithId<T>[], ctx?: C,) => R, context?: C,) =>
+    query: <T, R, C = unknown,>(fn: (items: WithId<T>[], ctx?: C,) => R, context?: C,) =>
       globalSwDbAPI.query<T, R, C>(fn, context, opts,),
-    getSome: <T, C = any,>(fn: (items: WithId<T>[], ctx?: C,) => WithId<T>[], context?: C,) =>
+    getSome: <T, C = unknown,>(fn: (items: WithId<T>[], ctx?: C,) => WithId<T>[], context?: C,) =>
       globalSwDbAPI.getSome<T, C>(fn, context, opts,),
-    delSome: <T, C = any,>(fn: (items: WithId<T>[], ctx?: C,) => WithId<T>[], context?: C,) =>
+    delSome: <T, C = unknown,>(fn: (items: WithId<T>[], ctx?: C,) => WithId<T>[], context?: C,) =>
       globalSwDbAPI.delSome<T, C>(fn, context, opts,),
-    setSome: <T, C = any,>(
+    setSome: <T, C = unknown,>(
       selectFn: (items: WithId<T>[], ctx?: C,) => WithId<T>[],
       updateFn: (item: WithId<T>, ctx?: C,) => WithId<T>,
       context?: C,
     ) => globalSwDbAPI.setSome<T, C>(selectFn, updateFn, context, opts,),
     exportDB: () => globalSwDbAPI.exportDB(opts,),
-    importDB: (data: Record<string, any>, clearFirst = false,) =>
+    importDB: (data: Record<string, unknown>, clearFirst = false,) =>
       globalSwDbAPI.importDB(data, clearFirst, opts,),
     backupToOpfs: (key: string, fileName?: string,) =>
       globalSwDbAPI.backupToOpfs(key, fileName, opts,),
