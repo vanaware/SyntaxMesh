@@ -58,7 +58,7 @@ export function initializeSwEventAdapter() {
   self.addEventListener('online', (event: any,) => {
     // ✅ Chave exata do EventMap
     EventBus.emit('syntaxmesh:network:online',);
-    handleOnline(event,);
+    //handleOnline(event,);
   },);
 
   self.addEventListener('offline', (event: any,) => {

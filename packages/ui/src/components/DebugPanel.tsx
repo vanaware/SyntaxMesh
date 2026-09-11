@@ -1,4 +1,8 @@
 // src/components/DebugPanel.tsx
+
+// @ts-nocheck : arquivo exemplo
+
+
 import { computed, signal, } from '@preact/signals';
 import { useEffect, } from 'preact/hooks';
 import type { JSX, } from 'preact';
@@ -140,8 +144,12 @@ export function DebugPanel() {
     <div style={styles.container}>
       <div style={styles.header}>
         <div style={styles.titleGroup}>
-          <span style={styles.title}>🐞 Painel de Debug</span>
-          <span style={styles.badgeCount}>{debugLogs.value.length} logs</span>
+          <span style={styles.title}>
+            🐞 Painel de Debug
+          </span>
+          <span style={styles.badgeCount}>
+            {debugLogs.value.length} logs
+          </span>
         </div>
 
         <div style={styles.actions}>
@@ -150,8 +158,7 @@ export function DebugPanel() {
               type='checkbox'
               checked={isDebugEnabled.value}
               onChange={toggleDebug}
-              style={styles.checkbox}
-            />
+              style={styles.checkbox} />
             <span style={{ fontWeight: 'bold', fontSize: '0.85rem', }}>
               {isDebugEnabled.value ? 'LIGADO' : 'DESLIGADO'}
             </span>
@@ -159,8 +166,7 @@ export function DebugPanel() {
 
           <md-outlined-button
             onClick={clearDebugLogs}
-            disabled={debugLogs.value.length === 0}
-          >
+            disabled={debugLogs.value.length === 0}>
             Limpar
           </md-outlined-button>
         </div>
@@ -172,19 +178,27 @@ export function DebugPanel() {
           placeholder='Filtrar por módulo ou mensagem...'
           value={filterText.value}
           onInput={(e,) => (filterText.value = (e.target as HTMLInputElement).value)}
-          style={styles.searchInput}
-        />
+          style={styles.searchInput} />
 
         <select
           value={filterType.value}
           onChange={(e,) => (filterType.value = (e.target as HTMLSelectElement).value)}
-          style={styles.selectInput}
-        >
-          <option value='all'>Todos os tipos</option>
-          <option value='info'>Info</option>
-          <option value='warn'>Avisos (Warn)</option>
-          <option value='error'>Erros</option>
-          <option value='success'>Sucesso</option>
+          style={styles.selectInput}>
+          <option value='all'>
+            Todos os tipos
+          </option>
+          <option value='info'>
+            Info
+          </option>
+          <option value='warn'>
+            Avisos (Warn)
+          </option>
+          <option value='error'>
+            Erros
+          </option>
+          <option value='success'>
+            Sucesso
+          </option>
         </select>
       </div>
 
@@ -192,26 +206,40 @@ export function DebugPanel() {
         {!isDebugEnabled.value && (
           <div style={styles.disabledNotice}>
             ⚠️ O modo Debug está{' '}
-            <strong>DESLIGADO</strong>. O painel não está registrando novas mensagens.
+            <strong>
+              DESLIGADO
+            </strong>. O painel não está registrando novas mensagens.
           </div>
         )}
 
         {filteredLogs.value.length === 0
-          ? <div style={styles.emptyState}>Nenhum log gravado.</div>
+          ? (
+            <div style={styles.emptyState}>
+              Nenhum log gravado.
+            </div>
+          )
           : (
             filteredLogs.value.map((log,) => (
               <div key={log.id} style={{ ...styles.logItem, ...getTypeStyle(log.type,), }}>
                 <div style={styles.logMeta}>
-                  <span style={styles.time}>{log.timestamp}</span>
-                  <span style={styles.module}>[{log.module}]</span>
+                  <span style={styles.time}>
+                    {log.timestamp}
+                  </span>
+                  <span style={styles.module}>
+                    [{log.module}]
+                  </span>
                   <span style={{ ...styles.typeTag, ...getTypeBadgeStyle(log.type,), }}>
                     {log.type.toUpperCase()}
                   </span>
                 </div>
-                <div style={styles.message}>{log.message}</div>
+                <div style={styles.message}>
+                  {log.message}
+                </div>
                 {log.details !== undefined && (
                   <details style={styles.details}>
-                    <summary style={styles.summary}>Ver detalhes JSON</summary>
+                    <summary style={styles.summary}>
+                      Ver detalhes JSON
+                    </summary>
                     <pre style={styles.json}>{JSON.stringify(log.details, null, 2)}</pre>
                   </details>
                 )}

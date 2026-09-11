@@ -97,25 +97,6 @@
         }
       },
       {
-        "id": "gemini-2.5-pro",
-        "name": "gemini-2.5-pro",
-        "baseUrl": "https://generativelanguage.googleapis.com",
-        "envKey": "GEMINI_API_KEY",
-        "generationConfig": {
-          "enableCacheControl": true,
-          "timeout": 180000,
-          "maxRetries": 5,
-          "retryInitialDelayMs": 3000,
-          "retryMaxDelayMs": 60000,
-          "contextWindowSize": 128000,
-          "samplingParams": {
-            "temperature": 0.2,
-            "top_p": 0.95,
-            "max_tokens": 8192
-          }
-        }
-      },
-      {
         "id": "gemini-3.1-flash-lite-image",
         "name": "gemini-3.1-flash-lite-image",
         "baseUrl": "https://generativelanguage.googleapis.com",
@@ -383,62 +364,342 @@
         }
       },
       {
-        "id": "qwen-vl-max",
-        "name": "Qwen VL Max (DashScope)",
-        "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
-        "envKey": "DASHSCOPE_API_KEY",
-        "generationConfig": {
-          "modalities": { "image": true },
-          "timeout": 180000,
-          "maxRetries": 5,
-          "retryInitialDelayMs": 3000,
-          "retryMaxDelayMs": 60000,
-          "contextWindowSize": 65536,
-          "samplingParams": { "temperature": 0.2, "top_p": 0.95, "max_tokens": 8192 }
-        }
-      },
-      {
-        "id": "qwen-plus-character",
-        "name": "Qwen Plus Character (DashScope)",
-        "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
-        "envKey": "DASHSCOPE_API_KEY",
-        "generationConfig": {
-          "timeout": 180000,
-          "maxRetries": 3,
-          "retryInitialDelayMs": 3000,
-          "retryMaxDelayMs": 30000,
-          "contextWindowSize": 65536,
-          "samplingParams": { "temperature": 0.4, "top_p": 0.95, "max_tokens": 4096 }
-        }
-      },
-      {
-        "id": "qwen-flash-character",
-        "name": "Qwen Flash Character (DashScope)",
-        "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
-        "envKey": "DASHSCOPE_API_KEY",
-        "generationConfig": {
-          "timeout": 120000,
-          "maxRetries": 3,
-          "retryInitialDelayMs": 2000,
-          "retryMaxDelayMs": 30000,
-          "contextWindowSize": 65536,
-          "samplingParams": { "temperature": 0.4, "top_p": 0.95, "max_tokens": 4096 }
-        }
-      },
-      {
-        "id": "qwen-mt-plus",
-        "name": "Qwen MT Plus Translation (DashScope)",
-        "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
-        "envKey": "DASHSCOPE_API_KEY",
-        "generationConfig": {
-          "timeout": 120000,
-          "maxRetries": 3,
-          "retryInitialDelayMs": 2000,
-          "retryMaxDelayMs": 30000,
-          "contextWindowSize": 32768,
-          "samplingParams": { "temperature": 0.1, "top_p": 0.95, "max_tokens": 4096 }
-        }
-      }
+    "id": "qwen3-235b-a22b",
+    "name": "Qwen3 235B A22B (DashScope Free)",
+    "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+    "envKey": "DASHSCOPE_API_KEY",
+    "generationConfig": {
+      "timeout": 300000,
+      "maxRetries": 5,
+      "retryInitialDelayMs": 3000,
+      "retryMaxDelayMs": 60000,
+      "contextWindowSize": 128000,
+      "samplingParams": { "temperature": 0.2, "top_p": 0.95, "max_tokens": 8192 }
+    }
+  },
+  {
+    "id": "qwen3.6-flash-2026-04-16",
+    "name": "Qwen3.6 Flash (DashScope Free)",
+    "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+    "envKey": "DASHSCOPE_API_KEY",
+    "generationConfig": {
+      "timeout": 180000,
+      "maxRetries": 5,
+      "retryInitialDelayMs": 3000,
+      "retryMaxDelayMs": 60000,
+      "contextWindowSize": 128000,
+      "samplingParams": { "temperature": 0.2, "top_p": 0.95, "max_tokens": 8192 }
+    }
+  },
+  {
+    "id": "qwen3.5-flash-2026-02-23",
+    "name": "Qwen3.5 Flash (DashScope Free)",
+    "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+    "envKey": "DASHSCOPE_API_KEY",
+    "generationConfig": {
+      "timeout": 180000,
+      "maxRetries": 5,
+      "retryInitialDelayMs": 3000,
+      "retryMaxDelayMs": 60000,
+      "contextWindowSize": 128000,
+      "samplingParams": { "temperature": 0.2, "top_p": 0.95, "max_tokens": 8192 }
+    }
+  },
+  {
+    "id": "qwen-plus-2025-12-01",
+    "name": "Qwen Plus Latest (DashScope Free)",
+    "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+    "envKey": "DASHSCOPE_API_KEY",
+    "generationConfig": {
+      "timeout": 180000,
+      "maxRetries": 5,
+      "retryInitialDelayMs": 3000,
+      "retryMaxDelayMs": 60000,
+      "contextWindowSize": 128000,
+      "samplingParams": { "temperature": 0.2, "top_p": 0.95, "max_tokens": 8192 }
+    }
+  },
+  {
+    "id": "qwen-plus-2025-09-11",
+    "name": "Qwen Plus 0911 (DashScope Free)",
+    "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+    "envKey": "DASHSCOPE_API_KEY",
+    "generationConfig": {
+      "timeout": 180000,
+      "maxRetries": 5,
+      "retryInitialDelayMs": 3000,
+      "retryMaxDelayMs": 60000,
+      "contextWindowSize": 128000,
+      "samplingParams": { "temperature": 0.2, "top_p": 0.95, "max_tokens": 8192 }
+    }
+  },
+  {
+    "id": "qwen-plus-2025-07-14",
+    "name": "Qwen Plus 0714 (DashScope Free)",
+    "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+    "envKey": "DASHSCOPE_API_KEY",
+    "generationConfig": {
+      "timeout": 180000,
+      "maxRetries": 5,
+      "retryInitialDelayMs": 3000,
+      "retryMaxDelayMs": 60000,
+      "contextWindowSize": 128000,
+      "samplingParams": { "temperature": 0.2, "top_p": 0.95, "max_tokens": 8192 }
+    }
+  },
+  {
+    "id": "qwen3-30b-a3b",
+    "name": "Qwen3 30B A3B (DashScope Free)",
+    "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+    "envKey": "DASHSCOPE_API_KEY",
+    "generationConfig": {
+      "timeout": 180000,
+      "maxRetries": 5,
+      "retryInitialDelayMs": 3000,
+      "retryMaxDelayMs": 60000,
+      "contextWindowSize": 128000,
+      "samplingParams": { "temperature": 0.2, "top_p": 0.95, "max_tokens": 8192 }
+    }
+  },
+  {
+    "id": "qwen3-30b-a3b-thinking-2507",
+    "name": "Qwen3 30B A3B Thinking (DashScope Free)",
+    "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+    "envKey": "DASHSCOPE_API_KEY",
+    "generationConfig": {
+      "timeout": 300000,
+      "maxRetries": 5,
+      "retryInitialDelayMs": 5000,
+      "retryMaxDelayMs": 60000,
+      "contextWindowSize": 128000,
+      "samplingParams": { "temperature": 0.2, "top_p": 0.95, "max_tokens": 8192 }
+    }
+  },
+  {
+    "id": "qvq-max",
+    "name": "QVQ Max Visual Reasoning (DashScope Free)",
+    "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+    "envKey": "DASHSCOPE_API_KEY",
+    "generationConfig": {
+      "modalities": { "image": true },
+      "timeout": 300000,
+      "maxRetries": 5,
+      "retryInitialDelayMs": 5000,
+      "retryMaxDelayMs": 60000,
+      "contextWindowSize": 128000,
+      "samplingParams": { "temperature": 0.2, "top_p": 0.95, "max_tokens": 8192 }
+    }
+  },
+  {
+    "id": "qwen-vl-max",
+    "name": "Qwen VL Max (DashScope Free)",
+    "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+    "envKey": "DASHSCOPE_API_KEY",
+    "generationConfig": {
+      "modalities": { "image": true },
+      "timeout": 180000,
+      "maxRetries": 5,
+      "retryInitialDelayMs": 3000,
+      "retryMaxDelayMs": 60000,
+      "contextWindowSize": 65536,
+      "samplingParams": { "temperature": 0.2, "top_p": 0.95, "max_tokens": 8192 }
+    }
+  },
+  {
+    "id": "qwen-vl-plus",
+    "name": "Qwen VL Plus (DashScope Free)",
+    "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+    "envKey": "DASHSCOPE_API_KEY",
+    "generationConfig": {
+      "modalities": { "image": true },
+      "timeout": 180000,
+      "maxRetries": 5,
+      "retryInitialDelayMs": 3000,
+      "retryMaxDelayMs": 60000,
+      "contextWindowSize": 65536,
+      "samplingParams": { "temperature": 0.2, "top_p": 0.95, "max_tokens": 8192 }
+    }
+  },
+  {
+    "id": "qwen3-vl-plus",
+    "name": "Qwen3 VL Plus (DashScope Free)",
+    "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+    "envKey": "DASHSCOPE_API_KEY",
+    "generationConfig": {
+      "modalities": { "image": true },
+      "timeout": 180000,
+      "maxRetries": 5,
+      "retryInitialDelayMs": 3000,
+      "retryMaxDelayMs": 60000,
+      "contextWindowSize": 128000,
+      "samplingParams": { "temperature": 0.2, "top_p": 0.95, "max_tokens": 8192 }
+    }
+  },
+  {
+    "id": "qwen3-vl-plus-2025-12-19",
+    "name": "Qwen3 VL Plus 1219 (DashScope Free)",
+    "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+    "envKey": "DASHSCOPE_API_KEY",
+    "generationConfig": {
+      "modalities": { "image": true },
+      "timeout": 180000,
+      "maxRetries": 5,
+      "retryInitialDelayMs": 3000,
+      "retryMaxDelayMs": 60000,
+      "contextWindowSize": 128000,
+      "samplingParams": { "temperature": 0.2, "top_p": 0.95, "max_tokens": 8192 }
+    }
+  },
+  {
+    "id": "qwen3-vl-plus-2025-09-23",
+    "name": "Qwen3 VL Plus 0923 (DashScope Free)",
+    "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+    "envKey": "DASHSCOPE_API_KEY",
+    "generationConfig": {
+      "modalities": { "image": true },
+      "timeout": 180000,
+      "maxRetries": 5,
+      "retryInitialDelayMs": 3000,
+      "retryMaxDelayMs": 60000,
+      "contextWindowSize": 128000,
+      "samplingParams": { "temperature": 0.2, "top_p": 0.95, "max_tokens": 8192 }
+    }
+  },
+  {
+    "id": "qwen3-vl-flash-2025-10-15",
+    "name": "Qwen3 VL Flash 1015 (DashScope Free)",
+    "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+    "envKey": "DASHSCOPE_API_KEY",
+    "generationConfig": {
+      "modalities": { "image": true },
+      "timeout": 180000,
+      "maxRetries": 5,
+      "retryInitialDelayMs": 3000,
+      "retryMaxDelayMs": 60000,
+      "contextWindowSize": 128000,
+      "samplingParams": { "temperature": 0.2, "top_p": 0.95, "max_tokens": 8192 }
+    }
+  },
+  {
+    "id": "qwen3-vl-235b-a22b-instruct",
+    "name": "Qwen3 VL 235B Instruct (DashScope Free)",
+    "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+    "envKey": "DASHSCOPE_API_KEY",
+    "generationConfig": {
+      "modalities": { "image": true },
+      "timeout": 300000,
+      "maxRetries": 5,
+      "retryInitialDelayMs": 5000,
+      "retryMaxDelayMs": 60000,
+      "contextWindowSize": 128000,
+      "samplingParams": { "temperature": 0.2, "top_p": 0.95, "max_tokens": 8192 }
+    }
+  },
+  {
+    "id": "qwen3-vl-235b-a22b-thinking",
+    "name": "Qwen3 VL 235B Thinking (DashScope Free)",
+    "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+    "envKey": "DASHSCOPE_API_KEY",
+    "generationConfig": {
+      "modalities": { "image": true },
+      "timeout": 300000,
+      "maxRetries": 5,
+      "retryInitialDelayMs": 5000,
+      "retryMaxDelayMs": 60000,
+      "contextWindowSize": 128000,
+      "samplingParams": { "temperature": 0.2, "top_p": 0.95, "max_tokens": 8192 }
+    }
+  },
+  {
+    "id": "qwen3-vl-32b-instruct",
+    "name": "Qwen3 VL 32B Instruct (DashScope Free)",
+    "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+    "envKey": "DASHSCOPE_API_KEY",
+    "generationConfig": {
+      "modalities": { "image": true },
+      "timeout": 180000,
+      "maxRetries": 5,
+      "retryInitialDelayMs": 3000,
+      "retryMaxDelayMs": 60000,
+      "contextWindowSize": 128000,
+      "samplingParams": { "temperature": 0.2, "top_p": 0.95, "max_tokens": 8192 }
+    }
+  },
+  {
+    "id": "qwen3-vl-32b-thinking",
+    "name": "Qwen3 VL 32B Thinking (DashScope Free)",
+    "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+    "envKey": "DASHSCOPE_API_KEY",
+    "generationConfig": {
+      "modalities": { "image": true },
+      "timeout": 300000,
+      "maxRetries": 5,
+      "retryInitialDelayMs": 5000,
+      "retryMaxDelayMs": 60000,
+      "contextWindowSize": 128000,
+      "samplingParams": { "temperature": 0.2, "top_p": 0.95, "max_tokens": 8192 }
+    }
+  },
+  {
+    "id": "qwen3-vl-30b-a3b-instruct",
+    "name": "Qwen3 VL 30B A3B Instruct (DashScope Free)",
+    "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+    "envKey": "DASHSCOPE_API_KEY",
+    "generationConfig": {
+      "modalities": { "image": true },
+      "timeout": 180000,
+      "maxRetries": 5,
+      "retryInitialDelayMs": 3000,
+      "retryMaxDelayMs": 60000,
+      "contextWindowSize": 128000,
+      "samplingParams": { "temperature": 0.2, "top_p": 0.95, "max_tokens": 8192 }
+    }
+  },
+  {
+    "id": "qwen3-vl-30b-a3b-thinking",
+    "name": "Qwen3 VL 30B A3B Thinking (DashScope Free)",
+    "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+    "envKey": "DASHSCOPE_API_KEY",
+    "generationConfig": {
+      "modalities": { "image": true },
+      "timeout": 300000,
+      "maxRetries": 5,
+      "retryInitialDelayMs": 5000,
+      "retryMaxDelayMs": 60000,
+      "contextWindowSize": 128000,
+      "samplingParams": { "temperature": 0.2, "top_p": 0.95, "max_tokens": 8192 }
+    }
+  },
+  {
+    "id": "qwen3-vl-8b-instruct",
+    "name": "Qwen3 VL 8B Instruct (DashScope Free)",
+    "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+    "envKey": "DASHSCOPE_API_KEY",
+    "generationConfig": {
+      "modalities": { "image": true },
+      "timeout": 120000,
+      "maxRetries": 3,
+      "retryInitialDelayMs": 2000,
+      "retryMaxDelayMs": 30000,
+      "contextWindowSize": 65536,
+      "samplingParams": { "temperature": 0.2, "top_p": 0.95, "max_tokens": 4096 }
+    }
+  },
+  {
+    "id": "qwen3-vl-8b-thinking",
+    "name": "Qwen3 VL 8B Thinking (DashScope Free)",
+    "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+    "envKey": "DASHSCOPE_API_KEY",
+    "generationConfig": {
+      "modalities": { "image": true },
+      "timeout": 180000,
+      "maxRetries": 3,
+      "retryInitialDelayMs": 2000,
+      "retryMaxDelayMs": 30000,
+      "contextWindowSize": 65536,
+      "samplingParams": { "temperature": 0.2, "top_p": 0.95, "max_tokens": 4096 }
+    }
+  }
     ]
   },
   "permissions": {
@@ -450,8 +711,8 @@
   },
   "$version": 4,
   "model": {
-    "name": "qwen3-vl-flash-2026-01-22",
-    "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+    "name": "gemini-3.8-flash",
+    "baseUrl": "https://generativelanguage.googleapis.com",
     "reasoningEffort": "high",
     "generationConfig": {
       "enableCacheControl": true,
@@ -467,20 +728,21 @@
       }
     }
   },
-  "modelFallbacks": "gemini-pro-latest,nvidia/nemotron-3-ultra-550b-a55b:free,nvidia/nemotron-3-super-120b-a12b:free",
+  "modelFallbacks": "qwen3.6-flash-2026-04-16,qwen-plus-latest,cohere/north-mini-code:free",
   "fastModel": "gemini-flash-lite-latest",
-  "compactionModel": "gemma-4-31b-it",
+  "compactionModel": "qwen-flash-2025-07-28",
   "advisorModel": "gemini-3.8-flash",
   "imageModel": "gemini-3.1-flash-lite-image",
   "security": {
     "auth": {
-      "selectedType": "openai"
+      "selectedType": "gemini"
     }
   },
   "providerMetadata": {
     "alibabaStandard": {
       "version": "eb53d39c7be9f3c3ca90c14d53d77cfb62386a817dc8bb366ae21b755b2d47f7",
-      "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
+      "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+      "ignoredVersion": "a5c548c3dae51a6aacafd3b3a657a8484a0e2c1915ec23bce4b1fae9d123208f"
     },
     "openrouter": {
       "version": "6ac6b64cdf1c6eab3ad7b69d0a718a5cae0d3e4eb8d11f74471f49c929a9a702",

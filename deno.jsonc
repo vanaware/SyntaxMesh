@@ -38,8 +38,10 @@
    },
    // 🛠️ Scripts de Automação
    "tasks": {
-     "test": "deno test -A tests/**/*test.ts packages/**/tests/**/*test.ts",
-     "check": "deno check build.ts esbuild.ts export.ts tests/**/*test.ts packages/**/tests/**/*test.ts packages/**/src/**/*.ts",
+     "test": "deno test -P",
+     "lint": "deno lint",
+     "fmt": "deno fmt --check",
+     "check": "deno check build.ts esbuild.ts export.ts tests/**/*test.ts packages/**/tests/**/*test.ts packages/**/src/**/*.{ts,tsx}",
      "tests": "deno task check && deno task test",
      "dev": "deno task --cwd packages/server dev",
      "start": "deno task --cwd packages/server start",
@@ -65,10 +67,6 @@
       "packages/**/src/**/*.{ts,tsx}",
       "tests/**/*test.ts",
       "packages/**/tests/**/*test.ts"
-    ],
-    "exclude": [
-      "packages/server/build/", 
-      "packages/worker-db/build/"
     ]
   },
   "test": {
@@ -124,5 +122,13 @@
       "packages/worker-db/build/"
     ]
   },
-  "unstable": ["bundle"]
+  "unstable": ["bundle"],
+  "exclude": [
+      "packages/server/build/", 
+      "packages/worker-db/build/",
+      "vendor",
+      "node_modules",
+      "snapshots",
+      "docs"
+    ]
  }

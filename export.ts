@@ -90,7 +90,7 @@ export const CONFIGURACOES: Record<ModoExportacao, ExportConfig> = {
     arquivosRaizPermitidos: [
       '03-arquitetura.md',
       '01-visao.md',
-      '09-regras-para-ia.md'
+      '09-regras-para-ia.md',
     ],
     incluiVersao: false,
     instrucaoCustomizada:
@@ -104,7 +104,7 @@ export const CONFIGURACOES: Record<ModoExportacao, ExportConfig> = {
     subpastasPermitidas: ['fases',],
     arquivosRaizPermitidos: [
       '06-testes-e-processo.md',
-      '07-roadmap.md'
+      '07-roadmap.md',
     ],
     incluiVersao: false,
     instrucaoCustomizada:
@@ -124,21 +124,21 @@ export const CONFIGURACOES: Record<ModoExportacao, ExportConfig> = {
   },
   source: {
     arquivoSaida: 'snapshots/source.md',
-    extensoesPermitidas: ['.rb'],
+    extensoesPermitidas: ['.rb',],
     pastaBase: './docs/taskjuggler',
-    subpastasPermitidas: ['lib/taskjuggler'],
+    subpastasPermitidas: ['lib/taskjuggler',],
     arquivosRaizPermitidos: [],
     incluiVersao: false,
     instrucaoCustomizada:
       'O texto abaixo contém um snapshot do código fonte do projeto taskjuggler, em ruby.',
     default: false, // ✅ Roda por padrão
   },
-learning: {
+  learning: {
     arquivoSaida: 'snapshots/learning.md',
-    extensoesPermitidas: ['.tjp', '.md'],
+    extensoesPermitidas: ['.tjp', '.md',],
     pastaBase: './docs',
-    subpastasPermitidas: ['Learning'],
-    arquivosRaizPermitidos: ['README.md'],
+    subpastasPermitidas: ['Learning',],
+    arquivosRaizPermitidos: ['README.md',],
     incluiVersao: false,
     instrucaoCustomizada:
       'O texto abaixo contém um snapshot de arquivos de projetos do taskjuggler, para treinamento.',
