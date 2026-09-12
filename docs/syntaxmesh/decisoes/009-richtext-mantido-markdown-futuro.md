@@ -36,4 +36,4 @@ Manter o RichText como formato legado para compatibilidade com arquivos `.tjp` e
 
 **Status:** Aceito
 **Data:** 2026-09-11
-**Autor(es):** Qwen Code
+**Autor(es):** Vanaware

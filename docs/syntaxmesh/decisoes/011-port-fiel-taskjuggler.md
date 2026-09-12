@@ -37,4 +37,4 @@ Portar **fielmente** o algoritmo, classes e semântica do TaskJuggler 3.8.4 do R
 
 **Status:** Aceito
 **Data:** 2026-09-11
-**Autor(es):** Qwen Code
+**Autor(es):** Vanaware

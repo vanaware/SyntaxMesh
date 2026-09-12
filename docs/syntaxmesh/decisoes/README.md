@@ -64,11 +64,9 @@ O que foi decidido? Seja específico e acionável.
 | 006 | Build pipeline: deno task build / dev / export / taskjuggler | Aceito | 2026-09-08 |
 | 007 | Workspace Deno com packages independentes | Aceito | 2026-09-08 |
 | 008 | Biblioteca de testes: `@std/testing/bdd` padrão | Aceito | 2026-09-08 |
-| 009 | Novos pacotes: language, richtext, markdown | Aceito | 2026-09-10 |
-| 010 | Testes de integração para validação do workspace | Aceito | 2026-09-10 |
-| 011 | Configuração do deno.jsonc para Fase 1 | Aceito | 2026-09-10 |
-| 012 | RichText mantido, Markdown futuro | Aceito | 2026-09-11 |
-| 013 | worker-db centraliza storage | Aceito | 2026-09-11 |
-| 014 | Port fiel do TaskJuggler | Aceito | 2026-09-11 |
+| 009 | RichText mantido, Markdown futuro | Aceito | 2026-09-11 |
+| 010 | worker-db centraliza storage | Aceito | 2026-09-11 |
+| 011 | Port fiel do TaskJuggler | Aceito | 2026-09-11 |
+| 012 | TjTime em TypeScript | Aceito | 2026-09-11 |
 
 > **Nota:** Manter esta tabela atualizada manualmente ou via script ao adicionar novos ADRs.

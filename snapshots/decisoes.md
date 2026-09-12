@@ -8,7 +8,7 @@
 
 # Contexto Exportado do Projeto SyntaxMesh - Modo: DECISOES
 
-Gerado automaticamente em: 9/10/2026, 10:50:42 PM
+Gerado automaticamente em: 9/12/2026, 8:24:35 AM
 
 ---
 
@@ -88,647 +88,6 @@ A arquitetura central será:
 
 **Objetivo:** construir primeiro um motor sólido e testável; depois uma aplicação completa em cima dele.
 
-````
-
----
-
-## Arquivo: `docs/syntaxmesh/03-arquitetura.md`
-
-````md
-# Execução offline
-
-O SyntaxMesh deverá funcionar completamente sem servidor de aplicação.
-
-Arquitetura:
-
-```text
-                  Navegador
-                     │
-              ┌──────▼──────┐
-              │ SyntaxMesh  │
-              │    PWA      │
-              └──────┬──────┘
-                     │
-       ┌─────────────┼─────────────┐
-       │             │             │
-       ▼             ▼             ▼
-   IndexedDB       OPFS        Cache API
-       │             │             │
-       └─────────────┼─────────────┘
-                     │
-                  Offline
-```
-
-O servidor de hospedagem terá apenas a função de entregar arquivos estáticos.
-
-Não deverá existir:
-
-```text
-Browser → Application Server → Database
-```
-
-A arquitetura desejada é:
-
-```text
-Browser
-   │
-   ├── Application
-   ├── Core
-   ├── Parser
-   ├── Reports
-   ├── IndexedDB, OPFS no @syntaxmesh/worker-db
-   └── Service Worker
-```
-
-## Arquitetura geral
-
-A arquitetura principal será:
-
-```text
-SyntaxMesh
-│
-├── core
-├── parser
-├── report
-├── storage
-└── app
-```
-
-### Core
-
-Responsável pelo modelo e processamento do planejamento.
-
-Não poderá depender de:
-
-* Preact;
-* BeerCSS;
-* DOM;
-* window;
-* document;
-* worker-db com IndexedDB e OPFS;
-* Service Worker.
-
-O Core deverá ser executável em:
-
-* navegador;
-* Web Worker;
-* Deno;
-* testes automatizados.
-
-#### Divisão detalhada do Core
-
-O Core deve ser totalmente independente de DOM.
-
-```text
-packages/core/src/
-├── mod.ts
-├── errors.ts
-│
-├── model/
-│   ├── project.ts
-│   ├── task.ts
-│   ├── resource.ts
-│   ├── account.ts
-│   ├── scenario.ts
-│   ├── calendar.ts
-│   ├── dependency.ts
-│   ├── constraint.ts
-│   └── assignment.ts
-│
-├── time/
-│   ├── duration.ts
-│   ├── effort.ts
-│   ├── date-range.ts
-│   └── date-math.ts
-│
-├── calendar/
-│   ├── workweek.ts
-│   ├── holiday.ts
-│   ├── workday.ts
-│   └── calendar-resolver.ts
-│
-├── scheduling/
-│   ├── graph.ts
-│   ├── cycle-detection.ts
-│   ├── topological-order.ts
-│   ├── scheduler.ts
-│   └── scheduler-result.ts
-│
-├── resources/
-│   ├── availability.ts
-│   ├── allocation.ts
-│   └── conflicts.ts
-│
-├── accounting/
-│   ├── cost.ts
-│   ├── revenue.ts
-│   └── balance.ts
-│
-├── scenarios/
-│   ├── scenario.ts
-│   └── scenario-comparison.ts
-│
-├── expressions/
-│   ├── expression.ts
-│   ├── evaluator.ts
-│   └── operators.ts
-│
-└── validation/
-    ├── validation-error.ts
-    ├── validation-result.ts
-    └── validate-project.ts
-```
-
-#### Regra importante
-
-Nenhum arquivo dentro de `packages/core/src/` deve importar:
-
-```ts
-import ... from "preact";
-import ... from "beercss";
-import ... from "idb-keyval";
-```
-
-Também não deve usar:
-
-```ts
-document
-window
-navigator
-localStorage ou indexedDB
-```
-
-Exceção apenas se for tipo Web API isolada e necessária, mas idealmente Core não usa.
-
-
-
-### Parser
-
-Responsável por:
-
-* lexer;
-* tokens;
-* gramática;
-* AST;
-* análise semântica;
-* validação;
-* linguagem;
-* tradução de palavras-chave para uma representação canônica.
-
-#### Divisão detalhada do Parser
-
-O Parser deve transformar texto em AST e depois em Core Model.
-
-```text
-packages/parser/src/
-├── mod.ts
-│
-├── language/
-│   ├── types.ts
-│   ├── canonical.ts
-│   ├── registry.ts
-│   ├── en.ts
-│   ├── pt-BR.ts
-│   └── es.ts
-│
-├── lexer/
-│   ├── token.ts
-│   ├── token-type.ts
-│   ├── lexer.ts
-│   └── lexer-errors.ts
-│
-├── ast/
-│   ├── node.ts
-│   ├── project-node.ts
-│   ├── task-node.ts
-│   ├── resource-node.ts
-│   ├── report-node.ts
-│   ├── dependency-node.ts
-│   ├── effort-node.ts
-│   ├── duration-node.ts
-│   └── source-location.ts
-│
-├── parser/
-│   ├── parser.ts
-│   ├── parser-context.ts
-│   ├── project-parser.ts
-│   ├── task-parser.ts
-│   ├── resource-parser.ts
-│   ├── dependency-parser.ts
-│   ├── effort-parser.ts
-│   ├── duration-parser.ts
-│   └── report-parser.ts
-│
-├── semantic/
-│   ├── symbol-table.ts
-│   ├── semantic-errors.ts
-│   ├── validate-ast.ts
-│   ├── resolve-dependencies.ts
-│   └── ast-to-core.ts
-│
-└── diagnostics/
-    ├── diagnostic.ts
-    └── diagnostic-list.ts
-```
-
-em docs/webjuggler temos um exemplo de tjp parser e utils em typescript para usarmos como referência
-
-### Report
-
-Responsável por:
-
-* modelo de relatório;
-* filtros;
-* colunas;
-* agrupamentos;
-* Gantt;
-* HTML;
-* CSV;
-* JSON;
-* futuras formas de exportação.
-
-##### Divisão detalhada de Report
-
-```text
-packages/report/src/
-├── mod.ts
-│
-├── model/
-│   ├── report.ts
-│   ├── column.ts
-│   ├── row.ts
-│   ├── cell.ts
-│   ├── filter.ts
-│   └── grouping.ts
-│
-├── builders/
-│   ├── task-report-builder.ts
-│   ├── resource-report-builder.ts
-│   └── cost-report-builder.ts
-│
-├── filters/
-│   ├── task-filter.ts
-│   ├── resource-filter.ts
-│   ├── period-filter.ts
-│   ├── status-filter.ts
-│   └── hierarchy-filter.ts
-│
-├── gantt/
-│   ├── gantt-model.ts
-│   ├── gantt-task.ts
-│   ├── gantt-dependency.ts
-│   ├── gantt-scale.ts
-│   └── gantt-svg.ts
-│
-└── export/
-    ├── json.ts
-    ├── csv.ts
-    └── html.ts
-```
-
-### Storage
-
-Responsável por persistência local:
-
-* IndexedDB;
-* OPFS;
-* arquivos;
-* projetos;
-* configurações;
-* importação;
-* exportação.
-
-#### Divisão detalhada de Storage
-
-Storage deve ser isolado e não deve contaminar o Core.    
-Utiliza o @syntaxmesh/worker-db e algumas funções ficarão em @syntaxmesh/utils.    
-A hierarquia abaixo pode sofrer mudanças para acomodar as funções em utils
-
-```text
-packages/storage/src
-├── mod.ts
-├── types.ts
-│
-├── db/
-│   ├── worker-db-client.ts
-│   ├── project.ts
-│   ├── settings.ts
-│   └── files.ts
-│
-├── projects/
-│   ├── project-service.ts
-│   ├── project-summary.ts
-│   ├── autosave.ts
-│   └── recovery.ts
-│
-└── transfer/
-    ├── import-tjp.ts
-    ├── export-tjp.ts
-    └── download.ts
-```
-
-#### Recomendação
-
-Crie um wrapper para o `worker-db`:
-
-```text
-packages/storage/src/db/worker-db-client.ts
-```
-
-Assim o restante do código não depende diretamente da biblioteca.
-
-Exemplo conceitual:
-
-```ts
-export interface KeyValueStore {
-  get<T>(key: string): Promise<T | undefined>;
-  set<T>(key: string, value: T): Promise<void>;
-  del(key: string): Promise<void>;
-  keys(): Promise<string[]>;
-}
-```
-
----
-
-### App
-
-Responsável pela interface.
-
-Tecnologias:
-
-* Preact;
-* Signals;
-* BeerCSS;
-* Web APIs.
-
-#### Divisão detalhada da aplicação
-
-A aplicação é a camada mais externa.
-
-```text
-packages/ui/src/
-├── main.tsx
-├── app.tsx
-│
-├── signals/
-│   ├── ui.ts
-│   ├── project.ts
-│   ├── editor.ts
-│   ├── parser.ts
-│   ├── report.ts
-│   └── settings.ts
-│
-├── components/
-│   ├── Toolbar.tsx
-│   ├── Sidebar.tsx
-│   ├── StatusBar.tsx
-│   ├── ProjectTree.tsx
-│   ├── ErrorList.tsx
-│   ├── LanguageSelector.tsx
-│   └── ThemeAware.tsx
-│
-├── views/
-│   ├── EditorView.tsx
-│   ├── ReportView.tsx
-│   ├── GanttView.tsx
-│   ├── SettingsView.tsx
-│   └── ProjectExplorerView.tsx
-│
-├── services/
-│   ├── engine-service.ts
-│   ├── parser-service.ts
-│   ├── scheduler-service.ts
-│   ├── report-service.ts
-│   └── storage-service.ts
-│
-└── workers/
-    ├── engine.worker.ts
-    └── engine-client.ts
-```
-
----
-
-### Divisão detalhada de linguagem multilíngue
-
-Essa parte é crítica e deve ficar bem isolada.
-
-```text
-packages/language/src
-├── types.ts
-├── canonical.ts
-├── registry.ts
-├── en.ts
-├── pt-BR.ts
-└── es.ts
-```
-
-#### `types.ts`
-
-Responsável por definir:
-
-```ts
-export interface LanguageDefinition {
-  id: string;
-  name: string;
-  keywords: Record<string, string[]>;
-  units: Record<string, string[]>;
-}
-```
-
-#### `canonical.ts`
-
-Responsável por normalizar palavras.
-
-Exemplo conceitual:
-
-```ts
-export type CanonicalKeyword =
-  | "project"
-  | "task"
-  | "resource"
-  | "depends"
-  | "effort"
-  | "duration"
-  | "report";
-```
-
-#### `registry.ts`
-
-Responsável por registrar idiomas.
-
-Exemplo conceitual:
-
-```ts
-export class LanguageRegistry {
-  get(id: string): LanguageDefinition {}
-  register(language: LanguageDefinition): void {}
-}
-```
-
-#### `en.ts`, `pt-BR.ts`, `es.ts`
-
-Cada arquivo contém apenas um idioma.
-
-
-## Estrutura de diretórios
-
-Estrutura inicial proposta:
-
-```text
-syntaxmesh/
-│
-├── deno.json
-├── README.md
-├── LICENSE
-│
-├── packages/
-│   │
-│   ├── core/src
-│   │   ├── model/
-│   │   ├── calendar/
-│   │   ├── scheduling/
-│   │   ├── accounting/
-│   │   ├── resources/
-│   │   ├── scenarios/
-│   │   ├── expressions/
-│   │   └── validation/
-│   │
-│   ├── parser/src
-│   │   ├── lexer/
-│   │   ├── grammar/
-│   │   ├── ast/
-│   │   ├── parser/
-│   │   ├── semantic/
-│   │   └── language/
-│   │       ├── language.ts
-│   │       ├── english.ts
-│   │       ├── portuguese-br.ts
-│   │       └── spanish.ts
-│   │
-│   ├── report/src
-│   │   ├── model/
-│   │   ├── filters/
-│   │   ├── columns/
-│   │   ├── gantt/
-│   │   ├── html/
-│   │   ├── csv/
-│   │   └── json/
-│   │
-│   ├── storage/src
-│   │   ├── indexeddb/
-│   │   ├── opfs/
-│   │   └── projects/
-│   │
-│   └── ui/src
-│       ├── components/
-│       ├── signals/
-│       ├── views/
-│       ├── workers/
-│       └── main.tsx
-```
-Subpastas /tests dentro de cada package. ex: `packages/core/tests/`    
-
-Somente uma subpasta public em:    
-```
-├── packages/ui/public/
-│   ├── index.html
-│   ├── manifest.json
-│   └── icons/
-``` 
-Pasta de exemplos em docs:
-```
-└── docs/examples/
-    ├── minimal.tjp
-    └── tutorial.tjp
-```
----
-
-## Regra arquitetural mais importante
-
-O fluxo de dependências deve ser sempre aproximadamente:
-
-```text
-APP
- │
- ├───────────────┐
- ▼               ▼
-REPORT         STORAGE
- │
- ▼
-CORE
- ▲
- │
-PARSER
-```
-
-Mas o Core nunca deverá depender de:
-
-```text
-APP
-REPORT
-STORAGE
-DOM
-IndexedDB, OPFS
-Preact
-BeerCSS
-```
-
-O objetivo é poder executar:
-
-```ts
-import { ... } from "./src/core/...";
-```
-
-diretamente no Deno e nos testes.
-
-Decisões arquitetônicas fundamentais estão documentadas em `docs/syntaxmesh/decisoes/` como ADRs (Architecture Decision Record).
-
-## Divisão dos testes
-
-Testes devem espelhar os módulos.
-
-```text
-packages/
-├── core/tests
-│   ├── project_test.ts
-│   ├── task_test.ts
-│   ├── duration_test.ts
-│   ├── effort_test.ts
-│   ├── calendar_test.ts
-│   ├── dependency_test.ts
-│   ├── scheduler_test.ts
-│   ├── cycle_detection_test.ts
-│   └── cost_test.ts
-│
-├── parser/tests
-│   ├── lexer_test.ts
-│   ├── parser_minimal_test.ts
-│   ├── parser_effort_test.ts
-│   ├── parser_dependency_test.ts
-│   ├── language_registry_test.ts
-│   ├── language_equivalence_test.ts
-│   └── semantic_validation_test.ts
-│
-├── report/tests
-│   ├── task_report_test.ts
-│   ├── filter_test.ts
-│   ├── csv_export_test.ts
-│   ├── json_export_test.ts
-│   └── gantt_svg_test.ts
-│
-├── storage/tests
-│   ├── project_repository_fake_test.ts
-│   ├── opfs_fake_test.ts
-│   ├── autosave_test.ts
-│   └── recovery_test.ts
-``` 
-Testes de integração na pasta tests raiz:
-``` 
-tests/integration/
-    ├── mvp_ptbr_test.ts
-    ├── mvp_en_test.ts
-    └── mvp_es_test.ts
-```
 ````
 
 ---
@@ -1268,168 +627,6 @@ describe("myFeature", () => {
 
 ---
 
-## Arquivo: `docs/syntaxmesh/decisoes/009-novos-pacotes-language-richtext-markdown.md`
-
-```md
-# Novos pacotes: language, richtext, markdown
-
-## Contexto
-
-Durante a Fase 1 (Fundação e Workspace Deno), identificamos três novos pacotes essenciais que estavam ausentes da estrutura monorepo:
-
-- `language`: Processamento de linguagem e análise léxica
-- `richtext`: Manipulação de rich text e formatação
-- `markdown`: Conversão e processamento de Markdown
-
-Esses pacotes são necessários para suportar as funcionalidades principais do SyntaxMesh, mas não estavam presentes no workspace inicial.
-
-## Decisão
-
-Criar três novos pacotes no workspace Deno:
-
-1. **@syntaxmesh/language** - Processamento de linguagem, análise léxica e construção de AST
-2. **@syntaxmesh/richtext** - Manipulação de rich text, formatação e estruturas de conteúdo
-3. **@syntaxmesh/markdown** - Conversão de Markdown para rich text e processamento de sintaxe
-
-Cada pacote terá:
-- `deno.jsonc` com configuração adequada
-- `mod.ts` como ponto de entrada
-- Testes unitários e de integração
-- Dependências apropriadas
-
-## Consequências
-
-### Positivas
-- Estrutura modular completa com todos os pacotes necessários
-- Cada pacote pode evoluir independentemente
-- Melhor separação de preocupações
-- Suporte completo para processamento de linguagem, rich text e Markdown
-
-### Negativas / Riscos
-- Aumento da complexidade do workspace (12 pacotes no total)
-- Mais arquivos de configuração para manter
-- Possível duplicação de código entre pacotes relacionados
-
-### Neutras / Observações
-- Pacotes criados com configurações mínimas para permitir desenvolvimento rápido
-- Testes de integração criados para validar a estrutura do workspace
-- ADR 007 (Workspace Deno com packages independentes) validado com esta expansão
-
----
-
-**Status:** Aceito
-**Data:** 2026-09-10
-**Autor(es):** Qwen Code
-```
-
----
-
-## Arquivo: `docs/syntaxmesh/decisoes/010-testes-de-integracao-para-valida-o-do-workspace.md`
-
-```md
-# Testes de integração para validação do workspace
-
-## Contexto
-
-Após a expansão do workspace com três novos pacotes (language, richtext, markdown), identificamos a necessidade de testes de integração robustos que validem:
-
-1. A estrutura completa do workspace Deno
-2. A regra de isolamento do Core (ADR 001)
-3. A funcionalidade básica de importação de todos os pacotes principais
-
-Esses testes garantem que o workspace funcione como um todo coeso e que as decisões arquitetônicas sejam respeitadas.
-
-## Decisão
-
-Criar três testes de integração no diretório `tests/integration/`:
-
-1. **workspace_test.ts** - Valida que todos os pacotes esperados estão presentes e têm configurações adequadas
-2. **core_isolation_test.ts** - Verifica que o Core respeita a regra de isolamento (sem DOM, Preact, BeerCSS, IndexedDB, OPFS, window, document, navigator, localStorage)
-3. **smoke_test.ts** - Testa a importação básica de todos os pacotes principais para garantir que estão funcionais
-
-Esses testes seguem o padrão BDD (@std/testing/bdd) conforme definido no ADR 008.
-
-## Consequências
-
-### Positivas
-- Validação automatizada da estrutura do workspace
-- Garantia de que as regras de isolamento do Core são respeitadas
-- Verificação rápida da saúde do sistema (smoke test)
-- Testes de integração que crescem com o workspace
-
-### Negativas / Riscos
-- Testes de integração podem ser mais lentos que testes unitários
-- Manutenção de testes que validam estrutura em vez de comportamento
-- Possível necessidade de atualizações quando novos pacotes são adicionados
-
-### Neutras / Observações
-- Testes seguem o padrão BDD para consistência
-- Testes são independentes e podem ser executados em qualquer ordem
-- Testes documentam as decisões arquitetônicas (ADR 001, ADR 007, ADR 008)
-
----
-
-**Status:** Aceito
-**Data:** 2026-09-10
-**Autor(es):** Qwen Code
-```
-
----
-
-## Arquivo: `docs/syntaxmesh/decisoes/011-configura-o-do-deno-jsonc-para-fase-1.md`
-
-```md
-# Configuração do deno.jsonc para Fase 1
-
-## Contexto
-
-A configuração do deno.jsonc no root do projeto precisava ser atualizada para suportar as necessidades da Fase 1 (Fundação e Workspace Deno). Requisitos específicos incluíam:
-
-1. Adicionar três novos pacotes (language, richtext, markdown) ao workspace
-2. Incluir catálogo de dependências para todas as bibliotecas padrão (@std/assert, @std/testing, @std/fs, @std/path, @std/collections)
-3. Adicionar dependências para preact e idb-keyval
-4. Atualizar as configurações de lint e fmt para corresponder às especificações da Fase 1
-5. Adicionar tarefa `check-all` para validação completa
-6. Corrigir configurações de lineWidth (80) e singleQuote (false) no fmt
-
-## Decisão
-
-Atualizar o deno.jsonc raiz com as seguintes mudanças:
-
-1. **Workspace**: Adicionar `language`, `richtext`, `markdown` aos pacotes listados
-2. **Catálogo**: Adicionar entradas para @std/assert, @std/testing, @std/fs, @std/path, @std/collections, preact e idb-keyval
-3. **Imports**: Adicionar @std/assert, @std/testing/bdd e @std/collections às importações
-4. **Tasks**: Adicionar `fmt-check`, `lint-fix` e `check-all` (que combina check + lint + fmt + test)
-5. **Fmt**: Corrigir lineWidth para 80, singleQuote para false, e atualizar include/exclude padrões
-6. **Lint**: Manter configuração existente com regras recomendadas
-
-## Consequências
-
-### Positivas
-- Workspace completo com todos os pacotes necessários
-- Configuração consistente com especificações da Fase 1
-- Validação completa através da tarefa check-all
-- Formatação e linting padronizados
-
-### Negativas / Riscos
-- Atualização da configuração pode afetar pipelines de CI existentes
-- Mais dependências no catálogo aumentam tempo de resolução
-- Tarefa check-all pode demorar mais para executar
-
-### Neutras / Observações
-- Configuração segue as especificações exatas da Fase 1
-- Manutenção do estilo e formatação consistentes
-- Suporte para desenvolvimento rápido com tarefas úteis
-
----
-
-**Status:** Aceito
-**Data:** 2026-09-10
-**Autor(es):** Qwen Code
-```
-
----
-
 ## Arquivo: `docs/syntaxmesh/decisoes/README.md`
 
 ````md
@@ -1499,11 +696,1009 @@ O que foi decidido? Seja específico e acionável.
 | 006 | Build pipeline: deno task build / dev / export / taskjuggler | Aceito | 2026-09-08 |
 | 007 | Workspace Deno com packages independentes | Aceito | 2026-09-08 |
 | 008 | Biblioteca de testes: `@std/testing/bdd` padrão | Aceito | 2026-09-08 |
-| 009 | Novos pacotes: language, richtext, markdown | Aceito | 2026-09-10 |
-| 010 | Testes de integração para validação do workspace | Aceito | 2026-09-10 |
-| 011 | Configuração do deno.jsonc para Fase 1 | Aceito | 2026-09-10 |
+| 009 | RichText mantido, Markdown futuro | Aceito | 2026-09-11 |
+| 010 | worker-db centraliza storage | Aceito | 2026-09-11 |
+| 011 | Port fiel do TaskJuggler | Aceito | 2026-09-11 |
+| 012 | TjTime em TypeScript | Aceito | 2026-09-11 |
 
 > **Nota:** Manter esta tabela atualizada manualmente ou via script ao adicionar novos ADRs.
+````
+
+---
+
+## Arquivo: `docs/syntaxmesh/decisoes/009-richtext-mantido-markdown-futuro.md`
+
+```md
+# RichText mantido, Markdown futuro
+
+## Contexto
+
+O formato de arquivo `.tjp` do TaskJuggler usa RichText (similar a MediaWiki markup) para descrições de tarefas, recursos e outros elementos. Durante a Fase 1, identificamos que o SyntaxMesh precisava suportar tanto o formato legado do TaskJuggler quanto um formato going-forward mais moderno.
+
+## Decisão
+
+Manter o RichText como formato legado para compatibilidade com arquivos `.tjp` existentes, enquanto introduz o Markdown como formato going-forward para conteúdo nativo do SyntaxMesh.
+
+- `@syntaxmesh/richtext` implementa fielmente o RichText do TJ 3.8.4 para leitura e escrita de arquivos `.tjp`.
+- `@syntaxmesh/markdown` (novo) é o formato going-forward para conteúdo nativo criado dentro do SyntaxMesh.
+- Ambos coexistem no ecossistema. O RichText será depreciado lentamente em favor do Markdown para novos projetos.
+- Conversores entre RichText e Markdown serão implementados em fases futuras para facilitar a migração.
+
+## Consequências
+
+### Positivas
+- Compatibilidade total com arquivos `.tjp` existentes do TaskJuggler
+- Uso de Markdown (formato amplamente conhecido) para novo conteúdo
+- Separação clara entre preocupações de legado e inovação
+- Comunidade já familiarizada com sintaxe Markdown
+
+### Negativas / Riscos
+- Duplicação de esforço em dois parsers de markup (RichText e Markdown)
+- Necessidade de conversores para migração entre formatos
+- Complexidade adicional na camada de armazenamento e exportação
+
+### Neutras / Observações
+- A decisão é um trade-off entre compatibilidade e modernidade
+- O RichText será mantido indefinidamente para arquivos legado
+- Novos projetos podem usar exclusivamente Markdown desde o início
+- Esta decisão valida a criação dos pacotes `@syntaxmesh/richtext` e `@syntaxmesh/markdown` no ADR 009
+
+---
+
+**Status:** Aceito
+**Data:** 2026-09-11
+**Autor(es):** Vanaware
+```
+
+---
+
+## Arquivo: `docs/syntaxmesh/decisoes/010-worker-db-centraliza-storage.md`
+
+```md
+# worker-db centraliza storage
+
+## Contexto
+
+O SyntaxMesh precisa de armazenamento persistente para projetos, configurações e arquivos associados. As APIs disponíveis no navegador são IndexedDB e OPFS (Origin Private File System), ambas com interfaces assíncronas e específicas do navegador. O Core do SyntaxMesh deve permanecer independente dessas APIs para ser executável em Deno, Web Workers e testes.
+
+## Decisão
+
+Centralizar toda interação com IndexedDB e OPFS através do pacote `@syntaxmesh/worker-db`, que atua como uma camada de abstração sobre essas APIs de armazenamento.
+
+- O `@syntaxmesh/worker-db` expõe uma interface simples `KeyValueStore` com métodos `get`, `set`, `del`, `keys`, etc.
+- O `@syntaxmesh/storage` consome exclusivamente a interface do `worker-db`, nunca acessando `idb-keyval` ou OPFS diretamente.
+- O Core nunca importa nada relacionado a storage ou worker-db.
+- Trocar entre IndexedDB e OPFS (ou adicionar novos backends) não afeta as camadas superiores (storage, Core, etc.).
+- Testes do Storage podem usar um fake do `worker-db` para isolamento.
+
+## Consequências
+
+### Positivas
+- Fronteira clara entre lógica de aplicação e detalhes de armazenamento
+- Independência do Core em relação a APIs de navegador
+- Facilidade de troca ou atualização de mecanismos de storage
+- Testabilidade aprimorada através de injeção de dependência/fakes
+- Conformidade com ADR 001 (Core independente de DOM) e ADR 003 (Storage não contamina Core)
+
+### Negativas / Riscos
+- Indireção adicional na camada de storage
+- Necessidade de manter e atualizar o worker-db conforme APIs evoluem
+- Sobrecarga mínima de performance devido à camada adicional
+
+### Neutras / Observações
+- Esta decisão valida e expande o conceito introduzido no ADR 003
+- O worker-db se torna um ponto único de verdade para todas as operações de storage
+- Facilita a implementação de recursos como backup, sincronização e versionamento
+- A interface KeyValueStore pode ser expandida com operações avançadas (transactions, índices) conforme necessário
+
+---
+
+**Status:** Aceito
+**Data:** 2026-09-11
+**Autor(es):** Vanaware
+```
+
+---
+
+## Arquivo: `docs/syntaxmesh/decisoes/011-port-fiel-taskjuggler.md`
+
+```md
+# Port fiel do TaskJuggler
+
+## Contexto
+
+O SyntaxMesh é uma implementação independente inspirada no TaskJuggler 3.8.4. A decisão inicial era implementar com arquitetura própria. Após análise mais profunda, ficou claro que a fidelidade ao comportamento original é mais importante que a originalidade da arquitetura.
+
+## Decisão
+
+Portar **fielmente** o algoritmo, classes e semântica do TaskJuggler 3.8.4 do Ruby para TypeScript/Deno.
+
+- Adaptações Ruby → TypeScript apenas quando a linguagem exigir (ex: `method_missing` → Proxy, blocos → funções de callback).
+- Golden tests comparativos (`tj3` real vs `tj3-ts`) são o critério de aceite principal.
+- Não inventar arquitetura nova onde o TJ já tem solução estabelecida.
+- A estrutura de diretórios do Core espelha `lib/taskjuggler/` do TJ original.
+- Nomes de classes e métodos permanecem em inglês (consistentes com o código fonte original).
+
+## Consequências
+
+### Positivas
+- Comportamento idêntico ao TaskJuggler original
+- Compatibilidade garantida com arquivos `.tjp` existentes
+- Validação direta via golden tests
+- Redução de riscos de bugs por divergência de comportamento
+
+### Negativas / Riscos
+- Limitação criativa para inovações arquiteturais
+- Dependência de decisões de design do TJ original (mesmo que subótimas)
+- Esforço adicional para mapear conceitos Ruby → TypeScript
+
+### Neutras / Observações
+- Esta decisão **substitui** o plano anterior de "implementação independente com arquitetura própria"
+- A fidelidade é comportamental, não textual (não é um wrapper ou binding)
+- O código fonte do TJ 3.8.4 (`docs/taskjuggler/`) é a principal referência
+- A decisão não afeta a camada de UI, que pode ter sua própria arquitetura
+
+---
+
+**Status:** Aceito
+**Data:** 2026-09-11
+**Autor(es):** Vanaware
+```
+
+---
+
+## Arquivo: `docs/syntaxmesh/decisoes/012-tjtime-typescript.md`
+
+````md
+# 012 — TjTime em TypeScript
+
+## Contexto
+
+O `TjTime.rb` do TaskJuggler usa `Time` do Ruby + `ENV['TZ']` global para representar timestamps. TypeScript/JavaScript não tem equivalente direto:
+
+- Não há `Time` nativo com precisão de segundos estável
+- Não há variável de ambiente global equivalente a `ENV['TZ']`
+- `Date` é mutável e tem semântica de timezone inconsistente
+- `Temporal` ainda não está estável no Deno
+
+Além disso, o código Ruby contém **bugs conhecidos** que afetam o output. Precisamos decidir: replicar (para paridade com `tj3`) ou corrigir.
+
+## Decisão
+
+### Representação
+
+- `TjTime` armazena `private readonly seconds: number` (inteiro, segundos desde epoch **UTC**)
+- Nunca expõe `Date` na API pública
+- Precisão de **segundos** (granularidade mínima do TJ é 1 minuto)
+
+### Timezone
+
+- Estado module-level `currentTimeZone: string` (default `'UTC'`)
+- `setTimeZone(zone)` retorna timezone anterior
+- Helper `Intl.DateTimeFormat` para offset e partes locais
+- Replica `ENV['TZ']` global do Ruby (documentado: **não thread-safe**)
+
+### Factory methods
+
+Construtor privado. Factory estáticos substituem o construtor polimórfico do Ruby:
+
+```
+TjTime.now()                                 → tempo atual
+TjTime.fromSeconds(secs)                     → segundos desde epoch
+TjTime.fromDate(date)                        → Date → TjTime
+TjTime.fromString(str)                       → "YYYY-MM-DD[-HH:MM[:SS][-TZ]]"
+TjTime.fromParts(y, m, d, h, min, s, tz?)    → partes + timezone
+```
+
+### Parsing
+
+Formato: `YYYY-MM-DD[-HH:MM[:SS][-TZ]]`, split em até **5 partes** por `-`.
+
+Validações:
+- Ano: 1970–2035
+- Mês: 1–12
+- Dia: 1–`lastDayOfMonth(month, year)`
+- Hora: 0–23, Minuto: 0–59, Segundo: 0–59
+- Timezone: `±HHMM`, range `[-1200, +1400]`
+
+Timezone presente → `Time.utc` + subtrair offset. Ausente → `currentTimeZone`.
+
+Mensagens de erro **idênticas** ao Ruby (incluindo `)` final faltante do erro de range).
+
+### `strftime` mínimo
+
+Suporta apenas: `%Y %m %d %H %M %S %A %a %B %b %z %Q %%`.
+
+`%Q` = quarter (extensão TJ). Formatos fora da lista lançam `TjArgumentError`.
+
+### Operações
+
+Comparação, aritmética, normalizações, avanços, diferenças e timezone — todos seguindo o Ruby fielmente (com exceção dos bugs, abaixo).
+
+### `deep_clone` e imutabilidade
+
+`TjTime` é imutável (todas as operações retornam novo). `deepClone(tjtime)` retorna `tjtime` (mesma referência).
+
+## Bugs do Ruby: replicar ou corrigir?
+
+O código Ruby do TJ 3.8.4 contém bugs conhecidos. Dividimos em 3 categorias.
+
+### Categoria A — Latentes (sempre corrigir)
+
+Nunca disparam em uso normal. Corrigir é invisível para o usuário.
+
+| Bug | Comportamento Ruby | Correção TS |
+|---|---|---|
+| `Interval#combine` tipo inconsistente | Retorna `[Interval]` em 2 branches, `Interval` no 3º | Retorna `Interval` sempre |
+| `Scoreboard#idxToDate` typo `kdx` | `NameError` se `forceIntoProject && idx < 0` | Usa `idx` corretamente |
+| `WorkingHours.@days` shared array | 7 referências ao mesmo `[]` | `Array.from({length:7}, () => [])` |
+
+**Decisão:** sempre corrigir. Não há flag. Registrar divergência aqui.
+
+### Categoria B — Afetam output (flag global)
+
+Produzem resultados diferentes em casos legítimos. Precisamos de paridade com `tj3` **e** opção de correção.
+
+| Bug | Ruby faz | Correto seria |
+|---|---|---|
+| `TjTime#sameTimeNextMonth` clamp em mês antigo | `2024-01-31 → 2024-03-02` (rollover) | `2024-01-31 → 2024-02-29` |
+| `TjTime#sameTimeNextQuarter` sem clamp | `2024-01-31 → 2024-05-01` (rollover) | `2024-01-31 → 2024-04-30` |
+| `TjTime#sameTimeNextYear` sem clamp | `2024-02-29 → 2025-03-01` | `2024-02-29 → 2025-02-28` |
+| `Integer#round` para `-X.5` | `-2.5.round == -3` | `-2.5.round == -2` (JS native) |
+| `TjTime#to_s` usa `sec` original | Formato depende do UTC original | Usar sec local |
+| `Scoreboard#collectIntervals` sentinel `0` | Slots que começam em 0 são deslocados | Usar `-1` como sentinel |
+
+**Decisão:** flag global.
+
+```ts
+// packages/core/src/compat.ts
+export const compat = {
+  /**
+   * Quando `true` (default), replica bugs do TaskJuggler 3.8.4 para
+   * garantir paridade bit-a-bit em golden tests.
+   *
+   * Quando `false`, aplica comportamento corrigido.
+   */
+  keepRubyBugs: true,
+};
+```
+
+Cada método afetado:
+
+```ts
+sameTimeNextMonth(): TjTime {
+  if (compat.keepRubyBugs) {
+    // comportamento Ruby (bug)
+  } else {
+    // comportamento corrigido
+  }
+}
+```
+
+Golden tests: não trocam a flag (default `true`).
+Produção: usuário troca em `main.tsx` se quiser comportamento corrigido.
+
+### Categoria C — Documentados no Ruby (sempre replicar)
+
+Não são bugs — são comportamentos documentados.
+
+| Comportamento | Justificativa |
+|---|---|
+| `Interval#compareTo` retorna 0 em overlap | Documentado: "only works for non-overlapping intervals" |
+| `String#to_i` retorna 0 em string inválida | Comportamento canônico do Ruby |
+| `Time.mktime` faz rollover em dia inválido | Comportamento documentado do `Time` |
+| `Integer#round` half-up em positivos | Mesmo que `Math.round` |
+
+**Decisão:** replicar sempre. Sem flag.
+
+## Alternativas consideradas
+
+- **`Temporal`**: API moderna, mas ainda fase 3 no Deno
+- **`luxon` / `date-fns-tz`**: dependência externa, desnecessária
+- **Sem flag, sempre replicar bugs**: mais simples, mas engessa o usuário
+- **Flag por método**: poluído demais
+
+## Consequências
+
+### Positivas
+
+- Comportamento idêntico ao `TjTime.rb` (validado por golden tests)
+- Sem dependências externas
+- API imutável e determinística
+- Paridade com `tj3` **por padrão**, correção opcional
+- Bugs documentados como ADR (rastreáveis)
+
+### Negativas / Riscos
+
+- Precisão limitada a segundos
+- Estado module-level `currentTimeZone` (documentado — idêntico ao Ruby)
+- Flag global muda comportamento em runtime — cuidado em testes que assumem paridade
+- Manutenção dupla dos branches `keepRubyBugs: true|false`
+
+### Neutras / Observações
+
+- Golden tests usam `keepRubyBugs: true`
+- Usuários podem trocar para `false` em `main.tsx` via `compat.keepRubyBugs = false`
+- Quando `Temporal` estabilizar, migração futura possível
+- Bugs de Categoria A são divergências documentadas (não rastreáveis por flag)
+- Ver `docs/syntaxmesh/cheat-sheet-ruby-ts.md` §12 para lista completa
+
+---
+
+**Status:** Aceito
+**Data:** 2026-09-11
+**Autor(es):** Vanaware
+````
+
+---
+
+## Arquivo: `docs/syntaxmesh/03-arquitetura.md`
+
+````md
+# Execução offline
+
+O SyntaxMesh deverá funcionar completamente sem servidor de aplicação.
+
+Arquitetura:
+
+```text
+                  Navegador
+                     │
+              ┌──────▼──────┐
+              │ SyntaxMesh  │
+              │    PWA      │
+              └──────┬──────┘
+                     │
+       ┌─────────────┼─────────────┐
+       │             │             │
+       ▼             ▼             ▼
+   IndexedDB       OPFS        Cache API
+       │             │             │
+       └─────────────┼─────────────┘
+                     │
+                  Offline
+```
+
+O servidor de hospedagem terá apenas a função de entregar arquivos estáticos.
+
+Não deverá existir:
+
+```text
+Browser → Application Server → Database
+```
+
+A arquitetura desejada é:
+
+```text
+Browser
+   │
+   ├── Application
+   ├── Core
+   ├── Parser
+   ├── Reports
+   ├── IndexedDB, OPFS no @syntaxmesh/worker-db
+   └── Service Worker
+```
+
+## Arquitetura geral
+
+A arquitetura principal será:
+
+```text
+SyntaxMesh
+│
+├── core
+├── parser
+├── language
+├── richtext
+├── markdown
+├── report
+├── storage
+├── worker-db
+├── utils
+├── service-worker
+├── ui
+└── server
+```
+
+### Core
+
+Responsável pelo modelo e processamento do planejamento.
+
+Não poderá depender de:
+
+* Preact;
+* BeerCSS;
+* DOM;
+* window;
+* document;
+* worker-db com IndexedDB e OPFS;
+* Service Worker.
+
+O Core deverá ser executável em:
+
+* navegador;
+* Web Worker;
+* Deno;
+* testes automatizados.
+
+#### Divisão detalhada do Core
+
+O Core deve ser totalmente independente de DOM.
+
+```text
+packages/core/src/
+├── mod.ts
+├── errors.ts
+│
+├── model/
+│   ├── project.ts
+│   ├── task.ts
+│   ├── resource.ts
+│   ├── account.ts
+│   ├── scenario.ts
+│   ├── calendar.ts
+│   ├── dependency.ts
+│   ├── constraint.ts
+│   └── assignment.ts
+│
+├── time/
+│   ├── duration.ts
+│   ├── effort.ts
+│   ├── date-range.ts
+│   └── date-math.ts
+│
+├── calendar/
+│   ├── workweek.ts
+│   ├── holiday.ts
+│   ├── workday.ts
+│   └── calendar-resolver.ts
+│
+├── scheduling/
+│   ├── graph.ts
+│   ├── cycle-detection.ts
+│   ├── topological-order.ts
+│   ├── scheduler.ts
+│   └── scheduler-result.ts
+│
+├── resources/
+│   ├── availability.ts
+│   ├── allocation.ts
+│   └── conflicts.ts
+│
+├── accounting/
+│   ├── cost.ts
+│   ├── revenue.ts
+│   └── balance.ts
+│
+├── scenarios/
+│   ├── scenario.ts
+│   └── scenario-comparison.ts
+│
+├── expressions/
+│   ├── expression.ts
+│   ├── evaluator.ts
+│   └── operators.ts
+│
+└── validation/
+    ├── validation-error.ts
+    ├── validation-result.ts
+    └── validate-project.ts
+```
+
+#### Regra importante
+
+Nenhum arquivo dentro de `packages/core/src/` deve importar:
+
+```ts
+import ... from "preact";
+import ... from "beercss";
+import ... from "idb-keyval";
+```
+
+Também não deve usar:
+
+```ts
+document
+window
+navigator
+localStorage ou indexedDB
+```
+
+Exceção apenas se for tipo Web API isolada e necessária, mas idealmente Core não usa.
+
+
+
+### Parser
+
+Responsável por:
+
+* lexer;
+* tokens;
+* gramática;
+* AST;
+* análise semântica;
+* validação;
+* linguagem;
+* tradução de palavras-chave para uma representação canônica.
+
+#### Divisão detalhada do Parser
+
+O Parser deve transformar texto em AST e depois em Core Model.
+
+```text
+packages/parser/src/
+├── mod.ts
+│
+├── language/
+│   ├── types.ts
+│   ├── canonical.ts
+│   ├── registry.ts
+│   ├── en.ts
+│   ├── pt-BR.ts
+│   └── es.ts
+│
+├── lexer/
+│   ├── token.ts
+│   ├── token-type.ts
+│   ├── lexer.ts
+│   └── lexer-errors.ts
+│
+├── ast/
+│   ├── node.ts
+│   ├── project-node.ts
+│   ├── task-node.ts
+│   ├── resource-node.ts
+│   ├── report-node.ts
+│   ├── dependency-node.ts
+│   ├── effort-node.ts
+│   ├── duration-node.ts
+│   └── source-location.ts
+│
+├── parser/
+│   ├── parser.ts
+│   ├── parser-context.ts
+│   ├── project-parser.ts
+│   ├── task-parser.ts
+│   ├── resource-parser.ts
+│   ├── dependency-parser.ts
+│   ├── effort-parser.ts
+│   ├── duration-parser.ts
+│   └── report-parser.ts
+│
+├── semantic/
+│   ├── symbol-table.ts
+│   ├── semantic-errors.ts
+│   ├── validate-ast.ts
+│   ├── resolve-dependencies.ts
+│   └── ast-to-core.ts
+│
+└── diagnostics/
+    ├── diagnostic.ts
+    └── diagnostic-list.ts
+```
+
+em docs/webjuggler temos um exemplo de tjp parser e utils em typescript para usarmos como referência
+
+### Report
+
+Responsável por:
+
+* modelo de relatório;
+* filtros;
+* colunas;
+* agrupamentos;
+* Gantt;
+* HTML;
+* CSV;
+* JSON;
+* futuras formas de exportação.
+
+##### Divisão detalhada de Report
+
+```text
+packages/report/src/
+├── mod.ts
+│
+├── model/
+│   ├── report.ts
+│   ├── column.ts
+│   ├── row.ts
+│   ├── cell.ts
+│   ├── filter.ts
+│   └── grouping.ts
+│
+├── builders/
+│   ├── task-report-builder.ts
+│   ├── resource-report-builder.ts
+│   └── cost-report-builder.ts
+│
+├── filters/
+│   ├── task-filter.ts
+│   ├── resource-filter.ts
+│   ├── period-filter.ts
+│   ├── status-filter.ts
+│   └── hierarchy-filter.ts
+│
+├── gantt/
+│   ├── gantt-model.ts
+│   ├── gantt-task.ts
+│   ├── gantt-dependency.ts
+│   ├── gantt-scale.ts
+│   └── gantt-svg.ts
+│
+└── export/
+    ├── json.ts
+    ├── csv.ts
+    └── html.ts
+```
+
+### Storage
+
+Responsável por persistência local:
+
+* IndexedDB;
+* OPFS;
+* arquivos;
+* projetos;
+* configurações;
+* importação;
+* exportação.
+
+#### Divisão detalhada de Storage
+
+Storage deve ser isolado e não deve contaminar o Core.    
+Utiliza o @syntaxmesh/worker-db e algumas funções ficarão em @syntaxmesh/utils.    
+A hierarquia abaixo pode sofrer mudanças para acomodar as funções em utils
+
+```text
+packages/storage/src
+├── mod.ts
+├── types.ts
+│
+├── db/
+│   ├── worker-db-client.ts
+│   ├── project.ts
+│   ├── settings.ts
+│   └── files.ts
+│
+├── projects/
+│   ├── project-service.ts
+│   ├── project-summary.ts
+│   ├── autosave.ts
+│   └── recovery.ts
+│
+└── transfer/
+    ├── import-tjp.ts
+    ├── export-tjp.ts
+    └── download.ts
+```
+
+#### Recomendação
+
+Crie um wrapper para o `worker-db`:
+
+```text
+packages/storage/src/db/worker-db-client.ts
+```
+
+Assim o restante do código não depende diretamente da biblioteca.
+
+Exemplo conceitual:
+
+```ts
+export interface KeyValueStore {
+  get<T>(key: string): Promise<T | undefined>;
+  set<T>(key: string, value: T): Promise<void>;
+  del(key: string): Promise<void>;
+  keys(): Promise<string[]>;
+}
+```
+
+---
+
+### App
+
+Responsável pela interface.
+
+Tecnologias:
+
+* Preact;
+* Signals;
+* BeerCSS;
+* Web APIs.
+
+#### Divisão detalhada da aplicação
+
+A aplicação é a camada mais externa.
+
+```text
+packages/ui/src/
+├── main.tsx
+├── app.tsx
+│
+├── signals/
+│   ├── ui.ts
+│   ├── project.ts
+│   ├── editor.ts
+│   ├── parser.ts
+│   ├── report.ts
+│   └── settings.ts
+│
+├── components/
+│   ├── Toolbar.tsx
+│   ├── Sidebar.tsx
+│   ├── StatusBar.tsx
+│   ├── ProjectTree.tsx
+│   ├── ErrorList.tsx
+│   ├── LanguageSelector.tsx
+│   └── ThemeAware.tsx
+│
+├── views/
+│   ├── EditorView.tsx
+│   ├── ReportView.tsx
+│   ├── GanttView.tsx
+│   ├── SettingsView.tsx
+│   └── ProjectExplorerView.tsx
+│
+├── services/
+│   ├── engine-service.ts
+│   ├── parser-service.ts
+│   ├── scheduler-service.ts
+│   ├── report-service.ts
+│   └── storage-service.ts
+│
+└── workers/
+    ├── engine.worker.ts
+    └── engine-client.ts
+```
+
+---
+
+### Divisão detalhada de linguagem multilíngue
+
+Essa parte é crítica e deve ficar bem isolada.
+
+```text
+packages/language/src
+├── types.ts
+├── canonical.ts
+├── registry.ts
+├── en.ts
+├── pt-BR.ts
+└── es.ts
+```
+
+#### `types.ts`
+
+Responsável por definir:
+
+```ts
+export interface LanguageDefinition {
+  id: string;
+  name: string;
+  keywords: Record<string, string[]>;
+  units: Record<string, string[]>;
+}
+```
+
+#### `canonical.ts`
+
+Responsável por normalizar palavras.
+
+Exemplo conceitual:
+
+```ts
+export type CanonicalKeyword =
+  | "project"
+  | "task"
+  | "resource"
+  | "depends"
+  | "effort"
+  | "duration"
+  | "report";
+```
+
+#### `registry.ts`
+
+Responsável por registrar idiomas.
+
+Exemplo conceitual:
+
+```ts
+export class LanguageRegistry {
+  get(id: string): LanguageDefinition {}
+  register(language: LanguageDefinition): void {}
+}
+```
+
+#### `en.ts`, `pt-BR.ts`, `es.ts`
+
+Cada arquivo contém apenas um idioma.
+
+
+### Divisão detalhada de RichText e Markdown
+
+```text
+packages/richtext/src
+├── mod.ts
+├── parser.ts
+├── serializer.ts
+└── types.ts
+
+packages/markdown/src
+├── mod.ts
+├── parser.ts
+├── serializer.ts
+└── types.ts
+```
+
+O `@syntaxmesh/richtext` implementa o formato RichText do TaskJuggler (similar a MediaWiki markup) para compatibilidade com arquivos `.tjp` existentes.
+
+O `@syntaxmesh/markdown` implementa o formato Markdown como formato going-forward para conteúdo nativo do SyntaxMesh.
+
+Ambos coexistem. O RichText será depreciado lentamente em favor do Markdown para novos projetos. Conversores entre os formatos serão implementados em fases futuras.
+
+
+## Estrutura de diretórios
+
+Estrutura inicial proposta:
+
+```text
+syntaxmesh/
+│
+├── deno.json
+├── README.md
+├── LICENSE
+│
+├── packages/
+│   │
+│   ├── core/src
+│   │   ├── model/
+│   │   ├── calendar/
+│   │   ├── scheduling/
+│   │   ├── accounting/
+│   │   ├── resources/
+│   │   ├── scenarios/
+│   │   ├── expressions/
+│   │   └── validation/
+│   │
+│   ├── parser/src
+│   │   ├── lexer/
+│   │   ├── grammar/
+│   │   ├── ast/
+│   │   ├── parser/
+│   │   ├── semantic/
+│   │   └── language/
+│   │       ├── language.ts
+│   │       ├── english.ts
+│   │       ├── portuguese-br.ts
+│   │       └── spanish.ts
+│   │
+│   ├── report/src
+│   │   ├── model/
+│   │   ├── filters/
+│   │   ├── columns/
+│   │   ├── gantt/
+│   │   ├── html/
+│   │   ├── csv/
+│   │   └── json/
+│   │
+│   ├── storage/src
+│   │   ├── indexeddb/
+│   │   ├── opfs/
+│   │   └── projects/
+│   │
+│   └── ui/src
+│       ├── components/
+│       ├── signals/
+│       ├── views/
+│       ├── workers/
+│       └── main.tsx
+```
+Subpastas /tests dentro de cada package. ex: `packages/core/tests/`    
+
+Somente uma subpasta public em:    
+```
+├── packages/ui/public/
+│   ├── index.html
+│   ├── manifest.json
+│   └── icons/
+``` 
+Pasta de exemplos em docs:
+```
+└── docs/examples/
+    ├── minimal.tjp
+    └── tutorial.tjp
+```
+---
+
+## Regra arquitetural mais importante
+
+O fluxo de dependências deve ser sempre aproximadamente:
+
+```text
+APP
+ │
+ ├───────────────┐
+ ▼               ▼
+REPORT         STORAGE
+ │
+ ▼
+CORE
+ ▲
+ │
+PARSER
+```
+
+Mas o Core nunca deverá depender de:
+
+```text
+APP
+REPORT
+STORAGE
+DOM
+IndexedDB, OPFS
+Preact
+BeerCSS
+```
+
+O objetivo é poder executar:
+
+```ts
+import { ... } from "./src/core/...";
+```
+
+diretamente no Deno e nos testes.
+
+Decisões arquitetônicas fundamentais estão documentadas em `docs/syntaxmesh/decisoes/` como ADRs (Architecture Decision Record).
+
+## Divisão dos testes
+
+Testes devem espelhar os módulos.
+
+```text
+packages/
+├── core/tests
+│   ├── project_test.ts
+│   ├── task_test.ts
+│   ├── duration_test.ts
+│   ├── effort_test.ts
+│   ├── calendar_test.ts
+│   ├── dependency_test.ts
+│   ├── scheduler_test.ts
+│   ├── cycle_detection_test.ts
+│   └── cost_test.ts
+│
+├── parser/tests
+│   ├── lexer_test.ts
+│   ├── parser_minimal_test.ts
+│   ├── parser_effort_test.ts
+│   ├── parser_dependency_test.ts
+│   ├── language_registry_test.ts
+│   ├── language_equivalence_test.ts
+│   └── semantic_validation_test.ts
+│
+├── report/tests
+│   ├── task_report_test.ts
+│   ├── filter_test.ts
+│   ├── csv_export_test.ts
+│   ├── json_export_test.ts
+│   └── gantt_svg_test.ts
+│
+├── storage/tests
+│   ├── project_repository_fake_test.ts
+│   ├── opfs_fake_test.ts
+│   ├── autosave_test.ts
+│   └── recovery_test.ts
+``` 
+Testes de integração na pasta tests raiz:
+``` 
+tests/integration/
+    ├── mvp_ptbr_test.ts
+    ├── mvp_en_test.ts
+    └── mvp_es_test.ts
+```
 ````
 
 ---

@@ -12,15 +12,15 @@
  * - Suporta múltiplos modos em uma única execução
  */
 
-import { walk, } from '@std/fs/walk';
-import { relative, } from '@std/path/relative';
+import { walk, } from "@std/fs/walk";
+import { relative, } from "@std/path/relative";
 import {
   deveIncluirArquivo,
   formatarArquivoMarkdown,
   gerarCabecalho,
-} from '@syntaxmesh/utils/export';
-import type { ExportConfig, } from '@syntaxmesh/utils/interfaces';
-import { APP_VERSION, EXTENSOES_PADRAO, } from '@syntaxmesh/utils/config';
+} from "@syntaxmesh/utils/export";
+import type { ExportConfig, } from "@syntaxmesh/utils/interfaces";
+import { APP_VERSION, EXTENSOES_PADRAO, } from "@syntaxmesh/utils/config";
 
 // ============================================================================
 // 📦 TIPOS ESPECÍFICOS DO PROJETO
@@ -31,18 +31,19 @@ import { APP_VERSION, EXTENSOES_PADRAO, } from '@syntaxmesh/utils/config';
  * Específicos para este projeto.
  */
 export type ModoExportacao =
-  | 'parser'
-  | 'ui'
-  | 'docs'
-  | 'decisoes'
-  | 'fases'
-  | 'engine'
-  | 'learning'
-  | 'source'
-  | 'server'
-  | 'workerdb'
-  | 'utils'
-  | 'sw';
+  | "parser"
+  | "core"
+  | "ui"
+  | "docs"
+  | "decisoes"
+  | "fases"
+  | "engine"
+  | "learning"
+  | "source"
+  | "server"
+  | "workerdb"
+  | "utils"
+  | "sw";
 
 // ============================================================================
 // 📋 CONFIGURAÇÕES ESPECÍFICAS DO SYNTAXMESH
@@ -54,161 +55,181 @@ export type ModoExportacao =
  */
 export const CONFIGURACOES: Record<ModoExportacao, ExportConfig> = {
   ui: {
-    arquivoSaida: 'snapshots/ui.md',
+    arquivoSaida: "snapshots/ui.md",
     extensoesPermitidas: EXTENSOES_PADRAO,
-    pastaBase: './packages/ui/',
-    subpastasPermitidas: ['src', 'public', 'tests', 'docs',],
-    arquivosRaizPermitidos: ['build.ts', 'deno.json', 'deno.jsonc', 'readme.md',],
+    pastaBase: "./packages/ui/",
+    subpastasPermitidas: ["src", "public", "tests", "docs",],
+    arquivosRaizPermitidos: [
+      "build.ts",
+      "deno.json",
+      "deno.jsonc",
+      "readme.md",
+    ],
     incluiVersao: true,
     instrucaoCustomizada:
-      'O texto abaixo contém os arquivos de CÓDIGO FONTE principais da aplicação (UI).',
+      "O texto abaixo contém os arquivos de CÓDIGO FONTE principais da aplicação (UI).",
     default: true, // ✅ Roda por padrão
   },
   docs: {
-    arquivoSaida: 'snapshots/docs.md',
-    extensoesPermitidas: ['.md', '.txt',],
-    pastaBase: './',
-    subpastasPermitidas: ['docs', 'docs/syntaxmesh',],
+    arquivoSaida: "snapshots/docs.md",
+    extensoesPermitidas: [".md", ".txt",],
+    pastaBase: "./",
+    subpastasPermitidas: ["docs", "docs/syntaxmesh",],
     arquivosRaizPermitidos: [
-      'readme.md',
-      'readme',
-      'license',
-      'license.md',
-      'license.txt',
-      '.tool-versions',
+      "readme.md",
+      "readme",
+      "license",
+      "license.md",
+      "license.txt",
+      ".tool-versions",
     ],
     incluiVersao: false,
     instrucaoCustomizada:
-      'O texto abaixo contém a DOCUMENTAÇÃO e diretrizes arquiteturais do projeto.',
+      "O texto abaixo contém a DOCUMENTAÇÃO e diretrizes arquiteturais do projeto.",
     default: false, // ✅ Roda por padrão
   },
   decisoes: {
-    arquivoSaida: 'snapshots/decisoes.md',
-    extensoesPermitidas: ['.md', '.txt',],
-    pastaBase: './docs/syntaxmesh',
-    subpastasPermitidas: ['decisoes',],
+    arquivoSaida: "snapshots/decisoes.md",
+    extensoesPermitidas: [".md", ".txt",],
+    pastaBase: "./docs/syntaxmesh",
+    subpastasPermitidas: ["decisoes",],
     arquivosRaizPermitidos: [
-      '03-arquitetura.md',
-      '01-visao.md',
-      '09-regras-para-ia.md',
+      "03-arquitetura.md",
+      "01-visao.md",
+      "09-regras-para-ia.md",
     ],
     incluiVersao: false,
     instrucaoCustomizada:
-      'O texto abaixo contém a DOCUMENTAÇÃO de Decisões arquitetônicas fundamentais como ADRs (Architecture Decision Record).',
+      "O texto abaixo contém a DOCUMENTAÇÃO de Decisões arquitetônicas fundamentais como ADRs (Architecture Decision Record).",
     default: false, // ✅ Roda por padrão
   },
   fases: {
-    arquivoSaida: 'snapshots/fases.md',
-    extensoesPermitidas: ['.md', '.txt',],
-    pastaBase: './docs/syntaxmesh',
-    subpastasPermitidas: ['fases',],
+    arquivoSaida: "snapshots/fases.md",
+    extensoesPermitidas: [".md", ".txt",],
+    pastaBase: "./docs/syntaxmesh",
+    subpastasPermitidas: ["fases",],
     arquivosRaizPermitidos: [
-      '06-testes-e-processo.md',
-      '07-roadmap.md',
+      "06-testes-e-processo.md",
+      "07-roadmap.md",
     ],
     incluiVersao: false,
     instrucaoCustomizada:
-      'O texto abaixo contém o planejamento do projeto dividido em fases e com TODO list planejado.',
+      "O texto abaixo contém o planejamento do projeto dividido em fases e com TODO list planejado.",
     default: false, // ✅ Roda por padrão
   },
   engine: {
-    arquivoSaida: 'snapshots/engine.md',
-    extensoesPermitidas: ['.md', '.txt',],
-    pastaBase: './docs',
-    subpastasPermitidas: ['tj3-engine',],
+    arquivoSaida: "snapshots/engine.md",
+    extensoesPermitidas: [".md", ".txt",],
+    pastaBase: "./docs",
+    subpastasPermitidas: ["tj3-engine",],
     arquivosRaizPermitidos: [],
     incluiVersao: false,
     instrucaoCustomizada:
-      'O texto abaixo contém um blueprint investigativo de como funciona o motor do projeto taskjuggler, analisando seu código fonte.',
+      "O texto abaixo contém um blueprint investigativo de como funciona o motor do projeto taskjuggler, analisando seu código fonte.",
     default: false, // ✅ Roda por padrão
   },
   source: {
-    arquivoSaida: 'snapshots/source.md',
-    extensoesPermitidas: ['.rb',],
-    pastaBase: './docs/taskjuggler',
-    subpastasPermitidas: ['lib/taskjuggler',],
+    arquivoSaida: "snapshots/source.md",
+    extensoesPermitidas: [".rb",],
+    pastaBase: "./docs/taskjuggler",
+    subpastasPermitidas: ["lib/taskjuggler",],
     arquivosRaizPermitidos: [],
     incluiVersao: false,
     instrucaoCustomizada:
-      'O texto abaixo contém um snapshot do código fonte do projeto taskjuggler, em ruby.',
+      "O texto abaixo contém um snapshot do código fonte do projeto taskjuggler, em ruby.",
     default: false, // ✅ Roda por padrão
   },
   learning: {
-    arquivoSaida: 'snapshots/learning.md',
-    extensoesPermitidas: ['.tjp', '.md',],
-    pastaBase: './docs',
-    subpastasPermitidas: ['Learning',],
-    arquivosRaizPermitidos: ['README.md',],
+    arquivoSaida: "snapshots/learning.md",
+    extensoesPermitidas: [".tjp", ".md",],
+    pastaBase: "./docs",
+    subpastasPermitidas: ["Learning",],
+    arquivosRaizPermitidos: ["README.md",],
     incluiVersao: false,
     instrucaoCustomizada:
-      'O texto abaixo contém um snapshot de arquivos de projetos do taskjuggler, para treinamento.',
+      "O texto abaixo contém um snapshot de arquivos de projetos do taskjuggler, para treinamento.",
     default: false, // ✅ Roda por padrão
   },
   server: {
-    arquivoSaida: 'snapshots/server.md',
+    arquivoSaida: "snapshots/server.md",
     extensoesPermitidas: EXTENSOES_PADRAO,
-    pastaBase: 'packages/server',
-    subpastasPermitidas: ['src', 'tests', 'docs',],
-    caminhosAdicionaisPermitidos: ['.github/workflows',],
+    pastaBase: "packages/server",
+    subpastasPermitidas: ["src", "tests", "docs",],
+    caminhosAdicionaisPermitidos: [".github/workflows",],
     arquivosRaizPermitidos: [
-      'build.ts',
-      'deno.json',
-      'deno.jsonc',
-      'readme.md',
-      'minify-keys.ts',
-      'wrangler-worker.toml',
-      'wrangler-pages.toml',
-      'deploy.sh',
+      "build.ts",
+      "deno.json",
+      "deno.jsonc",
+      "readme.md",
+      "minify-keys.ts",
+      "wrangler-worker.toml",
+      "wrangler-pages.toml",
+      "deploy.sh",
     ],
     incluiVersao: false,
     instrucaoCustomizada:
-      'O texto abaixo contém os arquivos de configuração e execução do SERVIDOR @syntaxmesh/server e CI/CD.',
+      "O texto abaixo contém os arquivos de configuração e execução do SERVIDOR @syntaxmesh/server e CI/CD.",
     default: true, // ✅ Roda por padrão
   },
   workerdb: {
-    arquivoSaida: 'snapshots/worker-db.md',
+    arquivoSaida: "snapshots/worker-db.md",
     extensoesPermitidas: EXTENSOES_PADRAO,
-    pastaBase: 'packages/worker-db',
-    subpastasPermitidas: ['src', 'tests', 'docs', 'example',],
-    arquivosRaizPermitidos: ['build.ts', 'deno.json', 'deno.jsonc', 'readme.md',],
+    pastaBase: "packages/worker-db",
+    subpastasPermitidas: ["src", "tests", "docs", "example",],
+    arquivosRaizPermitidos: [
+      "build.ts",
+      "deno.json",
+      "deno.jsonc",
+      "readme.md",
+    ],
     incluiVersao: false,
     instrucaoCustomizada:
-      'O texto abaixo contém experimentos e código da área de @syntaxmesh/workerdb',
+      "O texto abaixo contém experimentos e código da área de @syntaxmesh/workerdb",
     default: true, // ✅ Roda por padrão
   },
   utils: {
-    arquivoSaida: 'snapshots/utils.md',
+    arquivoSaida: "snapshots/utils.md",
     extensoesPermitidas: EXTENSOES_PADRAO,
-    pastaBase: 'packages/utils',
-    subpastasPermitidas: ['src', 'tests', 'docs',],
-    caminhosAdicionaisPermitidos: ['export.ts', 'esbuild.ts', 'build.ts',],
-    arquivosRaizPermitidos: ['deno.json', 'deno.jsonc', 'readme.md',],
+    pastaBase: "packages/utils",
+    subpastasPermitidas: ["src", "tests", "docs",],
+    caminhosAdicionaisPermitidos: ["export.ts", "esbuild.ts", "build.ts",],
+    arquivosRaizPermitidos: ["deno.json", "deno.jsonc", "readme.md",],
     incluiVersao: false,
     instrucaoCustomizada:
-      'O texto abaixo contém experimentos e código da área de @syntaxmesh/utils',
+      "O texto abaixo contém experimentos e código da área de @syntaxmesh/utils",
     default: true, // ✅ Roda por padrão
   },
   parser: {
-    arquivoSaida: 'snapshots/parser.md',
+    arquivoSaida: "snapshots/parser.md",
     extensoesPermitidas: EXTENSOES_PADRAO,
-    pastaBase: 'packages/parser',
-    subpastasPermitidas: ['src', 'tests', 'docs',],
-    caminhosAdicionaisPermitidos: ['export.ts', 'esbuild.ts', 'build.ts',],
-    arquivosRaizPermitidos: ['deno.json', 'deno.jsonc', 'readme.md',],
+    pastaBase: "packages/parser",
+    subpastasPermitidas: ["src", "tests", "docs",],
+    arquivosRaizPermitidos: ["deno.json", "deno.jsonc", "readme.md",],
     incluiVersao: false,
     instrucaoCustomizada:
-      'O texto abaixo contém experimentos e código da área de @syntaxmesh/parser',
+      "O texto abaixo contém experimentos e código da área de @syntaxmesh/parser",
+    default: true, // ✅ Roda por padrão
+  },
+  core: {
+    arquivoSaida: "snapshots/core.md",
+    extensoesPermitidas: EXTENSOES_PADRAO,
+    pastaBase: "packages/core",
+    subpastasPermitidas: ["src", "tests", "docs",],
+    arquivosRaizPermitidos: ["deno.json", "deno.jsonc", "readme.md",],
+    incluiVersao: false,
+    instrucaoCustomizada:
+      "O texto abaixo contém experimentos e código da área de @syntaxmesh/core",
     default: true, // ✅ Roda por padrão
   },
   sw: {
-    arquivoSaida: 'snapshots/sw.md',
+    arquivoSaida: "snapshots/sw.md",
     extensoesPermitidas: EXTENSOES_PADRAO,
-    pastaBase: 'packages/service-worker',
-    subpastasPermitidas: ['src', 'tests', 'docs',],
-    arquivosRaizPermitidos: ['deno.json', 'deno.jsonc', 'readme.md',],
+    pastaBase: "packages/service-worker",
+    subpastasPermitidas: ["src", "tests", "docs",],
+    arquivosRaizPermitidos: ["deno.json", "deno.jsonc", "readme.md",],
     incluiVersao: true,
     instrucaoCustomizada:
-      'O texto abaixo contém experimentos e código da área de @syntaxmesh/service-worker',
+      "O texto abaixo contém experimentos e código da área de @syntaxmesh/service-worker",
     default: true, // ❌ Só roda quando solicitado explicitamente
   },
 };
@@ -257,11 +278,11 @@ function parseArgs(args: string[],): ModoExportacao[] {
 
 async function exportarModo(modo: ModoExportacao,): Promise<void> {
   const config = CONFIGURACOES[modo];
-  const versaoDisplay = config.incluiVersao ? `[v${APP_VERSION}] ` : '';
+  const versaoDisplay = config.incluiVersao ? `[v${APP_VERSION}] ` : "";
 
-  console.log(`\n${'='.repeat(60,)}`,);
+  console.log(`\n${"=".repeat(60,)}`,);
   console.log(`📦 EXPORTANDO MODO: ${modo.toUpperCase()} ${versaoDisplay}`,);
-  console.log(`${'='.repeat(60,)}`,);
+  console.log(`${"=".repeat(60,)}`,);
   console.log(`📄 Arquivo de saída: ${config.arquivoSaida}`,);
   console.log(`📁 Pasta base: ${config.pastaBase}`,);
 
@@ -271,14 +292,17 @@ async function exportarModo(modo: ModoExportacao,): Promise<void> {
   let arquivosIncluidos = 0;
 
   // Varre o diretório atual e filtra os arquivos
-  for await (const entry of walk('.', { includeDirs: false, },)) {
-    const caminhoRelativo = relative('.', entry.path,);
+  for await (const entry of walk(".", { includeDirs: false, },)) {
+    const caminhoRelativo = relative(".", entry.path,);
 
     if (deveIncluirArquivo(caminhoRelativo, config,)) {
       try {
         console.log(`   ✅ Incluindo: ${caminhoRelativo}`,);
         const conteudoArquivo = await Deno.readTextFile(entry.path,);
-        conteudoFinal += formatarArquivoMarkdown(caminhoRelativo, conteudoArquivo,);
+        conteudoFinal += formatarArquivoMarkdown(
+          caminhoRelativo,
+          conteudoArquivo,
+        );
         arquivosIncluidos++;
       } catch (erro) {
         if (erro instanceof Error) {
@@ -305,8 +329,8 @@ if (import.meta.main) {
   // Parseia args e determina quais modos executar
   const modosParaExecutar = parseArgs(Deno.args,);
 
-  console.log('\n🚀 Iniciando Exportação de Contexto SyntaxMesh',);
-  console.log(`📋 Modos a exportar: ${modosParaExecutar.join(', ',)}`,);
+  console.log("\n🚀 Iniciando Exportação de Contexto SyntaxMesh",);
+  console.log(`📋 Modos a exportar: ${modosParaExecutar.join(", ",)}`,);
   console.log(`📌 Versão: v${APP_VERSION}\n`,);
 
   if (modosParaExecutar.length === 0) {
@@ -327,8 +351,8 @@ if (import.meta.main) {
   }
 
   const elapsed = (performance.now() - startTime).toFixed(0,);
-  console.log(`\n${'='.repeat(60,)}`,);
+  console.log(`\n${"=".repeat(60,)}`,);
   console.log(`🎉 EXPORTAÇÃO CONCLUÍDA COM SUCESSO!`,);
   console.log(`⏱️ Tempo total: ${elapsed}ms`,);
-  console.log(`${'='.repeat(60,)}\n`,);
+  console.log(`${"=".repeat(60,)}\n`,);
 }

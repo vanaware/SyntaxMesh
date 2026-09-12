@@ -711,7 +711,7 @@
   },
   "$version": 4,
   "model": {
-    "name": "qwen3.6-flash-2026-04-16",
+    "name": "qwen3.5-flash-2026-02-23",
     "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
     "reasoningEffort": "high",
     "generationConfig": {

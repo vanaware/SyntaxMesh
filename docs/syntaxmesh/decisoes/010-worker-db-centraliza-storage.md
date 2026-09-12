@@ -38,4 +38,4 @@ Centralizar toda interação com IndexedDB e OPFS através do pacote `@syntaxmes
 
 **Status:** Aceito
 **Data:** 2026-09-11
-**Autor(es):** Qwen Code
+**Autor(es):** Vanaware
