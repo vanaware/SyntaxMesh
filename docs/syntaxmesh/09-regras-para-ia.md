@@ -11,3 +11,5 @@
 - Idioma não pode contaminar Core.
 - Toda funcionalidade nova precisa de teste.
 - Decisões arquitetônicas relevantes devem ser registradas em `docs/syntaxmesh/decisoes/` como ADR (Architecture Decision Record).
+
+IMPORTANT: os arquivos TaskJuggler Ruby fonte estão em docs/taskjuggler/lib/taskjuggler

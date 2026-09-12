@@ -1,5 +1,7 @@
 # 013 — Flag global `compat.keepRubyBugs` para bugs do Ruby
 
+IMPORTANT: os arquivos TaskJuggler Ruby fonte estão em docs/taskjuggler/lib/taskjuggler
+
 ## Contexto
 
 O TaskJuggler 3.8.4, escrito em Ruby, contém **bugs conhecidos** que afetam o output de datas, formatação numérica e contagem de intervalos. O ADR 011 estabelece que o SyntaxMesh deve ser um **port fiel**, com paridade bit-a-bit validada por golden tests contra o `tj3` real.

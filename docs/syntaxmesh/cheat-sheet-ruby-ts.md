@@ -7,6 +7,8 @@
 
 ---
 
+IMPORTANT: os arquivos TaskJuggler Ruby fonte estão em docs/taskjuggler/lib/taskjuggler
+
 ## 1. Tipos e valores
 
 | Ruby | TypeScript |

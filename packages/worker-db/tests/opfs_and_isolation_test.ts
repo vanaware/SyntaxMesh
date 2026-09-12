@@ -45,9 +45,9 @@ Deno.test({
     await dbApp1.set('config', { theme: 'dark', },);
     await dbApp2.set('config', { theme: 'light', },);
 
-    const app1Vals = await dbApp1.values<any>();
+    const app1Vals = await dbApp1.values<unknown>();
     assertEquals(app1Vals.length, 1,);
-    assertEquals(app1Vals[0].theme, 'dark',);
+    assertEquals((app1Vals[0] as Record<string, unknown>).theme, 'dark',);
 
     const exportApp2 = await dbApp2.exportDB();
     assert(Object.keys(exportApp2,).includes('APP_2_config',),);
@@ -86,10 +86,10 @@ Deno.test({
 
     // Restore indicando a recordKey isolada
     await store.restoreFromOpfs(recordKey, 'meu_backup_db.json',);
-    const restored = await store.values<any>();
+    const restored = await store.values<unknown>();
     assertEquals(restored.length, 2,);
 
-    const k1 = await store.get<any>('k1',);
+    const k1 = await store.get<unknown>('k1',) as Record<string, unknown>;
     assertEquals(k1?.text, 'Hello OPFS DB',);
 
     FakeOPFSDirectory.clear();
@@ -130,11 +130,11 @@ Deno.test({
     const restoredKeys = store.keys();
     assertEquals(restoredKeys.length, 2,);
 
-    const config = store.get<any>('config',);
+    const config = store.get<unknown>('config',) as Record<string, unknown>;
     assertEquals(config?.theme, 'dark',);
     assertEquals(config?.notifications, true,);
 
-    const perfil = store.get<any>('perfil',);
+    const perfil = store.get<unknown>('perfil',) as Record<string, unknown>;
     assertEquals(perfil?.alias, 'Satoshi',);
 
     FakeOPFSDirectory.clear();

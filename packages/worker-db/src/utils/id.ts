@@ -53,7 +53,7 @@ export function prepareForSave(
   }
 
   // Intercepta a chave informada como "auto" via parâmetro direto ou tupla do setMany
-  let processKey = key === 'auto' ? gerarId() : key;
+  const processKey = key === 'auto' ? gerarId() : key;
 
   let finalKey = processKey || '';
 

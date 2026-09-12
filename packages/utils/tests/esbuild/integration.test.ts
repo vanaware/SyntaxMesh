@@ -28,11 +28,11 @@ describe('processTarget (integração)', () => {
         entryPoints: ['dummy.ts',],
       };
       // Mock esbuild.build
-      const mockBuild = async (options: any,) => {
+      const mockBuild = (options: Record<string, unknown>,) => {
         // Simula escrita do arquivo de saída
-        const outFile = options.outfile || join(options.outdir, 'output.js',);
-        await Deno.writeTextFile(outFile, '// bundled code',);
-        return { metafile: null, errors: [], warnings: [], };
+        const outFile = (options.outfile as string) || join(options.outdir as string, 'output.js',);
+        Deno.writeTextFile(outFile, '// bundled code',);
+        return Promise.resolve({ metafile: null, errors: [], warnings: [], });
       };
       await processTarget('ui', config, '2.0.0', mockBuild,);
       // Arquivo antigo foi removido (clean: ["."])
@@ -64,11 +64,13 @@ describe('processTarget (integração)', () => {
         entryPoints: ['dummy.ts',],
         metafile: true,
       };
-      const mockBuild = async () => ({
+      const mockBuild = () => Promise.resolve({
         metafile: {
           inputs: { 'src/main.ts': { bytes: 100, }, },
           outputs: { 'dist/main.js': { bytes: 500, }, },
         },
+        errors: [],
+        warnings: [],
       });
       await processTarget('ui', config, '1.0.0', mockBuild,);
       const metafilePath = join(distDir, 'ui-metafile.json',);
@@ -93,7 +95,7 @@ describe('processTarget (integração)', () => {
         entryPoints: ['dummy.ts',],
         metafile: false,
       };
-      const mockBuild = async () => ({
+      const mockBuild = () => Promise.resolve({
         metafile: { inputs: {}, },
       });
       await processTarget('ui', config, '1.0.0', mockBuild,);
@@ -118,7 +120,7 @@ describe('processTarget (integração)', () => {
         distdir: distDir,
         entryPoints: ['dummy.ts',],
       };
-      const mockBuild = async () => {
+      const mockBuild = () => {
         throw new Error('Build failed',);
       };
       let caughtError: Error | null = null;
@@ -147,11 +149,11 @@ describe('processTarget (integração)', () => {
         entryPoints: ['dummy.ts',],
         outfile: 'custom-name.js',
       };
-      let capturedOptions: any = null;
-      const mockBuild = async (options: any,) => {
+      let capturedOptions: Record<string, unknown> = {};
+      const mockBuild = (options: Record<string, unknown>,) => {
         capturedOptions = options;
-        await Deno.writeTextFile(options.outfile, '// code',);
-        return {};
+        Deno.writeTextFile(options.outfile as string, '// code',);
+        return Promise.resolve({ metafile: null, errors: [], warnings: [], });
       };
       await processTarget('ui', config, '1.0.0', mockBuild,);
       assertEquals(capturedOptions.outfile, join(distDir, 'custom-name.js',),);
@@ -178,11 +180,11 @@ describe('processTarget (integração)', () => {
         entryPoints: ['sw.ts',],
       };
       let capturedDefine: Record<string, string> = {};
-      const mockBuild = async (options: any,) => {
-        capturedDefine = options.define;
-        return {};
+      const mockBuild = (options: Record<string, unknown>,) => {
+        capturedDefine = options.define as Record<string, string>;
+        return Promise.resolve({ metafile: null, errors: [], warnings: [], });
       };
-      const mockListFn = async () => ['./app.js', './index.html',];
+      const mockListFn = () => Promise.resolve(['./app.js', './index.html',]);
       await processTarget('sw', config, '1.0.0', mockBuild, mockListFn,);
       // 🔥 CORREÇÃO: Tratamento explícito de undefined (noUncheckedIndexedAccess)
       const generatedAssets = capturedDefine['__GENERATED_ASSETS__']!;

@@ -93,10 +93,10 @@ describe("TjTime advances", () => {
     });
 
     it("handles february leap year week", () => {
-      // 24/fev (leap) + 7 = 31 > 29 -> 5/mar
+      // 24/fev (leap) + 7 = 31 > 29 -> 2/mar (rollover)
       const t = TjTime.fromString("2024-02-24-14:30:45");
       const result = t.sameTimeNextWeek();
-      assertEquals(result.toSeconds(), TjTime.fromString("2024-03-05-14:30:45").toSeconds());
+      assertEquals(result.toSeconds(), TjTime.fromString("2024-03-02-14:30:45").toSeconds());
     });
   });
 
@@ -108,9 +108,10 @@ describe("TjTime advances", () => {
     });
 
     it("handles day rollover when new month has fewer days", () => {
+      // Ruby bug: uses old month's monMax (31), sets day=31, then Time.mktime(2026,2,31) -> 2026-03-03
       const t = TjTime.fromString("2026-01-31-14:30:45");
       const result = t.sameTimeNextMonth();
-      assertEquals(result.toSeconds(), TjTime.fromString("2026-02-28-14:30:45").toSeconds());
+      assertEquals(result.toSeconds(), TjTime.fromString("2026-03-03-14:30:45").toSeconds());
     });
 
     it("handles month end to year boundary", () => {
@@ -120,9 +121,10 @@ describe("TjTime advances", () => {
     });
 
     it("handles 31st of month to month with 30 days", () => {
+      // Ruby bug: uses old month's monMax (31), sets day=31, then Time.mktime(2026,6,31) -> 2026-07-01
       const t = TjTime.fromString("2026-05-31-14:30:45");
       const result = t.sameTimeNextMonth();
-      assertEquals(result.toSeconds(), TjTime.fromString("2026-06-30-14:30:45").toSeconds());
+      assertEquals(result.toSeconds(), TjTime.fromString("2026-07-01-14:30:45").toSeconds());
     });
   });
 
@@ -140,9 +142,10 @@ describe("TjTime advances", () => {
     });
 
     it("handles 31st day rollover in quarter advance", () => {
+      // Ruby: month += 3 -> 4, day=31, Time.mktime(2026,4,31) -> 2026-05-01 (rollover)
       const t = TjTime.fromString("2026-01-31-14:30:45");
       const result = t.sameTimeNextQuarter();
-      assertEquals(result.toSeconds(), TjTime.fromString("2026-04-31-14:30:45").toSeconds());
+      assertEquals(result.toSeconds(), TjTime.fromString("2026-05-01-14:30:45").toSeconds());
     });
   });
 
@@ -185,10 +188,10 @@ describe("TjTime advances", () => {
       assertEquals(result.toSeconds(), TjTime.fromString("2026-01-18-14:30:45").toSeconds());
     });
 
-    it("finds next wednesday from monday (3 days later)", () => {
+    it("finds next wednesday from monday (2 days later)", () => {
       const t = TjTime.fromString("2026-01-12-14:30:45");
       const result = t.nextDayOfWeek(3);
-      assertEquals(result.toSeconds(), TjTime.fromString("2026-01-15-14:30:45").toSeconds());
+      assertEquals(result.toSeconds(), TjTime.fromString("2026-01-14-14:30:45").toSeconds());
     });
 
     it("validates dow range", () => {

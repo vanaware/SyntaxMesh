@@ -30,12 +30,12 @@ export function initializeUiEventAdapter() {
   },);
 
   // 2. Traduz eventos de rede nativos -> EventBus da UI
-  window.addEventListener('online', () => {
+  globalThis.addEventListener('online', () => {
     addDebugLog(`[UI-ADAPTER] 🟢 Rede online detectada.`,);
     EventBus.emit('syntaxmesh:network:online',);
   },);
 
-  window.addEventListener('offline', () => {
+  globalThis.addEventListener('offline', () => {
     addDebugLog(`[UI-ADAPTER] 🔴 Rede offline detectada.`,);
     EventBus.emit('syntaxmesh:network:offline',);
   },);

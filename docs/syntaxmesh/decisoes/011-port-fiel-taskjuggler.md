@@ -1,5 +1,7 @@
 # Port fiel do TaskJuggler
 
+IMPORTANT: os arquivos TaskJuggler Ruby fonte estão em docs/taskjuggler/lib/taskjuggler
+
 ## Contexto
 
 O SyntaxMesh é uma implementação independente inspirada no TaskJuggler 3.8.4. A decisão inicial era implementar com arquitetura própria. Após análise mais profunda, ficou claro que a fidelidade ao comportamento original é mais importante que a originalidade da arquitetura.

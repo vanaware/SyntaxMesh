@@ -42,7 +42,7 @@ export class TjTime {
    * Create TjTime from parts
    * @param year - Year (1970-2035)
    * @param month - Month (1-12)
-   * @param day - Day (1-31)
+   * @param day - Day (1-31) - may be invalid for the month, will roll over like Ruby's Time.mktime
    * @param hour - Hour (0-23, default 0)
    * @param minute - Minute (0-59, default 0)
    * @param second - Second (0-59, default 0)
@@ -484,8 +484,20 @@ export class TjTime {
     }
 
     let day = parts.day;
-    if (day > monMax) {
+    if (day >= TjTime.lastDayOfMonth(month, year)) {
       day = monMax;
+    }
+
+    // Handle rollover if day is still invalid for new month
+    const newLastDay = TjTime.lastDayOfMonth(month, year);
+    if (day > newLastDay) {
+      const excessDays = day - newLastDay;
+      day = excessDays;
+      month++;
+      if (month > 12) {
+        month = 1;
+        year++;
+      }
     }
 
     return TjTime.fromParts(year, month, day, parts.hour, parts.minute, parts.second, currentTimeZone);
@@ -504,8 +516,19 @@ export class TjTime {
       year++;
     }
 
-    // Day stays as-is (no clamp), may cause rollover
-    return TjTime.fromParts(year, month, parts.day, parts.hour, parts.minute, parts.second, currentTimeZone);
+    // Handle day overflow like Ruby's Time.mktime
+    let day = parts.day;
+    const newLastDay = TjTime.lastDayOfMonth(month, year);
+    if (day > newLastDay) {
+      day = day - newLastDay;
+      month++;
+      if (month > 12) {
+        month = 1;
+        year++;
+      }
+    }
+
+    return TjTime.fromParts(year, month, day, parts.hour, parts.minute, parts.second, currentTimeZone);
   }
 
   /**
@@ -516,7 +539,19 @@ export class TjTime {
     const year = parts.year + 1;
 
     // Day stays as-is (no clamp), may cause rollover
-    return TjTime.fromParts(year, parts.month, parts.day, parts.hour, parts.minute, parts.second, currentTimeZone);
+    let day = parts.day;
+    const newLastDay = TjTime.lastDayOfMonth(parts.month, year);
+    if (day > newLastDay) {
+      const excessDays = day - newLastDay;
+      day = excessDays;
+      let month = parts.month + 1;
+      if (month > 12) {
+        month = 1;
+      }
+      return TjTime.fromParts(year, month, day, parts.hour, parts.minute, parts.second, currentTimeZone);
+    }
+
+    return TjTime.fromParts(year, parts.month, day, parts.hour, parts.minute, parts.second, currentTimeZone);
   }
 
   /**
@@ -529,26 +564,23 @@ export class TjTime {
     }
 
     const parts = getLocalParts(this.seconds, currentTimeZone);
-    const currentDoW = parts.weekday;
 
-    // Calculate days to add
-    let daysToAdd = dow - currentDoW;
-    if (daysToAdd <= 0) {
-      daysToAdd += 7;
-    }
+    // Start from midnight of next day (always at least tomorrow)
+    const d = this.midnight().sameTimeNextDay();
+    const currentDoW = d.wday();
 
-    // Start from tomorrow
-    const tomorrow = this.sameTimeNextDay();
-    const tomorrowParts = getLocalParts(tomorrow.toSeconds(), currentTimeZone);
-    const tomorrowDoW = tomorrowParts.weekday;
+    // Calculate iterations needed
+    const iterations = (dow + 7 - currentDoW) % 7;
 
-    // Iterate daysToAdd times
-    let result = tomorrow;
-    for (let i = 0; i < daysToAdd; i++) {
+    // Iterate sameTimeNextDay
+    let result = d;
+    for (let i = 0; i < iterations; i++) {
       result = result.sameTimeNextDay();
     }
 
-    return result;
+    // Add original time back
+    const timeSeconds = parts.hour * 3600 + parts.minute * 60 + parts.second;
+    return result.addSeconds(timeSeconds);
   }
 
   /**

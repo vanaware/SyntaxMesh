@@ -16,22 +16,22 @@ Deno.test({
     },);
 
     // Valida execução de funções avançadas síncronas de Array
-    const result = store.query((items: any[],) => {
+    const result = store.query((items: Record<string, unknown>[],) => {
       return {
         count: items.length, // length
-        total: items.reduce((acc: number, i: any,) => acc + i.amount, 0,), // reduce
-        firstWork: items.find((i: any,) => i.tag === 'work'), // find
-        lastWork: items.findLast((i: any,) => i.tag === 'work'), // findLast
+        total: items.reduce((acc: number, i: Record<string, unknown>) => acc + (i as Record<string, unknown>).amount, 0,), // reduce
+        firstWork: items.find((i: Record<string, unknown>) => (i as Record<string, unknown>).tag === 'work'), // find
+        lastWork: items.findLast((i: Record<string, unknown>) => (i as Record<string, unknown>).tag === 'work'), // findLast
         lastItem: items.at(-1,), // at
-        hasPending: items.some((i: any,) => i.status === 'pending'), // some
-        allPositive: items.every((i: any,) => i.amount > 0), // every
-        tagsHaveHome: items.map((i: any,) => i.tag).includes('home',), // map e includes
-        idxPersonal: items.findIndex((i: any,) => i.tag === 'personal'), // findIndex
-        lastIdxWork: items.findLastIndex((i: any,) => i.tag === 'work'), // findLastIndex
-        indexOfZ: items.map((i: any,) => i.code).indexOf('z',), // indexOf
-        paidItems: items.filter((i: any,) => i.status === 'paid'), // filter
+        hasPending: items.some((i: Record<string, unknown>) => (i as Record<string, unknown>).status === 'pending'), // some
+        allPositive: items.every((i: Record<string, unknown>) => (i as Record<string, unknown>).amount > 0), // every
+        tagsHaveHome: items.map((i: Record<string, unknown>) => (i as Record<string, unknown>).tag).includes('home',), // map e includes
+        idxPersonal: items.findIndex((i: Record<string, unknown>) => (i as Record<string, unknown>).tag === 'personal'), // findIndex
+        lastIdxWork: items.findLastIndex((i: Record<string, unknown>) => (i as Record<string, unknown>).tag === 'work'), // findLastIndex
+        indexOfZ: items.map((i: Record<string, unknown>) => (i as Record<string, unknown>).code).indexOf('z',), // indexOf
+        paidItems: items.filter((i: Record<string, unknown>) => (i as Record<string, unknown>).status === 'paid'), // filter
         sliced: items.slice(1, 4,), // slice
-        sortedByAmount: items.toSorted((a: any, b: any,) => a.amount - b.amount), // toSorted
+        sortedByAmount: items.toSorted((a: Record<string, unknown>, b: Record<string, unknown>) => (a as Record<string, unknown>).amount - (b as Record<string, unknown>).amount), // toSorted
         reversed: items.toReversed(), // toReversed
         spliced: items.toSpliced(0, 2,), // toSpliced
       };
@@ -39,9 +39,9 @@ Deno.test({
 
     assertEquals(result.count, 5,);
     assertEquals(result.total, 1230,);
-    assertEquals((result.firstWork as any).amount, 150,);
-    assertEquals((result.lastWork as any).amount, 200,);
-    assertEquals((result.lastItem as any).code, 'k',);
+    assertEquals((result.firstWork as Record<string, unknown>).amount, 150,);
+    assertEquals((result.lastWork as Record<string, unknown>).amount, 200,);
+    assertEquals((result.lastItem as Record<string, unknown>).code, 'k',);
     assert(result.hasPending,);
     assert(result.allPositive,);
     assert(result.tagsHaveHome,);
@@ -50,8 +50,8 @@ Deno.test({
     assertEquals(result.indexOfZ, 2,);
     assertEquals(result.paidItems.length, 3,);
     assertEquals(result.sliced.length, 3,);
-    assertEquals((result.sortedByAmount[0] as any).amount, 80,);
-    assertEquals((result.reversed[0] as any).code, 'k',);
+    assertEquals((result.sortedByAmount[0] as Record<string, unknown>).amount, 80,);
+    assertEquals((result.reversed[0] as Record<string, unknown>).code, 'k',);
     assertEquals(result.spliced.length, 3,);
 
     store.clear();
@@ -67,19 +67,19 @@ Deno.test({
 
     // AssertThrows captura as exceções síncronas disparadas pelo wrapper ls()
     assertThrows(
-      () => store.getSome(() => ({ obj: 'invalid', } as any)),
+      () => store.getSome(() => ({ obj: 'invalid', } as unknown)),
       Error,
       'A função em getSome deve retornar um Array.',
     );
 
     assertThrows(
-      () => store.delSome(() => false as any),
+      () => store.delSome(() => false as unknown),
       Error,
       'A função em delSome deve retornar um Array.',
     );
 
     assertThrows(
-      () => store.setSome(() => 'string' as any, (i: any,) => i,),
+      () => store.setSome(() => 'string' as unknown, (i: unknown,) => i,),
       Error,
       'A função de seleção em setSome deve retornar um Array.',
     );

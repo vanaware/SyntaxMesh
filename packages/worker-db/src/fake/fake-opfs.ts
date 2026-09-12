@@ -6,9 +6,10 @@ export class FakeOPFSFileHandle {
     private storage: Map<string, Uint8Array>,
   ) {}
 
-  async createWritable() {
-    const self = this;
+  createWritable() {
     let content: Uint8Array = new Uint8Array();
+    const storage = this.storage;
+    const fullPath = this.fullPath;
     return {
       async write(data: Uint8Array | string | Blob | ArrayBuffer,) {
         if (data instanceof Uint8Array) {
@@ -21,8 +22,8 @@ export class FakeOPFSFileHandle {
           content = new TextEncoder().encode(String(data,),);
         }
       },
-      async close() {
-        self.storage.set(self.fullPath, content,);
+      close() {
+        storage.set(fullPath, content,);
       },
     };
   }
@@ -33,7 +34,7 @@ export class FakeOPFSFileHandle {
       throw new Error(`File ${this.fullPath} not found in Fake OPFS`,);
     }
     const fileName = this.fullPath.split('/',).pop() || 'file';
-    return new File([content as any,], fileName, {
+    return new File([content as BlobPart], fileName, {
       type: 'application/octet-stream',
       lastModified: Date.now(),
     },);
@@ -45,11 +46,11 @@ export class FakeOPFSDirectory {
 
   constructor(private path: string = '',) {}
 
-  async getDirectoryHandle(name: string, options?: { create?: boolean },) {
+  getDirectoryHandle(name: string, options?: { create?: boolean },) {
     return new FakeOPFSDirectory(this.path ? `${this.path}/${name}` : name,);
   }
 
-  async getFileHandle(name: string, options?: { create?: boolean },) {
+  getFileHandle(name: string, options?: { create?: boolean },) {
     const fullPath = this.path ? `${this.path}/${name}` : name;
     if (!options?.create && !FakeOPFSDirectory.sharedStorage.has(fullPath,)) {
       throw new Error(`File ${fullPath} not found in Fake OPFS`,);
@@ -57,7 +58,7 @@ export class FakeOPFSDirectory {
     return new FakeOPFSFileHandle(fullPath, FakeOPFSDirectory.sharedStorage,);
   }
 
-  async removeEntry(name: string,) {
+  removeEntry(name: string,) {
     const fullPath = this.path ? `${this.path}/${name}` : name;
     FakeOPFSDirectory.sharedStorage.delete(fullPath,);
   }
