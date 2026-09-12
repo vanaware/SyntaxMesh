@@ -207,7 +207,7 @@ Trivial — `{ date, description, amount }`. Sem lógica.
 
 ---
 
-### 12.0 — ADR 018 (modelo financeiro)
+### 8.0 — ADR 018 (modelo financeiro)
 
 #### Contexto
 
@@ -258,7 +258,7 @@ Criar `docs/syntaxmesh/decisoes/018-modelo-financeiro.md`.
 
 ---
 
-### 12.1 — `AccountCredit`
+### 8.1 — `AccountCredit`
 
 #### Contexto
 
@@ -307,7 +307,7 @@ assertEquals(c.amount, 5000);
 
 ---
 
-### 12.2 — `Charge`
+### 8.2 — `Charge`
 
 #### Contexto
 
@@ -392,7 +392,7 @@ assertEquals(c.turnover(period), 10000);
 
 ---
 
-### 12.3 — `ChargeSet`
+### 8.3 — `ChargeSet`
 
 #### Contexto
 
@@ -473,7 +473,7 @@ assertEquals(cs.share(devAccount), 0.7);
 
 ---
 
-### 12.4 — `AccountScenario.turnover` + `query_balance` + `query_turnover`
+### 8.4 — `AccountScenario.turnover` + `query_balance` + `query_turnover`
 
 #### Contexto
 
@@ -555,7 +555,7 @@ Análogo.
 
 ---
 
-### 12.5 — `TaskScenario.turnover` — pipeline completo
+### 8.5 — `TaskScenario.turnover` — pipeline completo
 
 #### Contexto
 
@@ -629,7 +629,7 @@ Análogo.
 
 ---
 
-### 12.6 — `ResourceScenario.turnover` — pipeline completo
+### 8.6 — `ResourceScenario.turnover` — pipeline completo
 
 #### Contexto
 
@@ -686,7 +686,7 @@ Análogo.
 
 ---
 
-### 12.7 — Meta-account (utilitário)
+### 8.7 — Meta-account (utilitário)
 
 #### Contexto
 
@@ -745,7 +745,7 @@ assertEquals(balance.adoptees.length, 2);
 
 ---
 
-### 12.8 — Golden tests (financeiro)
+### 8.8 — Golden tests (financeiro)
 
 #### Contexto
 

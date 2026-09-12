@@ -266,7 +266,7 @@ Toda API é `async`. Sem callbacks.
 
 ---
 
-### 24.0 — ADR 030 (schema versionado e migrações)
+### 19.0 — ADR 030 (schema versionado e migrações)
 
 #### Contexto
 
@@ -305,7 +305,7 @@ Criar `docs/syntaxmesh/decisoes/030-storage-schema.md`.
 
 ---
 
-### 24.1 — `schema.ts` + `migrations.ts`
+### 19.1 — `schema.ts` + `migrations.ts`
 
 #### Contexto
 
@@ -355,7 +355,7 @@ assertEquals(migrateProjectMeta(meta).schemaVersion, 1);
 
 ---
 
-### 24.2 — `mod.ts` (Storage exports)
+### 19.2 — `mod.ts` (Storage exports)
 
 #### Contexto
 
@@ -381,7 +381,7 @@ Exportar tudo.
 
 ---
 
-### 24.3 — `ProjectService`
+### 19.3 — `ProjectService`
 
 #### Contexto
 
@@ -451,7 +451,7 @@ assertEquals((await svc.list()).length, 1);
 
 ---
 
-### 24.4 — `Autosave`
+### 19.4 — `Autosave`
 
 #### Contexto
 
@@ -506,7 +506,7 @@ assertEquals(await svc.read('id1'), 'content');
 
 ---
 
-### 24.5 — `Recovery`
+### 19.5 — `Recovery`
 
 #### Contexto
 
@@ -558,7 +558,7 @@ assertEquals(r?.content, 'content');
 
 ---
 
-### 24.6 — `SettingsService`
+### 19.6 — `SettingsService`
 
 #### Contexto
 
@@ -612,7 +612,7 @@ assertEquals((await s.get()).locale, 'pt-BR');
 
 ---
 
-### 24.7 — `ImportExport`
+### 19.7 — `ImportExport`
 
 #### Contexto
 
@@ -664,7 +664,7 @@ assert(JSON.parse(exp.content).tjp === 'project p1 ...');
 
 ---
 
-### 24.8 — `ProjectLoader`
+### 19.8 — `ProjectLoader`
 
 #### Contexto
 
@@ -716,7 +716,7 @@ assert(project !== null);
 
 ---
 
-### 24.9 — Corrigir Fase 18 para usar `fakeOpfs()`
+### 19.9 — Corrigir Fase 18 para usar `fakeOpfs()`
 
 #### Contexto
 
@@ -769,7 +769,7 @@ import { fakeOpfs } from "@syntaxmesh/worker-db";
 
 ---
 
-### 24.10 — Substituir `addToScm` no-op
+### 19.10 — Substituir `addToScm` no-op
 
 #### Contexto
 
@@ -803,7 +803,7 @@ Substituir.
 
 ---
 
-### 24.11 — Integração com UI (referência)
+### 19.11 — Integração com UI (referência)
 
 #### Contexto
 
@@ -832,7 +832,7 @@ Documentar contrato.
 
 ---
 
-### 24.12 — Snapshot tests (persistência)
+### 19.12 — Snapshot tests (persistência)
 
 #### Contexto
 

@@ -39,10 +39,10 @@ deno task fmt && deno task lint
 ## Progresso
 
 ```
-[ ] 5.0  ADR 012                      —  0/5
-[ ] 5.1  TjTime parsing               —  0/18
-[ ] 5.2  TjTime aritmética            —  0/10
-[ ] 5.3  TjTime normalizações         —  0/10
+[x] 5.0  ADR 012                      —  0/5
+[x] 5.1  TjTime parsing               —  18/18 ✅
+[x] 5.2  TjTime aritmética            —  10/10 ✅
+[x] 5.3  TjTime normalizações         —  10/10 ✅
 [ ] 5.4  TjTime avanços               —  0/12
 [ ] 5.5  TjTime diferenças            —  0/8
 [ ] 5.6  TjTime timezone + strftime   —  0/16

@@ -300,7 +300,7 @@ Replicar.
 
 ---
 
-### 19.0 — ADR 026 (Gantt HTML+CSS)
+### 15.0 — ADR 026 (Gantt HTML+CSS)
 
 #### Contexto
 
@@ -337,7 +337,7 @@ Criar `docs/syntaxmesh/decisoes/026-gantt-html-css.md`.
 
 ---
 
-### 19.1 — `HTMLGraphics`
+### 15.1 — `HTMLGraphics`
 
 #### Contexto
 
@@ -391,7 +391,7 @@ const div = lineToHTML(10, 20, 50, 20, 'foo');
 
 ---
 
-### 19.2 — `CollisionDetector`
+### 15.2 — `CollisionDetector`
 
 #### Contexto
 
@@ -462,7 +462,7 @@ assert(!cd.collision(20, [50, 60], true));
 
 ---
 
-### 19.3 — `GanttRouter`
+### 15.3 — `GanttRouter`
 
 #### Contexto
 
@@ -538,7 +538,7 @@ Análogo.
 
 ---
 
-### 19.4 — `GanttTaskBar`
+### 15.4 — `GanttTaskBar`
 
 #### Contexto
 
@@ -600,7 +600,7 @@ assertEquals(html.length, 4); // frame invisível, frame, fill, progress
 
 ---
 
-### 19.5 — `GanttMilestone`
+### 15.5 — `GanttMilestone`
 
 #### Contexto
 
@@ -646,7 +646,7 @@ Análogo.
 
 ---
 
-### 19.6 — `GanttContainer`
+### 15.6 — `GanttContainer`
 
 #### Contexto
 
@@ -695,7 +695,7 @@ Análogo.
 
 ---
 
-### 19.7 — `GanttLoadStack`
+### 15.7 — `GanttLoadStack`
 
 #### Contexto
 
@@ -756,7 +756,7 @@ Análogo.
 
 ---
 
-### 19.8 — `GanttHeaderScaleItem`
+### 15.8 — `GanttHeaderScaleItem`
 
 #### Contexto
 
@@ -800,7 +800,7 @@ Análogo.
 
 ---
 
-### 19.9 — `GanttHeader`
+### 15.9 — `GanttHeader`
 
 #### Contexto
 
@@ -876,7 +876,7 @@ assert(header.gridLines.length > 0);
 
 ---
 
-### 19.10 — `GanttLine`
+### 15.10 — `GanttLine`
 
 #### Contexto
 
@@ -966,7 +966,7 @@ Análogo.
 
 ---
 
-### 19.11 — `GanttChart`
+### 15.11 — `GanttChart`
 
 #### Contexto
 
@@ -1080,7 +1080,7 @@ Análogo.
 
 ---
 
-### 19.12 — Integração com `TaskReport` e `ResourceReport`
+### 15.12 — Integração com `TaskReport` e `ResourceReport`
 
 #### Contexto
 
@@ -1131,7 +1131,7 @@ Análogo.
 
 ---
 
-### 19.13 — Golden tests (Gantt)
+### 15.13 — Golden tests (Gantt)
 
 #### Contexto
 

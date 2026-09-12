@@ -292,7 +292,7 @@ Histórico em `editor.ts` (stack de snapshots do conteúdo). Ctrl+Z / Ctrl+Y.
 
 ---
 
-### 25.0 — ADR 032 (PWA + UI stack)
+### 20.0 — ADR 032 (PWA + UI stack)
 
 #### Contexto
 
@@ -334,7 +334,7 @@ Criar `docs/syntaxmesh/decisoes/032-pwa-ui-stack.md`.
 
 ---
 
-### 25.1 — `manifest.json` + ícones
+### 20.1 — `manifest.json` + ícones
 
 #### Contexto
 
@@ -377,7 +377,7 @@ Criar manifest + gerar ícones.
 
 ---
 
-### 25.2 — Service Worker
+### 20.2 — Service Worker
 
 #### Contexto
 
@@ -432,7 +432,7 @@ Implementar.
 
 ---
 
-### 25.3 — Registro do SW + auto-update
+### 20.3 — Registro do SW + auto-update
 
 #### Contexto
 
@@ -470,7 +470,7 @@ Implementar.
 
 ---
 
-### 25.4 — `index.html` + shell offline
+### 20.4 — `index.html` + shell offline
 
 #### Contexto
 
@@ -513,7 +513,7 @@ Criar.
 
 ---
 
-### 25.5 — Preact + Signals setup
+### 20.5 — Preact + Signals setup
 
 #### Contexto
 
@@ -552,7 +552,7 @@ Implementar.
 
 ---
 
-### 25.6 — BeerCSS setup
+### 20.6 — BeerCSS setup
 
 #### Contexto
 
@@ -582,7 +582,7 @@ Integrar.
 
 ---
 
-### 25.7 — Theme system
+### 20.7 — Theme system
 
 #### Contexto
 
@@ -626,7 +626,7 @@ Implementar.
 
 ---
 
-### 25.8 — `engine.worker.ts`
+### 20.8 — `engine.worker.ts`
 
 #### Contexto
 
@@ -675,7 +675,7 @@ Implementar.
 
 ---
 
-### 25.9 — `engine-client.ts`
+### 20.9 — `engine-client.ts`
 
 #### Contexto
 
@@ -716,7 +716,7 @@ Implementar.
 
 ---
 
-### 25.10 — `parser-service.ts`
+### 20.10 — `parser-service.ts`
 
 #### Contexto
 
@@ -752,7 +752,7 @@ Implementar.
 
 ---
 
-### 25.11 — `scheduler-service.ts`
+### 20.11 — `scheduler-service.ts`
 
 #### Contexto
 
@@ -786,7 +786,7 @@ Implementar.
 
 ---
 
-### 25.12 — `report-service.ts` + `storage-service.ts`
+### 20.12 — `report-service.ts` + `storage-service.ts`
 
 #### Contexto
 
@@ -833,7 +833,7 @@ Implementar.
 
 ---
 
-### 25.13 — Estrutura de Signals
+### 20.13 — Estrutura de Signals
 
 #### Contexto
 
@@ -906,7 +906,7 @@ Implementar todos os signals.
 
 ---
 
-### 25.14 — `Toolbar`
+### 20.14 — `Toolbar`
 
 #### Contexto
 
@@ -945,7 +945,7 @@ Implementar.
 
 ---
 
-### 25.15 — `Sidebar` + `ProjectExplorer`
+### 20.15 — `Sidebar` + `ProjectExplorer`
 
 #### Contexto
 
@@ -986,7 +986,7 @@ Implementar.
 
 ---
 
-### 25.16 — `StatusBar` + `ErrorList`
+### 20.16 — `StatusBar` + `ErrorList`
 
 #### Contexto
 
@@ -1026,7 +1026,7 @@ Implementar.
 
 ---
 
-### 25.17 — `LanguageSelector`
+### 20.17 — `LanguageSelector`
 
 #### Contexto
 
@@ -1062,7 +1062,7 @@ Implementar.
 
 ---
 
-### 25.18 — `Shell` (layout)
+### 20.18 — `Shell` (layout)
 
 #### Contexto
 
@@ -1095,7 +1095,7 @@ Implementar.
 
 ---
 
-### 25.19 — `ProjectExplorerView`
+### 20.19 — `ProjectExplorerView`
 
 #### Contexto
 
@@ -1129,7 +1129,7 @@ Implementar.
 
 ---
 
-### 25.20 — `EditorView`
+### 20.20 — `EditorView`
 
 #### Contexto
 
@@ -1173,7 +1173,7 @@ Implementar.
 
 ---
 
-### 25.21 — `GanttView`
+### 20.21 — `GanttView`
 
 #### Contexto
 
@@ -1209,7 +1209,7 @@ Implementar.
 
 ---
 
-### 25.22 — `ReportView`
+### 20.22 — `ReportView`
 
 #### Contexto
 
@@ -1243,7 +1243,7 @@ Implementar.
 
 ---
 
-### 25.23 — `SettingsView`
+### 20.23 — `SettingsView`
 
 #### Contexto
 
@@ -1279,7 +1279,7 @@ Implementar.
 
 ---
 
-### 25.24 — `SheetsView` (Fase 18 UI)
+### 20.24 — `SheetsView` (Fase 18 UI)
 
 #### Contexto
 
@@ -1319,7 +1319,7 @@ Implementar.
 
 ---
 
-### 25.25 — Catálogo de mensagens da UI
+### 20.25 — Catálogo de mensagens da UI
 
 #### Contexto
 
@@ -1370,7 +1370,7 @@ Implementar.
 
 ---
 
-### 25.26 — Integração end-to-end
+### 20.26 — Integração end-to-end
 
 #### Contexto
 
@@ -1404,7 +1404,7 @@ Implementar.
 
 ---
 
-### 25.27 — Performance e acessibilidade
+### 20.27 — Performance e acessibilidade
 
 #### Contexto
 
@@ -1443,7 +1443,7 @@ Verificar.
 
 ---
 
-### 25.28 — Build e deploy
+### 20.28 — Build e deploy
 
 #### Contexto
 

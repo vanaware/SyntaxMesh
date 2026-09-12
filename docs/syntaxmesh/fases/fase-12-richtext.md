@@ -286,7 +286,7 @@ Usados por `RichTextElement.to_html`. Nesta fase, definir classes simples em `xm
 
 ---
 
-### 16.0 — ADR 023 (RichText e function handlers)
+### 12.0 — ADR 023 (RichText e function handlers)
 
 #### Contexto
 
@@ -328,7 +328,7 @@ Criar `docs/syntaxmesh/decisoes/023-richtext-handlers.md`.
 
 ---
 
-### 16.1 — `XMLElementLike` + primitivas
+### 12.1 — `XMLElementLike` + primitivas
 
 #### Contexto
 
@@ -386,7 +386,7 @@ assertEquals(div.toHTML(), '<div class="foo">Hello</div>');
 
 ---
 
-### 16.2 — `RichTextImage`
+### 12.2 — `RichTextImage`
 
 #### Contexto
 
@@ -425,7 +425,7 @@ Análogo.
 
 ---
 
-### 16.3 — `RichTextElement`
+### 12.3 — `RichTextElement`
 
 #### Contexto
 
@@ -520,7 +520,7 @@ Análogo.
 
 ---
 
-### 16.4 — `RichTextIntermediate`
+### 12.4 — `RichTextIntermediate`
 
 #### Contexto
 
@@ -580,7 +580,7 @@ Análogo.
 
 ---
 
-### 16.5 — `RichTextScanner`
+### 12.5 — `RichTextScanner`
 
 #### Contexto
 
@@ -650,7 +650,7 @@ Análogo.
 
 ---
 
-### 16.6 — `RichTextParser` + `RichTextSyntaxRules`
+### 12.6 — `RichTextParser` + `RichTextSyntaxRules`
 
 #### Contexto
 
@@ -739,7 +739,7 @@ Análogo.
 
 ---
 
-### 16.7 — `TOCEntry`
+### 12.7 — `TOCEntry`
 
 #### Contexto
 
@@ -782,7 +782,7 @@ Análogo.
 
 ---
 
-### 16.8 — `TableOfContents`
+### 12.8 — `TableOfContents`
 
 #### Contexto
 
@@ -822,7 +822,7 @@ Análogo.
 
 ---
 
-### 16.9 — `RichTextSnip`
+### 12.9 — `RichTextSnip`
 
 #### Contexto
 
@@ -870,7 +870,7 @@ Análogo.
 
 ---
 
-### 16.10 — `RichTextDocument` (abstract)
+### 12.10 — `RichTextDocument` (abstract)
 
 #### Contexto
 
@@ -934,7 +934,7 @@ Análogo.
 
 ---
 
-### 16.11 — `RichTextFunctionHandler` (abstract)
+### 12.11 — `RichTextFunctionHandler` (abstract)
 
 #### Contexto
 
@@ -970,7 +970,7 @@ Análogo.
 
 ---
 
-### 16.12 — `RichTextFunctionExample`
+### 12.12 — `RichTextFunctionExample`
 
 #### Contexto
 
@@ -1017,7 +1017,7 @@ Análogo.
 
 ---
 
-### 16.13 — `RTFWithQuerySupport`
+### 12.13 — `RTFWithQuerySupport`
 
 #### Contexto
 
@@ -1047,7 +1047,7 @@ Análogo.
 
 ---
 
-### 16.14 — `RTFQuery`
+### 12.14 — `RTFQuery`
 
 #### Contexto
 
@@ -1101,7 +1101,7 @@ Análogo.
 
 ---
 
-### 16.15 — `RTFReport` (stub)
+### 12.15 — `RTFReport` (stub)
 
 #### Contexto
 
@@ -1141,7 +1141,7 @@ Stub.
 
 ---
 
-### 16.16 — `RTFReportLink` (stub)
+### 12.16 — `RTFReportLink` (stub)
 
 #### Contexto
 
@@ -1179,7 +1179,7 @@ Stub.
 
 ---
 
-### 16.17 — `RTFNavigator` + `RTFHandlers`
+### 12.17 — `RTFNavigator` + `RTFHandlers`
 
 #### Contexto
 
@@ -1236,7 +1236,7 @@ Análogo.
 
 ---
 
-### 16.18 — `RichText` + `RichTextFactory` + integração com parser
+### 12.18 — `RichText` + `RichTextFactory` + integração com parser
 
 #### Contexto
 
@@ -1327,7 +1327,7 @@ assertEquals(rti.to_s(), "1) Title\n\nParagraph.");
 
 ---
 
-### 16.19 — Golden tests (RichText)
+### 12.19 — Golden tests (RichText)
 
 #### Contexto
 

@@ -82,7 +82,7 @@ describe("TjTime.beginOfWeek", () => {
     // 2026-01-17 é sábado
     const t = TjTime.fromString("2026-01-17-10:00:00");
     const result = t.beginOfWeek(false);
-    assertEquals(result.toSeconds(), TjTime.fromString("2026-01-18-00:00:00").toSeconds());
+    assertEquals(result.toSeconds(), TjTime.fromString("2026-01-11-00:00:00").toSeconds());
   });
 });
 

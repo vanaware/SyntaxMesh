@@ -161,7 +161,7 @@ Cada subfase segue `docs/syntaxmesh/fases/modelo-tarefas.md`.
 
 ---
 
-### 5.0 — ADR 012 (`TjTime` em TypeScript)
+### 2.0 — ADR 012 (`TjTime` em TypeScript)
 
 #### Contexto
 
@@ -210,7 +210,7 @@ Criar `docs/syntaxmesh/decisoes/012-tjtime-typescript.md` seguindo o template pa
 
 ---
 
-### 5.1 — `TjTime`: representação, factory methods e parsing
+### 2.1 — `TjTime`: representação, factory methods e parsing
 
 #### Contexto
 
@@ -304,7 +304,7 @@ TjTime.fromString("2026-01-01-25:00") // TjArgumentError
 
 ---
 
-### 5.2 — `TjTime`: comparação e aritmética
+### 2.2 — `TjTime`: comparação e aritmética
 
 #### Contexto
 
@@ -374,7 +374,7 @@ a.lessThan(b) === true;
 
 ---
 
-### 5.3 — `TjTime`: normalizações
+### 2.3 — `TjTime`: normalizações
 
 #### Contexto
 
@@ -439,7 +439,7 @@ TjTime.fromString("2024-02-29").beginOfMonth()
 
 ---
 
-### 5.4 — `TjTime`: avanços (`sameTimeNext*`)
+### 2.4 — `TjTime`: avanços (`sameTimeNext*`)
 
 #### Contexto
 
@@ -511,7 +511,7 @@ TjTime.fromString("2024-02-29").sameTimeNextYear()
 
 ---
 
-### 5.5 — `TjTime`: diferenças (`*To`)
+### 2.5 — `TjTime`: diferenças (`*To`)
 
 #### Contexto
 
@@ -577,7 +577,7 @@ TjTime.fromString("2026-01-31").daysTo(TjTime.fromString("2026-02-02")) === 2;
 
 ---
 
-### 5.6 — `TjTime`: timezone
+### 2.6 — `TjTime`: timezone
 
 #### Contexto
 
@@ -685,7 +685,7 @@ TjTime.fromString("2026-05-15").to_s("%Q") === "2";
 
 ---
 
-### 5.7 — `Interval` genérico
+### 2.7 — `Interval` genérico
 
 #### Contexto
 
@@ -752,7 +752,7 @@ a.intersection(b)!.end === 10;
 
 ---
 
-### 5.8 — `TimeInterval`
+### 2.8 — `TimeInterval`
 
 #### Contexto
 
@@ -802,7 +802,7 @@ iv.duration() === 86400;
 
 ---
 
-### 5.9 — `ScoreboardInterval`
+### 2.9 — `ScoreboardInterval`
 
 #### Contexto
 
@@ -858,7 +858,7 @@ iv.endDate().equals(sbStart.addSeconds(7200)) === true;
 
 ---
 
-### 5.10 — `IntervalList`
+### 2.10 — `IntervalList`
 
 #### Contexto
 
@@ -921,7 +921,7 @@ a.intersect(b); // [t2, t3]
 
 ---
 
-### 5.11 — `Scoreboard` (genérico)
+### 2.11 — `Scoreboard` (genérico)
 
 #### Contexto
 
@@ -1012,7 +1012,7 @@ sb.collectIntervals(
 
 ---
 
-### 5.12 — `WorkingHours`
+### 2.12 — `WorkingHours`
 
 #### Contexto
 
@@ -1102,7 +1102,7 @@ wh.weeklyWorkingHours() === 40;
 
 ---
 
-### 5.13 — `RealFormat`
+### 2.13 — `RealFormat`
 
 #### Contexto
 
@@ -1166,7 +1166,7 @@ pct.format(-5.5) === "(5.5)";
 
 ---
 
-### 5.14 — Infraestrutura de golden tests
+### 2.14 — Infraestrutura de golden tests
 
 #### Contexto
 

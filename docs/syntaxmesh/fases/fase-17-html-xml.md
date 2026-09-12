@@ -240,7 +240,7 @@ Decisão: SVG (mesmo do Ruby). Compatível com `Painter`.
 
 ---
 
-### 21.0 — ADR 028 (substituição de XML mínimo)
+### 17.0 — ADR 028 (substituição de XML mínimo)
 
 #### Contexto
 
@@ -281,7 +281,7 @@ Criar `docs/syntaxmesh/decisoes/028-substituicao-xml.md`.
 
 ---
 
-### 21.1 — `XMLElement`
+### 17.1 — `XMLElement`
 
 #### Contexto
 
@@ -383,7 +383,7 @@ assertEquals(div.to_s(), '<div class="foo">Hello</div>');
 
 ---
 
-### 21.2 — `XMLDocument`
+### 17.2 — `XMLDocument`
 
 #### Contexto
 
@@ -443,7 +443,7 @@ assertEquals(doc.to_s(), '<root/>');
 
 ---
 
-### 21.3 — `HTMLElements`
+### 17.3 — `HTMLElements`
 
 #### Contexto
 
@@ -496,7 +496,7 @@ assertEquals(div.to_s(), '<div class="foo">Hello</div>');
 
 ---
 
-### 21.4 — `HTMLDocument`
+### 17.4 — `HTMLDocument`
 
 #### Contexto
 
@@ -560,7 +560,7 @@ assertEquals(doc.to_s().includes('<title>My Title</title>'), true);
 
 ---
 
-### 21.5 — `ICalendar` — estrutura + `Component` base
+### 17.5 — `ICalendar` — estrutura + `Component` base
 
 #### Contexto
 
@@ -670,7 +670,7 @@ assert(str.includes('BEGIN:VTODO'));
 
 ---
 
-### 21.6 — `ICalendar` — `Todo`, `Event`, `Journal`
+### 17.6 — `ICalendar` — `Todo`, `Event`, `Journal`
 
 #### Contexto
 
@@ -748,7 +748,7 @@ Análogo.
 
 ---
 
-### 21.7 — `Color` + `Points` + `SVGSupport`
+### 17.7 — `Color` + `Points` + `SVGSupport`
 
 #### Contexto
 
@@ -831,7 +831,7 @@ assertEquals(p.to_s(), '1,2 3,4 ');
 
 ---
 
-### 21.8 — `Element` + `Group`
+### 17.8 — `Element` + `Group`
 
 #### Contexto
 
@@ -895,7 +895,7 @@ Análogo.
 
 ---
 
-### 21.9 — `Primitives` + `BasicShapes` + `Text`
+### 17.9 — `Primitives` + `BasicShapes` + `Text`
 
 #### Contexto
 
@@ -969,7 +969,7 @@ Análogo.
 
 ---
 
-### 21.10 — `Painter`
+### 17.10 — `Painter`
 
 #### Contexto
 
@@ -1015,7 +1015,7 @@ Análogo.
 
 ---
 
-### 21.11 — `FontMetrics` + `FontMetricsData` + `FontData`
+### 17.11 — `FontMetrics` + `FontMetricsData` + `FontData`
 
 #### Contexto
 
@@ -1102,7 +1102,7 @@ assert(w > 0);
 
 ---
 
-### 21.12 — Substituir `SimpleXMLElement` por `XMLElement`
+### 17.12 — Substituir `SimpleXMLElement` por `XMLElement`
 
 #### Contexto
 
@@ -1142,7 +1142,7 @@ Migrar.
 
 ---
 
-### 21.13 — Substituir `HTMLDocument` mínimo
+### 17.13 — Substituir `HTMLDocument` mínimo
 
 #### Contexto
 
@@ -1170,7 +1170,7 @@ Migrar.
 
 ---
 
-### 21.14 — Substituir `ICalendar` mínimo
+### 17.14 — Substituir `ICalendar` mínimo
 
 #### Contexto
 
@@ -1196,7 +1196,7 @@ Migrar.
 
 ---
 
-### 21.15 — Substituir `Painter` mínimo
+### 17.15 — Substituir `Painter` mínimo
 
 #### Contexto
 
@@ -1225,7 +1225,7 @@ Migrar.
 
 ---
 
-### 21.16 — Golden tests (HTML/XML/SVG)
+### 17.16 — Golden tests (HTML/XML/SVG)
 
 #### Contexto
 

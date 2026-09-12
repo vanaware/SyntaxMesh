@@ -8,7 +8,7 @@
 
 # Contexto Exportado do Projeto SyntaxMesh - Modo: FASES
 
-Gerado automaticamente em: 9/10/2026, 10:50:42 PM
+Gerado automaticamente em: 9/12/2026, 9:38:56 AM
 
 ---
 
@@ -142,123 +142,6 @@ import { assertEquals, assert, assertNotEquals } from "@std/assert";
 ### Nota sobre `Deno.test()` direta
 
 Existem testes (ex: `packages/worker-db/tests/`) usando `Deno.test({ name, fn })` diretamente sem `describe`/`it`. Este é um estilo válido mas **não é o padrão adotado**. Novos testes devem usar `describe`/`it`.
-````
-
----
-
-## Arquivo: `docs/syntaxmesh/07-roadmap.md`
-
-````md
-# Plano geral
-
-O desenvolvimento será dividido em oito fases:
-
-```text
-FASE 1  Fundação
-   ↓
-FASE 2  Core
-   ↓
-FASE 3  Parser + Linguagem
-   ↓
-FASE 4  Reports
-   ↓
-FASE 5  Storage
-   ↓
-FASE 6  PWA
-   ↓
-FASE 7  Interface
-   ↓
-FASE 8  Compatibilidade e Qualidade
-```
-
-## Roadmap resumido
-
-```text
-                    SYNTAXMESH
-                        │
-        ┌───────────────┴────────────────┐
-        │                                │
-     ENGINE                           APP
-        │                                │
-        ▼                                ▼
-     FASE 1                           FASE 6
-     Fundação                         PWA
-        │                                │
-        ▼                                ▼
-     FASE 2                           FASE 7
-     Core                              UI
-        │
-        ▼
-     FASE 3
-     Parser
-     Multilingual
-        │
-        ▼
-     FASE 4
-     Reports
-        │
-        ▼
-     FASE 5
-     Storage
-        │
-        └───────────────┐
-                        ▼
-                     FASE 8
-              Compatibilidade
-                e Qualidade
-```
-
----
-
-## Ordem de prioridade
-
-A prioridade será:
-
-### Prioridade 1
-
-```text
-Foundation
-Core
-Parser
-```
-
-Sem interface.
-
----
-
-### Prioridade 2
-
-```text
-Scheduler
-Reports
-```
-
----
-
-### Prioridade 3
-
-```text
-Storage
-PWA
-```
-
----
-
-### Prioridade 4
-
-```text
-UI
-```
-
----
-
-### Prioridade 5
-
-```text
-TaskJuggler compatibility
-Performance
-Security
-```
 ````
 
 ---
@@ -1652,6 +1535,4446 @@ passa sem erros, e:
 
 ---
 
+## Arquivo: `docs/syntaxmesh/fases/fase-2-tempo-geometria-tarefas.md`
+
+````md
+# Fase 2 — Tarefas Atômicas (revisada com base no Ruby)
+
+> **Arquivo:** `docs/syntaxmesh/fases/fase-02-tempo-geometria-tarefas.md`
+> **Plano:** `docs/syntaxmesh/fases/fase-02-tempo-geometria.md`
+> **Status:** ⬜ Não iniciada
+> **Total:** 142 tarefas (era 127)
+> **Concluídas:** 0
+> **Fonte Ruby revisada:** `TjTime.rb`, `Interval.rb`, `IntervalList.rb`, `Scoreboard.rb`, `WorkingHours.rb`, `RealFormat.rb`
+
+---
+
+## 0. Protocolo TDD (aplica-se a TODA tarefa)
+
+1. **Escrever o teste** que falha (coluna *Verificação*)
+2. `deno task test` → confirmar falha correta
+3. **Implementar o mínimo** (coluna *Arquivos*)
+4. `deno task test` → passa
+5. `deno task check-all` → verde
+6. **Commit atômico**: `feat(core): <descrição>`
+7. Marcar `[x]` neste arquivo
+
+**Regras:**
+- ⚠️ `⚠️ RUBY: <arquivo>:<linha>` = **leia o Ruby antes**. Não invente comportamento.
+- Tarefa com 2 verbos = quebre.
+- Não caber em 2h = quebre.
+- `check-all` falha em `fmt`/`lint` = não commitar.
+
+**Comandos:**
+```bash
+deno task test
+deno task check-all
+deno task fmt && deno task lint
+```
+
+**Ordem:** 5.0 → 5.14 estritamente. 5.6 pode rodar em paralelo com 5.7–5.10.
+
+---
+
+## Progresso
+
+```
+[ ] 5.0  ADR 012                      —  0/5
+[ ] 5.1  TjTime parsing               —  0/18
+[ ] 5.2  TjTime aritmética            —  0/10
+[ ] 5.3  TjTime normalizações         —  0/10
+[ ] 5.4  TjTime avanços               —  0/12
+[ ] 5.5  TjTime diferenças            —  0/8
+[ ] 5.6  TjTime timezone + strftime   —  0/16
+[ ] 5.7  Interval                     —  0/9
+[ ] 5.8  TimeInterval                 —  0/6
+[ ] 5.9  ScoreboardInterval           —  0/7
+[ ] 5.10 IntervalList                 —  0/7
+[ ] 5.11 Scoreboard                   —  0/12
+[ ] 5.12 WorkingHours                 —  0/14
+[ ] 5.13 RealFormat                   —  0/8
+[ ] 5.14 Infra golden tests           —  0/9
+─────────────────────────────────────────────
+TOTAL: 142
+```
+
+---
+
+## Bloco A — Fundação
+
+### 5.0 — ADR 012 (`TjTime` em TypeScript)
+
+*(inalterado — 5 tarefas)*
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 5.0.1 | Criar `decisoes/012-tjtime-typescript.md` | `decisoes/012-*.md` | tem frontmatter |
+| 5.0.2 | Seção **Contexto** (Time/ENV['TZ']) | idem | — |
+| 5.0.3 | Seção **Decisão** (representação, `Intl`, factory, strftime mínimo) | idem | — |
+| 5.0.4 | **Alternativas** (Temporal/luxon) + **Consequências** | idem | — |
+| 5.0.5 | Linha `012` em `decisoes/README.md` | `decisoes/README.md` | link funciona |
+
+---
+
+### 5.1 — `TjTime`: parsing
+
+**⚠️ RUBY: `TjTime.rb:parse` (linhas ~289–380).** O algoritmo é `split('-', 5)` — **cinco** campos separados por hífen. Não use regex genérica.
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 5.1.1 | Criar `tj-time.ts` classe vazia + construtor privado | `src/time/tj-time.ts` | `deno check` |
+| 5.1.2 | Campo `private readonly time: number` (ms desde epoch) | idem | idem |
+| 5.1.3 | `static fromSeconds(n)` + `static now()` + `toSeconds()` + 3 testes | idem + `tests/time/tj-time-parsing_test.ts` | 3 verdes |
+| 5.1.4 | `static fromDate(d)` + `toDate()` + 2 testes | idem | idem |
+| 5.1.5 | `static fromArray([y,m,d,h,min,s])` (usado por normalizações) + 2 testes | idem | idem |
+| 5.1.6 | ⚠️ RUBY:parse. Implementar `private parse(str)` usando **`str.split('-', 5)`** e validar que há 3–5 partes. Erro se ≠. | idem | 4 testes cobrindo 3, 4, 5 partes e inválido |
+| 5.1.7 | Validar **ano** `1970 <= y <= 2035`. Erro: `"Year #{y} out of range (1970 - 2035)"` | idem | 3 testes |
+| 5.1.8 | Validar **mês** `1 <= m <= 12`. Erro: `"Month #{m} out of range (1 - 12)"` | idem | 3 testes |
+| 5.1.9 | ⚠️ RUBY usa `Date.gregorian_leap?`. Implementar array local `maxDay[month]` (13 posições, índice 0 = 0) e `leapYear?` | idem | 5 testes (jan=31, fev=28, fev=29 bissexto, abr=30, jun=31) |
+| 5.1.10 | Validar **hora** `0 <= h <= 23` (default 0). Erro: `"Hour #{h} out of range (0 - 23)"` | idem | 3 testes |
+| 5.1.11 | Validar **minuto** `0 <= m <= 59` (default 0). Erro idem | idem | 3 testes |
+| 5.1.12 | Validar **segundo** `0 <= s <= 59` (default 0) | idem | 3 testes |
+| 5.1.13 | ⚠️ Se **sem timezone**: `Time.mktime(y, m, d, h, min, s)` (local). Comportamento de rollover do Ruby precisa ser replicado — `mktime(2024, 4, 31)` → `2024-05-01` | idem | 2 testes |
+| 5.1.14 | ⚠️ Se **com timezone** `±HHMM`: validar 5 chars, primeiro char `+`/`-`, range `[-1200, +1400]`. Erro: `"Time zone adjustment out of range (-1200 - +1400} but is #{zone})"` (mantenha `}` no final — bug do Ruby) | idem | 5 testes (formato, prefixo, range, minuto inválido) |
+| 5.1.15 | ⚠️ Com timezone: `Time.utc(...)` e **subtrair** o offset (não adicionar) | idem | 3 testes (`-0300`, `+0000`, `+1400`) |
+| 5.1.16 | ⚠️ **NÃO** usar `strftime` para retornar erro. Ruby usa `TjException.new, "msg"`. Em TS, `TjArgumentError` | idem | 1 teste agregado |
+| 5.1.17 | Adicionar `getOffsetSeconds(epochSecs, tz)` (Fase futura usa) | `src/time/timezone.ts` | 3 testes |
+| 5.1.18 | `getLocalParts(epochSecs, tz)` retornando `{y,m,d,h,min,s,weekday}` | idem | 3 testes |
+
+**Não fazer:** normalizações (5.3), avanços (5.4), timezone global (5.6).
+
+---
+
+### 5.2 — `TjTime`: comparação e aritmética
+
+**⚠️ RUBY: `TjTime.rb` linhas ~95–160.**
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 5.2.1 | `addSeconds(n)` + `subSeconds(n)` + 3 testes | `src/time/tj-time.ts` + `tests/time/tj-time-arithmetic_test.ts` | 3 verdes |
+| 5.2.2 | ⚠️ `diff(other)` retorna **segundos como number** (não ms) | idem | 2 testes |
+| 5.2.3 | `modulo(n)` = `toSeconds() % n` | idem | 2 testes |
+| 5.2.4 | ⚠️ `compareTo(other)` com **nil**: Ruby retorna `-1` se `other.nil?`. TS: `other: TjTime \| null` | idem | 2 testes |
+| 5.2.5 | ⚠️ `lessThan(other)` com `nil` → `false`; `greaterThan(nil)` → `true`. Ruby trata nil como "infinito" | idem | 4 testes |
+| 5.2.6 | `lessThanOrEqual`, `greaterThanOrEqual` seguem mesma regra | idem | 4 testes |
+| 5.2.7 | `equals(other)` com nil → `false` | idem | 2 testes |
+| 5.2.8 | ⚠️ `align(clock)` = `Math.floor(localtimeSecs / clock) * clock`. Usa **local time**, não UTC | idem | 3 testes (3600, 900, 60) |
+| 5.2.9 | `upto(end, step=1, fn)` itera enquanto `t < end`. **Não** itera se `start >= end` | idem | 3 testes |
+| 5.2.10 | Refatorar: extrair `private localSecs(): number` | idem | `check-all` |
+
+---
+
+### 5.3 — `TjTime`: normalizações
+
+**⚠️ RUBY: `TjTime.rb` linhas ~165–225.**
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 5.3.1 | `beginOfHour()` — zera min+seg **em local time** | `src/time/tj-time.ts` + `tests/time/tj-time-normalize_test.ts` | 3 verdes |
+| 5.3.2 | `midnight()` — zera h+m+s em local | idem | 3 verdes |
+| 5.3.3 | ⚠️ `beginOfWeek(startMonday)`: implementar o **algoritmo exato** do Ruby (vai para **meio-dia**, subtrai `(weekday - (startMonday?1:0))` dias, depois `midnight`). Não simplificar para "subtrair dias de hoje". | idem | 6 testes (seg/qua/sáb/dom × flag) |
+| 5.3.4 | ⚠️ **Edge case**: se domingo e `startMonday=true`, `weekday - 1 = -1`, ou seja, **adiciona** 1 dia antes de midnight. Testar. | idem | 1 teste |
+| 5.3.5 | `beginOfMonth()` — zera h/m/s, dia=1 | idem | 4 testes |
+| 5.3.6 | `beginOfQuarter()` — month = `((m-1) % 3) + 1` | idem | 4 testes |
+| 5.3.7 | `beginOfYear()` — zera h/m/s, dia=month=1 | idem | 3 testes |
+| 5.3.8 | `wday()`, `hour()`, `day()`, `month()`, `year()` — acessores via `localtime` | idem | 5 testes |
+| 5.3.9 | ⚠️ Todas operam em **timezone local** (`currentTimeZone`). Teste com `America/Sao_Paulo` | idem | 1 teste (bloqueado: 5.6) |
+| 5.3.10 | `to_a()` retorna `[y, m, d, h, min, s, weekday]` — usado por normalizações | idem | 1 teste |
+
+---
+
+### 5.4 — `TjTime`: avanços (`sameTimeNext*`)
+
+**⚠️ CRÍTICO: `TjTime.rb` linhas ~230–285.** Comportamento **diferente** do que parece à primeira vista. **Ler o Ruby antes de codificar.**
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 5.4.1 | `hoursLater(h)` = `addSeconds(h * 3600)` | `src/time/tj-time.ts` + `tests/time/tj-time-advance_test.ts` | 2 testes |
+| 5.4.2 | `sameTimeNextHour()` = `hoursLater(1)` | idem | 2 testes |
+| 5.4.3 | `sameTimeNextDay()`: `day += 1`; se `day > lastDayOfMonth(month, year)`, `day = 1` e `month += 1`; se `month > 12`, `month = 1`, `year += 1`. Usa `localtime.to_a` | idem | 5 testes |
+| 5.4.4 | ⚠️ **`sameTimeNextWeek()` NÃO É `+7 dias`**. É `day += 7` com overflow de **no máximo 1 mês**. Ex: `28/jan + 7 = 35 > 31 → 4/fev`. `25/jan + 7 = 32 > 31 → 1/fev` | idem | 5 testes |
+| 5.4.5 | ⚠️ `sameTimeNextMonth()`: captura `monMax = (month==2 && leap) ? 29 : MON_MAX[month]` (do mês **ANTIGO**). Avança mês. Se `day >= lastDayOfMonth(newMonth)`, `day = monMax`. **Este algoritmo tem bug**: `31/jan → monMax=31, day=31, new=2 → lastDayOfMonth(2,2024)=29, day>=29, day=31 → rollover março 2`. Replicar **exatamente** | idem | 6 testes (todos os meses) |
+| 5.4.6 | ⚠️ **`sameTimeNextQuarter()` SEM CLAMP**: `month += 3`, se `> 12` subtrai 12 e `year += 1`. **Não mexe em `day`**. `31/jan → 31/abr` → `Time.mktime(2024,4,31)` → `1/mai` (rollover) | idem | 4 testes |
+| 5.4.7 | ⚠️ **`sameTimeNextYear()` SEM CLAMP**: `year += 1`. `29/fev/2024 → 1/mar/2025` (rollover) | idem | 3 testes |
+| 5.4.8 | `nextDayOfWeek(dow)`: `d = midnight.sameTimeNextDay` (sempre **pelo menos amanhã**); `currentDoW = d.wday`; itera `(dow + 7 - currentDoW) % 7` vezes `sameTimeNextDay` | idem | 5 testes |
+| 5.4.9 | Validação `nextDayOfWeek`: `dow ∈ [0,6]` senão erro `"Day of week must be 0 - 6."` | idem | 1 teste |
+| 5.4.10 | Todas as normalizações preservam h/min/s | idem | 1 teste |
+| 5.4.11 | `lastDayOfMonth(month, year)`: `month==2 && leapYear? ? 29 : MON_MAX[month]` | idem | 3 testes |
+| 5.4.12 | `leapYear?(year)`: 400 → true; 100 → false; 4 → true | idem | 5 testes (2000, 1900, 2024, 2100, 2400) |
+
+---
+
+### 5.5 — `TjTime`: diferenças (`*To`)
+
+**⚠️ RUBY: `TjTime.rb` linhas ~290–320.** Todos usam `countIntervals` com `order()` (simétrico).
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 5.5.1 | `private order(date)`: retorna `[menor, maior]` | `src/time/tj-time.ts` + `tests/time/tj-time-diff_test.ts` | 1 teste |
+| 5.5.2 | `private countIntervals(date, stepFn)`: itera `sameTimeNext*` até `t1 >= t2` | idem | 1 teste |
+| 5.5.3 | `hoursTo(date)`: `Math.ceil((t2 - t1) / 3600)` | idem | 3 testes |
+| 5.5.4 | `daysTo(date)`: `countIntervals(date, 'sameTimeNextDay')` — **simétrico** | idem | 4 testes |
+| 5.5.5 | `weeksTo(date)` — simétrico | idem | 2 testes |
+| 5.5.6 | `monthsTo(date)` — simétrico | idem | 4 testes |
+| 5.5.7 | `quartersTo(date)`, `yearsTo(date)` | idem | 4 testes |
+| 5.5.8 | Teste agregado: `a.daysTo(b) === b.daysTo(a)` para 20 pares | idem | 1 teste |
+
+---
+
+### 5.6 — `TjTime`: timezone + strftime
+
+**⚠️ RUBY: `TjTime.rb` linhas ~55–85, 240–280, 330–370.**
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 5.6.1 | `isValidTimeZone(zone)` via `Intl.DateTimeFormat` (tentar construir, catch) | `src/time/timezone.ts` + `tests/time/timezone_test.ts` | 4 testes |
+| 5.6.2 | `checkTimeZone(zone)`: `'UTC' → true`; sem `/` → `false` | `src/time/tj-time.ts` + `tests/time/tj-time-timezone_test.ts` | 3 testes |
+| 5.6.3 | `getOffsetSeconds(epochSecs, tz)`: via `Intl` (partes locais - UTC) | `src/time/timezone.ts` | 3 testes |
+| 5.6.4 | Estado module-level `currentTz = 'UTC'`; `getTimeZone()`; `setTimeZone(tz)` retorna anterior | `src/time/tj-time.ts` | 3 testes |
+| 5.6.5 | `static checkTimeZone(tz)` (estático, distinto de instance) | idem | 2 testes |
+| 5.6.6 | `localtime(): Parts` (via `getLocalParts(toSeconds(), currentTz)`) | idem | 3 testes |
+| 5.6.7 | `gmtime(): Parts` (UTC) | idem | 2 testes |
+| 5.6.8 | `utc(): TjTime` — retorna **novo** TjTime com partes UTC (não muda currentTz) | idem | 3 testes |
+| 5.6.9 | `secondsOfDay(tz?)`: `(epochSecs + offset) % 86400` | idem | 3 testes |
+| 5.6.10 | `strftime(fmt, tz?)` **mínimo**: `%Y %m %d %H %M %S %A %a %B %b %z %Q` + `%%` | idem | 8 testes |
+| 5.6.11 | `strftime` com `%Q` = `((month-1)/3)+1` (quarter, extensão TJ) | idem | 4 testes |
+| 5.6.12 | `strftime` com `%z`: `+0000` / `-0300` / `+1400` | idem | 3 testes |
+| 5.6.13 | `strftime` com formato inválido lança `TjArgumentError` (não Ruby's `strftime` silencioso) | idem | 1 teste |
+| 5.6.14 | ⚠️ `to_s(fmt?, tz?)`: usa **`this.time.sec` (original)** para decidir se inclui `:%S` no formato default. Não usa `localtime().s` | idem | 2 testes |
+| 5.6.15 | `to_s` formato default: `'%Y-%m-%d-%H:%M' + (sec==0 ? '' : ':%S') + '-%z'` | idem | 3 testes |
+| 5.6.16 | `to_s` com `tz='UTC'`: usa `gmtime`, senão `localtime` | idem | 2 testes |
+
+---
+
+## Bloco B — Geometria
+
+### 5.7 — `Interval` genérico
+
+**⚠️ RUBY: `Interval.rb` linhas ~18–100.**
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 5.7.1 | Classe `Interval<S, E>` com `readonly start/end`; valida `end >= start` (erro: `"Invalid interval (#{s} - #{e})"`) | `src/time/interval.ts` + `tests/time/interval_test.ts` | 2 testes |
+| 5.7.2 | ⚠️ `contains(arg)`: **lança `TjArgumentError` se `self.constructor !== arg.constructor`**. Para `Interval`, requer `start <= arg.start && arg.end <= end`. Para valor, requer `start <= arg && arg < end` | idem | 4 testes |
+| 5.7.3 | ⚠️ `overlaps(arg)`: mesma checagem de classe. Para `Interval`: `(start <= arg.start && arg.start < end) \|\| (arg.start <= start && start < arg.end)`. Para valor: idêntico a `contains` | idem | 5 testes |
+| 5.7.4 | `intersection(other)`: `newStart = max`, `newEnd = min`; retorna `null` se `newStart >= newEnd` | idem | 4 testes |
+| 5.7.5 | ⚠️ **`combine(iv)` retorna `[Interval]` (Array com 1 elemento)**, não `Interval`. É um **bug do Ruby** mas replicamos. Se `iv.end === start`: `[new(iv.start, end)]`. Se `end === iv.start`: `[new(start, iv.end)]`. Senão: retorna `this` (não Array) | idem | 4 testes |
+| 5.7.6 | ⚠️ `compareTo(iv)`: retorna `-1` se `end < iv.start`, `1` se `iv.end < start`, **`0` se sobrepõe** (não lança) | idem | 4 testes |
+| 5.7.7 | `equals(iv)`: mesma classe E start/end iguais | idem | 3 testes |
+| 5.7.8 | ⚠️ Todos os métodos com checagem de classe: `if (self.constructor !== arg.constructor) throw TjArgumentError('Class mismatch')` | idem | 1 teste com subclasse |
+| 5.7.9 | Refatorar: extrair `private checkClass(arg)` | idem | `check-all` |
+
+---
+
+### 5.8 — `TimeInterval`
+
+**⚠️ RUBY: `Interval.rb` linhas ~115–160.**
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 5.8.1 | ⚠️ Constructor **variádico**: 1 arg (TjTime → `[arg, arg]`; TimeInterval → cópia) ou 2 args (ambos TjTime). Erro se outro | `src/time/time-interval.ts` + `tests/time/time-interval_test.ts` | 4 testes |
+| 5.8.2 | Erros: `"Illegal argument 1: #{class}"`, `"Interval start must be a date, not a #{class}"`, `"Too many arguments: #{n}"` | idem | 3 testes |
+| 5.8.3 | `duration(): number` em **segundos** (`end.diff(start)`) | idem | 3 testes |
+| 5.8.4 | `to_s()`: `"#{start.to_s()} - #{end.to_s()}"` | idem | 1 teste |
+| 5.8.5 | Setters `start=` / `end=` (mutável — diferente de `Interval`) | idem | 2 testes |
+| 5.8.6 | `static fromSingle(t)`, `static fromInterval(iv)` | idem | 2 testes |
+
+---
+
+### 5.9 — `ScoreboardInterval`
+
+**⚠️ RUBY: `Interval.rb` linhas ~165–260.**
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 5.9.1 | ⚠️ Constructor **variádico**: 1 arg (copy), 3 args (`sbStart, slotDuration, single`), 4 args (`sbStart, slotDuration, start, end`) | `src/time/scoreboard-interval.ts` + `tests/time/scoreboard-interval_test.ts` | 4 testes |
+| 5.9.2 | Validar `sbStart: TjTime`, `slotDuration: number` (int), `start/end: number \| TjTime` | idem | 3 testes |
+| 5.9.3 | `dateToIndex(date)`: `(date.diff(sbStart)) / slotDuration` (divisão **inteira**) | idem | 2 testes |
+| 5.9.4 | `indexToDate(idx)`: `sbStart.addSeconds(idx * slotDuration)` | idem | 2 testes |
+| 5.9.5 | `startDate()`, `endDate()`, `duration()` | idem | 3 testes |
+| 5.9.6 | Setters `start=` / `end=` aceitam `TjTime \| number` | idem | 3 testes |
+| 5.9.7 | `to_s()` usa `indexToDate(...).to_s()` | idem | 1 teste |
+
+---
+
+### 5.10 — `IntervalList`
+
+**⚠️ RUBY: `IntervalList.rb` linhas ~17–100.**
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 5.10.1 | Classe `IntervalList<T>` estende `Array<T>` com `[Symbol.species] = Array` | `src/time/interval-list.ts` + `tests/time/interval-list_test.ts` | 2 testes |
+| 5.10.2 | `append(iv)` — alias de `Array.push` (não usa `<<`) | idem | 1 teste |
+| 5.10.3 | ⚠️ `<<(iv)` sobrescrito: se `iv.start < last.end` → **lança** `"Intervals may not overlap and must be added in ascending order."`. Se `iv.start === last.end` → **merge** (substitui `last` por `new(last.start, iv.end)`). Senão, `push` | idem | 4 testes |
+| 5.10.4 | ⚠️ `intersect(other)`: algoritmo com **6 branches** do Ruby. **Não** usar `Set` ou mapa. Ler as linhas 20–75 do Ruby e replicar | idem | 8 testes (todas as combinações) |
+| 5.10.5 | Revisar: `intersect` retorna `IntervalList` **vazia** se não há sobreposição | idem | 1 teste |
+| 5.10.6 | Teste de fumaça: mesclar 100 intervalos ascendentes | idem | 1 teste |
+| 5.10.7 | Refatorar: extrair `private addCase(...)` para os branches | idem | `check-all` |
+
+---
+
+### 5.11 — `Scoreboard` genérico
+
+**⚠️ RUBY: `Scoreboard.rb` (~180 linhas).**
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 5.11.1 | ⚠️ Constructor: `size = Math.ceil((end - start) / resolution) + 1` — **CEIL**, não floor. `clear(initVal?)` preenche `data: T[]` | `src/time/scoreboard.ts` + `tests/time/scoreboard_test.ts` | 3 testes |
+| 5.11.2 | ⚠️ `idxToDate(idx, forceIntoProject=false)`: **BUG no Ruby** (`kdx` typo no branch negativo). **Corrigir em TS**: se `forceIntoProject` e `idx < 0` → `startDate`. Se `idx >= size` → `endDate`. Senão, lança `"Index #{idx} is out of scoreboard range (#{size-1})"`. Documentar desvio do Ruby | idem | 4 testes |
+| 5.11.3 | `dateToIdx(date, forceIntoProject=true)`: `Math.trunc((date - startDate) / resolution)`. Se `forceIntoProject`: clampa em `0` e `size-1`. Senão, lança | idem | 4 testes |
+| 5.11.4 | `get(idx)` / `set(idx, val)` / `clear(val?)` | idem | 3 testes |
+| 5.11.5 | `each(startIdx?, endIdx?)` — iterador com range | idem | 3 testes |
+| 5.11.6 | `each_index()` | idem | 2 testes |
+| 5.11.7 | `collect!(fn)` — in-place | idem | 2 testes |
+| 5.11.8 | ⚠️ `collectIntervals(iv, minDuration, predicate)`: algoritmo do Ruby com **sentinel `start === 0`** (bug: slot 0 nunca é início válido). Replicar **exatamente** | idem | 6 testes |
+| 5.11.9 | `length()` = `size` | idem | 1 teste |
+| 5.11.10 | `inspect()` — debug, lista `idx: date: value` | idem | 1 teste |
+| 5.11.11 | Refatorar: tipo genérico `T` — não usar `any` | idem | `check-all` |
+| 5.11.12 | Nota: `Scoreboard<number>` (Fase 6) e `Scoreboard<number \| null>` (Fase 6) devem funcionar | idem | 1 teste de tipos |
+
+---
+
+### 5.12 — `WorkingHours`
+
+**⚠️ RUBY: `WorkingHours.rb` (~250 linhas).**
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 5.12.1 | ⚠️ Constructor **variádico**: 1 arg (`WorkingHours` → cópia) ou 4 args (`slotDuration, startDate, endDate, timeZone`). `@days` inicializado com **default seg-sex 9-17** (não vazio!) | `src/calendar/working-hours.ts` + `tests/calendar/working-hours_test.ts` | 4 testes |
+| 5.12.2 | ⚠️ `@days` é `[ [], [[9h, 17h]], [[9h, 17h]], ..., [], [] ]` (7 entradas, [0] e [6] vazios) | idem | 2 testes |
+| 5.12.3 | ⚠️ Em TS, **usar arrays únicos** (`Array.from({length: 7}, () => [])`). O Ruby compartilha o mesmo array vazio para dom e sáb — replicar para compatibilidade | idem | 1 teste |
+| 5.12.4 | Construtor de cópia: deep copy de `days` (cada intervalo duplicado), `timezone`, `startDate`, `endDate`, `slotDuration`. `scoreboard` é **compartilhado** (copy-on-write: seta `null` em qualquer setter) | idem | 3 testes |
+| 5.12.5 | `setWorkingHours(dayOfWeek, intervals)`: valida `0 <= day <= 6`, `0 <= iv[0] < iv[1] <= 86400`. Erros: `"dayOfWeek out of range"`, `"Interval end time must be larger than start time"` | idem | 6 testes |
+| 5.12.6 | ⚠️ **`setWorkingHours` zera `scoreboard`** (copy-on-write). Idem para `timezone=`. Manter | idem | 2 testes |
+| 5.12.7 | `getWorkingHours(day)` retorna o array do dia | idem | 2 testes |
+| 5.12.8 | ⚠️ `onShift?(arg: TjTime \| number)`: aceita ambos. `initScoreboard` lazy. `TjTime` → `dateToIdx`, número → índice direto | idem | 5 testes |
+| 5.12.9 | ⚠️ `timeOff?(iv: TimeInterval)`: itera `startIdx..endIdx-1`. Retorna `true` se **todos** os slots são `false` (não-working). Diferente do que parece | idem | 3 testes |
+| 5.12.10 | `weeklyWorkingHours()`: soma `(iv[1] - iv[0])` por dia / 3600 | idem | 3 testes |
+| 5.12.11 | ⚠️ `initScoreboard`: **troca timezone global temporariamente** (`TjTime.setTimeZone(@timezone)`) durante o cálculo e restaura. Replicar. Usa `wday` e `secondsOfDay` locais | idem | 3 testes |
+| 5.12.12 | `==(wh)`: compara timezone, startDate, endDate, slotDuration, cada intervalo de cada dia | idem | 4 testes |
+| 5.12.13 | `deepClone()` = `new WorkingHours(this)` | idem | 2 testes |
+| 5.12.14 | `to_s()` — usado em debug | idem | 1 teste |
+
+---
+
+### 5.13 — `RealFormat`
+
+**⚠️ RUBY: `RealFormat.rb` (~120 linhas).**
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 5.13.1 | Constructor: `(args: [string, string, string, string, number] \| RealFormat)`. Valida `args.length === 5` senão `"Bad number of parameters #{n}"` | `src/format/real-format.ts` + `tests/format/real-format_test.ts` | 3 testes |
+| 5.13.2 | ⚠️ `format(n)` — algoritmo: `|n| * 10^digits`, `round()`, `to_i`, `toString()`. Pad com `'0' * (digits - len + 1)` se len <= digits. Split em intPart e fracPart | idem | 4 testes |
+| 5.13.3 | ⚠️ Separador de milhar: inserção manual iterando da direita, inserindo a cada 3 **se `i < intPart.length`** (último grupo pode ter 1-3 dígitos) | idem | 5 testes |
+| 5.13.4 | `fractionDigits = 0` → sem fracPart | idem | 2 testes |
+| 5.13.5 | `signPrefix` (negativos) — se `n < 0`, prepend | idem | 3 testes |
+| 5.13.6 | `signSuffix` (negativos) — se `n < 0`, append | idem | 3 testes |
+| 5.13.7 | Copy constructor + `to_s()` | idem | 2 testes |
+| 5.13.8 | ⚠️ `round()` do Ruby: `2.5.round = 3` (half-up, não banker's). Usar `Math.round` do TS (também half-up) | idem | 3 testes |
+
+---
+
+## Bloco C — Golden tests
+
+### 5.14 — Infraestrutura de golden tests
+
+*(inalterado — 9 tarefas, apenas ajustar escopos)*
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 5.14.1 | `scripts/golden/README.md` | idem | — |
+| 5.14.2 | `scripts/golden/tjtime.rb` — parsing + normalizações (30 casos) | idem | JSON válido |
+| 5.14.3 | Estender com avanços + diffs (60 casos) | idem | ≥ 60 |
+| 5.14.4 | `scripts/golden/working-hours.rb` (3 configs × 5 checks) | idem | JSON válido |
+| 5.14.5 | Task `golden:generate` | `deno.jsonc` | roda |
+| 5.14.6 | `tjtime_golden_test.ts` | idem | verde |
+| 5.14.7 | `working-hours_golden_test.ts` | idem | verde |
+| 5.14.8 | Mensagens claras em divergências | idem | 3 testes |
+| 5.14.9 | Commitar JSONs em `packages/core/tests/golden/` | idem | versionado |
+
+---
+
+## Notas para a IA (revisadas)
+
+1. **Leia o Ruby antes.** Toda tarefa com `⚠️ RUBY` = ler arquivo antes de escrever teste.
+2. **`split('-', 5)`** — parsing do TjTime é limitado a 5 partes.
+3. **`sameTimeNextWeek` não é `+7d`.** Tem lógica própria.
+4. **`sameTimeNextQuarter` e `sameTimeNextYear` não clampam.** Confie no rollover.
+5. **`sameTimeNextMonth` tem bug.** Replicar.
+6. **`combine` retorna `[Interval]`.** Replicar.
+7. **`compareTo` sobreposto retorna 0.**
+8. **`Scoreboard.size` usa `ceil`** e `idxToDate` tem bug `kdx`.
+9. **`WorkingHours.@days` compartilha array vazio** entre dom/sáb.
+10. **`strftime` é mínimo.** Formato fora da lista → `TjArgumentError`.
+11. **`to_s` usa `@time.sec` original**, não `localtime().s`.
+12. **`IntervalList.&` tem 6 branches.** Ler o Ruby.
+13. **Testes golden só depois** de toda a implementação verde.
+14. **Sem `any`.** Use `unknown` + narrowing.
+15. **Commit por subfase.**
+
+---
+
+**Fim do arquivo de tarefas da Fase 2 (revisada).**
+````
+
+---
+
+## Arquivo: `docs/syntaxmesh/fases/fase-1-fundacao-tarefas.md`
+
+````md
+# Fase 1 — Tarefas Atômicas
+
+> **Arquivo:** `docs/syntaxmesh/fases/fase-1-tarefas.md`
+> **Plano:** `docs/syntaxmesh/fases/fase-1-fundacao.md`
+> **Status:** 🟡 Em andamento
+> **Total:** 63 tarefas
+> **Concluídas:** 10
+
+---
+
+## 0. Protocolo TDD
+
+1. Escrever teste que falha
+2. `deno task test` → falha correta
+3. Implementar mínimo
+4. `deno task test` → passa
+5. `deno task check-all` → verde
+6. Commit: `feat(<scope>): <descrição>`
+7. Marcar `[x]`
+
+**Regras:**
+- 1 verbo, 1 entregável, verificação objetiva
+- >2 h = quebre
+- `check-all` falha = não commitar
+
+---
+
+## Progresso
+
+```
+[x] 1.1  deno.jsonc raiz                    —  0/10
+[x] 1.2  Estrutura de 12 packages           —  0/13
+[ ] 1.3  Core isolation test                —  0/6
+[ ] 1.4  Padrão BDD                         —  0/4
+[x] 1.5  ADRs 009–012 (renomeação+edição)   —  9/9  ✅
+[ ] 1.6  Task check-all                     —  0/3
+[ ] 1.7  Documentação inicial               —  1/8
+[ ] 1.8  Verificação final da fase          —  0/10
+─────────────────────────────────────────────
+TOTAL: 10/63
+```
+
+---
+
+## Bloco A — Workspace
+
+### 1.1 — `deno.jsonc` raiz
+
+| # | Tarefa | Arquivos | Verificação | Status |
+|---|---|---|---|---|
+| 1.1.1 | Criar/abrir `deno.jsonc` raiz | `deno.jsonc` | `deno fmt --check deno.jsonc` | [ ] |
+| 1.1.2 | `workspace[]` com 12 packages | idem | `deno check` | [ ] |
+| 1.1.3 | `catalog` com versões | idem | `deno check` | [ ] |
+| 1.1.4 | `imports` com prefixos | idem | `deno check` | [ ] |
+| 1.1.5 | `tasks.test` | idem | `deno task --list` | [ ] |
+| 1.1.6 | `tasks.lint`, `tasks.fmt`, `tasks.check`, `tasks.tests` | idem | `deno task --list` | [ ] |
+| 1.1.7 | `tasks.dev`, `tasks.build` | idem | `deno task --list` | [ ] |
+| 1.1.8 | `tasks.taskjuggler` | idem | `deno task --list` | [ ] |
+| 1.1.9 | `compilerOptions` | idem | `deno check` | [ ] |
+| 1.1.10 | `fmt` e `lint` | idem | `deno fmt --check && deno lint` | [ ] |
+
+### 1.2 — Estrutura de 12 packages
+
+| # | Tarefa | Verificação | Status |
+|---|---|---|---|
+| 1.2.1–1.2.12 | Criar 12 packages (core, parser, language, richtext, markdown, report, storage, worker-db, utils, service-worker, ui, server) | `deno check packages/*/mod.ts` | [ ] |
+| 1.2.13 | Teste de estrutura em `tests/integration/workspace_test.ts` | `deno task test` | [ ] |
+
+### 1.3 — Core isolation test
+
+| # | Tarefa | Arquivos | Verificação | Status |
+|---|---|---|---|---|
+| 1.3.1 | Criar `tests/integration/core_isolation_test.ts` vazio | idem | `deno test` | [ ] |
+| 1.3.2 | Scan recursivo de `packages/core/src/**/*.ts` | idem | verde | [ ] |
+| 1.3.3 | Verificar imports proibidos | idem | 1 teste | [ ] |
+| 1.3.4 | Verificar globals proibidos | idem | 1 teste | [ ] |
+| 1.3.5 | Teste smoke com arquivo temporário | idem | 1 teste | [ ] |
+| 1.3.6 | Reportar arquivo + linha | idem | 1 teste | [ ] |
+
+### 1.4 — Padrão BDD
+
+| # | Tarefa | Arquivos | Verificação | Status |
+|---|---|---|---|---|
+| 1.4.1 | Verificar `@std/testing/bdd` em `packages/utils/deno.jsonc` | idem | `deno check` | [ ] |
+| 1.4.2 | Exemplo canônico em `packages/utils/tests/bdd_example_test.ts` | idem | 3 testes verdes | [ ] |
+| 1.4.3 | Revisar `docs/syntaxmesh/06-testes-e-processo.md` | idem | lido | [ ] |
+| 1.4.4 | Adicionar nota sobre migração gradual | idem | lido | [ ] |
+
+---
+
+### 1.5 — ADRs 009–012 (reorganização) ✅
+
+**Executado.** Passos 1–6 dos "próximos passos" concluídos.
+
+| # | Tarefa | Arquivos | Verificação | Status |
+|---|---|---|---|---|
+| 1.5.1 | Deletar `009-novos-pacotes-language-richtext-markdown.md` | `decisoes/` | `ls` não mostra | [x] |
+| 1.5.2 | Deletar `010-testes-de-integracao-para-valida-o-do-workspace.md` | idem | idem | [x] |
+| 1.5.3 | Deletar `011-configura-o-do-deno-jsonc-para-fase-1.md` | idem | idem | [x] |
+| 1.5.4 | `git mv 012-richtext-* → 009-richtext-*` e editar título | `decisoes/009-richtext-mantido-markdown-futuro.md` | título `# 009` | [x] |
+| 1.5.5 | `git mv 013-worker-db-* → 010-worker-db-*` e editar título | `decisoes/010-worker-db-centraliza-storage.md` | título `# 010` | [x] |
+| 1.5.6 | `git mv 014-port-fiel-* → 011-port-fiel-*` e editar título | `decisoes/011-port-fiel-taskjuggler.md` | título `# 011` | [x] |
+| 1.5.7 | `git mv 015-tjtime-* → 012-tjtime-*` e editar título | `decisoes/012-tjtime-typescript.md` | título `# 012` | [x] |
+| 1.5.8 | Reescrever tabela em `decisoes/README.md` (001–012) | `decisoes/README.md` | 12 linhas | [x] |
+| 1.5.9 | Normalizar autor (`Qwen Code` → `Vanaware`) nas ADRs 009–012 | idem | grep zero `Qwen` | [x] |
+
+### 1.6 — Task `check-all`
+
+| # | Tarefa | Arquivos | Verificação | Status |
+|---|---|---|---|---|
+| 1.6.1 | Adicionar `tasks.check-all` | `deno.jsonc` | `deno task --list` | [ ] |
+| 1.6.2 | Documentar em `06-testes-e-processo.md` | idem | lido | [ ] |
+| 1.6.3 | Rodar `deno task check-all` na raiz | — | exit 0 | [ ] |
+
+### 1.7 — Documentação inicial
+
+| # | Tarefa | Arquivos | Verificação | Status |
+|---|---|---|---|---|
+| 1.7.1 | Revisar `00-index.md` com links novos | `00-index.md` | links válidos | [ ] |
+| 1.7.2 | Revisar `02-principios.md` | idem | lido | [ ] |
+| 1.7.3 | `03-arquitetura.md` lista os 12 packages | `03-arquitetura.md` | 12 nomes | [ ] |
+| 1.7.4 | `05-formato-e-compatibilidade.md` com RichText vs Markdown | idem | seção | [ ] |
+| 1.7.5 | `07-roadmap.md` com 21 fases | idem | 21 linhas | [ ] |
+| 1.7.6 | `09-regras-para-ia.md` com regra `sem any` | idem | idem | [ ] |
+| 1.7.7 | Criar `docs/syntaxmesh/fases/README.md` | idem | existe | [ ] |
+| 1.7.8 | Criar `docs/syntaxmesh/cheat-sheet-ruby-ts.md` | idem | existe | [x] |
+
+### 1.8 — Verificação final da fase
+
+| # | Tarefa | Verificação | Status |
+|---|---|---|---|
+| 1.8.1 | `deno task check-all` na raiz | exit 0 | [ ] |
+| 1.8.2 | `deno task test` isolado | ≥ 8 testes verdes | [ ] |
+| 1.8.3 | `import { } from "@syntaxmesh/core"` funciona | sem erro | [ ] |
+| 1.8.4 | `import { } from "@syntaxmesh/parser"` funciona | sem erro | [ ] |
+| 1.8.5 | 12 packages em `packages/*/deno.jsonc` | 12 arquivos | [ ] |
+| 1.8.6 | `decisoes/README.md` tem 12 ADRs | tabela completa | [ ] |
+| 1.8.7 | `core_isolation_test.ts` verde | verde | [ ] |
+| 1.8.8 | Atualizar status em `fase-1-fundacao.md` para `✅` | lido | [ ] |
+| 1.8.9 | Mover tarefas para `fase-1-tarefas.md` | arquivo existe | [x] |
+| 1.8.10 | Corrigir numeração de subfases em `fase-1-fundacao.md` (`4.x` → `1.x`) | idem | [ ] |
+
+---
+
+## Próximos passos (retomar daqui)
+
+1. **1.7.8** — criar `cheat-sheet-ruby-ts.md` ✅ (feito)
+2. **1.7.7** — criar `docs/syntaxmesh/fases/README.md`
+3. **1.6.1** — adicionar `check-all` em `deno.jsonc`
+4. **1.1.x** — verificar workspace raiz
+5. **1.2.1–1.2.13** — criar 12 packages + teste
+6. **1.3.1–1.3.6** — core isolation test
+7. **1.4.1–1.4.4** — padrão BDD
+8. **1.5** — concluído ✅
+9. **1.7.1–1.7.6** — docs
+10. **1.8.1–1.8.8, 1.8.10** — verificação final
+11. **Reescrever ADR 012** com a seção "Bugs do Ruby" (usar Bloco 3 deste chat)
+12. **Criar ADR 013** opcional: `013-cheat-sheet-ruby-ts.md` formalizando o documento
+
+---
+
+**Fim do arquivo.**
+````
+
+---
+
+## Arquivo: `docs/syntaxmesh/fases/_ajustes-r1-r12.md`
+
+````md
+# Ajustes R1–R12 — Checklist
+
+## R1 — ADR 013 `compat.keepRubyBugs` ✅
+
+- [x] Arquivo `docs/syntaxmesh/decisoes/013-compat-flag-ruby-bugs.md` criado (Parte 1).
+- [ ] Adicionar linha `013` em `docs/syntaxmesh/decisoes/README.md`.
+
+## R2 — Interface `PropertyLike` ✅
+
+- [x] Arquivo `packages/core/src/model/property-like.ts` criado (Parte 3).
+- [ ] Adicionar tarefa **3.1.0** em `fase-3-tarefas.md` (já está — verificar).
+- [ ] Adicionar seção `4.X — Interface PropertyLike (R2)` em `fase-3-modelo-atributos.md`.
+
+## R3 — Naming convention ✅
+
+- [x] Padrão documentado em `fases/README.md` (Parte 2).
+- [ ] Renomear `fase-2-tempo-geometria-tarefas.md` → `fase-2-tarefas.md`.
+- [ ] Renomear `fase-2-tempo-geometria-tarefas-complementar1.md` → `fase-2-tarefas-complementar1.md`.
+- [ ] Verificar Fases 4–21 seguem o padrão.
+
+## R4 — `fases/README.md` ✅
+
+- [x] Arquivo criado (Parte 2).
+
+## R5 — Política de migração de bugs ✅
+
+- [x] Seção "Política de migração (R5)" na ADR 013 (Parte 1).
+
+## R6 — Convenções git ✅
+
+- [x] Seção "Convenções git (R6)" em `fases/README.md` (Parte 2).
+- [ ] Opcional: criar `.gitmessage` com template.
+
+## R7 — Smoke test por fase ✅
+
+- [x] Seção "Smoke tests por fase (R7)" em `fases/README.md` (Parte 2).
+- [ ] Tarefa `3.15.7` já cobre Fase 3 (verificar).
+- [ ] Adicionar tarefas equivalentes em Fases 4–21.
+
+## R8 — Revisar `packages/core/mod.ts` exports ✅
+
+- [ ] Tarefa `3.1.18` já cobre (verificar).
+- [ ] Adicionar tarefa genérica em cada fase: "Re-exportar em `packages/core/mod.ts`".
+
+## R9 — Auditoria de completude ✅
+
+- [x] Seção "Auditoria de completude (R9)" em `fases/README.md` (Parte 2).
+- [ ] Tarefa `3.15.8` já cobre (verificar).
+- [ ] Adicionar `deno task audit:phase N` (futuro, opcional).
+
+## R10 — Formato de tarefas ✅
+
+- [x] Seção "Formato de tarefa (R10)" em `fases/README.md` (Parte 2).
+
+## R11 — Golden tests `keepRubyBugs: false` ✅
+
+- [ ] Tarefa `5.14.R.3` já cobre (verificar em `fase-2-tarefas-complementar1.md`).
+- [ ] Documentado na ADR 013 (Parte 1).
+
+## R12 — Corrigir numeração em `fase-3-modelo-atributos.md` ⚠️
+
+- [ ] Localizar todas as ocorrências de `### 6.X` no plano e renomear para `### 3.X`.
+- [ ] Localizar `**Bloco A** (6.0–6.2)` e ajustar para `(3.0–3.2)`.
+- [ ] Atualizar `## 6. Ordem de execução sugerida` — trocar `6.x` por `3.x`.
+- [ ] Atualizar `## 11. ADR 013 (referência rápida)` — verificar se aponta para o arquivo correto.
+
+**Comandos úteis:**
+
+```bash
+# Ver ocorrências a corrigir
+grep -n "### 6\." docs/syntaxmesh/fases/fase-3-modelo-atributos.md
+grep -n "6\.[0-9]" docs/syntaxmesh/fases/fase-3-modelo-atributos.md | grep -v "6\.0" | head
+
+# Após corrigir:
+grep -n "### [0-9]" docs/syntaxmesh/fases/fase-3-modelo-atributos.md
+```
+
+## Verificação final
+
+- [ ] `deno task check-all` verde.
+- [ ] `git tag phase-1-done` (se Fase 1 fechou).
+- [ ] Adicionar `docs/syntaxmesh/fases/_ajustes-r1-r12.md` na lista de exclusão do `.gitignore` (arquivo temporário).
+
+---
+
+**Última atualização:** 2026-09-12
+````
+
+---
+
+## Arquivo: `docs/syntaxmesh/fases/fase-3-modelo-atributos-tarefas.md`
+
+````md
+# Fase 3 — Tarefas Atômicas
+
+> **Arquivo:** `docs/syntaxmesh/fases/fase-3-tarefas.md`
+> **Plano:** `docs/syntaxmesh/fases/fase-3-modelo-atributos.md`
+> **Status:** ⬜ Não iniciada
+> **Total:** ~140 tarefas
+> **Concluídas:** 0
+> **Fonte Ruby:** `docs/taskjuggler/lib/taskjuggler/{AttributeBase,AttributeDefinition,Attributes,deep_copy}.rb`
+
+---
+
+## ⚠️ PREÂMBULO — Leia antes de começar
+
+### Regra zero
+
+**Toda tarefa é um port.** Antes de escrever o teste:
+
+1. Abrir o arquivo Ruby indicado em `⚠️ RUBY:`
+2. Ler **o arquivo inteiro** (não só o método)
+3. Consultar `docs/syntaxmesh/cheat-sheet-ruby-ts.md` (seção relevante)
+4. Se encontrar bug ou comportamento estranho, consultar cheat sheet §12 e categorizar (A/B/C)
+
+### `compat.keepRubyBugs`
+
+Criado na Fase 2 (`packages/core/src/compat.ts`). Ver **ADR 013** (`docs/syntaxmesh/decisoes/013-compat-flag-ruby-bugs.md`) e cheat sheet §15.
+
+### ADRs relevantes
+
+- **ADR 011** — Port fiel do TaskJuggler.
+- **ADR 013** — `compat.keepRubyBugs` (bugs do Ruby).
+- **ADR 014** — `mode` global de atributos (criado nesta fase).
+- **ADR 015** — Metaprogramação em `PropertyTreeNode` (criado na Fase 4).
+
+### Convenções
+
+- `AttributeBase.setMode(0)` em `beforeEach` — sem isso, testes vazam estado.
+- `tjpId` é `static readonly`.
+- Valor mora no `AttributeContainer`, nunca em campo próprio.
+- `deepClone` é pré-requisito (rodar 3.13 antes se preferir).
+- `to_rti` que depende de Fase 11/12 lança `NotYetImplementedError`.
+- Sem `any` em `src/`.
+
+### Anti-padrões
+
+- ❌ Não criar classes novas (ex: `ScoreboardValue`) que não existam no Ruby.
+- ❌ Não simplificar algoritmos complexos (ex: `to_tjp` de `WorkingHoursAttribute`).
+- ❌ Não reordenar registros de `AttributeDefinition` (ordem do `Project.rb` é a verdade).
+- ❌ Não usar `Proxy` em `AttributeBase` (a decisão é método `attribute(id)` explícito — ADR 015).
+
+---
+
+## Progresso
+
+```
+[ ] 3.0  ADR 014 (mode global)              —  0/5
+[ ] 3.1  Interface + AttributeBase          —  0/19
+[ ] 3.2  AttributeDefinition                —  0/8
+[ ] 3.3  Escalares e temporais (7)          —  0/22
+[ ] 3.4  Referência (3)                     —  0/11
+[ ] 3.5  Listas primitivas (6)              —  0/14
+[ ] 3.6  Dependências (2)                   —  0/6
+[ ] 3.7  Financeiro (3)                     —  0/8
+[ ] 3.8  Alocação e booking (2)             —  0/8
+[ ] 3.9  Expressões lógicas (2)             —  0/4
+[ ] 3.10 Tempo complexo (6)                 —  0/12
+[ ] 3.11 Formatação (5)                     —  0/6
+[ ] 3.12 Ricos (2)                          —  0/8
+[ ] 3.13 deepClone utility                  —  0/10
+[ ] 3.14 Golden tests                       —  0/9
+─────────────────────────────────────────────
+TOTAL: ~140
+```
+
+---
+
+## Bloco A — Fundação
+
+### 3.0 — ADR 014 (`mode` global de atributos)
+
+**Objetivo:** formalizar a flag global `mode` como decisão de arquitetura.
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 3.0.1 | Criar `docs/syntaxmesh/decisoes/014-attribute-mode-global.md` com frontmatter | idem | arquivo existe |
+| 3.0.2 | Seção **Contexto**: `@@mode` class variable; 3 modos (0/1/2); uso no scheduler | idem | — |
+| 3.0.3 | Seção **Decisão**: `static` em `AttributeBase` com getter/setter; reset em `beforeEach` | idem | — |
+| 3.0.4 | Seções **Alternativas** (`AsyncLocalStorage`, context-passing, Symbol) + **Consequências** + **Relação com ADR 013** | idem | — |
+| 3.0.5 | Adicionar linha `014` em `decisoes/README.md` | idem | 14 linhas |
+
+---
+
+### 3.1 — Interface + `AttributeBase` + `ListAttributeBase`
+
+**⚠️ RUBY: `AttributeBase.rb` (arquivo inteiro — ~150 linhas)**
+**🔎 CHEAT: §3 `@@classvar`, §8 `Hash.new { }`, §12 Categoria B (`Integer#round`)**
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 3.1.0 | Criar `src/model/property-like.ts` com `interface PropertyLike { readonly id: string; readonly name: string }` (R2) | `src/model/property-like.ts` | `deno check` |
+| 3.1.1 | Criar `attributes/attribute-container.ts` com `interface AttributeContainer` (get/set) | idem | `deno check` |
+| 3.1.2 | Criar `MockContainer` em testes (Map interno, `undefined` se ausente) | `tests/attributes/mock-container.ts` | `deno check` |
+| 3.1.3 | Criar `attributes/errors.ts` com `TjError`, `TjArgumentError`, `TjRuntimeError`, `AttributeOverwrite`, `NotYetImplementedError` | `src/attributes/errors.ts` | `deno check` |
+| 3.1.4 | Criar classe `AttributeBase<T>` vazia com `constructor(property: PropertyLike, type: AttributeDefinition<T>, container: AttributeContainer)` | `src/attributes/attribute-base.ts` | `deno check` |
+| 3.1.5 | ⚠️ RUBY:24. `private static _mode: 0\|1\|2 = 0`; `static get mode()`; `static setMode(m)` | idem | 3 testes |
+| 3.1.6 | Campos `protected readonly property/type/container`; flags `provided: boolean = false`, `inherited: boolean = false` | idem | 1 teste |
+| 3.1.7 | ⚠️ RUBY:`reset`. Implementar: `inherited = provided = false`; `container.setStoredValue(type.id, deepClone(type.default))` | idem | 3 testes |
+| 3.1.8 | ⚠️ RUBY:`inherit`. Implementar: `inherited = true`; `setStoredValue(id, deepClone(value))` | idem | 2 testes |
+| 3.1.9 | ⚠️ RUBY:`set`. Implementar: `mode===0 → provided=true`; `mode===1 → inherited=true`; `setStoredValue(id, value)` | idem | 4 testes (mode 0/1/2) |
+| 3.1.10 | Implementar `get()`, `get value()`, `get id()`, `get name()` | idem | 2 testes |
+| 3.1.11 | ⚠️ RUBY:`nil?`. `isNil(): boolean` = `true` se `null`, `undefined` ou `Array.isArray() && length === 0` | idem | 4 testes |
+| 3.1.12 | `isList(): boolean` retorna `false` na base | idem | 1 teste |
+| 3.1.13 | ⚠️ RUBY:`to_s`, `to_num`, `to_sort`, `to_rti`, `to_tjp`. Implementar os 5 com defaults da base | idem | 5 testes |
+| 3.1.14 | ⚠️ RUBY:`quotedString`. Protegido: se tem `\n` → `-8<-\n...\n->8-`; senão `"..."` com `\"` escapado | idem | 4 testes |
+| 3.1.15 | ⚠️ RUBY:`ListAttributeBase`. Subclasse com `to_s() = get().join(', ')` e `isList(): true` | `src/attributes/list-attribute-base.ts` | 2 testes |
+| 3.1.16 | Teste agregado: `beforeEach(() => AttributeBase.setMode(0))`; teste vaza estado se esquecer | idem | 1 teste (documenta) |
+| 3.1.17 | Re-exportar em `attributes/mod.ts` | idem | `deno check` |
+| 3.1.18 | Adicionar exports em `packages/core/mod.ts` (incluindo `PropertyLike`) | idem | `deno check` |
+
+---
+
+### 3.2 — `AttributeDefinition` + `AttributeType`
+
+**⚠️ RUBY: `AttributeDefinition.rb` (arquivo inteiro — ~60 linhas)**
+**🔎 CHEAT: §2 `.freeze` → `Object.freeze(this)`, §1 `Struct` → `interface`**
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 3.2.1 | Criar `attributes/attribute-type.ts` com `enum AttributeType` listando ~40 tipos do Ruby | idem | 1 teste (contagem ≥ 38) |
+| 3.2.2 | Criar `attributes/attribute-definition.ts` com 8 campos `readonly` | idem | `deno check` |
+| 3.2.3 | ⚠️ RUBY:`freeze`. Chamar `Object.freeze(this)` no fim do constructor | idem | 1 teste (`Object.isFrozen`) |
+| 3.2.4 | Validar `id` não-vazio e `name` não-vazio (`TjArgumentError`) | idem | 2 testes |
+| 3.2.5 | `userDefined` default `false` | idem | 2 testes |
+| 3.2.6 | Função `attributeTypeClass(type: AttributeType)` que retorna o construtor correspondente | idem | 3 testes |
+| 3.2.7 | Teste: mutar campo lança `TypeError` (strict mode) | idem | 1 teste |
+| 3.2.8 | Re-exportar em `attributes/mod.ts` | idem | `deno check` |
+
+---
+
+### 3.3 — Escalares e temporais
+
+**⚠️ RUBY: `Attributes.rb` — 7 subclasses**
+**🔎 CHEAT: §2 (classes), §5 (strings), §12 (bugs)**
+
+| # | Subclasse | `tjpId` | Tarefas |
+|---|---|---|---|
+| 3.3.1–3.3.3 | `StringAttribute` | `text` | 3 |
+| 3.3.4–3.3.6 | `IntegerAttribute` | `integer` | 3 |
+| 3.3.7–3.3.9 | `FloatAttribute` | `number` | 3 |
+| 3.3.10–3.3.13 | `BooleanAttribute` | `boolean` | 4 (`to_s`, `to_tjp` com `yes/no`) |
+| 3.3.14–3.3.15 | `SymbolAttribute` | `symbol` | 2 |
+| 3.3.16–3.3.18 | `DateAttribute` | `date` | 3 (`to_s` com formato, `to_s(null) → 'Error'`) |
+| 3.3.19–3.3.21 | `DurationAttribute` | `duration` | 3 (`to_s(null) → '${get()}h'`) |
+| 3.3.22 | Teste agregado — cada `tjpId` × 1 valor | — | 1 |
+
+**Padrão por subclasse** (ex: `StringAttribute`):
+1. Criar arquivo com classe vazia + `tjpId`.
+2. Implementar override(s) de `to_tjp`/`to_s` (ler Ruby).
+3. Testes para cada override.
+
+---
+
+### 3.4 — Referência
+
+**⚠️ RUBY: `Attributes.rb` — `PropertyAttribute`, `AccountAttribute`, `ReferenceAttribute`**
+**🔎 CHEAT: §5 `String#gsub`, §3 `arr.join`**
+
+| # | Subclasse | `tjpId` | Tarefas |
+|---|---|---|---|
+| 3.4.1–3.4.3 | `PropertyAttribute` | `property` | 3 |
+| 3.4.4–3.4.6 | `AccountAttribute` (`to_s = get()?.id ?? ''`) | `account` | 3 |
+| 3.4.7–3.4.11 | `ReferenceAttribute` (`url()`, `label()`, `to_s`, `to_tjp` com `{ label "..." }`) | `reference` | 5 |
+
+**Nota:** `ReferenceAttribute.to_rti` depende de RichText (Fase 12). Stub com `NotYetImplementedError` + comentário `// TODO Fase 12`.
+
+---
+
+### 3.5 — Listas primitivas
+
+**⚠️ RUBY: `Attributes.rb` — 6 subclasses**
+
+| # | Subclasse | `tjpId` | Tarefas |
+|---|---|---|---|
+| 3.5.1–3.5.2 | `FlagListAttribute` (`to_tjp = "flags ${join(', ')}"`) | `flaglist` | 2 |
+| 3.5.3–3.5.4 | `SymbolListAttribute` | `symbollist` | 2 |
+| 3.5.5–3.5.6 | `ScenarioListAttribute` | `scenarios` | 2 |
+| 3.5.7–3.5.8 | `NodeListAttribute` (sem `tjpId`) | — | 2 |
+| 3.5.9–3.5.11 | `ResourceListAttribute` (`to_s` junta `fullId`; `to_rti` stub Fase 12) | `resourcelist` | 3 |
+| 3.5.12–3.5.14 | `TaskListAttribute` | `tasklist` | 3 |
+
+---
+
+### 3.6 — Dependências
+
+**⚠️ RUBY: `Attributes.rb` — 2 subclasses**
+**Nota:** `TaskDependency` é Fase 7. Usar tipo `{ task: { fullId: string } }` local.
+
+| # | Subclasse | `tjpId` | Tarefas |
+|---|---|---|---|
+| 3.6.1–3.6.3 | `DependencyListAttribute` (`to_s` filtra `null`) | `dependencylist` | 3 |
+| 3.6.4–3.6.6 | `TaskDepListAttribute` (desestrutura tuplas) | `taskdeplist` | 3 |
+
+---
+
+### 3.7 — Financeiro
+
+**⚠️ RUBY: `Attributes.rb` — 3 subclasses**
+**Nota:** `Charge`, `ChargeSet`, `AccountCredit` são Fase 8. Stubs tipados.
+
+| # | Subclasse | `tjpId` | Tarefas |
+|---|---|---|---|
+| 3.7.1–3.7.2 | `ChargeListAttribute` | `charge` | 2 |
+| 3.7.3–3.7.5 | `ChargeSetListAttribute` (`to_s` chama `.to_s()`) | `chargeset` | 3 |
+| 3.7.6–3.7.8 | `AccountCreditListAttribute` (default `[]`) | `credits` | 3 |
+
+---
+
+### 3.8 — Alocação e booking
+
+**⚠️ RUBY: `Attributes.rb` — 2 subclasses**
+**Nota:** `Allocation`, `Booking` são Fase 7. Stubs tipados.
+
+| # | Subclasse | `tjpId` | Tarefas |
+|---|---|---|---|
+| 3.8.1–3.8.5 | `AllocationAttribute` — `to_s` com `select by mode`, `mandatory`, `persistent` (5 casos) | `allocation` | 5 |
+| 3.8.6–3.8.8 | `BookingListAttribute` — `to_s` OK; `to_tjp` **lança** | `bookinglist` | 3 |
+
+---
+
+### 3.9 — Expressões lógicas
+
+**⚠️ RUBY: `Attributes.rb` — 2 subclasses**
+**Nota:** `LogicalExpression` é Fase 11. Wrapper trivial.
+
+| # | Subclasse | `tjpId` | Tarefas |
+|---|---|---|---|
+| 3.9.1–3.9.2 | `LogicalExpressionAttribute` | `logicalexpressions` | 2 |
+| 3.9.3–3.9.4 | `LogicalExpressionListAttribute` (`isList: true`) | `logicalexpressions` | 2 |
+
+---
+
+### 3.10 — Tempo complexo
+
+**⚠️ RUBY: `Attributes.rb` — 6 subclasses**
+
+| # | Subclasse | `tjpId` | Nota | Tarefas |
+|---|---|---|---|---|
+| 3.10.1–3.10.2 | `TimeIntervalListAttribute` | `intervallist` | | 2 |
+| 3.10.3–3.10.4 | `LeaveListAttribute` | `leave` | `to_tjp = "leaves ${join(',\n')}"` | 2 |
+| 3.10.5–3.10.6 | `LeaveAllowanceListAttribute` | — | sem `tjpId` | 2 |
+| 3.10.7–3.10.8 | `LimitsAttribute` | `limits` | constructor chama `setProject`; `to_tjp` lança | 2 |
+| 3.10.9–3.10.10 | `ShiftAssignmentsAttribute` | `shifts` | constructor seta `project`; `to_tjp` implementa | 2 |
+| 3.10.11–3.10.12 | `WorkingHoursAttribute` | `workinghours` | `to_tjp` itera 7 dias | 2 |
+
+**Nota:** `WorkingHours` existe (Fase 2) → `to_tjp` **completo**. Os demais usam `NotYetImplementedError`.
+
+---
+
+### 3.11 — Formatação
+
+**⚠️ RUBY: `Attributes.rb` — 5 subclasses**
+
+| # | Subclasse | `tjpId` | Nota | Tarefas |
+|---|---|---|---|---|
+| 3.11.1 | `RealFormatAttribute` | — | sem `tjpId` | 1 |
+| 3.11.2 | `ColumnListAttribute` | `columns` | `to_s = 'TODO'` (replicar) | 1 |
+| 3.11.3 | `FormatListAttribute` | — | `to_s = join(', ')` | 1 |
+| 3.11.4 | `SortListAttribute` | `sorting` | | 1 |
+| 3.11.5 | `JournalSortListAttribute` | `journalsorting` | | 1 |
+| 3.11.6 | Teste agregado | — | 1 |
+
+---
+
+### 3.12 — Ricos
+
+**⚠️ RUBY: `Attributes.rb` — 2 subclasses**
+**Nota:** `RichText` é Fase 12. Interface `RichTextIntermediate` em `format/`.
+
+| # | Tarefa | Verificação |
+|---|---|---|
+| 3.12.1 | Criar `format/rich-text-port.ts` com `interface RichTextIntermediate` | `deno check` |
+| 3.12.2–3.12.5 | `RichTextAttribute` — `inputText()`, `tjpId='richtext'`, `to_s`, `to_tjp` | 4 testes |
+| 3.12.6–3.12.7 | `DefinitionListAttribute` (`isList: true`, sem `tjpId`) | 2 testes |
+| 3.12.8 | `RichTextAttribute` com `get() === null` → `inputText() === ''` | 1 teste |
+
+---
+
+### 3.13 — `deepClone` utility
+
+**⚠️ RUBY: `deep_copy.rb` (arquivo inteiro — ~80 linhas)**
+**🔎 CHEAT: §3 `.clone`/`dup`, §12 (referências circulares)**
+
+| # | Tarefa | Verificação |
+|---|---|---|
+| 3.13.1 | Criar `utils/deep-clone.ts` com `deepClone<T>(value: T): T` | `deno check` |
+| 3.13.2 | Primitivos (`number`, `string`, `boolean`, `bigint`, `symbol`, `null`, `undefined`) | 5 testes |
+| 3.13.3 | `TjTime` e `RealFormat` → retornam mesma referência | 2 testes |
+| 3.13.4 | Objeto com método `deepClone()` → chama | 1 teste |
+| 3.13.5 | Objeto com método `deep_clone()` (compat) → chama | 1 teste |
+| 3.13.6 | `Array` → recursivo | 2 testes |
+| 3.13.7 | `Map` → novo Map com valores clonados | 1 teste |
+| 3.13.8 | `Set` → novo Set | 1 teste |
+| 3.13.9 | Fallback → `structuredClone` | 1 teste |
+| 3.13.10 | ⚠️ Referências circulares: `structuredClone` lança; documentar limitação | 1 teste |
+
+---
+
+### 3.14 — Golden tests
+
+**⚠️ RUBY: `AttributeBase.rb`, `Attributes.rb`**
+**Usa:** `docs/taskjuggler/test/` + `tj3` real
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 3.14.1 | Atualizar `scripts/golden/README.md` | idem | existe |
+| 3.14.2 | `scripts/golden/attributes.rb` — ~40 casos (cada tipo × 2 valores) | idem | JSON válido |
+| 3.14.3 | Estender com casos de `mode` (0/1/2) e `inherit` | idem | ≥ 60 |
+| 3.14.4 | Task `golden:generate` atualizada | `deno.jsonc` | roda |
+| 3.14.5 | `tests/golden/attributes_golden_test.ts` — `to_tjp()` | idem | verde |
+| 3.14.6 | Comparar `to_s()` com tolerância de whitespace | idem | verde |
+| 3.14.7 | Comparar `deepClone` de cada default | idem | verde |
+| 3.14.8 | Mensagens detalhadas quando diverge | idem | 3 testes |
+| 3.14.9 | Commitar JSON em `packages/core/tests/golden/attributes.golden.json` | idem | versionado |
+
+---
+
+## Bloco C — Verificação final
+
+| # | Tarefa | Verificação |
+|---|---|---|
+| 3.15.1 | `deno task check-all` verde | exit 0 |
+| 3.15.2 | `deno task golden:generate && deno task test` verde | exit 0 |
+| 3.15.3 | `grep -r "NotYetImplementedError" packages/core/src/attributes/` ≥ 5 (stubs) | grep |
+| 3.15.4 | ADR 014 criada e commitada | git log |
+| 3.15.5 | Todos os ~40 tipos exportados em `attributes/mod.ts` | `deno check` |
+| 3.15.6 | Interface `PropertyLike` implementada em `model/` | `deno check` |
+| 3.15.7 | `tests/integration/smoke_after_phase_3_test.ts` — importa `@syntaxmesh/core`, cria `AttributeBase.setMode(0)`, verifica exports | 1 teste |
+| 3.15.8 | Auditoria: cada subfase do plano `fase-3-modelo-atributos.md` tem tarefas correspondentes | grep |
+| 3.15.9 | Corrigir numeração em `fase-3-modelo-atributos.md` (`### 6.x` → `### 3.x`) | grep |
+| 3.15.10 | Atualizar `docs/syntaxmesh/03-arquitetura.md` com `attributes/` e `compat.ts` | seção |
+
+---
+
+## Notas para a IA
+
+1. **Ordem:** 3.0 → 3.1 → ... → 3.14 → Bloco C. Exceção: 3.13 (deepClone) pode ir antes de 3.1.
+2. **Sempre ler o Ruby primeiro.** Cada tarefa com `⚠️ RUBY:` exige leitura.
+3. **Cheat sheet §12:** categorizar qualquer bug em A/B/C. Categoria B usa `compat.keepRubyBugs`.
+4. **`AttributeBase.setMode(0)` em `beforeEach`.**
+5. **`PropertyLike` é mínimo nesta fase** (só `id`, `name`). Fase 4 expande.
+6. **Stubs** (`NotYetImplementedError`) sempre com comentário `// TODO Fase N: <razão>`.
+7. **Não inventar classes.** Se não está no Ruby, não existe.
+8. **Ordem dos `AttributeDefinition`** preserva ordem do `Project.rb` (Fase 5).
+9. **Commit por subfase.** `feat(core): attribute-base`, etc.
+10. **Sem `any`.** Use `unknown` + narrowing.
+11. **Golden tests são o critério final.** Rodar `tj3` real se possível.
+12. **Não corrigir bugs de outras fases.** Abrir issue no arquivo da fase competente.
+13. **Não usar `Proxy`.** Método `attribute(id)` explícito (ADR 015).
+14. **ADR 014** (não 013) para `mode` global. **ADR 013** é `compat.keepRubyBugs`.
+
+---
+
+**Fim do arquivo de tarefas da Fase 3.**
+````
+
+---
+
+## Arquivo: `docs/syntaxmesh/fases/README.md`
+
+````md
+# Fases — Guia
+
+Este diretório contém o planejamento do projeto dividido em **21 fases**. Cada fase tem **até 3 arquivos** com propósitos distintos.
+
+## Convenção de nomes
+
+| Tipo | Padrão | Propósito | Exemplo |
+|---|---|---|---|
+| **Plano** | `fase-N-<slug>.md` | Especificação completa da fase (contexto, objetivo, subfases detalhadas, referências Ruby) | `fase-3-modelo-atributos.md` |
+| **Tarefas** | `fase-N-tarefas.md` | Lista executável de tarefas atômicas (TDD, ≤ 2h cada) | `fase-3-tarefas.md` |
+| **Complementar** | `fase-N-tarefas-complementar<N>.md` | Revisões pós-implementação (após feedback do Ruby ou testes) | `fase-2-tarefas-complementar1.md` |
+
+**Regras:**
+
+- `<slug>` é kebab-case, descritivo, sem numeração.
+- Um arquivo de **plano** é escrito **antes** de implementar.
+- Um arquivo de **tarefas** é derivado do plano.
+- Um arquivo **complementar** só existe se houver revisão. Numerado (`complementar1`, `complementar2`, ...).
+- `N` é o número da fase sem zero-padding (`fase-2-*`, não `fase-02-*`).
+
+### Renomeações pendentes
+
+| Atual | Novo |
+|---|---|
+| `fase-2-tempo-geometria-tarefas.md` | `fase-2-tarefas.md` |
+| `fase-2-tempo-geometria-tarefas-complementar1.md` | `fase-2-tarefas-complementar1.md` |
+
+## Diferença entre plano, tarefas e complementar
+
+### Plano (`fase-N-<slug>.md`)
+
+- **Destinado ao autor/IA** que vai projetar a fase.
+- Contém **contexto**, **objetivo**, **decisões de port**, **subfases** com justificativas, **referências cruzadas**.
+- **Não é executável.** Não tem checkboxes.
+- Escrito **antes** da implementação.
+- Pode referenciar o Ruby diretamente (`⚠️ RUBY: arquivo:linha`).
+
+### Tarefas (`fase-N-tarefas.md`)
+
+- **Destinado ao executor (IA ou dev)** que vai implementar.
+- Contém **tarefas atômicas** com: `# | Tarefa | Arquivos | Verificação`.
+- Cada tarefa é **TDD** (teste antes), **≤ 2h**, **1 verbo**.
+- Tem **checkboxes** e **progresso**.
+- Escrito **depois** do plano, **antes** da implementação.
+- Deve ser **completo** em relação ao plano (toda subfase do plano vira ≥ 1 tarefa).
+
+### Complementar (`fase-N-tarefas-complementar<N>.md`)
+
+- **Destinado ao revisor** após implementação.
+- Corrige divergências descobertas **durante** ou **depois** da implementação.
+- Segue o mesmo formato de tarefas, mas com prefixo `N.R` (ex: `5.4.R.1`).
+- **Não apaga** marcações originais — adiciona nota `(revisado em 5.X.R.Y)`.
+- Pode reabrir tarefas já marcadas.
+
+## Formato de tarefa
+
+Toda tarefa segue o formato:
+
+```markdown
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 3.1.4 | Criar classe `AttributeBase<T>` vazia com `constructor(property: PropertyLike, type: AttributeDefinition<T>, container: AttributeContainer)` | `src/attributes/attribute-base.ts` | `deno check` |
+```
+
+**Colunas:**
+
+- **#** — identificador único (`subfase.subtarefa`).
+- **Tarefa** — ação no imperativo, 1 verbo. Não caber em 2h → quebrar.
+- **Arquivos** — caminhos relativos exatos (sem `<...>`).
+- **Verificação** — comando objetivo (`deno check`, `deno test`, `grep`, contagem, etc.).
+
+**Marcadores especiais:**
+
+- `⚠️ RUBY: <arquivo>:<linha>` — leia o Ruby antes de implementar.
+- `🔎 CHEAT: §N` — consultar seção do cheat sheet.
+- `// TODO Fase N: <razão>` — stub com dependência futura.
+- `// RUBY-COMPAT-FIX: <desc>` — correção de bug Categoria A (ADR 013).
+- `// RUBY-COMPAT-FLAG: <desc>` — bug Categoria B (usa `compat.keepRubyBugs`).
+- `// RUBY-COMPAT-DOC: <link>` — comportamento documentado (Categoria C).
+
+**Regras de granularidade:**
+
+- 1 verbo, 1 entregável, verificação objetiva.
+- Não caber em 2h → quebrar em 2 tarefas.
+- Tarefa que depende de decisão de arquitetura → criar ADR antes.
+
+## Protocolo TDD
+
+Toda tarefa segue:
+
+1. **Escrever o teste** que falha.
+2. `deno task test` → confirmar falha correta.
+3. **Implementar o mínimo.**
+4. `deno task test` → passa.
+5. `deno task check-all` → verde.
+6. **Commit atômico** (ver abaixo).
+7. Marcar `[x]`.
+
+Se `check-all` falha em `fmt` ou `lint` → **não commitar**.
+
+## Convenções git
+
+### Branches
+
+| Uso | Padrão | Exemplo |
+|---|---|---|
+| Desenvolvimento de fase | `phase-N-<slug>` | `phase-3-modelo-atributos` |
+| Correção de bug | `fix/<slug>` | `fix/tjtime-parsing-rollover` |
+| Revisão (complementar) | `phase-N-review-<slug>` | `phase-2-review-ruby-bugs` |
+
+### Commits
+
+- **Formato:** `<tipo>(<escopo>): <descrição>` (Conventional Commits).
+- **Tipos:** `feat`, `fix`, `docs`, `test`, `refactor`, `chore`.
+- **Escopo:** package (`core`, `parser`, `report`, `storage`, `ui`) ou área (`decisoes`, `fases`, `golden`).
+- **Exemplos:**
+  - `feat(core): attribute-base com mode global`
+  - `fix(core): corrigir sameTimeNextMonth (Categoria B)`
+  - `docs(decisoes): ADR 014 attribute mode global`
+  - `test(core): golden tests TjTime parsing`
+  - `chore(fases): renomear fase-2-tarefas.md`
+
+### Tags
+
+- **Fase concluída:** `phase-N-done` (ex: `phase-2-done`).
+- **Release:** `vX.Y.Z` (ex: `v1.0.0`).
+- **Golden baseline:** `golden-vN` (ex: `golden-v1`).
+
+### Regras
+
+- **1 commit por tarefa** ou **por subfase** (decisão do executor).
+- **Não commitar** se `check-all` falhar.
+- **Não commitar** com `[WIP]` no `main`.
+- **Rodar `deno task golden:generate`** antes de commitar mudanças que afetam golden.
+- **Atualizar `fases/fase-N-tarefas.md`** no mesmo commit.
+
+## Smoke tests por fase
+
+Toda fase concluída deve adicionar um teste de fumaça:
+
+**Arquivo:** `tests/integration/smoke_after_phase_N_test.ts`
+
+**Conteúdo mínimo:**
+
+1. Importar todos os `mod.ts` de todos os packages afetados.
+2. Verificar exports públicos (contagem de símbolos).
+3. Rodar um cenário trivial end-to-end (ex: criar objeto, chamar método, verificar output).
+4. Garantir que a fase N **não quebrou** N-1.
+
+**Exemplo (Fase 3):**
+
+```ts
+import { describe, it } from "@std/testing/bdd";
+import { assert, assertEquals } from "@std/assert";
+import * as core from "@syntaxmesh/core";
+
+describe("Smoke after Phase 3", () => {
+  it("Core exporta AttributeBase", () => {
+    assert(core.AttributeBase !== undefined);
+  });
+
+  it("AttributeBase.setMode existe", () => {
+    assertEquals(typeof core.AttributeBase.setMode, "function");
+  });
+
+  it("Fase 2 não regrediu: TjTime.fromString funciona", () => {
+    const t = core.TjTime.fromString("2026-01-01");
+    assert(t.toSeconds() > 0);
+  });
+});
+```
+
+**Regra:** smoke test é **obrigatório** para fechar uma fase (ver Bloco C de cada `fase-N-tarefas.md`).
+
+## Auditoria de completude
+
+Antes de fechar uma fase:
+
+1. Para cada subfase do plano (`fase-N-<slug>.md`), verificar que existe ≥ 1 tarefa correspondente em `fase-N-tarefas.md`.
+2. Para cada arquivo mencionado no plano, verificar que existe tarefa de criação.
+3. Para cada ADR mencionada, verificar que foi criada.
+4. Rodar `grep` por termos-chave do plano no arquivo de tarefas.
+
+**Verificação rápida:**
+
+```bash
+# Contar subfases no plano
+grep -cE "^### [0-9]+\.[0-9]+" docs/syntaxmesh/fases/fase-N-<slug>.md
+
+# Contar subfases no arquivo de tarefas
+grep -cE "^### [0-9]+\.[0-9]+" docs/syntaxmesh/fases/fase-N-tarefas.md
+
+# Números devem bater (ou tarefas ≥ plano)
+```
+
+**Script sugerido (futuro):**
+
+```bash
+deno task audit:phase N
+```
+
+## Como uma IA deve usar estes arquivos
+
+**Fluxo típico:**
+
+1. Ler `fase-N-<slug>.md` (plano) — entender contexto e decisões.
+2. Ler `fase-N-tarefas.md` (tarefas) — encontrar a próxima tarefa não marcada.
+3. Para cada tarefa:
+   - Se `⚠️ RUBY:` → ler o arquivo Ruby indicado.
+   - Se `🔎 CHEAT:` → consultar seção do cheat sheet.
+   - Escrever teste, implementar, verificar, commitar.
+4. Se houver `fase-N-tarefas-complementar*.md`:
+   - Executar **após** todas as tarefas principais.
+   - Não apagar marcações originais.
+
+**Regras para a IA:**
+
+- **1 tarefa por vez.** Não avançar sem fechar a atual.
+- **Não modificar arquivos fora do escopo.** Se descobrir bug, abrir issue no arquivo da fase competente.
+- **Não inventar.** Se não está no plano nem no Ruby, não existe.
+- **Sem `any` em `src/`.** Use `unknown` + narrowing.
+- **Commit atômico.** `feat(core): attribute-base` etc.
+- **Não corrigir bugs de outras fases.** Abrir issue no arquivo competente.
+- **Ler o cheat sheet** antes de portar qualquer construção Ruby.
+
+## Mapa das 21 fases
+
+| Fase | Arquivo do plano | Status |
+|---|---|---|
+| 1 | `fase-1-fundacao.md` | ✅ Concluída |
+| 2 | `fase-2-tempo-geometria.md` | 🟡 Em andamento |
+| 3 | `fase-3-modelo-atributos.md` | ⬜ Não iniciada |
+| 4 | `fase-4-arvore-propriedades.md` | ⬜ Não iniciada |
+| 5 | `fase-5-entidades-concretas.md` | ⬜ Não iniciada |
+| 6 | `fase-6-scoreboard-estruturas.md` | ⬜ Não iniciada |
+| 7 | `fase-7-scheduler-core.md` | ⬜ Não iniciada |
+| 8 | `fase-8-financeiro.md` | ⬜ Não iniciada |
+| 9 | `fase-9-orquestrador-cache.md` | ⬜ Não iniciada |
+| 10 | `fase-10-parser-linguagem.md` | ⬜ Não iniciada |
+| 11 | `fase-11-logica-queries.md` | ⬜ Não iniciada |
+| 12 | `fase-12-richtext.md` | ⬜ Não iniciada |
+| 13 | `fase-13-markdown.md` | ⬜ Não iniciada |
+| 14 | `fase-14-relatorios.md` | ⬜ Não iniciada |
+| 15 | `fase-15-gantt.md` | ⬜ Não iniciada |
+| 16 | `fase-16-apoio.md` | ⬜ Não iniciada |
+| 17 | `fase-17-html-xml.md` | ⬜ Não iniciada |
+| 18 | `fase-18-time-status-sheets.md` | ⬜ Não iniciada |
+| 19 | `fase-19-storage.md` | ⬜ Não iniciada |
+| 20 | `fase-20-pwa-ui.md` | ⬜ Não iniciada |
+| 21 | `fase-21-compatibilidade-qualidade.md` | ⬜ Não iniciada |
+
+> **Nota:** atualizar esta tabela manualmente ao concluir uma fase (mover `⬜` → `🟡` → `✅`).
+
+## Referências cruzadas
+
+- `docs/syntaxmesh/decisoes/` — ADRs (001–015).
+- `docs/syntaxmesh/cheat-sheet-ruby-ts.md` — mapeamento Ruby→TS + bugs.
+- `docs/syntaxmesh/06-testes-e-processo.md` — protocolo TDD.
+- `docs/syntaxmesh/07-roadmap.md` — lista consolidada das 21 fases.
+- `docs/syntaxmesh/03-arquitetura.md` — arquitetura geral.
+
+---
+
+**Última atualização:** 2026-09-12
+````
+
+---
+
+## Arquivo: `docs/syntaxmesh/fases/fase-4-arvore-propriedades-tarefas.md`
+
+````md
+# Fase 4 — Tarefas Atômicas
+
+> **Arquivo:** `docs/syntaxmesh/fases/fase-4-tarefas.md`
+> **Plano:** `docs/syntaxmesh/fases/fase-4-arvore-propriedades.md`
+> **Status:** ⬜ Não iniciada
+> **Total:** ~118 tarefas
+> **Concluídas:** 0
+> **Fonte Ruby:** `docs/taskjuggler/lib/taskjuggler/{PropertyTreeNode,PropertySet,ScenarioData,Scenario,PTNProxy}.rb`
+
+---
+
+## ⚠️ PREÂMBULO — Leia antes de começar
+
+### Regra zero
+
+**Toda tarefa é um port.** Antes de escrever o teste:
+
+1. Abrir o arquivo Ruby indicado em `⚠️ RUBY:`
+2. Ler **o arquivo inteiro** (não só o método)
+3. Consultar `docs/syntaxmesh/cheat-sheet-ruby-ts.md` (seção relevante)
+4. Se encontrar bug ou comportamento estranho, consultar cheat sheet §12 e categorizar (A/B/C)
+
+### ADRs relevantes
+
+- **ADR 011** — Port fiel do TaskJuggler.
+- **ADR 012** — `TjTime` em TypeScript (Fase 2).
+- **ADR 013** — `compat.keepRubyBugs` (Fase 2).
+- **ADR 014** — `mode` global de atributos (Fase 3).
+- **ADR 015** — Metaprogramação em `PropertyTreeNode` (criado nesta fase).
+
+### Convenções
+
+- `AttributeBase.setMode(0)` em `beforeEach` — sem isso, testes vazam estado.
+- `PropertyTreeNode` é **concreta** (não abstrata). Subclasses estendem.
+- `attribute(id)` é o **único** ponto de criação de atributo não-scenario.
+- `scenarioAttribute(scIdx, id)` é o **único** ponto de criação de atributo scenario-specific.
+- `scenarioData(scIdx)` substitui `method_missing` (ADR 015).
+- Nunca usar `Proxy` (ADR 015).
+- Sem `any` em `src/`.
+
+### Anti-padrões
+
+- ❌ Não usar `Proxy` em `PropertyTreeNode` (ADR 015).
+- ❌ Não acessar `attributes` Map diretamente — sempre via `attribute(id)`.
+- ❌ Não inicializar atributos antecipadamente (lazy é decisão de design).
+- ❌ Não mutar `scenarioAttributes[scIdx]` fora de `scenarioAttribute`.
+- ❌ Não introduzir herança virtual / mixins.
+
+---
+
+## Progresso
+
+```
+[x] 4.0  ADR 015 (metaprogramação)          —  5/5  ✅ (já criada)
+[ ] 4.1  Fundação (AttributeContainer etc.) —  0/10
+[ ] 4.2  PropertyTreeNode estrutura         —  0/22
+[ ] 4.3  PropertyTreeNode atributos lazy    —  0/14
+[ ] 4.4  PropertyTreeNode herança           —  0/9
+[ ] 4.5  PropertyTreeNode adoção            —  0/8
+[ ] 4.6  PropertySet                        —  0/20
+[ ] 4.7  ScenarioData                       —  0/6
+[ ] 4.8  Scenario                           —  0/4
+[ ] 4.9  PTNProxy                           —  0/10
+[ ] 4.10 Golden tests                       —  0/10
+[ ] 4.11 Verificação final                  —  0/8
+─────────────────────────────────────────────
+TOTAL: ~118
+```
+
+---
+
+## Bloco A — Fundação
+
+### 4.0 — ADR 015 (`PropertyTreeNode` metaprogramação) ✅
+
+**Status:** ✅ Arquivo `docs/syntaxmesh/decisoes/015-metaprogramacao-propertytreenode.md` já criado.
+
+| # | Tarefa | Arquivos | Verificação | Status |
+|---|---|---|---|---|
+| 4.0.1 | Criar `015-metaprogramacao-propertytreenode.md` com frontmatter | idem | arquivo existe | [x] |
+| 4.0.2 | Seção **Contexto**: `Hash.new { }` + `method_missing` | idem | — | [x] |
+| 4.0.3 | Seção **Decisão**: `attribute(id)` + `scenarioData(scIdx)`, sem `Proxy` | idem | — | [x] |
+| 4.0.4 | Seções **Alternativas** (`Proxy`, inicialização antecipada) + **Consequências** | idem | — | [x] |
+| 4.0.5 | Adicionar linha `015` em `decisoes/README.md` | `decisoes/README.md` | 15 linhas | [x] |
+
+---
+
+### 4.1 — Fundação (AttributeContainer + ProjectLike + MockProject + erros)
+
+**⚠️ Depends:** Fase 3 (`PropertyLike`, `AttributeBase`, `AttributeDefinition`)
+**⚠️ RUBY: `PropertyTreeNode.rb` — topo do arquivo (definição de `@attributes`, `@data`)**
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 4.1.1 | Criar `model/project-like.ts` com `interface ProjectLike { scenarioCount: number; scenario(arg): Scenario \| null; scenarioIdx(sc): number \| undefined; get(name): unknown; set(name, v): void }` | `src/model/project-like.ts` | `deno check` |
+| 4.1.2 | Criar `model/errors.ts` com `TjInternalError extends TjError` | `src/model/errors.ts` | `deno check` |
+| 4.1.3 | Re-exportar `PropertyLike` de Fase 3 em `model/mod.ts` | `src/model/mod.ts` | `deno check` |
+| 4.1.4 | Estender `MockContainer` (Fase 3) para expor `has(id)` + `size()` | `tests/attributes/mock-container.ts` | `deno check` |
+| 4.1.5 | Criar `tests/model/mock-project.ts` (reescrever) com `MockProject implements ProjectLike` | idem | `deno check` |
+| 4.1.6 | `MockProject`: `scenarioCount` configurável (default `1`) | idem | 2 testes |
+| 4.1.7 | `MockProject`: `scenario(idx)` retorna `{ id: 'plan', fullId: 'plan' }` para `idx === 0` | idem | 2 testes |
+| 4.1.8 | `MockProject`: `scenarioIdx(sc)` retorna `0` para `plan`, `undefined` senão | idem | 2 testes |
+| 4.1.9 | `MockProject`: `get`/`set` sobre `Map<string, unknown>` interno | idem | 3 testes |
+| 4.1.10 | Adicionar exports em `packages/core/mod.ts` | `src/mod.ts` | `deno check` |
+
+---
+
+## Bloco B — `PropertyTreeNode`
+
+### 4.2 — `PropertyTreeNode` — estrutura e IDs
+
+**⚠️ RUBY: `PropertyTreeNode.rb` (linhas ~30–250)** — construtor, `fullId`, `level`, `getBSIndicies`, `getIndicies`, `addChild`, `removeReferences`, `leaf?`, `container?`, `kids`, `parents`, `all`, `allLeaves`, `isChildOf?`, `ancestors`, `root`, `levelSeqNo`.
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 4.2.1 | Criar classe `PropertyTreeNode implements PropertyLike, AttributeContainer` vazia | `src/model/property-tree-node.ts` | `deno check` |
+| 4.2.2 | Campos: `propertySet`, `project`, `parent`, `subId`, `id`, `name`, `sequenceNo`, `children[]`, `adoptees[]`, `stepParents[]`, `sourceFileInfo`, `data[]` | idem | 1 teste |
+| 4.2.3 | ⚠️ Constructor `(propertySet, id, name, parent)`: gerar ID único (`_<Class>_<N>`) se `id === null` | idem | 3 testes |
+| 4.2.4 | ⚠️ Constructor: em namespace hierárquico, se `id` contém `.`, extrair parent de `id` (Ruby: split em último `.`) | idem | 3 testes |
+| 4.2.5 | Constructor: chamar `set('id', fullId)`, `set('name', name)`, `set('seqno', sequenceNo)` | idem | 1 teste |
+| 4.2.6 | ⚠️ `get fullId()`: em `flatNamespace`, retorna `subId`; senão `parent.fullId + '.' + subId` | idem | 3 testes |
+| 4.2.7 | `logicalId(): string` — para `PropertyTreeNode` é igual a `fullId` (PTNProxy sobrescreve) | idem | 2 testes |
+| 4.2.8 | ⚠️ `get level(): number` — cacheado; `0` se sem parent, senão `parent.level + 1` | idem | 3 testes |
+| 4.2.9 | `root(): PropertyTreeNode` — sobe até `parent === null` | idem | 2 testes |
+| 4.2.10 | ⚠️ `ancestors(includeStepParents = false): PropertyTreeNode[]` — sobe, inclui stepParents se flag | idem | 4 testes |
+| 4.2.11 | `isChildOf?(ancestor): boolean` — checa se `ancestor` está em `parents()` recursivamente | idem | 4 testes |
+| 4.2.12 | ⚠️ `leaf(): boolean` — sem `children` E sem `adoptees` | idem | 3 testes |
+| 4.2.13 | `container(): boolean` — com `children` OU `adoptees` | idem | 3 testes |
+| 4.2.14 | `kids(): PropertyTreeNode[]` — `children + adoptees` | idem | 2 testes |
+| 4.2.15 | `parents(): PropertyTreeNode[]` — `[parent] + stepParents` filtrando `null` | idem | 2 testes |
+| 4.2.16 | `all(): PropertyTreeNode[]` — self + descendentes recursivo | idem | 3 testes |
+| 4.2.17 | ⚠️ `allLeaves(withoutSelf = false): PropertyTreeNode[]` — folhas; `withoutSelf` exclui self | idem | 4 testes |
+| 4.2.18 | ⚠️ `getBSIndicies(): number[]` — índice de cada ancestral em `parents[0].children` + índice em `children` | idem | 4 testes |
+| 4.2.19 | ⚠️ `getIndicies(): number[]` — usa `get('index')` do pai + filho | idem | 3 testes |
+| 4.2.20 | `levelSeqNo(node: PropertyTreeNode): number` — número sequencial no nível | idem | 2 testes |
+| 4.2.21 | `addChild(child): void` — push + set `parent` do child | idem | 2 testes |
+| 4.2.22 | `removeReferences(property): void` — remove de `children`, `adoptees`, `stepParents` | idem | 3 testes |
+
+---
+
+### 4.3 — `PropertyTreeNode` — atributos lazy
+
+**⚠️ RUBY: `PropertyTreeNode.rb` (linhas ~250–400)** — `@attributes` Hash default, `@scenarioAttributes`, `get`, `getAttribute`, `force`, `set`, `[]=`, `[]`, `provided`, `inherited`, `modified`.
+**🔎 CHEAT: §8 `Hash.new { }` → método `attribute(id)`, §3 `@@classvar` (não aplicável aqui)**
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 4.3.1 | Campo `private attributes = new Map<string, AttributeBase<unknown>>()` | `src/model/property-tree-node.ts` | `deno check` |
+| 4.3.2 | Campo `private scenarioAttributes: Array<Map<string, AttributeBase<unknown>>>` (inicializado com `project.scenarioCount` Maps vazios) | idem | 1 teste |
+| 4.3.3 | ⚠️ Método `attribute(id: string): AttributeBase<unknown>`: cache hit, senão `attributeDefinition(id)` + `new aDef.objClass(...)` | idem | 4 testes |
+| 4.3.4 | `attribute(id)` rejeita `scenarioSpecific` (`TjArgumentError`) | idem | 2 testes |
+| 4.3.5 | `attribute(id)` rejeita `id` desconhecido (`TjArgumentError` "Unknown attribute") | idem | 1 teste |
+| 4.3.6 | ⚠️ Método `private scenarioAttribute(scIdx, id): AttributeBase<unknown>`: cache hit, senão cria com `container = data[scIdx]` | idem | 4 testes |
+| 4.3.7 | `scenarioAttribute` rejeita `!scenarioSpecific` (`TjArgumentError`) | idem | 1 teste |
+| 4.3.8 | `scenarioAttribute` rejeita `data[scIdx] === null` (`TjInternalError` "ScenarioData must be initialized") | idem | 1 teste |
+| 4.3.9 | `get(id): unknown` → `this.attribute(id).get()` | idem | 2 testes |
+| 4.3.10 | `getAttribute(id, scIdx?): AttributeBase<unknown>` — dispatch entre `attribute` e `scenarioAttribute` | idem | 2 testes |
+| 4.3.11 | ⚠️ `set(id, value): void` — verifica overwrite (exceto listas); chama `attr.set(value)` | idem | 3 testes |
+| 4.3.12 | `force(id, value): void` — `attr.set(value)` sem check overwrite | idem | 1 teste |
+| 4.3.13 | ⚠️ `getForScenario(id, scIdx): unknown` → `scenarioAttribute(scIdx, id).get()` | idem | 2 testes |
+| 4.3.14 | ⚠️ `setForScenario(id, value, scIdx): void` — se `scIdx === undefined` delega a `set`; se `mode === 0` propaga para cenários derivados (filhos fazem `inherit`) | idem | 5 testes |
+| 4.3.15 | `provided(id, scIdx?): boolean` | idem | 3 testes |
+| 4.3.16 | `inherited(id, scIdx?): boolean` | idem | 3 testes |
+| 4.3.17 | `modified(id, scIdx?): boolean` — `provided \|\| inherited` | idem | 3 testes |
+| 4.3.18 | ⚠️ `attributeDefinition(id): AttributeDefinition \| undefined` — `propertySet.attributeDefinition(id)` | idem | 2 testes |
+| 4.3.19 | ⚠️ `scenarioData(scIdx): ScenarioData` — retorna `this.data[scIdx]!` (ADR 015) | idem | 2 testes |
+| 4.3.20 | `implements AttributeContainer`: `getStoredValue`/`setStoredValue` sobre `attributes` Map | idem | 3 testes |
+
+---
+
+### 4.4 — `PropertyTreeNode` — herança e backup/restore
+
+**⚠️ RUBY: `PropertyTreeNode.rb` (linhas ~400–500)** — `inheritAttributes`, `backupAttributes`, `restoreAttributes`.
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 4.4.1 | ⚠️ `inheritAttributes(): void` — itera `eachAttributeDefinition`; para atributos `inheritedFromParent` com parent que tem valor, chama `attr.inherit(parent.get(id))` | `src/model/property-tree-node.ts` | 4 testes |
+| 4.4.2 | `inheritAttributes` — top-level herda de `project.get(id)` se `inheritedFromProject` | idem | 3 testes |
+| 4.4.3 | `inheritAttributes` — cenários: itera por `scIdx`, propaga via `getForScenario`/`setForScenario` (com `inherit`) | idem | 3 testes |
+| 4.4.4 | `inheritAttributes` — não sobrescreve valor já `provided` | idem | 2 testes |
+| 4.4.5 | `inheritAttributes` — preserva `inherited` em cadeia (parent também herdou) | idem | 2 testes |
+| 4.4.6 | ⚠️ `backupAttributes(): AttributeBackup` — retorna `{ attributes: new Map(this.attributes), scenarioAttributes: this.scenarioAttributes.map(m => new Map(m)) }` | idem | 2 testes |
+| 4.4.7 | ⚠️ `restoreAttributes(backup): void` — restaura os Maps (atributos são compartilhados — cópia rasa) | idem | 2 testes |
+| 4.4.8 | `restoreAttributes` — testar round-trip: modifica, restaura, verifica valores originais | idem | 1 teste |
+| 4.4.9 | `restoreAttributes` — testar que mapa `attributes` é substituído, não mutado in-place | idem | 1 teste |
+
+---
+
+### 4.5 — `PropertyTreeNode` — adoção
+
+**⚠️ RUBY: `PropertyTreeNode.rb` (linhas ~500–560)** — `adopt`, `getAdopted`.
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 4.5.1 | ⚠️ `adopt(property): void` — rejeita `property === this` (`TjArgumentError` "cannot adopt itself") | `src/model/property-tree-node.ts` | 2 testes |
+| 4.5.2 | `adopt` — coleta `root().all()` e verifica se alguma folha de `property.allLeaves()` já está lá | idem | 3 testes |
+| 4.5.3 | `adopt` — rejeita duplicata (`TjArgumentError` "already adopted") | idem | 2 testes |
+| 4.5.4 | `adopt` — push em `adoptees` + chama `property.getAdopted(this)` | idem | 2 testes |
+| 4.5.5 | ⚠️ `getAdopted(property): void` — adiciona `property` a `stepParents` se ainda não estiver | idem | 2 testes |
+| 4.5.6 | `getAdopted` — idempotente: chamar 2x não duplica | idem | 1 teste |
+| 4.5.7 | `kids()` inclui `adoptees` (verificar comportamento pós-adopt) | idem | 1 teste |
+| 4.5.8 | `leaf()` retorna `false` quando há `adoptees` | idem | 1 teste |
+
+---
+
+## Bloco C — `PropertySet`
+
+### 4.6 — `PropertySet`
+
+**⚠️ RUBY: `PropertySet.rb` (arquivo inteiro — ~250 linhas)** — construtor, `addAttributeType`, `eachAttributeDefinition`, `knownAttribute`, `hasQuery?`, `scenarioSpecific?`, `inheritedFromProject?`, `inheritedFromParent?`, `userDefined?`, `listAttribute?`, `defaultValue`, `attributeName`, `attributeType`, `addProperty`, `removeProperty`, `clearProperties`, `index`, `levelSeqNo`, `maxDepth`, `items`, `empty?`, `topLevelItems`, `each`, `to_ary`.
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 4.6.1 | Criar `src/model/property-set.ts` com classe `PropertySet<T extends PropertyTreeNode>` | idem | `deno check` |
+| 4.6.2 | Campos: `project`, `flatNamespace`, `private properties[]`, `private propertyMap: Map<string, T>`, `private attributeDefinitions: Map<string, AttributeDefinition>` | idem | `deno check` |
+| 4.6.3 | ⚠️ Constructor `(project, flatNamespace)`: adiciona `id` (`StringAttribute`), `name` (`StringAttribute`), `seqno` (`IntegerAttribute`) via `addAttributeType` (base) | idem | 3 testes |
+| 4.6.4 | ⚠️ `addAttributeType(attrDef): void` — rejeita se `properties.length > 0` (`TjError` "Attribute types must be defined before properties are added") | idem | 2 testes |
+| 4.6.5 | `addAttributeType` — registra em `attributeDefinitions` Map | idem | 1 teste |
+| 4.6.6 | `addAttributeType` — idempotente: rejeita duplicata de id? (verificar Ruby) | idem | 1 teste |
+| 4.6.7 | `eachAttributeDefinition(): IterableIterator<AttributeDefinition>` | idem | 1 teste |
+| 4.6.8 | `knownAttribute(id): boolean` | idem | 2 testes |
+| 4.6.9 | ⚠️ `hasQuery?(id, scenarioIdx?): boolean` — verifica se existe `query_<id>` em alguma property (Fase 11 completa) → nesta fase: `false` | idem | 2 testes |
+| 4.6.10 | `scenarioSpecific?(id): boolean` — `attrDef.scenarioSpecific` | idem | 3 testes |
+| 4.6.11 | `inheritedFromProject?(id)`, `inheritedFromParent?(id)` | idem | 4 testes |
+| 4.6.12 | `userDefined?(id)` | idem | 2 testes |
+| 4.6.13 | ⚠️ `listAttribute?(id): boolean` — `attrDef.objClass` estende `ListAttributeBase` | idem | 3 testes |
+| 4.6.14 | `defaultValue(id): unknown` — `attrDef.default` | idem | 2 testes |
+| 4.6.15 | `attributeName(id): string \| undefined` | idem | 2 testes |
+| 4.6.16 | `attributeType(id): AttributeType \| undefined` | idem | 2 testes |
+| 4.6.17 | ⚠️ `addProperty(prop): void` — push + Map; atualiza `sequenceNo` do prop | idem | 3 testes |
+| 4.6.18 | ⚠️ `removeProperty(prop \| id): T` — remove recursivamente (children) + `removeReferences` | idem | 4 testes |
+| 4.6.19 | `clearProperties(): void` — limpa properties + Map | idem | 2 testes |
+| 4.6.20 | `get(id): T \| undefined` — via `propertyMap` | idem | 2 testes |
+| 4.6.21 | ⚠️ `index(): void` — recalcula `bsi` (via `getBSIndicies` + `levelSeqNo`?) — verificar Ruby | idem | 3 testes |
+| 4.6.22 | `levelSeqNo(property): number` — número sequencial de property no seu nível | idem | 2 testes |
+| 4.6.23 | `maxDepth(): number` | idem | 2 testes |
+| 4.6.24 | `items(): number`, `empty(): boolean`, `topLevelItems(): number` | idem | 4 testes |
+| 4.6.25 | `each(fn): void` — itera properties em ordem BSI | idem | 2 testes |
+| 4.6.26 | `toArray(): T[]` | idem | 1 teste |
+| 4.6.27 | `[Symbol.iterator](): Iterator<T>` | idem | 2 testes |
+
+---
+
+## Bloco D — `ScenarioData` e `Scenario`
+
+### 4.7 — `ScenarioData`
+
+**⚠️ RUBY: `ScenarioData.rb` (arquivo inteiro — ~70 linhas)** — constructor, `property`, `a(attributeName)`, `error`, `warning`, `info`, `deep_clone`.
+
+**Nota:** `MessageHandlerLike` é Fase 9. Nesta fase, interface + mock.
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 4.7.1 | Criar `src/model/message-handler-like.ts` com `interface MessageHandlerLike { error(id, text, sfi?, property?): void; warning(...); info(...) }` | idem | `deno check` |
+| 4.7.2 | Criar `src/model/scenario-data.ts` com classe `ScenarioData` | idem | `deno check` |
+| 4.7.3 | ⚠️ Constructor `(property, idx, attributes)`: seta `property.data[idx] = this` (self-registration) | idem | 3 testes |
+| 4.7.4 | `a(attributeName): unknown` — atalho para `property.getAttribute(name, scenarioIdx).get()` | idem | 3 testes |
+| 4.7.5 | ⚠️ `error(id, text, sfi?, property?)`, `warning(...)`, `info(...)` — delegam para `MessageHandler` singleton | idem | 4 testes |
+| 4.7.6 | `deepClone(): this` — retorna `this` (ScenarioData não é clonado) | idem | 1 teste |
+
+---
+
+### 4.8 — `Scenario`
+
+**⚠️ RUBY: `Scenario.rb` (arquivo inteiro — ~25 linhas)** — constructor, `all`, `allLeaves`.
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 4.8.1 | Criar `src/model/scenario.ts` com `class Scenario extends PropertyTreeNode` | idem | `deno check` |
+| 4.8.2 | ⚠️ Constructor `(project, id, name, parent)`: `super(project.scenarios, ...)` + registra em `project.addScenario(this)` | idem | 2 testes |
+| 4.8.3 | `all(): Scenario[]` — self + descendentes (override tipado) | idem | 3 testes |
+| 4.8.4 | `allLeaves(includeSelf = false): Scenario[]` | idem | 3 testes |
+
+---
+
+## Bloco E — `PTNProxy`
+
+### 4.9 — `PTNProxy`
+
+**⚠️ RUBY: `PTNProxy.rb` (arquivo inteiro — ~120 linhas)** — `logicalId`, `get`, `set`, `getForScenario`, `setForScenario`, `level`, `isChildOf?`, `getIndicies`, `ptn`.
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 4.9.1 | Criar `src/model/ptn-proxy.ts` com classe `PTNProxy` | idem | `deno check` |
+| 4.9.2 | Campos: `ptn`, `parent`, `private index`, `private tree`, `private levelCache` | idem | 1 teste |
+| 4.9.3 | Constructor `(ptn, parent)` — rejeita `parent === null` (`TjArgumentError`) | idem | 2 testes |
+| 4.9.4 | ⚠️ `logicalId(): string` — se `ptn.propertySet.flatNamespace`, retorna `ptn.id`; senão `parent.logicalId() + '.' + idCurto(ptn.id)` | idem | 4 testes |
+| 4.9.5 | ⚠️ `get(attribute): unknown` — se `index`/`tree`, retorna cache; senão delega a `ptn.get(attribute)` | idem | 3 testes |
+| 4.9.6 | ⚠️ `set(attribute, value): void` — se `index`/`tree`, seta cache; senão delega a `ptn.set(attribute, value)` | idem | 3 testes |
+| 4.9.7 | `getForScenario(attribute, scIdx)`, `setForScenario(attribute, value, scIdx)` — análogos | idem | 3 testes |
+| 4.9.8 | `get level(): number` — cacheado; sobe por `parent` | idem | 3 testes |
+| 4.9.9 | ⚠️ `isChildOf?(ancestor): boolean` | idem | 3 testes |
+| 4.9.10 | `getIndicies(): number[]`, `ptn(): PropertyTreeNode` | idem | 3 testes |
+
+---
+
+## Bloco F — Golden tests
+
+### 4.10 — Golden tests (`PropertyTreeNode` + `PropertySet`)
+
+**⚠️ RUBY: `PropertyTreeNode.rb`, `PropertySet.rb`**
+
+**Nota:** como `Task`/`Resource` ainda não existem (Fase 5), usamos uma subclasse `TestProperty` no script Ruby.
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 4.10.1 | Atualizar `scripts/golden/README.md` com seção de `property-tree` | idem | — |
+| 4.10.2 | `scripts/golden/property-tree.rb` — define `TestProperty < PropertyTreeNode` + `MockProject` | idem | roda |
+| 4.10.3 | Casos de estrutura: `fullId`, `level`, `getBSIndicies`, `all`, `allLeaves` | idem | JSON válido |
+| 4.10.4 | Casos de herança não-scenario em 3 níveis | idem | ≥ 10 casos |
+| 4.10.5 | Casos de herança scenario-specific com 2 cenários | idem | ≥ 10 casos |
+| 4.10.6 | Casos de adoção (simples + duplicada esperando erro) | idem | ≥ 5 casos |
+| 4.10.7 | Casos de backup/restore | idem | ≥ 3 casos |
+| 4.10.8 | Task `golden:generate` atualizada | `deno.jsonc` | roda |
+| 4.10.9 | `tests/golden/property-tree_golden_test.ts` — itera casos | idem | verde |
+| 4.10.10 | Commitar JSON em `packages/core/tests/golden/property-tree.golden.json` | idem | versionado |
+
+---
+
+## Bloco G — Verificação final
+
+### 4.11 — Verificação final
+
+| # | Tarefa | Verificação |
+|---|---|---|
+| 4.11.1 | `deno task check-all` verde | exit 0 |
+| 4.11.2 | `deno task golden:generate && deno task test` verde | exit 0 |
+| 4.11.3 | `grep -r "Proxy" packages/core/src/model/` retorna 0 (ADR 015) | grep |
+| 4.11.4 | `grep -r "scenarioData" packages/core/src/model/` ≥ 3 | grep |
+| 4.11.5 | ADR 015 já commitada | git log |
+| 4.11.6 | `PropertySet`, `PropertyTreeNode`, `ScenarioData`, `Scenario`, `PTNProxy` exportados em `model/mod.ts` | `deno check` |
+| 4.11.7 | `tests/integration/smoke_after_phase_4_test.ts` — importa `@syntaxmesh/core`, cria `PropertySet` + `PropertyTreeNode`, verifica `fullId`; verifica Fase 3 (`AttributeBase.setMode(0)`) | 1 teste |
+| 4.11.8 | Auditoria: cada subfase do plano `fase-4-arvore-propriedades.md` tem tarefas correspondentes | grep |
+
+---
+
+## Notas para a IA
+
+1. **Ordem:** 4.0 (já feito) → 4.1 → 4.2 → 4.3 → 4.4 → 4.5 → 4.6 → 4.7 → 4.8 → 4.9 → 4.10 → 4.11.
+2. **Sempre ler o Ruby primeiro.** Cada tarefa com `⚠️ RUBY:` exige leitura do arquivo completo.
+3. **`Proxy` é proibido** — ADR 015. Usar `attribute(id)` + `scenarioData(scIdx)`.
+4. **`AttributeBase.setMode(0)` em `beforeEach`** (herança do Fase 3).
+5. **`PropertyLike`** (Fase 3) fica **mínimo** (`id`, `name`). Não expandir.
+6. **`ProjectLike`** é nova interface em `model/project-like.ts` — mínimo para `PropertySet` e `PropertyTreeNode`.
+7. **`MockProject`** é **reescrito** (Fase 3 tinha versão mínima). Expandir com `scenarioCount`, `scenario(idx)`, `scenarioIdx(sc)`, `get`/`set`.
+8. **`scenarioData(scIdx)` retorna `ScenarioData`** — a partir da Fase 5, subclasses fazem override tipado (`TaskScenario`, etc.).
+9. **`inheritAttributes`** roda **uma vez por propriedade**, logo após criação. Não chamar em loop.
+10. **`backupAttributes`** é **cópia rasa** — atributos são compartilhados. Aceito (mesmo comportamento do Ruby).
+11. **`adopt`** validações: self, duplicata na mesma raiz. Não permitir ciclos.
+12. **`PropertySet.addAttributeType`** deve ser chamado **antes** de `addProperty`.
+13. **`PropertySet.index()`** recalcula BSI. Chamar após adicionar/remover.
+14. **`MockContainer`** é `AttributeContainer` (Fase 3). `PropertyTreeNode` também é.
+15. **Stubs** (`NotYetImplementedError`) com comentário `// TODO Fase N: <razão>`.
+16. **Sem `any`.** Use `unknown` + narrowing.
+17. **Commit por subfase.** `feat(core): property-tree-node`, etc.
+18. **Golden tests são o critério final.** Rodar `tj3` real se possível.
+19. **`MessageHandlerLike`** é interface nesta fase; implementação real na Fase 9.
+20. **`Scenario`** herda de `PropertyTreeNode` (não de `ScenarioData`).
+
+---
+
+## Notas específicas por subfase
+
+### 4.1 — Fundação
+
+- `ProjectLike` é **mínimo**: `scenarioCount`, `scenario`, `scenarioIdx`, `get`, `set`. Fase 9 expande.
+- `MockProject` **reescreve** o da Fase 3 (que era stub).
+- `MockContainer` é **estendido** com `has(id)` e `size()`.
+
+### 4.2 — Estrutura
+
+- `getBSIndicies` é o **mais sutil**. Ler Ruby linha-a-linha.
+- `getIndicies` usa `get('index')` — que é setado por `PropertySet.index()`.
+
+### 4.3 — Atributos lazy
+
+- `attribute(id)` é o **coração** de toda a Fase 4.
+- `scenarioAttribute(scIdx, id)` só é usado por `setForScenario`/`getForScenario`/`provided`/`inherited`/`modified`.
+- `setForScenario` com `mode 0` propaga para cenários derivados — teste com 3 cenários hierárquicos.
+
+### 4.4 — Herança
+
+- `inheritAttributes` é chamado **uma vez** por propriedade (nas subclasses, Fase 5).
+- `backupAttributes`/`restoreAttributes` são usados por `generateReport` (Fase 14).
+
+### 4.5 — Adoção
+
+- Adoção em árvore **sem ciclos**. `adopt` valida.
+
+### 4.6 — `PropertySet`
+
+- `PropertySet<T>` é **genérico**: `PropertySet<Scenario>`, `PropertySet<Task>`, etc.
+- `index()` recalcula BSI — chave para `getBSIndicies` funcionar.
+
+### 4.7 — `ScenarioData`
+
+- `a(name)` é o atalho que `TaskScenario`/`ResourceScenario` usam (Fase 5+).
+- `MessageHandlerLike` é interface — mock em testes.
+
+### 4.8 — `Scenario`
+
+- `all()` e `allLeaves()` sobrescrevem `PropertyTreeNode` com tipagem mais específica.
+- Registro em `project.addScenario` é **obrigatório**.
+
+### 4.9 — `PTNProxy`
+
+- Usado por `PropertyList` (Fase 9).
+- `logicalId()` respeita caminho de adoção.
+
+### 4.10 — Golden tests
+
+- `TestProperty < PropertyTreeNode` é subclasse **apenas no script Ruby** (não em `src/`).
+- Casos cobrem: estrutura, herança, adoção, backup/restore.
+
+---
+
+**Fim do arquivo de tarefas da Fase 4.**
+````
+
+---
+
+## Arquivo: `docs/syntaxmesh/fases/fase-4-arvore-propriedades.md`
+
+````md
+# Fase 4 — Árvore de Propriedades
+
+> **Arquivo:** `docs/syntaxmesh/fases/fase-4-arvore-propriedades.md`
+> **Status:** ⬜ Não iniciada
+> **Duração estimada:** 6–8 dias
+> **Depende de:** Fase 2 — Tempo e Geometria; Fase 3 — Modelo de Atributos
+> **Bloqueia:** Fases 5, 6, 7, 8, 9, 10, 11, 12, 14, 16
+
+---
+
+## 1. Contexto
+
+`PropertyTreeNode` é a **base de TODAS as entidades** do TaskJuggler. `Task`, `Resource`, `Account`, `Shift`, `Scenario` e `Report` herdam dela. Entender esta classe é entender 80% do modelo de domínio.
+
+Ela fornece:
+
+1. **Estrutura de árvore** — `parent`, `children`, `adoptees`, `stepParents`.
+2. **Sistema de IDs** — `id`, `subId`, `fullId`, `logicalId`, `getBSIndicies`, `getIndicies`.
+3. **Sistema de atributos lazy** — cria `AttributeBase` sob demanda via `attributeDefinition(id)`.
+4. **Herança dupla** — do pai (`inheritAttributes`) e do projeto.
+5. **Scenario-specific attributes** — array de Maps, um por cenário.
+6. **Adoção** — `adopt(property)` permite uma task aparecer em múltiplos contextos.
+7. **Backup/restore** — para reports dinâmicos (`generateReport`).
+
+Ao redor dela, o `PropertySet` gerencia:
+- Namespace (flat vs hierárquico).
+- Blueprint de `AttributeDefinition`s.
+- Índices (`index()`, `levelSeqNo()`, `maxDepth()`).
+
+E o `ScenarioData` é a base de todos os `*Scenario` (`TaskScenario`, `ResourceScenario`, etc.) — a parte scenario-specific de cada propriedade.
+
+O `Scenario` é uma entidade especial: herda de `PropertyTreeNode` mas representa o **cenário** em si (plan, delayed, etc.).
+
+O `PTNProxy` é um wrapper para tasks adotadas, permitindo que a mesma `Task` apareça em múltiplos contextos sem duplicar dados.
+
+Portar isso corretamente é **crítico**. Erros aqui quebram herança, cenários, relatórios, e o scheduler.
+
+---
+
+## 2. Objetivo
+
+Ao final desta fase:
+
+- `AttributeContainer` interface + `MockContainer` (para testes).
+- `PropertyTreeNode` com estrutura de árvore, IDs, atributos lazy, herança, adoção, backup/restore.
+- `PropertySet` com blueprint de atributos, namespace, índices.
+- `ScenarioData` (base para `*Scenario`).
+- `Scenario` (entidade concreta).
+- `PTNProxy` (wrapper para adopted tasks).
+- **≥ 130 testes unitários** + **≥ 30 golden tests** (estrutura de árvore, herança, adoção).
+- ADR 015 registrado.
+- `deno task check-all` verde.
+
+---
+
+## 3. Referências TaskJuggler
+
+### 3.1 Arquivos Ruby (fonte primária)
+
+Todos em `docs/taskjuggler/lib/taskjuggler/`:
+
+| Arquivo | Linhas aprox. | Complexidade | Prioridade |
+|---|---|---|---|
+| `PropertyTreeNode.rb` | ~600 | **Alta** | **Crítica** |
+| `PropertySet.rb` | ~250 | Média | **Crítica** |
+| `ScenarioData.rb` | ~70 | Baixa | **Crítica** |
+| `Scenario.rb` | ~25 | Baixa | **Crítica** |
+| `PTNProxy.rb` | ~120 | Média | Alta |
+
+### 3.2 Blueprints (fonte secundária)
+
+| Documento | Seção | Uso |
+|---|---|---|
+| `docs/tj3-engine/02-bluprint-engine1.md` | §3 PropertyTreeNode | Estrutura interna |
+| `docs/tj3-engine/02-bluprint-engine1.md` | §3.3 Sistema de Atributos (Lazy) | Lazy creation |
+| `docs/tj3-engine/02-bluprint-engine1.md` | §3.5 Herança de Atributos | inheritAttributes |
+| `docs/tj3-engine/02-bluprint-engine1.md` | §3.6 IDs e Hierarquia | fullId, getBSIndicies |
+| `docs/tj3-engine/02-bluprint-engine1.md` | §3.7 Adopt | adopt |
+| `docs/tj3-engine/02-bluprint-engine1.md` | §3.8 method_missing | Delegação |
+| `docs/tj3-engine/06-blueprint-engine5.md` | §5.3 PropertySet | Container |
+| `docs/tj3-engine/06-blueprint-engine5.md` | §4.2 ScenarioData | Base dos *Scenario |
+
+### 3.3 Golden tests
+
+Usamos `tj3` para validar:
+- Estrutura de árvore (fullId, level, getBSIndicies).
+- Herança em 3 níveis.
+- Propagação de cenários.
+- Adoção (adopt, adoptees, stepParents).
+
+Como `Task`/`Resource` ainda não existem (Fase 5), usamos uma subclasse `TestProperty` no script Ruby.
+
+---
+
+## 4. Decisões de port (Ruby → TypeScript)
+
+### 4.1 Lazy attribute creation
+
+Ruby usa `Hash.new { |hash, key| ... }` — a criação é transparente ao acessar `@attributes[id]`. Em TS, temos 3 opções:
+
+- **Proxy** — mais fiel, mas complexo e difícil de debugar.
+- **Método helper** — `attribute(id)` cria sob demanda. Explícito, testável.
+- **Inicializar tudo** — cria todos os atributos no construtor. Simples mas desperdiça memória (~40 atributos × milhares de propriedades).
+
+**Decisão:** **método helper `attribute(id)`**. Preserva a semântica (lazy) mas troca a transparência por explicitude.
+
+Ver ADR 015.
+
+### 4.2 `method_missing` → `scenarioData(scIdx)`
+
+Ruby delega métodos não encontrados para `@data[scenarioIdx]`. TS não tem `method_missing`.
+
+Opções:
+
+- **`Proxy` no PropertyTreeNode** — intercepta acessos a métodos.
+- **Métodos explícitos nas subclasses** — cada método delegado é definido manualmente.
+- **Helper `scenarioData(scIdx)`** — expõe `data[scIdx]` publicamente.
+
+**Decisão:** **helper `scenarioData(scIdx)`**. Subclasses que precisam delegar definem métodos explícitos (ex: `Task.readyForScheduling?(scIdx)` chama `this.scenarioData(scIdx).readyForScheduling?()`). Mais código, mas mais claro e testável.
+
+Ver ADR 015.
+
+### 4.3 `@@scenarioAttributes` → array de Maps
+
+Ruby: `@scenarioAttributes[scenarioIdx]` é um Hash com default block. TS: `Map<string, AttributeBase>` por cenário, com método helper `scenarioAttribute(scIdx, id)`.
+
+Inicializado no construtor como `Array.from({ length: project.scenarioCount }, () => new Map())`.
+
+### 4.4 Backup/restore
+
+Ruby: `@attributes.clone` e `@scenarioAttributes.clone`. TS: `new Map(this.attributes)` (cópia rasa do Map). Os valores (atributos) são compartilhados — igual ao Ruby.
+
+### 4.5 `PTNProxy` — wrapper explícito
+
+Ruby usa `method_missing`. TS: classe explícita com métodos que replicam a interface pública do `PropertyTreeNode` (`get`, `set`, `[]`, `[]=`, `level`, `isChildOf?`, `getIndicies`, `logicalId`).
+
+### 4.6 `PropertyTreeNode` é concreta ou abstrata?
+
+Ruby é concreta (não tem `abstract`). TS: **concreta**, com um construtor que aceita `propertySet`, `id`, `name`, `parent`. Subclasses (Task, Resource) chamam `super(...)`.
+
+### 4.7 MockProject
+
+Testes de Phase 4 precisam de um `Project` mínimo (para `scenarioCount` e `scenario(idx)`). Definimos `MockProject` em testes.
+
+Em produção, `Project` é da Fase 9. A interface `ProjectLike` é definida agora e `Project` a implementará.
+
+### 4.8 Erros
+
+Reutilizamos `TjError`, `TjArgumentError` (Fase 3). Adicionamos `TjInternalError` para situações impossíveis (`$DEBUG` do Ruby).
+
+---
+
+## 5. Subfases detalhadas
+
+Cada subfase segue `docs/syntaxmesh/fases/modelo-tarefas.md`.
+
+---
+
+### 4.0 — ADR 015 (metaprogramação em TS)
+
+#### Contexto
+
+O `PropertyTreeNode.rb` usa duas formas de metaprogramação que não têm equivalente direto em TS:
+
+1. **`Hash.new { |h, k| ... }`** — lazy creation de atributos ao acessar `@attributes[id]`.
+2. **`method_missing`** — delegação automática para `@data[scenarioIdx]`.
+
+Precisamos registrar formalmente como adaptamos cada uma.
+
+#### Objetivo
+
+Criar `docs/syntaxmesh/decisoes/015-metaprogramacao-propertytreenode.md`.
+
+#### Arquivos
+
+- `docs/syntaxmesh/decisoes/015-metaprogramacao-propertytreenode.md` (novo)
+- `docs/syntaxmesh/decisoes/README.md` (atualizar tabela)
+
+#### Requisitos
+
+- [ ] **Contexto:** explicar as duas metaprogramações do Ruby.
+- [ ] **Decisão:**
+  - Lazy creation → método `attribute(id)` (explícito).
+  - `method_missing` → helper `scenarioData(scIdx)` + métodos explícitos nas subclasses.
+- [ ] **Alternativas:** `Proxy` (ambos os casos), inicialização antecipada, métodos mágicos.
+- [ ] **Consequências:**
+  - **Positivas:** explícito, debugável, sem custo de `Proxy`.
+  - **Negativas:** mais código nas subclasses; menos transparente.
+  - **Mitigação:** helpers/documentação.
+- [ ] Tabela em `README.md` atualizada.
+
+#### Referências
+
+- `docs/taskjuggler/lib/taskjuggler/PropertyTreeNode.rb`.
+- `docs/taskjuggler/lib/taskjuggler/PTNProxy.rb`.
+- Seções 4.1, 4.2, 4.5 deste documento.
+
+#### Fora de escopo
+
+- Implementação.
+
+#### Critério de aceite
+
+- ADR 015 criado.
+- Tabela atualizada.
+
+---
+
+### 4.1 — `AttributeContainer`, `ProjectLike`, erros internos
+
+#### Contexto
+
+Antes de `PropertyTreeNode` e `ScenarioData`, precisamos das interfaces que eles implementam/consomem.
+
+#### Objetivo
+
+Definir:
+- `AttributeContainer` (já esboçada na Fase 3, formalizar).
+- `MockContainer` para testes.
+- `ProjectLike` (interface mínima do `Project` para esta fase).
+- `TjInternalError`.
+
+#### Arquivos
+
+- `packages/core/src/attributes/attribute-container.ts` (já existe, revisar)
+- `packages/core/src/model/project-like.ts`
+- `packages/core/src/errors.ts` (atualizar)
+- `packages/core/tests/model/mock-container.ts`
+- `packages/core/tests/model/mock-project.ts`
+
+#### Requisitos
+
+**`AttributeContainer`:**
+
+- [ ] `getStoredValue(attributeId: string): unknown`.
+- [ ] `setStoredValue(attributeId: string, value: unknown): void`.
+
+**`ProjectLike`:**
+
+- [ ] `get scenarioCount(): number`.
+- [ ] `scenario(idx: number): { id: string; fullId: string } | null`.
+- [ ] (Opcional) `objectId(): number` — usado para `ShiftAssignments.hashKey` (Fase 6).
+
+**`TjInternalError`:**
+
+- [ ] `class TjInternalError extends TjError`.
+
+**`MockContainer`:**
+
+- [ ] Implementa `AttributeContainer`.
+- [ ] Armazena em `Map<string, unknown>`.
+- [ ] `getStoredValue` retorna `undefined` se ausente.
+
+**`MockProject`:**
+
+- [ ] Implementa `ProjectLike`.
+- [ ] `scenarioCount` configurável (default 1).
+- [ ] `scenario(idx)` retorna `{ id: 'plan', fullId: 'plan' }` para `idx === 0`, senão `null`.
+
+#### Referências
+
+- `docs/taskjuggler/lib/taskjuggler/AttributeBase.rb` — uso de `@container`.
+- `docs/taskjuggler/lib/taskjuggler/PropertyTreeNode.rb` — `@project.scenarioCount`.
+
+#### Fora de escopo
+
+- `Project` real — Fase 9.
+
+#### Critério de aceite
+
+```ts
+const c = new MockContainer();
+c.setStoredValue("foo", "bar");
+assertEquals(c.getStoredValue("foo"), "bar");
+
+const p = new MockProject(2);
+assertEquals(p.scenarioCount, 2);
+assertEquals(p.scenario(0)?.id, "plan");
+assert(p.scenario(5) === null);
+```
+
+#### Testes
+
+- `attribute-container_test.ts`:
+  - `describe("MockContainer")`
+    - `it("armazena e recupera")`.
+    - `it("retorna undefined para chave ausente")`.
+- `mock-project_test.ts`:
+  - `describe("MockProject")`
+    - `it("scenarioCount")`.
+    - `it("scenario por índice")`.
+    - `it("retorna null para índice fora do range")`.
+
+---
+
+### 4.2 — `PropertyTreeNode` — estrutura de árvore e IDs
+
+#### Contexto
+
+Antes de atributos, precisamos da estrutura básica: parent/children, IDs, level, BSI.
+
+#### Objetivo
+
+Implementar:
+- Construtor com `propertySet`, `id`, `name`, `parent`.
+- Estrutura de árvore: `children`, `adoptees`, `stepParents`.
+- IDs: `id`, `subId`, `fullId`, `logicalId`.
+- Navegação: `level`, `root`, `ancestors`, `isChildOf?`, `leaf?`, `container?`, `all`, `allLeaves`, `kids`, `parents`.
+- Índices: `getBSIndicies`, `getIndicies`, `levelSeqNo`.
+- `removeReferences`.
+
+#### Arquivos
+
+- `packages/core/src/model/property-tree-node.ts`
+- `packages/core/tests/model/property-tree-node-structure_test.ts`
+
+#### Requisitos
+
+- [ ] Classe `PropertyTreeNode` (concreta).
+- [ ] Constructor `(propertySet, id, name, parent)`.
+- [ ] Campos:
+  - `propertySet: PropertySet`
+  - `project: ProjectLike` (via `propertySet.project`)
+  - `parent: PropertyTreeNode | null`
+  - `subId: string`
+  - `id: string` (igual a `fullId` em Ruby)
+  - `name: string`
+  - `sequenceNo: number` (incrementado pelo `PropertySet`)
+  - `children: PropertyTreeNode[]`
+  - `adoptees: PropertyTreeNode[]`
+  - `stepParents: PropertyTreeNode[]`
+  - `sourceFileInfo: SourceFileInfo | null`
+- [ ] Inicialização:
+  - Se `id` é null, gera ID único (`_<Tipo>_<N>`).
+  - Em namespace hierárquico, se `id` contém `.`, extrai `parent` de `id`.
+  - Chama `set('id', fullId)`, `set('name', name)`, `set('seqno', sequenceNo)`.
+- [ ] `get level(): number` — cacheado.
+- [ ] `get fullId(): string` — em flat, retorna `subId`; em hierárquico, `parent.fullId + '.' + subId`.
+- [ ] `logicalId(): string` — para `PropertyTreeNode` é igual a `fullId` (PTNProxy sobrescreve).
+- [ ] `root(): PropertyTreeNode` — topo da árvore.
+- [ ] `ancestors(includeStepParents = false): PropertyTreeNode[]`.
+- [ ] `isChildOf?(ancestor): boolean`.
+- [ ] `leaf(): boolean` — sem children e sem adoptees.
+- [ ] `container(): boolean` — com children ou adoptees.
+- [ ] `kids(): PropertyTreeNode[]` — `children + adoptees`.
+- [ ] `parents(): PropertyTreeNode[]` — `[parent] + stepParents` (filtra null).
+- [ ] `all(): PropertyTreeNode[]` — self + descendentes.
+- [ ] `allLeaves(withoutSelf = false): PropertyTreeNode[]`.
+- [ ] `getBSIndicies(): number[]`.
+- [ ] `getIndicies(): number[]` — usa `get('index')`.
+- [ ] `levelSeqNo(node): number`.
+- [ ] `addChild(child): void`.
+- [ ] `removeReferences(property): void` — remove de `children`, `adoptees`, `stepParents`.
+
+#### Referências
+
+- `docs/taskjuggler/lib/taskjuggler/PropertyTreeNode.rb` — métodos de estrutura.
+
+#### Fora de escopo
+
+- Atributos (4.3).
+- Herança (4.4).
+- Adoção (4.5).
+
+#### Critério de aceite
+
+```ts
+const ps = new PropertySet(mockProject, false);
+const root = new PropertyTreeNode(ps, "root", "Root", null);
+const child = new PropertyTreeNode(ps, "child", "Child", root);
+const gc = new PropertyTreeNode(ps, "gc", "Grandchild", child);
+
+assertEquals(root.fullId, "root");
+assertEquals(child.fullId, "root.child");
+assertEquals(gc.fullId, "root.child.gc");
+assertEquals(gc.level, 2);
+assertEquals(root.kids().length, 1);
+assert(gc.isChildOf(root));
+assert(!root.isChildOf(gc));
+```
+
+#### Testes
+
+- `property-tree-node-structure_test.ts`:
+  - `describe("PropertyTreeNode estrutura")`
+    - `it("constrói árvore de 3 níveis")`.
+    - `it("fullId hierárquico")`.
+    - `it("fullId flat")`.
+    - `it("level cacheado")`.
+    - `it("root")`.
+    - `it("ancestors")`.
+    - `it("ancestors inclui step parents")`.
+    - `it("isChildOf direto")`.
+    - `it("isChildOf indireto")`.
+    - `it("isChildOf falso")`.
+    - `it("leaf em folha")`.
+    - `it("container em pai")`.
+    - `it("kids inclui adoptees")`.
+    - `it("parents inclui step parents")`.
+    - `it("all")`.
+    - `it("allLeaves")`.
+    - `it("getBSIndicies")`.
+    - `it("getIndicies")`.
+    - `it("levelSeqNo")`.
+    - `it("removeReferences")`.
+
+---
+
+### 4.3 — `PropertyTreeNode` — atributos lazy
+
+#### Contexto
+
+O sistema de atributos lazy é o coração do `PropertyTreeNode`. Atributos são criados sob demanda; não-scenario vivem em `@attributes`, scenario-specific em `@scenarioAttributes[scIdx]`.
+
+#### Objetivo
+
+Implementar:
+- Método `attribute(id)` — cria lazy.
+- `scenarioAttribute(scIdx, id)` — cria lazy no cenário.
+- `get`, `getAttribute`, `set`, `force`, `[]`, `[]=`, `provided`, `inherited`, `modified`, `attributeDefinition`.
+- Validação de overwrite (`AttributeOverwrite`).
+- Propagação de cenários em `[]=` (mode 0).
+
+#### Arquivos
+
+- `packages/core/src/model/property-tree-node.ts` (estender)
+- `packages/core/tests/model/property-tree-node-attributes_test.ts`
+
+#### Requisitos
+
+- [ ] `private attributes: Map<string, AttributeBase>`.
+- [ ] `private scenarioAttributes: Array<Map<string, AttributeBase>>` (uma por cenário).
+- [ ] `private attribute(id: string): AttributeBase`:
+  - Se existe, retorna.
+  - Se não, busca `attributeDefinition(id)`.
+  - Se é `scenarioSpecific`, lança `TjArgumentError`.
+  - Cria `new aType.objClass(propertySet, aType, this)` e armazena.
+- [ ] `private scenarioAttribute(scIdx: number, id: string): AttributeBase`:
+  - Se existe, retorna.
+  - Se `this.data[scIdx]` é null, lança `TjInternalError` ("ScenarioData must be initialized before scenario-specific attributes").
+  - Se não é `scenarioSpecific`, lança `TjArgumentError`.
+  - Cria `new aType.objClass(propertySet, aType, this.data[scIdx])` e armazena.
+- [ ] `get(id): unknown` — `this.attribute(id).get()`.
+- [ ] `getAttribute(id, scIdx?): AttributeBase`.
+- [ ] `set(id, value): void` — verifica overwrite (exceto listas); chama `attr.set(value)`; se overwrite, lança `AttributeOverwrite`.
+- [ ] `force(id, value): void` — chama `attr.set(value)` sem verificar overwrite.
+- [ ] `getForScenario(id, scIdx): unknown`.
+- [ ] `setForScenario(id, value, scIdx): void`:
+  - Se `scIdx` é `undefined`, delega a `set`.
+  - Se `AttributeBase.mode === 0`, propaga para todos os cenários derivados: o cenário alvo recebe `set`, os filhos recebem `inherit` (via `project.scenario(scIdx).all()`).
+  - Senão, `set` no cenário alvo.
+  - Verifica overwrite em todos os cenários.
+- [ ] `provided(id, scIdx?): boolean`.
+- [ ] `inherited(id, scIdx?): boolean`.
+- [ ] `modified(id, scIdx?): boolean` — `provided || inherited`.
+- [ ] `attributeDefinition(id): AttributeDefinition | undefined`.
+- [ ] `data: ScenarioData[]` — array (inicialmente vazio; subclasses preenchem).
+- [ ] `scenarioData(scIdx: number): ScenarioData`.
+
+#### Referências
+
+- `docs/taskjuggler/lib/taskjuggler/PropertyTreeNode.rb` — construtor (Hash default), `get`, `getAttribute`, `force`, `set`, `[]=`, `[]`, `provided`, `inherited`, `modified`.
+
+#### Fora de escopo
+
+- `checkFailsAndWarnings` — Fase 11 (depende de `Query`).
+
+#### Critério de aceite
+
+```ts
+const ps = new PropertySet(mockProject, false);
+ps.addAttributeType(new AttributeDefinition(
+  "effort", "Effort", AttributeType.DurationAttribute,
+  false, false, true, 0,
+));
+
+const task = new PropertyTreeNode(ps, "t1", "Task 1", null);
+task.set("effort", 100);
+assertEquals(task.get("effort"), 100);
+assert(task.provided("effort", 0));
+```
+
+#### Testes
+
+- `property-tree-node-attributes_test.ts`:
+  - `describe("PropertyTreeNode atributos")`
+    - `it("cria lazy ao acessar get")`.
+    - `it("armazena valor em set")`.
+    - `it("set marca provided em mode 0")`.
+    - `it("set marca inherited em mode 1")`.
+    - `it("set não marca flag em mode 2")`.
+    - `it("rejeita overwrite de atributo não-lista")`.
+    - `it("aceita append em listas sem overwrite")`.
+    - `it("force sobrescreve sem erro")`.
+    - `it("rejeita atributo desconhecido")`.
+    - `it("atributo scenario-specific requer scIdx")`.
+    - `it("provided/inherited/modified")`.
+    - `it("propagação de cenário em mode 0")` — projeto com 3 cenários hierárquicos.
+
+---
+
+### 4.4 — `PropertyTreeNode` — herança e backup/restore
+
+#### Contexto
+
+Atributos podem ser herdados do pai (não-scenario) ou do projeto (top-level). Cenários-specific herdam do pai por cenário.
+
+Além disso, `backupAttributes`/`restoreAttributes` são usados para modificar atributos temporariamente durante `generateReport`.
+
+#### Objetivo
+
+Implementar:
+- `inheritAttributes()` — preenche atributos marcados como `inheritedFromParent`/`inheritedFromProject`.
+- `backupAttributes()` — snapshot.
+- `restoreAttributes(backup)` — restauração.
+
+#### Arquivos
+
+- `packages/core/src/model/property-tree-node.ts` (estender)
+- `packages/core/tests/model/property-tree-node-inherit_test.ts`
+
+#### Requisitos
+
+- [ ] `inheritAttributes(): void`:
+  - Para cada `AttributeDefinition` não-scenario com `inheritedFromParent`:
+    - Se tem parent e `parent.provided(id) || parent.inherited(id)`, chama `this.attribute(id).inherit(parent.get(id))`.
+    - Senão, se é top-level e `inheritedFromProject` e `project[id]` existe, chama `.inherit(project[id])`.
+  - Para cada `AttributeDefinition` scenario com `inheritedFromParent`:
+    - Por cenário: igual, mas usando `provided(id, scIdx)` e `parent.getForScenario(id, scIdx)`.
+    - Top-level herda de `project[id]`.
+- [ ] `backupAttributes(): AttributeBackup`:
+  - Retorna `{ attributes: new Map(this.attributes), scenarioAttributes: this.scenarioAttributes.map(m => new Map(m)) }`.
+- [ ] `restoreAttributes(backup): void`:
+  - Restaura os Maps.
+
+#### Referências
+
+- `docs/taskjuggler/lib/taskjuggler/PropertyTreeNode.rb` — `inheritAttributes`, `backupAttributes`, `restoreAttributes`.
+
+#### Fora de escopo
+
+- Validação de cenários derivados — Fase 5.
+
+#### Critério de aceite
+
+```ts
+const ps = new PropertySet(mockProject, false);
+ps.addAttributeType(new AttributeDefinition(
+  "priority", "Priority", AttributeType.IntegerAttribute,
+  true, true, false, 500,
+));
+
+const parent = new PropertyTreeNode(ps, "p", "Parent", null);
+parent.set("priority", 100);
+
+const child = new PropertyTreeNode(ps, "c", "Child", parent);
+child.inheritAttributes();
+assertEquals(child.get("priority"), 100);
+assert(child.inherited("priority"));
+```
+
+#### Testes
+
+- `property-tree-node-inherit_test.ts`:
+  - `describe("PropertyTreeNode.inheritAttributes")`
+    - `it("herda do parent não-scenario")`.
+    - `it("herda do project (top-level)")`.
+    - `it("não herda se parent não tem valor")`.
+    - `it("não herda se flag inheritFromParent = false")`.
+    - `it("herda scenario-specific do parent")`.
+    - `it("herda scenario-specific do project")`.
+    - `it("não herda sobre valor já provided")`.
+    - `it("preserva inherited em cadeia")`.
+  - `describe("PropertyTreeNode.backupAttributes/restoreAttributes")`
+    - `it("backup faz cópia rasa")`.
+    - `it("restore reverte modificações")`.
+    - `it("backup/restore preserva valores")`.
+
+---
+
+### 4.5 — `PropertyTreeNode` — adoção
+
+#### Contexto
+
+`adopt(property)` permite uma task aparecer em múltiplos contextos sem duplicar dados. O adoptado ganha o adotante como `stepParent`; o adotante ganha o adotado como `adoptee`.
+
+Validações:
+- Um nó não pode adotar a si mesmo.
+- Uma task não pode ser adotada duas vezes na mesma raiz (evita duplicação em reports).
+
+#### Objetivo
+
+Implementar `adopt` + `getAdopted` + validações.
+
+#### Arquivos
+
+- `packages/core/src/model/property-tree-node.ts` (estender)
+- `packages/core/tests/model/property-tree-node-adopt_test.ts`
+
+#### Requisitos
+
+- [ ] `adopt(property: PropertyTreeNode): void`:
+  - Se `property === this`, lança `TjArgumentError` ("A property cannot adopt itself").
+  - Coleta `root.all()` (todas as propriedades da raiz do adotante).
+  - Para cada leaf de `property.allLeaves()`:
+    - Se está em `allOfRoot`, lança `TjArgumentError` ("already adopted").
+  - `this.adoptees.push(property)`.
+  - `property.getAdopted(this)`.
+- [ ] `getAdopted(property): void`:
+  - Se `property` já está em `stepParents`, retorna.
+  - `this.stepParents.push(property)`.
+- [ ] `kids()` — atualizado para incluir `adoptees`.
+- [ ] `parents()` — atualizado para incluir `stepParents`.
+- [ ] `leaf()` — retorna false se tem `adoptees`.
+
+#### Referências
+
+- `docs/taskjuggler/lib/taskjuggler/PropertyTreeNode.rb` — `adopt`, `getAdopted`, `kids`, `parents`.
+
+#### Fora de escopo
+
+- `PTNProxy` (4.9).
+
+#### Critério de aceite
+
+```ts
+const ps = new PropertySet(mockProject, false);
+const root1 = new PropertyTreeNode(ps, "r1", "Root 1", null);
+const root2 = new PropertyTreeNode(ps, "r2", "Root 2", null);
+const task = new PropertyTreeNode(ps, "t", "Task", root1);
+
+root2.adopt(task);
+assertEquals(task.stepParents.length, 1);
+assertEquals(root2.adoptees.length, 1);
+assertEquals(root2.kids().length, 1);
+```
+
+#### Testes
+
+- `property-tree-node-adopt_test.ts`:
+  - `describe("PropertyTreeNode.adopt")`
+    - `it("adiciona adoptee e stepParent")`.
+    - `it("rejeita auto-adoção")`.
+    - `it("rejeita duplicação na mesma raiz")`.
+    - `it("kids inclui adoptees")`.
+    - `it("parents inclui stepParents")`.
+    - `it("leaf falso quando tem adoptee")`.
+    - `it("all inclui adoptees")`.
+    - `it("allLeaves inclui leaves de adoptees")`.
+
+---
+
+### 4.6 — `PropertySet`
+
+#### Contexto
+
+`PropertySet` é o container das propriedades de mesmo tipo. Gerencia:
+- Blueprint de `AttributeDefinition`s (registrados no início).
+- Namespace flat vs hierárquico.
+- Índices (BSI, tree).
+- Lista de propriedades.
+
+#### Objetivo
+
+Implementar `PropertySet` completo.
+
+#### Arquivos
+
+- `packages/core/src/model/property-set.ts`
+- `packages/core/tests/model/property-set_test.ts`
+
+#### Requisitos
+
+- [ ] Classe `PropertySet`:
+  - `project: ProjectLike`
+  - `flatNamespace: boolean`
+  - `private properties: PropertyTreeNode[]`
+  - `private propertyMap: Map<string, PropertyTreeNode>`
+  - `private attributeDefinitions: Map<string, AttributeDefinition>`
+- [ ] Constructor `(project, flatNamespace)`:
+  - Adiciona atributos base: `id` (StringAttribute), `name` (StringAttribute), `seqno` (IntegerAttribute).
+- [ ] `addAttributeType(attrDef: AttributeDefinition): void`:
+  - Se `properties.length > 0`, lança `TjError` ("Attribute types must be defined before properties are added").
+  - Registra em `attributeDefinitions`.
+- [ ] `eachAttributeDefinition(): IterableIterator<AttributeDefinition>`.
+- [ ] `knownAttribute(id): boolean`.
+- [ ] `hasQuery?(id, scenarioIdx?): boolean` — verifica se existe `query_<id>` em alguma propriedade (Fase 11 completa).
+- [ ] `scenarioSpecific?(id): boolean`.
+- [ ] `inheritedFromProject?(id): boolean`.
+- [ ] `inheritedFromParent?(id): boolean`.
+- [ ] `userDefined?(id): boolean`.
+- [ ] `listAttribute?(id): boolean`.
+- [ ] `defaultValue(id): unknown`.
+- [ ] `attributeName(id): string | undefined`.
+- [ ] `attributeType(id): AttributeType | undefined`.
+- [ ] `addProperty(prop): void`.
+- [ ] `removeProperty(prop | id): PropertyTreeNode` — remove recursivamente.
+- [ ] `clearProperties(): void`.
+- [ ] `get(id): PropertyTreeNode | undefined` — também implementar `[Symbol.iterator]`.
+- [ ] `index(): void` — recalcula BSI para todas as propriedades.
+- [ ] `levelSeqNo(property): number`.
+- [ ] `maxDepth(): number`.
+- [ ] `items(): number`.
+- [ ] `empty(): boolean`.
+- [ ] `topLevelItems(): number`.
+- [ ] `each(fn): void`.
+- [ ] `toArray(): PropertyTreeNode[]`.
+
+#### Referências
+
+- `docs/taskjuggler/lib/taskjuggler/PropertySet.rb` — arquivo completo.
+
+#### Fora de escopo
+
+- `hasQuery?` completo — Fase 11.
+
+#### Critério de aceite
+
+```ts
+const ps = new PropertySet(mockProject, false);
+ps.addAttributeType(new AttributeDefinition(
+  "effort", "Effort", AttributeType.DurationAttribute,
+  false, false, true, 0,
+));
+
+assertEquals(ps.knownAttribute("effort"), true);
+assertEquals(ps.scenarioSpecific?("effort"), true);
+assertEquals(ps.listAttribute?("effort"), false);
+
+const root = new PropertyTreeNode(ps, "r", "R", null);
+const child = new PropertyTreeNode(ps, "c", "C", root);
+assertEquals(ps.items(), 2);
+ps.index();
+assertEquals(root.get("bsi"), "1");
+assertEquals(child.get("bsi"), "1.1");
+```
+
+#### Testes
+
+- `property-set_test.ts`:
+  - `describe("PropertySet")`
+    - `it("constrói com atributos base")`.
+    - `it("addAttributeType registra")`.
+    - `it("rejeita addAttributeType após adicionar propriedade")`.
+    - `it("knownAttribute")`.
+    - `it("scenarioSpecific?")`.
+    - `it("inheritedFromProject?")`, `it("inheritedFromParent?")`.
+    - `it("listAttribute?")`.
+    - `it("defaultValue")`.
+    - `it("attributeName")`.
+    - `it("addProperty")`.
+    - `it("removeProperty recursivo")`.
+    - `it("index recalcula BSI")`.
+    - `it("levelSeqNo")`.
+    - `it("maxDepth")`.
+    - `it("items/empty/topLevelItems")`.
+    - `it("each")`.
+    - `it("toArray")`.
+
+---
+
+### 4.7 — `ScenarioData`
+
+#### Contexto
+
+Base de todos os `*Scenario` (`TaskScenario`, `ResourceScenario`, `AccountScenario`, `ShiftScenario`). Fornece acesso a atributos scenario-specific e mensagens de erro com contexto.
+
+#### Objetivo
+
+Implementar `ScenarioData`.
+
+#### Arquivos
+
+- `packages/core/src/model/scenario-data.ts`
+- `packages/core/tests/model/scenario-data_test.ts`
+
+#### Requisitos
+
+- [ ] Classe `ScenarioData`:
+  - `property: PropertyTreeNode`
+  - `project: ProjectLike`
+  - `scenarioIdx: number`
+  - `private attributes: Map<string, AttributeBase>`
+  - `private messageHandler: MessageHandlerInstance`
+- [ ] Constructor `(property, idx, attributes)`:
+  - Set `property.data[idx] = this`.
+- [ ] `deepClone(): this` — retorna `this`.
+- [ ] `a(attributeName: string): unknown` — acesso rápido.
+- [ ] `error(id, text, sourceFileInfo?, property?): void`.
+- [ ] `warning(id, text, sourceFileInfo?, property?): void`.
+- [ ] `info(id, text, sourceFileInfo?, property?): void`.
+
+**Nota:** `MessageHandlerInstance` é da Fase 9. Nesta fase, definimos uma interface `MessageHandlerLike` com métodos `error`, `warning`, `info`. Implementação mock em testes; real na Fase 9.
+
+#### Referências
+
+- `docs/taskjuggler/lib/taskjuggler/ScenarioData.rb` — arquivo completo.
+- `docs/tj3-engine/06-blueprint-engine5.md` — §4.2.
+
+#### Fora de escopo
+
+- `MessageHandler` real — Fase 9.
+
+#### Critério de aceite
+
+```ts
+const mockHandler = new MockMessageHandler();
+const prop = new PropertyTreeNode(ps, "t", "Task", null);
+const sd = new ScenarioData(prop, 0, new Map());
+
+assertEquals(prop.data[0], sd);
+assertEquals(sd.property, prop);
+assertEquals(sd.scenarioIdx, 0);
+sd.warning("test_warn", "message");
+assertEquals(mockHandler.warnings.length, 1);
+```
+
+#### Testes
+
+- `scenario-data_test.ts`:
+  - `describe("ScenarioData")`
+    - `it("registra em property.data[idx]")`.
+    - `it("a() acessa atributo")`.
+    - `it("deepClone retorna this")`.
+    - `it("error/warning/info delegam para handler")`.
+    - `it("usa sourceFileInfo padrão do property")`.
+
+---
+
+### 4.8 — `Scenario`
+
+#### Contexto
+
+`Scenario` é uma entidade concreta que herda de `PropertyTreeNode`. Representa um cenário (plan, delayed, etc.).
+
+#### Objetivo
+
+Implementar `Scenario`.
+
+#### Arquivos
+
+- `packages/core/src/model/scenario.ts`
+- `packages/core/tests/model/scenario_test.ts`
+
+#### Requisitos
+
+- [ ] Classe `Scenario extends PropertyTreeNode`:
+  - Constructor `(project, id, name, parent)`.
+  - Registra-se em `project.addScenario(this)`.
+- [ ] `all(): Scenario[]` — self + descendentes.
+- [ ] `allLeaves(includeSelf = false): Scenario[]`.
+
+#### Referências
+
+- `docs/taskjuggler/lib/taskjuggler/Scenario.rb` — arquivo completo.
+
+#### Fora de escopo
+
+- Lógica de cenário (projection, active) — Fase 5/9.
+
+#### Critério de aceite
+
+```ts
+const plan = new Scenario(mockProject, "plan", "Plan", null);
+const delayed = new Scenario(mockProject, "delayed", "Delayed", plan);
+
+assertEquals(plan.all().length, 2);
+assertEquals(plan.allLeaves().length, 1);
+assertEquals(plan.allLeaves()[0], delayed);
+```
+
+#### Testes
+
+- `scenario_test.ts`:
+  - `describe("Scenario")`
+    - `it("registra em project")`.
+    - `it("all com hierarquia")`.
+    - `it("allLeaves sem self")`.
+    - `it("allLeaves com self em folha")`.
+
+---
+
+### 4.9 — `PTNProxy`
+
+#### Contexto
+
+Wrapper para `PropertyTreeNode` usada em `PropertyList` (Fase 9). Permite que a mesma `Task` apareça em múltiplos contextos sem duplicar dados. O `logicalId` respeita o caminho de adoção.
+
+#### Objetivo
+
+Implementar `PTNProxy`.
+
+#### Arquivos
+
+- `packages/core/src/model/ptn-proxy.ts`
+- `packages/core/tests/model/ptn-proxy_test.ts`
+
+#### Requisitos
+
+- [ ] Classe `PTNProxy`:
+  - `ptn: PropertyTreeNode`
+  - `parent: PTNProxy | PropertyTreeNode`
+  - `private index: number | null`
+  - `private tree: string | null`
+  - `private levelCache: number`
+- [ ] Constructor `(ptn, parent)`:
+  - `parent` não pode ser null.
+- [ ] `logicalId(): string`:
+  - Se `ptn.propertySet.flatNamespace`, retorna `ptn.id`.
+  - Senão, `parent.logicalId() + '.' + idCurto(ptn.id)`.
+- [ ] `get(attribute): unknown`:
+  - Se `attribute === 'index'`, retorna `this.index`.
+  - Se `attribute === 'tree'`, retorna `this.tree`.
+  - Senão, delega para `ptn.get(attribute)`.
+- [ ] `set(attribute, value): void`:
+  - Se `attribute === 'index'`, seta `this.index`.
+  - Se `attribute === 'tree'`, seta `this.tree`.
+  - Senão, delega para `ptn.set(attribute, value)`.
+- [ ] `getForScenario(attribute, scIdx): unknown` — mesmo padrão.
+- [ ] `setForScenario(attribute, value, scIdx): void`.
+- [ ] `get level(): number` — cacheado, conta subindo pelo parent.
+- [ ] `isChildOf?(ancestor): boolean`.
+- [ ] `getIndicies(): number[]`.
+- [ ] `ptn(): PropertyTreeNode` — retorna `this.ptn`.
+
+**Nota:** `PTNProxy` também expõe `propertySet`, `fullId`, `name` via delegação.
+
+#### Referências
+
+- `docs/taskjuggler/lib/taskjuggler/PTNProxy.rb` — arquivo completo.
+
+#### Fora de escopo
+
+- Uso em `PropertyList` — Fase 9.
+
+#### Critério de aceite
+
+```ts
+const ps = new PropertySet(mockProject, false);
+const root = new PropertyTreeNode(ps, "root", "R", null);
+const task = new PropertyTreeNode(ps, "task", "T", root);
+const proxy = new PTNProxy(task, root);
+
+assertEquals(proxy.logicalId(), "root.task");
+assertEquals(proxy.level, 1);
+assertEquals(proxy.ptn(), task);
+```
+
+#### Testes
+
+- `ptn-proxy_test.ts`:
+  - `describe("PTNProxy")`
+    - `it("logicalId com ptn flat")`.
+    - `it("logicalId com ptn hierárquico")`.
+    - `it("get/set para index e tree")`.
+    - `it("get/set delega para ptn")`.
+    - `it("level cacheado")`.
+    - `it("isChildOf?")`.
+    - `it("getIndicies")`.
+    - `it("ptn() retorna original")`.
+    - `it("rejeita parent null")`.
+
+---
+
+### 4.10 — Golden tests (estrutura + herança + adoção)
+
+#### Contexto
+
+Validar comportamento contra o Ruby real.
+
+#### Objetivo
+
+Criar `scripts/golden/property-tree.rb` que:
+- Cria `MockProject` (Ruby minimalista).
+- Cria `PropertySet`, adiciona atributos.
+- Constrói árvores, testa herança, testa adoção.
+- Serializa resultados em JSON.
+
+Teste TS lê JSON e compara.
+
+#### Arquivos
+
+- `scripts/golden/property-tree.rb`
+- `scripts/golden/README.md` (atualizar)
+- `packages/core/tests/golden/property-tree.golden.json` (gerado)
+- `packages/core/tests/golden/property-tree_golden_test.ts`
+- `deno.jsonc` — atualizar task `golden:generate`
+
+#### Requisitos
+
+**Script Ruby:**
+
+- [ ] Define `TestProperty < PropertyTreeNode` no próprio script.
+- [ ] Define `MockProject` com `scenarioCount` e `scenario(idx)`.
+- [ ] Casos:
+  - Estrutura de árvore (fullId, level, getBSIndicies, all, allLeaves).
+  - Herança não-scenario em 3 níveis.
+  - Herança scenario-specific com 2 cenários.
+  - Adoção simples.
+  - Adoção duplicada (espera erro).
+  - Backup/restore.
+- [ ] Serializa em JSON estruturado.
+
+**Teste TS:**
+
+- [ ] Itera casos.
+- [ ] Verifica cada resultado.
+- [ ] Cobertura ≥ 30 casos.
+
+**Task `golden:generate`:**
+
+- [ ] `ruby scripts/golden/property-tree.rb > packages/core/tests/golden/property-tree.golden.json`.
+
+#### Referências
+
+- `docs/taskjuggler/lib/taskjuggler/PropertyTreeNode.rb`.
+- `docs/taskjuggler/lib/taskjuggler/PropertySet.rb`.
+- Fase 2, subfase 5.14 — infraestrutura base.
+
+#### Fora de escopo
+
+- Golden tests de Task/Resource — Fase 5.
+
+#### Critério de aceite
+
+```bash
+deno task golden:generate
+deno task test
+```
+
+- JSON com ≥ 30 casos.
+- Todos passam.
+
+#### Testes
+
+- `property-tree_golden_test.ts`:
+  - `describe("Golden PropertyTreeNode")`
+    - itera casos de estrutura.
+    - itera casos de herança.
+    - itera casos de adoção.
+
+---
+
+## 6. Ordem de execução sugerida
+
+```text
+4.0  ADR 015
+      ↓
+4.1  AttributeContainer + MockContainer + MockProject + erros
+      ↓
+4.6  PropertySet                    ← pode rodar antes de PropertyTreeNode completo
+      ↓
+4.2  PropertyTreeNode — estrutura
+      ↓
+4.3  PropertyTreeNode — atributos lazy
+      ↓
+4.4  PropertyTreeNode — herança
+      ↓
+4.5  PropertyTreeNode — adoção
+      ↓
+4.7  ScenarioData
+      ↓
+4.8  Scenario
+      ↓
+4.9  PTNProxy
+      ↓
+4.10 Golden tests
+```
+
+Cada subfase fecha com `deno task check-all` verde.
+
+---
+
+## 7. Critério de conclusão da fase
+
+A Fase 4 é considerada concluída quando:
+
+```bash
+deno task check-all
+```
+
+passa, e:
+
+- [ ] `PropertyTreeNode` completo (estrutura + atributos + herança + adoção).
+- [ ] `PropertySet` completo.
+- [ ] `ScenarioData` implementada.
+- [ ] `Scenario` implementada.
+- [ ] `PTNProxy` implementado.
+- [ ] `AttributeContainer`, `ProjectLike` formalizados.
+- [ ] `MockContainer`, `MockProject` em testes.
+- [ ] **≥ 130 testes unitários**.
+- [ ] **≥ 30 golden tests**.
+- [ ] Nenhum `any` em `src/` (exceto onde justificado).
+- [ ] Nenhum import proibido em `packages/core/src/`.
+- [ ] ADR 015 criado.
+- [ ] `scripts/golden/property-tree.rb` funcional.
+- [ ] `scripts/golden/README.md` atualizado.
+
+---
+
+## 8. Riscos e mitigações
+
+| Risco | Impacto | Mitigação |
+|---|---|---|
+| Lazy attribute creation com helper é menos transparente que Ruby | Médio | Testes garantem semântica igual; ADR 015 documenta |
+| `method_missing` substituído por helper quebra subclasses futuras | Médio | Definir padrão claro em ADR 015; revisar em Fase 5 |
+| Propagação de cenários em `[]=` com mode 0 tem bug | Alto | Testes com 3 cenários hierárquicos |
+| Backup/restore é cópia rasa | Baixo | Aceito — mesmo comportamento do Ruby |
+| Adoção recursiva pode causar loop | Alto | Detecção de duplicação em `allLeaves()` do root |
+| `MockProject` diverge do `Project` real | Médio | `ProjectLike` é interface mínima; Fase 9 implementa |
+| `getBSIndicies` depende de `levelSeqNo` correto | Alto | Testar com árvores variadas (2-3 níveis) |
+| `getIndicies` depende de `get('index')` (recalculado por `index()`) | Alto | Testar `PropertySet.index()` |
+| `PropertySet.removeProperty` pode quebrar referências | Alto | Testar remoção recursiva + `removeReferences` |
+
+---
+
+## 9. Referências cruzadas
+
+### Arquivos Ruby (fonte primária)
+
+- `docs/taskjuggler/lib/taskjuggler/PropertyTreeNode.rb`
+- `docs/taskjuggler/lib/taskjuggler/PropertySet.rb`
+- `docs/taskjuggler/lib/taskjuggler/ScenarioData.rb`
+- `docs/taskjuggler/lib/taskjuggler/Scenario.rb`
+- `docs/taskjuggler/lib/taskjuggler/PTNProxy.rb`
+
+### Blueprints
+
+- `docs/tj3-engine/02-bluprint-engine1.md` — §3, §4
+- `docs/tj3-engine/06-blueprint-engine5.md` — §4.2, §5.3
+
+### Documentos do projeto
+
+- `docs/syntaxmesh/decisoes/001-core-independente-do-dom.md`
+- `docs/syntaxmesh/decisoes/011-port-fiel-taskjuggler.md`
+- `docs/syntaxmesh/decisoes/014-attribute-mode-global.md`
+- `docs/syntaxmesh/decisoes/015-metaprogramacao-propertytreenode.md` (novo)
+- `docs/syntaxmesh/03-arquitetura.md`
+
+### Fases dependentes
+
+- **Fase 5 — Entidades Concretas** (Task, Resource herdam de PropertyTreeNode).
+- **Fase 6 — Scoreboard e Estruturas Base** (Limits, ShiftAssignments usam ScenarioData).
+- **Fase 7 — Scheduler** (usa `scenarioData(scIdx)` e atributos scenario).
+- **Fase 9 — Orquestrador** (Project gerencia PropertySets).
+- **Fase 14 — Reports** (usa `PropertyList` com `PTNProxy`).
+
+---
+
+## 10. Notas para a IA
+
+1. **`attribute(id)` é o coração.** Sempre use-o; nunca acesse `attributes` Map diretamente.
+2. **Não introduza `Proxy`.** A decisão foi por métodos explícitos (ADR 015). Se você acha que precisa, **pare e consulte o autor**.
+3. **`scenarioData(scIdx)` substitui `method_missing`.** Subclasses definem métodos explícitos que chamam `this.scenarioData(scIdx).<method>()`.
+4. **`inheritAttributes` é chamada uma vez por propriedade**, logo após a criação (nas subclasses). Não chame em loop.
+5. **`backupAttributes` é cópia rasa.** Não tente "melhorar" para deep copy — muda a semântica.
+6. **Propagação de cenários em `[]=` com mode 0.** Sempre propague para todos os derivados; o alvo recebe `set`, filhos recebem `inherit`.
+7. **`PropertySet.index()` recalcula BSI.** Chame sempre após adicionar/remover propriedades.
+8. **Golden tests contra Ruby são obrigatórios** para estrutura, herança e adoção.
+9. **Sem `any`.** Use `unknown` + narrowing.
+10. **Commit por subfase.** `feat(core): property-tree/<aspecto>`.
+11. **`MockProject` fica em `tests/`.** Não exponha em `src/`.
+12. **`ProjectLike` é interface, não classe.** `Project` real virá na Fase 9.
+13. **`MessageHandlerLike` é interface.** Implementação real na Fase 9.
+
+---
+
+## 11. ADR 015 (referência rápida)
+
+Criado como subfase 4.0. Conteúdo esperado:
+
+- **Título:** Metaprogramação em PropertyTreeNode: adaptações para TypeScript
+- **Contexto:** `Hash.new { ... }` (lazy) e `method_missing` (delegação).
+- **Decisão:**
+  - Lazy → método `attribute(id)`.
+  - Delegação → helper `scenarioData(scIdx)` + métodos explícitos.
+- **Alternativas:** `Proxy`, inicialização antecipada.
+- **Consequências:** clareza + debugabilidade; mais código.
+
+---
+
+**Fim da Fase 4.**
+````
+
+---
+
+## Arquivo: `docs/syntaxmesh/fases/fase-3-modelo-atributos.md`
+
+````md
+# Fase 3 — Modelo de Atributos
+
+> **Arquivo:** `docs/syntaxmesh/fases/fase-3-modelo-atributos.md`
+> **Status:** ⬜ Não iniciada
+> **Duração estimada:** 5–7 dias
+> **Depende de:** Fase 2 — Tempo e Geometria
+> **Bloqueia:** Fases 4, 5, 6, 7, 8, 10, 11, 12, 14, 16
+
+---
+
+## 1. Contexto
+
+O TaskJuggler tem um **sistema de atributos único**. Diferente de linguagens onde atributos são simples campos, aqui cada atributo é:
+
+1. **Tipado** — `DateAttribute`, `FloatAttribute`, `FlagListAttribute`, etc. (~40 tipos).
+2. **Rastreável** — sabe se o valor foi `provided` (usuário), `inherited` (pai/projeto) ou `computed` (scheduler).
+3. **Herança dupla** — herda do pai (`inheritedFromParent`) e/ou do projeto (`inheritedFromProject`).
+4. **Scenario-specific** — pode ter valor diferente por cenário (ex: `effort` no cenário "plan" vs "delayed").
+5. **Lazy** — só é instanciado quando acessado.
+6. **Container-based** — o valor é armazenado no container (`PropertyTreeNode` para não-scenario, `ScenarioData` para scenario-specific), não no próprio atributo.
+
+Este sistema é implementado por 4 arquivos Ruby:
+
+- `AttributeBase.rb` — classe base + `ListAttributeBase` + modo global (`@@mode`).
+- `AttributeDefinition.rb` — blueprint imutável de cada atributo.
+- `Attributes.rb` — ~40 subclasses (tipos concretos).
+- `deep_copy.rb` — utilitário genérico de cópia profunda (usado por `inherit`).
+
+Portar isso corretamente é **crítico**. Erros aqui quebram herança, cenários, validação e relatórios. As subfases seguem a divisão natural do Ruby, mas agrupam subclasses por afinidade.
+
+**Nota sobre dependências futuras:** alguns atributos (`RichTextAttribute`, `ResourceListAttribute.to_rti`, `ReferenceAttribute.to_rti`, `LimitsAttribute`, `ShiftAssignmentsAttribute`, `WorkingHoursAttribute`) dependem de classes que só existirão em fases posteriores (`Query` — Fase 11, `RichText` — Fase 12, `Limits`/`ShiftAssignments` — Fase 6/7). Nesta fase:
+- Definimos **interfaces de port** (`RichTextIntermediate`, `QueryLike`) em `packages/core/src/format/` para permitir compilação.
+- Implementamos os métodos que **não dependem** dessas classes.
+- Métodos que dependem lançam `NotYetImplementedError` com mensagem apontando a fase.
+
+---
+
+## 2. Objetivo
+
+Ao final desta fase:
+
+- `AttributeBase`, `ListAttributeBase`, `AttributeDefinition`, `AttributeOverwrite` implementados.
+- Todas as ~40 subclasses de atributo portadas.
+- Modo global (`mode` 0/1/2) implementado como `static` em `AttributeBase`.
+- `AttributeContainer` interface + implementações em `PropertyTreeNode` e `ScenarioData` (esqueletos).
+- `deepClone` utility substituindo `deep_copy.rb`.
+- **≥ 120 testes unitários** + **≥ 40 golden tests** (herança, propagação de cenários).
+- ADR 014 registrado.
+- `deno task check-all` verde.
+
+---
+
+## 3. Referências TaskJuggler
+
+### 3.1 Arquivos Ruby (fonte primária)
+
+Todos em `docs/taskjuggler/lib/taskjuggler/`:
+
+| Arquivo | Linhas aprox. | Complexidade | Prioridade |
+|---|---|---|---|
+| `AttributeBase.rb` | ~150 | Média | **Crítica** |
+| `AttributeDefinition.rb` | ~60 | Baixa | **Crítica** |
+| `Attributes.rb` | ~680 | Média | **Crítica** |
+| `deep_copy.rb` | ~80 | Baixa | Alta |
+
+### 3.2 Blueprints (fonte secundária)
+
+| Documento | Seção | Uso |
+|---|---|---|
+| `docs/tj3-engine/02-bluprint-engine1.md` | §2.3 AttributeDefinitions por PropertySet | Lista de atributos por entidade |
+| `docs/tj3-engine/02-bluprint-engine1.md` | §2.4 Formato de AttributeDefinition | Tupla de 8 campos |
+| `docs/tj3-engine/02-bluprint-engine1.md` | §3.3 Sistema de Atributos (Lazy Creation) | Lazy via Proxy |
+| `docs/tj3-engine/06-blueprint-engine5.md` | §6 Attributes (detalhado) | Subclasses completas |
+| `docs/tj3-engine/06-blueprint-engine5.md` | §6.2 Implementação de Atributos Comuns | Exemplos de cada tipo |
+
+### 3.3 Golden tests
+
+Usamos `tj3` para validar comportamento de herança e propagação de cenários. O script `scripts/golden/attributes.rb` gera JSON com cenários: projeto com atributos herdados em 3 níveis + 2 cenários + defaults.
+
+---
+
+## 4. Decisões de port (Ruby → TypeScript)
+
+### 4.1 `@@mode` global → `static` em `AttributeBase`
+
+Ruby usa `@@mode` (class variable compartilhada entre todas as subclasses). Em TS:
+
+```ts
+export type AttributeMode = 0 | 1 | 2;
+
+export abstract class AttributeBase {
+  private static _mode: AttributeMode = 0;
+
+  static get mode(): AttributeMode { return AttributeBase._mode; }
+  static setMode(mode: AttributeMode): void { AttributeBase._mode = mode; }
+}
+```
+
+**Limitação:** como o modo é global, dois projetos agendados simultaneamente no mesmo worker clobberariam. Aceito — é o mesmo comportamento do Ruby, e não precisamos de concorrência nesta fase. Registrado em ADR 014.
+
+### 4.2 `@container` → interface `AttributeContainer`
+
+Ruby armazena o valor em `@container.instance_variable_set('@' + id, value)`. Em TS:
+
+```ts
+export interface AttributeContainer {
+  getStoredValue(attributeId: string): unknown;
+  setStoredValue(attributeId: string, value: unknown): void;
+}
+```
+
+`PropertyTreeNode` e `ScenarioData` implementarão essa interface (Fase 4). Nesta fase, criamos a interface e uma implementação mock para testes.
+
+### 4.3 `deep_clone` genérico → função `deepClone<T>`
+
+Ruby estende `Object#deep_clone`. Em TS, usamos função standalone:
+
+```ts
+export function deepClone<T>(value: T): T;
+```
+
+Regras:
+- Primitivos (`number`, `string`, `boolean`, `null`, `undefined`) → retornam como estão.
+- `TjTime`, `RealFormat` → imutáveis, retornam `this`.
+- `PropertyTreeNode` (futuro) → retorna `this` (referência).
+- `Array` → recursivo em cada elemento.
+- `Map`, `Set` → recursivo.
+- Objetos com método `deepClone()` → chama o método.
+- Fallback → `structuredClone`.
+
+### 4.4 `tjpId` estático
+
+Ruby: cada subclasse define `def TipoAttribute::tjpId; 'text'; end`. TS: `static readonly tjpId = 'text';`.
+
+### 4.5 `to_rti` com dependências futuras
+
+Métodos `to_rti` que dependem de `RichText`/`Query`:
+
+- `RichTextAttribute.to_rti` — herda da base (retorna o valor).
+- `ResourceListAttribute.to_rti` — depende de `RichText` e `RTFHandlers`.
+- `ReferenceAttribute.to_rti` — depende de `RichText`.
+
+**Decisão:** nesta fase, essas implementações lançam `NotYetImplementedError` (com mensagem apontando Fase 11/12). Testes verificam que lançam. Fase 12 substitui.
+
+Interfaces de port em `packages/core/src/format/rich-text-port.ts`:
+
+```ts
+export interface RichTextIntermediate {
+  readonly richText: { readonly inputText: string };
+  to_s(): string;
+  to_html(): unknown;
+  empty(): boolean;
+  setQuery(query: unknown): void;
+  blockMode: boolean;
+  sectionNumbers: boolean;
+  cssClass: string | null;
+}
+
+export interface RichTextFactory {
+  create(text: string): RichTextIntermediate;
+}
+```
+
+### 4.6 `AttributeDefinition` imutável
+
+Ruby usa `freeze`. TS: usar `Object.freeze(this)` no construtor, mais `readonly` em todos os campos.
+
+### 4.7 Tipos de `default`
+
+O default de um atributo pode ser: número, string, booleano, `null`, ou template (Array vazio, `LeaveList` vazio, etc.). Em TS, o tipo é genérico `T`.
+
+### 4.8 `AttributeOverwrite` exception
+
+Ruby: `class AttributeOverwrite < ArgumentError`. TS: `class AttributeOverwrite extends TjArgumentError`.
+
+### 4.9 `quotedString` compartilhado
+
+Ruby: `AttributeBase#quotedString` (privado). TS: método `protected` em `AttributeBase`.
+
+### 4.10 `LimitsAttribute` e `ShiftAssignmentsAttribute`
+
+Esses dois atributos referenciam `Limits` e `ShiftAssignments`, que são classes da Fase 6/7. Nesta fase:
+- O tipo do `default` é `unknown` (aceita `null`).
+- `LimitsAttribute` estende `AttributeBase` sem lógica especial.
+- `ShiftAssignmentsAttribute` idem.
+
+Os métodos `to_tjp` que dependem dessas classes lançam `NotYetImplementedError` até Fase 7.
+
+### 4.11 — Interface `PropertyLike` (R2)
+
+A Fase 3 recebe `property` no constructor de `AttributeBase`, mas
+`PropertyTreeNode` só existe na Fase 4. Para evitar acoplamento circular,
+definimos a interface `PropertyLike` em
+`packages/core/src/model/property-like.ts` com apenas `id` e `name`.
+
+```ts
+export interface PropertyLike {
+  readonly id: string;
+  readonly name: string;
+}
+```
+AttributeBase declara protected readonly property: PropertyLike.
+Na Fase 4, PropertyTreeNode implements PropertyLike e a interface é
+expandida (adiciona project, children, parent, level, etc.).
+
+Motivação: sem isso, AttributeBase importaria PropertyTreeNode
+(inexistente na Fase 3), quebrando a compilação. Ver tarefa 3.1.0.
+
+Ver ADR 015 (metaprogramação) para a decisão correlata sobre como
+PropertyTreeNode expõe atributos (via método attribute(id) explícito,
+não Proxy).
+
+---
+
+## 5. Subfases detalhadas
+
+Cada subfase segue `docs/syntaxmesh/fases/modelo-tarefas.md`.
+
+---
+
+### 3.0 — ADR 014 (`mode` global de atributos)
+
+#### Contexto
+
+O `AttributeBase.rb` usa `@@mode` (class variable compartilhada). O modo afeta o comportamento de `set()` e `inherit()`:
+
+- `mode = 0` (provided): usuário setou o valor.
+- `mode = 1` (inherited): valor veio do pai ou do projeto.
+- `mode = 2` (computed): valor calculado pelo scheduler.
+
+O scheduler alterna entre modos durante o pipeline (`prepareScenario` usa mode 1, `scheduleScenario` usa mode 2).
+
+Em TypeScript, precisamos decidir como representar esse estado global.
+
+#### Objetivo
+
+Registrar formalmente a decisão em `docs/syntaxmesh/decisoes/014-attribute-mode-global.md`.
+
+#### Arquivos
+
+- `docs/syntaxmesh/decisoes/014-attribute-mode-global.md` (novo)
+- `docs/syntaxmesh/decisoes/README.md` (atualizar tabela)
+
+#### Requisitos
+
+- [ ] Contexto: por que `mode` existe, quando é usado.
+- [ ] Decisão: `static` em `AttributeBase`, com getter/setter.
+- [ ] Alternativas: `AsyncLocalStorage`, context-passing, `Symbol` no valor.
+- [ ] Consequências:
+  - **Positivas:** simplicidade, paridade com Ruby.
+  - **Negativas:** sem suporte a concorrência entre projetos no mesmo worker.
+  - **Mitigação futura:** se necessário, migrar para `AsyncLocalStorage`.
+- [ ] Atualizar tabela em `decisoes/README.md`.
+
+#### Referências
+
+- `docs/taskjuggler/lib/taskjuggler/AttributeBase.rb` — `@@mode`, `mode`, `setMode`.
+- `docs/syntaxmesh/decisoes/README.md` — template.
+- Seção 4.1 deste documento.
+
+#### Fora de escopo
+
+- Implementação — subfase 6.1.
+
+#### Critério de aceite
+
+- ADR 014 criado.
+- Tabela atualizada.
+
+---
+
+### 3.1 — `AttributeBase`, `ListAttributeBase`, `AttributeOverwrite`
+
+#### Contexto
+
+A classe base de todo o sistema de atributos. Define:
+- Armazenamento de valor via container.
+- Flags `provided`, `inherited`.
+- Modo global.
+- Métodos de leitura/escrita.
+- Conversões `to_s`, `to_num`, `to_sort`, `to_rti`, `to_tjp`.
+- `quotedString` para strings com newline.
+
+#### Objetivo
+
+Implementar `AttributeBase`, `ListAttributeBase` e `AttributeOverwrite` com testes cobrindo todos os modos.
+
+#### Arquivos
+
+- `packages/core/src/attributes/attribute-container.ts` (interface)
+- `packages/core/src/attributes/attribute-base.ts`
+- `packages/core/src/attributes/list-attribute-base.ts`
+- `packages/core/src/attributes/errors.ts` (`AttributeOverwrite`, `NotYetImplementedError`)
+- `packages/core/src/attributes/__test__/attribute-base_test.ts`
+- `packages/core/src/attributes/__test__/list-attribute-base_test.ts`
+
+#### Requisitos
+
+**`AttributeContainer`:**
+
+- [ ] `getStoredValue(attributeId: string): unknown`.
+- [ ] `setStoredValue(attributeId: string, value: unknown): void`.
+
+**`AttributeBase<T>`:**
+
+- [ ] `constructor(property: unknown, type: AttributeDefinition, container: AttributeContainer)`.
+- [ ] `protected readonly property: unknown`.
+- [ ] `protected readonly type: AttributeDefinition`.
+- [ ] `protected readonly container: AttributeContainer`.
+- [ ] `provided: boolean` (init `false`).
+- [ ] `inherited: boolean` (init `false`).
+- [ ] `static get mode(): AttributeMode`.
+- [ ] `static setMode(mode: AttributeMode): void`.
+- [ ] `reset(): void` — escreve `deepClone(type.default)` no container, zera `provided`/`inherited`.
+- [ ] `inherit(value: T): void` — `inherited = true`, escreve `deepClone(value)`.
+- [ ] `set(value: T): void` — atualiza flag conforme mode, escreve valor.
+- [ ] `get(): T` — lê do container.
+- [ ] `get value(): T` — alias de `get()`.
+- [ ] `get id(): string` — `type.id`.
+- [ ] `get name(): string` — `type.name`.
+- [ ] `isNil(): boolean` — `null`/`undefined`/Array vazio.
+- [ ] `isList(): boolean` — `false` (subclasses sobrescrevem).
+- [ ] `to_s(query?: unknown): string` — `String(get())`.
+- [ ] `to_num(): number | null` — número ou `null`.
+- [ ] `to_sort(): unknown` — número | string | `null`.
+- [ ] `to_rti(query: unknown): RichTextIntermediate | null` — retorna `null` por padrão.
+- [ ] `to_tjp(): string` — `${type.id} ${get()}`.
+- [ ] `protected quotedString(str: string): string` — se contém `\n`, usa `-8<-\n...\n->8-`; senão `"..."` com escapes.
+
+**`ListAttributeBase<T>`:**
+
+- [ ] Estende `AttributeBase<T[]>`.
+- [ ] `to_s(): string` — `get().join(', ')`.
+- [ ] `isList(): boolean` — `true`.
+
+**Erros:**
+
+- [ ] `NotYetImplementedError extends TjError` — para métodos stub.
+- [ ] `AttributeOverwrite extends TjArgumentError`.
+
+#### Referências
+
+- `docs/taskjuggler/lib/taskjuggler/AttributeBase.rb` — arquivo completo.
+- `docs/tj3-engine/06-blueprint-engine5.md` — §6.3 `markProvided`.
+
+#### Fora de escopo
+
+- Subclasses concretas (6.3+).
+- `PropertyTreeNode`/`ScenarioData` (Fase 4) — usamos `MockContainer` nos testes.
+
+#### Critério de aceite
+
+```ts
+const container = new MockContainer();
+const attr = new StringAttribute("property", def, container);
+
+attr.set("hello");
+assertEquals(attr.get(), "hello");
+assert(attr.provided);
+assert(!attr.inherited);
+
+AttributeBase.setMode(1);
+attr.inherit("inherited-value");
+assert(attr.inherited);
+assertEquals(attr.get(), "inherited-value");
+```
+
+#### Testes
+
+- `attribute-base_test.ts`:
+  - `describe("AttributeBase")`
+    - `it("reset escreve default no container")`.
+    - `it("set em mode 0 marca provided")`.
+    - `it("set em mode 1 marca inherited")`.
+    - `it("set em mode 2 não marca nenhum")`.
+    - `it("inherit marca inherited e clona valor")`.
+    - `it("isNil para null/undefined/array vazio")`.
+    - `it("isList é false")`.
+    - `it("to_s para número/string")`.
+    - `it("to_num para número")`.
+    - `it("to_num para string retorna null")`.
+    - `it("quotedString sem newline")`.
+    - `it("quotedString com newline usa -8<-")`.
+    - `it("quotedString escapa aspas")`.
+- `list-attribute-base_test.ts`:
+  - `describe("ListAttributeBase")`
+    - `it("isList é true")`.
+    - `it("to_s junta com vírgula")`.
+
+---
+
+### 3.2 — `AttributeDefinition`
+
+#### Contexto
+
+`AttributeDefinition` é o blueprint imutável de cada atributo. Cada `PropertySet` registra suas definições; cada `PropertyTreeNode` as consulta para criar atributos sob demanda.
+
+Formato da tupla (8 campos):
+1. `id: string`
+2. `name: string`
+3. `objClass: AttributeType` (construtor da subclasse)
+4. `inheritedFromParent: boolean`
+5. `inheritedFromProject: boolean`
+6. `scenarioSpecific: boolean`
+7. `default: unknown`
+8. `userDefined: boolean` (opcional, default `false`)
+
+#### Objetivo
+
+Implementar `AttributeDefinition` imutável + enum `AttributeType` (identificador do construtor).
+
+#### Arquivos
+
+- `packages/core/src/attributes/attribute-definition.ts`
+- `packages/core/src/attributes/attribute-type.ts`
+- `packages/core/src/attributes/__test__/attribute-definition_test.ts`
+
+#### Requisitos
+
+- [ ] `AttributeDefinition` com todos os 8 campos `readonly`.
+- [ ] `Object.freeze(this)` no construtor.
+- [ ] `AttributeType` enum com todos os tipos:
+  `AccountAttribute`, `AccountCreditListAttribute`, `AllocationAttribute`, `BookingListAttribute`, `BooleanAttribute`, `ChargeListAttribute`, `ChargeSetListAttribute`, `ColumnListAttribute`, `DateAttribute`, `DefinitionListAttribute`, `DependencyListAttribute`, `DurationAttribute`, `IntegerAttribute`, `FlagListAttribute`, `FloatAttribute`, `FormatListAttribute`, `JournalSortListAttribute`, `TimeIntervalListAttribute`, `LeaveAllowanceListAttribute`, `LeaveListAttribute`, `LimitsAttribute`, `LogicalExpressionAttribute`, `LogicalExpressionListAttribute`, `NodeListAttribute`, `PropertyAttribute`, `RealFormatAttribute`, `ReferenceAttribute`, `ResourceListAttribute`, `RichTextAttribute`, `ScenarioListAttribute`, `ShiftAssignmentsAttribute`, `SortListAttribute`, `StringAttribute`, `SymbolAttribute`, `SymbolListAttribute`, `TaskDepListAttribute`, `TaskListAttribute`, `WorkingHoursAttribute`.
+- [ ] `AttributeDefinition` valida `id` (não vazio), `name` (não vazio), `objClass` (definido).
+
+#### Referências
+
+- `docs/taskjuggler/lib/taskjuggler/AttributeDefinition.rb` — arquivo completo.
+- `docs/tj3-engine/02-bluprint-engine1.md` — §2.4.
+
+#### Fora de escopo
+
+- Registro em `PropertySet` — Fase 4.
+
+#### Critério de aceite
+
+```ts
+const def = new AttributeDefinition(
+  "effort", "Effort", AttributeType.DurationAttribute,
+  false, false, true, 0,
+);
+assert(Object.isFrozen(def));
+```
+
+#### Testes
+
+- `attribute-definition_test.ts`:
+  - `describe("AttributeDefinition")`
+    - `it("armazena todos os campos")`.
+    - `it("é imutável após criação")`.
+    - `it("rejeita id vazio")`.
+    - `it("rejeita name vazio")`.
+    - `it("userDefined default false")`.
+    - `it("userDefined true quando passado")`.
+
+---
+
+### 3.3 — Atributos escalares e temporais
+
+#### Contexto
+
+Primeiras subclasses concretas. Trivialmente simples mas usadas em todo lugar.
+
+Subclasses: `StringAttribute`, `IntegerAttribute`, `FloatAttribute`, `BooleanAttribute`, `SymbolAttribute`, `DateAttribute`, `DurationAttribute`.
+
+#### Objetivo
+
+Implementar cada atributo com `to_s`, `to_tjp` específicos e `tjpId` estático.
+
+#### Arquivos
+
+- `packages/core/src/attributes/scalar/string-attribute.ts`
+- `packages/core/src/attributes/scalar/integer-attribute.ts`
+- `packages/core/src/attributes/scalar/float-attribute.ts`
+- `packages/core/src/attributes/scalar/boolean-attribute.ts`
+- `packages/core/src/attributes/scalar/symbol-attribute.ts`
+- `packages/core/src/attributes/scalar/date-attribute.ts`
+- `packages/core/src/attributes/scalar/duration-attribute.ts`
+- `packages/core/src/attributes/__test__/scalar-attributes_test.ts`
+
+#### Requisitos
+
+**`StringAttribute`:**
+
+- [ ] `tjpId = "text"`.
+- [ ] `to_tjp()` → `${id} ${quotedString(get())}`.
+
+**`IntegerAttribute`:**
+
+- [ ] `tjpId = "integer"`.
+- [ ] `to_tjp()` herda da base (default).
+
+**`FloatAttribute`:**
+
+- [ ] `tjpId = "number"`.
+- [ ] `to_tjp()` → `${id} ${get()}`.
+
+**`BooleanAttribute`:**
+
+- [ ] `tjpId = "boolean"`.
+- [ ] `to_s()` → `"true"` / `"false"`.
+- [ ] `to_tjp()` → `${id} yes` / `${id} no`.
+
+**`SymbolAttribute`:**
+
+- [ ] `tjpId = "symbol"`.
+
+**`DateAttribute`:**
+
+- [ ] `tjpId = "date"`.
+- [ ] `to_s(query?)` → se valor existe, `value.to_s(query?.timeFormat ?? "%Y-%m-%d")`; senão `"Error"`.
+- [ ] `to_tjp()` herda da base.
+- [ ] Nota: `query` é `unknown` nesta fase (Fase 11 define `Query`).
+
+**`DurationAttribute`:**
+
+- [ ] `tjpId = "duration"`.
+- [ ] `to_s(query?)` → se query, `query.scaleDuration(project.slotsToDays(get()))`; senão `get().toString()`.
+- [ ] `to_tjp()` → `${id} ${get()}h`.
+- [ ] Nota: `query` e `project` são `unknown` nesta fase; o método lança se chamado sem query (comportamento documentado).
+
+#### Referências
+
+- `docs/taskjuggler/lib/taskjuggler/Attributes.rb` — classes correspondentes.
+- `docs/tj3-engine/06-blueprint-engine5.md` — §6.2.
+
+#### Fora de escopo
+
+- `DurationAttribute` com `query` real — Fase 11.
+
+#### Critério de aceite
+
+```ts
+const s = new StringAttribute(p, stringDef, c);
+s.set("hello\nworld");
+assertEquals(s.to_tjp(), `text -8<-\nhello\nworld\n->8-`);
+
+const b = new BooleanAttribute(p, boolDef, c);
+b.set(true);
+assertEquals(b.to_tjp(), "active yes");
+
+const d = new DateAttribute(p, dateDef, c);
+d.set(TjTime.fromString("2026-01-01"));
+assertEquals(d.to_s(), "2026-01-01");
+```
+
+#### Testes
+
+- `scalar-attributes_test.ts`:
+  - `describe("StringAttribute")`
+    - `it("to_s")`.
+    - `it("to_tjp simples")`.
+    - `it("to_tjp multiline")`.
+  - `describe("IntegerAttribute")` — `it("to_tjp")`.
+  - `describe("FloatAttribute")` — `it("to_tjp")`.
+  - `describe("BooleanAttribute")`
+    - `it("to_s true/false")`.
+    - `it("to_tjp yes/no")`.
+  - `describe("SymbolAttribute")` — `it("tjpId")`.
+  - `describe("DateAttribute")`
+    - `it("to_s com valor")`.
+    - `it("to_s sem valor retorna Error")`.
+    - `it("respeita timeFormat customizado")`.
+  - `describe("DurationAttribute")`
+    - `it("to_s sem query")`.
+    - `it("to_tjp")`.
+
+---
+
+### 3.4 — Atributos de referência
+
+#### Contexto
+
+Atributos que referenciam outras entidades: `PropertyAttribute`, `AccountAttribute`, `ReferenceAttribute`.
+
+#### Objetivo
+
+Portar os 3 atributos de referência.
+
+#### Arquivos
+
+- `packages/core/src/attributes/reference/property-attribute.ts`
+- `packages/core/src/attributes/reference/account-attribute.ts`
+- `packages/core/src/attributes/reference/reference-attribute.ts`
+- `packages/core/src/attributes/__test__/reference-attributes_test.ts`
+
+#### Requisitos
+
+**`PropertyAttribute`:**
+
+- [ ] `tjpId = "property"`.
+
+**`AccountAttribute`:**
+
+- [ ] `tjpId = "account"`.
+- [ ] `to_s()` → `get()?.id ?? ''`.
+- [ ] `to_tjp()` → `get()?.id ?? ''`.
+
+**`ReferenceAttribute`:**
+
+- [ ] `tjpId = "reference"`.
+- [ ] Valor é `[url, [label]?]`.
+- [ ] `url()` → `get()?.[0]`.
+- [ ] `label()` → `get()?.[1]?.[0] ?? get()?.[0] ?? null`.
+- [ ] `to_s()` → `url() ?? ''`.
+- [ ] `to_tjp()` → `${id} "${url}"${label ? ` { label "${label}" }` : ''}`.
+- [ ] `to_rti(query)` → lança `NotYetImplementedError` (Fase 12).
+
+#### Referências
+
+- `docs/taskjuggler/lib/taskjuggler/Attributes.rb` — `PropertyAttribute`, `AccountAttribute`, `ReferenceAttribute`.
+
+#### Fora de escopo
+
+- `ReferenceAttribute.to_rti` — Fase 12.
+
+#### Critério de aceite
+
+```ts
+const acc = new AccountAttribute(p, def, c);
+acc.set({ id: "cost.dev" });
+assertEquals(acc.to_s(), "cost.dev");
+
+const ref = new ReferenceAttribute(p, def, c);
+ref.set(["http://example.com", ["Example"]]);
+assertEquals(ref.to_tjp(), `foo "http://example.com" { label "Example" }`);
+```
+
+#### Testes
+
+- `reference-attributes_test.ts`:
+  - `describe("AccountAttribute")`
+    - `it("to_s com conta")`.
+    - `it("to_s sem conta retorna vazio")`.
+  - `describe("ReferenceAttribute")`
+    - `it("url e label")`.
+    - `it("to_s retorna url")`.
+    - `it("to_tjp sem label")`.
+    - `it("to_tjp com label")`.
+    - `it("to_rti lança NotYetImplementedError")`.
+
+---
+
+### 3.5 — Listas simples e de propriedades
+
+#### Contexto
+
+Atributos de lista que armazenam valores primitivos (`FlagList`, `SymbolList`, `ScenarioList`, `NodeList`) ou referências a outras propriedades (`ResourceList`, `TaskList`).
+
+#### Objetivo
+
+Portar 6 atributos de lista.
+
+#### Arquivos
+
+- `packages/core/src/attributes/list/flag-list-attribute.ts`
+- `packages/core/src/attributes/list/symbol-list-attribute.ts`
+- `packages/core/src/attributes/list/scenario-list-attribute.ts`
+- `packages/core/src/attributes/list/node-list-attribute.ts`
+- `packages/core/src/attributes/list/resource-list-attribute.ts`
+- `packages/core/src/attributes/list/task-list-attribute.ts`
+- `packages/core/src/attributes/__test__/list-simple_test.ts`
+
+#### Requisitos
+
+**`FlagListAttribute`:**
+
+- [ ] `tjpId = "flaglist"`.
+- [ ] `to_s()` → `get().join(', ')`.
+- [ ] `to_tjp()` → `flags ${get().join(', ')}`.
+
+**`SymbolListAttribute`:**
+
+- [ ] `tjpId = "symbollist"`.
+
+**`ScenarioListAttribute`:**
+
+- [ ] `tjpId = "scenarios"`.
+- [ ] `to_s()` → `get().join(', ')`.
+
+**`NodeListAttribute`:**
+
+- [ ] Sem `tjpId` explícito.
+
+**`ResourceListAttribute`:**
+
+- [ ] `tjpId = "resourcelist"`.
+- [ ] `to_s()` → `get().map(r => r.fullId).join(', ')`.
+- [ ] `to_tjp()` → `${id} ${get().map(r => r.fullId).join(', ')}`.
+- [ ] `to_rti(query)` → lança `NotYetImplementedError` (Fase 12).
+
+**`TaskListAttribute`:**
+
+- [ ] `tjpId = "tasklist"`.
+- [ ] `to_s()` → `get().map(t => t.fullId).join(', ')`.
+- [ ] `to_tjp()` → idem.
+
+#### Referências
+
+- `docs/taskjuggler/lib/taskjuggler/Attributes.rb` — classes correspondentes.
+
+#### Fora de escopo
+
+- `ResourceListAttribute.to_rti` — Fase 12.
+
+#### Critério de aceite
+
+```ts
+const fl = new FlagListAttribute(p, def, c);
+fl.set(["critical", "urgent"]);
+assertEquals(fl.to_tjp(), "flags critical, urgent");
+assertEquals(fl.isList(), true);
+```
+
+#### Testes
+
+- `list-simple_test.ts`:
+  - `describe("FlagListAttribute")`
+    - `it("to_s")`, `it("to_tjp")`, `it("isList true")`.
+  - `describe("SymbolListAttribute")` — `it("tjpId")`.
+  - `describe("ScenarioListAttribute")` — `it("to_s")`.
+  - `describe("ResourceListAttribute")`
+    - `it("to_s junta fullIds")`.
+    - `it("to_rti lança")`.
+  - `describe("TaskListAttribute")` — `it("to_s junta fullIds")`.
+
+---
+
+### 3.6 — Dependências (`DependencyListAttribute`, `TaskDepListAttribute`)
+
+#### Contexto
+
+Atributos que armazenam dependências entre tarefas.
+
+`DependencyListAttribute` — lista de `TaskDependency` (com `task`, `onEnd`, `gapDuration`, `gapLength`).
+
+`TaskDepListAttribute` — lista de tuplas `[task, onEnd]` (usada em `startpreds`, `startsuccs`, etc.).
+
+**Nota:** `TaskDependency` é da Fase 7. Nesta fase, usamos `unknown` no tipo e só implementamos `to_s`/`to_tjp` que acessam `.task.fullId`.
+
+#### Objetivo
+
+Portar os 2 atributos.
+
+#### Arquivos
+
+- `packages/core/src/attributes/list/dependency-list-attribute.ts`
+- `packages/core/src/attributes/list/task-dep-list-attribute.ts`
+- `packages/core/src/attributes/__test__/dependency-attributes_test.ts`
+
+#### Requisitos
+
+**`DependencyListAttribute`:**
+
+- [ ] `tjpId = "dependencylist"`.
+- [ ] `to_s()` → `get().filter(d => d.task).map(d => d.task.fullId).join(', ')`.
+- [ ] `to_tjp()` → `${id} ${get().map(d => d.task.fullId).join(', ')}`.
+
+**`TaskDepListAttribute`:**
+
+- [ ] `tjpId = "taskdeplist"`.
+- [ ] `to_s()` → `get().map(([t, _]) => t.fullId).join(', ')`.
+- [ ] `to_tjp()` → idem.
+
+#### Referências
+
+- `docs/taskjuggler/lib/taskjuggler/Attributes.rb` — classes correspondentes.
+
+#### Fora de escopo
+
+- `TaskDependency` — Fase 7.
+
+#### Critério de aceite
+
+```ts
+const dl = new DependencyListAttribute(p, def, c);
+dl.set([
+  { task: { fullId: "t1" }, onEnd: true },
+  { task: { fullId: "t2" }, onEnd: false },
+]);
+assertEquals(dl.to_s(), "t1, t2");
+```
+
+#### Testes
+
+- `dependency-attributes_test.ts`:
+  - `describe("DependencyListAttribute")`
+    - `it("to_s com task")`.
+    - `it("to_s filtra task null")`.
+    - `it("to_tjp")`.
+  - `describe("TaskDepListAttribute")`
+    - `it("to_s")`.
+    - `it("to_tjp")`.
+
+---
+
+### 3.7 — Financeiro (`ChargeListAttribute`, `ChargeSetListAttribute`, `AccountCreditListAttribute`)
+
+#### Contexto
+
+Atributos financeiros que referenciam `Charge`, `ChargeSet` e `AccountCredit` (Fase 8).
+
+Nesta fase, os tipos são `unknown`; só implementamos métodos que acessam campos estáveis (`to_s` de `ChargeSetList` usa `.to_s` do próprio `ChargeSet`).
+
+#### Objetivo
+
+Portar os 3 atributos.
+
+#### Arquivos
+
+- `packages/core/src/attributes/list/charge-list-attribute.ts`
+- `packages/core/src/attributes/list/charge-set-list-attribute.ts`
+- `packages/core/src/attributes/list/account-credit-list-attribute.ts`
+- `packages/core/src/attributes/__test__/financial-attributes_test.ts`
+
+#### Requisitos
+
+**`ChargeListAttribute`:**
+
+- [ ] `tjpId = "charge"`.
+- [ ] `to_s()` → `get().join(', ')`.
+- [ ] `to_tjp()` herda da base (default).
+
+**`ChargeSetListAttribute`:**
+
+- [ ] `tjpId = "chargeset"`.
+- [ ] `to_s()` → `get().map(i => i.to_s()).join(', ')`.
+- [ ] `to_tjp()` → `${id} ${get().map(i => i.to_s()).join(', ')}`.
+
+**`AccountCreditListAttribute`:**
+
+- [ ] `tjpId = "credits"`.
+- [ ] Constructor inicializa `set([])` (default é Array vazio).
+
+#### Referências
+
+- `docs/taskjuggler/lib/taskjuggler/Attributes.rb` — classes correspondentes.
+- `docs/tj3-engine/10-blueprint-finance.md` — contexto financeiro.
+
+#### Fora de escopo
+
+- `Charge`, `ChargeSet`, `AccountCredit` — Fase 8.
+
+#### Critério de aceite
+
+```ts
+const csl = new ChargeSetListAttribute(p, def, c);
+csl.set([{ to_s: () => "cost.dev 70%, cost.infra 30%" }]);
+assertEquals(csl.to_s(), "cost.dev 70%, cost.infra 30%");
+```
+
+#### Testes
+
+- `financial-attributes_test.ts`:
+  - `describe("ChargeListAttribute")` — `it("to_s")`.
+  - `describe("ChargeSetListAttribute")`
+    - `it("to_s chama to_s de cada")`.
+    - `it("to_tjp")`.
+  - `describe("AccountCreditListAttribute")`
+    - `it("default é array vazio")`.
+
+---
+
+### 3.8 — Alocação e booking (`AllocationAttribute`, `BookingListAttribute`)
+
+#### Contexto
+
+`AllocationAttribute` — lista de `Allocation` (Fase 7). `to_s` complexo com seleção de modo.
+
+`BookingListAttribute` — lista de `Booking` (Fase 7). `to_s` junta `.to_s()`; `to_tjp` lança (é caso especial).
+
+#### Objetivo
+
+Portar os 2 atributos.
+
+#### Arquivos
+
+- `packages/core/src/attributes/list/allocation-attribute.ts`
+- `packages/core/src/attributes/list/booking-list-attribute.ts`
+- `packages/core/src/attributes/__test__/allocation-attributes_test.ts`
+
+#### Requisitos
+
+**`AllocationAttribute`:**
+
+- [ ] `tjpId = "allocation"`.
+- [ ] `to_s()`:
+  - Itera `get()`.
+  - Para cada allocation: `[ id1, id2 ] select by <mode> [mandatory] [persistent]`.
+  - Modos: `order`, `lowprob`, `lowload`, `hiload`, `random`.
+- [ ] `to_tjp()` — lança `NotYetImplementedError` (comentário `# TODO: incomplete` no Ruby).
+
+**`BookingListAttribute`:**
+
+- [ ] `tjpId = "bookinglist"`.
+- [ ] `to_s()` → `get().map(b => b.to_s()).join(', ')`.
+- [ ] `to_tjp()` → lança `NotYetImplementedError` (Ruby: `raise "Don't call this method..."`).
+
+#### Referências
+
+- `docs/taskjuggler/lib/taskjuggler/Attributes.rb` — classes.
+- `docs/taskjuggler/lib/taskjuggler/Allocation.rb`.
+
+#### Fora de escopo
+
+- `Allocation`, `Booking` — Fase 7.
+
+#### Critério de aceite
+
+```ts
+const al = new AllocationAttribute(p, def, c);
+al.set([{
+  candidates: [{ fullId: "r1" }, { fullId: "r2" }],
+  selectionMode: 1,
+  mandatory: false,
+  persistent: true,
+}]);
+assertEquals(al.to_s(), "[ r1, r2 ] select by lowprob  persistent ");
+```
+
+#### Testes
+
+- `allocation-attributes_test.ts`:
+  - `describe("AllocationAttribute")`
+    - `it("to_s com 1 candidato")`.
+    - `it("to_s com 2 candidatos")`.
+    - `it("to_s com mandatory")`.
+    - `it("to_s com persistent")`.
+    - `it("to_tjp lança")`.
+  - `describe("BookingListAttribute")`
+    - `it("to_s")`.
+    - `it("to_tjp lança")`.
+
+---
+
+### 3.9 — Expressões lógicas (`LogicalExpressionAttribute`, `LogicalExpressionListAttribute`)
+
+#### Contexto
+
+Atributos que armazenam `LogicalExpression` (Fase 11). Nesta fase, são wrappers triviais; só implementamos os campos e `tjpId`.
+
+#### Objetivo
+
+Portar os 2 atributos.
+
+#### Arquivos
+
+- `packages/core/src/attributes/logical/logical-expression-attribute.ts`
+- `packages/core/src/attributes/logical/logical-expression-list-attribute.ts`
+- `packages/core/src/attributes/__test__/logical-attributes_test.ts`
+
+#### Requisitos
+
+**`LogicalExpressionAttribute`:**
+
+- [ ] `tjpId = "logicalexpressions"`.
+- [ ] Estende `AttributeBase<unknown>`.
+
+**`LogicalExpressionListAttribute`:**
+
+- [ ] `tjpId = "logicalexpressions"`.
+- [ ] Estende `ListAttributeBase<unknown>`.
+
+#### Referências
+
+- `docs/taskjuggler/lib/taskjuggler/Attributes.rb` — classes.
+
+#### Fora de escopo
+
+- `LogicalExpression`, `LogicalOperation` — Fase 11.
+
+#### Critério de aceite
+
+```ts
+const la = new LogicalExpressionAttribute(p, def, c);
+assertEquals(la.tjpId, "logicalexpressions");
+```
+
+#### Testes
+
+- `logical-attributes_test.ts`:
+  - `describe("LogicalExpressionAttribute")` — `it("tjpId")`.
+  - `describe("LogicalExpressionListAttribute")` — `it("isList true")`.
+
+---
+
+### 3.10 — Tempo complexo (TimeIntervalList, LeaveList, LeaveAllowanceList, Limits, ShiftAssignments, WorkingHours)
+
+#### Contexto
+
+Atributos que referenciam classes da Fase 6/7/16.
+
+**Nota:** alguns dependem de `Leave`, `Limits`, `ShiftAssignments` que **não existem ainda**. Implementamos apenas os wrappers triviais; os métodos complexos (`to_tjp` do `WorkingHoursAttribute`, `LimitsAttribute`, `ShiftAssignmentsAttribute`) ficam para as fases correspondentes.
+
+#### Objetivo
+
+Portar os 6 atributos com comportamento mínimo.
+
+#### Arquivos
+
+- `packages/core/src/attributes/time/time-interval-list-attribute.ts`
+- `packages/core/src/attributes/time/leave-list-attribute.ts`
+- `packages/core/src/attributes/time/leave-allowance-list-attribute.ts`
+- `packages/core/src/attributes/time/limits-attribute.ts`
+- `packages/core/src/attributes/time/shift-assignments-attribute.ts`
+- `packages/core/src/attributes/time/working-hours-attribute.ts`
+- `packages/core/src/attributes/__test__/time-attributes_test.ts`
+
+#### Requisitos
+
+**`TimeIntervalListAttribute`:**
+
+- [ ] `tjpId = "intervallist"`.
+- [ ] `to_s()` → `get().map(i => i.to_s()).join(', ')`.
+- [ ] `to_tjp()` → idem.
+
+**`LeaveListAttribute`:**
+
+- [ ] `tjpId = "leave"`.
+- [ ] `to_tjp()` → `leaves ${get().join(",\n")}`.
+- [ ] **Nota:** `Leave` é da Fase 16; tipo é `unknown` nesta fase.
+
+**`LeaveAllowanceListAttribute`:**
+
+- [ ] Sem `tjpId`.
+- [ ] Estende `ListAttributeBase<unknown>`.
+
+**`LimitsAttribute`:**
+
+- [ ] `tjpId = "limits"`.
+- [ ] Constructor: se `get()` existe, chama `value.setProject(property.project)`.
+- [ ] `to_tjp()` → lança `NotYetImplementedError` (Fase 7).
+
+**`ShiftAssignmentsAttribute`:**
+
+- [ ] `tjpId = "shifts"`.
+- [ ] Constructor: se `get()` existe, seta `value.project = property.project`.
+- [ ] `to_tjp()` → lança `NotYetImplementedError` (Fase 7).
+
+**`WorkingHoursAttribute`:**
+
+- [ ] `tjpId = "workinghours"`.
+- [ ] `to_tjp()` → itera 7 dias; chama `get().getWorkingHours(day)`; formata intervalos.
+- [ ] **Nota:** `WorkingHours` **existe** (Fase 2). Podemos implementar `to_tjp` completamente.
+
+#### Referências
+
+- `docs/taskjuggler/lib/taskjuggler/Attributes.rb` — classes.
+- `docs/taskjuggler/lib/taskjuggler/WorkingHours.rb` — `getWorkingHours`.
+
+#### Fora de escopo
+
+- `Limits`, `ShiftAssignments`, `Leave` — Fases 6, 7, 16.
+
+#### Critério de aceite
+
+```ts
+const wha = new WorkingHoursAttribute(p, def, c);
+const wh = new WorkingHours(3600, start, end, "UTC");
+wh.setWorkingHours(1, [[32400, 61200]]);
+wha.set(wh);
+assert(wha.to_tjp().includes("workinghours mon 9:00 - 17:00"));
+```
+
+#### Testes
+
+- `time-attributes_test.ts`:
+  - `describe("TimeIntervalListAttribute")` — `it("to_s")`.
+  - `describe("LeaveListAttribute")` — `it("tjpId")`.
+  - `describe("LimitsAttribute")`
+    - `it("constructor chama setProject se valor existe")`.
+    - `it("to_tjp lança")`.
+  - `describe("ShiftAssignmentsAttribute")`
+    - `it("constructor seta project")`.
+    - `it("to_tjp lança")`.
+  - `describe("WorkingHoursAttribute")`
+    - `it("to_tjp com 1 dia")`.
+    - `it("to_tjp com off")`.
+    - `it("to_tjp com múltiplos intervalos")`.
+
+---
+
+### 3.11 — Formatação e colunas (RealFormat, ColumnList, FormatList, SortList, JournalSortList)
+
+#### Contexto
+
+Atributos usados em reports para formatação e ordenação.
+
+#### Objetivo
+
+Portar os 5 atributos.
+
+#### Arquivos
+
+- `packages/core/src/attributes/format/real-format-attribute.ts`
+- `packages/core/src/attributes/format/column-list-attribute.ts`
+- `packages/core/src/attributes/format/format-list-attribute.ts`
+- `packages/core/src/attributes/format/sort-list-attribute.ts`
+- `packages/core/src/attributes/format/journal-sort-list-attribute.ts`
+- `packages/core/src/attributes/__test__/format-attributes_test.ts`
+
+#### Requisitos
+
+**`RealFormatAttribute`:**
+
+- [ ] Sem `tjpId` explícito.
+- [ ] Estende `AttributeBase<RealFormat>`.
+
+**`ColumnListAttribute`:**
+
+- [ ] `tjpId = "columns"`.
+- [ ] `to_s()` → lança `NotYetImplementedError` (Ruby: `"TODO"`).
+
+**`FormatListAttribute`:**
+
+- [ ] Sem `tjpId`.
+- [ ] `to_s()` → `get().join(', ')`.
+
+**`SortListAttribute`:**
+
+- [ ] `tjpId = "sorting"`.
+- [ ] Estende `ListAttributeBase<unknown>`.
+
+**`JournalSortListAttribute`:**
+
+- [ ] `tjpId = "journalsorting"`.
+- [ ] Estende `ListAttributeBase<unknown>`.
+
+#### Referências
+
+- `docs/taskjuggler/lib/taskjuggler/Attributes.rb` — classes.
+
+#### Fora de escopo
+
+- Reports — Fase 14.
+
+#### Critério de aceite
+
+```ts
+const fla = new FormatListAttribute(p, def, c);
+fla.set(["csv", "html"]);
+assertEquals(fla.to_s(), "csv, html");
+```
+
+#### Testes
+
+- `format-attributes_test.ts`:
+  - `describe("RealFormatAttribute")` — `it("armazena RealFormat")`.
+  - `describe("ColumnListAttribute")`
+    - `it("tjpId")`.
+    - `it("to_s lança")`.
+  - `describe("FormatListAttribute")` — `it("to_s")`.
+  - `describe("SortListAttribute")` — `it("tjpId")`.
+  - `describe("JournalSortListAttribute")` — `it("tjpId")`.
+
+---
+
+### 3.12 — Ricos (`RichTextAttribute`, `DefinitionListAttribute`)
+
+#### Contexto
+
+`RichTextAttribute` armazena `RichTextIntermediate` (Fase 12). Nesta fase, definimos a interface de port e o wrapper.
+
+`DefinitionListAttribute` é um `ListAttributeBase` sem lógica específica.
+
+#### Objetivo
+
+Portar os 2 atributos com interface de port.
+
+#### Arquivos
+
+- `packages/core/src/format/rich-text-port.ts` (novo — interfaces)
+- `packages/core/src/attributes/rich/rich-text-attribute.ts`
+- `packages/core/src/attributes/list/definition-list-attribute.ts`
+- `packages/core/src/attributes/__test__/rich-attributes_test.ts`
+
+#### Requisitos
+
+**`rich-text-port.ts`:**
+
+- [ ] Interface `RichTextIntermediate` (métodos usados por atributos).
+- [ ] Interface `RichTextFactory` (opcional, não usada nesta fase).
+
+**`RichTextAttribute`:**
+
+- [ ] `tjpId = "richtext"`.
+- [ ] `inputText(): string` → `get()?.richText.inputText ?? ''`.
+- [ ] `to_s()` → `get()?.to_s() ?? ''`.
+- [ ] `to_tjp()` → `${id} ${quotedString(get().richText.inputText)}`.
+
+**`DefinitionListAttribute`:**
+
+- [ ] Estende `ListAttributeBase<unknown>` (sem `tjpId`).
+
+#### Referências
+
+- `docs/taskjuggler/lib/taskjuggler/Attributes.rb` — classes.
+- `docs/tj3-engine/06-blueprint-engine5.md` — §6.2 `RichTextAttribute`.
+
+#### Fora de escopo
+
+- `RichText` real — Fase 12.
+
+#### Critério de aceite
+
+```ts
+const rta = new RichTextAttribute(p, def, c);
+rta.set({
+  richText: { inputText: "Hello world" },
+  to_s: () => "Hello world",
+});
+assertEquals(rta.inputText(), "Hello world");
+assertEquals(rta.to_tjp(), `note "Hello world"`);
+```
+
+#### Testes
+
+- `rich-attributes_test.ts`:
+  - `describe("RichTextAttribute")`
+    - `it("inputText com valor")`.
+    - `it("inputText sem valor retorna vazio")`.
+    - `it("to_s")`.
+    - `it("to_tjp")`.
+    - `it("to_tjp multiline")`.
+  - `describe("DefinitionListAttribute")` — `it("isList true")`.
+
+---
+
+### 3.13 — `deepClone` utility
+
+#### Contexto
+
+Ruby usa `Object#deep_clone` (custom, em `deep_copy.rb`). Em TS, implementamos uma função standalone.
+
+#### Objetivo
+
+Implementar `deepClone<T>` e testar exaustivamente.
+
+#### Arquivos
+
+- `packages/core/src/utils/deep-clone.ts`
+- `packages/core/tests/utils/deep-clone_test.ts`
+
+#### Requisitos
+
+- [ ] `export function deepClone<T>(value: T): T`.
+- [ ] Regras:
+  - `null`/`undefined` → retorna valor.
+  - Primitivos (`number`, `string`, `boolean`, `bigint`, `symbol`) → retorna valor.
+  - `TjTime` → retorna `value` (imutável, mas checagem explícita).
+  - `RealFormat` → retorna `value`.
+  - Objetos com método `deepClone()` → chama o método.
+  - Objetos com `deep_clone()` (compatibilidade Ruby) → chama o método.
+  - `Array` → recursivo em cada elemento.
+  - `Map` → novo `Map` com valores clonados.
+  - `Set` → novo `Set` com valores clonados.
+  - Fallback → `structuredClone(value)`.
+
+#### Referências
+
+- `docs/taskjuggler/lib/taskjuggler/deep_copy.rb` — arquivo completo.
+
+#### Fora de escopo
+
+- Objetos circulares — aceito como limitação (`structuredClone` lança).
+
+#### Critério de aceite
+
+```ts
+assertEquals(deepClone(42), 42);
+assertEquals(deepClone("hello"), "hello");
+
+const arr = [1, 2, [3, 4]];
+const cloned = deepClone(arr);
+assertNotSame(cloned, arr);
+assertNotSame(cloned[2], arr[2]);
+
+class WithDeepClone {
+  deepClone(): WithDeepClone { return new WithDeepClone(); }
+}
+const obj = new WithDeepClone();
+assertNotSame(deepClone(obj), obj);
+```
+
+#### Testes
+
+- `deep-clone_test.ts`:
+  - `describe("deepClone")`
+    - `it("retorna primitivos")`.
+    - `it("clona array raso")`.
+    - `it("clona array aninhado")`.
+    - `it("clona Map")`.
+    - `it("clona Set")`.
+    - `it("chama deepClone se existir")`.
+    - `it("chama deep_clone se existir")`.
+    - `it("fallback para structuredClone")`.
+    - `it("retorna mesmo TjTime")`.
+    - `it("retorna mesmo RealFormat")`.
+
+---
+
+### 3.14 — Infraestrutura de golden tests (attributes)
+
+#### Contexto
+
+Similar à Fase 2, usamos `tj3` para gerar referências. Aqui o foco é herança e propagação de cenários.
+
+#### Objetivo
+
+Criar `scripts/golden/attributes.rb` que gera um JSON com:
+- Projeto com 3 níveis de tasks (parent → child → grandchild).
+- Atributos herdados do projeto.
+- Atributos scenario-specific.
+- Default values.
+
+O teste TS instancia os mesmos atributos e verifica `provided`/`inherited`/`get()`.
+
+**Limitação:** `PropertyTreeNode` e `ScenarioData` são da Fase 4. Nesta fase, o golden test valida apenas o **estado interno** dos atributos (via MockContainer que rastreia qual id foi escrito).
+
+#### Arquivos
+
+- `scripts/golden/attributes.rb`
+- `scripts/golden/README.md` (atualizar)
+- `packages/core/tests/golden/attributes.golden.json` (gerado)
+- `packages/core/tests/golden/attributes_golden_test.ts`
+- `deno.jsonc` — atualizar task `golden:generate`
+
+#### Requisitos
+
+**Script Ruby:**
+
+- [ ] Importa `AttributeBase`, `AttributeDefinition`, `Attributes` da gem.
+- [ ] Gera casos como:
+  ```json
+  {
+    "cases": [
+      {
+        "description": "StringAttribute default vazio",
+        "type": "StringAttribute",
+        "default": "",
+        "operations": [
+          { "op": "get", "expected": "" },
+          { "op": "set", "value": "hello", "mode": 0 },
+          { "op": "get", "expected": "hello", "provided": true }
+        ]
+      },
+      {
+        "description": "IntegerAttribute herança de parent",
+        "type": "IntegerAttribute",
+        "default": 0,
+        "operations": [
+          { "op": "setMode", "value": 1 },
+          { "op": "inherit", "value": 500 },
+          { "op": "get", "expected": 500, "inherited": true }
+        ]
+      }
+    ]
+  }
+  ```
+
+**Teste TS:**
+
+- [ ] Lê o JSON.
+- [ ] Para cada caso: instancia o atributo correspondente, executa operações, compara `get()`, `provided`, `inherited`.
+- [ ] Cobertura mínima: 40 casos.
+
+**Task `golden:generate`:**
+
+- [ ] Adicionar `ruby scripts/golden/attributes.rb > packages/core/tests/golden/attributes.golden.json`.
+
+#### Referências
+
+- `docs/taskjuggler/lib/taskjuggler/AttributeBase.rb`.
+- `docs/taskjuggler/lib/taskjuggler/Attributes.rb`.
+- Fase 2, subfase 5.14 — infraestrutura base.
+
+#### Fora de escopo
+
+- Golden test de `PropertyTreeNode` — Fase 4.
+
+#### Critério de aceite
+
+```bash
+deno task golden:generate
+deno task test
+```
+
+- JSON com ≥ 40 casos.
+- Todos os golden tests passam.
+
+#### Testes
+
+- `attributes_golden_test.ts`:
+  - `describe("Golden attributes")` — itera casos.
+
+---
+
+## 6. Ordem de execução sugerida
+
+```text
+3.0  ADR 014
+      ↓
+3.13 deepClone utility        ← pode ser feito cedo, é independente
+      ↓
+3.1  AttributeBase + ListAttributeBase
+      ↓
+3.2  AttributeDefinition
+      ↓
+3.3  Escalares e temporais
+      ↓
+3.4  Referências
+      ↓
+3.5  Listas simples e de propriedades
+      ↓
+3.6  Dependências
+      ↓
+3.7  Financeiro
+      ↓
+3.8  Alocação e booking
+      ↓
+3.9  Expressões lógicas
+      ↓
+3.10 Tempo complexo
+      ↓
+3.11 Formatação
+      ↓
+3.12 Ricos
+      ↓
+3.14 Golden tests
+```
+
+Cada subfase fecha com `deno task check-all` verde.
+
+---
+
+## 7. Critério de conclusão da fase
+
+A Fase 3 é considerada concluída quando:
+
+```bash
+deno task check-all
+```
+
+passa, e:
+
+- [ ] `AttributeBase`, `ListAttributeBase`, `AttributeDefinition`, `AttributeOverwrite` implementados.
+- [ ] ~40 subclasses de atributo implementadas.
+- [ ] `deepClone` utility implementada.
+- [ ] Interface `AttributeContainer` definida.
+- [ ] Interface `RichTextIntermediate` definida (port).
+- [ ] **≥ 120 testes unitários**.
+- [ ] **≥ 40 golden tests**.
+- [ ] Nenhum `any` em `src/` (exceto onde justificado).
+- [ ] Nenhum import proibido em `packages/core/src/`.
+- [ ] ADR 014 criado.
+- [ ] `scripts/golden/attributes.rb` funcional.
+- [ ] `scripts/golden/README.md` atualizado.
+
+---
+
+## 8. Riscos e mitigações
+
+| Risco | Impacto | Mitigação |
+|---|---|---|
+| `mode` global causa bugs sutis em testes | Alto | `beforeEach`/`afterEach` resetando `AttributeBase.setMode(0)` |
+| Subclasses de atributo duplicam lógica | Médio | Revisar agrupamento antes de implementar |
+| `to_rti` stubs impedem testes completos | Médio | Documentar fases que completam; testar que lançam |
+| Interfaces de port divergem do `RichText` real | Médio | Revisar `rich-text-port.ts` na Fase 12 |
+| `WorkingHoursAttribute.to_tjp` diverge do Ruby | Médio | Golden test contra Ruby |
+| `deepClone` de objetos com referências circulares | Baixo | Aceito; documentado |
+| `AttributeDefinition` precisa de acesso a `project` | Médio | Adiar — Fase 4 define `PropertySet` |
+
+---
+
+## 9. Referências cruzadas
+
+### Arquivos Ruby (fonte primária)
+
+- `docs/taskjuggler/lib/taskjuggler/AttributeBase.rb`
+- `docs/taskjuggler/lib/taskjuggler/AttributeDefinition.rb`
+- `docs/taskjuggler/lib/taskjuggler/Attributes.rb`
+- `docs/taskjuggler/lib/taskjuggler/deep_copy.rb`
+
+### Blueprints
+
+- `docs/tj3-engine/02-bluprint-engine1.md` — §2.3, §2.4, §3.3
+- `docs/tj3-engine/06-blueprint-engine5.md` — §6
+
+### Documentos do projeto
+
+- `docs/syntaxmesh/decisoes/001-core-independente-do-dom.md`
+- `docs/syntaxmesh/decisoes/011-port-fiel-taskjuggler.md`
+- `docs/syntaxmesh/decisoes/014-attribute-mode-global.md` (novo)
+- `docs/syntaxmesh/03-arquitetura.md`
+
+### Fases dependentes
+
+- **Fase 4 — Árvore de Propriedades** (usa `AttributeDefinition`, `AttributeBase`, `AttributeContainer`).
+- **Fase 5 — Entidades Concretas** (define os `AttributeDefinition`s por entidade).
+- **Fase 6 — Scoreboard e Estruturas Base** (completa `LimitsAttribute`, `ShiftAssignmentsAttribute`).
+- **Fase 7 — Scheduler** (usa `Allocation`, `Booking`, `TaskDependency`).
+- **Fase 11 — Query** (usa `LogicalExpressionAttribute`).
+- **Fase 12 — RichText** (completa `RichTextAttribute.to_rti`).
+
+---
+
+## 10. Notas para a IA
+
+1. **`mode` global é resetado por testes.** Sempre `beforeEach(() => AttributeBase.setMode(0))`.
+2. **Métodos `to_rti` que dependem de fases futuras lançam `NotYetImplementedError`.** Não tentar implementar com stubs frágeis.
+3. **`AttributeDefinition` é imutável.** Nunca modificar após criação.
+4. **`tjpId` é `static readonly`.** Nunca instância.
+5. **`deepClone` é função pura.** Sem `this`. Sem efeitos colaterais.
+6. **Testes de golden usam o Ruby original.** Se divergir, **corrigir o TS**, não o golden.
+7. **Não otimizar.** ~40 subclasses pequenas são OK; performance vem do `DataCache` (Fase 9).
+8. **Sem `any`.** Usar `unknown` e narrowing.
+9. **Commit por subfase.** `feat(core): attributes/<tipo>`.
+10. **Interfaces de port** (`RichTextIntermediate`) ficam em `format/` e não em `attributes/`.
+
+---
+
+## 11. ADR 014 (referência rápida)
+
+Criado como subfase 3.0. Conteúdo esperado:
+
+- **Título:** Attribute mode global em TypeScript
+- **Contexto:** `@@mode` class variable em Ruby.
+- **Decisão:** `static` em `AttributeBase`, com getter/setter.
+- **Alternativas:** `AsyncLocalStorage`, context-passing.
+- **Consequências:** simplicidade + paridade; sem concorrência entre projetos no mesmo worker.
+
+---
+
+**Fim da Fase 3.**
+````
+
+---
+
 ## Arquivo: `docs/syntaxmesh/fases/fase-2-tempo-geometria.md`
 
 ````md
@@ -1818,7 +6141,7 @@ Cada subfase segue `docs/syntaxmesh/fases/modelo-tarefas.md`.
 
 ---
 
-### 5.0 — ADR 012 (`TjTime` em TypeScript)
+### 2.0 — ADR 012 (`TjTime` em TypeScript)
 
 #### Contexto
 
@@ -1867,7 +6190,7 @@ Criar `docs/syntaxmesh/decisoes/012-tjtime-typescript.md` seguindo o template pa
 
 ---
 
-### 5.1 — `TjTime`: representação, factory methods e parsing
+### 2.1 — `TjTime`: representação, factory methods e parsing
 
 #### Contexto
 
@@ -1961,7 +6284,7 @@ TjTime.fromString("2026-01-01-25:00") // TjArgumentError
 
 ---
 
-### 5.2 — `TjTime`: comparação e aritmética
+### 2.2 — `TjTime`: comparação e aritmética
 
 #### Contexto
 
@@ -2031,7 +6354,7 @@ a.lessThan(b) === true;
 
 ---
 
-### 5.3 — `TjTime`: normalizações
+### 2.3 — `TjTime`: normalizações
 
 #### Contexto
 
@@ -2096,7 +6419,7 @@ TjTime.fromString("2024-02-29").beginOfMonth()
 
 ---
 
-### 5.4 — `TjTime`: avanços (`sameTimeNext*`)
+### 2.4 — `TjTime`: avanços (`sameTimeNext*`)
 
 #### Contexto
 
@@ -2168,7 +6491,7 @@ TjTime.fromString("2024-02-29").sameTimeNextYear()
 
 ---
 
-### 5.5 — `TjTime`: diferenças (`*To`)
+### 2.5 — `TjTime`: diferenças (`*To`)
 
 #### Contexto
 
@@ -2234,7 +6557,7 @@ TjTime.fromString("2026-01-31").daysTo(TjTime.fromString("2026-02-02")) === 2;
 
 ---
 
-### 5.6 — `TjTime`: timezone
+### 2.6 — `TjTime`: timezone
 
 #### Contexto
 
@@ -2342,7 +6665,7 @@ TjTime.fromString("2026-05-15").to_s("%Q") === "2";
 
 ---
 
-### 5.7 — `Interval` genérico
+### 2.7 — `Interval` genérico
 
 #### Contexto
 
@@ -2409,7 +6732,7 @@ a.intersection(b)!.end === 10;
 
 ---
 
-### 5.8 — `TimeInterval`
+### 2.8 — `TimeInterval`
 
 #### Contexto
 
@@ -2459,7 +6782,7 @@ iv.duration() === 86400;
 
 ---
 
-### 5.9 — `ScoreboardInterval`
+### 2.9 — `ScoreboardInterval`
 
 #### Contexto
 
@@ -2515,7 +6838,7 @@ iv.endDate().equals(sbStart.addSeconds(7200)) === true;
 
 ---
 
-### 5.10 — `IntervalList`
+### 2.10 — `IntervalList`
 
 #### Contexto
 
@@ -2578,7 +6901,7 @@ a.intersect(b); // [t2, t3]
 
 ---
 
-### 5.11 — `Scoreboard` (genérico)
+### 2.11 — `Scoreboard` (genérico)
 
 #### Contexto
 
@@ -2669,7 +6992,7 @@ sb.collectIntervals(
 
 ---
 
-### 5.12 — `WorkingHours`
+### 2.12 — `WorkingHours`
 
 #### Contexto
 
@@ -2759,7 +7082,7 @@ wh.weeklyWorkingHours() === 40;
 
 ---
 
-### 5.13 — `RealFormat`
+### 2.13 — `RealFormat`
 
 #### Contexto
 
@@ -2823,7 +7146,7 @@ pct.format(-5.5) === "(5.5)";
 
 ---
 
-### 5.14 — Infraestrutura de golden tests
+### 2.14 — Infraestrutura de golden tests
 
 #### Contexto
 
@@ -3103,2710 +7426,6 @@ Criado como subfase 5.0. Conteúdo esperado:
 
 ---
 
-## Arquivo: `docs/syntaxmesh/fases/fase-3-modelo-atributos.md`
-
-````md
-# Fase 3 — Modelo de Atributos
-
-> **Arquivo:** `docs/syntaxmesh/fases/fase-3-modelo-atributos.md`
-> **Status:** ⬜ Não iniciada
-> **Duração estimada:** 5–7 dias
-> **Depende de:** Fase 2 — Tempo e Geometria
-> **Bloqueia:** Fases 4, 5, 6, 7, 8, 10, 11, 12, 14, 16
-
----
-
-## 1. Contexto
-
-O TaskJuggler tem um **sistema de atributos único**. Diferente de linguagens onde atributos são simples campos, aqui cada atributo é:
-
-1. **Tipado** — `DateAttribute`, `FloatAttribute`, `FlagListAttribute`, etc. (~40 tipos).
-2. **Rastreável** — sabe se o valor foi `provided` (usuário), `inherited` (pai/projeto) ou `computed` (scheduler).
-3. **Herança dupla** — herda do pai (`inheritedFromParent`) e/ou do projeto (`inheritedFromProject`).
-4. **Scenario-specific** — pode ter valor diferente por cenário (ex: `effort` no cenário "plan" vs "delayed").
-5. **Lazy** — só é instanciado quando acessado.
-6. **Container-based** — o valor é armazenado no container (`PropertyTreeNode` para não-scenario, `ScenarioData` para scenario-specific), não no próprio atributo.
-
-Este sistema é implementado por 4 arquivos Ruby:
-
-- `AttributeBase.rb` — classe base + `ListAttributeBase` + modo global (`@@mode`).
-- `AttributeDefinition.rb` — blueprint imutável de cada atributo.
-- `Attributes.rb` — ~40 subclasses (tipos concretos).
-- `deep_copy.rb` — utilitário genérico de cópia profunda (usado por `inherit`).
-
-Portar isso corretamente é **crítico**. Erros aqui quebram herança, cenários, validação e relatórios. As subfases seguem a divisão natural do Ruby, mas agrupam subclasses por afinidade.
-
-**Nota sobre dependências futuras:** alguns atributos (`RichTextAttribute`, `ResourceListAttribute.to_rti`, `ReferenceAttribute.to_rti`, `LimitsAttribute`, `ShiftAssignmentsAttribute`, `WorkingHoursAttribute`) dependem de classes que só existirão em fases posteriores (`Query` — Fase 11, `RichText` — Fase 12, `Limits`/`ShiftAssignments` — Fase 6/7). Nesta fase:
-- Definimos **interfaces de port** (`RichTextIntermediate`, `QueryLike`) em `packages/core/src/format/` para permitir compilação.
-- Implementamos os métodos que **não dependem** dessas classes.
-- Métodos que dependem lançam `NotYetImplementedError` com mensagem apontando a fase.
-
----
-
-## 2. Objetivo
-
-Ao final desta fase:
-
-- `AttributeBase`, `ListAttributeBase`, `AttributeDefinition`, `AttributeOverwrite` implementados.
-- Todas as ~40 subclasses de atributo portadas.
-- Modo global (`mode` 0/1/2) implementado como `static` em `AttributeBase`.
-- `AttributeContainer` interface + implementações em `PropertyTreeNode` e `ScenarioData` (esqueletos).
-- `deepClone` utility substituindo `deep_copy.rb`.
-- **≥ 120 testes unitários** + **≥ 40 golden tests** (herança, propagação de cenários).
-- ADR 013 registrado.
-- `deno task check-all` verde.
-
----
-
-## 3. Referências TaskJuggler
-
-### 3.1 Arquivos Ruby (fonte primária)
-
-Todos em `docs/taskjuggler/lib/taskjuggler/`:
-
-| Arquivo | Linhas aprox. | Complexidade | Prioridade |
-|---|---|---|---|
-| `AttributeBase.rb` | ~150 | Média | **Crítica** |
-| `AttributeDefinition.rb` | ~60 | Baixa | **Crítica** |
-| `Attributes.rb` | ~680 | Média | **Crítica** |
-| `deep_copy.rb` | ~80 | Baixa | Alta |
-
-### 3.2 Blueprints (fonte secundária)
-
-| Documento | Seção | Uso |
-|---|---|---|
-| `docs/tj3-engine/02-bluprint-engine1.md` | §2.3 AttributeDefinitions por PropertySet | Lista de atributos por entidade |
-| `docs/tj3-engine/02-bluprint-engine1.md` | §2.4 Formato de AttributeDefinition | Tupla de 8 campos |
-| `docs/tj3-engine/02-bluprint-engine1.md` | §3.3 Sistema de Atributos (Lazy Creation) | Lazy via Proxy |
-| `docs/tj3-engine/06-blueprint-engine5.md` | §6 Attributes (detalhado) | Subclasses completas |
-| `docs/tj3-engine/06-blueprint-engine5.md` | §6.2 Implementação de Atributos Comuns | Exemplos de cada tipo |
-
-### 3.3 Golden tests
-
-Usamos `tj3` para validar comportamento de herança e propagação de cenários. O script `scripts/golden/attributes.rb` gera JSON com cenários: projeto com atributos herdados em 3 níveis + 2 cenários + defaults.
-
----
-
-## 4. Decisões de port (Ruby → TypeScript)
-
-### 4.1 `@@mode` global → `static` em `AttributeBase`
-
-Ruby usa `@@mode` (class variable compartilhada entre todas as subclasses). Em TS:
-
-```ts
-export type AttributeMode = 0 | 1 | 2;
-
-export abstract class AttributeBase {
-  private static _mode: AttributeMode = 0;
-
-  static get mode(): AttributeMode { return AttributeBase._mode; }
-  static setMode(mode: AttributeMode): void { AttributeBase._mode = mode; }
-}
-```
-
-**Limitação:** como o modo é global, dois projetos agendados simultaneamente no mesmo worker clobberariam. Aceito — é o mesmo comportamento do Ruby, e não precisamos de concorrência nesta fase. Registrado em ADR 013.
-
-### 4.2 `@container` → interface `AttributeContainer`
-
-Ruby armazena o valor em `@container.instance_variable_set('@' + id, value)`. Em TS:
-
-```ts
-export interface AttributeContainer {
-  getStoredValue(attributeId: string): unknown;
-  setStoredValue(attributeId: string, value: unknown): void;
-}
-```
-
-`PropertyTreeNode` e `ScenarioData` implementarão essa interface (Fase 4). Nesta fase, criamos a interface e uma implementação mock para testes.
-
-### 4.3 `deep_clone` genérico → função `deepClone<T>`
-
-Ruby estende `Object#deep_clone`. Em TS, usamos função standalone:
-
-```ts
-export function deepClone<T>(value: T): T;
-```
-
-Regras:
-- Primitivos (`number`, `string`, `boolean`, `null`, `undefined`) → retornam como estão.
-- `TjTime`, `RealFormat` → imutáveis, retornam `this`.
-- `PropertyTreeNode` (futuro) → retorna `this` (referência).
-- `Array` → recursivo em cada elemento.
-- `Map`, `Set` → recursivo.
-- Objetos com método `deepClone()` → chama o método.
-- Fallback → `structuredClone`.
-
-### 4.4 `tjpId` estático
-
-Ruby: cada subclasse define `def TipoAttribute::tjpId; 'text'; end`. TS: `static readonly tjpId = 'text';`.
-
-### 4.5 `to_rti` com dependências futuras
-
-Métodos `to_rti` que dependem de `RichText`/`Query`:
-
-- `RichTextAttribute.to_rti` — herda da base (retorna o valor).
-- `ResourceListAttribute.to_rti` — depende de `RichText` e `RTFHandlers`.
-- `ReferenceAttribute.to_rti` — depende de `RichText`.
-
-**Decisão:** nesta fase, essas implementações lançam `NotYetImplementedError` (com mensagem apontando Fase 11/12). Testes verificam que lançam. Fase 12 substitui.
-
-Interfaces de port em `packages/core/src/format/rich-text-port.ts`:
-
-```ts
-export interface RichTextIntermediate {
-  readonly richText: { readonly inputText: string };
-  to_s(): string;
-  to_html(): unknown;
-  empty(): boolean;
-  setQuery(query: unknown): void;
-  blockMode: boolean;
-  sectionNumbers: boolean;
-  cssClass: string | null;
-}
-
-export interface RichTextFactory {
-  create(text: string): RichTextIntermediate;
-}
-```
-
-### 4.6 `AttributeDefinition` imutável
-
-Ruby usa `freeze`. TS: usar `Object.freeze(this)` no construtor, mais `readonly` em todos os campos.
-
-### 4.7 Tipos de `default`
-
-O default de um atributo pode ser: número, string, booleano, `null`, ou template (Array vazio, `LeaveList` vazio, etc.). Em TS, o tipo é genérico `T`.
-
-### 4.8 `AttributeOverwrite` exception
-
-Ruby: `class AttributeOverwrite < ArgumentError`. TS: `class AttributeOverwrite extends TjArgumentError`.
-
-### 4.9 `quotedString` compartilhado
-
-Ruby: `AttributeBase#quotedString` (privado). TS: método `protected` em `AttributeBase`.
-
-### 4.10 `LimitsAttribute` e `ShiftAssignmentsAttribute`
-
-Esses dois atributos referenciam `Limits` e `ShiftAssignments`, que são classes da Fase 6/7. Nesta fase:
-- O tipo do `default` é `unknown` (aceita `null`).
-- `LimitsAttribute` estende `AttributeBase` sem lógica especial.
-- `ShiftAssignmentsAttribute` idem.
-
-Os métodos `to_tjp` que dependem dessas classes lançam `NotYetImplementedError` até Fase 7.
-
----
-
-## 5. Subfases detalhadas
-
-Cada subfase segue `docs/syntaxmesh/fases/modelo-tarefas.md`.
-
----
-
-### 6.0 — ADR 013 (`mode` global de atributos)
-
-#### Contexto
-
-O `AttributeBase.rb` usa `@@mode` (class variable compartilhada). O modo afeta o comportamento de `set()` e `inherit()`:
-
-- `mode = 0` (provided): usuário setou o valor.
-- `mode = 1` (inherited): valor veio do pai ou do projeto.
-- `mode = 2` (computed): valor calculado pelo scheduler.
-
-O scheduler alterna entre modos durante o pipeline (`prepareScenario` usa mode 1, `scheduleScenario` usa mode 2).
-
-Em TypeScript, precisamos decidir como representar esse estado global.
-
-#### Objetivo
-
-Registrar formalmente a decisão em `docs/syntaxmesh/decisoes/013-attribute-mode-global.md`.
-
-#### Arquivos
-
-- `docs/syntaxmesh/decisoes/013-attribute-mode-global.md` (novo)
-- `docs/syntaxmesh/decisoes/README.md` (atualizar tabela)
-
-#### Requisitos
-
-- [ ] Contexto: por que `mode` existe, quando é usado.
-- [ ] Decisão: `static` em `AttributeBase`, com getter/setter.
-- [ ] Alternativas: `AsyncLocalStorage`, context-passing, `Symbol` no valor.
-- [ ] Consequências:
-  - **Positivas:** simplicidade, paridade com Ruby.
-  - **Negativas:** sem suporte a concorrência entre projetos no mesmo worker.
-  - **Mitigação futura:** se necessário, migrar para `AsyncLocalStorage`.
-- [ ] Atualizar tabela em `decisoes/README.md`.
-
-#### Referências
-
-- `docs/taskjuggler/lib/taskjuggler/AttributeBase.rb` — `@@mode`, `mode`, `setMode`.
-- `docs/syntaxmesh/decisoes/README.md` — template.
-- Seção 4.1 deste documento.
-
-#### Fora de escopo
-
-- Implementação — subfase 6.1.
-
-#### Critério de aceite
-
-- ADR 013 criado.
-- Tabela atualizada.
-
----
-
-### 6.1 — `AttributeBase`, `ListAttributeBase`, `AttributeOverwrite`
-
-#### Contexto
-
-A classe base de todo o sistema de atributos. Define:
-- Armazenamento de valor via container.
-- Flags `provided`, `inherited`.
-- Modo global.
-- Métodos de leitura/escrita.
-- Conversões `to_s`, `to_num`, `to_sort`, `to_rti`, `to_tjp`.
-- `quotedString` para strings com newline.
-
-#### Objetivo
-
-Implementar `AttributeBase`, `ListAttributeBase` e `AttributeOverwrite` com testes cobrindo todos os modos.
-
-#### Arquivos
-
-- `packages/core/src/attributes/attribute-container.ts` (interface)
-- `packages/core/src/attributes/attribute-base.ts`
-- `packages/core/src/attributes/list-attribute-base.ts`
-- `packages/core/src/attributes/errors.ts` (`AttributeOverwrite`, `NotYetImplementedError`)
-- `packages/core/src/attributes/__test__/attribute-base_test.ts`
-- `packages/core/src/attributes/__test__/list-attribute-base_test.ts`
-
-#### Requisitos
-
-**`AttributeContainer`:**
-
-- [ ] `getStoredValue(attributeId: string): unknown`.
-- [ ] `setStoredValue(attributeId: string, value: unknown): void`.
-
-**`AttributeBase<T>`:**
-
-- [ ] `constructor(property: unknown, type: AttributeDefinition, container: AttributeContainer)`.
-- [ ] `protected readonly property: unknown`.
-- [ ] `protected readonly type: AttributeDefinition`.
-- [ ] `protected readonly container: AttributeContainer`.
-- [ ] `provided: boolean` (init `false`).
-- [ ] `inherited: boolean` (init `false`).
-- [ ] `static get mode(): AttributeMode`.
-- [ ] `static setMode(mode: AttributeMode): void`.
-- [ ] `reset(): void` — escreve `deepClone(type.default)` no container, zera `provided`/`inherited`.
-- [ ] `inherit(value: T): void` — `inherited = true`, escreve `deepClone(value)`.
-- [ ] `set(value: T): void` — atualiza flag conforme mode, escreve valor.
-- [ ] `get(): T` — lê do container.
-- [ ] `get value(): T` — alias de `get()`.
-- [ ] `get id(): string` — `type.id`.
-- [ ] `get name(): string` — `type.name`.
-- [ ] `isNil(): boolean` — `null`/`undefined`/Array vazio.
-- [ ] `isList(): boolean` — `false` (subclasses sobrescrevem).
-- [ ] `to_s(query?: unknown): string` — `String(get())`.
-- [ ] `to_num(): number | null` — número ou `null`.
-- [ ] `to_sort(): unknown` — número | string | `null`.
-- [ ] `to_rti(query: unknown): RichTextIntermediate | null` — retorna `null` por padrão.
-- [ ] `to_tjp(): string` — `${type.id} ${get()}`.
-- [ ] `protected quotedString(str: string): string` — se contém `\n`, usa `-8<-\n...\n->8-`; senão `"..."` com escapes.
-
-**`ListAttributeBase<T>`:**
-
-- [ ] Estende `AttributeBase<T[]>`.
-- [ ] `to_s(): string` — `get().join(', ')`.
-- [ ] `isList(): boolean` — `true`.
-
-**Erros:**
-
-- [ ] `NotYetImplementedError extends TjError` — para métodos stub.
-- [ ] `AttributeOverwrite extends TjArgumentError`.
-
-#### Referências
-
-- `docs/taskjuggler/lib/taskjuggler/AttributeBase.rb` — arquivo completo.
-- `docs/tj3-engine/06-blueprint-engine5.md` — §6.3 `markProvided`.
-
-#### Fora de escopo
-
-- Subclasses concretas (6.3+).
-- `PropertyTreeNode`/`ScenarioData` (Fase 4) — usamos `MockContainer` nos testes.
-
-#### Critério de aceite
-
-```ts
-const container = new MockContainer();
-const attr = new StringAttribute("property", def, container);
-
-attr.set("hello");
-assertEquals(attr.get(), "hello");
-assert(attr.provided);
-assert(!attr.inherited);
-
-AttributeBase.setMode(1);
-attr.inherit("inherited-value");
-assert(attr.inherited);
-assertEquals(attr.get(), "inherited-value");
-```
-
-#### Testes
-
-- `attribute-base_test.ts`:
-  - `describe("AttributeBase")`
-    - `it("reset escreve default no container")`.
-    - `it("set em mode 0 marca provided")`.
-    - `it("set em mode 1 marca inherited")`.
-    - `it("set em mode 2 não marca nenhum")`.
-    - `it("inherit marca inherited e clona valor")`.
-    - `it("isNil para null/undefined/array vazio")`.
-    - `it("isList é false")`.
-    - `it("to_s para número/string")`.
-    - `it("to_num para número")`.
-    - `it("to_num para string retorna null")`.
-    - `it("quotedString sem newline")`.
-    - `it("quotedString com newline usa -8<-")`.
-    - `it("quotedString escapa aspas")`.
-- `list-attribute-base_test.ts`:
-  - `describe("ListAttributeBase")`
-    - `it("isList é true")`.
-    - `it("to_s junta com vírgula")`.
-
----
-
-### 6.2 — `AttributeDefinition`
-
-#### Contexto
-
-`AttributeDefinition` é o blueprint imutável de cada atributo. Cada `PropertySet` registra suas definições; cada `PropertyTreeNode` as consulta para criar atributos sob demanda.
-
-Formato da tupla (8 campos):
-1. `id: string`
-2. `name: string`
-3. `objClass: AttributeType` (construtor da subclasse)
-4. `inheritedFromParent: boolean`
-5. `inheritedFromProject: boolean`
-6. `scenarioSpecific: boolean`
-7. `default: unknown`
-8. `userDefined: boolean` (opcional, default `false`)
-
-#### Objetivo
-
-Implementar `AttributeDefinition` imutável + enum `AttributeType` (identificador do construtor).
-
-#### Arquivos
-
-- `packages/core/src/attributes/attribute-definition.ts`
-- `packages/core/src/attributes/attribute-type.ts`
-- `packages/core/src/attributes/__test__/attribute-definition_test.ts`
-
-#### Requisitos
-
-- [ ] `AttributeDefinition` com todos os 8 campos `readonly`.
-- [ ] `Object.freeze(this)` no construtor.
-- [ ] `AttributeType` enum com todos os tipos:
-  `AccountAttribute`, `AccountCreditListAttribute`, `AllocationAttribute`, `BookingListAttribute`, `BooleanAttribute`, `ChargeListAttribute`, `ChargeSetListAttribute`, `ColumnListAttribute`, `DateAttribute`, `DefinitionListAttribute`, `DependencyListAttribute`, `DurationAttribute`, `IntegerAttribute`, `FlagListAttribute`, `FloatAttribute`, `FormatListAttribute`, `JournalSortListAttribute`, `TimeIntervalListAttribute`, `LeaveAllowanceListAttribute`, `LeaveListAttribute`, `LimitsAttribute`, `LogicalExpressionAttribute`, `LogicalExpressionListAttribute`, `NodeListAttribute`, `PropertyAttribute`, `RealFormatAttribute`, `ReferenceAttribute`, `ResourceListAttribute`, `RichTextAttribute`, `ScenarioListAttribute`, `ShiftAssignmentsAttribute`, `SortListAttribute`, `StringAttribute`, `SymbolAttribute`, `SymbolListAttribute`, `TaskDepListAttribute`, `TaskListAttribute`, `WorkingHoursAttribute`.
-- [ ] `AttributeDefinition` valida `id` (não vazio), `name` (não vazio), `objClass` (definido).
-
-#### Referências
-
-- `docs/taskjuggler/lib/taskjuggler/AttributeDefinition.rb` — arquivo completo.
-- `docs/tj3-engine/02-bluprint-engine1.md` — §2.4.
-
-#### Fora de escopo
-
-- Registro em `PropertySet` — Fase 4.
-
-#### Critério de aceite
-
-```ts
-const def = new AttributeDefinition(
-  "effort", "Effort", AttributeType.DurationAttribute,
-  false, false, true, 0,
-);
-assert(Object.isFrozen(def));
-```
-
-#### Testes
-
-- `attribute-definition_test.ts`:
-  - `describe("AttributeDefinition")`
-    - `it("armazena todos os campos")`.
-    - `it("é imutável após criação")`.
-    - `it("rejeita id vazio")`.
-    - `it("rejeita name vazio")`.
-    - `it("userDefined default false")`.
-    - `it("userDefined true quando passado")`.
-
----
-
-### 6.3 — Atributos escalares e temporais
-
-#### Contexto
-
-Primeiras subclasses concretas. Trivialmente simples mas usadas em todo lugar.
-
-Subclasses: `StringAttribute`, `IntegerAttribute`, `FloatAttribute`, `BooleanAttribute`, `SymbolAttribute`, `DateAttribute`, `DurationAttribute`.
-
-#### Objetivo
-
-Implementar cada atributo com `to_s`, `to_tjp` específicos e `tjpId` estático.
-
-#### Arquivos
-
-- `packages/core/src/attributes/scalar/string-attribute.ts`
-- `packages/core/src/attributes/scalar/integer-attribute.ts`
-- `packages/core/src/attributes/scalar/float-attribute.ts`
-- `packages/core/src/attributes/scalar/boolean-attribute.ts`
-- `packages/core/src/attributes/scalar/symbol-attribute.ts`
-- `packages/core/src/attributes/scalar/date-attribute.ts`
-- `packages/core/src/attributes/scalar/duration-attribute.ts`
-- `packages/core/src/attributes/__test__/scalar-attributes_test.ts`
-
-#### Requisitos
-
-**`StringAttribute`:**
-
-- [ ] `tjpId = "text"`.
-- [ ] `to_tjp()` → `${id} ${quotedString(get())}`.
-
-**`IntegerAttribute`:**
-
-- [ ] `tjpId = "integer"`.
-- [ ] `to_tjp()` herda da base (default).
-
-**`FloatAttribute`:**
-
-- [ ] `tjpId = "number"`.
-- [ ] `to_tjp()` → `${id} ${get()}`.
-
-**`BooleanAttribute`:**
-
-- [ ] `tjpId = "boolean"`.
-- [ ] `to_s()` → `"true"` / `"false"`.
-- [ ] `to_tjp()` → `${id} yes` / `${id} no`.
-
-**`SymbolAttribute`:**
-
-- [ ] `tjpId = "symbol"`.
-
-**`DateAttribute`:**
-
-- [ ] `tjpId = "date"`.
-- [ ] `to_s(query?)` → se valor existe, `value.to_s(query?.timeFormat ?? "%Y-%m-%d")`; senão `"Error"`.
-- [ ] `to_tjp()` herda da base.
-- [ ] Nota: `query` é `unknown` nesta fase (Fase 11 define `Query`).
-
-**`DurationAttribute`:**
-
-- [ ] `tjpId = "duration"`.
-- [ ] `to_s(query?)` → se query, `query.scaleDuration(project.slotsToDays(get()))`; senão `get().toString()`.
-- [ ] `to_tjp()` → `${id} ${get()}h`.
-- [ ] Nota: `query` e `project` são `unknown` nesta fase; o método lança se chamado sem query (comportamento documentado).
-
-#### Referências
-
-- `docs/taskjuggler/lib/taskjuggler/Attributes.rb` — classes correspondentes.
-- `docs/tj3-engine/06-blueprint-engine5.md` — §6.2.
-
-#### Fora de escopo
-
-- `DurationAttribute` com `query` real — Fase 11.
-
-#### Critério de aceite
-
-```ts
-const s = new StringAttribute(p, stringDef, c);
-s.set("hello\nworld");
-assertEquals(s.to_tjp(), `text -8<-\nhello\nworld\n->8-`);
-
-const b = new BooleanAttribute(p, boolDef, c);
-b.set(true);
-assertEquals(b.to_tjp(), "active yes");
-
-const d = new DateAttribute(p, dateDef, c);
-d.set(TjTime.fromString("2026-01-01"));
-assertEquals(d.to_s(), "2026-01-01");
-```
-
-#### Testes
-
-- `scalar-attributes_test.ts`:
-  - `describe("StringAttribute")`
-    - `it("to_s")`.
-    - `it("to_tjp simples")`.
-    - `it("to_tjp multiline")`.
-  - `describe("IntegerAttribute")` — `it("to_tjp")`.
-  - `describe("FloatAttribute")` — `it("to_tjp")`.
-  - `describe("BooleanAttribute")`
-    - `it("to_s true/false")`.
-    - `it("to_tjp yes/no")`.
-  - `describe("SymbolAttribute")` — `it("tjpId")`.
-  - `describe("DateAttribute")`
-    - `it("to_s com valor")`.
-    - `it("to_s sem valor retorna Error")`.
-    - `it("respeita timeFormat customizado")`.
-  - `describe("DurationAttribute")`
-    - `it("to_s sem query")`.
-    - `it("to_tjp")`.
-
----
-
-### 6.4 — Atributos de referência
-
-#### Contexto
-
-Atributos que referenciam outras entidades: `PropertyAttribute`, `AccountAttribute`, `ReferenceAttribute`.
-
-#### Objetivo
-
-Portar os 3 atributos de referência.
-
-#### Arquivos
-
-- `packages/core/src/attributes/reference/property-attribute.ts`
-- `packages/core/src/attributes/reference/account-attribute.ts`
-- `packages/core/src/attributes/reference/reference-attribute.ts`
-- `packages/core/src/attributes/__test__/reference-attributes_test.ts`
-
-#### Requisitos
-
-**`PropertyAttribute`:**
-
-- [ ] `tjpId = "property"`.
-
-**`AccountAttribute`:**
-
-- [ ] `tjpId = "account"`.
-- [ ] `to_s()` → `get()?.id ?? ''`.
-- [ ] `to_tjp()` → `get()?.id ?? ''`.
-
-**`ReferenceAttribute`:**
-
-- [ ] `tjpId = "reference"`.
-- [ ] Valor é `[url, [label]?]`.
-- [ ] `url()` → `get()?.[0]`.
-- [ ] `label()` → `get()?.[1]?.[0] ?? get()?.[0] ?? null`.
-- [ ] `to_s()` → `url() ?? ''`.
-- [ ] `to_tjp()` → `${id} "${url}"${label ? ` { label "${label}" }` : ''}`.
-- [ ] `to_rti(query)` → lança `NotYetImplementedError` (Fase 12).
-
-#### Referências
-
-- `docs/taskjuggler/lib/taskjuggler/Attributes.rb` — `PropertyAttribute`, `AccountAttribute`, `ReferenceAttribute`.
-
-#### Fora de escopo
-
-- `ReferenceAttribute.to_rti` — Fase 12.
-
-#### Critério de aceite
-
-```ts
-const acc = new AccountAttribute(p, def, c);
-acc.set({ id: "cost.dev" });
-assertEquals(acc.to_s(), "cost.dev");
-
-const ref = new ReferenceAttribute(p, def, c);
-ref.set(["http://example.com", ["Example"]]);
-assertEquals(ref.to_tjp(), `foo "http://example.com" { label "Example" }`);
-```
-
-#### Testes
-
-- `reference-attributes_test.ts`:
-  - `describe("AccountAttribute")`
-    - `it("to_s com conta")`.
-    - `it("to_s sem conta retorna vazio")`.
-  - `describe("ReferenceAttribute")`
-    - `it("url e label")`.
-    - `it("to_s retorna url")`.
-    - `it("to_tjp sem label")`.
-    - `it("to_tjp com label")`.
-    - `it("to_rti lança NotYetImplementedError")`.
-
----
-
-### 6.5 — Listas simples e de propriedades
-
-#### Contexto
-
-Atributos de lista que armazenam valores primitivos (`FlagList`, `SymbolList`, `ScenarioList`, `NodeList`) ou referências a outras propriedades (`ResourceList`, `TaskList`).
-
-#### Objetivo
-
-Portar 6 atributos de lista.
-
-#### Arquivos
-
-- `packages/core/src/attributes/list/flag-list-attribute.ts`
-- `packages/core/src/attributes/list/symbol-list-attribute.ts`
-- `packages/core/src/attributes/list/scenario-list-attribute.ts`
-- `packages/core/src/attributes/list/node-list-attribute.ts`
-- `packages/core/src/attributes/list/resource-list-attribute.ts`
-- `packages/core/src/attributes/list/task-list-attribute.ts`
-- `packages/core/src/attributes/__test__/list-simple_test.ts`
-
-#### Requisitos
-
-**`FlagListAttribute`:**
-
-- [ ] `tjpId = "flaglist"`.
-- [ ] `to_s()` → `get().join(', ')`.
-- [ ] `to_tjp()` → `flags ${get().join(', ')}`.
-
-**`SymbolListAttribute`:**
-
-- [ ] `tjpId = "symbollist"`.
-
-**`ScenarioListAttribute`:**
-
-- [ ] `tjpId = "scenarios"`.
-- [ ] `to_s()` → `get().join(', ')`.
-
-**`NodeListAttribute`:**
-
-- [ ] Sem `tjpId` explícito.
-
-**`ResourceListAttribute`:**
-
-- [ ] `tjpId = "resourcelist"`.
-- [ ] `to_s()` → `get().map(r => r.fullId).join(', ')`.
-- [ ] `to_tjp()` → `${id} ${get().map(r => r.fullId).join(', ')}`.
-- [ ] `to_rti(query)` → lança `NotYetImplementedError` (Fase 12).
-
-**`TaskListAttribute`:**
-
-- [ ] `tjpId = "tasklist"`.
-- [ ] `to_s()` → `get().map(t => t.fullId).join(', ')`.
-- [ ] `to_tjp()` → idem.
-
-#### Referências
-
-- `docs/taskjuggler/lib/taskjuggler/Attributes.rb` — classes correspondentes.
-
-#### Fora de escopo
-
-- `ResourceListAttribute.to_rti` — Fase 12.
-
-#### Critério de aceite
-
-```ts
-const fl = new FlagListAttribute(p, def, c);
-fl.set(["critical", "urgent"]);
-assertEquals(fl.to_tjp(), "flags critical, urgent");
-assertEquals(fl.isList(), true);
-```
-
-#### Testes
-
-- `list-simple_test.ts`:
-  - `describe("FlagListAttribute")`
-    - `it("to_s")`, `it("to_tjp")`, `it("isList true")`.
-  - `describe("SymbolListAttribute")` — `it("tjpId")`.
-  - `describe("ScenarioListAttribute")` — `it("to_s")`.
-  - `describe("ResourceListAttribute")`
-    - `it("to_s junta fullIds")`.
-    - `it("to_rti lança")`.
-  - `describe("TaskListAttribute")` — `it("to_s junta fullIds")`.
-
----
-
-### 6.6 — Dependências (`DependencyListAttribute`, `TaskDepListAttribute`)
-
-#### Contexto
-
-Atributos que armazenam dependências entre tarefas.
-
-`DependencyListAttribute` — lista de `TaskDependency` (com `task`, `onEnd`, `gapDuration`, `gapLength`).
-
-`TaskDepListAttribute` — lista de tuplas `[task, onEnd]` (usada em `startpreds`, `startsuccs`, etc.).
-
-**Nota:** `TaskDependency` é da Fase 7. Nesta fase, usamos `unknown` no tipo e só implementamos `to_s`/`to_tjp` que acessam `.task.fullId`.
-
-#### Objetivo
-
-Portar os 2 atributos.
-
-#### Arquivos
-
-- `packages/core/src/attributes/list/dependency-list-attribute.ts`
-- `packages/core/src/attributes/list/task-dep-list-attribute.ts`
-- `packages/core/src/attributes/__test__/dependency-attributes_test.ts`
-
-#### Requisitos
-
-**`DependencyListAttribute`:**
-
-- [ ] `tjpId = "dependencylist"`.
-- [ ] `to_s()` → `get().filter(d => d.task).map(d => d.task.fullId).join(', ')`.
-- [ ] `to_tjp()` → `${id} ${get().map(d => d.task.fullId).join(', ')}`.
-
-**`TaskDepListAttribute`:**
-
-- [ ] `tjpId = "taskdeplist"`.
-- [ ] `to_s()` → `get().map(([t, _]) => t.fullId).join(', ')`.
-- [ ] `to_tjp()` → idem.
-
-#### Referências
-
-- `docs/taskjuggler/lib/taskjuggler/Attributes.rb` — classes correspondentes.
-
-#### Fora de escopo
-
-- `TaskDependency` — Fase 7.
-
-#### Critério de aceite
-
-```ts
-const dl = new DependencyListAttribute(p, def, c);
-dl.set([
-  { task: { fullId: "t1" }, onEnd: true },
-  { task: { fullId: "t2" }, onEnd: false },
-]);
-assertEquals(dl.to_s(), "t1, t2");
-```
-
-#### Testes
-
-- `dependency-attributes_test.ts`:
-  - `describe("DependencyListAttribute")`
-    - `it("to_s com task")`.
-    - `it("to_s filtra task null")`.
-    - `it("to_tjp")`.
-  - `describe("TaskDepListAttribute")`
-    - `it("to_s")`.
-    - `it("to_tjp")`.
-
----
-
-### 6.7 — Financeiro (`ChargeListAttribute`, `ChargeSetListAttribute`, `AccountCreditListAttribute`)
-
-#### Contexto
-
-Atributos financeiros que referenciam `Charge`, `ChargeSet` e `AccountCredit` (Fase 8).
-
-Nesta fase, os tipos são `unknown`; só implementamos métodos que acessam campos estáveis (`to_s` de `ChargeSetList` usa `.to_s` do próprio `ChargeSet`).
-
-#### Objetivo
-
-Portar os 3 atributos.
-
-#### Arquivos
-
-- `packages/core/src/attributes/list/charge-list-attribute.ts`
-- `packages/core/src/attributes/list/charge-set-list-attribute.ts`
-- `packages/core/src/attributes/list/account-credit-list-attribute.ts`
-- `packages/core/src/attributes/__test__/financial-attributes_test.ts`
-
-#### Requisitos
-
-**`ChargeListAttribute`:**
-
-- [ ] `tjpId = "charge"`.
-- [ ] `to_s()` → `get().join(', ')`.
-- [ ] `to_tjp()` herda da base (default).
-
-**`ChargeSetListAttribute`:**
-
-- [ ] `tjpId = "chargeset"`.
-- [ ] `to_s()` → `get().map(i => i.to_s()).join(', ')`.
-- [ ] `to_tjp()` → `${id} ${get().map(i => i.to_s()).join(', ')}`.
-
-**`AccountCreditListAttribute`:**
-
-- [ ] `tjpId = "credits"`.
-- [ ] Constructor inicializa `set([])` (default é Array vazio).
-
-#### Referências
-
-- `docs/taskjuggler/lib/taskjuggler/Attributes.rb` — classes correspondentes.
-- `docs/tj3-engine/10-blueprint-finance.md` — contexto financeiro.
-
-#### Fora de escopo
-
-- `Charge`, `ChargeSet`, `AccountCredit` — Fase 8.
-
-#### Critério de aceite
-
-```ts
-const csl = new ChargeSetListAttribute(p, def, c);
-csl.set([{ to_s: () => "cost.dev 70%, cost.infra 30%" }]);
-assertEquals(csl.to_s(), "cost.dev 70%, cost.infra 30%");
-```
-
-#### Testes
-
-- `financial-attributes_test.ts`:
-  - `describe("ChargeListAttribute")` — `it("to_s")`.
-  - `describe("ChargeSetListAttribute")`
-    - `it("to_s chama to_s de cada")`.
-    - `it("to_tjp")`.
-  - `describe("AccountCreditListAttribute")`
-    - `it("default é array vazio")`.
-
----
-
-### 6.8 — Alocação e booking (`AllocationAttribute`, `BookingListAttribute`)
-
-#### Contexto
-
-`AllocationAttribute` — lista de `Allocation` (Fase 7). `to_s` complexo com seleção de modo.
-
-`BookingListAttribute` — lista de `Booking` (Fase 7). `to_s` junta `.to_s()`; `to_tjp` lança (é caso especial).
-
-#### Objetivo
-
-Portar os 2 atributos.
-
-#### Arquivos
-
-- `packages/core/src/attributes/list/allocation-attribute.ts`
-- `packages/core/src/attributes/list/booking-list-attribute.ts`
-- `packages/core/src/attributes/__test__/allocation-attributes_test.ts`
-
-#### Requisitos
-
-**`AllocationAttribute`:**
-
-- [ ] `tjpId = "allocation"`.
-- [ ] `to_s()`:
-  - Itera `get()`.
-  - Para cada allocation: `[ id1, id2 ] select by <mode> [mandatory] [persistent]`.
-  - Modos: `order`, `lowprob`, `lowload`, `hiload`, `random`.
-- [ ] `to_tjp()` — lança `NotYetImplementedError` (comentário `# TODO: incomplete` no Ruby).
-
-**`BookingListAttribute`:**
-
-- [ ] `tjpId = "bookinglist"`.
-- [ ] `to_s()` → `get().map(b => b.to_s()).join(', ')`.
-- [ ] `to_tjp()` → lança `NotYetImplementedError` (Ruby: `raise "Don't call this method..."`).
-
-#### Referências
-
-- `docs/taskjuggler/lib/taskjuggler/Attributes.rb` — classes.
-- `docs/taskjuggler/lib/taskjuggler/Allocation.rb`.
-
-#### Fora de escopo
-
-- `Allocation`, `Booking` — Fase 7.
-
-#### Critério de aceite
-
-```ts
-const al = new AllocationAttribute(p, def, c);
-al.set([{
-  candidates: [{ fullId: "r1" }, { fullId: "r2" }],
-  selectionMode: 1,
-  mandatory: false,
-  persistent: true,
-}]);
-assertEquals(al.to_s(), "[ r1, r2 ] select by lowprob  persistent ");
-```
-
-#### Testes
-
-- `allocation-attributes_test.ts`:
-  - `describe("AllocationAttribute")`
-    - `it("to_s com 1 candidato")`.
-    - `it("to_s com 2 candidatos")`.
-    - `it("to_s com mandatory")`.
-    - `it("to_s com persistent")`.
-    - `it("to_tjp lança")`.
-  - `describe("BookingListAttribute")`
-    - `it("to_s")`.
-    - `it("to_tjp lança")`.
-
----
-
-### 6.9 — Expressões lógicas (`LogicalExpressionAttribute`, `LogicalExpressionListAttribute`)
-
-#### Contexto
-
-Atributos que armazenam `LogicalExpression` (Fase 11). Nesta fase, são wrappers triviais; só implementamos os campos e `tjpId`.
-
-#### Objetivo
-
-Portar os 2 atributos.
-
-#### Arquivos
-
-- `packages/core/src/attributes/logical/logical-expression-attribute.ts`
-- `packages/core/src/attributes/logical/logical-expression-list-attribute.ts`
-- `packages/core/src/attributes/__test__/logical-attributes_test.ts`
-
-#### Requisitos
-
-**`LogicalExpressionAttribute`:**
-
-- [ ] `tjpId = "logicalexpressions"`.
-- [ ] Estende `AttributeBase<unknown>`.
-
-**`LogicalExpressionListAttribute`:**
-
-- [ ] `tjpId = "logicalexpressions"`.
-- [ ] Estende `ListAttributeBase<unknown>`.
-
-#### Referências
-
-- `docs/taskjuggler/lib/taskjuggler/Attributes.rb` — classes.
-
-#### Fora de escopo
-
-- `LogicalExpression`, `LogicalOperation` — Fase 11.
-
-#### Critério de aceite
-
-```ts
-const la = new LogicalExpressionAttribute(p, def, c);
-assertEquals(la.tjpId, "logicalexpressions");
-```
-
-#### Testes
-
-- `logical-attributes_test.ts`:
-  - `describe("LogicalExpressionAttribute")` — `it("tjpId")`.
-  - `describe("LogicalExpressionListAttribute")` — `it("isList true")`.
-
----
-
-### 6.10 — Tempo complexo (TimeIntervalList, LeaveList, LeaveAllowanceList, Limits, ShiftAssignments, WorkingHours)
-
-#### Contexto
-
-Atributos que referenciam classes da Fase 6/7/16.
-
-**Nota:** alguns dependem de `Leave`, `Limits`, `ShiftAssignments` que **não existem ainda**. Implementamos apenas os wrappers triviais; os métodos complexos (`to_tjp` do `WorkingHoursAttribute`, `LimitsAttribute`, `ShiftAssignmentsAttribute`) ficam para as fases correspondentes.
-
-#### Objetivo
-
-Portar os 6 atributos com comportamento mínimo.
-
-#### Arquivos
-
-- `packages/core/src/attributes/time/time-interval-list-attribute.ts`
-- `packages/core/src/attributes/time/leave-list-attribute.ts`
-- `packages/core/src/attributes/time/leave-allowance-list-attribute.ts`
-- `packages/core/src/attributes/time/limits-attribute.ts`
-- `packages/core/src/attributes/time/shift-assignments-attribute.ts`
-- `packages/core/src/attributes/time/working-hours-attribute.ts`
-- `packages/core/src/attributes/__test__/time-attributes_test.ts`
-
-#### Requisitos
-
-**`TimeIntervalListAttribute`:**
-
-- [ ] `tjpId = "intervallist"`.
-- [ ] `to_s()` → `get().map(i => i.to_s()).join(', ')`.
-- [ ] `to_tjp()` → idem.
-
-**`LeaveListAttribute`:**
-
-- [ ] `tjpId = "leave"`.
-- [ ] `to_tjp()` → `leaves ${get().join(",\n")}`.
-- [ ] **Nota:** `Leave` é da Fase 16; tipo é `unknown` nesta fase.
-
-**`LeaveAllowanceListAttribute`:**
-
-- [ ] Sem `tjpId`.
-- [ ] Estende `ListAttributeBase<unknown>`.
-
-**`LimitsAttribute`:**
-
-- [ ] `tjpId = "limits"`.
-- [ ] Constructor: se `get()` existe, chama `value.setProject(property.project)`.
-- [ ] `to_tjp()` → lança `NotYetImplementedError` (Fase 7).
-
-**`ShiftAssignmentsAttribute`:**
-
-- [ ] `tjpId = "shifts"`.
-- [ ] Constructor: se `get()` existe, seta `value.project = property.project`.
-- [ ] `to_tjp()` → lança `NotYetImplementedError` (Fase 7).
-
-**`WorkingHoursAttribute`:**
-
-- [ ] `tjpId = "workinghours"`.
-- [ ] `to_tjp()` → itera 7 dias; chama `get().getWorkingHours(day)`; formata intervalos.
-- [ ] **Nota:** `WorkingHours` **existe** (Fase 2). Podemos implementar `to_tjp` completamente.
-
-#### Referências
-
-- `docs/taskjuggler/lib/taskjuggler/Attributes.rb` — classes.
-- `docs/taskjuggler/lib/taskjuggler/WorkingHours.rb` — `getWorkingHours`.
-
-#### Fora de escopo
-
-- `Limits`, `ShiftAssignments`, `Leave` — Fases 6, 7, 16.
-
-#### Critério de aceite
-
-```ts
-const wha = new WorkingHoursAttribute(p, def, c);
-const wh = new WorkingHours(3600, start, end, "UTC");
-wh.setWorkingHours(1, [[32400, 61200]]);
-wha.set(wh);
-assert(wha.to_tjp().includes("workinghours mon 9:00 - 17:00"));
-```
-
-#### Testes
-
-- `time-attributes_test.ts`:
-  - `describe("TimeIntervalListAttribute")` — `it("to_s")`.
-  - `describe("LeaveListAttribute")` — `it("tjpId")`.
-  - `describe("LimitsAttribute")`
-    - `it("constructor chama setProject se valor existe")`.
-    - `it("to_tjp lança")`.
-  - `describe("ShiftAssignmentsAttribute")`
-    - `it("constructor seta project")`.
-    - `it("to_tjp lança")`.
-  - `describe("WorkingHoursAttribute")`
-    - `it("to_tjp com 1 dia")`.
-    - `it("to_tjp com off")`.
-    - `it("to_tjp com múltiplos intervalos")`.
-
----
-
-### 6.11 — Formatação e colunas (RealFormat, ColumnList, FormatList, SortList, JournalSortList)
-
-#### Contexto
-
-Atributos usados em reports para formatação e ordenação.
-
-#### Objetivo
-
-Portar os 5 atributos.
-
-#### Arquivos
-
-- `packages/core/src/attributes/format/real-format-attribute.ts`
-- `packages/core/src/attributes/format/column-list-attribute.ts`
-- `packages/core/src/attributes/format/format-list-attribute.ts`
-- `packages/core/src/attributes/format/sort-list-attribute.ts`
-- `packages/core/src/attributes/format/journal-sort-list-attribute.ts`
-- `packages/core/src/attributes/__test__/format-attributes_test.ts`
-
-#### Requisitos
-
-**`RealFormatAttribute`:**
-
-- [ ] Sem `tjpId` explícito.
-- [ ] Estende `AttributeBase<RealFormat>`.
-
-**`ColumnListAttribute`:**
-
-- [ ] `tjpId = "columns"`.
-- [ ] `to_s()` → lança `NotYetImplementedError` (Ruby: `"TODO"`).
-
-**`FormatListAttribute`:**
-
-- [ ] Sem `tjpId`.
-- [ ] `to_s()` → `get().join(', ')`.
-
-**`SortListAttribute`:**
-
-- [ ] `tjpId = "sorting"`.
-- [ ] Estende `ListAttributeBase<unknown>`.
-
-**`JournalSortListAttribute`:**
-
-- [ ] `tjpId = "journalsorting"`.
-- [ ] Estende `ListAttributeBase<unknown>`.
-
-#### Referências
-
-- `docs/taskjuggler/lib/taskjuggler/Attributes.rb` — classes.
-
-#### Fora de escopo
-
-- Reports — Fase 14.
-
-#### Critério de aceite
-
-```ts
-const fla = new FormatListAttribute(p, def, c);
-fla.set(["csv", "html"]);
-assertEquals(fla.to_s(), "csv, html");
-```
-
-#### Testes
-
-- `format-attributes_test.ts`:
-  - `describe("RealFormatAttribute")` — `it("armazena RealFormat")`.
-  - `describe("ColumnListAttribute")`
-    - `it("tjpId")`.
-    - `it("to_s lança")`.
-  - `describe("FormatListAttribute")` — `it("to_s")`.
-  - `describe("SortListAttribute")` — `it("tjpId")`.
-  - `describe("JournalSortListAttribute")` — `it("tjpId")`.
-
----
-
-### 6.12 — Ricos (`RichTextAttribute`, `DefinitionListAttribute`)
-
-#### Contexto
-
-`RichTextAttribute` armazena `RichTextIntermediate` (Fase 12). Nesta fase, definimos a interface de port e o wrapper.
-
-`DefinitionListAttribute` é um `ListAttributeBase` sem lógica específica.
-
-#### Objetivo
-
-Portar os 2 atributos com interface de port.
-
-#### Arquivos
-
-- `packages/core/src/format/rich-text-port.ts` (novo — interfaces)
-- `packages/core/src/attributes/rich/rich-text-attribute.ts`
-- `packages/core/src/attributes/list/definition-list-attribute.ts`
-- `packages/core/src/attributes/__test__/rich-attributes_test.ts`
-
-#### Requisitos
-
-**`rich-text-port.ts`:**
-
-- [ ] Interface `RichTextIntermediate` (métodos usados por atributos).
-- [ ] Interface `RichTextFactory` (opcional, não usada nesta fase).
-
-**`RichTextAttribute`:**
-
-- [ ] `tjpId = "richtext"`.
-- [ ] `inputText(): string` → `get()?.richText.inputText ?? ''`.
-- [ ] `to_s()` → `get()?.to_s() ?? ''`.
-- [ ] `to_tjp()` → `${id} ${quotedString(get().richText.inputText)}`.
-
-**`DefinitionListAttribute`:**
-
-- [ ] Estende `ListAttributeBase<unknown>` (sem `tjpId`).
-
-#### Referências
-
-- `docs/taskjuggler/lib/taskjuggler/Attributes.rb` — classes.
-- `docs/tj3-engine/06-blueprint-engine5.md` — §6.2 `RichTextAttribute`.
-
-#### Fora de escopo
-
-- `RichText` real — Fase 12.
-
-#### Critério de aceite
-
-```ts
-const rta = new RichTextAttribute(p, def, c);
-rta.set({
-  richText: { inputText: "Hello world" },
-  to_s: () => "Hello world",
-});
-assertEquals(rta.inputText(), "Hello world");
-assertEquals(rta.to_tjp(), `note "Hello world"`);
-```
-
-#### Testes
-
-- `rich-attributes_test.ts`:
-  - `describe("RichTextAttribute")`
-    - `it("inputText com valor")`.
-    - `it("inputText sem valor retorna vazio")`.
-    - `it("to_s")`.
-    - `it("to_tjp")`.
-    - `it("to_tjp multiline")`.
-  - `describe("DefinitionListAttribute")` — `it("isList true")`.
-
----
-
-### 6.13 — `deepClone` utility
-
-#### Contexto
-
-Ruby usa `Object#deep_clone` (custom, em `deep_copy.rb`). Em TS, implementamos uma função standalone.
-
-#### Objetivo
-
-Implementar `deepClone<T>` e testar exaustivamente.
-
-#### Arquivos
-
-- `packages/core/src/utils/deep-clone.ts`
-- `packages/core/tests/utils/deep-clone_test.ts`
-
-#### Requisitos
-
-- [ ] `export function deepClone<T>(value: T): T`.
-- [ ] Regras:
-  - `null`/`undefined` → retorna valor.
-  - Primitivos (`number`, `string`, `boolean`, `bigint`, `symbol`) → retorna valor.
-  - `TjTime` → retorna `value` (imutável, mas checagem explícita).
-  - `RealFormat` → retorna `value`.
-  - Objetos com método `deepClone()` → chama o método.
-  - Objetos com `deep_clone()` (compatibilidade Ruby) → chama o método.
-  - `Array` → recursivo em cada elemento.
-  - `Map` → novo `Map` com valores clonados.
-  - `Set` → novo `Set` com valores clonados.
-  - Fallback → `structuredClone(value)`.
-
-#### Referências
-
-- `docs/taskjuggler/lib/taskjuggler/deep_copy.rb` — arquivo completo.
-
-#### Fora de escopo
-
-- Objetos circulares — aceito como limitação (`structuredClone` lança).
-
-#### Critério de aceite
-
-```ts
-assertEquals(deepClone(42), 42);
-assertEquals(deepClone("hello"), "hello");
-
-const arr = [1, 2, [3, 4]];
-const cloned = deepClone(arr);
-assertNotSame(cloned, arr);
-assertNotSame(cloned[2], arr[2]);
-
-class WithDeepClone {
-  deepClone(): WithDeepClone { return new WithDeepClone(); }
-}
-const obj = new WithDeepClone();
-assertNotSame(deepClone(obj), obj);
-```
-
-#### Testes
-
-- `deep-clone_test.ts`:
-  - `describe("deepClone")`
-    - `it("retorna primitivos")`.
-    - `it("clona array raso")`.
-    - `it("clona array aninhado")`.
-    - `it("clona Map")`.
-    - `it("clona Set")`.
-    - `it("chama deepClone se existir")`.
-    - `it("chama deep_clone se existir")`.
-    - `it("fallback para structuredClone")`.
-    - `it("retorna mesmo TjTime")`.
-    - `it("retorna mesmo RealFormat")`.
-
----
-
-### 6.14 — Infraestrutura de golden tests (attributes)
-
-#### Contexto
-
-Similar à Fase 2, usamos `tj3` para gerar referências. Aqui o foco é herança e propagação de cenários.
-
-#### Objetivo
-
-Criar `scripts/golden/attributes.rb` que gera um JSON com:
-- Projeto com 3 níveis de tasks (parent → child → grandchild).
-- Atributos herdados do projeto.
-- Atributos scenario-specific.
-- Default values.
-
-O teste TS instancia os mesmos atributos e verifica `provided`/`inherited`/`get()`.
-
-**Limitação:** `PropertyTreeNode` e `ScenarioData` são da Fase 4. Nesta fase, o golden test valida apenas o **estado interno** dos atributos (via MockContainer que rastreia qual id foi escrito).
-
-#### Arquivos
-
-- `scripts/golden/attributes.rb`
-- `scripts/golden/README.md` (atualizar)
-- `packages/core/tests/golden/attributes.golden.json` (gerado)
-- `packages/core/tests/golden/attributes_golden_test.ts`
-- `deno.jsonc` — atualizar task `golden:generate`
-
-#### Requisitos
-
-**Script Ruby:**
-
-- [ ] Importa `AttributeBase`, `AttributeDefinition`, `Attributes` da gem.
-- [ ] Gera casos como:
-  ```json
-  {
-    "cases": [
-      {
-        "description": "StringAttribute default vazio",
-        "type": "StringAttribute",
-        "default": "",
-        "operations": [
-          { "op": "get", "expected": "" },
-          { "op": "set", "value": "hello", "mode": 0 },
-          { "op": "get", "expected": "hello", "provided": true }
-        ]
-      },
-      {
-        "description": "IntegerAttribute herança de parent",
-        "type": "IntegerAttribute",
-        "default": 0,
-        "operations": [
-          { "op": "setMode", "value": 1 },
-          { "op": "inherit", "value": 500 },
-          { "op": "get", "expected": 500, "inherited": true }
-        ]
-      }
-    ]
-  }
-  ```
-
-**Teste TS:**
-
-- [ ] Lê o JSON.
-- [ ] Para cada caso: instancia o atributo correspondente, executa operações, compara `get()`, `provided`, `inherited`.
-- [ ] Cobertura mínima: 40 casos.
-
-**Task `golden:generate`:**
-
-- [ ] Adicionar `ruby scripts/golden/attributes.rb > packages/core/tests/golden/attributes.golden.json`.
-
-#### Referências
-
-- `docs/taskjuggler/lib/taskjuggler/AttributeBase.rb`.
-- `docs/taskjuggler/lib/taskjuggler/Attributes.rb`.
-- Fase 2, subfase 5.14 — infraestrutura base.
-
-#### Fora de escopo
-
-- Golden test de `PropertyTreeNode` — Fase 4.
-
-#### Critério de aceite
-
-```bash
-deno task golden:generate
-deno task test
-```
-
-- JSON com ≥ 40 casos.
-- Todos os golden tests passam.
-
-#### Testes
-
-- `attributes_golden_test.ts`:
-  - `describe("Golden attributes")` — itera casos.
-
----
-
-## 6. Ordem de execução sugerida
-
-```text
-6.0  ADR 013
-      ↓
-6.13 deepClone utility        ← pode ser feito cedo, é independente
-      ↓
-6.1  AttributeBase + ListAttributeBase
-      ↓
-6.2  AttributeDefinition
-      ↓
-6.3  Escalares e temporais
-      ↓
-6.4  Referências
-      ↓
-6.5  Listas simples e de propriedades
-      ↓
-6.6  Dependências
-      ↓
-6.7  Financeiro
-      ↓
-6.8  Alocação e booking
-      ↓
-6.9  Expressões lógicas
-      ↓
-6.10 Tempo complexo
-      ↓
-6.11 Formatação
-      ↓
-6.12 Ricos
-      ↓
-6.14 Golden tests
-```
-
-Cada subfase fecha com `deno task check-all` verde.
-
----
-
-## 7. Critério de conclusão da fase
-
-A Fase 3 é considerada concluída quando:
-
-```bash
-deno task check-all
-```
-
-passa, e:
-
-- [ ] `AttributeBase`, `ListAttributeBase`, `AttributeDefinition`, `AttributeOverwrite` implementados.
-- [ ] ~40 subclasses de atributo implementadas.
-- [ ] `deepClone` utility implementada.
-- [ ] Interface `AttributeContainer` definida.
-- [ ] Interface `RichTextIntermediate` definida (port).
-- [ ] **≥ 120 testes unitários**.
-- [ ] **≥ 40 golden tests**.
-- [ ] Nenhum `any` em `src/` (exceto onde justificado).
-- [ ] Nenhum import proibido em `packages/core/src/`.
-- [ ] ADR 013 criado.
-- [ ] `scripts/golden/attributes.rb` funcional.
-- [ ] `scripts/golden/README.md` atualizado.
-
----
-
-## 8. Riscos e mitigações
-
-| Risco | Impacto | Mitigação |
-|---|---|---|
-| `mode` global causa bugs sutis em testes | Alto | `beforeEach`/`afterEach` resetando `AttributeBase.setMode(0)` |
-| Subclasses de atributo duplicam lógica | Médio | Revisar agrupamento antes de implementar |
-| `to_rti` stubs impedem testes completos | Médio | Documentar fases que completam; testar que lançam |
-| Interfaces de port divergem do `RichText` real | Médio | Revisar `rich-text-port.ts` na Fase 12 |
-| `WorkingHoursAttribute.to_tjp` diverge do Ruby | Médio | Golden test contra Ruby |
-| `deepClone` de objetos com referências circulares | Baixo | Aceito; documentado |
-| `AttributeDefinition` precisa de acesso a `project` | Médio | Adiar — Fase 4 define `PropertySet` |
-
----
-
-## 9. Referências cruzadas
-
-### Arquivos Ruby (fonte primária)
-
-- `docs/taskjuggler/lib/taskjuggler/AttributeBase.rb`
-- `docs/taskjuggler/lib/taskjuggler/AttributeDefinition.rb`
-- `docs/taskjuggler/lib/taskjuggler/Attributes.rb`
-- `docs/taskjuggler/lib/taskjuggler/deep_copy.rb`
-
-### Blueprints
-
-- `docs/tj3-engine/02-bluprint-engine1.md` — §2.3, §2.4, §3.3
-- `docs/tj3-engine/06-blueprint-engine5.md` — §6
-
-### Documentos do projeto
-
-- `docs/syntaxmesh/decisoes/001-core-independente-do-dom.md`
-- `docs/syntaxmesh/decisoes/011-port-fiel-taskjuggler.md`
-- `docs/syntaxmesh/decisoes/013-attribute-mode-global.md` (novo)
-- `docs/syntaxmesh/03-arquitetura.md`
-
-### Fases dependentes
-
-- **Fase 4 — Árvore de Propriedades** (usa `AttributeDefinition`, `AttributeBase`, `AttributeContainer`).
-- **Fase 5 — Entidades Concretas** (define os `AttributeDefinition`s por entidade).
-- **Fase 6 — Scoreboard e Estruturas Base** (completa `LimitsAttribute`, `ShiftAssignmentsAttribute`).
-- **Fase 7 — Scheduler** (usa `Allocation`, `Booking`, `TaskDependency`).
-- **Fase 11 — Query** (usa `LogicalExpressionAttribute`).
-- **Fase 12 — RichText** (completa `RichTextAttribute.to_rti`).
-
----
-
-## 10. Notas para a IA
-
-1. **`mode` global é resetado por testes.** Sempre `beforeEach(() => AttributeBase.setMode(0))`.
-2. **Métodos `to_rti` que dependem de fases futuras lançam `NotYetImplementedError`.** Não tentar implementar com stubs frágeis.
-3. **`AttributeDefinition` é imutável.** Nunca modificar após criação.
-4. **`tjpId` é `static readonly`.** Nunca instância.
-5. **`deepClone` é função pura.** Sem `this`. Sem efeitos colaterais.
-6. **Testes de golden usam o Ruby original.** Se divergir, **corrigir o TS**, não o golden.
-7. **Não otimizar.** ~40 subclasses pequenas são OK; performance vem do `DataCache` (Fase 9).
-8. **Sem `any`.** Usar `unknown` e narrowing.
-9. **Commit por subfase.** `feat(core): attributes/<tipo>`.
-10. **Interfaces de port** (`RichTextIntermediate`) ficam em `format/` e não em `attributes/`.
-
----
-
-## 11. ADR 013 (referência rápida)
-
-Criado como subfase 6.0. Conteúdo esperado:
-
-- **Título:** Attribute mode global em TypeScript
-- **Contexto:** `@@mode` class variable em Ruby.
-- **Decisão:** `static` em `AttributeBase`, com getter/setter.
-- **Alternativas:** `AsyncLocalStorage`, context-passing.
-- **Consequências:** simplicidade + paridade; sem concorrência entre projetos no mesmo worker.
-
----
-
-**Fim da Fase 3.**
-````
-
----
-
-## Arquivo: `docs/syntaxmesh/fases/fase-4-arvore-propriedades.md`
-
-````md
-# Fase 4 — Árvore de Propriedades
-
-> **Arquivo:** `docs/syntaxmesh/fases/fase-4-arvore-propriedades.md`
-> **Status:** ⬜ Não iniciada
-> **Duração estimada:** 6–8 dias
-> **Depende de:** Fase 2 — Tempo e Geometria; Fase 3 — Modelo de Atributos
-> **Bloqueia:** Fases 5, 6, 7, 8, 9, 10, 11, 12, 14, 16
-
----
-
-## 1. Contexto
-
-`PropertyTreeNode` é a **base de TODAS as entidades** do TaskJuggler. `Task`, `Resource`, `Account`, `Shift`, `Scenario` e `Report` herdam dela. Entender esta classe é entender 80% do modelo de domínio.
-
-Ela fornece:
-
-1. **Estrutura de árvore** — `parent`, `children`, `adoptees`, `stepParents`.
-2. **Sistema de IDs** — `id`, `subId`, `fullId`, `logicalId`, `getBSIndicies`, `getIndicies`.
-3. **Sistema de atributos lazy** — cria `AttributeBase` sob demanda via `attributeDefinition(id)`.
-4. **Herança dupla** — do pai (`inheritAttributes`) e do projeto.
-5. **Scenario-specific attributes** — array de Maps, um por cenário.
-6. **Adoção** — `adopt(property)` permite uma task aparecer em múltiplos contextos.
-7. **Backup/restore** — para reports dinâmicos (`generateReport`).
-
-Ao redor dela, o `PropertySet` gerencia:
-- Namespace (flat vs hierárquico).
-- Blueprint de `AttributeDefinition`s.
-- Índices (`index()`, `levelSeqNo()`, `maxDepth()`).
-
-E o `ScenarioData` é a base de todos os `*Scenario` (`TaskScenario`, `ResourceScenario`, etc.) — a parte scenario-specific de cada propriedade.
-
-O `Scenario` é uma entidade especial: herda de `PropertyTreeNode` mas representa o **cenário** em si (plan, delayed, etc.).
-
-O `PTNProxy` é um wrapper para tasks adotadas, permitindo que a mesma `Task` apareça em múltiplos contextos sem duplicar dados.
-
-Portar isso corretamente é **crítico**. Erros aqui quebram herança, cenários, relatórios, e o scheduler.
-
----
-
-## 2. Objetivo
-
-Ao final desta fase:
-
-- `AttributeContainer` interface + `MockContainer` (para testes).
-- `PropertyTreeNode` com estrutura de árvore, IDs, atributos lazy, herança, adoção, backup/restore.
-- `PropertySet` com blueprint de atributos, namespace, índices.
-- `ScenarioData` (base para `*Scenario`).
-- `Scenario` (entidade concreta).
-- `PTNProxy` (wrapper para adopted tasks).
-- **≥ 130 testes unitários** + **≥ 30 golden tests** (estrutura de árvore, herança, adoção).
-- ADR 014 registrado.
-- `deno task check-all` verde.
-
----
-
-## 3. Referências TaskJuggler
-
-### 3.1 Arquivos Ruby (fonte primária)
-
-Todos em `docs/taskjuggler/lib/taskjuggler/`:
-
-| Arquivo | Linhas aprox. | Complexidade | Prioridade |
-|---|---|---|---|
-| `PropertyTreeNode.rb` | ~600 | **Alta** | **Crítica** |
-| `PropertySet.rb` | ~250 | Média | **Crítica** |
-| `ScenarioData.rb` | ~70 | Baixa | **Crítica** |
-| `Scenario.rb` | ~25 | Baixa | **Crítica** |
-| `PTNProxy.rb` | ~120 | Média | Alta |
-
-### 3.2 Blueprints (fonte secundária)
-
-| Documento | Seção | Uso |
-|---|---|---|
-| `docs/tj3-engine/02-bluprint-engine1.md` | §3 PropertyTreeNode | Estrutura interna |
-| `docs/tj3-engine/02-bluprint-engine1.md` | §3.3 Sistema de Atributos (Lazy) | Lazy creation |
-| `docs/tj3-engine/02-bluprint-engine1.md` | §3.5 Herança de Atributos | inheritAttributes |
-| `docs/tj3-engine/02-bluprint-engine1.md` | §3.6 IDs e Hierarquia | fullId, getBSIndicies |
-| `docs/tj3-engine/02-bluprint-engine1.md` | §3.7 Adopt | adopt |
-| `docs/tj3-engine/02-bluprint-engine1.md` | §3.8 method_missing | Delegação |
-| `docs/tj3-engine/06-blueprint-engine5.md` | §5.3 PropertySet | Container |
-| `docs/tj3-engine/06-blueprint-engine5.md` | §4.2 ScenarioData | Base dos *Scenario |
-
-### 3.3 Golden tests
-
-Usamos `tj3` para validar:
-- Estrutura de árvore (fullId, level, getBSIndicies).
-- Herança em 3 níveis.
-- Propagação de cenários.
-- Adoção (adopt, adoptees, stepParents).
-
-Como `Task`/`Resource` ainda não existem (Fase 5), usamos uma subclasse `TestProperty` no script Ruby.
-
----
-
-## 4. Decisões de port (Ruby → TypeScript)
-
-### 4.1 Lazy attribute creation
-
-Ruby usa `Hash.new { |hash, key| ... }` — a criação é transparente ao acessar `@attributes[id]`. Em TS, temos 3 opções:
-
-- **Proxy** — mais fiel, mas complexo e difícil de debugar.
-- **Método helper** — `attribute(id)` cria sob demanda. Explícito, testável.
-- **Inicializar tudo** — cria todos os atributos no construtor. Simples mas desperdiça memória (~40 atributos × milhares de propriedades).
-
-**Decisão:** **método helper `attribute(id)`**. Preserva a semântica (lazy) mas troca a transparência por explicitude.
-
-Ver ADR 014.
-
-### 4.2 `method_missing` → `scenarioData(scIdx)`
-
-Ruby delega métodos não encontrados para `@data[scenarioIdx]`. TS não tem `method_missing`.
-
-Opções:
-
-- **`Proxy` no PropertyTreeNode** — intercepta acessos a métodos.
-- **Métodos explícitos nas subclasses** — cada método delegado é definido manualmente.
-- **Helper `scenarioData(scIdx)`** — expõe `data[scIdx]` publicamente.
-
-**Decisão:** **helper `scenarioData(scIdx)`**. Subclasses que precisam delegar definem métodos explícitos (ex: `Task.readyForScheduling?(scIdx)` chama `this.scenarioData(scIdx).readyForScheduling?()`). Mais código, mas mais claro e testável.
-
-Ver ADR 014.
-
-### 4.3 `@@scenarioAttributes` → array de Maps
-
-Ruby: `@scenarioAttributes[scenarioIdx]` é um Hash com default block. TS: `Map<string, AttributeBase>` por cenário, com método helper `scenarioAttribute(scIdx, id)`.
-
-Inicializado no construtor como `Array.from({ length: project.scenarioCount }, () => new Map())`.
-
-### 4.4 Backup/restore
-
-Ruby: `@attributes.clone` e `@scenarioAttributes.clone`. TS: `new Map(this.attributes)` (cópia rasa do Map). Os valores (atributos) são compartilhados — igual ao Ruby.
-
-### 4.5 `PTNProxy` — wrapper explícito
-
-Ruby usa `method_missing`. TS: classe explícita com métodos que replicam a interface pública do `PropertyTreeNode` (`get`, `set`, `[]`, `[]=`, `level`, `isChildOf?`, `getIndicies`, `logicalId`).
-
-### 4.6 `PropertyTreeNode` é concreta ou abstrata?
-
-Ruby é concreta (não tem `abstract`). TS: **concreta**, com um construtor que aceita `propertySet`, `id`, `name`, `parent`. Subclasses (Task, Resource) chamam `super(...)`.
-
-### 4.7 MockProject
-
-Testes de Phase 4 precisam de um `Project` mínimo (para `scenarioCount` e `scenario(idx)`). Definimos `MockProject` em testes.
-
-Em produção, `Project` é da Fase 9. A interface `ProjectLike` é definida agora e `Project` a implementará.
-
-### 4.8 Erros
-
-Reutilizamos `TjError`, `TjArgumentError` (Fase 3). Adicionamos `TjInternalError` para situações impossíveis (`$DEBUG` do Ruby).
-
----
-
-## 5. Subfases detalhadas
-
----
-
-### 7.0 — ADR 014 (metaprogramação em TS)
-
-#### Contexto
-
-O `PropertyTreeNode.rb` usa duas formas de metaprogramação que não têm equivalente direto em TS:
-
-1. **`Hash.new { |h, k| ... }`** — lazy creation de atributos ao acessar `@attributes[id]`.
-2. **`method_missing`** — delegação automática para `@data[scenarioIdx]`.
-
-Precisamos registrar formalmente como adaptamos cada uma.
-
-#### Objetivo
-
-Criar `docs/syntaxmesh/decisoes/014-metaprogramacao-propertytreenode.md`.
-
-#### Arquivos
-
-- `docs/syntaxmesh/decisoes/014-metaprogramacao-propertytreenode.md` (novo)
-- `docs/syntaxmesh/decisoes/README.md` (atualizar tabela)
-
-#### Requisitos
-
-- [ ] **Contexto:** explicar as duas metaprogramações do Ruby.
-- [ ] **Decisão:**
-  - Lazy creation → método `attribute(id)` (explícito).
-  - `method_missing` → helper `scenarioData(scIdx)` + métodos explícitos nas subclasses.
-- [ ] **Alternativas:** `Proxy` (ambos os casos), inicialização antecipada, métodos mágicos.
-- [ ] **Consequências:**
-  - **Positivas:** explícito, debugável, sem custo de `Proxy`.
-  - **Negativas:** mais código nas subclasses; menos transparente.
-  - **Mitigação:** helpers/documentação.
-- [ ] Tabela em `README.md` atualizada.
-
-#### Referências
-
-- `docs/taskjuggler/lib/taskjuggler/PropertyTreeNode.rb`.
-- `docs/taskjuggler/lib/taskjuggler/PTNProxy.rb`.
-- Seções 4.1, 4.2, 4.5.
-
-#### Fora de escopo
-
-- Implementação.
-
-#### Critério de aceite
-
-- ADR 014 criado.
-- Tabela atualizada.
-
----
-
-### 7.1 — `AttributeContainer`, `ProjectLike`, erros internos
-
-#### Contexto
-
-Antes de `PropertyTreeNode` e `ScenarioData`, precisamos das interfaces que eles implementam/consomem.
-
-#### Objetivo
-
-Definir:
-- `AttributeContainer` (já esboçada na Fase 3, formalizar).
-- `MockContainer` para testes.
-- `ProjectLike` (interface mínima do `Project` para esta fase).
-- `TjInternalError`.
-
-#### Arquivos
-
-- `packages/core/src/attributes/attribute-container.ts` (já existe, revisar)
-- `packages/core/src/model/project-like.ts`
-- `packages/core/src/errors.ts` (atualizar)
-- `packages/core/tests/model/mock-container.ts`
-- `packages/core/tests/model/mock-project.ts`
-
-#### Requisitos
-
-**`AttributeContainer`:**
-
-- [ ] `getStoredValue(attributeId: string): unknown`.
-- [ ] `setStoredValue(attributeId: string, value: unknown): void`.
-
-**`ProjectLike`:**
-
-- [ ] `get scenarioCount(): number`.
-- [ ] `scenario(idx: number): { id: string; fullId: string } | null`.
-- [ ] (Opcional) `objectId(): number` — usado para `ShiftAssignments.hashKey` (Fase 6).
-
-**`TjInternalError`:**
-
-- [ ] `class TjInternalError extends TjError`.
-
-**`MockContainer`:**
-
-- [ ] Implementa `AttributeContainer`.
-- [ ] Armazena em `Map<string, unknown>`.
-- [ ] `getStoredValue` retorna `undefined` se ausente.
-
-**`MockProject`:**
-
-- [ ] Implementa `ProjectLike`.
-- [ ] `scenarioCount` configurável (default 1).
-- [ ] `scenario(idx)` retorna `{ id: 'plan', fullId: 'plan' }` para `idx === 0`, senão `null`.
-
-#### Referências
-
-- `docs/taskjuggler/lib/taskjuggler/AttributeBase.rb` — uso de `@container`.
-- `docs/taskjuggler/lib/taskjuggler/PropertyTreeNode.rb` — `@project.scenarioCount`.
-
-#### Fora de escopo
-
-- `Project` real — Fase 9.
-
-#### Critério de aceite
-
-```ts
-const c = new MockContainer();
-c.setStoredValue("foo", "bar");
-assertEquals(c.getStoredValue("foo"), "bar");
-
-const p = new MockProject(2);
-assertEquals(p.scenarioCount, 2);
-assertEquals(p.scenario(0)?.id, "plan");
-assert(p.scenario(5) === null);
-```
-
-#### Testes
-
-- `attribute-container_test.ts`:
-  - `describe("MockContainer")`
-    - `it("armazena e recupera")`.
-    - `it("retorna undefined para chave ausente")`.
-- `mock-project_test.ts`:
-  - `describe("MockProject")`
-    - `it("scenarioCount")`.
-    - `it("scenario por índice")`.
-    - `it("retorna null para índice fora do range")`.
-
----
-
-### 7.2 — `PropertyTreeNode` — estrutura de árvore e IDs
-
-#### Contexto
-
-Antes de atributos, precisamos da estrutura básica: parent/children, IDs, level, BSI.
-
-#### Objetivo
-
-Implementar:
-- Construtor com `propertySet`, `id`, `name`, `parent`.
-- Estrutura de árvore: `children`, `adoptees`, `stepParents`.
-- IDs: `id`, `subId`, `fullId`, `logicalId`.
-- Navegação: `level`, `root`, `ancestors`, `isChildOf?`, `leaf?`, `container?`, `all`, `allLeaves`, `kids`, `parents`.
-- Índices: `getBSIndicies`, `getIndicies`, `levelSeqNo`.
-- `removeReferences`.
-
-#### Arquivos
-
-- `packages/core/src/model/property-tree-node.ts`
-- `packages/core/tests/model/property-tree-node-structure_test.ts`
-
-#### Requisitos
-
-- [ ] Classe `PropertyTreeNode` (concreta).
-- [ ] Constructor `(propertySet, id, name, parent)`.
-- [ ] Campos:
-  - `propertySet: PropertySet`
-  - `project: ProjectLike` (via `propertySet.project`)
-  - `parent: PropertyTreeNode | null`
-  - `subId: string`
-  - `id: string` (igual a `fullId` em Ruby)
-  - `name: string`
-  - `sequenceNo: number` (incrementado pelo `PropertySet`)
-  - `children: PropertyTreeNode[]`
-  - `adoptees: PropertyTreeNode[]`
-  - `stepParents: PropertyTreeNode[]`
-  - `sourceFileInfo: SourceFileInfo | null`
-- [ ] Inicialização:
-  - Se `id` é null, gera ID único (`_<Tipo>_<N>`).
-  - Em namespace hierárquico, se `id` contém `.`, extrai `parent` de `id`.
-  - Chama `set('id', fullId)`, `set('name', name)`, `set('seqno', sequenceNo)`.
-- [ ] `get level(): number` — cacheado.
-- [ ] `get fullId(): string` — em flat, retorna `subId`; em hierárquico, `parent.fullId + '.' + subId`.
-- [ ] `logicalId(): string` — para `PropertyTreeNode` é igual a `fullId` (PTNProxy sobrescreve).
-- [ ] `root(): PropertyTreeNode` — topo da árvore.
-- [ ] `ancestors(includeStepParents = false): PropertyTreeNode[]`.
-- [ ] `isChildOf?(ancestor): boolean`.
-- [ ] `leaf(): boolean` — sem children e sem adoptees.
-- [ ] `container(): boolean` — com children ou adoptees.
-- [ ] `kids(): PropertyTreeNode[]` — `children + adoptees`.
-- [ ] `parents(): PropertyTreeNode[]` — `[parent] + stepParents` (filtra null).
-- [ ] `all(): PropertyTreeNode[]` — self + descendentes.
-- [ ] `allLeaves(withoutSelf = false): PropertyTreeNode[]`.
-- [ ] `getBSIndicies(): number[]`.
-- [ ] `getIndicies(): number[]` — usa `get('index')`.
-- [ ] `levelSeqNo(node): number`.
-- [ ] `addChild(child): void`.
-- [ ] `removeReferences(property): void` — remove de `children`, `adoptees`, `stepParents`.
-
-#### Referências
-
-- `docs/taskjuggler/lib/taskjuggler/PropertyTreeNode.rb` — métodos de estrutura.
-
-#### Fora de escopo
-
-- Atributos (7.3).
-- Herança (7.4).
-- Adoção (7.5).
-
-#### Critério de aceite
-
-```ts
-const ps = new PropertySet(mockProject, false);
-const root = new PropertyTreeNode(ps, "root", "Root", null);
-const child = new PropertyTreeNode(ps, "child", "Child", root);
-const gc = new PropertyTreeNode(ps, "gc", "Grandchild", child);
-
-assertEquals(root.fullId, "root");
-assertEquals(child.fullId, "root.child");
-assertEquals(gc.fullId, "root.child.gc");
-assertEquals(gc.level, 2);
-assertEquals(root.kids().length, 1);
-assert(gc.isChildOf(root));
-assert(!root.isChildOf(gc));
-```
-
-#### Testes
-
-- `property-tree-node-structure_test.ts`:
-  - `describe("PropertyTreeNode estrutura")`
-    - `it("constrói árvore de 3 níveis")`.
-    - `it("fullId hierárquico")`.
-    - `it("fullId flat")`.
-    - `it("level cacheado")`.
-    - `it("root")`.
-    - `it("ancestors")`.
-    - `it("ancestors inclui step parents")`.
-    - `it("isChildOf direto")`.
-    - `it("isChildOf indireto")`.
-    - `it("isChildOf falso")`.
-    - `it("leaf em folha")`.
-    - `it("container em pai")`.
-    - `it("kids inclui adoptees")`.
-    - `it("parents inclui step parents")`.
-    - `it("all")`.
-    - `it("allLeaves")`.
-    - `it("getBSIndicies")`.
-    - `it("getIndicies")`.
-    - `it("levelSeqNo")`.
-    - `it("removeReferences")`.
-
----
-
-### 7.3 — `PropertyTreeNode` — atributos lazy
-
-#### Contexto
-
-O sistema de atributos lazy é o coração do `PropertyTreeNode`. Atributos são criados sob demanda; não-scenario vivem em `@attributes`, scenario-specific em `@scenarioAttributes[scIdx]`.
-
-#### Objetivo
-
-Implementar:
-- Método `attribute(id)` — cria lazy.
-- `scenarioAttribute(scIdx, id)` — cria lazy no cenário.
-- `get`, `getAttribute`, `set`, `force`, `[]`, `[]=`, `provided`, `inherited`, `modified`, `attributeDefinition`.
-- Validação de overwrite (`AttributeOverwrite`).
-- Propagação de cenários em `[]=` (mode 0).
-
-#### Arquivos
-
-- `packages/core/src/model/property-tree-node.ts` (estender)
-- `packages/core/tests/model/property-tree-node-attributes_test.ts`
-
-#### Requisitos
-
-- [ ] `private attributes: Map<string, AttributeBase>`.
-- [ ] `private scenarioAttributes: Array<Map<string, AttributeBase>>` (uma por cenário).
-- [ ] `private attribute(id: string): AttributeBase`:
-  - Se existe, retorna.
-  - Se não, busca `attributeDefinition(id)`.
-  - Se é `scenarioSpecific`, lança `TjArgumentError`.
-  - Cria `new aType.objClass(propertySet, aType, this)` e armazena.
-- [ ] `private scenarioAttribute(scIdx: number, id: string): AttributeBase`:
-  - Se existe, retorna.
-  - Se `this.data[scIdx]` é null, lança `TjInternalError` ("ScenarioData must be initialized before scenario-specific attributes").
-  - Se não é `scenarioSpecific`, lança `TjArgumentError`.
-  - Cria `new aType.objClass(propertySet, aType, this.data[scIdx])` e armazena.
-- [ ] `get(id): unknown` — `this.attribute(id).get()`.
-- [ ] `getAttribute(id, scIdx?): AttributeBase`.
-- [ ] `set(id, value): void` — verifica overwrite (exceto listas); chama `attr.set(value)`; se overwrite, lança `AttributeOverwrite`.
-- [ ] `force(id, value): void` — chama `attr.set(value)` sem verificar overwrite.
-- [ ] `getForScenario(id, scIdx): unknown`.
-- [ ] `setForScenario(id, value, scIdx): void`:
-  - Se `scIdx` é `undefined`, delega a `set`.
-  - Se `AttributeBase.mode === 0`, propaga para todos os cenários derivados: o cenário alvo recebe `set`, os filhos recebem `inherit` (via `project.scenario(scIdx).all()`).
-  - Senão, `set` no cenário alvo.
-  - Verifica overwrite em todos os cenários.
-- [ ] `provided(id, scIdx?): boolean`.
-- [ ] `inherited(id, scIdx?): boolean`.
-- [ ] `modified(id, scIdx?): boolean` — `provided || inherited`.
-- [ ] `attributeDefinition(id): AttributeDefinition | undefined`.
-- [ ] `data: ScenarioData[]` — array (inicialmente vazio; subclasses preenchem).
-- [ ] `scenarioData(scIdx: number): ScenarioData`.
-
-#### Referências
-
-- `docs/taskjuggler/lib/taskjuggler/PropertyTreeNode.rb` — construtor (Hash default), `get`, `getAttribute`, `force`, `set`, `[]=`, `[]`, `provided`, `inherited`, `modified`.
-
-#### Fora de escopo
-
-- `checkFailsAndWarnings` — Fase 11 (depende de `Query`).
-
-#### Critério de aceite
-
-```ts
-const ps = new PropertySet(mockProject, false);
-ps.addAttributeType(new AttributeDefinition(
-  "effort", "Effort", AttributeType.DurationAttribute,
-  false, false, true, 0,
-));
-
-const task = new PropertyTreeNode(ps, "t1", "Task 1", null);
-task.set("effort", 100);
-assertEquals(task.get("effort"), 100);
-assert(task.provided("effort", 0));
-```
-
-#### Testes
-
-- `property-tree-node-attributes_test.ts`:
-  - `describe("PropertyTreeNode atributos")`
-    - `it("cria lazy ao acessar get")`.
-    - `it("armazena valor em set")`.
-    - `it("set marca provided em mode 0")`.
-    - `it("set marca inherited em mode 1")`.
-    - `it("set não marca flag em mode 2")`.
-    - `it("rejeita overwrite de atributo não-lista")`.
-    - `it("aceita append em listas sem overwrite")`.
-    - `it("force sobrescreve sem erro")`.
-    - `it("rejeita atributo desconhecido")`.
-    - `it("atributo scenario-specific requer scIdx")`.
-    - `it("provided/inherited/modified")`.
-    - `it("propagação de cenário em mode 0")` — projeto com 3 cenários hierárquicos.
-
----
-
-### 7.4 — `PropertyTreeNode` — herança e backup/restore
-
-#### Contexto
-
-Atributos podem ser herdados do pai (não-scenario) ou do projeto (top-level). Cenários-specific herdam do pai por cenário.
-
-Além disso, `backupAttributes`/`restoreAttributes` são usados para modificar atributos temporariamente durante `generateReport`.
-
-#### Objetivo
-
-Implementar:
-- `inheritAttributes()` — preenche atributos marcados como `inheritedFromParent`/`inheritedFromProject`.
-- `backupAttributes()` — snapshot.
-- `restoreAttributes(backup)` — restauração.
-
-#### Arquivos
-
-- `packages/core/src/model/property-tree-node.ts` (estender)
-- `packages/core/tests/model/property-tree-node-inherit_test.ts`
-
-#### Requisitos
-
-- [ ] `inheritAttributes(): void`:
-  - Para cada `AttributeDefinition` não-scenario com `inheritedFromParent`:
-    - Se tem parent e `parent.provided(id) || parent.inherited(id)`, chama `this.attribute(id).inherit(parent.get(id))`.
-    - Senão, se é top-level e `inheritedFromProject` e `project[id]` existe, chama `.inherit(project[id])`.
-  - Para cada `AttributeDefinition` scenario com `inheritedFromParent`:
-    - Por cenário: igual, mas usando `provided(id, scIdx)` e `parent.getForScenario(id, scIdx)`.
-    - Top-level herda de `project[id]`.
-- [ ] `backupAttributes(): AttributeBackup`:
-  - Retorna `{ attributes: new Map(this.attributes), scenarioAttributes: this.scenarioAttributes.map(m => new Map(m)) }`.
-- [ ] `restoreAttributes(backup): void`:
-  - Restaura os Maps.
-
-#### Referências
-
-- `docs/taskjuggler/lib/taskjuggler/PropertyTreeNode.rb` — `inheritAttributes`, `backupAttributes`, `restoreAttributes`.
-
-#### Fora de escopo
-
-- Validação de cenários derivados — Fase 5.
-
-#### Critério de aceite
-
-```ts
-const ps = new PropertySet(mockProject, false);
-ps.addAttributeType(new AttributeDefinition(
-  "priority", "Priority", AttributeType.IntegerAttribute,
-  true, true, false, 500,
-));
-
-const parent = new PropertyTreeNode(ps, "p", "Parent", null);
-parent.set("priority", 100);
-
-const child = new PropertyTreeNode(ps, "c", "Child", parent);
-child.inheritAttributes();
-assertEquals(child.get("priority"), 100);
-assert(child.inherited("priority"));
-```
-
-#### Testes
-
-- `property-tree-node-inherit_test.ts`:
-  - `describe("PropertyTreeNode.inheritAttributes")`
-    - `it("herda do parent não-scenario")`.
-    - `it("herda do project (top-level)")`.
-    - `it("não herda se parent não tem valor")`.
-    - `it("não herda se flag inheritFromParent = false")`.
-    - `it("herda scenario-specific do parent")`.
-    - `it("herda scenario-specific do project")`.
-    - `it("não herda sobre valor já provided")`.
-    - `it("preserva inherited em cadeia")`.
-  - `describe("PropertyTreeNode.backupAttributes/restoreAttributes")`
-    - `it("backup faz cópia rasa")`.
-    - `it("restore reverte modificações")`.
-    - `it("backup/restore preserva valores")`.
-
----
-
-### 7.5 — `PropertyTreeNode` — adoção
-
-#### Contexto
-
-`adopt(property)` permite uma task aparecer em múltiplos contextos sem duplicar dados. O adoptado ganha o adotante como `stepParent`; o adotante ganha o adotado como `adoptee`.
-
-Validações:
-- Um nó não pode adotar a si mesmo.
-- Uma task não pode ser adotada duas vezes na mesma raiz (evita duplicação em reports).
-
-#### Objetivo
-
-Implementar `adopt` + `getAdopted` + validações.
-
-#### Arquivos
-
-- `packages/core/src/model/property-tree-node.ts` (estender)
-- `packages/core/tests/model/property-tree-node-adopt_test.ts`
-
-#### Requisitos
-
-- [ ] `adopt(property: PropertyTreeNode): void`:
-  - Se `property === this`, lança `TjArgumentError` ("A property cannot adopt itself").
-  - Coleta `root.all()` (todas as propriedades da raiz do adotante).
-  - Para cada leaf de `property.allLeaves()`:
-    - Se está em `allOfRoot`, lança `TjArgumentError` ("already adopted").
-  - `this.adoptees.push(property)`.
-  - `property.getAdopted(this)`.
-- [ ] `getAdopted(property): void`:
-  - Se `property` já está em `stepParents`, retorna.
-  - `this.stepParents.push(property)`.
-- [ ] `kids()` — atualizado para incluir `adoptees`.
-- [ ] `parents()` — atualizado para incluir `stepParents`.
-- [ ] `leaf()` — retorna false se tem `adoptees`.
-
-#### Referências
-
-- `docs/taskjuggler/lib/taskjuggler/PropertyTreeNode.rb` — `adopt`, `getAdopted`, `kids`, `parents`.
-
-#### Fora de escopo
-
-- `PTNProxy` (7.9).
-
-#### Critério de aceite
-
-```ts
-const ps = new PropertySet(mockProject, false);
-const root1 = new PropertyTreeNode(ps, "r1", "Root 1", null);
-const root2 = new PropertyTreeNode(ps, "r2", "Root 2", null);
-const task = new PropertyTreeNode(ps, "t", "Task", root1);
-
-root2.adopt(task);
-assertEquals(task.stepParents.length, 1);
-assertEquals(root2.adoptees.length, 1);
-assertEquals(root2.kids().length, 1);
-```
-
-#### Testes
-
-- `property-tree-node-adopt_test.ts`:
-  - `describe("PropertyTreeNode.adopt")`
-    - `it("adiciona adoptee e stepParent")`.
-    - `it("rejeita auto-adoção")`.
-    - `it("rejeita duplicação na mesma raiz")`.
-    - `it("kids inclui adoptees")`.
-    - `it("parents inclui stepParents")`.
-    - `it("leaf falso quando tem adoptee")`.
-    - `it("all inclui adoptees")`.
-    - `it("allLeaves inclui leaves de adoptees")`.
-
----
-
-### 7.6 — `PropertySet`
-
-#### Contexto
-
-`PropertySet` é o container das propriedades de mesmo tipo. Gerencia:
-- Blueprint de `AttributeDefinition`s (registrados no início).
-- Namespace flat vs hierárquico.
-- Índices (BSI, tree).
-- Lista de propriedades.
-
-#### Objetivo
-
-Implementar `PropertySet` completo.
-
-#### Arquivos
-
-- `packages/core/src/model/property-set.ts`
-- `packages/core/tests/model/property-set_test.ts`
-
-#### Requisitos
-
-- [ ] Classe `PropertySet`:
-  - `project: ProjectLike`
-  - `flatNamespace: boolean`
-  - `private properties: PropertyTreeNode[]`
-  - `private propertyMap: Map<string, PropertyTreeNode>`
-  - `private attributeDefinitions: Map<string, AttributeDefinition>`
-- [ ] Constructor `(project, flatNamespace)`:
-  - Adiciona atributos base: `id` (StringAttribute), `name` (StringAttribute), `seqno` (IntegerAttribute).
-- [ ] `addAttributeType(attrDef: AttributeDefinition): void`:
-  - Se `properties.length > 0`, lança `TjError` ("Attribute types must be defined before properties are added").
-  - Registra em `attributeDefinitions`.
-- [ ] `eachAttributeDefinition(): IterableIterator<AttributeDefinition>`.
-- [ ] `knownAttribute(id): boolean`.
-- [ ] `hasQuery?(id, scenarioIdx?): boolean` — verifica se existe `query_<id>` em alguma propriedade (Fase 11 completa).
-- [ ] `scenarioSpecific?(id): boolean`.
-- [ ] `inheritedFromProject?(id): boolean`.
-- [ ] `inheritedFromParent?(id): boolean`.
-- [ ] `userDefined?(id): boolean`.
-- [ ] `listAttribute?(id): boolean`.
-- [ ] `defaultValue(id): unknown`.
-- [ ] `attributeName(id): string | undefined`.
-- [ ] `attributeType(id): AttributeType | undefined`.
-- [ ] `addProperty(prop): void`.
-- [ ] `removeProperty(prop | id): PropertyTreeNode` — remove recursivamente.
-- [ ] `clearProperties(): void`.
-- [ ] `get(id): PropertyTreeNode | undefined` — também implementar `[Symbol.iterator]`.
-- [ ] `index(): void` — recalcula BSI para todas as propriedades.
-- [ ] `levelSeqNo(property): number`.
-- [ ] `maxDepth(): number`.
-- [ ] `items(): number`.
-- [ ] `empty(): boolean`.
-- [ ] `topLevelItems(): number`.
-- [ ] `each(fn): void`.
-- [ ] `toArray(): PropertyTreeNode[]`.
-
-#### Referências
-
-- `docs/taskjuggler/lib/taskjuggler/PropertySet.rb` — arquivo completo.
-
-#### Fora de escopo
-
-- `hasQuery?` completo — Fase 11.
-
-#### Critério de aceite
-
-```ts
-const ps = new PropertySet(mockProject, false);
-ps.addAttributeType(new AttributeDefinition(
-  "effort", "Effort", AttributeType.DurationAttribute,
-  false, false, true, 0,
-));
-
-assertEquals(ps.knownAttribute("effort"), true);
-assertEquals(ps.scenarioSpecific?("effort"), true);
-assertEquals(ps.listAttribute?("effort"), false);
-
-const root = new PropertyTreeNode(ps, "r", "R", null);
-const child = new PropertyTreeNode(ps, "c", "C", root);
-assertEquals(ps.items(), 2);
-ps.index();
-assertEquals(root.get("bsi"), "1");
-assertEquals(child.get("bsi"), "1.1");
-```
-
-#### Testes
-
-- `property-set_test.ts`:
-  - `describe("PropertySet")`
-    - `it("constrói com atributos base")`.
-    - `it("addAttributeType registra")`.
-    - `it("rejeita addAttributeType após adicionar propriedade")`.
-    - `it("knownAttribute")`.
-    - `it("scenarioSpecific?")`.
-    - `it("inheritedFromProject?")`, `it("inheritedFromParent?")`.
-    - `it("listAttribute?")`.
-    - `it("defaultValue")`.
-    - `it("attributeName")`.
-    - `it("addProperty")`.
-    - `it("removeProperty recursivo")`.
-    - `it("index recalcula BSI")`.
-    - `it("levelSeqNo")`.
-    - `it("maxDepth")`.
-    - `it("items/empty/topLevelItems")`.
-    - `it("each")`.
-    - `it("toArray")`.
-
----
-
-### 7.7 — `ScenarioData`
-
-#### Contexto
-
-Base de todos os `*Scenario` (`TaskScenario`, `ResourceScenario`, `AccountScenario`, `ShiftScenario`). Fornece acesso a atributos scenario-specific e mensagens de erro com contexto.
-
-#### Objetivo
-
-Implementar `ScenarioData`.
-
-#### Arquivos
-
-- `packages/core/src/model/scenario-data.ts`
-- `packages/core/tests/model/scenario-data_test.ts`
-
-#### Requisitos
-
-- [ ] Classe `ScenarioData`:
-  - `property: PropertyTreeNode`
-  - `project: ProjectLike`
-  - `scenarioIdx: number`
-  - `private attributes: Map<string, AttributeBase>`
-  - `private messageHandler: MessageHandlerInstance`
-- [ ] Constructor `(property, idx, attributes)`:
-  - Set `property.data[idx] = this`.
-- [ ] `deepClone(): this` — retorna `this`.
-- [ ] `a(attributeName: string): unknown` — acesso rápido.
-- [ ] `error(id, text, sourceFileInfo?, property?): void`.
-- [ ] `warning(id, text, sourceFileInfo?, property?): void`.
-- [ ] `info(id, text, sourceFileInfo?, property?): void`.
-
-**Nota:** `MessageHandlerInstance` é da Fase 9. Nesta fase, definimos uma interface `MessageHandlerLike` com métodos `error`, `warning`, `info`. Implementação mock em testes; real na Fase 9.
-
-#### Referências
-
-- `docs/taskjuggler/lib/taskjuggler/ScenarioData.rb` — arquivo completo.
-- `docs/tj3-engine/06-blueprint-engine5.md` — §4.2.
-
-#### Fora de escopo
-
-- `MessageHandler` real — Fase 9.
-
-#### Critério de aceite
-
-```ts
-const mockHandler = new MockMessageHandler();
-const prop = new PropertyTreeNode(ps, "t", "Task", null);
-const sd = new ScenarioData(prop, 0, new Map());
-
-assertEquals(prop.data[0], sd);
-assertEquals(sd.property, prop);
-assertEquals(sd.scenarioIdx, 0);
-sd.warning("test_warn", "message");
-assertEquals(mockHandler.warnings.length, 1);
-```
-
-#### Testes
-
-- `scenario-data_test.ts`:
-  - `describe("ScenarioData")`
-    - `it("registra em property.data[idx]")`.
-    - `it("a() acessa atributo")`.
-    - `it("deepClone retorna this")`.
-    - `it("error/warning/info delegam para handler")`.
-    - `it("usa sourceFileInfo padrão do property")`.
-
----
-
-### 7.8 — `Scenario`
-
-#### Contexto
-
-`Scenario` é uma entidade concreta que herda de `PropertyTreeNode`. Representa um cenário (plan, delayed, etc.).
-
-#### Objetivo
-
-Implementar `Scenario`.
-
-#### Arquivos
-
-- `packages/core/src/model/scenario.ts`
-- `packages/core/tests/model/scenario_test.ts`
-
-#### Requisitos
-
-- [ ] Classe `Scenario extends PropertyTreeNode`:
-  - Constructor `(project, id, name, parent)`.
-  - Registra-se em `project.addScenario(this)`.
-- [ ] `all(): Scenario[]` — self + descendentes.
-- [ ] `allLeaves(includeSelf = false): Scenario[]`.
-
-#### Referências
-
-- `docs/taskjuggler/lib/taskjuggler/Scenario.rb` — arquivo completo.
-
-#### Fora de escopo
-
-- Lógica de cenário (projection, active) — Fase 5/9.
-
-#### Critério de aceite
-
-```ts
-const plan = new Scenario(mockProject, "plan", "Plan", null);
-const delayed = new Scenario(mockProject, "delayed", "Delayed", plan);
-
-assertEquals(plan.all().length, 2);
-assertEquals(plan.allLeaves().length, 1);
-assertEquals(plan.allLeaves()[0], delayed);
-```
-
-#### Testes
-
-- `scenario_test.ts`:
-  - `describe("Scenario")`
-    - `it("registra em project")`.
-    - `it("all com hierarquia")`.
-    - `it("allLeaves sem self")`.
-    - `it("allLeaves com self em folha")`.
-
----
-
-### 7.9 — `PTNProxy`
-
-#### Contexto
-
-Wrapper para `PropertyTreeNode` usada em `PropertyList` (Fase 9). Permite que a mesma `Task` apareça em múltiplos contextos sem duplicar dados. O `logicalId` respeita o caminho de adoção.
-
-#### Objetivo
-
-Implementar `PTNProxy`.
-
-#### Arquivos
-
-- `packages/core/src/model/ptn-proxy.ts`
-- `packages/core/tests/model/ptn-proxy_test.ts`
-
-#### Requisitos
-
-- [ ] Classe `PTNProxy`:
-  - `ptn: PropertyTreeNode`
-  - `parent: PTNProxy | PropertyTreeNode`
-  - `private index: number | null`
-  - `private tree: string | null`
-  - `private levelCache: number`
-- [ ] Constructor `(ptn, parent)`:
-  - `parent` não pode ser null.
-- [ ] `logicalId(): string`:
-  - Se `ptn.propertySet.flatNamespace`, retorna `ptn.id`.
-  - Senão, `parent.logicalId() + '.' + idCurto(ptn.id)`.
-- [ ] `get(attribute): unknown`:
-  - Se `attribute === 'index'`, retorna `this.index`.
-  - Se `attribute === 'tree'`, retorna `this.tree`.
-  - Senão, delega para `ptn.get(attribute)`.
-- [ ] `set(attribute, value): void`:
-  - Se `attribute === 'index'`, seta `this.index`.
-  - Se `attribute === 'tree'`, seta `this.tree`.
-  - Senão, delega para `ptn.set(attribute, value)`.
-- [ ] `getForScenario(attribute, scIdx): unknown` — mesmo padrão.
-- [ ] `setForScenario(attribute, value, scIdx): void`.
-- [ ] `get level(): number` — cacheado, conta subindo pelo parent.
-- [ ] `isChildOf?(ancestor): boolean`.
-- [ ] `getIndicies(): number[]`.
-- [ ] `ptn(): PropertyTreeNode` — retorna `this.ptn`.
-
-**Nota:** `PTNProxy` também expõe `propertySet`, `fullId`, `name` via delegação.
-
-#### Referências
-
-- `docs/taskjuggler/lib/taskjuggler/PTNProxy.rb` — arquivo completo.
-
-#### Fora de escopo
-
-- Uso em `PropertyList` — Fase 9.
-
-#### Critério de aceite
-
-```ts
-const ps = new PropertySet(mockProject, false);
-const root = new PropertyTreeNode(ps, "root", "R", null);
-const task = new PropertyTreeNode(ps, "task", "T", root);
-const proxy = new PTNProxy(task, root);
-
-assertEquals(proxy.logicalId(), "root.task");
-assertEquals(proxy.level, 1);
-assertEquals(proxy.ptn(), task);
-```
-
-#### Testes
-
-- `ptn-proxy_test.ts`:
-  - `describe("PTNProxy")`
-    - `it("logicalId com ptn flat")`.
-    - `it("logicalId com ptn hierárquico")`.
-    - `it("get/set para index e tree")`.
-    - `it("get/set delega para ptn")`.
-    - `it("level cacheado")`.
-    - `it("isChildOf?")`.
-    - `it("getIndicies")`.
-    - `it("ptn() retorna original")`.
-    - `it("rejeita parent null")`.
-
----
-
-### 7.10 — Golden tests (estrutura + herança + adoção)
-
-#### Contexto
-
-Validar comportamento contra o Ruby real.
-
-#### Objetivo
-
-Criar `scripts/golden/property-tree.rb` que:
-- Cria `MockProject` (Ruby minimalista).
-- Cria `PropertySet`, adiciona atributos.
-- Constrói árvores, testa herança, testa adoção.
-- Serializa resultados em JSON.
-
-Teste TS lê JSON e compara.
-
-#### Arquivos
-
-- `scripts/golden/property-tree.rb`
-- `scripts/golden/README.md` (atualizar)
-- `packages/core/tests/golden/property-tree.golden.json` (gerado)
-- `packages/core/tests/golden/property-tree_golden_test.ts`
-- `deno.jsonc` — atualizar task `golden:generate`
-
-#### Requisitos
-
-**Script Ruby:**
-
-- [ ] Define `TestProperty < PropertyTreeNode` no próprio script.
-- [ ] Define `MockProject` com `scenarioCount` e `scenario(idx)`.
-- [ ] Casos:
-  - Estrutura de árvore (fullId, level, getBSIndicies, all, allLeaves).
-  - Herança não-scenario em 3 níveis.
-  - Herança scenario-specific com 2 cenários.
-  - Adoção simples.
-  - Adoção duplicada (espera erro).
-  - Backup/restore.
-- [ ] Serializa em JSON estruturado.
-
-**Teste TS:**
-
-- [ ] Itera casos.
-- [ ] Verifica cada resultado.
-- [ ] Cobertura ≥ 30 casos.
-
-**Task `golden:generate`:**
-
-- [ ] `ruby scripts/golden/property-tree.rb > packages/core/tests/golden/property-tree.golden.json`.
-
-#### Referências
-
-- `docs/taskjuggler/lib/taskjuggler/PropertyTreeNode.rb`.
-- `docs/taskjuggler/lib/taskjuggler/PropertySet.rb`.
-- Fase 2, subfase 5.14 — infraestrutura base.
-
-#### Fora de escopo
-
-- Golden tests de Task/Resource — Fase 5.
-
-#### Critério de aceite
-
-```bash
-deno task golden:generate
-deno task test
-```
-
-- JSON com ≥ 30 casos.
-- Todos passam.
-
-#### Testes
-
-- `property-tree_golden_test.ts`:
-  - `describe("Golden PropertyTreeNode")`
-    - itera casos de estrutura.
-    - itera casos de herança.
-    - itera casos de adoção.
-
----
-
-## 6. Ordem de execução sugerida
-
-```text
-7.0  ADR 014
-      ↓
-7.1  AttributeContainer + MockContainer + MockProject + erros
-      ↓
-7.6  PropertySet                    ← pode rodar antes de PropertyTreeNode completo
-      ↓
-7.2  PropertyTreeNode — estrutura
-      ↓
-7.3  PropertyTreeNode — atributos lazy
-      ↓
-7.4  PropertyTreeNode — herança
-      ↓
-7.5  PropertyTreeNode — adoção
-      ↓
-7.7  ScenarioData
-      ↓
-7.8  Scenario
-      ↓
-7.9  PTNProxy
-      ↓
-7.10 Golden tests
-```
-
-Cada subfase fecha com `deno task check-all` verde.
-
----
-
-## 7. Critério de conclusão da fase
-
-A Fase 4 é considerada concluída quando:
-
-```bash
-deno task check-all
-```
-
-passa, e:
-
-- [ ] `PropertyTreeNode` completo (estrutura + atributos + herança + adoção).
-- [ ] `PropertySet` completo.
-- [ ] `ScenarioData` implementada.
-- [ ] `Scenario` implementada.
-- [ ] `PTNProxy` implementado.
-- [ ] `AttributeContainer`, `ProjectLike` formalizados.
-- [ ] `MockContainer`, `MockProject` em testes.
-- [ ] **≥ 130 testes unitários**.
-- [ ] **≥ 30 golden tests**.
-- [ ] Nenhum `any` em `src/` (exceto onde justificado).
-- [ ] Nenhum import proibido em `packages/core/src/`.
-- [ ] ADR 014 criado.
-- [ ] `scripts/golden/property-tree.rb` funcional.
-- [ ] `scripts/golden/README.md` atualizado.
-
----
-
-## 8. Riscos e mitigações
-
-| Risco | Impacto | Mitigação |
-|---|---|---|
-| Lazy attribute creation com helper é menos transparente que Ruby | Médio | Testes garantem semântica igual; ADR 014 documenta |
-| `method_missing` substituído por helper quebra subclasses futuras | Médio | Definir padrão claro em ADR 014; revisar em Fase 5 |
-| Propagação de cenários em `[]=` com mode 0 tem bug | Alto | Testes com 3 cenários hierárquicos |
-| Backup/restore é cópia rasa | Baixo | Aceito — mesmo comportamento do Ruby |
-| Adoção recursiva pode causar loop | Alto | Detecção de duplicação em `allLeaves()` do root |
-| `MockProject` diverge do `Project` real | Médio | `ProjectLike` é interface mínima; Fase 9 implementa |
-| `getBSIndicies` depende de `levelSeqNo` correto | Alto | Testar com árvores variadas (2-3 níveis) |
-| `getIndicies` depende de `get('index')` (recalculado por `index()`) | Alto | Testar `PropertySet.index()` |
-| `PropertySet.removeProperty` pode quebrar referências | Alto | Testar remoção recursiva + `removeReferences` |
-
----
-
-## 9. Referências cruzadas
-
-### Arquivos Ruby (fonte primária)
-
-- `docs/taskjuggler/lib/taskjuggler/PropertyTreeNode.rb`
-- `docs/taskjuggler/lib/taskjuggler/PropertySet.rb`
-- `docs/taskjuggler/lib/taskjuggler/ScenarioData.rb`
-- `docs/taskjuggler/lib/taskjuggler/Scenario.rb`
-- `docs/taskjuggler/lib/taskjuggler/PTNProxy.rb`
-
-### Blueprints
-
-- `docs/tj3-engine/02-bluprint-engine1.md` — §3, §4
-- `docs/tj3-engine/06-blueprint-engine5.md` — §4.2, §5.3
-
-### Documentos do projeto
-
-- `docs/syntaxmesh/decisoes/001-core-independente-do-dom.md`
-- `docs/syntaxmesh/decisoes/011-port-fiel-taskjuggler.md`
-- `docs/syntaxmesh/decisoes/013-attribute-mode-global.md`
-- `docs/syntaxmesh/decisoes/014-metaprogramacao-propertytreenode.md` (novo)
-- `docs/syntaxmesh/03-arquitetura.md`
-
-### Fases dependentes
-
-- **Fase 5 — Entidades Concretas** (Task, Resource herdam de PropertyTreeNode).
-- **Fase 6 — Scoreboard e Estruturas Base** (Limits, ShiftAssignments usam ScenarioData).
-- **Fase 7 — Scheduler** (usa `scenarioData(scIdx)` e atributos scenario).
-- **Fase 9 — Orquestrador** (Project gerencia PropertySets).
-- **Fase 14 — Reports** (usa `PropertyList` com `PTNProxy`).
-
----
-
-## 10. Notas para a IA
-
-1. **`attribute(id)` é o coração.** Sempre use-o; nunca acesse `attributes` Map diretamente.
-2. **Não introduza `Proxy`.** A decisão foi por métodos explícitos (ADR 014). Se você acha que precisa, **pare e consulte o autor**.
-3. **`scenarioData(scIdx)` substitui `method_missing`.** Subclasses definem métodos explícitos que chamam `this.scenarioData(scIdx).<method>()`.
-4. **`inheritAttributes` é chamada uma vez por propriedade**, logo após a criação (nas subclasses). Não chame em loop.
-5. **`backupAttributes` é cópia rasa.** Não tente "melhorar" para deep copy — muda a semântica.
-6. **Propagação de cenários em `[]=` com mode 0.** Sempre propague para todos os derivados; o alvo recebe `set`, filhos recebem `inherit`.
-7. **`PropertySet.index()` recalcula BSI.** Chame sempre após adicionar/remover propriedades.
-8. **Golden tests contra Ruby são obrigatórios** para estrutura, herança e adoção.
-9. **Sem `any`.** Use `unknown` e narrowing.
-10. **Commit por subfase.** `feat(core): property-tree/<aspecto>`.
-11. **`MockProject` fica em `tests/`.** Não exponha em `src/`.
-12. **`ProjectLike` é interface, não classe.** `Project` real virá na Fase 9.
-13. **`MessageHandlerLike` é interface.** Implementação real na Fase 9.
-
----
-
-## 11. ADR 014 (referência rápida)
-
-Criado como subfase 7.0. Conteúdo esperado:
-
-- **Título:** Metaprogramação Ruby em PropertyTreeNode: adaptações para TypeScript
-- **Contexto:** `Hash.new { ... }` (lazy) e `method_missing` (delegação).
-- **Decisão:**
-  - Lazy → método `attribute(id)`.
-  - Delegação → helper `scenarioData(scIdx)` + métodos explícitos.
-- **Alternativas:** `Proxy`, inicialização antecipada.
-- **Consequências:** clareza + debugabilidade; mais código.
-
----
-
-**Fim da Fase 4.**
-````
-
----
-
 ## Arquivo: `docs/syntaxmesh/fases/fase-5-entidades-concretas.md`
 
 ````md
@@ -6020,7 +7639,7 @@ Atributos como `definitions`, `journalAttributes`, `taskAttributes`, `resourceAt
 
 ---
 
-### 9.0 — ADR 015 (pré-carregamento de atributos em `*Scenario`)
+### 5.0 — ADR 015 (pré-carregamento de atributos em `*Scenario`)
 
 #### Contexto
 
@@ -6081,7 +7700,7 @@ Registrar a decisão de **replicar** esse pré-carregamento em TS.
 
 ---
 
-### 9.1 — Estender `ProjectLike` + `ScenarioData.preloadAttributes`
+### 5.1 — Estender `ProjectLike` + `ScenarioData.preloadAttributes`
 
 #### Contexto
 
@@ -6162,7 +7781,7 @@ assert(mp.scenario(0) !== null);
 
 ---
 
-### 9.2 — `Task` + `TaskScenario` (esqueleto)
+### 5.2 — `Task` + `TaskScenario` (esqueleto)
 
 #### Contexto
 
@@ -6242,7 +7861,7 @@ assert(t.getScenarioAttribute(0, "effort") !== undefined);
 
 ---
 
-### 9.3 — `Resource` + `ResourceScenario` (esqueleto)
+### 5.3 — `Resource` + `ResourceScenario` (esqueleto)
 
 #### Contexto
 
@@ -6301,7 +7920,7 @@ Análogo a `Task`.
 
 ---
 
-### 9.4 — `Account` + `AccountScenario` (esqueleto)
+### 5.4 — `Account` + `AccountScenario` (esqueleto)
 
 #### Contexto
 
@@ -6351,7 +7970,7 @@ Análogo.
 
 ---
 
-### 9.5 — `Shift` + `ShiftScenario`
+### 5.5 — `Shift` + `ShiftScenario`
 
 #### Contexto
 
@@ -6411,7 +8030,7 @@ assert(scenario.onShift(TjTime.fromString("2026-01-05-10:00")));
 
 ---
 
-### 9.6 — `Report` + `ReportScenario` (esqueleto)
+### 5.6 — `Report` + `ReportScenario` (esqueleto)
 
 #### Contexto
 
@@ -6472,7 +8091,7 @@ assertThrows(() => new Report(mp, "r2", "In*valid", null));
 
 ---
 
-### 9.7 — `AttributeDefinitions`: Scenarios
+### 5.7 — `AttributeDefinitions`: Scenarios
 
 #### Contexto
 
@@ -6535,7 +8154,7 @@ assertEquals(mp.scenarios.inheritedFromParent?("active"), true);
 
 ---
 
-### 9.8 — `AttributeDefinitions`: Shifts
+### 5.8 — `AttributeDefinitions`: Shifts
 
 #### Objetivo
 
@@ -6578,7 +8197,7 @@ Análogo. 7 atributos além dos base.
 
 ---
 
-### 9.9 — `AttributeDefinitions`: Accounts
+### 5.9 — `AttributeDefinitions`: Accounts
 
 #### Objetivo
 
@@ -6618,7 +8237,7 @@ Análogo. 6 atributos.
 
 ---
 
-### 9.10 — `AttributeDefinitions`: Resources
+### 5.10 — `AttributeDefinitions`: Resources
 
 #### Objetivo
 
@@ -6676,7 +8295,7 @@ Análogo. 20 atributos.
 
 ---
 
-### 9.11 — `AttributeDefinitions`: Tasks
+### 5.11 — `AttributeDefinitions`: Tasks
 
 #### Objetivo
 
@@ -6757,7 +8376,7 @@ Análogo. 44 atributos.
 
 ---
 
-### 9.12 — `AttributeDefinitions`: Reports
+### 5.12 — `AttributeDefinitions`: Reports
 
 #### Objetivo
 
@@ -6857,7 +8476,7 @@ Análogo. 61 atributos.
 
 ---
 
-### 9.13 — `MockProject` estendido + fixtures
+### 5.13 — `MockProject` estendido + fixtures
 
 #### Contexto
 
@@ -6919,7 +8538,7 @@ assertEquals(mp.reports.knownAttribute("novevents"), true);
 
 ---
 
-### 9.14 — Golden tests (definições de atributos)
+### 5.14 — Golden tests (definições de atributos)
 
 #### Contexto
 
@@ -7351,7 +8970,7 @@ Reutilizamos `TjError`, `TjArgumentError` (Fase 3). Adicionamos `TjInternalError
 
 ---
 
-### 10.0 — ADR 016 (Scoreboard encoding conventions)
+### 6.0 — ADR 016 (Scoreboard encoding conventions)
 
 #### Contexto
 
@@ -7414,7 +9033,7 @@ Criar `docs/syntaxmesh/decisoes/016-scoreboard-encoding.md`.
 
 ---
 
-### 10.1 — `scoreboard-bits.ts` (constantes + helpers)
+### 6.1 — `scoreboard-bits.ts` (constantes + helpers)
 
 #### Contexto
 
@@ -7488,7 +9107,7 @@ assertEquals(hasOverride(256), true);
 
 ---
 
-### 10.2 — `Limits` + `Limit`
+### 6.2 — `Limits` + `Limit`
 
 #### Contexto
 
@@ -7626,7 +9245,7 @@ assertEquals(limits.ok?(0, true, null), false);
 
 ---
 
-### 10.3 — `ShiftAssignments` + `ShiftAssignment`
+### 6.3 — `ShiftAssignments` + `ShiftAssignment`
 
 #### Contexto
 
@@ -7767,7 +9386,7 @@ assert(sa.assigned?(0)); // sbIdx 0 dentro do intervalo
 
 ---
 
-### 10.4 — `ShiftScenario` consolidado
+### 6.4 — `ShiftScenario` consolidado
 
 #### Contexto
 
@@ -7830,7 +9449,7 @@ assert(!ss.onShift(TjTime.fromString("2026-01-05-20:00")));
 
 ---
 
-### 10.5 — Integração com `ResourceScenario`
+### 6.5 — Integração com `ResourceScenario`
 
 #### Contexto
 
@@ -7887,7 +9506,7 @@ assert(!rs.onShift(/* sbIdx correspondente a Monday 20h */));
 
 ---
 
-### 10.6 — Golden tests (Limits, ShiftAssignments)
+### 6.6 — Golden tests (Limits, ShiftAssignments)
 
 #### Contexto
 
@@ -8355,7 +9974,7 @@ Esta fase é grande. As subfases são agrupadas em 5 blocos:
 
 ---
 
-### 11.0 — ADR 017 (heurística e slots)
+### 7.0 — ADR 017 (heurística e slots)
 
 #### Contexto
 
@@ -8411,7 +10030,7 @@ Criar `docs/syntaxmesh/decisoes/017-heuristica-scheduler.md`.
 
 ---
 
-### 11.1 — `DataCache`
+### 7.1 — `DataCache`
 
 #### Contexto
 
@@ -8485,7 +10104,7 @@ assertEquals(calls, 1); // 2ª chamada usa cache
 
 ---
 
-### 11.2 — `TaskDependency`
+### 7.2 — `TaskDependency`
 
 #### Contexto
 
@@ -8540,7 +10159,7 @@ assertEquals(dep.task?.id, 't1');
 
 ---
 
-### 11.3 — `Allocation` + `SelectionMode`
+### 7.3 — `Allocation` + `SelectionMode`
 
 #### Contexto
 
@@ -8621,7 +10240,7 @@ assertEquals(al.candidatesList(0)[0].fullId, 'b');
 
 ---
 
-### 11.4 — `Booking`
+### 7.4 — `Booking`
 
 #### Contexto
 
@@ -8679,7 +10298,7 @@ Análogo.
 
 ---
 
-### 11.5 — `TaskScenario.prepareScheduling` + `Xref` + `preScheduleCheck`
+### 7.5 — `TaskScenario.prepareScheduling` + `Xref` + `preScheduleCheck`
 
 #### Contexto
 
@@ -8843,7 +10462,7 @@ assert(ts.hasDurationSpec);
 
 ---
 
-### 11.6 — `TaskScenario.checkForLoops` + `calcCriticalness` + `calcPathCriticalness`
+### 7.6 — `TaskScenario.checkForLoops` + `calcCriticalness` + `calcPathCriticalness`
 
 #### Contexto
 
@@ -8948,7 +10567,7 @@ Análogo.
 
 ---
 
-### 11.7 — `TaskScenario.schedule` + `scheduleSlot`
+### 7.7 — `TaskScenario.schedule` + `scheduleSlot`
 
 #### Contexto
 
@@ -9038,7 +10657,7 @@ Análogo.
 
 ---
 
-### 11.8 — `TaskScenario.bookResources` + `bookResource`
+### 7.8 — `TaskScenario.bookResources` + `bookResource`
 
 #### Contexto
 
@@ -9146,7 +10765,7 @@ Análogo.
 
 ---
 
-### 11.9 — `TaskScenario.propagateDate` + `scheduleContainer` + `earliestStart` + `latestEnd`
+### 7.9 — `TaskScenario.propagateDate` + `scheduleContainer` + `earliestStart` + `latestEnd`
 
 #### Contexto
 
@@ -9274,7 +10893,7 @@ Análogo.
 
 ---
 
-### 11.10 — `TaskScenario.bookBookings` + `finishScheduling` + `postScheduleCheck` + completion/status/gauge
+### 7.10 — `TaskScenario.bookBookings` + `finishScheduling` + `postScheduleCheck` + completion/status/gauge
 
 #### Contexto
 
@@ -9407,7 +11026,7 @@ Análogo.
 
 ---
 
-### 11.11 — `ResourceScenario.initScoreboard`
+### 7.11 — `ResourceScenario.initScoreboard`
 
 #### Contexto
 
@@ -9506,7 +11125,7 @@ Análogo.
 
 ---
 
-### 11.12 — `ResourceScenario.book` + `bookBooking` + `bookedEffort`
+### 7.12 — `ResourceScenario.book` + `bookBooking` + `bookedEffort`
 
 #### Contexto
 
@@ -9582,7 +11201,7 @@ Análogo.
 
 ---
 
-### 11.13 — `ResourceScenario` — cálculos de slots e tree
+### 7.13 — `ResourceScenario` — cálculos de slots e tree
 
 #### Contexto
 
@@ -9647,7 +11266,7 @@ Análogo.
 
 ---
 
-### 11.14 — `ResourceScenario` — getEffectiveWork + getLeave + getTimeOffDays
+### 7.14 — `ResourceScenario` — getEffectiveWork + getLeave + getTimeOffDays
 
 #### Contexto
 
@@ -9709,7 +11328,7 @@ Análogo.
 
 ---
 
-### 11.15 — `ResourceScenario` — queries + turnover + cost
+### 7.15 — `ResourceScenario` — queries + turnover + cost
 
 #### Contexto
 
@@ -9785,7 +11404,7 @@ Análogo.
 
 ---
 
-### 11.16 — `TaskScenario` — queries + turnover + getAllocatedTime + getEffectiveWork + collectTimeOffIntervals
+### 7.16 — `TaskScenario` — queries + turnover + getAllocatedTime + getEffectiveWork + collectTimeOffIntervals
 
 #### Contexto
 
@@ -9896,13 +11515,13 @@ Análogo.
 
 ---
 
-### 11.17 — `TaskScenario` — `finishScheduling` (já feito em 11.10) + `postScheduleCheck` (já feito em 11.10)
+### 7.17 — `TaskScenario` — `finishScheduling` (já feito em 11.10) + `postScheduleCheck` (já feito em 11.10)
 
 Duplicação — referência apenas. `finishScheduling` e `postScheduleCheck` estão em 11.10.
 
 ---
 
-### 11.18 — Golden tests (scheduler)
+### 7.18 — Golden tests (scheduler)
 
 #### Contexto
 
@@ -10348,7 +11967,7 @@ Trivial — `{ date, description, amount }`. Sem lógica.
 
 ---
 
-### 12.0 — ADR 018 (modelo financeiro)
+### 8.0 — ADR 018 (modelo financeiro)
 
 #### Contexto
 
@@ -10399,7 +12018,7 @@ Criar `docs/syntaxmesh/decisoes/018-modelo-financeiro.md`.
 
 ---
 
-### 12.1 — `AccountCredit`
+### 8.1 — `AccountCredit`
 
 #### Contexto
 
@@ -10448,7 +12067,7 @@ assertEquals(c.amount, 5000);
 
 ---
 
-### 12.2 — `Charge`
+### 8.2 — `Charge`
 
 #### Contexto
 
@@ -10533,7 +12152,7 @@ assertEquals(c.turnover(period), 10000);
 
 ---
 
-### 12.3 — `ChargeSet`
+### 8.3 — `ChargeSet`
 
 #### Contexto
 
@@ -10614,7 +12233,7 @@ assertEquals(cs.share(devAccount), 0.7);
 
 ---
 
-### 12.4 — `AccountScenario.turnover` + `query_balance` + `query_turnover`
+### 8.4 — `AccountScenario.turnover` + `query_balance` + `query_turnover`
 
 #### Contexto
 
@@ -10696,7 +12315,7 @@ Análogo.
 
 ---
 
-### 12.5 — `TaskScenario.turnover` — pipeline completo
+### 8.5 — `TaskScenario.turnover` — pipeline completo
 
 #### Contexto
 
@@ -10770,7 +12389,7 @@ Análogo.
 
 ---
 
-### 12.6 — `ResourceScenario.turnover` — pipeline completo
+### 8.6 — `ResourceScenario.turnover` — pipeline completo
 
 #### Contexto
 
@@ -10827,7 +12446,7 @@ Análogo.
 
 ---
 
-### 12.7 — Meta-account (utilitário)
+### 8.7 — Meta-account (utilitário)
 
 #### Contexto
 
@@ -10886,7 +12505,7 @@ assertEquals(balance.adoptees.length, 2);
 
 ---
 
-### 12.8 — Golden tests (financeiro)
+### 8.8 — Golden tests (financeiro)
 
 #### Contexto
 
@@ -11342,7 +12961,7 @@ Sem `BatchProcessor`. Loop simples.
 
 ---
 
-### 13.0 — ADR 019 (orquestrador e ciclo de modos)
+### 9.0 — ADR 019 (orquestrador e ciclo de modos)
 
 #### Contexto
 
@@ -11391,7 +13010,7 @@ Criar `docs/syntaxmesh/decisoes/019-orquestrador-pipeline.md`.
 
 ---
 
-### 13.1 — `SourceFileInfo`, `TjException`, `TjRuntimeError`
+### 9.1 — `SourceFileInfo`, `TjException`, `TjRuntimeError`
 
 #### Contexto
 
@@ -11465,7 +13084,7 @@ assert(err instanceof Error);
 
 ---
 
-### 13.2 — `MessageHandler` + `MessageHandlerInstance`
+### 9.2 — `MessageHandler` + `MessageHandlerInstance`
 
 #### Contexto
 
@@ -11565,7 +13184,7 @@ mh.error("e1", "Error message"); // lança TjRuntimeError
 
 ---
 
-### 13.3 — `Log`
+### 9.3 — `Log`
 
 #### Contexto
 
@@ -11633,7 +13252,7 @@ Log.exit("test");
 
 ---
 
-### 13.4 — `PropertyList`
+### 9.4 — `PropertyList`
 
 #### Contexto
 
@@ -11736,7 +13355,7 @@ list.sort!();
 
 ---
 
-### 13.5 — `AppConfig`, `Tj3Config`, `version`
+### 9.5 — `AppConfig`, `Tj3Config`, `version`
 
 #### Contexto
 
@@ -11804,7 +13423,7 @@ assertEquals(AppConfig.dataDirs("data"), []);
 
 ---
 
-### 13.6 — `Project` — estrutura e atributos
+### 9.6 — `Project` — estrutura e atributos
 
 #### Contexto
 
@@ -11912,7 +13531,7 @@ assertEquals(p.reports.knownAttribute("novevents"), true);
 
 ---
 
-### 13.7 — `Project.schedule`
+### 9.7 — `Project.schedule`
 
 #### Contexto
 
@@ -12033,7 +13652,7 @@ assertEquals(p.schedule(), true);
 
 ---
 
-### 13.8 — `Project.generateReports` + `generateReport` + `listReports`
+### 9.8 — `Project.generateReports` + `generateReport` + `listReports`
 
 #### Contexto
 
@@ -12110,7 +13729,7 @@ Análogo.
 
 ---
 
-### 13.9 — `Project` — eventos e utilitários
+### 9.9 — `Project` — eventos e utilitários
 
 #### Contexto
 
@@ -12157,7 +13776,7 @@ Análogo.
 
 ---
 
-### 13.10 — `TaskJuggler` (top-level)
+### 9.10 — `TaskJuggler` (top-level)
 
 #### Contexto
 
@@ -12240,7 +13859,7 @@ assertEquals(tj.schedule(), true);
 
 ---
 
-### 13.11 — `MockProject` → `Project` real
+### 9.11 — `MockProject` → `Project` real
 
 #### Contexto
 
@@ -12285,7 +13904,7 @@ deno task test
 
 ---
 
-### 13.12 — Golden tests (end-to-end)
+### 9.12 — Golden tests (end-to-end)
 
 #### Contexto
 
@@ -12806,7 +14425,7 @@ A fase é organizada em **5 blocos**:
 
 ---
 
-### 14.0 — ADRs 020 e 021
+### 10.0 — ADRs 020 e 021
 
 #### Contexto
 
@@ -12866,7 +14485,7 @@ Criar:
 
 ---
 
-### 14.1 — `TokenDoc`
+### 10.1 — `TokenDoc`
 
 #### Contexto
 
@@ -12908,7 +14527,7 @@ Análogo.
 
 ---
 
-### 14.2 — `Macro` + `MacroTable`
+### 10.2 — `Macro` + `MacroTable`
 
 #### Contexto
 
@@ -12972,7 +14591,7 @@ assertEquals(resolved, "Hello World!");
 
 ---
 
-### 14.3 — `StackElement`
+### 10.3 — `StackElement`
 
 #### Contexto
 
@@ -13026,7 +14645,7 @@ Análogo.
 
 ---
 
-### 14.4 — `StateTransition` + `State`
+### 10.4 — `StateTransition` + `State`
 
 #### Contexto
 
@@ -13081,7 +14700,7 @@ Análogo.
 
 ---
 
-### 14.5 — `Pattern`
+### 10.5 — `Pattern`
 
 #### Contexto
 
@@ -13153,7 +14772,7 @@ Análogo.
 
 ---
 
-### 14.6 — `Rule`
+### 10.6 — `Rule`
 
 #### Contexto
 
@@ -13219,7 +14838,7 @@ Análogo.
 
 ---
 
-### 14.7 — `TextParser` FSM (core)
+### 10.7 — `TextParser` FSM (core)
 
 #### Contexto
 
@@ -13302,7 +14921,7 @@ assertEquals(p.parse('test'), 42);
 
 ---
 
-### 14.8 — `Scanner` (genérico)
+### 10.8 — `Scanner` (genérico)
 
 #### Contexto
 
@@ -13391,7 +15010,7 @@ Análogo.
 
 ---
 
-### 14.9 — `ProjectFileScanner`
+### 10.9 — `ProjectFileScanner`
 
 #### Contexto
 
@@ -13457,7 +15076,7 @@ assertEquals(scanner.nextToken()[0], 'KEYWORD'); // 'project' é keyword
 
 ---
 
-### 14.10 — `ProjectFileParser` (estrutura)
+### 10.10 — `ProjectFileParser` (estrutura)
 
 #### Contexto
 
@@ -13533,7 +15152,7 @@ Análogo.
 
 ---
 
-### 14.11 — `TjpSyntaxRules` — bloco 1 (project + task)
+### 10.11 — `TjpSyntaxRules` — bloco 1 (project + task)
 
 #### Contexto
 
@@ -13618,7 +15237,7 @@ assert(project instanceof Project);
 
 ---
 
-### 14.12 — `TjpSyntaxRules` — bloco 2 (resource + account + shift + scenario)
+### 10.12 — `TjpSyntaxRules` — bloco 2 (resource + account + shift + scenario)
 
 #### Objetivo
 
@@ -13697,7 +15316,7 @@ Análogo.
 
 ---
 
-### 14.13 — `TjpSyntaxRules` — bloco 3 (reports)
+### 10.13 — `TjpSyntaxRules` — bloco 3 (reports)
 
 #### Objetivo
 
@@ -13766,7 +15385,7 @@ Análogo.
 
 ---
 
-### 14.14 — `TjpSyntaxRules` — bloco 4 (tracking + lógica)
+### 10.14 — `TjpSyntaxRules` — bloco 4 (tracking + lógica)
 
 #### Objetivo
 
@@ -13838,7 +15457,7 @@ Análogo.
 
 ---
 
-### 14.15 — `LanguageDefinition` + `LanguageRegistry` + `CanonicalKeyword`
+### 10.15 — `LanguageDefinition` + `LanguageRegistry` + `CanonicalKeyword`
 
 #### Contexto
 
@@ -13916,7 +15535,7 @@ assertEquals(reg.resolve("unknown", "en"), null);
 
 ---
 
-### 14.16 — Idiomas: `en`, `pt-BR`, `es`
+### 10.16 — Idiomas: `en`, `pt-BR`, `es`
 
 #### Contexto
 
@@ -13992,7 +15611,7 @@ Análogo.
 
 ---
 
-### 14.17 — Diretiva `language` no parser
+### 10.17 — Diretiva `language` no parser
 
 #### Contexto
 
@@ -14048,7 +15667,7 @@ assert(project instanceof Project);
 
 ---
 
-### 14.18 — AST equivalence entre idiomas
+### 10.18 — AST equivalence entre idiomas
 
 #### Contexto
 
@@ -14098,7 +15717,7 @@ Análogo.
 
 ---
 
-### 14.19 — Golden tests (parser)
+### 10.19 — Golden tests (parser)
 
 #### Contexto
 
@@ -14684,7 +16303,7 @@ Simples.
 
 ---
 
-### 15.0 — ADR 022 (expressões lógicas sem precedência)
+### 11.0 — ADR 022 (expressões lógicas sem precedência)
 
 #### Contexto
 
@@ -14723,7 +16342,7 @@ Criar `docs/syntaxmesh/decisoes/022-expressoes-logicas.md`.
 
 ---
 
-### 15.1 — `LogicalOperation`
+### 11.1 — `LogicalOperation`
 
 #### Contexto
 
@@ -14807,7 +16426,7 @@ assertEquals(op2.eval(expr), true);
 
 ---
 
-### 15.2 — `LogicalAttribute` + `LogicalFlag`
+### 11.2 — `LogicalAttribute` + `LogicalFlag`
 
 #### Contexto
 
@@ -14878,7 +16497,7 @@ assertEquals(attr.eval(expr), 8);
 
 ---
 
-### 15.3 — `LogicalFunction` (14 funções)
+### 11.3 — `LogicalFunction` (14 funções)
 
 #### Contexto
 
@@ -14968,7 +16587,7 @@ assertEquals(fn.eval(expr), true);
 
 ---
 
-### 15.4 — `LogicalExpression`
+### 11.4 — `LogicalExpression`
 
 #### Contexto
 
@@ -15023,7 +16642,7 @@ assertEquals(expr.eval(query), false);
 
 ---
 
-### 15.5 — Testes de expressões complexas
+### 11.5 — Testes de expressões complexas
 
 #### Contexto
 
@@ -15071,7 +16690,7 @@ Análogo.
 
 ---
 
-### 15.6 — `Query` — estrutura
+### 11.6 — `Query` — estrutura
 
 #### Contexto
 
@@ -15178,7 +16797,7 @@ assertEquals(q.startIdx, p.dateToIdx(q.start));
 
 ---
 
-### 15.7 — `Query.process`
+### 11.7 — `Query.process`
 
 #### Contexto
 
@@ -15265,7 +16884,7 @@ assertEquals(q.to_num(), 8);
 
 ---
 
-### 15.8 — `Query` — métodos de acesso
+### 11.8 — `Query` — métodos de acesso
 
 #### Contexto
 
@@ -15320,7 +16939,7 @@ Análogo.
 
 ---
 
-### 15.9 — `Query` — scale + assignList
+### 11.9 — `Query` — scale + assignList
 
 #### Contexto
 
@@ -15398,7 +17017,7 @@ assertEquals(q.scaleDuration(3), "3d");
 
 ---
 
-### 15.10 — `Query` — `resolvePropertyId` + `setCustomData`
+### 11.10 — `Query` — `resolvePropertyId` + `setCustomData`
 
 #### Contexto
 
@@ -15458,7 +17077,7 @@ Análogo.
 
 ---
 
-### 15.11 — `SimpleQueryExpander`
+### 11.11 — `SimpleQueryExpander`
 
 #### Contexto
 
@@ -15518,7 +17137,7 @@ assertEquals(expander.expand(), "Effort: 8d");
 
 ---
 
-### 15.12 — Integração com `TaskScenario` e `ResourceScenario`
+### 11.12 — Integração com `TaskScenario` e `ResourceScenario`
 
 #### Contexto
 
@@ -15588,7 +17207,7 @@ assertEquals(q.to_s(), "8d");
 
 ---
 
-### 15.13 — Golden tests (expressões + queries)
+### 11.13 — Golden tests (expressões + queries)
 
 #### Contexto
 
@@ -16097,7 +17716,7 @@ Usados por `RichTextElement.to_html`. Nesta fase, definir classes simples em `xm
 
 ---
 
-### 16.0 — ADR 023 (RichText e function handlers)
+### 12.0 — ADR 023 (RichText e function handlers)
 
 #### Contexto
 
@@ -16139,7 +17758,7 @@ Criar `docs/syntaxmesh/decisoes/023-richtext-handlers.md`.
 
 ---
 
-### 16.1 — `XMLElementLike` + primitivas
+### 12.1 — `XMLElementLike` + primitivas
 
 #### Contexto
 
@@ -16197,7 +17816,7 @@ assertEquals(div.toHTML(), '<div class="foo">Hello</div>');
 
 ---
 
-### 16.2 — `RichTextImage`
+### 12.2 — `RichTextImage`
 
 #### Contexto
 
@@ -16236,7 +17855,7 @@ Análogo.
 
 ---
 
-### 16.3 — `RichTextElement`
+### 12.3 — `RichTextElement`
 
 #### Contexto
 
@@ -16331,7 +17950,7 @@ Análogo.
 
 ---
 
-### 16.4 — `RichTextIntermediate`
+### 12.4 — `RichTextIntermediate`
 
 #### Contexto
 
@@ -16391,7 +18010,7 @@ Análogo.
 
 ---
 
-### 16.5 — `RichTextScanner`
+### 12.5 — `RichTextScanner`
 
 #### Contexto
 
@@ -16461,7 +18080,7 @@ Análogo.
 
 ---
 
-### 16.6 — `RichTextParser` + `RichTextSyntaxRules`
+### 12.6 — `RichTextParser` + `RichTextSyntaxRules`
 
 #### Contexto
 
@@ -16550,7 +18169,7 @@ Análogo.
 
 ---
 
-### 16.7 — `TOCEntry`
+### 12.7 — `TOCEntry`
 
 #### Contexto
 
@@ -16593,7 +18212,7 @@ Análogo.
 
 ---
 
-### 16.8 — `TableOfContents`
+### 12.8 — `TableOfContents`
 
 #### Contexto
 
@@ -16633,7 +18252,7 @@ Análogo.
 
 ---
 
-### 16.9 — `RichTextSnip`
+### 12.9 — `RichTextSnip`
 
 #### Contexto
 
@@ -16681,7 +18300,7 @@ Análogo.
 
 ---
 
-### 16.10 — `RichTextDocument` (abstract)
+### 12.10 — `RichTextDocument` (abstract)
 
 #### Contexto
 
@@ -16745,7 +18364,7 @@ Análogo.
 
 ---
 
-### 16.11 — `RichTextFunctionHandler` (abstract)
+### 12.11 — `RichTextFunctionHandler` (abstract)
 
 #### Contexto
 
@@ -16781,7 +18400,7 @@ Análogo.
 
 ---
 
-### 16.12 — `RichTextFunctionExample`
+### 12.12 — `RichTextFunctionExample`
 
 #### Contexto
 
@@ -16828,7 +18447,7 @@ Análogo.
 
 ---
 
-### 16.13 — `RTFWithQuerySupport`
+### 12.13 — `RTFWithQuerySupport`
 
 #### Contexto
 
@@ -16858,7 +18477,7 @@ Análogo.
 
 ---
 
-### 16.14 — `RTFQuery`
+### 12.14 — `RTFQuery`
 
 #### Contexto
 
@@ -16912,7 +18531,7 @@ Análogo.
 
 ---
 
-### 16.15 — `RTFReport` (stub)
+### 12.15 — `RTFReport` (stub)
 
 #### Contexto
 
@@ -16952,7 +18571,7 @@ Stub.
 
 ---
 
-### 16.16 — `RTFReportLink` (stub)
+### 12.16 — `RTFReportLink` (stub)
 
 #### Contexto
 
@@ -16990,7 +18609,7 @@ Stub.
 
 ---
 
-### 16.17 — `RTFNavigator` + `RTFHandlers`
+### 12.17 — `RTFNavigator` + `RTFHandlers`
 
 #### Contexto
 
@@ -17047,7 +18666,7 @@ Análogo.
 
 ---
 
-### 16.18 — `RichText` + `RichTextFactory` + integração com parser
+### 12.18 — `RichText` + `RichTextFactory` + integração com parser
 
 #### Contexto
 
@@ -17138,7 +18757,7 @@ assertEquals(rti.to_s(), "1) Title\n\nParagraph.");
 
 ---
 
-### 16.19 — Golden tests (RichText)
+### 12.19 — Golden tests (RichText)
 
 #### Contexto
 
@@ -17576,7 +19195,7 @@ Markdown não tem i18n de keywords (não é a mesma sintaxe do `.tjp`). Não apl
 
 ---
 
-### 17.0 — ADR 024 (Markdown como formato going-forward)
+### 13.0 — ADR 024 (Markdown como formato going-forward)
 
 #### Contexto
 
@@ -17625,7 +19244,7 @@ Criar `docs/syntaxmesh/decisoes/024-markdown-going-forward.md`.
 
 ---
 
-### 17.1 — Integração com `micromark`
+### 13.1 — Integração com `micromark`
 
 #### Contexto
 
@@ -17689,7 +19308,7 @@ assertEquals(ast.children[1].type, "paragraph");
 
 ---
 
-### 17.2 — `MdastToRichText` (conversor AST → `RichTextElement`)
+### 13.2 — `MdastToRichText` (conversor AST → `RichTextElement`)
 
 #### Contexto
 
@@ -17766,7 +19385,7 @@ assertEquals(elements[1].category, "paragraph");
 
 ---
 
-### 17.3 — `MarkdownFactory`
+### 13.3 — `MarkdownFactory`
 
 #### Contexto
 
@@ -17819,7 +19438,7 @@ assertEquals(rti.to_s(), "1) Title\n\nParagraph.");
 
 ---
 
-### 17.4 — Extensão: cor (`<fcol:...>`)
+### 13.4 — Extensão: cor (`<fcol:...>`)
 
 #### Contexto
 
@@ -17864,7 +19483,7 @@ Análogo.
 
 ---
 
-### 17.5 — Extensão: HTML inline permitido
+### 13.5 — Extensão: HTML inline permitido
 
 #### Contexto
 
@@ -17911,7 +19530,7 @@ assertEquals(sanitizeHtml('<a href="x" onclick="y">z</a>'), '<a href="x">z</a>')
 
 ---
 
-### 17.6 — Extensão: funções customizadas
+### 13.6 — Extensão: funções customizadas
 
 #### Contexto
 
@@ -17967,7 +19586,7 @@ assertEquals(extractions[0].args, { attribute: 'effort' });
 
 ---
 
-### 17.7 — Extensão: mini-queries (`<-name->`)
+### 13.7 — Extensão: mini-queries (`<-name->`)
 
 #### Contexto
 
@@ -18006,7 +19625,7 @@ Análogo.
 
 ---
 
-### 17.8 — Pipeline de pré/pós-processamento
+### 13.8 — Pipeline de pré/pós-processamento
 
 #### Contexto
 
@@ -18056,7 +19675,7 @@ Análogo.
 
 ---
 
-### 17.9 — `to_markdown` em `RichTextIntermediate`
+### 13.9 — `to_markdown` em `RichTextIntermediate`
 
 #### Contexto
 
@@ -18123,7 +19742,7 @@ assertEquals(rti.to_markdown(), "# Title\n\nParagraph.");
 
 ---
 
-### 17.10 — Conversor `richTextToMarkdown`
+### 13.10 — Conversor `richTextToMarkdown`
 
 #### Contexto
 
@@ -18170,7 +19789,7 @@ assertEquals(
 
 ---
 
-### 17.11 — Integração com `MarkdownFactory`
+### 13.11 — Integração com `MarkdownFactory`
 
 #### Contexto
 
@@ -18213,7 +19832,7 @@ Análogo.
 
 ---
 
-### 17.12 — Golden tests (snapshot)
+### 13.12 — Golden tests (snapshot)
 
 #### Contexto
 
@@ -18670,7 +20289,7 @@ Fase 12 deixou stubs. Aqui completamos.
 
 ---
 
-### 18.0 — ADR 025 (reports browser-only)
+### 14.0 — ADR 025 (reports browser-only)
 
 #### Contexto
 
@@ -18710,7 +20329,7 @@ Criar `docs/syntaxmesh/decisoes/025-reports-browser.md`.
 
 ---
 
-### 18.1 — `CSVFile`
+### 14.1 — `CSVFile`
 
 #### Contexto
 
@@ -18773,7 +20392,7 @@ assertEquals(parsed, [['a', 'b'], [1, 2]]);
 
 ---
 
-### 18.2 — `ReportContext` (completar)
+### 14.2 — `ReportContext` (completar)
 
 #### Contexto
 
@@ -18826,7 +20445,7 @@ assertEquals(ctx.query.project, project);
 
 ---
 
-### 18.3 — `ReportBase`
+### 14.3 — `ReportBase`
 
 #### Contexto
 
@@ -18885,7 +20504,7 @@ Análogo.
 
 ---
 
-### 18.4 — `TableColumnDefinition` + `CellSettingPattern`
+### 14.4 — `TableColumnDefinition` + `CellSettingPattern`
 
 #### Contexto
 
@@ -18960,7 +20579,7 @@ Análogo.
 
 ---
 
-### 18.5 — `TableColumnSorter`
+### 14.5 — `TableColumnSorter`
 
 #### Contexto
 
@@ -19004,7 +20623,7 @@ Análogo.
 
 ---
 
-### 18.6 — `ReportTable`
+### 14.6 — `ReportTable`
 
 #### Contexto
 
@@ -19065,7 +20684,7 @@ Análogo.
 
 ---
 
-### 18.7 — `ReportTableColumn`
+### 14.7 — `ReportTableColumn`
 
 #### Contexto
 
@@ -19115,7 +20734,7 @@ Análogo.
 
 ---
 
-### 18.8 — `ReportTableLine`
+### 14.8 — `ReportTableLine`
 
 #### Contexto
 
@@ -19171,7 +20790,7 @@ Análogo.
 
 ---
 
-### 18.9 — `ReportTableCell` + `PlaceHolderCell`
+### 14.9 — `ReportTableCell` + `PlaceHolderCell`
 
 #### Contexto
 
@@ -19263,7 +20882,7 @@ Análogo.
 
 ---
 
-### 18.10 — `ReportTableLegend`
+### 14.10 — `ReportTableLegend`
 
 #### Contexto
 
@@ -19315,7 +20934,7 @@ Análogo.
 
 ---
 
-### 18.11 — `Report` (completar)
+### 14.11 — `Report` (completar)
 
 #### Contexto
 
@@ -19388,7 +21007,7 @@ Análogo.
 
 ---
 
-### 18.12 — `TableReport`
+### 14.12 — `TableReport`
 
 #### Contexto
 
@@ -19485,7 +21104,7 @@ Análogo.
 
 ---
 
-### 18.13 — `ColumnTable`
+### 14.13 — `ColumnTable`
 
 #### Contexto
 
@@ -19532,7 +21151,7 @@ Análogo.
 
 ---
 
-### 18.14 — `TaskListRE`
+### 14.14 — `TaskListRE`
 
 #### Contexto
 
@@ -19577,7 +21196,7 @@ Análogo.
 
 ---
 
-### 18.15 — `ResourceListRE`
+### 14.15 — `ResourceListRE`
 
 #### Contexto
 
@@ -19619,7 +21238,7 @@ Análogo.
 
 ---
 
-### 18.16 — `AccountListRE`
+### 14.16 — `AccountListRE`
 
 #### Contexto
 
@@ -19668,7 +21287,7 @@ Análogo.
 
 ---
 
-### 18.17 — `TextReport`
+### 14.17 — `TextReport`
 
 #### Contexto
 
@@ -19716,7 +21335,7 @@ Análogo.
 
 ---
 
-### 18.18 — `ExportRE` + `TjpExportRE` + `MspXmlRE`
+### 14.18 — `ExportRE` + `TjpExportRE` + `MspXmlRE`
 
 #### Contexto
 
@@ -19788,7 +21407,7 @@ Análogo.
 
 ---
 
-### 18.19 — `ICalReport`
+### 14.19 — `ICalReport`
 
 #### Contexto
 
@@ -19846,7 +21465,7 @@ Análogo.
 
 ---
 
-### 18.20 — `NikuReport` + `TraceReport` + `TagFile`
+### 14.20 — `NikuReport` + `TraceReport` + `TagFile`
 
 #### Contexto
 
@@ -19920,7 +21539,7 @@ Análogo.
 
 ---
 
-### 18.21 — `Navigator` + completar `RTFNavigator`
+### 14.21 — `Navigator` + completar `RTFNavigator`
 
 #### Contexto
 
@@ -19996,7 +21615,7 @@ Análogo.
 
 ---
 
-### 18.22 — `ChartPlotter`
+### 14.22 — `ChartPlotter`
 
 #### Contexto
 
@@ -20060,7 +21679,7 @@ Análogo.
 
 ---
 
-### 18.23 — Golden tests (reports)
+### 14.23 — Golden tests (reports)
 
 #### Contexto
 
@@ -20586,7 +22205,7 @@ Replicar.
 
 ---
 
-### 19.0 — ADR 026 (Gantt HTML+CSS)
+### 15.0 — ADR 026 (Gantt HTML+CSS)
 
 #### Contexto
 
@@ -20623,7 +22242,7 @@ Criar `docs/syntaxmesh/decisoes/026-gantt-html-css.md`.
 
 ---
 
-### 19.1 — `HTMLGraphics`
+### 15.1 — `HTMLGraphics`
 
 #### Contexto
 
@@ -20677,7 +22296,7 @@ const div = lineToHTML(10, 20, 50, 20, 'foo');
 
 ---
 
-### 19.2 — `CollisionDetector`
+### 15.2 — `CollisionDetector`
 
 #### Contexto
 
@@ -20748,7 +22367,7 @@ assert(!cd.collision(20, [50, 60], true));
 
 ---
 
-### 19.3 — `GanttRouter`
+### 15.3 — `GanttRouter`
 
 #### Contexto
 
@@ -20824,7 +22443,7 @@ Análogo.
 
 ---
 
-### 19.4 — `GanttTaskBar`
+### 15.4 — `GanttTaskBar`
 
 #### Contexto
 
@@ -20886,7 +22505,7 @@ assertEquals(html.length, 4); // frame invisível, frame, fill, progress
 
 ---
 
-### 19.5 — `GanttMilestone`
+### 15.5 — `GanttMilestone`
 
 #### Contexto
 
@@ -20932,7 +22551,7 @@ Análogo.
 
 ---
 
-### 19.6 — `GanttContainer`
+### 15.6 — `GanttContainer`
 
 #### Contexto
 
@@ -20981,7 +22600,7 @@ Análogo.
 
 ---
 
-### 19.7 — `GanttLoadStack`
+### 15.7 — `GanttLoadStack`
 
 #### Contexto
 
@@ -21042,7 +22661,7 @@ Análogo.
 
 ---
 
-### 19.8 — `GanttHeaderScaleItem`
+### 15.8 — `GanttHeaderScaleItem`
 
 #### Contexto
 
@@ -21086,7 +22705,7 @@ Análogo.
 
 ---
 
-### 19.9 — `GanttHeader`
+### 15.9 — `GanttHeader`
 
 #### Contexto
 
@@ -21162,7 +22781,7 @@ assert(header.gridLines.length > 0);
 
 ---
 
-### 19.10 — `GanttLine`
+### 15.10 — `GanttLine`
 
 #### Contexto
 
@@ -21252,7 +22871,7 @@ Análogo.
 
 ---
 
-### 19.11 — `GanttChart`
+### 15.11 — `GanttChart`
 
 #### Contexto
 
@@ -21366,7 +22985,7 @@ Análogo.
 
 ---
 
-### 19.12 — Integração com `TaskReport` e `ResourceReport`
+### 15.12 — Integração com `TaskReport` e `ResourceReport`
 
 #### Contexto
 
@@ -21417,7 +23036,7 @@ Análogo.
 
 ---
 
-### 19.13 — Golden tests (Gantt)
+### 15.13 — Golden tests (Gantt)
 
 #### Contexto
 
@@ -21910,7 +23529,7 @@ Já implementado na Fase 3 (`deep-clone.ts`).
 
 ---
 
-### 20.0 — ADR 027 (Journal e AlertLevel)
+### 16.0 — ADR 027 (Journal e AlertLevel)
 
 #### Contexto
 
@@ -21952,7 +23571,7 @@ Criar `docs/syntaxmesh/decisoes/027-journal-alertlevel.md`.
 
 ---
 
-### 20.1 — `AlertLevelDefinitions`
+### 16.1 — `AlertLevelDefinitions`
 
 #### Contexto
 
@@ -22035,7 +23654,7 @@ assertEquals(al.indexById('yellow'), 1);
 
 ---
 
-### 20.2 — `JournalEntry` + `JournalEntryList`
+### 16.2 — `JournalEntry` + `JournalEntryList`
 
 #### Contexto
 
@@ -22114,7 +23733,7 @@ Análogo.
 
 ---
 
-### 20.3 — `Journal` (core)
+### 16.3 — `Journal` (core)
 
 #### Contexto
 
@@ -22205,7 +23824,7 @@ Análogo.
 
 ---
 
-### 20.4 — `Leave` + `LeaveList` + `LeaveAllowance`
+### 16.4 — `Leave` + `LeaveList` + `LeaveAllowance`
 
 #### Contexto
 
@@ -22294,7 +23913,7 @@ assertEquals(allowances.balance('annual', t1.minus(1), t2.plus(1)), 10);
 
 ---
 
-### 20.5 — Substituir stubs de `LeaveList`
+### 16.5 — Substituir stubs de `LeaveList`
 
 #### Contexto
 
@@ -22338,7 +23957,7 @@ Substituir stubs.
 
 ---
 
-### 20.6 — `TextFormatter`
+### 16.6 — `TextFormatter`
 
 #### Contexto
 
@@ -22398,7 +24017,7 @@ assert(result.includes('\n'));
 
 ---
 
-### 20.7 — `FileList` + `FileRecord`
+### 16.7 — `FileList` + `FileRecord`
 
 #### Contexto
 
@@ -22451,7 +24070,7 @@ assertEquals(fl.modified?, false);
 
 ---
 
-### 20.8 — `URLParameter`
+### 16.8 — `URLParameter`
 
 #### Contexto
 
@@ -22498,7 +24117,7 @@ assertEquals(decoded, "Hello world");
 
 ---
 
-### 20.9 — `TernarySearchTree`
+### 16.9 — `TernarySearchTree`
 
 #### Contexto
 
@@ -22561,7 +24180,7 @@ assertEquals(tree.find('hel', true), ['hello', 'help']);
 
 ---
 
-### 20.10 — `AlgorithmDiff`
+### 16.10 — `AlgorithmDiff`
 
 #### Contexto
 
@@ -22615,7 +24234,7 @@ assertEquals(patched, [1, 4, 3]);
 
 ---
 
-### 20.11 — `StdIoWrapper`
+### 16.11 — `StdIoWrapper`
 
 #### Contexto
 
@@ -22671,7 +24290,7 @@ assertEquals(results.stdOut, "hello\n");
 
 ---
 
-### 20.12 — `UTF8String` (no-op)
+### 16.12 — `UTF8String` (no-op)
 
 #### Contexto
 
@@ -22723,7 +24342,7 @@ assertEquals(reverseUtf8("a👍b"), "b👍a");
 
 ---
 
-### 20.13 — `deepClone` (revisitar)
+### 16.13 — `deepClone` (revisitar)
 
 #### Contexto
 
@@ -22756,7 +24375,7 @@ Garantir cobertura.
 
 ---
 
-### 20.14 — `KateSyntax`
+### 16.14 — `KateSyntax`
 
 #### Contexto
 
@@ -22802,7 +24421,7 @@ Implementar.
 
 ---
 
-### 20.15 — `VimSyntax`
+### 16.15 — `VimSyntax`
 
 #### Contexto
 
@@ -22846,7 +24465,7 @@ Implementar.
 
 ---
 
-### 20.16 — Completar `TaskScenario.query_journal` + `query_alert` + etc.
+### 16.16 — Completar `TaskScenario.query_journal` + `query_alert` + etc.
 
 #### Contexto
 
@@ -22908,7 +24527,7 @@ Análogo.
 
 ---
 
-### 20.17 — Completar `ResourceScenario.query_dashboard`
+### 16.17 — Completar `ResourceScenario.query_dashboard`
 
 #### Contexto
 
@@ -22951,7 +24570,7 @@ Análogo.
 
 ---
 
-### 20.18 — Completar `LogicalFlag.eval` e `LogicalFunction.hasalert`
+### 16.18 — Completar `LogicalFlag.eval` e `LogicalFunction.hasalert`
 
 #### Contexto
 
@@ -23000,7 +24619,7 @@ Análogo.
 
 ---
 
-### 20.19 — Golden tests (journal + leaves)
+### 16.19 — Golden tests (journal + leaves)
 
 #### Contexto
 
@@ -23468,7 +25087,7 @@ Decisão: SVG (mesmo do Ruby). Compatível com `Painter`.
 
 ---
 
-### 21.0 — ADR 028 (substituição de XML mínimo)
+### 17.0 — ADR 028 (substituição de XML mínimo)
 
 #### Contexto
 
@@ -23509,7 +25128,7 @@ Criar `docs/syntaxmesh/decisoes/028-substituicao-xml.md`.
 
 ---
 
-### 21.1 — `XMLElement`
+### 17.1 — `XMLElement`
 
 #### Contexto
 
@@ -23611,7 +25230,7 @@ assertEquals(div.to_s(), '<div class="foo">Hello</div>');
 
 ---
 
-### 21.2 — `XMLDocument`
+### 17.2 — `XMLDocument`
 
 #### Contexto
 
@@ -23671,7 +25290,7 @@ assertEquals(doc.to_s(), '<root/>');
 
 ---
 
-### 21.3 — `HTMLElements`
+### 17.3 — `HTMLElements`
 
 #### Contexto
 
@@ -23724,7 +25343,7 @@ assertEquals(div.to_s(), '<div class="foo">Hello</div>');
 
 ---
 
-### 21.4 — `HTMLDocument`
+### 17.4 — `HTMLDocument`
 
 #### Contexto
 
@@ -23788,7 +25407,7 @@ assertEquals(doc.to_s().includes('<title>My Title</title>'), true);
 
 ---
 
-### 21.5 — `ICalendar` — estrutura + `Component` base
+### 17.5 — `ICalendar` — estrutura + `Component` base
 
 #### Contexto
 
@@ -23898,7 +25517,7 @@ assert(str.includes('BEGIN:VTODO'));
 
 ---
 
-### 21.6 — `ICalendar` — `Todo`, `Event`, `Journal`
+### 17.6 — `ICalendar` — `Todo`, `Event`, `Journal`
 
 #### Contexto
 
@@ -23976,7 +25595,7 @@ Análogo.
 
 ---
 
-### 21.7 — `Color` + `Points` + `SVGSupport`
+### 17.7 — `Color` + `Points` + `SVGSupport`
 
 #### Contexto
 
@@ -24059,7 +25678,7 @@ assertEquals(p.to_s(), '1,2 3,4 ');
 
 ---
 
-### 21.8 — `Element` + `Group`
+### 17.8 — `Element` + `Group`
 
 #### Contexto
 
@@ -24123,7 +25742,7 @@ Análogo.
 
 ---
 
-### 21.9 — `Primitives` + `BasicShapes` + `Text`
+### 17.9 — `Primitives` + `BasicShapes` + `Text`
 
 #### Contexto
 
@@ -24197,7 +25816,7 @@ Análogo.
 
 ---
 
-### 21.10 — `Painter`
+### 17.10 — `Painter`
 
 #### Contexto
 
@@ -24243,7 +25862,7 @@ Análogo.
 
 ---
 
-### 21.11 — `FontMetrics` + `FontMetricsData` + `FontData`
+### 17.11 — `FontMetrics` + `FontMetricsData` + `FontData`
 
 #### Contexto
 
@@ -24330,7 +25949,7 @@ assert(w > 0);
 
 ---
 
-### 21.12 — Substituir `SimpleXMLElement` por `XMLElement`
+### 17.12 — Substituir `SimpleXMLElement` por `XMLElement`
 
 #### Contexto
 
@@ -24370,7 +25989,7 @@ Migrar.
 
 ---
 
-### 21.13 — Substituir `HTMLDocument` mínimo
+### 17.13 — Substituir `HTMLDocument` mínimo
 
 #### Contexto
 
@@ -24398,7 +26017,7 @@ Migrar.
 
 ---
 
-### 21.14 — Substituir `ICalendar` mínimo
+### 17.14 — Substituir `ICalendar` mínimo
 
 #### Contexto
 
@@ -24424,7 +26043,7 @@ Migrar.
 
 ---
 
-### 21.15 — Substituir `Painter` mínimo
+### 17.15 — Substituir `Painter` mínimo
 
 #### Contexto
 
@@ -24453,7 +26072,7 @@ Migrar.
 
 ---
 
-### 21.16 — Golden tests (HTML/XML/SVG)
+### 17.16 — Golden tests (HTML/XML/SVG)
 
 #### Contexto
 
@@ -24661,1012 +26280,6 @@ Criado como subfase 21.0. Conteúdo esperado:
 ---
 
 **Fim da Fase 17.**
-````
-
----
-
-## Arquivo: `docs/syntaxmesh/fases/fase-19-storage.md`
-
-````md
-# Fase 19 — Storage
-
-> **Arquivo:** `docs/syntaxmesh/fases/fase-19-storage.md`
-> **Status:** ⬜ Não iniciada
-> **Duração estimada:** 4–5 dias
-> **Depende de:** Fases 4, 9, 18
-> **Bloqueia:** Fases 18 (SCM/OPFS), 20, 21
-
----
-
-## 1. Contexto
-
-Esta fase implementa a **camada de persistência** do SyntaxMesh consumindo `@syntaxmesh/worker-db`, que já está pronto.
-
-### Divisão de responsabilidades
-
-```
-UI (Fase 20)
-   ↓
-@  syntaxmesh/storage   ← ESTA FASE
-   ↓
-@syntaxmesh/worker-db   ← JÁ EXISTE (não tocar)
-   ↓
-Web Worker
-   ↓
-IndexedDB + OPFS
-```
-
-- **`@syntaxmesh/worker-db`** (Fase 1, já pronto): expõe KV e FS via Web Worker. Inclui `fake-opfs()` para testes.
-- **`@syntaxmesh/storage`** (esta fase): expõe `ProjectService`, `Autosave`, `Recovery`, `ImportExport`, `SettingsService`, `ProjectLoader`.
-
-**Regra crítica:** Storage **não contamina Core**. Core é sempre in-memory. Storage persiste.
-
-### API presumida do `worker-db`
-
-Conforme documento de arquitetura (Fase 1):
-
-```ts
-// key-value store
-interface KeyValueStore {
-  get<T>(key: string): Promise<T | undefined>;
-  set<T>(key: string, value: T): Promise<void>;
-  del(key: string): Promise<void>;
-  keys(): Promise<string[]>;
-}
-
-// file store
-interface FileStore {
-  read(path: string): Promise<string>;
-  write(path: string, content: string): Promise<void>;
-  delete(path: string): Promise<void>;
-  list(dir: string): Promise<string[]>;
-  exists(path: string): Promise<boolean>;
-  mkdir(path: string): Promise<void>;
-}
-
-// factory
-function createWorkerDbClient(): WorkerDbClient;
-function fakeOpfs(): FileStore;   // ← usado em testes
-```
-
-**Se a API real divergir, ajustar imports aqui.** Nesta fase não modificamos `worker-db`.
-
-### O que é persistido
-
-1. **Projetos `.tjp`** — arquivos de projeto.
-2. **Submissões `.tji`** — time sheets e status sheets (Fase 18).
-3. **Metadados** — nome, data de criação, autosave.
-4. **Configurações** — locale, tema, preferências.
-5. **Templates** — time sheet templates (Fase 18).
-6. **Snapshots** — versionamento opcional via OPFS.
-
-### IndexedDB vs OPFS
-
-| Aspecto | IndexedDB | OPFS |
-|---|---|---|
-| Uso | Metadados, settings | Arquivos grandes (`.tjp`, `.tji`) |
-| Ideal para | JSON pequeno | Arquivos texto |
-
-**Decisão:** metadados em KV; arquivos em FS. Ambos via `worker-db`.
-
-### Integração com Fase 18
-
-Fase 18 deixou `addToScm` como no-op e usou fallback `Map<string, string>`. Nesta fase:
-- `addToScm` passa a delegar ao `FileStore` **injetado** (interface, sem import).
-- Fase 18 é **corrigida** para usar `fakeOpfs()` do `worker-db` em testes.
-
----
-
-## 2. Objetivo
-
-Ao final desta fase:
-
-- `@syntaxmesh/storage` completo:
-  - `ProjectService` (CRUD).
-  - `Autosave` (debounced).
-  - `Recovery` (após crash).
-  - `ImportExport` (`.tjp`, `.tji`, `.json`).
-  - `SettingsService` (locale, tema).
-  - `ProjectLoader` (carrega `.tjp` do FS).
-- Integração com `@syntaxmesh/worker-db` (sem modificá-lo).
-- **Fase 18 corrigida** para usar `fakeOpfs()` em testes.
-- **≥ 80 testes unitários** + **≥ 15 snapshot tests** (persistência de `.tjp`).
-- ADR 030 registrado.
-- `deno task check-all` verde.
-
----
-
-## 3. Referências
-
-### 3.1 Bibliotecas
-
-- **`@syntaxmesh/worker-db`** — pacote interno. Já pronto.
-- **`@syntaxmesh/utils`** — helpers (se aplicável).
-
-### 3.2 Sem referência TaskJuggler
-
-TaskJuggler é Ruby/CLI, sem persistência browser. Fase específica do SyntaxMesh.
-
-### 3.3 Documentos de referência
-
-- `docs/syntaxmesh/03-arquitetura.md` — seção Storage.
-- `docs/syntaxmesh/decisoes/003-storage-nao-contamina-core.md`.
-- `docs/syntaxmesh/decisoes/010-worker-db-centraliza-storage.md`.
-- ADR 005 (browser only).
-
----
-
-## 4. Decisões de port
-
-### 4.1 Consumir `worker-db`, não reimplementar
-
-Toda interação com IndexedDB/OPFS passa por `@syntaxmesh/worker-db`. Nesta fase **não** criamos Worker, protocol, stores ou client — eles já existem.
-
-### 4.2 Interface `KeyValueStore` e `FileStore` injetadas
-
-Para desacoplar de `worker-db` em testes e permitir injeção:
-
-- `ProjectService` recebe `{ kv: KeyValueStore, fs: FileStore }` no construtor.
-- Testes passam `fakeOpfs()` do `worker-db`.
-
-### 4.3 Fake de testes vem do `worker-db`
-
-**Não** implementamos fake in-memory próprio. Usamos `fakeOpfs()` do `worker-db`.
-
-Se `worker-db` também expõe `fakeKv()` (ou equivalente), usamos. Senão, o `fakeOpfs()` é o padrão.
-
-### 4.4 Schema versionado no KV
-
-IndexedDB tem versionamento nativo. O `worker-db` é transparente. Nossa camada lida com migração de **formato de dados**, não de DB.
-
-**Schema de dados** (não de DB):
-
-```
-kv['projects/<id>'] = ProjectMeta (v1)
-kv['settings'] = Settings (v1)
-fs['projects/<id>.tjp'] = texto
-fs['unsaved/<id>.tjp'] = texto
-fs['timesheets/<date>/<res>.tji'] = texto
-fs['templates/<date>/<res>.tji'] = texto
-fs['outbox/<to>_<date>.eml'] = texto
-```
-
-### 4.5 Estrutura de pastas em OPFS
-
-```
-/ (root OPFS)
-├── projects/
-│   └── <id>.tjp
-├── timesheets/
-│   └── <date>/<resourceId>.tji
-├── templates/
-│   └── <date>/<resourceId>.tji
-├── unsaved/
-│   └── <id>.tjp
-└── outbox/
-    └── <to>_<date>.eml
-```
-
-### 4.6 ProjectService
-
-```ts
-interface ProjectMeta {
-  id: string;
-  name: string;
-  createdAt: number;
-  updatedAt: number;
-  sizeBytes: number;
-  scenarioCount: number;
-  schemaVersion: number;  // 1
-}
-```
-
-### 4.7 Autosave
-
-Debounced (500ms). Salva `.tjp` + metadados.
-
-### 4.8 Recovery
-
-Ao abrir, verifica `unsaved/`. Se existe, oferece recuperar.
-
-### 4.9 Import/Export
-
-- `importTjp(file: { name, content })`: cria.
-- `exportTjp(id)`: retorna `{ name, content }`.
-- `importTji`, `exportTji`.
-- `exportJson(id)`, `importJson(json)`.
-
-### 4.10 Settings service
-
-```ts
-interface Settings {
-  locale: string;                    // 'en' | 'pt-BR' | 'es'
-  theme: 'light' | 'dark' | 'auto';
-  fontSize: number;
-  autosaveMs: number;
-  schemaVersion: number;             // 1
-}
-```
-
-### 4.11 ProjectLoader
-
-```ts
-class ProjectLoader {
-  constructor(private fs: FileStore);
-  loadFromFs(path: string): Promise<Project>;
-  loadFromContent(content: string): Promise<Project>;
-}
-```
-
-**Nota:** `TaskJuggler.parse` (Fase 9) é stub. Nesta fase, `ProjectLoader.loadFromContent` usa `parse([content], ...)` variante ou `Project` construído manualmente até Fase 10 completar. **Fase 10 já implementou parser**, então `parseContent` deve estar disponível.
-
-Se `TaskJuggler` ainda não expõe `parseContent`, `ProjectLoader` levanta `NotYetImplementedError` (fallback para Fase 21).
-
-### 4.12 Migração de schema
-
-Se `ProjectMeta.schemaVersion < SCHEMA_VERSION`, roda `migrateProject(meta)`.
-
-Migrações registradas em `migrations.ts`. Backup antes de migrar (Fase 20).
-
-### 4.13 Erros
-
-- `StorageError extends TjError` — base.
-- `NotFoundError`, `QuotaExceededError`, `SchemaVersionError`.
-
-### 4.14 Promise-based API
-
-Toda API é `async`. Sem callbacks.
-
-### 4.15 Injeção para Fase 18
-
-`SheetHandlerBase.setFileStore(fs)` — Core **não importa** `@syntaxmesh/storage`. Interface `FileStore` fica em `packages/core/src/interfaces/`.
-
----
-
-## 5. Subfases detalhadas
-
-**Bloco A — Fundação** (24.0–24.2)
-**Bloco B — Serviços** (24.3–24.8)
-**Bloco C — Integração** (24.9–24.11)
-**Bloco D — Snapshot tests** (24.12)
-
----
-
-### Bloco A — Fundação
-
----
-
-### 24.0 — ADR 030 (schema versionado e migrações)
-
-#### Contexto
-
-O `worker-db` (já pronto) é transparente ao versionamento do IndexedDB. Nossa camada precisa versionar o **formato dos dados** persistidos.
-
-#### Objetivo
-
-Criar `docs/syntaxmesh/decisoes/030-storage-schema.md`.
-
-#### Arquivos
-
-- `docs/syntaxmesh/decisoes/030-storage-schema.md` (novo)
-- `docs/syntaxmesh/decisoes/README.md` (atualizar tabela)
-
-#### Requisitos
-
-- [ ] **Contexto:** `worker-db` transparente; nossa camada versiona dados.
-- [ ] **Decisões:**
-  - `DATA_SCHEMA_VERSION = 1`.
-  - Estrutura KV: `projects/<id>`, `settings`.
-  - Estrutura FS: `projects/`, `timesheets/`, `templates/`, `unsaved/`, `outbox/`.
-  - Migrações declarativas em `migrations.ts`.
-  - Backup antes de migrar.
-- [ ] **Alternativas:** sem versionamento (frágil).
-- [ ] **Consequências:** evolução segura; complexidade mínima.
-- [ ] Tabela em `README.md` atualizada.
-
-#### Referências
-
-- ADR 010.
-- `docs/syntaxmesh/03-arquitetura.md` — seção Storage.
-
-#### Critério de aceite
-
-- ADR 030 criado.
-
----
-
-### 24.1 — `schema.ts` + `migrations.ts`
-
-#### Contexto
-
-Definição do schema de dados e migrações.
-
-#### Objetivo
-
-Implementar.
-
-#### Arquivos
-
-- `packages/storage/src/schema.ts`
-- `packages/storage/src/migrations.ts`
-- `packages/storage/tests/migrations_test.ts`
-
-#### Requisitos
-
-**`schema.ts`:**
-
-- [ ] `const DATA_SCHEMA_VERSION = 1`.
-- [ ] `const KV_KEYS = { PROJECT_META_PREFIX: 'projects/', SETTINGS: 'settings' }`.
-- [ ] `const FS_PATHS = { PROJECTS: 'projects', TIMESHEETS: 'timesheets', TEMPLATES: 'templates', UNSAVED: 'unsaved', OUTBOX: 'outbox' }`.
-- [ ] `interface ProjectMeta` com `schemaVersion`.
-- [ ] `interface Settings` com `schemaVersion`.
-
-**`migrations.ts`:**
-
-- [ ] `interface Migration { fromVersion: number; apply(meta: ProjectMeta): ProjectMeta }`.
-- [ ] `const PROJECT_MIGRATIONS: Migration[] = []`.
-- [ ] `migrateProjectMeta(meta: ProjectMeta): ProjectMeta`:
-  - Se `meta.schemaVersion === DATA_SCHEMA_VERSION`, retorna meta.
-  - Senão, aplica migrações em sequência.
-
-#### Critério de aceite
-
-```ts
-const meta = { schemaVersion: 1, ... };
-assertEquals(migrateProjectMeta(meta).schemaVersion, 1);
-```
-
-#### Testes
-
-- `migrations_test.ts`:
-  - `it("DATA_SCHEMA_VERSION = 1")`.
-  - `it("migrateProjectMeta no-op v1")`.
-  - `it("migrateProjectMeta erro versão desconhecida")`.
-
----
-
-### 24.2 — `mod.ts` (Storage exports)
-
-#### Contexto
-
-Entry point.
-
-#### Objetivo
-
-Exportar tudo.
-
-#### Arquivos
-
-- `packages/storage/mod.ts`
-
-#### Requisitos
-
-- [ ] Exporta tipos: `ProjectMeta`, `Settings`, `KeyValueStore`, `FileStore`.
-- [ ] Exporta `ProjectService`, `Autosave`, `Recovery`, `ImportExport`, `SettingsService`, `ProjectLoader`.
-- [ ] Exporta erros: `StorageError`, `NotFoundError`, `QuotaExceededError`, `SchemaVersionError`.
-
----
-
-### Bloco B — Serviços
-
----
-
-### 24.3 — `ProjectService`
-
-#### Contexto
-
-CRUD de projetos.
-
-#### Objetivo
-
-Implementar `ProjectService`.
-
-#### Arquivos
-
-- `packages/storage/src/project-service.ts`
-- `packages/storage/tests/project-service_test.ts`
-
-#### Requisitos
-
-- [ ] `class ProjectService`:
-  - `private kv: KeyValueStore`
-  - `private fs: FileStore`
-- [ ] Constructor `(deps: { kv: KeyValueStore, fs: FileStore })`.
-- [ ] `list(): Promise<ProjectMeta[]>`:
-  - `kv.keys()` filtrando `projects/`.
-  - `Promise.all(map(meta => kv.get(meta)))`.
-- [ ] `create(name, content): Promise<string>`:
-  - `id = crypto.randomUUID()`.
-  - `fs.write('projects/<id>.tjp', content)`.
-  - `meta = { id, name, createdAt: Date.now(), updatedAt: Date.now(), sizeBytes: content.length, scenarioCount: 0, schemaVersion: 1 }`.
-  - `kv.set('projects/<id>', meta)`.
-  - Retorna `id`.
-- [ ] `read(id): Promise<string>`:
-  - `fs.read('projects/<id>.tjp')`.
-  - Se não existe, `throw NotFoundError`.
-- [ ] `getMeta(id): Promise<ProjectMeta>`.
-- [ ] `update(id, content): Promise<void>`:
-  - `fs.write(...)`.
-  - `meta.updatedAt = Date.now()`.
-  - `meta.sizeBytes = content.length`.
-  - `kv.set(...)`.
-- [ ] `delete(id): Promise<void>`:
-  - `fs.delete('projects/<id>.tjp')`.
-  - `kv.del('projects/<id>')`.
-- [ ] `rename(id, name): Promise<void>`.
-- [ ] `duplicate(id): Promise<string>`:
-  - Lê, cria com `"<name> (copy)"`.
-
-#### Critério de aceite
-
-```ts
-const svc = new ProjectService({ kv: fakeKv, fs: fakeOpfs() });
-const id = await svc.create("Meu Projeto", "project p1 ...");
-assertEquals(await svc.read(id), "project p1 ...");
-assertEquals((await svc.list()).length, 1);
-```
-
-#### Testes
-
-- `project-service_test.ts`:
-  - `it("create")`.
-  - `it("read")`.
-  - `it("read NotFoundError")`.
-  - `it("update")`.
-  - `it("delete")`.
-  - `it("list")`.
-  - `it("rename")`.
-  - `it("duplicate")`.
-  - `it("getMeta")`.
-
----
-
-### 24.4 — `Autosave`
-
-#### Contexto
-
-Autosave debounced.
-
-#### Objetivo
-
-Implementar `Autosave`.
-
-#### Arquivos
-
-- `packages/storage/src/autosave.ts`
-- `packages/storage/tests/autosave_test.ts`
-
-#### Requisitos
-
-- [ ] `class Autosave`:
-  - `private service: ProjectService`
-  - `private pending: Map<string, string>`
-  - `private timeout: number | null`
-  - `private delayMs: number`
-- [ ] Constructor `(service, delayMs = 500)`.
-- [ ] `schedule(id, content): void`:
-  - `pending.set(id, content)`.
-  - Reinicia `timeout` (clearTimeout + setTimeout).
-- [ ] `flush(): Promise<void>`:
-  - Salva todos `pending` via `service.update`.
-  - Limpa.
-- [ ] `cancel(): void`:
-  - `clearTimeout`. Limpa `pending`.
-- [ ] `pendingCount(): number`.
-- [ ] `dispose(): void`.
-
-#### Critério de aceite
-
-```ts
-const auto = new Autosave(svc, 50);
-auto.schedule('id1', 'content');
-await new Promise(r => setTimeout(r, 100));
-assertEquals(await svc.read('id1'), 'content');
-```
-
-#### Testes
-
-- `autosave_test.ts`:
-  - `it("schedule depois delay salva")`.
-  - `it("schedule múltiplas vezes substitui")`.
-  - `it("flush força salvamento")`.
-  - `it("cancel descarta")`.
-  - `it("pendingCount")`.
-  - `it("dispose cancela")`.
-
----
-
-### 24.5 — `Recovery`
-
-#### Contexto
-
-Recuperar após crash.
-
-#### Objetivo
-
-Implementar `Recovery`.
-
-#### Arquivos
-
-- `packages/storage/src/recovery.ts`
-- `packages/storage/tests/recovery_test.ts`
-
-#### Requisitos
-
-- [ ] `class Recovery`:
-  - `private fs: FileStore`
-- [ ] Constructor `(fs)`.
-- [ ] `markUnsaved(id, content): Promise<void>`:
-  - `fs.write('unsaved/<id>.tjp', content)`.
-- [ ] `hasUnsaved(): Promise<boolean>`:
-  - `(await fs.list('unsaved')).length > 0`.
-- [ ] `listUnsaved(): Promise<string[]>`.
-- [ ] `recover(id): Promise<{ id, content } | null>`:
-  - Lê `unsaved/<id>.tjp`.
-- [ ] `discard(id): Promise<void>`.
-- [ ] `clearAll(): Promise<void>`.
-
-#### Critério de aceite
-
-```ts
-const rec = new Recovery(fakeOpfs());
-await rec.markUnsaved('id1', 'content');
-assert(await rec.hasUnsaved());
-const r = await rec.recover('id1');
-assertEquals(r?.content, 'content');
-```
-
-#### Testes
-
-- `recovery_test.ts`:
-  - `it("markUnsaved")`.
-  - `it("hasUnsaved true/false")`.
-  - `it("listUnsaved")`.
-  - `it("recover")`.
-  - `it("discard")`.
-  - `it("clearAll")`.
-
----
-
-### 24.6 — `SettingsService`
-
-#### Contexto
-
-Configurações do usuário.
-
-#### Objetivo
-
-Implementar.
-
-#### Arquivos
-
-- `packages/storage/src/settings.ts`
-- `packages/storage/tests/settings_test.ts`
-
-#### Requisitos
-
-- [ ] `class SettingsService`:
-  - `private kv: KeyValueStore`
-- [ ] Constructor `(kv)`.
-- [ ] `get(): Promise<Settings>`:
-  - Se não existe, retorna defaults.
-- [ ] `set(partial: Partial<Settings>): Promise<void>`.
-- [ ] `reset(): Promise<void>`.
-- [ ] Defaults:
-  ```ts
-  {
-    locale: 'en',
-    theme: 'auto',
-    fontSize: 14,
-    autosaveMs: 500,
-    schemaVersion: 1,
-  }
-  ```
-
-#### Critério de aceite
-
-```ts
-const s = new SettingsService(fakeKv);
-assertEquals((await s.get()).locale, 'en');
-await s.set({ locale: 'pt-BR' });
-assertEquals((await s.get()).locale, 'pt-BR');
-```
-
-#### Testes
-
-- `settings_test.ts`:
-  - `it("get defaults")`.
-  - `it("set partial")`.
-  - `it("set preserva outros campos")`.
-  - `it("reset")`.
-
----
-
-### 24.7 — `ImportExport`
-
-#### Contexto
-
-Import/export de `.tjp`, `.tji`, `.json`.
-
-#### Objetivo
-
-Implementar.
-
-#### Arquivos
-
-- `packages/storage/src/import-export.ts`
-- `packages/storage/tests/import-export_test.ts`
-
-#### Requisitos
-
-- [ ] `class ImportExport`:
-  - `private service: ProjectService`
-  - `private fs: FileStore`
-- [ ] `importTjp(file: { name, content }): Promise<string>`:
-  - Nome sem extensão.
-  - `service.create(name, content)`.
-- [ ] `exportTjp(id): Promise<{ name, content }>`.
-- [ ] `importTji(file: { name, content }): Promise<void>`:
-  - `fs.write('timesheets/<name>', content)`.
-- [ ] `exportTji(path): Promise<{ name, content }>`.
-- [ ] `exportJson(id): Promise<{ name, content }>`:
-  - Estrutura: `{ meta, tjp, schemaVersion }`.
-- [ ] `importJson(file: { name, content }): Promise<string>`.
-
-#### Critério de aceite
-
-```ts
-const ie = new ImportExport(svc, fakeOpfs());
-const id = await ie.importTjp({ name: 'test.tjp', content: 'project p1 ...' });
-const exp = await ie.exportJson(id);
-assert(JSON.parse(exp.content).tjp === 'project p1 ...');
-```
-
-#### Testes
-
-- `import-export_test.ts`:
-  - `it("importTjp")`.
-  - `it("exportTjp")`.
-  - `it("importTji")`.
-  - `it("exportTji")`.
-  - `it("exportJson")`.
-  - `it("importJson")`.
-
----
-
-### 24.8 — `ProjectLoader`
-
-#### Contexto
-
-Carrega `.tjp` do FS e retorna `Project` (Fase 9).
-
-#### Objetivo
-
-Implementar `ProjectLoader`.
-
-#### Arquivos
-
-- `packages/storage/src/project-loader.ts`
-- `packages/storage/tests/project-loader_test.ts`
-
-#### Requisitos
-
-- [ ] `class ProjectLoader`:
-  - `private fs: FileStore`
-- [ ] Constructor `(fs)`.
-- [ ] `loadFromContent(content: string): Promise<Project>`:
-  - `tj = new TaskJuggler()`.
-  - `tj.parseContent(content)` ou equivalente — depende do que Fase 9/10 expõe.
-  - `tj.schedule()`.
-  - Retorna `tj.project`.
-- [ ] `loadFromFs(path): Promise<Project>`:
-  - Lê `fs.read(path)`.
-  - Chama `loadFromContent`.
-
-**Nota:** `TaskJuggler.parseContent` precisa existir. Se Fase 9/10 só expõem `parse(files[])`, esta fase adiciona `parseContent` (não intrusivo).
-
-#### Critério de aceite
-
-```ts
-const loader = new ProjectLoader(fakeOpfs());
-const project = await loader.loadFromContent('project p1 ...');
-assert(project !== null);
-```
-
-#### Testes
-
-- `project-loader_test.ts`:
-  - `it("loadFromContent ok")`.
-  - `it("loadFromContent erro")`.
-  - `it("loadFromFs")`.
-
----
-
-### Bloco C — Integração
-
----
-
-### 24.9 — Corrigir Fase 18 para usar `fakeOpfs()`
-
-#### Contexto
-
-Fase 18 usou fallback `Map<string, string>`. Como `worker-db` já existe com `fakeOpfs()`, devemos corrigir.
-
-#### Objetivo
-
-Substituir fallback.
-
-#### Arquivos
-
-- `packages/core/src/sheets/sheet-handler-base.ts` (atualizar)
-- `packages/core/tests/sheets/*.ts` (atualizar)
-- `docs/syntaxmesh/fases/fase-18-time-status-sheets.md` (atualizar nota)
-
-#### Requisitos
-
-- [ ] `SheetHandlerBase` recebe `FileStore` **injetado** via setter.
-- [ ] Interface `FileStore` fica em `packages/core/src/interfaces/file-store.ts` (Core define, Storage implementa).
-- [ ] Testes da Fase 18 usam `fakeOpfs()` do `worker-db`.
-- [ ] Remover `Map<string, string>` fallback.
-
-**Interface em Core (não importa Storage):**
-
-```ts
-// packages/core/src/interfaces/file-store.ts
-export interface FileStore {
-  read(path: string): Promise<string>;
-  write(path: string, content: string): Promise<void>;
-  delete(path: string): Promise<void>;
-  list(dir: string): Promise<string[]>;
-  exists(path: string): Promise<boolean>;
-  mkdir(path: string): Promise<void>;
-}
-```
-
-**Import nos testes da Fase 18:**
-
-```ts
-import { fakeOpfs } from "@syntaxmesh/worker-db";
-```
-
-#### Critério de aceite
-
-- Testes da Fase 18 passam com `fakeOpfs()`.
-
-#### Testes
-
-- Testes da Fase 18 re-rodados.
-
----
-
-### 24.10 — Substituir `addToScm` no-op
-
-#### Contexto
-
-Fase 18 deixou `addToScm` como no-op. Nesta fase, persistimos em OPFS.
-
-#### Objetivo
-
-Substituir.
-
-#### Arquivos
-
-- `packages/core/src/sheets/sheet-handler-base.ts` (atualizar)
-- Testes da Fase 18 atualizados.
-
-#### Requisitos
-
-- [ ] `addToScm(message, fileName)`:
-  - Se `fileStore === null`, no-op.
-  - Senão, delega para `fileStore.write(fileName, content)` (o conteúdo já foi escrito antes).
-  - Se `scmCommand !== null`, `warning('scm_not_supported_in_browser')`.
-
-**Nota:** Core **não importa** Storage. Só usa interface.
-
-#### Critério de aceite
-
-- `addToScm` persiste via `FileStore`.
-
-#### Testes
-
-- Testes da Fase 18 atualizados.
-
----
-
-### 24.11 — Integração com UI (referência)
-
-#### Contexto
-
-UI (Fase 20) consumirá `ProjectService`.
-
-#### Objetivo
-
-Documentar contrato.
-
-#### Arquivos
-
-- `docs/syntaxmesh/fases/fase-20-pwa-ui.md` (referência cruzada).
-
-#### Requisitos
-
-- [ ] Documentar que `ProjectService`, `Autosave`, `SettingsService` serão injetados na UI via service layer.
-- [ ] Nada a implementar aqui.
-
-#### Critério de aceite
-
-- Nota no documento da Fase 20.
-
----
-
-### Bloco D — Snapshot tests
-
----
-
-### 24.12 — Snapshot tests (persistência)
-
-#### Contexto
-
-Validar que `.tjp` salvo e recuperado é idêntico.
-
-#### Objetivo
-
-Snapshots.
-
-#### Arquivos
-
-- `packages/storage/tests/golden/persistence.golden.json`
-- `packages/storage/tests/golden/persistence_golden_test.ts`
-
-#### Requisitos
-
-- [ ] Para cada MWE (Fase 2, `docs/Learning/mwe001-009/`):
-  - Lê `.tjp` original.
-  - `service.create`.
-  - `service.read`.
-  - Compara byte-a-byte.
-- [ ] Testa `autosave` → `recovery`.
-- [ ] Testa `exportJson` + `importJson` round-trip.
-- [ ] ≥ 15 casos.
-
-#### Critério de aceite
-
-```bash
-deno task test
-```
-
-- ≥ 15 casos.
-- Todos passam.
-
-#### Testes
-
-- `persistence_golden_test.ts`:
-  - `describe("Persistence snapshots")` — itera.
-
----
-
-## 6. Ordem de execução sugerida
-
-```text
-24.0  ADR 030
-      ↓
-24.1  schema + migrations
-24.2  mod.ts
-      ↓
-24.3  ProjectService
-24.4  Autosave
-24.5  Recovery
-24.6  SettingsService
-24.7  ImportExport
-24.8  ProjectLoader
-      ↓
-24.9  Corrigir Fase 18 (fakeOpfs)
-24.10 Substituir addToScm
-24.11 Integração UI (doc)
-      ↓
-24.12 Snapshot tests
-```
-
-Cada subfase fecha com `deno task check-all` verde.
-
----
-
-## 7. Critério de conclusão da fase
-
-A Fase 19 é considerada concluída quando:
-
-```bash
-deno task check-all
-```
-
-passa, e:
-
-- [ ] `@syntaxmesh/storage` completo.
-- [ ] `worker-db` **não foi modificado**.
-- [ ] Fase 18 corrigida para usar `fakeOpfs()`.
-- [ ] `addToScm` funcional (injeção).
-- [ ] `ProjectLoader` funcional.
-- [ ] **≥ 80 testes unitários**.
-- [ ] **≥ 15 snapshot tests**.
-- [ ] Nenhum `any` em `src/` (exceto onde justificado).
-- [ ] ADR 030 criado.
-
----
-
-## 8. Riscos e mitigação
-
-| Risco | Impacto | Mitigação |
-|---|---|---|
-| API do `worker-db` divergir do presumido | Médio | Ajustar imports; não modificar worker-db |
-| `TaskJuggler.parseContent` não existir | Médio | Adicionar variante nesta fase |
-| `crypto.randomUUID()` em Deno antigo | Baixo | Fallback UUID v4 |
-| Schema migração errada perde dados | **Alto** | Backup antes de migrar |
-| Autosave dispara muito | Médio | Debounce 500ms |
-| Recovery com arquivo grande | Médio | Lazy load |
-| `fs.list` com prefixos | Médio | Testes com subpastas |
-| Quota excedida | Alto | Tratamento + limpeza |
-| Core importar Storage por engano | **Alto** | Interface em `core/interfaces/` |
-
----
-
-## 9. Referências cruzadas
-
-### Documentos do projeto
-
-- `docs/syntaxmesh/03-arquitetura.md` — seção Storage.
-- `docs/syntaxmesh/decisoes/003-storage-nao-contamina-core.md`.
-- `docs/syntaxmesh/decisoes/010-worker-db-centraliza-storage.md`.
-- `docs/syntaxmesh/decisoes/030-storage-schema.md` (novo).
-
-### Fases dependentes
-
-- **Fase 20 — UI** (consome `ProjectService`).
-- **Fase 21 — Compatibilidade** (persistência cross-browser).
-
-### Fases referenciadas
-
-- **Fase 1** — `@syntaxmesh/worker-db` (já pronto).
-- **Fase 9** — `Project`.
-- **Fase 10** — Parser (`parseContent`).
-- **Fase 18** — `addToScm` real.
-
----
-
-## 10. Notas para a IA
-
-1. **`@syntaxmesh/worker-db` já está pronto.** Não modificar.
-2. **Consumir `fakeOpfs()`** em testes.
-3. **Core define `FileStore` em `interfaces/`.** Storage implementa.
-4. **Core não importa Storage.** Injeção via setter.
-5. **Schema de dados versionado.** `DATA_SCHEMA_VERSION = 1`.
-6. **Autosave debounced.** 500ms.
-7. **Recovery** checa `unsaved/` ao abrir.
-8. **`crypto.randomUUID()`** para IDs.
-9. **`ProjectLoader`** usa `parseContent` (adicionar se necessário).
-10. **`addToScm`** delega para `FileStore`.
-11. **Fase 18 corrigida** para usar `fakeOpfs()`.
-12. **Sem `any`.** Use `unknown` + narrowing.
-13. **Commit por subfase.** `feat(storage): project-service`, etc.
-14. **Snapshot tests** byte-a-byte.
-
----
-
-## 11. ADR 030 (referência rápida)
-
-Criado como subfase 24.0. Conteúdo esperado:
-
-- **Título:** Schema versionado e migrações de storage
-- **Contexto:** `worker-db` transparente; nossa camada versiona dados.
-- **Decisões:**
-  - `DATA_SCHEMA_VERSION = 1`.
-  - Estrutura KV e FS.
-  - Migrações declarativas.
-  - Backup antes de migrar.
-- **Alternativas:** sem versionamento.
-- **Consequências:** evolução segura.
-
----
-
-**Fim da Fase 19.**
 ````
 
 ---
@@ -25982,7 +26595,7 @@ export interface FileStore {
 
 ---
 
-### 22.0 — ADRs 029 e 031
+### 18.0 — ADRs 029 e 031
 
 #### Contexto
 
@@ -26038,7 +26651,7 @@ Criar ambos.
 
 ---
 
-### 22.1 — Interface `FileStore` em Core
+### 18.1 — Interface `FileStore` em Core
 
 #### Contexto
 
@@ -26089,7 +26702,7 @@ await fs.write("foo.txt", "bar");
 
 ---
 
-### 22.2 — `TimeSheetRecord`
+### 18.2 — `TimeSheetRecord`
 
 #### Contexto
 
@@ -26178,7 +26791,7 @@ record.check(); // não lança
 
 ---
 
-### 22.3 — `TimeSheet` + `TimeSheets`
+### 18.3 — `TimeSheet` + `TimeSheets`
 
 #### Contexto
 
@@ -26257,7 +26870,7 @@ Análogo.
 
 ---
 
-### 22.4 — `Project.timeSheets` + `checkTimeSheets`
+### 18.4 — `Project.timeSheets` + `checkTimeSheets`
 
 #### Contexto
 
@@ -26300,7 +26913,7 @@ project.timeSheets.check();
 
 ---
 
-### 22.5 — `SheetHandlerBase` (com `FileStore` injetado)
+### 18.5 — `SheetHandlerBase` (com `FileStore` injetado)
 
 #### Contexto
 
@@ -26395,7 +27008,7 @@ await handler.sendEmail("a@b.com", "Hi", "Body");
 
 ---
 
-### 22.6 — `SheetSender`
+### 18.6 — `SheetSender`
 
 #### Contexto
 
@@ -26477,7 +27090,7 @@ Análogo.
 
 ---
 
-### 22.7 — `SheetReceiver`
+### 18.7 — `SheetReceiver`
 
 #### Contexto
 
@@ -26568,7 +27181,7 @@ Análogo.
 
 ---
 
-### 22.8 — `TimeSheetSender`
+### 18.8 — `TimeSheetSender`
 
 #### Objetivo
 
@@ -26609,7 +27222,7 @@ Análogo.
 
 ---
 
-### 22.9 — `TimeSheetReceiver`
+### 18.9 — `TimeSheetReceiver`
 
 #### Objetivo
 
@@ -26652,7 +27265,7 @@ Análogo.
 
 ---
 
-### 22.10 — `StatusSheetSender` + `StatusSheetReceiver`
+### 18.10 — `StatusSheetSender` + `StatusSheetReceiver`
 
 #### Objetivo
 
@@ -26710,7 +27323,7 @@ Análogo.
 
 ---
 
-### 22.11 — `TimeSheetSummary`
+### 18.11 — `TimeSheetSummary`
 
 #### Objetivo
 
@@ -26779,7 +27392,7 @@ Análogo.
 
 ---
 
-### 22.12 — Completar `TaskJuggler.checkTimeSheet` / `checkStatusSheet`
+### 18.12 — Completar `TaskJuggler.checkTimeSheet` / `checkStatusSheet`
 
 #### Contexto
 
@@ -26823,7 +27436,7 @@ Análogo.
 
 ---
 
-### 22.13 — `TimeSheetRecord.warnOnDelta` — integração
+### 18.13 — `TimeSheetRecord.warnOnDelta` — integração
 
 #### Objetivo
 
@@ -26851,7 +27464,7 @@ Análogo.
 
 ---
 
-### 22.14 — Verificar interface `FileStore`
+### 18.14 — Verificar interface `FileStore`
 
 #### Contexto
 
@@ -26886,7 +27499,7 @@ Análogo.
 
 ---
 
-### 22.15 — Golden tests (timesheets)
+### 18.15 — Golden tests (timesheets)
 
 #### Contexto
 
@@ -27105,6 +27718,1012 @@ passa, e:
 ---
 
 **Fim da Fase 18 (corrigida).**
+````
+
+---
+
+## Arquivo: `docs/syntaxmesh/fases/fase-19-storage.md`
+
+````md
+# Fase 19 — Storage
+
+> **Arquivo:** `docs/syntaxmesh/fases/fase-19-storage.md`
+> **Status:** ⬜ Não iniciada
+> **Duração estimada:** 4–5 dias
+> **Depende de:** Fases 4, 9, 18
+> **Bloqueia:** Fases 18 (SCM/OPFS), 20, 21
+
+---
+
+## 1. Contexto
+
+Esta fase implementa a **camada de persistência** do SyntaxMesh consumindo `@syntaxmesh/worker-db`, que já está pronto.
+
+### Divisão de responsabilidades
+
+```
+UI (Fase 20)
+   ↓
+@  syntaxmesh/storage   ← ESTA FASE
+   ↓
+@syntaxmesh/worker-db   ← JÁ EXISTE (não tocar)
+   ↓
+Web Worker
+   ↓
+IndexedDB + OPFS
+```
+
+- **`@syntaxmesh/worker-db`** (Fase 1, já pronto): expõe KV e FS via Web Worker. Inclui `fake-opfs()` para testes.
+- **`@syntaxmesh/storage`** (esta fase): expõe `ProjectService`, `Autosave`, `Recovery`, `ImportExport`, `SettingsService`, `ProjectLoader`.
+
+**Regra crítica:** Storage **não contamina Core**. Core é sempre in-memory. Storage persiste.
+
+### API presumida do `worker-db`
+
+Conforme documento de arquitetura (Fase 1):
+
+```ts
+// key-value store
+interface KeyValueStore {
+  get<T>(key: string): Promise<T | undefined>;
+  set<T>(key: string, value: T): Promise<void>;
+  del(key: string): Promise<void>;
+  keys(): Promise<string[]>;
+}
+
+// file store
+interface FileStore {
+  read(path: string): Promise<string>;
+  write(path: string, content: string): Promise<void>;
+  delete(path: string): Promise<void>;
+  list(dir: string): Promise<string[]>;
+  exists(path: string): Promise<boolean>;
+  mkdir(path: string): Promise<void>;
+}
+
+// factory
+function createWorkerDbClient(): WorkerDbClient;
+function fakeOpfs(): FileStore;   // ← usado em testes
+```
+
+**Se a API real divergir, ajustar imports aqui.** Nesta fase não modificamos `worker-db`.
+
+### O que é persistido
+
+1. **Projetos `.tjp`** — arquivos de projeto.
+2. **Submissões `.tji`** — time sheets e status sheets (Fase 18).
+3. **Metadados** — nome, data de criação, autosave.
+4. **Configurações** — locale, tema, preferências.
+5. **Templates** — time sheet templates (Fase 18).
+6. **Snapshots** — versionamento opcional via OPFS.
+
+### IndexedDB vs OPFS
+
+| Aspecto | IndexedDB | OPFS |
+|---|---|---|
+| Uso | Metadados, settings | Arquivos grandes (`.tjp`, `.tji`) |
+| Ideal para | JSON pequeno | Arquivos texto |
+
+**Decisão:** metadados em KV; arquivos em FS. Ambos via `worker-db`.
+
+### Integração com Fase 18
+
+Fase 18 deixou `addToScm` como no-op e usou fallback `Map<string, string>`. Nesta fase:
+- `addToScm` passa a delegar ao `FileStore` **injetado** (interface, sem import).
+- Fase 18 é **corrigida** para usar `fakeOpfs()` do `worker-db` em testes.
+
+---
+
+## 2. Objetivo
+
+Ao final desta fase:
+
+- `@syntaxmesh/storage` completo:
+  - `ProjectService` (CRUD).
+  - `Autosave` (debounced).
+  - `Recovery` (após crash).
+  - `ImportExport` (`.tjp`, `.tji`, `.json`).
+  - `SettingsService` (locale, tema).
+  - `ProjectLoader` (carrega `.tjp` do FS).
+- Integração com `@syntaxmesh/worker-db` (sem modificá-lo).
+- **Fase 18 corrigida** para usar `fakeOpfs()` em testes.
+- **≥ 80 testes unitários** + **≥ 15 snapshot tests** (persistência de `.tjp`).
+- ADR 030 registrado.
+- `deno task check-all` verde.
+
+---
+
+## 3. Referências
+
+### 3.1 Bibliotecas
+
+- **`@syntaxmesh/worker-db`** — pacote interno. Já pronto.
+- **`@syntaxmesh/utils`** — helpers (se aplicável).
+
+### 3.2 Sem referência TaskJuggler
+
+TaskJuggler é Ruby/CLI, sem persistência browser. Fase específica do SyntaxMesh.
+
+### 3.3 Documentos de referência
+
+- `docs/syntaxmesh/03-arquitetura.md` — seção Storage.
+- `docs/syntaxmesh/decisoes/003-storage-nao-contamina-core.md`.
+- `docs/syntaxmesh/decisoes/010-worker-db-centraliza-storage.md`.
+- ADR 005 (browser only).
+
+---
+
+## 4. Decisões de port
+
+### 4.1 Consumir `worker-db`, não reimplementar
+
+Toda interação com IndexedDB/OPFS passa por `@syntaxmesh/worker-db`. Nesta fase **não** criamos Worker, protocol, stores ou client — eles já existem.
+
+### 4.2 Interface `KeyValueStore` e `FileStore` injetadas
+
+Para desacoplar de `worker-db` em testes e permitir injeção:
+
+- `ProjectService` recebe `{ kv: KeyValueStore, fs: FileStore }` no construtor.
+- Testes passam `fakeOpfs()` do `worker-db`.
+
+### 4.3 Fake de testes vem do `worker-db`
+
+**Não** implementamos fake in-memory próprio. Usamos `fakeOpfs()` do `worker-db`.
+
+Se `worker-db` também expõe `fakeKv()` (ou equivalente), usamos. Senão, o `fakeOpfs()` é o padrão.
+
+### 4.4 Schema versionado no KV
+
+IndexedDB tem versionamento nativo. O `worker-db` é transparente. Nossa camada lida com migração de **formato de dados**, não de DB.
+
+**Schema de dados** (não de DB):
+
+```
+kv['projects/<id>'] = ProjectMeta (v1)
+kv['settings'] = Settings (v1)
+fs['projects/<id>.tjp'] = texto
+fs['unsaved/<id>.tjp'] = texto
+fs['timesheets/<date>/<res>.tji'] = texto
+fs['templates/<date>/<res>.tji'] = texto
+fs['outbox/<to>_<date>.eml'] = texto
+```
+
+### 4.5 Estrutura de pastas em OPFS
+
+```
+/ (root OPFS)
+├── projects/
+│   └── <id>.tjp
+├── timesheets/
+│   └── <date>/<resourceId>.tji
+├── templates/
+│   └── <date>/<resourceId>.tji
+├── unsaved/
+│   └── <id>.tjp
+└── outbox/
+    └── <to>_<date>.eml
+```
+
+### 4.6 ProjectService
+
+```ts
+interface ProjectMeta {
+  id: string;
+  name: string;
+  createdAt: number;
+  updatedAt: number;
+  sizeBytes: number;
+  scenarioCount: number;
+  schemaVersion: number;  // 1
+}
+```
+
+### 4.7 Autosave
+
+Debounced (500ms). Salva `.tjp` + metadados.
+
+### 4.8 Recovery
+
+Ao abrir, verifica `unsaved/`. Se existe, oferece recuperar.
+
+### 4.9 Import/Export
+
+- `importTjp(file: { name, content })`: cria.
+- `exportTjp(id)`: retorna `{ name, content }`.
+- `importTji`, `exportTji`.
+- `exportJson(id)`, `importJson(json)`.
+
+### 4.10 Settings service
+
+```ts
+interface Settings {
+  locale: string;                    // 'en' | 'pt-BR' | 'es'
+  theme: 'light' | 'dark' | 'auto';
+  fontSize: number;
+  autosaveMs: number;
+  schemaVersion: number;             // 1
+}
+```
+
+### 4.11 ProjectLoader
+
+```ts
+class ProjectLoader {
+  constructor(private fs: FileStore);
+  loadFromFs(path: string): Promise<Project>;
+  loadFromContent(content: string): Promise<Project>;
+}
+```
+
+**Nota:** `TaskJuggler.parse` (Fase 9) é stub. Nesta fase, `ProjectLoader.loadFromContent` usa `parse([content], ...)` variante ou `Project` construído manualmente até Fase 10 completar. **Fase 10 já implementou parser**, então `parseContent` deve estar disponível.
+
+Se `TaskJuggler` ainda não expõe `parseContent`, `ProjectLoader` levanta `NotYetImplementedError` (fallback para Fase 21).
+
+### 4.12 Migração de schema
+
+Se `ProjectMeta.schemaVersion < SCHEMA_VERSION`, roda `migrateProject(meta)`.
+
+Migrações registradas em `migrations.ts`. Backup antes de migrar (Fase 20).
+
+### 4.13 Erros
+
+- `StorageError extends TjError` — base.
+- `NotFoundError`, `QuotaExceededError`, `SchemaVersionError`.
+
+### 4.14 Promise-based API
+
+Toda API é `async`. Sem callbacks.
+
+### 4.15 Injeção para Fase 18
+
+`SheetHandlerBase.setFileStore(fs)` — Core **não importa** `@syntaxmesh/storage`. Interface `FileStore` fica em `packages/core/src/interfaces/`.
+
+---
+
+## 5. Subfases detalhadas
+
+**Bloco A — Fundação** (24.0–24.2)
+**Bloco B — Serviços** (24.3–24.8)
+**Bloco C — Integração** (24.9–24.11)
+**Bloco D — Snapshot tests** (24.12)
+
+---
+
+### Bloco A — Fundação
+
+---
+
+### 19.0 — ADR 030 (schema versionado e migrações)
+
+#### Contexto
+
+O `worker-db` (já pronto) é transparente ao versionamento do IndexedDB. Nossa camada precisa versionar o **formato dos dados** persistidos.
+
+#### Objetivo
+
+Criar `docs/syntaxmesh/decisoes/030-storage-schema.md`.
+
+#### Arquivos
+
+- `docs/syntaxmesh/decisoes/030-storage-schema.md` (novo)
+- `docs/syntaxmesh/decisoes/README.md` (atualizar tabela)
+
+#### Requisitos
+
+- [ ] **Contexto:** `worker-db` transparente; nossa camada versiona dados.
+- [ ] **Decisões:**
+  - `DATA_SCHEMA_VERSION = 1`.
+  - Estrutura KV: `projects/<id>`, `settings`.
+  - Estrutura FS: `projects/`, `timesheets/`, `templates/`, `unsaved/`, `outbox/`.
+  - Migrações declarativas em `migrations.ts`.
+  - Backup antes de migrar.
+- [ ] **Alternativas:** sem versionamento (frágil).
+- [ ] **Consequências:** evolução segura; complexidade mínima.
+- [ ] Tabela em `README.md` atualizada.
+
+#### Referências
+
+- ADR 010.
+- `docs/syntaxmesh/03-arquitetura.md` — seção Storage.
+
+#### Critério de aceite
+
+- ADR 030 criado.
+
+---
+
+### 19.1 — `schema.ts` + `migrations.ts`
+
+#### Contexto
+
+Definição do schema de dados e migrações.
+
+#### Objetivo
+
+Implementar.
+
+#### Arquivos
+
+- `packages/storage/src/schema.ts`
+- `packages/storage/src/migrations.ts`
+- `packages/storage/tests/migrations_test.ts`
+
+#### Requisitos
+
+**`schema.ts`:**
+
+- [ ] `const DATA_SCHEMA_VERSION = 1`.
+- [ ] `const KV_KEYS = { PROJECT_META_PREFIX: 'projects/', SETTINGS: 'settings' }`.
+- [ ] `const FS_PATHS = { PROJECTS: 'projects', TIMESHEETS: 'timesheets', TEMPLATES: 'templates', UNSAVED: 'unsaved', OUTBOX: 'outbox' }`.
+- [ ] `interface ProjectMeta` com `schemaVersion`.
+- [ ] `interface Settings` com `schemaVersion`.
+
+**`migrations.ts`:**
+
+- [ ] `interface Migration { fromVersion: number; apply(meta: ProjectMeta): ProjectMeta }`.
+- [ ] `const PROJECT_MIGRATIONS: Migration[] = []`.
+- [ ] `migrateProjectMeta(meta: ProjectMeta): ProjectMeta`:
+  - Se `meta.schemaVersion === DATA_SCHEMA_VERSION`, retorna meta.
+  - Senão, aplica migrações em sequência.
+
+#### Critério de aceite
+
+```ts
+const meta = { schemaVersion: 1, ... };
+assertEquals(migrateProjectMeta(meta).schemaVersion, 1);
+```
+
+#### Testes
+
+- `migrations_test.ts`:
+  - `it("DATA_SCHEMA_VERSION = 1")`.
+  - `it("migrateProjectMeta no-op v1")`.
+  - `it("migrateProjectMeta erro versão desconhecida")`.
+
+---
+
+### 19.2 — `mod.ts` (Storage exports)
+
+#### Contexto
+
+Entry point.
+
+#### Objetivo
+
+Exportar tudo.
+
+#### Arquivos
+
+- `packages/storage/mod.ts`
+
+#### Requisitos
+
+- [ ] Exporta tipos: `ProjectMeta`, `Settings`, `KeyValueStore`, `FileStore`.
+- [ ] Exporta `ProjectService`, `Autosave`, `Recovery`, `ImportExport`, `SettingsService`, `ProjectLoader`.
+- [ ] Exporta erros: `StorageError`, `NotFoundError`, `QuotaExceededError`, `SchemaVersionError`.
+
+---
+
+### Bloco B — Serviços
+
+---
+
+### 19.3 — `ProjectService`
+
+#### Contexto
+
+CRUD de projetos.
+
+#### Objetivo
+
+Implementar `ProjectService`.
+
+#### Arquivos
+
+- `packages/storage/src/project-service.ts`
+- `packages/storage/tests/project-service_test.ts`
+
+#### Requisitos
+
+- [ ] `class ProjectService`:
+  - `private kv: KeyValueStore`
+  - `private fs: FileStore`
+- [ ] Constructor `(deps: { kv: KeyValueStore, fs: FileStore })`.
+- [ ] `list(): Promise<ProjectMeta[]>`:
+  - `kv.keys()` filtrando `projects/`.
+  - `Promise.all(map(meta => kv.get(meta)))`.
+- [ ] `create(name, content): Promise<string>`:
+  - `id = crypto.randomUUID()`.
+  - `fs.write('projects/<id>.tjp', content)`.
+  - `meta = { id, name, createdAt: Date.now(), updatedAt: Date.now(), sizeBytes: content.length, scenarioCount: 0, schemaVersion: 1 }`.
+  - `kv.set('projects/<id>', meta)`.
+  - Retorna `id`.
+- [ ] `read(id): Promise<string>`:
+  - `fs.read('projects/<id>.tjp')`.
+  - Se não existe, `throw NotFoundError`.
+- [ ] `getMeta(id): Promise<ProjectMeta>`.
+- [ ] `update(id, content): Promise<void>`:
+  - `fs.write(...)`.
+  - `meta.updatedAt = Date.now()`.
+  - `meta.sizeBytes = content.length`.
+  - `kv.set(...)`.
+- [ ] `delete(id): Promise<void>`:
+  - `fs.delete('projects/<id>.tjp')`.
+  - `kv.del('projects/<id>')`.
+- [ ] `rename(id, name): Promise<void>`.
+- [ ] `duplicate(id): Promise<string>`:
+  - Lê, cria com `"<name> (copy)"`.
+
+#### Critério de aceite
+
+```ts
+const svc = new ProjectService({ kv: fakeKv, fs: fakeOpfs() });
+const id = await svc.create("Meu Projeto", "project p1 ...");
+assertEquals(await svc.read(id), "project p1 ...");
+assertEquals((await svc.list()).length, 1);
+```
+
+#### Testes
+
+- `project-service_test.ts`:
+  - `it("create")`.
+  - `it("read")`.
+  - `it("read NotFoundError")`.
+  - `it("update")`.
+  - `it("delete")`.
+  - `it("list")`.
+  - `it("rename")`.
+  - `it("duplicate")`.
+  - `it("getMeta")`.
+
+---
+
+### 19.4 — `Autosave`
+
+#### Contexto
+
+Autosave debounced.
+
+#### Objetivo
+
+Implementar `Autosave`.
+
+#### Arquivos
+
+- `packages/storage/src/autosave.ts`
+- `packages/storage/tests/autosave_test.ts`
+
+#### Requisitos
+
+- [ ] `class Autosave`:
+  - `private service: ProjectService`
+  - `private pending: Map<string, string>`
+  - `private timeout: number | null`
+  - `private delayMs: number`
+- [ ] Constructor `(service, delayMs = 500)`.
+- [ ] `schedule(id, content): void`:
+  - `pending.set(id, content)`.
+  - Reinicia `timeout` (clearTimeout + setTimeout).
+- [ ] `flush(): Promise<void>`:
+  - Salva todos `pending` via `service.update`.
+  - Limpa.
+- [ ] `cancel(): void`:
+  - `clearTimeout`. Limpa `pending`.
+- [ ] `pendingCount(): number`.
+- [ ] `dispose(): void`.
+
+#### Critério de aceite
+
+```ts
+const auto = new Autosave(svc, 50);
+auto.schedule('id1', 'content');
+await new Promise(r => setTimeout(r, 100));
+assertEquals(await svc.read('id1'), 'content');
+```
+
+#### Testes
+
+- `autosave_test.ts`:
+  - `it("schedule depois delay salva")`.
+  - `it("schedule múltiplas vezes substitui")`.
+  - `it("flush força salvamento")`.
+  - `it("cancel descarta")`.
+  - `it("pendingCount")`.
+  - `it("dispose cancela")`.
+
+---
+
+### 19.5 — `Recovery`
+
+#### Contexto
+
+Recuperar após crash.
+
+#### Objetivo
+
+Implementar `Recovery`.
+
+#### Arquivos
+
+- `packages/storage/src/recovery.ts`
+- `packages/storage/tests/recovery_test.ts`
+
+#### Requisitos
+
+- [ ] `class Recovery`:
+  - `private fs: FileStore`
+- [ ] Constructor `(fs)`.
+- [ ] `markUnsaved(id, content): Promise<void>`:
+  - `fs.write('unsaved/<id>.tjp', content)`.
+- [ ] `hasUnsaved(): Promise<boolean>`:
+  - `(await fs.list('unsaved')).length > 0`.
+- [ ] `listUnsaved(): Promise<string[]>`.
+- [ ] `recover(id): Promise<{ id, content } | null>`:
+  - Lê `unsaved/<id>.tjp`.
+- [ ] `discard(id): Promise<void>`.
+- [ ] `clearAll(): Promise<void>`.
+
+#### Critério de aceite
+
+```ts
+const rec = new Recovery(fakeOpfs());
+await rec.markUnsaved('id1', 'content');
+assert(await rec.hasUnsaved());
+const r = await rec.recover('id1');
+assertEquals(r?.content, 'content');
+```
+
+#### Testes
+
+- `recovery_test.ts`:
+  - `it("markUnsaved")`.
+  - `it("hasUnsaved true/false")`.
+  - `it("listUnsaved")`.
+  - `it("recover")`.
+  - `it("discard")`.
+  - `it("clearAll")`.
+
+---
+
+### 19.6 — `SettingsService`
+
+#### Contexto
+
+Configurações do usuário.
+
+#### Objetivo
+
+Implementar.
+
+#### Arquivos
+
+- `packages/storage/src/settings.ts`
+- `packages/storage/tests/settings_test.ts`
+
+#### Requisitos
+
+- [ ] `class SettingsService`:
+  - `private kv: KeyValueStore`
+- [ ] Constructor `(kv)`.
+- [ ] `get(): Promise<Settings>`:
+  - Se não existe, retorna defaults.
+- [ ] `set(partial: Partial<Settings>): Promise<void>`.
+- [ ] `reset(): Promise<void>`.
+- [ ] Defaults:
+  ```ts
+  {
+    locale: 'en',
+    theme: 'auto',
+    fontSize: 14,
+    autosaveMs: 500,
+    schemaVersion: 1,
+  }
+  ```
+
+#### Critério de aceite
+
+```ts
+const s = new SettingsService(fakeKv);
+assertEquals((await s.get()).locale, 'en');
+await s.set({ locale: 'pt-BR' });
+assertEquals((await s.get()).locale, 'pt-BR');
+```
+
+#### Testes
+
+- `settings_test.ts`:
+  - `it("get defaults")`.
+  - `it("set partial")`.
+  - `it("set preserva outros campos")`.
+  - `it("reset")`.
+
+---
+
+### 19.7 — `ImportExport`
+
+#### Contexto
+
+Import/export de `.tjp`, `.tji`, `.json`.
+
+#### Objetivo
+
+Implementar.
+
+#### Arquivos
+
+- `packages/storage/src/import-export.ts`
+- `packages/storage/tests/import-export_test.ts`
+
+#### Requisitos
+
+- [ ] `class ImportExport`:
+  - `private service: ProjectService`
+  - `private fs: FileStore`
+- [ ] `importTjp(file: { name, content }): Promise<string>`:
+  - Nome sem extensão.
+  - `service.create(name, content)`.
+- [ ] `exportTjp(id): Promise<{ name, content }>`.
+- [ ] `importTji(file: { name, content }): Promise<void>`:
+  - `fs.write('timesheets/<name>', content)`.
+- [ ] `exportTji(path): Promise<{ name, content }>`.
+- [ ] `exportJson(id): Promise<{ name, content }>`:
+  - Estrutura: `{ meta, tjp, schemaVersion }`.
+- [ ] `importJson(file: { name, content }): Promise<string>`.
+
+#### Critério de aceite
+
+```ts
+const ie = new ImportExport(svc, fakeOpfs());
+const id = await ie.importTjp({ name: 'test.tjp', content: 'project p1 ...' });
+const exp = await ie.exportJson(id);
+assert(JSON.parse(exp.content).tjp === 'project p1 ...');
+```
+
+#### Testes
+
+- `import-export_test.ts`:
+  - `it("importTjp")`.
+  - `it("exportTjp")`.
+  - `it("importTji")`.
+  - `it("exportTji")`.
+  - `it("exportJson")`.
+  - `it("importJson")`.
+
+---
+
+### 19.8 — `ProjectLoader`
+
+#### Contexto
+
+Carrega `.tjp` do FS e retorna `Project` (Fase 9).
+
+#### Objetivo
+
+Implementar `ProjectLoader`.
+
+#### Arquivos
+
+- `packages/storage/src/project-loader.ts`
+- `packages/storage/tests/project-loader_test.ts`
+
+#### Requisitos
+
+- [ ] `class ProjectLoader`:
+  - `private fs: FileStore`
+- [ ] Constructor `(fs)`.
+- [ ] `loadFromContent(content: string): Promise<Project>`:
+  - `tj = new TaskJuggler()`.
+  - `tj.parseContent(content)` ou equivalente — depende do que Fase 9/10 expõe.
+  - `tj.schedule()`.
+  - Retorna `tj.project`.
+- [ ] `loadFromFs(path): Promise<Project>`:
+  - Lê `fs.read(path)`.
+  - Chama `loadFromContent`.
+
+**Nota:** `TaskJuggler.parseContent` precisa existir. Se Fase 9/10 só expõem `parse(files[])`, esta fase adiciona `parseContent` (não intrusivo).
+
+#### Critério de aceite
+
+```ts
+const loader = new ProjectLoader(fakeOpfs());
+const project = await loader.loadFromContent('project p1 ...');
+assert(project !== null);
+```
+
+#### Testes
+
+- `project-loader_test.ts`:
+  - `it("loadFromContent ok")`.
+  - `it("loadFromContent erro")`.
+  - `it("loadFromFs")`.
+
+---
+
+### Bloco C — Integração
+
+---
+
+### 19.9 — Corrigir Fase 18 para usar `fakeOpfs()`
+
+#### Contexto
+
+Fase 18 usou fallback `Map<string, string>`. Como `worker-db` já existe com `fakeOpfs()`, devemos corrigir.
+
+#### Objetivo
+
+Substituir fallback.
+
+#### Arquivos
+
+- `packages/core/src/sheets/sheet-handler-base.ts` (atualizar)
+- `packages/core/tests/sheets/*.ts` (atualizar)
+- `docs/syntaxmesh/fases/fase-18-time-status-sheets.md` (atualizar nota)
+
+#### Requisitos
+
+- [ ] `SheetHandlerBase` recebe `FileStore` **injetado** via setter.
+- [ ] Interface `FileStore` fica em `packages/core/src/interfaces/file-store.ts` (Core define, Storage implementa).
+- [ ] Testes da Fase 18 usam `fakeOpfs()` do `worker-db`.
+- [ ] Remover `Map<string, string>` fallback.
+
+**Interface em Core (não importa Storage):**
+
+```ts
+// packages/core/src/interfaces/file-store.ts
+export interface FileStore {
+  read(path: string): Promise<string>;
+  write(path: string, content: string): Promise<void>;
+  delete(path: string): Promise<void>;
+  list(dir: string): Promise<string[]>;
+  exists(path: string): Promise<boolean>;
+  mkdir(path: string): Promise<void>;
+}
+```
+
+**Import nos testes da Fase 18:**
+
+```ts
+import { fakeOpfs } from "@syntaxmesh/worker-db";
+```
+
+#### Critério de aceite
+
+- Testes da Fase 18 passam com `fakeOpfs()`.
+
+#### Testes
+
+- Testes da Fase 18 re-rodados.
+
+---
+
+### 19.10 — Substituir `addToScm` no-op
+
+#### Contexto
+
+Fase 18 deixou `addToScm` como no-op. Nesta fase, persistimos em OPFS.
+
+#### Objetivo
+
+Substituir.
+
+#### Arquivos
+
+- `packages/core/src/sheets/sheet-handler-base.ts` (atualizar)
+- Testes da Fase 18 atualizados.
+
+#### Requisitos
+
+- [ ] `addToScm(message, fileName)`:
+  - Se `fileStore === null`, no-op.
+  - Senão, delega para `fileStore.write(fileName, content)` (o conteúdo já foi escrito antes).
+  - Se `scmCommand !== null`, `warning('scm_not_supported_in_browser')`.
+
+**Nota:** Core **não importa** Storage. Só usa interface.
+
+#### Critério de aceite
+
+- `addToScm` persiste via `FileStore`.
+
+#### Testes
+
+- Testes da Fase 18 atualizados.
+
+---
+
+### 19.11 — Integração com UI (referência)
+
+#### Contexto
+
+UI (Fase 20) consumirá `ProjectService`.
+
+#### Objetivo
+
+Documentar contrato.
+
+#### Arquivos
+
+- `docs/syntaxmesh/fases/fase-20-pwa-ui.md` (referência cruzada).
+
+#### Requisitos
+
+- [ ] Documentar que `ProjectService`, `Autosave`, `SettingsService` serão injetados na UI via service layer.
+- [ ] Nada a implementar aqui.
+
+#### Critério de aceite
+
+- Nota no documento da Fase 20.
+
+---
+
+### Bloco D — Snapshot tests
+
+---
+
+### 19.12 — Snapshot tests (persistência)
+
+#### Contexto
+
+Validar que `.tjp` salvo e recuperado é idêntico.
+
+#### Objetivo
+
+Snapshots.
+
+#### Arquivos
+
+- `packages/storage/tests/golden/persistence.golden.json`
+- `packages/storage/tests/golden/persistence_golden_test.ts`
+
+#### Requisitos
+
+- [ ] Para cada MWE (Fase 2, `docs/Learning/mwe001-009/`):
+  - Lê `.tjp` original.
+  - `service.create`.
+  - `service.read`.
+  - Compara byte-a-byte.
+- [ ] Testa `autosave` → `recovery`.
+- [ ] Testa `exportJson` + `importJson` round-trip.
+- [ ] ≥ 15 casos.
+
+#### Critério de aceite
+
+```bash
+deno task test
+```
+
+- ≥ 15 casos.
+- Todos passam.
+
+#### Testes
+
+- `persistence_golden_test.ts`:
+  - `describe("Persistence snapshots")` — itera.
+
+---
+
+## 6. Ordem de execução sugerida
+
+```text
+24.0  ADR 030
+      ↓
+24.1  schema + migrations
+24.2  mod.ts
+      ↓
+24.3  ProjectService
+24.4  Autosave
+24.5  Recovery
+24.6  SettingsService
+24.7  ImportExport
+24.8  ProjectLoader
+      ↓
+24.9  Corrigir Fase 18 (fakeOpfs)
+24.10 Substituir addToScm
+24.11 Integração UI (doc)
+      ↓
+24.12 Snapshot tests
+```
+
+Cada subfase fecha com `deno task check-all` verde.
+
+---
+
+## 7. Critério de conclusão da fase
+
+A Fase 19 é considerada concluída quando:
+
+```bash
+deno task check-all
+```
+
+passa, e:
+
+- [ ] `@syntaxmesh/storage` completo.
+- [ ] `worker-db` **não foi modificado**.
+- [ ] Fase 18 corrigida para usar `fakeOpfs()`.
+- [ ] `addToScm` funcional (injeção).
+- [ ] `ProjectLoader` funcional.
+- [ ] **≥ 80 testes unitários**.
+- [ ] **≥ 15 snapshot tests**.
+- [ ] Nenhum `any` em `src/` (exceto onde justificado).
+- [ ] ADR 030 criado.
+
+---
+
+## 8. Riscos e mitigação
+
+| Risco | Impacto | Mitigação |
+|---|---|---|
+| API do `worker-db` divergir do presumido | Médio | Ajustar imports; não modificar worker-db |
+| `TaskJuggler.parseContent` não existir | Médio | Adicionar variante nesta fase |
+| `crypto.randomUUID()` em Deno antigo | Baixo | Fallback UUID v4 |
+| Schema migração errada perde dados | **Alto** | Backup antes de migrar |
+| Autosave dispara muito | Médio | Debounce 500ms |
+| Recovery com arquivo grande | Médio | Lazy load |
+| `fs.list` com prefixos | Médio | Testes com subpastas |
+| Quota excedida | Alto | Tratamento + limpeza |
+| Core importar Storage por engano | **Alto** | Interface em `core/interfaces/` |
+
+---
+
+## 9. Referências cruzadas
+
+### Documentos do projeto
+
+- `docs/syntaxmesh/03-arquitetura.md` — seção Storage.
+- `docs/syntaxmesh/decisoes/003-storage-nao-contamina-core.md`.
+- `docs/syntaxmesh/decisoes/010-worker-db-centraliza-storage.md`.
+- `docs/syntaxmesh/decisoes/030-storage-schema.md` (novo).
+
+### Fases dependentes
+
+- **Fase 20 — UI** (consome `ProjectService`).
+- **Fase 21 — Compatibilidade** (persistência cross-browser).
+
+### Fases referenciadas
+
+- **Fase 1** — `@syntaxmesh/worker-db` (já pronto).
+- **Fase 9** — `Project`.
+- **Fase 10** — Parser (`parseContent`).
+- **Fase 18** — `addToScm` real.
+
+---
+
+## 10. Notas para a IA
+
+1. **`@syntaxmesh/worker-db` já está pronto.** Não modificar.
+2. **Consumir `fakeOpfs()`** em testes.
+3. **Core define `FileStore` em `interfaces/`.** Storage implementa.
+4. **Core não importa Storage.** Injeção via setter.
+5. **Schema de dados versionado.** `DATA_SCHEMA_VERSION = 1`.
+6. **Autosave debounced.** 500ms.
+7. **Recovery** checa `unsaved/` ao abrir.
+8. **`crypto.randomUUID()`** para IDs.
+9. **`ProjectLoader`** usa `parseContent` (adicionar se necessário).
+10. **`addToScm`** delega para `FileStore`.
+11. **Fase 18 corrigida** para usar `fakeOpfs()`.
+12. **Sem `any`.** Use `unknown` + narrowing.
+13. **Commit por subfase.** `feat(storage): project-service`, etc.
+14. **Snapshot tests** byte-a-byte.
+
+---
+
+## 11. ADR 030 (referência rápida)
+
+Criado como subfase 24.0. Conteúdo esperado:
+
+- **Título:** Schema versionado e migrações de storage
+- **Contexto:** `worker-db` transparente; nossa camada versiona dados.
+- **Decisões:**
+  - `DATA_SCHEMA_VERSION = 1`.
+  - Estrutura KV e FS.
+  - Migrações declarativas.
+  - Backup antes de migrar.
+- **Alternativas:** sem versionamento.
+- **Consequências:** evolução segura.
+
+---
+
+**Fim da Fase 19.**
 ````
 
 ---
@@ -27406,7 +29025,7 @@ Histórico em `editor.ts` (stack de snapshots do conteúdo). Ctrl+Z / Ctrl+Y.
 
 ---
 
-### 25.0 — ADR 032 (PWA + UI stack)
+### 20.0 — ADR 032 (PWA + UI stack)
 
 #### Contexto
 
@@ -27448,7 +29067,7 @@ Criar `docs/syntaxmesh/decisoes/032-pwa-ui-stack.md`.
 
 ---
 
-### 25.1 — `manifest.json` + ícones
+### 20.1 — `manifest.json` + ícones
 
 #### Contexto
 
@@ -27491,7 +29110,7 @@ Criar manifest + gerar ícones.
 
 ---
 
-### 25.2 — Service Worker
+### 20.2 — Service Worker
 
 #### Contexto
 
@@ -27546,7 +29165,7 @@ Implementar.
 
 ---
 
-### 25.3 — Registro do SW + auto-update
+### 20.3 — Registro do SW + auto-update
 
 #### Contexto
 
@@ -27584,7 +29203,7 @@ Implementar.
 
 ---
 
-### 25.4 — `index.html` + shell offline
+### 20.4 — `index.html` + shell offline
 
 #### Contexto
 
@@ -27627,7 +29246,7 @@ Criar.
 
 ---
 
-### 25.5 — Preact + Signals setup
+### 20.5 — Preact + Signals setup
 
 #### Contexto
 
@@ -27666,7 +29285,7 @@ Implementar.
 
 ---
 
-### 25.6 — BeerCSS setup
+### 20.6 — BeerCSS setup
 
 #### Contexto
 
@@ -27696,7 +29315,7 @@ Integrar.
 
 ---
 
-### 25.7 — Theme system
+### 20.7 — Theme system
 
 #### Contexto
 
@@ -27740,7 +29359,7 @@ Implementar.
 
 ---
 
-### 25.8 — `engine.worker.ts`
+### 20.8 — `engine.worker.ts`
 
 #### Contexto
 
@@ -27789,7 +29408,7 @@ Implementar.
 
 ---
 
-### 25.9 — `engine-client.ts`
+### 20.9 — `engine-client.ts`
 
 #### Contexto
 
@@ -27830,7 +29449,7 @@ Implementar.
 
 ---
 
-### 25.10 — `parser-service.ts`
+### 20.10 — `parser-service.ts`
 
 #### Contexto
 
@@ -27866,7 +29485,7 @@ Implementar.
 
 ---
 
-### 25.11 — `scheduler-service.ts`
+### 20.11 — `scheduler-service.ts`
 
 #### Contexto
 
@@ -27900,7 +29519,7 @@ Implementar.
 
 ---
 
-### 25.12 — `report-service.ts` + `storage-service.ts`
+### 20.12 — `report-service.ts` + `storage-service.ts`
 
 #### Contexto
 
@@ -27947,7 +29566,7 @@ Implementar.
 
 ---
 
-### 25.13 — Estrutura de Signals
+### 20.13 — Estrutura de Signals
 
 #### Contexto
 
@@ -28020,7 +29639,7 @@ Implementar todos os signals.
 
 ---
 
-### 25.14 — `Toolbar`
+### 20.14 — `Toolbar`
 
 #### Contexto
 
@@ -28059,7 +29678,7 @@ Implementar.
 
 ---
 
-### 25.15 — `Sidebar` + `ProjectExplorer`
+### 20.15 — `Sidebar` + `ProjectExplorer`
 
 #### Contexto
 
@@ -28100,7 +29719,7 @@ Implementar.
 
 ---
 
-### 25.16 — `StatusBar` + `ErrorList`
+### 20.16 — `StatusBar` + `ErrorList`
 
 #### Contexto
 
@@ -28140,7 +29759,7 @@ Implementar.
 
 ---
 
-### 25.17 — `LanguageSelector`
+### 20.17 — `LanguageSelector`
 
 #### Contexto
 
@@ -28176,7 +29795,7 @@ Implementar.
 
 ---
 
-### 25.18 — `Shell` (layout)
+### 20.18 — `Shell` (layout)
 
 #### Contexto
 
@@ -28209,7 +29828,7 @@ Implementar.
 
 ---
 
-### 25.19 — `ProjectExplorerView`
+### 20.19 — `ProjectExplorerView`
 
 #### Contexto
 
@@ -28243,7 +29862,7 @@ Implementar.
 
 ---
 
-### 25.20 — `EditorView`
+### 20.20 — `EditorView`
 
 #### Contexto
 
@@ -28287,7 +29906,7 @@ Implementar.
 
 ---
 
-### 25.21 — `GanttView`
+### 20.21 — `GanttView`
 
 #### Contexto
 
@@ -28323,7 +29942,7 @@ Implementar.
 
 ---
 
-### 25.22 — `ReportView`
+### 20.22 — `ReportView`
 
 #### Contexto
 
@@ -28357,7 +29976,7 @@ Implementar.
 
 ---
 
-### 25.23 — `SettingsView`
+### 20.23 — `SettingsView`
 
 #### Contexto
 
@@ -28393,7 +30012,7 @@ Implementar.
 
 ---
 
-### 25.24 — `SheetsView` (Fase 18 UI)
+### 20.24 — `SheetsView` (Fase 18 UI)
 
 #### Contexto
 
@@ -28433,7 +30052,7 @@ Implementar.
 
 ---
 
-### 25.25 — Catálogo de mensagens da UI
+### 20.25 — Catálogo de mensagens da UI
 
 #### Contexto
 
@@ -28484,7 +30103,7 @@ Implementar.
 
 ---
 
-### 25.26 — Integração end-to-end
+### 20.26 — Integração end-to-end
 
 #### Contexto
 
@@ -28518,7 +30137,7 @@ Implementar.
 
 ---
 
-### 25.27 — Performance e acessibilidade
+### 20.27 — Performance e acessibilidade
 
 #### Contexto
 
@@ -28557,7 +30176,7 @@ Verificar.
 
 ---
 
-### 25.28 — Build e deploy
+### 20.28 — Build e deploy
 
 #### Contexto
 
@@ -29111,7 +30730,7 @@ Criar template `.github/ISSUE_TEMPLATE/`:
 
 ---
 
-### 26.0 — ADR 033 (estratégia de validação)
+### 21.0 — ADR 033 (estratégia de validação)
 
 #### Contexto
 
@@ -29152,7 +30771,7 @@ Criar `docs/syntaxmesh/decisoes/033-estrategia-validacao.md`.
 
 ---
 
-### 26.1 — Corpus de fixtures
+### 21.1 — Corpus de fixtures
 
 #### Contexto
 
@@ -29193,7 +30812,7 @@ Copiar e organizar.
 
 ---
 
-### 26.2 — Script `tj3-runner.ts` (referência)
+### 21.2 — Script `tj3-runner.ts` (referência)
 
 #### Contexto
 
@@ -29239,7 +30858,7 @@ Implementar.
 
 ---
 
-### 26.3 — `tj3-ts-runner.ts` (sujeito)
+### 21.3 — `tj3-ts-runner.ts` (sujeito)
 
 #### Contexto
 
@@ -29275,7 +30894,7 @@ Implementar.
 
 ---
 
-### 26.4 — `comparator.ts` (comparador)
+### 21.4 — `comparator.ts` (comparador)
 
 #### Contexto
 
@@ -29315,7 +30934,7 @@ Implementar.
 
 ---
 
-### 26.5 — Golden tests end-to-end
+### 21.5 — Golden tests end-to-end
 
 #### Contexto
 
@@ -29365,7 +30984,7 @@ Implementar suite.
 
 ---
 
-### 26.6 — Divergências conhecidas
+### 21.6 — Divergências conhecidas
 
 #### Contexto
 
@@ -29403,7 +31022,7 @@ Documentar.
 
 ---
 
-### 26.7 — Relatório de conformidade
+### 21.7 — Relatório de conformidade
 
 #### Contexto
 
@@ -29439,7 +31058,7 @@ Gerar.
 
 ---
 
-### 26.8 — AST equivalence (en ↔ pt-BR ↔ es)
+### 21.8 — AST equivalence (en ↔ pt-BR ↔ es)
 
 #### Contexto
 
@@ -29481,7 +31100,7 @@ Implementar suite.
 
 ---
 
-### 26.9 — Regression snapshots
+### 21.9 — Regression snapshots
 
 #### Contexto
 
@@ -29527,7 +31146,7 @@ Implementar.
 
 ---
 
-### 26.10 — Testes unitários consolidados
+### 21.10 — Testes unitários consolidados
 
 #### Contexto
 
@@ -29559,7 +31178,7 @@ Rodar todos os testes unitários.
 
 ---
 
-### 26.11 — Benchmarks
+### 21.11 — Benchmarks
 
 #### Contexto
 
@@ -29608,7 +31227,7 @@ Deno.bench("parse 100 tasks", () => {
 
 ---
 
-### 26.12 — Testes de segurança
+### 21.12 — Testes de segurança
 
 #### Contexto
 
@@ -29662,7 +31281,7 @@ Implementar.
 
 ---
 
-### 26.13 — CSP
+### 21.13 — CSP
 
 #### Contexto
 
@@ -29701,7 +31320,7 @@ Configurar.
 
 ---
 
-### 26.14 — Otimização final
+### 21.14 — Otimização final
 
 #### Contexto
 
@@ -29732,7 +31351,7 @@ Aplicar correções.
 
 ---
 
-### 26.15 — Playwright setup
+### 21.15 — Playwright setup
 
 #### Contexto
 
@@ -29760,7 +31379,7 @@ Configurar.
 
 ---
 
-### 26.16 — Cenários E2E
+### 21.16 — Cenários E2E
 
 #### Contexto
 
@@ -29799,7 +31418,7 @@ Implementar.
 
 ---
 
-### 26.17 — Acessibilidade
+### 21.17 — Acessibilidade
 
 #### Contexto
 
@@ -29835,7 +31454,7 @@ Implementar.
 
 ---
 
-### 26.18 — Lighthouse CI
+### 21.18 — Lighthouse CI
 
 #### Contexto
 
@@ -29869,7 +31488,7 @@ Configurar.
 
 ---
 
-### 26.19 — Build de produção
+### 21.19 — Build de produção
 
 #### Contexto
 
@@ -29906,7 +31525,7 @@ Implementar.
 
 ---
 
-### 26.20 — CHANGELOG e release notes
+### 21.20 — CHANGELOG e release notes
 
 #### Contexto
 
@@ -29936,7 +31555,7 @@ Gerar.
 
 ---
 
-### 26.21 — Versionamento
+### 21.21 — Versionamento
 
 #### Contexto
 
@@ -29963,7 +31582,7 @@ Aplicar.
 
 ---
 
-### 26.22 — Documentação final
+### 21.22 — Documentação final
 
 #### Contexto
 
@@ -29995,7 +31614,7 @@ Escrever.
 
 ---
 
-### 26.23 — Templates de issues
+### 21.23 — Templates de issues
 
 #### Contexto
 
@@ -30023,7 +31642,7 @@ Criar.
 
 ---
 
-### 26.24 — CI/CD final
+### 21.24 — CI/CD final
 
 #### Contexto
 
@@ -30218,6 +31837,969 @@ Criado como subfase 26.0. Conteúdo esperado:
 ---
 
 **Fim da Fase 21.**
+````
+
+---
+
+## Arquivo: `docs/syntaxmesh/fases/fase-2-tempo-geometria-tarefas-complementar1.md`
+
+````md
+# Fase 2 — Tarefas Complementares (revisão pós-implementação)
+
+> **Arquivo:** `docs/syntaxmesh/fases/fase-2-tarefas-complementar.md`
+> **Plano:** `docs/syntaxmesh/fases/fase-2-tempo-geometria.md`
+> **Tarefas originais:** `docs/syntaxmesh/fases/fase-2-tarefas.md`
+> **Status:** ⬜ Não iniciada
+> **Total:** 42 tarefas
+> **Concluídas:** 0
+
+---
+
+## ⚠️ Quando executar este arquivo
+
+**Este arquivo só deve ser executado DEPOIS que todas as tarefas de `fase-2-tarefas.md` estiverem marcadas `[x]`.**
+
+Ele serve para:
+
+1. **Revisar** o que foi implementado na Fase 2 à luz da leitura completa dos arquivos Ruby.
+2. **Corrigir divergências** entre a primeira versão do TS e o comportamento real do `tj3`.
+3. **Categorizar bugs** do Ruby nas 3 categorias (A/B/C) definidas na ADR 012.
+4. **Adicionar a flag `compat.keepRubyBugs`** onde necessário.
+5. **Estender golden tests** para cobrir os bugs.
+
+Estas tarefas **podem rever** tarefas já marcadas como concluídas na Fase 2. Ao revisar, **não apague** a marcação original — adicione uma nota `(revisado em 5.X.R.Y)`.
+
+---
+
+## 0. Protocolo TDD (reforço)
+
+1. Escrever teste que falha
+2. `deno task test` → falha correta
+3. Implementar
+4. `deno task test` → passa
+5. `deno task check-all` → verde
+6. Commit: `fix(core): <descrição>`
+7. Marcar `[x]`
+
+**Regras específicas desta fase complementar:**
+
+- **Antes de cada tarefa:** reler o arquivo Ruby indicado.
+- **Se a mudança pode afetar golden tests**, rodar `deno task golden:generate && deno task test` antes de commitar.
+- **Se for bug Categoria B**, adicionar teste em **ambos os modos** (`keepRubyBugs: true` e `false`).
+- **Se for bug Categoria A**, adicionar comentário `// RUBY-COMPAT-FIX:` no código.
+- **Se for bug Categoria C**, adicionar comentário `// RUBY-COMPAT-DOC:` no código.
+
+---
+
+## Progresso
+
+```
+[ ] 5.0.R  Fundação (compat.ts + auditoria)     —  0/4
+[ ] 5.1.R  Parsing (revisão)                    —  0/5
+[ ] 5.2.R  Aritmética (revisão)                 —  0/5
+[ ] 5.3.R  Normalizações (revisão)              —  0/3
+[ ] 5.4.R  Avanços (revisão — 4 bugs Cat. B)    —  0/6
+[ ] 5.5.R  Diferenças (revisão)                 —  0/2
+[ ] 5.6.R  Timezone + strftime (revisão)        —  0/3
+[ ] 5.7.R  Interval (revisão — 3 bugs)          —  0/4
+[ ] 5.8.R  TimeInterval (revisão)               —  0/2
+[ ] 5.9.R  ScoreboardInterval (revisão)         —  0/2
+[ ] 5.10.R IntervalList (revisão)               —  0/3
+[ ] 5.11.R Scoreboard (revisão — 2 bugs)        —  0/4
+[ ] 5.12.R WorkingHours (revisão — 1 bug Cat A) —  0/3
+[ ] 5.13.R RealFormat (revisão — 1 bug Cat B)   —  0/2
+[ ] 5.14.R Golden tests (extensão)              —  0/4
+─────────────────────────────────────────────────
+TOTAL: 52
+```
+
+---
+
+## Bloco A — Fundação
+
+### 2.0.R — `compat.ts` + auditoria
+
+**Objetivo:** criar a infraestrutura da flag global `keepRubyBugs` e auditar o código existente.
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 5.0.R.1 | Criar `packages/core/src/compat.ts` com `export const compat = { keepRubyBugs: true }` + JSDoc explicando as 3 categorias | `src/compat.ts` | `deno check` |
+| 5.0.R.2 | Adicionar export em `packages/core/mod.ts` | `mod.ts` | `deno check` |
+| 5.0.R.3 | Auditoria: para cada método do código atual, marcar (via comentário) qual bug do §12 do cheat sheet ele pode ter | `src/time/*.ts` | grep `RUBY-COMPAT` retorna ≥ 0 |
+| 5.0.R.4 | Revisar ADR 012 — confirmar que a seção "Bugs do Ruby" está atualizada com as 3 categorias | `decisoes/012-tjtime-typescript.md` | lido |
+
+---
+
+## Bloco B — Revisão por subfase
+
+### 2.1.R — Parsing
+
+**⚠️ RUBY: `TjTime.rb:parse` (linhas 289–380)**
+**Categoria C:** rollover de `Time.mktime` é comportamento documentado, não bug.
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 5.1.R.1 | Verificar se `fromString` usa `split('-', 5)` (não regex). Se usa regex, reescrever com split | `src/time/tj-time.ts` | teste com 3/4/5 partes |
+| 5.1.R.2 | Confirmar que mensagem de erro do timezone out-of-range termina em `)` extra: `"...but is #{zone})"`. Replicar exato | idem | assert de mensagem |
+| 5.1.R.3 | Adicionar `// RUBY-COMPAT-DOC:` no ponto onde `fromParts` faz rollover (`mktime(2024,4,31) → 2024-05-01`) | idem | grep |
+| 5.1.R.4 | Adicionar teste que valida o rollover: `fromParts(2024, 4, 31)` === `fromString("2024-05-01")` | idem | 1 teste |
+| 5.1.R.5 | Testar `fromString` com ano=1970, 2035 (limites); mês=1, 12; dia=1, lastDay | idem | 4 testes |
+
+### 2.2.R — Aritmética
+
+**⚠️ RUBY: `TjTime.rb:95–160`**
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 5.2.R.1 | ⚠️ `compareTo(null)` deve retornar `-1` (não lançar). Ajustar assinatura `compareTo(other: TjTime \| null)` | `src/time/tj-time.ts` | 2 testes |
+| 5.2.R.2 | ⚠️ `lessThan(null)` retorna `false`; `greaterThan(null)` retorna `true`; `equals(null)` retorna `false` | idem | 3 testes |
+| 5.2.R.3 | `align(clock)` deve operar em **local time**: `Math.floor((this.toSeconds() + offset) / clock) * clock - offset` | idem | 2 testes (`America/Sao_Paulo`) |
+| 5.2.R.4 | ⚠️ **Categoria B:** `Math.round(-2.5) === -2`, mas Ruby `(-2.5).round === -3`. Criar helper `rubyRound(n)` em `compat.ts` que respeita `keepRubyBugs` | `src/compat.ts` + `src/utils/num.ts` | 3 testes (ambos modos) |
+| 5.2.R.5 | Substituir `Math.round` por `rubyRound` onde o Ruby usa `Integer#round` | `src/time/tj-time.ts`, `src/format/real-format.ts` | grep `Math.round` = 0 |
+
+### 2.3.R — Normalizações
+
+**⚠️ RUBY: `TjTime.rb:165–225`**
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 5.3.R.1 | ⚠️ `beginOfWeek` deve implementar o algoritmo exato: (1) ir para noon, (2) subtrair `(weekday - (startMonday?1:0))` dias, (3) chamar `midnight` | `src/time/tj-time.ts` | 6 testes |
+| 5.3.R.2 | Testar edge case domingo + `startMonday=true`: Ruby adiciona **1 dia** antes de midnight (resultado: próxima segunda) | idem | 1 teste |
+| 5.3.R.3 | Todas as normalizações devem operar em `currentTimeZone`. Adicionar teste com `America/Sao_Paulo` | idem | 1 teste |
+
+### 2.4.R — Avanços (4 bugs Categoria B)
+
+**⚠️ RUBY: `TjTime.rb:230–285`**
+**Aqui estão 4 bugs Categoria B.** Cada um precisa de flag.
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 5.4.R.1 | ⚠️ **Cat. B:** `sameTimeNextWeek` — Ruby faz `day += 7` com overflow de **1 mês**, não +7 dias. Adicionar branch `if (compat.keepRubyBugs)` | `src/time/tj-time.ts` | 3 testes (ambos modos) |
+| 5.4.R.2 | ⚠️ **Cat. B:** `sameTimeNextMonth` — Ruby clampa em `monMax` do mês **antigo** (bug). Adicionar branch `if (compat.keepRubyBugs)` | idem | 4 testes (ambos modos) |
+| 5.4.R.3 | ⚠️ **Cat. B:** `sameTimeNextQuarter` — Ruby **não clampa** (rollover). Adicionar branch | idem | 3 testes |
+| 5.4.R.4 | ⚠️ **Cat. B:** `sameTimeNextYear` — Ruby **não clampa** (rollover). Adicionar branch | idem | 3 testes |
+| 5.4.R.5 | `nextDayOfWeek(dow)` — sempre começa em `midnight.sameTimeNextDay` (pelo menos amanhã, nunca hoje) | idem | 3 testes |
+| 5.4.R.6 | Teste agregado: rodar 20 datas × 4 operações em ambos modos (compat e não-compat) | idem | 1 teste |
+
+### 2.5.R — Diferenças
+
+**⚠️ RUBY: `TjTime.rb:290–320`**
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 5.5.R.1 | Implementar `order()` (retorna `[menor, maior]`) e `countIntervals(date, stepFn)` — métodos privados | `src/time/tj-time.ts` | 2 testes |
+| 5.5.R.2 | Testar simetria: `a.daysTo(b) === b.daysTo(a)` para 20 pares | idem | 1 teste |
+
+### 2.6.R — Timezone + strftime
+
+**⚠️ RUBY: `TjTime.rb:55–85, 240–280, 330–370`**
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 5.6.R.1 | `strftime` com formato fora da lista (`%Z`, `%j`, etc.) lança `TjArgumentError` | `src/time/tj-time.ts` | 3 testes |
+| 5.6.R.2 | ⚠️ **Cat. B:** `to_s()` sem formato usa `this.time.sec` (original) para decidir se inclui `:%S`, não o sec local. Adicionar flag | idem | 2 testes (ambos modos) |
+| 5.6.R.3 | `to_s(fmt, 'UTC')` usa `gmtime`; `to_s(fmt)` usa `localtime` | idem | 2 testes |
+
+### 2.7.R — Interval (3 bugs)
+
+**⚠️ RUBY: `Interval.rb:18–100`**
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 5.7.R.1 | ⚠️ **Cat. A:** `combine` — Ruby retorna `[Interval]` em 2 branches e `Interval` no 3º (tipo inconsistente). **Corrigir:** sempre retornar `Interval` | `src/time/interval.ts` | 3 testes |
+| 5.7.R.2 | Adicionar comentário `// RUBY-COMPAT-FIX: combine sempre retorna Interval (Ruby retorna [Interval] em 2 branches)` | idem | grep |
+| 5.7.R.3 | ⚠️ **Cat. C:** `compareTo` retorna `0` em overlap (não lança). Confirmar e adicionar `// RUBY-COMPAT-DOC:` | idem | 1 teste |
+| 5.7.R.4 | `contains`/`overlaps` lançam `TjArgumentError('Class mismatch')` se classes divergem | idem | 2 testes |
+
+### 2.8.R — TimeInterval
+
+**⚠️ RUBY: `Interval.rb:115–160`**
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 5.8.R.1 | Constructor variádico: 1 arg (TjTime → sameTimeNextDay? Não — Ruby: `[arg, arg]`; TimeInterval → cópia) ou 2 args (start, end) | `src/time/time-interval.ts` | 4 testes |
+| 5.8.R.2 | Testar erros: `"Illegal argument 1: #{class}"`, `"Too many arguments: #{n}"` | idem | 2 testes |
+
+### 2.9.R — ScoreboardInterval
+
+**⚠️ RUBY: `Interval.rb:165–260`**
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 5.9.R.1 | Constructor variádico: 1 (copy), 3 (`sbStart, slotDuration, single`), 4 (`sbStart, slotDuration, start, end`) | `src/time/scoreboard-interval.ts` | 4 testes |
+| 5.9.R.2 | `dateToIndex` / `indexToDate` fazem divisão inteira (`Math.trunc`) | idem | 2 testes |
+
+### 2.10.R — IntervalList
+
+**⚠️ RUBY: `IntervalList.rb:17–100`**
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 5.10.R.1 | ⚠️ `intersect(other)` — algoritmo com 6 branches. Ler o Ruby linha-a-linha. **Não simplificar** | `src/time/interval-list.ts` | 8 testes (todas combinações) |
+| 5.10.R.2 | `<<` sobrescrito: overlap → erro; adjacente → merge; senão → push | idem | 4 testes |
+| 5.10.R.3 | Teste de fumaça: mesclar 100 intervalos ascendentes | idem | 1 teste |
+
+### 2.11.R — Scoreboard (2 bugs)
+
+**⚠️ RUBY: `Scoreboard.rb` (~180 linhas)**
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 5.11.R.1 | ⚠️ **Cat. A:** `idxToDate` — Ruby tem typo `kdx`. **Corrigir:** usar `idx` corretamente. Adicionar `// RUBY-COMPAT-FIX:` | `src/time/scoreboard.ts` | 3 testes |
+| 5.11.R.2 | ⚠️ Constructor: `size = Math.ceil((end - start) / resolution) + 1` (**ceil**, não floor) | idem | 2 testes |
+| 5.11.R.3 | ⚠️ **Cat. B:** `collectIntervals` — sentinel `start === 0` perde slot 0. Flag `keepRubyBugs` | idem | 4 testes (ambos modos) |
+| 5.11.R.4 | `dateToIdx(date, forceIntoProject=true)` — clamp em `[0, size-1]` | idem | 3 testes |
+
+### 2.12.R — WorkingHours (1 bug Cat. A)
+
+**⚠️ RUBY: `WorkingHours.rb` (~250 linhas)**
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 5.12.R.1 | ⚠️ **Cat. A:** `@days` compartilha o mesmo array vazio entre dom/sáb. **Corrigir:** `Array.from({length: 7}, () => [])`. Adicionar `// RUBY-COMPAT-FIX:` | `src/calendar/working-hours.ts` | 3 testes |
+| 5.12.R.2 | Constructor variádico: 1 (copy) ou 4 args | idem | 3 testes |
+| 5.12.R.3 | `timeOff(iv: TimeInterval)` itera `startIdx..endIdx-1`, retorna `true` se **todos** são `false` | idem | 2 testes |
+
+### 2.13.R — RealFormat (1 bug Cat. B)
+
+**⚠️ RUBY: `RealFormat.rb` (~120 linhas)**
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 5.13.R.1 | ⚠️ **Cat. B:** `round` de negativos — usar `rubyRound` helper (criado em 5.2.R.4) | `src/format/real-format.ts` | 2 testes (ambos modos) |
+| 5.13.R.2 | Testar `format(-12.5)` com `fractionDigits=0`: `-13` (compat) vs `-12` (fix) | idem | 2 testes |
+
+### 2.14.R — Golden tests (extensão)
+
+**Objetivo:** golden tests cobrem os 3 tipos de bug.
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 5.14.R.1 | Estender `tjtime.golden.json` com 20 casos cobrindo bugs Cat. B (sameTimeNext*, to_s, collectIntervals) | `scripts/golden/tjtime.rb` | ≥ 80 casos |
+| 5.14.R.2 | Criar `packages/core/tests/golden/compat.golden.json` que valida comportamento com `keepRubyBugs: true` (default) | idem | JSON válido |
+| 5.14.R.3 | Criar `packages/core/tests/golden/compat-fix.golden.json` com comportamento corrigido (para referência futura) | idem | JSON válido |
+| 5.14.R.4 | Teste `compat_golden_test.ts` roda ambos e valida | `tests/golden/compat_golden_test.ts` | verde |
+
+---
+
+## Bloco C — Verificação final
+
+| # | Tarefa | Verificação |
+|---|---|---|
+| 5.15.R.1 | `deno task check-all` verde | exit 0 |
+| 5.15.R.2 | `deno task golden:generate && deno task test` verde | exit 0 |
+| 5.15.R.3 | Todos os testes originais da Fase 2 continuam passando | sem regressão |
+| 5.15.R.4 | `grep -r "RUBY-COMPAT" packages/core/src/` retorna ≥ 10 ocorrências | grep |
+| 5.15.R.5 | `grep -r "keepRubyBugs" packages/core/src/` retorna ≥ 6 ocorrências (uma por bug Cat. B) | grep |
+| 5.15.R.6 | ADR 012 revisada e commitada | git log |
+| 5.15.R.7 | Marcar cada `5.X` original em `fase-2-tarefas.md` com `(revisado em 5.X.R.Y)` | grep |
+
+---
+
+## Notas para a IA
+
+1. **Ordem:** 5.0.R → 5.1.R → ... → 5.13.R → 5.14.R → Bloco C.
+2. **Sempre ler o Ruby antes** de cada 5.X.R.
+3. **Categoria A** = sempre corrigir, comentário `RUBY-COMPAT-FIX`.
+4. **Categoria B** = flag `compat.keepRubyBugs`, ambos branches testados.
+5. **Categoria C** = replicar, comentário `RUBY-COMPAT-DOC`.
+6. **Nunca apagar** marcação `[x]` original da Fase 2. Adicionar `(revisado em 5.X.R.Y)` ao lado.
+7. **Commit com prefixo `fix(core):`** (não `feat`).
+8. **Golden tests rodam com default (`keepRubyBugs: true`).**
+9. **Se um bug não está no §12 do cheat sheet**, adicionar lá primeiro.
+10. **Sem `any`.** Use `unknown` + narrowing.
+
+---
+
+**Fim do arquivo de tarefas complementares da Fase 2.**
+````
+
+---
+
+## Arquivo: `docs/syntaxmesh/07-roadmap.md`
+
+````md
+# Roadmap — Plano geral
+
+> **Arquivo:** `docs/syntaxmesh/07-roadmap.md`
+> **Status:** 🟡 Fases 1–2 em andamento; 3–21 não iniciadas
+> **Fonte da verdade:** este arquivo espelha `docs/syntaxmesh/fases/plano.md`.
+> Se houver divergência, **o `plano.md` prevalece**.
+
+O desenvolvimento do SyntaxMesh está dividido em **21 fases**. Cada fase é um port fiel de um subconjunto do TaskJuggler 3.8.4, ou uma extensão específica do SyntaxMesh (i18n, Markdown, PWA).
+
+---
+
+## Visão geral
+
+```text
+FASE 1  Fundação e Workspace Deno
+   ↓
+FASE 2  Tempo e Geometria (Core)
+   ↓
+FASE 3  Modelo de Atributos
+   ↓
+FASE 4  Árvore de Propriedades
+   ↓
+FASE 5  Entidades Concretas
+   ↓
+FASE 6  Scoreboard e Estruturas Base
+   ↓
+FASE 7  Scheduler Core
+   ↓
+FASE 8  Sistema Financeiro
+   ↓
+FASE 9  Orquestrador e Cache
+   ↓
+FASE 10 Parser e Linguagem
+   ↓
+FASE 11 Expressões Lógicas e Queries
+   ↓
+FASE 12 RichText
+   ↓
+FASE 13 Markdown
+   ↓
+FASE 14 Relatórios
+   ↓
+FASE 15 Gantt
+   ↓
+FASE 16 Apoio
+   ↓
+FASE 17 HTML/XML
+   ↓
+FASE 18 Time/Status Sheets
+   ↓
+FASE 19 Storage
+   ↓
+FASE 20 PWA + UI
+   ↓
+FASE 21 Compatibilidade e Qualidade
+   ↓
+Release 1.0
+```
+
+---
+
+## Camadas e dependências
+
+```text
+                    SYNTAXMESH
+                        │
+        ┌───────────────┴────────────────┐
+        │                                │
+     ENGINE                            APP
+        │                                │
+   Fases 2–19                       Fases 20–21
+   (Core + Parser                    (UI + PWA +
+    + Report + Storage)               Release)
+        │
+        ▼
+    deno task check-all  (todas as fases fecham verde)
+```
+
+**Regra arquitetural mais importante** (ADR 001):
+
+```text
+APP → REPORT → STORAGE → CORE ← PARSER
+```
+
+O **Core** nunca importa DOM, Preact, BeerCSS, IndexedDB, OPFS ou qualquer camada superior.
+
+---
+
+## Resumo executivo
+
+| Fase | Pacote principal | Referências Ruby (fonte) | Prioridade | Status |
+|---|---|---|---|---|
+| 1 | workspace | — (infraestrutura pura) | Alta | ✅ Concluída |
+| 2 | core | `TjTime`, `Interval`, `IntervalList`, `Scoreboard`, `WorkingHours`, `RealFormat` | **Crítica** | 🟡 Em andamento |
+| 3 | core | `AttributeBase`, `AttributeDefinition`, `Attributes`, `deep_copy` | **Crítica** | ⬜ |
+| 4 | core | `PropertyTreeNode`, `PropertySet`, `ScenarioData`, `Scenario`, `PTNProxy` | **Crítica** | ⬜ |
+| 5 | core | `Task`, `Resource`, `Account`, `Shift`, `Report`, `Project` (AttributeDefinitions) | **Crítica** | ⬜ |
+| 6 | core | `Scoreboard` (bits), `Limits`, `ShiftAssignments`, `ShiftScenario` | **Crítica** | ⬜ |
+| 7 | core | `TaskScenario`, `ResourceScenario`, `Allocation`, `Booking`, `TaskDependency`, `DataCache` | **Crítica** | ⬜ |
+| 8 | core | `Charge`, `ChargeSet`, `AccountCredit`, `AccountScenario` | Alta | ⬜ |
+| 9 | core | `Project`, `TaskJuggler`, `PropertyList`, `MessageHandler`, `Log`, `AppConfig` | **Crítica** | ⬜ |
+| 10 | parser + language | `TextParser/*`, `ProjectFileScanner`, `ProjectFileParser`, `TjpSyntaxRules` | **Crítica** | ⬜ |
+| 11 | core | `LogicalExpression`, `LogicalOperation`, `LogicalFunction`, `Query`, `SimpleQueryExpander` | **Crítica** | ⬜ |
+| 12 | richtext | `RichText`, `RichText/*` | Alta | ⬜ |
+| 13 | markdown | — (extensão SyntaxMesh) | Baixa | ⬜ |
+| 14 | report | `reports/*` (`TaskReport`, `ResourceReport`, `AccountReport`, `TextReport`, etc.) | **Crítica** | ⬜ |
+| 15 | report | `GanttChart`, `GanttRouter`, `CollisionDetector`, `HTMLGraphics` | Alta | ⬜ |
+| 16 | core | `Journal`, `AlertLevelDefinitions`, `LeaveList`, `TernarySearchTree`, `AlgorithmDiff`, etc. | Alta | ⬜ |
+| 17 | core (xml) | `XMLDocument`, `XMLElement`, `HTMLDocument`, `HTMLElements`, `ICalendar`, `Painter` | Média | ⬜ |
+| 18 | core (sheets) | `TimeSheets`, `Sheet*`, `TimeSheetSummary` | Média | ⬜ |
+| 19 | storage | — (worker-db já pronto na Fase 1) | Alta | ⬜ |
+| 20 | ui + service-worker | — (extensão SyntaxMesh) | Média | ⬜ |
+| 21 | tests/ | MWEs (`docs/Learning/mwe001–009`), TestSuite | **Crítica** | ⬜ |
+
+---
+
+## Fases em detalhe
+
+### FASE 1 — Fundação e Workspace Deno
+
+**Objetivo:** esqueleto do monorepo, quality pipeline, ADRs.
+
+**Referências TJ:** nenhuma (infraestrutura pura).
+
+**Entregáveis:**
+- `deno.jsonc` raiz com `workspace`, `catalog`, `imports`, `tasks`.
+- 12 packages: `core`, `parser`, `language`, `richtext`, `markdown`, `report`, `storage`, `worker-db`, `utils`, `service-worker`, `ui`, `server`.
+- Cada package com `deno.jsonc` próprio e `mod.ts`.
+- `@std/testing/bdd` + `@std/assert` como padrão.
+- ADRs 001–012.
+- CI local: `deno task check-all`.
+
+**Critério de aceite:** `deno task check-all` verde.
+
+**Plano:** `fases/fase-1-fundacao.md` · **Tarefas:** `fases/fase-1-tarefas.md`
+
+---
+
+### FASE 2 — Tempo e Geometria
+
+**Objetivo:** base temporal do motor. Tudo depende disso.
+
+**Referências TJ:**
+- `TjTime.rb` ← **fonte primária**
+- `Interval.rb`, `IntervalList.rb`, `Scoreboard.rb`, `WorkingHours.rb`, `RealFormat.rb`
+
+**Entregáveis:**
+- `TjTime` (representação em segundos, parsing, normalizações, avanços, diferenças, timezone, `strftime` mínimo).
+- `Interval`, `TimeInterval`, `ScoreboardInterval`.
+- `IntervalList`, `Scoreboard`.
+- `WorkingHours`, `RealFormat`.
+- ADR 012.
+- Infraestrutura de golden tests (`scripts/golden/*.rb`).
+
+**Critério de aceite:** `deno task check-all` + `deno task golden:generate` verdes.
+
+**Plano:** `fases/fase-2-tempo-geometria.md` · **Tarefas:** `fases/fase-2-tarefas.md` · **Revisão:** `fases/fase-2-tarefas-complementar1.md`
+
+---
+
+### FASE 3 — Modelo de Atributos
+
+**Objetivo:** sistema de tipos de atributos com herança e scenario-specific.
+
+**Referências TJ:**
+- `AttributeBase.rb`, `AttributeDefinition.rb`, `Attributes.rb`, `deep_copy.rb`
+
+**Entregáveis:**
+- `AttributeBase`, `ListAttributeBase`, `AttributeDefinition`, `AttributeOverwrite`.
+- ~40 subclasses de atributo (escalares, referências, listas, dependências, financeiro, alocação, lógicas, tempo complexo, formatação, ricos).
+- `deepClone` utility.
+- Interface `PropertyLike` (R2 — ver `fase-3-modelo-atributos.md` §4.11).
+- Interface `RichTextIntermediate` (port para Fase 12).
+- ADR 014.
+
+**Critério de aceite:** `deno task check-all` + golden tests verdes.
+
+**Plano:** `fases/fase-3-modelo-atributos.md` · **Tarefas:** `fases/fase-3-tarefas.md`
+
+---
+
+### FASE 4 — Árvore de Propriedades
+
+**Objetivo:** `PropertyTreeNode`, `PropertySet`, `ScenarioData`, `Scenario`, `PTNProxy`.
+
+**Referências TJ:**
+- `PropertyTreeNode.rb` ← **central**
+- `PropertySet.rb`, `ScenarioData.rb`, `Scenario.rb`, `PTNProxy.rb`
+
+**Entregáveis:**
+- `PropertyTreeNode` (estrutura, IDs, atributos lazy, herança, adoção, backup/restore).
+- `PropertySet` (namespace, blueprint, índices).
+- `ScenarioData`, `Scenario`, `PTNProxy`.
+- `AttributeContainer`, `ProjectLike`, `MockContainer`, `MockProject`.
+- ADR 015 (metaprogramação — **sem `Proxy`**).
+
+**Critério de aceite:** `deno task check-all` + golden tests verdes.
+
+**Plano:** `fases/fase-4-arvore-propriedades.md` · **Tarefas:** `fases/fase-4-tarefas.md`
+
+---
+
+### FASE 5 — Entidades Concretas
+
+**Objetivo:** `Task`, `Resource`, `Account`, `Shift`, `Report` + ~141 `AttributeDefinition`s.
+
+**Referências TJ:**
+- `Task.rb`, `TaskScenario.rb` (construtor), `Resource.rb`, `ResourceScenario.rb` (construtor).
+- `Account.rb`, `AccountScenario.rb`, `Shift.rb`, `ShiftScenario.rb`, `Report.rb`.
+- `Project.rb` (seções 200–420) ← **fonte das `AttributeDefinition`s**.
+
+**Entregáveis:**
+- Entidades como wrappers finos de `PropertyTreeNode`.
+- `*Scenario` como esqueletos (lógica vai para Fase 7).
+- `registerScenarioAttributes`, `registerShiftAttributes`, `registerAccountAttributes`, `registerResourceAttributes`, `registerTaskAttributes`, `registerReportAttributes`.
+- `ScenarioData.preloadAttributes`.
+- ADR 015 (pré-carregamento).
+
+**Critério de aceite:** golden tests comparam as ~141 `AttributeDefinition`s com o `Project.rb` real.
+
+**Plano:** `fases/fase-5-entidades-concretas.md`
+
+---
+
+### FASE 6 — Scoreboard e Estruturas Base
+
+**Objetivo:** bit-encoding do `Scoreboard`, `Limits`, `ShiftAssignments`.
+
+**Referências TJ:**
+- `Scoreboard.rb` (revisitar), `Limits.rb`, `ShiftAssignments.rb`, `ShiftScenario.rb`.
+
+**Entregáveis:**
+- `scoreboard-bits.ts` (constantes + helpers).
+- `Limits` + `Limit`.
+- `ShiftAssignments` + `ShiftAssignment` (com compartilhamento via `@@scoreboards`).
+- `ShiftScenario` consolidado.
+- `ResourceScenario.onShift?`.
+- `projectObjectId` helper.
+- ADR 016 (encoding).
+
+**Critério de aceite:** golden tests de `getSbSlot` em ~20 índices.
+
+**Plano:** `fases/fase-6-scoreboard-estruturas.md`
+
+---
+
+### FASE 7 — Scheduler Core
+
+**Objetivo:** o **coração**. Algoritmo heurístico slot-a-slot.
+
+**Referências TJ:**
+- `TaskScenario.rb` ← **central (~1200 linhas)**
+- `ResourceScenario.rb` ← **central (~900 linhas)**
+- `Allocation.rb`, `Booking.rb`, `TaskDependency.rb`, `DataCache.rb`.
+
+**Entregáveis:**
+- `TaskDependency`, `Allocation`, `Booking`, `DataCache`.
+- `TaskScenario` completo (`prepareScheduling`, `Xref`, `preScheduleCheck`, `checkForLoops`, `calcCriticalness`, `schedule`, `bookResources`, `propagateDate`, `bookBookings`, `finishScheduling`, `postScheduleCheck`, queries).
+- `ResourceScenario` completo (`initScoreboard`, `book`, `available?`, `treeSum`, `getEffectiveWork`, queries).
+- ADR 017 (heurística).
+
+**Critério de aceite:** golden tests end-to-end dos 9 MWEs + `TestSuite/Scheduler/`.
+
+**Plano:** `fases/fase-7-scheduler-core.md`
+
+---
+
+### FASE 8 — Sistema Financeiro
+
+**Objetivo:** custos, receitas, balanço.
+
+**Referências TJ:**
+- `Charge.rb`, `ChargeSet.rb`, `AccountCredit.rb`, `AccountScenario.rb`.
+- `TaskScenario.turnover`, `ResourceScenario.turnover`.
+- `reports/AccountListRE.rb` (modo balance).
+
+**Entregáveis:**
+- `AccountCredit`, `Charge`, `ChargeSet`.
+- `AccountScenario.turnover` + `query_balance` + `query_turnover`.
+- `TaskScenario.turnover` e `ResourceScenario.turnover` completos.
+- Meta-account (`createBalanceAccount` / `removeBalanceAccount`).
+- ADR 018 (modelo financeiro).
+
+**Critério de aceite:** golden tests do `mwe004` + variações.
+
+**Plano:** `fases/fase-8-financeiro.md`
+
+---
+
+### FASE 9 — Orquestrador e Cache
+
+**Objetivo:** colar tudo. `Project.schedule()` funciona end-to-end.
+
+**Referências TJ:**
+- `Project.rb` ← **central**
+- `TaskJuggler.rb`, `PropertyList.rb`, `MessageHandler.rb`, `Log.rb`, `TjException.rb`, `SourceFileInfo.rb`, `AppConfig.rb`, `Tj3Config.rb`.
+
+**Entregáveis:**
+- `SourceFileInfo`, `MessageHandler`, `Log`.
+- `PropertyList` (tree sort em 2 passes).
+- `AppConfig`, `Tj3Config`.
+- `Project` completo (`schedule`, `prepareScenario`, `scheduleScenario`, `finishScenario`, `generateReports`).
+- `TaskJuggler` top-level.
+- `MockProject` removido; testes migrados para `Project` real.
+- ADR 019 (orquestrador).
+
+**Critério de aceite:** golden tests end-to-end dos 9 MWEs.
+
+**Plano:** `fases/fase-9-orquestrador-cache.md`
+
+---
+
+### FASE 10 — Parser e Linguagem
+
+**Objetivo:** lexer, parser FSM, gramática TJP, i18n.
+
+**Referências TJ:**
+- `TextParser.rb` + `TextParser/*` (Pattern, Rule, State, StateTransition, StackElement, MacroTable, TokenDoc, SourceFileInfo).
+- `ProjectFileScanner.rb`, `ProjectFileParser.rb`, `TjpSyntaxRules.rb` (**~300 regras**).
+
+**Entregáveis:**
+- `TextParser` FSM.
+- `Scanner` + `ProjectFileScanner`.
+- `ProjectFileParser`.
+- `TjpSyntaxRules` completo (dividido em 4 subfases).
+- `LanguageRegistry` + 3 idiomas (`en`, `pt-BR`, `es`).
+- Diretiva `language "pt-BR"` funcional.
+- ADRs 020 (FSM), 021 (i18n).
+
+**Critério de aceite:** golden tests com `TestSuite/Syntax/Correct/` + `Syntax/Errors/` + AST equivalente entre idiomas.
+
+**Plano:** `fases/fase-10-parser-linguagem.md`
+
+---
+
+### FASE 11 — Expressões Lógicas e Queries
+
+**Objetivo:** motor de expressões lógicas + ponte para reports.
+
+**Referências TJ:**
+- `LogicalExpression.rb`, `LogicalOperation.rb`, `LogicalFunction.rb`, `Query.rb`, `SimpleQueryExpander.rb`.
+
+**Entregáveis:**
+- `LogicalOperation`, `LogicalAttribute`, `LogicalFlag`, `LogicalFunction`, `LogicalExpression`.
+- 14 funções lógicas (`hasalert`, `isactive`, `ischildof`, etc.).
+- `Query` completo (`process`, accessors, `scaleDuration`/`scaleLoad`, `resolvePropertyId`, `setCustomData`).
+- `SimpleQueryExpander`.
+- ADR 022 (expressões sem precedência).
+
+**Critério de aceite:** golden tests de expressões + queries dos MWEs.
+
+**Plano:** `fases/fase-11-logica-queries.md`
+
+---
+
+### FASE 12 — RichText
+
+**Objetivo:** markup MediaWiki para compatibilidade `.tjp`.
+
+**Referências TJ:**
+- `RichText.rb`, `RichText/*` (Element, Parser, Scanner, SyntaxRules, Snip, Document, TOCEntry, TableOfContents, FunctionHandler, FunctionExample, RTFHandlers, RTFNavigator, RTFQuery, RTFReport, RTFReportLink).
+
+**Entregáveis:**
+- `RichText`, `RichTextIntermediate`, `RichTextElement`.
+- `RichTextScanner`, `RichTextParser`, `RichTextSyntaxRules`.
+- `RichTextSnip`, `RichTextDocument`, `TOCEntry`, `TableOfContents`.
+- `RichTextFunctionHandler` + subclasses (com stubs para `RTFReport`, `RTFReportLink`, `RTFNavigator`).
+- `RichTextFactory` implementado e integrado com `ProjectFileParser`.
+- ADR 023 (RichText e handlers).
+
+**Critério de aceite:** golden tests de markup (`TestSuite/RichText/`).
+
+**Plano:** `fases/fase-12-richtext.md`
+
+---
+
+### FASE 13 — Markdown
+
+**Objetivo:** formato going-forward. Aditivo, não substitui RichText.
+
+**Referências TJ:** nenhuma (extensão SyntaxMesh).
+
+**Entregáveis:**
+- `MarkdownFactory` (implementa `RichTextFactory`).
+- `micromark` + `mdast-util-from-markdown` + `mdast-util-gfm`.
+- Extensões: cor, HTML inline, funções customizadas, mini-queries.
+- `to_markdown()` em `RichTextIntermediate`.
+- `richTextToMarkdown` (one-way).
+- ADR 024.
+
+**Critério de aceite:** snapshot tests.
+
+**Plano:** `fases/fase-13-markdown.md`
+
+---
+
+### FASE 14 — Relatórios
+
+**Objetivo:** pipeline completo de relatórios.
+
+**Referências TJ:**
+- `reports/Report.rb`, `ReportBase.rb`, `TableReport.rb`, `ReportTable*.rb`, `TableColumnDefinition.rb`.
+- `TaskListRE.rb`, `ResourceListRE.rb`, `AccountListRE.rb`, `TextReport.rb`.
+- `ExportRE.rb`, `TjpExportRE.rb`, `MspXmlRE.rb`, `ICalReport.rb`, `NikuReport.rb`, `TraceReport.rb`, `TagFile.rb`.
+- `Navigator.rb`, `ChartPlotter.rb`, `CSVFile.rb`.
+
+**Entregáveis:**
+- Infraestrutura de tabela completa.
+- `Report` + `ReportBase` + `TableReport` + `ColumnTable`.
+- 11 reports específicos.
+- `Navigator`, `ChartPlotter`.
+- `RTFReport`, `RTFReportLink`, `RTFNavigator` completos (stubs da Fase 12 removidos).
+- ADR 025 (reports browser-only — retornam strings).
+
+**Critério de aceite:** golden tests de reports dos 9 MWEs + `TestSuite/Reports/`.
+
+**Plano:** `fases/fase-14-relatorios.md`
+
+---
+
+### FASE 15 — Gantt
+
+**Objetivo:** Gantt chart completo em **HTML+CSS** (não SVG).
+
+**Referências TJ:**
+- `GanttChart.rb`, `GanttHeader.rb`, `GanttHeaderScaleItem.rb`, `GanttLine.rb`.
+- `GanttTaskBar.rb`, `GanttMilestone.rb`, `GanttContainer.rb`, `GanttLoadStack.rb`.
+- `GanttRouter.rb`, `CollisionDetector.rb`, `HTMLGraphics.rb`.
+
+**Entregáveis:**
+- `HTMLGraphics`, `CollisionDetector`, `GanttRouter`.
+- `GanttTaskBar`, `GanttMilestone`, `GanttContainer`, `GanttLoadStack`.
+- `GanttHeader` + `GanttHeaderScaleItem`.
+- `GanttLine`, `GanttChart`.
+- Integração com `TaskReport` e `ResourceReport` (coluna `chart`).
+- ADR 026 (Gantt HTML+CSS).
+
+**Critério de aceite:** golden tests de Gantt dos MWEs.
+
+**Plano:** `fases/fase-15-gantt.md`
+
+---
+
+### FASE 16 — Apoio
+
+**Objetivo:** estruturas auxiliares + completar stubs da Fase 14.
+
+**Referências TJ:**
+- `Journal.rb`, `AlertLevelDefinitions.rb`, `LeaveList.rb`.
+- `TernarySearchTree.rb`, `AlgorithmDiff.rb`, `TextFormatter.rb`.
+- `FileList.rb`, `URLParameter.rb`, `StdIoWrapper.rb`, `UTF8String.rb`.
+- `KateSyntax.rb`, `VimSyntax.rb`.
+
+**Entregáveis:**
+- `Journal` + `JournalEntry` + `JournalEntryList`.
+- `AlertLevelDefinition` + `AlertLevelDefinitions`.
+- `Leave` + `LeaveList` + `LeaveAllowance` + `LeaveAllowanceList` (substituem stubs da Fase 5).
+- `TextFormatter`, `FileList`, `URLParameter`, `TernarySearchTree`, `AlgorithmDiff`.
+- `StdIoWrapper` (adaptado), `UTF8String` (no-op).
+- Completar 8 queries de `TaskScenario` + `ResourceScenario.query_dashboard`.
+- Completar `LogicalFlag.eval` (Journal) e `LogicalFunction.hasalert`.
+- `KateSyntax`, `VimSyntax`.
+- ADR 027 (Journal e AlertLevel).
+
+**Critério de aceite:** golden tests de journal + leaves.
+
+**Plano:** `fases/fase-16-apoio.md`
+
+---
+
+### FASE 17 — HTML/XML
+
+**Objetivo:** substituir implementações mínimas de XML/HTML/ICalendar/Painter por versões completas.
+
+**Referências TJ:**
+- `XMLElement.rb`, `XMLDocument.rb`, `HTMLDocument.rb`, `HTMLElements.rb`.
+- `ICalendar.rb`.
+- `Painter.rb` + `Painter/*` (Color, Points, Element, Group, Primitives, BasicShapes, Text, SVGSupport, FontMetrics, FontMetricsData, FontData).
+
+**Entregáveis:**
+- `XMLElement` (substitui `SimpleXMLElement` da Fase 12).
+- `XMLDocument`, `HTMLDocument`, `HTMLElements`.
+- `ICalendar`, `Todo`, `Event`, `Journal`, `Person` completos.
+- `Painter` completo (SVG).
+- Substituição transparente em RichText (Fase 12), Reports (Fase 14), Gantt (Fase 15).
+- ADR 028.
+
+**Critério de aceite:** golden tests byte-a-byte de HTML/XML/SVG.
+
+**Plano:** `fases/fase-17-html-xml.md`
+
+---
+
+### FASE 18 — Time/Status Sheets
+
+**Objetivo:** time sheets e status sheets (captura de progresso).
+
+**Referências TJ:**
+- `TimeSheets.rb`, `TimeSheetSender.rb`, `TimeSheetReceiver.rb`, `TimeSheetSummary.rb`.
+- `StatusSheetSender.rb`, `StatusSheetReceiver.rb`.
+- `SheetHandlerBase.rb`, `SheetSender.rb`, `SheetReceiver.rb`.
+
+**Entregáveis:**
+- `TimeSheetRecord`, `TimeSheet`, `TimeSheets`.
+- `SheetHandlerBase` (com `FileStore` injetado via interface Core).
+- `SheetSender`, `SheetReceiver`.
+- `TimeSheetSender`, `TimeSheetReceiver`, `TimeSheetSummary`.
+- `StatusSheetSender`, `StatusSheetReceiver`.
+- `Project.timeSheets` + `checkTimeSheets`.
+- `TaskJuggler.checkTimeSheet` / `checkStatusSheet`.
+- ADRs 029 (time sheets no browser), 031 (FileStore injection).
+
+**Critério de aceite:** golden tests de timesheets.
+
+**Plano:** `fases/fase-18-time-status-sheets.md`
+
+---
+
+### FASE 19 — Storage
+
+**Objetivo:** persistência local via `@syntaxmesh/worker-db`.
+
+**Referências TJ:** nenhuma (extensão SyntaxMesh).
+
+**Entregáveis:**
+- `ProjectService` (CRUD).
+- `Autosave` (debounced).
+- `Recovery` (após crash).
+- `ImportExport` (`.tjp`, `.tji`, `.json`).
+- `SettingsService`.
+- `ProjectLoader` (usa `TaskJuggler.parseContent` da Fase 10).
+- Schema versionado (`DATA_SCHEMA_VERSION = 1`).
+- Fase 18 corrigida para usar `fakeOpfs()`.
+- ADR 030 (schema versionado).
+
+**Critério de aceite:** snapshot tests byte-a-byte.
+
+**Plano:** `fases/fase-19-storage.md`
+
+---
+
+### FASE 20 — PWA + UI
+
+**Objetivo:** Service Worker, manifest, Preact + Signals + BeerCSS.
+
+**Referências TJ:** `docs/BeerCSS/`.
+
+**Entregáveis:**
+- PWA instalável (`manifest.json` + Service Worker + offline).
+- Shell + Toolbar + Sidebar + StatusBar.
+- Editor de `.tjp` (com syntax highlight básico).
+- ProjectExplorer (CRUD).
+- ReportView, GanttView, SettingsView, SheetsView.
+- `engine.worker.ts` (parser + scheduler + reports).
+- Serviços (`engine-service`, `parser-service`, `scheduler-service`, `report-service`, `storage-service`).
+- Signals por domínio.
+- i18n de UI (separado de i18n de keywords).
+- Download/upload de `.tji`.
+- ADR 032.
+
+**Critério de aceite:** Lighthouse ≥ 90 (PWA, Performance, Accessibility, Best Practices).
+
+**Plano:** `fases/fase-20-pwa-ui.md`
+
+---
+
+### FASE 21 — Compatibilidade e Qualidade
+
+**Objetivo:** provar fidelidade ao TJ, robustez e prontidão para release.
+
+**Referências TJ:**
+- `docs/Learning/mwe001–mwe009/`.
+- `docs/taskjuggler/test/TestSuite/`.
+
+**Entregáveis:**
+- Corpus de fixtures (`tests/fixtures/`).
+- Golden tests end-to-end (`tj3` vs `tj3-ts`) em ≥ 200 fixtures.
+- AST equivalence (en ↔ pt-BR ↔ es) em ≥ 30 fixtures.
+- Regression snapshots em ≥ 100 pontos.
+- Benchmarks em ≥ 10 cenários.
+- Security tests (OWASP vectors).
+- Cross-browser (Playwright: Chromium, Firefox, WebKit).
+- A11y (`axe-core`).
+- Lighthouse ≥ 90 em 5 categorias.
+- Relatório de conformidade.
+- CHANGELOG + release notes + tag `v1.0.0`.
+- ADR 033 (estratégia de validação).
+
+**Critério de aceite:** todos os alvos acima atingidos; release 1.0 publicado.
+
+**Plano:** `fases/fase-21-compatibilidade-qualidade.md`
+
+---
+
+## Prioridade
+
+### 🔴 Prioridade 1 — Fundação
+```
+Fase 1  Fundação
+Fase 2  Tempo e Geometria
+Fase 3  Modelo de Atributos
+Fase 4  Árvore de Propriedades
+Fase 5  Entidades Concretas
+```
+Sem essas, nada funciona.
+
+### 🔴 Prioridade 2 — Motor
+```
+Fase 6  Scoreboard e Estruturas Base
+Fase 7  Scheduler Core
+Fase 9  Orquestrador e Cache
+Fase 10 Parser e Linguagem
+Fase 11 Expressões Lógicas e Queries
+```
+
+### 🟠 Prioridade 3 — Relatórios
+```
+Fase 8  Sistema Financeiro
+Fase 12 RichText
+Fase 14 Relatórios
+Fase 15 Gantt
+```
+
+### 🟡 Prioridade 4 — Complementos
+```
+Fase 13 Markdown
+Fase 16 Apoio
+Fase 17 HTML/XML
+Fase 18 Time/Status Sheets
+Fase 19 Storage
+```
+
+### 🟢 Prioridade 5 — Aplicação e Validação
+```
+Fase 20 PWA + UI
+Fase 21 Compatibilidade e Qualidade
+```
+
+---
+
+## Regras de execução
+
+1. **Uma tarefa por vez.** Não avançar sem fechar a atual.
+2. **TDD obrigatório.** Teste antes da implementação.
+3. **Fechar cada subfase com `deno task check-all` verde.**
+4. **Commit atômico** por subfase (ver `fases/README.md`).
+5. **Golden tests são o critério final.** Se divergir do `tj3`, corrigir o TS (ou documentar divergência).
+6. **Não corrigir bugs de outras fases.** Abrir issue no arquivo competente.
+7. **Sem `any` em `src/`.** Usar `unknown` + narrowing.
+8. **Nenhum import proibido no Core** (ADR 001).
+9. **Ler `cheat-sheet-ruby-ts.md` antes de portar** qualquer construção Ruby.
+10. **Consultar ADR 013 (`compat.keepRubyBugs`)** ao encontrar comportamento estranho no Ruby.
+
+---
+
+## Referências cruzadas
+
+### Documentos do projeto
+
+- `docs/syntaxmesh/01-visao.md` — visão geral.
+- `docs/syntaxmesh/03-arquitetura.md` — arquitetura em camadas.
+- `docs/syntaxmesh/04-linguagem-multilingue.md` — i18n de keywords.
+- `docs/syntaxmesh/06-testes-e-processo.md` — protocolo TDD.
+- `docs/syntaxmesh/09-regras-para-ia.md` — regras para IA.
+- `docs/syntaxmesh/10-futuro.md` — features não portadas.
+- `docs/syntaxmesh/cheat-sheet-ruby-ts.md` — mapeamento Ruby→TS + bugs.
+- `docs/syntaxmesh/decisoes/` — ADRs 001–033.
+- `docs/syntaxmesh/fases/plano.md` — **fonte da verdade** deste roadmap.
+- `docs/syntaxmesh/fases/README.md` — guia das fases.
+
+### Fontes de referência externa
+
+- `docs/taskjuggler/` — código-fonte Ruby (referência primária).
+- `docs/tj3-engine/` — blueprints (00–16).
+- `docs/Learning/mwe001–009/` — 9 MWEs progressivos.
+- `docs/BeerCSS/` — framework CSS.
+
+---
+
+**Última atualização:** 2026-09-12
+**Fonte da verdade:** `docs/syntaxmesh/fases/plano.md`
 ````
 
 ---

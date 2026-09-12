@@ -48,7 +48,7 @@ Ao final desta fase:
 - `Scenario` (entidade concreta).
 - `PTNProxy` (wrapper para adopted tasks).
 - **≥ 130 testes unitários** + **≥ 30 golden tests** (estrutura de árvore, herança, adoção).
-- ADR 014 registrado.
+- ADR 015 registrado.
 - `deno task check-all` verde.
 
 ---
@@ -104,7 +104,7 @@ Ruby usa `Hash.new { |hash, key| ... }` — a criação é transparente ao acess
 
 **Decisão:** **método helper `attribute(id)`**. Preserva a semântica (lazy) mas troca a transparência por explicitude.
 
-Ver ADR 014.
+Ver ADR 015.
 
 ### 4.2 `method_missing` → `scenarioData(scIdx)`
 
@@ -118,7 +118,7 @@ Opções:
 
 **Decisão:** **helper `scenarioData(scIdx)`**. Subclasses que precisam delegar definem métodos explícitos (ex: `Task.readyForScheduling?(scIdx)` chama `this.scenarioData(scIdx).readyForScheduling?()`). Mais código, mas mais claro e testável.
 
-Ver ADR 014.
+Ver ADR 015.
 
 ### 4.3 `@@scenarioAttributes` → array de Maps
 
@@ -152,9 +152,11 @@ Reutilizamos `TjError`, `TjArgumentError` (Fase 3). Adicionamos `TjInternalError
 
 ## 5. Subfases detalhadas
 
+Cada subfase segue `docs/syntaxmesh/fases/modelo-tarefas.md`.
+
 ---
 
-### 7.0 — ADR 014 (metaprogramação em TS)
+### 4.0 — ADR 015 (metaprogramação em TS)
 
 #### Contexto
 
@@ -167,11 +169,11 @@ Precisamos registrar formalmente como adaptamos cada uma.
 
 #### Objetivo
 
-Criar `docs/syntaxmesh/decisoes/014-metaprogramacao-propertytreenode.md`.
+Criar `docs/syntaxmesh/decisoes/015-metaprogramacao-propertytreenode.md`.
 
 #### Arquivos
 
-- `docs/syntaxmesh/decisoes/014-metaprogramacao-propertytreenode.md` (novo)
+- `docs/syntaxmesh/decisoes/015-metaprogramacao-propertytreenode.md` (novo)
 - `docs/syntaxmesh/decisoes/README.md` (atualizar tabela)
 
 #### Requisitos
@@ -191,7 +193,7 @@ Criar `docs/syntaxmesh/decisoes/014-metaprogramacao-propertytreenode.md`.
 
 - `docs/taskjuggler/lib/taskjuggler/PropertyTreeNode.rb`.
 - `docs/taskjuggler/lib/taskjuggler/PTNProxy.rb`.
-- Seções 4.1, 4.2, 4.5.
+- Seções 4.1, 4.2, 4.5 deste documento.
 
 #### Fora de escopo
 
@@ -199,12 +201,12 @@ Criar `docs/syntaxmesh/decisoes/014-metaprogramacao-propertytreenode.md`.
 
 #### Critério de aceite
 
-- ADR 014 criado.
+- ADR 015 criado.
 - Tabela atualizada.
 
 ---
 
-### 7.1 — `AttributeContainer`, `ProjectLike`, erros internos
+### 4.1 — `AttributeContainer`, `ProjectLike`, erros internos
 
 #### Contexto
 
@@ -291,7 +293,7 @@ assert(p.scenario(5) === null);
 
 ---
 
-### 7.2 — `PropertyTreeNode` — estrutura de árvore e IDs
+### 4.2 — `PropertyTreeNode` — estrutura de árvore e IDs
 
 #### Contexto
 
@@ -356,9 +358,9 @@ Implementar:
 
 #### Fora de escopo
 
-- Atributos (7.3).
-- Herança (7.4).
-- Adoção (7.5).
+- Atributos (4.3).
+- Herança (4.4).
+- Adoção (4.5).
 
 #### Critério de aceite
 
@@ -404,7 +406,7 @@ assert(!root.isChildOf(gc));
 
 ---
 
-### 7.3 — `PropertyTreeNode` — atributos lazy
+### 4.3 — `PropertyTreeNode` — atributos lazy
 
 #### Contexto
 
@@ -497,7 +499,7 @@ assert(task.provided("effort", 0));
 
 ---
 
-### 7.4 — `PropertyTreeNode` — herança e backup/restore
+### 4.4 — `PropertyTreeNode` — herança e backup/restore
 
 #### Contexto
 
@@ -576,7 +578,7 @@ assert(child.inherited("priority"));
 
 ---
 
-### 7.5 — `PropertyTreeNode` — adoção
+### 4.5 — `PropertyTreeNode` — adoção
 
 #### Contexto
 
@@ -617,7 +619,7 @@ Implementar `adopt` + `getAdopted` + validações.
 
 #### Fora de escopo
 
-- `PTNProxy` (7.9).
+- `PTNProxy` (4.9).
 
 #### Critério de aceite
 
@@ -648,7 +650,7 @@ assertEquals(root2.kids().length, 1);
 
 ---
 
-### 7.6 — `PropertySet`
+### 4.6 — `PropertySet`
 
 #### Contexto
 
@@ -757,7 +759,7 @@ assertEquals(child.get("bsi"), "1.1");
 
 ---
 
-### 7.7 — `ScenarioData`
+### 4.7 — `ScenarioData`
 
 #### Contexto
 
@@ -825,7 +827,7 @@ assertEquals(mockHandler.warnings.length, 1);
 
 ---
 
-### 7.8 — `Scenario`
+### 4.8 — `Scenario`
 
 #### Contexto
 
@@ -878,7 +880,7 @@ assertEquals(plan.allLeaves()[0], delayed);
 
 ---
 
-### 7.9 — `PTNProxy`
+### 4.9 — `PTNProxy`
 
 #### Contexto
 
@@ -960,7 +962,7 @@ assertEquals(proxy.ptn(), task);
 
 ---
 
-### 7.10 — Golden tests (estrutura + herança + adoção)
+### 4.10 — Golden tests (estrutura + herança + adoção)
 
 #### Contexto
 
@@ -1042,27 +1044,27 @@ deno task test
 ## 6. Ordem de execução sugerida
 
 ```text
-7.0  ADR 014
+4.0  ADR 015
       ↓
-7.1  AttributeContainer + MockContainer + MockProject + erros
+4.1  AttributeContainer + MockContainer + MockProject + erros
       ↓
-7.6  PropertySet                    ← pode rodar antes de PropertyTreeNode completo
+4.6  PropertySet                    ← pode rodar antes de PropertyTreeNode completo
       ↓
-7.2  PropertyTreeNode — estrutura
+4.2  PropertyTreeNode — estrutura
       ↓
-7.3  PropertyTreeNode — atributos lazy
+4.3  PropertyTreeNode — atributos lazy
       ↓
-7.4  PropertyTreeNode — herança
+4.4  PropertyTreeNode — herança
       ↓
-7.5  PropertyTreeNode — adoção
+4.5  PropertyTreeNode — adoção
       ↓
-7.7  ScenarioData
+4.7  ScenarioData
       ↓
-7.8  Scenario
+4.8  Scenario
       ↓
-7.9  PTNProxy
+4.9  PTNProxy
       ↓
-7.10 Golden tests
+4.10 Golden tests
 ```
 
 Cada subfase fecha com `deno task check-all` verde.
@@ -1090,7 +1092,7 @@ passa, e:
 - [ ] **≥ 30 golden tests**.
 - [ ] Nenhum `any` em `src/` (exceto onde justificado).
 - [ ] Nenhum import proibido em `packages/core/src/`.
-- [ ] ADR 014 criado.
+- [ ] ADR 015 criado.
 - [ ] `scripts/golden/property-tree.rb` funcional.
 - [ ] `scripts/golden/README.md` atualizado.
 
@@ -1100,8 +1102,8 @@ passa, e:
 
 | Risco | Impacto | Mitigação |
 |---|---|---|
-| Lazy attribute creation com helper é menos transparente que Ruby | Médio | Testes garantem semântica igual; ADR 014 documenta |
-| `method_missing` substituído por helper quebra subclasses futuras | Médio | Definir padrão claro em ADR 014; revisar em Fase 5 |
+| Lazy attribute creation com helper é menos transparente que Ruby | Médio | Testes garantem semântica igual; ADR 015 documenta |
+| `method_missing` substituído por helper quebra subclasses futuras | Médio | Definir padrão claro em ADR 015; revisar em Fase 5 |
 | Propagação de cenários em `[]=` com mode 0 tem bug | Alto | Testes com 3 cenários hierárquicos |
 | Backup/restore é cópia rasa | Baixo | Aceito — mesmo comportamento do Ruby |
 | Adoção recursiva pode causar loop | Alto | Detecção de duplicação em `allLeaves()` do root |
@@ -1131,8 +1133,8 @@ passa, e:
 
 - `docs/syntaxmesh/decisoes/001-core-independente-do-dom.md`
 - `docs/syntaxmesh/decisoes/011-port-fiel-taskjuggler.md`
-- `docs/syntaxmesh/decisoes/013-attribute-mode-global.md`
-- `docs/syntaxmesh/decisoes/014-metaprogramacao-propertytreenode.md` (novo)
+- `docs/syntaxmesh/decisoes/014-attribute-mode-global.md`
+- `docs/syntaxmesh/decisoes/015-metaprogramacao-propertytreenode.md` (novo)
 - `docs/syntaxmesh/03-arquitetura.md`
 
 ### Fases dependentes
@@ -1148,14 +1150,14 @@ passa, e:
 ## 10. Notas para a IA
 
 1. **`attribute(id)` é o coração.** Sempre use-o; nunca acesse `attributes` Map diretamente.
-2. **Não introduza `Proxy`.** A decisão foi por métodos explícitos (ADR 014). Se você acha que precisa, **pare e consulte o autor**.
+2. **Não introduza `Proxy`.** A decisão foi por métodos explícitos (ADR 015). Se você acha que precisa, **pare e consulte o autor**.
 3. **`scenarioData(scIdx)` substitui `method_missing`.** Subclasses definem métodos explícitos que chamam `this.scenarioData(scIdx).<method>()`.
 4. **`inheritAttributes` é chamada uma vez por propriedade**, logo após a criação (nas subclasses). Não chame em loop.
 5. **`backupAttributes` é cópia rasa.** Não tente "melhorar" para deep copy — muda a semântica.
 6. **Propagação de cenários em `[]=` com mode 0.** Sempre propague para todos os derivados; o alvo recebe `set`, filhos recebem `inherit`.
 7. **`PropertySet.index()` recalcula BSI.** Chame sempre após adicionar/remover propriedades.
 8. **Golden tests contra Ruby são obrigatórios** para estrutura, herança e adoção.
-9. **Sem `any`.** Use `unknown` e narrowing.
+9. **Sem `any`.** Use `unknown` + narrowing.
 10. **Commit por subfase.** `feat(core): property-tree/<aspecto>`.
 11. **`MockProject` fica em `tests/`.** Não exponha em `src/`.
 12. **`ProjectLike` é interface, não classe.** `Project` real virá na Fase 9.
@@ -1163,11 +1165,11 @@ passa, e:
 
 ---
 
-## 11. ADR 014 (referência rápida)
+## 11. ADR 015 (referência rápida)
 
-Criado como subfase 7.0. Conteúdo esperado:
+Criado como subfase 4.0. Conteúdo esperado:
 
-- **Título:** Metaprogramação Ruby em PropertyTreeNode: adaptações para TypeScript
+- **Título:** Metaprogramação em PropertyTreeNode: adaptações para TypeScript
 - **Contexto:** `Hash.new { ... }` (lazy) e `method_missing` (delegação).
 - **Decisão:**
   - Lazy → método `attribute(id)`.

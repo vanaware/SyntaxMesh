@@ -54,6 +54,8 @@ O que foi decidido? Seja específico e acionável.
 
 ## Lista de ADRs
 
+## Lista de ADRs
+
 | ID | Título | Status | Data |
 |---|---|---|---|
 | 001 | Core independente de DOM e Storage | Aceito | 2026-09-08 |
@@ -68,5 +70,8 @@ O que foi decidido? Seja específico e acionável.
 | 010 | worker-db centraliza storage | Aceito | 2026-09-11 |
 | 011 | Port fiel do TaskJuggler | Aceito | 2026-09-11 |
 | 012 | TjTime em TypeScript | Aceito | 2026-09-11 |
+| 013 | Flag global `compat.keepRubyBugs` para bugs do Ruby | Aceito | 2026-09-12 |
+| 014 | Attribute mode global em TypeScript | Aceito | 2026-09-12 |
+| 015 | Metaprogramação em PropertyTreeNode | Aceito | 2026-09-12 |
 
 > **Nota:** Manter esta tabela atualizada manualmente ou via script ao adicionar novos ADRs.

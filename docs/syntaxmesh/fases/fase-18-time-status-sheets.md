@@ -306,7 +306,7 @@ export interface FileStore {
 
 ---
 
-### 22.0 — ADRs 029 e 031
+### 18.0 — ADRs 029 e 031
 
 #### Contexto
 
@@ -362,7 +362,7 @@ Criar ambos.
 
 ---
 
-### 22.1 — Interface `FileStore` em Core
+### 18.1 — Interface `FileStore` em Core
 
 #### Contexto
 
@@ -413,7 +413,7 @@ await fs.write("foo.txt", "bar");
 
 ---
 
-### 22.2 — `TimeSheetRecord`
+### 18.2 — `TimeSheetRecord`
 
 #### Contexto
 
@@ -502,7 +502,7 @@ record.check(); // não lança
 
 ---
 
-### 22.3 — `TimeSheet` + `TimeSheets`
+### 18.3 — `TimeSheet` + `TimeSheets`
 
 #### Contexto
 
@@ -581,7 +581,7 @@ Análogo.
 
 ---
 
-### 22.4 — `Project.timeSheets` + `checkTimeSheets`
+### 18.4 — `Project.timeSheets` + `checkTimeSheets`
 
 #### Contexto
 
@@ -624,7 +624,7 @@ project.timeSheets.check();
 
 ---
 
-### 22.5 — `SheetHandlerBase` (com `FileStore` injetado)
+### 18.5 — `SheetHandlerBase` (com `FileStore` injetado)
 
 #### Contexto
 
@@ -719,7 +719,7 @@ await handler.sendEmail("a@b.com", "Hi", "Body");
 
 ---
 
-### 22.6 — `SheetSender`
+### 18.6 — `SheetSender`
 
 #### Contexto
 
@@ -801,7 +801,7 @@ Análogo.
 
 ---
 
-### 22.7 — `SheetReceiver`
+### 18.7 — `SheetReceiver`
 
 #### Contexto
 
@@ -892,7 +892,7 @@ Análogo.
 
 ---
 
-### 22.8 — `TimeSheetSender`
+### 18.8 — `TimeSheetSender`
 
 #### Objetivo
 
@@ -933,7 +933,7 @@ Análogo.
 
 ---
 
-### 22.9 — `TimeSheetReceiver`
+### 18.9 — `TimeSheetReceiver`
 
 #### Objetivo
 
@@ -976,7 +976,7 @@ Análogo.
 
 ---
 
-### 22.10 — `StatusSheetSender` + `StatusSheetReceiver`
+### 18.10 — `StatusSheetSender` + `StatusSheetReceiver`
 
 #### Objetivo
 
@@ -1034,7 +1034,7 @@ Análogo.
 
 ---
 
-### 22.11 — `TimeSheetSummary`
+### 18.11 — `TimeSheetSummary`
 
 #### Objetivo
 
@@ -1103,7 +1103,7 @@ Análogo.
 
 ---
 
-### 22.12 — Completar `TaskJuggler.checkTimeSheet` / `checkStatusSheet`
+### 18.12 — Completar `TaskJuggler.checkTimeSheet` / `checkStatusSheet`
 
 #### Contexto
 
@@ -1147,7 +1147,7 @@ Análogo.
 
 ---
 
-### 22.13 — `TimeSheetRecord.warnOnDelta` — integração
+### 18.13 — `TimeSheetRecord.warnOnDelta` — integração
 
 #### Objetivo
 
@@ -1175,7 +1175,7 @@ Análogo.
 
 ---
 
-### 22.14 — Verificar interface `FileStore`
+### 18.14 — Verificar interface `FileStore`
 
 #### Contexto
 
@@ -1210,7 +1210,7 @@ Análogo.
 
 ---
 
-### 22.15 — Golden tests (timesheets)
+### 18.15 — Golden tests (timesheets)
 
 #### Contexto
 

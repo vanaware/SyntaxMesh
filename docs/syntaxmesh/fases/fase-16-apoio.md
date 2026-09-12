@@ -274,7 +274,7 @@ Já implementado na Fase 3 (`deep-clone.ts`).
 
 ---
 
-### 20.0 — ADR 027 (Journal e AlertLevel)
+### 16.0 — ADR 027 (Journal e AlertLevel)
 
 #### Contexto
 
@@ -316,7 +316,7 @@ Criar `docs/syntaxmesh/decisoes/027-journal-alertlevel.md`.
 
 ---
 
-### 20.1 — `AlertLevelDefinitions`
+### 16.1 — `AlertLevelDefinitions`
 
 #### Contexto
 
@@ -399,7 +399,7 @@ assertEquals(al.indexById('yellow'), 1);
 
 ---
 
-### 20.2 — `JournalEntry` + `JournalEntryList`
+### 16.2 — `JournalEntry` + `JournalEntryList`
 
 #### Contexto
 
@@ -478,7 +478,7 @@ Análogo.
 
 ---
 
-### 20.3 — `Journal` (core)
+### 16.3 — `Journal` (core)
 
 #### Contexto
 
@@ -569,7 +569,7 @@ Análogo.
 
 ---
 
-### 20.4 — `Leave` + `LeaveList` + `LeaveAllowance`
+### 16.4 — `Leave` + `LeaveList` + `LeaveAllowance`
 
 #### Contexto
 
@@ -658,7 +658,7 @@ assertEquals(allowances.balance('annual', t1.minus(1), t2.plus(1)), 10);
 
 ---
 
-### 20.5 — Substituir stubs de `LeaveList`
+### 16.5 — Substituir stubs de `LeaveList`
 
 #### Contexto
 
@@ -702,7 +702,7 @@ Substituir stubs.
 
 ---
 
-### 20.6 — `TextFormatter`
+### 16.6 — `TextFormatter`
 
 #### Contexto
 
@@ -762,7 +762,7 @@ assert(result.includes('\n'));
 
 ---
 
-### 20.7 — `FileList` + `FileRecord`
+### 16.7 — `FileList` + `FileRecord`
 
 #### Contexto
 
@@ -815,7 +815,7 @@ assertEquals(fl.modified?, false);
 
 ---
 
-### 20.8 — `URLParameter`
+### 16.8 — `URLParameter`
 
 #### Contexto
 
@@ -862,7 +862,7 @@ assertEquals(decoded, "Hello world");
 
 ---
 
-### 20.9 — `TernarySearchTree`
+### 16.9 — `TernarySearchTree`
 
 #### Contexto
 
@@ -925,7 +925,7 @@ assertEquals(tree.find('hel', true), ['hello', 'help']);
 
 ---
 
-### 20.10 — `AlgorithmDiff`
+### 16.10 — `AlgorithmDiff`
 
 #### Contexto
 
@@ -979,7 +979,7 @@ assertEquals(patched, [1, 4, 3]);
 
 ---
 
-### 20.11 — `StdIoWrapper`
+### 16.11 — `StdIoWrapper`
 
 #### Contexto
 
@@ -1035,7 +1035,7 @@ assertEquals(results.stdOut, "hello\n");
 
 ---
 
-### 20.12 — `UTF8String` (no-op)
+### 16.12 — `UTF8String` (no-op)
 
 #### Contexto
 
@@ -1087,7 +1087,7 @@ assertEquals(reverseUtf8("a👍b"), "b👍a");
 
 ---
 
-### 20.13 — `deepClone` (revisitar)
+### 16.13 — `deepClone` (revisitar)
 
 #### Contexto
 
@@ -1120,7 +1120,7 @@ Garantir cobertura.
 
 ---
 
-### 20.14 — `KateSyntax`
+### 16.14 — `KateSyntax`
 
 #### Contexto
 
@@ -1166,7 +1166,7 @@ Implementar.
 
 ---
 
-### 20.15 — `VimSyntax`
+### 16.15 — `VimSyntax`
 
 #### Contexto
 
@@ -1210,7 +1210,7 @@ Implementar.
 
 ---
 
-### 20.16 — Completar `TaskScenario.query_journal` + `query_alert` + etc.
+### 16.16 — Completar `TaskScenario.query_journal` + `query_alert` + etc.
 
 #### Contexto
 
@@ -1272,7 +1272,7 @@ Análogo.
 
 ---
 
-### 20.17 — Completar `ResourceScenario.query_dashboard`
+### 16.17 — Completar `ResourceScenario.query_dashboard`
 
 #### Contexto
 
@@ -1315,7 +1315,7 @@ Análogo.
 
 ---
 
-### 20.18 — Completar `LogicalFlag.eval` e `LogicalFunction.hasalert`
+### 16.18 — Completar `LogicalFlag.eval` e `LogicalFunction.hasalert`
 
 #### Contexto
 
@@ -1364,7 +1364,7 @@ Análogo.
 
 ---
 
-### 20.19 — Golden tests (journal + leaves)
+### 16.19 — Golden tests (journal + leaves)
 
 #### Contexto
 

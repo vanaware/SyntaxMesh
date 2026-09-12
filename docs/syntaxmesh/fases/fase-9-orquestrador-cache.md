@@ -232,7 +232,7 @@ Sem `BatchProcessor`. Loop simples.
 
 ---
 
-### 13.0 — ADR 019 (orquestrador e ciclo de modos)
+### 9.0 — ADR 019 (orquestrador e ciclo de modos)
 
 #### Contexto
 
@@ -281,7 +281,7 @@ Criar `docs/syntaxmesh/decisoes/019-orquestrador-pipeline.md`.
 
 ---
 
-### 13.1 — `SourceFileInfo`, `TjException`, `TjRuntimeError`
+### 9.1 — `SourceFileInfo`, `TjException`, `TjRuntimeError`
 
 #### Contexto
 
@@ -355,7 +355,7 @@ assert(err instanceof Error);
 
 ---
 
-### 13.2 — `MessageHandler` + `MessageHandlerInstance`
+### 9.2 — `MessageHandler` + `MessageHandlerInstance`
 
 #### Contexto
 
@@ -455,7 +455,7 @@ mh.error("e1", "Error message"); // lança TjRuntimeError
 
 ---
 
-### 13.3 — `Log`
+### 9.3 — `Log`
 
 #### Contexto
 
@@ -523,7 +523,7 @@ Log.exit("test");
 
 ---
 
-### 13.4 — `PropertyList`
+### 9.4 — `PropertyList`
 
 #### Contexto
 
@@ -626,7 +626,7 @@ list.sort!();
 
 ---
 
-### 13.5 — `AppConfig`, `Tj3Config`, `version`
+### 9.5 — `AppConfig`, `Tj3Config`, `version`
 
 #### Contexto
 
@@ -694,7 +694,7 @@ assertEquals(AppConfig.dataDirs("data"), []);
 
 ---
 
-### 13.6 — `Project` — estrutura e atributos
+### 9.6 — `Project` — estrutura e atributos
 
 #### Contexto
 
@@ -802,7 +802,7 @@ assertEquals(p.reports.knownAttribute("novevents"), true);
 
 ---
 
-### 13.7 — `Project.schedule`
+### 9.7 — `Project.schedule`
 
 #### Contexto
 
@@ -923,7 +923,7 @@ assertEquals(p.schedule(), true);
 
 ---
 
-### 13.8 — `Project.generateReports` + `generateReport` + `listReports`
+### 9.8 — `Project.generateReports` + `generateReport` + `listReports`
 
 #### Contexto
 
@@ -1000,7 +1000,7 @@ Análogo.
 
 ---
 
-### 13.9 — `Project` — eventos e utilitários
+### 9.9 — `Project` — eventos e utilitários
 
 #### Contexto
 
@@ -1047,7 +1047,7 @@ Análogo.
 
 ---
 
-### 13.10 — `TaskJuggler` (top-level)
+### 9.10 — `TaskJuggler` (top-level)
 
 #### Contexto
 
@@ -1130,7 +1130,7 @@ assertEquals(tj.schedule(), true);
 
 ---
 
-### 13.11 — `MockProject` → `Project` real
+### 9.11 — `MockProject` → `Project` real
 
 #### Contexto
 
@@ -1175,7 +1175,7 @@ deno task test
 
 ---
 
-### 13.12 — Golden tests (end-to-end)
+### 9.12 — Golden tests (end-to-end)
 
 #### Contexto
 

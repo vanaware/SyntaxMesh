@@ -253,7 +253,7 @@ Esta fase é grande. As subfases são agrupadas em 5 blocos:
 
 ---
 
-### 11.0 — ADR 017 (heurística e slots)
+### 7.0 — ADR 017 (heurística e slots)
 
 #### Contexto
 
@@ -309,7 +309,7 @@ Criar `docs/syntaxmesh/decisoes/017-heuristica-scheduler.md`.
 
 ---
 
-### 11.1 — `DataCache`
+### 7.1 — `DataCache`
 
 #### Contexto
 
@@ -383,7 +383,7 @@ assertEquals(calls, 1); // 2ª chamada usa cache
 
 ---
 
-### 11.2 — `TaskDependency`
+### 7.2 — `TaskDependency`
 
 #### Contexto
 
@@ -438,7 +438,7 @@ assertEquals(dep.task?.id, 't1');
 
 ---
 
-### 11.3 — `Allocation` + `SelectionMode`
+### 7.3 — `Allocation` + `SelectionMode`
 
 #### Contexto
 
@@ -519,7 +519,7 @@ assertEquals(al.candidatesList(0)[0].fullId, 'b');
 
 ---
 
-### 11.4 — `Booking`
+### 7.4 — `Booking`
 
 #### Contexto
 
@@ -577,7 +577,7 @@ Análogo.
 
 ---
 
-### 11.5 — `TaskScenario.prepareScheduling` + `Xref` + `preScheduleCheck`
+### 7.5 — `TaskScenario.prepareScheduling` + `Xref` + `preScheduleCheck`
 
 #### Contexto
 
@@ -741,7 +741,7 @@ assert(ts.hasDurationSpec);
 
 ---
 
-### 11.6 — `TaskScenario.checkForLoops` + `calcCriticalness` + `calcPathCriticalness`
+### 7.6 — `TaskScenario.checkForLoops` + `calcCriticalness` + `calcPathCriticalness`
 
 #### Contexto
 
@@ -846,7 +846,7 @@ Análogo.
 
 ---
 
-### 11.7 — `TaskScenario.schedule` + `scheduleSlot`
+### 7.7 — `TaskScenario.schedule` + `scheduleSlot`
 
 #### Contexto
 
@@ -936,7 +936,7 @@ Análogo.
 
 ---
 
-### 11.8 — `TaskScenario.bookResources` + `bookResource`
+### 7.8 — `TaskScenario.bookResources` + `bookResource`
 
 #### Contexto
 
@@ -1044,7 +1044,7 @@ Análogo.
 
 ---
 
-### 11.9 — `TaskScenario.propagateDate` + `scheduleContainer` + `earliestStart` + `latestEnd`
+### 7.9 — `TaskScenario.propagateDate` + `scheduleContainer` + `earliestStart` + `latestEnd`
 
 #### Contexto
 
@@ -1172,7 +1172,7 @@ Análogo.
 
 ---
 
-### 11.10 — `TaskScenario.bookBookings` + `finishScheduling` + `postScheduleCheck` + completion/status/gauge
+### 7.10 — `TaskScenario.bookBookings` + `finishScheduling` + `postScheduleCheck` + completion/status/gauge
 
 #### Contexto
 
@@ -1305,7 +1305,7 @@ Análogo.
 
 ---
 
-### 11.11 — `ResourceScenario.initScoreboard`
+### 7.11 — `ResourceScenario.initScoreboard`
 
 #### Contexto
 
@@ -1404,7 +1404,7 @@ Análogo.
 
 ---
 
-### 11.12 — `ResourceScenario.book` + `bookBooking` + `bookedEffort`
+### 7.12 — `ResourceScenario.book` + `bookBooking` + `bookedEffort`
 
 #### Contexto
 
@@ -1480,7 +1480,7 @@ Análogo.
 
 ---
 
-### 11.13 — `ResourceScenario` — cálculos de slots e tree
+### 7.13 — `ResourceScenario` — cálculos de slots e tree
 
 #### Contexto
 
@@ -1545,7 +1545,7 @@ Análogo.
 
 ---
 
-### 11.14 — `ResourceScenario` — getEffectiveWork + getLeave + getTimeOffDays
+### 7.14 — `ResourceScenario` — getEffectiveWork + getLeave + getTimeOffDays
 
 #### Contexto
 
@@ -1607,7 +1607,7 @@ Análogo.
 
 ---
 
-### 11.15 — `ResourceScenario` — queries + turnover + cost
+### 7.15 — `ResourceScenario` — queries + turnover + cost
 
 #### Contexto
 
@@ -1683,7 +1683,7 @@ Análogo.
 
 ---
 
-### 11.16 — `TaskScenario` — queries + turnover + getAllocatedTime + getEffectiveWork + collectTimeOffIntervals
+### 7.16 — `TaskScenario` — queries + turnover + getAllocatedTime + getEffectiveWork + collectTimeOffIntervals
 
 #### Contexto
 
@@ -1794,13 +1794,13 @@ Análogo.
 
 ---
 
-### 11.17 — `TaskScenario` — `finishScheduling` (já feito em 11.10) + `postScheduleCheck` (já feito em 11.10)
+### 7.17 — `TaskScenario` — `finishScheduling` (já feito em 11.10) + `postScheduleCheck` (já feito em 11.10)
 
 Duplicação — referência apenas. `finishScheduling` e `postScheduleCheck` estão em 11.10.
 
 ---
 
-### 11.18 — Golden tests (scheduler)
+### 7.18 — Golden tests (scheduler)
 
 #### Contexto
 

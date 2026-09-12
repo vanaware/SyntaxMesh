@@ -216,7 +216,7 @@ Markdown não tem i18n de keywords (não é a mesma sintaxe do `.tjp`). Não apl
 
 ---
 
-### 17.0 — ADR 024 (Markdown como formato going-forward)
+### 13.0 — ADR 024 (Markdown como formato going-forward)
 
 #### Contexto
 
@@ -265,7 +265,7 @@ Criar `docs/syntaxmesh/decisoes/024-markdown-going-forward.md`.
 
 ---
 
-### 17.1 — Integração com `micromark`
+### 13.1 — Integração com `micromark`
 
 #### Contexto
 
@@ -329,7 +329,7 @@ assertEquals(ast.children[1].type, "paragraph");
 
 ---
 
-### 17.2 — `MdastToRichText` (conversor AST → `RichTextElement`)
+### 13.2 — `MdastToRichText` (conversor AST → `RichTextElement`)
 
 #### Contexto
 
@@ -406,7 +406,7 @@ assertEquals(elements[1].category, "paragraph");
 
 ---
 
-### 17.3 — `MarkdownFactory`
+### 13.3 — `MarkdownFactory`
 
 #### Contexto
 
@@ -459,7 +459,7 @@ assertEquals(rti.to_s(), "1) Title\n\nParagraph.");
 
 ---
 
-### 17.4 — Extensão: cor (`<fcol:...>`)
+### 13.4 — Extensão: cor (`<fcol:...>`)
 
 #### Contexto
 
@@ -504,7 +504,7 @@ Análogo.
 
 ---
 
-### 17.5 — Extensão: HTML inline permitido
+### 13.5 — Extensão: HTML inline permitido
 
 #### Contexto
 
@@ -551,7 +551,7 @@ assertEquals(sanitizeHtml('<a href="x" onclick="y">z</a>'), '<a href="x">z</a>')
 
 ---
 
-### 17.6 — Extensão: funções customizadas
+### 13.6 — Extensão: funções customizadas
 
 #### Contexto
 
@@ -607,7 +607,7 @@ assertEquals(extractions[0].args, { attribute: 'effort' });
 
 ---
 
-### 17.7 — Extensão: mini-queries (`<-name->`)
+### 13.7 — Extensão: mini-queries (`<-name->`)
 
 #### Contexto
 
@@ -646,7 +646,7 @@ Análogo.
 
 ---
 
-### 17.8 — Pipeline de pré/pós-processamento
+### 13.8 — Pipeline de pré/pós-processamento
 
 #### Contexto
 
@@ -696,7 +696,7 @@ Análogo.
 
 ---
 
-### 17.9 — `to_markdown` em `RichTextIntermediate`
+### 13.9 — `to_markdown` em `RichTextIntermediate`
 
 #### Contexto
 
@@ -763,7 +763,7 @@ assertEquals(rti.to_markdown(), "# Title\n\nParagraph.");
 
 ---
 
-### 17.10 — Conversor `richTextToMarkdown`
+### 13.10 — Conversor `richTextToMarkdown`
 
 #### Contexto
 
@@ -810,7 +810,7 @@ assertEquals(
 
 ---
 
-### 17.11 — Integração com `MarkdownFactory`
+### 13.11 — Integração com `MarkdownFactory`
 
 #### Contexto
 
@@ -853,7 +853,7 @@ Análogo.
 
 ---
 
-### 17.12 — Golden tests (snapshot)
+### 13.12 — Golden tests (snapshot)
 
 #### Contexto
 

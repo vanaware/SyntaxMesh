@@ -343,7 +343,7 @@ Simples.
 
 ---
 
-### 15.0 — ADR 022 (expressões lógicas sem precedência)
+### 11.0 — ADR 022 (expressões lógicas sem precedência)
 
 #### Contexto
 
@@ -382,7 +382,7 @@ Criar `docs/syntaxmesh/decisoes/022-expressoes-logicas.md`.
 
 ---
 
-### 15.1 — `LogicalOperation`
+### 11.1 — `LogicalOperation`
 
 #### Contexto
 
@@ -466,7 +466,7 @@ assertEquals(op2.eval(expr), true);
 
 ---
 
-### 15.2 — `LogicalAttribute` + `LogicalFlag`
+### 11.2 — `LogicalAttribute` + `LogicalFlag`
 
 #### Contexto
 
@@ -537,7 +537,7 @@ assertEquals(attr.eval(expr), 8);
 
 ---
 
-### 15.3 — `LogicalFunction` (14 funções)
+### 11.3 — `LogicalFunction` (14 funções)
 
 #### Contexto
 
@@ -627,7 +627,7 @@ assertEquals(fn.eval(expr), true);
 
 ---
 
-### 15.4 — `LogicalExpression`
+### 11.4 — `LogicalExpression`
 
 #### Contexto
 
@@ -682,7 +682,7 @@ assertEquals(expr.eval(query), false);
 
 ---
 
-### 15.5 — Testes de expressões complexas
+### 11.5 — Testes de expressões complexas
 
 #### Contexto
 
@@ -730,7 +730,7 @@ Análogo.
 
 ---
 
-### 15.6 — `Query` — estrutura
+### 11.6 — `Query` — estrutura
 
 #### Contexto
 
@@ -837,7 +837,7 @@ assertEquals(q.startIdx, p.dateToIdx(q.start));
 
 ---
 
-### 15.7 — `Query.process`
+### 11.7 — `Query.process`
 
 #### Contexto
 
@@ -924,7 +924,7 @@ assertEquals(q.to_num(), 8);
 
 ---
 
-### 15.8 — `Query` — métodos de acesso
+### 11.8 — `Query` — métodos de acesso
 
 #### Contexto
 
@@ -979,7 +979,7 @@ Análogo.
 
 ---
 
-### 15.9 — `Query` — scale + assignList
+### 11.9 — `Query` — scale + assignList
 
 #### Contexto
 
@@ -1057,7 +1057,7 @@ assertEquals(q.scaleDuration(3), "3d");
 
 ---
 
-### 15.10 — `Query` — `resolvePropertyId` + `setCustomData`
+### 11.10 — `Query` — `resolvePropertyId` + `setCustomData`
 
 #### Contexto
 
@@ -1117,7 +1117,7 @@ Análogo.
 
 ---
 
-### 15.11 — `SimpleQueryExpander`
+### 11.11 — `SimpleQueryExpander`
 
 #### Contexto
 
@@ -1177,7 +1177,7 @@ assertEquals(expander.expand(), "Effort: 8d");
 
 ---
 
-### 15.12 — Integração com `TaskScenario` e `ResourceScenario`
+### 11.12 — Integração com `TaskScenario` e `ResourceScenario`
 
 #### Contexto
 
@@ -1247,7 +1247,7 @@ assertEquals(q.to_s(), "8d");
 
 ---
 
-### 15.13 — Golden tests (expressões + queries)
+### 11.13 — Golden tests (expressões + queries)
 
 #### Contexto
 

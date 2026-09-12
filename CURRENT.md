@@ -12,6 +12,7 @@ Implementar a tarefa (docs/syntaxmesh/fases/):
 - docs/syntaxmesh/fases/fase-1-fundacao-tarefas.md (veja se estão todas executadas)
 - docs/syntaxmesh/fases/fase-2-tempo-geometria.md
 - docs/syntaxmesh/fases/fase-2-tempo-geometria-tarefas.md (veja se estão todas executadas)
+- docs/syntaxmesh/fases/_ajustes-r1-r12.md
 - docs/syntaxmesh/fases/fase-2-tempo-geometria-tarefas-complementar1.md
 
 IMPORTANTE

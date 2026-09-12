@@ -71,7 +71,7 @@ TOTAL: 52
 
 ## Bloco A — Fundação
 
-### 5.0.R — `compat.ts` + auditoria
+### 2.0.R — `compat.ts` + auditoria
 
 **Objetivo:** criar a infraestrutura da flag global `keepRubyBugs` e auditar o código existente.
 
@@ -86,7 +86,7 @@ TOTAL: 52
 
 ## Bloco B — Revisão por subfase
 
-### 5.1.R — Parsing
+### 2.1.R — Parsing
 
 **⚠️ RUBY: `TjTime.rb:parse` (linhas 289–380)**
 **Categoria C:** rollover de `Time.mktime` é comportamento documentado, não bug.
@@ -99,7 +99,7 @@ TOTAL: 52
 | 5.1.R.4 | Adicionar teste que valida o rollover: `fromParts(2024, 4, 31)` === `fromString("2024-05-01")` | idem | 1 teste |
 | 5.1.R.5 | Testar `fromString` com ano=1970, 2035 (limites); mês=1, 12; dia=1, lastDay | idem | 4 testes |
 
-### 5.2.R — Aritmética
+### 2.2.R — Aritmética
 
 **⚠️ RUBY: `TjTime.rb:95–160`**
 
@@ -111,7 +111,7 @@ TOTAL: 52
 | 5.2.R.4 | ⚠️ **Categoria B:** `Math.round(-2.5) === -2`, mas Ruby `(-2.5).round === -3`. Criar helper `rubyRound(n)` em `compat.ts` que respeita `keepRubyBugs` | `src/compat.ts` + `src/utils/num.ts` | 3 testes (ambos modos) |
 | 5.2.R.5 | Substituir `Math.round` por `rubyRound` onde o Ruby usa `Integer#round` | `src/time/tj-time.ts`, `src/format/real-format.ts` | grep `Math.round` = 0 |
 
-### 5.3.R — Normalizações
+### 2.3.R — Normalizações
 
 **⚠️ RUBY: `TjTime.rb:165–225`**
 
@@ -121,7 +121,7 @@ TOTAL: 52
 | 5.3.R.2 | Testar edge case domingo + `startMonday=true`: Ruby adiciona **1 dia** antes de midnight (resultado: próxima segunda) | idem | 1 teste |
 | 5.3.R.3 | Todas as normalizações devem operar em `currentTimeZone`. Adicionar teste com `America/Sao_Paulo` | idem | 1 teste |
 
-### 5.4.R — Avanços (4 bugs Categoria B)
+### 2.4.R — Avanços (4 bugs Categoria B)
 
 **⚠️ RUBY: `TjTime.rb:230–285`**
 **Aqui estão 4 bugs Categoria B.** Cada um precisa de flag.
@@ -135,7 +135,7 @@ TOTAL: 52
 | 5.4.R.5 | `nextDayOfWeek(dow)` — sempre começa em `midnight.sameTimeNextDay` (pelo menos amanhã, nunca hoje) | idem | 3 testes |
 | 5.4.R.6 | Teste agregado: rodar 20 datas × 4 operações em ambos modos (compat e não-compat) | idem | 1 teste |
 
-### 5.5.R — Diferenças
+### 2.5.R — Diferenças
 
 **⚠️ RUBY: `TjTime.rb:290–320`**
 
@@ -144,7 +144,7 @@ TOTAL: 52
 | 5.5.R.1 | Implementar `order()` (retorna `[menor, maior]`) e `countIntervals(date, stepFn)` — métodos privados | `src/time/tj-time.ts` | 2 testes |
 | 5.5.R.2 | Testar simetria: `a.daysTo(b) === b.daysTo(a)` para 20 pares | idem | 1 teste |
 
-### 5.6.R — Timezone + strftime
+### 2.6.R — Timezone + strftime
 
 **⚠️ RUBY: `TjTime.rb:55–85, 240–280, 330–370`**
 
@@ -154,7 +154,7 @@ TOTAL: 52
 | 5.6.R.2 | ⚠️ **Cat. B:** `to_s()` sem formato usa `this.time.sec` (original) para decidir se inclui `:%S`, não o sec local. Adicionar flag | idem | 2 testes (ambos modos) |
 | 5.6.R.3 | `to_s(fmt, 'UTC')` usa `gmtime`; `to_s(fmt)` usa `localtime` | idem | 2 testes |
 
-### 5.7.R — Interval (3 bugs)
+### 2.7.R — Interval (3 bugs)
 
 **⚠️ RUBY: `Interval.rb:18–100`**
 
@@ -165,7 +165,7 @@ TOTAL: 52
 | 5.7.R.3 | ⚠️ **Cat. C:** `compareTo` retorna `0` em overlap (não lança). Confirmar e adicionar `// RUBY-COMPAT-DOC:` | idem | 1 teste |
 | 5.7.R.4 | `contains`/`overlaps` lançam `TjArgumentError('Class mismatch')` se classes divergem | idem | 2 testes |
 
-### 5.8.R — TimeInterval
+### 2.8.R — TimeInterval
 
 **⚠️ RUBY: `Interval.rb:115–160`**
 
@@ -174,7 +174,7 @@ TOTAL: 52
 | 5.8.R.1 | Constructor variádico: 1 arg (TjTime → sameTimeNextDay? Não — Ruby: `[arg, arg]`; TimeInterval → cópia) ou 2 args (start, end) | `src/time/time-interval.ts` | 4 testes |
 | 5.8.R.2 | Testar erros: `"Illegal argument 1: #{class}"`, `"Too many arguments: #{n}"` | idem | 2 testes |
 
-### 5.9.R — ScoreboardInterval
+### 2.9.R — ScoreboardInterval
 
 **⚠️ RUBY: `Interval.rb:165–260`**
 
@@ -183,7 +183,7 @@ TOTAL: 52
 | 5.9.R.1 | Constructor variádico: 1 (copy), 3 (`sbStart, slotDuration, single`), 4 (`sbStart, slotDuration, start, end`) | `src/time/scoreboard-interval.ts` | 4 testes |
 | 5.9.R.2 | `dateToIndex` / `indexToDate` fazem divisão inteira (`Math.trunc`) | idem | 2 testes |
 
-### 5.10.R — IntervalList
+### 2.10.R — IntervalList
 
 **⚠️ RUBY: `IntervalList.rb:17–100`**
 
@@ -193,7 +193,7 @@ TOTAL: 52
 | 5.10.R.2 | `<<` sobrescrito: overlap → erro; adjacente → merge; senão → push | idem | 4 testes |
 | 5.10.R.3 | Teste de fumaça: mesclar 100 intervalos ascendentes | idem | 1 teste |
 
-### 5.11.R — Scoreboard (2 bugs)
+### 2.11.R — Scoreboard (2 bugs)
 
 **⚠️ RUBY: `Scoreboard.rb` (~180 linhas)**
 
@@ -204,7 +204,7 @@ TOTAL: 52
 | 5.11.R.3 | ⚠️ **Cat. B:** `collectIntervals` — sentinel `start === 0` perde slot 0. Flag `keepRubyBugs` | idem | 4 testes (ambos modos) |
 | 5.11.R.4 | `dateToIdx(date, forceIntoProject=true)` — clamp em `[0, size-1]` | idem | 3 testes |
 
-### 5.12.R — WorkingHours (1 bug Cat. A)
+### 2.12.R — WorkingHours (1 bug Cat. A)
 
 **⚠️ RUBY: `WorkingHours.rb` (~250 linhas)**
 
@@ -214,7 +214,7 @@ TOTAL: 52
 | 5.12.R.2 | Constructor variádico: 1 (copy) ou 4 args | idem | 3 testes |
 | 5.12.R.3 | `timeOff(iv: TimeInterval)` itera `startIdx..endIdx-1`, retorna `true` se **todos** são `false` | idem | 2 testes |
 
-### 5.13.R — RealFormat (1 bug Cat. B)
+### 2.13.R — RealFormat (1 bug Cat. B)
 
 **⚠️ RUBY: `RealFormat.rb` (~120 linhas)**
 
@@ -223,7 +223,7 @@ TOTAL: 52
 | 5.13.R.1 | ⚠️ **Cat. B:** `round` de negativos — usar `rubyRound` helper (criado em 5.2.R.4) | `src/format/real-format.ts` | 2 testes (ambos modos) |
 | 5.13.R.2 | Testar `format(-12.5)` com `fractionDigits=0`: `-13` (compat) vs `-12` (fix) | idem | 2 testes |
 
-### 5.14.R — Golden tests (extensão)
+### 2.14.R — Golden tests (extensão)
 
 **Objetivo:** golden tests cobrem os 3 tipos de bug.
 

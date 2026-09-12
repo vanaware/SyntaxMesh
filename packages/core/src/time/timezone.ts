@@ -1,4 +1,4 @@
-export const currentTimeZone: string = 'UTC';
+export const currentTimeZone: string = 'America/Sao_Paulo';
 
 /**
  * Check if a timezone string is valid (IANA format)
@@ -7,7 +7,16 @@ export const currentTimeZone: string = 'UTC';
  */
 export function isValidTimeZone(zone: string): boolean {
   try {
-    new Intl.DateTimeFormat(zone);
+    // Use Intl.supportedValuesOf to check if timezone is supported
+    // This is available in Deno and modern browsers
+    if (Intl.supportedValuesOf) {
+      const timezones = Intl.supportedValuesOf('timeZone');
+      return timezones.includes(zone);
+    }
+    
+    // Fallback: try creating a DateTimeFormat with the timezone
+    // If it throws, the timezone is invalid
+    new Intl.DateTimeFormat('en-US', { timeZone: zone });
     return true;
   } catch {
     return false;
@@ -23,13 +32,14 @@ export function isValidTimeZone(zone: string): boolean {
 export function getOffsetSeconds(epochSecs: number, timeZone: string): number {
   try {
     const date = new Date(epochSecs * 1000);
-    const formatter = new Intl.DateTimeFormat(timeZone, { timeZoneName: 'short' });
+    // Use shortOffset to get format like "GMT-03:00" instead of "BRT"
+    const formatter = new Intl.DateTimeFormat('en-US', { timeZoneName: 'shortOffset', timeZone });
     const parts = formatter.formatToParts(date);
     const offsetPart = parts.find(part => part.type === 'timeZoneName');
     if (!offsetPart) return 0;
     
-    // Extract offset from timezone name (e.g., "GMT-03:00" -> -18000)
-    const match = offsetPart.value.match(/GMT?([+-])(\d{2}):(\d{2})/);
+    // Extract offset from timezone name (e.g., "GMT-03:00" or "GMT-3" -> -10800)
+    const match = offsetPart.value.match(/GMT?([+-])(\d{1,2})(?::(\d{2}))?/);
     if (!match) return 0;
     
     const sign = match[1] === '-' ? -1 : 1;
@@ -59,45 +69,24 @@ export interface LocalParts {
  */
 export function getLocalParts(epochSecs: number, timeZone: string): LocalParts {
   try {
-    const date = new Date(epochSecs * 1000);
-    const formatter = new Intl.DateTimeFormat(timeZone, { 
-      year: 'numeric', 
-      month: '2-digit', 
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      weekday: 'short'
-    });
+    // Get the offset using getOffsetSeconds
+    const offset = getOffsetSeconds(epochSecs, timeZone);
     
-    const parts = formatter.formatToParts(date);
+    // Add offset to epoch seconds to get local time in UTC
+    // local = UTC + offset, so for UTC-3: local = UTC - 3 hours
+    const localEpochSecs = epochSecs + offset;
+    
+    // Extract parts manually using UTC methods
+    const localDate = new Date(localEpochSecs * 1000);
     const result: LocalParts = {
-      year: 0,
-      month: 0,
-      day: 0,
-      hour: 0,
-      minute: 0,
-      second: 0,
-      weekday: 0
+      year: localDate.getUTCFullYear(),
+      month: localDate.getUTCMonth() + 1,
+      day: localDate.getUTCDate(),
+      hour: localDate.getUTCHours(),
+      minute: localDate.getUTCMinutes(),
+      second: localDate.getUTCSeconds(),
+      weekday: localDate.getUTCDay()
     };
-    
-    for (const part of parts) {
-      if (part.type === 'year') result.year = parseInt(part.value);
-      else if (part.type === 'month') result.month = parseInt(part.value);
-      else if (part.type === 'day') result.day = parseInt(part.value);
-      else if (part.type === 'hour') result.hour = parseInt(part.value);
-      else if (part.type === 'minute') result.minute = parseInt(part.value);
-      else if (part.type === 'second') result.second = parseInt(part.value);
-      else if (part.type === 'weekday') {
-        const weekdayMap: Record<string, number> = {
-          'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3,
-          'Thursday': 4, 'Friday': 5, 'Saturday': 6,
-          'Dom': 0, 'Seg': 1, 'Ter': 2, 'Qua': 3,
-          'Qui': 4, 'Sex': 5, 'Sáb': 6,
-        };
-        result.weekday = weekdayMap[part.value] ?? 0;
-      }
-    }
     
     return result;
   } catch {

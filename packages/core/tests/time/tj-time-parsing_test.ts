@@ -46,20 +46,22 @@ describe("TjTime.fromString", () => {
   it("parseia com timezone +HHMM", () => {
     const t = TjTime.fromString("2026-01-15-14:30-0300");
     // -0300 means 3 hours behind UTC, so 14:30 local = 17:30 UTC
-    const expected = TjTime.fromParts(2026, 1, 15, 17, 30);
-    assertEquals(t.toSeconds(), expected.toSeconds());
+    // Expected: 1768498200 = 2026-01-15T17:30:00.000Z
+    assertEquals(t.toSeconds(), 1768498200);
   });
 
   it("parseia com timezone -HHMM", () => {
     const t = TjTime.fromString("2026-01-15-14:30+0300");
     // +0300 means 3 hours ahead of UTC, so 14:30 local = 11:30 UTC
-    const expected = TjTime.fromParts(2026, 1, 15, 11, 30);
-    assertEquals(t.toSeconds(), expected.toSeconds());
+    // Expected: 1768476600 = 2026-01-15T11:30:00.000Z
+    assertEquals(t.toSeconds(), 1768476600);
   });
 
   it("parseia com timezone +0000", () => {
     const t = TjTime.fromString("2026-01-15-14:30+0000");
-    assertEquals(t.toSeconds(), TjTime.fromParts(2026, 1, 15, 14, 30).toSeconds());
+    // +0000 means UTC, so 14:30 local = 14:30 UTC
+    // Expected: 1768487400 = 2026-01-15T14:30:00.000Z
+    assertEquals(t.toSeconds(), 1768487400);
   });
 
   it("rejeita ano < 1970", () => {

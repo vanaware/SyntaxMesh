@@ -347,7 +347,7 @@ Criar template `.github/ISSUE_TEMPLATE/`:
 
 ---
 
-### 26.0 — ADR 033 (estratégia de validação)
+### 21.0 — ADR 033 (estratégia de validação)
 
 #### Contexto
 
@@ -388,7 +388,7 @@ Criar `docs/syntaxmesh/decisoes/033-estrategia-validacao.md`.
 
 ---
 
-### 26.1 — Corpus de fixtures
+### 21.1 — Corpus de fixtures
 
 #### Contexto
 
@@ -429,7 +429,7 @@ Copiar e organizar.
 
 ---
 
-### 26.2 — Script `tj3-runner.ts` (referência)
+### 21.2 — Script `tj3-runner.ts` (referência)
 
 #### Contexto
 
@@ -475,7 +475,7 @@ Implementar.
 
 ---
 
-### 26.3 — `tj3-ts-runner.ts` (sujeito)
+### 21.3 — `tj3-ts-runner.ts` (sujeito)
 
 #### Contexto
 
@@ -511,7 +511,7 @@ Implementar.
 
 ---
 
-### 26.4 — `comparator.ts` (comparador)
+### 21.4 — `comparator.ts` (comparador)
 
 #### Contexto
 
@@ -551,7 +551,7 @@ Implementar.
 
 ---
 
-### 26.5 — Golden tests end-to-end
+### 21.5 — Golden tests end-to-end
 
 #### Contexto
 
@@ -601,7 +601,7 @@ Implementar suite.
 
 ---
 
-### 26.6 — Divergências conhecidas
+### 21.6 — Divergências conhecidas
 
 #### Contexto
 
@@ -639,7 +639,7 @@ Documentar.
 
 ---
 
-### 26.7 — Relatório de conformidade
+### 21.7 — Relatório de conformidade
 
 #### Contexto
 
@@ -675,7 +675,7 @@ Gerar.
 
 ---
 
-### 26.8 — AST equivalence (en ↔ pt-BR ↔ es)
+### 21.8 — AST equivalence (en ↔ pt-BR ↔ es)
 
 #### Contexto
 
@@ -717,7 +717,7 @@ Implementar suite.
 
 ---
 
-### 26.9 — Regression snapshots
+### 21.9 — Regression snapshots
 
 #### Contexto
 
@@ -763,7 +763,7 @@ Implementar.
 
 ---
 
-### 26.10 — Testes unitários consolidados
+### 21.10 — Testes unitários consolidados
 
 #### Contexto
 
@@ -795,7 +795,7 @@ Rodar todos os testes unitários.
 
 ---
 
-### 26.11 — Benchmarks
+### 21.11 — Benchmarks
 
 #### Contexto
 
@@ -844,7 +844,7 @@ Deno.bench("parse 100 tasks", () => {
 
 ---
 
-### 26.12 — Testes de segurança
+### 21.12 — Testes de segurança
 
 #### Contexto
 
@@ -898,7 +898,7 @@ Implementar.
 
 ---
 
-### 26.13 — CSP
+### 21.13 — CSP
 
 #### Contexto
 
@@ -937,7 +937,7 @@ Configurar.
 
 ---
 
-### 26.14 — Otimização final
+### 21.14 — Otimização final
 
 #### Contexto
 
@@ -968,7 +968,7 @@ Aplicar correções.
 
 ---
 
-### 26.15 — Playwright setup
+### 21.15 — Playwright setup
 
 #### Contexto
 
@@ -996,7 +996,7 @@ Configurar.
 
 ---
 
-### 26.16 — Cenários E2E
+### 21.16 — Cenários E2E
 
 #### Contexto
 
@@ -1035,7 +1035,7 @@ Implementar.
 
 ---
 
-### 26.17 — Acessibilidade
+### 21.17 — Acessibilidade
 
 #### Contexto
 
@@ -1071,7 +1071,7 @@ Implementar.
 
 ---
 
-### 26.18 — Lighthouse CI
+### 21.18 — Lighthouse CI
 
 #### Contexto
 
@@ -1105,7 +1105,7 @@ Configurar.
 
 ---
 
-### 26.19 — Build de produção
+### 21.19 — Build de produção
 
 #### Contexto
 
@@ -1142,7 +1142,7 @@ Implementar.
 
 ---
 
-### 26.20 — CHANGELOG e release notes
+### 21.20 — CHANGELOG e release notes
 
 #### Contexto
 
@@ -1172,7 +1172,7 @@ Gerar.
 
 ---
 
-### 26.21 — Versionamento
+### 21.21 — Versionamento
 
 #### Contexto
 
@@ -1199,7 +1199,7 @@ Aplicar.
 
 ---
 
-### 26.22 — Documentação final
+### 21.22 — Documentação final
 
 #### Contexto
 
@@ -1231,7 +1231,7 @@ Escrever.
 
 ---
 
-### 26.23 — Templates de issues
+### 21.23 — Templates de issues
 
 #### Contexto
 
@@ -1259,7 +1259,7 @@ Criar.
 
 ---
 
-### 26.24 — CI/CD final
+### 21.24 — CI/CD final
 
 #### Contexto
 

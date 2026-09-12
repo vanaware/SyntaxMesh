@@ -45,7 +45,7 @@ Ao final desta fase:
 - `AttributeContainer` interface + implementações em `PropertyTreeNode` e `ScenarioData` (esqueletos).
 - `deepClone` utility substituindo `deep_copy.rb`.
 - **≥ 120 testes unitários** + **≥ 40 golden tests** (herança, propagação de cenários).
-- ADR 013 registrado.
+- ADR 014 registrado.
 - `deno task check-all` verde.
 
 ---
@@ -96,7 +96,7 @@ export abstract class AttributeBase {
 }
 ```
 
-**Limitação:** como o modo é global, dois projetos agendados simultaneamente no mesmo worker clobberariam. Aceito — é o mesmo comportamento do Ruby, e não precisamos de concorrência nesta fase. Registrado em ADR 013.
+**Limitação:** como o modo é global, dois projetos agendados simultaneamente no mesmo worker clobberariam. Aceito — é o mesmo comportamento do Ruby, e não precisamos de concorrência nesta fase. Registrado em ADR 014.
 
 ### 4.2 `@container` → interface `AttributeContainer`
 
@@ -186,6 +186,30 @@ Esses dois atributos referenciam `Limits` e `ShiftAssignments`, que são classes
 
 Os métodos `to_tjp` que dependem dessas classes lançam `NotYetImplementedError` até Fase 7.
 
+### 4.11 — Interface `PropertyLike` (R2)
+
+A Fase 3 recebe `property` no constructor de `AttributeBase`, mas
+`PropertyTreeNode` só existe na Fase 4. Para evitar acoplamento circular,
+definimos a interface `PropertyLike` em
+`packages/core/src/model/property-like.ts` com apenas `id` e `name`.
+
+```ts
+export interface PropertyLike {
+  readonly id: string;
+  readonly name: string;
+}
+```
+AttributeBase declara protected readonly property: PropertyLike.
+Na Fase 4, PropertyTreeNode implements PropertyLike e a interface é
+expandida (adiciona project, children, parent, level, etc.).
+
+Motivação: sem isso, AttributeBase importaria PropertyTreeNode
+(inexistente na Fase 3), quebrando a compilação. Ver tarefa 3.1.0.
+
+Ver ADR 015 (metaprogramação) para a decisão correlata sobre como
+PropertyTreeNode expõe atributos (via método attribute(id) explícito,
+não Proxy).
+
 ---
 
 ## 5. Subfases detalhadas
@@ -194,7 +218,7 @@ Cada subfase segue `docs/syntaxmesh/fases/modelo-tarefas.md`.
 
 ---
 
-### 6.0 — ADR 013 (`mode` global de atributos)
+### 3.0 — ADR 014 (`mode` global de atributos)
 
 #### Contexto
 
@@ -210,11 +234,11 @@ Em TypeScript, precisamos decidir como representar esse estado global.
 
 #### Objetivo
 
-Registrar formalmente a decisão em `docs/syntaxmesh/decisoes/013-attribute-mode-global.md`.
+Registrar formalmente a decisão em `docs/syntaxmesh/decisoes/014-attribute-mode-global.md`.
 
 #### Arquivos
 
-- `docs/syntaxmesh/decisoes/013-attribute-mode-global.md` (novo)
+- `docs/syntaxmesh/decisoes/014-attribute-mode-global.md` (novo)
 - `docs/syntaxmesh/decisoes/README.md` (atualizar tabela)
 
 #### Requisitos
@@ -240,12 +264,12 @@ Registrar formalmente a decisão em `docs/syntaxmesh/decisoes/013-attribute-mode
 
 #### Critério de aceite
 
-- ADR 013 criado.
+- ADR 014 criado.
 - Tabela atualizada.
 
 ---
 
-### 6.1 — `AttributeBase`, `ListAttributeBase`, `AttributeOverwrite`
+### 3.1 — `AttributeBase`, `ListAttributeBase`, `AttributeOverwrite`
 
 #### Contexto
 
@@ -365,7 +389,7 @@ assertEquals(attr.get(), "inherited-value");
 
 ---
 
-### 6.2 — `AttributeDefinition`
+### 3.2 — `AttributeDefinition`
 
 #### Contexto
 
@@ -431,7 +455,7 @@ assert(Object.isFrozen(def));
 
 ---
 
-### 6.3 — Atributos escalares e temporais
+### 3.3 — Atributos escalares e temporais
 
 #### Contexto
 
@@ -543,7 +567,7 @@ assertEquals(d.to_s(), "2026-01-01");
 
 ---
 
-### 6.4 — Atributos de referência
+### 3.4 — Atributos de referência
 
 #### Contexto
 
@@ -617,7 +641,7 @@ assertEquals(ref.to_tjp(), `foo "http://example.com" { label "Example" }`);
 
 ---
 
-### 6.5 — Listas simples e de propriedades
+### 3.5 — Listas simples e de propriedades
 
 #### Contexto
 
@@ -702,7 +726,7 @@ assertEquals(fl.isList(), true);
 
 ---
 
-### 6.6 — Dependências (`DependencyListAttribute`, `TaskDepListAttribute`)
+### 3.6 — Dependências (`DependencyListAttribute`, `TaskDepListAttribute`)
 
 #### Contexto
 
@@ -770,7 +794,7 @@ assertEquals(dl.to_s(), "t1, t2");
 
 ---
 
-### 6.7 — Financeiro (`ChargeListAttribute`, `ChargeSetListAttribute`, `AccountCreditListAttribute`)
+### 3.7 — Financeiro (`ChargeListAttribute`, `ChargeSetListAttribute`, `AccountCreditListAttribute`)
 
 #### Contexto
 
@@ -837,7 +861,7 @@ assertEquals(csl.to_s(), "cost.dev 70%, cost.infra 30%");
 
 ---
 
-### 6.8 — Alocação e booking (`AllocationAttribute`, `BookingListAttribute`)
+### 3.8 — Alocação e booking (`AllocationAttribute`, `BookingListAttribute`)
 
 #### Contexto
 
@@ -909,7 +933,7 @@ assertEquals(al.to_s(), "[ r1, r2 ] select by lowprob  persistent ");
 
 ---
 
-### 6.9 — Expressões lógicas (`LogicalExpressionAttribute`, `LogicalExpressionListAttribute`)
+### 3.9 — Expressões lógicas (`LogicalExpressionAttribute`, `LogicalExpressionListAttribute`)
 
 #### Contexto
 
@@ -960,7 +984,7 @@ assertEquals(la.tjpId, "logicalexpressions");
 
 ---
 
-### 6.10 — Tempo complexo (TimeIntervalList, LeaveList, LeaveAllowanceList, Limits, ShiftAssignments, WorkingHours)
+### 3.10 — Tempo complexo (TimeIntervalList, LeaveList, LeaveAllowanceList, Limits, ShiftAssignments, WorkingHours)
 
 #### Contexto
 
@@ -1056,7 +1080,7 @@ assert(wha.to_tjp().includes("workinghours mon 9:00 - 17:00"));
 
 ---
 
-### 6.11 — Formatação e colunas (RealFormat, ColumnList, FormatList, SortList, JournalSortList)
+### 3.11 — Formatação e colunas (RealFormat, ColumnList, FormatList, SortList, JournalSortList)
 
 #### Contexto
 
@@ -1131,7 +1155,7 @@ assertEquals(fla.to_s(), "csv, html");
 
 ---
 
-### 6.12 — Ricos (`RichTextAttribute`, `DefinitionListAttribute`)
+### 3.12 — Ricos (`RichTextAttribute`, `DefinitionListAttribute`)
 
 #### Contexto
 
@@ -1202,7 +1226,7 @@ assertEquals(rta.to_tjp(), `note "Hello world"`);
 
 ---
 
-### 6.13 — `deepClone` utility
+### 3.13 — `deepClone` utility
 
 #### Contexto
 
@@ -1275,7 +1299,7 @@ assertNotSame(deepClone(obj), obj);
 
 ---
 
-### 6.14 — Infraestrutura de golden tests (attributes)
+### 3.14 — Infraestrutura de golden tests (attributes)
 
 #### Contexto
 
@@ -1374,35 +1398,35 @@ deno task test
 ## 6. Ordem de execução sugerida
 
 ```text
-6.0  ADR 013
+3.0  ADR 014
       ↓
-6.13 deepClone utility        ← pode ser feito cedo, é independente
+3.13 deepClone utility        ← pode ser feito cedo, é independente
       ↓
-6.1  AttributeBase + ListAttributeBase
+3.1  AttributeBase + ListAttributeBase
       ↓
-6.2  AttributeDefinition
+3.2  AttributeDefinition
       ↓
-6.3  Escalares e temporais
+3.3  Escalares e temporais
       ↓
-6.4  Referências
+3.4  Referências
       ↓
-6.5  Listas simples e de propriedades
+3.5  Listas simples e de propriedades
       ↓
-6.6  Dependências
+3.6  Dependências
       ↓
-6.7  Financeiro
+3.7  Financeiro
       ↓
-6.8  Alocação e booking
+3.8  Alocação e booking
       ↓
-6.9  Expressões lógicas
+3.9  Expressões lógicas
       ↓
-6.10 Tempo complexo
+3.10 Tempo complexo
       ↓
-6.11 Formatação
+3.11 Formatação
       ↓
-6.12 Ricos
+3.12 Ricos
       ↓
-6.14 Golden tests
+3.14 Golden tests
 ```
 
 Cada subfase fecha com `deno task check-all` verde.
@@ -1428,7 +1452,7 @@ passa, e:
 - [ ] **≥ 40 golden tests**.
 - [ ] Nenhum `any` em `src/` (exceto onde justificado).
 - [ ] Nenhum import proibido em `packages/core/src/`.
-- [ ] ADR 013 criado.
+- [ ] ADR 014 criado.
 - [ ] `scripts/golden/attributes.rb` funcional.
 - [ ] `scripts/golden/README.md` atualizado.
 
@@ -1466,7 +1490,7 @@ passa, e:
 
 - `docs/syntaxmesh/decisoes/001-core-independente-do-dom.md`
 - `docs/syntaxmesh/decisoes/011-port-fiel-taskjuggler.md`
-- `docs/syntaxmesh/decisoes/013-attribute-mode-global.md` (novo)
+- `docs/syntaxmesh/decisoes/014-attribute-mode-global.md` (novo)
 - `docs/syntaxmesh/03-arquitetura.md`
 
 ### Fases dependentes
@@ -1495,9 +1519,9 @@ passa, e:
 
 ---
 
-## 11. ADR 013 (referência rápida)
+## 11. ADR 014 (referência rápida)
 
-Criado como subfase 6.0. Conteúdo esperado:
+Criado como subfase 3.0. Conteúdo esperado:
 
 - **Título:** Attribute mode global em TypeScript
 - **Contexto:** `@@mode` class variable em Ruby.

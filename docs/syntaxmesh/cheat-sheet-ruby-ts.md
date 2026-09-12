@@ -3,7 +3,7 @@
 > **Arquivo:** `docs/syntaxmesh/cheat-sheet-ruby-ts.md`
 > **Propósito:** mapeamento idiomático de construções Ruby para TypeScript, para uso nas tarefas de port das fases 2+.
 > **Como usar:** ao portar qualquer arquivo Ruby, consulte esta tabela **primeiro**. Se aparecer um idioma não mapeado, adicione uma entrada (mantenha ordenado por categoria). Se encontrar um bug do Ruby, siga o fluxo de §12.
-> **Referências:** ADR 011 (port fiel), ADR 012 (TjTime).
+> **Referências:** ADR 011 (port fiel), ADR 012 (TjTime), ADR 013 (compat.keepRubyBugs).
 
 ---
 
@@ -242,7 +242,9 @@ Nunca disparam em uso normal. Corrigir é invisível para o usuário. Não preci
 | `Scoreboard#idxToDate` | Typo `kdx` (variável inexistente) no branch `forceIntoProject && idx < 0` | Usar `idx` |
 | `WorkingHours.@days` | 7 referências ao **mesmo** array `[]` via `Array.new(7, [])` | `Array.from({length:7}, () => [])` |
 
-### Categoria B — Afetam output (flag global)
+### Categoria B — Afetam output (flag global `compat.keepRubyBugs`)
+
+> **Referência:** ADR 013 documenta a política completa.
 
 Produzem resultados diferentes em casos legítimos. Precisam de paridade com `tj3` **e** opção de correção.
 

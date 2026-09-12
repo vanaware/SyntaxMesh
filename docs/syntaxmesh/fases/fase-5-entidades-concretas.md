@@ -208,7 +208,7 @@ Atributos como `definitions`, `journalAttributes`, `taskAttributes`, `resourceAt
 
 ---
 
-### 9.0 — ADR 015 (pré-carregamento de atributos em `*Scenario`)
+### 5.0 — ADR 015 (pré-carregamento de atributos em `*Scenario`)
 
 #### Contexto
 
@@ -269,7 +269,7 @@ Registrar a decisão de **replicar** esse pré-carregamento em TS.
 
 ---
 
-### 9.1 — Estender `ProjectLike` + `ScenarioData.preloadAttributes`
+### 5.1 — Estender `ProjectLike` + `ScenarioData.preloadAttributes`
 
 #### Contexto
 
@@ -350,7 +350,7 @@ assert(mp.scenario(0) !== null);
 
 ---
 
-### 9.2 — `Task` + `TaskScenario` (esqueleto)
+### 5.2 — `Task` + `TaskScenario` (esqueleto)
 
 #### Contexto
 
@@ -430,7 +430,7 @@ assert(t.getScenarioAttribute(0, "effort") !== undefined);
 
 ---
 
-### 9.3 — `Resource` + `ResourceScenario` (esqueleto)
+### 5.3 — `Resource` + `ResourceScenario` (esqueleto)
 
 #### Contexto
 
@@ -489,7 +489,7 @@ Análogo a `Task`.
 
 ---
 
-### 9.4 — `Account` + `AccountScenario` (esqueleto)
+### 5.4 — `Account` + `AccountScenario` (esqueleto)
 
 #### Contexto
 
@@ -539,7 +539,7 @@ Análogo.
 
 ---
 
-### 9.5 — `Shift` + `ShiftScenario`
+### 5.5 — `Shift` + `ShiftScenario`
 
 #### Contexto
 
@@ -599,7 +599,7 @@ assert(scenario.onShift(TjTime.fromString("2026-01-05-10:00")));
 
 ---
 
-### 9.6 — `Report` + `ReportScenario` (esqueleto)
+### 5.6 — `Report` + `ReportScenario` (esqueleto)
 
 #### Contexto
 
@@ -660,7 +660,7 @@ assertThrows(() => new Report(mp, "r2", "In*valid", null));
 
 ---
 
-### 9.7 — `AttributeDefinitions`: Scenarios
+### 5.7 — `AttributeDefinitions`: Scenarios
 
 #### Contexto
 
@@ -723,7 +723,7 @@ assertEquals(mp.scenarios.inheritedFromParent?("active"), true);
 
 ---
 
-### 9.8 — `AttributeDefinitions`: Shifts
+### 5.8 — `AttributeDefinitions`: Shifts
 
 #### Objetivo
 
@@ -766,7 +766,7 @@ Análogo. 7 atributos além dos base.
 
 ---
 
-### 9.9 — `AttributeDefinitions`: Accounts
+### 5.9 — `AttributeDefinitions`: Accounts
 
 #### Objetivo
 
@@ -806,7 +806,7 @@ Análogo. 6 atributos.
 
 ---
 
-### 9.10 — `AttributeDefinitions`: Resources
+### 5.10 — `AttributeDefinitions`: Resources
 
 #### Objetivo
 
@@ -864,7 +864,7 @@ Análogo. 20 atributos.
 
 ---
 
-### 9.11 — `AttributeDefinitions`: Tasks
+### 5.11 — `AttributeDefinitions`: Tasks
 
 #### Objetivo
 
@@ -945,7 +945,7 @@ Análogo. 44 atributos.
 
 ---
 
-### 9.12 — `AttributeDefinitions`: Reports
+### 5.12 — `AttributeDefinitions`: Reports
 
 #### Objetivo
 
@@ -1045,7 +1045,7 @@ Análogo. 61 atributos.
 
 ---
 
-### 9.13 — `MockProject` estendido + fixtures
+### 5.13 — `MockProject` estendido + fixtures
 
 #### Contexto
 
@@ -1107,7 +1107,7 @@ assertEquals(mp.reports.knownAttribute("novevents"), true);
 
 ---
 
-### 9.14 — Golden tests (definições de atributos)
+### 5.14 — Golden tests (definições de atributos)
 
 #### Contexto
 

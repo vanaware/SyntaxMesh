@@ -298,11 +298,11 @@ export class TjTime {
   }
 
   /**
-   * Beginning of quarter: month = ((m-1) % 3) + 1, h/m/s=0
+   * Beginning of quarter: month = floor((m-1)/3)*3 + 1, h/m/s=0
    */
   beginOfQuarter(): TjTime {
     const parts = getLocalParts(this.seconds, currentTimeZone);
-    const quarterMonth = ((parts.month - 1) % 3) + 1;
+    const quarterMonth = Math.floor((parts.month - 1) / 3) * 3 + 1;
     return TjTime.fromParts(parts.year, quarterMonth, 1, 0, 0, 0, currentTimeZone);
   }
 
@@ -374,5 +374,194 @@ export class TjTime {
       fn(current);
       current = TjTime.fromSeconds(current.seconds + step);
     }
+  }
+
+  /**
+   * Add hours to TjTime
+   * @param hours - Hours to add
+   */
+  hoursLater(hours: number): TjTime {
+    return this.addSeconds(hours * 3600);
+  }
+
+  /**
+   * Get same time next hour
+   */
+  sameTimeNextHour(): TjTime {
+    return this.hoursLater(1);
+  }
+
+  /**
+   * Get same time next day
+   */
+  sameTimeNextDay(): TjTime {
+    const parts = getLocalParts(this.seconds, currentTimeZone);
+    let day = parts.day + 1;
+    let month = parts.month;
+    let year = parts.year;
+
+    // Get max days for current month
+    const maxDays = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    let monMax = maxDays[month]!;
+    if (month === 2 && TjTime.isLeapYear(year)) {
+      monMax = 29;
+    }
+
+    // Handle overflow
+    while (day > monMax) {
+      day = 1;
+      month++;
+      if (month > 12) {
+        month = 1;
+        year++;
+      }
+      // Update max days for new month
+      monMax = maxDays[month]!;
+      if (month === 2 && TjTime.isLeapYear(year)) {
+        monMax = 29;
+      }
+    }
+
+    return TjTime.fromParts(year, month, day, parts.hour, parts.minute, parts.second, currentTimeZone);
+  }
+
+  /**
+   * Get same time next week (day += 7 with max 1 month overflow)
+   */
+  sameTimeNextWeek(): TjTime {
+    const parts = getLocalParts(this.seconds, currentTimeZone);
+    let day = parts.day + 7;
+    let month = parts.month;
+    let year = parts.year;
+
+    // Get max days for current month
+    const maxDays = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    let monMax = maxDays[month]!;
+    if (month === 2 && TjTime.isLeapYear(year)) {
+      monMax = 29;
+    }
+
+    // Handle overflow (max 1 month)
+    if (day > monMax) {
+      day = day - monMax;
+      month++;
+      if (month > 12) {
+        month = 1;
+        year++;
+      }
+      // Update max days for new month
+      monMax = maxDays[month]!;
+      if (month === 2 && TjTime.isLeapYear(year)) {
+        monMax = 29;
+      }
+      // If still overflow, clamp to month end
+      if (day > monMax) {
+        day = monMax;
+      }
+    }
+
+    return TjTime.fromParts(year, month, day, parts.hour, parts.minute, parts.second, currentTimeZone);
+  }
+
+  /**
+   * Get same time next month (clamp bug from old month's monMax)
+   */
+  sameTimeNextMonth(): TjTime {
+    const parts = getLocalParts(this.seconds, currentTimeZone);
+    let month = parts.month + 1;
+    let year = parts.year;
+
+    if (month > 12) {
+      month = 1;
+      year++;
+    }
+
+    // Get max days for OLD month (this is the bug - uses old month's max)
+    const maxDays = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    let monMax = maxDays[parts.month]!;
+    if (parts.month === 2 && TjTime.isLeapYear(parts.year)) {
+      monMax = 29;
+    }
+
+    let day = parts.day;
+    if (day > monMax) {
+      day = monMax;
+    }
+
+    return TjTime.fromParts(year, month, day, parts.hour, parts.minute, parts.second, currentTimeZone);
+  }
+
+  /**
+   * Get same time next quarter (NO clamp, rollover)
+   */
+  sameTimeNextQuarter(): TjTime {
+    const parts = getLocalParts(this.seconds, currentTimeZone);
+    let month = parts.month + 3;
+    let year = parts.year;
+
+    if (month > 12) {
+      month -= 12;
+      year++;
+    }
+
+    // Day stays as-is (no clamp), may cause rollover
+    return TjTime.fromParts(year, month, parts.day, parts.hour, parts.minute, parts.second, currentTimeZone);
+  }
+
+  /**
+   * Get same time next year (NO clamp, rollover)
+   */
+  sameTimeNextYear(): TjTime {
+    const parts = getLocalParts(this.seconds, currentTimeZone);
+    const year = parts.year + 1;
+
+    // Day stays as-is (no clamp), may cause rollover
+    return TjTime.fromParts(year, parts.month, parts.day, parts.hour, parts.minute, parts.second, currentTimeZone);
+  }
+
+  /**
+   * Get next day of week
+   * @param dow - Day of week (0=Sunday, 1=Monday, ..., 6=Saturday)
+   */
+  nextDayOfWeek(dow: number): TjTime {
+    if (dow < 0 || dow > 6) {
+      throw new TjArgumentError("Day of week must be 0 - 6.");
+    }
+
+    const parts = getLocalParts(this.seconds, currentTimeZone);
+    const currentDoW = parts.weekday;
+
+    // Calculate days to add
+    let daysToAdd = dow - currentDoW;
+    if (daysToAdd <= 0) {
+      daysToAdd += 7;
+    }
+
+    // Start from tomorrow
+    const tomorrow = this.sameTimeNextDay();
+    const tomorrowParts = getLocalParts(tomorrow.toSeconds(), currentTimeZone);
+    const tomorrowDoW = tomorrowParts.weekday;
+
+    // Iterate daysToAdd times
+    let result = tomorrow;
+    for (let i = 0; i < daysToAdd; i++) {
+      result = result.sameTimeNextDay();
+    }
+
+    return result;
+  }
+
+  /**
+   * Get last day of month
+   * @param month - Month (1-12)
+   * @param year - Year
+   */
+  static lastDayOfMonth(month: number, year: number): number {
+    const maxDays = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    let maxDay = maxDays[month]!;
+    if (month === 2 && TjTime.isLeapYear(year)) {
+      maxDay = 29;
+    }
+    return maxDay;
   }
 }

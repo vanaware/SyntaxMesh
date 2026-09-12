@@ -205,7 +205,7 @@ Reutilizamos `TjError`, `TjArgumentError` (Fase 3). Adicionamos `TjInternalError
 
 ---
 
-### 10.0 — ADR 016 (Scoreboard encoding conventions)
+### 6.0 — ADR 016 (Scoreboard encoding conventions)
 
 #### Contexto
 
@@ -268,7 +268,7 @@ Criar `docs/syntaxmesh/decisoes/016-scoreboard-encoding.md`.
 
 ---
 
-### 10.1 — `scoreboard-bits.ts` (constantes + helpers)
+### 6.1 — `scoreboard-bits.ts` (constantes + helpers)
 
 #### Contexto
 
@@ -342,7 +342,7 @@ assertEquals(hasOverride(256), true);
 
 ---
 
-### 10.2 — `Limits` + `Limit`
+### 6.2 — `Limits` + `Limit`
 
 #### Contexto
 
@@ -480,7 +480,7 @@ assertEquals(limits.ok?(0, true, null), false);
 
 ---
 
-### 10.3 — `ShiftAssignments` + `ShiftAssignment`
+### 6.3 — `ShiftAssignments` + `ShiftAssignment`
 
 #### Contexto
 
@@ -621,7 +621,7 @@ assert(sa.assigned?(0)); // sbIdx 0 dentro do intervalo
 
 ---
 
-### 10.4 — `ShiftScenario` consolidado
+### 6.4 — `ShiftScenario` consolidado
 
 #### Contexto
 
@@ -684,7 +684,7 @@ assert(!ss.onShift(TjTime.fromString("2026-01-05-20:00")));
 
 ---
 
-### 10.5 — Integração com `ResourceScenario`
+### 6.5 — Integração com `ResourceScenario`
 
 #### Contexto
 
@@ -741,7 +741,7 @@ assert(!rs.onShift(/* sbIdx correspondente a Monday 20h */));
 
 ---
 
-### 10.6 — Golden tests (Limits, ShiftAssignments)
+### 6.6 — Golden tests (Limits, ShiftAssignments)
 
 #### Contexto
 

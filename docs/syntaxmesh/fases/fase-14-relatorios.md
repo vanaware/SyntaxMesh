@@ -280,7 +280,7 @@ Fase 12 deixou stubs. Aqui completamos.
 
 ---
 
-### 18.0 — ADR 025 (reports browser-only)
+### 14.0 — ADR 025 (reports browser-only)
 
 #### Contexto
 
@@ -320,7 +320,7 @@ Criar `docs/syntaxmesh/decisoes/025-reports-browser.md`.
 
 ---
 
-### 18.1 — `CSVFile`
+### 14.1 — `CSVFile`
 
 #### Contexto
 
@@ -383,7 +383,7 @@ assertEquals(parsed, [['a', 'b'], [1, 2]]);
 
 ---
 
-### 18.2 — `ReportContext` (completar)
+### 14.2 — `ReportContext` (completar)
 
 #### Contexto
 
@@ -436,7 +436,7 @@ assertEquals(ctx.query.project, project);
 
 ---
 
-### 18.3 — `ReportBase`
+### 14.3 — `ReportBase`
 
 #### Contexto
 
@@ -495,7 +495,7 @@ Análogo.
 
 ---
 
-### 18.4 — `TableColumnDefinition` + `CellSettingPattern`
+### 14.4 — `TableColumnDefinition` + `CellSettingPattern`
 
 #### Contexto
 
@@ -570,7 +570,7 @@ Análogo.
 
 ---
 
-### 18.5 — `TableColumnSorter`
+### 14.5 — `TableColumnSorter`
 
 #### Contexto
 
@@ -614,7 +614,7 @@ Análogo.
 
 ---
 
-### 18.6 — `ReportTable`
+### 14.6 — `ReportTable`
 
 #### Contexto
 
@@ -675,7 +675,7 @@ Análogo.
 
 ---
 
-### 18.7 — `ReportTableColumn`
+### 14.7 — `ReportTableColumn`
 
 #### Contexto
 
@@ -725,7 +725,7 @@ Análogo.
 
 ---
 
-### 18.8 — `ReportTableLine`
+### 14.8 — `ReportTableLine`
 
 #### Contexto
 
@@ -781,7 +781,7 @@ Análogo.
 
 ---
 
-### 18.9 — `ReportTableCell` + `PlaceHolderCell`
+### 14.9 — `ReportTableCell` + `PlaceHolderCell`
 
 #### Contexto
 
@@ -873,7 +873,7 @@ Análogo.
 
 ---
 
-### 18.10 — `ReportTableLegend`
+### 14.10 — `ReportTableLegend`
 
 #### Contexto
 
@@ -925,7 +925,7 @@ Análogo.
 
 ---
 
-### 18.11 — `Report` (completar)
+### 14.11 — `Report` (completar)
 
 #### Contexto
 
@@ -998,7 +998,7 @@ Análogo.
 
 ---
 
-### 18.12 — `TableReport`
+### 14.12 — `TableReport`
 
 #### Contexto
 
@@ -1095,7 +1095,7 @@ Análogo.
 
 ---
 
-### 18.13 — `ColumnTable`
+### 14.13 — `ColumnTable`
 
 #### Contexto
 
@@ -1142,7 +1142,7 @@ Análogo.
 
 ---
 
-### 18.14 — `TaskListRE`
+### 14.14 — `TaskListRE`
 
 #### Contexto
 
@@ -1187,7 +1187,7 @@ Análogo.
 
 ---
 
-### 18.15 — `ResourceListRE`
+### 14.15 — `ResourceListRE`
 
 #### Contexto
 
@@ -1229,7 +1229,7 @@ Análogo.
 
 ---
 
-### 18.16 — `AccountListRE`
+### 14.16 — `AccountListRE`
 
 #### Contexto
 
@@ -1278,7 +1278,7 @@ Análogo.
 
 ---
 
-### 18.17 — `TextReport`
+### 14.17 — `TextReport`
 
 #### Contexto
 
@@ -1326,7 +1326,7 @@ Análogo.
 
 ---
 
-### 18.18 — `ExportRE` + `TjpExportRE` + `MspXmlRE`
+### 14.18 — `ExportRE` + `TjpExportRE` + `MspXmlRE`
 
 #### Contexto
 
@@ -1398,7 +1398,7 @@ Análogo.
 
 ---
 
-### 18.19 — `ICalReport`
+### 14.19 — `ICalReport`
 
 #### Contexto
 
@@ -1456,7 +1456,7 @@ Análogo.
 
 ---
 
-### 18.20 — `NikuReport` + `TraceReport` + `TagFile`
+### 14.20 — `NikuReport` + `TraceReport` + `TagFile`
 
 #### Contexto
 
@@ -1530,7 +1530,7 @@ Análogo.
 
 ---
 
-### 18.21 — `Navigator` + completar `RTFNavigator`
+### 14.21 — `Navigator` + completar `RTFNavigator`
 
 #### Contexto
 
@@ -1606,7 +1606,7 @@ Análogo.
 
 ---
 
-### 18.22 — `ChartPlotter`
+### 14.22 — `ChartPlotter`
 
 #### Contexto
 
@@ -1670,7 +1670,7 @@ Análogo.
 
 ---
 
-### 18.23 — Golden tests (reports)
+### 14.23 — Golden tests (reports)
 
 #### Contexto
 

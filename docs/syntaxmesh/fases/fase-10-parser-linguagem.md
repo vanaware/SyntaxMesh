@@ -292,7 +292,7 @@ A fase é organizada em **5 blocos**:
 
 ---
 
-### 14.0 — ADRs 020 e 021
+### 10.0 — ADRs 020 e 021
 
 #### Contexto
 
@@ -352,7 +352,7 @@ Criar:
 
 ---
 
-### 14.1 — `TokenDoc`
+### 10.1 — `TokenDoc`
 
 #### Contexto
 
@@ -394,7 +394,7 @@ Análogo.
 
 ---
 
-### 14.2 — `Macro` + `MacroTable`
+### 10.2 — `Macro` + `MacroTable`
 
 #### Contexto
 
@@ -458,7 +458,7 @@ assertEquals(resolved, "Hello World!");
 
 ---
 
-### 14.3 — `StackElement`
+### 10.3 — `StackElement`
 
 #### Contexto
 
@@ -512,7 +512,7 @@ Análogo.
 
 ---
 
-### 14.4 — `StateTransition` + `State`
+### 10.4 — `StateTransition` + `State`
 
 #### Contexto
 
@@ -567,7 +567,7 @@ Análogo.
 
 ---
 
-### 14.5 — `Pattern`
+### 10.5 — `Pattern`
 
 #### Contexto
 
@@ -639,7 +639,7 @@ Análogo.
 
 ---
 
-### 14.6 — `Rule`
+### 10.6 — `Rule`
 
 #### Contexto
 
@@ -705,7 +705,7 @@ Análogo.
 
 ---
 
-### 14.7 — `TextParser` FSM (core)
+### 10.7 — `TextParser` FSM (core)
 
 #### Contexto
 
@@ -788,7 +788,7 @@ assertEquals(p.parse('test'), 42);
 
 ---
 
-### 14.8 — `Scanner` (genérico)
+### 10.8 — `Scanner` (genérico)
 
 #### Contexto
 
@@ -877,7 +877,7 @@ Análogo.
 
 ---
 
-### 14.9 — `ProjectFileScanner`
+### 10.9 — `ProjectFileScanner`
 
 #### Contexto
 
@@ -943,7 +943,7 @@ assertEquals(scanner.nextToken()[0], 'KEYWORD'); // 'project' é keyword
 
 ---
 
-### 14.10 — `ProjectFileParser` (estrutura)
+### 10.10 — `ProjectFileParser` (estrutura)
 
 #### Contexto
 
@@ -1019,7 +1019,7 @@ Análogo.
 
 ---
 
-### 14.11 — `TjpSyntaxRules` — bloco 1 (project + task)
+### 10.11 — `TjpSyntaxRules` — bloco 1 (project + task)
 
 #### Contexto
 
@@ -1104,7 +1104,7 @@ assert(project instanceof Project);
 
 ---
 
-### 14.12 — `TjpSyntaxRules` — bloco 2 (resource + account + shift + scenario)
+### 10.12 — `TjpSyntaxRules` — bloco 2 (resource + account + shift + scenario)
 
 #### Objetivo
 
@@ -1183,7 +1183,7 @@ Análogo.
 
 ---
 
-### 14.13 — `TjpSyntaxRules` — bloco 3 (reports)
+### 10.13 — `TjpSyntaxRules` — bloco 3 (reports)
 
 #### Objetivo
 
@@ -1252,7 +1252,7 @@ Análogo.
 
 ---
 
-### 14.14 — `TjpSyntaxRules` — bloco 4 (tracking + lógica)
+### 10.14 — `TjpSyntaxRules` — bloco 4 (tracking + lógica)
 
 #### Objetivo
 
@@ -1324,7 +1324,7 @@ Análogo.
 
 ---
 
-### 14.15 — `LanguageDefinition` + `LanguageRegistry` + `CanonicalKeyword`
+### 10.15 — `LanguageDefinition` + `LanguageRegistry` + `CanonicalKeyword`
 
 #### Contexto
 
@@ -1402,7 +1402,7 @@ assertEquals(reg.resolve("unknown", "en"), null);
 
 ---
 
-### 14.16 — Idiomas: `en`, `pt-BR`, `es`
+### 10.16 — Idiomas: `en`, `pt-BR`, `es`
 
 #### Contexto
 
@@ -1478,7 +1478,7 @@ Análogo.
 
 ---
 
-### 14.17 — Diretiva `language` no parser
+### 10.17 — Diretiva `language` no parser
 
 #### Contexto
 
@@ -1534,7 +1534,7 @@ assert(project instanceof Project);
 
 ---
 
-### 14.18 — AST equivalence entre idiomas
+### 10.18 — AST equivalence entre idiomas
 
 #### Contexto
 
@@ -1584,7 +1584,7 @@ Análogo.
 
 ---
 
-### 14.19 — Golden tests (parser)
+### 10.19 — Golden tests (parser)
 
 #### Contexto
 
