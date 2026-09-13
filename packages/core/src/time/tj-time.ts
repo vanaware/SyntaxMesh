@@ -16,6 +16,32 @@ export class TjTime {
   }
 
   /**
+   * Order two times from smaller to larger
+   * @param date - Other TjTime instance
+   * @returns Array [smaller, larger]
+   */
+  public order(date: TjTime): [TjTime, TjTime] {
+    return this.lessThan(date) ? [this, date] : [date, this];
+  }
+
+  /**
+   * Count intervals between start and end time
+   * @param start - Start TjTime instance
+   * @param end - End TjTime instance (assumed >= start)
+   * @param stepFunc - Function to advance time by one interval
+   * @returns Number of intervals
+   */
+  public countIntervals(start: TjTime, end: TjTime, stepFunc: (t: TjTime) => TjTime): number {
+    let i = 0;
+    let t = start;
+    while (t.lessThan(end)) {
+      t = stepFunc(t);
+      i++;
+    }
+    return i;
+  }
+
+  /**
    * Returns current time
    */
   static now(): TjTime {
@@ -102,6 +128,7 @@ export class TjTime {
    * @param str - String to parse
    */
   static fromString(str: string): TjTime {
+    // Use regex to properly parse the string with timezone
     const regex = /^(\d{4})-(\d{2})-(\d{2})(?:-(\d{2}):(\d{2})(?::(\d{2}))?)?(?:([+-]\d{4}))?$/;
     const match = str.match(regex);
     if (!match) {
@@ -115,12 +142,15 @@ export class TjTime {
     let hour = 0;
     let minute = 0;
     let second = 0;
-    const tz: string = currentTimeZone;
 
     if (match[4]) {
       hour = parseInt(match[4]);
-      minute = parseInt(match[5]!);
-      second = match[6] ? parseInt(match[6]) : 0;
+      if (match[5]) {
+        minute = parseInt(match[5]!);
+        if (match[6]) {
+          second = parseInt(match[6]);
+        }
+      }
     }
 
     if (match[7]) {
@@ -153,7 +183,7 @@ export class TjTime {
       return new TjTime(utcSeconds - offsetSeconds);
     }
 
-    return TjTime.fromParts(year, month, day, hour, minute, second, tz);
+    return TjTime.fromParts(year, month, day, hour, minute, second);
   }
 
   /**
@@ -555,6 +585,74 @@ export class TjTime {
   }
 
   /**
+   * Get difference in hours between this time and another time.
+   * The result is rounded up. Positive when end >= start, negative when end < start.
+   * @param date - Other TjTime instance
+   */
+  public hoursTo(date: TjTime): number {
+    const [smaller, larger] = this.order(date);
+    // countIntervals always returns positive count from smaller to larger
+    const count = this.countIntervals(smaller, larger, (t) => t.sameTimeNextHour());
+    // Return positive if this is the smaller, negative if this is the larger
+    return smaller === this ? count : -count;
+  }
+
+  /**
+   * Get difference in days between this time and another time.
+   * The result is always rounded up (positive).
+   * @param date - Other TjTime instance
+   */
+  public daysTo(date: TjTime): number {
+    const [smaller, larger] = this.order(date);
+    const count = this.countIntervals(smaller, larger, (t) => t.sameTimeNextDay());
+    return count;
+  }
+
+  /**
+   * Get difference in weeks between this time and another time.
+   * The result is always rounded up (positive).
+   * @param date - Other TjTime instance
+   */
+  public weeksTo(date: TjTime): number {
+    const [smaller, larger] = this.order(date);
+    const count = this.countIntervals(smaller, larger, (t) => t.sameTimeNextWeek());
+    return count;
+  }
+
+  /**
+   * Get difference in months between this time and another time.
+   * The result is always rounded up (positive).
+   * @param date - Other TjTime instance
+   */
+  public monthsTo(date: TjTime): number {
+    const [smaller, larger] = this.order(date);
+    const count = this.countIntervals(smaller, larger, (t) => t.sameTimeNextMonth());
+    return count;
+  }
+
+  /**
+   * Get difference in quarters between this time and another time.
+   * The result is always rounded up (positive).
+   * @param date - Other TjTime instance
+   */
+  public quartersTo(date: TjTime): number {
+    const [smaller, larger] = this.order(date);
+    const count = this.countIntervals(smaller, larger, (t) => t.sameTimeNextQuarter());
+    return count;
+  }
+
+  /**
+   * Get difference in years between this time and another time.
+   * The result is always rounded up (positive).
+   * @param date - Other TjTime instance
+   */
+  public yearsTo(date: TjTime): number {
+    const [smaller, larger] = this.order(date);
+    const count = this.countIntervals(smaller, larger, (t) => t.sameTimeNextYear());
+    return count;
+  }
+
+  /**
    * Get next day of week
    * @param dow - Day of week (0=Sunday, 1=Monday, ..., 6=Saturday)
    */
@@ -584,6 +682,111 @@ export class TjTime {
   }
 
   /**
+   * Format time according to the given format string.
+   * @param format - Format string (e.g., "%Y %m %d %H %M %S")
+   * @param tz - Optional timezone (defaults to currentTimeZone)
+   * @returns Formatted time string
+   */
+  strftime(format: string, tz: string = currentTimeZone): string {
+    // Validate timezone
+    if (!isValidTimeZone(tz)) {
+      throw new TjArgumentError(`Invalid time zone: ${tz}`);
+    }
+
+    // Get local parts for the given timezone
+    const parts = getLocalParts(this.seconds, tz);
+
+    // Get timezone abbreviation
+    const formatter = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'short' });
+    const tzParts = formatter.formatToParts(this.toDate());
+    const tzAbbr = tzParts.find(p => p.type === 'timeZoneName')?.value || tz;
+
+    // Day of week names
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dayAbbr = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    // Month names
+    const monthNames = ['', 'January', 'February', 'March', 'April', 'May', 'June',
+                        'July', 'August', 'September', 'October', 'November', 'December'];
+    const monthAbbr = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    // Replace %% with a placeholder first to protect it from validation
+    const PLACEHOLDER = '\x00';
+    let result = format.replace(/%%/g, PLACEHOLDER);
+
+    // Replace format specifiers
+    result = result.replace('%Y', String(parts.year).padStart(4, '0'));
+    result = result.replace('%m', String(parts.month).padStart(2, '0'));
+    result = result.replace('%d', String(parts.day).padStart(2, '0'));
+    result = result.replace('%H', String(parts.hour).padStart(2, '0'));
+    result = result.replace('%M', String(parts.minute).padStart(2, '0'));
+    result = result.replace('%S', String(parts.second).padStart(2, '0'));
+    result = result.replace('%A', dayNames[parts.weekday] ?? 'Unknown');
+    result = result.replace('%a', dayAbbr[parts.weekday] ?? 'Unknown');
+    result = result.replace('%B', monthNames[parts.month] ?? 'Unknown');
+    result = result.replace('%b', monthAbbr[parts.month] ?? 'Unknown');
+    // %z: UTC offset in +HHMM / -HHMM format
+    const offset = getOffsetSeconds(this.seconds, tz);
+    const offSign = offset < 0 ? '-' : '+';
+    const offAbs = Math.abs(offset);
+    const offHours = String(Math.floor(offAbs / 3600)).padStart(2, '0');
+    const offMins = String(Math.floor((offAbs % 3600) / 60)).padStart(2, '0');
+    result = result.replace('%z', `${offSign}${offHours}${offMins}`);
+    result = result.replace('%Q', String(Math.floor((parts.month - 1) / 3) + 1));
+    result = result.replace('%Z', tzAbbr);
+
+    // Validate that no unsupported format specifiers remain.
+    // Ruby's strftime is lenient, but TjTime raises TjArgumentError for
+    // formats outside the supported list (%Y %m %d %H %M %S %A %a %B %b %z %Q %Z %%).
+    // The placeholder \x00 is not a format specifier, so it won't match.
+    // Match % followed by any character that is NOT % (to avoid matching %%)
+    // Then check if that character is NOT one of the valid specifiers
+    const unsupportedMatch = result.match(/%(?!%)(.)/);
+    if (unsupportedMatch) {
+      const specifier = unsupportedMatch[0]; // Full match like %c, %x, etc.
+      const validSpecifiers = ['Y', 'm', 'd', 'H', 'M', 'S', 'A', 'a', 'B', 'b', 'z', 'Q', 'Z'];
+      const specifierChar = unsupportedMatch[1]; // Just the letter after %
+      if (specifierChar && !validSpecifiers.includes(specifierChar)) {
+        throw new TjArgumentError(`Invalid format specifier: ${specifier}`);
+      }
+    }
+
+    // Restore %% placeholder to literal %
+    result = result.replace(new RegExp(PLACEHOLDER, 'g'), '%');
+
+    return result;
+  }
+
+  /**
+   * Convert TjTime to string.
+   *
+   * With no format argument, uses the default `'%Y-%m-%d-%H:%M'` plus
+   * `:%S` when the original seconds are non-zero, plus `-%z`.
+   *
+   * // RUBY-COMPAT-DOC: `to_s` decides whether to include `:%S` from
+   * `@time.sec` (the original UTC second), NOT from `localtime().sec`.
+   * // RUBY-COMPAT-DOC: with `tz === 'UTC'` the Ruby implementation routes
+   * through `gmtime`; in TS the equivalent is `strftime(format, 'UTC')`,
+   * which yields the same UTC wall-clock parts.
+   *
+   * @param format - Optional format string
+   * @param tz - Optional timezone (defaults to currentTimeZone)
+   * @returns Formatted time string
+   */
+  to_s(format?: string, tz: string = currentTimeZone): string {
+    if (format === undefined || format === null) {
+      format = '%Y-%m-%d-%H:%M';
+      // Use the original seconds (this.seconds % 60), not localtime().sec
+      if (this.seconds % 60 !== 0) {
+        format += ':%S';
+      }
+      format += '-%z';
+    }
+    return this.strftime(format, tz);
+  }
+
+  /**
    * Get last day of month
    * @param month - Month (1-12)
    * @param year - Year
@@ -595,5 +798,79 @@ export class TjTime {
       maxDay = 29;
     }
     return maxDay;
+  }
+
+  /**
+   * Get total seconds of day in local time
+   * @param tz - Optional timezone (defaults to currentTimeZone)
+   * @returns Seconds since midnight in local time
+   */
+  secondsOfDay(tz: string = currentTimeZone): number {
+    const parts = getLocalParts(this.seconds, tz);
+    return parts.hour * 3600 + parts.minute * 60 + parts.second;
+  }
+
+  /**
+   * Get time in UTC
+   */
+  utc(): TjTime {
+    const parts = getLocalParts(this.seconds, currentTimeZone);
+    const offset = getOffsetSeconds(this.seconds, currentTimeZone);
+    return TjTime.fromSeconds(this.seconds - offset);
+  }
+
+  /**
+   * Get time in local timezone
+   */
+  localtime(): TjTime {
+    const parts = getLocalParts(this.seconds, currentTimeZone);
+    const offset = getOffsetSeconds(this.seconds, currentTimeZone);
+    return TjTime.fromSeconds(this.seconds + offset);
+  }
+
+  /**
+   * Get time in GMT
+   */
+  gmtime(): TjTime {
+    const parts = getLocalParts(this.seconds, currentTimeZone);
+    const offset = getOffsetSeconds(this.seconds, currentTimeZone);
+    return TjTime.fromSeconds(this.seconds - offset);
+  }
+
+  /**
+   * Check if a timezone string is valid
+   * @param zone - Timezone string to validate
+   * @returns boolean
+   */
+  static checkTimeZone(zone: string): boolean {
+    try {
+      if (zone === 'UTC') return true;
+      if (!zone.includes('/')) return false;
+      new Intl.DateTimeFormat('en-US', { timeZone: zone });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Set a new active time zone
+   * @param zone - Timezone string to set
+   */
+  static setTimeZone(zone: string): string | null {
+    if (!TjTime.checkTimeZone(zone)) {
+      throw new TjArgumentError(`Illegal time zone ${zone}`);
+    }
+    // Note: In TypeScript/JavaScript, we can't truly set a global timezone
+    // This is a placeholder for the Ruby interface
+    return null;
+  }
+
+  /**
+   * Get the currently active time zone
+   * @returns Timezone string
+   */
+  static getTimeZone(): string {
+    return currentTimeZone;
   }
 }

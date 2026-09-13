@@ -176,153 +176,118 @@
             "max_tokens": 8192
           }
         }
-      }, 
-      {
-        "id": "nvidia/nemotron-3-super-120b-a12b:free",
-        "name": "nvidia/nemotron-3-super-120b-a12b:free",
-        "baseUrl": "https://openrouter.ai/api/v1",
-        "envKey": "OPENROUTER_API_KEY",
-        "generationConfig": {
-          "enableCacheControl": true,
-          "customHeaders": {
-            "HTTP-Referer": "https://github.com/QwenLM/qwen-code.git",
-            "X-OpenRouter-Title": "Qwen Code"
-          },
-          "timeout": 300000,
-          "streamIdleTimeoutMs": 600000,
-          "maxRetries": 5,
-          "retryInitialDelayMs": 5000,
-          "retryMaxDelayMs": 60000,
-          "contextWindowSize": 128000,
-          "extra_body": {
-            "transforms": ["middle-out"],
-            "provider": {
-              "allow_fallbacks": true,
-              "sort": "throughput"
-            }
-          },
-          "samplingParams": {
-            "temperature": 0.2,
-            "top_p": 0.95,
-            "max_tokens": 8192
-          }
-        }
       },
       {
-        "id": "nvidia/nemotron-3-ultra-550b-a55b:free",
-        "name": "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "id": "openrouter/free",
+        "name": "OpenRouter Free Router (fallback universal)",
         "baseUrl": "https://openrouter.ai/api/v1",
         "envKey": "OPENROUTER_API_KEY",
         "generationConfig": {
-          "enableCacheControl": true,
-          "customHeaders": {
-            "HTTP-Referer": "https://github.com/QwenLM/qwen-code.git",
-            "X-OpenRouter-Title": "Qwen Code"
-          },
-          "timeout": 300000,
-          "streamIdleTimeoutMs": 600000,
-          "maxRetries": 5,
-          "retryInitialDelayMs": 5000,
-          "retryMaxDelayMs": 60000,
           "contextWindowSize": 128000,
+          "timeout": 120000,
+          "maxRetries": 2,
+          "retryInitialDelayMs": 3000,
+          "retryMaxDelayMs": 15000,
+          "enableCacheControl": false,
+          "customHeaders": {
+            "HTTP-Referer": "https://github.com/vanaware/syntaxmesh",
+            "X-OpenRouter-Title": "SyntaxMesh"
+          },
           "extra_body": {
-            "transforms": ["middle-out"],
             "provider": {
               "allow_fallbacks": true,
-              "sort": "throughput"
+              "sort": "price",
+              "data_collection": "deny"
             }
           },
           "samplingParams": {
             "temperature": 0.2,
             "top_p": 0.95,
-            "max_tokens": 8192
-          }
-        }
-      },
-      {
-        "id": "nvidia/nemotron-3.5-content-safety:free",
-        "name": "nvidia/nemotron-3.5-content-safety:free",
-        "baseUrl": "https://openrouter.ai/api/v1",
-        "envKey": "OPENROUTER_API_KEY",
-        "generationConfig": {
-          "enableCacheControl": true,
-          "customHeaders": {
-            "HTTP-Referer": "https://github.com/QwenLM/qwen-code.git",
-            "X-OpenRouter-Title": "Qwen Code"
-          },
-          "timeout": 300000,
-          "streamIdleTimeoutMs": 600000,
-          "maxRetries": 5,
-          "retryInitialDelayMs": 5000,
-          "retryMaxDelayMs": 60000,
-          "contextWindowSize": 128000,
-          "extra_body": {
-            "transforms": ["middle-out"],
-            "provider": {
-              "allow_fallbacks": true,
-              "sort": "throughput"
-            }
-          },
-          "samplingParams": {
-            "temperature": 0.2,
-            "top_p": 0.95,
-            "max_tokens": 8192
-          }
-        }
-      },
-      {
-        "id": "nvidia/nemotron-3.5-lightning:free",
-        "name": "nvidia/nemotron-3.5-lightning:free",
-        "baseUrl": "https://openrouter.ai/api/v1",
-        "envKey": "OPENROUTER_API_KEY",
-        "generationConfig": {
-          "enableCacheControl": true,
-          "customHeaders": {
-            "HTTP-Referer": "https://github.com/QwenLM/qwen-code.git",
-            "X-OpenRouter-Title": "Qwen Code"
-          },
-          "timeout": 300000,
-          "streamIdleTimeoutMs": 600000,
-          "maxRetries": 5,
-          "retryInitialDelayMs": 5000,
-          "retryMaxDelayMs": 60000,
-          "contextWindowSize": 128000,
-          "extra_body": {
-            "transforms": ["middle-out"],
-            "provider": {
-              "allow_fallbacks": true,
-              "sort": "throughput"
-            }
-          },
-          "samplingParams": {
-            "temperature": 0.2,
-            "top_p": 0.95,
-            "max_tokens": 8192
+            "max_tokens": 4096
           }
         }
       },
       {
         "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
-        "name": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+        "name": "Nemotron 3 Nano Omni (free - rápido)",
         "baseUrl": "https://openrouter.ai/api/v1",
         "envKey": "OPENROUTER_API_KEY",
         "generationConfig": {
-          "enableCacheControl": true,
-          "customHeaders": {
-            "HTTP-Referer": "https://github.com/QwenLM/qwen-code.git",
-            "X-OpenRouter-Title": "Qwen Code"
-          },
-          "timeout": 300000,
-          "streamIdleTimeoutMs": 600000,
-          "maxRetries": 5,
-          "retryInitialDelayMs": 5000,
-          "retryMaxDelayMs": 60000,
           "contextWindowSize": 128000,
+          "timeout": 60000,
+          "maxRetries": 1,
+          "retryInitialDelayMs": 2000,
+          "retryMaxDelayMs": 10000,
+          "enableCacheControl": false,
+          "customHeaders": {
+            "HTTP-Referer": "https://github.com/vanaware/syntaxmesh",
+            "X-OpenRouter-Title": "SyntaxMesh"
+          },
           "extra_body": {
-            "transforms": ["middle-out"],
             "provider": {
               "allow_fallbacks": true,
-              "sort": "throughput"
+              "sort": "price",
+              "data_collection": "deny"
+            }
+          },
+          "samplingParams": {
+            "temperature": 0.2,
+            "top_p": 0.95,
+            "max_tokens": 4096
+          }
+        }
+      },
+      {
+        "id": "google/gemma-4-31b-it:free",
+        "name": "Gemma 4 31B (free - equilibrado)",
+        "baseUrl": "https://openrouter.ai/api/v1",
+        "envKey": "OPENROUTER_API_KEY",
+        "generationConfig": {
+          "contextWindowSize": 128000,
+          "timeout": 90000,
+          "maxRetries": 1,
+          "retryInitialDelayMs": 2000,
+          "retryMaxDelayMs": 10000,
+          "enableCacheControl": false,
+          "customHeaders": {
+            "HTTP-Referer": "https://github.com/vanaware/syntaxmesh",
+            "X-OpenRouter-Title": "SyntaxMesh"
+          },
+          "extra_body": {
+            "provider": {
+              "allow_fallbacks": true,
+              "sort": "price",
+              "data_collection": "deny"
+            }
+          },
+          "samplingParams": {
+            "temperature": 0.2,
+            "top_p": 0.95,
+            "max_tokens": 4096
+          }
+        }
+      },
+      {
+        "id": "z-ai/glm-5.2:free",
+        "name": "GLM 5.2 (free - reasoning forte)",
+        "baseUrl": "https://openrouter.ai/api/v1",
+        "envKey": "OPENROUTER_API_KEY",
+        "generationConfig": {
+          "contextWindowSize": 128000,
+          "timeout": 180000,
+          "maxRetries": 1,
+          "retryInitialDelayMs": 5000,
+          "retryMaxDelayMs": 20000,
+          "enableCacheControl": false,
+          "customHeaders": {
+            "HTTP-Referer": "https://github.com/vanaware/syntaxmesh",
+            "X-OpenRouter-Title": "SyntaxMesh"
+          },
+          "extra_body": {
+            "provider": {
+              "allow_fallbacks": true,
+              "sort": "price",
+              "data_collection": "deny"
             }
           },
           "samplingParams": {
@@ -333,33 +298,32 @@
         }
       },
       {
-        "id": "openrouter/free",
-        "name": "openrouter/free",
+        "id": "minimax/minimax-m3:free",
+        "name": "MiniMax M3 (free - contexto longo)",
         "baseUrl": "https://openrouter.ai/api/v1",
         "envKey": "OPENROUTER_API_KEY",
         "generationConfig": {
-          "enableCacheControl": true,
-          "customHeaders": {
-            "HTTP-Referer": "https://github.com/QwenLM/qwen-code.git",
-            "X-OpenRouter-Title": "Qwen Code"
-          },
-          "timeout": 300000,
-          "streamIdleTimeoutMs": 600000,
-          "maxRetries": 5,
-          "retryInitialDelayMs": 5000,
-          "retryMaxDelayMs": 60000,
           "contextWindowSize": 128000,
+          "timeout": 180000,
+          "maxRetries": 1,
+          "retryInitialDelayMs": 5000,
+          "retryMaxDelayMs": 20000,
+          "enableCacheControl": false,
+          "customHeaders": {
+            "HTTP-Referer": "https://github.com/vanaware/syntaxmesh",
+            "X-OpenRouter-Title": "SyntaxMesh"
+          },
           "extra_body": {
-            "transforms": ["middle-out"],
             "provider": {
               "allow_fallbacks": true,
-              "sort": "throughput"
+              "sort": "price",
+              "data_collection": "deny"
             }
           },
           "samplingParams": {
             "temperature": 0.2,
             "top_p": 0.95,
-            "max_tokens": 8192
+            "max_tokens": 4096
           }
         }
       },
@@ -711,7 +675,7 @@
   },
   "$version": 4,
   "model": {
-    "name": "openrouter/free",
+    "name": "nvidia/nemotron-3.5-lightning:free",
     "baseUrl": "https://openrouter.ai/api/v1",
     "reasoningEffort": "high",
     "generationConfig": {

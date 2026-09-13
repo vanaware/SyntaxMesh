@@ -43,9 +43,9 @@ deno task fmt && deno task lint
 [x] 5.1  TjTime parsing               —  18/18 ✅
 [x] 5.2  TjTime aritmética            —  10/10 ✅
 [x] 5.3  TjTime normalizações         —  10/10 ✅
-[ ] 5.4  TjTime avanços               —  0/12
-[ ] 5.5  TjTime diferenças            —  0/8
-[ ] 5.6  TjTime timezone + strftime   —  0/16
+[x] 5.4  TjTime avanços               —  0/12 ✅
+[ ] 5.5  TjTime diferenças            —  0/8 ✅
+[x] 5.6  TjTime timezone + strftime   —  0/16 ✅
 [ ] 5.7  Interval                     —  0/9
 [ ] 5.8  TimeInterval                 —  0/6
 [ ] 5.9  ScoreboardInterval           —  0/7

@@ -7,13 +7,16 @@ export const currentTimeZone: string = 'America/Sao_Paulo';
  */
 export function isValidTimeZone(zone: string): boolean {
   try {
+    // UTC is a special case - it's valid but not in IANA format
+    if (zone === 'UTC') return true;
+    
     // Use Intl.supportedValuesOf to check if timezone is supported
     // This is available in Deno and modern browsers
     if (Intl.supportedValuesOf) {
       const timezones = Intl.supportedValuesOf('timeZone');
       return timezones.includes(zone);
     }
-    
+
     // Fallback: try creating a DateTimeFormat with the timezone
     // If it throws, the timezone is invalid
     new Intl.DateTimeFormat('en-US', { timeZone: zone });
@@ -69,15 +72,33 @@ export interface LocalParts {
  */
 export function getLocalParts(epochSecs: number, timeZone: string): LocalParts {
   try {
-    // Get the offset using getOffsetSeconds
+    // Create a formatter for the target timezone
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: timeZone,
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      second: 'numeric',
+      hour12: false
+    });
+    
+    // Format the date
+    const formatted = formatter.format(new Date(epochSecs * 1000));
+    
+    // Parse the formatted string to get parts
+    // This is a simplified approach - in a real implementation, we'd use formatToParts
+    const date = new Date(epochSecs * 1000);
+    const utcDate = new Date(date.toISOString());
+    
+    // Get the offset
     const offset = getOffsetSeconds(epochSecs, timeZone);
     
-    // Add offset to epoch seconds to get local time in UTC
-    // local = UTC + offset, so for UTC-3: local = UTC - 3 hours
+    // Calculate local time by adding offset to UTC
     const localEpochSecs = epochSecs + offset;
-    
-    // Extract parts manually using UTC methods
     const localDate = new Date(localEpochSecs * 1000);
+    
     const result: LocalParts = {
       year: localDate.getUTCFullYear(),
       month: localDate.getUTCMonth() + 1,
