@@ -83,19 +83,22 @@ Deno.test({
 
     // AssertRejects captura os throw Exceptions disparados lá no switch(command) do worker
     await assertRejects(
-      async () => await store.getSome(() => ({ obj: 'invalid', } as unknown)),
+      // deno-lint-ignore no-explicit-any
+      async () => await store.getSome(() => ({ obj: 'invalid', } as any)),
       Error,
       'A função injetada em GET_SOME deve retornar um Array.',
     );
 
     await assertRejects(
-      async () => await store.delSome(() => false as unknown),
+      // deno-lint-ignore no-explicit-any
+      async () => await store.delSome(() => false as any),
       Error,
       'A função injetada em DEL_SOME deve retornar um Array.',
     );
 
     await assertRejects(
-      async () => await store.setSome(() => 'string' as unknown, (i: unknown,) => i,),
+      // deno-lint-ignore no-explicit-any
+      async () => await store.setSome(() => 'string' as any, (i: unknown,) => i as any,),
       Error,
       'A função de seleção em SET_SOME deve retornar um Array.',
     );
@@ -118,7 +121,8 @@ Deno.test({
 
     // Atualiza nome para UPPERCASE e converte 'level' (number) para string
     await store.setSome(
-      (items: Funcionario[]) => items.filter((item: Funcionario) => item.active === true),
+      // deno-lint-ignore no-explicit-any
+      (items: Funcionario[]) => items.filter((item: Funcionario) => item.active === true) as any,
       (item: Funcionario) => ({
         ...item,
         name: item.name.toUpperCase(),

@@ -675,7 +675,7 @@
   },
   "$version": 4,
   "model": {
-    "name": "nvidia/nemotron-3.5-lightning:free",
+    "name": "openrouter/free",
     "baseUrl": "https://openrouter.ai/api/v1",
     "reasoningEffort": "high",
     "generationConfig": {

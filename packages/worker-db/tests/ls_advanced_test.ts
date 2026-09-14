@@ -16,24 +16,25 @@ Deno.test({
     },);
 
     // Valida execução de funções avançadas síncronas de Array
-    const result = store.query((items: Record<string, unknown>[],) => {
+    const result = store.query((items) => {
+      const data = items as Record<string, unknown>[];
       return {
-        count: items.length, // length
-        total: items.reduce((acc: number, i: Record<string, unknown>) => acc + (i as Record<string, unknown>).amount, 0,), // reduce
-        firstWork: items.find((i: Record<string, unknown>) => (i as Record<string, unknown>).tag === 'work'), // find
-        lastWork: items.findLast((i: Record<string, unknown>) => (i as Record<string, unknown>).tag === 'work'), // findLast
-        lastItem: items.at(-1,), // at
-        hasPending: items.some((i: Record<string, unknown>) => (i as Record<string, unknown>).status === 'pending'), // some
-        allPositive: items.every((i: Record<string, unknown>) => (i as Record<string, unknown>).amount > 0), // every
-        tagsHaveHome: items.map((i: Record<string, unknown>) => (i as Record<string, unknown>).tag).includes('home',), // map e includes
-        idxPersonal: items.findIndex((i: Record<string, unknown>) => (i as Record<string, unknown>).tag === 'personal'), // findIndex
-        lastIdxWork: items.findLastIndex((i: Record<string, unknown>) => (i as Record<string, unknown>).tag === 'work'), // findLastIndex
-        indexOfZ: items.map((i: Record<string, unknown>) => (i as Record<string, unknown>).code).indexOf('z',), // indexOf
-        paidItems: items.filter((i: Record<string, unknown>) => (i as Record<string, unknown>).status === 'paid'), // filter
-        sliced: items.slice(1, 4,), // slice
-        sortedByAmount: items.toSorted((a: Record<string, unknown>, b: Record<string, unknown>) => (a as Record<string, unknown>).amount - (b as Record<string, unknown>).amount), // toSorted
-        reversed: items.toReversed(), // toReversed
-        spliced: items.toSpliced(0, 2,), // toSpliced
+        count: data.length, // length
+        total: data.reduce((acc, i) => acc + (i.amount as number), 0,), // reduce
+        firstWork: data.find((i) => i.tag === 'work'), // find
+        lastWork: data.findLast((i) => i.tag === 'work'), // findLast
+        lastItem: data.at(-1,), // at
+        hasPending: data.some((i) => i.status === 'pending'), // some
+        allPositive: data.every((i) => (i.amount as number) > 0), // every
+        tagsHaveHome: data.map((i) => i.tag as string).includes('home',), // map e includes
+        idxPersonal: data.findIndex((i) => i.tag === 'personal'), // findIndex
+        lastIdxWork: data.findLastIndex((i) => i.tag === 'work'), // findLastIndex
+        indexOfZ: data.map((i) => i.code as string).indexOf('z',), // indexOf
+        paidItems: data.filter((i) => i.status === 'paid'), // filter
+        sliced: data.slice(1, 4,), // slice
+        sortedByAmount: data.toSorted((a, b) => (a.amount as number) - (b.amount as number)), // toSorted
+        reversed: data.toReversed(), // toReversed
+        spliced: data.toSpliced(0, 2,), // toSpliced
       };
     },);
 
@@ -67,19 +68,22 @@ Deno.test({
 
     // AssertThrows captura as exceções síncronas disparadas pelo wrapper ls()
     assertThrows(
-      () => store.getSome(() => ({ obj: 'invalid', } as unknown)),
+      // deno-lint-ignore no-explicit-any
+      () => store.getSome(() => ({ obj: 'invalid', } as any)),
       Error,
       'A função em getSome deve retornar um Array.',
     );
 
     assertThrows(
-      () => store.delSome(() => false as unknown),
+      // deno-lint-ignore no-explicit-any
+      () => store.delSome(() => false as any),
       Error,
       'A função em delSome deve retornar um Array.',
     );
 
     assertThrows(
-      () => store.setSome(() => 'string' as unknown, (i: unknown,) => i,),
+      // deno-lint-ignore no-explicit-any
+      () => store.setSome(() => 'string' as any, (i: unknown,) => i as any,),
       Error,
       'A função de seleção em setSome deve retornar um Array.',
     );
@@ -102,27 +106,39 @@ Deno.test({
 
     // Atualiza nome para UPPERCASE e converte 'level' (number) para string
     store.setSome(
-      (items: any[],) => items.filter((item: any,) => item.active === true),
-      (item: any,) => ({
-        ...item,
-        name: item.name.toUpperCase(),
-        department: item.department.toUpperCase(),
-        level: String(item.level,), // Mutação de tipo explícita!
-      }),
+      (items) => {
+        const data = items as Record<string, unknown>[];
+        // deno-lint-ignore no-explicit-any
+        return data.filter((item) => (item.active as boolean) === true) as any;
+      },
+      (item) => {
+        const data = item as Record<string, unknown>;
+        return {
+          ...data,
+          name: (data.name as string).toUpperCase(),
+          department: (data.department as string).toUpperCase(),
+          level: String(data.level as number), // Mutação de tipo explícita!
+          _id: data._id as string,
+        };
+      },
     );
 
-    const e10 = store.get<any>('e10',);
+    const e10 = store.get<Record<string, unknown>>('e10',);
     assertEquals(e10?.name, 'JOÃO SILVA',);
     assertEquals(e10?.department, 'TECNOLOGIA',);
     assertEquals(typeof e10?.level, 'string',);
     assertEquals(e10?.level, '2',);
 
-    const e30 = store.get<any>('e30',);
+    const e30 = store.get<Record<string, unknown>>('e30',);
     assertEquals(e30?.department, 'vendas',); // Permanece em lowercase pois active=false
     assertEquals(typeof e30?.level, 'number',); // Permanece tipo número
 
     // Exclui funcionários inativos via delSome
-    store.delSome((items: any[],) => items.filter((i: any,) => i.active === false));
+    store.delSome((items) => {
+      const data = items as Record<string, unknown>[];
+      // deno-lint-ignore no-explicit-any
+      return data.filter((i) => (i.active as boolean) === false) as any;
+    });
 
     // Checa deleção correta
     assertEquals(store.get('e30',), undefined,);
@@ -130,8 +146,8 @@ Deno.test({
     assertEquals(remainingKeys.length, 2,);
 
     // Assegura integridade dos que ficaram
-    const remaining = store.values<any>();
-    assertNotEquals(remaining[0].name, 'pedro alves',);
+    const remaining = store.values<Record<string, unknown>>();
+    assertNotEquals(remaining[0]?.name as string, 'pedro alves',);
 
     store.clear();
   },
