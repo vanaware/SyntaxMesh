@@ -68,22 +68,19 @@ Deno.test({
 
     // AssertThrows captura as exceções síncronas disparadas pelo wrapper ls()
     assertThrows(
-      // deno-lint-ignore no-explicit-any
-      () => store.getSome(() => ({ obj: 'invalid', } as any)),
+      () => store.getSome(() => ({ obj: 'invalid', } as Record<string, unknown>)),
       Error,
       'A função em getSome deve retornar um Array.',
     );
 
     assertThrows(
-      // deno-lint-ignore no-explicit-any
-      () => store.delSome(() => false as any),
+      () => store.delSome(() => false as boolean),
       Error,
       'A função em delSome deve retornar um Array.',
     );
 
     assertThrows(
-      // deno-lint-ignore no-explicit-any
-      () => store.setSome(() => 'string' as any, (i: unknown,) => i as any,),
+      () => store.setSome(() => 'string' as unknown, (i: unknown,) => i as unknown,),
       Error,
       'A função de seleção em setSome deve retornar um Array.',
     );
@@ -108,8 +105,7 @@ Deno.test({
     store.setSome(
       (items) => {
         const data = items as Record<string, unknown>[];
-        // deno-lint-ignore no-explicit-any
-        return data.filter((item) => (item.active as boolean) === true) as any;
+        return data.filter((item) => (item.active as boolean) === true) as Record<string, unknown>[];
       },
       (item) => {
         const data = item as Record<string, unknown>;
@@ -136,8 +132,7 @@ Deno.test({
     // Exclui funcionários inativos via delSome
     store.delSome((items) => {
       const data = items as Record<string, unknown>[];
-      // deno-lint-ignore no-explicit-any
-      return data.filter((i) => (i.active as boolean) === false) as any;
+      return data.filter((i) => (i.active as boolean) === false) as Record<string, unknown>[];
     });
 
     // Checa deleção correta

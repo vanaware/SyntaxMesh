@@ -28,16 +28,16 @@ export class FakeOPFSFileHandle {
     };
   }
 
-  async getFile(): Promise<File> {
+  getFile(): Promise<File> {
     const content = this.storage.get(this.fullPath,);
     if (content === undefined) {
       throw new Error(`File ${this.fullPath} not found in Fake OPFS`,);
     }
     const fileName = this.fullPath.split('/',).pop() || 'file';
-    return new File([content as BlobPart], fileName, {
+    return Promise.resolve(new File([content as BlobPart], fileName, {
       type: 'application/octet-stream',
       lastModified: Date.now(),
-    },);
+    },));
   }
 }
 

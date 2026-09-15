@@ -33,20 +33,22 @@ export function gerarIdComPrefixo(prefix: string,): string {
 }
 
 // Injeta dinamicamente o '_id' sem o prefixo ao LER do banco/localStorage
-export function formatDbItem(key: IDBValidKey, val: any, prefix = '',): any {
-  if (!val || typeof val !== 'object' || Array.isArray(val,)) return val;
-  const keyStr = String(key,);
-  const _id = prefix && keyStr.startsWith(prefix,) ? keyStr.slice(prefix.length,) : keyStr;
-  return { _id, ...val, };
+export function formatDbItem(key: IDBValidKey, val: unknown, prefix = ''): unknown {
+  if (!val || typeof val !== 'object' || Array.isArray(val)) return val;
+  const keyStr = String(key);
+  const _id = prefix && keyStr.startsWith(prefix) ? keyStr.slice(prefix.length) : keyStr;
+  return { _id, ...val };
 }
 
 // Prepara a chave final e limpa o '_id' do objeto gravado
 export function prepareForSave(
   key: string | undefined | null,
-  val: any,
+  val: unknown,
   prefix = '',
-): { key: string; cleanVal: any } {
-  let rawId = val && typeof val === 'object' ? val._id : undefined;
+): { key: string; cleanVal: unknown } {
+  let rawId = val && typeof val === 'object' && !Array.isArray(val)
+    ? (val as Record<string, unknown>)._id as string | undefined
+    : undefined;
 
   if (rawId === 'auto') {
     rawId = gerarId();
@@ -75,8 +77,8 @@ export function prepareForSave(
     throw new Error("Uma chave (key) ou um atributo '_id' no objeto deve ser fornecido.",);
   }
 
-  if (val && typeof val === 'object' && !Array.isArray(val,) && '_id' in val) {
-    const { _id: _, ...cleanVal } = val;
+  if (val && typeof val === 'object' && !Array.isArray(val) && '_id' in (val as Record<string, unknown>)) {
+    const { _id: _, ...cleanVal } = val as Record<string, unknown>;
     return { key: finalKey, cleanVal, };
   }
 

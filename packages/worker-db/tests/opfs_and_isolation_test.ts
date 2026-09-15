@@ -18,13 +18,13 @@ Deno.test({
     storeA.set('1', { data: 'from A', },);
     storeB.set('1', { data: 'from B', },);
 
-    assertEquals(storeA.get<any>('1',)?.data, 'from A',);
-    assertEquals(storeB.get<any>('1',)?.data, 'from B',);
+    assertEquals(storeA.get<Record<string, unknown>>('1',)?.data, 'from A',);
+    assertEquals(storeB.get<Record<string, unknown>>('1',)?.data, 'from B',);
 
     storeA.clear();
     assertEquals(storeA.keys().length, 0,);
     assertEquals(storeB.keys().length, 1,);
-    assertEquals(storeB.get<any>('1',)?.data, 'from B',);
+    assertEquals(storeB.get<Record<string, unknown>>('1',)?.data, 'from B',);
   },
 },);
 

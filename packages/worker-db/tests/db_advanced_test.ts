@@ -1,4 +1,5 @@
 import { db, assert, assertEquals, assertNotEquals, assertRejects, } from '../src/fake/fake-mod.ts';
+import { type WithId, } from '../src/utils/id.ts';
 
 interface Fatura {
   tag: string;
@@ -83,22 +84,19 @@ Deno.test({
 
     // AssertRejects captura os throw Exceptions disparados lá no switch(command) do worker
     await assertRejects(
-      // deno-lint-ignore no-explicit-any
-      async () => await store.getSome(() => ({ obj: 'invalid', } as any)),
+      async () => await store.getSome(() => ({ obj: 'invalid', } as unknown as WithId<unknown>[])),
       Error,
       'A função injetada em GET_SOME deve retornar um Array.',
     );
 
     await assertRejects(
-      // deno-lint-ignore no-explicit-any
-      async () => await store.delSome(() => false as any),
+      async () => await store.delSome(() => false as unknown as WithId<unknown>[]),
       Error,
       'A função injetada em DEL_SOME deve retornar um Array.',
     );
 
     await assertRejects(
-      // deno-lint-ignore no-explicit-any
-      async () => await store.setSome(() => 'string' as any, (i: unknown,) => i as any,),
+      async () => await store.setSome(() => 'string' as unknown as WithId<unknown>[], (i: unknown,) => i as unknown as WithId<unknown>),
       Error,
       'A função de seleção em SET_SOME deve retornar um Array.',
     );
@@ -121,8 +119,7 @@ Deno.test({
 
     // Atualiza nome para UPPERCASE e converte 'level' (number) para string
     await store.setSome(
-      // deno-lint-ignore no-explicit-any
-      (items: Funcionario[]) => items.filter((item: Funcionario) => item.active === true) as any,
+      (items: Funcionario[]) => items.filter((item: Funcionario) => item.active === true) as Funcionario[],
       (item: Funcionario) => ({
         ...item,
         name: item.name.toUpperCase(),

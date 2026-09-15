@@ -78,7 +78,7 @@ export const globalSwDbAPI = {
     const store = getCustomStore(opts?.dbName, opts?.storeName,);
     const rawKey = opts?.prefix && !key.startsWith(opts.prefix,) ? `${opts.prefix}${key}` : key;
     const val = await get(rawKey, store,);
-    return val !== undefined ? formatDbItem(rawKey, val, opts?.prefix,) : undefined;
+    return val !== undefined ? formatDbItem(rawKey, val, opts?.prefix,) as WithId<T> : undefined;
   },
 
   set: async <T,>(
@@ -131,7 +131,7 @@ export const globalSwDbAPI = {
     }
     const { key: finalKey, cleanVal, } = prepareForSave(rawKey, updated, opts?.prefix,);
     await set(finalKey, cleanVal, store,);
-    return formatDbItem(finalKey, cleanVal, opts?.prefix,);
+    return formatDbItem(finalKey, cleanVal, opts?.prefix,) as WithId<T>;
   },
 
   delete: async (key: string, opts?: DbStoreOptions,): Promise<void> => {
