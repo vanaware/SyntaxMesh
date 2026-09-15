@@ -29,7 +29,7 @@ export class IntervalList<T extends Comparable> extends Array<Interval<T>> {
           'Intervals may not overlap and must be added in ascending order.'
         );
       } else if (equals(last.end, iv.start)) {
-        this[this.length - 1] = new (last.constructor as any)(last.start, iv.end);
+        this[this.length - 1] = new (last.constructor as new (start: T, end: T) => Interval<T>)(last.start, iv.end);
         return this.length;
       }
     }
@@ -43,47 +43,83 @@ export class IntervalList<T extends Comparable> extends Array<Interval<T>> {
     let li = 0;
 
     while (si < this.length && li < list.length) {
-      this.addCase(res, si, li, list);
+      const selfIv = this[si] as Interval<T>;
+      const listIv = list[li] as Interval<T>;
+      const result = this.addCase(selfIv, listIv, si, li);
+      if (result.type === "push") {
+        res.push(result.interval!);
+      }
+      si = result.si;
+      li = result.li;
     }
 
     return res;
   }
 
-  private addCase(res: IntervalList<T>, si: number, li: number, list: IntervalList<T>): void {
-    const selfIv = this[si] as Interval<T>;
-    const listIv = list[li] as Interval<T>;
-
+  private addCase(
+    selfIv: Interval<T>,
+    listIv: Interval<T>,
+    si: number,
+    li: number
+  ): { type: "push" | "skip"; interval?: Interval<T>; si: number; li: number } {
     if (lessThan(selfIv.start, listIv.start)) {
       if (!lessThan(listIv.start, selfIv.end)) {
-        si += 1;
+        return { type: "skip", interval: undefined!, si: si + 1, li };
       } else if (lessThan(selfIv.end, listIv.end)) {
-        res.push(new (selfIv.constructor as any)(listIv.start, selfIv.end));
-        si += 1;
+        return {
+          type: "push",
+          interval: new (selfIv.constructor as new (start: T, end: T) => Interval<T>)(listIv.start, selfIv.end),
+          si: si + 1,
+          li,
+        };
       } else {
-        res.push(new (selfIv.constructor as any)(listIv.start, listIv.end));
-        li += 1;
+        return {
+          type: "push",
+          interval: new (selfIv.constructor as new (start: T, end: T) => Interval<T>)(listIv.start, listIv.end),
+          si: si + 1,
+          li: li + 1,
+        };
       }
     } else if (lessThan(listIv.start, selfIv.start)) {
       if (!lessThan(selfIv.start, listIv.end)) {
-        li += 1;
+        return { type: "skip", interval: undefined!, si, li: li + 1 };
       } else if (lessThan(listIv.end, selfIv.end)) {
-        res.push(new (selfIv.constructor as any)(selfIv.start, listIv.end));
-        li += 1;
+        return {
+          type: "push",
+          interval: new (selfIv.constructor as new (start: T, end: T) => Interval<T>)(selfIv.start, listIv.end),
+          si,
+          li: li + 1,
+        };
       } else {
-        res.push(new (selfIv.constructor as any)(selfIv.start, selfIv.end));
-        si += 1;
+        return {
+          type: "push",
+          interval: new (selfIv.constructor as new (start: T, end: T) => Interval<T>)(selfIv.start, selfIv.end),
+          si: si + 1,
+          li: li + 1,
+        };
       }
     } else {
       if (equals(selfIv.end, listIv.end)) {
-        res.push(selfIv);
-        li += 1;
-        si += 1;
+        return {
+          type: "push",
+          interval: selfIv,
+          si: si + 1,
+          li: li + 1,
+        };
       } else if (lessThan(selfIv.end, listIv.end)) {
-        res.push(selfIv);
-        si += 1;
+        return {
+          type: "push",
+          interval: selfIv,
+          si: si + 1,
+          li,
+        };
       } else {
-        res.push(listIv);
-        li += 1;
+        return {
+          type: "push",
+          interval: listIv,
+          si,
+          li: li + 1,
+        };
       }
     }
   }

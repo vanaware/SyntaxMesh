@@ -39,13 +39,13 @@ deno task fmt && deno task lint
 ## Progresso
 
 ```
-[x] 5.0  ADR 012                      —  0/5
+[x] 5.0  ADR 012                      —  5/5 ✅
 [x] 5.1  TjTime parsing               —  18/18 ✅
 [x] 5.2  TjTime aritmética            —  10/10 ✅
 [x] 5.3  TjTime normalizações         —  10/10 ✅
-[x] 5.4  TjTime avanços               —  0/12 ✅
-[ ] 5.5  TjTime diferenças            —  0/8 ✅
-[x] 5.6  TjTime timezone + strftime   —  0/16 ✅
+[x] 5.4  TjTime avanços               —  12/12 ✅
+[x] 5.5  TjTime diferenças            —  8/8 ✅
+[x] 5.6  TjTime timezone + strftime   —  16/16 ✅
 [ ] 5.7  Interval                     —  0/9
 [ ] 5.8  TimeInterval                 —  0/6
 [x] 5.9  ScoreboardInterval           —  7/7 ✅
@@ -266,7 +266,7 @@ TOTAL: 142
 | 5.10.1 | Classe `IntervalList<T>` estende `Array<T>` com `[Symbol.species] = Array` | `src/time/interval-list.ts` + `tests/time/interval-list_test.ts` | 2 testes |
 | 5.10.2 | `append(iv)` — alias de `Array.push` (não usa `<<`) | idem | 1 teste |
 | 5.10.3 | ⚠️ `<<(iv)` sobrescrito: se `iv.start < last.end` → **lança** `"Intervals may not overlap and must be added in ascending order."`. Se `iv.start === last.end` → **merge** (substitui `last` por `new(last.start, iv.end)`). Senão, `push` | idem | 4 testes |
-| 5.10.4 | ⚠️ `intersect(other)`: algoritmo com **6 branches** do Ruby. **Não** usar `Set` ou mapa. Ler as linhas 20–75 do Ruby e replicar | idem | 8 testes (todas as combinações) |
+| 5.10.4 | ⚠️ `intersect(other)`: algoritmo com **6 branches** do Ruby. **Não** usar `Set` ou mapa. Ler as linhas 20–75 do Ruby e replicar | idem | 6 testes (todas as combinações) |
 | 5.10.5 | Revisar: `intersect` retorna `IntervalList` **vazia** se não há sobreposição | idem | 1 teste |
 | 5.10.6 | Teste de fumaça: mesclar 100 intervalos ascendentes | idem | 1 teste |
 | 5.10.7 | Refatorar: extrair `private addCase(...)` para os branches | idem | `check-all` |

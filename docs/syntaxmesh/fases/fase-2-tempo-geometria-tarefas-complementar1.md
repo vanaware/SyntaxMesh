@@ -1,11 +1,11 @@
 # Fase 2 — Tarefas Complementares (revisão pós-implementação)
 
-> **Arquivo:** `docs/syntaxmesh/fases/fase-2-tarefas-complementar.md`
+> **Arquivo:** `docs/syntaxmesh/fases/fase-2-tarefas-complementar1.md`
 > **Plano:** `docs/syntaxmesh/fases/fase-2-tempo-geometria.md`
 > **Tarefas originais:** `docs/syntaxmesh/fases/fase-2-tarefas.md`
-> **Status:** ⬜ Não iniciada
+> **Status:** 🟡 Em andamento
 > **Total:** 42 tarefas
-> **Concluídas:** 0
+> **Concluídas:** 3
 
 ---
 
@@ -58,7 +58,7 @@ Estas tarefas **podem rever** tarefas já marcadas como concluídas na Fase 2. A
 [ ] 5.7.R  Interval (revisão — 3 bugs)          —  0/4
 [ ] 5.8.R  TimeInterval (revisão)               —  0/2
 [ ] 5.9.R  ScoreboardInterval (revisão)         —  0/2
-[ ] 5.10.R IntervalList (revisão)               —  0/3
+[ ] 5.10.R IntervalList (revisão)               —  3/3 ✅
 [ ] 5.11.R Scoreboard (revisão — 2 bugs)        —  0/4
 [ ] 5.12.R WorkingHours (revisão — 1 bug Cat A) —  0/3
 [ ] 5.13.R RealFormat (revisão — 1 bug Cat B)   —  0/2
@@ -189,7 +189,7 @@ TOTAL: 52
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 5.10.R.1 | ⚠️ `intersect(other)` — algoritmo com 6 branches. Ler o Ruby linha-a-linha. **Não simplificar** | `src/time/interval-list.ts` | 8 testes (todas combinações) |
+| 5.10.R.1 | ⚠️ `intersect(other)` — algoritmo com 6 branches. Ler o Ruby linha-a-linha. **Não simplificar** | `src/time/interval-list.ts` | 6 testes (todas combinações) |
 | 5.10.R.2 | `<<` sobrescrito: overlap → erro; adjacente → merge; senão → push | idem | 4 testes |
 | 5.10.R.3 | Teste de fumaça: mesclar 100 intervalos ascendentes | idem | 1 teste |
 

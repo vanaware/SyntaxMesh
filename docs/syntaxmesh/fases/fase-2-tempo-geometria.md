@@ -869,7 +869,8 @@ iv.endDate().equals(sbStart.addSeconds(7200)) === true;
 Implementar `IntervalList<T extends Interval>` com:
 - Herança de `Array<T>`.
 - `intersect(other): IntervalList<T>`.
-- `add(iv: T): this` — com merge automático.
+- `push(iv)` sobrescrito: overlap → erro; adjacente → merge automático; senão → push.
+- `append(iv)` — alias de `Array.push` (sem validação).
 
 #### Arquivos
 
@@ -880,8 +881,8 @@ Implementar `IntervalList<T extends Interval>` com:
 
 - [ ] `class IntervalList<T extends Interval<any, any>> extends Array<T>`:
   - `intersect(other: IntervalList<T>): IntervalList<T>`.
-  - `add(iv: T): this`.
-  - `append(iv: T): void`.
+  - `push(iv)` sobrescrito: overlap → erro; adjacente → merge; senão → push.
+  - `append(iv)` — alias de `Array.push` (sem validação).
   - `[Symbol.species] = Array`.
 
 #### Referências
@@ -896,11 +897,11 @@ Implementar `IntervalList<T extends Interval>` com:
 
 ```ts
 const a = new IntervalList<TimeInterval>();
-a.add(new TimeInterval(t1, t2));
-a.add(new TimeInterval(t2, t3)); // mescla → 1 intervalo [t1, t3]
+a.push(new TimeInterval(t1, t2));
+a.push(new TimeInterval(t2, t3)); // mescla → 1 intervalo [t1, t3]
 
 const b = new IntervalList<TimeInterval>();
-b.add(new TimeInterval(t2, t4));
+b.push(new TimeInterval(t2, t4));
 a.intersect(b); // [t2, t3]
 ```
 
@@ -908,16 +909,25 @@ a.intersect(b); // [t2, t3]
 
 `interval-list_test.ts`:
 
-- `describe("IntervalList.add")`
-  - `it("adiciona intervalo isolado")`.
-  - `it("mescla adjacente à direita")`.
-  - `it("mescla adjacente à esquerda")`.
-  - `it("rejeita sobreposição")`.
+- `describe("IntervalList.push")`
+  - `it("lança quando sobrepõe")`.
+  - `it("mescla adjacente")`.
+  - `it("adiciona não sobreposto")`.
+  - `it("lida com lista vazia")`.
 - `describe("IntervalList.intersect")`
-  - `it("interseção parcial")`.
-  - `it("interseção total")`.
-  - `it("interseção vazia")`.
-  - `it("interseção múltipla")`.
+  - `it("retorna vazio quando não há sobreposição")`.
+  - `it("retorna idêntico quando totalmente sobreposto")`.
+  - `it("retorna parcial")`.
+  - `it("lida com múltiplos intervalos em ambas as listas")`.
+  - `it("lida com starts iguais")`.
+  - `it("funciona com TjTime")`.
+- `describe("IntervalList.append")`
+  - `it("adiciona sem validação")`.
+- `describe("IntervalList extends Array with Symbol.species")`
+  - `it("é instância de Array")`.
+  - `it("Symbol.species é Array")`.
+- `describe("IntervalList smoke test")`
+  - `it("mescla 100 intervalos ascendentes em um")`.
 
 ---
 
