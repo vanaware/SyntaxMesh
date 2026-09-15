@@ -150,7 +150,7 @@ export const globalSwDbAPI = {
     );
     const rawValues = await getMany(fullKeys, store,);
     return rawValues.map((val, idx,) =>
-      val !== undefined ? formatDbItem(fullKeys[idx]!, val, opts?.prefix,) : undefined
+      val !== undefined ? formatDbItem(fullKeys[idx]!, val, opts?.prefix,) as WithId<T> : undefined
     );
   },
 

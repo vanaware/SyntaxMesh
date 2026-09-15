@@ -1,5 +1,6 @@
 import { assert, assertEquals, assertNotEquals, assertThrows, } from '@std/assert';
 import { ls, } from '../src/fake/fake-mod.ts';
+import { type WithId, } from '../src/utils/id.ts';
 
 Deno.test({
   name: 'LS Advanced - Execução de Métodos Modernos de Array JS (query, getSome)',
@@ -68,19 +69,19 @@ Deno.test({
 
     // AssertThrows captura as exceções síncronas disparadas pelo wrapper ls()
     assertThrows(
-      () => store.getSome(() => ({ obj: 'invalid', } as Record<string, unknown>)),
+      () => store.getSome(() => ({ obj: 'invalid', } as unknown as WithId<unknown>[])),
       Error,
       'A função em getSome deve retornar um Array.',
     );
 
     assertThrows(
-      () => store.delSome(() => false as boolean),
+      () => store.delSome(() => false as unknown as WithId<unknown>[]),
       Error,
       'A função em delSome deve retornar um Array.',
     );
 
     assertThrows(
-      () => store.setSome(() => 'string' as unknown, (i: unknown,) => i as unknown,),
+      () => store.setSome(() => 'string' as unknown as WithId<unknown>[], (i: unknown,) => i as unknown as WithId<unknown>),
       Error,
       'A função de seleção em setSome deve retornar um Array.',
     );
@@ -105,7 +106,7 @@ Deno.test({
     store.setSome(
       (items) => {
         const data = items as Record<string, unknown>[];
-        return data.filter((item) => (item.active as boolean) === true) as Record<string, unknown>[];
+        return data.filter((item) => (item.active as boolean) === true) as WithId<Record<string, unknown>>[];
       },
       (item) => {
         const data = item as Record<string, unknown>;
@@ -132,7 +133,7 @@ Deno.test({
     // Exclui funcionários inativos via delSome
     store.delSome((items) => {
       const data = items as Record<string, unknown>[];
-      return data.filter((i) => (i.active as boolean) === false) as Record<string, unknown>[];
+      return data.filter((i) => (i.active as boolean) === false) as WithId<Record<string, unknown>>[];
     });
 
     // Checa deleção correta

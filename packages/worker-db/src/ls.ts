@@ -32,7 +32,7 @@ function getAllPrefixedEntries(prefix = '',): [string, unknown,][] {
 
 function getFormattedItems<T,>(prefix = '',): WithId<T>[] {
   const rawEntries = getAllPrefixedEntries(prefix,);
-  return rawEntries.map(([k, v,],) => formatDbItem(k, v, prefix,));
+  return rawEntries.map(([k, v,],) => formatDbItem(k, v, prefix,) as WithId<T>);
 }
 
 function resolveKey(key: string, prefix = '',): string {
@@ -46,7 +46,7 @@ function createScopedLs(prefix = '',) {
       const raw = localStorage.getItem(fullKey,);
       if (raw === null) return undefined;
       try {
-        return formatDbItem(fullKey, JSON.parse(raw,), prefix,);
+        return formatDbItem(fullKey, JSON.parse(raw,), prefix,) as WithId<T>;
       } catch {
         return undefined;
       }
@@ -85,7 +85,7 @@ function createScopedLs(prefix = '',) {
 
       const { key: finalKey, cleanVal, } = prepareForSave(key, updated, prefix,);
       localStorage.setItem(finalKey, JSON.stringify(cleanVal,),);
-      return formatDbItem(finalKey, cleanVal, prefix,);
+      return formatDbItem(finalKey, cleanVal, prefix,) as WithId<T>;
     },
 
     delete: (key: string,): void => {
