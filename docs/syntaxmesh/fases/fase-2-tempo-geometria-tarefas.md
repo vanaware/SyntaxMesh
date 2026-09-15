@@ -48,7 +48,7 @@ deno task fmt && deno task lint
 [x] 5.6  TjTime timezone + strftime   —  0/16 ✅
 [ ] 5.7  Interval                     —  0/9
 [ ] 5.8  TimeInterval                 —  0/6
-[ ] 5.9  ScoreboardInterval           —  0/7
+[x] 5.9  ScoreboardInterval           —  7/7 ✅
 [ ] 5.10 IntervalList                 —  0/7
 [ ] 5.11 Scoreboard                   —  0/12
 [ ] 5.12 WorkingHours                 —  0/14
@@ -247,13 +247,13 @@ TOTAL: 142
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 5.9.1 | ⚠️ Constructor **variádico**: 1 arg (copy), 3 args (`sbStart, slotDuration, single`), 4 args (`sbStart, slotDuration, start, end`) | `src/time/scoreboard-interval.ts` + `tests/time/scoreboard-interval_test.ts` | 4 testes |
-| 5.9.2 | Validar `sbStart: TjTime`, `slotDuration: number` (int), `start/end: number \| TjTime` | idem | 3 testes |
-| 5.9.3 | `dateToIndex(date)`: `(date.diff(sbStart)) / slotDuration` (divisão **inteira**) | idem | 2 testes |
-| 5.9.4 | `indexToDate(idx)`: `sbStart.addSeconds(idx * slotDuration)` | idem | 2 testes |
-| 5.9.5 | `startDate()`, `endDate()`, `duration()` | idem | 3 testes |
-| 5.9.6 | Setters `start=` / `end=` aceitam `TjTime \| number` | idem | 3 testes |
-| 5.9.7 | `to_s()` usa `indexToDate(...).to_s()` | idem | 1 teste |
+| 5.9.1 | ⚠️ Constructor **variádico**: 1 arg (copy), 3 args (`sbStart, slotDuration, single`), 4 args (`sbStart, slotDuration, start, end`) | `src/time/scoreboard-interval.ts` + `tests/time/scoreboard-interval_test.ts` | 4 testes ✅ |
+| 5.9.2 | Validar `sbStart: TjTime`, `slotDuration: number` (int), `start/end: number \| TjTime` | idem | 3 testes ✅ |
+| 5.9.3 | `dateToIndex(date)`: `(date.diff(sbStart)) / slotDuration` (divisão **inteira**) | idem | 2 testes ✅ |
+| 5.9.4 | `indexToDate(idx)`: `sbStart.addSeconds(idx * slotDuration)` | idem | 2 testes ✅ |
+| 5.9.5 | `startDate()`, `endDate()`, `duration()` | idem | 3 testes ✅ |
+| 5.9.6 | Setters `start=` / `end=` aceitam `TjTime \| number` | idem | 3 testes ✅ |
+| 5.9.7 | `to_s()` usa `indexToDate(...).to_s()` | idem | 1 teste ✅ |
 
 ---
 
