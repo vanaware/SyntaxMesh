@@ -12,5 +12,6 @@ export const CORE_VERSION = "0.0.0-placeholder";
 export * from './time/tj-time.ts';
 export * from './time/timezone.ts';
 export * from './time/interval.ts';
+export * from './time/interval-list.ts';
 export * from './time/time-interval.ts';
 export * from './time/scoreboard-interval.ts';

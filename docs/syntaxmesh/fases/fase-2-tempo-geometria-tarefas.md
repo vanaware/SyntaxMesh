@@ -49,7 +49,7 @@ deno task fmt && deno task lint
 [ ] 5.7  Interval                     —  0/9
 [ ] 5.8  TimeInterval                 —  0/6
 [x] 5.9  ScoreboardInterval           —  7/7 ✅
-[ ] 5.10 IntervalList                 —  0/7
+[x] 5.10 IntervalList             —  7/7 ✅
 [ ] 5.11 Scoreboard                   —  0/12
 [ ] 5.12 WorkingHours                 —  0/14
 [ ] 5.13 RealFormat                   —  0/8

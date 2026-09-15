@@ -1,0 +1,12 @@
+import { TjTime } from './packages/core/src/time/tj-time.ts';
+const t1 = TjTime.fromString('2026-01-01-00:00:00');
+const t2 = TjTime.fromString('2026-01-01-02:00:00');
+const t3 = TjTime.fromString('2026-01-01-01:00:00');
+const t4 = TjTime.fromString('2026-01-01-03:00:00');
+console.log('t1:', t1.toSeconds());
+console.log('t2:', t2.toSeconds());
+console.log('t3:', t3.toSeconds());
+console.log('t4:', t4.toSeconds());
+console.log('t1 < t3:', t1.lessThan(t3));
+console.log('t3 < t2:', t3.lessThan(t2));
+console.log('t2 < t4:', t2.lessThan(t4));
