@@ -1,27 +1,26 @@
 import { Interval } from './interval.ts';
 import { TjArgumentError } from './tj-time.ts';
-import { Comparable } from './interval.ts';
 
-function lessThan<T extends Comparable>(a: T, b: T): boolean {
+function lessThan<T>(a: T, b: T): boolean {
   if (typeof a === 'number' && typeof b === 'number') return a < b;
   if (a instanceof Date && b instanceof Date) return a.getTime() < b.getTime();
-  return (a as unknown as { compareTo: (other: T) => number }).compareTo(b) < 0;
+  return (a as { compareTo: (other: T) => number }).compareTo(b) < 0;
 }
 
-function equals<T extends Comparable>(a: T, b: T): boolean {
+function equals<T>(a: T, b: T): boolean {
   if (typeof a === 'number' && typeof b === 'number') return a === b;
   if (a instanceof Date && b instanceof Date) return a.getTime() === b.getTime();
-  return (a as unknown as { equals: (other: T) => boolean }).equals(b);
+  return (a as { equals: (other: T) => boolean }).equals(b);
 }
 
-export class IntervalList<T extends Comparable> extends Array<Interval<T>> {
+export class IntervalList<T extends Interval<any>> extends Array<T> {
   static override [Symbol.species] = Array;
 
-  append(iv: Interval<T>): void {
+  append(iv: T): void {
     super.push(iv);
   }
 
-  override push(iv: Interval<T>): number {
+  override push(iv: T): number {
     const last = this.length > 0 ? this[this.length - 1] : undefined;
     if (last) {
       if (lessThan(iv.start, last.end)) {
@@ -29,7 +28,7 @@ export class IntervalList<T extends Comparable> extends Array<Interval<T>> {
           'Intervals may not overlap and must be added in ascending order.'
         );
       } else if (equals(last.end, iv.start)) {
-        this[this.length - 1] = new (last.constructor as new (start: T, end: T) => Interval<T>)(last.start, iv.end);
+        this[this.length - 1] = new (last.constructor as new (...args: unknown[]) => T)(last.start, iv.end);
         return this.length;
       }
     }
@@ -43,8 +42,8 @@ export class IntervalList<T extends Comparable> extends Array<Interval<T>> {
     let li = 0;
 
     while (si < this.length && li < list.length) {
-      const selfIv = this[si] as Interval<T>;
-      const listIv = list[li] as Interval<T>;
+      const selfIv = this[si] as T;
+      const listIv = list[li] as T;
       const result = this.addCase(selfIv, listIv, si, li);
       if (result.type === "push") {
         res.push(result.interval!);
@@ -57,25 +56,25 @@ export class IntervalList<T extends Comparable> extends Array<Interval<T>> {
   }
 
   private addCase(
-    selfIv: Interval<T>,
-    listIv: Interval<T>,
+    selfIv: T,
+    listIv: T,
     si: number,
     li: number
-  ): { type: "push" | "skip"; interval?: Interval<T>; si: number; li: number } {
+  ): { type: "push" | "skip"; interval?: T; si: number; li: number } {
     if (lessThan(selfIv.start, listIv.start)) {
       if (!lessThan(listIv.start, selfIv.end)) {
         return { type: "skip", interval: undefined!, si: si + 1, li };
       } else if (lessThan(selfIv.end, listIv.end)) {
         return {
           type: "push",
-          interval: new (selfIv.constructor as new (start: T, end: T) => Interval<T>)(listIv.start, selfIv.end),
+          interval: new (selfIv.constructor as new (...args: unknown[]) => T)(listIv.start, selfIv.end),
           si: si + 1,
           li,
         };
       } else {
         return {
           type: "push",
-          interval: new (selfIv.constructor as new (start: T, end: T) => Interval<T>)(listIv.start, listIv.end),
+          interval: new (selfIv.constructor as new (...args: unknown[]) => T)(listIv.start, listIv.end),
           si: si + 1,
           li: li + 1,
         };
@@ -86,14 +85,14 @@ export class IntervalList<T extends Comparable> extends Array<Interval<T>> {
       } else if (lessThan(listIv.end, selfIv.end)) {
         return {
           type: "push",
-          interval: new (selfIv.constructor as new (start: T, end: T) => Interval<T>)(selfIv.start, listIv.end),
+          interval: new (selfIv.constructor as new (...args: unknown[]) => T)(selfIv.start, listIv.end),
           si,
           li: li + 1,
         };
       } else {
         return {
           type: "push",
-          interval: new (selfIv.constructor as new (start: T, end: T) => Interval<T>)(selfIv.start, selfIv.end),
+          interval: new (selfIv.constructor as new (...args: unknown[]) => T)(selfIv.start, selfIv.end),
           si: si + 1,
           li: li + 1,
         };

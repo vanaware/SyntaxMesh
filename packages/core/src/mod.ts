@@ -15,3 +15,5 @@ export * from './time/interval.ts';
 export * from './time/interval-list.ts';
 export * from './time/time-interval.ts';
 export * from './time/scoreboard-interval.ts';
+export * from './time/scoreboard.ts';
+export * from './compat.ts';

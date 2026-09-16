@@ -46,8 +46,8 @@ deno task fmt && deno task lint
 [x] 5.4  TjTime avanços               —  12/12 ✅
 [x] 5.5  TjTime diferenças            —  8/8 ✅
 [x] 5.6  TjTime timezone + strftime   —  16/16 ✅
-[ ] 5.7  Interval                     —  0/9
-[ ] 5.8  TimeInterval                 —  0/6
+[x] 5.7  Interval                     —  9/9 ✅
+[x] 5.8  TimeInterval                 —  6/6 ✅
 [x] 5.9  ScoreboardInterval           —  7/7 ✅
 [x] 5.10 IntervalList             —  7/7 ✅
 [ ] 5.11 Scoreboard                   —  0/12

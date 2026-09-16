@@ -28,15 +28,12 @@ export class Interval<T extends Comparable> {
    * @param arg - Interval or value to check
    * @returns true if contained
    */
-  contains(arg: Interval<T> | T): boolean {
+  contains(arg: T | Interval<T>): boolean {
+    this.checkClass(arg);
     if (arg instanceof Interval) {
-      this.checkClass(arg);
       return this.start <= arg.start && arg.end <= this.end;
-    } else if (typeof arg === 'number' || arg instanceof Date) {
-      return this.start <= arg && arg < this.end;
     } else {
-      this.checkClass(arg);
-      return false;
+      return this.start <= arg && arg < this.end;
     }
   }
 
@@ -45,16 +42,13 @@ export class Interval<T extends Comparable> {
    * @param arg - Interval or value to check
    * @returns true if overlaps
    */
-  overlaps(arg: Interval<T> | T): boolean {
+  overlaps(arg: T | Interval<T>): boolean {
+    this.checkClass(arg);
     if (arg instanceof Interval) {
-      this.checkClass(arg);
       return this.start <= arg.start && arg.start < this.end ||
              arg.start <= this.start && this.start < arg.end;
-    } else if (typeof arg === 'number' || arg instanceof Date) {
-      return this.contains(arg);
     } else {
-      this.checkClass(arg);
-      return false;
+      return this.contains(arg);
     }
   }
 
@@ -92,7 +86,7 @@ export class Interval<T extends Comparable> {
    * @param iv - Other interval
    * @returns -1 if end < iv.start, 1 if iv.end < start, 0 if overlaps
    */
-  compareTo(iv: Interval<T>): number {
+  compareTo(iv: Interval<T>): -1 | 0 | 1 {
     if (this.end < iv.start) {
       return -1;
     }
@@ -127,7 +121,11 @@ export class Interval<T extends Comparable> {
    * @throws TjArgumentError if class mismatch
    */
   private checkClass(arg: unknown): void {
-    if (this.constructor !== (arg as { constructor: unknown }).constructor) {
+    if (arg instanceof Interval) {
+      if (this.constructor !== arg.constructor) {
+        throw new TjArgumentError('Class mismatch');
+      }
+    } else if (typeof arg !== 'number' && !(arg instanceof Date) && !(arg instanceof TjTime)) {
       throw new TjArgumentError('Class mismatch');
     }
   }
