@@ -53,7 +53,7 @@ describe("Scoreboard", () => {
       const end = TjTime.fromSeconds(1000).toDate();
       const resolution = 60;
       const sb = new Scoreboard<string>(start, end, resolution);
-      const expected = new Date(start.getTime() + 2 * resolution);
+      const expected = new Date(start.getTime() + 2 * resolution * 1000);
       assertEquals(sb.idxToDate(2).getTime(), expected.getTime());
     });
 
@@ -88,7 +88,7 @@ describe("Scoreboard", () => {
       const end = TjTime.fromSeconds(1000).toDate();
       const resolution = 60;
       const sb = new Scoreboard<string>(start, end, resolution);
-      const testDate = new Date(start.getTime() + 2 * resolution);
+      const testDate = new Date(start.getTime() + 2 * resolution * 1000);
       assertEquals(sb.dateToIdx(testDate), 2);
     });
 
@@ -115,7 +115,7 @@ describe("Scoreboard", () => {
       const end = TjTime.fromSeconds(1000).toDate();
       const resolution = 60;
       const sb = new Scoreboard<string>(start, end, resolution);
-      const beforeStart = new Date(start.getTime() - 1000);
+      const beforeStart = new Date(start.getTime() - 120000);
       assertThrows(() => sb.dateToIdx(beforeStart, false), Error, "is out of project time range");
     });
   });
@@ -306,7 +306,7 @@ describe("Scoreboard", () => {
       sb.set(5, 1);
       sb.set(6, 1);
       const iv = new TimeInterval(TjTime.fromSeconds(start.getTime() / 1000), TjTime.fromSeconds(end.getTime() / 1000));
-      const result = sb.collectIntervals(iv, 120, (v) => v === 1);
+      const result = sb.collectIntervals(iv, 180, (v) => v === 1);
       assertEquals(result.length, 0);
     });
 
@@ -328,7 +328,7 @@ describe("Scoreboard", () => {
       const end = TjTime.fromSeconds(1000).toDate();
       const resolution = 60;
       const sb = new Scoreboard<string>(start, end, resolution);
-      assertEquals(sb.size, 61);
+      assertEquals(sb.size, 16);
     });
   });
 

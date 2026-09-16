@@ -47,11 +47,11 @@ export class Scoreboard<T> {
         throw new TjArgumentError(`Index ${idx} is out of scoreboard range (${this.size - 1})`);
       }
     }
-    return new Date(this.startDate.getTime() + idx * this.resolution);
+    return new Date(this.startDate.getTime() + idx * this.resolution * 1000);
   }
 
   dateToIdx(date: Date, forceIntoProject: boolean = true): number {
-    const idx = Math.trunc((date.getTime() - this.startDate.getTime()) / this.resolution);
+    const idx = Math.trunc((date.getTime() - this.startDate.getTime()) / (this.resolution * 1000));
 
     if (forceIntoProject) {
       if (idx < 0) return 0;
