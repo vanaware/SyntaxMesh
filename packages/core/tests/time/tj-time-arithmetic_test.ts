@@ -1,5 +1,7 @@
 import { describe, it, } from "@std/testing/bdd";
 import { assertEquals, assertThrows, } from "@std/assert";
+import { setCurrentTimeZone, } from "../../src/time/timezone.ts";
+import { compat, } from "../../src/compat.ts";
 import { TjArgumentError, TjTime, } from "../../src/time/tj-time.ts";
 
 describe("TjTime aritmética", () => {
@@ -28,6 +30,71 @@ describe("TjTime aritmética", () => {
     const t = TjTime.fromString("2026-01-01",);
     assertEquals(t.modulo(86400,), t.toSeconds() % 86400,);
     assertEquals(t.modulo(3600,), t.toSeconds() % 3600,);
+  });
+});
+
+describe("TjTime.align", () => {
+  it("alinhamento em America/Sao_Paulo (UTC-3)", () => {
+    const oldTz = setCurrentTimeZone("America/Sao_Paulo",);
+    try {
+      // 2026-01-15 14:30:00 BRT (UTC-3) -> UTC 17:30:00
+      // align(3600) -> floor((utc + offset)/3600)*3600 - offset
+      // offset = -10800, utc = 1768474200
+      // floor((1768474200 - 10800)/3600)*3600 - (-10800) = 1768464000
+      const t = TjTime.fromString("2026-01-15-14:30:00",);
+      const result = t.align(3600,);
+      assertEquals(
+        result.toSeconds(),
+        TjTime.fromString("2026-01-15-14:00:00",).toSeconds(),
+      );
+    } finally {
+      setCurrentTimeZone(oldTz,);
+    }
+  });
+
+  it("alinhamento com clock maior que o dia em America/Sao_Paulo", () => {
+    const oldTz = setCurrentTimeZone("America/Sao_Paulo",);
+    try {
+      // align(86400) -> floor((utc - 10800)/86400)*86400 + 10800
+      // 2026-01-15 14:30 BRT -> UTC 17:30 -> floor((1768474200-10800)/86400)*86400 + 10800 = 1768425600 + 10800 = 1768436400
+      // 1768436400 UTC -> 2026-01-15 00:00 BRT
+      const t = TjTime.fromString("2026-01-15-14:30:00",);
+      const result = t.align(86400,);
+      assertEquals(
+        result.toSeconds(),
+        TjTime.fromString("2026-01-15-00:00:00",).toSeconds(),
+      );
+    } finally {
+      setCurrentTimeZone(oldTz,);
+    }
+  });
+});
+
+describe("TjTime.compareTo(null)", () => {
+  it("compareTo(null) retorna -1", () => {
+    const t = TjTime.fromString("2026-01-01",);
+    assertEquals(t.compareTo(null,), -1,);
+  });
+});
+
+describe("TjTime.lessThan(null)", () => {
+  it("lessThan(null) retorna false", () => {
+    const t = TjTime.fromString("2026-01-01",);
+    assertEquals(t.lessThan(null,), false,);
+  });
+});
+
+describe("TjTime.greaterThan(null)", () => {
+  it("greaterThan(null) retorna true", () => {
+    const t = TjTime.fromString("2026-01-01",);
+    assertEquals(t.greaterThan(null,), true,);
+  });
+});
+
+describe("TjTime.equals(null)", () => {
+  it("equals(null) retorna false", () => {
+    const t = TjTime.fromString("2026-01-01",);
+    assertEquals(t.equals(null,), false,);
   });
 });
 

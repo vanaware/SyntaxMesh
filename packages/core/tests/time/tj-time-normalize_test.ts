@@ -1,5 +1,6 @@
 import { describe, it, } from "@std/testing/bdd";
 import { assertEquals, assertThrows, } from "@std/assert";
+import { setCurrentTimeZone, } from "../../src/time/timezone.ts";
 import { TjArgumentError, TjTime, } from "../../src/time/tj-time.ts";
 
 describe("TjTime.beginOfHour", () => {
@@ -251,5 +252,64 @@ describe("TjTime.to_a", () => {
     const t = TjTime.fromString("2026-01-15-14:30:45",);
     const result = t.to_a();
     assertEquals(result, [2026, 1, 15, 14, 30, 45, 4,],);
+  });
+});
+
+describe("TjTime normalizações em currentTimeZone", () => {
+  it("beginOfWeek em America/Sao_Paulo (UTC-3)", () => {
+    const oldTz = setCurrentTimeZone("America/Sao_Paulo",);
+    try {
+      // 2026-01-12 é segunda-feira
+      const t = TjTime.fromString("2026-01-12-14:30:00",);
+      const result = t.beginOfWeek(true,);
+      assertEquals(
+        result.toSeconds(),
+        TjTime.fromString("2026-01-12-00:00:00",).toSeconds(),
+      );
+    } finally {
+      setCurrentTimeZone(oldTz,);
+    }
+  });
+
+  it("beginOfMonth em America/Sao_Paulo (UTC-3)", () => {
+    const oldTz = setCurrentTimeZone("America/Sao_Paulo",);
+    try {
+      const t = TjTime.fromString("2026-03-20-14:30:45",);
+      const result = t.beginOfMonth();
+      assertEquals(
+        result.toSeconds(),
+        TjTime.fromString("2026-03-01-00:00:00",).toSeconds(),
+      );
+    } finally {
+      setCurrentTimeZone(oldTz,);
+    }
+  });
+
+  it("beginOfQuarter em America/Sao_Paulo (UTC-3)", () => {
+    const oldTz = setCurrentTimeZone("America/Sao_Paulo",);
+    try {
+      const t = TjTime.fromString("2026-08-15-14:30:45",);
+      const result = t.beginOfQuarter();
+      assertEquals(
+        result.toSeconds(),
+        TjTime.fromString("2026-07-01-00:00:00",).toSeconds(),
+      );
+    } finally {
+      setCurrentTimeZone(oldTz,);
+    }
+  });
+
+  it("beginOfYear em America/Sao_Paulo (UTC-3)", () => {
+    const oldTz = setCurrentTimeZone("America/Sao_Paulo",);
+    try {
+      const t = TjTime.fromString("2026-06-15-14:30:45",);
+      const result = t.beginOfYear();
+      assertEquals(
+        result.toSeconds(),
+        TjTime.fromString("2026-01-01-00:00:00",).toSeconds(),
+      );
+    } finally {
+      setCurrentTimeZone(oldTz,);
+    }
   });
 });
