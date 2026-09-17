@@ -76,6 +76,26 @@ describe("TjTime comparação", () => {
     assertEquals(t2.compareTo(t1,), 1,);
     assertEquals(t1.compareTo(t1,), 0,);
   });
+
+  it("compareTo(null) retorna -1", () => {
+    const t = TjTime.fromString("2026-01-01",);
+    assertEquals(t.compareTo(null,), -1,);
+  });
+
+  it("lessThan(null) retorna false", () => {
+    const t = TjTime.fromString("2026-01-01",);
+    assertEquals(t.lessThan(null,), false,);
+  });
+
+  it("greaterThan(null) retorna true", () => {
+    const t = TjTime.fromString("2026-01-01",);
+    assertEquals(t.greaterThan(null,), true,);
+  });
+
+  it("equals(null) retorna false", () => {
+    const t = TjTime.fromString("2026-01-01",);
+    assertEquals(t.equals(null,), false,);
+  });
 });
 
 describe("TjTime.upto", () => {

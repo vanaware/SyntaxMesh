@@ -132,6 +132,28 @@ describe("TjTime.fromString", () => {
     assertThrows(() => TjTime.fromString("01-01-2026",), TjArgumentError,);
     assertThrows(() => TjTime.fromString("abc",), TjArgumentError,);
   });
+
+  it("aceita limites de ano (1970, 2035)", () => {
+    assertEquals(
+      TjTime.fromString("1970-01-01",).toSeconds(),
+      TjTime.fromParts(1970, 1, 1,).toSeconds(),
+    );
+    assertEquals(
+      TjTime.fromString("2035-12-31",).toSeconds(),
+      TjTime.fromParts(2035, 12, 31,).toSeconds(),
+    );
+  });
+
+  it("aceita limites de mês (1, 12) e dia (1, último)", () => {
+    assertEquals(
+      TjTime.fromString("2026-01-01",).toSeconds(),
+      TjTime.fromParts(2026, 1, 1,).toSeconds(),
+    );
+    assertEquals(
+      TjTime.fromString("2026-12-31",).toSeconds(),
+      TjTime.fromParts(2026, 12, 31,).toSeconds(),
+    );
+  });
 });
 
 describe("TjTime.fromParts", () => {
@@ -161,6 +183,18 @@ describe("TjTime.fromParts", () => {
   it("valida dia para fevereiro em ano bissexto", () => {
     const t = TjTime.fromParts(2024, 2, 29,);
     assertEquals(t.toSeconds(), TjTime.fromString("2024-02-29",).toSeconds(),);
-    assertThrows(() => TjTime.fromParts(2025, 2, 29,), TjArgumentError,);
+    // RUBY-COMPAT-DOC: fromParts allows rollover (mktime(2025,2,29) → 2025-03-01)
+    assertEquals(
+      TjTime.fromParts(2025, 2, 29,).toSeconds(),
+      TjTime.fromString("2025-03-01",).toSeconds(),
+    );
+  });
+
+  it("valida rollover de dia inválido para mês seguinte (4/31 → 5/1)", () => {
+    // RUBY-COMPAT-DOC: fromParts allows rollover (mktime(2024,4,31) → 2024-05-01)
+    assertEquals(
+      TjTime.fromParts(2024, 4, 31,).toSeconds(),
+      TjTime.fromString("2024-05-01",).toSeconds(),
+    );
   });
 });

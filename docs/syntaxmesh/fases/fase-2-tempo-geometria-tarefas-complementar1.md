@@ -49,7 +49,7 @@ Estas tarefas **podem rever** tarefas já marcadas como concluídas na Fase 2. A
 
 ```
 [x] 5.0.R  Fundação (compat.ts + auditoria)     —  2/4 (5.0.R.1✅ 5.0.R.2✅)
-[ ] 5.1.R  Parsing (revisão)                    —  0/5
+[x] 5.1.R  Parsing (revisão)                    —  5/5 (5.1.R.1✅ 5.1.R.2✅ 5.1.R.3✅ 5.1.R.4✅ 5.1.R.5✅)
 [ ] 5.2.R  Aritmética (revisão)                 —  2/5 (5.2.R.4✅ 5.2.R.5✅)
 [ ] 5.3.R  Normalizações (revisão)              —  0/3
 [ ] 5.4.R  Avanços (revisão — 4 bugs Cat. B)    —  4/6 (5.4.R.1✅ 5.4.R.2✅ 5.4.R.3✅ 5.4.R.4✅)
@@ -64,7 +64,7 @@ Estas tarefas **podem rever** tarefas já marcadas como concluídas na Fase 2. A
 [ ] 5.13.R RealFormat (revisão — 1 bug Cat B)   —  0/2
 [ ] 5.14.R Golden tests (extensão)              —  0/4
 ─────────────────────────────────────────────────
-TOTAL: 52 (12 done)
+TOTAL: 52 (17 done)
 ```
 
 ---

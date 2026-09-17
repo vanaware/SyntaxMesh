@@ -110,17 +110,9 @@ export class TjTime {
       throw new TjArgumentError(`Second ${second} out of range (0 - 59)`,);
     }
 
-    // Validate day for month
-    const maxDays = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31,];
-    let maxDay: number = maxDays[month]!;
-    if (month === 2 && TjTime.isLeapYear(year,)) {
-      maxDay = 29;
-    }
-    if (day < 1 || day > maxDay) {
-      throw new TjArgumentError(
-        `Day ${day} out of range (1 - ${maxDay}) for month ${month}`,
-      );
-    }
+    // RUBY-COMPAT-DOC: Ruby's Time.mktime does rollover (e.g. mktime(2024,4,31) → 2024-05-01).
+    // JavaScript's Date.UTC also does rollover naturally, so we don't validate day range here.
+    // fromString() does its own strict validation before calling fromParts().
 
     // Convert to UTC seconds
     const date = new Date(
@@ -138,37 +130,60 @@ export class TjTime {
    * @param str - String to parse
    */
   static fromString(str: string,): TjTime {
-    // Use regex to properly parse the string with timezone
-    const regex =
-      /^(\d{4})-(\d{2})-(\d{2})(?:-(\d{2}):(\d{2})(?::(\d{2}))?)?(?:([+-]\d{4}))?$/;
-    const match = str.match(regex,);
-    if (!match) {
+    // Use split('-', 5) to properly parse the string with timezone
+    const parts = str.split('-', 5);
+    if (parts.length < 3) {
       throw new TjArgumentError(`Invalid date format: ${str}`,);
     }
 
-    const year = parseInt(match[1]!,);
-    const month = parseInt(match[2]!,);
-    const day = parseInt(match[3]!,);
+    const year = parseInt(parts[0]!,);
+    const month = parseInt(parts[1]!,);
+    const day = parseInt(parts[2]!,);
 
     let hour = 0;
     let minute = 0;
     let second = 0;
+    let tzPart: string | undefined = undefined;
 
-    if (match[4]) {
-      hour = parseInt(match[4],);
-      if (match[5]) {
-        minute = parseInt(match[5]!,);
-        if (match[6]) {
-          second = parseInt(match[6],);
+    if (parts.length > 3) {
+      // Check if timezone is embedded in time part (e.g. "14:30+0300")
+      const tzMatch = parts[3]!.match(/([+-]\d{4})$/);
+      if (tzMatch) {
+        // Timezone is at the end of the time part
+        const timeWithoutTz = parts[3]!.slice(0, -(tzMatch[1]!.length));
+        if (!/^\d{2}:\d{2}(:\d{2})?$/.test(timeWithoutTz,)) {
+          throw new TjArgumentError(`Invalid time format: ${parts[3]}`,);
         }
+        const timeParts = timeWithoutTz.split(':', 3);
+        hour = parseInt(timeParts[0]!,);
+        minute = parseInt(timeParts[1]!,);
+        if (timeParts.length > 2) {
+          second = parseInt(timeParts[2]!,);
+        }
+        tzPart = tzMatch[1];
+      } else {
+        // Parse time part (HH:MM[:SS]) — must be strictly digits/colons
+        if (!/^\d{2}:\d{2}(:\d{2})?$/.test(parts[3]!,)) {
+          throw new TjArgumentError(`Invalid time format: ${parts[3]}`,);
+        }
+        const timeParts = parts[3]!.split(':', 3);
+        hour = parseInt(timeParts[0]!,);
+        minute = parseInt(timeParts[1]!,);
+        if (timeParts.length > 2) {
+          second = parseInt(timeParts[2]!,);
+        }
+      }
+
+      // If we have a 5th part, the timezone is '-' + parts[4] (the '-' was consumed as delimiter)
+      if (parts.length > 4) {
+        tzPart = '-' + parts[4]!;
       }
     }
 
-    if (match[7]) {
-      const tzPart = match[7];
+    if (tzPart) {
       if (!/^[+-]\d{4}$/.test(tzPart,)) {
         throw new TjArgumentError(
-          `Time zone adjustment out of range (-1200 - +1400) but is ${tzPart})`,
+          `Time zone adjustment out of range (-1200 - +1400) but is ${tzPart}`,
         );
       }
 
@@ -181,7 +196,7 @@ export class TjTime {
         minutes < 0 || minutes > 59
       ) {
         throw new TjArgumentError(
-          `Time zone adjustment out of range (-1200 - +1400) but is ${tzPart})`,
+          `Time zone adjustment out of range (-1200 - +1400) but is ${tzPart}`,
         );
       }
 
@@ -191,7 +206,7 @@ export class TjTime {
       // Validate range
       if (offsetSeconds < -12 * 3600 || offsetSeconds > 14 * 3600) {
         throw new TjArgumentError(
-          `Time zone adjustment out of range (-1200 - +1400) but is ${tzPart})`,
+          `Time zone adjustment out of range (-1200 - +1400) but is ${tzPart}`,
         );
       }
 
@@ -204,6 +219,22 @@ export class TjTime {
       const utcSeconds = Math.floor(date.getTime() / 1000,);
       return new TjTime(utcSeconds - offsetSeconds,);
     }
+
+    // Validate day for month (strict validation, unlike fromParts which allows rollover)
+    const maxDays = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31,];
+    let maxDay: number = maxDays[month]!;
+    if (month === 2 && TjTime.isLeapYear(year,)) {
+      maxDay = 29;
+    }
+    if (day < 1 || day > maxDay) {
+      throw new TjArgumentError(
+        `Day ${day} out of range (1 - ${maxDay}) for month ${month}`,
+      );
+    }
+
+    // RUBY-COMPAT-DOC: Ruby's Time.mktime does rollover (e.g. mktime(2024,4,31) → 2024-05-01).
+    // JavaScript's Date.UTC also does rollover naturally, so we don't validate day range here.
+    // fromString() does its own strict validation before calling fromParts().
 
     return TjTime.fromParts(year, month, day, hour, minute, second,);
   }
