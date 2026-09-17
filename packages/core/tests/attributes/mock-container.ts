@@ -5,7 +5,7 @@
  * Retorna `null` se o atributo não estiver definido.
  */
 
-import { type AttributeContainer } from "../../src/attributes/attribute-container.ts";
+import { type AttributeContainer, } from "../../src/attributes/attribute-container.ts";
 
 /**
  * Container mock para testes.
@@ -16,12 +16,12 @@ import { type AttributeContainer } from "../../src/attributes/attribute-containe
 export class MockContainer implements AttributeContainer {
   private readonly store = new Map<string, unknown>();
 
-  getStoredValue(attributeId: string): unknown {
-    return this.store.get(attributeId) ?? null;
+  getStoredValue(attributeId: string,): unknown {
+    return this.store.get(attributeId,) ?? null;
   }
 
-  setStoredValue(attributeId: string, value: unknown): void {
-    this.store.set(attributeId, value);
+  setStoredValue(attributeId: string, value: unknown,): void {
+    this.store.set(attributeId, value,);
   }
 
   /**

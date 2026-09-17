@@ -8,8 +8,8 @@
  * Erro base para todos os erros do sistema de atributos.
  */
 export class TjError extends Error {
-  constructor(message: string) {
-    super(message);
+  constructor(message: string,) {
+    super(message,);
     this.name = "TjError";
   }
 }
@@ -18,8 +18,8 @@ export class TjError extends Error {
  * Erro de argumento inválido — usado para validação de parâmetros.
  */
 export class TjArgumentError extends TjError {
-  constructor(message: string) {
-    super(message);
+  constructor(message: string,) {
+    super(message,);
     this.name = "TjArgumentError";
   }
 }
@@ -28,8 +28,8 @@ export class TjArgumentError extends TjError {
  * Erro de execução — usado para falhas durante a execução normal.
  */
 export class TjRuntimeError extends TjError {
-  constructor(message: string) {
-    super(message);
+  constructor(message: string,) {
+    super(message,);
     this.name = "TjRuntimeError";
   }
 }
@@ -40,8 +40,8 @@ export class TjRuntimeError extends TjError {
  * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb (raise AttributeOverwrite)
  */
 export class AttributeOverwrite extends TjRuntimeError {
-  constructor(attributeId: string) {
-    super(`Attribute '${attributeId}' já está definido`);
+  constructor(attributeId: string,) {
+    super(`Attribute '${attributeId}' já está definido`,);
     this.name = "AttributeOverwrite";
   }
 }
@@ -52,8 +52,8 @@ export class AttributeOverwrite extends TjRuntimeError {
  * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb (raise NotYetImplementedError)
  */
 export class NotYetImplementedError extends TjRuntimeError {
-  constructor(phase: string, method: string) {
-    super(`O método '${method}' depende da Fase ${phase}`);
+  constructor(phase: string, method: string,) {
+    super(`O método '${method}' depende da Fase ${phase}`,);
     this.name = "NotYetImplementedError";
   }
 }

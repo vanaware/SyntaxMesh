@@ -4,10 +4,10 @@
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:AccountCreditListAttribute
  */
 
-import { type PropertyLike } from "../../model/property-like.ts";
-import { type AttributeContainer } from "../attribute-container.ts";
-import { type AttributeDefinition } from "../attribute-definition.ts";
-import { ListAttributeBase } from "../list-attribute-base.ts";
+import { type PropertyLike, } from "../../model/property-like.ts";
+import { type AttributeContainer, } from "../attribute-container.ts";
+import { type AttributeDefinition, } from "../attribute-definition.ts";
+import { ListAttributeBase, } from "../list-attribute-base.ts";
 
 /**
  * Atributo de lista de créditos de conta.

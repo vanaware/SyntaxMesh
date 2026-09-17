@@ -4,15 +4,15 @@
  * @see docs/taskjuggler/lib/taskjuggler/AttributeDefinition.rb (arquivo inteiro)
  */
 
-import { AttributeType } from "./attribute-type.ts";
-import { TjArgumentError } from "./errors.ts";
+import { AttributeType, } from "./attribute-type.ts";
+import { TjArgumentError, } from "./errors.ts";
 
 /**
  * Definição de um atributo — blueprint imutável.
  *
  * @see docs/taskjuggler/lib/taskjuggler/AttributeDefinition.rb
  */
-export class AttributeDefinition<T> {
+export class AttributeDefinition<T,> {
   /**
    * ID do atributo (ex: "effort", "responsible").
    */
@@ -76,10 +76,10 @@ export class AttributeDefinition<T> {
     isScenarioAttribute: boolean = false,
   ) {
     if (id === null || id === undefined || id === "") {
-      throw new TjArgumentError("AttributeDefinition id não pode ser vazio");
+      throw new TjArgumentError("AttributeDefinition id não pode ser vazio",);
     }
     if (name === null || name === undefined || name === "") {
-      throw new TjArgumentError("AttributeDefinition name não pode ser vazio");
+      throw new TjArgumentError("AttributeDefinition name não pode ser vazio",);
     }
 
     this.id = id;
@@ -92,7 +92,7 @@ export class AttributeDefinition<T> {
     this.isScenarioAttribute = isScenarioAttribute;
 
     // @see docs/taskjuggler/lib/taskjuggler/AttributeDefinition.rb:freeze
-    Object.freeze(this);
+    Object.freeze(this,);
   }
 
   /**
@@ -100,7 +100,7 @@ export class AttributeDefinition<T> {
    *
    * @see docs/taskjuggler/lib/taskjuggler/AttributeDefinition.rb:attributeTypeClass
    */
-  static attributeTypeClass(type: AttributeType): unknown {
+  static attributeTypeClass(type: AttributeType,): unknown {
     switch (type) {
       case AttributeType.String:
         return "StringAttribute";
@@ -179,7 +179,7 @@ export class AttributeDefinition<T> {
       case AttributeType.DefinitionList:
         return "DefinitionListAttribute";
       default:
-        throw new TjArgumentError(`Tipo de atributo desconhecido: ${type}`);
+        throw new TjArgumentError(`Tipo de atributo desconhecido: ${type}`,);
     }
   }
 }

@@ -4,17 +4,18 @@
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:BookingListAttribute
  */
 
-import { type PropertyLike } from "../../model/property-like.ts";
-import { type AttributeContainer } from "../attribute-container.ts";
-import { type AttributeDefinition } from "../attribute-definition.ts";
-import { ListAttributeBase } from "../list-attribute-base.ts";
+import { type PropertyLike, } from "../../model/property-like.ts";
+import { type AttributeContainer, } from "../attribute-container.ts";
+import { type AttributeDefinition, } from "../attribute-definition.ts";
+import { ListAttributeBase, } from "../list-attribute-base.ts";
 
 /**
  * Atributo de lista de bookings.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:BookingListAttribute
  */
-export class BookingListAttribute extends ListAttributeBase<{ to_s(): string }> {
+export class BookingListAttribute
+  extends ListAttributeBase<{ to_s(): string }> {
   /**
    * ID do tipo de atributo para BookingListAttribute.
    */
@@ -30,10 +31,10 @@ export class BookingListAttribute extends ListAttributeBase<{ to_s(): string }> 
     const out = [];
     if (val) {
       for (const item of val) {
-        out.push(item.to_s());
+        out.push(item.to_s(),);
       }
     }
-    return out.join(", ");
+    return out.join(", ",);
   }
 
   /**
@@ -42,6 +43,8 @@ export class BookingListAttribute extends ListAttributeBase<{ to_s(): string }> 
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:BookingListAttribute#to_tjp
    */
   override to_tjp(): string {
-    throw new Error("Don't call this method. This needs to be a special case.");
+    throw new Error(
+      "Don't call this method. This needs to be a special case.",
+    );
   }
 }

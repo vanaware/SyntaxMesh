@@ -4,17 +4,18 @@
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:NodeListAttribute
  */
 
-import { type PropertyLike } from "../../model/property-like.ts";
-import { type AttributeContainer } from "../attribute-container.ts";
-import { type AttributeDefinition } from "../attribute-definition.ts";
-import { ListAttributeBase } from "../list-attribute-base.ts";
+import { type PropertyLike, } from "../../model/property-like.ts";
+import { type AttributeContainer, } from "../attribute-container.ts";
+import { type AttributeDefinition, } from "../attribute-definition.ts";
+import { ListAttributeBase, } from "../list-attribute-base.ts";
 
 /**
  * Atributo de lista de nós.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:NodeListAttribute
  */
-export class NodeListAttribute extends ListAttributeBase<{ id: string; name: string; }> {
+export class NodeListAttribute
+  extends ListAttributeBase<{ id: string; name: string }> {
   /**
    * Converte o valor para string.
    *
@@ -22,6 +23,6 @@ export class NodeListAttribute extends ListAttributeBase<{ id: string; name: str
    */
   override to_s(): string {
     const val = this.get();
-    return val ? val.map(item => item.id).join(", ") : "";
+    return val ? val.map((item,) => item.id).join(", ",) : "";
   }
 }

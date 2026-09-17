@@ -4,17 +4,18 @@
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:TaskListAttribute
  */
 
-import { type PropertyLike } from "../../model/property-like.ts";
-import { type AttributeContainer } from "../attribute-container.ts";
-import { type AttributeDefinition } from "../attribute-definition.ts";
-import { ListAttributeBase } from "../list-attribute-base.ts";
+import { type PropertyLike, } from "../../model/property-like.ts";
+import { type AttributeContainer, } from "../attribute-container.ts";
+import { type AttributeDefinition, } from "../attribute-definition.ts";
+import { ListAttributeBase, } from "../list-attribute-base.ts";
 
 /**
  * Atributo de lista de tarefas.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:TaskListAttribute
  */
-export class TaskListAttribute extends ListAttributeBase<{ id: string; name: string; }> {
+export class TaskListAttribute
+  extends ListAttributeBase<{ id: string; name: string }> {
   /**
    * ID do tipo de atributo para TaskListAttribute.
    */
@@ -27,7 +28,7 @@ export class TaskListAttribute extends ListAttributeBase<{ id: string; name: str
    */
   override to_s(): string {
     const val = this.get();
-    return val ? val.map(item => item.id).join(", ") : "";
+    return val ? val.map((item,) => item.id).join(", ",) : "";
   }
 
   /**
@@ -37,7 +38,7 @@ export class TaskListAttribute extends ListAttributeBase<{ id: string; name: str
    */
   override to_tjp(): string {
     const val = this.get();
-    const out = val ? val.map(item => item.id) : [];
-    return `${this.type.id} ${out.join(", ")}`;
+    const out = val ? val.map((item,) => item.id) : [];
+    return `${this.type.id} ${out.join(", ",)}`;
   }
 }

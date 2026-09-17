@@ -4,18 +4,19 @@
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ReferenceAttribute
  */
 
-import { type PropertyLike } from "../../model/property-like.ts";
-import { type AttributeContainer } from "../attribute-container.ts";
-import { type AttributeDefinition } from "../attribute-definition.ts";
-import { AttributeBase } from "../attribute-base.ts";
-import { NotYetImplementedError } from "../errors.ts";
+import { type PropertyLike, } from "../../model/property-like.ts";
+import { type AttributeContainer, } from "../attribute-container.ts";
+import { type AttributeDefinition, } from "../attribute-definition.ts";
+import { AttributeBase, } from "../attribute-base.ts";
+import { NotYetImplementedError, } from "../errors.ts";
 
 /**
  * Atributo de referência (URL + label opcional).
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ReferenceAttribute
  */
-export class ReferenceAttribute extends AttributeBase<{ url: string; label?: string }> {
+export class ReferenceAttribute
+  extends AttributeBase<{ url: string; label?: string }> {
   /**
    * ID do tipo de atributo para ReferenceAttribute.
    */
@@ -37,8 +38,8 @@ export class ReferenceAttribute extends AttributeBase<{ url: string; label?: str
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ReferenceAttribute#to_rti
    */
   override to_rti(): unknown {
-    // TODO Fase 12: usar RichText quando disponível
-    throw new NotYetImplementedError("12", "to_rti");
+    // TODO(@djones) Fase 12: usar RichText quando disponível
+    throw new NotYetImplementedError("12", "to_rti",);
   }
 
   /**

@@ -15,7 +15,7 @@
  * @returns Cópia profunda do valor
  * @throws Se `structuredClone` não for suportado (Node.js sem flag global)
  */
-export function deepClone<T>(value: T): T {
+export function deepClone<T,>(value: T,): T {
   // Primitivos (number, string, boolean, bigint, symbol, null, undefined)
   if (
     value === null ||
@@ -28,57 +28,70 @@ export function deepClone<T>(value: T): T {
   }
 
   // Array
-  if (Array.isArray(value)) {
-    return value.map(item => deepClone(item)) as unknown as T;
+  if (Array.isArray(value,)) {
+    return value.map((item,) => deepClone(item,)) as unknown as T;
   }
 
   // Map
   if (value instanceof Map) {
     return new Map(
-      Array.from(value.entries(), ([key, val]) => [
-        deepClone(key),
-        deepClone(val),
-      ]),
+      Array.from(value.entries(), ([key, val,],) => [
+        deepClone(key,),
+        deepClone(val,),
+      ],),
     ) as unknown as T;
   }
 
   // Set
   if (value instanceof Set) {
-    return new Set(Array.from(value, item => deepClone(item))) as unknown as T;
+    return new Set(
+      Array.from(value, (item,) => deepClone(item,),),
+    ) as unknown as T;
   }
 
   // Objetos customizados que implementam método deepClone()
-  if (typeof (value as any).deepClone === "function") {
-    return (value as any).deepClone();
+  if (
+    typeof (value as unknown as { deepClone?: () => T }).deepClone ===
+      "function"
+  ) {
+    return (value as unknown as { deepClone(): T }).deepClone();
   }
 
   // Compatibilidade com método deep_clone() (compat.keepRubyBugs)
-  if (typeof (value as any).deep_clone === "function") {
-    return (value as any).deep_clone();
+  if (
+    typeof (value as unknown as { deep_clone?: () => T }).deep_clone ===
+      "function"
+  ) {
+    return (value as unknown as { deep_clone(): T }).deep_clone();
   }
 
   // Object (plain)
   if (value.constructor === Object) {
     const result = {} as Record<string, unknown>;
-    for (const [key, val] of Object.entries(value)) {
-      result[key] = deepClone(val);
+    for (const [key, val,] of Object.entries(value,)) {
+      result[key] = deepClone(val,);
     }
     return result as unknown as T;
   }
 
   // TjTime e RealFormat — retornar referência (sem cópia profunda)
-  if (value.constructor?.name === "TjTime" || value.constructor?.name === "RealFormat") {
+  if (
+    value.constructor?.name === "TjTime" ||
+    value.constructor?.name === "RealFormat"
+  ) {
     return value;
   }
 
   // Fallback para outros tipos de objeto (incluindo classes do projeto)
   // Usar structuredClone se disponível, senão lançar
   if (typeof structuredClone === "function") {
-    return structuredClone(value) as T;
+    return structuredClone(value,) as T;
   }
 
   throw new Error(
-    `deepClone: não é possível clonar ${value.constructor?.name ?? typeof value} ` +
-    `(structuredClone não disponível)`,
+    `deepClone: não é possível clonar ${
+      value.constructor?.name ?? typeof value
+    } ` +
+      `(structuredClone não disponível)`,
   );
 }

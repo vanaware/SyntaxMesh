@@ -4,10 +4,10 @@
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:DateAttribute
  */
 
-import { type PropertyLike } from "../../model/property-like.ts";
-import { type AttributeContainer } from "../attribute-container.ts";
-import { type AttributeDefinition } from "../attribute-definition.ts";
-import { AttributeBase } from "../attribute-base.ts";
+import { type PropertyLike, } from "../../model/property-like.ts";
+import { type AttributeContainer, } from "../attribute-container.ts";
+import { type AttributeDefinition, } from "../attribute-definition.ts";
+import { AttributeBase, } from "../attribute-base.ts";
 
 /**
  * Atributo escalar data.
@@ -28,7 +28,7 @@ export class DateAttribute extends AttributeBase<string> {
   override to_s(): string {
     const val = this.get();
     if (val) {
-      // TODO Fase 11: usar query.timeFormat quando disponível
+      // TODO(@djones) Fase 11: usar query.timeFormat quando disponível
       return val;
     }
     return "Error";

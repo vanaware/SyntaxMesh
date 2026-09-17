@@ -4,17 +4,18 @@
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:TaskDepListAttribute
  */
 
-import { type PropertyLike } from "../../model/property-like.ts";
-import { type AttributeContainer } from "../attribute-container.ts";
-import { type AttributeDefinition } from "../attribute-definition.ts";
-import { ListAttributeBase } from "../list-attribute-base.ts";
+import { type PropertyLike, } from "../../model/property-like.ts";
+import { type AttributeContainer, } from "../attribute-container.ts";
+import { type AttributeDefinition, } from "../attribute-definition.ts";
+import { ListAttributeBase, } from "../list-attribute-base.ts";
 
 /**
  * Atributo de lista de dependências de tarefas.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:TaskDepListAttribute
  */
-export class TaskDepListAttribute extends ListAttributeBase<{ task: { fullId: string }; onEnd: boolean }> {
+export class TaskDepListAttribute
+  extends ListAttributeBase<{ task: { fullId: string }; onEnd: boolean }> {
   /**
    * ID do tipo de atributo para TaskDepListAttribute.
    */
@@ -30,10 +31,10 @@ export class TaskDepListAttribute extends ListAttributeBase<{ task: { fullId: st
     const out = [];
     if (val) {
       for (const t of val) {
-        out.push(t.task.fullId);
+        out.push(t.task.fullId,);
       }
     }
-    return out.join(", ");
+    return out.join(", ",);
   }
 
   /**
@@ -46,9 +47,9 @@ export class TaskDepListAttribute extends ListAttributeBase<{ task: { fullId: st
     const out = [];
     if (val) {
       for (const t of val) {
-        out.push(t.task.fullId);
+        out.push(t.task.fullId,);
       }
     }
-    return `${this.type.id} ${out.join(", ")}`;
+    return `${this.type.id} ${out.join(", ",)}`;
   }
 }

@@ -4,10 +4,10 @@
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:AccountAttribute
  */
 
-import { type PropertyLike } from "../../model/property-like.ts";
-import { type AttributeContainer } from "../attribute-container.ts";
-import { type AttributeDefinition } from "../attribute-definition.ts";
-import { AttributeBase } from "../attribute-base.ts";
+import { type PropertyLike, } from "../../model/property-like.ts";
+import { type AttributeContainer, } from "../attribute-container.ts";
+import { type AttributeDefinition, } from "../attribute-definition.ts";
+import { AttributeBase, } from "../attribute-base.ts";
 
 /**
  * Atributo de referência à conta.

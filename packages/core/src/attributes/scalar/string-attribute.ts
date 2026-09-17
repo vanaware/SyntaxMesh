@@ -4,10 +4,10 @@
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:StringAttribute
  */
 
-import { type PropertyLike } from "../../model/property-like.ts";
-import { type AttributeContainer } from "../attribute-container.ts";
-import { type AttributeDefinition } from "../attribute-definition.ts";
-import { AttributeBase } from "../attribute-base.ts";
+import { type PropertyLike, } from "../../model/property-like.ts";
+import { type AttributeContainer, } from "../attribute-container.ts";
+import { type AttributeDefinition, } from "../attribute-definition.ts";
+import { AttributeBase, } from "../attribute-base.ts";
 
 /**
  * Atributo escalar de texto.
@@ -26,6 +26,6 @@ export class StringAttribute extends AttributeBase<string> {
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:StringAttribute#to_tjp
    */
   override to_tjp(): string {
-    return `${this.type.id} ${this.quotedString()}`;
+    return `${this.type.id} ${this.quotedString(this.to_s(),)}`;
   }
 }

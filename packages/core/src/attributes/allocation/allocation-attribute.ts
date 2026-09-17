@@ -4,15 +4,21 @@
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:AllocationAttribute
  */
 
-import { type PropertyLike } from "../../model/property-like.ts";
-import { type AttributeContainer } from "../attribute-container.ts";
-import { type AttributeDefinition } from "../attribute-definition.ts";
-import { ListAttributeBase } from "../list-attribute-base.ts";
+import { type PropertyLike, } from "../../model/property-like.ts";
+import { type AttributeContainer, } from "../attribute-container.ts";
+import { type AttributeDefinition, } from "../attribute-definition.ts";
+import { ListAttributeBase, } from "../list-attribute-base.ts";
 
 /**
  * Modos de seleção de alocação.
  */
-export const ALLOCATION_MODES = ["order", "lowprob", "lowload", "hiload", "random"] as const;
+export const ALLOCATION_MODES = [
+  "order",
+  "lowprob",
+  "lowload",
+  "hiload",
+  "random",
+] as const;
 
 /**
  * Atributo de lista de alocações.
@@ -44,28 +50,28 @@ export class AllocationAttribute extends ListAttributeBase<{
         if (first) {
           first = false;
         } else {
-          out.push("\n");
+          out.push("\n",);
         }
-        out.push("[ ");
+        out.push("[ ",);
         let firstR = true;
         for (const resource of allocation.candidates) {
           if (firstR) {
             firstR = false;
           } else {
-            out.push(", ");
+            out.push(", ",);
           }
-          out.push(resource.fullId);
+          out.push(resource.fullId,);
         }
         const mode = ALLOCATION_MODES[allocation.selectionMode] ?? "order";
-        out.push(` ] select by ${mode} `);
+        out.push(` ] select by ${mode} `,);
         if (allocation.mandatory) {
-          out.push("mandatory ");
+          out.push("mandatory ",);
         }
         if (allocation.persistent) {
-          out.push("persistent ");
+          out.push("persistent ",);
         }
       }
     }
-    return out.join("");
+    return out.join("",);
   }
 }

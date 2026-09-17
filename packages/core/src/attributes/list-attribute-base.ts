@@ -4,17 +4,17 @@
  * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:ListAttributeBase
  */
 
-import { type PropertyLike } from "../model/property-like.ts";
-import { type AttributeContainer } from "./attribute-container.ts";
-import { type AttributeDefinition } from "./attribute-definition.ts";
-import { AttributeBase } from "./attribute-base.ts";
+import { type PropertyLike, } from "../model/property-like.ts";
+import { type AttributeContainer, } from "./attribute-container.ts";
+import { type AttributeDefinition, } from "./attribute-definition.ts";
+import { AttributeBase, } from "./attribute-base.ts";
 
 /**
  * Classe base para atributos de lista.
  *
  * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:ListAttributeBase
  */
-export abstract class ListAttributeBase<T> extends AttributeBase<T[]> {
+export abstract class ListAttributeBase<T,> extends AttributeBase<T[]> {
   /**
    * Verifica se o atributo é uma lista.
    *
@@ -34,6 +34,6 @@ export abstract class ListAttributeBase<T> extends AttributeBase<T[]> {
     if (val === null) {
       return "";
     }
-    return val.join(", ");
+    return val.join(", ",);
   }
 }

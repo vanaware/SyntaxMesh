@@ -4,17 +4,18 @@
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:DependencyListAttribute
  */
 
-import { type PropertyLike } from "../../model/property-like.ts";
-import { type AttributeContainer } from "../attribute-container.ts";
-import { type AttributeDefinition } from "../attribute-definition.ts";
-import { ListAttributeBase } from "../list-attribute-base.ts";
+import { type PropertyLike, } from "../../model/property-like.ts";
+import { type AttributeContainer, } from "../attribute-container.ts";
+import { type AttributeDefinition, } from "../attribute-definition.ts";
+import { ListAttributeBase, } from "../list-attribute-base.ts";
 
 /**
  * Atributo de lista de dependências.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:DependencyListAttribute
  */
-export class DependencyListAttribute extends ListAttributeBase<{ task: { fullId: string } }> {
+export class DependencyListAttribute
+  extends ListAttributeBase<{ task: { fullId: string } }> {
   /**
    * ID do tipo de atributo para DependencyListAttribute.
    */
@@ -31,11 +32,11 @@ export class DependencyListAttribute extends ListAttributeBase<{ task: { fullId:
     if (val) {
       for (const t of val) {
         if (t.task) {
-          out.push(t.task.fullId);
+          out.push(t.task.fullId,);
         }
       }
     }
-    return out.join(", ");
+    return out.join(", ",);
   }
 
   /**
@@ -49,10 +50,10 @@ export class DependencyListAttribute extends ListAttributeBase<{ task: { fullId:
     if (val) {
       for (const taskDep of val) {
         if (taskDep.task) {
-          out.push(taskDep.task.fullId);
+          out.push(taskDep.task.fullId,);
         }
       }
     }
-    return `${this.type.id} ${out.join(", ")}`;
+    return `${this.type.id} ${out.join(", ",)}`;
   }
 }

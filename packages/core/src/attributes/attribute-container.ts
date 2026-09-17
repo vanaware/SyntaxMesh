@@ -16,7 +16,7 @@ export interface AttributeContainer {
    * @param attributeId - ID do atributo (ex: "effort")
    * @returns O valor armazenado ou `undefined` se não definido
    */
-  getStoredValue(attributeId: string): unknown;
+  getStoredValue(attributeId: string,): unknown;
 
   /**
    * Armazena um valor para um atributo.
@@ -24,5 +24,5 @@ export interface AttributeContainer {
    * @param attributeId - ID do atributo (ex: "effort")
    * @param value - Valor a ser armazenado
    */
-  setStoredValue(attributeId: string, value: unknown): void;
+  setStoredValue(attributeId: string, value: unknown,): void;
 }

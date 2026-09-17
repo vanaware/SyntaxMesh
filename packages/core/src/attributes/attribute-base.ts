@@ -4,11 +4,11 @@
  * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb (arquivo inteiro)
  */
 
-import { type PropertyLike } from "../model/property-like.ts";
-import { type AttributeContainer } from "./attribute-container.ts";
-import { type AttributeDefinition } from "./attribute-definition.ts";
-import { deepClone } from "../utils/deep-clone.ts";
-import { AttributeOverwrite, NotYetImplementedError } from "./errors.ts";
+import { type PropertyLike, } from "../model/property-like.ts";
+import { type AttributeContainer, } from "./attribute-container.ts";
+import { type AttributeDefinition, } from "./attribute-definition.ts";
+import { deepClone, } from "../utils/deep-clone.ts";
+import { AttributeOverwrite, NotYetImplementedError, } from "./errors.ts";
 
 /**
  * Modos globais para o comportamento de `set()` e `inherit()`.
@@ -22,7 +22,7 @@ export type AttributeMode = 0 | 1 | 2;
  *
  * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb
  */
-export abstract class AttributeBase<T> {
+export abstract class AttributeBase<T,> {
   /**
    * Modo global que influencia `set()` e `inherit()`.
    *
@@ -34,9 +34,9 @@ export abstract class AttributeBase<T> {
     return AttributeBase._mode;
   }
 
-  static setMode(mode: AttributeMode): void {
+  static setMode(mode: AttributeMode,): void {
     if (mode !== 0 && mode !== 1 && mode !== 2) {
-      throw new Error(`Modo inválido: ${mode}. Deve ser 0, 1 ou 2.`);
+      throw new Error(`Modo inválido: ${mode}. Deve ser 0, 1 ou 2.`,);
     }
     AttributeBase._mode = mode;
   }
@@ -84,7 +84,10 @@ export abstract class AttributeBase<T> {
   reset(): void {
     this.inherited = false;
     this.provided = false;
-    this.container.setStoredValue(this.type.id, deepClone(this.type.defaultValue));
+    this.container.setStoredValue(
+      this.type.id,
+      deepClone(this.type.defaultValue,),
+    );
   }
 
   /**
@@ -92,9 +95,9 @@ export abstract class AttributeBase<T> {
    *
    * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:inherit
    */
-  inherit(value: T): void {
+  inherit(value: T,): void {
     this.inherited = true;
-    this.container.setStoredValue(this.type.id, deepClone(value));
+    this.container.setStoredValue(this.type.id, deepClone(value,),);
   }
 
   /**
@@ -102,7 +105,7 @@ export abstract class AttributeBase<T> {
    *
    * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:set
    */
-  set(value: T): void {
+  set(value: T,): void {
     switch (AttributeBase.mode) {
       case 0: // provided
         this.provided = true;
@@ -114,21 +117,21 @@ export abstract class AttributeBase<T> {
         // nenhuma flag é marcada
         break;
     }
-    this.container.setStoredValue(this.type.id, value);
+    this.container.setStoredValue(this.type.id, value,);
   }
 
   /**
    * Obtém o valor atual do atributo.
    */
   get(): T | null {
-    return this.container.getStoredValue(this.type.id) as T | null;
+    return this.container.getStoredValue(this.type.id,) as T | null;
   }
 
   /**
    * Obtém o valor como `unknown` (para serialização).
    */
   get value(): unknown {
-    return this.container.getStoredValue(this.type.id);
+    return this.container.getStoredValue(this.type.id,);
   }
 
   /**
@@ -151,8 +154,9 @@ export abstract class AttributeBase<T> {
    * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:nil?
    */
   isNil(): boolean {
-    const val = this.container.getStoredValue(this.type.id);
-    return val === null || val === undefined || (Array.isArray(val) && val.length === 0);
+    const val = this.container.getStoredValue(this.type.id,);
+    return val === null || val === undefined ||
+      (Array.isArray(val,) && val.length === 0);
   }
 
   /**
@@ -171,7 +175,7 @@ export abstract class AttributeBase<T> {
    */
   to_s(): string {
     const val = this.get();
-    return val === null ? "" : String(val);
+    return val === null ? "" : String(val,);
   }
 
   /**
@@ -184,7 +188,7 @@ export abstract class AttributeBase<T> {
     if (val === null) {
       return 0;
     }
-    return Number(val);
+    return Number(val,);
   }
 
   /**
@@ -197,7 +201,7 @@ export abstract class AttributeBase<T> {
     if (val === null) {
       return "";
     }
-    return String(val);
+    return String(val,);
   }
 
   /**
@@ -206,7 +210,7 @@ export abstract class AttributeBase<T> {
    * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:to_rti
    */
   to_rti(): unknown {
-    throw new NotYetImplementedError("12", "to_rti");
+    throw new NotYetImplementedError("12", "to_rti",);
   }
 
   /**
@@ -215,7 +219,7 @@ export abstract class AttributeBase<T> {
    * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:to_tjp
    */
   to_tjp(): unknown {
-    throw new NotYetImplementedError("11", "to_tjp");
+    throw new NotYetImplementedError("11", "to_tjp",);
   }
 
   /**
@@ -223,11 +227,11 @@ export abstract class AttributeBase<T> {
    *
    * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:quotedString
    */
-  quotedString(): string {
-    const val = this.to_s();
-    if (val.includes("\n")) {
-      return `-8<-\n${val}\n->8-`;
+  quotedString(str?: string,): string {
+    const s = str ?? this.to_s();
+    if (s.includes("\n",)) {
+      return `-8<-\n${s}\n->8-`;
     }
-    return `"${val.replace(/"/g, '\\"')}"`;
+    return `"${s.replace(/"/g, '\\"',)}"`;
   }
 }

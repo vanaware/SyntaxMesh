@@ -4,10 +4,10 @@
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:DurationAttribute
  */
 
-import { type PropertyLike } from "../../model/property-like.ts";
-import { type AttributeContainer } from "../attribute-container.ts";
-import { type AttributeDefinition } from "../attribute-definition.ts";
-import { AttributeBase } from "../attribute-base.ts";
+import { type PropertyLike, } from "../../model/property-like.ts";
+import { type AttributeContainer, } from "../attribute-container.ts";
+import { type AttributeDefinition, } from "../attribute-definition.ts";
+import { AttributeBase, } from "../attribute-base.ts";
 
 /**
  * Atributo escalar duração.
@@ -28,7 +28,7 @@ export class DurationAttribute extends AttributeBase<number> {
   override to_s(): string {
     const val = this.get();
     if (val !== null) {
-      // TODO Fase 11: usar query.scaleDuration(query.project.slotsToDays(val)) quando disponível
+      // TODO(@djones) Fase 11: usar query.scaleDuration(query.project.slotsToDays(val)) quando disponível
       return val.toString();
     }
     return "";

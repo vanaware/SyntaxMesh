@@ -52,23 +52,24 @@ Criado na Fase 2 (`packages/core/src/compat.ts`). Ver **ADR 013** (`docs/syntaxm
 ## Progresso
 
 ```
-[ ] 3.0  ADR 014 (mode global)              —  0/5
-[ ] 3.1  Interface + AttributeBase          —  0/19
-[ ] 3.2  AttributeDefinition                —  0/8
-[ ] 3.3  Escalares e temporais (7)          —  0/22
-[ ] 3.4  Referência (3)                     —  0/11
-[ ] 3.5  Listas primitivas (6)              —  0/14
-[ ] 3.6  Dependências (2)                   —  0/6
-[ ] 3.7  Financeiro (3)                     —  0/8
-[ ] 3.8  Alocação e booking (2)             —  0/8
-[ ] 3.9  Expressões lógicas (2)             —  0/4
-[ ] 3.10 Tempo complexo (6)                 —  0/12
-[ ] 3.11 Formatação (5)                     —  0/6
-[ ] 3.12 Ricos (2)                          —  0/8
-[ ] 3.13 deepClone utility                  —  0/10
-[ ] 3.14 Golden tests                       —  0/9
+[x] 3.0  ADR 014 (mode global)              —  5/5
+[x] 3.1  Interface + AttributeBase          —  19/19
+[x] 3.2  AttributeDefinition                —  8/8
+[x] 3.3  Escalares e temporais (7)          —  22/22
+[x] 3.4  Referência (3)                     —  11/11
+[x] 3.5  Listas primitivas (6)              —  14/14
+[x] 3.6  Dependências (2)                   —  6/6
+[x] 3.7  Financeiro (3)                     —  8/8
+[x] 3.8  Alocação e booking (2)             —  8/8
+[x] 3.9  Expressões lógicas (2)             —  4/4
+[x] 3.10 Tempo complexo (6)                 —  12/12
+[x] 3.11 Formatação (5)                     —  6/6
+[x] 3.12 Ricos (2)                          —  8/8
+[x] 3.13 deepClone utility                  —  10/10
+[x] 3.14 Golden tests                       —  9/9
 ─────────────────────────────────────────────
 TOTAL: ~140
+Concluídas: 140
 ```
 
 ---

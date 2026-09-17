@@ -1,7 +1,7 @@
 import { describe, it, } from "@std/testing/bdd";
-import { assertEquals, assertThrows, assert, } from "@std/assert";
-import { AttributeDefinition } from "../../src/attributes/attribute-definition.ts";
-import { AttributeType } from "../../src/attributes/attribute-type.ts";
+import { assert, assertEquals, assertThrows, } from "@std/assert";
+import { AttributeDefinition, } from "../../src/attributes/attribute-definition.ts";
+import { AttributeType, } from "../../src/attributes/attribute-type.ts";
 
 describe("AttributeDefinition", () => {
   it("cria definição com todos os campos", () => {
@@ -11,14 +11,14 @@ describe("AttributeDefinition", () => {
       AttributeType.Integer,
       0,
     );
-    assertEquals(def.id, "effort");
-    assertEquals(def.name, "Effort");
-    assertEquals(def.type, AttributeType.Integer);
-    assertEquals(def.defaultValue, 0);
-    assertEquals(def.userDefined, false);
-    assertEquals(def.isList, false);
-    assertEquals(def.isSingleton, false);
-    assertEquals(def.isScenarioAttribute, false);
+    assertEquals(def.id, "effort",);
+    assertEquals(def.name, "Effort",);
+    assertEquals(def.type, AttributeType.Integer,);
+    assertEquals(def.defaultValue, 0,);
+    assertEquals(def.userDefined, false,);
+    assertEquals(def.isList, false,);
+    assertEquals(def.isSingleton, false,);
+    assertEquals(def.isScenarioAttribute, false,);
   });
 
   it("aceita userDefined=true", () => {
@@ -29,7 +29,7 @@ describe("AttributeDefinition", () => {
       "",
       true,
     );
-    assertEquals(def.userDefined, true);
+    assertEquals(def.userDefined, true,);
   });
 
   it("aceita isList=true", () => {
@@ -41,7 +41,7 @@ describe("AttributeDefinition", () => {
       false,
       true,
     );
-    assertEquals(def.isList, true);
+    assertEquals(def.isList, true,);
   });
 
   it("lança TjArgumentError com id vazio", () => {
@@ -79,7 +79,7 @@ describe("AttributeDefinition", () => {
       AttributeType.String,
       "",
     );
-    assert(Object.isFrozen(def));
+    assert(Object.isFrozen(def,),);
   });
 
   it("mutar campo lança TypeError (strict mode)", () => {
@@ -91,7 +91,7 @@ describe("AttributeDefinition", () => {
     );
     assertThrows(
       () => {
-        (def as any).id = "other";
+        (def as unknown as { id: string }).id = "other";
       },
       TypeError,
     );
@@ -99,22 +99,23 @@ describe("AttributeDefinition", () => {
 
   it("attributeTypeClass retorna construtor para cada tipo", () => {
     assertEquals(
-      AttributeDefinition.attributeTypeClass(AttributeType.String),
+      AttributeDefinition.attributeTypeClass(AttributeType.String,),
       "StringAttribute",
     );
     assertEquals(
-      AttributeDefinition.attributeTypeClass(AttributeType.Integer),
+      AttributeDefinition.attributeTypeClass(AttributeType.Integer,),
       "IntegerAttribute",
     );
     assertEquals(
-      AttributeDefinition.attributeTypeClass(AttributeType.Boolean),
+      AttributeDefinition.attributeTypeClass(AttributeType.Boolean,),
       "BooleanAttribute",
     );
   });
 
   it("attributeTypeClass lança para tipo desconhecido", () => {
     assertThrows(
-      () => AttributeDefinition.attributeTypeClass(-1 as any),
+      () =>
+        AttributeDefinition.attributeTypeClass(-1 as unknown as AttributeType,),
       Error,
     );
   });
