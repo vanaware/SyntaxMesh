@@ -50,7 +50,7 @@ Ao final desta fase:
 - `ResourceScenario.turnover` **completo**.
 - `AccountListRE` (relatório de contas) com **modo balance** — subfase preparatória para Fase 14.
 - **≥ 80 testes unitários** + **≥ 25 golden tests** (mwe004 + variações).
-- ADR 018 registrado.
+- ADR 019 registrado.
 - `deno task check-all` verde.
 
 ---
@@ -115,7 +115,7 @@ Ruby usa `Float` para `amount`, `rate`, `credits.amount`. Não usa `BigDecimal`.
 
 **Risco:** `0.1 + 0.2 !== 0.3`. Aceito — mesma semântica do Ruby. Se precisão se tornar problema em relatórios, migrar para `Decimal` em fase futura.
 
-Ver ADR 018.
+Ver ADR 019.
 
 ### 4.2 Meta-account: padrão para balance
 
@@ -207,7 +207,7 @@ Trivial — `{ date, description, amount }`. Sem lógica.
 
 ---
 
-### 8.0 — ADR 018 (modelo financeiro)
+### 8.0 — ADR 019 (modelo financeiro)
 
 #### Contexto
 
@@ -219,11 +219,11 @@ O sistema financeiro do TaskJuggler tem 3 decisões implícitas no Ruby que prec
 
 #### Objetivo
 
-Criar `docs/syntaxmesh/decisoes/018-modelo-financeiro.md`.
+Criar `docs/syntaxmesh/decisoes/019-modelo-financeiro.md`.
 
 #### Arquivos
 
-- `docs/syntaxmesh/decisoes/018-modelo-financeiro.md` (novo)
+- `docs/syntaxmesh/decisoes/019-modelo-financeiro.md` (novo)
 - `docs/syntaxmesh/decisoes/README.md` (atualizar tabela)
 
 #### Requisitos
@@ -253,7 +253,7 @@ Criar `docs/syntaxmesh/decisoes/018-modelo-financeiro.md`.
 
 #### Critério de aceite
 
-- ADR 018 criado.
+- ADR 019 criado.
 - Tabela atualizada.
 
 ---
@@ -289,7 +289,7 @@ Implementar `AccountCredit`.
 
 #### Fora de escopo
 
-- Uso — subfase 12.4.
+- Uso — subfase 8.4.
 
 #### Critério de aceite
 
@@ -441,7 +441,7 @@ Implementar `ChargeSet` com validações e distribuição automática.
 
 #### Fora de escopo
 
-- Uso — subfase 12.5.
+- Uso — subfase 8.5.
 
 #### Critério de aceite
 
@@ -530,7 +530,7 @@ Implementar `AccountScenario.turnover`, `query_balance`, `query_turnover`.
 
 #### Fora de escopo
 
-- Meta-account creation (feita por `AccountListRE` — subfase 12.7).
+- Meta-account creation (feita por `AccountListRE` — subfase 8.7).
 - Report generation — Fase 14.
 
 #### Critério de aceite
@@ -826,22 +826,22 @@ deno task test
 ## 6. Ordem de execução sugerida
 
 ```text
-12.0  ADR 018
+8.0  ADR 019
       ↓
-12.1  AccountCredit                ← pode rodar em paralelo com 12.2
-12.2  Charge
+8.1  AccountCredit                ← pode rodar em paralelo com 12.2
+8.2  Charge
       ↓
-12.3  ChargeSet
+8.3  ChargeSet
       ↓
-12.4  AccountScenario.turnover + queries
+8.4  AccountScenario.turnover + queries
       ↓
-12.5  TaskScenario.turnover (completo)
+8.5  TaskScenario.turnover (completo)
       ↓
-12.6  ResourceScenario.turnover (completo)
+8.6  ResourceScenario.turnover (completo)
       ↓
-12.7  Meta-account (utilitário)
+8.7  Meta-account (utilitário)
       ↓
-12.8  Golden tests
+8.8  Golden tests
 ```
 
 Cada subfase fecha com `deno task check-all` verde.
@@ -868,7 +868,7 @@ passa, e:
 - [ ] **≥ 25 golden tests**.
 - [ ] Nenhum `any` em `src/` (exceto onde justificado).
 - [ ] Nenhum import proibido em `packages/core/src/`.
-- [ ] ADR 018 criado.
+- [ ] ADR 019 criado.
 - [ ] Scripts `finance-*.rb` funcionais.
 
 ---
@@ -909,7 +909,7 @@ passa, e:
 ### Documentos do projeto
 
 - `docs/syntaxmesh/decisoes/011-port-fiel-taskjuggler.md`
-- `docs/syntaxmesh/decisoes/018-modelo-financeiro.md` (novo)
+- `docs/syntaxmesh/decisoes/019-modelo-financeiro.md` (novo)
 - `docs/syntaxmesh/03-arquitetura.md`
 
 ### Casos de teste
@@ -944,9 +944,9 @@ passa, e:
 
 ---
 
-## 11. ADR 018 (referência rápida)
+## 11. ADR 019 (referência rápida)
 
-Criado como subfase 12.0. Conteúdo esperado:
+Criado como subfase 8.0. Conteúdo esperado:
 
 - **Título:** Modelo financeiro em TypeScript: Float, meta-account, sem cache
 - **Contexto:** pipeline de `turnover`, decisões implícitas do Ruby.

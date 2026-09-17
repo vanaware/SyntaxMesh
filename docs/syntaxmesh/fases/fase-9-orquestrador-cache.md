@@ -47,7 +47,7 @@ Ao final desta fase:
 - `TaskJuggler` top-level — `parse`, `schedule`, `generateReports`, `generateReport`, `checkTimeSheet`, `checkStatusSheet`, `freeze`.
 - `MockProject` removido (substituído por `Project` real).
 - **≥ 180 testes unitários** + **≥ 30 golden tests** (schedule end-to-end dos 9 MWEs).
-- ADR 019 registrado.
+- ADR 020 registrado.
 - `deno task check-all` verde.
 
 ---
@@ -232,7 +232,7 @@ Sem `BatchProcessor`. Loop simples.
 
 ---
 
-### 9.0 — ADR 019 (orquestrador e ciclo de modos)
+### 9.0 — ADR 020 (orquestrador e ciclo de modos)
 
 #### Contexto
 
@@ -245,11 +245,11 @@ Precisamos registrar:
 
 #### Objetivo
 
-Criar `docs/syntaxmesh/decisoes/019-orquestrador-pipeline.md`.
+Criar `docs/syntaxmesh/decisoes/020-orquestrador-pipeline.md`.
 
 #### Arquivos
 
-- `docs/syntaxmesh/decisoes/019-orquestrador-pipeline.md` (novo)
+- `docs/syntaxmesh/decisoes/020-orquestrador-pipeline.md` (novo)
 - `docs/syntaxmesh/decisoes/README.md` (atualizar tabela)
 
 #### Requisitos
@@ -276,7 +276,7 @@ Criar `docs/syntaxmesh/decisoes/019-orquestrador-pipeline.md`.
 
 #### Critério de aceite
 
-- ADR 019 criado.
+- ADR 020 criado.
 - Tabela atualizada.
 
 ---
@@ -773,8 +773,8 @@ Implementar o **construtor** e **atributos** do `Project`, incluindo os 6 `Prope
 
 #### Fora de escopo
 
-- `schedule()` — subfase 13.7.
-- `generateReports()` — subfase 13.8.
+- `schedule()` — subfase 9.7.
+- `generateReports()` — subfase 9.8.
 
 #### Critério de aceite
 
@@ -1242,31 +1242,31 @@ deno task test
 ## 6. Ordem de execução sugerida
 
 ```text
-13.0  ADR 019
+9.0  ADR 020
       ↓
-13.1  SourceFileInfo + errors
+9.1  SourceFileInfo + errors
       ↓
-13.2  MessageHandler
+9.2  MessageHandler
       ↓
-13.3  Log
+9.3  Log
       ↓
-13.5  AppConfig + Tj3Config + version
+9.5  AppConfig + Tj3Config + version
       ↓
-13.4  PropertyList
+9.4  PropertyList
       ↓
-13.6  Project — estrutura e atributos
+9.6  Project — estrutura e atributos
       ↓
-13.7  Project.schedule
+9.7  Project.schedule
       ↓
-13.9  Project — eventos e utilitários
+9.9  Project — eventos e utilitários
       ↓
-13.8  Project.generateReports (stub para Fase 14)
+9.8  Project.generateReports (stub para Fase 14)
       ↓
-13.10 TaskJuggler
+9.10 TaskJuggler
       ↓
-13.11 Migrar MockProject → Project
+9.11 Migrar MockProject → Project
       ↓
-13.12 Golden tests
+9.12 Golden tests
 ```
 
 Cada subfase fecha com `deno task check-all` verde.
@@ -1293,7 +1293,7 @@ passa, e:
 - [ ] **≥ 30 golden tests** end-to-end.
 - [ ] Nenhum `any` em `src/` (exceto onde justificado).
 - [ ] Nenhum import proibido em `packages/core/src/`.
-- [ ] ADR 019 criado.
+- [ ] ADR 020 criado.
 - [ ] Scripts `project-schedule-mwe*.rb` funcionais.
 
 ---
@@ -1341,7 +1341,7 @@ passa, e:
 
 - `docs/syntaxmesh/decisoes/011-port-fiel-taskjuggler.md`
 - `docs/syntaxmesh/decisoes/013-attribute-mode-global.md`
-- `docs/syntaxmesh/decisoes/019-orquestrador-pipeline.md` (novo)
+- `docs/syntaxmesh/decisoes/020-orquestrador-pipeline.md` (novo)
 - `docs/syntaxmesh/03-arquitetura.md`
 
 ### Casos de teste
@@ -1378,9 +1378,9 @@ passa, e:
 
 ---
 
-## 11. ADR 019 (referência rápida)
+## 11. ADR 020 (referência rápida)
 
-Criado como subfase 13.0. Conteúdo esperado:
+Criado como subfase 9.0. Conteúdo esperado:
 
 - **Título:** Orquestrador e pipeline de scheduling
 - **Contexto:** `Project.schedule()` é o pipeline central; alterna `mode` global.

@@ -33,14 +33,14 @@ Ao final desta fase, o scheduler tem todas as estruturas de restrição prontas.
 
 Ao final desta fase:
 
-- Convenções de **bit encoding** do `Scoreboard` documentadas (ADR 016) e encapsuladas em helpers.
+- Convenções de **bit encoding** do `Scoreboard` documentadas (ADR 017) e encapsuladas em helpers.
 - `Scoreboard` estendido com métodos utilitários para uso numérico (bit operations).
 - `Limits` + `Limit` implementados.
 - `ShiftAssignments` + `ShiftAssignment` implementados, com **compartilhamento de scoreboards** (via cache estático).
 - `ShiftScenario` consolidado (`onShift?`, `onLeave?`, `replace?`).
 - Helper `projectObjectId` para replicar `object_id` do Ruby.
 - **≥ 90 testes unitários** + **≥ 25 golden tests** (Limits, ShiftAssignments).
-- ADR 016 registrado.
+- ADR 017 registrado.
 - `deno task check-all` verde.
 
 ---
@@ -112,11 +112,11 @@ export function hasOverride(val: number | null): boolean;
 
 **Justificativa:** documenta as convenções em um único lugar; evita magic numbers espalhados.
 
-Ver ADR 016.
+Ver ADR 017.
 
 ### 4.2 Scoreboard numérico especializado?
 
-Ruby usa `Array` genérico. TS poderia usar `Int32Array` para scoreboards numéricos. **Decisão:** **não** especializar nesta fase. `Scoreboard<number>` com `number[]` é suficiente. Otimização fica para depois se performance exigir. Ver ADR 016.
+Ruby usa `Array` genérico. TS poderia usar `Int32Array` para scoreboards numéricos. **Decisão:** **não** especializar nesta fase. `Scoreboard<number>` com `number[]` é suficiente. Otimização fica para depois se performance exigir. Ver ADR 017.
 
 ### 4.3 `Limit` interno: `Scoreboard<number>`
 
@@ -205,7 +205,7 @@ Reutilizamos `TjError`, `TjArgumentError` (Fase 3). Adicionamos `TjInternalError
 
 ---
 
-### 6.0 — ADR 016 (Scoreboard encoding conventions)
+### 6.0 — ADR 017 (Scoreboard encoding conventions)
 
 #### Contexto
 
@@ -215,11 +215,11 @@ Antes de implementar, precisamos registrá-las formalmente.
 
 #### Objetivo
 
-Criar `docs/syntaxmesh/decisoes/016-scoreboard-encoding.md`.
+Criar `docs/syntaxmesh/decisoes/017-scoreboard-encoding.md`.
 
 #### Arquivos
 
-- `docs/syntaxmesh/decisoes/016-scoreboard-encoding.md` (novo)
+- `docs/syntaxmesh/decisoes/017-scoreboard-encoding.md` (novo)
 - `docs/syntaxmesh/decisoes/README.md` (atualizar tabela)
 
 #### Requisitos
@@ -263,7 +263,7 @@ Criar `docs/syntaxmesh/decisoes/016-scoreboard-encoding.md`.
 
 #### Critério de aceite
 
-- ADR 016 criado com encoding completo.
+- ADR 017 criado com encoding completo.
 - Tabela atualizada.
 
 ---
@@ -272,7 +272,7 @@ Criar `docs/syntaxmesh/decisoes/016-scoreboard-encoding.md`.
 
 #### Contexto
 
-Centralizar o encoding documentado no ADR 016.
+Centralizar o encoding documentado no ADR 017.
 
 #### Objetivo
 
@@ -309,7 +309,7 @@ Criar módulo com constantes e funções puras para leitura/escrita de bits.
 #### Referências
 
 - `docs/taskjuggler/lib/taskjuggler/ShiftAssignments.rb` — comentários do encoding.
-- ADR 016.
+- ADR 017.
 
 #### Fora de escopo
 
@@ -823,19 +823,19 @@ deno task test
 ## 6. Ordem de execução sugerida
 
 ```text
-10.0 ADR 016
+6.0 ADR 017
       ↓
-10.1 scoreboard-bits + helpers
+6.1 scoreboard-bits + helpers
       ↓
-10.2 Limits + Limit
+6.2 Limits + Limit
       ↓
-10.3 ShiftAssignments + ShiftAssignment     ← precisa de projectObjectId
+6.3 ShiftAssignments + ShiftAssignment     ← precisa de projectObjectId
       ↓
-10.4 ShiftScenario consolidado
+6.4 ShiftScenario consolidado
       ↓
-10.5 ResourceScenario.onShift?
+6.5 ResourceScenario.onShift?
       ↓
-10.6 Golden tests
+6.6 Golden tests
 ```
 
 Cada subfase fecha com `deno task check-all` verde.
@@ -862,7 +862,7 @@ passa, e:
 - [ ] **≥ 25 golden tests**.
 - [ ] Nenhum `any` em `src/` (exceto onde justificado).
 - [ ] Nenhum import proibido em `packages/core/src/`.
-- [ ] ADR 016 criado.
+- [ ] ADR 017 criado.
 - [ ] Scripts `limits.rb` e `shift-assignments.rb` funcionais.
 
 ---
@@ -902,7 +902,7 @@ passa, e:
 
 - `docs/syntaxmesh/decisoes/001-core-independente-do-dom.md`
 - `docs/syntaxmesh/decisoes/011-port-fiel-taskjuggler.md`
-- `docs/syntaxmesh/decisoes/016-scoreboard-encoding.md` (novo)
+- `docs/syntaxmesh/decisoes/017-scoreboard-encoding.md` (novo)
 - `docs/syntaxmesh/03-arquitetura.md`
 
 ### Fases dependentes
@@ -931,9 +931,9 @@ passa, e:
 
 ---
 
-## 11. ADR 016 (referência rápida)
+## 11. ADR 017 (referência rápida)
 
-Criado como subfase 10.0. Conteúdo esperado:
+Criado como subfase 6.0. Conteúdo esperado:
 
 - **Título:** Scoreboard bit encoding em TypeScript
 - **Contexto:** `Scoreboard` é genérico; encoding é por convenção espalhada no Ruby.

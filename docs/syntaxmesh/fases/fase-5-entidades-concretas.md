@@ -41,7 +41,7 @@ Ao final desta fase:
 - **~141 `AttributeDefinition`s** registradas por `PropertySet` (via funções `registerTaskAttributes(ps)`, etc.).
 - `MockProject` completo com todos os `PropertySet`s.
 - **≥ 100 testes unitários** + **≥ 20 golden tests** (contagem de atributos, defaults, flags de herança).
-- ADR 015 registrado.
+- ADR 016 registrado.
 - `deno task check-all` verde.
 
 ---
@@ -107,9 +107,11 @@ class Task extends PropertyTreeNode {
 
 `TaskScenario` e `ResourceScenario` no Ruby têm ~1200 e ~900 linhas respectivamente. **Nesta fase, são esqueletos** com apenas:
 - Constructor que chama `super(property, scenarioIdx, attributes)`.
-- **Pré-carregamento de atributos** (ver ADR 015).
+- **Pré-carregamento de atributos** (ver ADR 016).
 
 Todo o resto vai para a Fase 7. `AccountScenario` e `ShiftScenario` são mais simples e podem ser quase completos, mas ainda assim deixamos `turnover`/`onShift?` para fases futuras.
+
+**Nota crítica:** os `*Scenario` (`TaskScenario`, `ResourceScenario`, etc.) nesta fase são **esqueletos**. Toda a lógica de scheduling, book, propagação, validação etc. é da Fase 7. Aqui só preparamos a estrutura e forçamos a criação dos atributos que o scheduler vai usar (ver **ADR 016**).
 
 ### 4.3 `ProjectLike` estendida
 
@@ -208,7 +210,7 @@ Atributos como `definitions`, `journalAttributes`, `taskAttributes`, `resourceAt
 
 ---
 
-### 5.0 — ADR 015 (pré-carregamento de atributos em `*Scenario`)
+### 5.0 — ADR 016 (pré-carregamento de atributos em `*Scenario`)
 
 #### Contexto
 
@@ -235,7 +237,7 @@ Registrar a decisão de **replicar** esse pré-carregamento em TS.
 
 #### Arquivos
 
-- `docs/syntaxmesh/decisoes/015-pre-carregamento-atributos-scenario.md` (novo)
+- `docs/syntaxmesh/decisoes/016-pre-carregamento-atributos-scenario.md` (novo)
 - `docs/syntaxmesh/decisoes/README.md` (atualizar tabela)
 
 #### Requisitos
@@ -260,11 +262,11 @@ Registrar a decisão de **replicar** esse pré-carregamento em TS.
 
 #### Fora de escopo
 
-- Implementação (subfase 9.1).
+- Implementação (subfase 5.1).
 
 #### Critério de aceite
 
-- ADR 015 criado.
+- ADR 016 criado.
 - Tabela atualizada.
 
 ---
@@ -1191,26 +1193,26 @@ deno task test
 ## 6. Ordem de execução sugerida
 
 ```text
-9.0  ADR 015
+5.0  ADR 016
       ↓
-9.1  ProjectLike + ScenarioData.preloadAttributes
+5.1  ProjectLike + ScenarioData.preloadAttributes
       ↓
-9.7  AttributeDefinitions: Scenarios     ← pode ir em paralelo com 9.2
-9.8  AttributeDefinitions: Shifts
-9.9  AttributeDefinitions: Accounts
-9.10 AttributeDefinitions: Resources
-9.11 AttributeDefinitions: Tasks
-9.12 AttributeDefinitions: Reports
+5.7  AttributeDefinitions: Scenarios     ← pode ir em paralelo com 5.2
+5.8  AttributeDefinitions: Shifts
+5.9  AttributeDefinitions: Accounts
+5.10 AttributeDefinitions: Resources
+5.11 AttributeDefinitions: Tasks
+5.12 AttributeDefinitions: Reports
       ↓
-9.2  Task + TaskScenario                 ← precisa de 9.11
-9.3  Resource + ResourceScenario         ← precisa de 9.10
-9.4  Account + AccountScenario           ← precisa de 9.9
-9.5  Shift + ShiftScenario               ← precisa de 9.8
-9.6  Report + ReportScenario             ← precisa de 9.12
+5.2  Task + TaskScenario                 ← precisa de 5.11
+5.3  Resource + ResourceScenario         ← precisa de 5.10
+5.4  Account + AccountScenario           ← precisa de 5.9
+5.5  Shift + ShiftScenario               ← precisa de 5.8
+5.6  Report + ReportScenario             ← precisa de 5.12
       ↓
-9.13 MockProject estendido
+5.13 MockProject estendido
       ↓
-9.14 Golden tests
+5.14 Golden tests
 ```
 
 Cada subfase fecha com `deno task check-all` verde.
@@ -1238,7 +1240,7 @@ passa, e:
 - [ ] **≥ 20 golden tests** (todos os atributos).
 - [ ] Nenhum `any` em `src/` (exceto onde justificado).
 - [ ] Nenhum import proibido em `packages/core/src/`.
-- [ ] ADR 015 criado.
+- [ ] ADR 016 criado.
 - [ ] `scripts/golden/attribute-definitions.rb` funcional.
 
 ---
@@ -1282,7 +1284,7 @@ passa, e:
 
 - `docs/syntaxmesh/decisoes/001-core-independente-do-dom.md`
 - `docs/syntaxmesh/decisoes/011-port-fiel-taskjuggler.md`
-- `docs/syntaxmesh/decisoes/015-pre-carregamento-atributos-scenario.md` (novo)
+- `docs/syntaxmesh/decisoes/016-pre-carregamento-atributos-scenario.md` (novo)
 - `docs/syntaxmesh/03-arquitetura.md`
 
 ### Fases dependentes
@@ -1312,9 +1314,9 @@ passa, e:
 
 ---
 
-## 11. ADR 015 (referência rápida)
+## 11. ADR 016 (referência rápida)
 
-Criado como subfase 9.0. Conteúdo esperado:
+Criado como subfase 5.0. Conteúdo esperado:
 
 - **Título:** Pré-carregamento de atributos em `*Scenario`
 - **Contexto:** Ruby faz `%w(...).each { |attr| @property[attr, @scenarioIdx] }` para forçar criação.

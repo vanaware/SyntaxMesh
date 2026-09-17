@@ -1436,32 +1436,32 @@ deno task test
 ## 6. Ordem de execução sugerida
 
 ```text
-20.0  ADR 027
+16.0  ADR 027
       ↓
-20.1  AlertLevelDefinitions
-20.2  JournalEntry + JournalEntryList
-20.3  Journal
+16.1  AlertLevelDefinitions
+16.2  JournalEntry + JournalEntryList
+16.3  Journal
       ↓
-20.4  Leave + LeaveList + LeaveAllowance
-20.5  Substituir stubs de LeaveList
+16.4  Leave + LeaveList + LeaveAllowance
+16.5  Substituir stubs de LeaveList
       ↓
-20.6  TextFormatter
-20.7  FileList
-20.8  URLParameter
-20.9  TernarySearchTree
-20.10 AlgorithmDiff
-20.11 StdIoWrapper
-20.12 UTF8String
-20.13 deepClone (revisar)
+16.6  TextFormatter
+16.7  FileList
+16.8  URLParameter
+16.9  TernarySearchTree
+16.10 AlgorithmDiff
+16.11 StdIoWrapper
+16.12 UTF8String
+16.13 deepClone (revisar)
       ↓
-20.14 KateSyntax
-20.15 VimSyntax
+16.14 KateSyntax
+16.15 VimSyntax
       ↓
-20.16 Completar TaskScenario query_*
-20.17 Completar ResourceScenario query_dashboard
-20.18 Completar LogicalFlag + hasalert
+16.16 Completar TaskScenario query_*
+16.17 Completar ResourceScenario query_dashboard
+16.18 Completar LogicalFlag + hasalert
       ↓
-20.19 Golden tests
+16.19 Golden tests
 ```
 
 Cada subfase fecha com `deno task check-all` verde.
@@ -1570,7 +1570,7 @@ passa, e:
 
 ## 11. ADR 027 (referência rápida)
 
-Criado como subfase 20.0. Conteúdo esperado:
+Criado como subfase 16.0. Conteúdo esperado:
 
 - **Título:** Journal e AlertLevel
 - **Contexto:** tracking de projetos; alertas green/yellow/red.

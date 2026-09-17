@@ -1201,27 +1201,27 @@ deno task test
 ## 6. Ordem de execução sugerida
 
 ```text
-19.0  ADR 026
+15.0  ADR 026
       ↓
-19.1  HTMLGraphics
-19.2  CollisionDetector
-19.3  GanttRouter           ← complexo
+15.1  HTMLGraphics
+15.2  CollisionDetector
+15.3  GanttRouter           ← complexo
       ↓
-19.4  GanttTaskBar
-19.5  GanttMilestone
-19.6  GanttContainer
-19.7  GanttLoadStack
+15.4  GanttTaskBar
+15.5  GanttMilestone
+15.6  GanttContainer
+15.7  GanttLoadStack
       ↓
-19.8  GanttHeaderScaleItem
-19.9  GanttHeader
+15.8  GanttHeaderScaleItem
+15.9  GanttHeader
       ↓
-19.10 GanttLine             ← integra todos
+15.10 GanttLine             ← integra todos
       ↓
-19.11 GanttChart            ← orquestrador
+15.11 GanttChart            ← orquestrador
       ↓
-19.12 Integração TaskReport/ResourceReport
+15.12 Integração TaskReport/ResourceReport
       ↓
-19.13 Golden tests
+15.13 Golden tests
 ```
 
 Cada subfase fecha com `deno task check-all` verde.
@@ -1330,7 +1330,7 @@ passa, e:
 
 ## 11. ADR 026 (referência rápida)
 
-Criado como subfase 19.0. Conteúdo esperado:
+Criado como subfase 15.0. Conteúdo esperado:
 
 - **Título:** Gantt HTML+CSS
 - **Contexto:** TJ usa HTML+CSS; alternativas SVG/Canvas.

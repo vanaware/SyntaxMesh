@@ -60,7 +60,7 @@ Ao final desta fase:
 - **Substituição** de `ICalendar` mínimo por versão completa.
 - **Substituição** de `Painter` mínimo por versão completa.
 - **≥ 220 testes unitários** + **≥ 30 golden tests** (HTML/XML/sVG snapshots).
-- ADR 028 registrado.
+- ADR 029 registrado.
 - `deno task check-all` verde.
 
 ---
@@ -240,7 +240,7 @@ Decisão: SVG (mesmo do Ruby). Compatível com `Painter`.
 
 ---
 
-### 17.0 — ADR 028 (substituição de XML mínimo)
+### 17.0 — ADR 029 (substituição de XML mínimo)
 
 #### Contexto
 
@@ -250,11 +250,11 @@ Agora substituímos por implementações completas. Isso precisa ser registrado.
 
 #### Objetivo
 
-Criar `docs/syntaxmesh/decisoes/028-substituicao-xml.md`.
+Criar `docs/syntaxmesh/decisoes/029-substituicao-xml.md`.
 
 #### Arquivos
 
-- `docs/syntaxmesh/decisoes/028-substituicao-xml.md` (novo)
+- `docs/syntaxmesh/decisoes/029-substituicao-xml.md` (novo)
 - `docs/syntaxmesh/decisoes/README.md` (atualizar tabela)
 
 #### Requisitos
@@ -276,7 +276,7 @@ Criar `docs/syntaxmesh/decisoes/028-substituicao-xml.md`.
 
 #### Critério de aceite
 
-- ADR 028 criado.
+- ADR 029 criado.
 - Tabela atualizada.
 
 ---
@@ -1134,7 +1134,7 @@ Migrar.
 
 #### Referências
 
-- ADR 028.
+- ADR 029.
 
 #### Critério de aceite
 
@@ -1295,29 +1295,29 @@ deno task test
 ## 6. Ordem de execução sugerida
 
 ```text
-21.0  ADR 028
+17.0  ADR 029
       ↓
-21.1  XMLElement + XMLText + XMLNamedText + XMLComment + XMLBlob
-21.2  XMLDocument
+17.1  XMLElement + XMLText + XMLNamedText + XMLComment + XMLBlob
+17.2  XMLDocument
       ↓
-21.3  HTMLElements
-21.4  HTMLDocument
+17.3  HTMLElements
+17.4  HTMLDocument
       ↓
-21.5  ICalendar estrutura + Component
-21.6  Todo, Event, Journal
+17.5  ICalendar estrutura + Component
+17.6  Todo, Event, Journal
       ↓
-21.7  Color + Points + SVGSupport
-21.8  Element + Group
-21.9  Primitives + BasicShapes + Text
-21.10 Painter
-21.11 FontMetrics + FontData
+17.7  Color + Points + SVGSupport
+17.8  Element + Group
+17.9  Primitives + BasicShapes + Text
+17.10 Painter
+17.11 FontMetrics + FontData
       ↓
-21.12 Substituir SimpleXMLElement → XMLElement
-21.13 Substituir HTMLDocument mínimo
-21.14 Substituir ICalendar mínimo
-21.15 Substituir Painter mínimo
+17.12 Substituir SimpleXMLElement → XMLElement
+17.13 Substituir HTMLDocument mínimo
+17.14 Substituir ICalendar mínimo
+17.15 Substituir Painter mínimo
       ↓
-21.16 Golden tests
+17.16 Golden tests
 ```
 
 Cada subfase fecha com `deno task check-all` verde.
@@ -1345,7 +1345,7 @@ passa, e:
 - [ ] **≥ 220 testes unitários**.
 - [ ] **≥ 30 golden tests**.
 - [ ] Nenhum `any` em `src/` (exceto onde justificado).
-- [ ] ADR 028 criado.
+- [ ] ADR 029 criado.
 
 ---
 
@@ -1385,7 +1385,7 @@ passa, e:
 
 ### Documentos do projeto
 
-- `docs/syntaxmesh/decisoes/028-substituicao-xml.md` (novo)
+- `docs/syntaxmesh/decisoes/029-substituicao-xml.md` (novo)
 - `docs/syntaxmesh/03-arquitetura.md`
 
 ### Fases dependentes
@@ -1417,9 +1417,9 @@ passa, e:
 
 ---
 
-## 11. ADR 028 (referência rápida)
+## 11. ADR 029 (referência rápida)
 
-Criado como subfase 21.0. Conteúdo esperado:
+Criado como subfase 17.0. Conteúdo esperado:
 
 - **Título:** Substituição de XML/HTML/ICalendar/Painter mínimos
 - **Contexto:** Fases 12/14 introduziram implementações mínimas.

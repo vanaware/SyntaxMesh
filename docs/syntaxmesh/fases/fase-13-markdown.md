@@ -79,7 +79,7 @@ Ao final desta fase:
 - `to_tagged` (usado em testes) equivalente ao RichText.
 - Conversor `richTextToMarkdown` (one-way, para migração).
 - **≥ 80 testes unitários**.
-- ADR 024 registrado.
+- ADR 025 registrado.
 - `deno task check-all` verde.
 
 ---
@@ -216,7 +216,7 @@ Markdown não tem i18n de keywords (não é a mesma sintaxe do `.tjp`). Não apl
 
 ---
 
-### 13.0 — ADR 024 (Markdown como formato going-forward)
+### 13.0 — ADR 025 (Markdown como formato going-forward)
 
 #### Contexto
 
@@ -229,11 +229,11 @@ ADR 009 (Fase 1) registra a coexistência RichText + Markdown, mas sem detalhes 
 
 #### Objetivo
 
-Criar `docs/syntaxmesh/decisoes/024-markdown-going-forward.md`.
+Criar `docs/syntaxmesh/decisoes/025-markdown-going-forward.md`.
 
 #### Arquivos
 
-- `docs/syntaxmesh/decisoes/024-markdown-going-forward.md` (novo)
+- `docs/syntaxmesh/decisoes/025-markdown-going-forward.md` (novo)
 - `docs/syntaxmesh/decisoes/README.md` (atualizar tabela)
 
 #### Requisitos
@@ -260,7 +260,7 @@ Criar `docs/syntaxmesh/decisoes/024-markdown-going-forward.md`.
 
 #### Critério de aceite
 
-- ADR 024 criado.
+- ADR 025 criado.
 - Tabela atualizada.
 
 ---
@@ -898,26 +898,26 @@ Congelar snapshots.
 ## 6. Ordem de execução sugerida
 
 ```text
-17.0  ADR 024
+13.0  ADR 025
       ↓
-17.1  Integração micromark
+13.1  Integração micromark
       ↓
-17.2  MdastToRichText
+13.2  MdastToRichText
       ↓
-17.4  Extensão color
-17.5  Extensão HTML sanitizer
-17.6  Extensão functions
-17.7  Extensão mini-queries
-17.8  Pipeline
+13.4  Extensão color
+13.5  Extensão HTML sanitizer
+13.6  Extensão functions
+13.7  Extensão mini-queries
+13.8  Pipeline
       ↓
-17.3  MarkdownFactory
+13.3  MarkdownFactory
       ↓
-17.9  to_markdown
-17.10 Conversor RichText → Markdown
+13.9  to_markdown
+13.10 Conversor RichText → Markdown
       ↓
-17.11 Integração
+13.11 Integração
       ↓
-17.12 Snapshot tests
+13.12 Snapshot tests
 ```
 
 Cada subfase fecha com `deno task check-all` verde.
@@ -942,7 +942,7 @@ passa, e:
 - [ ] **≥ 80 testes unitários**.
 - [ ] **≥ 20 snapshot tests**.
 - [ ] Nenhum `any` em `src/` (exceto onde justificado).
-- [ ] ADR 024 criado.
+- [ ] ADR 025 criado.
 
 ---
 
@@ -968,7 +968,7 @@ passa, e:
 ### Documentos do projeto
 
 - `docs/syntaxmesh/decisoes/009-richtext-mantido-markdown-futuro.md`
-- `docs/syntaxmesh/decisoes/024-markdown-going-forward.md` (novo)
+- `docs/syntaxmesh/decisoes/025-markdown-going-forward.md` (novo)
 - `docs/syntaxmesh/04-linguagem-multilingue.md`
 
 ### Bibliotecas
@@ -1003,9 +1003,9 @@ passa, e:
 
 ---
 
-## 11. ADR 024 (referência rápida)
+## 11. ADR 025 (referência rápida)
 
-Criado como subfase 17.0. Conteúdo esperado:
+Criado como subfase 13.0. Conteúdo esperado:
 
 - **Título:** Markdown como formato going-forward
 - **Contexto:** coexistência RichText/Markdown; falta de AST em `@deno/gfm`.

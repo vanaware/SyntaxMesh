@@ -79,7 +79,7 @@ Ao final desta fase:
 - `Query` completo (`process`, `to_s`, `to_num`, `to_sort`, `to_rti`, `result`, `scaleDuration`, `scaleLoad`, `assignList`, `setCustomData`, `resolvePropertyId`, `reset`).
 - `SimpleQueryExpander` completo.
 - **≥ 180 testes unitários** + **≥ 40 golden tests** (expressões dos MWEs + queries em reports).
-- ADR 022 registrado.
+- ADR 023 registrado.
 - `deno task check-all` verde.
 
 ---
@@ -132,7 +132,7 @@ Ex:
 - `a | b & c` = `(a | b) & c`
 - `a & b | c` = `(a & b) | c`
 
-Isso é **diferente** da maioria das linguagens. Documentar em ADR 022.
+Isso é **diferente** da maioria das linguagens. Documentar em ADR 023.
 
 ### 4.2 `&` e `|` são **lazy**
 
@@ -343,7 +343,7 @@ Simples.
 
 ---
 
-### 11.0 — ADR 022 (expressões lógicas sem precedência)
+### 11.0 — ADR 023 (expressões lógicas sem precedência)
 
 #### Contexto
 
@@ -355,11 +355,11 @@ Também: `&` e `|` são **lazy** (short-circuit).
 
 #### Objetivo
 
-Criar `docs/syntaxmesh/decisoes/022-expressoes-logicas.md`.
+Criar `docs/syntaxmesh/decisoes/023-expressoes-logicas.md`.
 
 #### Arquivos
 
-- `docs/syntaxmesh/decisoes/022-expressoes-logicas.md` (novo)
+- `docs/syntaxmesh/decisoes/023-expressoes-logicas.md` (novo)
 - `docs/syntaxmesh/decisoes/README.md` (atualizar tabela)
 
 #### Requisitos
@@ -377,7 +377,7 @@ Criar `docs/syntaxmesh/decisoes/022-expressoes-logicas.md`.
 
 #### Critério de aceite
 
-- ADR 022 criado.
+- ADR 023 criado.
 - Tabela atualizada.
 
 ---
@@ -1325,25 +1325,25 @@ deno task test
 ## 6. Ordem de execução sugerida
 
 ```text
-15.0  ADR 022
+11.0  ADR 023
       ↓
-15.1  LogicalOperation
-15.2  LogicalAttribute + LogicalFlag
-15.3  LogicalFunction
-15.4  LogicalExpression
-15.5  Testes e2e
+11.1  LogicalOperation
+11.2  LogicalAttribute + LogicalFlag
+11.3  LogicalFunction
+11.4  LogicalExpression
+11.5  Testes e2e
       ↓
-15.6  Query estrutura
-15.7  Query.process
-15.8  Query accessors
-15.9  Query scale + assignList
-15.10 Query resolvePropertyId + customData
+11.6  Query estrutura
+11.7  Query.process
+11.8  Query accessors
+11.9  Query scale + assignList
+11.10 Query resolvePropertyId + customData
       ↓
-15.11 SimpleQueryExpander
+11.11 SimpleQueryExpander
       ↓
-15.12 Integração com TaskScenario/ResourceScenario
+11.12 Integração com TaskScenario/ResourceScenario
       ↓
-15.13 Golden tests
+11.13 Golden tests
 ```
 
 Cada subfase fecha com `deno task check-all` verde.
@@ -1370,7 +1370,7 @@ passa, e:
 - [ ] **≥ 40 golden tests**.
 - [ ] Nenhum `any` em `src/` (exceto onde justificado).
 - [ ] Nenhum import proibido em `packages/core/src/`.
-- [ ] ADR 022 criado.
+- [ ] ADR 023 criado.
 
 ---
 
@@ -1410,7 +1410,7 @@ passa, e:
 ### Documentos do projeto
 
 - `docs/syntaxmesh/decisoes/011-port-fiel-taskjuggler.md`
-- `docs/syntaxmesh/decisoes/022-expressoes-logicas.md` (novo)
+- `docs/syntaxmesh/decisoes/023-expressoes-logicas.md` (novo)
 - `docs/syntaxmesh/03-arquitetura.md`
 
 ### Casos de teste
@@ -1448,9 +1448,9 @@ passa, e:
 
 ---
 
-## 11. ADR 022 (referência rápida)
+## 11. ADR 023 (referência rápida)
 
-Criado como subfase 15.0. Conteúdo esperado:
+Criado como subfase 11.0. Conteúdo esperado:
 
 - **Título:** Expressões lógicas sem precedência
 - **Contexto:** TJ avalia left-to-right, sem precedência.

@@ -56,7 +56,7 @@ Ao final desta fase:
 - Diretiva `language "pt-BR"` funcional.
 - AST equivalente entre idiomas.
 - **≥ 400 testes unitários** + **≥ 100 golden tests** (cada MWE + Syntax/Correct + Syntax/Errors).
-- ADR 020 e ADR 021 registrados.
+- ADR 021 e ADR 022 registrados.
 - `deno task check-all` verde.
 
 ---
@@ -193,7 +193,7 @@ A diretiva `language "pt-BR"` deve ser detectada **antes** de qualquer outra key
 
 **Alternativa:** detectar durante o parsing. Complexo, porque keywords `project`, `task` etc. já viram tokens canônicos.
 
-**Decisão:** pré-scan com regex no início do arquivo. Documentar em ADR 021.
+**Decisão:** pré-scan com regex no início do arquivo. Documentar em ADR 022.
 
 ### 4.9 Tokens: `:KEYWORD` vs `:ID`
 
@@ -304,25 +304,25 @@ Duas decisões arquiteturais críticas desta fase:
 #### Objetivo
 
 Criar:
-- `docs/syntaxmesh/decisoes/020-fsm-textparser.md`.
-- `docs/syntaxmesh/decisoes/021-i18n-keywords.md`.
+- `docs/syntaxmesh/decisoes/021-fsm-textparser.md`.
+- `docs/syntaxmesh/decisoes/022-i18n-keywords.md`.
 
 #### Arquivos
 
-- `docs/syntaxmesh/decisoes/020-fsm-textparser.md` (novo)
-- `docs/syntaxmesh/decisoes/021-i18n-keywords.md` (novo)
+- `docs/syntaxmesh/decisoes/021-fsm-textparser.md` (novo)
+- `docs/syntaxmesh/decisoes/022-i18n-keywords.md` (novo)
 - `docs/syntaxmesh/decisoes/README.md` (atualizar)
 
 #### Requisitos
 
-**ADR 020 — FSM do TextParser:**
+**ADR 021 — FSM do TextParser:**
 
 - [ ] **Contexto:** o parser do TJ é FSM compilado em runtime.
 - [ ] **Decisão:** manter fielmente (não portar para parser combinators).
 - [ ] **Alternativas:** recursive descent, PEG, parser combinators.
 - [ ] **Consequências:** fidelidade absoluta (suporta `extend`); complexidade alta.
 
-**ADR 021 — i18n de keywords:**
+**ADR 022 — i18n de keywords:**
 
 - [ ] **Contexto:** TJ só tem inglês. SyntaxMesh quer pt-BR, es.
 - [ ] **Decisão:**
@@ -1378,7 +1378,7 @@ Implementar a infraestrutura de i18n.
 #### Referências
 
 - `docs/syntaxmesh/04-linguagem-multilingue.md`.
-- ADR 021.
+- ADR 022.
 
 #### Critério de aceite
 
@@ -1512,7 +1512,7 @@ Implementar detecção e aplicação.
 #### Referências
 
 - `docs/syntaxmesh/04-linguagem-multilingue.md` — seção "Declaração do idioma no arquivo".
-- ADR 021.
+- ADR 022.
 
 #### Critério de aceite
 
@@ -1566,7 +1566,7 @@ Testar equivalência em todos os MWEs.
 #### Referências
 
 - `docs/syntaxmesh/04-linguagem-multilingue.md`.
-- ADR 021.
+- ADR 022.
 
 #### Critério de aceite
 
@@ -1657,34 +1657,34 @@ deno task test
 ## 6. Ordem de execução sugerida
 
 ```text
-14.0  ADRs 020, 021
+10.0  ADRs 020, 021
       ↓
-14.1  TokenDoc
-14.2  Macro + MacroTable
-14.3  StackElement
-14.4  State
-14.5  Pattern
-14.6  Rule
+10.1  TokenDoc
+10.2  Macro + MacroTable
+10.3  StackElement
+10.4  State
+10.5  Pattern
+10.6  Rule
       ↓
-14.7  TextParser FSM
+10.7  TextParser FSM
       ↓
-14.8  Scanner genérico
+10.8  Scanner genérico
       ↓
-14.9  ProjectFileScanner
+10.9  ProjectFileScanner
       ↓
-14.10 ProjectFileParser (estrutura)
+10.10 ProjectFileParser (estrutura)
       ↓
-14.11 TjpSyntaxRules bloco 1 (project + task)
-14.12 TjpSyntaxRules bloco 2 (resource + account + shift + scenario)
-14.13 TjpSyntaxRules bloco 3 (reports)
-14.14 TjpSyntaxRules bloco 4 (tracking + lógica)
+10.11 TjpSyntaxRules bloco 1 (project + task)
+10.12 TjpSyntaxRules bloco 2 (resource + account + shift + scenario)
+10.13 TjpSyntaxRules bloco 3 (reports)
+10.14 TjpSyntaxRules bloco 4 (tracking + lógica)
       ↓
-14.15 LanguageRegistry
-14.16 Idiomas
-14.17 Diretiva language
-14.18 AST equivalence
+10.15 LanguageRegistry
+10.16 Idiomas
+10.17 Diretiva language
+10.18 AST equivalence
       ↓
-14.19 Golden tests
+10.19 Golden tests
 ```
 
 Cada subfase fecha com `deno task check-all` verde.
@@ -1751,8 +1751,8 @@ passa, e:
 
 ### Documentos do projeto
 
-- `docs/syntaxmesh/decisoes/020-fsm-textparser.md` (novo)
-- `docs/syntaxmesh/decisoes/021-i18n-keywords.md` (novo)
+- `docs/syntaxmesh/decisoes/021-fsm-textparser.md` (novo)
+- `docs/syntaxmesh/decisoes/022-i18n-keywords.md` (novo)
 - `docs/syntaxmesh/04-linguagem-multilingue.md`
 - `docs/syntaxmesh/03-arquitetura.md`
 
@@ -1796,7 +1796,7 @@ passa, e:
 
 ## 11. ADRs 020, 021 (referência rápida)
 
-**ADR 020 — FSM do TextParser:**
+**ADR 021 — FSM do TextParser:**
 
 - **Título:** FSM do TextParser compilado em runtime
 - **Contexto:** TJ usa FSM, não recursive descent.
@@ -1804,7 +1804,7 @@ passa, e:
 - **Alternativas:** recursive descent, PEG.
 - **Consequências:** suporta `extend`; complexidade.
 
-**ADR 021 — i18n de keywords:**
+**ADR 022 — i18n de keywords:**
 
 - **Título:** Sistema de i18n de keywords
 - **Contexto:** TJ só tem inglês; SyntaxMesh quer pt-BR, es.

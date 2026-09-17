@@ -43,7 +43,7 @@ Ao final desta fase:
 - `TaskScenario.turnover`, `getAllocatedTime`, `getEffectiveWork`, `collectTimeOffIntervals`.
 - Queries: `query_effort`, `query_duration`, `query_complete`, `query_cost`, `query_revenue`, `query_rate`, `query_status`, `query_activetasks`, `query_closedtasks`, `query_opentasks`, `query_competitorcount`, `query_competitors`, `query_gauge`, `query_priority`, `query_resources`, `query_responsible`, `query_scheduling`, `query_followers`, `query_precursors`, `query_inputs`, `query_targets`, `query_headcount`, `query_effortdone`, `query_effortleft`, `query_annualleave`, `query_annualleavelist`, `query_annualleavebalance`, `query_sickleave`, `query_specialleave`, `query_unpaidleave`, `query_timeoffdays`, `query_duties`, `query_freework`, `query_freetime`, `query_fte`.
 - **≥ 250 testes unitários** + **≥ 60 golden tests** (os 9 MWEs + casos de `TestSuite/Scheduler/`).
-- ADR 017 registrado.
+- ADR 018 registrado.
 - `deno task check-all` verde.
 
 ---
@@ -108,7 +108,7 @@ Ruby mantém muitos `@instance_variables` mutáveis (`@currentSlotIdx`, `@doneEf
 
 `TaskScenario` e `ResourceScenario` usam `DataCache.instance.cached(...args, block)` extensivamente. Precisamos do `DataCache` **antes** de começar o scheduler. A Fase 9 planejava implementá-lo, mas ele é pré-requisito aqui.
 
-**Decisão:** implementar `DataCache` na subfase 11.0 desta fase, com testes. A Fase 9 o referencia.
+**Decisão:** implementar `DataCache` na subfase 7.0 desta fase, com testes. A Fase 9 o referencia.
 
 ### 4.3 Delegação via `scenarioData(scIdx)`
 
@@ -210,7 +210,7 @@ Ruby: o `Query.process` chama `property.send("query_#{attrId}", self)`. Em TS, p
 
 **Decisão:** `Query.process` faz lookup por `(property.scenarioData(scIdx) as any)[`query_${attrId}`]`. Se existir, chama. Não usar `Proxy`.
 
-Detalhes na subfase 11.15.
+Detalhes na subfase 7.15.
 
 ### 4.16 Erros: `TjRuntimeError` para runtime
 
@@ -253,7 +253,7 @@ Esta fase é grande. As subfases são agrupadas em 5 blocos:
 
 ---
 
-### 7.0 — ADR 017 (heurística e slots)
+### 7.0 — ADR 018 (heurística e slots)
 
 #### Contexto
 
@@ -267,11 +267,11 @@ Registrar formalmente antes de implementar.
 
 #### Objetivo
 
-Criar `docs/syntaxmesh/decisoes/017-heuristica-scheduler.md`.
+Criar `docs/syntaxmesh/decisoes/018-heuristica-scheduler.md`.
 
 #### Arquivos
 
-- `docs/syntaxmesh/decisoes/017-heuristica-scheduler.md` (novo)
+- `docs/syntaxmesh/decisoes/018-heuristica-scheduler.md` (novo)
 - `docs/syntaxmesh/decisoes/README.md` (atualizar)
 
 #### Requisitos
@@ -300,7 +300,7 @@ Criar `docs/syntaxmesh/decisoes/017-heuristica-scheduler.md`.
 
 #### Critério de aceite
 
-- ADR 017 criado.
+- ADR 018 criado.
 - Tabela atualizada.
 
 ---
@@ -416,7 +416,7 @@ Implementar `TaskDependency`.
 
 #### Fora de escopo
 
-- Uso — subfase 11.4.
+- Uso — subfase 7.4.
 
 #### Critério de aceite
 
@@ -480,7 +480,7 @@ Implementar `Allocation` com os 5 modos de seleção.
   - Se `MaxLoaded`, ordena por `bookedEffort` desc.
   - Cacheia se `MinAllocated && !persistent`.
 
-**Nota:** `ResourceScenario.bookedEffort(scIdx)` é da subfase 11.13. Aqui usamos um getter genérico `resource.bookedEffort(scIdx)` que delega para o `ResourceScenario`.
+**Nota:** `ResourceScenario.bookedEffort(scIdx)` é da subfase 7.13. Aqui usamos um getter genérico `resource.bookedEffort(scIdx)` que delega para o `ResourceScenario`.
 
 #### Referências
 
@@ -489,7 +489,7 @@ Implementar `Allocation` com os 5 modos de seleção.
 
 #### Fora de escopo
 
-- Uso por `TaskScenario` — subfase 11.7.
+- Uso por `TaskScenario` — subfase 7.7.
 
 #### Critério de aceite
 
@@ -556,7 +556,7 @@ Implementar `Booking`.
 
 #### Fora de escopo
 
-- Uso — subfase 11.10.
+- Uso — subfase 7.10.
 
 #### Critério de aceite
 
@@ -649,7 +649,7 @@ Implementar `prepareScheduling`, `Xref`, `preScheduleCheck`, `markAsMilestone`.
 - [ ] Reset `contendedResources`.
 - [ ] Coletar `mandatories` (de `allocate`).
 - [ ] Reset `lockedResource` de cada `allocation`.
-- [ ] `bookBookings()` (subfase 11.10).
+- [ ] `bookBookings()` (subfase 7.10).
 - [ ] Se `StartEnd`, setar `startIdx`, `endIdx`.
 
 **`Xref()`:**
@@ -700,7 +700,7 @@ Implementar `prepareScheduling`, `Xref`, `preScheduleCheck`, `markAsMilestone`.
 
 #### Fora de escopo
 
-- `schedule()` real — subfase 11.7.
+- `schedule()` real — subfase 7.7.
 
 #### Critério de aceite
 
@@ -814,7 +814,7 @@ Implementar `checkForLoops`, `resetLoopFlags`, `calcCriticalness`, `calcPathCrit
 
 #### Fora de escopo
 
-- `schedule()` — subfase 11.7.
+- `schedule()` — subfase 7.7.
 
 #### Critério de aceite
 
@@ -914,8 +914,8 @@ Implementar `schedule`, `scheduleSlot`, `markAsScheduled`, `markAsRunaway`, `rea
 
 #### Fora de escopo
 
-- `bookResources` real — subfase 11.8.
-- `propagateDate` real — subfase 11.9.
+- `bookResources` real — subfase 7.8.
+- `propagateDate` real — subfase 7.9.
 
 #### Critério de aceite
 
@@ -1018,7 +1018,7 @@ Implementar `bookResources`, `bookResource`, `rollbackBookings`, `limitsOk?`, `i
 
 #### Fora de escopo
 
-- `propagateDate` real — subfase 11.9.
+- `propagateDate` real — subfase 7.9.
 
 #### Critério de aceite
 
@@ -1878,38 +1878,38 @@ deno task test
 ## 6. Ordem de execução sugerida
 
 ```text
-11.0  ADR 017
+7.0  ADR 018
       ↓
-11.1  DataCache
+7.1  DataCache
       ↓
-11.2  TaskDependency
+7.2  TaskDependency
       ↓
-11.3  Allocation
+7.3  Allocation
       ↓
-11.4  Booking
+7.4  Booking
       ↓
-11.5  TaskScenario prepare + Xref + preScheduleCheck
+7.5  TaskScenario prepare + Xref + preScheduleCheck
       ↓
-11.6  TaskScenario checkForLoops + criticalness
+7.6  TaskScenario checkForLoops + criticalness
       ↓
-11.11 ResourceScenario initScoreboard           ← pode rodar em paralelo com 11.7
-11.12 ResourceScenario book + bookBooking
-11.13 ResourceScenario slots
-11.14 ResourceScenario effective work
+7.11 ResourceScenario initScoreboard           ← pode rodar em paralelo com 11.7
+7.12 ResourceScenario book + bookBooking
+7.13 ResourceScenario slots
+7.14 ResourceScenario effective work
       ↓
-11.7  TaskScenario.schedule + scheduleSlot
+7.7  TaskScenario.schedule + scheduleSlot
       ↓
-11.8  TaskScenario bookResources + bookResource
+7.8  TaskScenario bookResources + bookResource
       ↓
-11.9  TaskScenario propagateDate + scheduleContainer + earliestStart/latestEnd
+7.9  TaskScenario propagateDate + scheduleContainer + earliestStart/latestEnd
       ↓
-11.10 TaskScenario bookBookings + finishScheduling + postScheduleCheck
+7.10 TaskScenario bookBookings + finishScheduling + postScheduleCheck
       ↓
-11.15 ResourceScenario queries
+7.15 ResourceScenario queries
       ↓
-11.16 TaskScenario queries
+7.16 TaskScenario queries
       ↓
-11.18 Golden tests
+7.18 Golden tests
 ```
 
 Cada subfase fecha com `deno task check-all` verde.
@@ -1934,7 +1934,7 @@ passa, e:
 - [ ] **≥ 60 golden tests** (9 MWEs + TestSuite/Scheduler).
 - [ ] Nenhum `any` em `src/` (exceto onde justificado).
 - [ ] Nenhum import proibido em `packages/core/src/`.
-- [ ] ADR 017 criado.
+- [ ] ADR 018 criado.
 - [ ] Scripts `scheduler-mwe*.rb` funcionais.
 
 ---
@@ -1977,7 +1977,7 @@ passa, e:
 
 - `docs/syntaxmesh/decisoes/011-port-fiel-taskjuggler.md`
 - `docs/syntaxmesh/decisoes/016-scoreboard-encoding.md`
-- `docs/syntaxmesh/decisoes/017-heuristica-scheduler.md` (novo)
+- `docs/syntaxmesh/decisoes/018-heuristica-scheduler.md` (novo)
 - `docs/syntaxmesh/03-arquitetura.md`
 
 ### Casos de teste
@@ -2017,9 +2017,9 @@ passa, e:
 
 ---
 
-## 11. ADR 017 (referência rápida)
+## 11. ADR 018 (referência rápida)
 
-Criado como subfase 11.0. Conteúdo esperado:
+Criado como subfase 7.0. Conteúdo esperado:
 
 - **Título:** Heurística do scheduler TaskJuggler
 - **Contexto:** algoritmo não é ótimo; é greedy com slots.

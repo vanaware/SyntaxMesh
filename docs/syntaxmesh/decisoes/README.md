@@ -76,5 +76,16 @@ O que foi decidido? Seja específico e acionável.
 | 016 | Pré-carregamento de atributos em `*Scenario` | Proposto | — |
 | 017 | Scoreboard bit encoding em TypeScript | Proposto | — |
 | 018 | Heurística do scheduler TaskJuggler | Proposto | — |
+| 019 | Modelo financeiro em TypeScript | Proposto | — |
+| 020 | Orquestrador e pipeline de scheduling | Proposto | — |
+| 021 | FSM do TextParser compilado em runtime | Proposto | — |
+| 022 | i18n de keywords via LanguageRegistry | Proposto | — |
+| 023 | Expressões lógicas sem precedência | Proposto | — |
+| 024 | RichText e function handlers | Proposto | — |
+| 025 | Markdown como formato going-forward | Proposto | — |
+| 026 | Reports no browser: retorno de strings | Proposto | — |
+| 027 | Gantt HTML+CSS | Proposto | — |
+| 028 | Journal e AlertLevel em TypeScript | Proposto | — |
+| 029 | Substituição de XML/HTML/ICalendar/Painter mínimos | Proposto | — |
 
 > **Nota:** Manter esta tabela atualizada manualmente ou via script ao adicionar novos ADRs.

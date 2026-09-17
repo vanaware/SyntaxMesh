@@ -97,7 +97,7 @@ Ao final desta fase:
 - `RichTextFactory` implementado (substitui stub da Fase 10).
 - Integração com `ProjectFileParser` (`newRichText`).
 - **≥ 200 testes unitários** + **≥ 30 golden tests** (markup do `TestSuite/RichText/`).
-- ADR 023 registrado.
+- ADR 024 registrado.
 - `deno task check-all` verde.
 
 ---
@@ -286,7 +286,7 @@ Usados por `RichTextElement.to_html`. Nesta fase, definir classes simples em `xm
 
 ---
 
-### 12.0 — ADR 023 (RichText e function handlers)
+### 12.0 — ADR 024 (RichText e function handlers)
 
 #### Contexto
 
@@ -297,11 +297,11 @@ O `RichText` é um dos componentes mais complexos do TaskJuggler. Duas decisões
 
 #### Objetivo
 
-Criar `docs/syntaxmesh/decisoes/023-richtext-handlers.md`.
+Criar `docs/syntaxmesh/decisoes/024-richtext-handlers.md`.
 
 #### Arquivos
 
-- `docs/syntaxmesh/decisoes/023-richtext-handlers.md` (novo)
+- `docs/syntaxmesh/decisoes/024-richtext-handlers.md` (novo)
 - `docs/syntaxmesh/decisoes/README.md` (atualizar tabela)
 
 #### Requisitos
@@ -323,7 +323,7 @@ Criar `docs/syntaxmesh/decisoes/023-richtext-handlers.md`.
 
 #### Critério de aceite
 
-- ADR 023 criado.
+- ADR 024 criado.
 - Tabela atualizada.
 
 ---
@@ -1397,32 +1397,32 @@ deno task test
 ## 6. Ordem de execução sugerida
 
 ```text
-16.0  ADR 023
+12.0  ADR 024
       ↓
-16.1  XMLElementLike
-16.2  RichTextImage
-16.3  RichTextElement
-16.4  RichTextIntermediate
+12.1  XMLElementLike
+12.2  RichTextImage
+12.3  RichTextElement
+12.4  RichTextIntermediate
       ↓
-16.5  RichTextScanner
-16.6  RichTextParser + SyntaxRules
+12.5  RichTextScanner
+12.6  RichTextParser + SyntaxRules
       ↓
-16.7  TOCEntry
-16.8  TableOfContents
-16.9  RichTextSnip
-16.10 RichTextDocument
+12.7  TOCEntry
+12.8  TableOfContents
+12.9  RichTextSnip
+12.10 RichTextDocument
       ↓
-16.11 RichTextFunctionHandler
-16.12 RichTextFunctionExample
-16.13 RTFWithQuerySupport
-16.14 RTFQuery
-16.15 RTFReport (stub)
-16.16 RTFReportLink (stub)
-16.17 RTFNavigator + RTFHandlers
+12.11 RichTextFunctionHandler
+12.12 RichTextFunctionExample
+12.13 RTFWithQuerySupport
+12.14 RTFQuery
+12.15 RTFReport (stub)
+12.16 RTFReportLink (stub)
+12.17 RTFNavigator + RTFHandlers
       ↓
-16.18 RichText + RichTextFactory + integração
+12.18 RichText + RichTextFactory + integração
       ↓
-16.19 Golden tests
+12.19 Golden tests
 ```
 
 Cada subfase fecha com `deno task check-all` verde.
@@ -1448,7 +1448,7 @@ passa, e:
 - [ ] **≥ 200 testes unitários**.
 - [ ] **≥ 30 golden tests**.
 - [ ] Nenhum `any` em `src/` (exceto onde justificado).
-- [ ] ADR 023 criado.
+- [ ] ADR 024 criado.
 - [ ] Script `richtext.rb` funcional.
 
 ---
@@ -1485,7 +1485,7 @@ passa, e:
 ### Documentos do projeto
 
 - `docs/syntaxmesh/decisoes/009-richtext-mantido-markdown-futuro.md`
-- `docs/syntaxmesh/decisoes/023-richtext-handlers.md` (novo)
+- `docs/syntaxmesh/decisoes/024-richtext-handlers.md` (novo)
 - `docs/syntaxmesh/04-linguagem-multilingue.md`
 
 ### Casos de teste
@@ -1523,9 +1523,9 @@ passa, e:
 
 ---
 
-## 11. ADR 023 (referência rápida)
+## 11. ADR 024 (referência rápida)
 
-Criado como subfase 16.0. Conteúdo esperado:
+Criado como subfase 12.0. Conteúdo esperado:
 
 - **Título:** RichText e function handlers
 - **Contexto:** RichText MediaWiki; reuso de `TextParser`; handlers.

@@ -76,7 +76,7 @@ Ao final desta fase:
 - **Completar stubs:** `RTFReport`, `RTFReportLink`, `RTFNavigator` (Fase 12).
 - **Integrar `Project.generateReports`** (Fase 9).
 - **≥ 350 testes unitários** + **≥ 60 golden tests** (reports dos 9 MWEs + TestSuite).
-- ADR 025 registrado.
+- ADR 026 registrado.
 - `deno task check-all` verde.
 
 ---
@@ -260,7 +260,7 @@ Fase 12 deixou stubs. Aqui completamos.
 
 **Decisão:** `Report.generate` no browser **retorna** o conteúdo (string) em vez de escrever. API: `generateReport(): string[]` — array de outputs.
 
-**Nota:** isso muda a assinatura do Ruby. Documentar em ADR 025.
+**Nota:** isso muda a assinatura do Ruby. Documentar em ADR 026.
 
 ---
 
@@ -280,7 +280,7 @@ Fase 12 deixou stubs. Aqui completamos.
 
 ---
 
-### 14.0 — ADR 025 (reports browser-only)
+### 14.0 — ADR 026 (reports browser-only)
 
 #### Contexto
 
@@ -315,7 +315,7 @@ Criar `docs/syntaxmesh/decisoes/025-reports-browser.md`.
 
 #### Critério de aceite
 
-- ADR 025 criado.
+- ADR 026 criado.
 - Tabela atualizada.
 
 ---
@@ -967,7 +967,7 @@ Completar `Report`.
   - `content.generateIntermediateFormat()`.
 - [ ] `to_html(): XMLElementLike | null`.
 - [ ] `interactive?(): boolean`.
-- [ ] Private `generateHTML(): string | null` — retorna HTML como string (ADR 025).
+- [ ] Private `generateHTML(): string | null` — retorna HTML como string (ADR 026).
 - [ ] Private `generateCSV(): unknown[][] | null`.
 - [ ] Private `generateTJP(): string | null`.
 - [ ] Private `generateMspXml(): string | null`.
@@ -1742,37 +1742,37 @@ deno task test
 ## 6. Ordem de execução sugerida
 
 ```text
-18.0  ADR 025
+14.0  ADR 026
       ↓
-18.1  CSVFile
-18.2  ReportContext (completar)
-18.3  ReportBase
-18.4  TableColumnDefinition + CellSettingPattern
-18.5  TableColumnSorter
+14.1  CSVFile
+14.2  ReportContext (completar)
+14.3  ReportBase
+14.4  TableColumnDefinition + CellSettingPattern
+14.5  TableColumnSorter
       ↓
-18.6  ReportTable
-18.7  ReportTableColumn
-18.8  ReportTableLine
-18.9  ReportTableCell + PlaceHolderCell
-18.10 ReportTableLegend
+14.6  ReportTable
+14.7  ReportTableColumn
+14.8  ReportTableLine
+14.9  ReportTableCell + PlaceHolderCell
+14.10 ReportTableLegend
       ↓
-18.11 Report (completar)
-18.12 TableReport         ← mais complexo
-18.13 ColumnTable
+14.11 Report (completar)
+14.12 TableReport         ← mais complexo
+14.13 ColumnTable
       ↓
-18.14 TaskListRE
-18.15 ResourceListRE
-18.16 AccountListRE
-18.17 TextReport
-18.18 ExportRE + TjpExportRE + MspXmlRE
-18.19 ICalReport
-18.20 NikuReport + TraceReport + TagFile
+14.14 TaskListRE
+14.15 ResourceListRE
+14.16 AccountListRE
+14.17 TextReport
+14.18 ExportRE + TjpExportRE + MspXmlRE
+14.19 ICalReport
+14.20 NikuReport + TraceReport + TagFile
       ↓
-18.21 Navigator + completar RTFNavigator
+14.21 Navigator + completar RTFNavigator
       ↓
-18.22 ChartPlotter
+14.22 ChartPlotter
       ↓
-18.23 Golden tests
+14.23 Golden tests
 ```
 
 Cada subfase fecha com `deno task check-all` verde.
@@ -1798,7 +1798,7 @@ passa, e:
 - [ ] **≥ 350 testes unitários**.
 - [ ] **≥ 60 golden tests**.
 - [ ] Nenhum `any` em `src/` (exceto onde justificado).
-- [ ] ADR 025 criado.
+- [ ] ADR 026 criado.
 
 ---
 
@@ -1816,7 +1816,7 @@ passa, e:
 | `ICalendar.foldLines` com UTF-8 | Médio | Testes com emojis/acentos |
 | `filterTaskList` com `isdutyof()` | Alto | Teste com recursos aninhados |
 | `copyAuxiliaryFiles` no-op | Médio | Aceito; Fase 20 |
-| `outputDir` no browser | Médio | ADR 025 |
+| `outputDir` no browser | Médio | ADR 026 |
 | `Painter` mínimo vs real | Médio | Fase 17 substitui |
 | Performance de `generateHTML` | Médio | Benchmarks |
 
@@ -1866,7 +1866,7 @@ passa, e:
 9. **`TjpExportRE`:** fidelidade textual.
 10. **`MspXmlRE`:** usar `XMLElementLike` + serializer.
 11. **`ICalendar.foldLines`:** linhas de 75 chars.
-12. **Browser reports retornam strings.** ADR 025.
+12. **Browser reports retornam strings.** ADR 026.
 13. **`ChartPlotter`:** implementar `Painter` mínimo nesta fase.
 14. **`RTFNavigator`, `RTFReport`, `RTFReportLink`:** completar stubs da Fase 12.
 15. **Sem `any`.** Use `unknown` + type guards.
@@ -1874,9 +1874,9 @@ passa, e:
 
 ---
 
-## 11. ADR 025 (referência rápida)
+## 11. ADR 026 (referência rápida)
 
-Criado como subfase 18.0. Conteúdo esperado:
+Criado como subfase 14.0. Conteúdo esperado:
 
 - **Título:** Reports no browser: retorno de strings
 - **Contexto:** Ruby escreve arquivos; browser não tem FS.
