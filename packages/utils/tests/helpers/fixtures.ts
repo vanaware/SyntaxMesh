@@ -1,6 +1,6 @@
 /// <reference lib="deno.ns" />
 
-import { join, } from '@std/path';
+import { join, } from "@std/path";
 
 /**
  * Cria um diretório temporário com estrutura controlada para testes.
@@ -9,7 +9,7 @@ import { join, } from '@std/path';
 export async function withTempDir<T,>(
   fn: (dir: string,) => Promise<T>,
 ): Promise<T> {
-  const tempDir = await Deno.makeTempDir({ prefix: 'syntaxmesh-test-', },);
+  const tempDir = await Deno.makeTempDir({ prefix: "syntaxmesh-test-", },);
   try {
     return await fn(tempDir,);
   } finally {
@@ -24,12 +24,12 @@ export async function withTempDenoJsonc(
   version: string,
   extras?: Record<string, unknown>,
 ): Promise<{ path: string; cleanup: () => Promise<void> }> {
-  const tempDir = await Deno.makeTempDir({ prefix: 'syntaxmesh-deno-test-', },);
-  const path = join(tempDir, 'deno.jsonc',);
+  const tempDir = await Deno.makeTempDir({ prefix: "syntaxmesh-deno-test-", },);
+  const path = join(tempDir, "deno.jsonc",);
 
   const content = JSON.stringify(
     {
-      name: '@syntaxmesh/test',
+      name: "@syntaxmesh/test",
       version,
       ...extras,
     },
@@ -51,11 +51,11 @@ export async function withTempDenoJsonc(
 export async function withFileStructure(
   files: Record<string, string>,
 ): Promise<{ dir: string; cleanup: () => Promise<void> }> {
-  const tempDir = await Deno.makeTempDir({ prefix: 'syntaxmesh-fs-test-', },);
+  const tempDir = await Deno.makeTempDir({ prefix: "syntaxmesh-fs-test-", },);
 
   for (const [path, content,] of Object.entries(files,)) {
     const fullPath = join(tempDir, path,);
-    const dirPath = fullPath.substring(0, fullPath.lastIndexOf('/',),);
+    const dirPath = fullPath.substring(0, fullPath.lastIndexOf("/",),);
 
     if (dirPath) {
       await Deno.mkdir(dirPath, { recursive: true, },);

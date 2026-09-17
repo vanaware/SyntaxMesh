@@ -9,18 +9,18 @@ export function ToastSnackbar() {
   if (!state.visible) return null;
 
   // Cores adaptadas ao padrão MD3 com base no tipo de mensagem
-  let background = 'var(--md-sys-color-inverse-surface, #2e312e)';
-  let color = 'var(--md-sys-color-inverse-on-surface, #eff1ed)';
-  let iconName = 'info';
+  let background = "var(--md-sys-color-inverse-surface, #2e312e)";
+  let color = "var(--md-sys-color-inverse-on-surface, #eff1ed)";
+  let iconName = "info";
 
-  if (state.type === 'success') {
-    background = 'var(--md-sys-color-primary-container, #8cf0cf)';
-    color = 'var(--md-sys-color-on-primary-container, #002114)';
-    iconName = 'check_circle';
-  } else if (state.type === 'error') {
-    background = 'var(--md-sys-color-error-container, #ffdad6)';
-    color = 'var(--md-sys-color-on-error-container, #410002)';
-    iconName = 'error';
+  if (state.type === "success") {
+    background = "var(--md-sys-color-primary-container, #8cf0cf)";
+    color = "var(--md-sys-color-on-primary-container, #002114)";
+    iconName = "check_circle";
+  } else if (state.type === "error") {
+    background = "var(--md-sys-color-error-container, #ffdad6)";
+    color = "var(--md-sys-color-on-error-container, #410002)";
+    iconName = "error";
   }
 
   return (
@@ -44,10 +44,10 @@ export function ToastSnackbar() {
       width: auto;
       animation: fadeIn 0.25s cubic-bezier(0.2, 0, 0, 1);
     `}>
-      <md-icon style='font-size: 1.2rem; flex-shrink: 0;'>
+      <md-icon style="font-size: 1.2rem; flex-shrink: 0;">
         {iconName}
       </md-icon>
-      <span style='word-break: break-word; line-height: 1.3;'>
+      <span style="word-break: break-word; line-height: 1.3;">
         {state.message}
       </span>
     </div>

@@ -7,13 +7,13 @@
  * - Os novos pacotes (language, richtext, markdown) estão presentes
  */
 
-import { assert, assertEquals } from "@std/assert";
-import { describe, it } from "@std/testing/bdd";
-import { existsSync } from "@std/fs";
-import { join, resolve } from "@std/path";
+import { assert, assertEquals, } from "@std/assert";
+import { describe, it, } from "@std/testing/bdd";
+import { existsSync, } from "@std/fs";
+import { join, resolve, } from "@std/path";
 
-const ROOT = resolve(Deno.cwd());
-const PACKAGES_DIR = join(ROOT, "packages");
+const ROOT = resolve(Deno.cwd(),);
+const PACKAGES_DIR = join(ROOT, "packages",);
 
 const EXPECTED_PACKAGES = [
   "core",
@@ -34,7 +34,7 @@ const EXPECTED_PACKAGES = [
  * Remove comentários de linha única (//) e de bloco (/* *\/) de JSONC,
  * respeitando strings para não corromper valores que contenham essas sequências.
  */
-function stripJSONCComments(text: string): string {
+function stripJSONCComments(text: string,): string {
   let result = "";
   let inString = false;
   let stringChar = "";
@@ -95,41 +95,62 @@ function stripJSONCComments(text: string): string {
   return result;
 }
 
-function parseJSONC(text: string): unknown {
-  return JSON.parse(stripJSONCComments(text));
+function parseJSONC(text: string,): unknown {
+  return JSON.parse(stripJSONCComments(text,),);
 }
 
 describe("workspace", () => {
   it("deve ter todos os pacotes esperados presentes no diretório packages", () => {
     for (const pkg of EXPECTED_PACKAGES) {
-      const dir = join(PACKAGES_DIR, pkg);
-      assert(existsSync(dir), `Pacote ${pkg} deve existir em ${dir}`);
+      const dir = join(PACKAGES_DIR, pkg,);
+      assert(existsSync(dir,), `Pacote ${pkg} deve existir em ${dir}`,);
     }
   });
 
   it("cada pacote deve ter um deno.jsonc válido com name, exports, version e tasks", () => {
     for (const pkg of EXPECTED_PACKAGES) {
-      const configPath = join(PACKAGES_DIR, pkg, "deno.jsonc");
-      assert(existsSync(configPath), `deno.jsonc deve existir em ${configPath}`);
-
-      const config = parseJSONC(Deno.readTextFileSync(configPath)) as { name: string; exports: Record<string, unknown>; tasks: Record<string, unknown> };
+      const configPath = join(PACKAGES_DIR, pkg, "deno.jsonc",);
       assert(
-        typeof config.name === "string" && config.name.startsWith("@syntaxmesh/"),
+        existsSync(configPath,),
+        `deno.jsonc deve existir em ${configPath}`,
+      );
+
+      const config = parseJSONC(Deno.readTextFileSync(configPath,),) as {
+        name: string;
+        exports: Record<string, unknown>;
+        tasks: Record<string, unknown>;
+      };
+      assert(
+        typeof config.name === "string" &&
+          config.name.startsWith("@syntaxmesh/",),
         `Pacote ${pkg} deve ter name válido, recebeu: ${config.name}`,
       );
       assert(
-        config.exports && (typeof config.exports === "object" || typeof config.exports === "string"),
+        config.exports &&
+          (typeof config.exports === "object" ||
+            typeof config.exports === "string"),
         `Pacote ${pkg} deve ter exports definido`,
       );
-      assert(config.tasks && typeof config.tasks === "object", `Pacote ${pkg} deve ter tasks definido`);
+      assert(
+        config.tasks && typeof config.tasks === "object",
+        `Pacote ${pkg} deve ter tasks definido`,
+      );
     }
   });
 
   it("pacotes language, richtext e markdown devem ter exports apontando para mod.ts", () => {
-    for (const pkg of ["language", "richtext", "markdown"]) {
-      const configPath = join(PACKAGES_DIR, pkg, "deno.jsonc");
-      const config = parseJSONC(Deno.readTextFileSync(configPath)) as { name: string; exports: Record<string, unknown>; tasks: Record<string, unknown> };
-      assertEquals(config.exports["."], "./mod.ts", `Pacote ${pkg} deve exportar "./mod.ts"`);
+    for (const pkg of ["language", "richtext", "markdown",]) {
+      const configPath = join(PACKAGES_DIR, pkg, "deno.jsonc",);
+      const config = parseJSONC(Deno.readTextFileSync(configPath,),) as {
+        name: string;
+        exports: Record<string, unknown>;
+        tasks: Record<string, unknown>;
+      };
+      assertEquals(
+        config.exports["."],
+        "./mod.ts",
+        `Pacote ${pkg} deve exportar "./mod.ts"`,
+      );
     }
   });
 });
