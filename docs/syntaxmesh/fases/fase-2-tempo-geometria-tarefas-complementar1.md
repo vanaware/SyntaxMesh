@@ -4,8 +4,8 @@
 > **Plano:** `docs/syntaxmesh/fases/fase-2-tempo-geometria.md`
 > **Tarefas originais:** `docs/syntaxmesh/fases/fase-2-tarefas.md`
 > **Status:** 🟡 Em andamento
-> **Total:** 42 tarefas
-> **Concluídas:** 3
+> **Total:** 52 tarefas
+> **Concluídas:** 12 (refrescado 2026-09-17)
 
 ---
 
@@ -48,23 +48,23 @@ Estas tarefas **podem rever** tarefas já marcadas como concluídas na Fase 2. A
 ## Progresso
 
 ```
-[ ] 5.0.R  Fundação (compat.ts + auditoria)     —  0/4
+[x] 5.0.R  Fundação (compat.ts + auditoria)     —  2/4 (5.0.R.1✅ 5.0.R.2✅)
 [ ] 5.1.R  Parsing (revisão)                    —  0/5
-[ ] 5.2.R  Aritmética (revisão)                 —  0/5
+[ ] 5.2.R  Aritmética (revisão)                 —  2/5 (5.2.R.4✅ 5.2.R.5✅)
 [ ] 5.3.R  Normalizações (revisão)              —  0/3
-[ ] 5.4.R  Avanços (revisão — 4 bugs Cat. B)    —  0/6
+[ ] 5.4.R  Avanços (revisão — 4 bugs Cat. B)    —  4/6 (5.4.R.1✅ 5.4.R.2✅ 5.4.R.3✅ 5.4.R.4✅)
 [ ] 5.5.R  Diferenças (revisão)                 —  0/2
-[ ] 5.6.R  Timezone + strftime (revisão)        —  0/3
-[ ] 5.7.R  Interval (revisão — 3 bugs)          —  0/4
-[ ] 5.8.R  TimeInterval (revisão)               —  0/2
-[ ] 5.9.R  ScoreboardInterval (revisão)         —  0/2
+[ ] 5.6.R  Timezone + strftime (revisão)        —  1/3 (5.6.R.2✅)
+[ ] 5.7.R  Interval (revisão — 3 bugs)          —  1/4 (5.7.R.1✅)
+[ ] 5.8.R  TimeInterval (revisão)               —  1/2 (5.8.R.1✅)
+[ ] 5.9.R  ScoreboardInterval (revisão)         —  1/2 (5.9.R.1✅)
 [ ] 5.10.R IntervalList (revisão)               —  3/3 ✅
-[ ] 5.11.R Scoreboard (revisão — 2 bugs)        —  0/4
+[ ] 5.11.R Scoreboard (revisão — 2 bugs)        —  2/4 (5.11.R.1✅ 5.11.R.2✅)
 [ ] 5.12.R WorkingHours (revisão — 1 bug Cat A) —  0/3
 [ ] 5.13.R RealFormat (revisão — 1 bug Cat B)   —  0/2
 [ ] 5.14.R Golden tests (extensão)              —  0/4
 ─────────────────────────────────────────────────
-TOTAL: 52
+TOTAL: 52 (12 done)
 ```
 
 ---

@@ -7,6 +7,7 @@ import {
 } from "./timezone.ts";
 import { assertEquals, assertNotEquals, } from "@std/assert";
 import { TjArgumentError, } from "../attributes/errors.ts";
+import { compat, } from "../compat.ts";
 export { TjArgumentError, };
 
 export class TjTime {
@@ -237,6 +238,27 @@ export class TjTime {
   }
 
   /**
+   * Align time to the given clock (in seconds), operating in local time.
+   *
+   * Algorithm (matches TjTime.rb:align):
+   *   floor((this.toSeconds() + offset) / clock) * clock - offset
+   *
+   * where offset is the UTC offset for the current timezone.
+   *
+   * @param clock - Clock in seconds (must be positive)
+   * @returns Aligned TjTime
+   */
+  align(clock: number,): TjTime {
+    if (clock <= 0) {
+      throw new TjArgumentError(`clock must be positive, not ${clock}`,);
+    }
+    const offset = getOffsetSeconds(this.seconds, currentTimeZone,);
+    const aligned = Math.floor((this.seconds + offset) / clock,) * clock -
+      offset;
+    return new TjTime(aligned,);
+  }
+
+  /**
    * Subtract seconds from TjTime
    * @param secs - Seconds to subtract
    */
@@ -262,10 +284,11 @@ export class TjTime {
 
   /**
    * Compare to another TjTime instance
-   * @param other - Other TjTime instance
+   * @param other - Other TjTime instance or null
    * @returns -1 if less, 0 if equal, 1 if greater
    */
-  compareTo(other: TjTime,): -1 | 0 | 1 {
+  compareTo(other: TjTime | null,): -1 | 0 | 1 {
+    if (other === null) return -1;
     if (this.seconds < other.seconds) return -1;
     if (this.seconds > other.seconds) return 1;
     return 0;
@@ -273,25 +296,28 @@ export class TjTime {
 
   /**
    * Check if this TjTime is less than another
-   * @param other - Other TjTime instance
+   * @param other - Other TjTime instance or null
    */
-  lessThan(other: TjTime,): boolean {
+  lessThan(other: TjTime | null,): boolean {
+    if (other === null) return false;
     return this.seconds < other.seconds;
   }
 
   /**
    * Check if this TjTime is greater than another
-   * @param other - Other TjTime instance
+   * @param other - Other TjTime instance or null
    */
-  greaterThan(other: TjTime,): boolean {
+  greaterThan(other: TjTime | null,): boolean {
+    if (other === null) return true;
     return this.seconds > other.seconds;
   }
 
   /**
    * Check if this TjTime equals another
-   * @param other - Other TjTime instance
+   * @param other - Other TjTime instance or null
    */
-  equals(other: TjTime,): boolean {
+  equals(other: TjTime | null,): boolean {
+    if (other === null) return false;
     return this.seconds === other.seconds;
   }
 
@@ -544,46 +570,47 @@ export class TjTime {
    * Get same time next week (day += 7 with max 1 month overflow)
    */
   sameTimeNextWeek(): TjTime {
-    const parts = getLocalParts(this.seconds, currentTimeZone,);
-    let day = parts.day + 7;
-    let month = parts.month;
-    let year = parts.year;
+    if (compat.keepRubyBugs) {
+      // RUBY-COMPAT: Ruby does `day += 7` with 1-month overflow, not +7 exact days
+      const parts = getLocalParts(this.seconds, currentTimeZone,);
+      let day = parts.day + 7;
+      let month = parts.month;
+      let year = parts.year;
 
-    // Get max days for current month
-    const maxDays = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31,];
-    let monMax = maxDays[month]!;
-    if (month === 2 && TjTime.isLeapYear(year,)) {
-      monMax = 29;
-    }
-
-    // Handle overflow (max 1 month)
-    if (day > monMax) {
-      day = day - monMax;
-      month++;
-      if (month > 12) {
-        month = 1;
-        year++;
-      }
-      // Update max days for new month
-      monMax = maxDays[month]!;
+      const maxDays = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31,];
+      let monMax = maxDays[month]!;
       if (month === 2 && TjTime.isLeapYear(year,)) {
         monMax = 29;
       }
-      // If still overflow, clamp to month end
-      if (day > monMax) {
-        day = monMax;
-      }
-    }
 
-    return TjTime.fromParts(
-      year,
-      month,
-      day,
-      parts.hour,
-      parts.minute,
-      parts.second,
-      currentTimeZone,
-    );
+      if (day > monMax) {
+        day = day - monMax;
+        month++;
+        if (month > 12) {
+          month = 1;
+          year++;
+        }
+        monMax = maxDays[month]!;
+        if (month === 2 && TjTime.isLeapYear(year,)) {
+          monMax = 29;
+        }
+        if (day > monMax) {
+          day = monMax;
+        }
+      }
+
+      return TjTime.fromParts(
+        year,
+        month,
+        day,
+        parts.hour,
+        parts.minute,
+        parts.second,
+        currentTimeZone,
+      );
+    }
+    // Corrected: +7 exact days
+    return this.addSeconds(7 * 24 * 3600,);
   }
 
   /**
@@ -599,28 +626,46 @@ export class TjTime {
       year++;
     }
 
-    // Get max days for OLD month (this is the bug - uses old month's max)
-    const maxDays = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31,];
-    let monMax = maxDays[parts.month]!;
-    if (parts.month === 2 && TjTime.isLeapYear(parts.year,)) {
-      monMax = 29;
-    }
+    if (compat.keepRubyBugs) {
+      // RUBY-COMPAT: clamp in OLD month's monMax (bug)
+      const maxDays = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31,];
+      let monMax = maxDays[parts.month]!;
+      if (parts.month === 2 && TjTime.isLeapYear(parts.year,)) {
+        monMax = 29;
+      }
 
+      let day = parts.day;
+      if (day >= TjTime.lastDayOfMonth(month, year,)) {
+        day = monMax;
+      }
+
+      // Handle rollover if day is still invalid for new month
+      const newLastDay = TjTime.lastDayOfMonth(month, year,);
+      if (day > newLastDay) {
+        const excessDays = day - newLastDay;
+        day = excessDays;
+        month++;
+        if (month > 12) {
+          month = 1;
+          year++;
+        }
+      }
+
+      return TjTime.fromParts(
+        year,
+        month,
+        day,
+        parts.hour,
+        parts.minute,
+        parts.second,
+        currentTimeZone,
+      );
+    }
+    // Corrected: clamp in NEW month's lastDayOfMonth
     let day = parts.day;
-    if (day >= TjTime.lastDayOfMonth(month, year,)) {
-      day = monMax;
-    }
-
-    // Handle rollover if day is still invalid for new month
     const newLastDay = TjTime.lastDayOfMonth(month, year,);
     if (day > newLastDay) {
-      const excessDays = day - newLastDay;
-      day = excessDays;
-      month++;
-      if (month > 12) {
-        month = 1;
-        year++;
-      }
+      day = newLastDay;
     }
 
     return TjTime.fromParts(
@@ -647,16 +692,34 @@ export class TjTime {
       year++;
     }
 
-    // Handle day overflow like Ruby's Time.mktime
+    if (compat.keepRubyBugs) {
+      // RUBY-COMPAT: no clamp, rollover via Time.mktime
+      let day = parts.day;
+      const newLastDay = TjTime.lastDayOfMonth(month, year,);
+      if (day > newLastDay) {
+        day = day - newLastDay;
+        month++;
+        if (month > 12) {
+          month = 1;
+          year++;
+        }
+      }
+
+      return TjTime.fromParts(
+        year,
+        month,
+        day,
+        parts.hour,
+        parts.minute,
+        parts.second,
+        currentTimeZone,
+      );
+    }
+    // Corrected: clamp to last day of new month
     let day = parts.day;
     const newLastDay = TjTime.lastDayOfMonth(month, year,);
     if (day > newLastDay) {
-      day = day - newLastDay;
-      month++;
-      if (month > 12) {
-        month = 1;
-        year++;
-      }
+      day = newLastDay;
     }
 
     return TjTime.fromParts(
@@ -677,25 +740,43 @@ export class TjTime {
     const parts = getLocalParts(this.seconds, currentTimeZone,);
     const year = parts.year + 1;
 
-    // Day stays as-is (no clamp), may cause rollover
-    let day = parts.day;
-    const newLastDay = TjTime.lastDayOfMonth(parts.month, year,);
-    if (day > newLastDay) {
-      const excessDays = day - newLastDay;
-      day = excessDays;
-      let month = parts.month + 1;
-      if (month > 12) {
-        month = 1;
+    if (compat.keepRubyBugs) {
+      // RUBY-COMPAT: no clamp, rollover (e.g. 29/02/2024 → 01/03/2025)
+      let day = parts.day;
+      const newLastDay = TjTime.lastDayOfMonth(parts.month, year,);
+      if (day > newLastDay) {
+        const excessDays = day - newLastDay;
+        day = excessDays;
+        let month = parts.month + 1;
+        if (month > 12) {
+          month = 1;
+        }
+        return TjTime.fromParts(
+          year,
+          month,
+          day,
+          parts.hour,
+          parts.minute,
+          parts.second,
+          currentTimeZone,
+        );
       }
+
       return TjTime.fromParts(
         year,
-        month,
+        parts.month,
         day,
         parts.hour,
         parts.minute,
         parts.second,
         currentTimeZone,
       );
+    }
+    // Corrected: clamp to last day of new month
+    let day = parts.day;
+    const newLastDay = TjTime.lastDayOfMonth(parts.month, year,);
+    if (day > newLastDay) {
+      day = newLastDay;
     }
 
     return TjTime.fromParts(

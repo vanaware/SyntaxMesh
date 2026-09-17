@@ -1,4 +1,5 @@
 import { TjArgumentError, } from "../time/tj-time.ts";
+import { rubyRound, } from "../compat.ts";
 
 export class RealFormat {
   readonly signPrefix: string;
@@ -35,7 +36,7 @@ export class RealFormat {
       number = -number;
     }
 
-    const intNumber = Math.round(number * (10 ** this.fractionDigits),)
+    const intNumber = rubyRound(number * (10 ** this.fractionDigits),)
       .toString();
     if (intNumber.length <= this.fractionDigits) {
       const padded = "0".repeat(this.fractionDigits - intNumber.length + 1,) +
