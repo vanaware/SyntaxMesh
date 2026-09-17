@@ -8,7 +8,7 @@ import { type PropertyLike } from "../model/property-like.ts";
 import { type AttributeContainer } from "./attribute-container.ts";
 import { type AttributeDefinition } from "./attribute-definition.ts";
 import { deepClone } from "../utils/deep-clone.ts";
-import { AttributeOverwrite } from "./errors.ts";
+import { AttributeOverwrite, NotYetImplementedError } from "./errors.ts";
 
 /**
  * Modos globais para o comportamento de `set()` e `inherit()`.
@@ -56,12 +56,12 @@ export abstract class AttributeBase<T> {
   /**
    * Se `true`, o valor foi fornecido explicitamente (usuário).
    */
-  protected provided: boolean = false;
+  public provided: boolean = false;
 
   /**
    * Se `true`, o valor foi herdado (pai/projeto).
    */
-  protected inherited: boolean = false;
+  public inherited: boolean = false;
 
   constructor(
     property: PropertyLike,
@@ -81,7 +81,7 @@ export abstract class AttributeBase<T> {
   reset(): void {
     this.inherited = false;
     this.provided = false;
-    this.container.setStoredValue(this.type.id, deepClone(this.type.default));
+    this.container.setStoredValue(this.type.id, deepClone(this.type.defaultValue));
   }
 
   /**

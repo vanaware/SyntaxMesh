@@ -6,13 +6,8 @@ import {
   setCurrentTimeZone,
 } from "./timezone.ts";
 import { assertEquals, assertNotEquals, } from "@std/assert";
-
-export class TjArgumentError extends Error {
-  constructor(message: string,) {
-    super(message,);
-    this.name = "TjArgumentError";
-  }
-}
+import { TjArgumentError } from "../attributes/errors.ts";
+export { TjArgumentError };
 
 export class TjTime {
   private readonly seconds: number;
