@@ -1,17 +1,23 @@
-import { isValidTimeZone, getOffsetSeconds, getLocalParts, currentTimeZone } from './timezone.ts';
-import { assertEquals, assertNotEquals } from "@std/assert";
+import {
+  currentTimeZone,
+  getLocalParts,
+  getOffsetSeconds,
+  isValidTimeZone,
+  setCurrentTimeZone,
+} from "./timezone.ts";
+import { assertEquals, assertNotEquals, } from "@std/assert";
 
 export class TjArgumentError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'TjArgumentError';
+  constructor(message: string,) {
+    super(message,);
+    this.name = "TjArgumentError";
   }
 }
 
 export class TjTime {
   private readonly seconds: number;
 
-  private constructor(seconds: number) {
+  private constructor(seconds: number,) {
     this.seconds = seconds;
   }
 
@@ -20,8 +26,8 @@ export class TjTime {
    * @param date - Other TjTime instance
    * @returns Array [smaller, larger]
    */
-  public order(date: TjTime): [TjTime, TjTime] {
-    return this.lessThan(date) ? [this, date] : [date, this];
+  public order(date: TjTime,): [TjTime, TjTime,] {
+    return this.lessThan(date,) ? [this, date,] : [date, this,];
   }
 
   /**
@@ -31,11 +37,15 @@ export class TjTime {
    * @param stepFunc - Function to advance time by one interval
    * @returns Number of intervals
    */
-  public countIntervals(start: TjTime, end: TjTime, stepFunc: (t: TjTime) => TjTime): number {
+  public countIntervals(
+    start: TjTime,
+    end: TjTime,
+    stepFunc: (t: TjTime,) => TjTime,
+  ): number {
     let i = 0;
     let t = start;
-    while (t.lessThan(end)) {
-      t = stepFunc(t);
+    while (t.lessThan(end,)) {
+      t = stepFunc(t,);
       i++;
     }
     return i;
@@ -45,23 +55,23 @@ export class TjTime {
    * Returns current time
    */
   static now(): TjTime {
-    return new TjTime(Math.floor(Date.now() / 1000));
+    return new TjTime(Math.floor(Date.now() / 1000,),);
   }
 
   /**
    * Create TjTime from seconds since epoch
    * @param secs - Seconds since epoch (UTC)
    */
-  static fromSeconds(secs: number): TjTime {
-    return new TjTime(secs);
+  static fromSeconds(secs: number,): TjTime {
+    return new TjTime(secs,);
   }
 
   /**
    * Create TjTime from Date object
    * @param date - Date object
    */
-  static fromDate(date: Date): TjTime {
-    return new TjTime(Math.floor(date.getTime() / 1000));
+  static fromDate(date: Date,): TjTime {
+    return new TjTime(Math.floor(date.getTime() / 1000,),);
   }
 
   /**
@@ -81,90 +91,102 @@ export class TjTime {
     hour: number = 0,
     minute: number = 0,
     second: number = 0,
-    tz: string = currentTimeZone
+    tz: string = currentTimeZone,
   ): TjTime {
-    if (!isValidTimeZone(tz)) {
-      throw new TjArgumentError(`Invalid time zone: ${tz}`);
+    if (!isValidTimeZone(tz,)) {
+      throw new TjArgumentError(`Invalid time zone: ${tz}`,);
     }
-    
+
     // Validate ranges
     if (year < 1970 || year > 2035) {
-      throw new TjArgumentError(`Year ${year} out of range (1970 - 2035)`);
+      throw new TjArgumentError(`Year ${year} out of range (1970 - 2035)`,);
     }
     if (month < 1 || month > 12) {
-      throw new TjArgumentError(`Month ${month} out of range (1 - 12)`);
+      throw new TjArgumentError(`Month ${month} out of range (1 - 12)`,);
     }
     if (hour < 0 || hour > 23) {
-      throw new TjArgumentError(`Hour ${hour} out of range (0 - 23)`);
+      throw new TjArgumentError(`Hour ${hour} out of range (0 - 23)`,);
     }
     if (minute < 0 || minute > 59) {
-      throw new TjArgumentError(`Minute ${minute} out of range (0 - 59)`);
+      throw new TjArgumentError(`Minute ${minute} out of range (0 - 59)`,);
     }
     if (second < 0 || second > 59) {
-      throw new TjArgumentError(`Second ${second} out of range (0 - 59)`);
+      throw new TjArgumentError(`Second ${second} out of range (0 - 59)`,);
     }
-    
+
     // Validate day for month
-    const maxDays = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    const maxDays = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31,];
     let maxDay: number = maxDays[month]!;
-    if (month === 2 && TjTime.isLeapYear(year)) {
+    if (month === 2 && TjTime.isLeapYear(year,)) {
       maxDay = 29;
     }
     if (day < 1 || day > maxDay) {
-      throw new TjArgumentError(`Day ${day} out of range (1 - ${maxDay}) for month ${month}`);
+      throw new TjArgumentError(
+        `Day ${day} out of range (1 - ${maxDay}) for month ${month}`,
+      );
     }
-    
+
     // Convert to UTC seconds
-    const date = new Date(Date.UTC(year, month - 1, day, hour, minute, second));
-    const utcSeconds = Math.floor(date.getTime() / 1000);
-    
+    const date = new Date(
+      Date.UTC(year, month - 1, day, hour, minute, second,),
+    );
+    const utcSeconds = Math.floor(date.getTime() / 1000,);
+
     // Apply timezone offset
-    const offset = getOffsetSeconds(utcSeconds, tz);
-    return new TjTime(utcSeconds - offset);
+    const offset = getOffsetSeconds(utcSeconds, tz,);
+    return new TjTime(utcSeconds - offset,);
   }
 
   /**
    * Parse string in format YYYY-MM-DD[-HH:MM[:SS][-TZ]]
    * @param str - String to parse
    */
-  static fromString(str: string): TjTime {
+  static fromString(str: string,): TjTime {
     // Use regex to properly parse the string with timezone
-    const regex = /^(\d{4})-(\d{2})-(\d{2})(?:-(\d{2}):(\d{2})(?::(\d{2}))?)?(?:([+-]\d{4}))?$/;
-    const match = str.match(regex);
+    const regex =
+      /^(\d{4})-(\d{2})-(\d{2})(?:-(\d{2}):(\d{2})(?::(\d{2}))?)?(?:([+-]\d{4}))?$/;
+    const match = str.match(regex,);
     if (!match) {
-      throw new TjArgumentError(`Invalid date format: ${str}`);
+      throw new TjArgumentError(`Invalid date format: ${str}`,);
     }
 
-    const year = parseInt(match[1]!);
-    const month = parseInt(match[2]!);
-    const day = parseInt(match[3]!);
+    const year = parseInt(match[1]!,);
+    const month = parseInt(match[2]!,);
+    const day = parseInt(match[3]!,);
 
     let hour = 0;
     let minute = 0;
     let second = 0;
 
     if (match[4]) {
-      hour = parseInt(match[4]);
+      hour = parseInt(match[4],);
       if (match[5]) {
-        minute = parseInt(match[5]!);
+        minute = parseInt(match[5]!,);
         if (match[6]) {
-          second = parseInt(match[6]);
+          second = parseInt(match[6],);
         }
       }
     }
 
     if (match[7]) {
       const tzPart = match[7];
-      if (!/^[+-]\d{4}$/.test(tzPart)) {
-        throw new TjArgumentError(`Time zone adjustment out of range (-1200 - +1400) but is ${tzPart})`);
+      if (!/^[+-]\d{4}$/.test(tzPart,)) {
+        throw new TjArgumentError(
+          `Time zone adjustment out of range (-1200 - +1400) but is ${tzPart})`,
+        );
       }
 
-      const sign = tzPart[0] === '-' ? -1 : 1;
-      const hours = parseInt(tzPart.substring(1, 3));
-      const minutes = parseInt(tzPart.substring(3, 5));
+      const sign = tzPart[0] === "-" ? -1 : 1;
+      const hours = parseInt(tzPart.substring(1, 3,),);
+      const minutes = parseInt(tzPart.substring(3, 5,),);
 
-      if (hours < 0 || hours > 12 || (hours === 12 && minutes > 0) || minutes < 0 || minutes > 59) {
-        throw new TjArgumentError(`Time zone adjustment out of range (-1200 - +1400) but is ${tzPart})`);
+      if (
+        hours < 0 || hours > 12 || (hours === 12 && minutes > 0) ||
+        minutes < 0 || minutes > 59
+      ) {
+        throw new TjArgumentError(
+          `Time zone adjustment out of range (-1200 - +1400) but is ${tzPart})`,
+        );
       }
 
       const offsetHours = hours * 60 + minutes;
@@ -172,18 +194,22 @@ export class TjTime {
 
       // Validate range
       if (offsetSeconds < -12 * 3600 || offsetSeconds > 14 * 3600) {
-        throw new TjArgumentError(`Time zone adjustment out of range (-1200 - +1400) but is ${tzPart})`);
+        throw new TjArgumentError(
+          `Time zone adjustment out of range (-1200 - +1400) but is ${tzPart})`,
+        );
       }
 
       // Fixed-offset timezones are not valid IANA identifiers, so compute UTC
       // seconds directly instead of routing through fromParts/isValidTimeZone.
       // offsetSeconds is positive for +HHMM (local ahead of UTC), so subtract to get UTC.
-      const date = new Date(Date.UTC(year, month - 1, day, hour, minute, second));
-      const utcSeconds = Math.floor(date.getTime() / 1000);
-      return new TjTime(utcSeconds - offsetSeconds);
+      const date = new Date(
+        Date.UTC(year, month - 1, day, hour, minute, second,),
+      );
+      const utcSeconds = Math.floor(date.getTime() / 1000,);
+      return new TjTime(utcSeconds - offsetSeconds,);
     }
 
-    return TjTime.fromParts(year, month, day, hour, minute, second);
+    return TjTime.fromParts(year, month, day, hour, minute, second,);
   }
 
   /**
@@ -197,13 +223,13 @@ export class TjTime {
    * Convert to Date object (for debugging)
    */
   toDate(): Date {
-    return new Date(this.seconds * 1000);
+    return new Date(this.seconds * 1000,);
   }
 
   /**
    * Check if year is leap year
    */
-  static isLeapYear(year: number): boolean {
+  static isLeapYear(year: number,): boolean {
     return (year % 400 === 0) || (year % 4 === 0 && year % 100 !== 0);
   }
 
@@ -211,23 +237,23 @@ export class TjTime {
    * Add seconds to TjTime
    * @param secs - Seconds to add
    */
-  addSeconds(secs: number): TjTime {
-    return new TjTime(this.seconds + secs);
+  addSeconds(secs: number,): TjTime {
+    return new TjTime(this.seconds + secs,);
   }
 
   /**
    * Subtract seconds from TjTime
    * @param secs - Seconds to subtract
    */
-  subSeconds(secs: number): TjTime {
-    return new TjTime(this.seconds - secs);
+  subSeconds(secs: number,): TjTime {
+    return new TjTime(this.seconds - secs,);
   }
 
   /**
    * Get difference in seconds between two TjTime instances
    * @param other - Other TjTime instance
    */
-  diff(other: TjTime): number {
+  diff(other: TjTime,): number {
     return this.seconds - other.seconds;
   }
 
@@ -235,7 +261,7 @@ export class TjTime {
    * Get modulo of seconds
    * @param val - Value to modulo by
    */
-  modulo(val: number): number {
+  modulo(val: number,): number {
     return this.seconds % val;
   }
 
@@ -244,7 +270,7 @@ export class TjTime {
    * @param other - Other TjTime instance
    * @returns -1 if less, 0 if equal, 1 if greater
    */
-  compareTo(other: TjTime): -1 | 0 | 1 {
+  compareTo(other: TjTime,): -1 | 0 | 1 {
     if (this.seconds < other.seconds) return -1;
     if (this.seconds > other.seconds) return 1;
     return 0;
@@ -254,7 +280,7 @@ export class TjTime {
    * Check if this TjTime is less than another
    * @param other - Other TjTime instance
    */
-  lessThan(other: TjTime): boolean {
+  lessThan(other: TjTime,): boolean {
     return this.seconds < other.seconds;
   }
 
@@ -262,7 +288,7 @@ export class TjTime {
    * Check if this TjTime is greater than another
    * @param other - Other TjTime instance
    */
-  greaterThan(other: TjTime): boolean {
+  greaterThan(other: TjTime,): boolean {
     return this.seconds > other.seconds;
   }
 
@@ -270,7 +296,7 @@ export class TjTime {
    * Check if this TjTime equals another
    * @param other - Other TjTime instance
    */
-  equals(other: TjTime): boolean {
+  equals(other: TjTime,): boolean {
     return this.seconds === other.seconds;
   }
 
@@ -278,7 +304,7 @@ export class TjTime {
    * Check if this TjTime is less than or equal to another
    * @param other - Other TjTime instance
    */
-  lessThanOrEqual(other: TjTime): boolean {
+  lessThanOrEqual(other: TjTime,): boolean {
     return this.seconds <= other.seconds;
   }
 
@@ -286,7 +312,7 @@ export class TjTime {
    * Check if this TjTime is greater than or equal to another
    * @param other - Other TjTime instance
    */
-  greaterThanOrEqual(other: TjTime): boolean {
+  greaterThanOrEqual(other: TjTime,): boolean {
     return this.seconds >= other.seconds;
   }
 
@@ -294,61 +320,109 @@ export class TjTime {
    * Zero minutes and seconds in local time
    */
   beginOfHour(): TjTime {
-    const parts = getLocalParts(this.seconds, currentTimeZone);
-    return TjTime.fromParts(parts.year, parts.month, parts.day, parts.hour, 0, 0, currentTimeZone);
+    const parts = getLocalParts(this.seconds, currentTimeZone,);
+    return TjTime.fromParts(
+      parts.year,
+      parts.month,
+      parts.day,
+      parts.hour,
+      0,
+      0,
+      currentTimeZone,
+    );
   }
 
   /**
    * Zero hours, minutes, seconds in local time
    */
   midnight(): TjTime {
-    const parts = getLocalParts(this.seconds, currentTimeZone);
-    return TjTime.fromParts(parts.year, parts.month, parts.day, 0, 0, 0, currentTimeZone);
+    const parts = getLocalParts(this.seconds, currentTimeZone,);
+    return TjTime.fromParts(
+      parts.year,
+      parts.month,
+      parts.day,
+      0,
+      0,
+      0,
+      currentTimeZone,
+    );
   }
 
   /**
    * Beginning of week. If startMonday=true, week starts Monday; otherwise Sunday.
    * Algorithm: go to noon, subtract (weekday - (startMonday?1:0)) days, then midnight.
    */
-  beginOfWeek(startMonday: boolean = true): TjTime {
-    const parts = getLocalParts(this.seconds, currentTimeZone);
-    const noon = TjTime.fromParts(parts.year, parts.month, parts.day, 12, 0, 0, currentTimeZone);
+  beginOfWeek(startMonday: boolean = true,): TjTime {
+    const parts = getLocalParts(this.seconds, currentTimeZone,);
+    const noon = TjTime.fromParts(
+      parts.year,
+      parts.month,
+      parts.day,
+      12,
+      0,
+      0,
+      currentTimeZone,
+    );
     const daysToSubtract = parts.weekday - (startMonday ? 1 : 0);
-    const noonMinusDays = noon.subSeconds(daysToSubtract * 86400);
-    const np = getLocalParts(noonMinusDays.toSeconds(), currentTimeZone);
-    return TjTime.fromParts(np.year, np.month, np.day, 0, 0, 0, currentTimeZone);
+    const noonMinusDays = noon.subSeconds(daysToSubtract * 86400,);
+    const np = getLocalParts(noonMinusDays.toSeconds(), currentTimeZone,);
+    return TjTime.fromParts(
+      np.year,
+      np.month,
+      np.day,
+      0,
+      0,
+      0,
+      currentTimeZone,
+    );
   }
 
   /**
    * Beginning of month: day=1, h/m/s=0 in local time
    */
   beginOfMonth(): TjTime {
-    const parts = getLocalParts(this.seconds, currentTimeZone);
-    return TjTime.fromParts(parts.year, parts.month, 1, 0, 0, 0, currentTimeZone);
+    const parts = getLocalParts(this.seconds, currentTimeZone,);
+    return TjTime.fromParts(
+      parts.year,
+      parts.month,
+      1,
+      0,
+      0,
+      0,
+      currentTimeZone,
+    );
   }
 
   /**
    * Beginning of quarter: month = floor((m-1)/3)*3 + 1, h/m/s=0
    */
   beginOfQuarter(): TjTime {
-    const parts = getLocalParts(this.seconds, currentTimeZone);
-    const quarterMonth = Math.floor((parts.month - 1) / 3) * 3 + 1;
-    return TjTime.fromParts(parts.year, quarterMonth, 1, 0, 0, 0, currentTimeZone);
+    const parts = getLocalParts(this.seconds, currentTimeZone,);
+    const quarterMonth = Math.floor((parts.month - 1) / 3,) * 3 + 1;
+    return TjTime.fromParts(
+      parts.year,
+      quarterMonth,
+      1,
+      0,
+      0,
+      0,
+      currentTimeZone,
+    );
   }
 
   /**
    * Beginning of year: month=1, day=1, h/m/s=0
    */
   beginOfYear(): TjTime {
-    const parts = getLocalParts(this.seconds, currentTimeZone);
-    return TjTime.fromParts(parts.year, 1, 1, 0, 0, 0, currentTimeZone);
+    const parts = getLocalParts(this.seconds, currentTimeZone,);
+    return TjTime.fromParts(parts.year, 1, 1, 0, 0, 0, currentTimeZone,);
   }
 
   /**
    * Weekday in local time (0=Sunday, 1=Monday, ..., 6=Saturday)
    */
   wday(): number {
-    const parts = getLocalParts(this.seconds, currentTimeZone);
+    const parts = getLocalParts(this.seconds, currentTimeZone,);
     return parts.weekday;
   }
 
@@ -356,7 +430,7 @@ export class TjTime {
    * Hour in local time
    */
   hour(): number {
-    const parts = getLocalParts(this.seconds, currentTimeZone);
+    const parts = getLocalParts(this.seconds, currentTimeZone,);
     return parts.hour;
   }
 
@@ -364,7 +438,7 @@ export class TjTime {
    * Day in local time
    */
   day(): number {
-    const parts = getLocalParts(this.seconds, currentTimeZone);
+    const parts = getLocalParts(this.seconds, currentTimeZone,);
     return parts.day;
   }
 
@@ -372,7 +446,7 @@ export class TjTime {
    * Month in local time
    */
   month(): number {
-    const parts = getLocalParts(this.seconds, currentTimeZone);
+    const parts = getLocalParts(this.seconds, currentTimeZone,);
     return parts.month;
   }
 
@@ -380,7 +454,7 @@ export class TjTime {
    * Year in local time
    */
   year(): number {
-    const parts = getLocalParts(this.seconds, currentTimeZone);
+    const parts = getLocalParts(this.seconds, currentTimeZone,);
     return parts.year;
   }
 
@@ -388,8 +462,16 @@ export class TjTime {
    * Return [year, month, day, hour, minute, second, weekday] in local time
    */
   to_a(): number[] {
-    const parts = getLocalParts(this.seconds, currentTimeZone);
-    return [parts.year, parts.month, parts.day, parts.hour, parts.minute, parts.second, parts.weekday];
+    const parts = getLocalParts(this.seconds, currentTimeZone,);
+    return [
+      parts.year,
+      parts.month,
+      parts.day,
+      parts.hour,
+      parts.minute,
+      parts.second,
+      parts.weekday,
+    ];
   }
 
   /**
@@ -398,11 +480,11 @@ export class TjTime {
    * @param step - Step in seconds (default 1)
    * @param fn - Callback function
    */
-  upto(end: TjTime, step: number = 1, fn: (t: TjTime) => void): void {
-    let current = TjTime.fromSeconds(this.seconds);
+  upto(end: TjTime, step: number = 1, fn: (t: TjTime,) => void,): void {
+    let current = TjTime.fromSeconds(this.seconds,);
     while (current.seconds < end.seconds) {
-      fn(current);
-      current = TjTime.fromSeconds(current.seconds + step);
+      fn(current,);
+      current = TjTime.fromSeconds(current.seconds + step,);
     }
   }
 
@@ -410,30 +492,30 @@ export class TjTime {
    * Add hours to TjTime
    * @param hours - Hours to add
    */
-  hoursLater(hours: number): TjTime {
-    return this.addSeconds(hours * 3600);
+  hoursLater(hours: number,): TjTime {
+    return this.addSeconds(hours * 3600,);
   }
 
   /**
    * Get same time next hour
    */
   sameTimeNextHour(): TjTime {
-    return this.hoursLater(1);
+    return this.hoursLater(1,);
   }
 
   /**
    * Get same time next day
    */
   sameTimeNextDay(): TjTime {
-    const parts = getLocalParts(this.seconds, currentTimeZone);
+    const parts = getLocalParts(this.seconds, currentTimeZone,);
     let day = parts.day + 1;
     let month = parts.month;
     let year = parts.year;
 
     // Get max days for current month
-    const maxDays = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    const maxDays = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31,];
     let monMax = maxDays[month]!;
-    if (month === 2 && TjTime.isLeapYear(year)) {
+    if (month === 2 && TjTime.isLeapYear(year,)) {
       monMax = 29;
     }
 
@@ -447,27 +529,35 @@ export class TjTime {
       }
       // Update max days for new month
       monMax = maxDays[month]!;
-      if (month === 2 && TjTime.isLeapYear(year)) {
+      if (month === 2 && TjTime.isLeapYear(year,)) {
         monMax = 29;
       }
     }
 
-    return TjTime.fromParts(year, month, day, parts.hour, parts.minute, parts.second, currentTimeZone);
+    return TjTime.fromParts(
+      year,
+      month,
+      day,
+      parts.hour,
+      parts.minute,
+      parts.second,
+      currentTimeZone,
+    );
   }
 
   /**
    * Get same time next week (day += 7 with max 1 month overflow)
    */
   sameTimeNextWeek(): TjTime {
-    const parts = getLocalParts(this.seconds, currentTimeZone);
+    const parts = getLocalParts(this.seconds, currentTimeZone,);
     let day = parts.day + 7;
     let month = parts.month;
     let year = parts.year;
 
     // Get max days for current month
-    const maxDays = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    const maxDays = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31,];
     let monMax = maxDays[month]!;
-    if (month === 2 && TjTime.isLeapYear(year)) {
+    if (month === 2 && TjTime.isLeapYear(year,)) {
       monMax = 29;
     }
 
@@ -481,7 +571,7 @@ export class TjTime {
       }
       // Update max days for new month
       monMax = maxDays[month]!;
-      if (month === 2 && TjTime.isLeapYear(year)) {
+      if (month === 2 && TjTime.isLeapYear(year,)) {
         monMax = 29;
       }
       // If still overflow, clamp to month end
@@ -490,14 +580,22 @@ export class TjTime {
       }
     }
 
-    return TjTime.fromParts(year, month, day, parts.hour, parts.minute, parts.second, currentTimeZone);
+    return TjTime.fromParts(
+      year,
+      month,
+      day,
+      parts.hour,
+      parts.minute,
+      parts.second,
+      currentTimeZone,
+    );
   }
 
   /**
    * Get same time next month (clamp bug from old month's monMax)
    */
   sameTimeNextMonth(): TjTime {
-    const parts = getLocalParts(this.seconds, currentTimeZone);
+    const parts = getLocalParts(this.seconds, currentTimeZone,);
     let month = parts.month + 1;
     let year = parts.year;
 
@@ -507,19 +605,19 @@ export class TjTime {
     }
 
     // Get max days for OLD month (this is the bug - uses old month's max)
-    const maxDays = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    const maxDays = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31,];
     let monMax = maxDays[parts.month]!;
-    if (parts.month === 2 && TjTime.isLeapYear(parts.year)) {
+    if (parts.month === 2 && TjTime.isLeapYear(parts.year,)) {
       monMax = 29;
     }
 
     let day = parts.day;
-    if (day >= TjTime.lastDayOfMonth(month, year)) {
+    if (day >= TjTime.lastDayOfMonth(month, year,)) {
       day = monMax;
     }
 
     // Handle rollover if day is still invalid for new month
-    const newLastDay = TjTime.lastDayOfMonth(month, year);
+    const newLastDay = TjTime.lastDayOfMonth(month, year,);
     if (day > newLastDay) {
       const excessDays = day - newLastDay;
       day = excessDays;
@@ -530,14 +628,22 @@ export class TjTime {
       }
     }
 
-    return TjTime.fromParts(year, month, day, parts.hour, parts.minute, parts.second, currentTimeZone);
+    return TjTime.fromParts(
+      year,
+      month,
+      day,
+      parts.hour,
+      parts.minute,
+      parts.second,
+      currentTimeZone,
+    );
   }
 
   /**
    * Get same time next quarter (NO clamp, rollover)
    */
   sameTimeNextQuarter(): TjTime {
-    const parts = getLocalParts(this.seconds, currentTimeZone);
+    const parts = getLocalParts(this.seconds, currentTimeZone,);
     let month = parts.month + 3;
     let year = parts.year;
 
@@ -548,7 +654,7 @@ export class TjTime {
 
     // Handle day overflow like Ruby's Time.mktime
     let day = parts.day;
-    const newLastDay = TjTime.lastDayOfMonth(month, year);
+    const newLastDay = TjTime.lastDayOfMonth(month, year,);
     if (day > newLastDay) {
       day = day - newLastDay;
       month++;
@@ -558,19 +664,27 @@ export class TjTime {
       }
     }
 
-    return TjTime.fromParts(year, month, day, parts.hour, parts.minute, parts.second, currentTimeZone);
+    return TjTime.fromParts(
+      year,
+      month,
+      day,
+      parts.hour,
+      parts.minute,
+      parts.second,
+      currentTimeZone,
+    );
   }
 
   /**
    * Get same time next year (NO clamp, rollover)
    */
   sameTimeNextYear(): TjTime {
-    const parts = getLocalParts(this.seconds, currentTimeZone);
+    const parts = getLocalParts(this.seconds, currentTimeZone,);
     const year = parts.year + 1;
 
     // Day stays as-is (no clamp), may cause rollover
     let day = parts.day;
-    const newLastDay = TjTime.lastDayOfMonth(parts.month, year);
+    const newLastDay = TjTime.lastDayOfMonth(parts.month, year,);
     if (day > newLastDay) {
       const excessDays = day - newLastDay;
       day = excessDays;
@@ -578,10 +692,26 @@ export class TjTime {
       if (month > 12) {
         month = 1;
       }
-      return TjTime.fromParts(year, month, day, parts.hour, parts.minute, parts.second, currentTimeZone);
+      return TjTime.fromParts(
+        year,
+        month,
+        day,
+        parts.hour,
+        parts.minute,
+        parts.second,
+        currentTimeZone,
+      );
     }
 
-    return TjTime.fromParts(year, parts.month, day, parts.hour, parts.minute, parts.second, currentTimeZone);
+    return TjTime.fromParts(
+      year,
+      parts.month,
+      day,
+      parts.hour,
+      parts.minute,
+      parts.second,
+      currentTimeZone,
+    );
   }
 
   /**
@@ -589,10 +719,14 @@ export class TjTime {
    * The result is rounded up. Positive when end >= start, negative when end < start.
    * @param date - Other TjTime instance
    */
-  public hoursTo(date: TjTime): number {
-    const [smaller, larger] = this.order(date);
+  public hoursTo(date: TjTime,): number {
+    const [smaller, larger,] = this.order(date,);
     // countIntervals always returns positive count from smaller to larger
-    const count = this.countIntervals(smaller, larger, (t) => t.sameTimeNextHour());
+    const count = this.countIntervals(
+      smaller,
+      larger,
+      (t,) => t.sameTimeNextHour(),
+    );
     // Return positive if this is the smaller, negative if this is the larger
     return smaller === this ? count : -count;
   }
@@ -602,9 +736,13 @@ export class TjTime {
    * The result is always rounded up (positive).
    * @param date - Other TjTime instance
    */
-  public daysTo(date: TjTime): number {
-    const [smaller, larger] = this.order(date);
-    const count = this.countIntervals(smaller, larger, (t) => t.sameTimeNextDay());
+  public daysTo(date: TjTime,): number {
+    const [smaller, larger,] = this.order(date,);
+    const count = this.countIntervals(
+      smaller,
+      larger,
+      (t,) => t.sameTimeNextDay(),
+    );
     return count;
   }
 
@@ -613,9 +751,13 @@ export class TjTime {
    * The result is always rounded up (positive).
    * @param date - Other TjTime instance
    */
-  public weeksTo(date: TjTime): number {
-    const [smaller, larger] = this.order(date);
-    const count = this.countIntervals(smaller, larger, (t) => t.sameTimeNextWeek());
+  public weeksTo(date: TjTime,): number {
+    const [smaller, larger,] = this.order(date,);
+    const count = this.countIntervals(
+      smaller,
+      larger,
+      (t,) => t.sameTimeNextWeek(),
+    );
     return count;
   }
 
@@ -624,9 +766,13 @@ export class TjTime {
    * The result is always rounded up (positive).
    * @param date - Other TjTime instance
    */
-  public monthsTo(date: TjTime): number {
-    const [smaller, larger] = this.order(date);
-    const count = this.countIntervals(smaller, larger, (t) => t.sameTimeNextMonth());
+  public monthsTo(date: TjTime,): number {
+    const [smaller, larger,] = this.order(date,);
+    const count = this.countIntervals(
+      smaller,
+      larger,
+      (t,) => t.sameTimeNextMonth(),
+    );
     return count;
   }
 
@@ -635,9 +781,13 @@ export class TjTime {
    * The result is always rounded up (positive).
    * @param date - Other TjTime instance
    */
-  public quartersTo(date: TjTime): number {
-    const [smaller, larger] = this.order(date);
-    const count = this.countIntervals(smaller, larger, (t) => t.sameTimeNextQuarter());
+  public quartersTo(date: TjTime,): number {
+    const [smaller, larger,] = this.order(date,);
+    const count = this.countIntervals(
+      smaller,
+      larger,
+      (t,) => t.sameTimeNextQuarter(),
+    );
     return count;
   }
 
@@ -646,9 +796,13 @@ export class TjTime {
    * The result is always rounded up (positive).
    * @param date - Other TjTime instance
    */
-  public yearsTo(date: TjTime): number {
-    const [smaller, larger] = this.order(date);
-    const count = this.countIntervals(smaller, larger, (t) => t.sameTimeNextYear());
+  public yearsTo(date: TjTime,): number {
+    const [smaller, larger,] = this.order(date,);
+    const count = this.countIntervals(
+      smaller,
+      larger,
+      (t,) => t.sameTimeNextYear(),
+    );
     return count;
   }
 
@@ -656,12 +810,12 @@ export class TjTime {
    * Get next day of week
    * @param dow - Day of week (0=Sunday, 1=Monday, ..., 6=Saturday)
    */
-  nextDayOfWeek(dow: number): TjTime {
+  nextDayOfWeek(dow: number,): TjTime {
     if (dow < 0 || dow > 6) {
-      throw new TjArgumentError("Day of week must be 0 - 6.");
+      throw new TjArgumentError("Day of week must be 0 - 6.",);
     }
 
-    const parts = getLocalParts(this.seconds, currentTimeZone);
+    const parts = getLocalParts(this.seconds, currentTimeZone,);
 
     // Start from midnight of next day (always at least tomorrow)
     const d = this.midnight().sameTimeNextDay();
@@ -678,7 +832,7 @@ export class TjTime {
 
     // Add original time back
     const timeSeconds = parts.hour * 3600 + parts.minute * 60 + parts.second;
-    return result.addSeconds(timeSeconds);
+    return result.addSeconds(timeSeconds,);
   }
 
   /**
@@ -687,54 +841,97 @@ export class TjTime {
    * @param tz - Optional timezone (defaults to currentTimeZone)
    * @returns Formatted time string
    */
-  strftime(format: string, tz: string = currentTimeZone): string {
+  strftime(format: string, tz: string = currentTimeZone,): string {
     // Validate timezone
-    if (!isValidTimeZone(tz)) {
-      throw new TjArgumentError(`Invalid time zone: ${tz}`);
+    if (!isValidTimeZone(tz,)) {
+      throw new TjArgumentError(`Invalid time zone: ${tz}`,);
     }
 
     // Get local parts for the given timezone
-    const parts = getLocalParts(this.seconds, tz);
+    const parts = getLocalParts(this.seconds, tz,);
 
     // Get timezone abbreviation
-    const formatter = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'short' });
-    const tzParts = formatter.formatToParts(this.toDate());
-    const tzAbbr = tzParts.find(p => p.type === 'timeZoneName')?.value || tz;
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: tz,
+      timeZoneName: "short",
+    },);
+    const tzParts = formatter.formatToParts(this.toDate(),);
+    const tzAbbr = tzParts.find((p,) => p.type === "timeZoneName")?.value || tz;
 
     // Day of week names
-    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const dayAbbr = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const dayNames = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ];
+    const dayAbbr = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat",];
 
     // Month names
-    const monthNames = ['', 'January', 'February', 'March', 'April', 'May', 'June',
-                        'July', 'August', 'September', 'October', 'November', 'December'];
-    const monthAbbr = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthNames = [
+      "",
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+    const monthAbbr = [
+      "",
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
 
     // Replace %% with a placeholder first to protect it from validation
-    const PLACEHOLDER = '\x00';
-    let result = format.replace(/%%/g, PLACEHOLDER);
+    const PLACEHOLDER = "\x00";
+    let result = format.replace(/%%/g, PLACEHOLDER,);
 
     // Replace format specifiers
-    result = result.replace('%Y', String(parts.year).padStart(4, '0'));
-    result = result.replace('%m', String(parts.month).padStart(2, '0'));
-    result = result.replace('%d', String(parts.day).padStart(2, '0'));
-    result = result.replace('%H', String(parts.hour).padStart(2, '0'));
-    result = result.replace('%M', String(parts.minute).padStart(2, '0'));
-    result = result.replace('%S', String(parts.second).padStart(2, '0'));
-    result = result.replace('%A', dayNames[parts.weekday] ?? 'Unknown');
-    result = result.replace('%a', dayAbbr[parts.weekday] ?? 'Unknown');
-    result = result.replace('%B', monthNames[parts.month] ?? 'Unknown');
-    result = result.replace('%b', monthAbbr[parts.month] ?? 'Unknown');
+    result = result.replace("%Y", String(parts.year,).padStart(4, "0",),);
+    result = result.replace("%m", String(parts.month,).padStart(2, "0",),);
+    result = result.replace("%d", String(parts.day,).padStart(2, "0",),);
+    result = result.replace("%H", String(parts.hour,).padStart(2, "0",),);
+    result = result.replace("%M", String(parts.minute,).padStart(2, "0",),);
+    result = result.replace("%S", String(parts.second,).padStart(2, "0",),);
+    result = result.replace("%A", dayNames[parts.weekday] ?? "Unknown",);
+    result = result.replace("%a", dayAbbr[parts.weekday] ?? "Unknown",);
+    result = result.replace("%B", monthNames[parts.month] ?? "Unknown",);
+    result = result.replace("%b", monthAbbr[parts.month] ?? "Unknown",);
     // %z: UTC offset in +HHMM / -HHMM format
-    const offset = getOffsetSeconds(this.seconds, tz);
-    const offSign = offset < 0 ? '-' : '+';
-    const offAbs = Math.abs(offset);
-    const offHours = String(Math.floor(offAbs / 3600)).padStart(2, '0');
-    const offMins = String(Math.floor((offAbs % 3600) / 60)).padStart(2, '0');
-    result = result.replace('%z', `${offSign}${offHours}${offMins}`);
-    result = result.replace('%Q', String(Math.floor((parts.month - 1) / 3) + 1));
-    result = result.replace('%Z', tzAbbr);
+    const offset = getOffsetSeconds(this.seconds, tz,);
+    const offSign = offset < 0 ? "-" : "+";
+    const offAbs = Math.abs(offset,);
+    const offHours = String(Math.floor(offAbs / 3600,),).padStart(2, "0",);
+    const offMins = String(Math.floor((offAbs % 3600) / 60,),).padStart(
+      2,
+      "0",
+    );
+    result = result.replace("%z", `${offSign}${offHours}${offMins}`,);
+    result = result.replace(
+      "%Q",
+      String(Math.floor((parts.month - 1) / 3,) + 1,),
+    );
+    result = result.replace("%Z", tzAbbr,);
 
     // Validate that no unsupported format specifiers remain.
     // Ruby's strftime is lenient, but TjTime raises TjArgumentError for
@@ -742,18 +939,32 @@ export class TjTime {
     // The placeholder \x00 is not a format specifier, so it won't match.
     // Match % followed by any character that is NOT % (to avoid matching %%)
     // Then check if that character is NOT one of the valid specifiers
-    const unsupportedMatch = result.match(/%(?!%)(.)/);
+    const unsupportedMatch = result.match(/%(?!%)(.)/,);
     if (unsupportedMatch) {
       const specifier = unsupportedMatch[0]; // Full match like %c, %x, etc.
-      const validSpecifiers = ['Y', 'm', 'd', 'H', 'M', 'S', 'A', 'a', 'B', 'b', 'z', 'Q', 'Z'];
+      const validSpecifiers = [
+        "Y",
+        "m",
+        "d",
+        "H",
+        "M",
+        "S",
+        "A",
+        "a",
+        "B",
+        "b",
+        "z",
+        "Q",
+        "Z",
+      ];
       const specifierChar = unsupportedMatch[1]; // Just the letter after %
-      if (specifierChar && !validSpecifiers.includes(specifierChar)) {
-        throw new TjArgumentError(`Invalid format specifier: ${specifier}`);
+      if (specifierChar && !validSpecifiers.includes(specifierChar,)) {
+        throw new TjArgumentError(`Invalid format specifier: ${specifier}`,);
       }
     }
 
     // Restore %% placeholder to literal %
-    result = result.replace(new RegExp(PLACEHOLDER, 'g'), '%');
+    result = result.replace(new RegExp(PLACEHOLDER, "g",), "%",);
 
     return result;
   }
@@ -774,16 +985,16 @@ export class TjTime {
    * @param tz - Optional timezone (defaults to currentTimeZone)
    * @returns Formatted time string
    */
-  to_s(format?: string, tz: string = currentTimeZone): string {
+  to_s(format?: string, tz: string = currentTimeZone,): string {
     if (format === undefined || format === null) {
-      format = '%Y-%m-%d-%H:%M';
+      format = "%Y-%m-%d-%H:%M";
       // Use the original seconds (this.seconds % 60), not localtime().sec
       if (this.seconds % 60 !== 0) {
-        format += ':%S';
+        format += ":%S";
       }
-      format += '-%z';
+      format += "-%z";
     }
-    return this.strftime(format, tz);
+    return this.strftime(format, tz,);
   }
 
   /**
@@ -791,10 +1002,10 @@ export class TjTime {
    * @param month - Month (1-12)
    * @param year - Year
    */
-  static lastDayOfMonth(month: number, year: number): number {
-    const maxDays = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  static lastDayOfMonth(month: number, year: number,): number {
+    const maxDays = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31,];
     let maxDay = maxDays[month]!;
-    if (month === 2 && TjTime.isLeapYear(year)) {
+    if (month === 2 && TjTime.isLeapYear(year,)) {
       maxDay = 29;
     }
     return maxDay;
@@ -805,8 +1016,8 @@ export class TjTime {
    * @param tz - Optional timezone (defaults to currentTimeZone)
    * @returns Seconds since midnight in local time
    */
-  secondsOfDay(tz: string = currentTimeZone): number {
-    const parts = getLocalParts(this.seconds, tz);
+  secondsOfDay(tz: string = currentTimeZone,): number {
+    const parts = getLocalParts(this.seconds, tz,);
     return parts.hour * 3600 + parts.minute * 60 + parts.second;
   }
 
@@ -814,27 +1025,27 @@ export class TjTime {
    * Get time in UTC
    */
   utc(): TjTime {
-    const parts = getLocalParts(this.seconds, currentTimeZone);
-    const offset = getOffsetSeconds(this.seconds, currentTimeZone);
-    return TjTime.fromSeconds(this.seconds - offset);
+    const parts = getLocalParts(this.seconds, currentTimeZone,);
+    const offset = getOffsetSeconds(this.seconds, currentTimeZone,);
+    return TjTime.fromSeconds(this.seconds - offset,);
   }
 
   /**
    * Get time in local timezone
    */
   localtime(): TjTime {
-    const parts = getLocalParts(this.seconds, currentTimeZone);
-    const offset = getOffsetSeconds(this.seconds, currentTimeZone);
-    return TjTime.fromSeconds(this.seconds + offset);
+    const parts = getLocalParts(this.seconds, currentTimeZone,);
+    const offset = getOffsetSeconds(this.seconds, currentTimeZone,);
+    return TjTime.fromSeconds(this.seconds + offset,);
   }
 
   /**
    * Get time in GMT
    */
   gmtime(): TjTime {
-    const parts = getLocalParts(this.seconds, currentTimeZone);
-    const offset = getOffsetSeconds(this.seconds, currentTimeZone);
-    return TjTime.fromSeconds(this.seconds - offset);
+    const parts = getLocalParts(this.seconds, currentTimeZone,);
+    const offset = getOffsetSeconds(this.seconds, currentTimeZone,);
+    return TjTime.fromSeconds(this.seconds - offset,);
   }
 
   /**
@@ -842,11 +1053,11 @@ export class TjTime {
    * @param zone - Timezone string to validate
    * @returns boolean
    */
-  static checkTimeZone(zone: string): boolean {
+  static checkTimeZone(zone: string,): boolean {
     try {
-      if (zone === 'UTC') return true;
-      if (!zone.includes('/')) return false;
-      new Intl.DateTimeFormat('en-US', { timeZone: zone });
+      if (zone === "UTC") return true;
+      if (!zone.includes("/",)) return false;
+      new Intl.DateTimeFormat("en-US", { timeZone: zone, },);
       return true;
     } catch {
       return false;
@@ -856,14 +1067,13 @@ export class TjTime {
   /**
    * Set a new active time zone
    * @param zone - Timezone string to set
+   * @returns Previous timezone string, or null if none was set
    */
-  static setTimeZone(zone: string): string | null {
-    if (!TjTime.checkTimeZone(zone)) {
-      throw new TjArgumentError(`Illegal time zone ${zone}`);
+  static setTimeZone(zone: string,): string | null {
+    if (!TjTime.checkTimeZone(zone,)) {
+      throw new TjArgumentError(`Illegal time zone ${zone}`,);
     }
-    // Note: In TypeScript/JavaScript, we can't truly set a global timezone
-    // This is a placeholder for the Ruby interface
-    return null;
+    return setCurrentTimeZone(zone,);
   }
 
   /**

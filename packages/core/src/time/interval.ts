@@ -1,9 +1,9 @@
-import { TjArgumentError, TjTime } from './tj-time.ts';
+import { TjArgumentError, TjTime, } from "./tj-time.ts";
 
 // Type constraint for comparable values
 export type Comparable = number | Date | TjTime;
 
-export class Interval<T extends Comparable> {
+export class Interval<T extends Comparable,> {
   protected _start: T;
   protected _end: T;
 
@@ -15,9 +15,9 @@ export class Interval<T extends Comparable> {
     return this._end;
   }
 
-  constructor(start: T, end: T) {
+  constructor(start: T, end: T,) {
     if (end < start) {
-      throw new TjArgumentError(`Invalid interval (${start} - ${end})`);
+      throw new TjArgumentError(`Invalid interval (${start} - ${end})`,);
     }
     this._start = start;
     this._end = end;
@@ -28,8 +28,8 @@ export class Interval<T extends Comparable> {
    * @param arg - Interval or value to check
    * @returns true if contained
    */
-  contains(arg: T | Interval<T>): boolean {
-    this.checkClass(arg);
+  contains(arg: T | Interval<T>,): boolean {
+    this.checkClass(arg,);
     if (arg instanceof Interval) {
       return this.start <= arg.start && arg.end <= this.end;
     } else {
@@ -42,13 +42,13 @@ export class Interval<T extends Comparable> {
    * @param arg - Interval or value to check
    * @returns true if overlaps
    */
-  overlaps(arg: T | Interval<T>): boolean {
-    this.checkClass(arg);
+  overlaps(arg: T | Interval<T>,): boolean {
+    this.checkClass(arg,);
     if (arg instanceof Interval) {
       return this.start <= arg.start && arg.start < this.end ||
-             arg.start <= this.start && this.start < arg.end;
+        arg.start <= this.start && this.start < arg.end;
     } else {
-      return this.contains(arg);
+      return this.contains(arg,);
     }
   }
 
@@ -57,13 +57,13 @@ export class Interval<T extends Comparable> {
    * @param other - Other interval
    * @returns Intersection interval or null if no overlap
    */
-  intersection(other: Interval<T>): Interval<T> | null {
+  intersection(other: Interval<T>,): Interval<T> | null {
     const newStart = this.start > other.start ? this.start : other.start;
     const newEnd = this.end < other.end ? this.end : other.end;
     if (newStart >= newEnd) {
       return null;
     }
-    return new Interval(newStart, newEnd);
+    return new Interval(newStart, newEnd,);
   }
 
   /**
@@ -71,14 +71,14 @@ export class Interval<T extends Comparable> {
    * @param iv - Other interval
    * @returns Array containing combined interval
    */
-  combine(iv: Interval<T>): Interval<T>[] {
+  combine(iv: Interval<T>,): Interval<T>[] {
     if (iv.end === this.start) {
-      return [new Interval(iv.start, this.end)];
+      return [new Interval(iv.start, this.end,),];
     }
     if (this.end === iv.start) {
-      return [new Interval(this.start, iv.end)];
+      return [new Interval(this.start, iv.end,),];
     }
-    return [this];
+    return [this,];
   }
 
   /**
@@ -86,7 +86,7 @@ export class Interval<T extends Comparable> {
    * @param iv - Other interval
    * @returns -1 if end < iv.start, 1 if iv.end < start, 0 if overlaps
    */
-  compareTo(iv: Interval<T>): -1 | 0 | 1 {
+  compareTo(iv: Interval<T>,): -1 | 0 | 1 {
     if (this.end < iv.start) {
       return -1;
     }
@@ -101,9 +101,9 @@ export class Interval<T extends Comparable> {
    * @param iv - Other interval
    * @returns true if same class and start/end
    */
-  equals(iv: Interval<T>): boolean {
+  equals(iv: Interval<T>,): boolean {
     return this.start === iv.start &&
-           this.end === iv.end;
+      this.end === iv.end;
   }
 
   /**
@@ -111,7 +111,7 @@ export class Interval<T extends Comparable> {
    * @param arg - Object to check
    * @returns true if Interval
    */
-  static isInterval<T extends Comparable>(arg: unknown): arg is Interval<T> {
+  static isInterval<T extends Comparable,>(arg: unknown,): arg is Interval<T> {
     return arg instanceof Interval;
   }
 
@@ -120,13 +120,16 @@ export class Interval<T extends Comparable> {
    * @param arg - Object to check
    * @throws TjArgumentError if class mismatch
    */
-  private checkClass(arg: unknown): void {
+  private checkClass(arg: unknown,): void {
     if (arg instanceof Interval) {
       if (this.constructor !== arg.constructor) {
-        throw new TjArgumentError('Class mismatch');
+        throw new TjArgumentError("Class mismatch",);
       }
-    } else if (typeof arg !== 'number' && !(arg instanceof Date) && !(arg instanceof TjTime)) {
-      throw new TjArgumentError('Class mismatch');
+    } else if (
+      typeof arg !== "number" && !(arg instanceof Date) &&
+      !(arg instanceof TjTime)
+    ) {
+      throw new TjArgumentError("Class mismatch",);
     }
   }
 }

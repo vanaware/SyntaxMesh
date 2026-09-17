@@ -50,10 +50,10 @@ deno task fmt && deno task lint
 [x] 5.8  TimeInterval                 —  6/6 ✅
 [x] 5.9  ScoreboardInterval           —  7/7 ✅
 [x] 5.10 IntervalList             —  7/7 ✅
-[ ] 5.11 Scoreboard                   —  0/12
-[ ] 5.12 WorkingHours                 —  0/14
-[ ] 5.13 RealFormat                   —  0/8
-[ ] 5.14 Infra golden tests           —  0/9
+[x] 5.11 Scoreboard                   —  12/12 ✅
+[x] 5.12 WorkingHours                 —  14/14 ✅
+[x] 5.13 RealFormat                   —  8/8 ✅
+[x] 5.14 Infra golden tests           —  9/9 ✅
 ─────────────────────────────────────────────
 TOTAL: 142
 ```
@@ -300,20 +300,20 @@ TOTAL: 142
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 5.12.1 | ⚠️ Constructor **variádico**: 1 arg (`WorkingHours` → cópia) ou 4 args (`slotDuration, startDate, endDate, timeZone`). `@days` inicializado com **default seg-sex 9-17** (não vazio!) | `src/calendar/working-hours.ts` + `tests/calendar/working-hours_test.ts` | 4 testes |
-| 5.12.2 | ⚠️ `@days` é `[ [], [[9h, 17h]], [[9h, 17h]], ..., [], [] ]` (7 entradas, [0] e [6] vazios) | idem | 2 testes |
-| 5.12.3 | ⚠️ Em TS, **usar arrays únicos** (`Array.from({length: 7}, () => [])`). O Ruby compartilha o mesmo array vazio para dom e sáb — replicar para compatibilidade | idem | 1 teste |
-| 5.12.4 | Construtor de cópia: deep copy de `days` (cada intervalo duplicado), `timezone`, `startDate`, `endDate`, `slotDuration`. `scoreboard` é **compartilhado** (copy-on-write: seta `null` em qualquer setter) | idem | 3 testes |
-| 5.12.5 | `setWorkingHours(dayOfWeek, intervals)`: valida `0 <= day <= 6`, `0 <= iv[0] < iv[1] <= 86400`. Erros: `"dayOfWeek out of range"`, `"Interval end time must be larger than start time"` | idem | 6 testes |
-| 5.12.6 | ⚠️ **`setWorkingHours` zera `scoreboard`** (copy-on-write). Idem para `timezone=`. Manter | idem | 2 testes |
-| 5.12.7 | `getWorkingHours(day)` retorna o array do dia | idem | 2 testes |
-| 5.12.8 | ⚠️ `onShift?(arg: TjTime \| number)`: aceita ambos. `initScoreboard` lazy. `TjTime` → `dateToIdx`, número → índice direto | idem | 5 testes |
-| 5.12.9 | ⚠️ `timeOff?(iv: TimeInterval)`: itera `startIdx..endIdx-1`. Retorna `true` se **todos** os slots são `false` (não-working). Diferente do que parece | idem | 3 testes |
-| 5.12.10 | `weeklyWorkingHours()`: soma `(iv[1] - iv[0])` por dia / 3600 | idem | 3 testes |
-| 5.12.11 | ⚠️ `initScoreboard`: **troca timezone global temporariamente** (`TjTime.setTimeZone(@timezone)`) durante o cálculo e restaura. Replicar. Usa `wday` e `secondsOfDay` locais | idem | 3 testes |
-| 5.12.12 | `==(wh)`: compara timezone, startDate, endDate, slotDuration, cada intervalo de cada dia | idem | 4 testes |
-| 5.12.13 | `deepClone()` = `new WorkingHours(this)` | idem | 2 testes |
-| 5.12.14 | `to_s()` — usado em debug | idem | 1 teste |
+| 5.12.1 | ⚠️ Constructor **variádico**: 1 arg (`WorkingHours` → cópia) ou 4 args (`slotDuration, startDate, endDate, timeZone`). `@days` inicializado com **default seg-sex 9-17** (não vazio!) | `src/calendar/working-hours.ts` + `tests/calendar/working-hours_test.ts` | 4 testes ✅ |
+| 5.12.2 | ⚠️ `@days` é `[ [], [[9h, 17h]], [[9h, 17h]], ..., [], [] ]` (7 entradas, [0] e [6] vazios) | idem | 2 testes ✅ |
+| 5.12.3 | ⚠️ Em TS, **usar arrays únicos** (`Array.from({length: 7}, () => [])`). O Ruby compartilha o mesmo array vazio para dom e sáb — replicar para compatibilidade | idem | 1 teste ✅ |
+| 5.12.4 | Construtor de cópia: deep copy de `days` (cada intervalo duplicado), `timezone`, `startDate`, `endDate`, `slotDuration`. `scoreboard` é **compartilhado** (copy-on-write: seta `null` em qualquer setter) | idem | 3 testes ✅ |
+| 5.12.5 | `setWorkingHours(dayOfWeek, intervals)`: valida `0 <= day <= 6`, `0 <= iv[0] < iv[1] <= 86400`. Erros: `"dayOfWeek out of range"`, `"Interval end time must be larger than start time"` | idem | 6 testes ✅ |
+| 5.12.6 | ⚠️ **`setWorkingHours` zera `scoreboard`** (copy-on-write). Idem para `timezone=`. Manter | idem | 2 testes ✅ |
+| 5.12.7 | `getWorkingHours(day)` retorna o array do dia | idem | 2 testes ✅ |
+| 5.12.8 | ⚠️ `onShift?(arg: TjTime \| number)`: aceita ambos. `initScoreboard` lazy. `TjTime` → `dateToIdx`, número → índice direto | idem | 5 testes ✅ |
+| 5.12.9 | ⚠️ `timeOff?(iv: TimeInterval)`: itera `startIdx..endIdx-1`. Retorna `true` se **todos** os slots são `false` (não-working). Diferente do que parece | idem | 3 testes ✅ |
+| 5.12.10 | `weeklyWorkingHours()`: soma `(iv[1] - iv[0])` por dia / 3600 | idem | 3 testes ✅ |
+| 5.12.11 | ⚠️ `initScoreboard`: **troca timezone global temporariamente** (`TjTime.setTimeZone(@timezone)`) durante o cálculo e restaura. Replicar. Usa `wday` e `secondsOfDay` locais | idem | 3 testes ✅ |
+| 5.12.12 | `==(wh)`: compara timezone, startDate, endDate, slotDuration, cada intervalo de cada dia | idem | 4 testes ✅ |
+| 5.12.13 | `deepClone()` = `new WorkingHours(this)` | idem | 2 testes ✅ |
+| 5.12.14 | `to_s()` — usado em debug | idem | 1 teste ✅ |
 
 ---
 

@@ -1,25 +1,25 @@
-export const currentTimeZone: string = 'America/Sao_Paulo';
+export let currentTimeZone: string = "America/Sao_Paulo";
 
 /**
- * Check if a timezone string is valid (IANA format)
- * @param zone - Timezone string to validate
- * @returns boolean
+ * Set the current timezone
+ * @param zone - Timezone string to set
+ * @returns Previous timezone string
  */
-export function isValidTimeZone(zone: string): boolean {
-  try {
-    // UTC is a special case - it's valid but not in IANA format
-    if (zone === 'UTC') return true;
-    
-    // Use Intl.supportedValuesOf to check if timezone is supported
-    // This is available in Deno and modern browsers
-    if (Intl.supportedValuesOf) {
-      const timezones = Intl.supportedValuesOf('timeZone');
-      return timezones.includes(zone);
-    }
+export function setCurrentTimeZone(zone: string,): string {
+  const old = currentTimeZone;
+  currentTimeZone = zone;
+  return old;
+}
 
-    // Fallback: try creating a DateTimeFormat with the timezone
-    // If it throws, the timezone is invalid
-    new Intl.DateTimeFormat('en-US', { timeZone: zone });
+/**
+ * Check if a timezone string is valid
+ * @param zone - Timezone string to validate
+ * @returns true if timezone is valid, false otherwise
+ */
+export function isValidTimeZone(zone: string,): boolean {
+  try {
+    // Try to create a formatter for the timezone
+    new Intl.DateTimeFormat("en-US", { timeZone: zone, },);
     return true;
   } catch {
     return false;
@@ -32,22 +32,25 @@ export function isValidTimeZone(zone: string): boolean {
  * @param timeZone - Timezone string (e.g., 'America/Sao_Paulo')
  * @returns Offset in seconds
  */
-export function getOffsetSeconds(epochSecs: number, timeZone: string): number {
+export function getOffsetSeconds(epochSecs: number, timeZone: string,): number {
   try {
-    const date = new Date(epochSecs * 1000);
+    const date = new Date(epochSecs * 1000,);
     // Use shortOffset to get format like "GMT-03:00" instead of "BRT"
-    const formatter = new Intl.DateTimeFormat('en-US', { timeZoneName: 'shortOffset', timeZone });
-    const parts = formatter.formatToParts(date);
-    const offsetPart = parts.find(part => part.type === 'timeZoneName');
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      timeZoneName: "shortOffset",
+      timeZone,
+    },);
+    const parts = formatter.formatToParts(date,);
+    const offsetPart = parts.find((part,) => part.type === "timeZoneName");
     if (!offsetPart) return 0;
-    
+
     // Extract offset from timezone name (e.g., "GMT-03:00" or "GMT-3" -> -10800)
-    const match = offsetPart.value.match(/GMT?([+-])(\d{1,2})(?::(\d{2}))?/);
+    const match = offsetPart.value.match(/GMT?([+-])(\d{1,2})(?::(\d{2}))?/,);
     if (!match) return 0;
-    
-    const sign = match[1] === '-' ? -1 : 1;
-    const hours = parseInt(match[2] ?? '0');
-    const minutes = parseInt(match[3] ?? '0');
+
+    const sign = match[1] === "-" ? -1 : 1;
+    const hours = parseInt(match[2] ?? "0",);
+    const minutes = parseInt(match[3] ?? "0",);
     return sign * (hours * 3600 + minutes * 60);
   } catch {
     return 0;
@@ -70,35 +73,38 @@ export interface LocalParts {
  * @param timeZone - Timezone string
  * @returns Object with local parts
  */
-export function getLocalParts(epochSecs: number, timeZone: string): LocalParts {
+export function getLocalParts(
+  epochSecs: number,
+  timeZone: string,
+): LocalParts {
   try {
     // Create a formatter for the target timezone
-    const formatter = new Intl.DateTimeFormat('en-US', {
+    const formatter = new Intl.DateTimeFormat("en-US", {
       timeZone: timeZone,
-      year: 'numeric',
-      month: 'numeric',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: 'numeric',
-      second: 'numeric',
-      hour12: false
-    });
-    
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric",
+      hour12: false,
+    },);
+
     // Format the date
-    const formatted = formatter.format(new Date(epochSecs * 1000));
-    
+    const formatted = formatter.format(new Date(epochSecs * 1000,),);
+
     // Parse the formatted string to get parts
     // This is a simplified approach - in a real implementation, we'd use formatToParts
-    const date = new Date(epochSecs * 1000);
-    const utcDate = new Date(date.toISOString());
-    
+    const date = new Date(epochSecs * 1000,);
+    const utcDate = new Date(date.toISOString(),);
+
     // Get the offset
-    const offset = getOffsetSeconds(epochSecs, timeZone);
-    
+    const offset = getOffsetSeconds(epochSecs, timeZone,);
+
     // Calculate local time by adding offset to UTC
     const localEpochSecs = epochSecs + offset;
-    const localDate = new Date(localEpochSecs * 1000);
-    
+    const localDate = new Date(localEpochSecs * 1000,);
+
     const result: LocalParts = {
       year: localDate.getUTCFullYear(),
       month: localDate.getUTCMonth() + 1,
@@ -106,9 +112,9 @@ export function getLocalParts(epochSecs: number, timeZone: string): LocalParts {
       hour: localDate.getUTCHours(),
       minute: localDate.getUTCMinutes(),
       second: localDate.getUTCSeconds(),
-      weekday: localDate.getUTCDay()
+      weekday: localDate.getUTCDay(),
     };
-    
+
     return result;
   } catch {
     return {
@@ -118,7 +124,7 @@ export function getLocalParts(epochSecs: number, timeZone: string): LocalParts {
       hour: 0,
       minute: 0,
       second: 0,
-      weekday: 0
+      weekday: 0,
     };
   }
 }
