@@ -47,6 +47,16 @@ export function deepClone<T>(value: T): T {
     return new Set(Array.from(value, item => deepClone(item))) as unknown as T;
   }
 
+  // Objetos customizados que implementam método deepClone()
+  if (typeof (value as any).deepClone === "function") {
+    return (value as any).deepClone();
+  }
+
+  // Compatibilidade com método deep_clone() (compat.keepRubyBugs)
+  if (typeof (value as any).deep_clone === "function") {
+    return (value as any).deep_clone();
+  }
+
   // Object (plain)
   if (value.constructor === Object) {
     const result = {} as Record<string, unknown>;
@@ -59,16 +69,6 @@ export function deepClone<T>(value: T): T {
   // TjTime e RealFormat — retornar referência (sem cópia profunda)
   if (value.constructor?.name === "TjTime" || value.constructor?.name === "RealFormat") {
     return value;
-  }
-
-  // Objetos customizados que implementam método deepClone()
-  if (typeof (value as any).deepClone === "function") {
-    return (value as any).deepClone();
-  }
-
-  // Compatibilidade com método deep_clone() (compat.keepRubyBugs)
-  if (typeof (value as any).deep_clone === "function") {
-    return (value as any).deep_clone();
   }
 
   // Fallback para outros tipos de objeto (incluindo classes do projeto)

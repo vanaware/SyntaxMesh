@@ -35,6 +35,9 @@ export abstract class AttributeBase<T> {
   }
 
   static setMode(mode: AttributeMode): void {
+    if (mode !== 0 && mode !== 1 && mode !== 2) {
+      throw new Error(`Modo inválido: ${mode}. Deve ser 0, 1 ou 2.`);
+    }
     AttributeBase._mode = mode;
   }
 

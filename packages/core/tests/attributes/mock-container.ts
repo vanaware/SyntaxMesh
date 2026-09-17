@@ -2,7 +2,7 @@
  * Mock container para testes do sistema de atributos.
  *
  * Implementa `AttributeContainer` usando um Map interno.
- * Retorna `undefined` se o atributo não estiver definido.
+ * Retorna `null` se o atributo não estiver definido.
  */
 
 import { type AttributeContainer } from "../../src/attributes/attribute-container.ts";
@@ -11,13 +11,13 @@ import { type AttributeContainer } from "../../src/attributes/attribute-containe
  * Container mock para testes.
  *
  * Usa um `Map<string, unknown>` interno.
- * Retorna `undefined` se o atributo não estiver definido.
+ * Retorna `null` se o atributo não estiver definido.
  */
 export class MockContainer implements AttributeContainer {
   private readonly store = new Map<string, unknown>();
 
   getStoredValue(attributeId: string): unknown {
-    return this.store.get(attributeId);
+    return this.store.get(attributeId) ?? null;
   }
 
   setStoredValue(attributeId: string, value: unknown): void {

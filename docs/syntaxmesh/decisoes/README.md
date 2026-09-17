@@ -73,5 +73,8 @@ O que foi decidido? Seja específico e acionável.
 | 013 | Flag global `compat.keepRubyBugs` para bugs do Ruby | Aceito | 2026-09-12 |
 | 014 | Attribute mode global em TypeScript | Aceito | 2026-09-12 |
 | 015 | Metaprogramação em PropertyTreeNode | Aceito | 2026-09-12 |
+| 016 | Pré-carregamento de atributos em `*Scenario` | Proposto | — |
+| 017 | Scoreboard bit encoding em TypeScript | Proposto | — |
+| 018 | Heurística do scheduler TaskJuggler | Proposto | — |
 
 > **Nota:** Manter esta tabela atualizada manualmente ou via script ao adicionar novos ADRs.

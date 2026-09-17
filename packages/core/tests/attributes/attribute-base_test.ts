@@ -49,7 +49,7 @@ describe("AttributeBase", () => {
   });
 
   it("setMode aceita apenas 0, 1 ou 2", () => {
-    assertThrows(() => AttributeBase.setMode(3 as AttributeMode));
+    assertThrows(() => AttributeBase.setMode(3 as AttributeMode), Error);
   });
 
   it("reset define provided=false e inherited=false", () => {
