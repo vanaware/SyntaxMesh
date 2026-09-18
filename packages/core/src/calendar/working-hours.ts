@@ -26,7 +26,11 @@ export class WorkingHours {
     timeZone?: string,
   ) {
     // @days initialized with 7 empty arrays (default: Sat/Sun off)
-    this.days = [[], [], [], [], [], [], [],] as Array<
+    // RUBY-COMPAT-FIX (task 5.12.R.1): the original Ruby implementation
+    // uses a shared empty array reference across all 7 days, causing
+    // Category A bug where modifying one day affects all days.
+    // This is always fixed regardless of compat.keepRubyBugs.
+    this.days = Array.from({ length: 7, }, () => [],) as Array<
       Array<[number, number,]>
     >;
     this.scoreboard = null;

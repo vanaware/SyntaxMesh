@@ -67,18 +67,24 @@ export class Interval<T extends Comparable,> {
   }
 
   /**
-   * Combine intervals (returns array with 1 element - Ruby bug)
+   * Combine intervals.
+   *
+   * RUBY-COMPAT-FIX (task 5.7.R.1 / 5.7.R.2): the original Ruby
+   * implementation returns an Array with a single Interval element.
+   * This is a Category A bug — it is always fixed regardless of
+   * compat.keepRubyBugs because the return type must be Interval.
+   *
    * @param iv - Other interval
-   * @returns Array containing combined interval
+   * @returns Combined interval
    */
-  combine(iv: Interval<T>,): Interval<T>[] {
+  combine(iv: Interval<T>,): Interval<T> {
     if (iv.end === this.start) {
-      return [new Interval(iv.start, this.end,),];
+      return new Interval(iv.start, this.end,);
     }
     if (this.end === iv.start) {
-      return [new Interval(this.start, iv.end,),];
+      return new Interval(this.start, iv.end,);
     }
-    return [this,];
+    return this;
   }
 
   /**

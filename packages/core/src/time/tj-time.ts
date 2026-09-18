@@ -131,7 +131,7 @@ export class TjTime {
    */
   static fromString(str: string,): TjTime {
     // Use split('-', 5) to properly parse the string with timezone
-    const parts = str.split('-', 5);
+    const parts = str.split("-", 5,);
     if (parts.length < 3) {
       throw new TjArgumentError(`Invalid date format: ${str}`,);
     }
@@ -147,14 +147,14 @@ export class TjTime {
 
     if (parts.length > 3) {
       // Check if timezone is embedded in time part (e.g. "14:30+0300")
-      const tzMatch = parts[3]!.match(/([+-]\d{4})$/);
+      const tzMatch = parts[3]!.match(/([+-]\d{4})$/,);
       if (tzMatch) {
         // Timezone is at the end of the time part
-        const timeWithoutTz = parts[3]!.slice(0, -(tzMatch[1]!.length));
+        const timeWithoutTz = parts[3]!.slice(0, -(tzMatch[1]!.length),);
         if (!/^\d{2}:\d{2}(:\d{2})?$/.test(timeWithoutTz,)) {
           throw new TjArgumentError(`Invalid time format: ${parts[3]}`,);
         }
-        const timeParts = timeWithoutTz.split(':', 3);
+        const timeParts = timeWithoutTz.split(":", 3,);
         hour = parseInt(timeParts[0]!,);
         minute = parseInt(timeParts[1]!,);
         if (timeParts.length > 2) {
@@ -166,7 +166,7 @@ export class TjTime {
         if (!/^\d{2}:\d{2}(:\d{2})?$/.test(parts[3]!,)) {
           throw new TjArgumentError(`Invalid time format: ${parts[3]}`,);
         }
-        const timeParts = parts[3]!.split(':', 3);
+        const timeParts = parts[3]!.split(":", 3,);
         hour = parseInt(timeParts[0]!,);
         minute = parseInt(timeParts[1]!,);
         if (timeParts.length > 2) {
@@ -176,7 +176,7 @@ export class TjTime {
 
       // If we have a 5th part, the timezone is '-' + parts[4] (the '-' was consumed as delimiter)
       if (parts.length > 4) {
-        tzPart = '-' + parts[4]!;
+        tzPart = "-" + parts[4]!;
       }
     }
 

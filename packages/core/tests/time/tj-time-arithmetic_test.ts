@@ -189,3 +189,84 @@ describe("TjTime.upto", () => {
     assertEquals(results.length, 0,);
   });
 });
+
+describe("TjTime.order", () => {
+  it("retorna [menor, maior]", () => {
+    const t1 = TjTime.fromString("2026-01-01",);
+    const t2 = TjTime.fromString("2026-01-03",);
+    const [smaller, larger,] = t1.order(t2,);
+    assertEquals(smaller.toSeconds(), t1.toSeconds(),);
+    assertEquals(larger.toSeconds(), t2.toSeconds(),);
+  });
+
+  it("retorna [this, other] quando this < other", () => {
+    const t1 = TjTime.fromString("2026-01-01",);
+    const t2 = TjTime.fromString("2026-01-02",);
+    const [smaller, larger,] = t1.order(t2,);
+    assertEquals(smaller.toSeconds(), t1.toSeconds(),);
+    assertEquals(larger.toSeconds(), t2.toSeconds(),);
+  });
+
+  it("retorna [other, this] quando other < this", () => {
+    const t1 = TjTime.fromString("2026-01-02",);
+    const t2 = TjTime.fromString("2026-01-01",);
+    const [smaller, larger,] = t1.order(t2,);
+    assertEquals(smaller.toSeconds(), t2.toSeconds(),);
+    assertEquals(larger.toSeconds(), t1.toSeconds(),);
+  });
+});
+
+describe("TjTime.countIntervals", () => {
+  it("conta intervalos de 1 dia", () => {
+    const start = TjTime.fromString("2026-01-01",);
+    const end = TjTime.fromString("2026-01-04",);
+    const t = TjTime.fromString("2026-01-01",);
+    const count = t.countIntervals(
+      start,
+      end,
+      (x: TjTime,) => x.addSeconds(86400,),
+    );
+    assertEquals(count, 3,);
+  });
+
+  it("retorna 0 se start >= end", () => {
+    const start = TjTime.fromString("2026-01-02",);
+    const end = TjTime.fromString("2026-01-01",);
+    const t = TjTime.fromString("2026-01-01",);
+    const count = t.countIntervals(
+      start,
+      end,
+      (x: TjTime,) => x.addSeconds(1,),
+    );
+    assertEquals(count, 0,);
+  });
+});
+
+describe("TjTime.nextDayOfWeek", () => {
+  it("retorna próxima segunda a partir de quarta", () => {
+    // 2026-01-14 é quarta-feira (wday=3)
+    const t = TjTime.fromString("2026-01-14-10:00:00",);
+    const result = t.nextDayOfWeek(1,); // Monday
+    assertEquals(result.wday(), 1,);
+    assertEquals(result.hour(), 10,);
+  });
+
+  it("retorna próximo domingo a partir de sábado", () => {
+    // 2026-01-17 é sábado (wday=6)
+    const t = TjTime.fromString("2026-01-17-10:00:00",);
+    const result = t.nextDayOfWeek(0,); // Sunday
+    assertEquals(result.wday(), 0,);
+    assertEquals(result.hour(), 10,);
+  });
+
+  it("retorna próximo dia da semana nunca hoje", () => {
+    // 2026-01-12 é segunda-feira (wday=1)
+    const t = TjTime.fromString("2026-01-12-10:00:00",);
+    const result = t.nextDayOfWeek(1,); // Monday
+    // Deve ser a próxima segunda, não hoje
+    assertEquals(
+      result.toSeconds(),
+      TjTime.fromString("2026-01-19-10:00:00",).toSeconds(),
+    );
+  });
+});

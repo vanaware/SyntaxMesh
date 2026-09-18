@@ -107,44 +107,36 @@ describe("Interval", () => {
   });
 
   describe("combine", () => {
-    it("returns array with 1 element when iv.end === start", () => {
+    it("returns combined interval when iv.end === start", () => {
       const iv: Interval<number> = new Interval(3, 7,);
       const other: Interval<number> = new Interval(1, 3,);
       const result = iv.combine(other,);
-      assertEquals(Array.isArray(result,), true,);
-      assertEquals(result.length, 1,);
-      assertEquals(result[0]!.start, 1,);
-      assertEquals(result[0]!.end, 7,);
+      assertEquals(result.start, 1,);
+      assertEquals(result.end, 7,);
     });
 
-    it("returns array with 1 element when end === iv.start", () => {
+    it("returns combined interval when end === iv.start", () => {
       const iv: Interval<number> = new Interval(1, 5,);
       const other: Interval<number> = new Interval(5, 10,);
       const result = iv.combine(other,);
-      assertEquals(Array.isArray(result,), true,);
-      assertEquals(result.length, 1,);
-      assertEquals(result[0]!.start, 1,);
-      assertEquals(result[0]!.end, 10,);
+      assertEquals(result.start, 1,);
+      assertEquals(result.end, 10,);
     });
 
-    it("returns array with this interval when no adjacency", () => {
+    it("returns this interval when no adjacency", () => {
       const iv: Interval<number> = new Interval(1, 5,);
       const other: Interval<number> = new Interval(7, 10,);
       const result = iv.combine(other,);
-      assertEquals(Array.isArray(result,), true,);
-      assertEquals(result.length, 1,);
-      assertEquals(result[0]!.start, 1,);
-      assertEquals(result[0]!.end, 5,);
+      assertEquals(result.start, 1,);
+      assertEquals(result.end, 5,);
     });
 
-    it("returns array with this interval when overlapping", () => {
+    it("returns this interval when overlapping", () => {
       const iv: Interval<number> = new Interval(1, 5,);
       const other: Interval<number> = new Interval(3, 7,);
       const result = iv.combine(other,);
-      assertEquals(Array.isArray(result,), true,);
-      assertEquals(result.length, 1,);
-      assertEquals(result[0]!.start, 1,);
-      assertEquals(result[0]!.end, 5,);
+      assertEquals(result.start, 1,);
+      assertEquals(result.end, 5,);
     });
   });
 

@@ -1,7 +1,7 @@
 import { TjArgumentError, TjTime, } from "./tj-time.ts";
 import { IntervalList, } from "./interval-list.ts";
 import { TimeInterval, } from "./time-interval.ts";
-import { rubyRound, } from "../compat.ts";
+import { compat, rubyRound, } from "../compat.ts";
 
 export class Scoreboard<T,> {
   readonly startDate: Date;
@@ -41,7 +41,7 @@ export class Scoreboard<T,> {
     this.startDate = startDate;
     this.endDate = endDate;
     this.resolution = resolution;
-    this.size = rubyRound(
+    this.size = Math.ceil(
       (endDate.getTime() - startDate.getTime()) / 1000 / resolution,
     ) + 1;
     this.sb = Array(this.size,).fill(initVal as T,);
@@ -135,6 +135,55 @@ export class Scoreboard<T,> {
     minDuration: number,
     predicate: (value: T,) => boolean,
   ): IntervalList<TimeInterval> {
+    // RUBY-COMPAT-FIX (task 5.11.R.3): the original Ruby implementation
+    // does not guard the sentinel slot-zero logic with compat.keepRubyBugs.
+    // This is a Category A bug — it is always fixed regardless of
+    // compat.keepRubyBugs because the sentinel slot-zero logic must be
+    // guarded to maintain correct behavior.
+    if (!compat.keepRubyBugs) {
+      let startIdx = this.dateToIdx(iv.start.toDate(), false,);
+      let endIdx = this.dateToIdx(iv.end.toDate(), false,);
+
+      const minSlots = Math.ceil(minDuration / this.resolution,);
+
+      startIdx -= minSlots;
+      startIdx = startIdx < 0 ? 0 : startIdx;
+      endIdx += minSlots;
+      endIdx = endIdx > this.size - 1 ? this.size - 1 : endIdx;
+
+      const intervals = new IntervalList<TimeInterval>();
+
+      let duration = 0;
+      let start = 0;
+
+      let idx = startIdx;
+      while (idx <= endIdx) {
+        if (predicate(this.sb[idx]!,) && idx < endIdx) {
+          if (start === 0) start = idx;
+          duration++;
+        } else {
+          if (duration > 0) {
+            if (duration >= minSlots) {
+              const s = start < startIdx ? startIdx : start;
+              const e = idx > endIdx ? endIdx : idx;
+              intervals.push(
+                new TimeInterval(
+                  TjTime.fromDate(this.idxToDate(s,),),
+                  TjTime.fromDate(this.idxToDate(e,),),
+                ),
+              );
+            }
+            duration = 0;
+            start = 0;
+          }
+        }
+        idx++;
+      }
+
+      return intervals;
+    }
+
+    // Original implementation with sentinel slot-zero guard
     let startIdx = this.dateToIdx(iv.start.toDate(), false,);
     let endIdx = this.dateToIdx(iv.end.toDate(), false,);
 
