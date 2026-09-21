@@ -73,6 +73,16 @@ export interface LocalParts {
  * @param timeZone - Timezone string
  * @returns Object with local parts
  */
+const weekdayNames = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+
 export function getLocalParts(
   epochSecs: number,
   timeZone: string,
@@ -88,32 +98,49 @@ export function getLocalParts(
       minute: "numeric",
       second: "numeric",
       hour12: false,
+      weekday: "long",
     },);
 
-    // Format the date
-    const formatted = formatter.format(new Date(epochSecs * 1000,),);
+    // Use formatToParts to get the parts directly
+    const parts = formatter.formatToParts(new Date(epochSecs * 1000,),);
 
-    // Parse the formatted string to get parts
-    // This is a simplified approach - in a real implementation, we'd use formatToParts
-    const date = new Date(epochSecs * 1000,);
-    const utcDate = new Date(date.toISOString(),);
-
-    // Get the offset
-    const offset = getOffsetSeconds(epochSecs, timeZone,);
-
-    // Calculate local time by adding offset to UTC
-    const localEpochSecs = epochSecs + offset;
-    const localDate = new Date(localEpochSecs * 1000,);
-
+    // Extract the values from the parts
     const result: LocalParts = {
-      year: localDate.getUTCFullYear(),
-      month: localDate.getUTCMonth() + 1,
-      day: localDate.getUTCDate(),
-      hour: localDate.getUTCHours(),
-      minute: localDate.getUTCMinutes(),
-      second: localDate.getUTCSeconds(),
-      weekday: localDate.getUTCDay(),
+      year: 0,
+      month: 0,
+      day: 0,
+      hour: 0,
+      minute: 0,
+      second: 0,
+      weekday: 0,
     };
+
+    for (const part of parts) {
+      switch (part.type) {
+        case "year":
+          result.year = parseInt(part.value, 10,);
+          break;
+        case "month":
+          result.month = parseInt(part.value, 10,);
+          break;
+        case "day":
+          result.day = parseInt(part.value, 10,);
+          break;
+        case "hour":
+          result.hour = parseInt(part.value, 10,);
+          break;
+        case "minute":
+          result.minute = parseInt(part.value, 10,);
+          break;
+        case "second":
+          result.second = parseInt(part.value, 10,);
+          break;
+        case "weekday":
+          const idx = weekdayNames.indexOf(part.value);
+          result.weekday = idx >= 0 ? idx : 0;
+          break;
+      }
+    }
 
     return result;
   } catch {

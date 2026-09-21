@@ -1,5 +1,6 @@
 import { TjArgumentError, } from "../time/tj-time.ts";
 import { rubyRound, } from "../compat.ts";
+// RUBY-COMPAT: uses rubyRound (Category B) for negative number rounding
 
 export class RealFormat {
   readonly signPrefix: string;

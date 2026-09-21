@@ -1,0 +1,1413 @@
+{
+  "version": "1.0",
+  "description": "Golden test cases for TjTime compatibility (Cat. B bugs)",
+  "generated_at": "2026-09-20 17:30:40 UTC",
+  "cases": [
+    {
+      "description": "sameTimeNextDay advances to next day same time",
+      "method": "sameTimeNextDay",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": {
+        "year": 2026,
+        "month": 1,
+        "day": 16,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      }
+    },
+    {
+      "description": "sameTimeNextDay rolls month end",
+      "method": "sameTimeNextDay",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 31,
+        "hour": 23,
+        "minute": 59,
+        "second": 59
+      },
+      "expected": {
+        "year": 2026,
+        "month": 2,
+        "day": 1,
+        "hour": 23,
+        "minute": 59,
+        "second": 59
+      }
+    },
+    {
+      "description": "sameTimeNextDay leap year",
+      "method": "sameTimeNextDay",
+      "input": {
+        "year": 2024,
+        "month": 2,
+        "day": 29,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": {
+        "year": 2024,
+        "month": 3,
+        "day": 1,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      }
+    },
+    {
+      "description": "sameTimeNextDay year boundary",
+      "method": "sameTimeNextDay",
+      "input": {
+        "year": 2026,
+        "month": 12,
+        "day": 31,
+        "hour": 23,
+        "minute": 59,
+        "second": 59
+      },
+      "expected": {
+        "year": 2027,
+        "month": 1,
+        "day": 1,
+        "hour": 23,
+        "minute": 59,
+        "second": 59
+      }
+    },
+    {
+      "description": "sameTimeNextWeek advances 7 days",
+      "method": "sameTimeNextWeek",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 12,
+        "hour": 10,
+        "minute": 0,
+        "second": 0
+      },
+      "expected": {
+        "year": 2026,
+        "month": 1,
+        "day": 19,
+        "hour": 10,
+        "minute": 0,
+        "second": 0
+      }
+    },
+    {
+      "description": "sameTimeNextWeek year boundary",
+      "method": "sameTimeNextWeek",
+      "input": {
+        "year": 2026,
+        "month": 12,
+        "day": 28,
+        "hour": 14,
+        "minute": 30,
+        "second": 0
+      },
+      "expected": {
+        "year": 2027,
+        "month": 1,
+        "day": 4,
+        "hour": 14,
+        "minute": 30,
+        "second": 0
+      }
+    },
+    {
+      "description": "sameTimeNextMonth advances one month",
+      "method": "sameTimeNextMonth",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 0
+      },
+      "expected": {
+        "year": 2026,
+        "month": 2,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 0
+      }
+    },
+    {
+      "description": "sameTimeNextMonth handles month end",
+      "method": "sameTimeNextMonth",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 31,
+        "hour": 12,
+        "minute": 0,
+        "second": 0
+      },
+      "expected": {
+        "year": 2026,
+        "month": 2,
+        "day": 28,
+        "hour": 12,
+        "minute": 0,
+        "second": 0
+      }
+    },
+    {
+      "description": "sameTimeNextMonth February to March",
+      "method": "sameTimeNextMonth",
+      "input": {
+        "year": 2026,
+        "month": 2,
+        "day": 28,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": {
+        "year": 2026,
+        "month": 3,
+        "day": 28,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      }
+    },
+    {
+      "description": "sameTimeNextMonth end of year",
+      "method": "sameTimeNextMonth",
+      "input": {
+        "year": 2026,
+        "month": 12,
+        "day": 15,
+        "hour": 10,
+        "minute": 0,
+        "second": 0
+      },
+      "expected": {
+        "year": 2027,
+        "month": 1,
+        "day": 15,
+        "hour": 10,
+        "minute": 0,
+        "second": 0
+      }
+    },
+    {
+      "description": "sameTimeNextQuarter advances one quarter",
+      "method": "sameTimeNextQuarter",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 0
+      },
+      "expected": {
+        "year": 2026,
+        "month": 4,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 0
+      }
+    },
+    {
+      "description": "sameTimeNextQuarter Q4 to next year",
+      "method": "sameTimeNextQuarter",
+      "input": {
+        "year": 2026,
+        "month": 10,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 0
+      },
+      "expected": {
+        "year": 2027,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 0
+      }
+    },
+    {
+      "description": "sameTimeNextYear advances one year",
+      "method": "sameTimeNextYear",
+      "input": {
+        "year": 2026,
+        "month": 6,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": {
+        "year": 2027,
+        "month": 6,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      }
+    },
+    {
+      "description": "sameTimeNextYear leap year to non-leap",
+      "method": "sameTimeNextYear",
+      "input": {
+        "year": 2024,
+        "month": 2,
+        "day": 29,
+        "hour": 12,
+        "minute": 0,
+        "second": 0
+      },
+      "expected": {
+        "year": 2025,
+        "month": 2,
+        "day": 28,
+        "hour": 12,
+        "minute": 0,
+        "second": 0
+      }
+    },
+    {
+      "description": "strftime %Y returns year",
+      "method": "strftime",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": "2026"
+    },
+    {
+      "description": "strftime %m returns month",
+      "method": "strftime",
+      "input": {
+        "year": 2026,
+        "month": 3,
+        "day": 5,
+        "hour": 9,
+        "minute": 5,
+        "second": 1
+      },
+      "expected": "03"
+    },
+    {
+      "description": "strftime %d returns day",
+      "method": "strftime",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": "15"
+    },
+    {
+      "description": "strftime %H returns hour 24h",
+      "method": "strftime",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": "14"
+    },
+    {
+      "description": "strftime %M returns minute",
+      "method": "strftime",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": "30"
+    },
+    {
+      "description": "strftime %S returns second",
+      "method": "strftime",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": "45"
+    },
+    {
+      "description": "strftime %A returns weekday name",
+      "method": "strftime",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": "Thursday"
+    },
+    {
+      "description": "strftime %B returns month name",
+      "method": "strftime",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": "January"
+    },
+    {
+      "description": "strftime %z returns timezone offset",
+      "method": "strftime",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": "+0000",
+      "timezone": "UTC"
+    },
+    {
+      "description": "strftime %Z returns timezone name",
+      "method": "strftime",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": "UTC",
+      "timezone": "UTC"
+    },
+    {
+      "description": "beginOfHour zeroes minutes and seconds",
+      "method": "beginOfHour",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 0,
+        "second": 0
+      }
+    },
+    {
+      "description": "midnight zeroes hours, minutes, seconds",
+      "method": "midnight",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 0,
+        "minute": 0,
+        "second": 0
+      }
+    },
+    {
+      "description": "beginOfWeek with startMonday=true",
+      "method": "beginOfWeek",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": {
+        "year": 2026,
+        "month": 1,
+        "day": 12,
+        "hour": 0,
+        "minute": 0,
+        "second": 0
+      }
+    },
+    {
+      "description": "beginOfMonth zeroes to first day",
+      "method": "beginOfMonth",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": {
+        "year": 2026,
+        "month": 1,
+        "day": 1,
+        "hour": 0,
+        "minute": 0,
+        "second": 0
+      }
+    },
+    {
+      "description": "beginOfYear zeroes to January 1",
+      "method": "beginOfYear",
+      "input": {
+        "year": 2026,
+        "month": 6,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": {
+        "year": 2026,
+        "month": 1,
+        "day": 1,
+        "hour": 0,
+        "minute": 0,
+        "second": 0
+      }
+    },
+    {
+      "description": "beginOfWeek in timezone America/Sao_Paulo",
+      "method": "beginOfWeek",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 12,
+        "hour": 14,
+        "minute": 30,
+        "second": 0
+      },
+      "expected": {
+        "year": 2026,
+        "month": 1,
+        "day": 12,
+        "hour": 0,
+        "minute": 0,
+        "second": 0
+      },
+      "timezone": "America/Sao_Paulo"
+    },
+    {
+      "description": "beginOfMonth in timezone America/Sao_Paulo",
+      "method": "beginOfMonth",
+      "input": {
+        "year": 2026,
+        "month": 3,
+        "day": 20,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": {
+        "year": 2026,
+        "month": 3,
+        "day": 1,
+        "hour": 0,
+        "minute": 0,
+        "second": 0
+      },
+      "timezone": "America/Sao_Paulo"
+    },
+    {
+      "description": "wday returns day of week (0=Sunday)",
+      "method": "wday",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": 4
+    },
+    {
+      "description": "hour returns local hour",
+      "method": "hour",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": 14
+    },
+    {
+      "description": "day returns day of month",
+      "method": "day",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": 15
+    },
+    {
+      "description": "month returns month number",
+      "method": "month",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": 1
+    },
+    {
+      "description": "year returns year",
+      "method": "year",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": 2026
+    },
+    {
+      "description": "to_a returns [year, month, day, hour, minute, second, wday]",
+      "method": "to_a",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": [
+        2026,
+        1,
+        15,
+        14,
+        30,
+        45,
+        4
+      ]
+    },
+    {
+      "description": "compareTo equal times returns 0",
+      "method": "compareTo",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": 0,
+      "compareWith": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      }
+    },
+    {
+      "description": "compareTo less than returns -1",
+      "method": "compareTo",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": -1,
+      "compareWith": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 46
+      }
+    },
+    {
+      "description": "compareTo greater than returns 1",
+      "method": "compareTo",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": 1,
+      "compareWith": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 44
+      }
+    },
+    {
+      "description": "collectIntervals returns empty for no intervals",
+      "method": "collectIntervals",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": [
+
+      ]
+    },
+    {
+      "description": "collectIntervals with single interval",
+      "method": "collectIntervals",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": [
+        {
+          "start": "2026-01-15-14:30:45",
+          "end": "2026-01-15-15:30:45"
+        }
+      ]
+    },
+    {
+      "description": "collectIntervals with multiple intervals",
+      "method": "collectIntervals",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": [
+        {
+          "start": "2026-01-15-14:30:45",
+          "end": "2026-01-15-15:30:45"
+        },
+        {
+          "start": "2026-01-15-16:00:00",
+          "end": "2026-01-15-17:00:00"
+        }
+      ]
+    },
+    {
+      "description": "sameTimeNextYear leap year to leap year",
+      "method": "sameTimeNextYear",
+      "input": {
+        "year": 2024,
+        "month": 3,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": {
+        "year": 2025,
+        "month": 3,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      }
+    },
+    {
+      "description": "sameTimeNextYear February 28 non-leap",
+      "method": "sameTimeNextYear",
+      "input": {
+        "year": 2025,
+        "month": 2,
+        "day": 28,
+        "hour": 12,
+        "minute": 0,
+        "second": 0
+      },
+      "expected": {
+        "year": 2026,
+        "month": 2,
+        "day": 28,
+        "hour": 12,
+        "minute": 0,
+        "second": 0
+      }
+    },
+    {
+      "description": "sameTimeNextDay March 31 to April 1",
+      "method": "sameTimeNextDay",
+      "input": {
+        "year": 2026,
+        "month": 3,
+        "day": 31,
+        "hour": 12,
+        "minute": 0,
+        "second": 0
+      },
+      "expected": {
+        "year": 2026,
+        "month": 4,
+        "day": 1,
+        "hour": 12,
+        "minute": 0,
+        "second": 0
+      }
+    },
+    {
+      "description": "sameTimeNextDay February 28 non-leap",
+      "method": "sameTimeNextDay",
+      "input": {
+        "year": 2025,
+        "month": 2,
+        "day": 28,
+        "hour": 10,
+        "minute": 0,
+        "second": 0
+      },
+      "expected": {
+        "year": 2025,
+        "month": 3,
+        "day": 1,
+        "hour": 10,
+        "minute": 0,
+        "second": 0
+      }
+    },
+    {
+      "description": "sameTimeNextWeek mid-year",
+      "method": "sameTimeNextWeek",
+      "input": {
+        "year": 2026,
+        "month": 6,
+        "day": 15,
+        "hour": 8,
+        "minute": 30,
+        "second": 0
+      },
+      "expected": {
+        "year": 2026,
+        "month": 6,
+        "day": 22,
+        "hour": 8,
+        "minute": 30,
+        "second": 0
+      }
+    },
+    {
+      "description": "sameTimeNextMonth March 31 to April 30",
+      "method": "sameTimeNextMonth",
+      "input": {
+        "year": 2026,
+        "month": 3,
+        "day": 31,
+        "hour": 14,
+        "minute": 0,
+        "second": 0
+      },
+      "expected": {
+        "year": 2026,
+        "month": 4,
+        "day": 30,
+        "hour": 14,
+        "minute": 0,
+        "second": 0
+      }
+    },
+    {
+      "description": "sameTimeNextMonth May 31 to June 30",
+      "method": "sameTimeNextMonth",
+      "input": {
+        "year": 2026,
+        "month": 5,
+        "day": 31,
+        "hour": 10,
+        "minute": 0,
+        "second": 0
+      },
+      "expected": {
+        "year": 2026,
+        "month": 6,
+        "day": 30,
+        "hour": 10,
+        "minute": 0,
+        "second": 0
+      }
+    },
+    {
+      "description": "sameTimeNextMonth December 31 to January 31",
+      "method": "sameTimeNextMonth",
+      "input": {
+        "year": 2026,
+        "month": 12,
+        "day": 31,
+        "hour": 14,
+        "minute": 0,
+        "second": 0
+      },
+      "expected": {
+        "year": 2027,
+        "month": 1,
+        "day": 31,
+        "hour": 14,
+        "minute": 0,
+        "second": 0
+      }
+    },
+    {
+      "description": "sameTimeNextQuarter Q2 to Q3",
+      "method": "sameTimeNextQuarter",
+      "input": {
+        "year": 2026,
+        "month": 5,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 0
+      },
+      "expected": {
+        "year": 2026,
+        "month": 8,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 0
+      }
+    },
+    {
+      "description": "sameTimeNextQuarter Q4 to next year Q1",
+      "method": "sameTimeNextQuarter",
+      "input": {
+        "year": 2026,
+        "month": 11,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 0
+      },
+      "expected": {
+        "year": 2027,
+        "month": 2,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 0
+      }
+    },
+    {
+      "description": "strftime %y returns 2-digit year",
+      "method": "strftime",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": "26"
+    },
+    {
+      "description": "strftime %j returns day of year",
+      "method": "strftime",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": "015"
+    },
+    {
+      "description": "strftime %W returns week number",
+      "method": "strftime",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": "02"
+    },
+    {
+      "description": "strftime %p returns AM/PM",
+      "method": "strftime",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": "PM"
+    },
+    {
+      "description": "strftime %I returns 12-hour hour",
+      "method": "strftime",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": "02"
+    },
+    {
+      "description": "strftime %x returns date format",
+      "method": "strftime",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": "01/15/26"
+    },
+    {
+      "description": "strftime %X returns time format",
+      "method": "strftime",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": "14:30:45"
+    },
+    {
+      "description": "strftime %% returns literal %",
+      "method": "strftime",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": "%"
+    },
+    {
+      "description": "to_s returns default format",
+      "method": "to_s",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": "2026-01-15 14:30:45 +0000"
+    },
+    {
+      "description": "to_s with timezone offset",
+      "method": "to_s",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": "2026-01-15 14:30:45 +0000",
+      "timezone": "UTC"
+    },
+    {
+      "description": "secondsOfDay returns seconds since midnight",
+      "method": "secondsOfDay",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": 52245
+    },
+    {
+      "description": "secondsOfDay at midnight",
+      "method": "secondsOfDay",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 0,
+        "minute": 0,
+        "second": 0
+      },
+      "expected": 0
+    },
+    {
+      "description": "secondsOfDay at end of day",
+      "method": "secondsOfDay",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 23,
+        "minute": 59,
+        "second": 59
+      },
+      "expected": 86399
+    },
+    {
+      "description": "lastDayOfMonth January",
+      "method": "lastDayOfMonth",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": 31
+    },
+    {
+      "description": "lastDayOfMonth February non-leap",
+      "method": "lastDayOfMonth",
+      "input": {
+        "year": 2025,
+        "month": 2,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": 28
+    },
+    {
+      "description": "lastDayOfMonth February leap",
+      "method": "lastDayOfMonth",
+      "input": {
+        "year": 2024,
+        "month": 2,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": 29
+    },
+    {
+      "description": "lastDayOfMonth April",
+      "method": "lastDayOfMonth",
+      "input": {
+        "year": 2026,
+        "month": 4,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": 30
+    },
+    {
+      "description": "utc returns UTC time",
+      "method": "utc",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      }
+    },
+    {
+      "description": "localtime returns local time",
+      "method": "localtime",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      }
+    },
+    {
+      "description": "gmtime returns UTC time",
+      "method": "gmtime",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      }
+    },
+    {
+      "description": "compareTo same time returns 0",
+      "method": "compareTo",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": 0,
+      "compareWith": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      }
+    },
+    {
+      "description": "compareTo one second less returns -1",
+      "method": "compareTo",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": -1,
+      "compareWith": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 46
+      }
+    },
+    {
+      "description": "compareTo one second greater returns 1",
+      "method": "compareTo",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": 1,
+      "compareWith": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 44
+      }
+    },
+    {
+      "description": "compareTo different months",
+      "method": "compareTo",
+      "input": {
+        "year": 2026,
+        "month": 2,
+        "day": 1,
+        "hour": 0,
+        "minute": 0,
+        "second": 0
+      },
+      "expected": 1,
+      "compareWith": {
+        "year": 2026,
+        "month": 1,
+        "day": 31,
+        "hour": 23,
+        "minute": 59,
+        "second": 59
+      }
+    },
+    {
+      "description": "beginOfWeek Sunday start",
+      "method": "beginOfWeek",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": {
+        "year": 2026,
+        "month": 1,
+        "day": 11,
+        "hour": 0,
+        "minute": 0,
+        "second": 0
+      }
+    },
+    {
+      "description": "beginOfQuarter zeroes to first day of quarter",
+      "method": "beginOfQuarter",
+      "input": {
+        "year": 2026,
+        "month": 3,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": {
+        "year": 2026,
+        "month": 1,
+        "day": 1,
+        "hour": 0,
+        "minute": 0,
+        "second": 0
+      }
+    },
+    {
+      "description": "beginOfWeek in timezone Europe/London",
+      "method": "beginOfWeek",
+      "input": {
+        "year": 2026,
+        "month": 1,
+        "day": 12,
+        "hour": 14,
+        "minute": 30,
+        "second": 0
+      },
+      "expected": {
+        "year": 2026,
+        "month": 1,
+        "day": 12,
+        "hour": 0,
+        "minute": 0,
+        "second": 0
+      },
+      "timezone": "Europe/London"
+    },
+    {
+      "description": "beginOfMonth in timezone Asia/Tokyo",
+      "method": "beginOfMonth",
+      "input": {
+        "year": 2026,
+        "month": 3,
+        "day": 20,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "expected": {
+        "year": 2026,
+        "month": 3,
+        "day": 1,
+        "hour": 0,
+        "minute": 0,
+        "second": 0
+      },
+      "timezone": "Asia/Tokyo"
+    }
+  ]
+}

@@ -183,7 +183,7 @@ export class TjTime {
     if (tzPart) {
       if (!/^[+-]\d{4}$/.test(tzPart,)) {
         throw new TjArgumentError(
-          `Time zone adjustment out of range (-1200 - +1400) but is ${tzPart}`,
+          `Time zone adjustment out of range (-1200 - +1400} but is ${tzPart}`,
         );
       }
 
@@ -196,7 +196,7 @@ export class TjTime {
         minutes < 0 || minutes > 59
       ) {
         throw new TjArgumentError(
-          `Time zone adjustment out of range (-1200 - +1400) but is ${tzPart}`,
+          `Time zone adjustment out of range (-1200 - +1400} but is ${tzPart}`,
         );
       }
 
@@ -206,7 +206,7 @@ export class TjTime {
       // Validate range
       if (offsetSeconds < -12 * 3600 || offsetSeconds > 14 * 3600) {
         throw new TjArgumentError(
-          `Time zone adjustment out of range (-1200 - +1400) but is ${tzPart}`,
+          `Time zone adjustment out of range (-1200 - +1400} but is ${tzPart}`,
         );
       }
 
@@ -538,6 +538,26 @@ export class TjTime {
       fn(current,);
       current = TjTime.fromSeconds(current.seconds + step,);
     }
+  }
+
+  /**
+   * Collect intervals between this TjTime and end with step
+   * @param end - End TjTime (exclusive)
+   * @param step - Step in seconds (default 1)
+   * @returns Array of intervals [{start: TjTime, end: TjTime}]
+   */
+  collectIntervals(
+    end: TjTime,
+    step: number = 1,
+  ): { start: TjTime; end: TjTime }[] {
+    const intervals: { start: TjTime; end: TjTime }[] = [];
+    let current = TjTime.fromSeconds(this.seconds,);
+    while (current.seconds < end.seconds) {
+      const next = TjTime.fromSeconds(current.seconds + step,);
+      intervals.push({ start: current, end: next, },);
+      current = next;
+    }
+    return intervals;
   }
 
   /**
@@ -948,22 +968,23 @@ export class TjTime {
    * @param tz - Optional timezone (defaults to currentTimeZone)
    * @returns Formatted time string
    */
-  strftime(format: string, tz: string = currentTimeZone,): string {
-    // Validate timezone
-    if (!isValidTimeZone(tz,)) {
-      throw new TjArgumentError(`Invalid time zone: ${tz}`,);
+  strftime(format: string, tz?: string,): string {
+    // Validate timezone - use UTC if not specified
+    const timeZone = tz ?? "UTC";
+    if (!isValidTimeZone(timeZone,)) {
+      throw new TjArgumentError(`Invalid time zone: ${timeZone}`,);
     }
 
     // Get local parts for the given timezone
-    const parts = getLocalParts(this.seconds, tz,);
+    const parts = getLocalParts(this.seconds, timeZone,);
 
     // Get timezone abbreviation
     const formatter = new Intl.DateTimeFormat("en-US", {
-      timeZone: tz,
+      timeZone: timeZone,
       timeZoneName: "short",
     },);
     const tzParts = formatter.formatToParts(this.toDate(),);
-    const tzAbbr = tzParts.find((p,) => p.type === "timeZoneName")?.value || tz;
+    const tzAbbr = tzParts.find((p,) => p.type === "timeZoneName")?.value || timeZone;
 
     // Day of week names
     const dayNames = [
@@ -1015,6 +1036,7 @@ export class TjTime {
 
     // Replace format specifiers
     result = result.replace("%Y", String(parts.year,).padStart(4, "0",),);
+    result = result.replace("%y", String(parts.year % 100,).padStart(2, "0",),);
     result = result.replace("%m", String(parts.month,).padStart(2, "0",),);
     result = result.replace("%d", String(parts.day,).padStart(2, "0",),);
     result = result.replace("%H", String(parts.hour,).padStart(2, "0",),);
@@ -1025,7 +1047,7 @@ export class TjTime {
     result = result.replace("%B", monthNames[parts.month] ?? "Unknown",);
     result = result.replace("%b", monthAbbr[parts.month] ?? "Unknown",);
     // %z: UTC offset in +HHMM / -HHMM format
-    const offset = getOffsetSeconds(this.seconds, tz,);
+    const offset = getOffsetSeconds(this.seconds, timeZone,);
     const offSign = offset < 0 ? "-" : "+";
     const offAbs = Math.abs(offset,);
     const offHours = String(Math.floor(offAbs / 3600,),).padStart(2, "0",);
@@ -1038,11 +1060,49 @@ export class TjTime {
       "%Q",
       String(Math.floor((parts.month - 1) / 3,) + 1,),
     );
+    // %Z: timezone abbreviation
     result = result.replace("%Z", tzAbbr,);
+    // %p: AM/PM
+    const ampm = parts.hour < 12 ? "AM" : "PM";
+    result = result.replace("%p", ampm,);
+    // %I: 12-hour hour (1-12)
+    const hour12 = parts.hour % 12 || 12;
+    result = result.replace("%I", String(hour12,).padStart(2, "0",),);
+    // %j: day of year (001-366)
+    let dayOfYear = 0;
+    for (let i = 1; i < parts.month; i++) {
+      const maxDays = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31,];
+      let monMax = maxDays[i]!;
+      if (i === 2 && TjTime.isLeapYear(parts.year,)) {
+        monMax = 29;
+      }
+      dayOfYear += monMax;
+    }
+    dayOfYear += parts.day;
+    result = result.replace("%j", String(dayOfYear,).padStart(3, "0",),);
+    // %W: week number (00-53, Monday as first day of week)
+    const firstDayOfYear = TjTime.fromParts(parts.year, 1, 1, 0, 0, 0, tz,);
+    const firstWeekday = firstDayOfYear.wday(); // 0=Sunday, 1=Monday, etc.
+    const daysSinceMonday = parts.weekday === 0 ? 6 : parts.weekday - 1;
+    const dayOfYearForWeek = dayOfYear - 1;
+    const weekNumber = Math.floor((dayOfYearForWeek + daysSinceMonday) / 7,);
+    result = result.replace("%W", String(weekNumber,).padStart(2, "0",),);
+    // %x: date format (MM/DD/YY)
+    const monthStr = String(parts.month,).padStart(2, "0",);
+    const dayStr = String(parts.day,).padStart(2, "0",);
+    const year2Str = String(parts.year % 100,).padStart(2, "0",);
+    result = result.replace("%x", `${monthStr}/${dayStr}/${year2Str}`,);
+    // %X: time format (HH:MM:SS)
+    const hourStr = String(parts.hour,).padStart(2, "0",);
+    const minuteStr = String(parts.minute,).padStart(2, "0",);
+    const secondStr = String(parts.second,).padStart(2, "0",);
+    result = result.replace("%X", `${hourStr}:${minuteStr}:${secondStr}`,);
+    // %%: literal %
+    result = result.replace(new RegExp(PLACEHOLDER, "g",), "%",);
 
     // Validate that no unsupported format specifiers remain.
     // Ruby's strftime is lenient, but TjTime raises TjArgumentError for
-    // formats outside the supported list (%Y %m %d %H %M %S %A %a %B %b %z %Q %Z %%).
+    // formats outside the supported list (%Y %y %m %d %H %M %S %A %a %B %b %z %Q %Z %p %I %j %W %x %X %%).
     // The placeholder \x00 is not a format specifier, so it won't match.
     // Match % followed by any character that is NOT % (to avoid matching %%)
     // Then check if that character is NOT one of the valid specifiers
@@ -1051,6 +1111,7 @@ export class TjTime {
       const specifier = unsupportedMatch[0]; // Full match like %c, %x, etc.
       const validSpecifiers = [
         "Y",
+        "y",
         "m",
         "d",
         "H",
@@ -1063,6 +1124,12 @@ export class TjTime {
         "z",
         "Q",
         "Z",
+        "p",
+        "I",
+        "j",
+        "W",
+        "x",
+        "X",
       ];
       const specifierChar = unsupportedMatch[1]; // Just the letter after %
       if (specifierChar && !validSpecifiers.includes(specifierChar,)) {

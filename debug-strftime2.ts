@@ -1,0 +1,22 @@
+import { TjTime } from "./packages/core/src/time/tj-time.ts";
+
+const t = TjTime.fromParts(2026, 3, 5, 9, 5, 1);
+console.log("Input: 2026-03-05 09:05:01");
+console.log("strftime %m:", t.strftime("%m", "UTC"));
+console.log("strftime %Y:", t.strftime("%Y", "UTC"));
+console.log("strftime %d:", t.strftime("%d", "UTC"));
+console.log("strftime %H:", t.strftime("%H", "UTC"));
+console.log("strftime %M:", t.strftime("%M", "UTC"));
+console.log("strftime %S:", t.strftime("%S", "UTC"));
+console.log("strftime %A:", t.strftime("%A", "UTC"));
+console.log("strftime %B:", t.strftime("%B", "UTC"));
+console.log("strftime %z:", t.strftime("%z", "UTC"));
+console.log("strftime %Z:", t.strftime("%Z", "UTC"));
+console.log("strftime %y:", t.strftime("%y", "UTC"));
+console.log("strftime %j:", t.strftime("%j", "UTC"));
+console.log("strftime %W:", t.strftime("%W", "UTC"));
+console.log("strftime %p:", t.strftime("%p", "UTC"));
+console.log("strftime %I:", t.strftime("%I", "UTC"));
+console.log("strftime %x:", t.strftime("%x", "UTC"));
+console.log("strftime %X:", t.strftime("%X", "UTC"));
+console.log("strftime %%:", t.strftime("%%", "UTC"));

@@ -137,9 +137,7 @@ export class Scoreboard<T,> {
   ): IntervalList<TimeInterval> {
     // RUBY-COMPAT-FIX (task 5.11.R.3): the original Ruby implementation
     // does not guard the sentinel slot-zero logic with compat.keepRubyBugs.
-    // This is a Category A bug — it is always fixed regardless of
-    // compat.keepRubyBugs because the sentinel slot-zero logic must be
-    // guarded to maintain correct behavior.
+    // This is a Category B bug — guarded by compat.keepRubyBugs flag.
     if (!compat.keepRubyBugs) {
       let startIdx = this.dateToIdx(iv.start.toDate(), false,);
       let endIdx = this.dateToIdx(iv.end.toDate(), false,);

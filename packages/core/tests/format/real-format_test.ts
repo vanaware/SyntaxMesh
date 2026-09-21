@@ -170,5 +170,10 @@ describe("RealFormat", () => {
       const rf = new RealFormat(["-", "", "", ".", 0,],);
       assertEquals(rf.format(0.5,), "1",);
     });
+
+    it("rounds -12.5 to -13 with fractionDigits=0", () => {
+      const rf = new RealFormat(["-", "", "", ".", 0,],);
+      assertEquals(rf.format(-12.5,), "-13",);
+    });
   });
 });

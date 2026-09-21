@@ -2,9 +2,9 @@
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-02-tempo-geometria-tarefas.md`
 > **Plano:** `docs/syntaxmesh/fases/fase-02-tempo-geometria.md`
-> **Status:** ⬜ Não iniciada
+> **Status:** ✅ Concluída
 > **Total:** 142 tarefas (era 127)
-> **Concluídas:** 0
+> **Concluídas:** 142/142 ✅
 > **Fonte Ruby revisada:** `TjTime.rb`, `Interval.rb`, `IntervalList.rb`, `Scoreboard.rb`, `WorkingHours.rb`, `RealFormat.rb`
 
 ---

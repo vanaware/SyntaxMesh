@@ -1,0 +1,24 @@
+import { TjTime } from "./packages/core/src/time/tj-time.ts";
+
+const t = TjTime.fromParts(2026, 3, 5, 9, 5, 1);
+console.log("seconds:", t.toSeconds());
+console.log("to_a:", JSON.stringify(t.to_a()));
+console.log("strftime %m UTC:", JSON.stringify(t.strftime("%m", "UTC")));
+console.log("strftime %Y UTC:", JSON.stringify(t.strftime("%Y", "UTC")));
+console.log("strftime %d UTC:", JSON.stringify(t.strftime("%d", "UTC")));
+console.log("strftime %H UTC:", JSON.stringify(t.strftime("%H", "UTC")));
+console.log("strftime %M UTC:", JSON.stringify(t.strftime("%M", "UTC")));
+console.log("strftime %S UTC:", JSON.stringify(t.strftime("%S", "UTC")));
+console.log("strftime %A UTC:", JSON.stringify(t.strftime("%A", "UTC")));
+console.log("strftime %B UTC:", JSON.stringify(t.strftime("%B", "UTC")));
+console.log("strftime %z UTC:", JSON.stringify(t.strftime("%z", "UTC")));
+console.log("strftime %Z UTC:", JSON.stringify(t.strftime("%Z", "UTC")));
+console.log("strftime %y UTC:", JSON.stringify(t.strftime("%y", "UTC")));
+console.log("strftime %j UTC:", JSON.stringify(t.strftime("%j", "UTC")));
+console.log("strftime %W UTC:", JSON.stringify(t.strftime("%W", "UTC")));
+console.log("strftime %p UTC:", JSON.stringify(t.strftime("%p", "UTC")));
+console.log("strftime %I UTC:", JSON.stringify(t.strftime("%I", "UTC")));
+console.log("strftime %x UTC:", JSON.stringify(t.strftime("%x", "UTC")));
+console.log("strftime %X UTC:", JSON.stringify(t.strftime("%X", "UTC")));
+console.log("strftime %% UTC:", JSON.stringify(t.strftime("%%", "UTC")));
+console.log("to_s:", JSON.stringify(t.to_s()));

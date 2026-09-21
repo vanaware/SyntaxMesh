@@ -20,7 +20,7 @@ describe("TjTime.strftime", () => {
     });
 
     it("%H - hour 2 digits", () => {
-      const t = TjTime.fromString("2026-01-15-14:30:45",);
+      const t = TjTime.fromParts(2026, 1, 15, 14, 30, 45, "UTC",);
       assertEquals(t.strftime("%H",), "14",);
     });
 
@@ -129,6 +129,23 @@ describe("TjTime.strftime", () => {
     });
   });
 
+  describe("extended specifiers", () => {
+    it("%x - date format (MM/DD/YY)", () => {
+      const t = TjTime.fromParts(2026, 1, 15, 14, 30, 45, "UTC",);
+      assertEquals(t.strftime("%x",), "01/15/26",);
+    });
+
+    it("%X - time format (HH:MM:SS)", () => {
+      const t = TjTime.fromParts(2026, 1, 15, 14, 30, 45, "UTC",);
+      assertEquals(t.strftime("%X",), "14:30:45",);
+    });
+
+    it("%p - AM/PM", () => {
+      const t = TjTime.fromParts(2026, 1, 15, 14, 30, 45, "UTC",);
+      assertEquals(t.strftime("%p",), "PM",);
+    });
+  });
+
   describe("invalid format throws TjArgumentError", () => {
     it("throws for unsupported specifier %c", () => {
       const t = TjTime.fromString("2026-01-15-14:30:45",);
@@ -136,33 +153,6 @@ describe("TjTime.strftime", () => {
         () => t.strftime("%c",),
         TjArgumentError,
         "Invalid format specifier: %c",
-      );
-    });
-
-    it("throws for unsupported specifier %x", () => {
-      const t = TjTime.fromString("2026-01-15-14:30:45",);
-      assertThrows(
-        () => t.strftime("%x",),
-        TjArgumentError,
-        "Invalid format specifier: %x",
-      );
-    });
-
-    it("throws for unsupported specifier %X", () => {
-      const t = TjTime.fromString("2026-01-15-14:30:45",);
-      assertThrows(
-        () => t.strftime("%X",),
-        TjArgumentError,
-        "Invalid format specifier: %X",
-      );
-    });
-
-    it("throws for unsupported specifier %p", () => {
-      const t = TjTime.fromString("2026-01-15-14:30:45",);
-      assertThrows(
-        () => t.strftime("%p",),
-        TjArgumentError,
-        "Invalid format specifier: %p",
       );
     });
   });
