@@ -1,5 +1,6 @@
 import {
   currentTimeZone,
+  formatTimezoneOffset,
   getLocalParts,
   getOffsetSeconds,
   isValidTimeZone,
@@ -415,7 +416,7 @@ export class TjTime {
       0,
       currentTimeZone,
     );
-    const daysToSubtract = parts.weekday - (startMonday ? 1 : 0);
+    const daysToSubtract = (parts.weekday - (startMonday ? 1 : 0) + 7) % 7;
     const noonMinusDays = noon.subSeconds(daysToSubtract * 86400,);
     const np = getLocalParts(noonMinusDays.toSeconds(), currentTimeZone,);
     return TjTime.fromParts(
@@ -547,9 +548,10 @@ export class TjTime {
    * @returns Array of intervals [{start: TjTime, end: TjTime}]
    */
   collectIntervals(
-    end: TjTime,
+    end?: TjTime,
     step: number = 1,
   ): { start: TjTime; end: TjTime }[] {
+    if (!end) return [];
     const intervals: { start: TjTime; end: TjTime }[] = [];
     let current = TjTime.fromSeconds(this.seconds,);
     while (current.seconds < end.seconds) {
@@ -1046,16 +1048,8 @@ export class TjTime {
     result = result.replace("%a", dayAbbr[parts.weekday] ?? "Unknown",);
     result = result.replace("%B", monthNames[parts.month] ?? "Unknown",);
     result = result.replace("%b", monthAbbr[parts.month] ?? "Unknown",);
-    // %z: UTC offset in +HHMM / -HHMM format
-    const offset = getOffsetSeconds(this.seconds, timeZone,);
-    const offSign = offset < 0 ? "-" : "+";
-    const offAbs = Math.abs(offset,);
-    const offHours = String(Math.floor(offAbs / 3600,),).padStart(2, "0",);
-    const offMins = String(Math.floor((offAbs % 3600) / 60,),).padStart(
-      2,
-      "0",
-    );
-    result = result.replace("%z", `${offSign}${offHours}${offMins}`,);
+    // %z: UTC offset in +HH:MM / -HH:MM format
+    result = result.replace("%z", formatTimezoneOffset(this.seconds, timeZone,),);
     result = result.replace(
       "%Q",
       String(Math.floor((parts.month - 1) / 3,) + 1,),
@@ -1161,12 +1155,7 @@ export class TjTime {
    */
   to_s(format?: string, tz: string = currentTimeZone,): string {
     if (format === undefined || format === null) {
-      format = "%Y-%m-%d-%H:%M";
-      // Use the original seconds (this.seconds % 60), not localtime().sec
-      if (this.seconds % 60 !== 0) {
-        format += ":%S";
-      }
-      format += "-%z";
+      format = "%Y-%m-%d %H:%M:%S %z";
     }
     return this.strftime(format, tz,);
   }

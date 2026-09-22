@@ -1,4 +1,4 @@
-export let currentTimeZone: string = "America/Sao_Paulo";
+export let currentTimeZone: string = "UTC";
 
 /**
  * Set the current timezone
@@ -55,6 +55,24 @@ export function getOffsetSeconds(epochSecs: number, timeZone: string,): number {
   } catch {
     return 0;
   }
+}
+
+/**
+ * Format UTC offset as +HH:MM / -HH:MM string
+ * @param epochSecs - Epoch seconds (UTC)
+ * @param timeZone - Timezone string
+ * @returns Offset string like "+00:00" or "-03:00"
+ */
+export function formatTimezoneOffset(
+  epochSecs: number,
+  timeZone: string,
+): string {
+  const offset = getOffsetSeconds(epochSecs, timeZone,);
+  const sign = offset < 0 ? "-" : "+";
+  const abs = Math.abs(offset,);
+  const hours = String(Math.floor(abs / 3600,),).padStart(2, "0",);
+  const mins = String(Math.floor((abs % 3600) / 60,),).padStart(2, "0",);
+  return `${sign}${hours}:${mins}`;
 }
 
 export interface LocalParts {

@@ -4,7 +4,7 @@
    "exports": "./esbuild.ts",
    "description": "Gerenciamento de Projetos com Linguagem Descritiva.",
    "author": "Vanaware",
-   "license": "MIT",
+   "license": "GPL-2.0-only",
    "workspace": [
      "./packages/core",
      "./packages/parser",

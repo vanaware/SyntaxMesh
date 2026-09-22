@@ -1,6 +1,7 @@
 import { describe, it, } from "@std/testing/bdd";
 import { assertEquals, assertThrows, } from "@std/assert";
 import { RealFormat, } from "../../src/format/real-format.ts";
+import { compat, } from "../../src/compat.ts";
 
 describe("RealFormat", () => {
   describe("constructor", () => {
@@ -171,9 +172,21 @@ describe("RealFormat", () => {
       assertEquals(rf.format(0.5,), "1",);
     });
 
-    it("rounds -12.5 to -13 with fractionDigits=0", () => {
+    it("rounds -12.5 to -13 with fractionDigits=0 (compat mode)", () => {
       const rf = new RealFormat(["-", "", "", ".", 0,],);
       assertEquals(rf.format(-12.5,), "-13",);
+    });
+
+    it("rounds -12.5 to -12 with fractionDigits=0 (fix mode)", () => {
+      const rf = new RealFormat(["-", "", "", ".", 0,],);
+      // Temporarily set compat.keepRubyBugs=false to test fix mode
+      const original = compat.keepRubyBugs;
+      compat.keepRubyBugs = false;
+      try {
+        assertEquals(rf.format(-12.5,), "-12",);
+      } finally {
+        compat.keepRubyBugs = original;
+      }
     });
   });
 });

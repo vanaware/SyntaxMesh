@@ -156,8 +156,8 @@
       },
       "expected": {
         "year": 2026,
-        "month": 2,
-        "day": 28,
+        "month": 3,
+        "day": 3,
         "hour": 12,
         "minute": 0,
         "second": 0
@@ -276,8 +276,8 @@
       },
       "expected": {
         "year": 2025,
-        "month": 2,
-        "day": 28,
+        "month": 3,
+        "day": 1,
         "hour": 12,
         "minute": 0,
         "second": 0
@@ -398,7 +398,7 @@
         "minute": 30,
         "second": 45
       },
-      "expected": "+0000",
+      "expected": "+00:00",
       "timezone": "UTC"
     },
     {
@@ -717,9 +717,16 @@
         "minute": 30,
         "second": 45
       },
-      "expected": [
-
-      ]
+      "expected": [],
+      "end": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "second": 45
+      },
+      "step": 3600
     },
     {
       "description": "collectIntervals with single interval",
@@ -734,10 +741,19 @@
       },
       "expected": [
         {
-          "start": "2026-01-15-14:30:45",
-          "end": "2026-01-15-15:30:45"
+          "start": "2026-01-15 14:30:45 +00:00",
+          "end": "2026-01-15 15:30:45 +00:00"
         }
-      ]
+      ],
+      "end": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 15,
+        "minute": 30,
+        "second": 45
+      },
+      "step": 3600
     },
     {
       "description": "collectIntervals with multiple intervals",
@@ -752,14 +768,23 @@
       },
       "expected": [
         {
-          "start": "2026-01-15-14:30:45",
-          "end": "2026-01-15-15:30:45"
+          "start": "2026-01-15 14:30:45 +00:00",
+          "end": "2026-01-15 15:30:45 +00:00"
         },
         {
-          "start": "2026-01-15-16:00:00",
-          "end": "2026-01-15-17:00:00"
+          "start": "2026-01-15 15:30:45 +00:00",
+          "end": "2026-01-15 16:30:45 +00:00"
         }
-      ]
+      ],
+      "end": {
+        "year": 2026,
+        "month": 1,
+        "day": 15,
+        "hour": 16,
+        "minute": 30,
+        "second": 45
+      },
+      "step": 3600
     },
     {
       "description": "sameTimeNextYear leap year to leap year",
@@ -874,8 +899,8 @@
       },
       "expected": {
         "year": 2026,
-        "month": 4,
-        "day": 30,
+        "month": 5,
+        "day": 1,
         "hour": 14,
         "minute": 0,
         "second": 0
@@ -894,8 +919,8 @@
       },
       "expected": {
         "year": 2026,
-        "month": 6,
-        "day": 30,
+        "month": 7,
+        "day": 1,
         "hour": 10,
         "minute": 0,
         "second": 0
@@ -1076,7 +1101,7 @@
         "minute": 30,
         "second": 45
       },
-      "expected": "2026-01-15 14:30:45 +0000"
+      "expected": "2026-01-15 14:30:45 +00:00"
     },
     {
       "description": "to_s with timezone offset",
@@ -1089,7 +1114,7 @@
         "minute": 30,
         "second": 45
       },
-      "expected": "2026-01-15 14:30:45 +0000",
+      "expected": "2026-01-15 14:30:45 +00:00",
       "timezone": "UTC"
     },
     {

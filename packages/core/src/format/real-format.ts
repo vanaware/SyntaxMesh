@@ -1,5 +1,5 @@
 import { TjArgumentError, } from "../time/tj-time.ts";
-import { rubyRound, } from "../compat.ts";
+import { compat, rubyRound, } from "../compat.ts";
 // RUBY-COMPAT: uses rubyRound (Category B) for negative number rounding
 
 export class RealFormat {
@@ -31,14 +31,12 @@ export class RealFormat {
   }
 
   format(number: number,): string {
-    let negate = false;
-    if (number < 0) {
-      negate = true;
-      number = -number;
-    }
-
-    const intNumber = rubyRound(number * (10 ** this.fractionDigits),)
-      .toString();
+    const rounded = compat.keepRubyBugs
+      ? rubyRound(number * (10 ** this.fractionDigits),)
+      : Math.round(number * (10 ** this.fractionDigits),);
+    const negate = rounded < 0;
+    const absNumber = negate ? -rounded : rounded;
+    const intNumber = absNumber.toString();
     if (intNumber.length <= this.fractionDigits) {
       const padded = "0".repeat(this.fractionDigits - intNumber.length + 1,) +
         intNumber;

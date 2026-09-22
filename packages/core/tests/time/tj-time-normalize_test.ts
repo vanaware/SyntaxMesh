@@ -92,7 +92,7 @@ describe("TjTime.beginOfWeek", () => {
     const result = t.beginOfWeek(true,);
     assertEquals(
       result.toSeconds(),
-      TjTime.fromString("2026-01-19-00:00:00",).toSeconds(),
+      TjTime.fromString("2026-01-12-00:00:00",).toSeconds(),
     );
   });
 

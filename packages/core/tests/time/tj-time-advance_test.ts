@@ -153,7 +153,8 @@ describe("TjTime advances", () => {
     });
 
     it("handles day rollover when new month has fewer days", () => {
-      // Ruby bug: uses old month's monMax (31), sets day=31, then Time.mktime(2026,2,31) -> 2026-03-03
+      // Ruby bug (keepRubyBugs=true): uses old month's monMax, rolls over excess days
+      // Jan 31 -> Feb 31 -> Mar 3 (Feb has 28 days, 31-28=3 days into March)
       const t = TjTime.fromString("2026-01-31-14:30:45",);
       const result = t.sameTimeNextMonth();
       assertEquals(

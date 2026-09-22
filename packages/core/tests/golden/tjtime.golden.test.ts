@@ -24,6 +24,8 @@ interface GoldenCase {
   expected: unknown;
   timezone?: string;
   format?: string;
+  end?: { year: number; month: number; day: number; hour: number; minute: number; second: number };
+  step?: number;
   compareWith?: { year: number; month: number; day: number; hour: number; minute: number; second: number };
   combineWith?: { year: number; month: number; day: number; hour: number; minute: number; second: number };
 }
@@ -76,12 +78,11 @@ function runCase(c: GoldenCase,): void {
       actual = t.to_s();
       break;
     case "collectIntervals": {
-      // For collectIntervals cases, the golden file provides a start time
-      // and an expected list of intervals. We synthesize an end time by
-      // stepping forward 2 intervals from the start, collecting intervals
-      // of 1 hour each.
-      const end = t.addSeconds(2 * 3600,);
-      const intervals = t.collectIntervals(end, 3600,);
+      const end = c.end
+        ? TjTime.fromParts(c.end.year, c.end.month, c.end.day, c.end.hour, c.end.minute, c.end.second,)
+        : undefined;
+      const step = c.step ?? 1;
+      const intervals = t.collectIntervals(end, step,);
       actual = intervals.map((iv,) => ({
         start: iv.start.to_s(undefined, c.timezone ?? "UTC",),
         end: iv.end.to_s(undefined, c.timezone ?? "UTC",),
@@ -95,7 +96,7 @@ function runCase(c: GoldenCase,): void {
       actual = partsOf(t.midnight(),);
       break;
     case "beginOfWeek":
-      actual = partsOf(t.beginOfWeek(true,),);
+      actual = partsOf(t.beginOfWeek(!c.description.includes("Sunday start"),),);
       break;
     case "beginOfMonth":
       actual = partsOf(t.beginOfMonth(),);
@@ -126,7 +127,9 @@ function runCase(c: GoldenCase,): void {
       break;
     case "strftime": {
       const tz = c.timezone ?? "UTC";
-      actual = t.strftime(c.format ?? "%Y", tz,);
+      const formatMatch = c.description.match(/strftime (\%\w+|%%)/,);
+      const format = formatMatch ? formatMatch[1]! : "%Y";
+      actual = t.strftime(format, tz,);
       break;
     }
     case "secondsOfDay": {
