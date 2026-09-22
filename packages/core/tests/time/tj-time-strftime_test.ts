@@ -165,7 +165,7 @@ describe("TjTime.to_s", () => {
       const t = TjTime.fromString("2026-01-15-14:30:45",);
       const result = t.to_s();
       assertEquals(result.includes(":",), true,);
-      assertEquals(result.match(/:\d{2} /,) !== null, true,); // has :SS 
+      assertEquals(result.match(/:\d{2} /,) !== null, true,); // has :SS
     });
 
     it("always includes :%S in to_s format", () => {
@@ -174,7 +174,9 @@ describe("TjTime.to_s", () => {
       const result = t.to_s();
       // Should match: 2026-01-15 14:30:00 +00:00
       assertEquals(
-        result.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [+-]\d{2}:\d{2}$/,) !==
+        result.match(
+          /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [+-]\d{2}:\d{2}$/,
+        ) !==
           null,
         true,
       );
@@ -187,7 +189,9 @@ describe("TjTime.to_s", () => {
       const result = t.to_s();
       // Should match: 2026-01-15 14:30:00 +00:00
       assertEquals(
-        result.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [+-]\d{2}:\d{2}$/,) !==
+        result.match(
+          /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [+-]\d{2}:\d{2}$/,
+        ) !==
           null,
         true,
       );
@@ -198,7 +202,9 @@ describe("TjTime.to_s", () => {
       const result = t.to_s();
       // Should match: 2026-01-15 14:30:45 +00:00
       assertEquals(
-        result.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [+-]\d{2}:\d{2}$/,) !==
+        result.match(
+          /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [+-]\d{2}:\d{2}$/,
+        ) !==
           null,
         true,
       );

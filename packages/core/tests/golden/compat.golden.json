@@ -717,9 +717,7 @@
         "minute": 30,
         "second": 45
       },
-      "expected": [
-
-      ]
+      "expected": []
     },
     {
       "description": "collectIntervals with single interval",

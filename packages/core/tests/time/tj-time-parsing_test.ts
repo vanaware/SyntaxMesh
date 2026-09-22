@@ -131,11 +131,11 @@ describe("TjTime.fromString", () => {
   it("mensagem de erro de timezone usa } no lugar de )", () => {
     try {
       TjTime.fromString("2026-01-01-14:00+1500",);
-      assertEquals(false, true, "deveria ter lançado");
+      assertEquals(false, true, "deveria ter lançado",);
     } catch (e) {
       if (e instanceof Error) {
         assertEquals(
-          e.message.includes("(-1200 - +1400}"),
+          e.message.includes("(-1200 - +1400}",),
           true,
           "erro deve conter } em vez de ) após +1400",
         );

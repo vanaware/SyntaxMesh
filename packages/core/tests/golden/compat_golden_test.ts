@@ -27,9 +27,23 @@ interface GoldenCase {
   expected: unknown;
   timezone?: string;
   format?: string;
-  end?: { year: number; month: number; day: number; hour: number; minute: number; second: number };
+  end?: {
+    year: number;
+    month: number;
+    day: number;
+    hour: number;
+    minute: number;
+    second: number;
+  };
   step?: number;
-  compareWith?: { year: number; month: number; day: number; hour: number; minute: number; second: number };
+  compareWith?: {
+    year: number;
+    month: number;
+    day: number;
+    hour: number;
+    minute: number;
+    second: number;
+  };
 }
 
 interface GoldenFile {
@@ -39,13 +53,22 @@ interface GoldenFile {
   cases: GoldenCase[];
 }
 
-function loadGoldenFile(path: string): GoldenFile {
+function loadGoldenFile(path: string,): GoldenFile {
   const url = new URL(path, import.meta.url,);
   const content = Deno.readTextFileSync(url,);
   return JSON.parse(content,) as GoldenFile;
 }
 
-function partsOf(t: TjTime,): { year: number; month: number; day: number; hour: number; minute: number; second: number } {
+function partsOf(
+  t: TjTime,
+): {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+  second: number;
+} {
   const parts = t.to_a();
   return {
     year: parts[0]!,
@@ -96,7 +119,14 @@ function runCase(c: GoldenCase, keepRubyBugs: boolean,): void {
         break;
       case "collectIntervals": {
         const end = c.end
-          ? TjTime.fromParts(c.end.year, c.end.month, c.end.day, c.end.hour, c.end.minute, c.end.second,)
+          ? TjTime.fromParts(
+            c.end.year,
+            c.end.month,
+            c.end.day,
+            c.end.hour,
+            c.end.minute,
+            c.end.second,
+          )
           : undefined;
         const step = c.step ?? 1;
         const intervals = t.collectIntervals(end, step,);
@@ -113,7 +143,9 @@ function runCase(c: GoldenCase, keepRubyBugs: boolean,): void {
         actual = partsOf(t.midnight(),);
         break;
       case "beginOfWeek":
-        actual = partsOf(t.beginOfWeek(!c.description.includes("Sunday start"),),);
+        actual = partsOf(
+          t.beginOfWeek(!c.description.includes("Sunday start",),),
+        );
         break;
       case "beginOfMonth":
         actual = partsOf(t.beginOfMonth(),);
@@ -152,7 +184,9 @@ function runCase(c: GoldenCase, keepRubyBugs: boolean,): void {
       case "compareTo": {
         const compareWith = c.compareWith;
         if (!compareWith) {
-          throw new Error(`Missing compareWith for compareTo case: ${c.description}`);
+          throw new Error(
+            `Missing compareWith for compareTo case: ${c.description}`,
+          );
         }
         actual = t.compareTo(TjTime.fromParts(
           compareWith.year,
@@ -161,30 +195,30 @@ function runCase(c: GoldenCase, keepRubyBugs: boolean,): void {
           compareWith.hour,
           compareWith.minute,
           compareWith.second,
-        ));
+        ),);
         break;
       }
       case "secondsOfDay": {
         const tz = c.timezone ?? "UTC";
-        actual = t.secondsOfDay(tz);
+        actual = t.secondsOfDay(tz,);
         break;
       }
       case "lastDayOfMonth": {
         const month = c.input.month;
         const year = c.input.year;
-        actual = TjTime.lastDayOfMonth(month, year);
+        actual = TjTime.lastDayOfMonth(month, year,);
         break;
       }
       case "utc": {
-        actual = partsOf(t.utc());
+        actual = partsOf(t.utc(),);
         break;
       }
       case "localtime": {
-        actual = partsOf(t.localtime());
+        actual = partsOf(t.localtime(),);
         break;
       }
       case "gmtime": {
-        actual = partsOf(t.gmtime());
+        actual = partsOf(t.gmtime(),);
         break;
       }
       default:
@@ -202,7 +236,7 @@ function runCase(c: GoldenCase, keepRubyBugs: boolean,): void {
 }
 
 describe("Compat golden tests (keepRubyBugs=true)", () => {
-  const golden = loadGoldenFile("./tjtime.golden.json");
+  const golden = loadGoldenFile("./tjtime.golden.json",);
 
   for (const c of golden.cases) {
     it(`${c.method}: ${c.description}`, () => {
@@ -212,7 +246,7 @@ describe("Compat golden tests (keepRubyBugs=true)", () => {
 });
 
 describe("Compat golden tests (keepRubyBugs=false)", () => {
-  const golden = loadGoldenFile("./compat-fix.golden.json");
+  const golden = loadGoldenFile("./compat-fix.golden.json",);
 
   for (const c of golden.cases) {
     it(`${c.method}: ${c.description}`, () => {

@@ -986,7 +986,8 @@ export class TjTime {
       timeZoneName: "short",
     },);
     const tzParts = formatter.formatToParts(this.toDate(),);
-    const tzAbbr = tzParts.find((p,) => p.type === "timeZoneName")?.value || timeZone;
+    const tzAbbr = tzParts.find((p,) => p.type === "timeZoneName")?.value ||
+      timeZone;
 
     // Day of week names
     const dayNames = [
@@ -1049,7 +1050,10 @@ export class TjTime {
     result = result.replace("%B", monthNames[parts.month] ?? "Unknown",);
     result = result.replace("%b", monthAbbr[parts.month] ?? "Unknown",);
     // %z: UTC offset in +HH:MM / -HH:MM format
-    result = result.replace("%z", formatTimezoneOffset(this.seconds, timeZone,),);
+    result = result.replace(
+      "%z",
+      formatTimezoneOffset(this.seconds, timeZone,),
+    );
     result = result.replace(
       "%Q",
       String(Math.floor((parts.month - 1) / 3,) + 1,),

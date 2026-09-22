@@ -5,50 +5,162 @@
   "cases": [
     {
       "description": "sameTimeNextWeek fixed behavior (no rollover)",
-      "expected": {"day": 19, "hour": 10, "minute": 0, "month": 1, "second": 0, "year": 2026},
-      "input": {"day": 12, "hour": 10, "minute": 0, "month": 1, "second": 0, "year": 2026},
+      "expected": {
+        "day": 19,
+        "hour": 10,
+        "minute": 0,
+        "month": 1,
+        "second": 0,
+        "year": 2026
+      },
+      "input": {
+        "day": 12,
+        "hour": 10,
+        "minute": 0,
+        "month": 1,
+        "second": 0,
+        "year": 2026
+      },
       "method": "sameTimeNextWeek"
     },
     {
       "description": "sameTimeNextMonth fixed behavior (clamp to month end)",
-      "expected": {"day": 28, "hour": 12, "minute": 0, "month": 2, "second": 0, "year": 2026},
-      "input": {"day": 31, "hour": 12, "minute": 0, "month": 1, "second": 0, "year": 2026},
+      "expected": {
+        "day": 28,
+        "hour": 12,
+        "minute": 0,
+        "month": 2,
+        "second": 0,
+        "year": 2026
+      },
+      "input": {
+        "day": 31,
+        "hour": 12,
+        "minute": 0,
+        "month": 1,
+        "second": 0,
+        "year": 2026
+      },
       "method": "sameTimeNextMonth"
     },
     {
       "description": "sameTimeNextQuarter fixed behavior (clamp to quarter end)",
-      "expected": {"day": 31, "hour": 14, "minute": 30, "month": 3, "second": 0, "year": 2026},
-      "input": {"day": 15, "hour": 14, "minute": 30, "month": 1, "second": 0, "year": 2026},
+      "expected": {
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "month": 4,
+        "second": 0,
+        "year": 2026
+      },
+      "input": {
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "month": 1,
+        "second": 0,
+        "year": 2026
+      },
       "method": "sameTimeNextQuarter"
     },
     {
       "description": "sameTimeNextYear fixed behavior (clamp to year end)",
-      "expected": {"day": 28, "hour": 12, "minute": 0, "month": 2, "second": 0, "year": 2025},
-      "input": {"day": 29, "hour": 12, "minute": 0, "month": 2, "second": 0, "year": 2024},
+      "expected": {
+        "day": 28,
+        "hour": 12,
+        "minute": 0,
+        "month": 2,
+        "second": 0,
+        "year": 2025
+      },
+      "input": {
+        "day": 29,
+        "hour": 12,
+        "minute": 0,
+        "month": 2,
+        "second": 0,
+        "year": 2024
+      },
       "method": "sameTimeNextYear"
     },
     {
       "description": "sameTimeNextWeek with month boundary (fixed)",
-      "expected": {"day": 4, "hour": 14, "minute": 30, "month": 1, "second": 0, "year": 2027},
-      "input": {"day": 28, "hour": 14, "minute": 30, "month": 12, "second": 0, "year": 2026},
+      "expected": {
+        "day": 4,
+        "hour": 14,
+        "minute": 30,
+        "month": 1,
+        "second": 0,
+        "year": 2027
+      },
+      "input": {
+        "day": 28,
+        "hour": 14,
+        "minute": 30,
+        "month": 12,
+        "second": 0,
+        "year": 2026
+      },
       "method": "sameTimeNextWeek"
     },
     {
       "description": "sameTimeNextMonth year boundary (fixed)",
-      "expected": {"day": 15, "hour": 10, "minute": 0, "month": 1, "second": 0, "year": 2027},
-      "input": {"day": 15, "hour": 10, "minute": 0, "month": 12, "second": 0, "year": 2026},
+      "expected": {
+        "day": 15,
+        "hour": 10,
+        "minute": 0,
+        "month": 1,
+        "second": 0,
+        "year": 2027
+      },
+      "input": {
+        "day": 15,
+        "hour": 10,
+        "minute": 0,
+        "month": 12,
+        "second": 0,
+        "year": 2026
+      },
       "method": "sameTimeNextMonth"
     },
     {
       "description": "sameTimeNextQuarter year boundary (fixed)",
-      "expected": {"day": 15, "hour": 14, "minute": 30, "month": 1, "second": 0, "year": 2027},
-      "input": {"day": 15, "hour": 14, "minute": 30, "month": 10, "second": 0, "year": 2026},
+      "expected": {
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "month": 1,
+        "second": 0,
+        "year": 2027
+      },
+      "input": {
+        "day": 15,
+        "hour": 14,
+        "minute": 30,
+        "month": 10,
+        "second": 0,
+        "year": 2026
+      },
       "method": "sameTimeNextQuarter"
     },
     {
       "description": "sameTimeNextYear leap year to non-leap (fixed)",
-      "expected": {"day": 28, "hour": 12, "minute": 0, "month": 2, "second": 0, "year": 2025},
-      "input": {"day": 29, "hour": 12, "minute": 0, "month": 2, "second": 0, "year": 2024},
+      "expected": {
+        "day": 28,
+        "hour": 12,
+        "minute": 0,
+        "month": 2,
+        "second": 0,
+        "year": 2025
+      },
+      "input": {
+        "day": 29,
+        "hour": 12,
+        "minute": 0,
+        "month": 2,
+        "second": 0,
+        "year": 2024
+      },
       "method": "sameTimeNextYear"
     }
   ]

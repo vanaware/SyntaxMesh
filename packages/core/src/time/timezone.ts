@@ -153,10 +153,11 @@ export function getLocalParts(
         case "second":
           result.second = parseInt(part.value, 10,);
           break;
-        case "weekday":
-          const idx = weekdayNames.indexOf(part.value);
+        case "weekday": {
+          const idx = weekdayNames.indexOf(part.value,);
           result.weekday = idx >= 0 ? idx : 0;
           break;
+        }
       }
     }
 

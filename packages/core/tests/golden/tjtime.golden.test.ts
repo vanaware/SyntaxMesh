@@ -24,10 +24,31 @@ interface GoldenCase {
   expected: unknown;
   timezone?: string;
   format?: string;
-  end?: { year: number; month: number; day: number; hour: number; minute: number; second: number };
+  end?: {
+    year: number;
+    month: number;
+    day: number;
+    hour: number;
+    minute: number;
+    second: number;
+  };
   step?: number;
-  compareWith?: { year: number; month: number; day: number; hour: number; minute: number; second: number };
-  combineWith?: { year: number; month: number; day: number; hour: number; minute: number; second: number };
+  compareWith?: {
+    year: number;
+    month: number;
+    day: number;
+    hour: number;
+    minute: number;
+    second: number;
+  };
+  combineWith?: {
+    year: number;
+    month: number;
+    day: number;
+    hour: number;
+    minute: number;
+    second: number;
+  };
 }
 
 interface GoldenFile {
@@ -79,7 +100,14 @@ function runCase(c: GoldenCase,): void {
       break;
     case "collectIntervals": {
       const end = c.end
-        ? TjTime.fromParts(c.end.year, c.end.month, c.end.day, c.end.hour, c.end.minute, c.end.second,)
+        ? TjTime.fromParts(
+          c.end.year,
+          c.end.month,
+          c.end.day,
+          c.end.hour,
+          c.end.minute,
+          c.end.second,
+        )
         : undefined;
       const step = c.step ?? 1;
       const intervals = t.collectIntervals(end, step,);
@@ -96,7 +124,9 @@ function runCase(c: GoldenCase,): void {
       actual = partsOf(t.midnight(),);
       break;
     case "beginOfWeek":
-      actual = partsOf(t.beginOfWeek(!c.description.includes("Sunday start"),),);
+      actual = partsOf(
+        t.beginOfWeek(!c.description.includes("Sunday start",),),
+      );
       break;
     case "beginOfMonth":
       actual = partsOf(t.beginOfMonth(),);
@@ -157,7 +187,9 @@ function runCase(c: GoldenCase,): void {
     case "compareTo": {
       const compareWith = c.compareWith;
       if (!compareWith) {
-        throw new Error(`Missing compareWith for compareTo case: ${c.description}`);
+        throw new Error(
+          `Missing compareWith for compareTo case: ${c.description}`,
+        );
       }
       actual = t.compareTo(TjTime.fromParts(
         compareWith.year,
@@ -166,7 +198,7 @@ function runCase(c: GoldenCase,): void {
         compareWith.hour,
         compareWith.minute,
         compareWith.second,
-      ));
+      ),);
       break;
     }
     default:
