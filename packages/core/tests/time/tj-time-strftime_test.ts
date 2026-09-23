@@ -165,17 +165,17 @@ describe("TjTime.to_s", () => {
       const t = TjTime.fromString("2026-01-15-14:30:45",);
       const result = t.to_s();
       assertEquals(result.includes(":",), true,);
-      assertEquals(result.match(/:\d{2} /,) !== null, true,); // has :SS
+      assertEquals(result.match(/:\d{2}-/,) !== null, true,); // has :SS-
     });
 
     it("always includes :%S in to_s format", () => {
       // New format always includes seconds
       const t = TjTime.fromString("2026-01-15-14:30:00",);
       const result = t.to_s();
-      // Should match: 2026-01-15 14:30:00 +00:00
+      // Should match: 2026-01-15-14:30-+00:00 (sec=0, no :%S)
       assertEquals(
         result.match(
-          /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [+-]\d{2}:\d{2}$/,
+          /^\d{4}-\d{2}-\d{2}-\d{2}:\d{2}-[+-]\d{2}:\d{2}$/,
         ) !==
           null,
         true,
@@ -184,26 +184,26 @@ describe("TjTime.to_s", () => {
   });
 
   describe("default format", () => {
-    it("format is %Y-%m-%d %H:%M:%S %z when seconds == 0", () => {
+    it("format is %Y-%m-%d-%H:%M-%z when seconds == 0", () => {
       const t = TjTime.fromString("2026-01-15-14:30:00",);
       const result = t.to_s();
-      // Should match: 2026-01-15 14:30:00 +00:00
+      // Should match: 2026-01-15-14:30-+00:00
       assertEquals(
         result.match(
-          /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [+-]\d{2}:\d{2}$/,
+          /^\d{4}-\d{2}-\d{2}-\d{2}:\d{2}-[+-]\d{2}:\d{2}$/,
         ) !==
           null,
         true,
       );
     });
 
-    it("format is %Y-%m-%d %H:%M:%S %z when seconds != 0", () => {
+    it("format is %Y-%m-%d-%H:%M:%S-%z when seconds != 0", () => {
       const t = TjTime.fromString("2026-01-15-14:30:45",);
       const result = t.to_s();
-      // Should match: 2026-01-15 14:30:45 +00:00
+      // Should match: 2026-01-15-14:30:45-+00:00
       assertEquals(
         result.match(
-          /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [+-]\d{2}:\d{2}$/,
+          /^\d{4}-\d{2}-\d{2}-\d{2}:\d{2}:\d{2}-[+-]\d{2}:\d{2}$/,
         ) !==
           null,
         true,

@@ -1159,7 +1159,12 @@ export class TjTime {
    */
   to_s(format?: string, tz: string = currentTimeZone,): string {
     if (format === undefined || format === null) {
-      format = "%Y-%m-%d %H:%M:%S %z";
+      if (compat.keepRubyBugs) {
+        const sec = this.seconds % 60;
+        format = "%Y-%m-%d-%H:%M" + (sec === 0 ? "" : ":%S") + "-%z";
+      } else {
+        format = "%Y-%m-%d %H:%M:%S %z";
+      }
     }
     return this.strftime(format, tz,);
   }
