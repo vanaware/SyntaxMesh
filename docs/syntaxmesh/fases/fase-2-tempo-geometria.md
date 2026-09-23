@@ -1,7 +1,7 @@
 # Fase 2 — Tempo e Geometria
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-2-tempo-geometria.md`
-> **Status:** ⬜ Não iniciada
+> **Status:** ✅ Concluída
 > **Duração estimada:** 5–7 dias
 > **Depende de:** Fase 1 — Fundação
 > **Bloqueia:** Fases 3, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15, 18

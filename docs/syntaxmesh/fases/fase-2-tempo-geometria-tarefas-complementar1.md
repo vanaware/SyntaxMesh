@@ -3,9 +3,9 @@
 > **Arquivo:** `docs/syntaxmesh/fases/fase-2-tarefas-complementar1.md`
 > **Plano:** `docs/syntaxmesh/fases/fase-2-tempo-geometria.md`
 > **Tarefas originais:** `docs/syntaxmesh/fases/fase-2-tarefas.md`
-> **Status:** 🟡 Em andamento
+> **Status:** ✅ Concluída
 > **Total:** 52 tarefas
-> **Concluídas:** 12 (refrescado 2026-09-17)
+> **Concluídas:** 52 (refrescado 2026-09-23)
 
 ---
 
@@ -48,23 +48,23 @@ Estas tarefas **podem rever** tarefas já marcadas como concluídas na Fase 2. A
 ## Progresso
 
 ```
-[x] 5.0.R  Fundação (compat.ts + auditoria)     —  2/4 (5.0.R.1✅ 5.0.R.2✅)
+[x] 5.0.R  Fundação (compat.ts + auditoria)     —  4/4 (5.0.R.1✅ 5.0.R.2✅ 5.0.R.3✅ 5.0.R.4✅)
 [x] 5.1.R  Parsing (revisão)                    —  5/5 (5.1.R.1✅ 5.1.R.2✅ 5.1.R.3✅ 5.1.R.4✅ 5.1.R.5✅)
-[ ] 5.2.R  Aritmética (revisão)                 —  2/5 (5.2.R.4✅ 5.2.R.5✅)
-[ ] 5.3.R  Normalizações (revisão)              —  0/3
-[ ] 5.4.R  Avanços (revisão — 4 bugs Cat. B)    —  4/6 (5.4.R.1✅ 5.4.R.2✅ 5.4.R.3✅ 5.4.R.4✅)
-[ ] 5.5.R  Diferenças (revisão)                 —  0/2
-[ ] 5.6.R  Timezone + strftime (revisão)        —  1/3 (5.6.R.2✅)
-[ ] 5.7.R  Interval (revisão — 3 bugs)          —  1/4 (5.7.R.1✅)
-[ ] 5.8.R  TimeInterval (revisão)               —  1/2 (5.8.R.1✅)
-[ ] 5.9.R  ScoreboardInterval (revisão)         —  1/2 (5.9.R.1✅)
-[ ] 5.10.R IntervalList (revisão)               —  3/3 ✅
-[ ] 5.11.R Scoreboard (revisão — 2 bugs)        —  2/4 (5.11.R.1✅ 5.11.R.2✅)
-[ ] 5.12.R WorkingHours (revisão — 1 bug Cat A) —  0/3
-[ ] 5.13.R RealFormat (revisão — 1 bug Cat B)   —  0/2
-[ ] 5.14.R Golden tests (extensão)              —  0/4
+[x] 5.2.R  Aritmética (revisão)                 —  5/5 (5.2.R.1✅ 5.2.R.2✅ 5.2.R.3✅ 5.2.R.4✅ 5.2.R.5✅)
+[x] 5.3.R  Normalizações (revisão)              —  3/3 (5.3.R.1✅ 5.3.R.2✅ 5.3.R.3✅)
+[x] 5.4.R  Avanços (revisão — 4 bugs Cat. B)    —  6/6 (5.4.R.1✅ 5.4.R.2✅ 5.4.R.3✅ 5.4.R.4✅ 5.4.R.5✅ 5.4.R.6✅)
+[x] 5.5.R  Diferenças (revisão)                 —  2/2 (5.5.R.1✅ 5.5.R.2✅)
+[x] 5.6.R  Timezone + strftime (revisão)        —  3/3 (5.6.R.1✅ 5.6.R.2✅ 5.6.R.3✅)
+[x] 5.7.R  Interval (revisão — 3 bugs)          —  4/4 (5.7.R.1✅ 5.7.R.2✅ 5.7.R.3✅ 5.7.R.4✅)
+[x] 5.8.R  TimeInterval (revisão)               —  2/2 (5.8.R.1✅ 5.8.R.2✅)
+[x] 5.9.R  ScoreboardInterval (revisão)         —  2/2 (5.9.R.1✅ 5.9.R.2✅)
+[x] 5.10.R IntervalList (revisão)               —  3/3 ✅
+[x] 5.11.R Scoreboard (revisão — 2 bugs)        —  4/4 (5.11.R.1✅ 5.11.R.2✅ 5.11.R.3✅ 5.11.R.4✅)
+[x] 5.12.R WorkingHours (revisão — 1 bug Cat A) —  3/3 (5.12.R.1✅ 5.12.R.2✅ 5.12.R.3✅)
+[x] 5.13.R RealFormat (revisão — 1 bug Cat B)   —  2/2 (5.13.R.1✅ 5.13.R.2✅)
+[x] 5.14.R Golden tests (extensão)              —  4/4 ✅
 ─────────────────────────────────────────────────
-TOTAL: 52 (17 done)
+TOTAL: 52 (52 done)
 ```
 
 ---
