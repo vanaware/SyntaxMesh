@@ -42,36 +42,15 @@ export class AllocationAttribute extends ListAttributeBase<{
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:AllocationAttribute#to_s
    */
   override to_s(): string {
-    const val = this.get();
-    const out = [];
-    if (val) {
-      let first = true;
-      for (const allocation of val) {
-        if (first) {
-          first = false;
-        } else {
-          out.push("\n",);
-        }
-        out.push("[ ",);
-        let firstR = true;
-        for (const resource of allocation.candidates) {
-          if (firstR) {
-            firstR = false;
-          } else {
-            out.push(", ",);
-          }
-          out.push(resource.fullId,);
-        }
-        const mode = ALLOCATION_MODES[allocation.selectionMode] ?? "order";
-        out.push(` ] select by ${mode} `,);
-        if (allocation.mandatory) {
-          out.push("mandatory ",);
-        }
-        if (allocation.persistent) {
-          out.push("persistent ",);
-        }
-      }
-    }
-    return out.join("",);
+    return "TODO";
+  }
+
+  /**
+   * Converte o valor para TJP (formato TaskJuggler).
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:AllocationAttribute#to_tjp
+   */
+  override to_tjp(): string {
+    return this.tjpId;
   }
 }

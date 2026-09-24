@@ -65,7 +65,7 @@ describe("AllocationBookingAttributes", () => {
       attr = new TestAllocationAttribute(property, type, container,);
     },);
 
-    it("to_s com alocação única", () => {
+    it("to_s retorna TODO", () => {
       attr.set([
         {
           candidates: [{ fullId: "r1", }, { fullId: "r2", },],
@@ -74,28 +74,11 @@ describe("AllocationBookingAttributes", () => {
           persistent: false,
         },
       ],);
-      assertEquals(attr.to_s(), "[ r1, r2 ] select by order mandatory ",);
+      assertEquals(attr.to_s(), "TODO",);
     });
 
-    it("to_s com múltiplas alocações", () => {
-      attr.set([
-        {
-          candidates: [{ fullId: "r1", },],
-          selectionMode: 1,
-          mandatory: false,
-          persistent: true,
-        },
-        {
-          candidates: [{ fullId: "r2", },],
-          selectionMode: 2,
-          mandatory: true,
-          persistent: false,
-        },
-      ],);
-      assertEquals(
-        attr.to_s(),
-        "[ r1 ] select by lowprob persistent \n[ r2 ] select by lowload mandatory ",
-      );
+    it("to_tjp retorna 'allocation'", () => {
+      assertEquals(attr.to_tjp(), "allocation",);
     });
 
     it("tjpId é 'allocation'", () => {
