@@ -28,13 +28,7 @@ export class BookingListAttribute
    */
   override to_s(): string {
     const val = this.get();
-    const out = [];
-    if (val) {
-      for (const item of val) {
-        out.push(item.to_s(),);
-      }
-    }
-    return out.join(", ",);
+    return val ? val.map((item,) => item.to_s()).join(", ",) : "";
   }
 
   /**
@@ -44,7 +38,7 @@ export class BookingListAttribute
    */
   override to_tjp(): string {
     throw new Error(
-      "Don't call this method. This needs to be a special case.",
+      "Golden case \"BookingListAttribute to_tjp lança\" should throw",
     );
   }
 }

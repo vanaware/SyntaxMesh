@@ -30,7 +30,7 @@ export class WorkingHoursAttribute extends AttributeBase<unknown> {
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:WorkingHoursAttribute#to_tjp
    */
   override to_tjp(): string {
-    const dayNames = ["sun", "mon", "tue", "wed", "thu", "fri", "sat",];
+    const dayNames = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
     let str = "";
     for (let day = 0; day < 7; day++) {
       str += `workinghours ${dayNames[day]} `;
@@ -48,6 +48,43 @@ export class WorkingHoursAttribute extends AttributeBase<unknown> {
         } else {
           str += ", ";
         }
+        const startH = Math.floor(iv[0] / 3600);
+        const startM = Math.floor((iv[0] % 3600) / 60);
+        const endH = Math.floor(iv[1] / 3600);
+        const endM = Math.floor((iv[1] % 3600) / 60);
+        str += `${startH}:${startM === 0 ? "00" : startM} - ${endH}:${
+          endM === 0 ? "00" : endM
+        }`;
+      }
+      if (day < 6) str += "\n";
+    }
+    return str;
+  }
+
+  /**
+   * Converte o valor para string.
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:WorkingHoursAttribute#to_s
+   */
+  override to_s(): string {
+    const dayNames = ["sun", "mon", "tue", "wed", "thu", "fri", "sat",];
+    let str = "";
+    for (let day = 0; day < 7; day++) {
+      if (day > 0) str += "\n";
+      str += `${dayNames[day]} `;
+      const whs =
+        (this.get() as WorkingHoursValue | null)?.getWorkingHours?.(day,) ?? [];
+      if (whs.length === 0) {
+        str += "off";
+        continue;
+      }
+      let first = true;
+      for (const iv of whs) {
+        if (first) {
+          first = false;
+        } else {
+          str += ", ";
+        }
         const startH = Math.floor(iv[0] / 3600,);
         const startM = Math.floor((iv[0] % 3600) / 60,);
         const endH = Math.floor(iv[1] / 3600,);
@@ -56,7 +93,6 @@ export class WorkingHoursAttribute extends AttributeBase<unknown> {
           endM === 0 ? "00" : endM
         }`;
       }
-      if (day < 6) str += "\n";
     }
     return str;
   }

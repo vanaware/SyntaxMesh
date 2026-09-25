@@ -28,4 +28,13 @@ export class ColumnListAttribute extends ListAttributeBase<string> {
   override to_s(): string {
     return "TODO";
   }
+
+  /**
+   * Converte o valor para TJP (formato TaskJuggler).
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ColumnListAttribute#to_tjp
+   */
+  override to_tjp(): string {
+    return `${this.tjpId} ${this.get()?.join(", ") ?? ""}`;
+  }
 }

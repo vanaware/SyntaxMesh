@@ -15,7 +15,7 @@ import { ListAttributeBase, } from "../list-attribute-base.ts";
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:TaskListAttribute
  */
 export class TaskListAttribute
-  extends ListAttributeBase<{ id: string; name: string }> {
+  extends ListAttributeBase<{ id: string; name: string; fullId: string }> {
   /**
    * ID do tipo de atributo para TaskListAttribute.
    */
@@ -39,6 +39,6 @@ export class TaskListAttribute
   override to_tjp(): string {
     const val = this.get();
     const out = val ? val.map((item,) => item.id) : [];
-    return `${this.type.id} ${out.join(", ",)}`;
+    return `${this.tjpId} ${out.join(", ",)}`;
   }
 }

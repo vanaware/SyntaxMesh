@@ -26,6 +26,6 @@ export class StringAttribute extends AttributeBase<string> {
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:StringAttribute#to_tjp
    */
   override to_tjp(): string {
-    return `${this.type.id} ${this.quotedString(this.to_s(),)}`;
+    return `${this.tjpId} ${this.quotedString(this.to_s())}`;
   }
 }

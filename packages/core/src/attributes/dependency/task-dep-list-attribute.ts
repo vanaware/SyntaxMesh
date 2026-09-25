@@ -15,7 +15,7 @@ import { ListAttributeBase, } from "../list-attribute-base.ts";
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:TaskDepListAttribute
  */
 export class TaskDepListAttribute
-  extends ListAttributeBase<{ task: { fullId: string }; onEnd: boolean }> {
+  extends ListAttributeBase<[{ fullId: string }, { fullId: string }]> {
   /**
    * ID do tipo de atributo para TaskDepListAttribute.
    */
@@ -30,8 +30,8 @@ export class TaskDepListAttribute
     const val = this.get();
     const out = [];
     if (val) {
-      for (const t of val) {
-        out.push(t.task.fullId,);
+      for (const pair of val) {
+        out.push(pair[0].fullId, pair[1].fullId,);
       }
     }
     return out.join(", ",);
@@ -46,10 +46,10 @@ export class TaskDepListAttribute
     const val = this.get();
     const out = [];
     if (val) {
-      for (const t of val) {
-        out.push(t.task.fullId,);
+      for (const pair of val) {
+        out.push(pair[0].fullId, pair[1].fullId,);
       }
     }
-    return `${this.type.id} ${out.join(", ",)}`;
+    return `${this.tjpId} ${out.join(" ",)}`;
   }
 }

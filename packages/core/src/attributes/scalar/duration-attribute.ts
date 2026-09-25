@@ -4,6 +4,7 @@
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:DurationAttribute
  */
 
+import { formatDuration, } from "./duration-formatter.ts";
 import { type PropertyLike, } from "../../model/property-like.ts";
 import { type AttributeContainer, } from "../attribute-container.ts";
 import { type AttributeDefinition, } from "../attribute-definition.ts";
@@ -28,8 +29,7 @@ export class DurationAttribute extends AttributeBase<number> {
   override to_s(): string {
     const val = this.get();
     if (val !== null) {
-      // TODO(@djones) Fase 11: usar query.scaleDuration(query.project.slotsToDays(val)) quando disponível
-      return val.toString();
+      return formatDuration(val,);
     }
     return "";
   }
@@ -41,6 +41,6 @@ export class DurationAttribute extends AttributeBase<number> {
    */
   override to_tjp(): string {
     const val = this.get();
-    return `${this.type.id} ${val}h`;
+    return `${this.tjpId} ${formatDuration(val ?? 0,)}`;
   }
 }

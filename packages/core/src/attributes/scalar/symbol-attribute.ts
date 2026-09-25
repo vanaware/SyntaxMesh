@@ -19,4 +19,13 @@ export class SymbolAttribute extends AttributeBase<string> {
    * ID do tipo de atributo para SymbolAttribute.
    */
   static readonly tjpId = "symbol";
+
+  /**
+   * Converte o valor para TJP (formato TaskJuggler).
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:SymbolAttribute#to_tjp
+   */
+  override to_tjp(): string {
+    return `${this.tjpId} ${this.get()}`;
+  }
 }

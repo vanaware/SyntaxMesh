@@ -14,7 +14,7 @@ import { ListAttributeBase, } from "../list-attribute-base.ts";
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ChargeListAttribute
  */
-export class ChargeListAttribute extends ListAttributeBase<string> {
+export class ChargeListAttribute extends ListAttributeBase<{ amount: number }> {
   /**
    * ID do tipo de atributo para ChargeListAttribute.
    */
@@ -27,6 +27,28 @@ export class ChargeListAttribute extends ListAttributeBase<string> {
    */
   override to_s(): string {
     const val = this.get();
-    return val ? val.join(", ",) : "";
+    const out = [];
+    if (val) {
+      for (const item of val) {
+        out.push(item.amount.toString(),);
+      }
+    }
+    return out.join(", ",);
+  }
+
+  /**
+   * Converte o valor para TJP (formato TaskJuggler).
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ChargeListAttribute#to_tjp
+   */
+  override to_tjp(): string {
+    const val = this.get();
+    const out = [];
+    if (val) {
+      for (const item of val) {
+        out.push(item.amount.toString(),);
+      }
+    }
+    return `${this.tjpId} ${out.join(", ",)}`;
   }
 }

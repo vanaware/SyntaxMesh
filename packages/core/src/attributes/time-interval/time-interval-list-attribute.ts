@@ -50,6 +50,6 @@ export class TimeIntervalListAttribute
         out.push(item.to_s(),);
       }
     }
-    return `${this.type.id} ${out.join(", ",)}`;
+    return `${this.tjpId} ${out.join(", ",)}`;
   }
 }

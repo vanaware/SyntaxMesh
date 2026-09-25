@@ -19,4 +19,13 @@ export class RealFormatAttribute extends AttributeBase<unknown> {
    * ID do tipo de atributo para RealFormatAttribute.
    */
   static readonly tjpId = "realformat";
+
+  /**
+   * Converte o valor para TJP (formato TaskJuggler).
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:RealFormatAttribute#to_tjp
+   */
+  override to_tjp(): string {
+    return `${this.tjpId} ${this.get()}`;
+  }
 }

@@ -27,7 +27,7 @@ export class BooleanAttribute extends AttributeBase<boolean> {
    */
   override to_s(): string {
     const val = this.get();
-    return val ? "true" : "false";
+    return val ? "yes" : "no";
   }
 
   /**

@@ -33,4 +33,13 @@ export class DateAttribute extends AttributeBase<string> {
     }
     return "Error";
   }
+
+  /**
+   * Converte o valor para TJP (formato TaskJuggler).
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:DateAttribute#to_tjp
+   */
+  override to_tjp(): string {
+    return `${this.tjpId} ${this.get()}`;
+  }
 }

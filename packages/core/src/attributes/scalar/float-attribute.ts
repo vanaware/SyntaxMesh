@@ -26,6 +26,6 @@ export class FloatAttribute extends AttributeBase<number> {
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:FloatAttribute#to_tjp
    */
   override to_tjp(): string {
-    return `${this.type.id} ${this.get()}`;
+    return `${this.tjpId} ${this.get()}`;
   }
 }

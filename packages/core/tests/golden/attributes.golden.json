@@ -1,0 +1,901 @@
+{
+  "version": "1.0",
+  "description": "Golden test cases for Attribute attributes (Phase 3)",
+  "generated_at": "2026-09-24 01:29:34 UTC",
+  "cases": [
+    {
+      "description": "StringAttribute to_tjp com texto simples",
+      "method": "to_tjp",
+      "type": "String",
+      "input": {
+        "value": "hello"
+      },
+      "expected": "text \"hello\""
+    },
+    {
+      "description": "StringAttribute to_tjp com texto vazio",
+      "method": "to_tjp",
+      "type": "String",
+      "input": {
+        "value": ""
+      },
+      "expected": "text \"\""
+    },
+    {
+      "description": "StringAttribute to_s com texto",
+      "method": "to_s",
+      "type": "String",
+      "input": {
+        "value": "hello"
+      },
+      "expected": "hello"
+    },
+    {
+      "description": "IntegerAttribute to_tjp com valor positivo",
+      "method": "to_tjp",
+      "type": "Integer",
+      "input": {
+        "value": 42
+      },
+      "expected": "integer 42"
+    },
+    {
+      "description": "IntegerAttribute to_tjp com zero",
+      "method": "to_tjp",
+      "type": "Integer",
+      "input": {
+        "value": 0
+      },
+      "expected": "integer 0"
+    },
+    {
+      "description": "IntegerAttribute to_s com valor",
+      "method": "to_s",
+      "type": "Integer",
+      "input": {
+        "value": 42
+      },
+      "expected": "42"
+    },
+    {
+      "description": "FloatAttribute to_tjp com valor",
+      "method": "to_tjp",
+      "type": "Float",
+      "input": {
+        "value": 3.14
+      },
+      "expected": "number 3.14"
+    },
+    {
+      "description": "FloatAttribute to_s com valor",
+      "method": "to_s",
+      "type": "Float",
+      "input": {
+        "value": 3.14
+      },
+      "expected": "3.14"
+    },
+    {
+      "description": "BooleanAttribute to_tjp com true",
+      "method": "to_tjp",
+      "type": "Boolean",
+      "input": {
+        "value": true
+      },
+      "expected": "boolean yes"
+    },
+    {
+      "description": "BooleanAttribute to_tjp com false",
+      "method": "to_tjp",
+      "type": "Boolean",
+      "input": {
+        "value": false
+      },
+      "expected": "boolean no"
+    },
+    {
+      "description": "BooleanAttribute to_s com true",
+      "method": "to_s",
+      "type": "Boolean",
+      "input": {
+        "value": true
+      },
+      "expected": "yes"
+    },
+    {
+      "description": "BooleanAttribute to_s com false",
+      "method": "to_s",
+      "type": "Boolean",
+      "input": {
+        "value": false
+      },
+      "expected": "no"
+    },
+    {
+      "description": "SymbolAttribute to_tjp com símbolo",
+      "method": "to_tjp",
+      "type": "Symbol",
+      "input": {
+        "value": "active"
+      },
+      "expected": "symbol active"
+    },
+    {
+      "description": "SymbolAttribute to_s com símbolo",
+      "method": "to_s",
+      "type": "Symbol",
+      "input": {
+        "value": "active"
+      },
+      "expected": "active"
+    },
+    {
+      "description": "DateAttribute to_tjp com data",
+      "method": "to_tjp",
+      "type": "Date",
+      "input": {
+        "value": "2026-01-15"
+      },
+      "expected": "date 2026-01-15"
+    },
+    {
+      "description": "DateAttribute to_s com data",
+      "method": "to_s",
+      "type": "Date",
+      "input": {
+        "value": "2026-01-15"
+      },
+      "expected": "2026-01-15"
+    },
+    {
+      "description": "DurationAttribute to_tjp com duração",
+      "method": "to_tjp",
+      "type": "Duration",
+      "input": {
+        "value": 3600
+      },
+      "expected": "duration 1h"
+    },
+    {
+      "description": "DurationAttribute to_s com duração",
+      "method": "to_s",
+      "type": "Duration",
+      "input": {
+        "value": 3600
+      },
+      "expected": "1h"
+    },
+    {
+      "description": "FlagListAttribute to_tjp com flags",
+      "method": "to_tjp",
+      "type": "FlagList",
+      "input": {
+        "value": [
+          "a",
+          "b"
+        ]
+      },
+      "expected": "flags a, b"
+    },
+    {
+      "description": "FlagListAttribute to_s com flags",
+      "method": "to_s",
+      "type": "FlagList",
+      "input": {
+        "value": [
+          "a",
+          "b"
+        ]
+      },
+      "expected": "a, b"
+    },
+    {
+      "description": "SymbolListAttribute to_tjp com símbolos",
+      "method": "to_tjp",
+      "type": "SymbolList",
+      "input": {
+        "value": [
+          "x",
+          "y"
+        ]
+      },
+      "expected": "symbollist x, y"
+    },
+    {
+      "description": "SymbolListAttribute to_s com símbolos",
+      "method": "to_s",
+      "type": "SymbolList",
+      "input": {
+        "value": [
+          "x",
+          "y"
+        ]
+      },
+      "expected": "x, y"
+    },
+    {
+      "description": "ScenarioListAttribute to_tjp com cenários",
+      "method": "to_tjp",
+      "type": "ScenarioList",
+      "input": {
+        "value": [
+          "s1",
+          "s2"
+        ]
+      },
+      "expected": "scenarios s1, s2"
+    },
+    {
+      "description": "ScenarioListAttribute to_s com cenários",
+      "method": "to_s",
+      "type": "ScenarioList",
+      "input": {
+        "value": [
+          "s1",
+          "s2"
+        ]
+      },
+      "expected": "s1, s2"
+    },
+    {
+      "description": "ResourceListAttribute to_tjp com recursos",
+      "method": "to_tjp",
+      "type": "ResourceList",
+      "input": {
+        "value": [
+          {
+            "fullId": "r1"
+          },
+          {
+            "fullId": "r2"
+          }
+        ]
+      },
+      "expected": "resourcelist r1, r2"
+    },
+    {
+      "description": "ResourceListAttribute to_s com recursos",
+      "method": "to_s",
+      "type": "ResourceList",
+      "input": {
+        "value": [
+          {
+            "fullId": "r1"
+          },
+          {
+            "fullId": "r2"
+          }
+        ]
+      },
+      "expected": "r1, r2"
+    },
+    {
+      "description": "TaskListAttribute to_tjp com tarefas",
+      "method": "to_tjp",
+      "type": "TaskList",
+      "input": {
+        "value": [
+          {
+            "fullId": "t1"
+          },
+          {
+            "fullId": "t2"
+          }
+        ]
+      },
+      "expected": "tasklist t1, t2"
+    },
+    {
+      "description": "TaskListAttribute to_s com tarefas",
+      "method": "to_s",
+      "type": "TaskList",
+      "input": {
+        "value": [
+          {
+            "fullId": "t1"
+          },
+          {
+            "fullId": "t2"
+          }
+        ]
+      },
+      "expected": "t1, t2"
+    },
+    {
+      "description": "DependencyListAttribute to_tjp com dependências",
+      "method": "to_tjp",
+      "type": "DependencyList",
+      "input": {
+        "value": [
+          {
+            "task": {
+              "fullId": "d1"
+            }
+          }
+        ]
+      },
+      "expected": "dependencylist d1"
+    },
+    {
+      "description": "DependencyListAttribute to_s com dependências",
+      "method": "to_s",
+      "type": "DependencyList",
+      "input": {
+        "value": [
+          {
+            "task": {
+              "fullId": "d1"
+            }
+          }
+        ]
+      },
+      "expected": "d1"
+    },
+    {
+      "description": "TaskDepListAttribute to_tjp com dependências",
+      "method": "to_tjp",
+      "type": "TaskDepList",
+      "input": {
+        "value": [
+          [
+            {
+              "fullId": "t1"
+            },
+            {
+              "fullId": "d1"
+            }
+          ]
+        ]
+      },
+      "expected": "taskdeplist t1 d1"
+    },
+    {
+      "description": "TaskDepListAttribute to_s com dependências",
+      "method": "to_s",
+      "type": "TaskDepList",
+      "input": {
+        "value": [
+          [
+            {
+              "fullId": "t1"
+            },
+            {
+              "fullId": "d1"
+            }
+          ]
+        ]
+      },
+      "expected": "t1, d1"
+    },
+    {
+      "description": "ChargeListAttribute to_tjp com charges",
+      "method": "to_tjp",
+      "type": "ChargeList",
+      "input": {
+        "value": [
+          {
+            "amount": 100
+          }
+        ]
+      },
+      "expected": "charge 100"
+    },
+    {
+      "description": "ChargeListAttribute to_s com charges",
+      "method": "to_s",
+      "type": "ChargeList",
+      "input": {
+        "value": [
+          {
+            "amount": 100
+          }
+        ]
+      },
+      "expected": "100"
+    },
+    {
+      "description": "ChargeSetListAttribute to_tjp com chargeSet",
+      "method": "to_tjp",
+      "type": "ChargeSetList",
+      "input": {
+        "value": [
+          {
+            "to_s": "#<Proc:0x00007f5716178eb8 scripts/golden/attributes.rb:162 (lambda)>"
+          }
+        ]
+      },
+      "expected": "chargeset cs1"
+    },
+    {
+      "description": "ChargeSetListAttribute to_s com chargeSet",
+      "method": "to_s",
+      "type": "ChargeSetList",
+      "input": {
+        "value": [
+          {
+            "to_s": "#<Proc:0x00007f5716178da0 scripts/golden/attributes.rb:165 (lambda)>"
+          }
+        ]
+      },
+      "expected": "cs1"
+    },
+    {
+      "description": "AccountCreditListAttribute to_tjp com credits",
+      "method": "to_tjp",
+      "type": "AccountCreditList",
+      "input": {
+        "value": [
+          {
+            "amount": 50
+          }
+        ]
+      },
+      "expected": "credits 50"
+    },
+    {
+      "description": "AccountCreditListAttribute to_s com credits",
+      "method": "to_s",
+      "type": "AccountCreditList",
+      "input": {
+        "value": [
+          {
+            "amount": 50
+          }
+        ]
+      },
+      "expected": "50"
+    },
+    {
+      "description": "AllocationAttribute to_tjp com alocação",
+      "method": "to_tjp",
+      "type": "Allocation",
+      "input": {
+        "value": {
+          "mode": 0,
+          "mandatory": true,
+          "persistent": false
+        }
+      },
+      "expected": "allocation"
+    },
+    {
+      "description": "AllocationAttribute to_s com alocação",
+      "method": "to_s",
+      "type": "Allocation",
+      "input": {
+        "value": {
+          "mode": 0,
+          "mandatory": true,
+          "persistent": false
+        }
+      },
+      "expected": "TODO"
+    },
+    {
+      "description": "BookingListAttribute to_tjp lança",
+      "method": "to_tjp",
+      "type": "BookingList",
+      "input": {
+        "value": [
+          {
+            "booking": "b1"
+          }
+        ]
+      },
+      "expected": "throws"
+    },
+    {
+      "description": "BookingListAttribute to_s com booking",
+      "method": "to_s",
+      "type": "BookingList",
+      "input": {
+        "value": [
+          {
+            "booking": "b1"
+          }
+        ]
+      },
+      "expected": "TODO"
+    },
+    {
+      "description": "LogicalExpressionAttribute to_tjp lança",
+      "method": "to_tjp",
+      "type": "LogicalExpression",
+      "input": {
+        "value": "expr"
+      },
+      "expected": "throws"
+    },
+    {
+      "description": "LogicalExpressionAttribute to_s com expr",
+      "method": "to_s",
+      "type": "LogicalExpression",
+      "input": {
+        "value": "expr"
+      },
+      "expected": "TODO"
+    },
+    {
+      "description": "LogicalExpressionListAttribute to_tjp lança",
+      "method": "to_tjp",
+      "type": "LogicalExpressionList",
+      "input": {
+        "value": [
+          "expr1"
+        ]
+      },
+      "expected": "throws"
+    },
+    {
+      "description": "LogicalExpressionListAttribute to_s com expr",
+      "method": "to_s",
+      "type": "LogicalExpressionList",
+      "input": {
+        "value": [
+          "expr1"
+        ]
+      },
+      "expected": "expr1"
+    },
+    {
+      "description": "TimeIntervalListAttribute to_tjp com intervalos",
+      "method": "to_tjp",
+      "type": "TimeIntervalList",
+      "input": {
+        "value": [
+          {
+            "to_s": "#<Proc:0x00007f5716178508 scripts/golden/attributes.rb:210 (lambda)>"
+          },
+          {
+            "to_s": "#<Proc:0x00007f5716178490 scripts/golden/attributes.rb:213 (lambda)>"
+          }
+        ]
+      },
+      "expected": "intervallist 1h-2h, 3h-4h"
+    },
+    {
+      "description": "TimeIntervalListAttribute to_s com intervalos",
+      "method": "to_s",
+      "type": "TimeIntervalList",
+      "input": {
+        "value": [
+          {
+            "to_s": "#<Proc:0x00007f5716178378 scripts/golden/attributes.rb:210 (lambda)>"
+          },
+          {
+            "to_s": "#<Proc:0x00007f5716178328 scripts/golden/attributes.rb:213 (lambda)>"
+          }
+        ]
+      },
+      "expected": "1h-2h, 3h-4h"
+    },
+    {
+      "description": "LeaveListAttribute to_tjp com feriados",
+      "method": "to_tjp",
+      "type": "LeaveList",
+      "input": {
+        "value": [
+          "2026-01-01",
+          "2026-02-01"
+        ]
+      },
+      "expected": "leaves 2026-01-01,\n2026-02-01"
+    },
+    {
+      "description": "LeaveListAttribute to_s com feriados",
+      "method": "to_s",
+      "type": "LeaveList",
+      "input": {
+        "value": [
+          "2026-01-01",
+          "2026-02-01"
+        ]
+      },
+      "expected": "2026-01-01, 2026-02-01"
+    },
+    {
+      "description": "LeaveAllowanceListAttribute to_tjp lança",
+      "method": "to_tjp",
+      "type": "LeaveAllowanceList",
+      "input": {
+        "value": [
+          "la1"
+        ]
+      },
+      "expected": "throws"
+    },
+    {
+      "description": "LeaveAllowanceListAttribute to_s com allowance",
+      "method": "to_s",
+      "type": "LeaveAllowanceList",
+      "input": {
+        "value": [
+          "la1"
+        ]
+      },
+      "expected": "la1"
+    },
+    {
+      "description": "LimitsAttribute to_tjp lança NotYetImplementedError",
+      "method": "to_tjp",
+      "type": "Limits",
+      "input": {
+        "value": null
+      },
+      "expected": "throws"
+    },
+    {
+      "description": "LimitsAttribute to_s lança",
+      "method": "to_s",
+      "type": "Limits",
+      "input": {
+        "value": null
+      },
+      "expected": "throws"
+    },
+    {
+      "description": "ShiftAssignmentsAttribute to_tjp com atribuições",
+      "method": "to_tjp",
+      "type": "ShiftAssignments",
+      "input": {
+        "value": {
+          "assignments": [
+            {
+              "shiftScenario": {
+                "property": {
+                  "fullId": "shift1"
+                }
+              },
+              "interval": "1h-2h"
+            }
+          ]
+        }
+      },
+      "expected": "shifts shift1 1h-2h"
+    },
+    {
+      "description": "ShiftAssignmentsAttribute to_s com atribuições",
+      "method": "to_s",
+      "type": "ShiftAssignments",
+      "input": {
+        "value": {
+          "assignments": [
+            {
+              "shiftScenario": {
+                "property": {
+                  "fullId": "shift1"
+                }
+              },
+              "interval": "1h-2h"
+            }
+          ]
+        }
+      },
+      "expected": "shift1 1h-2h"
+    },
+    {
+      "description": "WorkingHoursAttribute to_tjp com horários",
+      "method": "to_tjp",
+      "type": "WorkingHours",
+      "input": {
+        "value": {
+          "getWorkingHours": "#<Proc:0x00007f57161779c8 scripts/golden/attributes.rb:250 (lambda)>"
+        }
+      },
+      "expected": "workinghours sun 0:00 - 1:00\nworkinghours mon off\nworkinghours tue off\nworkinghours wed off\nworkinghours thu off\nworkinghours fri off\nworkinghours sat off"
+    },
+    {
+      "description": "WorkingHoursAttribute to_s com horários",
+      "method": "to_s",
+      "type": "WorkingHours",
+      "input": {
+        "value": {
+          "getWorkingHours": "#<Proc:0x00007f5716177900 scripts/golden/attributes.rb:253 (lambda)>"
+        }
+      },
+      "expected": "sun 0:00 - 1:00\nmon off\ntue off\nwed off\nthu off\nfri off\nsat off"
+    },
+    {
+      "description": "RealFormatAttribute to_tjp com formato",
+      "method": "to_tjp",
+      "type": "RealFormat",
+      "input": {
+        "value": "0.00"
+      },
+      "expected": "realformat 0.00"
+    },
+    {
+      "description": "RealFormatAttribute to_s com formato",
+      "method": "to_s",
+      "type": "RealFormat",
+      "input": {
+        "value": "0.00"
+      },
+      "expected": "0.00"
+    },
+    {
+      "description": "ColumnListAttribute to_tjp com colunas",
+      "method": "to_tjp",
+      "type": "ColumnList",
+      "input": {
+        "value": [
+          "col1",
+          "col2"
+        ]
+      },
+      "expected": "columns col1, col2"
+    },
+    {
+      "description": "ColumnListAttribute to_s com colunas",
+      "method": "to_s",
+      "type": "ColumnList",
+      "input": {
+        "value": [
+          "col1",
+          "col2"
+        ]
+      },
+      "expected": "TODO"
+    },
+    {
+      "description": "FormatListAttribute to_tjp com formatos",
+      "method": "to_tjp",
+      "type": "FormatList",
+      "input": {
+        "value": [
+          "pdf",
+          "html"
+        ]
+      },
+      "expected": "formatlist pdf, html"
+    },
+    {
+      "description": "FormatListAttribute to_s com formatos",
+      "method": "to_s",
+      "type": "FormatList",
+      "input": {
+        "value": [
+          "pdf",
+          "html"
+        ]
+      },
+      "expected": "pdf, html"
+    },
+    {
+      "description": "SortListAttribute to_tjp com sorting",
+      "method": "to_tjp",
+      "type": "SortList",
+      "input": {
+        "value": [
+          "name"
+        ]
+      },
+      "expected": "sorting name"
+    },
+    {
+      "description": "SortListAttribute to_s com sorting",
+      "method": "to_s",
+      "type": "SortList",
+      "input": {
+        "value": [
+          "name"
+        ]
+      },
+      "expected": "name"
+    },
+    {
+      "description": "JournalSortListAttribute to_tjp com journalSorting",
+      "method": "to_tjp",
+      "type": "JournalSortList",
+      "input": {
+        "value": [
+          "journal1"
+        ]
+      },
+      "expected": "journalsorting journal1"
+    },
+    {
+      "description": "JournalSortListAttribute to_s com journalSorting",
+      "method": "to_s",
+      "type": "JournalSortList",
+      "input": {
+        "value": [
+          "journal1"
+        ]
+      },
+      "expected": "journal1"
+    },
+    {
+      "description": "RichTextAttribute to_tjp com richText",
+      "method": "to_tjp",
+      "type": "RichText",
+      "input": {
+        "value": {
+          "richText": {
+            "inputText": "hello"
+          },
+          "to_s": "#<Proc:0x00007f571617ecc8 scripts/golden/attributes.rb:298 (lambda)>"
+        }
+      },
+      "expected": "richtext \"hello\""
+    },
+    {
+      "description": "RichTextAttribute to_s com richText",
+      "method": "to_s",
+      "type": "RichText",
+      "input": {
+        "value": {
+          "richText": {
+            "inputText": "hello"
+          },
+          "to_s": "#<Proc:0x00007f571617dbc0 scripts/golden/attributes.rb:301 (lambda)>"
+        }
+      },
+      "expected": "hello"
+    },
+    {
+      "description": "DefinitionListAttribute to_tjp com definitions",
+      "method": "to_tjp",
+      "type": "DefinitionList",
+      "input": {
+        "value": [
+          "def1",
+          "def2"
+        ]
+      },
+      "expected": "definitionlist def1, def2"
+    },
+    {
+      "description": "DefinitionListAttribute to_s com definitions",
+      "method": "to_s",
+      "type": "DefinitionList",
+      "input": {
+        "value": [
+          "def1",
+          "def2"
+        ]
+      },
+      "expected": "def1, def2"
+    },
+    {
+      "description": "mode 0 (provided) — StringAttribute",
+      "method": "to_tjp_mode",
+      "type": "String",
+      "input": {
+        "value": "test",
+        "mode": 0
+      },
+      "expected": "text \"test\""
+    },
+    {
+      "description": "mode 1 (inherited) — StringAttribute",
+      "method": "to_tjp_mode",
+      "type": "String",
+      "input": {
+        "value": "test",
+        "mode": 1
+      },
+      "expected": "text \"test\""
+    },
+    {
+      "description": "mode 2 (computed) — StringAttribute",
+      "method": "to_tjp_mode",
+      "type": "String",
+      "input": {
+        "value": "test",
+        "mode": 2
+      },
+      "expected": "text \"test\""
+    },
+    {
+      "description": "inherit — StringAttribute herda valor",
+      "method": "to_tjp_inherit",
+      "type": "String",
+      "input": {
+        "value": "inherited",
+        "inherit": true
+      },
+      "expected": "text \"inherited\""
+    }
+  ]
+}

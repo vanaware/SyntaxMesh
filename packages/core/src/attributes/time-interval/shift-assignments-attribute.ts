@@ -30,17 +30,31 @@ export class ShiftAssignmentsAttribute extends AttributeBase<unknown> {
   static readonly tjpId = "shifts";
 
   /**
+   * Converte o valor para string.
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ShiftAssignmentsAttribute#to_s
+   */
+  override to_s(): string {
+    const v = this.get() as ShiftAssignmentsValue | null;
+    if (!v || !v.assignments || v.assignments.length === 0) {
+      return "";
+    }
+    const sa = v.assignments[0];
+    return `${sa.shiftScenario.property.fullId} ${sa.interval}`;
+  }
+
+  /**
    * Converte o valor para TJP (formato TaskJuggler).
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ShiftAssignmentsAttribute#to_tjp
    */
   override to_tjp(): string {
     const v = this.get() as ShiftAssignmentsValue | null;
-    if (!v || !v.assignments) {
-      return "shifts ";
+    if (!v || !v.assignments || v.assignments.length === 0) {
+      return this.tjpId;
     }
     let first = true;
-    let str = "shifts ";
+    let str = `${this.tjpId} `;
     for (const sa of v.assignments) {
       if (first) {
         first = false;

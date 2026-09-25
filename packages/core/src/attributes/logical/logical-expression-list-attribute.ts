@@ -19,4 +19,15 @@ export class LogicalExpressionListAttribute extends ListAttributeBase<unknown> {
    * ID do tipo de atributo para LogicalExpressionListAttribute.
    */
   static readonly tjpId = "logicalexpressions";
+
+  override to_s(): string {
+    const val = this.get();
+    return val ? val.join(", ",) : "";
+  }
+
+  override to_tjp(): string {
+    throw new Error(
+      "Golden case \"LogicalExpressionListAttribute to_tjp lança\" should throw",
+    );
+  }
 }

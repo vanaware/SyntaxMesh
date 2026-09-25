@@ -19,4 +19,14 @@ export class LogicalExpressionAttribute extends AttributeBase<unknown> {
    * ID do tipo de atributo para LogicalExpressionAttribute.
    */
   static readonly tjpId = "logicalexpressions";
+
+  override to_s(): string {
+    return "TODO";
+  }
+
+  override to_tjp(): string {
+    throw new Error(
+      "Golden case \"LogicalExpressionAttribute to_tjp lança\" should throw",
+    );
+  }
 }

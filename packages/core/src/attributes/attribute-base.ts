@@ -135,6 +135,16 @@ export abstract class AttributeBase<T,> {
   }
 
   /**
+   * ID do tipo de atributo para serialização TJP.
+   *
+   * Subclasses definem `static readonly tjpId`. Este getter permite
+   * acessá-lo via instância sem repetir o nome da classe.
+   */
+  protected get tjpId(): string {
+    return (this.constructor as unknown as { tjpId: string }).tjpId;
+  }
+
+  /**
    * Obtém o ID do atributo.
    */
   get id(): string {

@@ -29,4 +29,13 @@ export class ScenarioListAttribute extends ListAttributeBase<string> {
     const val = this.get();
     return val ? val.join(", ",) : "";
   }
+
+  /**
+   * Converte o valor para TJP (formato TaskJuggler).
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ScenarioListAttribute#to_tjp
+   */
+  override to_tjp(): string {
+    return `${this.tjpId} ${this.get()?.join(", ") ?? ""}`;
+  }
 }

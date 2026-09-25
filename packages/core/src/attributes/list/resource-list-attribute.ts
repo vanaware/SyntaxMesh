@@ -16,7 +16,7 @@ import { NotYetImplementedError, } from "../errors.ts";
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ResourceListAttribute
  */
 export class ResourceListAttribute
-  extends ListAttributeBase<{ id: string; name: string; project: unknown }> {
+  extends ListAttributeBase<{ id: string; name: string; project: unknown; fullId: string }> {
   /**
    * ID do tipo de atributo para ResourceListAttribute.
    */
@@ -30,6 +30,17 @@ export class ResourceListAttribute
   override to_s(): string {
     const val = this.get();
     return val ? val.map((item,) => item.id).join(", ",) : "";
+  }
+
+  /**
+   * Converte o valor para TJP (formato TaskJuggler).
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ResourceListAttribute#to_tjp
+   */
+  override to_tjp(): string {
+    const val = this.get();
+    const out = val ? val.map((item,) => item.id) : [];
+    return `${this.tjpId} ${out.join(", ",)}`;
   }
 
   /**
