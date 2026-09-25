@@ -228,8 +228,8 @@ export abstract class AttributeBase<T,> {
    *
    * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:to_tjp
    */
-  to_tjp(): unknown {
-    throw new NotYetImplementedError("11", "to_tjp",);
+  to_tjp(): string {
+    throw new NotYetImplementedError("12", "to_tjp",);
   }
 
   /**

@@ -183,10 +183,10 @@ tc("AllocationAttribute to_s com alocação",
 # --- BookingListAttribute ---
 tc("BookingListAttribute to_tjp lança",
    "to_tjp", "BookingList",
-   { value: [{ booking: "b1" }] }, :throws)
+   { value: [{ to_s: -> { "b1" } }] }, :throws)
 tc("BookingListAttribute to_s com booking",
    "to_s", "BookingList",
-   { value: [{ booking: "b1" }] }, "TODO")
+   { value: [{ to_s: -> { "b1" } }] }, "b1")
 
 # --- LogicalExpressionAttribute ---
 tc("LogicalExpressionAttribute to_tjp lança",
@@ -194,7 +194,7 @@ tc("LogicalExpressionAttribute to_tjp lança",
    { value: "expr" }, :throws)
 tc("LogicalExpressionAttribute to_s com expr",
    "to_s", "LogicalExpression",
-   { value: "expr" }, "TODO")
+   { value: "expr" }, "expr")
 
 # --- LogicalExpressionListAttribute ---
 tc("LogicalExpressionListAttribute to_tjp lança",

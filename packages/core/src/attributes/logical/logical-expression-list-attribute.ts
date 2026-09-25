@@ -27,7 +27,7 @@ export class LogicalExpressionListAttribute extends ListAttributeBase<unknown> {
 
   override to_tjp(): string {
     throw new Error(
-      "Golden case \"LogicalExpressionListAttribute to_tjp lança\" should throw",
+      'Golden case "LogicalExpressionListAttribute to_tjp lança" should throw',
     );
   }
 }

@@ -19,4 +19,14 @@ export class JournalSortListAttribute extends ListAttributeBase<unknown> {
    * ID do tipo de atributo para JournalSortListAttribute.
    */
   static readonly tjpId = "journalsorting";
+
+  /**
+   * Converte o valor para string.
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:JournalSortListAttribute#to_s
+   */
+  override to_s(): string {
+    const val = this.get();
+    return val ? val.join(", ",) : "";
+  }
 }

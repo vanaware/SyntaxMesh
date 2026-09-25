@@ -26,6 +26,6 @@ export class SymbolListAttribute extends ListAttributeBase<string> {
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:SymbolListAttribute#to_tjp
    */
   override to_tjp(): string {
-    return `${this.tjpId} ${this.get()?.join(", ") ?? ""}`;
+    return `${this.tjpId} ${this.get()?.join(", ",) ?? ""}`;
   }
 }

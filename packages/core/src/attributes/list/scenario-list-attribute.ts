@@ -36,6 +36,6 @@ export class ScenarioListAttribute extends ListAttributeBase<string> {
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ScenarioListAttribute#to_tjp
    */
   override to_tjp(): string {
-    return `${this.tjpId} ${this.get()?.join(", ") ?? ""}`;
+    return `${this.tjpId} ${this.get()?.join(", ",) ?? ""}`;
   }
 }

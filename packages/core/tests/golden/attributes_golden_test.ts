@@ -1,6 +1,9 @@
 import { describe, it, } from "@std/testing/bdd";
 import { assertEquals, assertThrows, } from "@std/assert";
-import { AttributeBase, type AttributeMode, } from "../../src/attributes/attribute-base.ts";
+import {
+  AttributeBase,
+  type AttributeMode,
+} from "../../src/attributes/attribute-base.ts";
 import { AttributeDefinition, } from "../../src/attributes/attribute-definition.ts";
 import { AttributeType, } from "../../src/attributes/attribute-type.ts";
 import { type AttributeContainer, } from "../../src/attributes/attribute-container.ts";
@@ -92,21 +95,26 @@ function loadGoldenFile(): GoldenFile {
  */
 function rehydrate(value: unknown,): unknown {
   if (Array.isArray(value,)) {
-    return value.map((v,) => rehydrate(v,),);
+    return value.map((v,) => rehydrate(v,));
   }
   if (value && typeof value === "object") {
     const obj = value as Record<string, unknown>;
     const out: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(obj,)) {
+    for (const [k, v,] of Object.entries(obj,)) {
       out[k] = rehydrate(v,);
     }
-    if (typeof out.to_s === "string" && out.to_s.startsWith("#<Proc")) {
+    if (typeof out.to_s === "string" && out.to_s.startsWith("#<Proc",)) {
       const marker = out.to_s as string;
-      const match = marker.match(/#<Proc:0x[0-9a-f]+ scripts\/golden\/attributes\.rb:(\d+) \(lambda\)>/,);
-      const line = match ? Number.parseInt(match[1] ?? "", 10) : 0;
+      const match = marker.match(
+        /#<Proc:0x[0-9a-f]+ scripts\/golden\/attributes\.rb:(\d+) \(lambda\)>/,
+      );
+      const line = match ? Number.parseInt(match[1] ?? "", 10,) : 0;
       out.to_s = () => procTo_s(line,);
     }
-    if (typeof out.getWorkingHours === "string" && out.getWorkingHours.startsWith("#<Proc")) {
+    if (
+      typeof out.getWorkingHours === "string" &&
+      out.getWorkingHours.startsWith("#<Proc",)
+    ) {
       out.getWorkingHours = (day: number,) => procGetWorkingHours(day,);
     }
     return out;
@@ -124,10 +132,18 @@ function procTo_s(line: number,): string {
       return "cs1";
     case 165:
       return "cs1";
+    case 186:
+      return "b1";
+    case 189:
+      return "b1";
     case 210:
       return "1h-2h";
     case 213:
       return "3h-4h";
+    case 250:
+      return "0:00 - 1:00";
+    case 253:
+      return "0:00 - 1:00";
     case 298:
       return "hello";
     case 301:
@@ -140,8 +156,8 @@ function procTo_s(line: number,): string {
 /**
  * Maps the working-hours proc marker to its interval array.
  */
-function procGetWorkingHours(day: number,): [number, number][] {
-  return day === 0 ? [[0, 3600]] : [];
+function procGetWorkingHours(day: number,): [number, number,][] {
+  return day === 0 ? [[0, 3600,],] : [];
 }
 
 function runCase(c: GoldenCase,): void {
@@ -185,19 +201,35 @@ function runCase(c: GoldenCase,): void {
   switch (c.method) {
     case "to_tjp": {
       if (c.expected === "throws") {
-        assertThrows(() => attr.to_tjp(), Error, `Golden case "${c.description}" should throw`);
+        assertThrows(
+          () => attr.to_tjp(),
+          Error,
+          `Golden case "${c.description}" should throw`,
+        );
       } else {
         const actual = attr.to_tjp();
-        assertEquals(actual, c.expected, `Golden case "${c.description}" failed for method ${c.method}`);
+        assertEquals(
+          actual,
+          c.expected,
+          `Golden case "${c.description}" failed for method ${c.method}`,
+        );
       }
       break;
     }
     case "to_s": {
       if (c.expected === "throws") {
-        assertThrows(() => attr.to_s(), Error, `Golden case "${c.description}" should throw`);
+        assertThrows(
+          () => attr.to_s(),
+          Error,
+          `Golden case "${c.description}" should throw`,
+        );
       } else {
         const actual_s = attr.to_s();
-        assertEquals(actual_s, c.expected, `Golden case "${c.description}" failed for method ${c.method}`);
+        assertEquals(
+          actual_s,
+          c.expected,
+          `Golden case "${c.description}" failed for method ${c.method}`,
+        );
       }
       break;
     }
@@ -237,7 +269,7 @@ function runCase(c: GoldenCase,): void {
       break;
     }
     default:
-      throw new Error(`Unknown method in golden file: ${c.method}`);
+      throw new Error(`Unknown method in golden file: ${c.method}`,);
   }
 }
 
@@ -286,7 +318,7 @@ function getAttributeClass(type: string,): unknown {
 
   const cls = typeMap[type];
   if (!cls) {
-    throw new Error(`Unknown attribute type: ${type}`);
+    throw new Error(`Unknown attribute type: ${type}`,);
   }
   return cls;
 }
@@ -336,7 +368,7 @@ function getAttributeType(type: string,): AttributeType {
 
   const attrType = typeMap[type];
   if (!attrType) {
-    throw new Error(`Unknown attribute type: ${type}`);
+    throw new Error(`Unknown attribute type: ${type}`,);
   }
   return attrType;
 }

@@ -36,4 +36,14 @@ export abstract class ListAttributeBase<T,> extends AttributeBase<T[]> {
     }
     return val.join(", ",);
   }
+
+  /**
+   * Converte o valor para TJP (formato TaskJuggler).
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:to_tjp
+   */
+  override to_tjp(): string {
+    const val = this.get();
+    return `${this.tjpId} ${val?.join(", ",) ?? ""}`;
+  }
 }

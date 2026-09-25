@@ -194,11 +194,15 @@ describe("ListPrimitiveAttributes", () => {
     },);
 
     it("to_s", () => {
-      attr.set([{ id: "r1", name: "Resource 1", project: null, }, {
-        id: "r2",
-        name: "Resource 2",
-        project: null,
-      },],);
+      attr.set([
+        { id: "r1", name: "Resource 1", project: null, fullId: "r1", },
+        {
+          id: "r2",
+          name: "Resource 2",
+          project: null,
+          fullId: "r2",
+        },
+      ],);
       assertEquals(attr.to_s(), "r1, r2",);
     });
 
@@ -226,17 +230,19 @@ describe("ListPrimitiveAttributes", () => {
     },);
 
     it("to_s", () => {
-      attr.set([{ id: "t1", name: "Task 1", }, {
+      attr.set([{ id: "t1", name: "Task 1", fullId: "t1", }, {
         id: "t2",
         name: "Task 2",
+        fullId: "t2",
       },],);
       assertEquals(attr.to_s(), "t1, t2",);
     });
 
     it("to_tjp", () => {
-      attr.set([{ id: "t1", name: "Task 1", }, {
+      attr.set([{ id: "t1", name: "Task 1", fullId: "t1", }, {
         id: "t2",
         name: "Task 2",
+        fullId: "t2",
       },],);
       assertEquals(attr.to_tjp(), "tasklist t1, t2",);
     });

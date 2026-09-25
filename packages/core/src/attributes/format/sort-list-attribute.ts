@@ -19,4 +19,14 @@ export class SortListAttribute extends ListAttributeBase<unknown> {
    * ID do tipo de atributo para SortListAttribute.
    */
   static readonly tjpId = "sorting";
+
+  /**
+   * Converte o valor para string.
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:SortListAttribute#to_s
+   */
+  override to_s(): string {
+    const val = this.get();
+    return val ? val.join(", ",) : "";
+  }
 }

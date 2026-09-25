@@ -21,12 +21,12 @@ export class LogicalExpressionAttribute extends AttributeBase<unknown> {
   static readonly tjpId = "logicalexpressions";
 
   override to_s(): string {
-    return "TODO";
+    return String(this.get());
   }
 
   override to_tjp(): string {
     throw new Error(
-      "Golden case \"LogicalExpressionAttribute to_tjp lança\" should throw",
+      'Golden case "LogicalExpressionAttribute to_tjp lança" should throw',
     );
   }
 }

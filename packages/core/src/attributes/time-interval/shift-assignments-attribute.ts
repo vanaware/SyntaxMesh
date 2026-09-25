@@ -40,6 +40,9 @@ export class ShiftAssignmentsAttribute extends AttributeBase<unknown> {
       return "";
     }
     const sa = v.assignments[0];
+    if (!sa) {
+      return "";
+    }
     return `${sa.shiftScenario.property.fullId} ${sa.interval}`;
   }
 
@@ -51,11 +54,14 @@ export class ShiftAssignmentsAttribute extends AttributeBase<unknown> {
   override to_tjp(): string {
     const v = this.get() as ShiftAssignmentsValue | null;
     if (!v || !v.assignments || v.assignments.length === 0) {
-      return this.tjpId;
+      return `${this.tjpId} `;
     }
     let first = true;
     let str = `${this.tjpId} `;
     for (const sa of v.assignments) {
+      if (!sa) {
+        continue;
+      }
       if (first) {
         first = false;
       } else {

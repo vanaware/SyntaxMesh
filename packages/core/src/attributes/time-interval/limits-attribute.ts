@@ -38,6 +38,6 @@ export class LimitsAttribute extends AttributeBase<unknown> {
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:LimitsAttribute#to_s
    */
   override to_s(): string {
-    throw new Error("Golden case \"LimitsAttribute to_s lança\" should throw");
+    throw new Error('Golden case "LimitsAttribute to_s lança" should throw',);
   }
 }

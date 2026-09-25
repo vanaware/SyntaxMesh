@@ -33,5 +33,5 @@ export function formatDuration(seconds: number,): string {
   if (secs > 0 || parts.length === 0) {
     parts.push(`${secs}s`,);
   }
-  return sign + parts.join("");
+  return sign + parts.join("",);
 }

@@ -30,7 +30,7 @@ export class WorkingHoursAttribute extends AttributeBase<unknown> {
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:WorkingHoursAttribute#to_tjp
    */
   override to_tjp(): string {
-    const dayNames = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+    const dayNames = ["sun", "mon", "tue", "wed", "thu", "fri", "sat",];
     let str = "";
     for (let day = 0; day < 7; day++) {
       str += `workinghours ${dayNames[day]} `;
@@ -48,10 +48,10 @@ export class WorkingHoursAttribute extends AttributeBase<unknown> {
         } else {
           str += ", ";
         }
-        const startH = Math.floor(iv[0] / 3600);
-        const startM = Math.floor((iv[0] % 3600) / 60);
-        const endH = Math.floor(iv[1] / 3600);
-        const endM = Math.floor((iv[1] % 3600) / 60);
+        const startH = Math.floor(iv[0] / 3600,);
+        const startM = Math.floor((iv[0] % 3600) / 60,);
+        const endH = Math.floor(iv[1] / 3600,);
+        const endM = Math.floor((iv[1] % 3600) / 60,);
         str += `${startH}:${startM === 0 ? "00" : startM} - ${endH}:${
           endM === 0 ? "00" : endM
         }`;

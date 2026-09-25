@@ -11,7 +11,7 @@ import { AccountCreditListAttribute, } from "../../src/attributes/financial/acco
 class TestChargeListAttribute extends ChargeListAttribute {
   constructor(
     property: { id: string; name: string },
-    type: AttributeDefinition<string[]>,
+    type: AttributeDefinition<{ amount: number }[]>,
     container: MockContainer,
   ) {
     super(property, type, container,);
@@ -31,7 +31,7 @@ class TestChargeSetListAttribute extends ChargeSetListAttribute {
 class TestAccountCreditListAttribute extends AccountCreditListAttribute {
   constructor(
     property: { id: string; name: string },
-    type: AttributeDefinition<unknown[]>,
+    type: AttributeDefinition<{ amount: number }[]>,
     container: MockContainer,
   ) {
     super(property, type, container,);
@@ -49,7 +49,7 @@ describe("FinancialAttributes", () => {
   },);
 
   describe("ChargeListAttribute", () => {
-    let type: AttributeDefinition<string[]>;
+    let type: AttributeDefinition<{ amount: number }[]>;
     let attr: TestChargeListAttribute;
 
     beforeEach(() => {
@@ -63,8 +63,8 @@ describe("FinancialAttributes", () => {
     },);
 
     it("to_s", () => {
-      attr.set(["c1", "c2", "c3",],);
-      assertEquals(attr.to_s(), "c1, c2, c3",);
+      attr.set([{ amount: 1, }, { amount: 2, }, { amount: 3, },],);
+      assertEquals(attr.to_s(), "1, 2, 3",);
     });
 
     it("tjpId é 'charge'", () => {
@@ -124,7 +124,7 @@ describe("FinancialAttributes", () => {
   });
 
   describe("AccountCreditListAttribute", () => {
-    let type: AttributeDefinition<unknown[]>;
+    let type: AttributeDefinition<{ amount: number }[]>;
     let attr: TestAccountCreditListAttribute;
 
     beforeEach(() => {

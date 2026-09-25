@@ -35,6 +35,6 @@ export class ColumnListAttribute extends ListAttributeBase<string> {
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ColumnListAttribute#to_tjp
    */
   override to_tjp(): string {
-    return `${this.tjpId} ${this.get()?.join(", ") ?? ""}`;
+    return `${this.tjpId} ${this.get()?.join(", ",) ?? ""}`;
   }
 }

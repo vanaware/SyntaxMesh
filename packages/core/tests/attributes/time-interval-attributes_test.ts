@@ -217,11 +217,11 @@ describe("TimeIntervalAttributes", () => {
       attr.set({
         assignments: [
           {
-            shiftScenario: { property: { fullId: "shift1", } },
+            shiftScenario: { property: { fullId: "shift1", }, },
             interval: "1h-2h",
           },
           {
-            shiftScenario: { property: { fullId: "shift2", } },
+            shiftScenario: { property: { fullId: "shift2", }, },
             interval: "3h-4h",
           },
         ],
@@ -260,7 +260,7 @@ describe("TimeIntervalAttributes", () => {
       attr.set({
         getWorkingHours: (day: number,) => {
           if (day === 0) {
-            return [[0, 3600],]; // 1h
+            return [[0, 3600,],]; // 1h
           }
           return [];
         },

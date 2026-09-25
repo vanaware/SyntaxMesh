@@ -28,7 +28,8 @@ export class BookingListAttribute
    */
   override to_s(): string {
     const val = this.get();
-    return val ? val.map((item,) => item.to_s()).join(", ",) : "";
+    if (val === null) return "";
+    return val.map(item => item.to_s()).join(', ');
   }
 
   /**
@@ -38,7 +39,7 @@ export class BookingListAttribute
    */
   override to_tjp(): string {
     throw new Error(
-      "Golden case \"BookingListAttribute to_tjp lança\" should throw",
+      'Golden case "BookingListAttribute to_tjp lança" should throw',
     );
   }
 }

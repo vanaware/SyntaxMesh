@@ -14,7 +14,8 @@ import { ListAttributeBase, } from "../list-attribute-base.ts";
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:AccountCreditListAttribute
  */
-export class AccountCreditListAttribute extends ListAttributeBase<{ amount: number }> {
+export class AccountCreditListAttribute
+  extends ListAttributeBase<{ amount: number }> {
   /**
    * ID do tipo de atributo para AccountCreditListAttribute.
    */
