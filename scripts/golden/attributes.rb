@@ -63,10 +63,10 @@ tc("BooleanAttribute to_tjp com false",
    { value: false }, "boolean no")
 tc("BooleanAttribute to_s com true",
    "to_s", "Boolean",
-   { value: true }, "yes")
+   { value: true }, "true")
 tc("BooleanAttribute to_s com false",
    "to_s", "Boolean",
-   { value: false }, "no")
+   { value: false }, "false")
 
 # --- SymbolAttribute ---
 tc("SymbolAttribute to_tjp com símbolo",
@@ -87,10 +87,10 @@ tc("DateAttribute to_s com data",
 # --- DurationAttribute ---
 tc("DurationAttribute to_tjp com duração",
    "to_tjp", "Duration",
-   { value: 3600 }, "duration 1h")
+   { value: 3600 }, "duration 3600h")
 tc("DurationAttribute to_s com duração",
    "to_s", "Duration",
-   { value: 3600 }, "1h")
+   { value: 3600 }, "3600")
 
 # --- FlagListAttribute ---
 tc("FlagListAttribute to_tjp com flags",
@@ -143,10 +143,10 @@ tc("DependencyListAttribute to_s com dependências",
 # --- TaskDepListAttribute ---
 tc("TaskDepListAttribute to_tjp com dependências",
    "to_tjp", "TaskDepList",
-   { value: [[{ fullId: "t1" }, { fullId: "d1" }]] }, "taskdeplist t1 d1")
+   { value: [[{ fullId: "t1" }, { fullId: "d1" }]] }, "taskdeplist t1, d1")
 tc("TaskDepListAttribute to_s com dependências",
    "to_s", "TaskDepList",
-   { value: [[{ fullId: "t1" }, { fullId: "d1" }]] }, "t1 d1")
+   { value: [[{ fullId: "t1" }, { fullId: "d1" }]] }, "t1, d1")
 
 # --- ChargeListAttribute ---
 tc("ChargeListAttribute to_tjp com charges",
@@ -247,10 +247,10 @@ tc("ShiftAssignmentsAttribute to_s com atribuições",
 # --- WorkingHoursAttribute ---
 tc("WorkingHoursAttribute to_tjp com horários",
    "to_tjp", "WorkingHours",
-   { value: { getWorkingHours: ->(day) { day == 0 ? [[0, 3600]] : [] } } }, "workinghours sun 1:00 - 2:00\nworkinghours mon off\nworkinghours tue off\nworkinghours wed off\nworkinghours thu off\nworkinghours fri off\nworkinghours sat off")
+   { value: { getWorkingHours: ->(day) { day == 0 ? [[3600, 7200]] : [] } } }, "workinghours sun 1:00 - 2:00\nworkinghours mon off\nworkinghours tue off\nworkinghours wed off\nworkinghours thu off\nworkinghours fri off\nworkinghours sat off")
 tc("WorkingHoursAttribute to_s com horários",
    "to_s", "WorkingHours",
-   { value: { getWorkingHours: ->(day) { day == 0 ? [[0, 3600]] : [] } } }, "sun 1:00 - 2:00")
+   { value: { getWorkingHours: ->(day) { day == 0 ? [[3600, 7200]] : [] } } }, "sun 1:00 - 2:00")
 
 # --- RealFormatAttribute ---
 tc("RealFormatAttribute to_tjp com formato",

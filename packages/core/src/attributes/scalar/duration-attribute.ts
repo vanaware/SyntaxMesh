@@ -8,6 +8,7 @@ import { type PropertyLike, } from "../../model/property-like.ts";
 import { type AttributeContainer, } from "../attribute-container.ts";
 import { type AttributeDefinition, } from "../attribute-definition.ts";
 import { AttributeBase, } from "../attribute-base.ts";
+import { formatDuration, } from "./duration-formatter.ts";
 
 /**
  * Atributo escalar duração.
@@ -27,10 +28,7 @@ export class DurationAttribute extends AttributeBase<number> {
    */
   override to_s(): string {
     const val = this.get();
-    if (val !== null) {
-      return `${val}`;
-    }
-    return "";
+    return val !== null ? `${val}` : "";
   }
 
   /**
@@ -40,6 +38,6 @@ export class DurationAttribute extends AttributeBase<number> {
    */
   override to_tjp(): string {
     const val = this.get();
-    return `${this.tjpId} ${val}h`;
+    return `${this.tjpId} ${val !== null ? `${val}h` : ""}`;
   }
 }

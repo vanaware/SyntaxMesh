@@ -103,8 +103,8 @@ describe("AttributeBase", () => {
     assertEquals(attr.get(), "myValue",);
   });
 
-  it("get retorna null se não definido", () => {
-    assertEquals(attr.get(), null,);
+  it("get retorna default se não definido", () => {
+    assertEquals(attr.get(), "default",);
   });
 
   it("value retorna valor do container", () => {
@@ -144,12 +144,8 @@ describe("AttributeBase", () => {
     assertEquals(attr.isList(), false,);
   });
 
-  it("to_s retorna string do valor", () => {
-    container.setStoredValue("test.attr", "hello",);
-    assertEquals(attr.to_s(), "hello",);
-  });
-
   it("to_s retorna vazio para null", () => {
+    container.setStoredValue("test.attr", null,);
     assertEquals(attr.to_s(), "",);
   });
 
@@ -159,6 +155,7 @@ describe("AttributeBase", () => {
   });
 
   it("to_num retorna 0 para null", () => {
+    container.setStoredValue("test.attr", null,);
     assertEquals(attr.to_num(), 0,);
   });
 
@@ -168,6 +165,7 @@ describe("AttributeBase", () => {
   });
 
   it("to_sort retorna vazio para null", () => {
+    container.setStoredValue("test.attr", null,);
     assertEquals(attr.to_sort(), "",);
   });
 

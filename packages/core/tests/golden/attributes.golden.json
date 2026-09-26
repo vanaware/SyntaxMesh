@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "description": "Golden test cases for Attribute attributes (Phase 3)",
-  "generated_at": "2026-09-25 21:14:15 UTC",
+  "generated_at": "2026-09-26 11:20:46 UTC",
   "cases": [
     {
       "description": "StringAttribute to_tjp com texto simples",
@@ -400,7 +400,7 @@
       "input": {
         "value": [
           {
-            "to_s": "#<Proc:0x00007f99f03f9300 scripts/golden/attributes.rb:162 (lambda)>"
+            "to_s": "#<Proc:0x00007f9df7b795c0 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:162 (lambda)>"
           }
         ]
       },
@@ -413,7 +413,7 @@
       "input": {
         "value": [
           {
-            "to_s": "#<Proc:0x00007f99f03f91c0 scripts/golden/attributes.rb:165 (lambda)>"
+            "to_s": "#<Proc:0x00007f9df7b794a8 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:165 (lambda)>"
           }
         ]
       },
@@ -478,7 +478,7 @@
       "input": {
         "value": [
           {
-            "to_s": "#<Proc:0x00007f99f03f8dd8 scripts/golden/attributes.rb:186 (lambda)>"
+            "to_s": "#<Proc:0x00007f9df7b78f58 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:186 (lambda)>"
           }
         ]
       },
@@ -491,7 +491,7 @@
       "input": {
         "value": [
           {
-            "to_s": "#<Proc:0x00007f99f03f8ce8 scripts/golden/attributes.rb:189 (lambda)>"
+            "to_s": "#<Proc:0x00007f9df7b78e68 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:189 (lambda)>"
           }
         ]
       },
@@ -544,10 +544,10 @@
       "input": {
         "value": [
           {
-            "to_s": "#<Proc:0x00007f99f03f8770 scripts/golden/attributes.rb:210 (lambda)>"
+            "to_s": "#<Proc:0x00007f9df7b78b98 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:210 (lambda)>"
           },
           {
-            "to_s": "#<Proc:0x00007f99f03f8748 scripts/golden/attributes.rb:213 (lambda)>"
+            "to_s": "#<Proc:0x00007f9df7b78850 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:210 (lambda)>"
           }
         ]
       },
@@ -560,10 +560,10 @@
       "input": {
         "value": [
           {
-            "to_s": "#<Proc:0x00007f99f03f8630 scripts/golden/attributes.rb:210 (lambda)>"
+            "to_s": "#<Proc:0x00007f9df7b78760 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:213 (lambda)>"
           },
           {
-            "to_s": "#<Proc:0x00007f99f03f85e0 scripts/golden/attributes.rb:213 (lambda)>"
+            "to_s": "#<Proc:0x00007f9df7b78738 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:213 (lambda)>"
           }
         ]
       },
@@ -679,10 +679,10 @@
       "type": "WorkingHours",
       "input": {
         "value": {
-          "getWorkingHours": "#<Proc:0x00007f99f03f7ed8 scripts/golden/attributes.rb:250 (lambda)>"
+          "getWorkingHours": "#<Proc:0x00007f9df7b78080 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:250 (lambda)>"
         }
       },
-      "expected": "workinghours sun 0:00 - 1:00\nworkinghours mon off\nworkinghours tue off\nworkinghours wed off\nworkinghours thu off\nworkinghours fri off\nworkinghours sat off"
+      "expected": "workinghours sun 1:00 - 2:00\nworkinghours mon off\nworkinghours tue off\nworkinghours wed off\nworkinghours thu off\nworkinghours fri off\nworkinghours sat off"
     },
     {
       "description": "WorkingHoursAttribute to_s com horários",
@@ -690,10 +690,10 @@
       "type": "WorkingHours",
       "input": {
         "value": {
-          "getWorkingHours": "#<Proc:0x00007f99f03f7e10 scripts/golden/attributes.rb:253 (lambda)>"
+          "getWorkingHours": "#<Proc:0x00007f9df7b77fe0 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:253 (lambda)>"
         }
       },
-      "expected": "sun 0:00 - 1:00\nmon off\ntue off\nwed off\nthu off\nfri off\nsat off"
+      "expected": "sun 1:00 - 2:00"
     },
     {
       "description": "RealFormatAttribute to_tjp com formato",
@@ -814,7 +814,7 @@
           "richText": {
             "inputText": "hello"
           },
-          "to_s": "#<Proc:0x00007f99f03f6d58 scripts/golden/attributes.rb:298 (lambda)>"
+          "to_s": "#<Proc:0x00007f9df7b7f470 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:298 (lambda)>"
         }
       },
       "expected": "richtext \"hello\""
@@ -828,7 +828,7 @@
           "richText": {
             "inputText": "hello"
           },
-          "to_s": "#<Proc:0x00007f99f03f6cb8 scripts/golden/attributes.rb:301 (lambda)>"
+          "to_s": "#<Proc:0x00007f9df7b7f3f8 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:301 (lambda)>"
         }
       },
       "expected": "hello"
@@ -899,3 +899,4 @@
     }
   ]
 }
+

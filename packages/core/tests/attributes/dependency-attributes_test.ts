@@ -20,7 +20,9 @@ class TestDependencyListAttribute extends DependencyListAttribute {
 class TestTaskDepListAttribute extends TaskDepListAttribute {
   constructor(
     property: { id: string; name: string },
-    type: AttributeDefinition<({ fullId: string } | [{ fullId: string }, boolean])[]>,
+    type: AttributeDefinition<
+      ({ fullId: string } | [{ fullId: string }, boolean,])[]
+    >,
     container: MockContainer,
   ) {
     super(property, type, container,);
@@ -82,7 +84,7 @@ describe("DependencyAttributes", () => {
 
   describe("TaskDepListAttribute", () => {
     let type: AttributeDefinition<
-      ({ fullId: string } | [{ fullId: string }, boolean])[]
+      ({ fullId: string } | [{ fullId: string }, boolean,])[]
     >;
     let attr: TestTaskDepListAttribute;
 
@@ -98,16 +100,16 @@ describe("DependencyAttributes", () => {
 
     it("to_s com dependências", () => {
       attr.set([
-        [{ fullId: "task1" }, true],
-        [{ fullId: "task2" }, false],
+        [{ fullId: "task1", }, true,],
+        [{ fullId: "task2", }, false,],
       ],);
       assertEquals(attr.to_s(), "task1, task2",);
     });
 
     it("to_tjp com dependências", () => {
       attr.set([
-        [{ fullId: "task1" }, true],
-        [{ fullId: "task2" }, false],
+        [{ fullId: "task1", }, true,],
+        [{ fullId: "task2", }, false,],
       ],);
       assertEquals(attr.to_tjp(), "taskdeplist task1, task2",);
     });

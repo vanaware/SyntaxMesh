@@ -98,6 +98,39 @@ packages/core/src/
 │   ├── project.ts
 │   ├── task.ts
 │   ├── resource.ts
+│   └── property-like.ts
+├── attributes/
+│   ├── mod.ts
+│   ├── attribute-base.ts
+│   ├── attribute-container.ts
+│   ├── attribute-definition.ts
+│   ├── attribute-type.ts
+│   ├── errors.ts
+│   ├── list-attribute-base.ts
+│   ├── reference/
+│   ├── list/
+│   ├── dependency/
+│   ├── financial/
+│   ├── allocation/
+│   ├── logical/
+│   ├── time-interval/
+│   ├── format/
+│   └── rich/
+├── time/
+│   ├── tj-time.ts
+│   ├── timezone.ts
+│   ├── interval.ts
+│   ├── interval-list.ts
+│   ├── time-interval.ts
+│   └── scoreboard-interval.ts
+│   └── scoreboard.ts
+├── calendar/
+│   └── working-hours.ts
+├── format/
+│   └── real-format.ts
+├── compat.ts
+└── utils/
+    └── deep-clone.ts
 │   ├── account.ts
 │   ├── scenario.ts
 │   ├── calendar.ts

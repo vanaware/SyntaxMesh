@@ -29,7 +29,7 @@ export class BookingListAttribute
   override to_s(): string {
     const val = this.get();
     if (val === null) return "";
-    return val.map(item => item.to_s()).join(', ');
+    return val.map((item,) => item.to_s()).join(", ",);
   }
 
   /**

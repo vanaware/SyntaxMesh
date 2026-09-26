@@ -88,6 +88,7 @@ describe("ReferenceAttributes", () => {
     });
 
     it("to_s sem valor retorna ''", () => {
+      container.setStoredValue("account", null,);
       assertEquals(attr.to_s(), "",);
     });
 
@@ -97,6 +98,7 @@ describe("ReferenceAttributes", () => {
     });
 
     it("to_tjp sem valor retorna ''", () => {
+      container.setStoredValue("account", null,);
       assertEquals(attr.to_tjp(), "",);
     });
 
@@ -125,6 +127,7 @@ describe("ReferenceAttributes", () => {
     });
 
     it("to_s sem valor retorna ''", () => {
+      container.setStoredValue("reference", null,);
       assertEquals(attr.to_s(), "",);
     });
 
@@ -142,6 +145,7 @@ describe("ReferenceAttributes", () => {
     });
 
     it("to_tjp sem valor retorna ''", () => {
+      container.setStoredValue("reference", null,);
       assertEquals(attr.to_tjp(), "",);
     });
 
@@ -151,6 +155,7 @@ describe("ReferenceAttributes", () => {
     });
 
     it("url() sem valor retorna null", () => {
+      container.setStoredValue("reference", null,);
       assertEquals(attr.url(), null,);
     });
 
@@ -165,6 +170,7 @@ describe("ReferenceAttributes", () => {
     });
 
     it("label() sem valor retorna null", () => {
+      container.setStoredValue("reference", null,);
       assertEquals(attr.label(), null,);
     });
 

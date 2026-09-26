@@ -21,7 +21,7 @@ export class LogicalExpressionAttribute extends AttributeBase<unknown> {
   static readonly tjpId = "logicalexpressions";
 
   override to_s(): string {
-    return String(this.get());
+    return String(this.get(),);
   }
 
   override to_tjp(): string {

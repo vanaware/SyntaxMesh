@@ -55,6 +55,7 @@
      "lint-fix": "deno lint --fix",
      "check-all": "deno task check && deno task lint && deno task fmt --check && deno task test",
      "tests": "deno task check && deno task test",
+     "golden:generate": "deno run --allow-read --allow-write --allow-run ./packages/core/tests/golden/generate_golden.ts",
      "dev": "deno task --cwd packages/server dev",
      "start": "deno task --cwd packages/server start",
      "export": "deno run --allow-read --allow-write ./export.ts",

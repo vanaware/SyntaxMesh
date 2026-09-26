@@ -74,6 +74,7 @@ export abstract class AttributeBase<T,> {
     this.property = property;
     this.type = type;
     this.container = container;
+    this.reset();
   }
 
   /**

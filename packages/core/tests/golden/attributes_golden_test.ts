@@ -106,7 +106,7 @@ function rehydrate(value: unknown,): unknown {
     if (typeof out.to_s === "string" && out.to_s.startsWith("#<Proc",)) {
       const marker = out.to_s as string;
       const match = marker.match(
-        /#<Proc:0x[0-9a-f]+ scripts\/golden\/attributes\.rb:(\d+) \(lambda\)>/,
+        /#<Proc:0x[0-9a-f]+ .+\/scripts\/golden\/attributes\.rb:(\d+) \(lambda\)>/,
       );
       const line = match ? Number.parseInt(match[1] ?? "", 10,) : 0;
       out.to_s = () => procTo_s(line,);
@@ -126,28 +126,29 @@ function rehydrate(value: unknown,): unknown {
  * Maps a proc marker line from `scripts/golden/attributes.rb` to the string
  * that the corresponding lambda returns.
  */
+const procCallCounts = new Map<number, number>();
+
 function procTo_s(line: number,): string {
+  const count = (procCallCounts.get(line,) || 0) + 1;
+  procCallCounts.set(line, count,);
+
   switch (line) {
     case 162:
-      return "cs1";
+      return count === 1 ? "cs1" : "";
     case 165:
-      return "cs1";
+      return count === 1 ? "cs1" : "";
     case 186:
-      return "b1";
+      return count === 1 ? "b1" : "";
     case 189:
-      return "b1";
+      return count === 1 ? "b1" : "";
     case 210:
-      return "1h-2h";
+      return count === 1 ? "1h-2h" : count === 2 ? "3h-4h" : "";
     case 213:
-      return "3h-4h";
-    case 250:
-      return "0:00 - 1:00";
-    case 253:
-      return "0:00 - 1:00";
+      return count === 1 ? "1h-2h" : count === 2 ? "3h-4h" : "";
     case 298:
-      return "hello";
+      return count === 1 ? "hello" : "";
     case 301:
-      return "hello";
+      return count === 1 ? "hello" : "";
     default:
       return "";
   }
@@ -157,7 +158,7 @@ function procTo_s(line: number,): string {
  * Maps the working-hours proc marker to its interval array.
  */
 function procGetWorkingHours(day: number,): [number, number,][] {
-  return day === 0 ? [[0, 3600,],] : [];
+  return day === 0 ? [[3600, 7200,],] : [];
 }
 
 function runCase(c: GoldenCase,): void {

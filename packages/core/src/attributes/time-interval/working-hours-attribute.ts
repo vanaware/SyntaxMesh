@@ -70,14 +70,11 @@ export class WorkingHoursAttribute extends AttributeBase<unknown> {
     const dayNames = ["sun", "mon", "tue", "wed", "thu", "fri", "sat",];
     let str = "";
     for (let day = 0; day < 7; day++) {
-      if (day > 0) str += "\n";
-      str += `${dayNames[day]} `;
       const whs =
         (this.get() as WorkingHoursValue | null)?.getWorkingHours?.(day,) ?? [];
-      if (whs.length === 0) {
-        str += "off";
-        continue;
-      }
+      if (whs.length === 0) continue;
+      if (str.length > 0) str += "\n";
+      str += `${dayNames[day]} `;
       let first = true;
       for (const iv of whs) {
         if (first) {
