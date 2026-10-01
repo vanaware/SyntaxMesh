@@ -6,7 +6,7 @@ export class Account extends PropertyTreeNode {
   constructor(
     project: ProjectLike,
     id: string | null,
-    name: string | null,
+    name: string,
     parent: Account | null,
   ) {
     super(project.accounts, id, name, parent,);
@@ -18,6 +18,6 @@ export class Account extends PropertyTreeNode {
   }
 
   override scenarioData(scIdx: number): AccountScenario {
-    return this.data[scIdx]!;
+    return this.data[scIdx]! as AccountScenario;
   }
 }

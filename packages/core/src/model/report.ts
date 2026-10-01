@@ -10,7 +10,7 @@ export class Report extends PropertyTreeNode {
   constructor(
     project: ProjectLike,
     id: string | null,
-    name: string | null,
+    name: string,
     parent: Report | null,
   ) {
     super(project.reports, id, name, parent,);
@@ -24,7 +24,7 @@ export class Report extends PropertyTreeNode {
   }
 
   override scenarioData(scIdx: number): ReportScenario {
-    return this.data[scIdx]!;
+    return this.data[scIdx]! as ReportScenario;
   }
 
   /**

@@ -35,7 +35,7 @@ export class ShiftScenario extends ScenarioData {
    * @see docs/taskjuggler/lib/taskjuggler/ShiftScenario.rb:onLeave?
    */
   onLeave(date: TjTime): boolean {
-    const leaves = this.a("leaves");
+    const leaves = this.a("leaves") as Iterable<{ interval: { contains(d: TjTime): boolean } }>;
     if (!leaves) {
       return false;
     }

@@ -6,7 +6,7 @@ export class Resource extends PropertyTreeNode {
   constructor(
     project: ProjectLike,
     id: string | null,
-    name: string | null,
+    name: string,
     parent: Resource | null,
   ) {
     super(project.resources, id, name, parent,);
@@ -18,6 +18,6 @@ export class Resource extends PropertyTreeNode {
   }
 
   override scenarioData(scIdx: number): ResourceScenario {
-    return this.data[scIdx]!;
+    return this.data[scIdx]! as ResourceScenario;
   }
 }

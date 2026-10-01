@@ -6,7 +6,7 @@ export class Shift extends PropertyTreeNode {
   constructor(
     project: ProjectLike,
     id: string | null,
-    name: string | null,
+    name: string,
     parent: Shift | null,
   ) {
     super(project.shifts, id, name, parent,);
@@ -18,6 +18,6 @@ export class Shift extends PropertyTreeNode {
   }
 
   override scenarioData(scIdx: number): ShiftScenario {
-    return this.data[scIdx]!;
+    return this.data[scIdx]! as ShiftScenario;
   }
 }

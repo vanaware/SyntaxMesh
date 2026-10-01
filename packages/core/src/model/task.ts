@@ -6,7 +6,7 @@ export class Task extends PropertyTreeNode {
   constructor(
     project: ProjectLike,
     id: string | null,
-    name: string | null,
+    name: string,
     parent: Task | null,
   ) {
     super(project.tasks, id, name, parent,);
@@ -18,6 +18,6 @@ export class Task extends PropertyTreeNode {
   }
 
   override scenarioData(scIdx: number): TaskScenario {
-    return this.data[scIdx]!;
+    return this.data[scIdx]! as TaskScenario;
   }
 }
