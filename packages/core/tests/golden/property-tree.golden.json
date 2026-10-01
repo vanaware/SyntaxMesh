@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "description": "Golden test cases for PropertyTreeNode, PropertySet, ScenarioData, Scenario, PTNProxy (Phase 4)",
-  "generated_at": "2026-10-01 09:51:10 UTC",
+  "generated_at": "2026-10-01 17:04:24 UTC",
   "cases": [
     {
       "description": "fullId hierárquico - raiz",
@@ -150,7 +150,8 @@
         "value": null
       },
       "expected": false,
-      "node": "root"
+      "node": "root",
+      "target": "child"
     },
     {
       "description": "isChildOf filho -> raiz",
@@ -160,7 +161,8 @@
         "value": null
       },
       "expected": true,
-      "node": "child"
+      "node": "child",
+      "target": "root"
     },
     {
       "description": "isChildOf neto -> filho",
@@ -170,7 +172,8 @@
         "value": null
       },
       "expected": true,
-      "node": "gc"
+      "node": "gc",
+      "target": "child"
     },
     {
       "description": "isChildOf neto -> raiz",
@@ -180,7 +183,8 @@
         "value": null
       },
       "expected": true,
-      "node": "gc"
+      "node": "gc",
+      "target": "root"
     },
     {
       "description": "leaf raiz",
@@ -419,7 +423,8 @@
         "value": null
       },
       "expected": 100,
-      "node": "child"
+      "node": "child",
+      "attr": "priority"
     },
     {
       "description": "herança do root para neto",
@@ -429,7 +434,8 @@
         "value": null
       },
       "expected": 100,
-      "node": "gc"
+      "node": "gc",
+      "attr": "priority"
     },
     {
       "description": "filho sobrescreve neto",
@@ -439,7 +445,8 @@
         "value": null
       },
       "expected": 200,
-      "node": "gc"
+      "node": "gc",
+      "attr": "priority"
     },
     {
       "description": "root provided",
@@ -449,7 +456,8 @@
         "value": null
       },
       "expected": true,
-      "node": "root"
+      "node": "root",
+      "attr": "priority"
     },
     {
       "description": "root inherited",
@@ -459,7 +467,8 @@
         "value": null
       },
       "expected": false,
-      "node": "root"
+      "node": "root",
+      "attr": "priority"
     },
     {
       "description": "filho provided",
@@ -469,7 +478,8 @@
         "value": null
       },
       "expected": true,
-      "node": "child"
+      "node": "child",
+      "attr": "priority"
     },
     {
       "description": "filho inherited",
@@ -479,7 +489,8 @@
         "value": null
       },
       "expected": true,
-      "node": "child"
+      "node": "child",
+      "attr": "priority"
     },
     {
       "description": "neto provided",
@@ -489,7 +500,8 @@
         "value": null
       },
       "expected": false,
-      "node": "gc"
+      "node": "gc",
+      "attr": "priority"
     },
     {
       "description": "neto inherited",
@@ -499,7 +511,8 @@
         "value": null
       },
       "expected": true,
-      "node": "gc"
+      "node": "gc",
+      "attr": "priority"
     },
     {
       "description": "root modified",
@@ -509,7 +522,8 @@
         "value": null
       },
       "expected": true,
-      "node": "root"
+      "node": "root",
+      "attr": "priority"
     },
     {
       "description": "filho modified",
@@ -519,7 +533,8 @@
         "value": null
       },
       "expected": true,
-      "node": "child"
+      "node": "child",
+      "attr": "priority"
     },
     {
       "description": "neto modified",
@@ -529,7 +544,8 @@
         "value": null
       },
       "expected": true,
-      "node": "gc"
+      "node": "gc",
+      "attr": "priority"
     },
     {
       "description": "cenario 0 provided",
@@ -649,7 +665,8 @@
         "value": null
       },
       "expected": "throws",
-      "node": "task"
+      "node": "task",
+      "adopter": "root2"
     },
     {
       "description": "auto-adoção - lança erro",
@@ -659,7 +676,8 @@
         "value": null
       },
       "expected": "throws",
-      "node": "task"
+      "node": "task",
+      "adopter": "task"
     },
     {
       "description": "status após modificação",
@@ -669,7 +687,8 @@
         "value": null
       },
       "expected": "in_progress",
-      "node": "root"
+      "node": "root",
+      "attr": "status"
     },
     {
       "description": "priority após modificação",
@@ -679,7 +698,8 @@
         "value": null
       },
       "expected": 100,
-      "node": "root"
+      "node": "root",
+      "attr": "priority"
     },
     {
       "description": "status após restore",
@@ -689,7 +709,8 @@
         "value": null
       },
       "expected": "in_progress",
-      "node": "root"
+      "node": "root",
+      "attr": "status"
     },
     {
       "description": "priority após restore",
@@ -699,7 +720,8 @@
         "value": null
       },
       "expected": 500,
-      "node": "root"
+      "node": "root",
+      "attr": "priority"
     },
     {
       "description": "modificação no backup afeta original",
@@ -709,7 +731,8 @@
         "value": null
       },
       "expected": "modified",
-      "node": "root"
+      "node": "root",
+      "attr": "status"
     },
     {
       "description": "fullId namespace plano raiz",
@@ -778,3 +801,4 @@
     }
   ]
 }
+

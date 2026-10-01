@@ -1,6 +1,7 @@
 import { type ProjectLike, } from "./project-like.ts";
 import { PropertyTreeNode, } from "./property-tree-node.ts";
 import { PropertySet, } from "./property-set.ts";
+import { ScenarioData, } from "./scenario-data.ts";
 
 export class Scenario extends PropertyTreeNode {
   constructor(
@@ -38,5 +39,9 @@ export class Scenario extends PropertyTreeNode {
       });
     }
     return result;
+  }
+
+  override scenarioData(scIdx: number): ScenarioData {
+    return this.data[scIdx]!;
   }
 }

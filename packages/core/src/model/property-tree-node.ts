@@ -71,7 +71,21 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
     }
 
     if (id !== null) {
-      this.subId = id;
+      // Handle hierarchical IDs like Ruby: split at last '.'
+      if (!propertySet.flatNamespace && id.includes('.')) {
+        const lastDotIndex = id.lastIndexOf('.');
+        this.subId = id.substring(lastDotIndex + 1);
+        // Try to set parent from propertySet if parent is still null
+        if (parent === null) {
+          const parentId = id.substring(0, lastDotIndex);
+          const parentNode = propertySet.get(parentId);
+          if (parentNode) {
+            this._parent = parentNode;
+          }
+        }
+      } else {
+        this.subId = id;
+      }
     } else if (!propertySet.flatNamespace && resolvedId.includes('.')) {
       this.subId = resolvedId.substring(resolvedId.lastIndexOf('.') + 1);
     } else {
@@ -85,6 +99,10 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
       parent.addChild(this);
     }
     propertySet.addProperty(this);
+  }
+
+  get parent(): PropertyTreeNode | null {
+    return this._parent;
   }
 
   get level(): number {
@@ -141,8 +159,8 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
     } else {
       const parent = this.parents()[0];
       if (parent) {
-        nodes.push(...parent.ancestors(false));
         nodes.push(parent);
+        nodes.push(...parent.ancestors(false));
       }
     }
     return nodes;
@@ -204,15 +222,15 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
 
   getBSIndicies(): number[] {
     const indices: number[] = [];
-    let current: PropertyTreeNode | null = this._parent;
+    let current: PropertyTreeNode | null = this;
     while (current) {
-      const parent = current.parents()[0];
+      const parent = current._parent as PropertyTreeNode | null;
       if (parent) {
         indices.unshift(parent.levelSeqNo(current));
       } else {
         indices.unshift(this.propertySet.levelSeqNo(current));
       }
-      current = current._parent;
+      current = parent;
     }
     return indices;
   }

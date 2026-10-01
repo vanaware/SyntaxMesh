@@ -29,6 +29,9 @@ export * from "./model/message-handler-like.ts";
 export * from "./model/scenario-data.ts";
 export * from "./model/errors.ts";
 export * from "./model/property-tree-node.ts";
+export * from "./model/property-set.ts";
+export * from "./model/scenario.ts";
+export * from "./model/ptn-proxy.ts";
 // Export attributes module
 export * from "./attributes/mod.ts";
 // Export utils module

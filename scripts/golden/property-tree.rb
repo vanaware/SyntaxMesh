@@ -31,6 +31,9 @@ def tc(desc, method, type, input, expected, *args)
     h[:mode] = opts[:mode] if opts[:mode]
     h[:inherit] = opts[:inherit] if opts[:inherit]
     h[:node] = opts[:node] if opts[:node]
+    h[:target] = opts[:target] if opts[:target]
+    h[:adopter] = opts[:adopter] if opts[:adopter]
+    h[:attr] = opts[:attr] if opts[:attr]
   end
   $golden_cases << h
 end
@@ -111,10 +114,10 @@ def testStructure
   tc("allLeaves sem self", "allLeaves", "TestProperty", { value: nil, withoutSelf: true }, fmtList(root.allLeaves(true)), node: "root")
   tc("allLeaves com self", "allLeaves", "TestProperty", { value: nil, withoutSelf: false }, fmtList(root.allLeaves(false)), node: "root")
 
-  tc("isChildOf raiz -> filho", "isChildOf", "TestProperty", { value: nil }, root.isChildOf?(child), node: "root")
-  tc("isChildOf filho -> raiz", "isChildOf", "TestProperty", { value: nil }, child.isChildOf?(root), node: "child")
-  tc("isChildOf neto -> filho", "isChildOf", "TestProperty", { value: nil }, gc.isChildOf?(child), node: "gc")
-  tc("isChildOf neto -> raiz", "isChildOf", "TestProperty", { value: nil }, gc.isChildOf?(root), node: "gc")
+  tc("isChildOf raiz -> filho", "isChildOf", "TestProperty", { value: nil }, root.isChildOf?(child), node: "root", target: "child")
+  tc("isChildOf filho -> raiz", "isChildOf", "TestProperty", { value: nil }, child.isChildOf?(root), node: "child", target: "root")
+  tc("isChildOf neto -> filho", "isChildOf", "TestProperty", { value: nil }, gc.isChildOf?(child), node: "gc", target: "child")
+  tc("isChildOf neto -> raiz", "isChildOf", "TestProperty", { value: nil }, gc.isChildOf?(root), node: "gc", target: "root")
 
   tc("leaf raiz", "leaf", "TestProperty", { value: nil }, root.leaf?, node: "root")
   tc("leaf filho", "leaf", "TestProperty", { value: nil }, child.leaf?, node: "child")
@@ -163,24 +166,24 @@ def testInheritance3Levels
   child.inheritAttributes
   gc.inheritAttributes
 
-  tc("herança do root para filho", "get", "TestProperty", { value: nil }, root.get("priority"), node: "child")
-  tc("herança do root para neto", "get", "TestProperty", { value: nil }, root.get("priority"), node: "gc")
+  tc("herança do root para filho", "get", "TestProperty", { value: nil }, root.get("priority"), node: "child", attr: "priority")
+  tc("herança do root para neto", "get", "TestProperty", { value: nil }, root.get("priority"), node: "gc", attr: "priority")
 
   child.set("priority", 200)
   gc.inheritAttributes
 
-  tc("filho sobrescreve neto", "get", "TestProperty", { value: nil }, child.get("priority"), node: "gc")
+  tc("filho sobrescreve neto", "get", "TestProperty", { value: nil }, child.get("priority"), node: "gc", attr: "priority")
 
-  tc("root provided", "provided", "TestProperty", { value: nil }, root.provided("priority"), node: "root")
-  tc("root inherited", "inherited", "TestProperty", { value: nil }, root.inherited("priority"), node: "root")
-  tc("filho provided", "provided", "TestProperty", { value: nil }, child.provided("priority"), node: "child")
-  tc("filho inherited", "inherited", "TestProperty", { value: nil }, child.inherited("priority"), node: "child")
-  tc("neto provided", "provided", "TestProperty", { value: nil }, gc.provided("priority"), node: "gc")
-  tc("neto inherited", "inherited", "TestProperty", { value: nil }, gc.inherited("priority"), node: "gc")
+  tc("root provided", "provided", "TestProperty", { value: nil }, root.provided("priority"), node: "root", attr: "priority")
+  tc("root inherited", "inherited", "TestProperty", { value: nil }, root.inherited("priority"), node: "root", attr: "priority")
+  tc("filho provided", "provided", "TestProperty", { value: nil }, child.provided("priority"), node: "child", attr: "priority")
+  tc("filho inherited", "inherited", "TestProperty", { value: nil }, child.inherited("priority"), node: "child", attr: "priority")
+  tc("neto provided", "provided", "TestProperty", { value: nil }, gc.provided("priority"), node: "gc", attr: "priority")
+  tc("neto inherited", "inherited", "TestProperty", { value: nil }, gc.inherited("priority"), node: "gc", attr: "priority")
 
-  tc("root modified", "modified", "TestProperty", { value: nil }, root.modified?("priority"), node: "root")
-  tc("filho modified", "modified", "TestProperty", { value: nil }, child.modified?("priority"), node: "child")
-  tc("neto modified", "modified", "TestProperty", { value: nil }, gc.modified?("priority"), node: "gc")
+  tc("root modified", "modified", "TestProperty", { value: nil }, root.modified?("priority"), node: "root", attr: "priority")
+  tc("filho modified", "modified", "TestProperty", { value: nil }, child.modified?("priority"), node: "child", attr: "priority")
+  tc("neto modified", "modified", "TestProperty", { value: nil }, gc.modified?("priority"), node: "gc", attr: "priority")
 end
 
 def testScenarioSpecificInheritance
@@ -223,16 +226,16 @@ def testAdoption
 
   begin
     root2.adopt(task)
-    tc("adoção duplicada - lança erro", "adopt", "TestProperty", { value: nil }, "throws", node: "task")
+    tc("adoção duplicada - lança erro", "adopt", "TestProperty", { value: nil }, "throws", node: "task", adopter: "root2")
   rescue TaskJuggler::TjRuntimeError => e
-    tc("adoção duplicada - lança erro", "adopt", "TestProperty", { value: nil }, "throws", node: "task")
+    tc("adoção duplicada - lança erro", "adopt", "TestProperty", { value: nil }, "throws", node: "task", adopter: "root2")
   end
 
   begin
     task.adopt(task)
-    tc("auto-adoção - deve lançar erro", "adopt", "TestProperty", { value: nil }, "throws", node: "task")
+    tc("auto-adoção - deve lançar erro", "adopt", "TestProperty", { value: nil }, "throws", node: "task", adopter: "task")
   rescue TaskJuggler::TjRuntimeError => e
-    tc("auto-adoção - lança erro", "adopt", "TestProperty", { value: nil }, "throws", node: "task")
+    tc("auto-adoção - lança erro", "adopt", "TestProperty", { value: nil }, "throws", node: "task", adopter: "task")
   end
 end
 
@@ -253,16 +256,16 @@ def testBackupRestore
   ))
   root.set("priority", 100)
 
-  tc("status após modificação", "get", "TestProperty", { value: nil }, root.get("status"), node: "root")
-  tc("priority após modificação", "get", "TestProperty", { value: nil }, root.get("priority"), node: "root")
+  tc("status após modificação", "get", "TestProperty", { value: nil }, root.get("status"), node: "root", attr: "status")
+  tc("priority após modificação", "get", "TestProperty", { value: nil }, root.get("priority"), node: "root", attr: "priority")
 
   root.restoreAttributes(backup)
 
-  tc("status após restore", "get", "TestProperty", { value: nil }, root.get("status"), node: "root")
-  tc("priority após restore", "get", "TestProperty", { value: nil }, root.get("priority"), node: "root")
+  tc("status após restore", "get", "TestProperty", { value: nil }, root.get("status"), node: "root", attr: "status")
+  tc("priority após restore", "get", "TestProperty", { value: nil }, root.get("priority"), node: "root", attr: "priority")
 
   backup[0]["status"].set("modified")
-  tc("modificação no backup afeta original", "get", "TestProperty", { value: nil }, root.get("status"), node: "root")
+  tc("modificação no backup afeta original", "get", "TestProperty", { value: nil }, root.get("status"), node: "root", attr: "status")
 end
 
 def testFlatNamespace

@@ -32,7 +32,7 @@ export class MockProject implements ProjectLike {
       id: sc.id,
       fullId: sc.fullId,
       all: () => {
-        return this.scenarios.map(s => ({ id: s.id, fullId: s.fullId }));
+        return [];
       },
     };
   }

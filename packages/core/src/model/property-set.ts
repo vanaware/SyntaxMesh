@@ -191,7 +191,7 @@ export class PropertySet {
   levelSeqNo(property: PropertyTreeNode): number {
     let seqNo = 1;
     for (const p of this._properties) {
-      if (!p.parents()[0]) {
+      if (!p.parent) {
         if (p === property) {
           return seqNo;
         }

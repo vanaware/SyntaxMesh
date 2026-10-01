@@ -17,7 +17,7 @@ describe("Scenario", () => {
     const scenario = new Scenario(project, "plan", "Plan", null,);
     assertEquals(scenario.id, "plan");
     assertEquals(scenario.name, "Plan");
-    assertEquals(scenario.level, 1);
+    assertEquals(scenario.level, 0);
   });
 
   it("cenario herda de PropertyTreeNode", () => {

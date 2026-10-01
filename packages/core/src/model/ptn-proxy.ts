@@ -1,6 +1,7 @@
 import { type PropertyTreeNode, } from "./property-tree-node.ts";
 import { type ProjectLike, } from "./project-like.ts";
 import { type AttributeContainer, } from "../attributes/attribute-container.ts";
+import { ScenarioData, } from "./scenario-data.ts";
 
 export class PTNProxy implements AttributeContainer {
   private readonly _ptn: PropertyTreeNode;
@@ -115,5 +116,9 @@ export class PTNProxy implements AttributeContainer {
 
   setStoredValue(attributeId: string, value: unknown): void {
     this._ptn.setStoredValue(attributeId, value);
+  }
+
+  scenarioData(scIdx: number): ScenarioData {
+    return this._ptn.scenarioData(scIdx);
   }
 }
