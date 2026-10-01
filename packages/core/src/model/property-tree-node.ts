@@ -22,7 +22,7 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
   readonly adoptees: PropertyTreeNode[];
   readonly stepParents: PropertyTreeNode[];
   sourceFileInfo: SourceFileInfo | null;
-  readonly data: ScenarioData[];
+  data: ScenarioData[];
   private _level: number;
 
   attributes: Map<string, AttributeBase<unknown>>;
@@ -329,6 +329,24 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
       return this.scenarioAttribute(scIdx, id);
     }
     return this.attribute(id);
+  }
+
+  /**
+   * Acesso público ao atributo de cenário (para uso interno do ScenarioData).
+   * Cria o AttributeBase se ainda não existir.
+   */
+  getScenarioAttribute(scIdx: number, id: string): AttributeBase<unknown> {
+    return this.scenarioAttribute(scIdx, id);
+  }
+
+  /**
+   * Retorna o Map de atributos de cenário para um scIdx (uso interno).
+   */
+  protected getScenarioAttributes(scIdx: number): Map<string, AttributeBase<unknown>> {
+    if (!this.scenarioAttributes[scIdx]) {
+      this.scenarioAttributes[scIdx] = new Map();
+    }
+    return this.scenarioAttributes[scIdx];
   }
 
   getForScenario(id: string, scIdx: number): unknown {

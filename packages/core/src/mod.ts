@@ -23,15 +23,7 @@ export * from "./format/real-format.ts";
 // Export compat
 export * from "./compat.ts";
 // Export model module
-export * from "./model/property-like.ts";
-export * from "./model/project-like.ts";
-export * from "./model/message-handler-like.ts";
-export * from "./model/scenario-data.ts";
-export * from "./model/errors.ts";
-export * from "./model/property-tree-node.ts";
-export * from "./model/property-set.ts";
-export * from "./model/scenario.ts";
-export * from "./model/ptn-proxy.ts";
+export * from "./model/mod.ts";
 // Export attributes module
 export * from "./attributes/mod.ts";
 // Export utils module
