@@ -1,0 +1,780 @@
+{
+  "version": "1.0",
+  "description": "Golden test cases for PropertyTreeNode, PropertySet, ScenarioData, Scenario, PTNProxy (Phase 4)",
+  "generated_at": "2026-10-01 09:51:10 UTC",
+  "cases": [
+    {
+      "description": "fullId hierárquico - raiz",
+      "method": "fullId",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": "root",
+      "node": "root"
+    },
+    {
+      "description": "fullId hierárquico - filho",
+      "method": "fullId",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": "root.child",
+      "node": "child"
+    },
+    {
+      "description": "fullId hierárquico - neto",
+      "method": "fullId",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": "root.child.gc",
+      "node": "gc"
+    },
+    {
+      "description": "level raiz",
+      "method": "level",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": 0,
+      "node": "root"
+    },
+    {
+      "description": "level filho",
+      "method": "level",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": 1,
+      "node": "child"
+    },
+    {
+      "description": "level neto",
+      "method": "level",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": 2,
+      "node": "gc"
+    },
+    {
+      "description": "getBSIndicies raiz",
+      "method": "getBSIndicies",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": [
+        1
+      ],
+      "node": "root"
+    },
+    {
+      "description": "getBSIndicies filho",
+      "method": "getBSIndicies",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": [
+        1,
+        1
+      ],
+      "node": "child"
+    },
+    {
+      "description": "getBSIndicies neto",
+      "method": "getBSIndicies",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": [
+        1,
+        1,
+        1
+      ],
+      "node": "gc"
+    },
+    {
+      "description": "all inclui self",
+      "method": "all",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": [
+        "root",
+        "root.child",
+        "root.child.gc"
+      ],
+      "node": "root"
+    },
+    {
+      "description": "allLeaves sem self",
+      "method": "allLeaves",
+      "type": "TestProperty",
+      "input": {
+        "value": null,
+        "withoutSelf": true
+      },
+      "expected": [
+        "root.child.gc"
+      ],
+      "node": "root"
+    },
+    {
+      "description": "allLeaves com self",
+      "method": "allLeaves",
+      "type": "TestProperty",
+      "input": {
+        "value": null,
+        "withoutSelf": false
+      },
+      "expected": [
+        "root.child.gc"
+      ],
+      "node": "root"
+    },
+    {
+      "description": "isChildOf raiz -> filho",
+      "method": "isChildOf",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": false,
+      "node": "root"
+    },
+    {
+      "description": "isChildOf filho -> raiz",
+      "method": "isChildOf",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": true,
+      "node": "child"
+    },
+    {
+      "description": "isChildOf neto -> filho",
+      "method": "isChildOf",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": true,
+      "node": "gc"
+    },
+    {
+      "description": "isChildOf neto -> raiz",
+      "method": "isChildOf",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": true,
+      "node": "gc"
+    },
+    {
+      "description": "leaf raiz",
+      "method": "leaf",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": false,
+      "node": "root"
+    },
+    {
+      "description": "leaf filho",
+      "method": "leaf",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": false,
+      "node": "child"
+    },
+    {
+      "description": "leaf neto",
+      "method": "leaf",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": true,
+      "node": "gc"
+    },
+    {
+      "description": "container raiz",
+      "method": "container",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": true,
+      "node": "root"
+    },
+    {
+      "description": "container filho",
+      "method": "container",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": true,
+      "node": "child"
+    },
+    {
+      "description": "container neto",
+      "method": "container",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": false,
+      "node": "gc"
+    },
+    {
+      "description": "kids raiz",
+      "method": "kids",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": [
+        "root.child"
+      ],
+      "node": "root"
+    },
+    {
+      "description": "kids filho",
+      "method": "kids",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": [
+        "root.child.gc"
+      ],
+      "node": "child"
+    },
+    {
+      "description": "kids neto",
+      "method": "kids",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": [
+
+      ],
+      "node": "gc"
+    },
+    {
+      "description": "parents raiz",
+      "method": "parents",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": [
+
+      ],
+      "node": "root"
+    },
+    {
+      "description": "parents filho",
+      "method": "parents",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": [
+        "root"
+      ],
+      "node": "child"
+    },
+    {
+      "description": "parents neto",
+      "method": "parents",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": [
+        "root.child"
+      ],
+      "node": "gc"
+    },
+    {
+      "description": "root raiz",
+      "method": "root",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": "root",
+      "node": "root"
+    },
+    {
+      "description": "root filho",
+      "method": "root",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": "root",
+      "node": "child"
+    },
+    {
+      "description": "root neto",
+      "method": "root",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": "root",
+      "node": "gc"
+    },
+    {
+      "description": "ancestors raiz",
+      "method": "ancestors",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": [
+
+      ],
+      "node": "root"
+    },
+    {
+      "description": "ancestors filho",
+      "method": "ancestors",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": [
+        "root"
+      ],
+      "node": "child"
+    },
+    {
+      "description": "ancestors neto",
+      "method": "ancestors",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": [
+        "root.child",
+        "root"
+      ],
+      "node": "gc"
+    },
+    {
+      "description": "logicalId raiz",
+      "method": "logicalId",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": "root",
+      "node": "root"
+    },
+    {
+      "description": "logicalId filho",
+      "method": "logicalId",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": "root.child",
+      "node": "child"
+    },
+    {
+      "description": "logicalId neto",
+      "method": "logicalId",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": "root.child.gc",
+      "node": "gc"
+    },
+    {
+      "description": "herança do root para filho",
+      "method": "get",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": 100,
+      "node": "child"
+    },
+    {
+      "description": "herança do root para neto",
+      "method": "get",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": 100,
+      "node": "gc"
+    },
+    {
+      "description": "filho sobrescreve neto",
+      "method": "get",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": 200,
+      "node": "gc"
+    },
+    {
+      "description": "root provided",
+      "method": "provided",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": true,
+      "node": "root"
+    },
+    {
+      "description": "root inherited",
+      "method": "inherited",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": false,
+      "node": "root"
+    },
+    {
+      "description": "filho provided",
+      "method": "provided",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": true,
+      "node": "child"
+    },
+    {
+      "description": "filho inherited",
+      "method": "inherited",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": true,
+      "node": "child"
+    },
+    {
+      "description": "neto provided",
+      "method": "provided",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": false,
+      "node": "gc"
+    },
+    {
+      "description": "neto inherited",
+      "method": "inherited",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": true,
+      "node": "gc"
+    },
+    {
+      "description": "root modified",
+      "method": "modified",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": true,
+      "node": "root"
+    },
+    {
+      "description": "filho modified",
+      "method": "modified",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": true,
+      "node": "child"
+    },
+    {
+      "description": "neto modified",
+      "method": "modified",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": true,
+      "node": "gc"
+    },
+    {
+      "description": "cenario 0 provided",
+      "method": "provided",
+      "type": "TestProperty",
+      "input": {
+        "value": null,
+        "scenarioIdx": 0
+      },
+      "expected": false,
+      "node": "root"
+    },
+    {
+      "description": "cenario 0 inherited",
+      "method": "inherited",
+      "type": "TestProperty",
+      "input": {
+        "value": null,
+        "scenarioIdx": 0
+      },
+      "expected": false,
+      "node": "root"
+    },
+    {
+      "description": "cenario 1 provided",
+      "method": "provided",
+      "type": "TestProperty",
+      "input": {
+        "value": null,
+        "scenarioIdx": 1
+      },
+      "expected": false,
+      "node": "root"
+    },
+    {
+      "description": "cenario 1 inherited",
+      "method": "inherited",
+      "type": "TestProperty",
+      "input": {
+        "value": null,
+        "scenarioIdx": 1
+      },
+      "expected": false,
+      "node": "root"
+    },
+    {
+      "description": "cenario 1 provided",
+      "method": "provided",
+      "type": "TestProperty",
+      "input": {
+        "value": null,
+        "scenarioIdx": 1
+      },
+      "expected": false,
+      "node": "root"
+    },
+    {
+      "description": "cenario 0 ainda provided",
+      "method": "provided",
+      "type": "TestProperty",
+      "input": {
+        "value": null,
+        "scenarioIdx": 0
+      },
+      "expected": false,
+      "node": "root"
+    },
+    {
+      "description": "adoção simples - kids",
+      "method": "kids",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": [
+        "root1.task"
+      ],
+      "node": "root1"
+    },
+    {
+      "description": "adoção simples - leaf falso",
+      "method": "leaf",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": true,
+      "node": "task"
+    },
+    {
+      "description": "adoção simples - kids",
+      "method": "kids",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": [
+        "root1.task"
+      ],
+      "node": "root2"
+    },
+    {
+      "description": "adoção simples - leaf falso",
+      "method": "leaf",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": true,
+      "node": "task"
+    },
+    {
+      "description": "adoção duplicada - lança erro",
+      "method": "adopt",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": "throws",
+      "node": "task"
+    },
+    {
+      "description": "auto-adoção - lança erro",
+      "method": "adopt",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": "throws",
+      "node": "task"
+    },
+    {
+      "description": "status após modificação",
+      "method": "get",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": "in_progress",
+      "node": "root"
+    },
+    {
+      "description": "priority após modificação",
+      "method": "get",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": 100,
+      "node": "root"
+    },
+    {
+      "description": "status após restore",
+      "method": "get",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": "in_progress",
+      "node": "root"
+    },
+    {
+      "description": "priority após restore",
+      "method": "get",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": 500,
+      "node": "root"
+    },
+    {
+      "description": "modificação no backup afeta original",
+      "method": "get",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": "modified",
+      "node": "root"
+    },
+    {
+      "description": "fullId namespace plano raiz",
+      "method": "fullId",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": "root",
+      "node": "root"
+    },
+    {
+      "description": "fullId namespace plano filho",
+      "method": "fullId",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": "child",
+      "node": "child"
+    },
+    {
+      "description": "level namespace plano raiz",
+      "method": "level",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": 0,
+      "node": "root"
+    },
+    {
+      "description": "level namespace plano filho",
+      "method": "level",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": 1,
+      "node": "child"
+    },
+    {
+      "description": "getBSIndicies namespace plano raiz",
+      "method": "getBSIndicies",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": [
+        1
+      ],
+      "node": "root"
+    },
+    {
+      "description": "getBSIndicies namespace plano filho",
+      "method": "getBSIndicies",
+      "type": "TestProperty",
+      "input": {
+        "value": null
+      },
+      "expected": [
+        1,
+        1
+      ],
+      "node": "child"
+    }
+  ]
+}

@@ -25,6 +25,20 @@ export class MockContainer implements AttributeContainer {
   }
 
   /**
+   * Retorna true se a chave existe no store.
+   */
+  has(attributeId: string,): boolean {
+    return this.store.has(attributeId,);
+  }
+
+  /**
+   * Retorna o número de entradas no store.
+   */
+  size(): number {
+    return this.store.size;
+  }
+
+  /**
    * Retorna o Map interno (para verificações em testes).
    */
   getStore(): Map<string, unknown> {

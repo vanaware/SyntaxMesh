@@ -66,6 +66,11 @@ export abstract class AttributeBase<T,> {
    */
   public inherited: boolean = false;
 
+  /**
+   * Valor armazenado localmente (para evitar recursão).
+   */
+  protected _value: T | null = null;
+
   constructor(
     property: PropertyLike,
     type: AttributeDefinition<T>,
@@ -85,6 +90,7 @@ export abstract class AttributeBase<T,> {
   reset(): void {
     this.inherited = false;
     this.provided = false;
+    this._value = this.type.defaultValue;
     this.container.setStoredValue(
       this.type.id,
       deepClone(this.type.defaultValue,),
@@ -98,6 +104,7 @@ export abstract class AttributeBase<T,> {
    */
   inherit(value: T,): void {
     this.inherited = true;
+    this._value = deepClone(value,);
     this.container.setStoredValue(this.type.id, deepClone(value,),);
   }
 
@@ -118,6 +125,7 @@ export abstract class AttributeBase<T,> {
         // nenhuma flag é marcada
         break;
     }
+    this._value = value;
     this.container.setStoredValue(this.type.id, value,);
   }
 
@@ -185,7 +193,7 @@ export abstract class AttributeBase<T,> {
    * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:to_s
    */
   to_s(): string {
-    const val = this.get();
+    const val = this.container.getStoredValue(this.type.id,);
     return val === null ? "" : String(val,);
   }
 
@@ -195,7 +203,7 @@ export abstract class AttributeBase<T,> {
    * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:to_num
    */
   to_num(): number {
-    const val = this.get();
+    const val = this.container.getStoredValue(this.type.id,);
     if (val === null) {
       return 0;
     }
@@ -208,7 +216,7 @@ export abstract class AttributeBase<T,> {
    * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:to_sort
    */
   to_sort(): string {
-    const val = this.get();
+    const val = this.container.getStoredValue(this.type.id,);
     if (val === null) {
       return "";
     }

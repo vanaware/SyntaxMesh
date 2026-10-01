@@ -6,6 +6,14 @@
 
 import { AttributeType, } from "./attribute-type.ts";
 import { TjArgumentError, } from "./errors.ts";
+import { AttributeBase, } from "./attribute-base.ts";
+import { StringAttribute, } from "./scalar/string-attribute.ts";
+import { IntegerAttribute, } from "./scalar/integer-attribute.ts";
+import { FloatAttribute, } from "./scalar/float-attribute.ts";
+import { BooleanAttribute, } from "./scalar/boolean-attribute.ts";
+import { DurationAttribute, } from "./scalar/duration-attribute.ts";
+import { type PropertyLike, } from "../model/property-like.ts";
+import { type AttributeContainer, } from "./attribute-container.ts";
 
 /**
  * Definição de um atributo — blueprint imutável.
@@ -51,7 +59,23 @@ export class AttributeDefinition<T,> {
   /**
    * Se o atributo é de escopo de cenário.
    */
-  readonly isScenarioAttribute: boolean;
+  isScenarioAttribute: boolean;
+
+  /**
+   * Construtor da classe de atributo correspondente (ex: StringAttribute).
+   * Usado em `new aType.objClass(propertySet, aType, this)`.
+   */
+  objClass: new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+
+  /**
+   * Se o atributo é herdado do pai (não-scenario ou scenario-specific).
+   */
+  inheritedFromParent: boolean;
+
+  /**
+   * Se o atributo é herdado do projeto (top-level).
+   */
+  inheritedFromProject: boolean;
 
   /**
    * Constrói uma definição de atributo.
@@ -64,6 +88,8 @@ export class AttributeDefinition<T,> {
    * @param isList - Se é uma lista
    * @param isSingleton - Se é singleton
    * @param isScenarioAttribute - Se é de escopo de cenário
+   * @param inheritedFromParent - Se o atributo é herdado do pai
+   * @param inheritedFromProject - Se o atributo é herdado do projeto
    */
   constructor(
     id: string,
@@ -74,6 +100,8 @@ export class AttributeDefinition<T,> {
     isList: boolean = false,
     isSingleton: boolean = false,
     isScenarioAttribute: boolean = false,
+    inheritedFromParent: boolean = false,
+    inheritedFromProject: boolean = false,
   ) {
     if (id === null || id === undefined || id === "") {
       throw new TjArgumentError("AttributeDefinition id não pode ser vazio",);
@@ -90,9 +118,12 @@ export class AttributeDefinition<T,> {
     this.isList = isList;
     this.isSingleton = isSingleton;
     this.isScenarioAttribute = isScenarioAttribute;
+    this.objClass = AttributeDefinition.getObjClass(type);
+    this.inheritedFromParent = inheritedFromParent;
+    this.inheritedFromProject = inheritedFromProject;
 
     // @see docs/taskjuggler/lib/taskjuggler/AttributeDefinition.rb:freeze
-    Object.freeze(this,);
+    Object.freeze(this);
   }
 
   /**
@@ -182,4 +213,24 @@ export class AttributeDefinition<T,> {
         throw new TjArgumentError(`Tipo de atributo desconhecido: ${type}`,);
     }
   }
+
+  static getObjClass(type: AttributeType): new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any> {
+    switch (type) {
+      case AttributeType.String:
+        return StringAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      case AttributeType.Integer:
+        return IntegerAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      case AttributeType.Float:
+        return FloatAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      case AttributeType.Boolean:
+        return BooleanAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      case AttributeType.Duration:
+        return DurationAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      default:
+        // For other types, return a dummy class that extends AttributeBase
+        return (() => {}) as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+    }
+  }
 }
+
+export { AttributeType };
