@@ -26,7 +26,7 @@ describe("ReportAttributes", () => {
       ps = new PropertySet(project, false);
     },);
 
-    it("registra 35 atributos específicos (excluindo base id, name, seqno, index)", async () => {
+    it("registra 63 atributos específicos (excluindo base id, name, seqno, index)", async () => {
       const { registerReportAttributes } = await import(
         "../../src/model/attributes/report-attributes.ts",
       );
@@ -51,13 +51,13 @@ describe("ReportAttributes", () => {
       assert(attrDef !== undefined, "accountroot deve estar registrado");
       assertEquals(attrDef.id, "accountroot");
       assertEquals(attrDef.name, "Account Root");
-      assertEquals(attrDef.type, AttributeType.String);
-      assertEquals(attrDef.defaultValue, "");
+      assertEquals(attrDef.type, AttributeType.Property);
+      assertEquals(attrDef.defaultValue, null);
       assertEquals(attrDef.userDefined, false);
       assertEquals(attrDef.isList, false);
       assertEquals(attrDef.isSingleton, false);
       assertEquals(attrDef.isScenarioAttribute, false);
-      assertEquals(attrDef.inheritedFromParent, false);
+      assertEquals(attrDef.inheritedFromParent, true);
       assertEquals(attrDef.inheritedFromProject, false);
     },);
 
@@ -97,7 +97,7 @@ describe("ReportAttributes", () => {
       assertEquals(attrDef.isList, false);
       assertEquals(attrDef.isSingleton, false);
       assertEquals(attrDef.isScenarioAttribute, false);
-      assertEquals(attrDef.inheritedFromParent, false);
+      assertEquals(attrDef.inheritedFromParent, true);
       assertEquals(attrDef.inheritedFromProject, false);
     },);
 
@@ -112,12 +112,12 @@ describe("ReportAttributes", () => {
       assertEquals(attrDef.id, "scenarios");
       assertEquals(attrDef.name, "Scenarios");
       assertEquals(attrDef.type, AttributeType.ScenarioList);
-      assertEquals(attrDef.defaultValue, []);
+      assertEquals(attrDef.defaultValue, [0]);
       assertEquals(attrDef.userDefined, false);
       assertEquals(attrDef.isList, false);
       assertEquals(attrDef.isSingleton, false);
       assertEquals(attrDef.isScenarioAttribute, false);
-      assertEquals(attrDef.inheritedFromParent, false);
+      assertEquals(attrDef.inheritedFromParent, true);
       assertEquals(attrDef.inheritedFromProject, false);
     },);
 
@@ -132,7 +132,7 @@ describe("ReportAttributes", () => {
       assertEquals(attrDef.id, "height");
       assertEquals(attrDef.name, "Height");
       assertEquals(attrDef.type, AttributeType.Integer);
-      assertEquals(attrDef.defaultValue, 0);
+      assertEquals(attrDef.defaultValue, 480);
       assertEquals(attrDef.userDefined, false);
       assertEquals(attrDef.isList, false);
       assertEquals(attrDef.isSingleton, false);
@@ -152,12 +152,12 @@ describe("ReportAttributes", () => {
       assertEquals(attrDef.id, "width");
       assertEquals(attrDef.name, "Width");
       assertEquals(attrDef.type, AttributeType.Integer);
-      assertEquals(attrDef.defaultValue, 0);
+      assertEquals(attrDef.defaultValue, 640);
       assertEquals(attrDef.userDefined, false);
       assertEquals(attrDef.isList, false);
       assertEquals(attrDef.isSingleton, false);
       assertEquals(attrDef.isScenarioAttribute, false);
-      assertEquals(attrDef.inheritedFromParent, false);
+      assertEquals(attrDef.inheritedFromParent, true);
       assertEquals(attrDef.inheritedFromProject, false);
     },);
 
@@ -172,12 +172,12 @@ describe("ReportAttributes", () => {
       assertEquals(attrDef.id, "title");
       assertEquals(attrDef.name, "Title");
       assertEquals(attrDef.type, AttributeType.String);
-      assertEquals(attrDef.defaultValue, "");
+      assertEquals(attrDef.defaultValue, null);
       assertEquals(attrDef.userDefined, false);
       assertEquals(attrDef.isList, false);
       assertEquals(attrDef.isSingleton, false);
       assertEquals(attrDef.isScenarioAttribute, false);
-      assertEquals(attrDef.inheritedFromParent, false);
+      assertEquals(attrDef.inheritedFromParent, true);
       assertEquals(attrDef.inheritedFromProject, false);
     },);
 
@@ -192,13 +192,13 @@ describe("ReportAttributes", () => {
       assertEquals(attrDef.id, "timezone");
       assertEquals(attrDef.name, "Time Zone");
       assertEquals(attrDef.type, AttributeType.String);
-      assertEquals(attrDef.defaultValue, "");
+      assertEquals(attrDef.defaultValue, null);
       assertEquals(attrDef.userDefined, false);
       assertEquals(attrDef.isList, false);
       assertEquals(attrDef.isSingleton, false);
       assertEquals(attrDef.isScenarioAttribute, false);
-      assertEquals(attrDef.inheritedFromParent, false);
-      assertEquals(attrDef.inheritedFromProject, false);
+      assertEquals(attrDef.inheritedFromParent, true);
+      assertEquals(attrDef.inheritedFromProject, true);
     },);
 
     it("registra tree (String) com atributos corretos", async () => {
@@ -237,8 +237,8 @@ describe("ReportAttributes", () => {
       assertEquals(attrDef.isList, false);
       assertEquals(attrDef.isSingleton, false);
       assertEquals(attrDef.isScenarioAttribute, false);
-      assertEquals(attrDef.inheritedFromParent, false);
-      assertEquals(attrDef.inheritedFromProject, false);
+      assertEquals(attrDef.inheritedFromParent, true);
+      assertEquals(attrDef.inheritedFromProject, true);
     },);
 
     it("registra novevents (Boolean) com atributos corretos", async () => {
@@ -257,7 +257,7 @@ describe("ReportAttributes", () => {
       assertEquals(attrDef.isList, false);
       assertEquals(attrDef.isSingleton, false);
       assertEquals(attrDef.isScenarioAttribute, false);
-      assertEquals(attrDef.inheritedFromParent, false);
+      assertEquals(attrDef.inheritedFromParent, true);
       assertEquals(attrDef.inheritedFromProject, false);
     },);
   },);

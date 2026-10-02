@@ -3,26 +3,26 @@ import { AttributeDefinition, } from "../../attributes/attribute-definition.ts";
 import { AttributeType, } from "../../attributes/attribute-type.ts";
 
 /**
- * Registra os atributos específicos de report (35 atributos).
+ * Registra os atributos específicos de report (63 atributos).
  *
  * @see docs/taskjuggler/lib/taskjuggler/Report.rb
  */
 export function registerReportAttributes(propertySet: PropertySet): void {
-  // accountroot: Account Root (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
+  // accountroot: Account Root (PropertyAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "accountroot",
     "Account Root",
-    AttributeType.String,
-    "",
+    AttributeType.Property,
+    null,
     false, // userDefined
     false, // isList
     false, // isSingleton
     false, // isScenarioAttribute
-    false, // inheritedFromParent
+    true, // inheritedFromParent
     false, // inheritedFromProject
   ));
 
-  // auxdir: Aux. Dir. (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
+  // auxdir: Aux. Dir. (StringAttribute, inheritedFromParent=true, inheritedFromProject=true, isScenarioAttribute=false, default="")
   propertySet.addAttributeType(new AttributeDefinition(
     "auxdir",
     "Aux. Dir.",
@@ -32,8 +32,8 @@ export function registerReportAttributes(propertySet: PropertySet): void {
     false, // isList
     false, // isSingleton
     false, // isScenarioAttribute
-    false, // inheritedFromParent
-    false, // inheritedFromProject
+    true, // inheritedFromParent
+    true, // inheritedFromProject
   ));
 
   // bsi: BSI (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
@@ -50,250 +50,298 @@ export function registerReportAttributes(propertySet: PropertySet): void {
     false, // inheritedFromProject
   ));
 
-  // caption: Caption (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
+  // caption: Caption (RichTextAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "caption",
     "Caption",
-    AttributeType.String,
-    "",
+    AttributeType.RichText,
+    null,
     false, // userDefined
     false, // isList
     false, // isSingleton
     false, // isScenarioAttribute
-    false, // inheritedFromParent
+    true, // inheritedFromParent
     false, // inheritedFromProject
   ));
 
-  // center: Center (IntegerAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=0)
+  // center: Center (RichTextAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "center",
     "Center",
-    AttributeType.Integer,
-    0,
+    AttributeType.RichText,
+    null,
     false, // userDefined
     false, // isList
     false, // isSingleton
     false, // isScenarioAttribute
-    false, // inheritedFromParent
+    true, // inheritedFromParent
     false, // inheritedFromProject
   ));
 
-  // columns: Columns (ColumnListAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=[])
+  // columns: Columns (ColumnListAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=[])
   propertySet.addAttributeType(new AttributeDefinition(
     "columns",
     "Columns",
     AttributeType.ColumnList,
-    [], // Default empty array for ColumnListAttribute
+    [],
     false, // userDefined
     false, // isList
     false, // isSingleton
     false, // isScenarioAttribute
-    false, // inheritedFromParent
+    true, // inheritedFromParent
     false, // inheritedFromProject
   ));
 
-  // costaccount: Cost Account (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
+  // costaccount: Cost Account (AccountAttribute, inheritedFromParent=true, inheritedFromProject=true, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "costaccount",
     "Cost Account",
-    AttributeType.String,
-    "",
+    AttributeType.Account,
+    null,
     false, // userDefined
     false, // isList
     false, // isSingleton
     false, // isScenarioAttribute
-    false, // inheritedFromParent
-    false, // inheritedFromProject
+    true, // inheritedFromParent
+    true, // inheritedFromProject
   ));
 
-  // currencyFormat: Currency Format (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
+  // currencyFormat: Currency Format (RealFormatAttribute, inheritedFromParent=true, inheritedFromProject=true, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "currencyFormat",
     "Currency Format",
-    AttributeType.String,
-    "",
+    AttributeType.RealFormat,
+    null,
     false, // userDefined
     false, // isList
     false, // isSingleton
     false, // isScenarioAttribute
-    false, // inheritedFromParent
-    false, // inheritedFromProject
+    true, // inheritedFromParent
+    true, // inheritedFromProject
   ));
 
-  // definitions: Definitions (DefinitionListAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=[])
+  // definitions: Definitions (DefinitionListAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=['*'])
   propertySet.addAttributeType(new AttributeDefinition(
     "definitions",
     "Definitions",
     AttributeType.DefinitionList,
-    [], // Default empty array for DefinitionListAttribute
+    ['*'],
     false, // userDefined
     false, // isList
     false, // isSingleton
     false, // isScenarioAttribute
-    false, // inheritedFromParent
+    true, // inheritedFromParent
     false, // inheritedFromProject
   ));
 
-  // end: End (DateAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
+  // end: End (DateAttribute, inheritedFromParent=true, inheritedFromProject=true, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "end",
     "End",
     AttributeType.Date,
-    null, // Default null for DateAttribute
+    null,
     false, // userDefined
     false, // isList
     false, // isSingleton
     false, // isScenarioAttribute
-    false, // inheritedFromParent
-    false, // inheritedFromProject
+    true, // inheritedFromParent
+    true, // inheritedFromProject
   ));
 
-  // markdate: Mark Date (DateAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
+  // markdate: Mark Date (DateAttribute, inheritedFromParent=true, inheritedFromProject=true, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "markdate",
     "Mark Date",
     AttributeType.Date,
-    null, // Default null for DateAttribute
+    null,
     false, // userDefined
     false, // isList
     false, // isSingleton
     false, // isScenarioAttribute
-    false, // inheritedFromParent
-    false, // inheritedFromProject
+    true, // inheritedFromParent
+    true, // inheritedFromProject
   ));
 
-  // epilog: Epilog (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
+  // epilog: Epilog (RichTextAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "epilog",
     "Epilog",
-    AttributeType.String,
-    "",
+    AttributeType.RichText,
+    null,
     false, // userDefined
     false, // isList
     false, // isSingleton
     false, // isScenarioAttribute
-    false, // inheritedFromParent
+    true, // inheritedFromParent
     false, // inheritedFromProject
   ));
 
-  // flags: Flags (FlagListAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=[])
+  // flags: Flags (FlagListAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=[])
   propertySet.addAttributeType(new AttributeDefinition(
     "flags",
     "Flags",
     AttributeType.FlagList,
     [],
-    false, false, false, false,
-    false, false,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // footer: Footer (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
+  // footer: Footer (RichTextAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "footer",
     "Footer",
-    AttributeType.String,
-    "",
-    false, false, false, false,
-    false, false,
+    AttributeType.RichText,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // formats: Formats (FormatListAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=[])
+  // formats: Formats (FormatListAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=[])
   propertySet.addAttributeType(new AttributeDefinition(
     "formats",
     "Formats",
     AttributeType.FormatList,
     [],
-    false, false, false, false,
-    false, false,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // ganttBars: Gantt Bars (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
+  // ganttBars: Gantt Bars (BooleanAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=true)
   propertySet.addAttributeType(new AttributeDefinition(
     "ganttBars",
     "Gantt Bars",
-    AttributeType.String,
-    "",
-    false, false, false, false,
-    false, false,
+    AttributeType.Boolean,
+    true,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // header: Header (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
+  // header: Header (RichTextAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "header",
     "Header",
-    AttributeType.String,
-    "",
-    false, false, false, false,
-    false, false,
+    AttributeType.RichText,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // headline: Headline (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
+  // headline: Headline (RichTextAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "headline",
     "Headline",
-    AttributeType.String,
-    "",
-    false, false, false, false,
-    false, false,
+    AttributeType.RichText,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // hideAccount: Hide Account (BooleanAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=false)
+  // hideAccount: Hide Account (LogicalExpressionAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "hideAccount",
     "Hide Account",
-    AttributeType.Boolean,
-    false,
-    false, false, false, false,
-    false, false,
+    AttributeType.LogicalExpression,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // hideJournalEntry: Hide Journal Entry (BooleanAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=false)
+  // hideJournalEntry: Hide Journal Entry (LogicalExpressionAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "hideJournalEntry",
     "Hide Journal Entry",
-    AttributeType.Boolean,
-    false,
-    false, false, false, false,
-    false, false,
+    AttributeType.LogicalExpression,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // hideResource: Hide Resource (BooleanAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=false)
+  // hideResource: Hide Resource (LogicalExpressionAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "hideResource",
     "Hide Resource",
-    AttributeType.Boolean,
-    false,
-    false, false, false, false,
-    false, false,
+    AttributeType.LogicalExpression,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // hideTask: Hide Task (BooleanAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=false)
+  // hideTask: Hide Task (LogicalExpressionAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "hideTask",
     "Hide Task",
-    AttributeType.Boolean,
-    false,
-    false, false, false, false,
-    false, false,
+    AttributeType.LogicalExpression,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // height: Height (IntegerAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=0)
+  // height: Height (IntegerAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=480)
   propertySet.addAttributeType(new AttributeDefinition(
     "height",
     "Height",
     AttributeType.Integer,
-    0,
-    false, false, false, false,
-    false, false,
+    480,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    false, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // id: ID (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
+  // id: ID (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "id",
     "ID",
     AttributeType.String,
-    "",
-    false, false, false, false,
-    false, false,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    false, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
   // index: Index (IntegerAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=-1)
@@ -302,8 +350,12 @@ export function registerReportAttributes(propertySet: PropertySet): void {
     "Index",
     AttributeType.Integer,
     -1,
-    false, false, false, false,
-    false, false,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    false, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
   // interactive: Interactive (BooleanAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=false)
@@ -312,338 +364,474 @@ export function registerReportAttributes(propertySet: PropertySet): void {
     "Interactive",
     AttributeType.Boolean,
     false,
-    false, false, false, false,
-    false, false,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    false, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // journalAttributes: Journal Attributes (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
+  // journalAttributes: Journal Attributes (SymbolListAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=['*'])
   propertySet.addAttributeType(new AttributeDefinition(
     "journalAttributes",
     "Journal Attributes",
-    AttributeType.String,
-    "",
-    false, false, false, false,
-    false, false,
+    AttributeType.SymbolList,
+    ['*'],
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // journalMode: Journal Mode (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
+  // journalMode: Journal Mode (SymbolAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=:journal)
   propertySet.addAttributeType(new AttributeDefinition(
     "journalMode",
     "Journal Mode",
-    AttributeType.String,
-    "",
-    false, false, false, false,
-    false, false,
+    AttributeType.Symbol,
+    "journal",
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // left: Left (IntegerAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=0)
+  // left: Left (RichTextAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "left",
     "Left",
-    AttributeType.Integer,
-    0,
-    false, false, false, false,
-    false, false,
+    AttributeType.RichText,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // loadUnit: Load Unit (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
+  // loadUnit: Load Unit (StringAttribute, inheritedFromParent=true, inheritedFromProject=true, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "loadUnit",
     "Load Unit",
     AttributeType.String,
-    "",
-    false, false, false, false,
-    false, false,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    true, // inheritedFromProject
   ));
 
-  // name: Name (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
+  // name: Name (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "name",
     "Name",
     AttributeType.String,
-    "",
-    false, false, false, false,
-    false, false,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    false, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // now: Now (DateAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
+  // now: Now (DateAttribute, inheritedFromParent=true, inheritedFromProject=true, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "now",
     "Now",
     AttributeType.Date,
     null,
-    false, false, false, false,
-    false, false,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    true, // inheritedFromProject
   ));
 
-  // numberFormat: Number Format (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
+  // numberFormat: Number Format (RealFormatAttribute, inheritedFromParent=true, inheritedFromProject=true, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "numberFormat",
     "Number Format",
-    AttributeType.String,
-    "",
-    false, false, false, false,
-    false, false,
+    AttributeType.RealFormat,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    true, // inheritedFromProject
   ));
 
-  // openNodes: Open Nodes (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
+  // openNodes: Open Nodes (NodeListAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "openNodes",
     "Open Nodes",
-    AttributeType.String,
-    "",
-    false, false, false, false,
-    false, false,
+    AttributeType.NodeList,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    false, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // prolog: Prolog (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
+  // prolog: Prolog (RichTextAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "prolog",
     "Prolog",
-    AttributeType.String,
-    "",
-    false, false, false, false,
-    false, false,
+    AttributeType.RichText,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // rawHtmlHead: Raw HTML Head (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
+  // rawHtmlHead: Raw HTML Head (StringAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "rawHtmlHead",
     "Raw HTML Head",
     AttributeType.String,
-    "",
-    false, false, false, false,
-    false, false,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // resourceAttributes: Resource Attributes (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
+  // resourceAttributes: Resource Attributes (FormatListAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=['*'])
   propertySet.addAttributeType(new AttributeDefinition(
     "resourceAttributes",
     "Resource Attributes",
-    AttributeType.String,
-    "",
-    false, false, false, false,
-    false, false,
+    AttributeType.FormatList,
+    ['*'],
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // resourceroot: Resource Root (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
+  // resourceroot: Resource Root (PropertyAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "resourceroot",
     "Resource Root",
-    AttributeType.String,
-    "",
-    false, false, false, false,
-    false, false,
+    AttributeType.Property,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // revenueaccount: Revenue Account (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
+  // revenueaccount: Revenue Account (AccountAttribute, inheritedFromParent=true, inheritedFromProject=true, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "revenueaccount",
     "Revenue Account",
-    AttributeType.String,
-    "",
-    false, false, false, false,
-    false, false,
+    AttributeType.Account,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    true, // inheritedFromProject
   ));
 
-  // right: Right (IntegerAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=0)
+  // right: Right (RichTextAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "right",
     "Right",
-    AttributeType.Integer,
-    0,
-    false, false, false, false,
-    false, false,
+    AttributeType.RichText,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // rollupAccount: Rollup Account (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
+  // rollupAccount: Rollup Account (LogicalExpressionAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "rollupAccount",
     "Rollup Account",
-    AttributeType.String,
-    "",
-    false, false, false, false,
-    false, false,
+    AttributeType.LogicalExpression,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // rollupResource: Rollup Resource (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
+  // rollupResource: Rollup Resource (LogicalExpressionAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "rollupResource",
     "Rollup Resource",
-    AttributeType.String,
-    "",
-    false, false, false, false,
-    false, false,
+    AttributeType.LogicalExpression,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // rollupTask: Rollup Task (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
+  // rollupTask: Rollup Task (LogicalExpressionAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "rollupTask",
     "Rollup Task",
-    AttributeType.String,
-    "",
-    false, false, false, false,
-    false, false,
+    AttributeType.LogicalExpression,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // scenarios: Scenarios (ScenarioListAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=[])
+  // scenarios: Scenarios (ScenarioListAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=[0])
   propertySet.addAttributeType(new AttributeDefinition(
     "scenarios",
     "Scenarios",
     AttributeType.ScenarioList,
-    [],
-    false, false, false, false,
-    false, false,
+    [0],
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // selfcontained: Self Contained (BooleanAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=false)
+  // selfcontained: Self Contained (BooleanAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=false)
   propertySet.addAttributeType(new AttributeDefinition(
     "selfcontained",
     "Self Contained",
     AttributeType.Boolean,
     false,
-    false, false, false, false,
-    false, false,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // seqno: Seqno (IntegerAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=0)
+  // seqno: Seqno (IntegerAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "seqno",
     "Seqno",
     AttributeType.Integer,
-    0,
-    false, false, false, false,
-    false, false,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    false, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // shortTimeFormat: Short Time Format (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
+  // shortTimeFormat: Short Time Format (StringAttribute, inheritedFromParent=true, inheritedFromProject=true, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "shortTimeFormat",
     "Short Time Format",
     AttributeType.String,
-    "",
-    false, false, false, false,
-    false, false,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    true, // inheritedFromProject
   ));
 
-  // sortAccounts: Sort Accounts (SortListAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=[])
+  // sortAccounts: Sort Accounts (SortListAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=[['seqno', true, -1]])
   propertySet.addAttributeType(new AttributeDefinition(
     "sortAccounts",
     "Sort Accounts",
     AttributeType.SortList,
-    [],
-    false, false, false, false,
-    false, false,
+    [['seqno', true, -1]],
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // sortJournalEntries: Sort Journal Entries (SortListAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=[])
+  // sortJournalEntries: Sort Journal Entries (JournalSortListAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=[['alert', 1], ['date', 1], ['seqno', 1]])
   propertySet.addAttributeType(new AttributeDefinition(
     "sortJournalEntries",
     "Sort Journal Entries",
-    AttributeType.SortList,
-    [],
-    false, false, false, false,
-    false, false,
+    AttributeType.JournalSortList,
+    [['alert', 1], ['date', 1], ['seqno', 1]],
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // sortResources: Sort Resources (SortListAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=[])
+  // sortResources: Sort Resources (SortListAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=[['seqno', true, -1]])
   propertySet.addAttributeType(new AttributeDefinition(
     "sortResources",
     "Sort Resources",
     AttributeType.SortList,
-    [],
-    false, false, false, false,
-    false, false,
+    [['seqno', true, -1]],
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // sortTasks: Sort Tasks (SortListAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=[])
+  // sortTasks: Sort Tasks (SortListAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=[['seqno', true, -1]])
   propertySet.addAttributeType(new AttributeDefinition(
     "sortTasks",
     "Sort Tasks",
     AttributeType.SortList,
-    [],
-    false, false, false, false,
-    false, false,
+    [['seqno', true, -1]],
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // start: Start (DateAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
+  // start: Start (DateAttribute, inheritedFromParent=true, inheritedFromProject=true, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "start",
     "Start",
     AttributeType.Date,
     null,
-    false, false, false, false,
-    false, false,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    true, // inheritedFromProject
   ));
 
-  // taskAttributes: Task Attributes (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
+  // taskAttributes: Task Attributes (FormatListAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=['*'])
   propertySet.addAttributeType(new AttributeDefinition(
     "taskAttributes",
     "Task Attributes",
-    AttributeType.String,
-    "",
-    false, false, false, false,
-    false, false,
+    AttributeType.FormatList,
+    ['*'],
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // taskroot: Task Root (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
+  // taskroot: Task Root (PropertyAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "taskroot",
     "Task Root",
-    AttributeType.String,
-    "",
-    false, false, false, false,
-    false, false,
+    AttributeType.Property,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // timeFormat: Time Format (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
+  // timeFormat: Time Format (StringAttribute, inheritedFromParent=true, inheritedFromProject=true, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "timeFormat",
     "Time Format",
     AttributeType.String,
-    "",
-    false, false, false, false,
-    false, false,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    true, // inheritedFromProject
   ));
 
-  // timeOffId: Time Off ID (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
+  // timeOffId: Time Off ID (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "timeOffId",
     "Time Off ID",
     AttributeType.String,
-    "",
-    false, false, false, false,
-    false, false,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    false, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // timeOffName: Time Off Name (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
+  // timeOffName: Time Off Name (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "timeOffName",
     "Time Off Name",
     AttributeType.String,
-    "",
-    false, false, false, false,
-    false, false,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    false, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // timezone: Time Zone (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
+  // timezone: Time Zone (StringAttribute, inheritedFromParent=true, inheritedFromProject=true, isScenarioAttribute=false, default=TjTime.getTimeZone())
   propertySet.addAttributeType(new AttributeDefinition(
     "timezone",
     "Time Zone",
     AttributeType.String,
-    "",
-    false, false, false, false,
-    false, false,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    true, // inheritedFromProject
   ));
 
-  // title: Title (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
+  // title: Title (StringAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "title",
     "Title",
     AttributeType.String,
-    "",
-    false, false, false, false,
-    false, false,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
   // tree: Tree Index (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
@@ -652,37 +840,53 @@ export function registerReportAttributes(propertySet: PropertySet): void {
     "Tree Index",
     AttributeType.String,
     "",
-    false, false, false, false,
-    false, false,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    false, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // weekStartsMonday: Week Starts Monday (BooleanAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=false)
+  // weekStartsMonday: Week Starts Monday (BooleanAttribute, inheritedFromParent=true, inheritedFromProject=true, isScenarioAttribute=false, default=false)
   propertySet.addAttributeType(new AttributeDefinition(
     "weekStartsMonday",
     "Week Starts Monday",
     AttributeType.Boolean,
     false,
-    false, false, false, false,
-    false, false,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    true, // inheritedFromProject
   ));
 
-  // width: Width (IntegerAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=0)
+  // width: Width (IntegerAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=640)
   propertySet.addAttributeType(new AttributeDefinition(
     "width",
     "Width",
     AttributeType.Integer,
-    0,
-    false, false, false, false,
-    false, false,
+    640,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 
-  // novevents: No Events (BooleanAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=false)
+  // novevents: No Events (BooleanAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=false)
   propertySet.addAttributeType(new AttributeDefinition(
     "novevents",
     "No Events",
     AttributeType.Boolean,
     false,
-    false, false, false, false,
-    false, false,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    true, // inheritedFromParent
+    false, // inheritedFromProject
   ));
 }
