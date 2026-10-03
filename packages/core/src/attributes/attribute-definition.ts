@@ -12,8 +12,41 @@ import { IntegerAttribute, } from "./scalar/integer-attribute.ts";
 import { FloatAttribute, } from "./scalar/float-attribute.ts";
 import { BooleanAttribute, } from "./scalar/boolean-attribute.ts";
 import { DurationAttribute, } from "./scalar/duration-attribute.ts";
+import { DateAttribute, } from "./scalar/date-attribute.ts";
+import { SymbolAttribute, } from "./scalar/symbol-attribute.ts";
+import { PropertyAttribute, } from "./reference/property-attribute.ts";
+import { AccountAttribute, } from "./reference/account-attribute.ts";
+import { ReferenceAttribute, } from "./reference/reference-attribute.ts";
 import { type PropertyLike, } from "../model/property-like.ts";
 import { type AttributeContainer, } from "./attribute-container.ts";
+import { FlagListAttribute, } from "./list/flag-list-attribute.ts";
+import { SymbolListAttribute, } from "./list/symbol-list-attribute.ts";
+import { ScenarioListAttribute, } from "./list/scenario-list-attribute.ts";
+import { NodeListAttribute, } from "./list/node-list-attribute.ts";
+import { ResourceListAttribute, } from "./list/resource-list-attribute.ts";
+import { TaskListAttribute, } from "./list/task-list-attribute.ts";
+import { DependencyListAttribute, } from "./dependency/dependency-list-attribute.ts";
+import { TaskDepListAttribute, } from "./dependency/task-dep-list-attribute.ts";
+import { ChargeListAttribute, } from "./financial/charge-list-attribute.ts";
+import { ChargeSetListAttribute, } from "./financial/charge-set-list-attribute.ts";
+import { AccountCreditListAttribute, } from "./financial/account-credit-list-attribute.ts";
+import { AllocationAttribute, } from "./allocation/allocation-attribute.ts";
+import { BookingListAttribute, } from "./allocation/booking-list-attribute.ts";
+import { LogicalExpressionAttribute, } from "./logical/logical-expression-attribute.ts";
+import { LogicalExpressionListAttribute, } from "./logical/logical-expression-list-attribute.ts";
+import { TimeIntervalListAttribute, } from "./time-interval/time-interval-list-attribute.ts";
+import { LeaveListAttribute, } from "./time-interval/leave-list-attribute.ts";
+import { LeaveAllowanceListAttribute, } from "./time-interval/leave-allowance-list-attribute.ts";
+import { LimitsAttribute, } from "./time-interval/limits-attribute.ts";
+import { ShiftAssignmentsAttribute, } from "./time-interval/shift-assignments-attribute.ts";
+import { WorkingHoursAttribute, } from "./time-interval/working-hours-attribute.ts";
+import { RealFormatAttribute, } from "./format/real-format-attribute.ts";
+import { ColumnListAttribute, } from "./format/column-list-attribute.ts";
+import { FormatListAttribute, } from "./format/format-list-attribute.ts";
+import { SortListAttribute, } from "./format/sort-list-attribute.ts";
+import { JournalSortListAttribute, } from "./format/journal-sort-list-attribute.ts";
+import { RichTextAttribute, } from "./rich/rich-text-attribute.ts";
+import { DefinitionListAttribute, } from "./rich/definition-list-attribute.ts";
 
 /**
  * Definição de um atributo — blueprint imutável.
@@ -224,11 +257,76 @@ export class AttributeDefinition<T,> {
         return FloatAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
       case AttributeType.Boolean:
         return BooleanAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      case AttributeType.Symbol:
+        return SymbolAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      case AttributeType.Date:
+        return DateAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
       case AttributeType.Duration:
         return DurationAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      case AttributeType.Property:
+        return PropertyAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      case AttributeType.Account:
+        return AccountAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      case AttributeType.Reference:
+        return ReferenceAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      case AttributeType.FlagList:
+        return FlagListAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      case AttributeType.SymbolList:
+        return SymbolListAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      case AttributeType.ScenarioList:
+        return ScenarioListAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      case AttributeType.NodeList:
+        return NodeListAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      case AttributeType.ResourceList:
+        return ResourceListAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      case AttributeType.TaskList:
+        return TaskListAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      case AttributeType.DependencyList:
+        return DependencyListAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      case AttributeType.TaskDepList:
+        return TaskDepListAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      case AttributeType.ChargeList:
+        return ChargeListAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      case AttributeType.ChargeSetList:
+        return ChargeSetListAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      case AttributeType.AccountCreditList:
+        return AccountCreditListAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      case AttributeType.Allocation:
+        return AllocationAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      case AttributeType.BookingList:
+        return BookingListAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      case AttributeType.LogicalExpression:
+        return LogicalExpressionAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      case AttributeType.LogicalExpressionList:
+        return LogicalExpressionListAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      case AttributeType.TimeIntervalList:
+        return TimeIntervalListAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      case AttributeType.LeaveList:
+        return LeaveListAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      case AttributeType.LeaveAllowanceList:
+        return LeaveAllowanceListAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      case AttributeType.Limits:
+        return LimitsAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      case AttributeType.ShiftAssignments:
+        return ShiftAssignmentsAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      case AttributeType.WorkingHours:
+        return WorkingHoursAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      case AttributeType.RealFormat:
+        return RealFormatAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      case AttributeType.ColumnList:
+        return ColumnListAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      case AttributeType.FormatList:
+        return FormatListAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      case AttributeType.SortList:
+        return SortListAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      case AttributeType.JournalSortList:
+        return JournalSortListAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      case AttributeType.RichText:
+        return RichTextAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+      case AttributeType.DefinitionList:
+        return DefinitionListAttribute as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
       default:
-        // For other types, return a dummy class that extends AttributeBase
-        return (() => {}) as unknown as new (property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) => AttributeBase<any>;
+        throw new TjArgumentError(`Tipo de atributo desconhecido: ${type}`,);
     }
   }
 }

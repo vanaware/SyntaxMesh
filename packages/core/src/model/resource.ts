@@ -11,9 +11,8 @@ export class Resource extends PropertyTreeNode {
   ) {
     super(project.resources, id, name, parent,);
     project.addResource(this);
-    this.data = Array.from({ length: project.scenarioCount }, () => null as any);
     for (let i = 0; i < project.scenarioCount; i++) {
-      new ResourceScenario(this, i, this.getScenarioAttributes(i));
+      this.data[i] = new ResourceScenario(this, i, this.getScenarioAttributes(i));
     }
   }
 

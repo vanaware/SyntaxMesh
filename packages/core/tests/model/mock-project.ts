@@ -1,6 +1,11 @@
-import { PropertySet, } from "../../src/model/property-tree-node.ts";
+import { PropertySet, } from "../../src/model/property-set.ts";
 import { type ProjectLike, } from "../../src/model/project-like.ts";
 import { TjTime, } from "../../src/time/tj-time.ts";
+import { registerTaskAttributes, } from "../../src/model/attributes/task-attributes.ts";
+import { registerResourceAttributes, } from "../../src/model/attributes/resource-attributes.ts";
+import { registerAccountAttributes, } from "../../src/model/attributes/account-attributes.ts";
+import { registerShiftAttributes, } from "../../src/model/attributes/shift-attributes.ts";
+import { registerReportAttributes, } from "../../src/model/attributes/report-attributes.ts";
 
 /**
  * Projeto mock para testes da Fase 5+.
@@ -21,7 +26,7 @@ export class MockProject implements ProjectLike {
   private readonly _scenarios: Array<{ id: string; fullId: string }>;
   private readonly store = new Map<string, unknown>();
 
-  constructor(scenarioCount: number = 1) {
+  constructor(scenarioCount: number = 1, flatNamespace: boolean = false) {
     this._scenarios = [];
     for (let i = 0; i < scenarioCount; i++) {
       this._scenarios.push({
@@ -31,11 +36,17 @@ export class MockProject implements ProjectLike {
     }
 
     this.scenarios = new PropertySet(this, true);
-    this.shifts = new PropertySet(this, false);
-    this.accounts = new PropertySet(this, false);
-    this.resources = new PropertySet(this, false);
-    this.tasks = new PropertySet(this, false);
-    this.reports = new PropertySet(this, false);
+    this.shifts = new PropertySet(this, flatNamespace);
+    this.accounts = new PropertySet(this, flatNamespace);
+    this.resources = new PropertySet(this, flatNamespace);
+    this.tasks = new PropertySet(this, flatNamespace);
+    this.reports = new PropertySet(this, flatNamespace);
+
+    registerTaskAttributes(this.tasks);
+    registerResourceAttributes(this.resources);
+    registerAccountAttributes(this.accounts);
+    registerShiftAttributes(this.shifts);
+    registerReportAttributes(this.reports);
   }
 
   get scenarioCount(): number {

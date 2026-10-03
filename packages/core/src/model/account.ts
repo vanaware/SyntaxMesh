@@ -11,9 +11,8 @@ export class Account extends PropertyTreeNode {
   ) {
     super(project.accounts, id, name, parent,);
     project.addAccount(this);
-    this.data = Array.from({ length: project.scenarioCount }, () => null as any);
     for (let i = 0; i < project.scenarioCount; i++) {
-      new AccountScenario(this, i, this.getScenarioAttributes(i));
+      this.data[i] = new AccountScenario(this, i, this.getScenarioAttributes(i));
     }
   }
 

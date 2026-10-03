@@ -17,9 +17,8 @@ export class Report extends PropertyTreeNode {
     project.addReport(this);
     this.typeSpec = null;
     this.content = null;
-    this.data = Array.from({ length: project.scenarioCount }, () => null as any);
     for (let i = 0; i < project.scenarioCount; i++) {
-      new ReportScenario(this, i, this.getScenarioAttributes(i));
+      this.data[i] = new ReportScenario(this, i, this.getScenarioAttributes(i));
     }
   }
 

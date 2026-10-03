@@ -30,6 +30,7 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
   private _parent: PropertyTreeNode | null;
   private _idProvided: boolean;
   private _values: Map<string, unknown>;
+  private _fullId: string | null;
 
   constructor(
     propertySet: PropertySet,
@@ -57,6 +58,7 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
     this._parent = parent;
     this._idProvided = id !== null;
     this._values = new Map();
+    this._fullId = null;
 
     let resolvedId: string;
     if (id === null) {
@@ -81,6 +83,9 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
           const parentNode = propertySet.get(parentId);
           if (parentNode) {
             this._parent = parentNode;
+          } else {
+            // Parent not found: store full id for fullId computation
+            this._fullId = id;
           }
         }
       } else {
@@ -121,6 +126,10 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
   get fullId(): string {
     if (this.propertySet.flatNamespace) {
       return this.subId;
+    }
+    // If parent not found, return stored fullId
+    if (this._fullId !== null) {
+      return this._fullId;
     }
     let result = this.subId;
     let current: PropertyTreeNode | null = this._parent;

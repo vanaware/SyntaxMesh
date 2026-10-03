@@ -11,9 +11,8 @@ export class Task extends PropertyTreeNode {
   ) {
     super(project.tasks, id, name, parent,);
     project.addTask(this);
-    this.data = Array.from({ length: project.scenarioCount }, () => null as any);
     for (let i = 0; i < project.scenarioCount; i++) {
-      new TaskScenario(this, i, this.getScenarioAttributes(i));
+      this.data[i] = new TaskScenario(this, i, this.getScenarioAttributes(i));
     }
   }
 
