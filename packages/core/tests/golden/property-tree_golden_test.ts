@@ -366,7 +366,7 @@ function runCase(c: GoldenCase,): void {
       break;
     }
     case "provided": {
-      const actual = node.provided("priority");
+      const actual = node.provided(c.attr || "priority", c.input?.scenarioIdx);
       assertEquals(
         actual,
         c.expected,
@@ -375,7 +375,7 @@ function runCase(c: GoldenCase,): void {
       break;
     }
     case "inherited": {
-      const actual = node.inherited("priority");
+      const actual = node.inherited(c.attr || "priority", c.input?.scenarioIdx);
       assertEquals(
         actual,
         c.expected,

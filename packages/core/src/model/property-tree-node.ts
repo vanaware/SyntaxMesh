@@ -377,10 +377,10 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
           const scenarioIdx = this.project.scenarioIdx(sc.fullId);
           if (scenarioIdx !== undefined) {
             const scenarioAttr = this.scenarioAttribute(scenarioIdx, id);
-            if (scenarioAttr.provided && !scenarioAttr.isList()) {
-              overwrite = true;
-            }
             if (scenarioIdx === scIdx) {
+              if (scenarioAttr.provided && !scenarioAttr.isList()) {
+                overwrite = true;
+              }
               scenarioAttr.set(value as never);
             } else {
               scenarioAttr.inherit(value as never);

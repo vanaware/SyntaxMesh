@@ -15,6 +15,9 @@ export class MockProject implements ProjectLike {
   readonly tasks: PropertySet;
   readonly reports: PropertySet;
 
+  readonly id = "mock";
+  readonly name = "Mock Project";
+
   private readonly _scenarios: Array<{ id: string; fullId: string }>;
   private readonly store = new Map<string, unknown>();
 
@@ -82,4 +85,16 @@ export class MockProject implements ProjectLike {
   addResource(_r: unknown): void {}
   addReport(_r: unknown): void {}
   removeAccount(_a: unknown): void {}
+
+  attributeDefinition(id: string): any {
+    return this.scenarios.attributeDefinition(id);
+  }
+
+  getScenarioAttribute(scIdx: number, id: string): any {
+    const property = this.scenarios.get("plan");
+    if (property) {
+      return property.getScenarioAttribute(scIdx, id);
+    }
+    return null;
+  }
 }

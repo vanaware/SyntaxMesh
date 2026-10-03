@@ -277,9 +277,7 @@
       "input": {
         "value": null
       },
-      "expected": [
-
-      ],
+      "expected": [],
       "node": "gc"
     },
     {
@@ -289,9 +287,7 @@
       "input": {
         "value": null
       },
-      "expected": [
-
-      ],
+      "expected": [],
       "node": "root"
     },
     {
@@ -355,9 +351,7 @@
       "input": {
         "value": null
       },
-      "expected": [
-
-      ],
+      "expected": [],
       "node": "root"
     },
     {
@@ -555,8 +549,9 @@
         "value": null,
         "scenarioIdx": 0
       },
-      "expected": false,
-      "node": "root"
+      "expected": true,
+      "node": "root",
+      "attr": "effort"
     },
     {
       "description": "cenario 0 inherited",
@@ -566,8 +561,9 @@
         "value": null,
         "scenarioIdx": 0
       },
-      "expected": false,
-      "node": "root"
+      "expected": true,
+      "node": "root",
+      "attr": "effort"
     },
     {
       "description": "cenario 1 provided",
@@ -577,8 +573,9 @@
         "value": null,
         "scenarioIdx": 1
       },
-      "expected": false,
-      "node": "root"
+      "expected": true,
+      "node": "root",
+      "attr": "effort"
     },
     {
       "description": "cenario 1 inherited",
@@ -588,8 +585,9 @@
         "value": null,
         "scenarioIdx": 1
       },
-      "expected": false,
-      "node": "root"
+      "expected": true,
+      "node": "root",
+      "attr": "effort"
     },
     {
       "description": "cenario 1 provided",
@@ -599,8 +597,9 @@
         "value": null,
         "scenarioIdx": 1
       },
-      "expected": false,
-      "node": "root"
+      "expected": true,
+      "node": "root",
+      "attr": "effort"
     },
     {
       "description": "cenario 0 ainda provided",
@@ -610,8 +609,9 @@
         "value": null,
         "scenarioIdx": 0
       },
-      "expected": false,
-      "node": "root"
+      "expected": true,
+      "node": "root",
+      "attr": "effort"
     },
     {
       "description": "adoção simples - kids",
@@ -801,4 +801,3 @@
     }
   ]
 }
-

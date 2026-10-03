@@ -229,7 +229,7 @@ describe("PropertyTreeNode", () => {
     const newPropertySet = createPropertySetWithCustomAttr(attrDef);
     const newRoot = new TestProperty(newPropertySet, null, "root", null,);
     newRoot.setForScenario("scenarioAttr", "value", 0);
-    assertEquals(newRoot.getForScenario("scenarioAttr", 0), "default");
+    assertEquals(newRoot.getForScenario("scenarioAttr", 0), "value");
   });
 
   it("set lança erro para atributo sobrescrito", () => {
@@ -256,7 +256,7 @@ describe("PropertyTreeNode", () => {
     const newPropertySet = createPropertySetWithCustomAttr(attrDef);
     const newRoot = new TestProperty(newPropertySet, null, "root", null,);
     newRoot.setForScenario("scenarioAttr", "value1", 0);
-    newRoot.setForScenario("scenarioAttr", "value2", 0);
+    assertThrows(() => newRoot.setForScenario("scenarioAttr", "value2", 0), Error);
   });
 
   it("provided retorna false para atributo não definido", () => {
@@ -291,7 +291,7 @@ describe("PropertyTreeNode", () => {
     const newPropertySet = createPropertySetWithCustomAttr(attrDef);
     const newRoot = new TestProperty(newPropertySet, null, "root", null,);
     newRoot.setForScenario("scenarioAttr", "value", 0);
-    assertEquals(newRoot.provided("scenarioAttr", 0), false);
+    assertEquals(newRoot.provided("scenarioAttr", 0), true);
   });
 
   it("inherited retorna false para atributo não definido", () => {
