@@ -301,6 +301,20 @@ export function registerResourceAttributes(propertySet: PropertySet): void {
     true, // inheritedFromProject
   ));
 
+  // tree: Tree Index (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
+  propertySet.addAttributeType(new AttributeDefinition(
+    "tree",
+    "Tree Index",
+    AttributeType.String,
+    "",
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    false, // inheritedFromParent
+    false, // inheritedFromProject
+  ));
+
   // warn: Warning Condition (LogicalExpressionListAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=[])
   propertySet.addAttributeType(new AttributeDefinition(
     "warn",
