@@ -36,7 +36,15 @@ for (const { name, rubyScript, outputPath } of scripts) {
     Deno.exit(1,);
   }
 
-  const stdout = new TextDecoder().decode(result.stdout,);
+  let stdout = new TextDecoder().decode(result.stdout,);
+
+  // Normalize Ruby proc memory addresses to a stable placeholder.
+  // The address is non-deterministic between runs; the path and line number
+  // are preserved because the rehydration regex extracts the line number.
+  stdout = stdout.replace(
+    /#<Proc:(0x[0-9a-f]+) (.+\/scripts\/golden\/\w+\.rb:\d+ \(lambda\))>/g,
+    "#<Proc:0x000000000000 $2>",
+  );
 
   // Validate JSON before writing
   try {

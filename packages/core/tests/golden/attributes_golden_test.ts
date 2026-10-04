@@ -202,11 +202,7 @@ function runCase(c: GoldenCase,): void {
   switch (c.method) {
     case "to_tjp": {
       if (c.expected === "throws") {
-        assertThrows(
-          () => attr.to_tjp(),
-          Error,
-          `Golden case "${c.description}" should throw`,
-        );
+        assertThrows(() => attr.to_tjp(), Error);
       } else {
         const actual = attr.to_tjp();
         assertEquals(
@@ -219,11 +215,7 @@ function runCase(c: GoldenCase,): void {
     }
     case "to_s": {
       if (c.expected === "throws") {
-        assertThrows(
-          () => attr.to_s(),
-          Error,
-          `Golden case "${c.description}" should throw`,
-        );
+        assertThrows(() => attr.to_s(), Error);
       } else {
         const actual_s = attr.to_s();
         assertEquals(

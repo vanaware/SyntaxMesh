@@ -7,6 +7,7 @@
 import { type PropertyLike, } from "../../model/property-like.ts";
 import { type AttributeContainer, } from "../attribute-container.ts";
 import { type AttributeDefinition, } from "../attribute-definition.ts";
+import { NotYetImplementedError, } from "../errors.ts";
 import { ListAttributeBase, } from "../list-attribute-base.ts";
 
 /**
@@ -26,8 +27,6 @@ export class LeaveAllowanceListAttribute extends ListAttributeBase<unknown> {
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:LeaveAllowanceListAttribute#to_tjp
    */
   override to_tjp(): string {
-    throw new Error(
-      'Golden case "LeaveAllowanceListAttribute to_tjp lança" should throw',
-    );
+    throw new NotYetImplementedError("16", "to_tjp",);
   }
 }
