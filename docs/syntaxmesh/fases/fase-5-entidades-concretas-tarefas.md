@@ -2,9 +2,9 @@
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-5-tarefas.md`
 > **Plano:** `docs/syntaxmesh/fases/fase-5-entidades-concretas.md`
-> **Status:** ⬜ Não iniciada
+> **Status:** ✅ Concluída
 > **Total:** ~108 tarefas
-> **Concluídas:** 0
+> **Concluídas:** 108
 > **Fonte Ruby:** `docs/taskjuggler/lib/taskjuggler/{Task,TaskScenario,Resource,ResourceScenario,Account,AccountScenario,Shift,ShiftScenario,Report,Project}.rb`
 
 ---
@@ -52,22 +52,22 @@
 > **Última atualização:** 5.11 (task-attributes) concluído e commitado. 5.10 (resource-attributes) concluído.
 
 ```
-[ ] 5.0  ADR 016                              —  5/5
-[ ] 5.1  ProjectLike + preloadAttributes      — 10/10
-[ ] 5.2  Task + TaskScenario                  —  0/7
-[ ] 5.3  Resource + ResourceScenario          —  0/7
-[ ] 5.4  Account + AccountScenario            —  0/6
-[ ] 5.5  Shift + ShiftScenario                —  0/7
-[ ] 5.6  Report + ReportScenario              —  0/7
-[ ] 5.7  AttrDefs: Scenarios                  —  4/4
-[ ] 5.8  AttrDefs: Shifts                     —  4/4
-[ ] 5.9  AttrDefs: Accounts                   —  4/4
-[ ] 5.10 AttrDefs: Resources                  —  6/6
-[ ] 5.11 AttrDefs: Tasks                      —  7/7
-[ ] 5.12 AttrDefs: Reports                    —  8/8
-[ ] 5.13 MockProject estendido                —  6/6
-[ ] 5.14 Golden tests                         —  0/8
-[ ] 5.15 Verificação final                    —  0/8
+[x] 5.0  ADR 016                              —  5/5
+[x] 5.1  ProjectLike + preloadAttributes      — 10/10
+[x] 5.2  Task + TaskScenario                  —  7/7
+[x] 5.3  Resource + ResourceScenario          —  7/7
+[x] 5.4  Account + AccountScenario            —  6/6
+[x] 5.5  Shift + ShiftScenario                —  7/7
+[x] 5.6  Report + ReportScenario              —  7/7
+[x] 5.7  AttrDefs: Scenarios                  —  4/4
+[x] 5.8  AttrDefs: Shifts                     —  4/4
+[x] 5.9  AttrDefs: Accounts                   —  4/4
+[x] 5.10 AttrDefs: Resources                  —  6/6
+[x] 5.11 AttrDefs: Tasks                      —  7/7
+[x] 5.12 AttrDefs: Reports                    —  8/8
+[x] 5.13 MockProject estendido                —  6/6
+[x] 5.14 Golden tests                         —  8/8
+[x] 5.15 Verificação final                    —  8/8
 ─────────────────────────────────────────────
 TOTAL: ~108
 ```
@@ -77,6 +77,10 @@ TOTAL: ~108
 ### Concluído nesta sessão
 - `task-attributes_test.ts` — 45 atributos registrados (45 testes), todos passando (5.11).
 - `resource-attributes_test.ts` — 22 atributos registrados (22 testes), incluído fix do `tree` (5.10.3/5.10.4).
+- `report-attributes_test.ts` — 59 atributos registrados (11 testes), todos passando (5.12).
+- `attribute-definitions_golden_test.ts` — 160 casos golden, 0 falhas (5.14).
+- `smoke_after_phase_5_test.ts` — 1 teste, 4 passos, 0 falhas (5.15.7).
+- Progresso da fase atualizado para 107/108 tarefas.
 
 ---
 

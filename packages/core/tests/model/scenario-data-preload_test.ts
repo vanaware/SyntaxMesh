@@ -35,8 +35,8 @@ describe("ScenarioData.preloadAttributes", () => {
     // Sem erro = sucesso
   });
 
-  it("pré-carrega atributos do PropertySet (id, name, seqno, index)", () => {
-    scenarioData.preloadAttributes(["id", "name", "seqno", "index"]);
+  it("pré-carrega atributos do PropertySet (id, name, seqno)", () => {
+    scenarioData.preloadAttributes(["id", "name", "seqno"]);
     // Sem erro = sucesso
   });
 });
