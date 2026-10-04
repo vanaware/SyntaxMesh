@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "description": "Golden test cases for Attribute attributes (Phase 3)",
-  "generated_at": "2026-10-04 21:07:36 UTC",
+  "generated_at": "2026-10-04 21:24:28 UTC",
   "cases": [
     {
       "description": "StringAttribute to_tjp com texto simples",
@@ -400,7 +400,7 @@
       "input": {
         "value": [
           {
-            "to_s": "#<Proc:0x000000000000 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:162 (lambda)>"
+            "to_s": "#<Proc:0x000000000000 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:163 (lambda)>"
           }
         ]
       },
@@ -413,7 +413,7 @@
       "input": {
         "value": [
           {
-            "to_s": "#<Proc:0x000000000000 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:165 (lambda)>"
+            "to_s": "#<Proc:0x000000000000 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:166 (lambda)>"
           }
         ]
       },
@@ -478,7 +478,7 @@
       "input": {
         "value": [
           {
-            "to_s": "#<Proc:0x000000000000 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:186 (lambda)>"
+            "to_s": "#<Proc:0x000000000000 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:187 (lambda)>"
           }
         ]
       },
@@ -491,7 +491,7 @@
       "input": {
         "value": [
           {
-            "to_s": "#<Proc:0x000000000000 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:189 (lambda)>"
+            "to_s": "#<Proc:0x000000000000 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:190 (lambda)>"
           }
         ]
       },
@@ -544,10 +544,10 @@
       "input": {
         "value": [
           {
-            "to_s": "#<Proc:0x000000000000 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:210 (lambda)>"
+            "to_s": "#<Proc:0x000000000000 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:211 (lambda)>"
           },
           {
-            "to_s": "#<Proc:0x000000000000 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:210 (lambda)>"
+            "to_s": "#<Proc:0x000000000000 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:211 (lambda)>"
           }
         ]
       },
@@ -560,10 +560,10 @@
       "input": {
         "value": [
           {
-            "to_s": "#<Proc:0x000000000000 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:213 (lambda)>"
+            "to_s": "#<Proc:0x000000000000 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:214 (lambda)>"
           },
           {
-            "to_s": "#<Proc:0x000000000000 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:213 (lambda)>"
+            "to_s": "#<Proc:0x000000000000 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:214 (lambda)>"
           }
         ]
       },
@@ -679,7 +679,7 @@
       "type": "WorkingHours",
       "input": {
         "value": {
-          "getWorkingHours": "#<Proc:0x000000000000 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:250 (lambda)>"
+          "getWorkingHours": "#<Proc:0x000000000000 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:251 (lambda)>"
         }
       },
       "expected": "workinghours sun 1:00 - 2:00\nworkinghours mon off\nworkinghours tue off\nworkinghours wed off\nworkinghours thu off\nworkinghours fri off\nworkinghours sat off"
@@ -690,7 +690,7 @@
       "type": "WorkingHours",
       "input": {
         "value": {
-          "getWorkingHours": "#<Proc:0x000000000000 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:253 (lambda)>"
+          "getWorkingHours": "#<Proc:0x000000000000 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:254 (lambda)>"
         }
       },
       "expected": "sun 1:00 - 2:00"
@@ -814,7 +814,7 @@
           "richText": {
             "inputText": "hello"
           },
-          "to_s": "#<Proc:0x000000000000 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:298 (lambda)>"
+          "to_s": "#<Proc:0x000000000000 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:299 (lambda)>"
         }
       },
       "expected": "richtext \"hello\""
@@ -828,7 +828,7 @@
           "richText": {
             "inputText": "hello"
           },
-          "to_s": "#<Proc:0x000000000000 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:301 (lambda)>"
+          "to_s": "#<Proc:0x000000000000 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:302 (lambda)>"
         }
       },
       "expected": "hello"
@@ -896,6 +896,970 @@
         "inherit": true
       },
       "expected": "text \"inherited\""
+    },
+    {
+      "description": "deepClone — String default null",
+      "method": "deepClone",
+      "type": "String",
+      "input": {
+        "value": null
+      },
+      "expected": null
+    },
+    {
+      "description": "deepClone — Integer default 0",
+      "method": "deepClone",
+      "type": "Integer",
+      "input": {
+        "value": 0
+      },
+      "expected": 0
+    },
+    {
+      "description": "deepClone — Float default 0.0",
+      "method": "deepClone",
+      "type": "Float",
+      "input": {
+        "value": 0.0
+      },
+      "expected": 0.0
+    },
+    {
+      "description": "deepClone — Boolean default false",
+      "method": "deepClone",
+      "type": "Boolean",
+      "input": {
+        "value": false
+      },
+      "expected": false
+    },
+    {
+      "description": "deepClone — Symbol default nil",
+      "method": "deepClone",
+      "type": "Symbol",
+      "input": {
+        "value": null
+      },
+      "expected": null
+    },
+    {
+      "description": "deepClone — Date default nil",
+      "method": "deepClone",
+      "type": "Date",
+      "input": {
+        "value": null
+      },
+      "expected": null
+    },
+    {
+      "description": "deepClone — Duration default 0",
+      "method": "deepClone",
+      "type": "Duration",
+      "input": {
+        "value": 0
+      },
+      "expected": 0
+    },
+    {
+      "description": "deepClone — Property default nil",
+      "method": "deepClone",
+      "type": "Property",
+      "input": {
+        "value": null
+      },
+      "expected": null
+    },
+    {
+      "description": "deepClone — Account default nil",
+      "method": "deepClone",
+      "type": "Account",
+      "input": {
+        "value": null
+      },
+      "expected": null
+    },
+    {
+      "description": "deepClone — Reference default nil",
+      "method": "deepClone",
+      "type": "Reference",
+      "input": {
+        "value": null
+      },
+      "expected": null
+    },
+    {
+      "description": "deepClone — FlagList default []",
+      "method": "deepClone",
+      "type": "FlagList",
+      "input": {
+        "value": [
+
+        ]
+      },
+      "expected": [
+
+      ]
+    },
+    {
+      "description": "deepClone — SymbolList default []",
+      "method": "deepClone",
+      "type": "SymbolList",
+      "input": {
+        "value": [
+
+        ]
+      },
+      "expected": [
+
+      ]
+    },
+    {
+      "description": "deepClone — ScenarioList default []",
+      "method": "deepClone",
+      "type": "ScenarioList",
+      "input": {
+        "value": [
+
+        ]
+      },
+      "expected": [
+
+      ]
+    },
+    {
+      "description": "deepClone — NodeList default []",
+      "method": "deepClone",
+      "type": "NodeList",
+      "input": {
+        "value": [
+
+        ]
+      },
+      "expected": [
+
+      ]
+    },
+    {
+      "description": "deepClone — ResourceList default []",
+      "method": "deepClone",
+      "type": "ResourceList",
+      "input": {
+        "value": [
+
+        ]
+      },
+      "expected": [
+
+      ]
+    },
+    {
+      "description": "deepClone — TaskList default []",
+      "method": "deepClone",
+      "type": "TaskList",
+      "input": {
+        "value": [
+
+        ]
+      },
+      "expected": [
+
+      ]
+    },
+    {
+      "description": "deepClone — DependencyList default []",
+      "method": "deepClone",
+      "type": "DependencyList",
+      "input": {
+        "value": [
+
+        ]
+      },
+      "expected": [
+
+      ]
+    },
+    {
+      "description": "deepClone — TaskDepList default []",
+      "method": "deepClone",
+      "type": "TaskDepList",
+      "input": {
+        "value": [
+
+        ]
+      },
+      "expected": [
+
+      ]
+    },
+    {
+      "description": "deepClone — ChargeList default []",
+      "method": "deepClone",
+      "type": "ChargeList",
+      "input": {
+        "value": [
+
+        ]
+      },
+      "expected": [
+
+      ]
+    },
+    {
+      "description": "deepClone — ChargeSetList default []",
+      "method": "deepClone",
+      "type": "ChargeSetList",
+      "input": {
+        "value": [
+
+        ]
+      },
+      "expected": [
+
+      ]
+    },
+    {
+      "description": "deepClone — AccountCreditList default []",
+      "method": "deepClone",
+      "type": "AccountCreditList",
+      "input": {
+        "value": [
+
+        ]
+      },
+      "expected": [
+
+      ]
+    },
+    {
+      "description": "deepClone — Allocation default nil",
+      "method": "deepClone",
+      "type": "Allocation",
+      "input": {
+        "value": null
+      },
+      "expected": null
+    },
+    {
+      "description": "deepClone — BookingList default []",
+      "method": "deepClone",
+      "type": "BookingList",
+      "input": {
+        "value": [
+
+        ]
+      },
+      "expected": [
+
+      ]
+    },
+    {
+      "description": "deepClone — LogicalExpression default nil",
+      "method": "deepClone",
+      "type": "LogicalExpression",
+      "input": {
+        "value": null
+      },
+      "expected": null
+    },
+    {
+      "description": "deepClone — LogicalExpressionList default []",
+      "method": "deepClone",
+      "type": "LogicalExpressionList",
+      "input": {
+        "value": [
+
+        ]
+      },
+      "expected": [
+
+      ]
+    },
+    {
+      "description": "deepClone — TimeIntervalList default []",
+      "method": "deepClone",
+      "type": "TimeIntervalList",
+      "input": {
+        "value": [
+
+        ]
+      },
+      "expected": [
+
+      ]
+    },
+    {
+      "description": "deepClone — LeaveList default []",
+      "method": "deepClone",
+      "type": "LeaveList",
+      "input": {
+        "value": [
+
+        ]
+      },
+      "expected": [
+
+      ]
+    },
+    {
+      "description": "deepClone — LeaveAllowanceList default []",
+      "method": "deepClone",
+      "type": "LeaveAllowanceList",
+      "input": {
+        "value": [
+
+        ]
+      },
+      "expected": [
+
+      ]
+    },
+    {
+      "description": "deepClone — Limits default nil",
+      "method": "deepClone",
+      "type": "Limits",
+      "input": {
+        "value": null
+      },
+      "expected": null
+    },
+    {
+      "description": "deepClone — ShiftAssignments default []",
+      "method": "deepClone",
+      "type": "ShiftAssignments",
+      "input": {
+        "value": [
+
+        ]
+      },
+      "expected": [
+
+      ]
+    },
+    {
+      "description": "deepClone — WorkingHours default nil",
+      "method": "deepClone",
+      "type": "WorkingHours",
+      "input": {
+        "value": null
+      },
+      "expected": null
+    },
+    {
+      "description": "deepClone — RealFormat default nil",
+      "method": "deepClone",
+      "type": "RealFormat",
+      "input": {
+        "value": null
+      },
+      "expected": null
+    },
+    {
+      "description": "deepClone — ColumnList default []",
+      "method": "deepClone",
+      "type": "ColumnList",
+      "input": {
+        "value": [
+
+        ]
+      },
+      "expected": [
+
+      ]
+    },
+    {
+      "description": "deepClone — FormatList default []",
+      "method": "deepClone",
+      "type": "FormatList",
+      "input": {
+        "value": [
+
+        ]
+      },
+      "expected": [
+
+      ]
+    },
+    {
+      "description": "deepClone — SortList default []",
+      "method": "deepClone",
+      "type": "SortList",
+      "input": {
+        "value": [
+
+        ]
+      },
+      "expected": [
+
+      ]
+    },
+    {
+      "description": "deepClone — JournalSortList default []",
+      "method": "deepClone",
+      "type": "JournalSortList",
+      "input": {
+        "value": [
+
+        ]
+      },
+      "expected": [
+
+      ]
+    },
+    {
+      "description": "deepClone — RichText default nil",
+      "method": "deepClone",
+      "type": "RichText",
+      "input": {
+        "value": null
+      },
+      "expected": null
+    },
+    {
+      "description": "deepClone — DefinitionList default []",
+      "method": "deepClone",
+      "type": "DefinitionList",
+      "input": {
+        "value": [
+
+        ]
+      },
+      "expected": [
+
+      ]
+    },
+    {
+      "description": "diverge — String mismatch",
+      "method": "diverge",
+      "type": "String",
+      "input": {
+        "value": "hello"
+      },
+      "expected": "world"
+    },
+    {
+      "description": "diverge — Integer mismatch",
+      "method": "diverge",
+      "type": "Integer",
+      "input": {
+        "value": 42
+      },
+      "expected": 100
+    },
+    {
+      "description": "diverge — Float mismatch",
+      "method": "diverge",
+      "type": "Float",
+      "input": {
+        "value": 3.14
+      },
+      "expected": 2.71
+    },
+    {
+      "description": "diverge — Boolean mismatch",
+      "method": "diverge",
+      "type": "Boolean",
+      "input": {
+        "value": true
+      },
+      "expected": false
+    },
+    {
+      "description": "diverge — Symbol mismatch",
+      "method": "diverge",
+      "type": "Symbol",
+      "input": {
+        "value": "foo"
+      },
+      "expected": "bar"
+    },
+    {
+      "description": "diverge — Date mismatch",
+      "method": "diverge",
+      "type": "Date",
+      "input": {
+        "value": "2023-01-01"
+      },
+      "expected": "2023-02-01"
+    },
+    {
+      "description": "diverge — Duration mismatch",
+      "method": "diverge",
+      "type": "Duration",
+      "input": {
+        "value": 3600
+      },
+      "expected": 7200
+    },
+    {
+      "description": "diverge — Property mismatch",
+      "method": "diverge",
+      "type": "Property",
+      "input": {
+        "value": {
+          "id": "task1",
+          "name": "Task 1"
+        }
+      },
+      "expected": {
+        "id": "task2",
+        "name": "Task 2"
+      }
+    },
+    {
+      "description": "diverge — Account mismatch",
+      "method": "diverge",
+      "type": "Account",
+      "input": {
+        "value": {
+          "id": "acc1",
+          "name": "Account 1"
+        }
+      },
+      "expected": {
+        "id": "acc2",
+        "name": "Account 2"
+      }
+    },
+    {
+      "description": "diverge — Reference mismatch",
+      "method": "diverge",
+      "type": "Reference",
+      "input": {
+        "value": {
+          "url": "http://example.com/1",
+          "label": "Example 1"
+        }
+      },
+      "expected": {
+        "url": "http://example.com/2",
+        "label": "Example 2"
+      }
+    },
+    {
+      "description": "diverge — FlagList mismatch",
+      "method": "diverge",
+      "type": "FlagList",
+      "input": {
+        "value": [
+          "flag1",
+          "flag2"
+        ]
+      },
+      "expected": [
+        "flag3",
+        "flag4"
+      ]
+    },
+    {
+      "description": "diverge — SymbolList mismatch",
+      "method": "diverge",
+      "type": "SymbolList",
+      "input": {
+        "value": [
+          "sym1",
+          "sym2"
+        ]
+      },
+      "expected": [
+        "sym3",
+        "sym4"
+      ]
+    },
+    {
+      "description": "diverge — ScenarioList mismatch",
+      "method": "diverge",
+      "type": "ScenarioList",
+      "input": {
+        "value": [
+          "scen1",
+          "scen2"
+        ]
+      },
+      "expected": [
+        "scen3",
+        "scen4"
+      ]
+    },
+    {
+      "description": "diverge — NodeList mismatch",
+      "method": "diverge",
+      "type": "NodeList",
+      "input": {
+        "value": [
+          "node1",
+          "node2"
+        ]
+      },
+      "expected": [
+        "node3",
+        "node4"
+      ]
+    },
+    {
+      "description": "diverge — ResourceList mismatch",
+      "method": "diverge",
+      "type": "ResourceList",
+      "input": {
+        "value": [
+          "res1",
+          "res2"
+        ]
+      },
+      "expected": [
+        "res3",
+        "res4"
+      ]
+    },
+    {
+      "description": "diverge — TaskList mismatch",
+      "method": "diverge",
+      "type": "TaskList",
+      "input": {
+        "value": [
+          "task1",
+          "task2"
+        ]
+      },
+      "expected": [
+        "task3",
+        "task4"
+      ]
+    },
+    {
+      "description": "diverge — DependencyList mismatch",
+      "method": "diverge",
+      "type": "DependencyList",
+      "input": {
+        "value": [
+          "dep1",
+          "dep2"
+        ]
+      },
+      "expected": [
+        "dep3",
+        "dep4"
+      ]
+    },
+    {
+      "description": "diverge — TaskDepList mismatch",
+      "method": "diverge",
+      "type": "TaskDepList",
+      "input": {
+        "value": [
+          "tdep1",
+          "tdep2"
+        ]
+      },
+      "expected": [
+        "tdep3",
+        "tdep4"
+      ]
+    },
+    {
+      "description": "diverge — ChargeList mismatch",
+      "method": "diverge",
+      "type": "ChargeList",
+      "input": {
+        "value": [
+          "charge1",
+          "charge2"
+        ]
+      },
+      "expected": [
+        "charge3",
+        "charge4"
+      ]
+    },
+    {
+      "description": "diverge — ChargeSetList mismatch",
+      "method": "diverge",
+      "type": "ChargeSetList",
+      "input": {
+        "value": [
+          "cset1",
+          "cset2"
+        ]
+      },
+      "expected": [
+        "cset3",
+        "cset4"
+      ]
+    },
+    {
+      "description": "diverge — AccountCreditList mismatch",
+      "method": "diverge",
+      "type": "AccountCreditList",
+      "input": {
+        "value": [
+          "credit1",
+          "credit2"
+        ]
+      },
+      "expected": [
+        "credit3",
+        "credit4"
+      ]
+    },
+    {
+      "description": "diverge — Allocation mismatch",
+      "method": "diverge",
+      "type": "Allocation",
+      "input": {
+        "value": {
+          "mandatory": true,
+          "persistent": false
+        }
+      },
+      "expected": {
+        "mandatory": false,
+        "persistent": true
+      }
+    },
+    {
+      "description": "diverge — BookingList mismatch",
+      "method": "diverge",
+      "type": "BookingList",
+      "input": {
+        "value": [
+          "book1",
+          "book2"
+        ]
+      },
+      "expected": [
+        "book3",
+        "book4"
+      ]
+    },
+    {
+      "description": "diverge — LogicalExpression mismatch",
+      "method": "diverge",
+      "type": "LogicalExpression",
+      "input": {
+        "value": {
+          "expr": "task1",
+          "op": "and",
+          "expr2": "task2"
+        }
+      },
+      "expected": {
+        "expr": "task3",
+        "op": "or",
+        "expr2": "task4"
+      }
+    },
+    {
+      "description": "diverge — LogicalExpressionList mismatch",
+      "method": "diverge",
+      "type": "LogicalExpressionList",
+      "input": {
+        "value": [
+          "lexpr1",
+          "lexpr2"
+        ]
+      },
+      "expected": [
+        "lexpr3",
+        "lexpr4"
+      ]
+    },
+    {
+      "description": "diverge — TimeIntervalList mismatch",
+      "method": "diverge",
+      "type": "TimeIntervalList",
+      "input": {
+        "value": [
+          "tint1",
+          "tint2"
+        ]
+      },
+      "expected": [
+        "tint3",
+        "tint4"
+      ]
+    },
+    {
+      "description": "diverge — LeaveList mismatch",
+      "method": "diverge",
+      "type": "LeaveList",
+      "input": {
+        "value": [
+          "leave1",
+          "leave2"
+        ]
+      },
+      "expected": [
+        "leave3",
+        "leave4"
+      ]
+    },
+    {
+      "description": "diverge — LeaveAllowanceList mismatch",
+      "method": "diverge",
+      "type": "LeaveAllowanceList",
+      "input": {
+        "value": [
+          "leaveallow1",
+          "leaveallow2"
+        ]
+      },
+      "expected": [
+        "leaveallow3",
+        "leaveallow4"
+      ]
+    },
+    {
+      "description": "diverge — Limits mismatch",
+      "method": "diverge",
+      "type": "Limits",
+      "input": {
+        "value": {
+          "max": 100,
+          "min": 0
+        }
+      },
+      "expected": {
+        "max": 200,
+        "min": 50
+      }
+    },
+    {
+      "description": "diverge — ShiftAssignments mismatch",
+      "method": "diverge",
+      "type": "ShiftAssignments",
+      "input": {
+        "value": [
+          "shift1",
+          "shift2"
+        ]
+      },
+      "expected": [
+        "shift3",
+        "shift4"
+      ]
+    },
+    {
+      "description": "diverge — WorkingHours mismatch",
+      "method": "diverge",
+      "type": "WorkingHours",
+      "input": {
+        "value": {
+          "mon": "9-17",
+          "tue": "9-17"
+        }
+      },
+      "expected": {
+        "mon": "10-18",
+        "tue": "10-18"
+      }
+    },
+    {
+      "description": "diverge — RealFormat mismatch",
+      "method": "diverge",
+      "type": "RealFormat",
+      "input": {
+        "value": {
+          "precision": 2,
+          "scale": 0
+        }
+      },
+      "expected": {
+        "precision": 3,
+        "scale": 1
+      }
+    },
+    {
+      "description": "diverge — ColumnList mismatch",
+      "method": "diverge",
+      "type": "ColumnList",
+      "input": {
+        "value": [
+          "col1",
+          "col2"
+        ]
+      },
+      "expected": [
+        "col3",
+        "col4"
+      ]
+    },
+    {
+      "description": "diverge — FormatList mismatch",
+      "method": "diverge",
+      "type": "FormatList",
+      "input": {
+        "value": [
+          "fmt1",
+          "fmt2"
+        ]
+      },
+      "expected": [
+        "fmt3",
+        "fmt4"
+      ]
+    },
+    {
+      "description": "diverge — SortList mismatch",
+      "method": "diverge",
+      "type": "SortList",
+      "input": {
+        "value": [
+          "sort1",
+          "sort2"
+        ]
+      },
+      "expected": [
+        "sort3",
+        "sort4"
+      ]
+    },
+    {
+      "description": "diverge — JournalSortList mismatch",
+      "method": "diverge",
+      "type": "JournalSortList",
+      "input": {
+        "value": [
+          "jsort1",
+          "jsort2"
+        ]
+      },
+      "expected": [
+        "jsort3",
+        "jsort4"
+      ]
+    },
+    {
+      "description": "diverge — RichText mismatch",
+      "method": "diverge",
+      "type": "RichText",
+      "input": {
+        "value": {
+          "inputText": "hello",
+          "richText": {
+            "inputText": "world"
+          }
+        }
+      },
+      "expected": {
+        "inputText": "hi",
+        "richText": {
+          "inputText": "earth"
+        }
+      }
+    },
+    {
+      "description": "diverge — DefinitionList mismatch",
+      "method": "diverge",
+      "type": "DefinitionList",
+      "input": {
+        "value": [
+          "def1",
+          "def2"
+        ]
+      },
+      "expected": [
+        "def3",
+        "def4"
+      ]
     }
   ]
 }

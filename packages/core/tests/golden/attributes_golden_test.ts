@@ -9,6 +9,7 @@ import { AttributeType, } from "../../src/attributes/attribute-type.ts";
 import { type AttributeContainer, } from "../../src/attributes/attribute-container.ts";
 import { type PropertyLike, } from "../../src/model/property-like.ts";
 import { MockContainer, } from "../attributes/mock-container.ts";
+import { deepClone, } from "../../src/utils/deep-clone.ts";
 import { StringAttribute, } from "../../src/attributes/scalar/string-attribute.ts";
 import { IntegerAttribute, } from "../../src/attributes/scalar/integer-attribute.ts";
 import { FloatAttribute, } from "../../src/attributes/scalar/float-attribute.ts";
@@ -133,21 +134,21 @@ function procTo_s(line: number,): string {
   procCallCounts.set(line, count,);
 
   switch (line) {
-    case 162:
+    case 163:
       return count === 1 ? "cs1" : "";
-    case 165:
+    case 166:
       return count === 1 ? "cs1" : "";
-    case 186:
+    case 187:
       return count === 1 ? "b1" : "";
-    case 189:
+    case 190:
       return count === 1 ? "b1" : "";
-    case 210:
+    case 211:
       return count === 1 ? "1h-2h" : count === 2 ? "3h-4h" : "";
-    case 213:
+    case 214:
       return count === 1 ? "1h-2h" : count === 2 ? "3h-4h" : "";
-    case 298:
+    case 299:
       return count === 1 ? "hello" : "";
-    case 301:
+    case 302:
       return count === 1 ? "hello" : "";
     default:
       return "";
@@ -244,6 +245,52 @@ function runCase(c: GoldenCase,): void {
         c.expected,
         `Golden case "${c.description}" failed for method ${c.method}`,
       );
+      break;
+    }
+    case "deepClone": {
+      // 3.14.7 — deepClone de cada default deve ser estruturalmente igual.
+      // O golden file registra o valor original; o teste clona e compara.
+      const original = c.input?.value;
+      const clone = deepClone(original);
+      assertEquals(
+        clone,
+        original,
+        `Golden case "${c.description}" failed: deepClone(${JSON.stringify(
+          original,
+        )}) !== original`,
+      );
+      break;
+    }
+    case "diverge": {
+      // 3.14.8 — quando diverge, a mensagem de erro deve ser detalhada.
+      // Passa uma mensagem customizada ao assertEquals contendo descrição,
+      // método e tipo, para que o erro de divergência seja diagnosticável.
+      const actual = c.input?.value;
+      const expected = c.expected;
+      const detailMsg = `Golden case "${c.description}" failed for method ${c.method} type ${c.type}`;
+      try {
+        assertEquals(actual, expected, detailMsg,);
+        throw new Error(
+          `Golden case "${c.description}" should have thrown for method ${c.method}`,
+        );
+      } catch (e) {
+        const msg = (e as Error).message;
+        assertEquals(
+          msg.includes(c.description),
+          true,
+          `Divergence message should include description "${c.description}"`,
+        );
+        assertEquals(
+          msg.includes(c.method),
+          true,
+          `Divergence message should include method "${c.method}"`,
+        );
+        assertEquals(
+          msg.includes(c.type),
+          true,
+          `Divergence message should include type "${c.type}"`,
+        );
+      }
       break;
     }
     case ":throws": {

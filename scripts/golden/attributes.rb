@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "json"
+require "date"
 
 $golden_cases = []
 
@@ -323,6 +324,243 @@ tc("mode 2 (computed) — StringAttribute",
 tc("inherit — StringAttribute herda valor",
    "to_tjp_inherit", "String",
    { value: "inherited", inherit: true }, "text \"inherited\"")
+
+# --- deepClone comparison (3.14.7) ---
+# Compare deepClone of each attribute default value against the original.
+# The golden file records the default value; the TS test deepClones it and
+# asserts structural equality with the original.
+tc("deepClone — String default null",
+   "deepClone", "String",
+   { value: nil }, nil)
+tc("deepClone — Integer default 0",
+   "deepClone", "Integer",
+   { value: 0 }, 0)
+tc("deepClone — Float default 0.0",
+   "deepClone", "Float",
+   { value: 0.0 }, 0.0)
+tc("deepClone — Boolean default false",
+   "deepClone", "Boolean",
+   { value: false }, false)
+tc("deepClone — Symbol default nil",
+   "deepClone", "Symbol",
+   { value: nil }, nil)
+tc("deepClone — Date default nil",
+   "deepClone", "Date",
+   { value: nil }, nil)
+tc("deepClone — Duration default 0",
+   "deepClone", "Duration",
+   { value: 0 }, 0)
+tc("deepClone — Property default nil",
+   "deepClone", "Property",
+   { value: nil }, nil)
+tc("deepClone — Account default nil",
+   "deepClone", "Account",
+   { value: nil }, nil)
+tc("deepClone — Reference default nil",
+   "deepClone", "Reference",
+   { value: nil }, nil)
+tc("deepClone — FlagList default []",
+   "deepClone", "FlagList",
+   { value: [] }, [])
+tc("deepClone — SymbolList default []",
+   "deepClone", "SymbolList",
+   { value: [] }, [])
+tc("deepClone — ScenarioList default []",
+   "deepClone", "ScenarioList",
+   { value: [] }, [])
+tc("deepClone — NodeList default []",
+   "deepClone", "NodeList",
+   { value: [] }, [])
+tc("deepClone — ResourceList default []",
+   "deepClone", "ResourceList",
+   { value: [] }, [])
+tc("deepClone — TaskList default []",
+   "deepClone", "TaskList",
+   { value: [] }, [])
+tc("deepClone — DependencyList default []",
+   "deepClone", "DependencyList",
+   { value: [] }, [])
+tc("deepClone — TaskDepList default []",
+   "deepClone", "TaskDepList",
+   { value: [] }, [])
+tc("deepClone — ChargeList default []",
+   "deepClone", "ChargeList",
+   { value: [] }, [])
+tc("deepClone — ChargeSetList default []",
+   "deepClone", "ChargeSetList",
+   { value: [] }, [])
+tc("deepClone — AccountCreditList default []",
+   "deepClone", "AccountCreditList",
+   { value: [] }, [])
+tc("deepClone — Allocation default nil",
+   "deepClone", "Allocation",
+   { value: nil }, nil)
+tc("deepClone — BookingList default []",
+   "deepClone", "BookingList",
+   { value: [] }, [])
+tc("deepClone — LogicalExpression default nil",
+   "deepClone", "LogicalExpression",
+   { value: nil }, nil)
+tc("deepClone — LogicalExpressionList default []",
+   "deepClone", "LogicalExpressionList",
+   { value: [] }, [])
+tc("deepClone — TimeIntervalList default []",
+   "deepClone", "TimeIntervalList",
+   { value: [] }, [])
+tc("deepClone — LeaveList default []",
+   "deepClone", "LeaveList",
+   { value: [] }, [])
+tc("deepClone — LeaveAllowanceList default []",
+   "deepClone", "LeaveAllowanceList",
+   { value: [] }, [])
+tc("deepClone — Limits default nil",
+   "deepClone", "Limits",
+   { value: nil }, nil)
+tc("deepClone — ShiftAssignments default []",
+   "deepClone", "ShiftAssignments",
+   { value: [] }, [])
+tc("deepClone — WorkingHours default nil",
+   "deepClone", "WorkingHours",
+   { value: nil }, nil)
+tc("deepClone — RealFormat default nil",
+   "deepClone", "RealFormat",
+   { value: nil }, nil)
+tc("deepClone — ColumnList default []",
+   "deepClone", "ColumnList",
+   { value: [] }, [])
+tc("deepClone — FormatList default []",
+   "deepClone", "FormatList",
+   { value: [] }, [])
+tc("deepClone — SortList default []",
+   "deepClone", "SortList",
+   { value: [] }, [])
+tc("deepClone — JournalSortList default []",
+   "deepClone", "JournalSortList",
+   { value: [] }, [])
+tc("deepClone — RichText default nil",
+   "deepClone", "RichText",
+   { value: nil }, nil)
+tc("deepClone — DefinitionList default []",
+   "deepClone", "DefinitionList",
+   { value: [] }, [])
+
+# --- Detailed divergence messages (3.14.8) ---
+# These tests verify that when a golden case diverges, the error message
+# includes enough context to diagnose the problem.
+tc("diverge — String mismatch",
+   "diverge", "String",
+   { value: "hello" }, "world")
+tc("diverge — Integer mismatch",
+   "diverge", "Integer",
+   { value: 42 }, 100)
+tc("diverge — Float mismatch",
+   "diverge", "Float",
+   { value: 3.14 }, 2.71)
+tc("diverge — Boolean mismatch",
+   "diverge", "Boolean",
+   { value: true }, false)
+tc("diverge — Symbol mismatch",
+   "diverge", "Symbol",
+   { value: :foo }, :bar)
+tc("diverge — Date mismatch",
+   "diverge", "Date",
+   { value: Date.parse("2023-01-01") }, Date.parse("2023-02-01"))
+tc("diverge — Duration mismatch",
+   "diverge", "Duration",
+   { value: 3600 }, 7200)
+tc("diverge — Property mismatch",
+   "diverge", "Property",
+   { value: { id: "task1", name: "Task 1" } }, { id: "task2", name: "Task 2" })
+tc("diverge — Account mismatch",
+   "diverge", "Account",
+   { value: { id: "acc1", name: "Account 1" } }, { id: "acc2", name: "Account 2" })
+tc("diverge — Reference mismatch",
+   "diverge", "Reference",
+   { value: { url: "http://example.com/1", label: "Example 1" } }, { url: "http://example.com/2", label: "Example 2" })
+tc("diverge — FlagList mismatch",
+   "diverge", "FlagList",
+   { value: [:flag1, :flag2] }, [:flag3, :flag4])
+tc("diverge — SymbolList mismatch",
+   "diverge", "SymbolList",
+   { value: [:sym1, :sym2] }, [:sym3, :sym4])
+tc("diverge — ScenarioList mismatch",
+   "diverge", "ScenarioList",
+   { value: ["scen1", "scen2"] }, ["scen3", "scen4"])
+tc("diverge — NodeList mismatch",
+   "diverge", "NodeList",
+   { value: ["node1", "node2"] }, ["node3", "node4"])
+tc("diverge — ResourceList mismatch",
+   "diverge", "ResourceList",
+   { value: ["res1", "res2"] }, ["res3", "res4"])
+tc("diverge — TaskList mismatch",
+   "diverge", "TaskList",
+   { value: ["task1", "task2"] }, ["task3", "task4"])
+tc("diverge — DependencyList mismatch",
+   "diverge", "DependencyList",
+   { value: ["dep1", "dep2"] }, ["dep3", "dep4"])
+tc("diverge — TaskDepList mismatch",
+   "diverge", "TaskDepList",
+   { value: ["tdep1", "tdep2"] }, ["tdep3", "tdep4"])
+tc("diverge — ChargeList mismatch",
+   "diverge", "ChargeList",
+   { value: ["charge1", "charge2"] }, ["charge3", "charge4"])
+tc("diverge — ChargeSetList mismatch",
+   "diverge", "ChargeSetList",
+   { value: ["cset1", "cset2"] }, ["cset3", "cset4"])
+tc("diverge — AccountCreditList mismatch",
+   "diverge", "AccountCreditList",
+   { value: ["credit1", "credit2"] }, ["credit3", "credit4"])
+tc("diverge — Allocation mismatch",
+   "diverge", "Allocation",
+   { value: { mandatory: true, persistent: false } }, { mandatory: false, persistent: true })
+tc("diverge — BookingList mismatch",
+   "diverge", "BookingList",
+   { value: ["book1", "book2"] }, ["book3", "book4"])
+tc("diverge — LogicalExpression mismatch",
+   "diverge", "LogicalExpression",
+   { value: { expr: "task1", op: "and", expr2: "task2" } }, { expr: "task3", op: "or", expr2: "task4" })
+tc("diverge — LogicalExpressionList mismatch",
+   "diverge", "LogicalExpressionList",
+   { value: ["lexpr1", "lexpr2"] }, ["lexpr3", "lexpr4"])
+tc("diverge — TimeIntervalList mismatch",
+   "diverge", "TimeIntervalList",
+   { value: ["tint1", "tint2"] }, ["tint3", "tint4"])
+tc("diverge — LeaveList mismatch",
+   "diverge", "LeaveList",
+   { value: ["leave1", "leave2"] }, ["leave3", "leave4"])
+tc("diverge — LeaveAllowanceList mismatch",
+   "diverge", "LeaveAllowanceList",
+   { value: ["leaveallow1", "leaveallow2"] }, ["leaveallow3", "leaveallow4"])
+tc("diverge — Limits mismatch",
+   "diverge", "Limits",
+   { value: { max: 100, min: 0 } }, { max: 200, min: 50 })
+tc("diverge — ShiftAssignments mismatch",
+   "diverge", "ShiftAssignments",
+   { value: ["shift1", "shift2"] }, ["shift3", "shift4"])
+tc("diverge — WorkingHours mismatch",
+   "diverge", "WorkingHours",
+   { value: { mon: "9-17", tue: "9-17" } }, { mon: "10-18", tue: "10-18" })
+tc("diverge — RealFormat mismatch",
+   "diverge", "RealFormat",
+   { value: { precision: 2, scale: 0 } }, { precision: 3, scale: 1 })
+tc("diverge — ColumnList mismatch",
+   "diverge", "ColumnList",
+   { value: ["col1", "col2"] }, ["col3", "col4"])
+tc("diverge — FormatList mismatch",
+   "diverge", "FormatList",
+   { value: ["fmt1", "fmt2"] }, ["fmt3", "fmt4"])
+tc("diverge — SortList mismatch",
+   "diverge", "SortList",
+   { value: ["sort1", "sort2"] }, ["sort3", "sort4"])
+tc("diverge — JournalSortList mismatch",
+   "diverge", "JournalSortList",
+   { value: ["jsort1", "jsort2"] }, ["jsort3", "jsort4"])
+tc("diverge — RichText mismatch",
+   "diverge", "RichText",
+   { value: { inputText: "hello", richText: { inputText: "world" } } }, { inputText: "hi", richText: { inputText: "earth" } })
+tc("diverge — DefinitionList mismatch",
+   "diverge", "DefinitionList",
+   { value: ["def1", "def2"] }, ["def3", "def4"])
 
 # Generate the JSON output
 output = {

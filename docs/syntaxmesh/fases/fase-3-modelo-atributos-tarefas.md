@@ -2,9 +2,9 @@
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-3-tarefas.md`
 > **Plano:** `docs/syntaxmesh/fases/fase-3-modelo-atributos.md`
-> **Status:** 🟡 Em andamento
+> **Status:** ✅ Concluída
 > **Total:** ~140 tarefas
-> **Concluídas:** ~131 (3.0–3.13; 3.14 e Bloco C pendentes)
+> **Concluídas:** ~140 (100%)
 > **Fonte Ruby:** `docs/taskjuggler/lib/taskjuggler/{AttributeBase,AttributeDefinition,Attributes,deep_copy}.rb`
 
 ---
@@ -66,11 +66,11 @@ Criado na Fase 2 (`packages/core/src/compat.ts`). Ver **ADR 013** (`docs/syntaxm
 [x] 3.11 Formatação (5)                     —  6/6
 [x] 3.12 Ricos (2)                          —  8/8
 [x] 3.13 deepClone utility                  —  10/10
-[ ] 3.14 Golden tests                       —  0/9
-[ ] Bloco C — Verificação final             —  0/10
+[x] 3.14 Golden tests                       —  9/9
+[x] Bloco C — Verificação final             —  10/10
 ─────────────────────────────────────────────
 TOTAL: ~140
-Concluídas: ~131
+Concluídas: ~140
 ```
 
 ---
