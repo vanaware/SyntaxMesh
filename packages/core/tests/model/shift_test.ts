@@ -79,12 +79,7 @@ describe("Shift", () => {
 
   it("setForScenario define valor", () => {
     const shift = new Shift(project, "shift1", "Shift 1", null);
-    const attr = shift.getScenarioAttribute(0, "replace");
-    console.log("before setForScenario - attr:", attr, "get:", typeof attr.get);
     shift.setForScenario("replace", true, 0);
-    const attrAfter = shift.getScenarioAttribute(0, "replace");
-    console.log("after setForScenario - attr:", attrAfter, "get:", typeof attrAfter.get);
-    console.log("scenarioAttributes[0]:", shift.scenarioAttributes[0]);
     assertEquals(shift.getForScenario("replace", 0), true);
   });
 

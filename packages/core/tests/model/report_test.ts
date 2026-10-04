@@ -81,7 +81,7 @@ describe("Report", () => {
     }
   });
 
-  it("getScenarioAttribute lança para atributo não específico de cenário", () => {
+  it("getScenarioAttribute lança para atributo não específico de cenário (id)", () => {
     const report = new Report(project, "report1", "Report 1", null);
     try {
       report.getScenarioAttribute(0, "id");
@@ -91,10 +91,16 @@ describe("Report", () => {
     }
   });
 
-  it("setForScenario define valor", () => {
+  it("setForScenario lança para qualquer atributo (Report não tem atributos específicos de cenário)", () => {
     const report = new Report(project, "report1", "Report 1", null);
-    report.setForScenario("caption", "My Report", 0);
-    assertEquals(report.getForScenario("caption", 0), "My Report");
+    assertThrows(
+      () => report.setForScenario("caption", "My Report", 0),
+      Error,
+    );
+    assertThrows(
+      () => report.setForScenario("id", "newid", 0),
+      Error,
+    );
   });
 
   it("setForScenario lança para atributo não específico de cenário", () => {

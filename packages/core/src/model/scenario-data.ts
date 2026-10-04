@@ -12,7 +12,8 @@ export class ScenarioData implements AttributeContainer {
   constructor(property: PropertyLike, scenarioIdx: number, attributes: Map<string, unknown>) {
     this.property = property;
     this.scenarioIdx = scenarioIdx;
-    this.attributes = attributes;
+    // Use a separate Map for attribute values to avoid conflict with scenarioAttributes
+    this.attributes = new Map();
   }
 
   getProperty(): PropertyLike {
