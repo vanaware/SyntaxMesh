@@ -1,0 +1,43 @@
+project "Priority Demo" 2011-04-17-0:00--0700 +2m {
+  timezone "America/Denver"
+}
+
+resource tux "Tux"
+
+# *** EXAMPLE: project +
+task jobs "Project breakdown" {
+  start ${projectstart}
+
+  task work "The regular work" {
+    effort 20d
+    priority 500
+    allocate tux
+    limits { weeklymax 25h }
+  }
+
+  task support "Customer Support" {
+    # This is a high priority task. Due to the high priority tux is
+    # spending the required daily maximum on it.
+    end ${projectend}
+    priority 800
+    allocate tux
+    limits { dailymax 2h }
+  }
+
+  task conference "Attend Conference" {
+    period 2011-04-25 +2d
+    allocate tux
+    priority 1000
+  }
+
+  task maintenance "Maintenance work" {
+    # This is a fallback task. Whenever tux is not doing something
+    # else he is allocated to this task.
+    end ${projectend}
+    priority 300
+    allocate tux
+    limits { weeklymax 2d }
+  }
+}
+# *** EXAMPLE: project -
+

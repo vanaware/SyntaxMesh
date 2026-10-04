@@ -1,0 +1,34 @@
+project celltext  "celltext" "1.0" 2007-01-01 - 2007-03-01 {
+  timezone "America/Denver"
+}
+
+# *** EXAMPLE: 1 +
+resource tux "Tux"
+
+task t "Task" {
+  task s "SubTask" {
+    start 2007-01-01
+    effort 5d
+    allocate tux
+  }
+}
+# *** EXAMPLE: 1 -
+# Just a very basic report with some standard columns
+taskreport simple "SimpleReport" {
+  formats html
+  columns bsi, name, start, end, weekly
+}
+
+# Report with custom colum title
+taskreport custom "CustomTitle" {
+  formats html
+  columns bsi, name { title "Work Item" }, effort
+}
+
+# *** EXAMPLE: 1 +
+# Report with index and task name combined in one single column
+taskreport combined "CombinedColumn" {
+  formats html
+  columns name { celltext 1 "<-query attribute='bsi'-> <-query->"},
+          start, end, weekly
+}

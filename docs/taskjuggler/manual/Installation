@@ -1,0 +1,404 @@
+== Installation ==
+
+TaskJuggler 3.x is written in [http://www.ruby-lang.org Ruby]. It
+should run on any platform that Ruby is available on. It uses the
+standard Ruby mechanism for distribution, a package format called
+[http://docs.rubygems.org RubyGems].
+
+=== Requirements ===
+
+Ruby applications are platform independent. There is no need to
+compile anything. But TaskJuggler has a very small set of
+dependencies that you have to take care of first. Please make sure you
+have the minimum required version installed.
+
+==== Supported Operating Systems ====
+
+* '''Linux''': Linux is the primary development platform for
+TaskJuggler. Releases are tested on recent openSUSE versions.
+
+* '''Other Unix OSes''': Should work as well, but releases are not
+tested on these OSes.
+
+* '''Windows''': Windows7 and some older version of Windows should
+work. There is no maintainer for this platform, so all releases are
+not tested on this platform.
+
+* '''MacOSX''': Will probably work as well. Releases are not tested
+on this OS. Older MacOS versions will likely not work.
+
+If you are interested in becoming the maintainer for any of the
+currently unmaintained (and untested) OSes, please contact us via the
+developer mailing list.
+
+==== Other required Software ====
+
+* '''Ruby:''' TaskJuggler 3.x is written in Ruby.  You need a Ruby
+runtime environment to run it. This can be downloaded from
+[http://www.ruby-lang.org/en/downloads/ here].  Most Linux
+distributions usually have Ruby already included. So does MacOS X
+Leopard. For Windows, there is a one-click installer available. The
+recommended Ruby version to make full use of TaskJuggler is Ruby 2.0.
+Ruby 1.9.1 contains some bugs that prevent the multi-core support to
+work. For users that are not interested in multi-core support, the web
+server,  the time sheet infrastructure and daemon Ruby 1.8.7 is still
+OK to use. On Windows you need at least Ruby 1.9.2. If you want to
+use non-ASCII characters, Ruby 1.9.2 or later is required as well.
+
+You must have configured your system locale to be UTF-8 to work
+properly with non-ASCII characters.
+
+See below for instructions on how to use the latest and greatest Ruby
+version in parallel with your distribution Ruby.
+
+* '''RubyGems:''' If it did not come with your OS or the Ruby
+installation, see [http://docs.rubygems.org here] how to get and
+install it. RubyGems is a cross-platform package manager. It will
+download and install all other required software packages
+automatically when you install TaskJuggler. These packages are called
+Ruby gems.
+
+Other versions of Ruby (Rubinius, JRuby, etc.) may work but have not
+been tested.
+
+=== Installation Steps for Users ===
+
+==== The easy way ====
+
+===== System Wide Installation =====
+
+TaskJuggler is a command line tool. It does not (yet) have a graphical
+user interface. To use it, you need to know how to open a command
+or terminal window. In this manual, we refer to it as your shell. The
+following paragraphs describe the commands you need to type into your
+[http://en.wikipedia.org/wiki/Shell_(computing) shell].
+
+On systems that already have Ruby and the gem package manager
+installed you can simply type the following command as root or admin
+user into your shell or command window:
+
+  gem install taskjuggler
+
+This will download and install the latest version from the
+[http://rubygems.org/gems/taskjuggler RubyGems.org] site.
+
+===== Installation into a local Directory =====
+
+If you don't want to install TaskJuggler for all users on the system,
+you can also install it into your home or data directory. This does
+not require root or admin permissions.
+
+The following steps describe the installation on a Linux system
+with the bash shell. You may have to use slightly different commands
+on a different operating system.
+
+Create a new directory ''''taskjuggler'''' in your $HOME directory for
+the installation to go into.
+
+  mkdir taskjuggler
+
+Install the gem and all dependencies.
+
+  gem install --install-dir taskjuggler taskjuggler-X.X.X.gem
+
+If you must use a proxy to access the Internet, you need to set a
+shell environment variable so ''''gem'''' can find and use it. The
+setting below needs to be adapted to your local environment. Check
+with your admin or IT department if needed.
+
+  export HTTP_PROXY=http://%USER%:%PASSWORD%@%SERVER%:%PORT%
+
+Configure your ''''PATH'''' variable to find the taskjuggler programs.
+
+  export PATH="${PATH}:${HOME}/taskjuggler/bin"
+
+Configure gem to find the installed files.
+
+  export GEM_HOME=${HOME}/taskjuggler
+
+The last two settings should also be added to your .profile file to
+make them permanent.
+
+That's it. You now should run TaskJuggler.
+
+  tj3 --version
+
+==== The manual way ====
+
+If the easy way doesn't work for you, you need to download and install
+the packages manually.  Download TaskJuggler gem file from the
+[http://rubygems.org/gems/taskjuggler RubyGems.org] site.
+
+A gem package is an operating system and architecture independent
+archive file for Ruby programs. You can install it on any system that
+has Ruby and RubyGems installed.  Normally, you should be logged-in
+as root or administrator to run the following installation command.
+Replace the X.X.X with the actual version that you have downloaded.
+
+ gem install pkg/taskjuggler-X.X.X.gem 
+
+It will install all components of the Gem in the appropriate place.
+
+On user friendly Linux distributions, the start scripts will be
+installed in a standard directory like ''''/usr/bin''''. On Debian
+based distributions, the start scripts end up in a place like
+''''/var/lib/gems/1.8/bin/'''' that is not listed in the ''''PATH''''
+variable. You either have to create a symbolic link for each start
+script or add the directory to your PATH variable. If you use the
+standard [http://en.wikipedia.org/wiki/Bash bash shell], put the
+following line in your ''''${HOME}/.profile'''' file.
+
+ PATH=${PATH}:/var/lib/gems/1.8/bin/
+
+Windows and MacOS platforms may require similar steps.
+
+=== Update from older TaskJuggler 3.x versions ===
+
+Updates work just like the installation.
+
+ gem update taskjuggler
+
+For downloaded or self-built packages use the following command:
+
+ gem update pkg/taskjuggler-X.X.X.gem
+
+
+=== Installing TaskJuggler from the Git Repository ===
+
+The following description is for developers and users that want to
+learn more about TaskJuggler or want to make improvements. TaskJuggler
+is [http://en.wikipedia.org/wiki/Open_source Open Source] software and
+you are encouraged to read and modify the source code.
+
+Before you download the source code, make sure you have all the
+necessary dependencies installed. You should have Ruby 1.9.2 or later
+and you need to have the following gems installed
+
+ gem install rake mail rspec term-ansicolor rcov
+
+rcov is optional, but you must have the other gems and their
+dependencies installed.
+
+To get the source code, the recommended way it to check out the
+latest code from the developer repository. To do this, you need to
+have [http://www.kernel.org/pub/software/scm/git/docs/ git] installed.
+
+Then checkout the source code with the following command
+
+ git clone git@github.com/taskjuggler/TaskJuggler.git
+
+Make sure you have removed all previously installed instances of
+TaskJuggler from your system before doing so. It is a common mistake
+to have an old version of the TaskJuggler installed and then use parts
+of the old and new version together.
+
+If your Ruby installation does not come with the
+[http://rake.rubyforge.org Rake] build tool, you need to install it
+now.
+
+If you are interested in a code coverage analysis, you need to also
+install the [http://eigenclass.org/hiki.rb?rcov rcov] code coverage
+analysis tool. This tool is not needed for most developers. You can
+safely ignore the warning during rake builds if you don't have it
+installed.
+
+The following command will create a gem package from the source code.
+
+ cd taskjuggler3; rake gem
+ 
+If you plan to modify the TaskJuggler files, creating and installing
+the gem file for every test run is not very comfortable. To run tj3
+from source put the following code in your ''''.profile'''' file.
+This is for users of the bash shell. Adapt it accordingly if you use
+another shell. 
+
+ # Make sure the shell finds the TaskJuggler programs
+ export PATH=${PATH}:${TASKJUGGLER_DIR}/bin
+
+=== Quickly switching between various TaskJuggler 3.x versions ===
+
+One of the benefits of using TaskJuggler from the Git repository is
+the ability to get the latest bug fixes. If a bug was reported, it is
+usually fixed fairly quickly, but it can take several weeks before
+the next official release happens. The following commands must all be
+executed from within the checked-out Git directory.
+
+ git pull
+
+gets you the latest changes. We usually try to keep the head branch
+stable. Using it should not be much more risky than using a regular
+release. Nevertheless, problems can occur and a fixed version might
+take a few days.
+
+ git checkout -f XXXXXXXX
+
+will switch your current working copy to the version with commit ID
+XXXXXXXX. Alternatively, you can also use tag names.
+
+ git checkout -f release-0.0.10
+
+This will switch to the released version 0.0.10.
+
+ git tag
+
+provides you with a list of all tags.
+
+TaskJuggler 3.x is written in Ruby. There is no make or build process
+needed. Every code change is effective immediately. The tutorial, the
+manual and some other parts do require a build step.
+
+ rake release
+
+will do it all and even create installable gem files again.
+
+=== Installing a newer Ruby version ===
+
+New Ruby versions are released usually about once or twice a year.
+Unfortunately, it takes some time before Linux distributions pick up
+the new release. Depending on your distribution, this can take
+anything from a few weeks to several years. Many distributions still
+have not yet made the switch to Ruby 2.0. The core part of
+TaskJuggler can be used with Ruby 1.8.9, but it is at least 3 times
+slower. Therefor it is recommended, that you install the latest
+stable release of Ruby to use TaskJuggler. This can easily and safely
+being done in parallel to your distribution Ruby. Both versions can
+be used in parallel without interfering each other.
+
+This section only covers Linux. For other operating system, please
+search the web for instructions. If you want to contribute the
+description for another OS, please see [[How_To_Contribute]].
+
+First, you need to download the source code of the latest stable
+release from
+[http://www.ruby-lang.org/en/downloads/ www.ruby-lang.org].
+
+The source code is distributed as zipped tarfile. You can extract it
+like this. Change the file name to the actual version you have
+downloaded.
+
+  tar -Zxvf ruby-X.X.X-*.tar.gz
+
+This will create a directory with the same name as the archive, but
+without the ''''.tar.gz'''' extension. 
+
+Before you continue, make sure you have all the necessary packages
+installed to compile ruby. That would be everything you need to
+compile C programs. That includes gcc, make, zlib and libyaml. If
+something is missing, you will run into problems in the next 2 steps.
+It's sometimes not obvious which package to install to fix the issue.
+
+Now change into this directory and configure the source code for your
+specific OS and compile it. We configure Ruby to append ''''19'''' to
+all executable names. This way, you can easily choose if you want to
+run the old or the new Ruby. ''''ruby'''' runs your distribution Ruby,
+''''ruby19'''' runs your new ruby.
+
+  cd ruby-X.X.X-*
+  ./configure --program-suffix=19
+  make
+
+If all goes well, you can install it now. This requires root
+permission, so you need to enter the root password. All executables
+will be installed into ''''/usr/local/bin''''.
+
+  sudo make install
+
+The TaskJuggler front-end scripts always use the ''''ruby''''
+interpreter that's the first in the PATH. You need to set a link in
+your local ''''bin'''' directory to point to your ''''ruby19''''
+executable as ''''ruby''''. 
+
+  ln -s /usr/local/bin/ruby19 ${HOME}/bin/ruby
+
+Make sure your ''''${HOME}/bin'''' directory is the first directory in
+the ''''PATH''''. This step varies a lot depending on the login
+shell. E. g. for ''''bash'''' put the following at the end in your
+''''.profile'''' shell config file. Please make sure that
+''''/usr/local/bin'''' is also in the PATH so that the ruby
+executables (all having a ''''19'''' suffix) will be found as well.
+
+  export PATH=${HOME}/bin:${PATH}
+
+Log out and back in again. Now
+
+  which ruby
+
+should return the path to the link to your
+''''${HOME}/bin/ruby''''. You now have the latest Ruby installed and
+are ready to use TaskJuggler.
+
+As a final step, you need to install the ''''mail'''' and
+''''term-ansicolor'''' gems.
+
+  sudo gem19 install mail term-ansicolor
+
+If you don't want to use TaskJuggler from the git repository, you can
+install the TaskJuggler gem as well.
+
+  sudo gem19 install taskjuggler
+
+=== Installing the Vim Support ===
+
+TaskJuggler can be used with any text editor that supports UTF-8 text
+file editing. If you don't have a preference yet, we recommend to try
+the [http://www.vim.org Vim] text editor. It's a very powerful editor
+and it has been customized for better integration with TaskJuggler.
+This section describes how to activate and use the Vim integration.
+Vim is provided by pretty much any Linux distribution and also works
+well on MacOX and Windows. See the web page for how to install it if
+you don't have it yet.
+
+This section describes the integration on Linux. Please see the
+[[How_To_Contribute]] section if you want to contribute the
+description for another OS.
+
+If you have never customized Vim, you need to create a few
+directories first.
+
+  cd ${HOME}
+  mkdir .vim
+  mkdir .vim/syntax
+
+Then copy the syntax file ''''tjp.vim'''' into the vim syntax
+directory. The following command works if you have installed
+TaskJuggler as a gem with the system provided Ruby. For other cases,
+you may have to modify it accordingly.
+
+  cp `gem contents taskjuggler | fgrep tjp.vim` .vim/syntax
+
+Now we have to make sure Vim detects the file. Edit the
+''''.vim/filetype.vim'''' file to contain the following section.
+
+ augroup filetypedetect
+ au BufNewFile,BufRead *.tjp,*.tji               setf tjp
+ augroup END
+
+And edit the ''''.vim/syntax.vim'''' file to contain the following line.
+
+ au! Syntax tjp          so ~/.vim/syntax/tjp.vim
+
+When you now open a ''''.tjp'''' or ''''.tji'''' file in Vim, you
+should have the following features available:
+
+* Syntax highlighting. TJP keywords should be colored in different colors.
+* Syntax folding. The optional parts of properties within the curly
+  braces can be collapsed. For this to work, the opening brace needs
+  to be on the same line as the property keyword. The closing brace
+  must be the first non-blank character of the last line of the
+  block. See the '''':help fold'''' Vim help command for details how
+  to open and close folds.
+* Tag navigation. If you include a [[tagfile]] report in your project,
+  Vim will know all property IDs and can jump to them. If you have a
+  task with the ID ''''foo.bar'''', the command '''':ta foo.bar''''
+  will put the cursor right where task ''''foo.bar'''' was declared.
+* ID completion. If you include a [[tagfile]] report in your project,
+  Vim can tell you the full hierarchical ID of a property. Just move
+  the cursor to the first line of the property definition and press
+  ''''Ctrl-]''''.
+* Run tj3 from within vim. Just type '''':make your_project.tjp'''' to
+  start the scheduling process. In case of errors or warnings, you
+  will be able to navigate the errors with '''':cn'''' and
+  '''':cp''''.
+* Move the cursor over any TaskJuggler syntax keyword and press
+  ''''shift-k'''' to get the manual page for this keyword.
+

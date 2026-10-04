@@ -1,0 +1,105 @@
+project test "Test" "1.0" 2007-08-22 +2m {
+  workinghours mon-fri 9:00 - 12:00, 13:00 - 18:00
+}
+
+include "checks.tji"
+
+shift odd_days "Odd Days" {
+  workinghours mon, wed, fri 10:00 - 16:00
+  workinghours tue, thu, sat, sun off
+  vacation 2007-09-03
+}
+
+shift even_days "Even Days" {
+  workinghours mon, wed, fri off
+  workinghours tue, thu, sat, sun 10:00 - 16:00
+  vacation 2007-09-04
+	shift even_no_we "Even Days, no weekend" {
+    workinghours sat, sun off
+	}
+}
+
+shift morning "Morning" {
+  workinghours mon - sun 8:00 - 12:00
+}
+
+shift thu_vac "Vacation on Thursday" {
+  vacation 2007-09-06
+  replace
+}
+
+resource team "Team" {
+  vacation 2007-08-22 +3d
+  shifts morning 2007-08-23 +5d
+
+  resource mdf "MDF Worker" {
+    shifts odd_days 2007-09-01 +2w
+  }
+
+  resource ttss "TTSS Worker" {
+    shifts even_days 2007-09-01 +2w
+  }
+
+  resource tt "TT Worker" {
+    shifts even_no_we 2007-09-01 +2w
+  }
+
+  resource wed_vac "Vacation on Wednesday" {
+    vacation 2007-09-05
+    shifts thu_vac 2007-09-01 +7d
+  }
+
+  resource work1 "Worker 1"
+}
+
+resource default "Default Worker"
+
+task prj "Project" {
+  start 2007-08-22
+
+  task mdf "MDF Task" {
+    effort 4w
+    allocate mdf
+    ${FixEnd "2007-10-01-16:00"}
+  }
+
+  task ttss "TTSS Task" {
+    effort 5w
+    allocate ttss
+    ${FixEnd "2007-10-05-11:00"}
+  }
+
+  task tt "TT Task" {
+    effort 4w
+    allocate tt
+    ${FixEnd "2007-10-03-11:00"}
+  }
+
+  task default "Default Task" {
+    effort 7w
+    allocate default
+    ${FixEnd "2007-10-09-18:00"}
+  }
+
+  task vac_test "Vacation on Thursday" {
+    start 2007-09-01
+    effort 4d
+    allocate wed_vac
+    ${FixEnd "2007-09-07-18:00"}
+  }
+
+  task work1 "Task with shift morning" {
+    start ${projectstart}
+    allocate work1
+    effort 3w
+    shifts morning 2007-09-01 +4w
+    ${FixEnd "2007-10-02-18:00"}
+  }
+
+}
+
+taskreport shift "Shift" {
+  formats html
+  columns name, start, end, daily
+}
+

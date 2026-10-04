@@ -1,0 +1,67 @@
+project simple "Simple Project" "1.0" 2007-01-01 - 2007-01-30 {
+  timezone "America/Denver"
+  currency "USD"
+}
+
+# *** EXAMPLE: 1 +
+account project_cost "Project Costs"
+account payments "Customer Payments"{
+  credits 2007-01-01 "Customer down payment" 500.0,
+          2007-01-14 "1st rate" 2000.0
+}
+
+balance project_cost payments
+
+resource tux "Tux" {
+  rate 300
+}
+resource konqui "Konqui" {
+  rate 200
+}
+
+task items "Room decoration" {
+  start 2007-01-06
+  # The default account for all tasks
+  chargeset project_cost
+
+  task plan "Plan work and buy material" {
+    # Upfront material cost
+    charge 500.0 onstart
+    length 2d
+  }
+   task remove "Remove old inventory" {
+    allocate tux
+    allocate konqui
+    effort 1d
+    depends !plan
+  }
+  task implement "Arrange new decoration" {
+    effort 5d
+    allocate tux, konqui
+    depends !remove
+  }
+  task acceptance "Presentation and customer acceptance" {
+    duration 5d
+    depends !implement
+    chargeset payments
+    # Customer pays at end of acceptance
+    charge 2000.0 onend
+  }
+}
+# *** EXAMPLE: 1 -
+
+accountreport "Account-1" {
+  formats html
+  timeformat "%d-%M-%y"
+  columns index, name, weekly
+}
+
+accountreport "Account-2" {
+  formats html
+  timeformat "%d-%M-%y"
+  columns index,
+          name,
+          weekly {
+            celltext 1 "<-query attribute='turnover'->"
+          }
+}

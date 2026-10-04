@@ -1,0 +1,122 @@
+project "Test" 2009-02-04 - 2009-06-01 {
+  timezone "Europe/Amsterdam"
+}
+
+include "checks.tji"
+
+resource r1 "Resource 1"
+resource r2 "Resource 2"
+resource r3 "Resource 3"
+resource r4 "Resource 4"
+
+task ms1 "Milestone 1" {
+  ${FixStart "${projectstart}"}
+  milestone
+}
+
+task ms2 "Milestone 2" {
+  milestone
+  scheduling alap
+  ${FixEnd "${projectend}"}
+}
+
+task p1 "Parent Tasks" {
+  task only_s_e "Only start or end dates" {
+    task t1 "Task 1" {
+      ${FixMS "${projectstart}"}
+    }
+    task t2 "Task 2" {
+      start 2009-02-06
+      # This is an implicit milestone
+      ${FixTask "2009-02-06" "2009-02-06"}
+    }
+    task t3 "Task 3" {
+      end 2009-03-01
+      # This is an implicit milestone
+      ${FixMS "2009-03-01"}
+    }
+  }
+  task ms "Milestones" {
+    task t1 "Task 1" {
+      milestone
+      ${FixMS "${projectstart}"}
+    }
+    task t2 "Task 2" {
+      milestone
+      scheduling alap
+      ${FixMS "${projectend}"}
+    }
+    task t3 "Task 3" {
+      start 2009-02-06
+      milestone
+      ${FixMS "2009-02-06"}
+    }
+    task t4 "Task 4" {
+      end 2009-03-01
+      milestone
+      ${FixMS "2009-03-01"}
+    }
+    task t5 "Task 5" {
+      start 2009-02-06
+      depends ms1
+      ${FixMS "2009-02-06"}
+    }
+    task t6 "Task 6" {
+      end 2009-03-01
+      precedes ms2
+      ${FixMS "2009-03-01"}
+    }
+  }
+  task w_effort "With effort" {
+    task t1 "Task 1" {
+      allocate r1
+      effort 20d
+      scheduling asap
+      ${FixTask "2009-02-04-09:00" "2009-03-03-17:00"}
+    }
+    task t2 "Task 2" {
+      start 2009-02-06
+      effort 20d
+      scheduling asap
+      allocate r2
+      ${FixTask "2009-02-06-09:00" "2009-03-05-17:00"}
+    }
+    task t3 "Task 3" {
+      effort 20d
+      allocate r3
+      scheduling alap
+      ${FixTask "2009-05-04-09:00" "2009-05-29-17:00"}
+    }
+    task t4 "Task 4" {
+      end 2009-05-01
+      scheduling alap
+      effort 20d
+      allocate r4
+      ${FixTask "2009-04-03-09:00" "2009-04-30-17:00"}
+    }
+  }
+}
+
+task p2 "Parent Tasks 2" {
+  task t1 "Task1" {
+    ${FixMS "${projectstart}"}
+  }
+  task t2 "Task2" {
+    depends !t1
+    ${FixMS "${projectstart}"}
+  }
+  task t3 "Task3" {
+    scheduling alap
+    ${FixMS "${projectend}"}
+  }
+  task t4 "Task4" {
+    precedes !t3
+    ${FixMS "${projectend}"}
+  }
+}
+
+taskreport inherit "InheritStartEnd" {
+  formats html
+	columns name, id, start, end, chart
+}
+

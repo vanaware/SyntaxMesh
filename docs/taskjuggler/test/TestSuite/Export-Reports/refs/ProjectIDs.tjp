@@ -1,0 +1,34 @@
+project prj1 "ProjectIDs example" "1.0" 2006-08-22-00:00-+0000 - 2006-09-21-10:00-+0000 {
+  timezone "America/Denver"
+  scenario plan "Plan Scenario" {
+    active yes
+  }
+}
+
+projectids prj, prj1, prj2
+
+
+task t1 "Task 1" {
+  start 2006-08-22-06:00-+0000
+  scheduled
+}
+task t2 "Task 2" {
+  start 2006-08-22-06:00-+0000
+  scheduled
+}
+task t3 "Task 3" {
+  start 2006-08-22-06:00-+0000
+  scheduled
+}
+supplement task t1 {
+  priority 500
+  projectid prj
+}
+supplement task t2 {
+  priority 500
+  projectid prj1
+}
+supplement task t3 {
+  priority 500
+  projectid prj2
+}

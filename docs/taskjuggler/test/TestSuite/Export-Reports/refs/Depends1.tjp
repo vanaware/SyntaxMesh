@@ -1,0 +1,57 @@
+project prj "P" "1.0" 2007-11-09-00:00-+0000 - 2007-12-24-00:00-+0000 {
+  timezone "America/Denver"
+  scenario plan "Plan Scenario" {
+    active yes
+  }
+}
+
+projectids prj
+
+
+task foo1 "foo1" {
+  task foo2 "foo2" {
+    start 2007-12-04-07:00-+0000
+    scheduled
+  }
+  task foo3 "foo3" {
+    depends foo1.foo2
+    start 2007-12-04-07:00-+0000
+    end 2007-12-05-00:00-+0000
+    scheduling asap
+    scheduled
+  }
+}
+task bar "bar" {
+  depends foo1.foo2
+  start 2007-12-04-07:00-+0000
+  end 2007-12-06-00:00-+0000
+  scheduling asap
+  scheduled
+}
+task bar1 "bar1" {
+  depends foo1, bar
+  start 2007-12-07-00:00-+0000
+  end 2007-12-09-00:00-+0000
+  scheduling asap
+  scheduled
+}
+supplement task foo1 {
+  priority 500
+  projectid prj
+}
+supplement task foo1.foo2 {
+  priority 500
+  projectid prj
+}
+supplement task foo1.foo3 {
+  priority 500
+  projectid prj
+}
+supplement task bar {
+  priority 500
+  projectid prj
+}
+supplement task bar1 {
+  priority 500
+  projectid prj
+}

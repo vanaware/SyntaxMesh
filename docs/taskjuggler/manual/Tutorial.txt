@@ -1,0 +1,679 @@
+== The Tutorial: Your first Project ==
+
+We have mentioned already that TaskJuggler uses plain text files that
+capture the known parts of the project. As you will see now, the syntax
+of these files is easy to understand and very intuitive. This chapter
+will walk you step by step through your first project. You create the
+project plan for a made-up accounting software project. This project
+demonstrates most of the commonly used features of TaskJuggler. It
+also includes some of the more advanced concepts that you may or may
+not need for your projects. Don't get scared by them. You can use
+them once you are more familiar with TaskJuggler and your projects
+grow larger. The complete tutorial example comes with your
+TaskJuggler software installation. You can use the following command
+to find the base directory of the example projects.
+
+  ruby -e "puts Gem::Specification.find_by_name('taskjuggler').gem_dir"
+
+The file for the tutorial project is called
+''''examples/Tutorial/tutorial.tjp''''. You can use any plain text
+editor to view and modify it.
+
+=== Starting the project ===
+
+Every TaskJuggler project file must start with the [[project]]
+property. It tells TaskJuggler the name of your project and a start
+and end date. The start and end dates don't need to be exact, but must
+fit all tasks of the project. It is the time interval the TaskJuggler
+scheduler will use to fit the tasks in. So, make it large enough for
+all your tasks to fit in. But don't make it too large, because this
+will result in longer scheduling times and higher memory consumption.
+
+<[example file="tutorial" tag="header1"]>
+
+All TaskJuggler properties have a unique ID, a name, and a set of
+optional attributes. The name must always be specified. The ID can be
+omitted if you never have to reference the property from another
+context. If you omit the ID, TaskJuggler will automatically generate a
+unique ID. The optional attributes are always enclosed in curly
+braces. If no optional attributes are specified, the braces can be
+omitted as well. In this example we will introduce a number of the
+attributes that may or may not matter for your specific projects. If
+you don't see an immediate need for a specific attribute, feel free to
+ignore it for now. You can always come back to them later. A full list
+of the supported project attributes can be found in the ''attributes''
+section of the [[project]] property documentation.
+
+Attributes always start with a keyword that identifies them.  The
+meaning and parameters of attributes depends on the property context
+that they are used in. A context is delimited by a set of curly
+braces that enclose optional attributes of a property. The area
+outside of any property is called the global scope.  Usually,
+attributes have one or more arguments. These arguments can be dates,
+character strings, numbers or symbols. Strings must be enclosed in
+single or double quotes. The argument types and meaning is explained
+for each keyword in the syntax reference section of this manual.
+
+TaskJuggler manages all events with an accuracy of up to 15 minutes.
+In many cases, you don't care about this level of accuracy.
+Nevertheless, it's good to have it when you need it. All dates can
+optionally be extended by a time. By default, TaskJuggler assumes
+that all times are UTC (world time) times. If you prefer a different
+time zone, you need to use the [[timezone]] attribute.
+
+<[example file="tutorial" tag="timezone"]>
+
+Be aware that the project start and end dates in the project header
+are specified before you specify the time zone. The project header
+dates are always assumed to be UTC unless you specify differently.
+See [[interval2]] for details.
+
+ project acso "Accounting Software"  2002-01-16-0:00-+0100
+
+The [[currency]] attribute specifies the unit of all currency values.
+
+<[example file="tutorial" tag="currency"]>
+
+Because each culture has its own way of specifying dates and numbers,
+the format for these is configurable.  Use the [[timeformat]]
+attribute to specify the default format for dates. This format is used
+for reports, it does not affect the way you specify dates in the
+project files. Here you always need to use the [[date|TaskJuggler date
+notation]].
+
+<[example file="tutorial" tag="formats"]>
+
+We also can specify the way numbers or currency values are shown in
+the reports. Use the [[numberformat]] and [[currencyformat]]
+attributes for this.
+
+The attribute [[now]] is used to set the current day for the
+scheduler to another value than to the moment your invoke TaskJuggler.
+If this attribute is not present, TaskJuggler will use the current
+moment of time to determine where you are with your tasks. To get a
+defined result for the reports in this example we've picked a specific
+date that fits our purpose here. In your projects, you would use
+[[now]] to generate status reports for the date you specify.
+
+<[example file="tutorial" tag="now"]>
+
+In this tutorial we would like to compare two scenarios of the
+project. The first scenario is the one that we have planned. The
+second scenario is how it really happened. The two scenarios have the
+same task structure, but the start and end dates and other attributes
+of the task that are scenario specific may vary. In this example we
+assume that the project got delayed and use a second scenario that we
+name "Delayed" to describe the actual project. The scenario property
+is used to specify the scenarios. The delayed scenario is nested into
+the plan scenario.  This tells TaskJuggler to use all values from the
+plan scenario also for the second scenario unless the second scenario
+has it's own values. This is a very easy but also powerful way to
+analyze the impact of certain changes to the plan of record.  We'll
+see further below, how to specify values for a scenario and how to
+compare the results.
+
+<[example file="tutorial" tag="scenario"]>
+
+To summarize the above, let's look at the complete header again.
+Don't get scared by the wealth of attributes here. They are all
+optional and mostly used to illustrate the flexibility of TaskJuggler.
+
+<[example file="tutorial" tag="header2"]>
+
+=== Global Attributes ===
+
+For this tutorial, we also like to do a simple profit and loss
+analysis of the project. We will track labor cost versus customer
+payments. To calculate the labor costs we have to specify the default
+daily costs of an employee. This can be changed for certain employees
+later, but it illustrates an important concept of TaskJuggler –
+inheritance of attributes. In order to reduce the size of the
+TaskJuggler project file to a readable minimum, properties inherit
+many attributes from their enclosing scopes. We'll see further below,
+what this actually means. Right after the project property we are at
+top-level scope, so this is the default for all following properties.
+
+<[example file="tutorial" tag="rate"]>
+
+The [[rate]] attribute can be used to specify the daily costs of
+resources. All subsequently declared resources will get this rate. But
+it can certainly be changed to a different rate at group or individual
+resource level.
+
+You may also want to tell TaskJuggler about holidays that affect
+all resources. Global holidays are time periods where TaskJuggler
+does not do any resource assignments to tasks.
+
+<[example file="tutorial" tag="vacation"]>
+
+Use the [[leaves]] attribute to define a global holiday. Global
+holidays may have a name and must have a date or date range. Other leaves for
+individual resources or groups of resources can be defined similarly.
+
+=== Macros ===
+
+Macros are another TaskJuggler feature to save you typing work and to
+keep project files small and maintainable. Macros are text patterns
+that can be defined once and inserted multiple times in the project
+file. A [[macro]] always has a name and the text pattern is enclosed
+by square brackets. 
+
+<[example file="tutorial" tag="macro"]>
+
+To use the macro you simply have to write
+''''${allocate_developers}'''' and TaskJuggler will replace the term
+''''${allocate_developers}'''' with the pattern. We will use this
+macro further below in the example and then explain the meaning of the
+pattern.
+
+=== Declaring Flags ===
+
+A TaskJuggler feature that you will probably make heavy use of is
+flags. Once declared you can attach them to any property. When you
+generate reports of the TaskJuggler results, you can use the flags to
+filter out unwanted properties and limit the report to exactly those
+details that you want to have included.
+
+<[example file="tutorial" tag="flags"]>
+
+This is a [[flags]] declaration. All flags need to be declared before
+they can be used to avoid hard to find errors due to misspelled flag
+names. The flags should be declared before any property at global
+scope. We will see further down, how we can make use of these flags.
+
+=== Declaring Accounts ===
+
+The use of our resources will generate costs. For a profit and loss
+analysis, we need to balance the cost against the customer payments.
+In order not to get lost with all the various amounts, we declare 3
+[[account|accounts]] to credit the amounts to. We create one account
+for the development costs, one for the documentation costs, and one
+for the customer payments.
+Actually, there is a fourth account consisting of two accounts nested
+into it.
+
+<[example file="tutorial" tag="accounts"]>
+
+The account needs an ID and a name.  IDs may only consist of the
+characters a to z, A to Z and the underscore. All but the first
+character may also be digits 0 to 9. The ID is necessary so that we
+can reference the property again later without having to write the
+potentially much longer name. The name may contain space characters
+and therefore has to be enclosed with single or double quotes.
+
+Accounts can be grouped by nesting them. You can use this feature to
+create sets of accounts. Such sets can then be balanced against each
+other to create a profit and loss analysis. When you have specified
+accounts in your project, you must at least define one default
+[[balance]].
+
+<[example file="tutorial" tag="balance"]>
+
+=== Declaring Resources ===
+
+While the above introduced account property is only needed if you
+want to do a P&L analysis, resources are usually found in almost any
+project.
+
+<[example file="tutorial" tag="resources"]>
+
+This snippet of the example shows the use of the [[resource|
+resource property]]. Just like accounts, resources should have an ID
+and must have a name. Resource IDs, like account IDs must also be
+unique within their property class. As you can see, resource
+properties can be nested: ''''dev'''' is a group or container
+resource, a team that consists of three other resources.
+
+''''dev1'''', alias Paul Smith, costs more than the normal employee.
+So the declaration of ''''dev1'''' overwrites the inherited default
+rate with a higher value.
+
+The default value has been inherited from the enclosing scope,
+resource ''''dev'''', which in turn has inherited it from the global
+scope.  The declaration of the resource Klaus Müller uses another
+optional attribute. Attributes are only inherited from the parent
+property if the attribute was declared in the parent property before
+the child property declaration was started.
+
+The syntax reference lists for each property whether an attribute is
+inherited from the parent or the attribute in the global scope.
+
+With [[leaves]] you can specify certain time intervals where the
+resource is not available. Leaves are list attributes. They accumulate
+the declarations. If you want to get rid of inherited or previously
+assigned values, you can use the [[purge]] attribute to clear the
+list.
+
+''''leaves'''' requires a time interval. It is important to understand
+how TaskJuggler handles time intervals.  Internally, TaskJuggler uses
+the number of seconds after January 1st, 1970 to store any date.  So
+all dates are actually stored with an accuracy of 1 second in UTC
+time. ''''2002-02-01'''' specifies midnight February 1st, 2002.
+Following the TaskJuggler concept of requiring as little information
+as necessary and extending the rest with sensible defaults,
+TaskJuggler adds the time 0:00:00 if nothing else has been specified.
+So the vacation ends on midnight February 5th, 2002. Well, almost.
+Every time you specify a time interval, the end date is not included
+in the interval. So Klaus Müller's vacation ends exactly at 0:00:00 on
+February 5th, 2002. February 5 is not part of the leave!
+
+Peter Murphy only works 6.4 hours a day. So we use the
+[[limits.resource|limits]] attribute to limit his daily working hours.
+We could also define exact working hours using the [[shift|shift
+property]], but we ignore this for now.
+
+Note that we have attached the flag ''''team'''' after the declaration
+of the sub-resources to the team resources.  This way, these flags
+don't get passed down to the sub-resources. If we would have declared
+the flags before the sub-resources, then they would have the flags
+attached as well.
+
+=== Specifying the Tasks ===
+
+Let's focus on the real work now. The project should solve a problem:
+the creation of an accounting software. Because the job is quite
+complicated, we break it down into several subtasks. We need to do a
+specification, develop the software, test the software, and write a
+manual. Using the [[task|task property]], this would look as follows:
+
+<[example file="tutorial" tag="task1"]>
+
+Similar to resources, tasks are declared by using the task keyword
+followed by an ID and a name string. All TaskJuggler properties have
+their own namespaces. This means, that it is quite OK to have a
+resource and a task with the same ID. Tasks may have optional
+attributes which can be tasks again, so tasks can be nested. In
+contrast to all other TaskJuggler properties, task IDs inherit the ID
+of the enclosing task as a prefix to the ID. The full ID of the spec
+task is AcSo.spec. You need to use this absolute ID when you want to
+reference the task later on. This hierarchical name space for tasks
+was chosen to support large projects where multiple project managers
+may use the same ID in different sub tasks.
+
+To track important milestones of the project, we also added a task
+called Milestones. This task, like most of the other tasks will get
+some subtasks later on.
+
+We consider the specification task simple enough, so we don't have to
+break it into further subtasks. So let's add some more details to it.
+
+<[example file="tutorial" tag="spec"]>
+
+The [[effort]] to complete the task is specified with 20 man-days.
+Alternatively we could have used the [[length]] attribute or
+the [[duration]] attribute. ''''length'''' specifies the
+duration of the task in working days while ''''duration'''' specifies
+the duration in calendar days.  Contrary to ''''effort'''', these two don't
+have to have a specification of the involved resources. Since
+''''effort'''' specifies the duration in man-days, we need to say who
+should be allocated to the task. The task won't finish before the
+resources could be allocated long enough to reach the specified
+effort. Tasks with ''''length'''' or ''''duration'''' criteria and
+allocated resources will last exactly as long as requested. Resources
+will be allocated only if available. It's possible that such a task
+ends up with no allocations at all if the resources are always
+assigned to other tasks for that period. Each task can only have one
+of the three duration criteria. Container tasks may never have a
+duration specification. They are automatically adjusted to fit all
+sub tasks.
+
+Here we use the allocate_developers macro mentioned above. The
+expression ''''${allocate_developers}'''' is simply expanded to 
+
+<[example file="tutorial" tag="expandedmacro"]>
+
+If you need to [[allocate]] the same bunch of people to several tasks,
+the macro saves you some typing. You could have written the allocate
+attributes directly instead of using the macro. Since the allocation
+of multiple resources to a task is a good place for macro
+usage, we found it a good idea to use it in this example as well.
+
+For TaskJuggler to schedule a task, it needs to know either the start
+and end criteria of a task, or one of them and a duration
+specification. The start and end criteria can either be fixed dates or
+relative dates. Relative dates are specifications of the type ''task B
+starts after task A has finished''. Or in other words, task B depends
+on task A. In this example the spec task depends on a subtask of the
+deliveries task. We have not specified it yet, but it has the local ID
+''''start''''.
+
+To specify the dependency between the two tasks, we use the
+[[depends]] attribute. This attribute must be followed by one or more
+task IDs. If more than one ID is specified, each ID has to be
+separated with a comma from the previous one. Task IDs can be either
+absolute IDs or relative IDs. An absolute ID of a task is the ID of
+this task prepended by the IDs of all enclosing tasks. The task IDs
+are separated by a dot from each other. The absolute ID of the
+specification task would be ''''AcSo.spec''''.
+
+Relative IDs always start with one or more exclamation marks. Each
+exclamation mark moves the scope to the next enclosing task. So
+''''!deliveries.start'''' is expanded to ''''AcSo.deliveries.start''''
+since ''''AcSo'''' is the enclosing task of ''''deliveries''''. Relative task
+IDs are a little bit confusing at first, but have a real advantage
+over absolute IDs.  Sooner or later you want to move tasks around in
+your project and then it's a lot less likely that you have to fix
+dependency specifications of relative IDs.
+
+The software development task is still too complex to specify it
+directly. So we split it further into subtasks.
+
+<[example file="tutorial" tag="software"]>
+
+We use the [[priority]] attribute to mark the importance of
+the tasks. 500 is the default priority of top-level tasks. Setting the
+priority to 1000 marks the task as most important task, since the
+possible range is 1 (not important at all) to 1000 (ultimately
+important). ''''priority'''' is an attribute that is passed down to subtasks
+if specified before the subtasks' declaration. So all subtasks of
+software have a priority of 1000 as well, unless they have their own
+priority definition.
+
+<[example file="tutorial" tag="database"]>
+
+The work on the database coupling should not start before the
+specification has been finished. So we again use the [[depends]]
+attribute to let TaskJuggler know about this. This time we use two
+exclamation marks for the relative ID. The first one puts us in the
+scope of the enclosing software task. The second one is to get into
+the AcSo scope that contains the spec tasks. For a change, we
+[[allocate]] resources directly without using a macro.
+
+<[example file="tutorial" tag="gui"]>
+
+One more interesting thing to note is the fact that we like the
+resource ''''dev2'''' only to work 6 hours each day on this task, so
+we use the optional attribute [[limits.resource]] to specify this.
+
+TaskJuggler can schedule your project for two different [[scenario|
+scenarios]]. We have called the first scenario ''''plan'''' scenario
+and the second ''''delayed'''' scenario. Many of the reports allow you
+to put the values of both scenarios side by side to each other, so you
+can compare the scenarios. All scenario-specific values that are
+not explicitly stated for the ''''delayed'''' scenario are taken from
+the ''''plan'''' scenario. So the user only has to specify the values
+that differ in the delayed scenario.  The two scenarios must have the
+same task structure and the same dependencies. But the start and end
+dates of tasks as well as the duration may vary. In the example we
+have planned the work on the graphical user interface to be 35
+man-days. It turned out that we actually needed 40 man-days. By
+prefixing the [[effort]] attribute with ''''delayed:'''', the
+effort value for the ''''delayed'''' scenario can be specified.
+
+<[example file="tutorial" tag="backend"]>
+
+By default, TaskJuggler assumes that all tasks are on schedule.
+Sometimes you want to generate reports that show how much of a task
+actually has been completed. TaskJuggler uses the current date for
+this, unless you have specified another date using the now attribute.
+If a task is ahead of schedule or late, this can be specified using
+the [[complete]] attribute. This specifies how many percent
+of the task have been completed up to the current date. In our case
+the back-end implementation is slightly ahead of schedule as we will
+see from the report.
+
+<[example file="tutorial" tag="test"]>
+
+The software testing task has been split up into an alpha and
+a beta test task. The interesting thing here is, that efforts can not
+only be specified as man-days, but also man-weeks, man-hours, etc. By
+default, TaskJuggler assumes a man-day is 8 hours, man-week is 40
+man-hours or 5 man-days. The conversion factor can be changed using the
+[[dailyworkinghours]] attribute.
+
+Let's go back to the outermost task again. At the beginning of the
+example we stated that we want to credit all development work to one
+account with ID dev and all documentation work to the account doc. To
+achieve this, we use the attribute [[chargeset]] to credit
+all tasks to the ''''dev'''' account.
+
+For the duration of the ''''AcSo'''' task we also have running costs
+for the lease on the building and the equipment. To compensate this,
+we charge a daily rate of USD 170 per day using the [[charge]]
+attribute.
+
+<[example file="tutorial" tag="charge"]>
+
+Since we specify the attribute for the top-level task before we
+declare any subtasks, this attribute will be inherited by all subtasks
+and their subtasks and so on. The only exception is the writing of the
+manual. We need to change the chargeset for this task again, as it is
+also a subtask of AcSo and we want to use a different account for it.
+
+<[example file="tutorial" tag="manual"]>
+
+=== Specifying Milestones ===
+
+All tasks that have been discussed so far, had a certain duration. We
+did not always specify the duration explicitly, but we expect them to
+last for a certain period of time. Sometimes you just want to capture
+a certain moment in your project plan. These moments are usually
+called milestones, since they have some level of importance for the
+progress of the project.
+
+TaskJuggler has support for milestones as well. Milestones are leaf
+tasks that don't have a duration specification.
+
+<[example file="tutorial" tag="deliveries"]>
+
+We have put all important milestones of the project as subtasks of the
+deliveries task. This way they show up nicely grouped in the reports.
+All milestones either have a dependency or a fixed start date. For the
+first milestone we have used the attribute [[start]] to set a fixed start
+date. All other tasks have direct or indirect dependencies on this
+task. Moving back the start date will slip the whole project. This has
+actually happened, so we use the ''''delayed:'''' prefix again to
+specify the start date for the delayed scenario.
+
+Every milestone is linked to a customer payment. By using the
+[[charge]] attribute we can credit the specified amount to the
+account associated with this task. Since we have assigned the
+''''rev'''' account to the enclosing task, all milestones will use
+this account as well. This time, we use the keyword ''''onstart''''
+to indicate that this is not a continuous charge but a one-time
+charge that is credited at the begin of the task.
+
+Did you notice the line in the task done that starts with a hash? This
+line is commented out. If TaskJuggler finds a hash, it ignores the
+rest of the line. This way you can include comments in your project.
+The [[maxend]] attribute specifies that the task should end no
+later than the specified date. This information is not used for
+scheduling, but only for checking the schedule afterwards. Since the
+task will end later than the specified date, commenting out the line
+would trigger a warning.
+
+Now the project has been completely specified. Stopping here would
+result in a valid TaskJuggler file that could be processed and
+scheduled. But no reports would be generated to visualize the results.
+
+=== Visualizing the Project ===
+
+To see and share the project data, reports can be generated. You
+can generate any number of reports and you can select from a variety
+of report types and output formats. To have a report generated after
+the project scheduling has been completed, you need include a report
+definition into the project description. Report definitions are
+properties that are very similar to the task and resource properties
+that you are already familiar with. Just like these, report
+definitions can be nested to take advantage of the attribute
+inheritance mechanism. Every report definition starts with the type
+of the report. Each type of report has a particular focus. A
+[[taskreport]] lists the project data in the form of a task list.
+A [[resourcereport]] does the same in form of a resource list. For a
+more generic report, you can use the [[textreport]].
+
+A ''''textreport'''' does not directly present the data in form of a
+task or resource list. It just consists of text building blocks that
+are described by [[Rich_Text_Attributes|Rich Text]]. There can be a
+building block at the top and bottom, as well as three columns in
+the center. The column are called ''''left'''', ''''center'''' and
+''''right''''.
+
+For our first report, we'll just use the center column for now. Like
+every property, you need to specify a name. This name will be the
+base name of the generated report file. Depending on the output
+format, the proper suffix is appended. For this report, we only chose
+to generate a web page in HTML format. There is no default format
+defined for reports. If the [[formats]] attribute is not specified,
+no output file will be generated for the report specification.
+
+This may seem odd at first glance since TaskJuggler syntax always
+tries to use the most compact and readable syntax for the common
+case. As you will see in a minute, reports may be composed of several
+report specifications. One report specification can include the
+output of another report specification as well. In this case, the
+included report does not need to generate it's own file. The output
+will be included within the output of another report specification.
+In case of such composed reports, the output format specification of
+the top-level format will be used for all included reports as well.
+
+<[example file="tutorial" tag="overview_report1"]>
+
+For the main report, we choose the file name ''''Overview'''' and the
+format ''''html''''. So, the generated file will be called
+''''Overview.html''''.
+
+As we've mentioned before, the sections of a ''''textreport'''' are
+defined in Rich Text format. Here we use a so called block generator
+to include the HTML output of another report definition. The
+''''report'''' block generator allows us to compose reports by
+combining their output into a single report. You must provide the
+''''id'''' parameter to specify which report definition you would
+like to use. In this case, it is a report definition with the ID
+''''overview''''. Note that generator parameters need to be enclosed
+in single or double quotes. We are essentially marking a string
+within a string. This can only work out, if we don't use the same
+parameter for both. Let's define this report first.
+
+<[example file="tutorial" tag="overview1"]>
+
+Instead of another [[textreport]] definition we are now using a
+[[taskreport]]. A task report contains a list of tasks in a table
+structure. By default, it contains all tasks of the project. As we
+will see later on, we can use filter expressions to limit the content
+to a well defined subset of tasks. The table contains a line for each
+task and comes by default with a few columns like the name of the
+task, and the start and end dates. For this project overview report,
+we like to have also the effort for each task, the duration, the
+effort, the cost and revenue numbers included. To top it off, we also
+include a column with a Gantt chart.
+
+By including the cost and revenue column, we are able to do a simple
+profit and loss analysis on the project. This P&L is computed from
+the accounts that we have provided above. For this to work, we need
+to tell TaskJuggler which accounts are cost accounts and which are
+revenue accounts. We have already conveniently grouped the accounts
+and the [[balance]] attribute specifies which accounts are used for
+the P&L in this report.
+
+<[example file="tutorial" tag="overview2"]>
+
+The columns of the report can be customized. You can overwrite the
+default title or the cell content. See [[columns]] for a full list of
+available attributes. For the chart column, we'd like to have a
+tool tip that displays additional details when the mouse pointer is
+placed over a task bar. Since we use this tool tip in several
+reports, we have defined the ''''TaskTip'''' macro for it.
+
+<[example file="tutorial" tag="tasktip"]>
+
+The [[tooltip.column|tooltip]] attribute describes the content of the
+tool tip. The first parameter is a logical expression that determines
+when the tool tip is active. You can specify multiple tool tips. The
+first matching one is being displayed. The condition is evaluated for
+each report line. The ''''istask()'''' function only evaluates to true
+for task lines. See [[functions]] for a complete list of functions
+that can be used in [[logicalexpression|logical expressions]].
+
+The content of the tool tip is a template that uses
+[[Rich_Text_Attributes#Block_and_Inline_Generators|query
+generators]] to include task attributes such as the start and end
+date.
+
+We have chosen to include the start and end date of each task in the
+report. By default, TaskJuggler lists dates as day, month and year.
+We like the format to be similar to the format that the project
+syntax uses, but also like to include the weekday. To change the date
+format, the [[timeformat]] attribute can be used.
+
+The project will last a few weeks. The most convenient unit to list
+efforts in is man or resource days. The [[loadunit]] attribute
+tells TaskJuggler to list the load of each task or resource in man
+days.  Since this will just be a number without a unit, it is
+advisable to include a small hint for the reader that these values are
+indeed man or resource days. The caption of the table is a convenient
+place to put this information by using the [[caption]] attribute.
+
+<[example file="tutorial" tag="overview3"]>
+
+The ''''taskreport'''' can contain more than just the table. It is
+not as flexible as the ''''textreport'''', but still has support for
+a header and footer. Let's look at the header first. We not only
+like to put a headline here, but several paragraphs of text. The
+[[header]] attribute is a [[Rich_Text_Attributes|Rich Text]]
+attribute just like [[center]]. We could enclose it in single or
+double quotes again. But for Strings that span multiple lines and
+potentially include single or double quotes as well, scissor-marks or
+cut-here-marks are recommended. These marks look like a pair of
+scissors that cut along a dashed line. Use
+''''<nowiki>-8<-</nowiki>'''' to begin a string and ''''->8-'''' to
+terminate it. The opening cut mark must be immediately followed by a
+line break. The indentation of the following line defines the
+indentation that will be ignored for all lines of the string. The
+following lines must have at least the same indentation. The
+indentation that exceeds the indentation of the first line will be
+kept in the resulting string. With this feature, you can define
+multi-line Rich Text strings without disturbing the indentation
+structure of your project file.
+
+<[example file="tutorial" tag="overview4"]>
+
+Section headers are surrounded by ''''<nowiki>==</nowiki>''''. The
+number of equal signs, define the section level. You need to start
+with two equal characters for the first level. Text that is surrounded
+by blank lines will create a paragraph. Bullet lists can be made by
+starting a line with a ''''#'''' character. Remember that the
+indentation of cut-mark strings will be ignored. Your ''''#''''
+character must not be the first character in the line as long it is
+only preceded by the exact same number of blanks as the first line of
+the cut-mark string.
+
+If you want to reference other reports from this report, you can
+include the file name of this report by ''''<nowiki>[[</nowiki>''''
+and ''''<nowiki>]]</nowiki>''''.  Don't include the extension of the
+file name, it will be automatically appended. The actual
+representation of the reference depends on the chosen output format.
+For HTML output, the reference is a click-able link to the referenced
+report file.
+
+For the [[footer]] we can proceed accordingly. We just add a few more
+paragraphs of text to describe certain aspects of the project. By
+putting it all together, we end up with the following report
+definition.
+
+<[example file="tutorial" tag="overview"]>
+
+The generated report can be found
+[http://www.taskjuggler.org/tj3/examples/Tutorial/Overview.html
+here]. It serves as an entry page for the other reports. While it
+already contains some references, a navigator bar would be handy as
+well. Fortunately, there is a block generator called 'navigator' to
+take care of this. But before we can include the navigator in the
+report, we need to define it first.
+
+<[example file="tutorial" tag="navigator"]>
+
+[[hidereport]] is a filter attribute. The logical expression
+determines which reports will be included in the navigator bar. A
+logical expression of 0 means hide no reports, so all are included.
+
+The best place to put a navigator bar in the report is right at the
+top. We use two horizontal lines to separate the navigator from the
+main headline and the rest of the report.
+''''<nowiki>----</nowiki>'''' at the begin of the line create such a
+horizontal separation line.
+
+<[example file="tutorial" tag="overview_report2"]>
+
+
+

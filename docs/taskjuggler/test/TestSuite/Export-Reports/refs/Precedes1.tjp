@@ -1,0 +1,46 @@
+project prj "P" "1.0" 2003-11-09-00:00-+0000 - 2003-12-24-00:00-+0000 {
+  timezone "America/Denver"
+  scenario plan "Plan Scenario" {
+    active yes
+  }
+}
+
+projectids prj
+
+
+task foo1 "foo1" {
+  task foo2 "foo2" {
+    start 2003-12-04-07:00-+0000
+    scheduled
+  }
+  task foo3 "foo3" {
+    precedes foo1.foo2
+    start 2003-12-03-16:00-+0000
+    end 2003-12-04-07:00-+0000
+    scheduling alap
+    scheduled
+  }
+}
+task bar "bar" {
+  precedes foo1.foo2
+  start 2003-12-02-16:00-+0000
+  end 2003-12-04-07:00-+0000
+  scheduling alap
+  scheduled
+}
+supplement task foo1 {
+  priority 500
+  projectid prj
+}
+supplement task foo1.foo2 {
+  priority 500
+  projectid prj
+}
+supplement task foo1.foo3 {
+  priority 500
+  projectid prj
+}
+supplement task bar {
+  priority 500
+  projectid prj
+}

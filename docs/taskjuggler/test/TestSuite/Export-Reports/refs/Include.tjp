@@ -1,0 +1,58 @@
+project prj "Include Test" "1.0" 2010-02-26-00:00-+0000 - 2010-03-05-00:00-+0000 {
+  timezone "America/Denver"
+  scenario plan "Plan Scenario" {
+    active yes
+  }
+}
+
+projectids prj
+
+resource _Resource_1 "RF1"
+resource _Resource_2 "RF2"
+resource _Resource_3 "R"
+resource _Resource_4 "R2"
+
+task _Task_1 "Foo" {
+  start 2010-02-26-00:00-+0000
+  scheduled
+}
+supplement task _Task_1 {
+  priority 500
+  projectid prj
+}
+supplement resource _Resource_1 {
+  workinghours sun off
+               workinghours mon 9:00 - 17:00
+               workinghours tue 9:00 - 17:00
+               workinghours wed 9:00 - 17:00
+               workinghours thu 9:00 - 17:00
+               workinghours fri 9:00 - 17:00
+               workinghours sat off
+}
+supplement resource _Resource_2 {
+  workinghours sun off
+               workinghours mon 9:00 - 17:00
+               workinghours tue 9:00 - 17:00
+               workinghours wed 9:00 - 17:00
+               workinghours thu 9:00 - 17:00
+               workinghours fri 9:00 - 17:00
+               workinghours sat off
+}
+supplement resource _Resource_3 {
+  workinghours sun off
+               workinghours mon 9:00 - 17:00
+               workinghours tue 9:00 - 17:00
+               workinghours wed 9:00 - 17:00
+               workinghours thu 9:00 - 17:00
+               workinghours fri 9:00 - 17:00
+               workinghours sat off
+}
+supplement resource _Resource_4 {
+  workinghours sun off
+               workinghours mon 9:00 - 17:00
+               workinghours tue 9:00 - 17:00
+               workinghours wed 9:00 - 17:00
+               workinghours thu 9:00 - 17:00
+               workinghours fri 9:00 - 17:00
+               workinghours sat off
+}

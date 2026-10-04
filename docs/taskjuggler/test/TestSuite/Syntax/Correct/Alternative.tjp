@@ -1,0 +1,15 @@
+project "Project" 2000-01-01 - 2000-03-01 {
+  timezone "America/Denver"
+}
+
+# *** EXAMPLE: 1 +
+resource tuxus "Tuxus"
+resource tuxia "Tuxia"
+
+task t "Task" {
+  start ${projectstart}
+  effort 5d
+  # Use tuxus or tuxia, whoever is available.
+  allocate tuxus { alternative tuxia }
+}
+

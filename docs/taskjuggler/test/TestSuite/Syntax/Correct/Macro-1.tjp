@@ -1,0 +1,21 @@
+project "Example Project" 2008-01-18 +2m {
+  timezone "America/Denver"
+}
+
+macro allocateGroup [
+  allocate tux1, tux2
+]
+
+resource tux1 "Tux1"
+resource tux2 "Tux2"
+
+task t1 "Task1" {
+  start ${projectstart}  # built-in macro
+}
+
+task t2 "Task2" {
+  depends !t1
+  effort 20d
+  ${allocateGroup}
+}
+

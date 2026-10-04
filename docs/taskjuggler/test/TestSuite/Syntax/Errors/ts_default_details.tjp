@@ -1,0 +1,24 @@
+project "test" 2010-02-21 +2m {
+  trackingscenario plan
+}
+
+resource r1 "R1"
+
+task t1 "Task 1" {
+  effort 5d
+  allocate r1
+}
+
+timesheet r1 2010-02-21 +1w {
+  task t1 {
+    work 100%
+    remaining 0d
+    status green "Green" {
+# MARK: error 19 ts_default_details
+      details -8<-
+      Some more details
+      ->8-
+    }
+  }
+}
+

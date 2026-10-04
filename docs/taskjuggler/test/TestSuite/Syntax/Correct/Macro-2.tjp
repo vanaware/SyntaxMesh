@@ -1,0 +1,11 @@
+project "Test" 2010-04-28 +1w {
+  timezone "America/Denver"
+}
+
+macro task [ task "${0}" ]
+macro tname [ Prepare ]
+macro meal [ Crème brûlée ]
+
+task "${meal} ${tname}"
+${task "${tname} ${meal} "}
+

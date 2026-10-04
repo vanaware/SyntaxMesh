@@ -1,0 +1,85 @@
+# *** EXAMPLE: 2 +
+# *** EXAMPLE: 1 +
+project "test" 2009-11-30 +2m {
+  timezone "America/Denver"
+  trackingscenario plan
+  now ${projectstart}
+}
+# *** EXAMPLE: 1 -
+
+resource r1 "R1"
+# *** EXAMPLE: 2 -
+resource r2 "R2"
+
+# *** EXAMPLE: 6 +
+task t1 "Task 1" {
+  effort 5d
+  allocate r1
+}
+# *** EXAMPLE: 6 -
+# *** EXAMPLE: 5 +
+task t2 "Task 2" {
+  task t3 "Task 3" {
+    duration 10d
+    allocate r2
+  }
+}
+# *** EXAMPLE: 6 +
+
+# *** EXAMPLE: 5 -
+# *** EXAMPLE: 1 +
+# *** EXAMPLE: 3 +
+# *** EXAMPLE: 4 +
+timesheet r1 2009-11-30 +1w {
+# *** EXAMPLE: 3 -
+  task t1 {
+    work 3d
+    remaining 0d
+    status green "All work done" {
+      summary "I had good fun!"
+      details -8<-
+        This task went smoothly and I got three things done:
+        * Have fun
+        * Be on time
+        * Get things done
+      ->8-
+    }
+  }
+# *** EXAMPLE: 6 -
+# *** EXAMPLE: 4 -
+# *** EXAMPLE: 3 +
+  newtask t4 "Another fun job" {
+    work 2d
+    remaining 4d
+    status yellow "Had a cool idea" {
+      summary "Will have a schedule impact though."
+    }
+  }
+# *** EXAMPLE: 4 +
+# *** EXAMPLE: 6 +
+}
+# *** EXAMPLE: 6 -
+# *** EXAMPLE: 4 -
+# *** EXAMPLE: 3 -
+
+# *** EXAMPLE: 5 +
+timesheet r2 2009-11-30 +1w {
+  task t2.t3 {
+    work 5d
+    end 2009-12-10
+    status red "I need more time" {
+      summary "This takes longer than expected"
+      details -8<-
+        To finish on time, I need help. Get this r1 guy to help me out
+        here.
+        * I want to have fun too!
+      ->8-
+    }
+  }
+  status yellow "My wife got ill" {
+    summary "I might have to work from home for a few days next week."
+  }
+}
+# *** EXAMPLE: 5 -
+# *** EXAMPLE: 1 -
+

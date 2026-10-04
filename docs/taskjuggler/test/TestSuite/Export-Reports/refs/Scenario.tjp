@@ -1,0 +1,25 @@
+project prj "Example" "1.0" 2007-05-29-00:00-+0000 - 2007-07-01-00:00-+0000 {
+  timezone "America/Denver"
+  scenario plan "Planned Scenario" {
+    scenario actual "Actual Scenario" {
+      active yes
+    }
+    scenario test "Test Scenario" {
+      active no
+    }
+    active yes
+  }
+}
+
+projectids prj
+
+
+task t "Task" {
+  start 2007-05-29-06:00-+0000
+  scheduled
+  actual:start 2007-06-03-06:00-+0000
+}
+supplement task t {
+  priority 500
+  projectid prj
+}

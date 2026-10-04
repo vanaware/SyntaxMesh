@@ -1,0 +1,262 @@
+=== Rich Text Attributes ===
+
+TaskJuggler supports Rich Text data for some STRING attributes that
+are marked accordingly in the syntax reference. Rich Text means, that
+you can use certain markup symbols to structure the text into
+sections, include headlines, bullet lists and the like. The following
+sections describe the supported markup elements and how to use them.
+
+The markup syntax is mostly compatible to the syntax used by the
+popular [http://www.mediawiki.org MediaWiki].
+
+==== Block Markups ====
+
+All block markups are delimited by an empty line. The markup must
+always start at the beginning of the first line of the block. Block
+markups cannot be nested.
+
+The simplest form of a block is a paragraph. It's a block of text
+that is separated by empty lines from other blocks. There is no
+markup needed to start a text block.
+
+Headlines can be inserted by using ''''='''' characters to start a
+line. There are 3 level of headlines.
+
+ == Headline Level 1 ==
+ === Headline Level 2 ===
+ ==== Headline Level 3 ====
+
+A line that starts with four dashes creates a horizontal line.
+
+ ----
+
+Items of a bullet list start with a star. The number of stars
+determines the bullet list level of the item. Three levels are
+supported. Bullet items may span multiple lines but cannot contain
+paragraphs.
+
+ * Bullet 1
+ ** Bullet 2
+ *** Bullet 3
+
+Enumerated lists are formed by using a ''''#'''' instead of ''''*''''.
+
+ # Enumeration Level 1
+ ## Enumeration Level 2
+ ### Enumeration Level 3
+
+Sections of lines that start with a space character are interpreted
+as pre-formatted text. The formatting will be preserved by using a
+fixed-width font and by not interpreting any markup characters within
+the text.
+
+  Pre-formatted text start with
+  a single space at the start of 
+  each line.
+
+==== In-Line Markups ====
+
+In-line markups may occur within a text block. They don't have to
+start at the start of the line.
+
+ This is an ''italic'' word.
+ This is a '''bold''' word.
+ This is a ''''monospaced'''' word.
+ This is a '''''italic and bold''''' word.
+
+The monospaced format is not part of the original MediaWiki markup, but
+we found it useful to have for this manual.
+
+Text can be colored when enclosed in ''''fcol'''' tags.
+
+ This is a <fcol:green>green</fcol> word.
+
+The following colors are supported: black, maroon, green, olive, navy,
+purple, teal, silver, gray, red, lime, yellow, blue, fuchsia, aqua and
+white.
+
+Alternatively, a hash sign followed by a 3 or 6 digit hexadecimal
+number can be used as well. The hexadecimal number specifies the
+values for the red, green and blue component of the color (i. e.,
+#FFF for white).
+
+The above listed in-line markups cannot be nested.
+
+Links to external documents are possible as well. In the first form,
+the URL will appear in the readable text as well. In the second form,
+the text after the URL will be visible but the link will be available
+if the output format supports it.
+
+ [http://www.taskjuggler.org]
+ [http://www.taskjuggler.org The TaskJuggler Web Site]
+
+For local references, the second form is available as well. In this
+form, ''''.html'''' is appended to the first word in the reference to
+create the URL.
+
+ [[item]]
+ [[item|An item]]
+
+Images can be added with a similar syntax.
+
+ [[File:image.jpg]]
+ [[File:image.jpg|alt=An image]]
+
+This first version will be replaced with the file ''''image.jpg''''
+when the output format supports this. Otherwise a blank space will be
+inserted. The second version inserts the text ''''An image'''' if the
+output format does not support images. The following image types are
+supported and detected by their file name extensions: ''''.jpg'''',
+''''.gif'''', ''''.png'''' and ''''.svg''''. 
+
+The vertical positioning of the embedded file can be controlled with
+additional attributes.
+
+ [[File:image.svg|text-bottom]]
+
+The following attributes are supported: ''''top, middle, bottom,
+baseline, sub, super, text-top, text-bottom''''.
+
+In some situations, it is desirable to not interpret certain markup
+sequences and reproduce the text verbatim. Such text must be enclosed
+in nowiki tags.
+
+ <nowiki> This is not '''bold''' text. </nowiki>
+
+You can also insert raw HTML code by enclosing it in
+'''<nowiki><html>...</html></nowiki>''' tags. For all other output
+formats, this content will be ignored. There is also no error checking
+whether the code is valid! Use this feature very carefully.
+
+==== Block and Inline Generators ====
+
+Block and inline generators are a very powerful extension that allow
+you to insert arbitrarily complex content. Block generators create a
+text block whereas inline generators generate an element that fits
+inside a text paragraph.
+
+Block generators use the following syntax:
+
+ <[generator_name parameter1="value1" ... ]>
+
+Inline generators have a very similar syntax:
+
+ <-generator_name parameter1="value1" ... ->
+
+Each generator is identified by a name. See the following list for
+supported generators and their functionality. Generators can have one or
+more optional parameters. Some parameters are mandatory, other are
+optional. The value of a parameter must be enclosed in single or
+double quotes. Since your rich text content must already be enclosed
+by double or single quotes, make sure you don't use the same quoting
+marks for the parameter value. Alternatively you can put a backslash
+in front of the quote mark to escape it.
+
+----
+'''Block Generator''' ''''navigator''''
+
+Parameters:
+
+* ''''id'''' : ID of a defined [[navigator]]
+
+The navigator generator inserts the referenced navigator.
+----
+'''Block Generator''' ''''report''''
+
+Parameters:
+
+* ''''id'''' : ID of a defined report
+
+The report generator inserts the referenced report as a new block
+of this text. The referenced report inherits some context such as the
+report period and the property set from the referencing report.
+----
+'''Inline Generator''' ''''reportlink''''
+
+Parameters:
+
+* ''''id'''' : ID of a defined report
+
+* ''''attributes'''': A set of attributes that override the original
+attributes of the referenced report. All report attributes
+are supported. Since the values of attributes already must be enclosed
+by single or double quotes, all single or double quotes contained in
+the string must be escaped with backslashes. This feature enables
+reports with content that is customized based on where they have been
+referenced from. It requires the reports to be dynamically generated
+and is only available when used with the ''''tj3d'''' web server
+''''tj3webd''''.
+The ''''tj3'''' application will ignore the attributes setting.
+
+ taskreport "All" {
+   formats html
+   columns name { 
+     celltext 1 -8<-
+       <-query attribute="name"-> <-reportlink id="taskRep"
+                    attributes="hidetask plan.id != \"<-id->\""->
+       ->8-
+   }, start, end
+ }
+ 
+ taskreport taskRep "Task" {
+   formats html
+ } 
+
+The report link generator inserts a link to the referenced report.
+----
+'''Inline Generator''' ''''query''''
+
+Parameters:
+
+* ''''family'''' : Specifies whether a ''''task'''' or a ''''resource''''
+should be queried.
+
+* ''''property'''' : The ID of the task or resource to be queried. If
+no property is specified and no property is provided by the scope, the
+query will return a global project attribute. When the query is used
+with a scope that already provides a property, a sequence of ! can be
+used to move the property to the parent property. That way you can
+access attributes of any of the parents.
+
+* ''''scopeproperty'''' : The ID of the scope property. If the property is a
+task this must be a resource ID and vice versa.
+
+* ''''attribute'''' : The ID of the attribute which value should be returned
+by the query. If a property ID is provided, this must be one of the
+names that can be used as [[columnid]] values. Without a property,
+global attributes of the project can be requested. The following
+attributes are supported: ''''copyright'''', ''''currency'''',
+''''end'''', ''''name'''', ''''now'''', ''''projectid'''',
+''''start'''' and ''''version''''.
+
+* ''''scenario'''' : The ID of a scenario. This must be provided whenever the
+requested attribute is scenario specific.
+
+* ''''start'''' : The start date of the report period of the current report.
+
+* ''''end'''' : The end date of the report period of the current report.
+
+* ''''loadunit'''' : The [[loadunit]] that should be used in
+case the requested attribute is an effort or duration value.
+
+* ''''timeformat'''' : The [[timeformat]] used to format date attributes.
+
+* ''''numberformat'''' : The [[numberformat]] used to format arithmetic
+attributes.
+
+* ''''currencyformat'''' : The [[currencyformat]] used to format currency
+values.
+
+The query generator inserts any requested value from the project, a
+task or a resource.
+
+Queries are context aware. Depending on the context where the query
+is used, certain or all of the above parameters have already
+predefined values. When used in the header section of a report, the
+context does not provide a property or scope property. Start and end
+dates as well the formatting options are taken from the report
+context. But when used e. g. in [[celltext.column]], the cell
+provides that property and the attribute and possibly even the scope
+property.
+
+

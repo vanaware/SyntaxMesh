@@ -1,0 +1,119 @@
+=== TaskJuggler 2.x Migration ===
+
+This section will cover changes between TaskJuggler 2.x and 3.x.
+
+* The syntax for macros has changed slightly. The terminating
+''''<nowiki>]</nowiki>'''' must be the last character before the
+line break. No spaces or comments are allowed here. Parameters of
+macro calls must always be enclosed by double quotes. In contrast to
+regular strings, single quotes are not allowed here. The parameter
+may not span multiple lines.
+
+* The ''''projection'''' attribute has been removed. The
+is now provided by [[trackingscenario]].
+
+* The default working hours have been changed to 9:00 - 17:00.
+
+* IDs for properties such as tasks, resources and reports are now
+optional. If you don't need to reference a property, you can omit the
+ID. TaskJuggler will automatically assign an ID then.
+
+* Top-level accounts no longer need a ''''cost'''' or ''''revenue''''
+attribute. Any two top level accounts can now be balanced against
+each other using the [[balance]] attribute in the report.
+
+* The ''''shift'''' attribute for tasks and resources has been
+renamed to ''''shifts'''' to allow support for multiple shifts.
+
+* The global ''''limits'''' attribute has been removed. Since both
+tasks and resources have a ''''limits'''' attribute, a global
+attribute was inconsistent as only resources inherited this
+attribute. Use a parent resource to emulate the old behavior.
+
+* Shifts and limits for allocations have been deprecated. The concept
+was bogus and not compatible with bookings. The functionality is
+now provided by [[shifts.task|shifts]] and [[limits.task|limits]] on the
+task level. Limits for a task can be [[resources.limit|selectively
+applied]] to certain resources.
+
+* The ''''startbuffer'''' and ''''endbuffer'''' attributes have been
+deprecated. They have not been widely used and had no impact on
+scheduling.
+
+* The project attribute ''''allowredifinitions'''' has been dropped.
+It was an ugly workaround for a rare corner case. Using [[supplement]] is
+the clean way to do this.
+
+* Camel case names for function names in logical expressions have
+been deprecated. Function names need to be all lower case now. Some
+functions have been removed as all attributes can now be accessed by
+scenario.attribute_id notation.
+
+* The format for report has been changed considerably.
+The old format was not very flexible and had some design flaws.
+TaskJuggler 3.x now supports report nesting and composition. A report
+definition can be used to generated multiple output [[formats]]. The
+name of a report must now be specified without the file name
+extension. It will be automatically added depending on the output
+format.
+
+* The sorting modes have been extended to include the scenario. Also,
+the sorting direction is no longer mangled with the attribute name.
+What used to be ''''startup'''' is now ''''plan.start.up''''. See
+[[sorttasks]] or [[sortresources]] for details.
+
+* The attribute ''''properties'''' for ''''export'''' reports is no
+longer supported. The naming was inconsistent with TaskJuggler lingo
+and did not handle tasks and resources separately. It has been
+replaced with [[taskattributes]] and [[resourceattributes]].
+
+* The ''''barlabels'''' attribute for reports is no longer needed.
+HTML reports have always empty Gantt-chart bars and the calendar
+reports always have values.
+
+* Support for reading and writing XML files is no longer available.
+The content was redundant with the TJP file format and it was not
+widely used. Keeping it in sync was too much of an effort to be worth
+it. There is nothing in the TJ3 design that would prevent this
+feature from being added again, but there are no plans for this right
+now.
+
+=== Using TaskJuggler 2.x and TaskJuggler 3.x in parallel ===
+
+While TaskJuggler 3.x has many new features over TaskJuggler 2.x like
+the much improved HTML reports, many 2.x users will miss the
+graphical user interface.
+
+To ease the migration, you can continue to use the TaskJuggler 2.x
+front-end while using TaskJuggler 3.x for report generation. This is
+possible because TaskJuggler 3.x can read-in the TaskJuggler 2.x
+export files. Export files are fully scheduled projects that include
+start and end dates for all tasks and bookings for resource
+allocations. 
+
+To export all tasks and resources into a TJP file that can be read by
+TaskJuggler 3.x include the following export report definition in your
+TaskJuggler 2.x project plan. The necessary patches to support this
+only made it into TaskJuggler 2.x after the 2.4.3 release. So be sure
+to use a recent version from the Git repository to try this.
+
+ export "FullProject.tjp" {
+   taskattributes all
+   resourceattributes all
+   hideresource 0
+ }
+
+The resulting ''''FullProject.tjp'''' file is a valid self-contained
+project file that can be read with TaskJuggler 2.x or TaskJuggler
+3.x. The file does not contain any report definitions. To generate
+reports with TaskJuggler 3.x you need to create an additional file
+that contains the TaskJuggler 3.x report definitions.
+
+Let's assume the file is called ''''tj3reports.tji''''. Start
+TaskJuggler 3.x with the following command:
+
+ tj3 FullProject.tjp tj3reports.tji
+
+Now you have generated TaskJuggler 3.x reports from you TaskJuggler
+2.x project.
+

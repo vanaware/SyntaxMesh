@@ -1,0 +1,28 @@
+project query "Query Test" 2009-11-08 +1m 
+  copyright "The Gang"
+
+resource foo "Foo"
+
+task bar "Bar" {
+  effort 1w
+  allocate foo 
+}
+
+textreport "Query" {
+  formats html
+  center -8<-
+    * Copyright: <-query attribute="copyright"->
+    * Currency: <-query attribute="currency"->
+    * End: <-query attribute="end"->
+    * Name: <-query attribute="name"->
+    * Now: <-query attribute="now"->
+    * Project ID: <-query attribute="projectid"->
+    * Start: <-query attribute="start"->
+    * Version: <-query attribute="version"->
+
+    The task <-query family="task" property="bar"
+    attribute="name"-> has an effort of
+    <-query family="task" property="bar" attribute="effort"->.
+    ->8-
+}
+

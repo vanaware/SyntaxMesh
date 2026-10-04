@@ -1,0 +1,30 @@
+project project "Simple Project" "1.0" 2007-01-05 +1m {
+  timezone "America/Denver"
+  # The baseline date for the projection.
+  now 2007-01-15
+}
+
+resource tux "Tux"
+
+task test "Testing" {
+  start 2007-01-05
+  effort 10d
+  allocate tux
+}
+
+supplement resource tux {
+  # Book a whole day (8 hours). The 1 hour lunch break is skipped.
+  booking test 2007-01-06-9:00 +9h { sloppy 1 }
+  # Book 2 days in the afternoon, 4 hours each.
+  booking test 2007-01-08-13:00 +4h,
+               2007-01-09-13:00 +4h
+  # This is a common mistake. With standard working hours, this will
+  # yield a zero time booking! The interval is midnight to 8am. So
+  # it's outside of the working hours and 'sloppy 2' suppresses the
+  # warning.
+  booking test 2007-01-11 +8h { sloppy 2 }
+  # Use 'overtime' to book off-hour slots. This booking will book the
+  # full 10 hours, ignoring the lunch break and adding an extra hour
+  # in the morning.
+  booking test 2007-01-11-8:00 +10h { overtime 1 }
+}

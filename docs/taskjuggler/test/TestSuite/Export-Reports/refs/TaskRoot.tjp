@@ -1,0 +1,76 @@
+project prj "Taskroot Example" "1.0" 2005-07-22-00:00-+0000 - 2005-08-26-00:00-+0000 {
+  timezone "America/Denver"
+  scenario plan "Plan Scenario" {
+    active yes
+  }
+}
+
+projectids prj
+
+
+task items "Project breakdown" {
+  task plan "Plan work" {
+    start 2005-07-22-06:00-+0000
+    end 2005-07-26-23:00-+0000
+    scheduling asap
+    scheduled
+  }
+  task implementation "Implement work" {
+    task phase1 "Phase 1" {
+      depends items.plan
+      start 2005-07-26-23:00-+0000
+      end 2005-08-02-23:00-+0000
+      scheduling asap
+      scheduled
+    }
+    task phase2 "Phase 2" {
+      depends items.implementation.phase1
+      start 2005-08-02-23:00-+0000
+      end 2005-08-05-23:00-+0000
+      scheduling asap
+      scheduled
+    }
+    task phase3 "Phase 3" {
+      depends items.implementation.phase2
+      start 2005-08-05-23:00-+0000
+      end 2005-08-11-23:00-+0000
+      scheduling asap
+      scheduled
+    }
+  }
+  task acceptance "Customer acceptance" {
+    depends items.implementation
+    start 2005-08-11-23:00-+0000
+    end 2005-08-16-23:00-+0000
+    scheduling asap
+    scheduled
+  }
+}
+supplement task items {
+  priority 500
+  projectid prj
+}
+supplement task items.plan {
+  priority 500
+  projectid prj
+}
+supplement task items.implementation {
+  priority 500
+  projectid prj
+}
+supplement task items.implementation.phase1 {
+  priority 500
+  projectid prj
+}
+supplement task items.implementation.phase2 {
+  priority 500
+  projectid prj
+}
+supplement task items.implementation.phase3 {
+  priority 500
+  projectid prj
+}
+supplement task items.acceptance {
+  priority 500
+  projectid prj
+}

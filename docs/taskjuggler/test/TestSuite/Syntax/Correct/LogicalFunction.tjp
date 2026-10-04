@@ -1,0 +1,22 @@
+project "Logical Function Demo" 2009-11-21 +2w {
+  timezone "America/Denver"
+}
+
+resource "Team" {
+  resource joe "Joe"
+}
+
+task "Parent" {
+  task "Sub" {
+    effort 1w
+    allocate joe
+  }
+}
+
+# *** EXAMPLE: 1 +
+taskreport "LogicalFunction" {
+  formats html
+  hideresource ~(isleaf() & isleaf_())
+}
+# *** EXAMPLE: 1 -
+

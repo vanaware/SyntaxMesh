@@ -1,0 +1,145 @@
+== Introduction ==
+
+=== About TaskJuggler ===
+
+TaskJuggler is a modern and powerful project management tool. Its new
+approach to project planning and tracking is far superior to the
+commonly used Gantt chart editing tools. It has already been
+successfully used in many projects and scales to projects with
+hundreds of resources and thousands of tasks.
+
+TaskJuggler is an Open Source tool for serious project managers. It
+covers the complete spectrum of project management tasks from the
+first idea to the completion of the project without enforcing certain
+work flows or methodologies. It assists you during project scoping,
+resource assignment, cost and revenue planning, risk and communication
+management, status tracking and reporting.
+
+TaskJuggler provides an optimizing scheduler that computes your
+project time lines and resource assignments based on the project
+outline and the constrains that you have provided. The built-in
+resource balancer and constrains checker offload you from having to
+worry about irrelevant details and ring the alarm if the project gets
+out of hand. The flexible "as many details as necessary"-approach
+allows you to still plan your project as you go, making it also ideal
+for new management strategies such as Extreme Programming and Agile
+Project Management.
+
+If you are about to build a skyscraper or just want to put together
+your colleague's shift plan for the next month, TaskJuggler is the
+right tool for you. If you just want to draw nice looking Gantt
+charts to impress your boss or your investors, TaskJuggler might not
+be right for you. It can certainly produce nice looking Gantt charts
+and other reports, but it takes some effort to master its power. For
+those that are willing to invest a few hours to get started with the
+software it will become a companion you don't want to miss anymore.
+
+TaskJuggler is a command line tool that you use from a
+[http://en.wikipedia.org/wiki/Shell_(computing) shell]. This means
+that to enter your project data you will use one of the most
+versatile and powerful tools there is: your favorite
+[http://en.wikipedia.org/wiki/Text_editor text editor]. To get a
+first impression, you can look at this
+[http://www.taskjuggler.org/tj3/examples/Tutorial/tutorial.tjp project
+file]. The project description is fairly intuitive, but very powerful
+as well.  The [[Tutorial]] will explain this file line by line. Please
+look at the [http://www.taskjuggler.org/tj3/examples/Overview.html
+resulting reports] that visualize the project.
+
+
+=== License and Copyright ===
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of
+[http://www.gnu.org/licenses/old-licenses/gpl-2.0.html version 2 of
+the GNU General Public License] as published by the Free Software
+Foundation. You accept the terms of this license by distributing or
+using this software.
+
+This manual is Copyright (c) 2006, 2007, 2008, 2009, 2010 Chris Schlaeger.
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3
+or any later version published by the Free Software Foundation; with
+no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
+A copy of the license is included in the section entitled "GNU
+Free Documentation License".
+
+The HTML reports use icons from the
+[http://www.kde.org/people/credits/ KDE Icon Team]. The icons are
+licensed under the [http://www.fsf.org/licenses/lgpl.html GNU Lesser
+General Public License].
+
+The HTML reports use Java Script code from
+[http://www.walterzorn.de/en/tooltip/tooltip_e.htm Walter Zorn]. The code
+is licensed under the [http://www.fsf.org/licenses/lgpl.html GNU
+Lesser General Public License].
+
+TaskJuggler does require other software components to operate. These
+components include the Ruby runtime system, operating system libraries
+and other components installed as Ruby gems. We have used great care
+to ensure that all dependencies are compatible with the TaskJuggler
+license and are being used as required by those licenses. But use
+cases may vary and you should check those licenses yourself to ensure
+that you use those components in accordance with their licenses.
+
+=== Features and Highlights ===
+
+==== Basic Properties ====
+
+* Manages tasks, resources and accounts of your project
+* Powerful to-do list management
+* Detailed reference manual
+* Simple installation
+* Runs on all Linux, Unix, Windows, MacOS and several other operating systems
+* Full integration with Vim text editor
+
+==== Advanced Scheduling ====
+
+* Automatic resource leveling and tasks conflict resolution
+* Unlimited number of scenarios (baselines) of the same project for what-if analysis
+* Flexible working hours and leave management
+* Support for shift working
+* Multiple time zone support
+
+==== Accounting ====
+
+* Tasks may have initial costs, finishing costs
+* Resources may have usage based costs
+* Task and/or resource base cost models
+* Support for profit/loss analysis
+
+==== Reporting ====
+
+* Comprehensive and flexible reports so you can find the information you need when you need it
+* Powerful filtering functions to provide the right amount of detail to the right audience
+* Time and status sheet reporting infrastructure
+* Project tracking and status reporting with dashboard support
+
+==== Scaling and Enterprise Features ====
+
+* Projects can be combined to larger projects
+* Support for central resource allocation database
+* Manages roles and complex reporting lines
+* Powerful project description language with macro support
+* Scales well on multi-core or multi-CPU systems
+* Support for project management teams and revision control systems
+* Data export to Microsoft Project and Computer Associates Clarity
+
+==== Web Publishing and Groupware Functions ====
+
+* HTML reports for web publishing
+* CSV data export for exchange with popular office software
+* iCalendar export for data exchange with calendar and productivity applications
+* Built-in web server for dynamic and interactive reports
+* Server based time sheet system for status and actual work reporting
+
+=== TaskJuggler on the Web ===
+
+The official TaskJuggler web site can be found at
+[http://www.taskjuggler.org].
+
+Since the developers are mostly busy project managers themselves, we
+have created a [http://www.taskjuggler.org/contact.html forum] for users
+to help each other.
+

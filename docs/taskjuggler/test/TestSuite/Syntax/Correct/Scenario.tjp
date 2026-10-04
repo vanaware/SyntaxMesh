@@ -1,0 +1,19 @@
+# *** EXAMPLE: header +
+project "Example" 2007-05-29 - 2007-07-01 {
+  timezone "America/Denver"
+  scenario plan "Planned Scenario" {
+    scenario actual "Actual Scenario"
+    scenario test "Test Scenario" {
+      active no
+    }
+  }
+}
+# *** EXAMPLE: header -
+
+# *** EXAMPLE: task +
+task t "Task" {
+  start 2007-05-29
+  actual:start 2007-06-03
+  test:start 2007-06-07
+}
+# *** EXAMPLE: task -

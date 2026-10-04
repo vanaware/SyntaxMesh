@@ -1,0 +1,63 @@
+project prj "Simple Project" "1.0" 2009-10-04-00:00-+0000 - 2009-11-03-10:00-+0000 {
+  timezone "America/Denver"
+  scenario plan "Plan Scenario" {
+    active yes
+  }
+}
+
+projectids prj
+
+shift _Shift_1 "Foo" {
+  workinghours sun off
+               workinghours mon 9:00 - 17:00
+               workinghours tue 9:00 - 17:00
+               workinghours wed 9:00 - 17:00
+               workinghours thu 9:00 - 17:00
+               workinghours fri 9:00 - 17:00
+               workinghours sat off
+  shift _Shift_2 "bar" {
+    workinghours sun off
+                 workinghours mon 9:00 - 17:00
+                 workinghours tue 9:00 - 17:00
+                 workinghours wed 9:00 - 17:00
+                 workinghours thu 9:00 - 17:00
+                 workinghours fri 9:00 - 17:00
+                 workinghours sat off
+  }
+}
+resource _Resource_1 "Foo" {
+  resource _Resource_2 "Bar"
+}
+
+task _Task_1 "Foo" {
+  task _Task_2 "Bar" {
+    start 2009-10-04-00:00-+0000
+    scheduled
+  }
+}
+supplement task _Task_1 {
+  priority 500
+  projectid prj
+}
+supplement task _Task_1._Task_2 {
+  priority 500
+  projectid prj
+}
+supplement resource _Resource_1 {
+  workinghours sun off
+               workinghours mon 9:00 - 17:00
+               workinghours tue 9:00 - 17:00
+               workinghours wed 9:00 - 17:00
+               workinghours thu 9:00 - 17:00
+               workinghours fri 9:00 - 17:00
+               workinghours sat off
+}
+supplement resource _Resource_2 {
+  workinghours sun off
+               workinghours mon 9:00 - 17:00
+               workinghours tue 9:00 - 17:00
+               workinghours wed 9:00 - 17:00
+               workinghours thu 9:00 - 17:00
+               workinghours fri 9:00 - 17:00
+               workinghours sat off
+}

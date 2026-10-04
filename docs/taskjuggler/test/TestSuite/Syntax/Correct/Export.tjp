@@ -1,0 +1,50 @@
+# *** EXAMPLE: 1 +
+# *** EXAMPLE: 2 +
+project export  "Project" "1.0" 2007-01-01 - 2008-01-01 {
+  timezone "America/Denver"
+}
+
+resource tux "Tux"
+resource bob "Bob"
+
+# *** EXAMPLE: 1 -
+task t1 "Task 1" {
+  start 2007-01-01
+  effort 20d
+  allocate tux
+  allocate bob
+  limits { dailymax 6h }
+}
+# *** EXAMPLE: 1 +
+# *** EXAMPLE: 2 -
+task t2 "Task 2" {
+  start 2007-01-01
+  end 2007-06-30
+  allocate tux
+  allocate bob
+  limits { weeklymax 3d }
+}
+
+# *** EXAMPLE: 1 -
+# *** EXAMPLE: 2 +
+# Export the project as fully scheduled project.
+export "FullProject" {
+  definitions *
+  taskattributes *
+  hideresource 0
+}
+
+# Export only bookings for 1st week as resource supplements
+export "Week1Bookings" {
+  definitions -
+  start 2007-01-01
+  end 2007-01-08
+  taskattributes booking
+  hideresource 0
+}
+
+# Export the scheduled project as Microsoft Project XML format.
+export "MS-Project" {
+  formats mspxml
+  loadunit quarters
+}

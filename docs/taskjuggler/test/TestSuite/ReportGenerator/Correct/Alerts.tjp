@@ -1,0 +1,67 @@
+project "Alert Tests" 2010-08-03 +6m
+
+task "T1" {
+  task "T1.1" {
+    task "T1.1.1" {
+      journalentry 2010-08-03 "T1.1.1 Not in report"
+      journalentry 2010-08-05 "T1.1.1"
+      journalentry 2010-08-15 "T1.1.1 Not in report"
+    }
+    journalentry 2010-08-05 "T1.1"
+  }
+}
+task "T2" {
+  task "T2.1" {
+    task "T2.1.1" {
+      journalentry 2010-08-03 "T2.1.1 Red Not in report" { alert red }
+      journalentry 2010-08-05 "T2.1.1"
+      journalentry 2010-08-15 "T2.1.1 Green Not in report" { alert green }
+    }
+    journalentry 2010-08-05 "T2.1 Yellow" { alert yellow }
+  }
+}
+task "T3" {
+  task "T3.1" {
+    task "T3.1.1" {
+      journalentry 2010-08-03 "T3.1.1 Not in report"
+      journalentry 2010-08-06 "T3.1.1 Red" { alert red }
+      journalentry 2010-08-15 "T3.1.1 Green Not in report" { alert green }
+    }
+    journalentry 2010-08-06 "T3.1 Yellow" { alert yellow }
+  }
+}
+
+taskreport "Alerts-1" {
+  formats html, csv
+  columns name, alert,
+          journal {
+            celltext 1 "<-query attribute='journal' journalmode='journal_sub'->"
+            title "Journal_sub (full period)"
+            period ${projectstart} - ${projectend}
+          },
+          journal {
+            title "journal (full period)"
+            period ${projectstart} - ${projectend}
+          },
+          journal {
+            title "journal"
+          },
+          journal {
+            title "journal_sub"
+            celltext 1 "<-query attribute='journal' journalmode='journal_sub'->"
+          },
+          journal {
+            title "alerts_down"
+            celltext 1 "<-query attribute='journal' journalmode='alerts_down'->"
+          },
+          journal {
+            title "status_down"
+            celltext 1 "<-query attribute='journal' journalmode='status_down'->"
+          },
+          journal {
+            title "status_up"
+            celltext 1 "<-query attribute='journal' journalmode='status_up'->"
+          }
+  period 2010-08-05 - 2010-08-15
+}
+

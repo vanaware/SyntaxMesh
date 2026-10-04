@@ -1,0 +1,2263 @@
+= Next Release (Some Day)
+
+== New Features
+
+  * Add webrick as dependency since it is no longer part of Ruby
+
+== Bug Fixes
+
+  * Make TaskJuggler compatible with Ruby 3.4.x
+  * Properly handle time values past UTC+1200.
+  * Use double quotes for BSI column in CSV reports
+
+
+= Release 3.7.2 (2023-02-25)
+
+== New Features
+
+  * The 'duties' column now supports the 'listitem' attribute.
+
+== Bug Fixes
+
+  * File.exists? is no longer supported in Ruby 3.2.x
+  * Attempt to fix MS Project XML export for newer MSP versions.
+  * Eliminate use of useless variable
+  * Fix race condition that surfaces when using Ruby 3.x.
+  * Don't crash on division by zero for timesheets shorter than 1 week
+  * Properly escape double quotes in CSV file strings.
+  * Don't crash if task is overspeficied.
+  * Queries in listitems for some columns now respect scope property
+
+
+= Release 3.7.1 (2020-03-14)
+
+  * Bumping version to 3.7.1
+  * Storing the version in version.rb
+  * add novevents keyword to icalreport context
+  * Revert "Revert "Revert "    
+    This reverts commit d3c9d87a4fd58c9af15a44eb6c2b6c131f939912.
+  * Revert "Revert "    
+    This reverts commit 3ca91860374adefb5821ab70d1a3030883459231.
+  * Revert "    
+    This reverts commit 163fabe4f21b92a9828f65ccd186526af6c3b401.
+  * Revert "Revert "    
+    This reverts commit 3ca91860374adefb5821ab70d1a3030883459231.
+  * Revert "    
+    This reverts commit 163fabe4f21b92a9828f65ccd186526af6c3b401.
+  * Corrected some words.
+  * fix: In Windows and Cygwin generate file path for the booking file is
+    wrong
+    Reported-by: Yury Rumega
+    
+    When running the freeze command in Windows and Cygwin file path for the booking file is
+    generated wrongly.
+
+= Release 3.7.0 (2020-03-14)
+
+== New Features
+
+  * Adding a column that lists all annual leave days.
+  * Include man pages in gem
+  * man pages: Code modifications
+  * h2m files to enhance the generated man page
+  * rake task to build man pages using help2man
+  * Add reference line via 'markdate' parameter
+
+== Bug Fixes
+
+  * Don't use 'milestone' keyword in export reports.
+  * Fix a few warnings in the Gemfile
+  * Eliminate warnings seen with Ruby 2.5
+  * Fix endless loop when using sorting criteria in some reports.
+  * Don't crash in account definition.
+  * Correcting Typos undo: plural for pixel in German (pixel) different from English (pixels)
+  * Correcting Typos in manual pages and source file comments
+  * Correct spelling mistake in lib/taskjuggler/apps/Tj3Man.rb
+  * Clean the source tree using rake
+  * Fix crash when taskjuggler.rc is not valid YAML.
+  * syntax of xml comments to not have -- in the body
+  * Spec tests failed on some Ubuntu/Debian versions.
+  * Prioritize resource leave time over free time in resource reports
+
+
+= Release 3.6.0 (2016-03-12)
+
+== New Features
+
+  * Bump version to 3.6.0
+  * 'headcount' now ignores resources that are marked as unemployed.
+  * Adding experimental support for 'effortdone' and 'effortleft'
+  * Ruby 2.1 compatibility fixes
+  * The sort* report attributes no longer require a scenario id.
+  * Allow not-yet declared resources for 'managers' and 'responsible'.
+  * Issue error when uninitialized dates are used in logical expressions.
+  * Allow tasks with 'booking' and 'scheduled' but without effort.
+  * New report column 'children' to list all direct children.
+
+== Bug Fixes
+
+  * Remove rspec warnings.
+  * Eliminate warning about duplicate hash entry.
+  * Fixing a test suite problem with Ruby 2.2.x.
+  * Fix tj3man crash with Ruby 2.2.2.
+  * Don't crash when a parent scenario is inactive.
+  * Improving the documentation of list attributes
+  * Check that duration values are at least 'timingresolution' long.
+  * Don't crash on config files with missing sections.
+  * Use hardcoded tree sorting for MS Project XML.
+  * Resolve symlinks when constructing lib path.
+  * Don't crash when unknown property attributes are used in logical expressions.
+  * Clarifying that trace reports have fixed units and formating.
+  * gaplength/gapduration now works with onstart/onend of effort tasks
+
+
+= Release 3.5.0 (2013-06-29)
+
+== New Features
+
+  * Only include scenario in error messages when using multiple scenarios.
+  * Hammock tasks are now supported.
+  * Adding search field to the online user manual.
+  * List contended resources and tasks for runaway tasks.
+  * Queries can now access attributes of parent properties.
+  * Adding support for new custom attribute type 'number'.
+  * Add --list-reports option for tj3 similar to tj3client.
+  * Ruby 2.0 is now the recommended Ruby version.
+  * Adding 'outputdir' attribute to set output directory for reports.
+  * 'auxdir' attribute is now also a global attribute.
+
+== Bug Fixes
+
+  * Don't crash on 'tj3man -m' command
+  * Clarify error message when dependency is broken.
+  * Don't ignore provided start/end date when deps are present.
+  * Ensure that 'length' considers task 'shifts' as well.
+  * Fixing some layout issues with Firefox.
+  * Include optional attributes in export of extended attribute definition.
+  * Make project freezing work on Windows again.
+  * Don't ignore bookings for task limits.
+  * Use proper github link to current repository in manual.
+  * Don't crash when group resources are made persistent.
+  * Make gem build work on Ruby 2.0.0
+  * columns using 'celltext' now show the correct value
+  * Add new function to test for invalid attribute values in logical expressions.
+  * Use correct DOCTYPE in HTML5 documents.
+  * Make spaces after <fcol:...> work in RichText.
+  * Ensure that times in ICal files are always UTC.
+  * Added warning for overwriting non-scenario-specific attributes.
+  * Add link to logical expression page for attributes that use them.
+  * Clarify description of 'newtask' keyword.
+  * Don't crash when containers are marked as milestone.
+  * Include off-hour shading in Gantt charts when end is off chart.
+  * Adding missing 'turnover' to 'columnid' documentation.
+
+
+= Release 3.4.0 (2012-12-17)
+
+== New Features
+
+  * 'auxdir' can be used to specify alterntive path to CSS and script files.
+  * Trace file reader can now deal with Open/LibreOffice generated files.
+  * Add timefomat1 and timeformat2 attributes to set calendar column headers.
+  * Add report columns 'scheduling' to show the scheduling mode of leaf tasks.
+  * Priority inversions now generate a warning.
+  * 'competitors' and 'competitorcount' columns added.
+  * Better documentation of the task scheduler in the user manual.
+  * Support raw HTML fragments inlined into rich text strings.
+  * Added 'rawhtmlhead' attribute to insert HTML fragments into the HTML head section.
+  * Major performance improvements for reports using targets and inputs.
+  * Adding --report and --reports option to tj3.
+
+== Bug Fixes
+
+  * Don't crash on files with bad file encodings.
+  * 'tagfile' cannot work without a file name.
+  * Report correct line number for errors at end of master file.
+  * Don't crash when adopting a top-level task.
+  * Don't put -bookings.tji file in -o directory.
+  * MS Project XML files respect the 'screnarios' setting now.
+  * Timesheet reports are now based on the 'trackingscenario' instead of the top-level.
+  * Make <-reportlink ...-> work with otherwise empty strings.
+  * Handle *prefix settings properly across nested include files.
+  * Properly export working hours that are not hour-aligned.
+  * Fix link to generated tutorial reports.
+  * Add requirement for >= Ruby 1.9.2 for non-ASCII users.
+  * Undefined macros ${?foo} now work with TJ3.
+  * Improving the heuristic to select a persistent resource from a set of alternatives.
+  * Ensure that resource load bars in Gantt charts have at least a 1px width
+
+
+= Release 3.3.0 (2012-07-22)
+
+== New Features
+
+  * Support 'purge' in export report definitions.
+  * Allow 'export' to be used as nested report.
+  * Export scheduled project as Microsoft Project XML format.
+  * Some speed improvements of the TJP parser.
+  * Support nested macro definitions.
+  * Improved scheduling performance.
+  * 'effortleft' and 'effortdone' columns now work for resources as well.
+  * Adding 'status_dep' and 'alerts_dep' journalmode options.
+
+== Bug Fixes
+
+  * Don't crash when 'complete' is reported for container w/o real sub-tasks.
+  * Fix 'celltext' documentation.
+  * Properly compute cost from tasks when reported in a resource context.
+  * Ensure that there are no duplicated (by adoption) tasks in a report.
+  * Clarify start/end slot clipping for tasks with 'allocate'.
+  * Don't miss certain tasks in 'inputs' and 'targets' list.
+  * Don't crash when gantt report interval is outside of tasks.
+  * Allow macro definitions at end of file.
+  * Don't silently force interval durations to align with timing resolution.
+  * Make @none work for logical expressions.
+  * Support 'purge' for a specific scenario.
+  * Properly escape " in plain text strings in export reports.
+  * Make nested 'supplement' work with absolute IDs.
+
+
+= Release 3.2.0 (2012-04-30)
+
+== New Features
+
+  * 'leaves' attribute is now officially supported.
+  * 'alert' can now be specified with 'journalattributes'
+  * Adding Scrum example project.
+  * Adding @all and @none constants to improve readability of logical expressions.
+  * Support custom start or end dates for auto-adjusted columns
+  * Add 'sendmail' as alternative email delivery method.
+  * Adding 'activetasks', 'opentasks' and 'closedtasks' columns.
+  * Web server is now a separate program: tj3webd
+  * More consistent error reporting across the tj3 programs.
+  * HTML reports now use HTML5 syntax.
+  * Chart plotter for tracereport data
+  * New 'tracereport' to track property attributes over time.
+
+== Bug Fixes
+
+  * Don't show deprecated or removed attributes in 'Attributes' section of the manual.
+  * resourcereport now has 'no, name' as default columns.
+  * ALAP tasks in the tracking scenario no longer get allocations prior to now date.
+  * Remove bogus warning when multiple leaveallowances are used.
+  * 'workinghours' was ignored for all but default scenario.
+  * Properly report effort values for resources of parent tasks in task lists.
+  * Some deprecated or removed syntax elements were not rejected properly.
+  * Don't warn about container tasks without resource allocations.
+  * Make purge work for *root attributes.
+  * Allow multiple spaces after * and # in RichText lists.
+  * Clarify difference between TJ date format and ISO 8601.
+  * Time and status sheets templates now work properly with non-US locale.
+  * Including task ID again in timesheet summaries.
+  * Property report resource efforts in calendar cells for loadunit hour.
+  * 'vacation' is no longer ignored when multiple scenarios are used.
+  * Use ".ics" extension instead of ".ical" for ICal reports.
+  * Clarifying ruby installation instructions in the manual.
+  * Make task limits that had no resource associated work properly.
+  * Fix link to 'listitem' documentation in manual.
+  * Fix links to tagfile documentation in Vim installation section.
+  * Don't crash on wrongly encoded input files.
+  * Make 'tj3 -o <dir>' work on Ruby 1.8.
+  * Make shortauto and longauto formats work for all numberformat options.
+
+
+= Release 3.1.0 (2012-01-11)
+
+== New Features
+
+  * Added a new report column 'balance' for account reports.
+  * Making the tj3man output more readable with colors.
+  * New attribute 'leaveallowance'
+  * New report columns to report leaves for report period
+  * Replaced 'vacation' with more flexible 'leaves' attribute.
+  * Adding colorized terminal output.
+  * The <fcol:...> rich text token now supports RGB values.
+  * 'headcount' is now also supported for tasks.
+  * Adding examples for textreport and attributes to manual.
+  * Make TaskJuggler usable as a ToDo list manager.
+  * Supported alert levels can now be freely defined.
+  * Added new logical function 'isresponsibilityof'.
+  * Support '-' argument for 'balance' to clear a set balance.
+  * Gantt charts now use normal task bars for rolled-up tasks.
+  * Adding support for new account attribute 'credits'.
+  * Added a project template to the examples directory.
+  * Adding query attribute 'turnover' for account reports.
+  * Adopted tasks are now included in the reports.
+  * Don't include deprecated keywords in vim syntax file.
+  * RichText now also supports colored text.
+  * Added error message for no longer supported keywords.
+  * Clearly mark deprecated and removed keywords in syntax manual.
+  * 'accountreports' are back again.
+
+== Bug Fixes
+
+  * Abort tj3 if error occurs during --freeze operation.
+  * Fix vim :make command to not be confused by tj3 output.
+  * Make the fraction seperator of the 'numberformat' option work.
+  * Prevent years in calendar column headers from being chopped-off.
+  * Make tj3man work with Ruby 1.8 again.
+  * Fixing a crash on bad syntax in a query for 'resources'.
+  * Add gem dependencies to from-git install section in the manual.
+  * Prevent crash when reports only have disabled scenarios.
+  * Properly report syntax errors with open context at file end.
+  * Don't crash when no tasks fit but reports are forced.
+  * Colorize alert tags in standalone mode.
+  * Make timesheets work with custom yearlyworkinghours.
+  * fte and headcount column now have a proper header
+  * Don't show any progress information when --silent is set.
+  * 'headcount' column now shows proper values.
+  * Fix the 'complete' value of container tasks.
+  * Don't crash when HTML files cannot be written.
+  * Fixed a locking bug in the batch processor.
+  * Eliminate duplicate entries in status sheet confirmation.
+  * Show correct documentation of alert levels in the manual.
+  * Rich text enumerations many have a blank lines in between.
+  * Custom alignment, font and cell color now also work in calendar cells.
+  * Respect limits for all requested resources of that limit.
+  * Properly position the Gantt chart container for very small bars.
+  * Clarify the use of 'purge' in the user manual.
+  * Don't crash when generating certail iCal reports.
+  * Correct syntax of 'export' in reference manual.
+  * Allocate now also supports 'shifts' instead of the deprecated 'shift'.
+  * Make 'tj3client report' work with additional report files.
+
+
+= Release 3.0.0 (2011-11-01)
+
+== New Features
+
+  * Add support for FTE calculation.
+  * Use project name and report title in title of HTML reports.
+  * Improved stylesheet for code and verbatim sections in HTML reports.
+  * Navigator (Menu) in reports is now surrounded by rulers.
+  * Adding instructions for install into a local directory.
+
+== Bug Fixes
+
+  * Include shifts in export reports.
+  * 0-efficiency resources are no longer cut short when effort is reached.
+  * Include 'timingresolution' in export files.
+  * Check file name for illegal characters.
+  * Document the one day requirement for status in time sheets.
+  * Don't crash on bad working hour intervals.
+  * Don't crash when sorting is used for calculated attributes.
+  * Don't crash when report with navigator is hidden from that navigator.
+  * Properly escape ' in HTML popup boxes.
+  * Don't crash on scanner errors.
+  * Correctly document the 'tagfile' keyword.
+  * Use padding for all menu bar entries in reports.
+  * Months names in calendar reports are no longer cut off.
+  * Ensure that Clarity timesheets always show all projects in timesheets.
+  * Also process submitted sheets if the attachements were not properly detected.
+
+
+= Release 0.2.2 (2011-09-13)
+
+== New Features
+
+  * Check all input files for encoding errors.
+  * Adding Fedora 20 schedule as an example.
+  * Deprecating old journal columns.
+  * Making journal reports more configureable.
+  * Add --html option for tj3man to show help in browser.
+  * More elaborate explanation of the reported 'complete' values.
+  * 'purge' is now supported in reports
+  * Eliminate the need to set TASKJUGGLER_DATA_PATH when installed from gem.
+  * Improved debugging output for --debuglevel and --debugmodules option.
+  * Using a standard gemspec file to build the gem package.
+
+== Bug Fixes
+
+  * Use stricter encoding checks for incoming emails.
+  * Don't report unset min/max start/end dates as errors in reports.
+  * <-query attribute="journal'-> now also works without a property context.
+  * Don't crash when 'scenario' is used with 'icalreport'.
+  * Propagate dates from scheduled tasks to dependencies with effort.
+  * Be less agressive when inheriting project start and end dates.
+  * Don't crash when tasks don't fit the project time frame.
+  * Correct 'effort must be larger than 0' error message.
+
+
+= Release 0.2.1 (2011-07-13)
+
+== Bug Fixes
+
+  * Fix scheduler deadlock problem.
+
+
+= Release 0.2.0 (2011-07-10)
+
+== New Features
+
+  * Added warning for non-effort tasks with allocate that don't get resources.
+  * Improved Vim integration
+  * Re-map Ctrl-] in vim to show full ID of property in current line.
+  * New report to generate source file infos for properties as ctags file.
+  * Scheduler performance improvements for large projects
+  * Added warning when accounts are present but no balance has been defined.
+  * Add --abort-on-warnings flag to tj3.
+  * Make sure that provided bookings don't exceed task specifications.
+  * Resource loads can now be reported in 'quarters' as well.
+  * Improved messages for some types of scheduling errors.
+  * Get the TJ2 bookings per resource in export reports back.
+  * Scheduler performance improvements
+  * Adding support to generate iCalendar files
+
+== Bug Fixes
+
+  * Tracking scenario tasks with no bookings but allocations
+  * Ensure that tracking scenario is set after all scenario definitions.
+  * Show last matched token in syntax error messages.
+  * Properly handle white spaces in macro calls.
+  * Properly handle unicode characters in macros and environment variables.
+  * tj3d shows local times again for loaded projects.
+  * Make --freezedate option work properly.
+  * Flags are now properly inherited by sub properties.
+
+
+= Release 0.1.1 (2011-06-08)
+
+== Bug Fixes
+
+  * Fix structure of generated HTML files.
+
+
+= Release 0.1.0 (2011-06-06)
+
+  * Bumping the version to 0.1.0
+  * Update TJ2 -> TJ3 migration section with recent changes.
+  * Include HEAD in changelog.
+  * Fix error reporting for run-away multi-line tokens.
+  * Cleaning up the code that generates the user manual.
+  * Converting UserManual.rb to use new HTMLElements classes.
+  * Add some syntax sugar to make HTML generation easier.
+  * Update TODO list.
+  * Changing default working hours to mon - fri 9am - 5pm.
+    
+    This cuts the size of bookings files in half. If you want the old
+    behavior back, add
+    
+       workinghours mon - fri 9:00 - 12:00, 13:00 - 18:00
+    
+    to your project header section.
+  * Fix that flag filtering for journal entries.
+  * Make sure we generate <br/> and <hr/> as self closing HTML elements.
+  * Adding 'ismilestone' function for logical expressions.
+  * Update manual to reflect the changes of bookings/projection mode.
+  * Adding --freeze option to tj3 to simplify generation of bookings.
+  * Make time comparions more robust against undef values.
+  * Queries now support 'journal' without a propery context.
+    
+    This allows journal entries to be included in a text report.
+  * Deprecating 'projection' keyword. It is no longer supported.
+    
+    Please use the 'trackingscenario' feature instead.
+  * Include flags in journal entries reports.
+  * Adding 'ischildof' function for logical expressions.
+  * Improve 'limits' example for multiple resources.
+  * Fix recently introduced bug in Clarity HTML reports.
+  * Fix crash in Clarity reports.
+  * Adding 'hidejournalentry' attribute to filter journals in reports.
+  * Added plumbing for journal entry filtering
+  * Adding support for flags for time and status sheets and journal entries
+  * Reports can now have their own 'currentformat' and 'numberformat'.
+  * Adding description for important and fall-back tasks to manual
+  * Slightly improved formating for the crash error messages.
+  * Fix problem with 'start' and 'end' in queries.
+  * Fix display of arguments with links in tj3man.
+  * Explain ruby backtrace as application bug.
+    
+    Users seem to interpret them as regular tj3 error messages.
+  * Fix declaration of tasks with absolute task IDs.
+  * Adding support to inherit bookings to sub-tracking-scenarios.
+    
+    The scenarios that are derived from the 'trackingscenario' will
+    inherit the bookings from that scenario.
+    
+    The 'trackingscenario' keyword has been moved to the project header
+    section.
+  * Make resource lists work again in report cells.
+    
+    Reported-by: Alexander Nagy
+  * Fix crash when using 'hidereport' in a navigator.
+    
+    Reported-by: Jerry Neely
+  * Update tutorial to reflect recent syntax changes.
+  * Cleaning up the scenario attributes somewhat.
+    
+    * 'enabled' and 'disabled' have been replaced by 'active'.
+    * 'minslackrate' didn't do anything. Removed.
+  * Fixing a crash when reporting certain dependencies.
+    
+    Reported-by: Bernd Wiedemann
+  * Replacing 'listmode' with 'listitem' attribute.
+    
+    The 'listmode' syntax was not very powerful nor user friendly.
+    'listitem' is much easier to use and offers many more features.
+    
+    This change is not backwards compatible. Projects that use the
+    recently introduced 'listmode' keyword need to be updated.
+  * Previous patch added code to wrong file. Reverting.
+  * Fix test suite to reflect recent environment support.
+  * Make sure that all dependencies are shown in Gantt chart.
+  * Adding support for injecting environment variable values.
+    
+    Use the $(VAR) syntax to insert the value of the VAR variable.
+  * Fix time and status sheet checking when using tj3 instead of tj3d.
+  * Making 'id', 'name' and 'seqno' a regular property attributes.
+  * Create property attributes on demand.
+    
+    This reduces the memory footprint of large projects. Unfortunately, I
+    haven't seen much of a performance difference.
+  * Fix dumping of 'duties' attribute.
+  * Fixing benchmark script.
+  * Report an error when taskroot or resourceroot are used with leaf properties.
+  * Fix a crash when 'precedes' is used with comma separated tasks.
+    
+    Reported-by: Bernd Wiedemann <bwiedemann@gmx.de>
+  * It's actually mail 2.2.15.
+  * Allow all 'mail' versions after 2.1.15.
+    
+    Let's hope the 'mail' gem doesn't break again.
+  * Replace 'wbs' keyword with 'bsi'.
+    
+    Work breakdown structure (WBS) only applies to task, not all
+    properties. Breakdown Structure Index (BSI) is more generic. 'wbs'
+    will still be supported, but is now deprecated.
+  * Fix require for manual rake task
+  * Moving Tj3Man also to the apps directory.
+  * Adding check for minimum required Ruby version.
+    
+    tj3 still works with 1.8.7. All other apps need 1.9.2.
+  * Improving the 'priority' example in the manual.
+  * Adding 'rolluptask' and 'rollupresource' support for export reports.
+  * Improve accuracy of line number for "Unexpected token" errors.
+  * Don't call exit from deep inside the applications.
+    
+    Use an exception instead that is then cought and generates an exit.
+    Added a spec file for status sheets.
+  * Fixing problem with wrong report cells on Ruby 1.8.
+  * Don't crash when no project file is provided to tj3.
+  * Improve example for task limits in the manual.
+  * Improving time sheet tests.
+  * Switching email encoding to base64.
+    
+    Quoted printable is just causing too much trouble.
+  * Avoid duplicate entries in 'responsible' list.
+  * Fix a crash in tj3client check-ss.
+  * Eliminate dependency on open4 gem.
+    
+    With the recent changes, we can now call Tj3Client in-process.
+  * The ruby mail gem now seems to be stable again.
+    
+    I've used 2.1.15 without any problems so far.
+  * Revert "Apply Query result priority patch."
+    
+    This reverts commit d42cc71d522f36610d83337b4dad8be5815c964d.
+  * Apply Query result priority patch.
+
+= Release 0.0.11 (2011-03-21)
+
+  * Update the manual with more detailed installation section.
+  * Allowing multiple 'charge' attributes per task again.
+  * Bumping the version to 0.0.11
+  * Some cleanup for time sheet test.
+  * Discontinuing setup.rb install method.
+    
+    Those few who need this know how to do it manually. Gem is now the
+    only supported install method.
+  * Fixing the alert label in status sheet summary mails.
+  * Fix a crash of the tj3d web server when showing reports.
+  * Allowing multiple instances of flag attributes per property.
+  * Use alert colors in time and status sheet summary emails.
+  * Eliminate the 'rbconfig/datadir will be deprecated' warning.
+    
+    This patch hopefully works on 1.8 and 1.9 with rubygems 1.3 and later.
+  * Clarifying the 'length' attribute in the documentation.
+  * Make sure CSV reports work for Bignum values as well.
+  * Fixing a Ruby 1.8 compatibility issue.
+  * All programs now have a proper entry class that is derived of off Tj3AppBase
+  * Converting tj3 to use Tj3AppBase class.
+  * Moving daemon and client entry code into apps directory.
+  * Allowing multiple 'depends' and 'precedes' attributes per task.
+    
+    https://github.com/taskjuggler/TaskJuggler/issues#issue/5
+  * Add rake tasks to generate Vim syntax file.
+  * Cleaning up the tj3man entry script.
+  * Swap priority of numericals and RTI on Query results.
+  * Show alert text in the appropriate color.
+  * Even more cleanup of new TernarySearchTree class.
+  * Some polishing for TernarySearchTree class.
+  * tj3man now supports partial keywords.
+    
+    If no exact match for the keyword is found, a list of candidates is
+    printed.
+  * Fixing a problem with <-query-> RichText function.
+  * Adding tutorial reports to README.
+  * Moving RichText classes into a separate directory.
+  * Moving all non-entry ruby scripts into lib/taskjuggler.
+  * Adding experimental support for task adoption.
+  * Changing manual to reflect the use of github to contribute patches.
+  * Make sure that the Project class can be used without the TaskJuggler class.
+  * New column 'inputs' that lists prerequisites of a task.
+  * Use safer default value for dateToIdx() functions.
+  * Rename README to README.rdoc so GitHub will render it properly.
+  * Don't crash when 'now' date is outside of the project period.
+    
+    Crash happened when 'effortleft' or 'effortdone' columns were used.
+    
+    Reported-by: Bas de Bruijn <basluminize@gmail.com>
+  * Don't use generated README anymore.
+  * Some code cleanup for the time keeping class.
+  * Include resources that were on vacation in Clarity reports.
+  * Use new text diff feature for CSV reports as well.
+  * Resolve a Ruby 1.8.7 vs. 1.9.x compatibility issues with the test suite.
+  * Allowing time sheets for zero efficiency resources.
+  * Adding month and year methods for TjTime.
+  * More time zone related work.
+  * Resolving some issues with the test suite.
+  * Further cleanup of the time library.
+  * Improve example for using per resource limits for task allocations.
+  * All projects now default to UTC (world time) zone.
+    
+    Unless you specify a different time zone in the project header, all
+    dates will now be assumed to be UTC dates. The dates in the project
+    header are also always UTC unless specified differently (with +/-XXXX)
+    extension.
+  * More time zone related fixes.
+  * Allow timesheets from zero-efficiency resources.
+    
+    This can be used to receive status messages on tasks from automated
+    systems like test systems and the like.
+  * Add missing export.tji file.
+  * Make 'fail' and 'warn' work for all scenarios.
+  * Make 'allocate' work for multiple scenarios again.
+    
+    This fix also affects some other list attributes that can be used
+    multiple times within the same context.
+    
+    Reported-by: Ulrich Domroese <ulrich.domroese@web.de>
+  * Fix inheritance of start and end dates for derived scenarios.
+    
+    Reported-by: Ulrich Domroese <ulrich.domroese@web.de>
+  * Fix a crash caused by the recent time zone changes.
+  * Describe how to quickly switch between different source code version.
+  * All reports may now use a separate time zone for their dates.
+    
+    * Loop tests for export reports added.
+    * Several fixes for handling multiple time zones.
+  * Fix setting of global time zone again.
+  * Properly escape quoted strings in export report.
+  * Including the timezone definition into export reports.
+  * Don't export disabled scenarios when no scenarios were specified.
+  * Allow different duration specs for same task in multiple scenarios.
+  * Some fixes for the export reports.
+  * Adding a diff class to be used in test cases.
+  * Adding new richtext type for user-defined attributes.
+  * Don't use intermediary files for export cycle tests.
+  * Don't include redundant scenario attributes in export report.
+  * Export reports now contain all scenario by default. Not just the first one.
+    
+    Prevent tj3 crash in TaskScenario::scheduleContainer.
+    
+    Reported-by: Rodolphe Jouannet <rodolphe.jouannet@gmail.com>
+  * Allow bookings for all scenarios again.
+    
+    This is required for export reports to work properly. Bookings can be
+    used in all scenarios, but they will not be passed to any other
+    scenario. They are only valid for the scenario they are defined in.
+  * Move all TextParser files into the TextParser directory.
+  * Restrict bookings to leaf scenarios.
+    
+    Since bookings cannot be changed or selectively deleted in derived
+    scenarios, it only makes sense to use them in leaf scenarios.
+  * Properly respect most export report attributes.i
+    
+    They were just ignored.
+    
+    Reported-by: Magnus Wiklund <wiklund.magnus@comcast.net>
+  * Some tasks with start-start or end-end dependencies could not be scheduled.
+  * Prevent crash on tasks with too weak end spec.
+    
+    Reported-by: Stephan <sdevrieses@gmail.com>
+  * Fix crash when 'purge' is used with a non-scenario-specific attribute.
+  * Fixing changelog script to handle multi-digit release levels properly.
+  * Bumping version to 0.0.9
+
+= Release 0.0.10 (2011-01-31)
+
+  * Bumping version to 0.0.10
+    
+    0.0.9 was a no-go version.
+  * Bumping version to 0.0.9
+  * Fix entry scripts.
+
+= Release 0.0.9 (2011-01-30)
+
+  * Bumping version to 0.0.9
+  * Executable name and primary Ruby file name should always match.
+  * Adding a .gitignore file.
+  * Add development dependencies to gem spec file.
+  * Fix alertmessages. Don't show overriden old alerts again.
+    
+    If a child had an alert, the parent reset it and another child added
+    another green message after that, the old alert was showing up again.
+  * Fixing dependency symbols in precursor and follower lists.
+  * Supporting listmode option for precursor and follower columns as well.
+  * Properly handle part-time workers in Clarity reports.
+  * Fixing some layout issues in the manual.
+  * Some code consolidation.
+  * Include all Clarity projects in Niku reports.
+    
+    Also add projects with 0 effort so they show up in the actual
+    reporting page of Clarity.
+  * Make 'listmode' options a power of 2.
+  * Make 'celltext' also work for calendar column cells.
+  * Improving the cell content shortener.
+  * Adding new attributes 'listtype' and 'listmode'.
+    
+    These new attributes can be used to customize the lists in report
+    table cells.
+  * Use accurate width even with icons and tooltips in the table.
+  * Column width is now a fixed measure, not a minimum measure.
+  * Adding a default landing page for built-in web server.
+  * Clarify usage of bookings and scenarios in the manual.
+  * Update copyright to 2011.
+  * Make web server work again.
+    
+    Reported-by: Bernhard Wiedemann <bwiedemann@gmx.de>
+  * Fix crash for "<-query scenario='actual' attribute=...->" queries.
+    
+    Reported-by: Patrick Berry <postgradpat@gmail.com>
+  * Fix time-off highlighting at report boundaries.
+    
+    Reported-by: Tom Schutter <t.schutter@comcast.net>
+  * vacation is a cumulative attribute. Don't issue a warning for multiple use.
+  * Fixing "Overwriting a previously provided value" crashes.
+    
+    Reported-by: Bernhard Wiedemann <bwiedemann@gmx.de>
+  * Fixing progress meter off-by-one bug.
+    
+    For long labels the progress meter started one char too far right.
+    
+    Reported-by: Tom Schutter <tschutter@corelogic.com>
+  * Fix handling of container tasks with dependencies.
+    
+    This bug was introduced by the recent onstart/onend changes.
+    
+    Reported-by: Sam Elstob <samelstob@gmail.com>
+  * Prevent crashes in report generator when using -f option with tj3.
+  * Add error message for reports without a file name.
+  * Second part of onstart/onend fixes.
+  * Fix serious problem with 'onstart' and 'onend' dependencies.
+    
+    The parser was too permissive and some illegal cases slipped through.
+    Tasks with start-start deps must be ASAP and end-end tasks must be
+    ALAP.
+    
+    Reported-by: Bernd Wiedemann <bwiedemann@gmx.de>
+  * Add warning if an attribute is used twice in the same context.
+    
+    This is to prevent accidental overwrites of attributes in bigger
+    scopes. This will also alert users that first assign a value to a
+    derived scenario and then to the parent scenario.
+  * Fixing a serious flaw in the handling of inherited scenario specific attributes.
+    
+    This fix will potentially change the result of existing projects that
+    use inheritable attributes in combination with derived scenarios. The
+    handling of these attributes was broken and derived scenarios used
+    wrong attribute values.
+  * Refactored the ProjectBroker API to make it cleaner.
+  * caption, epilog, headline, prolog and title are now inheritable report attributes
+  * tj3client now supports a --format option to request a certain output format.
+  * Properly limit bookings in export report to report period.
+    
+    Reported-by: Magnus Wiklund (wiklund.magnus@comcast.net)
+  * Adding spec for ProjectBrowser.
+    
+    Just a first draft.
+  * Added a rake task to run the RSpec tests.
+  * Fixing completion bars in Gantt charts.
+    
+    The bars were showing random values instead of the correct completion
+    degree.
+  * Show off-duty periods for task lines in Gantt charts.
+  * Don't show global working hour zones for group resources in Gantt
+    charts.
+  * Adding more examples for limits to the manual.
+  * Fix a typo in the manual.
+    
+    Added some comments to the code.
+  * Explaining use of tool tips in the tutorial.
+  * Fixing 'taskprefix' attribute for include files.
+    
+    Reported-by: Sam Elstob <samelstob@gmail.com>
+  * Ensure deterministic order of projects and resources in Niku reports.
+  * Adding test case for niku reports.
+  * Move CSV reference reports into refs directory.
+  * Include vacation time for each resource in Niku reports.
+  * Generate warnings if a non-supported format is requested for a report.
+  * Show releases for last to first in CHANGELOG
+
+= Release 0.0.8 (2010-11-24)
+
+  * Bumping version to 0.0.8
+  * Update feature list.
+  * Fixing end of exported bookings.
+    
+    There was one time slot too much at the task end.
+    
+    Reported-by: Dimitri Pissarenko <dmitri.pissarenko@gmail.com>
+  * Fixing the booking example used in the reference manual.
+  * Adding 'resourceroot' and 'rollupresource' attributes.
+  * Make dependency loop error message more specific.
+  * Properly detect illegal tokens inside of patterns.
+    
+    This was only working for tokens at the end of a rule.
+  * Fixing the attributes and contexts info in the manual and tj3man
+    output.
+  * Fixing CSV reports with embedded tables.
+  * Reuse RichText parser for parsing all RichText input.
+  * Switch parser to use new state machine compiler.
+  * Fix merge conflict.
+  * Fix Ruby 1.8.x compatibility issue.
+  * Some more work on the state machine compiler.
+  * Adding a (still disabled) state machine compiler to the parser.
+  * Looking into pre-compiled states for the parser FSM.
+  * Clarifying the difference between ${now} and ${today}.
+  * Minor parser code tweaks.
+  * More parser code tweaking.
+  * Cleaning up some parser code.
+  * Moving the rule transition analysis into Rules.
+  * Some speed improvements for the parsers.
+  * Use more symbols and less Strings.
+  * Add a warning if no report was defined or no format was specified.
+  * Add more descriptive error message for start/gap conflict.
+  * Cleaned-up the GanttRounter and refactored the collision detector.
+  * Limiting the scoreboard iterations to actually used segments.
+  * Fix missing values in 'status' column
+  * More performance improvements for the report generator.
+  * Fix performance regressions for the 'resources' column.
+  * Substantial speed improvements for the report generator.
+  * Fixing a typo.
+  * Some cleanups of the DataCache.
+  * Adding a global data cache to speed up report generation.
+    
+    This is just a test implementation. It needs further fine tuning and
+    polishing.
+  * Another merge conflict
+  * Fix a merge conflict
+  * Adding simple performance profiling support to report server
+  * Performance improvements
+    
+    'loadunit' now defaults to 'days' instead of 'shortauto'. 'shortauto'
+    is neat, but can slow down the report generation quite a bit.
+  * Show tried directories when TASKJUGGLER_DATA_PATH is not set properly.
+  * Improve parser performance by sharing Workinghours scoreboards.
+    
+    The scoreboards now use the copy-on-write scheme.
+  * Fixing several time zone related bugs in the context of working hours.
+    
+    This patch also adds much stricter error checking for time and date
+    values.
+  * Adding a new benchmark for report generation speed.
+  * Added a unit test for WorkingHours::timeOff?()
+  * Don't default time sheets that have been submitted after last tj3ts_summary.
+  * Include list of defaulters in the status report templates.
+    
+    If tj3ts_summary has been used to generate the 'missing-reports' file,
+    this will now be included in the status sheet templates.
+  * Don't use tooltips to shorten table headers.
+  * Fix crashes when bad sorting criteria is used.
+  * Updating the install section with current dependencies.
+
+= Release 0.0.7 (2010-09-08)
+
+  * Bumping version to 0.0.7
+  * Add section on tj3 web server.
+  * Fix crashes when using the underscore variants of some functions.
+  * Fix overflow of some HTML table cells.
+  * Add missing file.
+  * Document web server usage.
+  * Only check for modified files when the project has been loaded completely.
+  * Ruby 1.8 compatibility fixes.
+  * Adding some documentation on how to use the dynamic reports.
+  * Completing basic support for dynamic reports.
+    
+    By using sometink like <-reportlink id="foorep" attributes="hidetask
+    plan.id != \"<-id->\""-> you can now create parameterized reports that
+    the tj3d web server generates on demand.
+  * Adding a proper error message when webserver can't find data dirs.
+    
+    Reported-by: AzenAlex <azenalex@gmail.com>
+  * Cleaned up test cases for RichText
+  * Clarify allocation shift documentation.
+  * Adding a test for allocation shifts.
+  * Add support for per allocation shifts.
+  * Warn user when CSV format is requested for textreport.
+    
+    Reported-by: vijay <jahagirdar.vs@gmail.com>
+  * Use proper Exception class to catch encoding errors.
+  * Check mail encoding even before we pass it to 'mail'.
+  * Some more fixes for 'alertmessages' and 'alert' columns.
+  * Fix bug with incorrect end date or remaining work values in time sheet templates.
+  * Adding 'journal_sub' column to reports.
+    
+    It works like 'journal' but also includes the sub tasks.
+  * Don't crash in multi-CPU mode when no reports are provided.
+  * Only milestones are identified as 'targets'.
+    
+    This makes more sense than trying to use a date to limits the included
+    tasks.
+  * Don't send sheet summary emails in RichText syntax.
+    
+    Use proper text and HTML instead.
+  * Targets are now also listed for container tasks.
+  * Report completion degree for container tasks as well.
+  * Make sure we have a proper return value.
+  * Documenting image positioning attributes.
+  * Adding support for SVG files to [[File:...]] tag.
+  * More fixes for the *prefix attributes.
+  * Fixing a problem with the '*prefix' attributes of 'include'.
+    
+    Reported-by: Emanuele Cannizzaro <emanuele.cannizzaro@gmail.com>
+  * Allow daemon to copy data directories.
+  * Change some timeouts to retire server process more quickly.
+  * Make sure time sheet warnings/errors always have a source file info.
+  * Add a stylesheet to the HTML emails.
+  * Confirmation mail for time and status sheets now HTML and plain text
+  * Adding more debug infrastructure to the daemon.
+  * Fix another macro-in-string problem.
+    
+    Reported-by: Tomas <tomas.it@gmail.com>
+  * Fix problem with multiple macro calls inside a string
+    
+    Reported-by: Tomas <tomas.it@gmail.com>
+  * Some more fine tuning for the vim syntax file generator
+  * Fixing missing column header for 'freework' column.
+    
+    Reported-by: JohnZ <jza2602@googlemail.com>
+  * Fix some links in the user manual.
+    
+    Reported-by: Emanuele Cannizzaro <emanuele.cannizzaro@gmail.com>
+  * Generator for Vim syntax highlighting files added.
+  * Support autoselecting the server port.
+  * Make BatchProcess handle forks in queue() and wait() blocks.
+  * Adding check for gap length/duration of dependencies.
+    
+    When the scheduling direction of a task points away from the
+    dependency gap, TJ cannot guarantee that the condition will be met.
+    But at least now an error is generated if the gap is too small.
+  * Fix handling of multi-line version of HREF tokens.
+  * Adding missing file FileList.rb.
+  * Adding 'update' command to tj3d
+    
+    The 'update' command will reload all projects that have files that
+    were modified after the project was loaded. A project that is
+    currently reloaded will not be loaded twice.
+  * Encoding check is now done in the TextScanner.
+  * Cleaning up the RichText scanner RegExps.
+  * Cleaning up the RichText tokens somewhat.
+  * Make RichText [[..]] tokens work with multiple lines.
+  * Refactor RichTextScanner to use TextScanner as well.
+    
+    Both scanners are now RegExp based. The error handling was cleaned up.
+  * Fixing syntax
+  * Revert "Avoid the duplicate entries in the status sheet confirmation mail."
+    
+    This reverts commit 84ca0e9e3767ca74ae92ed5d75bc37bdedac4dd5.
+  * list-reports command should show all report types
+    
+    Not just HTML reports.
+  * Avoid the duplicate entries in the status sheet confirmation mail.
+    
+    When a status sheet was re-submitted, the old and the new entries were
+    listed in the confirmation mail.
+
+= Release 0.0.6 (2010-07-05)
+
+  * Bumping version to 0.0.6.
+    
+    Changelog added.
+  * Add CSV output format for NIKU reports.
+  * The project reference can be set a lot easier.
+  * Fix problem with macros in DQ Strings.
+    
+    Reported-by: Thomas <tomas.it@gmail.com>
+  * Some speed improvements for the parser.
+  * And make it work with Ruby 1.8 again.
+  * Fix bugs in CSV file generator and the 'precursors' column.
+    
+    Reported-by: Frederic Dorodie <frederic.durodie@googlemail.com>
+  * Don't shut down a server while it's still connected to a client.
+  * Don't have the client disconnect the ReportServer from the ProjectServer.
+    
+    The client already sends the termination request to the ReportServer.
+    The ProjectServer can automatically detect (via pings) that the
+    ReportServer is no longer there and drop it.
+  * Make macro calls inside of numbers, IDs and strings work again.
+  * Fix Ruby 1.8 compatibility problem.
+  * Allow multi-line macro definition again.
+    
+    The macro expansion code is still broken. It needs to move into the stream
+    handler.
+  * Fix for Ruby 1.8.6.
+  * Switching TextScanner to a regexp based implementation.
+  * Ping twice a minute to avoid some spurious heartbeat losses.
+  * Fix multi-CPU mode again.
+  * Make report list more machine readable
+  * Clean up the TextStream API somewhat.
+  * Replacing some String comparisons with Fixnum comps.
+    
+    This improves the parser speed somewhat.
+  * Use syntax based EOF check instead of hard-coded version.
+  * Adding a version with loop instead of recursion.
+    
+    It may scale better for large projects but it is 8% slower.
+  * Some performance improvements
+  * More precise error location reporting for the parser.
+  * Some speed improvements for the TextScanner.
+  * Eliminate the TextScanner callback again.
+    
+    It's not precise enough when characters are pushed-back.
+  * Make handling of include files more robust.
+  * Using a call-back to signal end of included file.
+  * Move line number counting to StreamHandle classes.
+  * Eliminated sporadic problems with ObjectSpace._id2ref calls in Ruby 1.9
+  * Make status sheet receiver work again.
+  * Adapting tutorial to new syntax.
+  * Make export report less verbose by not using prefix for default scenario.
+  * Keep Task and Resource consistent.
+  * Syntax change: alertmessage -> journalmessages, alertsummary -> journalsummaries
+    
+    This keyword renaming is necessary to avoid confusion with the new
+    'alertmessages' and 'alertsummaries' keywords.
+  * Passing report attributes via reportlink.
+    
+    Improving the STRING documentation.
+  * Adding test for journal column.
+  * Some fixes to better support RichText in logical expressions.
+  * Don't use Array.find_index yet. We still support Ruby 1.8.6.
+  * Implement checking of reports against a known reference file.
+  * Fix task allocation for task with start and end dates.
+    
+    Reported-by: Thomas <tomas.it@gmail.com>
+  * Fixed crash when using deprecated allocation limits.
+    
+    Reported-by: Marcin Inkielman <marcin.inkielman@gmail.com>
+  * Write some data natively to CSV files to fix time sheets.
+  * Reworked CSVFile to make it RFC4180 compliant.
+  * Properly mark milestones in export reports.
+    
+    Reported-by: Guo-Rong Koh <guorong.koh@gmail.com>
+  * Try to accept properly encoded, but non UTF-8 mails as well.
+  * Add another test for the recent 'limits' fixes.
+  * Fixed a number of bugs in the limit handler.
+    
+    Reported-by: Marcin Inkielman <marcin.inkielman@gmail.com>
+  * Change tutorial to use built-in email attribute
+  * Fix a crash with computed attributes used for sorting.
+    
+    Reported-by: Guo-Rong Koh <guorong.koh@gmail.com>
+  * Generating a dynamic unique ID for report segments.
+  * Make rollup* attributes work again.
+  * Adding 'opennodes' attribute for reports.
+    
+    This is for TJ internal use only.
+  * Don't compile a summary in reminder mode.
+  * Adding -w command line option to start web server.
+  * Add documentation for 'reportlink' RTF generator.
+  * Adding support for user-defined column alignments.
+  * Add RichText attribute to reference other reports.
+  * Add 'isfeatureof' logical function.
+  * Don't generate all output formats for nested reports.
+  * Don't try to copy auxilliary files for interactive reports.
+  * Show list of reports for a selected project on web server welcome
+    page.
+  * Make web server port configurable via command line.
+  * First working version of the web server mode.
+    
+    Still has many rough edges, but it does server interactively generated
+    reports.
+  * Fix crash when using some logical functions.
+  * Create file with the resource IDs of the missing reports.
+  * Update the 'export' documentation to reflect TJ3 features.
+  * Move list of missing reports to beginning of summary report.
+  * Make tj3 work for files in current directory again.
+  * Fix test suite for ruby 1.8.
+  * More code to support interactive HTML reports.
+  * Add check for recursively nested reports.
+  * Use explicite stack for ReportContext.
+  * Add references to sorting attributes.
+  * Make export reports less noisy by default.
+  * Some improvements for the CSV read from file.
+  * Try harder to send a reply to email sender.
+  * Need string interpolation to work.
+  * Use different subject for time and status sheets emails.
+  * Enable level4 bullet items and numbers for 'details' section.
+  * Don't use cut marks for attachements.
+  * Improving the documentation of some attributes.
+  * Fix manual generation.
+  * Adding runtime dependencies to GEM spec file.
+  * mail-2.2.1 changed the subject encoding again
+  * Adding support for one more level for RT titles, bullets and number
+    lists.
+  * Add check for valid UTF-8 encoding of submitted sheets.
+  * Make scenario.attribute notation more prominent in the doc.
+  * Fix spelling error.
+  * Make sure all files of the gem are readable.
+  * Allow space at begin of titles in RichText.
+  * Fix some time sheet related bugs dealing with personal notes.
+  * Fix personal messages after newtasks.
+  * Prevent crashed when parsing corrupted incoming mails
+  * Add commandline option for sheet interval duration.
+  * First code for built-in web server that can server dynamic reports.
+  * Support project loading at daemon start.
+  * Don't include override reports in time sheet summaries.
+  * Improved check for use of 'scheduled' attribute.
+  * Only allow 'scheduled' attribute for tasks that already have a start
+    and end date.
+    
+    Reported-by: Olaf Seidel <olaf.seidel@iscue.com>
+  * Allow macro calls within macro calls.
+    
+    I'm not sure why I blocked this, but I can't think of any good reason
+    anymore. Allowing it again.
+    
+    Reported-by: Olaf Seidel <olaf.seidel@iscue.com>
+  * Simplify algorithm to generate status report templates.
+  * Fix report sorting for 'id'.
+  * Add status section to 'newtask' template section.
+  * Don't include events at start date in status report templates.
+  * Get rid of spurious 'rake release' errors.
+  * Fix crash in parsing unterminated queries.
+    
+    Reported-by: Cornelius Schumacher <cschum@suse.de>
+  * Make sure that 'scheduled' is only set when we really have a start and
+    end date.
+
+= Release 0.0.5 (2010-04-14)
+
+  * Bumping version to 0.0.5.
+  * Some fixes for mail-2.2. It looks like this version fixes most open
+    bugs.
+  * Switch custom 'Email' attribute to built-in 'email'.
+  * Don't use message IDs as file names. Use a MD5 hash of them.
+  * Fixing problems with manual.
+    
+    Reported-by: JohnZ <jza2602@googlemail.com>
+  * Complete documentation of status sheet usage.
+  * Adding support for 'managers' attribute for resources.
+  * Use 127.0.0.1 instead of localhost to fix busy port detection.
+  * Completing support for user defined checks.
+    
+    Now errors and warnings are supported for resources and tasks.
+  * Fix resource allocation for duration tasks.
+    
+    Add new 'fail' attribute to support test case for this problem.
+    
+    Reported-by: Cornelius Schumacher <cschum@suse.de>
+  * Add method to disengage ReportServer from ProjectServer.
+  * Make TCP port configurable via command line option
+  * Fix the rendering of embedded Gantt charts that have scroll bars.
+  * Raise the probability of tasks leading up to milestones to get their
+    resources.
+  * Draw HTML triangles with partial div borders.
+    
+    This uses less divs to render triangles. This patch is based on a
+    suggestion from X Ryl. Thanks!
+  * Prevent ProjectServer from hanging in certain states.
+  * mail-2.1.5 contains a showstopper bug. Reverting back to 2.1.3.
+  * Make switch to mail-2.1.5.2 and later.
+  * Some spelling and language fixes.
+  * Describe the time sheet process in the manual.
+  * Starting to document the client/server and time sheet stuff
+  * Signal errors with TjException
+  * Send out reminder emails when time sheets were not submitted in time.
+  * Fix error message to report correct task.
+  * Add command to list reports to tj3client
+  * Adding hartbeat checks to the daemon
+  * Clean up of the tj3client code.
+  * Some code cleanups of the daemon code
+  * Fix performance problem when adding a project remotely.
+  * Replacing tj3 daemon mode with real daemon.
+    
+    This comes with some changes to the tj3client command line interface.
+  * Abstracting Tj3AppBase so it can be used for other apps as well.
+  * Add flag icons to task and resource journal reports.
+  * Support vertical alignment option for RichText images.
+  * Add support for images in RichText.
+  * Fix RichText internal reference to match MediaWiki syntax.
+    
+    [[foo bar baz]] must now be [[foo|bar baz]].
+  * Sort tasks by task ID in sheet templates.
+  * Spelling fixes.
+  * Fixing the default date of sheets.
+  * Fix warning for new tasks in time sheets.
+  * Status sheets headers need time period not just end date
+    
+    This is needed to fix a problem that status sheet answer emails
+    contain only current dashboard entries.
+  * Adding additional header fields to emails.
+  * Fix test suite after recent code changes.
+  * Fix personal status note in time sheets.
+  * Add option to send individual reports as well.
+  * I don't think this warning is very helpful. Remove it.
+  * Add --force option to resend sheet templates.
+  * Fix a crash when export reports were used before other reports.
+    
+    Reported-by: Eduardo Schoenknecht <eduardo.schoenknecht@gmail.com>
+  * Fix crash when using textreports without a header.
+  * Encode emails as quoted-printable
+  * Not including the minDate reports is probably more practical.
+  * Fix crash when trying to set workinghours for shifts or resources.
+    
+    Reported-by: Eduardo Schoenknecht <eduardo.schoenknecht@gmail.com>
+  * Adding journal reporting for Tasks.
+  * Add a link back to 'columns' from 'columnid'.
+    
+    Reported-by: Marcel <marcel@avigora.com>
+  * Don't include all old journal entries. Just the higher alerts.
+  * Fix reporting of new tasks for delta check.
+  * Check for garbage at end of sheet files.
+  * Some styling for the journal reports.
+  * Only warn once per mis-indented line.
+  * Fix crash when both calendar and chart columns were used.
+    
+    Reported-by: JohnZ <jza2602@googlemail.com>
+  * Make the automatic end date for sheets work.
+  * Add checks for default time sheet strings.
+  * Clear time sheets and journal info before checking a time sheet.
+  * Time sheets are due by default on Mondays, status sheets on Wednesday.
+  * Moved common code of start scripts into new Tj3AppBase class.
+  * Adding script to send out a summary of all time sheets.
+  * Use shortened cell texts only for height and width limited cells.
+  * Make sure that calendar columns always span their assigned width.
+  * RichText plain text can now be indented.
+  * Some bug fixes for the TextFormatter and more unit tests.
+  * Improved version of block text formatter.
+  * Adding commandline option for sheet tests to tj3.
+  * Add commandline option to limit the resource list for status reports.
+  * Started to improve the plain text output of RichText
+  * Update for TODO list based on recent feedback.
+  * Fix crash when reusing an extend ID.
+    
+    Reported-by: John Franey <jjfraney@gmail.com>
+  * Add close button to tooltips so IE user can use CTRL-C to copy.
+  * Only include sheet in body if it was sent in body.
+  * Fix signature handling and CR/LF removal.
+  * Switch to quoted printable encoding for email body.
+  * Add outlook for next period to time sheet templates.
+  * Make email composition more robust.
+  * Make manual build again.
+  * Be more flexible with the detection of ->8-
+  * Improved error reporting for unterminated cut mark strings
+  * Save extracted sheets when they fail
+  * Require a paragraph break to start a RichText verbatim/pre section.
+  * Try to work around another encoding problem.
+  * Add simple test suite for status reports.
+  * Refactored common code of sheet senders into a base class.
+  * Refactored common code into receiver base class.
+  * Adding receiver for status reports.
+  * Add reported actuals as comments to status sheet templates.
+  * Some more improvements for the resource journal format.
+  * Add reported time sheet number to the resulting report.
+  * Make quote removal work for empty lines without trailing spaces.
+  * Add check for time sheets with broken encoding.
+  * Make percentage computation work for part-time employees too.
+  * Added support to send status sheet templates.
+  * Always store time sheets in UNIX text file format.
+  * Add warnings for requested changes in time sheets.
+  * Make time sheet receiver more flexible.
+    
+    It can deal with junk before and behind the time sheet and can ignore
+    email quote signs.
+  * Fix calculation of completion for effort based task.
+  * Don't include full sheet in error log.
+  * Add {} after include statements.
+  * Enable 'journal' column for reports.
+    
+    Currently only works for resources, not task.
+  * Fix SCM command for all.tji.
+  * Fix off-by-one bug that caused efforts to be one slot short.
+  * Some more bug fixes for the time sheet processor.
+  * Fix syntax.
+  * Add SCM support.
+  * Linewrapping support for RichText paragraphs in text mode.
+  * Try to send emails even for email delivery failures.
+  * Make CR and CR+LF work for buffers as well.
+  * Deal with CR/LF issues no matter where the file was created or is
+    read.
+  * Always generate the full list even when doing single send-outs.
+  * Add more logging and error handling.
+  * Adding simple test case for timesheet sender/receiver.
+  * Change some working of the time sheet related text messages.
+  * Don't send templates to resources on vacation.
+  * Generate tji files that include all timesheet tji files in the
+    directory.
+  * Support task independent status message in time sheets.
+  * Merge some common code into single base class.
+  * Add a ')' after section numbers in text mode.
+  * A slightly improved version of the race condition hack.
+  * Add command line option to send out just specific templates.
+  * Fix TJ2.x export section.
+    
+    A git checkout after 2.4.3 is required.
+  * Improved validation of time periods.
+    
+    Reported-by: petermp <pmprestesaeter@gmail.com>
+  * Allow timesheet syntax in body of email.
+  * Include warnings in answer email.
+  * Add --nomail option for tj3ts_receiver.
+    
+    Switch from open3 to open4.
+  * Turn email sending on.
+  * Make -c option work for tj3ts_receiver
+  * Make tj3ts_receiver more configurable.
+  * Make sender/receiver scripts more robust.
+  * Added a script for the time sheet receiver.
+    
+    Nicer formatting of the returned time sheet.
+  * Adding scripts to send and receive time sheets via email.
+  * Some improvements for the client/server interactions.
+  * Add examples for time sheet stuff to the manual.
+  * More error checking for time sheets.
+  * Add paragraph to generate proper HTML.
+  * More HTML layout fixes to work around IE8 bugs.
+  * Fixed a problem with inherited attributes in derived scenarios.
+    
+    Reported-by: Brendan Hyland <brendan.hyland@hylandqs.ca>
+  * More HTML code fixes for IE8.
+  * Again more tables for HTML layout to please IE8.
+  * Fixed a crash when using shift assignments.
+    
+    Reported-by: JohnZ <jza2602@googlemail.com>
+  * Use some common code for table frames.
+  * Going back to using HTML tables.
+    
+    There is just no way I can get the layout to work with divs on all
+    browsers.
+  * Some CSS fixes to make it work with Firefox and Opera.
+    
+    IE8 will probably still not work.
+  * Some cleanups for the text report column layout.
+  * Switch tutorial to new columns.
+  * Fix textreport layout.
+  * Replace 'depends' and 'precedes' columns with 'precursors' and
+    'followers'.
+    
+    Also: Tooltips now show up on click, not hover.
+  * Make CSV tests work again.
+  * Make tooltips work for charts in HTML reports.
+  * Fix logical functions with trailing _.
+    
+    And some more HTML compliance fixes.
+  * Generated HTML files should be all W3C compliant again.
+  * Use a single function to generate all HTML head sections.
+  * Add missing content-type meta tag.
+  * Fix some HTML problems.
+  * It's time to switch to strict XHTML 1.0.
+  * Try to work around IE bugs.
+  * Use Query attributes more frequently during report generation.
+    
+    This is just a first step of a larger effort.
+  * Fix crash.
+  * Be more explicit about operator precedence in logical expressions.
+  * Make tooltips sticky.
+    
+    The icon of the name column now always has a tooltip with the ID.
+  * Swap symbol and label in HTML report legend.
+  * Properly handle self-closing XML tags.
+  * Replace some HTML tables with div constructs.
+    
+    Start to cleanup the stylesheet namespace.
+  * Add project ID to Niku report headers as well.
+  * Put 0.0 in XOG files, but not in HTML reports.
+  * Some more bug fixes for Clarity reporting.
+  * headline is now support for nikureports.
+  * Adding an HTML version for the Clarity reports.
+    
+    They are mostly useful for debugging right now.
+  * Improve readability of code sections in user manual.
+  * Adding an example for the Clarity XOG report.
+  * Some cleanups for the Clarity export file.
+  * Some cleanups for the Clarity exporter.
+  * First draft of a Clarity export report.
+    
+    Just a concept for testing right now.
+  * More work on the time sheet report generator.
+    
+    Currently hardcoded for percentage reporting.
+  * Adding TJ2 with TJ3 reports howto.
+  * Fix 'taskattributes' for export reports.
+    
+    Reported-by: Marcel <mbrouillet@triumemba.org>
+  * Add additional search path for Debian based distros.
+
+= Release 0.0.4 (2010-02-01)
+
+  * Some prep for signed gems. Not yet very user friendly.
+  * On our way to a 0.0.4 release.
+  * Don't crash on empty tooltips.
+  * More improvements for the installation description.
+  * Better documentation for the install procedure.
+  * More details on TJ2->TJ3 migration.
+  * It's 2010 now.
+  * Add support for 'today' built-in macro.
+  * First working version of client/server feature.
+    
+    Still very basic code.
+  * Fix nested include files with taskprefix.
+    
+    This patch also enforces a .tji extension for included files.
+    Reported-by: Christian Sunkel <christian@suenkel.de>
+  * Make timezone test work again on glibc 2.10 and later.
+  * More sketches for the client/server code.
+  * First parts of a report server.
+  * Make sure we always return an Array.
+  * Added support for an 'alerttrend' column.
+  * Use Query for LogicalExpressions.
+    
+    And some unrelated bug fixes.
+  * Added support for status sheets.
+  * Support multiple journal entries for same date.
+  * Show all task in taskreports by default.
+    
+    Added isongoing() function to get old behavior back.
+  * Support for custom periods for columns.
+  * Make cell background color configurable.
+  * Add an expiration date to 'hasalert()'
+  * Get rid of empty tooltips.
+  * Add option to generate self contained HTML reports.
+  * Bug fix for ReferenceAttributes.
+  * Cleaning up the Query mechanism.
+  * Show name instead of id for 'responsible'.
+  * Some fixes for the time sheet handling.
+  * Remove scenario specification from time sheets.
+    
+    It's a project setting now.
+  * Only use bold lines in tree mode.
+  * s/count/length/ for Ruby 1.8 compatibility.
+  * Make 'summary' and 'details' work in time sheets.
+  * First pieces of the time sheet report generator.
+    
+    We can now generate time sheet templates and read the filled-out ones
+    back in again. Still a lot of plumbing missing though.
+  * Make the status part of time sheets work.
+  * First code for time sheet support.
+  * Make alertmessages work.
+  * Use more descriptive names for the journalentry attributes.
+  * Make 'loadunits' work again.
+    
+    Reported-by: Guillaume DELVIT <guiguid@free.fr>
+  * Add check for feature limited RichText strings.
+    
+    - More accurate error position reporting.
+    - Cleaned-up alarm level descriptions.
+  * Add support for 'alertnotice' column.
+  * Some bug fixes for the Query mechanism.
+  * hasalert function for LogicalExpressions added.
+  * Added support for statically computed dates.
+  * Some bug fixes for the report generator.
+  * Make LogicalExpressions work with dates.
+  * Make hyper link targets configurable.
+  * Put HTML stylesheets into separate files.
+  * Several bug fixes for the report generator.
+  * Make logical expressions work with strings.
+  * Added support for queries inside of HREF
+  * :w
+  * Update tutorial for new syntax.
+  * Major change of how the cell content is generated.
+    
+    This commit changes the synatx in an incompatible way to earlier
+    versions!
+  * Initialize all RichStrings in reports for queries.
+  * Another fix for the cell generator.
+  * Fix manual build.
+  * Some fixes for last commits.
+  * Some cleanups for the cell text handling.
+  * Some refactoring of the RichText classes.
+    
+    Generate proper intermediate objects so this stuff is re-entrant and
+    the Query objects can be attached.
+  * Project attributes can now be queried.
+  * Support nested properties for non-leaf properties in reports.
+    
+    This is a major change to earlier versions. To get the old behavior
+    back, you need to replace
+    
+     hideresource ~isleaf()
+    
+    with
+    
+     hideresource ~(isleaf() & isleaf_())
+    
+    See manual for details what the function with _ suffix mean.
+  * Cleaned-up the query code somewhat.
+  * Queries now have a context.
+  * Don't drop parent tasks too early in the filter process.
+  * Make the != operator work for logical expressions.
+  * Fix column width handling for table columns.
+  * Don't delete manual dir.
+  * Fix sporious build fails for manual.
+  * Added support for alert level reporting.
+  * Always show a dot after one-level-only bullet items.
+  * Use tooltips for all fixed-width columns.
+  * Make sure the details icon is always visible.
+  * Get rid of empty tooltips.
+  * Added reportable attribute 'targets' for tasks.
+  * Improved handling of column width setting
+  * Fix UTF-8 issue with IE8.
+  * Started to turn list attributes into RichText cells
+  * Make HTML reports a bit nicer.
+    
+    * Move copyright to page bottom.
+    * Highlight active navigator menu.
+  * Updated todo list.
+  * Handle RichText columns with tooltip windows if necessary.
+  * Cleaned up BatchProcessor to report a Ruby 1.9.x bug.
+  * Improved tree sorting code.
+  * Replace some clone() with dup() calls.
+    
+    Will probably not affect performance much, but we really only need
+    dup() here.
+  * Fix Ruby 1.8 compatibility issue.
+  * Fix tree sorting.
+  * Make tree sorting work better.
+    
+    The algorithm is still broken.
+  * Fix sorting for 'tree' + something lists.
+  * Fix isdependencyof.
+  * Fix free time reporting for resources.
+  * Make hidecelltext really work for standard cells.
+  * Move doc of logical functions to syntax reference.
+  * Make hidecelltext work with standard report cells.
+  * New section for manual.
+  * Added documentation of logical functions and other syntax elements.
+  * Fix a HTML render issue with Opera.
+  * Added isactive() LEXP function.
+  * I shall run the test suite before committing 'trivial' fixes...
+  * Some bug fixes.
+  * Fix a Ruby 1.8 compatibility issue.
+  * Added support for RichText function query.
+  * RichTextProtocol -> RichTextFunction
+  * Add hint that X.X.X needs to be replaced with current version.
+  * Fix some races in the BatchProcessor.
+  * Some more cleanup of the BatchProcessor.
+  * Navigator now matches the report structure.
+  * Call wait() block as soon as jobs have finished.
+    
+    Don't wait until all jobs have completed.
+  * Assorted bug fixes.
+  * Make BatchProcessor more robust.
+  * Fix multithreaded report generation.
+    
+    Also don't overwrite inherited report attributes.
+  * Improved handling of EOT within RichText tokens.
+  * Reports can now have a title that's used by the navigators.
+  * Accounts and reports can now be flagged.
+  * Fix missing bookings in export report.
+    
+    Reported-by: Arlindo Carvalho <rdc02271@yahoo.com>
+  * 'effortdone' and 'effortleft' columns added.
+  * Fix manual generation.
+  * Add support for ']' inside macro definitions.
+  * Another attempt to fix the datadir problem.
+  * Add separate config variables for software name and package name.
+  * Some bug fixes.
+  * HTML reports now contain icons.
+  * Improved bug report guidelines.
+  * Fix crash on recursive macro calls.
+  * Fix resource load stack in Gantt charts.
+  * Added some more features for reports.
+  * Document 'formats' attribute more prominently.
+
+= Release 0.0.3 (2009-10-20)
+
+  * It's time for a new release.
+  * Fix multi-char operators for LogicalExpressions.
+  * Fix for last hidecellurl patch.
+  * Add support for hidecellurl.
+    
+    Fix tutorial examples.
+  * Only the first file must be a .tjp
+  * Try fix for IE8.
+  * 'Overview' looks nicer in the nagivation bar.
+  * Update example.
+  * Started update of tutorial with new report syntax.
+  * Convert tutorial example references to new syntax.
+  * Implemented block and inline generators for RichText.
+    
+    The new syntax replaces the previously used [[protocol:name]] syntax.
+  * Fix Ruby 1.8 compatibility problem.
+  * Various improvemens for the HTML reports.
+  * Fix some rendering issues of the HTML reports.
+  * Check for @value not being set.
+    
+    Fix suggested by msc.
+  * Generate more descriptiv auto-IDs.
+  * Fix display of reference URLs in reports.
+    
+    Bug reported by msc.
+  * Some code refactoring to cleanup the mode handling.
+  * Detect recursive inclusions.
+  * Improved input file name validation.
+  * --output-dir option added
+    
+    Generated reports will be put into this directory if specified.
+  * Update manual to include optional IDs.
+  * Make property IDs optional.
+    
+    ID and version for the project declaration are also optional now.
+  * Improved test for weak deps problem.
+    
+    This is a forward port of the fix that Gregoire wrote for the weak
+    dependency problem.
+  * Added test case from Gregoire.
+    
+    No need to forward port this fix.
+  * Don't inherit maxstart and minend.
+  * Add support for 'scenario' column.
+    
+    Bug reported by garyo.
+  * Some code cleanup.
+  * More missing pieces of the the 'fix resourceprefix' commit.
+  * Somehow this change was left out of the last commit.
+  * Fix 'resourceprefix' handling.
+    
+    This fixes a problem reported by Beni.
+  * Fixes for export report.
+    
+    Make inclusion of definitions user configurable.
+    Add new '*' and '-' shortcut for keyword lists.
+  * Some cleanup in the RichText generator.
+    
+    I need to find a clean solution to handle RTPs that expand into
+    blocks. Right now they are enclosed in <p>..</p> and that's illegal in
+    HTML.
+  * Fix tutorial example again.
+  * Avoid compatibility issue with 1.8.6.
+  * Updating the tutorial with latest syntax changes.
+  * Several fixes for the manual.
+    
+    * Added documentation for types.
+    * Added documentation for new cut-mark-strings.
+  * Nested reports: putting it all together
+    
+    * First working version of nested reports.
+    * Added support for cut-mark-strings (-8<- for bar ->8-)
+    * Scanner cleanups.
+  * Explicitely use current dir for 'require'.
+    
+    Latest ruby 1.9.2 version seems to no longer include '.' in $:.
+  * Fix suggested by Guillaume DELVIT.
+  * More steps towards nested reports.
+  * Update tutorial example.
+  * Another fix for bookings.
+  * More refactoring to prepare composable reports.
+  * More bug fixes.
+    
+    Fix problems with reference attributes defaulting to 'true'.
+    Fix WorkingHour dumping.
+  * Don't change start/end date of scheduled tasks with bookings.
+  * Make sure we always show the year in the header.
+  * Respect the user provided report period.
+  * Some bug fixes for report generator.
+  * Started refactoring for composable reports.
+    
+    This is very much WIP right now. The report syntax will change again.
+  * Fix scenario related problem reported by Jean-Yves.
+    
+    We need to treat inheritance from scenarios like initial assignments,
+    not like inheritance from parent properties.
+  * Eliminate dead code.
+  * Handle duration task with bookings like TJ2.x.
+  * Fixed link to example entry.
+  * Added journaling support.
+    
+    No reporting support yet.
+  * Be more clear on inheritance in syntax reference.
+    
+    Attributes can be inherited from a parent property or a global
+    attribute. The syntax reference now clearly lists for which attributes
+    this is the case.
+  * Fix tutorial example.
+  * Added support for 'header' and 'footer' attributes.
+  * Make menus more versatile.
+  * Fix description of ID characters.
+  * Use a well defined time zone for syntax tests.
+  * Properly handle provided completion values.
+  * Export report related fixes.
+  * Older versions of zoneinfo use the English name.
+    
+    Pick a more static time zone that works with all systems.
+  * Time zone related fixes.
+    
+    * Setting a global time zone works now.
+    * The timing resolution is limited based on the selected time zone.
+    * The test suite should work in all time zones now.
+  * Added support for 'depends' and 'precedes' column.
+  * Cosmetic changes to the report menu.
+  * First shot at an autogenerated menu for reports.
+  * Fix entry link for report.
+  * Improve the bug report howto.
+  * Don't always trust the ruby doc.
+  * Testing the new ML archive.
+  * Added item to TODO list.
+  * Fix another link to the new forum page.
+  * Set link to new forum entry page.
+  * Set forum link to new forum page.
+  * Updated TODO list.
+  * Dropped support for old report definitions.
+    
+    The new format is now more in line with the TJP language and conflicts
+    with the old format. A legacy support is not possible.
+  * Rewrote the deep_clone support.
+    
+    This method is a lot more robust.
+    The report syntax used in the tutorial is just a draft and will change
+    again.
+  * Refactored Report class.
+    
+    Replaced ReportElement and ReportTableElement with ReportTableBase.
+  * Clean up exception raises.
+    
+    Some more prep work for the upcoming report refactoring.
+  * Turning Report attributes into TJ attributes.
+  * Turning Report into a TJ property.
+    
+    That way we get attribute inheritance for reports and we can create a
+    structured tree of reports.
+
+= Release 0.0.2 (2009-03-04)
+
+  * Time for another alpha release.
+    
+    Bump version to 0.0.2.
+  * Advertise proper encoding for all HTML files.
+  * Show off more features in the tutorial.
+  * Fix tutorial project.
+    
+    Generate example/tutorial from the test case that is used for the
+    manual.
+  * Align custom attribute in report cells properly.
+  * Make export reports more TJ2.x compatible.
+  * Version without ruby-prof calls.
+  * This version needs ruby-prof and crashes ruby 1.9.
+  * Make sure the start date of intervals is smaller than the end date.
+  * Generate proper HTML code for reports.
+  * Added 'treelevel' logical function.
+    
+    Started to work on colored text cells.
+  * Add commandline option to generate reports despite scheduling errors.
+  * Documented the BatchProcess class.
+  * Some fixes for the SMP support.
+  * Improving the tutorial for TJ3.
+  * Use multiple CPU cores for report generation.
+    
+    First draft, not working yet.
+  * Ruby 1.9 has good UTF8 String support. Use the built-in functions.
+  * Use 'times' instead of '0.upto'.
+  * Open new window for external references in the manual.
+  * Some speed improvements and code cleanup.
+  * Cleaned-up progress information.
+    
+    More source code comments.
+  * Some speed improvements by cached the onShift? result.
+  * A few more scheduler fixes.
+  * Code cleanup and comments.
+  * Some booking related fixes.
+  * Add check for project without tasks.
+  * Lots of cleanups and speed improvements in the scheduler.
+    
+    Fixed manual generation.
+    More test cases.
+  * Bug fix and more test cases for allocations.
+  * Some speed improvements.
+  * Do milestone detection before inheriting start/end dates.
+    
+    This makes more sense and is compatible with TJ 2.x.
+  * Fix basename computation.
+  * Don't put -w in the shebang line.
+  * Various fixes for the test suite.
+    
+    rake19 is still failing with some obscure error message around id2ref
+    calls. But ruby19 all.rb works fine.
+  * Improving the scheduler performance.
+    
+    Added progress indicator.
+  * Fix task shifts to be compatible with TJ 2.x.
+    
+    Make sure all tests of the test suite work properly again.
+  * Initialize the scoreboards only when the resource is actually used.
+    
+    This can drastically speed up the scheduling for projects with many
+    unused resources.
+  * Don't break when hitting an unscheduled task.
+  * Show all runaway task as warning first. Then abort.
+  * Task start or end dates can now be inherited from parent tasks or the
+    project time frame.
+  * 'rake release' does not work on Windows.
+  * Finally fixed the output path in the manual task.
+  * Don't include subdirs of manual in distribution.
+  * Need to use hardcoded file name :(
+  * Use variable instead of hardcoded path.
+  * Using threads to get more performance is a dead-end with Ruby.
+    
+    The big VM lock kills any chance to use multiple CPUs. This makes Ruby
+    really an anachronism in todays multi-CPU PC world.
+  * First steps towards a multi-threaded scheduler.
+    
+    This version still suffers many race conditions!
+  * Support generation of the user manual with installed version.
+    
+    The package-time manual generation still works, but users can now use
+    tj3man to generate their own copy of the HTML manual.
+  * Don't generate the manual for packaging.
+  * Completing the move of classes into the TaskJuggler namespace.
+  * Again putting more classes into the TaskJugler namespace.
+  * Some cleanups.
+    
+    Build manual and rdoc for release.
+    Don't include README.rb in rdoc documentation.
+    Gem package should be called taskjuggler, not taskjuggler3.
+  * HTMLDocument.rb does not belong in reports.
+  * Moving report classes into reports directory.
+    
+    And putting them in the TaskJuggler namespace.
+  * Combine all attribute classes into a single file.
+  * Put more classes into the TaskJuggler namespace.
+  * Hopefully the last one.
+  * And another one.
+  * More Ruby 1.8.6 compatibility fixes.
+  * Fix compatibility issues with Ruby 1.8.6 and earlier.
+  * fix README, gem, rdoc tasks, Rakefile handle load error
+  * rcov task for ruby19, need small rcov patches
+  * run_gem_test for ruby18
+  * Some cleanups as a result of the new rake build system.
+  * enable test individually
+  * test rake task
+  * manual rake task
+  * fix rexml/formatters/pretty for rcov task
+  * rcov rake task
+  * Update makedist to make better use of rake.
+    
+    This file will become obsolete once we have a rake task for the
+    manual.
+  * remove rcov rake task for ruby19
+  * manual rake task
+  * Cleaned up the new include syntax documentation.
+  * fix rexml/formatters/pretty for rcov task
+  * enable test individually
+  * Remove redundant computation of transitiveOptional in Rule.
+    
+    Added more comments.
+  * Revert "rcov rake task"
+    
+    This reverts commit e7d3a424a91d2a01f7b625e7e1e0cdc619614f0d.
+    
+    [xpc:1] taskjuggler3> rake19 --trace
+    (in /home/cs/src/taskjuggler/taskjuggler3)
+    rake aborted!
+    no such file to load -- rcov/rcovtask
+    /home/cs/src/taskjuggler/taskjuggler3/tasks/rcov.rake:2:in `require'
+    ...
+  * stats rake task
+  * rdoc rake task
+  * rcov rake task
+  * show rake task
+  * Revert "test rake task"
+    
+    This reverts commit 7ff85849b906c504a782c52921b2516d8988d00c.
+    
+    This patch seem to remove the ability to run test cases individually.
+  * test rake task
+  * Rakefile tasks : README, gem
+  * Don't break compatibility with Ruby 1.8.
+    
+    I shall test ruby 1.8 before committing.
+    I shall test ruby 1.8 before committing.
+    I shall test ruby 1.8 before committing.
+    I shall test ruby 1.8 before committing.
+    I shall test ruby 1.8 before committing.
+    ...
+  * Improved the handling of file inclusion in the parser.
+  * Get rid of ugly String operation.
+  * Make parsers work with empty input strings when syntax permits.
+  * Bug fix.
+  * Cleaned up new Log class.
+    
+    Added basic structure of a propper ARGV parser.
+  * stats rake task
+  * rdoc rake task
+  * rcov rake task
+  * show rake task
+  * test rake task
+  * Rakefile tasks : README, gem
+  * Add execution trace logger.
+    
+    Put more classes into the TaskJuggler namespace.
+  * Limits can now be resource specific.
+    
+    This is helpful to map the deprecated allocation limits to.
+  * Limits can now be restricted to certain time intervals.
+  * First steps to introduce namespaces.
+  * rakefile system setup and a few changes
+  * It's 2009!
+    
+    Update copyright sections and removed some Ruby 1.9 warnings.
+  * Replace dependency on Ruby library CSV class with own CSVFile class.
+    
+    CSV is a major compatibility nightmare between Ruby 1.8 and 1.9.
+    Rather than plastering the code with version specific code snippets, I
+    decided to implement my own CSV reader and writer.
+  * Re-add UTF8 support files.
+  * Merging ruby-1.9 changes back to master.
+  * No longer needed.
+  * Added some new benchmarks to compare ruby 1.8 and 1.9 performances.
+  * Fix TjTime.sameTimeNextMonth bug reported by pauland.
+    
+    http://www.taskjuggler.org/FUDforum2/index.php?t=msg&th=4003&start=0&rid=65&S=9d61c1a4a09e928b646920b7968d724c
+  * Fix problem with latest ruby SVN.
+  * Added a dash between dates to meet TJ 2.4.1 date interval syntax.
+  * Finally a version that works with ruby 1.9 SVN.
+  * Merge some selected patches back.
+    
+    Bring the TextScanner test back.
+  * Revert "Improve UTF-8 support in scanners."
+    
+    This reverts commit f05aceac000314c380b7fc46cc6665bdf214a622.
+  * Revert "Improved UTF8 testing."
+    
+    This reverts commit 3209450c18a8087b9e023ae7130fe78bf47570b2.
+  * Revert "More UTF-8 releated cleanups."
+    
+    This reverts commit 88668b7980ed126c65919ac4a3d7c89ed7419be0.
+  * Revert "Converted the String processing in the parser to more Ruby 1.9 compatible syntax."
+    
+    This reverts commit 5fbc96e02eab62d207598f355784a3b1d46acac4.
+  * Revert "Some cleanup after the recent changes."
+    
+    This reverts commit 64c4cb2e282da5195beeed6b488b28365131362e.
+  * Some cleanup after the recent changes.
+  * Converted the String processing in the parser to more Ruby 1.9 compatible syntax.
+  * More UTF-8 releated cleanups.
+  * Improved UTF8 testing.
+  * Improve UTF-8 support in scanners.
+    
+    This should also simplify a migration to Ruby 1.9.
+  * Added test case and bug fixes for LogicalExpression.
+  * Code cleanups and API documentation.
+  * Test case for PropertySet added.
+    
+    Still very rudimentary, but does check WBS indexing and node removal.
+    Lots of related bug fixes.
+  * Avoid to store derived data in the PropertySet data structure.
+    
+    This will make PropertyTreeNode deletions from the set easier.
+  * Add test for Project.rb.
+    
+    Make TjTime constructor a bit more handy.
+  * Fix syntax reference generation problem.
+  * Fixes for the recently added example projects in the test suite.
+    
+    Most of them involved 'limits'. They also triggered some bugs in tj3 which have been fixed as well.
+  * Add examples for properties in manual.
+  * Improved doc for 'supplement'.
+  * Add example for 'booking' property.
+  * Add example for 'credit' property.
+  * Add example for 'complete' property.
+  * Add example for 'copyright' property.
+  * Add example for 'caption' property.
+  * Fix problem with reference custom attributes.
+  * Fix 'priority' attribute for tasks.
+  * Clarify purge description.
+  * Add description of purge and limits for allocate property.
+  * Add support for 'hidecell' column attribute.
+  * Make use of endIdx consistent with TjTime end objects.
+    
+    Lots of bug fixes for the effort computation routines.
+  * Several bug fixes for the effort and duration reporting functions.
+  * Add support for ? prefix for dynamic macros to allow them to be undefined.
+  * Some bug fixes.
+  * Add support for cellurl column attribute.
+  * Use nil instead of string constant for empty load stack elements.
+  * Added support for celltext column attribute.
+  * Clarify install and contribute section of the manual.
+    
+    Get rid of some TJ2.x leftovers.
+  * Fixed HTML load-stack generation.
+    
+    Removed junk lines under ColumnTables.
+    Don't include parent task for taskroot reports.
+  * Another round of checks for the parser.
+  * Complete TaskScenario.preScheduleCheck().
+  * Adding accidently deleted patches again.
+  * More parser error checks.
+  * More error checking.
+  * Properly handle rich text attributes in report columns.
+    
+    Make reports smaller by using more CSS attributes.
+  * Port recent scheduler improvements from 2.x version.
+  * Fixed runtime error reported by Susan.
+    
+    Error checking for report start and end dates added.
+  * Started to support RichText columns in HTML reports.
+  * Add protocol handlers for RichText.
+    
+    The tutorial in the manual now includes code snippets from the Syntax/Correct directory files.
+  * The reference manual can use example code again.
+  * Improve doc for workinghours. Start TjpExample class.
+  * Fix documentation for arguments that are documented, single pattern rules.
+  * Handle white spaces in Rich Text explicitely.
+  * Correct syntax examples as test cases added.
+  * Include RichText elements in SyntaxReference in link checking.
+  * Add link checker for RichTextDocuments.
+  * Improved white space handling for RichText output generators.
+  * Property report scenario specific and inheritable optional attributes.
+  * Added 2008 to copyright header.
+  * Document the top-level class and add a hint to it in the README.
+  * Merged syntax reference into new user manual.
+  * Add infrastructure to generate user manual from MediaWiki files.
+  * Switched calendar report columns to use Query.
+  * Test cases and fix for dynamic attribute sorting.
+  * Dynamic Property attributes can now be sorted as well.
+  * Add framework for CSV report unit tests.
+  * Make 'include' work at start of project file.
+  * Unified query infrastructure implemented.
+    
+    All property attributes can now be queried via the same interface.
+    The report generates use it already for dynamic attributes.
+  * Some comments added.
+  * Make logical functions with arguments work.
+    
+    This fix includes various other bug fixes as well.
+  * Add 'rake' as installation dependency.
+  * Only use forward locking path for path criticalness.
+    
+    Port from 2.x.
+  * Improved error handling.
+  * Added support for CSV reports.
+  * Fix multiple mandatoy allocations with overlapping resource sets.
+  * Added support for one-time and duration dependent charges.
+  * Work around for Firefox column width bug.
+  * More work on the accounting features.
+  * Many fixes so that TJ3 can read TJ2 exported projects properly.
+  * Properly connect the error handlers of the RichText parser and the TJP parser.
+    
+    RichText errors are now reported just like TJP errors with their proper in-file location.
+  * Added support for RichText prologs and epilogs in reports.
+  * Added support for some more MediaWiki markups.
+    
+    Most RichText features are now used for the reference manual.
+  * Cleaned up RichText classes and added unit tests.
+  * Added simple rich text engine to better format the documentation.
+    
+    Still very crude and needs lots of comments.
+  * Various fixes for the README and the reference manual.
+  * Fix sorting order of keywords in reference manual.
+  * Improved the intro page for the HTML manual.
+  * Fix problem with label.
+  * Updated README with better install description.
+  * Added support for functions in logical expression.
+    
+    Right now only isLeaf() works.
+  * Generate all legend elements on demand and show them only if used.
+  * Use smaller start gap for Gantt chart dependency arrows.
+  * First work on Account support.
+    
+    Not much there yet, but the parser already understands most of the syntax.
+  * Replaced all relative font sizes with absolute ones.
+  * Warn about using 'wbs' for sorting. It's produces unexpected results.
+    
+    Users should use 'tree' instead.
+  * Fix font-weight handling for reports.
+  * Fix WBS sorting bug reported by bhoel.
+    
+    Added some more comments.
+  * Several fixes/improvements for the HTML calendar and chart.
+  * Make calendar columns scrollable as well.
+    
+    This patch still has many rough edges but is a first shot in the right direction.
+  * Fix index link in reference manual HTML pages.
+  * Fix 'TjTime.rb:113:in `local': argument out of range' error.
+    
+    More comments added to TjTime.rb.
+  * Fix more bugs reported by bhoel.
+    
+    - WBS indexing fixed.
+    - Add first set of checks to TaskScenario.preScheduleCheck to prevent containers with duration attributes.
+    - Fix 'duration' column values.
+  * Fix ReportElement.rb:376:in `[]': no implicit conversion from nil to integer bug.
+  * Get rid of some Ruby warnings.
+  * Complete support for 'loadunit' in reports.
+  * Fix another cut/copy/paste-bug.
+  * Fix bug reported by bhoel.
+  * Fix bolding and indentation of container lines in reports.
+  * Various fixes and improvements.
+    
+    - Add support for load scaling.
+    - Simpler form of ledgend.
+    - Assorted fixes.
+  * Some more polishing for the HTML Gantt chart.
+    
+    Added now-line.
+    Use larger padding for cells.
+  * Improved the Gantt dependency line routing.
+  * First draft of a dependency line router for the Gantt chart.
+  * Added support for dependency arrows in HTML charts.
+    
+    Very crude arrow routing right now. Will be fixed later.
+    More comments added all over the place.
+  * Make HTML Gantt chart scrollable.
+  * Show time-off intervals in HTML Gantt charts.
+  * Some cosmetics for the HTML reference manual.
+  * Task and resource rendering in Gantt charts now works.
+  * More work on the HTML Gantt chart.
+    
+    Still lots more work to do but it is taking shape now.
+  * First version of HTML Gantt chart.
+    
+    This is just draft code to test browser compatibility.
+  * Cleanup up report attributes.
+    
+    Report line counting fixed.
+    Alternating background colors fixed.
+  * Report refactoring completed.
+    
+    All lose ends connected again. Should work as good/bad as before the refactoring.
+  * Complete refactoring of report classes.
+    
+    This is just a snapshot with very many lose ends.
+  * HTML documentation how has proper navigation bar.
+  * Support HTML formatted syntax help for parser keywords.
+  * Get rid of the Subversion tag in the header.
+  * Hopefully final test.
+  * Another test commit.
+  * Just a test for post-receive.
+  * Just a test commit.
+  * Avoid multiple resets of unmodified Limits scoreboards.
+  * Make parser rule definition easier.
+    
+    Don't require the rule name to be entered twice.
+    Make function names a bit more consistent.
+  * Cleaned up all code that deals with resource allocations.
+    
+    Fixed a number of other bugs in related classes as well.
+  * Support for limits for resource usage and task assignments added.
+  * Various bug fixes and documentation improvements.
+  * Make shifts work for task assignments.
+    
+    Various other bug fixes and speed improvements.
+  * Make ShiftAssignments use shared Scoreboards.
+    
+    This increases memory efficiency and performance for larger projects.
+  * Make Shifts work for some more complicated test cases.
+    
+    Cleanup of Workinghours.
+    Fixed lots of bugs in ShiftAssignments.
+  * First round of Shift support.
+    
+    Far from complete, but resource shifts seem to work ok.
+  * Make sure we have test cases for all syntax error messages.
+  * Use less special cases in the syntax description.
+  * Make tj3man work for 'allocate' and 'columns'.
+  * Some cosmetics for the HTML reports.
+  * Added more features to the export report.
+  * More syntax documentation and build system improvements.
+    
+    Fixed Rakefile and package generation script.
+    Added more docs for syntax keywords.
+  * More work on tj3man.
+    
+    Many more keywords have been documented.
+  * Accept interger and float values.
+  * More tj3man fixes. More syntax documentation.
+  * More work on tj3man.
+  * More work on auto-documenting parser.
+  * First implementation of syntax manual tool tj3man.
+  * Some bug fixes and scalability improvements.
+  * Optimizer now properly uses path criticalness heuristic.
+  * First implementation of path priority calculation.
+  * More fixes for 'booking'.
+    Make logical expressions work.
+  * Added support for 'no' column.
+  * More test for bookings and some bug fixes.
+  * More work on bookings.
+  * Some work on 'booking' support. Not yet complete.
+  * Eliminate some code dumplication.
+  * More test cases. More bug fixes.
+  * Fix for loop detector.
+  * Dependency loop checker added.
+  * Fixed 'precedes' dependencies.
+  * Implemented some ideas how to support start->start or end->end
+    dependencies.
+  * Assorted improvements.
+    
+    Prepared dependency handling for start/start and end/end deps.
+    HTML report beautifications.
+    Scenario attribute support improved.
+  * Cleaned up macro parser and added error checking.
+  * Macro parser added to TextScanner.
+    
+    Error checking is still missing but it seems to work with first
+    simple tests.
+  * Don't revconftrol HTML files in this dir.
+  * More infrastructure for test suite added.
+  * Added support for real project files in the test suite.
+  * Extended Export report generator and TJP parser so that the parser can
+    read a generated export report.
+  * More work on Export report generator.
+  * Cleanup TJP syntax rules by replacing repeated pattern with
+    convenience functions.
+  * User helper functions to setup syntax rules for similar rules.
+  * Support for global and resource vacations added.
+  * New color scheme for HTML reports.
+    
+    Some more work to generate nicer looking HTML reports. A few bits and
+    pieces are still missing.
+  * Added support for task and resource sorting.
+    
+    Some hardining for reporting unfinished scheduling runs.
+    The sorting stuff is completely untested.
+  * Moved TJP syntax rules into separate file.
+  * More work done on the report generator.
+    
+    We now have HTML task and resource reports that have a basic working
+    feature set.
+    
+    Report columns may contain property fixed data values, computed values
+    based on the property and report interval, as well as calendar charts.
+  * More work on HTML task report
+    
+    htmltaskreports are now somewhat complete. Resources are not yet
+    supported.
+  * - More work on HTML task report generation.
+  * - Cleanup of task report generator.
+    - Added lots of time manipulation functions.
+  * - Scheduler fixes.
+  * - Support for logical expressions added.
+    - Multiple scenarios for HTML reports.
+  * - Renaming some files to be more specific.
+    - Some more comments.
+  * - Add missing files from last checkin.
+  * - Fix attribute inheritance.
+  * - Nicer and more complete reports.
+  * Added lots of new features:
+    - Extended attributes
+    - Hierachic tasks
+    - post scheduling task checking
+    - include file support
+  * - Support for WorkingHours added.
+  * - Added support for more keywords in the parser.
+  * - Documented TextParser.
+    - Debug support for TextParser.
+    - Added more TJP language keywords to ProjectParser.
+    - Added FLOAT token to scanner.
+  * - Add proper header to all ruby files.
+    - Make taskjuggler.rb the real main program.
+  * - First shot of a parser added.
+  * - Fix HTML report header.
+  * initial import
+  * 
+

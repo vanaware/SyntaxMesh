@@ -1,0 +1,40 @@
+project prj "Query Demo" "1.0" 2009-11-22-00:00-+0000 - 2009-12-22-10:00-+0000 {
+  timezone "America/Denver"
+  scenario plan "Plan Scenario" {
+    active yes
+  }
+}
+
+projectids prj
+
+resource joe "Joe"
+
+task _Task_1 "Job" {
+  start 2009-11-23-16:00-+0000
+  end 2009-12-05-00:00-+0000
+  scheduling asap
+  scheduled
+}
+supplement task _Task_1 {
+  booking joe 2009-11-23-16:00-+0000 + 8.0h,
+          2009-11-24-16:00-+0000 + 8.0h,
+          2009-11-25-16:00-+0000 + 8.0h,
+          2009-11-26-16:00-+0000 + 8.0h,
+          2009-11-27-16:00-+0000 + 8.0h,
+          2009-11-30-16:00-+0000 + 8.0h,
+          2009-12-01-16:00-+0000 + 8.0h,
+          2009-12-02-16:00-+0000 + 8.0h,
+          2009-12-03-16:00-+0000 + 8.0h,
+          2009-12-04-16:00-+0000 + 8.0h { overtime 2 }
+  priority 500
+  projectid prj
+}
+supplement resource joe {
+  workinghours sun off
+               workinghours mon 9:00 - 17:00
+               workinghours tue 9:00 - 17:00
+               workinghours wed 9:00 - 17:00
+               workinghours thu 9:00 - 17:00
+               workinghours fri 9:00 - 17:00
+               workinghours sat off
+}

@@ -1,0 +1,172 @@
+=== How to Contribute ===
+
+==== Why contribute? ====
+
+TaskJuggler is an Open Source Project. It was developed by volunteers
+mostly in their spare time. Made available under the GNU General
+Public license and similar licenses, TaskJuggler can be shared and
+used free of charge by anybody who respects the license conditions.
+Does that mean you can use it without worrying about anything? Clearly
+not! Though users have no legal obligation to contribute, you should
+feel a moral obligation to support Open Source in whatever way you
+can. This can range from helping out other users with their first
+Linux installation to actively contributing to the TaskJuggler
+Project, not just as a programmer. The following section describes,
+how you can contribute to any of the components that are part of the
+TaskJuggler software releases.  
+
+==== Preparing a contribution ====
+
+All TaskJuggler development is coordinated using the
+[https://github.com/taskjuggler/TaskJuggler/issues github source code
+management platform]. All changes must be submitted using Git github
+so that we can track the authorship of each submission. There is
+[http://help.github.com/ excellent documentation] available on how to
+use github. 
+
+Make sure you have followed the steps described in the
+[Installation.html#Installation_Steps_for_Developers Installation
+Steps for Developers] chapter.
+
+If you have never used Git before, you need to configure it first. You
+need to set your name and email address. This information will be
+present in all patches that you submit.
+
+ git config --global user.name "Your Name"
+ git config --global user.email "firstname.lastname@domain.org"
+
+Do not use the development snapshots or send your patches as plain
+diff files. We'd like to ensure that we know who contributed to
+TaskJuggler. Therefor we are only accepting signed-off git patches
+with full user names and valid email addresses.
+
+Next you need to find the files where you want to make your
+modifications. Sometimes files will be generated from other files. Do
+not change those generated files. Your changes will be overwritten the
+next time you call the make utility.
+
+==== Creating a Patch ====
+
+When you are done with your changes, it's a good idea to test them. In
+the taskjuggler directory run the following commands. 
+
+ cd taskjuggler3
+ rake test
+ rake spec
+ rake manual
+ rake gem
+
+If there are no errors, you can check or test the result. If
+everything works fine, you can lock at your changes again.
+
+ git diff
+
+The git-diff utility performs a line-by-line comparison of the files
+against the latest version in you local repository. Try to only make
+changes that have an impact on the generated files. Do not change
+indentation or line wrapping of paragraphs unless absolutely
+necessary. These kinds of changes increase the size of diff files and
+make it much harder to evaluate the patches. When making changes to
+the program code, please use exactly the same coding style as the
+rest of the code. If your contribution is large enough to justify a
+copyright claim, please indicate what copyright you claim in the
+patch. For modifications to existing files, we will assume that your
+contribution falls under the same license as the modified file. All
+new files will need to contain a license declaration, preferably GPL
+version 2. In any case, the license must be
+[http://www.opensource.org/licenses an OSI accepted license] and be
+compatible with the GPL version 2 used by the rest of the project.
+
+Review all changes carefully. In case you have created new source
+files, you need to register them with your repository.
+
+ git add FILENAME
+
+If you think you are done, you can commit your changes to your local
+repository.
+
+ git commit -a -s
+
+The -s parameter is very important. We will only accept signed-off patches. By
+signing off on your patches you confirm that you wrote the code and have the
+right to pass it on as a patch. See
+[http://gerrit.googlecode.com/svn/documentation/2.0/user-signedoffby.html this
+document] for more information!
+
+Please include a meaningful commit message. The first line (header line) should
+be prefixed by ''''Fix: '''' for bug fixes or ''''New: '''' for new features.
+This is used to automatically generate the change log from one release to
+another. So a bug that has been introduced after the last release and is fixed
+before the next release does not need to be included in the changelog. For
+those cases, don't use any prefix.
+
+After the header line leave a blank line and include one or more paragraphs
+with more detailed information about the patch. This information will also be
+included in the the change log if the header line has a prefix.
+
+If you fix a bug that was reported by somebody else, please also include a reported-by line:
+
+ Reported-by: whoever-reported-the-bug
+
+Then push it into your forked github repository.
+
+ git push
+
+The final step is to send us a [http://help.github.com/pull-requests/
+pull request] for your changes.
+
+==== Contributing to the User Manual ====
+
+The user manual is currently a rough port of the 2.x manual. It
+contains many inaccuracies and does not provide much more than a
+tutorial and a syntax reference. Any help to turn this into a real
+user manual is greatly appreciated.
+
+The manual is composed from 3 different sources.
+
+# The sources for normal pages are in MediaWiki format and can be
+found in the ''''manual'''' directory of the source distribution. 
+
+# The information in the syntax reference is extracted from the TJP
+parser source code. It can be found in the file
+''''lib/TjpSyntaxRules.rb''''. You can ignore all but the
+''''doc(...)'''', ''''arg(...)'''' and ''''example(...)'''' sections.
+
+# The TJP syntax examples are in the
+''''test/TestSuite/Syntax/Correct'''' directory.
+
+The following command build the HTML files for the manual in the
+''''manual/html'''' directory.
+
+ rake manual
+
+==== Contributing to the Test Suite ====
+
+The test suite can be found in the ''''test'''' and ''''spec''''
+directories. It contains unit and system tests but is very rudimentary
+at the moment.  Adding more system tests to the test/CSV-Report directory
+is probably the best place to start. Originally, TaskJuggler used
+classic Ruby unit tests, but a migration to
+[http://rspec.info/|RSpec-2] is in the works now. New tests should be
+written as RSpec tests unless they require infrastructure only
+available in the ''''test'''' directory.
+
+==== Contributing to the Ruby code ====
+
+For the first stable TaskJuggler release we have most 2.x
+features supported. The few things that break backwards compatibility
+are documented in the [[TaskJuggler_2x_Migration]] section.
+
+In general, patches are very welcome. Please follow the coding style
+and naming conventions used in the existing code. Larger changes
+should be preceded by a discussion in the
+[http://www.taskjuggler.org/contact.html TaskJuggler Developer Forum].
+
+==== Some final words to Contributors ====
+
+We do welcome all contributions, but please understand that we reserve
+the right to reject any contribution that does not follow the above
+guidelines or otherwise conflicts with the goals of the TaskJuggler
+team. It is a good idea to contact the team prior to making any larger
+efforts.
+

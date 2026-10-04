@@ -1,0 +1,26 @@
+project "Project" 2000-01-01-0:00 - 2000-03-01-0:00 {
+  timezone "Europe/Berlin"
+  now 2000-01-08
+  trackingscenario plan
+}
+
+resource r "Resource"
+
+task t "Task" {
+  start ${projectstart}
+  effort 10d
+  allocate r
+}
+
+# Include the data from previous scheduling run.
+# We assume that the exported data has been frozen.
+# By importing it, we make sure they don't get changed any more.
+include "CompletedWork.tji"
+
+# Export only bookings for 1st week as resource supplements
+export "CompletedWork.tji" {
+  start 2000-01-01
+  end 2000-01-08
+  taskattributes booking
+  hideresource 0
+}

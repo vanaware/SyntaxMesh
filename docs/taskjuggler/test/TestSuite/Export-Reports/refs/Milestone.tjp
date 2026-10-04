@@ -1,0 +1,26 @@
+project prj "Milestone demo" "1.0" 2005-07-15-00:00-+0000 - 2005-08-01-00:00-+0000 {
+  timezone "America/Denver"
+  scenario plan "Plan Scenario" {
+    active yes
+  }
+}
+
+projectids prj
+
+
+task project_start "Project Start" {
+  start 2005-07-15-06:00-+0000
+  scheduled
+}
+task deadline "Important Deadline" {
+  start 2005-07-20-06:00-+0000
+  scheduled
+}
+supplement task project_start {
+  priority 500
+  projectid prj
+}
+supplement task deadline {
+  priority 500
+  projectid prj
+}

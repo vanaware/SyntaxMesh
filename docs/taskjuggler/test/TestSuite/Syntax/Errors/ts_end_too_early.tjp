@@ -1,0 +1,20 @@
+project "test" 2010-02-19 +2m {
+  trackingscenario plan
+}
+
+resource r1 "R1"
+
+task t1 "Task 1" {
+  duration 5d
+  allocate r1
+}
+
+timesheet r1 2010-02-21 +1w {
+  task t1 {
+    work 80%
+# MARK: error 16 ts_end_too_early
+    end 2010-02-20
+    status green "Lots of work done"
+  }
+}
+

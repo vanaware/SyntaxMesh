@@ -1,0 +1,88 @@
+project test "Test" "1.0" 2007-08-29 +6m {
+  workinghours mon-fri 9:00 - 12:00, 13:00 - 18:00
+}
+
+include "checks.tji"
+
+resource a "A"
+resource b "B"
+resource c "C"
+resource d "D"
+resource e "E"
+resource f "F"
+resource g "G"
+resource h "H"
+resource i "I"
+resource j "J"
+resource k "K"
+
+task tasks "Tasks" {
+  task t1 "40h with 4h daily limit" {
+    effort 40h
+    allocate a
+    limits { dailymax 4h }
+    ${FixEnd "2007-09-11-14:00"}
+  }
+  task t2 "30d with 3d weekly limit" {
+    effort 30d
+    allocate b
+    limits { weeklymax 3d }
+    ${FixEnd "2007-10-31-18:00"}
+  }
+  task t3 "45d with 15d monthly limit" {
+    effort 45d
+    allocate c
+    limits { monthlymax 15d }
+    ${FixEnd "2007-11-15-18:00"}
+  }
+  task t4 "7h/day 4d/week 15d/months" {
+    effort 50d
+    allocate d
+    limits { dailymax 7h weeklymax 4d monthlymax 15d }
+    ${FixEnd "2007-12-04-15:00"}
+  }
+}
+
+task nested "Nested Tasks (20h/week limit)" {
+  limits { weeklymax 20h }
+  task a "Task A" {
+    allocate e
+    effort 30d
+    ${FixEnd "2008-02-06-14:00"}
+  }
+  task b "Task B (7h/day limit)" {
+    effort 30d
+    allocate f
+    priority 600
+    limits { dailymax 7h }
+    ${FixEnd "2007-11-14-16:00"}
+  }
+}
+
+task interval "Interval Limit" {
+  effort 20d
+  allocate g
+  limits { weeklymax 8h { period 2007-09-05 +8d }}
+  ${FixEnd "2007-10-01-18:00"}
+}
+
+task resource "Resource Limit" {
+  effort 10d
+  allocate h
+  limits { weeklymax 16h { resources h }}
+  ${FixEnd "2007-09-25-18:00"}
+}
+
+task resources "Multiple Resources" {
+  effort 20d
+  allocate i, j, k
+  limits { dailymax 2h { resources i}
+           dailymax 6h { resources j} }
+  ${FixEnd "2007-09-11-18:00"}
+}
+
+taskreport limits "Limits" {
+  formats html
+  columns no, name, start, end, effort, daily
+}
+

@@ -1,0 +1,18 @@
+project prj "Auto Macro Test" "1.0" 2006-09-22-00:00-+0000 - 2006-10-22-10:00-+0000 {
+  timezone "UTC"
+  scenario plan "Plan Scenario" {
+    active yes
+  }
+}
+
+projectids prj
+
+
+task items "Project breakdown" {
+  start 2006-09-22-00:00-+0000
+  scheduled
+}
+supplement task items {
+  priority 500
+  projectid prj
+}

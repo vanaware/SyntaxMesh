@@ -1,0 +1,63 @@
+project prj "Resource Prefix Example" "1.0" 2009-09-13-00:00-+0000 - 2009-10-13-10:00-+0000 {
+  timezone "America/Denver"
+  scenario plan "Plan Scenario" {
+    active yes
+  }
+}
+
+projectids prj
+
+resource team "Team" {
+  resource foo "Foo"
+  resource bar "Bar"
+}
+
+task t "Task" {
+  start 2009-09-14-14:00-+0000
+  end 2009-09-21-17:00-+0000
+  scheduling asap
+  scheduled
+}
+supplement task t {
+  booking bar 2009-09-14-14:00-+0000 + 7.0h,
+          2009-09-15-14:00-+0000 + 7.0h,
+          2009-09-16-14:00-+0000 + 7.0h,
+          2009-09-17-14:00-+0000 + 7.0h,
+          2009-09-18-14:00-+0000 + 7.0h,
+          2009-09-21-14:00-+0000 + 3.0h { overtime 2 }
+  booking foo 2009-09-14-15:00-+0000 + 8.0h,
+          2009-09-15-15:00-+0000 + 8.0h,
+          2009-09-16-15:00-+0000 + 8.0h,
+          2009-09-17-15:00-+0000 + 8.0h,
+          2009-09-18-15:00-+0000 + 8.0h,
+          2009-09-21-15:00-+0000 + 2.0h { overtime 2 }
+  priority 500
+  projectid prj
+}
+supplement resource team {
+  workinghours sun off
+               workinghours mon 9:00 - 17:00
+               workinghours tue 9:00 - 17:00
+               workinghours wed 9:00 - 17:00
+               workinghours thu 9:00 - 17:00
+               workinghours fri 9:00 - 17:00
+               workinghours sat off
+}
+supplement resource foo {
+  workinghours sun off
+               workinghours mon 9:00 - 17:00
+               workinghours tue 9:00 - 17:00
+               workinghours wed 9:00 - 17:00
+               workinghours thu 9:00 - 17:00
+               workinghours fri 9:00 - 17:00
+               workinghours sat off
+}
+supplement resource bar {
+  workinghours sun off
+               workinghours mon 8:00 - 15:00
+               workinghours tue 8:00 - 15:00
+               workinghours wed 8:00 - 15:00
+               workinghours thu 8:00 - 15:00
+               workinghours fri 8:00 - 15:00
+               workinghours sat off
+}

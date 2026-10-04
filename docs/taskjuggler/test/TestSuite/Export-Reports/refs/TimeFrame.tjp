@@ -1,0 +1,51 @@
+project prj "Simple Project" "1.0" 2000-01-01-12:00-+0000 - 2000-01-04-18:00-+0000 {
+  timezone "America/Denver"
+  scenario plan "Plan Scenario" {
+    active yes
+  }
+}
+
+projectids prj
+
+resource tux "Tux"
+
+task t1 "Task1" {
+  start 2000-01-01-19:00-+0000
+  end 2000-01-04-00:00-+0000
+  scheduling asap
+  scheduled
+}
+task t2 "Task2" {
+  start 2000-01-02-07:00-+0000
+  end 2000-01-03-07:00-+0000
+  scheduling asap
+  scheduled
+}
+task t3 "Task3" {
+  start 2000-01-03-16:00-+0000
+  end 2000-01-04-00:00-+0000
+  scheduling asap
+  scheduled
+}
+supplement task t1 {
+  priority 500
+  projectid prj
+}
+supplement task t2 {
+  priority 500
+  projectid prj
+}
+supplement task t3 {
+  booking tux 2000-01-03-16:00-+0000 + 8.0h { overtime 2 }
+  priority 500
+  projectid prj
+}
+supplement resource tux {
+  workinghours sun off
+               workinghours mon 9:00 - 17:00
+               workinghours tue 9:00 - 17:00
+               workinghours wed 9:00 - 17:00
+               workinghours thu 9:00 - 17:00
+               workinghours fri 9:00 - 17:00
+               workinghours sat off
+}

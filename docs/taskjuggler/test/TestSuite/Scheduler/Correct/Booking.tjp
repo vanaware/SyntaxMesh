@@ -1,0 +1,162 @@
+project test "Test" "1.0" 2007-04-22 +5w {
+	now 2007-04-30
+	scenario plan "Plan"
+  workinghours mon - fri 9:00 - 12:00, 13:00 - 18:00
+}
+
+include "checks.tji"
+
+resource tux1 "Tux 1"
+resource tux2 "Tux 2" {
+	vacation 2007-04-24 +2d
+}
+resource tux3 "Tux 3" {
+	vacation 2007-04-24 +2d
+}
+resource tux4 "Tux 4" {
+	vacation 2007-04-24 +2d
+}
+
+task t1 "Task 1" {
+	effort 7d
+	allocate tux1
+  # We got 2d from bookings. See supplement below!
+	booking tux1 2007-04-24 +10h,
+					    2007-04-25 +10h { sloppy 1 }
+  booking tux1 2007-04-27 +10h { overtime 2 }
+  ${FixStart "2007-04-24-9:00"}
+	${FixEnd "2007-05-04-18:00"}
+}
+
+task t2 "Task 2" {
+	effort 10d
+	allocate tux2
+	booking tux2 2007-04-23 +5d { sloppy 2 }
+	${FixEnd "2007-05-08-18:00"}
+}
+
+task t3 "Task 3" {
+	effort 11d
+	allocate tux3
+	booking tux3 2007-04-23 +5d { sloppy 2 overtime 1 }
+	${FixEnd "2007-05-01-18:00"}
+}
+
+task t4 "Task 3" {
+	effort 16d
+	allocate tux4
+	booking tux4 2007-04-23 +5d { sloppy 2 overtime 2 }
+	${FixEnd "2007-04-30-18:00"}
+}
+
+supplement resource tux1 {
+	booking t1 2007-04-26-4:00 +10h { sloppy 1 }
+}
+
+resource r10 "R10"
+resource r11 "R11"
+resource r12 "R12"
+resource r13 "R13"
+resource r14 "R14"
+resource r15 "R15"
+resource r16 "R16"
+resource r17 "R17"
+resource r18 "R18"
+resource r19 "R19"
+resource r20 "R20"
+
+task t10 "Task 10" {
+  booking r10 2007-04-23-9:00 +1h
+  end 2007-04-24
+  scheduling asap
+  ${FixStart "2007-04-23-9:00"}
+  ${FixEnd "2007-04-24"}
+}
+
+task t11 "Task 11" {
+  start 2007-04-22-12:00
+  booking r11 2007-04-23-9:00 +1h
+  end 2007-04-24
+  scheduling asap
+  ${FixStart "2007-04-22-12:00"}
+  ${FixEnd "2007-04-24"}
+}
+
+task t12 "Task 12" {
+  effort 1d
+  allocate r12
+  booking r12 2007-04-23-9:00 +1h
+  ${FixStart "2007-04-23-9:00"}
+  ${FixEnd "2007-04-30-17:00"}
+}
+
+task t13 "Task 13" {
+  effort 4h
+  allocate r13
+  booking r13 2007-04-23-9:00 +5h { sloppy 2 }
+  ${FixStart "2007-04-23-9:00"}
+  ${FixEnd "2007-04-23-14:00"}
+}
+
+task t14 "Task 14" {
+  effort 4h
+  allocate r14
+  booking r14 2007-04-23-9:00 +5h { sloppy 2 }
+  ${FixStart "2007-04-23-9:00"}
+  ${FixEnd "2007-04-23-14:00"}
+}
+
+task t15 "Task 15" {
+  length 4h
+  allocate r15
+  booking r15 2007-04-23-9:00 +5h { sloppy 2 }
+  ${FixStart "2007-04-23-9:00"}
+  ${FixEnd "2007-04-23-14:00"}
+}
+
+task t16 "Task 16" {
+  length 5h
+  allocate r16
+  booking r16 2007-04-23-9:00 +5h { sloppy 2 }
+  ${FixStart "2007-04-23-9:00"}
+  ${FixEnd "2007-04-23-15:00"}
+}
+
+task t17 "Task 17" {
+  length 6h
+  allocate r17
+  booking r17 2007-04-23-9:00 +5h { sloppy 2 }
+  ${FixStart "2007-04-23-9:00"}
+  ${FixEnd "2007-04-23-16:00"}
+}
+
+task t18 "Task 18" {
+  duration 5h
+  allocate r18
+  booking r18 2007-04-23-9:00 +5h { sloppy 2 }
+  ${FixStart "2007-04-23-9:00"}
+  ${FixEnd "2007-04-23-14:00"}
+}
+
+task t19 "Task 19" {
+  duration 5h
+  allocate r19
+  booking r19 2007-04-23-9:00 +5h { sloppy 2 }
+  ${FixStart "2007-04-23-9:00"}
+  ${FixEnd "2007-04-23-14:00"}
+}
+
+task t20 "Task 20" {
+  duration 6h
+  allocate r20
+  booking r20 2007-04-23-9:00 +5h { sloppy 2 }
+  ${FixStart "2007-04-23-9:00"}
+  ${FixEnd "2007-04-23-15:00"}
+}
+
+taskreport booking "Booking" {
+  formats html
+	columns no, name, effort, hourly
+	hideresource 0
+}
+

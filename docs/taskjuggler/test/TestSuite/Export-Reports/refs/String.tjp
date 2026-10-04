@@ -1,0 +1,32 @@
+project prj "String Tests" "1.0" 2005-06-06-00:00-+0000 - 2005-06-26-00:00-+0000 {
+  timezone "America/Denver"
+  scenario plan "Plan Scenario" {
+    active yes
+  }
+}
+
+projectids prj
+
+resource tux "Tux \"The Penguing\" Tuxus"
+
+task items "Project Plan\\\\Breakdown" {
+  start 2005-06-06-15:00-+0000
+  end 2005-06-07-23:00-+0000
+  scheduling asap
+  scheduled
+}
+supplement task items {
+  booking tux 2005-06-06-15:00-+0000 + 8.0h,
+          2005-06-07-15:00-+0000 + 8.0h { overtime 2 }
+  priority 500
+  projectid prj
+}
+supplement resource tux {
+  workinghours sun off
+               workinghours mon 9:00 - 17:00
+               workinghours tue 9:00 - 17:00
+               workinghours wed 9:00 - 17:00
+               workinghours thu 9:00 - 17:00
+               workinghours fri 9:00 - 17:00
+               workinghours sat off
+}

@@ -1,0 +1,124 @@
+project "Test" 2011-08-01 +1m {
+  now 2011-08-15
+  trackingscenario plan
+}
+
+flags foo
+
+resource r1 "R1"
+resource r2 "R2"
+resource r3 "R3"
+resource r4 "R4"
+
+task t1 "T1" {
+  task t2 "T2" {
+    effort 1w
+    allocate r1
+  }
+  task t3 "T3" {
+    effort 1w
+    allocate r2
+    journalentry 2011-08-08 "r1 had to help out" {
+      author r2
+    }
+  }
+}
+
+# Timesheets 1st week
+timesheet r1 2011-08-01 +1w {
+  task t1.t2 {
+    work 3d
+    remaining 6d
+    status green "All good" {
+      summary "No problems found"
+      details "Work is progressing well"
+    }
+  }
+  task t1.t3 {
+    work 1d
+    remaining 2d
+    status yellow "Helped out" {
+      summary "r2 asked for d2"
+    }
+  }
+  newtask t4 "T4" {
+    work 1d
+    remaining 3d
+    status red "Big Problem" {
+      flags foo
+      summary "Had to help out"
+      details "Unplanned distraction"
+    }
+  }
+}
+timesheet r3 2011-08-01 +1w {
+  status yellow "Not feeling good" {
+    summary "Will see the doctor again"
+  }
+  newtask sick "Out sick" {
+    work 5d
+    remaining 2d
+    status green "Hope to feel better soon"
+  }
+}
+
+# Timesheet 2nd week
+timesheet r1 2011-08-08 +1w {
+  task t1.t2 {
+    work 5d
+    remaining 1d
+    status green "All ok"
+  }
+  task t1.t3 {
+    work 0d
+    remaining 2d
+    status red "Fire burning" {
+      details "It's really hot"
+    }
+  }
+}
+
+statussheet r4 2011-08-09 {
+  task t1 {
+    status green "Don't panik!"
+  }
+}
+
+macro columns [
+  columns name,
+          journal {
+            title "journal"
+            celltext 1 "<-query attribute='journal' journalmode='journal'->"
+          },
+          journal {
+            title "journal_sub"
+            celltext 1 "<-query attribute='journal' journalmode='journal_sub'->"
+          },
+          journal {
+            title "status_up"
+            celltext 1 "<-query attribute='journal' journalmode='status_up'->"
+          },
+          journal {
+            title "status_down"
+            celltext 1 "<-query attribute='journal' journalmode='status_down'->"
+          },
+          journal {
+            title "alerts_down"
+            celltext 1 "<-query attribute='journal' journalmode='alerts_down'->"
+          }
+]
+
+resourcereport "JournalMode-1" {
+  formats html, csv
+  journalmode journal
+  journalattributes *
+  ${columns}
+}
+
+taskreport "JournalMode-2" {
+  formats html, csv
+  journalmode journal
+  journalattributes *
+  ${columns}
+}
+

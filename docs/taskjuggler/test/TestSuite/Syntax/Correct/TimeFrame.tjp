@@ -1,0 +1,21 @@
+project "Simple Project" 2000-01-01-12:00 - 2000-01-04-18:00 {
+  timezone "America/Denver"
+}
+
+resource tux "Tux"
+
+task t1 "Task1" {
+  start 2000-01-01-12:00
+  length 1d
+}
+
+task t2 "Task2" {
+  start 2000-01-02
+  duration 1d
+}
+
+task t3 "Task3" {
+  start 2000-01-02
+  effort 1d
+  allocate tux
+}
