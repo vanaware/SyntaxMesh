@@ -7,13 +7,15 @@ import { TjArgumentError, } from "../attributes/errors.ts";
 export class ScenarioData implements AttributeContainer {
   private property: PropertyLike;
   private scenarioIdx: number;
-  private attributes: Map<string, unknown>;
+  private attributes: Map<string, AttributeBase<unknown>>;
+  private _values: Map<string, unknown>;
 
-  constructor(property: PropertyLike, scenarioIdx: number, attributes: Map<string, unknown>) {
+  constructor(property: PropertyLike, scenarioIdx: number, attributes: Map<string, AttributeBase<unknown>>) {
     this.property = property;
     this.scenarioIdx = scenarioIdx;
     // Use a separate Map for attribute values to avoid conflict with scenarioAttributes
     this.attributes = new Map();
+    this._values = new Map();
   }
 
   getProperty(): PropertyLike {
@@ -24,20 +26,21 @@ export class ScenarioData implements AttributeContainer {
     return this.scenarioIdx;
   }
 
-  getAttributes(): Map<string, unknown> {
+  getAttributes(): Map<string, AttributeBase<unknown>> {
     return this.attributes;
   }
 
   getStoredValue(attributeId: string): unknown {
-    return this.attributes.get(attributeId);
+    return this._values.get(attributeId) ?? null;
   }
 
   setStoredValue(attributeId: string, value: unknown): void {
-    this.attributes.set(attributeId, value);
+    this._values.set(attributeId, value);
   }
 
   a(attributeName: string): unknown {
-    return this.attributes.get(attributeName);
+    const attr = this.attributes.get(attributeName);
+    return attr?.get();
   }
 
   error(id: string, text: string, sfi?: string, property?: PropertyLike): void {
@@ -60,15 +63,6 @@ export class ScenarioData implements AttributeContainer {
   }
 
   /**
-   * TODO Fase 8: turnover completo.
-   *
-   * @see docs/taskjuggler/lib/taskjuggler/AccountScenario.rb:turnover
-   */
-  turnover(startIdx: number, endIdx: number): number {
-    throw new Error("NotYetImplementedError: Fase 8 - turnover");
-  }
-
-  /**
    * Pré-carrega atributos de cenário, criando cada AttributeBase
    * se ainda não existir. Usado pelos *Scenario constructors
    * (ADR 016) para replicar o comportamento do Ruby.
@@ -79,7 +73,8 @@ export class ScenarioData implements AttributeContainer {
       if (!aDef) {
         throw new TjArgumentError(`Unknown attribute '${id}'`);
       }
-      (this.property as any).getScenarioAttribute(this.scenarioIdx, id);
+      const attr = (this.property as any).getScenarioAttribute(this.scenarioIdx, id);
+      this.attributes.set(id, attr);
     }
   }
 }

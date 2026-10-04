@@ -30,8 +30,4 @@ export interface ProjectLike {
   addResource(r: Resource): void;
   addReport(r: Report): void;
   removeAccount(a: Account): void;
-
-  // Atributos de projeto (usados por inheritAttributes)
-  get(attributeId: string): unknown;
-  set(attributeId: string, value: unknown): void;
 }

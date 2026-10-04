@@ -53,7 +53,7 @@ import { DefinitionListAttribute, } from "./rich/definition-list-attribute.ts";
  *
  * @see docs/taskjuggler/lib/taskjuggler/AttributeDefinition.rb
  */
-export class AttributeDefinition<T,> {
+export class AttributeDefinition<T> {
   /**
    * ID do atributo (ex: "effort", "responsible").
    */
