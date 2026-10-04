@@ -27,6 +27,20 @@ export function registerShiftAttributes(propertySet: PropertySet): void {
     false, // inheritedFromProject
   ));
 
+  // id: ID (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
+  propertySet.addAttributeType(new AttributeDefinition(
+    "id",
+    "ID",
+    AttributeType.String,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    false, // inheritedFromParent
+    false, // inheritedFromProject
+  ));
+
   // index: Index (IntegerAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=-1)
   // Re-registra para sobrescrever o default 0 da base PropertySet (Ruby @shifts tem index default -1)
   propertySet.addAttributeType(new AttributeDefinition(
@@ -70,12 +84,40 @@ export function registerShiftAttributes(propertySet: PropertySet): void {
     false, // inheritedFromProject
   ));
 
-  // timezone: Time Zone (StringAttribute, inheritedFromParent=true, inheritedFromProject=true, isScenarioAttribute=true, default=currentTimeZone)
+  // name: Name (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
+  propertySet.addAttributeType(new AttributeDefinition(
+    "name",
+    "Name",
+    AttributeType.String,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    false, // inheritedFromParent
+    false, // inheritedFromProject
+  ));
+
+  // seqno: No (IntegerAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
+  propertySet.addAttributeType(new AttributeDefinition(
+    "seqno",
+    "No",
+    AttributeType.Integer,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    false, // inheritedFromParent
+    false, // inheritedFromProject
+  ));
+
+  // timezone: Time Zone (StringAttribute, inheritedFromParent=true, inheritedFromProject=true, isScenarioAttribute=true, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "timezone",
     "Time Zone",
     AttributeType.String,
-    currentTimeZone,
+    null,
     false, // userDefined
     false, // isList
     false, // isSingleton

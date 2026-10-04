@@ -1,0 +1,1713 @@
+{
+  "version": "1.0",
+  "description": "Golden test for AttributeDefinitions",
+  "generated_at": "2026-10-04T18:15:21Z",
+  "cases": [
+    {
+      "id": "accountroot",
+      "name": "Account Root",
+      "objClass": "TaskJuggler::PropertyAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "active",
+      "name": "Enabled",
+      "objClass": "TaskJuggler::BooleanAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": true,
+      "userDefined": false
+    },
+    {
+      "id": "aggregate",
+      "name": "Aggregate",
+      "objClass": "TaskJuggler::SymbolAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": "tasks",
+      "userDefined": false
+    },
+    {
+      "id": "allocate",
+      "name": "Allocations",
+      "objClass": "TaskJuggler::AllocationAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": [
+
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "alloctdeffort",
+      "name": "Alloctd. Effort",
+      "objClass": "TaskJuggler::FloatAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": 0.0,
+      "userDefined": false
+    },
+    {
+      "id": "assignedresources",
+      "name": "Assigned Resources",
+      "objClass": "TaskJuggler::ResourceListAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": [
+
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "auxdir",
+      "name": "Auxiliary files directory",
+      "objClass": "TaskJuggler::StringAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": true,
+      "scenarioSpecific": false,
+      "default": "",
+      "userDefined": false
+    },
+    {
+      "id": "booking",
+      "name": "Bookings",
+      "objClass": "TaskJuggler::BookingListAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": [
+
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "bsi",
+      "name": "BSI",
+      "objClass": "TaskJuggler::StringAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": "",
+      "userDefined": false
+    },
+    {
+      "id": "bsi",
+      "name": "BSI",
+      "objClass": "TaskJuggler::StringAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": "",
+      "userDefined": false
+    },
+    {
+      "id": "bsi",
+      "name": "BSI",
+      "objClass": "TaskJuggler::StringAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": "",
+      "userDefined": false
+    },
+    {
+      "id": "bsi",
+      "name": "BSI",
+      "objClass": "TaskJuggler::StringAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": "",
+      "userDefined": false
+    },
+    {
+      "id": "bsi",
+      "name": "BSI",
+      "objClass": "TaskJuggler::StringAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": "",
+      "userDefined": false
+    },
+    {
+      "id": "caption",
+      "name": "Caption",
+      "objClass": "TaskJuggler::RichTextAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "center",
+      "name": "Center",
+      "objClass": "TaskJuggler::RichTextAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "charge",
+      "name": "Charges",
+      "objClass": "TaskJuggler::ChargeListAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": [
+
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "chargeset",
+      "name": "Charge Sets",
+      "objClass": "TaskJuggler::ChargeSetListAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": [
+
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "chargeset",
+      "name": "Charge Sets",
+      "objClass": "TaskJuggler::ChargeSetListAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": [
+
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "columns",
+      "name": "Columns",
+      "objClass": "TaskJuggler::ColumnListAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": [
+
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "competitors",
+      "name": "Competitors",
+      "objClass": "TaskJuggler::TaskListAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": [
+
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "complete",
+      "name": "Completion",
+      "objClass": "TaskJuggler::FloatAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "costaccount",
+      "name": "Cost Account",
+      "objClass": "TaskJuggler::AccountAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": true,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "credits",
+      "name": "Credits",
+      "objClass": "TaskJuggler::AccountCreditListAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": [
+
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "criticalness",
+      "name": "Criticalness",
+      "objClass": "TaskJuggler::FloatAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": 0.0,
+      "userDefined": false
+    },
+    {
+      "id": "criticalness",
+      "name": "Criticalness",
+      "objClass": "TaskJuggler::FloatAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": 0.0,
+      "userDefined": false
+    },
+    {
+      "id": "currencyFormat",
+      "name": "Currency Format",
+      "objClass": "TaskJuggler::RealFormatAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": true,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "definitions",
+      "name": "Definitions",
+      "objClass": "TaskJuggler::DefinitionListAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": [
+        "*"
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "depends",
+      "name": "Preceding tasks",
+      "objClass": "TaskJuggler::DependencyListAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": [
+
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "directreports",
+      "name": "Direct Reports",
+      "objClass": "TaskJuggler::ResourceListAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": [
+
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "duration",
+      "name": "Duration",
+      "objClass": "TaskJuggler::DurationAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": 0,
+      "userDefined": false
+    },
+    {
+      "id": "duties",
+      "name": "Duties",
+      "objClass": "TaskJuggler::TaskListAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": [
+
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "efficiency",
+      "name": "Efficiency",
+      "objClass": "TaskJuggler::FloatAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": 1.0,
+      "userDefined": false
+    },
+    {
+      "id": "effort",
+      "name": "Total Effort",
+      "objClass": "TaskJuggler::IntegerAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": 0,
+      "userDefined": false
+    },
+    {
+      "id": "effort",
+      "name": "Effort",
+      "objClass": "TaskJuggler::DurationAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": 0,
+      "userDefined": false
+    },
+    {
+      "id": "effortdone",
+      "name": "Completed Effort",
+      "objClass": "TaskJuggler::IntegerAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "effortleft",
+      "name": "Remaining Effort",
+      "objClass": "TaskJuggler::IntegerAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "email",
+      "name": "Email",
+      "objClass": "TaskJuggler::StringAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "end",
+      "name": "End",
+      "objClass": "TaskJuggler::DateAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "end",
+      "name": "End",
+      "objClass": "TaskJuggler::DateAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": true,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "endpreds",
+      "name": "End Preds.",
+      "objClass": "TaskJuggler::TaskDepListAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": [
+
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "endsuccs",
+      "name": "End Succs.",
+      "objClass": "TaskJuggler::TaskDepListAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": [
+
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "epilog",
+      "name": "Epilog",
+      "objClass": "TaskJuggler::RichTextAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "fail",
+      "name": "Failure Conditions",
+      "objClass": "TaskJuggler::LogicalExpressionListAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": [
+
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "fail",
+      "name": "Failure Conditions",
+      "objClass": "TaskJuggler::LogicalExpressionListAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": [
+
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "flags",
+      "name": "Flags",
+      "objClass": "TaskJuggler::FlagListAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": [
+
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "flags",
+      "name": "Flags",
+      "objClass": "TaskJuggler::FlagListAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": [
+
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "flags",
+      "name": "Flags",
+      "objClass": "TaskJuggler::FlagListAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": [
+
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "flags",
+      "name": "Flags",
+      "objClass": "TaskJuggler::FlagListAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": [
+
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "footer",
+      "name": "Footer",
+      "objClass": "TaskJuggler::RichTextAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "formats",
+      "name": "Formats",
+      "objClass": "TaskJuggler::FormatListAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": [
+
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "forward",
+      "name": "Scheduling",
+      "objClass": "TaskJuggler::BooleanAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": true,
+      "userDefined": false
+    },
+    {
+      "id": "ganttBars",
+      "name": "Gantt Bars",
+      "objClass": "TaskJuggler::BooleanAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": true,
+      "userDefined": false
+    },
+    {
+      "id": "gauge",
+      "name": "Schedule gauge",
+      "objClass": "TaskJuggler::StringAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "header",
+      "name": "Header",
+      "objClass": "TaskJuggler::RichTextAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "headline",
+      "name": "Headline",
+      "objClass": "TaskJuggler::RichTextAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "height",
+      "name": "Height",
+      "objClass": "TaskJuggler::IntegerAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": 480,
+      "userDefined": false
+    },
+    {
+      "id": "hideAccount",
+      "name": "Hide Account",
+      "objClass": "TaskJuggler::LogicalExpressionAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "hideJournalEntry",
+      "name": "Hide JournalEntry",
+      "objClass": "TaskJuggler::LogicalExpressionAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "hideResource",
+      "name": "Hide Resource",
+      "objClass": "TaskJuggler::LogicalExpressionAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "hideTask",
+      "name": "Hide Task",
+      "objClass": "TaskJuggler::LogicalExpressionAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "id",
+      "name": "ID",
+      "objClass": "TaskJuggler::StringAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "id",
+      "name": "ID",
+      "objClass": "TaskJuggler::StringAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "id",
+      "name": "ID",
+      "objClass": "TaskJuggler::StringAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "id",
+      "name": "ID",
+      "objClass": "TaskJuggler::StringAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": "",
+      "userDefined": false
+    },
+    {
+      "id": "id",
+      "name": "ID",
+      "objClass": "TaskJuggler::StringAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "id",
+      "name": "ID",
+      "objClass": "TaskJuggler::StringAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "index",
+      "name": "Index",
+      "objClass": "TaskJuggler::IntegerAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": -1,
+      "userDefined": false
+    },
+    {
+      "id": "index",
+      "name": "Index",
+      "objClass": "TaskJuggler::IntegerAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": -1,
+      "userDefined": false
+    },
+    {
+      "id": "index",
+      "name": "Index",
+      "objClass": "TaskJuggler::IntegerAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": -1,
+      "userDefined": false
+    },
+    {
+      "id": "index",
+      "name": "Index",
+      "objClass": "TaskJuggler::IntegerAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": -1,
+      "userDefined": false
+    },
+    {
+      "id": "index",
+      "name": "Index",
+      "objClass": "TaskJuggler::IntegerAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": -1,
+      "userDefined": false
+    },
+    {
+      "id": "interactive",
+      "name": "Interactive",
+      "objClass": "TaskJuggler::BooleanAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": false,
+      "userDefined": false
+    },
+    {
+      "id": "journalAttributes",
+      "name": "Journal Attributes",
+      "objClass": "TaskJuggler::SymbolListAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": [
+        "*"
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "journalMode",
+      "name": "Journal Mode",
+      "objClass": "TaskJuggler::SymbolAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": "journal",
+      "userDefined": false
+    },
+    {
+      "id": "leaveallowances",
+      "name": "Leave Allowances",
+      "objClass": "TaskJuggler::LeaveAllowanceListAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": [
+
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "leaves",
+      "name": "Leaves",
+      "objClass": "TaskJuggler::LeaveListAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": true,
+      "scenarioSpecific": true,
+      "default": [
+
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "leaves",
+      "name": "Leaves",
+      "objClass": "TaskJuggler::LeaveListAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": true,
+      "scenarioSpecific": true,
+      "default": [
+
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "left",
+      "name": "Left",
+      "objClass": "TaskJuggler::RichTextAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "length",
+      "name": "Length",
+      "objClass": "TaskJuggler::DurationAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": 0,
+      "userDefined": false
+    },
+    {
+      "id": "limits",
+      "name": "Limits",
+      "objClass": "TaskJuggler::LimitsAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": true,
+      "scenarioSpecific": true,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "limits",
+      "name": "Limits",
+      "objClass": "TaskJuggler::LimitsAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "loadUnit",
+      "name": "Load Unit",
+      "objClass": "TaskJuggler::StringAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": true,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "managers",
+      "name": "Managers",
+      "objClass": "TaskJuggler::ResourceListAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": [
+
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "markdate",
+      "name": "Markdate",
+      "objClass": "TaskJuggler::DateAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": true,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "maxend",
+      "name": "Max. End",
+      "objClass": "TaskJuggler::DateAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "maxstart",
+      "name": "Max. Start",
+      "objClass": "TaskJuggler::DateAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "milestone",
+      "name": "Milestone",
+      "objClass": "TaskJuggler::BooleanAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": false,
+      "userDefined": false
+    },
+    {
+      "id": "minend",
+      "name": "Min. End",
+      "objClass": "TaskJuggler::DateAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "minstart",
+      "name": "Min. Start",
+      "objClass": "TaskJuggler::DateAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "name",
+      "name": "Name",
+      "objClass": "TaskJuggler::StringAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "name",
+      "name": "Name",
+      "objClass": "TaskJuggler::StringAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "name",
+      "name": "Name",
+      "objClass": "TaskJuggler::StringAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "name",
+      "name": "Name",
+      "objClass": "TaskJuggler::StringAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": "",
+      "userDefined": false
+    },
+    {
+      "id": "name",
+      "name": "Name",
+      "objClass": "TaskJuggler::StringAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "name",
+      "name": "Name",
+      "objClass": "TaskJuggler::StringAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "note",
+      "name": "Note",
+      "objClass": "TaskJuggler::RichTextAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "novevents",
+      "name": "No vevents in icalreports",
+      "objClass": "TaskJuggler::BooleanAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": false,
+      "userDefined": false
+    },
+    {
+      "id": "now",
+      "name": "Now",
+      "objClass": "TaskJuggler::DateAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": true,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "numberFormat",
+      "name": "Number Format",
+      "objClass": "TaskJuggler::RealFormatAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": true,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "openNodes",
+      "name": "Open Nodes",
+      "objClass": "TaskJuggler::NodeListAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "ownbookings",
+      "name": "Own Bookings",
+      "objClass": "TaskJuggler::BooleanAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": true,
+      "userDefined": false
+    },
+    {
+      "id": "pathcriticalness",
+      "name": "Path Criticalness",
+      "objClass": "TaskJuggler::FloatAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": 0.0,
+      "userDefined": false
+    },
+    {
+      "id": "precedes",
+      "name": "Following tasks",
+      "objClass": "TaskJuggler::DependencyListAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": [
+
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "priority",
+      "name": "Priority",
+      "objClass": "TaskJuggler::IntegerAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": true,
+      "scenarioSpecific": true,
+      "default": 500,
+      "userDefined": false
+    },
+    {
+      "id": "projectid",
+      "name": "Project ID",
+      "objClass": "TaskJuggler::SymbolAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": true,
+      "scenarioSpecific": true,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "projection",
+      "name": "Projection Mode",
+      "objClass": "TaskJuggler::BooleanAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": false,
+      "userDefined": false
+    },
+    {
+      "id": "projectionmode",
+      "name": "Projection Mode",
+      "objClass": "TaskJuggler::BooleanAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": false,
+      "userDefined": false
+    },
+    {
+      "id": "prolog",
+      "name": "Prolog",
+      "objClass": "TaskJuggler::RichTextAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "rate",
+      "name": "Rate",
+      "objClass": "TaskJuggler::FloatAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": true,
+      "scenarioSpecific": true,
+      "default": 0.0,
+      "userDefined": false
+    },
+    {
+      "id": "rawHtmlHead",
+      "name": "Raw HTML Header",
+      "objClass": "TaskJuggler::StringAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "replace",
+      "name": "Replace",
+      "objClass": "TaskJuggler::BooleanAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": false,
+      "userDefined": false
+    },
+    {
+      "id": "reports",
+      "name": "Reports",
+      "objClass": "TaskJuggler::ResourceListAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": [
+
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "resourceAttributes",
+      "name": "Resource Attributes",
+      "objClass": "TaskJuggler::FormatListAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": [
+        "*"
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "resourceroot",
+      "name": "resource Root",
+      "objClass": "TaskJuggler::PropertyAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "responsible",
+      "name": "Responsible",
+      "objClass": "TaskJuggler::ResourceListAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": [
+
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "revenueaccount",
+      "name": "Revenue Account",
+      "objClass": "TaskJuggler::AccountAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": true,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "right",
+      "name": "Right",
+      "objClass": "TaskJuggler::RichTextAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "rollupAccount",
+      "name": "Rollup Account",
+      "objClass": "TaskJuggler::LogicalExpressionAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "rollupResource",
+      "name": "Rollup Resource",
+      "objClass": "TaskJuggler::LogicalExpressionAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "rollupTask",
+      "name": "Rollup Task",
+      "objClass": "TaskJuggler::LogicalExpressionAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "scenarios",
+      "name": "Scenarios",
+      "objClass": "TaskJuggler::ScenarioListAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": [
+        0
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "scheduled",
+      "name": "Scheduled",
+      "objClass": "TaskJuggler::BooleanAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": false,
+      "userDefined": false
+    },
+    {
+      "id": "selfcontained",
+      "name": "Selfcontained",
+      "objClass": "TaskJuggler::BooleanAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": false,
+      "userDefined": false
+    },
+    {
+      "id": "seqno",
+      "name": "No",
+      "objClass": "TaskJuggler::IntegerAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "seqno",
+      "name": "No",
+      "objClass": "TaskJuggler::IntegerAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "seqno",
+      "name": "No",
+      "objClass": "TaskJuggler::IntegerAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "seqno",
+      "name": "No",
+      "objClass": "TaskJuggler::IntegerAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "seqno",
+      "name": "No",
+      "objClass": "TaskJuggler::IntegerAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "seqno",
+      "name": "No",
+      "objClass": "TaskJuggler::IntegerAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "shifts",
+      "name": "Shifts",
+      "objClass": "TaskJuggler::ShiftAssignmentsAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "shifts",
+      "name": "Shifts",
+      "objClass": "TaskJuggler::ShiftAssignmentsAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "shortTimeFormat",
+      "name": "Short Time Format",
+      "objClass": "TaskJuggler::StringAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": true,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "sortAccounts",
+      "name": "Sort Accounts",
+      "objClass": "TaskJuggler::SortListAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": [
+        [
+          "seqno",
+          true,
+          -1
+        ]
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "sortJournalEntries",
+      "name": "Sort Journal Entries",
+      "objClass": "TaskJuggler::JournalSortListAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": [
+        [
+          "alert",
+          1
+        ],
+        [
+          "date",
+          1
+        ],
+        [
+          "seqno",
+          1
+        ]
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "sortResources",
+      "name": "Sort Resources",
+      "objClass": "TaskJuggler::SortListAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": [
+        [
+          "seqno",
+          true,
+          -1
+        ]
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "sortTasks",
+      "name": "Sort Tasks",
+      "objClass": "TaskJuggler::SortListAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": [
+        [
+          "seqno",
+          true,
+          -1
+        ]
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "start",
+      "name": "Start",
+      "objClass": "TaskJuggler::DateAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "start",
+      "name": "Start",
+      "objClass": "TaskJuggler::DateAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": true,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "startpreds",
+      "name": "Start Preds.",
+      "objClass": "TaskJuggler::TaskDepListAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": [
+
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "startsuccs",
+      "name": "Start Succs.",
+      "objClass": "TaskJuggler::TaskDepListAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": [
+
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "status",
+      "name": "Task Status",
+      "objClass": "TaskJuggler::StringAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": "",
+      "userDefined": false
+    },
+    {
+      "id": "taskAttributes",
+      "name": "Task Attributes",
+      "objClass": "TaskJuggler::FormatListAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": [
+        "*"
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "taskroot",
+      "name": "Task Root",
+      "objClass": "TaskJuggler::PropertyAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "timeFormat",
+      "name": "Time Format",
+      "objClass": "TaskJuggler::StringAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": true,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "timeOffId",
+      "name": "Time Off ID",
+      "objClass": "TaskJuggler::StringAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "timeOffName",
+      "name": "Time Off Name",
+      "objClass": "TaskJuggler::StringAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "timezone",
+      "name": "Time Zone",
+      "objClass": "TaskJuggler::StringAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": true,
+      "scenarioSpecific": true,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "timezone",
+      "name": "Time Zone",
+      "objClass": "TaskJuggler::StringAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": true,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "title",
+      "name": "Title",
+      "objClass": "TaskJuggler::StringAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "tree",
+      "name": "Tree Index",
+      "objClass": "TaskJuggler::StringAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": "",
+      "userDefined": false
+    },
+    {
+      "id": "tree",
+      "name": "Tree Index",
+      "objClass": "TaskJuggler::StringAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": "",
+      "userDefined": false
+    },
+    {
+      "id": "tree",
+      "name": "Tree Index",
+      "objClass": "TaskJuggler::StringAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": "",
+      "userDefined": false
+    },
+    {
+      "id": "tree",
+      "name": "Tree Index",
+      "objClass": "TaskJuggler::StringAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": "",
+      "userDefined": false
+    },
+    {
+      "id": "tree",
+      "name": "Tree Index",
+      "objClass": "TaskJuggler::StringAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": "",
+      "userDefined": false
+    },
+    {
+      "id": "warn",
+      "name": "Warning Condition",
+      "objClass": "TaskJuggler::LogicalExpressionListAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": [
+
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "warn",
+      "name": "Warning Condition",
+      "objClass": "TaskJuggler::LogicalExpressionListAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": [
+
+      ],
+      "userDefined": false
+    },
+    {
+      "id": "weekStartsMonday",
+      "name": "Week Starts Monday",
+      "objClass": "TaskJuggler::BooleanAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": true,
+      "scenarioSpecific": false,
+      "default": false,
+      "userDefined": false
+    },
+    {
+      "id": "width",
+      "name": "Width",
+      "objClass": "TaskJuggler::IntegerAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": 640,
+      "userDefined": false
+    },
+    {
+      "id": "workinghours",
+      "name": "Working Hours",
+      "objClass": "TaskJuggler::WorkingHoursAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": true,
+      "scenarioSpecific": true,
+      "default": null,
+      "userDefined": false
+    },
+    {
+      "id": "workinghours",
+      "name": "Working Hours",
+      "objClass": "TaskJuggler::WorkingHoursAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": true,
+      "scenarioSpecific": true,
+      "default": null,
+      "userDefined": false
+    }
+  ]
+}
+

@@ -22,10 +22,10 @@ export function registerReportAttributes(propertySet: PropertySet): void {
     false, // inheritedFromProject
   ));
 
-  // auxdir: Aux. Dir. (StringAttribute, inheritedFromParent=true, inheritedFromProject=true, isScenarioAttribute=false, default="")
+  // auxdir: Auxiliary files directory (StringAttribute, inheritedFromParent=true, inheritedFromProject=true, isScenarioAttribute=false, default="")
   propertySet.addAttributeType(new AttributeDefinition(
     "auxdir",
-    "Aux. Dir.",
+    "Auxiliary files directory",
     AttributeType.String,
     "",
     false, // userDefined
@@ -148,10 +148,10 @@ export function registerReportAttributes(propertySet: PropertySet): void {
     true, // inheritedFromProject
   ));
 
-  // markdate: Mark Date (DateAttribute, inheritedFromParent=true, inheritedFromProject=true, isScenarioAttribute=false, default=nil)
+  // markdate: Markdate (DateAttribute, inheritedFromParent=true, inheritedFromProject=true, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "markdate",
-    "Mark Date",
+    "Markdate",
     AttributeType.Date,
     null,
     false, // userDefined
@@ -176,7 +176,7 @@ export function registerReportAttributes(propertySet: PropertySet): void {
     false, // inheritedFromProject
   ));
 
-  // flags: Flags (FlagListAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=[])
+  // flags: Flags (FlagListAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=true, default=[])
   propertySet.addAttributeType(new AttributeDefinition(
     "flags",
     "Flags",
@@ -185,7 +185,7 @@ export function registerReportAttributes(propertySet: PropertySet): void {
     false, // userDefined
     false, // isList
     false, // isSingleton
-    false, // isScenarioAttribute
+    true, // isScenarioAttribute
     true, // inheritedFromParent
     false, // inheritedFromProject
   ));
@@ -274,10 +274,10 @@ export function registerReportAttributes(propertySet: PropertySet): void {
     false, // inheritedFromProject
   ));
 
-  // hideJournalEntry: Hide Journal Entry (LogicalExpressionAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
+  // hideJournalEntry: Hide JournalEntry (LogicalExpressionAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "hideJournalEntry",
-    "Hide Journal Entry",
+    "Hide JournalEntry",
     AttributeType.LogicalExpression,
     null,
     false, // userDefined
@@ -498,10 +498,10 @@ export function registerReportAttributes(propertySet: PropertySet): void {
     false, // inheritedFromProject
   ));
 
-  // rawHtmlHead: Raw HTML Head (StringAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
+  // rawHtmlHead: Raw HTML Header (StringAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "rawHtmlHead",
-    "Raw HTML Head",
+    "Raw HTML Header",
     AttributeType.String,
     null,
     false, // userDefined
@@ -526,10 +526,10 @@ export function registerReportAttributes(propertySet: PropertySet): void {
     false, // inheritedFromProject
   ));
 
-  // resourceroot: Resource Root (PropertyAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
+  // resourceroot: resource Root (PropertyAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "resourceroot",
-    "Resource Root",
+    "resource Root",
     AttributeType.Property,
     null,
     false, // userDefined
@@ -624,10 +624,10 @@ export function registerReportAttributes(propertySet: PropertySet): void {
     false, // inheritedFromProject
   ));
 
-  // selfcontained: Self Contained (BooleanAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=false)
+  // selfcontained: Selfcontained (BooleanAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=false)
   propertySet.addAttributeType(new AttributeDefinition(
     "selfcontained",
-    "Self Contained",
+    "Selfcontained",
     AttributeType.Boolean,
     false,
     false, // userDefined
@@ -638,10 +638,10 @@ export function registerReportAttributes(propertySet: PropertySet): void {
     false, // inheritedFromProject
   ));
 
-  // seqno: Seqno (IntegerAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
+  // seqno: No (IntegerAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "seqno",
-    "Seqno",
+    "No",
     AttributeType.Integer,
     null,
     false, // userDefined
@@ -876,10 +876,10 @@ export function registerReportAttributes(propertySet: PropertySet): void {
     false, // inheritedFromProject
   ));
 
-  // novevents: No Events (BooleanAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=false)
+  // novevents: No vevents in icalreports (BooleanAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=false)
   propertySet.addAttributeType(new AttributeDefinition(
     "novevents",
-    "No Events",
+    "No vevents in icalreports",
     AttributeType.Boolean,
     false,
     false, // userDefined

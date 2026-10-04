@@ -4,7 +4,7 @@ import { AttributeType, } from "../../attributes/attribute-type.ts";
 import { BooleanAttribute, } from "../../attributes/scalar/boolean-attribute.ts";
 
 /**
- * Registra os atributos específicos de cenário (3 atributos).
+ * Registra os atributos específicos de cenário (6 atributos).
  *
  * @see docs/taskjuggler/lib/taskjuggler/Scenario.rb
  */
@@ -29,6 +29,48 @@ export function registerScenarioAttributes(propertySet: PropertySet): void {
     "Own Bookings",
     AttributeType.Boolean,
     true,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    false, // inheritedFromParent
+    false, // inheritedFromProject
+  ));
+
+  // id: ID (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
+  propertySet.addAttributeType(new AttributeDefinition(
+    "id",
+    "ID",
+    AttributeType.String,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    false, // inheritedFromParent
+    false, // inheritedFromProject
+  ));
+
+  // name: Name (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
+  propertySet.addAttributeType(new AttributeDefinition(
+    "name",
+    "Name",
+    AttributeType.String,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    false, // inheritedFromParent
+    false, // inheritedFromProject
+  ));
+
+  // seqno: No (IntegerAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
+  propertySet.addAttributeType(new AttributeDefinition(
+    "seqno",
+    "No",
+    AttributeType.Integer,
+    null,
     false, // userDefined
     false, // isList
     false, // isSingleton

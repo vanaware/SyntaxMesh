@@ -96,7 +96,7 @@ describe("ReportAttributes", () => {
       assertEquals(attrDef.userDefined, false);
       assertEquals(attrDef.isList, false);
       assertEquals(attrDef.isSingleton, false);
-      assertEquals(attrDef.isScenarioAttribute, false);
+      assertEquals(attrDef.isScenarioAttribute, true);
       assertEquals(attrDef.inheritedFromParent, true);
       assertEquals(attrDef.inheritedFromProject, false);
     },);
@@ -250,7 +250,7 @@ describe("ReportAttributes", () => {
       const attrDef = ps.attributeDefinition("novevents");
       assert(attrDef !== undefined, "novevents deve estar registrado");
       assertEquals(attrDef.id, "novevents");
-      assertEquals(attrDef.name, "No Events");
+      assertEquals(attrDef.name, "No vevents in icalreports");
       assertEquals(attrDef.type, AttributeType.Boolean);
       assertEquals(attrDef.defaultValue, false);
       assertEquals(attrDef.userDefined, false);

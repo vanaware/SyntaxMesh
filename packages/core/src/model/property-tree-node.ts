@@ -249,7 +249,7 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
     let current: PropertyTreeNode | null = this;
     while (current) {
       const parent = current.parents()[0];
-      if (parent) {
+      if (parent && parent.propertySet.knownAttribute('index')) {
         const index = parent.get('index');
         if (index !== null && index !== undefined && index !== 0) {
           indices.unshift(index as number);

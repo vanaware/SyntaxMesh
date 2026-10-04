@@ -42,6 +42,20 @@ export function registerAccountAttributes(propertySet: PropertySet): void {
     false, // inheritedFromProject
   ));
 
+  // id: ID (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
+  propertySet.addAttributeType(new AttributeDefinition(
+    "id",
+    "ID",
+    AttributeType.String,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    false, // inheritedFromParent
+    false, // inheritedFromProject
+  ));
+
   // aggregate: Aggregate (SymbolAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=false, default=:tasks)
   propertySet.addAttributeType(new AttributeDefinition(
     "aggregate",
@@ -81,6 +95,34 @@ export function registerAccountAttributes(propertySet: PropertySet): void {
     false, // isSingleton
     true, // isScenarioAttribute
     true, // inheritedFromParent
+    false, // inheritedFromProject
+  ));
+
+  // name: Name (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
+  propertySet.addAttributeType(new AttributeDefinition(
+    "name",
+    "Name",
+    AttributeType.String,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    false, // inheritedFromParent
+    false, // inheritedFromProject
+  ));
+
+  // seqno: No (IntegerAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
+  propertySet.addAttributeType(new AttributeDefinition(
+    "seqno",
+    "No",
+    AttributeType.Integer,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    false, // inheritedFromParent
     false, // inheritedFromProject
   ));
 

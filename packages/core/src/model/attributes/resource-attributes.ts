@@ -34,6 +34,34 @@ export function registerResourceAttributes(propertySet: PropertySet): void {
     false, // inheritedFromProject
   ));
 
+  // id: ID (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
+  propertySet.addAttributeType(new AttributeDefinition(
+    "id",
+    "ID",
+    AttributeType.String,
+    "",
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    false, // inheritedFromParent
+    false, // inheritedFromProject
+  ));
+
+  // name: Name (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
+  propertySet.addAttributeType(new AttributeDefinition(
+    "name",
+    "Name",
+    AttributeType.String,
+    "",
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
+    false, // inheritedFromParent
+    false, // inheritedFromProject
+  ));
+
   // index: Index (IntegerAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=-1)
   // Re-registra para sobrescrever o default 0 da base PropertySet (Ruby @resources tem index default -1)
   propertySet.addAttributeType(new AttributeDefinition(
@@ -269,6 +297,20 @@ export function registerResourceAttributes(propertySet: PropertySet): void {
     false, // isList
     false, // isSingleton
     true, // isScenarioAttribute
+    false, // inheritedFromParent
+    false, // inheritedFromProject
+  ));
+
+  // seqno: No (IntegerAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
+  propertySet.addAttributeType(new AttributeDefinition(
+    "seqno",
+    "No",
+    AttributeType.Integer,
+    null,
+    false, // userDefined
+    false, // isList
+    false, // isSingleton
+    false, // isScenarioAttribute
     false, // inheritedFromParent
     false, // inheritedFromProject
   ));

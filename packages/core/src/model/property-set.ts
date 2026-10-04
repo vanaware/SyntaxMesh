@@ -29,10 +29,7 @@ export class PropertySet {
       "name", "Name", AttributeType.String, "", false, false, false, false,
     ));
     this.addAttributeType(new AttributeDefinition(
-      "seqno", "Seq. No", AttributeType.Integer, 0, false, false, true, false,
-    ));
-    this.addAttributeType(new AttributeDefinition(
-      "index", "Index", AttributeType.Integer, 0, false, false, true, false,
+      "seqno", "Seq. No", AttributeType.Integer, 0, false, false, false, false,
     ));
   }
 

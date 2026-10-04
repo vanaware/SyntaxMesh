@@ -128,6 +128,12 @@ export function registerTaskAttributes(propertySet: PropertySet): void {
     null, false, false, false, true, false, false,
   ));
 
+  // bsi: BSI (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
+  propertySet.addAttributeType(new AttributeDefinition(
+    "bsi", "BSI", AttributeType.String,
+    "", false, false, false, false, false, false,
+  ));
+
   // id: ID (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(new AttributeDefinition(
     "id", "ID", AttributeType.String,
@@ -138,6 +144,18 @@ export function registerTaskAttributes(propertySet: PropertySet): void {
   propertySet.addAttributeType(new AttributeDefinition(
     "index", "Index", AttributeType.Integer,
     -1, false, false, false, false, false, false,
+  ));
+
+  // name: Name (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
+  propertySet.addAttributeType(new AttributeDefinition(
+    "name", "Name", AttributeType.String,
+    null, false, false, false, false, false, false,
+  ));
+
+  // seqno: No (IntegerAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
+  propertySet.addAttributeType(new AttributeDefinition(
+    "seqno", "No", AttributeType.Integer,
+    null, false, false, false, false, false, false,
   ));
 
   // length: Length (DurationAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=true, default=0)
@@ -180,12 +198,6 @@ export function registerTaskAttributes(propertySet: PropertySet): void {
   propertySet.addAttributeType(new AttributeDefinition(
     "minstart", "Min. Start", AttributeType.Date,
     null, false, false, false, true, true, false,
-  ));
-
-  // name: Name (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
-  propertySet.addAttributeType(new AttributeDefinition(
-    "name", "Name", AttributeType.String,
-    null, false, false, false, false, false, false,
   ));
 
   // note: Note (RichTextAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=nil)

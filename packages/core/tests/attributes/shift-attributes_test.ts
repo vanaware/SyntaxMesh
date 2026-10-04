@@ -132,7 +132,7 @@ describe("ShiftAttributes", () => {
       assertEquals(attrDef.id, "timezone");
       assertEquals(attrDef.name, "Time Zone");
       assertEquals(attrDef.type, AttributeType.String);
-      assertEquals(attrDef.defaultValue, "UTC");
+      assertEquals(attrDef.defaultValue, null);
       assertEquals(attrDef.userDefined, false);
       assertEquals(attrDef.isList, false);
       assertEquals(attrDef.isSingleton, false);

@@ -6,6 +6,7 @@ import { registerResourceAttributes, } from "../../src/model/attributes/resource
 import { registerAccountAttributes, } from "../../src/model/attributes/account-attributes.ts";
 import { registerShiftAttributes, } from "../../src/model/attributes/shift-attributes.ts";
 import { registerReportAttributes, } from "../../src/model/attributes/report-attributes.ts";
+import { registerScenarioAttributes, } from "../../src/model/attributes/scenario-attributes.ts";
 
 /**
  * Projeto mock para testes da Fase 5+.
@@ -47,6 +48,7 @@ export class MockProject implements ProjectLike {
     registerAccountAttributes(this.accounts);
     registerShiftAttributes(this.shifts);
     registerReportAttributes(this.reports);
+    registerScenarioAttributes(this.scenarios);
   }
 
   get scenarioCount(): number {
