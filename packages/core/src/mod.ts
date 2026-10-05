@@ -9,22 +9,18 @@
 export const CORE_VERSION = "0.0.0-placeholder";
 
 // Export time module
-export * from "./time/tj-time.ts";
-export * from "./time/timezone.ts";
-export * from "./time/interval.ts";
-export * from "./time/interval-list.ts";
-export * from "./time/time-interval.ts";
-export * from "./time/scoreboard-interval.ts";
-export * from "./time/scoreboard.ts";
+export * from "./time/mod.ts";
 // Export calendar module
 export * from "./calendar/working-hours.ts";
 // Export format module
 export * from "./format/real-format.ts";
 // Export compat
 export * from "./compat.ts";
+// Export scheduling module
+export * from "./scheduling/mod.ts";
 // Export model module
 export * from "./model/mod.ts";
 // Export attributes module
 export * from "./attributes/mod.ts";
 // Export utils module
-export * from "./utils/deep-clone.ts";
+export * from "./utils/mod.ts";

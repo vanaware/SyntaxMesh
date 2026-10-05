@@ -74,7 +74,7 @@ O que foi decidido? Seja específico e acionável.
 | 014 | Attribute mode global em TypeScript | Aceito | 2026-09-12 |
 | 015 | Metaprogramação em PropertyTreeNode | Aceito | 2026-09-12 |
 | 016 | Pré-carregamento de atributos em `*Scenario` | Aceito | 2026-10-01 |
-| 017 | Scoreboard bit encoding em TypeScript | Proposto | — |
+| 017 | Scoreboard bit encoding em TypeScript | Concluído | 2026-10-04 |
 | 018 | Heurística do scheduler TaskJuggler | Proposto | — |
 | 019 | Modelo financeiro em TypeScript | Proposto | — |
 | 020 | Orquestrador e pipeline de scheduling | Proposto | — |
