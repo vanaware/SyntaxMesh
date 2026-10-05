@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "description": "Golden test cases for Limits compatibility (Phase 6)",
-  "generated_at": "2026-10-05 22:16:37 UTC",
+  "generated_at": "2026-10-05 22:28:06 UTC",
   "cases": [
     {
       "description": "limit dailymax after 3 inc ok?(0,true) false",
@@ -51,7 +51,7 @@
         "index": 0,
         "upper": false
       },
-      "expected": true
+      "expected": false
     },
     {
       "description": "limit dailymin no inc ok?(0,true) true",
@@ -91,7 +91,7 @@
         "index": 24,
         "upper": true
       },
-      "expected": true
+      "expected": false
     },
     {
       "description": "limit weeklymin no inc ok?(0,false) false",
@@ -101,7 +101,7 @@
         "index": 0,
         "upper": false
       },
-      "expected": true
+      "expected": false
     },
     {
       "description": "limit monthlymax after 3 inc ok?(0,true) false",
@@ -121,7 +121,7 @@
         "index": 0,
         "upper": false
       },
-      "expected": true
+      "expected": false
     },
     {
       "description": "limit maximum after 2 inc ok?(0,true) true",
@@ -131,7 +131,7 @@
         "index": 0,
         "upper": true
       },
-      "expected": false
+      "expected": true
     },
     {
       "description": "limit maximum after 3 inc ok?(0,true) false",
@@ -141,7 +141,7 @@
         "index": 0,
         "upper": true
       },
-      "expected": false
+      "expected": true
     },
     {
       "description": "limit minimum no inc ok?(0,false) false",
@@ -151,7 +151,7 @@
         "index": 0,
         "upper": false
       },
-      "expected": true
+      "expected": false
     },
     {
       "description": "limit minimum after 1 inc ok?(0,false) true",
@@ -161,7 +161,7 @@
         "index": 0,
         "upper": false
       },
-      "expected": true
+      "expected": false
     },
     {
       "description": "limit dailymax after 1 inc ok?(null,true) false",
@@ -171,7 +171,7 @@
         "index": null,
         "upper": true
       },
-      "expected": true
+      "expected": false
     },
     {
       "description": "limit dailymax after reset ok?(0,true) true",

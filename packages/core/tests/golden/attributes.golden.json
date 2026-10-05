@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "description": "Golden test cases for Attribute attributes (Phase 3)",
-  "generated_at": "2026-10-05 22:16:36 UTC",
+  "generated_at": "2026-10-05 22:28:05 UTC",
   "cases": [
     {
       "description": "StringAttribute to_tjp com texto simples",

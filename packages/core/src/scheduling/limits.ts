@@ -148,34 +148,38 @@ export class Limit {
       return true;
     }
 
-    const checkAll = index === null;
-    const startIdx = this.interval.start;
-    const endIdx = this.interval.end;
-
-    for (let idx = startIdx; idx <= endIdx; idx++) {
-      if (!checkAll) {
-        const targetIdx = typeof index === "number" ? index : this.interval.dateToIndex(index,);
-        if (idx !== targetIdx) {
-          continue;
+    if (index === null) {
+      // Verificar todos os slots
+      for (let i = 0; i < this.scoreboard.size; i++) {
+        const value = this.scoreboard.get(i,);
+        if (this.upper) {
+          if (value >= this.value) {
+            return false;
+          }
+        } else {
+          if (value < this.value) {
+            return false;
+          }
         }
       }
-
-      const value = this.scoreboard.get(idx,);
-
-      if (this.upper) {
-        // Limite superior: valor deve ser < this.value
-        if (value >= this.value) {
-          return false;
-        }
-      } else {
-        // Limite inferior: valor deve ser >= this.value
-        if (value < this.value) {
-          return false;
-        }
-      }
+      return true;
     }
 
-    return true;
+    const targetIdx = typeof index === "number" ? index : this.interval.dateToIndex(index,);
+    if (!this.interval.contains(targetIdx,)) {
+      return true;
+    }
+
+    const sbIdx = this.idxToSbIdx(targetIdx);
+    const value = this.scoreboard.get(sbIdx,);
+
+    if (this.upper) {
+      // Limite superior: valor deve ser < this.value
+      return value < this.value;
+    } else {
+      // Limite inferior: valor deve ser >= this.value
+      return value >= this.value;
+    }
   }
 
   /**
