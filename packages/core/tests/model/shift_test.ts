@@ -3,6 +3,8 @@ import { assertEquals, assert } from "@std/assert";
 import { MockProject } from "./mock-project.ts";
 import { Shift } from "../../src/model/shift.ts";
 import { ShiftScenario } from "../../src/model/shift-scenario.ts";
+import { WorkingHours } from "../../src/calendar/working-hours.ts";
+import { TjTime } from "../../src/time/tj-time.ts";
 
 describe("Shift", () => {
   let project: MockProject;
@@ -45,19 +47,19 @@ describe("Shift", () => {
     const shift = new Shift(project, "shift1", "Shift 1", null);
     const scenario = shift.scenarioData(0);
     assert(scenario instanceof ShiftScenario);
-    // ShiftScenario does NOT preload attributes (per task list 5.5.5)
-    assert(scenario.a("workinghours") === undefined);
-    assert(scenario.a("leaves") === undefined);
-    assert(scenario.a("replace") === undefined);
+    // ShiftScenario pré-carrega workinghours, replace, leaves (Fase 6.4)
+    assert(scenario.a("workinghours") !== undefined);
+    assert(scenario.a("leaves") !== undefined);
+    assert(scenario.a("replace") !== undefined);
   });
 
   it("cenario pré-carrega atributos", () => {
     const shift = new Shift(project, "shift1", "Shift 1", null);
     const scenario = shift.scenarioData(0);
-    // ShiftScenario does NOT preload attributes (per task list 5.5.5)
-    assert(scenario.a("workinghours") === undefined);
-    assert(scenario.a("leaves") === undefined);
-    assert(scenario.a("replace") === undefined);
+    // ShiftScenario pré-carrega workinghours, replace, leaves (Fase 6.4)
+    assert(scenario.a("workinghours") !== undefined);
+    assert(scenario.a("leaves") !== undefined);
+    assert(scenario.a("replace") !== undefined);
   });
 
   it("getScenarioAttribute pré-carrega atributo", () => {
@@ -179,5 +181,61 @@ describe("Shift", () => {
     const shift = new Shift(project2, "parent.child", "Child", null);
     assertEquals(shift.fullId, "parent.child");
     assertEquals(shift.subId, "parent.child");
+  });
+});
+
+describe("ShiftScenario", () => {
+  let project: MockProject;
+  let shift: Shift;
+  let shiftScenario: ShiftScenario;
+
+  beforeEach(() => {
+    project = new MockProject(2);
+    shift = new Shift(project, "shift1", "Shift 1", null);
+    shiftScenario = shift.scenarioData(0);
+  });
+
+  it("onShift? retorna true para slot de tempo de trabalho", () => {
+    const start = new Date("2026-01-05T00:00:00Z");
+    const end = new Date("2026-01-12T00:00:00Z");
+    const wh = new WorkingHours(3600, start, end);
+    wh.setWorkingHours(1, [[9 * 60 * 60, 17 * 60 * 60]]);
+    shift.setForScenario("workinghours", wh, 0);
+
+    const monday10am = TjTime.fromDate(new Date("2026-01-05T10:00:00Z"));
+    assertEquals(shiftScenario.onShift(monday10am), true);
+
+    const monday8pm = TjTime.fromDate(new Date("2026-01-05T20:00:00Z"));
+    assertEquals(shiftScenario.onShift(monday8pm), false);
+
+    const sunday10am = TjTime.fromDate(new Date("2026-01-04T10:00:00Z"));
+    assertEquals(shiftScenario.onShift(sunday10am), false);
+  });
+
+  it("onShift? retorna true para slot sem workinghours", () => {
+    const monday10am = TjTime.fromDate(new Date("2026-01-05T10:00:00Z"));
+    assertEquals(shiftScenario.onShift(monday10am), true);
+  });
+
+  it("replace? retorna true quando definido", () => {
+    shift.setForScenario("replace", true, 0);
+    assertEquals(shiftScenario.replace(), true);
+  });
+
+  it("replace? retorna false quando não definido", () => {
+    assertEquals(shiftScenario.replace(), false);
+  });
+
+  it("onLeave? retorna true para slot com leave", () => {
+    const leaveInterval = { contains: (_date: TjTime) => true };
+    shift.setForScenario("leaves", [{ interval: leaveInterval }], 0);
+
+    const date = TjTime.fromDate(new Date("2026-01-05T12:00:00Z"));
+    assertEquals(shiftScenario.onLeave(date), true);
+  });
+
+  it("onLeave? retorna false para slot sem leave", () => {
+    const date = TjTime.fromDate(new Date("2026-01-05T12:00:00Z"));
+    assertEquals(shiftScenario.onLeave(date), false);
   });
 });

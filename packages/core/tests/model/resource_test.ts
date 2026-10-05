@@ -3,6 +3,12 @@ import { assertEquals, assert } from "@std/assert";
 import { MockProject } from "./mock-project.ts";
 import { Resource } from "../../src/model/resource.ts";
 import { ResourceScenario } from "../../src/model/resource-scenario.ts";
+import { WorkingHours } from "../../src/calendar/working-hours.ts";
+import { Shift } from "../../src/model/shift.ts";
+import { ShiftScenario } from "../../src/model/shift-scenario.ts";
+import { ShiftAssignment, ShiftAssignments } from "../../src/scheduling/shift-assignments.ts";
+import { TimeInterval } from "../../src/time/time-interval.ts";
+import { TjTime } from "../../src/time/tj-time.ts";
 
 describe("Resource", () => {
   let project: MockProject;
@@ -175,5 +181,63 @@ describe("Resource", () => {
     const resource = new Resource(project2, "parent.child", "Child", null);
     assertEquals(resource.fullId, "parent.child");
     assertEquals(resource.subId, "parent.child");
+  });
+});
+
+describe("ResourceScenario.onShift?", () => {
+  let project: MockProject;
+  let resource: Resource;
+  let scenario: ResourceScenario;
+
+  beforeEach(() => {
+    project = new MockProject(2);
+    project.set("start", TjTime.fromDate(new Date("2026-01-01T00:00:00Z")));
+    project.set("scheduleGranularity", 3600);
+    resource = new Resource(project, "res1", "Resource 1", null);
+    scenario = resource.scenarioData(0);
+    ShiftAssignments.sbClear();
+  });
+
+  it("usa workinghours quando shifts não atribuídos", () => {
+    const start = new Date("2026-01-01T00:00:00Z");
+    const end = new Date("2026-01-08T00:00:00Z");
+    const wh = new WorkingHours(3600, start, end);
+    wh.setWorkingHours(1, [[9 * 60 * 60, 17 * 60 * 60]]);
+    resource.setForScenario("workinghours", wh, 0);
+
+    // sbIdx 10 = 2026-01-01T10:00Z (Monday 10am)
+    assertEquals(scenario.onShift(10), true);
+    // sbIdx 20 = 2026-01-01T20:00Z (Monday 8pm)
+    assertEquals(scenario.onShift(20), false);
+    // sbIdx 0 = 2026-01-01T00:00Z (Tuesday midnight)
+    assertEquals(scenario.onShift(0), false);
+  });
+
+  it("retorna true quando workinghours ausente", () => {
+    assertEquals(scenario.onShift(10), true);
+  });
+
+  it("prioriza shifts sobre workinghours", () => {
+    const start = new Date("2026-01-01T00:00:00Z");
+    const end = new Date("2026-01-08T00:00:00Z");
+    const wh = new WorkingHours(3600, start, end);
+    wh.setWorkingHours(1, [[9 * 60 * 60, 17 * 60 * 60]]);
+    resource.setForScenario("workinghours", wh, 0);
+
+    const shift = new Shift(project, "night", "Night", null);
+    const shiftScenario = shift.scenarioData(0);
+    const interval = new TimeInterval(
+      TjTime.fromDate(new Date("2026-01-01T20:00:00Z")),
+      TjTime.fromDate(new Date("2026-01-02T04:00:00Z")),
+    );
+    const sas = new ShiftAssignments();
+    sas.project = project;
+    sas.addAssignment(new ShiftAssignment(shiftScenario, interval));
+    resource.setForScenario("shifts", sas, 0);
+
+    // sbIdx 10 = 10:00 (shift não cobre, herda workinghours → true)
+    assertEquals(scenario.onShift(10), true);
+    // sbIdx 20 = 20:00 (shift cobre e tem prioridade → true)
+    assertEquals(scenario.onShift(20), true);
   });
 });

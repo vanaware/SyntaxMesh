@@ -6,6 +6,7 @@ import { LeaveListAttribute, } from "../attributes/time-interval/leave-list-attr
 export class ShiftScenario extends ScenarioData {
   constructor(shift: any, scIdx: number, attributes: Map<string, any>) {
     super(shift, scIdx, attributes);
+    this.preloadAttributes(["workinghours", "replace", "leaves"]);
   }
 
   /** Acesso público ao project do cenário (evita acessar `property` privado de ScenarioData). */

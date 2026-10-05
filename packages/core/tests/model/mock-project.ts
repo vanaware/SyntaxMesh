@@ -78,10 +78,10 @@ export class MockProject implements ProjectLike {
   }
 
   get(name: string): unknown {
-    if (name === "now") return TjTime.fromString("2026-01-01");
-    if (name === "start") return TjTime.fromString("2026-01-01");
-    if (name === "end") return TjTime.fromString("2026-12-31");
-    if (name === "scheduleGranularity") return 3600;
+    if (name === "now") return this.store.get("now") ?? TjTime.fromString("2026-01-01");
+    if (name === "start") return this.store.get("start") ?? TjTime.fromString("2026-01-01");
+    if (name === "end") return this.store.get("end") ?? TjTime.fromString("2026-12-31");
+    if (name === "scheduleGranularity") return this.store.get("scheduleGranularity") ?? 3600;
     return this.store.get(name);
   }
 

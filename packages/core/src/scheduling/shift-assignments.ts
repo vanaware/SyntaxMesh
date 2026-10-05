@@ -46,14 +46,14 @@ export class ShiftAssignment {
    * Retorna uma cópia profunda desta atribuição.
    */
   copy(): ShiftAssignment {
-    return new ShiftAssignment(this.shiftScenario, this.interval,);
+    return new ShiftAssignment(this.shiftScenario, new TimeInterval(this.interval,));
   }
 
   /**
    * Verifica se este intervalo se sobrepõe ao intervalo dado.
    */
   overlaps(iv: TimeInterval): boolean {
-    return this.interval.start < iv.end && this.interval.end > iv.start;
+    return this.interval.overlaps(iv,);
   }
 
   /**
@@ -67,7 +67,7 @@ export class ShiftAssignment {
    * Verifica se a data está dentro do intervalo de atribuição.
    */
   assigned(date: TjTime): boolean {
-    return date >= this.interval.start && date < this.interval.end;
+    return date.greaterThanOrEqual(this.interval.start,) && date.lessThan(this.interval.end,);
   }
 
   /**
@@ -119,6 +119,26 @@ export class ShiftAssignments {
       this.scoreboard = null;
       this.hashKeyCache = null;
     }
+  }
+
+  /**
+   * Retorna uma cópia profunda desta instância.
+   *
+   * As atribuições são copiadas via `ShiftAssignment.copy()`.
+   * O scoreboard é reinicializado como null (computação lazy) para evitar
+   * efeitos colaterais durante a clonagem.
+   *
+   * @see deepClone
+   */
+  deepClone(): ShiftAssignments {
+    const clone = new ShiftAssignments();
+    for (const a of this.assignments) {
+      clone.assignments.push(a.copy(),);
+    }
+    clone.project = this.project;
+    clone.scoreboard = null;
+    clone.hashKeyCache = null;
+    return clone;
   }
 
   /**
@@ -258,13 +278,26 @@ export class ShiftAssignments {
   }
 
   /**
+   * Representação textual para depuração.
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/ShiftAssignments.rb:to_s
+   */
+  to_s(): string {
+    if (this.assignments.length === 0) {
+      return "";
+    }
+    const parts = this.assignments.map((a) => a.to_s(),);
+    return "shifts " + parts.join(", ");
+  }
+
+  /**
    * Cria ou retorna um scoreboard compartilhado para este hashKey.
    *
    * Se o hashKey já existe no cache estático, adiciona o objectId ao Set
    * e retorna o scoreboard compartilhado. Senão, cria um novo scoreboard
    * com initVal null (lazy computation) e registra no cache.
    */
-  private newScoreboard(): Scoreboard<number | null> {
+  newScoreboard(): Scoreboard<number | null> {
     const key = this.hashKey();
     const objId = projectObjectId(this.project ?? {});
 
@@ -278,9 +311,12 @@ export class ShiftAssignments {
       throw new TjArgumentError("Project must be set to create scoreboard",);
     }
 
-    const start = this.project.get("start") as Date;
-    const end = this.project.get("end") as Date;
+    const startRaw = this.project.get("start");
+    const endRaw = this.project.get("end");
     const granularity = this.project.get("scheduleGranularity") as number;
+
+    const start = startRaw instanceof TjTime ? new Date(startRaw.toSeconds() * 1000) : startRaw as Date;
+    const end = endRaw instanceof TjTime ? new Date(endRaw.toSeconds() * 1000) : endRaw as Date;
 
     if (!start || !end || !granularity) {
       throw new TjArgumentError("Project missing required attributes for scoreboard",);
