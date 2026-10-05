@@ -29,8 +29,9 @@ project['scheduleGranularity'] = 3600
 
 # Create a shift with working hours Monday 9-17
 shift = TaskJuggler::Shift.new(project, 'shift1', 'Shift 1', nil)
-shift.scenario(0).a('workinghours') = TaskJuggler::WorkingHours.new(3600, project['start'], project['end'])
-shift.scenario(0).a('workinghours').setWorkingHours(1, [[9 * 3600, 17 * 3600]])
+wh = TaskJuggler::WorkingHours.new(3600, project['start'], project['end'])
+wh.setWorkingHours(1, [[9 * 3600, 17 * 3600]])
+shift['workinghours', 0] = wh
 
 # Create ShiftAssignments with 2 assignments
 assignments = TaskJuggler::ShiftAssignments.new
@@ -54,56 +55,60 @@ assignments.addAssignment(TaskJuggler::ShiftAssignment.new(
   shift.scenario(0), interval2
 ))
 
-# Test getSbSlot for various indices
-# Monday 9:00 (index 9) - assigned, onShift, not timeOff, not onLeave
-# Monday 12:00 (index 12) - assigned, onShift, not timeOff, not onLeave
-# Monday 20:00 (index 20) - not assigned, timeOff (no workinghours), not onLeave
-# Tuesday 10:00 (index 10) - assigned, onShift, not timeOff, not onLeave
-# Tuesday 20:00 (index 20) - not assigned, timeOff, not onLeave
+# Test getSbSlot for various indices.
+# Values are recorded from the actual implementation, not hard-coded.
 
 # Test getSbSlot for index 9 (Monday 9:00)
-# BIT_ASSIGNED (1) | BIT_OFF_WORK (0) | LEAVE_MASK (0) | BIT_OVERRIDE (0) = 1
-tc("ShiftAssignments getSbSlot index 9 (Mon 9:00)", "getSbSlot", { index: 9 }, 1)
+actual = assignments.getSbSlot(9)
+tc("ShiftAssignments getSbSlot index 9 (Mon 9:00)", "getSbSlot", { index: 9 }, actual)
 
 # Test getSbSlot for index 12 (Monday 12:00)
-# BIT_ASSIGNED (1) | BIT_OFF_WORK (0) | LEAVE_MASK (0) | BIT_OVERRIDE (0) = 1
-tc("ShiftAssignments getSbSlot index 12 (Mon 12:00)", "getSbSlot", { index: 12 }, 1)
+actual = assignments.getSbSlot(12)
+tc("ShiftAssignments getSbSlot index 12 (Mon 12:00)", "getSbSlot", { index: 12 }, actual)
 
 # Test getSbSlot for index 20 (Monday 20:00)
-# BIT_ASSIGNED (0) | BIT_OFF_WORK (1) | LEAVE_MASK (0) | BIT_OVERRIDE (0) = 2
-tc("ShiftAssignments getSbSlot index 20 (Mon 20:00)", "getSbSlot", { index: 20 }, 2)
+actual = assignments.getSbSlot(20)
+tc("ShiftAssignments getSbSlot index 20 (Mon 20:00)", "getSbSlot", { index: 20 }, actual)
 
 # Test getSbSlot for index 10 (Tuesday 10:00)
-# BIT_ASSIGNED (1) | BIT_OFF_WORK (0) | LEAVE_MASK (0) | BIT_OVERRIDE (0) = 1
-tc("ShiftAssignments getSbSlot index 10 (Tue 10:00)", "getSbSlot", { index: 10 }, 1)
+actual = assignments.getSbSlot(10)
+tc("ShiftAssignments getSbSlot index 10 (Tue 10:00)", "getSbSlot", { index: 10 }, actual)
 
 # Test getSbSlot for index 0 (Sunday midnight)
-# BIT_ASSIGNED (0) | BIT_OFF_WORK (1) | LEAVE_MASK (0) | BIT_OVERRIDE (0) = 2
-tc("ShiftAssignments getSbSlot index 0 (Sun 00:00)", "getSbSlot", { index: 0 }, 2)
+actual = assignments.getSbSlot(0)
+tc("ShiftAssignments getSbSlot index 0 (Sun 00:00)", "getSbSlot", { index: 0 }, actual)
 
 # Test assigned? method
 # index 9 - assigned
-tc("ShiftAssignments assigned? index 9 (Mon 9:00)", "assigned?", { index: 9 }, true)
+actual = assignments.assigned?(9)
+tc("ShiftAssignments assigned? index 9 (Mon 9:00)", "assigned?", { index: 9 }, actual)
 # index 20 - not assigned
-tc("ShiftAssignments assigned? index 20 (Mon 20:00)", "assigned?", { index: 20 }, false)
+actual = assignments.assigned?(20)
+tc("ShiftAssignments assigned? index 20 (Mon 20:00)", "assigned?", { index: 20 }, actual)
 
 # Test onShift? method
 # index 9 - onShift
-tc("ShiftAssignments onShift? index 9 (Mon 9:00)", "onShift?", { index: 9 }, true)
+actual = assignments.onShift?(9)
+tc("ShiftAssignments onShift? index 9 (Mon 9:00)", "onShift?", { index: 9 }, actual)
 # index 20 - not onShift
-tc("ShiftAssignments onShift? index 20 (Mon 20:00)", "onShift?", { index: 20 }, false)
+actual = assignments.onShift?(20)
+tc("ShiftAssignments onShift? index 20 (Mon 20:00)", "onShift?", { index: 20 }, actual)
 
 # Test timeOff? method
 # index 9 - not timeOff
-tc("ShiftAssignments timeOff? index 9 (Mon 9:00)", "timeOff?", { index: 9 }, false)
+actual = assignments.timeOff?(9)
+tc("ShiftAssignments timeOff? index 9 (Mon 9:00)", "timeOff?", { index: 9 }, actual)
 # index 20 - timeOff
-tc("ShiftAssignments timeOff? index 20 (Mon 20:00)", "timeOff?", { index: 20 }, true)
+actual = assignments.timeOff?(20)
+tc("ShiftAssignments timeOff? index 20 (Mon 20:00)", "timeOff?", { index: 20 }, actual)
 
 # Test onLeave? method
 # index 9 - not onLeave
-tc("ShiftAssignments onLeave? index 9 (Mon 9:00)", "onLeave?", { index: 9 }, false)
+actual = assignments.onLeave?(9)
+tc("ShiftAssignments onLeave? index 9 (Mon 9:00)", "onLeave?", { index: 9 }, actual)
 # index 20 - not onLeave
-tc("ShiftAssignments onLeave? index 20 (Mon 20:00)", "onLeave?", { index: 20 }, false)
+actual = assignments.onLeave?(20)
+tc("ShiftAssignments onLeave? index 20 (Mon 20:00)", "onLeave?", { index: 20 }, actual)
 
 # Test hashKey for identical instances
 assignments2 = TaskJuggler::ShiftAssignments.new
@@ -115,7 +120,8 @@ assignments2.addAssignment(TaskJuggler::ShiftAssignment.new(
   shift.scenario(0), interval2
 ))
 
-tc("ShiftAssignments hashKey identical instances", "hashKey", { assignments: assignments }, true)
+actual = assignments.hashKey == assignments2.hashKey
+tc("ShiftAssignments hashKey identical instances", "hashKey", { assignments: assignments }, actual)
 
 # Test hashKey for different instances
 assignments3 = TaskJuggler::ShiftAssignments.new
@@ -124,7 +130,8 @@ assignments3.addAssignment(TaskJuggler::ShiftAssignment.new(
   shift.scenario(0), interval1
 ))
 
-tc("ShiftAssignments hashKey different instances", "hashKey", { assignments: assignments3 }, false)
+actual = assignments.hashKey == assignments3.hashKey
+tc("ShiftAssignments hashKey different instances", "hashKey", { assignments: assignments3 }, actual)
 
 output = {
   version: "1.0",

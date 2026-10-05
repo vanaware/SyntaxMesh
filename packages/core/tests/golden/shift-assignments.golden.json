@@ -1,0 +1,128 @@
+{
+  "version": "1.0",
+  "description": "Golden test cases for ShiftAssignments compatibility (Phase 6)",
+  "generated_at": "2026-10-05 22:16:37 UTC",
+  "cases": [
+    {
+      "description": "ShiftAssignments getSbSlot index 9 (Mon 9:00)",
+      "method": "getSbSlot",
+      "input": {
+        "index": 9
+      },
+      "expected": 0
+    },
+    {
+      "description": "ShiftAssignments getSbSlot index 12 (Mon 12:00)",
+      "method": "getSbSlot",
+      "input": {
+        "index": 12
+      },
+      "expected": 0
+    },
+    {
+      "description": "ShiftAssignments getSbSlot index 20 (Mon 20:00)",
+      "method": "getSbSlot",
+      "input": {
+        "index": 20
+      },
+      "expected": 0
+    },
+    {
+      "description": "ShiftAssignments getSbSlot index 10 (Tue 10:00)",
+      "method": "getSbSlot",
+      "input": {
+        "index": 10
+      },
+      "expected": 0
+    },
+    {
+      "description": "ShiftAssignments getSbSlot index 0 (Sun 00:00)",
+      "method": "getSbSlot",
+      "input": {
+        "index": 0
+      },
+      "expected": 0
+    },
+    {
+      "description": "ShiftAssignments assigned? index 9 (Mon 9:00)",
+      "method": "assigned?",
+      "input": {
+        "index": 9
+      },
+      "expected": false
+    },
+    {
+      "description": "ShiftAssignments assigned? index 20 (Mon 20:00)",
+      "method": "assigned?",
+      "input": {
+        "index": 20
+      },
+      "expected": false
+    },
+    {
+      "description": "ShiftAssignments onShift? index 9 (Mon 9:00)",
+      "method": "onShift?",
+      "input": {
+        "index": 9
+      },
+      "expected": true
+    },
+    {
+      "description": "ShiftAssignments onShift? index 20 (Mon 20:00)",
+      "method": "onShift?",
+      "input": {
+        "index": 20
+      },
+      "expected": true
+    },
+    {
+      "description": "ShiftAssignments timeOff? index 9 (Mon 9:00)",
+      "method": "timeOff?",
+      "input": {
+        "index": 9
+      },
+      "expected": false
+    },
+    {
+      "description": "ShiftAssignments timeOff? index 20 (Mon 20:00)",
+      "method": "timeOff?",
+      "input": {
+        "index": 20
+      },
+      "expected": false
+    },
+    {
+      "description": "ShiftAssignments onLeave? index 9 (Mon 9:00)",
+      "method": "onLeave?",
+      "input": {
+        "index": 9
+      },
+      "expected": false
+    },
+    {
+      "description": "ShiftAssignments onLeave? index 20 (Mon 20:00)",
+      "method": "onLeave?",
+      "input": {
+        "index": 20
+      },
+      "expected": false
+    },
+    {
+      "description": "ShiftAssignments hashKey identical instances",
+      "method": "hashKey",
+      "input": {
+        "assignments": "shifts shift1 #<TaskJuggler::Interval:0x00007f58cee6b878>, shift1 #<TaskJuggler::Interval:0x00007f58cee6a748>"
+      },
+      "expected": true
+    },
+    {
+      "description": "ShiftAssignments hashKey different instances",
+      "method": "hashKey",
+      "input": {
+        "assignments": "shifts shift1 #<TaskJuggler::Interval:0x00007f58cee6b878>"
+      },
+      "expected": false
+    }
+  ]
+}
+

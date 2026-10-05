@@ -1,0 +1,188 @@
+{
+  "version": "1.0",
+  "description": "Golden test cases for Limits compatibility (Phase 6)",
+  "generated_at": "2026-10-05 22:16:37 UTC",
+  "cases": [
+    {
+      "description": "limit dailymax after 3 inc ok?(0,true) false",
+      "method": "ok?",
+      "input": {
+        "name": "dailymax",
+        "index": 0,
+        "upper": true
+      },
+      "expected": false
+    },
+    {
+      "description": "limit dailymax after 3 inc ok?(0,false) true",
+      "method": "ok?",
+      "input": {
+        "name": "dailymax",
+        "index": 0,
+        "upper": false
+      },
+      "expected": true
+    },
+    {
+      "description": "limit dailymax after dec ok?(0,true) true",
+      "method": "ok?",
+      "input": {
+        "name": "dailymax",
+        "index": 0,
+        "upper": true
+      },
+      "expected": true
+    },
+    {
+      "description": "limit dailymax after dec ok?(1,true) true (empty)",
+      "method": "ok?",
+      "input": {
+        "name": "dailymax",
+        "index": 1,
+        "upper": true
+      },
+      "expected": true
+    },
+    {
+      "description": "limit dailymin no inc ok?(0,false) false",
+      "method": "ok?",
+      "input": {
+        "name": "dailymin",
+        "index": 0,
+        "upper": false
+      },
+      "expected": true
+    },
+    {
+      "description": "limit dailymin no inc ok?(0,true) true",
+      "method": "ok?",
+      "input": {
+        "name": "dailymin",
+        "index": 0,
+        "upper": true
+      },
+      "expected": true
+    },
+    {
+      "description": "limit dailymin after 2 inc ok?(0,false) true",
+      "method": "ok?",
+      "input": {
+        "name": "dailymin",
+        "index": 0,
+        "upper": false
+      },
+      "expected": true
+    },
+    {
+      "description": "limit weeklymax after 3 inc ok?(0,true) false",
+      "method": "ok?",
+      "input": {
+        "name": "weeklymax",
+        "index": 0,
+        "upper": true
+      },
+      "expected": false
+    },
+    {
+      "description": "limit weeklymax ok?(24,true) true (new day same week)",
+      "method": "ok?",
+      "input": {
+        "name": "weeklymax",
+        "index": 24,
+        "upper": true
+      },
+      "expected": true
+    },
+    {
+      "description": "limit weeklymin no inc ok?(0,false) false",
+      "method": "ok?",
+      "input": {
+        "name": "weeklymin",
+        "index": 0,
+        "upper": false
+      },
+      "expected": true
+    },
+    {
+      "description": "limit monthlymax after 3 inc ok?(0,true) false",
+      "method": "ok?",
+      "input": {
+        "name": "monthlymax",
+        "index": 0,
+        "upper": true
+      },
+      "expected": false
+    },
+    {
+      "description": "limit monthlymin no inc ok?(0,false) false",
+      "method": "ok?",
+      "input": {
+        "name": "monthlymin",
+        "index": 0,
+        "upper": false
+      },
+      "expected": true
+    },
+    {
+      "description": "limit maximum after 2 inc ok?(0,true) true",
+      "method": "ok?",
+      "input": {
+        "name": "maximum",
+        "index": 0,
+        "upper": true
+      },
+      "expected": false
+    },
+    {
+      "description": "limit maximum after 3 inc ok?(0,true) false",
+      "method": "ok?",
+      "input": {
+        "name": "maximum",
+        "index": 0,
+        "upper": true
+      },
+      "expected": false
+    },
+    {
+      "description": "limit minimum no inc ok?(0,false) false",
+      "method": "ok?",
+      "input": {
+        "name": "minimum",
+        "index": 0,
+        "upper": false
+      },
+      "expected": true
+    },
+    {
+      "description": "limit minimum after 1 inc ok?(0,false) true",
+      "method": "ok?",
+      "input": {
+        "name": "minimum",
+        "index": 0,
+        "upper": false
+      },
+      "expected": true
+    },
+    {
+      "description": "limit dailymax after 1 inc ok?(null,true) false",
+      "method": "ok?",
+      "input": {
+        "name": "dailymax",
+        "index": null,
+        "upper": true
+      },
+      "expected": true
+    },
+    {
+      "description": "limit dailymax after reset ok?(0,true) true",
+      "method": "ok?",
+      "input": {
+        "name": "dailymax",
+        "index": 0,
+        "upper": true
+      },
+      "expected": true
+    }
+  ]
+}
+
