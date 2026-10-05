@@ -1,10 +1,21 @@
 import { ScenarioData, } from "./scenario-data.ts";
+import { type ProjectLike, } from "./project-like.ts";
 import { type TjTime, } from "../time/tj-time.ts";
 import { LeaveListAttribute, } from "../attributes/time-interval/leave-list-attribute.ts";
 
 export class ShiftScenario extends ScenarioData {
   constructor(shift: any, scIdx: number, attributes: Map<string, any>) {
     super(shift, scIdx, attributes);
+  }
+
+  /** Acesso público ao project do cenário (evita acessar `property` privado de ScenarioData). */
+  get project(): ProjectLike {
+    return (this.getProperty() as any).project;
+  }
+
+  /** Acesso público ao scenarioIdx (evita acessar o campo privado de ScenarioData). */
+  get scenarioIndex(): number {
+    return this.getScenarioIdx();
   }
 
   /**

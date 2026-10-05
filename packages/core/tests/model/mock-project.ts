@@ -81,6 +81,7 @@ export class MockProject implements ProjectLike {
     if (name === "now") return TjTime.fromString("2026-01-01");
     if (name === "start") return TjTime.fromString("2026-01-01");
     if (name === "end") return TjTime.fromString("2026-12-31");
+    if (name === "scheduleGranularity") return 3600;
     return this.store.get(name);
   }
 

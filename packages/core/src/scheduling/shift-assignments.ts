@@ -4,6 +4,7 @@ import { TimeInterval, } from "../time/time-interval.ts";
 import { IntervalList, } from "../time/interval-list.ts";
 import { ShiftScenario, } from "../model/shift-scenario.ts";
 import { Resource, } from "../model/resource.ts";
+import { ProjectLike, } from "../model/project-like.ts";
 import { projectObjectId, } from "../utils/project-object-id.ts";
 import {
   BIT_ASSIGNED,
@@ -11,6 +12,7 @@ import {
   BIT_OVERRIDE,
   packLeaveType,
   LEAVE_TYPES,
+  LEAVE_MASK,
 } from "../time/scoreboard-bits.ts";
 
 /**
@@ -34,10 +36,10 @@ export class ShiftAssignment {
    * Usada para compartilhamento de scoreboards entre instâncias com conteúdo idêntico.
    */
   hashKey(): string {
-    const projectId = projectObjectId(this.shiftScenario.property.project);
+    const projectId = projectObjectId(this.shiftScenario.project);
     const start = this.interval.start.toSeconds();
     const end = this.interval.end.toSeconds();
-    return `${projectId}|${this.shiftScenario.scenarioIdx}|${start}|${end}`;
+    return `${projectId}|${this.shiftScenario.scenarioIndex}|${start}|${end}`;
   }
 
   /**
@@ -86,7 +88,7 @@ export class ShiftAssignment {
    * Representação textual desta atribuição.
    */
   to_s(): string {
-    return `<${this.shiftScenario.scenarioIdx}> ${this.interval.start.to_s()} - ${this.interval.end.to_s()}`;
+    return `<${this.shiftScenario.scenarioIndex}> ${this.interval.to_s()}`;
   }
 }
 
@@ -164,26 +166,29 @@ export class ShiftAssignments {
       return cached;
     }
 
+    // Converter idx para TjTime (conforme Ruby: getSbSlot usa a data do slot).
+    const date = TjTime.fromDate(this.scoreboard.idxToDate(idx,));
+
     // Computar encoding lazy
     let val = 0;
     let hasAssignment = false;
 
     for (const sa of this.assignments) {
-      if (!sa.assigned(idx,)) {
+      if (!sa.assigned(date,)) {
         continue;
       }
       hasAssignment = true;
       val |= BIT_ASSIGNED;
 
-      if (!sa.onShift(idx,)) {
+      if (!sa.onShift(date,)) {
         val |= BIT_OFF_WORK;
       }
 
-      if (sa.onLeave(idx,)) {
+      if (sa.onLeave(date,)) {
         val |= packLeaveType(LEAVE_TYPES.holiday);
       }
 
-      if (sa.replace(idx,)) {
+      if (sa.replace(date,)) {
         val |= BIT_OVERRIDE;
       }
     }
@@ -231,7 +236,7 @@ export class ShiftAssignments {
     if (!this.scoreboard) {
       this.scoreboard = this.newScoreboard();
     }
-    return this.scoreboard.collectIntervals(iv, minDuration, (v) => (v & BIT_OFF_WORK) !== 0,);
+    return this.scoreboard.collectIntervals(iv, minDuration, (v) => (v! & BIT_OFF_WORK) !== 0,);
   }
 
   /**
@@ -245,7 +250,7 @@ export class ShiftAssignments {
     }
 
     // Ordenar assignments por interval.start (in-place, como Ruby)
-    this.assignments.sort((a, b) => a.interval.start - b.interval.start,);
+    this.assignments.sort((a, b) => a.interval.start.toSeconds() - b.interval.start.toSeconds(),);
 
     const parts = this.assignments.map((a) => a.hashKey(),);
     this.hashKeyCache = parts.join("||");
@@ -273,9 +278,9 @@ export class ShiftAssignments {
       throw new TjArgumentError("Project must be set to create scoreboard",);
     }
 
-    const start = this.project.get("start");
-    const end = this.project.get("end");
-    const granularity = this.project.get("scheduleGranularity");
+    const start = this.project.get("start") as Date;
+    const end = this.project.get("end") as Date;
+    const granularity = this.project.get("scheduleGranularity") as number;
 
     if (!start || !end || !granularity) {
       throw new TjArgumentError("Project missing required attributes for scoreboard",);

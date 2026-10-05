@@ -212,6 +212,11 @@ export class Limits {
     }
   }
 
+  /** Retorna o projeto associado (para testes). */
+  getProject(): ProjectLike | null {
+    return this.project;
+  }
+
   /**
    * Associa este `Limits` a um projeto.
    *
@@ -278,7 +283,7 @@ export class Limits {
     if (!interval && this.project) {
       const startDate = this.project.get("start");
       const endDate = this.project.get("end");
-      const scheduleGranularity = this.project.get("scheduleGranularity");
+      const scheduleGranularity = this.project.get("scheduleGranularity") as number;
 
       if (!startDate || !endDate || !scheduleGranularity) {
         throw new TjArgumentError("Project missing required attributes for limit interval",);
@@ -288,22 +293,22 @@ export class Limits {
       const startTime = startDate as TjTime;
       const endTime = endDate as TjTime;
 
-      // Ajustar início/fim conforme o tipo de limite
-      if (name.startsWith("daily")) {
-        // Começar à meia-noite - usar midnight() que retorna início do dia
-        // Para daily, queremos start às 00:00 do dia startDate
-        // Para endDate, queremos também às 00:00 do dia endDate
-        // Como startDate e endDate já são datas, mantemos elas
-      } else if (name.startsWith("weekly")) {
-        // Começar no início da semana (segunda-feira se weekStartsMonday for true)
-        const weekStartsMonday = this.project.get("weekStartsMonday");
-        // Implementação simplificada: manter o start original
-      } else if (name.startsWith("monthly")) {
-        // Começar no primeiro dia do mês
-        // Implementação simplificada: manter o start original
-      }
+      // Criar intervalo com o range completo do projeto
+      const endIdx = Math.trunc(endTime.diff(startTime) / scheduleGranularity);
+      interval = new ScoreboardInterval(startTime, scheduleGranularity, 0, endIdx);
 
-      interval = new ScoreboardInterval(startTime, scheduleGranularity, 0,);
+      // Alinhar início/fim conforme o tipo de limite (conforme Ruby Limits.rb)
+      interval.start = interval.startDate().midnight();
+      interval.end = interval.endDate().midnight();
+
+      if (name.startsWith("weekly")) {
+        const weekStartsMonday = this.project.get("weekStartsMonday") as boolean;
+        interval.start = interval.startDate().beginOfWeek(weekStartsMonday);
+        interval.end = interval.endDate().beginOfWeek(weekStartsMonday);
+      } else if (name.startsWith("monthly")) {
+        interval.start = interval.startDate().beginOfMonth();
+        interval.end = interval.endDate().beginOfMonth();
+      }
     }
 
     if (!interval) {
