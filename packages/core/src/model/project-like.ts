@@ -5,6 +5,7 @@ import type { Account, } from "./account.ts";
 import type { Resource, } from "./resource.ts";
 import type { Task, } from "./task.ts";
 import type { Report, } from "./report.ts";
+import type { TjTime, } from "../time/tj-time.ts";
 
 export interface ProjectLike {
   readonly scenarioCount: number;
@@ -38,4 +39,12 @@ export interface ProjectLike {
    * cruzadas entre tarefas.
    */
   task(id: string): Task | null;
+
+  /**
+   * Converte uma data `TjTime` para o índice numérico de slot.
+   *
+   * Usado por `TaskScenario.prepareScheduling()` para calcular
+   * o índice do dia atual.
+   */
+  dateToIdx(date: TjTime): number;
 }

@@ -106,6 +106,13 @@ export class MockProject implements ProjectLike {
     return prop as import("../../src/model/task.ts").Task;
   }
 
+  dateToIdx(date: TjTime): number {
+    const start = this.get("start") as TjTime;
+    const granularity = (this.get("scheduleGranularity") as number) ?? 3600;
+    const diff = date.toSeconds() - start.toSeconds();
+    return Math.floor(diff / granularity);
+  }
+
   attributeDefinition(id: string): any {
     return this.scenarios.attributeDefinition(id);
   }
