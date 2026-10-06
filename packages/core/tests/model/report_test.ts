@@ -67,8 +67,8 @@ describe("Report", () => {
   it("cenario NÃO pré-carrega atributos (sem preload)", () => {
     const report = new Report(project, "report1", "Report 1", null);
     const scenario = report.scenarioData(0);
-    assert(scenario.a("caption") === undefined);
-    assert(scenario.a("title") === undefined);
+    assert(scenario.a("caption") === null);
+    assert(scenario.a("title") === null);
   });
 
   it("getScenarioAttribute lança para atributo não específico de cenário", () => {

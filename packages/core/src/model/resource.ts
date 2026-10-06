@@ -19,4 +19,13 @@ export class Resource extends PropertyTreeNode {
   override scenarioData(scIdx: number): ResourceScenario {
     return this.data[scIdx]! as ResourceScenario;
   }
+
+  /**
+   * Retorna o esforço já alocado (booked effort) para o cenário dado.
+   *
+   * Corresponde a `ResourceScenario#bookedEffort` do Ruby.
+   */
+  bookedEffort(scIdx: number): number {
+    return this.scenarioData(scIdx).a("effort") as number ?? 0;
+  }
 }

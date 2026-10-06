@@ -40,7 +40,10 @@ export class ScenarioData implements AttributeContainer {
 
   a(attributeName: string): unknown {
     const attr = this.attributes.get(attributeName);
-    return attr?.get();
+    if (!attr) {
+      return null;
+    }
+    return attr.get();
   }
 
   error(id: string, text: string, sfi?: string, property?: PropertyLike): void {
