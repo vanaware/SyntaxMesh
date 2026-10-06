@@ -100,6 +100,12 @@ export class MockProject implements ProjectLike {
   addReport(_r: unknown): void {}
   removeAccount(_a: unknown): void {}
 
+  task(id: string): import("../../src/model/task.ts").Task | null {
+    const prop = this.tasks.get(id);
+    if (prop === undefined) return null;
+    return prop as import("../../src/model/task.ts").Task;
+  }
+
   attributeDefinition(id: string): any {
     return this.scenarios.attributeDefinition(id);
   }

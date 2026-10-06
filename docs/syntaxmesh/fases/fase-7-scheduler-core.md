@@ -1,7 +1,7 @@
 # Fase 7 — Scheduler Core
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-7-scheduler-core.md`
-> **Status:** ⬜ Não iniciada
+> **Status:** 🟡 Em andamento (7.2 TaskDependency concluída)
 > **Duração estimada:** 15–20 dias
 > **Depende de:** Fases 2–6
 > **Bloqueia:** Fases 8, 9, 11, 14, 21

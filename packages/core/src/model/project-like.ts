@@ -30,4 +30,12 @@ export interface ProjectLike {
   addResource(r: Resource): void;
   addReport(r: Report): void;
   removeAccount(a: Account): void;
+
+  /**
+   * Resolve um ID de tarefa em um objeto `Task`.
+   *
+   * Usado por `TaskDependency.resolve()` para resolver referências
+   * cruzadas entre tarefas.
+   */
+  task(id: string): Task | null;
 }

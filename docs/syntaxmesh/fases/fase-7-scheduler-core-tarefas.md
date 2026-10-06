@@ -63,7 +63,7 @@
 ```
 [ ] 7.0  ADR 018 (heurística scheduler)          —  0/5
 [ ] 7.1  DataCache                               —  0/9
-[ ] 7.2  TaskDependency                          —  0/6
+[✓] 7.2  TaskDependency                          —  6/6
 [ ] 7.3  Allocation                              —  0/14
 [ ] 7.4  Booking                                 —  0/6
 [ ] 7.5  TaskScenario.prepare + Xref + preCheck  —  0/30
@@ -140,6 +140,8 @@ TOTAL: ~215
 | 7.2.4 | ⚠️ `equals(other: TaskDependency): boolean` — compara `taskId`, `onEnd`, `gapDuration`, `gapLength` | idem | 4 testes |
 | 7.2.5 | ⚠️ `resolve(project: ProjectLike): Task \| null` — busca `project.task(this.taskId)`; atribui a `this.task`; retorna | idem | 4 testes |
 | 7.2.6 | Re-exportar em `src/scheduling/mod.ts` e `packages/core/mod.ts` | idem | `deno check` |
+
+**✅ 7.2.1–7.2.6 concluídos**
 
 ---
 
