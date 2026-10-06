@@ -259,7 +259,7 @@ Criar `docs/syntaxmesh/decisoes/017-scoreboard-encoding.md`.
 
 #### Fora de escopo
 
-- Implementação — subfases 10.1+.
+- Implementação — subfases 6.1+.
 
 #### Critério de aceite
 
@@ -313,7 +313,7 @@ Criar módulo com constantes e funções puras para leitura/escrita de bits.
 
 #### Fora de escopo
 
-- Uso — subfases 10.2+.
+- Uso — subfases 6.2+.
 
 #### Critério de aceite
 
