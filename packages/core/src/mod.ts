@@ -24,3 +24,9 @@ export * from "./model/mod.ts";
 export * from "./attributes/mod.ts";
 // Export utils module
 export * from "./utils/mod.ts";
+
+// Phase 6 exports (re-export from sub-modules)
+export * from "./time/scoreboard-bits.ts";
+export * from "./scheduling/limits.ts";
+export * from "./scheduling/shift-assignments.ts";
+export * from "./utils/project-object-id.ts";

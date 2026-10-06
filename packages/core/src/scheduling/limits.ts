@@ -272,11 +272,11 @@ export class Limits {
         upper = name === "monthlymax";
         break;
       case "maximum":
-        period = interval ? interval.duration() : 0;
+        period = interval ? interval.duration() : (this.project ? this.project.get("scheduleGranularity") as number : 0);
         upper = true;
         break;
       case "minimum":
-        period = interval ? interval.duration() : 0;
+        period = interval ? interval.duration() : (this.project ? this.project.get("scheduleGranularity") as number : 0);
         upper = false;
         break;
       default:
@@ -322,16 +322,16 @@ export class Limits {
     // Remover limite existente com mesmo nome, startDate, endDate e resource
     const startDate = interval.startDate(),
       endDate = interval.endDate();
-    this.limits.splice(
-      this.limits.findIndex(
-        (limit) =>
-          limit.name === name &&
-          limit.interval.startDate().toSeconds() === startDate.toSeconds() &&
-          limit.interval.endDate().toSeconds() === endDate.toSeconds() &&
-          limit.resource === resource,
-      ),
-      1,
+    const existingIdx = this.limits.findIndex(
+      (limit) =>
+        limit.name === name &&
+        limit.interval.startDate().toSeconds() === startDate.toSeconds() &&
+        limit.interval.endDate().toSeconds() === endDate.toSeconds() &&
+        (limit.resource === resource || limit.resource === null || resource === null),
     );
+    if (existingIdx >= 0) {
+      this.limits.splice(existingIdx, 1);
+    }
 
     // Criar novo limite
     const limit = new Limit(name, interval, period, value, upper, resource,);

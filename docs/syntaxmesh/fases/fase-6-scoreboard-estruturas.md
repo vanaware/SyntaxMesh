@@ -1,7 +1,7 @@
 # Fase 6 — Scoreboard e Estruturas Base
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-6-scoreboard-estruturas.md`
-> **Status:** ⬜ Não iniciada
+> **Status:** ✅ Concluída
 > **Duração estimada:** 5–7 dias
 > **Depende de:** Fase 2 — Tempo e Geometria; Fase 3 — Modelo de Atributos; Fase 4 — Árvore de Propriedades; Fase 5 — Entidades Concretas
 > **Bloqueia:** Fases 7, 8, 9

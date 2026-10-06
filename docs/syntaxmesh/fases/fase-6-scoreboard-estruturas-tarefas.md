@@ -2,9 +2,9 @@
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-6-tarefas.md`
 > **Plano:** `docs/syntaxmesh/fases/fase-6-scoreboard-estruturas.md`
-> **Status:** ⬜ Não iniciada
+> **Status:** ✅ Concluída
 > **Total:** ~110 tarefas
-> **Concluídas:** 0
+> **Concluídas:** ~110
 > **Fonte Ruby:** `docs/taskjuggler/lib/taskjuggler/{Scoreboard,Limits,ShiftAssignments,ShiftScenario,ResourceScenario}.rb`
 
 ---
@@ -52,14 +52,14 @@
 ## Progresso
 
 ```
-[ ] 6.0  ADR 017 (Scoreboard encoding)       —  0/5
-[ ] 6.1  scoreboard-bits                     —  0/12
-[ ] 6.2  Limits + Limit                      —  0/26
-[ ] 6.3  ShiftAssignments + ShiftAssignment  —  0/28
-[ ] 6.4  ShiftScenario consolidado           —  0/6
-[ ] 6.5  ResourceScenario.onShift?           —  0/6
-[ ] 6.6  Golden tests                        —  0/9
-[ ] 6.7  Verificação final                   —  0/8
+[✓] 6.0  ADR 017 (Scoreboard encoding)       —  5/5
+[✓] 6.1  scoreboard-bits                     —  12/12
+[✓] 6.2  Limits + Limit                      —  26/26
+[✓] 6.3  ShiftAssignments + ShiftAssignment  —  28/28
+[✓] 6.4  ShiftScenario consolidado           —  6/6
+[✓] 6.5  ResourceScenario.onShift?           —  6/6
+[✓] 6.6  Golden tests                        —  9/9
+[✓] 6.7  Verificação final                   —  8/8
 ─────────────────────────────────────────────
 TOTAL: ~110
 ```

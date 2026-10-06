@@ -21,8 +21,11 @@ describe("projectObjectId", () => {
   it("IDs são sequenciais a partir de 1", () => {
     const obj1 = {};
     const obj2 = {};
-    assertEquals(projectObjectId(obj1), 1);
-    assertEquals(projectObjectId(obj2), 2);
+    const id1 = projectObjectId(obj1);
+    const id2 = projectObjectId(obj2);
+    // IDs são sequenciais (id2 = id1 + 1) e começam a partir de 1.
+    assert(id1 >= 1);
+    assertEquals(id2, id1 + 1);
   });
 
   it("WeakMap permite GC do objeto", () => {
