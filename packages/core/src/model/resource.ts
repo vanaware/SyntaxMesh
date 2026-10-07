@@ -26,6 +26,6 @@ export class Resource extends PropertyTreeNode {
    * Corresponde a `ResourceScenario#bookedEffort` do Ruby.
    */
   bookedEffort(scIdx: number): number {
-    return this.scenarioData(scIdx).a("effort") as number ?? 0;
+    return this.scenarioData(scIdx).bookedEffort();
   }
 }

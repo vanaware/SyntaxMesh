@@ -150,10 +150,12 @@ describe("Allocation", () => {
     });
 
     it("ordena por bookedEffort ascendente para MinLoaded", () => {
-      // r1 tem effort=0, r2 tem effort=5, r3 tem effort=2
-      r1.setForScenario("effort", 0, 0);
-      r2.setForScenario("effort", 5, 0);
-      r3.setForScenario("effort", 2, 0);
+      // r1 tem bookedEffort=0, r2 tem bookedEffort=5, r3 tem bookedEffort=2
+      // bookedEffort() lê o contador interno @effort (incrementado por book()),
+      // não o atributo effort.
+      (r1.scenarioData(0) as any).effort = 0;
+      (r2.scenarioData(0) as any).effort = 5;
+      (r3.scenarioData(0) as any).effort = 2;
 
       const alloc = new Allocation([r1, r2, r3], SelectionMode.MinLoaded);
       const result = alloc.candidatesList(0);
@@ -164,9 +166,9 @@ describe("Allocation", () => {
     });
 
     it("ordena por bookedEffort descendente para MaxLoaded", () => {
-      r1.setForScenario("effort", 0, 0);
-      r2.setForScenario("effort", 5, 0);
-      r3.setForScenario("effort", 2, 0);
+      (r1.scenarioData(0) as any).effort = 0;
+      (r2.scenarioData(0) as any).effort = 5;
+      (r3.scenarioData(0) as any).effort = 2;
 
       const alloc = new Allocation([r1, r2, r3], SelectionMode.MaxLoaded);
       const result = alloc.candidatesList(0);
