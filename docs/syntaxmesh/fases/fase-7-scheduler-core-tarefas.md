@@ -61,11 +61,11 @@
 ## Progresso
 
 ```
-[ ] 7.0  ADR 018 (heurística scheduler)          —  0/5
-[ ] 7.1  DataCache                               —  0/9
+[✓] 7.0  ADR 018 (heurística scheduler)          —  5/5
+[✓] 7.1  DataCache                               —  9/9
 [✓] 7.2  TaskDependency                          —  6/6
-[ ] 7.3  Allocation                              —  0/14
-[ ] 7.4  Booking                                 —  0/6
+[✓] 7.3  Allocation                              — 14/14
+[✓] 7.4  Booking                                 —  6/6
 [ ] 7.5  TaskScenario.prepare + Xref + preCheck  —  0/30
 [ ] 7.6  TaskScenario.checkForLoops + criticalness — 0/16
 [ ] 7.7  TaskScenario.schedule + scheduleSlot    —  0/14
@@ -89,7 +89,7 @@ TOTAL: ~215
 
 ## Bloco A — Fundação
 
-### 7.0 — ADR 018 (heurística do scheduler)
+### 7.0 — ADR 018 (heurística do scheduler) ✅ Concluído
 
 **Objetivo:** formalizar o algoritmo greedy como decisão de arquitetura.
 
@@ -103,7 +103,7 @@ TOTAL: ~215
 
 ---
 
-### 7.1 — `DataCache`
+### 7.1 — `DataCache` ✅ Concluído
 
 **⚠️ RUBY: `DataCache.rb` (arquivo inteiro — ~150 linhas)**
 **🔎 CHEAT: §3 `Hash` → `Map`, §12 Categoria B (hash collision)**
@@ -145,7 +145,7 @@ TOTAL: ~215
 
 ---
 
-### 7.3 — `Allocation` + `SelectionMode`
+### 7.3 — `Allocation` + `SelectionMode` ✅ Concluído
 
 **⚠️ RUBY: `Allocation.rb` (arquivo inteiro — ~130 linhas)**
 **🔎 CHEAT: §2 (enum), §3 `arr.sort_by` → `[...arr].sort()`**

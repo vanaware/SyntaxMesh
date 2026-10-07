@@ -199,17 +199,18 @@ describe("ResourceScenario.onShift?", () => {
   });
 
   it("usa workinghours quando shifts não atribuídos", () => {
-    const start = new Date("2026-01-01T00:00:00Z");
-    const end = new Date("2026-01-08T00:00:00Z");
+    // 2026-01-05 é segunda-feira.
+    const start = new Date("2026-01-05T00:00:00Z");
+    const end = new Date("2026-01-12T00:00:00Z");
     const wh = new WorkingHours(3600, start, end);
     wh.setWorkingHours(1, [[9 * 60 * 60, 17 * 60 * 60]]);
     resource.setForScenario("workinghours", wh, 0);
 
-    // sbIdx 10 = 2026-01-01T10:00Z (Monday 10am)
+    // sbIdx 10 = 2026-01-05T10:00Z (Monday 10am)
     assertEquals(scenario.onShift(10), true);
-    // sbIdx 20 = 2026-01-01T20:00Z (Monday 8pm)
+    // sbIdx 20 = 2026-01-05T20:00Z (Monday 8pm)
     assertEquals(scenario.onShift(20), false);
-    // sbIdx 0 = 2026-01-01T00:00Z (Tuesday midnight)
+    // sbIdx 0 = 2026-01-05T00:00Z (Monday midnight)
     assertEquals(scenario.onShift(0), false);
   });
 

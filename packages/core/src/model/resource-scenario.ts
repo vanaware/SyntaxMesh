@@ -1,6 +1,9 @@
 import { ScenarioData, } from "./scenario-data.ts";
 import { ShiftAssignments, } from "../scheduling/shift-assignments.ts";
 import { WorkingHours, } from "../calendar/working-hours.ts";
+import { Limits, } from "../scheduling/limits.ts";
+import { type PropertyLike, } from "./property-like.ts";
+import { type AttributeBase, } from "../attributes/attribute-base.ts";
 
 /**
  * Lista exata de atributos pré-carregados pelo ResourceScenario do Ruby
@@ -25,6 +28,33 @@ export const RESOURCE_SCENARIO_ATTRS: string[] = [
 ];
 
 export class ResourceScenario extends ScenarioData {
+  constructor(property: PropertyLike, scIdx: number, attributes: Map<string, AttributeBase<unknown>>) {
+    super(property, scIdx, attributes);
+    this.preloadAttributes(RESOURCE_SCENARIO_ATTRS);
+  }
+
+  /**
+   * Returns true if the resource is on shift at the time specified by
+   * _sbIdx_.
+   *
+   * If shifts are assigned to this resource and the slot is assigned,
+   * the shift's availability is checked. Otherwise, the working hours
+   * are used to determine availability.
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/ResourceScenario.rb:onShift?
+   */
+  onShift(sbIdx: number): boolean {
+    const shifts = this.a("shifts") as ShiftAssignments | undefined;
+    if (shifts && shifts.assigned(sbIdx)) {
+      return shifts.onShift(sbIdx);
+    }
+    const workinghours = this.a("workinghours") as WorkingHours | undefined;
+    if (workinghours) {
+      return workinghours.onShift(sbIdx);
+    }
+    return true;
+  }
+
   /**
    * Returns true if the resource is available at the time specified by
    * _sbIdx_.
