@@ -2,6 +2,7 @@ import { beforeEach, describe, it } from "@std/testing/bdd";
 import { assertEquals, assert } from "@std/assert";
 import { MockProject } from "./mock-project.ts";
 import { Resource } from "../../src/model/resource.ts";
+import { Task } from "../../src/model/task.ts";
 import { ResourceScenario } from "../../src/model/resource-scenario.ts";
 
 describe("ResourceScenario", () => {
@@ -68,31 +69,37 @@ describe("ResourceScenario", () => {
   });
 
   it("available retorna true para slot não ocupado", () => {
+    // O scoreboard é inicializado lazy em available() quando necessário
     assertEquals(resourceScenario.available(0), true);
   });
 
   it("booked retorna false para slot não ocupado", () => {
+    // O scoreboard é inicializado lazy em booked() quando necessário
     assertEquals(resourceScenario.booked(0), false);
   });
 
   it("bookedTask retorna null para slot não ocupado", () => {
+    // O scoreboard é inicializado lazy em bookedTask() quando necessário
     assertEquals(resourceScenario.bookedTask(0), null);
   });
 
   it("book registra ocupação para slot", () => {
     const project2 = new MockProject(1);
     const resource2 = new Resource(project2, "r2", "Resource 2", null);
+    const task = new Task(project2, "t1", "Task 1", null);
     const resourceScenario2 = resource2.scenarioData(0);
-    resourceScenario2.book(0, 1);
+    // O scoreboard é inicializado lazy em book() via available()
+    resourceScenario2.book(0, task);
     assertEquals(resourceScenario2.booked(0), true);
   });
 
   it("bookBooking registra ocupação com tarefa", () => {
     const project2 = new MockProject(1);
     const resource2 = new Resource(project2, "r2", "Resource 2", null);
+    const task = new Task(project2, "t1", "Task 1", null);
     const resourceScenario2 = resource2.scenarioData(0);
-    const task = { id: "task1", duration: 1 } as any;
-    resourceScenario2.bookBooking(0, task);
+    const booking = { task, overtime: 0, sloppy: 0, sourceFileInfo: null };
+    resourceScenario2.bookBooking(0, booking);
     assertEquals(resourceScenario2.booked(0), true);
     assertEquals(resourceScenario2.bookedTask(0), task);
   });
@@ -101,12 +108,15 @@ describe("ResourceScenario", () => {
     assertEquals(resourceScenario.bookedEffort(), 0);
   });
 
-  it("getMinSlot retorna o primeiro slot", () => {
-    assertEquals(resourceScenario.getMinSlot(), null);
+  it("getMinSlot retorna o primeiro slot disponível", () => {
+    // initScoreboard marca todos os slots como disponíveis (onShift = true)
+    // e define minslot com o primeiro slot disponível.
+    assertEquals(resourceScenario.getMinSlot(), 0);
   });
 
-  it("getMaxSlot retorna o último slot", () => {
-    assertEquals(resourceScenario.getMaxSlot(), null);
+  it("getMaxSlot retorna o último slot disponível", () => {
+    // initScoreboard define maxslot como o último slot disponível.
+    assertEquals(resourceScenario.getMaxSlot(), resourceScenario.scoreboard!.size - 1);
   });
 
   it("rate retorna taxa do recurso", () => {
@@ -132,11 +142,13 @@ describe("ResourceScenario", () => {
   });
 
   it("getEffectiveFreeTime retorna tempo livre efetivo", () => {
-    assertEquals(resourceScenario.getEffectiveFreeTime(0, 10), 0);
+    // 10 slots * 3600s = 36000 segundos (todos os slots livres)
+    assertEquals(resourceScenario.getEffectiveFreeTime(0, 10), 36000);
   });
 
   it("getEffectiveFreeWork retorna trabalho livre efetivo", () => {
-    assertEquals(resourceScenario.getEffectiveFreeWork(0, 10), 0);
+    // (10 slots * 3600s) / (8h * 3600s) * eficiência(1) = 1.25
+    assertEquals(resourceScenario.getEffectiveFreeWork(0, 10), 1.25);
   });
 
   it("getTimeOffDays retorna dias de folga", () => {

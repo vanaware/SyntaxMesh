@@ -44,7 +44,7 @@ export const RESOURCE_SCENARIO_ATTRS: string[] = [
 ];
 
 export class ResourceScenario extends ScenarioData {
-  private scoreboard: Scoreboard<number | null | Task> | null = null;
+  public scoreboard: Scoreboard<number | null | Task> | null = null;
   private effort: number = 0;
   private firstBookedSlot: number | null = null;
   private lastBookedSlot: number | null = null;
@@ -88,12 +88,13 @@ export class ResourceScenario extends ScenarioData {
    * @see docs/taskjuggler/lib/taskjuggler/ResourceScenario.rb:available?
    */
   available(sbIdx: number): boolean {
-    if (this.scoreboard === null) {
-      return false;
-    }
-    const slot = this.scoreboard.get(sbIdx);
-    if (slot !== null) {
-      return false;
+    // Ruby: `@scoreboard[sbIdx].nil?` — when the scoreboard is nil,
+    // `@scoreboard[sbIdx]` returns nil, so the slot is considered available.
+    if (this.scoreboard !== null) {
+      const slot = this.scoreboard.get(sbIdx);
+      if (slot !== null) {
+        return false;
+      }
     }
     const limits = this.a("limits") as Limits | undefined;
     if (limits) {
@@ -150,6 +151,10 @@ export class ResourceScenario extends ScenarioData {
       this.duties.push(task);
     }
 
+    // Lazy initialization of scoreboard (Ruby: scoreboard is initialized earlier)
+    if (this.scoreboard === null) {
+      this.initScoreboard();
+    }
     this.scoreboard!.set(sbIdx, task);
     const efficiency = (this.a("efficiency") as number) ?? 1;
     this.effort += efficiency;
