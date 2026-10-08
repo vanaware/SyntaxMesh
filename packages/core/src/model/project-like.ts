@@ -9,11 +9,11 @@ import type { TjTime, } from "../time/tj-time.ts";
 
 export interface ProjectLike {
   readonly scenarioCount: number;
-  scenario(idx: number): { id: string; fullId: string } | null;
-  scenarioIdx(sc: string): number | undefined;
-  get(name: string): unknown;
-  set(name: string, value: unknown): void;
-  addScenario(scenario: { id: string; fullId: string }): void;
+  scenario(idx: number,): { id: string; fullId: string } | null;
+  scenarioIdx(sc: string,): number | undefined;
+  get(name: string,): unknown;
+  set(name: string, value: unknown,): void;
+  addScenario(scenario: { id: string; fullId: string },): void;
 
   // PropertySets (para as entidades se registrarem)
   readonly scenarios: PropertySet;
@@ -24,13 +24,13 @@ export interface ProjectLike {
   readonly reports: PropertySet;
 
   // Registro
-  addScenario(s: Scenario): void;
-  addShift(s: Shift): void;
-  addAccount(a: Account): void;
-  addTask(t: Task): void;
-  addResource(r: Resource): void;
-  addReport(r: Report): void;
-  removeAccount(a: Account): void;
+  addScenario(s: Scenario,): void;
+  addShift(s: Shift,): void;
+  addAccount(a: Account,): void;
+  addTask(t: Task,): void;
+  addResource(r: Resource,): void;
+  addReport(r: Report,): void;
+  removeAccount(a: Account,): void;
 
   /**
    * Resolve um ID de tarefa em um objeto `Task`.
@@ -38,7 +38,7 @@ export interface ProjectLike {
    * Usado por `TaskDependency.resolve()` para resolver referências
    * cruzadas entre tarefas.
    */
-  task(id: string): Task | null;
+  task(id: string,): Task | null;
 
   /**
    * Converte uma data `TjTime` para o índice numérico de slot.
@@ -46,5 +46,34 @@ export interface ProjectLike {
    * Usado por `TaskScenario.prepareScheduling()` para calcular
    * o índice do dia atual.
    */
-  dateToIdx(date: TjTime): number;
+  dateToIdx(date: TjTime,): number;
+
+  /**
+   * Converte um índice de slot para uma data `TjTime`.
+   *
+   * Usado por `TaskScenario.schedule()` e `propagateDate()` para
+   * propagar datas.
+   */
+  idxToDate(sbIdx: number,): TjTime;
+
+  /**
+   * Verifica se algum recurso está disponível no slot especificado.
+   *
+   * Usado por `TaskScenario.bookResources()`.
+   */
+  anyResourceAvailable(sbIdx: number,): boolean;
+
+  /**
+   * Verifica se o slot especificado é um horário de trabalho.
+   *
+   * Usado por `TaskScenario.onShiftCheck()` e `calcLength()`.
+   */
+  isWorkingTime(sbIdx: number,): boolean;
+
+  /**
+   * Converte um número de slots para dias de trabalho.
+   *
+   * Usado por `TaskScenario.postScheduleCheck()` para relatar gaps.
+   */
+  slotsToDays(slots: number,): number;
 }

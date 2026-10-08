@@ -66,4 +66,84 @@ describe("ResourceScenario", () => {
     // Por enquanto, apenas verificar que o método existe
     assertEquals(typeof resourceScenario.onShift, "function");
   });
+
+  it("available retorna true para slot não ocupado", () => {
+    assertEquals(resourceScenario.available(0), true);
+  });
+
+  it("booked retorna false para slot não ocupado", () => {
+    assertEquals(resourceScenario.booked(0), false);
+  });
+
+  it("bookedTask retorna null para slot não ocupado", () => {
+    assertEquals(resourceScenario.bookedTask(0), null);
+  });
+
+  it("book registra ocupação para slot", () => {
+    const project2 = new MockProject(1);
+    const resource2 = new Resource(project2, "r2", "Resource 2", null);
+    const resourceScenario2 = resource2.scenarioData(0);
+    resourceScenario2.book(0, 1);
+    assertEquals(resourceScenario2.booked(0), true);
+  });
+
+  it("bookBooking registra ocupação com tarefa", () => {
+    const project2 = new MockProject(1);
+    const resource2 = new Resource(project2, "r2", "Resource 2", null);
+    const resourceScenario2 = resource2.scenarioData(0);
+    const task = { id: "task1", duration: 1 } as any;
+    resourceScenario2.bookBooking(0, task);
+    assertEquals(resourceScenario2.booked(0), true);
+    assertEquals(resourceScenario2.bookedTask(0), task);
+  });
+
+  it("bookedEffort retorna 0 inicialmente", () => {
+    assertEquals(resourceScenario.bookedEffort(), 0);
+  });
+
+  it("getMinSlot retorna o primeiro slot", () => {
+    assertEquals(resourceScenario.getMinSlot(), null);
+  });
+
+  it("getMaxSlot retorna o último slot", () => {
+    assertEquals(resourceScenario.getMaxSlot(), null);
+  });
+
+  it("rate retorna taxa do recurso", () => {
+    assertEquals(resourceScenario.rate(), 0);
+    resource.setForScenario("rate", 100, 0);
+    assertEquals(resourceScenario.rate(), 100);
+  });
+
+  it("turnover retorna turnover do recurso", () => {
+    assertEquals(resourceScenario.turnover(0, 10, null, null, false), 0);
+  });
+
+  it("cost calcula custo do recurso", () => {
+    assertEquals(resourceScenario.cost(0, 10, null), 0);
+  });
+
+  it("getEffectiveWork retorna trabalho efetivo", () => {
+    assertEquals(resourceScenario.getEffectiveWork(0, 10, null), 0);
+  });
+
+  it("getAllocatedTime retorna tempo alocado", () => {
+    assertEquals(resourceScenario.getAllocatedTime(0, 10, null), 0);
+  });
+
+  it("getEffectiveFreeTime retorna tempo livre efetivo", () => {
+    assertEquals(resourceScenario.getEffectiveFreeTime(0, 10), 0);
+  });
+
+  it("getEffectiveFreeWork retorna trabalho livre efetivo", () => {
+    assertEquals(resourceScenario.getEffectiveFreeWork(0, 10), 0);
+  });
+
+  it("getTimeOffDays retorna dias de folga", () => {
+    assertEquals(resourceScenario.getTimeOffDays(0, 10), 0);
+  });
+
+  it("getLeave retorna folgas", () => {
+    assertEquals(resourceScenario.getLeave(0, 10, "vacation"), 0);
+  });
 });

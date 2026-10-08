@@ -27,35 +27,41 @@ export class MockProject implements ProjectLike {
   private readonly _scenarios: Array<{ id: string; fullId: string }>;
   private readonly store = new Map<string, unknown>();
 
-  constructor(scenarioCount: number = 1, flatNamespace: boolean = false) {
+  constructor(scenarioCount: number = 1, flatNamespace: boolean = false,) {
     this._scenarios = [];
     for (let i = 0; i < scenarioCount; i++) {
       this._scenarios.push({
         id: i === 0 ? "plan" : `scenario${i}`,
         fullId: i === 0 ? "plan" : `scenario${i}`,
-      });
+      },);
     }
 
-    this.scenarios = new PropertySet(this, true);
-    this.shifts = new PropertySet(this, flatNamespace);
-    this.accounts = new PropertySet(this, flatNamespace);
-    this.resources = new PropertySet(this, flatNamespace);
-    this.tasks = new PropertySet(this, flatNamespace);
-    this.reports = new PropertySet(this, flatNamespace);
+    this.scenarios = new PropertySet(this, true,);
+    this.shifts = new PropertySet(this, flatNamespace,);
+    this.accounts = new PropertySet(this, flatNamespace,);
+    this.resources = new PropertySet(this, flatNamespace,);
+    this.tasks = new PropertySet(this, flatNamespace,);
+    this.reports = new PropertySet(this, flatNamespace,);
 
-    registerTaskAttributes(this.tasks);
-    registerResourceAttributes(this.resources);
-    registerAccountAttributes(this.accounts);
-    registerShiftAttributes(this.shifts);
-    registerReportAttributes(this.reports);
-    registerScenarioAttributes(this.scenarios);
+    registerTaskAttributes(this.tasks,);
+    registerResourceAttributes(this.resources,);
+    registerAccountAttributes(this.accounts,);
+    registerShiftAttributes(this.shifts,);
+    registerReportAttributes(this.reports,);
+    registerScenarioAttributes(this.scenarios,);
   }
 
   get scenarioCount(): number {
     return this._scenarios.length;
   }
 
-  scenario(idx: number): { id: string; fullId: string; all(): Array<{ id: string; fullId: string }> } | null {
+  scenario(
+    idx: number,
+  ): {
+    id: string;
+    fullId: string;
+    all(): Array<{ id: string; fullId: string }>;
+  } | null {
     if (idx < 0 || idx >= this._scenarios.length) {
       return null;
     }
@@ -63,11 +69,11 @@ export class MockProject implements ProjectLike {
     return {
       id: sc.id,
       fullId: sc.fullId,
-      all: () => [...this._scenarios],
+      all: () => [...this._scenarios,],
     };
   }
 
-  scenarioIdx(sc: string): number | undefined {
+  scenarioIdx(sc: string,): number | undefined {
     for (let i = 0; i < this._scenarios.length; i++) {
       const scenario = this._scenarios[i];
       if (scenario && (scenario.id === sc || scenario.fullId === sc)) {
@@ -77,50 +83,87 @@ export class MockProject implements ProjectLike {
     return undefined;
   }
 
-  get(name: string): unknown {
-    if (name === "now") return this.store.get("now") ?? TjTime.fromString("2026-01-01");
-    if (name === "start") return this.store.get("start") ?? TjTime.fromString("2026-01-01");
-    if (name === "end") return this.store.get("end") ?? TjTime.fromString("2026-12-31");
-    if (name === "scheduleGranularity") return this.store.get("scheduleGranularity") ?? 3600;
-    return this.store.get(name);
+  get(name: string,): unknown {
+    if (name === "now") {
+      return this.store.get("now",) ?? TjTime.fromString("2026-01-01",);
+    }
+    if (name === "start") {
+      return this.store.get("start",) ?? TjTime.fromString("2026-01-01",);
+    }
+    if (name === "end") {
+      return this.store.get("end",) ?? TjTime.fromString("2026-12-31",);
+    }
+    if (name === "scheduleGranularity") {
+      return this.store.get("scheduleGranularity",) ?? 3600;
+    }
+    return this.store.get(name,);
   }
 
-  set(name: string, value: unknown): void {
-    this.store.set(name, value);
+  set(name: string, value: unknown,): void {
+    this.store.set(name, value,);
   }
 
-  addScenario(scenario: { id: string; fullId: string }): void {
-    this._scenarios.push(scenario);
+  addScenario(scenario: { id: string; fullId: string },): void {
+    this._scenarios.push(scenario,);
   }
 
-  addShift(_s: unknown): void {}
-  addAccount(_a: unknown): void {}
-  addTask(_t: unknown): void {}
-  addResource(_r: unknown): void {}
-  addReport(_r: unknown): void {}
-  removeAccount(_a: unknown): void {}
+  addShift(_s: unknown,): void {}
+  addAccount(_a: unknown,): void {}
+  addTask(_t: unknown,): void {}
+  addResource(_r: unknown,): void {}
+  addReport(_r: unknown,): void {}
+  removeAccount(_a: unknown,): void {}
 
-  task(id: string): import("../../src/model/task.ts").Task | null {
-    const prop = this.tasks.get(id);
+  task(id: string,): import("../../src/model/task.ts").Task | null {
+    const prop = this.tasks.get(id,);
     if (prop === undefined) return null;
     return prop as import("../../src/model/task.ts").Task;
   }
 
-  dateToIdx(date: TjTime): number {
-    const start = this.get("start") as TjTime;
-    const granularity = (this.get("scheduleGranularity") as number) ?? 3600;
+  dateToIdx(date: TjTime,): number {
+    const start = this.get("start",) as TjTime;
+    const granularity = (this.get("scheduleGranularity",) as number) ?? 3600;
     const diff = date.toSeconds() - start.toSeconds();
-    return Math.floor(diff / granularity);
+    return Math.floor(diff / granularity,);
   }
 
-  attributeDefinition(id: string): any {
-    return this.scenarios.attributeDefinition(id);
+  idxToDate(sbIdx: number,): TjTime {
+    const start = this.get("start",) as TjTime;
+    const granularity = (this.get("scheduleGranularity",) as number) ?? 3600;
+    return TjTime.fromSeconds(start.toSeconds() + sbIdx * granularity,);
   }
 
-  getScenarioAttribute(scIdx: number, id: string): any {
-    const property = this.scenarios.get("plan");
+  anyResourceAvailable(sbIdx: number,): boolean {
+    for (const prop of this.resources.toArray()) {
+      const resource = prop as any;
+      if (resource.scenarioData?.(0,)) {
+        const rs = resource.scenarioData(0,);
+        if (rs.available?.(sbIdx,)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  isWorkingTime(sbIdx: number,): boolean {
+    // Mock: every slot is working time.
+    return true;
+  }
+
+  slotsToDays(slots: number,): number {
+    const granularity = (this.get("scheduleGranularity",) as number) ?? 3600;
+    return slots / (3600 / granularity);
+  }
+
+  attributeDefinition(id: string,): any {
+    return this.scenarios.attributeDefinition(id,);
+  }
+
+  getScenarioAttribute(scIdx: number, id: string,): any {
+    const property = this.scenarios.get("plan",);
     if (property) {
-      return property.getScenarioAttribute(scIdx, id);
+      return property.getScenarioAttribute(scIdx, id,);
     }
     return null;
   }

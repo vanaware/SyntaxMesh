@@ -8,6 +8,7 @@ import { TjTime } from "../../src/time/tj-time.ts";
 import { Resource } from "../../src/model/resource.ts";
 import { ScoreboardInterval } from "../../src/time/scoreboard-interval.ts";
 import { Booking } from "../../src/scheduling/booking.ts";
+import { Allocation } from "../../src/scheduling/allocation.ts";
 
 describe("TaskScenario", () => {
   let project: MockProject;
@@ -174,5 +175,175 @@ describe("TaskScenario", () => {
     task.setForScenario("start", TjTime.fromString("2026-01-01"), 0);
     // Forward task with start but no duration spec and no end is not ready
     assertEquals(taskScenario.readyForScheduling(), false);
+  });
+
+  // Test schedule
+  it("schedule agenda tarefa sem esforço", () => {
+    task.setForScenario("start", TjTime.fromString("2026-01-01"), 0);
+    task.setForScenario("end", TjTime.fromString("2026-01-02"), 0);
+    const result = taskScenario.schedule();
+    assertEquals(result, true);
+  });
+
+  it("scheduleSlot agenda slot para tarefa", () => {
+    task.setForScenario("start", TjTime.fromString("2026-01-01"), 0);
+    task.setForScenario("end", TjTime.fromString("2026-01-02"), 0);
+    taskScenario.schedule();
+    // schedule() already completed the task, so scheduleSlot() returns false
+    assertEquals(taskScenario.scheduleSlot(), false);
+  });
+
+  it("bookResources agenda recursos para tarefa", () => {
+    const resource = new Resource(project, "r1", "Resource 1", null);
+    task.setForScenario("allocate", [resource], 0);
+    task.setForScenario("start", TjTime.fromString("2026-01-01"), 0);
+    task.setForScenario("end", TjTime.fromString("2026-01-02"), 0);
+    taskScenario.schedule();
+    taskScenario.bookResources();
+    assertEquals(taskScenario.schedule(), true);
+  });
+
+  it("bookResource agenda recurso para tarefa", () => {
+    const resource = new Resource(project, "r1", "Resource 1", null);
+    const allocation = new Allocation([resource]);
+    task.setForScenario("allocate", [allocation], 0);
+    task.setForScenario("start", TjTime.fromString("2026-01-01"), 0);
+    task.setForScenario("end", TjTime.fromString("2026-01-02"), 0);
+    taskScenario.schedule();
+    taskScenario.bookResource(resource);
+    assertEquals(taskScenario.schedule(), true);
+  });
+
+  it("rollbackBookings remove bookings", () => {
+    const resource = new Resource(project, "r1", "Resource 1", null);
+    const allocation = new Allocation([resource]);
+    task.setForScenario("allocate", [allocation], 0);
+    task.setForScenario("start", TjTime.fromString("2026-01-01"), 0);
+    task.setForScenario("end", TjTime.fromString("2026-01-02"), 0);
+    taskScenario.schedule();
+    taskScenario.bookResources();
+    taskScenario.rollbackBookings();
+    // After rollbackBookings, the task is unscheduled, so schedule() returns true
+    assertEquals(taskScenario.schedule(), true);
+  });
+
+  it("scheduleContainer agenda container com filhos", () => {
+    const childTask = new Task(project, "t2", "Child Task", task);
+    // startEndTask container: no effort, has start+end
+    task.setForScenario("start", TjTime.fromString("2026-01-01"), 0);
+    task.setForScenario("end", TjTime.fromString("2026-01-02"), 0);
+    // Child must have start+end for scheduleContainer to compute bounds
+    childTask.setForScenario("start", TjTime.fromString("2026-01-01"), 0);
+    childTask.setForScenario("end", TjTime.fromString("2026-01-02"), 0);
+    taskScenario.schedule();
+    taskScenario.scheduleContainer();
+    assertEquals(taskScenario.schedule(), true);
+  });
+
+  it("earliestStart retorna start mais cedo", () => {
+    // Ruby returns null when no dependencies exist
+    assertEquals(taskScenario.earliestStart(), null);
+  });
+
+  it("latestEnd retorna end mais tarde", () => {
+    // Ruby returns null when no dependencies exist
+    assertEquals(taskScenario.latestEnd(), null);
+  });
+
+  it("finishScheduling finaliza agendamento", () => {
+    task.setForScenario("start", TjTime.fromString("2026-01-01"), 0);
+    task.setForScenario("end", TjTime.fromString("2026-01-02"), 0);
+    taskScenario.schedule();
+    taskScenario.finishScheduling();
+    assertEquals(taskScenario.schedule(), true);
+  });
+
+  it("preScheduleCheck verifica após agendamento", () => {
+    task.setForScenario("start", TjTime.fromString("2026-01-01"), 0);
+    task.setForScenario("end", TjTime.fromString("2026-01-02"), 0);
+    taskScenario.schedule();
+    taskScenario.preScheduleCheck();
+    assertEquals(taskScenario.errors(), 0);
+  });
+
+  it("calcCompletion calcula completude", () => {
+    task.setForScenario("effort", 3600, 0);
+    task.setForScenario("effortdone", 1800, 0);
+    taskScenario.calcCompletion();
+    assertEquals(taskScenario.complete(), 50);
+  });
+
+  it("calcStatus calcula status", () => {
+    task.setForScenario("effort", 3600, 0);
+    task.setForScenario("effortdone", 1800, 0);
+    taskScenario.calcStatus();
+    // Ruby uses "in progress" (space), not "in-progress"
+    assertEquals(taskScenario.status(), "in progress");
+  });
+
+  it("calcGauge calcula gauge", () => {
+    task.setForScenario("effort", 3600, 0);
+    task.setForScenario("effortdone", 1800, 0);
+    task.setForScenario("start", TjTime.fromString("2026-01-01"), 0);
+    task.setForScenario("end", TjTime.fromString("2026-01-02"), 0);
+    taskScenario.calcCompletion();
+    taskScenario.calcGauge();
+    assertEquals(taskScenario.gauge(), "50");
+  });
+
+  it("onShift verifica turno", () => {
+    assertEquals(taskScenario.onShift(0), true);
+  });
+
+  it("limitsOk verifica limites", () => {
+    assertEquals(taskScenario.limitsOk(0), true);
+  });
+
+  it("propagateDate propaga data para dependentes", () => {
+    const dependentTask = new Task(project, "t2", "Dependent Task", null);
+    task.setForScenario("effort", 3600, 0);
+    task.setForScenario("start", TjTime.fromString("2026-01-01"), 0);
+    task.setForScenario("end", TjTime.fromString("2026-01-02"), 0);
+    taskScenario.schedule();
+    const startDate = taskScenario.a("start") as TjTime;
+    taskScenario.propagateDate(startDate, false, false);
+    assertEquals(taskScenario.startIdx(), project.dateToIdx(startDate));
+  });
+
+  it("propagateDateToDep propaga data para dependente", () => {
+    const dependentTask = new Task(project, "t2", "Dependent Task", null);
+    task.setForScenario("effort", 3600, 0);
+    task.setForScenario("start", TjTime.fromString("2026-01-01"), 0);
+    task.setForScenario("end", TjTime.fromString("2026-01-02"), 0);
+    taskScenario.schedule();
+    taskScenario.propagateDateToDep();
+    assertEquals(taskScenario.errors(), 0);
+  });
+
+  it("canInheritDate verifica herança de data", () => {
+    assertEquals(taskScenario.canInheritDate(false), true);
+  });
+
+  it("markAsMilestone marca tarefa como milestone", () => {
+    task.setForScenario("milestone", true, 0);
+    taskScenario.markAsMilestone();
+    assertEquals(taskScenario.milestone(), true);
+  });
+
+  it("Xref resolve referências cruzadas", () => {
+    taskScenario.Xref();
+    assertEquals(taskScenario.errors(), 0);
+  });
+
+  it("checkDependency verifica dependência", () => {
+    taskScenario.checkDependency({ taskId: "nonexistent" }, "");
+    assert(taskScenario.errors() > 0);
+  });
+
+  it("prepareScheduling prepara para agendamento", () => {
+    task.setForScenario("start", TjTime.fromString("2026-01-01"), 0);
+    task.setForScenario("end", TjTime.fromString("2026-01-02"), 0);
+    taskScenario.prepareScheduling();
+    assertEquals(taskScenario.schedule(), true);
   });
 });
