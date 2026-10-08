@@ -10,13 +10,13 @@ export class Task extends PropertyTreeNode {
     parent: Task | null,
   ) {
     super(project.tasks, id, name, parent,);
-    project.addTask(this);
+    project.addTask(this,);
     for (let i = 0; i < project.scenarioCount; i++) {
-      this.data[i] = new TaskScenario(this, i, this.getScenarioAttributes(i));
+      this.data[i] = new TaskScenario(this, i, this.getScenarioAttributes(i,),);
     }
   }
 
-  override scenarioData(scIdx: number): TaskScenario {
+  override scenarioData(scIdx: number,): TaskScenario {
     return this.data[scIdx]! as TaskScenario;
   }
 }

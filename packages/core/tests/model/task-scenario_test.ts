@@ -1,14 +1,14 @@
-import { beforeEach, describe, it } from "@std/testing/bdd";
-import { assertEquals, assert, assertThrows } from "@std/assert";
-import { MockProject } from "./mock-project.ts";
-import { Task } from "../../src/model/task.ts";
-import { TaskScenario } from "../../src/model/task-scenario.ts";
-import { DurationType } from "../../src/scheduling/mod.ts";
-import { TjTime } from "../../src/time/tj-time.ts";
-import { Resource } from "../../src/model/resource.ts";
-import { ScoreboardInterval } from "../../src/time/scoreboard-interval.ts";
-import { Booking } from "../../src/scheduling/booking.ts";
-import { Allocation } from "../../src/scheduling/allocation.ts";
+import { beforeEach, describe, it, } from "@std/testing/bdd";
+import { assert, assertEquals, assertThrows, } from "@std/assert";
+import { MockProject, } from "./mock-project.ts";
+import { Task, } from "../../src/model/task.ts";
+import { TaskScenario, } from "../../src/model/task-scenario.ts";
+import { DurationType, } from "../../src/scheduling/mod.ts";
+import { TjTime, } from "../../src/time/tj-time.ts";
+import { Resource, } from "../../src/model/resource.ts";
+import { ScoreboardInterval, } from "../../src/time/scoreboard-interval.ts";
+import { Booking, } from "../../src/scheduling/booking.ts";
+import { Allocation, } from "../../src/scheduling/allocation.ts";
 
 describe("TaskScenario", () => {
   let project: MockProject;
@@ -16,122 +16,122 @@ describe("TaskScenario", () => {
   let taskScenario: TaskScenario;
 
   beforeEach(() => {
-    project = new MockProject(1);
-    task = new Task(project, "t1", "Task 1", null);
-    taskScenario = task.scenarioData(0);
-  });
+    project = new MockProject(1,);
+    task = new Task(project, "t1", "Task 1", null,);
+    taskScenario = task.scenarioData(0,);
+  },);
 
   it("constructor pré-carrega atributos", () => {
     // Verificar que os atributos foram pré-carregados
-    assertEquals(taskScenario.a("effort"), 0);
-    assertEquals(taskScenario.a("length"), 0);
-    assertEquals(taskScenario.a("duration"), 0);
-    assertEquals(taskScenario.a("start"), null);
-    assertEquals(taskScenario.a("end"), null);
-    assertEquals(taskScenario.a("milestone"), false);
-    assertEquals(taskScenario.a("forward"), true);
-    assertEquals(taskScenario.a("priority"), 500);
+    assertEquals(taskScenario.a("effort",), 0,);
+    assertEquals(taskScenario.a("length",), 0,);
+    assertEquals(taskScenario.a("duration",), 0,);
+    assertEquals(taskScenario.a("start",), null,);
+    assertEquals(taskScenario.a("end",), null,);
+    assertEquals(taskScenario.a("milestone",), false,);
+    assertEquals(taskScenario.a("forward",), true,);
+    assertEquals(taskScenario.a("priority",), 500,);
   });
 
   it("a retorna valor de atributo", () => {
     // Definir um valor de atributo
-    task.setForScenario("effort", 3600, 0);
-    assertEquals(taskScenario.a("effort"), 3600);
+    task.setForScenario("effort", 3600, 0,);
+    assertEquals(taskScenario.a("effort",), 3600,);
   });
 
   it("a retorna null para atributo não definido", () => {
-    assertEquals(taskScenario.a("nonexistent"), null);
+    assertEquals(taskScenario.a("nonexistent",), null,);
   });
 
   it("constructor cria TaskScenario com task e scenarioIdx corretos", () => {
-    assertEquals(taskScenario.getProperty(), task);
-    assertEquals(taskScenario.getScenarioIdx(), 0);
+    assertEquals(taskScenario.getProperty(), task,);
+    assertEquals(taskScenario.getScenarioIdx(), 0,);
   });
 
   it("constructor com múltiplos cenários", () => {
-    const project2 = new MockProject(3);
-    const task2 = new Task(project2, "t2", "Task 2", null);
-    assertEquals(task2.scenarioData(0).getScenarioIdx(), 0);
-    assertEquals(task2.scenarioData(1).getScenarioIdx(), 1);
-    assertEquals(task2.scenarioData(2).getScenarioIdx(), 2);
+    const project2 = new MockProject(3,);
+    const task2 = new Task(project2, "t2", "Task 2", null,);
+    assertEquals(task2.scenarioData(0,).getScenarioIdx(), 0,);
+    assertEquals(task2.scenarioData(1,).getScenarioIdx(), 1,);
+    assertEquals(task2.scenarioData(2,).getScenarioIdx(), 2,);
   });
 
   // Test preScheduleCheck
   it("preScheduleCheck passa para tarefa simples sem esforço", () => {
     // Tarefa simples sem esforço, sem alocações, sem bookings
     // Give it an end date so it's not underspecified
-    task.setForScenario("end", TjTime.fromString("2026-01-02"), 0);
+    task.setForScenario("end", TjTime.fromString("2026-01-02",), 0,);
     taskScenario.preScheduleCheck();
-    assertEquals(taskScenario.errors(), 0);
+    assertEquals(taskScenario.errors(), 0,);
   });
 
   it("preScheduleCheck falha para tarefa com esforço mas sem alocações", () => {
-    task.setForScenario("effort", 3600, 0);
+    task.setForScenario("effort", 3600, 0,);
     taskScenario.preScheduleCheck();
-    assert(taskScenario.errors() > 0);
+    assert(taskScenario.errors() > 0,);
   });
 
   it("preScheduleCheck falha para tarefa container com bookings", () => {
     // Criar uma tarefa container (com filhos)
-    const childTask = new Task(project, "t2", "Child Task", task);
-    task.setForScenario("effort", 3600, 0);
-    task.setForScenario("allocate", [], 0);
-    task.setForScenario("booking", [], 0);
+    const childTask = new Task(project, "t2", "Child Task", task,);
+    task.setForScenario("effort", 3600, 0,);
+    task.setForScenario("allocate", [], 0,);
+    task.setForScenario("booking", [], 0,);
     taskScenario.preScheduleCheck();
-    assert(taskScenario.errors() > 0);
+    assert(taskScenario.errors() > 0,);
   });
 
   it("preScheduleCheck falha para milestone com bookings", () => {
     // Create a real Booking for the milestone
-    const resource = new Resource(project, "r1", "Resource 1", null);
+    const resource = new Resource(project, "r1", "Resource 1", null,);
     const interval = new ScoreboardInterval(
-      project.get("start") as TjTime,
-      (project.get("scheduleGranularity") as number) ?? 3600,
+      project.get("start",) as TjTime,
+      (project.get("scheduleGranularity",) as number) ?? 3600,
       0,
       1,
     );
-    const booking = new Booking(resource, task, [interval]);
-    task.setForScenario("milestone", true, 0);
-    task.setForScenario("booking", [booking], 0);
+    const booking = new Booking(resource, task, [interval,],);
+    task.setForScenario("milestone", true, 0,);
+    task.setForScenario("booking", [booking,], 0,);
     taskScenario.preScheduleCheck();
-    assert(taskScenario.errors() > 0);
+    assert(taskScenario.errors() > 0,);
   });
 
   it("preScheduleCheck falha para tarefa agendada sem start/end", () => {
-    task.setForScenario("scheduled", true, 0);
+    task.setForScenario("scheduled", true, 0,);
     taskScenario.preScheduleCheck();
-    assert(taskScenario.errors() > 0);
+    assert(taskScenario.errors() > 0,);
   });
 
   // Test checkForLoops - simplified test
   it("checkForLoops não lança para tarefa simples", () => {
-    taskScenario.checkForLoops([], false, false, true);
-    assertEquals(taskScenario.errors(), 0);
+    taskScenario.checkForLoops([], false, false, true,);
+    assertEquals(taskScenario.errors(), 0,);
   });
 
   // Test calcCriticalness
   it("calcCriticalness para milestone sem esforço", () => {
-    task.setForScenario("milestone", true, 0);
-    task.setForScenario("priority", 1000, 0);
+    task.setForScenario("milestone", true, 0,);
+    task.setForScenario("priority", 1000, 0,);
     taskScenario.calcCriticalness();
-    assertEquals(taskScenario.criticalness(), 2.0);
+    assertEquals(taskScenario.criticalness(), 2.0,);
   });
 
   it("calcCriticalness para tarefa sem esforço", () => {
     taskScenario.calcCriticalness();
-    assertEquals(taskScenario.criticalness(), 0.0);
+    assertEquals(taskScenario.criticalness(), 0.0,);
   });
 
   // Test calcPathCriticalness
   it("calcPathCriticalness para tarefa sem dependências", () => {
     taskScenario.calcCriticalness();
     const pathCriticalness = taskScenario.calcPathCriticalness();
-    assertEquals(taskScenario.a("pathcriticalness"), 0.0);
+    assertEquals(taskScenario.a("pathcriticalness",), 0.0,);
   });
 
   // Test countResourceAllocations
   it("countResourceAllocations conta alocações", () => {
-    task.setForScenario("allocate", [], 0);
+    task.setForScenario("allocate", [], 0,);
     // countResourceAllocations returns void; verify it doesn't throw
     taskScenario.countResourceAllocations();
   });
@@ -139,7 +139,7 @@ describe("TaskScenario", () => {
   // Test candidates
   it("candidates retorna lista vazia sem alocações", () => {
     const candidates = taskScenario.candidates();
-    assertEquals(candidates.length, 0);
+    assertEquals(candidates.length, 0,);
   });
 
   // Test resetLoopFlags
@@ -151,200 +151,200 @@ describe("TaskScenario", () => {
 
   // Test hasDependencies
   it("hasDependencies retorna false para tarefa sem dependências", () => {
-    assertEquals(taskScenario.hasDependencies(false), false);
-    assertEquals(taskScenario.hasDependencies(true), false);
+    assertEquals(taskScenario.hasDependencies(false,), false,);
+    assertEquals(taskScenario.hasDependencies(true,), false,);
   });
 
   // Test hasStrongDeps
   it("hasStrongDeps retorna false para tarefa sem dependências fortes", () => {
-    assertEquals(taskScenario.hasStrongDeps(false), false);
+    assertEquals(taskScenario.hasStrongDeps(false,), false,);
   });
 
   // Test markAsRunaway
   it("markAsRunaway marca tarefa como runaway", () => {
     taskScenario.markAsRunaway();
-    assertEquals(taskScenario.isRunAway(), true);
+    assertEquals(taskScenario.isRunAway(), true,);
   });
 
   // Test readyForScheduling
   it("readyForScheduling para tarefa sem start", () => {
-    assertEquals(taskScenario.readyForScheduling(), false);
+    assertEquals(taskScenario.readyForScheduling(), false,);
   });
 
   it("readyForScheduling para tarefa com start e sem esforço", () => {
-    task.setForScenario("start", TjTime.fromString("2026-01-01"), 0);
+    task.setForScenario("start", TjTime.fromString("2026-01-01",), 0,);
     // Forward task with start but no duration spec and no end is not ready
-    assertEquals(taskScenario.readyForScheduling(), false);
+    assertEquals(taskScenario.readyForScheduling(), false,);
   });
 
   // Test schedule
   it("schedule agenda tarefa sem esforço", () => {
-    task.setForScenario("start", TjTime.fromString("2026-01-01"), 0);
-    task.setForScenario("end", TjTime.fromString("2026-01-02"), 0);
+    task.setForScenario("start", TjTime.fromString("2026-01-01",), 0,);
+    task.setForScenario("end", TjTime.fromString("2026-01-02",), 0,);
     const result = taskScenario.schedule();
-    assertEquals(result, true);
+    assertEquals(result, true,);
   });
 
   it("scheduleSlot agenda slot para tarefa", () => {
-    task.setForScenario("start", TjTime.fromString("2026-01-01"), 0);
-    task.setForScenario("end", TjTime.fromString("2026-01-02"), 0);
+    task.setForScenario("start", TjTime.fromString("2026-01-01",), 0,);
+    task.setForScenario("end", TjTime.fromString("2026-01-02",), 0,);
     taskScenario.schedule();
     // schedule() already completed the task, so scheduleSlot() returns false
-    assertEquals(taskScenario.scheduleSlot(), false);
+    assertEquals(taskScenario.scheduleSlot(), false,);
   });
 
   it("bookResources agenda recursos para tarefa", () => {
-    const resource = new Resource(project, "r1", "Resource 1", null);
-    const allocation = new Allocation([resource]);
-    task.setForScenario("allocate", [allocation], 0);
-    task.setForScenario("start", TjTime.fromString("2026-01-01"), 0);
-    task.setForScenario("end", TjTime.fromString("2026-01-02"), 0);
+    const resource = new Resource(project, "r1", "Resource 1", null,);
+    const allocation = new Allocation([resource,],);
+    task.setForScenario("allocate", [allocation,], 0,);
+    task.setForScenario("start", TjTime.fromString("2026-01-01",), 0,);
+    task.setForScenario("end", TjTime.fromString("2026-01-02",), 0,);
     taskScenario.schedule();
     taskScenario.bookResources();
-    assertEquals(taskScenario.schedule(), true);
+    assertEquals(taskScenario.schedule(), true,);
   });
 
   it("bookResource agenda recurso para tarefa", () => {
-    const resource = new Resource(project, "r1", "Resource 1", null);
-    const allocation = new Allocation([resource]);
-    task.setForScenario("allocate", [allocation], 0);
-    task.setForScenario("start", TjTime.fromString("2026-01-01"), 0);
-    task.setForScenario("end", TjTime.fromString("2026-01-02"), 0);
+    const resource = new Resource(project, "r1", "Resource 1", null,);
+    const allocation = new Allocation([resource,],);
+    task.setForScenario("allocate", [allocation,], 0,);
+    task.setForScenario("start", TjTime.fromString("2026-01-01",), 0,);
+    task.setForScenario("end", TjTime.fromString("2026-01-02",), 0,);
     taskScenario.schedule();
-    taskScenario.bookResource(resource);
-    assertEquals(taskScenario.schedule(), true);
+    taskScenario.bookResource(resource,);
+    assertEquals(taskScenario.schedule(), true,);
   });
 
   it("rollbackBookings remove bookings", () => {
-    const resource = new Resource(project, "r1", "Resource 1", null);
-    const allocation = new Allocation([resource]);
-    task.setForScenario("allocate", [allocation], 0);
-    task.setForScenario("start", TjTime.fromString("2026-01-01"), 0);
-    task.setForScenario("end", TjTime.fromString("2026-01-02"), 0);
+    const resource = new Resource(project, "r1", "Resource 1", null,);
+    const allocation = new Allocation([resource,],);
+    task.setForScenario("allocate", [allocation,], 0,);
+    task.setForScenario("start", TjTime.fromString("2026-01-01",), 0,);
+    task.setForScenario("end", TjTime.fromString("2026-01-02",), 0,);
     taskScenario.schedule();
     taskScenario.bookResources();
     taskScenario.rollbackBookings();
     // After rollbackBookings, the task is unscheduled, so schedule() returns true
-    assertEquals(taskScenario.schedule(), true);
+    assertEquals(taskScenario.schedule(), true,);
   });
 
   it("scheduleContainer agenda container com filhos", () => {
-    const childTask = new Task(project, "t2", "Child Task", task);
+    const childTask = new Task(project, "t2", "Child Task", task,);
     // startEndTask container: no effort, has start+end
-    task.setForScenario("start", TjTime.fromString("2026-01-01"), 0);
-    task.setForScenario("end", TjTime.fromString("2026-01-02"), 0);
+    task.setForScenario("start", TjTime.fromString("2026-01-01",), 0,);
+    task.setForScenario("end", TjTime.fromString("2026-01-02",), 0,);
     // Child must have start+end for scheduleContainer to compute bounds
-    childTask.setForScenario("start", TjTime.fromString("2026-01-01"), 0);
-    childTask.setForScenario("end", TjTime.fromString("2026-01-02"), 0);
+    childTask.setForScenario("start", TjTime.fromString("2026-01-01",), 0,);
+    childTask.setForScenario("end", TjTime.fromString("2026-01-02",), 0,);
     taskScenario.schedule();
     taskScenario.scheduleContainer();
-    assertEquals(taskScenario.schedule(), true);
+    assertEquals(taskScenario.schedule(), true,);
   });
 
   it("earliestStart retorna start mais cedo", () => {
     // Ruby returns null when no dependencies exist
-    assertEquals(taskScenario.earliestStart(), null);
+    assertEquals(taskScenario.earliestStart(), null,);
   });
 
   it("latestEnd retorna end mais tarde", () => {
     // Ruby returns null when no dependencies exist
-    assertEquals(taskScenario.latestEnd(), null);
+    assertEquals(taskScenario.latestEnd(), null,);
   });
 
   it("finishScheduling finaliza agendamento", () => {
-    task.setForScenario("start", TjTime.fromString("2026-01-01"), 0);
-    task.setForScenario("end", TjTime.fromString("2026-01-02"), 0);
+    task.setForScenario("start", TjTime.fromString("2026-01-01",), 0,);
+    task.setForScenario("end", TjTime.fromString("2026-01-02",), 0,);
     taskScenario.schedule();
     taskScenario.finishScheduling();
-    assertEquals(taskScenario.schedule(), true);
+    assertEquals(taskScenario.schedule(), true,);
   });
 
   it("preScheduleCheck verifica após agendamento", () => {
-    task.setForScenario("start", TjTime.fromString("2026-01-01"), 0);
-    task.setForScenario("end", TjTime.fromString("2026-01-02"), 0);
+    task.setForScenario("start", TjTime.fromString("2026-01-01",), 0,);
+    task.setForScenario("end", TjTime.fromString("2026-01-02",), 0,);
     taskScenario.schedule();
     taskScenario.preScheduleCheck();
-    assertEquals(taskScenario.errors(), 0);
+    assertEquals(taskScenario.errors(), 0,);
   });
 
   it("calcCompletion calcula completude", () => {
-    task.setForScenario("effort", 3600, 0);
-    task.setForScenario("effortdone", 1800, 0);
+    task.setForScenario("effort", 3600, 0,);
+    task.setForScenario("effortdone", 1800, 0,);
     taskScenario.calcCompletion();
-    assertEquals(taskScenario.complete(), 50);
+    assertEquals(taskScenario.complete(), 50,);
   });
 
   it("calcStatus calcula status", () => {
-    task.setForScenario("effort", 3600, 0);
-    task.setForScenario("effortdone", 1800, 0);
+    task.setForScenario("effort", 3600, 0,);
+    task.setForScenario("effortdone", 1800, 0,);
     taskScenario.calcStatus();
     // Ruby uses "in progress" (space), not "in-progress"
-    assertEquals(taskScenario.status(), "in progress");
+    assertEquals(taskScenario.status(), "in progress",);
   });
 
   it("calcGauge calcula gauge", () => {
-    task.setForScenario("effort", 3600, 0);
-    task.setForScenario("effortdone", 1800, 0);
-    task.setForScenario("start", TjTime.fromString("2026-01-01"), 0);
-    task.setForScenario("end", TjTime.fromString("2026-01-02"), 0);
+    task.setForScenario("effort", 3600, 0,);
+    task.setForScenario("effortdone", 1800, 0,);
+    task.setForScenario("start", TjTime.fromString("2026-01-01",), 0,);
+    task.setForScenario("end", TjTime.fromString("2026-01-02",), 0,);
     taskScenario.calcCompletion();
     taskScenario.calcGauge();
-    assertEquals(taskScenario.gauge(), "50");
+    assertEquals(taskScenario.gauge(), "50",);
   });
 
   it("onShift verifica turno", () => {
-    assertEquals(taskScenario.onShift(0), true);
+    assertEquals(taskScenario.onShift(0,), true,);
   });
 
   it("limitsOk verifica limites", () => {
-    assertEquals(taskScenario.limitsOk(0), true);
+    assertEquals(taskScenario.limitsOk(0,), true,);
   });
 
   it("propagateDate propaga data para dependentes", () => {
-    const dependentTask = new Task(project, "t2", "Dependent Task", null);
-    task.setForScenario("effort", 3600, 0);
-    task.setForScenario("start", TjTime.fromString("2026-01-01"), 0);
-    task.setForScenario("end", TjTime.fromString("2026-01-02"), 0);
+    const dependentTask = new Task(project, "t2", "Dependent Task", null,);
+    task.setForScenario("effort", 3600, 0,);
+    task.setForScenario("start", TjTime.fromString("2026-01-01",), 0,);
+    task.setForScenario("end", TjTime.fromString("2026-01-02",), 0,);
     taskScenario.schedule();
-    const startDate = taskScenario.a("start") as TjTime;
-    taskScenario.propagateDate(startDate, false, false);
-    assertEquals(taskScenario.startIdx(), project.dateToIdx(startDate));
+    const startDate = taskScenario.a("start",) as TjTime;
+    taskScenario.propagateDate(startDate, false, false,);
+    assertEquals(taskScenario.startIdx(), project.dateToIdx(startDate,),);
   });
 
   it("propagateDateToDep propaga data para dependente", () => {
-    const dependentTask = new Task(project, "t2", "Dependent Task", null);
-    task.setForScenario("effort", 3600, 0);
-    task.setForScenario("start", TjTime.fromString("2026-01-01"), 0);
-    task.setForScenario("end", TjTime.fromString("2026-01-02"), 0);
+    const dependentTask = new Task(project, "t2", "Dependent Task", null,);
+    task.setForScenario("effort", 3600, 0,);
+    task.setForScenario("start", TjTime.fromString("2026-01-01",), 0,);
+    task.setForScenario("end", TjTime.fromString("2026-01-02",), 0,);
     taskScenario.schedule();
     taskScenario.propagateDateToDep();
-    assertEquals(taskScenario.errors(), 0);
+    assertEquals(taskScenario.errors(), 0,);
   });
 
   it("canInheritDate verifica herança de data", () => {
-    assertEquals(taskScenario.canInheritDate(false), true);
+    assertEquals(taskScenario.canInheritDate(false,), true,);
   });
 
   it("markAsMilestone marca tarefa como milestone", () => {
-    task.setForScenario("milestone", true, 0);
+    task.setForScenario("milestone", true, 0,);
     taskScenario.markAsMilestone();
-    assertEquals(taskScenario.milestone(), true);
+    assertEquals(taskScenario.milestone(), true,);
   });
 
   it("Xref resolve referências cruzadas", () => {
     taskScenario.Xref();
-    assertEquals(taskScenario.errors(), 0);
+    assertEquals(taskScenario.errors(), 0,);
   });
 
   it("checkDependency verifica dependência", () => {
-    taskScenario.checkDependency({ taskId: "nonexistent" }, "");
-    assert(taskScenario.errors() > 0);
+    taskScenario.checkDependency({ taskId: "nonexistent", }, "",);
+    assert(taskScenario.errors() > 0,);
   });
 
   it("prepareScheduling prepara para agendamento", () => {
-    task.setForScenario("start", TjTime.fromString("2026-01-01"), 0);
-    task.setForScenario("end", TjTime.fromString("2026-01-02"), 0);
+    task.setForScenario("start", TjTime.fromString("2026-01-01",), 0,);
+    task.setForScenario("end", TjTime.fromString("2026-01-02",), 0,);
     taskScenario.prepareScheduling();
-    assertEquals(taskScenario.schedule(), true);
+    assertEquals(taskScenario.schedule(), true,);
   });
 });

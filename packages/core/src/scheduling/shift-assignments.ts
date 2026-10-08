@@ -10,9 +10,9 @@ import {
   BIT_ASSIGNED,
   BIT_OFF_WORK,
   BIT_OVERRIDE,
-  packLeaveType,
-  LEAVE_TYPES,
   LEAVE_MASK,
+  LEAVE_TYPES,
+  packLeaveType,
 } from "../time/scoreboard-bits.ts";
 
 /**
@@ -25,7 +25,7 @@ export class ShiftAssignment {
   readonly shiftScenario: ShiftScenario;
   readonly interval: TimeInterval;
 
-  constructor(shiftScenario: ShiftScenario, interval: TimeInterval) {
+  constructor(shiftScenario: ShiftScenario, interval: TimeInterval,) {
     this.shiftScenario = shiftScenario;
     this.interval = interval;
   }
@@ -36,7 +36,7 @@ export class ShiftAssignment {
    * Usada para compartilhamento de scoreboards entre instâncias com conteúdo idêntico.
    */
   hashKey(): string {
-    const projectId = projectObjectId(this.shiftScenario.project);
+    const projectId = projectObjectId(this.shiftScenario.project,);
     const start = this.interval.start.toSeconds();
     const end = this.interval.end.toSeconds();
     return `${projectId}|${this.shiftScenario.scenarioIndex}|${start}|${end}`;
@@ -46,41 +46,45 @@ export class ShiftAssignment {
    * Retorna uma cópia profunda desta atribuição.
    */
   copy(): ShiftAssignment {
-    return new ShiftAssignment(this.shiftScenario, new TimeInterval(this.interval,));
+    return new ShiftAssignment(
+      this.shiftScenario,
+      new TimeInterval(this.interval,),
+    );
   }
 
   /**
    * Verifica se este intervalo se sobrepõe ao intervalo dado.
    */
-  overlaps(iv: TimeInterval): boolean {
+  overlaps(iv: TimeInterval,): boolean {
     return this.interval.overlaps(iv,);
   }
 
   /**
    * Verifica se a data está dentro do intervalo e o shift é de substituição.
    */
-  replace(date: TjTime): boolean {
-    return this.assigned(date) && this.shiftScenario.replace();
+  replace(date: TjTime,): boolean {
+    return this.assigned(date,) && this.shiftScenario.replace();
   }
 
   /**
    * Verifica se a data está dentro do intervalo de atribuição.
    */
-  assigned(date: TjTime): boolean {
-    return date.greaterThanOrEqual(this.interval.start,) && date.lessThan(this.interval.end,);
+  assigned(date: TjTime,): boolean {
+    return date.greaterThanOrEqual(this.interval.start,) &&
+      date.lessThan(this.interval.end,);
   }
 
   /**
    * Verifica se a data tem tempo de trabalho definido pelo shift.
    */
-  onShift(date: TjTime): boolean {
+  onShift(date: TjTime,): boolean {
     return this.shiftScenario.onShift(date,);
   }
 
   /**
    * Verifica se a data tem leave definido pelo shift.
    */
-  onLeave(date: TjTime): boolean {
+  onLeave(date: TjTime,): boolean {
     return this.shiftScenario.onLeave(date,);
   }
 
@@ -105,9 +109,9 @@ export class ShiftAssignments {
   private scoreboard: Scoreboard<number | null> | null;
   private hashKeyCache: string | null;
 
-  constructor(sa?: ShiftAssignments) {
+  constructor(sa?: ShiftAssignments,) {
     if (sa) {
-      this.assignments = sa.assignments.map((a) => a.copy(),);
+      this.assignments = sa.assignments.map((a,) => a.copy());
       this.project = sa.project;
       this.scoreboard = null;
       this.hashKeyCache = null;
@@ -146,7 +150,7 @@ export class ShiftAssignments {
    *
    * @returns true se adicionada com sucesso, false se houver sobreposição.
    */
-  addAssignment(sa: ShiftAssignment): boolean {
+  addAssignment(sa: ShiftAssignment,): boolean {
     if (this.overlaps(sa.interval,)) {
       return false;
     }
@@ -158,7 +162,7 @@ export class ShiftAssignments {
   /**
    * Verifica se algum intervalo se sobrepõe ao intervalo dado.
    */
-  overlaps(iv: TimeInterval): boolean {
+  overlaps(iv: TimeInterval,): boolean {
     for (const sa of this.assignments) {
       if (sa.overlaps(iv,)) {
         return true;
@@ -176,7 +180,7 @@ export class ShiftAssignments {
    * - Bits 2–5 (LEAVE_MASK): tipo de leave (holiday, annual, etc.).
    * - Bit 8 (BIT_OVERRIDE): se alguma atribuição é de substituição.
    */
-  getSbSlot(idx: number): number {
+  getSbSlot(idx: number,): number {
     if (!this.scoreboard) {
       this.scoreboard = this.newScoreboard();
     }
@@ -187,7 +191,7 @@ export class ShiftAssignments {
     }
 
     // Converter idx para TjTime (conforme Ruby: getSbSlot usa a data do slot).
-    const date = TjTime.fromDate(this.scoreboard.idxToDate(idx,));
+    const date = TjTime.fromDate(this.scoreboard.idxToDate(idx,),);
 
     // Computar encoding lazy
     let val = 0;
@@ -205,7 +209,7 @@ export class ShiftAssignments {
       }
 
       if (sa.onLeave(date,)) {
-        val |= packLeaveType(LEAVE_TYPES.holiday);
+        val |= packLeaveType(LEAVE_TYPES.holiday,);
       }
 
       if (sa.replace(date,)) {
@@ -224,39 +228,46 @@ export class ShiftAssignments {
   /**
    * Verifica se há atribuição no índice dado.
    */
-  assigned(idx: number): boolean {
-    return (this.getSbSlot(idx) & BIT_ASSIGNED) !== 0;
+  assigned(idx: number,): boolean {
+    return (this.getSbSlot(idx,) & BIT_ASSIGNED) !== 0;
   }
 
   /**
    * Verifica se há tempo de trabalho disponível no índice dado.
    */
-  onShift(idx: number): boolean {
-    return (this.getSbSlot(idx) & BIT_OFF_WORK) === 0;
+  onShift(idx: number,): boolean {
+    return (this.getSbSlot(idx,) & BIT_OFF_WORK) === 0;
   }
 
   /**
    * Verifica se há tempo de trabalho **não** disponível no índice dado.
    */
-  timeOff(idx: number): boolean {
-    return (this.getSbSlot(idx) & BIT_OFF_WORK) !== 0;
+  timeOff(idx: number,): boolean {
+    return (this.getSbSlot(idx,) & BIT_OFF_WORK) !== 0;
   }
 
   /**
    * Verifica se há leave no índice dado.
    */
-  onLeave(idx: number): boolean {
-    return (this.getSbSlot(idx) & LEAVE_MASK) !== 0;
+  onLeave(idx: number,): boolean {
+    return (this.getSbSlot(idx,) & LEAVE_MASK) !== 0;
   }
 
   /**
    * Coleta intervalos de tempo fora (off-duty) com duração mínima.
    */
-  collectTimeOffIntervals(iv: TimeInterval, minDuration: number): IntervalList<TimeInterval> {
+  collectTimeOffIntervals(
+    iv: TimeInterval,
+    minDuration: number,
+  ): IntervalList<TimeInterval> {
     if (!this.scoreboard) {
       this.scoreboard = this.newScoreboard();
     }
-    return this.scoreboard.collectIntervals(iv, minDuration, (v) => (v! & BIT_OFF_WORK) !== 0,);
+    return this.scoreboard.collectIntervals(
+      iv,
+      minDuration,
+      (v,) => (v! & BIT_OFF_WORK) !== 0,
+    );
   }
 
   /**
@@ -270,10 +281,12 @@ export class ShiftAssignments {
     }
 
     // Ordenar assignments por interval.start (in-place, como Ruby)
-    this.assignments.sort((a, b) => a.interval.start.toSeconds() - b.interval.start.toSeconds(),);
+    this.assignments.sort((a, b,) =>
+      a.interval.start.toSeconds() - b.interval.start.toSeconds()
+    );
 
-    const parts = this.assignments.map((a) => a.hashKey(),);
-    this.hashKeyCache = parts.join("||");
+    const parts = this.assignments.map((a,) => a.hashKey());
+    this.hashKeyCache = parts.join("||",);
     return this.hashKeyCache;
   }
 
@@ -286,8 +299,8 @@ export class ShiftAssignments {
     if (this.assignments.length === 0) {
       return "";
     }
-    const parts = this.assignments.map((a) => a.to_s(),);
-    return "shifts " + parts.join(", ");
+    const parts = this.assignments.map((a,) => a.to_s());
+    return "shifts " + parts.join(", ",);
   }
 
   /**
@@ -299,11 +312,11 @@ export class ShiftAssignments {
    */
   newScoreboard(): Scoreboard<number | null> {
     const key = this.hashKey();
-    const objId = projectObjectId(this.project ?? {});
+    const objId = projectObjectId(this.project ?? {},);
 
-    const record = ShiftAssignments.scoreboards.get(key);
+    const record = ShiftAssignments.scoreboards.get(key,);
     if (record) {
-      record[0].add(objId);
+      record[0].add(objId,);
       return record[1];
     }
 
@@ -311,24 +324,30 @@ export class ShiftAssignments {
       throw new TjArgumentError("Project must be set to create scoreboard",);
     }
 
-    const startRaw = this.project.get("start");
-    const endRaw = this.project.get("end");
-    const granularity = this.project.get("scheduleGranularity") as number;
+    const startRaw = this.project.get("start",);
+    const endRaw = this.project.get("end",);
+    const granularity = this.project.get("scheduleGranularity",) as number;
 
-    const start = startRaw instanceof TjTime ? new Date(startRaw.toSeconds() * 1000) : startRaw as Date;
-    const end = endRaw instanceof TjTime ? new Date(endRaw.toSeconds() * 1000) : endRaw as Date;
+    const start = startRaw instanceof TjTime
+      ? new Date(startRaw.toSeconds() * 1000,)
+      : startRaw as Date;
+    const end = endRaw instanceof TjTime
+      ? new Date(endRaw.toSeconds() * 1000,)
+      : endRaw as Date;
 
     if (!start || !end || !granularity) {
-      throw new TjArgumentError("Project missing required attributes for scoreboard",);
+      throw new TjArgumentError(
+        "Project missing required attributes for scoreboard",
+      );
     }
 
     const sb = new Scoreboard<number | null>(start, end, granularity, null,);
     const ids = new Set<number>();
-    ids.add(objId);
-    ShiftAssignments.scoreboards.set(key, [ids, sb],);
+    ids.add(objId,);
+    ShiftAssignments.scoreboards.set(key, [ids, sb,],);
 
     // Registrar FinalizationRegistry para limpar quando a instância for GC'ed
-    ShiftAssignments.finalizer.register(this, { key, objId });
+    ShiftAssignments.finalizer.register(this, { key, objId, },);
 
     return sb;
   }
@@ -344,20 +363,23 @@ export class ShiftAssignments {
    * Remove uma referência de objectId do cache estático.
    * Se o Set ficar vazio, deleta a entrada do Map.
    */
-  static deleteScoreboard(objId: number): void {
-    for (const [key, [ids, sb]] of ShiftAssignments.scoreboards) {
-      ids.delete(objId);
+  static deleteScoreboard(objId: number,): void {
+    for (const [key, [ids, sb,],] of ShiftAssignments.scoreboards) {
+      ids.delete(objId,);
       if (ids.size === 0) {
-        ShiftAssignments.scoreboards.delete(key);
+        ShiftAssignments.scoreboards.delete(key,);
       }
     }
   }
 
   /** Cache estático de scoreboards compartilhados (hashKey → [Set<objectId>, Scoreboard]). */
-  static scoreboards: Map<string, [Set<number>, Scoreboard<number | null>]> = new Map();
+  static scoreboards: Map<string, [Set<number>, Scoreboard<number | null>,]> =
+    new Map();
 
   /** FinalizationRegistry para limpar cache quando instâncias são GC'ed. */
-  static finalizer = new FinalizationRegistry<{ key: string; objId: number }>((heldValue) => {
-    ShiftAssignments.deleteScoreboard(heldValue.objId);
-  });
+  static finalizer = new FinalizationRegistry<{ key: string; objId: number }>(
+    (heldValue,) => {
+      ShiftAssignments.deleteScoreboard(heldValue.objId,);
+    },
+  );
 }

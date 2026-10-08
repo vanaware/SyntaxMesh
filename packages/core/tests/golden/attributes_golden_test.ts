@@ -203,7 +203,7 @@ function runCase(c: GoldenCase,): void {
   switch (c.method) {
     case "to_tjp": {
       if (c.expected === "throws") {
-        assertThrows(() => attr.to_tjp(), Error);
+        assertThrows(() => attr.to_tjp(), Error,);
       } else {
         const actual = attr.to_tjp();
         assertEquals(
@@ -216,7 +216,7 @@ function runCase(c: GoldenCase,): void {
     }
     case "to_s": {
       if (c.expected === "throws") {
-        assertThrows(() => attr.to_s(), Error);
+        assertThrows(() => attr.to_s(), Error,);
       } else {
         const actual_s = attr.to_s();
         assertEquals(
@@ -251,13 +251,15 @@ function runCase(c: GoldenCase,): void {
       // 3.14.7 — deepClone de cada default deve ser estruturalmente igual.
       // O golden file registra o valor original; o teste clona e compara.
       const original = c.input?.value;
-      const clone = deepClone(original);
+      const clone = deepClone(original,);
       assertEquals(
         clone,
         original,
-        `Golden case "${c.description}" failed: deepClone(${JSON.stringify(
-          original,
-        )}) !== original`,
+        `Golden case "${c.description}" failed: deepClone(${
+          JSON.stringify(
+            original,
+          )
+        }) !== original`,
       );
       break;
     }
@@ -267,7 +269,8 @@ function runCase(c: GoldenCase,): void {
       // método e tipo, para que o erro de divergência seja diagnosticável.
       const actual = c.input?.value;
       const expected = c.expected;
-      const detailMsg = `Golden case "${c.description}" failed for method ${c.method} type ${c.type}`;
+      const detailMsg =
+        `Golden case "${c.description}" failed for method ${c.method} type ${c.type}`;
       try {
         assertEquals(actual, expected, detailMsg,);
         throw new Error(
@@ -276,17 +279,17 @@ function runCase(c: GoldenCase,): void {
       } catch (e) {
         const msg = (e as Error).message;
         assertEquals(
-          msg.includes(c.description),
+          msg.includes(c.description,),
           true,
           `Divergence message should include description "${c.description}"`,
         );
         assertEquals(
-          msg.includes(c.method),
+          msg.includes(c.method,),
           true,
           `Divergence message should include method "${c.method}"`,
         );
         assertEquals(
-          msg.includes(c.type),
+          msg.includes(c.type,),
           true,
           `Divergence message should include type "${c.type}"`,
         );

@@ -43,7 +43,7 @@ export class DataCache {
    *
    * @param size — capacidade máxima do cache (padrão: 100000).
    */
-  resize(size: number = 100000): void {
+  resize(size: number = 100000,): void {
     this.highWaterMark = size;
     this.lowWaterMark = size * 0.9;
   }
@@ -63,11 +63,11 @@ export class DataCache {
    * @param fn — função que computa o valor se não estiver no cache.
    * @returns O valor armazenado ou computado.
    */
-  cached<T>(args: unknown[], fn: () => T): T {
-    const keyJson = this.argsToJson(args);
-    const key = this.hashFromJson(keyJson);
-    if (this.entries.has(key)) {
-      const entry = this.entries.get(key)!;
+  cached<T,>(args: unknown[], fn: () => T,): T {
+    const keyJson = this.argsToJson(args,);
+    const key = this.hashFromJson(keyJson,);
+    if (this.entries.has(key,)) {
+      const entry = this.entries.get(key,)!;
       if (entry.jsonKey !== keyJson) {
         // Duas args diferentes produzem a mesma chave hash. Isso deve ser
         // um evento muito raro!
@@ -78,7 +78,7 @@ export class DataCache {
       return entry.value() as T;
     }
     this.misses += 1;
-    return this.store(fn(), args, keyJson, key) as T;
+    return this.store(fn(), args, keyJson, key,) as T;
   }
 
   /**
@@ -131,23 +131,29 @@ Hit Rate: ${this.hits * 100.0 / (this.hits + this.misses)}%`;
     return this.collisions;
   }
 
-  private argsToJson(args: unknown[]): string {
-    return JSON.stringify(args, (_key, value) =>
-      typeof value === 'bigint' ? value.toString() : value
+  private argsToJson(args: unknown[],): string {
+    return JSON.stringify(
+      args,
+      (_key, value,) => typeof value === "bigint" ? value.toString() : value,
     );
   }
 
-  private hashFromJson(json: string): number {
+  private hashFromJson(json: string,): number {
     let hash = 0;
     for (let i = 0; i < json.length; i++) {
-      const char = json.charCodeAt(i);
+      const char = json.charCodeAt(i,);
       hash = ((hash << 5) - hash) + char;
       hash = hash & hash; // converte para int32
     }
     return hash;
   }
 
-  private store(value: unknown, unhashedKey: unknown[], jsonKey: string, key: number): unknown {
+  private store(
+    value: unknown,
+    unhashedKey: unknown[],
+    jsonKey: string,
+    key: number,
+  ): unknown {
     this.stores += 1;
 
     if (this.entries.size >= this.highWaterMark) {
@@ -155,20 +161,20 @@ Hit Rate: ${this.hits * 100.0 / (this.hits + this.misses)}%`;
       const toDelete = this.entries.size - this.lowWaterMark;
       let deleted = 0;
       const keysToDelete: number[] = [];
-      for (const [k, entry] of this.entries) {
+      for (const [k, entry,] of this.entries) {
         // Contagens de hits envelhecem com cada limpeza.
         entry.hits -= 1;
         if (entry.hits <= 0 && deleted < toDelete) {
-          keysToDelete.push(k);
+          keysToDelete.push(k,);
           deleted++;
         }
       }
       for (const k of keysToDelete) {
-        this.entries.delete(k);
+        this.entries.delete(k,);
       }
     }
 
-    this.entries.set(key, new DataCacheEntry(unhashedKey, jsonKey, value));
+    this.entries.set(key, new DataCacheEntry(unhashedKey, jsonKey, value,),);
     return value;
   }
 }
@@ -182,7 +188,11 @@ class DataCacheEntry {
   readonly jsonKey: string;
   hits: number = 1;
 
-  constructor(unhashedKey: unknown[], jsonKey: string, private _value: unknown) {
+  constructor(
+    unhashedKey: unknown[],
+    jsonKey: string,
+    private _value: unknown,
+  ) {
     this.unhashedKey = unhashedKey;
     this.jsonKey = jsonKey;
     // O contador de acessos é definido como 1 para aumentar a chance de que

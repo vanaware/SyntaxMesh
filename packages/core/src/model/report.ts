@@ -14,15 +14,19 @@ export class Report extends PropertyTreeNode {
     parent: Report | null,
   ) {
     super(project.reports, id, name, parent,);
-    project.addReport(this);
+    project.addReport(this,);
     this.typeSpec = null;
     this.content = null;
     for (let i = 0; i < project.scenarioCount; i++) {
-      this.data[i] = new ReportScenario(this, i, this.getScenarioAttributes(i));
+      this.data[i] = new ReportScenario(
+        this,
+        i,
+        this.getScenarioAttributes(i,),
+      );
     }
   }
 
-  override scenarioData(scIdx: number): ReportScenario {
+  override scenarioData(scIdx: number,): ReportScenario {
     return this.data[scIdx]! as ReportScenario;
   }
 
@@ -31,9 +35,9 @@ export class Report extends PropertyTreeNode {
    *
    * @see docs/taskjuggler/lib/taskjuggler/Report.rb:checkFileName
    */
-  checkFileName(name: string): void {
+  checkFileName(name: string,): void {
     const invalid = /[?%*:"<>|]/;
-    if (invalid.test(name)) {
+    if (invalid.test(name,)) {
       throw new Error(
         `Invalid file name '${name}': contains invalid characters`,
       );
@@ -45,11 +49,11 @@ export class Report extends PropertyTreeNode {
    *
    * @see docs/taskjuggler/lib/taskjuggler/Report.rb:absoluteFileName
    */
-  absoluteFileName(name: string): string {
-    if (name.startsWith("/")) {
+  absoluteFileName(name: string,): string {
+    if (name.startsWith("/",)) {
       return name;
     }
-    const outputDir = this.project.get("outputDir");
+    const outputDir = this.project.get("outputDir",);
     const dir = (outputDir as string) || "";
     return dir + "/" + name;
   }
@@ -59,7 +63,7 @@ export class Report extends PropertyTreeNode {
    *
    * @see docs/taskjuggler/lib/taskjuggler/Report.rb:absoluteFileName?
    */
-  absoluteFileNameExists(name: string): boolean {
-    return name.startsWith("/");
+  absoluteFileNameExists(name: string,): boolean {
+    return name.startsWith("/",);
   }
 }

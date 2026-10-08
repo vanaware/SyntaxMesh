@@ -9,23 +9,39 @@ import { type PropertyLike, } from "../../src/model/property-like.ts";
 import { type AttributeDefinition, } from "../../src/attributes/attribute-definition.ts";
 import { type AttributeContainer, } from "../../src/attributes/attribute-container.ts";
 
-function makeMockAttrClass(defaultValue: unknown) {
+function makeMockAttrClass(defaultValue: unknown,) {
   return class MockAttribute extends AttributeBase<unknown> {
-    constructor(property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) {
-      super(property, type, container);
+    constructor(
+      property: PropertyLike,
+      type: AttributeDefinition<unknown>,
+      container: AttributeContainer,
+    ) {
+      super(property, type, container,);
     }
-    override set(value: unknown) { super.set(value as never); }
-    override get() { return this._value; }
+    override set(value: unknown,) {
+      super.set(value as never,);
+    }
+    override get() {
+      return this._value;
+    }
   };
 }
 
-function makeMockScenarioAttrClass(defaultValue: unknown) {
+function makeMockScenarioAttrClass(defaultValue: unknown,) {
   return class MockScenarioAttribute extends AttributeBase<unknown> {
-    constructor(property: PropertyLike, type: AttributeDefinition<unknown>, container: AttributeContainer) {
-      super(property, type, container);
+    constructor(
+      property: PropertyLike,
+      type: AttributeDefinition<unknown>,
+      container: AttributeContainer,
+    ) {
+      super(property, type, container,);
     }
-    override set(value: unknown) { super.set(value as never); }
-    override get() { return this._value; }
+    override set(value: unknown,) {
+      super.set(value as never,);
+    }
+    override get() {
+      return this._value;
+    }
   };
 }
 
@@ -33,7 +49,13 @@ interface GoldenCase {
   description: string;
   method: string;
   type: string;
-  input: { value: unknown; mode?: 0 | 1 | 2; inherit?: boolean; withoutSelf?: boolean; scenarioIdx?: number } | null;
+  input: {
+    value: unknown;
+    mode?: 0 | 1 | 2;
+    inherit?: boolean;
+    withoutSelf?: boolean;
+    scenarioIdx?: number;
+  } | null;
   expected: unknown;
   mode?: 0 | 1 | 2;
   inherit?: boolean;
@@ -59,34 +81,62 @@ function loadGoldenFile(): GoldenFile {
   return data;
 }
 
-function getGroup(c: GoldenCase): string {
-  if (c.description.includes("namespace plano")) return "flat";
-  if (c.description.includes("cenario")) return "scenario";
-  if (c.description.includes("adoção")) return "adoption";
-  if (c.description.includes("status após") || c.description.includes("priority após") || c.description.includes("modificação no backup")) return "backup";
-  if (c.description.includes("herança") || c.description.includes("provided") || c.description.includes("inherited") || c.description.includes("modified") || c.description.includes("sobrescreve")) return "inheritance";
+function getGroup(c: GoldenCase,): string {
+  if (c.description.includes("namespace plano",)) return "flat";
+  if (c.description.includes("cenario",)) return "scenario";
+  if (c.description.includes("adoção",)) return "adoption";
+  if (
+    c.description.includes("status após",) ||
+    c.description.includes("priority após",) ||
+    c.description.includes("modificação no backup",)
+  ) return "backup";
+  if (
+    c.description.includes("herança",) || c.description.includes("provided",) ||
+    c.description.includes("inherited",) ||
+    c.description.includes("modified",) ||
+    c.description.includes("sobrescreve",)
+  ) return "inheritance";
   return "structure";
 }
 
-function getNode(nodes: Map<string, PropertyTreeNode>, c: GoldenCase): PropertyTreeNode {
+function getNode(
+  nodes: Map<string, PropertyTreeNode>,
+  c: GoldenCase,
+): PropertyTreeNode {
   const nodeName = c.node || "gc";
-  const node = nodes.get(nodeName);
-  if (!node) throw new Error(`Node "${nodeName}" not found for case "${c.description}"`);
+  const node = nodes.get(nodeName,);
+  if (!node) {
+    throw new Error(
+      `Node "${nodeName}" not found for case "${c.description}"`,
+    );
+  }
   return node;
 }
 
 // Shared state for sequential groups
-let inheritanceState: { root: PropertyTreeNode; child: PropertyTreeNode; gc: PropertyTreeNode; phase: 0 | 1 } | null = null;
-let backupState: { root: PropertyTreeNode; backup: [Map<string, AttributeBase<unknown>>, Array<Map<string, AttributeBase<unknown>>>]; phase: number } | null = null;
+let inheritanceState: {
+  root: PropertyTreeNode;
+  child: PropertyTreeNode;
+  gc: PropertyTreeNode;
+  phase: 0 | 1;
+} | null = null;
+let backupState: {
+  root: PropertyTreeNode;
+  backup: [
+    Map<string, AttributeBase<unknown>>,
+    Array<Map<string, AttributeBase<unknown>>>,
+  ];
+  phase: number;
+} | null = null;
 
-function setupInheritance(phase: 0 | 1) {
+function setupInheritance(phase: 0 | 1,) {
   if (inheritanceState && inheritanceState.phase >= phase) return;
-  const project = new MockProject(1);
-  const propertySet = new PropertySet(project, false);
+  const project = new MockProject(1,);
+  const propertySet = new PropertySet(project, false,);
   propertySet.addAttributeType({
     id: "priority",
     name: "Priority",
-    objClass: makeMockAttrClass(500),
+    objClass: makeMockAttrClass(500,),
     inheritedFromParent: true,
     inheritedFromProject: false,
     defaultValue: 500,
@@ -95,31 +145,31 @@ function setupInheritance(phase: 0 | 1) {
     isList: false,
     isSingleton: false,
     isScenarioAttribute: false,
-  });
-  const root = new PropertyTreeNode(propertySet, "root", "Root", null);
-  const child = new PropertyTreeNode(propertySet, "child", "Child", root);
-  const gc = new PropertyTreeNode(propertySet, "gc", "Grandchild", child);
-  root.set("priority", 100);
+  },);
+  const root = new PropertyTreeNode(propertySet, "root", "Root", null,);
+  const child = new PropertyTreeNode(propertySet, "child", "Child", root,);
+  const gc = new PropertyTreeNode(propertySet, "gc", "Grandchild", child,);
+  root.set("priority", 100,);
   child.inheritAttributes();
   gc.inheritAttributes();
   if (phase === 1) {
-    child.set("priority", 200);
+    child.set("priority", 200,);
     gc.inheritAttributes();
   }
-  inheritanceState = { root, child, gc, phase };
+  inheritanceState = { root, child, gc, phase, };
 }
 
-function setupBackup(phase: 0 | 1 | 2) {
+function setupBackup(phase: 0 | 1 | 2,) {
   if (backupState && backupState.phase >= phase) return;
   if (!backupState) {
-    const project = new MockProject(1);
-    const propertySet = new PropertySet(project, false);
+    const project = new MockProject(1,);
+    const propertySet = new PropertySet(project, false,);
     // Add both attribute types before root creation (TS auto-adds to PropertySet,
     // unlike Ruby which requires addProperty to be called manually).
     propertySet.addAttributeType({
       id: "status",
       name: "Status",
-      objClass: makeMockAttrClass("active"),
+      objClass: makeMockAttrClass("active",),
       inheritedFromParent: false,
       inheritedFromProject: false,
       defaultValue: "active",
@@ -128,11 +178,11 @@ function setupBackup(phase: 0 | 1 | 2) {
       isList: false,
       isSingleton: false,
       isScenarioAttribute: false,
-    });
+    },);
     propertySet.addAttributeType({
       id: "priority",
       name: "Priority",
-      objClass: makeMockAttrClass(500),
+      objClass: makeMockAttrClass(500,),
       inheritedFromParent: false,
       inheritedFromProject: false,
       defaultValue: 500,
@@ -141,26 +191,26 @@ function setupBackup(phase: 0 | 1 | 2) {
       isList: false,
       isSingleton: false,
       isScenarioAttribute: false,
-    });
-    const root = new PropertyTreeNode(propertySet, "root", "Root", null);
-    root.set("status", "in_progress");
+    },);
+    const root = new PropertyTreeNode(propertySet, "root", "Root", null,);
+    root.set("status", "in_progress",);
     const backup = root.backupAttributes();
     // Set priority AFTER backup, matching Ruby script behavior
-    root.set("priority", 100);
-    backupState = { root, backup, phase: 0 };
+    root.set("priority", 100,);
+    backupState = { root, backup, phase: 0, };
   }
   if (phase >= 1 && backupState.phase < 1) {
-    backupState.root.restoreAttributes(backupState.backup);
+    backupState.root.restoreAttributes(backupState.backup,);
     backupState.phase = 1;
   }
   if (phase >= 2 && backupState.phase < 2) {
-    backupState.backup[0].get("status")!.set("modified");
+    backupState.backup[0].get("status",)!.set("modified",);
     backupState.phase = 2;
   }
 }
 
 function runCase(c: GoldenCase,): void {
-  const group = getGroup(c);
+  const group = getGroup(c,);
   const nodeName = c.node || "gc";
 
   let project: MockProject;
@@ -169,32 +219,32 @@ function runCase(c: GoldenCase,): void {
 
   switch (group) {
     case "structure": {
-      project = new MockProject(1);
-      propertySet = new PropertySet(project, false);
-      const root = new PropertyTreeNode(propertySet, "root", "Root", null);
-      const child = new PropertyTreeNode(propertySet, "child", "Child", root);
-      const gc = new PropertyTreeNode(propertySet, "gc", "Grandchild", child);
-      nodes.set("root", root);
-      nodes.set("child", child);
-      nodes.set("gc", gc);
+      project = new MockProject(1,);
+      propertySet = new PropertySet(project, false,);
+      const root = new PropertyTreeNode(propertySet, "root", "Root", null,);
+      const child = new PropertyTreeNode(propertySet, "child", "Child", root,);
+      const gc = new PropertyTreeNode(propertySet, "gc", "Grandchild", child,);
+      nodes.set("root", root,);
+      nodes.set("child", child,);
+      nodes.set("gc", gc,);
       break;
     }
     case "inheritance": {
-      const phase = c.description.includes("herança do root para") ? 0 : 1;
-      setupInheritance(phase);
+      const phase = c.description.includes("herança do root para",) ? 0 : 1;
+      setupInheritance(phase,);
       const s = inheritanceState!;
-      nodes.set("root", s.root);
-      nodes.set("child", s.child);
-      nodes.set("gc", s.gc);
+      nodes.set("root", s.root,);
+      nodes.set("child", s.child,);
+      nodes.set("gc", s.gc,);
       break;
     }
     case "scenario": {
-      project = new MockProject(2);
-      propertySet = new PropertySet(project, false);
+      project = new MockProject(2,);
+      propertySet = new PropertySet(project, false,);
       propertySet.addAttributeType({
         id: "effort",
         name: "Effort",
-        objClass: makeMockScenarioAttrClass(0),
+        objClass: makeMockScenarioAttrClass(0,),
         inheritedFromParent: false,
         inheritedFromProject: false,
         defaultValue: 0,
@@ -203,48 +253,51 @@ function runCase(c: GoldenCase,): void {
         isList: false,
         isSingleton: false,
         isScenarioAttribute: true,
-      });
-      const root = new PropertyTreeNode(propertySet, "root", "Root", null);
-      root.setForScenario("effort", 3600, 0);
-      root.setForScenario("effort", 7200, 1);
-      nodes.set("root", root);
+      },);
+      const root = new PropertyTreeNode(propertySet, "root", "Root", null,);
+      root.setForScenario("effort", 3600, 0,);
+      root.setForScenario("effort", 7200, 1,);
+      nodes.set("root", root,);
       break;
     }
     case "adoption": {
-      project = new MockProject(1);
-      propertySet = new PropertySet(project, false);
-      const root1 = new PropertyTreeNode(propertySet, "root1", "Root 1", null);
-      const root2 = new PropertyTreeNode(propertySet, "root2", "Root 2", null);
-      const task = new PropertyTreeNode(propertySet, "task", "Task", root1);
-      root2.adopt(task);
-      nodes.set("root1", root1);
-      nodes.set("root2", root2);
-      nodes.set("task", task);
+      project = new MockProject(1,);
+      propertySet = new PropertySet(project, false,);
+      const root1 = new PropertyTreeNode(propertySet, "root1", "Root 1", null,);
+      const root2 = new PropertyTreeNode(propertySet, "root2", "Root 2", null,);
+      const task = new PropertyTreeNode(propertySet, "task", "Task", root1,);
+      root2.adopt(task,);
+      nodes.set("root1", root1,);
+      nodes.set("root2", root2,);
+      nodes.set("task", task,);
       break;
     }
     case "backup": {
-      const phase = c.description.includes("modificação no backup") ? 2 :
-                     c.description.includes("restore") ? 1 : 0;
-      setupBackup(phase);
+      const phase = c.description.includes("modificação no backup",) ?
+        2 :
+        c.description.includes("restore",)
+        ? 1
+        : 0;
+      setupBackup(phase,);
       const s = backupState!;
-      nodes.set("root", s.root);
+      nodes.set("root", s.root,);
       (s.root as any).backup = s.backup;
       break;
     }
     case "flat": {
-      project = new MockProject(1);
-      propertySet = new PropertySet(project, true);
-      const root = new PropertyTreeNode(propertySet, "root", "Root", null);
-      const child = new PropertyTreeNode(propertySet, "child", "Child", root);
-      nodes.set("root", root);
-      nodes.set("child", child);
+      project = new MockProject(1,);
+      propertySet = new PropertySet(project, true,);
+      const root = new PropertyTreeNode(propertySet, "root", "Root", null,);
+      const child = new PropertyTreeNode(propertySet, "child", "Child", root,);
+      nodes.set("root", root,);
+      nodes.set("child", child,);
       break;
     }
     default:
-      throw new Error(`Unknown group: ${group}`);
+      throw new Error(`Unknown group: ${group}`,);
   }
 
-  const node = getNode(nodes, c);
+  const node = getNode(nodes, c,);
 
   switch (c.method) {
     case "fullId": {
@@ -277,24 +330,24 @@ function runCase(c: GoldenCase,): void {
     case "all": {
       const actual = node.all();
       assertEquals(
-        actual.map(p => p.fullId),
+        actual.map((p,) => p.fullId),
         c.expected,
         `Golden case "${c.description}" failed for method ${c.method}`,
       );
       break;
     }
     case "allLeaves": {
-      const actual = node.allLeaves(c.input?.withoutSelf || false);
+      const actual = node.allLeaves(c.input?.withoutSelf || false,);
       assertEquals(
-        actual.map(p => p.fullId),
+        actual.map((p,) => p.fullId),
         c.expected,
         `Golden case "${c.description}" failed for method ${c.method}`,
       );
       break;
     }
     case "isChildOf": {
-      const target = nodes.get(c.target || "child")!;
-      const actual = node.isChildOf(target);
+      const target = nodes.get(c.target || "child",)!;
+      const actual = node.isChildOf(target,);
       assertEquals(
         actual,
         c.expected,
@@ -323,7 +376,7 @@ function runCase(c: GoldenCase,): void {
     case "kids": {
       const actual = node.kids();
       assertEquals(
-        actual.map(p => p.fullId),
+        actual.map((p,) => p.fullId),
         c.expected,
         `Golden case "${c.description}" failed for method ${c.method}`,
       );
@@ -332,7 +385,7 @@ function runCase(c: GoldenCase,): void {
     case "parents": {
       const actual = node.parents();
       assertEquals(
-        actual.map(p => p.fullId),
+        actual.map((p,) => p.fullId),
         c.expected,
         `Golden case "${c.description}" failed for method ${c.method}`,
       );
@@ -350,7 +403,7 @@ function runCase(c: GoldenCase,): void {
     case "ancestors": {
       const actual = node.ancestors();
       assertEquals(
-        actual.map(p => p.fullId),
+        actual.map((p,) => p.fullId),
         c.expected,
         `Golden case "${c.description}" failed for method ${c.method}`,
       );
@@ -366,7 +419,7 @@ function runCase(c: GoldenCase,): void {
       break;
     }
     case "provided": {
-      const actual = node.provided(c.attr || "priority", c.input?.scenarioIdx);
+      const actual = node.provided(c.attr || "priority", c.input?.scenarioIdx,);
       assertEquals(
         actual,
         c.expected,
@@ -375,7 +428,10 @@ function runCase(c: GoldenCase,): void {
       break;
     }
     case "inherited": {
-      const actual = node.inherited(c.attr || "priority", c.input?.scenarioIdx);
+      const actual = node.inherited(
+        c.attr || "priority",
+        c.input?.scenarioIdx,
+      );
       assertEquals(
         actual,
         c.expected,
@@ -384,7 +440,7 @@ function runCase(c: GoldenCase,): void {
       break;
     }
     case "modified": {
-      const actual = node.modified("priority");
+      const actual = node.modified("priority",);
       assertEquals(
         actual,
         c.expected,
@@ -394,7 +450,7 @@ function runCase(c: GoldenCase,): void {
     }
     case "get": {
       const attrId = c.attr || "priority";
-      const actual = node.get(attrId);
+      const actual = node.get(attrId,);
       assertEquals(
         actual,
         c.expected,
@@ -403,13 +459,17 @@ function runCase(c: GoldenCase,): void {
       break;
     }
     case "getForScenario": {
-      assertEquals(node.getForScenario("effort", c.input?.scenarioIdx || 0), c.expected, `Golden case "${c.description}" failed`);
+      assertEquals(
+        node.getForScenario("effort", c.input?.scenarioIdx || 0,),
+        c.expected,
+        `Golden case "${c.description}" failed`,
+      );
       break;
     }
     case "stepParents": {
       const actual = node.stepParents;
       assertEquals(
-        actual.map(p => p.fullId),
+        actual.map((p,) => p.fullId),
         c.expected,
         `Golden case "${c.description}" failed for method ${c.method}`,
       );
@@ -418,14 +478,14 @@ function runCase(c: GoldenCase,): void {
     case "adoptees": {
       const actual = node.adoptees;
       assertEquals(
-        actual.map(p => p.fullId),
+        actual.map((p,) => p.fullId),
         c.expected,
         `Golden case "${c.description}" failed for method ${c.method}`,
       );
       break;
     }
     case "status": {
-      const actual = node.get("status");
+      const actual = node.get("status",);
       assertEquals(
         actual,
         c.expected,
@@ -434,7 +494,7 @@ function runCase(c: GoldenCase,): void {
       break;
     }
     case "priority": {
-      const actual = node.get("priority");
+      const actual = node.get("priority",);
       assertEquals(
         actual,
         c.expected,
@@ -443,10 +503,10 @@ function runCase(c: GoldenCase,): void {
       break;
     }
     case "adopt": {
-      const adopter = nodes.get(c.adopter || node.id);
+      const adopter = nodes.get(c.adopter || node.id,);
       assertThrows(() => {
-        adopter!.adopt(node);
-      });
+        adopter!.adopt(node,);
+      },);
       break;
     }
     default:

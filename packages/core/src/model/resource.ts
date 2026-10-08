@@ -10,13 +10,17 @@ export class Resource extends PropertyTreeNode {
     parent: Resource | null,
   ) {
     super(project.resources, id, name, parent,);
-    project.addResource(this);
+    project.addResource(this,);
     for (let i = 0; i < project.scenarioCount; i++) {
-      this.data[i] = new ResourceScenario(this, i, this.getScenarioAttributes(i));
+      this.data[i] = new ResourceScenario(
+        this,
+        i,
+        this.getScenarioAttributes(i,),
+      );
     }
   }
 
-  override scenarioData(scIdx: number): ResourceScenario {
+  override scenarioData(scIdx: number,): ResourceScenario {
     return this.data[scIdx]! as ResourceScenario;
   }
 
@@ -25,7 +29,7 @@ export class Resource extends PropertyTreeNode {
    *
    * Corresponde a `ResourceScenario#bookedEffort` do Ruby.
    */
-  bookedEffort(scIdx: number): number {
-    return this.scenarioData(scIdx).bookedEffort();
+  bookedEffort(scIdx: number,): number {
+    return this.scenarioData(scIdx,).bookedEffort();
   }
 }

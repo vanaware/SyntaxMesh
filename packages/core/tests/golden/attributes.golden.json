@@ -992,143 +992,99 @@
       "method": "deepClone",
       "type": "FlagList",
       "input": {
-        "value": [
-
-        ]
+        "value": []
       },
-      "expected": [
-
-      ]
+      "expected": []
     },
     {
       "description": "deepClone — SymbolList default []",
       "method": "deepClone",
       "type": "SymbolList",
       "input": {
-        "value": [
-
-        ]
+        "value": []
       },
-      "expected": [
-
-      ]
+      "expected": []
     },
     {
       "description": "deepClone — ScenarioList default []",
       "method": "deepClone",
       "type": "ScenarioList",
       "input": {
-        "value": [
-
-        ]
+        "value": []
       },
-      "expected": [
-
-      ]
+      "expected": []
     },
     {
       "description": "deepClone — NodeList default []",
       "method": "deepClone",
       "type": "NodeList",
       "input": {
-        "value": [
-
-        ]
+        "value": []
       },
-      "expected": [
-
-      ]
+      "expected": []
     },
     {
       "description": "deepClone — ResourceList default []",
       "method": "deepClone",
       "type": "ResourceList",
       "input": {
-        "value": [
-
-        ]
+        "value": []
       },
-      "expected": [
-
-      ]
+      "expected": []
     },
     {
       "description": "deepClone — TaskList default []",
       "method": "deepClone",
       "type": "TaskList",
       "input": {
-        "value": [
-
-        ]
+        "value": []
       },
-      "expected": [
-
-      ]
+      "expected": []
     },
     {
       "description": "deepClone — DependencyList default []",
       "method": "deepClone",
       "type": "DependencyList",
       "input": {
-        "value": [
-
-        ]
+        "value": []
       },
-      "expected": [
-
-      ]
+      "expected": []
     },
     {
       "description": "deepClone — TaskDepList default []",
       "method": "deepClone",
       "type": "TaskDepList",
       "input": {
-        "value": [
-
-        ]
+        "value": []
       },
-      "expected": [
-
-      ]
+      "expected": []
     },
     {
       "description": "deepClone — ChargeList default []",
       "method": "deepClone",
       "type": "ChargeList",
       "input": {
-        "value": [
-
-        ]
+        "value": []
       },
-      "expected": [
-
-      ]
+      "expected": []
     },
     {
       "description": "deepClone — ChargeSetList default []",
       "method": "deepClone",
       "type": "ChargeSetList",
       "input": {
-        "value": [
-
-        ]
+        "value": []
       },
-      "expected": [
-
-      ]
+      "expected": []
     },
     {
       "description": "deepClone — AccountCreditList default []",
       "method": "deepClone",
       "type": "AccountCreditList",
       "input": {
-        "value": [
-
-        ]
+        "value": []
       },
-      "expected": [
-
-      ]
+      "expected": []
     },
     {
       "description": "deepClone — Allocation default nil",
@@ -1144,13 +1100,9 @@
       "method": "deepClone",
       "type": "BookingList",
       "input": {
-        "value": [
-
-        ]
+        "value": []
       },
-      "expected": [
-
-      ]
+      "expected": []
     },
     {
       "description": "deepClone — LogicalExpression default nil",
@@ -1166,52 +1118,36 @@
       "method": "deepClone",
       "type": "LogicalExpressionList",
       "input": {
-        "value": [
-
-        ]
+        "value": []
       },
-      "expected": [
-
-      ]
+      "expected": []
     },
     {
       "description": "deepClone — TimeIntervalList default []",
       "method": "deepClone",
       "type": "TimeIntervalList",
       "input": {
-        "value": [
-
-        ]
+        "value": []
       },
-      "expected": [
-
-      ]
+      "expected": []
     },
     {
       "description": "deepClone — LeaveList default []",
       "method": "deepClone",
       "type": "LeaveList",
       "input": {
-        "value": [
-
-        ]
+        "value": []
       },
-      "expected": [
-
-      ]
+      "expected": []
     },
     {
       "description": "deepClone — LeaveAllowanceList default []",
       "method": "deepClone",
       "type": "LeaveAllowanceList",
       "input": {
-        "value": [
-
-        ]
+        "value": []
       },
-      "expected": [
-
-      ]
+      "expected": []
     },
     {
       "description": "deepClone — Limits default nil",
@@ -1227,13 +1163,9 @@
       "method": "deepClone",
       "type": "ShiftAssignments",
       "input": {
-        "value": [
-
-        ]
+        "value": []
       },
-      "expected": [
-
-      ]
+      "expected": []
     },
     {
       "description": "deepClone — WorkingHours default nil",
@@ -1258,52 +1190,36 @@
       "method": "deepClone",
       "type": "ColumnList",
       "input": {
-        "value": [
-
-        ]
+        "value": []
       },
-      "expected": [
-
-      ]
+      "expected": []
     },
     {
       "description": "deepClone — FormatList default []",
       "method": "deepClone",
       "type": "FormatList",
       "input": {
-        "value": [
-
-        ]
+        "value": []
       },
-      "expected": [
-
-      ]
+      "expected": []
     },
     {
       "description": "deepClone — SortList default []",
       "method": "deepClone",
       "type": "SortList",
       "input": {
-        "value": [
-
-        ]
+        "value": []
       },
-      "expected": [
-
-      ]
+      "expected": []
     },
     {
       "description": "deepClone — JournalSortList default []",
       "method": "deepClone",
       "type": "JournalSortList",
       "input": {
-        "value": [
-
-        ]
+        "value": []
       },
-      "expected": [
-
-      ]
+      "expected": []
     },
     {
       "description": "deepClone — RichText default nil",
@@ -1319,13 +1235,9 @@
       "method": "deepClone",
       "type": "DefinitionList",
       "input": {
-        "value": [
-
-        ]
+        "value": []
       },
-      "expected": [
-
-      ]
+      "expected": []
     },
     {
       "description": "diverge — String mismatch",
@@ -1863,4 +1775,3 @@
     }
   ]
 }
-

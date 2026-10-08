@@ -46,12 +46,12 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
     this.stepParents = [];
     this.sourceFileInfo = null;
     this.data = Array.from(
-      { length: this.project.scenarioCount },
-      (_, i) => new ScenarioData(this, i, new Map()),
+      { length: this.project.scenarioCount, },
+      (_, i,) => new ScenarioData(this, i, new Map(),),
     );
     this.attributes = new Map();
     this.scenarioAttributes = Array.from(
-      { length: this.project.scenarioCount },
+      { length: this.project.scenarioCount, },
       () => new Map(),
     );
     this._level = -1;
@@ -63,10 +63,10 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
     let resolvedId: string;
     if (id === null) {
       if (parent) {
-        resolvedId = parent.fullId + '.' + name;
+        resolvedId = parent.fullId + "." + name;
       } else {
-        const tag = this.constructor.name.replace(/TaskJuggler::/, '');
-        resolvedId = '_' + tag + '_' + (propertySet.items + 1).toString();
+        const tag = this.constructor.name.replace(/TaskJuggler::/, "",);
+        resolvedId = "_" + tag + "_" + (propertySet.items + 1).toString();
       }
     } else {
       resolvedId = id;
@@ -74,13 +74,13 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
 
     if (id !== null) {
       // Handle hierarchical IDs like Ruby: split at last '.'
-      if (!propertySet.flatNamespace && id.includes('.')) {
-        const lastDotIndex = id.lastIndexOf('.');
-        this.subId = id.substring(lastDotIndex + 1);
+      if (!propertySet.flatNamespace && id.includes(".",)) {
+        const lastDotIndex = id.lastIndexOf(".",);
+        this.subId = id.substring(lastDotIndex + 1,);
         // Try to set parent from propertySet if parent is still null
         if (parent === null) {
-          const parentId = id.substring(0, lastDotIndex);
-          const parentNode = propertySet.get(parentId);
+          const parentId = id.substring(0, lastDotIndex,);
+          const parentNode = propertySet.get(parentId,);
           if (parentNode) {
             this._parent = parentNode;
           } else {
@@ -91,8 +91,8 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
       } else {
         this.subId = id;
       }
-    } else if (!propertySet.flatNamespace && resolvedId.includes('.')) {
-      this.subId = resolvedId.substring(resolvedId.lastIndexOf('.') + 1);
+    } else if (!propertySet.flatNamespace && resolvedId.includes(".",)) {
+      this.subId = resolvedId.substring(resolvedId.lastIndexOf(".",) + 1,);
     } else {
       this.subId = resolvedId;
     }
@@ -101,9 +101,9 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
     this.sequenceNo = this.propertySet.items + 1;
 
     if (parent) {
-      parent.addChild(this);
+      parent.addChild(this,);
     }
-    propertySet.addProperty(this);
+    propertySet.addProperty(this,);
   }
 
   get parent(): PropertyTreeNode | null {
@@ -134,7 +134,7 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
     let result = this.subId;
     let current: PropertyTreeNode | null = this._parent;
     while (current) {
-      result = current.subId + '.' + result;
+      result = current.subId + "." + result;
       current = current._parent;
     }
     return result;
@@ -142,7 +142,9 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
 
   // Debug method
   _debugFullId(): string {
-    return `subId=${this.subId}, _parent=${this._parent?.id ?? 'null'}, _idProvided=${this._idProvided}`;
+    return `subId=${this.subId}, _parent=${
+      this._parent?.id ?? "null"
+    }, _idProvided=${this._idProvided}`;
   }
 
   logicalId(): string {
@@ -158,30 +160,30 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
     return current;
   }
 
-  ancestors(includeStepParents: boolean = false): PropertyTreeNode[] {
+  ancestors(includeStepParents: boolean = false,): PropertyTreeNode[] {
     const nodes: PropertyTreeNode[] = [];
     if (includeStepParents) {
-      this.parents().forEach(parent => {
-        nodes.push(parent);
-        nodes.push(...parent.ancestors(true));
-      });
+      this.parents().forEach((parent,) => {
+        nodes.push(parent,);
+        nodes.push(...parent.ancestors(true,),);
+      },);
     } else {
       const parent = this.parents()[0];
       if (parent) {
-        nodes.push(parent);
-        nodes.push(...parent.ancestors(false));
+        nodes.push(parent,);
+        nodes.push(...parent.ancestors(false,),);
       }
     }
     return nodes;
   }
 
-  isChildOf(ancestor: PropertyTreeNode): boolean {
+  isChildOf(ancestor: PropertyTreeNode,): boolean {
     const parent = this.parents()[0];
     if (parent === ancestor) {
       return true;
     }
     if (parent) {
-      return parent.isChildOf(ancestor);
+      return parent.isChildOf(ancestor,);
     }
     return false;
   }
@@ -195,36 +197,36 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
   }
 
   kids(): PropertyTreeNode[] {
-    return [...this.children, ...this.adoptees];
+    return [...this.children, ...this.adoptees,];
   }
 
   parents(): PropertyTreeNode[] {
     const result: PropertyTreeNode[] = [];
     if (this._parent) {
-      result.push(this._parent);
+      result.push(this._parent,);
     }
-    result.push(...this.stepParents);
+    result.push(...this.stepParents,);
     return result;
   }
 
   all(): PropertyTreeNode[] {
-    const result: PropertyTreeNode[] = [this];
-    this.kids().forEach(child => {
-      result.push(...child.all());
-    });
+    const result: PropertyTreeNode[] = [this,];
+    this.kids().forEach((child,) => {
+      result.push(...child.all(),);
+    },);
     return result;
   }
 
-  allLeaves(withoutSelf: boolean = false): PropertyTreeNode[] {
+  allLeaves(withoutSelf: boolean = false,): PropertyTreeNode[] {
     const result: PropertyTreeNode[] = [];
     if (this.leaf()) {
       if (!withoutSelf) {
-        result.push(this);
+        result.push(this,);
       }
     } else {
-      this.kids().forEach(child => {
-        result.push(...child.allLeaves());
-      });
+      this.kids().forEach((child,) => {
+        result.push(...child.allLeaves(),);
+      },);
     }
     return result;
   }
@@ -235,9 +237,9 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
     while (current) {
       const parent = current._parent as PropertyTreeNode | null;
       if (parent) {
-        indices.unshift(parent.levelSeqNo(current));
+        indices.unshift(parent.levelSeqNo(current,),);
       } else {
-        indices.unshift(this.propertySet.levelSeqNo(current));
+        indices.unshift(this.propertySet.levelSeqNo(current,),);
       }
       current = parent;
     }
@@ -249,10 +251,10 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
     let current: PropertyTreeNode | null = this;
     while (current) {
       const parent = current.parents()[0];
-      if (parent && parent.propertySet.knownAttribute('index')) {
-        const index = parent.get('index');
+      if (parent && parent.propertySet.knownAttribute("index",)) {
+        const index = parent.get("index",);
         if (index !== null && index !== undefined && index !== 0) {
-          indices.unshift(index as number);
+          indices.unshift(index as number,);
         }
       }
       current = current._parent;
@@ -260,229 +262,240 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
     return indices;
   }
 
-  levelSeqNo(node: PropertyTreeNode): number {
-    return this.children.indexOf(node) + 1;
+  levelSeqNo(node: PropertyTreeNode,): number {
+    return this.children.indexOf(node,) + 1;
   }
 
-  addChild(child: PropertyTreeNode): void {
-    this.children.push(child);
+  addChild(child: PropertyTreeNode,): void {
+    this.children.push(child,);
   }
 
-  removeReferences(property: PropertyTreeNode): void {
-    const index = this.children.indexOf(property);
+  removeReferences(property: PropertyTreeNode,): void {
+    const index = this.children.indexOf(property,);
     if (index !== -1) {
-      this.children.splice(index, 1);
+      this.children.splice(index, 1,);
     }
-    const adopteeIndex = this.adoptees.indexOf(property);
+    const adopteeIndex = this.adoptees.indexOf(property,);
     if (adopteeIndex !== -1) {
-      this.adoptees.splice(adopteeIndex, 1);
+      this.adoptees.splice(adopteeIndex, 1,);
     }
-    const stepParentIndex = this.stepParents.indexOf(property);
+    const stepParentIndex = this.stepParents.indexOf(property,);
     if (stepParentIndex !== -1) {
-      this.stepParents.splice(stepParentIndex, 1);
+      this.stepParents.splice(stepParentIndex, 1,);
     }
   }
 
-  getStoredValue(attributeId: string): unknown {
-    return this._values.get(attributeId) ?? null;
+  getStoredValue(attributeId: string,): unknown {
+    return this._values.get(attributeId,) ?? null;
   }
 
-  setStoredValue(attributeId: string, value: unknown): void {
-    this._values.set(attributeId, value);
+  setStoredValue(attributeId: string, value: unknown,): void {
+    this._values.set(attributeId, value,);
   }
 
-  attribute(id: string): AttributeBase<unknown> {
-    let attr = this.attributes.get(id);
+  attribute(id: string,): AttributeBase<unknown> {
+    let attr = this.attributes.get(id,);
     if (attr === undefined) {
-      const aDef = this.attributeDefinition(id);
+      const aDef = this.attributeDefinition(id,);
       if (!aDef) {
-        throw new TjArgumentError(`Unknown attribute '${id}'`);
+        throw new TjArgumentError(`Unknown attribute '${id}'`,);
       }
       if (aDef.isScenarioAttribute) {
-        throw new TjArgumentError(`Attribute '${id}' é específico de cenário`);
+        throw new TjArgumentError(`Attribute '${id}' é específico de cenário`,);
       }
-      attr = new aDef.objClass(this, aDef, this);
-      this.attributes.set(id, attr);
+      attr = new aDef.objClass(this, aDef, this,);
+      this.attributes.set(id, attr,);
     }
     return attr!;
   }
 
-  private scenarioAttribute(scIdx: number, id: string): AttributeBase<unknown> {
-    let attr = this.scenarioAttributes[scIdx]?.get(id);
+  private scenarioAttribute(
+    scIdx: number,
+    id: string,
+  ): AttributeBase<unknown> {
+    let attr = this.scenarioAttributes[scIdx]?.get(id,);
     if (attr === undefined) {
-      const aDef = this.attributeDefinition(id);
+      const aDef = this.attributeDefinition(id,);
       if (!aDef) {
-        throw new TjArgumentError(`Unknown attribute '${id}'`);
+        throw new TjArgumentError(`Unknown attribute '${id}'`,);
       }
       if (!aDef.isScenarioAttribute) {
-        throw new TjArgumentError(`Attribute '${id}' não é específico de cenário`);
+        throw new TjArgumentError(
+          `Attribute '${id}' não é específico de cenário`,
+        );
       }
       if (!this.data[scIdx]) {
-        throw new TjInternalError("ScenarioData must be initialized before scenario-specific attributes");
+        throw new TjInternalError(
+          "ScenarioData must be initialized before scenario-specific attributes",
+        );
       }
-      attr = new aDef.objClass(this, aDef, this.data[scIdx]);
+      attr = new aDef.objClass(this, aDef, this.data[scIdx],);
       if (!this.scenarioAttributes[scIdx]) {
         this.scenarioAttributes[scIdx] = new Map();
       }
-      this.scenarioAttributes[scIdx].set(id, attr);
+      this.scenarioAttributes[scIdx].set(id, attr,);
     }
     return attr!;
   }
 
-  get(id: string): unknown {
-    return this.attribute(id).get();
+  get(id: string,): unknown {
+    return this.attribute(id,).get();
   }
 
-  getAttribute(id: string, scIdx?: number): AttributeBase<unknown> {
+  getAttribute(id: string, scIdx?: number,): AttributeBase<unknown> {
     if (scIdx !== undefined) {
-      return this.scenarioAttribute(scIdx, id);
+      return this.scenarioAttribute(scIdx, id,);
     }
-    return this.attribute(id);
+    return this.attribute(id,);
   }
 
   /**
    * Acesso público ao atributo de cenário (para uso interno do ScenarioData).
    * Cria o AttributeBase se ainda não existir.
    */
-  getScenarioAttribute(scIdx: number, id: string): AttributeBase<unknown> {
-    return this.scenarioAttribute(scIdx, id);
+  getScenarioAttribute(scIdx: number, id: string,): AttributeBase<unknown> {
+    return this.scenarioAttribute(scIdx, id,);
   }
 
   /**
    * Retorna o Map de atributos de cenário para um scIdx (uso interno).
    */
-  protected getScenarioAttributes(scIdx: number): Map<string, AttributeBase<unknown>> {
+  protected getScenarioAttributes(
+    scIdx: number,
+  ): Map<string, AttributeBase<unknown>> {
     if (!this.scenarioAttributes[scIdx]) {
       this.scenarioAttributes[scIdx] = new Map();
     }
     return this.scenarioAttributes[scIdx];
   }
 
-  getForScenario(id: string, scIdx: number): unknown {
-    return this.scenarioAttribute(scIdx, id).get();
+  getForScenario(id: string, scIdx: number,): unknown {
+    return this.scenarioAttribute(scIdx, id,).get();
   }
 
-  set(id: string, value: unknown): void {
-    const attr = this.attribute(id);
+  set(id: string, value: unknown,): void {
+    const attr = this.attribute(id,);
     const overwrite = attr.provided && !attr.isList();
-    attr.set(value as never);
+    attr.set(value as never,);
     if (overwrite) {
-      throw new AttributeOverwrite(id);
+      throw new AttributeOverwrite(id,);
     }
   }
 
-  setForScenario(id: string, value: unknown, scIdx: number): void {
+  setForScenario(id: string, value: unknown, scIdx: number,): void {
     if (scIdx === undefined) {
-      this.set(id, value);
+      this.set(id, value,);
       return;
     }
-    const attr = this.scenarioAttribute(scIdx, id);
+    const attr = this.scenarioAttribute(scIdx, id,);
     let overwrite = attr.provided && !attr.isList();
     if (AttributeBase.mode === 0) {
-      const scenario = this.project.scenario(scIdx);
+      const scenario = this.project.scenario(scIdx,);
       if (scenario) {
-        const allScenarios = (scenario as any).all ? (scenario as any).all() : [scenario];
-        allScenarios.forEach((sc: any) => {
-          const scenarioIdx = this.project.scenarioIdx(sc.fullId);
+        const allScenarios = (scenario as any).all
+          ? (scenario as any).all()
+          : [scenario,];
+        allScenarios.forEach((sc: any,) => {
+          const scenarioIdx = this.project.scenarioIdx(sc.fullId,);
           if (scenarioIdx !== undefined) {
-            const scenarioAttr = this.scenarioAttribute(scenarioIdx, id);
+            const scenarioAttr = this.scenarioAttribute(scenarioIdx, id,);
             if (scenarioIdx === scIdx) {
               if (scenarioAttr.provided && !scenarioAttr.isList()) {
                 overwrite = true;
               }
-              scenarioAttr.set(value as never);
+              scenarioAttr.set(value as never,);
             } else {
-              scenarioAttr.inherit(value as never);
+              scenarioAttr.inherit(value as never,);
             }
           }
-        });
+        },);
       }
     } else {
-      attr.set(value as never);
+      attr.set(value as never,);
     }
     if (overwrite) {
-      throw new AttributeOverwrite(id);
+      throw new AttributeOverwrite(id,);
     }
   }
 
-  provided(id: string, scIdx?: number): boolean {
+  provided(id: string, scIdx?: number,): boolean {
     if (scIdx !== undefined) {
-      const attr = this.scenarioAttributes[scIdx]?.get(id);
+      const attr = this.scenarioAttributes[scIdx]?.get(id,);
       return attr ? attr.provided : false;
     }
-    const attr = this.attributes.get(id);
+    const attr = this.attributes.get(id,);
     return attr ? attr.provided : false;
   }
 
-  inherited(id: string, scIdx?: number): boolean {
+  inherited(id: string, scIdx?: number,): boolean {
     if (scIdx !== undefined) {
-      const attr = this.scenarioAttributes[scIdx]?.get(id);
+      const attr = this.scenarioAttributes[scIdx]?.get(id,);
       return attr ? attr.inherited : false;
     }
-    const attr = this.attributes.get(id);
+    const attr = this.attributes.get(id,);
     return attr ? attr.inherited : false;
   }
 
-  modified(id: string, scIdx?: number): boolean {
+  modified(id: string, scIdx?: number,): boolean {
     if (scIdx !== undefined) {
-      const attr = this.scenarioAttributes[scIdx]?.get(id);
+      const attr = this.scenarioAttributes[scIdx]?.get(id,);
       return attr ? (attr.provided || attr.inherited) : false;
     }
-    const attr = this.attributes.get(id);
+    const attr = this.attributes.get(id,);
     return attr ? (attr.provided || attr.inherited) : false;
   }
 
-  attributeDefinition(id: string): AttributeDefinition<unknown> | undefined {
-    return this.propertySet.attributeDefinition(id);
+  attributeDefinition(id: string,): AttributeDefinition<unknown> | undefined {
+    return this.propertySet.attributeDefinition(id,);
   }
 
-  scenarioData(scIdx: number): ScenarioData {
+  scenarioData(scIdx: number,): ScenarioData {
     return this.data[scIdx]!;
   }
 
-  adopt(property: PropertyTreeNode): void {
+  adopt(property: PropertyTreeNode,): void {
     if (property === this) {
-      throw new TjArgumentError("A property cannot adopt itself");
+      throw new TjArgumentError("A property cannot adopt itself",);
     }
     const allOfRoot = this.root().all();
     for (const leaf of property.allLeaves()) {
-      if (allOfRoot.includes(leaf)) {
+      if (allOfRoot.includes(leaf,)) {
         throw new TjArgumentError(
           `The task '${leaf.fullId}' has already been adopted`,
         );
       }
     }
-    this.adoptees.push(property);
-    property.getAdopted(this);
+    this.adoptees.push(property,);
+    property.getAdopted(this,);
   }
 
-  getAdopted(property: PropertyTreeNode): void {
-    if (this.stepParents.includes(property)) {
+  getAdopted(property: PropertyTreeNode,): void {
+    if (this.stepParents.includes(property,)) {
       return;
     }
-    this.stepParents.push(property);
+    this.stepParents.push(property,);
   }
 
   inheritAttributes(): void {
-    this.propertySet.eachAttributeDefinition((attrDef) => {
+    this.propertySet.eachAttributeDefinition((attrDef,) => {
       if (attrDef.isScenarioAttribute || !attrDef.inheritedFromParent) {
         return;
       }
       const aId = attrDef.id;
       const parent = this.parents()[0];
       if (parent) {
-        if (parent.provided(aId) || parent.inherited(aId)) {
-          this.attribute(aId).inherit(parent.get(aId) as never);
+        if (parent.provided(aId,) || parent.inherited(aId,)) {
+          this.attribute(aId,).inherit(parent.get(aId,) as never,);
         }
       } else if (attrDef.inheritedFromProject) {
-        const projectVal = this.project.get(aId);
+        const projectVal = this.project.get(aId,);
         if (projectVal !== undefined) {
-          this.attribute(aId).inherit(projectVal as never);
+          this.attribute(aId,).inherit(projectVal as never,);
         }
       }
-    });
+    },);
 
-    this.propertySet.eachAttributeDefinition((attrDef) => {
+    this.propertySet.eachAttributeDefinition((attrDef,) => {
       if (!attrDef.isScenarioAttribute || !attrDef.inheritedFromParent) {
         return;
       }
@@ -490,44 +503,53 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
       for (let scIdx = 0; scIdx < this.project.scenarioCount; scIdx++) {
         const parent = this.parents()[0];
         if (parent) {
-          if (parent.provided(aId, scIdx) || parent.inherited(aId, scIdx)) {
-            this.scenarioAttribute(scIdx, aId).inherit(
-              parent.getForScenario(aId, scIdx) as never,
+          if (parent.provided(aId, scIdx,) || parent.inherited(aId, scIdx,)) {
+            this.scenarioAttribute(scIdx, aId,).inherit(
+              parent.getForScenario(aId, scIdx,) as never,
             );
           }
         } else if (attrDef.inheritedFromProject) {
-          const projectVal = this.project.get(aId);
-          if (projectVal !== undefined && this.scenarioAttributes[scIdx]?.has(aId)) {
-            this.scenarioAttribute(scIdx, aId).inherit(projectVal as never);
+          const projectVal = this.project.get(aId,);
+          if (
+            projectVal !== undefined &&
+            this.scenarioAttributes[scIdx]?.has(aId,)
+          ) {
+            this.scenarioAttribute(scIdx, aId,).inherit(projectVal as never,);
           }
         }
       }
-    });
+    },);
   }
 
-  backupAttributes(): [Map<string, AttributeBase<unknown>>, Array<Map<string, AttributeBase<unknown>>>] {
+  backupAttributes(): [
+    Map<string, AttributeBase<unknown>>,
+    Array<Map<string, AttributeBase<unknown>>>,
+  ] {
     return [
-      new Map(this.attributes),
-      this.scenarioAttributes.map(m => new Map(m)),
+      new Map(this.attributes,),
+      this.scenarioAttributes.map((m,) => new Map(m,)),
     ];
   }
 
   restoreAttributes(
-    backup: [Map<string, AttributeBase<unknown>>, Array<Map<string, AttributeBase<unknown>>>],
+    backup: [
+      Map<string, AttributeBase<unknown>>,
+      Array<Map<string, AttributeBase<unknown>>>,
+    ],
   ): void {
     this.attributes.clear();
-    this.scenarioAttributes.forEach(m => m.clear());
-    backup[0].forEach((value, key) => {
-      this.attributes.set(key, value);
-    });
-    backup[1].forEach((map, scIdx) => {
-      map.forEach((value, key) => {
+    this.scenarioAttributes.forEach((m,) => m.clear());
+    backup[0].forEach((value, key,) => {
+      this.attributes.set(key, value,);
+    },);
+    backup[1].forEach((map, scIdx,) => {
+      map.forEach((value, key,) => {
         if (!this.scenarioAttributes[scIdx]) {
           this.scenarioAttributes[scIdx] = new Map();
         }
-        this.scenarioAttributes[scIdx].set(key, value);
-      });
-    });
+        this.scenarioAttributes[scIdx].set(key, value,);
+      },);
+    },);
   }
 }
 

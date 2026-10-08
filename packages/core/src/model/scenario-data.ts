@@ -10,7 +10,11 @@ export class ScenarioData implements AttributeContainer {
   private attributes: Map<string, AttributeBase<unknown>>;
   private _values: Map<string, unknown>;
 
-  constructor(property: PropertyLike, scenarioIdx: number, attributes: Map<string, AttributeBase<unknown>>) {
+  constructor(
+    property: PropertyLike,
+    scenarioIdx: number,
+    attributes: Map<string, AttributeBase<unknown>>,
+  ) {
     this.property = property;
     this.scenarioIdx = scenarioIdx;
     // Use a separate Map for attribute values to avoid conflict with scenarioAttributes
@@ -30,35 +34,45 @@ export class ScenarioData implements AttributeContainer {
     return this.attributes;
   }
 
-  getStoredValue(attributeId: string): unknown {
-    return this._values.get(attributeId) ?? null;
+  getStoredValue(attributeId: string,): unknown {
+    return this._values.get(attributeId,) ?? null;
   }
 
-  setStoredValue(attributeId: string, value: unknown): void {
-    this._values.set(attributeId, value);
+  setStoredValue(attributeId: string, value: unknown,): void {
+    this._values.set(attributeId, value,);
   }
 
-  a(attributeName: string): unknown {
-    const attr = this.attributes.get(attributeName);
+  a(attributeName: string,): unknown {
+    const attr = this.attributes.get(attributeName,);
     if (!attr) {
       return null;
     }
     return attr.get();
   }
 
-  error(id: string, text: string, sfi?: string, property?: PropertyLike): void {
+  error(
+    id: string,
+    text: string,
+    sfi?: string,
+    property?: PropertyLike,
+  ): void {
     // TODO: Implement MessageHandler integration
-    console.error(`[${id}] ${text}`);
+    console.error(`[${id}] ${text}`,);
   }
 
-  warning(id: string, text: string, sfi?: string, property?: PropertyLike): void {
+  warning(
+    id: string,
+    text: string,
+    sfi?: string,
+    property?: PropertyLike,
+  ): void {
     // TODO: Implement MessageHandler integration
-    console.warn(`[${id}] ${text}`);
+    console.warn(`[${id}] ${text}`,);
   }
 
-  info(id: string, text: string, sfi?: string, property?: PropertyLike): void {
+  info(id: string, text: string, sfi?: string, property?: PropertyLike,): void {
     // TODO: Implement MessageHandler integration
-    console.log(`[${id}] ${text}`);
+    console.log(`[${id}] ${text}`,);
   }
 
   deepClone(): this {
@@ -70,14 +84,17 @@ export class ScenarioData implements AttributeContainer {
    * se ainda não existir. Usado pelos *Scenario constructors
    * (ADR 016) para replicar o comportamento do Ruby.
    */
-  preloadAttributes(ids: string[]): void {
+  preloadAttributes(ids: string[],): void {
     for (const id of ids) {
-      const aDef = (this.property as any).attributeDefinition(id);
+      const aDef = (this.property as any).attributeDefinition(id,);
       if (!aDef) {
-        throw new TjArgumentError(`Unknown attribute '${id}'`);
+        throw new TjArgumentError(`Unknown attribute '${id}'`,);
       }
-      const attr = (this.property as any).getScenarioAttribute(this.scenarioIdx, id);
-      this.attributes.set(id, attr);
+      const attr = (this.property as any).getScenarioAttribute(
+        this.scenarioIdx,
+        id,
+      );
+      this.attributes.set(id, attr,);
     }
   }
 }

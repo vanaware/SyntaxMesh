@@ -981,7 +981,6 @@ export class TaskScenario extends ScenarioData {
     return this.a("forward",) as boolean;
   }
 
-
   currentSlotIdx(): number | null {
     return this._currentSlotIdx;
   }
@@ -1395,7 +1394,7 @@ export class TaskScenario extends ScenarioData {
           "efficiency",
         ) as number;
 
-        const assignedresources = this.a("assignedresources") as any[];
+        const assignedresources = this.a("assignedresources",) as any[];
         if (!assignedresources.includes(r,)) {
           assignedresources.push(r,);
         }

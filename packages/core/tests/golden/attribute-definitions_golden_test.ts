@@ -1,8 +1,8 @@
-import { describe, it } from "@std/testing/bdd";
-import { assertEquals } from "@std/assert";
-import { AttributeDefinition } from "../../src/attributes/attribute-definition.ts";
-import { AttributeType } from "../../src/attributes/attribute-type.ts";
-import { MockProject } from "../model/mock-project.ts";
+import { describe, it, } from "@std/testing/bdd";
+import { assertEquals, } from "@std/assert";
+import { AttributeDefinition, } from "../../src/attributes/attribute-definition.ts";
+import { AttributeType, } from "../../src/attributes/attribute-type.ts";
+import { MockProject, } from "../model/mock-project.ts";
 
 /**
  * Golden test runner for AttributeDefinitions.
@@ -66,7 +66,8 @@ const rubyClassToType: Record<string, AttributeType> = {
   "TaskJuggler::AllocationAttribute": AttributeType.Allocation,
   "TaskJuggler::BookingListAttribute": AttributeType.BookingList,
   "TaskJuggler::LogicalExpressionAttribute": AttributeType.LogicalExpression,
-  "TaskJuggler::LogicalExpressionListAttribute": AttributeType.LogicalExpressionList,
+  "TaskJuggler::LogicalExpressionListAttribute":
+    AttributeType.LogicalExpressionList,
   "TaskJuggler::TimeIntervalListAttribute": AttributeType.TimeIntervalList,
   "TaskJuggler::LeaveListAttribute": AttributeType.LeaveList,
   "TaskJuggler::LeaveAllowanceListAttribute": AttributeType.LeaveAllowanceList,
@@ -86,18 +87,20 @@ const rubyClassToType: Record<string, AttributeType> = {
  * Extracts the short class name from a Ruby objClass string.
  * e.g. "TaskJuggler::StringAttribute" → "StringAttribute"
  */
-function shortClassName(objClass: string): string {
-  return objClass.split("::").pop() ?? objClass;
+function shortClassName(objClass: string,): string {
+  return objClass.split("::",).pop() ?? objClass;
 }
 
 /**
  * Converts a TS AttributeDefinition to the golden format for comparison.
  */
-function toGolden(ad: AttributeDefinition<unknown>): GoldenCase {
+function toGolden(ad: AttributeDefinition<unknown>,): GoldenCase {
   return {
     id: ad.id,
     name: ad.name,
-    objClass: `TaskJuggler::${AttributeDefinition.attributeTypeClass(ad.type)}`,
+    objClass: `TaskJuggler::${
+      AttributeDefinition.attributeTypeClass(ad.type,)
+    }`,
     inheritedFromParent: ad.inheritedFromParent,
     inheritedFromProject: ad.inheritedFromProject,
     scenarioSpecific: ad.isScenarioAttribute,
@@ -110,7 +113,7 @@ function toGolden(ad: AttributeDefinition<unknown>): GoldenCase {
  * Collects all AttributeDefinitions from all 6 PropertySets of a MockProject,
  * sorted alphabetically by id (matching Ruby's eachAttributeDefinition sort).
  */
-function collectAllAttributeDefinitions(project: MockProject): GoldenCase[] {
+function collectAllAttributeDefinitions(project: MockProject,): GoldenCase[] {
   const result: GoldenCase[] = [];
   const propertySets = [
     project.scenarios,
@@ -122,20 +125,20 @@ function collectAllAttributeDefinitions(project: MockProject): GoldenCase[] {
   ];
 
   for (const ps of propertySets) {
-    ps.eachAttributeDefinition((ad) => {
-      result.push(toGolden(ad));
-    });
+    ps.eachAttributeDefinition((ad,) => {
+      result.push(toGolden(ad,),);
+    },);
   }
 
   // Sort by id to match Ruby's @attributeDefinitions.sort.each
-  result.sort((a, b) => a.id.localeCompare(b.id));
+  result.sort((a, b,) => a.id.localeCompare(b.id,));
   return result;
 }
 
 function loadGoldenFile(): GoldenFile {
-  const path = new URL("./attribute-definitions.golden.json", import.meta.url);
-  const content = Deno.readTextFileSync(path);
-  return JSON.parse(content) as GoldenFile;
+  const path = new URL("./attribute-definitions.golden.json", import.meta.url,);
+  const content = Deno.readTextFileSync(path,);
+  return JSON.parse(content,) as GoldenFile;
 }
 
 /**
@@ -145,15 +148,15 @@ function loadGoldenFile(): GoldenFile {
  * and the order within a group follows the PropertySet iteration order,
  * which is identical in the Ruby golden generator and the TS collector.
  */
-function groupById<T extends { id: string }>(cases: T[]): Map<string, T[]> {
+function groupById<T extends { id: string },>(cases: T[],): Map<string, T[]> {
   const map = new Map<string, T[]>();
   for (const c of cases) {
-    let group = map.get(c.id);
+    let group = map.get(c.id,);
     if (!group) {
       group = [];
-      map.set(c.id, group);
+      map.set(c.id, group,);
     }
-    group.push(c);
+    group.push(c,);
   }
   return map;
 }
@@ -161,23 +164,23 @@ function groupById<T extends { id: string }>(cases: T[]): Map<string, T[]> {
 describe("AttributeDefinitions golden tests", () => {
   const golden = loadGoldenFile();
   const project = new MockProject();
-  const tsDefinitions = collectAllAttributeDefinitions(project);
+  const tsDefinitions = collectAllAttributeDefinitions(project,);
 
-  const goldenById = groupById(golden.cases);
-  const tsById = groupById(tsDefinitions);
+  const goldenById = groupById(golden.cases,);
+  const tsById = groupById(tsDefinitions,);
 
   // Report ids that differ between golden and TS (for diagnostics only).
   const missingInTs: string[] = [];
   const extraInTs: string[] = [];
   for (const id of goldenById.keys()) {
-    if (!tsById.has(id)) missingInTs.push(id);
+    if (!tsById.has(id,)) missingInTs.push(id,);
   }
   for (const id of tsById.keys()) {
-    if (!goldenById.has(id)) extraInTs.push(id);
+    if (!goldenById.has(id,)) extraInTs.push(id,);
   }
   if (missingInTs.length > 0 || extraInTs.length > 0) {
-    console.log("Missing in TS:", missingInTs);
-    console.log("Extra in TS:", extraInTs);
+    console.log("Missing in TS:", missingInTs,);
+    console.log("Extra in TS:", extraInTs,);
   }
 
   // The golden file and TS implementation must have the same number of cases
@@ -194,18 +197,18 @@ describe("AttributeDefinitions golden tests", () => {
 
   for (let gi = 0; gi < golden.cases.length; gi++) {
     const expected = golden.cases[gi]!;
-    const group = tsById.get(expected.id);
+    const group = tsById.get(expected.id,);
     if (!group) {
-      throw new Error(`No TS cases for id '${expected.id}'`);
+      throw new Error(`No TS cases for id '${expected.id}'`,);
     }
 
     // Find the next unused TS case within this id group.
     let actual: GoldenCase | undefined;
     for (const candidate of group) {
-      const idx = tsDefinitions.indexOf(candidate);
-      if (!usedTsIndices.has(idx)) {
+      const idx = tsDefinitions.indexOf(candidate,);
+      if (!usedTsIndices.has(idx,)) {
         actual = candidate;
-        usedTsIndices.add(idx);
+        usedTsIndices.add(idx,);
         break;
       }
     }
@@ -217,16 +220,20 @@ describe("AttributeDefinitions golden tests", () => {
 
     it(`case ${gi}: ${expected.id}`, () => {
       // Verify name matches
-      assertEquals(actual.name, expected.name, `name mismatch for ${expected.id}`);
+      assertEquals(
+        actual.name,
+        expected.name,
+        `name mismatch for ${expected.id}`,
+      );
 
       // Verify objClass matches (Ruby class name vs TS attributeTypeClass)
       const expectedType = rubyClassToType[expected.objClass];
       if (expectedType === undefined) {
-        throw new Error(`Unknown Ruby objClass: ${expected.objClass}`);
+        throw new Error(`Unknown Ruby objClass: ${expected.objClass}`,);
       }
       assertEquals(
-        shortClassName(actual.objClass),
-        AttributeDefinition.attributeTypeClass(expectedType),
+        shortClassName(actual.objClass,),
+        AttributeDefinition.attributeTypeClass(expectedType,),
         `objClass mismatch for ${expected.id}: expected ${expected.objClass}`,
       );
 

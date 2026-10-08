@@ -10,13 +10,17 @@ export class Account extends PropertyTreeNode {
     parent: Account | null,
   ) {
     super(project.accounts, id, name, parent,);
-    project.addAccount(this);
+    project.addAccount(this,);
     for (let i = 0; i < project.scenarioCount; i++) {
-      this.data[i] = new AccountScenario(this, i, this.getScenarioAttributes(i));
+      this.data[i] = new AccountScenario(
+        this,
+        i,
+        this.getScenarioAttributes(i,),
+      );
     }
   }
 
-  override scenarioData(scIdx: number): AccountScenario {
+  override scenarioData(scIdx: number,): AccountScenario {
     return this.data[scIdx]! as AccountScenario;
   }
 }

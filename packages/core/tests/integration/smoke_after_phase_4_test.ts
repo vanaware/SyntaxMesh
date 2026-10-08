@@ -54,12 +54,12 @@ describe("Smoke test after Phase 4", () => {
   },);
 
   it("imports @syntaxmesh/core and creates PropertyTreeNode", () => {
-    const project = new MockProject(1);
-    const propertySet = new PropertySet(project, false);
-    const root = new PropertyTreeNode(propertySet, null, "root", null);
-    assertEquals(root.id, "_PropertyTreeNode_1");
-    assertEquals(root.name, "root");
-    assertEquals(root.level, 0);
+    const project = new MockProject(1,);
+    const propertySet = new PropertySet(project, false,);
+    const root = new PropertyTreeNode(propertySet, null, "root", null,);
+    assertEquals(root.id, "_PropertyTreeNode_1",);
+    assertEquals(root.name, "root",);
+    assertEquals(root.level, 0,);
   });
 
   it("imports all model classes", () => {

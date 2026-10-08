@@ -11,27 +11,42 @@
 const scripts: Array<{ name: string; rubyScript: URL; outputPath: URL }> = [
   {
     name: "attributes",
-    rubyScript: new URL("../../../../scripts/golden/attributes.rb", import.meta.url,),
+    rubyScript: new URL(
+      "../../../../scripts/golden/attributes.rb",
+      import.meta.url,
+    ),
     outputPath: new URL("./attributes.golden.json", import.meta.url,),
   },
   {
     name: "attribute-definitions",
-    rubyScript: new URL("../../../../scripts/golden/attribute-definitions.rb", import.meta.url,),
-    outputPath: new URL("./attribute-definitions.golden.json", import.meta.url,),
+    rubyScript: new URL(
+      "../../../../scripts/golden/attribute-definitions.rb",
+      import.meta.url,
+    ),
+    outputPath: new URL(
+      "./attribute-definitions.golden.json",
+      import.meta.url,
+    ),
   },
   {
     name: "limits",
-    rubyScript: new URL("../../../../scripts/golden/limits.rb", import.meta.url,),
+    rubyScript: new URL(
+      "../../../../scripts/golden/limits.rb",
+      import.meta.url,
+    ),
     outputPath: new URL("./limits.golden.json", import.meta.url,),
   },
   {
     name: "shift-assignments",
-    rubyScript: new URL("../../../../scripts/golden/shift-assignments.rb", import.meta.url,),
+    rubyScript: new URL(
+      "../../../../scripts/golden/shift-assignments.rb",
+      import.meta.url,
+    ),
     outputPath: new URL("./shift-assignments.golden.json", import.meta.url,),
   },
 ];
 
-for (const { name, rubyScript, outputPath } of scripts) {
+for (const { name, rubyScript, outputPath, } of scripts) {
   const proc = new Deno.Command("ruby", {
     args: [rubyScript.pathname,],
     stdout: "piped",

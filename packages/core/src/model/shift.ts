@@ -10,13 +10,17 @@ export class Shift extends PropertyTreeNode {
     parent: Shift | null,
   ) {
     super(project.shifts, id, name, parent,);
-    project.addShift(this);
+    project.addShift(this,);
     for (let i = 0; i < project.scenarioCount; i++) {
-      this.data[i] = new ShiftScenario(this, i, this.getScenarioAttributes(i));
+      this.data[i] = new ShiftScenario(
+        this,
+        i,
+        this.getScenarioAttributes(i,),
+      );
     }
   }
 
-  override scenarioData(scIdx: number): ShiftScenario {
+  override scenarioData(scIdx: number,): ShiftScenario {
     return this.data[scIdx]! as ShiftScenario;
   }
 }

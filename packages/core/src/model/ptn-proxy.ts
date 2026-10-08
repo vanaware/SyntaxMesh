@@ -10,15 +10,18 @@ export class PTNProxy implements AttributeContainer {
   private readonly tree: PropertyTreeNode;
   private readonly levelCache: number;
 
-  constructor(ptn: PropertyTreeNode, parent: PropertyTreeNode) {
+  constructor(ptn: PropertyTreeNode, parent: PropertyTreeNode,) {
     this._ptn = ptn;
     this.parent = parent;
-    this.index = parent.children.indexOf(ptn);
-    this.tree = this.findTreeRoot(ptn, parent);
+    this.index = parent.children.indexOf(ptn,);
+    this.tree = this.findTreeRoot(ptn, parent,);
     this.levelCache = this.calculateLevel();
   }
 
-  private findTreeRoot(ptn: PropertyTreeNode, parent: PropertyTreeNode): PropertyTreeNode {
+  private findTreeRoot(
+    ptn: PropertyTreeNode,
+    parent: PropertyTreeNode,
+  ): PropertyTreeNode {
     let current: PropertyTreeNode = ptn;
     while (current.parents()[0]) {
       current = current.parents()[0] as PropertyTreeNode;
@@ -43,35 +46,35 @@ export class PTNProxy implements AttributeContainer {
     let result = this._ptn.subId;
     let current: PropertyTreeNode | null = this.parent;
     while (current) {
-      result = current.subId + '.' + result;
+      result = current.subId + "." + result;
       current = current.parents()[0] as PropertyTreeNode | null;
     }
     return result;
   }
 
-  get(attribute: string): unknown {
+  get(attribute: string,): unknown {
     if (this.index >= 0 && this.tree.children[this.index] === this._ptn) {
-      return this._ptn.get(attribute);
+      return this._ptn.get(attribute,);
     }
     return undefined;
   }
 
-  set(attribute: string, value: unknown): void {
+  set(attribute: string, value: unknown,): void {
     if (this.index >= 0 && this.tree.children[this.index] === this._ptn) {
-      this._ptn.set(attribute, value);
+      this._ptn.set(attribute, value,);
     }
   }
 
-  getForScenario(attribute: string, scIdx: number): unknown {
+  getForScenario(attribute: string, scIdx: number,): unknown {
     if (this.index >= 0 && this.tree.children[this.index] === this._ptn) {
-      return this._ptn.getForScenario(attribute, scIdx);
+      return this._ptn.getForScenario(attribute, scIdx,);
     }
     return undefined;
   }
 
-  setForScenario(attribute: string, value: unknown, scIdx: number): void {
+  setForScenario(attribute: string, value: unknown, scIdx: number,): void {
     if (this.index >= 0 && this.tree.children[this.index] === this._ptn) {
-      this._ptn.setForScenario(attribute, value, scIdx);
+      this._ptn.setForScenario(attribute, value, scIdx,);
     }
   }
 
@@ -79,7 +82,7 @@ export class PTNProxy implements AttributeContainer {
     return this.levelCache;
   }
 
-  isChildOf(ancestor: PropertyTreeNode): boolean {
+  isChildOf(ancestor: PropertyTreeNode,): boolean {
     let current: PropertyTreeNode | null = this.parent;
     while (current) {
       if (current === ancestor) {
@@ -95,10 +98,10 @@ export class PTNProxy implements AttributeContainer {
     let current: PropertyTreeNode | null = this._ptn;
     while (current) {
       const parent = current.parents()[0];
-      if (parent && parent.propertySet.knownAttribute('index')) {
-        const index = parent.get('index');
+      if (parent && parent.propertySet.knownAttribute("index",)) {
+        const index = parent.get("index",);
         if (index !== null && index !== undefined && index !== 0) {
-          indices.unshift(index as number);
+          indices.unshift(index as number,);
         }
       }
       current = current.parents()[0] as PropertyTreeNode | null;
@@ -110,15 +113,15 @@ export class PTNProxy implements AttributeContainer {
     return this._ptn;
   }
 
-  getStoredValue(attributeId: string): unknown {
-    return this._ptn.getStoredValue(attributeId);
+  getStoredValue(attributeId: string,): unknown {
+    return this._ptn.getStoredValue(attributeId,);
   }
 
-  setStoredValue(attributeId: string, value: unknown): void {
-    this._ptn.setStoredValue(attributeId, value);
+  setStoredValue(attributeId: string, value: unknown,): void {
+    this._ptn.setStoredValue(attributeId, value,);
   }
 
-  scenarioData(scIdx: number): ScenarioData {
-    return this._ptn.scenarioData(scIdx);
+  scenarioData(scIdx: number,): ScenarioData {
+    return this._ptn.scenarioData(scIdx,);
   }
 }

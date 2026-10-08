@@ -10,38 +10,38 @@ export class Scenario extends PropertyTreeNode {
     name: string,
     parent: PropertyTreeNode | null,
   ) {
-    const propertySet = new PropertySet(project, false);
+    const propertySet = new PropertySet(project, false,);
     super(propertySet, id, name, parent,);
     project.addScenario(this,);
   }
 
   override all(): Scenario[] {
     const result: Scenario[] = [this,];
-    this.kids().forEach(child => {
+    this.kids().forEach((child,) => {
       if (child instanceof Scenario) {
         result.push(...child.all(),);
       }
-    });
+    },);
     return result;
   }
 
-  override allLeaves(includeSelf: boolean = false): Scenario[] {
+  override allLeaves(includeSelf: boolean = false,): Scenario[] {
     const result: Scenario[] = [];
     if (this.leaf()) {
       if (includeSelf) {
         result.push(this,);
       }
     } else {
-      this.kids().forEach(child => {
+      this.kids().forEach((child,) => {
         if (child instanceof Scenario) {
           result.push(...child.allLeaves(),);
         }
-      });
+      },);
     }
     return result;
   }
 
-  override scenarioData(scIdx: number): ScenarioData {
+  override scenarioData(scIdx: number,): ScenarioData {
     return this.data[scIdx]!;
   }
 }

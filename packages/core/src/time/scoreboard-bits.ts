@@ -15,13 +15,13 @@
  * Ordem: project (0) é menor prioridade; holiday (5) é mais comum.
  */
 export const LEAVE_TYPES = {
-  project: 0,      // 0b00 << LEAVE_SHIFT = 0
-  annual: 1,       // 0b01 << LEAVE_SHIFT = 4
-  special: 2,      // 0b10 << LEAVE_SHIFT = 8
-  sick: 3,         // 0b11 << LEAVE_SHIFT = 12
-  unpaid: 4,       // 0b100 << LEAVE_SHIFT = 16
-  holiday: 5,      // 0b101 << LEAVE_SHIFT = 20
-  unemployed: 6,   // 0b110 << LEAVE_SHIFT = 24
+  project: 0, // 0b00 << LEAVE_SHIFT = 0
+  annual: 1, // 0b01 << LEAVE_SHIFT = 4
+  special: 2, // 0b10 << LEAVE_SHIFT = 8
+  sick: 3, // 0b11 << LEAVE_SHIFT = 12
+  unpaid: 4, // 0b100 << LEAVE_SHIFT = 16
+  holiday: 5, // 0b101 << LEAVE_SHIFT = 20
+  unemployed: 6, // 0b110 << LEAVE_SHIFT = 24
 } as const;
 
 /**
@@ -59,7 +59,7 @@ export const BIT_OVERRIDE = 1 << 8; // 0b100000000 = 256
  * @param type — um dos valores de LEAVE_TYPES.
  * @returns valor shiftado para bits 2–5.
  */
-export function packLeaveType(type: number): number {
+export function packLeaveType(type: number,): number {
   return type << LEAVE_SHIFT;
 }
 
@@ -69,7 +69,7 @@ export function packLeaveType(type: number): number {
  * @param val — valor numérico do scoreboard (bits 2–5 contêm o tipo).
  * @returns tipo de leave (0–6) ou 0 se val for null/undefined.
  */
-export function unpackLeaveType(val: number | null | undefined): number {
+export function unpackLeaveType(val: number | null | undefined,): number {
   if (val == null) return 0;
   return (val & LEAVE_MASK) >>> LEAVE_SHIFT;
 }
@@ -77,7 +77,7 @@ export function unpackLeaveType(val: number | null | undefined): number {
 /**
  * Verifica se o valor indica que há uma atribuição (bit 0 set).
  */
-export function isAssigned(val: number | null | undefined): boolean {
+export function isAssigned(val: number | null | undefined,): boolean {
   if (val == null) return false;
   return (val & BIT_ASSIGNED) !== 0;
 }
@@ -86,7 +86,7 @@ export function isAssigned(val: number | null | undefined): boolean {
  * Verifica se o valor indica tempo de trabalho disponível (bit 1 não set).
  * Sem bit 1 = tempo de trabalho disponível (working hours).
  */
-export function isWorkingTime(val: number | null | undefined): boolean {
+export function isWorkingTime(val: number | null | undefined,): boolean {
   if (val == null) return false;
   return (val & BIT_OFF_WORK) === 0;
 }
@@ -95,7 +95,7 @@ export function isWorkingTime(val: number | null | undefined): boolean {
  * Verifica se o valor indica tempo de trabalho **não** disponível (bit 1 set).
  * Com bit 1 = tempo de trabalho não disponível (off-duty).
  */
-export function isTimeOff(val: number | null | undefined): boolean {
+export function isTimeOff(val: number | null | undefined,): boolean {
   if (val == null) return false;
   return (val & BIT_OFF_WORK) !== 0;
 }
@@ -103,7 +103,7 @@ export function isTimeOff(val: number | null | undefined): boolean {
 /**
  * Verifica se o valor indica algum leave (bits 2–5 não zero).
  */
-export function isLeave(val: number | null | undefined): boolean {
+export function isLeave(val: number | null | undefined,): boolean {
   if (val == null) return false;
   return (val & LEAVE_MASK) !== 0;
 }
@@ -115,15 +115,18 @@ export function isLeave(val: number | null | undefined): boolean {
  * @param type — um dos valores de LEAVE_TYPES.
  * @returns true se bits 2–5 correspondem ao tipo.
  */
-export function isLeaveType(val: number | null | undefined, type: number): boolean {
+export function isLeaveType(
+  val: number | null | undefined,
+  type: number,
+): boolean {
   if (val == null) return false;
-  return unpackLeaveType(val) === type;
+  return unpackLeaveType(val,) === type;
 }
 
 /**
  * Verifica se o valor indica override global (bit 8 set).
  */
-export function hasOverride(val: number | null | undefined): boolean {
+export function hasOverride(val: number | null | undefined,): boolean {
   if (val == null) return false;
   return (val & BIT_OVERRIDE) !== 0;
 }
@@ -136,7 +139,11 @@ export function hasOverride(val: number | null | undefined): boolean {
  * @param hasOverride — true se override global (bit 8 = 1).
  * @returns valor inteiro com bits definidos conforme os parâmetros.
  */
-export function packWorkTime(isWorking: boolean, leaveType?: number, hasOverride?: boolean): number {
+export function packWorkTime(
+  isWorking: boolean,
+  leaveType?: number,
+  hasOverride?: boolean,
+): number {
   let val = 0;
 
   // Bit 0: atribuído (assumimos que sempre há atribuição para este helper)
@@ -149,7 +156,7 @@ export function packWorkTime(isWorking: boolean, leaveType?: number, hasOverride
 
   // Bits 2–5: leave type
   if (leaveType != null) {
-    val |= packLeaveType(leaveType);
+    val |= packLeaveType(leaveType,);
   }
 
   // Bit 8: override

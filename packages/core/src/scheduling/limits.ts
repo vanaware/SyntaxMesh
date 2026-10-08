@@ -35,7 +35,12 @@ export class Limit {
     this.value = value;
     this.upper = upper;
     this.resource = resource;
-    this.scoreboard = new Scoreboard<number>(interval.startDate().toDate(), interval.endDate().toDate(), period, 0,);
+    this.scoreboard = new Scoreboard<number>(
+      interval.startDate().toDate(),
+      interval.endDate().toDate(),
+      period,
+      0,
+    );
     this.dirty = false;
   }
 
@@ -76,7 +81,7 @@ export class Limit {
       undefined,
     );
     for (let i = 0; i < this.scoreboard.size; i++) {
-      newLimit.scoreboard.set(i, this.scoreboard.get(i),);
+      newLimit.scoreboard.set(i, this.scoreboard.get(i,),);
     }
     newLimit.dirty = this.dirty;
     return newLimit;
@@ -87,9 +92,11 @@ export class Limit {
    *
    * @param index — se fornecido, reseta apenas o slot para este índice (convertido de TjTime).
    */
-  reset(index?: number | TjTime): void {
+  reset(index?: number | TjTime,): void {
     if (index !== undefined) {
-      const idx = typeof index === "number" ? index : this.interval.dateToIndex(index,);
+      const idx = typeof index === "number"
+        ? index
+        : this.interval.dateToIndex(index,);
       if (this.interval.contains(idx,)) {
         this.scoreboard.set(idx, 0,);
       }
@@ -105,8 +112,10 @@ export class Limit {
    * @param index — índice dentro do intervalo do limite (convertido de TjTime).
    * @param resource — recurso que está alocando (para filtrar).
    */
-  inc(index: number | TjTime, resource: Resource | null): void {
-    const idx = typeof index === "number" ? index : this.interval.dateToIndex(index,);
+  inc(index: number | TjTime, resource: Resource | null,): void {
+    const idx = typeof index === "number"
+      ? index
+      : this.interval.dateToIndex(index,);
     if (!this.interval.contains(idx,)) {
       return;
     }
@@ -121,8 +130,10 @@ export class Limit {
   /**
    * Decrementa o contador para o índice/tempo dado, se permitido.
    */
-  dec(index: number | TjTime, resource: Resource | null): void {
-    const idx = typeof index === "number" ? index : this.interval.dateToIndex(index,);
+  dec(index: number | TjTime, resource: Resource | null,): void {
+    const idx = typeof index === "number"
+      ? index
+      : this.interval.dateToIndex(index,);
     if (!this.interval.contains(idx,)) {
       return;
     }
@@ -142,9 +153,16 @@ export class Limit {
    * @param resource — recurso que está verificando (para filtrar).
    * @returns true se o limite for satisfatório.
    */
-  ok(index: number | TjTime | null, upper: boolean, resource: Resource | null): boolean {
+  ok(
+    index: number | TjTime | null,
+    upper: boolean,
+    resource: Resource | null,
+  ): boolean {
     // Se upper !== this.upper ou resource filtrado, sempre retorna true
-    if (upper !== this.upper || (this.resource !== null && this.resource !== resource)) {
+    if (
+      upper !== this.upper ||
+      (this.resource !== null && this.resource !== resource)
+    ) {
       return true;
     }
 
@@ -165,12 +183,14 @@ export class Limit {
       return true;
     }
 
-    const targetIdx = typeof index === "number" ? index : this.interval.dateToIndex(index,);
+    const targetIdx = typeof index === "number"
+      ? index
+      : this.interval.dateToIndex(index,);
     if (!this.interval.contains(targetIdx,)) {
       return true;
     }
 
-    const sbIdx = this.idxToSbIdx(targetIdx);
+    const sbIdx = this.idxToSbIdx(targetIdx,);
     const value = this.scoreboard.get(sbIdx,);
 
     if (this.upper) {
@@ -185,7 +205,7 @@ export class Limit {
   /**
    * Converte um índice do projeto para um índice do scoreboard do limite.
    */
-  private idxToSbIdx(index: number): number {
+  private idxToSbIdx(index: number,): number {
     return Math.trunc(
       (index - this.interval.start) * this.interval.slotDuration / this.period,
     );
@@ -202,13 +222,13 @@ export class Limits {
   readonly limits: Limit[];
   private project: ProjectLike | null;
 
-  constructor(limits?: Limit[] | Limits) {
+  constructor(limits?: Limit[] | Limits,) {
     if (limits instanceof Limits) {
       // Cópia profunda
-      this.limits = limits.limits.map((limit) => limit.copy(),);
+      this.limits = limits.limits.map((limit,) => limit.copy());
       this.project = limits.project;
     } else if (Array.isArray(limits,)) {
-      this.limits = limits.map((limit) => limit.copy(),);
+      this.limits = limits.map((limit,) => limit.copy());
       this.project = null;
     } else {
       this.limits = [];
@@ -226,9 +246,11 @@ export class Limits {
    *
    * @throws TjArgumentError se `limits` não estiver vazio.
    */
-  setProject(project: ProjectLike): void {
+  setProject(project: ProjectLike,): void {
     if (this.limits.length > 0) {
-      throw new TjArgumentError("Cannot set project on Limits that already has limits",);
+      throw new TjArgumentError(
+        "Cannot set project on Limits that already has limits",
+      );
     }
     this.project = project;
   }
@@ -250,7 +272,12 @@ export class Limits {
    * @param interval — opcional, `ScoreboardInterval` customizado. Se não fornecido, criado a partir do projeto.
    * @param resource — opcional, recurso que este limite se aplica (para limites por recurso).
    */
-  setLimit(name: string, value: number, interval?: ScoreboardInterval, resource?: Resource): void {
+  setLimit(
+    name: string,
+    value: number,
+    interval?: ScoreboardInterval,
+    resource?: Resource,
+  ): void {
     // Determinar tipo de limite e período
     let period: number;
     let upper: boolean;
@@ -272,11 +299,19 @@ export class Limits {
         upper = name === "monthlymax";
         break;
       case "maximum":
-        period = interval ? interval.duration() : (this.project ? this.project.get("scheduleGranularity") as number : 0);
+        period = interval
+          ? interval.duration()
+          : (this.project
+            ? this.project.get("scheduleGranularity",) as number
+            : 0);
         upper = true;
         break;
       case "minimum":
-        period = interval ? interval.duration() : (this.project ? this.project.get("scheduleGranularity") as number : 0);
+        period = interval
+          ? interval.duration()
+          : (this.project
+            ? this.project.get("scheduleGranularity",) as number
+            : 0);
         upper = false;
         break;
       default:
@@ -285,12 +320,16 @@ export class Limits {
 
     // Se interval não fornecido, criar a partir do projeto
     if (!interval && this.project) {
-      const startDate = this.project.get("start");
-      const endDate = this.project.get("end");
-      const scheduleGranularity = this.project.get("scheduleGranularity") as number;
+      const startDate = this.project.get("start",);
+      const endDate = this.project.get("end",);
+      const scheduleGranularity = this.project.get(
+        "scheduleGranularity",
+      ) as number;
 
       if (!startDate || !endDate || !scheduleGranularity) {
-        throw new TjArgumentError("Project missing required attributes for limit interval",);
+        throw new TjArgumentError(
+          "Project missing required attributes for limit interval",
+        );
       }
 
       // startDate e endDate já são TjTime (do MockProject)
@@ -298,39 +337,51 @@ export class Limits {
       const endTime = endDate as TjTime;
 
       // Criar intervalo com o range completo do projeto
-      const endIdx = Math.trunc(endTime.diff(startTime) / scheduleGranularity);
-      interval = new ScoreboardInterval(startTime, scheduleGranularity, 0, endIdx);
+      const endIdx = Math.trunc(
+        endTime.diff(startTime,) / scheduleGranularity,
+      );
+      interval = new ScoreboardInterval(
+        startTime,
+        scheduleGranularity,
+        0,
+        endIdx,
+      );
 
       // Alinhar início/fim conforme o tipo de limite (conforme Ruby Limits.rb)
       interval.start = interval.startDate().midnight();
       interval.end = interval.endDate().midnight();
 
-      if (name.startsWith("weekly")) {
-        const weekStartsMonday = this.project.get("weekStartsMonday") as boolean;
-        interval.start = interval.startDate().beginOfWeek(weekStartsMonday);
-        interval.end = interval.endDate().beginOfWeek(weekStartsMonday);
-      } else if (name.startsWith("monthly")) {
+      if (name.startsWith("weekly",)) {
+        const weekStartsMonday = this.project.get(
+          "weekStartsMonday",
+        ) as boolean;
+        interval.start = interval.startDate().beginOfWeek(weekStartsMonday,);
+        interval.end = interval.endDate().beginOfWeek(weekStartsMonday,);
+      } else if (name.startsWith("monthly",)) {
         interval.start = interval.startDate().beginOfMonth();
         interval.end = interval.endDate().beginOfMonth();
       }
     }
 
     if (!interval) {
-      throw new TjArgumentError(`Interval must be provided or project must be set for limit: ${name}`,);
+      throw new TjArgumentError(
+        `Interval must be provided or project must be set for limit: ${name}`,
+      );
     }
 
     // Remover limite existente com mesmo nome, startDate, endDate e resource
     const startDate = interval.startDate(),
       endDate = interval.endDate();
     const existingIdx = this.limits.findIndex(
-      (limit) =>
+      (limit,) =>
         limit.name === name &&
         limit.interval.startDate().toSeconds() === startDate.toSeconds() &&
         limit.interval.endDate().toSeconds() === endDate.toSeconds() &&
-        (limit.resource === resource || limit.resource === null || resource === null),
+        (limit.resource === resource || limit.resource === null ||
+          resource === null),
     );
     if (existingIdx >= 0) {
-      this.limits.splice(existingIdx, 1);
+      this.limits.splice(existingIdx, 1,);
     }
 
     // Criar novo limite
@@ -341,7 +392,7 @@ export class Limits {
   /**
    * Incrementa o contador para o índice/tempo dado em todos os limites.
    */
-  inc(index: number | TjTime, resource?: Resource): void {
+  inc(index: number | TjTime, resource?: Resource,): void {
     const r = resource ?? null;
     for (const limit of this.limits) {
       limit.inc(index, r,);
@@ -351,7 +402,7 @@ export class Limits {
   /**
    * Decrementa o contador para o índice/tempo dado em todos os limites.
    */
-  dec(index: number | TjTime, resource?: Resource): void {
+  dec(index: number | TjTime, resource?: Resource,): void {
     const r = resource ?? null;
     for (const limit of this.limits) {
       limit.dec(index, r,);
@@ -361,7 +412,11 @@ export class Limits {
   /**
    * Verifica se todos os limites são satisfatórios para o índice/tempo dado.
    */
-  ok(index: number | TjTime | null, upper?: boolean, resource?: Resource): boolean {
+  ok(
+    index: number | TjTime | null,
+    upper?: boolean,
+    resource?: Resource,
+  ): boolean {
     const r = resource ?? null;
     for (const limit of this.limits) {
       if (!limit.ok(index, upper ?? true, r,)) {

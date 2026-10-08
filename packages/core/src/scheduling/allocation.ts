@@ -70,7 +70,7 @@ export class Allocation {
    * @param str — um dos nomes: `order`, `minallocated`, `minloaded`, `maxloaded`, `random`.
    * @throws TjArgumentError se o modo não for reconhecido.
    */
-  setSelectionMode(str: string): void {
+  setSelectionMode(str: string,): void {
     const modes = [
       "order",
       "minallocated",
@@ -78,9 +78,9 @@ export class Allocation {
       "maxloaded",
       "random",
     ];
-    const idx = modes.indexOf(str);
+    const idx = modes.indexOf(str,);
     if (idx === -1) {
-      throw new TjArgumentError(`Unknown selection mode ${str}`);
+      throw new TjArgumentError(`Unknown selection mode ${str}`,);
     }
     this.selectionMode = idx as SelectionMode;
   }
@@ -88,17 +88,17 @@ export class Allocation {
   /**
    * Adiciona outro candidato à lista de candidatos.
    */
-  addCandidate(candidate: Resource): void {
-    this.candidates.push(candidate);
+  addCandidate(candidate: Resource,): void {
+    this.candidates.push(candidate,);
   }
 
   /**
    * Retorna true se não houver shifts definidos ou se os shifts definidos
    * estiverem ativos no índice do scoreboard dado.
    */
-  onShift(sbIdx: number): boolean {
+  onShift(sbIdx: number,): boolean {
     if (this.shifts) {
-      return this.shifts.onShift(sbIdx);
+      return this.shifts.onShift(sbIdx,);
     }
     return true;
   }
@@ -109,7 +109,7 @@ export class Allocation {
    * Para `MinAllocated` e `!persistent`, a lista ordenada é cacheada em
    * `staticCandidates` para eficiência.
    */
-  candidatesList(scenarioIdx: number = 0): Resource[] {
+  candidatesList(scenarioIdx: number = 0,): Resource[] {
     // Se já temos a lista estática cacheada, retorna ela.
     if (this.staticCandidates) {
       return this.staticCandidates;
@@ -122,39 +122,45 @@ export class Allocation {
 
     // Random: embaralha com Math.random.
     if (this.selectionMode === SelectionMode.Random) {
-      const shuffled = [...this.candidates];
+      const shuffled = [...this.candidates,];
       shuffled.sort(() => Math.random() - 0.5);
       return shuffled;
     }
 
     // Minallocated / MinLoaded / MaxLoaded: ordena por criticalness ou bookedEffort.
-    const list = [...this.candidates].sort((x, y) => {
+    const list = [...this.candidates,].sort((x, y,) => {
       if (this.selectionMode === SelectionMode.MinAllocated) {
         if (this.persistent) {
           // Para recursos persistentes, usa bookedEffort como critério primário.
-          const cmp =
-            x.bookedEffort(scenarioIdx) - y.bookedEffort(scenarioIdx);
+          const cmp = x.bookedEffort(scenarioIdx,) -
+            y.bookedEffort(scenarioIdx,);
           if (cmp !== 0) {
             return cmp;
           }
           // Em caso de empate, usa criticalness.
-          const xCrit = x.scenarioData(scenarioIdx).a("criticalness") as number ?? 0;
-          const yCrit = y.scenarioData(scenarioIdx).a("criticalness") as number ?? 0;
+          const xCrit =
+            x.scenarioData(scenarioIdx,).a("criticalness",) as number ?? 0;
+          const yCrit =
+            y.scenarioData(scenarioIdx,).a("criticalness",) as number ?? 0;
           return xCrit - yCrit;
         }
         // Para recursos não persistentes, usa criticalness.
-        const xCrit = x.scenarioData(scenarioIdx).a("criticalness") as number ?? 0;
-        const yCrit = y.scenarioData(scenarioIdx).a("criticalness") as number ?? 0;
+        const xCrit =
+          x.scenarioData(scenarioIdx,).a("criticalness",) as number ?? 0;
+        const yCrit =
+          y.scenarioData(scenarioIdx,).a("criticalness",) as number ?? 0;
         return xCrit - yCrit;
       }
       if (this.selectionMode === SelectionMode.MinLoaded) {
-        return x.bookedEffort(scenarioIdx) - y.bookedEffort(scenarioIdx);
+        return x.bookedEffort(scenarioIdx,) - y.bookedEffort(scenarioIdx,);
       }
       if (this.selectionMode === SelectionMode.MaxLoaded) {
-        return y.bookedEffort(scenarioIdx) - x.bookedEffort(scenarioIdx);
+        return y.bookedEffort(scenarioIdx,) - x.bookedEffort(scenarioIdx,);
       }
-      throw new TjArgumentError(`Unknown selection mode ${this.selectionMode}`);
-    });
+      throw new TjArgumentError(
+        `Unknown selection mode ${this.selectionMode}`,
+      );
+    },);
 
     // Cacheia apenas para MinAllocated && !persistent.
     if (this.selectionMode === SelectionMode.MinAllocated && !this.persistent) {

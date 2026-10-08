@@ -58,8 +58,10 @@ export class Interval<T extends Comparable,> {
    * @returns Intersection interval or null if no overlap
    */
   intersection(other: Interval<T>,): Interval<T> | null {
-    const newStart = this._gt(this.start, other.start) ? this.start : other.start;
-    const newEnd = this._lt(this.end, other.end) ? this.end : other.end;
+    const newStart = this._gt(this.start, other.start,)
+      ? this.start
+      : other.start;
+    const newEnd = this._lt(this.end, other.end,) ? this.end : other.end;
     if (!this._lt(newStart, newEnd,)) {
       return null;
     }

@@ -14,11 +14,11 @@ let nextProjectId = 1;
  * @param project — objeto para o qual gerar/retornar o ID.
  * @returns ID sequencial (começando em 1).
  */
-export function projectObjectId(project: object): number {
-  let id = projectIds.get(project);
+export function projectObjectId(project: object,): number {
+  let id = projectIds.get(project,);
   if (id === undefined) {
     id = nextProjectId++;
-    projectIds.set(project, id);
+    projectIds.set(project, id,);
   }
   return id;
 }

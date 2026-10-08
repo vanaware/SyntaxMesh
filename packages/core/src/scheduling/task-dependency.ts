@@ -17,7 +17,7 @@ export class TaskDependency {
   gapDuration: number;
   gapLength: number;
 
-  constructor(taskId: string, onEnd: boolean) {
+  constructor(taskId: string, onEnd: boolean,) {
     this.taskId = taskId;
     this.task = null;
     this.onEnd = onEnd;
@@ -31,7 +31,7 @@ export class TaskDependency {
    * Duas dependências são iguais se tiverem o mesmo `taskId`, `task`, `onEnd`,
    * `gapDuration` e `gapLength`.
    */
-  equals(other: TaskDependency): boolean {
+  equals(other: TaskDependency,): boolean {
     return (
       this.taskId === other.taskId &&
       this.task === other.task &&
@@ -47,8 +47,8 @@ export class TaskDependency {
    * @param project — objeto ProjectLike que deve implementar `task(id: string): Task | null`
    * @returns O objeto Task resolvido, ou null se não existir.
    */
-  resolve(project: ProjectLike): Task | null {
-    this.task = project.task(this.taskId);
+  resolve(project: ProjectLike,): Task | null {
+    this.task = project.task(this.taskId,);
     return this.task;
   }
 }
