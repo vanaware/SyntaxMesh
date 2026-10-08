@@ -195,7 +195,8 @@ describe("TaskScenario", () => {
 
   it("bookResources agenda recursos para tarefa", () => {
     const resource = new Resource(project, "r1", "Resource 1", null);
-    task.setForScenario("allocate", [resource], 0);
+    const allocation = new Allocation([resource]);
+    task.setForScenario("allocate", [allocation], 0);
     task.setForScenario("start", TjTime.fromString("2026-01-01"), 0);
     task.setForScenario("end", TjTime.fromString("2026-01-02"), 0);
     taskScenario.schedule();

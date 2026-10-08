@@ -49,6 +49,8 @@ export class TaskScenario extends ScenarioData {
   private _doneLength: number = 0;
   private _doneEffort: number = 0.0;
   private _nowIdx: number = 0;
+  private _startIdx: number | null = null;
+  private _endIdx: number | null = null;
   private _startIsDetermed: boolean | null = null;
   private _endIsDetermed: boolean | null = null;
   private _startPropagated: boolean = false;
@@ -147,10 +149,10 @@ export class TaskScenario extends ScenarioData {
       const start = this.a("start",) as TjTime;
       const end = this.a("end",) as TjTime;
       if (start) {
-        (this.getProperty() as any).getScenarioAttribute(scIdx, "startIdx",).set(project.dateToIdx(start,),);
+        this._startIdx = project.dateToIdx(start,);
       }
       if (end) {
-        (this.getProperty() as any).getScenarioAttribute(scIdx, "endIdx",).set(project.dateToIdx(end,),);
+        this._endIdx = project.dateToIdx(end,);
       }
     }
   }
@@ -210,18 +212,18 @@ export class TaskScenario extends ScenarioData {
   propagateDate(date: TjTime, end: boolean, set: boolean,): void {
     const idx = (this.getProperty() as any).project.dateToIdx(date,);
     if (end) {
-      (this.getProperty() as any).setForScenario(
-        "endIdx",
-        idx,
-        this.getScenarioIdx(),
-      );
+      this._endIdx = idx;
     } else {
-      (this.getProperty() as any).setForScenario(
-        "startIdx",
-        idx,
-        this.getScenarioIdx(),
-      );
+      this._startIdx = idx;
     }
+  }
+
+  startIdx(): number | null {
+    return this._startIdx;
+  }
+
+  endIdx(): number | null {
+    return this._endIdx;
   }
 
   /**
@@ -979,19 +981,6 @@ export class TaskScenario extends ScenarioData {
     return this.a("forward",) as boolean;
   }
 
-  startIdx(): number | null {
-    return (this.getProperty() as any).getForScenario(
-      "startIdx",
-      this.getScenarioIdx(),
-    ) as number ?? null;
-  }
-
-  endIdx(): number | null {
-    return (this.getProperty() as any).getForScenario(
-      "endIdx",
-      this.getScenarioIdx(),
-    ) as number ?? null;
-  }
 
   currentSlotIdx(): number | null {
     return this._currentSlotIdx;
@@ -1223,9 +1212,9 @@ export class TaskScenario extends ScenarioData {
         this.bookResources();
         if (
           (this.forward() &&
-            (this.currentSlotIdx() as number) >= (this.endIdx() as number)) ||
+            (this.currentSlotIdx() as number) >= (this._endIdx as number)) ||
           (!this.forward() &&
-            (this.currentSlotIdx() as number) <= (this.startIdx() as number))
+            (this.currentSlotIdx() as number) <= (this._startIdx as number))
         ) {
           this.markAsScheduled();
           (this.getProperty() as any).parents().forEach((parent: any,) => {
@@ -1406,8 +1395,9 @@ export class TaskScenario extends ScenarioData {
           "efficiency",
         ) as number;
 
-        if (!(this as any)._assignedresources.includes(r,)) {
-          (this as any)._assignedresources.push(r,);
+        const assignedresources = this.a("assignedresources") as any[];
+        if (!assignedresources.includes(r,)) {
+          assignedresources.push(r,);
         }
         booked = true;
       } else if (

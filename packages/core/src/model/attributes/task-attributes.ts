@@ -260,18 +260,7 @@ export function registerTaskAttributes(propertySet: PropertySet): void {
     null, false, false, false, true, false, false,
   ));
 
-  // startIdx: Start Index (IntegerAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=true, default=nil)
-  propertySet.addAttributeType(new AttributeDefinition(
-    "startIdx", "Start Index", AttributeType.Integer,
-    null, false, false, false, true, false, false,
-  ));
-
-  // endIdx: End Index (IntegerAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=true, default=nil)
-  propertySet.addAttributeType(new AttributeDefinition(
-    "endIdx", "End Index", AttributeType.Integer,
-    null, false, false, false, true, false, false,
-  ));
-
+  
   // startpreds: Start Preds. (TaskDepListAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=true, default=[])
   propertySet.addAttributeType(new AttributeDefinition(
     "startpreds", "Start Preds.", AttributeType.TaskDepList,

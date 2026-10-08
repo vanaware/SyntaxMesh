@@ -945,14 +945,39 @@ TOTAL: ~215
    - Corrigiu `getMinSlot()`/`getMaxSlot()` para retornar índices de slot válidos
    - Corrigiu `getEffectiveFreeTime()`/`getEffectiveFreeWork()` para calcular valores corretos
 
+3. **Correção do golden test `attribute-definitions_golden_test.ts`** (último loop)
+   - **Sintoma:** `AssertionError: Case count mismatch: TS has 162, golden has 160`
+     — diagnóstico: `Extra in TS: ["endIdx", "startIdx"]`
+   - **Raiz:** em `packages/core/src/model/attributes/task-attributes.ts` estavam
+     registrando `startIdx`/`endIdx` como atributos do `PropertySet`. No Ruby, em
+     `TaskScenario.rb`, `@startIdx`/`@endIdx` são **variáveis de instância locais**
+     (definidas em `prepareScheduling`, linhas 150-151, e atualizadas em
+     `propagateDate`, linhas 1008-1011) — **não** atributos registrados.
+   - **Correção:**
+     - `packages/core/src/model/attributes/task-attributes.ts` — removeu os dois
+       `propertySet.addAttributeType(new AttributeDefinition("startIdx"/"endIdx", …))`
+     - `packages/core/src/model/task-scenario.ts` — substituiu o acesso via
+       `getScenarioAttribute(scIdx, "startIdx"/"endIdx").set(…)` por instância
+       privada `this._startIdx`/`this._endIdx`; os getters `startIdx()`/`endIdx()`
+       agora retornam diretamente essas instâncias; `scheduleSlot` e `propagateDate`
+       foram atualizados para usar `this._endIdx`/`this._startIdx`.
+   - **Resultado:** golden test passa **160/160** (era 162/160 antes).
+
+4. **Correção de `bookResource` em `task-scenario.ts`**
+   - `this._assignedresources` (campo privado inexistente) → `this.a("assignedresources")`
+     para evitar `TypeError: Cannot read properties of undefined (reading 'includes')`.
+
 ### Resultados
 
-- **Todos os 24 testes em `resource-scenario_test.ts` passam**
-- **O conjunto completo de testes tem 3 falhas preexistentes** (não causadas por estas alterações):
-  - `TaskAttributes.registerTaskAttributes` (golden test)
-  - `TaskScenario.bookResources`, `bookResource`, `rollbackBookings` (testes de integração)
-- **Type check passa**
-- **Smoke test passa**
+- **Conjunto completo de testes: 151 passed / 2080 steps / 0 failed** (`deno task test`)
+- **Golden test `attribute-definitions_golden_test.ts`: 160/160**
+- **`deno task check` (type check): passa**
+- **`deno task check-all`: type check + lint + fmt-check + test**
+  - `check` ✅, `test` ✅
+  - `lint` reporta 298 `no-explicit-any` e `fmt --check` reporta 76 problemas de
+    formatação — **preexistentes em toda a base de código**, não introduzidos por
+    esta fase (confirmado via `git diff HEAD`: as alterações desta fase são apenas
+    em `task-attributes.ts`, `task-scenario.ts` e `task-scenario_test.ts`).
 
 ### Status do Plano
 
