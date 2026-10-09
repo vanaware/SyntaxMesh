@@ -4,6 +4,16 @@ import { type AttributeContainer, } from "../attributes/attribute-container.ts";
 import { type AttributeBase, } from "../attributes/attribute-base.ts";
 import { TjArgumentError, } from "../attributes/errors.ts";
 
+/**
+ * Type guard to check if a PropertyLike is a PropertyTreeNode.
+ * This is safe because ScenarioData is only used in Phase 4+ where
+ * PropertyTreeNode exists.
+ */
+type PropertyTreeNodeLike = PropertyLike & {
+  attributeDefinition(id: string,): unknown;
+  getScenarioAttribute(scIdx: number, id: string,): unknown;
+};
+
 export class ScenarioData implements AttributeContainer {
   private property: PropertyLike;
   private scenarioIdx: number;
@@ -87,7 +97,7 @@ export class ScenarioData implements AttributeContainer {
   preloadAttributes(ids: string[],): void {
     for (const id of ids) {
       // Cast to PropertyTreeNode to access attributeDefinition and getScenarioAttribute
-      const propertyTreeNode = this.property as any;
+      const propertyTreeNode = this.property as PropertyTreeNodeLike;
       const aDef = propertyTreeNode.attributeDefinition(id,);
       if (!aDef) {
         throw new TjArgumentError(`Unknown attribute '${id}'`,);

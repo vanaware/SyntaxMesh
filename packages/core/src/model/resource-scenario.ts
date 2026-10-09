@@ -242,7 +242,9 @@ export class ResourceScenario extends ScenarioData {
           if (booking.sloppy < 1) {
             this.error(
               "booking_no_duty",
-              `Resource ${(this.getProperty() as PropertyTreeNode).fullId} has no duty at ` +
+              `Resource ${
+                (this.getProperty() as PropertyTreeNode).fullId
+              } has no duty at ` +
                 `${sb.idxToDate(sbIdx,)}.`,
               booking.sourceFileInfo,
             );
@@ -613,7 +615,11 @@ export class ResourceScenario extends ScenarioData {
   /**
    * Count leave slots of a specific type between startIdx and endIdx.
    */
-  getLeaveSlots(startIdx: number, endIdx: number, type: number | string,): number {
+  getLeaveSlots(
+    startIdx: number,
+    endIdx: number,
+    type: number | string,
+  ): number {
     const leaveType = typeof type === "string" ? LEAVE_TYPES[type] : type;
     return this.countSlots(
       startIdx,

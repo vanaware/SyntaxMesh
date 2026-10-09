@@ -319,7 +319,7 @@ describe("ShiftAssignments", () => {
       TjTime.fromDate(new Date("2026-01-01T09:00:00Z",),),
     );
     shift.setForScenario("leaves", [{
-      interval: { contains: (d: any,) => true, },
+      interval: { contains: (_d: unknown,) => true, },
     },], 0,);
     sas.addAssignment(sa,);
     assertEquals(sas.onLeave(0,), true,);

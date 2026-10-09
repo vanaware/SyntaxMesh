@@ -3,6 +3,7 @@ import { assert, assertEquals, assertThrows, } from "@std/assert";
 import { MockProject, } from "../model/mock-project.ts";
 import { Resource, } from "../../src/model/resource.ts";
 import { Allocation, SelectionMode, } from "../../src/scheduling/allocation.ts";
+import { ResourceScenario, } from "../../src/model/resource-scenario.ts";
 import { TjArgumentError, } from "../../src/attributes/errors.ts";
 
 describe("Allocation", () => {
@@ -121,7 +122,7 @@ describe("Allocation", () => {
     it("delega para shifts.onShift quando shifts definido", () => {
       const alloc = new Allocation([r1,],);
       const mockShifts = { onShift: (_sbIdx: number,) => false, };
-      (alloc as any).shifts = mockShifts;
+      alloc.shifts = mockShifts;
       assertEquals(alloc.onShift(0,), false,);
     });
   });
@@ -153,9 +154,9 @@ describe("Allocation", () => {
       // r1 tem bookedEffort=0, r2 tem bookedEffort=5, r3 tem bookedEffort=2
       // bookedEffort() lê o contador interno @effort (incrementado por book()),
       // não o atributo effort.
-      (r1.scenarioData(0,) as any).effort = 0;
-      (r2.scenarioData(0,) as any).effort = 5;
-      (r3.scenarioData(0,) as any).effort = 2;
+      (r1.scenarioData(0,) as ResourceScenario).effort = 0;
+      (r2.scenarioData(0,) as ResourceScenario).effort = 5;
+      (r3.scenarioData(0,) as ResourceScenario).effort = 2;
 
       const alloc = new Allocation([r1, r2, r3,], SelectionMode.MinLoaded,);
       const result = alloc.candidatesList(0,);
@@ -166,9 +167,9 @@ describe("Allocation", () => {
     });
 
     it("ordena por bookedEffort descendente para MaxLoaded", () => {
-      (r1.scenarioData(0,) as any).effort = 0;
-      (r2.scenarioData(0,) as any).effort = 5;
-      (r3.scenarioData(0,) as any).effort = 2;
+      (r1.scenarioData(0,) as ResourceScenario).effort = 0;
+      (r2.scenarioData(0,) as ResourceScenario).effort = 5;
+      (r3.scenarioData(0,) as ResourceScenario).effort = 2;
 
       const alloc = new Allocation([r1, r2, r3,], SelectionMode.MaxLoaded,);
       const result = alloc.candidatesList(0,);
@@ -187,7 +188,7 @@ describe("Allocation", () => {
       const result1 = alloc.candidatesList(0,);
       const result2 = alloc.candidatesList(0,);
       assertEquals(result1, result2,);
-      assert((alloc as any).staticCandidates !== null,);
+      assert(alloc.staticCandidates !== null,);
     });
 
     it("não cacheia para MinAllocated && persistent", () => {
@@ -197,7 +198,7 @@ describe("Allocation", () => {
         true,
       );
       alloc.candidatesList(0,);
-      assert((alloc as any).staticCandidates === null,);
+      assert(alloc.staticCandidates === null,);
     });
   });
 });

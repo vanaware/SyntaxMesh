@@ -135,9 +135,9 @@ export class MockProject implements ProjectLike {
 
   anyResourceAvailable(sbIdx: number,): boolean {
     for (const prop of this.resources.toArray()) {
-      const resource = prop as any;
+      const resource = prop as { scenarioData?: (scIdx: number,) => unknown };
       if (resource.scenarioData?.(0,)) {
-        const rs = resource.scenarioData(0,);
+        const rs = resource.scenarioData(0,) as { available?: (sbIdx: number,) => boolean };
         if (rs.available?.(sbIdx,)) {
           return true;
         }
@@ -156,15 +156,15 @@ export class MockProject implements ProjectLike {
     return slots / (3600 / granularity);
   }
 
-  attributeDefinition(id: string,): any {
+  attributeDefinition(id: string,): import("../../src/attributes/attribute-definition.ts").AttributeDefinition<unknown> | undefined {
     return this.scenarios.attributeDefinition(id,);
   }
 
-  getScenarioAttribute(scIdx: number, id: string,): any {
+  getScenarioAttribute(scIdx: number, id: string,): import("../../src/attributes/attribute-base.ts").AttributeBase<unknown> {
     const property = this.scenarios.get("plan",);
     if (property) {
       return property.getScenarioAttribute(scIdx, id,);
     }
-    return null;
+    return null as unknown as import("../../src/attributes/attribute-base.ts").AttributeBase<unknown>;
   }
 }

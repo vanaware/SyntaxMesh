@@ -4,10 +4,14 @@ import { Limit, Limits, } from "../../src/scheduling/limits.ts";
 import { ScoreboardInterval, } from "../../src/time/scoreboard-interval.ts";
 import { TjTime, } from "../../src/time/tj-time.ts";
 import { MockProject, } from "../model/mock-project.ts";
+import { Resource, } from "../../src/model/resource.ts";
+
+/** Cria um recurso mockado para testes de limite por resource. */
+function makeResource(project: MockProject, id: string,): Resource {
+  return new Resource(project, id, id, null,);
+}
 
 describe("Limit", () => {
-  const sbStart = TjTime.fromDate(new Date("2026-01-01T00:00:00Z",),);
-  const sbEnd = TjTime.fromDate(new Date("2026-01-08T00:00:00Z",),);
 
   it("constructor cria Limit com campos corretos", () => {
     const interval = new ScoreboardInterval(sbStart, 3600, 0, 167,);
@@ -77,7 +81,8 @@ describe("Limit", () => {
 
   it("inc filtra por resource", () => {
     const interval = new ScoreboardInterval(sbStart, 3600, 0, 167,);
-    const resource = {} as any;
+    const project = new MockProject(2,);
+    const resource = makeResource(project, "r1",);
     const limit = new Limit("dailymax", interval, 86400, 8, true, resource,);
     limit.inc(0, resource,);
     assertEquals(limit.getScoreboard().get(0,), 1,);
@@ -135,7 +140,8 @@ describe("Limit", () => {
 
   it("ok? com resource filtra", () => {
     const interval = new ScoreboardInterval(sbStart, 3600, 0, 167,);
-    const resource = {} as any;
+    const project = new MockProject(2,);
+    const resource = makeResource(project, "r1",);
     const limit = new Limit("dailymax", interval, 86400, 8, true, resource,);
     limit.inc(0, resource,);
     assertEquals(limit.ok(0, true, resource,), true,);
@@ -323,7 +329,7 @@ describe("Limits", () => {
     const limits = new Limits();
     const project = new MockProject(2,);
     limits.setProject(project,);
-    const resource = {} as any;
+    const resource = makeResource(project, "r1",);
     limits.setLimit("dailymax", 8 * 3600, undefined, resource,);
     limits.inc(0, resource,);
     assertEquals(limits.ok(0, true, resource,), true,);

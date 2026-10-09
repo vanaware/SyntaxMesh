@@ -391,10 +391,11 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
     if (AttributeBase.mode === 0) {
       const scenario = this.project.scenario(scIdx,);
       if (scenario) {
-        const allScenarios = (scenario as any).all
-          ? (scenario as any).all()
+        const scenarioWithAll = scenario as { all?: () => Scenario[] };
+        const allScenarios = scenarioWithAll.all
+          ? scenarioWithAll.all()
           : [scenario,];
-        allScenarios.forEach((sc: any,) => {
+        allScenarios.forEach((sc,) => {
           const scenarioIdx = this.project.scenarioIdx(sc.fullId,);
           if (scenarioIdx !== undefined) {
             const scenarioAttr = this.scenarioAttribute(scenarioIdx, id,);

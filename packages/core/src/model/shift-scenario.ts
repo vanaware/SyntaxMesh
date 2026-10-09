@@ -4,10 +4,19 @@ import { type TjTime, } from "../time/tj-time.ts";
 import { LeaveListAttribute, } from "../attributes/time-interval/leave-list-attribute.ts";
 import { WorkingHours, } from "../calendar/working-hours.ts";
 import { type PropertyTreeNode, } from "./property-tree-node.ts";
+import { type PropertyLike, } from "./property-like.ts";
 
 export class ShiftScenario extends ScenarioData {
-  constructor(shift: unknown, scIdx: number, attributes: Map<string, unknown>,) {
-    super(shift as any, scIdx, attributes as any,);
+  constructor(
+    shift: unknown,
+    scIdx: number,
+    attributes: Map<string, unknown>,
+  ) {
+    super(
+      shift as PropertyLike,
+      scIdx,
+      attributes as Map<string, unknown>,
+    );
     this.preloadAttributes(["workinghours", "replace", "leaves",],);
   }
 
