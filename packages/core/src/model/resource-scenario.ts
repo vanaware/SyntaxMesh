@@ -320,7 +320,7 @@ export class ResourceScenario extends ScenarioData {
       task = task.ptn;
     }
     // There can't be any effective work if the start is after the end or the
-    // todo list doesn't contain the specified task.
+    // duties list doesn't contain the specified task.
     if (startIdx >= endIdx || (task && !this.duties.includes(task,))) {
       return 0.0;
     }
