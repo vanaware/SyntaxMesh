@@ -14,6 +14,7 @@ export interface ProjectLike {
   get(name: string,): unknown;
   set(name: string, value: unknown,): void;
   addScenario(scenario: { id: string; fullId: string },): void;
+  addScenario(s: Scenario,): void;
 
   // PropertySets (para as entidades se registrarem)
   readonly scenarios: PropertySet;
@@ -24,7 +25,6 @@ export interface ProjectLike {
   readonly reports: PropertySet;
 
   // Registro
-  addScenario(s: Scenario,): void;
   addShift(s: Shift,): void;
   addAccount(a: Account,): void;
   addTask(t: Task,): void;

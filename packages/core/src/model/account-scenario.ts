@@ -7,8 +7,8 @@ import { ScenarioData, } from "./scenario-data.ts";
 export const ACCOUNT_SCENARIO_ATTRS: string[] = ["credits",];
 
 export class AccountScenario extends ScenarioData {
-  constructor(account: any, scIdx: number, attributes: Map<string, any>,) {
-    super(account, scIdx, attributes,);
+  constructor(account: unknown, scIdx: number, attributes: Map<string, unknown>,) {
+    super(account as any, scIdx, attributes as any,);
     this.preloadAttributes(ACCOUNT_SCENARIO_ATTRS,);
   }
 }

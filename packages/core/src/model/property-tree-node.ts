@@ -152,12 +152,11 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
   }
 
   root(): PropertyTreeNode {
-    let current: PropertyTreeNode = this;
-    const parent = current.parents()[0];
+    const parent = this.parents()[0];
     if (parent) {
       return parent.root();
     }
-    return current;
+    return this;
   }
 
   ancestors(includeStepParents: boolean = false,): PropertyTreeNode[] {
@@ -233,31 +232,31 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
 
   getBSIndicies(): number[] {
     const indices: number[] = [];
-    let current: PropertyTreeNode | null = this;
-    while (current) {
-      const parent = current._parent as PropertyTreeNode | null;
+    let node: PropertyTreeNode | null = this;
+    while (node) {
+      const parent = node._parent as PropertyTreeNode | null;
       if (parent) {
-        indices.unshift(parent.levelSeqNo(current,),);
+        indices.unshift(parent.levelSeqNo(node,),);
       } else {
-        indices.unshift(this.propertySet.levelSeqNo(current,),);
+        indices.unshift(this.propertySet.levelSeqNo(node,),);
       }
-      current = parent;
+      node = parent;
     }
     return indices;
   }
 
   getIndicies(): number[] {
     const indices: number[] = [];
-    let current: PropertyTreeNode | null = this;
-    while (current) {
-      const parent = current.parents()[0];
+    let node: PropertyTreeNode | null = this;
+    while (node) {
+      const parent = node.parents()[0];
       if (parent && parent.propertySet.knownAttribute("index",)) {
         const index = parent.get("index",);
         if (index !== null && index !== undefined && index !== 0) {
           indices.unshift(index as number,);
         }
       }
-      current = current._parent;
+      node = node._parent;
     }
     return indices;
   }

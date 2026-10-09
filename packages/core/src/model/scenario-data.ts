@@ -56,7 +56,7 @@ export class ScenarioData implements AttributeContainer {
     sfi?: string,
     property?: PropertyLike,
   ): void {
-    // TODO: Implement MessageHandler integration
+    // TODO(#issue): Implement MessageHandler integration
     console.error(`[${id}] ${text}`,);
   }
 
@@ -66,12 +66,12 @@ export class ScenarioData implements AttributeContainer {
     sfi?: string,
     property?: PropertyLike,
   ): void {
-    // TODO: Implement MessageHandler integration
+    // TODO(#issue): Implement MessageHandler integration
     console.warn(`[${id}] ${text}`,);
   }
 
   info(id: string, text: string, sfi?: string, property?: PropertyLike,): void {
-    // TODO: Implement MessageHandler integration
+    // TODO(#issue): Implement MessageHandler integration
     console.log(`[${id}] ${text}`,);
   }
 
@@ -86,11 +86,13 @@ export class ScenarioData implements AttributeContainer {
    */
   preloadAttributes(ids: string[],): void {
     for (const id of ids) {
-      const aDef = (this.property as any).attributeDefinition(id,);
+      // Cast to PropertyTreeNode to access attributeDefinition and getScenarioAttribute
+      const propertyTreeNode = this.property as any;
+      const aDef = propertyTreeNode.attributeDefinition(id,);
       if (!aDef) {
         throw new TjArgumentError(`Unknown attribute '${id}'`,);
       }
-      const attr = (this.property as any).getScenarioAttribute(
+      const attr = propertyTreeNode.getScenarioAttribute(
         this.scenarioIdx,
         id,
       );

@@ -2,16 +2,18 @@ import { ScenarioData, } from "./scenario-data.ts";
 import { type ProjectLike, } from "./project-like.ts";
 import { type TjTime, } from "../time/tj-time.ts";
 import { LeaveListAttribute, } from "../attributes/time-interval/leave-list-attribute.ts";
+import { WorkingHours, } from "../calendar/working-hours.ts";
+import { type PropertyTreeNode, } from "./property-tree-node.ts";
 
 export class ShiftScenario extends ScenarioData {
-  constructor(shift: any, scIdx: number, attributes: Map<string, any>,) {
-    super(shift, scIdx, attributes,);
+  constructor(shift: unknown, scIdx: number, attributes: Map<string, unknown>,) {
+    super(shift as any, scIdx, attributes as any,);
     this.preloadAttributes(["workinghours", "replace", "leaves",],);
   }
 
   /** Acesso público ao project do cenário (evita acessar `property` privado de ScenarioData). */
   get project(): ProjectLike {
-    return (this.getProperty() as any).project;
+    return (this.getProperty() as PropertyTreeNode).project;
   }
 
   /** Acesso público ao scenarioIdx (evita acessar o campo privado de ScenarioData). */
@@ -29,7 +31,7 @@ export class ShiftScenario extends ScenarioData {
     if (!wh) {
       return true;
     }
-    return (wh as any).onShift(date,);
+    return (wh as WorkingHours).onShift(date,);
   }
 
   /**

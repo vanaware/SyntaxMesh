@@ -1,7 +1,7 @@
 import { ScenarioData, } from "./scenario-data.ts";
 
 export class ReportScenario extends ScenarioData {
-  constructor(report: any, scIdx: number, attributes: Map<string, any>,) {
-    super(report, scIdx, attributes,);
+  constructor(report: unknown, scIdx: number, attributes: Map<string, unknown>,) {
+    super(report as any, scIdx, attributes as any,);
   }
 }

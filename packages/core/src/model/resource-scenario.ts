@@ -6,7 +6,24 @@ import { type PropertyLike, } from "./property-like.ts";
 import { type AttributeBase, } from "../attributes/attribute-base.ts";
 import { Scoreboard, } from "../time/scoreboard.ts";
 import { Task, } from "./task.ts";
+import { type Account, } from "./account.ts";
 import { TjTime, } from "../time/tj-time.ts";
+
+/**
+ * Shape of a leave entry as stored on the `leaves` attribute.
+ *
+ * The TS codebase does not yet have a dedicated `Leave` class (Phase 16
+ * item); leaves are kept as plain objects with `interval`, `type` and
+ * `reason` properties.
+ *
+ * @see docs/taskjuggler/lib/taskjuggler/LeaveList.rb:Leave
+ */
+interface Leave {
+  type: string | number;
+  interval: { start: { toDate(): Date }; end: { toDate(): Date } };
+  reason?: string;
+  typeIdx: number;
+}
 
 /**
  * Leave type indices for scoreboard encoding.
@@ -48,11 +65,11 @@ export class ResourceScenario extends ScenarioData {
   private effort: number = 0;
   private firstBookedSlot: number | null = null;
   private lastBookedSlot: number | null = null;
-  private firstBookedSlots: Map<any, number> = new Map();
-  private lastBookedSlots: Map<any, number> = new Map();
+  private firstBookedSlots: Map<Task, number> = new Map();
+  private lastBookedSlots: Map<Task, number> = new Map();
   private minslot: number | null = null;
   private maxslot: number | null = null;
-  private duties: any[] = [];
+  private duties: Task[] = [];
 
   constructor(
     property: PropertyLike,
@@ -102,7 +119,7 @@ export class ResourceScenario extends ScenarioData {
     }
     const limits = this.a("limits",) as Limits | undefined;
     if (limits) {
-      return limits.ok(sbIdx, true, this.getProperty() as any,);
+      return limits.ok(sbIdx, true, this.getProperty() as PropertyTreeNode,);
     }
     return true;
   }
@@ -127,7 +144,7 @@ export class ResourceScenario extends ScenarioData {
    *
    * @see docs/taskjuggler/lib/taskjuggler/ResourceScenario.rb:bookedTask
    */
-  bookedTask(sbIdx: number,): any {
+  bookedTask(sbIdx: number,): Task | null {
     if (this.scoreboard === null) {
       return null;
     }
@@ -145,7 +162,7 @@ export class ResourceScenario extends ScenarioData {
    *
    * @see docs/taskjuggler/lib/taskjuggler/ResourceScenario.rb:book
    */
-  book(sbIdx: number, task: any, force: boolean = false,): boolean {
+  book(sbIdx: number, task: Task, force: boolean = false,): boolean {
     if (!force && !this.available(sbIdx,)) {
       return false;
     }
@@ -165,7 +182,7 @@ export class ResourceScenario extends ScenarioData {
 
     const limits = this.a("limits",) as Limits | undefined;
     if (limits) {
-      limits.inc(sbIdx, this.getProperty() as any,);
+      limits.inc(sbIdx, this.getProperty() as PropertyTreeNode,);
     }
     if (task.incLimits) {
       task.incLimits(this.getScenarioIdx(), sbIdx, this.getProperty(),);
@@ -199,7 +216,7 @@ export class ResourceScenario extends ScenarioData {
    *
    * @see docs/taskjuggler/lib/taskjuggler/ResourceScenario.rb:bookBooking
    */
-  bookBooking(sbIdx: number, booking: any,): boolean {
+  bookBooking(sbIdx: number, booking: Booking,): boolean {
     if (this.scoreboard === null) {
       this.initScoreboard();
     }
@@ -211,7 +228,7 @@ export class ResourceScenario extends ScenarioData {
         this.error(
           "booking_conflict",
           `Resource ${
-            (this.getProperty() as any).fullId
+            (this.getProperty() as PropertyTreeNode).fullId
           } has multiple conflicting ` +
             `bookings for ${sb.idxToDate(sbIdx,)}. The ` +
             `conflicting tasks are ${sb.get(sbIdx,)} and ` +
@@ -225,7 +242,7 @@ export class ResourceScenario extends ScenarioData {
           if (booking.sloppy < 1) {
             this.error(
               "booking_no_duty",
-              `Resource ${(this.getProperty() as any).fullId} has no duty at ` +
+              `Resource ${(this.getProperty() as PropertyTreeNode).fullId} has no duty at ` +
                 `${sb.idxToDate(sbIdx,)}.`,
               booking.sourceFileInfo,
             );
@@ -237,7 +254,7 @@ export class ResourceScenario extends ScenarioData {
             this.error(
               "booking_on_vacation",
               `Resource ${
-                (this.getProperty() as any).fullId
+                (this.getProperty() as PropertyTreeNode).fullId
               } is on vacation at ` +
                 `${sb.idxToDate(sbIdx,)}.`,
               booking.sourceFileInfo,
@@ -259,9 +276,9 @@ export class ResourceScenario extends ScenarioData {
    * @see docs/taskjuggler/lib/taskjuggler/ResourceScenario.rb:bookedEffort
    */
   bookedEffort(): number {
-    if ((this.getProperty() as any).container?.()) {
+    if ((this.getProperty() as PropertyTreeNode).container?.()) {
       let effort = 0;
-      for (const child of (this.getProperty() as any).kids) {
+      for (const child of (this.getProperty() as PropertyTreeNode).kids) {
         effort += child.scenarioData(this.getScenarioIdx(),).bookedEffort();
       }
       return effort;
@@ -275,9 +292,9 @@ export class ResourceScenario extends ScenarioData {
    *
    * @see docs/taskjuggler/lib/taskjuggler/ResourceScenario.rb:getLeave
    */
-  getLeave(startIdx: number, endIdx: number, type: any,): number {
+  getLeave(startIdx: number, endIdx: number, type: number | string,): number {
     return this.treeSum(startIdx, endIdx, type, () => {
-      const project = (this.getProperty() as any).project;
+      const project = (this.getProperty() as PropertyTreeNode).project;
       const granularity = project.get("scheduleGranularity",) as number;
       const dailyWorkingHours = (project.get("dailyWorkingHours",) as number) ??
         8;
@@ -296,7 +313,7 @@ export class ResourceScenario extends ScenarioData {
   getEffectiveWork(
     startIdx: number,
     endIdx: number,
-    task: any = null,
+    task: Task | null = null,
   ): number {
     // Make sure we have the real Task and not a proxy.
     if (task && task.ptn) {
@@ -308,15 +325,15 @@ export class ResourceScenario extends ScenarioData {
       return 0.0;
     }
 
-    const project = (this.getProperty() as any).project;
+    const project = (this.getProperty() as PropertyTreeNode).project;
     const granularity = project.get("scheduleGranularity",) as number;
     const efficiency = (this.a("efficiency",) as number) ?? 1;
     const dailyWorkingHours = (project.get("dailyWorkingHours",) as number) ??
       8;
 
-    if ((this.getProperty() as any).container?.()) {
+    if ((this.getProperty() as PropertyTreeNode).container?.()) {
       let work = 0.0;
-      for (const child of (this.getProperty() as any).kids) {
+      for (const child of (this.getProperty() as PropertyTreeNode).kids) {
         work += child.scenarioData(this.getScenarioIdx(),).getEffectiveWork(
           startIdx,
           endIdx,
@@ -343,13 +360,13 @@ export class ResourceScenario extends ScenarioData {
   getAllocatedTime(
     startIdx: number,
     endIdx: number,
-    task: any = null,
+    task: Task | null = null,
   ): number {
     return this.treeSum(startIdx, endIdx, task, () => {
       if (this.scoreboard === null) {
         return 0;
       }
-      const project = (this.getProperty() as any).project;
+      const project = (this.getProperty() as PropertyTreeNode).project;
       const granularity = project.get("scheduleGranularity",) as number;
       const dailyWorkingHours = (project.get("dailyWorkingHours",) as number) ??
         8;
@@ -366,7 +383,7 @@ export class ResourceScenario extends ScenarioData {
    */
   getEffectiveFreeTime(startIdx: number, endIdx: number,): number {
     return this.treeSum(startIdx, endIdx, null, () => {
-      const project = (this.getProperty() as any).project;
+      const project = (this.getProperty() as PropertyTreeNode).project;
       const granularity = project.get("scheduleGranularity",) as number;
       return this.getFreeSlots(startIdx, endIdx,) * granularity;
     },);
@@ -380,7 +397,7 @@ export class ResourceScenario extends ScenarioData {
    */
   getEffectiveFreeWork(startIdx: number, endIdx: number,): number {
     return this.treeSum(startIdx, endIdx, null, () => {
-      const project = (this.getProperty() as any).project;
+      const project = (this.getProperty() as PropertyTreeNode).project;
       const granularity = project.get("scheduleGranularity",) as number;
       const efficiency = (this.a("efficiency",) as number) ?? 1;
       const dailyWorkingHours = (project.get("dailyWorkingHours",) as number) ??
@@ -397,7 +414,7 @@ export class ResourceScenario extends ScenarioData {
    */
   getTimeOffDays(startIdx: number, endIdx: number,): number {
     return this.treeSum(startIdx, endIdx, null, () => {
-      const project = (this.getProperty() as any).project;
+      const project = (this.getProperty() as PropertyTreeNode).project;
       const granularity = project.get("scheduleGranularity",) as number;
       const efficiency = (this.a("efficiency",) as number) ?? 1;
       const dailyWorkingHours = (project.get("dailyWorkingHours",) as number) ??
@@ -441,7 +458,7 @@ export class ResourceScenario extends ScenarioData {
    * @see docs/taskjuggler/lib/taskjuggler/ResourceScenario.rb:initScoreboard
    */
   initScoreboard(): void {
-    const project = (this.getProperty() as any).project;
+    const project = (this.getProperty() as PropertyTreeNode).project;
     const start = project.get("start",) as TjTime;
     const end = project.get("end",) as TjTime;
     const granularity = project.get("scheduleGranularity",) as number;
@@ -464,7 +481,7 @@ export class ResourceScenario extends ScenarioData {
     }
 
     // Mark all global leave slots
-    const leaves = this.a("leaves",) as any[];
+    const leaves = this.a("leaves",) as Leave[];
     if (leaves) {
       for (const leave of leaves) {
         const startIdx = this.scoreboard.dateToIdx(
@@ -480,7 +497,7 @@ export class ResourceScenario extends ScenarioData {
     }
 
     // Mark all resource-specific leave slots
-    const resLeaves = this.a("leaves",) as any[];
+    const resLeaves = this.a("leaves",) as Leave[];
     if (resLeaves) {
       for (const leave of resLeaves) {
         const startIdx = this.scoreboard!.dateToIdx(
@@ -572,7 +589,7 @@ export class ResourceScenario extends ScenarioData {
   getAllocatedSlots(
     startIdx: number,
     endIdx: number,
-    task: any = null,
+    task: Task | null = null,
   ): number {
     if (this.scoreboard === null) return 0;
 
@@ -596,7 +613,7 @@ export class ResourceScenario extends ScenarioData {
   /**
    * Count leave slots of a specific type between startIdx and endIdx.
    */
-  getLeaveSlots(startIdx: number, endIdx: number, type: any,): number {
+  getLeaveSlots(startIdx: number, endIdx: number, type: number | string,): number {
     const leaveType = typeof type === "string" ? LEAVE_TYPES[type] : type;
     return this.countSlots(
       startIdx,
@@ -624,7 +641,7 @@ export class ResourceScenario extends ScenarioData {
   private fitIndicies(
     startIdx: number,
     endIdx: number,
-    task: any = null,
+    task: Task | null = null,
   ): [number, number,] {
     if (task) {
       const taskFirst = this.firstBookedSlots.get(task,);
@@ -667,9 +684,9 @@ export class ResourceScenario extends ScenarioData {
     arg: T,
     block: () => number,
   ): number {
-    if ((this.getProperty() as any).container?.()) {
+    if ((this.getProperty() as PropertyTreeNode).container?.()) {
       let sum = 0.0;
-      for (const child of (this.getProperty() as any).kids) {
+      for (const child of (this.getProperty() as PropertyTreeNode).kids) {
         sum += child.scenarioData(this.getScenarioIdx(),).treeSumR(
           cacheTag,
           startIdx,
@@ -724,9 +741,9 @@ export class ResourceScenario extends ScenarioData {
    * Returns the daily cost/rate of a resource or resource group.
    */
   rate(): number {
-    if ((this.getProperty() as any).container?.()) {
+    if ((this.getProperty() as PropertyTreeNode).container?.()) {
       let dailyRate = 0.0;
-      for (const child of (this.getProperty() as any).kids) {
+      for (const child of (this.getProperty() as PropertyTreeNode).kids) {
         dailyRate += child.scenarioData(this.getScenarioIdx(),).rate();
       }
       return dailyRate;
@@ -742,13 +759,13 @@ export class ResourceScenario extends ScenarioData {
   turnover(
     startIdx: number,
     endIdx: number,
-    account: any,
-    task: any = null,
+    account: Account,
+    task: Task | null = null,
     includeKids: boolean = false,
   ): number {
     let amount = 0.0;
-    if ((this.getProperty() as any).container?.() && includeKids) {
-      for (const child of (this.getProperty() as any).kids) {
+    if ((this.getProperty() as PropertyTreeNode).container?.() && includeKids) {
+      for (const child of (this.getProperty() as PropertyTreeNode).kids) {
         amount += child.scenarioData(this.getScenarioIdx(),).turnover(
           startIdx,
           endIdx,
@@ -767,7 +784,7 @@ export class ResourceScenario extends ScenarioData {
         );
       } else if (!this.isChargesetEmpty()) {
         const totalResourceCost = this.cost(startIdx, endIdx,);
-        const chargeset = this.a("chargeset",) as Map<any, number>;
+        const chargeset = this.a("chargeset",) as Map<Account, number>;
         if (chargeset) {
           for (const [accnt, share,] of chargeset) {
             if (
@@ -787,7 +804,7 @@ export class ResourceScenario extends ScenarioData {
    *
    * @see docs/taskjuggler/lib/taskjuggler/ResourceScenario.rb:cost
    */
-  cost(startIdx: number, endIdx: number, task: any = null,): number {
+  cost(startIdx: number, endIdx: number, task: Task | null = null,): number {
     return this.getAllocatedTime(startIdx, endIdx, task,) * this.rate();
   }
 
@@ -795,7 +812,7 @@ export class ResourceScenario extends ScenarioData {
    * Check if the chargeset is empty.
    */
   private isChargesetEmpty(): boolean {
-    const chargeset = this.a("chargeset",) as Map<any, number> | undefined;
+    const chargeset = this.a("chargeset",) as Map<Account, number> | undefined;
     if (!chargeset) return true;
     for (const [, share,] of chargeset) {
       if (share > 0.0) return false;
