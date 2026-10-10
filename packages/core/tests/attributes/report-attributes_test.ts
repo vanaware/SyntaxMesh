@@ -12,7 +12,7 @@ describe("ReportAttributes", () => {
   let property: { id: string; name: string };
   let project: MockProject;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     AttributeBase.setMode(0,);
     container = new MockContainer();
     project = new MockProject();
@@ -22,7 +22,7 @@ describe("ReportAttributes", () => {
   describe("registerReportAttributes", () => {
     let ps: PropertySet;
 
-    beforeEach(async () => {
+    beforeEach(() => {
       ps = new PropertySet(project, false,);
     },);
 

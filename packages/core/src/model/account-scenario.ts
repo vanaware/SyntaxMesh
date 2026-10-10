@@ -1,5 +1,6 @@
 import { ScenarioData, } from "./scenario-data.ts";
 import { type PropertyLike, } from "./property-like.ts";
+import { type AttributeBase, } from "../attributes/attribute-base.ts";
 
 /**
  * Lista exata de atributos pré-carregados pelo AccountScenario do Ruby
@@ -11,12 +12,12 @@ export class AccountScenario extends ScenarioData {
   constructor(
     account: unknown,
     scIdx: number,
-    attributes: Map<string, unknown>,
+    attributes: Map<string, AttributeBase<unknown>>,
   ) {
     super(
       account as PropertyLike,
       scIdx,
-      attributes as Map<string, unknown>,
+      attributes,
     );
     this.preloadAttributes(ACCOUNT_SCENARIO_ATTRS,);
   }

@@ -8,6 +8,7 @@ import { AttributeBase, } from "../attributes/attribute-base.ts";
 import { AttributeOverwrite, TjArgumentError, } from "../attributes/errors.ts";
 import { TjInternalError, } from "./errors.ts";
 import { ScenarioData, } from "./scenario-data.ts";
+import { Scenario, } from "./scenario.ts";
 import { PropertySet, } from "./property-set.ts";
 export { PropertySet, };
 
@@ -232,23 +233,24 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
 
   getBSIndicies(): number[] {
     const indices: number[] = [];
-    let node: PropertyTreeNode | null = this;
-    while (node) {
+    const collect = (node: PropertyTreeNode | null,): void => {
+      if (!node) return;
       const parent = node._parent as PropertyTreeNode | null;
       if (parent) {
         indices.unshift(parent.levelSeqNo(node,),);
       } else {
         indices.unshift(this.propertySet.levelSeqNo(node,),);
       }
-      node = parent;
-    }
+      collect(parent,);
+    };
+    collect(this,);
     return indices;
   }
 
   getIndicies(): number[] {
     const indices: number[] = [];
-    let node: PropertyTreeNode | null = this;
-    while (node) {
+    const collect = (node: PropertyTreeNode | undefined,): void => {
+      if (!node) return;
       const parent = node.parents()[0];
       if (parent && parent.propertySet.knownAttribute("index",)) {
         const index = parent.get("index",);
@@ -256,8 +258,9 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
           indices.unshift(index as number,);
         }
       }
-      node = node._parent;
-    }
+      collect(parent,);
+    };
+    collect(this,);
     return indices;
   }
 

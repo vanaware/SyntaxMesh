@@ -5,18 +5,15 @@ import { LeaveListAttribute, } from "../attributes/time-interval/leave-list-attr
 import { WorkingHours, } from "../calendar/working-hours.ts";
 import { type PropertyTreeNode, } from "./property-tree-node.ts";
 import { type PropertyLike, } from "./property-like.ts";
+import { type AttributeBase, } from "../attributes/attribute-base.ts";
 
 export class ShiftScenario extends ScenarioData {
   constructor(
     shift: unknown,
     scIdx: number,
-    attributes: Map<string, unknown>,
+    attributes: Map<string, AttributeBase<unknown>>,
   ) {
-    super(
-      shift as PropertyLike,
-      scIdx,
-      attributes as Map<string, unknown>,
-    );
+    super(shift as PropertyLike, scIdx, attributes,);
     this.preloadAttributes(["workinghours", "replace", "leaves",],);
   }
 

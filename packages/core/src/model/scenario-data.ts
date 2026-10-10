@@ -3,6 +3,7 @@ import { type MessageHandlerLike, } from "../model/message-handler-like.ts";
 import { type AttributeContainer, } from "../attributes/attribute-container.ts";
 import { type AttributeBase, } from "../attributes/attribute-base.ts";
 import { TjArgumentError, } from "../attributes/errors.ts";
+import { type SourceFileInfo, } from "../model/property-tree-node.ts";
 
 /**
  * Type guard to check if a PropertyLike is a PropertyTreeNode.
@@ -10,9 +11,14 @@ import { TjArgumentError, } from "../attributes/errors.ts";
  * PropertyTreeNode exists.
  */
 type PropertyTreeNodeLike = PropertyLike & {
-  attributeDefinition(id: string,): unknown;
-  getScenarioAttribute(scIdx: number, id: string,): unknown;
+  attributeDefinition(id: string,): AttributeDefinition<unknown> | undefined;
+  getScenarioAttribute(
+    scIdx: number,
+    id: string,
+  ): AttributeBase<unknown>;
 };
+
+import { type AttributeDefinition, } from "../attributes/attribute-definition.ts";
 
 export class ScenarioData implements AttributeContainer {
   protected property: PropertyLike;
@@ -63,7 +69,7 @@ export class ScenarioData implements AttributeContainer {
   error(
     id: string,
     text: string,
-    sfi?: string,
+    sfi?: string | SourceFileInfo | null,
     property?: PropertyLike,
   ): void {
     // TODO(#issue): Implement MessageHandler integration
@@ -73,14 +79,14 @@ export class ScenarioData implements AttributeContainer {
   warning(
     id: string,
     text: string,
-    sfi?: string,
+    sfi?: string | SourceFileInfo | null,
     property?: PropertyLike,
   ): void {
     // TODO(#issue): Implement MessageHandler integration
     console.warn(`[${id}] ${text}`,);
   }
 
-  info(id: string, text: string, sfi?: string, property?: PropertyLike,): void {
+  info(id: string, text: string, sfi?: string | SourceFileInfo | null, property?: PropertyLike,): void {
     // TODO(#issue): Implement MessageHandler integration
     console.log(`[${id}] ${text}`,);
   }

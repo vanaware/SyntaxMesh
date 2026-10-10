@@ -1,9 +1,12 @@
+import { ScenarioData, } from "./scenario-data.ts";
+import { type Task, } from "./task.ts";
 import { type Resource, } from "./resource.ts";
 import { type ProjectLike, } from "./project-like.ts";
 import { type PropertyLike, } from "./property-like.ts";
 import { PropertyTreeNode, } from "./property-tree-node.ts";
 import { TjTime, } from "../time/tj-time.ts";
 import { Allocation, } from "../scheduling/allocation.ts";
+import { TaskDependency, } from "../scheduling/task-dependency.ts";
 import { ShiftAssignments, } from "../scheduling/shift-assignments.ts";
 import { DurationType, } from "../scheduling/mod.ts";
 
@@ -75,7 +78,7 @@ export class TaskScenario extends ScenarioData {
   private _durationType: string = "";
   private _shifts: ShiftAssignments | null = null;
 
-  constructor(task: Task, scIdx: number, attributes: Map<string, unknown>,) {
+  constructor(task: Task, scIdx: number, attributes: Map<string, AttributeBase<unknown>>,) {
     super(task, scIdx, attributes,);
     this.preloadAttributes(TASK_SCENARIO_ATTRS,);
   }
@@ -188,10 +191,16 @@ export class TaskScenario extends ScenarioData {
     }
   }
 
-  hasDependency(depType: string, target: Task | null, onEnd: boolean,): boolean {
+  hasDependency(
+    depType: string,
+    target: Task | null,
+    onEnd: boolean,
+  ): boolean {
     const list = this.a(depType,) as TaskDependency[];
     return list
-      ? list.some(([t, oe,]: [Task | null, boolean],) => t === target && oe === onEnd)
+      ? list.some(([t, oe,]: [Task | null, boolean,],) =>
+        t === target && oe === onEnd
+      )
       : false;
   }
 
@@ -615,7 +624,7 @@ export class TaskScenario extends ScenarioData {
    * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:checkForLoops
    */
   checkForLoops(
-    path: [Task, boolean][],
+    path: [Task, boolean,][],
     atEnd: boolean,
     fromOutside: boolean,
     forward: boolean,
@@ -701,7 +710,9 @@ export class TaskScenario extends ScenarioData {
           }
         }
       } else {
-        if (this._endsuccs.length === 0 && (this.getProperty() as Task).parent) {
+        if (
+          this._endsuccs.length === 0 && (this.getProperty() as Task).parent
+        ) {
           (this.getProperty() as Task).parent.scenarioData(
             this.getScenarioIdx(),
           ).checkForLoops(path, true, false, forward,);
@@ -1221,9 +1232,11 @@ export class TaskScenario extends ScenarioData {
             (this.currentSlotIdx() as number) <= (this._startIdx as number))
         ) {
           this.markAsScheduled();
-          (this.getProperty() as Task).parents().forEach((parent: PropertyTreeNode,) => {
-            parent.scheduleContainer(this.getScenarioIdx(),);
-          },);
+          (this.getProperty() as Task).parents().forEach(
+            (parent: PropertyTreeNode,) => {
+              parent.scheduleContainer(this.getScenarioIdx(),);
+            },
+          );
           return false;
         }
         break;

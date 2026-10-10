@@ -63,7 +63,7 @@ describe("ResourceScenario", () => {
   });
 
   it("onShift retorna valor de shifts se definido", () => {
-    // TODO: Implementar teste com shifts definido
+    // TODO(@username): Implementar teste com shifts definido
     // Por enquanto, apenas verificar que o método existe
     assertEquals(typeof resourceScenario.onShift, "function",);
   });
