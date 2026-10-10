@@ -137,7 +137,9 @@ export class MockProject implements ProjectLike {
     for (const prop of this.resources.toArray()) {
       const resource = prop as { scenarioData?: (scIdx: number,) => unknown };
       if (resource.scenarioData?.(0,)) {
-        const rs = resource.scenarioData(0,) as { available?: (sbIdx: number,) => boolean };
+        const rs = resource.scenarioData(0,) as {
+          available?: (sbIdx: number,) => boolean;
+        };
         if (rs.available?.(sbIdx,)) {
           return true;
         }
@@ -156,15 +158,26 @@ export class MockProject implements ProjectLike {
     return slots / (3600 / granularity);
   }
 
-  attributeDefinition(id: string,): import("../../src/attributes/attribute-definition.ts").AttributeDefinition<unknown> | undefined {
+  attributeDefinition(
+    id: string,
+  ):
+    | import("../../src/attributes/attribute-definition.ts").AttributeDefinition<
+      unknown
+    >
+    | undefined {
     return this.scenarios.attributeDefinition(id,);
   }
 
-  getScenarioAttribute(scIdx: number, id: string,): import("../../src/attributes/attribute-base.ts").AttributeBase<unknown> {
+  getScenarioAttribute(
+    scIdx: number,
+    id: string,
+  ): import("../../src/attributes/attribute-base.ts").AttributeBase<unknown> {
     const property = this.scenarios.get("plan",);
     if (property) {
       return property.getScenarioAttribute(scIdx, id,);
     }
-    return null as unknown as import("../../src/attributes/attribute-base.ts").AttributeBase<unknown>;
+    return null as unknown as import("../../src/attributes/attribute-base.ts").AttributeBase<
+      unknown
+    >;
   }
 }

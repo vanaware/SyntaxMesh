@@ -12,6 +12,8 @@ function makeResource(project: MockProject, id: string,): Resource {
 }
 
 describe("Limit", () => {
+  const sbStart = TjTime.fromDate(new Date("2026-01-01T00:00:00Z",),);
+  const sbEnd = TjTime.fromDate(new Date("2026-01-08T00:00:00Z",),);
 
   it("constructor cria Limit com campos corretos", () => {
     const interval = new ScoreboardInterval(sbStart, 3600, 0, 167,);

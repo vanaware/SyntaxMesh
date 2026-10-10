@@ -281,7 +281,12 @@ function runCase(c: GoldenCase,): void {
       setupBackup(phase,);
       const s = backupState!;
       nodes.set("root", s.root,);
-      (s.root as any).backup = s.backup;
+      (s.root as PropertyTreeNode & {
+        backup: [
+          Map<string, AttributeBase<unknown>>,
+          Array<Map<string, AttributeBase<unknown>>>,
+        ];
+      }).backup = s.backup;
       break;
     }
     case "flat": {

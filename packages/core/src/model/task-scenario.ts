@@ -1,6 +1,7 @@
-import { ScenarioData, } from "./scenario-data.ts";
+import { type Resource, } from "./resource.ts";
 import { type ProjectLike, } from "./project-like.ts";
 import { type PropertyLike, } from "./property-like.ts";
+import { PropertyTreeNode, } from "./property-tree-node.ts";
 import { TjTime, } from "../time/tj-time.ts";
 import { Allocation, } from "../scheduling/allocation.ts";
 import { ShiftAssignments, } from "../scheduling/shift-assignments.ts";
@@ -41,7 +42,7 @@ export const TASK_SCENARIO_ATTRS: string[] = [
 ];
 
 export class TaskScenario extends ScenarioData {
-  private _candidates: any[] = [];
+  private _candidates: Resource[] = [];
   private _isRunAway: boolean = false;
   private _hasDurationSpec: boolean = false;
   private _currentSlotIdx: number | null = null;
@@ -55,13 +56,14 @@ export class TaskScenario extends ScenarioData {
   private _endIsDetermed: boolean | null = null;
   private _startPropagated: boolean = false;
   private _endPropagated: boolean = false;
-  private _allLimits: any[] = [];
-  private _contendedResources: Map<any, Map<any, number>> = new Map();
-  private _mandatories: any[] = [];
-  private _startpreds: any[] = [];
-  private _startsuccs: any[] = [];
-  private _endpreds: any[] = [];
-  private _endsuccs: any[] = [];
+  private _allLimits: unknown[] = [];
+  private _contendedResources: Map<Task, Map<Task, number>> = new Map();
+  private _mandatories: Allocation[] = [];
+  private _competitors: Task[] = [];
+  private _startpreds: [Task | null, boolean,][] = [];
+  private _startsuccs: [Task | null, boolean,][] = [];
+  private _endpreds: [Task | null, boolean,][] = [];
+  private _endsuccs: [Task | null, boolean,][] = [];
   private _deadEndFlags: boolean[] = [false, false, false, false,];
   private _criticalness: number = 0.0;
   private _pathcriticalness: number | null = null;
@@ -69,23 +71,26 @@ export class TaskScenario extends ScenarioData {
   private _status: string = "";
   private _gauge: string | null = null;
   private _errors: number = 0;
+  private _scheduled: boolean = false;
+  private _durationType: string = "";
+  private _shifts: ShiftAssignments | null = null;
 
-  constructor(task: any, scIdx: number, attributes: Map<string, any>,) {
+  constructor(task: Task, scIdx: number, attributes: Map<string, unknown>,) {
     super(task, scIdx, attributes,);
     this.preloadAttributes(TASK_SCENARIO_ATTRS,);
   }
 
   markAsScheduled(): void {
-    if ((this as any)._scheduled) return;
-    (this as any)._scheduled = true;
+    if (this._scheduled) return;
+    this._scheduled = true;
   }
 
   prepareScheduling(): void {
     const scIdx = this.getScenarioIdx();
-    (this.getProperty() as any).setForScenario("startpreds", [], scIdx,);
-    (this.getProperty() as any).setForScenario("startsuccs", [], scIdx,);
-    (this.getProperty() as any).setForScenario("endpreds", [], scIdx,);
-    (this.getProperty() as any).setForScenario("endsuccs", [], scIdx,);
+    (this.getProperty() as Task).setForScenario("startpreds", [], scIdx,);
+    (this.getProperty() as Task).setForScenario("startsuccs", [], scIdx,);
+    (this.getProperty() as Task).setForScenario("endpreds", [], scIdx,);
+    (this.getProperty() as Task).setForScenario("endsuccs", [], scIdx,);
 
     this._isRunAway = false;
     this._currentSlotIdx = null;
@@ -93,7 +98,7 @@ export class TaskScenario extends ScenarioData {
     this._doneLength = 0;
     this._doneEffort = 0.0;
 
-    const project = (this.getProperty() as any).project as ProjectLike;
+    const project = (this.getProperty() as Task).project as ProjectLike;
     this._nowIdx = project.dateToIdx(project.get("now",) as TjTime,);
 
     this._startIsDetermed = null;
@@ -120,12 +125,12 @@ export class TaskScenario extends ScenarioData {
       this._hasDurationSpec = milestone;
       durationType = "startEndTask";
     }
-    (this as any)._durationType = durationType;
+    this._durationType = durationType;
 
     this.markAsMilestone();
 
     this._allLimits = [];
-    let task: any = this.getProperty();
+    let task: PropertyTreeNode | null = this.getProperty();
     while (task) {
       const limits = task.getForScenario("limits", scIdx,);
       if (limits) this._allLimits.push(limits,);
@@ -135,7 +140,7 @@ export class TaskScenario extends ScenarioData {
     this._contendedResources = new Map();
 
     this._mandatories = [];
-    const allocate = this.a("allocate",) as any[];
+    const allocate = this.a("allocate",) as Allocation[];
     if (allocate) {
       for (const allocation of allocate) {
         if (allocation.mandatory) this._mandatories.push(allocation,);
@@ -159,23 +164,23 @@ export class TaskScenario extends ScenarioData {
 
   Xref(): void {
     const scIdx = this.getScenarioIdx();
-    const depends = this.a("depends",) as any[];
+    const depends = this.a("depends",) as TaskDependency[];
     if (depends) {
       for (const dependency of depends) {
         const depTask = this.checkDependency(dependency, "depends",);
         this._startpreds.push([depTask, dependency.onEnd,],);
-        (depTask.scenarioData(scIdx,) as any)._startsuccs.push([
+        (depTask.scenarioData(scIdx,) as TaskScenario)._startsuccs.push([
           this.getProperty(),
           false,
         ],);
       }
     }
-    const precedes = this.a("precedes",) as any[];
+    const precedes = this.a("precedes",) as TaskDependency[];
     if (precedes) {
       for (const dependency of precedes) {
         const predTask = this.checkDependency(dependency, "precedes",);
         this._endsuccs.push([predTask, dependency.onEnd,],);
-        (predTask.scenarioData(scIdx,) as any)._endpreds.push([
+        (predTask.scenarioData(scIdx,) as TaskScenario)._endpreds.push([
           this.getProperty(),
           true,
         ],);
@@ -183,10 +188,10 @@ export class TaskScenario extends ScenarioData {
     }
   }
 
-  hasDependency(depType: string, target: any, onEnd: boolean,): boolean {
-    const list = this.a(depType,) as any[];
+  hasDependency(depType: string, target: Task | null, onEnd: boolean,): boolean {
+    const list = this.a(depType,) as TaskDependency[];
     return list
-      ? list.some(([t, oe,]: any[],) => t === target && oe === onEnd)
+      ? list.some(([t, oe,]: [Task | null, boolean],) => t === target && oe === onEnd)
       : false;
   }
 
@@ -195,7 +200,7 @@ export class TaskScenario extends ScenarioData {
    *
    * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:checkDependency
    */
-  checkDependency(dependency: any, depType: string,): any {
+  checkDependency(dependency: TaskDependency, depType: string,): Task | null {
     const task = this.project().task(dependency.taskId,);
     if (!task) {
       this.error("unknown_task", `Unknown task '${dependency.taskId}'`,);
@@ -210,7 +215,7 @@ export class TaskScenario extends ScenarioData {
    * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:propagateDate
    */
   propagateDate(date: TjTime, end: boolean, set: boolean,): void {
-    const idx = (this.getProperty() as any).project.dateToIdx(date,);
+    const idx = (this.getProperty() as Task).project.dateToIdx(date,);
     if (end) {
       this._endIdx = idx;
     } else {
@@ -236,7 +241,7 @@ export class TaskScenario extends ScenarioData {
   }
 
   propagateInitialValues(): void {
-    const project = (this.getProperty() as any).project as ProjectLike;
+    const project = (this.getProperty() as Task).project as ProjectLike;
     if (!this._startPropagated) {
       const start = this.a("start",) as TjTime;
       if (start) {
@@ -263,28 +268,28 @@ export class TaskScenario extends ScenarioData {
 
   markAsMilestone(): void {
     const milestone = this.a("milestone",) as boolean;
-    if (milestone && (this.getProperty() as any).container?.()) {
+    if (milestone && (this.getProperty() as Task).container?.()) {
       this.error(
         "container_milestone",
         `Container task ${
-          (this.getProperty() as any).fullId
+          (this.getProperty() as Task).fullId
         } may not be marked as a milestone.`,
       );
       return;
     }
 
     if (
-      (this.getProperty() as any).container?.() || this._hasDurationSpec ||
-      !(this.a("booking",) as any[])?.length ||
-      !(this.a("allocate",) as any[])?.length
+      (this.getProperty() as Task).container?.() || this._hasDurationSpec ||
+      !(this.a("booking",) as unknown[])?.length ||
+      !(this.a("allocate",) as Allocation[])?.length
     ) {
       return;
     }
 
     const hasStartSpec = !!(this.a("start",) as TjTime) ||
-      !!(this.a("depends",) as any[])?.length;
+      !!(this.a("depends",) as TaskDependency[])?.length;
     const hasEndSpec = !!(this.a("end",) as TjTime) ||
-      !!(this.a("precedes",) as any[])?.length;
+      !!(this.a("precedes",) as TaskDependency[])?.length;
 
     const newMilestone =
       (hasStartSpec && this.a("forward",) as boolean && !hasEndSpec) ||
@@ -296,13 +301,13 @@ export class TaskScenario extends ScenarioData {
       const start = this.a("start",) as TjTime;
       const end = this.a("end",) as TjTime;
       if (start && !end) {
-        (this.getProperty() as any).setForScenario(
+        (this.getProperty() as Task).setForScenario(
           "end",
           start,
           this.getScenarioIdx(),
         );
       } else if (!start && end) {
-        (this.getProperty() as any).setForScenario(
+        (this.getProperty() as Task).setForScenario(
           "start",
           end,
           this.getScenarioIdx(),
@@ -317,7 +322,7 @@ export class TaskScenario extends ScenarioData {
    * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:bookBookings
    */
   bookBookings(): void {
-    const bookings = this.a("booking",) as any[];
+    const bookings = this.a("booking",) as unknown[];
     if (!bookings) return;
     for (const booking of bookings) {
       booking.book(this,);
@@ -372,15 +377,15 @@ export class TaskScenario extends ScenarioData {
     this.warning(
       "runaway",
       `${remainingEffort}d of effort of task ${
-        (this.getProperty() as any).fullId
+        (this.getProperty() as Task).fullId
       } does not fit into the project time frame.`,
     );
-    const competitors = this.a("competitors",) as any[];
+    const competitors = this.a("competitors",) as Task[];
     if (competitors && competitors.length > 0) {
       this.warning(
         "runaway_competitor",
         `Task ${
-          (this.getProperty() as any).fullId
+          (this.getProperty() as Task).fullId
         } has competitors for the same resources.`,
       );
     }
@@ -392,7 +397,7 @@ export class TaskScenario extends ScenarioData {
    * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:readyForScheduling?
    */
   readyForScheduling(): boolean {
-    if ((this as any)._scheduled) return true;
+    if (this._scheduled) return true;
     if (this._isRunAway) return false;
     const forward = this.a("forward",) as boolean;
     const start = this.a("start",) as TjTime;
@@ -410,7 +415,7 @@ export class TaskScenario extends ScenarioData {
    * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:preScheduleCheck
    */
   preScheduleCheck(): void {
-    const chargeset = this.a("chargeset",) as any[];
+    const chargeset = this.a("chargeset",) as unknown[];
     if (chargeset) {
       for (const chargesetItem of chargeset) {
         for (const [account, share,] of chargesetItem) {
@@ -424,7 +429,7 @@ export class TaskScenario extends ScenarioData {
       }
     }
 
-    const responsible = this.a("responsible",) as any[];
+    const responsible = this.a("responsible",) as unknown[];
     if (responsible) {
       const convertedResponsible = [];
       for (const resourceId of responsible) {
@@ -438,19 +443,19 @@ export class TaskScenario extends ScenarioData {
           convertedResponsible.push(resource,);
         }
       }
-      (this.getProperty() as any).setForScenario(
+      (this.getProperty() as Task).setForScenario(
         "responsible",
         convertedResponsible,
         this.getScenarioIdx(),
       );
     }
 
-    const booking = this.a("booking",) as any[];
-    if (booking.length > 0 && (this.getProperty() as any).container?.()) {
+    const booking = this.a("booking",) as unknown[];
+    if (booking.length > 0 && (this.getProperty() as Task).container?.()) {
       this.error(
         "container_booking",
         `Container task ${
-          (this.getProperty() as any).fullId
+          (this.getProperty() as Task).fullId
         } may not have bookings.`,
       );
     }
@@ -460,27 +465,27 @@ export class TaskScenario extends ScenarioData {
       this.error(
         "milestone_booking",
         `Milestone ${
-          (this.getProperty() as any).fullId
+          (this.getProperty() as Task).fullId
         } may not have bookings.`,
       );
     }
 
-    if ((this as any)._scheduled && (!this.a("start",) || !this.a("end",))) {
+    if (this._scheduled && (!this.a("start",) || !this.a("end",))) {
       this.error(
         "not_scheduled",
         `Task ${
-          (this.getProperty() as any).fullId
+          (this.getProperty() as Task).fullId
         } is marked as scheduled but does not have a fixed start and end date.`,
       );
     }
 
     const effort = this.a("effort",) as number;
-    const allocate = this.a("allocate",) as any[];
+    const allocate = this.a("allocate",) as Allocation[];
     if (effort > 0 && (!allocate || allocate.length === 0)) {
       this.error(
         "effort_no_allocations",
         `Task ${
-          (this.getProperty() as any).fullId
+          (this.getProperty() as Task).fullId
         } has an effort but no resource allocations.`,
       );
     }
@@ -491,11 +496,11 @@ export class TaskScenario extends ScenarioData {
     if ((this.a("duration",) as number) > 0) durationSpecs++;
     if (milestone) durationSpecs++;
 
-    if ((this.getProperty() as any).container?.() && durationSpecs > 0) {
+    if ((this.getProperty() as Task).container?.() && durationSpecs > 0) {
       this.error(
         "container_duration",
         `Container task ${
-          (this.getProperty() as any).fullId
+          (this.getProperty() as Task).fullId
         } may not have a duration or be marked as milestones.`,
       );
     }
@@ -504,22 +509,22 @@ export class TaskScenario extends ScenarioData {
       this.error(
         "milestone_duration",
         `Milestone ${
-          (this.getProperty() as any).fullId
+          (this.getProperty() as Task).fullId
         } may not have a duration.`,
       );
     }
 
     if (
       milestone && this.a("start",) && this.a("end",) &&
-      (this.a("start",) as any).toSeconds() !==
-        (this.a("end",) as any).toSeconds()
+      (this.a("start",) as TjTime).toSeconds() !==
+        (this.a("end",) as TjTime).toSeconds()
     ) {
       this.error(
         "milestone_start_end",
-        `Start (${(this.a("start",) as any).toString()}) and end (${
-          (this.a("end",) as any).toString()
+        `Start (${(this.a("start",) as TjTime).toString()}) and end (${
+          (this.a("end",) as TjTime).toString()
         }) dates of milestone task ${
-          (this.getProperty() as any).fullId
+          (this.getProperty() as Task).fullId
         } must be identical.`,
       );
     }
@@ -528,7 +533,7 @@ export class TaskScenario extends ScenarioData {
     const hasDependenciesStart = this.hasDependencies(false,);
     const hasDependenciesEnd = this.hasDependencies(true,);
 
-    if (!milestone && !((this.getProperty() as any).container?.())) {
+    if (!milestone && !((this.getProperty() as Task).container?.())) {
       if (
         durationSpecs === 0 &&
         ((forward && !this.a("end",) && !hasDependenciesEnd) ||
@@ -537,7 +542,7 @@ export class TaskScenario extends ScenarioData {
         this.error(
           "task_underspecified",
           `Task ${
-            (this.getProperty() as any).fullId
+            (this.getProperty() as Task).fullId
           } has too few specifications to be scheduled.`,
         );
       }
@@ -549,11 +554,11 @@ export class TaskScenario extends ScenarioData {
         );
       }
 
-      const startSpeced = (this.getProperty() as any).provided(
+      const startSpeced = (this.getProperty() as Task).provided(
         "start",
         this.getScenarioIdx(),
       );
-      const endSpeced = (this.getProperty() as any).provided(
+      const endSpeced = (this.getProperty() as Task).provided(
         "end",
         this.getScenarioIdx(),
       );
@@ -562,7 +567,7 @@ export class TaskScenario extends ScenarioData {
           (hasDependenciesStart && forward && endSpeced) ||
           (hasDependenciesEnd && !forward && startSpeced)) &&
         durationSpecs > 0 &&
-        !(this.getProperty() as any).provided(
+        !(this.getProperty() as Task).provided(
           "scheduled",
           this.getScenarioIdx(),
         )
@@ -570,14 +575,14 @@ export class TaskScenario extends ScenarioData {
         this.error(
           "task_overspecified",
           `Task ${
-            (this.getProperty() as any).fullId
+            (this.getProperty() as Task).fullId
           } has a start, an end and a duration specification.`,
         );
       }
     }
 
     if (
-      !forward && booking && booking.length > 0 && !(this as any)._scheduled
+      !forward && booking && booking.length > 0 && !this._scheduled
     ) {
       this.error(
         "alap_booking",
@@ -610,21 +615,21 @@ export class TaskScenario extends ScenarioData {
    * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:checkForLoops
    */
   checkForLoops(
-    path: any[],
+    path: [Task, boolean][],
     atEnd: boolean,
     fromOutside: boolean,
     forward: boolean,
   ): void {
-    if (path.includes([this.getProperty() as any, atEnd,],)) {
+    if (path.includes([this.getProperty() as Task, atEnd,],)) {
       this.warning(
         "loop_detected",
         `Dependency loop detected at ${atEnd ? "end" : "start"} of task ${
-          (this.getProperty() as any).fullId
+          (this.getProperty() as Task).fullId
         }`,
       );
       let skip = true;
       for (const [t, e,] of path) {
-        if (t === (this.getProperty() as any) && e === atEnd) {
+        if (t === (this.getProperty() as Task) && e === atEnd) {
           skip = false;
           continue;
         }
@@ -643,12 +648,12 @@ export class TaskScenario extends ScenarioData {
       return;
     }
 
-    path.push([this.getProperty() as any, atEnd,],);
+    path.push([this.getProperty() as Task, atEnd,],);
 
     if (!atEnd) {
       if (fromOutside) {
-        if ((this.getProperty() as any).container?.()) {
-          for (const child of (this.getProperty() as any).children) {
+        if ((this.getProperty() as Task).container?.()) {
+          for (const child of (this.getProperty() as Task).children) {
             child.scenarioData(this.getScenarioIdx(),).checkForLoops(
               path,
               false,
@@ -663,9 +668,9 @@ export class TaskScenario extends ScenarioData {
         }
       } else {
         if (
-          this._startpreds.length === 0 && (this.getProperty() as any).parent
+          this._startpreds.length === 0 && (this.getProperty() as Task).parent
         ) {
-          (this.getProperty() as any).parent.scenarioData(
+          (this.getProperty() as Task).parent.scenarioData(
             this.getScenarioIdx(),
           ).checkForLoops(path, false, false, forward,);
         } else {
@@ -681,8 +686,8 @@ export class TaskScenario extends ScenarioData {
       }
     } else {
       if (fromOutside) {
-        if ((this.getProperty() as any).container?.()) {
-          for (const child of (this.getProperty() as any).children) {
+        if ((this.getProperty() as Task).container?.()) {
+          for (const child of (this.getProperty() as Task).children) {
             child.scenarioData(this.getScenarioIdx(),).checkForLoops(
               path,
               true,
@@ -696,8 +701,8 @@ export class TaskScenario extends ScenarioData {
           }
         }
       } else {
-        if (this._endsuccs.length === 0 && (this.getProperty() as any).parent) {
-          (this.getProperty() as any).parent.scenarioData(
+        if (this._endsuccs.length === 0 && (this.getProperty() as Task).parent) {
+          (this.getProperty() as Task).parent.scenarioData(
             this.getScenarioIdx(),
           ).checkForLoops(path, true, false, forward,);
         } else {
@@ -768,8 +773,8 @@ export class TaskScenario extends ScenarioData {
         maxCriticalness = criticalness;
       }
     } else {
-      if ((this.getProperty() as any).container?.()) {
-        for (const task of (this.getProperty() as any).children) {
+      if ((this.getProperty() as Task).container?.()) {
+        for (const task of (this.getProperty() as Task).children) {
           const criticalness = task.scenarioData(this.getScenarioIdx(),)
             .calcPathCriticalness(false,);
           if (criticalness > maxCriticalness) {
@@ -806,8 +811,8 @@ export class TaskScenario extends ScenarioData {
   calcPathCriticalnessEndSuccs(): number {
     let maxCriticalness = 0.0;
 
-    if ((this.getProperty() as any).container?.()) {
-      for (const task of (this.getProperty() as any).children) {
+    if ((this.getProperty() as Task).container?.()) {
+      for (const task of (this.getProperty() as Task).children) {
         const criticalness = task.scenarioData(this.getScenarioIdx(),)
           .calcPathCriticalnessEndSuccs();
         if (criticalness > maxCriticalness) {
@@ -859,17 +864,17 @@ export class TaskScenario extends ScenarioData {
    *
    * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:candidates
    */
-  candidates(): any[] {
+  candidates(): Resource[] {
     if (this._candidates.length > 0) {
       return this._candidates;
     }
 
-    const allocate = this.a("allocate",) as any[];
+    const allocate = this.a("allocate",) as Allocation[];
     if (!allocate) {
       return [];
     }
 
-    const candidates: any[] = [];
+    const candidates: Resource[] = [];
     for (const allocation of allocate) {
       for (
         const candidate of allocation.candidatesList(this.getScenarioIdx(),)
@@ -885,11 +890,11 @@ export class TaskScenario extends ScenarioData {
   }
 
   durationType(): string {
-    return (this as any)._durationType;
+    return this._durationType;
   }
 
   onShift(sbIdx: number,): boolean {
-    const shifts = (this as any)._shifts;
+    const shifts = this._shifts;
     if (shifts && shifts.assigned?.(sbIdx,)) {
       return shifts.onShift?.(sbIdx,);
     } else {
@@ -902,15 +907,15 @@ export class TaskScenario extends ScenarioData {
   }
 
   project(): ProjectLike {
-    return (this.getProperty() as any).project as ProjectLike;
+    return (this.getProperty() as Task).project as ProjectLike;
   }
 
-  override getProperty(): any {
-    return (this as any).property;
+  override getProperty(): Task {
+    return this.property;
   }
 
   override getScenarioIdx(): number {
-    return (this as any).scenarioIdx;
+    return this.scenarioIdx;
   }
 
   override a(attr: string,): unknown {
@@ -933,15 +938,15 @@ export class TaskScenario extends ScenarioData {
     this._isRunAway = true;
   }
 
-  isDependencyOf(task: any,): boolean {
+  isDependencyOf(task: Task,): boolean {
     const scIdx = this.getScenarioIdx();
-    const depends = task.a("depends",) as any[];
+    const depends = task.a("depends",) as TaskDependency[];
     if (depends) {
       for (const dep of depends) {
         if (dep.task === this.getProperty()) return true;
       }
     }
-    const precedes = task.a("precedes",) as any[];
+    const precedes = task.a("precedes",) as TaskDependency[];
     if (precedes) {
       for (const dep of precedes) {
         if (dep.task === this.getProperty()) return true;
@@ -951,29 +956,29 @@ export class TaskScenario extends ScenarioData {
   }
 
   shiftAssignments(scIdx: number,): ShiftAssignments | null {
-    const shifts = this.a("shifts",) as any[];
+    const shifts = this.a("shifts",) as ShiftAssignments[];
     if (!shifts || shifts.length === 0) return null;
     return new ShiftAssignments();
   }
 
   shifts(): boolean {
-    const shifts = this.a("shifts",) as any[];
+    const shifts = this.a("shifts",) as ShiftAssignments[];
     return !!(shifts && shifts.length > 0);
   }
 
-  startpreds(): any[] {
+  startpreds(): [Task | null, boolean,][] {
     return this._startpreds;
   }
 
-  startsuccs(): any[] {
+  startsuccs(): [Task | null, boolean,][] {
     return this._startsuccs;
   }
 
-  endpreds(): any[] {
+  endpreds(): [Task | null, boolean,][] {
     return this._endpreds;
   }
 
-  endsuccs(): any[] {
+  endsuccs(): [Task | null, boolean,][] {
     return this._endsuccs;
   }
 
@@ -1017,15 +1022,15 @@ export class TaskScenario extends ScenarioData {
     return this._endPropagated;
   }
 
-  allLimits(): any[] {
+  allLimits(): unknown[] {
     return this._allLimits;
   }
 
-  contendedResources(): Map<any, Map<any, number>> {
+  contendedResources(): Map<Task, Map<Task, number>> {
     return this._contendedResources;
   }
 
-  mandatories(): any[] {
+  mandatories(): Allocation[] {
     return this._mandatories;
   }
 
@@ -1074,13 +1079,13 @@ export class TaskScenario extends ScenarioData {
    */
   schedule(): boolean {
     // Check if the task has already been scheduled e.g. by propagateDate()
-    if ((this as any)._scheduled) return true;
+    if (this._scheduled) return true;
 
     this.prepareScheduling();
 
-    const logTag = `schedule_${(this.getProperty() as any).id}`;
+    const logTag = `schedule_${(this.getProperty() as Task).id}`;
     console.log(
-      `[${logTag}] Scheduling task ${(this.getProperty() as any).id}`,
+      `[${logTag}] Scheduling task ${(this.getProperty() as Task).id}`,
     );
 
     // Compute the date of the next slot this task wants to have scheduled.
@@ -1090,9 +1095,9 @@ export class TaskScenario extends ScenarioData {
         const start = this.a("start",) as TjTime;
         const now = project.get("now",) as TjTime;
         const projectionmode = this.a("projectionmode",) as boolean;
-        const allocate = this.a("allocate",) as any[];
+        const allocate = this.a("allocate",) as Allocation[];
 
-        (this as any)._currentSlotIdx = project.dateToIdx(
+        this._currentSlotIdx = project.dateToIdx(
           projectionmode && (now.toSeconds() > start.toSeconds()) &&
             allocate?.length > 0
             ? now
@@ -1103,7 +1108,7 @@ export class TaskScenario extends ScenarioData {
       if (this.currentSlotIdx() === null) {
         const project = this.project();
         const end = this.a("end",) as TjTime;
-        (this as any)._currentSlotIdx = project.dateToIdx(end,) - 1;
+        this._currentSlotIdx = project.dateToIdx(end,) - 1;
       }
     }
 
@@ -1115,15 +1120,15 @@ export class TaskScenario extends ScenarioData {
     const delta = this.forward() ? 1 : -1;
 
     while (this.scheduleSlot()) {
-      (this as any)._currentSlotIdx += delta;
+      this._currentSlotIdx += delta;
       if (
-        (this as any)._currentSlotIdx < lowerLimit ||
-        upperLimit < (this as any)._currentSlotIdx
+        this._currentSlotIdx < lowerLimit ||
+        upperLimit < this._currentSlotIdx
       ) {
         this.markAsRunaway();
         console.log(
           `[${logTag}] Scheduling of task ${
-            (this.getProperty() as any).id
+            (this.getProperty() as Task).id
           } failed`,
         );
         return false;
@@ -1132,7 +1137,7 @@ export class TaskScenario extends ScenarioData {
 
     console.log(
       `[${logTag}] Scheduling of task ${
-        (this.getProperty() as any).id
+        (this.getProperty() as Task).id
       } completed`,
     );
     return true;
@@ -1166,9 +1171,9 @@ export class TaskScenario extends ScenarioData {
       case "lengthTask":
         this.bookResources();
         if (this.onShift(this.currentSlotIdx() as number,)) {
-          (this as any)._doneLength += 1;
+          this._doneLength += 1;
         }
-        if ((this as any)._doneLength >= (this.a("length",) as number)) {
+        if (this._doneLength >= (this.a("length",) as number)) {
           if (this.forward()) {
             this.propagateDate(
               this.project().idxToDate((this.currentSlotIdx() as number) + 1,),
@@ -1188,8 +1193,8 @@ export class TaskScenario extends ScenarioData {
 
       case "durationTask":
         this.bookResources();
-        (this as any)._doneDuration += 1;
-        if ((this as any)._doneDuration >= (this.a("duration",) as number)) {
+        this._doneDuration += 1;
+        if (this._doneDuration >= (this.a("duration",) as number)) {
           if (this.forward()) {
             this.propagateDate(
               this.project().idxToDate((this.currentSlotIdx() as number) + 1,),
@@ -1216,7 +1221,7 @@ export class TaskScenario extends ScenarioData {
             (this.currentSlotIdx() as number) <= (this._startIdx as number))
         ) {
           this.markAsScheduled();
-          (this.getProperty() as any).parents().forEach((parent: any,) => {
+          (this.getProperty() as Task).parents().forEach((parent: PropertyTreeNode,) => {
             parent.scheduleContainer(this.getScenarioIdx(),);
           },);
           return false;
@@ -1225,7 +1230,7 @@ export class TaskScenario extends ScenarioData {
 
       default:
         throw new Error(
-          `Unknown task duration type ${(this as any)._durationType}`,
+          `Unknown task duration type ${this._durationType}`,
         );
     }
 
@@ -1239,7 +1244,7 @@ export class TaskScenario extends ScenarioData {
     if (
       !this.project().anyResourceAvailable(this.currentSlotIdx() as number,) ||
       ((this.a("projectionmode",) as boolean) &&
-        ((this as any)._nowIdx > (this.currentSlotIdx() as number)))
+        (this._nowIdx > (this.currentSlotIdx() as number)))
     ) {
       return;
     }
@@ -1249,8 +1254,8 @@ export class TaskScenario extends ScenarioData {
     }
 
     // Mandatory allocations check
-    const takenMandatories: any[] = [];
-    const mandatories = (this as any)._mandatories;
+    const takenMandatories: Resource[] = [];
+    const mandatories = this._mandatories;
     for (const allocation of mandatories) {
       let found = false;
       const candidates = allocation.candidates;
@@ -1280,7 +1285,7 @@ export class TaskScenario extends ScenarioData {
       }
     }
 
-    const allocate = this.a("allocate",) as any[];
+    const allocate = this.a("allocate",) as Allocation[];
     for (const allocation of allocate) {
       const lockedCandidate = allocation.lockedResource;
       if (lockedCandidate) {
@@ -1308,7 +1313,7 @@ export class TaskScenario extends ScenarioData {
             this.warning(
               "broken_persistence",
               `Persistence broken for Task ${
-                (this.getProperty() as any).fullId
+                (this.getProperty() as Task).fullId
               } - resource ${lockedCandidate.name} is gone`,
             );
             allocation.lockedResource = null;
@@ -1323,7 +1328,7 @@ export class TaskScenario extends ScenarioData {
             this.warning(
               "broken_persistence",
               `Persistence broken for Task ${
-                (this.getProperty() as any).fullId
+                (this.getProperty() as Task).fullId
               } - resource ${lockedCandidate.name} is gone`,
             );
             allocation.lockedResource = null;
@@ -1346,14 +1351,14 @@ export class TaskScenario extends ScenarioData {
   /**
    * Book a specific resource. Returns true if the resource was booked.
    */
-  bookResource(resource: any,): boolean {
+  bookResource(resource: PropertyTreeNode,): boolean {
     let booked = false;
     for (const r of resource.allLeaves()) {
       if (
         (this.a("effort",) as number) > 0 &&
           (r.scenarioData(this.getScenarioIdx(),).a("efficiency",) as number) >
             0.0 &&
-          (this as any)._doneEffort >= (this.a("effort",) as number) ||
+          this._doneEffort >= (this.a("effort",) as number) ||
         !this.limitsOk(this.currentSlotIdx() as number, r,)
       ) {
         break;
@@ -1367,7 +1372,7 @@ export class TaskScenario extends ScenarioData {
         )
       ) {
         if (
-          (this.a("effort",) as number) > 0 && (this as any)._doneEffort === 0
+          (this.a("effort",) as number) > 0 && this._doneEffort === 0
         ) {
           if (this.forward()) {
             this.propagateDate(
@@ -1376,7 +1381,7 @@ export class TaskScenario extends ScenarioData {
               true,
             );
             console.log(
-              `Task ${(this.getProperty() as any).fullId} first assignment`,
+              `Task ${(this.getProperty() as Task).fullId} first assignment`,
             );
           } else {
             this.propagateDate(
@@ -1385,16 +1390,16 @@ export class TaskScenario extends ScenarioData {
               true,
             );
             console.log(
-              `Task ${(this.getProperty() as any).fullId} last assignment`,
+              `Task ${(this.getProperty() as Task).fullId} last assignment`,
             );
           }
         }
 
-        (this as any)._doneEffort += r.scenarioData(this.getScenarioIdx(),).a(
+        this._doneEffort += r.scenarioData(this.getScenarioIdx(),).a(
           "efficiency",
         ) as number;
 
-        const assignedresources = this.a("assignedresources",) as any[];
+        const assignedresources = this.a("assignedresources",) as unknown[];
         if (!assignedresources.includes(r,)) {
           assignedresources.push(r,);
         }
@@ -1409,14 +1414,14 @@ export class TaskScenario extends ScenarioData {
           this.getScenarioIdx(),
           this.currentSlotIdx() as number,
         );
-        if (!(this as any)._competitors.includes(competitor,)) {
-          (this as any)._competitors.push(competitor,);
+        if (!this._competitors.includes(competitor,)) {
+          this._competitors.push(competitor,);
         }
-        const contended = (this as any)._contendedResources.get(competitor,);
+        const contended = this._contendedResources.get(competitor,);
         if (contended) {
           contended.set(r, (contended.get(r,) || 0) + 1,);
         } else {
-          (this as any)._contendedResources.set(
+          this._contendedResources.set(
             competitor,
             new Map([[r, 1,],],),
           );
@@ -1431,7 +1436,7 @@ export class TaskScenario extends ScenarioData {
    * Rollback bookings for this task.
    */
   rollbackBookings(): void {
-    const allocate = this.a("allocate",) as any[];
+    const allocate = this.a("allocate",) as Allocation[];
     for (const allocation of allocate) {
       const candidates = allocation.candidates;
       for (const candidate of candidates) {
@@ -1453,7 +1458,7 @@ export class TaskScenario extends ScenarioData {
    */
   scheduleContainer(): void {
     if (
-      (this as any)._scheduled || !(this.getProperty() as any).container?.()
+      this._scheduled || !(this.getProperty() as Task).container?.()
     ) {
       return;
     }
@@ -1461,7 +1466,7 @@ export class TaskScenario extends ScenarioData {
     let nStart: TjTime | null = null;
     let nEnd: TjTime | null = null;
 
-    for (const child of (this.getProperty() as any).children) {
+    for (const child of (this.getProperty() as Task).children) {
       if (
         !child.scenarioData(this.getScenarioIdx(),).a("scheduled",) ||
         child.scenarioData(this.getScenarioIdx(),).a("start",) === null ||
@@ -1489,7 +1494,7 @@ export class TaskScenario extends ScenarioData {
       return;
     }
 
-    const task = this.getProperty() as any;
+    const task = this.getProperty() as Task;
     let startSet = false;
     let endSet = false;
 
@@ -1517,7 +1522,7 @@ export class TaskScenario extends ScenarioData {
    */
   earliestStart(): TjTime | null {
     let startDate: TjTime | null = null;
-    const depends = this.a("depends",) as any[];
+    const depends = this.a("depends",) as TaskDependency[];
 
     for (const dependency of depends) {
       const potentialStartDate = dependency.task.scenarioData(
@@ -1571,7 +1576,7 @@ export class TaskScenario extends ScenarioData {
 
     // If any of the parent tasks has an explicit start date, the task must
     // start at or after this date.
-    let task: any = this.getProperty();
+    let task: PropertyTreeNode | null = this.getProperty();
     while (task.parent) {
       task = task.parent;
       const parentStart = task.scenarioData(this.getScenarioIdx(),).a(
@@ -1588,7 +1593,7 @@ export class TaskScenario extends ScenarioData {
 
     // When the computed start date is after the already determined end date
     // of the task, the start dependencies were too weak.
-    const taskEnd = (this.getProperty() as any).scenarioData(
+    const taskEnd = (this.getProperty() as Task).scenarioData(
       this.getScenarioIdx(),
     ).a("end",) as TjTime;
     if (
@@ -1598,7 +1603,7 @@ export class TaskScenario extends ScenarioData {
       this.error(
         "impossible_start_dep",
         `Task ${
-          (this.getProperty() as any).fullId
+          (this.getProperty() as Task).fullId
         } has start date dependencies that conflict with the end date.`,
       );
     }
@@ -1611,7 +1616,7 @@ export class TaskScenario extends ScenarioData {
    */
   latestEnd(): TjTime | null {
     let endDate: TjTime | null = null;
-    const precedes = this.a("precedes",) as any[];
+    const precedes = this.a("precedes",) as TaskDependency[];
 
     for (const dependency of precedes) {
       const potentialEndDate = dependency.task.scenarioData(
@@ -1665,7 +1670,7 @@ export class TaskScenario extends ScenarioData {
 
     // If any of the parent tasks has an explicit end date, the task must
     // end at or before this date.
-    let task: any = this.getProperty();
+    let task: PropertyTreeNode | null = this.getProperty();
     while (task.parent) {
       task = task.parent;
       const parentEnd = task.scenarioData(this.getScenarioIdx(),).a(
@@ -1682,7 +1687,7 @@ export class TaskScenario extends ScenarioData {
 
     // When the computed end date is before the already determined start date
     // of the task, the end dependencies were too weak.
-    const taskStart = (this.getProperty() as any).scenarioData(
+    const taskStart = (this.getProperty() as Task).scenarioData(
       this.getScenarioIdx(),
     ).a("start",) as TjTime;
     if (
@@ -1692,7 +1697,7 @@ export class TaskScenario extends ScenarioData {
       this.error(
         "impossible_end_dep",
         `Task ${
-          (this.getProperty() as any).fullId
+          (this.getProperty() as Task).fullId
         } has end date dependencies that conflict with the start date.`,
       );
     }
@@ -1704,21 +1709,21 @@ export class TaskScenario extends ScenarioData {
    * Finish scheduling: compute completion and status.
    */
   finishScheduling(): void {
-    if ((this as any)._scheduled) return;
+    if (this._scheduled) return;
 
     this.calcCompletion();
     this.calcStatus();
     this.calcGauge();
     this.propagateDateToDep();
 
-    (this as any)._scheduled = true;
+    this._scheduled = true;
   }
 
   /**
    * Check whether resource limits are ok for the current slot.
    */
-  limitsOk(sbIdx: number, resource?: any,): boolean {
-    const allocate = this.a("allocate",) as any[];
+  limitsOk(sbIdx: number, resource?: PropertyTreeNode,): boolean {
+    const allocate = this.a("allocate",) as Allocation[];
     for (const allocation of allocate) {
       const candidates = allocation.candidates;
       for (const candidate of candidates) {
@@ -1784,7 +1789,7 @@ export class TaskScenario extends ScenarioData {
    * Propagate date changes to dependent tasks.
    */
   propagateDateToDep(): void {
-    const depends = this.a("depends",) as any[];
+    const depends = this.a("depends",) as TaskDependency[];
     for (const dependency of depends) {
       const dependent = dependency.task;
       const dependentScenarioData = dependent.scenarioData(

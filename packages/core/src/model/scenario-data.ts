@@ -15,8 +15,8 @@ type PropertyTreeNodeLike = PropertyLike & {
 };
 
 export class ScenarioData implements AttributeContainer {
-  private property: PropertyLike;
-  private scenarioIdx: number;
+  protected property: PropertyLike;
+  protected scenarioIdx: number;
   private attributes: Map<string, AttributeBase<unknown>>;
   private _values: Map<string, unknown>;
 

@@ -102,7 +102,7 @@ export class PropertySet {
       const property = this._properties[0]!;
       if (
         property.data[0] &&
-        property.data[0].a("query_" + id) !== undefined
+        property.data[0].a("query_" + id,) !== undefined
       ) {
         return true;
       }
