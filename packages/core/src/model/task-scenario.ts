@@ -4,11 +4,16 @@ import { type Resource, } from "./resource.ts";
 import { type ProjectLike, } from "./project-like.ts";
 import { type PropertyLike, } from "./property-like.ts";
 import { PropertyTreeNode, } from "./property-tree-node.ts";
+import { type AttributeBase, } from "../attributes/attribute-base.ts";
+import { Booking, } from "../scheduling/booking.ts";
 import { TjTime, } from "../time/tj-time.ts";
 import { Allocation, } from "../scheduling/allocation.ts";
 import { TaskDependency, } from "../scheduling/task-dependency.ts";
 import { ShiftAssignments, } from "../scheduling/shift-assignments.ts";
 import { DurationType, } from "../scheduling/mod.ts";
+import { Limits, } from "../scheduling/limits.ts";
+import { type Account, } from "./account.ts";
+import { ResourceScenario, } from "./resource-scenario.ts";
 
 export const TASK_SCENARIO_ATTRS: string[] = [
   "allocate",
@@ -60,7 +65,7 @@ export class TaskScenario extends ScenarioData {
   private _startPropagated: boolean = false;
   private _endPropagated: boolean = false;
   private _allLimits: unknown[] = [];
-  private _contendedResources: Map<Task, Map<Task, number>> = new Map();
+  private _contendedResources: Map<Task, Map<Resource, number>> = new Map();
   private _mandatories: Allocation[] = [];
   private _competitors: Task[] = [];
   private _startpreds: [Task | null, boolean,][] = [];
@@ -78,7 +83,11 @@ export class TaskScenario extends ScenarioData {
   private _durationType: string = "";
   private _shifts: ShiftAssignments | null = null;
 
-  constructor(task: Task, scIdx: number, attributes: Map<string, AttributeBase<unknown>>,) {
+  constructor(
+    task: Task,
+    scIdx: number,
+    attributes: Map<string, AttributeBase<unknown>>,
+  ) {
     super(task, scIdx, attributes,);
     this.preloadAttributes(TASK_SCENARIO_ATTRS,);
   }
@@ -171,22 +180,26 @@ export class TaskScenario extends ScenarioData {
     if (depends) {
       for (const dependency of depends) {
         const depTask = this.checkDependency(dependency, "depends",);
-        this._startpreds.push([depTask, dependency.onEnd,],);
-        (depTask.scenarioData(scIdx,) as TaskScenario)._startsuccs.push([
-          this.getProperty(),
-          false,
-        ],);
+        if (depTask) {
+          this._startpreds.push([depTask, dependency.onEnd,],);
+          (depTask.scenarioData(scIdx,) as TaskScenario)._startsuccs.push([
+            this.getProperty(),
+            false,
+          ],);
+        }
       }
     }
     const precedes = this.a("precedes",) as TaskDependency[];
     if (precedes) {
       for (const dependency of precedes) {
         const predTask = this.checkDependency(dependency, "precedes",);
-        this._endsuccs.push([predTask, dependency.onEnd,],);
-        (predTask.scenarioData(scIdx,) as TaskScenario)._endpreds.push([
-          this.getProperty(),
-          true,
-        ],);
+        if (predTask) {
+          this._endsuccs.push([predTask, dependency.onEnd,],);
+          (predTask.scenarioData(scIdx,) as TaskScenario)._endpreds.push([
+            this.getProperty(),
+            true,
+          ],);
+        }
       }
     }
   }
@@ -198,8 +211,8 @@ export class TaskScenario extends ScenarioData {
   ): boolean {
     const list = this.a(depType,) as TaskDependency[];
     return list
-      ? list.some(([t, oe,]: [Task | null, boolean,],) =>
-        t === target && oe === onEnd
+      ? list.some((dependency,) =>
+        dependency.task === target && dependency.onEnd === onEnd
       )
       : false;
   }
@@ -331,10 +344,21 @@ export class TaskScenario extends ScenarioData {
    * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:bookBookings
    */
   bookBookings(): void {
-    const bookings = this.a("booking",) as unknown[];
+    const bookings = this.a("booking",) as Booking[];
     if (!bookings) return;
+    const scIdx = this.getScenarioIdx();
     for (const booking of bookings) {
-      booking.book(this,);
+      for (const interval of booking.intervals) {
+        const startIdx = this.project().dateToIdx(
+          this.project().idxToDate(interval.start,),
+        );
+        const endIdx = this.project().dateToIdx(
+          this.project().idxToDate(interval.end,),
+        );
+        for (let idx = startIdx; idx < endIdx; idx++) {
+          booking.resource.scenarioData(scIdx,).bookBooking(idx, booking,);
+        }
+      }
     }
   }
 
@@ -424,7 +448,7 @@ export class TaskScenario extends ScenarioData {
    * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:preScheduleCheck
    */
   preScheduleCheck(): void {
-    const chargeset = this.a("chargeset",) as unknown[];
+    const chargeset = this.a("chargeset",) as Map<Account, number>[];
     if (chargeset) {
       for (const chargesetItem of chargeset) {
         for (const [account, share,] of chargesetItem) {
@@ -438,11 +462,11 @@ export class TaskScenario extends ScenarioData {
       }
     }
 
-    const responsible = this.a("responsible",) as unknown[];
+    const responsible = this.a("responsible",) as string[];
     if (responsible) {
       const convertedResponsible = [];
       for (const resourceId of responsible) {
-        const resource = this.project().task(resourceId,);
+        const resource = this.project().resource(resourceId,);
         if (!resource) {
           this.error(
             "resource_id_expected",
@@ -599,9 +623,10 @@ export class TaskScenario extends ScenarioData {
       );
     }
 
+    const scIdx = this.getScenarioIdx();
     for (const [task, onEnd,] of this._startsuccs) {
-      if (!task.a("forward",)) {
-        task.error(
+      if (task && !task.scenarioData(scIdx,).a("forward",)) {
+        task.scenarioData(scIdx,).error(
           "onstart_wrong_direction",
           "Tasks with on-start dependencies must be ASAP scheduled",
         );
@@ -609,8 +634,8 @@ export class TaskScenario extends ScenarioData {
     }
 
     for (const [task, onEnd,] of this._endpreds) {
-      if (task.a("forward",)) {
-        task.error(
+      if (task && task.scenarioData(scIdx,).a("forward",)) {
+        task.scenarioData(scIdx,).error(
           "onend_wrong_direction",
           "Tasks with on-end dependencies must be ALAP scheduled",
         );
@@ -663,7 +688,7 @@ export class TaskScenario extends ScenarioData {
       if (fromOutside) {
         if ((this.getProperty() as Task).container?.()) {
           for (const child of (this.getProperty() as Task).children) {
-            child.scenarioData(this.getScenarioIdx(),).checkForLoops(
+            (child as Task).scenarioData(this.getScenarioIdx(),).checkForLoops(
               path,
               false,
               true,
@@ -677,19 +702,23 @@ export class TaskScenario extends ScenarioData {
         }
       } else {
         if (
-          this._startpreds.length === 0 && (this.getProperty() as Task).parent
+          this._startpreds.length === 0 &&
+          (this.getProperty() as Task).parent
         ) {
-          (this.getProperty() as Task).parent.scenarioData(
+          const parent = (this.getProperty() as Task).parent as Task;
+          parent.scenarioData(
             this.getScenarioIdx(),
           ).checkForLoops(path, false, false, forward,);
         } else {
           for (const [task, targetEnd,] of this._startpreds) {
-            task.scenarioData(this.getScenarioIdx(),).checkForLoops(
-              path,
-              targetEnd,
-              true,
-              forward,
-            );
+            if (task) {
+              (task as Task).scenarioData(this.getScenarioIdx(),).checkForLoops(
+                path,
+                targetEnd,
+                true,
+                forward,
+              );
+            }
           }
         }
       }
@@ -697,7 +726,7 @@ export class TaskScenario extends ScenarioData {
       if (fromOutside) {
         if ((this.getProperty() as Task).container?.()) {
           for (const child of (this.getProperty() as Task).children) {
-            child.scenarioData(this.getScenarioIdx(),).checkForLoops(
+            (child as Task).scenarioData(this.getScenarioIdx(),).checkForLoops(
               path,
               true,
               true,
@@ -711,19 +740,23 @@ export class TaskScenario extends ScenarioData {
         }
       } else {
         if (
-          this._endsuccs.length === 0 && (this.getProperty() as Task).parent
+          this._endsuccs.length === 0 &&
+          (this.getProperty() as Task).parent
         ) {
-          (this.getProperty() as Task).parent.scenarioData(
+          const parent = (this.getProperty() as Task).parent as Task;
+          parent.scenarioData(
             this.getScenarioIdx(),
           ).checkForLoops(path, true, false, forward,);
         } else {
           for (const [task, targetEnd,] of this._endsuccs) {
-            task.scenarioData(this.getScenarioIdx(),).checkForLoops(
-              path,
-              targetEnd,
-              true,
-              forward,
-            );
+            if (task) {
+              (task as Task).scenarioData(this.getScenarioIdx(),).checkForLoops(
+                path,
+                targetEnd,
+                true,
+                forward,
+              );
+            }
           }
         }
       }
@@ -756,9 +789,8 @@ export class TaskScenario extends ScenarioData {
 
     let criticalness = 0.0;
     for (const resource of this._candidates) {
-      criticalness += resource.get(
+      criticalness += resource.scenarioData(this.getScenarioIdx(),).a(
         "criticalness",
-        this.getScenarioIdx(),
       ) as number;
     }
     criticalness /= this._candidates.length;
@@ -786,18 +818,23 @@ export class TaskScenario extends ScenarioData {
     } else {
       if ((this.getProperty() as Task).container?.()) {
         for (const task of (this.getProperty() as Task).children) {
-          const criticalness = task.scenarioData(this.getScenarioIdx(),)
-            .calcPathCriticalness(false,);
+          const criticalness = (task as Task).scenarioData(
+            this.getScenarioIdx(),
+          ).calcPathCriticalness(false,);
           if (criticalness > maxCriticalness) {
             maxCriticalness = criticalness;
           }
         }
       } else {
         for (const [task, onEnd,] of this._startsuccs) {
-          const criticalness = task.scenarioData(this.getScenarioIdx(),)
-            .calcPathCriticalness(onEnd,);
-          if (criticalness > maxCriticalness) {
-            maxCriticalness = criticalness;
+          if (task) {
+            const criticalness = (task as Task).scenarioData(
+              this.getScenarioIdx(),
+            ) as TaskScenario;
+            const pathCrit = criticalness.calcPathCriticalness(onEnd,);
+            if (pathCrit > maxCriticalness) {
+              maxCriticalness = pathCrit;
+            }
           }
         }
 
@@ -824,23 +861,114 @@ export class TaskScenario extends ScenarioData {
 
     if ((this.getProperty() as Task).container?.()) {
       for (const task of (this.getProperty() as Task).children) {
-        const criticalness = task.scenarioData(this.getScenarioIdx(),)
-          .calcPathCriticalnessEndSuccs();
-        if (criticalness > maxCriticalness) {
-          maxCriticalness = criticalness;
+        const criticalness = (task as Task).scenarioData(
+          this.getScenarioIdx(),
+        ) as TaskScenario;
+        const pathCrit = criticalness.calcPathCriticalnessEndSuccs();
+        if (pathCrit > maxCriticalness) {
+          maxCriticalness = pathCrit;
         }
       }
     } else {
       for (const [task, onEnd,] of this._endsuccs) {
-        const criticalness = task.scenarioData(this.getScenarioIdx(),)
-          .calcPathCriticalnessEndSuccs();
-        if (criticalness > maxCriticalness) {
-          maxCriticalness = criticalness;
+        if (task) {
+          const criticalness = (task as Task).scenarioData(
+            this.getScenarioIdx(),
+          ) as TaskScenario;
+          const pathCrit = criticalness.calcPathCriticalnessEndSuccs();
+          if (pathCrit > maxCriticalness) {
+            maxCriticalness = pathCrit;
+          }
         }
       }
     }
 
     return maxCriticalness;
+  }
+
+  /**
+   * Compute the turnover (cost or revenue) for this task.
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:turnover
+   */
+  turnover(
+    startIdx: number,
+    endIdx: number,
+    account: Account,
+    resource: Resource | null = null,
+    includeKids: boolean = true,
+  ): number {
+    let amount = 0.0;
+    if ((this.getProperty() as Task).container?.() && includeKids) {
+      for (const child of (this.getProperty() as Task).children) {
+        amount += (child as Task).scenarioData(this.getScenarioIdx(),).turnover(
+          startIdx,
+          endIdx,
+          account,
+          resource,
+        );
+      }
+    } else {
+      // If we are evaluating the task in the context of a specific resource,
+      // we use the chargeset of that resource, not the chargeset of the task.
+      const chargeset = resource
+        ? (resource.scenarioData(this.getScenarioIdx(),) as ResourceScenario).a(
+          "chargeset",
+        )
+        : this.a("chargeset",);
+
+      // If there are no chargeset defined for this task, we don't need to
+      // compute the resource related or other cost.
+      if (chargeset) {
+        let resourceCost = 0.0;
+        const otherCost = 0.0;
+
+        // Container tasks don't have resource cost.
+        if (!(this.getProperty() as Task).container?.()) {
+          if (resource) {
+            resourceCost = (resource.scenarioData(
+              this.getScenarioIdx(),
+            ) as ResourceScenario).cost(
+              startIdx,
+              endIdx,
+            );
+          } else {
+            for (
+              const assignedResource of this.a(
+                "assignedresources",
+              ) as Resource[]
+            ) {
+              resourceCost += (assignedResource.scenarioData(
+                this.getScenarioIdx(),
+              ) as ResourceScenario).cost(startIdx, endIdx,);
+            }
+          }
+        }
+
+        const charge = this.a("charge",) as unknown[];
+        if (charge && charge.length > 0) {
+          // Add one-time and periodic charges to the amount.
+          for (const chargeItem of charge) {
+            // TODO(#7): Implement charge.turnover
+            // For now, skip
+          }
+        }
+
+        const totalCost = resourceCost + otherCost;
+        // Now weight the total cost by the share of the account
+        for (const chargesetItem of chargeset as Map<Account, number>[]) {
+          for (const [accnt, share,] of chargesetItem) {
+            if (
+              share > 0.0 && (accnt === account || accnt.isChildOf?.(account,))
+            ) {
+              amount += totalCost * share;
+            }
+          }
+        }
+      }
+    }
+
+    return amount;
   }
 
   /**
@@ -858,11 +986,11 @@ export class TaskScenario extends ScenarioData {
 
     const avgEffort = (this.a("effort",) as number) / this._candidates.length;
     for (const resource of this._candidates) {
-      const current = resource.get(
+      const current = resource.getForScenario(
         "alloctdeffort",
         this.getScenarioIdx(),
       ) as number;
-      resource.set(
+      resource.setForScenario(
         "alloctdeffort",
         current + avgEffort,
         this.getScenarioIdx(),
@@ -922,7 +1050,7 @@ export class TaskScenario extends ScenarioData {
   }
 
   override getProperty(): Task {
-    return this.property;
+    return super.getProperty() as Task;
   }
 
   override getScenarioIdx(): number {
@@ -951,13 +1079,15 @@ export class TaskScenario extends ScenarioData {
 
   isDependencyOf(task: Task,): boolean {
     const scIdx = this.getScenarioIdx();
-    const depends = task.a("depends",) as TaskDependency[];
+    const depends = task.scenarioData(scIdx,).a("depends",) as TaskDependency[];
     if (depends) {
       for (const dep of depends) {
         if (dep.task === this.getProperty()) return true;
       }
     }
-    const precedes = task.a("precedes",) as TaskDependency[];
+    const precedes = task.scenarioData(scIdx,).a(
+      "precedes",
+    ) as TaskDependency[];
     if (precedes) {
       for (const dep of precedes) {
         if (dep.task === this.getProperty()) return true;
@@ -1037,7 +1167,20 @@ export class TaskScenario extends ScenarioData {
     return this._allLimits;
   }
 
-  contendedResources(): Map<Task, Map<Task, number>> {
+  /**
+   * Increment all limits for the given scoreboard index.
+   * Limits do not take efficiency into account. Limits are usage limits, not
+   * effort limits.
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:incLimits
+   */
+  incLimits(sbIdx: number, resource?: Resource,): void {
+    for (const limit of this._allLimits) {
+      (limit as Limits).inc(sbIdx, resource,);
+    }
+  }
+
+  contendedResources(): Map<Task, Map<Resource, number>> {
     return this._contendedResources;
   }
 
@@ -1131,6 +1274,15 @@ export class TaskScenario extends ScenarioData {
     const delta = this.forward() ? 1 : -1;
 
     while (this.scheduleSlot()) {
+      if (this._currentSlotIdx === null) {
+        this.markAsRunaway();
+        console.log(
+          `[${logTag}] Scheduling of task ${
+            (this.getProperty() as Task).id
+          } failed: currentSlotIdx is null`,
+        );
+        return false;
+      }
       this._currentSlotIdx += delta;
       if (
         this._currentSlotIdx < lowerLimit ||
@@ -1234,7 +1386,9 @@ export class TaskScenario extends ScenarioData {
           this.markAsScheduled();
           (this.getProperty() as Task).parents().forEach(
             (parent: PropertyTreeNode,) => {
-              parent.scheduleContainer(this.getScenarioIdx(),);
+              ((parent as Task).scenarioData(
+                this.getScenarioIdx(),
+              ) as TaskScenario).scheduleContainer();
             },
           );
           return false;
@@ -1274,12 +1428,13 @@ export class TaskScenario extends ScenarioData {
       const candidates = allocation.candidates;
       for (const candidate of candidates) {
         let allAvailable = true;
-        for (const resource of candidate.allLeaves()) {
+        for (const resource of candidate.allLeaves() as Resource[]) {
           if (
             !this.limitsOk(this.currentSlotIdx() as number, resource,) ||
-            !resource.scenarioData(this.getScenarioIdx(),).available(
-              this.currentSlotIdx() as number,
-            ) ||
+            !(resource.scenarioData(this.getScenarioIdx(),) as ResourceScenario)
+              .available(
+                this.currentSlotIdx() as number,
+              ) ||
             takenMandatories.includes(resource,)
           ) {
             allAvailable = false;
@@ -1308,7 +1463,9 @@ export class TaskScenario extends ScenarioData {
 
         if (
           allocation.atomic &&
-          lockedCandidate.scenarioData(this.getScenarioIdx(),).bookedTask(
+          (lockedCandidate.scenarioData(
+            this.getScenarioIdx(),
+          ) as ResourceScenario).bookedTask(
             this.currentSlotIdx() as number,
           )
         ) {
@@ -1317,10 +1474,10 @@ export class TaskScenario extends ScenarioData {
         }
 
         if (this.forward()) {
-          if (
-            (this.currentSlotIdx() as number) <
-              lockedCandidate.scenarioData(this.getScenarioIdx(),).getMaxSlot()
-          ) {
+          const maxSlot = (lockedCandidate.scenarioData(
+            this.getScenarioIdx(),
+          ) as ResourceScenario).getMaxSlot();
+          if (maxSlot === null || (this.currentSlotIdx() as number) < maxSlot) {
             // Continue
           } else {
             this.warning(
@@ -1332,10 +1489,10 @@ export class TaskScenario extends ScenarioData {
             allocation.lockedResource = null;
           }
         } else {
-          if (
-            (this.currentSlotIdx() as number) >
-              lockedCandidate.scenarioData(this.getScenarioIdx(),).getMinSlot()
-          ) {
+          const minSlot = (lockedCandidate.scenarioData(
+            this.getScenarioIdx(),
+          ) as ResourceScenario).getMinSlot();
+          if (minSlot === null || (this.currentSlotIdx() as number) > minSlot) {
             // Continue
           } else {
             this.warning(
@@ -1366,10 +1523,11 @@ export class TaskScenario extends ScenarioData {
    */
   bookResource(resource: PropertyTreeNode,): boolean {
     let booked = false;
-    for (const r of resource.allLeaves()) {
+    for (const r of resource.allLeaves() as Resource[]) {
+      const rs = r.scenarioData(this.getScenarioIdx(),) as ResourceScenario;
       if (
         (this.a("effort",) as number) > 0 &&
-          (r.scenarioData(this.getScenarioIdx(),).a("efficiency",) as number) >
+          (rs.a("efficiency",) as number) >
             0.0 &&
           this._doneEffort >= (this.a("effort",) as number) ||
         !this.limitsOk(this.currentSlotIdx() as number, r,)
@@ -1378,8 +1536,7 @@ export class TaskScenario extends ScenarioData {
       }
 
       if (
-        r.scenarioData(this.getScenarioIdx(),).book(
-          this.getScenarioIdx(),
+        rs.book(
           this.currentSlotIdx() as number,
           this.getProperty(),
         )
@@ -1408,7 +1565,7 @@ export class TaskScenario extends ScenarioData {
           }
         }
 
-        this._doneEffort += r.scenarioData(this.getScenarioIdx(),).a(
+        this._doneEffort += rs.a(
           "efficiency",
         ) as number;
 
@@ -1418,15 +1575,13 @@ export class TaskScenario extends ScenarioData {
         }
         booked = true;
       } else if (
-        r.scenarioData(this.getScenarioIdx(),).bookedTask(
-          this.getScenarioIdx(),
+        rs.bookedTask(
           this.currentSlotIdx() as number,
         )
       ) {
-        const competitor = r.scenarioData(this.getScenarioIdx(),).bookedTask(
-          this.getScenarioIdx(),
+        const competitor = rs.bookedTask(
           this.currentSlotIdx() as number,
-        );
+        ) as Task;
         if (!this._competitors.includes(competitor,)) {
           this._competitors.push(competitor,);
         }
@@ -1453,13 +1608,17 @@ export class TaskScenario extends ScenarioData {
     for (const allocation of allocate) {
       const candidates = allocation.candidates;
       for (const candidate of candidates) {
-        for (const r of candidate.allLeaves()) {
-          const rs = r.scenarioData(this.getScenarioIdx(),);
+        for (const r of candidate.allLeaves() as Resource[]) {
+          const rs = r.scenarioData(this.getScenarioIdx(),) as ResourceScenario;
           if (
             rs.bookedTask(this.currentSlotIdx() as number,) ===
               this.getProperty()
           ) {
-            rs.scoreboard!.set(this.currentSlotIdx() as number, null,);
+            (rs.scoreboard as unknown as { set: (i: number, v: null,) => void })
+              .set(
+                this.currentSlotIdx() as number,
+                null,
+              );
           }
         }
       }
@@ -1480,20 +1639,19 @@ export class TaskScenario extends ScenarioData {
     let nEnd: TjTime | null = null;
 
     for (const child of (this.getProperty() as Task).children) {
+      const childSc = child.scenarioData(
+        this.getScenarioIdx(),
+      ) as TaskScenario;
       if (
-        !child.scenarioData(this.getScenarioIdx(),).a("scheduled",) ||
-        child.scenarioData(this.getScenarioIdx(),).a("start",) === null ||
-        child.scenarioData(this.getScenarioIdx(),).a("end",) === null
+        !childSc.a("scheduled",) ||
+        childSc.a("start",) === null ||
+        childSc.a("end",) === null
       ) {
         return;
       }
 
-      const childStart = child.scenarioData(this.getScenarioIdx(),).a(
-        "start",
-      ) as TjTime;
-      const childEnd = child.scenarioData(this.getScenarioIdx(),).a(
-        "end",
-      ) as TjTime;
+      const childStart = childSc.a("start",) as TjTime;
+      const childEnd = childSc.a("end",) as TjTime;
 
       if (nStart === null || childStart < nStart) {
         nStart = childStart;
@@ -1508,14 +1666,17 @@ export class TaskScenario extends ScenarioData {
     }
 
     const task = this.getProperty() as Task;
+    const taskSc = task.scenarioData(this.getScenarioIdx(),) as TaskScenario;
     let startSet = false;
     let endSet = false;
 
-    if (task.a("start",) === null || task.a("start",) > nStart) {
+    if (
+      taskSc.a("start",) === null || (taskSc.a("start",) as TjTime) > nStart
+    ) {
       task.setForScenario("start", nStart, this.getScenarioIdx(),);
       startSet = true;
     }
-    if (task.a("end",) === null || task.a("end",) < nEnd) {
+    if (taskSc.a("end",) === null || (taskSc.a("end",) as TjTime) < nEnd) {
       task.setForScenario("end", nEnd, this.getScenarioIdx(),);
       endSet = true;
     }
@@ -1538,6 +1699,9 @@ export class TaskScenario extends ScenarioData {
     const depends = this.a("depends",) as TaskDependency[];
 
     for (const dependency of depends) {
+      if (!dependency.task) {
+        continue;
+      }
       const potentialStartDate = dependency.task.scenarioData(
         this.getScenarioIdx(),
       ).a(
@@ -1592,9 +1756,10 @@ export class TaskScenario extends ScenarioData {
     let task: PropertyTreeNode | null = this.getProperty();
     while (task.parent) {
       task = task.parent;
-      const parentStart = task.scenarioData(this.getScenarioIdx(),).a(
-        "start",
-      ) as TjTime;
+      const parentSc = task.scenarioData(
+        this.getScenarioIdx(),
+      ) as TaskScenario;
+      const parentStart = parentSc.a("start",) as TjTime;
       if (
         parentStart !== null &&
         (startDate === null || parentStart.toSeconds() > startDate.toSeconds())
@@ -1606,9 +1771,10 @@ export class TaskScenario extends ScenarioData {
 
     // When the computed start date is after the already determined end date
     // of the task, the start dependencies were too weak.
-    const taskEnd = (this.getProperty() as Task).scenarioData(
+    const taskSc = (this.getProperty() as Task).scenarioData(
       this.getScenarioIdx(),
-    ).a("end",) as TjTime;
+    ) as TaskScenario;
+    const taskEnd = taskSc.a("end",) as TjTime;
     if (
       taskEnd !== null &&
       (startDate === null || startDate.toSeconds() > taskEnd.toSeconds())
@@ -1632,6 +1798,9 @@ export class TaskScenario extends ScenarioData {
     const precedes = this.a("precedes",) as TaskDependency[];
 
     for (const dependency of precedes) {
+      if (!dependency.task) {
+        continue;
+      }
       const potentialEndDate = dependency.task.scenarioData(
         this.getScenarioIdx(),
       ).a(
@@ -1686,9 +1855,10 @@ export class TaskScenario extends ScenarioData {
     let task: PropertyTreeNode | null = this.getProperty();
     while (task.parent) {
       task = task.parent;
-      const parentEnd = task.scenarioData(this.getScenarioIdx(),).a(
-        "end",
-      ) as TjTime;
+      const parentSc = task.scenarioData(
+        this.getScenarioIdx(),
+      ) as TaskScenario;
+      const parentEnd = parentSc.a("end",) as TjTime;
       if (
         parentEnd !== null &&
         (endDate === null || parentEnd.toSeconds() < endDate.toSeconds())
@@ -1700,9 +1870,10 @@ export class TaskScenario extends ScenarioData {
 
     // When the computed end date is before the already determined start date
     // of the task, the end dependencies were too weak.
-    const taskStart = (this.getProperty() as Task).scenarioData(
+    const taskSc = (this.getProperty() as Task).scenarioData(
       this.getScenarioIdx(),
-    ).a("start",) as TjTime;
+    ) as TaskScenario;
+    const taskStart = taskSc.a("start",) as TjTime;
     if (
       taskStart !== null &&
       (endDate === null || endDate.toSeconds() < taskStart.toSeconds())
@@ -1740,11 +1911,11 @@ export class TaskScenario extends ScenarioData {
     for (const allocation of allocate) {
       const candidates = allocation.candidates;
       for (const candidate of candidates) {
-        for (const r of candidate.allLeaves()) {
+        for (const r of candidate.allLeaves() as Resource[]) {
           if (resource && r !== resource) {
             continue;
           }
-          const rs = r.scenarioData(this.getScenarioIdx(),);
+          const rs = r.scenarioData(this.getScenarioIdx(),) as ResourceScenario;
           if (!rs.available(sbIdx,)) {
             return false;
           }
@@ -1804,20 +1975,23 @@ export class TaskScenario extends ScenarioData {
   propagateDateToDep(): void {
     const depends = this.a("depends",) as TaskDependency[];
     for (const dependency of depends) {
+      if (!dependency.task) {
+        continue;
+      }
       const dependent = dependency.task;
       const dependentScenarioData = dependent.scenarioData(
         this.getScenarioIdx(),
-      );
+      ) as TaskScenario;
       if (!dependentScenarioData.a("scheduled",)) {
         continue;
       }
 
       const changed = dependency.onEnd
         ? dependentScenarioData.a("start",) !== null &&
-          dependentScenarioData.a("start",)!.toSeconds() <
+          (dependentScenarioData.a("start",) as TjTime).toSeconds() <
             (this.a("end",) as TjTime).toSeconds()
         : dependentScenarioData.a("end",) !== null &&
-          dependentScenarioData.a("end",)!.toSeconds() >
+          (dependentScenarioData.a("end",) as TjTime).toSeconds() >
             (this.a("start",) as TjTime).toSeconds();
 
       if (changed) {

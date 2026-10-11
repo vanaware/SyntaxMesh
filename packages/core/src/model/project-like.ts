@@ -41,6 +41,14 @@ export interface ProjectLike {
   task(id: string,): Task | null;
 
   /**
+   * Resolve um ID de recurso em um objeto `Resource`.
+   *
+   * Usado por `TaskScenario.preScheduleCheck()` para converter os IDs de
+   * recursos do atributo `responsible` em objetos `Resource`.
+   */
+  resource(id: string,): Resource | null;
+
+  /**
    * Converte uma data `TjTime` para o índice numérico de slot.
    *
    * Usado por `TaskScenario.prepareScheduling()` para calcular

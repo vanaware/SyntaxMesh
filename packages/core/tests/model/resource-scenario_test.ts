@@ -4,6 +4,10 @@ import { MockProject, } from "./mock-project.ts";
 import { Resource, } from "../../src/model/resource.ts";
 import { Task, } from "../../src/model/task.ts";
 import { ResourceScenario, } from "../../src/model/resource-scenario.ts";
+import { Account, } from "../../src/model/account.ts";
+import { Booking, } from "../../src/scheduling/booking.ts";
+import { ScoreboardInterval, } from "../../src/time/scoreboard-interval.ts";
+import { TjTime, } from "../../src/time/tj-time.ts";
 
 describe("ResourceScenario", () => {
   let project: MockProject;
@@ -98,7 +102,18 @@ describe("ResourceScenario", () => {
     const resource2 = new Resource(project2, "r2", "Resource 2", null,);
     const task = new Task(project2, "t1", "Task 1", null,);
     const resourceScenario2 = resource2.scenarioData(0,);
-    const booking = { task, overtime: 0, sloppy: 0, sourceFileInfo: null, };
+    const booking = new Booking(
+      resource2,
+      task,
+      [
+        new ScoreboardInterval(
+          TjTime.fromDate(new Date("2026-01-01T00:00:00Z",),),
+          3600,
+          0,
+          1,
+        ),
+      ],
+    );
     resourceScenario2.bookBooking(0, booking,);
     assertEquals(resourceScenario2.booked(0,), true,);
     assertEquals(resourceScenario2.bookedTask(0,), task,);
@@ -129,7 +144,8 @@ describe("ResourceScenario", () => {
   });
 
   it("turnover retorna turnover do recurso", () => {
-    assertEquals(resourceScenario.turnover(0, 10, null, null, false,), 0,);
+    const account = new Account(project, "acc1", "Account 1", null,);
+    assertEquals(resourceScenario.turnover(0, 10, account, null, false,), 0,);
   });
 
   it("cost calcula custo do recurso", () => {

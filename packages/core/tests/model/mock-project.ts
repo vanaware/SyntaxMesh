@@ -120,6 +120,12 @@ export class MockProject implements ProjectLike {
     return prop as import("../../src/model/task.ts").Task;
   }
 
+  resource(id: string,): import("../../src/model/resource.ts").Resource | null {
+    const prop = this.resources.get(id,);
+    if (prop === undefined) return null;
+    return prop as import("../../src/model/resource.ts").Resource;
+  }
+
   dateToIdx(date: TjTime,): number {
     const start = this.get("start",) as TjTime;
     const granularity = (this.get("scheduleGranularity",) as number) ?? 3600;

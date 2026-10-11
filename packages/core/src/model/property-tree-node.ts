@@ -217,6 +217,15 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
     return result;
   }
 
+  /**
+   * Returns the PropertyTreeNode itself (unwraps PTNProxy if present).
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/PropertyTreeNode.rb:ptn
+   */
+  ptn(): PropertyTreeNode {
+    return this;
+  }
+
   allLeaves(withoutSelf: boolean = false,): PropertyTreeNode[] {
     const result: PropertyTreeNode[] = [];
     if (this.leaf()) {

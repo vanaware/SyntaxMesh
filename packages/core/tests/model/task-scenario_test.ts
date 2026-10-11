@@ -3,6 +3,7 @@ import { assert, assertEquals, assertThrows, } from "@std/assert";
 import { MockProject, } from "./mock-project.ts";
 import { Task, } from "../../src/model/task.ts";
 import { TaskScenario, } from "../../src/model/task-scenario.ts";
+import { TaskDependency, } from "../../src/scheduling/task-dependency.ts";
 import { DurationType, } from "../../src/scheduling/mod.ts";
 import { TjTime, } from "../../src/time/tj-time.ts";
 import { Resource, } from "../../src/model/resource.ts";
@@ -337,7 +338,8 @@ describe("TaskScenario", () => {
   });
 
   it("checkDependency verifica dependência", () => {
-    taskScenario.checkDependency({ taskId: "nonexistent", }, "",);
+    const dependency = new TaskDependency("nonexistent", false,);
+    taskScenario.checkDependency(dependency, "",);
     assert(taskScenario.errors() > 0,);
   });
 

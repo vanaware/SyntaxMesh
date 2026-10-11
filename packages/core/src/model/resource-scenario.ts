@@ -8,6 +8,7 @@ import { type PropertyTreeNode, } from "./property-tree-node.ts";
 import { type AttributeBase, } from "../attributes/attribute-base.ts";
 import { Scoreboard, } from "../time/scoreboard.ts";
 import { Task, } from "./task.ts";
+import { Resource, } from "./resource.ts";
 import { type Account, } from "./account.ts";
 import { TjTime, } from "../time/tj-time.ts";
 
@@ -186,7 +187,10 @@ export class ResourceScenario extends ScenarioData {
     if (limits) {
       limits.inc(sbIdx, this.getProperty() as Resource,);
     }
-    task.scenarioData(this.getScenarioIdx(),).incLimits(sbIdx, this.getProperty() as Resource,);
+    task.scenarioData(this.getScenarioIdx(),).incLimits(
+      sbIdx,
+      this.getProperty() as Resource,
+    );
 
     // Track first/last booked slots (all tasks)
     if (this.firstBookedSlot === null || this.firstBookedSlot > sbIdx) {
@@ -281,11 +285,19 @@ export class ResourceScenario extends ScenarioData {
     if ((this.getProperty() as PropertyTreeNode).container?.()) {
       let effort = 0;
       for (const child of (this.getProperty() as PropertyTreeNode).kids()) {
-        effort += (child as Resource).scenarioData(this.getScenarioIdx(),).bookedEffort();
+        effort += (child as Resource).scenarioData(this.getScenarioIdx(),)
+          .bookedEffort();
       }
       return effort;
     }
     return this.effort;
+  }
+
+  /**
+   * Sets the booked effort for this resource (for testing).
+   */
+  setEffort(value: number,): void {
+    this.effort = value;
   }
 
   /**
@@ -319,7 +331,7 @@ export class ResourceScenario extends ScenarioData {
   ): number {
     // Make sure we have the real Task and not a proxy.
     if (task && task.ptn()) {
-      task = task.ptn();
+      task = task.ptn() as Task;
     }
     // There can't be any effective work if the start is after the end or the
     // duties list doesn't contain the specified task.
@@ -336,11 +348,12 @@ export class ResourceScenario extends ScenarioData {
     if ((this.getProperty() as PropertyTreeNode).container?.()) {
       let work = 0.0;
       for (const child of (this.getProperty() as PropertyTreeNode).kids()) {
-        work += (child as Resource).scenarioData(this.getScenarioIdx(),).getEffectiveWork(
-          startIdx,
-          endIdx,
-          task,
-        );
+        work += (child as Resource).scenarioData(this.getScenarioIdx(),)
+          .getEffectiveWork(
+            startIdx,
+            endIdx,
+            task,
+          );
       }
       return work;
     }
@@ -598,7 +611,7 @@ export class ResourceScenario extends ScenarioData {
     [startIdx, endIdx,] = this.fitIndicies(startIdx, endIdx, task,);
     if (startIdx >= endIdx) return 0;
 
-    const taskList = task ? task.all : [];
+    const taskList = task ? task.all() : [];
     return this.countSlots(startIdx, endIdx, (slot,) => {
       if (!(slot instanceof Task)) return false;
       return task === null || taskList.includes(slot,);
@@ -620,7 +633,7 @@ export class ResourceScenario extends ScenarioData {
     endIdx: number,
     type: number | string,
   ): number {
-    const leaveType = typeof type === "string" ? LEAVE_TYPES[type] : type;
+    const leaveType = typeof type === "string" ? LEAVE_TYPES[type]! : type;
     return this.countSlots(
       startIdx,
       endIdx,
@@ -693,13 +706,14 @@ export class ResourceScenario extends ScenarioData {
     if ((this.getProperty() as PropertyTreeNode).container?.()) {
       let sum = 0.0;
       for (const child of (this.getProperty() as PropertyTreeNode).kids()) {
-        sum += (child as Resource).scenarioData(this.getScenarioIdx(),).treeSumR(
-          cacheTag,
-          startIdx,
-          endIdx,
-          arg,
-          block,
-        );
+        sum += (child as Resource).scenarioData(this.getScenarioIdx(),)
+          .treeSumR(
+            cacheTag,
+            startIdx,
+            endIdx,
+            arg,
+            block,
+          );
       }
       return sum;
     } else {
@@ -750,7 +764,8 @@ export class ResourceScenario extends ScenarioData {
     if ((this.getProperty() as PropertyTreeNode).container?.()) {
       let dailyRate = 0.0;
       for (const child of (this.getProperty() as PropertyTreeNode).kids()) {
-        dailyRate += (child as Resource).scenarioData(this.getScenarioIdx(),).rate();
+        dailyRate += (child as Resource).scenarioData(this.getScenarioIdx(),)
+          .rate();
       }
       return dailyRate;
     }
@@ -772,21 +787,21 @@ export class ResourceScenario extends ScenarioData {
     let amount = 0.0;
     if ((this.getProperty() as PropertyTreeNode).container?.() && includeKids) {
       for (const child of (this.getProperty() as PropertyTreeNode).kids()) {
-        amount += child.scenarioData(this.getScenarioIdx(),).turnover(
-          startIdx,
-          endIdx,
-          account,
-          task,
-        );
+        amount += (child as Resource).scenarioData(this.getScenarioIdx(),)
+          .turnover(
+            startIdx,
+            endIdx,
+            account,
+            task,
+          );
       }
     } else {
       if (task) {
-        amount += task.turnover(
-          this.getScenarioIdx(),
+        amount += (task as Task).scenarioData(this.getScenarioIdx(),).turnover(
           startIdx,
           endIdx,
           account,
-          this.getProperty(),
+          this.getProperty() as Resource,
         );
       } else if (!this.isChargesetEmpty()) {
         const totalResourceCost = this.cost(startIdx, endIdx,);

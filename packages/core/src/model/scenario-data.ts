@@ -86,7 +86,12 @@ export class ScenarioData implements AttributeContainer {
     console.warn(`[${id}] ${text}`,);
   }
 
-  info(id: string, text: string, sfi?: string | SourceFileInfo | null, property?: PropertyLike,): void {
+  info(
+    id: string,
+    text: string,
+    sfi?: string | SourceFileInfo | null,
+    property?: PropertyLike,
+  ): void {
     // TODO(#issue): Implement MessageHandler integration
     console.log(`[${id}] ${text}`,);
   }
