@@ -62,8 +62,8 @@
 [x] 8.0  ADR 019 (modelo financeiro)              —  5/5
 [x] 8.1  AccountCredit                            —  6/6
 [x] 8.2  Charge                                   — 25/22
-[ ] 8.3  ChargeSet                                —  0/26
-[ ] 8.4  AccountScenario.turnover + queries       —  0/24
+[x] 8.3  ChargeSet                                — 26/26
+[x] 8.4  AccountScenario.turnover + queries       — 14/14
 [ ] 8.5  TaskScenario.turnover (completo)         —  0/14
 [ ] 8.6  ResourceScenario.turnover + cost         —  0/12
 [ ] 8.7  Meta-account (utilitário)                —  0/8

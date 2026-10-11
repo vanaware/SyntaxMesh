@@ -51,7 +51,7 @@ export class ChargeSet {
       );
     }
     if (this.masterAccount === null) {
-      this.masterAccount = account.root();
+      this.masterAccount = account.root() as Account;
     } else if (this.masterAccount !== account.root()) {
       throw new TjArgumentError(
         `All members of this charge set must belong to the ${this.masterAccount.fullId} account. ${account.fullId} belongs to ${account.root().fullId}.`,
