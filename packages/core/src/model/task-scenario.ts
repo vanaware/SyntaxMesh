@@ -14,6 +14,9 @@ import { DurationType, } from "../scheduling/mod.ts";
 import { Limits, } from "../scheduling/limits.ts";
 import { type Account, } from "./account.ts";
 import { ResourceScenario, } from "./resource-scenario.ts";
+import { Charge, } from "../finance/charge.ts";
+import { ChargeSet, } from "../finance/charge-set.ts";
+import { TimeInterval, } from "../time/time-interval.ts";
 
 export const TASK_SCENARIO_ATTRS: string[] = [
   "allocate",
@@ -900,7 +903,7 @@ export class TaskScenario extends ScenarioData {
   ): number {
     let amount = 0.0;
     if ((this.getProperty() as Task).container?.() && includeKids) {
-      for (const child of (this.getProperty() as Task).children) {
+      for (const child of (this.getProperty() as Task).kids()) {
         amount += (child as Task).scenarioData(this.getScenarioIdx(),).turnover(
           startIdx,
           endIdx,
@@ -908,63 +911,67 @@ export class TaskScenario extends ScenarioData {
           resource,
         );
       }
-    } else {
-      // If we are evaluating the task in the context of a specific resource,
-      // we use the chargeset of that resource, not the chargeset of the task.
-      const chargeset = resource
-        ? (resource.scenarioData(this.getScenarioIdx(),) as ResourceScenario).a(
-          "chargeset",
-        )
-        : this.a("chargeset",);
+    }
+    // If we are evaluating the task in the context of a specific resource,
+    // we use the chargeset of that resource, not the chargeset of the task.
+    const chargeset = resource
+      ? (resource.scenarioData(this.getScenarioIdx(),) as ResourceScenario).a(
+        "chargeset",
+      ) as ChargeSet[]
+      : this.a("chargeset",) as ChargeSet[];
 
-      // If there are no chargeset defined for this task, we don't need to
-      // compute the resource related or other cost.
-      if (chargeset) {
-        let resourceCost = 0.0;
-        const otherCost = 0.0;
+    // If there are no chargeset defined for this task, we don't need to
+    // compute the resource related or other cost.
+    if (chargeset && chargeset.length > 0) {
+      let resourceCost = 0.0;
+      let otherCost = 0.0;
 
-        // Container tasks don't have resource cost.
-        if (!(this.getProperty() as Task).container?.()) {
-          if (resource) {
-            resourceCost = (resource.scenarioData(
+      // Container tasks don't have resource cost.
+      if (!(this.getProperty() as Task).container?.()) {
+        if (resource) {
+          resourceCost = (resource.scenarioData(
+            this.getScenarioIdx(),
+          ) as ResourceScenario).cost(
+            startIdx,
+            endIdx,
+            this.getProperty() as Task,
+          );
+        } else {
+          for (
+            const assignedResource of this.a(
+              "assignedresources",
+            ) as Resource[]
+          ) {
+            resourceCost += (assignedResource.scenarioData(
               this.getScenarioIdx(),
-            ) as ResourceScenario).cost(
-              startIdx,
-              endIdx,
-            );
-          } else {
-            for (
-              const assignedResource of this.a(
-                "assignedresources",
-              ) as Resource[]
-            ) {
-              resourceCost += (assignedResource.scenarioData(
-                this.getScenarioIdx(),
-              ) as ResourceScenario).cost(startIdx, endIdx,);
-            }
+            ) as ResourceScenario).cost(startIdx, endIdx,);
           }
         }
+      }
 
-        const charge = this.a("charge",) as unknown[];
-        if (charge && charge.length > 0) {
-          // Add one-time and periodic charges to the amount.
-          for (const chargeItem of charge) {
-            // TODO(#7): Implement charge.turnover
-            // For now, skip
-          }
+      const charge = this.a("charge",) as Charge[];
+      if (charge && charge.length > 0) {
+        // Add one-time and periodic charges to the amount.
+        const iv = new TimeInterval(
+          this.project().idxToDate(startIdx,),
+          this.project().idxToDate(endIdx,),
+        );
+        for (const chargeItem of charge) {
+          otherCost += chargeItem.turnover(iv,);
         }
+      }
 
-        const totalCost = resourceCost + otherCost;
-        // Now weight the total cost by the share of the account
-        for (const chargesetItem of chargeset as Map<Account, number>[]) {
-          for (const [accnt, share,] of chargesetItem) {
-            if (
-              share > 0.0 && (accnt === account || accnt.isChildOf?.(account,))
-            ) {
-              amount += totalCost * share;
-            }
+      const totalCost = resourceCost + otherCost;
+      // Now weight the total cost by the share of the account
+      for (const chargesetItem of chargeset as ChargeSet[]) {
+        chargesetItem.each((accnt, share,) => {
+          if (
+            share !== null &&
+            share > 0.0 && (accnt === account || accnt.isChildOf?.(account,))
+          ) {
+            amount += totalCost * share;
           }
-        }
+        });
       }
     }
 
