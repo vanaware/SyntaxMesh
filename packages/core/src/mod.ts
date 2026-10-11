@@ -30,3 +30,6 @@ export * from "./time/scoreboard-bits.ts";
 export * from "./scheduling/limits.ts";
 export * from "./scheduling/shift-assignments.ts";
 export * from "./utils/project-object-id.ts";
+
+// Phase 8 exports (re-export from finance module)
+export * from "./finance/mod.ts";
