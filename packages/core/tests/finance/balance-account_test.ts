@@ -2,6 +2,7 @@ import { beforeEach, describe, it, } from "@std/testing/bdd";
 import { assert, assertEquals, assertThrows, } from "@std/assert";
 import { MockProject, } from "../model/mock-project.ts";
 import { Account, } from "../../src/model/account.ts";
+import { AccountCredit, } from "../../src/finance/account-credit.ts";
 import { balanceAccount, } from "../../src/finance/balance-account.ts";
 import { TjTime, } from "../../src/time/tj-time.ts";
 

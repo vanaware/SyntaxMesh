@@ -57,12 +57,8 @@ function bookResource(
   const end = task.getForScenario("end", scIdx,) as TjTime;
   const startIdx = project.dateToIdx(start,);
   const endIdx = project.dateToIdx(end,);
-  console.log("Booking resource for task slots", startIdx, "to", endIdx, "(task start", start.toString(), "end", end.toString(), ")");
   for (let i = startIdx; i < endIdx; i++) {
-    const available = resourceScenario.available(i,);
-    console.log("Slot", i, "available?", available);
-    const booked = resourceScenario.book(i, task,);
-    console.log("Booked slot", i, "result", booked);
+    resourceScenario.book(i, task,);
   }
 }
 

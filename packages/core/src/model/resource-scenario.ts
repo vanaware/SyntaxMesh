@@ -11,6 +11,7 @@ import { Task, } from "./task.ts";
 import { Resource, } from "./resource.ts";
 import { type Account, } from "./account.ts";
 import { TjTime, } from "../time/tj-time.ts";
+import { ChargeSet, } from "../finance/charge-set.ts";
 
 /**
  * Shape of a leave entry as stored on the `leaves` attribute.
@@ -805,14 +806,18 @@ export class ResourceScenario extends ScenarioData {
         );
       } else if (!this.isChargesetEmpty()) {
         const totalResourceCost = this.cost(startIdx, endIdx,);
-        const chargeset = this.a("chargeset",) as Map<Account, number>;
+        const chargeset = this.a("chargeset",) as ChargeSet[];
         if (chargeset) {
-          for (const [accnt, share,] of chargeset) {
-            if (
-              share > 0.0 && (accnt === account || accnt.isChildOf?.(account,))
-            ) {
-              amount += totalResourceCost * share;
-            }
+          for (const set of chargeset) {
+            set.each((accnt, share) => {
+              if (
+                share !== null &&
+                share > 0.0 &&
+                (accnt === account || accnt.isChildOf?.(account,))
+              ) {
+                amount += totalResourceCost * share;
+              }
+            });
           }
         }
       }
@@ -826,18 +831,25 @@ export class ResourceScenario extends ScenarioData {
    * @see docs/taskjuggler/lib/taskjuggler/ResourceScenario.rb:cost
    */
   cost(startIdx: number, endIdx: number, task: Task | null = null,): number {
-    return this.getAllocatedTime(startIdx, endIdx, task,) * this.rate();
+    // Ruby uses @rate (the raw rate attribute), not the container-summing
+    // rate() method, so a group resource's own rate is used directly.
+    return this.getAllocatedTime(startIdx, endIdx, task,) * (this.a("rate",) as number);
   }
 
   /**
    * Check if the chargeset is empty.
    */
   private isChargesetEmpty(): boolean {
-    const chargeset = this.a("chargeset",) as Map<Account, number> | undefined;
+    const chargeset = this.a("chargeset",) as ChargeSet[] | undefined;
     if (!chargeset) return true;
-    for (const [, share,] of chargeset) {
-      if (share > 0.0) return false;
+    let empty = true;
+    for (const set of chargeset) {
+      set.each((_, share) => {
+        if (share !== null && share > 0.0) {
+          empty = false;
+        }
+      });
     }
-    return true;
+    return empty;
   }
 }

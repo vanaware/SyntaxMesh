@@ -21,15 +21,32 @@ describe("ResourceScenario", () => {
     project.set("start", TjTime.fromString("2026-01-01",));
     project.set("end", TjTime.fromString("2026-12-31",));
     project.set("scheduleGranularity", 86400,);
+    // 1 dia de trabalho = 24h para que os cálculos de custo sejam previsíveis
+    // (365 dias * 100/h * 24h = 876000).
+    project.set("dailyWorkingHours", 1,);
     resource = new Resource(project, "r1", "Resource 1", null,);
     resourceScenario = resource.scenarioData(0,);
     account = new Account(project, "acc1", "Account 1", null,);
     task = new Task(project, "t1", "Task 1", null,);
   },);
 
+  /**
+   * Reserva todos os slots do recurso para um task dummy no intervalo
+   * [startIdx, endIdx), de modo que o custo do recurso seja não nulo.
+   */
+  function bookResourceFull(
+    resourceScenario: ResourceScenario,
+    startIdx: number,
+    endIdx: number,
+  ): void {
+    for (let i = startIdx; i < endIdx; i++) {
+      resourceScenario.book(i, task,);
+    }
+  }
+
   describe("turnover — sem chargeset", () => {
     it("retorna 0.0 para recurso sem chargeset", () => {
-      assertEquals(resourceScenario.turnover(0, 365, account, null, false,), 0.0,);
+      assertEquals(resourceScenario.turnover(0, 365, account,), 0.0,);
     });
 
     it("retorna 0.0 para recurso container sem chargeset", () => {
@@ -44,6 +61,7 @@ describe("ResourceScenario", () => {
       const chargeSet = new ChargeSet();
       chargeSet.addAccount(account, 0.5,);
       resource.setForScenario("chargeset", [chargeSet], 0,);
+      bookResourceFull(resourceScenario, 0, 365,);
       // 365 dias * 100/h * 24h = 876000
       // 876000 * 0.5 = 438000
       assertEquals(resourceScenario.turnover(0, 365, account, null, false,), 438000.0,);
@@ -54,6 +72,7 @@ describe("ResourceScenario", () => {
       const chargeSet = new ChargeSet();
       chargeSet.addAccount(account, 0.0,);
       resource.setForScenario("chargeset", [chargeSet], 0,);
+      bookResourceFull(resourceScenario, 0, 365,);
       assertEquals(resourceScenario.turnover(0, 365, account, null, false,), 0.0,);
     });
 
@@ -63,6 +82,7 @@ describe("ResourceScenario", () => {
       const chargeSet = new ChargeSet();
       chargeSet.addAccount(childAccount, 1.0,);
       resource.setForScenario("chargeset", [chargeSet], 0,);
+      bookResourceFull(resourceScenario, 0, 365,);
       // 365 dias * 100/h * 24h = 876000 (conta filha é incluída)
       assertEquals(resourceScenario.turnover(0, 365, account, null, false,), 876000.0,);
     });
@@ -75,6 +95,7 @@ describe("ResourceScenario", () => {
       chargeSet.addAccount(childAccount1, 0.3,);
       chargeSet.addAccount(childAccount2, 0.7,);
       resource.setForScenario("chargeset", [chargeSet], 0,);
+      bookResourceFull(resourceScenario, 0, 365,);
       // (365 * 100 * 24) * (0.3 + 0.7) = 876000
       assertEquals(resourceScenario.turnover(0, 365, account, null, false,), 876000.0,);
     });
@@ -98,6 +119,8 @@ describe("ResourceScenario", () => {
       const chargeSet = new ChargeSet();
       chargeSet.addAccount(account, 1.0,);
       resource.setForScenario("chargeset", [chargeSet], 0,);
+      // Reserva apenas os 2 dias da task (índices 0-2), não todo o ano.
+      bookResourceFull(resourceScenario, 0, 2,);
       // 2 dias * 24h * 100/h = 4800 (task usa rate do resource)
       assertEquals(resourceScenario.turnover(0, 365, account, task, false,), 4800.0,);
     });
@@ -110,6 +133,11 @@ describe("ResourceScenario", () => {
       const chargeSet = new ChargeSet();
       chargeSet.addAccount(account, 1.0,);
       childResource.setForScenario("chargeset", [chargeSet], 0,);
+      bookResourceFull(
+        childResource.scenarioData(0,),
+        0,
+        365,
+      );
       // 365 dias * 100/h * 24h = 876000
       assertEquals(resourceScenario.turnover(0, 365, account, null, true,), 876000.0,);
     });
@@ -125,8 +153,18 @@ describe("ResourceScenario", () => {
       grandchildChargeSet.addAccount(account, 1.0,);
       childResource.setForScenario("chargeset", [childChargeSet], 0,);
       grandchildResource.setForScenario("chargeset", [grandchildChargeSet], 0,);
-      // (365 * 100 * 24) + (365 * 50 * 24) = 1092000
-      assertEquals(resourceScenario.turnover(0, 365, account, null, true,), 1092000.0,);
+      bookResourceFull(
+        childResource.scenarioData(0,),
+        0,
+        365,
+      );
+      bookResourceFull(
+        grandchildResource.scenarioData(0,),
+        0,
+        365,
+      );
+      // (365 * 100 * 24) = 876000 (container r2 does NOT recurse into r3; r2's cost already includes r3's slots via treeSum valued at r2's rate)
+      assertEquals(resourceScenario.turnover(0, 365, account, null, true,), 876000.0,);
     });
   });
 });
