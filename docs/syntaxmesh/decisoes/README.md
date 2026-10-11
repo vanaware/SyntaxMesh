@@ -76,7 +76,7 @@ O que foi decidido? Seja específico e acionável.
 | 016 | Pré-carregamento de atributos em `*Scenario` | Aceito | 2026-10-01 |
 | 017 | Scoreboard bit encoding em TypeScript | Concluído | 2026-10-04 |
 | 018 | Heurística do scheduler TaskJuggler | Concluído | 2026-10-05 |
-| 019 | Modelo financeiro em TypeScript | Proposto | — |
+| 019 | Modelo financeiro em TypeScript | Concluída | 2026-10-11 |
 | 020 | Orquestrador e pipeline de scheduling | Proposto | — |
 | 021 | FSM do TextParser compilado em runtime | Proposto | — |
 | 022 | i18n de keywords via LanguageRegistry | Proposto | — |

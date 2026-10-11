@@ -59,8 +59,8 @@
 ## Progresso
 
 ```
-[ ] 8.0  ADR 019 (modelo financeiro)              —  0/5
-[ ] 8.1  AccountCredit                            —  0/6
+[x] 8.0  ADR 019 (modelo financeiro)              —  5/5
+[x] 8.1  AccountCredit                            —  6/6
 [ ] 8.2  Charge                                   —  0/22
 [ ] 8.3  ChargeSet                                —  0/26
 [ ] 8.4  AccountScenario.turnover + queries       —  0/24

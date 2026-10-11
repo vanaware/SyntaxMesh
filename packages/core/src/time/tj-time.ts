@@ -1255,4 +1255,12 @@ export class TjTime {
   static getTimeZone(): string {
     return currentTimeZone;
   }
+
+  /**
+   * Convert to string using the default format "%Y-%m-%d".
+   * @returns Formatted date string
+   */
+  toString(): string {
+    return this.to_s("%Y-%m-%d",);
+  }
 }
