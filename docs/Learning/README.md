@@ -60,8 +60,8 @@ The repository is organized into incremental learning steps.
 │
 ├── mwe004/              # Financials & Resources
 │   ├── tutorial.tjp     # Accounts, Rates, Revenue, P&L
-│   ├── PnL.html         # Profit and Loss Statement
-│   └── Resources.html   # Resource cost breakdown
+│   ├── packages/core/tests/golden/PnL.html         # Profit and Loss Statement
+│   └── packages/core/tests/golden/Resources.html   # Resource cost breakdown
 │
 ├── mwe005/              # Scheduling & Availability
 │   ├── tutorial.tjp     # Shifts, Global Vacation, Task Priorities

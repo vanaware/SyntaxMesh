@@ -371,7 +371,7 @@ TOTAL: ~125
 |---|---|---|---|
 | 8.8.1 | Atualizar `scripts/golden/README.md` com seção de `finance` | idem | existe |
 | 8.8.2 | Criar `scripts/golden/finance-mwe004.rb` — roda `tj3 mwe004/tutorial.tjp` | idem | roda |
-| 8.8.3 | Lê `PnL.html` e `Resources.html`; extrai `balance`, `turnover`, `cost`, `revenue` de cada conta | idem | JSON válido |
+| 8.8.3 | Lê `packages/core/tests/golden/PnL.html` e `packages/core/tests/golden/Resources.html`; extrai `balance`, `turnover`, `cost`, `revenue` de cada conta | idem | JSON válido |
 | 8.8.4 | Serializa em `finance-mwe004.golden.json` | idem | ≥ 10 casos |
 | 8.8.5 | Criar `scripts/golden/finance-variations.rb` — casos adicionais: chargeset 100%/70-30/null, charge onStart/onEnd/perDiem, credit manual +/- , aggregate tasks vs resources, balance cost revenue | idem | ≥ 15 casos |
 | 8.8.6 | Serializa em `finance-variations.golden.json` | idem | JSON válido |

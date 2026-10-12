@@ -769,7 +769,7 @@ Rodar mwe004 + variações.
 **Script Ruby `finance-mwe004.rb`:**
 
 - [ ] Roda `tj3 mwe004/tutorial.tjp`.
-- [ ] Lê `PnL.html` e `Resources.html`.
+- [ ] Lê `packages/core/tests/golden/PnL.html` e `packages/core/tests/golden/Resources.html`.
 - [ ] Extrai valores de `balance`, `turnover`, `cost`, `revenue` para cada conta.
 - [ ] Serializa.
 

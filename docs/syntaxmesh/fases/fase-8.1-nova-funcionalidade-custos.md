@@ -79,6 +79,7 @@ This cost is automatically posted to the account defined by the material's `char
 | `perhour` | Value posted every hour | `charge 10 perhour` |
 | `perday` | Value posted every day | `charge 100 perday` |
 | `perweek` | Value posted every week | `charge 500 perweek` |
+| `permonth` | Value posted every month | `charge 1000 permonth` |
 | `distributed` | Total divided uniformly over the task | `charge 1000 distributed` |
 | `distribution { ... }` | Total divided into non-linear fractions | `charge 1000 distribution { 0.5, 0.3, 0.2 }` |
 
@@ -115,6 +116,37 @@ task "Foundation" {
   real:charge 1200 distributed
 }
 ```
+
+### 3.6 Negative Charge Semantics
+
+`charge` can be **negative** (representing monetary cost, refunds, or credits). This is useful for:
+
+- **Rebates**: `charge -500 perday` for a 5-day task → -500 × 5 = **-2500 total**
+- **Returns**: `charge -1000 onstart` for a refund
+- **Cost offsets**: `charge -200 distributed` to offset other charges
+
+**Important**: Negative values are only allowed for `charge` type. `effort` and `material` bookings **cannot** be negative:
+
+```
+// ✅ Allowed (negative charge)
+booking charge "Foundation" value -1200 on 2026-11-03
+
+// ❌ Rejected (negative effort)
+booking effort "Engineer" 2026-11-01 - 2026-11-05 { sloppy -2 }
+
+// ❌ Rejected (negative material)
+booking material "Steel" quantity -550 on 2026-11-03
+```
+
+The `ExtendedBooking` constructor enforces this:
+- `charge` type: accepts negative values (cost, refunds, credits)
+- `effort` type: rejects negative values (work cannot be negative)
+- `material` type: rejects negative values (quantity cannot be negative)
+
+This consistency ensures that:
+- `charge` represents monetary flow (can be positive or negative)
+- `effort` represents work (always non-negative)
+- `material` represents physical quantity (always non-negative)
 
 ---
 
