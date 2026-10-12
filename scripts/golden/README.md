@@ -21,6 +21,8 @@ paritária.
 | `attributes.rb` | 3 | `attributes.golden.json` | `attributes_golden_test.ts` |
 | `tjtime.rb` | 2 | `tjtime.golden.json` | `tjtime.golden.test.ts` |
 | `compute_golden.rb` | 2 | `compat-fix.golden.json` | `compat_golden_test.ts` |
+| `finance-mwe004.rb` | 8 | `finance-mwe004.golden.json` | `finance_golden_test.ts` |
+| `finance-variations.rb` | 8 | `finance-variations.golden.json` | `finance_golden_test.ts` |
 
 ## Fluxo de trabalho
 

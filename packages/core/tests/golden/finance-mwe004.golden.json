@@ -1,0 +1,91 @@
+{
+  "version": "1.0",
+  "description": "Casos financeiros extraídos de mwe004/tutorial.tjp (PnL e Resources)",
+  "generated_at": "2026-10-12T15:56:13Z",
+  "cases": [
+    {
+      "description": "Project Expenses",
+      "method": "to_tjp",
+      "type": "Account",
+      "input": {
+        "value": null
+      },
+      "expected": {
+        "balance": 0.0,
+        "cost": 0.0,
+        "revenue": 0.0,
+        "turnover": 0.0
+      }
+    },
+    {
+      "description": "Salaries",
+      "method": "to_tjp",
+      "type": "Account",
+      "input": {
+        "value": null
+      },
+      "expected": {
+        "balance": 0.0,
+        "cost": 0.0,
+        "revenue": 0.0,
+        "turnover": 0.0
+      }
+    },
+    {
+      "description": "Project Revenue",
+      "method": "to_tjp",
+      "type": "Account",
+      "input": {
+        "value": null
+      },
+      "expected": {
+        "balance": 0.0,
+        "cost": 0.0,
+        "revenue": 0.0,
+        "turnover": 0.0
+      }
+    },
+    {
+      "description": "Total",
+      "method": "to_tjp",
+      "type": "Account",
+      "input": {
+        "value": null
+      },
+      "expected": {
+        "balance": 0.0,
+        "cost": 0.0,
+        "revenue": 0.0,
+        "turnover": 0.0
+      }
+    },
+    {
+      "description": "Alice",
+      "method": "to_tjp",
+      "type": "Resource",
+      "input": {
+        "value": null
+      },
+      "expected": {
+        "effort": 2.5,
+        "cost": 0.0,
+        "revenue": 0.0,
+        "balance": 0.0
+      }
+    },
+    {
+      "description": "Bob",
+      "method": "to_tjp",
+      "type": "Resource",
+      "input": {
+        "value": null
+      },
+      "expected": {
+        "effort": 5.5,
+        "cost": 0.0,
+        "revenue": 0.0,
+        "balance": 0.0
+      }
+    }
+  ]
+}

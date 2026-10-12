@@ -24,18 +24,19 @@ resource dev "Developers" {
 /* 3. The Project Tasks */
 task project "Paid Project" {
 
-  /* All tasks charge their calculated labor cost to 'salaries' */
-  chargeset salaries
-
   task t1 "Specification" {
     effort 2d
     allocate alice
+    /* All tasks charge their calculated labor cost to 'salaries' */
+    chargeset salaries
   }
 
   task t2 "Development" {
     effort 5d
     allocate bob
     depends !t1
+    /* All tasks charge their calculated labor cost to 'salaries' */
+    chargeset salaries
   }
 
   /* Task 3: The actual work */
@@ -43,6 +44,8 @@ task project "Paid Project" {
     effort 1d
     allocate alice, bob
     depends !t2
+    /* All tasks charge their calculated labor cost to 'salaries' */
+    chargeset salaries
   }
 
   /* Task 4: The Payment Event */
