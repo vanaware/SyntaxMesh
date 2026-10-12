@@ -3,14 +3,14 @@
 Welcome to the SyntaxMesh project! This file (`AGENTS.md`) is automatically injected into the AI's system instructions. You MUST strictly adhere to the following architectural rules and constraints when modifying or extending this codebase.
 
 ## 1. Runtime & Environment (Pure Deno)
-- **Deno Only**: This project runs entirely on Deno. 
+- **Deno Only**: This project runs entirely on Deno.
 - **NO Node.js or Local NPM**: Do NOT use `npm install`, do NOT create a `node_modules` directory locally, and do NOT rely on Node.js specific APIs.
 - **Dependency Management**: All dependencies are managed exclusively via `deno.json` using `npm:` and `jsr:` specifiers (e.g., `npm:preact`, `jsr:@std/testing`).
 - **Bundling**: We use Deno's native (and unstable) bundler via the `esbuild.ts` script or esbuild (`deno task esbuild`). This script parses typescript and generates the final output exclusively in the `packages/server/build/dist/` directory.
 
 ## 2. Framework & State Management
 - **Preact**: Use Preact (not React). The configuration in `packages/ui/deno.jsonc` maps `jsx` to `preact`.
-- **State via Signals**: All reactive state MUST use `@preact/signals`. 
+- **State via Signals**: All reactive state MUST use `@preact/signals`.
   - Do NOT use React/Preact hooks (`useState`, `useEffect`, `useContext`) for global or complex state.
   - Global state, actions, and derived states (`computed`) should be centralized in `packages/ui/src/stores/`.
 - **Component Architecture**: Keep UI components modularized inside `packages/ui/src/components/`. `packages/ui/src/main.tsx` is exclusively the application entry point and bootstrap file.
@@ -46,6 +46,67 @@ Welcome to the SyntaxMesh project! This file (`AGENTS.md`) is automatically inje
   - Tests: `deno task test`.
 - **Proactive Unit Testing**: Whenever you implement new functions, utilities, or complex logic, you MUST proactively create unit tests for them using the `@std/testing/bdd` standard. Do not wait for the user to explicitly ask for tests.
 
+## 8. Current Development Plan (21 Phases)
+
+This project follows a **21-phase development plan** (previously 8 phases). The canonical plan is at `docs/syntaxmesh/fases/plano.md`. Each phase has a plan file and an atomic task file:
+
+| Fase | Descrição | Status |
+|---|---|---|
+| Fase 1 — Fundação e Workspace Deno | Esqueleto do monorepo, quality pipeline, ADRs | ✅ Concluída |
+| Fase 2 — Tempo e Geometria | Base temporal do motor. Tudo depende disso. | ✅ Concluída |
+| Fase 3 — Modelo de Atributos | Sistema de tipos de atributos com herança e scenario-specific. | ⬜ Não iniciada |
+| Fase 4 — Árvore de Propriedades | `PropertyTreeNode`, `PropertySet`, `ScenarioData`, `Scenario`, `PTNProxy`. | ⬜ Não iniciada |
+| Fase 5 — Entidades Concretas | `Task`, `Resource`, `Account`, `Shift`, `Report` (esqueleto). | ⬜ Não iniciada |
+| Fase 6 — Scoreboard e Estruturas Base | Scoreboard bit-encoded + limites + shifts. | ✅ Concluída |
+| Fase 7 — Scheduler Core | O coração. Loop slot-a-slot. | 🟡 Em andamento (7.2 TaskDependency concluída) |
+| Fase 8 — Sistema Financeiro | Custos, receitas, balanço. **Alta prioridade.** | ⬜ Não iniciada |
+| Fase 8.1 — Nova funcionalidade de custos | Material, charge estendido, booking estendido, tracking scenario. | ✅ Concluída |
+| Fase 9 — Orquestrador e Cache | `Project`, `TaskJuggler`, `DataCache`, `PropertyList`, `MessageHandler`, `Log`. | ⬜ Não iniciada |
+| Fase 10 — Parser e Linguagem | Lexer, parser FSM, gramática TJP, i18n. | ⬜ Não iniciada |
+| Fase 11 — Expressões Lógicas e Queries | Motor de expressões lógicas e ponte para reports. | ⬜ Não iniciada |
+| Fase 12 — RichText (compatibilidade TJP) | Manter Markup MediaWiki para compatibilidade total com `.tjp`. | ⬜ Não iniciada |
+| Fase 13 — Markdown (novo, futuro) | Formato going-forward. Wrapper sobre `@deno/gfm` + extensões. | ⬜ Não iniciada |
+| Fase 14 — Relatórios | Pipeline completo de relatórios. | ⬜ Não iniciada |
+| Fase 15 — Gantt | Gantt chart completo em HTML+CSS. | ⬜ Não iniciada |
+| Fase 16 — Apoio | Estruturas auxiliares. | ⬜ Não iniciada |
+| Fase 17 — HTML/XML | Geradores de HTML/XML. | ⬜ Não iniciada |
+| Fase 18 — Time/Status Sheets | Time sheets e status sheets. | ⬜ Não iniciada |
+| Fase 19 — Storage | Persistência local via `@syntaxmesh/worker-db`. | ⬜ Não iniciada |
+| Fase 20 — PWA + UI | Service Worker, manifest, Preact + Signals + BeerCSS. | ⬜ Não iniciada |
+| Fase 21 — Compatibilidade e Qualidade | Golden tests, corpus multilíngue, performance, release. | ⬜ Não iniciada |
+
+**Arquivos de referência:**
+- `docs/syntaxmesh/fases/plano.md` — plano canônico de 21 fases.
+- `docs/syntaxmesh/fases/fase-N-descricaoo.md` — plano da fase.
+- `docs/syntaxmesh/fases/fase-N-descricaoo-tarefas.md` — tarefas atômicas com testes unitários.
+- `CURRENT.md` — resumo do estado atual e instruções de contexto.
+
+## 9. Golden Tests
+
+Golden tests are generated from Ruby scripts (`scripts/golden/*.rb`) and committed as JSON in `packages/core/tests/golden/`. When implementing or modifying core functionality, extend the golden tests and run `deno task golden:generate && deno task test` before committing.
+
+## 10. Architecture Decision Records (ADRs)
+
+All important architectural decisions are documented as ADRs in `docs/syntaxmesh/decisoes/` (ADRs 001–029). Consult `docs/syntaxmesh/decisoes/README.md` for the full list. Create a new ADR for any significant architectural decision.
+
+## 11. Ruby Source Files
+
+The original TaskJuggler Ruby source files are in `docs/taskjuggler/lib/taskjuggler/`. These are the source of truth for behavior when porting features.
+
+## 12. Quality Pipeline
+
+Run `deno task check-all` for full validation:
+- `deno check` (type check)
+- `deno lint` (lint)
+- `deno fmt --check` (formatting)
+- `deno test` (tests)
+
+## 13. Important Notes
+
+- `deno task --list` returns `error: unexpected argument '--list'` — Deno 2.x lists tasks by running `deno task` with no arguments.
+- The project is a TypeScript port of TaskJuggler 3.8.4, running on Deno (no Node.js/npm), browser-only PWA.
+- Follow the rules in `docs/syntaxmesh/09-regras-para-ia.md` for golden rules of development.
+
 By following these guidelines, we maintain a fast, dependency-free, and cohesive Deno/Preact environment without the overhead of Node.js toolchains or complex CSS bundlers.
 
-We are developing an PWA app following a planned directive and tasks. Follow instruction for actual status and next task at CURRENT.md file.
+We are developing a PWA app following a planned directive and tasks. Follow instruction for actual status and next task at CURRENT.md file.
