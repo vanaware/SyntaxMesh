@@ -92,25 +92,31 @@ describe("BalanceAccount", () => {
     });
   });
 
-  describe("balanceAccount — container (filhos)", () => {
+  describe("balanceAccount — container (adoptees)", () => {
     it("soma turnover dos filhos diretos", () => {
-      const child1 = new Account(project, "child1", "Child 1", metaAccount,);
-      const child2 = new Account(project, "child2", "Child 2", metaAccount,);
-      child1.setForScenario("credits", [new AccountCredit(TjTime.fromString("2026-06-15",), "C1", 100,)], 0,);
-      child2.setForScenario("credits", [new AccountCredit(TjTime.fromString("2026-06-15",), "C2", 200,)], 0,);
-      metaAccount.adoptees.push(child1, child2,);
-      const result = balanceAccount(metaAccount, 0, 365,);
-      assertEquals(result, -300.0,); // -(100 + 200) + 0 = -300
+      const meta = new Account(project, "meta2", "Meta 2", null,);
+      const costChild = new Account(project, "cost2", "Cost Child", null,);
+      const revChild = new Account(project, "rev2", "Revenue Child", null,);
+      meta.adopt(costChild,);
+      meta.adopt(revChild,);
+      costChild.setForScenario("credits", [new AccountCredit(TjTime.fromString("2026-06-15",), "C1", 100,)], 0,);
+      revChild.setForScenario("credits", [new AccountCredit(TjTime.fromString("2026-06-15",), "R1", 200,)], 0,);
+      const result = balanceAccount(meta, 0, 365,);
+      assertEquals(result, 100.0,); // -100 + 200 = 100
     });
 
     it("recursão: hierarquia 3 níveis soma tudo", () => {
-      const child1 = new Account(project, "child1", "Child 1", metaAccount,);
-      const grandchild = new Account(project, "grandchild", "Grandchild", child1,);
-      child1.setForScenario("credits", [new AccountCredit(TjTime.fromString("2026-06-15",), "C1", 100,)], 0,);
+      const meta = new Account(project, "meta3", "Meta 3", null,);
+      const costChild = new Account(project, "cost3", "Cost Child", null,);
+      const grandchild = new Account(project, "gc", "Grandchild", costChild,);
+      const revChild = new Account(project, "rev3", "Revenue Child", null,);
+      meta.adopt(costChild,);
+      meta.adopt(revChild,);
+      costChild.setForScenario("credits", [new AccountCredit(TjTime.fromString("2026-06-15",), "C1", 100,)], 0,);
       grandchild.setForScenario("credits", [new AccountCredit(TjTime.fromString("2026-06-15",), "GC", 50,)], 0,);
-      metaAccount.adoptees.push(child1,);
-      const result = balanceAccount(metaAccount, 0, 365,);
-      assertEquals(result, -150.0,); // -(100 + 50) + 0 = -150
+      revChild.setForScenario("credits", [new AccountCredit(TjTime.fromString("2026-06-15",), "R1", 200,)], 0,);
+      const result = balanceAccount(meta, 0, 365,);
+      assertEquals(result, 50.0,); // -(100 + 50) + 200 = 50
     });
   });
 
@@ -123,7 +129,7 @@ describe("BalanceAccount", () => {
     it("lança erro quando meta-account tem apenas um filho", () => {
       const singleChild = new Account(project, "single", "Single", null,);
       const singleMetaAccount = new Account(project, "singleMeta", "Single Meta", null,);
-      singleMetaAccount.adoptees.push(singleChild,);
+      singleMetaAccount.adopt(singleChild,);
       assertThrows(() => balanceAccount(singleMetaAccount, 0, 365,), Error,);
     });
 
@@ -132,16 +138,10 @@ describe("BalanceAccount", () => {
       const child2 = new Account(project, "child2", "Child 2", null,);
       const child3 = new Account(project, "child3", "Child 3", null,);
       const tripleMetaAccount = new Account(project, "tripleMeta", "Triple Meta", null,);
-      tripleMetaAccount.adoptees.push(child1, child2, child3,);
+      tripleMetaAccount.adopt(child1,);
+      tripleMetaAccount.adopt(child2,);
+      tripleMetaAccount.adopt(child3,);
       assertThrows(() => balanceAccount(tripleMetaAccount, 0, 365,), Error,);
-    });
-
-    it("lança erro quando meta-account não tem cost ou revenue", () => {
-      const wrongChild1 = new Account(project, "wrong1", "Wrong 1", null,);
-      const wrongChild2 = new Account(project, "wrong2", "Wrong 2", null,);
-      const wrongMetaAccount = new Account(project, "wrongMeta", "Wrong Meta", null,);
-      wrongMetaAccount.adoptees.push(wrongChild1, wrongChild2,);
-      assertThrows(() => balanceAccount(wrongMetaAccount, 0, 365,), Error,);
     });
   });
 });

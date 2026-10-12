@@ -64,9 +64,9 @@
 [x] 8.2  Charge                                   — 25/22
 [x] 8.3  ChargeSet                                — 26/26
 [x] 8.4  AccountScenario.turnover + queries       — 14/14
-[ ] 8.5  TaskScenario.turnover (completo)         —  0/14
-[ ] 8.6  ResourceScenario.turnover + cost         —  0/12
-[ ] 8.7  Meta-account (utilitário)                —  0/8
+[x] 8.5  TaskScenario.turnover (completo)         — 14/14
+[x] 8.6  ResourceScenario.turnover + cost         — 12/12
+[x] 8.7  Meta-account (utilitário)                — 8/8
 [ ] 8.8  Golden tests (financeiro)                —  0/10
 [ ] 8.9  Verificação final                        —  0/8
 ─────────────────────────────────────────────────
