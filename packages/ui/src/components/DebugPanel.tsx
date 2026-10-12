@@ -6,8 +6,6 @@
 import { computed, signal, } from "@preact/signals";
 import { useEffect, } from "preact/hooks";
 import type { JSX, } from "preact";
-import { buscarChave, criarStore, salvarChave, } from "@syntaxmesh/utils/db";
-import { DB_NAMES, } from "@syntaxmesh/utils/config";
 
 export interface DebugLogEntry {
   id: string;
@@ -23,13 +21,12 @@ const DEBUG_LOG_PREFIX = "debug_log_";
 const MAX_LOGS = 200;
 const DEBUG_CHANNEL_NAME = "syntaxmesh_debug_channel";
 
-const storeConfigDB = criarStore(DB_NAMES.CONFIG,);
-
 export const isDebugEnabled = signal<boolean>(false,);
 
-buscarChave<boolean>(storeConfigDB, DEBUG_CONFIG_KEY,).then((val,) => {
-  if (val !== undefined) {
-    isDebugEnabled.value = val;
+// Carrega o estado salvo no localStorage (substituto do IndexedDB do utils)
+localStorage.getItem(DEBUG_CONFIG_KEY,).then((val,) => {
+  if (val !== null && val !== undefined) {
+    isDebugEnabled.value = val === "true";
   }
 },);
 
@@ -124,14 +121,7 @@ const filterType = signal<string>("all",);
 
 export function DebugPanel() {
   useEffect(() => {
-    salvarChave(storeConfigDB, DEBUG_CONFIG_KEY, isDebugEnabled.value,).catch(
-      (err,) => {
-        console.warn(
-          "Falha ao salvar configuração de debug no IndexedDB:",
-          err,
-        );
-      },
-    );
+    localStorage.setItem(DEBUG_CONFIG_KEY, isDebugEnabled.value.toString(),);
   }, [isDebugEnabled.value,],);
 
   const filteredLogs = computed(() => {

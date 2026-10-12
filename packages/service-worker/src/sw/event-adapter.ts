@@ -2,9 +2,9 @@
 /// <reference lib="webworker" />
 declare const self: ServiceWorkerGlobalScope;
 
-import { EventBus, } from "@syntaxmesh/utils/eventbus";
-import { APP_VERSION, } from "@syntaxmesh/utils/config";
-import { addDebugLog, } from "@syntaxmesh/utils/debug";
+import EventBus, } from "../utils/eventbus.ts";
+import { APP_VERSION, } from "../utils/config.ts";
+import { addDebugLog, } from "../utils/debug.ts";
 
 // === HANDLERS NATIVOS EXISTENTES (INFRAESTRUTURA) ===
 import { handleActivate, handleCacheFetch, handleInstall, } from "./cache.ts";

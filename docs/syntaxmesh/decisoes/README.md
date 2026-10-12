@@ -87,5 +87,6 @@ O que foi decidido? Seja específico e acionável.
 | 027 | Gantt HTML+CSS | Proposto | — |
 | 028 | Journal e AlertLevel em TypeScript | Proposto | — |
 | 029 | Substituição de XML/HTML/ICalendar/Painter mínimos | Proposto | — |
+| 030 | Arquitetura simplificada: packages/core + JSR libraries | Proposto | 2026-10-12 |
 
 > **Nota:** Manter esta tabela atualizada manualmente ou via script ao adicionar novos ADRs.

@@ -3,7 +3,7 @@
 declare const self: ServiceWorkerGlobalScope;
 declare const __GENERATED_ASSETS__: string[];
 
-import { APP_VERSION, } from "@syntaxmesh/utils/config";
+import { APP_VERSION, } from "../utils/config.ts";
 
 const CACHE_NAME = `syntaxmesh-proto-cache-v${APP_VERSION}`;
 const ASSETS_TO_CACHE: string[] = typeof __GENERATED_ASSETS__ !== "undefined"

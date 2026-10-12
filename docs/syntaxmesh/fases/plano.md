@@ -12,6 +12,8 @@
 - 1.5 — ADRs 001–008 já existentes + novos ADRs das decisões recentes (RichText mantido, Markdown futuro, worker-db centralizado, BatchProcessor adiado).
 - 1.6 — CI: `deno test`, `deno lint`, `deno fmt --check`.
 
+**Nota de arquitetura (ADR 030):** A arquitetura está planejada para ser simplificada: o desenvolvimento deve ocorrer **inteiramente em `packages/core`**, mantendo apenas `packages/server`, `packages/ui` e `packages/service-worker` como pacotes de suporte para testes. Os pacotes `packages/utils` e `packages/worker-db` serão substituídos pelas bibliotecas JSR `jsr:@vanaware/buildit` e `jsr:@vanaware/workerdb`. Enquanto isso, manter os pacotes atuais sem remover nada — a substituição será feita manualmente pelo usuário.
+
 **Critério de aceite:** `deno task test && deno task lint && deno task fmt` sem erros.
 
 ---

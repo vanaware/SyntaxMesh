@@ -4,9 +4,10 @@
   "private": false,
   "type": "module",
   "scripts": {
-    "dev": "./install-script.sh && deno task build && deno task dev",
-    "build": "deno task build",
-    "lint": "deno task lint",
-    "test": "deno task check-all"
+    "dev": "bash ./install-script.sh && deno task esbuild noversion && deno task dev",
+    "build": "bash ./install-script.sh && deno task esbuild",
+    "start": "bash ./install-script.sh && deno task start",
+    "lint": "bash ./install-script.sh && deno task lint",
+    "test": "bash ./install-script.sh && deno task tests"
   }
 }

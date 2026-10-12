@@ -1,21 +1,52 @@
 /// <reference lib="deno.ns" />
 
 import { serveDir, } from "@std/http/file-server";
+import { fromFileUrl, } from "@std/path";
 
-const port = Number(Deno.env.get("PORT",) ?? 3000,);
+const rawPort = Deno.env.get("PORT",);
+const port = rawPort ? Number(rawPort,) : 3000;
 
-Deno.serve({ port, }, async (req,) => {
+const fsRoot = (() => {
+  const distUrl = fromFileUrl(new URL("../build/dist", import.meta.url,),);
   try {
+    Deno.statSync(distUrl,);
+    return distUrl;
+  } catch {
+    try {
+      Deno.statSync("./build/dist",);
+      return "./build/dist";
+    } catch {
+      return "./packages/server/build/dist";
+    }
+  }
+})();
+
+Deno.serve({ port, hostname: "0.0.0.0", }, async (req,) => {
+  try {
+    const url = new URL(req.url,);
+    console.debug(`[REQ] ${req.method} ${url.pathname}`,);
+
     const staticResponse = await serveDir(req, {
-      fsRoot: "./build/dist",
+      fsRoot,
       showDirListing: false,
       quiet: true,
     },);
 
+    staticResponse.headers.set(
+      "Cache-Control",
+      "no-store, no-cache, must-revalidate, proxy-revalidate",
+    );
+    staticResponse.headers.set("Pragma", "no-cache",);
+    staticResponse.headers.set("Expires", "0",);
+
+    // Permitir escopo global para Service Worker
+    if (url.pathname === "/sw.js" || url.pathname.endsWith("/sw.js",)) {
+      staticResponse.headers.set("Service-Worker-Allowed", "/",);
+    }
     return staticResponse;
   } catch (err) {
     console.warn(
-      `[STATIC] Falha ao servir arquivo estático. Build ainda não foi executado?`,
+      `[STATIC] Falha ao servir arquivo estático. Verifique se Build foi executado?`,
       err instanceof Error ? err.message : err,
     );
 

@@ -1,0 +1,61 @@
+{
+  "$schema": "https://vanaware.github.io/buildit/schema/denobuild.json",
+  "versionPaths": [
+    "packages/core/src/utils/version.ts",
+    "packages/service-worker/src/utils/version.ts",
+    "packages/ui/src/utils/version.ts"
+  ],
+  "forcepackagesversion": true,
+  "targets": {
+    "ui": {
+      "default": true,
+      "srcdir": "packages/ui/src",
+      "distdir": "packages/server/build/dist",
+      "copyFiles": [
+        {
+          "basedir": "packages/ui/public"
+        },
+        {
+          "basedir": "packages/ui/src",
+          "includes": [
+            "index.html"
+          ]
+        }
+      ],
+      "clean": {
+        "includes": [
+          "*"
+        ]
+      },
+      "entryPoints": [
+        "main.tsx"
+      ],
+      "platform": "browser",
+      "format": "esm",
+      "minify": false,
+      "sourcemap": "linked",
+      "keepNames": true,
+      "codeSplitting": false,
+      "packages": "bundle",
+      "inlineImports": true
+    },
+    "sw": {
+      "default": true,
+      "defineAssetsString": "__GENERATED_ASSETS__",
+      "srcdir": "packages/service-worker/src",
+      "distdir": "packages/server/build/dist",
+      "clean": {
+        "includes": ["service-worker.js", "service-worker.js.map"]
+      },
+      "entryPoints": ["service-worker.ts"],
+      "platform": "browser",
+      "format": "esm",
+      "minify": false,
+      "sourcemap": "linked",
+      "keepNames": true,
+      "codeSplitting": false,
+      "packages": "bundle",
+      "inlineImports": true
+    }
+  }
+}
