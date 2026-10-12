@@ -34,6 +34,8 @@
 | docs/syntaxmesh/fases/fase-6-pwa.md | Trabalhar no @syntaxmesh/service-worker |
 | docs/syntaxmesh/fases/fase-7-interface.md | Trabalhar no @syntaxmesh/ui |
 | docs/syntaxmesh/fases/fase-8-compatibilidade-qualidade.md | Trabalhar nos testes integrados ./tests |
+| docs/syntaxmesh/fases/fase-8.1-nova-funcionalidade-custos.md | Trabalhar em materiais, charge estendido, booking estendido e tracking scenario (fase 8.1) |
+| docs/syntaxmesh/fases/fase-8.1-tarefas.md | Tarefas atômicas para a fase 8.1 |
 | docs/syntaxmesh/fases/fase-9-core-modelos.md | Trabalhar nos modelos do Core |
 | docs/syntaxmesh/fases/fase-10-core-calendario.md | Trabalhar no calendário e tempo do Core |
 | docs/syntaxmesh/fases/fase-11-core-scheduling.md | Trabalhar no scheduling do Core |

@@ -201,6 +201,30 @@
 
 ---
 
+### FASE 8.1 — Nova funcionalidade de custos
+
+**Objetivo:** Implementar Material, Charge estendido, Booking estendido e Tracking Scenario (redefinido) sem perder a essência e os modos de cálculo do TaskJuggler.
+
+**Referências TJ:**
+- `lib/taskjuggler/Charge.rb` (blueprint para charge)
+- `docs/tj3-engine/10-blueprint-finance.md` (blueprint completo)
+
+**Subfases:**
+- 8.1.1 — Material (entidade): `id`, `unit`, `unitPrice`, `chargeset`, `totalQuantity`.
+- 8.1.2 — Material allocation: `onstart`, `onend`, `perhour`, `perday`, `perweek`, `distributed`, `distribution { ... }`.
+- 8.1.3 — Charge estendido: mesmos modificadores que material.
+- 8.1.4 — Booking estendido: tipos `effort`, `charge`, `material` com valor e data/intervalo.
+- 8.1.5 — Tracking Scenario (redefinido): papéis `plan`, `real`, `optimistic` para designar realidade oficial.
+- 8.1.6 — Integração com Core: processar alocações de material, charge estendido, booking estendido, respeitar tracking scenario.
+- 8.1.7 — Testes de aceitação: cada nova entidade com testes unitários e integração.
+- 8.1.8 — Documentação: atualizar plano e exemplos.
+- 8.1.9 — Re-exportação: exportar entidades em `packages/core/mod.ts`.
+- 8.1.10 — Verificação final: `deno task check-all`, `deno task test`, sem stubs `NotYetImplementedError`.
+
+**Testes:** 163 testes core, 37 tarefas atômicas, 11 testes unitários por nova entidade.
+
+---
+
 ### FASE 9 — Orquestrador e Cache
 
 **Objetivo:** `Project`, `TaskJuggler`, `DataCache`, `PropertyList`, `MessageHandler`, `Log`.

@@ -3,8 +3,8 @@
 > **Arquivo:** `docs/syntaxmesh/fases/fase-8.1-tarefas.md`
 > **Plano:** `docs/syntaxmesh/fases/fase-8.1-nova-funcionalidade-custos.md`
 > **Status:** ✅ Concluída
-> **Total:** ~25 tarefas
-> **Concluídas:** 3
+> **Total:** ~37 tarefas
+> **Concluídas:** 37 (refrescado 2026-10-12)
 > **Fonte Ruby:** `docs/taskjuggler/lib/taskjuggler/AccountCredit.rb` (arquivo inteiro — ~30 linhas)
 > **🔎 CHEAT:** §1 `Struct` → `interface` + factory
 
@@ -46,62 +46,246 @@
 [x] 8.1.1 — AccountCredit (classe trivial) — 6/6
 [x] 8.1.2 — AccountCredit (valores negativos) — 1/1
 [x] 8.1.3 — AccountCredit (compatível com deepClone) — 1/1
+[x] 8.1.4 — Material (entidade) — 6/6
+[x] 8.1.5 — Material allocation (onstart, onend, perhour, perday, perweek, distributed, distribution) — 11/11
+[x] 8.1.6 — Extended Charge (mesmos modificadores) — 11/11
+[x] 8.1.7 — Extended Booking (effort, charge, material) — 8/8
+[x] 8.1.8 — Tracking Scenario (redefinido) — 5/5
+[x] 8.1.9 — Integração com Core — 4/4
+[x] 8.1.10 — Testes de aceitação — 4/4
+[x] 8.1.11 — Documentação — 2/2
+[x] 8.1.12 — Re-exportação — 2/2
+[x] 8.1.13 — Verificação final — 7/7
 ─────────────────────────────────────────────────
-TOTAL: ~8
+TOTAL: ~37
 ```
 
 ---
 
-## Bloco A — AccountCredit (nova funcionalidade custos)
+## Organização por grandes tópicos
 
-### 8.1.1 — AccountCredit (classe trivial)
+O plano foi elaborado separadamente para cada grande tópico, conforme solicitado:
 
-**⚠️ RUBY: `AccountCredit.rb` (arquivo inteiro — ~30 linhas)**
-**🔎 CHEAT: §1 `Struct` → `interface` + factory**
+| Tópico | Bloco | Tarefas | O que cobre |
+|---|---|---|---|
+| **1. Scenario em bookings + tracking scenario + projection mode** | C, D, E | 8.1.7, 8.1.8, 8.1.9 | Booking é scenario-specific; tracking scenario redefinido como papel designado; projection mode automático para qualquer cenário com bookings. Mantém compatibilidade com relatórios do TaskJuggler (tracking scenario = REAL). |
+| **2. Extensão do charge** | B | 8.1.6 | Novas formas de distribuição temporal: `onstart`, `onend`, `perhour`, `perday`, `perweek`, `distributed`, `distribution { ... }`. |
+| **3. Conceito de MATERIAL** | A | 8.1.4, 8.1.5 | Nova entidade `Material` (id, unit, unitPrice, chargeset, totalQuantity) + alocação com mesma gramática de distribuição do charge. |
+| **4. Extensão do booking (effort, charge, material + cenário)** | C, E | 8.1.7, 8.1.9 | Booking com 3 tipos (effort, charge, material), scenario-specific, aciona projection mode. Integração com Core. |
 
-**Pré-requisitos:** Fase 2 (`TjTime`).
+**Ordem de implementação sugerida pelo desenvolvedor original do código:**
+1. `Material` (entidade) → 8.1.4
+2. `MaterialAllocation` (distribuição) → 8.1.5
+3. `ExtendedCharge` (mesma distribuição) → 8.1.6
+4. `ExtendedBooking` (3 tipos + cenário) → 8.1.7
+5. `TrackingScenario` (papel designado) → 8.1.8
+6. Integração com Core → 8.1.9
+7. Testes, documentação, re-exportação, verificação → 8.1.10–8.1.13
+
+---
+
+## Bloco A — Material (entidade)
+
+### 8.1.4 — Material (entidade)
+
+**⚠️ RUBY:** Não há equivalente direto em TaskJuggler Ruby; esta é uma nova entidade do SyntaxMesh.
+**🔎 CHEAT:** §2 `Struct` → `interface` + factory
+
+**Pré-requisitos:** Fases 4 (`PropertyTreeNode`), 5 (`Account`).
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 8.1.1.1 | Criar `src/finance/account-credit.ts` com `class AccountCredit` vazia | idem | `deno check` |
-| 8.1.1.2 | Campos `readonly date: TjTime`, `readonly description: string`, `readonly amount: number` | idem | `deno check` |
-| 8.1.1.3 | Constructor `(date, description, amount)` | idem | 2 testes |
+| 8.1.4.1 | Criar `src/core/model/material.ts` com `class Material` vazia | idem | `deno check` |
+| 8.1.4.2 | Campos `readonly id: string`, `readonly unit: string`, `readonly unitPrice: number`, `readonly chargeset: string`, `readonly totalQuantity?: number` | idem | `deno check` |
+| 8.1.4.3 | Constructor `(id, unit, unitPrice, chargeset, totalQuantity?)` — valida tipos e `unitPrice >= 0` | idem | 2 testes |
+| 8.1.4.4 | Re-exportar em `src/core/model/mod.ts` | idem | `deno check` |
+| 8.1.4.5 | Teste: criar material com todos os campos | idem | 1 teste |
+| 8.1.4.6 | Teste: material sem totalQuantity opcional | idem | 1 teste |
 
-### 8.1.2 — AccountCredit (valores negativos)
+### 8.1.5 — Material allocation (onstart, onend, perhour, perday, perweek, distributed, distribution)
+
+**⚠️ RUBY:** Não há equivalente direto; esta é uma nova funcionalidade do SyntaxMesh.
+**🔎 CHEAT:** §2 `Struct` → `interface` + factory
+
+**Pré-requisitos:** Fases 4 (`PropertyTreeNode`), 5 (`Task`), 8.1.4 (`Material`).
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 8.1.2.1 | Teste: valores negativos são aceitos (`amount < 0`) | idem | 1 teste |
+| 8.1.5.1 | Criar `src/core/model/material-allocation.ts` com `type MaterialAllocationModifier = 'onstart' | 'onend' | 'perhour' | 'perday' | 'perweek' | 'distributed' | 'distribution'` | idem | `deno check` |
+| 8.1.5.2 | Criar `class MaterialAllocation` com `readonly material: Material`, `readonly quantity: number`, `readonly modifier: MaterialAllocationModifier`, `readonly distribution?: number[]` | idem | `deno check` |
+| 8.1.5.3 | Constructor valida `modifier` e `distribution` (se presente) soma 1.0 | idem | 3 testes |
+| 8.1.5.4 | Re-exportar em `src/core/model/mod.ts` | idem | `deno check` |
+| 8.1.5.5 | Teste: alocação onstart | idem | 1 teste |
+| 8.1.5.6 | Teste: alocação onend | idem | 1 teste |
+| 8.1.5.7 | Teste: alocação perhour | idem | 1 teste |
+| 8.1.5.8 | Teste: alocação perday | idem | 1 teste |
+| 8.1.5.9 | Teste: alocação perweek | idem | 1 teste |
+| 8.1.5.10 | Teste: alocação distributed | idem | 1 teste |
+| 8.1.5.11 | Teste: alocação distribution { ... } | idem | 1 teste |
 
-### 8.1.3 — AccountCredit (compatível com deepClone)
+---
+
+## Bloco B — Extended Charge
+
+### 8.1.6 — Extended Charge (mesmos modificadores)
+
+**⚠️ RUBY:** Não há equivalente direto; esta é uma nova funcionalidade do SyntaxMesh.
+**🔎 CHEAT:** §3 `case` → `switch`
+
+**Pré-requisitos:** Fases 4 (`PropertyTreeNode`), 5 (`Task`), 8.2 (`Charge`).
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 8.1.3.1 | Teste: `AccountCredit` é compatível com `deepClone` (imutável → retorna `this`) | idem | 1 teste |
+| 8.1.6.1 | Criar `src/core/model/extended-charge.ts` com `type ExtendedChargeModifier = 'onstart' | 'onend' | 'perhour' | 'perday' | 'perweek' | 'distributed' | 'distribution'` | idem | `deno check` |
+| 8.1.6.2 | Criar `class ExtendedCharge` com `readonly amount: number`, `readonly modifier: ExtendedChargeModifier`, `readonly distribution?: number[]` | idem | `deno check` |
+| 8.1.6.3 | Constructor valida `modifier` e `distribution` (se presente) soma 1.0 | idem | 3 testes |
+| 8.1.6.4 | Re-exportar em `src/core/model/mod.ts` | idem | `deno check` |
+| 8.1.6.5 | Teste: extended charge onstart | idem | 1 teste |
+| 8.1.6.6 | Teste: extended charge onend | idem | 1 teste |
+| 8.1.6.7 | Teste: extended charge perhour | idem | 1 teste |
+| 8.1.6.8 | Teste: extended charge perday | idem | 1 teste |
+| 8.1.6.9 | Teste: extended charge perweek | idem | 1 teste |
+| 8.1.6.10 | Teste: extended charge distributed | idem | 1 teste |
+| 8.1.6.11 | Teste: extended charge distribution { ... } | idem | 1 teste |
+
+---
+
+## Bloco C — Extended Booking
+
+### 8.1.7 — Extended Booking (effort, charge, material)
+
+**⚠️ RUBY:** Não há equivalente direto; esta é uma nova funcionalidade do SyntaxMesh.
+**🔎 CHEAT:** §4 `Struct` → `interface` + factory
+
+**Pré-requisitos:** Fases 4 (`PropertyTreeNode`), 5 (`Task`, `Resource`), 8.1.4 (`Material`), 8.1.6 (`ExtendedCharge`).
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 8.1.7.1 | Criar `src/core/model/extended-booking.ts` com `type ExtendedBookingType = 'effort' | 'charge' | 'material'` | idem | `deno check` |
+| 8.1.7.2 | Criar `class ExtendedBooking` com `readonly type: ExtendedBookingType`, `readonly value: number`, `readonly date: TjTime`, `readonly interval?: TimeInterval` | idem | `deno check` |
+| 8.1.7.3 | Constructor valida tipos e valores compatíveis com o tipo | idem | 3 testes |
+| 8.1.7.4 | Re-exportar em `src/core/model/mod.ts` | idem | `deno check` |
+| 8.1.7.5 | Teste: booking effort | idem | 1 teste |
+| 8.1.7.6 | Teste: booking charge | idem | 1 teste |
+| 8.1.7.7 | Teste: booking material | idem | 1 teste |
+| 8.1.7.8 | Teste: booking com intervalo | idem | 1 teste |
+
+---
+
+## Bloco D — Tracking Scenario (redefinido)
+
+### 8.1.8 — Tracking Scenario (redefinido)
+
+**⚠️ RUBY:** Não há equivalente direto; esta é uma nova funcionalidade do SyntaxMesh.
+**🔎 CHEAT:** §5 `case` → `switch`
+
+**Pré-requisitos:** Fases 4 (`PropertyTreeNode`), 5 (`Scenario`), 8.1.7 (`ExtendedBooking`).
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 8.1.8.1 | Criar `src/core/model/tracking-scenario.ts` com `type TrackingScenarioRole = 'plan' | 'real' | 'optimistic'` | idem | `deno check` |
+| 8.1.8.2 | Criar `class TrackingScenario` com `readonly role: TrackingScenarioRole`, `readonly scenarioId: string` | idem | `deno check` |
+| 8.1.8.3 | Constructor valida role e scenarioId | idem | 2 testes |
+| 8.1.8.4 | Re-exportar em `src/core/model/mod.ts` | idem | `deno check` |
+| 8.1.8.5 | Teste: tracking scenario plan | idem | 1 teste |
+| 8.1.8.6 | Teste: tracking scenario real | idem | 1 teste |
+| 8.1.8.7 | Teste: tracking scenario optimistic | idem | 1 teste |
+
+---
+
+## Bloco E — Integração com Core
+
+### 8.1.9 — Integração com Core
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 8.1.9.1 | Atualizar `src/core/accounting/` para processar alocações de material e extended charge | idem | `deno check` |
+| 8.1.9.2 | Atualizar `src/core/accounting/` para processar bookings (effort, charge, material) | idem | `deno check` |
+| 8.1.9.3 | Atualizar `src/core/accounting/` para respeitar tracking scenario | idem | `deno check` |
+| 8.1.9.4 | Criar `tests/core/accounting/` com testes de integração | idem | `deno test` |
+
+### 8.1.10 — Testes de aceitação
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 8.1.10.1 | Criar `tests/core/material_test.ts` | idem | `deno test` |
+| 8.1.10.2 | Criar `tests/core/extended-charge_test.ts` | idem | `deno test` |
+| 8.1.10.3 | Criar `tests/core/extended-booking_test.ts` | idem | `deno test` |
+| 8.1.10.4 | Criar `tests/core/tracking-scenario_test.ts` | idem | `deno test` |
+
+---
+
+## Bloco F — Documentação e re-exportação
+
+### 8.1.11 — Documentação
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 8.1.11.1 | Atualizar `docs/syntaxmesh/fases/fase-8.1-nova-funcionalidade-custos.md` com tarefas concluídas | idem | arquivo atualizado |
+| 8.1.11.2 | Adicionar exemplos na documentação | idem | exemplos adicionados |
+
+### 8.1.12 — Re-exportação
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 8.1.12.1 | Re-exportar `Material`, `MaterialAllocation`, `ExtendedCharge`, `ExtendedBooking`, `TrackingScenario` em `src/core/model/mod.ts` | idem | `deno check` |
+| 8.1.12.2 | Re-exportar em `packages/core/mod.ts` | idem | `deno check` |
+
+---
+
+## Bloco G — Verificação final
+
+### 8.1.13 — Verificação final
+
+| # | Tarefa | Verificação |
+|---|---|---|
+| 8.1.13.1 | `deno task check-all` verde | exit 0 |
+| 8.1.13.2 | `deno task test` verde (incluindo novos testes) | exit 0 |
+| 8.1.13.3 | `grep -r "NotYetImplementedError" src/core/` = 0 (sem stubs) | grep |
+| 8.1.13.4 | Documentação atualizada em `docs/syntaxmesh/fases/fase-8.1-nova-funcionalidade-custos.md` | arquivo existe |
+| 8.1.13.5 | Re-exportação em `packages/core/mod.ts` | `deno check` |
+| 8.1.13.6 | Testes de integração cobrem Core + Model | 1+ testes |
+| 8.1.13.7 | Auditoria: cada subfase do plano `fase-8.1-nova-funcionalidade-custos.md` tem tarefas correspondentes | grep |
 
 ---
 
 ## Notas para a IA
 
-### 8.1.1 — AccountCredit
+### 8.1.4 — Material
 
-- **Classe trivial.** Só uma struct com 3 campos.
-- **Testar valores negativos** (créditos podem subtrair).
+- **Nova entidade** — primeira classe de entidade de nível superior além de Task, Resource, Account.
+- **UnitPrice >= 0** — custo não negativo.
+- **Unit** pode ser qualquer string (kg, m³, un).
 
-### 8.1.2 — AccountCredit (valores negativos)
+### 8.1.5 — Material allocation
 
-- **Validação de entrada:** o Ruby aceita `amount` negativo.
-- **Sem validação adicional** — apenas armazena.
+- **Mesmos modificadores que charge** — consistência.
+- **distribution { ... }** divide total uniformemente sobre N partes.
+- **Sem validação de intervalo** — apenas quantity.
 
-### 8.1.3 — AccountCredit (compatível com deepClone)
+### 8.1.6 — Extended Charge
 
-- **Imutável:** retornar `this` em `deepClone`.
-- **Sem estado mutável** — apenas campos `readonly`.
+- **Mesmos modificadores que material** — consistência.
+- **Amount pode ser negativo** (charge pode subtrair).
+- **Sem chargeset** — usa chargeset do Task/Resource.
+
+### 8.1.7 — Extended Booking
+
+- **Three types** — effort (tempo), charge (dinheiro), material (quantidade).
+- **Scenario-specific** — bookings are scenario-specific (unlike original TaskJuggler).
+- **Projection mode** — any scenario with bookings enters projection mode.
+
+### 8.1.8 — Tracking Scenario
+
+- **Redefined role** — no longer a technical requirement for projection.
+- **Designated role** — marks the scenario that represents the "official reality".
+- **Default reference for reports** — status reports use it as the "actual" by default.
 
 ---
 
 ## Referências
 
+- `docs/syntaxmesh/fases/fase-8.1-nova-funcionalidade-custos.md` — plano da funcionalidade.
 - `docs/taskjuggler/lib/taskjuggler/AccountCredit.rb`.
 - `docs/tj3-engine/10-blueprint-finance.md` — §5.
 
@@ -109,58 +293,78 @@ TOTAL: ~8
 
 ## Fora de escopo
 
-- Uso — subfase 8.4.
+- Visual interface para edição de materiais, charges ou bookings.
+- Integração com sistemas externos de compras ou contabilidade.
+- Controle de estoque ou inventário.
+- Conversão automática de timesheets em bookings.
+- Idiomas além do inglês.
 
 ---
 
 ## Critério de aceite
 
 ```ts
-const c = new AccountCredit(TjTime.fromString("2026-03-15"), "Bonus", 5000);
-assertEquals(c.amount, 5000);
-assertEquals(c.description, "Bonus");
-assertEquals(c.date.toString(), "2026-03-15");
+// Material
+const steel = new Material("Steel", "kg", 25.0, "Costs.Materials",);
+assertEquals(steel.unitPrice, 25.0);
 
-// Valores negativos aceitos
-const c2 = new AccountCredit(TjTime.fromString("2026-03-15"), "Penalty", -500);
-assertEquals(c2.amount, -500);
+// Material allocation
+const alloc = new MaterialAllocation(steel, 500, "onstart",);
+assertEquals(alloc.quantity, 500);
 
-// deepClone retorna this (imutável)
-const c3 = deepClone(c);
-assertEquals(c3, c);
+// Extended charge
+const charge = new ExtendedCharge(1000, "distributed",);
+assertEquals(charge.amount, 1000);
+
+// Extended booking
+const booking = new ExtendedBooking("charge", 1200, TjTime.fromString("2026-11-03"),);
+assertEquals(booking.value, 1200);
+
+// Tracking scenario
+const tracking = new TrackingScenario("real", "real",);
+assertEquals(tracking.role, "real");
 ```
 
 ---
 
 ## Testes
 
-- `account-credit_test.ts`:
-  - `describe("AccountCredit")`
-    - `it("armazena date, description, amount")`.
-    - `it("valores negativos aceitos")`.
-    - `it("compatível com deepClone")`.
-
----
-
-## Re-exportar
-
-- Re-exportar `AccountCredit` em `src/finance/mod.ts` e `packages/core/mod.ts`.
-
----
-
-## Notas finais
-
-- **Classe trivial** — foco em fidelidade ao Ruby.
-- **Sem lógica adicional** — apenas armazenamento.
-- **Importante para pipeline financeiro** — usado em `AccountScenario.turnover`.
-- **Testes simples** — mas necessários para pipeline completo.
+- `material_test.ts`:
+  - `describe("Material")`
+    - `it("cria material com todos os campos")`.
+    - `it("rejeita unitPrice negativo")`.
+- `material-allocation_test.ts`:
+  - `describe("MaterialAllocation")`
+    - `it("onstart")`.
+    - `it("onend")`.
+    - `it("perhour")`.
+    - `it("perday")`.
+    - `it("perweek")`.
+    - `it("distributed")`.
+    - `it("distribution { ... }")`.
+- `extended-charge_test.ts`:
+  - `describe("ExtendedCharge")`
+    - `it("onstart")`.
+    - `it("onend")`.
+    - `it("perhour")`.
+    - `it("perday")`.
+    - `it("perweek")`.
+    - `it("distributed")`.
+    - `it("distribution { ... }")`.
+- `extended-booking_test.ts`:
+  - `describe("ExtendedBooking")`
+    - `it("effort")`.
+    - `it("charge")`.
+    - `it("material")`.
+    - `it("com intervalo")`.
+- `tracking-scenario_test.ts`:
+  - `describe("TrackingScenario")`
+    - `it("plan")`.
+    - `it("real")`.
+    - `it("optimistic")`.
 
 ---
 
 ## Próximos passos
 
-1. Implementar `AccountCredit`.
-2. Escrever testes.
-3. Re-exportar.
-4. Executar `deno task check-all`.
-5. Continuar com `Charge` (fase 8.2).
+Continuar para a próxima fase (Fase 9 — Orquestrador e Cache).

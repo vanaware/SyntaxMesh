@@ -7,3 +7,4 @@
 export * from "./account-credit.ts";
 export * from "./charge.ts";
 export * from "./charge-set.ts";
+export * from "./balance-account.ts";
