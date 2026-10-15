@@ -235,6 +235,8 @@ deno task audit:phase N
 | 6 | `fase-6-scoreboard-estruturas.md` | ⬜ Não iniciada |
 | 7 | `fase-7-scheduler-core.md` | ⬜ Não iniciada |
 | 8 | `fase-8-financeiro.md` | ⬜ Não iniciada |
+| 8.1 | [Materiais + Charge/Booking estendidos](./fase-8.1-nova-funcionalidade-custos.md) | Extensões do SyntaxMesh | ⬜ |
+| 8.2 | [Modelo Contábil Estendido](./fase-8.2-modelo-contabil-estendido.md) | Reescreve agregação contábil | ⬜ |
 | 9 | `fase-9-orquestrador-cache.md` | ⬜ Não iniciada |
 | 10 | `fase-10-parser-linguagem.md` | ⬜ Não iniciada |
 | 11 | `fase-11-logica-queries.md` | ⬜ Não iniciada |

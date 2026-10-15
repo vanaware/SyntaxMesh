@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "description": "Casos financeiros extraídos de mwe004/tutorial.tjp (PnL e Resources)",
-  "generated_at": "2026-10-12T15:56:13Z",
+  "generated_at": "2026-10-13T20:30:43Z",
   "cases": [
     {
       "description": "Project Expenses",
@@ -67,7 +67,7 @@
         "value": null
       },
       "expected": {
-        "effort": 2.5,
+        "effort": 0.0,
         "cost": 0.0,
         "revenue": 0.0,
         "balance": 0.0
@@ -81,7 +81,7 @@
         "value": null
       },
       "expected": {
-        "effort": 5.5,
+        "effort": 0.0,
         "cost": 0.0,
         "revenue": 0.0,
         "balance": 0.0

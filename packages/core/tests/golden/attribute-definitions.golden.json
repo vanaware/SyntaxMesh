@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "description": "Golden test for AttributeDefinitions",
-  "generated_at": "2026-10-06T01:18:38Z",
+  "generated_at": "2026-10-13T21:24:32Z",
   "cases": [
     {
       "id": "accountroot",
@@ -40,7 +40,9 @@
       "inheritedFromParent": true,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [],
+      "default": [
+
+      ],
       "userDefined": false
     },
     {
@@ -60,7 +62,9 @@
       "inheritedFromParent": false,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [],
+      "default": [
+
+      ],
       "userDefined": false
     },
     {
@@ -80,7 +84,9 @@
       "inheritedFromParent": false,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [],
+      "default": [
+
+      ],
       "userDefined": false
     },
     {
@@ -160,7 +166,9 @@
       "inheritedFromParent": false,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [],
+      "default": [
+
+      ],
       "userDefined": false
     },
     {
@@ -170,7 +178,9 @@
       "inheritedFromParent": true,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [],
+      "default": [
+
+      ],
       "userDefined": false
     },
     {
@@ -180,7 +190,9 @@
       "inheritedFromParent": true,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [],
+      "default": [
+
+      ],
       "userDefined": false
     },
     {
@@ -190,7 +202,9 @@
       "inheritedFromParent": true,
       "inheritedFromProject": false,
       "scenarioSpecific": false,
-      "default": [],
+      "default": [
+
+      ],
       "userDefined": false
     },
     {
@@ -200,7 +214,9 @@
       "inheritedFromParent": false,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [],
+      "default": [
+
+      ],
       "userDefined": false
     },
     {
@@ -230,7 +246,9 @@
       "inheritedFromParent": false,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [],
+      "default": [
+
+      ],
       "userDefined": false
     },
     {
@@ -282,7 +300,9 @@
       "inheritedFromParent": true,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [],
+      "default": [
+
+      ],
       "userDefined": false
     },
     {
@@ -292,7 +312,9 @@
       "inheritedFromParent": false,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [],
+      "default": [
+
+      ],
       "userDefined": false
     },
     {
@@ -312,7 +334,9 @@
       "inheritedFromParent": false,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [],
+      "default": [
+
+      ],
       "userDefined": false
     },
     {
@@ -402,7 +426,9 @@
       "inheritedFromParent": false,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [],
+      "default": [
+
+      ],
       "userDefined": false
     },
     {
@@ -412,7 +438,9 @@
       "inheritedFromParent": false,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [],
+      "default": [
+
+      ],
       "userDefined": false
     },
     {
@@ -432,7 +460,9 @@
       "inheritedFromParent": false,
       "inheritedFromProject": false,
       "scenarioSpecific": false,
-      "default": [],
+      "default": [
+
+      ],
       "userDefined": false
     },
     {
@@ -442,7 +472,9 @@
       "inheritedFromParent": false,
       "inheritedFromProject": false,
       "scenarioSpecific": false,
-      "default": [],
+      "default": [
+
+      ],
       "userDefined": false
     },
     {
@@ -452,7 +484,9 @@
       "inheritedFromParent": true,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [],
+      "default": [
+
+      ],
       "userDefined": false
     },
     {
@@ -462,7 +496,9 @@
       "inheritedFromParent": true,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [],
+      "default": [
+
+      ],
       "userDefined": false
     },
     {
@@ -472,7 +508,9 @@
       "inheritedFromParent": true,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [],
+      "default": [
+
+      ],
       "userDefined": false
     },
     {
@@ -482,7 +520,9 @@
       "inheritedFromParent": true,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [],
+      "default": [
+
+      ],
       "userDefined": false
     },
     {
@@ -502,7 +542,9 @@
       "inheritedFromParent": true,
       "inheritedFromProject": false,
       "scenarioSpecific": false,
-      "default": [],
+      "default": [
+
+      ],
       "userDefined": false
     },
     {
@@ -754,7 +796,9 @@
       "inheritedFromParent": true,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [],
+      "default": [
+
+      ],
       "userDefined": false
     },
     {
@@ -764,7 +808,9 @@
       "inheritedFromParent": true,
       "inheritedFromProject": true,
       "scenarioSpecific": true,
-      "default": [],
+      "default": [
+
+      ],
       "userDefined": false
     },
     {
@@ -774,7 +820,9 @@
       "inheritedFromParent": true,
       "inheritedFromProject": true,
       "scenarioSpecific": true,
-      "default": [],
+      "default": [
+
+      ],
       "userDefined": false
     },
     {
@@ -834,7 +882,9 @@
       "inheritedFromParent": true,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [],
+      "default": [
+
+      ],
       "userDefined": false
     },
     {
@@ -1034,7 +1084,9 @@
       "inheritedFromParent": true,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [],
+      "default": [
+
+      ],
       "userDefined": false
     },
     {
@@ -1124,7 +1176,9 @@
       "inheritedFromParent": false,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [],
+      "default": [
+
+      ],
       "userDefined": false
     },
     {
@@ -1156,7 +1210,9 @@
       "inheritedFromParent": true,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [],
+      "default": [
+
+      ],
       "userDefined": false
     },
     {
@@ -1429,7 +1485,9 @@
       "inheritedFromParent": false,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [],
+      "default": [
+
+      ],
       "userDefined": false
     },
     {
@@ -1439,7 +1497,9 @@
       "inheritedFromParent": false,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [],
+      "default": [
+
+      ],
       "userDefined": false
     },
     {
@@ -1591,7 +1651,9 @@
       "inheritedFromParent": false,
       "inheritedFromProject": false,
       "scenarioSpecific": false,
-      "default": [],
+      "default": [
+
+      ],
       "userDefined": false
     },
     {
@@ -1601,7 +1663,9 @@
       "inheritedFromParent": false,
       "inheritedFromProject": false,
       "scenarioSpecific": false,
-      "default": [],
+      "default": [
+
+      ],
       "userDefined": false
     },
     {
@@ -1646,3 +1710,4 @@
     }
   ]
 }
+

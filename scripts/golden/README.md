@@ -93,3 +93,68 @@ Ao adicionar um novo tipo de atributo ou corrigir comportamento:
 3. `deno task test` — verificar que os testes passam.
 4. Commitar os três arquivos juntos (`attributes.rb`, `.golden.json`,
    `_golden_test.ts` se houver).
+
+## Finance Golden Tests (Fase 8.8)
+
+Os testes golden financeiros geram casos a partir de arquivos `.tjp` do TaskJuggler
+(`tj3`) e comparam os valores de relatórios (PnL, Resources) com a
+implementação TypeScript.
+
+### Arquivos
+
+- `scripts/golden/finance-mwe004.rb` — gera `finance-mwe004.golden.json`
+- `scripts/golden/finance-variations.rb` — gera `finance-variations.golden.json`
+- `packages/core/tests/golden/finance_golden_test.ts` — testes que carregam os JSONs e validam os valores
+
+### Fluxo de trabalho
+
+```bash
+# Gerar golden para mwe004 (caso base)
+ruby scripts/golden/finance-mwe004.rb
+# Gerar golden para variações (casos adicionais)
+ruby scripts/golden/finance-variations.rb
+# Rodar testes
+npm test
+```
+
+### Regras Específicas
+
+1. **`balance cost rev` deve estar NO ESCOPO DO PROJETO** (fora do bloco `project`)
+2. **`chargeset` em tarefas aponta para um `Account` (não um `Resource`)**
+3. **`charge` e `effort` são tratados como custos**
+4. **`charge` com `onend` gera custo no final da tarefa**
+5. **`charge` com `onstart` gera custo no início**
+6. **`charge` com `perday` gera custo diário**
+7. **`charge` com `perhour`/`perweek` são convertidos para `perday`**
+8. **`charge` negativo é permitido (créditos)**
+9. **`effort` negativo é rejeitado**
+10. **`chargeset` em recursos usa `resource.chargeset`**
+
+### Diagnóstico de valores zero
+
+Se os valores golden são todos 0.0:
+
+1. **Verifique `balance cost rev`** — deve estar no escopo correto
+2. **Verifique `chargeset`** — deve apontar para um Account válido
+3. **Verifique `rate`** — recursos devem ter rate definido
+4. **Verifique `effort`** — tarefas devem ter effort definido
+5. **Verifique `charge`** — deve estar no escopo correto
+6. **Verifique `now`** — deve estar dentro do período do projeto
+7. **Verifique `depends`** — tarefas devem ter start/end constraints
+
+### Exemplo de caso golden
+
+```json
+{
+  "description": "Project Expenses",
+  "method": "to_tjp",
+  "type": "Account",
+  "input": { "value": null },
+  "expected": {
+    "balance": 1000.0,
+    "cost": 800.0,
+    "revenue": 200.0,
+    "turnover": 600.0
+  }
+}
+```

@@ -1,85 +1,83 @@
-project prj "Cost & Resource Project" "1.0" 2024-08-01 - 2024-08-31 {
+project prj "Cost & Resource Project" "1.0" 2024-08-01 - 2024-11-30 {
+  timezone "Europe/Paris"
   timeformat "%Y-%m-%d"
-  now 2024-08-01
+  now 2024-09-15
   currency "USD"
 }
 
-/* 1. Accounts */
-account cost "Project Expenses" {
-  account salaries "Salaries"
+rate 390.0
+
+account cost "Project Cost" {
+  account dev "Development"
 }
+account rev "Payments"
+balance cost rev
 
-account rev "Project Revenue"
-
-/* 2. Resources with Rates */
 resource dev "Developers" {
-  resource alice "Alice" {
-    rate 400.0
+  resource dev1 "Paul Smith" {
+    rate 350.0
   }
-  resource bob "Bob" {
+  resource dev2 "Sébastien Bono" {
     rate 300.0
   }
 }
 
-/* 3. The Project Tasks */
-task project "Paid Project" {
+task AcSo "Accounting Software" {
+  chargeset dev
+  charge 170 perday
+  responsible dev1
 
-  task t1 "Specification" {
-    effort 2d
-    allocate alice
-    /* All tasks charge their calculated labor cost to 'salaries' */
-    chargeset salaries
+  task spec "Specification" {
+    effort 20d
+    allocate dev1, dev2
   }
 
-  task t2 "Development" {
-    effort 5d
-    allocate bob
-    depends !t1
-    /* All tasks charge their calculated labor cost to 'salaries' */
-    chargeset salaries
+  task software "Software Development" {
+    depends !spec
+    responsible dev1
+    task database "Database coupling" {
+      effort 20d
+      allocate dev1, dev2
+    }
+    task gui "Graphical User Interface" {
+      effort 35d
+      depends !database
+      allocate dev2
+    }
   }
 
-  /* Task 3: The actual work */
-  task t3 "Delivery Work" {
-    effort 1d
-    allocate alice, bob
-    depends !t2
-    /* All tasks charge their calculated labor cost to 'salaries' */
-    chargeset salaries
-  }
-
-  /* Task 4: The Payment Event */
-  task t4 "Payment Received" {
-    milestone
-    depends !t3
-
-    /* Switch the account bucket for this specific task to 'rev' */
+  task deliveries "Milestones" {
+    purge chargeset
     chargeset rev
 
-    /* Book a fixed amount upon completion */
-    charge 5000.0 onend
+    task start "Project start" {
+      start ${projectstart}
+      charge 21000.0 onstart
+    }
+    task beta "Beta version" {
+      depends !!software.gui
+      charge 13000.0 onstart
+    }
   }
 }
 
-/* 4. Financial Report */
-accountreport "PnL" {
+taskreport overview "overview" {
   formats html
-  headline "Profit and Loss Statement"
-
-  /* FIX: 'total' is removed.
-     'monthly' shows the data for each month.
-     'balance cost rev' calculates Revenue - Cost for those cells. */
-  columns name, monthly
-
+  columns bsi { title 'WBS' },
+          name, start, end, effort, cost,
+          revenue, chart { }
+  timeformat "%a %Y-%m-%d"
+  loadunit days
+  hideresource @all
   balance cost rev
+  caption 'All effort values are in man days.'
 }
 
-/* 5. Resource Usage Report */
-resourcereport "Resources" {
+resourcereport resourceGraph "resourceGraph" {
   formats html
-  headline "Resource Costs"
-  columns name, effort, cost, revenue
-
-  /* FIX: Define the balance so TJ knows how to compute the cost/revenue columns */
-  balance cost rev
+  headline "Resource Allocation Graph"
+  columns no, name, effort, rate, weekly { }
+  loadunit shortauto
+  hideresource ~isleaf()
+  sorttasks plan.start.up
 }

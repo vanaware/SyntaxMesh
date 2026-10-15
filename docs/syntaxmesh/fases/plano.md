@@ -225,6 +225,25 @@
 
 **Testes:** 163 testes core, 37 tarefas atômicas, 11 testes unitários por nova entidade.
 
+### Fase 8.2 — Modelo Contábil Estendido
+
+Reescreve o motor de agregação contábil do SyntaxMesh. Contas deixam de ser
+exclusivas (`aggregate` vira filtro opcional); subtotais por tipo são mantidos em
+buckets; todo lançamento vira `CostEvent` auditável; múltiplos chargesets por
+task/recurso/material são permitidos (um por top-level); motor de precedência
+explícito com modos `force` e `fallback`; bookings passam a ser scenario-aware.
+
+Duração estimada: 5–8 dias.
+Documento: `docs/syntaxmesh/fases/fase-8.2-modelo-contabil-estendido.md`.
+Tarefas: `docs/syntaxmesh/fases/fase-8.2-tarefas.md`.
+
+- **Plano:** [fase-8.2-modelo-contabil-estendido.md](./fase-8.2-modelo-contabil-estendido.md)
+- **Tarefas:** [fase-8.2-tarefas.md](./fase-8.2-tarefas.md)
+- **ADR:** [031 — Modelo Contábil Estendido](../decisoes/020-modelo-contabil-estendido.md)
+- **Duração:** 5–8 dias
+- **Depende de:** Fases 2–8, 8.1
+- **Bloqueia:** Fases 9, 14, 21
+
 ---
 
 ### FASE 9 — Orquestrador e Cache

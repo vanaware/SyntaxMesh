@@ -31,82 +31,38 @@ resources_doc = Nokogiri::HTML(File.read(resources_path))
 # Extract account data from PnL.html
 accounts = []
 
-# Get all tabline rows from the outer table
-outer_rows = pnl_doc.xpath('//table[@class="tj_table"]//tr[@class="tabline"]')
+# Find all rows in the outer table
+all_rows = pnl_doc.xpath('//table[@class="tj_table"]//tr[@class="tabline"][td[@class="costaccountcell1"] or td[@class="costaccountcell2"] or td[@class="revenueaccountcell1"] or td[@class="accountcell2"]]')
 
-# Separate account names from monthly values
-# The outer table has 8 tabline rows:
-# - Rows 0-3: monthly values (costaccountcell1, costaccountcell2, revenueaccountcell1, accountcell2)
-# - Rows 4-7: account names (Project Expenses, Salaries, Project Revenue, Total)
-# We need to identify which rows are account names (non-numeric text)
+# The PnL structure has value rows first (numeric), then name rows (text).
+# Match by position: value row i corresponds to name row i.
+value_rows = all_rows[0..3] || []
+name_rows = all_rows[4..7] || []
 
-account_name_rows = []
-monthly_value_rows = []
-
-outer_rows.each do |row|
-  name_cell = row.at_xpath('.//td[@class="tj_table_cell_label"]')
+# Match account names with their corresponding values by position
+name_rows.each_with_index do |name_row, index|
+  # Find the account name cell
+  name_cell = name_row.at_xpath('.//td[@class="tj_table_cell_label"]')
   next unless name_cell
-  
-  text = name_cell.text.strip
-  
-  # Check if this is a numeric value (monthly value) or account name
-  if text =~ /^-?[0-9,]+\.?[0-9]*$/
-    monthly_value_rows << row
-  else
-    account_name_rows << row
-  end
-end
 
-# Extract account names
-account_names = []
-account_name_rows.each do |row|
-  name_cell = row.at_xpath('.//td[@class="tj_table_cell_label"]')
-  next unless name_cell
-  
   account_name = name_cell.text.strip
-  account_names << account_name
-end
+  next if account_name.empty?
 
-# Extract monthly values from the inner table
-# The inner table is inside the rowspan="7" td with class "tabback"
-inner_rows = pnl_doc.xpath('//table[@class="tj_table"]//div[@class="tabback"]//table[@class="tj_table"]//tr[@class="tabline"]')
-
-monthly_values = []
-inner_rows.each do |row|
-  value_cell = row.at_xpath('.//td[@class="tj_table_cell_label"]')
-  next unless value_cell
-  
-  text = value_cell.text.strip
-  if text =~ /^-?[0-9,]+\.?[0-9]*$/
-    number = text.gsub(/[^0-9.-]/, '').to_f
-    monthly_values << number
+  # Find the corresponding value row (same index)
+  monthly_value = 0.0
+  if index < value_rows.length
+    value_row = value_rows[index]
+    # Find the value cell in the value row
+    value_cell = value_row.at_xpath('.//td[@class="tj_table_cell_label"]')
+    if value_cell
+      text = value_cell.text.strip
+      if text =~ /^-?[0-9,]+\.?[0-9]*$/
+        monthly_value = text.gsub(/[^0-9.-]/, '').to_f
+      end
+    end
   end
-end
 
-# Create account entries
-# For PnL, the monthly values correspond to:
-# [costaccountcell1, costaccountcell2, revenueaccountcell1, accountcell2]
-# = [Project Expenses, Salaries, Project Revenue, Total]
-
-account_names.each_with_index do |account_name, index|
-  # Find the balance for this account
-  balance = 0.0
-  
-  case account_name
-  when "Project Expenses"
-    # Project Expenses is costaccountcell1 (row 0)
-    balance = monthly_values[0] || 0.0
-  when "Salaries"
-    # Salaries is costaccountcell2 (row 1)
-    balance = monthly_values[1] || 0.0
-  when "Project Revenue"
-    # Project Revenue is revenueaccountcell1 (row 2)
-    balance = monthly_values[2] || 0.0
-  when "Total"
-    # Total is accountcell2 (row 3)
-    balance = monthly_values[3] || 0.0
-  end
-  
+  # Create account entry
   account = {
     "description" => account_name,
     "method" => "to_tjp",
@@ -115,13 +71,13 @@ account_names.each_with_index do |account_name, index|
       "value" => nil
     },
     "expected" => {
-      "balance" => balance,
+      "balance" => monthly_value,
       "cost" => 0.0,  # Not available from PnL
       "revenue" => 0.0,  # Not available from PnL
-      "turnover" => balance  # For PnL, turnover = balance
+      "turnover" => monthly_value  # For PnL, turnover = balance
     }
   }
-  
+
   accounts << account
 end
 
@@ -129,33 +85,48 @@ end
 resources = []
 
 # Find all resource rows
-resource_rows = resources_doc.xpath('//table[@class="tj_table"]//tr[@class="tabline"]')
-
-resource_rows.each do |row|
-  # Get resource name (first label cell)
+resources_doc.xpath('//table[@class="tj_table"]//tr[@class="tabline"][td[@class="resourcecell1"] or td[@class="resourcecell2"]]').each do |row|
+  # Find the resource name cell
   name_cell = row.at_xpath('.//td[@class="resourcecell1"]//table//td[@class="tj_table_cell_label"]') ||
               row.at_xpath('.//td[@class="resourcecell2"]//table//td[@class="tj_table_cell_label"]')
-  
+
   next unless name_cell
-  
+
   resource_name = name_cell.text.strip
-  
-  # Skip header rows
   next if resource_name == "Developers"
-  
-  # Extract all label cells (first is name, rest are values)
-  all_labels = row.xpath('.//td[@class="tj_table_cell_label"]')
-  value_texts = all_labels[1..-1].map(&:text).map(&:strip)
-  
-  values = []
-  value_texts.each do |text|
+
+  # Extract effort, cost, revenue from the resource row
+  # These are in cells with class resourcecell2
+  effort_cell = row.at_xpath('.//td[@class="resourcecell2"]//table//td[@class="tj_table_cell_label"][1]')
+  cost_cell = row.at_xpath('.//td[@class="resourcecell2"]//table//td[@class="tj_table_cell_label"][2]')
+  revenue_cell = row.at_xpath('.//td[@class="resourcecell2"]//table//td[@class="tj_table_cell_label"][3]')
+
+  effort = 0.0
+  cost = 0.0
+  revenue = 0.0
+
+  if effort_cell
+    text = effort_cell.text.strip
     if text =~ /^-?[0-9,]+\.?[0-9]*$/
-      number = text.gsub(/[^0-9.-]/, '').to_f
-      values << number
+      effort = text.gsub(/[^0-9.-]/, '').to_f
     end
   end
-  
-  # For Resources report: [effort, cost, revenue]
+
+  if cost_cell
+    text = cost_cell.text.strip
+    if text =~ /^-?[0-9,]+\.?[0-9]*$/
+      cost = text.gsub(/[^0-9.-]/, '').to_f
+    end
+  end
+
+  if revenue_cell
+    text = revenue_cell.text.strip
+    if text =~ /^-?[0-9,]+\.?[0-9]*$/
+      revenue = text.gsub(/[^0-9.-]/, '').to_f
+    end
+  end
+
+  # Create resource entry
   resource = {
     "description" => resource_name,
     "method" => "to_tjp",
@@ -164,13 +135,13 @@ resource_rows.each do |row|
       "value" => nil
     },
     "expected" => {
-      "effort" => values[0] || 0.0,
-      "cost" => values[1] || 0.0,
-      "revenue" => values[2] || 0.0,
-      "balance" => values[1] - values[2]  # cost - revenue
+      "effort" => effort,
+      "cost" => cost,
+      "revenue" => revenue,
+      "balance" => cost - revenue
     }
   }
-  
+
   resources << resource
 end
 
@@ -188,3 +159,4 @@ golden = {
 # Write to file
 File.write(OUTPUT_FILE, JSON.pretty_generate(golden))
 puts "Generated #{OUTPUT_FILE} with #{all_cases.length} cases"
+puts "Accounts: #{accounts.length}, Resources: #{resources.length}"
