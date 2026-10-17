@@ -67,8 +67,8 @@
 [x] 8.5  TaskScenario.turnover (completo)         — 14/14
 [x] 8.6  ResourceScenario.turnover + cost         — 12/12
 [x] 8.7  Meta-account (utilitário)                — 8/8
-[ ] 8.8  Golden tests (financeiro)                —  0/10
-[ ] 8.9  Verificação final                        —  0/8
+[x] 8.8  Golden tests (financeiro)                — 10/10
+[x] 8.9  Verificação final                        —  8/8
 ─────────────────────────────────────────────────
 TOTAL: ~125
 ```

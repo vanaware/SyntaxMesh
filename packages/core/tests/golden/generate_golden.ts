@@ -44,6 +44,22 @@ const scripts: Array<{ name: string; rubyScript: URL; outputPath: URL }> = [
     ),
     outputPath: new URL("./shift-assignments.golden.json", import.meta.url,),
   },
+  {
+    name: "finance-mwe004",
+    rubyScript: new URL(
+      "../../../../scripts/golden/finance-mwe004.rb",
+      import.meta.url,
+    ),
+    outputPath: new URL("./finance-mwe004.golden.json", import.meta.url,),
+  },
+  {
+    name: "finance-variations",
+    rubyScript: new URL(
+      "../../../../scripts/golden/finance-variations.rb",
+      import.meta.url,
+    ),
+    outputPath: new URL("./finance-variations.golden.json", import.meta.url,),
+  },
 ];
 
 for (const { name, rubyScript, outputPath, } of scripts) {
@@ -71,11 +87,22 @@ for (const { name, rubyScript, outputPath, } of scripts) {
     "#<Proc:0x000000000000 $2>",
   );
 
+  // Extract the last JSON object from stdout. Ruby scripts may emit
+  // informational `puts` messages before the JSON output; we grab the
+  // trailing JSON object so the parser doesn't choke on log lines.
+  const jsonMatch = stdout.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    console.error(`Ruby output ${name} has no JSON object:\n${stdout}`);
+    Deno.exit(1,);
+  }
+  stdout = jsonMatch[0];
+
   // Validate JSON before writing
   try {
     JSON.parse(stdout,);
   } catch (e) {
     console.error(`Ruby output ${name} is not valid JSON:`, e,);
+    console.error(`Raw output:\n${stdout}`);
     Deno.exit(1,);
   }
 

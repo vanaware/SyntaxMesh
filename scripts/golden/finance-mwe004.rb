@@ -142,6 +142,8 @@ golden = {
   "cases" => cases
 }
 
-File.write(OUTPUT_FILE, JSON.pretty_generate(golden))
-puts "Generated #{OUTPUT_FILE} with #{cases.length} cases"
-puts "Tasks: #{cases.select { |c| c["type"] == "Task" }.length}, Resources: #{cases.select { |c| c["type"] == "Resource" }.length}"
+# Output JSON to stdout for capture by generate_golden.ts
+# (log messages go to stderr so they don't pollute the JSON output)
+$stderr.puts "Generated #{OUTPUT_FILE} with #{cases.length} cases"
+$stderr.puts "Tasks: #{cases.select { |c| c["type"] == "Task" }.length}, Resources: #{cases.select { |c| c["type"] == "Resource" }.length}"
+puts JSON.pretty_generate(golden)

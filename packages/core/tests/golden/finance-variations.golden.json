@@ -1,0 +1,337 @@
+{
+  "version": "1.0",
+  "description": "Casos financeiros extraidos de mwe004/variaveis.tjp (8 taskreports isolando variacoes de chargeset, charge modes, credit, balance order)",
+  "generated_at": "2026-10-17T20:39:47-0300",
+  "cases": [
+    {
+      "description": "[chargeset 100% dev] 100pct dev",
+      "method": "to_tjp",
+      "type": "Task",
+      "input": {
+        "value": null
+      },
+      "expected": {
+        "effort": 150.0,
+        "cost": 5500.0,
+        "revenue": 0.0,
+        "balance": -5500.0,
+        "turnover": 5500.0
+      }
+    },
+    {
+      "description": "[chargeset 100% dev] Specification",
+      "method": "to_tjp",
+      "type": "Task",
+      "input": {
+        "value": null
+      },
+      "expected": {
+        "effort": 100.0,
+        "cost": 4000.0,
+        "revenue": 0.0,
+        "balance": -4000.0,
+        "turnover": 4000.0
+      }
+    },
+    {
+      "description": "[chargeset 100% dev] Build",
+      "method": "to_tjp",
+      "type": "Task",
+      "input": {
+        "value": null
+      },
+      "expected": {
+        "effort": 50.0,
+        "cost": 1500.0,
+        "revenue": 0.0,
+        "balance": -1500.0,
+        "turnover": 1500.0
+      }
+    },
+    {
+      "description": "[chargeset 70-30 dev/mat] 70-30 split",
+      "method": "to_tjp",
+      "type": "Task",
+      "input": {
+        "value": null
+      },
+      "expected": {
+        "effort": 150.0,
+        "cost": 5500.0,
+        "revenue": 0.0,
+        "balance": -5500.0,
+        "turnover": 5500.0
+      }
+    },
+    {
+      "description": "[chargeset 70-30 dev/mat] Specification",
+      "method": "to_tjp",
+      "type": "Task",
+      "input": {
+        "value": null
+      },
+      "expected": {
+        "effort": 100.0,
+        "cost": 4000.0,
+        "revenue": 0.0,
+        "balance": -4000.0,
+        "turnover": 4000.0
+      }
+    },
+    {
+      "description": "[chargeset 70-30 dev/mat] Build",
+      "method": "to_tjp",
+      "type": "Task",
+      "input": {
+        "value": null
+      },
+      "expected": {
+        "effort": 50.0,
+        "cost": 1500.0,
+        "revenue": 0.0,
+        "balance": -1500.0,
+        "turnover": 1500.0
+      }
+    },
+    {
+      "description": "[chargeset 50-50 dev/mat] 50-50 split",
+      "method": "to_tjp",
+      "type": "Task",
+      "input": {
+        "value": null
+      },
+      "expected": {
+        "effort": 150.0,
+        "cost": 5500.0,
+        "revenue": 0.0,
+        "balance": -5500.0,
+        "turnover": 5500.0
+      }
+    },
+    {
+      "description": "[chargeset 50-50 dev/mat] Specification",
+      "method": "to_tjp",
+      "type": "Task",
+      "input": {
+        "value": null
+      },
+      "expected": {
+        "effort": 100.0,
+        "cost": 4000.0,
+        "revenue": 0.0,
+        "balance": -4000.0,
+        "turnover": 4000.0
+      }
+    },
+    {
+      "description": "[chargeset 50-50 dev/mat] Build",
+      "method": "to_tjp",
+      "type": "Task",
+      "input": {
+        "value": null
+      },
+      "expected": {
+        "effort": 50.0,
+        "cost": 1500.0,
+        "revenue": 0.0,
+        "balance": -1500.0,
+        "turnover": 1500.0
+      }
+    },
+    {
+      "description": "[purge chargeset] purge chargeset",
+      "method": "to_tjp",
+      "type": "Task",
+      "input": {
+        "value": null
+      },
+      "expected": {
+        "effort": 100.0,
+        "cost": 0.0,
+        "revenue": 0.0,
+        "balance": 0.0,
+        "turnover": 0.0
+      }
+    },
+    {
+      "description": "[purge chargeset] Specification",
+      "method": "to_tjp",
+      "type": "Task",
+      "input": {
+        "value": null
+      },
+      "expected": {
+        "effort": 100.0,
+        "cost": 0.0,
+        "revenue": 0.0,
+        "balance": 0.0,
+        "turnover": 0.0
+      }
+    },
+    {
+      "description": "[charge onStart/onEnd/perDiem] charge modes",
+      "method": "to_tjp",
+      "type": "Task",
+      "input": {
+        "value": null
+      },
+      "expected": {
+        "effort": 53.0,
+        "cost": 8587.5,
+        "revenue": 0.0,
+        "balance": -8587.5,
+        "turnover": 8587.5
+      }
+    },
+    {
+      "description": "[charge onStart/onEnd/perDiem] Start Charge",
+      "method": "to_tjp",
+      "type": "Task",
+      "input": {
+        "value": null
+      },
+      "expected": {
+        "effort": 1.0,
+        "cost": 1050.0,
+        "revenue": 0.0,
+        "balance": -1050.0,
+        "turnover": 1050.0
+      }
+    },
+    {
+      "description": "[charge onStart/onEnd/perDiem] End Charge",
+      "method": "to_tjp",
+      "type": "Task",
+      "input": {
+        "value": null
+      },
+      "expected": {
+        "effort": 1.0,
+        "cost": 2037.5,
+        "revenue": 0.0,
+        "balance": -2037.5,
+        "turnover": 2037.5
+      }
+    },
+    {
+      "description": "[charge onStart/onEnd/perDiem] PerDiem Work",
+      "method": "to_tjp",
+      "type": "Task",
+      "input": {
+        "value": null
+      },
+      "expected": {
+        "effort": 50.0,
+        "cost": 5500.0,
+        "revenue": 0.0,
+        "balance": -5500.0,
+        "turnover": 5500.0
+      }
+    },
+    {
+      "description": "[charge on revenue account] credit test",
+      "method": "to_tjp",
+      "type": "Task",
+      "input": {
+        "value": null
+      },
+      "expected": {
+        "effort": 0.0,
+        "cost": 0.0,
+        "revenue": 6500.0,
+        "balance": 6500.0,
+        "turnover": 6500.0
+      }
+    },
+    {
+      "description": "[charge on revenue account] Payment",
+      "method": "to_tjp",
+      "type": "Task",
+      "input": {
+        "value": null
+      },
+      "expected": {
+        "effort": 0.0,
+        "cost": 0.0,
+        "revenue": 5000.0,
+        "balance": 5000.0,
+        "turnover": 5000.0
+      }
+    },
+    {
+      "description": "[charge on revenue account] Refund",
+      "method": "to_tjp",
+      "type": "Task",
+      "input": {
+        "value": null
+      },
+      "expected": {
+        "effort": 0.0,
+        "cost": 0.0,
+        "revenue": 1500.0,
+        "balance": 1500.0,
+        "turnover": 1500.0
+      }
+    },
+    {
+      "description": "[balance rev cost (reversed)] balance order",
+      "method": "to_tjp",
+      "type": "Task",
+      "input": {
+        "value": null
+      },
+      "expected": {
+        "effort": 100.0,
+        "cost": 0.0,
+        "revenue": 4000.0,
+        "balance": 4000.0,
+        "turnover": 4000.0
+      }
+    },
+    {
+      "description": "[balance rev cost (reversed)] Work",
+      "method": "to_tjp",
+      "type": "Task",
+      "input": {
+        "value": null
+      },
+      "expected": {
+        "effort": 100.0,
+        "cost": 0.0,
+        "revenue": 4000.0,
+        "balance": 4000.0,
+        "turnover": 4000.0
+      }
+    },
+    {
+      "description": "[charge perhour] perhour charge",
+      "method": "to_tjp",
+      "type": "Task",
+      "input": {
+        "value": null
+      },
+      "expected": {
+        "effort": 50.0,
+        "cost": 35600.0,
+        "revenue": 0.0,
+        "balance": -35600.0,
+        "turnover": 35600.0
+      }
+    },
+    {
+      "description": "[charge perhour] Work",
+      "method": "to_tjp",
+      "type": "Task",
+      "input": {
+        "value": null
+      },
+      "expected": {
+        "effort": 50.0,
+        "cost": 35600.0,
+        "revenue": 0.0,
+        "balance": -35600.0,
+        "turnover": 35600.0
+      }
+    }
+  ]
+}

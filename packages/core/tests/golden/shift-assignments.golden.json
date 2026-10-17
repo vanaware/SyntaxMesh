@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "description": "Golden test cases for ShiftAssignments compatibility (Phase 6)",
-  "generated_at": "2026-10-13 21:24:33 UTC",
+  "generated_at": "2026-10-17 23:39:45 UTC",
   "cases": [
     {
       "description": "ShiftAssignments getSbSlot index 9 (Mon 9:00)",
@@ -111,7 +111,7 @@
       "description": "ShiftAssignments hashKey identical instances",
       "method": "hashKey",
       "input": {
-        "assignments": "shifts shift1 #<TaskJuggler::Interval:0x00007f5383e5a050>, shift1 #<TaskJuggler::Interval:0x00007f5383e58f20>"
+        "assignments": "shifts shift1 #<TaskJuggler::Interval:0x00007efe99caa280>, shift1 #<TaskJuggler::Interval:0x00007efe99ca9150>"
       },
       "expected": true
     },
@@ -119,10 +119,9 @@
       "description": "ShiftAssignments hashKey different instances",
       "method": "hashKey",
       "input": {
-        "assignments": "shifts shift1 #<TaskJuggler::Interval:0x00007f5383e5a050>"
+        "assignments": "shifts shift1 #<TaskJuggler::Interval:0x00007efe99caa280>"
       },
       "expected": false
     }
   ]
 }
-

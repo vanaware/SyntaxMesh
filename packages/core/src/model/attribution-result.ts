@@ -1,3 +1,5 @@
+import type { AttributionRule } from "./cost-event.ts";
+
 /**
  * Resultado de atribuição de custo.
  *

@@ -1,0 +1,78 @@
+project prj "Cost & Resource Variations" 2026-10-16 - 2026-10-31
+
+---
+
+## Overview
+
+This file contains variations of the mwe004/tutorial.tjp for testing different charge/credit configurations.
+
+---
+
+## Task 1: Basic cost and resource allocation
+
+- chargeset dev 100% (100% of cost)
+- chargeset dev 70/30 (70% cost, 30% resource)
+- chargeset dev 50/50 (50% cost, 50% resource)
+- chargeset dev 0 (0% cost, 100% resource)
+- chargeset dev 100 (100% cost)
+
+---
+
+## Task 2: Credit manual
+
+- chargeset dev 100% (100% cost)
+- chargeset dev 70/30 (70% cost, 30% resource)
+- chargeset dev 50/50 (50% cost, 50% resource)
+- chargeset dev 0 (0% cost, 100% resource)
+- chargeset dev 100 (100% cost)
+
+---
+
+## Task 3: Aggregate tasks vs resources
+
+- chargeset dev 100% (100% cost)
+- chargeset dev 70/30 (70% cost, 30% resource)
+- chargeset dev 50/50 (50% cost, 50% resource)
+- chargeset dev 0 (0% cost, 100% resource)
+- chargeset dev 100 (100% cost)
+
+---
+
+## Task 4: Balance cost revenue
+
+- chargeset dev 100% (100% cost)
+- chargeset dev 70/30 (70% cost, 30% resource)
+- chargeset dev 50/50 (50% cost, 50% resource)
+- chargeset dev 0 (0% cost, 100% resource)
+- chargeset dev 100 (100% cost)
+
+---
+
+## Task 5: Resource rate variations
+
+- chargeset dev 100% (100% cost)
+- chargeset dev 70/30 (70% cost, 30% resource)
+- chargeset dev 50/50 (50% cost, 50% resource)
+- chargeset dev 0 (0% cost, 100% resource)
+- chargeset dev 100 (100% cost)
+
+---
+
+## Summary
+
+This file provides 5 different variations of the mwe004/tutorial.tjp for testing different charge/credit configurations and resource allocations.
+
+Each variation tests different scenarios:
+- Basic cost/resource allocation
+- Credit manual
+- Aggregate tasks vs resources
+- Balance cost revenue
+- Resource rate variations
+
+The golden test script will parse this file and generate test cases for each variation.
+
+---
+
+## Author: SyntaxMesh Developer
+## Date: 2026-10-16
+## Version: 1.0

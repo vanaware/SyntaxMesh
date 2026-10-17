@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "description": "Golden test for AttributeDefinitions",
-  "generated_at": "2026-10-13T21:24:32Z",
+  "generated_at": "2026-10-17T23:39:45Z",
   "cases": [
     {
       "id": "accountroot",
@@ -1710,4 +1710,3 @@
     }
   ]
 }
-

@@ -1,7 +1,7 @@
 // monorepo/service-worker/src/utils/mod.ts
-import { addDebugLog, } from "./debug.ts";
-import { APP_VERSION, } from "./config.ts";
-import EventBus, } from "./eventbus.ts";
+import { addDebugLog } from "./debug.ts";
+import { APP_VERSION } from "./config.ts";
+import EventBus from "./eventbus.ts";
 
 let uiAdapterInitialized = false;
 
