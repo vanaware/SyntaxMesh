@@ -1,90 +1,158 @@
 {
   "version": "1.0",
-  "description": "Casos financeiros extraídos de mwe004/tutorial.tjp (PnL e Resources)",
-  "generated_at": "2026-10-13T20:30:43Z",
+  "description": "Casos financeiros extraídos de mwe004/tutorial.tjp (overview taskreport + resourceGraph resourcereport)",
+  "generated_at": "2026-10-16T14:00:37Z",
   "cases": [
     {
-      "description": "Project Expenses",
+      "description": "Accounting Software\n           \n          \n            ID: AcSo (WBS 1)",
       "method": "to_tjp",
-      "type": "Account",
+      "type": "Task",
       "input": {
         "value": null
       },
       "expected": {
-        "balance": 0.0,
-        "cost": 0.0,
-        "revenue": 0.0,
-        "turnover": 0.0
+        "effort": 750.0,
+        "cost": 36526.25,
+        "revenue": 34000.0,
+        "balance": -2526.25,
+        "turnover": 70526.25
       }
     },
     {
-      "description": "Salaries",
+      "description": "Milestones\n           \n          \n            ID: AcSo.deliveries (WBS 1.3)",
       "method": "to_tjp",
-      "type": "Account",
-      "input": {
-        "value": null
-      },
-      "expected": {
-        "balance": 0.0,
-        "cost": 0.0,
-        "revenue": 0.0,
-        "turnover": 0.0
-      }
-    },
-    {
-      "description": "Project Revenue",
-      "method": "to_tjp",
-      "type": "Account",
-      "input": {
-        "value": null
-      },
-      "expected": {
-        "balance": 0.0,
-        "cost": 0.0,
-        "revenue": 0.0,
-        "turnover": 0.0
-      }
-    },
-    {
-      "description": "Total",
-      "method": "to_tjp",
-      "type": "Account",
-      "input": {
-        "value": null
-      },
-      "expected": {
-        "balance": 0.0,
-        "cost": 0.0,
-        "revenue": 0.0,
-        "turnover": 0.0
-      }
-    },
-    {
-      "description": "Alice",
-      "method": "to_tjp",
-      "type": "Resource",
+      "type": "Task",
       "input": {
         "value": null
       },
       "expected": {
         "effort": 0.0,
         "cost": 0.0,
-        "revenue": 0.0,
-        "balance": 0.0
+        "revenue": 34000.0,
+        "balance": 34000.0,
+        "turnover": 34000.0
       }
     },
     {
-      "description": "Bob",
+      "description": "Project start\n           \n          \n            ID: AcSo.deliveries.start (WBS 1.3.1)",
       "method": "to_tjp",
-      "type": "Resource",
+      "type": "Task",
       "input": {
         "value": null
       },
       "expected": {
         "effort": 0.0,
         "cost": 0.0,
+        "revenue": 21000.0,
+        "balance": 21000.0,
+        "turnover": 21000.0
+      }
+    },
+    {
+      "description": "Beta version\n           \n          \n            ID: AcSo.deliveries.beta (WBS 1.3.2)",
+      "method": "to_tjp",
+      "type": "Task",
+      "input": {
+        "value": null
+      },
+      "expected": {
+        "effort": 0.0,
+        "cost": 0.0,
+        "revenue": 13000.0,
+        "balance": 13000.0,
+        "turnover": 13000.0
+      }
+    },
+    {
+      "description": "Specification\n           \n          \n            ID: AcSo.spec (WBS 1.1)",
+      "method": "to_tjp",
+      "type": "Task",
+      "input": {
+        "value": null
+      },
+      "expected": {
+        "effort": 200.0,
+        "cost": 6500.0,
         "revenue": 0.0,
-        "balance": 0.0
+        "balance": -6500.0,
+        "turnover": 6500.0
+      }
+    },
+    {
+      "description": "Software Development\n           \n          \n            ID: AcSo.software (WBS 1.2)",
+      "method": "to_tjp",
+      "type": "Task",
+      "input": {
+        "value": null
+      },
+      "expected": {
+        "effort": 550.0,
+        "cost": 17000.0,
+        "revenue": 0.0,
+        "balance": -17000.0,
+        "turnover": 17000.0
+      }
+    },
+    {
+      "description": "Database coupling\n           \n          \n            ID: AcSo.software.database (WBS 1.2.1)",
+      "method": "to_tjp",
+      "type": "Task",
+      "input": {
+        "value": null
+      },
+      "expected": {
+        "effort": 200.0,
+        "cost": 6500.0,
+        "revenue": 0.0,
+        "balance": -6500.0,
+        "turnover": 6500.0
+      }
+    },
+    {
+      "description": "Graphical User Interface\n           \n          \n            ID: AcSo.software.gui (WBS 1.2.2)",
+      "method": "to_tjp",
+      "type": "Task",
+      "input": {
+        "value": null
+      },
+      "expected": {
+        "effort": 350.0,
+        "cost": 10500.0,
+        "revenue": 0.0,
+        "balance": -10500.0,
+        "turnover": 10500.0
+      }
+    },
+    {
+      "description": "Resource: Paul Smith",
+      "method": "to_tjp",
+      "type": "Resource",
+      "input": {
+        "value": null
+      },
+      "expected": {
+        "effort": 28.0,
+        "rate": 350.0,
+        "cost": 9800.0,
+        "revenue": 0.0,
+        "balance": -9800.0,
+        "turnover": 9800.0
+      }
+    },
+    {
+      "description": "Resource: Sébastien Bono",
+      "method": "to_tjp",
+      "type": "Resource",
+      "input": {
+        "value": null
+      },
+      "expected": {
+        "effort": 75.0,
+        "rate": 300.0,
+        "cost": 22500.0,
+        "revenue": 0.0,
+        "balance": -22500.0,
+        "turnover": 22500.0
       }
     }
   ]

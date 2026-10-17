@@ -77,17 +77,17 @@ O que foi decidido? Seja específico e acionável.
 | 017 | Scoreboard bit encoding em TypeScript | Concluído | 2026-10-04 |
 | 018 | Heurística do scheduler TaskJuggler | Concluído | 2026-10-05 |
 | 019 | Modelo financeiro em TypeScript | Concluída | 2026-10-11 |
-| 020 | Orquestrador e pipeline de scheduling | Proposto | — |
-| 021 | FSM do TextParser compilado em runtime | Proposto | — |
-| 022 | i18n de keywords via LanguageRegistry | Proposto | — |
-| 023 | Expressões lógicas sem precedência | Proposto | — |
-| 024 | RichText e function handlers | Proposto | — |
-| 025 | Markdown como formato going-forward | Proposto | — |
-| 026 | Reports no browser: retorno de strings | Proposto | — |
-| 027 | Gantt HTML+CSS | Proposto | — |
-| 028 | Journal e AlertLevel em TypeScript | Proposto | — |
-| 029 | Substituição de XML/HTML/ICalendar/Painter mínimos | Proposto | — |
-| 030 | Arquitetura simplificada: packages/core + JSR libraries | Proposto | 2026-10-12 |
-| 031 | Modelo Contábil Estendido | Proposto | 2026-10-15 |
+| 020 | Modelo Contábil Estendido | Proposto | 2026-10-15 |
+| 021 | Orquestrador e pipeline de scheduling | Proposto | — |
+| 022 | FSM do TextParser compilado em runtime | Proposto | — |
+| 023 | i18n de keywords via LanguageRegistry | Proposto | — |
+| 024 | Expressões lógicas sem precedência | Proposto | — |
+| 025 | RichText e function handlers | Proposto | — |
+| 026 | Markdown como formato going-forward | Proposto | — |
+| 027 | Reports no browser: retorno de strings | Proposto | — |
+| 028 | Gantt HTML+CSS | Proposto | — |
+| 029 | Journal e AlertLevel em TypeScript | Proposto | — |
+| 030 | Substituição de XML/HTML/ICalendar/Painter mínimos | Proposto | — |
+| 031 | Arquitetura simplificada: packages/core + JSR libraries | Proposto | 2026-10-12 |
 
 > **Nota:** Manter esta tabela atualizada manualmente ou via script ao adicionar novos ADRs.

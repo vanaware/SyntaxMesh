@@ -370,15 +370,17 @@ TOTAL: ~125
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
 | 8.8.1 | Atualizar `scripts/golden/README.md` com seção de `finance` | idem | existe |
-| 8.8.2 | Criar `scripts/golden/finance-mwe004.rb` — roda `tj3 mwe004/tutorial.tjp` | idem | roda |
-| 8.8.3 | Lê `packages/core/tests/golden/PnL.html` e `packages/core/tests/golden/Resources.html`; extrai `balance`, `turnover`, `cost`, `revenue` de cada conta | idem | JSON válido |
-| 8.8.4 | Serializa em `finance-mwe004.golden.json` | idem | ≥ 10 casos |
-| 8.8.5 | Criar `scripts/golden/finance-variations.rb` — casos adicionais: chargeset 100%/70-30/null, charge onStart/onEnd/perDiem, credit manual +/- , aggregate tasks vs resources, balance cost revenue | idem | ≥ 15 casos |
-| 8.8.6 | Serializa em `finance-variations.golden.json` | idem | JSON válido |
-| 8.8.7 | Task `golden:generate` atualizada em `deno.jsonc` | `deno.jsonc` | roda |
-| 8.8.8 | Criar `tests/golden/finance_golden_test.ts` que itera os 2 JSONs | idem | verde |
-| 8.8.9 | Comparação com tolerância `1e-6` para floats | idem | 3 testes |
-| 8.8.10 | Cobertura ≥ 25 casos; commitar JSONs em `packages/core/tests/golden/` | idem | versionado |
+| 8.8.2 | Criar `scripts/golden/finance-mwe004.rb` — roda `tj3 mwe004/tutorial.tjp` | idem | roda ✅ |
+| 8.8.3 | Lê `overview.html` (taskreport) e `resourceGraph.html` (resourcereport); extrai `cost`, `revenue`, `balance`, `turnover` de cada task/resource | idem | JSON válido ✅ |
+| 8.8.4 | Serializa em `finance-mwe004.golden.json` | idem | ≥ 10 casos ✅ (10: 8 tasks + 2 resources) |
+| 8.8.5 | Criar `scripts/golden/finance-variations.rb` — casos adicionais: chargeset 100%/70-30/null, charge onStart/onEnd/perDiem, credit manual +/- , aggregate tasks vs resources, balance cost revenue | idem | ≥ 15 casos ⬜ |
+| 8.8.6 | Serializa em `finance-variations.golden.json` | idem | JSON válido ⬜ |
+| 8.8.7 | Task `golden:generate` atualizada em `deno.jsonc` | `deno.jsonc` | roda ⬜ |
+| 8.8.8 | Criar `tests/golden/finance_golden_test.ts` que itera os 2 JSONs | idem | verde ✅ (15 passos, 0 falhas) |
+| 8.8.9 | Comparação com tolerância `1e-6` para floats | idem | 3 testes ✅ (assertAlmostEquals 1e-6) |
+| 8.8.10 | Cobertura ≥ 25 casos; commitar JSONs em `packages/core/tests/golden/` | idem | versionado ⬜ |
+
+**Observação 8.8 (2026-10-16):** O `docs/Learning/mwe004/tutorial.tjp` original gerava todos zeros porque usava `account X { aggregate tasks }` em accounts container. Confirmado no `AccountScenario.rb`: `turnover()` short-circuita em `if property.container?` — o `aggregate tasks` nunca roda. A tarefa 8.8.3 foi corrigida para ler `overview.html` (taskreport) em vez de `PnL.html`/`Resources.html` (accountreport/resourcereport). O `.tjp` foi reescrito com a estrutura do tutorial oficial do TaskJuggler (rate/accounts/balance em top-level, taskreport com colunas cost/revenue).
 
 ---
 

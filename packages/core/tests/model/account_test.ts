@@ -180,3 +180,78 @@ describe("Account", () => {
     assertEquals(account.subId, "parent.child",);
   });
 });
+
+describe("Account.allowedTypes", () => {
+  let project: MockProject;
+
+  beforeEach(() => {
+    project = new MockProject(1,);
+  },);
+
+  it("conta nova aceita todos os tipos por default", () => {
+    const account = new Account(project, "acc1", "Account 1", null,);
+    assert(account.canAccept("task",),);
+    assert(account.canAccept("resource",),);
+    assert(account.canAccept("material",),);
+  });
+
+  it("setAllowedTypes restringe para task apenas", () => {
+    const account = new Account(project, "acc1", "Account 1", null,);
+    account.setAllowedTypes(["task",]);
+    assert(account.canAccept("task",),);
+    assert(!account.canAccept("resource",),);
+    assert(!account.canAccept("material",),);
+  });
+
+  it("getAllowedTypes retorna conjunto vazio por default", () => {
+    const account = new Account(project, "acc1", "Account 1", null,);
+    assertEquals(account.getAllowedTypes().length, 0,);
+  });
+
+  it("getAllowedTypes retorna tipos configurados", () => {
+    const account = new Account(project, "acc1", "Account 1", null,);
+    account.setAllowedTypes(["task", "resource",]);
+    const types = account.getAllowedTypes().sort();
+    assertEquals(types, ["resource", "task",]);
+  });
+
+  it("conta com aggregate tasks rejeita resource", () => {
+    const account = new Account(project, "acc1", "Account 1", null,);
+    account.setAllowedTypes(["task",]);
+    assert(!account.canAccept("resource",),);
+  });
+
+  it("conta com aggregate resources rejeita task", () => {
+    const account = new Account(project, "acc1", "Account 1", null,);
+    account.setAllowedTypes(["resource",]);
+    assert(!account.canAccept("task",),);
+  });
+
+  it("conta com aggregate materials rejeita task e resource", () => {
+    const account = new Account(project, "acc1", "Account 1", null,);
+    account.setAllowedTypes(["material",]);
+    assert(!account.canAccept("task",),);
+    assert(!account.canAccept("resource",),);
+    assert(account.canAccept("material",),);
+  });
+
+  it("conta sem aggregate (vazio) aceita tudo", () => {
+    const account = new Account(project, "acc1", "Account 1", null,);
+    assert(account.canAccept("task",),);
+    assert(account.canAccept("resource",),);
+    assert(account.canAccept("material",),);
+  });
+
+  it("lança erro claro quando aggregate tasks e custo de recurso", () => {
+    const account = new Account(project, "acc1", "Account 1", null,);
+    account.setAllowedTypes(["task",]);
+    let erro: unknown = null;
+    try {
+      account.canAccept("resource",);
+      assert(false, "Deveria ter lançado",);
+    } catch (e) {
+      erro = e;
+    }
+    assert(erro instanceof Error,);
+  });
+});

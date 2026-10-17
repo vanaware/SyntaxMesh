@@ -367,4 +367,4 @@ assertEquals(tracking.role, "real");
 
 ## Próximos passos
 
-Continuar para a próxima fase (Fase 9 — Orquestrador e Cache).
+Continuar para a próxima fase (Fase 8.2 — contabilidade extendida ).

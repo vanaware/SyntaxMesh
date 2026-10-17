@@ -6,6 +6,7 @@ import { type ProjectLike, } from "./project-like.ts";
 import { type AccountCredit, } from "../finance/account-credit.ts";
 import { type TjTime, } from "../time/tj-time.ts";
 import { PropertyTreeNode, } from "./property-tree-node.ts";
+import { TjInternalError, } from "./errors.ts";
 
 /**
  * Interface para query de relatório (balance/turnover).
@@ -26,12 +27,23 @@ export interface Query {
 }
 
 /**
+ * Interface para subtotais por tipo (task/resource/material).
+ */
+export interface AccountBuckets {
+  task: number;
+  resource: number;
+  material: number;
+}
+
+/**
  * Lista exata de atributos pré-carregados pelo AccountScenario do Ruby
  * (AccountScenario.rb, linhas 17–20).
  */
 export const ACCOUNT_SCENARIO_ATTRS: string[] = ["credits",];
 
 export class AccountScenario extends ScenarioData {
+  private buckets: AccountBuckets = { task: 0, resource: 0, material: 0 };
+
   constructor(
     account: unknown,
     scIdx: number,
@@ -61,6 +73,9 @@ export class AccountScenario extends ScenarioData {
    * @see docs/taskjuggler/lib/taskjuggler/AccountScenario.rb#turnover
    */
   turnover(startIdx: number, endIdx: number): number {
+    // Reset buckets a cada chamada.
+    this.buckets = { task: 0, resource: 0, material: 0 };
+
     let amount = 0.0;
 
     // 1. Credits (manuais)
@@ -88,14 +103,27 @@ export class AccountScenario extends ScenarioData {
         // Normal case: accumulate turnover of child accounts
         for (const child of property.children ?? []) {
           const childAccount = child as unknown as Account;
-          amount += childAccount.scenarioData(this.scenarioIdx,).turnover(startIdx, endIdx,);
+          const childAmount = childAccount.scenarioData(this.scenarioIdx,).turnover(startIdx, endIdx,);
+          amount += childAmount;
+          // Buckets herdam dos filhos.
+          const childBuckets = childAccount.scenarioData(this.scenarioIdx,).getBuckets();
+          this.buckets.task += childBuckets.task;
+          this.buckets.resource += childBuckets.resource;
+          this.buckets.material += childBuckets.material;
         }
       } else {
         // Special case for meta account used to calculate a balance.
         // The first adoptee is the top-level cost account, the second the top-level revenue account.
-        amount +=
-          -(adoptees[0] as unknown as Account).scenarioData(this.scenarioIdx,).turnover(startIdx, endIdx,) +
+        const costAmount =
+          -(adoptees[0] as unknown as Account).scenarioData(this.scenarioIdx,).turnover(startIdx, endIdx,);
+        const revenueAmount =
           (adoptees[1] as unknown as Account).scenarioData(this.scenarioIdx,).turnover(startIdx, endIdx,);
+        amount += costAmount + revenueAmount;
+        const costBuckets = (adoptees[0] as unknown as Account).scenarioData(this.scenarioIdx,).getBuckets();
+        const revenueBuckets = (adoptees[1] as unknown as Account).scenarioData(this.scenarioIdx,).getBuckets();
+        this.buckets.task += -costBuckets.task + revenueBuckets.task;
+        this.buckets.resource += -costBuckets.resource + revenueBuckets.resource;
+        this.buckets.material += -costBuckets.material + revenueBuckets.material;
       }
     } else {
       // Leaf: aggregate by type (tasks or resources)
@@ -109,7 +137,9 @@ export class AccountScenario extends ScenarioData {
           const taskScenario = taskAccount.scenarioData(this.scenarioIdx,) as unknown as {
             turnover(startIdx: number, endIdx: number, account: unknown, resource: unknown, includeKids: boolean,): number;
           };
-          amount += taskScenario.turnover(startIdx, endIdx, this.property, null, false,);
+          const taskAmount = taskScenario.turnover(startIdx, endIdx, this.property, null, false,);
+          amount += taskAmount;
+          this.buckets.task += taskAmount;
         });
       } else if (aggregate === "resources") {
         project.resources.each((resource) => {
@@ -118,7 +148,19 @@ export class AccountScenario extends ScenarioData {
             const resourceScenario = resourceAccount.scenarioData(this.scenarioIdx,) as unknown as {
               turnover(startIdx: number, endIdx: number, account: unknown, resource: unknown, includeKids: boolean,): number;
             };
-            amount += resourceScenario.turnover(startIdx, endIdx, this.property, null, false,);
+            const resourceAmount = resourceScenario.turnover(startIdx, endIdx, this.property, null, false,);
+            amount += resourceAmount;
+            this.buckets.resource += resourceAmount;
+          }
+        });
+      } else if (aggregate === "materials") {
+        // Material aggregation: sum totalCost of all materials.
+        project.resources.each?.((material) => {
+          const materialObj = material as unknown as { totalCost?: () => number };
+          if (typeof materialObj.totalCost === "function") {
+            const materialAmount = materialObj.totalCost();
+            amount += materialAmount;
+            this.buckets.material += materialAmount;
           }
         });
       } else {
@@ -127,6 +169,36 @@ export class AccountScenario extends ScenarioData {
     }
 
     return amount;
+  }
+
+  /**
+   * Retorna os buckets atuais (última chamada de turnover).
+   */
+  getBuckets(): AccountBuckets {
+    return { ...this.buckets };
+  }
+
+  /**
+   * Calcula o turnover por tipo (task/resource/material).
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/AccountScenario.rb#turnover
+   */
+  turnoverByType(
+    startIdx: number,
+    endIdx: number,
+    type: "task" | "resource" | "material",
+  ): number {
+    this.turnover(startIdx, endIdx,);
+    switch (type) {
+      case "task":
+        return this.buckets.task;
+      case "resource":
+        return this.buckets.resource;
+      case "material":
+        return this.buckets.material;
+      default:
+        throw new TjInternalError(`Unknown cost type ${type as string}`);
+    }
   }
 
   /**
