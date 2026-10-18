@@ -2,9 +2,9 @@
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-8.2-tarefas.md`
 > **Plano:** `docs/syntaxmesh/fases/fase-8.2-modelo-contabil-estendido.md`
-> **Status:** ⬜ Não iniciada
+> **Status:** ✅ Concluída
 > **Total:** ~130 tarefas
-> **Concluídas:** 0
+> **Concluídas:** 130 (refrescado 2026-10-18)
 > **Fonte Ruby:** `Account.rb`, `AccountScenario.rb`, `ChargeSet.rb` + extensões SyntaxMesh
 > **🔎 CHEAT:** §2 `Struct`, §3 `case` → `switch`, §12 Categoria B (float)
 
@@ -67,16 +67,16 @@
 ```
 [✓] 8.2.0  ADR 031 (modelo contábil estendido)        —  6/6
 [✓] 8.2.1  Account.allowedTypes                       —  9/9
-[✓] 8.2.2  AccountScenario.turnoverByType + buckets   —  12/12
+[✓] 8.2.2  AccountScenario.turnoverByType + buckets  —  12/12
 [✓] 8.2.3  CostEvent                                  —  10/10
 [✓] 8.2.4  ChargeSetCollection                        —  14/14
 [✓] 8.2.5  Motor de precedência (attribution)         —  16/16
-[✓] 8.2.6  Integração material no motor               —  8/8
+[✓] 8.2.6  Integração material no motor              —  8/8
 [✓] 8.2.7  Booking scenario-aware                     —  10/10
-[ ] 8.2.8  Integração com Task/Resource.turnover      —  0/12
-[ ] 8.2.9  API de relatórios (breakdown + plan×actual)—  0/10
-[ ] 8.2.10 Golden tests                               —  0/12
-[ ] 8.2.11 Verificação final                          —  0/9
+[✓] 8.2.8  Integração com Task/Resource.turnover     —  12/12
+[✓] 8.2.9  API de relatórios (breakdown + plan×actual)—  10/10
+[✓] 8.2.10 Golden tests                              —  12/12
+[✓] 8.2.11 Verificação final                          —  9/9
 ─────────────────────────────────────────────────────
 TOTAL: ~130
 ```

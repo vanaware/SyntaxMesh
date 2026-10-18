@@ -2,9 +2,9 @@
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-8-tarefas.md`
 > **Plano:** `docs/syntaxmesh/fases/fase-8-financeiro.md`
-> **Status:** ⬜ Não iniciada
+> **Status:** ✅ Concluída
 > **Total:** ~125 tarefas
-> **Concluídas:** 0
+> **Concluídas:** 125 (refrescado 2026-10-18)
 > **Fonte Ruby:** `docs/taskjuggler/lib/taskjuggler/{Charge,ChargeSet,AccountCredit,AccountScenario,Account}.rb` + seções `turnover` de `TaskScenario.rb` / `ResourceScenario.rb` + `reports/AccountListRE.rb`
 
 ---
