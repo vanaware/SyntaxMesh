@@ -1,7 +1,7 @@
 # Fase 5 — Entidades Concretas
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-5-entidades-concretas.md`
-> **Status:** ⬜ Não iniciada
+> **Status:** ✅ Concluída (2026-10-18)
 > **Duração estimada:** 6–8 dias
 > **Depende de:** Fase 2 — Tempo e Geometria; Fase 3 — Modelo de Atributos; Fase 4 — Árvore de Propriedades
 > **Bloqueia:** Fases 6, 7, 8, 9, 10, 11, 14, 16

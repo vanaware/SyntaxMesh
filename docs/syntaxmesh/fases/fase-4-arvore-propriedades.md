@@ -1,7 +1,7 @@
 # Fase 4 — Árvore de Propriedades
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-4-arvore-propriedades.md`
-> **Status:** ⬜ Não iniciada
+> **Status:** ✅ Concluída (2026-10-18)
 > **Duração estimada:** 6–8 dias
 > **Depende de:** Fase 2 — Tempo e Geometria; Fase 3 — Modelo de Atributos
 > **Bloqueia:** Fases 5, 6, 7, 8, 9, 10, 11, 12, 14, 16
