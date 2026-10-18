@@ -42,7 +42,7 @@ export interface AccountBuckets {
 export const ACCOUNT_SCENARIO_ATTRS: string[] = ["credits",];
 
 export class AccountScenario extends ScenarioData {
-  private buckets: AccountBuckets = { task: 0, resource: 0, material: 0 };
+  private buckets: AccountBuckets = { task: 0, resource: 0, material: 0, };
 
   constructor(
     account: unknown,
@@ -72,16 +72,17 @@ export class AccountScenario extends ScenarioData {
    *
    * @see docs/taskjuggler/lib/taskjuggler/AccountScenario.rb#turnover
    */
-  turnover(startIdx: number, endIdx: number): number {
+  turnover(startIdx: number, endIdx: number,): number {
     // Reset buckets a cada chamada.
-    this.buckets = { task: 0, resource: 0, material: 0 };
+    this.buckets = { task: 0, resource: 0, material: 0, };
 
     let amount = 0.0;
 
     // 1. Credits (manuais)
     const credits = this.a("credits",) as AccountCredit[];
     if (credits && credits.length > 0) {
-      const project = (this.property as PropertyLike & { project: ProjectLike, }).project;
+      const project =
+        (this.property as PropertyLike & { project: ProjectLike }).project;
       const startDate = project.idxToDate(startIdx,);
       const endDate = project.idxToDate(endIdx,);
       for (const credit of credits) {
@@ -103,10 +104,12 @@ export class AccountScenario extends ScenarioData {
         // Normal case: accumulate turnover of child accounts
         for (const child of property.children ?? []) {
           const childAccount = child as unknown as Account;
-          const childAmount = childAccount.scenarioData(this.scenarioIdx,).turnover(startIdx, endIdx,);
+          const childAmount = childAccount.scenarioData(this.scenarioIdx,)
+            .turnover(startIdx, endIdx,);
           amount += childAmount;
           // Buckets herdam dos filhos.
-          const childBuckets = childAccount.scenarioData(this.scenarioIdx,).getBuckets();
+          const childBuckets = childAccount.scenarioData(this.scenarioIdx,)
+            .getBuckets();
           this.buckets.task += childBuckets.task;
           this.buckets.resource += childBuckets.resource;
           this.buckets.material += childBuckets.material;
@@ -114,57 +117,129 @@ export class AccountScenario extends ScenarioData {
       } else {
         // Special case for meta account used to calculate a balance.
         // The first adoptee is the top-level cost account, the second the top-level revenue account.
-        const costAmount =
-          -(adoptees[0] as unknown as Account).scenarioData(this.scenarioIdx,).turnover(startIdx, endIdx,);
-        const revenueAmount =
-          (adoptees[1] as unknown as Account).scenarioData(this.scenarioIdx,).turnover(startIdx, endIdx,);
+        const costAmount = -(adoptees[0] as unknown as Account).scenarioData(
+          this.scenarioIdx,
+        ).turnover(startIdx, endIdx,);
+        const revenueAmount = (adoptees[1] as unknown as Account).scenarioData(
+          this.scenarioIdx,
+        ).turnover(startIdx, endIdx,);
         amount += costAmount + revenueAmount;
-        const costBuckets = (adoptees[0] as unknown as Account).scenarioData(this.scenarioIdx,).getBuckets();
-        const revenueBuckets = (adoptees[1] as unknown as Account).scenarioData(this.scenarioIdx,).getBuckets();
+        const costBuckets = (adoptees[0] as unknown as Account).scenarioData(
+          this.scenarioIdx,
+        ).getBuckets();
+        const revenueBuckets = (adoptees[1] as unknown as Account).scenarioData(
+          this.scenarioIdx,
+        ).getBuckets();
         this.buckets.task += -costBuckets.task + revenueBuckets.task;
-        this.buckets.resource += -costBuckets.resource + revenueBuckets.resource;
-        this.buckets.material += -costBuckets.material + revenueBuckets.material;
+        this.buckets.resource += -costBuckets.resource +
+          revenueBuckets.resource;
+        this.buckets.material += -costBuckets.material +
+          revenueBuckets.material;
       }
     } else {
       // Leaf: aggregate by type (tasks or resources)
       const aggregate = this.getAccountAttribute("aggregate",) as string;
-      const project = (this.property as PropertyLike & { project: ProjectLike, }).project;
+      const project =
+        (this.property as PropertyLike & { project: ProjectLike }).project;
 
       if (aggregate === "tasks") {
-        project.tasks.each((task) => {
+        project.tasks.each((task,) => {
           // Cast to Account to access scenarioData, then to TaskScenario for turnover with 5 args
           const taskAccount = task as unknown as Account;
-          const taskScenario = taskAccount.scenarioData(this.scenarioIdx,) as unknown as {
-            turnover(startIdx: number, endIdx: number, account: unknown, resource: unknown, includeKids: boolean,): number;
+          const taskScenario = taskAccount.scenarioData(
+            this.scenarioIdx,
+          ) as unknown as {
+            turnover(
+              startIdx: number,
+              endIdx: number,
+              account: unknown,
+              resource: unknown,
+              includeKids: boolean,
+            ): number;
           };
-          const taskAmount = taskScenario.turnover(startIdx, endIdx, this.property, null, false,);
+          const taskAmount = taskScenario.turnover(
+            startIdx,
+            endIdx,
+            this.property,
+            null,
+            false,
+          );
           amount += taskAmount;
           this.buckets.task += taskAmount;
-        });
+        },);
       } else if (aggregate === "resources") {
-        project.resources.each((resource) => {
+        project.resources.each((resource,) => {
           if (resource.leaf?.()) {
             const resourceAccount = resource as unknown as Account;
-            const resourceScenario = resourceAccount.scenarioData(this.scenarioIdx,) as unknown as {
-              turnover(startIdx: number, endIdx: number, account: unknown, resource: unknown, includeKids: boolean,): number;
+            const resourceScenario = resourceAccount.scenarioData(
+              this.scenarioIdx,
+            ) as unknown as {
+              turnover(
+                startIdx: number,
+                endIdx: number,
+                account: unknown,
+                resource: unknown,
+                includeKids: boolean,
+              ): number;
             };
-            const resourceAmount = resourceScenario.turnover(startIdx, endIdx, this.property, null, false,);
+            const resourceAmount = resourceScenario.turnover(
+              startIdx,
+              endIdx,
+              this.property,
+              null,
+              false,
+            );
             amount += resourceAmount;
             this.buckets.resource += resourceAmount;
           }
-        });
+        },);
       } else if (aggregate === "materials") {
         // Material aggregation: sum totalCost of all materials.
-        project.resources.each?.((material) => {
-          const materialObj = material as unknown as { totalCost?: () => number };
+        project.resources.each?.((material,) => {
+          const materialObj = material as unknown as {
+            totalCost?: () => number;
+          };
           if (typeof materialObj.totalCost === "function") {
             const materialAmount = materialObj.totalCost();
             amount += materialAmount;
             this.buckets.material += materialAmount;
           }
-        });
+        },);
       } else {
-        throw new Error(`Unknown aggregation type ${aggregate}`);
+        throw new Error(`Unknown aggregation type ${aggregate}`,);
+      }
+    }
+
+    // Bloco I: Popula buckets a partir de CostEvents emitidos pelo motor de atribuição
+    // Este é o novo comportamento para contas leaf (não container)
+    if (!property.container?.()) {
+      const project =
+        (this.property as PropertyLike & { project: ProjectLike }).project;
+      const scIdx = this.scenarioIdx;
+      const account = this.property as unknown as Account;
+
+      // Filtrar CostEvents para este cenário e conta (ou seus filhos)
+      for (const event of project.costEvents) {
+        if (event.scenarioIdx !== scIdx) continue;
+        if (!event.account) continue;
+        // Verificar se o evento pertence a esta conta ou a um filho
+        if (
+          event.account === account ||
+          (event.account as any).isChildOf?.(account,)
+        ) {
+          // Classificar por tipo
+          switch (event.type) {
+            case "task_charge":
+              this.buckets.task += event.amount;
+              break;
+            case "resource_effort":
+              this.buckets.resource += event.amount;
+              break;
+            case "material_usage":
+              this.buckets.material += event.amount;
+              break;
+          }
+        }
       }
     }
 
@@ -175,7 +250,7 @@ export class AccountScenario extends ScenarioData {
    * Retorna os buckets atuais (última chamada de turnover).
    */
   getBuckets(): AccountBuckets {
-    return { ...this.buckets };
+    return { ...this.buckets, };
   }
 
   /**
@@ -197,7 +272,7 @@ export class AccountScenario extends ScenarioData {
       case "material":
         return this.buckets.material;
       default:
-        throw new TjInternalError(`Unknown cost type ${type as string}`);
+        throw new TjInternalError(`Unknown cost type ${type as string}`,);
     }
   }
 
@@ -206,8 +281,9 @@ export class AccountScenario extends ScenarioData {
    *
    * @see docs/taskjuggler/lib/taskjuggler/AccountScenario.rb#query_balance
    */
-  query_balance(query: Query): void {
-    const project = (this.property as PropertyLike & { project: ProjectLike, }).project;
+  query_balance(query: Query,): void {
+    const project =
+      (this.property as PropertyLike & { project: ProjectLike }).project;
     const startIdx = 0;
     const endIdx = project.dateToIdx(query.start,);
     const amount = this.turnover(startIdx, endIdx,);
@@ -222,8 +298,9 @@ export class AccountScenario extends ScenarioData {
    *
    * @see docs/taskjuggler/lib/taskjuggler/AccountScenario.rb#query_turnover
    */
-  query_turnover(query: Query): void {
-    const project = (this.property as PropertyLike & { project: ProjectLike, }).project;
+  query_turnover(query: Query,): void {
+    const project =
+      (this.property as PropertyLike & { project: ProjectLike }).project;
     const startIdx = project.dateToIdx(query.start,);
     const endIdx = project.dateToIdx(query.end,);
     const amount = this.turnover(startIdx, endIdx,);

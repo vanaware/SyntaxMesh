@@ -17,6 +17,8 @@ import { ResourceScenario, } from "./resource-scenario.ts";
 import { Charge, } from "../finance/charge.ts";
 import { ChargeSet, } from "../finance/charge-set.ts";
 import { TimeInterval, } from "../time/time-interval.ts";
+import { CostLine, resolveAccount, } from "../accounting/attribution.ts";
+import { CostEvent, createCostEvent, } from "../accounting/cost-event.ts";
 
 export const TASK_SCENARIO_ATTRS: string[] = [
   "allocate",
@@ -971,7 +973,136 @@ export class TaskScenario extends ScenarioData {
           ) {
             amount += totalCost * share;
           }
-        });
+        },);
+      }
+    }
+
+    // Bloco I: Integração com motor de atribuição (attribution engine)
+    // Calcula linhas de custo e emite CostEvents para auditoria
+    const task = this.getProperty() as Task;
+    const scIdx = this.getScenarioIdx();
+    const project = task.project as ProjectLike;
+
+    // Determinar se há chargeset disponível para atribuição
+    const hasChargeset = resource
+      ? (resource.scenarioData(scIdx,) as ResourceScenario).a(
+        "chargeset",
+      ) as ChargeSet[]
+      : this.a("chargeset",) as ChargeSet[];
+
+    // 1. Linhas de custo de recursos (resource_effort)
+    if (!task.container?.() && hasChargeset && hasChargeset.length > 0) {
+      if (resource) {
+        // Custo de recurso específico para esta tarefa
+        const resourceCost = (resource.scenarioData(scIdx,) as ResourceScenario)
+          .cost(
+            startIdx,
+            endIdx,
+            task,
+          );
+        if (resourceCost > 0) {
+          const line: CostLine = {
+            type: "resource_effort",
+            amount: resourceCost,
+            task: task,
+            resource: resource,
+          };
+          const attribution = resolveAccount(line,);
+          // Emitir CostEvent
+          const costEvent = createCostEvent(
+            line,
+            attribution.account,
+            attribution.rule,
+            scIdx,
+            "planned", // modo planejado por default
+          );
+          project.costEvents.push(costEvent,);
+          // Se a conta resolvida corresponde à conta solicitada, adicionar ao total
+          if (
+            attribution.account &&
+            (attribution.account === account ||
+              (attribution.account as any).isChildOf?.(account,))
+          ) {
+            amount += resourceCost;
+          }
+        }
+      } else {
+        // Custo de todos os recursos atribuídos à tarefa
+        for (
+          const assignedResource of this.a("assignedresources",) as Resource[]
+        ) {
+          const resourceCost =
+            (assignedResource.scenarioData(scIdx,) as ResourceScenario).cost(
+              startIdx,
+              endIdx,
+              task,
+            );
+          if (resourceCost > 0) {
+            const line: CostLine = {
+              type: "resource_effort",
+              amount: resourceCost,
+              task: task,
+              resource: assignedResource,
+            };
+            const attribution = resolveAccount(line,);
+            const costEvent = createCostEvent(
+              line,
+              attribution.account,
+              attribution.rule,
+              scIdx,
+              "planned",
+            );
+            project.costEvents.push(costEvent,);
+            if (
+              attribution.account &&
+              (attribution.account === account ||
+                (attribution.account as any).isChildOf?.(account,))
+            ) {
+              amount += resourceCost;
+            }
+          }
+        }
+      }
+    }
+
+    // 2. Linhas de custo de material (material_usage)
+    // TODO: Integrar com MaterialAllocation quando disponível
+    // Por enquanto, manter compatibilidade com o antigo motor de chargeset
+
+    // 3. Linhas de custo de charge (task_charge)
+    const charge = this.a("charge",) as Charge[];
+    if (
+      charge && charge.length > 0 && hasChargeset && hasChargeset.length > 0
+    ) {
+      const iv = new TimeInterval(
+        this.project().idxToDate(startIdx,),
+        this.project().idxToDate(endIdx,),
+      );
+      for (const chargeItem of charge) {
+        const chargeCost = chargeItem.turnover(iv,);
+        if (chargeCost > 0) {
+          const line: CostLine = {
+            type: "task_charge",
+            amount: chargeCost,
+            task: task,
+          };
+          const attribution = resolveAccount(line,);
+          const costEvent = createCostEvent(
+            line,
+            attribution.account,
+            attribution.rule,
+            scIdx,
+            "planned",
+          );
+          project.costEvents.push(costEvent,);
+          if (
+            attribution.account &&
+            (attribution.account === account ||
+              (attribution.account as any).isChildOf?.(account,))
+          ) {
+            amount += chargeCost;
+          }
+        }
       }
     }
 

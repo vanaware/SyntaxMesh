@@ -4,6 +4,8 @@ import { AccountScenario, } from "./account-scenario.ts";
 
 type CostType = 'task' | 'resource' | 'material';
 
+export type { CostType };
+
 export class Account extends PropertyTreeNode {
   private allowedTypes: Set<CostType> = new Set();
 

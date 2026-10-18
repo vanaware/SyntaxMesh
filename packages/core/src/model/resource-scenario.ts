@@ -12,6 +12,9 @@ import { Resource, } from "./resource.ts";
 import { type Account, } from "./account.ts";
 import { TjTime, } from "../time/tj-time.ts";
 import { ChargeSet, } from "../finance/charge-set.ts";
+import { type ProjectLike, } from "./project-like.ts";
+import { CostLine, resolveAccount, } from "../accounting/attribution.ts";
+import { CostEvent, createCostEvent, } from "../accounting/cost-event.ts";
 
 /**
  * Shape of a leave entry as stored on the `leaves` attribute.
@@ -809,19 +812,59 @@ export class ResourceScenario extends ScenarioData {
         const chargeset = this.a("chargeset",) as ChargeSet[];
         if (chargeset) {
           for (const set of chargeset) {
-            set.each((accnt, share) => {
+            set.each((accnt, share,) => {
               if (
                 share !== null &&
                 share > 0.0 &&
-                (accnt === account || accnt.isChildOf?.(account,))
+                (accnt === account || (accnt as any).isChildOf?.(account,))
               ) {
                 amount += totalResourceCost * share;
               }
-            });
+            },);
           }
         }
       }
     }
+
+    // Bloco I: Integração com motor de atribuição (attribution engine)
+    // Calcula linhas de custo e emite CostEvents para auditoria
+    const resource = this.getProperty() as Resource;
+    const scIdx = this.getScenarioIdx();
+    const project = resource.project as ProjectLike;
+
+    // Determinar se há chargeset disponível para atribuição
+    const hasChargeset = this.a("chargeset",) as ChargeSet[];
+
+    // 1. Linhas de custo de recursos (resource_effort)
+    if (!task && hasChargeset && hasChargeset.length > 0) {
+      const resourceCost = this.cost(startIdx, endIdx,);
+      if (resourceCost > 0) {
+        const line: CostLine = {
+          type: "resource_effort",
+          amount: resourceCost,
+          resource: resource,
+        };
+        const attribution = resolveAccount(line,);
+        // Emitir CostEvent
+        const costEvent = createCostEvent(
+          line,
+          attribution.account,
+          attribution.rule,
+          scIdx,
+          "planned", // modo planejado por default
+        );
+        project.costEvents.push(costEvent,);
+        // Se a conta resolvida corresponde à conta solicitada, adicionar ao total
+        if (
+          attribution.account &&
+          (attribution.account === account ||
+            (attribution.account as any).isChildOf?.(account,))
+        ) {
+          amount += resourceCost;
+        }
+      }
+    }
+
     return amount;
   }
 
@@ -833,7 +876,8 @@ export class ResourceScenario extends ScenarioData {
   cost(startIdx: number, endIdx: number, task: Task | null = null,): number {
     // Ruby uses @rate (the raw rate attribute), not the container-summing
     // rate() method, so a group resource's own rate is used directly.
-    return this.getAllocatedTime(startIdx, endIdx, task,) * (this.a("rate",) as number);
+    return this.getAllocatedTime(startIdx, endIdx, task,) *
+      (this.a("rate",) as number);
   }
 
   /**
@@ -844,11 +888,11 @@ export class ResourceScenario extends ScenarioData {
     if (!chargeset) return true;
     let empty = true;
     for (const set of chargeset) {
-      set.each((_, share) => {
+      set.each((_, share,) => {
         if (share !== null && share > 0.0) {
           empty = false;
         }
-      });
+      },);
     }
     return empty;
   }

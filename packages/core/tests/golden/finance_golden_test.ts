@@ -56,18 +56,26 @@ function loadGoldenFileVariations(): GoldenFile {
 }
 
 function assertClose(actual: number, expected: number, label: string,): void {
-  assertAlmostEquals(actual, expected, TOLERANCE, `${label}: expected ${expected}, got ${actual}`,);
+  assertAlmostEquals(
+    actual,
+    expected,
+    TOLERANCE,
+    `${label}: expected ${expected}, got ${actual}`,
+  );
 }
 
 describe("Finance golden tests (mwe004)", () => {
   const golden = loadGoldenFile();
 
   // Group cases by type for structured verification
-  const taskCases = golden.cases.filter((c) => c.type === "Task",);
-  const resourceCases = golden.cases.filter((c) => c.type === "Resource",);
+  const taskCases = golden.cases.filter((c,) => c.type === "Task");
+  const resourceCases = golden.cases.filter((c,) => c.type === "Resource");
 
   it("golden file has >= 10 cases", () => {
-    assert(golden.cases.length >= 10, `Expected >= 10 cases, got ${golden.cases.length}`,);
+    assert(
+      golden.cases.length >= 10,
+      `Expected >= 10 cases, got ${golden.cases.length}`,
+    );
   });
 
   it("golden file has task and resource cases", () => {
@@ -105,35 +113,58 @@ describe("Finance golden tests (mwe004)", () => {
       // Resources have no revenue
       assertClose(e.revenue ?? 0.0, 0.0, "resource revenue",);
       // Balance = -cost (resources are cost-only)
-      const rc = e.cost ?? 0.0; assertClose(e.balance ?? 0.0, -rc, "resource balance");
+      const rc = e.cost ?? 0.0;
+      assertClose(e.balance ?? 0.0, -rc, "resource balance",);
     });
   }
 
   // Cross-check: total project cost and revenue from task cases
   it("total project cost and revenue are non-zero (golden values are real)", () => {
-    const totalCost = taskCases.reduce((sum, c) => sum + c.expected.cost!, 0,);
-    const totalRevenue = taskCases.reduce((sum, c) => sum + c.expected.revenue!, 0,);
+    const totalCost = taskCases.reduce((sum, c,) => sum + c.expected.cost!, 0,);
+    const totalRevenue = taskCases.reduce(
+      (sum, c,) => sum + c.expected.revenue!,
+      0,
+    );
     assert(totalCost > 0, `Expected non-zero total cost, got ${totalCost}`,);
-    assert(totalRevenue > 0, `Expected non-zero total revenue, got ${totalRevenue}`,);
+    assert(
+      totalRevenue > 0,
+      `Expected non-zero total revenue, got ${totalRevenue}`,
+    );
   });
 
   // Cross-check: resource costs are a portion of total task cost.
   // Task cost includes both resource effort (effort * rate) AND any
   // perDiem charges on container tasks, so resource cost <= task cost.
   it("resource costs are <= total task cost", () => {
-    const totalResourceCost = resourceCases.reduce((sum, c) => sum + (c.expected.cost ?? 0), 0,);
-    const totalTaskCost = taskCases.reduce((sum, c) => sum + (c.expected.cost ?? 0), 0,);
-    assert(totalResourceCost <= totalTaskCost + TOLERANCE,
-      `Resource cost ${totalResourceCost} should be <= total task cost ${totalTaskCost}`,);
+    const totalResourceCost = resourceCases.reduce(
+      (sum, c,) => sum + (c.expected.cost ?? 0),
+      0,
+    );
+    const totalTaskCost = taskCases.reduce(
+      (sum, c,) => sum + (c.expected.cost ?? 0),
+      0,
+    );
+    assert(
+      totalResourceCost <= totalTaskCost + TOLERANCE,
+      `Resource cost ${totalResourceCost} should be <= total task cost ${totalTaskCost}`,
+    );
   });
 
   // Cross-check: resource costs are <= total task cost (resources are cost-only,
   // task cost also includes perDiem charges on container tasks).
   it("resource costs are <= total task cost", () => {
-    const totalResourceCost = resourceCases.reduce((sum, c) => sum + (c.expected.cost ?? 0), 0,);
-    const totalTaskCost = taskCases.reduce((sum, c) => sum + (c.expected.cost ?? 0), 0,);
-    assert(totalResourceCost <= totalTaskCost + TOLERANCE,
-      `Resource cost ${totalResourceCost} should be <= total task cost ${totalTaskCost}`,);
+    const totalResourceCost = resourceCases.reduce(
+      (sum, c,) => sum + (c.expected.cost ?? 0),
+      0,
+    );
+    const totalTaskCost = taskCases.reduce(
+      (sum, c,) => sum + (c.expected.cost ?? 0),
+      0,
+    );
+    assert(
+      totalResourceCost <= totalTaskCost + TOLERANCE,
+      `Resource cost ${totalResourceCost} should be <= total task cost ${totalTaskCost}`,
+    );
   });
 });
 
@@ -141,11 +172,14 @@ describe("Finance golden tests (variations)", () => {
   const golden = loadGoldenFileVariations();
 
   // Group cases by type for structured verification
-  const taskCases = golden.cases.filter((c) => c.type === "Task",);
-  const resourceCases = golden.cases.filter((c) => c.type === "Resource",);
+  const taskCases = golden.cases.filter((c,) => c.type === "Task");
+  const resourceCases = golden.cases.filter((c,) => c.type === "Resource");
 
   it("golden file has >= 20 cases", () => {
-    assert(golden.cases.length >= 20, `Expected >= 20 cases, got ${golden.cases.length}`,);
+    assert(
+      golden.cases.length >= 20,
+      `Expected >= 20 cases, got ${golden.cases.length}`,
+    );
   });
 
   it("golden file has task cases", () => {
@@ -182,7 +216,8 @@ describe("Finance golden tests (variations)", () => {
       // Resources have no revenue
       assertClose(e.revenue ?? 0.0, 0.0, "resource revenue",);
       // Balance = -cost (resources are cost-only)
-      const rc = e.cost ?? 0.0; assertClose(e.balance ?? 0.0, -rc, "resource balance");
+      const rc = e.cost ?? 0.0;
+      assertClose(e.balance ?? 0.0, -rc, "resource balance",);
     });
   }
 });

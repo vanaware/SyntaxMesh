@@ -1,6 +1,7 @@
 import { PropertyTreeNode, } from "./property-tree-node.ts";
 import { type ProjectLike, } from "./project-like.ts";
 import { PropertySet, } from "./property-set.ts";
+import { ChargeSetCollection, } from "../finance/charge-set-collection.ts";
 
 /**
  * Entidade de primeira classe representando um insumo físico do projeto
@@ -12,7 +13,7 @@ import { PropertySet, } from "./property-set.ts";
 export class Material extends PropertyTreeNode {
   readonly unit: string;
   readonly unitPrice: number;
-  readonly chargeset: string;
+  readonly chargeset: ChargeSetCollection;
   readonly totalQuantity?: number;
 
   constructor(
@@ -20,7 +21,7 @@ export class Material extends PropertyTreeNode {
     id: string,
     unit: string,
     unitPrice: number,
-    chargeset: string,
+    chargeset?: ChargeSetCollection,
     totalQuantity?: number,
   ) {
     // Material não é registrado em PropertySet — é uma entidade simples.
@@ -29,7 +30,7 @@ export class Material extends PropertyTreeNode {
     super(propertySet, id, id, null,);
     this.unit = unit;
     this.unitPrice = unitPrice;
-    this.chargeset = chargeset;
+    this.chargeset = chargeset ?? new ChargeSetCollection();
     this.totalQuantity = totalQuantity;
   }
 

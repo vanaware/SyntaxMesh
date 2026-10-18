@@ -20,16 +20,19 @@ export class ExtendedBooking {
   readonly value: number;
   readonly date: TjTime;
   readonly interval?: TimeInterval;
+  readonly scenarioIdx?: number;
 
   constructor(
     type: ExtendedBookingType,
     value: number,
     date: TjTime,
     interval?: TimeInterval,
+    scenarioIdx?: number,
   ) {
     this.type = type;
     this.value = value;    this.date = date;
     this.interval = interval;
+    this.scenarioIdx = scenarioIdx;
 
     // Validação
     // Permitir valores negativos para charge (custo monetário), mas não para effort/material

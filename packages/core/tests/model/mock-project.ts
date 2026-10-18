@@ -1,5 +1,6 @@
 import { PropertySet, } from "../../src/model/property-set.ts";
 import { type ProjectLike, } from "../../src/model/project-like.ts";
+import { CostEvent, } from "../../src/model/cost-event.ts";
 import { TjTime, } from "../../src/time/tj-time.ts";
 import { registerTaskAttributes, } from "../../src/model/attributes/task-attributes.ts";
 import { registerResourceAttributes, } from "../../src/model/attributes/resource-attributes.ts";
@@ -23,6 +24,8 @@ export class MockProject implements ProjectLike {
 
   readonly id = "mock";
   readonly name = "Mock Project";
+  readonly costEvents: CostEvent[] = [];
+  readonly trackingScenario: string | null = null;
 
   private readonly _scenarios: Array<{ id: string; fullId: string }>;
   private readonly store = new Map<string, unknown>();
@@ -185,5 +188,19 @@ export class MockProject implements ProjectLike {
     return null as unknown as import("../../src/attributes/attribute-base.ts").AttributeBase<
       unknown
     >;
+  }
+
+  /**
+   * Fase 8.2: Verifica se o cenário possui agendamentos (bookings).
+   */
+  hasBookings(_scenarioIdx: number,): boolean {
+    return false;
+  }
+
+  /**
+   * Fase 8.2: Verifica se o cenário está em modo de projeção.
+   */
+  isProjectionMode(scenarioIdx: number,): boolean {
+    return !this.hasBookings(scenarioIdx,);
   }
 }

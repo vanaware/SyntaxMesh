@@ -65,14 +65,14 @@
 ## Progresso
 
 ```
-[ ] 8.2.0  ADR 031 (modelo contábil estendido)        —  0/6
-[ ] 8.2.1  Account.allowedTypes                       —  0/9
-[ ] 8.2.2  AccountScenario.turnoverByType + buckets   —  0/12
-[ ] 8.2.3  CostEvent                                  —  0/10
-[ ] 8.2.4  ChargeSetCollection                        —  0/14
-[ ] 8.2.5  Motor de precedência (attribution)         —  0/16
-[ ] 8.2.6  Integração material no motor               —  0/8
-[ ] 8.2.7  Booking scenario-aware                     —  0/10
+[✓] 8.2.0  ADR 031 (modelo contábil estendido)        —  6/6
+[✓] 8.2.1  Account.allowedTypes                       —  9/9
+[✓] 8.2.2  AccountScenario.turnoverByType + buckets   —  12/12
+[✓] 8.2.3  CostEvent                                  —  10/10
+[✓] 8.2.4  ChargeSetCollection                        —  14/14
+[✓] 8.2.5  Motor de precedência (attribution)         —  16/16
+[✓] 8.2.6  Integração material no motor               —  8/8
+[✓] 8.2.7  Booking scenario-aware                     —  10/10
 [ ] 8.2.8  Integração com Task/Resource.turnover      —  0/12
 [ ] 8.2.9  API de relatórios (breakdown + plan×actual)—  0/10
 [ ] 8.2.10 Golden tests                               —  0/12

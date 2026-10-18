@@ -6,7 +6,7 @@ import { MockProject, } from "./mock-project.ts";
 
 describe("MaterialAllocation", () => {
   const project = new MockProject();
-  const steel = new Material(project, "Steel", "kg", 25.0, "Costs.Materials",);
+  const steel = new Material(project, "Steel", "kg", 25.0);
 
   it("onstart", () => {
     const alloc = new MaterialAllocation(steel, 500, "onstart",);

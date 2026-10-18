@@ -6,6 +6,7 @@ import type { Resource, } from "./resource.ts";
 import type { Task, } from "./task.ts";
 import type { Report, } from "./report.ts";
 import type { TjTime, } from "../time/tj-time.ts";
+import type { CostEvent, } from "./cost-event.ts";
 
 export interface ProjectLike {
   readonly scenarioCount: number;
@@ -84,4 +85,10 @@ export interface ProjectLike {
    * Usado por `TaskScenario.postScheduleCheck()` para relatar gaps.
    */
   slotsToDays(slots: number,): number;
+
+  // Novas propriedades para a Fase 8.2
+  readonly costEvents: CostEvent[];
+  readonly trackingScenario: string | null;
+  hasBookings(scenarioIdx: number,): boolean;
+  isProjectionMode(scenarioIdx: number,): boolean;
 }
