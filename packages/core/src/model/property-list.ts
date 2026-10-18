@@ -1,26 +1,23 @@
-import { PropertySet } from "./property-set.ts";
-import { PropertyTreeNode } from "./property-tree-node.ts";
-import { SourceFileInfo } from "./source-file-info.ts";
-import { Query } from "../attributes/query.ts";
+import { PropertyTreeNode, } from "./property-tree-node.ts";
+import { PropertySet, } from "./property-set.ts";
+import { SourceFileInfo, } from "../source-file-info.ts";
 
-export class PropertyList<T extends PropertyTreeNode> {
+export class PropertyList<T extends PropertyTreeNode = PropertyTreeNode,> {
   private items: T[];
-  readonly propertySet: PropertySet<T>;
-  query: Query | null;
+  readonly propertySet: PropertySet;
   private sortingLevels: number;
   private sortingCriteria: string[];
   private sortingUp: boolean[];
   private scenarioIdx: number[];
 
-  constructor(arg: PropertySet<T> | PropertyList<T>, copyItems: boolean = true) {
+  constructor(arg: PropertySet | PropertyList<T>, copyItems: boolean = true,) {
     if (arg instanceof PropertySet) {
       this.propertySet = arg;
       this.items = [];
     } else {
       this.propertySet = arg.propertySet;
-      this.items = copyItems ? [...arg.items] : arg.items;
+      this.items = copyItems ? [...arg.items,] : arg.items;
     }
-    this.query = null;
     this.sortingLevels = 0;
     this.sortingCriteria = [];
     this.sortingUp = [];
@@ -28,14 +25,14 @@ export class PropertyList<T extends PropertyTreeNode> {
   }
 
   toArray(): T[] {
-    return [...this.items];
+    return [...this.items,];
   }
 
   length(): number {
     return this.items.length;
   }
 
-  get(index: number): T | undefined {
+  get(index: number,): T | undefined {
     return this.items[index];
   }
 
@@ -43,54 +40,58 @@ export class PropertyList<T extends PropertyTreeNode> {
     return this.items[Symbol.iterator]();
   }
 
-  includes(node: T): boolean {
-    return this.items.includes(node);
+  includes(node: T,): boolean {
+    return this.items.includes(node,);
   }
 
-  find(node: T): T | undefined {
-    return this.items.find(item => item === node);
+  find(predicateOrNode: ((item: T,) => boolean) | T,): T | null {
+    if (typeof predicateOrNode === "function") {
+      return this.items.find(predicateOrNode as (item: T,) => boolean,) ?? null;
+    }
+    const index = this.items.indexOf(predicateOrNode,);
+    return index >= 0 ? this.items[index] ?? null : null;
   }
 
   push(...items: T[]): number {
-    return this.items.push(...items);
+    return this.items.push(...items,);
   }
 
-  append(list: PropertyList<T> | T[]): void {
+  append(list: PropertyList<T> | T[],): void {
     if (list instanceof PropertyList) {
-      this.items.push(...list.items);
+      this.items.push(...list.items,);
     } else {
-      this.items.push(...list);
+      this.items.push(...list,);
     }
   }
 
-  delete(index: number): void {
+  delete(index: number,): void {
     if (index >= 0 && index < this.items.length) {
-      this.items.splice(index, 1);
+      this.items.splice(index, 1,);
     }
   }
 
-  deleteIf(predicate: (item: T) => boolean): void {
+  deleteIf(predicate: (item: T,) => boolean,): void {
     const indices = this.items
-      .map((item, index) => ({ item, index }))
-      .filter(({ item }) => predicate(item))
-      .map(({ index }) => index)
-      .sort((a, b) => b - a);
+      .map((item, index,) => ({ item, index, }))
+      .filter(({ item, },) => predicate(item,))
+      .map(({ index, },) => index)
+      .sort((a, b,) => b - a);
 
-    indices.forEach(index => {
-      this.items.splice(index, 1);
-    });
+    indices.forEach((index,) => {
+      this.items.splice(index, 1,);
+    },);
   }
 
   unique(): void {
     const seen = new Set<string>();
-    this.items = this.items.filter(item => {
+    this.items = this.items.filter((item,) => {
       const id = item.id;
-      if (seen.has(id)) {
+      if (seen.has(id,)) {
         return false;
       }
-      seen.add(id);
+      seen.add(id,);
       return true;
-    });
+    },);
   }
 
   clear(): void {
@@ -99,45 +100,48 @@ export class PropertyList<T extends PropertyTreeNode> {
 
   includeAdopted(): void {
     const allItems: T[] = [];
-    this.items.forEach(item => {
-      allItems.push(item);
-      allItems.push(...item.adoptees);
-    });
+    this.items.forEach((item,) => {
+      allItems.push(item,);
+      allItems.push(...(item.adoptees as unknown as T[]),);
+    },);
     this.items = allItems;
   }
 
-  checkForDuplicates(sfi: SourceFileInfo): void {
+  checkForDuplicates(sfi: SourceFileInfo,): void {
     const seen = new Set<string>();
-    this.items.forEach(item => {
-      if (seen.has(item.id)) {
-        throw new Error(`Duplicate property ID: ${item.id}`);
+    this.items.forEach((item,) => {
+      if (seen.has(item.id,)) {
+        throw new Error(`Duplicate property ID: ${item.id}`,);
       }
-      seen.add(item.id);
-    });
+      seen.add(item.id,);
+    },);
   }
 
-  setSorting(modes: Array<[string, boolean, number]>): void {
+  setSorting(modes: Array<[string, boolean, number,]>,): void {
     this.sortingCriteria = [];
     this.sortingUp = [];
     this.scenarioIdx = [];
 
-    modes.forEach(([criteria, up, scIdx]) => {
-      this.addSortingCriteria(criteria, up, scIdx);
-    });
+    modes.forEach(([criteria, up, scIdx,],) => {
+      this.addSortingCriteria(criteria, up, scIdx,);
+    },);
   }
 
-  addSortingCriteria(criteria: string, up: boolean, scIdx: number): void {
-    if (!this.propertySet.knownAttribute(criteria) && !this.hasQuery(criteria, scIdx)) {
-      throw new Error(`Unknown attribute or query: ${criteria}`);
+  addSortingCriteria(criteria: string, up: boolean, scIdx: number,): void {
+    if (
+      !this.propertySet.knownAttribute(criteria,) &&
+      !this.hasQuery(criteria, scIdx,)
+    ) {
+      throw new Error(`Unknown attribute or query: ${criteria}`,);
     }
 
-    if (this.scenarioSpecific(criteria, scIdx) && scIdx === -1) {
-      throw new Error(`Scenario-specific attribute requires scenario index`);
+    if (this.scenarioSpecific(criteria, scIdx,) && scIdx === -1) {
+      throw new Error(`Scenario-specific attribute requires scenario index`,);
     }
 
-    this.sortingCriteria.push(criteria);
-    this.sortingUp.push(up);
-    this.scenarioIdx.push(scIdx);
+    this.sortingCriteria.push(criteria,);
+    this.sortingUp.push(up,);
+    this.scenarioIdx.push(scIdx,);
     this.sortingLevels++;
   }
 
@@ -149,7 +153,8 @@ export class PropertyList<T extends PropertyTreeNode> {
   }
 
   treeMode(): boolean {
-    return this.sortingCriteria.length > 0 && this.sortingCriteria[0] === "tree";
+    return this.sortingCriteria.length > 0 &&
+      this.sortingCriteria[0] === "tree";
   }
 
   sort(): void {
@@ -184,28 +189,28 @@ export class PropertyList<T extends PropertyTreeNode> {
 
   private addFirstCriteria(): void {
     if (this.sortingCriteria.length === 0) {
-      this.sortingCriteria.unshift("tree");
-      this.sortingUp.unshift(true);
-      this.scenarioIdx.unshift(-1);
+      this.sortingCriteria.unshift("tree",);
+      this.sortingUp.unshift(true,);
+      this.scenarioIdx.unshift(-1,);
       this.sortingLevels++;
     }
   }
 
   private sortInternal(): void {
-    this.items.sort((a, b) => {
+    this.items.sort((a, b,) => {
       for (let i = 0; i < this.sortingCriteria.length; i++) {
-        const criteria = this.sortingCriteria[i];
+        const criteria = this.sortingCriteria[i]!;
         const up = this.sortingUp[i];
         const scIdx = this.scenarioIdx[i];
 
         let aValue: unknown, bValue: unknown;
 
-        if (this.scenarioSpecific(criteria, scIdx)) {
-          aValue = a.getForScenario(criteria, scIdx);
-          bValue = b.getForScenario(criteria, scIdx);
+        if (this.scenarioSpecific(criteria, scIdx!,)) {
+          aValue = a.getForScenario(criteria, scIdx!,);
+          bValue = b.getForScenario(criteria, scIdx!,);
         } else {
-          aValue = a.get(criteria);
-          bValue = b.get(criteria);
+          aValue = a.get(criteria,);
+          bValue = b.get(criteria,);
         }
 
         if (aValue === bValue) {
@@ -220,7 +225,7 @@ export class PropertyList<T extends PropertyTreeNode> {
         }
 
         if (typeof aValue === "string" && typeof bValue === "string") {
-          const comparison = aValue.localeCompare(bValue);
+          const comparison = aValue.localeCompare(bValue,);
           return up ? comparison : -comparison;
         }
 
@@ -228,48 +233,48 @@ export class PropertyList<T extends PropertyTreeNode> {
           return up ? aValue - bValue : bValue - aValue;
         }
 
-        const aStr = String(aValue);
-        const bStr = String(bValue);
-        const comparison = aStr.localeCompare(bStr);
+        const aStr = String(aValue,);
+        const bStr = String(bValue,);
+        const comparison = aStr.localeCompare(bStr,);
         return up ? comparison : -comparison;
       }
 
       return 0;
-    });
+    },);
   }
 
   index(): void {
-    this.items.forEach((item, index) => {
-      item.set("index", index + 1);
-    });
+    this.items.forEach((item, index,) => {
+      item.set("index", index + 1,);
+    },);
   }
 
   private indexTree(): void {
-    this.items.forEach((item, index) => {
+    this.items.forEach((item, index,) => {
       const bsIdcs = item.getBSIndicies();
       let bsi = "";
       let first = true;
-      bsIdcs.forEach((idx) => {
+      bsIdcs.forEach((idx,) => {
         if (first) {
           first = false;
         } else {
           bsi += ".";
         }
         bsi += idx.toString();
-      });
-      item.set("bsi", bsi);
-    });
+      },);
+      item.set("bsi", bsi,);
+    },);
   }
 
-  itemIndex(item: T): number {
-    return this.items.indexOf(item);
+  itemIndex(item: T,): number {
+    return this.items.indexOf(item,);
   }
 
-  private hasQuery(criteria: string, scIdx: number): boolean {
+  private hasQuery(criteria: string, scIdx: number,): boolean {
     return false;
   }
 
-  private scenarioSpecific(criteria: string, scIdx: number): boolean {
-    return this.propertySet.scenarioSpecific?(criteria) || false;
+  private scenarioSpecific(criteria: string, scIdx: number,): boolean {
+    return this.propertySet.scenarioSpecific?.(criteria,) || false;
   }
 }

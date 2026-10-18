@@ -77,8 +77,8 @@ O que foi decidido? Seja específico e acionável.
 | 017 | Scoreboard bit encoding em TypeScript | Concluído | 2026-10-04 |
 | 018 | Heurística do scheduler TaskJuggler | Concluído | 2026-10-05 |
 | 019 | Modelo financeiro em TypeScript | Concluída | 2026-10-11 |
-| 020 | Modelo Contábil Estendido | Proposto | 2026-10-15 |
-| 021 | Orquestrador e pipeline de scheduling | Aceito | 2026-10-18 |
+| 020 | Modelo Contábil Estendido | Conclida | 2026-10-15 |
+| 021 | Orquestrador e pipeline de scheduling | Concluído | 2026-10-18 |
 | 022 | FSM do TextParser compilado em runtime | Proposto | — |
 | 023 | i18n de keywords via LanguageRegistry | Proposto | — |
 | 024 | Expressões lógicas sem precedência | Proposto | — |

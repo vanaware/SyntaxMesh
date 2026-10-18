@@ -3,14 +3,17 @@ export class Log {
   static stack: string[] = [];
   static segments: string[] = [];
   static silent: boolean = false;
-  static progress: number = 0;
+  static progressPct: number = 0;
   static progressMeter: string = '';
 
   static enter(segment: string, message: string): void {
     this.stack.push(segment);
     this.segments.push(`${segment}: ${message}`);
     if (this.level > 0) {
-      console.error(this.formatMessage(this.segments[this.segments.length - 1]));
+      const last = this.segments[this.segments.length - 1];
+      if (last) {
+        console.error(this.formatMessage(last));
+      }
     }
   }
 
@@ -55,16 +58,16 @@ export class Log {
 
   static activity(): void {
     if (this.silent) return;
-    this.progress = (this.progress + 1) % 100;
+    this.progressPct = (this.progressPct + 1) % 100;
     if (Deno?.stderr?.isTerminal()) {
-      process.stdout.write(`\rProgress: ${this.progress}%`);
+      Deno.stdout.writeSync(new TextEncoder().encode(`\rProgress: ${this.progressPct}%`));
     }
   }
 
   static progress(percent: number): void {
-    this.progress = Math.max(0, Math.min(100, percent));
+    this.progressPct = Math.max(0, Math.min(100, percent));
     if (Deno?.stderr?.isTerminal()) {
-      process.stdout.write(`\rProgress: ${this.progress}%`);
+      Deno.stdout.writeSync(new TextEncoder().encode(`\rProgress: ${this.progressPct}%`));
     }
   }
 
@@ -73,7 +76,7 @@ export class Log {
     this.stack = [];
     this.segments = [];
     this.silent = false;
-    this.progress = 0;
+    this.progressPct = 0;
     this.progressMeter = '';
   }
 

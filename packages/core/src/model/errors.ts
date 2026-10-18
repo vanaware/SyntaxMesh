@@ -1,5 +1,3 @@
-import { TjError } from "./attributes/errors.ts";
-
 /**
  * Erro base para todos os erros do sistema de atributos.
  */
@@ -31,9 +29,19 @@ export class TjRuntimeError extends TjError {
 }
 
 /**
- * Erro quando um atributo tenta sobresrer um valor já definido.
+ * Erro interno — usado para situações impossíveis.
  */
-export class AttributeOverwrite extends TjRuntimeError {
+export class TjInternalError extends TjError {
+  constructor(message: string) {
+    super(message);
+    this.name = "TjInternalError";
+  }
+}
+
+/**
+ * Erro quando um atributo tenta sobrescrever um valor já definido.
+ */
+export class AttributeOverwrite extends TjArgumentError {
   constructor(attributeId: string) {
     super(`Attribute '${attributeId}' já está definido`);
     this.name = "AttributeOverwrite";
