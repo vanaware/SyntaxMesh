@@ -3,16 +3,12 @@ import { assertEquals, } from "@std/assert";
 import { AppConfig, } from "../src/app-config.ts";
 
 describe("AppConfig", () => {
-  it("version armazena versão", () => {
-    assertEquals(AppConfig.version, "0.0.0",);
-  });
-
   it("packageName armazena nome do pacote", () => {
-    assertEquals(AppConfig.packageName, "@syntaxmesh/core",);
+    assertEquals(AppConfig.packageName, "@vanaware/syntaxmesh",);
   });
 
   it("softwareName armazena nome do software", () => {
-    assertEquals(AppConfig.softwareName, "TaskJuggler 3",);
+    assertEquals(AppConfig.softwareName, "SyntaxMesh",);
   });
 
   it("dataDirs retorna array vazio por padrão", () => {

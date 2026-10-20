@@ -1,7 +1,7 @@
 import { AppConfig } from "./app-config.ts";
 
 /**
- * Inicializa AppConfig com valores do TaskJuggler.
+ * Inicializa AppConfig com valores do SyntaxMesh.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Tj3Config.rb
  */

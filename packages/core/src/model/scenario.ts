@@ -10,9 +10,7 @@ export class Scenario extends PropertyTreeNode {
     name: string,
     parent: PropertyTreeNode | null,
   ) {
-    const propertySet = new PropertySet(project, false,);
-    super(propertySet, id, name, parent,);
-    project.addScenario(this,);
+    super(project.scenarios, id, name, parent,);
   }
 
   override all(): Scenario[] {

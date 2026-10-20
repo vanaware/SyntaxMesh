@@ -87,6 +87,14 @@ export class ResourceScenario extends ScenarioData {
     this.preloadAttributes(RESOURCE_SCENARIO_ATTRS,);
   }
 
+  project(): ProjectLike {
+    return (this.getProperty() as Resource).project as ProjectLike;
+  }
+
+  override getProperty(): Resource {
+    return super.getProperty() as Resource;
+  }
+
   /**
    * Returns true if the resource is on shift at the time specified by
    * _sbIdx_.
@@ -107,6 +115,205 @@ export class ResourceScenario extends ScenarioData {
       return workinghours.onShift(sbIdx,);
     }
     return true;
+  }
+
+  /**
+   * This method must be called at the beginning of each scheduling run. It
+   * initializes variables used during the scheduling process.
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/ResourceScenario.rb:prepareScheduling
+   */
+  prepareScheduling(): void {
+    this.effort = 0;
+    if ((this.getProperty() as PropertyTreeNode).leaf?.()) {
+      this.initScoreboard();
+    }
+  }
+
+  /**
+   * The criticalness of a resource is a measure for the probability that all
+   * allocations can be fulfilled. The smaller the value, the more likely
+   * will the tasks get the resource. A value above 1.0 means that
+   * statistically some tasks will not get their resources. A value between
+   * 0 and 1 implies no guarantee, though.
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/ResourceScenario.rb:calcCriticalness
+   */
+  calcCriticalness(): void {
+    if (this.scoreboard === null) {
+      // Resources that are not allocated are not critical at all.
+      this.setStoredValue("criticalness", 0.0,);
+      return;
+    }
+    let freeSlots = 0;
+    for (let i = 0; i < this.scoreboard.size; i++) {
+      if (this.scoreboard.get(i,) === null) {
+        freeSlots++;
+      }
+    }
+    const alloctdeffort = (this.a("alloctdeffort",) as number) ?? 0;
+    this.setStoredValue(
+      "criticalness",
+      freeSlots === 0 ? 1.0 : alloctdeffort / freeSlots,
+    );
+  }
+
+  /**
+   * Resolves the `managers` attribute into `Resource` objects and builds the
+   * reverse `directreports` link.
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/ResourceScenario.rb:setDirectReports
+   */
+  setDirectReports(): void {
+    const managers = (this.a("managers",) as string[]) ?? [];
+    const property = this.getProperty() as PropertyTreeNode;
+    const resolved: Resource[] = [];
+
+    for (const managerId of managers) {
+      const manager = this.project().resource(managerId,);
+      if (!manager) {
+        this.error(
+          "resource_id_expected",
+          `${managerId} is not a defined resource.`,
+        );
+        continue;
+      }
+      if (!(manager as PropertyTreeNode).leaf?.()) {
+        this.error(
+          "manager_is_group",
+          `Resource ${property.fullId} has group ${manager.fullId} ` +
+            `assigned as manager. Managers must be leaf resources.`,
+        );
+        continue;
+      }
+      if (manager === property) {
+        this.error(
+          "manager_is_self",
+          `Resource ${property.fullId} cannot manage itself.`,
+        );
+        continue;
+      }
+
+      // Only leaf resources have reporting lines.
+      if (property.leaf?.()) {
+        const managerDirectReports = (manager as PropertyTreeNode)
+          .getForScenario("directreports", this.getScenarioIdx(),) as Resource[];
+        if (!managerDirectReports.includes(property as unknown as Resource,)) {
+          (manager as PropertyTreeNode).setForScenario(
+            "directreports",
+            [...managerDirectReports, property as unknown as Resource,],
+            this.getScenarioIdx(),
+          );
+        }
+      }
+
+      resolved.push(manager,);
+    }
+
+    // @managers.uniq!
+    this.setStoredValue("managers", resolved,);
+  }
+
+  /**
+   * Propagates this resource into the `reports` list of its managers.
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/ResourceScenario.rb:setReports
+   */
+  setReports(): void {
+    const directReports = (this.a("directreports",) as Resource[]) ?? [];
+    if (directReports.length === 0) {
+      return;
+    }
+
+    const property = this.getProperty() as PropertyTreeNode;
+    for (const manager of directReports) {
+      const managerNode = manager as unknown as PropertyTreeNode;
+      const reports = (managerNode.getForScenario(
+        "reports",
+        this.getScenarioIdx(),
+      ) as Resource[]) ?? [];
+      if (!reports.includes(property as unknown as Resource,)) {
+        managerNode.setForScenario(
+          "reports",
+          [...reports, property as unknown as Resource,],
+          this.getScenarioIdx(),
+        );
+      }
+    }
+  }
+
+  /**
+   * Hook for resource specific consistency checks before the scheduling run.
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/ResourceScenario.rb:preScheduleCheck
+   */
+  preScheduleCheck(): void {}
+
+  /**
+   * Housekeeping after the scheduling run. Meant to be called for top-level
+   * resources, it then recursively descends into all child resources.
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/ResourceScenario.rb:finishScheduling
+   */
+  finishScheduling(): void {
+    const property = this.getProperty() as PropertyTreeNode;
+
+    for (const child of property.kids()) {
+      (child as Resource).scenarioData(this.getScenarioIdx(),)
+        .finishScheduling();
+    }
+
+    // Add the parent tasks of each task to the duties list.
+    const duties = (this.a("duties",) as Task[]) ?? [];
+    for (const task of duties) {
+      for (const pTask of task.ancestors(true,)) {
+        if (!duties.includes(pTask as Task,)) {
+          duties.push(pTask as Task,);
+        }
+      }
+    }
+    this.setStoredValue("duties", duties,);
+
+    // Add the assigned task to the parent(s) resource duties list.
+    for (const pResource of property.parents()) {
+      const pDuties = (pResource.getForScenario(
+        "duties",
+        this.getScenarioIdx(),
+      ) as Task[]) ?? [];
+      for (const task of duties) {
+        if (!pDuties.includes(task,)) {
+          pDuties.push(task,);
+        }
+      }
+      pResource.setForScenario(
+        "duties",
+        pDuties,
+        this.getScenarioIdx(),
+      );
+    }
+  }
+
+  /**
+   * Runs the user defined `fail`/`warn` checks of this resource.
+   *
+   * The expression evaluation is provided by the query engine (Phase 11), so
+   * only the presence of the attributes is verified for now.
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/PropertyTreeNode.rb:checkFailsAndWarnings
+   */
+  checkFailsAndWarnings(): void {
+    const property = this.getProperty() as PropertyTreeNode;
+    for (const attrId of ["fail", "warn",]) {
+      const attr = property.getAttribute(attrId, this.getScenarioIdx(),);
+      if (!attr) {
+        continue;
+      }
+      this.warning(
+        `${attrId}_check_unsupported`,
+        `User defined ${attrId} check for resource ${property.fullId} ` +
+          `cannot be evaluated yet (requires the query engine).`,
+      );
+    }
   }
 
   /**
