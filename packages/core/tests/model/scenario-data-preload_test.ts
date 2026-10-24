@@ -1,14 +1,15 @@
 import { beforeEach, describe, it, } from "@std/testing/bdd";
 import { assertEquals, assertThrows, } from "@std/assert";
-import { MockProject, } from "./mock-project.ts";
+import { createTestProject, } from "../fixtures/create-test-project.ts";
+import { Project, } from "../../src/model/project.ts";
 import { ScenarioData, } from "../../src/model/scenario-data.ts";
 
 describe("ScenarioData.preloadAttributes", () => {
-  let project: MockProject;
+  let project: Project;
   let scenarioData: ScenarioData;
 
   beforeEach(() => {
-    project = new MockProject(1,);
+    project = createTestProject(1,);
     scenarioData = new ScenarioData(project, 0, new Map(),);
   },);
 

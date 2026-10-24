@@ -1,15 +1,16 @@
 import { beforeEach, describe, it, } from "@std/testing/bdd";
 import { assertEquals, } from "@std/assert";
-import { MockProject, } from "./mock-project.ts";
+import { createTestProject, } from "../fixtures/create-test-project.ts";
+import { Project, } from "../../src/model/project.ts";
 import { PropertySet, } from "../../src/model/property-set.ts";
 import { Scenario, } from "../../src/model/scenario.ts";
 
 describe("Scenario", () => {
-  let project: MockProject;
+  let project: Project;
   let propertySet: PropertySet;
 
   beforeEach(() => {
-    project = new MockProject(2,);
+    project = createTestProject(2,);
     propertySet = new PropertySet(project, false,);
   },);
 

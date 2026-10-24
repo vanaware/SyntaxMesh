@@ -47,7 +47,7 @@ Ao final desta fase:
 - `TaskJuggler` top-level — `parse`, `schedule`, `generateReports`, `generateReport`, `checkTimeSheet`, `checkStatusSheet`, `freeze`.
 - `MockProject` removido (substituído por `Project` real).
 - **≥ 180 testes unitários** + **≥ 30 golden tests** (schedule end-to-end dos 9 MWEs).
-- ADR 020 registrado.
+- ADR 021 registrado.
 - `deno task check-all` verde.
 
 ---
@@ -232,7 +232,7 @@ Sem `BatchProcessor`. Loop simples.
 
 ---
 
-### 9.0 — ADR 020 (orquestrador e ciclo de modos)
+### 9.0 — ADR 021 (orquestrador e ciclo de modos)
 
 #### Contexto
 
@@ -245,11 +245,11 @@ Precisamos registrar:
 
 #### Objetivo
 
-Criar `docs/syntaxmesh/decisoes/020-orquestrador-pipeline.md`.
+Criar `docs/syntaxmesh/decisoes/021-orquestrador-pipeline.md`.
 
 #### Arquivos
 
-- `docs/syntaxmesh/decisoes/020-orquestrador-pipeline.md` (novo)
+- `docs/syntaxmesh/decisoes/021-orquestrador-pipeline.md` (novo)
 - `docs/syntaxmesh/decisoes/README.md` (atualizar tabela)
 
 #### Requisitos
@@ -276,7 +276,7 @@ Criar `docs/syntaxmesh/decisoes/020-orquestrador-pipeline.md`.
 
 #### Critério de aceite
 
-- ADR 020 criado.
+- ADR 021 criado.
 - Tabela atualizada.
 
 ---
@@ -1242,7 +1242,7 @@ deno task test
 ## 6. Ordem de execução sugerida
 
 ```text
-9.0  ADR 020
+9.0  ADR 021
       ↓
 9.1  SourceFileInfo + errors
       ↓
@@ -1293,7 +1293,7 @@ passa, e:
 - [ ] **≥ 30 golden tests** end-to-end.
 - [ ] Nenhum `any` em `src/` (exceto onde justificado).
 - [ ] Nenhum import proibido em `packages/core/src/`.
-- [ ] ADR 020 criado.
+- [ ] ADR 021 criado.
 - [ ] Scripts `project-schedule-mwe*.rb` funcionais.
 
 ---
@@ -1341,7 +1341,7 @@ passa, e:
 
 - `docs/syntaxmesh/decisoes/011-port-fiel-taskjuggler.md`
 - `docs/syntaxmesh/decisoes/013-attribute-mode-global.md`
-- `docs/syntaxmesh/decisoes/020-orquestrador-pipeline.md` (novo)
+- `docs/syntaxmesh/decisoes/021-orquestrador-pipeline.md` (novo)
 - `docs/syntaxmesh/03-arquitetura.md`
 
 ### Casos de teste
@@ -1378,7 +1378,7 @@ passa, e:
 
 ---
 
-## 11. ADR 020 (referência rápida)
+## 11. ADR 021 (referência rápida)
 
 Criado como subfase 9.0. Conteúdo esperado:
 

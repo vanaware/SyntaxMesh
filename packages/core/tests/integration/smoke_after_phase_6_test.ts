@@ -1,6 +1,7 @@
 import { beforeEach, describe, it, } from "@std/testing/bdd";
 import { assert, assertEquals, } from "@std/assert";
-import { MockProject, } from "../model/mock-project.ts";
+import { createTestProject, } from "../fixtures/create-test-project.ts";
+import { Project, } from "../../src/model/project.ts";
 import { Limits, } from "../../src/scheduling/limits.ts";
 import { ShiftAssignments, } from "../../src/scheduling/shift-assignments.ts";
 import { Shift, } from "../../src/model/shift.ts";
@@ -19,7 +20,7 @@ describe("Smoke test after Phase 6", () => {
   },);
 
   it("cria Limits e verifica tipos de limite", () => {
-    const project = new MockProject(1,);
+    const project = createTestProject(1,);
     const limits = new Limits();
     limits.setProject(project,);
 
@@ -42,7 +43,7 @@ describe("Smoke test after Phase 6", () => {
   });
 
   it("verifica ShiftAssignments com atribuição", () => {
-    const project = new MockProject(1,);
+    const project = createTestProject(1,);
     const shift = new Shift(project, "shift1", "Shift 1", null,);
     const wh = new WorkingHours(
       3600,
@@ -74,7 +75,7 @@ describe("Smoke test after Phase 6", () => {
   });
 
   it("verifica ShiftScenario consolidado", () => {
-    const project = new MockProject(1,);
+    const project = createTestProject(1,);
     const shift = new Shift(project, "shift1", "Shift 1", null,);
     const wh = new WorkingHours(
       3600,
@@ -99,7 +100,7 @@ describe("Smoke test after Phase 6", () => {
   });
 
   it("verifica ResourceScenario.onShift?", () => {
-    const project = new MockProject(1,);
+    const project = createTestProject(1,);
     const resource = new Resource(project, "res1", "Resource 1", null,);
     const shifts = new ShiftAssignments();
     shifts.project = project;
@@ -134,8 +135,8 @@ describe("Smoke test after Phase 6", () => {
   });
 
   it("verifica projectObjectId helper", () => {
-    const project1 = new MockProject(1,);
-    const project2 = new MockProject(2,);
+    const project1 = createTestProject(1,);
+    const project2 = createTestProject(2,);
 
     const id1 = projectObjectId(project1,);
     const id2 = projectObjectId(project2,);
@@ -150,7 +151,7 @@ describe("Smoke test after Phase 6", () => {
   });
 
   it("verifica que ShiftAssignments compartilha scoreboards", () => {
-    const project = new MockProject(1,);
+    const project = createTestProject(1,);
     const shift = new Shift(project, "shift1", "Shift 1", null,);
     const wh = new WorkingHours(
       3600,
@@ -181,7 +182,7 @@ describe("Smoke test after Phase 6", () => {
   });
 
   it("verifica que Limits.reset() funciona", () => {
-    const project = new MockProject(1,);
+    const project = createTestProject(1,);
     const limits = new Limits();
     limits.setProject(project,);
 
@@ -202,7 +203,7 @@ describe("Smoke test after Phase 6", () => {
   });
 
   it("verifica que ShiftAssignments.sbClear() limpa cache", () => {
-    const project = new MockProject(1,);
+    const project = createTestProject(1,);
     const shift = new Shift(project, "shift1", "Shift 1", null,);
     const wh = new WorkingHours(
       3600,

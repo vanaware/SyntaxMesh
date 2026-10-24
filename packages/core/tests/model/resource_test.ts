@@ -1,6 +1,7 @@
 import { beforeEach, describe, it, } from "@std/testing/bdd";
 import { assert, assertEquals, } from "@std/assert";
-import { MockProject, } from "./mock-project.ts";
+import { createTestProject, } from "../fixtures/create-test-project.ts";
+import { Project, } from "../../src/model/project.ts";
 import { Resource, } from "../../src/model/resource.ts";
 import { ResourceScenario, } from "../../src/model/resource-scenario.ts";
 import { WorkingHours, } from "../../src/calendar/working-hours.ts";
@@ -14,10 +15,10 @@ import { TimeInterval, } from "../../src/time/time-interval.ts";
 import { TjTime, } from "../../src/time/tj-time.ts";
 
 describe("Resource", () => {
-  let project: MockProject;
+  let project: Project;
 
   beforeEach(() => {
-    project = new MockProject(2,);
+    project = createTestProject(2,);
   },);
 
   it("cria recurso com id e nome", () => {
@@ -123,7 +124,7 @@ describe("Resource", () => {
   });
 
   it("recurso com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true", () => {
-    const project2 = new MockProject(1, true,);
+    const project2 = createTestProject(1, true,);
     const existing = new Resource(project2, "parent", "Parent", null,);
     const resource = new Resource(project2, "parent.child", "Child", null,);
     assertEquals(resource.fullId, "parent.child",);
@@ -131,7 +132,7 @@ describe("Resource", () => {
   });
 
   it("recurso com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true, id com múltiplos pontos", () => {
-    const project2 = new MockProject(1, true,);
+    const project2 = createTestProject(1, true,);
     const existing = new Resource(project2, "parent", "Parent", null,);
     const resource = new Resource(
       project2,
@@ -144,7 +145,7 @@ describe("Resource", () => {
   });
 
   it("recurso com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace false, parent does not exist", () => {
-    const project2 = new MockProject(1, false,);
+    const project2 = createTestProject(1, false,);
     const resource = new Resource(
       project2,
       "nonexistent.child",
@@ -156,7 +157,7 @@ describe("Resource", () => {
   });
 
   it("recurso com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true, parent does not exist", () => {
-    const project2 = new MockProject(1, true,);
+    const project2 = createTestProject(1, true,);
     const resource = new Resource(
       project2,
       "nonexistent.child",
@@ -168,7 +169,7 @@ describe("Resource", () => {
   });
 
   it("recurso com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace false, child already exists", () => {
-    const project2 = new MockProject(1, false,);
+    const project2 = createTestProject(1, false,);
     const existing = new Resource(project2, "child", "Child", null,);
     const resource = new Resource(
       project2,
@@ -181,7 +182,7 @@ describe("Resource", () => {
   });
 
   it("recurso com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true, child already exists", () => {
-    const project2 = new MockProject(1, true,);
+    const project2 = createTestProject(1, true,);
     const existing = new Resource(project2, "child", "Child", null,);
     const resource = new Resource(
       project2,
@@ -194,7 +195,7 @@ describe("Resource", () => {
   });
 
   it("recurso com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace false, child already exists, parent already exists", () => {
-    const project2 = new MockProject(1, false,);
+    const project2 = createTestProject(1, false,);
     const parent = new Resource(project2, "parent", "Parent", null,);
     const existing = new Resource(project2, "parent.child", "Child", null,);
     const resource = new Resource(project2, "parent.child", "Child", null,);
@@ -203,7 +204,7 @@ describe("Resource", () => {
   });
 
   it("recurso com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true, child already exists, parent already exists", () => {
-    const project2 = new MockProject(1, true,);
+    const project2 = createTestProject(1, true,);
     const parent = new Resource(project2, "parent", "Parent", null,);
     const existing = new Resource(project2, "parent.child", "Child", null,);
     const resource = new Resource(project2, "parent.child", "Child", null,);
@@ -213,12 +214,12 @@ describe("Resource", () => {
 });
 
 describe("ResourceScenario.onShift?", () => {
-  let project: MockProject;
+  let project: Project;
   let resource: Resource;
   let scenario: ResourceScenario;
 
   beforeEach(() => {
-    project = new MockProject(2,);
+    project = createTestProject(2,);
     project.set("start", TjTime.fromDate(new Date("2026-01-01T00:00:00Z",),),);
     project.set("scheduleGranularity", 3600,);
     resource = new Resource(project, "res1", "Resource 1", null,);

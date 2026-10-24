@@ -30,9 +30,9 @@
 - **ADR 017** — Scoreboard bit encoding (Fase 6).
 - **ADR 018** — Heurística do scheduler (Fase 7).
 - **ADR 019** — Modelo financeiro (Fase 8).
-- **ADR 020** — Orquestrador e pipeline (Fase 9).
-- **ADR 021** — FSM do TextParser (**criado nesta fase**).
-- **ADR 022** — i18n de keywords (**criado nesta fase**).
+- **ADR 021** — Orquestrador e pipeline (Fase 9).
+- **ADR 022** — FSM do TextParser (**criado nesta fase**).
+- **ADR 023** — i18n de keywords (**criado nesta fase**).
 
 ### Convenções CRÍTICAS
 

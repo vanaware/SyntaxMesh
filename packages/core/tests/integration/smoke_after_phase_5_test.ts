@@ -1,9 +1,11 @@
 import { beforeEach, describe, it, } from "@std/testing/bdd";
 import { assert, assertEquals, } from "@std/assert";
-import { MockProject, } from "../model/mock-project.ts";
+import { createTestProject, } from "../fixtures/create-test-project.ts";
+import { Project, } from "../../src/model/project.ts";
 import { Task, } from "../../src/model/task.ts";
 import { PropertyTreeNode, } from "../../src/model/property-tree-node.ts";
 import { PropertySet, } from "../../src/model/property-set.ts";
+import { Scenario, } from "../../src/model/scenario.ts";
 
 describe("Smoke test after Phase 5", () => {
   beforeEach(() => {
@@ -11,8 +13,8 @@ describe("Smoke test after Phase 5", () => {
     // (AttributeBase.setMode(0) é chamado automaticamente em beforeEach dos testes)
   },);
 
-  it("cria MockProject com 6 PropertySets", () => {
-    const project = new MockProject(1,);
+  it("cria Project com 6 PropertySets", () => {
+    const project = createTestProject(1,);
     assert(project.scenarios instanceof PropertySet,);
     assert(project.shifts instanceof PropertySet,);
     assert(project.accounts instanceof PropertySet,);
@@ -22,7 +24,7 @@ describe("Smoke test after Phase 5", () => {
   });
 
   it("cria Task e verifica pré-carregamento de atributos de cenário", () => {
-    const project = new MockProject(1,);
+    const project = createTestProject(1,);
     const task = new Task(project, "task1", "Task 1", null,);
     assertEquals(task.id, "task1",);
     assertEquals(task.name, "Task 1",);
@@ -46,7 +48,7 @@ describe("Smoke test after Phase 5", () => {
   });
 
   it("verifica Fase 4 (PropertyTreeNode) através de Task", () => {
-    const project = new MockProject(1,);
+    const project = createTestProject(1,);
     const task = new Task(project, "task1", "Task 1", null,);
 
     // Verificar herança de PropertyTreeNode
@@ -69,8 +71,8 @@ describe("Smoke test after Phase 5", () => {
     assertEquals(task.getForScenario("effort", 0,), 5,);
   });
 
-  it("verifica que MockProject implementa ProjectLike corretamente", () => {
-    const project = new MockProject(2,);
+  it("verifica que Project implementa ProjectLike corretamente", () => {
+    const project = createTestProject(2,);
     assertEquals(project.scenarioCount, 2,);
     assertEquals(project.scenario(0,)?.id, "plan",);
     assertEquals(project.scenario(1,)?.id, "scenario1",);
@@ -80,7 +82,7 @@ describe("Smoke test after Phase 5", () => {
     assert(attr !== undefined,);
 
     // Verificar que addScenario funciona
-    project.addScenario({ id: "scenario2", fullId: "scenario2", },);
+    project.addScenario(new Scenario(project, "scenario2", "Scenario 2", null,));
     assertEquals(project.scenarioCount, 3,);
     assertEquals(project.scenario(2,)?.id, "scenario2",);
   });

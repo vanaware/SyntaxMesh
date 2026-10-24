@@ -1,6 +1,7 @@
 import { beforeEach, describe, it, } from "@std/testing/bdd";
 import { assert, assertEquals, } from "@std/assert";
-import { MockProject, } from "./mock-project.ts";
+import { createTestProject, } from "../fixtures/create-test-project.ts";
+import { Project, } from "../../src/model/project.ts";
 import { Resource, } from "../../src/model/resource.ts";
 import { Task, } from "../../src/model/task.ts";
 import { ResourceScenario, } from "../../src/model/resource-scenario.ts";
@@ -10,12 +11,12 @@ import { ScoreboardInterval, } from "../../src/time/scoreboard-interval.ts";
 import { TjTime, } from "../../src/time/tj-time.ts";
 
 describe("ResourceScenario", () => {
-  let project: MockProject;
+  let project: Project;
   let resource: Resource;
   let resourceScenario: ResourceScenario;
 
   beforeEach(() => {
-    project = new MockProject(1,);
+    project = createTestProject(1,);
     resource = new Resource(project, "r1", "Resource 1", null,);
     resourceScenario = resource.scenarioData(0,);
   },);
@@ -54,7 +55,7 @@ describe("ResourceScenario", () => {
   });
 
   it("constructor com múltiplos cenários", () => {
-    const project2 = new MockProject(3,);
+    const project2 = createTestProject(3,);
     const resource2 = new Resource(project2, "r2", "Resource 2", null,);
     assertEquals(resource2.scenarioData(0,).getScenarioIdx(), 0,);
     assertEquals(resource2.scenarioData(1,).getScenarioIdx(), 1,);
@@ -88,7 +89,7 @@ describe("ResourceScenario", () => {
   });
 
   it("book registra ocupação para slot", () => {
-    const project2 = new MockProject(1,);
+    const project2 = createTestProject(1,);
     const resource2 = new Resource(project2, "r2", "Resource 2", null,);
     const task = new Task(project2, "t1", "Task 1", null,);
     const resourceScenario2 = resource2.scenarioData(0,);
@@ -98,7 +99,7 @@ describe("ResourceScenario", () => {
   });
 
   it("bookBooking registra ocupação com tarefa", () => {
-    const project2 = new MockProject(1,);
+    const project2 = createTestProject(1,);
     const resource2 = new Resource(project2, "r2", "Resource 2", null,);
     const task = new Task(project2, "t1", "Task 1", null,);
     const resourceScenario2 = resource2.scenarioData(0,);

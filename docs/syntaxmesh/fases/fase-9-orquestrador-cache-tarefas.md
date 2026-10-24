@@ -2,9 +2,9 @@
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-9-tarefas.md`
 > **Plano:** `docs/syntaxmesh/fases/fase-9-orquestrador-cache.md`
-> **Status:** ⬜ Não iniciada
+> **Status:** ✅ Concluída
 > **Total:** ~195 tarefas
-> **Concluídas:** 0
+> **Concluídas:** ~195
 > **Fonte Ruby:** `docs/taskjuggler/lib/taskjuggler/{Project,TaskJuggler,PropertyList,MessageHandler,Log,TjException,AppConfig,Tj3Config,version,FileList}.rb` + `TextParser/SourceFileInfo.rb`
 
 ---
@@ -30,7 +30,7 @@
 - **ADR 017** — Scoreboard bit encoding (Fase 6).
 - **ADR 018** — Heurística do scheduler (Fase 7).
 - **ADR 019** — Modelo financeiro (Fase 8).
-- **ADR 020** — Orquestrador e pipeline (**criado nesta fase**).
+- **ADR 021** — Orquestrador e pipeline (**criado nesta fase**).
 
 ### Convenções CRÍTICAS
 
@@ -65,19 +65,19 @@
 ## Progresso
 
 ```
-[ ] 9.0  ADR 020 (orquestrador e pipeline)         —  0/5
-[ ] 9.1  SourceFileInfo + erros                    —  0/10
-[ ] 9.2  MessageHandler + MessageHandlerInstance   —  0/20
-[ ] 9.3  Log                                       —  0/12
-[ ] 9.4  AppConfig + Tj3Config + version           —  0/10
-[ ] 9.5  PropertyList                              —  0/28
-[ ] 9.6  Project — estrutura e atributos           —  0/24
-[ ] 9.7  Project.schedule                          —  0/26
-[ ] 9.8  Project — generateReports + utils         —  0/18
-[ ] 9.9  TaskJuggler top-level                     —  0/14
-[ ] 9.10 Migrar MockProject → Project              —  0/8
-[ ] 9.11 Golden tests end-to-end                   —  0/10
-[ ] 9.12 Verificação final                         —  0/10
+[✓] 9.0  ADR 021 (orquestrador e pipeline)         —  5/5
+[✓] 9.1  SourceFileInfo + erros                    —  10/10
+[✓] 9.2  MessageHandler + MessageHandlerInstance   —  20/20
+[✓] 9.3  Log                                       —  12/12
+[✓] 9.4  AppConfig + Tj3Config + version           —  10/10
+[✓] 9.5  PropertyList                              —  28/28
+[✓] 9.6  Project — estrutura e atributos           —  24/24
+[✓] 9.7  Project.schedule                          —  26/26
+[✓] 9.8  Project — generateReports + utils         —  18/18
+[✓] 9.9  TaskJuggler top-level                     —  14/14
+[✓] 9.10 Migrar MockProject → Project              —  8/8
+[✓] 9.11 Golden tests end-to-end                   —  10/10
+[✓] 9.12 Verificação final                         —  10/10
 ────────────────────────────────────────────────────
 TOTAL: ~195
 ```
@@ -86,19 +86,19 @@ TOTAL: ~195
 
 ## Bloco A — Fundação
 
-### 9.0 — ADR 020 (orquestrador e pipeline)
+### 9.0 — ADR 021 (orquestrador e pipeline)
 
 **Objetivo:** formalizar o pipeline de `Project.schedule()` e a decisão de manter `mode` global.
 
-**⚠️ Nota:** o plano usa `ADR 019`, mas o ADR 019 foi alocado para `modelo-financeiro` (Fase 8). Aqui usamos **ADR 020**.
+**⚠️ Nota:** o plano usa `ADR 019`, mas o ADR 019 foi alocado para `modelo-financeiro` (Fase 8). Aqui usamos **ADR 021**.
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 9.0.1 | Criar `docs/syntaxmesh/decisoes/020-orquestrador-pipeline.md` com frontmatter | idem | arquivo existe |
+| 9.0.1 | Criar `docs/syntaxmesh/decisoes/021-orquestrador-pipeline.md` com frontmatter | idem | arquivo existe |
 | 9.0.2 | Seção **Contexto:** `Project.schedule()` é o pipeline central; alterna `mode` global (ADR 014) | idem | — |
 | 9.0.3 | Seção **Decisão 1:** manter `mode` global (reforça ADR 014) | idem | — |
 | 9.0.4 | Seção **Decisão 2:** pipeline exato do Ruby (`initScoreboards` → `index` → por cenário: `setMode(1) → prepareScenario → setMode(2) → scheduleScenario → finishScenario`); **Decisão 3:** sem `BatchProcessor`; reports sequenciais; **Decisão 4:** `AppConfig.dataDirs` retorna `[]` no browser | idem | — |
-| 9.0.5 | Seções **Alternativas** (`AsyncLocalStorage`, Web Workers) + **Consequências**; atualizar linha `020` em `decisoes/README.md` | idem | 20 linhas |
+| 9.0.5 | Seções **Alternativas** (`AsyncLocalStorage`, Web Workers) + **Consequências**; atualizar linha `021` em `decisoes/README.md` | idem | 20 linhas |
 
 ---
 
@@ -575,12 +575,12 @@ TOTAL: ~195
 | 9.12.1 | `deno task check-all` verde | exit 0 |
 | 9.12.2 | `deno task golden:generate && deno task test` verde | exit 0 |
 | 9.12.3 | `grep -r "NotYetImplementedError" packages/core/src/` — apenas `TaskJuggler.parse/freeze/checkTimeSheet/checkStatusSheet` e `Project.journal` | ≤ 5 ocorrências |
-| 9.12.4 | ADR 020 criada e commitada | git log |
+| 9.12.4 | ADR 021 criada e commitada | git log |
 | 9.12.5 | `SourceFileInfo`, `MessageHandlerInstance`, `Log`, `PropertyList`, `AppConfig`, `Project`, `TaskJuggler` exportados em `packages/core/mod.ts` | `deno check` |
 | 9.12.6 | `MockProject` removido (`grep -r "MockProject" packages/core/src/` retorna 0) | grep |
 | 9.12.7 | `tests/integration/smoke_after_phase_9_test.ts` — cria `Project`, adiciona 1 task, roda `schedule()`, verifica `scheduled`; verifica Fase 8 (`ChargeSet`) | 1 teste |
 | 9.12.8 | Auditoria: cada subfase do plano `fase-9-orquestrador-cache.md` tem tarefas correspondentes | grep |
-| 9.12.9 | Corrigir numeração em `fase-9-orquestrador-cache.md` (`### 13.X` → `### 9.X`, `ADR 019` → `ADR 020`) | grep |
+| 9.12.9 | Corrigir numeração em `fase-9-orquestrador-cache.md` (`### 13.X` → `### 9.X`, `ADR 019` → `ADR 021`) | grep |
 | 9.12.10 | Teste agregado: `TaskJuggler.schedule()` end-to-end em projeto de 3 tasks em cadeia | 1 teste |
 
 ---
@@ -606,7 +606,7 @@ TOTAL: ~195
 16. **Commit por subfase.** `feat(core): message-handler`, `feat(core): project-schedule`, etc.
 17. **`TaskJuggler.parseContent`** é variante nova (não existe no Ruby) — adicionada para Fase 19 (`ProjectLoader`).
 18. **`AttributeBase.setMode(0)` em `beforeEach`.**
-19. **ADR 020** (não 019). **ADR 019** é modelo financeiro (Fase 8).
+19. **ADR 021** (não 020/019). **ADR 020** é modelo de dependências (Fase 7) e **ADR 019** é modelo financeiro (Fase 8).
 20. **Golden tests contra `tj3` são a prova.** Se divergir, corrigir TS, não golden.
 
 ---

@@ -6,7 +6,8 @@ import { Shift, } from "../../src/model/shift.ts";
 import { WorkingHours, } from "../../src/calendar/working-hours.ts";
 import { TimeInterval, } from "../../src/time/time-interval.ts";
 import { TjTime, } from "../../src/time/tj-time.ts";
-import { MockProject, } from "../model/mock-project.ts";
+import { createTestProject, } from "../fixtures/create-test-project.ts";
+import { Project, } from "../../src/model/project.ts";
 
 /**
  * Golden test runner for ShiftAssignments compatibility cases.
@@ -40,8 +41,8 @@ function loadGoldenFile(): GoldenFile {
   return JSON.parse(content,) as GoldenFile;
 }
 
-function setupShiftAssignments(project?: MockProject,): ShiftAssignments {
-  const p = project ?? new MockProject(1,);
+function setupShiftAssignments(project?: Project,): ShiftAssignments {
+  const p = project ?? createTestProject(1,);
 
   // Setup project attributes as in the Ruby script
   p.set("start", TjTime.fromDate(new Date("2026-01-01T00:00:00Z",),),);
@@ -139,7 +140,7 @@ function runCase(c: GoldenCase,): void {
     case "hashKey": {
       const assignments = setupShiftAssignments();
       const assignments2 = setupShiftAssignments(
-        assignments.project as MockProject,
+        assignments.project as Project,
       ); // Use same project for identical instances
       const assignments3 = setupShiftAssignments(); // Different project
 

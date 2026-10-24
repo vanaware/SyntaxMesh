@@ -1,6 +1,7 @@
 import { describe, it, } from "@std/testing/bdd";
 import { assert, assertEquals, assertThrows, } from "@std/assert";
-import { MockProject, } from "../model/mock-project.ts";
+import { createTestProject, } from "../fixtures/create-test-project.ts";
+import { Project, } from "../../src/model/project.ts";
 import { Account, } from "../../src/model/account.ts";
 import { Resource, } from "../../src/model/resource.ts";
 import { Task, } from "../../src/model/task.ts";
@@ -8,18 +9,18 @@ import { Material, } from "../../src/model/material.ts";
 import { ChargeSet, } from "../../src/finance/charge-set.ts";
 import { CostLine, resolveAccount, } from "../../src/accounting/attribution.ts";
 
-function makeAccount(project: MockProject, id: string, name: string,): Account {
+function makeAccount(project: Project, id: string, name: string,): Account {
   return new Account(project, id, name, null,);
 }
 
-function makeChargeset(project: MockProject, account: Account,): ChargeSet {
+function makeChargeset(project: Project, account: Account,): ChargeSet {
   const cs = new ChargeSet();
   cs.addAccount(account, 1.0,);
   return cs;
 }
 
 describe("Attribution Engine", () => {
-  const project = new MockProject();
+  const project = createTestProject();
 
   it("Regra 1: explicitAccount presente → 'explicit'", () => {
     const account = makeAccount(project, "acc1", "Account 1",);

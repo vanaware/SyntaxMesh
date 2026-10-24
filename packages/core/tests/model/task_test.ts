@@ -1,14 +1,15 @@
 import { beforeEach, describe, it, } from "@std/testing/bdd";
 import { assert, assertEquals, } from "@std/assert";
-import { MockProject, } from "./mock-project.ts";
+import { createTestProject, } from "../fixtures/create-test-project.ts";
+import { Project, } from "../../src/model/project.ts";
 import { Task, } from "../../src/model/task.ts";
 import { TaskScenario, } from "../../src/model/task-scenario.ts";
 
 describe("Task", () => {
-  let project: MockProject;
+  let project: Project;
 
   beforeEach(() => {
-    project = new MockProject(2,);
+    project = createTestProject(2,);
   },);
 
   it("cria tarefa com id e nome", () => {
@@ -113,7 +114,7 @@ describe("Task", () => {
   });
 
   it("tarefa com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true", () => {
-    const project2 = new MockProject(1, true,);
+    const project2 = createTestProject(1, true,);
     const existing = new Task(project2, "parent", "Parent", null,);
     const task = new Task(project2, "parent.child", "Child", null,);
     assertEquals(task.fullId, "parent.child",);
@@ -121,7 +122,7 @@ describe("Task", () => {
   });
 
   it("tarefa com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true, id com múltiplos pontos", () => {
-    const project2 = new MockProject(1, true,);
+    const project2 = createTestProject(1, true,);
     const existing = new Task(project2, "parent", "Parent", null,);
     const task = new Task(
       project2,
@@ -134,21 +135,21 @@ describe("Task", () => {
   });
 
   it("tarefa com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace false, parent does not exist", () => {
-    const project2 = new MockProject(1, false,);
+    const project2 = createTestProject(1, false,);
     const task = new Task(project2, "nonexistent.child", "Child", null,);
     assertEquals(task.fullId, "nonexistent.child",);
     assertEquals(task.subId, "child",);
   });
 
   it("tarefa com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true, parent does not exist", () => {
-    const project2 = new MockProject(1, true,);
+    const project2 = createTestProject(1, true,);
     const task = new Task(project2, "nonexistent.child", "Child", null,);
     assertEquals(task.fullId, "nonexistent.child",);
     assertEquals(task.subId, "nonexistent.child",);
   });
 
   it("tarefa com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace false, child already exists", () => {
-    const project2 = new MockProject(1, false,);
+    const project2 = createTestProject(1, false,);
     const existing = new Task(project2, "child", "Child", null,);
     const task = new Task(project2, "nonexistent.child", "Child", null,);
     assertEquals(task.fullId, "nonexistent.child",);
@@ -156,7 +157,7 @@ describe("Task", () => {
   });
 
   it("tarefa com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true, child already exists", () => {
-    const project2 = new MockProject(1, true,);
+    const project2 = createTestProject(1, true,);
     const existing = new Task(project2, "child", "Child", null,);
     const task = new Task(project2, "nonexistent.child", "Child", null,);
     assertEquals(task.fullId, "nonexistent.child",);
@@ -164,7 +165,7 @@ describe("Task", () => {
   });
 
   it("tarefa com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace false, child already exists, parent already exists", () => {
-    const project2 = new MockProject(1, false,);
+    const project2 = createTestProject(1, false,);
     const parent = new Task(project2, "parent", "Parent", null,);
     const existing = new Task(project2, "parent.child", "Child", null,);
     const task = new Task(project2, "parent.child", "Child", null,);
@@ -173,7 +174,7 @@ describe("Task", () => {
   });
 
   it("tarefa com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true, child already exists, parent already exists", () => {
-    const project2 = new MockProject(1, true,);
+    const project2 = createTestProject(1, true,);
     const parent = new Task(project2, "parent", "Parent", null,);
     const existing = new Task(project2, "parent.child", "Child", null,);
     const task = new Task(project2, "parent.child", "Child", null,);

@@ -3,6 +3,7 @@ import { type PropertyTreeNode, } from "./property-tree-node.ts";
 import { AttributeDefinition, } from "../attributes/attribute-definition.ts";
 import { AttributeType, } from "../attributes/attribute-type.ts";
 import { TjArgumentError, } from "../attributes/errors.ts";
+import { ScenarioData, } from "./scenario-data.ts";
 
 export class PropertySet {
   readonly _project: ProjectLike;
@@ -154,6 +155,29 @@ export class PropertySet {
   addProperty(prop: PropertyTreeNode,): void {
     this._propertyMap.set(prop.id, prop,);
     this._properties.push(prop,);
+    
+    // Resize data and scenarioAttributes arrays for the added property
+    // to match the current project scenarioCount
+    const scenarioCount = this._project.scenarioCount;
+    if (scenarioCount > 0) {
+      // Ensure data array has correct length
+      if (prop.data.length !== scenarioCount) {
+        const newData = Array.from(
+          { length: scenarioCount },
+          (_, i,) => prop.data[i] ?? new ScenarioData(prop, i, new Map(),),
+        );
+        prop.data = newData;
+      }
+      
+      // Ensure scenarioAttributes array has correct length
+      if (prop.scenarioAttributes.length !== scenarioCount) {
+        const newScenarioAttributes = Array.from(
+          { length: scenarioCount },
+          (_, i,) => prop.scenarioAttributes[i] ?? new Map(),
+        );
+        prop.scenarioAttributes = newScenarioAttributes;
+      }
+    }
   }
 
   removeProperty(prop: PropertyTreeNode | string,): PropertyTreeNode {
@@ -213,7 +237,7 @@ export class PropertySet {
         }
         bsi += idx.toString();
       },);
-      p.set("bsi", bsi,);
+      p.force("bsi", bsi,);
     },);
   }
 

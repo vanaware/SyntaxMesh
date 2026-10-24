@@ -1,16 +1,17 @@
 import { beforeEach, describe, it, } from "@std/testing/bdd";
 import { assert, assertEquals, } from "@std/assert";
-import { MockProject, } from "./mock-project.ts";
+import { createTestProject, } from "../fixtures/create-test-project.ts";
+import { Project, } from "../../src/model/project.ts";
 import { Shift, } from "../../src/model/shift.ts";
 import { ShiftScenario, } from "../../src/model/shift-scenario.ts";
 import { WorkingHours, } from "../../src/calendar/working-hours.ts";
 import { TjTime, } from "../../src/time/tj-time.ts";
 
 describe("Shift", () => {
-  let project: MockProject;
+  let project: Project;
 
   beforeEach(() => {
-    project = new MockProject(2,);
+    project = createTestProject(2,);
   },);
 
   it("cria shift com id e nome", () => {
@@ -120,7 +121,7 @@ describe("Shift", () => {
   });
 
   it("shift com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true", () => {
-    const project2 = new MockProject(1, true,);
+    const project2 = createTestProject(1, true,);
     const existing = new Shift(project2, "parent", "Parent", null,);
     const shift = new Shift(project2, "parent.child", "Child", null,);
     assertEquals(shift.fullId, "parent.child",);
@@ -128,7 +129,7 @@ describe("Shift", () => {
   });
 
   it("shift com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true, id com múltiplos pontos", () => {
-    const project2 = new MockProject(1, true,);
+    const project2 = createTestProject(1, true,);
     const existing = new Shift(project2, "parent", "Parent", null,);
     const shift = new Shift(
       project2,
@@ -141,21 +142,21 @@ describe("Shift", () => {
   });
 
   it("shift com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace false, parent does not exist", () => {
-    const project2 = new MockProject(1, false,);
+    const project2 = createTestProject(1, false,);
     const shift = new Shift(project2, "nonexistent.child", "Child", null,);
     assertEquals(shift.fullId, "nonexistent.child",);
     assertEquals(shift.subId, "child",);
   });
 
   it("shift com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true, parent does not exist", () => {
-    const project2 = new MockProject(1, true,);
+    const project2 = createTestProject(1, true,);
     const shift = new Shift(project2, "nonexistent.child", "Child", null,);
     assertEquals(shift.fullId, "nonexistent.child",);
     assertEquals(shift.subId, "nonexistent.child",);
   });
 
   it("shift com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace false, child already exists", () => {
-    const project2 = new MockProject(1, false,);
+    const project2 = createTestProject(1, false,);
     const existing = new Shift(project2, "child", "Child", null,);
     const shift = new Shift(project2, "nonexistent.child", "Child", null,);
     assertEquals(shift.fullId, "nonexistent.child",);
@@ -163,7 +164,7 @@ describe("Shift", () => {
   });
 
   it("shift com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true, child already exists", () => {
-    const project2 = new MockProject(1, true,);
+    const project2 = createTestProject(1, true,);
     const existing = new Shift(project2, "child", "Child", null,);
     const shift = new Shift(project2, "nonexistent.child", "Child", null,);
     assertEquals(shift.fullId, "nonexistent.child",);
@@ -171,7 +172,7 @@ describe("Shift", () => {
   });
 
   it("shift com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace false, child already exists, parent already exists", () => {
-    const project2 = new MockProject(1, false,);
+    const project2 = createTestProject(1, false,);
     const parent = new Shift(project2, "parent", "Parent", null,);
     const existing = new Shift(project2, "parent.child", "Child", null,);
     const shift = new Shift(project2, "parent.child", "Child", null,);
@@ -180,7 +181,7 @@ describe("Shift", () => {
   });
 
   it("shift com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true, child already exists, parent already exists", () => {
-    const project2 = new MockProject(1, true,);
+    const project2 = createTestProject(1, true,);
     const parent = new Shift(project2, "parent", "Parent", null,);
     const existing = new Shift(project2, "parent.child", "Child", null,);
     const shift = new Shift(project2, "parent.child", "Child", null,);
@@ -190,12 +191,12 @@ describe("Shift", () => {
 });
 
 describe("ShiftScenario", () => {
-  let project: MockProject;
+  let project: Project;
   let shift: Shift;
   let shiftScenario: ShiftScenario;
 
   beforeEach(() => {
-    project = new MockProject(2,);
+    project = createTestProject(2,);
     shift = new Shift(project, "shift1", "Shift 1", null,);
     shiftScenario = shift.scenarioData(0,);
   },);

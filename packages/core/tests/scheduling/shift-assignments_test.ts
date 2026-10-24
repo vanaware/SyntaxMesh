@@ -1,6 +1,7 @@
 import { beforeEach, describe, it, } from "@std/testing/bdd";
 import { assert, assertEquals, } from "@std/assert";
-import { MockProject, } from "../model/mock-project.ts";
+import { createTestProject, } from "../fixtures/create-test-project.ts";
+import { Project, } from "../../src/model/project.ts";
 import { Shift, } from "../../src/model/shift.ts";
 import { ShiftScenario, } from "../../src/model/shift-scenario.ts";
 import {
@@ -11,13 +12,13 @@ import { TimeInterval, } from "../../src/time/time-interval.ts";
 import { TjTime, } from "../../src/time/tj-time.ts";
 
 describe("ShiftAssignment", () => {
-  let project: MockProject;
+  let project: Project;
   let shift: Shift;
   let shiftScenario: ShiftScenario;
   let interval: TimeInterval;
 
   beforeEach(() => {
-    project = new MockProject(2,);
+    project = createTestProject(2,);
     shift = new Shift(project, "shift1", "Shift 1", null,);
     shiftScenario = shift.scenarioData(0,);
     interval = new TimeInterval(
@@ -119,14 +120,14 @@ describe("ShiftAssignment", () => {
 });
 
 describe("ShiftAssignments", () => {
-  let project: MockProject;
+  let project: Project;
   let shift: Shift;
   let shiftScenario: ShiftScenario;
   let interval: TimeInterval;
   let sa: ShiftAssignment;
 
   beforeEach(() => {
-    project = new MockProject(2,);
+    project = createTestProject(2,);
     shift = new Shift(project, "shift1", "Shift 1", null,);
     shiftScenario = shift.scenarioData(0,);
     interval = new TimeInterval(
@@ -220,7 +221,7 @@ describe("ShiftAssignments", () => {
     const sas = new ShiftAssignments();
     sas.project = project;
     // Set project start to match assignment start so index 0 covers the assignment
-    sas.project.set(
+    sas.project!.set(
       "start",
       TjTime.fromDate(new Date("2026-01-01T09:00:00Z",),),
     );
@@ -235,7 +236,7 @@ describe("ShiftAssignments", () => {
     const sas = new ShiftAssignments();
     sas.project = project;
     // Set project start to match assignment start so index 0 covers the assignment
-    sas.project.set(
+    sas.project!.set(
       "start",
       TjTime.fromDate(new Date("2026-01-01T09:00:00Z",),),
     );
@@ -248,7 +249,7 @@ describe("ShiftAssignments", () => {
     const sas = new ShiftAssignments();
     sas.project = project;
     // Set project start to match assignment start so index 0 covers the assignment
-    sas.project.set(
+    sas.project!.set(
       "start",
       TjTime.fromDate(new Date("2026-01-01T09:00:00Z",),),
     );
@@ -314,7 +315,7 @@ describe("ShiftAssignments", () => {
   it("onLeave retorna true para slot com leave", () => {
     const sas = new ShiftAssignments();
     sas.project = project;
-    sas.project.set(
+    sas.project!.set(
       "start",
       TjTime.fromDate(new Date("2026-01-01T09:00:00Z",),),
     );

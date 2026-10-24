@@ -332,7 +332,7 @@ export class Limits {
         );
       }
 
-      // startDate e endDate já são TjTime (do MockProject)
+      // startDate e endDate já são TjTime (do Project)
       const startTime = startDate as TjTime;
       const endTime = endDate as TjTime;
 

@@ -1,6 +1,7 @@
 import { beforeEach, describe, it, } from "@std/testing/bdd";
 import { assert, assertEquals, } from "@std/assert";
-import { MockProject, } from "../model/mock-project.ts";
+import { createTestProject, } from "../fixtures/create-test-project.ts";
+import { Project, } from "../../src/model/project.ts";
 import { Resource, } from "../../src/model/resource.ts";
 import { Task, } from "../../src/model/task.ts";
 import { Charge, ChargeMode, } from "../../src/finance/charge.ts";
@@ -9,11 +10,11 @@ import { TjTime, } from "../../src/time/tj-time.ts";
 import { TjArgumentError, } from "../../src/attributes/errors.ts";
 
 describe("Charge", () => {
-  let project: MockProject;
+  let project: Project;
   let task: Task;
 
   beforeEach(() => {
-    project = new MockProject(1,);
+    project = createTestProject(1,);
     task = new Task(project, "t1", "Task 1", null,);
   },);
 

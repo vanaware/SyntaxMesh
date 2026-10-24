@@ -61,7 +61,7 @@ Fase 9 implementa o **Project** central e o **TaskJuggler** top-level que orques
 
 **Testes:** `project-structure_test.ts` (26 passos, 0 falhas)
 
-### 9.7 — `Project.schedule()` — pipeline de orquestração ✅ **CONCLUÍDO**
+### 9.7 — `Project.schedule()` — pipeline de orquestração ✅ **PARCIALMENTE CONCLUÍDO**
 
 **Implementado em `packages/core/src/model/project.ts`:**
 - `initScoreboards()` — `Scoreboard<number|null>` + `scoreboardNoLeaves`, slots de trabalho = `null`, leaves globais com bit `(1<<2)`
@@ -74,7 +74,13 @@ Fase 9 implementa o **Project** central e o **TaskJuggler** top-level que orques
 
 **Padrão TS:** todos os métodos de scheduling vivem nos `*Scenario` subclasses — chamadas feitas via `scenarioData(scIdx) as TaskScenario` / `as ResourceScenario`.
 
-**Testes:** `project-schedule_test.ts` (52 passos, 0 falhas)
+**Testes:** `project-schedule_test.ts` (26 passos, 0 falhas) — **FALTAM testes de pipeline de schedule()**
+
+**Tarefas pendentes:**
+- 9.7.2 — adicionar testes unitários para `initScoreboards()`, `computeResourceAvailabilities()`, `prepareScenario()`, `scheduleScenario()`, `finishScenario()`, `schedule()`
+- 9.7.2 — adicionar golden tests para schedule end-to-end (9 MWEs)
+
+**Documentação:** corrigir status em `fase-9-orquestrador-cache-tarefas.md` para refletir que 9.7 está parcialmente implementado
 
 ### 9.8 — `TaskJuggler` top-level ⏳ **NÃO INICIADO**
 
@@ -94,7 +100,7 @@ Fase 9 implementa o **Project** central e o **TaskJuggler** top-level que orques
 **Requer:**
 - ≥180 testes unitários (incluindo os 9 MWEs golden)
 - ≥30 golden tests (schedule end-to-end dos 9 MWEs)
-- ADR 020 registrado
+- ADR 021 registrado
 - `deno task check-all` verde
 
 ## Progresso Atual
@@ -114,7 +120,7 @@ Fase 9 implementa o **Project** central e o **TaskJuggler** top-level que orques
 5. **Implementar `TaskJuggler` top-level** (9.8)
 6. **Criar `taskjuggler_test.ts`** (9.8)
 7. **Completar testes golden e verificação** (9.9)
-8. **Registrar ADR 020**
+8. **Registrar ADR 021**
 
 ## Tarefas Atômicas por Micro-etapa
 
@@ -168,5 +174,5 @@ Fase 9 implementa o **Project** central e o **TaskJuggler** top-level que orques
 ### Micro-etapa 9.9: Verificação e ADR
 - [ ] Completar ≥180 testes unitários
 - [ ] Completar ≥30 golden tests
-- [ ] Registrar ADR 020 (`docs/syntaxmesh/decisoes/020-orquestrador-pipeline.md`)
+- [ ] Registrar ADR 021 (`docs/syntaxmesh/decisoes/021-orquestrador-pipeline.md`)
 - [ ] Executar `deno task check-all` e garantir verde

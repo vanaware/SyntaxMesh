@@ -304,7 +304,10 @@ export class ResourceScenario extends ScenarioData {
   checkFailsAndWarnings(): void {
     const property = this.getProperty() as PropertyTreeNode;
     for (const attrId of ["fail", "warn",]) {
-      const attr = property.getAttribute(attrId, this.getScenarioIdx(),);
+      // fail/warn are non-scenario attributes (Project.rb:219/411:
+      // isScenarioAttribute=false). Ruby's checkFailsAndWarnings reads
+      // @attributes['fail'] directly, never the scenario attributes.
+      const attr = property.getAttribute(attrId,);
       if (!attr) {
         continue;
       }

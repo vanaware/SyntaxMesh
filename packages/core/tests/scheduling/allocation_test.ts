@@ -1,6 +1,7 @@
 import { beforeEach, describe, it, } from "@std/testing/bdd";
 import { assert, assertEquals, assertThrows, } from "@std/assert";
-import { MockProject, } from "../model/mock-project.ts";
+import { createTestProject, } from "../fixtures/create-test-project.ts";
+import { Project, } from "../../src/model/project.ts";
 import { Resource, } from "../../src/model/resource.ts";
 import { Allocation, SelectionMode, } from "../../src/scheduling/allocation.ts";
 import { ResourceScenario, } from "../../src/model/resource-scenario.ts";
@@ -15,13 +16,13 @@ class AllocationTestHelper extends Allocation {
 }
 
 describe("Allocation", () => {
-  let project: MockProject;
+  let project: Project;
   let r1: Resource;
   let r2: Resource;
   let r3: Resource;
 
   beforeEach(() => {
-    project = new MockProject(1,);
+    project = createTestProject(1,);
     r1 = new Resource(project, "r1", "Resource 1", null,);
     r2 = new Resource(project, "r2", "Resource 2", null,);
     r3 = new Resource(project, "r3", "Resource 3", null,);

@@ -1,6 +1,7 @@
 import { beforeEach, describe, it, } from "@std/testing/bdd";
 import { assert, assertEquals, } from "@std/assert";
-import { MockProject, } from "../model/mock-project.ts";
+import { createTestProject, } from "../fixtures/create-test-project.ts";
+import { Project, } from "../../src/model/project.ts";
 import { Task, } from "../../src/model/task.ts";
 import { Resource, } from "../../src/model/resource.ts";
 import { Account, } from "../../src/model/account.ts";
@@ -17,7 +18,7 @@ describe("Smoke test after Phase 8", () => {
   },);
 
   it("cria Charge com 3 modos válidos", () => {
-    const project = new MockProject(1,);
+    const project = createTestProject(1,);
     const task = new Task(project, "t1", "Task 1", null,);
 
     const charge1 = new Charge(100, "onStart", task, 0,);
@@ -32,7 +33,7 @@ describe("Smoke test after Phase 8", () => {
   });
 
   it("calcula Charge.turnover para cada modo", () => {
-    const project = new MockProject(1,);
+    const project = createTestProject(1,);
     const task = new Task(project, "t1", "Task 1", null,);
     task.setForScenario("start", TjTime.fromString("2026-03-15"), 0,);
     task.setForScenario("end", TjTime.fromString("2026-03-20"), 0,);
@@ -56,7 +57,7 @@ describe("Smoke test after Phase 8", () => {
   });
 
   it("cria ChargeSet e adiciona accounts com shares", () => {
-    const project = new MockProject(1,);
+    const project = createTestProject(1,);
     const parentAccount = new Account(project, "parent", "Parent", null,);
     const account1 = new Account(project, "parent.acc1", "Account 1", parentAccount,);
     const account2 = new Account(project, "parent.acc2", "Account 2", parentAccount,);
@@ -83,11 +84,11 @@ describe("Smoke test after Phase 8", () => {
   });
 
   it("cria meta-account (balance) com createBalanceAccount", () => {
-    const project = new MockProject(1,);
+    const project = createTestProject(1,);
     const costAccount = new Account(project, "cost", "Cost", null,);
     const revenueAccount = new Account(project, "rev", "Revenue", null,);
 
-    // MockProject doesn't have newAccount method, so create meta account directly
+    // Project doesn't have newAccount method, so create meta account directly
     // and push cost/revenue accounts to adoptees manually (same pattern as balance-account_test.ts)
     const balance = new Account(project, "_balance_1", "Total", null,);
     balance.adoptees.push(costAccount, revenueAccount,);
@@ -101,7 +102,7 @@ describe("Smoke test after Phase 8", () => {
   });
 
   it("verifica Fase 7 (TaskScenario.schedule) ainda funciona", () => {
-    const project = new MockProject(1,);
+    const project = createTestProject(1,);
     const task = new Task(project, "t1", "Task 1", null,);
 
     // TaskScenario deve existir e ter método schedule

@@ -1,6 +1,7 @@
 import { beforeEach, describe, it, } from "@std/testing/bdd";
 import { assert, assertEquals, } from "@std/assert";
-import { MockProject, } from "../model/mock-project.ts";
+import { createTestProject, } from "../fixtures/create-test-project.ts";
+import { Project, } from "../../src/model/project.ts";
 import { Resource, } from "../../src/model/resource.ts";
 import { Task, } from "../../src/model/task.ts";
 import { Booking, Overtime, Sloppy, } from "../../src/scheduling/booking.ts";
@@ -8,12 +9,12 @@ import { ScoreboardInterval, } from "../../src/time/scoreboard-interval.ts";
 import { TjTime, } from "../../src/time/tj-time.ts";
 
 describe("Booking", () => {
-  let project: MockProject;
+  let project: Project;
   let r1: Resource;
   let t1: Task;
 
   beforeEach(() => {
-    project = new MockProject(1,);
+    project = createTestProject(1,);
     r1 = new Resource(project, "r1", "Resource 1", null,);
     t1 = new Task(project, "t1", "Task 1", null,);
   },);

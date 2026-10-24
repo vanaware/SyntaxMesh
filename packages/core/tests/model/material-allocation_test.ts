@@ -2,10 +2,11 @@ import { describe, it } from "@std/testing/bdd";
 import { assert, assertEquals, assertThrows } from "@std/assert";
 import { Material, } from "../../src/model/material.ts";
 import { MaterialAllocation, } from "../../src/model/material-allocation.ts";
-import { MockProject, } from "./mock-project.ts";
+import { createTestProject, } from "../fixtures/create-test-project.ts";
+import { Project, } from "../../src/model/project.ts";
 
 describe("MaterialAllocation", () => {
-  const project = new MockProject();
+  const project = createTestProject();
   const steel = new Material(project, "Steel", "kg", 25.0);
 
   it("onstart", () => {

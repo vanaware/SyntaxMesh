@@ -4,18 +4,19 @@ import { AttributeBase, } from "../../src/attributes/attribute-base.ts";
 import { AttributeDefinition, } from "../../src/attributes/attribute-definition.ts";
 import { AttributeType, } from "../../src/attributes/attribute-type.ts";
 import { MockContainer, } from "./mock-container.ts";
-import { MockProject, } from "../model/mock-project.ts";
+import { createTestProject, } from "../fixtures/create-test-project.ts";
+import { Project, } from "../../src/model/project.ts";
 import { PropertySet, } from "../../src/model/property-set.ts";
 
 describe("ScenarioAttributes", () => {
   let container: MockContainer;
   let property: { id: string; name: string };
-  let project: MockProject;
+  let project: Project;
 
   beforeEach(() => {
     AttributeBase.setMode(0,);
     container = new MockContainer();
-    project = new MockProject();
+    project = createTestProject();
     property = { id: "test.attr", name: "Test Attr", };
   },);
 

@@ -1,6 +1,7 @@
 import { beforeEach, describe, it, } from "@std/testing/bdd";
 import { assert, assertEquals, } from "@std/assert";
-import { MockProject, } from "./mock-project.ts";
+import { createTestProject, } from "../fixtures/create-test-project.ts";
+import { Project, } from "../../src/model/project.ts";
 import { Resource, } from "../../src/model/resource.ts";
 import { ResourceScenario, } from "../../src/model/resource-scenario.ts";
 import { Account, } from "../../src/model/account.ts";
@@ -9,14 +10,14 @@ import { ChargeSet, } from "../../src/finance/charge-set.ts";
 import { TjTime, } from "../../src/time/tj-time.ts";
 
 describe("ResourceScenario", () => {
-  let project: MockProject;
+  let project: Project;
   let resource: Resource;
   let resourceScenario: ResourceScenario;
   let account: Account;
   let task: Task;
 
   beforeEach(() => {
-    project = new MockProject(1,);
+    project = createTestProject(1,);
     // Granularidade diária para que os índices correspondam a datas previsíveis.
     project.set("start", TjTime.fromString("2026-01-01",));
     project.set("end", TjTime.fromString("2026-12-31",));

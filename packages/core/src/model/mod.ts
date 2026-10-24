@@ -31,3 +31,6 @@ export * from "./extended-booking.ts";
 export * from "./tracking-scenario.ts";
 export * from "../accounting/cost-event.ts";
 export * from "../finance/charge-set-collection.ts";
+
+// 9.8.3.3 — export Project
+export { Project } from "./project.ts";

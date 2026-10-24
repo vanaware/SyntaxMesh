@@ -1,15 +1,16 @@
 import { beforeEach, describe, it, } from "@std/testing/bdd";
 import { assert, assertEquals, assertThrows, } from "@std/assert";
-import { MockProject, } from "../model/mock-project.ts";
+import { createTestProject, } from "../fixtures/create-test-project.ts";
+import { Project, } from "../../src/model/project.ts";
 import { Account, } from "../../src/model/account.ts";
 import { ChargeSet, } from "../../src/finance/charge-set.ts";
 import { TjArgumentError, } from "../../src/attributes/errors.ts";
 
 describe("ChargeSet", () => {
-  let project: MockProject;
+  let project: Project;
 
   beforeEach(() => {
-    project = new MockProject(1,);
+    project = createTestProject(1,);
   },);
 
   describe("constructor", () => {
@@ -67,7 +68,7 @@ describe("ChargeSet", () => {
     it("rejeita conta de root diferente", () => {
       const chargeSet = new ChargeSet();
       chargeSet.addAccount(account1, 0.5,);
-      const project2 = new MockProject(1,);
+      const project2 = createTestProject(1,);
       const account4 = new Account(project2, "b1", "Account B", null,);
       assertThrows(() => chargeSet.addAccount(account4, 0.5,), TjArgumentError,);
     });

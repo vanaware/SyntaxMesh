@@ -1,6 +1,7 @@
 import { beforeEach, describe, it, } from "@std/testing/bdd";
 import { assert, assertEquals, assertThrows, } from "@std/assert";
-import { MockProject, } from "./mock-project.ts";
+import { createTestProject, } from "../fixtures/create-test-project.ts";
+import { Project, } from "../../src/model/project.ts";
 import { Task, } from "../../src/model/task.ts";
 import { TaskScenario, } from "../../src/model/task-scenario.ts";
 import { TaskDependency, } from "../../src/scheduling/task-dependency.ts";
@@ -12,12 +13,12 @@ import { Booking, } from "../../src/scheduling/booking.ts";
 import { Allocation, } from "../../src/scheduling/allocation.ts";
 
 describe("TaskScenario", () => {
-  let project: MockProject;
+  let project: Project;
   let task: Task;
   let taskScenario: TaskScenario;
 
   beforeEach(() => {
-    project = new MockProject(1,);
+    project = createTestProject(1,);
     task = new Task(project, "t1", "Task 1", null,);
     taskScenario = task.scenarioData(0,);
   },);
@@ -50,7 +51,7 @@ describe("TaskScenario", () => {
   });
 
   it("constructor com múltiplos cenários", () => {
-    const project2 = new MockProject(3,);
+    const project2 = createTestProject(3,);
     const task2 = new Task(project2, "t2", "Task 2", null,);
     assertEquals(task2.scenarioData(0,).getScenarioIdx(), 0,);
     assertEquals(task2.scenarioData(1,).getScenarioIdx(), 1,);

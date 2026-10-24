@@ -1,14 +1,15 @@
 import { beforeEach, describe, it, } from "@std/testing/bdd";
 import { assert, assertEquals, } from "@std/assert";
-import { MockProject, } from "./mock-project.ts";
+import { createTestProject, } from "../fixtures/create-test-project.ts";
+import { Project, } from "../../src/model/project.ts";
 import { Account, } from "../../src/model/account.ts";
 import { AccountScenario, } from "../../src/model/account-scenario.ts";
 
 describe("Account", () => {
-  let project: MockProject;
+  let project: Project;
 
   beforeEach(() => {
-    project = new MockProject(2,);
+    project = createTestProject(2,);
   },);
 
   it("cria conta com id e nome", () => {
@@ -112,7 +113,7 @@ describe("Account", () => {
   });
 
   it("conta com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true", () => {
-    const project2 = new MockProject(1, true,);
+    const project2 = createTestProject(1, true,);
     const existing = new Account(project2, "parent", "Parent", null,);
     const account = new Account(project2, "parent.child", "Child", null,);
     assertEquals(account.fullId, "parent.child",);
@@ -120,7 +121,7 @@ describe("Account", () => {
   });
 
   it("conta com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true, id com múltiplos pontos", () => {
-    const project2 = new MockProject(1, true,);
+    const project2 = createTestProject(1, true,);
     const existing = new Account(project2, "parent", "Parent", null,);
     const account = new Account(
       project2,
@@ -133,21 +134,21 @@ describe("Account", () => {
   });
 
   it("conta com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace false, parent does not exist", () => {
-    const project2 = new MockProject(1, false,);
+    const project2 = createTestProject(1, false,);
     const account = new Account(project2, "nonexistent.child", "Child", null,);
     assertEquals(account.fullId, "nonexistent.child",);
     assertEquals(account.subId, "child",);
   });
 
   it("conta com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true, parent does not exist", () => {
-    const project2 = new MockProject(1, true,);
+    const project2 = createTestProject(1, true,);
     const account = new Account(project2, "nonexistent.child", "Child", null,);
     assertEquals(account.fullId, "nonexistent.child",);
     assertEquals(account.subId, "nonexistent.child",);
   });
 
   it("conta com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace false, child already exists", () => {
-    const project2 = new MockProject(1, false,);
+    const project2 = createTestProject(1, false,);
     const existing = new Account(project2, "child", "Child", null,);
     const account = new Account(project2, "nonexistent.child", "Child", null,);
     assertEquals(account.fullId, "nonexistent.child",);
@@ -155,7 +156,7 @@ describe("Account", () => {
   });
 
   it("conta com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true, child already exists", () => {
-    const project2 = new MockProject(1, true,);
+    const project2 = createTestProject(1, true,);
     const existing = new Account(project2, "child", "Child", null,);
     const account = new Account(project2, "nonexistent.child", "Child", null,);
     assertEquals(account.fullId, "nonexistent.child",);
@@ -163,7 +164,7 @@ describe("Account", () => {
   });
 
   it("conta com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace false, child already exists, parent already exists", () => {
-    const project2 = new MockProject(1, false,);
+    const project2 = createTestProject(1, false,);
     const parent = new Account(project2, "parent", "Parent", null,);
     const existing = new Account(project2, "parent.child", "Child", null,);
     const account = new Account(project2, "parent.child", "Child", null,);
@@ -172,7 +173,7 @@ describe("Account", () => {
   });
 
   it("conta com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true, child already exists, parent already exists", () => {
-    const project2 = new MockProject(1, true,);
+    const project2 = createTestProject(1, true,);
     const parent = new Account(project2, "parent", "Parent", null,);
     const existing = new Account(project2, "parent.child", "Child", null,);
     const account = new Account(project2, "parent.child", "Child", null,);
@@ -182,10 +183,10 @@ describe("Account", () => {
 });
 
 describe("Account.allowedTypes", () => {
-  let project: MockProject;
+  let project: Project;
 
   beforeEach(() => {
-    project = new MockProject(1,);
+    project = createTestProject(1,);
   },);
 
   it("conta nova aceita todos os tipos por default", () => {

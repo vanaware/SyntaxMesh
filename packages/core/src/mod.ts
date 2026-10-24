@@ -33,3 +33,6 @@ export * from "./utils/project-object-id.ts";
 
 // Phase 8 exports (re-export from finance module)
 export * from "./finance/mod.ts";
+
+// 9.9.14 — export TaskJuggler
+export { TaskJuggler } from "./taskjuggler.ts";

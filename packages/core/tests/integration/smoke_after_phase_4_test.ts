@@ -46,7 +46,8 @@ import { RichTextAttribute, } from "../../src/attributes/rich/rich-text-attribut
 import { DefinitionListAttribute, } from "../../src/attributes/rich/definition-list-attribute.ts";
 import { PropertyTreeNode, } from "../../src/model/property-tree-node.ts";
 import { PropertySet, } from "../../src/model/property-set.ts";
-import { MockProject, } from "../model/mock-project.ts";
+import { createTestProject, } from "../fixtures/create-test-project.ts";
+import { Project, } from "../../src/model/project.ts";
 
 describe("Smoke test after Phase 4", () => {
   beforeEach(() => {
@@ -54,7 +55,7 @@ describe("Smoke test after Phase 4", () => {
   },);
 
   it("imports @syntaxmesh/core and creates PropertyTreeNode", () => {
-    const project = new MockProject(1,);
+    const project = createTestProject(1,);
     const propertySet = new PropertySet(project, false,);
     const root = new PropertyTreeNode(propertySet, null, "root", null,);
     assertEquals(root.id, "_PropertyTreeNode_1",);
@@ -66,7 +67,7 @@ describe("Smoke test after Phase 4", () => {
     const types = [
       PropertyTreeNode,
       PropertySet,
-      MockProject,
+      Project,
     ];
 
     for (const cls of types) {

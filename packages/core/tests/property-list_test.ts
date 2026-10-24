@@ -1,6 +1,7 @@
 import { beforeEach, describe, it, } from "@std/testing/bdd";
 import { assertEquals, assertThrows, } from "@std/assert";
-import { MockProject, } from "./mock-project.ts";
+import { createTestProject, } from "./fixtures/create-test-project.ts";
+import { Project, } from "../src/model/project.ts";
 import {
   PropertySet,
   PropertyTreeNode,
@@ -19,11 +20,11 @@ class TestProperty extends PropertyTreeNode {
 }
 
 describe("PropertyList", () => {
-  let project: MockProject;
+  let project: Project;
   let propertySet: PropertySet;
 
   beforeEach(() => {
-    project = new MockProject("test-project",);
+    project = createTestProject();
     propertySet = new PropertySet(project, false,);
   },);
 

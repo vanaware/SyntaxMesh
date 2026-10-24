@@ -1,16 +1,17 @@
 import { beforeEach, describe, it, } from "@std/testing/bdd";
 import { assert, assertEquals, } from "@std/assert";
-import { MockProject, } from "../model/mock-project.ts";
+import { createTestProject, } from "../fixtures/create-test-project.ts";
+import { Project, } from "../../src/model/project.ts";
 import { Task, } from "../../src/model/task.ts";
 import { TaskDependency, } from "../../src/scheduling/task-dependency.ts";
 
 describe("TaskDependency", () => {
-  let project: MockProject;
+  let project: Project;
   let task1: Task;
   let task2: Task;
 
   beforeEach(() => {
-    project = new MockProject(1,);
+    project = createTestProject(1,);
     task1 = new Task(project, "t1", "Task 1", null,);
     task2 = new Task(project, "t2", "Task 2", null,);
   },);

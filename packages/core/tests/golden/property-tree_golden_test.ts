@@ -2,7 +2,8 @@ import { describe, it, } from "@std/testing/bdd";
 import { assertEquals, assertThrows, } from "@std/assert";
 import { PropertyTreeNode, } from "../../src/model/property-tree-node.ts";
 import { PropertySet, } from "../../src/model/property-set.ts";
-import { MockProject, } from "../model/mock-project.ts";
+import { createTestProject, } from "../fixtures/create-test-project.ts";
+import { Project, } from "../../src/model/project.ts";
 import { AttributeBase, } from "../../src/attributes/attribute-base.ts";
 import { AttributeType, } from "../../src/attributes/attribute-type.ts";
 import { type PropertyLike, } from "../../src/model/property-like.ts";
@@ -131,7 +132,7 @@ let backupState: {
 
 function setupInheritance(phase: 0 | 1,) {
   if (inheritanceState && inheritanceState.phase >= phase) return;
-  const project = new MockProject(1,);
+  const project = createTestProject(1,);
   const propertySet = new PropertySet(project, false,);
   propertySet.addAttributeType({
     id: "priority",
@@ -162,7 +163,7 @@ function setupInheritance(phase: 0 | 1,) {
 function setupBackup(phase: 0 | 1 | 2,) {
   if (backupState && backupState.phase >= phase) return;
   if (!backupState) {
-    const project = new MockProject(1,);
+    const project = createTestProject(1,);
     const propertySet = new PropertySet(project, false,);
     // Add both attribute types before root creation (TS auto-adds to PropertySet,
     // unlike Ruby which requires addProperty to be called manually).
@@ -213,13 +214,13 @@ function runCase(c: GoldenCase,): void {
   const group = getGroup(c,);
   const nodeName = c.node || "gc";
 
-  let project: MockProject;
+  let project: Project;
   let propertySet: PropertySet;
   const nodes: Map<string, PropertyTreeNode> = new Map();
 
   switch (group) {
     case "structure": {
-      project = new MockProject(1,);
+      project = createTestProject(1,);
       propertySet = new PropertySet(project, false,);
       const root = new PropertyTreeNode(propertySet, "root", "Root", null,);
       const child = new PropertyTreeNode(propertySet, "child", "Child", root,);
@@ -239,7 +240,7 @@ function runCase(c: GoldenCase,): void {
       break;
     }
     case "scenario": {
-      project = new MockProject(2,);
+      project = createTestProject(2,);
       propertySet = new PropertySet(project, false,);
       propertySet.addAttributeType({
         id: "effort",
@@ -261,7 +262,7 @@ function runCase(c: GoldenCase,): void {
       break;
     }
     case "adoption": {
-      project = new MockProject(1,);
+      project = createTestProject(1,);
       propertySet = new PropertySet(project, false,);
       const root1 = new PropertyTreeNode(propertySet, "root1", "Root 1", null,);
       const root2 = new PropertyTreeNode(propertySet, "root2", "Root 2", null,);
@@ -290,7 +291,7 @@ function runCase(c: GoldenCase,): void {
       break;
     }
     case "flat": {
-      project = new MockProject(1,);
+      project = createTestProject(1,);
       propertySet = new PropertySet(project, true,);
       const root = new PropertyTreeNode(propertySet, "root", "Root", null,);
       const child = new PropertyTreeNode(propertySet, "child", "Child", root,);

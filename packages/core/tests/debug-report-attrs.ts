@@ -1,8 +1,8 @@
 import { PropertySet, } from "../src/model/property-set.ts";
-import { MockProject, } from "./model/mock-project.ts";
+import { createTestProject, } from "./fixtures/create-test-project.ts";
 import { registerReportAttributes, } from "../src/model/attributes/report-attributes.ts";
 
-const project = new MockProject();
+const project = createTestProject();
 const ps = new PropertySet(project, false,);
 registerReportAttributes(ps,);
 

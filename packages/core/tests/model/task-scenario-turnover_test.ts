@@ -1,6 +1,7 @@
 import { beforeEach, describe, it, } from "@std/testing/bdd";
 import { assert, assertEquals, } from "@std/assert";
-import { MockProject, } from "./mock-project.ts";
+import { createTestProject, } from "../fixtures/create-test-project.ts";
+import { Project, } from "../../src/model/project.ts";
 import { Task, } from "../../src/model/task.ts";
 import { TaskScenario, } from "../../src/model/task-scenario.ts";
 import { Resource, } from "../../src/model/resource.ts";
@@ -51,7 +52,7 @@ function bookResource(
   resourceScenario: ResourceScenario,
   task: Task,
   scIdx: number,
-  project: MockProject,
+  project: Project,
 ): void {
   const start = task.getForScenario("start", scIdx,) as TjTime;
   const end = task.getForScenario("end", scIdx,) as TjTime;
@@ -63,7 +64,7 @@ function bookResource(
 }
 
 describe("TaskScenario", () => {
-  let project: MockProject;
+  let project: Project;
   let task: Task;
   let taskScenario: TaskScenario;
   let resource: Resource;
@@ -71,7 +72,7 @@ describe("TaskScenario", () => {
   let account: Account;
 
   beforeEach(() => {
-    project = new MockProject(1,);
+    project = createTestProject(1,);
     // Granularidade diária para que os índices correspondam a datas previsíveis.
     project.set("start", TjTime.fromString("2026-01-01",));
     project.set("end", TjTime.fromString("2026-12-31",));

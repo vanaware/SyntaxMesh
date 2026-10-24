@@ -1,6 +1,7 @@
 import { beforeEach, describe, it, } from "@std/testing/bdd";
 import { assertEquals, assertThrows, } from "@std/assert";
-import { MockProject, } from "./mock-project.ts";
+import { createTestProject, } from "../fixtures/create-test-project.ts";
+import { Project, } from "../../src/model/project.ts";
 import { PropertySet, } from "../../src/model/property-set.ts";
 import { PropertyTreeNode, } from "../../src/model/property-tree-node.ts";
 import { PTNProxy, } from "../../src/model/ptn-proxy.ts";
@@ -21,13 +22,13 @@ class TestProperty extends PropertyTreeNode {
 }
 
 describe("PTNProxy", () => {
-  let project: MockProject;
+  let project: Project;
   let propertySet: PropertySet;
   let root: TestProperty;
   let child: TestProperty;
 
   beforeEach(() => {
-    project = new MockProject(2,);
+    project = createTestProject(2,);
     propertySet = new PropertySet(project, false,);
     root = new TestProperty(propertySet, null, "root", null,);
     child = new TestProperty(propertySet, null, "child", root,);

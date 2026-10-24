@@ -1,19 +1,20 @@
 import { beforeEach, describe, it } from "@std/testing/bdd";
 import { assert, assertEquals, assertThrows, } from "@std/assert";
-import { MockProject, } from "./mock-project.ts";
+import { createTestProject, } from "../fixtures/create-test-project.ts";
+import { Project, } from "../../src/model/project.ts";
 import { Account, } from "../../src/model/account.ts";
 import { AccountScenario, Query, } from "../../src/model/account-scenario.ts";
 import { AccountCredit, } from "../../src/finance/account-credit.ts";
 import { TjTime, } from "../../src/time/tj-time.ts";
 
 describe("AccountScenario", () => {
-  let project: MockProject;
+  let project: Project;
   let root: Account;
   let child1: Account;
   let child2: Account;
 
   beforeEach(() => {
-    project = new MockProject(1,);
+    project = createTestProject(1,);
     // Range de um ano inteiro, granularity diária (86400s), para que os
     // índices dos testes correspondam a datas previsíveis.
     project.set("start", TjTime.fromString("2026-01-01"));
@@ -153,13 +154,13 @@ describe("AccountScenario", () => {
 });
 
 describe("AccountScenario.turnoverByType + buckets", () => {
-  let project: MockProject;
+  let project: Project;
   let root: Account;
   let child1: Account;
   let child2: Account;
 
   beforeEach(() => {
-    project = new MockProject(1,);
+    project = createTestProject(1,);
     // Range de um ano inteira, granularity diária (86400s), para que os
     // índices dos testes correspondam a datas previsíveis.
     project.set("start", TjTime.fromString("2026-01-01"));

@@ -66,4 +66,11 @@ export class Report extends PropertyTreeNode {
   absoluteFileNameExists(name: string,): boolean {
     return name.startsWith("/",);
   }
+
+  /**
+   * Gera o relatório (stub para Fase 14).
+   */
+  generate(_formats?: string[], _scIdx?: number,): void {
+    // Fase 14: implementação real
+  }
 }

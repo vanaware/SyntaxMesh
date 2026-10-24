@@ -5,16 +5,19 @@ import { type ProjectLike, } from "./project-like.ts";
 import { type CostEvent, } from "./cost-event.ts";
 import { SourceFileInfo, } from "../source-file-info.ts";
 import { TjArgumentError, } from "../attributes/errors.ts";
+import { TjInternalError, } from "./errors.ts";
 import { AttributeBase, } from "../attributes/attribute-base.ts";
 import { AttributeDefinition, } from "../attributes/attribute-definition.ts";
 import { AttributeType, } from "../attributes/attribute-type.ts";
 import { TjTime, } from "../time/tj-time.ts";
 import { Scoreboard, } from "../time/scoreboard.ts";
+import { WorkingHours, } from "../calendar/working-hours.ts";
 import { Limits, } from "../scheduling/limits.ts";
 import { ShiftAssignments, } from "../scheduling/shift-assignments.ts";
 import { TimeSheets, } from "../scheduling/time-sheets.ts";
 import { ReportContext, } from "../reports/report-context.ts";
 import { Report, } from "./report.ts";
+import { ReportType, } from "./report-type.ts";
 import { Task, } from "./task.ts";
 import { Resource, } from "./resource.ts";
 import { TaskScenario, } from "./task-scenario.ts";
@@ -51,8 +54,8 @@ export class Project implements ProjectLike {
   readonly inputFiles: string[];
   readonly timeSheets: TimeSheets;
   readonly reportContexts: ReportContext[];
-  readonly outputDir: string;
-  readonly warnTsDeltas: boolean;
+  outputDir: string;
+  warnTsDeltas: boolean;
   scoreboard: Scoreboard<number | null> | null;
   scoreboardNoLeaves: Scoreboard<number | null> | null;
   resourceAvailability: Scoreboard<boolean> | null;
@@ -65,7 +68,69 @@ export class Project implements ProjectLike {
     return false;
   }
 
-  constructor(id: string, name: string, version: string,) {
+  getScenarioAttribute(
+    scIdx: number,
+    id: string,
+  ): AttributeBase<unknown> {
+    const scenario = this.scenarios.get("plan",);
+    if (scenario) {
+      // Try to get scenario-specific attribute first
+      try {
+        return scenario.getScenarioAttribute(scIdx, id,);
+      } catch (e) {
+        // If attribute is not scenario-specific (e.g., name, id, seqno),
+        // fall back to the base attribute
+        if (e instanceof TjArgumentError && e.message.includes("não é específico de cenário")) {
+          return scenario.getAttribute(id,);
+        }
+        // If attribute is unknown (e.g., task attribute like "effort"),
+        // search all PropertySets for the definition and create the scenario attribute
+        if (e instanceof TjArgumentError && e.message.includes("Unknown attribute '")) {
+          // Search all PropertySets for the attribute definition
+          const propertySets = [
+            this.scenarios,
+            this.shifts,
+            this.accounts,
+            this.resources,
+            this.tasks,
+            this.reports,
+          ];
+          for (const ps of propertySets) {
+            const attrDef = ps.attributeDefinition(id,);
+            if (attrDef && attrDef.isScenarioAttribute) {
+              // Create the scenario attribute on the plan scenario using the found definition
+              // We need to bypass the scenario's attributeDefinition lookup
+              // by directly creating the attribute using the found attrDef
+              if (!scenario.data[scIdx]) {
+                throw new TjInternalError(
+                  "ScenarioData must be initialized before scenario-specific attributes"
+                );
+              }
+              const attr = new attrDef.objClass(scenario, attrDef, scenario.data[scIdx]);
+              if (!scenario.scenarioAttributes[scIdx]) {
+                scenario.scenarioAttributes[scIdx] = new Map();
+              }
+              scenario.scenarioAttributes[scIdx].set(id, attr);
+              return attr;
+            }
+          }
+        }
+        throw e;
+      }
+    }
+    return null as unknown as AttributeBase<unknown>;
+  }
+
+  attributeDefinition(id: string,): AttributeDefinition<unknown> | undefined {
+    return this.scenarios.attributeDefinition(id,);
+  }
+
+  constructor(
+    id: string,
+    name: string,
+    version: string,
+    flatNamespace?: boolean,
+  ) {
     this.id = id;
     this.name = name;
     this.version = version;
@@ -87,6 +152,15 @@ export class Project implements ProjectLike {
     // Default project attributes (Ruby defaults from Project.rb)
     this.attributes.set("dailyworkinghours", 8.0,);
     this.attributes.set("yearlyworkingdays", 260.714,);
+
+    // Create PropertySets with flatNamespace control
+    const flat = flatNamespace ?? false;
+    this.scenarios = new PropertySet(this, true,);
+    this.shifts = new PropertySet(this, flat,);
+    this.accounts = new PropertySet(this, flat,);
+    this.resources = new PropertySet(this, flat,);
+    this.tasks = new PropertySet(this, flat,);
+    this.reports = new PropertySet(this, flat,);
     this.attributes.set("scheduleGranularity", 3600,);
     this.attributes.set("timezone", TjTime.getTimeZone(),);
     this.attributes.set("weekStartsMonday", true,);
@@ -95,14 +169,6 @@ export class Project implements ProjectLike {
     this.attributes.set("priority", 500,);
     this.attributes.set("rate", 0.0,);
     this.attributes.set("now", TjTime.now().align(3600,),);
-
-    // Create PropertySets
-    this.scenarios = new PropertySet(this, true,);
-    this.shifts = new PropertySet(this, false,);
-    this.accounts = new PropertySet(this, false,);
-    this.resources = new PropertySet(this, false,);
-    this.tasks = new PropertySet(this, false,);
-    this.reports = new PropertySet(this, false,);
 
     // Register attributes synchronously
     registerScenarioAttributes(this.scenarios,);
@@ -113,7 +179,10 @@ export class Project implements ProjectLike {
     registerReportAttributes(this.reports,);
 
     // Create initial plan scenario
-    new Scenario(this, "plan", "Plan", null,);
+    const planScenario = new Scenario(this, "plan", "Plan", null,);
+    // The scenario attributes are already registered via registerScenarioAttributes on the PropertySet
+    // and the Scenario constructor initializes scenarioAttributes via PropertyTreeNode
+    // So no additional action needed here
   }
 
   get scenarioCount(): number {
@@ -193,6 +262,27 @@ export class Project implements ProjectLike {
     }
   }
 
+  private reinitializeWorkingHours(): void {
+    // Reinitialize working hours based on new start/end/timezone
+    // This matches Ruby Project.rb:522-525 — only create WorkingHours
+    // if both start and end are already set (Ruby guards this).
+    // The values must be TjTime instances (Ruby stores Date objects here);
+    // raw strings are stored verbatim and skipped, matching the Ruby
+    // behavior where WorkingHours.new would only be called with real
+    // Date values from the attribute system.
+    const start = this.get("start",);
+    const end = this.get("end",);
+    if (!(start instanceof TjTime) || !(end instanceof TjTime)) {
+      return;
+    }
+    const granularity = this.get("scheduleGranularity",) as number;
+    const timezone = this.get("timezone",) as string;
+
+    // Create WorkingHours instance
+    const workinghours = new WorkingHours(granularity, start.toDate(), end.toDate(), timezone,);
+    this.attributes.set("workinghours", workinghours,);
+  }
+
   error(
     id: string,
     text: string,
@@ -249,13 +339,25 @@ export class Project implements ProjectLike {
   }
 
   idxToDate(idx: number,): TjTime {
-    return this.scoreboard
-      ? TjTime.fromDate(this.scoreboard.idxToDate(idx,),)
-      : TjTime.fromString("2026-01-01",);
+    if (this.scoreboard) {
+      return TjTime.fromDate(this.scoreboard.idxToDate(idx,),);
+    }
+    const start = this.get("start",) as TjTime | undefined;
+    if (!start) {
+      return TjTime.fromString("2026-01-01",);
+    }
+    const granularity = (this.get("scheduleGranularity",) as number) ?? 3600;
+    return TjTime.fromSeconds(start.toSeconds() + idx * granularity,);
   }
 
   dateToIdx(date: TjTime, forceIntoProject: boolean = true,): number {
-    return this.scoreboard?.dateToIdx(date.toDate(), forceIntoProject,) ?? 0;
+    const start = this.get("start",) as TjTime | undefined;
+    if (!start) {
+      return 0;
+    }
+    const granularity = (this.get("scheduleGranularity",) as number) ?? 3600;
+    const diff = date.toSeconds() - start.toSeconds();
+    return Math.floor(diff / granularity,);
   }
 
   isWorkingTime(sbIdx: number,): boolean {
@@ -306,15 +408,17 @@ export class Project implements ProjectLike {
   }
 
   journal(query: unknown,): unknown {
-    throw new Error("NotYetImplementedError: journal depends on Phase 16",);
+    throw new NotYetImplementedError("16", "journal");
   }
 
   to_s(): string {
     return `Project(id=${this.id}, name=${this.name}, version=${this.version})`;
   }
 
-  addScenario(s: Scenario,): void {
-    this.scenarios.addProperty(s,);
+  addScenario(_s: Scenario,): void {
+    // Scenario is already registered via PropertyTreeNode constructor
+    // This matches the pattern of addTask/addResource/addAccount/addShift/addReport
+    // which are all no-ops since their constructors auto-register
   }
 
   addShift(_s: unknown,): void {}
@@ -333,6 +437,138 @@ export class Project implements ProjectLike {
     }
   }
 
+  // 9.8 — Project.generateReports + generateReport + listReports
+  generateReports(maxCpuCores: number,): void {
+    // Ignorar maxCpuCores (browser)
+    this.reports.index();
+    for (const report of this.reports.toArray()) {
+      const formats = report.get("formats",) as unknown[] | undefined;
+      if (!formats || formats.length === 0) {
+        continue;
+      }
+      Log.startProgressMeter(`Report ${report.name}`);
+      this.reportContexts.push(new ReportContext(this, report as Report,));
+      (report as Report).generate();
+      this.reportContexts.pop();
+      Log.stopProgressMeter();
+    }
+    // DataCache.instance.flush(); // stub
+  }
+
+  generateReport(reportId: string, regExpMode: boolean, formats?: string[] | null, dynamicAttributes?: string | null,): void {
+    let reportList: string[];
+    if (regExpMode) {
+      reportList = this.matchingReports(reportId,);
+    } else {
+      reportList = this.reports.get(reportId) ? [reportId,] : [];
+    }
+    for (const id of reportList) {
+      const report = this.reports.get(id,);
+      if (!report) {
+        this.error("unknown_report_id", "Request to generate unknown report " + id);
+        continue;
+      }
+      if (formats === null || formats === undefined) {
+        const reportFormats = report.get("formats",) as unknown[] | undefined;
+        if (!reportFormats || reportFormats.length === 0) {
+          this.error("formats_empty", "Formats empty for report " + id);
+          continue;
+        }
+      }
+      this.reportContexts.push(new ReportContext(this, report as Report,));
+      if (dynamicAttributes) {
+        // report.backupAttributes(); // stub
+        // parseReportAttributes(report, dynamicAttributes); // stub
+      }
+      (report as Report).generate(formats as string[] | undefined);
+      if (dynamicAttributes) {
+        // report.restoreAttributes(...); // stub
+      }
+      this.reportContexts.pop();
+    }
+  }
+
+  listReports(reportId: string, regExpMode: boolean,): void {
+    let reportList: string[];
+    if (regExpMode) {
+      reportList = this.matchingReports(reportId,);
+    } else {
+      reportList = this.reports.get(reportId) ? [reportId,] : [];
+    }
+    if (reportList.length === 0) {
+      console.log(`No match for ${reportId}`);
+    }
+    for (const id of reportList) {
+      const report = this.reports.get(id,);
+      if (!report) continue;
+      const formats = report.get("formats",) as unknown[] | undefined;
+      if (!formats || formats.length === 0) continue;
+      console.log(`${id}\t${formats.join(", ")}\t${report.name}`);
+    }
+  }
+
+  checkReports(): void {
+    if (this.reports.items === 0) {
+      this.warning("no_report_defined", "This project has no reports defined. No output data will be generated.");
+    }
+    if (!this.accounts.empty()) {
+      for (const report of this.reports.toArray()) {
+        if ((report as Report).typeSpec === ReportType.AccountReport) continue;
+        const costAccount = report.get("costaccount",);
+        const revenueAccount = report.get("revenueaccount",);
+        if (!costAccount || !revenueAccount) {
+          this.warning("report_without_balance", "The report " + report.fullId + " has no 'balance' defined. No cost or revenue computation will be possible.", report.sourceFileInfo as unknown as SourceFileInfo | null,);
+        }
+      }
+    }
+    for (const report of this.reports.toArray()) {
+      const formats = report.get("formats",) as unknown[] | undefined;
+      if (!formats || formats.length === 0) {
+        this.warning("all_formats_empty", "None of the reports has a 'formats' attribute. No output data will be generated.", report.sourceFileInfo as unknown as SourceFileInfo | null,);
+        return;
+      }
+    }
+  }
+
+  enableTraceReports(enable: boolean,): void {
+    for (const report of this.reports.toArray()) {
+      if ((report as Report).typeSpec !== ReportType.TraceReport) continue;
+      let formats = report.get("formats",) as unknown[] | undefined;
+      if (!formats) {
+        formats = [];
+      }
+      if (enable) {
+        if (!formats.includes("csv",)) {
+          formats.push("csv",);
+        }
+      } else {
+        const idx = formats.indexOf("csv",);
+        if (idx !== -1) {
+          formats.splice(idx, 1);
+        }
+      }
+      report.set("formats", formats,);
+    }
+  }
+
+  matchingReports(reportId: string,): string[] {
+    const list: string[] = [];
+    let regex: RegExp;
+    try {
+      regex = new RegExp(reportId,);
+    } catch {
+      // Not a valid regex: fall back to exact match
+      return list;
+    }
+    for (const report of this.reports.toArray()) {
+      const id = report.fullId;
+      if (regex.test(id)) {
+        list.push(id,);
+      }
+    }
+    return list;
+  }
+
   static maxScheduleGranularity(): number {
     return 3600;
   }
@@ -341,7 +577,6 @@ export class Project implements ProjectLike {
     this.initScoreboards();
 
     // Set all index counters to their proper values
-    this.scenarios.index();
     this.shifts.index();
     this.accounts.index();
     this.resources.index();
@@ -375,24 +610,29 @@ export class Project implements ProjectLike {
     }
 
     // Check for failed tasks and resources after all scenarios are scheduled
+    // Check for failed tasks and resources after all scenarios are scheduled
+    // Ruby: resources.each { resource.checkFailsAndWarnings } (once per resource)
+    //      tasks.each { task.checkFailsAndWarnings } (once per task)
     for (const resource of this.resources.toArray()) {
-      // Resource has scenarioData for each scenario
-      for (let scIdx = 0; scIdx < this.scenarios.items; scIdx++) {
-        (resource.scenarioData(scIdx,) as ResourceScenario)
-          .checkFailsAndWarnings();
-      }
+      // Resource has scenarioData for each scenario, but checkFailsAndWarnings
+      // checks global (non-scenario) attributes 'fail'/'warn' (isScenarioAttribute=false)
+      // So call it once per resource (not per scenario)
+      (resource.scenarioData(0,) as ResourceScenario).checkFailsAndWarnings();
     }
 
     for (const task of this.tasks.toArray()) {
-      for (let scIdx = 0; scIdx < this.scenarios.items; scIdx++) {
-        (task.scenarioData(scIdx,) as TaskScenario).checkFailsAndWarnings();
-      }
+      (task.scenarioData(0,) as TaskScenario).checkFailsAndWarnings();
     }
 
     if (this.warnTsDeltas) {
       this.timeSheets.warnOnDelta();
     }
     return true;
+  }
+
+  // 9.8.3.2 — checkTimeSheets
+  checkTimeSheets(): void {
+    this.timeSheets.check();
   }
 
   private initScoreboards(): void {
@@ -679,12 +919,5 @@ export class Project implements ProjectLike {
       }
       i++;
     }
-  }
-
-  private reinitializeWorkingHours(): void {
-    // Reinitialize working hours based on new start/end/timezone
-    // This would typically involve recreating the working hours attribute
-    // For now, we'll just log that this needs to be implemented
-    console.log("Reinitializing working hours (not yet implemented)",);
   }
 }

@@ -1,15 +1,16 @@
 import { beforeEach, describe, it, } from "@std/testing/bdd";
 import { assert, assertEquals, assertThrows, } from "@std/assert";
-import { MockProject, } from "./mock-project.ts";
+import { createTestProject, } from "../fixtures/create-test-project.ts";
+import { Project, } from "../../src/model/project.ts";
 import { Report, } from "../../src/model/report.ts";
 import { ReportScenario, } from "../../src/model/report-scenario.ts";
 import { ReportType, } from "../../src/model/report-type.ts";
 
 describe("Report", () => {
-  let project: MockProject;
+  let project: Project;
 
   beforeEach(() => {
-    project = new MockProject(2,);
+    project = createTestProject(2,);
   },);
 
   it("enum ReportType tem 11 valores", () => {
@@ -177,7 +178,7 @@ describe("Report", () => {
   });
 
   it("relatório com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true", () => {
-    const project2 = new MockProject(1, true,);
+    const project2 = createTestProject(1, true,);
     const existing = new Report(project2, "parent", "Parent", null,);
     const report = new Report(project2, "parent.child", "Child", null,);
     assertEquals(report.fullId, "parent.child",);
@@ -185,7 +186,7 @@ describe("Report", () => {
   });
 
   it("relatório com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true, id com múltiplos pontos", () => {
-    const project2 = new MockProject(1, true,);
+    const project2 = createTestProject(1, true,);
     const existing = new Report(project2, "parent", "Parent", null,);
     const report = new Report(
       project2,
@@ -198,21 +199,21 @@ describe("Report", () => {
   });
 
   it("relatório com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace false, parent does not exist", () => {
-    const project2 = new MockProject(1, false,);
+    const project2 = createTestProject(1, false,);
     const report = new Report(project2, "nonexistent.child", "Child", null,);
     assertEquals(report.fullId, "nonexistent.child",);
     assertEquals(report.subId, "child",);
   });
 
   it("relatório com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true, parent does not exist", () => {
-    const project2 = new MockProject(1, true,);
+    const project2 = createTestProject(1, true,);
     const report = new Report(project2, "nonexistent.child", "Child", null,);
     assertEquals(report.fullId, "nonexistent.child",);
     assertEquals(report.subId, "nonexistent.child",);
   });
 
   it("relatório com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace false, child already exists", () => {
-    const project2 = new MockProject(1, false,);
+    const project2 = createTestProject(1, false,);
     const existing = new Report(project2, "child", "Child", null,);
     const report = new Report(project2, "nonexistent.child", "Child", null,);
     assertEquals(report.fullId, "nonexistent.child",);
@@ -220,7 +221,7 @@ describe("Report", () => {
   });
 
   it("relatório com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true, child already exists", () => {
-    const project2 = new MockProject(1, true,);
+    const project2 = createTestProject(1, true,);
     const existing = new Report(project2, "child", "Child", null,);
     const report = new Report(project2, "nonexistent.child", "Child", null,);
     assertEquals(report.fullId, "nonexistent.child",);
@@ -228,7 +229,7 @@ describe("Report", () => {
   });
 
   it("relatório com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace false, child already exists, parent already exists", () => {
-    const project2 = new MockProject(1, false,);
+    const project2 = createTestProject(1, false,);
     const parent = new Report(project2, "parent", "Parent", null,);
     const existing = new Report(project2, "parent.child", "Child", null,);
     const report = new Report(project2, "parent.child", "Child", null,);
@@ -237,7 +238,7 @@ describe("Report", () => {
   });
 
   it("relatório com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true, child already exists, parent already exists", () => {
-    const project2 = new MockProject(1, true,);
+    const project2 = createTestProject(1, true,);
     const parent = new Report(project2, "parent", "Parent", null,);
     const existing = new Report(project2, "parent.child", "Child", null,);
     const report = new Report(project2, "parent.child", "Child", null,);

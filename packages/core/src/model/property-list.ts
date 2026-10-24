@@ -262,7 +262,7 @@ export class PropertyList<T extends PropertyTreeNode = PropertyTreeNode,> {
         }
         bsi += idx.toString();
       },);
-      item.set("bsi", bsi,);
+      item.force("bsi", bsi,);
     },);
   }
 

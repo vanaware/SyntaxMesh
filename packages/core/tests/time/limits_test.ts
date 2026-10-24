@@ -3,11 +3,12 @@ import { assert, assertEquals, assertThrows, } from "@std/assert";
 import { Limit, Limits, } from "../../src/scheduling/limits.ts";
 import { ScoreboardInterval, } from "../../src/time/scoreboard-interval.ts";
 import { TjTime, } from "../../src/time/tj-time.ts";
-import { MockProject, } from "../model/mock-project.ts";
+import { createTestProject, } from "../fixtures/create-test-project.ts";
+import { Project, } from "../../src/model/project.ts";
 import { Resource, } from "../../src/model/resource.ts";
 
 /** Cria um recurso mockado para testes de limite por resource. */
-function makeResource(project: MockProject, id: string,): Resource {
+function makeResource(project: Project, id: string,): Resource {
   return new Resource(project, id, id, null,);
 }
 
@@ -83,7 +84,7 @@ describe("Limit", () => {
 
   it("inc filtra por resource", () => {
     const interval = new ScoreboardInterval(sbStart, 3600, 0, 167,);
-    const project = new MockProject(2,);
+    const project = createTestProject(2,);
     const resource = makeResource(project, "r1",);
     const limit = new Limit("dailymax", interval, 86400, 8, true, resource,);
     limit.inc(0, resource,);
@@ -142,7 +143,7 @@ describe("Limit", () => {
 
   it("ok? com resource filtra", () => {
     const interval = new ScoreboardInterval(sbStart, 3600, 0, 167,);
-    const project = new MockProject(2,);
+    const project = createTestProject(2,);
     const resource = makeResource(project, "r1",);
     const limit = new Limit("dailymax", interval, 86400, 8, true, resource,);
     limit.inc(0, resource,);
@@ -230,7 +231,7 @@ describe("Limits", () => {
       167,
     );
     limits.limits.push(new Limit("dailymax", interval, 86400, 8, true,),);
-    const project = new MockProject(2,);
+    const project = createTestProject(2,);
     assertThrows(
       () => limits.setProject(project,),
       Error,
@@ -240,7 +241,7 @@ describe("Limits", () => {
 
   it("setProject associa projeto", () => {
     const limits = new Limits();
-    const project = new MockProject(2,);
+    const project = createTestProject(2,);
     limits.setProject(project,);
     assertEquals(limits.getProject(), project,);
   });
@@ -262,7 +263,7 @@ describe("Limits", () => {
 
   it("setLimit dailymax cria limite diário", () => {
     const limits = new Limits();
-    const project = new MockProject(2,);
+    const project = createTestProject(2,);
     limits.setProject(project,);
     limits.setLimit("dailymax", 8,);
     assertEquals(limits.limits[0]!.name, "dailymax",);
@@ -273,7 +274,7 @@ describe("Limits", () => {
 
   it("setLimit weeklymax cria limite semanal", () => {
     const limits = new Limits();
-    const project = new MockProject(2,);
+    const project = createTestProject(2,);
     limits.setProject(project,);
     limits.setLimit("weeklymax", 40,);
     assertEquals(limits.limits[0]!.name, "weeklymax",);
@@ -283,7 +284,7 @@ describe("Limits", () => {
 
   it("setLimit monthlymax cria limite mensal", () => {
     const limits = new Limits();
-    const project = new MockProject(2,);
+    const project = createTestProject(2,);
     limits.setProject(project,);
     limits.setLimit("monthlymax", 160,);
     assertEquals(limits.limits[0]!.name, "monthlymax",);
@@ -306,7 +307,7 @@ describe("Limits", () => {
 
   it("setLimit substitui existente", () => {
     const limits = new Limits();
-    const project = new MockProject(2,);
+    const project = createTestProject(2,);
     limits.setProject(project,);
     limits.setLimit("dailymax", 8,);
     limits.setLimit("dailymax", 10 * 3600,);
@@ -316,7 +317,7 @@ describe("Limits", () => {
 
   it("inc/dec/ok? delegam para os limites", () => {
     const limits = new Limits();
-    const project = new MockProject(2,);
+    const project = createTestProject(2,);
     limits.setProject(project,);
     limits.setLimit("dailymax", 8,);
     limits.inc(0,);
@@ -329,7 +330,7 @@ describe("Limits", () => {
 
   it("inc filtra por resource", () => {
     const limits = new Limits();
-    const project = new MockProject(2,);
+    const project = createTestProject(2,);
     limits.setProject(project,);
     const resource = makeResource(project, "r1",);
     limits.setLimit("dailymax", 8 * 3600, undefined, resource,);
@@ -345,7 +346,7 @@ describe("Limits", () => {
 
   it("agregado: dailymax 8h + 30 incs → ok? retorna false", () => {
     const limits = new Limits();
-    const project = new MockProject(2,);
+    const project = createTestProject(2,);
     limits.setProject(project,);
     limits.setLimit("dailymax", 8,);
     for (let i = 0; i < 30; i++) {

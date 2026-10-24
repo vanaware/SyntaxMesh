@@ -393,6 +393,11 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
     }
   }
 
+  force(id: string, value: unknown,): void {
+    const attr = this.attribute(id,);
+    attr.set(value as never,);
+  }
+
   setForScenario(id: string, value: unknown, scIdx: number,): void {
     if (scIdx === undefined) {
       this.set(id, value,);
@@ -401,27 +406,25 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
     const attr = this.scenarioAttribute(scIdx, id,);
     let overwrite = attr.provided && !attr.isList();
     if (AttributeBase.mode === 0) {
-      const scenario = this.project.scenario(scIdx,);
-      if (scenario) {
-        const scenarioWithAll = scenario as { all?: () => Scenario[] };
-        const allScenarios = scenarioWithAll.all
-          ? scenarioWithAll.all()
-          : [scenario,];
-        allScenarios.forEach((sc,) => {
-          const scenarioIdx = this.project.scenarioIdx(sc.fullId,);
-          if (scenarioIdx !== undefined) {
-            const scenarioAttr = this.scenarioAttribute(scenarioIdx, id,);
-            if (scenarioIdx === scIdx) {
-              if (scenarioAttr.provided && !scenarioAttr.isList()) {
-                overwrite = true;
-              }
-              scenarioAttr.set(value as never,);
-            } else {
-              scenarioAttr.inherit(value as never,);
+      // In mode 0, we need to iterate over ALL scenarios in the project,
+      // not just the scenario's children. The Ruby implementation uses
+      // @project.scenario(scenario).all which returns all scenarios.
+      // In TypeScript, we need to iterate over all scenarios in the scenarios PropertySet.
+      const allScenarios = this.project.scenarios.toArray();
+      allScenarios.forEach((sc,) => {
+        const scenarioIdx = this.project.scenarioIdx(sc.fullId,);
+        if (scenarioIdx !== undefined) {
+          const scenarioAttr = this.scenarioAttribute(scenarioIdx, id,);
+          if (scenarioIdx === scIdx) {
+            if (scenarioAttr.provided && !scenarioAttr.isList()) {
+              overwrite = true;
             }
+            scenarioAttr.set(value as never,);
+          } else {
+            scenarioAttr.inherit(value as never,);
           }
-        },);
-      }
+        }
+      },);
     } else {
       attr.set(value as never,);
     }

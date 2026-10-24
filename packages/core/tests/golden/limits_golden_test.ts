@@ -3,7 +3,8 @@ import { assertEquals, } from "@std/assert";
 import { Limits, } from "../../src/scheduling/limits.ts";
 import { ScoreboardInterval, } from "../../src/time/scoreboard-interval.ts";
 import { TjTime, } from "../../src/time/tj-time.ts";
-import { MockProject, } from "../model/mock-project.ts";
+import { createTestProject, } from "../fixtures/create-test-project.ts";
+import { Project, } from "../../src/model/project.ts";
 
 /**
  * Golden test runner for Limits compatibility cases.
@@ -39,7 +40,7 @@ function loadGoldenFile(): GoldenFile {
 }
 
 function runCase(c: GoldenCase,): void {
-  const project = new MockProject(1,);
+  const project = createTestProject(1,);
   const sbStart = TjTime.fromDate(new Date("2026-01-01T00:00:00Z",),);
   const sbEnd = TjTime.fromDate(new Date("2026-01-08T00:00:00Z",),);
   const interval = new ScoreboardInterval(sbStart, 3600, 0, 167,);

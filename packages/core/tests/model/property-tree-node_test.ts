@@ -1,6 +1,7 @@
 import { beforeEach, describe, it, } from "@std/testing/bdd";
 import { assertEquals, assertThrows, } from "@std/assert";
-import { MockProject, } from "./mock-project.ts";
+import { createTestProject, } from "../fixtures/create-test-project.ts";
+import { Project, } from "../../src/model/project.ts";
 import {
   PropertySet,
   PropertyTreeNode,
@@ -22,12 +23,12 @@ class TestProperty extends PropertyTreeNode {
 }
 
 describe("PropertyTreeNode", () => {
-  let project: MockProject;
+  let project: Project;
   let propertySet: PropertySet;
   let root: TestProperty;
 
   beforeEach(() => {
-    project = new MockProject(2,);
+    project = createTestProject(2,);
     propertySet = new PropertySet(project, false,);
     root = new TestProperty(propertySet, null, "root", null,);
   },);
@@ -36,7 +37,7 @@ describe("PropertyTreeNode", () => {
   const createPropertySetWithCustomAttr = (
     attrDef: AttributeDefinition<string>,
   ) => {
-    const newProject = new MockProject(2,);
+    const newProject = createTestProject(2,);
     const newPropertySet = new PropertySet(newProject, false,);
     newPropertySet.addAttributeType(attrDef,);
     return newPropertySet;

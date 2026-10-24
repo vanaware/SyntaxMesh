@@ -1,19 +1,20 @@
 import { beforeEach, describe, it, } from "@std/testing/bdd";
 import { assert, assertEquals, assertThrows, } from "@std/assert";
-import { MockProject, } from "../model/mock-project.ts";
+import { createTestProject, } from "../fixtures/create-test-project.ts";
+import { Project, } from "../../src/model/project.ts";
 import { Account, } from "../../src/model/account.ts";
 import { AccountCredit, } from "../../src/finance/account-credit.ts";
 import { balanceAccount, } from "../../src/finance/balance-account.ts";
 import { TjTime, } from "../../src/time/tj-time.ts";
 
 describe("BalanceAccount", () => {
-  let project: MockProject;
+  let project: Project;
   let costAccount: Account;
   let revenueAccount: Account;
   let metaAccount: Account;
 
   beforeEach(() => {
-    project = new MockProject(1,);
+    project = createTestProject(1,);
     // Granularidade diária para que os índices correspondam a datas previsíveis.
     project.set("start", TjTime.fromString("2026-01-01",));
     project.set("end", TjTime.fromString("2026-12-31",));

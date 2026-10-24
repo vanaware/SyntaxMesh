@@ -2,7 +2,8 @@ import { describe, it, } from "@std/testing/bdd";
 import { assertEquals, } from "@std/assert";
 import { AttributeDefinition, } from "../../src/attributes/attribute-definition.ts";
 import { AttributeType, } from "../../src/attributes/attribute-type.ts";
-import { MockProject, } from "../model/mock-project.ts";
+import { createTestProject, } from "../fixtures/create-test-project.ts";
+import { Project, } from "../../src/model/project.ts";
 
 /**
  * Golden test runner for AttributeDefinitions.
@@ -110,10 +111,10 @@ function toGolden(ad: AttributeDefinition<unknown>,): GoldenCase {
 }
 
 /**
- * Collects all AttributeDefinitions from all 6 PropertySets of a MockProject,
+ * Collects all AttributeDefinitions from all 6 PropertySets of a Project,
  * sorted alphabetically by id (matching Ruby's eachAttributeDefinition sort).
  */
-function collectAllAttributeDefinitions(project: MockProject,): GoldenCase[] {
+function collectAllAttributeDefinitions(project: Project,): GoldenCase[] {
   const result: GoldenCase[] = [];
   const propertySets = [
     project.scenarios,
@@ -163,7 +164,7 @@ function groupById<T extends { id: string },>(cases: T[],): Map<string, T[]> {
 
 describe("AttributeDefinitions golden tests", () => {
   const golden = loadGoldenFile();
-  const project = new MockProject();
+  const project = createTestProject();
   const tsDefinitions = collectAllAttributeDefinitions(project,);
 
   const goldenById = groupById(golden.cases,);
