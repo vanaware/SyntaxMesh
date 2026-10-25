@@ -349,8 +349,8 @@ Implementar as 5 funções.
 
 #### Arquivos
 
-- `packages/report/src/gantt/html-graphics.ts`
-- `packages/report/tests/gantt/html-graphics_test.ts`
+- `packages/core/src/gantt/html-graphics.ts`
+- `packages/core/tests/gantt/html-graphics_test.ts`
 
 #### Requisitos
 
@@ -403,8 +403,8 @@ Implementar `CollisionDetector`.
 
 #### Arquivos
 
-- `packages/report/src/gantt/collision-detector.ts`
-- `packages/report/tests/gantt/collision-detector_test.ts`
+- `packages/core/src/gantt/collision-detector.ts`
+- `packages/core/tests/gantt/collision-detector_test.ts`
 
 #### Requisitos
 
@@ -474,8 +474,8 @@ Implementar `GanttRouter`.
 
 #### Arquivos
 
-- `packages/report/src/gantt/gantt-router.ts`
-- `packages/report/tests/gantt/gantt-router_test.ts`
+- `packages/core/src/gantt/gantt-router.ts`
+- `packages/core/tests/gantt/gantt-router_test.ts`
 
 #### Requisitos
 
@@ -550,8 +550,8 @@ Implementar `GanttTaskBar`.
 
 #### Arquivos
 
-- `packages/report/src/gantt/gantt-task-bar.ts`
-- `packages/report/tests/gantt/gantt-task-bar_test.ts`
+- `packages/core/src/gantt/gantt-task-bar.ts`
+- `packages/core/tests/gantt/gantt-task-bar_test.ts`
 
 #### Requisitos
 
@@ -612,8 +612,8 @@ Implementar `GanttMilestone`.
 
 #### Arquivos
 
-- `packages/report/src/gantt/gantt-milestone.ts`
-- `packages/report/tests/gantt/gantt-milestone_test.ts`
+- `packages/core/src/gantt/gantt-milestone.ts`
+- `packages/core/tests/gantt/gantt-milestone_test.ts`
 
 #### Requisitos
 
@@ -658,8 +658,8 @@ Implementar `GanttContainer`.
 
 #### Arquivos
 
-- `packages/report/src/gantt/gantt-container.ts`
-- `packages/report/tests/gantt/gantt-container_test.ts`
+- `packages/core/src/gantt/gantt-container.ts`
+- `packages/core/tests/gantt/gantt-container_test.ts`
 
 #### Requisitos
 
@@ -707,8 +707,8 @@ Implementar `GanttLoadStack`.
 
 #### Arquivos
 
-- `packages/report/src/gantt/gantt-load-stack.ts`
-- `packages/report/tests/gantt/gantt-load-stack_test.ts`
+- `packages/core/src/gantt/gantt-load-stack.ts`
+- `packages/core/tests/gantt/gantt-load-stack_test.ts`
 
 #### Requisitos
 
@@ -768,8 +768,8 @@ Implementar `GanttHeaderScaleItem`.
 
 #### Arquivos
 
-- `packages/report/src/gantt/gantt-header-scale-item.ts`
-- `packages/report/tests/gantt/gantt-header-scale-item_test.ts`
+- `packages/core/src/gantt/gantt-header-scale-item.ts`
+- `packages/core/tests/gantt/gantt-header-scale-item_test.ts`
 
 #### Requisitos
 
@@ -812,8 +812,8 @@ Implementar `GanttHeader`.
 
 #### Arquivos
 
-- `packages/report/src/gantt/gantt-header.ts`
-- `packages/report/tests/gantt/gantt-header_test.ts`
+- `packages/core/src/gantt/gantt-header.ts`
+- `packages/core/tests/gantt/gantt-header_test.ts`
 
 #### Requisitos
 
@@ -888,8 +888,8 @@ Implementar `GanttLine`.
 
 #### Arquivos
 
-- `packages/report/src/gantt/gantt-line.ts`
-- `packages/report/tests/gantt/gantt-line_test.ts`
+- `packages/core/src/gantt/gantt-line.ts`
+- `packages/core/tests/gantt/gantt-line_test.ts`
 
 #### Requisitos
 
@@ -978,8 +978,8 @@ Implementar `GanttChart`.
 
 #### Arquivos
 
-- `packages/report/src/gantt/gantt-chart.ts`
-- `packages/report/tests/gantt/gantt-chart_test.ts`
+- `packages/core/src/gantt/gantt-chart.ts`
+- `packages/core/tests/gantt/gantt-chart_test.ts`
 
 #### Requisitos
 
@@ -1092,7 +1092,7 @@ Testes end-to-end.
 
 #### Arquivos
 
-- `packages/report/tests/gantt/integration_test.ts`
+- `packages/core/tests/gantt/integration_test.ts`
 
 #### Requisitos
 
@@ -1145,8 +1145,8 @@ Scripts Ruby que rodam `tj3` nos MWEs e extraem HTML do chart.
 
 - `scripts/golden/gantt-mwe001.rb` a `gantt-mwe009.rb`
 - `scripts/golden/README.md` (atualizar)
-- `packages/report/tests/golden/gantt.golden.json`
-- `packages/report/tests/golden/gantt_golden_test.ts`
+- `packages/core/tests/golden/gantt.golden.json`
+- `packages/core/tests/golden/gantt_golden_test.ts`
 - `deno.jsonc` — atualizar `golden:generate`
 
 #### Requisitos

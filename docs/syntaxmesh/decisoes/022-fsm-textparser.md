@@ -9,6 +9,12 @@ Precisamos registrar:
 2. O pipeline exato de geração de FSM (`parseFSM`) que copia o Ruby linha-a-linha.
 3. A necessidade de suportar `extend` (herança de regras) e `language` i18n.
 
+**Alternativas consideradas e rejeitadas:**
+
+- A) **Recursive descent** — rejeitada: o TS do TJ usa `extend` (herança de regras em runtime), que exige re-compilação da gramática; recursive descent teria que ser reescrito a cada `extend`.
+- B) **PEG / parser combinators** — rejeitadas: não reproduzem exatamente a resolução de conflitos SHIFT/REDUCE nem as mensagens de erro do Ruby (expectativa de golden tests, ADR 011).
+- C) **FSM pré-compilado (tabelas estáticas)** — rejeitada: perda a capacidade de estender regras em runtime; fica como otimização futura possível (ver Fora de escopo).
+
 ## Decisão
 
 Manter o **FSM compilado em runtime** como o coração do `TextParser`. O FSM é gerado por `Pattern.generateStates()` e armazenado em `State` objetos com transições `StateTransition` exatas.

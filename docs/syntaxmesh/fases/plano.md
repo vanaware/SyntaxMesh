@@ -12,7 +12,7 @@
 - 1.5 — ADRs 001–008 já existentes + novos ADRs das decisões recentes (RichText mantido, Markdown futuro, worker-db centralizado, BatchProcessor adiado).
 - 1.6 — CI: `deno test`, `deno lint`, `deno fmt --check`.
 
-**Nota de arquitetura (ADR 030):** A arquitetura está planejada para ser simplificada: o desenvolvimento deve ocorrer **inteiramente em `packages/core`**, mantendo apenas `packages/server`, `packages/ui` e `packages/service-worker` como pacotes de suporte para testes. Os pacotes `packages/utils` e `packages/worker-db` serão substituídos pelas bibliotecas JSR `jsr:@vanaware/buildit` e `jsr:@vanaware/workerdb`. Enquanto isso, manter os pacotes atuais sem remover nada — a substituição será feita manualmente pelo usuário.
+**Nota de arquitetura (ADR 030):** A arquitetura está planejada para ser simplificada: o desenvolvimento deve ocorrer **inteiramente em `packages/core`**, mantendo apenas `packages/server`, `packages/ui` e `packages/service-worker` como pacotes de suporte para testes. Os pacotes `packages/utils` e `vendor-packages/worker-db (ver ADR 030)` serão substituídos pelas bibliotecas JSR `jsr:@vanaware/buildit` e `jsr:@vanaware/workerdb`. Enquanto isso, manter os pacotes atuais sem remover nada — a substituição será feita manualmente pelo usuário.
 
 **Critério de aceite:** `deno task test && deno task lint && deno task fmt` sem erros.
 
@@ -546,7 +546,7 @@ Tarefas: `docs/syntaxmesh/fases/fase-8.2-tarefas.md`.
 
 ### FASE 19 — Storage
 
-**Objetivo:** Persistência local via `@syntaxmesh/worker-db`.
+**Objetivo:** Persistência local via `@vanaware/workerdb`.
 
 **Referências TJ:** nenhuma (novo).
 
@@ -557,7 +557,7 @@ Tarefas: `docs/syntaxmesh/fases/fase-8.2-tarefas.md`.
 - 19.4 — Import/export `.tjp`.
 - 19.5 — Autosave + recovery.
 
-**Regra:** **Nunca** usar `idb-keyval` direto. **Sempre** via `@syntaxmesh/worker-db`.
+**Regra:** **Nunca** usar `idb-keyval` direto. **Sempre** via `@vanaware/workerdb`.
 
 ---
 

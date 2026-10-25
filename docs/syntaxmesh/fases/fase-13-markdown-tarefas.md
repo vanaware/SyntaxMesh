@@ -107,13 +107,13 @@ TOTAL: ~115
 
 **⚠️ Contexto:** `micromark` + `mdast-util-from-markdown` + `mdast-util-gfm` produzem AST `mdast`.
 
-**Pré-requisitos:** `packages/markdown/deno.jsonc` configurado.
+**Pré-requisitos:** `packages/core/src/markdown/deno.jsonc` configurado.
 
 #### 13.1.1 — Dependências
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 13.1.1.1 | Adicionar `micromark` em `imports` (`npm:micromark@^4`) | `packages/markdown/deno.jsonc` | `deno check` |
+| 13.1.1.1 | Adicionar `micromark` em `imports` (`npm:micromark@^4`) | `packages/core/src/markdown/deno.jsonc` | `deno check` |
 | 13.1.2.1 | Adicionar `mdast-util-from-markdown` (`npm:mdast-util-from-markdown@^2`) | idem | `deno check` |
 | 13.1.3.1 | Adicionar `mdast-util-gfm` (`npm:mdast-util-gfm@^3`) | idem | `deno check` |
 | 13.1.4.1 | Adicionar `micromark-extension-gfm` (`npm:micromark-extension-gfm@^3`) | idem | `deno check` |
@@ -122,7 +122,7 @@ TOTAL: ~115
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 13.1.2.1 | Criar `packages/markdown/src/parse-mdast.ts` com `function parseMdast(text: string): MdastRoot` | idem | `deno check` |
+| 13.1.2.1 | Criar `packages/core/src/markdown/parse-mdast.ts` com `function parseMdast(text: string): MdastRoot` | idem | `deno check` |
 | 13.1.2.2 | Configurar `micromark` com extensão `gfm` e `fromMarkdown` | idem | 2 testes |
 | 13.1.2.3 | Tipos de nós `mdast`: importar de `mdast` | idem | `deno check` |
 
@@ -130,7 +130,7 @@ TOTAL: ~115
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 13.1.3.1 | Teste: `heading` (depth 1–6) | `packages/markdown/tests/parse-mdast_test.ts` | 6 testes |
+| 13.1.3.1 | Teste: `heading` (depth 1–6) | `packages/core/tests/markdown/parse-mdast_test.ts` | 6 testes |
 | 13.1.3.2 | Teste: `paragraph` | idem | 1 teste |
 | 13.1.3.3 | Teste: `emphasis` / `strong` | idem | 2 testes |
 | 13.1.3.4 | Teste: `list` ordered/unordered + `listItem` | idem | 4 testes |
@@ -141,7 +141,7 @@ TOTAL: ~115
 | 13.1.3.9 | Teste: `html` (inline + block) | idem | 2 testes |
 | 13.1.3.10 | Teste: `text` + `break` | idem | 2 testes |
 | 13.1.3.11 | Teste: `strikethrough` (GFM) | idem | 1 teste |
-| 13.1.3.12 | Re-exportar `parseMdast` em `packages/markdown/mod.ts` | idem | `deno check` |
+| 13.1.3.12 | Re-exportar `parseMdast` em `packages/core/src/markdown/mod.ts` | idem | `deno check` |
 
 ---
 
@@ -153,7 +153,7 @@ TOTAL: ~115
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 13.2.1 | Criar `packages/markdown/src/mdast-to-richtext.ts` com `class MdastToRichText` | idem | `deno check` |
+| 13.2.1 | Criar `packages/core/src/markdown/mdast-to-richtext.ts` com `class MdastToRichText` | idem | `deno check` |
 | 13.2.2 | Campo `private sectionCounter: number[]` (inicializado `[0,0,0,0]`) | idem | `deno check` |
 | 13.2.3 | Método `convert(root: MdastRoot): RichTextElement[]` — itera children | idem | 3 testes |
 | 13.2.4 | ⚠️ `heading` (depth 1) → `title1` | idem | 2 testes |
@@ -170,7 +170,7 @@ TOTAL: ~115
 | 13.2.15 | ⚠️ `html` → `htmlblob` (sanitizado via `sanitizeHtml` — subfase 13.5) | idem | 3 testes |
 | 13.2.16 | `table` → sequência de `paragraph` (não suportado nativamente) | idem | 3 testes |
 | 13.2.17 | `sectionCounter` incrementado em cada título | idem | 2 testes |
-| 13.2.18 | Re-exportar em `packages/markdown/mod.ts` | idem | `deno check` |
+| 13.2.18 | Re-exportar em `packages/core/src/markdown/mod.ts` | idem | `deno check` |
 
 ---
 
@@ -182,12 +182,12 @@ TOTAL: ~115
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 13.3.1 | Criar `packages/markdown/src/factory.ts` com `class MarkdownFactory implements RichTextFactory` | idem | `deno check` |
+| 13.3.1 | Criar `packages/core/src/markdown/factory.ts` com `class MarkdownFactory implements RichTextFactory` | idem | `deno check` |
 | 13.3.2 | Constructor `(project: Project \| null, sfi: SourceFileInfo \| null)` | idem | 2 testes |
 | 13.3.3 | ⚠️ `create(text: string): RichTextIntermediate` — pipeline: pré-processar → `parseMdast` → `MdastToRichText.convert` → construir `RichTextIntermediate` | idem | 4 testes |
 | 13.3.4 | Pipeline: registra handlers de `RTFHandlers.create(project, sfi)` no `rti` | idem | 2 testes |
 | 13.3.5 | `createFromMdast(mdast: MdastRoot): RichTextIntermediate` — variante que pula o `parseMdast` | idem | 2 testes |
-| 13.3.6 | Re-exportar em `packages/markdown/mod.ts` | idem | `deno check` |
+| 13.3.6 | Re-exportar em `packages/core/src/markdown/mod.ts` | idem | `deno check` |
 
 ---
 
@@ -201,7 +201,7 @@ TOTAL: ~115
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 13.4.1 | Criar `packages/markdown/src/extensions/color.ts` | idem | `deno check` |
+| 13.4.1 | Criar `packages/core/src/markdown/extensions/color.ts` | idem | `deno check` |
 | 13.4.2 | `type ColorExtraction = { placeholder: string; color: string; content: string }` | idem | `deno check` |
 | 13.4.3 | ⚠️ `preprocessColor(text: string): { text: string; extractions: ColorExtraction[] }` — regex `/<fcol:([a-z]+|#[0-9A-Fa-f]{3,6})>(.*?)<\/fcol>/g` | idem | 4 testes |
 | 13.4.4 | Validação: cores nomeadas (`red`, `blue`, `green`, etc.) + hex (`#RGB` / `#RRGGBB`) | idem | 5 testes |
@@ -218,7 +218,7 @@ TOTAL: ~115
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 13.5.1 | Criar `packages/markdown/src/extensions/html-sanitizer.ts` | idem | `deno check` |
+| 13.5.1 | Criar `packages/core/src/markdown/extensions/html-sanitizer.ts` | idem | `deno check` |
 | 13.5.2 | Definir **allow-list**: `span`, `div`, `a`, `b`, `i`, `em`, `strong`, `code`, `pre`, `br`, `hr`, `p`, `ul`, `ol`, `li`, `blockquote` | idem | 1 teste |
 | 13.5.3 | Definir **block-list**: `script`, `iframe`, `object`, `embed`, `style`, `link`, `meta` | idem | 1 teste |
 | 13.5.4 | ⚠️ `sanitizeHtml(html: string): string` — parseia tags; remove block-list; preserva allow-list | idem | 6 testes |
@@ -237,7 +237,7 @@ TOTAL: ~115
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 13.6.1 | Criar `packages/markdown/src/extensions/functions.ts` | idem | `deno check` |
+| 13.6.1 | Criar `packages/core/src/markdown/extensions/functions.ts` | idem | `deno check` |
 | 13.6.2 | `type FunctionExtraction = { placeholder: string; name: string; args: Record<string, string> }` | idem | `deno check` |
 | 13.6.3 | ⚠️ `preprocessFunctions(text: string): { text: string; extractions: FunctionExtraction[] }` — regex `/\[\[([a-z]+):([^\]]+)\]\]/g` | idem | 4 testes |
 | 13.6.4 | ⚠️ Parse de args: pares `key=value` ou posicionais via `/([a-z]+)="([^"]*)"\|(\S+)/g` | idem | 6 testes |
@@ -258,7 +258,7 @@ TOTAL: ~115
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 13.7.1 | Criar `packages/markdown/src/extensions/mini-query.ts` | idem | `deno check` |
+| 13.7.1 | Criar `packages/core/src/markdown/extensions/mini-query.ts` | idem | `deno check` |
 | 13.7.2 | ⚠️ `preprocessMiniQueries(text: string): { text: string; extractions: Extraction[] }` — regex `/<-([a-zA-Z][_a-zA-Z]*)->/g` | idem | 4 testes |
 | 13.7.3 | Substituição por `§MINIQ_n§` | idem | 2 testes |
 | 13.7.4 | ⚠️ `postprocessMiniQueries(node, extractions): MdastNode` — substitui por `['query', { attribute }]` | idem | 3 testes |
@@ -274,7 +274,7 @@ TOTAL: ~115
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 13.8.1 | Criar `packages/markdown/src/extensions/pipeline.ts` | idem | `deno check` |
+| 13.8.1 | Criar `packages/core/src/markdown/extensions/pipeline.ts` | idem | `deno check` |
 | 13.8.2 | `type Extraction = { placeholder: string; category: 'fontCol' \| 'inlinefunc' \| 'blockfunc'; data: unknown }` | idem | `deno check` |
 | 13.8.3 | `class ExtractionPipeline` com `private extractions: Map<string, Extraction>` | idem | `deno check` |
 | 13.8.4 | ⚠️ `preprocess(text: string): string` — ordem: `color` → `functions` → `mini-queries` | idem | 4 testes |
@@ -293,9 +293,9 @@ TOTAL: ~115
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 13.9.1 | Adicionar `to_markdown(): string` em `RichTextIntermediate` | `packages/richtext/src/rich-text-intermediate.ts` | `deno check` |
+| 13.9.1 | Adicionar `to_markdown(): string` em `RichTextIntermediate` | `packages/core/src/richtext/rich-text-intermediate.ts` | `deno check` |
 | 13.9.2 | ⚠️ Delega para `tree?.to_markdown() ?? ''` | idem | 2 testes |
-| 13.9.3 | Adicionar `to_markdown(): string` em `RichTextElement` | `packages/richtext/src/rich-text-element.ts` | `deno check` |
+| 13.9.3 | Adicionar `to_markdown(): string` em `RichTextElement` | `packages/core/src/richtext/rich-text-element.ts` | `deno check` |
 | 13.9.4 | ⚠️ `title1-4` → `#`–`####` + texto | idem | 4 testes |
 | 13.9.5 | `paragraph` → texto + `\n\n` | idem | 2 testes |
 | 13.9.6 | `italic` → `*texto*`; `bold` → `**texto**` | idem | 2 testes |
@@ -318,14 +318,14 @@ TOTAL: ~115
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 13.10.1 | Criar `packages/markdown/src/convert-rich-to-md.ts` | idem | `deno check` |
+| 13.10.1 | Criar `packages/core/src/markdown/convert-rich-to-md.ts` | idem | `deno check` |
 | 13.10.2 | ⚠️ `richTextToMarkdown(richText: string): string` — cria `RichText`, gera `RichTextIntermediate`, chama `to_markdown()` | idem | 4 testes |
 | 13.10.3 | Comentário no topo do output (opcional): `<!-- converted from RichText -->` | idem | 2 testes |
 | 13.10.4 | ⚠️ Funções customizadas são preservadas (`[[query:...]]` etc.) | idem | 3 testes |
 | 13.10.5 | Teste: `"== Title ==\n\n'''bold'''"` → `"# Title\n\n**bold**"` | idem | 1 teste |
 | 13.10.6 | Teste: listas | idem | 1 teste |
 | 13.10.7 | Teste: links | idem | 1 teste |
-| 13.10.8 | Re-exportar em `packages/markdown/mod.ts` | idem | `deno check` |
+| 13.10.8 | Re-exportar em `packages/core/src/markdown/mod.ts` | idem | `deno check` |
 
 ---
 
@@ -339,7 +339,7 @@ TOTAL: ~115
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 13.11.1 | Criar `packages/markdown/tests/integration_test.ts` | idem | `deno check` |
+| 13.11.1 | Criar `packages/core/tests/markdown/integration_test.ts` | idem | `deno check` |
 | 13.11.2 | ⚠️ `MarkdownFactory.create(texto)` com todas as extensões | idem | 3 testes |
 | 13.11.3 | ⚠️ `RTFQuery` funciona dentro de Markdown | idem | 2 testes |
 | 13.11.4 | ⚠️ `to_s`, `to_html`, `to_markdown` consistentes | idem | 3 testes |
@@ -357,12 +357,12 @@ TOTAL: ~115
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 13.12.1 | Criar `packages/markdown/tests/golden/markdown-snapshots.json` (gerado) | idem | `deno check` |
+| 13.12.1 | Criar `packages/core/tests/markdown/golden/markdown-snapshots.json` (gerado) | idem | `deno check` |
 | 13.12.2 | Lista de fixtures: Markdown simples (heading, paragraph, lists) | idem | ≥ 5 fixtures |
 | 13.12.3 | Fixtures: Markdown com extensões (color, functions, mini-query) | idem | ≥ 5 fixtures |
 | 13.12.4 | Fixtures: HTML inline (com sanitização) | idem | ≥ 5 fixtures |
 | 13.12.5 | Fixtures: blockquotes, code blocks, imagens, links | idem | ≥ 5 fixtures |
-| 13.12.6 | Criar `packages/markdown/tests/golden/snapshot_test.ts` | idem | `deno check` |
+| 13.12.6 | Criar `packages/core/tests/markdown/golden/snapshot_test.ts` | idem | `deno check` |
 | 13.12.7 | ⚠️ Para cada fixture: `to_s`, `to_html`, `to_markdown` congelados | idem | 4 testes |
 | 13.12.8 | Se snapshot divergir, mostrar diff | idem | 2 testes |
 
@@ -376,9 +376,9 @@ TOTAL: ~115
 |---|---|---|
 | 13.13.1 | `deno task check-all` verde | exit 0 |
 | 13.13.2 | `deno task test` verde | exit 0 |
-| 13.13.3 | `grep -r "NotYetImplementedError" packages/markdown/src/` = 0 (sem stubs) | grep |
+| 13.13.3 | `grep -r "NotYetImplementedError" packages/core/src/markdown/` = 0 (sem stubs) | grep |
 | 13.13.4 | ADR 025 criada e commitada | git log |
-| 13.13.5 | `MarkdownFactory`, `parseMdast`, `richTextToMarkdown` exportados em `packages/markdown/mod.ts` | `deno check` |
+| 13.13.5 | `MarkdownFactory`, `parseMdast`, `richTextToMarkdown` exportados em `packages/core/src/markdown/mod.ts` | `deno check` |
 | 13.13.6 | `tests/integration/smoke_after_phase_13_test.ts` — cria `MarkdownFactory`, gera `rti`, verifica `to_s`; verifica Fase 12 (`RichText`) | 1 teste |
 | 13.13.7 | Auditoria: cada subfase do plano `fase-13-markdown.md` tem tarefas correspondentes | grep |
 | 13.13.8 | Corrigir numeração em `fase-13-markdown.md` (`### 17.X` → `### 13.X`, `ADR 024` → `ADR 025`) | grep |

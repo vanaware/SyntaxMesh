@@ -125,7 +125,7 @@ TOTAL: ~205
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 15.1.1 | Criar `packages/report/src/gantt/html-graphics.ts` | idem | `deno check` |
+| 15.1.1 | Criar `packages/core/src/gantt/html-graphics.ts` | idem | `deno check` |
 | 15.1.2 | ⚠️ `lineToHTML(xs, ys, xe, ye, category): XMLElementLike` — se `ys === ye`: horizontal; se `xs === xe`: vertical; senão, `throw Error('diagonal line')` | idem | 5 testes |
 | 15.1.3 | `lineToHTML` — troca `xs`/`xe` se `xs > xe`; idem `ys`/`ye` | idem | 3 testes |
 | 15.1.4 | Teste: `<div class="foo" style="left:10px; top:20px; width:41px; height:1px;"></div>` | idem | 1 teste |
@@ -136,7 +136,7 @@ TOTAL: ~205
 | 15.1.9 | Teste: `lineToHTML` com coordenadas iguais (0 comprimento) | idem | 1 teste |
 | 15.1.10 | Teste: `lineToHTML` com coordenadas negativas | idem | 1 teste |
 | 15.1.11 | Teste: `rectToHTML` com width 0 | idem | 1 teste |
-| 15.1.12 | Re-exportar em `packages/report/mod.ts` | idem | `deno check` |
+| 15.1.12 | Re-exportar em `packages/core/src/mod.ts` | idem | `deno check` |
 
 ---
 
@@ -151,7 +151,7 @@ TOTAL: ~205
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 15.2.1.1 | Criar `packages/report/src/gantt/collision-detector.ts` com `class CollisionDetector` | idem | `deno check` |
+| 15.2.1.1 | Criar `packages/core/src/gantt/collision-detector.ts` com `class CollisionDetector` | idem | `deno check` |
 | 15.2.1.2 | Campos: `private width`, `private height`, `private hLines: number[][][]`, `private vLines: number[][][]` | idem | `deno check` |
 | 15.2.1.3 | Constructor `(width, height)` | idem | 2 testes |
 
@@ -185,7 +185,7 @@ TOTAL: ~205
 | 15.2.4.3 | ⚠️ `private overlaps?(s1, s2)` | idem | 3 testes |
 | 15.2.4.4 | ⚠️ `private mergeable?(s1, s2)` | idem | 4 testes |
 | 15.2.4.5 | ⚠️ `private merge(dst, seg)` | idem | 2 testes |
-| 15.2.4.6 | Re-exportar em `packages/report/mod.ts` | idem | `deno check` |
+| 15.2.4.6 | Re-exportar em `packages/core/src/mod.ts` | idem | `deno check` |
 
 ---
 
@@ -200,7 +200,7 @@ TOTAL: ~205
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 15.3.1.1 | Criar `packages/report/src/gantt/gantt-router.ts` | idem | `deno check` |
+| 15.3.1.1 | Criar `packages/core/src/gantt/gantt-router.ts` | idem | `deno check` |
 | 15.3.1.2 | Constantes: `MinStartGap = 5`, `MinEndGap = 10` | idem | `deno check` |
 | 15.3.1.3 | Campos: `private width`, `private height`, `private detector: CollisionDetector` | idem | `deno check` |
 | 15.3.1.4 | Constructor `(width, height)` — cria `CollisionDetector` interno | idem | 2 testes |
@@ -248,7 +248,7 @@ TOTAL: ~205
 | 15.3.5.2 | Teste: `placeLine` clampa | idem | 2 testes |
 | 15.3.5.3 | ⚠️ `private addLineTo(points, x2, y2): void` — bloqueia zona 2px | idem | 3 testes |
 | 15.3.5.4 | ⚠️ `private justify(x, y, w, h): [number, number, number, number]` | idem | 2 testes |
-| 15.3.5.5 | Re-exportar em `packages/report/mod.ts` | idem | `deno check` |
+| 15.3.5.5 | Re-exportar em `packages/core/src/mod.ts` | idem | `deno check` |
 
 ---
 
@@ -262,7 +262,7 @@ TOTAL: ~205
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 15.4.1 | Criar `packages/report/src/gantt/gantt-task-bar.ts` | idem | `deno check` |
+| 15.4.1 | Criar `packages/core/src/gantt/gantt-task-bar.ts` | idem | `deno check` |
 | 15.4.2 | Constante: `static readonly SIZE = 6` (half-height da barra) | idem | `deno check` |
 | 15.4.3 | Campos: `private query`, `private lineHeight`, `private start`, `private end`, `private y` | idem | `deno check` |
 | 15.4.4 | Constructor `(query, lineHeight, xStart, xEnd, y)` | idem | 3 testes |
@@ -285,7 +285,7 @@ TOTAL: ~205
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 15.5.1 | Criar `packages/report/src/gantt/gantt-milestone.ts` | idem | `deno check` |
+| 15.5.1 | Criar `packages/core/src/gantt/gantt-milestone.ts` | idem | `deno check` |
 | 15.5.2 | Constante: `static readonly SIZE = 6` | idem | `deno check` |
 | 15.5.3 | Campos: `private lineHeight`, `private x`, `private y` | idem | `deno check` |
 | 15.5.4 | Constructor `(lineHeight, x, y)` | idem | 2 testes |
@@ -304,7 +304,7 @@ TOTAL: ~205
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 15.6.1 | Criar `packages/report/src/gantt/gantt-container.ts` | idem | `deno check` |
+| 15.6.1 | Criar `packages/core/src/gantt/gantt-container.ts` | idem | `deno check` |
 | 15.6.2 | Constante: `static readonly SIZE = 5` | idem | `deno check` |
 | 15.6.3 | Campos: `private lineHeight`, `private start`, `private end`, `private y` | idem | `deno check` |
 | 15.6.4 | Constructor `(lineHeight, xStart, xEnd, y)` | idem | 3 testes |
@@ -313,7 +313,7 @@ TOTAL: ~205
 | 15.6.7 | ⚠️ `to_html(): XMLElementLike[]` — frame invisível + `containerbar` + 2 `jagToHTML` | idem | 4 testes |
 | 15.6.8 | Teste: `to_html` com start/end corretos | idem | 1 teste |
 | 15.6.9 | Teste: jags nas posições corretas | idem | 2 testes |
-| 15.6.10 | Re-exportar em `packages/report/mod.ts` | idem | `deno check` |
+| 15.6.10 | Re-exportar em `packages/core/src/mod.ts` | idem | `deno check` |
 
 ---
 
@@ -325,7 +325,7 @@ TOTAL: ~205
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 15.7.1 | Criar `packages/report/src/gantt/gantt-load-stack.ts` | idem | `deno check` |
+| 15.7.1 | Criar `packages/core/src/gantt/gantt-load-stack.ts` | idem | `deno check` |
 | 15.7.2 | Campos: `line`, `lineHeight`, `x`, `y`, `w`, `values`, `categories`, `yLevels`, `drawFrame` | idem | `deno check` |
 | 15.7.3 | ⚠️ Constructor `(line, x, w, values, categories)` — rejeita `values.length !== categories.length` | idem | 3 testes |
 | 15.7.4 | ⚠️ `drawFrame = true` se algum `category === null && value > 0` | idem | 3 testes |
@@ -350,7 +350,7 @@ TOTAL: ~205
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 15.8.1 | Criar `packages/report/src/gantt/gantt-header-scale-item.ts` | idem | `deno check` |
+| 15.8.1 | Criar `packages/core/src/gantt/gantt-header-scale-item.ts` | idem | `deno check` |
 | 15.8.2 | Campos: `label`, `x`, `y`, `width`, `height` | idem | `deno check` |
 | 15.8.3 | Constructor `(label, x, y, width, height)` | idem | 2 testes |
 | 15.8.4 | ⚠️ `to_html(): XMLElementLike` — `<div class="tabhead">` com `<div style="padding:3px;">label</div>` | idem | 2 testes |
@@ -367,7 +367,7 @@ TOTAL: ~205
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 15.9.1.1 | Criar `packages/report/src/gantt/gantt-header.ts` | idem | `deno check` |
+| 15.9.1.1 | Criar `packages/core/src/gantt/gantt-header.ts` | idem | `deno check` |
 | 15.9.1.2 | Campos: `private columnDef`, `private chart`, `private largeScale`, `private smallScale` | idem | `deno check` |
 | 15.9.1.3 | Campos: `gridLines: number[]`, `nowLineX`, `markdateLineX`, `cellStartDates: TjTime[]`, `height = 39` | idem | `deno check` |
 | 15.9.1.4 | Constructor `(columnDef, chart)` | idem | 2 testes |
@@ -394,7 +394,7 @@ TOTAL: ~205
 | 15.9.3.3 | Teste: `height === 39` | idem | 1 teste |
 | 15.9.3.4 | Teste: `gridLines.length > 0` | idem | 1 teste |
 | 15.9.3.5 | Teste: `cellStartDates` preenchido | idem | 1 teste |
-| 15.9.3.6 | Re-exportar em `packages/report/mod.ts` | idem | `deno check` |
+| 15.9.3.6 | Re-exportar em `packages/core/src/mod.ts` | idem | `deno check` |
 
 ---
 
@@ -411,7 +411,7 @@ TOTAL: ~205
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 15.10.1.1 | Criar `packages/report/src/gantt/gantt-line.ts` | idem | `deno check` |
+| 15.10.1.1 | Criar `packages/core/src/gantt/gantt-line.ts` | idem | `deno check` |
 | 15.10.1.2 | Campos: `private chart`, `query`, `private tooltip`, `private category`, `y`, `height`, `private lineIndex` | idem | `deno check` |
 | 15.10.1.3 | Campos: `private timeOffZones`, `private content: GanttContent[]` | idem | `deno check` |
 | 15.10.1.4 | ⚠️ Constructor `(chart, query, y, height, lineIndex, tooltip)` — `this.y = y + chart.header.height + 1` | idem | 3 testes |
@@ -477,7 +477,7 @@ TOTAL: ~205
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 15.11.1.1 | Criar `packages/report/src/gantt/gantt-chart.ts` | idem | `deno check` |
+| 15.11.1.1 | Criar `packages/core/src/gantt/gantt-chart.ts` | idem | `deno check` |
 | 15.11.1.2 | Constante: `readonly SCROLLBARHEIGHT = 20` | idem | `deno check` |
 | 15.11.1.3 | Campos: `start`, `end`, `readonly now`, `readonly weekStartsMonday`, `header`, `width`, `scale` | idem | `deno check` |
 | 15.11.1.4 | Campos: `readonly scales` (estático), `table`, `readonly markdate`, `viewWidth`, `private columnDef`, `private height` | idem | `deno check` |
@@ -575,7 +575,7 @@ TOTAL: ~205
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 15.12.1 | Criar `packages/report/tests/gantt/integration_test.ts` | idem | `deno check` |
+| 15.12.1 | Criar `packages/core/tests/gantt/integration_test.ts` | idem | `deno check` |
 | 15.12.2 | ⚠️ `TaskReport` com coluna `chart`: `columnDef.id === 'chart'` → `GanttChart` no header | idem | 3 testes |
 | 15.12.3 | ⚠️ `generateTableCell` cria `GanttLine` para cada task | idem | 4 testes |
 | 15.12.4 | `to_html()` retorna HTML completo com barras e setas | idem | 3 testes |
@@ -604,11 +604,11 @@ TOTAL: ~205
 | 15.13.3 | Normaliza (remove whitespace, ordena atributos) | idem | 2 testes |
 | 15.13.4 | Serializa `{ taskBars: [...], milestones: [...], containers: [...], depArrows: [...] }` | idem | JSON válido |
 | 15.13.5 | Task `golden:generate` atualizada em `deno.jsonc` | `deno.jsonc` | roda |
-| 15.13.6 | Criar `packages/report/tests/golden/gantt_golden_test.ts` | idem | verde |
+| 15.13.6 | Criar `packages/core/tests/golden/gantt_golden_test.ts` | idem | verde |
 | 15.13.7 | Para cada caso: constrói `Project`, gera Gantt | idem | ≥ 30 casos |
 | 15.13.8 | Comparação com tolerância de 1px em posições X/Y | idem | 3 testes |
 | 15.13.9 | Verifica: número de task bars, posições X, número de setas, Y de cada linha | idem | 4 testes |
-| 15.13.10 | Cobertura ≥ 30 casos; commitar JSON em `packages/report/tests/golden/` | idem | versionado |
+| 15.13.10 | Cobertura ≥ 30 casos; commitar JSON em `packages/core/tests/golden/` | idem | versionado |
 
 ---
 
@@ -620,9 +620,9 @@ TOTAL: ~205
 |---|---|---|
 | 15.14.1 | `deno task check-all` verde | exit 0 |
 | 15.14.2 | `deno task golden:generate && deno task test` verde | exit 0 |
-| 15.14.3 | `grep -rE "(svg\|canvas)" packages/report/src/gantt/` retorna 0 (HTML puro) | grep |
+| 15.14.3 | `grep -rE "(svg\|canvas)" packages/core/src/gantt/` retorna 0 (HTML puro) | grep |
 | 15.14.4 | ADR 027 criada e commitada | git log |
-| 15.14.5 | `HTMLGraphics`, `CollisionDetector`, `GanttRouter`, `GanttChart`, `GanttHeader`, `GanttLine`, `GanttTaskBar`, `GanttMilestone`, `GanttContainer`, `GanttLoadStack` exportados em `packages/report/mod.ts` | `deno check` |
+| 15.14.5 | `HTMLGraphics`, `CollisionDetector`, `GanttRouter`, `GanttChart`, `GanttHeader`, `GanttLine`, `GanttTaskBar`, `GanttMilestone`, `GanttContainer`, `GanttLoadStack` exportados em `packages/core/src/mod.ts` | `deno check` |
 | 15.14.6 | `tests/integration/smoke_after_phase_15_test.ts` — cria `Project`, gera `TaskReport` com coluna `chart`; verifica Fase 14 (reports HTML) | 1 teste |
 | 15.14.7 | Auditoria: cada subfase do plano `fase-15-gantt.md` tem tarefas correspondentes | grep |
 | 15.14.8 | Corrigir numeração em `fase-15-gantt.md` (`### 19.X` → `### 15.X`, `ADR 025` → `ADR 027`) | grep |

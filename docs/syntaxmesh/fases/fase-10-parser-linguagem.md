@@ -364,8 +364,8 @@ Implementar `TokenDoc`.
 
 #### Arquivos
 
-- `packages/parser/src/lexer/token-doc.ts`
-- `packages/parser/tests/token-doc_test.ts`
+- `packages/core/src/lexer/token-doc.ts`
+- `packages/core/tests/token-doc_test.ts`
 
 #### Requisitos
 
@@ -406,8 +406,8 @@ Implementar `Macro` + `MacroTable`.
 
 #### Arquivos
 
-- `packages/parser/src/lexer/macro-table.ts`
-- `packages/parser/tests/macro-table_test.ts`
+- `packages/core/src/lexer/macro-table.ts`
+- `packages/core/tests/macro-table_test.ts`
 
 #### Requisitos
 
@@ -470,8 +470,8 @@ Implementar `StackElement` + `TextParserResultArray`.
 
 #### Arquivos
 
-- `packages/parser/src/parser/stack-element.ts`
-- `packages/parser/tests/stack-element_test.ts`
+- `packages/core/src/parser/stack-element.ts`
+- `packages/core/tests/stack-element_test.ts`
 
 #### Requisitos
 
@@ -524,8 +524,8 @@ Implementar as 2 classes.
 
 #### Arquivos
 
-- `packages/parser/src/parser/state.ts`
-- `packages/parser/tests/state_test.ts`
+- `packages/core/src/parser/state.ts`
+- `packages/core/tests/state_test.ts`
 
 #### Requisitos
 
@@ -579,8 +579,8 @@ Implementar `Pattern` completo.
 
 #### Arquivos
 
-- `packages/parser/src/parser/pattern.ts`
-- `packages/parser/tests/pattern_test.ts`
+- `packages/core/src/parser/pattern.ts`
+- `packages/core/tests/pattern_test.ts`
 
 #### Requisitos
 
@@ -651,8 +651,8 @@ Implementar `Rule`.
 
 #### Arquivos
 
-- `packages/parser/src/parser/rule.ts`
-- `packages/parser/tests/rule_test.ts`
+- `packages/core/src/parser/rule.ts`
+- `packages/core/tests/rule_test.ts`
 
 #### Requisitos
 
@@ -717,8 +717,8 @@ Implementar `TextParser`.
 
 #### Arquivos
 
-- `packages/parser/src/parser/text-parser.ts`
-- `packages/parser/tests/text-parser_test.ts`
+- `packages/core/src/parser/text-parser.ts`
+- `packages/core/tests/text-parser_test.ts`
 
 #### Requisitos
 
@@ -800,9 +800,9 @@ Implementar `Scanner` + `StreamHandle` + subclasses.
 
 #### Arquivos
 
-- `packages/parser/src/lexer/scanner.ts`
-- `packages/parser/src/lexer/stream-handle.ts`
-- `packages/parser/tests/scanner_test.ts`
+- `packages/core/src/lexer/scanner.ts`
+- `packages/core/src/lexer/stream-handle.ts`
+- `packages/core/tests/scanner_test.ts`
 
 #### Requisitos
 
@@ -889,8 +889,8 @@ Implementar `ProjectFileScanner`.
 
 #### Arquivos
 
-- `packages/parser/src/lexer/project-file-scanner.ts`
-- `packages/parser/tests/project-file-scanner_test.ts`
+- `packages/core/src/lexer/project-file-scanner.ts`
+- `packages/core/tests/project-file-scanner_test.ts`
 
 #### Requisitos
 
@@ -955,8 +955,8 @@ Implementar a **estrutura** (não as regras).
 
 #### Arquivos
 
-- `packages/parser/src/parser/project-file-parser.ts`
-- `packages/parser/tests/project-file-parser-structure_test.ts`
+- `packages/core/src/parser/project-file-parser.ts`
+- `packages/core/tests/project-file-parser-structure_test.ts`
 
 #### Requisitos
 
@@ -1031,11 +1031,11 @@ Implementar ~80 regras do bloco 1: `project`, `task`, `optionalID`, `date`, `int
 
 #### Arquivos
 
-- `packages/parser/src/parser/rules/rules-project.ts`
-- `packages/parser/src/parser/rules/rules-task.ts`
-- `packages/parser/src/parser/rules/rules-common.ts`
-- `packages/parser/tests/rules-project_test.ts`
-- `packages/parser/tests/rules-task_test.ts`
+- `packages/core/src/parser/rules/rules-project.ts`
+- `packages/core/src/parser/rules/rules-task.ts`
+- `packages/core/src/parser/rules/rules-common.ts`
+- `packages/core/tests/rules-project_test.ts`
+- `packages/core/tests/rules-task_test.ts`
 
 #### Requisitos
 
@@ -1112,10 +1112,10 @@ Implementar ~60 regras de resource, account, shift, scenario.
 
 #### Arquivos
 
-- `packages/parser/src/parser/rules/rules-resource.ts`
-- `packages/parser/src/parser/rules/rules-account.ts`
-- `packages/parser/src/parser/rules/rules-shift.ts`
-- `packages/parser/src/parser/rules/rules-scenario.ts`
+- `packages/core/src/parser/rules/rules-resource.ts`
+- `packages/core/src/parser/rules/rules-account.ts`
+- `packages/core/src/parser/rules/rules-shift.ts`
+- `packages/core/src/parser/rules/rules-scenario.ts`
 
 #### Requisitos
 
@@ -1191,10 +1191,10 @@ Implementar ~80 regras de reports (task, resource, account, text, trace, export,
 
 #### Arquivos
 
-- `packages/parser/src/parser/rules/rules-reports.ts`
-- `packages/parser/src/parser/rules/rules-columns.ts`
-- `packages/parser/tests/rules-reports_test.ts`
-- `packages/parser/tests/rules-columns_test.ts`
+- `packages/core/src/parser/rules/rules-reports.ts`
+- `packages/core/src/parser/rules/rules-columns.ts`
+- `packages/core/tests/rules-reports_test.ts`
+- `packages/core/tests/rules-columns_test.ts`
 
 #### Requisitos
 
@@ -1260,12 +1260,12 @@ Implementar ~60 regras de tracking (timesheet, statussheet, journal) + lógica +
 
 #### Arquivos
 
-- `packages/parser/src/parser/rules/rules-timesheet.ts`
-- `packages/parser/src/parser/rules/rules-statussheet.ts`
-- `packages/parser/src/parser/rules/rules-journal.ts`
-- `packages/parser/src/parser/rules/rules-logical.ts`
-- `packages/parser/tests/rules-timesheet_test.ts`
-- `packages/parser/tests/rules-logical_test.ts`
+- `packages/core/src/parser/rules/rules-timesheet.ts`
+- `packages/core/src/parser/rules/rules-statussheet.ts`
+- `packages/core/src/parser/rules/rules-journal.ts`
+- `packages/core/src/parser/rules/rules-logical.ts`
+- `packages/core/tests/rules-timesheet_test.ts`
+- `packages/core/tests/rules-logical_test.ts`
 
 #### Requisitos
 
@@ -1336,10 +1336,10 @@ Implementar a infraestrutura de i18n.
 
 #### Arquivos
 
-- `packages/language/src/types.ts`
-- `packages/language/src/canonical.ts`
-- `packages/language/src/registry.ts`
-- `packages/language/tests/registry_test.ts`
+- `packages/core/src/i18n/types.ts`
+- `packages/core/src/i18n/canonical.ts`
+- `packages/core/src/i18n/registry.ts`
+- `packages/core/tests/i18n/registry_test.ts`
 
 #### Requisitos
 
@@ -1414,10 +1414,10 @@ Implementar as 3 `LanguageDefinition`.
 
 #### Arquivos
 
-- `packages/language/src/en.ts`
-- `packages/language/src/pt-BR.ts`
-- `packages/language/src/es.ts`
-- `packages/language/tests/languages_test.ts`
+- `packages/core/src/i18n/en.ts`
+- `packages/core/src/i18n/pt-BR.ts`
+- `packages/core/src/i18n/es.ts`
+- `packages/core/tests/i18n/languages_test.ts`
 
 #### Requisitos
 
@@ -1490,8 +1490,8 @@ Implementar detecção e aplicação.
 
 #### Arquivos
 
-- `packages/parser/src/parser/project-file-parser.ts` (estender)
-- `packages/parser/tests/language-directive_test.ts`
+- `packages/core/src/parser/project-file-parser.ts` (estender)
+- `packages/core/tests/language-directive_test.ts`
 
 #### Requisitos
 
@@ -1546,7 +1546,7 @@ Testar equivalência em todos os MWEs.
 
 #### Arquivos
 
-- `packages/parser/tests/ast-equivalence_test.ts`
+- `packages/core/tests/ast-equivalence_test.ts`
 - `docs/Learning/mwe001-009/*.pt-BR.tjp` (novos)
 - `docs/Learning/mwe001-009/*.es.tjp` (novos)
 
@@ -1599,8 +1599,8 @@ Rodar `tj3` em todos os arquivos válidos e de erro do `TestSuite`.
 - `scripts/golden/parser-mwe*.rb`
 - `scripts/golden/parser-syntax-correct.rb`
 - `scripts/golden/parser-syntax-errors.rb`
-- `packages/parser/tests/golden/parser.golden.json`
-- `packages/parser/tests/golden/parser_golden_test.ts`
+- `packages/core/tests/golden/parser.golden.json`
+- `packages/core/tests/golden/parser_golden_test.ts`
 - `deno.jsonc` — atualizar `golden:generate`
 
 #### Requisitos
@@ -1711,7 +1711,7 @@ passa, e:
 - [ ] **≥ 400 testes unitários**.
 - [ ] **≥ 100 golden tests**.
 - [ ] Nenhum `any` em `src/` (exceto onde justificado).
-- [ ] Nenhum import proibido em `packages/parser/src/`.
+- [ ] Nenhum import proibido em `packages/core/src/`.
 - [ ] ADRs 020 e 021 criados.
 - [ ] Scripts `parser-*.rb` funcionais.
 

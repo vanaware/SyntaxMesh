@@ -10,7 +10,7 @@
 
 ## 1. Contexto
 
-Esta fase implementa a **camada de persistência** do SyntaxMesh consumindo `@syntaxmesh/worker-db`, que já está pronto.
+Esta fase implementa a **camada de persistência** do SyntaxMesh consumindo `@vanaware/workerdb`, que já está pronto.
 
 ### Divisão de responsabilidades
 
@@ -19,15 +19,15 @@ UI (Fase 20)
    ↓
 @  syntaxmesh/storage   ← ESTA FASE
    ↓
-@syntaxmesh/worker-db   ← JÁ EXISTE (não tocar)
+@vanaware/workerdb   ← JÁ EXISTE (não tocar)
    ↓
 Web Worker
    ↓
 IndexedDB + OPFS
 ```
 
-- **`@syntaxmesh/worker-db`** (Fase 1, já pronto): expõe KV e FS via Web Worker. Inclui `fake-opfs()` para testes.
-- **`@syntaxmesh/storage`** (esta fase): expõe `ProjectService`, `Autosave`, `Recovery`, `ImportExport`, `SettingsService`, `ProjectLoader`.
+- **`@vanaware/workerdb`** (Fase 1, já pronto): expõe KV e FS via Web Worker. Inclui `fake-opfs()` para testes.
+- **`@syntaxmesh/core/storage`** (esta fase): expõe `ProjectService`, `Autosave`, `Recovery`, `ImportExport`, `SettingsService`, `ProjectLoader`.
 
 **Regra crítica:** Storage **não contamina Core**. Core é sempre in-memory. Storage persiste.
 
@@ -91,14 +91,14 @@ Fase 18 deixou `addToScm` como no-op e usou fallback `Map<string, string>`. Nest
 
 Ao final desta fase:
 
-- `@syntaxmesh/storage` completo:
+- `@syntaxmesh/core/storage` completo:
   - `ProjectService` (CRUD).
   - `Autosave` (debounced).
   - `Recovery` (após crash).
   - `ImportExport` (`.tjp`, `.tji`, `.json`).
   - `SettingsService` (locale, tema).
   - `ProjectLoader` (carrega `.tjp` do FS).
-- Integração com `@syntaxmesh/worker-db` (sem modificá-lo).
+- Integração com `@vanaware/workerdb` (sem modificá-lo).
 - **Fase 18 corrigida** para usar `fakeOpfs()` em testes.
 - **≥ 80 testes unitários** + **≥ 15 snapshot tests** (persistência de `.tjp`).
 - ADR 030 registrado.
@@ -110,7 +110,7 @@ Ao final desta fase:
 
 ### 3.1 Bibliotecas
 
-- **`@syntaxmesh/worker-db`** — pacote interno. Já pronto.
+- **`@vanaware/workerdb`** — pacote interno. Já pronto.
 - **`@syntaxmesh/utils`** — helpers (se aplicável).
 
 ### 3.2 Sem referência TaskJuggler
@@ -130,7 +130,7 @@ TaskJuggler é Ruby/CLI, sem persistência browser. Fase específica do SyntaxMe
 
 ### 4.1 Consumir `worker-db`, não reimplementar
 
-Toda interação com IndexedDB/OPFS passa por `@syntaxmesh/worker-db`. Nesta fase **não** criamos Worker, protocol, stores ou client — eles já existem.
+Toda interação com IndexedDB/OPFS passa por `@vanaware/workerdb`. Nesta fase **não** criamos Worker, protocol, stores ou client — eles já existem.
 
 ### 4.2 Interface `KeyValueStore` e `FileStore` injetadas
 
@@ -249,7 +249,7 @@ Toda API é `async`. Sem callbacks.
 
 ### 4.15 Injeção para Fase 18
 
-`SheetHandlerBase.setFileStore(fs)` — Core **não importa** `@syntaxmesh/storage`. Interface `FileStore` fica em `packages/core/src/interfaces/`.
+`SheetHandlerBase.setFileStore(fs)` — Core **não importa** `@syntaxmesh/core/storage`. Interface `FileStore` fica em `packages/core/src/interfaces/`.
 
 ---
 
@@ -317,9 +317,9 @@ Implementar.
 
 #### Arquivos
 
-- `packages/storage/src/schema.ts`
-- `packages/storage/src/migrations.ts`
-- `packages/storage/tests/migrations_test.ts`
+- `packages/core/src/storage/schema.ts`
+- `packages/core/src/storage/migrations.ts`
+- `packages/core/tests/storage/migrations_test.ts`
 
 #### Requisitos
 
@@ -367,7 +367,7 @@ Exportar tudo.
 
 #### Arquivos
 
-- `packages/storage/mod.ts`
+- `packages/core/src/storage/mod.ts`
 
 #### Requisitos
 
@@ -393,8 +393,8 @@ Implementar `ProjectService`.
 
 #### Arquivos
 
-- `packages/storage/src/project-service.ts`
-- `packages/storage/tests/project-service_test.ts`
+- `packages/core/src/storage/project-service.ts`
+- `packages/core/tests/storage/project-service_test.ts`
 
 #### Requisitos
 
@@ -463,8 +463,8 @@ Implementar `Autosave`.
 
 #### Arquivos
 
-- `packages/storage/src/autosave.ts`
-- `packages/storage/tests/autosave_test.ts`
+- `packages/core/src/storage/autosave.ts`
+- `packages/core/tests/storage/autosave_test.ts`
 
 #### Requisitos
 
@@ -518,8 +518,8 @@ Implementar `Recovery`.
 
 #### Arquivos
 
-- `packages/storage/src/recovery.ts`
-- `packages/storage/tests/recovery_test.ts`
+- `packages/core/src/storage/recovery.ts`
+- `packages/core/tests/storage/recovery_test.ts`
 
 #### Requisitos
 
@@ -570,8 +570,8 @@ Implementar.
 
 #### Arquivos
 
-- `packages/storage/src/settings.ts`
-- `packages/storage/tests/settings_test.ts`
+- `packages/core/src/storage/settings.ts`
+- `packages/core/tests/storage/settings_test.ts`
 
 #### Requisitos
 
@@ -624,8 +624,8 @@ Implementar.
 
 #### Arquivos
 
-- `packages/storage/src/import-export.ts`
-- `packages/storage/tests/import-export_test.ts`
+- `packages/core/src/storage/import-export.ts`
+- `packages/core/tests/storage/import-export_test.ts`
 
 #### Requisitos
 
@@ -676,8 +676,8 @@ Implementar `ProjectLoader`.
 
 #### Arquivos
 
-- `packages/storage/src/project-loader.ts`
-- `packages/storage/tests/project-loader_test.ts`
+- `packages/core/src/storage/project-loader.ts`
+- `packages/core/tests/storage/project-loader_test.ts`
 
 #### Requisitos
 
@@ -756,7 +756,7 @@ export interface FileStore {
 **Import nos testes da Fase 18:**
 
 ```ts
-import { fakeOpfs } from "@syntaxmesh/worker-db";
+import { fakeOpfs } from "@vanaware/workerdb";
 ```
 
 #### Critério de aceite
@@ -844,8 +844,8 @@ Snapshots.
 
 #### Arquivos
 
-- `packages/storage/tests/golden/persistence.golden.json`
-- `packages/storage/tests/golden/persistence_golden_test.ts`
+- `packages/core/tests/storage/golden/persistence.golden.json`
+- `packages/core/tests/storage/golden/persistence_golden_test.ts`
 
 #### Requisitos
 
@@ -910,7 +910,7 @@ deno task check-all
 
 passa, e:
 
-- [ ] `@syntaxmesh/storage` completo.
+- [ ] `@syntaxmesh/core/storage` completo.
 - [ ] `worker-db` **não foi modificado**.
 - [ ] Fase 18 corrigida para usar `fakeOpfs()`.
 - [ ] `addToScm` funcional (injeção).
@@ -954,7 +954,7 @@ passa, e:
 
 ### Fases referenciadas
 
-- **Fase 1** — `@syntaxmesh/worker-db` (já pronto).
+- **Fase 1** — `@vanaware/workerdb` (já pronto).
 - **Fase 9** — `Project`.
 - **Fase 10** — Parser (`parseContent`).
 - **Fase 18** — `addToScm` real.
@@ -963,7 +963,7 @@ passa, e:
 
 ## 10. Notas para a IA
 
-1. **`@syntaxmesh/worker-db` já está pronto.** Não modificar.
+1. **`@vanaware/workerdb` já está pronto.** Não modificar.
 2. **Consumir `fakeOpfs()`** em testes.
 3. **Core define `FileStore` em `interfaces/`.** Storage implementa.
 4. **Core não importa Storage.** Injeção via setter.

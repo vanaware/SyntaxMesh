@@ -5,7 +5,7 @@
 > **Status:** ⬜ Não iniciada
 > **Total:** ~85 tarefas
 > **Concluídas:** 0
-> **Fonte:** `@syntaxmesh/worker-db` (já pronto) + extensão SyntaxMesh
+> **Fonte:** `@vanaware/workerdb` (já pronto) + extensão SyntaxMesh
 
 ---
 
@@ -25,7 +25,7 @@
 
 ### Contexto crítico
 
-- `@syntaxmesh/worker-db` **já existe** (Fase 1). **Não modificá-lo.**
+- `@vanaware/workerdb` **já existe** (Fase 1). **Não modificá-lo.**
 - Storage **consome** `worker-db`, expondo serviços de mais alto nível.
 - `ProjectService`, `Autosave`, `Recovery`, `SettingsService`, `ImportExport`, `ProjectLoader`.
 - Schema de dados versionado (`DATA_SCHEMA_VERSION = 1`).
@@ -45,9 +45,9 @@
 
 ### Anti-padrões
 
-- ❌ Não modificar `@syntaxmesh/worker-db`.
+- ❌ Não modificar `@vanaware/workerdb`.
 - ❌ Não usar IndexedDB ou OPFS diretamente.
-- ❌ Não importar `@syntaxmesh/storage` em Core (ADR 001).
+- ❌ Não importar `@syntaxmesh/core/storage` em Core (ADR 001).
 - ❌ Não implementar fake de FS próprio — usar `fakeOpfs()`.
 
 ---
@@ -98,11 +98,11 @@ TOTAL: ~85
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 24.1.1 | Criar `packages/storage/src/schema.ts` com `DATA_SCHEMA_VERSION = 1` | idem | `deno check` |
+| 24.1.1 | Criar `packages/core/src/storage/schema.ts` com `DATA_SCHEMA_VERSION = 1` | idem | `deno check` |
 | 24.1.2 | Definir `KV_KEYS` (`PROJECT_META_PREFIX`, `SETTINGS`) e `FS_PATHS` (`PROJECTS`, `TIMESHEETS`, `TEMPLATES`, `UNSAVED`, `OUTBOX`) | idem | `deno check` |
 | 24.1.3 | Definir `interface ProjectMeta` com `schemaVersion` | idem | `deno check` |
 | 24.1.4 | Definir `interface Settings` com `schemaVersion` | idem | `deno check` |
-| 24.1.5 | Criar `packages/storage/src/migrations.ts` com `interface Migration` | idem | `deno check` |
+| 24.1.5 | Criar `packages/core/src/storage/migrations.ts` com `interface Migration` | idem | `deno check` |
 | 24.1.6 | Implementar `migrateProjectMeta(meta: ProjectMeta): ProjectMeta` | idem | 3 testes |
 | 24.1.7 | Teste: `migrateProjectMeta` no-op para `schemaVersion: 1` | idem | 1 teste |
 | 24.1.8 | Teste: `migrateProjectMeta` lança para versão desconhecida | idem | 1 teste |
@@ -113,9 +113,9 @@ TOTAL: ~85
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 24.2.1 | Exportar tipos `ProjectMeta`, `Settings`, `KeyValueStore`, `FileStore` | `packages/storage/mod.ts` | `deno check` |
+| 24.2.1 | Exportar tipos `ProjectMeta`, `Settings`, `KeyValueStore`, `FileStore` | `packages/core/src/storage/mod.ts` | `deno check` |
 | 24.2.2 | Exportar serviços e erros | idem | `deno check` |
-| 24.2.3 | Criar `packages/storage/deno.jsonc` (se não existir) | idem | `deno check` |
+| 24.2.3 | Criar `packages/core/src/storage/deno.jsonc` (se não existir) | idem | `deno check` |
 
 ---
 
@@ -127,7 +127,7 @@ TOTAL: ~85
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 24.3.1 | Criar `packages/storage/src/project-service.ts` com classe vazia | idem | `deno check` |
+| 24.3.1 | Criar `packages/core/src/storage/project-service.ts` com classe vazia | idem | `deno check` |
 | 24.3.2 | Constructor recebe `{ kv: KeyValueStore, fs: FileStore }` | idem | 2 testes |
 | 24.3.3 | Implementar `list(): Promise<ProjectMeta[]>` | idem | 2 testes |
 | 24.3.4 | Implementar `create(name, content): Promise<string>` | idem | 3 testes |
@@ -148,7 +148,7 @@ TOTAL: ~85
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 24.4.1 | Criar `packages/storage/src/autosave.ts` com classe vazia | idem | `deno check` |
+| 24.4.1 | Criar `packages/core/src/storage/autosave.ts` com classe vazia | idem | `deno check` |
 | 24.4.2 | Constructor recebe `(service: ProjectService, delayMs = 500)` | idem | 2 testes |
 | 24.4.3 | Implementar `schedule(id, content): void` (debounce) | idem | 3 testes |
 | 24.4.4 | Implementar `flush(): Promise<void>` | idem | 2 testes |
@@ -165,7 +165,7 @@ TOTAL: ~85
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 24.5.1 | Criar `packages/storage/src/recovery.ts` com classe vazia | idem | `deno check` |
+| 24.5.1 | Criar `packages/core/src/storage/recovery.ts` com classe vazia | idem | `deno check` |
 | 24.5.2 | Constructor recebe `fs: FileStore` | idem | 2 testes |
 | 24.5.3 | Implementar `markUnsaved(id, content): Promise<void>` | idem | 2 testes |
 | 24.5.4 | Implementar `hasUnsaved(): Promise<boolean>` | idem | 2 testes |
@@ -182,7 +182,7 @@ TOTAL: ~85
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 24.6.1 | Criar `packages/storage/src/settings.ts` com classe vazia | idem | `deno check` |
+| 24.6.1 | Criar `packages/core/src/storage/settings.ts` com classe vazia | idem | `deno check` |
 | 24.6.2 | Constructor recebe `kv: KeyValueStore` | idem | 2 testes |
 | 24.6.3 | Implementar `get(): Promise<Settings>` com defaults | idem | 3 testes |
 | 24.6.4 | Implementar `set(partial): Promise<void>` | idem | 2 testes |
@@ -198,7 +198,7 @@ TOTAL: ~85
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 24.7.1 | Criar `packages/storage/src/import-export.ts` com classe vazia | idem | `deno check` |
+| 24.7.1 | Criar `packages/core/src/storage/import-export.ts` com classe vazia | idem | `deno check` |
 | 24.7.2 | Constructor recebe `(service, fs)` | idem | 2 testes |
 | 24.7.3 | Implementar `importTjp(file): Promise<string>` | idem | 3 testes |
 | 24.7.4 | Implementar `exportTjp(id): Promise<{ name, content }>` | idem | 2 testes |
@@ -217,7 +217,7 @@ TOTAL: ~85
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 24.8.1 | Criar `packages/storage/src/project-loader.ts` com classe vazia | idem | `deno check` |
+| 24.8.1 | Criar `packages/core/src/storage/project-loader.ts` com classe vazia | idem | `deno check` |
 | 24.8.2 | Constructor recebe `fs: FileStore` | idem | 2 testes |
 | 24.8.3 | Implementar `loadFromContent(content): Promise<Project>` | idem | 3 testes |
 | 24.8.4 | Implementar `loadFromFs(path): Promise<Project>` | idem | 2 testes |
@@ -275,12 +275,12 @@ TOTAL: ~85
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 24.12.1 | Criar `packages/storage/tests/golden/persistence.golden.json` | idem | `deno check` |
+| 24.12.1 | Criar `packages/core/tests/storage/golden/persistence.golden.json` | idem | `deno check` |
 | 24.12.2 | Lista de fixtures: todos os 9 MWEs | idem | ≥ 9 fixtures |
 | 24.12.3 | Para cada: `service.create` + `service.read` | idem | 9 testes |
 | 24.12.4 | Testar `autosave` → `recovery` | idem | 2 testes |
 | 24.12.5 | Testar `exportJson` + `importJson` round-trip | idem | 3 testes |
-| 24.12.6 | Criar `packages/storage/tests/golden/persistence_golden_test.ts` | idem | `deno check` |
+| 24.12.6 | Criar `packages/core/tests/storage/golden/persistence_golden_test.ts` | idem | `deno check` |
 | 24.12.7 | Cobertura ≥ 15 casos | idem | verde |
 
 ---
@@ -291,9 +291,9 @@ TOTAL: ~85
 |---|---|---|
 | 24.13.1 | `deno task check-all` verde | exit 0 |
 | 24.13.2 | `deno task test` verde | exit 0 |
-| 24.13.3 | `grep -r "NotYetImplementedError" packages/storage/src/` = 0 | grep |
+| 24.13.3 | `grep -r "NotYetImplementedError" packages/core/src/storage/` = 0 | grep |
 | 24.13.4 | ADR 030 criada e commitada | git log |
-| 24.13.5 | Todos os serviços exportados em `packages/storage/mod.ts` | `deno check` |
+| 24.13.5 | Todos os serviços exportados em `packages/core/src/storage/mod.ts` | `deno check` |
 | 24.13.6 | `tests/integration/smoke_after_phase_19_test.ts` — cria projeto via `ProjectService`, salva, lê de volta; verifica Fase 18 (`SheetHandlerBase`) | 1 teste |
 | 24.13.7 | Auditoria: cada subfase do plano `fase-19-storage.md` tem tarefas correspondentes | grep |
 | 24.13.8 | Corrigir numeração em `fase-19-storage.md` (`### 24.X` → `### 19.X`? Verificar se necessário) | grep |
@@ -303,10 +303,10 @@ TOTAL: ~85
 ## Notas para a IA
 
 1. **Ordem:** 24.0 → 24.1 → 24.2 → 24.3 → 24.4 → 24.5 → 24.6 → 24.7 → 24.8 → 24.9 → 24.10 → 24.11 → 24.12 → 24.13.
-2. **`@syntaxmesh/worker-db` já existe.** Não modificá-lo.
+2. **`@vanaware/workerdb` já existe.** Não modificá-lo.
 3. **Usar `fakeOpfs()`** em todos os testes que tocam FS.
 4. **Core define `FileStore` em `interfaces/`.** Storage implementa.
-5. **Core não importa `@syntaxmesh/storage`.** Injeção via setter.
+5. **Core não importa `@syntaxmesh/core/storage`.** Injeção via setter.
 6. **Schema de dados versionado.** `DATA_SCHEMA_VERSION = 1`.
 7. **`Autosave` é debounced.** 500ms default.
 8. **`Recovery` usa `unsaved/`.**

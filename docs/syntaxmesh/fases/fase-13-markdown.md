@@ -277,7 +277,7 @@ Configurar `micromark` + `mdast-util-from-markdown` + `mdast-util-gfm` para prod
 
 #### Arquivos
 
-- `packages/markdown/deno.jsonc` — adicionar dependências:
+- `packages/core/src/markdown/deno.jsonc` — adicionar dependências:
   ```jsonc
   "imports": {
     "micromark": "npm:micromark@^4",
@@ -285,8 +285,8 @@ Configurar `micromark` + `mdast-util-from-markdown` + `mdast-util-gfm` para prod
     "mdast-util-gfm": "npm:mdast-util-gfm@^3"
   }
   ```
-- `packages/markdown/src/parse-mdast.ts`
-- `packages/markdown/tests/parse-mdast_test.ts`
+- `packages/core/src/markdown/parse-mdast.ts`
+- `packages/core/tests/markdown/parse-mdast_test.ts`
 
 #### Requisitos
 
@@ -341,8 +341,8 @@ Implementar `MdastToRichText`.
 
 #### Arquivos
 
-- `packages/markdown/src/mdast-to-richtext.ts`
-- `packages/markdown/tests/mdast-to-richtext_test.ts`
+- `packages/core/src/markdown/mdast-to-richtext.ts`
+- `packages/core/tests/markdown/mdast-to-richtext_test.ts`
 
 #### Requisitos
 
@@ -418,9 +418,9 @@ Implementar `MarkdownFactory`.
 
 #### Arquivos
 
-- `packages/markdown/src/factory.ts`
-- `packages/markdown/tests/factory_test.ts`
-- `packages/markdown/mod.ts`
+- `packages/core/src/markdown/factory.ts`
+- `packages/core/tests/markdown/factory_test.ts`
+- `packages/core/src/markdown/mod.ts`
 
 #### Requisitos
 
@@ -471,8 +471,8 @@ Implementar extração e conversão.
 
 #### Arquivos
 
-- `packages/markdown/src/extensions/color.ts`
-- `packages/markdown/tests/extensions/color_test.ts`
+- `packages/core/src/markdown/extensions/color.ts`
+- `packages/core/tests/markdown/extensions/color_test.ts`
 
 #### Requisitos
 
@@ -516,8 +516,8 @@ Implementar allow-list.
 
 #### Arquivos
 
-- `packages/markdown/src/extensions/html-sanitizer.ts`
-- `packages/markdown/tests/extensions/html-sanitizer_test.ts`
+- `packages/core/src/markdown/extensions/html-sanitizer.ts`
+- `packages/core/tests/markdown/extensions/html-sanitizer_test.ts`
 
 #### Requisitos
 
@@ -563,8 +563,8 @@ Implementar extração e conversão.
 
 #### Arquivos
 
-- `packages/markdown/src/extensions/functions.ts`
-- `packages/markdown/tests/extensions/functions_test.ts`
+- `packages/core/src/markdown/extensions/functions.ts`
+- `packages/core/tests/markdown/extensions/functions_test.ts`
 
 #### Requisitos
 
@@ -619,8 +619,8 @@ Implementar extração e conversão.
 
 #### Arquivos
 
-- `packages/markdown/src/extensions/mini-query.ts`
-- `packages/markdown/tests/extensions/mini-query_test.ts`
+- `packages/core/src/markdown/extensions/mini-query.ts`
+- `packages/core/tests/markdown/extensions/mini-query_test.ts`
 
 #### Requisitos
 
@@ -658,8 +658,8 @@ Implementar pipeline unificado.
 
 #### Arquivos
 
-- `packages/markdown/src/extensions/pipeline.ts`
-- `packages/markdown/tests/extensions/pipeline_test.ts`
+- `packages/core/src/markdown/extensions/pipeline.ts`
+- `packages/core/tests/markdown/extensions/pipeline_test.ts`
 
 #### Requisitos
 
@@ -708,8 +708,8 @@ Adicionar `to_markdown()` em `RichTextIntermediate` (Fase 12).
 
 #### Arquivos
 
-- `packages/richtext/src/rich-text-intermediate.ts` (estender)
-- `packages/richtext/tests/rich-text-intermediate-markdown_test.ts`
+- `packages/core/src/richtext/rich-text-intermediate.ts` (estender)
+- `packages/core/tests/richtext/rich-text-intermediate-markdown_test.ts`
 
 #### Requisitos
 
@@ -775,8 +775,8 @@ Implementar `richTextToMarkdown`.
 
 #### Arquivos
 
-- `packages/markdown/src/convert-rich-to-md.ts`
-- `packages/markdown/tests/convert-rich-to-md_test.ts`
+- `packages/core/src/markdown/convert-rich-to-md.ts`
+- `packages/core/tests/markdown/convert-rich-to-md_test.ts`
 
 #### Requisitos
 
@@ -822,7 +822,7 @@ Testes end-to-end.
 
 #### Arquivos
 
-- `packages/markdown/tests/integration_test.ts`
+- `packages/core/tests/markdown/integration_test.ts`
 
 #### Requisitos
 
@@ -865,8 +865,8 @@ Congelar snapshots.
 
 #### Arquivos
 
-- `packages/markdown/tests/golden/markdown-snapshots.json` (gerado no primeiro run)
-- `packages/markdown/tests/golden/snapshot_test.ts`
+- `packages/core/tests/markdown/golden/markdown-snapshots.json` (gerado no primeiro run)
+- `packages/core/tests/markdown/golden/snapshot_test.ts`
 
 #### Requisitos
 

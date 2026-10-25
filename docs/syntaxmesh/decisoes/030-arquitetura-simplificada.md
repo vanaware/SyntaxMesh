@@ -21,6 +21,8 @@ Mantém-se apenas três pacotes de suporte, que **não recebem a lógica do core
 - `packages/ui` — para interface do usuário
 - `packages/service-worker` — para PWA e service worker
 
+**Pacotes de apoio reais do bundle** (decisão confirmada em 2026-10-24): apenas `server`, `service-worker` e `ui` existem como pacotes; todo código de domínio — inclusive parser/lexer — vive em `packages/core` (subpastas `src/parser/`, `src/lexer/`, `src/i18n/`, `src/richtext/` etc.).
+
 **Remover** os pacotes `packages/utils` e `packages/worker-db` e substituí-los por bibliotecas JSR padronizadas:
 
 - `jsr:@vanaware/buildit` — para build pipeline, esbuild, export
@@ -47,6 +49,6 @@ Mantém-se apenas três pacotes de suporte, que **não recebem a lógica do core
 
 ---
 
-**Status:** Proposto
-**Data:** 2026-10-12
+**Status:** Aceito
+**Data:** 2026-10-12 (aceita em 2026-10-24)
 **Autor(es):** Vanaware

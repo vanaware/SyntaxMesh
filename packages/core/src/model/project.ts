@@ -5,7 +5,7 @@ import { type ProjectLike, } from "./project-like.ts";
 import { type CostEvent, } from "./cost-event.ts";
 import { SourceFileInfo, } from "../source-file-info.ts";
 import { TjArgumentError, } from "../attributes/errors.ts";
-import { TjInternalError, } from "./errors.ts";
+import { NotYetImplementedError, TjInternalError, } from "./errors.ts";
 import { AttributeBase, } from "../attributes/attribute-base.ts";
 import { AttributeDefinition, } from "../attributes/attribute-definition.ts";
 import { AttributeType, } from "../attributes/attribute-type.ts";
@@ -80,12 +80,18 @@ export class Project implements ProjectLike {
       } catch (e) {
         // If attribute is not scenario-specific (e.g., name, id, seqno),
         // fall back to the base attribute
-        if (e instanceof TjArgumentError && e.message.includes("não é específico de cenário")) {
+        if (
+          e instanceof TjArgumentError &&
+          e.message.includes("não é específico de cenário",)
+        ) {
           return scenario.getAttribute(id,);
         }
         // If attribute is unknown (e.g., task attribute like "effort"),
         // search all PropertySets for the definition and create the scenario attribute
-        if (e instanceof TjArgumentError && e.message.includes("Unknown attribute '")) {
+        if (
+          e instanceof TjArgumentError &&
+          e.message.includes("Unknown attribute '",)
+        ) {
           // Search all PropertySets for the attribute definition
           const propertySets = [
             this.scenarios,
@@ -103,14 +109,18 @@ export class Project implements ProjectLike {
               // by directly creating the attribute using the found attrDef
               if (!scenario.data[scIdx]) {
                 throw new TjInternalError(
-                  "ScenarioData must be initialized before scenario-specific attributes"
+                  "ScenarioData must be initialized before scenario-specific attributes",
                 );
               }
-              const attr = new attrDef.objClass(scenario, attrDef, scenario.data[scIdx]);
+              const attr = new attrDef.objClass(
+                scenario,
+                attrDef,
+                scenario.data[scIdx],
+              );
               if (!scenario.scenarioAttributes[scIdx]) {
                 scenario.scenarioAttributes[scIdx] = new Map();
               }
-              scenario.scenarioAttributes[scIdx].set(id, attr);
+              scenario.scenarioAttributes[scIdx].set(id, attr,);
               return attr;
             }
           }
@@ -279,7 +289,12 @@ export class Project implements ProjectLike {
     const timezone = this.get("timezone",) as string;
 
     // Create WorkingHours instance
-    const workinghours = new WorkingHours(granularity, start.toDate(), end.toDate(), timezone,);
+    const workinghours = new WorkingHours(
+      granularity,
+      start.toDate(),
+      end.toDate(),
+      timezone,
+    );
     this.attributes.set("workinghours", workinghours,);
   }
 
@@ -408,7 +423,7 @@ export class Project implements ProjectLike {
   }
 
   journal(query: unknown,): unknown {
-    throw new NotYetImplementedError("16", "journal");
+    throw new NotYetImplementedError("16", "journal",);
   }
 
   to_s(): string {
@@ -446,8 +461,8 @@ export class Project implements ProjectLike {
       if (!formats || formats.length === 0) {
         continue;
       }
-      Log.startProgressMeter(`Report ${report.name}`);
-      this.reportContexts.push(new ReportContext(this, report as Report,));
+      Log.startProgressMeter(`Report ${report.name}`,);
+      this.reportContexts.push(new ReportContext(this, report as Report,),);
       (report as Report).generate();
       this.reportContexts.pop();
       Log.stopProgressMeter();
@@ -455,32 +470,40 @@ export class Project implements ProjectLike {
     // DataCache.instance.flush(); // stub
   }
 
-  generateReport(reportId: string, regExpMode: boolean, formats?: string[] | null, dynamicAttributes?: string | null,): void {
+  generateReport(
+    reportId: string,
+    regExpMode: boolean,
+    formats?: string[] | null,
+    dynamicAttributes?: string | null,
+  ): void {
     let reportList: string[];
     if (regExpMode) {
       reportList = this.matchingReports(reportId,);
     } else {
-      reportList = this.reports.get(reportId) ? [reportId,] : [];
+      reportList = this.reports.get(reportId,) ? [reportId,] : [];
     }
     for (const id of reportList) {
       const report = this.reports.get(id,);
       if (!report) {
-        this.error("unknown_report_id", "Request to generate unknown report " + id);
+        this.error(
+          "unknown_report_id",
+          "Request to generate unknown report " + id,
+        );
         continue;
       }
       if (formats === null || formats === undefined) {
         const reportFormats = report.get("formats",) as unknown[] | undefined;
         if (!reportFormats || reportFormats.length === 0) {
-          this.error("formats_empty", "Formats empty for report " + id);
+          this.error("formats_empty", "Formats empty for report " + id,);
           continue;
         }
       }
-      this.reportContexts.push(new ReportContext(this, report as Report,));
+      this.reportContexts.push(new ReportContext(this, report as Report,),);
       if (dynamicAttributes) {
         // report.backupAttributes(); // stub
         // parseReportAttributes(report, dynamicAttributes); // stub
       }
-      (report as Report).generate(formats as string[] | undefined);
+      (report as Report).generate(formats as string[] | undefined,);
       if (dynamicAttributes) {
         // report.restoreAttributes(...); // stub
       }
@@ -493,23 +516,26 @@ export class Project implements ProjectLike {
     if (regExpMode) {
       reportList = this.matchingReports(reportId,);
     } else {
-      reportList = this.reports.get(reportId) ? [reportId,] : [];
+      reportList = this.reports.get(reportId,) ? [reportId,] : [];
     }
     if (reportList.length === 0) {
-      console.log(`No match for ${reportId}`);
+      console.log(`No match for ${reportId}`,);
     }
     for (const id of reportList) {
       const report = this.reports.get(id,);
       if (!report) continue;
       const formats = report.get("formats",) as unknown[] | undefined;
       if (!formats || formats.length === 0) continue;
-      console.log(`${id}\t${formats.join(", ")}\t${report.name}`);
+      console.log(`${id}\t${formats.join(", ",)}\t${report.name}`,);
     }
   }
 
   checkReports(): void {
     if (this.reports.items === 0) {
-      this.warning("no_report_defined", "This project has no reports defined. No output data will be generated.");
+      this.warning(
+        "no_report_defined",
+        "This project has no reports defined. No output data will be generated.",
+      );
     }
     if (!this.accounts.empty()) {
       for (const report of this.reports.toArray()) {
@@ -517,14 +543,23 @@ export class Project implements ProjectLike {
         const costAccount = report.get("costaccount",);
         const revenueAccount = report.get("revenueaccount",);
         if (!costAccount || !revenueAccount) {
-          this.warning("report_without_balance", "The report " + report.fullId + " has no 'balance' defined. No cost or revenue computation will be possible.", report.sourceFileInfo as unknown as SourceFileInfo | null,);
+          this.warning(
+            "report_without_balance",
+            "The report " + report.fullId +
+              " has no 'balance' defined. No cost or revenue computation will be possible.",
+            report.sourceFileInfo as unknown as SourceFileInfo | null,
+          );
         }
       }
     }
     for (const report of this.reports.toArray()) {
       const formats = report.get("formats",) as unknown[] | undefined;
       if (!formats || formats.length === 0) {
-        this.warning("all_formats_empty", "None of the reports has a 'formats' attribute. No output data will be generated.", report.sourceFileInfo as unknown as SourceFileInfo | null,);
+        this.warning(
+          "all_formats_empty",
+          "None of the reports has a 'formats' attribute. No output data will be generated.",
+          report.sourceFileInfo as unknown as SourceFileInfo | null,
+        );
         return;
       }
     }
@@ -544,7 +579,7 @@ export class Project implements ProjectLike {
       } else {
         const idx = formats.indexOf("csv",);
         if (idx !== -1) {
-          formats.splice(idx, 1);
+          formats.splice(idx, 1,);
         }
       }
       report.set("formats", formats,);
@@ -562,7 +597,7 @@ export class Project implements ProjectLike {
     }
     for (const report of this.reports.toArray()) {
       const id = report.fullId;
-      if (regex.test(id)) {
+      if (regex.test(id,)) {
         list.push(id,);
       }
     }
@@ -663,9 +698,10 @@ export class Project implements ProjectLike {
     for (let i = 0; i < scoreboardSize; i++) {
       if (
         workinghours &&
-        (workinghours as { onShift?: (arg: TjTime | number,) => boolean }).onShift?.(
-          TjTime.fromDate(date),
-        )
+        (workinghours as { onShift?: (arg: TjTime | number,) => boolean })
+          .onShift?.(
+            TjTime.fromDate(date,),
+          )
       ) {
         this.scoreboard.set(i, null,);
         this.scoreboardNoLeaves.set(i, null,);

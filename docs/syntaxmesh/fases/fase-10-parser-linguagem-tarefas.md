@@ -2,14 +2,28 @@
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-10-tarefas.md`
 > **Plano:** `docs/syntaxmesh/fases/fase-10-parser-linguagem.md`
-> **Status:** ⬜ Não iniciada
+> **Status:** 🟡 Em andamento
 > **Total:** ~345 tarefas
-> **Concluídas:** 0
+> **Concluídas:** 10.1–10.6 implementadas e testadas em `packages/core` (2026-10-24)
 > **Fonte Ruby:** `docs/taskjuggler/lib/taskjuggler/{TextParser,TextParser/*,ProjectFileScanner,ProjectFileParser,TjpSyntaxRules}.rb`
 
 ---
 
 ## ⚠️ PREÂMBULO — Leia antes de começar
+
+### Arquitetura de pacotes (ADR 030 — aceita em 2026-10-24)
+
+**Todo o código principal do SyntaxMesh vive em `packages/core`.** Não existem (nem devem ser criados) pacotes `parser`, `language`, `richtext`, `markdown`, `report`, `storage`. Apenas `server`, `ui` e `service-worker` permanecem como pacotes de apoio. Mapeamento canônico dos caminhos desta fase:
+
+| Plano original | Caminho real |
+|---|---|
+| `packages/parser/src/lexer/` | `packages/core/src/lexer/` |
+| `packages/parser/src/parser/` | `packages/core/src/parser/` |
+| `packages/parser/mod.ts` | `packages/core/src/mod.ts` |
+| `packages/parser/tests/` | `packages/core/tests/parser/` e `packages/core/tests/lexer/` |
+| `packages/language/src/` | `packages/core/src/i18n/` |
+
+Barrels já criados: `packages/core/src/lexer/mod.ts` e `packages/core/src/parser/mod.ts` (re-exportados em `src/mod.ts`).
 
 ### Regra zero
 
@@ -67,14 +81,14 @@
 ## Progresso
 
 ```
-[ ] 10.0  ADRs 021 e 022 (FSM + i18n)                  —  0/8
-[ ] 10.1  TokenDoc                                     —  0/4
-[ ] 10.2  Macro + MacroTable                           —  0/10
-[ ] 10.3  StackElement + TextParserResultArray         —  0/8
-[ ] 10.4  StateTransition + State                      —  0/12
-[ ] 10.5  Pattern                                      —  0/24
-[ ] 10.6  Rule                                         —  0/18
-[ ] 10.7  TextParser FSM                               —  0/22
+[x] 10.0  ADRs 021 e 022 (FSM + i18n)                  —  8/8  (implementadas como ADR 022/023; ver nota)
+[x] 10.1  TokenDoc                                     —  4/4
+[x] 10.2  Macro + MacroTable                           —  10/10
+[x] 10.3  StackElement + TextParserResultArray         —  8/8
+[x] 10.4  StateTransition + State                      —  12/12
+[x] 10.5  Pattern                                      —  24/24
+[x] 10.6  Rule                                         —  18/18
+[x] 10.7  TextParser FSM                               —  22/22 (41 testes)
 [ ] 10.8  Scanner genérico + StreamHandle              —  0/20
 [ ] 10.9  ProjectFileScanner                           —  0/20
 [ ] 10.10 ProjectFileParser (estrutura)                —  0/18
@@ -99,6 +113,8 @@ TOTAL: ~345
 ### 10.0 — ADRs 021 e 022
 
 **Objetivo:** formalizar a FSM do `TextParser` e o sistema de i18n.
+
+> **✔ Concluída (2026-10-24):** os ADRs foram criados com numeração **022** (FSM do TextParser) e **023** (i18n de keywords), porque 021 já estava ocupado por `021-orquestrador-pipeline.md` (Fase 9). Arquivos: `docs/syntaxmesh/decisoes/022-fsm-textparser.md`, `docs/syntaxmesh/decisoes/023-i18n-keywords.md` (com Contexto, Alternativas rejeitadas, Decisão, Consequências, Status/Data/Autor) e tabela de `decisoes/README.md` atualizada. A correção de numeração no plano (`### 14.X` → `### 10.X`, referências a ADR 020/021) fica na tarefa 10.20.9.
 
 **⚠️ Nota:** o plano usa `ADR 020/021`, mas ADR 020 é `orquestrador-pipeline` (Fase 9). Aqui usamos **ADR 021** (FSM) e **ADR 022** (i18n).
 
@@ -125,10 +141,10 @@ TOTAL: ~345
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 10.1.1 | Criar `packages/parser/src/lexer/token-doc.ts` com `class TokenDoc` | idem | `deno check` |
+| 10.1.1 | Criar `packages/core/src/lexer/token-doc.ts` com `class TokenDoc` | idem | `deno check` |
 | 10.1.2 | Campos: `name: string \| null`, `text: string \| null`, `typeSpec: string \| null`, `pattern: Pattern \| null` | idem | `deno check` |
 | 10.1.3 | ⚠️ Constructor `(name: string \| null, arg: string \| Pattern)` — se `arg` é string, `text = arg`; senão, `pattern = arg` | idem | 4 testes (name null/válido, text, pattern) |
-| 10.1.4 | Re-exportar em `lexer/mod.ts` e `packages/parser/mod.ts` | idem | `deno check` |
+| 10.1.4 | Re-exportar em `lexer/mod.ts` e `packages/core/src/mod.ts` | idem | `deno check` |
 
 ---
 
@@ -141,7 +157,7 @@ TOTAL: ~345
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 10.2.1 | Criar `packages/parser/src/lexer/macro-table.ts` com `class Macro` | idem | `deno check` |
+| 10.2.1 | Criar `packages/core/src/lexer/macro-table.ts` com `class Macro` | idem | `deno check` |
 | 10.2.2 | `Macro`: campos `readonly name: string`, `readonly value: string`, `readonly sourceFileInfo: SourceFileInfo` | idem | `deno check` |
 | 10.2.3 | `Macro` — Constructor `(name, value, sfi)` + valida `name` não vazio | idem | 3 testes |
 | 10.2.4 | Criar `class MacroTable` com `private macros: Map<string, Macro>` | idem | `deno check` |
@@ -150,7 +166,7 @@ TOTAL: ~345
 | 10.2.7 | ⚠️ `include?(name: string): boolean` | idem | 2 testes |
 | 10.2.8 | ⚠️ `resolve(args: string[], sfi: SourceFileInfo): [Macro, string] \| null` — `name = args[0]`; se `name[0] === '?'`, remove `?`; se não existe, `null` | idem | 4 testes |
 | 10.2.9 | `resolve` — `resolved = macro.value`; para cada arg (a partir de 1), substituir `${i}` por `arg`; substituir `$${` por `${` | idem | 5 testes |
-| 10.2.10 | Re-exportar em `lexer/mod.ts` e `packages/parser/mod.ts` | idem | `deno check` |
+| 10.2.10 | Re-exportar em `lexer/mod.ts` e `packages/core/src/mod.ts` | idem | `deno check` |
 
 ---
 
@@ -163,7 +179,7 @@ TOTAL: ~345
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 10.3.1 | Criar `packages/parser/src/parser/stack-element.ts` com `class TextParserResultArray<T> extends Array<T>` | idem | `deno check` |
+| 10.3.1 | Criar `packages/core/src/parser/stack-element.ts` com `class TextParserResultArray<T> extends Array<T>` | idem | `deno check` |
 | 10.3.2 | ⚠️ `TextParserResultArray.push(...items)` — se algum item é Array, concatena em vez de aninhar | idem | 4 testes |
 | 10.3.3 | Criar `class StackElement` com `val: unknown[]`, `sourceFileInfo: Array<SourceFileInfo \| null>`, `firstSourceFileInfo: SourceFileInfo \| null`, `private position: number` | idem | `deno check` |
 | 10.3.4 | Campos `function: ((...args: unknown[]) => unknown) \| null`, `state: State \| null` | idem | `deno check` |
@@ -182,7 +198,7 @@ TOTAL: ~345
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 10.4.1 | Criar `packages/parser/src/parser/state.ts` com `class StateTransition` | idem | `deno check` |
+| 10.4.1 | Criar `packages/core/src/parser/state.ts` com `class StateTransition` | idem | `deno check` |
 | 10.4.2 | `StateTransition`: campos `tokenType: string \| symbol`, `state: State`, `stateStack: State[]`, `loopBack: boolean` | idem | `deno check` |
 | 10.4.3 | Constructor `(descriptor: [type, name], state, stateStack, loopBack)` | idem | 3 testes |
 | 10.4.4 | Criar `class State` com `rule`, `pattern`, `index`, `transitions: Map<string, StateTransition>`, `noReduce: boolean` | idem | `deno check` |
@@ -193,7 +209,7 @@ TOTAL: ~345
 | 10.4.9 | ⚠️ `expectedTokens(): string[]` — lista os tokens válidos | idem | 3 testes |
 | 10.4.10 | Teste: `state.to_s()` retorna descrição legível (rule, pattern, index) | idem | 1 teste |
 | 10.4.11 | `type StateKey = [string, string \| null, number]` — tipo exportado | idem | `deno check` |
-| 10.4.12 | Re-exportar em `parser/mod.ts` e `packages/parser/mod.ts` | idem | `deno check` |
+| 10.4.12 | Re-exportar em `parser/mod.ts` e `packages/core/src/mod.ts` | idem | `deno check` |
 
 ---
 
@@ -208,7 +224,7 @@ TOTAL: ~345
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 10.5.1.1 | Criar `packages/parser/src/parser/pattern.ts` com `class Pattern` | idem | `deno check` |
+| 10.5.1.1 | Criar `packages/core/src/parser/pattern.ts` com `class Pattern` | idem | `deno check` |
 | 10.5.1.2 | Campos: `keyword: string \| null`, `doc: string \| null`, `supportLevel`, `seeAlso: string[]`, `exampleFile: string \| null`, `exampleTag: string \| null` | idem | `deno check` |
 | 10.5.1.3 | Campos: `tokens: Array<[type, name]>`, `function`, `args: Array<TokenDoc \| null>`, `lastSyntaxToken: number` | idem | `deno check` |
 | 10.5.1.4 | ⚠️ Constructor `(tokens, fn)` — parse tokens com prefixo `!$_` | idem | 3 testes |
@@ -268,7 +284,7 @@ TOTAL: ~345
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 10.6.1 | Criar `packages/parser/src/parser/rule.ts` com `class Rule` | idem | `deno check` |
+| 10.6.1 | Criar `packages/core/src/parser/rule.ts` com `class Rule` | idem | `deno check` |
 | 10.6.2 | Campos: `name`, `patterns: Pattern[]`, `optional`, `repeatable`, `keyword`, `doc`, `transitiveOptional` | idem | `deno check` |
 | 10.6.3 | ⚠️ Constructor `(name: string)` — inicializa vazio | idem | 2 testes |
 | 10.6.4 | ⚠️ `flushCache(): void` — reseta `transitiveOptional` | idem | 2 testes |
@@ -298,11 +314,21 @@ TOTAL: ~345
 
 **Pré-requisitos:** 10.1–10.6.
 
+> **✔ Concluída (2026-10-24):** `packages/core/src/parser/text-parser.ts` + `packages/core/tests/parser/text-parser_test.ts` (41 passos BDD). Divergências intencionais do port:
+> 1. `initRules` usa lista explícita `ruleMethods: string[]` (reflection `methods.grep(/^rule_/)` não portável — cheat-sheet §12 Categoria B). `newRule` aceita segundo argumento opcional `block`.
+> 2. `newRule` **reutiliza** regra existente em vez de lançar (Ruby lança; aqui `initRules` já registra a regra antes de chamar `rule_*`). Com `extend` de verdade (10.11+) isso volta a ser relevante.
+> 3. `@blockedVariables` Hash do Ruby → `Map<string, boolean>`; `@@expectedTokens` é o método `State#expectedTokens()` (já portado em 10.4).
+> 4. `states[[rule, pattern, index]]` → `stateKeyOf(...)` (StateKeys, 10.4). `saveFsmStack`/`restoreFsmStack` guardam a tupla `[rule, pattern, index]` no `StackElement.state` — `stateOf()` resolve na leitura.
+> 5. `error()`/`warning()` sem scanner **logam sem lançar** (MessageHandler.rb: `error` só `addMessage`); usando o `MessageHandlerInstance` do core, que lança em `.error()`, seria derrubar o FSM — usamos `addMessage` direto via `logMessage`.
+> 6. Caminhos que em Ruby seguem com `nil` e morrem em `NoMethodError` (no_reduce → pilha vazia, rule desconhecida) têm guarda explícita em TS: após logar o erro, encerra com `false`/`break`.
+> 7. `AttributeOverwrite` já existe em `model/errors.ts` (Fase 3/4) — `finishPattern` captura a classe existente, não duplicamos.
+> 8. `dumpStack` (debug) retorna string em vez de imprimir (`print`/`puts` do Ruby não têm equivalente browser).
+
 #### 10.7.1 — Estrutura
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 10.7.1.1 | Criar `packages/parser/src/parser/text-parser.ts` com `abstract class TextParser` | idem | `deno check` |
+| 10.7.1.1 | Criar `packages/core/src/parser/text-parser.ts` com `abstract class TextParser` | idem | `deno check` |
 | 10.7.1.2 | Campos: `rules: Map<string, Rule>`, `variables: string[]`, `blockedVariables: Set<string>`, `cr: Rule \| null`, `states: Map<StateKey, State>` | idem | `deno check` |
 | 10.7.1.3 | Campos: `stack: StackElement[] \| null`, `expectedTokens: string[]`, `scanner`, `val: unknown[]`, `sourceFileInfo: Array<SourceFileInfo \| null>` | idem | `deno check` |
 | 10.7.1.4 | ⚠️ `limitTokenSet(tokenSet: string[] \| null): void` | idem | 3 testes |
@@ -360,7 +386,7 @@ TOTAL: ~345
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 10.8.1.1 | Criar `packages/parser/src/lexer/scanner.ts` com `class Scanner` | idem | `deno check` |
+| 10.8.1.1 | Criar `packages/core/src/lexer/scanner.ts` com `class Scanner` | idem | `deno check` |
 | 10.8.1.2 | Campos: `masterFile: string`, `messageHandler`, `log`, `macroTable: MacroTable`, `cf: StreamHandle \| null` | idem | `deno check` |
 | 10.8.1.3 | Campos: `fileStack: Array<[StreamHandle, Token \| null, (() => void) \| null]>`, `finishLastFile: boolean`, `fileNameIsBuffer: boolean` | idem | `deno check` |
 | 10.8.1.4 | Campos: `startOfToken: SourceFileInfo \| null`, `lineDelta: number`, `patternsByMode: Map<string, ...>` | idem | `deno check` |
@@ -410,7 +436,7 @@ TOTAL: ~345
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 10.8.7.1 | Criar `packages/parser/src/lexer/stream-handle.ts` com `class StreamHandle` | idem | `deno check` |
+| 10.8.7.1 | Criar `packages/core/src/lexer/stream-handle.ts` com `class StreamHandle` | idem | `deno check` |
 | 10.8.7.2 | Campos: `fileName`, `log`, `textScanner`, `stream`, `scanner`, `macroStack`, `nextMacroEnd` | idem | `deno check` |
 | 10.8.7.3 | ⚠️ `error(id, message)`, `close()`, `injectText(text, callLength)` | idem | 3 testes |
 | 10.8.7.4 | ⚠️ `injectMacro(macro, args, text, callLength)` — `macroStack.push`, `nextMacroEnd` | idem | 4 testes |
@@ -431,7 +457,7 @@ TOTAL: ~345
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 10.9.1.1 | Criar `packages/parser/src/lexer/project-file-scanner.ts` com `class ProjectFileScanner extends Scanner` | idem | `deno check` |
+| 10.9.1.1 | Criar `packages/core/src/lexer/project-file-scanner.ts` com `class ProjectFileScanner extends Scanner` | idem | `deno check` |
 | 10.9.1.2 | Constructor `(masterFile, log, language = 'en')` — chama `super(masterFile, log, {}, ':tjp')` | idem | 2 testes |
 | 10.9.1.3 | Registrar pattern `nil` para espaços + comentários (`#`, `//`, `/* */`) | idem | 3 testes |
 | 10.9.1.4 | Registrar `${...}` para macro call; `$(...)` para env var | idem | 3 testes |
@@ -457,7 +483,7 @@ TOTAL: ~345
 |---|---|---|---|
 | 10.9.3.1 | ⚠️ Se `language !== 'en'`, aplicar `LanguageRegistry.resolve(word, language)` sobre tokens `ID` | idem | 5 testes (en, pt-BR, es, desconhecido, sem idioma) |
 | 10.9.3.2 | Se sinônimo encontrado, retorna `[KEYWORD, canonical]` em vez de `[ID, text]` | idem | 4 testes |
-| 10.9.3.3 | Re-exportar em `lexer/mod.ts` e `packages/parser/mod.ts` | idem | `deno check` |
+| 10.9.3.3 | Re-exportar em `lexer/mod.ts` e `packages/core/src/mod.ts` | idem | `deno check` |
 
 ---
 
@@ -474,7 +500,7 @@ TOTAL: ~345
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 10.10.1.1 | Criar `packages/parser/src/parser/project-file-parser.ts` com `class ProjectFileParser extends TextParser` | idem | `deno check` |
+| 10.10.1.1 | Criar `packages/core/src/parser/project-file-parser.ts` com `class ProjectFileParser extends TextParser` | idem | `deno check` |
 | 10.10.1.2 | Campo `variables = ['INTEGER', 'FLOAT', 'DATE', 'TIME', 'STRING', 'LITERAL', 'ID', 'ID_WITH_COLON', 'ABSOLUTE_ID', 'MACRO', 'KEYWORD']` | idem | 1 teste |
 | 10.10.1.3 | Campos: `project`, `property`, `scenarioIdx`, `idStack: string[]`, `fileStack`, `fileStackVariables: string[]` | idem | `deno check` |
 | 10.10.1.4 | Campos de prefixo: `taskprefix`, `resourceprefix`, `accountprefix`, `reportprefix` | idem | `deno check` |
@@ -525,7 +551,7 @@ TOTAL: ~345
 | 10.10.5.14 | ⚠️ `parseReportAttributes(report, attributes): void` | idem | 3 testes |
 | 10.10.5.15 | ⚠️ `initRules()` — chamada a cada `rule_*` (registro explícito via array) | idem | 2 testes |
 | 10.10.5.16 | ⚠️ `updateParserTables()` — override de `TextParser` se necessário | idem | 2 testes |
-| 10.10.5.17 | Re-exportar em `parser/mod.ts` e `packages/parser/mod.ts` | idem | `deno check` |
+| 10.10.5.17 | Re-exportar em `parser/mod.ts` e `packages/core/src/mod.ts` | idem | `deno check` |
 | 10.10.5.18 | Teste agregado: `open` + `parse('project')` de um `.tjp` mínimo vazio | idem | 1 teste |
 
 ---
@@ -545,7 +571,7 @@ TOTAL: ~345
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 10.11.1.1 | Criar `packages/parser/src/parser/rules/rules-common.ts` com `rule_optionalID` | idem | 3 testes |
+| 10.11.1.1 | Criar `packages/core/src/parser/rules/rules-common.ts` com `rule_optionalID` | idem | 3 testes |
 | 10.11.1.2 | `rule_optionalVersion`, `rule_optionalMinus`, `rule_optionalPercent`, `rule_optionalScenarioIdCol` | idem | 8 testes |
 | 10.11.1.3 | `rule_date`, `rule_dateCalcedOrNot`, `rule_valDate` | idem | 6 testes |
 | 10.11.1.4 | `rule_interval`, `rule_intervalOrDate`, `rule_intervalEnd`, `rule_intervalOptionalEnd`, `rule_intervalOptional`, `rule_intervals`, `rule_intervalsOptional`, `rule_valInterval`, `rule_valIntervalOrDate`, `rule_valIntervals` | idem | 18 testes |
@@ -746,9 +772,9 @@ TOTAL: ~345
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 10.15.1 | Criar `packages/language/src/types.ts` com `interface LanguageDefinition` (campos: `id`, `name`, `keywords`, `units`) | idem | `deno check` |
-| 10.15.2 | Criar `packages/language/src/canonical.ts` com `type CanonicalKeyword` (união de ~200 keywords) | idem | 1 teste (contagem ≥ 200) |
-| 10.15.3 | Criar `packages/language/src/registry.ts` com `class LanguageRegistry` | idem | `deno check` |
+| 10.15.1 | Criar `packages/core/src/i18n/types.ts` com `interface LanguageDefinition` (campos: `id`, `name`, `keywords`, `units`) | idem | `deno check` |
+| 10.15.2 | Criar `packages/core/src/i18n/canonical.ts` com `type CanonicalKeyword` (união de ~200 keywords) | idem | 1 teste (contagem ≥ 200) |
+| 10.15.3 | Criar `packages/core/src/i18n/registry.ts` com `class LanguageRegistry` | idem | `deno check` |
 | 10.15.4 | Campos: `private languages: Map<string, LanguageDefinition>`, `private keywordIndex`, `private unitIndex` | idem | `deno check` |
 | 10.15.5 | ⚠️ `register(lang: LanguageDefinition): void` | idem | 2 testes |
 | 10.15.6 | ⚠️ `get(id: string): LanguageDefinition \| null` | idem | 3 testes |
@@ -756,7 +782,7 @@ TOTAL: ~345
 | 10.15.8 | ⚠️ `resolve(word: string, langId: string): string \| null` — busca em `keywordIndex` | idem | 5 testes |
 | 10.15.9 | ⚠️ `resolveUnit(unit: string, langId: string): string \| null` | idem | 4 testes |
 | 10.15.10 | ⚠️ `canonicalizeKeywords(langId: string): Map<string, string>` — retorna `synonym → canonical` | idem | 2 testes |
-| 10.15.11 | Re-exportar em `packages/language/mod.ts` | idem | `deno check` |
+| 10.15.11 | Re-exportar em `packages/core/src/i18n/mod.ts` | idem | `deno check` |
 | 10.15.12 | Teste agregado: 2 idiomas registrados; `resolve` retorna canônico correto para cada um | idem | 1 teste |
 
 ---
@@ -767,16 +793,16 @@ TOTAL: ~345
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 10.16.1 | Criar `packages/language/src/en.ts` com `export const en: LanguageDefinition` | idem | `deno check` |
+| 10.16.1 | Criar `packages/core/src/i18n/en.ts` com `export const en: LanguageDefinition` | idem | `deno check` |
 | 10.16.2 | `en.keywords` com todos os ~200 keywords canônicos (cada um com `[canonical]` como sinônimo) | idem | 1 teste (contagem 200) |
 | 10.16.3 | `en.units`: `day`, `hour`, `week`, `month`, `year`, `minute` | idem | 6 testes |
-| 10.16.4 | Criar `packages/language/src/pt-BR.ts` — tradução completa dos ~200 keywords | idem | 1 teste (contagem 200) |
+| 10.16.4 | Criar `packages/core/src/i18n/pt-BR.ts` — tradução completa dos ~200 keywords | idem | 1 teste (contagem 200) |
 | 10.16.5 | `pt-BR.units`: `d`, `dia`, `dias`, `h`, `hora`, `horas`, etc. | idem | 6 testes |
-| 10.16.6 | Criar `packages/language/src/es.ts` — tradução completa | idem | 1 teste |
+| 10.16.6 | Criar `packages/core/src/i18n/es.ts` — tradução completa | idem | 1 teste |
 | 10.16.7 | `es.units`: `d`, `día`, `días`, `h`, `hora`, `horas`, etc. | idem | 6 testes |
 | 10.16.8 | Teste: todos os 3 idiomas cobrem os mesmos ~200 keywords canônicos | idem | 1 teste |
 | 10.16.9 | Teste: nenhum sinônimo colide entre idiomas (dentro do mesmo idioma) | idem | 1 teste |
-| 10.16.10 | Criar `packages/language/tests/languages_test.ts` com teste agregado | idem | 1 teste |
+| 10.16.10 | Criar `packages/core/tests/i18n/languages_test.ts` com teste agregado | idem | 1 teste |
 
 ---
 
@@ -807,7 +833,7 @@ TOTAL: ~345
 |---|---|---|---|
 | 10.18.1 | Traduzir `mwe001/tutorial.tjp` para `pt-BR` e `es` (novos arquivos `.pt-BR.tjp`, `.es.tjp`) | `tests/fixtures/i18n/` | arquivos existem |
 | 10.18.2 | Repetir para `mwe002–mwe009` (8 traduções × 2 idiomas) | idem | 16 arquivos |
-| 10.18.3 | Criar `packages/parser/tests/ast-equivalence_test.ts` | idem | `deno check` |
+| 10.18.3 | Criar `packages/core/tests/ast-equivalence_test.ts` | idem | `deno check` |
 | 10.18.4 | Função helper `normalizeAST(ast)` — substitui `name` de tasks/resources por `"__TASK__"`/`"__RESOURCE__"` | idem | 3 testes |
 | 10.18.5 | ⚠️ Para cada MWE: parsear versão `en` → AST1 | idem | 9 testes |
 | 10.18.6 | Para cada MWE: parsear versão `pt-BR` → AST2 | idem | 9 testes |
@@ -833,10 +859,10 @@ TOTAL: ~345
 | 10.19.5 | Criar `scripts/golden/parser-syntax-errors.rb` — itera `TestSuite/Syntax/Errors/` (~50 `.tjp`); captura `{ file, ok: false, errorId, errorMsg, lineNo }` | idem | roda |
 | 10.19.6 | Serializar em `parser.golden.json` | idem | ≥ 100 casos |
 | 10.19.7 | Task `golden:generate` atualizada em `deno.jsonc` | `deno.jsonc` | roda |
-| 10.19.8 | Criar `packages/parser/tests/golden/parser_golden_test.ts` — itera casos | idem | verde |
+| 10.19.8 | Criar `packages/core/tests/golden/parser_golden_test.ts` — itera casos | idem | verde |
 | 10.19.9 | Para cada caso, parsear com `ProjectFileParser`; comparar sucesso/erro | idem | ≥ 100 casos |
 | 10.19.10 | Se erro, comparar `errorId`, `errorMsg` (ou equivalente), `lineNo` | idem | 5 testes |
-| 10.19.11 | Cobertura ≥ 100 casos; commitar JSON em `packages/parser/tests/golden/` | idem | versionado |
+| 10.19.11 | Cobertura ≥ 100 casos; commitar JSON em `packages/core/tests/golden/` | idem | versionado |
 | 10.19.12 | Teste de regressão: rodar novamente `tj3` e comparar com o JSON commitado | idem | 1 teste |
 
 ---
@@ -849,10 +875,10 @@ TOTAL: ~345
 |---|---|---|
 | 10.20.1 | `deno task check-all` verde | exit 0 |
 | 10.20.2 | `deno task golden:generate && deno task test` verde | exit 0 |
-| 10.20.3 | `grep -r "NotYetImplementedError" packages/parser/src/` — apenas `newRichText` (Fase 12) | ≤ 1 ocorrência |
+| 10.20.3 | `grep -r "NotYetImplementedError" packages/core/src/` — apenas `newRichText` (Fase 12) | ≤ 1 ocorrência |
 | 10.20.4 | ADRs 021 e 022 criadas e commitadas | git log |
-| 10.20.5 | Todos os ~300 `rule_*` implementados em `TjpSyntaxRules` | `grep -c "rule_" packages/parser/src/parser/rules/` ≥ 300 |
-| 10.20.6 | `LanguageRegistry`, `en`, `pt-BR`, `es` exportados em `packages/language/mod.ts` | `deno check` |
+| 10.20.5 | Todos os ~300 `rule_*` implementados em `TjpSyntaxRules` | `grep -c "rule_" packages/core/src/parser/rules/` ≥ 300 |
+| 10.20.6 | `LanguageRegistry`, `en`, `pt-BR`, `es` exportados em `packages/core/src/i18n/mod.ts` | `deno check` |
 | 10.20.7 | `tests/integration/smoke_after_phase_10_test.ts` — parseia `mwe001/tutorial.tjp`, verifica AST; parseia `mwe001/tutorial.pt-BR.tjp`, compara AST; verifica Fase 9 (`Project.schedule`) | 1 teste |
 | 10.20.8 | Auditoria: cada subfase do plano `fase-10-parser-linguagem.md` tem tarefas correspondentes | grep |
 | 10.20.9 | Corrigir numeração em `fase-10-parser-linguagem.md` (`### 14.X` → `### 10.X`, `ADR 020/021` → `ADR 021/022`) | grep |

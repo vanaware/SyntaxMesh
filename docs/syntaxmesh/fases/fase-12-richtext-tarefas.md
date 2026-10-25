@@ -131,14 +131,14 @@ TOTAL: ~215
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 12.1.1 | Criar `packages/richtext/src/xml-like.ts` com `interface XMLElementLike` | idem | `deno check` |
+| 12.1.1 | Criar `packages/core/src/richtext/xml-like.ts` com `interface XMLElementLike` | idem | `deno check` |
 | 12.1.2 | `XMLElementLike`: campos `tag: string`, `attrs: Record<string, string>`, `children: Array<XMLElementLike \| string>` | idem | `deno check` |
 | 12.1.3 | `XMLElementLike`: métodos `append(child): void`, `toHTML(): string` | idem | `deno check` |
 | 12.1.4 | Criar `class SimpleXMLElement implements XMLElementLike` | idem | `deno check` |
 | 12.1.5 | Constructor `(tag, attrs = {})` — inicializa `children = []` | idem | 2 testes |
 | 12.1.6 | ⚠️ `append(child): void` — se `child` é string, adiciona como texto | idem | 3 testes |
 | 12.1.7 | ⚠️ `toHTML(): string` — serializa com indentação mínima; escapa `&`, `<`, `>`, `"` | idem | 6 testes (auto-close, com filhos, com attrs, escapes) |
-| 12.1.8 | Re-exportar em `packages/richtext/mod.ts` | idem | `deno check` |
+| 12.1.8 | Re-exportar em `packages/core/src/richtext/mod.ts` | idem | `deno check` |
 
 ---
 
@@ -150,7 +150,7 @@ TOTAL: ~215
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 12.2.1 | Criar `packages/richtext/src/rich-text-image.ts` com `class RichTextImage` | idem | `deno check` |
+| 12.2.1 | Criar `packages/core/src/richtext/rich-text-image.ts` com `class RichTextImage` | idem | `deno check` |
 | 12.2.2 | Campos: `readonly fileName: string`, `altText: string \| null`, `verticalAlign: string \| null` | idem | `deno check` |
 | 12.2.3 | Constructor `(fileName)` — `altText = verticalAlign = null` | idem | 2 testes |
 | 12.2.4 | Teste: `altText` e `verticalAlign` são mutáveis | idem | 1 teste |
@@ -170,7 +170,7 @@ TOTAL: ~215
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 12.3.1.1 | Criar `packages/richtext/src/rich-text-element.ts` com `class RichTextElement` | idem | `deno check` |
+| 12.3.1.1 | Criar `packages/core/src/richtext/rich-text-element.ts` com `class RichTextElement` | idem | `deno check` |
 | 12.3.1.2 | Campos: `richText: RichTextIntermediate`, `category: string`, `children: Array<RichTextElement \| string>`, `data: unknown`, `appendSpace: boolean` | idem | `deno check` |
 | 12.3.1.3 | Constructor `(rti, category, arg?)` — processa `arg` (string, array, número, etc.) | idem | 5 testes |
 
@@ -258,7 +258,7 @@ TOTAL: ~215
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 12.4.1.1 | Criar `packages/richtext/src/rich-text-intermediate.ts` com `class RichTextIntermediate` | idem | `deno check` |
+| 12.4.1.1 | Criar `packages/core/src/richtext/rich-text-intermediate.ts` com `class RichTextIntermediate` | idem | `deno check` |
 | 12.4.1.2 | Campos `richText: RichText`, `tree: RichTextElement \| null`, `blockMode: boolean = true`, `sectionNumbers: boolean = true` | idem | `deno check` |
 | 12.4.1.3 | Campos de formatação: `lineWidth = 80`, `indent = 0`, `titleIndent = 0`, `parIndent = 0`, `listIndent = 1`, `preIndent = 0` | idem | `deno check` |
 | 12.4.1.4 | Campos: `linkTarget: string \| null`, `cssClass: string \| null`, `functionHandlers: Map<string, RichTextFunctionHandler>` | idem | `deno check` |
@@ -303,7 +303,7 @@ TOTAL: ~215
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 12.5.1.1 | Criar `packages/richtext/src/rich-text-scanner.ts` com `class RichTextScanner extends Scanner` | idem | `deno check` |
+| 12.5.1.1 | Criar `packages/core/src/richtext/rich-text-scanner.ts` com `class RichTextScanner extends Scanner` | idem | `deno check` |
 | 12.5.1.2 | Constructor `(masterFile)` — chama `super(masterFile, ..., ':bop')` | idem | 1 teste |
 
 #### 12.5.2 — Modos
@@ -355,7 +355,7 @@ TOTAL: ~215
 | 12.5.4.17 | `hrefStart`, `hrefEnd` | idem | 2 testes |
 | 12.5.4.18 | `refStart`, `refEnd` | idem | 2 testes |
 | 12.5.4.19 | Teste agregado: tokenização de markup básico | idem | 1 teste |
-| 12.5.4.20 | Re-exportar em `packages/richtext/mod.ts` | idem | `deno check` |
+| 12.5.4.20 | Re-exportar em `packages/core/src/richtext/mod.ts` | idem | `deno check` |
 
 ---
 
@@ -369,7 +369,7 @@ TOTAL: ~215
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 12.6.1.1 | Criar `packages/richtext/src/rich-text-parser.ts` com `class RichTextParser extends TextParser` | idem | `deno check` |
+| 12.6.1.1 | Criar `packages/core/src/richtext/rich-text-parser.ts` com `class RichTextParser extends TextParser` | idem | `deno check` |
 | 12.6.1.2 | Campos: `richTextI: RichTextIntermediate`, `sectionCounter: number[]`, `numberListCounter: number[]` | idem | `deno check` |
 | 12.6.1.3 | Constructor `(rti, sectionCounter = [0,0,0,0], tokenSet = null)` | idem | 3 testes |
 | 12.6.1.4 | ⚠️ `reuse(rti, sectionCounter, tokenSet): void` — reseta estado do singleton | idem | 4 testes |
@@ -382,7 +382,7 @@ TOTAL: ~215
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 12.6.2.1 | Criar `packages/richtext/src/rich-text-syntax-rules.ts` | idem | `deno check` |
+| 12.6.2.1 | Criar `packages/core/src/richtext/rich-text-syntax-rules.ts` | idem | `deno check` |
 | 12.6.2.2 | ⚠️ `rule_richtext` — entry point | idem | 2 testes |
 | 12.6.2.3 | ⚠️ `rule_sections`, `rule_section` | idem | 3 testes |
 | 12.6.2.4 | ⚠️ `rule_headlines` | idem | 2 testes |
@@ -417,7 +417,7 @@ TOTAL: ~215
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 12.7.1 | Criar `packages/richtext/src/toc-entry.ts` com `class TOCEntry` | idem | `deno check` |
+| 12.7.1 | Criar `packages/core/src/richtext/toc-entry.ts` com `class TOCEntry` | idem | `deno check` |
 | 12.7.2 | Campos: `readonly number: string`, `readonly title: string`, `readonly file: string`, `readonly tag: string \| null` | idem | `deno check` |
 | 12.7.3 | Constructor `(number, title, file, tag?)` | idem | 2 testes |
 | 12.7.4 | ⚠️ `to_html(): XMLElementLike[]` — gera lista de elementos por nível | idem | 4 testes |
@@ -431,7 +431,7 @@ TOTAL: ~215
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 12.8.1 | Criar `packages/richtext/src/table-of-contents.ts` com `class TableOfContents` | idem | `deno check` |
+| 12.8.1 | Criar `packages/core/src/richtext/table-of-contents.ts` com `class TableOfContents` | idem | `deno check` |
 | 12.8.2 | Campo `private entries: TOCEntry[]` | idem | `deno check` |
 | 12.8.3 | ⚠️ `addEntry(entry): void` | idem | 2 testes |
 | 12.8.4 | ⚠️ `[Symbol.iterator](): Iterator<TOCEntry>` | idem | 2 testes |
@@ -447,7 +447,7 @@ TOTAL: ~215
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 12.9.1 | Criar `packages/richtext/src/rich-text-snip.ts` com `class RichTextSnip` | idem | `deno check` |
+| 12.9.1 | Criar `packages/core/src/richtext/rich-text-snip.ts` com `class RichTextSnip` | idem | `deno check` |
 | 12.9.2 | Campos: `name`, `prevSnip`, `nextSnip`, `private richText`, `private document` | idem | `deno check` |
 | 12.9.3 | Constructor `(document, fileName, sectionCounter)` — lê arquivo, cria `RichText`, gera `RichTextIntermediate` | idem | 3 testes |
 | 12.9.4 | Setter `linkTarget=` | idem | 2 testes |
@@ -466,7 +466,7 @@ TOTAL: ~215
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 12.10.1 | Criar `packages/richtext/src/rich-text-document.ts` com `abstract class RichTextDocument` | idem | `deno check` |
+| 12.10.1 | Criar `packages/core/src/richtext/rich-text-document.ts` com `abstract class RichTextDocument` | idem | `deno check` |
 | 12.10.2 | Campos: `snippets: RichTextSnip[]`, `dirty: boolean`, `sectionCounter: number[]`, `linkTarget`, `toc`, `anchors`, `functionHandlers`, `references` | idem | `deno check` |
 | 12.10.3 | `registerFunctionHandler(handler): void` | idem | 2 testes |
 | 12.10.4 | ⚠️ `addSnip(file: string): RichTextSnip` — encadeia `prevSnip`/`nextSnip` | idem | 4 testes |
@@ -489,12 +489,12 @@ TOTAL: ~215
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 12.11.1 | Criar `packages/richtext/src/handlers/function-handler.ts` | idem | `deno check` |
+| 12.11.1 | Criar `packages/core/src/richtext/handlers/function-handler.ts` | idem | `deno check` |
 | 12.11.2 | `abstract class RichTextFunctionHandler`: `readonly function: string`, `blockFunction: boolean`, `readonly sourceFileInfo: SourceFileInfo \| null` | idem | `deno check` |
 | 12.11.3 | Constructor `(function, sfi = null)` — `blockFunction = false` | idem | 2 testes |
 | 12.11.4 | Abstract: `to_s(args)`, `to_html(args)`, `to_tagged(args)` | idem | `deno check` |
 | 12.11.5 | ⚠️ `dup(): RichTextFunctionHandler` — retorna nova instância | idem | 2 testes |
-| 12.11.6 | Re-exportar em `packages/richtext/mod.ts` | idem | `deno check` |
+| 12.11.6 | Re-exportar em `packages/core/src/richtext/mod.ts` | idem | `deno check` |
 
 ---
 
@@ -504,7 +504,7 @@ TOTAL: ~215
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 12.12.1 | Criar `packages/richtext/src/handlers/function-example.ts` | idem | `deno check` |
+| 12.12.1 | Criar `packages/core/src/richtext/handlers/function-example.ts` | idem | `deno check` |
 | 12.12.2 | `class RichTextFunctionExample extends RichTextFunctionHandler`: `function = 'example'`, `blockFunction = true` | idem | 1 teste |
 | 12.12.3 | ⚠️ `to_s(args): string` → `''` | idem | 1 teste |
 | 12.12.4 | ⚠️ `to_html(args): XMLElementLike` — `file = args.file`, `tag = args.tag`; carrega `.tjp`, extrai snippet, retorna `<div class="codeframe"><pre class="code">...</pre></div>` | idem | 4 testes |
@@ -521,7 +521,7 @@ TOTAL: ~215
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 12.13.1 | Criar `packages/richtext/src/handlers/rtf-with-query-support.ts` | idem | `deno check` |
+| 12.13.1 | Criar `packages/core/src/richtext/handlers/rtf-with-query-support.ts` | idem | `deno check` |
 | 12.13.2 | `abstract class RTFWithQuerySupport extends RichTextFunctionHandler`: `protected query: Query \| null` | idem | `deno check` |
 | 12.13.3 | ⚠️ `setQuery(query: Query): void` — duplica a query | idem | 3 testes |
 | 12.13.4 | Teste: `dup()` preserva `query` | idem | 1 teste |
@@ -538,7 +538,7 @@ TOTAL: ~215
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 12.14.1.1 | Criar `packages/richtext/src/handlers/rtf-query.ts` | idem | `deno check` |
+| 12.14.1.1 | Criar `packages/core/src/richtext/handlers/rtf-query.ts` | idem | `deno check` |
 | 12.14.1.2 | `class RTFQuery extends RTFWithQuerySupport`: `function = 'query'`, `blockFunction = false` | idem | 1 teste |
 | 12.14.1.3 | Constructor `(project, sfi)` | idem | 1 teste |
 
@@ -572,7 +572,7 @@ TOTAL: ~215
 | 12.14.4.1 | Teste: `[[query:attribute=effort]]` em task com effort | idem | 1 teste |
 | 12.14.4.2 | Teste: erro se `attribute` ausente | idem | 1 teste |
 | 12.14.4.3 | Teste: erro se `family` inválida | idem | 1 teste |
-| 12.14.4.4 | Re-exportar em `packages/richtext/mod.ts` | idem | `deno check` |
+| 12.14.4.4 | Re-exportar em `packages/core/src/richtext/mod.ts` | idem | `deno check` |
 
 ---
 
@@ -584,7 +584,7 @@ TOTAL: ~215
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 12.15.1 | Criar `packages/richtext/src/handlers/rtf-report.ts` | idem | `deno check` |
+| 12.15.1 | Criar `packages/core/src/richtext/handlers/rtf-report.ts` | idem | `deno check` |
 | 12.15.2 | `class RTFReport extends RichTextFunctionHandler`: `function = 'report'`, `blockFunction = true` | idem | 1 teste |
 | 12.15.3 | ⚠️ `to_html(args)` — **stub**: `throw new NotYetImplementedError("RTFReport requer Fase 14")` + comentário `// TODO Fase 14` | idem | 1 teste |
 
@@ -598,7 +598,7 @@ TOTAL: ~215
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 12.16.1 | Criar `packages/richtext/src/handlers/rtf-report-link.ts` | idem | `deno check` |
+| 12.16.1 | Criar `packages/core/src/richtext/handlers/rtf-report-link.ts` | idem | `deno check` |
 | 12.16.2 | `class RTFReportLink extends RTFWithQuerySupport`: `function = 'reportlink'` | idem | 1 teste |
 | 12.16.3 | ⚠️ `to_html(args)` — **stub**: `throw NotYetImplementedError("Fase 14")` | idem | 1 teste |
 
@@ -612,15 +612,15 @@ TOTAL: ~215
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 12.17.1 | Criar `packages/richtext/src/handlers/rtf-navigator.ts` | idem | `deno check` |
+| 12.17.1 | Criar `packages/core/src/richtext/handlers/rtf-navigator.ts` | idem | `deno check` |
 | 12.17.2 | `class RTFNavigator extends RichTextFunctionHandler`: `function = 'navigator'`, `blockFunction = true` | idem | 1 teste |
 | 12.17.3 | ⚠️ `to_html(args)` — `id = args.id` obrigatório; **stub**: `throw NotYetImplementedError("Navigator requer Fase 14")` | idem | 2 testes |
-| 12.17.4 | Criar `packages/richtext/src/handlers/rtf-handlers.ts` | idem | `deno check` |
+| 12.17.4 | Criar `packages/core/src/richtext/handlers/rtf-handlers.ts` | idem | `deno check` |
 | 12.17.5 | ⚠️ `RTFHandlers.create(project, sfi): RichTextFunctionHandler[]` — retorna `[RTFNavigator, RTFQuery, RTFReport, RTFReportLink]` | idem | 2 testes |
 | 12.17.6 | Teste: `create` retorna 4 handlers | idem | 1 teste |
 | 12.17.7 | Teste: cada handler tem `function` correto | idem | 4 testes |
 | 12.17.8 | Teste: `RTFQuery` e `RTFReportLink` suportam `setQuery` | idem | 2 testes |
-| 12.17.9 | Re-exportar em `packages/richtext/mod.ts` | idem | `deno check` |
+| 12.17.9 | Re-exportar em `packages/core/src/richtext/mod.ts` | idem | `deno check` |
 | 12.17.10 | Teste agregado: `RTFHandlers.create` com `project` mockado | idem | 1 teste |
 
 ---
@@ -637,7 +637,7 @@ TOTAL: ~215
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 12.18.1.1 | Criar `packages/richtext/src/rich-text.ts` com `class RichText` | idem | `deno check` |
+| 12.18.1.1 | Criar `packages/core/src/richtext/rich-text.ts` com `class RichText` | idem | `deno check` |
 | 12.18.1.2 | Campos: `readonly inputText: string`, `private functionHandlers`, `static parser: RichTextParser \| null` | idem | `deno check` |
 | 12.18.1.3 | Constructor `(text: string, functionHandlers: RichTextFunctionHandler[] = [])` | idem | 3 testes |
 | 12.18.1.4 | ⚠️ `generateIntermediateFormat(sectionCounter = [0,0,0,0], tokenSet: string[] \| null = null): RichTextIntermediate \| null` | idem | 4 testes |
@@ -652,7 +652,7 @@ TOTAL: ~215
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 12.18.2.1 | Criar `packages/richtext/src/factory.ts` com `class RichTextFactoryImpl implements RichTextFactory` | idem | `deno check` |
+| 12.18.2.1 | Criar `packages/core/src/richtext/factory.ts` com `class RichTextFactoryImpl implements RichTextFactory` | idem | `deno check` |
 | 12.18.2.2 | Constructor `(project, sfi)` | idem | 1 teste |
 | 12.18.2.3 | ⚠️ `create(text: string): RichTextIntermediate` — cria `RichText` com `RTFHandlers.create`, chama `generateIntermediateFormat` | idem | 3 testes |
 | 12.18.2.4 | Se `null`, lança `TjArgumentError` | idem | 1 teste |
@@ -661,9 +661,9 @@ TOTAL: ~215
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 12.18.3.1 | Adicionar setter `setRichTextFactory(factory: RichTextFactory)` em `ProjectFileParser` | `packages/parser/src/parser/project-file-parser.ts` | 2 testes |
+| 12.18.3.1 | Adicionar setter `setRichTextFactory(factory: RichTextFactory)` em `ProjectFileParser` | `packages/core/src/parser/project-file-parser.ts` | 2 testes |
 | 12.18.3.2 | ⚠️ `newRichText(text, sfi, tokenSet)` usa `this.richTextFactory.create(text)` | idem | 3 testes |
-| 12.18.3.3 | `packages/richtext/mod.ts` exporta `RichTextFactoryImpl` | idem | `deno check` |
+| 12.18.3.3 | `packages/core/src/richtext/mod.ts` exporta `RichTextFactoryImpl` | idem | `deno check` |
 | 12.18.3.4 | Smoke test: parser cria `RichText` real (não stub) | idem | 1 teste |
 
 ---
@@ -683,10 +683,10 @@ TOTAL: ~215
 | 12.19.3 | Para cada arquivo: cria `RichText.new(content)`, gera `rti`, serializa `input`/`plain`/`tagged`/`html` | idem | ≥ 30 casos |
 | 12.19.4 | Serializa em `richtext.golden.json` | idem | JSON válido |
 | 12.19.5 | Task `golden:generate` atualizada em `deno.jsonc` | `deno.jsonc` | roda |
-| 12.19.6 | Criar `packages/richtext/tests/golden/richtext_golden_test.ts` | idem | verde |
+| 12.19.6 | Criar `packages/core/tests/richtext/golden/richtext_golden_test.ts` | idem | verde |
 | 12.19.7 | Para cada caso: `plain`, `tagged`, `html` comparados | idem | ≥ 30 casos |
 | 12.19.8 | Tolerância: normalizar whitespace em `to_s`; HTML byte-a-byte | idem | 3 testes |
-| 12.19.9 | Cobertura ≥ 30 casos; commitar JSON em `packages/richtext/tests/golden/` | idem | versionado |
+| 12.19.9 | Cobertura ≥ 30 casos; commitar JSON em `packages/core/tests/richtext/golden/` | idem | versionado |
 | 12.19.10 | Teste de regressão: rodar novamente e comparar | idem | 1 teste |
 
 ---
@@ -699,9 +699,9 @@ TOTAL: ~215
 |---|---|---|
 | 12.20.1 | `deno task check-all` verde | exit 0 |
 | 12.20.2 | `deno task golden:generate && deno task test` verde | exit 0 |
-| 12.20.3 | `grep -r "NotYetImplementedError" packages/richtext/src/` — apenas `RTFReport`, `RTFReportLink`, `RTFNavigator` | ≤ 3 ocorrências |
+| 12.20.3 | `grep -r "NotYetImplementedError" packages/core/src/richtext/` — apenas `RTFReport`, `RTFReportLink`, `RTFNavigator` | ≤ 3 ocorrências |
 | 12.20.4 | ADR 024 criada e commitada | git log |
-| 12.20.5 | `RichText`, `RichTextIntermediate`, `RichTextElement`, `RichTextFactoryImpl`, `RTFHandlers` exportados em `packages/richtext/mod.ts` | `deno check` |
+| 12.20.5 | `RichText`, `RichTextIntermediate`, `RichTextElement`, `RichTextFactoryImpl`, `RTFHandlers` exportados em `packages/core/src/richtext/mod.ts` | `deno check` |
 | 12.20.6 | `ProjectFileParser.setRichTextFactory` funcional | 1 teste |
 | 12.20.7 | `tests/integration/smoke_after_phase_12_test.ts` — cria `RichText`, gera `rti`, verifica `to_s`; verifica Fase 11 (`Query`) | 1 teste |
 | 12.20.8 | Auditoria: cada subfase do plano `fase-12-richtext.md` tem tarefas correspondentes | grep |

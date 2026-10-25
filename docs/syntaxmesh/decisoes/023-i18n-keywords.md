@@ -9,6 +9,12 @@ Precisamos registrar:
 2. O mecanismo de pré-scan com regex para detectar a diretiva `language "xxx"`.
 3. O mapeamento transparente no scanner: sinônimos → canônicos, sem alterar o parser.
 
+**Alternativas consideradas e rejeitadas:**
+
+- A) **Um parser por idioma** — rejeitada: ~300 regras duplicadas por idioma; violaria o port fiel (ADR 011) e a manutenção.
+- B) **Keywords nativas não-canônicas no parser** — rejeitada: o parser passaria a conhecer idiomas, quebrando a regra de ouro "parser não conhece idiomas finais depois da normalização" e impedindo ASTs equivalentes entre idiomas.
+- C) **`LanguageRegistry` (escolhida)** — sinônimos resolvidos no scanner; parser opera sempre em keywords canônicos (inglês).
+
 ## Decisão
 
 Criar `LanguageRegistry` (extensão do SyntaxMesh, não está no TJ) com:

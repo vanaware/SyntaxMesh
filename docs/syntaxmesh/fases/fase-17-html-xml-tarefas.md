@@ -551,11 +551,11 @@ TOTAL: ~180
 |---|---|---|---|
 | 17.12.1 | Mover interface `XMLElementLike` para `packages/core/src/xml/xml-element-like.ts` | idem | `deno check` |
 | 17.12.2 | `XMLElement` importa de lá | idem | `deno check` |
-| 17.12.3 | Atualizar imports em `packages/richtext/src/**` | idem | `deno check` |
-| 17.12.4 | Atualizar imports em `packages/report/src/**` | idem | `deno check` |
-| 17.12.5 | Atualizar imports em `packages/report/src/gantt/**` | idem | `deno check` |
+| 17.12.3 | Atualizar imports em `packages/core/src/richtext/**` | idem | `deno check` |
+| 17.12.4 | Atualizar imports em `packages/core/src/**` | idem | `deno check` |
+| 17.12.5 | Atualizar imports em `packages/core/src/gantt/**` | idem | `deno check` |
 | 17.12.6 | Atualizar imports em `packages/core/tests/**` | idem | `deno check` |
-| 17.12.7 | ⚠️ Deletar `SimpleXMLElement` de `packages/richtext/src/xml-like.ts` | idem | `grep -r "SimpleXMLElement"` retorna 0 |
+| 17.12.7 | ⚠️ Deletar `SimpleXMLElement` de `packages/core/src/richtext/xml-like.ts` | idem | `grep -r "SimpleXMLElement"` retorna 0 |
 | 17.12.8 | Re-rodar todos os testes | idem | verde |
 
 ---
@@ -568,9 +568,9 @@ TOTAL: ~180
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 17.13.1 | Deletar `packages/report/src/html-document.ts` (versão mínima) | idem | `deno check` |
-| 17.13.2 | Atualizar imports em `packages/report/src/report.ts` | idem | `deno check` |
-| 17.13.3 | Atualizar imports em `packages/report/src/**` | idem | `deno check` |
+| 17.13.1 | Deletar `packages/core/src/html-document.ts` (versão mínima) | idem | `deno check` |
+| 17.13.2 | Atualizar imports em `packages/core/src/report.ts` | idem | `deno check` |
+| 17.13.3 | Atualizar imports em `packages/core/src/**` | idem | `deno check` |
 | 17.13.4 | Re-rodar testes da Fase 14 | idem | verde |
 
 ---
@@ -583,9 +583,9 @@ TOTAL: ~180
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 17.14.1 | Deletar `packages/report/src/i-calendar.ts` (versão mínima) | idem | `deno check` |
-| 17.14.2 | Atualizar imports em `packages/report/src/i-cal-report.ts` | idem | `deno check` |
-| 17.14.3 | Atualizar imports em `packages/report/src/**` | idem | `deno check` |
+| 17.14.1 | Deletar `packages/core/src/i-calendar.ts` (versão mínima) | idem | `deno check` |
+| 17.14.2 | Atualizar imports em `packages/core/src/i-cal-report.ts` | idem | `deno check` |
+| 17.14.3 | Atualizar imports em `packages/core/src/**` | idem | `deno check` |
 | 17.14.4 | Re-rodar testes da Fase 14 | idem | verde |
 
 ---
@@ -598,9 +598,9 @@ TOTAL: ~180
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 17.15.1 | Deletar `packages/report/src/painter-min.ts` (versão mínima) | idem | `deno check` |
-| 17.15.2 | Atualizar imports em `packages/report/src/chart-plotter.ts` | idem | `deno check` |
-| 17.15.3 | Atualizar imports em `packages/report/src/**` | idem | `deno check` |
+| 17.15.1 | Deletar `packages/core/src/painter-min.ts` (versão mínima) | idem | `deno check` |
+| 17.15.2 | Atualizar imports em `packages/core/src/chart-plotter.ts` | idem | `deno check` |
+| 17.15.3 | Atualizar imports em `packages/core/src/**` | idem | `deno check` |
 | 17.15.4 | Re-rodar testes da Fase 14 | idem | verde |
 
 ---

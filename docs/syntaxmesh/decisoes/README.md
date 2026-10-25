@@ -87,7 +87,7 @@ O que foi decidido? Seja específico e acionável.
 | 027 | Reports no browser: retorno de strings | Proposto | — |
 | 028 | Gantt HTML+CSS | Proposto | — |
 | 029 | Journal e AlertLevel em TypeScript | Proposto | — |
-| 030 | Substituição de XML/HTML/ICalendar/Painter mínimos | Proposto | — |
-| 031 | Arquitetura simplificada: packages/core + JSR libraries | Proposto | 2026-10-12 |
+| 030 | Arquitetura simplificada: todo código principal em `packages/core` | Aceito | 2026-10-24 |
+| 031 | Modelo Contábil Estendido (repete 020; ver arquivo) | Proposto | — |
 
 > **Nota:** Manter esta tabela atualizada manualmente ou via script ao adicionar novos ADRs.

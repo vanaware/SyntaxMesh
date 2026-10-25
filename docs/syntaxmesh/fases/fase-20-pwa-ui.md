@@ -19,13 +19,13 @@ Browser (PWA)
    ↓
 @  syntaxmesh/ui       ← ESTA FASE (Preact + Signals + BeerCSS)
    ↓
-@syntaxmesh/storage    ← Fase 19
+@syntaxmesh/core/storage    ← Fase 19
 @syntaxmesh/core       ← Fases 2–9, 11, 16
 @syntaxmesh/parser     ← Fase 10
-@syntaxmesh/richtext   ← Fase 12
-@syntaxmesh/markdown   ← Fase 13
-@syntaxmesh/report     ← Fases 14, 15
-@syntaxmesh/worker-db  ← Fase 1 (já pronto)
+@syntaxmesh/core/richtext   ← Fase 12
+@syntaxmesh/core/markdown   ← Fase 13
+@syntaxmesh/core     ← Fases 14, 15
+@vanaware/workerdb  ← Fase 1 (já pronto)
 @syntaxmesh/service-worker ← ESTA FASE
 ```
 
@@ -65,7 +65,7 @@ Usuário edita
 ### Regras
 
 - **UI não contém lógica de negócio.** Toda lógica está em Core/Parser/Report.
-- **UI não toca IndexedDB/OPFS diretamente.** Sempre via `@syntaxmesh/storage`.
+- **UI não toca IndexedDB/OPFS diretamente.** Sempre via `@syntaxmesh/core/storage`.
 - **UI não executa parser/scheduler na main thread.** Sempre via Worker.
 - **Core não é importado pela UI diretamente**, apenas via `services/`.
 
@@ -165,7 +165,7 @@ services/
 ├── parser-service.ts      (fala com engine.worker)
 ├── scheduler-service.ts   (fala com engine.worker)
 ├── report-service.ts      (fala com engine.worker)
-└── storage-service.ts     (fala com @syntaxmesh/storage)
+└── storage-service.ts     (fala com @syntaxmesh/core/storage)
 ```
 
 ### 4.5 Signals estruturados
@@ -1605,7 +1605,7 @@ passa, e:
 ## 10. Notas para a IA
 
 1. **UI consome serviços, não Core diretamente.**
-2. **UI não toca IndexedDB/OPFS.** Sempre via `@syntaxmesh/storage`.
+2. **UI não toca IndexedDB/OPFS.** Sempre via `@syntaxmesh/core/storage`.
 3. **UI não executa parser/scheduler na main thread.** Sempre via Worker.
 4. **Preact + Signals + BeerCSS.** Não introduzir outros frameworks.
 5. **Editor básico.** Sem CodeMirror/Monaco nesta fase.

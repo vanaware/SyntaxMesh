@@ -332,8 +332,8 @@ Implementar `CSVFile`.
 
 #### Arquivos
 
-- `packages/report/src/csv-file.ts`
-- `packages/report/tests/csv-file_test.ts`
+- `packages/core/src/csv-file.ts`
+- `packages/core/tests/csv-file_test.ts`
 
 #### Requisitos
 
@@ -395,8 +395,8 @@ Completar `ReportContext`.
 
 #### Arquivos
 
-- `packages/report/src/report-context.ts`
-- `packages/report/tests/report-context_test.ts`
+- `packages/core/src/report-context.ts`
+- `packages/core/tests/report-context_test.ts`
 
 #### Requisitos
 
@@ -448,8 +448,8 @@ Implementar `ReportBase`.
 
 #### Arquivos
 
-- `packages/report/src/report-base.ts`
-- `packages/report/tests/report-base_test.ts`
+- `packages/core/src/report-base.ts`
+- `packages/core/tests/report-base_test.ts`
 
 #### Requisitos
 
@@ -509,9 +509,9 @@ Implementar ambos.
 
 #### Arquivos
 
-- `packages/report/src/table-column-definition.ts`
-- `packages/report/src/cell-setting-pattern.ts`
-- `packages/report/tests/table-column-definition_test.ts`
+- `packages/core/src/table-column-definition.ts`
+- `packages/core/src/cell-setting-pattern.ts`
+- `packages/core/tests/table-column-definition_test.ts`
 
 #### Requisitos
 
@@ -582,8 +582,8 @@ Implementar `TableColumnSorter`.
 
 #### Arquivos
 
-- `packages/report/src/table-column-sorter.ts`
-- `packages/report/tests/table-column-sorter_test.ts`
+- `packages/core/src/table-column-sorter.ts`
+- `packages/core/tests/table-column-sorter_test.ts`
 
 #### Requisitos
 
@@ -626,8 +626,8 @@ Implementar `ReportTable`.
 
 #### Arquivos
 
-- `packages/report/src/report-table.ts`
-- `packages/report/tests/report-table_test.ts`
+- `packages/core/src/report-table.ts`
+- `packages/core/tests/report-table_test.ts`
 
 #### Requisitos
 
@@ -687,8 +687,8 @@ Implementar `ReportTableColumn`.
 
 #### Arquivos
 
-- `packages/report/src/report-table-column.ts`
-- `packages/report/tests/report-table-column_test.ts`
+- `packages/core/src/report-table-column.ts`
+- `packages/core/tests/report-table-column_test.ts`
 
 #### Requisitos
 
@@ -737,8 +737,8 @@ Implementar `ReportTableLine`.
 
 #### Arquivos
 
-- `packages/report/src/report-table-line.ts`
-- `packages/report/tests/report-table-line_test.ts`
+- `packages/core/src/report-table-line.ts`
+- `packages/core/tests/report-table-line_test.ts`
 
 #### Requisitos
 
@@ -795,9 +795,9 @@ Implementar ambas.
 
 #### Arquivos
 
-- `packages/report/src/report-table-cell.ts`
-- `packages/report/src/placeholder-cell.ts`
-- `packages/report/tests/report-table-cell_test.ts`
+- `packages/core/src/report-table-cell.ts`
+- `packages/core/src/placeholder-cell.ts`
+- `packages/core/tests/report-table-cell_test.ts`
 
 #### Requisitos
 
@@ -885,8 +885,8 @@ Implementar `ReportTableLegend`.
 
 #### Arquivos
 
-- `packages/report/src/report-table-legend.ts`
-- `packages/report/tests/report-table-legend_test.ts`
+- `packages/core/src/report-table-legend.ts`
+- `packages/core/tests/report-table-legend_test.ts`
 
 #### Requisitos
 
@@ -937,8 +937,8 @@ Completar `Report`.
 
 #### Arquivos
 
-- `packages/report/src/report.ts` (completar)
-- `packages/report/tests/report_test.ts`
+- `packages/core/src/report.ts` (completar)
+- `packages/core/tests/report_test.ts`
 
 #### Requisitos
 
@@ -1010,8 +1010,8 @@ Implementar `TableReport`.
 
 #### Arquivos
 
-- `packages/report/src/table-report.ts`
-- `packages/report/tests/table-report_test.ts`
+- `packages/core/src/table-report.ts`
+- `packages/core/tests/table-report_test.ts`
 
 #### Requisitos
 
@@ -1107,8 +1107,8 @@ Implementar `ColumnTable`.
 
 #### Arquivos
 
-- `packages/report/src/column-table.ts`
-- `packages/report/tests/column-table_test.ts`
+- `packages/core/src/column-table.ts`
+- `packages/core/tests/column-table_test.ts`
 
 #### Requisitos
 
@@ -1154,8 +1154,8 @@ Implementar `TaskListRE`.
 
 #### Arquivos
 
-- `packages/report/src/task-list-re.ts`
-- `packages/report/tests/task-list-re_test.ts`
+- `packages/core/src/task-list-re.ts`
+- `packages/core/tests/task-list-re_test.ts`
 
 #### Requisitos
 
@@ -1199,8 +1199,8 @@ Implementar `ResourceListRE`.
 
 #### Arquivos
 
-- `packages/report/src/resource-list-re.ts`
-- `packages/report/tests/resource-list-re_test.ts`
+- `packages/core/src/resource-list-re.ts`
+- `packages/core/tests/resource-list-re_test.ts`
 
 #### Requisitos
 
@@ -1241,8 +1241,8 @@ Implementar `AccountListRE`.
 
 #### Arquivos
 
-- `packages/report/src/account-list-re.ts`
-- `packages/report/tests/account-list-re_test.ts`
+- `packages/core/src/account-list-re.ts`
+- `packages/core/tests/account-list-re_test.ts`
 
 #### Requisitos
 
@@ -1290,8 +1290,8 @@ Implementar `TextReport`.
 
 #### Arquivos
 
-- `packages/report/src/text-report.ts`
-- `packages/report/tests/text-report_test.ts`
+- `packages/core/src/text-report.ts`
+- `packages/core/tests/text-report_test.ts`
 
 #### Requisitos
 
@@ -1338,12 +1338,12 @@ Implementar os 3.
 
 #### Arquivos
 
-- `packages/report/src/export-re.ts`
-- `packages/report/src/tjp-export-re.ts`
-- `packages/report/src/msp-xml-re.ts`
-- `packages/report/tests/export-re_test.ts`
-- `packages/report/tests/tjp-export-re_test.ts`
-- `packages/report/tests/msp-xml-re_test.ts`
+- `packages/core/src/export-re.ts`
+- `packages/core/src/tjp-export-re.ts`
+- `packages/core/src/msp-xml-re.ts`
+- `packages/core/tests/export-re_test.ts`
+- `packages/core/tests/tjp-export-re_test.ts`
+- `packages/core/tests/msp-xml-re_test.ts`
 
 #### Requisitos
 
@@ -1410,9 +1410,9 @@ Implementar `ICalReport`.
 
 #### Arquivos
 
-- `packages/report/src/i-cal-report.ts`
-- `packages/report/src/i-calendar.ts`
-- `packages/report/tests/i-cal-report_test.ts`
+- `packages/core/src/i-cal-report.ts`
+- `packages/core/src/i-calendar.ts`
+- `packages/core/tests/i-cal-report_test.ts`
 
 #### Requisitos
 
@@ -1468,12 +1468,12 @@ Implementar os 3.
 
 #### Arquivos
 
-- `packages/report/src/niku-report.ts`
-- `packages/report/src/trace-report.ts`
-- `packages/report/src/tag-file.ts`
-- `packages/report/tests/niku-report_test.ts`
-- `packages/report/tests/trace-report_test.ts`
-- `packages/report/tests/tag-file_test.ts`
+- `packages/core/src/niku-report.ts`
+- `packages/core/src/trace-report.ts`
+- `packages/core/src/tag-file.ts`
+- `packages/core/tests/niku-report_test.ts`
+- `packages/core/tests/trace-report_test.ts`
+- `packages/core/tests/tag-file_test.ts`
 
 #### Requisitos
 
@@ -1542,9 +1542,9 @@ Implementar `Navigator` e completar `RTFNavigator`.
 
 #### Arquivos
 
-- `packages/report/src/navigator.ts`
-- `packages/report/tests/navigator_test.ts`
-- `packages/richtext/src/handlers/rtf-navigator.ts` (completar)
+- `packages/core/src/navigator.ts`
+- `packages/core/tests/navigator_test.ts`
+- `packages/core/src/richtext/handlers/rtf-navigator.ts` (completar)
 
 #### Requisitos
 
@@ -1618,8 +1618,8 @@ Implementar `ChartPlotter`.
 
 #### Arquivos
 
-- `packages/report/src/chart-plotter.ts`
-- `packages/report/tests/chart-plotter_test.ts`
+- `packages/core/src/chart-plotter.ts`
+- `packages/core/tests/chart-plotter_test.ts`
 
 #### Requisitos
 
@@ -1685,8 +1685,8 @@ Scripts Ruby que rodam `tj3` em MWEs e extraem HTML/CSV.
 - `scripts/golden/reports-mwe001.rb` a `reports-mwe009.rb`
 - `scripts/golden/reports-syntax-correct.rb`
 - `scripts/golden/README.md` (atualizar)
-- `packages/report/tests/golden/reports.golden.json`
-- `packages/report/tests/golden/reports_golden_test.ts`
+- `packages/core/tests/golden/reports.golden.json`
+- `packages/core/tests/golden/reports_golden_test.ts`
 - `deno.jsonc` — atualizar `golden:generate`
 
 #### Requisitos

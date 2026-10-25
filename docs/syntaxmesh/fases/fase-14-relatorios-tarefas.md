@@ -136,7 +136,7 @@ TOTAL: ~350
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 14.1.1.1 | Criar `packages/report/src/csv-file.ts` com `class CSVFile` | idem | `deno check` |
+| 14.1.1.1 | Criar `packages/core/src/csv-file.ts` com `class CSVFile` | idem | `deno check` |
 | 14.1.1.2 | Campos: `data: unknown[][] \| null`, `private separator: string`, `private quote: string` | idem | `deno check` |
 | 14.1.1.3 | Constructor `(data?, separator = ';', quote = '"')` | idem | 3 testes |
 
@@ -169,7 +169,7 @@ TOTAL: ~350
 |---|---|---|---|
 | 14.1.4.1 | ⚠️ `read(fileName): unknown[][]` — no browser: `NotYetImplementedError` ou via `FileStore` | idem | 1 teste |
 | 14.1.4.2 | ⚠️ `write(fileName): void` — no browser: se `fileName === '.'`, retorna; senão, no-op + warning | idem | 2 testes |
-| 14.1.4.3 | Re-exportar em `packages/report/mod.ts` | idem | `deno check` |
+| 14.1.4.3 | Re-exportar em `packages/core/src/mod.ts` | idem | `deno check` |
 
 ---
 
@@ -182,7 +182,7 @@ TOTAL: ~350
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 14.2.1 | Criar/estender `packages/report/src/report-context.ts` | idem | `deno check` |
+| 14.2.1 | Criar/estender `packages/core/src/report-context.ts` | idem | `deno check` |
 | 14.2.2 | Campos: `project: Project`, `report: Report`, `query: Query`, `dynamicReportId: string` | idem | `deno check` |
 | 14.2.3 | Campos: `childReportCounter: number`, `tasks: PropertyList<Task>`, `resources: PropertyList<Resource>` | idem | `deno check` |
 | 14.2.4 | Campo: `attributeBackup: [Map<string, AttributeBase>, Map<string, AttributeBase>[]] \| null` | idem | `deno check` |
@@ -191,7 +191,7 @@ TOTAL: ~350
 | 14.2.7 | ⚠️ Senão: `dynamicReportId = '0'`; `tasks = project.tasks.toArray()`; `resources = project.resources.toArray()` | idem | 3 testes |
 | 14.2.8 | Teste: `query.project === project` | idem | 1 teste |
 | 14.2.9 | Teste: `dynamicReportId` encadeado (0, 0.1, 0.2, 0.2.1, ...) | idem | 2 testes |
-| 14.2.10 | Re-exportar em `packages/report/mod.ts` | idem | `deno check` |
+| 14.2.10 | Re-exportar em `packages/core/src/mod.ts` | idem | `deno check` |
 
 ---
 
@@ -206,7 +206,7 @@ TOTAL: ~350
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 14.3.1.1 | Criar `packages/report/src/report-base.ts` com `abstract class ReportBase` | idem | `deno check` |
+| 14.3.1.1 | Criar `packages/core/src/report-base.ts` com `abstract class ReportBase` | idem | `deno check` |
 | 14.3.1.2 | Campos: `report: Report`, `project: Project` | idem | `deno check` |
 | 14.3.1.3 | Constructor `(report)` — seta `project = report.project` | idem | 2 testes |
 | 14.3.1.4 | ⚠️ `a(attribute): unknown` — atalho para `report.get(attribute)` | idem | 2 testes |
@@ -237,7 +237,7 @@ TOTAL: ~350
 | 14.3.4.1 | ⚠️ `private generateHtmlTableFrame(): XMLElementLike` | idem | 3 testes |
 | 14.3.4.2 | ⚠️ `private generateHtmlTableRow(): XMLElementLike` | idem | 2 testes |
 | 14.3.4.3 | ⚠️ `private rt_to_html(name): XMLElementLike \| null` | idem | 4 testes |
-| 14.3.4.4 | Re-exportar em `packages/report/mod.ts` | idem | `deno check` |
+| 14.3.4.4 | Re-exportar em `packages/core/src/mod.ts` | idem | `deno check` |
 
 ---
 
@@ -251,7 +251,7 @@ TOTAL: ~350
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 14.4.1.1 | Criar `packages/report/src/cell-setting-pattern.ts` com `class CellSettingPattern` | idem | `deno check` |
+| 14.4.1.1 | Criar `packages/core/src/cell-setting-pattern.ts` com `class CellSettingPattern` | idem | `deno check` |
 | 14.4.1.2 | Campos: `readonly setting: unknown`, `readonly logExpr: LogicalExpression` | idem | `deno check` |
 | 14.4.1.3 | Constructor `(setting, logExpr)` | idem | 2 testes |
 | 14.4.1.4 | Criar `class CellSettingPatternList` com `private patterns: CellSettingPattern[]` | idem | `deno check` |
@@ -262,12 +262,12 @@ TOTAL: ~350
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 14.4.2.1 | Criar `packages/report/src/table-column-definition.ts` com `class TableColumnDefinition` | idem | `deno check` |
+| 14.4.2.1 | Criar `packages/core/src/table-column-definition.ts` com `class TableColumnDefinition` | idem | `deno check` |
 | 14.4.2.2 | Campos: `readonly id: string`, `title: string`, `start: TjTime \| null`, `end: TjTime \| null` | idem | `deno check` |
 | 14.4.2.3 | Campos: `cellText`, `cellColor`, `fontColor`, `hAlign`, `tooltip` (todos `CellSettingPatternList`) | idem | `deno check` |
 | 14.4.2.4 | Campos: `listItem: string \| null`, `listType`, `scale`, `width`, `timeformat1`, `timeformat2`, `content`, `column: ReportTableColumn \| null` | idem | `deno check` |
 | 14.4.2.5 | Constructor `(id, title)` | idem | 3 testes |
-| 14.4.2.6 | Re-exportar em `packages/report/mod.ts` | idem | `deno check` |
+| 14.4.2.6 | Re-exportar em `packages/core/src/mod.ts` | idem | `deno check` |
 
 ---
 
@@ -279,7 +279,7 @@ TOTAL: ~350
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 14.5.1 | Criar `packages/report/src/table-column-sorter.ts` com `class TableColumnSorter` | idem | `deno check` |
+| 14.5.1 | Criar `packages/core/src/table-column-sorter.ts` com `class TableColumnSorter` | idem | `deno check` |
 | 14.5.2 | Campos: `private oldTable: unknown[][]`, `discontinuedColumns: number` | idem | `deno check` |
 | 14.5.3 | Constructor `(table)` | idem | 2 testes |
 | 14.5.4 | ⚠️ `sort(newHeaders: string[]): unknown[][]` — reordena colunas | idem | 4 testes |
@@ -299,7 +299,7 @@ TOTAL: ~350
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 14.6.1 | Criar `packages/report/src/report-table.ts` com `class ReportTable` | idem | `deno check` |
+| 14.6.1 | Criar `packages/core/src/report-table.ts` com `class ReportTable` | idem | `deno check` |
 | 14.6.2 | Constante `readonly SCROLLBARHEIGHT = 20` | idem | `deno check` |
 | 14.6.3 | Campos: `headerLineHeight = 19`, `headerFontSize = 15`, `private columns`, `private lines` | idem | `deno check` |
 | 14.6.4 | Campos: `maxIndent`, `equiLines`, `embedded`, `selfcontained`, `auxDir` | idem | `deno check` |
@@ -316,7 +316,7 @@ TOTAL: ~350
 | 14.6.15 | ⚠️ `to_csv(csv = [[]], startColumn = 0): unknown[][] \| number` | idem | 5 testes |
 | 14.6.16 | Teste: `to_csv` com 2 linhas | idem | 1 teste |
 | 14.6.17 | Teste: `to_csv` com startColumn > 0 | idem | 1 teste |
-| 14.6.18 | Re-exportar em `packages/report/mod.ts` | idem | `deno check` |
+| 14.6.18 | Re-exportar em `packages/core/src/mod.ts` | idem | `deno check` |
 
 ---
 
@@ -328,7 +328,7 @@ TOTAL: ~350
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 14.7.1 | Criar `packages/report/src/report-table-column.ts` com `class ReportTableColumn` | idem | `deno check` |
+| 14.7.1 | Criar `packages/core/src/report-table-column.ts` com `class ReportTableColumn` | idem | `deno check` |
 | 14.7.2 | Campos: `table`, `definition: TableColumnDefinition \| null`, `cell1: ReportTableCell`, `cell2: ReportTableCell`, `scrollbar: boolean` | idem | `deno check` |
 | 14.7.3 | ⚠️ Constructor `(table, definition, title)` — cria `cell1` e `cell2` com `bold = true`, `padding = 5` | idem | 5 testes |
 | 14.7.4 | ⚠️ `minWidth(): number` | idem | 3 testes |
@@ -345,7 +345,7 @@ TOTAL: ~350
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 14.8.1 | Criar `packages/report/src/report-table-line.ts` com `class ReportTableLine` | idem | `deno check` |
+| 14.8.1 | Criar `packages/core/src/report-table-line.ts` com `class ReportTableLine` | idem | `deno check` |
 | 14.8.2 | Campos: `table`, `property`, `scopeLine`, `private cells`, `height = 21`, `indentation = 0` | idem | `deno check` |
 | 14.8.3 | Campos: `fontSize = 12`, `bold`, `no`, `lineNo`, `subLineNo` | idem | `deno check` |
 | 14.8.4 | Constructor `(table, property, scopeLine)` | idem | 3 testes |
@@ -354,7 +354,7 @@ TOTAL: ~350
 | 14.8.7 | ⚠️ `scopeProperty(): PropertyTreeNode \| null` | idem | 2 testes |
 | 14.8.8 | ⚠️ `to_html(): XMLElementLike` | idem | 4 testes |
 | 14.8.9 | ⚠️ `to_csv(csv, startColumn, lineIdx): number` | idem | 3 testes |
-| 14.8.10 | Re-exportar em `packages/report/mod.ts` | idem | `deno check` |
+| 14.8.10 | Re-exportar em `packages/core/src/mod.ts` | idem | `deno check` |
 
 ---
 
@@ -369,7 +369,7 @@ TOTAL: ~350
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 14.9.1.1 | Criar `packages/report/src/report-table-cell.ts` com `class ReportTableCell` | idem | `deno check` |
+| 14.9.1.1 | Criar `packages/core/src/report-table-cell.ts` com `class ReportTableCell` | idem | `deno check` |
 | 14.9.1.2 | Campos: `line`, `headerCell`, `query`, `text`, `data`, `special`, `category` | idem | `deno check` |
 | 14.9.1.3 | Campos: `cellColor`, `fontColor`, `bold`, `fontSize`, `alignment`, `indent`, `width`, `rows`, `columns`, `padding` | idem | `deno check` |
 | 14.9.1.4 | Campos: `hidden`, `icon`, `iconTooltip`, `tooltip`, `showTooltipHint`, `force_string` | idem | `deno check` |
@@ -407,13 +407,13 @@ TOTAL: ~350
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 14.9.4.1 | Criar `packages/report/src/placeholder-cell.ts` com `class PlaceHolderCell` | idem | `deno check` |
+| 14.9.4.1 | Criar `packages/core/src/placeholder-cell.ts` com `class PlaceHolderCell` | idem | `deno check` |
 | 14.9.4.2 | Campos: `line`, `embeddedLine` | idem | `deno check` |
 | 14.9.4.3 | Constructor `(line, embeddedLine)` | idem | 2 testes |
 | 14.9.4.4 | ⚠️ `to_csv(csv, columnIdx, lineIdx): number` — delega para `embeddedLine` | idem | 3 testes |
 | 14.9.4.5 | `to_html(): null` | idem | 1 teste |
 | 14.9.4.6 | Teste: `PlaceHolderCell.to_csv` delega corretamente | idem | 1 teste |
-| 14.9.4.7 | Re-exportar em `packages/report/mod.ts` | idem | `deno check` |
+| 14.9.4.7 | Re-exportar em `packages/core/src/mod.ts` | idem | `deno check` |
 
 ---
 
@@ -425,7 +425,7 @@ TOTAL: ~350
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 14.10.1 | Criar `packages/report/src/report-table-legend.ts` com `class ReportTableLegend` | idem | `deno check` |
+| 14.10.1 | Criar `packages/core/src/report-table-legend.ts` com `class ReportTableLegend` | idem | `deno check` |
 | 14.10.2 | Campos: `showGanttItems`, `private ganttItems`, `private calendarItems` | idem | `deno check` |
 | 14.10.3 | ⚠️ `addGanttItem(text, color): void` — dedup | idem | 3 testes |
 | 14.10.4 | ⚠️ `addCalendarItem(text, color): void` — dedup | idem | 3 testes |
@@ -434,7 +434,7 @@ TOTAL: ~350
 | 14.10.7 | ⚠️ `private ganttItemToHTML(itemRef, name, width)` | idem | 3 testes |
 | 14.10.8 | ⚠️ `private itemToHTML(itemRef)` | idem | 2 testes |
 | 14.10.9 | ⚠️ `private itemsToHTML(items)` | idem | 2 testes |
-| 14.10.10 | Re-exportar em `packages/report/mod.ts` | idem | `deno check` |
+| 14.10.10 | Re-exportar em `packages/core/src/mod.ts` | idem | `deno check` |
 
 ---
 
@@ -450,7 +450,7 @@ TOTAL: ~350
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 14.11.1.1 | ⚠️ `generateIntermediateFormat(): void` — se `scenarios.empty`, `warning('all_scenarios_disabled')` | `packages/report/src/report.ts` | 2 testes |
+| 14.11.1.1 | ⚠️ `generateIntermediateFormat(): void` — se `scenarios.empty`, `warning('all_scenarios_disabled')` | `packages/core/src/report.ts` | 2 testes |
 | 14.11.1.2 | ⚠️ Dispatch por `typeSpec`: `accountreport` → `AccountListRE` | idem | 1 teste |
 | 14.11.1.3 | `export` → `ExportRE`; `iCal` → `ICalReport`; `niku` → `NikuReport` | idem | 3 testes |
 | 14.11.1.4 | `resourcereport` → `ResourceListRE`; `tagfile` → `TagFile`; `textreport` → `TextReport` | idem | 3 testes |
@@ -484,7 +484,7 @@ TOTAL: ~350
 | 14.11.3.9 | ⚠️ `private generateCTags(): string \| null` | idem | 2 testes |
 | 14.11.3.10 | ⚠️ `private copyAuxiliaryFiles(): void` — no-op no browser | idem | 1 teste |
 | 14.11.3.11 | ⚠️ `private absoluteFileName(name): string` — prepend `outputDir` | idem | 3 testes |
-| 14.11.3.12 | Re-exportar em `packages/report/mod.ts` | idem | `deno check` |
+| 14.11.3.12 | Re-exportar em `packages/core/src/mod.ts` | idem | `deno check` |
 
 ---
 
@@ -499,7 +499,7 @@ TOTAL: ~350
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 14.12.1.1 | Criar `packages/report/src/table-report.ts` com `abstract class TableReport extends ReportBase` | idem | `deno check` |
+| 14.12.1.1 | Criar `packages/core/src/table-report.ts` com `abstract class TableReport extends ReportBase` | idem | `deno check` |
 | 14.12.1.2 | Campos: `legend: ReportTableLegend`, `protected table: ReportTable`, `protected columns: Map<TableColumnDefinition, TableReportColumn>` | idem | `deno check` |
 | 14.12.1.3 | Static `propertiesById: Map<string, [string, boolean, 'left' \| 'right', boolean]>` — ~40 entradas | idem | 1 teste (contagem ≥ 40) |
 | 14.12.1.4 | Static `propertiesByType: Map<AttributeType, [boolean, 'left' \| 'right']>` | idem | `deno check` |
@@ -577,12 +577,12 @@ TOTAL: ~350
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 14.13.1 | Criar `packages/report/src/column-table.ts` com `class ColumnTable extends ReportTable` | idem | `deno check` |
+| 14.13.1 | Criar `packages/core/src/column-table.ts` com `class ColumnTable extends ReportTable` | idem | `deno check` |
 | 14.13.2 | Campo: `viewWidth: number \| null` | idem | `deno check` |
 | 14.13.3 | ⚠️ Constructor: `headerFontSize = 10`, `embedded = true` | idem | 3 testes |
 | 14.13.4 | ⚠️ `to_html(): XMLElementLike` — `td` com `rowspan = 2 + lines.length + 1` | idem | 4 testes |
 | 14.13.5 | Teste: `embedded === true` | idem | 1 teste |
-| 14.13.6 | Re-exportar em `packages/report/mod.ts` | idem | `deno check` |
+| 14.13.6 | Re-exportar em `packages/core/src/mod.ts` | idem | `deno check` |
 
 ---
 
@@ -597,7 +597,7 @@ TOTAL: ~350
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 14.14.1 | Criar `packages/report/src/task-list-re.ts` com `class TaskListRE extends TableReport` | idem | `deno check` |
+| 14.14.1 | Criar `packages/core/src/task-list-re.ts` com `class TaskListRE extends TableReport` | idem | `deno check` |
 | 14.14.2 | Constructor `(report)` | idem | 1 teste |
 | 14.14.3 | ⚠️ `generateIntermediateFormat(): void` — chama `super.generateIntermediateFormat()` | idem | 1 teste |
 | 14.14.4 | ⚠️ Prepara `taskList`: `PropertyList`, `includeAdopted`, `setSorting(sortTasks)`, `filterTaskList`, `sort`, `checkForDuplicates` | idem | 5 testes |
@@ -606,7 +606,7 @@ TOTAL: ~350
 | 14.14.7 | ⚠️ `generateTaskList(taskList, resourceList, null)` | idem | 2 testes |
 | 14.14.8 | Teste: `generateIntermediateFormat` básico | idem | 1 teste |
 | 14.14.9 | Teste: `columns` com `chart` | idem | 1 teste |
-| 14.14.10 | Re-exportar em `packages/report/mod.ts` | idem | `deno check` |
+| 14.14.10 | Re-exportar em `packages/core/src/mod.ts` | idem | `deno check` |
 
 ---
 
@@ -618,7 +618,7 @@ TOTAL: ~350
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 14.15.1 | Criar `packages/report/src/resource-list-re.ts` com `class ResourceListRE extends TableReport` | idem | `deno check` |
+| 14.15.1 | Criar `packages/core/src/resource-list-re.ts` com `class ResourceListRE extends TableReport` | idem | `deno check` |
 | 14.15.2 | Constructor `(report)` | idem | 1 teste |
 | 14.15.3 | ⚠️ `generateIntermediateFormat(): void` — `resourceList` filtrado | idem | 2 testes |
 | 14.15.4 | ⚠️ `taskList` **sem filtro** | idem | 2 testes |
@@ -627,7 +627,7 @@ TOTAL: ~350
 | 14.15.7 | ⚠️ `generateResourceList(resourceList, taskList, null)` | idem | 2 testes |
 | 14.15.8 | Teste: `generateIntermediateFormat` básico | idem | 1 teste |
 | 14.15.9 | Teste: `assignedTaskList` correto | idem | 1 teste |
-| 14.15.10 | Re-exportar em `packages/report/mod.ts` | idem | `deno check` |
+| 14.15.10 | Re-exportar em `packages/core/src/mod.ts` | idem | `deno check` |
 
 ---
 
@@ -640,7 +640,7 @@ TOTAL: ~350
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 14.16.1 | Criar `packages/report/src/account-list-re.ts` com `class AccountListRE extends TableReport` | idem | `deno check` |
+| 14.16.1 | Criar `packages/core/src/account-list-re.ts` com `class AccountListRE extends TableReport` | idem | `deno check` |
 | 14.16.2 | Constructor `(report)` | idem | 1 teste |
 | 14.16.3 | ⚠️ `generateIntermediateFormat(): void` — `accountList` filtrado | idem | 2 testes |
 | 14.16.4 | ⚠️ Para cada coluna: `adjustColumnPeriod(columnDef)`, `generateHeaderCell` | idem | 2 testes |
@@ -663,7 +663,7 @@ TOTAL: ~350
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 14.17.1 | Criar `packages/report/src/text-report.ts` com `class TextReport extends ReportBase` | idem | `deno check` |
+| 14.17.1 | Criar `packages/core/src/text-report.ts` com `class TextReport extends ReportBase` | idem | `deno check` |
 | 14.17.2 | Campos: `header`, `left`, `center`, `right`, `footer` (RichTextIntermediate) | idem | `deno check` |
 | 14.17.3 | Campos: `lWidth`, `cWidth`, `rWidth`, `lPadding`, `cPadding`, `rPadding` | idem | `deno check` |
 | 14.17.4 | ⚠️ `generateIntermediateFormat()` — calcula larguras conforme presença de seções | idem | 5 testes |
@@ -686,7 +686,7 @@ TOTAL: ~350
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 14.18.1.1 | Criar `packages/report/src/export-re.ts` com `class ExportRE extends ReportBase` | idem | `deno check` |
+| 14.18.1.1 | Criar `packages/core/src/export-re.ts` com `class ExportRE extends ReportBase` | idem | `deno check` |
 | 14.18.1.2 | `generateIntermediateFormat()` — vazio | idem | 1 teste |
 | 14.18.1.3 | ⚠️ `to_tjp(): string` — delega para `TjpExportRE` | idem | 2 testes |
 | 14.18.1.4 | ⚠️ `to_mspxml(): string` — delega para `MspXmlRE` | idem | 2 testes |
@@ -695,7 +695,7 @@ TOTAL: ~350
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 14.18.2.1 | Criar `packages/report/src/tjp-export-re.ts` com `class TjpExportRE` | idem | `deno check` |
+| 14.18.2.1 | Criar `packages/core/src/tjp-export-re.ts` com `class TjpExportRE` | idem | `deno check` |
 | 14.18.2.2 | Constructor `(report)` | idem | 1 teste |
 | 14.18.2.3 | ⚠️ `to_tjp(): string` — prepara `resourceList` e `taskList` filtrados | idem | 3 testes |
 | 14.18.2.4 | ⚠️ `getBookings()` — coleta bookings por cenário | idem | 3 testes |
@@ -715,7 +715,7 @@ TOTAL: ~350
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 14.18.3.1 | Criar `packages/report/src/msp-xml-re.ts` com `class MspXmlRE` | idem | `deno check` |
+| 14.18.3.1 | Criar `packages/core/src/msp-xml-re.ts` com `class MspXmlRE` | idem | `deno check` |
 | 14.18.3.2 | Constructor `(report)` | idem | 1 teste |
 | 14.18.3.3 | ⚠️ `to_mspxml(): string` — `XMLDocument` com header, `Project` com `xmlns` | idem | 3 testes |
 | 14.18.3.4 | ⚠️ `generateProjectAttributes`, `generateTasks`, `generateResources`, `generateAssignments` | idem | 6 testes |
@@ -738,7 +738,7 @@ TOTAL: ~350
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 14.19.1.1 | Criar `packages/report/src/i-calendar.ts` com `class Person` | idem | `deno check` |
+| 14.19.1.1 | Criar `packages/core/src/i-calendar.ts` com `class Person` | idem | `deno check` |
 | 14.19.1.2 | `class Component` com `to_s()`, `dateTime`, `foldLines` | idem | `deno check` |
 | 14.19.1.3 | `class Todo extends Component` — `priority`, `percentComplete` | idem | `deno check` |
 | 14.19.1.4 | `class Event extends Component` | idem | `deno check` |
@@ -752,7 +752,7 @@ TOTAL: ~350
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 14.19.2.1 | Criar `packages/report/src/i-cal-report.ts` com `class ICalReport extends ReportBase` | idem | `deno check` |
+| 14.19.2.1 | Criar `packages/core/src/i-cal-report.ts` com `class ICalReport extends ReportBase` | idem | `deno check` |
 | 14.19.2.2 | ⚠️ `generateIntermediateFormat()` — `taskList` filtrado | idem | 3 testes |
 | 14.19.2.3 | Para cada task: cria `Todo` | idem | 2 testes |
 | 14.19.2.4 | Se tem responsible com email, `setOrganizer` | idem | 2 testes |
@@ -773,7 +773,7 @@ TOTAL: ~350
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 14.20.1.1 | Criar `packages/report/src/niku-report.ts` com `class NikuReport extends ReportBase` | idem | `deno check` |
+| 14.20.1.1 | Criar `packages/core/src/niku-report.ts` com `class NikuReport extends ReportBase` | idem | `deno check` |
 | 14.20.1.2 | ⚠️ `generateIntermediateFormat()` — `computeResourceTotals()`, `collectProjects()`, `computeProjectAllocations()` | idem | 5 testes |
 | 14.20.1.3 | ⚠️ `to_html()`, `to_niku()`, `to_csv()` | idem | 4 testes |
 | 14.20.1.4 | Teste: `computeResourceTotals` | idem | 1 teste |
@@ -784,7 +784,7 @@ TOTAL: ~350
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 14.20.2.1 | Criar `packages/report/src/trace-report.ts` com `class TraceReport extends ReportBase` | idem | `deno check` |
+| 14.20.2.1 | Criar `packages/core/src/trace-report.ts` com `class TraceReport extends ReportBase` | idem | `deno check` |
 | 14.20.2.2 | ⚠️ `generateIntermediateFormat()` — `headers = ['Date', ...]` | idem | 2 testes |
 | 14.20.2.3 | Se arquivo existe, lê | idem | 2 testes |
 | 14.20.2.4 | ⚠️ Se headers mudaram, `TableColumnSorter` (Fase 14.5) | idem | 3 testes |
@@ -797,12 +797,12 @@ TOTAL: ~350
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 14.20.3.1 | Criar `packages/report/src/tag-file.ts` com `class TagFile extends ReportBase` | idem | `deno check` |
+| 14.20.3.1 | Criar `packages/core/src/tag-file.ts` com `class TagFile extends ReportBase` | idem | `deno check` |
 | 14.20.3.2 | ⚠️ `generateIntermediateFormat()` — adiciona resources, tasks, reports como `TagFileEntry` | idem | 4 testes |
 | 14.20.3.3 | ⚠️ `to_ctags(): string` | idem | 2 testes |
 | 14.20.3.4 | Teste: coleta resources/tasks/reports | idem | 1 teste |
 | 14.20.3.5 | Teste: `to_ctags` | idem | 1 teste |
-| 14.20.3.6 | Re-exportar `NikuReport`, `TraceReport`, `TagFile` em `packages/report/mod.ts` | idem | `deno check` |
+| 14.20.3.6 | Re-exportar `NikuReport`, `TraceReport`, `TagFile` em `packages/core/src/mod.ts` | idem | `deno check` |
 
 ---
 
@@ -818,7 +818,7 @@ TOTAL: ~350
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 14.21.1.1 | Criar `packages/report/src/navigator.ts` com `class NavigatorElement` | idem | `deno check` |
+| 14.21.1.1 | Criar `packages/core/src/navigator.ts` com `class NavigatorElement` | idem | `deno check` |
 | 14.21.1.2 | Campos: `parent`, `label`, `url`, `elements: NavigatorElement[]`, `current: boolean` | idem | `deno check` |
 | 14.21.1.3 | Constructor `(parent, label?, url?)` | idem | 3 testes |
 | 14.21.1.4 | ⚠️ `to_html(html?: XMLElementLike): XMLElementLike` | idem | 3 testes |
@@ -840,7 +840,7 @@ TOTAL: ~350
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 14.21.3.1 | ⚠️ Completar `to_html(args)` em `RTFNavigator` — `id = args.id` obrigatório | `packages/richtext/src/handlers/rtf-navigator.ts` | 3 testes |
+| 14.21.3.1 | ⚠️ Completar `to_html(args)` em `RTFNavigator` — `id = args.id` obrigatório | `packages/core/src/richtext/handlers/rtf-navigator.ts` | 3 testes |
 | 14.21.3.2 | `navigator = project.navigators[id]`; se não existe, `error` | idem | 2 testes |
 | 14.21.3.3 | Retorna `navigator.to_html()` | idem | 2 testes |
 | 14.21.3.4 | Remover `NotYetImplementedError` | idem | 1 teste |
@@ -861,7 +861,7 @@ TOTAL: ~350
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 14.22.1.1 | Criar `packages/report/src/painter-min.ts` com `class PainterMin` | idem | `deno check` |
+| 14.22.1.1 | Criar `packages/core/src/painter-min.ts` com `class PainterMin` | idem | `deno check` |
 | 14.22.1.2 | Campos: `width`, `height`, `private elements` | idem | `deno check` |
 | 14.22.1.3 | ⚠️ `group(attrs): XMLElementLike` | idem | 2 testes |
 | 14.22.1.4 | ⚠️ `line(x1, y1, x2, y2, attrs): XMLElementLike` | idem | 2 testes |
@@ -876,7 +876,7 @@ TOTAL: ~350
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 14.22.2.1 | Criar `packages/report/src/chart-plotter.ts` com `class ChartPlotter` | idem | `deno check` |
+| 14.22.2.1 | Criar `packages/core/src/chart-plotter.ts` com `class ChartPlotter` | idem | `deno check` |
 | 14.22.2.2 | Campos: `width`, `height`, `data`, margens, `legendGap`, `markerWidth`, ... | idem | `deno check` |
 | 14.22.2.3 | Campos: `labels`, `yData`, `xData`, `dataType`, `xMinDate`, `xMaxDate`, `yMinDate`, `yMaxDate`, `yMinVal`, `yMaxVal` | idem | `deno check` |
 | 14.22.2.4 | ⚠️ `generate(): void` | idem | 2 testes |
@@ -893,7 +893,7 @@ TOTAL: ~350
 | 14.22.2.15 | Teste: `to_svg` com 1 série | idem | 1 teste |
 | 14.22.2.16 | Teste: `to_svg` com 2 séries | idem | 1 teste |
 | 14.22.2.17 | Teste: `to_svg` com datas | idem | 1 teste |
-| 14.22.2.18 | Re-exportar em `packages/report/mod.ts` | idem | `deno check` |
+| 14.22.2.18 | Re-exportar em `packages/core/src/mod.ts` | idem | `deno check` |
 
 ---
 
@@ -913,11 +913,11 @@ TOTAL: ~350
 | 14.23.3 | Serializar em `reports.golden.json` | idem | JSON válido |
 | 14.23.4 | Criar `scripts/golden/reports-syntax-correct.rb` — itera `TestSuite/Reports/` | idem | roda |
 | 14.23.5 | Task `golden:generate` atualizada em `deno.jsonc` | `deno.jsonc` | roda |
-| 14.23.6 | Criar `packages/report/tests/golden/reports_golden_test.ts` | idem | verde |
+| 14.23.6 | Criar `packages/core/tests/golden/reports_golden_test.ts` | idem | verde |
 | 14.23.7 | Para cada caso: constrói `Project`, cria `Report` equivalente, chama `report.generate()` | idem | ≥ 60 casos |
 | 14.23.8 | Comparação HTML (normalizado, sem whitespace) | idem | 3 testes |
 | 14.23.9 | Normalização: ordenar atributos, colapsar whitespace, substituir IDs gerados | idem | 4 testes |
-| 14.23.10 | Cobertura ≥ 60 casos; commitar JSON em `packages/report/tests/golden/` | idem | versionado |
+| 14.23.10 | Cobertura ≥ 60 casos; commitar JSON em `packages/core/tests/golden/` | idem | versionado |
 | 14.23.11 | Teste de regressão: rodar novamente e comparar | idem | 1 teste |
 | 14.23.12 | Smoke test: `Report.generate()` retorna string (ADR 026) | idem | 1 teste |
 
@@ -931,9 +931,9 @@ TOTAL: ~350
 |---|---|---|
 | 14.24.1 | `deno task check-all` verde | exit 0 |
 | 14.24.2 | `deno task golden:generate && deno task test` verde | exit 0 |
-| 14.24.3 | `grep -r "NotYetImplementedError" packages/report/src/` — apenas stubs de StatusSheet/TimeSheet (Fase 18) | ≤ 2 ocorrências |
+| 14.24.3 | `grep -r "NotYetImplementedError" packages/core/src/` — apenas stubs de StatusSheet/TimeSheet (Fase 18) | ≤ 2 ocorrências |
 | 14.24.4 | ADR 026 criada e commitada | git log |
-| 14.24.5 | `Report`, `ReportBase`, `TableReport`, `TaskListRE`, `ResourceListRE`, `AccountListRE`, `TextReport`, `ExportRE`, `TjpExportRE`, `MspXmlRE`, `ICalReport`, `NikuReport`, `TraceReport`, `TagFile`, `Navigator`, `ChartPlotter`, `CSVFile`, `ReportContext` exportados em `packages/report/mod.ts` | `deno check` |
+| 14.24.5 | `Report`, `ReportBase`, `TableReport`, `TaskListRE`, `ResourceListRE`, `AccountListRE`, `TextReport`, `ExportRE`, `TjpExportRE`, `MspXmlRE`, `ICalReport`, `NikuReport`, `TraceReport`, `TagFile`, `Navigator`, `ChartPlotter`, `CSVFile`, `ReportContext` exportados em `packages/core/src/mod.ts` | `deno check` |
 | 14.24.6 | `RTFNavigator`, `RTFReport`, `RTFReportLink` completos (stubs Fase 12 removidos) | 3 testes |
 | 14.24.7 | `tests/integration/smoke_after_phase_14_test.ts` — cria `Project`, gera `Report` HTML; verifica Fase 13 (Markdown) | 1 teste |
 | 14.24.8 | Auditoria: cada subfase do plano `fase-14-relatorios.md` tem tarefas correspondentes | grep |

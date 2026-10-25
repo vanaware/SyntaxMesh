@@ -65,7 +65,7 @@ O SyntaxMesh suporta dois formatos de markup para conteúdo:
 
 ### RichText (legado)
 
-O formato RichText é usado em arquivos `.tjp` do TaskJuggler. O pacote `@syntaxmesh/richtext` implementa fielmente este formato para garantir compatibilidade com projetos existentes.
+O formato RichText é usado em arquivos `.tjp` do TaskJuggler. O pacote `@syntaxmesh/core` implementa fielmente este formato para garantir compatibilidade com projetos existentes.
 
 ```text
 project "Meu Projeto" {
@@ -77,7 +77,7 @@ project "Meu Projeto" {
 
 ### Markdown (going-forward)
 
-O Markdown é o formato recomendado para novo conteúdo no SyntaxMesh. O pacote `@syntaxmesh/markdown` implementa a conversão e processamento deste formato.
+O Markdown é o formato recomendado para novo conteúdo no SyntaxMesh. O pacote `@syntaxmesh/core` implementa a conversão e processamento deste formato.
 
 ```text
 # Meu Projeto
@@ -93,5 +93,5 @@ Conversores entre RichText e Markdown serão implementados em fases futuras para
 
 | Formato | Pacote | Status | Uso |
 |---|---|---|---|
-| RichText | `@syntaxmesh/richtext` | Ativo (legado) | Arquivos `.tjp` existentes |
-| Markdown | `@syntaxmesh/markdown` | Ativo (going-forward) | Novo conteúdo nativo |
+| RichText | `@syntaxmesh/core` | Ativo (legado) | Arquivos `.tjp` existentes |
+| Markdown | `@syntaxmesh/core` | Ativo (going-forward) | Novo conteúdo nativo |

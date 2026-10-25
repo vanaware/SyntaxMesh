@@ -223,7 +223,7 @@ Responsável por:
 O Parser deve transformar texto em AST e depois em Core Model.
 
 ```text
-packages/parser/src/
+packages/core/src/
 ├── mod.ts
 │
 ├── language/
@@ -293,7 +293,7 @@ Responsável por:
 ##### Divisão detalhada de Report
 
 ```text
-packages/report/src/
+packages/core/src/
 ├── mod.ts
 │
 ├── model/
@@ -348,7 +348,7 @@ Utiliza o @syntaxmesh/worker-db e algumas funções ficarão em @syntaxmesh/util
 A hierarquia abaixo pode sofrer mudanças para acomodar as funções em utils
 
 ```text
-packages/storage/src
+packages/core/src/storage/src
 ├── mod.ts
 ├── types.ts
 │
@@ -375,7 +375,7 @@ packages/storage/src
 Crie um wrapper para o `worker-db`:
 
 ```text
-packages/storage/src/db/worker-db-client.ts
+packages/core/src/storage/db/worker-db-client.ts
 ```
 
 Assim o restante do código não depende diretamente da biblioteca.
@@ -456,7 +456,7 @@ packages/ui/src/
 Essa parte é crítica e deve ficar bem isolada.
 
 ```text
-packages/language/src
+packages/core/src/i18n/src
 ├── types.ts
 ├── canonical.ts
 ├── registry.ts
@@ -516,22 +516,22 @@ Cada arquivo contém apenas um idioma.
 ### Divisão detalhada de RichText e Markdown
 
 ```text
-packages/richtext/src
+packages/core/src/richtext/src
 ├── mod.ts
 ├── parser.ts
 ├── serializer.ts
 └── types.ts
 
-packages/markdown/src
+packages/core/src/markdown/src
 ├── mod.ts
 ├── parser.ts
 ├── serializer.ts
 └── types.ts
 ```
 
-O `@syntaxmesh/richtext` implementa o formato RichText do TaskJuggler (similar a MediaWiki markup) para compatibilidade com arquivos `.tjp` existentes.
+O `@syntaxmesh/core` implementa o formato RichText do TaskJuggler (similar a MediaWiki markup) para compatibilidade com arquivos `.tjp` existentes.
 
-O `@syntaxmesh/markdown` implementa o formato Markdown como formato going-forward para conteúdo nativo do SyntaxMesh.
+O `@syntaxmesh/core` implementa o formato Markdown como formato going-forward para conteúdo nativo do SyntaxMesh.
 
 Ambos coexistem. O RichText será depreciado lentamente em favor do Markdown para novos projetos. Conversores entre os formatos serão implementados em fases futuras.
 

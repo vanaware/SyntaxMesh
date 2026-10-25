@@ -59,7 +59,7 @@ String / XMLElement tree
 
 ### Por que manter RichText?
 
-Decisão registrada no ADR 009 (Fase 1). `.tjp` originais do TaskJuggler usam MediaWiki markup. Se substituíssemos por Markdown, `.tjp` existentes quebrariam. RichText é mantido para **compatibilidade total**. Um `@syntaxmesh/markdown` (Fase 13) coexiste para conteúdo nativo futuro.
+Decisão registrada no ADR 009 (Fase 1). `.tjp` originais do TaskJuggler usam MediaWiki markup. Se substituíssemos por Markdown, `.tjp` existentes quebrariam. RichText é mantido para **compatibilidade total**. Um `@syntaxmesh/core/markdown` (Fase 13) coexiste para conteúdo nativo futuro.
 
 ### Reuso de `TextParser`
 
@@ -166,7 +166,7 @@ O `RichTextElement` é o nó da árvore. Cada nó tem `category`, `children`, `d
 
 O `to_html` retorna uma **árvore de `XMLElement`** (Fase 17). Como `XMLElement` ainda não existe, **nesta fase** `to_html` retorna uma string HTML **manualmente construída**.
 
-**Alternativa:** definir interface `XMLElementLike` em `packages/richtext/src/xml-like.ts`:
+**Alternativa:** definir interface `XMLElementLike` em `packages/core/src/richtext/xml-like.ts`:
 
 ```ts
 interface XMLElementLike {
@@ -340,8 +340,8 @@ Criar `XMLElementLike`, `XMLTextLike`, `XMLCommentLike`, `XMLBlobLike`.
 
 #### Arquivos
 
-- `packages/richtext/src/xml-like.ts`
-- `packages/richtext/tests/xml-like_test.ts`
+- `packages/core/src/richtext/xml-like.ts`
+- `packages/core/tests/richtext/xml-like_test.ts`
 
 #### Requisitos
 
@@ -398,8 +398,8 @@ Implementar `RichTextImage`.
 
 #### Arquivos
 
-- `packages/richtext/src/rich-text-image.ts`
-- `packages/richtext/tests/rich-text-image_test.ts`
+- `packages/core/src/richtext/rich-text-image.ts`
+- `packages/core/tests/richtext/rich-text-image_test.ts`
 
 #### Requisitos
 
@@ -437,8 +437,8 @@ Implementar `RichTextElement` com `to_s`, `to_html`, `to_tagged`, `cleanUp`, `em
 
 #### Arquivos
 
-- `packages/richtext/src/rich-text-element.ts`
-- `packages/richtext/tests/rich-text-element_test.ts`
+- `packages/core/src/richtext/rich-text-element.ts`
+- `packages/core/tests/richtext/rich-text-element_test.ts`
 
 #### Requisitos
 
@@ -532,8 +532,8 @@ Implementar `RichTextIntermediate`.
 
 #### Arquivos
 
-- `packages/richtext/src/rich-text-intermediate.ts`
-- `packages/richtext/tests/rich-text-intermediate_test.ts`
+- `packages/core/src/richtext/rich-text-intermediate.ts`
+- `packages/core/tests/richtext/rich-text-intermediate_test.ts`
 
 #### Requisitos
 
@@ -592,8 +592,8 @@ Implementar `RichTextScanner extends Scanner`.
 
 #### Arquivos
 
-- `packages/richtext/src/rich-text-scanner.ts`
-- `packages/richtext/tests/rich-text-scanner_test.ts`
+- `packages/core/src/richtext/rich-text-scanner.ts`
+- `packages/core/tests/richtext/rich-text-scanner_test.ts`
 
 #### Requisitos
 
@@ -662,9 +662,9 @@ Implementar `RichTextParser` + `RichTextSyntaxRules`.
 
 #### Arquivos
 
-- `packages/richtext/src/rich-text-parser.ts`
-- `packages/richtext/src/rich-text-syntax-rules.ts`
-- `packages/richtext/tests/rich-text-parser_test.ts`
+- `packages/core/src/richtext/rich-text-parser.ts`
+- `packages/core/src/richtext/rich-text-syntax-rules.ts`
+- `packages/core/tests/richtext/rich-text-parser_test.ts`
 
 #### Requisitos
 
@@ -751,8 +751,8 @@ Implementar `TOCEntry`.
 
 #### Arquivos
 
-- `packages/richtext/src/toc-entry.ts`
-- `packages/richtext/tests/toc-entry_test.ts`
+- `packages/core/src/richtext/toc-entry.ts`
+- `packages/core/tests/richtext/toc-entry_test.ts`
 
 #### Requisitos
 
@@ -794,8 +794,8 @@ Implementar `TableOfContents`.
 
 #### Arquivos
 
-- `packages/richtext/src/table-of-contents.ts`
-- `packages/richtext/tests/table-of-contents_test.ts`
+- `packages/core/src/richtext/table-of-contents.ts`
+- `packages/core/tests/richtext/table-of-contents_test.ts`
 
 #### Requisitos
 
@@ -834,8 +834,8 @@ Implementar `RichTextSnip`.
 
 #### Arquivos
 
-- `packages/richtext/src/rich-text-snip.ts`
-- `packages/richtext/tests/rich-text-snip_test.ts`
+- `packages/core/src/richtext/rich-text-snip.ts`
+- `packages/core/tests/richtext/rich-text-snip_test.ts`
 
 #### Requisitos
 
@@ -882,8 +882,8 @@ Implementar `RichTextDocument` (abstract).
 
 #### Arquivos
 
-- `packages/richtext/src/rich-text-document.ts`
-- `packages/richtext/tests/rich-text-document_test.ts`
+- `packages/core/src/richtext/rich-text-document.ts`
+- `packages/core/tests/richtext/rich-text-document_test.ts`
 
 #### Requisitos
 
@@ -946,7 +946,7 @@ Implementar `RichTextFunctionHandler`.
 
 #### Arquivos
 
-- `packages/richtext/src/handlers/function-handler.ts`
+- `packages/core/src/richtext/handlers/function-handler.ts`
 
 #### Requisitos
 
@@ -982,8 +982,8 @@ Implementar `RichTextFunctionExample`.
 
 #### Arquivos
 
-- `packages/richtext/src/handlers/function-example.ts`
-- `packages/richtext/tests/function-example_test.ts`
+- `packages/core/src/richtext/handlers/function-example.ts`
+- `packages/core/tests/richtext/function-example_test.ts`
 
 #### Requisitos
 
@@ -1029,7 +1029,7 @@ Implementar `RTFWithQuerySupport`.
 
 #### Arquivos
 
-- `packages/richtext/src/handlers/rtf-with-query-support.ts`
+- `packages/core/src/richtext/handlers/rtf-with-query-support.ts`
 
 #### Requisitos
 
@@ -1059,8 +1059,8 @@ Implementar `RTFQuery`.
 
 #### Arquivos
 
-- `packages/richtext/src/handlers/rtf-query.ts`
-- `packages/richtext/tests/rtf-query_test.ts`
+- `packages/core/src/richtext/handlers/rtf-query.ts`
+- `packages/core/tests/richtext/rtf-query_test.ts`
 
 #### Requisitos
 
@@ -1113,8 +1113,8 @@ Stub.
 
 #### Arquivos
 
-- `packages/richtext/src/handlers/rtf-report.ts`
-- `packages/richtext/tests/rtf-report_test.ts`
+- `packages/core/src/richtext/handlers/rtf-report.ts`
+- `packages/core/tests/richtext/rtf-report_test.ts`
 
 #### Requisitos
 
@@ -1153,8 +1153,8 @@ Stub.
 
 #### Arquivos
 
-- `packages/richtext/src/handlers/rtf-report-link.ts`
-- `packages/richtext/tests/rtf-report-link_test.ts`
+- `packages/core/src/richtext/handlers/rtf-report-link.ts`
+- `packages/core/tests/richtext/rtf-report-link_test.ts`
 
 #### Requisitos
 
@@ -1191,10 +1191,10 @@ Implementar ambos.
 
 #### Arquivos
 
-- `packages/richtext/src/handlers/rtf-navigator.ts`
-- `packages/richtext/src/handlers/rtf-handlers.ts`
-- `packages/richtext/tests/rtf-navigator_test.ts`
-- `packages/richtext/tests/rtf-handlers_test.ts`
+- `packages/core/src/richtext/handlers/rtf-navigator.ts`
+- `packages/core/src/richtext/handlers/rtf-handlers.ts`
+- `packages/core/tests/richtext/rtf-navigator_test.ts`
+- `packages/core/tests/richtext/rtf-handlers_test.ts`
 
 #### Requisitos
 
@@ -1248,12 +1248,12 @@ Implementar `RichText` e `RichTextFactory`.
 
 #### Arquivos
 
-- `packages/richtext/src/rich-text.ts`
-- `packages/richtext/src/factory.ts`
-- `packages/richtext/mod.ts` (exports)
-- `packages/parser/src/parser/project-file-parser.ts` (integração)
-- `packages/richtext/tests/rich-text_test.ts`
-- `packages/richtext/tests/factory_test.ts`
+- `packages/core/src/richtext/rich-text.ts`
+- `packages/core/src/richtext/factory.ts`
+- `packages/core/src/richtext/mod.ts` (exports)
+- `packages/core/src/parser/project-file-parser.ts` (integração)
+- `packages/core/tests/richtext/rich-text_test.ts`
+- `packages/core/tests/richtext/factory_test.ts`
 
 #### Requisitos
 
@@ -1341,8 +1341,8 @@ Script Ruby processa arquivos de teste de markup e serializa HTML/tagged/plain.
 
 - `scripts/golden/richtext.rb`
 - `scripts/golden/README.md` (atualizar)
-- `packages/richtext/tests/golden/richtext.golden.json`
-- `packages/richtext/tests/golden/richtext_golden_test.ts`
+- `packages/core/tests/richtext/golden/richtext.golden.json`
+- `packages/core/tests/richtext/golden/richtext_golden_test.ts`
 - `deno.jsonc` — atualizar `golden:generate`
 
 #### Requisitos

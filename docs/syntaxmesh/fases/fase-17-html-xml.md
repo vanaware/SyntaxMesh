@@ -1114,10 +1114,10 @@ Migrar.
 
 #### Arquivos
 
-- `packages/richtext/src/xml-like.ts` — manter `XMLElementLike` interface.
-- `packages/richtext/src/rich-text-element.ts` — atualizar imports.
-- `packages/report/src/**` — atualizar imports.
-- `packages/report/src/gantt/**` — atualizar imports.
+- `packages/core/src/richtext/xml-like.ts` — manter `XMLElementLike` interface.
+- `packages/core/src/richtext/rich-text-element.ts` — atualizar imports.
+- `packages/core/src/**` — atualizar imports.
+- `packages/core/src/gantt/**` — atualizar imports.
 - `packages/core/tests/**` — atualizar imports.
 
 #### Requisitos
@@ -1154,8 +1154,8 @@ Migrar.
 
 #### Arquivos
 
-- `packages/report/src/html-document.ts` (remover)
-- `packages/report/src/report.ts` (atualizar imports)
+- `packages/core/src/html-document.ts` (remover)
+- `packages/core/src/report.ts` (atualizar imports)
 - Fase 12, 14 — imports.
 
 #### Requisitos
@@ -1182,8 +1182,8 @@ Migrar.
 
 #### Arquivos
 
-- `packages/report/src/i-calendar.ts` (remover)
-- `packages/report/src/i-cal-report.ts` (atualizar imports)
+- `packages/core/src/i-calendar.ts` (remover)
+- `packages/core/src/i-cal-report.ts` (atualizar imports)
 
 #### Requisitos
 
@@ -1208,7 +1208,7 @@ Migrar.
 
 #### Arquivos
 
-- `packages/report/src/chart-plotter.ts` (atualizar imports)
+- `packages/core/src/chart-plotter.ts` (atualizar imports)
 
 #### Requisitos
 

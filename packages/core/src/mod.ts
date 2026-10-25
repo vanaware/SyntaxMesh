@@ -35,4 +35,9 @@ export * from "./utils/project-object-id.ts";
 export * from "./finance/mod.ts";
 
 // 9.9.14 — export TaskJuggler
-export { TaskJuggler } from "./taskjuggler.ts";
+export { TaskJuggler, } from "./taskjuggler.ts";
+
+// Fase 10 — lexer e parser (port de TextParser/*)
+export * from "./lexer/mod.ts";
+export * from "./parser/mod.ts";
+export { SourceFileInfo, } from "./source-file-info.ts";
