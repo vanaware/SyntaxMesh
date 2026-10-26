@@ -336,4 +336,26 @@ Criado como subfase 24.0. Conteúdo esperado:
 
 ---
 
+## Adendo Fase 10 Complemento: image store OPFS (#5 RDO)
+
+> **Origem:** `fase-10-complemento1.md` §6.6 (Storage). A resolução de caminho relativo (OPFS primeiro, fallback `dataDirs`) é consumida pela Fase 13 (adendo 13.14) e pela Fase 14 (`RdoReport`).
+
+```
+[ ] 24.14  image-store.ts                        —  0/4
+[ ] 24.15  Imagens em export/backup              —  0/2
+[ ] 24.16  Integração Markdown/RDO (doc)         —  0/1
+```
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 24.14.1 | Criar `storage/projects/image-store.ts`: `write(projectId, relPath, Blob)`, `read(projectId, relPath): Blob|null`, `delete`, `list` — via `FileStore` do `@vanaware/workerdb` (**não** tocar OPFS direto) | `storage/projects/image-store.ts` | 4 testes com `fakeOpfs()` |
+| 24.14.2 | Raiz por projeto (`projects/<id>/`); caminhos relativos normalizados (sem `..`, sem absolutos) | idem | 2 testes |
+| 24.14.3 | expor `image-store` em `mod.ts` | `storage/mod.ts` | `deno check` |
+| 24.14.4 | Sem `any`; API `async`; erros `StorageError`/`NotFoundError` | — | lint |
+| 24.15.1 | Imagens entram no export/backup do projeto junto dos `.tjp` | `storage/import-export.ts` | 1 teste |
+| 24.15.2 | `DATA_SCHEMA_VERSION`: imagens não exigem migração (FS, não KV) — registrar em ADR 030 | decisoes/… | — |
+| 24.16.1 | Contrato: `FileStore` injetável no renderizador Markdown (Fase 13, tarefa 13.14.2) e no `RdoReport` (Fase 14, tarefa 14.25.9) | doc no plano da fase | — |
+
+---
+
 **Fim do arquivo de tarefas da Fase 19.**

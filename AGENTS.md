@@ -54,15 +54,17 @@ This project follows a **21-phase development plan** (previously 8 phases). The 
 |---|---|---|
 | Fase 1 — Fundação e Workspace Deno | Esqueleto do monorepo, quality pipeline, ADRs | ✅ Concluída |
 | Fase 2 — Tempo e Geometria | Base temporal do motor. Tudo depende disso. | ✅ Concluída |
-| Fase 3 — Modelo de Atributos | Sistema de tipos de atributos com herança e scenario-specific. | ⬜ Não iniciada |
-| Fase 4 — Árvore de Propriedades | `PropertyTreeNode`, `PropertySet`, `ScenarioData`, `Scenario`, `PTNProxy`. | ⬜ Não iniciada |
-| Fase 5 — Entidades Concretas | `Task`, `Resource`, `Account`, `Shift`, `Report` (esqueleto). | ⬜ Não iniciada |
+| Fase 3 — Modelo de Atributos | Sistema de tipos de atributos com herança e scenario-specific. | ✅ Concluída |
+| Fase 4 — Árvore de Propriedades | `PropertyTreeNode`, `PropertySet`, `ScenarioData`, `Scenario`, `PTNProxy`. | ✅ Concluída |
+| Fase 5 — Entidades Concretas | `Task`, `Resource`, `Account`, `Shift`, `Report` (esqueleto). | ✅ Concluída |
 | Fase 6 — Scoreboard e Estruturas Base | Scoreboard bit-encoded + limites + shifts. | ✅ Concluída |
-| Fase 7 — Scheduler Core | O coração. Loop slot-a-slot. | 🟡 Em andamento (7.2 TaskDependency concluída) |
-| Fase 8 — Sistema Financeiro | Custos, receitas, balanço. **Alta prioridade.** | ⬜ Não iniciada |
-| Fase 8.1 — Nova funcionalidade de custos | Material, charge estendido, booking estendido, tracking scenario. | ✅ Concluída |
-| Fase 9 — Orquestrador e Cache | `Project`, `TaskJuggler`, `DataCache`, `PropertyList`, `MessageHandler`, `Log`. | ⬜ Não iniciada |
-| Fase 10 — Parser e Linguagem | Lexer, parser FSM, gramática TJP, i18n. | ⬜ Não iniciada |
+| Fase 7 — Scheduler Core | O coração. Loop slot-a-slot. | ✅ Concluída (gap de datas em `Project.schedule()` — ver CURRENT.md) |
+| Fase 8 — Sistema Financeiro | Custos, receitas, balanço. **Alta prioridade.** | ✅ Concluída |
+| Fase 8.1 — Nova funcionalidade de custos | Material, charge estendido, booking estendido, tracking scenario. | ✅ Concluída (parser de `material` pendente → Fase 10 Complemento) |
+| Fase 8.2 — Modelo Contábil Estendido | Reescrita da agregação contábil (CostEvent, chargesets múltiplos, precedência). | ✅ Concluída |
+| Fase 9 — Orquestrador e Cache | `Project`, `TaskJuggler`, `DataCache`, `PropertyList`, `MessageHandler`, `Log`. | ✅ Concluída |
+| Fase 10 — Parser e Linguagem | Lexer, parser FSM, gramática TJP, i18n. | ✅ Concluída (2026-10-26) |
+| Fase 10 Complemento — Extensões RDO/orçamento | `material` no parser, `note`/`journal` estendidos, `picture`/`format`/`rdoreport`/`breakdownreport`, `timebasis` (#6/#6a). | ⬜ Não iniciada (`fase-10-complemento-tarefas.md` + adendos 13/14/16/18/19/20/21) |
 | Fase 11 — Expressões Lógicas e Queries | Motor de expressões lógicas e ponte para reports. | ⬜ Não iniciada |
 | Fase 12 — RichText (compatibilidade TJP) | Manter Markup MediaWiki para compatibilidade total com `.tjp`. | ⬜ Não iniciada |
 | Fase 13 — Markdown (novo, futuro) | Formato going-forward. Wrapper sobre `@deno/gfm` + extensões. | ⬜ Não iniciada |
@@ -71,14 +73,15 @@ This project follows a **21-phase development plan** (previously 8 phases). The 
 | Fase 16 — Apoio | Estruturas auxiliares. | ⬜ Não iniciada |
 | Fase 17 — HTML/XML | Geradores de HTML/XML. | ⬜ Não iniciada |
 | Fase 18 — Time/Status Sheets | Time sheets e status sheets. | ⬜ Não iniciada |
-| Fase 19 — Storage | Persistência local via `@syntaxmesh/worker-db`. | ⬜ Não iniciada |
+| Fase 19 — Storage | Persistência local via `@vanaware/workerdb` (ADR 030). | ⬜ Não iniciada |
 | Fase 20 — PWA + UI | Service Worker, manifest, Preact + Signals + BeerCSS. | ⬜ Não iniciada |
 | Fase 21 — Compatibilidade e Qualidade | Golden tests, corpus multilíngue, performance, release. | ⬜ Não iniciada |
 
 **Arquivos de referência:**
 - `docs/syntaxmesh/fases/plano.md` — plano canônico de 21 fases.
-- `docs/syntaxmesh/fases/fase-N-descricaoo.md` — plano da fase.
-- `docs/syntaxmesh/fases/fase-N-descricaoo-tarefas.md` — tarefas atômicas com testes unitários.
+- `docs/syntaxmesh/fases/fase-N-descricao.md` — plano da fase.
+- `docs/syntaxmesh/fases/fase-N-descricao-tarefas.md` — tarefas atômicas com testes unitários.
+- `docs/syntaxmesh/fases/` + `docs/syntaxmesh/decisoes/` — **fonte da verdade** de escopo e andamento; demais docs de `docs/syntaxmesh/` são referência histórica.
 - `CURRENT.md` — resumo do estado atual e instruções de contexto.
 
 ## 9. Golden Tests
@@ -87,7 +90,7 @@ Golden tests are generated from Ruby scripts (`scripts/golden/*.rb`) and committ
 
 ## 10. Architecture Decision Records (ADRs)
 
-All important architectural decisions are documented as ADRs in `docs/syntaxmesh/decisoes/` (ADRs 001–029). Consult `docs/syntaxmesh/decisoes/README.md` for the full list. Create a new ADR for any significant architectural decision.
+All important architectural decisions are documented as ADRs in `docs/syntaxmesh/decisoes/` (ADRs 001–031). Consult `docs/syntaxmesh/decisoes/README.md` for the full list. Create a new ADR for any significant architectural decision.
 
 ## 11. Ruby Source Files
 

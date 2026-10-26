@@ -1100,4 +1100,41 @@ TOTAL: ~350
 
 ---
 
+## 14.25 — Adendo Fase 10 Complemento: `BreakdownReport`, `RdoReport` e colunas novas
+
+> **Origem:** `fase-10-complemento1.md` §5 (#4 `breakdownreport`) e §6 (#5 `rdoreport`); `fase-10-complemento2.md` §7.4 (coluna `timebasis`). O parser (Bloco C3.5–C3.7 de `fase-10-complemento-tarefas.md`) apenas **reconhece** a sintaxe; a **execução** dos relatórios é aqui. Depende do Journal estendido (adendo Fase 16).
+
+### 14.25.1 — `BreakdownReport` (#4)
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 14.25.1 | Criar `BreakdownReport extends ReportBase` (`report/reports/breakdown-report.ts`), registrado no dispatch de reports | `report/reports/breakdown-report.ts` | teste de registro |
+| 14.25.2 | `groupby account` (default): por conta, listar recursos (esforço + custo via `chargeset`), materiais (quantidade + `unitPrice` + total) e charges (modo + valor) + total da conta — consome `AccountScenario.turnoverByType` (8.2) e `Material`/`MaterialAllocation` (8.1/C1) | idem | 3 testes |
+| 14.25.3 | `groupby task`: idem por tarefa (recursos/materiais/charges alocados + total) | idem | 2 testes |
+| 14.25.4 | Filtros `hidetask`/`hideaccount`/`hideresource`/`hidejournalentry <expr>` via engine da Fase 11; `period` default = período do projeto | idem | 2 testes |
+| 14.25.5 | Colunas `name`, `materials`, `resources`, `charges`, `total`; formatos **HTML** (tabela hierárquica), **CSV** (linhas planas), **JSON** (aninhado) | `report/columns/*` | 3 testes |
+
+### 14.25.2 — `RdoReport` (#5)
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 14.25.6 | Criar `RdoReport extends ReportBase` (`report/reports/rdo-report.ts`); `period` **obrigatório** (defesa: parser já valida `rdo_period_required`) | `report/reports/rdo-report.ts` | teste de registro |
+| 14.25.7 | `groupby` `date` (default) | `task` | `resource` | `material` | `account` usando `Journal.entriesByTask`/`entriesByResource`/`entriesByMaterial`/`entriesByAccount` (adendo Fase 16) | idem | 4 testes |
+| 14.25.8 | `journalmode` (`journal` default, `status_up`, `status_down`, `alerts_*`) e `journalattributes` (`date`, `headline`, `summary`, `details`, `alert`, `author`) | idem | 3 testes |
+| 14.25.9 | Galeria de imagens: unir `pictures` dos `JournalEntry` + imagens do `details` (Markdown Fase 13 / RichText Fase 12 conforme `format`); `maxpictures` limita **só a saída** (entrada ilimitada); `align`/`width`/`caption`/`alt` respeitados | idem | 3 testes |
+| 14.25.10 | Colunas `name`, `resources`, `responsible`, `journal`, `pictures`, `materials`, `charges`; formatos HTML (template de RDO) e JSON aninhado por `groupby` | idem | 2 testes |
+
+### 14.25.3 — Colunas novas nos relatórios existentes
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 14.25.11 | Coluna `note` estendida a resource/account/material (modelo nos Blocos C0/C1) | `report/columns/note.ts` | 2 testes |
+| 14.25.12 | Coluna `journal` (e variantes `journal_sub`, `alerts_*`) funcionando em material/account | `report/columns/journal.ts` | 2 testes |
+| 14.25.13 | Coluna `timebasis` exibe o valor **canônico** resolvido (`duration`/`length`) de `TaskScenario.resolvedTimebasis` (Bloco C2) | `report/columns/timebasis.ts` | 1 teste |
+| 14.25.14 | **Regressão:** `taskreport`, `resourcereport`, `accountreport` inalterados para projetos sem as extensões | testes golden existentes | verde |
+
+**Sem impacto:** `breakdownreport`/`rdoreport` não calculam custo — consomem o `turnover` já resolvido com `timebasis` (Fase 8.2/C2). **ADR:** seguir a numeração planejada do plano da Fase 14 (não alocar nova aqui).
+
+---
+
 **Fim do arquivo de tarefas da Fase 14.**

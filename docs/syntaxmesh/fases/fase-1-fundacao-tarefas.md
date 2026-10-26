@@ -1,10 +1,12 @@
 # Fase 1 — Tarefas Atômicas
 
-> **Arquivo:** `docs/syntaxmesh/fases/fase-1-tarefas.md`
+> **Arquivo:** `docs/syntaxmesh/fases/fase-1-fundacao-tarefas.md`
 > **Plano:** `docs/syntaxmesh/fases/fase-1-fundacao.md`
 > **Status:** ✅ Concluída
 > **Total:** 63 tarefas
 > **Concluídas:** 63 (refrescado 2026-09-23)
+>
+> ⚠️ **Nota (ADR 030):** tarefas 1.2/1.8 referem-se aos 12 packages **históricos** criados na Fase 1. O estado real do repositório é `packages/core` (todo o código de fases) + `server`/`ui`/`service-worker` de suporte; a consolidação é manual pelo usuário (não abrir tarefas de remoção automáticas).
 
 ---
 

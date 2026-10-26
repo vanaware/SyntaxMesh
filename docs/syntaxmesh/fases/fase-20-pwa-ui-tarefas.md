@@ -614,4 +614,25 @@ Criado como subfase 25.0. Conteúdo esperado:
 
 ---
 
+## Adendo Fase 10 Complemento: tela de RDO (#5)
+
+> **Origem:** `fase-10-complemento1.md` §6.6 (App). Depende do `RdoReport` (Fase 14, adendo 14.25.2) e do image store (Fase 19, adendo 24.14). Stack obrigatória: Preact + `@preact/signals` + BeerCSS (sem Tailwind, sem CSS próprio).
+
+```
+[ ] 25.30  Store + actions de RDO                —  0/3
+[ ] 25.31  RdoView (seleção de período + galeria) —  0/5
+```
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 25.30.1 | Signal `rdoPeriod` + action `generateRdo(period)` no store (invoca `RdoReport` via worker, sem bloquear a UI) | `ui/src/stores/rdo.ts` | `deno check` |
+| 25.30.2 | Estado de carregamento/erro via signals; sem `useState`/`useEffect` | idem | review |
+| 25.31.1 | `RdoView.tsx`: seleção de período (BeerCSS date fields) e botão de geração | `ui/src/components/RdoView.tsx` | teste de render |
+| 25.31.2 | Galeria de imagens do RDO (HTML do `RdoReport` renderizado; `maxpictures` já aplicado na saída) | idem | teste |
+| 25.31.3 | Offline: imagens OPFS via `URL.createObjectURL` funcionam sem rede (Service Worker não pode cachear blobs — validar política de cache) | `service-worker.ts` (checar, não mudar sem necessidade) | teste manual documentado |
+| 25.31.4 | Exportar RDO (download HTML/JSON) | idem | teste |
+| 25.31.5 | Navegação: entrada da tela no menu existente (BeerCSS nav) | `ui/src/main.tsx` / nav | review |
+
+---
+
 **Fim do arquivo de tarefas da Fase 20.**

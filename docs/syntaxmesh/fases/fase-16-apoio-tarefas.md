@@ -770,4 +770,22 @@ TOTAL: ~195
 
 ---
 
+## 16.21 — Adendo Fase 10 Complemento: Journal aceita `Material`/`Account` + `pictures`/`format`
+
+> **Origem:** `fase-10-complemento1.md` §2.5 (impacto Journal #1), §4.5 (#3) e §6.6 (#5). O modelo `Picture` e os campos `pictures`/`format` em `JournalEntry` já nascem no Bloco C3.3.5 de `fase-10-complemento-tarefas.md`; aqui o subsistema `journal/` os consome por completo.
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 16.21.1 | `JournalEntry.property` aceita `Material` e `Account` (uniões de tipo já abertas pelo Bloco C1/C0) | `journal/journal-entry.ts` | `deno check` |
+| 16.21.2 | `Journal.entriesByMaterial(material, startDate?, endDate?, logExp?, alertLevel?): JournalEntryList` | `journal/journal.ts` | 2 testes |
+| 16.21.3 | `Journal.entriesByAccount(account, …)` com a mesma assinatura | `journal/journal.ts` | 2 testes |
+| 16.21.4 | `currentEntries`/`currentEntriesR`/`alertLevel`/`alertEntries` tratam `Material` e `Account` como **folha** (sem `journal_sub`); `journalentry` de account/material **contribui** para `alertLevel` | `journal/journal.ts` | 3 testes |
+| 16.21.5 | `Journal.to_rti` aceita material/account nos modos `journal`, `status_up`, `status_down`, `alerts_*`; para material `journal_sub` vira `journal` | `journal/journal.ts` (RTI) | 2 testes |
+| 16.21.6 | `JournalEntry.pictures: Picture[]` e `format: 'markdown'|'richtext'` (default `markdown`) propagados na consulta e no RTI | `journal/journal.ts`, `journal/journal-entry.ts` | 2 testes |
+| 16.21.7 | **Regressão:** journal em `task`/`resource`/`project` idêntico ao comportamento atual | testes existentes | verde |
+
+**Critério de aceite do adendo:** `entriesByMaterial`/`entriesByAccount` funcionam com filtros de data/alerta; `alertLevel` agrega account/material; nenhum teste existente de journal quebra.
+
+---
+
 **Fim do arquivo de tarefas da Fase 16.**

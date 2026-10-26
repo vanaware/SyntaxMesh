@@ -524,4 +524,22 @@ TOTAL: ~185
 
 ---
 
+## 18.17 — Adendo Fase 10 Complemento: `material` em sheets + `picture` em `status`
+
+> **Origem:** `fase-10-complemento1.md` §2.5 (impacto Sheets #1) e §6.3 (`picture` em `status`). O parser já aceita `picture`/`format` dentro de `status` (Bloco C3.3.4 de `fase-10-complemento-tarefas.md`); aqui as sheets consomem.
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 18.17.1 | `TimeSheetRecord` aceita `material` como alvo de `work` (→ `MaterialScenario.effortdone`) e `remaining` (→ `effortleft`) — validação individual | `sheets/time-sheet-record.ts` | 3 testes |
+| 18.17.2 | Material **NÃO** entra em `totalNetWorkingSlots` (material não tem working hours) — asserir na validação de deltas | `sheets/time-sheet.ts`, `sheets/time-sheets.ts` | 1 teste |
+| 18.17.3 | `status` de material via timesheet/statussheet cria `JournalEntry` com `property = Material` (adendo Fase 16) | `sheets/time-sheet-record.ts` | 2 testes |
+| 18.17.4 | `SheetSender` lista `material` entre as propriedades que recebem `work`/`remaining`/`status` no template; `SheetReceiver` faz o parse de volta | `sheets/sheet-sender.ts`, `sheets/sheet-receiver.ts` | 2 testes |
+| 18.17.5 | `TimeSheetSummary` agrega status de material (contagem, alertas) | `sheets/time-sheet-summary.ts` | 1 teste |
+| 18.17.6 | `picture` (e `format`) em `status`: `JournalEntry` do status recebe `pictures`/`format` (modelo C3.3.5); `picture` ausente → comportamento atual inalterado | `sheets/time-sheet-record.ts` | 2 testes |
+| 18.17.7 | **Regressão:** timesheets sem material/picture geram resultado idêntico ao atual | testes existentes | verde |
+
+**Critério de aceite do adendo:** um `.tjp`/timesheet pode reportar `work`/`remaining` de material sem quebrar a validação de slots; `status` com `picture` chega ao Journal intacto.
+
+---
+
 **Fim do arquivo de tarefas da Fase 18.**

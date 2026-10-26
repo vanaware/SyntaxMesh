@@ -7,8 +7,9 @@ Este diretório contém o planejamento do projeto dividido em **21 fases**. Cada
 | Tipo | Padrão | Propósito | Exemplo |
 |---|---|---|---|
 | **Plano** | `fase-N-<slug>.md` | Especificação completa da fase (contexto, objetivo, subfases detalhadas, referências Ruby) | `fase-3-modelo-atributos.md` |
-| **Tarefas** | `fase-N-tarefas.md` | Lista executável de tarefas atômicas (TDD, ≤ 2h cada) | `fase-3-tarefas.md` |
-| **Complementar** | `fase-N-tarefas-complementar<N>.md` | Revisões pós-implementação (após feedback do Ruby ou testes) | `fase-2-tarefas-complementar1.md` |
+| **Tarefas** | `fase-N-<slug>-tarefas.md` | Lista executável de tarefas atômicas (TDD, ≤ 2h cada) | `fase-3-modelo-atributos-tarefas.md` |
+| **Complementar** | `fase-N-<slug>-tarefas-complementar<M>.md` | Revisões pós-implementação (após feedback do Ruby ou testes) | `fase-2-tempo-geometria-tarefas-complementar1.md` |
+| **Especificação de extensão** | `fase-N-complemento<K>.md` / `fase-N-complemento-tarefas.md` | Funcionalidades novas **fora** do escopo original do TJ, planejadas após a fase âncora | `fase-10-complemento1.md`, `fase-10-complemento-tarefas.md` |
 
 **Regras:**
 
@@ -17,13 +18,7 @@ Este diretório contém o planejamento do projeto dividido em **21 fases**. Cada
 - Um arquivo de **tarefas** é derivado do plano.
 - Um arquivo **complementar** só existe se houver revisão. Numerado (`complementar1`, `complementar2`, ...).
 - `N` é o número da fase sem zero-padding (`fase-2-*`, não `fase-02-*`).
-
-### Renomeações pendentes
-
-| Atual | Novo |
-|---|---|
-| `fase-2-tempo-geometria-tarefas.md` | `fase-2-tarefas.md` |
-| `fase-2-tempo-geometria-tarefas-complementar1.md` | `fase-2-tarefas-complementar1.md` |
+- Adendos de fases futuras (tarefas complementares que tocam fases 11–21) vão **no arquivo de tarefas da fase afetada**, sob uma seção `Adendo Fase 10 Complemento`.
 
 ## Diferença entre plano, tarefas e complementar
 
@@ -35,7 +30,7 @@ Este diretório contém o planejamento do projeto dividido em **21 fases**. Cada
 - Escrito **antes** da implementação.
 - Pode referenciar o Ruby diretamente (`⚠️ RUBY: arquivo:linha`).
 
-### Tarefas (`fase-N-tarefas.md`)
+### Tarefas (`fase-N-<slug>-tarefas.md`)
 
 - **Destinado ao executor (IA ou dev)** que vai implementar.
 - Contém **tarefas atômicas** com: `# | Tarefa | Arquivos | Verificação`.
@@ -204,7 +199,7 @@ deno task audit:phase N
 **Fluxo típico:**
 
 1. Ler `fase-N-<slug>.md` (plano) — entender contexto e decisões.
-2. Ler `fase-N-tarefas.md` (tarefas) — encontrar a próxima tarefa não marcada.
+2. Ler `fase-N-<slug>-tarefas.md` (tarefas) — encontrar a próxima tarefa não marcada.
 3. Para cada tarefa:
    - Se `⚠️ RUBY:` → ler o arquivo Ruby indicado.
    - Se `🔎 CHEAT:` → consultar seção do cheat sheet.
@@ -228,39 +223,41 @@ deno task audit:phase N
 | Fase | Arquivo do plano | Status |
 |---|---|---|
 | 1 | `fase-1-fundacao.md` | ✅ Concluída |
-| 2 | `fase-2-tempo-geometria.md` | 🟡 Em andamento |
-| 3 | `fase-3-modelo-atributos.md` | ⬜ Não iniciada |
-| 4 | `fase-4-arvore-propriedades.md` | ⬜ Não iniciada |
-| 5 | `fase-5-entidades-concretas.md` | ⬜ Não iniciada |
-| 6 | `fase-6-scoreboard-estruturas.md` | ⬜ Não iniciada |
-| 7 | `fase-7-scheduler-core.md` | ⬜ Não iniciada |
-| 8 | `fase-8-financeiro.md` | ⬜ Não iniciada |
-| 8.1 | [Materiais + Charge/Booking estendidos](./fase-8.1-nova-funcionalidade-custos.md) | Extensões do SyntaxMesh | ⬜ |
-| 8.2 | [Modelo Contábil Estendido](./fase-8.2-modelo-contabil-estendido.md) | Reescreve agregação contábil | ⬜ |
-| 9 | `fase-9-orquestrador-cache.md` | ⬜ Não iniciada |
-| 10 | `fase-10-parser-linguagem.md` | ⬜ Não iniciada |
+| 2 | `fase-2-tempo-geometria.md` | ✅ Concluída |
+| 3 | `fase-3-modelo-atributos.md` | ✅ Concluída |
+| 4 | `fase-4-arvore-propriedades.md` | ✅ Concluída |
+| 5 | `fase-5-entidades-concretas.md` | ✅ Concluída |
+| 6 | `fase-6-scoreboard-estruturas.md` | ✅ Concluída |
+| 7 | `fase-7-scheduler-core.md` | ✅ Concluída (gap de datas em `Project.schedule()` sobre modelos do parser — ver CURRENT.md) |
+| 8 | `fase-8-financeiro.md` | ✅ Concluída |
+| 8.1 | [Materiais + Charge/Booking estendidos](./fase-8.1-nova-funcionalidade-custos.md) | ✅ Concluída (parser de `material` pendente → `fase-10-complemento-tarefas.md`) |
+| 8.2 | [Modelo Contábil Estendido](./fase-8.2-modelo-contabil-estendido.md) | ✅ Concluída |
+| 9 | `fase-9-orquestrador-cache.md` | ✅ Concluída |
+| 10 | `fase-10-parser-linguagem.md` | ✅ Concluída (2026-10-26) |
+| 10-C | [`fase-10-complemento1.md`](./fase-10-complemento1.md) · [`fase-10-complemento2.md`](./fase-10-complemento2.md) → [`fase-10-complemento-tarefas.md`](./fase-10-complemento-tarefas.md) | ⬜ Extensões RDO/orçamento/timebasis — não iniciada |
 | 11 | `fase-11-logica-queries.md` | ⬜ Não iniciada |
 | 12 | `fase-12-richtext.md` | ⬜ Não iniciada |
-| 13 | `fase-13-markdown.md` | ⬜ Não iniciada |
-| 14 | `fase-14-relatorios.md` | ⬜ Não iniciada |
+| 13 | `fase-13-markdown.md` | ⬜ Não iniciada (tem adendo do complemento) |
+| 14 | `fase-14-relatorios.md` | ⬜ Não iniciada (tem adendo do complemento) |
 | 15 | `fase-15-gantt.md` | ⬜ Não iniciada |
-| 16 | `fase-16-apoio.md` | ⬜ Não iniciada |
+| 16 | `fase-16-apoio.md` | ⬜ Não iniciada (tem adendo do complemento) |
 | 17 | `fase-17-html-xml.md` | ⬜ Não iniciada |
-| 18 | `fase-18-time-status-sheets.md` | ⬜ Não iniciada |
-| 19 | `fase-19-storage.md` | ⬜ Não iniciada |
-| 20 | `fase-20-pwa-ui.md` | ⬜ Não iniciada |
-| 21 | `fase-21-compatibilidade-qualidade.md` | ⬜ Não iniciada |
+| 18 | `fase-18-time-status-sheets.md` | ⬜ Não iniciada (tem adendo do complemento) |
+| 19 | `fase-19-storage.md` | ⬜ Não iniciada (tem adendo do complemento) |
+| 20 | `fase-20-pwa-ui.md` | ⬜ Não iniciada (tem adendo do complemento) |
+| 21 | `fase-21-compatibilidade-qualidade.md` | ⬜ Não iniciada (tem adendo do complemento) |
 
 > **Nota:** atualizar esta tabela manualmente ao concluir uma fase (mover `⬜` → `🟡` → `✅`).
 
 ## Referências cruzadas
 
-- `docs/syntaxmesh/decisoes/` — ADRs (001–015).
+- `docs/syntaxmesh/decisoes/` — ADRs 001–031 (existentes até 023 + 030/031; numeração futura reservada nos arquivos de fases: 024 RichText, 025 Markdown, 026 Reports, 028 Apoio).
 - `docs/syntaxmesh/cheat-sheet-ruby-ts.md` — mapeamento Ruby→TS + bugs.
 - `docs/syntaxmesh/06-testes-e-processo.md` — protocolo TDD.
-- `docs/syntaxmesh/07-roadmap.md` — lista consolidada das 21 fases.
-- `docs/syntaxmesh/03-arquitetura.md` — arquitetura geral.
+- `docs/syntaxmesh/fases/plano.md` — **plano canônico consolidado das 21 fases** (este diretório é a fonte da verdade do escopo e andamento).
+- `docs/syntaxmesh/03-arquitetura.md` — arquitetura geral (histórica; vale ADR 030 para o estado real dos pacotes).
+- `CURRENT.md` (raiz) — resumo do estado atual e próximo passo.
 
 ---
 
-**Última atualização:** 2026-09-12
+**Última atualização:** 2026-10-26

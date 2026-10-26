@@ -1,5 +1,7 @@
 # SyntaxMesh
 
+> ⚠️ **Documento de visão (base).** O escopo, planejamento e andamento **reais** do projeto vivem em `docs/syntaxmesh/fases/` (plano canônico `plano.md` com **21 fases** + arquivos `fase-N-*.md`) e `docs/syntaxmesh/decisoes/` (ADRs). O estado atual e o próximo passo estão em `CURRENT.md`. Em caso de conflito entre este arquivo e `docs/syntaxmesh/fases/`, vale `docs/syntaxmesh/fases/`.
+
 ## Offline Multilingual Project Planning Engine
 
 **Versão do documento:** 1.0
@@ -657,6 +659,8 @@ Cada tarefa deverá:
 ---
 
 # 17. Plano geral
+
+> **Atualizado:** o desenvolvimento foi reorganizado em **21 fases** (canônico em `docs/syntaxmesh/fases/plano.md`). A divisão original em oito fases abaixo é histórica.
 
 O desenvolvimento será dividido em oito fases:
 

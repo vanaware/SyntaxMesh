@@ -307,6 +307,8 @@ Tarefas: `docs/syntaxmesh/fases/fase-8.2-tarefas.md`.
 
 **Testes:** lexing de cada tipo; parsing de `project`, `task`, `resource`, `account`, `shift`, `scenario`, `report`; i18n (AST igual em en/pt-BR/es); macros `${N}`; includes.
 
+**Complemento (extensões pós-Fase 10):** `fase-10-complemento1.md` (#1–#5) e `fase-10-complemento2.md` (#6/#6a) — tarefas em `fase-10-complemento-tarefas.md` (Blocos C0–C4, tocam Fases 5/7/8.1/10) e adendos nos `-tarefas.md` das Fases 13/14/16/18/19/20/21. O parser **não** cobria `material` (Fase 8.1 definiu só o modelo) nem `timebasis`/`picture`/`format`/`breakdownreport`/`rdoreport`.
+
 ---
 
 ### FASE 11 — Expressões Lógicas e Queries
@@ -600,26 +602,33 @@ Tarefas: `docs/syntaxmesh/fases/fase-8.2-tarefas.md`.
 
 ## Resumo executivo
 
-| Fase | Pacote | Referências Ruby | Prioridade |
-|---|---|---|---|
-| 1 | workspace | — | Alta |
-| 2 | core | TjTime, Interval, IntervalList, WorkingHours, RealFormat | **Crítica** |
-| 3 | core | AttributeBase, AttributeDefinition, Attributes, deep_copy | **Crítica** |
-| 4 | core | PropertyTreeNode, PropertySet, ScenarioData, Scenario, PTNProxy | **Crítica** |
-| 5 | core | Task, Resource, Account, Shift, Report, Project | **Crítica** |
-| 6 | core | Scoreboard, Limits, ShiftAssignments, ShiftScenario | **Crítica** |
-| 7 | core | TaskScenario, ResourceScenario, Allocation, Booking, TaskDependency | **Crítica** |
-| 8 | core | Charge, ChargeSet, AccountCredit, AccountScenario | **Alta** |
-| 9 | core | Project, TaskJuggler, DataCache, PropertyList, MessageHandler, Log | **Crítica** |
-| 10 | parser + language | TextParser/*, ProjectFileScanner, ProjectFileParser, TjpSyntaxRules | **Crítica** |
-| 11 | core | LogicalExpression, LogicalOperation, LogicalFunction, Query, SimpleQueryExpander | **Crítica** |
-| 12 | richtext | RichText, RichText/* | **Alta** |
-| 13 | markdown | — | Baixa (futuro) |
-| 14 | report | reports/* | **Crítica** |
-| 15 | report | Gantt* | **Alta** |
-| 16 | core | Journal, AlertLevelDefinitions, LeaveList, TernarySearchTree, etc. | **Alta** |
-| 17 | report | XMLDocument, XMLElement, HTMLDocument, HTMLElements, ICalendar | **Média** |
-| 18 | storage | TimeSheets, Sheet* | **Média** |
-| 19 | storage | — | **Alta** |
-| 20 | ui + service-worker | — | **Média** |
-| 21 | tests/ | MWEs, TestSuite | **Crítica** |
+| Fase | Pacote | Referências Ruby | Prioridade | Status |
+|---|---|---|---|---|
+| 1 | workspace | — | Alta | ✅ Concluída |
+| 2 | core | TjTime, Interval, IntervalList, WorkingHours, RealFormat | **Crítica** | ✅ Concluída |
+| 3 | core | AttributeBase, AttributeDefinition, Attributes, deep_copy | **Crítica** | ✅ Concluída |
+| 4 | core | PropertyTreeNode, PropertySet, ScenarioData, Scenario, PTNProxy | **Crítica** | ✅ Concluída |
+| 5 | core | Task, Resource, Account, Shift, Report, Project | **Crítica** | ✅ Concluída |
+| 6 | core | Scoreboard, Limits, ShiftAssignments, ShiftScenario | **Crítica** | ✅ Concluída |
+| 7 | core | TaskScenario, ResourceScenario, Allocation, Booking, TaskDependency | **Crítica** | ✅ Concluída (gap de datas em `Project.schedule()` sobre modelos do parser — ver CURRENT.md) |
+| 8 | core | Charge, ChargeSet, AccountCredit, AccountScenario | **Alta** | ✅ Concluída |
+| 8.1 | core | — (extensão SyntaxMesh: Material, charge/booking estendidos, tracking) | **Alta** | ✅ Concluída (parser de `material` pendente → complemento) |
+| 8.2 | core | — (extensão SyntaxMesh: modelo contábil estendido) | **Alta** | ✅ Concluída |
+| 9 | core | Project, TaskJuggler, DataCache, PropertyList, MessageHandler, Log | **Crítica** | ✅ Concluída |
+| 10 | core (parser + i18n) | TextParser/*, ProjectFileScanner, ProjectFileParser, TjpSyntaxRules | **Crítica** | ✅ Concluída (2026-10-26) |
+| 10-C | core | — (extensões RDO/orçamento/timebasis) | **Alta** | ⬜ `fase-10-complemento-tarefas.md` + adendos nas fases 13/14/16/18/19/20/21 |
+| 11 | core | LogicalExpression, LogicalOperation, LogicalFunction, Query, SimpleQueryExpander | **Crítica** | ⬜ Não iniciada |
+| 12 | core (richtext) | RichText, RichText/* | **Alta** | ⬜ Não iniciada |
+| 13 | core (markdown) | — | Baixa (futuro) | ⬜ Não iniciada (adendo 13.14) |
+| 14 | core (report) | reports/* | **Crítica** | ⬜ Não iniciada (adendo 14.25) |
+| 15 | core (report) | Gantt* | **Alta** | ⬜ Não iniciada |
+| 16 | core | Journal, AlertLevelDefinitions, LeaveList, TernarySearchTree, etc. | **Alta** | ⬜ Não iniciada (adendo 16.21) |
+| 17 | core (report) | XMLDocument, XMLElement, HTMLDocument, HTMLElements, ICalendar | **Média** | ⬜ Não iniciada |
+| 18 | core (sheets) | TimeSheets, Sheet* | **Média** | ⬜ Não iniciada (adendo 18.17) |
+| 19 | storage | — | **Alta** | ⬜ Não iniciada (adendo 24.14–24.16) |
+| 20 | ui + service-worker | — | **Média** | ⬜ Não iniciada (adendo 25.30–25.31) |
+| 21 | tests/ | MWEs, TestSuite | **Crítica** | ⬜ Não iniciada (adendo 26.26–26.28) |
+
+> **Pacotes (ADR 030):** todo o código de fases vive em `packages/core` (parser, i18n, richtext, markdown, report, sheets, journal, storage de nível lógico). `packages/server`, `packages/ui`, `packages/service-worker` são suporte. A coluna "Pacote" acima indica a camada lógica histórica, não um package físico.
+
+> **Fase 10 Complemento (2026-10-26):** especificações em `fase-10-complemento1.md` (#1–#5: journal/note em material/resource/account, `breakdownreport`, RDO com `picture`/`format`/`rdoreport`) e `fase-10-complemento2.md` (#6 `timebasis`, #6a distribuição temporal unificada). Tarefas de fases ≤ 10: `fase-10-complemento-tarefas.md` (Blocos C0–C4). Tarefas de fases futuras: adendos nos respectivos `-tarefas.md`.

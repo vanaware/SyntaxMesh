@@ -492,4 +492,22 @@ TOTAL: ~115
 
 ---
 
+## 13.14 — Adendo Fase 10 Complemento: imagens em Markdown (#5 RDO)
+
+> **Origem:** `fase-10-complemento1.md` §6 (funcionalidade #5). O parser já aceitará `format markdown` em `journalentry`/`status` (Bloco C3.3 de `fase-10-complemento-tarefas.md`); o `details` com default `markdown` chega a este renderizador.
+
+### 13.14.1 — Resolução de caminho de imagem
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 13.14.1 | Extensão de imagem `![alt](path)` distingue **URL externa** (`http(s)://`, passa intacta) de **caminho relativo** | `markdown/extensions/images.ts` | 2 testes |
+| 13.14.2 | Caminho relativo resolve **OPFS primeiro** via `FileStore` injetado (Fase 19 `image-store`, adendo próprio); fallback `dataDirs` do projeto | `markdown/extensions/images.ts` | 2 testes |
+| 13.14.3 | Imagem OPFS vira `Blob` → `URL.createObjectURL` (ou data URI) para funcionar **offline** na PWA | `markdown/extensions/images.ts` | 1 teste |
+| 13.14.4 | `format richtext` (default para `.tjp` existentes no TJ) continua roteando para o renderizador RichText da Fase 12 — Markdown **não** interfere | `markdown/render.ts` | regressão |
+| 13.14.5 | Testes BDD com `fakeOpfs()`: imagem existente, imagem ausente (fallback `dataDirs`), URL externa intocada | `tests/markdown/images_test.ts` | 3+ testes |
+
+**Critério de aceite do adendo:** `![x](fotos/a.jpg)` renderiza offline quando `fotos/a.jpg` existe no OPFS do projeto; URL externa é preservada; `format richtext` continua idêntico ao comportamento atual.
+
+---
+
 **Fim do arquivo de tarefas da Fase 13.**

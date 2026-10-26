@@ -499,4 +499,26 @@ Criado como subfase 26.0. Conteúdo esperado:
 
 ---
 
+## Adendo Fase 10 Complemento: regressão e qualidade das extensões (#1–#6a)
+
+> **Origem:** `fase-10-complemento1.md` §8/§10 e `fase-10-complemento2.md` §8/§11. As extensões nasceram com fixtures próprias nos Blocos C3/C4 de `fase-10-complemento-tarefas.md`; aqui entram na matriz de compatibilidade e no gate de release.
+
+```
+[ ] 26.26  Matriz de extensões i18n              —  0/3
+[ ] 26.27  known-divergences timebasis           —  0/2
+[ ] 26.28  Gate de release com extensões         —  0/2
+```
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 26.26.1 | Corpus de regressão estendido: `.tjp` do TJ puro (sem keywords novas) processa **byte-idêntico** antes/depois das extensões | `tests/corpus/` | suite verde |
+| 26.26.2 | AST-equivalence das keywords novas (`material`, `picture`, `format`, `timebasis`, `breakdownreport`, `rdoreport`) em en/pt-BR/es (ampliação do que o Bloco C3.9 iniciou) | `tests/ast-equivalence_test.ts` | 3+ testes |
+| 26.26.3 | Benchmarks: parser com regras novas não regride >5% no throughput de `.tjp` existentes | `tests/bench/` | baseline |
+| 26.27.1 | Preencher `known-divergences.json` com `timebasis length` e cálculos de `perweek`/`permonth` que divergem do `tj3` (documentar fórmula TJ observada) | `packages/core/tests/golden/known-divergences.json` | revisão |
+| 26.27.2 | Golden `charge` default `duration` contra `tj3` coberto no corpus MWE completo | `scripts/golden/finance-*.rb` | `deno task golden:generate` verde |
+| 26.28.1 | Matriz de cobertura #1–#6a × camadas (modelo/parser/journal/sheets/markdown/reports/storage/app) marcada no `plano.md` | docs | revisão |
+| 26.28.2 | Gate de release: `check:all` + golden + corpus + Lighthouse com a tela de RDO presente | CI | verde |
+
+---
+
 **Fim do arquivo de tarefas da Fase 21.**

@@ -1,19 +1,16 @@
 # Arquivo `CURRENT.md`
 
 Leia os arquivos:
-- docs/syntaxmesh/fases/plano.md (plano canônico de 21 fases)
+- docs/syntaxmesh/fases/plano.md (plano canônico de 21 fases — fonte da verdade de escopo e andamento)
+- docs/syntaxmesh/fases/README.md (convenções de arquivos, protocolo TDD, mapa de fases)
 - docs/syntaxmesh/09-regras-para-ia.md (regras de ouro)
 
 Tenha conhecimento da lista de ADR em : docs/syntaxmesh/decisoes/README.md
 Reuna dicas e analise-as do arquivo: docs/syntaxmesh/cheat-sheet-ruby-ts.md
 
-Implementar a tarefa (docs/syntaxmesh/fases/):
-- docs/syntaxmesh/fases/fase-1-fundacao.md (caso precise de algum ajuste - opcional)
-- docs/syntaxmesh/fases/fase-1-fundacao-tarefas.md (veja se estão todas executadas)
-- docs/syntaxmesh/fases/fase-2-tempo-geometria.md
-- docs/syntaxmesh/fases/fase-2-tempo-geometria-tarefas.md (veja se estão todas executadas)
-- docs/syntaxmesh/fases/_ajustes-r1-r12.md
-- docs/syntaxmesh/fases/fase-2-tempo-geometria-tarefas-complementar1.md
+Desenvolvimento atual (docs/syntaxmesh/fases/):
+- **Fase 10 Complemento** — `fase-10-complemento1.md` + `fase-10-complemento2.md` (especificações) → executar `fase-10-complemento-tarefas.md` (Blocos C0–C4, toca Fases 5/7/8.1/10) e os adendos "Adendo Fase 10 Complemento" nos `-tarefas.md` das Fases 13/14/16/18/19/20/21.
+- Em paralelo/sequência: Fase 11 (`fase-11-logica-queries-tarefas.md`) e Fase 12 (`fase-12-richtext-tarefas.md`) — dependem só do que já está concluído.
 
 IMPORTANTE
 * os arquivos TaskJuggler Ruby fonte estão em docs/taskjuggler/lib/taskjuggler
@@ -41,18 +38,19 @@ i18n (10.15+) em `packages/core/src/i18n/`.
 - Fase 8.1 — Nova funcionalidade de custos ✅ (163 testes core, 37 tarefas atômicas)
 - Fase 8.2 — Modelo Contábil Estendido ✅ (130 tarefas)
 - Fase 9 — Orquestrador e Cache ✅ (~195 tarefas)
-- Fase 10 — Parser e Linguagem ✅ (10.0–10.20 concluídas em 2026-10-26)
-
-**Fases ativas/próximas:**
-- Fase 10 — Parser e Linguagem ✅ Concluída (2026-10-26): `TextParser` FSM,
+- Fase 10 — Parser e Linguagem ✅ (10.0–10.20 concluídas em 2026-10-26): `TextParser` FSM,
   `Scanner`/`ProjectFileScanner`, `ProjectFileParser`, `TjpSyntaxRules` com as
   348 regras do Ruby portadas (380 registradas, 0 placeholders), i18n
   (`LanguageRegistry` + en/pt-BR/es + diretiva `language`), AST equivalence
   9 MWEs × 3 idiomas, golden parser com 178 casos (5 skipped — dependem de
-  RichText, Fase 12). Suíte core: **213 testes / 2792 passos, 0 falhas**;
+  RichText, Fase 12). Suíte core: **225 testes / 2828 passos, 0 falhas**;
   `deno task check:all` e `deno fmt --check` verdes. Verificação final em
   `fase-10-parser-linguagem-tarefas.md` (10.20) e smoke test
   `tests/integration/smoke_after_phase_10_test.ts`.
+
+## Fases ativas/próximas
+
+- **Fase 10 Complemento — Extensões RDO/orçamento ⬜ Não iniciada:** tarefas em `fase-10-complemento-tarefas.md` (material no parser + modelo, `note`/`journal` estendidos, `picture`/`format`, `timebasis` #6/#6a com `distribution.ts`, `breakdownreport`/`rdoreport`, i18n, golden) + adendos nas Fases 13/14/16/18/19/20/21.
 - Fase 11 — Expressões Lógicas e Queries ⬜ Não iniciada
 - Fase 12 — RichText (compatibilidade TJP) ⬜ Não iniciada
 - Fase 13 — Markdown (novo, futuro) ⬜ Não iniciada
@@ -68,12 +66,12 @@ i18n (10.15+) em `packages/core/src/i18n/`.
 ## Arquivos de tarefas atômicas (TDD)
 
 Cada fase tem um arquivo de tarefas atômicas separado:
-- `docs/syntaxmesh/fases/fase-N-descricaoo-tarefas.md` — tarefas atômicas com testes unitários
-- `docs/syntaxmesh/fases/fase-N-descricaoo.md` — plano da funcionalidade
+- `docs/syntaxmesh/fases/fase-N-descricao-tarefas.md` — tarefas atômicas com testes unitários
+- `docs/syntaxmesh/fases/fase-N-descricao.md` — plano da funcionalidade
 
 ## Decisões arquitetônicas (ADR)
 
-Todas as decisões arquitetônicas importantes estão documentadas em `docs/syntaxmesh/decisoes/` (ADRs 001–029). Consulte `docs/syntaxmesh/decisoes/README.md` para a lista completa.
+Todas as decisões arquitetônicas importantes estão documentadas em `docs/syntaxmesh/decisoes/` (ADRs 001–031). Consulte `docs/syntaxmesh/decisoes/README.md` para a lista completa.
 
 ## Regras de ouro para IA
 
@@ -107,8 +105,7 @@ O ambiente está pré-configurado para rodar TaskJuggler. Execute `tj3` diretame
 - `deno task --list` retorna `error: unexpected argument '--list'` — Deno 2.x lista tarefas executando `deno task` sem argumentos.
 - O nome real da task de validação completa é `deno task check:all` (dois-pontos), não `check-all`.
 - A Fase 2 está genuinamente implementada (9 arquivos em `packages/core/src/time/`, 14 arquivos de teste em `packages/core/tests/time/`).
-- A Fase 8.1 está implementada com 163 testes core e 37 tarefas atômicas.
-- A Fase 7 está em andamento (7.2 TaskDependency concluída).
+- A Fase 8.1 está implementada com 163 testes core e 37 tarefas atômicas — mas **apenas o modelo** de `material`; o parser não conhece `material` (correção no Bloco C3 de `fase-10-complemento-tarefas.md`).
 - **Gap conhecido (Fase 7/9):** `Project.schedule()` roda end-to-end sobre modelos
   vindos do parser sem lançar, mas ainda não coloca as datas (`not_scheduled`,
   `task_start_undef`; `TaskDependency.task` não é resolvido no prepare). O tj3

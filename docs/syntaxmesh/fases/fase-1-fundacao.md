@@ -1,10 +1,12 @@
 # Fase 1 — Fundação e Workspace Deno
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-1-fundacao.md`
-> **Status:** ✅ Concluída (revisada e consolidada em 2026-09-10)
+> **Status:** ✅ Concluída (revisada e consolidada em 2026-09-10; resumo de conclusão incorporado de `resumo-fase-1.md` em 2026-10-26)
 > **Duração estimada:** 1–2 dias
 > **Depende de:** nada
 > **Bloqueia:** todas as fases subsequentes
+>
+> ⚠️ **Nota (ADR 030 — arquitetura simplificada):** este plano registra a estrutura **histórica** de 12 packages criada na Fase 1. O estado real do repositório hoje é: todo código de fases em `packages/core` (parser, i18n, richtext, markdown, report, sheets, journal, storage de nível lógico incluso), com `packages/server`, `packages/ui` e `packages/service-worker` como pacotes de suporte. `@syntaxmesh/utils` e `@syntaxmesh/worker-db` serão substituídos por `jsr:@vanaware/buildit` e `jsr:@vanaware/workerdb` manualmente pelo usuário. Ver `docs/syntaxmesh/decisoes/030-arquitetura-simplificada.md`.
 
 ---
 
@@ -655,18 +657,17 @@ passa sem erros, e:
 
 ### Documentos do projeto
 
-- `docs/syntaxmesh/00-index.md`
 - `docs/syntaxmesh/01-visao.md`
 - `docs/syntaxmesh/02-principios.md`
 - `docs/syntaxmesh/03-arquitetura.md`
 - `docs/syntaxmesh/04-linguagem-multilingue.md`
 - `docs/syntaxmesh/05-formato-e-compatibilidade.md`
 - `docs/syntaxmesh/06-testes-e-processo.md`
-- `docs/syntaxmesh/07-roadmap.md`
 - `docs/syntaxmesh/08-mvp.md`
 - `docs/syntaxmesh/09-regras-para-ia.md`
 - `docs/syntaxmesh/10-futuro.md`
-- `docs/syntaxmesh/decisoes/001` a `011`
+- `docs/syntaxmesh/fases/plano.md` — plano canônico consolidado (substitui o antigo `07-roadmap.md`)
+- `docs/syntaxmesh/decisoes/` — ADRs 001 em diante
 
 ### Código-fonte de referência (TaskJuggler)
 
@@ -686,6 +687,24 @@ passa sem erros, e:
 4. **Rodar `deno task check-all` antes de cada commit.**
 5. **Se um ADR existente conflitar com as decisões recentes, atualizar o ADR** em vez de criar um novo (exceto se a decisão for realmente nova).
 6. **Registrar qualquer desvio do plano** como comentário em `docs/syntaxmesh/fases/fase-1-fundacao.md`.
+
+---
+
+## 10. Resumo de conclusão (incorporado de `resumo-fase-1.md`)
+
+A fase de fundação do projeto SyntaxMesh foi completamente implementada e validada (63/63 tarefas). Todos os requisitos foram atendidos conforme as diretrizes arquitetônicas e de desenvolvimento definidas no projeto.
+
+### Itens implementados
+
+- **1.1 — Criar projeto Deno**: Deno como ambiente principal; `deno.jsonc` com dependências e tarefas; sem Node.js/npm/package.json no fluxo de desenvolvimento.
+- **1.2 — Estrutura de diretórios**: monorepo com packages por camada (à época: core, parser, report, storage, ui, server, service-worker, utils, worker-db — ver nota do ADR 030 no cabeçalho).
+- **1.3 — Core independente**: nenhum arquivo em `packages/core/src/` importa Preact, BeerCSS, DOM, IndexedDB ou OPFS; core executa direto no Deno; regra de dependência APP → REPORT → STORAGE → CORE ← PARSER.
+- **1.4 — Pipeline de qualidade**: tarefas `test`, `lint`, `fmt` (e `check:all`) no `deno.jsonc`; fluxo Implementar → teste → corrigir → formatar → lint → commit; padrão `@std/testing/bdd` + `@std/assert`.
+- **1.5 — Documentação inicial**: `docs/syntaxmesh/` completa; ADRs em `docs/syntaxmesh/decisoes/`; referências em `docs/taskjuggler/` e `docs/webjuggler/`; MWEs em `docs/Learning/`.
+
+### Verificação
+
+`deno task check:all` e `deno task test` verdes na conclusão da fase.
 
 ---
 
