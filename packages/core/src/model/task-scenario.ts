@@ -1,4 +1,8 @@
 import { ScenarioData, } from "./scenario-data.ts";
+import {
+  resolveTimebasis,
+  type Timebasis,
+} from "../accounting/distribution.ts";
 import { type Task, } from "./task.ts";
 import { type Resource, } from "./resource.ts";
 import { type ProjectLike, } from "./project-like.ts";
@@ -52,6 +56,7 @@ export const TASK_SCENARIO_ATTRS: string[] = [
   "shifts",
   "start",
   "status",
+  "timebasis",
 ];
 
 export class TaskScenario extends ScenarioData {
@@ -86,6 +91,12 @@ export class TaskScenario extends ScenarioData {
   private _errors: number = 0;
   private _scheduled: boolean = false;
   private _durationType: string = "";
+  /**
+   * timebasis efetivo resolvido (§2.4), calculado em prepareScheduling()
+   * (Fase 10 Complemento C2.5). Exclusivo para cálculo de custo — não
+   * altera agendamento.
+   */
+  resolvedTimebasis: Timebasis = "duration";
   private _shifts: ShiftAssignments | null = null;
 
   constructor(
@@ -143,6 +154,14 @@ export class TaskScenario extends ScenarioData {
       durationType = "startEndTask";
     }
     this._durationType = durationType;
+
+    // C2.5: resolve o timebasis efetivo (§2.4) uma vez por ciclo de
+    // schedule. Não afeta o agendamento — só a distribuição de custo.
+    this.resolvedTimebasis = resolveTimebasis(
+      this.getProperty() as Task,
+      scIdx,
+      project,
+    );
 
     this.markAsMilestone();
 

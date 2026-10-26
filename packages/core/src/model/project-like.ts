@@ -5,6 +5,7 @@ import type { Account, } from "./account.ts";
 import type { Resource, } from "./resource.ts";
 import type { Task, } from "./task.ts";
 import type { Report, } from "./report.ts";
+import type { Material, } from "./material.ts";
 import type { TjTime, } from "../time/tj-time.ts";
 import type { CostEvent, } from "./cost-event.ts";
 
@@ -24,6 +25,7 @@ export interface ProjectLike {
   readonly resources: PropertySet;
   readonly tasks: PropertySet;
   readonly reports: PropertySet;
+  readonly materials: PropertySet;
 
   // Registro
   addShift(s: Shift,): void;
@@ -31,6 +33,7 @@ export interface ProjectLike {
   addTask(t: Task,): void;
   addResource(r: Resource,): void;
   addReport(r: Report,): void;
+  addMaterial(m: Material,): void;
   removeAccount(a: Account,): void;
 
   /**
@@ -48,6 +51,11 @@ export interface ProjectLike {
    * recursos do atributo `responsible` em objetos `Resource`.
    */
   resource(id: string,): Resource | null;
+
+  /**
+   * Resolve um ID de material em um objeto `Material` (Fase 10 Complemento C1).
+   */
+  material(id: string,): Material | null;
 
   /**
    * Converte uma data `TjTime` para o índice numérico de slot.

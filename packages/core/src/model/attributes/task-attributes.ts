@@ -728,6 +728,24 @@ export function registerTaskAttributes(propertySet: PropertySet,): void {
     ),
   );
 
+  // timebasis: Time Basis (SymbolAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=true, default=nil)
+  // Extensão Fase 10 Complemento C2.1 (#6) — não existe no TJ Ruby. Valores
+  // canônicos `duration`/`length`; aliases normalizados no parser (C3.4.1).
+  propertySet.addAttributeType(
+    new AttributeDefinition(
+      "timebasis",
+      "Time Basis",
+      AttributeType.Symbol,
+      null,
+      false, // userDefined
+      false, // isList
+      false, // isSingleton
+      true, // isScenarioAttribute
+      false, // inheritedFromParent
+      false, // inheritedFromProject
+    ),
+  );
+
   // tree: Tree Index (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
   propertySet.addAttributeType(
     new AttributeDefinition(

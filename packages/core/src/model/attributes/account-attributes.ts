@@ -126,6 +126,24 @@ export function registerAccountAttributes(propertySet: PropertySet,): void {
     ),
   );
 
+  // note: Note (RichTextAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
+  // Extensão Fase 10 Complemento (#1 nota estática) — espelha task-attributes.ts.
+  // O diário (`journalentry`) não é atributo: usa o journal global com property=account.
+  propertySet.addAttributeType(
+    new AttributeDefinition(
+      "note",
+      "Note",
+      AttributeType.RichText,
+      null,
+      false, // userDefined
+      false, // isList
+      false, // isSingleton
+      false, // isScenarioAttribute
+      false, // inheritedFromParent
+      false, // inheritedFromProject
+    ),
+  );
+
   // seqno: No (IntegerAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
   propertySet.addAttributeType(
     new AttributeDefinition(

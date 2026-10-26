@@ -41,6 +41,7 @@ import { registerAccountAttributes, } from "../model/attributes/account-attribut
 import { registerResourceAttributes, } from "../model/attributes/resource-attributes.ts";
 import { registerTaskAttributes, } from "../model/attributes/task-attributes.ts";
 import { registerReportAttributes, } from "../model/attributes/report-attributes.ts";
+import { registerMaterialAttributes, } from "../model/attributes/material-attributes.ts";
 
 export class Project implements ProjectLike {
   readonly id: string;
@@ -53,6 +54,7 @@ export class Project implements ProjectLike {
   readonly resources: PropertySet;
   readonly tasks: PropertySet;
   readonly reports: PropertySet;
+  readonly materials: PropertySet;
   readonly inputFiles: string[];
   readonly timeSheets: TimeSheets;
   readonly reportContexts: ReportContext[];
@@ -102,6 +104,7 @@ export class Project implements ProjectLike {
             this.resources,
             this.tasks,
             this.reports,
+            this.materials,
           ];
           for (const ps of propertySets) {
             const attrDef = ps.attributeDefinition(id,);
@@ -175,6 +178,8 @@ export class Project implements ProjectLike {
     this.resources = new PropertySet(this, true,);
     this.tasks = new PropertySet(this, false,);
     this.reports = new PropertySet(this, false,);
+    // Materials: IDs hierárquicos como tasks (rollup de allocations C1).
+    this.materials = new PropertySet(this, false,);
     this.attributes.set("scheduleGranularity", 3600,);
     this.attributes.set("timezone", TjTime.getTimeZone(),);
     this.attributes.set("weekStartsMonday", true,);
@@ -182,6 +187,9 @@ export class Project implements ProjectLike {
     this.attributes.set("currency", "EUR",);
     this.attributes.set("priority", 500,);
     this.attributes.set("rate", 0.0,);
+    // timebasis default global (Fase 10 Complemento C2.2, #6): `duration`
+    // preserva a semântica TJ de dias corridos para distribuição de custo.
+    this.attributes.set("timebasis", "duration",);
     this.attributes.set("now", TjTime.now().align(3600,),);
 
     // Alert levels padrão (Ruby AlertLevelDefinitions#initialize).
@@ -200,6 +208,7 @@ export class Project implements ProjectLike {
     registerResourceAttributes(this.resources,);
     registerTaskAttributes(this.tasks,);
     registerReportAttributes(this.reports,);
+    registerMaterialAttributes(this.materials,);
 
     // Create initial plan scenario
     const planScenario = new Scenario(this, "plan", "Plan", null,);
@@ -267,6 +276,11 @@ export class Project implements ProjectLike {
   resource(id: string,): Resource | null {
     const prop = this.resources.get(id,);
     return prop ? (prop as Resource) : null;
+  }
+
+  material(id: string,): import("./material.ts").Material | null {
+    const prop = this.materials.get(id,);
+    return prop ? (prop as import("./material.ts").Material) : null;
   }
 
   report(id: string,): Report | null {
@@ -467,6 +481,8 @@ export class Project implements ProjectLike {
   addResource(_r: unknown,): void {}
 
   addReport(_r: unknown,): void {}
+
+  addMaterial(_m: unknown,): void {}
 
   removeAccount(account: unknown,): void {
     if (account instanceof PropertyTreeNode) {

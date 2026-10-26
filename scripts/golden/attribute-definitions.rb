@@ -23,6 +23,24 @@ project = TaskJuggler::Project.new('prj', 'Test', '1.0')
 # Coleta todas as definições de atributos de todos os PropertySets
 attribute_definitions = []
 
+def note_extension(set_name)
+  # Extensão documentada do port (Fase 10 Complemento C0): nota estática
+  # (#1) em Account/Resource. Não existe no TJ 3.8.4 Ruby — é injetada
+  # aqui como divergência intencional, espelhando o `note` de Task
+  # (RichTextAttribute, não cenário, não herda).
+  {
+    'id' => 'note',
+    'name' => 'Note',
+    'objClass' => 'TaskJuggler::RichTextAttribute',
+    'inheritedFromParent' => false,
+    'inheritedFromProject' => false,
+    'scenarioSpecific' => false,
+    'default' => nil,
+    'userDefined' => false,
+    'extension' => set_name,
+  }
+end
+
 # Percorre os PropertySets do projeto (o Ruby os armazena em @propertySets)
 project.scenarios.eachAttributeDefinition do |attr_def|
   # Converte para um hash com os campos que o golden test espera.
@@ -65,6 +83,7 @@ project.accounts.eachAttributeDefinition do |attr_def|
     'userDefined' => attr_def.userDefined,
   }
 end
+attribute_definitions << note_extension('accounts')
 
 project.resources.eachAttributeDefinition do |attr_def|
   attribute_definitions << {
@@ -78,6 +97,7 @@ project.resources.eachAttributeDefinition do |attr_def|
     'userDefined' => attr_def.userDefined,
   }
 end
+attribute_definitions << note_extension('resources')
 
 project.tasks.eachAttributeDefinition do |attr_def|
   attribute_definitions << {
@@ -91,6 +111,19 @@ project.tasks.eachAttributeDefinition do |attr_def|
     'userDefined' => attr_def.userDefined,
   }
 end
+# Extensão documentada do port (Fase 10 Complemento C2.1, #6): timebasis
+# em Task (SymbolAttribute, scenario-specific). Não existe no TJ Ruby.
+attribute_definitions << {
+  'id' => 'timebasis',
+  'name' => 'Time Basis',
+  'objClass' => 'TaskJuggler::SymbolAttribute',
+  'inheritedFromParent' => false,
+  'inheritedFromProject' => false,
+  'scenarioSpecific' => true,
+  'default' => nil,
+  'userDefined' => false,
+  'extension' => 'tasks',
+}
 
 project.reports.eachAttributeDefinition do |attr_def|
   attribute_definitions << {

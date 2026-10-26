@@ -58,4 +58,21 @@ export class Task extends PropertyTreeNode {
    * Apenas Task possui `chargesetMode`. Resource e Material não têm.
    */
   chargesetMode: "default" | "force" = "default";
+
+  /**
+   * Validação modelo-level do `timebasis` (Fase 10 Complemento C2.3).
+   * Milestones não aceitam timebasis explícito (complemento2 §2.6,
+   * erro `timebasis_not_supported`). A regra completa de overspecification
+   * (`task_overspecified`) é aplicada no parser (C3.4.3).
+   */
+  validateTimebasis(value: string | null,): void {
+    if (
+      value != null &&
+      this.scenarioData(0,).a("milestone",) === true
+    ) {
+      throw new Error(
+        `timebasis_not_supported: Milestone task '${this.id}' cannot have 'timebasis'.`,
+      );
+    }
+  }
 }

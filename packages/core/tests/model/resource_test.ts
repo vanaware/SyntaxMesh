@@ -5,6 +5,7 @@ import { Project, } from "../../src/model/project.ts";
 import { Resource, } from "../../src/model/resource.ts";
 import { ResourceScenario, } from "../../src/model/resource-scenario.ts";
 import { WorkingHours, } from "../../src/calendar/working-hours.ts";
+import { AttributeType, } from "../../src/attributes/attribute-type.ts";
 import { Shift, } from "../../src/model/shift.ts";
 import { ShiftScenario, } from "../../src/model/shift-scenario.ts";
 import {
@@ -273,5 +274,44 @@ describe("ResourceScenario.onShift?", () => {
     assertEquals(scenario.onShift(10,), true,);
     // sbIdx 20 = 20:00 (shift cobre e tem prioridade → true)
     assertEquals(scenario.onShift(20,), true,);
+  });
+});
+
+describe("Resource: atributo note (extensão Fase 10 Complemento C0)", () => {
+  let project: Project;
+
+  beforeEach(() => {
+    project = createTestProject(2,);
+  },);
+
+  it("propertySet de resource conhece 'note'", () => {
+    assert(project.resources.knownAttribute("note",),);
+  });
+
+  it("note é RichText, não scenario-specific e não herda", () => {
+    const def = project.resources.attributeDefinition("note",);
+    assert(def, "definição de note deve existir",);
+    assertEquals(def!.type, AttributeType.RichText,);
+    assertEquals(def!.isScenarioAttribute, false,);
+    assertEquals(def!.inheritedFromParent, false,);
+    assertEquals(def!.inheritedFromProject, false,);
+  });
+
+  it("note round-trip via set/get (não cenário)", () => {
+    const resource = new Resource(project, "r1", "Engineer", null,);
+    resource.set("note", "nota estática",);
+    assertEquals(resource.get("note",), "nota estática",);
+  });
+
+  it("segundo set de note lança AttributeOverwrite (singleton não-lista)", () => {
+    const resource = new Resource(project, "r1", "Engineer", null,);
+    resource.set("note", "primeira",);
+    let lancou = false;
+    try {
+      resource.set("note", "segunda",);
+    } catch (_e) {
+      lancou = true;
+    }
+    assert(lancou, "esperava AttributeOverwrite",);
   });
 });

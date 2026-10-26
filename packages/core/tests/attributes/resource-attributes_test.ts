@@ -39,7 +39,7 @@ describe("ResourceAttributes", () => {
           count++;
         }
       },);
-      assertEquals(count, 21,);
+      assertEquals(count, 22,);
     });
 
     it("registra bsi com atributos corretos", async () => {

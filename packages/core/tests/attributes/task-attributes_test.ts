@@ -39,7 +39,7 @@ describe("TaskAttributes", () => {
           count++;
         }
       },);
-      assertEquals(count, 43,);
+      assertEquals(count, 44,);
     });
 
     it("registra allocate com atributos corretos", async () => {

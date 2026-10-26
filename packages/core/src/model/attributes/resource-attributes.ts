@@ -309,6 +309,23 @@ export function registerResourceAttributes(propertySet: PropertySet,): void {
     ),
   );
 
+  // note: Note (RichTextAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
+  // Extensão Fase 10 Complemento (#1 nota estática) — espelha task-attributes.ts.
+  propertySet.addAttributeType(
+    new AttributeDefinition(
+      "note",
+      "Note",
+      AttributeType.RichText,
+      null,
+      false, // userDefined
+      false, // isList
+      false, // isSingleton
+      false, // isScenarioAttribute
+      false, // inheritedFromParent
+      false, // inheritedFromProject
+    ),
+  );
+
   // rate: Rate (FloatAttribute, inheritedFromParent=true, inheritedFromProject=true, isScenarioAttribute=true, default=0.0)
   propertySet.addAttributeType(
     new AttributeDefinition(

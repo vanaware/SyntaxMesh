@@ -4,6 +4,9 @@ import { createTestProject, } from "../fixtures/create-test-project.ts";
 import { Project, } from "../../src/model/project.ts";
 import { Account, } from "../../src/model/account.ts";
 import { AccountScenario, } from "../../src/model/account-scenario.ts";
+import { AttributeType, } from "../../src/attributes/attribute-type.ts";
+import { JournalEntry, } from "../../src/model/journal.ts";
+import { TjTime, } from "../../src/time/tj-time.ts";
 
 describe("Account", () => {
   let project: Project;
@@ -269,5 +272,58 @@ describe("Account.allowedTypes", () => {
       erro = e;
     }
     assert(erro instanceof Error,);
+  });
+});
+
+describe("Account: note + diário (extensão Fase 10 Complemento C0)", () => {
+  let project: Project;
+
+  beforeEach(() => {
+    project = createTestProject(2,);
+  },);
+
+  it("propertySet de account conhece 'note'", () => {
+    assert(project.accounts.knownAttribute("note",),);
+  });
+
+  it("note é RichText, não scenario-specific e não herda", () => {
+    const def = project.accounts.attributeDefinition("note",);
+    assert(def, "definição de note deve existir",);
+    assertEquals(def!.type, AttributeType.RichText,);
+    assertEquals(def!.isScenarioAttribute, false,);
+    assertEquals(def!.inheritedFromParent, false,);
+    assertEquals(def!.inheritedFromProject, false,);
+  });
+
+  it("note round-trip via set/get (não cenário)", () => {
+    const account = new Account(project, "acc1", "Costs", null,);
+    account.set("note", "conta de custos",);
+    assertEquals(account.get("note",), "conta de custos",);
+  });
+
+  it("segundo set de note lança AttributeOverwrite", () => {
+    const account = new Account(project, "acc1", "Costs", null,);
+    account.set("note", "primeira",);
+    let lancou = false;
+    try {
+      account.set("note", "segunda",);
+    } catch (_e) {
+      lancou = true;
+    }
+    assert(lancou, "esperava AttributeOverwrite",);
+  });
+
+  it("journalentry de account usa o journal global (property = account)", () => {
+    const account = new Account(project, "acc1", "Costs", null,);
+    const entry = new JournalEntry(
+      project.journal,
+      TjTime.fromString("2026-10-15",),
+      "Orçamento aprovado",
+      account,
+    );
+    assertEquals(project.journal.entriesFor(account,).length, 1,);
+    assertEquals(project.journal.entriesFor(account,)[0], entry,);
+    // Não é atributo scenario-specific: entradas permanecem globais
+    assertEquals(project.journal.entriesFor(null,).length, 0,);
   });
 });

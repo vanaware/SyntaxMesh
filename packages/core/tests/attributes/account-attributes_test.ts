@@ -27,7 +27,7 @@ describe("AccountAttributes", () => {
       ps = new PropertySet(project, false,);
     },);
 
-    it("registra 5 atributos específicos (excluindo base id, name, seqno, index)", async () => {
+    it("registra 6 atributos específicos (excluindo base id, name, seqno, index)", async () => {
       const { registerAccountAttributes, } = await import(
         "../../src/model/attributes/account-attributes.ts"
       );
@@ -39,7 +39,7 @@ describe("AccountAttributes", () => {
           count++;
         }
       },);
-      assertEquals(count, 5,);
+      assertEquals(count, 6,);
     });
 
     it("registra bsi com atributos corretos", async () => {
