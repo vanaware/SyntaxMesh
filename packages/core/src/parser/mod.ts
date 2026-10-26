@@ -19,3 +19,4 @@ export {
   TextParser,
   tokenTypeToInt,
 } from "./text-parser.ts";
+export { detectLanguage, ProjectFileParser, } from "./project-file-parser.ts";

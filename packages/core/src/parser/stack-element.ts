@@ -7,16 +7,19 @@ import { type SourceFileInfo, } from "../source-file-info.ts";
  */
 export class TextParserResultArray<T,> extends Array<T> {
   /**
-   * Adiciona um valor, concatenando se o item já for um Array.
-   * Se algum item é Array, concatena em vez de aninhar.
+   * Adiciona um valor. Apenas concatena se o item for *outro*
+   * TextParserResultArray (loop repetível aninhado), replicando o `<<`
+   * do Ruby (TextParser.rb l.69-75). Arrays "comuns" (p.ex. tuplas de
+   * critérios de ordenação) são armazenados como elemento único, sem
+   * achatar.
    */
   override push(...items: (T | T[])[]): number {
     for (const item of items) {
-      if (Array.isArray(item,)) {
-        // Concatena o array ao invés de aninhar
+      if (item instanceof TextParserResultArray) {
+        // Loop interno: mescla com o array externo.
         super.push(...item,);
       } else {
-        super.push(item,);
+        super.push(item as T,);
       }
     }
     return this.length;

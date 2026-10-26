@@ -39,12 +39,12 @@ export class MaterialAllocation {
 
     // Validação
     if (quantity < 0) {
-      throw new Error("Material allocation quantity cannot be negative");
+      throw new Error("Material allocation quantity cannot be negative",);
     }
 
     if (distribution) {
-      const sum = distribution.reduce((a, b) => a + b, 0);
-      if (Math.abs(sum - 1.0) > 0.001) {
+      const sum = distribution.reduce((a, b,) => a + b, 0,);
+      if (Math.abs(sum - 1.0,) > 0.001) {
         throw new Error(
           `Material allocation distribution must sum to 1.0, got ${sum}`,
         );

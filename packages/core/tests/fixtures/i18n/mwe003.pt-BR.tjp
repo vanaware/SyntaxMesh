@@ -1,0 +1,56 @@
+language "pt-BR"
+
+projeto prj "Hierarchical Project" "1.0" 2024-07-01 - 2024-07-31 {
+  formatohora "%Y-%m-%d"
+  agora 2024-07-01
+}
+
+/* 1. Hierarchical Resources */
+recurso team "Development Team" {
+  recurso alice "Alice"
+  recurso bob "Bob"
+}
+
+/* 2. Hierarchical Tasks (WBS) */
+tarefa deliverable "Software Release 1.0" {
+
+  /* Phase 1: Preparation */
+  tarefa phase1 "Preparation" {
+
+    tarefa t1 "Requirements" {
+      esforço 3d
+      alocar alice
+    }
+
+    tarefa t2 "Architecture" {
+      esforço 2d
+      alocar bob
+      depende !t1   # The '!' means "look for 't1' inside the current parent (phase1)"
+    }
+  }
+
+  /* Key Event: Milestone */
+  tarefa m1 "Design Approved" {
+    marco       # Zero duration, just a marker
+    depende !phase1 # Waits for the entire phase1 to finish
+  }
+
+  /* Phase 2: Execution */
+  tarefa phase2 "Implementation" {
+    depende !m1     # Wait for approval
+
+    tarefa t3 "Coding" {
+      esforço 5d
+      alocar alice, bob
+    }
+  }
+}
+
+/* 3. Hierarchical Report */
+relatoriotarefa "WBS" {
+  formatos html
+  manchete "Work Breakdown Structure"
+
+  # 'bsi' (Breakdown Structure Index) shows the hierarchy numbers (1.1, 1.2, etc.)
+  colunas bsi, name, início, fim, esforço, chart
+}

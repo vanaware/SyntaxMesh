@@ -16,22 +16,30 @@ describe("TextParserResultArray", () => {
     assertEquals([...arr,], ["a",],);
   });
 
-  it("push de array concatena em vez de aninhar", () => {
-    const arr = new TextParserResultArray<string>();
+  it("push de array comum aninha (não achata) — contrato Ruby", () => {
+    const arr = new TextParserResultArray<unknown>();
     arr.push(["a", "b",],);
+    assertEquals([...arr,], [["a", "b",],],);
+  });
+
+  it("push de TextParserResultArray aninhado mescla com o externo", () => {
+    const arr = new TextParserResultArray<unknown>();
+    const inner = new TextParserResultArray<unknown>();
+    inner.push("a", "b",);
+    arr.push(inner,);
     assertEquals([...arr,], ["a", "b",],);
   });
 
-  it("push misto (valores e arrays) achata tudo", () => {
-    const arr = new TextParserResultArray<string>();
+  it("push misto (valores e arrays) só mescla TextParserResultArray", () => {
+    const arr = new TextParserResultArray<unknown>();
     arr.push("x", ["y", "z",], "w",);
-    assertEquals([...arr,], ["x", "y", "z", "w",],);
+    assertEquals([...arr,], ["x", ["y", "z",], "w",],);
   });
 
-  it("retorna o comprimento total após concatenação", () => {
-    const arr = new TextParserResultArray<number>();
+  it("retorna o comprimento total após inserções", () => {
+    const arr = new TextParserResultArray<unknown>();
     const len = arr.push([1, 2, 3,],);
-    assertEquals(len, 3,);
+    assertEquals(len, 1,);
   });
 });
 
@@ -92,12 +100,11 @@ describe("StackElement", () => {
     ],);
   });
 
-  it("insert com multiValue e array achata o array", () => {
+  it("insert com multiValue e array comum aninha (não achata)", () => {
     const el = new StackElement(null, null,);
     el.insert(0, ["a", "b",], sfi, true,);
-    assertEquals([...(el.val[0] as TextParserResultArray<string>),], [
-      "a",
-      "b",
+    assertEquals([...(el.val[0] as TextParserResultArray<unknown>),], [
+      ["a", "b",],
     ],);
   });
 

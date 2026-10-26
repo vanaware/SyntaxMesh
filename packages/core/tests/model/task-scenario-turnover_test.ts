@@ -28,8 +28,10 @@ function injectCharge(
   // O atributo `charge` espera { amount: number }[] (formato do parser),
   // mas a implementação de `turnover` espera objetos Charge. Injetamos com cast.
   // Acumula no array existente (setForScenario substitui o array inteiro).
-  const current = (task.getForScenario("charge", scIdx,) as { amount: number }[] | null) ?? [];
-  current.push(charge as unknown as { amount: number });
+  const current =
+    (task.getForScenario("charge", scIdx,) as { amount: number }[] | null) ??
+      [];
+  current.push(charge as unknown as { amount: number },);
   task.setForScenario("charge", current, scIdx,);
 }
 
@@ -42,7 +44,7 @@ function injectChargeSet(
   scIdx: number,
 ): void {
   // O atributo `chargeset` espera ChargeSet[]
-  task.setForScenario("chargeset", [chargeSet], scIdx,);
+  task.setForScenario("chargeset", [chargeSet,], scIdx,);
 }
 
 /**
@@ -74,8 +76,8 @@ describe("TaskScenario", () => {
   beforeEach(() => {
     project = createTestProject(1,);
     // Granularidade diária para que os índices correspondam a datas previsíveis.
-    project.set("start", TjTime.fromString("2026-01-01",));
-    project.set("end", TjTime.fromString("2026-12-31",));
+    project.set("start", TjTime.fromString("2026-01-01",),);
+    project.set("end", TjTime.fromString("2026-12-31",),);
     project.set("scheduleGranularity", 86400,);
     // 1 dia de trabalho = 24h para que os cálculos de custo sejam previsíveis
     // (2 dias * 24h * 100/h = 4800).
@@ -193,7 +195,7 @@ describe("TaskScenario", () => {
       resource.setForScenario("rate", 100, 0,);
       const chargeSet = new ChargeSet();
       chargeSet.addAccount(account, 1.0,);
-      resource.setForScenario("chargeset", [chargeSet], 0,);
+      resource.setForScenario("chargeset", [chargeSet,], 0,);
       bookResource(resourceScenario, task, 0, project,);
       // 2 dias * 24h * 100/h = 4800
       assertEquals(taskScenario.turnover(0, 365, account, resource,), 4800.0,);
@@ -205,7 +207,7 @@ describe("TaskScenario", () => {
       resource.setForScenario("rate", 100, 0,);
       const chargeSet = new ChargeSet();
       chargeSet.addAccount(account, 1.0,);
-      resource.setForScenario("chargeset", [chargeSet], 0,);
+      resource.setForScenario("chargeset", [chargeSet,], 0,);
       injectCharge(task, 100, "perDiem", 0,);
       bookResource(resourceScenario, task, 0, project,);
       // (2 dias * 24h * 100/h) + (2 dias * 100) = 4800 + 200 = 5000
@@ -220,7 +222,7 @@ describe("TaskScenario", () => {
       resource.setForScenario("rate", 100, 0,);
       const chargeSet = new ChargeSet();
       chargeSet.addAccount(account, 0.5,);
-      resource.setForScenario("chargeset", [chargeSet], 0,);
+      resource.setForScenario("chargeset", [chargeSet,], 0,);
       bookResource(resourceScenario, task, 0, project,);
       // (2 dias * 24h * 100/h) * 0.5 = 2400
       assertEquals(taskScenario.turnover(0, 365, account, resource,), 2400.0,);
@@ -232,19 +234,24 @@ describe("TaskScenario", () => {
       resource.setForScenario("rate", 100, 0,);
       const chargeSet = new ChargeSet();
       chargeSet.addAccount(account, 0.0,);
-      resource.setForScenario("chargeset", [chargeSet], 0,);
+      resource.setForScenario("chargeset", [chargeSet,], 0,);
       bookResource(resourceScenario, task, 0, project,);
       assertEquals(taskScenario.turnover(0, 365, account, resource,), 0.0,);
     });
 
     it("inclui conta filha do account", () => {
-      const childAccount = new Account(project, "acc2", "Child Account", account,);
+      const childAccount = new Account(
+        project,
+        "acc2",
+        "Child Account",
+        account,
+      );
       task.setForScenario("start", TjTime.fromString("2026-01-01",), 0,);
       task.setForScenario("end", TjTime.fromString("2026-01-03",), 0,);
       resource.setForScenario("rate", 100, 0,);
       const chargeSet = new ChargeSet();
       chargeSet.addAccount(childAccount, 1.0,);
-      resource.setForScenario("chargeset", [chargeSet], 0,);
+      resource.setForScenario("chargeset", [chargeSet,], 0,);
       bookResource(resourceScenario, task, 0, project,);
       // 2 dias * 24h * 100/h = 4800 (conta filha é incluída)
       assertEquals(taskScenario.turnover(0, 365, account, resource,), 4800.0,);

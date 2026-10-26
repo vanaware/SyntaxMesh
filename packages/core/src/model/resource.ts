@@ -38,7 +38,7 @@ export class Resource extends PropertyTreeNode {
   /**
    * Define o charge set do recurso.
    */
-  set chargeset(value: ChargeSetCollection) {
+  set chargeset(value: ChargeSetCollection,) {
     this.chargeset_ = value;
   }
 

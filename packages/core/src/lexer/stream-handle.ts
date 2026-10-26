@@ -327,7 +327,8 @@ export class BufferStreamHandle extends StreamHandle {
   }
 }
 
-function loadFileText(fileName: string,): string {
+/** Lê o texto de um arquivo via hook injetado ou Deno filesystem. */
+export function loadFileText(fileName: string,): string {
   if (FileStreamHandle.fileLoader) {
     return FileStreamHandle.fileLoader(fileName,);
   }

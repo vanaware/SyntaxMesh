@@ -26,7 +26,7 @@ export class Material extends PropertyTreeNode {
   ) {
     // Material não é registrado em PropertySet — é uma entidade simples.
     // Usamos um PropertySet temporário apenas para satisfazer o construtor.
-    const propertySet = new PropertySet(project, false);
+    const propertySet = new PropertySet(project, false,);
     super(propertySet, id, id, null,);
     this.unit = unit;
     this.unitPrice = unitPrice;
@@ -46,7 +46,7 @@ export class Material extends PropertyTreeNode {
    * Cópia profunda imutável.
    * Retorna this (imutável) para compatibilidade com deepClone.
    */
-  deepClone(): this {
+  override deepClone(): this {
     return this;
   }
 }

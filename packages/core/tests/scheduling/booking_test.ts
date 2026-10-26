@@ -7,6 +7,7 @@ import { Task, } from "../../src/model/task.ts";
 import { Booking, Overtime, Sloppy, } from "../../src/scheduling/booking.ts";
 import { ScoreboardInterval, } from "../../src/time/scoreboard-interval.ts";
 import { TjTime, } from "../../src/time/tj-time.ts";
+import { SourceFileInfo, } from "../../src/source-file-info.ts";
 
 describe("Booking", () => {
   let project: Project;
@@ -67,8 +68,11 @@ describe("Booking", () => {
       const sbStart = TjTime.fromDate(new Date("2024-01-01",),);
       const iv = new ScoreboardInterval(sbStart, 3600, 0, 24,);
       const booking = new Booking(r1, t1, [iv,],);
-      booking.sourceFileInfo = { file: "test.tjp", line: 1, };
-      assertEquals(booking.sourceFileInfo, { file: "test.tjp", line: 1, },);
+      booking.sourceFileInfo = new SourceFileInfo("test.tjp", 1, 0,);
+      assertEquals(
+        booking.sourceFileInfo,
+        new SourceFileInfo("test.tjp", 1, 0,),
+      );
     });
   });
 

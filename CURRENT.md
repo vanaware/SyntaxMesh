@@ -21,7 +21,7 @@ IMPORTANTE
 * arquivos de documentação na raiz da pasta docs/syntaxmesh, podem estar desatualizados, e podem ser atualizados para manter coerencia com o plano em docs/syntaxmesh/fases
 * arquivos da pasta docs/tj3-engine foram usados para elaborar o plano em docs/syntaxmesh/fases mas podem estar desatualizados também por conta da evolução do projeto e podem ser atualizados se precisar tambem
 
-## Resumo do estado atual (2026-10-24)
+## Resumo do estado atual (2026-10-26)
 
 **Arquitetura de pacotes (ADR 030 — aceita):** todo código principal vive em
 `packages/core`. Não criar pacotes `parser`, `language`, `richtext`, `markdown`,
@@ -41,9 +41,18 @@ i18n (10.15+) em `packages/core/src/i18n/`.
 - Fase 8.1 — Nova funcionalidade de custos ✅ (163 testes core, 37 tarefas atômicas)
 - Fase 8.2 — Modelo Contábil Estendido ✅ (130 tarefas)
 - Fase 9 — Orquestrador e Cache ✅ (~195 tarefas)
+- Fase 10 — Parser e Linguagem ✅ (10.0–10.20 concluídas em 2026-10-26)
 
 **Fases ativas/próximas:**
-- Fase 10 — Parser e Linguagem 🟡 Em andamento (10.1–10.7 implementadas e testadas em core — `TextParser` FSM com 41 testes; ADRs da 10.0 concluídos como 022/023; próxima 10.8 — Scanner genérico + StreamHandle). Total do suite: 154 testes / 2337 passos.
+- Fase 10 — Parser e Linguagem ✅ Concluída (2026-10-26): `TextParser` FSM,
+  `Scanner`/`ProjectFileScanner`, `ProjectFileParser`, `TjpSyntaxRules` com as
+  348 regras do Ruby portadas (380 registradas, 0 placeholders), i18n
+  (`LanguageRegistry` + en/pt-BR/es + diretiva `language`), AST equivalence
+  9 MWEs × 3 idiomas, golden parser com 178 casos (5 skipped — dependem de
+  RichText, Fase 12). Suíte core: **213 testes / 2792 passos, 0 falhas**;
+  `deno task check:all` e `deno fmt --check` verdes. Verificação final em
+  `fase-10-parser-linguagem-tarefas.md` (10.20) e smoke test
+  `tests/integration/smoke_after_phase_10_test.ts`.
 - Fase 11 — Expressões Lógicas e Queries ⬜ Não iniciada
 - Fase 12 — RichText (compatibilidade TJP) ⬜ Não iniciada
 - Fase 13 — Markdown (novo, futuro) ⬜ Não iniciada
@@ -96,6 +105,17 @@ O ambiente está pré-configurado para rodar TaskJuggler. Execute `tj3` diretame
 ## Observações sobre o repositório
 
 - `deno task --list` retorna `error: unexpected argument '--list'` — Deno 2.x lista tarefas executando `deno task` sem argumentos.
+- O nome real da task de validação completa é `deno task check:all` (dois-pontos), não `check-all`.
 - A Fase 2 está genuinamente implementada (9 arquivos em `packages/core/src/time/`, 14 arquivos de teste em `packages/core/tests/time/`).
 - A Fase 8.1 está implementada com 163 testes core e 37 tarefas atômicas.
 - A Fase 7 está em andamento (7.2 TaskDependency concluída).
+- **Gap conhecido (Fase 7/9):** `Project.schedule()` roda end-to-end sobre modelos
+  vindos do parser sem lançar, mas ainda não coloca as datas (`not_scheduled`,
+  `task_start_undef`; `TaskDependency.task` não é resolvido no prepare). O tj3
+  real agenda o mwe001 com folga — o modelo do parser está correto; o ajuste é
+  do scheduler. Documentado no smoke test pós-Fase 10.
+- **Semântica do MessageHandler:** `error()` só lança `TjRuntimeError` com
+  `trapSetup = true` (Ruby MessageHandler.rb l.291-298); drivers golden e
+  testes que esperam abort precisam ativar o trap explicitamente.
+- Golden do parser exige fuso UTC por caso (Ruby `TaskJuggler.new` reseta via
+  `TjTime.setTimeZone('UTC')`).

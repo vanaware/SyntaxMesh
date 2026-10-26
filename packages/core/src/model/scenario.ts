@@ -23,10 +23,14 @@ export class Scenario extends PropertyTreeNode {
     return result;
   }
 
-  override allLeaves(includeSelf: boolean = false,): Scenario[] {
+  /**
+   * Ruby PropertyTreeNode#allLeaves (l.275-285): `withoutSelf` EXCLUI o
+   * próprio nó quando ele é folha — mesma semântica da classe base.
+   */
+  override allLeaves(withoutSelf: boolean = false,): Scenario[] {
     const result: Scenario[] = [];
     if (this.leaf()) {
-      if (includeSelf) {
+      if (!withoutSelf) {
         result.push(this,);
       }
     } else {

@@ -1,4 +1,4 @@
-import { AppConfig } from "./app-config.ts";
+import { AppConfig, } from "./app-config.ts";
 
 /**
  * Inicializa AppConfig com valores do SyntaxMesh.

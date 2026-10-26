@@ -64,7 +64,8 @@ tc("sameTimeNextMonth advances one month",
 tc("sameTimeNextMonth handles month end",
    "sameTimeNextMonth",
    { year: 2026, month: 1, day: 31, hour: 12, minute: 0, second: 0 },
-   { year: 2026, month: 2, day: 28, hour: 12, minute: 0, second: 0 })
+   # Ruby rolls over (mktime), it does NOT clip to month end.
+   { year: 2026, month: 3, day: 3, hour: 12, minute: 0, second: 0 })
 
 tc("sameTimeNextMonth February to March",
    "sameTimeNextMonth",
@@ -94,7 +95,8 @@ tc("sameTimeNextYear advances one year",
 tc("sameTimeNextYear leap year to non-leap",
    "sameTimeNextYear",
    { year: 2024, month: 2, day: 29, hour: 12, minute: 0, second: 0 },
-   { year: 2025, month: 2, day: 28, hour: 12, minute: 0, second: 0 })
+   # Ruby rolls over: Feb 29 + 1y -> Mar 1.
+   { year: 2025, month: 3, day: 1, hour: 12, minute: 0, second: 0 })
 
 # --- strftime ---
 
@@ -253,14 +255,14 @@ tc("collectIntervals returns empty for no intervals",
 tc("collectIntervals with single interval",
    "collectIntervals",
    { year: 2026, month: 1, day: 15, hour: 14, minute: 30, second: 45 },
-   [{ start: "2026-01-15-14:30:45", end: "2026-01-15-15:30:45" }])
+   [{ start: "2026-01-15-14:30:45-+0000", end: "2026-01-15-15:30:45-+0000" }])
 
 tc("collectIntervals with multiple intervals",
    "collectIntervals",
    { year: 2026, month: 1, day: 15, hour: 14, minute: 30, second: 45 },
    [
-     { start: "2026-01-15-14:30:45", end: "2026-01-15-15:30:45" },
-     { start: "2026-01-15-16:00:00", end: "2026-01-15-17:00:00" },
+     { start: "2026-01-15-14:30:45-+0000", end: "2026-01-15-15:30:45-+0000" },
+     { start: "2026-01-15-15:30:45-+0000", end: "2026-01-15-16:30:45-+0000" },
    ])
 
 tc("sameTimeNextYear leap year to leap year",
@@ -291,12 +293,14 @@ tc("sameTimeNextWeek mid-year",
 tc("sameTimeNextMonth March 31 to April 30",
    "sameTimeNextMonth",
    { year: 2026, month: 3, day: 31, hour: 14, minute: 0, second: 0 },
-   { year: 2026, month: 4, day: 30, hour: 14, minute: 0, second: 0 })
+   # Ruby rolls over: Mar 31 + 1mo -> May 1 (Apr 31 spills).
+   { year: 2026, month: 5, day: 1, hour: 14, minute: 0, second: 0 })
 
 tc("sameTimeNextMonth May 31 to June 30",
    "sameTimeNextMonth",
    { year: 2026, month: 5, day: 31, hour: 10, minute: 0, second: 0 },
-   { year: 2026, month: 6, day: 30, hour: 10, minute: 0, second: 0 })
+   # Ruby rolls over: May 31 + 1mo -> Jul 1 (Jun 31 spills).
+   { year: 2026, month: 7, day: 1, hour: 10, minute: 0, second: 0 })
 
 tc("sameTimeNextMonth December 31 to January 31",
    "sameTimeNextMonth",
@@ -360,12 +364,12 @@ tc("strftime %% returns literal %",
 tc("to_s returns default format",
    "to_s",
    { year: 2026, month: 1, day: 15, hour: 14, minute: 30, second: 45 },
-   "2026-01-15 14:30:45 +0000")
+   "2026-01-15-14:30:45-+0000")
 
 tc("to_s with timezone offset",
    "to_s",
    { year: 2026, month: 1, day: 15, hour: 14, minute: 30, second: 45 },
-   "2026-01-15 14:30:45 +0000", timezone: "UTC")
+   "2026-01-15-14:30:45-+0000", timezone: "UTC")
 
 # --- secondsOfDay ---
 

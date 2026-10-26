@@ -15,8 +15,10 @@ import {
 /**
  * ParserToken — token entregue pelo scanner ao FSM.
  * [type, name, sourceFileInfo], espelhando o Ruby `[type, name, sfi]`.
+ * Elemento 1 é `unknown` porque o Scanner converte valores (DATE → TjTime,
+ * INTEGER/FLOAT → number, TIME → segundos), como no Ruby.
  */
-export type ParserToken = [string, string, SourceFileInfo | null,];
+export type ParserToken = [string, unknown, SourceFileInfo | null,];
 
 /**
  * Host mínimo que uma action de Pattern recebe ao ser chamada.
@@ -240,9 +242,17 @@ export abstract class TextParser {
   getSourceFileInfo(): SourceFileInfo | null {
     if (this.stack === null || this.stack.length <= 1) {
       const scanner = this.scanner as
-        | { sourceFileInfo: SourceFileInfo | null }
+        | {
+          sourceFileInfo: SourceFileInfo | null | (() => SourceFileInfo);
+        }
         | null;
-      return scanner ? scanner.sourceFileInfo : null;
+      if (!scanner) {
+        return null;
+      }
+      // Scanner real expõe método; fakes de teste podem expor propriedade.
+      return typeof scanner.sourceFileInfo === "function"
+        ? scanner.sourceFileInfo()
+        : scanner.sourceFileInfo;
     }
     return this.stack[this.stack.length - 1]!.firstSourceFileInfo;
   }
@@ -251,7 +261,7 @@ export abstract class TextParser {
    * Registra um erro. Com scanner, delega (tem mais contexto); sem scanner,
    * loga no MessageHandler — Ruby recursava (bug real, l.221-230).
    */
-  protected error(
+  error(
     id: string,
     text: string,
     sfi: SourceFileInfo | null = null,
@@ -283,7 +293,7 @@ export abstract class TextParser {
   /**
    * Registra um warning. Mesma delegação de error (TextParser.rb l.232-241).
    */
-  protected warning(
+  warning(
     id: string,
     text: string,
     sfi: SourceFileInfo | null = null,
@@ -407,11 +417,13 @@ export abstract class TextParser {
         // Transições que entram em regras geram estados onde precisamos
         // retornar quando a regra terminar. Empilhamos essa lista em @stack.
         const stackElement = this.stack[this.stack.length - 1]!;
-        const seState = stackElement.state as State;
         let first = true;
         for (const s of transition.stateStack) {
           this.checkForOldSyntax(s, token!,);
-          if (first && s.pattern === seState.pattern) {
+          // `stackElement.state` pode ser tupla [rule, pattern, index] —
+          // resolve como State antes de comparar o padrão (fiel a Ruby,
+          // que lê stackElement.state.pattern a cada iteração).
+          if (first && s.pattern === this.stateOf(stackElement,)?.pattern) {
             // O primeiro estado da lista pode ser apenas outro estado do
             // padrão corrente — o StackElement já está na pilha.
             stackElement.state = s;
@@ -540,7 +552,14 @@ export abstract class TextParser {
     let result: unknown = null;
     if (state.pattern && state.pattern.function) {
       // Disponibiliza os valores dos tokens e seus SourceFileInfo à action.
-      this.val = stackEntry!.val;
+      // Ruby: `@val` é um Array onde índices de tokens opcionais não
+      // preenchidos leem `nil`. Em TS, buracos viram `undefined` — os
+      // índices do padrão são normalizados para null antes da action.
+      const vals = stackEntry!.val;
+      for (let i = 0; i < state.pattern.tokens.length; i++) {
+        if (vals[i] === undefined) vals[i] = null;
+      }
+      this.val = vals;
       this.sourceFileInfo = stackEntry!.sourceFileInfo;
       try {
         // A action roda como callback comum (sem arrow): `this` = parser.

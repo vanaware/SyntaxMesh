@@ -33,4 +33,4 @@ export * from "../accounting/cost-event.ts";
 export * from "../finance/charge-set-collection.ts";
 
 // 9.8.3.3 — export Project
-export { Project } from "./project.ts";
+export { Project, } from "./project.ts";

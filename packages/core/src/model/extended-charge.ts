@@ -35,8 +35,8 @@ export class ExtendedCharge {
 
     // Validação
     if (distribution) {
-      const sum = distribution.reduce((a, b) => a + b, 0);
-      if (Math.abs(sum - 1.0) > 0.001) {
+      const sum = distribution.reduce((a, b,) => a + b, 0,);
+      if (Math.abs(sum - 1.0,) > 0.001) {
         throw new Error(
           `Extended charge distribution must sum to 1.0, got ${sum}`,
         );

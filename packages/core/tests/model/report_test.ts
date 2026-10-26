@@ -1,5 +1,6 @@
 import { beforeEach, describe, it, } from "@std/testing/bdd";
 import { assert, assertEquals, assertThrows, } from "@std/assert";
+import { MessageHandlerInstance, } from "../../src/message-handler.ts";
 import { createTestProject, } from "../fixtures/create-test-project.ts";
 import { Project, } from "../../src/model/project.ts";
 import { Report, } from "../../src/model/report.ts";
@@ -127,14 +128,32 @@ describe("Report", () => {
   });
 
   it("checkFileName rejeita caracteres inválidos", () => {
+    // Ruby: checkFileName chama error() que com trapSetup aborta.
+    const mh = MessageHandlerInstance.instance;
+    mh.trapSetup = true;
     const report = new Report(project, "report1", "Report 1", null,);
     assertThrows(() => report.checkFileName("file?name",), Error,);
+    mh.messages.length = 0;
+    mh.errors = 0;
     assertThrows(() => report.checkFileName("file*name",), Error,);
+    mh.messages.length = 0;
+    mh.errors = 0;
     assertThrows(() => report.checkFileName("file:name",), Error,);
+    mh.messages.length = 0;
+    mh.errors = 0;
     assertThrows(() => report.checkFileName('file"name',), Error,);
+    mh.messages.length = 0;
+    mh.errors = 0;
     assertThrows(() => report.checkFileName("file<name>",), Error,);
+    mh.messages.length = 0;
+    mh.errors = 0;
     assertThrows(() => report.checkFileName("file|name",), Error,);
+    mh.messages.length = 0;
+    mh.errors = 0;
     assertThrows(() => report.checkFileName("file%name",), Error,);
+    mh.trapSetup = false;
+    mh.messages.length = 0;
+    mh.errors = 0;
   });
 
   it("checkFileName aceita nomes válidos", () => {
@@ -177,72 +196,33 @@ describe("Report", () => {
     assertEquals(report.parent, existing,);
   });
 
-  it("relatório com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true", () => {
-    const project2 = createTestProject(1, true,);
-    const existing = new Report(project2, "parent", "Parent", null,);
-    const report = new Report(project2, "parent.child", "Child", null,);
-    assertEquals(report.fullId, "parent.child",);
-    assertEquals(report.subId, "parent.child",);
-  });
-
-  it("relatório com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true, id com múltiplos pontos", () => {
-    const project2 = createTestProject(1, true,);
-    const existing = new Report(project2, "parent", "Parent", null,);
-    const report = new Report(
-      project2,
-      "parent.child.grandchild",
-      "Grandchild",
-      null,
-    );
-    assertEquals(report.fullId, "parent.child.grandchild",);
-    assertEquals(report.subId, "parent.child.grandchild",);
-  });
-
-  it("relatório com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace false, parent does not exist", () => {
+  it("relatório pontuado com pai inexistente não adota ninguém", () => {
     const project2 = createTestProject(1, false,);
+    const report = new Report(project2, "nonexistent.child", "Child", null,);
+    assertEquals(report.fullId, "nonexistent.child",);
+    assertEquals(report.subId, "child",);
+    assertEquals(report.parent, null,);
+  });
+
+  it("relatório pontuado com filho pré-existente não colide (hierárquico)", () => {
+    const project2 = createTestProject(1, false,);
+    new Report(project2, "child", "Child", null,);
     const report = new Report(project2, "nonexistent.child", "Child", null,);
     assertEquals(report.fullId, "nonexistent.child",);
     assertEquals(report.subId, "child",);
   });
 
-  it("relatório com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true, parent does not exist", () => {
-    const project2 = createTestProject(1, true,);
-    const report = new Report(project2, "nonexistent.child", "Child", null,);
-    assertEquals(report.fullId, "nonexistent.child",);
-    assertEquals(report.subId, "nonexistent.child",);
-  });
-
-  it("relatório com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace false, child already exists", () => {
-    const project2 = createTestProject(1, false,);
-    const existing = new Report(project2, "child", "Child", null,);
-    const report = new Report(project2, "nonexistent.child", "Child", null,);
-    assertEquals(report.fullId, "nonexistent.child",);
-    assertEquals(report.subId, "child",);
-  });
-
-  it("relatório com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true, child already exists", () => {
-    const project2 = createTestProject(1, true,);
-    const existing = new Report(project2, "child", "Child", null,);
-    const report = new Report(project2, "nonexistent.child", "Child", null,);
-    assertEquals(report.fullId, "nonexistent.child",);
-    assertEquals(report.subId, "nonexistent.child",);
-  });
-
-  it("relatório com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace false, child already exists, parent already exists", () => {
+  it("redefinição pontuada resolve pai e subId curto (hierárquico)", () => {
     const project2 = createTestProject(1, false,);
     const parent = new Report(project2, "parent", "Parent", null,);
-    const existing = new Report(project2, "parent.child", "Child", null,);
+    new Report(project2, "parent.child", "Child", null,);
     const report = new Report(project2, "parent.child", "Child", null,);
     assertEquals(report.fullId, "parent.child",);
     assertEquals(report.subId, "child",);
+    assertEquals(report.parent, parent,);
   });
 
-  it("relatório com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true, child already exists, parent already exists", () => {
-    const project2 = createTestProject(1, true,);
-    const parent = new Report(project2, "parent", "Parent", null,);
-    const existing = new Report(project2, "parent.child", "Child", null,);
-    const report = new Report(project2, "parent.child", "Child", null,);
-    assertEquals(report.fullId, "parent.child",);
-    assertEquals(report.subId, "parent.child",);
-  });
+  // Variantes com flatNamespace="true" foram removidas: Ruby fixa @reports
+  // como hierárquico (Project.rb: PropertySet.new(self, false)) — o flag do
+  // construtor não tem correspondência no TJ original.
 });

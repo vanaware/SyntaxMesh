@@ -1,4 +1,4 @@
-import { describe, it, } from "@std/testing/bdd";
+import { afterEach, beforeEach, describe, it, } from "@std/testing/bdd";
 import { assertEquals, assertThrows, } from "@std/assert";
 import { PropertyTreeNode, } from "../../src/model/property-tree-node.ts";
 import { PropertySet, } from "../../src/model/property-set.ts";
@@ -8,6 +8,7 @@ import { AttributeBase, } from "../../src/attributes/attribute-base.ts";
 import { AttributeType, } from "../../src/attributes/attribute-type.ts";
 import { type PropertyLike, } from "../../src/model/property-like.ts";
 import { type AttributeDefinition, } from "../../src/attributes/attribute-definition.ts";
+import { MessageHandlerInstance, } from "../../src/message-handler.ts";
 import { type AttributeContainer, } from "../../src/attributes/attribute-container.ts";
 
 function makeMockAttrClass(defaultValue: unknown,) {
@@ -521,6 +522,16 @@ function runCase(c: GoldenCase,): void {
 }
 
 describe("PropertyTreeNode golden tests", () => {
+  // Ruby CLI sempre roda com trapSetup=true → primeiro erro aborta.
+  beforeEach(() => {
+    const mh = MessageHandlerInstance.instance;
+    mh.trapSetup = true;
+    mh.messages.length = 0;
+    mh.errors = 0;
+  },);
+  afterEach(() => {
+    MessageHandlerInstance.instance.trapSetup = false;
+  },);
   const golden = loadGoldenFile();
 
   for (const c of golden.cases) {

@@ -22,4 +22,5 @@ export {
   type TokenPattern,
   type TokenPostProcessor,
 } from "./scanner.ts";
+export { ProjectFileScanner, TJP_MODES, } from "./project-file-scanner.ts";
 export { TokenDoc, } from "./token-doc.ts";

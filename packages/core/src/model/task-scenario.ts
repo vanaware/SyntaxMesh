@@ -2009,8 +2009,10 @@ export class TaskScenario extends ScenarioData {
     const projectStart = this.project().get("start",) as TjTime | null;
     const projectEnd = this.project().get("end",) as TjTime | null;
     if (start && projectStart && projectEnd) {
-      if (start.toSeconds() < projectStart.toSeconds() ||
-          start.toSeconds() > projectEnd.toSeconds()) {
+      if (
+        start.toSeconds() < projectStart.toSeconds() ||
+        start.toSeconds() > projectEnd.toSeconds()
+      ) {
         this.error(
           "task_start_range",
           `The start time (${start}) of task ${property.fullId} ` +
@@ -2044,8 +2046,10 @@ export class TaskScenario extends ScenarioData {
       );
     }
     if (end && projectStart && projectEnd) {
-      if (end.toSeconds() < projectStart.toSeconds() ||
-          end.toSeconds() > projectEnd.toSeconds()) {
+      if (
+        end.toSeconds() < projectStart.toSeconds() ||
+        end.toSeconds() > projectEnd.toSeconds()
+      ) {
         this.error(
           "task_end_range",
           `The end time (${end}) of task ${property.fullId} ` +
@@ -2082,8 +2086,12 @@ export class TaskScenario extends ScenarioData {
     // Check that tasks fits into parent task.
     const parent = property.parent as Task | null;
     if (parent) {
-      const parentStart = parent.scenarioData(this.getScenarioIdx(),).a("start",) as TjTime | null;
-      const parentEnd = parent.scenarioData(this.getScenarioIdx(),).a("end",) as TjTime | null;
+      const parentStart = parent.scenarioData(this.getScenarioIdx(),).a(
+        "start",
+      ) as TjTime | null;
+      const parentEnd = parent.scenarioData(this.getScenarioIdx(),).a("end",) as
+        | TjTime
+        | null;
       if (parentStart && parentEnd) {
         if (start && start.toSeconds() < parentStart.toSeconds()) {
           this.error(
@@ -2111,25 +2119,33 @@ export class TaskScenario extends ScenarioData {
       if (!task) continue;
       const limit = dependency.onEnd
         ? task.scenarioData(this.getScenarioIdx(),).a("end",) as TjTime | null
-        : task.scenarioData(this.getScenarioIdx(),).a("start",) as TjTime | null;
+        : task.scenarioData(this.getScenarioIdx(),).a("start",) as
+          | TjTime
+          | null;
       if (!limit) continue;
       if (start && limit) {
         const limitSeconds = limit.toSeconds();
         const startSeconds = start.toSeconds();
         const gapDuration = dependency.gapDuration;
         const gapLength = dependency.gapLength;
-        if (startSeconds < limitSeconds ||
-            (gapDuration > 0 && limitSeconds + gapDuration > startSeconds) ||
-            (gapLength > 0 && this.project().slotsToDays(startSeconds - limitSeconds) < gapLength)) {
+        if (
+          startSeconds < limitSeconds ||
+          (gapDuration > 0 && limitSeconds + gapDuration > startSeconds) ||
+          (gapLength > 0 &&
+            this.project().slotsToDays(startSeconds - limitSeconds,) <
+              gapLength)
+        ) {
           this.error(
             "task_pred_before",
             `Task ${property.fullId} (${start}) must start ` +
               (gapDuration > 0
                 ? `${gapDuration / (60 * 60 * 24)} days `
                 : gapLength > 0
-                  ? `${this.project().slotsToDays(gapLength)} working days `
-                  : '') +
-              `after ${dependency.onEnd ? 'end' : 'start'} (${limit}) of task ` +
+                ? `${this.project().slotsToDays(gapLength,)} working days `
+                : "") +
+              `after ${
+                dependency.onEnd ? "end" : "start"
+              } (${limit}) of task ` +
               `${task.fullId}. This condition could not be met.`,
           );
         }
@@ -2143,25 +2159,32 @@ export class TaskScenario extends ScenarioData {
       if (!task) continue;
       const limit = dependency.onEnd
         ? task.scenarioData(this.getScenarioIdx(),).a("end",) as TjTime | null
-        : task.scenarioData(this.getScenarioIdx(),).a("start",) as TjTime | null;
+        : task.scenarioData(this.getScenarioIdx(),).a("start",) as
+          | TjTime
+          | null;
       if (!limit) continue;
       if (end && limit) {
         const limitSeconds = limit.toSeconds();
         const endSeconds = end.toSeconds();
         const gapDuration = dependency.gapDuration;
         const gapLength = dependency.gapLength;
-        if (limitSeconds < endSeconds ||
-            (gapDuration > 0 && limitSeconds - gapDuration < endSeconds) ||
-            (gapLength > 0 && this.project().slotsToDays(limitSeconds - endSeconds) < gapLength)) {
+        if (
+          limitSeconds < endSeconds ||
+          (gapDuration > 0 && limitSeconds - gapDuration < endSeconds) ||
+          (gapLength > 0 &&
+            this.project().slotsToDays(limitSeconds - endSeconds,) < gapLength)
+        ) {
           this.error(
             "task_succ_after",
             `Task ${property.fullId} (${end}) must end ` +
               (gapDuration > 0
                 ? `${gapDuration / (60 * 60 * 24)} days `
                 : gapLength > 0
-                  ? `${this.project().slotsToDays(gapLength)} working days `
-                  : '') +
-              `before ${dependency.onEnd ? 'end' : 'start'} (${limit}) of task ` +
+                ? `${this.project().slotsToDays(gapLength,)} working days `
+                : "") +
+              `before ${
+                dependency.onEnd ? "end" : "start"
+              } (${limit}) of task ` +
               `${task.fullId}. This condition could not be met.`,
           );
         }
@@ -2177,9 +2200,11 @@ export class TaskScenario extends ScenarioData {
       }
     }
 
-    if (property.leaf?.() && this.a("effort",) === 0 && !this.a("milestone",) &&
-        (this.a("allocate",) as Allocation[]).length > 0 &&
-        (this.a("assignedresources",) as Resource[]).length === 0) {
+    if (
+      property.leaf?.() && this.a("effort",) === 0 && !this.a("milestone",) &&
+      (this.a("allocate",) as Allocation[]).length > 0 &&
+      (this.a("assignedresources",) as Resource[]).length === 0
+    ) {
       // The user used an 'allocate' for the task, but did not specify any
       // 'effort'. Actual allocations will only happen when resources are
       // available by chance. If there are no assigned resources, we generate
@@ -2195,8 +2220,10 @@ export class TaskScenario extends ScenarioData {
     const competitors = this.a("competitors",) as Task[];
     const thieves: Task[] = [];
     for (const t of competitors) {
-      if ((t.scenarioData(this.getScenarioIdx(),).a("priority",) as number) <
-          (this.a("priority",) as number)) {
+      if (
+        (t.scenarioData(this.getScenarioIdx(),).a("priority",) as number) <
+          (this.a("priority",) as number)
+      ) {
         thieves.push(t,);
       }
     }
@@ -2205,7 +2232,7 @@ export class TaskScenario extends ScenarioData {
         "priority_inversion",
         `Due to a mix of ALAP and ASAP scheduled tasks or a ` +
           `dependency on a lower priority tasks the following ` +
-          `task${thieves.length > 1 ? 's' : ''} stole resources from ` +
+          `task${thieves.length > 1 ? "s" : ""} stole resources from ` +
           `${property.fullId} despite having a lower priority:`,
       );
       for (const t of thieves) {

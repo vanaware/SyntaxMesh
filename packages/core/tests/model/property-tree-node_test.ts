@@ -1,5 +1,6 @@
 import { beforeEach, describe, it, } from "@std/testing/bdd";
 import { assertEquals, assertThrows, } from "@std/assert";
+import { MessageHandlerInstance, } from "../../src/message-handler.ts";
 import { createTestProject, } from "../fixtures/create-test-project.ts";
 import { Project, } from "../../src/model/project.ts";
 import {
@@ -439,10 +440,16 @@ describe("PropertyTreeNode", () => {
   });
 
   it("adopt lança erro para auto-adoção", () => {
+    // Ruby: error() com trapSetup levanta TjRuntimeError.
+    MessageHandlerInstance.instance.trapSetup = true;
     assertThrows(() => root.adopt(root,), Error,);
+    MessageHandlerInstance.instance.trapSetup = false;
+    MessageHandlerInstance.instance.messages.length = 0;
+    MessageHandlerInstance.instance.errors = 0;
   });
 
   it("adopt lança erro para tarefa já adotada", () => {
+    MessageHandlerInstance.instance.trapSetup = true;
     const attrDef = new AttributeDefinition(
       "testAttr",
       "Test Attr",
@@ -453,6 +460,9 @@ describe("PropertyTreeNode", () => {
     const newRoot = new TestProperty(newPropertySet, null, "root", null,);
     const child = new TestProperty(newPropertySet, null, "child", newRoot,);
     assertThrows(() => newRoot.adopt(child,), Error,);
+    MessageHandlerInstance.instance.trapSetup = false;
+    MessageHandlerInstance.instance.messages.length = 0;
+    MessageHandlerInstance.instance.errors = 0;
   });
 
   it("adopt adiciona adotado", () => {

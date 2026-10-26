@@ -94,22 +94,27 @@ describe("Account", () => {
     assertEquals(child.level, 1,);
   });
 
-  it("conta com pai herda fullId", () => {
+  it("conta com pai mantém fullId curto (namespace flat, Ruby)", () => {
     const parent = new Account(project, "parent", "Parent", null,);
     const child = new Account(project, "child", "Child", parent,);
-    assertEquals(child.fullId, "parent.child",);
+    // Ruby Project.rb: @accounts é flat — IDs curtos valem globalmente.
+    assertEquals(child.fullId, "child",);
+    assertEquals(project.account("child",), child,);
   });
 
-  it("conta com id hierárquico resolve pai do PropertySet", () => {
+  it("id pontuado não resolve pai em namespace flat", () => {
     const account = new Account(project, "parent.child", "Child", null,);
+    // Flat: o ponto não tem significado — ID literal, sem adoção.
     assertEquals(account.fullId, "parent.child",);
-    assertEquals(account.subId, "child",);
+    assertEquals(account.subId, "parent.child",);
+    assertEquals(account.parent, null,);
   });
 
-  it("conta com id hierárquico resolve pai do PropertySet (já existente)", () => {
+  it("conta com id pontuado não adota conta existente como pai (flat)", () => {
     const existing = new Account(project, "parent", "Parent", null,);
     const account = new Account(project, "parent.child", "Child", null,);
-    assertEquals(account.parent, existing,);
+    assertEquals(account.parent, null,);
+    assertEquals(account.fullId, "parent.child",);
   });
 
   it("conta com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true", () => {
@@ -133,11 +138,20 @@ describe("Account", () => {
     assertEquals(account.subId, "parent.child.grandchild",);
   });
 
-  it("conta com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace false, parent does not exist", () => {
+  it("id pontuado com pai inexistente permanece literal (flat)", () => {
     const project2 = createTestProject(1, false,);
     const account = new Account(project2, "nonexistent.child", "Child", null,);
     assertEquals(account.fullId, "nonexistent.child",);
-    assertEquals(account.subId, "child",);
+    assertEquals(account.subId, "nonexistent.child",);
+  });
+
+  it("id pontuado com filho já existente sobrescreve no mapa (flat)", () => {
+    const project2 = createTestProject(1, false,);
+    new Account(project2, "nonexistent.child", "Child", null,);
+    const account = new Account(project2, "nonexistent.child", "Child", null,);
+    assertEquals(account.fullId, "nonexistent.child",);
+    assertEquals(account.subId, "nonexistent.child",);
+    assertEquals(project2.account("nonexistent.child",), account,);
   });
 
   it("conta com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true, parent does not exist", () => {
@@ -147,12 +161,13 @@ describe("Account", () => {
     assertEquals(account.subId, "nonexistent.child",);
   });
 
-  it("conta com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace false, child already exists", () => {
+  it("redefinição com mesmo id pontuado mantém literal (flat)", () => {
     const project2 = createTestProject(1, false,);
-    const existing = new Account(project2, "child", "Child", null,);
-    const account = new Account(project2, "nonexistent.child", "Child", null,);
-    assertEquals(account.fullId, "nonexistent.child",);
-    assertEquals(account.subId, "child",);
+    new Account(project2, "parent", "Parent", null,);
+    new Account(project2, "parent.child", "Child", null,);
+    const account = new Account(project2, "parent.child", "Child", null,);
+    assertEquals(account.fullId, "parent.child",);
+    assertEquals(account.subId, "parent.child",);
   });
 
   it("conta com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true, child already exists", () => {
@@ -163,13 +178,13 @@ describe("Account", () => {
     assertEquals(account.subId, "nonexistent.child",);
   });
 
-  it("conta com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace false, child already exists, parent already exists", () => {
+  it("id pontuado duplicado com pai existente mantém literal (flat)", () => {
     const project2 = createTestProject(1, false,);
-    const parent = new Account(project2, "parent", "Parent", null,);
-    const existing = new Account(project2, "parent.child", "Child", null,);
+    new Account(project2, "parent", "Parent", null,);
+    new Account(project2, "parent.child", "Child", null,);
     const account = new Account(project2, "parent.child", "Child", null,);
     assertEquals(account.fullId, "parent.child",);
-    assertEquals(account.subId, "child",);
+    assertEquals(account.subId, "parent.child",);
   });
 
   it("conta com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true, child already exists, parent already exists", () => {
@@ -198,7 +213,7 @@ describe("Account.allowedTypes", () => {
 
   it("setAllowedTypes restringe para task apenas", () => {
     const account = new Account(project, "acc1", "Account 1", null,);
-    account.setAllowedTypes(["task",]);
+    account.setAllowedTypes(["task",],);
     assert(account.canAccept("task",),);
     assert(!account.canAccept("resource",),);
     assert(!account.canAccept("material",),);
@@ -211,26 +226,26 @@ describe("Account.allowedTypes", () => {
 
   it("getAllowedTypes retorna tipos configurados", () => {
     const account = new Account(project, "acc1", "Account 1", null,);
-    account.setAllowedTypes(["task", "resource",]);
+    account.setAllowedTypes(["task", "resource",],);
     const types = account.getAllowedTypes().sort();
-    assertEquals(types, ["resource", "task",]);
+    assertEquals(types, ["resource", "task",],);
   });
 
   it("conta com aggregate tasks rejeita resource", () => {
     const account = new Account(project, "acc1", "Account 1", null,);
-    account.setAllowedTypes(["task",]);
+    account.setAllowedTypes(["task",],);
     assert(!account.canAccept("resource",),);
   });
 
   it("conta com aggregate resources rejeita task", () => {
     const account = new Account(project, "acc1", "Account 1", null,);
-    account.setAllowedTypes(["resource",]);
+    account.setAllowedTypes(["resource",],);
     assert(!account.canAccept("task",),);
   });
 
   it("conta com aggregate materials rejeita task e resource", () => {
     const account = new Account(project, "acc1", "Account 1", null,);
-    account.setAllowedTypes(["material",]);
+    account.setAllowedTypes(["material",],);
     assert(!account.canAccept("task",),);
     assert(!account.canAccept("resource",),);
     assert(account.canAccept("material",),);
@@ -245,7 +260,7 @@ describe("Account.allowedTypes", () => {
 
   it("lança erro claro quando aggregate tasks e custo de recurso", () => {
     const account = new Account(project, "acc1", "Account 1", null,);
-    account.setAllowedTypes(["task",]);
+    account.setAllowedTypes(["task",],);
     let erro: unknown = null;
     try {
       account.canAccept("resource",);

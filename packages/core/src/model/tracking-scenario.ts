@@ -16,7 +16,7 @@ export class TrackingScenario {
   readonly role: TrackingScenarioRole;
   readonly scenarioId: string;
 
-  constructor(role: TrackingScenarioRole, scenarioId: string) {
+  constructor(role: TrackingScenarioRole, scenarioId: string,) {
     this.role = role;
     this.scenarioId = scenarioId;
   }

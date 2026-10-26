@@ -35,14 +35,14 @@ describe("Smoke test after Phase 8", () => {
   it("calcula Charge.turnover para cada modo", () => {
     const project = createTestProject(1,);
     const task = new Task(project, "t1", "Task 1", null,);
-    task.setForScenario("start", TjTime.fromString("2026-03-15"), 0,);
-    task.setForScenario("end", TjTime.fromString("2026-03-20"), 0,);
+    task.setForScenario("start", TjTime.fromString("2026-03-15",), 0,);
+    task.setForScenario("end", TjTime.fromString("2026-03-20",), 0,);
 
     // Period must be wide enough to contain both start (03-15) and end (03-20).
     // TimeInterval is [start, end) exclusive, so end must be > 03-20.
     const period = new TimeInterval(
-      TjTime.fromString("2026-03-10"),
-      TjTime.fromString("2026-03-25"),
+      TjTime.fromString("2026-03-10",),
+      TjTime.fromString("2026-03-25",),
     );
 
     const chargeStart = new Charge(100, "onStart", task, 0,);
@@ -59,8 +59,18 @@ describe("Smoke test after Phase 8", () => {
   it("cria ChargeSet e adiciona accounts com shares", () => {
     const project = createTestProject(1,);
     const parentAccount = new Account(project, "parent", "Parent", null,);
-    const account1 = new Account(project, "parent.acc1", "Account 1", parentAccount,);
-    const account2 = new Account(project, "parent.acc2", "Account 2", parentAccount,);
+    const account1 = new Account(
+      project,
+      "parent.acc1",
+      "Account 1",
+      parentAccount,
+    );
+    const account2 = new Account(
+      project,
+      "parent.acc2",
+      "Account 2",
+      parentAccount,
+    );
 
     const chargeset = new ChargeSet();
     chargeset.addAccount(account1, 0.7,);
@@ -69,13 +79,13 @@ describe("Smoke test after Phase 8", () => {
     // ChargeSet.master returns the root account of the first member
     assertEquals(chargeset.master, parentAccount,);
     chargeset.complete();
-    assertEquals(chargeset.share(account1), 0.7,);
-    assertEquals(chargeset.share(account2), 0.3,);
+    assertEquals(chargeset.share(account1,), 0.7,);
+    assertEquals(chargeset.share(account2,), 0.3,);
   });
 
   it("cria AccountCredit com valores negativos", () => {
     const credit = new AccountCredit(
-      TjTime.fromString("2026-03-15"),
+      TjTime.fromString("2026-03-15",),
       "Reimbursement",
       -50.0,
     );

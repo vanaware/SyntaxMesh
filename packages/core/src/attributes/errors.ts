@@ -6,10 +6,10 @@
  * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb (raise ArgumentError, RuntimeError)
  */
 export {
-  TjError,
-  TjArgumentError,
-  TjRuntimeError,
-  TjInternalError,
   AttributeOverwrite,
   NotYetImplementedError,
+  TjArgumentError,
+  TjError,
+  TjInternalError,
+  TjRuntimeError,
 } from "../model/errors.ts";

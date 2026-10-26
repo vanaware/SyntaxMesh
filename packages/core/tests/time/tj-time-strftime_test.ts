@@ -55,12 +55,12 @@ describe("TjTime.strftime", () => {
       assertEquals(t.strftime("%b",), "Jan",);
     });
 
-    it("%z - UTC offset +HH:MM/-HH:MM", () => {
+    it("%z - UTC offset +HHMM/-HHMM (Ruby, sem dois-pontos)", () => {
       const t = TjTime.fromString("2026-01-15-14:30:45",);
       const result = t.strftime("%z",);
-      // Should match +HH:MM or -HH:MM format
+      // Ruby strftime %z: +HHMM (4 dígitos, sem dois-pontos)
       assertEquals(typeof result, "string",);
-      assertEquals(result.length, 6,);
+      assertEquals(result.length, 5,);
       assertEquals(result[0] === "+" || result[0] === "-", true,);
     });
 
@@ -106,26 +106,26 @@ describe("TjTime.strftime", () => {
   });
 
   describe("%z UTC offset", () => {
-    it("returns +HH:MM for positive offset", () => {
+    it("returns +HHMM for positive offset", () => {
       // Use a timezone with positive offset
       const t = TjTime.fromString("2026-01-15-14:30:45",);
       const result = t.strftime("%z", "Europe/Berlin",); // UTC+1 in winter
       assertEquals(result.startsWith("+",), true,);
-      assertEquals(result.length, 6,);
+      assertEquals(result.length, 5,);
     });
 
-    it("returns -HH:MM for negative offset", () => {
+    it("returns -HHMM for negative offset", () => {
       // Use a timezone with negative offset
       const t = TjTime.fromString("2026-01-15-14:30:45",);
       const result = t.strftime("%z", "America/New_York",); // UTC-5 in winter
       assertEquals(result.startsWith("-",), true,);
-      assertEquals(result.length, 6,);
+      assertEquals(result.length, 5,);
     });
 
-    it("returns +00:00 for UTC", () => {
+    it("returns +0000 for UTC", () => {
       const t = TjTime.fromString("2026-01-15-14:30:45",);
       const result = t.strftime("%z", "UTC",);
-      assertEquals(result, "+00:00",);
+      assertEquals(result, "+0000",);
     });
   });
 
@@ -169,13 +169,12 @@ describe("TjTime.to_s", () => {
     });
 
     it("always includes :%S in to_s format", () => {
-      // New format always includes seconds
       const t = TjTime.fromString("2026-01-15-14:30:00",);
       const result = t.to_s();
-      // Should match: 2026-01-15-14:30-+00:00 (sec=0, no :%S)
+      // Should match: 2026-01-15-14:30-+0000 (sec=0, no :%S)
       assertEquals(
         result.match(
-          /^\d{4}-\d{2}-\d{2}-\d{2}:\d{2}-[+-]\d{2}:\d{2}$/,
+          /^\d{4}-\d{2}-\d{2}-\d{2}:\d{2}-[+-]\d{4}$/,
         ) !==
           null,
         true,
@@ -187,10 +186,10 @@ describe("TjTime.to_s", () => {
     it("format is %Y-%m-%d-%H:%M-%z when seconds == 0", () => {
       const t = TjTime.fromString("2026-01-15-14:30:00",);
       const result = t.to_s();
-      // Should match: 2026-01-15-14:30-+00:00
+      // Should match: 2026-01-15-14:30-+0000
       assertEquals(
         result.match(
-          /^\d{4}-\d{2}-\d{2}-\d{2}:\d{2}-[+-]\d{2}:\d{2}$/,
+          /^\d{4}-\d{2}-\d{2}-\d{2}:\d{2}-[+-]\d{4}$/,
         ) !==
           null,
         true,
@@ -200,10 +199,10 @@ describe("TjTime.to_s", () => {
     it("format is %Y-%m-%d-%H:%M:%S-%z when seconds != 0", () => {
       const t = TjTime.fromString("2026-01-15-14:30:45",);
       const result = t.to_s();
-      // Should match: 2026-01-15-14:30:45-+00:00
+      // Should match: 2026-01-15-14:30:45-+0000
       assertEquals(
         result.match(
-          /^\d{4}-\d{2}-\d{2}-\d{2}:\d{2}:\d{2}-[+-]\d{2}:\d{2}$/,
+          /^\d{4}-\d{2}-\d{2}-\d{2}:\d{2}:\d{2}-[+-]\d{4}$/,
         ) !==
           null,
         true,
@@ -213,7 +212,7 @@ describe("TjTime.to_s", () => {
     it("includes timezone offset at end", () => {
       const t = TjTime.fromString("2026-01-15-14:30:00",);
       const result = t.to_s();
-      assertEquals(result.match(/[+-]\d{2}:\d{2}$/,) !== null, true,);
+      assertEquals(result.match(/[+-]\d{4}$/,) !== null, true,);
     });
   });
 
@@ -222,9 +221,9 @@ describe("TjTime.to_s", () => {
       const t = TjTime.fromString("2026-01-15-14:30:00",);
       const result = t.to_s(undefined, "UTC",);
       // Should be in UTC timezone
-      assertEquals(result.match(/[+-]\d{2}:\d{2}$/,) !== null, true,);
-      // UTC offset should be +00:00
-      assertEquals(result.endsWith("+00:00",), true,);
+      assertEquals(result.match(/[+-]\d{4}$/,) !== null, true,);
+      // UTC offset should be +0000
+      assertEquals(result.endsWith("+0000",), true,);
     });
 
     it("differs from local timezone result", () => {
@@ -232,8 +231,8 @@ describe("TjTime.to_s", () => {
       const localResult = t.to_s(undefined, "America/New_York",);
       const utcResult = t.to_s(undefined, "UTC",);
       // Results should differ (America/New_York is UTC-5 in winter)
-      assertEquals(localResult.endsWith("-05:00",), true,);
-      assertEquals(utcResult.endsWith("+00:00",), true,);
+      assertEquals(localResult.endsWith("-0500",), true,);
+      assertEquals(utcResult.endsWith("+0000",), true,);
     });
   });
 
@@ -247,7 +246,7 @@ describe("TjTime.to_s", () => {
     it("uses provided format with custom timezone", () => {
       const t = TjTime.fromString("2026-01-15-14:30:45",);
       const result = t.to_s("%Y-%m-%d %H:%M %z", "UTC",);
-      assertEquals(result.endsWith("+00:00",), true,);
+      assertEquals(result.endsWith("+0000",), true,);
     });
   });
 });

@@ -102,22 +102,26 @@ describe("Shift", () => {
     assertEquals(child.level, 1,);
   });
 
-  it("shift com pai herda fullId", () => {
+  it("shift com pai mantém fullId curto (namespace flat, Ruby)", () => {
     const parent = new Shift(project, "parent", "Parent", null,);
     const child = new Shift(project, "child", "Child", parent,);
-    assertEquals(child.fullId, "parent.child",);
+    // Ruby Project.rb: @shifts é flat — IDs curtos valem globalmente.
+    assertEquals(child.fullId, "child",);
+    assertEquals(project.shift("child",), child,);
   });
 
-  it("shift com id hierárquico resolve pai do PropertySet", () => {
+  it("shift com id pontuado não resolve pai em namespace flat", () => {
     const shift = new Shift(project, "parent.child", "Child", null,);
     assertEquals(shift.fullId, "parent.child",);
-    assertEquals(shift.subId, "child",);
+    assertEquals(shift.subId, "parent.child",);
+    assertEquals(shift.parent, null,);
   });
 
-  it("shift com id hierárquico resolve pai do PropertySet (já existente)", () => {
-    const existing = new Shift(project, "parent", "Parent", null,);
+  it("shift com id pontuado não adota shift existente como pai", () => {
+    new Shift(project, "parent", "Parent", null,);
     const shift = new Shift(project, "parent.child", "Child", null,);
-    assertEquals(shift.parent, existing,);
+    assertEquals(shift.parent, null,);
+    assertEquals(shift.fullId, "parent.child",);
   });
 
   it("shift com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true", () => {
@@ -141,11 +145,11 @@ describe("Shift", () => {
     assertEquals(shift.subId, "parent.child.grandchild",);
   });
 
-  it("shift com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace false, parent does not exist", () => {
+  it("shift pontuado com pai inexistente permanece literal (flat)", () => {
     const project2 = createTestProject(1, false,);
     const shift = new Shift(project2, "nonexistent.child", "Child", null,);
     assertEquals(shift.fullId, "nonexistent.child",);
-    assertEquals(shift.subId, "child",);
+    assertEquals(shift.subId, "nonexistent.child",);
   });
 
   it("shift com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true, parent does not exist", () => {
@@ -155,12 +159,12 @@ describe("Shift", () => {
     assertEquals(shift.subId, "nonexistent.child",);
   });
 
-  it("shift com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace false, child already exists", () => {
+  it("shift pontuado com filho pré-existente mantém literal (flat)", () => {
     const project2 = createTestProject(1, false,);
-    const existing = new Shift(project2, "child", "Child", null,);
+    new Shift(project2, "child", "Child", null,);
     const shift = new Shift(project2, "nonexistent.child", "Child", null,);
     assertEquals(shift.fullId, "nonexistent.child",);
-    assertEquals(shift.subId, "child",);
+    assertEquals(shift.subId, "nonexistent.child",);
   });
 
   it("shift com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true, child already exists", () => {
@@ -171,13 +175,13 @@ describe("Shift", () => {
     assertEquals(shift.subId, "nonexistent.child",);
   });
 
-  it("shift com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace false, child already exists, parent already exists", () => {
+  it("shift pontuado duplicado mantém literal (flat)", () => {
     const project2 = createTestProject(1, false,);
-    const parent = new Shift(project2, "parent", "Parent", null,);
-    const existing = new Shift(project2, "parent.child", "Child", null,);
+    new Shift(project2, "parent", "Parent", null,);
+    new Shift(project2, "parent.child", "Child", null,);
     const shift = new Shift(project2, "parent.child", "Child", null,);
     assertEquals(shift.fullId, "parent.child",);
-    assertEquals(shift.subId, "child",);
+    assertEquals(shift.subId, "parent.child",);
   });
 
   it("shift com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true, child already exists, parent already exists", () => {

@@ -58,10 +58,13 @@ export function getOffsetSeconds(epochSecs: number, timeZone: string,): number {
 }
 
 /**
- * Format UTC offset as +HH:MM / -HH:MM string
+ * Format UTC offset in Ruby strftime %z format: +HHMM / -HHMM (no colon).
+ * O formato sem dois-pontos é exigido pelo regex DATE do scanner do TJ
+ * (`(-[-+]?\d{4})?`) — com dois-pontos, o `to_s` de um TjTime não é
+ * reconhecido como DATE ao voltar pelo parser (macros de data).
  * @param epochSecs - Epoch seconds (UTC)
  * @param timeZone - Timezone string
- * @returns Offset string like "+00:00" or "-03:00"
+ * @returns Offset string like "+0000" or "-0300"
  */
 export function formatTimezoneOffset(
   epochSecs: number,
@@ -72,7 +75,7 @@ export function formatTimezoneOffset(
   const abs = Math.abs(offset,);
   const hours = String(Math.floor(abs / 3600,),).padStart(2, "0",);
   const mins = String(Math.floor((abs % 3600) / 60,),).padStart(2, "0",);
-  return `${sign}${hours}:${mins}`;
+  return `${sign}${hours}${mins}`;
 }
 
 export interface LocalParts {

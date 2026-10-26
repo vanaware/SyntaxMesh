@@ -38,24 +38,24 @@ export class ChargeSetCollection {
    * - Apenas um set por top-level account
    * - Todos os membros devem pertencer ao mesmo top-level account
    */
-  add(set: ChargeSet): void {
+  add(set: ChargeSet,): void {
     const top = set.master;
     if (top === null) {
-      throw new TjArgumentError("chargeset vazio");
+      throw new TjArgumentError("chargeset vazio",);
     }
-    if (this.sets.has(top)) {
+    if (this.sets.has(top,)) {
       throw new TjArgumentError(
         `já existe chargeset para top-level ${top.id}`,
       );
     }
-    this.sets.set(top, set);
+    this.sets.set(top, set,);
   }
 
   /**
    * Retorna o charge set para um top-level account específico.
    */
-  forTop(top: Account): ChargeSet | null {
-    return this.sets.get(top) ?? null;
+  forTop(top: Account,): ChargeSet | null {
+    return this.sets.get(top,) ?? null;
   }
 
   /**
@@ -74,30 +74,36 @@ export class ChargeSetCollection {
       case "task":
         // task_charge usa o chargeset da tarefa
         if (source?.task) {
-          const task = source.task as unknown as { chargeset: ChargeSetCollection };
+          const task = source.task as unknown as {
+            chargeset: ChargeSetCollection;
+          };
           const master = task.chargeset.master;
           if (master === null) return null;
-          return task.chargeset.forTop(master);
+          return task.chargeset.forTop(master,);
         }
         // Sem fonte: usar o primeiro chargeset da coleção
         return this.first();
       case "resource":
         // resource_effort usa o chargeset da origem (resource)
         if (source?.resource) {
-          const resource = source.resource as unknown as { chargeset: ChargeSetCollection };
+          const resource = source.resource as unknown as {
+            chargeset: ChargeSetCollection;
+          };
           const master = resource.chargeset.master;
           if (master === null) return null;
-          return resource.chargeset.forTop(master);
+          return resource.chargeset.forTop(master,);
         }
         // Sem fonte: usar o primeiro chargeset da coleção
         return this.first();
       case "material":
         // material_usage usa o chargeset da origem (material)
         if (source?.material) {
-          const material = source.material as unknown as { chargeset: ChargeSetCollection };
+          const material = source.material as unknown as {
+            chargeset: ChargeSetCollection;
+          };
           const master = material.chargeset.master;
           if (master === null) return null;
-          return material.chargeset.forTop(master);
+          return material.chargeset.forTop(master,);
         }
         // Sem fonte: usar o primeiro chargeset da coleção
         return this.first();

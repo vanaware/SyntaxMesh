@@ -39,7 +39,7 @@ export class Charge {
     task: Task,
     scenarioIdx: number,
   ) {
-    if (!["onStart", "onEnd", "perDiem"].includes(mode,)) {
+    if (!["onStart", "onEnd", "perDiem",].includes(mode,)) {
       throw new TjArgumentError(`Unsupported mode ${mode}`,);
     }
     this.amount = amount;

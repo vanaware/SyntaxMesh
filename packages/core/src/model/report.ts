@@ -2,6 +2,7 @@ import { type ProjectLike, } from "./project-like.ts";
 import { PropertyTreeNode, } from "./property-tree-node.ts";
 import { ReportScenario, } from "./report-scenario.ts";
 import { ReportType, } from "./report-type.ts";
+import { MessageHandlerInstance, } from "../message-handler.ts";
 
 export class Report extends PropertyTreeNode {
   typeSpec: ReportType | null;
@@ -14,6 +15,8 @@ export class Report extends PropertyTreeNode {
     parent: Report | null,
   ) {
     super(project.reports, id, name, parent,);
+    // Ruby Report#initialize (l.48-52): checkFileName antes de addReport.
+    this.checkFileName(name,);
     project.addReport(this,);
     this.typeSpec = null;
     this.content = null;
@@ -36,10 +39,18 @@ export class Report extends PropertyTreeNode {
    * @see docs/taskjuggler/lib/taskjuggler/Report.rb:checkFileName
    */
   checkFileName(name: string,): void {
-    const invalid = /[?%*:"<>|]/;
-    if (invalid.test(name,)) {
-      throw new Error(
-        `Invalid file name '${name}': contains invalid characters`,
+    // Ruby (Report.rb l.455-466): no Linux a regex é /[\\?%*:|"<>]/.
+    const illegal = /[\\?%*:|"<>]/;
+    if (illegal.test(name,)) {
+      // `sourceFileInfo` ainda é nil no construtor → linha null no golden.
+      MessageHandlerInstance.instance.error(
+        "invalid_file_name",
+        "File names may not contain any of the following characters: " +
+          '\\?%*:|"<>',
+        null,
+        null,
+        null,
+        null,
       );
     }
   }

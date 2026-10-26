@@ -63,16 +63,18 @@ describe("MacroTable", () => {
     assertEquals(table.resolve(["nao_existe",], sfi,), null,);
   });
 
-  it("resolve com prefixo '?' retorna null se macro não existe", () => {
+  it("resolve com prefixo '?' retorna [nil, ''] se macro não existe", () => {
+    // Ruby MacroTable#resolve (l.63-66): macro opcional indefinida → [nil, '']
+    // (o expandMacro do Scanner ignora silenciosamente texto vazio).
     const table = new MacroTable();
-    assertEquals(table.resolve(["?opcional",], sfi,), null,);
+    assertEquals(table.resolve(["?opcional",], sfi,), [null, "",],);
   });
 
   it("resolve com prefixo '?' retorna macro com texto vazio se existe", () => {
     const table = new MacroTable();
     table.add(new Macro("existe", "X", sfi,),);
     const result = table.resolve(["?existe",], sfi,);
-    assertEquals(result?.[0].name, "existe",);
+    assertEquals(result?.[0]?.name, "existe",);
     assertEquals(result?.[1], "",);
   });
 
@@ -80,7 +82,7 @@ describe("MacroTable", () => {
     const table = new MacroTable();
     table.add(new Macro("a", "valor", sfi,),);
     const result = table.resolve(["a",], sfi,);
-    assertEquals(result?.[0].value, "valor",);
+    assertEquals(result?.[0]?.value, "valor",);
     assertEquals(result?.[1], "valor",);
   });
 

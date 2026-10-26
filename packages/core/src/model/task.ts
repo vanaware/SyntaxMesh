@@ -1,6 +1,7 @@
 import { type ProjectLike, } from "./project-like.ts";
 import { PropertyTreeNode, } from "./property-tree-node.ts";
 import { TaskScenario, } from "./task-scenario.ts";
+import type { Booking, } from "../scheduling/booking.ts";
 import { ChargeSetCollection, } from "../finance/charge-set-collection.ts";
 
 export class Task extends PropertyTreeNode {
@@ -25,6 +26,15 @@ export class Task extends PropertyTreeNode {
   }
 
   /**
+   * Registra um booking no cenário indicado (Ruby TaskScenario#addBooking).
+   * Bookings valem apenas para o cenário onde foram definidos.
+   */
+  addBooking(scIdx: number, booking: Booking,): void {
+    const list = this.scenarioData(scIdx,).a("booking",) as Booking[] | null;
+    if (list) list.push(booking,);
+  }
+
+  /**
    * Retorna o charge set da tarefa.
    */
   get chargeset(): ChargeSetCollection {
@@ -34,7 +44,7 @@ export class Task extends PropertyTreeNode {
   /**
    * Define o charge set da tarefa.
    */
-  set chargeset(value: ChargeSetCollection) {
+  set chargeset(value: ChargeSetCollection,) {
     this.chargeset_ = value;
   }
 

@@ -13,7 +13,12 @@ export function createTestProject(
   scenarioCount: number = 1,
   flatNamespace: boolean = false,
 ): Project {
-  const project = new Project("test", "Test Project", "0.0.0-test", flatNamespace,);
+  const project = new Project(
+    "test",
+    "Test Project",
+    "0.0.0-test",
+    flatNamespace,
+  );
 
   // Configura defaults para start/end/now/scheduleGranularity
   project.set("start", TjTime.fromString("2026-01-01",),);
@@ -23,7 +28,12 @@ export function createTestProject(
 
   // Adiciona cenários extras além do cenário "plan" padrão
   for (let i = 1; i < scenarioCount; i++) {
-    const scenario = new Scenario(project, `scenario${i}`, `Scenario ${i}`, null,);
+    const scenario = new Scenario(
+      project,
+      `scenario${i}`,
+      `Scenario ${i}`,
+      null,
+    );
     // O Scenario é automaticamente registrado em project.scenarios via PropertyTreeNode constructor
   }
 

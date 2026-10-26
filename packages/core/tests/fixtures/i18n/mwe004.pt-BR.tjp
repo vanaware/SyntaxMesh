@@ -1,0 +1,85 @@
+language "pt-BR"
+
+projeto prj "Cost & Resource Project" "1.0" 2024-08-01 - 2024-11-30 {
+  fusohorario "Europe/Paris"
+  formatohora "%Y-%m-%d"
+  agora 2024-09-15
+  moeda "USD"
+}
+
+taxa 390.0
+
+conta cost "Project Cost" {
+  conta dev "Development"
+}
+conta rev "Payments"
+saldo cost rev
+
+recurso dev "Developers" {
+  recurso dev1 "Paul Smith" {
+    taxa 350.0
+  }
+  recurso dev2 "Sébastien Bono" {
+    taxa 300.0
+  }
+}
+
+tarefa AcSo "Accounting Software" {
+  definirconta dev
+  valor 170 perday
+  responsável dev1
+
+  tarefa spec "Specification" {
+    esforço 20d
+    alocar dev1, dev2
+  }
+
+  tarefa software "Software Development" {
+    depende !spec
+    responsável dev1
+    tarefa database "Database coupling" {
+      esforço 20d
+      alocar dev1, dev2
+    }
+    tarefa gui "Graphical User Interface" {
+      esforço 35d
+      depende !database
+      alocar dev2
+    }
+  }
+
+  tarefa deliveries "Milestones" {
+    depurar definirconta
+    definirconta rev
+
+    tarefa início "Project start" {
+      início ${projectstart}
+      valor 21000.0 noinicio
+    }
+    tarefa beta "Beta version" {
+      depende !!software.gui
+      valor 13000.0 noinicio
+    }
+  }
+}
+
+relatoriotarefa overview "overview" {
+  formatos html
+  colunas bsi { título 'WBS' },
+          name, início, fim, esforço, cost,
+          revenue, chart { }
+  formatohora "%a %Y-%m-%d"
+  unidadecarga days
+  ocultarrecurso @all
+  saldo cost rev
+  legenda 'All effort values are in man days.'
+}
+
+relatoriorecurso resourceGraph "resourceGraph" {
+  formatos html
+  manchete "Resource Allocation Graph"
+  colunas não, name, esforço, taxa, weekly { }
+  unidadecarga shortauto
+  ocultarrecurso ~isleaf()
+  ordenartarefas plan.start.up
+}

@@ -10,11 +10,13 @@ import { AttributeBase, } from "../attributes/attribute-base.ts";
 import { AttributeDefinition, } from "../attributes/attribute-definition.ts";
 import { AttributeType, } from "../attributes/attribute-type.ts";
 import { TjTime, } from "../time/tj-time.ts";
+import { getOffsetSeconds, } from "../time/timezone.ts";
 import { Scoreboard, } from "../time/scoreboard.ts";
 import { WorkingHours, } from "../calendar/working-hours.ts";
 import { Limits, } from "../scheduling/limits.ts";
 import { ShiftAssignments, } from "../scheduling/shift-assignments.ts";
 import { TimeSheets, } from "../scheduling/time-sheets.ts";
+import { Journal, } from "./journal.ts";
 import { ReportContext, } from "../reports/report-context.ts";
 import { Report, } from "./report.ts";
 import { ReportType, } from "./report-type.ts";
@@ -139,7 +141,7 @@ export class Project implements ProjectLike {
     id: string,
     name: string,
     version: string,
-    flatNamespace?: boolean,
+    _flatNamespace?: boolean,
   ) {
     this.id = id;
     this.name = name;
@@ -163,14 +165,16 @@ export class Project implements ProjectLike {
     this.attributes.set("dailyworkinghours", 8.0,);
     this.attributes.set("yearlyworkingdays", 260.714,);
 
-    // Create PropertySets with flatNamespace control
-    const flat = flatNamespace ?? false;
+    // PropertySets: Ruby Project.rb fixa o namespace por conjunto —
+    // scenarios/shifts/accounts/resources são flat (IDs curtos globais);
+    // tasks/reports são hierárquicos (fullId pontuado). O parâmetro do
+    // construtor não tem correspondência no TJ original.
     this.scenarios = new PropertySet(this, true,);
-    this.shifts = new PropertySet(this, flat,);
-    this.accounts = new PropertySet(this, flat,);
-    this.resources = new PropertySet(this, flat,);
-    this.tasks = new PropertySet(this, flat,);
-    this.reports = new PropertySet(this, flat,);
+    this.shifts = new PropertySet(this, true,);
+    this.accounts = new PropertySet(this, true,);
+    this.resources = new PropertySet(this, true,);
+    this.tasks = new PropertySet(this, false,);
+    this.reports = new PropertySet(this, false,);
     this.attributes.set("scheduleGranularity", 3600,);
     this.attributes.set("timezone", TjTime.getTimeZone(),);
     this.attributes.set("weekStartsMonday", true,);
@@ -179,6 +183,15 @@ export class Project implements ProjectLike {
     this.attributes.set("priority", 500,);
     this.attributes.set("rate", 0.0,);
     this.attributes.set("now", TjTime.now().align(3600,),);
+
+    // Alert levels padrão (Ruby AlertLevelDefinitions#initialize).
+    // Tupla [id, nome, cor]. Podem ser substituídos pela diretiva
+    // `alertlevels` no bloco project.
+    this.attributes.set("alertLevels", [
+      ["green", "Green", "#008000",],
+      ["yellow", "Yellow", "#BEA800",],
+      ["red", "Red", "#C00000",],
+    ],);
 
     // Register attributes synchronously
     registerScenarioAttributes(this.scenarios,);
@@ -197,6 +210,16 @@ export class Project implements ProjectLike {
 
   get scenarioCount(): number {
     return this.scenarios.items;
+  }
+
+  /**
+   * Sobrescreve deep_clone para que referências ao projeto não levem a
+   * uma cópia profunda do projeto inteiro (Ruby: Project#deep_clone).
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/Project.rb#deep_clone
+   */
+  deepClone(): this {
+    return this;
   }
 
   scenario(arg: number | string,): Scenario | null {
@@ -237,6 +260,9 @@ export class Project implements ProjectLike {
     const prop = this.tasks.get(id,);
     return prop ? (prop as Task) : null;
   }
+
+  /** Journal do projeto (Ruby Project.rb `self['journal']`). */
+  readonly journal: Journal = new Journal();
 
   resource(id: string,): Resource | null {
     const prop = this.resources.get(id,);
@@ -422,10 +448,6 @@ export class Project implements ProjectLike {
     return attrDef?.name;
   }
 
-  journal(query: unknown,): unknown {
-    throw new NotYetImplementedError("16", "journal",);
-  }
-
   to_s(): string {
     return `Project(id=${this.id}, name=${this.name}, version=${this.version})`;
   }
@@ -605,7 +627,17 @@ export class Project implements ProjectLike {
   }
 
   static maxScheduleGranularity(): number {
-    return 3600;
+    // Ruby: Time.gm(2000, 1, 1).getlocal.min — os minutos do relógio local
+    // no fuso ativo (TjTime.setTimeZone atualiza o fuso global).
+    const offsetSec = getOffsetSeconds(
+      Date.UTC(2000, 0, 1,) / 1000,
+      TjTime.getTimeZone(),
+    );
+    const min = ((Math.round(offsetSec / 60,) % 60) + 60) % 60;
+    if (min === 0) return 3600;
+    if (min === 30) return 1800;
+    if (min === 15 || min === 45) return 900;
+    throw new TjInternalError(`Unknown Time zone alignment ${min}`,);
   }
 
   schedule(): boolean {

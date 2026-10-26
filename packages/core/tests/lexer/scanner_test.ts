@@ -16,9 +16,9 @@ import { Scanner, type TokenPattern, } from "../../src/lexer/scanner.ts";
 
 /** Padrões mínimos: espaços ignorados + ID + fallback (evita loop igual :LITERAL do TJ). */
 const basePatterns: TokenPattern[] = [
-  [null, /^\s+/, ":tjp", null,],
-  ["ID", /^[A-Za-z_]\w*/, ":tjp", null,],
-  ["LIT", /^[^]/, ":tjp", null,],
+  [null, /\s+/, ":tjp", null,],
+  ["ID", /[A-Za-z_]\w*/, ":tjp", null,],
+  ["LIT", /[^]/, ":tjp", null,],
 ];
 
 function makeScanner(text: string, patterns = basePatterns,): Scanner {
@@ -207,20 +207,20 @@ describe("Scanner — estrutura e padrões (10.8.1/10.8.2)", () => {
   });
 
   it("padrão sem modo usa :tjp por omissão", () => {
-    const s = new Scanner("m", Log, [["ID", /^x/, undefined, null,],], ":tjp",);
+    const s = new Scanner("m", Log, [["ID", /x/, undefined, null,],], ":tjp",);
     assertEquals(s.patternsByMode.get(":tjp",)!.length, 1,);
   });
 
   it("addPattern com lista de modos replica o padrão", () => {
     const s = new Scanner("m", Log, basePatterns, ":tjp",);
-    s.addPattern("T", /^q/, [":dqString", ":macroCall",], null,);
+    s.addPattern("T", /q/, [":dqString", ":macroCall",], null,);
     assertEquals(s.patternsByMode.get(":dqString",)!.length, 1,);
     assertEquals(s.patternsByMode.get(":macroCall",)!.length, 1,);
   });
 
   it("set mode troca activePatterns", () => {
     const s = new Scanner("m", Log, basePatterns, ":tjp",);
-    s.addPattern("DQ", /^x/, ":dqString", null,);
+    s.addPattern("DQ", /x/, ":dqString", null,);
     s.mode = ":dqString";
     assertEquals(s.activePatterns?.length, 1,);
     assertEquals(s.mode, ":dqString",);
@@ -397,7 +397,7 @@ describe("Scanner — tokens (10.8.5)", () => {
   it("postProc pode reescrever tipo e texto", () => {
     const patterns: TokenPattern[] = [[
       "ID",
-      /^[a-z]+/,
+      /[a-z]+/,
       ":tjp",
       (type, text,) => [type === "ID" ? "KEYWORD" : type, text.toUpperCase(),],
     ],];
@@ -407,7 +407,7 @@ describe("Scanner — tokens (10.8.5)", () => {
   });
 
   it("caractere sem match loga no_token_match (comportamento Ruby)", () => {
-    const patterns: TokenPattern[] = [["ID", /^[a-z]+/, ":tjp", null,],];
+    const patterns: TokenPattern[] = [["ID", /[a-z]+/, ":tjp", null,],];
     const s = new Scanner("abc", Log, patterns, ":tjp",);
     s.open(true,);
     // Sem pattern de fallback, invocar nextToken em '!' looparia como no
@@ -422,7 +422,7 @@ describe("Scanner — tokens (10.8.5)", () => {
   it("token não terminado fora do modo default loga runaway_token", () => {
     const patterns: TokenPattern[] = [
       [null, /\s+/, ":tjp", null,],
-      ["ID", /^[a-z]+/, ":tjp", null,],
+      ["ID", /[a-z]+/, ":tjp", null,],
       ["STR", /"[^"]*"/, ":dqString", null,],
       [null, /[^]/, ":dqString", null,],
     ];
@@ -430,8 +430,9 @@ describe("Scanner — tokens (10.8.5)", () => {
     s.open(true,);
     s.nextToken(); // abc
     s.mode = ":dqString";
-    s.nextToken(); // consome abre-aspas
-    const t = s.nextToken(); // força EOF em modo não-default
+    // A partir daqui tudo é ignorado caractere a caractere até o fim do
+    // arquivo, que dispara runaway_token por estar fora do modo default.
+    const t = s.nextToken();
     assertEquals(t[0], "eof",);
     const msgs = MessageHandlerInstance.instance.messages;
     assert(msgs.some((m,) => m.id === "runaway_token"),);
@@ -458,7 +459,7 @@ describe("Scanner — macros (10.8.6)", () => {
     };
     const patterns: TokenPattern[] = [
       [null, /\s+/, ":tjp", null,],
-      ["ID", /^[a-z]+/, ":tjp", null,],
+      ["ID", /[a-z]+/, ":tjp", null,],
       [null, /\$\{[^}]*\}/, ":tjp", macroCall,],
     ];
     const s = new Scanner("${greet mundo}", Log, patterns, ":tjp",);

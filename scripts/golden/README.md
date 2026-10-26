@@ -23,6 +23,7 @@ paritária.
 | `compute_golden.rb` | 2 | `compat-fix.golden.json` | `compat_golden_test.ts` |
 | `finance-mwe004.rb` | 8 | `finance-mwe004.golden.json` | `finance_golden_test.ts` |
 | `finance-variations.rb` | 8 | `finance-variations.golden.json` | `finance_golden_test.ts` |
+| `parser-mwe001..009.rb` + `parser-syntax-{correct,errors}.rb` | 10 | `parser.golden.json` | `parser_golden_test.ts` |
 
 ## Fluxo de trabalho
 
@@ -158,3 +159,49 @@ Se os valores golden são todos 0.0:
   }
 }
 ```
+
+## Parser Golden Tests (Fase 10.19)
+
+Geram os casos de **parse de `.tjp`** (successo e erro) executando o
+TaskJuggler Ruby real como oracle. O harness replica o `test_Syntax.rb` do
+TJ: para cada arquivo, um `TaskJuggler.new` (que reseta o fuso para UTC via
+`TjTime.setTimeZone('UTC')`), `mh.trapSetup = true` (primeiro erro aborta o
+parse) e captura `{ file, ok, errorId?, errorMsg?, lineNo? }`.
+
+### Arquivos
+
+- `parser-common.rb` — harness compartilhado (carrega a gema, roda um
+  arquivo `.tjp` e imprime o caso JSON; markers `<<<GOLDEN>>>` isolam o
+  JSON dos logs do tj3).
+- `parser-mwe001.rb` … `parser-mwe009.rb` — um script por MWE de
+  `docs/Learning/mweNNN/tutorial.tjp` (casos de sucesso, incluindo os
+  `include` dos tutoriais).
+- `parser-syntax-correct.rb` — itera `docs/taskjuggler/test/TestSuite/Syntax/Correct/`.
+- `parser-syntax-errors.rb` — itera `…/Syntax/Errors/` e captura
+  `errorId`/`errorMsg`/`lineNo` da primeira mensagem do MessageHandler.
+- Saída mesclada em `packages/core/tests/golden/parser.golden.json`
+  (178 casos), consumida por `parser_golden_test.ts`.
+
+### Fluxo de trabalho
+
+```bash
+deno task golden:generate   # roda todos os parser-*.rb via ruby + tj3
+deno task test              # valida o parser TS contra o parser.golden.json
+```
+
+### Casos com RichText (Fase 12)
+
+Cinco casos dependem de RichText/Markup e têm **skip explícito** em
+`parser_golden_test.ts` (`PENDING_FASE_12`): `Syntax/Correct/{CustomAttributes,
+EnvVar,MinMax,tutorial}.tjp` e `Syntax/Errors/unsupported_token.tjp` —
+`unsupported_token` exige `limitTokenSet`, chamado apenas do
+`RichText/Parser.rb`. Serão habilitados na Fase 12.
+
+### Regras específicas
+
+1. **Fuso UTC por caso.** O golden só bate se cada parse resetar o fuso
+   (o driver TS espelha com `TjTime.setTimeZone("UTC")` em `parseMasterFile`).
+2. **Primeiro erro aborta.** Com `trapSetup`, apenas a primeira mensagem
+   do MessageHandler aparece no golden — o TS replica com `mh.trapSetup = true`.
+3. **Nunca editar `parser.golden.json` à mão** — regerer com
+   `deno task golden:generate`.

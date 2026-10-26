@@ -1,4 +1,5 @@
 import { type PropertyLike, } from "./property-like.ts";
+import { MessageHandlerInstance, } from "../message-handler.ts";
 import { type AttributeContainer, } from "../attributes/attribute-container.ts";
 import { AttributeDefinition, } from "../attributes/attribute-definition.ts";
 import { AttributeType, } from "../attributes/attribute-type.ts";
@@ -10,7 +11,9 @@ import { TjInternalError, } from "./errors.ts";
 import { ScenarioData, } from "./scenario-data.ts";
 import { Scenario, } from "./scenario.ts";
 import { PropertySet, } from "./property-set.ts";
+import type { SourceFileInfo, } from "../source-file-info.ts";
 export { PropertySet, };
+export type { SourceFileInfo, };
 
 export class PropertyTreeNode implements PropertyLike, AttributeContainer {
   readonly propertySet: PropertySet;
@@ -469,14 +472,29 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
   }
 
   adopt(property: PropertyTreeNode,): void {
+    // Ruby PropertyTreeNode#adopt (l.154-172): usa o MessageHandler global;
+    // sob `trapSetup` o primeiro erro aborta o parse (TjRuntimeError).
     if (property === this) {
-      throw new TjArgumentError("A property cannot adopt itself",);
+      MessageHandlerInstance.instance.error(
+        "adopt_self",
+        "A property cannot adopt itself",
+        null,
+        null,
+        null,
+        null,
+      );
     }
     const allOfRoot = this.root().all();
     for (const leaf of property.allLeaves()) {
       if (allOfRoot.includes(leaf,)) {
-        throw new TjArgumentError(
-          `The task '${leaf.fullId}' has already been adopted`,
+        MessageHandlerInstance.instance.error(
+          "adopt_duplicate_child",
+          `The task '${leaf.fullId}' has already been adopted by property ` +
+            `'${this.root().fullId}' or any of its sub-properties.`,
+          null,
+          null,
+          null,
+          null,
         );
       }
     }
@@ -536,6 +554,17 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
     },);
   }
 
+  /**
+   * deep_clone é usado apenas para atributos, nunca para propriedades.
+   * Como os atributos podem referenciar propriedades, essas referências
+   * devem permanecer referências (Ruby: PropertyTreeNode#deep_clone).
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/PropertyTreeNode.rb#deep_clone
+   */
+  deepClone(): this {
+    return this;
+  }
+
   backupAttributes(): [
     Map<string, AttributeBase<unknown>>,
     Array<Map<string, AttributeBase<unknown>>>,
@@ -566,9 +595,4 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
       },);
     },);
   }
-}
-
-export interface SourceFileInfo {
-  file: string;
-  line: number;
 }

@@ -23,4 +23,9 @@ export class Shift extends PropertyTreeNode {
   override scenarioData(scIdx: number,): ShiftScenario {
     return this.data[scIdx]! as ShiftScenario;
   }
+
+  /** Ruby Shift#scenario (l.43-45): referência ao _scenarioIdx_-ésimo. */
+  scenario(scIdx: number,): ShiftScenario {
+    return this.scenarioData(scIdx,);
+  }
 }

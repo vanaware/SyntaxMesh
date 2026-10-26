@@ -115,7 +115,7 @@ describe("ShiftAssignment", () => {
   it("to_s retorna representação", () => {
     const sa = new ShiftAssignment(shiftScenario, interval,);
     const str = sa.to_s();
-    assertEquals(str, "<0> 2026-01-01-09:00-+00:00 - 2026-01-01-17:00-+00:00",);
+    assertEquals(str, "<0> 2026-01-01-09:00-+0000 - 2026-01-01-17:00-+0000",);
   });
 });
 
@@ -345,7 +345,7 @@ describe("ShiftAssignments", () => {
     const str = sas.to_s();
     assert(str.includes("shifts",),);
     assert(str.includes("<0>",),);
-    assert(str.includes("2026-01-01-09:00-+00:00",),);
+    assert(str.includes("2026-01-01-09:00-+0000",),);
   });
 
   it("to_s retorna string vazia para assignments vazios", () => {

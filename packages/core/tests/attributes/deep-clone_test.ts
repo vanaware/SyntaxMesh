@@ -1,5 +1,5 @@
 import { describe, it, } from "@std/testing/bdd";
-import { assert, assertEquals, assertThrows, } from "@std/assert";
+import { assert, assertEquals, } from "@std/assert";
 import { deepClone, } from "../../src/utils/deep-clone.ts";
 import { TjTime, } from "../../src/time/tj-time.ts";
 import { RealFormat, } from "../../src/format/real-format.ts";
@@ -66,7 +66,7 @@ describe("deepClone", () => {
     assert(cloned !== set,);
   });
 
-  it("fallback usa structuredClone", () => {
+  it("fallback genérico clona recursivamente", () => {
     const obj = { a: 1, b: { c: 2, }, };
     const cloned = deepClone(obj,);
     assertEquals(cloned, obj,);
@@ -74,12 +74,51 @@ describe("deepClone", () => {
     assert((cloned as { b: unknown }).b !== obj.b,);
   });
 
-  it("referências circulares lançam erro", () => {
+  it("referências circulares preservam estrutura (Ruby @clonedObject)", () => {
     const obj: Record<string, unknown> = { a: 1, };
     obj.self = obj;
-    assertThrows(
-      () => deepClone(obj,),
-      Error,
-    );
+    const cloned = deepClone(obj,) as Record<string, unknown>;
+    assertEquals(cloned.a, 1,);
+    assert(cloned !== obj,);
+    // O ciclo se reconstrói dentro da cópia, não aponta para o original.
+    assertEquals(cloned.self, cloned,);
+  });
+
+  it("instância de classe: cópia preserva protótipo e métodos", () => {
+    class Ponto {
+      x = 1;
+      y = 2;
+      tags: string[] = ["a",];
+      soma(): number {
+        return this.x + this.y;
+      }
+    }
+    const p = new Ponto();
+    const cloned = deepClone(p,);
+    assert(cloned instanceof Ponto,);
+    assertEquals(cloned.soma(), 3,);
+    assert(cloned !== p,);
+    assert(cloned.tags !== p.tags,);
+    cloned.x = 10;
+    assertEquals(p.x, 1,);
+  });
+
+  it("classe com deepClone() próprio devolve referência (PTN-like)", () => {
+    class No {
+      id = "n1";
+      deepClone(): this {
+        return this;
+      }
+    }
+    const n = new No();
+    assertEquals(deepClone(n,), n,);
+  });
+
+  it("objeto contendo função a mantém por referência (sem DOMException)", () => {
+    const fn = () => 42;
+    const holder = { callback: fn, nested: { fn, }, };
+    const cloned = deepClone(holder,);
+    assertEquals(cloned.callback, fn,);
+    assertEquals(cloned.nested.fn, fn,);
   });
 });

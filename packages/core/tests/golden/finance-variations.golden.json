@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "description": "Casos financeiros extraidos de mwe004/variaveis.tjp (8 taskreports isolando variacoes de chargeset, charge modes, credit, balance order)",
-  "generated_at": "2026-10-18T09:41:28-0300",
+  "generated_at": "2026-10-26T10:28:04-0300",
   "cases": [
     {
       "description": "[chargeset 100% dev] 100pct dev",

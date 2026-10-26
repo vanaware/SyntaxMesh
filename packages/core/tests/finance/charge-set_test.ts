@@ -17,7 +17,10 @@ describe("ChargeSet", () => {
     it("cria um ChargeSet vazio", () => {
       const chargeSet = new ChargeSet();
       assertEquals(chargeSet.master, null,);
-      assertEquals(chargeSet.share(new Account(project, "a1", "Account 1", null,)), null,);
+      assertEquals(
+        chargeSet.share(new Account(project, "a1", "Account 1", null,),),
+        null,
+      );
     });
   });
 
@@ -30,19 +33,19 @@ describe("ChargeSet", () => {
       account1 = new Account(project, "a1", "Account 1", null,);
       account2 = new Account(project, "a2", "Account 2", null,);
       account3 = new Account(project, "a3", "Account 3", null,);
-    }, );
+    },);
 
     it("aceita conta leaf válida com share", () => {
       const chargeSet = new ChargeSet();
       chargeSet.addAccount(account1, 0.5,);
       assertEquals(chargeSet.master, account1,);
-      assertEquals(chargeSet.share(account1), 0.5,);
+      assertEquals(chargeSet.share(account1,), 0.5,);
     });
 
     it("aceita conta leaf válida sem share (null)", () => {
       const chargeSet = new ChargeSet();
       chargeSet.addAccount(account1, null,);
-      assertEquals(chargeSet.share(account1), null,);
+      assertEquals(chargeSet.share(account1,), null,);
     });
 
     it("rejeita conta group (não leaf)", () => {
@@ -55,7 +58,10 @@ describe("ChargeSet", () => {
     it("rejeita conta já existente", () => {
       const chargeSet = new ChargeSet();
       chargeSet.addAccount(account1, 0.5,);
-      assertThrows(() => chargeSet.addAccount(account1, 0.3,), TjArgumentError,);
+      assertThrows(
+        () => chargeSet.addAccount(account1, 0.3,),
+        TjArgumentError,
+      );
     });
 
     it("define master como root da primeira conta", () => {
@@ -70,7 +76,10 @@ describe("ChargeSet", () => {
       chargeSet.addAccount(account1, 0.5,);
       const project2 = createTestProject(1,);
       const account4 = new Account(project2, "b1", "Account B", null,);
-      assertThrows(() => chargeSet.addAccount(account4, 0.5,), TjArgumentError,);
+      assertThrows(
+        () => chargeSet.addAccount(account4, 0.5,),
+        TjArgumentError,
+      );
     });
 
     it("rejeita conta group (container)", () => {
@@ -82,24 +91,30 @@ describe("ChargeSet", () => {
 
     it("rejeita share < 0", () => {
       const chargeSet = new ChargeSet();
-      assertThrows(() => chargeSet.addAccount(account1, -0.1,), TjArgumentError,);
+      assertThrows(
+        () => chargeSet.addAccount(account1, -0.1,),
+        TjArgumentError,
+      );
     });
 
     it("rejeita share > 1", () => {
       const chargeSet = new ChargeSet();
-      assertThrows(() => chargeSet.addAccount(account1, 1.1,), TjArgumentError,);
+      assertThrows(
+        () => chargeSet.addAccount(account1, 1.1,),
+        TjArgumentError,
+      );
     });
 
     it("aceita share == 0", () => {
       const chargeSet = new ChargeSet();
       chargeSet.addAccount(account1, 0.0,);
-      assertEquals(chargeSet.share(account1), 0.0,);
+      assertEquals(chargeSet.share(account1,), 0.0,);
     });
 
     it("aceita share == 1", () => {
       const chargeSet = new ChargeSet();
       chargeSet.addAccount(account1, 1.0,);
-      assertEquals(chargeSet.share(account1), 1.0,);
+      assertEquals(chargeSet.share(account1,), 1.0,);
     });
   });
 
@@ -114,7 +129,7 @@ describe("ChargeSet", () => {
       account2 = new Account(project, "a2", "Account 2", account1,);
       account3 = new Account(project, "a3", "Account 3", account1,);
       account4 = new Account(project, "a4", "Account 4", account1,);
-    }, );
+    },);
 
     it("itera sobre todas as contas", () => {
       const chargeSet = new ChargeSet();
@@ -123,7 +138,7 @@ describe("ChargeSet", () => {
       chargeSet.addAccount(account2, 0.5,);
       chargeSet.addAccount(account3, null,);
       chargeSet.addAccount(account4, 0.3,);
-      chargeSet.each((acc, share) => {
+      chargeSet.each((acc, share,) => {
         accounts.push(acc,);
         shares.push(share,);
       },);
@@ -145,15 +160,15 @@ describe("ChargeSet", () => {
       account3 = new Account(project, "a3", "Account 3", account1,);
       account4 = new Account(project, "a4", "Account 4", account1,);
       account5 = new Account(project, "a5", "Account 5", account1,);
-    }, );
+    },);
 
     it("não faz nada se já completo (100% definido)", () => {
       const chargeSet = new ChargeSet();
       chargeSet.addAccount(account2, 0.5,);
       chargeSet.addAccount(account3, 0.5,);
       chargeSet.complete();
-      assertEquals(chargeSet.share(account2), 0.5,);
-      assertEquals(chargeSet.share(account3), 0.5,);
+      assertEquals(chargeSet.share(account2,), 0.5,);
+      assertEquals(chargeSet.share(account3,), 0.5,);
     });
 
     it("distribui remainder entre contas sem share", () => {
@@ -162,9 +177,9 @@ describe("ChargeSet", () => {
       chargeSet.addAccount(account3, null,);
       chargeSet.addAccount(account4, null,);
       chargeSet.complete();
-      assertEquals(chargeSet.share(account2), 0.3,);
-      assertEquals(chargeSet.share(account3), 0.35,);
-      assertEquals(chargeSet.share(account4), 0.35,);
+      assertEquals(chargeSet.share(account2,), 0.3,);
+      assertEquals(chargeSet.share(account3,), 0.35,);
+      assertEquals(chargeSet.share(account4,), 0.35,);
     });
 
     it("rejeita total > 100%", () => {
@@ -195,10 +210,10 @@ describe("ChargeSet", () => {
       chargeSet.addAccount(account4, null,);
       chargeSet.addAccount(account5, null,);
       chargeSet.complete();
-      assertEquals(chargeSet.share(account2), 0.1,);
-      assertEquals(chargeSet.share(account3), 0.3,);
-      assertEquals(chargeSet.share(account4), 0.3,);
-      assertEquals(chargeSet.share(account5), 0.3,);
+      assertEquals(chargeSet.share(account2,), 0.1,);
+      assertEquals(chargeSet.share(account3,), 0.3,);
+      assertEquals(chargeSet.share(account4,), 0.3,);
+      assertEquals(chargeSet.share(account5,), 0.3,);
     });
 
     it("distribui remainder para 1 conta sem share", () => {
@@ -206,8 +221,8 @@ describe("ChargeSet", () => {
       chargeSet.addAccount(account2, 0.0,);
       chargeSet.addAccount(account3, null,);
       chargeSet.complete();
-      assertEquals(chargeSet.share(account2), 0.0,);
-      assertEquals(chargeSet.share(account3), 1.0,);
+      assertEquals(chargeSet.share(account2,), 0.0,);
+      assertEquals(chargeSet.share(account3,), 1.0,);
     });
   });
 
@@ -218,17 +233,17 @@ describe("ChargeSet", () => {
     beforeEach(() => {
       account1 = new Account(project, "a1", "Account 1", null,);
       account2 = new Account(project, "a2", "Account 2", null,);
-    }, );
+    },);
 
     it("retorna share para conta existente", () => {
       const chargeSet = new ChargeSet();
       chargeSet.addAccount(account1, 0.7,);
-      assertEquals(chargeSet.share(account1), 0.7,);
+      assertEquals(chargeSet.share(account1,), 0.7,);
     });
 
     it("retorna null para conta não existente", () => {
       const chargeSet = new ChargeSet();
-      assertEquals(chargeSet.share(account1), null,);
+      assertEquals(chargeSet.share(account1,), null,);
     });
   });
 
@@ -241,7 +256,7 @@ describe("ChargeSet", () => {
       root = new Account(project, "a1", "Account 1", null,);
       account1 = new Account(project, "a2", "Account 2", root,);
       account2 = new Account(project, "a3", "Account 3", root,);
-    }, );
+    },);
 
     it("retorna string vazia para conjunto vazio", () => {
       const chargeSet = new ChargeSet();
@@ -251,14 +266,15 @@ describe("ChargeSet", () => {
     it("retorna string com uma conta", () => {
       const chargeSet = new ChargeSet();
       chargeSet.addAccount(account1, 0.5,);
-      assertEquals(chargeSet.to_s(), "(a1.a2 50%)",);
+      // Accounts são flat no Ruby — fullId é o ID curto.
+      assertEquals(chargeSet.to_s(), "(a2 50%)",);
     });
 
     it("retorna string com múltiplas contas", () => {
       const chargeSet = new ChargeSet();
       chargeSet.addAccount(account1, 0.5,);
       chargeSet.addAccount(account2, 0.3,);
-      assertEquals(chargeSet.to_s(), "(a1.a2 50%, a1.a3 30%)",);
+      assertEquals(chargeSet.to_s(), "(a2 50%, a3 30%)",);
     });
 
     it("retorna string com share null (após complete)", () => {
@@ -266,7 +282,7 @@ describe("ChargeSet", () => {
       chargeSet.addAccount(account1, 0.5,);
       chargeSet.addAccount(account2, null,);
       chargeSet.complete();
-      assertEquals(chargeSet.to_s(), "(a1.a2 50%, a1.a3 50%)",);
+      assertEquals(chargeSet.to_s(), "(a2 50%, a3 50%)",);
     });
   });
 });

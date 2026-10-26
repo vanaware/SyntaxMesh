@@ -1,0 +1,61 @@
+language "pt-BR"
+
+projeto prj "Tracking Progress" "1.0" 2024-10-01 - 2024-10-31 {
+  formatohora "%Y-%m-%d"
+
+  # IMPORTANT: 'now' simulates the current date.
+  # We assume we are in the middle of the project (Oct 15th).
+  agora 2024-10-15
+  moeda "USD"
+}
+
+/* 1. Resources */
+recurso dev "Developer" {
+  taxa 400.0
+}
+
+/* 2. Tasks (The Plan) */
+tarefa projeto "Software Project" {
+
+  tarefa t1 "Requirements" {
+    # This task was scheduled for the first week
+    início 2024-10-01
+    esforço 5d
+    alocar dev
+
+    # Method A: Simple Completion
+    # We simply state this task is 100% finished.
+    completo 100
+  }
+
+  tarefa t2 "Implementation" {
+    # This task starts after t1
+    depende !t1
+    esforço 10d
+    alocar dev
+
+    # Journal entries help document *why* things happened
+    lançamento 2024-10-10 "Started implementation phase"
+  }
+}
+
+/* 3. Tracking Actuals (The Reality) */
+# We use 'supplement' to add bookings to the resource defined above.
+# This simulates importing a timesheet.
+suplementar recurso dev {
+
+  # Syntax: booking <task_id> <start> - <end>
+  # 'dev' worked 3 days on 't2' so far.
+  atribuição project.t2 2024-10-08-09:00 - 2024-10-08-17:00
+  atribuição project.t2 2024-10-09-09:00 - 2024-10-09-17:00
+  atribuição project.t2 2024-10-10-09:00 - 2024-10-10-17:00
+}
+
+/* 4. Status Report */
+relatoriotarefa "StatusReport" {
+  formatos html
+  manchete "Project Status Report (as of 2024-10-15)"
+
+  # FIX: Flatten the column list. Do not nest columns inside 'chart'.
+  colunas bsi, name, início, fim, esforço, esforçofeito, esforçorestante, completo, estado, chart
+}

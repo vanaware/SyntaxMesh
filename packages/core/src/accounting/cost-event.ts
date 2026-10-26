@@ -1,17 +1,23 @@
-import { type Account } from "../model/account.ts";
-import { type Resource } from "../model/resource.ts";
-import { type Task } from "../model/task.ts";
-import { type Material } from "../model/material.ts";
-import { type ChargeSetCollection } from "../finance/charge-set-collection.ts";
-import { type CostType } from "../model/account.ts";
-import { type AttributionRule, type AttributionResult } from "../model/cost-event.ts";
+import { type Account, } from "../model/account.ts";
+import { type Resource, } from "../model/resource.ts";
+import { type Task, } from "../model/task.ts";
+import { type Material, } from "../model/material.ts";
+import { type ChargeSetCollection, } from "../finance/charge-set-collection.ts";
+import { type CostType, } from "../model/account.ts";
+import {
+  type AttributionResult,
+  type AttributionRule,
+} from "../model/cost-event.ts";
 
 /**
  * Representa um evento de custo auditável para um único valor monetário.
  *
  * Semelhante a `MaterialAllocation`, mas para valores monetários.
  */
-export type CostEventType = "task_charge" | "resource_effort" | "material_usage";
+export type CostEventType =
+  | "task_charge"
+  | "resource_effort"
+  | "material_usage";
 
 /**
  * Representa um evento de custo auditável para um único valor monetário.

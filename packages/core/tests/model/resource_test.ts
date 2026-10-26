@@ -105,22 +105,26 @@ describe("Resource", () => {
     assertEquals(child.level, 1,);
   });
 
-  it("recurso com pai herda fullId", () => {
+  it("recurso com pai mantém fullId curto (namespace flat, Ruby)", () => {
     const parent = new Resource(project, "parent", "Parent", null,);
     const child = new Resource(project, "child", "Child", parent,);
-    assertEquals(child.fullId, "parent.child",);
+    // Ruby Project.rb: @resources é flat — IDs curtos valem globalmente.
+    assertEquals(child.fullId, "child",);
+    assertEquals(project.resource("child",), child,);
   });
 
-  it("recurso com id hierárquico resolve pai do PropertySet", () => {
+  it("recurso com id pontuado não resolve pai em namespace flat", () => {
     const resource = new Resource(project, "parent.child", "Child", null,);
     assertEquals(resource.fullId, "parent.child",);
-    assertEquals(resource.subId, "child",);
+    assertEquals(resource.subId, "parent.child",);
+    assertEquals(resource.parent, null,);
   });
 
-  it("recurso com id hierárquico resolve pai do PropertySet (já existente)", () => {
-    const existing = new Resource(project, "parent", "Parent", null,);
+  it("recurso com id pontuado não adota recurso existente como pai", () => {
+    new Resource(project, "parent", "Parent", null,);
     const resource = new Resource(project, "parent.child", "Child", null,);
-    assertEquals(resource.parent, existing,);
+    assertEquals(resource.parent, null,);
+    assertEquals(resource.fullId, "parent.child",);
   });
 
   it("recurso com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true", () => {
@@ -144,7 +148,7 @@ describe("Resource", () => {
     assertEquals(resource.subId, "parent.child.grandchild",);
   });
 
-  it("recurso com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace false, parent does not exist", () => {
+  it("recurso pontuado com pai inexistente permanece literal (flat)", () => {
     const project2 = createTestProject(1, false,);
     const resource = new Resource(
       project2,
@@ -153,7 +157,7 @@ describe("Resource", () => {
       null,
     );
     assertEquals(resource.fullId, "nonexistent.child",);
-    assertEquals(resource.subId, "child",);
+    assertEquals(resource.subId, "nonexistent.child",);
   });
 
   it("recurso com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true, parent does not exist", () => {
@@ -168,9 +172,9 @@ describe("Resource", () => {
     assertEquals(resource.subId, "nonexistent.child",);
   });
 
-  it("recurso com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace false, child already exists", () => {
+  it("recurso pontuado com filho pré-existente mantém literal (flat)", () => {
     const project2 = createTestProject(1, false,);
-    const existing = new Resource(project2, "child", "Child", null,);
+    new Resource(project2, "child", "Child", null,);
     const resource = new Resource(
       project2,
       "nonexistent.child",
@@ -178,7 +182,7 @@ describe("Resource", () => {
       null,
     );
     assertEquals(resource.fullId, "nonexistent.child",);
-    assertEquals(resource.subId, "child",);
+    assertEquals(resource.subId, "nonexistent.child",);
   });
 
   it("recurso com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true, child already exists", () => {
@@ -194,13 +198,13 @@ describe("Resource", () => {
     assertEquals(resource.subId, "nonexistent.child",);
   });
 
-  it("recurso com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace false, child already exists, parent already exists", () => {
+  it("recurso pontuado duplicado mantém literal (flat)", () => {
     const project2 = createTestProject(1, false,);
-    const parent = new Resource(project2, "parent", "Parent", null,);
-    const existing = new Resource(project2, "parent.child", "Child", null,);
+    new Resource(project2, "parent", "Parent", null,);
+    new Resource(project2, "parent.child", "Child", null,);
     const resource = new Resource(project2, "parent.child", "Child", null,);
     assertEquals(resource.fullId, "parent.child",);
-    assertEquals(resource.subId, "child",);
+    assertEquals(resource.subId, "parent.child",);
   });
 
   it("recurso com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true, child already exists, parent already exists", () => {

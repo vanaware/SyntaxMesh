@@ -57,14 +57,16 @@ export class MacroTable {
   resolve(
     args: string[],
     sourceFileInfo: SourceFileInfo,
-  ): [Macro, string,] | null {
+  ): [Macro | null, string,] | null {
     const name = args[0] ?? "";
     // Se o primeiro caractere do nome for '?', a macro pode ser indefinida
     // e é silenciosamente ignorada.
     if (name.length > 0 && name[0] === "?") {
       const cleanName = name.slice(1,);
+      // Ruby l.66: macro opcional indefinida devolve `[nil, '']` — o
+      // `text === ''` faz expandMacro ignorar a chamada em silêncio.
       if (!this.macros.has(cleanName,)) {
-        return null;
+        return [null, "",];
       }
       return [this.macros.get(cleanName,)!, "",];
     }

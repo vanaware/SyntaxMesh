@@ -1,0 +1,72 @@
+language "es"
+
+proyecto prj "Scenario Planning" "1.0" 2024-12-01 - 2024-12-31 {
+  formatohora "%Y-%m-%d"
+  ahora 2024-12-01
+  moneda "USD"
+
+  /* 1. Define Scenarios (Hierarchical) */
+  # FIX: Only ONE top-level scenario allowed.
+  escenario baseline "Original Plan" {
+
+    # 'delayed' is a sub-scenario. It inherits everything from 'baseline'.
+    escenario delayed "Delayed Reality" {
+    }
+  }
+}
+
+recurso dev "Developer"
+
+/* 2. Tasks with Scenario-Specific Data */
+tarea proyecto "Scenario Demo" {
+
+  tarea t1 "Design" {
+    asignar dev
+    inicio 2024-12-01
+
+    # FIX: No prefix needed for the top-level scenario ('baseline')
+    esfuerzo 5d
+
+    # Specific override for the 'delayed' scenario
+    delayed:effort 8d
+  }
+
+  tarea t2 "Implementation" {
+    asignar dev
+    depende !t1
+    esfuerzo 10d
+  }
+}
+
+/* 3. Comparison Reports */
+
+# Report A: Showing the Baseline
+infotarea "PlanView" {
+  formatos html
+  titular "Original Plan (Baseline)"
+  columnas bsi, name, inicio, fin, esfuerzo, chart
+
+  # Show the top-level scenario
+  escenarios baseline
+}
+
+# Report B: Showing the Delay
+infotarea "DelayedView" {
+  formatos html
+  titular "Delayed Reality"
+  columnas bsi, name, inicio, fin, esfuerzo, chart
+
+  # Show the sub-scenario
+  escenarios delayed
+}
+
+# Report C: The Comparison
+infotarea "Comparison" {
+  formatos html
+  titular "Baseline vs. Delay Comparison"
+
+  # FIX: Compare parent and child scenarios
+  escenarios baseline, delayed
+
+  columnas bsi, name, inicio, fin, esfuerzo, chart
+}

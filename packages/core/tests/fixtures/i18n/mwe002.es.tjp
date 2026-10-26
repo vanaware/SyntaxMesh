@@ -1,0 +1,51 @@
+language "es"
+
+proyecto migration "Project" "1.0" 2024-07-15 - 2024-08-15 {
+  ahora 2024-07-15
+  formatohora "%Y-%m-%d"
+  formatonumero "-" "" "." "," 2
+  horaslaborales lun - vie 8:00 - 12:00, 13:00 - 17:00
+}
+
+# Resource with detailed configuration
+recurso dev "Developer"
+
+# Task hierarchy with dependencies
+tarea project_root "Project Root" {
+  tarea phase1 "Phase 1" {
+    tarea p1s1 "Task 1.1" {
+      esfuerzo 1d
+      asignar dev
+    }
+    tarea p1s2 "Task 1.2" {
+      depende !p1s1
+      esfuerzo 2d
+      asignar dev
+    }
+  }
+
+  tarea phase2 "Phase 2" {
+    depende !phase1
+    tarea p2s1 "Task 2.1" {
+      esfuerzo 1d
+      asignar dev
+    }
+  }
+}
+
+# Report that causes the issue (Chart column)
+infotarea "tasks" {
+  titular "Task Plan"
+  formatos html
+  columnas name, inicio, fin, chart  # This column caused the error in 3.8.1
+  ocultarrecurso 0
+}
+
+# Resource report that may also cause issues (Calendar view)
+inforecurso "resources" {
+  titular "Resource Allocation"
+  formatos html
+  columnas name, weekly  # Calendar view caused issues in 3.8.1
+  unidadcarga days
+  ocultartarea 0
+}

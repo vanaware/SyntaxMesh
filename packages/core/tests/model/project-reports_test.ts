@@ -1,15 +1,15 @@
-import { beforeEach, describe, it } from "@std/testing/bdd";
-import { assert, assertEquals, assertExists, assertThrows } from "@std/assert";
-import { Project } from "../../src/model/project.ts";
-import { Report } from "../../src/model/report.ts";
+import { beforeEach, describe, it, } from "@std/testing/bdd";
+import { assert, assertEquals, assertExists, assertThrows, } from "@std/assert";
+import { Project, } from "../../src/model/project.ts";
+import { Report, } from "../../src/model/report.ts";
 import { ReportType, } from "../../src/model/report-type.ts";
 
 describe("Project.checkReports", () => {
   let project: Project;
 
   beforeEach(() => {
-    project = new Project("test-project", "Test Project", "1.0.0");
-  });
+    project = new Project("test-project", "Test Project", "1.0.0",);
+  },);
 
   it("warning sem reports", () => {
     // Should not throw, just warning
@@ -30,11 +30,11 @@ describe("Project.generateReports", () => {
   let project: Project;
 
   beforeEach(() => {
-    project = new Project("test-project", "Test Project", "1.0.0");
+    project = new Project("test-project", "Test Project", "1.0.0",);
     // Add a report with formats
     const report = new Report(project, "report1", "Report 1", null,);
     report.set("formats", ["html",],);
-  });
+  },);
 
   it("itera reports com formats", () => {
     // Should not throw
@@ -46,10 +46,10 @@ describe("Project.listReports", () => {
   let project: Project;
 
   beforeEach(() => {
-    project = new Project("test-project", "Test Project", "1.0.0");
+    project = new Project("test-project", "Test Project", "1.0.0",);
     const report = new Report(project, "report1", "Report 1", null,);
     report.set("formats", ["html",],);
-  });
+  },);
 
   it("lista reports com id exato", () => {
     // Should not throw
@@ -65,10 +65,10 @@ describe("Project.generateReport", () => {
   let project: Project;
 
   beforeEach(() => {
-    project = new Project("test-project", "Test Project", "1.0.0");
+    project = new Project("test-project", "Test Project", "1.0.0",);
     const report = new Report(project, "report1", "Report 1", null,);
     report.set("formats", ["html",],);
-  });
+  },);
 
   it("gera report com id exato", () => {
     project.generateReport("report1", false,);
@@ -91,11 +91,11 @@ describe("Project.enableTraceReports", () => {
   let project: Project;
 
   beforeEach(() => {
-    project = new Project("test-project", "Test Project", "1.0.0");
+    project = new Project("test-project", "Test Project", "1.0.0",);
     const report = new Report(project, "trace1", "Trace Report", null,);
     report.typeSpec = ReportType.TraceReport;
     report.set("formats", ["html",],);
-  });
+  },);
 
   it("habilita CSV para tracereport", () => {
     project.enableTraceReports(true,);
@@ -121,14 +121,14 @@ describe("Project.matchingReports", () => {
   let project: Project;
 
   beforeEach(() => {
-    project = new Project("test-project", "Test Project", "1.0.0");
+    project = new Project("test-project", "Test Project", "1.0.0",);
     const report1 = new Report(project, "report1", "Report 1", null,);
     report1.set("formats", ["html",],);
     const report2 = new Report(project, "report2", "Report 2", null,);
     report2.set("formats", ["html",],);
     const report3 = new Report(project, "report3", "Report 3", null,);
     report3.set("formats", ["html",],);
-  });
+  },);
 
   it("matchingReports id exato", () => {
     const matches = project.matchingReports("report1",);
@@ -139,8 +139,8 @@ describe("Project.matchingReports", () => {
   it("matchingReports regExp", () => {
     const matches = project.matchingReports("report.*",);
     assertEquals(matches.length, 3,);
-    assertEquals(matches.includes("report1"), true,);
-    assertEquals(matches.includes("report2"), true,);
-    assertEquals(matches.includes("report3"), true,);
+    assertEquals(matches.includes("report1",), true,);
+    assertEquals(matches.includes("report2",), true,);
+    assertEquals(matches.includes("report3",), true,);
   });
 });

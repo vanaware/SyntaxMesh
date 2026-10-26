@@ -90,9 +90,9 @@ for (const { name, rubyScript, outputPath, } of scripts) {
   // Extract the last JSON object from stdout. Ruby scripts may emit
   // informational `puts` messages before the JSON output; we grab the
   // trailing JSON object so the parser doesn't choke on log lines.
-  const jsonMatch = stdout.match(/\{[\s\S]*\}/);
+  const jsonMatch = stdout.match(/\{[\s\S]*\}/,);
   if (!jsonMatch) {
-    console.error(`Ruby output ${name} has no JSON object:\n${stdout}`);
+    console.error(`Ruby output ${name} has no JSON object:\n${stdout}`,);
     Deno.exit(1,);
   }
   stdout = jsonMatch[0];
@@ -102,10 +102,72 @@ for (const { name, rubyScript, outputPath, } of scripts) {
     JSON.parse(stdout,);
   } catch (e) {
     console.error(`Ruby output ${name} is not valid JSON:`, e,);
-    console.error(`Raw output:\n${stdout}`);
+    console.error(`Raw output:\n${stdout}`,);
     Deno.exit(1,);
   }
 
   await Deno.writeTextFile(outputPath, stdout + "\n",);
   console.log(`Generated ${outputPath.pathname}`,);
 }
+
+// ---------------------------------------------------------------------------
+// Parser golden (10.19): 9 scripts de MWE (tj3 --check-syntax) + Correct +
+// Errors (API Ruby MessageChecker-style), mesclados em parser.golden.json.
+// ---------------------------------------------------------------------------
+
+const parserScripts = [
+  ...Array.from(
+    { length: 9, },
+    (_, i,) => `parser-mwe${String(i + 1,).padStart(3, "0",)}.rb`,
+  ),
+  "parser-syntax-correct.rb",
+  "parser-syntax-errors.rb",
+];
+
+type ParserCase = {
+  file: string;
+  ok: boolean;
+  messages: unknown[];
+};
+
+const parserCases: ParserCase[] = [];
+for (const script of parserScripts) {
+  const url = new URL(`../../../../scripts/golden/${script}`, import.meta.url,);
+  const proc = new Deno.Command("ruby", {
+    args: [url.pathname,],
+    stdout: "piped",
+    stderr: "piped",
+  },);
+  const result = proc.outputSync();
+  if (!result.success) {
+    console.error(
+      `Ruby script ${script} failed:\n` +
+        new TextDecoder().decode(result.stderr,),
+    );
+    Deno.exit(1,);
+  }
+  const text = new TextDecoder().decode(result.stdout,);
+  const jsonMatch = text.match(/\{[\s\S]*\}/,);
+  if (!jsonMatch) {
+    console.error(`Ruby output ${script} has no JSON object:\n${text}`,);
+    Deno.exit(1,);
+  }
+  const parsed = JSON.parse(jsonMatch[0],) as {
+    cases?: ParserCase[];
+    file?: string;
+  };
+  if (parsed.cases) {
+    parserCases.push(...parsed.cases,);
+  } else {
+    parserCases.push(parsed as ParserCase,);
+  }
+}
+
+const parserOut = new URL("./parser.golden.json", import.meta.url,);
+await Deno.writeTextFile(
+  parserOut,
+  JSON.stringify({ cases: parserCases, }, null, 2,) + "\n",
+);
+console.log(
+  `Generated ${parserOut.pathname} (${parserCases.length} cases)`,
+);

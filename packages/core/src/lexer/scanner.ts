@@ -7,7 +7,7 @@
  *
  * @see docs/taskjuggler/lib/taskjuggler/TextParser/Scanner.rb
  */
-import { Message, type MessageType, } from "../message.ts";
+import { type MessageType, } from "../message.ts";
 import { MessageHandlerInstance, } from "../message-handler.ts";
 import { SourceFileInfo, } from "../source-file-info.ts";
 import { Macro, MacroTable, } from "./macro-table.ts";
@@ -23,7 +23,7 @@ import {
 export type TokenPostProcessor = (
   type: string | null,
   text: string,
-) => [string | null, string,];
+) => [string | null, unknown,];
 
 /** Padrão de token: [tipo (null = ignorar), regex, modo(s), pós-processamento]. */
 export type TokenPattern = [
@@ -34,7 +34,7 @@ export type TokenPattern = [
 ];
 
 /** Token produzido pelo scanner: [tipo, texto, origem]. */
-export type ScannerToken = [string, string, SourceFileInfo | null,];
+export type ScannerToken = [string, unknown, SourceFileInfo | null,];
 
 /** Entrada da pilha de arquivos: handle, token em buffer e callback de EOF. */
 type FileStackEntry = [StreamHandle, ScannerToken | null, (() => void) | null,];
@@ -89,7 +89,10 @@ export class Scanner implements ScannerHostLike {
       const postProc = pat[3];
       this.addPattern(type, regExp, mode, postProc,);
     }
-    this.mode = defaultMode;
+    // Permite subclasses registrarem padrões após super(): se o modo ainda
+    // não existir, apenas guarda o nome; a subclasse reatribui `mode` depois.
+    this.activePatterns = this.patternsByMode.get(defaultMode,) ?? null;
+    this.scannerMode = defaultMode;
   }
 
   /**
@@ -328,7 +331,7 @@ export class Scanner implements ScannerHostLike {
     }
   }
 
-  /** Erro relacionado ao texto processado (não lança; igual ao Ruby). */
+  /** Erro relacionado ao texto processado (lança ≈ Ruby trapSetup). */
   error(
     id: string,
     text: string,
@@ -372,15 +375,18 @@ export class Scanner implements ScannerHostLike {
 
       if (this.activePatterns) {
         for (const entry of this.activePatterns) {
-          const scanned = this.cf.scan(entry[1],);
-          if (scanned !== null) {
-            match = scanned;
+          // Ruby: `if (match = @cf.scan(re))` — a atribuição também zera
+          // `match` quando o padrão não casa. Sem isso, um token ignorado
+          // (type nil) deixaria `match` obsoleto e o loop nunca chegaria ao
+          // branch de erro (infinite loop em `no_token_match`).
+          match = this.cf.scan(entry[1],);
+          if (match !== null) {
             let type: string | null = entry[0];
-            let value = scanned;
+            let value: unknown = match;
             const postProc = entry[3];
             if (postProc) {
-              [type, value,] = postProc(type, value,);
-              match = value;
+              [type, value,] = postProc(type, value as string,);
+              match = value as string;
             }
             if (type === null) break; // Token ignorado.
 
@@ -408,8 +414,11 @@ export class Scanner implements ScannerHostLike {
   }
 
   /**
-   * Loga no MessageHandler sem lançar — equivalente a MessageHandler#error
-   * do Ruby (que apenas acumula a mensagem). Inclui histórico de macros.
+   * Loga no MessageHandler — equivalente ao `message` do Scanner.rb
+   * (l.535-563): erros e warnings passam por `MessageHandler#error/warning`,
+   * que LANÇA `TjRuntimeError` quando `trapSetup` está ativo (primeiro erro
+   * aborta o parse — é o comportamento que os golden tests gravam). Inclui
+   * histórico de macros como infos prévios.
    */
   private message(
     type: MessageType,
@@ -438,9 +447,10 @@ export class Scanner implements ScannerHostLike {
       }
     }
 
-    this.messageHandler.messages.push(
-      new Message(type, id, text, at, line, data, null,),
-    );
-    if (type === "error") this.messageHandler.errors++;
+    if (type === "error") {
+      this.messageHandler.error(id, text, at, line, data,);
+    } else {
+      this.messageHandler.warning(id, text, at, line, data,);
+    }
   }
 }

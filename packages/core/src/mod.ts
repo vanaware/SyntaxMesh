@@ -40,4 +40,17 @@ export { TaskJuggler, } from "./taskjuggler.ts";
 // Fase 10 — lexer e parser (port de TextParser/*)
 export * from "./lexer/mod.ts";
 export * from "./parser/mod.ts";
+
+// Fase 10 — i18n (extensão SyntaxMesh — ADR 023)
+export {
+  CANONICAL_KEYWORDS,
+  type CanonicalKeyword,
+  type CanonicalUnit,
+  en,
+  es,
+  globalRegistry,
+  type LanguageDefinition,
+  LanguageRegistry,
+  ptBR,
+} from "./i18n/mod.ts";
 export { SourceFileInfo, } from "./source-file-info.ts";

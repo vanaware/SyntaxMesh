@@ -82,7 +82,9 @@ describe("Smoke test after Phase 5", () => {
     assert(attr !== undefined,);
 
     // Verificar que addScenario funciona
-    project.addScenario(new Scenario(project, "scenario2", "Scenario 2", null,));
+    project.addScenario(
+      new Scenario(project, "scenario2", "Scenario 2", null,),
+    );
     assertEquals(project.scenarioCount, 3,);
     assertEquals(project.scenario(2,)?.id, "scenario2",);
   });

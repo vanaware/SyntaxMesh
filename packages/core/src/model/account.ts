@@ -2,9 +2,9 @@ import { type ProjectLike, } from "./project-like.ts";
 import { PropertyTreeNode, } from "./property-tree-node.ts";
 import { AccountScenario, } from "./account-scenario.ts";
 
-type CostType = 'task' | 'resource' | 'material';
+type CostType = "task" | "resource" | "material";
 
-export type { CostType };
+export type { CostType, };
 
 export class Account extends PropertyTreeNode {
   private allowedTypes: Set<CostType> = new Set();
@@ -30,15 +30,15 @@ export class Account extends PropertyTreeNode {
     return this.data[scIdx]! as AccountScenario;
   }
 
-  canAccept(type: CostType): boolean {
-    return this.allowedTypes.size === 0 || this.allowedTypes.has(type);
+  canAccept(type: CostType,): boolean {
+    return this.allowedTypes.size === 0 || this.allowedTypes.has(type,);
   }
 
-  setAllowedTypes(types: CostType[]): void {
-    this.allowedTypes = new Set(types);
+  setAllowedTypes(types: CostType[],): void {
+    this.allowedTypes = new Set(types,);
   }
 
   getAllowedTypes(): CostType[] {
-    return Array.from(this.allowedTypes);
+    return Array.from(this.allowedTypes,);
   }
 }

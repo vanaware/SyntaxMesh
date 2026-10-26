@@ -2,9 +2,9 @@
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-10-tarefas.md`
 > **Plano:** `docs/syntaxmesh/fases/fase-10-parser-linguagem.md`
-> **Status:** 🟡 Em andamento
+> **Status:** ✅ Concluída (2026-10-26)
 > **Total:** ~345 tarefas
-> **Concluídas:** 10.1–10.6 implementadas e testadas em `packages/core` (2026-10-24)
+> **Concluídas:** 10.0–10.20 implementadas e testadas em `packages/core` (suíte core: 213 testes / 2792 passos, 0 falhas; golden parser: 178 casos; 5 casos com RichText adiados para a Fase 12 via skip explícito)
 > **Fonte Ruby:** `docs/taskjuggler/lib/taskjuggler/{TextParser,TextParser/*,ProjectFileScanner,ProjectFileParser,TjpSyntaxRules}.rb`
 
 ---
@@ -89,21 +89,21 @@ Barrels já criados: `packages/core/src/lexer/mod.ts` e `packages/core/src/parse
 [x] 10.5  Pattern                                      —  24/24
 [x] 10.6  Rule                                         —  18/18
 [x] 10.7  TextParser FSM                               —  22/22 (41 testes)
-[ ] 10.8  Scanner genérico + StreamHandle              —  0/20
-[ ] 10.9  ProjectFileScanner                           —  0/20
-[ ] 10.10 ProjectFileParser (estrutura)                —  0/18
-[ ] 10.11 TjpSyntaxRules: project + task               —  0/32
-[ ] 10.12 TjpSyntaxRules: resource + account + shift   —  0/26
-[ ] 10.13 TjpSyntaxRules: reports                      —  0/30
-[ ] 10.14 TjpSyntaxRules: tracking + logic             —  0/24
-[ ] 10.15 LanguageRegistry                             —  0/12
-[ ] 10.16 Idiomas (en, pt-BR, es)                      —  0/10
-[ ] 10.17 Diretiva `language` no parser                —  0/8
-[ ] 10.18 AST equivalence entre idiomas                —  0/8
-[ ] 10.19 Golden tests (parser)                        —  0/12
-[ ] 10.20 Verificação final                            —  0/10
+[x] 10.8  Scanner genérico + StreamHandle              —  20/20 (55 passos)
+[x] 10.9  ProjectFileScanner                           —  20/20 (30 passos)
+[x] 10.10 ProjectFileParser (estrutura)                —  18/18 (32 passos)
+[x] 10.11 TjpSyntaxRules: project + task               —  32/32 (23 passos)
+[x] 10.12 TjpSyntaxRules: resource + account + shift   —  26/26 (38 passos)
+[x] 10.13 TjpSyntaxRules: reports                      —  30/30 (24 passos)
+[x] 10.14 TjpSyntaxRules: tracking + logic             —  24/24 (20 passos)
+[x] 10.15 LanguageRegistry                             —  12/12 (18 passos)
+[x] 10.16 Idiomas (en, pt-BR, es)                      —  10/10 (9 passos)
+[x] 10.17 Diretiva `language` no parser                —  8/8
+[x] 10.18 AST equivalence entre idiomas                —  8/8 (31 casos: 9 MWEs × 3 idiomas)
+[x] 10.19 Golden tests (parser)                        —  12/12 (178 casos · 5 skipped Fase 12)
+[x] 10.20 Verificação final                            —  10/10
 ────────────────────────────────────────────────────────
-TOTAL: ~345
+TOTAL: ~345 — concluída em 2026-10-26
 ```
 
 ---

@@ -39,29 +39,32 @@ describe("Charge", () => {
 
     it("rejeita modo inválido", () => {
       const invalidMode = "invalid" as ChargeMode;
-      assertThrows(() => new Charge(100, invalidMode, task, 0,), TjArgumentError,);
+      assertThrows(
+        () => new Charge(100, invalidMode, task, 0,),
+        TjArgumentError,
+      );
     });
   });
 
   describe("turnover", () => {
     describe("modo 'onStart'", () => {
       it("retorna amount se start dentro do período", () => {
-        task.setForScenario("start", TjTime.fromString("2026-03-15"), 0,);
-        task.setForScenario("end", TjTime.fromString("2026-03-20"), 0,);
+        task.setForScenario("start", TjTime.fromString("2026-03-15",), 0,);
+        task.setForScenario("end", TjTime.fromString("2026-03-20",), 0,);
         const period = new TimeInterval(
-          TjTime.fromString("2026-03-10"),
-          TjTime.fromString("2026-03-25"),
+          TjTime.fromString("2026-03-10",),
+          TjTime.fromString("2026-03-25",),
         );
         const charge = new Charge(500, "onStart", task, 0,);
         assertEquals(charge.turnover(period,), 500,);
       });
 
       it("retorna 0 se start fora do período", () => {
-        task.setForScenario("start", TjTime.fromString("2026-03-15"), 0,);
-        task.setForScenario("end", TjTime.fromString("2026-03-20"), 0,);
+        task.setForScenario("start", TjTime.fromString("2026-03-15",), 0,);
+        task.setForScenario("end", TjTime.fromString("2026-03-20",), 0,);
         const period = new TimeInterval(
-          TjTime.fromString("2026-03-25"),
-          TjTime.fromString("2026-03-30"),
+          TjTime.fromString("2026-03-25",),
+          TjTime.fromString("2026-03-30",),
         );
         const charge = new Charge(500, "onStart", task, 0,);
         assertEquals(charge.turnover(period,), 0,);
@@ -69,10 +72,10 @@ describe("Charge", () => {
 
       it("retorna 0 se start é null", () => {
         task.setForScenario("start", null, 0,);
-        task.setForScenario("end", TjTime.fromString("2026-03-20"), 0,);
+        task.setForScenario("end", TjTime.fromString("2026-03-20",), 0,);
         const period = new TimeInterval(
-          TjTime.fromString("2026-03-10"),
-          TjTime.fromString("2026-03-25"),
+          TjTime.fromString("2026-03-10",),
+          TjTime.fromString("2026-03-25",),
         );
         const charge = new Charge(500, "onStart", task, 0,);
         assertEquals(charge.turnover(period,), 0,);
@@ -81,33 +84,33 @@ describe("Charge", () => {
 
     describe("modo 'onEnd'", () => {
       it("retorna amount se end dentro do período", () => {
-        task.setForScenario("start", TjTime.fromString("2026-03-15"), 0,);
-        task.setForScenario("end", TjTime.fromString("2026-03-20"), 0,);
+        task.setForScenario("start", TjTime.fromString("2026-03-15",), 0,);
+        task.setForScenario("end", TjTime.fromString("2026-03-20",), 0,);
         const period = new TimeInterval(
-          TjTime.fromString("2026-03-10"),
-          TjTime.fromString("2026-03-25"),
+          TjTime.fromString("2026-03-10",),
+          TjTime.fromString("2026-03-25",),
         );
         const charge = new Charge(500, "onEnd", task, 0,);
         assertEquals(charge.turnover(period,), 500,);
       });
 
       it("retorna 0 se end fora do período", () => {
-        task.setForScenario("start", TjTime.fromString("2026-03-15"), 0,);
-        task.setForScenario("end", TjTime.fromString("2026-03-20"), 0,);
+        task.setForScenario("start", TjTime.fromString("2026-03-15",), 0,);
+        task.setForScenario("end", TjTime.fromString("2026-03-20",), 0,);
         const period = new TimeInterval(
-          TjTime.fromString("2026-03-25"),
-          TjTime.fromString("2026-03-30"),
+          TjTime.fromString("2026-03-25",),
+          TjTime.fromString("2026-03-30",),
         );
         const charge = new Charge(500, "onEnd", task, 0,);
         assertEquals(charge.turnover(period,), 0,);
       });
 
       it("retorna 0 se end é null", () => {
-        task.setForScenario("start", TjTime.fromString("2026-03-15"), 0,);
+        task.setForScenario("start", TjTime.fromString("2026-03-15",), 0,);
         task.setForScenario("end", null, 0,);
         const period = new TimeInterval(
-          TjTime.fromString("2026-03-10"),
-          TjTime.fromString("2026-03-25"),
+          TjTime.fromString("2026-03-10",),
+          TjTime.fromString("2026-03-25",),
         );
         const charge = new Charge(500, "onEnd", task, 0,);
         assertEquals(charge.turnover(period,), 0,);
@@ -116,11 +119,11 @@ describe("Charge", () => {
 
     describe("modo 'perDiem'", () => {
       it("retorna amount * dias se start/end dentro do período", () => {
-        task.setForScenario("start", TjTime.fromString("2026-03-15"), 0,);
-        task.setForScenario("end", TjTime.fromString("2026-03-20"), 0,);
+        task.setForScenario("start", TjTime.fromString("2026-03-15",), 0,);
+        task.setForScenario("end", TjTime.fromString("2026-03-20",), 0,);
         const period = new TimeInterval(
-          TjTime.fromString("2026-03-15"),
-          TjTime.fromString("2026-03-18"),
+          TjTime.fromString("2026-03-15",),
+          TjTime.fromString("2026-03-18",),
         );
         const charge = new Charge(100, "perDiem", task, 0,);
         // 3 dias (15,16,17) * 100 = 300 (TimeInterval é [start, end), exclusivo do end)
@@ -128,11 +131,11 @@ describe("Charge", () => {
       });
 
       it("retorna 0 se start/end fora do período", () => {
-        task.setForScenario("start", TjTime.fromString("2026-03-15"), 0,);
-        task.setForScenario("end", TjTime.fromString("2026-03-20"), 0,);
+        task.setForScenario("start", TjTime.fromString("2026-03-15",), 0,);
+        task.setForScenario("end", TjTime.fromString("2026-03-20",), 0,);
         const period = new TimeInterval(
-          TjTime.fromString("2026-03-25"),
-          TjTime.fromString("2026-03-30"),
+          TjTime.fromString("2026-03-25",),
+          TjTime.fromString("2026-03-30",),
         );
         const charge = new Charge(100, "perDiem", task, 0,);
         assertEquals(charge.turnover(period,), 0,);
@@ -140,32 +143,32 @@ describe("Charge", () => {
 
       it("retorna 0 se start é null", () => {
         task.setForScenario("start", null, 0,);
-        task.setForScenario("end", TjTime.fromString("2026-03-20"), 0,);
+        task.setForScenario("end", TjTime.fromString("2026-03-20",), 0,);
         const period = new TimeInterval(
-          TjTime.fromString("2026-03-15"),
-          TjTime.fromString("2026-03-25"),
+          TjTime.fromString("2026-03-15",),
+          TjTime.fromString("2026-03-25",),
         );
         const charge = new Charge(100, "perDiem", task, 0,);
         assertEquals(charge.turnover(period,), 0,);
       });
 
       it("retorna 0 se end é null", () => {
-        task.setForScenario("start", TjTime.fromString("2026-03-15"), 0,);
+        task.setForScenario("start", TjTime.fromString("2026-03-15",), 0,);
         task.setForScenario("end", null, 0,);
         const period = new TimeInterval(
-          TjTime.fromString("2026-03-15"),
-          TjTime.fromString("2026-03-25"),
+          TjTime.fromString("2026-03-15",),
+          TjTime.fromString("2026-03-25",),
         );
         const charge = new Charge(100, "perDiem", task, 0,);
         assertEquals(charge.turnover(period,), 0,);
       });
 
       it("retorna 0 se interseção parcial", () => {
-        task.setForScenario("start", TjTime.fromString("2026-03-15"), 0,);
-        task.setForScenario("end", TjTime.fromString("2026-03-20"), 0,);
+        task.setForScenario("start", TjTime.fromString("2026-03-15",), 0,);
+        task.setForScenario("end", TjTime.fromString("2026-03-20",), 0,);
         const period = new TimeInterval(
-          TjTime.fromString("2026-03-18"),
-          TjTime.fromString("2026-03-22"),
+          TjTime.fromString("2026-03-18",),
+          TjTime.fromString("2026-03-22",),
         );
         const charge = new Charge(100, "perDiem", task, 0,);
         // 2 dias (18,19) * 100 = 200 (exclusive do end)
@@ -173,11 +176,11 @@ describe("Charge", () => {
       });
 
       it("retorna 0 se sem interseção", () => {
-        task.setForScenario("start", TjTime.fromString("2026-03-15"), 0,);
-        task.setForScenario("end", TjTime.fromString("2026-03-20"), 0,);
+        task.setForScenario("start", TjTime.fromString("2026-03-15",), 0,);
+        task.setForScenario("end", TjTime.fromString("2026-03-20",), 0,);
         const period = new TimeInterval(
-          TjTime.fromString("2026-03-25"),
-          TjTime.fromString("2026-03-30"),
+          TjTime.fromString("2026-03-25",),
+          TjTime.fromString("2026-03-30",),
         );
         const charge = new Charge(100, "perDiem", task, 0,);
         assertEquals(charge.turnover(period,), 0,);
@@ -203,12 +206,18 @@ describe("Charge", () => {
   });
 });
 
-function assertThrows(fn: () => void, errorClass: typeof TjArgumentError,): void {
+function assertThrows(
+  fn: () => void,
+  errorClass: typeof TjArgumentError,
+): void {
   let error: unknown;
   try {
     fn();
   } catch (e) {
     error = e;
   }
-  assert(error instanceof errorClass, `Esperado ${errorClass.name}, obtido ${error}`,);
+  assert(
+    error instanceof errorClass,
+    `Esperado ${errorClass.name}, obtido ${error}`,
+  );
 }

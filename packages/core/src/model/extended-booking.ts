@@ -30,7 +30,8 @@ export class ExtendedBooking {
     scenarioIdx?: number,
   ) {
     this.type = type;
-    this.value = value;    this.date = date;
+    this.value = value;
+    this.date = date;
     this.interval = interval;
     this.scenarioIdx = scenarioIdx;
 
@@ -39,11 +40,15 @@ export class ExtendedBooking {
     if (type === "charge" && value < 0) {
       // charge pode ser negativo (custo)
     } else if (type !== "charge" && value < 0) {
-      throw new Error(`Extended booking ${type} value cannot be negative: ${value}`);
+      throw new Error(
+        `Extended booking ${type} value cannot be negative: ${value}`,
+      );
     }
 
     if (type === "effort" && interval && interval.duration() < 0) {
-      throw new Error("Extended booking effort interval cannot have negative duration");
+      throw new Error(
+        "Extended booking effort interval cannot have negative duration",
+      );
     }
   }
 

@@ -155,7 +155,7 @@ export class PropertySet {
   addProperty(prop: PropertyTreeNode,): void {
     this._propertyMap.set(prop.id, prop,);
     this._properties.push(prop,);
-    
+
     // Resize data and scenarioAttributes arrays for the added property
     // to match the current project scenarioCount
     const scenarioCount = this._project.scenarioCount;
@@ -163,16 +163,16 @@ export class PropertySet {
       // Ensure data array has correct length
       if (prop.data.length !== scenarioCount) {
         const newData = Array.from(
-          { length: scenarioCount },
+          { length: scenarioCount, },
           (_, i,) => prop.data[i] ?? new ScenarioData(prop, i, new Map(),),
         );
         prop.data = newData;
       }
-      
+
       // Ensure scenarioAttributes array has correct length
       if (prop.scenarioAttributes.length !== scenarioCount) {
         const newScenarioAttributes = Array.from(
-          { length: scenarioCount },
+          { length: scenarioCount, },
           (_, i,) => prop.scenarioAttributes[i] ?? new Map(),
         );
         prop.scenarioAttributes = newScenarioAttributes;

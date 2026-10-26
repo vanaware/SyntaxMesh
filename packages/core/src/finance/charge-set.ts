@@ -39,13 +39,17 @@ export class ChargeSet {
    *
    * @see docs/taskjuggler/lib/taskjuggler/ChargeSet.rb#addAccount
    */
-  addAccount(account: Account, share: number | null): void {
+  addAccount(account: Account, share: number | null | undefined,): void {
+    // Ruby: optionalPercent ausente chega como nil. `undefined` residual do
+    // parser deve ser tratado igual (share === null), senão complete() soma
+    // NaN e reclama de "Total share ... NaN".
+    const s = share ?? null;
     if (!account.leaf()) {
       throw new TjArgumentError(
         `Account ${account.fullId} is a group account and cannot be used in a chargeset.`,
       );
     }
-    if (this.set.has(account)) {
+    if (this.set.has(account,)) {
       throw new TjArgumentError(
         `Account ${account.fullId} is already a member of the charge set.`,
       );
@@ -62,10 +66,12 @@ export class ChargeSet {
         `${account.fullId} is a group account. Only leaf accounts are allowed for a charge set.`,
       );
     }
-    if (share !== null && (share < 0.0 || share > 1.0)) {
-      throw new TjArgumentError("Charge set shares must be between 0 and 100%");
+    if (s !== null && (s < 0.0 || s > 1.0)) {
+      throw new TjArgumentError(
+        "Charge set shares must be between 0 and 100%",
+      );
     }
-    this.set.set(account, share);
+    this.set.set(account, s,);
   }
 
   /**
@@ -73,9 +79,9 @@ export class ChargeSet {
    *
    * @see docs/taskjuggler/lib/taskjuggler/ChargeSet.rb#each
    */
-  each(fn: (account: Account, share: number | null) => void): void {
-    for (const [account, share] of this.set) {
-      fn(account, share);
+  each(fn: (account: Account, share: number | null,) => void,): void {
+    for (const [account, share,] of this.set) {
+      fn(account, share,);
     }
   }
 
@@ -106,9 +112,9 @@ export class ChargeSet {
           `Total share is 100% but ${undefined} account(s) still exist.`,
         );
       }
-      for (const [account, share] of this.set) {
+      for (const [account, share,] of this.set) {
         if (share === null) {
-          this.set.set(account, commonShare);
+          this.set.set(account, commonShare,);
         }
       }
     } else if (totalPercent !== 1.0) {
@@ -123,8 +129,8 @@ export class ChargeSet {
    *
    * @see docs/taskjuggler/lib/taskjuggler/ChargeSet.rb#share
    */
-  share(account: Account): number | null {
-    return this.set.get(account) ?? null;
+  share(account: Account,): number | null {
+    return this.set.get(account,) ?? null;
   }
 
   /**
@@ -134,7 +140,7 @@ export class ChargeSet {
    */
   to_s(): string {
     let str = "(";
-    for (const [account, share] of this.set) {
+    for (const [account, share,] of this.set) {
       if (str !== "(") {
         str += ", ";
       }

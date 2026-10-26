@@ -1,0 +1,42 @@
+language "pt-BR"
+
+projeto prj "Data Export" "1.0" 2024-11-01 - 2024-11-30 {
+  formatohora "%Y-%m-%d"
+  agora 2024-11-01
+  moeda "USD"
+}
+
+recurso dev "Developer"
+
+tarefa projeto "Export Demo" {
+  tarefa t1 "Design" {
+    início 2024-11-01
+    esforço 3d
+    alocar dev
+  }
+
+  tarefa t2 "Implementation" {
+    depende !t1
+    esforço 5d
+    alocar dev
+  }
+
+  tarefa t3 "Meeting" {
+    depende !t2
+    esforço 4h
+    alocar dev
+  }
+}
+
+/* 1. CSV Report (For Excel/Spreadsheets) */
+relatoriotarefa "ExportCSV" {
+  formatos csv
+  colunas id, name, início, fim, esforço
+}
+
+/* 2. iCalendar Report (For Outlook/Google Calendar) */
+icalreport "ExportCalendar" {
+  # We will export all tasks.
+  # Note: The 'hidetask' filter is removed to ensure compatibility.
+  ocultartarefa 0
+}

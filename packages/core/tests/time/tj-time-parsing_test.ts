@@ -49,8 +49,10 @@ describe("TjTime.fromString", () => {
     );
   });
 
-  it("parseia com timezone +HHMM", () => {
-    const t = TjTime.fromString("2026-01-15-14:30-0300",);
+  it("parseia com timezone -HHMM (duplo traço, forma Ruby)", () => {
+    // Ruby: to_s produz "...-HH:MM--0300"; split('-', 5) deixa o sinal em
+    // parts[4]. O traço extra antes de -0300 é apenas o separador.
+    const t = TjTime.fromString("2026-01-15-14:30--0300",);
     // -0300 means 3 hours behind UTC, so 14:30 local = 17:30 UTC
     // Expected: 1768498200 = 2026-01-15T17:30:00.000Z
     assertEquals(t.toSeconds(), 1768498200,);
@@ -68,6 +70,20 @@ describe("TjTime.fromString", () => {
     // +0000 means UTC, so 14:30 local = 14:30 UTC
     // Expected: 1768487400 = 2026-01-15T14:30:00.000Z
     assertEquals(t.toSeconds(), 1768487400,);
+  });
+
+  it("round-trip to_s(%z) → fromString (macros de data, mwe004)", () => {
+    // O valor de ${projectstart} volta pelo scanner como DATE; o formato
+    // to_s precisa ser parseável (split Ruby de limite 5, %z sem ':').
+    const t = TjTime.fromString("2024-08-01-00:00-+0000",);
+    assertEquals(
+      t.to_s("%Y-%m-%d-%H:%M-%z", "UTC",),
+      "2024-08-01-00:00-+0000",
+    );
+    assertEquals(
+      TjTime.fromString(t.to_s("%Y-%m-%d-%H:%M-%z", "UTC",),).toSeconds(),
+      t.toSeconds(),
+    );
   });
 
   it("rejeita ano < 1970", () => {
@@ -112,7 +128,7 @@ describe("TjTime.fromString", () => {
       TjArgumentError,
     );
     assertThrows(
-      () => TjTime.fromString("2026-01-01-14:00-1300",),
+      () => TjTime.fromString("2026-01-01-14:00--1300",),
       TjArgumentError,
     );
   });

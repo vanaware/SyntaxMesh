@@ -1,9 +1,25 @@
 /**
- * Erro base para todos os erros do sistema de atributos.
+ * Erro de execução — aborta o processamento.
+ *
+ * Equivalente ao `TjRuntimeError` do Ruby (MessageHandler.rb l.25): é erro
+ * de programação / abort imediato. NÃO é pego pelo `catch` de
+ * TextParser#parse (que só trata `TjError` ≈ TjException); propaga até o
+ * topo, onde o driver o trata como falha do parse.
  */
-export class TjError extends Error {
-  constructor(message: string) {
-    super(message);
+export class TjRuntimeError extends Error {
+  constructor(message: string,) {
+    super(message,);
+    this.name = "TjRuntimeError";
+  }
+}
+
+/**
+ * Erro base para erros de parse recuperáveis (≈ `TjException` do Ruby):
+ * `TextParser#parse` captura e loga como `critical('parse', ...)`.
+ */
+export class TjError extends TjRuntimeError {
+  constructor(message: string,) {
+    super(message,);
     this.name = "TjError";
   }
 }
@@ -11,29 +27,19 @@ export class TjError extends Error {
 /**
  * Erro de argumento inválido — usado para validação de parâmetros.
  */
-export class TjArgumentError extends TjError {
-  constructor(message: string) {
-    super(message);
+export class TjArgumentError extends TjRuntimeError {
+  constructor(message: string,) {
+    super(message,);
     this.name = "TjArgumentError";
-  }
-}
-
-/**
- * Erro de execução — usado para falhas durante a execução normal.
- */
-export class TjRuntimeError extends TjError {
-  constructor(message: string) {
-    super(message);
-    this.name = "TjRuntimeError";
   }
 }
 
 /**
  * Erro interno — usado para situações impossíveis.
  */
-export class TjInternalError extends TjError {
-  constructor(message: string) {
-    super(message);
+export class TjInternalError extends TjRuntimeError {
+  constructor(message: string,) {
+    super(message,);
     this.name = "TjInternalError";
   }
 }
@@ -42,8 +48,8 @@ export class TjInternalError extends TjError {
  * Erro quando um atributo tenta sobrescrever um valor já definido.
  */
 export class AttributeOverwrite extends TjArgumentError {
-  constructor(attributeId: string) {
-    super(`Attribute '${attributeId}' já está definido`);
+  constructor(attributeId: string,) {
+    super(`Attribute '${attributeId}' já está definido`,);
     this.name = "AttributeOverwrite";
   }
 }
@@ -52,8 +58,8 @@ export class AttributeOverwrite extends TjArgumentError {
  * Erro para métodos que dependem de fases futuras.
  */
 export class NotYetImplementedError extends TjRuntimeError {
-  constructor(phase: string, method: string) {
-    super(`O método '${method}' depende da Fase ${phase}`);
+  constructor(phase: string, method: string,) {
+    super(`O método '${method}' depende da Fase ${phase}`,);
     this.name = "NotYetImplementedError";
   }
 }

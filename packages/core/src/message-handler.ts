@@ -67,10 +67,15 @@ export class MessageHandlerInstance {
     line?: string | null,
     data?: unknown,
     scenario?: Scenario | null,
-  ): never {
+  ): void {
     this.addMessage("error", id, message, sfi, line, data, scenario,);
     this.errors++;
-    throw new TjRuntimeError(`${id}: ${message}`,);
+    // Ruby (MessageHandler.rb l.291-298): com trapSetup ativo levanta
+    // TjRuntimeError (primeiro erro aborta o parse); sem trap, o CLI
+    // faria exit 1 — em teste/navegador acumulamos silenciosamente.
+    if (this.trapSetup) {
+      throw new TjRuntimeError(`${id}: ${message}`,);
+    }
   }
 
   critical(

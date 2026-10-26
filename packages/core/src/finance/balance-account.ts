@@ -57,7 +57,10 @@ export function balanceAccount(
 
   // Calcular turnover líquido: -cost + revenue
   const costTurnover = costAccount.scenarioData(0,).turnover(startIdx, endIdx,);
-  const revenueTurnover = revenueAccount.scenarioData(0,).turnover(startIdx, endIdx,);
+  const revenueTurnover = revenueAccount.scenarioData(0,).turnover(
+    startIdx,
+    endIdx,
+  );
 
   return -costTurnover + revenueTurnover;
 }
@@ -74,7 +77,7 @@ export function balanceAccount(
  * @returns O turnover líquido.
  */
 export function balanceAccountScenario(
-  metaAccountScenario: { getProperty(): Account; },
+  metaAccountScenario: { getProperty(): Account },
   startIdx: number,
   endIdx: number,
 ): number {
@@ -94,7 +97,9 @@ export function balanceAccountScenario(
  * @returns A conta meta temporária.
  */
 export function createBalanceAccount(
-  project: { newAccount(id: string, name: string, parent: Account | null): Account; },
+  project: {
+    newAccount(id: string, name: string, parent: Account | null,): Account;
+  },
   costAccount: Account,
   revenueAccount: Account,
 ): Account {
@@ -104,8 +109,8 @@ export function createBalanceAccount(
     "Total",
     null,
   );
-  metaAccount.adopt(costAccount);
-  metaAccount.adopt(revenueAccount);
+  metaAccount.adopt(costAccount,);
+  metaAccount.adopt(revenueAccount,);
   return metaAccount;
 }
 
@@ -118,8 +123,8 @@ export function createBalanceAccount(
  * @param account A conta meta a ser removida.
  */
 export function removeBalanceAccount(
-  project: { removeAccount(account: Account): void; },
+  project: { removeAccount(account: Account,): void },
   account: Account,
 ): void {
-  project.removeAccount(account);
+  project.removeAccount(account,);
 }

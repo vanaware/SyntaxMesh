@@ -1,8 +1,8 @@
-import { SourceFileInfo } from "./source-file-info.ts";
-import { TjRuntimeError } from "./model/errors.ts";
-import { Scenario } from "./model/scenario.ts";
+import { SourceFileInfo, } from "./source-file-info.ts";
+import { TjRuntimeError, } from "./model/errors.ts";
+import { Scenario, } from "./model/scenario.ts";
 
-export type MessageType = 'fatal' | 'error' | 'warning' | 'info' | 'debug';
+export type MessageType = "fatal" | "error" | "warning" | "info" | "debug";
 
 export class Message {
   readonly type: MessageType;
@@ -33,14 +33,14 @@ export class Message {
 
   to_s(): string {
     const colorCodes = {
-      fatal: '\x1b[31m',
-      error: '\x1b[31m',
-      warning: '\x1b[33m',
-      info: '\x1b[36m',
-      debug: '\x1b[90m',
+      fatal: "\x1b[31m",
+      error: "\x1b[31m",
+      warning: "\x1b[33m",
+      info: "\x1b[36m",
+      debug: "\x1b[90m",
     };
-    const reset = '\x1b[0m';
-    const color = colorCodes[this.type] || '';
+    const reset = "\x1b[0m";
+    const color = colorCodes[this.type] || "";
     let result = `${color}${this.id}: ${this.message}${reset}`;
     if (this.sourceFileInfo) {
       result += ` [${this.sourceFileInfo.to_s()}]`;

@@ -113,39 +113,15 @@ describe("Task", () => {
     assertEquals(task.parent, existing,);
   });
 
-  it("tarefa com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true", () => {
-    const project2 = createTestProject(1, true,);
-    const existing = new Task(project2, "parent", "Parent", null,);
-    const task = new Task(project2, "parent.child", "Child", null,);
-    assertEquals(task.fullId, "parent.child",);
-    assertEquals(task.subId, "parent.child",);
-  });
-
-  it("tarefa com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true, id com múltiplos pontos", () => {
-    const project2 = createTestProject(1, true,);
-    const existing = new Task(project2, "parent", "Parent", null,);
-    const task = new Task(
-      project2,
-      "parent.child.grandchild",
-      "Grandchild",
-      null,
-    );
-    assertEquals(task.fullId, "parent.child.grandchild",);
-    assertEquals(task.subId, "parent.child.grandchild",);
-  });
+  // Variantes com flatNamespace="true" foram removidas: Ruby fixa @tasks
+  // como hierárquico (Project.rb: PropertySet.new(self, false)) — o flag do
+  // construtor não tem correspondência no TJ original.
 
   it("tarefa com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace false, parent does not exist", () => {
     const project2 = createTestProject(1, false,);
     const task = new Task(project2, "nonexistent.child", "Child", null,);
     assertEquals(task.fullId, "nonexistent.child",);
     assertEquals(task.subId, "child",);
-  });
-
-  it("tarefa com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true, parent does not exist", () => {
-    const project2 = createTestProject(1, true,);
-    const task = new Task(project2, "nonexistent.child", "Child", null,);
-    assertEquals(task.fullId, "nonexistent.child",);
-    assertEquals(task.subId, "nonexistent.child",);
   });
 
   it("tarefa com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace false, child already exists", () => {
@@ -156,14 +132,6 @@ describe("Task", () => {
     assertEquals(task.subId, "child",);
   });
 
-  it("tarefa com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true, child already exists", () => {
-    const project2 = createTestProject(1, true,);
-    const existing = new Task(project2, "child", "Child", null,);
-    const task = new Task(project2, "nonexistent.child", "Child", null,);
-    assertEquals(task.fullId, "nonexistent.child",);
-    assertEquals(task.subId, "nonexistent.child",);
-  });
-
   it("tarefa com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace false, child already exists, parent already exists", () => {
     const project2 = createTestProject(1, false,);
     const parent = new Task(project2, "parent", "Parent", null,);
@@ -171,14 +139,5 @@ describe("Task", () => {
     const task = new Task(project2, "parent.child", "Child", null,);
     assertEquals(task.fullId, "parent.child",);
     assertEquals(task.subId, "child",);
-  });
-
-  it("tarefa com id hierárquico resolve pai do PropertySet (já existente) - flatNamespace true, child already exists, parent already exists", () => {
-    const project2 = createTestProject(1, true,);
-    const parent = new Task(project2, "parent", "Parent", null,);
-    const existing = new Task(project2, "parent.child", "Child", null,);
-    const task = new Task(project2, "parent.child", "Child", null,);
-    assertEquals(task.fullId, "parent.child",);
-    assertEquals(task.subId, "parent.child",);
   });
 });

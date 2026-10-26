@@ -260,7 +260,7 @@ function rule_projectHeader(this: ProjectFileParser): void {
 }
 ```
 
-**Organização:** as ~300 regras são distribuídas em 4 arquivos (subfases 14.11–14.14).
+**Organização:** as ~300 regras são distribuídas em 4 arquivos (subfases 10.11–10.14).
 
 ### 4.18 Documentação embutida
 
@@ -280,11 +280,11 @@ O parser chama `newRichText(text, sfi, tokenSet)`. **Fase 12** implementa. Nesta
 
 A fase é organizada em **5 blocos**:
 
-**Bloco A — Infraestrutura do parser** (14.0–14.6): ADR, TokenDoc, Macro, StackElement, State, Pattern, Rule.
-**Bloco B — FSM e Scanner** (14.7–14.9): TextParser FSM, Scanner, ProjectFileScanner.
-**Bloco C — ProjectFileParser e TjpSyntaxRules** (14.10–14.14): parser + ~300 regras.
-**Bloco D — i18n** (14.15–14.18): LanguageRegistry, idiomas, diretiva, AST equivalence.
-**Bloco E — Golden tests** (14.19).
+**Bloco A — Infraestrutura do parser** (10.0–10.6): ADR, TokenDoc, Macro, StackElement, State, Pattern, Rule.
+**Bloco B — FSM e Scanner** (10.7–10.9): TextParser FSM, Scanner, ProjectFileScanner.
+**Bloco C — ProjectFileParser e TjpSyntaxRules** (10.10–10.14): parser + ~300 regras.
+**Bloco D — i18n** (10.15–10.18): LanguageRegistry, idiomas, diretiva, AST equivalence.
+**Bloco E — Golden tests** (10.19).
 
 ---
 
@@ -292,7 +292,7 @@ A fase é organizada em **5 blocos**:
 
 ---
 
-### 10.0 — ADRs 020 e 021
+### 10.0 — ADRs 021 e 022
 
 #### Contexto
 
@@ -347,7 +347,7 @@ Criar:
 
 #### Critério de aceite
 
-- ADRs 020 e 021 criados.
+- ADRs 021 e 022 criados.
 - Tabela atualizada.
 
 ---
@@ -1657,7 +1657,7 @@ deno task test
 ## 6. Ordem de execução sugerida
 
 ```text
-10.0  ADRs 020, 021
+10.0  ADRs 021, 022
       ↓
 10.1  TokenDoc
 10.2  Macro + MacroTable
@@ -1701,19 +1701,19 @@ deno task check-all
 
 passa, e:
 
-- [ ] `TextParser` FSM completo.
-- [ ] `Scanner` + `ProjectFileScanner`.
-- [ ] `ProjectFileParser` completo.
-- [ ] `TjpSyntaxRules` (~300 regras) completas.
-- [ ] `LanguageRegistry` + 3 idiomas.
-- [ ] Diretiva `language` funcional.
-- [ ] AST equivalente entre en/pt-BR/es.
+- [x] `TextParser` FSM completo.
+- [x] `Scanner` + `ProjectFileScanner`.
+- [x] `ProjectFileParser` completo.
+- [x] `TjpSyntaxRules` (~300 regras) completas.
+- [x] `LanguageRegistry` + 3 idiomas.
+- [x] Diretiva `language` funcional.
+- [x] AST equivalente entre en/pt-BR/es.
 - [ ] **≥ 400 testes unitários**.
-- [ ] **≥ 100 golden tests**.
-- [ ] Nenhum `any` em `src/` (exceto onde justificado).
-- [ ] Nenhum import proibido em `packages/core/src/`.
-- [ ] ADRs 020 e 021 criados.
-- [ ] Scripts `parser-*.rb` funcionais.
+- [x] **≥ 100 golden tests** (178 casos no parser.golden.json).
+- [x] Nenhum `any` em `src/` (exceto onde justificado).
+- [x] Nenhum import proibido em `packages/core/src/`.
+- [x] ADRs 021 e 022 criados.
+- [x] Scripts `parser-*.rb` funcionais.
 
 ---
 
@@ -1794,7 +1794,7 @@ passa, e:
 
 ---
 
-## 11. ADRs 020, 021 (referência rápida)
+## 11. ADRs 021, 022 (referência rápida)
 
 **ADR 021 — FSM do TextParser:**
 

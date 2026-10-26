@@ -8,7 +8,7 @@ export class SourceFileInfo {
   readonly lineNo: number;
   readonly columnNo: number;
 
-  constructor(fileName: string, lineNo: number, columnNo: number) {
+  constructor(fileName: string, lineNo: number, columnNo: number,) {
     this.fileName = fileName;
     this.lineNo = lineNo;
     this.columnNo = columnNo;

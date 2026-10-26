@@ -1,0 +1,64 @@
+language "pt-BR"
+
+projeto prj "Macros Demo" "1.0" 2024-12-01 - 2024-12-31 {
+  formatohora "%Y-%m-%d"
+  agora 2024-12-01
+  moeda "USD"
+}
+
+/* 1. Resources */
+recurso dev1 "Alice"
+recurso dev2 "Bob"
+recurso qa1 "Charlie"
+
+/* 2. Define Macros (Templates) */
+
+# Macro A: Simple Text Replacement
+macro assign_team [
+  alocar dev1
+  alocar dev2
+]
+
+# Macro B: Parameterized Task Template
+# ${1} = Task ID
+# ${2} = Task Name
+# ${3} = Effort
+# ${4} = Extra attributes (Dependencies, etc.) - INSERTED FIRST
+macro feature_task [
+  tarefa ${1} "${2}" {
+    # FIX: Insert dependencies here, BEFORE defining sub-tasks
+    ${4}
+
+    # Sub-task 1: Implementation
+    tarefa impl "Implementation" {
+      esforço ${3}d
+      ${assign_team}
+    }
+
+    # Sub-task 2: Testing
+    tarefa test "QA Testing" {
+      depende !impl
+      esforço 1d
+      alocar qa1
+    }
+  }
+]
+
+/* 3. Using Macros in the Project */
+tarefa projeto "Software Release" {
+
+  # Feature A: No dependencies.
+  # We pass an empty string "" as the 4th argument.
+  ${feature_task "feat_a" "Login System" "5" ""}
+
+  # Feature B: Depends on Feature A.
+  # We pass the dependency string as the 4th argument.
+  ${feature_task "feat_b" "User Profile" "3" "depends !feat_a"}
+}
+
+/* 4. Report */
+relatoriotarefa "MacroResult" {
+  formatos html
+  manchete "Project Generated via Macros"
+  colunas bsi, name, início, fim, esforço, chart
+}

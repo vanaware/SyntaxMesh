@@ -1,0 +1,40 @@
+language "pt-BR"
+
+/* 1. Project Header: ID, Name, Version, and Timeframe */
+projeto prj "My First Project" "1.0" 2024-06-01 - 2024-06-30 {
+  formatohora "%Y-%m-%d"
+  agora 2024-06-01
+}
+
+/* 2. Resources: Who is doing the work? */
+recurso dev "Foad"
+
+/* 3. Tasks: What needs to be done? */
+tarefa main "Main Project" {
+  
+  tarefa t1 "Design Phase" {
+    esforço 2d       # Takes 2 days of work
+    alocar dev    # Assigned to Foad
+  }
+
+  tarefa t2 "Implementation" {
+    esforço 3d
+    alocar dev
+    depende !t1     # Cannot start until t1 is finished
+  }
+
+  tarefa t3 "Testing" {
+    esforço 1d
+    alocar dev
+    depende !t2     # Cannot start until t2 is finished
+  }
+}
+
+/* 4. Reports: Define what you want to see */
+relatoriotarefa "Plan" {
+  formatos html
+  manchete "My Project Gantt Chart"
+  
+  # The 'chart' column generates the visual Gantt bars
+  colunas bsi { título 'WBS' }, name, início, fim, chart
+}

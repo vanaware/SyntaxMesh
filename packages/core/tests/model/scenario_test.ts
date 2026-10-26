@@ -33,14 +33,16 @@ describe("Scenario", () => {
     assertEquals(scenario.all()[0], scenario,);
   });
 
-  it("cenario allLeaves(includeSelf=true) inclui self se folha", () => {
+  it("cenario allLeaves(withoutSelf=false) inclui self se folha", () => {
     const scenario = new Scenario(project, "plan", "Plan", null,);
-    assertEquals(scenario.allLeaves(true,).length, 1,);
-    assertEquals(scenario.allLeaves(true,)[0], scenario,);
+    // Ruby: allLeaves() default = withoutSelf=false → leaf returns [self]
+    assertEquals(scenario.allLeaves(false,).length, 1,);
+    assertEquals(scenario.allLeaves(false,)[0], scenario,);
   });
 
-  it("cenario allLeaves(includeSelf=false) exclui self", () => {
+  it("cenario allLeaves(withoutSelf=true) exclui self", () => {
     const scenario = new Scenario(project, "plan", "Plan", null,);
-    assertEquals(scenario.allLeaves(false,).length, 0,);
+    // Ruby: allLeaves(true) = withoutSelf → leaf excludes self
+    assertEquals(scenario.allLeaves(true,).length, 0,);
   });
 });

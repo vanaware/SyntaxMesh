@@ -1,0 +1,1568 @@
+{
+  "cases": [
+    {
+      "file": "docs/Learning/mwe001/tutorial.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/Learning/mwe002/tutorial.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/Learning/mwe003/tutorial.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/Learning/mwe004/tutorial.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/Learning/mwe005/tutorial.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/Learning/mwe006/tutorial.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/Learning/mwe007/tutorial.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/Learning/mwe008/tutorial.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/Learning/mwe009/tutorial.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Account.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/AccountReport.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/AdoptedTasks.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/AlertLevels.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Allocate-1.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Alternative.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/AutoID.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/AutoMacros.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Booking.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Caption.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Celltext.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Comments.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Complete.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Currencyformat.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/CustomAttributes.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Depends1.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Durations.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Efficiency.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/EnvVar.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Export.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Flags.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Freeze.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Gap.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/HtmlTaskReport.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Include.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Journal.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Leave.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Limits-1.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/ListAttributes.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/LoadUnits.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/LogicalExpression.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/LogicalFunction.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Macro-1.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Macro-2.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Macro-3.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Macro-4.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Manager.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Mandatory.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Milestone.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/MinMax.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Niku.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Numberformat.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Period.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Persistent.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Precedes1.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Priority.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Project.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/ProjectIDs.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Query.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Reports.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Resource.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/ResourcePrefix.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/ResourceRoot.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Responsible.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/RollupResource.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Scenario.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Scheduling.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Select.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Shift.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Simple.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/StatusSheet.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/String.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Supplement.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/TaskPrefix.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/TaskRoot.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/TimeFrame.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/TimeSheet1.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Timezone.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Timezone2.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/TraceReport.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Vacation.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/navigator.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/template.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/textreport.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Correct/tutorial.tjp",
+      "ok": true,
+      "messages": []
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/adopt_duplicate_child-1.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "adopt_duplicate_child",
+          "lineNo": null
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/adopt_duplicate_child-2.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "adopt_duplicate_child",
+          "lineNo": null
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/adopt_duplicate_child-3.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "adopt_duplicate_child",
+          "lineNo": null
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/adopt_self.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "adopt_self",
+          "lineNo": null
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/alert_level_redef.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "alert_level_redef",
+          "lineNo": 3
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/alert_name_redef.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "alert_name_redef",
+          "lineNo": 3
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/bad_include.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "bad_include",
+          "lineNo": 6
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/bad_time_zone.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "bad_time_zone",
+          "lineNo": 3
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/bad_timing_res.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "bad_timing_res",
+          "lineNo": 3
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/booking_group.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "booking_group",
+          "lineNo": 13
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/booking_milestone.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "booking_milestone",
+          "lineNo": 12
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/booking_no_leaf.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "booking_no_leaf",
+          "lineNo": 12
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/chargeset.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "chargeset",
+          "lineNo": 12
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/chargeset_master.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "chargeset_master",
+          "lineNo": 13
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/container_attribute.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "container_attribute",
+          "lineNo": 11
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/cost_acct_no_top.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "cost_acct_no_top",
+          "lineNo": 23
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/cost_rev_same.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "cost_rev_same",
+          "lineNo": 22
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/date_in_range.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "date_in_range",
+          "lineNo": 5
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/effort_zero.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "effort_zero",
+          "lineNo": 6
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/empty.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "unexpctd_token",
+          "lineNo": 2
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/extend_id_cap.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "extend_id_cap",
+          "lineNo": 4
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/include_before_project.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "include_before_project",
+          "lineNo": 2
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/include_recursion.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "include_recursion",
+          "lineNo": 1
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/interval_end_in_range.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "interval_end_in_range",
+          "lineNo": 5
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/interval_start_in_range.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "interval_start_in_range",
+          "lineNo": 5
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/invalid_file_name.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "invalid_file_name",
+          "lineNo": null
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/junk_after_cut.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "junk_after_cut",
+          "lineNo": 4
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/leaf_resource_id_expected.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "leaf_resource_id_expected",
+          "lineNo": 10
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/macro_stack_overflow.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "info",
+          "id": "macro_stack",
+          "lineNo": null
+        },
+        {
+          "type": "info",
+          "id": "macro_stack",
+          "lineNo": 3
+        },
+        {
+          "type": "info",
+          "id": "macro_stack",
+          "lineNo": 3
+        },
+        {
+          "type": "info",
+          "id": "macro_stack",
+          "lineNo": 3
+        },
+        {
+          "type": "info",
+          "id": "macro_stack",
+          "lineNo": 3
+        },
+        {
+          "type": "info",
+          "id": "macro_stack",
+          "lineNo": 3
+        },
+        {
+          "type": "info",
+          "id": "macro_stack",
+          "lineNo": 3
+        },
+        {
+          "type": "info",
+          "id": "macro_stack",
+          "lineNo": 3
+        },
+        {
+          "type": "info",
+          "id": "macro_stack",
+          "lineNo": 3
+        },
+        {
+          "type": "info",
+          "id": "macro_stack",
+          "lineNo": 3
+        },
+        {
+          "type": "info",
+          "id": "macro_stack",
+          "lineNo": 3
+        },
+        {
+          "type": "info",
+          "id": "macro_stack",
+          "lineNo": 3
+        },
+        {
+          "type": "info",
+          "id": "macro_stack",
+          "lineNo": 3
+        },
+        {
+          "type": "info",
+          "id": "macro_stack",
+          "lineNo": 3
+        },
+        {
+          "type": "info",
+          "id": "macro_stack",
+          "lineNo": 3
+        },
+        {
+          "type": "info",
+          "id": "macro_stack",
+          "lineNo": 3
+        },
+        {
+          "type": "info",
+          "id": "macro_stack",
+          "lineNo": 3
+        },
+        {
+          "type": "info",
+          "id": "macro_stack",
+          "lineNo": 3
+        },
+        {
+          "type": "info",
+          "id": "macro_stack",
+          "lineNo": 3
+        },
+        {
+          "type": "info",
+          "id": "macro_stack",
+          "lineNo": 3
+        },
+        {
+          "type": "info",
+          "id": "macro_stack",
+          "lineNo": 3
+        },
+        {
+          "type": "info",
+          "id": "macro_stack",
+          "lineNo": 3
+        },
+        {
+          "type": "error",
+          "id": "macro_stack_overflow",
+          "lineNo": 28
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/misaligned_date.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "misaligned_date",
+          "lineNo": 6
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/multiple_durations.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "multiple_durations",
+          "lineNo": 7
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/navigator_exists.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "navigator_exists",
+          "lineNo": 10
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/no_own_resource_booking.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "no_own_resource_booking",
+          "lineNo": 15
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/no_own_task_booking.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "no_own_task_booking",
+          "lineNo": 15
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/no_reduce.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "no_reduce",
+          "lineNo": 5
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/no_token_match1.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "no_token_match",
+          "lineNo": 5
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/no_token_match2.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "no_token_match",
+          "lineNo": 5
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/no_token_match3.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "no_token_match",
+          "lineNo": 6
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/no_token_match4.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "no_token_match",
+          "lineNo": 6
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/no_token_match5.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "no_token_match",
+          "lineNo": 6
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/operand_attribute.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "operand_attribute",
+          "lineNo": 9
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/operand_unkn_flag.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "operand_unkn_flag",
+          "lineNo": 9
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/operand_unkn_scen.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "operand_unkn_scen",
+          "lineNo": 11
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/overtime_range.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "overtime_range",
+          "lineNo": 11
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/purge_unknown_id.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "purge_unknown_id",
+          "lineNo": 6
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/report_end.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "report_end",
+          "lineNo": 9
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/report_exists.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "report_exists",
+          "lineNo": 9
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/report_start.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "report_start",
+          "lineNo": 9
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/resource_exists.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "resource_exists",
+          "lineNo": 6
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/resource_id_expected.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "resource_id_expected",
+          "lineNo": 6
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/resourceroot_leaf.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "resourceroot_leaf",
+          "lineNo": 9
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/rev_acct_no_top.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "rev_acct_no_top",
+          "lineNo": 22
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/runaway_token.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "runaway_token",
+          "lineNo": 6
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/scenario_after_tracking.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "scenario_after_tracking",
+          "lineNo": 4
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/scenario_exists.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "scenario_exists",
+          "lineNo": 6
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/shift_assignment_overlap.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "shift_assignment_overlap",
+          "lineNo": 13
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/shift_exists.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "shift_exists",
+          "lineNo": 6
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/shift_id_expected.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "shift_id_expected",
+          "lineNo": 5
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/sloppy_range.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "sloppy_range",
+          "lineNo": 11
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/sort_direction.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "sort_direction",
+          "lineNo": 9
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/sort_unknown_scen.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "sort_unknown_scen",
+          "lineNo": 9
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/sorting_bsi.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "sorting_bsi",
+          "lineNo": 9
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/sorting_crit_exptd1.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "sorting_crit_exptd1",
+          "lineNo": 11
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/sorting_crit_exptd2.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "sorting_crit_exptd2",
+          "lineNo": 9
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/ss_no_tracking_scenario.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "ss_no_tracking_scenario",
+          "lineNo": 7
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/start_before_end1.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "start_before_end",
+          "lineNo": 4
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/start_before_end2.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "start_before_end",
+          "lineNo": 5
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/task_complete.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "task_complete",
+          "lineNo": 6
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/task_exists.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "task_exists",
+          "lineNo": 6
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/task_priority.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "task_priority",
+          "lineNo": 6
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/task_without_chargeset.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "task_without_chargeset",
+          "lineNo": 8
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/taskroot_leaf.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "taskroot_leaf",
+          "lineNo": 7
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/time_error.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "time_error",
+          "lineNo": 2
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/time_interval.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "time_interval",
+          "lineNo": 5
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/too_few_alert_levels.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "too_few_alert_levels",
+          "lineNo": 3
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/too_large_timing_res.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "too_large_timing_res",
+          "lineNo": 4
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/too_many_bangs.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "too_many_bangs",
+          "lineNo": 7
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/ts_bad_priority.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "ts_bad_priority",
+          "lineNo": 16
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/ts_default_details.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "ts_default_details",
+          "lineNo": 19
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/ts_default_summary.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "ts_default_summary",
+          "lineNo": 19
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/ts_duplicate_task.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "ts_duplicate_task",
+          "lineNo": 13
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/ts_end_too_early.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "ts_end_too_early",
+          "lineNo": 16
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/ts_headline_too_long.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "ts_headline_too_long",
+          "lineNo": 18
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/ts_no_headline2.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "ts_no_headline",
+          "lineNo": 17
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/ts_no_tracking_scenario.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "ts_no_tracking_scenario",
+          "lineNo": 7
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/ts_summary_too_long.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "ts_summary_too_long",
+          "lineNo": 19
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/undecl_flag.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "undecl_flag",
+          "lineNo": 5
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/unknown_env_var.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "unknown_env_var",
+          "lineNo": 5
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/unknown_projectid.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "unknown_projectid",
+          "lineNo": 5
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/unknown_scenario_id.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "unknown_scenario_id",
+          "lineNo": 5
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/unknown_scenario_idx.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "unknown_scenario_idx",
+          "lineNo": 9
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/unknown_task.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "unknown_task",
+          "lineNo": 9
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/unsupported_token.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "unsupported_token",
+          "lineNo": 8
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/Syntax/Errors/working_duration_too_small.tjp",
+      "ok": false,
+      "messages": [
+        {
+          "type": "error",
+          "id": "working_duration_too_small",
+          "lineNo": 5
+        }
+      ]
+    }
+  ]
+}

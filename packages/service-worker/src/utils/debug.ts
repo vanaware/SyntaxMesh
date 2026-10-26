@@ -21,5 +21,5 @@ export function addDebugLog(
     // addDebugLog(message)
     message = arg1;
   }
-  console.debug(`[SW-DEBUG] ${message}`);
+  console.debug(`[SW-DEBUG] ${message}`,);
 }

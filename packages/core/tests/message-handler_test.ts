@@ -57,11 +57,20 @@ describe("MessageHandlerInstance", () => {
     assertEquals(mh.messages.length, 1,);
   });
 
-  it("error lança TjRuntimeError", () => {
+  it("error com trapSetup lança TjRuntimeError", () => {
+    // Ruby MessageHandler.rb l.294-296: raise só com trap do thread ativo.
+    mh.trapSetup = true;
     assertThrows(
       () => mh.error("e1", "msg",),
       TjRuntimeError,
     );
+    assertEquals(mh.errors, 1,);
+    assertEquals(mh.messages.length, 1,);
+    mh.trapSetup = false;
+  });
+
+  it("error sem trapSetup apenas acumula (CLI faria exit 1)", () => {
+    mh.error("e1", "msg",);
     assertEquals(mh.errors, 1,);
     assertEquals(mh.messages.length, 1,);
   });

@@ -197,7 +197,10 @@ export class ResourceScenario extends ScenarioData {
       // Only leaf resources have reporting lines.
       if (property.leaf?.()) {
         const managerDirectReports = (manager as PropertyTreeNode)
-          .getForScenario("directreports", this.getScenarioIdx(),) as Resource[];
+          .getForScenario(
+            "directreports",
+            this.getScenarioIdx(),
+          ) as Resource[];
         if (!managerDirectReports.includes(property as unknown as Resource,)) {
           (manager as PropertyTreeNode).setForScenario(
             "directreports",
