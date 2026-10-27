@@ -277,3 +277,39 @@ describe("ProjectFileScanner (10.9)", () => {
     assertEquals(t[1], "tarefa",);
   });
 });
+
+describe("C3.8 scanner — keywords novas tokenizam sem novos modos", () => {
+  // Fase 10 Complemento C3.8.1: asserir que as keywords novas (material,
+  // picture, format, timebasis, breakdownreport, rdoreport) tokenizam como
+  // `ID` canônico (o scanner não precisa de novos estados/modos). Aliases
+  // pt-BR/es normalizam para a forma canônica.
+  const newKeywords = [
+    "material",
+    "picture",
+    "format",
+    "timebasis",
+    "breakdownreport",
+    "rdoreport",
+    "caption",
+    "align",
+    "alt",
+    "markdown",
+    "richtext",
+  ];
+  for (const kw of newKeywords) {
+    it(`en: '${kw}' tokeniza como ID canônico`, () => {
+      const t = scanAll(kw, "en",)[0]!;
+      assertEquals(t[0], "ID",);
+      assertEquals(t[1], kw,);
+    });
+  }
+  it("pt-BR: 'base_temporal' → canônico 'timebasis'", () => {
+    assertEquals(texts("base_temporal", "pt-BR",), ["timebasis",],);
+  });
+  it("pt-BR: 'tratrabalhado' → canônico 'working'", () => {
+    assertEquals(texts("tratrabalhado", "pt-BR",), ["working",],);
+  });
+  it("es: 'base_temporal' → canônico 'timebasis'", () => {
+    assertEquals(texts("base_temporal", "es",), ["timebasis",],);
+  });
+});

@@ -124,6 +124,20 @@ attribute_definitions << {
   'userDefined' => false,
   'extension' => 'tasks',
 }
+# Extensão documentada do port (Fase 10 Complemento C1): materialallocations
+# em Task (NodeListAttribute, cenário-específico) — alocações de material da
+# tarefa. Não existe no TJ Ruby.
+attribute_definitions << {
+  'id' => 'materialallocations',
+  'name' => 'Material Allocations',
+  'objClass' => 'TaskJuggler::NodeListAttribute',
+  'inheritedFromParent' => false,
+  'inheritedFromProject' => false,
+  'scenarioSpecific' => true,
+  'default' => [],
+  'userDefined' => false,
+  'extension' => 'tasks',
+}
 
 project.reports.eachAttributeDefinition do |attr_def|
   attribute_definitions << {
@@ -137,6 +151,30 @@ project.reports.eachAttributeDefinition do |attr_def|
     'userDefined' => attr_def.userDefined,
   }
 end
+# Extensões documentadas do port (Fase 10 Complemento C3.5/C3.6): groupby e
+# maxpictures em Report. Não existem no TJ Ruby.
+attribute_definitions << {
+  'id' => 'groupby',
+  'name' => 'Group By',
+  'objClass' => 'TaskJuggler::SymbolAttribute',
+  'inheritedFromParent' => false,
+  'inheritedFromProject' => false,
+  'scenarioSpecific' => false,
+  'default' => nil,
+  'userDefined' => false,
+  'extension' => 'reports',
+}
+attribute_definitions << {
+  'id' => 'maxpictures',
+  'name' => 'Max Pictures',
+  'objClass' => 'TaskJuggler::IntegerAttribute',
+  'inheritedFromParent' => false,
+  'inheritedFromProject' => false,
+  'scenarioSpecific' => false,
+  'default' => 0,
+  'userDefined' => false,
+  'extension' => 'reports',
+}
 
 # Ordena por id para corresponder ao Ruby (já ordenado por cadaAttributeDefinition)
 attribute_definitions.sort_by! { |ad| ad['id'] }

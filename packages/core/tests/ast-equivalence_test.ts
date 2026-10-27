@@ -126,6 +126,7 @@ const SET_NAMES = [
   "shifts",
   "scenarios",
   "reports",
+  "materials",
 ] as const;
 
 /** Extrai snapshot estrutural determinístico do Project parseado. */

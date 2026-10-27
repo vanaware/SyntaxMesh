@@ -1,0 +1,39 @@
+project sm "SM Timebasis" "1.0" 2026-01-01 - 2026-12-31 {
+  timezone "Europe/Berlin"
+}
+
+resource dev "Dev" {
+}
+
+task tb_duration "Duration" {
+  start 2026-02-01
+  effort 5d
+  allocate dev
+  timebasis duration
+}
+
+task tb_calendar "Calendar alias" {
+  start 2026-02-01
+  effort 5d
+  allocate dev
+  timebasis calendar
+}
+
+task tb_length "Length" {
+  start 2026-02-01
+  effort 5d
+  allocate dev
+  timebasis length
+}
+
+task tb_working "Working alias" {
+  start 2026-02-01
+  effort 5d
+  allocate dev
+  timebasis working
+}
+
+task tb_milestone "Milestone" {
+  milestone
+  timebasis duration
+}

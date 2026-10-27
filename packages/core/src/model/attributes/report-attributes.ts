@@ -1015,4 +1015,39 @@ export function registerReportAttributes(propertySet: PropertySet,): void {
       false, // inheritedFromProject
     ),
   );
+
+  // groupby: Group By (SymbolAttribute) — extensão Fase 10 Complemento C3.5/C3.6.
+  // Critério de agrupamento dos relatórios breakdownreport (account|task) e
+  // rdoreport (date|task|resource|material|account). Execução na Fase 14.
+  propertySet.addAttributeType(
+    new AttributeDefinition(
+      "groupby",
+      "Group By",
+      AttributeType.Symbol,
+      null,
+      false, // userDefined
+      false, // isList
+      false, // isSingleton
+      false, // isScenarioAttribute
+      false, // inheritedFromParent
+      false, // inheritedFromProject
+    ),
+  );
+
+  // maxpictures: Max Pictures (IntegerAttribute) — extensão Fase 10 C3.6 (rdoreport).
+  // Limite de imagens por período no RDO. Consumo na Fase 14.
+  propertySet.addAttributeType(
+    new AttributeDefinition(
+      "maxpictures",
+      "Max Pictures",
+      AttributeType.Integer,
+      0,
+      false, // userDefined
+      false, // isList
+      false, // isSingleton
+      false, // isScenarioAttribute
+      false, // inheritedFromParent
+      false, // inheritedFromProject
+    ),
+  );
 }

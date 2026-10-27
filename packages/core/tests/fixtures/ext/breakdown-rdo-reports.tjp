@@ -1,0 +1,48 @@
+project sm "SM Reports" "1.0" 2026-01-01 - 2026-12-31 {
+  timezone "Europe/Berlin"
+  currency "EUR"
+}
+
+account costs "Custos" {}
+account revenue "Receita" {}
+
+material steel "Aço" {
+  unit "kg"
+  unitprice 2.5
+  totalquantity 1000
+}
+
+resource dev "Dev" {
+}
+
+task t1 "Tarefa 1" {
+  start 2026-02-01
+  effort 5d
+  allocate dev
+  material steel 100 perday
+  journalentry 2026-02-05 "Status" {
+    summary "Em andamento"
+  }
+}
+
+breakdownreport br "Breakdown" {
+  groupby task
+  period 2026-01-01 - 2026-12-31
+  formats html
+  columns bsi, name, materials, charges, effort
+  hideaccount false()
+}
+
+breakdownreport bracct "Breakdown por Conta" {
+  groupby account
+  columns name, turnover, cost
+}
+
+rdoreport rdo "RDO Diário" {
+  period 2026-02-01 - 2026-02-28
+  groupby date
+  maxpictures 5
+  columns name, effort, pictures, timebasis
+  journalmode journal
+  hidejournalentry isleaf()
+}

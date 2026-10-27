@@ -126,4 +126,22 @@ export function registerMaterialAttributes(propertySet: PropertySet,): void {
       false, // inheritedFromProject
     ),
   );
+
+  // totalquantity: Total Quantity (FloatAttribute, inheritedFromParent=false,
+  // inheritedFromProject=false, isScenarioAttribute=false, default=0.0).
+  // Fase 10 Complemento C3.1.1 — quantidade total planejada do insumo.
+  propertySet.addAttributeType(
+    new AttributeDefinition(
+      "totalquantity",
+      "Total Quantity",
+      AttributeType.Float,
+      0.0,
+      false, // userDefined
+      false, // isList
+      false, // isSingleton
+      false, // isScenarioAttribute
+      false, // inheritedFromParent
+      false, // inheritedFromProject
+    ),
+  );
 }

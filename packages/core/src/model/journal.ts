@@ -8,6 +8,10 @@
 import type { TjTime, } from "../time/tj-time.ts";
 import type { SourceFileInfo, } from "../source-file-info.ts";
 import type { PropertyTreeNode, } from "./property-tree-node.ts";
+import { type Picture, } from "./picture.ts";
+
+/** Formato do corpo de uma entrada (`markdown` é o default). */
+export type EntryFormat = "markdown" | "richtext";
 
 export class JournalEntry {
   readonly journal: Journal;
@@ -22,6 +26,9 @@ export class JournalEntry {
   alertLevel = 0;
   flags: string[] = [];
   timeSheetRecord: unknown = null;
+  // Fase 10 Complemento C3.3.5 — imagens e formato da entrada.
+  pictures: Picture[] = [];
+  format: EntryFormat = "markdown";
 
   constructor(
     journal: Journal,

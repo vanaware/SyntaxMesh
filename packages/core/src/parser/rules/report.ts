@@ -58,11 +58,95 @@ export function registerReportRules(p: ProjectFileParser,): void {
   // ------------------------------------------------------------------
   rule(p, "reports", () => {
     p.pattern(["!accountReport",],);
+    p.pattern(["!breakdownReport",],);
     p.pattern(["!export",],);
+    p.pattern(["!rdoReport",],);
     p.pattern(["!resourceReport",],);
     p.pattern(["!taskReport",],);
     p.pattern(["!textReport",],);
     p.pattern(["!traceReport",],);
+  },);
+
+  // ------------------------------------------------------------------
+  // Fase 10 Complemento C3.5 — breakdownreport (extensão SyntaxMesh).
+  // Cabeçalho análogo a accountReport; corpo reutiliza `reportBody`
+  // (formats/period/hide*/columns) + `groupby` (account|task).
+  // ------------------------------------------------------------------
+  rule(p, "breakdownReport", () => {
+    p.pattern(["!breakdownReportHeader", "!reportBody",], function (
+      this: ProjectFileParser,
+    ): unknown {
+      this.property = asProp(this,).parent;
+      return null;
+    },);
+  },);
+
+  rule(p, "breakdownReportHeader", () => {
+    p.pattern(
+      ["_breakdownreport", "!optionalID", "!reportName",],
+      function (this: ProjectFileParser,): unknown {
+        this.newReport(
+          this.val[1] as string | null,
+          String(this.val[2],),
+          "breakdownreport",
+          this.sourceFileInfo[0] ?? null,
+          function (this: ProjectFileParser,): void {
+            asProp(this,).set("groupby", "account",);
+          },
+        );
+        return null;
+      },
+    );
+    p.arg(2, "name", "The name of the report.",);
+  },);
+
+  // ------------------------------------------------------------------
+  // Fase 10 Complemento C3.6 — rdoreport (extensão SyntaxMesh).
+  // `period` é obrigatório (validado no reduce → rdo_period_required).
+  // ------------------------------------------------------------------
+  rule(p, "rdoReport", () => {
+    p.pattern(["!rdoReportHeader", "!reportBody",], function (
+      this: ProjectFileParser,
+    ): unknown {
+      const rep = asProp(this,);
+      if (!rep.provided("end",)) {
+        this.error(
+          "rdo_period_required",
+          "rdoreport requires a period.",
+          rep.sourceFileInfo,
+          rep,
+        );
+      }
+      this.property = rep.parent;
+      return null;
+    },);
+  },);
+
+  rule(p, "rdoReportHeader", () => {
+    p.pattern(
+      ["_rdoreport", "!optionalID", "!reportName",],
+      function (this: ProjectFileParser,): unknown {
+        this.newReport(
+          this.val[1] as string | null,
+          String(this.val[2],),
+          "rdoreport",
+          this.sourceFileInfo[0] ?? null,
+          function (this: ProjectFileParser,): void {
+            asProp(this,).set("groupby", "date",);
+          },
+        );
+        return null;
+      },
+    );
+    p.arg(2, "name", "The name of the report.",);
+  },);
+
+  rule(p, "groupbyValue", () => {
+    p.pattern(["_account",], () => "account",);
+    p.pattern(["_task",], () => "task",);
+    p.pattern(["_resource",], () => "resource",);
+    p.pattern(["_material",], () => "material",);
+    p.pattern(["_date",], () => "date",);
   },);
 
   rule(p, "taskReport", () => {
@@ -526,6 +610,22 @@ export function registerReportRules(p: ProjectFileParser,): void {
 
     p.pattern(["!formats",],);
 
+    // Fase 10 Complemento C3.5/C3.6 — groupby (breakdown/rdo) e maxpictures (rdo).
+    p.pattern(
+      ["_groupby", "!groupbyValue",],
+      function (this: ProjectFileParser,): unknown {
+        asProp(this,).set("groupby", this.val[1],);
+        return null;
+      },
+    );
+    p.pattern(
+      ["_maxpictures", "$INTEGER",],
+      function (this: ProjectFileParser,): unknown {
+        asProp(this,).set("maxpictures", Number(this.val[1],),);
+        return null;
+      },
+    );
+
     p.pattern(["_header", "$STRING",], function (
       this: ProjectFileParser,
     ): unknown {
@@ -731,6 +831,17 @@ export function registerReportRules(p: ProjectFileParser,): void {
       return null;
     },);
     p.also(["sortaccounts",],);
+  },);
+
+  // Fase 10 Complemento C3.7.2 — hidejournalentry <expr> (extensão SyntaxMesh).
+  // A avaliação da expressão é Fase 11; aqui só acceptamos na gramática.
+  rule(p, "hidejournalentry", () => {
+    p.pattern(["_hidejournalentry", "!logicalExpression",], function (
+      this: ProjectFileParser,
+    ): unknown {
+      asProp(this,).set("hideJournalEntry", this.val[1],);
+      return null;
+    },);
   },);
 
   rule(p, "rollupresource", () => {
@@ -1685,6 +1796,10 @@ export function registerReportRules(p: ProjectFileParser,): void {
     },);
 
     p.pattern(["!summary",],);
+
+    // Fase 10 Complemento C3.3.4 — `picture`/`format` em status de sheet.
+    p.pattern(["!picture",],);
+    p.pattern(["!format",],);
   },);
 
   // ------------------------------------------------------------------
@@ -2142,5 +2257,11 @@ export function registerReportRules(p: ProjectFileParser,): void {
     p.descr("A group of columns with one column for each week",);
     p.singlePattern("_yearly",);
     p.descr("A group of columns with one column for each year",);
+    // Fase 10 Complemento C3.7.1 — colunas novas (extensão SyntaxMesh).
+    // Parser só aceita o nome; a execução é Fase 14.
+    p.singlePattern("_materials",);
+    p.singlePattern("_charges",);
+    p.singlePattern("_pictures",);
+    p.singlePattern("_timebasis",);
   },);
 }

@@ -39,7 +39,7 @@ describe("ReportAttributes", () => {
           count++;
         }
       },);
-      assertEquals(count, 59,);
+      assertEquals(count, 61,);
     });
 
     it("registra accountroot com atributos corretos", async () => {

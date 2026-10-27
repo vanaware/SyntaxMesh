@@ -587,6 +587,8 @@ export function registerProjectRules(p: ProjectFileParser,): void {
 
     p.pattern(["!macro",],);
 
+    p.pattern(["!material",],);
+
     p.pattern(["!navigator",],);
 
     p.pattern(

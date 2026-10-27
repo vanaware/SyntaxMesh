@@ -1,0 +1,62 @@
+{
+  "version": "1.0",
+  "description": "Divergências intencionais entre SyntaxMesh e TaskJuggler 3.8.4. Cada entrada documenta um caso onde o comportamento SM difere do tj3 por decisão de design, não por bug. Verificados em `packages/core/tests/golden/timebasis-parity_golden_test.ts`.",
+  "generated_at": "2026-10-26T00:00:00-0300",
+  "divergences": [
+    {
+      "id": "perday_inclusive_semantics",
+      "modifier": "perday",
+      "timebasis": "duration",
+      "expected": "sintaxe-mesh: amount × (dias corridos TOCADOS pela tarefa, inclusive ambas as pontas)",
+      "tj3": "amount × (end.diff(start) / 86400) — days elapsed half-open",
+      "delta": "+1 amount quando a tarefa começa e termina a meia-noite UTC",
+      "justification": "§3.4.1 — 'distribuir por dias do período'. Para uma tarefa Mon-Fri o usuário espera 5 × perDayRate, não 4.",
+      "spec_ref": "docs/syntaxmesh/fases/fase-10-complemento2.md#341",
+      "test_ref": "packages/core/tests/golden/timebasis-parity_golden_test.ts"
+    },
+    {
+      "id": "permonth_extension",
+      "modifier": "permonth",
+      "timebasis": "duration",
+      "expected": "proporcional: amount × elegíveis ∩ mês / elegíveis-do-mês (para cada mês coberto)",
+      "tj3": "não tem permonth; tj3 mapeia só onstart/onend/perday/perhour/perweek",
+      "delta": "SyntaxMesh extension — sem equivalente TJ",
+      "justification": "complemento2 §3.4.4; caso de uso real (aluguel mensal, assinaturas).",
+      "spec_ref": "docs/syntaxmesh/fases/fase-10-complemento2.md#344",
+      "test_ref": "packages/core/tests/accounting/extended-charge-timebasis_test.ts"
+    },
+    {
+      "id": "perhour_working_vs_elapsed",
+      "modifier": "perhour",
+      "timebasis": "duration",
+      "expected": "amount × horas ÚTEIS do período (independente do timebasis — propriedade 8 §2.7)",
+      "tj3": "mapeia perhour X → perDiem X × 24; usa horas de relógio × dias elapsed",
+      "delta": "diferente por design: SM usa workingHoursPerDay do projeto (default 8), tj3 usa 24",
+      "justification": "complemento2 §2.7 propriedade 8 — perhour é SEMPRE horas úteis, não horas de relógio. Convenção correta para 'custo por hora trabalhada'.",
+      "spec_ref": "docs/syntaxmesh/fases/fase-10-complemento2.md#27",
+      "test_ref": "packages/core/tests/accounting/extended-charge-timebasis_test.ts"
+    },
+    {
+      "id": "length_mode_task_only",
+      "modifier": "all",
+      "timebasis": "length",
+      "expected": "dias elegíveis = dias ÚTEIS do shift/projeto SEM leaves de recurso (task-centric)",
+      "tj3": "não tem length mode para charge",
+      "delta": "SyntaxMesh extension — modo length só existe em SM",
+      "justification": "complemento2 §2.7 propriedade 5 — charge/material são task-centric; leaves de recurso nunca entram.",
+      "spec_ref": "docs/syntaxmesh/fases/fase-10-complemento2.md#27",
+      "test_ref": "packages/core/tests/accounting/extended-charge-timebasis_test.ts"
+    },
+    {
+      "id": "distribution_last_block_absorbs_remainder",
+      "modifier": "distribution",
+      "timebasis": "any",
+      "expected": "N blocos consecutivos; os primeiros N-1 têm tamanho floor(eligíveis/N); o último absorve o resto",
+      "tj3": "não tem distribution { frações }",
+      "delta": "SyntaxMesh extension",
+      "justification": "complemento2 §10.1 — decisão explícita registrada na fase 10 complemento.",
+      "spec_ref": "docs/syntaxmesh/fases/fase-10-complemento2.md#101",
+      "test_ref": "packages/core/tests/accounting/distribution_test.ts"
+    }
+  ]
+}

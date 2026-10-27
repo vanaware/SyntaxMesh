@@ -81,6 +81,8 @@ export class ProjectFileParser extends TextParser {
   allocate: unknown = null;
   booking: unknown = null;
   journalEntry: unknown = null;
+  /** Picture em processamento (Fase 10 Complemento C3.3). */
+  picture: unknown = null;
   taskDependency: unknown = null;
   navigator: unknown = null;
   /** Navigators definidos (Ruby `@project['navigators']`). */

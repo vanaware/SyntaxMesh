@@ -1,0 +1,47 @@
+project sm "SM Material" "1.0" 2026-01-01 - 2026-12-31 {
+  timezone "Europe/Berlin"
+  currency "EUR"
+}
+
+account costs "Custos" {
+}
+
+material steel "Aço" {
+  unit "kg"
+  unitprice 2.5
+  totalquantity 1000
+  journalentry 2026-01-05 "Chegada do aço" {
+    summary "Lote 1 recebido"
+    picture "a.png" {
+      caption "Empilhamento"
+      align left
+      width 320
+      alt "Pilha de aço"
+    }
+    picture "b.png" {
+      caption "Nota fiscal"
+      align center
+    }
+    format markdown
+  }
+}
+
+material concrete "Concreto" {
+  unit "m3"
+  unitprice 120
+  totalquantity 50
+}
+
+task build "Construção" {
+  start 2026-02-01
+  material steel 200 perday
+  use concrete 10
+  journalentry 2026-02-10 "Diário da obra" {
+    picture "obra.png" {
+      caption "Vista lateral"
+      align right
+      width 640
+    }
+    format richtext
+  }
+}

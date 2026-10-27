@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "description": "Golden test for AttributeDefinitions",
-  "generated_at": "2026-10-26T22:11:24Z",
+  "generated_at": "2026-10-27T10:54:58Z",
   "cases": [
     {
       "id": "accountroot",
@@ -40,9 +40,7 @@
       "inheritedFromParent": true,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [
-
-      ],
+      "default": [],
       "userDefined": false
     },
     {
@@ -62,9 +60,7 @@
       "inheritedFromParent": false,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [
-
-      ],
+      "default": [],
       "userDefined": false
     },
     {
@@ -84,9 +80,7 @@
       "inheritedFromParent": false,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [
-
-      ],
+      "default": [],
       "userDefined": false
     },
     {
@@ -166,9 +160,7 @@
       "inheritedFromParent": false,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [
-
-      ],
+      "default": [],
       "userDefined": false
     },
     {
@@ -178,9 +170,7 @@
       "inheritedFromParent": true,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [
-
-      ],
+      "default": [],
       "userDefined": false
     },
     {
@@ -190,9 +180,7 @@
       "inheritedFromParent": true,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [
-
-      ],
+      "default": [],
       "userDefined": false
     },
     {
@@ -202,9 +190,7 @@
       "inheritedFromParent": true,
       "inheritedFromProject": false,
       "scenarioSpecific": false,
-      "default": [
-
-      ],
+      "default": [],
       "userDefined": false
     },
     {
@@ -214,9 +200,7 @@
       "inheritedFromParent": false,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [
-
-      ],
+      "default": [],
       "userDefined": false
     },
     {
@@ -246,9 +230,7 @@
       "inheritedFromParent": false,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [
-
-      ],
+      "default": [],
       "userDefined": false
     },
     {
@@ -300,9 +282,7 @@
       "inheritedFromParent": true,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [
-
-      ],
+      "default": [],
       "userDefined": false
     },
     {
@@ -312,9 +292,7 @@
       "inheritedFromParent": false,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [
-
-      ],
+      "default": [],
       "userDefined": false
     },
     {
@@ -334,9 +312,7 @@
       "inheritedFromParent": false,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [
-
-      ],
+      "default": [],
       "userDefined": false
     },
     {
@@ -426,9 +402,7 @@
       "inheritedFromParent": false,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [
-
-      ],
+      "default": [],
       "userDefined": false
     },
     {
@@ -438,9 +412,7 @@
       "inheritedFromParent": false,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [
-
-      ],
+      "default": [],
       "userDefined": false
     },
     {
@@ -460,9 +432,7 @@
       "inheritedFromParent": false,
       "inheritedFromProject": false,
       "scenarioSpecific": false,
-      "default": [
-
-      ],
+      "default": [],
       "userDefined": false
     },
     {
@@ -472,9 +442,7 @@
       "inheritedFromParent": false,
       "inheritedFromProject": false,
       "scenarioSpecific": false,
-      "default": [
-
-      ],
+      "default": [],
       "userDefined": false
     },
     {
@@ -484,9 +452,7 @@
       "inheritedFromParent": true,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [
-
-      ],
+      "default": [],
       "userDefined": false
     },
     {
@@ -496,9 +462,7 @@
       "inheritedFromParent": true,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [
-
-      ],
+      "default": [],
       "userDefined": false
     },
     {
@@ -508,9 +472,7 @@
       "inheritedFromParent": true,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [
-
-      ],
+      "default": [],
       "userDefined": false
     },
     {
@@ -520,9 +482,7 @@
       "inheritedFromParent": true,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [
-
-      ],
+      "default": [],
       "userDefined": false
     },
     {
@@ -542,9 +502,7 @@
       "inheritedFromParent": true,
       "inheritedFromProject": false,
       "scenarioSpecific": false,
-      "default": [
-
-      ],
+      "default": [],
       "userDefined": false
     },
     {
@@ -576,6 +534,17 @@
       "scenarioSpecific": true,
       "default": null,
       "userDefined": false
+    },
+    {
+      "id": "groupby",
+      "name": "Group By",
+      "objClass": "TaskJuggler::SymbolAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false,
+      "extension": "reports"
     },
     {
       "id": "header",
@@ -796,9 +765,7 @@
       "inheritedFromParent": true,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [
-
-      ],
+      "default": [],
       "userDefined": false
     },
     {
@@ -808,9 +775,7 @@
       "inheritedFromParent": true,
       "inheritedFromProject": true,
       "scenarioSpecific": true,
-      "default": [
-
-      ],
+      "default": [],
       "userDefined": false
     },
     {
@@ -820,9 +785,7 @@
       "inheritedFromParent": true,
       "inheritedFromProject": true,
       "scenarioSpecific": true,
-      "default": [
-
-      ],
+      "default": [],
       "userDefined": false
     },
     {
@@ -882,9 +845,7 @@
       "inheritedFromParent": true,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [
-
-      ],
+      "default": [],
       "userDefined": false
     },
     {
@@ -898,6 +859,17 @@
       "userDefined": false
     },
     {
+      "id": "materialallocations",
+      "name": "Material Allocations",
+      "objClass": "TaskJuggler::NodeListAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": [],
+      "userDefined": false,
+      "extension": "tasks"
+    },
+    {
       "id": "maxend",
       "name": "Max. End",
       "objClass": "TaskJuggler::DateAttribute",
@@ -906,6 +878,17 @@
       "scenarioSpecific": true,
       "default": null,
       "userDefined": false
+    },
+    {
+      "id": "maxpictures",
+      "name": "Max Pictures",
+      "objClass": "TaskJuggler::IntegerAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": 0,
+      "userDefined": false,
+      "extension": "reports"
     },
     {
       "id": "maxstart",
@@ -1106,9 +1089,7 @@
       "inheritedFromParent": true,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [
-
-      ],
+      "default": [],
       "userDefined": false
     },
     {
@@ -1198,9 +1179,7 @@
       "inheritedFromParent": false,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [
-
-      ],
+      "default": [],
       "userDefined": false
     },
     {
@@ -1232,9 +1211,7 @@
       "inheritedFromParent": true,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [
-
-      ],
+      "default": [],
       "userDefined": false
     },
     {
@@ -1507,9 +1484,7 @@
       "inheritedFromParent": false,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [
-
-      ],
+      "default": [],
       "userDefined": false
     },
     {
@@ -1519,9 +1494,7 @@
       "inheritedFromParent": false,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": [
-
-      ],
+      "default": [],
       "userDefined": false
     },
     {
@@ -1684,9 +1657,7 @@
       "inheritedFromParent": false,
       "inheritedFromProject": false,
       "scenarioSpecific": false,
-      "default": [
-
-      ],
+      "default": [],
       "userDefined": false
     },
     {
@@ -1696,9 +1667,7 @@
       "inheritedFromParent": false,
       "inheritedFromProject": false,
       "scenarioSpecific": false,
-      "default": [
-
-      ],
+      "default": [],
       "userDefined": false
     },
     {

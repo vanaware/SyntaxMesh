@@ -142,6 +142,9 @@ export function registerTaskRules(p: ProjectFileParser,): void {
 
     p.pattern(["!journalEntry",],);
 
+    // Fase 10 Complemento C3.1.2 — alocação de material na tarefa.
+    p.pattern(["!materialAllocation",],);
+
     p.pattern(
       ["_note", "$STRING",],
       function (this: ProjectFileParser,): unknown {
@@ -811,6 +814,10 @@ export function registerTaskRules(p: ProjectFileParser,): void {
 
     p.pattern(["!summary",],);
     p.pattern(["!details",],);
+
+    // Fase 10 Complemento C3.3.3 — `picture` e `format` na journalentry.
+    p.pattern(["!picture",],);
+    p.pattern(["!format",],);
   },);
 
   // ------------------------------------------------------------------
@@ -916,6 +923,63 @@ export function registerTaskRules(p: ProjectFileParser,): void {
     p.doc(
       "duration",
       "Calendar time the task should last. 7d means one week.",
+    );
+
+    // Fase 10 Complemento C3.4.1/C3.4.2 — `timebasis` como atributo de
+    // cenário. Normaliza aliases (`calendar` → `duration`, `working` →
+    // `length`) e registra `task_overspecified` quando a tarefa já tem
+    // `duration`/`length` explícito (§2.6).
+    p.pattern(
+      ["_timebasis", "!timebasisMode",],
+      function (this: ProjectFileParser,): unknown {
+        const raw = String(this.val[1],);
+        const canonical = raw === "calendar"
+          ? "duration"
+          : raw === "working"
+          ? "length"
+          : raw;
+        const prop = asProp(this,);
+        // §2.6 task_overspecified: timebasis + explicit length/duration.
+        const d = prop.getForScenario("duration", this.scenarioIdx,);
+        const l = prop.getForScenario("length", this.scenarioIdx,);
+        if (
+          d != null && (d as number) > 0 ||
+          l != null && (l as number) > 0
+        ) {
+          this.error(
+            "task_overspecified",
+            `Task '${prop.id}' cannot combine explicit 'duration'/'length' with 'timebasis ${raw}'.`,
+            this.sourceFileInfo[0] ?? null,
+            prop,
+          );
+          return null;
+        }
+        // §2.6 timebasis_not_supported: milestone não aceita timebasis.
+        if (prop.getForScenario("milestone", this.scenarioIdx,) === true) {
+          this.error(
+            "timebasis_not_supported",
+            `Milestone task '${prop.id}' cannot have 'timebasis'.`,
+            this.sourceFileInfo[0] ?? null,
+            prop,
+          );
+          return null;
+        }
+        if (canonical !== "duration" && canonical !== "length") {
+          this.error(
+            "illegal_timebasis",
+            `Illegal timebasis value '${raw}'. Expected: duration|calendar|length|working.`,
+            this.sourceFileInfo[1] ?? null,
+            prop,
+          );
+          return null;
+        }
+        prop.setForScenario("timebasis", canonical, this.scenarioIdx,);
+        return null;
+      },
+    );
+    p.doc(
+      "timebasis",
+      "Basis used by the engine to distribute temporal charges: 'duration' (calendar days) or 'length' (working days).",
     );
 
     p.pattern(
@@ -1293,6 +1357,18 @@ export function registerTaskRules(p: ProjectFileParser,): void {
     p.descr("Charge the amount for every week the task lasts.",);
   },);
 
+  // Fase 10 Complemento C3.4.1 — palavras aceitas por `timebasis`.
+  rule(p, "timebasisMode", () => {
+    p.pattern(["_duration",], () => "duration",);
+    p.descr("Distribute across calendar days (tj3-compatible default).",);
+    p.pattern(["_calendar",], () => "calendar",);
+    p.descr("Alias of 'duration'.",);
+    p.pattern(["_length",], () => "length",);
+    p.descr("Distribute across working days (excluding shift leaves).",);
+    p.pattern(["_working",], () => "working",);
+    p.descr("Alias of 'length'.",);
+  },);
+
   rule(p, "schedulingDirection", () => {
     p.singlePattern("_alap",);
     p.singlePattern("_asap",);
@@ -1308,6 +1384,8 @@ export function registerTaskRules(p: ProjectFileParser,): void {
     p.descr("Aggregate resources",);
     p.pattern(["_tasks",], () => "tasks",);
     p.descr("Aggregate tasks",);
+    p.pattern(["_materials",], () => "materials",);
+    p.descr("Aggregate materials",);
   },);
 
   rule(p, "vacationName", () => {

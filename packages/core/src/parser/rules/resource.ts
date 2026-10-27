@@ -57,6 +57,22 @@ export function registerResourceRules(p: ProjectFileParser,): void {
     );
     p.doc("email", "The email address of the resource.",);
 
+    // Fase 10 Complemento C3.2.1 — `note` em recurso (porta de rule_taskNote).
+    p.pattern(
+      ["_note", "$STRING",],
+      function (this: ProjectFileParser,): unknown {
+        asProp(this,).set(
+          "note",
+          this.newRichText(
+            String(this.val[1],),
+            this.sourceFileInfo[1] ?? null,
+          ),
+        );
+        return null;
+      },
+    );
+    p.doc("note.resource", "Attach a note to the resource.",);
+
     p.pattern(["!journalEntry",],);
     p.pattern(["!purge",],);
     p.pattern(["!resource",],);

@@ -42,6 +42,25 @@ export function registerAccountRules(p: ProjectFileParser,): void {
     p.optional();
 
     p.pattern(["!account",],);
+
+    // Fase 10 Complemento C3.2.2 — `note` e `journalentry` em conta.
+    p.pattern(
+      ["_note", "$STRING",],
+      function (this: ProjectFileParser,): unknown {
+        asProp(this,).set(
+          "note",
+          this.newRichText(
+            String(this.val[1],),
+            this.sourceFileInfo[1] ?? null,
+          ),
+        );
+        return null;
+      },
+    );
+    p.doc("note.account", "Attach a note to the account.",);
+
+    p.pattern(["!journalEntry",],);
+
     p.pattern(["!accountScenarioAttributes",],);
     p.pattern(
       ["!scenarioIdCol", "!accountScenarioAttributes",],

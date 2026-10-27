@@ -16,6 +16,7 @@ import { ScoreboardInterval, } from "../../time/scoreboard-interval.ts";
 import { TimeInterval, } from "../../time/time-interval.ts";
 import { TjTime, } from "../../time/tj-time.ts";
 import { Account, } from "../../model/account.ts";
+import { Material, } from "../../model/material.ts";
 import { Resource, } from "../../model/resource.ts";
 import { Scenario, } from "../../model/scenario.ts";
 import { Task, } from "../../model/task.ts";
@@ -479,6 +480,9 @@ export function registerScenarioRules(p: ProjectFileParser,): void {
           aggregate = "tasks";
         } else if (prop instanceof Resource) {
           aggregate = "resources";
+        } else if (prop instanceof Material) {
+          // Fase 10 Complemento C3.1.1 — chargeset de material.
+          aggregate = "materials";
         } else {
           throw new Error(`Unknown property type ${prop?.constructor.name}`,);
         }

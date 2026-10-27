@@ -24,6 +24,25 @@ export function registerTaskAttributes(propertySet: PropertySet,): void {
     ),
   );
 
+  // materialallocations: Material Allocations (NodeListAttribute,
+  // inheritedFromParent=false, inheritedFromProject=false,
+  // isScenarioAttribute=true, default=[]).
+  // Fase 10 Complemento C3.1.2 — alocações de material (`material`/`use`) da task.
+  propertySet.addAttributeType(
+    new AttributeDefinition(
+      "materialallocations",
+      "Material Allocations",
+      AttributeType.NodeList,
+      [],
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+    ),
+  );
+
   // assignedresources: Assigned Resources (ResourceListAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=true, default=[])
   propertySet.addAttributeType(
     new AttributeDefinition(

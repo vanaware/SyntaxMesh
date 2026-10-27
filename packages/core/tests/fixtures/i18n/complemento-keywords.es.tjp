@@ -1,0 +1,31 @@
+language "es"
+proyecto prj "Test" "1.0" 2026-01-01 - 2026-12-31
+material steel "Steel" {
+  unit "kg"
+  unitprice 2
+  totalquantity 100
+}
+tarea t1 "T1" {
+  esfuerzo 2d
+  base_temporal duration
+  asiento 2026-01-05 "Entry" {
+    imagen "a.png" {
+      leyenda "Cap"
+      alinear left
+      ancho 100
+      alt "Alt"
+    }
+    formato markdown
+  }
+}
+informedesglose br "B" {
+  agruparpore tarea
+  columnas materiales, cargos, imagenes, base_temporal
+  ocultarasiento isleaf()
+}
+infodiarioobra rdo "R" {
+  periodo 2026-01-01 - 2026-01-31
+  agruparpore date
+  maxfotos 5
+  columnas name
+}

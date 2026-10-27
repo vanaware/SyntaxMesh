@@ -1,0 +1,30 @@
+project prj "Test" "1.0" 2026-01-01 - 2026-12-31
+material steel "Steel" {
+  unit "kg"
+  unitprice 2
+  totalquantity 100
+}
+task t1 "T1" {
+  effort 2d
+  timebasis duration
+  journalentry 2026-01-05 "Entry" {
+    picture "a.png" {
+      caption "Cap"
+      align left
+      width 100
+      alt "Alt"
+    }
+    format markdown
+  }
+}
+breakdownreport br "B" {
+  groupby task
+  columns materials, charges, pictures, timebasis
+  hidejournalentry isleaf()
+}
+rdoreport rdo "R" {
+  period 2026-01-01 - 2026-01-31
+  groupby date
+  maxpictures 5
+  columns name
+}

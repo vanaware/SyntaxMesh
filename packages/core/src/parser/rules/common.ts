@@ -716,6 +716,11 @@ export function registerCommonRules(p: ProjectFileParser,): void {
     p.arg(1, "account ID", "The ID of an already defined account.",);
   },);
 
+  rule(p, "supplementMaterial", () => {
+    p.pattern(["_material", "!materialId",], suppSet,);
+    p.arg(1, "material ID", "The ID of an already defined material.",);
+  },);
+
   rule(p, "supplementReport", () => {
     p.pattern(["_report", "!reportId",], suppSet,);
     p.arg(1, "report ID", "The absolute ID of an already defined report.",);
@@ -727,6 +732,7 @@ export function registerCommonRules(p: ProjectFileParser,): void {
       return null;
     };
     p.pattern(["!supplementAccount", "!accountBody",], pop,);
+    p.pattern(["!supplementMaterial", "!materialBody",], pop,);
     p.pattern(["!supplementReport", "!reportBody",], pop,);
     p.pattern(["!supplementResource", "!resourceBody",], pop,);
     p.pattern(["!supplementTask", "!taskBody",], pop,);

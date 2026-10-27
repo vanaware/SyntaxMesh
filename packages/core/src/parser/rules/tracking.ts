@@ -490,5 +490,9 @@ export function registerTrackingRules(p: ProjectFileParser,): void {
     );
 
     p.pattern(["!summary",],);
+
+    // Fase 10 Complemento C3.3.4 — `picture`/`format` em status (estrutura).
+    p.pattern(["!picture",],);
+    p.pattern(["!format",],);
   },);
 }
