@@ -4,7 +4,7 @@
 > **Plano:** `docs/syntaxmesh/fases/fase-10-parser-linguagem.md`
 > **Status:** ✅ Concluída (2026-10-26)
 > **Total:** ~345 tarefas
-> **Concluídas:** 10.0–10.20 implementadas e testadas em `packages/core` (suíte core: 213 testes / 2792 passos, 0 falhas; golden parser: 178 casos; 5 casos com RichText adiados para a Fase 12 via skip explícito)
+> **Concluídas:** 10.0–10.20 implementadas e testadas em `packages/core` (suíte core: 279 testes / 2994 passos, 0 falhas; golden parser: 178 casos; 5 casos com RichText adiados para a Fase 12 via skip explícito). Complemento C0–C4 (extensões de domínio) concluído em 2026-10-27 — ver `fase-10-complemento-tarefas.md`.
 > **Fonte Ruby:** `docs/taskjuggler/lib/taskjuggler/{TextParser,TextParser/*,ProjectFileScanner,ProjectFileParser,TjpSyntaxRules}.rb`
 
 ---

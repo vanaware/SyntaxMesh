@@ -3,7 +3,8 @@
 > **Arquivo:** `docs/syntaxmesh/fases/fase-10-complemento-tarefas.md`
 > **Especificação:** `fase-10-complemento1.md` (funcionalidades #1–#5) + `fase-10-complemento2.md` (#6 `timebasis` e #6a distribuição temporal)
 > **Escopo deste arquivo:** **apenas** as tarefas que tocam as **Fases 1–10** (modelo, núcleo/scheduler, parser, i18n de keywords, golden de parser). As tarefas de fases futuras (11–21) estão em **adendos** nos arquivos de cada fase.
-> **Status:** ⬜ Não iniciada
+> **Status:** ✅ Concluída (2026-10-27)
+> **Concluídas:** Blocos C0–C4 implementados e testadas em `packages/core`. Modelo (`note`/`journal` em resource/account; `Material` registrado + `MaterialScenario` + `effortdone`/`effortleft`; `timebasis` + `resolveTimebasis` + `distribution.ts`), parser (`material`/`supplement material`/`note`/`journalentry`/`picture`/`format`/`timebasis`/`breakdownreport`/`rdoreport`/colunas novas/`hidejournalentry`), i18n (en/pt-BR/es com AST equivalente) e golden (regressão parser idêntica; fixtures de extensão). Suíte core: 279 testes / 2994 passos, 0 falhas; `golden:generate` idempotente; `fmt`/`lint`/`check` verdes. RichText (`note`) adiado para a Fase 12 (lança `NotYetImplementedError`).
 > **Fonte Ruby:** nada no `tj3` para `material`/`picture`/`rdoreport`/`breakdownreport`/`timebasis` (extensões). `note`/`journalentry`/`supplement` **existem** no TJ (task/resource/account) — portar fiel o que existe, estender onde é novo.
 > **Convenção:** seguir `docs/syntaxmesh/fases/modelo-tarefas.md` e as regras de `09-regras-para-ia.md`. Sem `any` em `src/`.
 
@@ -213,14 +214,14 @@ Hoje `Material` (`model/material.ts`) **não** é registrado em um `PropertySet`
 
 ## Critérios de aceite deste arquivo (só o que toca Fases ≤ 10)
 
-- [ ] `Material` é `PropertyTreeNode` registrado no projeto (`project.materials`).
-- [ ] `note` existe em resource/account/material; `journal`/`journalentry` em account/material; `effortdone`/`effortleft` em `MaterialScenario`.
-- [ ] `timebasis` existe (modelo) e `resolveTimebasis` roda no `prepareScheduling` sem alterar o agendamento.
-- [ ] `distribution.ts` implementa §3.4–§3.5 (perday/perweek/permonth/distributed/distribution; perhour sempre útil; bordas proporcionais; `weekStartsMonday`; shift; leaves de recurso não contam).
-- [ ] Parser aceita `material`/`supplement material`/`note`/`journalentry` (resource/account/material)/`picture`/`format`/`timebasis`/`breakdownreport`/`rdoreport` e os erros novos.
-- [ ] Keywords novas presentes em en/pt-BR/es com AST equivalente.
-- [ ] Regressão de `.tjp` existentes: **zero quebra** (golden task/finance idênticos).
-- [ ] Sem `any` em `src/`; `check:all`/`test`/`golden:generate` verdes.
+- [x] `Material` é `PropertyTreeNode` registrado no projeto (`project.materials`).
+- [x] `note` existe em resource/account/material; `journal`/`journalentry` em account/material; `effortdone`/`effortleft` em `MaterialScenario`.
+- [x] `timebasis` existe (modelo) e `resolveTimebasis` roda no `prepareScheduling` sem alterar o agendamento.
+- [x] `distribution.ts` implementa §3.4–§3.5 (perday/perweek/permonth/distributed/distribution; perhour sempre útil; bordas proporcionais; `weekStartsMonday`; shift; leaves de recurso não contam).
+- [x] Parser aceita `material`/`supplement material`/`note`/`journalentry` (resource/account/material)/`picture`/`format`/`timebasis`/`breakdownreport`/`rdoreport` e os erros novos.
+- [x] Keywords novas presentes em en/pt-BR/es com AST equivalente.
+- [x] Regressão de `.tjp` existentes: **zero quebra** (golden task/finance idênticos).
+- [x] Sem `any` em `src/`; `check:all`/`test`/`golden:generate` verdes.
 
 > **Referências cruzadas (fases futuras — ver adendos):** #16 Journal (`entriesByMaterial`/`entriesByAccount`, `pictures`/`format` na API), #18 Sheets (material `work`/`remaining`/`status`, `picture` em status), #13 Markdown (imagens OPFS/`dataDirs`), #14 Reports (`BreakdownReport`/`RdoReport`, colunas `note`/`journal`/`timebasis`/`pictures`), #19 Storage (image store OPFS), #20 App (tela RDO), #21 Compat (golden de extensão).
 

@@ -81,7 +81,7 @@ O que foi decidido? Seja específico e acionável.
 | 021 | Orquestrador e pipeline de scheduling | Concluído | 2026-10-18 |
 | 022 | FSM do TextParser compilado em runtime | Aceito | 2026-10-23 |
 | 023 | i18n de keywords via LanguageRegistry | Aceito | 2026-10-23 |
-| 024 | Expressões lógicas sem precedência | Proposto | — |
+| 024 | Expressões lógicas sem precedência | Aceito | 2026-10-27 |
 | 025 | RichText e function handlers | Proposto | — |
 | 026 | Markdown como formato going-forward | Proposto | — |
 | 027 | Reports no browser: retorno de strings | Proposto | — |

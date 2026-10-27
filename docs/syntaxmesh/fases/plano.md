@@ -612,11 +612,11 @@ Tarefas: `docs/syntaxmesh/fases/fase-8.2-tarefas.md`.
 | 6 | core | Scoreboard, Limits, ShiftAssignments, ShiftScenario | **Crítica** | ✅ Concluída |
 | 7 | core | TaskScenario, ResourceScenario, Allocation, Booking, TaskDependency | **Crítica** | ✅ Concluída (gap de datas em `Project.schedule()` sobre modelos do parser — ver CURRENT.md) |
 | 8 | core | Charge, ChargeSet, AccountCredit, AccountScenario | **Alta** | ✅ Concluída |
-| 8.1 | core | — (extensão SyntaxMesh: Material, charge/booking estendidos, tracking) | **Alta** | ✅ Concluída (parser de `material` pendente → complemento) |
+| 8.1 | core | — (extensão SyntaxMesh: Material, charge/booking estendidos, tracking) | **Alta** | ✅ Concluída (parser de `material` entregue no Complemento Fase 10) |
 | 8.2 | core | — (extensão SyntaxMesh: modelo contábil estendido) | **Alta** | ✅ Concluída |
 | 9 | core | Project, TaskJuggler, DataCache, PropertyList, MessageHandler, Log | **Crítica** | ✅ Concluída |
 | 10 | core (parser + i18n) | TextParser/*, ProjectFileScanner, ProjectFileParser, TjpSyntaxRules | **Crítica** | ✅ Concluída (2026-10-26) |
-| 10-C | core | — (extensões RDO/orçamento/timebasis) | **Alta** | ⬜ `fase-10-complemento-tarefas.md` + adendos nas fases 13/14/16/18/19/20/21 |
+| 10-C | core | — (extensões RDO/orçamento/timebasis) | **Alta** | ✅ Concluída (2026-10-27; Blocos C0–C4; adendos nas fases 13/14/16/18/19/20/21 permanecem p/ fases futuras) |
 | 11 | core | LogicalExpression, LogicalOperation, LogicalFunction, Query, SimpleQueryExpander | **Crítica** | ⬜ Não iniciada |
 | 12 | core (richtext) | RichText, RichText/* | **Alta** | ⬜ Não iniciada |
 | 13 | core (markdown) | — | Baixa (futuro) | ⬜ Não iniciada (adendo 13.14) |

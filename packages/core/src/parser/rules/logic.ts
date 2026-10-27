@@ -137,7 +137,8 @@ export function registerLogicRules(p: ProjectFileParser,): void {
       }
       return new LogicalAttribute(
         attribute ?? scenario!,
-        this.project!.scenario(scenarioIdx ?? 0,),
+        // scenarioIdx já validado acima (erro se undefined); cenário 0 existe.
+        this.project!.scenario(scenarioIdx ?? 0,)!,
       );
     },);
 

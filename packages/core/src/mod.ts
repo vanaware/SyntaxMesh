@@ -54,3 +54,16 @@ export {
   ptBR,
 } from "./i18n/mod.ts";
 export { SourceFileInfo, } from "./source-file-info.ts";
+
+// Fase 11 — expressões lógicas (Logical*) e Query
+export * from "./logic/logical-operation.ts";
+export * from "./logic/logical-attribute.ts";
+export * from "./logic/logical-flag.ts";
+export * from "./logic/logical-function.ts";
+export * from "./logic/logical-expression.ts";
+export * from "./logic/type-guards.ts";
+// Exportação explícita para não conflitar com a interface `Query` mínima de
+// `account-scenario.ts` (re-exportada via `export *` do modelo).
+export { Query, type QueryParams, } from "./query/query.ts";
+export * from "./query/custom-data.ts";
+export * from "./query/simple-query-expander.ts";

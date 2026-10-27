@@ -50,8 +50,8 @@ i18n (10.15+) em `packages/core/src/i18n/`.
 
 ## Fases ativas/próximas
 
-- **Fase 10 Complemento — Extensões RDO/orçamento ⬜ Não iniciada:** tarefas em `fase-10-complemento-tarefas.md` (material no parser + modelo, `note`/`journal` estendidos, `picture`/`format`, `timebasis` #6/#6a com `distribution.ts`, `breakdownreport`/`rdoreport`, i18n, golden) + adendos nas Fases 13/14/16/18/19/20/21.
-- Fase 11 — Expressões Lógicas e Queries ⬜ Não iniciada
+- **Fase 10 Complemento — Extensões RDO/orçamento ✅ Concluída (2026-10-27):** Blocos C0–C4 de `fase-10-complemento-tarefas.md` implementados e testadas (material no parser + modelo registrado, `note`/`journal` estendidos a resource/account/material, `picture`/`format`, `timebasis` #6/#6a com `distribution.ts`, `breakdownreport`/`rdoreport`, colunas novas + `hidejournalentry`, i18n en/pt-BR/es com AST equivalente, golden parser idêntico + fixtures de extensão). Adendos de fases futuras (13/14/16/18/19/20/21) permanecem pendentes nessas fases. Suíte core: **279 testes / 2994 passos, 0 falhas**.
+- **Fase 11 — Expressões Lógicas e Queries 🟡 Em andamento** (iniciada 2026-10-27): `fase-11-logica-queries-tarefas.md`.
 - Fase 12 — RichText (compatibilidade TJP) ⬜ Não iniciada
 - Fase 13 — Markdown (novo, futuro) ⬜ Não iniciada
 - Fase 14 — Relatórios ⬜ Não iniciada
