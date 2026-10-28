@@ -6,7 +6,8 @@
  */
 import { describe, it, } from "@std/testing/bdd";
 import { assertEquals, } from "@std/assert";
-import { Project, } from "../../src/model/project.ts";
+import { createTestProject, } from "../fixtures/create-test-project.ts";
+import type { Project, } from "../../src/model/project.ts";
 import { Task, } from "../../src/model/task.ts";
 import { ExtendedCharge, } from "../../src/model/extended-charge.ts";
 import { MaterialAllocation, } from "../../src/model/material-allocation.ts";
@@ -23,9 +24,12 @@ import {
 function day(y: number, m: number, d: number,): TjTime {
   return TjTime.fromDate(new Date(Date.UTC(y, m - 1, d,),),);
 }
-function dayNum(tj: TjTime,): number {
-  return Math.floor(tj.toDate().getTime() / 86_400_000,);
-}
+/**
+ * Cria uma tarefa com início/fim no cenário 0. `ExtendedCharge.turnover()` e
+ * `MaterialAllocation.quantityIn()` lêem exclusivamente os atributos de
+ * cenário `start`/`end` (mesma fonte que o `Charge` do tj3), então não é
+ * necessário tocar em campos internos de `TaskScenario`.
+ */
 function schedTask(
   project: Project,
   id: string,
@@ -33,19 +37,6 @@ function schedTask(
   to: TjTime,
 ): Task {
   const t = new Task(project, id, id, null,);
-  const s = t.scenarioData(0,);
-  s.scheduledStart = from;
-  s.scheduledEnd = to;
-  s.actualStart = from;
-  s.actualEnd = to;
-  s.duration = {
-    start: dayNum(from,),
-    end: dayNum(to,),
-    workingDays: dayNum(to,) - dayNum(from,) + 1,
-  };
-  s.durationType = "fixedduration";
-  // ExtendedCharge/MaterialAllocation lêem os atributos de cenário
-  // `start`/`end` (mesma fonte que Charge/tj3).
   t.setForScenario("start", from, 0,);
   t.setForScenario("end", to, 0,);
   return t;
@@ -69,7 +60,7 @@ function testCtx(timebasis: Timebasis = "duration",): DistributionContext {
 
 describe("C2.10 ExtendedCharge.turnover respeita timebasis", () => {
   it("perday timebasis=duration: propaga por todos os dias (§3.4.1)", () => {
-    const p = new Project("test", "Test", "2026-01-01", "2026-12-31",);
+    const p = createTestProject();
     // Ter 06/01 – Sáb 10/01/2026 (5 dias corridos).
     const task = schedTask(p, "t1", day(2026, 1, 6,), day(2026, 1, 10,),);
     const charge = new ExtendedCharge(100, "perday",);
@@ -79,7 +70,7 @@ describe("C2.10 ExtendedCharge.turnover respeita timebasis", () => {
   });
 
   it("perday timebasis=length: só dias úteis do calendário (§3.4.1)", () => {
-    const p = new Project("test", "Test", "2026-01-01", "2026-12-31",);
+    const p = createTestProject();
     // Seg 05/01 – Dom 11/01/2026 (7 dias corridos, 5 úteis).
     const task = schedTask(p, "t1", day(2026, 1, 5,), day(2026, 1, 11,),);
     const charge = new ExtendedCharge(100, "perday",);
@@ -89,7 +80,7 @@ describe("C2.10 ExtendedCharge.turnover respeita timebasis", () => {
   });
 
   it("perweek propaga amount × elegíveis / elegíveis-da-semana (§3.5)", () => {
-    const p = new Project("test", "Test", "2026-01-01", "2026-12-31",);
+    const p = createTestProject();
     // Seg 05/01 – Sex 09/01/2026 (1 semana, 5 dias úteis).
     const task = schedTask(p, "t1", day(2026, 1, 5,), day(2026, 1, 9,),);
     const charge = new ExtendedCharge(1000, "perweek",);
@@ -100,7 +91,7 @@ describe("C2.10 ExtendedCharge.turnover respeita timebasis", () => {
   });
 
   it("permonth propaga amount × elegíveis / elegíveis-do-mês (§3.5)", () => {
-    const p = new Project("test", "Test", "2026-01-01", "2026-12-31",);
+    const p = createTestProject();
     // Novembro/2026 (Seg 02 – Seg 30): 21 dias úteis.
     const task = schedTask(p, "t1", day(2026, 11, 2,), day(2026, 11, 30,),);
     const charge = new ExtendedCharge(2000, "permonth",);
@@ -114,7 +105,7 @@ describe("C2.10 ExtendedCharge.turnover respeita timebasis", () => {
   });
 
   it("onstart/onEnd respeitam período coberto (§3.2)", () => {
-    const p = new Project("test", "Test", "2026-01-01", "2026-12-31",);
+    const p = createTestProject();
     const task = schedTask(p, "t1", day(2026, 6, 1,), day(2026, 6, 10,),);
     const c1 = new ExtendedCharge(500, "onstart",);
     c1.attach(task, 0, testCtx(),);
@@ -131,7 +122,7 @@ describe("C2.10 ExtendedCharge.turnover respeita timebasis", () => {
   it(
     "distributed distribui igualmente sobre elegíveis e soma o total (§3.4.2)",
     () => {
-      const p = new Project("test", "Test", "2026-01-01", "2026-12-31",);
+      const p = createTestProject();
       const task = schedTask(p, "t1", day(2026, 1, 5,), day(2026, 1, 9,),);
       const charge = new ExtendedCharge(1000, "distributed",);
       charge.attach(task, 0, testCtx("length",),);
@@ -147,7 +138,7 @@ describe("C2.10 ExtendedCharge.turnover respeita timebasis", () => {
   it(
     "distribution {f1,f2,f3} em blocos, último absorve resíduo (§10.1)",
     () => {
-      const p = new Project("test", "Test", "2026-01-01", "2026-12-31",);
+      const p = createTestProject();
       // 5 dias úteis (Seg 05 – Sex 09/01). Frações [0.2, 0.3, 0.5] →
       // base=floor(5/3)=1; blocos: 1, 1, 3 (último absorve resíduo).
       // valor: bloco1=200 no dia 05, bloco2=300 no dia 06, bloco3=500/3 por
@@ -169,7 +160,7 @@ describe("C2.10 ExtendedCharge.turnover respeita timebasis", () => {
   );
 
   it("perhour usa horas úteis, independente de timebasis (prop. 8)", () => {
-    const p = new Project("test", "Test", "2026-01-01", "2026-12-31",);
+    const p = createTestProject();
     const task = schedTask(p, "t1", day(2026, 1, 5,), day(2026, 1, 11,),);
     const charge = new ExtendedCharge(10, "perhour",);
     // 8h/dia, Seg–Sex → 5 dias úteis × 8h = 40h × 10 = 400.
@@ -181,10 +172,10 @@ describe("C2.10 ExtendedCharge.turnover respeita timebasis", () => {
 
 describe("C2.10 MaterialAllocation respeita timebasis", () => {
   it("perday × elegíveis (§3.4.1)", () => {
-    const p = new Project("test", "Test", "2026-01-01", "2026-12-31",);
-    p.addAccount(new Account(p, "MA", "M",),);
+    const p = createTestProject();
+    p.addAccount(new Account(p, "MA", "M", null,),);
     const task = schedTask(p, "t1", day(2026, 1, 5,), day(2026, 1, 9,),);
-    const material = new Material(p, "ST", "ton", 50, "MA", 100,);
+    const material = new Material(p, "ST", "ton", 50,);
     const alloc = new MaterialAllocation(material, 20, "perday",);
     alloc.attach(task, 0, testCtx("length",),);
     const full = new TimeInterval(day(2026, 1, 5,), day(2026, 1, 9,),);
@@ -199,7 +190,7 @@ describe(
     it(
       "com leaves de recurso no projeto, turnover permanece o mesmo (§2.7)",
       () => {
-        const p = new Project("test", "Test", "2026-01-01", "2026-12-31",);
+        const p = createTestProject();
         const task = schedTask(p, "t1", day(2026, 1, 5,), day(2026, 1, 9,),);
         const charge = new ExtendedCharge(100, "perday",);
         // Ctx sem leaves: 5 elegíveis × 100 = 500.
@@ -221,7 +212,7 @@ describe(
     it(
       "ctx com leaves de shift exclui dias; leaves de recurso não entram (§2.7)",
       () => {
-        const p = new Project("test", "Test", "2026-01-01", "2026-12-31",);
+        const p = createTestProject();
         const task = schedTask(p, "t1", day(2026, 1, 5,), day(2026, 1, 9,),);
         // Leaves do SHIFT (2026-01-07) — exatamente 1 dia (qua).
         const ctxWithShiftLeave: DistributionContext = {

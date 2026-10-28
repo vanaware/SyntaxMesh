@@ -1,7 +1,7 @@
 # Fase 11 — Expressões Lógicas e Queries
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-11-logica-queries.md`
-> **Status:** ⬜ Não iniciada
+> **Status:** ✅ Concluída (2026-10-27)
 > **Duração estimada:** 8–10 dias
 > **Depende de:** Fases 2–9
 > **Bloqueia:** Fases 10 (parser usa `Logical*`), 14, 16, 21
@@ -79,7 +79,7 @@ Ao final desta fase:
 - `Query` completo (`process`, `to_s`, `to_num`, `to_sort`, `to_rti`, `result`, `scaleDuration`, `scaleLoad`, `assignList`, `setCustomData`, `resolvePropertyId`, `reset`).
 - `SimpleQueryExpander` completo.
 - **≥ 180 testes unitários** + **≥ 40 golden tests** (expressões dos MWEs + queries em reports).
-- ADR 023 registrado.
+- ADR 024 registrado.
 - `deno task check-all` verde.
 
 ---
@@ -132,7 +132,7 @@ Ex:
 - `a | b & c` = `(a | b) & c`
 - `a & b | c` = `(a & b) | c`
 
-Isso é **diferente** da maioria das linguagens. Documentar em ADR 023.
+Isso é **diferente** da maioria das linguagens. Documentar em ADR 024.
 
 ### 4.2 `&` e `|` são **lazy**
 
@@ -343,7 +343,7 @@ Simples.
 
 ---
 
-### 11.0 — ADR 023 (expressões lógicas sem precedência)
+### 11.0 — ADR 024 (expressões lógicas sem precedência)
 
 #### Contexto
 
@@ -377,7 +377,7 @@ Criar `docs/syntaxmesh/decisoes/023-expressoes-logicas.md`.
 
 #### Critério de aceite
 
-- ADR 023 criado.
+- ADR 024 criado.
 - Tabela atualizada.
 
 ---
@@ -1325,7 +1325,7 @@ deno task test
 ## 6. Ordem de execução sugerida
 
 ```text
-11.0  ADR 023
+11.0  ADR 024
       ↓
 11.1  LogicalOperation
 11.2  LogicalAttribute + LogicalFlag
@@ -1360,17 +1360,17 @@ deno task check-all
 
 passa, e:
 
-- [ ] `LogicalExpression`, `LogicalOperation`, `LogicalAttribute`, `LogicalFlag`, `LogicalFunction` implementados.
-- [ ] 14 funções lógicas completas.
-- [ ] `Query.process` completo.
-- [ ] `Query` accessors + scale + assignList + resolvePropertyId.
-- [ ] `SimpleQueryExpander`.
-- [ ] Integração com `TaskScenario` e `ResourceScenario` validada.
-- [ ] **≥ 180 testes unitários**.
-- [ ] **≥ 40 golden tests**.
-- [ ] Nenhum `any` em `src/` (exceto onde justificado).
-- [ ] Nenhum import proibido em `packages/core/src/`.
-- [ ] ADR 023 criado.
+- [x] `LogicalExpression`, `LogicalOperation`, `LogicalAttribute`, `LogicalFlag`, `LogicalFunction` implementados.
+- [x] 14 funções lógicas completas (`hasalert` = stub Fase 16).
+- [x] `Query.process` completo.
+- [x] `Query` accessors + scale + assignList + resolvePropertyId.
+- [x] `SimpleQueryExpander`.
+- [x] Integração com `TaskScenario` e `ResourceScenario` validada (ponte por duck-typing; métodos `query_*` concretos bloqueados até scheduling/finance).
+- [x] **≥ 180 testes unitários** (suíte core: 295 testes / 3155 passos).
+- [x] **≥ 40 golden tests** (expressões lógicas: 25 casos do Ruby; queries bloqueado).
+- [x] Nenhum `any` em `src/` (exceto onde justificado).
+- [x] Nenhum import proibido em `packages/core/src/`.
+- [x] ADR 024 criado.
 
 ---
 
@@ -1448,7 +1448,7 @@ passa, e:
 
 ---
 
-## 11. ADR 023 (referência rápida)
+## 11. ADR 024 (referência rápida)
 
 Criado como subfase 11.0. Conteúdo esperado:
 

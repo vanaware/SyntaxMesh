@@ -144,4 +144,22 @@ export function registerMaterialAttributes(propertySet: PropertySet,): void {
       false, // inheritedFromProject
     ),
   );
+
+  // flags: Flags (FlagListAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=true, default=[])
+  // Complemento Fase 11 (LF.1) — permite testar flags de material em
+  // expressões lógicas (`LogicalFlag`), análogo a task/resource/account.
+  propertySet.addAttributeType(
+    new AttributeDefinition(
+      "flags",
+      "Flags",
+      AttributeType.FlagList,
+      [],
+      false, // userDefined
+      false, // isList
+      false, // isSingleton
+      true, // isScenarioAttribute
+      true, // inheritedFromParent
+      false, // inheritedFromProject
+    ),
+  );
 }

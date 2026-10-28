@@ -43,7 +43,7 @@ export class LogicalExpression {
     const body = this.operation.to_s(query,);
     return this.sourceFileInfo === null
       ? body
-      : `${String(this.sourceFileInfo,)} ${body}`;
+      : `${this.sourceFileInfo.to_s()} ${body}`;
   }
 
   toString(): string {

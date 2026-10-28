@@ -7,6 +7,12 @@
 > **Concluídas:** 0
 > **Fonte Ruby:** `docs/taskjuggler/lib/taskjuggler/{Journal,AlertLevelDefinitions,LeaveList,TernarySearchTree,AlgorithmDiff,TextFormatter,FileList,URLParameter,StdIoWrapper,UTF8String,KateSyntax,VimSyntax}.rb`
 
+> **📌 Âncora — Complemento Fase 11 (2ª onda, §6.5/§6.6 de `fase-11-logical-complemento.md`):**
+> ao implementar Journal, desenvolver: ramo **Journal do `LogicalFlag.eval`**
+> (hoje só Query; `JournalEntry.flags: string[]` já existe no modelo),
+> **`hasalert`** real (substitui o stub `NotYetImplementedError("16")`) e
+> validação de flags de journalentry no `LogicalOperation`.
+
 ---
 
 ## ⚠️ PREÂMBULO — Leia antes de começar

@@ -617,10 +617,11 @@ Tarefas: `docs/syntaxmesh/fases/fase-8.2-tarefas.md`.
 | 9 | core | Project, TaskJuggler, DataCache, PropertyList, MessageHandler, Log | **Crítica** | ✅ Concluída |
 | 10 | core (parser + i18n) | TextParser/*, ProjectFileScanner, ProjectFileParser, TjpSyntaxRules | **Crítica** | ✅ Concluída (2026-10-26) |
 | 10-C | core | — (extensões RDO/orçamento/timebasis) | **Alta** | ✅ Concluída (2026-10-27; Blocos C0–C4; adendos nas fases 13/14/16/18/19/20/21 permanecem p/ fases futuras) |
-| 11 | core | LogicalExpression, LogicalOperation, LogicalFunction, Query, SimpleQueryExpander | **Crítica** | ⬜ Não iniciada |
+| 11 | core | LogicalExpression, LogicalOperation, LogicalFunction, Query, SimpleQueryExpander | **Crítica** | ✅ Concluída (2026-10-27; motor lógico + Query + expander testados; 11.12/11.13 de queries parcialmente bloqueados — métodos `query_*` concretos dependem de scheduling/finance) |
+| 11-C | core | — (extensões: funções/atributos/flags lógicas de material/charge + registrar funções-doc) | **Alta** | 🟡 Em andamento (`fase-11-logical-complemento.md`; 1ª onda 2026-10-27: LC-A/LC-B/LC-D + LF.1. **2ª onda §6.9 executada 2026-10-27**: G1–G5 — `TaskScenario#getAllocatedTime` portado, 10 funções de datas/alocações/material implementadas, `flags` no parser de material habilitado. **§6.10: G1.4 ancorado + review (a)–(g) aplicado** — `Project#dateToIdx` corrigido fiel ao Ruby, semânticas estritas (id inválido, agenda parcial, limiar de alocação); sobem só bloqueios reais ancorados nas Fases 14/16/18/21) |
 | 12 | core (richtext) | RichText, RichText/* | **Alta** | ⬜ Não iniciada |
 | 13 | core (markdown) | — | Baixa (futuro) | ⬜ Não iniciada (adendo 13.14) |
-| 14 | core (report) | reports/* | **Crítica** | ⬜ Não iniciada (adendo 14.25) |
+| 14 | core (report) | reports/* | **Crítica** | ⬜ Não iniciada (adendos 14.25, 14.26) |
 | 15 | core (report) | Gantt* | **Alta** | ⬜ Não iniciada |
 | 16 | core | Journal, AlertLevelDefinitions, LeaveList, TernarySearchTree, etc. | **Alta** | ⬜ Não iniciada (adendo 16.21) |
 | 17 | core (report) | XMLDocument, XMLElement, HTMLDocument, HTMLElements, ICalendar | **Média** | ⬜ Não iniciada |
@@ -632,3 +633,5 @@ Tarefas: `docs/syntaxmesh/fases/fase-8.2-tarefas.md`.
 > **Pacotes (ADR 030):** todo o código de fases vive em `packages/core` (parser, i18n, richtext, markdown, report, sheets, journal, storage de nível lógico). `packages/server`, `packages/ui`, `packages/service-worker` são suporte. A coluna "Pacote" acima indica a camada lógica histórica, não um package físico.
 
 > **Fase 10 Complemento (2026-10-26):** especificações em `fase-10-complemento1.md` (#1–#5: journal/note em material/resource/account, `breakdownreport`, RDO com `picture`/`format`/`rdoreport`) e `fase-10-complemento2.md` (#6 `timebasis`, #6a distribuição temporal unificada). Tarefas de fases ≤ 10: `fase-10-complemento-tarefas.md` (Blocos C0–C4). Tarefas de fases futuras: adendos nos respectivos `-tarefas.md`.
+
+> **Fase 11 Complemento (2026-10-27):** `fase-11-logical-complemento.md` — funções/atributos/flags lógicas além do port fiel (14 funções Ruby). Funções viáveis hoje e extensões de flags/atributos de material/charge ficam na Fase 11; funções que exigem scheduling/financeiro são **registradas** (nome+aridade+i18n+stub) aqui e **avaliadas** nas Fases 7/8; a **aplicação** de `hidematerial`/`rollupmaterial`/`hidepicture` + verificação de hide/rollup de task/resource/account vira o adendo **14.26** na Fase 14.

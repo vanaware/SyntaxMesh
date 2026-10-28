@@ -7,6 +7,12 @@
 > **Concluídas:** 0
 > **Fonte Ruby:** `docs/taskjuggler/lib/taskjuggler/{TimeSheets,TimeSheetSender,TimeSheetReceiver,TimeSheetSummary,StatusSheetSender,StatusSheetReceiver,SheetHandlerBase,SheetSender,SheetReceiver}.rb`
 
+> **📌 Âncora — Complemento Fase 11 (2ª onda, §6.6 de `fase-11-logical-complemento.md`):**
+> a função lógica **`istaskstatus(id, status)`** permanece stub
+> (`NotYetImplementedError("7")`) até existir o enum de status derivado de
+> tracking (notstarted/inprogress/finished/…). Implementar junto das status
+> sheets e reclassificar `FUNCTIONS_EXT` (feasible) + testes.
+
 ---
 
 ## ⚠️ PREÂMBULO — Leia antes de começar

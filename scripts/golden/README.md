@@ -16,14 +16,15 @@ paritária.
 
 ## Arquivos
 
-| Arquivo | Fase | Gera | Usado por |
-|---|---|---|---|
-| `attributes.rb` | 3 | `attributes.golden.json` | `attributes_golden_test.ts` |
-| `tjtime.rb` | 2 | `tjtime.golden.json` | `tjtime.golden.test.ts` |
-| `compute_golden.rb` | 2 | `compat-fix.golden.json` | `compat_golden_test.ts` |
-| `finance-mwe004.rb` | 8 | `finance-mwe004.golden.json` | `finance_golden_test.ts` |
-| `finance-variations.rb` | 8 | `finance-variations.golden.json` | `finance_golden_test.ts` |
-| `parser-mwe001..009.rb` + `parser-syntax-{correct,errors}.rb` | 10 | `parser.golden.json` | `parser_golden_test.ts` |
+| Arquivo                                                       | Fase | Gera                              | Usado por                            |
+| ------------------------------------------------------------- | ---- | --------------------------------- | ------------------------------------ |
+| `attributes.rb`                                               | 3    | `attributes.golden.json`          | `attributes_golden_test.ts`          |
+| `tjtime.rb`                                                   | 2    | `tjtime.golden.json`              | `tjtime.golden.test.ts`              |
+| `compute_golden.rb`                                           | 2    | `compat-fix.golden.json`          | `compat_golden_test.ts`              |
+| `finance-mwe004.rb`                                           | 8    | `finance-mwe004.golden.json`      | `finance_golden_test.ts`             |
+| `finance-variations.rb`                                       | 8    | `finance-variations.golden.json`  | `finance_golden_test.ts`             |
+| `parser-mwe001..009.rb` + `parser-syntax-{correct,errors}.rb` | 10   | `parser.golden.json`              | `parser_golden_test.ts`              |
+| `logical-expressions.rb`                                      | 11   | `logical-expressions.golden.json` | `logical-expressions_golden_test.ts` |
 
 ## Fluxo de trabalho
 
@@ -205,3 +206,37 @@ EnvVar,MinMax,tutorial}.tjp` e `Syntax/Errors/unsupported_token.tjp` —
    do MessageHandler aparece no golden — o TS replica com `mh.trapSetup = true`.
 3. **Nunca editar `parser.golden.json` à mão** — regerer com
    `deno task golden:generate`.
+
+## Logical Expressions Golden Tests (Fase 11.13)
+
+Validam a semântica do motor de expressões lógicas (`LogicalOperation`/
+`LogicalExpression`) contra o Ruby como oracle.
+
+### Arquivos
+
+- `scripts/golden/logical-expressions.rb` — constrói árvores
+  `LogicalOperation` sobre primitivos (números, strings, booleanos), avalia
+  via `LogicalExpression#eval(nil)` e serializa `{ description, tree,
+  expected }` para `logical-expressions.golden.json` (25 casos).
+- `packages/core/tests/golden/logical-expressions_golden_test.ts` —
+  reconstroi cada `tree` em TS, avalia e compara com `expected`.
+
+### Escopo e divergências conhecidas
+
+O golden cobre **apenas** os casos em que Ruby e TS coincidem: comparações de
+mesmo tipo, `&`/`|` lazy (short-circuit), `~`, avaliação **left-to-right sem
+precedência** (ADR 024) e erros de operador. Comparações **número-vs-string**
+são deliberadamente omitidas: o Ruby é estrito (`coerceNumber` rejeita
+`String` → `TjException`), enquanto o port TS segue a tarefa 11.1.3.8
+(`parseFloat` da string). Incluir esses casos geraria falsa divergência.
+
+### Queries golden (11.13.4–11.13.5) — BLOQUEADO
+
+A geração de um golden de queries a partir do HTML do `tj3` depende dos
+métodos `query_*` de scheduling/financeiro em `Task`/`Resource`
+(`query_effort`, `query_duration`, `query_cost`, …), que **ainda não existem**
+no core (só `query_balance`/`query_turnover` estão implementados). Este golden
+será criado quando as fases de scheduling (7) e financeiro (8) entregarem
+esses métodos. A ponte `Query.process` (dispatch
+`customData → property.query_X → data[scIdx].query_X → atributo base`) já é
+coberta por `query_test.ts` e `integration/query-task_test.ts`.

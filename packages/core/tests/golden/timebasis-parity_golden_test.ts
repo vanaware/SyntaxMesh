@@ -17,7 +17,7 @@
  */
 import { describe, it, } from "@std/testing/bdd";
 import { assert, assertAlmostEquals, } from "@std/assert";
-import { Project, } from "../../src/model/project.ts";
+import { createTestProject, } from "../fixtures/create-test-project.ts";
 import { Task, } from "../../src/model/task.ts";
 import { Charge, } from "../../src/finance/charge.ts";
 import { ExtendedCharge, } from "../../src/model/extended-charge.ts";
@@ -40,25 +40,22 @@ function durationCtx(): DistributionContext {
   };
 }
 function schedTask(
-  project: Project,
+  project: ReturnType<typeof createTestProject>,
   id: string,
   from: TjTime,
   to: TjTime,
 ): Task {
+  // `Charge.turnover()` (tj3) e `ExtendedCharge.turnover()` lêem apenas os
+  // atributos de cenário `start`/`end` — não é preciso tocar em campos
+  // internos de `TaskScenario`.
   const t = new Task(project, id, id, null,);
-  const s = t.scenarioData(0,);
-  s.scheduledStart = from;
-  s.scheduledEnd = to;
-  s.actualStart = from;
-  s.actualEnd = to;
-  // tj3's Charge lê os atributos de cenário `start`/`end`:
   t.setForScenario("start", from, 0,);
   t.setForScenario("end", to, 0,);
   return t;
 }
 
 describe("C2.12 Paridade tj3 ↔ ExtendedCharge em modo duration", () => {
-  const project = new Project("p", "P", "2026-01-01", "2026-12-31",);
+  const project = createTestProject();
 
   // Tarefa [Mon 05/01, Fri 09/01] UTC 00:00 → tj3: 4 dias elapsed; SM: 5 dias
   // inclusive. Ver divergência documentada em known-divergences.json.

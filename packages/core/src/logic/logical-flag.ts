@@ -14,9 +14,13 @@ import type { LogicalExpression, } from "./logical-expression.ts";
 import { LogicalOperation, } from "./logical-operation.ts";
 import { isQuery, } from "./type-guards.ts";
 
-/** A `flags` é um atributo de projeto (não scenario-specific). */
+/** `flags` é scenario-specific; o Ruby lê com índice de cenário 0. */
 function hasFlag(query: Query, flag: string,): boolean {
-  const flags = (query.property?.get("flags",) as string[] | undefined) ?? [];
+  const property = query.property;
+  if (!property) return false;
+  const flags =
+    (property.getForScenario("flags", 0,) as string[] | undefined) ??
+      [];
   return flags.includes(flag,);
 }
 

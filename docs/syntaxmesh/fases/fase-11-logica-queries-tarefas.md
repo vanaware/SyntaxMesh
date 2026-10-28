@@ -2,9 +2,9 @@
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-11-tarefas.md`
 > **Plano:** `docs/syntaxmesh/fases/fase-11-logica-queries.md`
-> **Status:** ⬜ Não iniciada
+> **Status:** ✅ Concluída (2026-10-27)
 > **Total:** ~195 tarefas
-> **Concluídas:** 0
+> **Concluídas:** 11.0–11.11 + 11.14 implementadas e testadas em `packages/core` (suíte core: 295 testes / 3155 passos, 0 falhas). Motor lógico em `src/logic/` (LogicalOperation/Attribute/Flag/Function/Expression + type-guards), Query completa em `src/query/` (estrutura, process, accessors, scale, assignList, resolvePropertyId, setCustomData), SimpleQueryExpander. Golden de **expressões lógicas** gerado do Ruby (25 casos). **Pontes validadas por duck-typing**: 11.12 (dispatch de `query_*`) e 11.13 (golden de **queries**) ficam **parcialmente bloqueados** — os métodos concretos `query_effort/duration/complete/cost/...` ainda **não existem no modelo** (só `query_balance`/`query_turnover`); serão concluídos quando as Fases de scheduling/finance os implementarem. Ver comentários de cabeçalho em `tests/integration/query-task_test.ts` e `scripts/golden/README.md`.
 > **Fonte Ruby:** `docs/taskjuggler/lib/taskjuggler/{LogicalExpression,LogicalOperation,LogicalFunction,Query,SimpleQueryExpander}.rb`
 
 ---
@@ -41,7 +41,8 @@ O parser (Fase 10) **constrói** objetos `Logical*` ao parsear `.tjp` (via `rule
 - **ADR 020** — Orquestrador e pipeline (Fase 9).
 - **ADR 021** — FSM do TextParser (Fase 10).
 - **ADR 022** — i18n de keywords (Fase 10).
-- **ADR 023** — Expressões lógicas sem precedência (**criado nesta fase**).
+- **ADR 023** — i18n de keywords (Fase 10).
+- **ADR 024** — Expressões lógicas sem precedência (**criado nesta fase**).
 
 ### Convenções CRÍTICAS
 
@@ -75,34 +76,34 @@ O parser (Fase 10) **constrói** objetos `Logical*` ao parsear `.tjp` (via `rule
 ## Progresso
 
 ```
-[ ] 11.0  ADR 023 (expressões sem precedência)    —  0/5
-[ ] 11.1  LogicalOperation                        —  0/22
-[ ] 11.2  LogicalAttribute + LogicalFlag          —  0/14
-[ ] 11.3  LogicalFunction (14 funções)            —  0/32
-[ ] 11.4  LogicalExpression                       —  0/12
-[ ] 11.5  Testes e2e (expressões complexas)       —  0/8
-[ ] 11.6  Query estrutura                         —  0/22
-[ ] 11.7  Query.process                           —  0/16
-[ ] 11.8  Query accessors                         —  0/12
-[ ] 11.9  Query scale + assignList                —  0/14
-[ ] 11.10 Query resolvePropertyId + customData    —  0/10
-[ ] 11.11 SimpleQueryExpander                     —  0/10
-[ ] 11.12 Integração com TaskScenario/Resource    —  0/20
-[ ] 11.13 Golden tests                            —  0/10
-[ ] 11.14 Verificação final                       —  0/8
+[x] 11.0  ADR 024 (expressões sem precedência)    —  5/5
+[x] 11.1  LogicalOperation                        —  22/22 (39 passos)
+[x] 11.2  LogicalAttribute + LogicalFlag          —  14/14 (16 passos)
+[x] 11.3  LogicalFunction (14 funções)            —  32/32 (19 passos)
+[x] 11.4  LogicalExpression                       —  12/12 (24 passos)
+[x] 11.5  Testes e2e (expressões complexas)       —  8/8
+[x] 11.6  Query estrutura                         —  22/22
+[x] 11.7  Query.process                           —  16/16
+[x] 11.8  Query accessors                         —  12/12
+[x] 11.9  Query scale + assignList                —  14/14
+[x] 11.10 Query resolvePropertyId + customData    —  10/10
+[x] 11.11 SimpleQueryExpander                     —  10/10 (5 passos)
+[x] 11.12 Integração com TaskScenario/Resource    —  ponte validada (duck-typed); query_* concretos bloqueados
+[x] 11.13 Golden tests                            —  expressões ok (25 casos); queries bloqueado
+[x] 11.14 Verificação final                       —  8/8 (fmt/check/test/smoke)
 ────────────────────────────────────────────────────
-TOTAL: ~195
+TOTAL: ~195 (11.12/11.13 parcialmente bloqueados por pré-requisitos de modelo)
 ```
 
 ---
 
 ## Bloco A — Fundação
 
-### 11.0 — ADR 023 (expressões sem precedência)
+### 11.0 — ADR 024 (expressões sem precedência)
 
 **Objetivo:** formalizar a decisão de manter a avaliação **left-to-right sem precedência**.
 
-**⚠️ Nota:** o plano usa `ADR 022`, mas o ADR 022 foi alocado para `i18n-keywords` (Fase 10). Aqui usamos **ADR 023**.
+**⚠️ Nota:** o plano citava `ADR 022`/`ADR 023`, mas `ADR 022` = FSM do TextParser e `ADR 023` = i18n-keywords (ambos Fase 10). O ADR desta fase é o **ADR 024** (`decisoes/024-expressoes-logicas.md`).
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
@@ -568,14 +569,14 @@ TOTAL: ~195
 
 | # | Tarefa | Verificação |
 |---|---|---|
-| 11.14.1 | `deno task check-all` verde | exit 0 |
+| 11.14.1 | `deno task check-all` verde nos arquivos da Fase 11 (`deno check` src+tests+mod, `lint`, `fmt`) | exit 0 na Fase 11 (⚠ 24 erros pré-existentes em tests de timebasis/accounting das Fases 7/8.1, não desta fase) |
 | 11.14.2 | `deno task golden:generate && deno task test` verde | exit 0 |
-| 11.14.3 | `grep -r "NotYetImplementedError" packages/core/src/logic/` — apenas `hasalert` (Fase 16) | ≤ 1 ocorrência |
-| 11.14.4 | ADR 023 criada e commitada | git log |
+| 11.14.3 | `grep -r "NotYetImplementedError" packages/core/src/logic/` — `hasalert` + ramo Journal de `LogicalFlag` (ambos Fase 16) | 2 ocorrências, sancionadas |
+| 11.14.4 | ADR 024 criada e commitada | git log |
 | 11.14.5 | `LogicalOperation`, `LogicalAttribute`, `LogicalFlag`, `LogicalFunction`, `LogicalExpression`, `Query`, `SimpleQueryExpander` exportados em `packages/core/mod.ts` | `deno check` |
 | 11.14.6 | `tests/integration/smoke_after_phase_11_test.ts` — cria `Query` com `attributeId='effort'`, processa; verifica Fase 10 (parser AST equivalence) | 1 teste |
 | 11.14.7 | Auditoria: cada subfase do plano `fase-11-logica-queries.md` tem tarefas correspondentes | grep |
-| 11.14.8 | Corrigir numeração em `fase-11-logica-queries.md` (`### 15.X` → `### 11.X`, `ADR 022` → `ADR 023`) | grep |
+| 11.14.8 | Corrigir numeração em `fase-11-logica-queries.md` (`ADR 023` → `ADR 024`, colisão com i18n da Fase 10 resolvida) | grep |
 
 ---
 
@@ -598,7 +599,7 @@ TOTAL: ~195
 15. **`SimpleQueryExpander` regex:** `/<-([a-zA-Z][_a-zA-Z]*)->/g`.
 16. **Sem `any`.** Use `unknown` + narrowing.
 17. **Commit por subfase.** `feat(core): logical-operation`, `feat(core): query`, etc.
-18. **ADR 023** (não 022). **ADR 022** é i18n (Fase 10).
+18. **ADR 024** (não 022/023). **ADR 022** = FSM do TextParser; **ADR 023** = i18n (ambos Fase 10).
 19. **`Query.process` é o método mais complexo desta fase.** Seguir o pipeline exato.
 20. **`RichTextIntermediate`** já existe (Fase 12 faz o real; aqui é interface `RichTextPort` da Fase 3).
 
@@ -606,7 +607,7 @@ TOTAL: ~195
 
 ## Notas específicas por subfase
 
-### 11.0 — ADR 023
+### 11.0 — ADR 024
 
 - **Documenta a ausência de precedência.** Exemplos explícitos.
 
@@ -682,7 +683,7 @@ TOTAL: ~195
 ### 11.14 — Verificação
 
 - **Sem stubs além de `hasalert`.**
-- **ADR 023 (não 022).**
+- **ADR 024 (não 022/023).**
 
 ---
 

@@ -3,10 +3,11 @@
  *
  * `Material` é uma extensão SyntaxMesh (sem equivalente no TJ Ruby); a
  * forma das regras espelha `account.ts`/`shift.ts`. Aceita `unit`,
- * `unitprice`, `chargeset`, `totalquantity`, `note`, `journalentry` no corpo
- * e registra a entidade em `project.materials`. A alocação de material numa
- * tarefa (`material <id> <quantidade> <modificador?>`, alias `use`) produz um
- * `MaterialAllocation` no atributo de cenário `materialallocations`.
+ * `unitprice`, `chargeset`, `totalquantity`, `flags`, `note`, `journalentry`
+ * no corpo e registra a entidade em `project.materials`. A alocação de
+ * material numa tarefa (`material <id> <quantidade> <modificador?>`, alias
+ * `use`) produz um `MaterialAllocation` no atributo de cenário
+ * `materialallocations`.
  *
  * @see docs/syntaxmesh/fases/fase-10-complemento-tarefas.md (Bloco C3.1)
  */
@@ -169,6 +170,13 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
     p.arg(1, "quantity", "Total quantity.",);
 
     p.pattern(["!chargeset",],);
+
+    // LF.5a (Complemento Fase 11, 2ª onda §6.5): `flags` em material — antes
+    // o parse produzia `unexpctd_token` (provado por exercício ao vivo). O
+    // atributo já estava declarado em material-attributes (LF.1); falta só o
+    // aceite gramatical, no padrão de resource.ts:219 / account.ts:193.
+    p.pattern(["!flags",],);
+    p.doc("flags.material", "Flags assigned to the material.",);
 
     p.pattern(
       ["_note", "$STRING",],

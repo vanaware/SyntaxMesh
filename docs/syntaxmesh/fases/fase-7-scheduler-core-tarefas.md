@@ -987,4 +987,21 @@ Todos os 215 itens de tarefa (7.0-7.19) estão marcados como concluídos.
 
 ---
 
+## Adendo (2026-10-27) — Gap remanescente: placement de datas (âncora do G1.4)
+
+Apesar dos 215 itens marcados, **probe ao vivo na 2ª onda do Complemento
+Fase 11** mostrou que o pipeline `Project.schedule()` ainda **não coloca
+Datas nem bookings** mesmo num modelo construído à mão mínimo (effort em
+segundos + `allocate` + `start`): `end` permanece `null`, zero slots
+reservados (`ScenarioData#error` é stub de `console.log`,
+`scenario-data.ts:96`, então as mensagens `task_start_undef`/
+`task_end_undef` nem passam pelo MessageHandler). O tj3 real agenda o
+mwe001 com folga — o modelo está correto; o ajuste é do scheduler.
+
+- **Manifesto/âncora de testes:** `packages/core/tests/integration/logical-scheduler-driven_test.ts` — metade 1 ativa (regression do estado atual; falha de propósito quando o placement evoluir) + metade 2 comentada (expectativa pós-fix).
+- Também ancorado em `tests/integration/smoke_after_phase_10_test.ts` e no CURRENT.md ("Gap conhecido Fase 7/9").
+- Destrava de verdade o **G1.4** do `fase-11-logical-complemento.md` §6.1/§6.10.
+
+---
+
 **Fim do arquivo de tarefas da Fase 7.**

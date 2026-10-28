@@ -5,7 +5,7 @@ import { type ProjectLike, } from "./project-like.ts";
 import { type CostEvent, } from "./cost-event.ts";
 import { SourceFileInfo, } from "../source-file-info.ts";
 import { TjArgumentError, } from "../attributes/errors.ts";
-import { NotYetImplementedError, TjInternalError, } from "./errors.ts";
+import { NotYetImplementedError, TjError, TjInternalError, } from "./errors.ts";
 import { AttributeBase, } from "../attributes/attribute-base.ts";
 import { AttributeDefinition, } from "../attributes/attribute-definition.ts";
 import { AttributeType, } from "../attributes/attribute-type.ts";
@@ -405,12 +405,39 @@ export class Project implements ProjectLike {
     return TjTime.fromSeconds(start.toSeconds() + idx * granularity,);
   }
 
+  /**
+   * Ruby Project.rb:961 — `forceIntoProject` clampa aos limites do plano
+   * (antes → 0, depois → último slot); sem clamp, data fora do intervalo
+   * é erro. O port ignorava o parâmetro (índices negativos/estourados
+   * vazavam para as chamadas); corrigido na 2ª onda do Complemento 11.
+   */
   dateToIdx(date: TjTime, forceIntoProject: boolean = true,): number {
     const start = this.get("start",) as TjTime | undefined;
     if (!start) {
       return 0;
     }
+    const end = this.get("end",) as TjTime | undefined;
     const granularity = (this.get("scheduleGranularity",) as number) ?? 3600;
+    if (end && date.toSeconds() > end.toSeconds()) {
+      if (!forceIntoProject) {
+        throw new TjError(
+          `Date ${date} is out of project time range ` +
+            `(${start} - ${end})`,
+        );
+      }
+      const size = this.scoreboard?.size ??
+        Math.ceil((end.toSeconds() - start.toSeconds()) / granularity,) + 1;
+      return size - 1;
+    }
+    if (date.toSeconds() < start.toSeconds()) {
+      if (!forceIntoProject) {
+        throw new TjError(
+          `Date ${date} is out of project time range ` +
+            `(${start} - ${end})`,
+        );
+      }
+      return 0;
+    }
     const diff = date.toSeconds() - start.toSeconds();
     return Math.floor(diff / granularity,);
   }

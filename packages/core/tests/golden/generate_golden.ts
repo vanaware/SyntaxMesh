@@ -60,6 +60,17 @@ const scripts: Array<{ name: string; rubyScript: URL; outputPath: URL }> = [
     ),
     outputPath: new URL("./finance-variations.golden.json", import.meta.url,),
   },
+  {
+    name: "logical-expressions",
+    rubyScript: new URL(
+      "../../../../scripts/golden/logical-expressions.rb",
+      import.meta.url,
+    ),
+    outputPath: new URL(
+      "./logical-expressions.golden.json",
+      import.meta.url,
+    ),
+  },
 ];
 
 for (const { name, rubyScript, outputPath, } of scripts) {

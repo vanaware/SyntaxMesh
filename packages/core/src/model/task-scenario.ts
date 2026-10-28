@@ -3,7 +3,7 @@ import {
   resolveTimebasis,
   type Timebasis,
 } from "../accounting/distribution.ts";
-import { type Task, } from "./task.ts";
+import { Task, } from "./task.ts";
 import { type Resource, } from "./resource.ts";
 import { type ProjectLike, } from "./project-like.ts";
 import { type PropertyLike, } from "./property-like.ts";
@@ -1095,6 +1095,73 @@ export class TaskScenario extends ScenarioData {
 
   getEffectiveWork(): number {
     return this._doneEffort;
+  }
+
+  /**
+   * Tempo total (em dias) alocado pelos recursos designados a esta tarefa
+   * entre `startIdx` e `endIdx`. Com `resource`, considera apenas a alocação
+   * desse recurso; containers somam os filhos (fiel ao Ruby).
+   *
+   * Port fiel de `TaskScenario.rb#getAllocatedTime` (1562–1588). O Ruby
+   * cacheia via `@dCache.cached(self, :TaskScenarioAllocatedTime, ...)`; este
+   * port omite o cache em linha com `ResourceScenario.getAllocatedTime`
+   * (resource-scenario.ts:592 — whose `treeSum` carrega apenas o `cacheTag`
+   * nominal): o flush do `DataCache` ainda é stub neste projeto
+   * (`project.ts:508`), então não há ponto de invalidação dos valores.
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb#getAllocatedTime
+   */
+  getAllocatedTime(
+    startIdx: number,
+    endIdx: number,
+    resource: Resource | null = null,
+  ): number {
+    const task = this.getProperty() as Task;
+    const assigned = (this.a("assignedresources",) as Resource[]) ?? [];
+    // Normaliza proxy → nó real (mesma guard de ResourceScenario#
+    // getEffectiveWork:549-552).
+    const res = (resource ? (resource.ptn?.() ?? resource) : null) as
+      | Resource
+      | null;
+    if (
+      this.milestone() || startIdx >= endIdx ||
+      (res !== null && !assigned.some((r,) => (r.ptn?.() ?? r) === res))
+    ) {
+      return 0.0;
+    }
+    const scIdx = this.getScenarioIdx();
+    let allocatedTime = 0.0;
+    if (task.container()) {
+      // Ruby: task.getAllocatedTime(@scenarioIdx, startIdx, endIdx, resource)
+      // — here the child Task exposes its TaskScenario directly. Filtra por
+      // classe (review (e)): `kids()` é tipado como PropertyTreeNode[]; um
+      // filho não-Task jamais deveria existir, mas o cast cego exploding na
+      // primeira exceção — ignorar não-tasks é o comportamento seguro.
+      for (const kid of task.kids()) {
+        if (!(kid instanceof Task)) continue;
+        allocatedTime += kid.scenarioData(scIdx,).getAllocatedTime(
+          startIdx,
+          endIdx,
+          res,
+        );
+      }
+    } else if (res !== null) {
+      allocatedTime += res.scenarioData(scIdx,).getAllocatedTime(
+        startIdx,
+        endIdx,
+        task,
+      );
+    } else {
+      for (const r of assigned) {
+        const real = (r.ptn?.() ?? r) as Resource;
+        allocatedTime += real.scenarioData(scIdx,).getAllocatedTime(
+          startIdx,
+          endIdx,
+          task,
+        );
+      }
+    }
+    return allocatedTime;
   }
 
   isRunAway(): boolean {

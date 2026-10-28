@@ -7,6 +7,15 @@
 > **Concluídas:** 0
 > **Foco:** Golden tests, i18n, performance, segurança, cross-browser, release
 
+> **📌 Âncora — Complemento Fase 11 (2ª onda, §6.7 de `fase-11-logical-complemento.md`):**
+> (LC-E.3) estender `scripts/golden/logical-expressions.rb` com casos
+> Ruby↔TS concordantes p/ as funções da 2ª onda (`isactive`/`isallocated` —
+> exige `TaskScenario.getAllocatedTime`) e regressão do scheduler;
+> (LC-E.2) round-trip i18n das keywords novas
+> (`isaccount`/`ismaterial`/`isparentof`/`istaskofproject`) em AST-equivalence;
+> extensões sem correspondente Ruby permanecem **fora** do golden (política em
+> `scripts/golden/README.md`).
+
 ---
 
 ## ⚠️ PREÂMBULO — Leia antes de começar

@@ -605,7 +605,7 @@ export class Query {
     }
     this.sortable = list;
     this.string = list;
-    // TODO Fase 12: gerar RichTextIntermediate via RichTextFactory.
+    // TODO(@djones) Fase 12: gerar RichTextIntermediate via RichTextFactory.
     this.rti = null;
   }
 

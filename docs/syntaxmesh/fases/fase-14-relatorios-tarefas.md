@@ -1137,4 +1137,44 @@ TOTAL: ~350
 
 ---
 
+## 14.26 — Adendo Fase 11 Complemento: `hide`/`rollup` de todas as entidades + `hidepicture`
+
+> **Origem:** `fase-11-logical-complemento.md` §2 (atributos lógicos de
+> material/charge) e o pedido de opções de relatório. As expressões lógicas já
+> são parseadas na Fase 10 e avaliadas na Fase 11; aqui entra só a **aplicação**
+> nos relatórios.
+
+**Contexto verificado:** o parser (Fase 10) já aceita `hidetask`/`hideresource`/
+`hideaccount`/`hidejournalentry` e `rolluptask`/`rollupresource`/`rollupaccount`
+(`parser/rules/report.ts`, tarefas 10.13.2.2–3). `ReportBase.filterAccountList`
+(14.3.3.1) recebe `hideExpr`/`rollupExpr`. **Faltam** no parser E na avaliação:
+`hidematerial`/`rollupmaterial`/`hidepicture`, e a **aplicação efetiva** de
+todos os hide/rollup nos geradores de tabela.
+
+### 14.26.1 — Verificação do hide/rollup já planejado
+
+| # | Tarefa | Estado | Verificação |
+|---|--------|--------|-------------|
+| 14.26.1a | Confirmar que `hidetask`/`hideresource`/`hideaccount` são **avaliados** (não só parseados) em `ReportBase`/`TableReport` | a auditar | grep + teste |
+| 14.26.1b | Confirmar `rolluptask`/`rollupresource`/`rollupaccount` aplicados em `filterAccountList`/summary | a auditar | teste |
+| 14.26.1c | Se alguma avaliação faltar nas 14.1–14.24, adicionar tarefa corretiva no bloco pertinente | — | — |
+
+### 14.26.2 — Novas opções (material/picture)
+
+| # | Tarefa | Arquivos | Verificação |
+|---|--------|----------|-------------|
+| 14.26.2a | Parser: `rule_hidematerial` + `rule_rollupmaterial` (análogos a `hideresource`/`rollupresource`) | `parser/rules/report.ts` | 2 testes |
+| 14.26.2b | Parser: `rule_hidepicture` (análogo a `hidejournalentry`; `picture` é elemento SyntaxMesh) | `parser/rules/report.ts` | 1 teste |
+| 14.26.2c | i18n `hidematerial`/`rollupmaterial`/`hidepicture` (canonical + en/pt-BR/es) com AST equivalente | `src/i18n/*` | teste i18n |
+| 14.26.2d | `ReportContext`/`Query`: campos `hideMaterial`/`rollupMaterial`/`hidePicture` (parceiros de `hideJournalEntry`) | `report/report-context.ts`, `src/query/query.ts` | `deno check` |
+| 14.26.2e | Aplicar `hidematerial`/`rollupmaterial` na geração de linhas/colunas de material (RDO/breakdown `groupby material`, 14.25) | `report/reports/*` | 3 testes |
+| 14.26.2f | Aplicar `hidepicture`: ocultar `pictures` de `JournalEntry`/material quando a expressão for verdadeira | `report/columns/pictures.ts` | 2 testes |
+| 14.26.2g | **Regressão:** relatórios sem as novas diretivas inalterados | golden existente | verde |
+
+**Pré-requisitos:** `Picture`/`Material` já existem (Fase 8.1/Complemento 10).
+`hidepicture` pode depender das colunas `pictures` (14.25.9/14.25.12) — se ainda
+não construídas, executar depois delas. **ADR:** nenhuma nova; usa ADR 024.
+
+---
+
 **Fim do arquivo de tarefas da Fase 14.**
