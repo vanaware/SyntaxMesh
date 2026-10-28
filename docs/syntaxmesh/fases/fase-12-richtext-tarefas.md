@@ -2,10 +2,23 @@
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-12-tarefas.md`
 > **Plano:** `docs/syntaxmesh/fases/fase-12-richtext.md`
-> **Status:** ⬜ Não iniciada
+> **Status:** 🟡 Em andamento (fundação entregue 2026-10-28: 12.0/12.1/12.2/12.11)
 > **Total:** ~215 tarefas
-> **Concluídas:** 0
+> **Concluídas:** 4 subfases (12.0 ADR · 12.1 XMLElementLike · 12.2 RichTextImage · 12.11 FunctionHandler)
 > **Fonte Ruby:** `docs/taskjuggler/lib/taskjuggler/RichText.rb` + `RichText/*.rb`
+
+> **📌 Âncora — stubs de atributos/queries que esperam o RichText (audit 2026-10-27,
+> Fases 2–11 concluídas).** Ao entregar o RichText, **substituir** os stubs
+> `NotYetImplementedError("12")` / `rti = null` pelos geradores de RTI reais:
+>
+> - `attributes/attribute-base.ts:232` → `AttributeBase#to_rti` (base).
+> - `attributes/reference/reference-attribute.ts:42` → `ReferenceAttribute#to_rti`.
+> - `attributes/list/resource-list-attribute.ts:54` → `ResourceListAttribute#to_rti`.
+> - `query/query.ts:608` → popular `this.rti` via `RichTextFactory` no pipeline `process`.
+> - `parser/project-file-parser.ts:463` → parse de blocos RichText (Markup MediaWiki).
+>
+> Fontes Ruby: `Attributes.rb` (`to_rti` por classe) e `RichText.rb`
+> (`RichTextIntermediate`/`RichTextFactory`). Coberto por `phase 12` + testes RTI.
 
 ---
 
@@ -78,9 +91,9 @@ Nada na Fase 10 precisa mudar; apenas o parser passa a usar a implementação re
 ## Progresso
 
 ```
-[ ] 12.0  ADR 024 (RichText e handlers)            —  0/5
-[ ] 12.1  XMLElementLike + SimpleXMLElement        —  0/8
-[ ] 12.2  RichTextImage                            —  0/4
+[x] 12.0  ADR 025 (RichText e handlers)            —  5/5  ⚠️ renúmerado 024→025 (024 = expressões lógicas, Fase 11)
+[x] 12.1  XMLElementLike + SimpleXMLElement        —  8/8  (15 testes)
+[x] 12.2  RichTextImage                            —  4/4  (2 testes)
 [ ] 12.3  RichTextElement                          —  0/28
 [ ] 12.4  RichTextIntermediate                     —  0/18
 [ ] 12.5  RichTextScanner                          —  0/20
@@ -89,7 +102,7 @@ Nada na Fase 10 precisa mudar; apenas o parser passa a usar a implementação re
 [ ] 12.8  TableOfContents                          —  0/5
 [ ] 12.9  RichTextSnip                             —  0/8
 [ ] 12.10 RichTextDocument                         —  0/10
-[ ] 12.11 RichTextFunctionHandler                  —  0/6
+[x] 12.11 RichTextFunctionHandler                  —  6/6  (5 testes; base abstrata + error/warning via MessageHandlerInstance)
 [ ] 12.12 RichTextFunctionExample                  —  0/6
 [ ] 12.13 RTFWithQuerySupport                      —  0/4
 [ ] 12.14 RTFQuery                                 —  0/18
@@ -100,7 +113,7 @@ Nada na Fase 10 precisa mudar; apenas o parser passa a usar a implementação re
 [ ] 12.19 Golden tests (RichText)                  —  0/10
 [ ] 12.20 Verificação final                        —  0/8
 ─────────────────────────────────────────────────────
-TOTAL: ~215
+TOTAL: ~215 | suíte core: 307 passed / 3270 steps / 0 failed
 ```
 
 ---

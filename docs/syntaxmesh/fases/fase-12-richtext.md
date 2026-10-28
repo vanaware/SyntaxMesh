@@ -6,6 +6,13 @@
 > **Depende de:** Fases 2, 4, 10, 11
 > **Bloqueia:** Fases 10 (parser precisa de `RichTextFactory`), 14, 16, 17, 21
 
+> **⚠️ Correção de numeração (2026-10-28):** este plano chama "ADR 024" à
+> decisão de RichText, mas **024 já foi alocado** a *expressões lógicas sem
+> precedência* (Fase 11). O ADR de RichText é **025** — criado em
+> `docs/syntaxmesh/decisoes/025-richtext-handlers.md`. Onde este arquivo diz
+> "ADR 024" leia-se **ADR 025**. As seções "### 16.x" do §5 são também
+> relíquia de numeração antiga → correspondem a **12.x**.
+
 ---
 
 ## ⚠️ Nota de ordem de execução

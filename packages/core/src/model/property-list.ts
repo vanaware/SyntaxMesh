@@ -11,17 +11,36 @@ export class PropertyList<T extends PropertyTreeNode = PropertyTreeNode,> {
   private scenarioIdx: number[];
 
   constructor(arg: PropertySet | PropertyList<T>, copyItems: boolean = true,) {
-    if (arg instanceof PropertySet) {
-      this.propertySet = arg;
-      this.items = [];
-    } else {
-      this.propertySet = arg.propertySet;
-      this.items = copyItems ? [...arg.items,] : arg.items;
-    }
+    // Estado de ordenação começa zerado; o ramo de `PropertyList` pode
+    // herdá-lo da lista-fonte logo abaixo (fiel a `resetSorting` do Ruby).
     this.sortingLevels = 0;
     this.sortingCriteria = [];
     this.sortingUp = [];
     this.scenarioIdx = [];
+
+    // Ruby `PropertyList#initialize` (PropertyList.rb:37-39): os itens vêm
+    // SEMPRE de `arg.to_ary` quando `copyItems` é true. Para um `PropertySet`
+    // isso é o array plano de propriedades (`@properties.dup`); para outra
+    // `PropertyList` é a cópia dos seus itens. Ausente esta linha o
+    // `PropertyList(set)` ficava vazio e o scheduler não via nenhuma
+    // task/recurso (causa-raiz da não-colocação de datas — Fase 7).
+    this.items = copyItems ? (arg.toArray() as T[]) : [];
+
+    if (arg instanceof PropertySet) {
+      this.propertySet = arg;
+      // Ruby: `resetSorting; addSortingCriteria('seqno', true, -1); sort!`.
+      // Toda `PropertySet` define o atributo `seqno`, então o critério é
+      // sempre válido e garante uma ordem determinística pré-escalonamento.
+      this.addSortingCriteria("seqno", true, -1,);
+      this.sort();
+    } else {
+      // Cria a partir de outra `PropertyList`: copia o estado de ordenação.
+      this.propertySet = arg.propertySet;
+      this.sortingCriteria = [...arg.sortingCriteria,];
+      this.sortingUp = [...arg.sortingUp,];
+      this.scenarioIdx = [...arg.scenarioIdx,];
+      this.sortingLevels = arg.sortingLevels;
+    }
   }
 
   toArray(): T[] {

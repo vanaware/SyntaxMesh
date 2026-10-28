@@ -2,6 +2,7 @@ import { type Project, } from "./model/project.ts";
 import { type ProjectFileParser, } from "./parser/project-file-parser.ts";
 import { TjTime, } from "./time/tj-time.ts";
 import { NotYetImplementedError, } from "./model/errors.ts";
+import { MessageHandlerInstance, } from "./message-handler.ts";
 
 /**
  * TaskJuggler — fachada top-level para CLI/apps.
@@ -107,6 +108,7 @@ export class TaskJuggler {
   }
 
   get errors(): number {
-    return 0; // TODO: integrate with MessageHandlerInstance
+    // TaskJuggler.rb:384-386 — reflete a contagem do MessageHandler.
+    return MessageHandlerInstance.instance.errors;
   }
 }

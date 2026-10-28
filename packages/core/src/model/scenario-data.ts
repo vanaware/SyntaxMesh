@@ -1,9 +1,9 @@
 import { type PropertyLike, } from "../model/property-like.ts";
-import { type MessageHandlerLike, } from "../model/message-handler-like.ts";
 import { type AttributeContainer, } from "../attributes/attribute-container.ts";
 import { type AttributeBase, } from "../attributes/attribute-base.ts";
 import { TjArgumentError, } from "../attributes/errors.ts";
 import { type SourceFileInfo, } from "../model/property-tree-node.ts";
+import { MessageHandlerInstance, } from "../message-handler.ts";
 
 /**
  * Type guard to check if a PropertyLike is a PropertyTreeNode.
@@ -66,14 +66,44 @@ export class ScenarioData implements AttributeContainer {
     return attr.get();
   }
 
+  /**
+   * Canal de mensagens da propriedade (Fase 9 — integração com o
+   * MessageHandler). Espelha `ScenarioData.rb:46-65`: o handler recebe o
+   * SourceFileInfo (o argumento ou, ausente, o da própria propriedade), a
+   * propriedade portadora e o cenário do índice atual. Antes estes métodos
+   * eram stubs de `console.*`, o que fazia as falhas do scheduler
+   * (ex.: `not_scheduled`, `task_underspecified`) nunca chegarem ao
+   * MessageHandler (causa-raiz do gap G1.4).
+   */
+  private messageArgs(
+    sfi?: string | SourceFileInfo | null,
+    property?: PropertyLike,
+  ): [SourceFileInfo | null, unknown, unknown,] {
+    const prop = (property ?? this.property) as PropertyLike & {
+      sourceFileInfo?: SourceFileInfo | null;
+      project?: { scenario?: (idx: number,) => unknown };
+    };
+    const effectiveSfi = (typeof sfi === "object" ? sfi : null) ??
+      prop.sourceFileInfo ?? null;
+    const scenario = prop.project?.scenario?.(this.scenarioIdx,) ?? null;
+    return [effectiveSfi, property ?? this.property, scenario,];
+  }
+
   error(
     id: string,
     text: string,
     sfi?: string | SourceFileInfo | null,
     property?: PropertyLike,
   ): void {
-    // TODO(#issue): Implement MessageHandler integration
-    console.error(`[${id}] ${text}`,);
+    const [effSfi, prop, scenario,] = this.messageArgs(sfi, property,);
+    MessageHandlerInstance.instance.error(
+      id,
+      text,
+      effSfi,
+      null,
+      prop,
+      scenario as never,
+    );
   }
 
   warning(
@@ -82,8 +112,15 @@ export class ScenarioData implements AttributeContainer {
     sfi?: string | SourceFileInfo | null,
     property?: PropertyLike,
   ): void {
-    // TODO(#issue): Implement MessageHandler integration
-    console.warn(`[${id}] ${text}`,);
+    const [effSfi, prop, scenario,] = this.messageArgs(sfi, property,);
+    MessageHandlerInstance.instance.warning(
+      id,
+      text,
+      effSfi,
+      null,
+      prop,
+      scenario as never,
+    );
   }
 
   info(
@@ -92,8 +129,15 @@ export class ScenarioData implements AttributeContainer {
     sfi?: string | SourceFileInfo | null,
     property?: PropertyLike,
   ): void {
-    // TODO(#issue): Implement MessageHandler integration
-    console.log(`[${id}] ${text}`,);
+    const [effSfi, prop, scenario,] = this.messageArgs(sfi, property,);
+    MessageHandlerInstance.instance.info(
+      id,
+      text,
+      effSfi,
+      null,
+      prop,
+      scenario as never,
+    );
   }
 
   deepClone(): this {

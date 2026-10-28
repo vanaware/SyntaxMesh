@@ -179,7 +179,8 @@ tc("AllocationAttribute to_tjp com alocação",
    { value: { mode: 0, mandatory: true, persistent: false } }, "allocation")
 tc("AllocationAttribute to_s com alocação",
    "to_s", "Allocation",
-   { value: { mode: 0, mandatory: true, persistent: false } }, "TODO")
+   { value: [ { candidates: [ { fullId: "r1" }, { fullId: "r2" } ], selectionMode: 0, mandatory: true, persistent: false } ] },
+   "[ r1, r2 ] select by order mandatory ")
 
 # --- BookingListAttribute ---
 tc("BookingListAttribute to_tjp lança",
@@ -190,17 +191,19 @@ tc("BookingListAttribute to_s com booking",
    { value: [{ to_s: -> { "b1" } }] }, "b1")
 
 # --- LogicalExpressionAttribute ---
-tc("LogicalExpressionAttribute to_tjp lança",
+# Ruby herda AttributeBase#to_tjp (AttributeBase.rb:169) = "<type.id> <get.to_s>";
+# não lança. Port: `logicalexpressions expr`.
+tc("LogicalExpressionAttribute to_tjp com expr",
    "to_tjp", "LogicalExpression",
-   { value: "expr" }, :throws)
+   { value: "expr" }, "logicalexpressions expr")
 tc("LogicalExpressionAttribute to_s com expr",
    "to_s", "LogicalExpression",
    { value: "expr" }, "expr")
 
 # --- LogicalExpressionListAttribute ---
-tc("LogicalExpressionListAttribute to_tjp lança",
+tc("LogicalExpressionListAttribute to_tjp com expr",
    "to_tjp", "LogicalExpressionList",
-   { value: ["expr1"] }, :throws)
+   { value: ["expr1"] }, "logicalexpressions expr1")
 tc("LogicalExpressionListAttribute to_s com expr",
    "to_s", "LogicalExpressionList",
    { value: ["expr1"] }, "expr1")

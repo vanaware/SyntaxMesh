@@ -7,7 +7,6 @@
 import { type PropertyLike, } from "../../model/property-like.ts";
 import { type AttributeContainer, } from "../attribute-container.ts";
 import { type AttributeDefinition, } from "../attribute-definition.ts";
-import { NotYetImplementedError, } from "../errors.ts";
 import { AttributeBase, } from "../attribute-base.ts";
 
 /**
@@ -25,7 +24,13 @@ export class LogicalExpressionAttribute extends AttributeBase<unknown> {
     return String(this.get(),);
   }
 
+  /**
+   * Ruby `LogicalExpressionAttribute` não sobrepõe `to_tjp`; herda
+   * `AttributeBase#to_tjp` = `@type.id + " " + get.to_s` (AttributeBase.rb:169).
+   * Como `to_s` já é `get.to_s`, o despejo TJP é o id do tipo seguido do
+   * dump da expressão (ex.: `logicalexpressions <op>`).
+   */
   override to_tjp(): string {
-    throw new NotYetImplementedError("11", "to_tjp",);
+    return `${this.tjpId} ${this.to_s()}`;
   }
 }

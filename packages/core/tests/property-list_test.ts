@@ -110,4 +110,22 @@ describe("PropertyList", () => {
     assertEquals(items[0], root,);
     assertEquals(items[1], child,);
   });
+
+  // Regression (Fase 7): `PropertyList(set)` deve popular os itens a partir
+  // do `PropertySet` (fiel a Ruby `@items = arg.to_ary`). Sem isso o
+  // scheduler itera uma lista vazia e nenhuma task/recurso é escalonado.
+  it("construtor a partir de PropertySet popula os itens do conjunto", () => {
+    const a = new TestProperty(propertySet, "a", "A", null,);
+    const b = new TestProperty(propertySet, "b", "B", null,);
+    const list = new PropertyList<TestProperty>(propertySet,);
+    assertEquals(list.toArray().includes(a,), true,);
+    assertEquals(list.toArray().includes(b,), true,);
+    assertEquals(list.length(), 2,);
+  });
+
+  it("construtor com copyItems=false não copia itens do PropertySet", () => {
+    new TestProperty(propertySet, "a", "A", null,);
+    const list = new PropertyList<TestProperty>(propertySet, false,);
+    assertEquals(list.length(), 0,);
+  });
 });

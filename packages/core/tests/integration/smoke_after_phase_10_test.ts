@@ -7,10 +7,9 @@
  *     report).
  *  2. Parseia a variante pt-BR e compara as ASTs normalizadas (10.18).
  *  3. Roda `Project.schedule()` (Fase 9) sobre o modelo parseado e
- *     verifica que o pipeline completo termina sem exceção. (A colocação
- *     de datas ainda não funciona em modelos construídos pelo parser —
- *     gap da Fase 7, que está em andamento; o tj3 real agenda o mwe001
- *     com folga, então o modelo do parser está correto.)
+ *     verifica que o pipeline completo termina sem exceção e que o
+ *     scheduler da Fase 7 coloca as datas reais. Os inícios batem com o
+ *     `tj3` real no mwe001: t1→2024-06-03, t2→2024-06-05, t3→2024-06-10.
  *
  * O laço agregado dos 9 MWEs × 3 idiomas (10.20.10) está em
  * `tests/ast-equivalence_test.ts` (describe `${mwe}: AST equivalente…`).
@@ -122,8 +121,7 @@ describe("Smoke test after Phase 10 (parser → modelo → scheduler)", () => {
     const t2 = findNode(project, "tasks", "t2",) as Task;
     const t3 = findNode(project, "tasks", "t3",) as Task;
     assert(t1 && t2 && t3, "tasks existem pós-schedule",);
-    // Pós-schedule as arestas permanecem no grafo (taskId = fullId do alvo;
-    // a resolução para o objeto Task é gap da Fase 7 em andamento).
+    // Pós-schedule as arestas permanecem no grafo (taskId = fullId do alvo).
     assertEquals(
       (t2.getForScenario("depends", 0,) as TaskDependency[])[0]!.taskId,
       "main.t1",
@@ -134,6 +132,19 @@ describe("Smoke test after Phase 10 (parser → modelo → scheduler)", () => {
       "main.t2",
       "aresta t2→t3 preservada",
     );
+
+    // Fase 7 placement: o scheduler coloca datas reais sobre o modelo do
+    // parser. Os inícios batem com o `tj3` real no mwe001 (recurso dev é
+    // full-time Mon-Fri; t2 segue o fim de t1; t3 pula o fim-de-semana).
+    const dayOf = (t: Task,): string => {
+      const s = t.getForScenario("start", 0,) as TjTime | null;
+      return s ? s.toString().slice(0, 10,) : "<sem start>";
+    };
+    assertEquals(dayOf(t1,), "2024-06-03", "t1 start igual ao tj3",);
+    assertEquals(dayOf(t2,), "2024-06-05", "t2 start igual ao tj3",);
+    assertEquals(dayOf(t3,), "2024-06-10", "t3 start igual ao tj3",);
+    assert(t1.getForScenario("end", 0,) !== null, "t1 tem end definido",);
+    assert(t2.getForScenario("end", 0,) !== null, "t2 tem end definido",);
   });
 
   // Restaura o fuso para não contaminar outros arquivos de teste.

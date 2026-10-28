@@ -7,7 +7,6 @@
 import { type PropertyLike, } from "../../model/property-like.ts";
 import { type AttributeContainer, } from "../attribute-container.ts";
 import { type AttributeDefinition, } from "../attribute-definition.ts";
-import { NotYetImplementedError, } from "../errors.ts";
 import { ListAttributeBase, } from "../list-attribute-base.ts";
 
 /**
@@ -26,7 +25,7 @@ export class LogicalExpressionListAttribute extends ListAttributeBase<unknown> {
     return val ? val.join(", ",) : "";
   }
 
-  override to_tjp(): string {
-    throw new NotYetImplementedError("11", "to_tjp",);
-  }
+  // Ruby `LogicalExpressionListAttribute` não sobrepõe `to_tjp`; herda o
+  // despejo de lista (id do tipo + valores). Deixamos `ListAttributeBase#to_tjp`
+  // assumir: `logicalexpressions <v1, v2>`.
 }

@@ -6,6 +6,7 @@ import { createTestProject, } from "./fixtures/create-test-project.ts";
 import { TjTime, } from "../src/time/tj-time.ts";
 import { Task, } from "../src/model/task.ts";
 import { NotYetImplementedError, } from "../src/model/errors.ts";
+import { MessageHandlerInstance, } from "../src/message-handler.ts";
 
 describe("TaskJuggler", () => {
   let tj: TaskJuggler;
@@ -105,7 +106,12 @@ describe("TaskJuggler", () => {
     assertEquals(tj.listReports("report1", false,), true,);
   });
 
-  it("errors getter", () => {
+  it("errors getter reflete o MessageHandler (TaskJuggler.rb:384)", () => {
+    // Antes era um stub `return 0`; agora espelha a contagem real do handler.
+    MessageHandlerInstance.instance.reset();
     assertEquals(tj.errors, 0,);
+    MessageHandlerInstance.instance.error("probe", "boom",);
+    assertEquals(tj.errors, 1,);
+    MessageHandlerInstance.instance.reset();
   });
 });

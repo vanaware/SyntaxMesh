@@ -23,6 +23,11 @@ export class ColumnListAttribute extends ListAttributeBase<string> {
   /**
    * Converte o valor para string.
    *
+   * Fiel ao Ruby: `ColumnListAttribute#to_s` retorna literalmente a
+   * string "TODO" no upstream (Attributes.rb:196-198 — nunca implementado
+   * lá; as colunas são despejadas via `to_tjp`, não por `to_s`). Não é um
+   * gap nosso: mudar isto desviaria do comportamento de referência.
+   *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ColumnListAttribute#to_s
    */
   override to_s(): string {

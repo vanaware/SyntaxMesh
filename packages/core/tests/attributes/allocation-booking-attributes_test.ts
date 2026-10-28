@@ -65,7 +65,7 @@ describe("AllocationBookingAttributes", () => {
       attr = new TestAllocationAttribute(property, type, container,);
     },);
 
-    it("to_s retorna TODO", () => {
+    it("to_s despeja alocações no formato Ruby", () => {
       attr.set([
         {
           candidates: [{ fullId: "r1", }, { fullId: "r2", },],
@@ -74,7 +74,45 @@ describe("AllocationBookingAttributes", () => {
           persistent: false,
         },
       ],);
-      assertEquals(attr.to_s(), "TODO",);
+      // Attributes.rb:78-103 — `[ c1, c2 ] select by <modo> [mandatory ]`.
+      assertEquals(attr.to_s(), "[ r1, r2 ] select by order mandatory ",);
+    });
+
+    it("to_s une múltiplas alocações por quebra de linha", () => {
+      attr.set([
+        {
+          candidates: [{ fullId: "a", },],
+          selectionMode: 4,
+          mandatory: false,
+          persistent: true,
+        },
+        {
+          candidates: [{ fullId: "b", }, { fullId: "c", },],
+          selectionMode: 1,
+          mandatory: false,
+          persistent: false,
+        },
+      ],);
+      assertEquals(
+        attr.to_s(),
+        "[ a ] select by random persistent \n[ b, c ] select by lowprob ",
+      );
+    });
+
+    it("to_s com valor vazio retorna string vazia", () => {
+      assertEquals(
+        new TestAllocationAttribute(
+          property,
+          new AttributeDefinition(
+            "allocation",
+            "Allocation",
+            AttributeType.Allocation,
+            [],
+          ),
+          container,
+        ).to_s(),
+        "",
+      );
     });
 
     it("to_tjp retorna 'allocation'", () => {

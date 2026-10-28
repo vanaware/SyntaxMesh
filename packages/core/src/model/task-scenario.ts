@@ -111,6 +111,15 @@ export class TaskScenario extends ScenarioData {
   markAsScheduled(): void {
     if (this._scheduled) return;
     this._scheduled = true;
+    // Ruby: `scheduled` é runtime attribute lido via `@scheduled`
+    // (TaskScenario.rb:57-59). No port o bag é o canal de leitura
+    // (`a("scheduled")` em scheduleContainer/propagateDateToDep), então
+    // espelhamos o flag no property bag ao marcar.
+    (this.getProperty() as Task).forceForScenario(
+      "scheduled",
+      true,
+      this.getScenarioIdx(),
+    );
   }
 
   prepareScheduling(): void {
@@ -206,7 +215,11 @@ export class TaskScenario extends ScenarioData {
         const depTask = this.checkDependency(dependency, "depends",);
         if (depTask) {
           this._startpreds.push([depTask, dependency.onEnd,],);
-          (depTask.scenarioData(scIdx,) as TaskScenario)._startsuccs.push([
+          // Ruby (TaskScenario.rb:170): o sucessor vai para `endsuccs` quando
+          // a dependência é on-end e para `startsuccs` caso contrário. O flag
+          // propagado ao dep é sempre false (define o start do dependente).
+          const depSc = depTask.scenarioData(scIdx,) as TaskScenario;
+          (dependency.onEnd ? depSc._endsuccs : depSc._startsuccs).push([
             this.getProperty(),
             false,
           ],);
@@ -219,7 +232,10 @@ export class TaskScenario extends ScenarioData {
         const predTask = this.checkDependency(dependency, "precedes",);
         if (predTask) {
           this._endsuccs.push([predTask, dependency.onEnd,],);
-          (predTask.scenarioData(scIdx,) as TaskScenario)._endpreds.push([
+          // Ruby (TaskScenario.rb:177): predecessor vai para `endpreds` quando
+          // on-end e para `startpreds` caso contrário. Flag propagado true.
+          const predSc = predTask.scenarioData(scIdx,) as TaskScenario;
+          (dependency.onEnd ? predSc._endpreds : predSc._startpreds).push([
             this.getProperty(),
             true,
           ],);
@@ -244,6 +260,13 @@ export class TaskScenario extends ScenarioData {
   /**
    * Verifica e resolve uma dependência cruzada.
    *
+   * Ruby (TaskScenario.rb:2318-2326) faz `dependency.resolve(@project)`, que
+   * atribui `@task = project.task(@taskId)` e o retorna. O port precisa dessa
+   * atribuição: `earliestStart`/`latestEnd` percorrem `depends` lendo
+   * `dependency.task` (TaskScenario.rb:1176-1178); sem ela a data do
+   * predecessor nunca é encontrada e o dependente nunca recebe o start
+   * propagado (gap de placement da Fase 7 em modelos vindos do parser).
+   *
    * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:checkDependency
    */
   checkDependency(dependency: TaskDependency, depType: string,): Task | null {
@@ -252,20 +275,119 @@ export class TaskScenario extends ScenarioData {
       this.error("unknown_task", `Unknown task '${dependency.taskId}'`,);
       return null;
     }
+    // Equivalente a `TaskDependency#resolve`: fixa a referência do alvo.
+    dependency.task = task;
     return task;
   }
 
   /**
-   * Propaga uma data (start ou end) para a tarefa.
+   * Propaga uma data (start ou end) para a tarefa, para os dependentes
+   * diretos, para os filhos que podem herdar a data e para os containers
+   * enclosing.
+   *
+   * Port fiel de `TaskScenario.rb#propagateDate` (980-1074). A versão
+   * anterior guardava apenas `@startIdx`/`@endIdx` e nunca escrevia os
+   * atributos `start`/`end` no bag — as tarefas concluíam o effort mas
+   * ficavam sem data de fim (`task_end_undef`). No port o armazenamento
+   * das datas é o property bag via `setForScenario` (canal já usado por
+   * `scheduleContainer` e `prepareScheduling`), equivalente ao
+   * `instance_variable_set` + attribute do Ruby.
    *
    * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:propagateDate
    */
-  propagateDate(date: TjTime, end: boolean, set: boolean,): void {
-    const idx = (this.getProperty() as Task).project.dateToIdx(date,);
-    if (end) {
-      this._endIdx = idx;
+  propagateDate(
+    date: TjTime,
+    atEnd: boolean,
+    ignoreEffort: boolean = false,
+  ): void {
+    const property = this.getProperty() as Task;
+    const scIdx = this.getScenarioIdx();
+    const thisEnd = atEnd ? "end" : "start";
+    const otherEnd = atEnd ? "start" : "end";
+
+    // Flags anti-duplicação durante propagateInitialValues().
+    if (atEnd) {
+      this._endPropagated = true;
     } else {
-      this._startIdx = idx;
+      this._startPropagated = true;
+    }
+
+    // Leaf tasks podem definir/encolher a data; containers só em
+    // scheduleContainer().
+    if (property.leaf?.()) {
+      const setDate = this.a(thisEnd,) as TjTime | null;
+      // Se já temos data neste end, apenas encolhemos o período.
+      if (
+        setDate &&
+        (atEnd ? date.compareTo(setDate,) > 0 : date.compareTo(setDate,) < 0)
+      ) {
+        return;
+      }
+      // `forceForScenario` (sem guarda de sobrescrita): scheduler escreve
+      // valor de runtime, não input do parser — equivalente ao
+      // `instance_variable_set` do Ruby (TaskScenario.rb:1012).
+      property.forceForScenario(thisEnd, date, scIdx,);
+      if (this.durationType() === "startEndTask") {
+        if (atEnd) {
+          this._endIdx = this.project().dateToIdx(date,);
+        } else {
+          this._startIdx = this.project().dateToIdx(date,);
+        }
+      }
+    }
+
+    if (this.a("milestone",)) {
+      // Start e end de um milestone são idênticos.
+      this.markAsScheduled();
+      if (this.a(otherEnd,) === null) {
+        this.propagateDate(this.a(thisEnd,) as TjTime, !atEnd,);
+      }
+    } else if (
+      !this._scheduled && this.a("start",) && this.a("end",) &&
+      !(
+        (this.a("length",) as number) === 0 &&
+        (this.a("duration",) as number) === 0 &&
+        (this.a("effort",) as number) === 0 &&
+        ((this.a("allocate",) as Allocation[]) ?? []).length > 0
+      )
+    ) {
+      this.markAsScheduled();
+    }
+
+    // Propaga aos dependentes diretos. Para on-end-successors / on-start-
+    // preds de tarefa effort-based a data ainda pode mudar (bookResource()
+    // propaga a data final), exceto quando ignoreEffort.
+    if (atEnd) {
+      if (ignoreEffort || (this.a("effort",) as number) === 0) {
+        for (const [task, onEnd,] of this._endpreds) {
+          if (task) this.propagateDateToDep(task, onEnd,);
+        }
+      }
+      for (const [task, onEnd,] of this._endsuccs) {
+        if (task) this.propagateDateToDep(task, onEnd,);
+      }
+    } else {
+      if (ignoreEffort || (this.a("effort",) as number) === 0) {
+        for (const [task, onEnd,] of this._startsuccs) {
+          if (task) this.propagateDateToDep(task, onEnd,);
+        }
+      }
+      for (const [task, onEnd,] of this._startpreds) {
+        if (task) this.propagateDateToDep(task, onEnd,);
+      }
+    }
+
+    // Data implícita dos filhos que podem herdar este end do pai.
+    for (const child of property.children as Task[]) {
+      const childSc = child.scenarioData(scIdx,) as TaskScenario;
+      if (childSc.canInheritDate(atEnd,)) {
+        childSc.propagateDate(date, atEnd, false,);
+      }
+    }
+
+    // A propagação pode ter completado o intervalo do container pai.
+    for (const parent of property.parents()) {
+      (parent as Task).scenarioData(scIdx,).scheduleContainer();
     }
   }
 
@@ -280,10 +402,50 @@ export class TaskScenario extends ScenarioData {
   /**
    * Verifica se a tarefa pode herdar uma data do cenário.
    *
-   * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:canInheritDate
+   * Port fiel de `TaskScenario.rb#canInheritDate?` (1080-1121) usando as
+   * primitivas do bag (`a("start")`/`a("end")` no lugar dos ivars `@start`/
+   * `@end`).
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:canInheritDate?
    */
   canInheritDate(end: boolean,): boolean {
-    return true;
+    const thisEnd = end ? "end" : "start";
+    const thatEnd = end ? "start" : "end";
+
+    // False se já temos data neste end ou se há dependência forte nele.
+    if (this.a(thisEnd,) !== null) return false;
+    if (this.hasStrongDeps(end,)) return false;
+
+    // Containers herdam se não têm dependências neste end.
+    if ((this.getProperty() as Task).container?.()) return true;
+
+    const hasThatSpec = this.a(thatEnd,) !== null ||
+      this.hasStrongDeps(!end,);
+
+    // Sem start/end spec, sem duration spec, mas com allocations: herda.
+    if (hasThatSpec && !this._hasDurationSpec && this._allocateNotEmpty()) {
+      return true;
+    }
+
+    if (this.forward() !== end) {
+      // A direção do agendamento aponta para longe deste end.
+      if (this._hasDurationSpec || this.bookingNotEmpty()) return true;
+      return hasThatSpec;
+    } else {
+      // A direção aponta para este end.
+      return this.a(thatEnd,) !== null && !this._hasDurationSpec &&
+        !this.bookingNotEmpty();
+    }
+  }
+
+  private _allocateNotEmpty(): boolean {
+    const allocate = this.a("allocate",) as Allocation[] | null;
+    return !!allocate && allocate.length > 0;
+  }
+
+  private bookingNotEmpty(): boolean {
+    const booking = this.a("booking",) as unknown[] | null;
+    return !!booking && booking.length > 0;
   }
 
   propagateInitialValues(): void {
@@ -1234,8 +1396,16 @@ export class TaskScenario extends ScenarioData {
     return this._doneLength;
   }
 
+  /**
+   * Esforço já concluído pelo scheduler (1 unidade por slot reservado, com
+   * eficiência do recurso). O Ruby usa a variável de instância `@doneEffort`
+   * (TaskScenario.rb:1761-1762, 1944), NÃO o atributo `effortdone` — que é
+   * entrada do usuário via tracking cuts (TaskScenario.rb:2020-2026).
+   * Ler `a("effortdone")` retornava sempre 0 e impedia o encerramento de
+   * effortTasks (nunca propagavam `end`).
+   */
   doneEffort(): number {
-    return this.a("effortdone",) as number ?? 0;
+    return this._doneEffort;
   }
 
   nowIdx(): number {
@@ -1332,11 +1502,6 @@ export class TaskScenario extends ScenarioData {
 
     this.prepareScheduling();
 
-    const logTag = `schedule_${(this.getProperty() as Task).id}`;
-    console.log(
-      `[${logTag}] Scheduling task ${(this.getProperty() as Task).id}`,
-    );
-
     // Compute the date of the next slot this task wants to have scheduled.
     if (this.forward()) {
       if (this.currentSlotIdx() === null) {
@@ -1371,11 +1536,6 @@ export class TaskScenario extends ScenarioData {
     while (this.scheduleSlot()) {
       if (this._currentSlotIdx === null) {
         this.markAsRunaway();
-        console.log(
-          `[${logTag}] Scheduling of task ${
-            (this.getProperty() as Task).id
-          } failed: currentSlotIdx is null`,
-        );
         return false;
       }
       this._currentSlotIdx += delta;
@@ -1384,20 +1544,10 @@ export class TaskScenario extends ScenarioData {
         upperLimit < this._currentSlotIdx
       ) {
         this.markAsRunaway();
-        console.log(
-          `[${logTag}] Scheduling of task ${
-            (this.getProperty() as Task).id
-          } failed`,
-        );
         return false;
       }
     }
 
-    console.log(
-      `[${logTag}] Scheduling of task ${
-        (this.getProperty() as Task).id
-      } completed`,
-    );
     return true;
   }
 
@@ -1645,17 +1795,11 @@ export class TaskScenario extends ScenarioData {
               false,
               true,
             );
-            console.log(
-              `Task ${(this.getProperty() as Task).fullId} first assignment`,
-            );
           } else {
             this.propagateDate(
               this.project().idxToDate((this.currentSlotIdx() as number) + 1,),
               true,
               true,
-            );
-            console.log(
-              `Task ${(this.getProperty() as Task).fullId} last assignment`,
             );
           }
         }
@@ -1768,11 +1912,11 @@ export class TaskScenario extends ScenarioData {
     if (
       taskSc.a("start",) === null || (taskSc.a("start",) as TjTime) > nStart
     ) {
-      task.setForScenario("start", nStart, this.getScenarioIdx(),);
+      task.forceForScenario("start", nStart, this.getScenarioIdx(),);
       startSet = true;
     }
     if (taskSc.a("end",) === null || (taskSc.a("end",) as TjTime) < nEnd) {
-      task.setForScenario("end", nEnd, this.getScenarioIdx(),);
+      task.forceForScenario("end", nEnd, this.getScenarioIdx(),);
       endSet = true;
     }
 
@@ -2360,11 +2504,19 @@ export class TaskScenario extends ScenarioData {
 
   /**
    * Compute completion percentage.
+   *
+   * Usa o atributo de usuário `effortdone` (tracking cuts), NÃO o contador
+   * interno `_doneEffort` do scheduler. O Ruby faz o mesmo em
+   * `calcTaskCompletion` via `query_effortdone` / `@effortdone`
+   * (TaskScenario.rb:1347-1349, 2425-2437). O port ainda não implementa o
+   * cálculo por scoreboard (`getEffectiveWork(startIdx, endIdx)`), então
+   * mantém a aproximação direta pelo atributo.
    */
   calcCompletion(): void {
     const effort = this.a("effort",) as number;
+    const effortDone = (this.a("effortdone",) as number) ?? 0;
     if (effort > 0) {
-      this._complete = Math.round((this.doneEffort() / effort) * 100,);
+      this._complete = Math.round((effortDone / effort) * 100,);
     } else {
       this._complete = 0;
     }
@@ -2400,9 +2552,22 @@ export class TaskScenario extends ScenarioData {
   }
 
   /**
-   * Propagate date changes to dependent tasks.
+   * Propaga data para tarefa dependente (versão fiel de 2 argumentos,
+   * `TaskScenario.rb#propagateDateToDep`, 2373-2398). Chamada pela cadeia
+   * de `propagateDate` sobre as listas de dependências já resolvidas.
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:propagateDateToDep
    */
-  propagateDateToDep(): void {
+  propagateDateToDep(task: Task, atEnd: boolean,): void;
+  /**
+   * Variante sem argumentos que percorre `depends` e reinicia scheduling
+   * de dependentes já agendados (uso interno legado).
+   */
+  propagateDateToDep(): void;
+  propagateDateToDep(task?: Task, atEnd?: boolean,): void {
+    if (task && atEnd !== undefined) {
+      return this.propagateDateToDepInternal(task, atEnd,);
+    }
     const depends = this.a("depends",) as TaskDependency[];
     for (const dependency of depends) {
       if (!dependency.task) {
@@ -2428,5 +2593,25 @@ export class TaskScenario extends ScenarioData {
         dependent.scenarioData(this.getScenarioIdx(),).finishScheduling();
       }
     }
+  }
+
+  private propagateDateToDepInternal(task: Task, atEnd: boolean,): void {
+    const dep = task.scenarioData(this.getScenarioIdx(),) as TaskScenario;
+    // Não propaga se a tarefa já está completamente agendada ou é container.
+    if (dep._scheduled || (task.container?.() ?? false)) return;
+
+    // Não propaga se a tarefa já tem data para aquele end.
+    if (dep.a(atEnd ? "end" : "start",) !== null) return;
+
+    // Não propaga se a tarefa tem duration spec e o end a definir está na
+    // direção do scheduling.
+    if (dep.hasDurationSpec() && !(atEnd !== dep.forward())) return;
+
+    // Usa a data mais tardia/cedo possível apenas quando todas as demais
+    // dependências daquele end já foram determinadas.
+    const nDate = atEnd ? dep.latestEnd() : dep.earliestStart();
+    if (nDate === null) return;
+
+    dep.propagateDate(nDate, atEnd, false,);
   }
 }

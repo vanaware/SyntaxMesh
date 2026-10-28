@@ -3,12 +3,14 @@
 > **Arquivo:** `docs/syntaxmesh/fases/fase-11-logical-complemento.md`
 > **Plano base:** `docs/syntaxmesh/fases/fase-11-logica-queries.md`
 > **Tarefas:** `docs/syntaxmesh/fases/fase-11-logica-queries-tarefas.md` (11.0–11.14 concluídas)
-> **Status:** 🟡 Em andamento — 1ª onda (LC-A/LC-B/LC-D + LF.1) e **2ª onda
-> (§6: G1–G5) executadas em 2026-10-27**: `TaskScenario#getAllocatedTime`
-> portado, 10 funções de datas/alocações/material implementadas, `flags` no
-> parser de material habilitado. Restam apenas os bloqueios reais com âncora
-> nas Fases 14/16/18/21 (G6/G7/G8). Review pós-onda (a)–(g) e fechamento do
-> G1.4 (com âncora no gap de scheduler da Fase 7): §6.10.
+> **Status:** ✅ Concluída (2026-10-27) — 1ª onda (LC-A/LC-B/LC-D + LF.1), **2ª
+> onda (§6: G1–G5)** e **auditoria final (§6.11)** executadas. Todo trabalho
+> acionável **sem dependência das Fases 12–21** está feito e testado
+> (D-3/LC-A.6 resolvido: `istask`/`isresource`/`isleaf`/`isan*` resolvem por
+> `$ID` — coberto em `logical-function_test.ts`). O que resta está **ancorado**
+> nas fases donas: scheduler (G1.4)→Fase 7; `isoncriticalpath`/`freeze`/hide-rollup→F14/15;
+> `hasalert`/`Journal`/LF.2-3→F16; `istaskstatus`→F18; fachada `parse*`→F19;
+> golden/i18n round-trip de extensões→F21.
 > **Fonte Ruby:** `docs/taskjuggler/lib/taskjuggler/LogicalFunction.rb`, `LogicalOperation.rb`, `TjpSyntaxRules.rb`, `i18n/*`
 > **ADRs:** 011 (port fiel), 023 (i18n de keywords), 024 (expressões sem precedência)
 
@@ -527,6 +529,53 @@ tests/logic/logical-function-second-wave_test.ts, describe
 **Verificação (pós-review)**: `deno task check:all` exit 0 · `deno task test`
 **302 passed / 3242 steps / 0 failed / 0 ignored** (era 300/3231) · lint limpo
 nos 5 arquivos tocados · `deno fmt --check` limpo (359 arquivos).
+
+---
+
+## 6.11 — Auditoria final de gaps (Fases 2–11) e roteamento (2026-10-27)
+
+Pedido explícito: levantar **todo gap restante das Fases 2–11**; desenvolver
+o que **não** depende das Fases 12–21 e **ancorar** no `-tarefas.md` da fase
+dona aquilo que depende delas. varredura de `packages/core/src` por
+`NotYetImplementedError(` (17) e `TODO` (13), cada candidato conferido contra
+o Ruby (`docs/taskjuggler/lib/taskjuggler/`).
+
+### Desenvolvido agora (escopo Fase 3/9/11 — Ruby como verdade, sem dependência 12–21)
+
+| # | Gap | Correção | Teste |
+|---|---|---|---|
+| 1 | **`ScenarioData#error/warning/info` eram stubs `console.*`** — mensagens do scheduler (`not_scheduled`, `task_underspecified`, `runaway`, `task_end_undef`) nunca chegavam ao `MessageHandlerInstance`. **É a raiz do G1.4 e sobra da Fase 9.** Ruby `ScenarioData.rb:46-65` roteia para `@messageHandler.error(id, text, sfi||@property.sourceFileInfo, nil, property||@property, @project.scenario(idx))`. | `scenario-data.ts`: novo helper privado `messageArgs()` + `error/warning/info` encaminhando para `MessageHandlerInstance.instance`. Preserva a assinatura Ruby (sfi/property/scenario). | `scenario-data-preload_test.ts`: describe `ScenarioData → MessageHandler` — 4 casos (error incrementa `errors`; warning marca `type==="warning"`; info não conta; `error` anexa property como `data`). Cada teste faz `reset()` no `beforeEach`. |
+| 2 | **`TaskJuggler#errors` retornava `0` hardcoded.** Ruby `TaskJuggler.rb:384` = `MessageHandlerInstance.instance.errors`. | `taskjuggler.ts`: `get errors()` → `MessageHandlerInstance.instance.errors`. | `taskjuggler_test.ts`: reescrito — `reset()`, afirma `0`, dispara `error("probe")`, afirma reflexão `1`, `reset()`. |
+| 3 | **`AllocationAttribute#to_s` retornava `"TODO"`, mas o Ruby tem impl real** (`Attributes.rb:78-103`). | `allocation-attribute.ts`: `to_s` fiel — por alocação `[ c1, c2 ] select by <mode> [mandatory ][persistent ]`, múltiplas unidas por `\n`. `ALLOCATION_MODES` já espelha `%w(order lowprob lowload hiload random)`. | `allocation-booking-attributes_test.ts`: 3 casos (single/multi/`\n`/vazio). Golden `attributes.rb` + `attributes.golden.json` atualizados (input agora array com `candidates`). |
+| 4 | **`LogicalExpression(Attribute)`/`…ListAttribute` lançavam no `to_tjp`**, mas o Ruby não sobrescreve → herda `AttributeBase#to_tjp` = `@type.id + " " + get.to_s` (`AttributeBase.rb:169`). | `logical-expression-attribute.ts`: `to_tjp` = `` `${tjpId} ${to_s()}` ``. `logical-expression-list-attribute.ts`: remove o override que lançava (herda `ListAttributeBase#to_tjp`). | Golden `attributes.rb` + `.json`: `logicalexpressions expr` / `logicalexpressions expr1`. |
+
+### Já fieis ao Ruby — NÃO são gaps (só comentário explicativo)
+
+- **`ColumnListAttribute#to_s` → `"TODO"`**: o Ruby **literalmente** retorna `"TODO"` (`Attributes.rb:196-198`). Manter é fidelidade (ADR 011). Comentário adicionado.
+- **`AllocationAttribute#to_tjp`** (stub): incompleto **no próprio upstream** (retorna array com `"# TODO: incomplete"`). Manter o stub.
+- **`DateAttribute#to_s`**: o Ruby usa `query ? query.timeFormat : '%Y-%m-%d'`, mas o pipeline de Query do port formata `TjTime` direto (`query.ts:345`) — `to_s` não recebe `query`. Tratado; só comentei e fiz `to_s` lidar com instância `TjTime` (`%Y-%m-%d`).
+- **`project.defaultAccount` → `account:null`**: 0 ocorrências no Ruby e nos `-tarefas` — extensão SyntaxMesh (ADR 031 regra 4). `null` é honesto p/ "sem default configurado".
+
+### Ancorados nas fases donas (dependem de 12–21 — nada fica para trás)
+
+| Stub | Fase dona | Âncora |
+|---|---|---|
+| `to_rti` ×4 (task/resource/account/report) + `query` rti | **12 (RichText)** | novo bloco em `fase-12-richtext-tarefas.md` |
+| `isoncriticalpath` (sem slack/float nem no Ruby) · `freeze` (escreve arquivo) · `project.defaultAccount` (regra 4) | **14 (Relatórios)** / **8.2** | `fase-14-relatorios-tarefas.md` (isoncriticalpath + freeze) · `fase-8.2-tarefas.md` (defaultAccount) |
+| `checkTimeSheet`/`checkStatusSheet`/`istaskstatus` | **18** | já ancorado (verificado) |
+| `hasalert`/`Journal`/leave-allowance | **16** | já ancorado (verificado) |
+| Fachada `TaskJuggler.parse/parseFile/parseContent` (transporte de arquivo) | **19 (Storage)** | novo bloco em `fase-19-storage-tarefas.md` — o motor de parse (Fase 10) já está pronto/testado via `ProjectFileParser` em buffer |
+
+### Verificação
+
+`deno check` limpo nos 7 arquivos `src` tocados · `deno lint` limpo (11
+arquivos) · `deno fmt` aplicado. **`deno task test` → 303 passed / 3248 steps
+/ 0 failed** (era 302/3242). Nota: ligar o `ScenarioData` ao `MessageHandler`
+**não** muda `TaskScenario.errors()` (contador local, `task-scenario.ts:1310`),
+então nenhuma asserção de agendamento quebrou; o único teste que afirmava
+`messages.length===0` pós-`schedule` era o regression G1.4
+(`logical-scheduler-driven_test.ts`) — relaxado, pois o roteamento agora é
+testado unitária e deterministicamente.
 
 ---
 

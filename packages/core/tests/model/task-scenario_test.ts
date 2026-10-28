@@ -302,15 +302,16 @@ describe("TaskScenario", () => {
     assertEquals(taskScenario.limitsOk(0,), true,);
   });
 
-  it("propagateDate propaga data para dependentes", () => {
-    const dependentTask = new Task(project, "t2", "Dependent Task", null,);
-    task.setForScenario("effort", 3600, 0,);
-    task.setForScenario("start", TjTime.fromString("2026-01-01",), 0,);
-    task.setForScenario("end", TjTime.fromString("2026-01-02",), 0,);
-    taskScenario.schedule();
-    const startDate = taskScenario.a("start",) as TjTime;
-    taskScenario.propagateDate(startDate, false, false,);
-    assertEquals(taskScenario.startIdx(), project.dateToIdx(startDate,),);
+  it("propagateDate grava a data no leaf (property bag)", () => {
+    // Ruby (TaskScenario.rb:1008-1014): propagateDate escreve o atributo do
+    // leaf e só registra @startIdx/@endIdx quando durationType já é
+    // :startEndTask (definido em prepareScheduling). Sem agendar, escreve
+    // apenas o bag.
+    const startDate = TjTime.fromString("2026-01-05",);
+    taskScenario.propagateDate(startDate, false, true,);
+    assertEquals(taskScenario.a("start",), startDate,);
+    // End ainda não tocado.
+    assertEquals(taskScenario.a("end",), null,);
   });
 
   it("propagateDateToDep propaga data para dependente", () => {
@@ -323,7 +324,11 @@ describe("TaskScenario", () => {
     assertEquals(taskScenario.errors(), 0,);
   });
 
-  it("canInheritDate verifica herança de data", () => {
+  it("canInheritDate reflete as regras do Ruby (não é stub true)", () => {
+    // Leaf nu (ASAP, sem start/end/deps/allocate) não pode herdar o start.
+    assertEquals(taskScenario.canInheritDate(false,), false,);
+    // Container sem dependência forte neste end herda a data do pai.
+    new Task(project, "tc", "TC", task,);
     assertEquals(taskScenario.canInheritDate(false,), true,);
   });
 

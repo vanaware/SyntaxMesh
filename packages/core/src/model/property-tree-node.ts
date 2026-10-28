@@ -401,6 +401,18 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
     attr.set(value as never,);
   }
 
+  /**
+   * Grava um valor de runtime (scheduler) no atributo de cenário sem a
+   * guarda de sobrescrita de `setForScenario`. Equivalente ao
+   * `instance_variable_set` que o Ruby usa para runtime attributes em
+   * `TaskScenario#propagateDate` (TaskScenario.rb:1012) — o guard
+   * `provided` existe para inputs do parser, não para o motor.
+   */
+  forceForScenario(id: string, value: unknown, scIdx: number,): void {
+    const attr = this.scenarioAttribute(scIdx, id,);
+    attr.set(value as never,);
+  }
+
   setForScenario(id: string, value: unknown, scIdx: number,): void {
     if (scIdx === undefined) {
       this.set(id, value,);

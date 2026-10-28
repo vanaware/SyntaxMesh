@@ -7,6 +7,25 @@
 > **Concluídas:** 0
 > **Fonte Ruby:** `docs/taskjuggler/lib/taskjuggler/reports/*.rb` + `TableColumnDefinition.rb` + `TableColumnSorter.rb` + `ICalendar.rb` + `Painter/*.rb`
 
+> **📌 Âncora — Complemento Fase 11 (`fase-11-logical-complemento.md` §6.6/§6.9, G6):**
+> a função lógica **`isoncriticalpath(id)`** permanece stub
+> (`NotYetImplementedError("14")`). Ela depende de **cálculo de float/caminho
+> crítico**, que não existe nem no TaskJuggler 3.8.4 vendorizado (extensão pura):
+> exige (a) o scheduler (Fase 7) computar folga total (`float`) por tarefa e (b)
+> a exposição em relatórios/Gantt para `Query` consultar. Implementar junto do
+> caminho crítico dos relatórios e reclassificar `FUNCTIONS_EXT` (`blocked →
+> feasible`) + testes. Ver também `fase-15-gantt-tarefas.md` (destacar caminho
+> crítico no gráfico).
+
+> **📌 Âncora — fachada `TaskJuggler#freeze` (`src/taskjuggler.ts:90`,
+> `NotYetImplementedError("14")`):** `freeze(freezeDate, taskBookings)`
+> (TaskJuggler.rb:220+) deriva nomes de arquivo do arquivo-mestre e escreve
+> `*-header.tji` + arquivo de bookings, então exige (a) a mecânica de
+> congelamento de bookings/datas sobre o cenário de tracking (Fase 8.1) e
+> (b) **saída de arquivo** — no PWA isso mora em Storage/UI (**Fase 19/20**,
+> `worker-db`/OPFS), não no core. Portar a lógica de congelamento aqui e o
+> transporte de arquivo na Fase 19.
+
 ---
 
 ## ⚠️ PREÂMBULO — Leia antes de começar

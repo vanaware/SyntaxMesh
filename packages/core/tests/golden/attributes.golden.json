@@ -463,13 +463,23 @@
       "method": "to_s",
       "type": "Allocation",
       "input": {
-        "value": {
-          "mode": 0,
-          "mandatory": true,
-          "persistent": false
-        }
+        "value": [
+          {
+            "candidates": [
+              {
+                "fullId": "r1"
+              },
+              {
+                "fullId": "r2"
+              }
+            ],
+            "selectionMode": 0,
+            "mandatory": true,
+            "persistent": false
+          }
+        ]
       },
-      "expected": "TODO"
+      "expected": "[ r1, r2 ] select by order mandatory "
     },
     {
       "description": "BookingListAttribute to_tjp lança",
@@ -498,13 +508,13 @@
       "expected": "b1"
     },
     {
-      "description": "LogicalExpressionAttribute to_tjp lança",
+      "description": "LogicalExpressionAttribute to_tjp com expr",
       "method": "to_tjp",
       "type": "LogicalExpression",
       "input": {
         "value": "expr"
       },
-      "expected": "throws"
+      "expected": "logicalexpressions expr"
     },
     {
       "description": "LogicalExpressionAttribute to_s com expr",
@@ -516,7 +526,7 @@
       "expected": "expr"
     },
     {
-      "description": "LogicalExpressionListAttribute to_tjp lança",
+      "description": "LogicalExpressionListAttribute to_tjp com expr",
       "method": "to_tjp",
       "type": "LogicalExpressionList",
       "input": {
@@ -524,7 +534,7 @@
           "expr1"
         ]
       },
-      "expected": "throws"
+      "expected": "logicalexpressions expr1"
     },
     {
       "description": "LogicalExpressionListAttribute to_s com expr",

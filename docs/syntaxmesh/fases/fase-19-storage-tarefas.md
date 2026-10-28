@@ -7,6 +7,20 @@
 > **Concluídas:** 0
 > **Fonte:** `@vanaware/workerdb` (já pronto) + extensão SyntaxMesh
 
+> **📌 Âncora — fachada CLI `TaskJuggler` que depende de fonte/destino de
+> arquivo (audit 2026-10-27, Fases 2–11).** O motor de parse (Fase 10) está
+> pronto e testado via `ProjectFileParser` (conteúdo em buffer); o que falta é
+> o **transporte de arquivo** que esses três stubs da fachada exigem:
+>
+> - `taskjuggler.ts:28` `parse(files, keepParser)` (`NotYetImplementedError("10")`)
+>   — TaskJuggler.rb:46-101: abrir cada arquivo + `parse(:project)`/`:propertiesFile`.
+> - `taskjuggler.ts:31` `parseFile(fileName, rule)` — stub (TaskJuggler.rb:105+).
+> - `taskjuggler.ts:36` `parseContent(content)` (`NotYetImplementedError("19")`)
+>   — variante com conteúdo direto (já referenciado por `ProjectLoader`, 24.8.5).
+>
+> No PWA, `files`/`fileName` vir do `FileStore` (`worker-db`/OPFS), não do `fs`
+> do Node. Implementar os três sobre o `FileStore`/`ProjectLoader` desta fase.
+
 ---
 
 ## ⚠️ PREÂMBULO — Leia antes de começar

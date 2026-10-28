@@ -238,6 +238,18 @@ TOTAL: ~130
 | 8.2.5.15 | Integrar `chargesetmode` no parser | `parser/rule_chargeset.ts` | 2 testes |
 | 8.2.5.16 | Teste agregado: task force + resource com chargeset próprio → task domina | idem | 1 teste |
 
+> **📌 Âncora — regra 4 (`project_default`) parcialmente realizada (audit 2026-10-27, Complemento Fase 11).**
+> `resolveAccount` (`src/accounting/attribution.ts`) resolve as regras 1–3 com
+> contas reais, mas a **regra 4** retorna `{ account: null, rule: "project_default" }`
+> com `projectDefault` como placeholder. Isso é **correto para o estado atual**: não
+> existe `project.defaultAccount` no TaskJuggler Ruby (grep = 0) nem atributo/palavra-
+> chave correspondente registrado no modelo — logo, sem conta default configurada, o
+> resultado honesto é "não atribuída" (`account: null`). **Desenvolver quando** for
+> definido um atributo de conta-default do projeto (keyword no parser + `AttributeDefinition`
+> em `project-attributes.ts`): resolver via `project.account(id)` e popular `projectDefault`
+> real; o consumo aparece nos relatórios de balanço/custos. **Fase de destino: 14
+> (Relatórios)** — onde `project_default` deixa de ser no-op e precisa de uma conta.
+
 ---
 
 ## Bloco G — Integração material
