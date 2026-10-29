@@ -1,0 +1,357 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "para",
+      "description": "Parágrafo simples de texto",
+      "input": "Texto simples aqui.\n\n",
+      "sectionNumbers": true,
+      "expected": {
+        "plain": "Texto simples aqui.",
+        "tagged": "<div>[Texto] [simples] [aqui.]</div>",
+        "html": "<div>Texto simples aqui.</div>"
+      }
+    },
+    {
+      "id": "two-paragraphs",
+      "description": "Dois parágrafos separados por linha em branco",
+      "input": "Primeiro paragrafo.\n\nSegundo paragrafo.\n\n",
+      "sectionNumbers": true,
+      "expected": {
+        "plain": "Primeiro paragrafo.\n\nSegundo paragrafo.",
+        "tagged": "<div><p>[Primeiro] [paragrafo.]</p>\n\n<p>[Segundo] [paragrafo.]</p>\n\n</div>",
+        "html": "<div>\n <p>Primeiro paragrafo.</p>\n <p>Segundo paragrafo.</p>\n</div>"
+      }
+    },
+    {
+      "id": "head-h1",
+      "description": "Título de nível 1 com numeração de seção",
+      "input": "== Capitulo ==\n\n",
+      "sectionNumbers": true,
+      "expected": {
+        "plain": "1) Capitulo",
+        "tagged": "<div><h1>1 [Capitulo]</h1>\n\n</div>",
+        "html": "<div><h1 id=\"Capitulo\">1 Capitulo</h1></div>"
+      }
+    },
+    {
+      "id": "head-h1-text",
+      "description": "Título de nível 1 seguido de parágrafo",
+      "input": "== Cap ==\n\nTexto normal aqui.\n\n",
+      "sectionNumbers": true,
+      "expected": {
+        "plain": "1) Cap\n\nTexto normal aqui.",
+        "tagged": "<div><h1>1 [Cap]</h1>\n\n<p>[Texto] [normal] [aqui.]</p>\n\n</div>",
+        "html": "<div>\n <h1 id=\"Cap\">1 Cap</h1>\n <p>Texto normal aqui.</p>\n</div>"
+      }
+    },
+    {
+      "id": "head-h2",
+      "description": "Título de nível 2",
+      "input": "=== Secao ===\n\n",
+      "sectionNumbers": true,
+      "expected": {
+        "plain": "0.1) Secao",
+        "tagged": "<div><h2>0.1 [Secao]</h2>\n\n</div>",
+        "html": "<div><h2 id=\"Secao\">0.1 Secao</h2></div>"
+      }
+    },
+    {
+      "id": "head-h3",
+      "description": "Título de nível 3",
+      "input": "==== Subsecao ====\n\n",
+      "sectionNumbers": true,
+      "expected": {
+        "plain": "0.0.1) Subsecao",
+        "tagged": "<div><h3>0.0.1 [Subsecao]</h3>\n\n</div>",
+        "html": "<div><h3 id=\"Subsecao\">0.0.1 Subsecao</h3></div>"
+      }
+    },
+    {
+      "id": "head-nested",
+      "description": "Títulos aninhados avançam os contadores de seção",
+      "input": "== A ==\n\n=== B ===\n\n== C ==\n\n",
+      "sectionNumbers": true,
+      "expected": {
+        "plain": "1) A\n\n1.1) B\n\n2) C",
+        "tagged": "<div><h1>1 [A]</h1>\n\n<h2>1.1 [B]</h2>\n\n<h1>2 [C]</h1>\n\n</div>",
+        "html": "<div>\n <h1 id=\"A\">1 A</h1>\n <h2 id=\"B\">1.1 B</h2>\n <h1 id=\"C\">2 C</h1>\n</div>"
+      }
+    },
+    {
+      "id": "bold",
+      "description": "Negrito com três apóstrofos",
+      "input": "isto e '''negrito''' aqui\n\n",
+      "sectionNumbers": true,
+      "expected": {
+        "plain": "isto e negrito aqui",
+        "tagged": "<div>[isto] [e] <b>[negrito]</b> [aqui]</div>",
+        "html": "<div>isto e <b>negrito</b> aqui</div>"
+      }
+    },
+    {
+      "id": "italic",
+      "description": "Itálico com dois apóstrofos",
+      "input": "isto e ''italico'' aqui\n\n",
+      "sectionNumbers": true,
+      "expected": {
+        "plain": "isto e italico aqui",
+        "tagged": "<div>[isto] [e] <i>[italico]</i> [aqui]</div>",
+        "html": "<div>isto e <i>italico</i> aqui</div>"
+      }
+    },
+    {
+      "id": "underline",
+      "description": "Sublinhado com underscores duplos",
+      "input": "isto e __sublinhado__ aqui\n\n",
+      "sectionNumbers": true,
+      "expected": {
+        "plain": "isto e __sublinhado__ aqui",
+        "tagged": "<div>[isto] [e] [__sublinhado__] [aqui]</div>",
+        "html": "<div>isto e __sublinhado__ aqui</div>"
+      }
+    },
+    {
+      "id": "bullet-list",
+      "description": "Lista com marcadores",
+      "input": "* um\n* dois\n\n",
+      "sectionNumbers": true,
+      "expected": {
+        "plain": " * um\n\n * dois",
+        "tagged": "<div><ul><li>* [um]</li>\n<li>* [dois]</li>\n</ul></div>",
+        "html": "<div><ul>\n  <li>um</li>\n  <li>dois</li>\n </ul></div>"
+      }
+    },
+    {
+      "id": "number-list",
+      "description": "Lista numerada",
+      "input": "# um\n# dois\n\n",
+      "sectionNumbers": true,
+      "expected": {
+        "plain": " 1. um\n\n 2. dois",
+        "tagged": "<div><ol><li>1 [um]</li>\n<li>2 [dois]</li>\n</ol></div>",
+        "html": "<div><ol>\n  <li>um</li>\n  <li>dois</li>\n </ol></div>"
+      }
+    },
+    {
+      "id": "nested-list",
+      "description": "Item de lista aninhada",
+      "input": "** nivel2\n\n",
+      "sectionNumbers": true,
+      "expected": {
+        "plain": "  * nivel2",
+        "tagged": "<div><ul><ul><li> * [nivel2]</li>\n</ul></ul></div>",
+        "html": "<div><ul><ul><li>nivel2</li></ul></ul></div>"
+      }
+    },
+    {
+      "id": "code-block",
+      "description": "Bloco de código (negrito de múltiplas linhas)",
+      "input": "''' code block\nlinha2\n''' mais\n\n",
+      "sectionNumbers": true,
+      "expected": {
+        "plain": "code block linha2 mais",
+        "tagged": "<div><b>[code] [block] [linha2]</b> [mais]</div>",
+        "html": "<div>\n <b>code block linha2</b> mais</div>"
+      }
+    },
+    {
+      "id": "nowiki",
+      "description": "Conteúdo nowiki preserva marcadores literalmente",
+      "input": "<nowiki>'''nao'''</nowiki>\n\n",
+      "sectionNumbers": true,
+      "expected": {
+        "plain": "'''nao'''",
+        "tagged": "<div>['''nao''']</div>",
+        "html": "<div>'''nao'''</div>"
+      }
+    },
+    {
+      "id": "html-comment",
+      "description": "Comentário HTML",
+      "input": "<!-- comentário -->\n\n",
+      "sectionNumbers": true,
+      "expected": {
+        "plain": "<!-- comentário -->",
+        "tagged": "<div>[<!--] [comentário] [-->]</div>",
+        "html": "<div>&lt;!-- comentário --&gt;</div>"
+      }
+    },
+    {
+      "id": "href-simple",
+      "description": "Link externo com rótulo",
+      "input": "[http://exemplo.com Exemplo]\n\n",
+      "sectionNumbers": true,
+      "expected": {
+        "plain": "Exemplo",
+        "tagged": "<div><a href=\"http://exemplo.com\" >[Exemplo]</a></div>",
+        "html": "<div><a href=\"http://exemplo.com\">Exemplo</a></div>"
+      }
+    },
+    {
+      "id": "href-bare",
+      "description": "Link externo sem rótulo (URL vira texto)",
+      "input": "[http://exemplo.com]\n\n",
+      "sectionNumbers": true,
+      "expected": {
+        "plain": "http://exemplo.com",
+        "tagged": "<div><a href=\"http://exemplo.com\" >[http://exemplo.com]</a></div>",
+        "html": "<div><a href=\"http://exemplo.com\">http://exemplo.com</a></div>"
+      }
+    },
+    {
+      "id": "ref-simple",
+      "description": "Referência interna [[Section]]",
+      "input": "veja [[Section]] aqui\n\n",
+      "sectionNumbers": true,
+      "expected": {
+        "plain": "veja Section aqui",
+        "tagged": "<div>[veja] <ref data=\"Section\">[Section]</ref> [aqui]</div>",
+        "html": "<div>veja <a href=\"Section.html\">Section</a> aqui</div>"
+      }
+    },
+    {
+      "id": "ref-label",
+      "description": "Referência interna com rótulo",
+      "input": "[[Section|Um rótulo]]\n\n",
+      "sectionNumbers": true,
+      "expected": {
+        "plain": "Um rótulo",
+        "tagged": "<div><ref data=\"Section\">[Um rótulo]</ref></div>",
+        "html": "<div><a href=\"Section.html\">Um rótulo</a></div>"
+      }
+    },
+    {
+      "id": "ref-anchor",
+      "description": "Referência interna com âncora",
+      "input": "[[Section#tag|Âncora]]\n\n",
+      "sectionNumbers": true,
+      "expected": {
+        "plain": "Âncora",
+        "tagged": "<div><ref data=\"Section#tag\">[Âncora]</ref></div>",
+        "html": "<div><a href=\"Section.html#tag\">Âncora</a></div>"
+      }
+    },
+    {
+      "id": "table-basic",
+      "description": "Tabela MediaWiki",
+      "input": "!| T\n!| c1 || c2\n|-\n| a || b\n|)\n\n",
+      "sectionNumbers": true,
+      "expected": {
+        "plain": "!| T !| c1 || c2 |- | a || b |)",
+        "tagged": "<div>[!|] [T] [!|] [c1] [||] [c2] [|-] [|] [a] [||] [b] [|)]</div>",
+        "html": "<div>!| T !| c1 || c2 |- | a || b |)</div>"
+      }
+    },
+    {
+      "id": "quote",
+      "description": "Citação",
+      "input": "\"\"\" citação\n\n",
+      "sectionNumbers": true,
+      "expected": {
+        "plain": "\"\"\" citação",
+        "tagged": "<div>[\"\"\"] [citação]</div>",
+        "html": "<div>\"\"\" citação</div>"
+      }
+    },
+    {
+      "id": "deflist",
+      "description": "Lista de definição",
+      "input": "; termo : definição\n\n",
+      "sectionNumbers": true,
+      "expected": {
+        "plain": "; termo : definição",
+        "tagged": "<div>[;] [termo] [:] [definição]</div>",
+        "html": "<div>; termo : definição</div>"
+      }
+    },
+    {
+      "id": "hr",
+      "description": "Linha horizontal",
+      "input": "----\n\n",
+      "sectionNumbers": true,
+      "expected": {
+        "plain": "--------------------------------------------------------------------------------",
+        "tagged": "<div><hr>----</hr>\n</div>",
+        "html": "<div><hr/></div>"
+      }
+    },
+    {
+      "id": "entity-amp",
+      "description": "E comercial em texto",
+      "input": "A & B\n\n",
+      "sectionNumbers": true,
+      "expected": {
+        "plain": "A & B",
+        "tagged": "<div>[A] [&] [B]</div>",
+        "html": "<div>A &amp; B</div>"
+      }
+    },
+    {
+      "id": "escape-brackets",
+      "description": "Aspa escapa colchetes de referência",
+      "input": "\"[[não é ref]]\n\n",
+      "sectionNumbers": true,
+      "expected": {
+        "plain": "\"não é ref",
+        "tagged": "<div>[\"]<ref data=\"não é ref\">[não é ref]</ref></div>",
+        "html": "<div>\"<a href=\"não é ref.html\">não é ref</a>\n</div>"
+      }
+    },
+    {
+      "id": "no-trailing-blank",
+      "description": "Texto sem linha em branco final",
+      "input": "sem linha em branco no fim",
+      "sectionNumbers": true,
+      "expected": {
+        "plain": "sem linha em branco no fim",
+        "tagged": "<div>[sem] [linha] [em] [branco] [no] [fim]</div>",
+        "html": "<div>sem linha em branco no fim</div>"
+      }
+    },
+    {
+      "id": "multiline-para",
+      "description": "Parágrafo de múltiplas linhas",
+      "input": "linha um\nlinha dois\n\n",
+      "sectionNumbers": true,
+      "expected": {
+        "plain": "linha um linha dois",
+        "tagged": "<div>[linha] [um] [linha] [dois]</div>",
+        "html": "<div>linha um linha dois</div>"
+      }
+    },
+    {
+      "id": "empty",
+      "description": "Entrada vazia produz árvore raiz sem filhos",
+      "input": "",
+      "sectionNumbers": true,
+      "expected": {
+        "plain": "",
+        "tagged": "<div></div>",
+        "html": "<div></div>"
+      }
+    },
+    {
+      "id": "image",
+      "description": "Imagem via image:",
+      "input": "[[image:foto.png]]\n\n",
+      "sectionNumbers": true,
+      "expected": {
+        "plain": "image:foto.png",
+        "tagged": "<div><ref data=\"image:foto.png\">[image:foto.png]</ref></div>",
+        "html": "<div><a href=\"image:foto.png.html\">image:foto.png</a></div>"
+      }
+    },
+    {
+      "id": "head-no-number",
+      "description": "Título sem numeração de seção (sectionNumbers=false)",
+      "input": "== Capitulo ==\n\nTexto.\n\n",
+      "sectionNumbers": false,
+      "expected": {
+        "plain": "Capitulo\n\nTexto.",
+        "tagged": "<div><h1>1 [Capitulo]</h1>\n\n<p>[Texto.]</p>\n\n</div>",
+        "html": "<div>\n <h1 id=\"Capitulo\">Capitulo</h1>\n <p>Texto.</p>\n</div>"
+      }
+    }
+  ]
+}

@@ -71,6 +71,17 @@ const scripts: Array<{ name: string; rubyScript: URL; outputPath: URL }> = [
       import.meta.url,
     ),
   },
+  {
+    name: "richtext",
+    rubyScript: new URL(
+      "../../../../scripts/golden/richtext.rb",
+      import.meta.url,
+    ),
+    outputPath: new URL(
+      "../richtext/golden/richtext.golden.json",
+      import.meta.url,
+    ),
+  },
 ];
 
 for (const { name, rubyScript, outputPath, } of scripts) {

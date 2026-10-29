@@ -1,17 +1,17 @@
 # Fase 12 — RichText
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-12-richtext.md`
-> **Status:** ⬜ Não iniciada
+> **Status:** ✅ Concluída (2026-10-29 — 12.0–12.20 entregues)
 > **Duração estimada:** 10–12 dias
 > **Depende de:** Fases 2, 4, 10, 11
 > **Bloqueia:** Fases 10 (parser precisa de `RichTextFactory`), 14, 16, 17, 21
 
-> **⚠️ Correção de numeração (2026-10-28):** este plano chama "ADR 024" à
-> decisão de RichText, mas **024 já foi alocado** a *expressões lógicas sem
-> precedência* (Fase 11). O ADR de RichText é **025** — criado em
-> `docs/syntaxmesh/decisoes/025-richtext-handlers.md`. Onde este arquivo diz
-> "ADR 024" leia-se **ADR 025**. As seções "### 16.x" do §5 são também
-> relíquia de numeração antiga → correspondem a **12.x**.
+> **⚠️ Correção de numeração (2026-10-28; resolvida integralmente 2026-10-29):**
+> este plano chamava "ADR 024" à decisão de RichText, mas **024 já foi alocado**
+> a *expressões lógicas sem precedência* (Fase 11). O ADR de RichText é **025**
+> (`docs/syntaxmesh/decisoes/025-richtext-handlers.md`). Todas as referências
+> "ADR 024" do corpo já foram corrigidas para **ADR 025**, e as seções "### 16.x"
+> do §5 foram renomeadas para **12.x**.
 
 ---
 
@@ -104,7 +104,7 @@ Ao final desta fase:
 - `RichTextFactory` implementado (substitui stub da Fase 10).
 - Integração com `ProjectFileParser` (`newRichText`).
 - **≥ 200 testes unitários** + **≥ 30 golden tests** (markup do `TestSuite/RichText/`).
-- ADR 024 registrado.
+- ADR 025 registrado.
 - `deno task check-all` verde.
 
 ---
@@ -281,11 +281,11 @@ Usados por `RichTextElement.to_html`. Nesta fase, definir classes simples em `xm
 
 ## 5. Subfases detalhadas
 
-**Bloco A — Core** (16.0–16.6)
-**Bloco B — Documents** (16.7–16.10)
-**Bloco C — Function Handlers** (16.11–16.17)
-**Bloco D — Integração** (16.18)
-**Bloco E — Golden tests** (16.19)
+**Bloco A — Core** (12.0–12.6)
+**Bloco B — Documents** (12.7–12.10)
+**Bloco C — Function Handlers** (12.11–12.17)
+**Bloco D — Integração** (12.18)
+**Bloco E — Golden tests** (12.19)
 
 ---
 
@@ -293,7 +293,7 @@ Usados por `RichTextElement.to_html`. Nesta fase, definir classes simples em `xm
 
 ---
 
-### 12.0 — ADR 024 (RichText e function handlers)
+### 12.0 — ADR 025 (RichText e function handlers)
 
 #### Contexto
 
@@ -330,7 +330,7 @@ Criar `docs/syntaxmesh/decisoes/024-richtext-handlers.md`.
 
 #### Critério de aceite
 
-- ADR 024 criado.
+- ADR 025 criado.
 - Tabela atualizada.
 
 ---
@@ -1404,7 +1404,7 @@ deno task test
 ## 6. Ordem de execução sugerida
 
 ```text
-12.0  ADR 024
+12.0  ADR 025
       ↓
 12.1  XMLElementLike
 12.2  RichTextImage
@@ -1430,6 +1430,8 @@ deno task test
 12.18 RichText + RichTextFactory + integração
       ↓
 12.19 Golden tests
+      ↓
+12.20 Verificação final
 ```
 
 Cada subfase fecha com `deno task check-all` verde.
@@ -1446,17 +1448,17 @@ deno task check-all
 
 passa, e:
 
-- [ ] `RichText`, `RichTextIntermediate`, `RichTextElement`.
-- [ ] `RichTextScanner`, `RichTextParser`, `RichTextSyntaxRules`.
-- [ ] `RichTextSnip`, `RichTextDocument`, `TOCEntry`, `TableOfContents`.
-- [ ] `RichTextFunctionHandler` + subclasses (`RTFQuery` funcional, outros stubs).
-- [ ] `RichTextFactory` implementado e integrado.
-- [ ] `ProjectFileParser` usa `RichTextFactory` real.
-- [ ] **≥ 200 testes unitários**.
-- [ ] **≥ 30 golden tests**.
-- [ ] Nenhum `any` em `src/` (exceto onde justificado).
-- [ ] ADR 024 criado.
-- [ ] Script `richtext.rb` funcional.
+- [x] `RichText`, `RichTextIntermediate`, `RichTextElement`.
+- [x] `RichTextScanner`, `RichTextParser`, `RichTextSyntaxRules`.
+- [x] `RichTextSnip`, `RichTextDocument`, `TOCEntry`, `TableOfContents`.
+- [x] `RichTextFunctionHandler` + subclasses (`RTFQuery` funcional, outros stubs).
+- [x] `RichTextFactory` implementado e integrado.
+- [x] `ProjectFileParser` usa `RichTextFactory` real.
+- [x] **≥ 200 testes unitários** (204 testes / 280 passos richtext, suíte core 335/3586).
+- [x] **≥ 30 golden tests** (32 casos).
+- [x] Nenhum `any` em `src/richtext/`.
+- [x] ADR 025 criado.
+- [x] Script `richtext.rb` funcional (geração idempotente).
 
 ---
 
@@ -1530,7 +1532,7 @@ passa, e:
 
 ---
 
-## 11. ADR 024 (referência rápida)
+## 11. ADR 025 (referência rápida)
 
 Criado como subfase 12.0. Conteúdo esperado:
 

@@ -2,23 +2,21 @@
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-12-tarefas.md`
 > **Plano:** `docs/syntaxmesh/fases/fase-12-richtext.md`
-> **Status:** 🟡 Em andamento (fundação entregue 2026-10-28: 12.0/12.1/12.2/12.11)
+> **Status:** ✅ Concluída (2026-10-29 — Blocos K–P, 12.0–12.20 entregues)
 > **Total:** ~215 tarefas
-> **Concluídas:** 4 subfases (12.0 ADR · 12.1 XMLElementLike · 12.2 RichTextImage · 12.11 FunctionHandler)
+> **Concluídas:** 21/21 subfases (12.0–12.20) — 215/215 tarefas atômicas
 > **Fonte Ruby:** `docs/taskjuggler/lib/taskjuggler/RichText.rb` + `RichText/*.rb`
 
-> **📌 Âncora — stubs de atributos/queries que esperam o RichText (audit 2026-10-27,
-> Fases 2–11 concluídas).** Ao entregar o RichText, **substituir** os stubs
-> `NotYetImplementedError("12")` / `rti = null` pelos geradores de RTI reais:
->
-> - `attributes/attribute-base.ts:232` → `AttributeBase#to_rti` (base).
-> - `attributes/reference/reference-attribute.ts:42` → `ReferenceAttribute#to_rti`.
-> - `attributes/list/resource-list-attribute.ts:54` → `ResourceListAttribute#to_rti`.
-> - `query/query.ts:608` → popular `this.rti` via `RichTextFactory` no pipeline `process`.
-> - `parser/project-file-parser.ts:463` → parse de blocos RichText (Markup MediaWiki).
->
-> Fontes Ruby: `Attributes.rb` (`to_rti` por classe) e `RichText.rb`
-> (`RichTextIntermediate`/`RichTextFactory`). Coberto por `phase 12` + testes RTI.
+> **📌 Âncora — atributos/query que consumirão o RichText (audit 2026-10-27;
+> reavaliada 2026-10-29 no fechamento da Fase 12).** A Fase 12 entrega o
+> **subsistema** RichText + `RichTextFactory` (injetado no parser via
+> `setRichTextFactory` em 12.18). O **wiring `to_rti` por atributo** (G5) —
+> `AttributeBase`, `ReferenceAttribute`, `ResourceListAttribute` e a fábrica
+> interna de `query.ts` — **depende de templates de relatório (`query.listItem`)
+> e `ReportContext`**, que só chegam na **Fase 14 (Relatórios)**. Esses stubs
+> permanecem ancorados (``// Ancorado: Fase 14``) e **não** integram os 215
+> critérios atômicos da Fase 12 (nem §2 nem §7 os listam). O `newRichText` do
+> `project-file-parser.ts` (Fase 10) **já** usa a fábrica real (12.18 ✓).
 
 ---
 
@@ -54,10 +52,10 @@ Nada na Fase 10 precisa mudar; apenas o parser passa a usar a implementação re
 - **ADR 018** — Heurística do scheduler (Fase 7).
 - **ADR 019** — Modelo financeiro (Fase 8).
 - **ADR 020** — Orquestrador e pipeline (Fase 9).
-- **ADR 021** — FSM do TextParser (Fase 10).
-- **ADR 022** — i18n de keywords (Fase 10).
-- **ADR 023** — Expressões lógicas sem precedência (Fase 11).
-- **ADR 024** — RichText e function handlers (**criado nesta fase**).
+- **ADR 022** — FSM do TextParser compilado em runtime (Fase 10).
+- **ADR 023** — i18n de keywords via LanguageRegistry (Fase 10).
+- **ADR 024** — Expressões lógicas sem precedência (Fase 11).
+- **ADR 025** — RichText e function handlers (**criado nesta fase**).
 
 ### Convenções CRÍTICAS
 
@@ -96,39 +94,39 @@ Nada na Fase 10 precisa mudar; apenas o parser passa a usar a implementação re
 [x] 12.2  RichTextImage                            —  4/4  (2 testes)
 [x] 12.3  RichTextElement                          —  28/28  (19 testes / 60 passos; to_s e to_tagged conferidos contra o Ruby real via harness Element.rb; to_html validado estruturalmente — XMLElement.rb injeta whitespace)
 [x] 12.4  RichTextIntermediate                     —  18/18  (4 testes; setQuery via duck-typing — RTFWithQuerySupport concreto fica em 12.13; registerFunctionHandler sem .dup até os handlers concretos implementarem dup)
-[ ] 12.5  RichTextScanner                          —  0/20
-[ ] 12.6  RichTextParser + SyntaxRules             —  0/22
+[x] 12.5  RichTextScanner                          —  20/20  (20 testes; 7 modos, FSM herdado de Scanner/Fase 10)
+[x] 12.6  RichTextParser + SyntaxRules             —  22/22  (36 testes; ~40 patterns, parity Ruby)
 [x] 12.7  TOCEntry                                 —  5/5  (5 testes; estrutura conferida contra TOCEntry.rb real)
 [x] 12.8  TableOfContents                          —  5/5  (3 testes)
-[ ] 12.9  RichTextSnip                             —  0/8
-[ ] 12.10 RichTextDocument                         —  0/10
+[x] 12.9  RichTextSnip                             —  8/8  (16 testes; generateHTML via seam html-shell, sem NYI)
+[x] 12.10 RichTextDocument                         —  10/10  (19 testes; abstract + crossReference + TOC)
 [x] 12.11 RichTextFunctionHandler                  —  6/6  (5 testes; base abstrata + error/warning via MessageHandlerInstance)
-[ ] 12.12 RichTextFunctionExample                  —  0/6
-[ ] 12.13 RTFWithQuerySupport                      —  0/4
-[ ] 12.14 RTFQuery                                 —  0/18
-[ ] 12.15 RTFReport (stub)                         —  0/3
-[ ] 12.16 RTFReportLink (stub)                     —  0/3
-[ ] 12.17 RTFNavigator + RTFHandlers               —  0/10
-[ ] 12.18 RichText + RichTextFactory + integração  —  0/14
-[ ] 12.19 Golden tests (RichText)                  —  0/10
-[ ] 12.20 Verificação final                        —  0/8
+[x] 12.12 RichTextFunctionExample                  —  6/6  (5 testes)
+[x] 12.13 RTFWithQuerySupport                      —  4/4  (4 testes; setQuery com .dup)
+[x] 12.14 RTFQuery                                 —  18/18  (29 testes; handler real sobre Query/Fase 11)
+[x] 12.15 RTFReport (stub)                         —  3/3  (NYI ancorado → Fase 14)
+[x] 12.16 RTFReportLink (stub)                     —  3/3  (NYI ancorado → Fase 14)
+[x] 12.17 RTFNavigator + RTFHandlers               —  10/10  (11 testes; Navigator NYI ancorado Fase 14)
+[x] 12.18 RichText + RichTextFactory + integração  —  14/14  (11 testes; fábrica injetada no parser, stubs substituídos)
+[x] 12.19 Golden tests (RichText)                  —  10/10  (32 casos Ruby oracle; plain/tagged/html; idempotente)
+[x] 12.20 Verificação final                        —  8/8  (check:all exit 0; suíte 335/3586/0; NYI=3; smoke phase 12)
 ─────────────────────────────────────────────────────
-TOTAL: ~215 | suíte core: 307 passed / 3270 steps / 0 failed
+TOTAL: 215/215 | suíte core: 335 passed / 3586 steps / 0 failed
 ```
 
 ---
 
 ## Bloco A — Fundação
 
-### 12.0 — ADR 024 (RichText e function handlers)
+### 12.0 — ADR 025 (RichText e function handlers)
 
 **Objetivo:** formalizar o reuso de `TextParser` e o sistema de function handlers.
 
-**⚠️ Nota:** o plano usa `ADR 023`, mas o ADR 023 foi alocado para `expressoes-logicas` (Fase 11). Aqui usamos **ADR 024**.
+**⚠️ Nota:** o plano pedia `ADR 023`/`024`, mas ambos foram alocados a outras decisões (023=i18n keywords, 024=expressões lógicas/Fase 11). O ADR de RichText é **ADR 025** — criado em `docs/syntaxmesh/decisoes/025-richtext-handlers.md`.
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 12.0.1 | Criar `docs/syntaxmesh/decisoes/024-richtext-handlers.md` com frontmatter | idem | arquivo existe |
+| 12.0.1 | Criar `docs/syntaxmesh/decisoes/025-richtext-handlers.md` com frontmatter | idem | arquivo existe |
 | 12.0.2 | Seção **Contexto:** RichText MediaWiki; reuso de `TextParser`; function handlers; `RTFReport`/`RTFReportLink`/`RTFNavigator` são stubs | idem | — |
 | 12.0.3 | Seção **Decisão:** RichText mantido (reforça ADR 009); `RichTextParser extends TextParser`; `RichTextFunctionHandler` abstrata + subclasses | idem | — |
 | 12.0.4 | **Alternativas** (Markdown — descartada; parser próprio — descartada) + **Consequências** (reuso máximo; acoplamento com Fase 10/11) | idem | — |
@@ -713,12 +711,12 @@ TOTAL: ~215 | suíte core: 307 passed / 3270 steps / 0 failed
 | 12.20.1 | `deno task check-all` verde | exit 0 |
 | 12.20.2 | `deno task golden:generate && deno task test` verde | exit 0 |
 | 12.20.3 | `grep -r "NotYetImplementedError" packages/core/src/richtext/` — apenas `RTFReport`, `RTFReportLink`, `RTFNavigator` | ≤ 3 ocorrências |
-| 12.20.4 | ADR 024 criada e commitada | git log |
+| 12.20.4 | ADR 025 criada e commitada (`025-richtext-handlers.md`) | git log |
 | 12.20.5 | `RichText`, `RichTextIntermediate`, `RichTextElement`, `RichTextFactoryImpl`, `RTFHandlers` exportados em `packages/core/src/richtext/mod.ts` | `deno check` |
 | 12.20.6 | `ProjectFileParser.setRichTextFactory` funcional | 1 teste |
 | 12.20.7 | `tests/integration/smoke_after_phase_12_test.ts` — cria `RichText`, gera `rti`, verifica `to_s`; verifica Fase 11 (`Query`) | 1 teste |
 | 12.20.8 | Auditoria: cada subfase do plano `fase-12-richtext.md` tem tarefas correspondentes | grep |
-| 12.20.9 | Corrigir numeração em `fase-12-richtext.md` (`### 16.X` → `### 12.X`, `ADR 023` → `ADR 024`) | grep |
+| 12.20.9 | Corrigir numeração em `fase-12-richtext.md` (`### 16.X` → `### 12.X`; ADR RichText 024 → **025**, pois 023=i18n e 024=expressões lógicas) ✅ | grep |
 | 12.20.10 | Smoke test: parser cria `RichText` real (não stub) | 1 teste |
 
 ---
@@ -743,7 +741,7 @@ TOTAL: ~215 | suíte core: 307 passed / 3270 steps / 0 failed
 15. **`children_to_s` concatena com espaços.** `appendSpace` controla.
 16. **Sem `any`.** Use `unknown` + type guards.
 17. **Commit por subfase.** `feat(richtext): rich-text-element`, `feat(richtext): rtf-query`, etc.
-18. **ADR 024** (não 023). **ADR 023** é expressões lógicas (Fase 11).
+18. **ADR 025** (RichText). Não 023 (i18n keywords) nem 024 (expressões lógicas, Fase 11).
 19. **`XMLElementLike` é interface; `SimpleXMLElement` é implementação mínima.** Fase 17 substitui.
 20. **`to_html` retorna `XMLElementLike`.** Não string.
 
@@ -751,7 +749,7 @@ TOTAL: ~215 | suíte core: 307 passed / 3270 steps / 0 failed
 
 ## Notas específicas por subfase
 
-### 12.0 — ADR 024
+### 12.0 — ADR 025
 
 - **Documenta o reuso de `TextParser`.**
 - **Documenta function handlers.**
@@ -848,15 +846,17 @@ TOTAL: ~215 | suíte core: 307 passed / 3270 steps / 0 failed
 - **`RichTextFactoryImpl`.**
 - **`ProjectFileParser.setRichTextFactory`.**
 
-### 12.19 — Golden tests
+### 12.19 — Golden tests ✅
 
-- **Markup de exemplo.**
-- **`plain`, `tagged`, `html`.**
+- `scripts/golden/richtext.rb` — 32 casos, oracle Ruby (`RichText.rb` real, `trapSetup`, reset de `@@parser` por caso).
+- **`plain`, `tagged`, `html`** com tolerâncias documentadas (whitespace em `plain`; serialização `>`/`/>` em `html`).
+- **Idempotente** (`ruby richtext.rb` reproduz o JSON byte-a-byte); 2 casos em que o próprio Ruby lança erro (`=====` aninhado, `'''…''…'''` ambíguo) ficam de fora — reavaliar na Fase 21.
 
-### 12.20 — Verificação
+### 12.20 — Verificação ✅
 
-- **Sem stubs além de `RTFReport`, `RTFReportLink`, `RTFNavigator`.**
-- **ADR 024 (não 023).**
+- **Sem stubs além de `RTFReport`, `RTFReportLink`, `RTFNavigator`** (3 NYI ancorados Fase 14) sob `src/richtext/`.
+- **ADR 025** (não 023/024).
+- `deno task check:all` exit 0 · suíte core 335/3586/0 · smoke `tests/integration/smoke_after_phase_12_test.ts` verde.
 
 ---
 

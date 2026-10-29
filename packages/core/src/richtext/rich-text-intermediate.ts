@@ -8,9 +8,8 @@
  * consultados por `RichTextElement` para `blockfunc`/`inlinefunc`.
  *
  * Port fiel de `RichText.rb:141-233` + reopen `RTFWithQuerySupport.rb:35-45`
- * (`setQuery`). No Ruby o `registerFunctionHandler` guarda `handler.dup`; aqui
- * registramos a instância diretamente (o `dup` dos handlers concretos chega com
- * 12.12+, quando `RichTextFunctionHandler.dup()` for implementado por subclasse).
+ * (`setQuery`). O `registerFunctionHandler` guarda `handler.dup()` como no Ruby
+ * (`RichText.rb:186`), usando o `dup()` da base (12.11.5).
  *
  * @see docs/taskjuggler/lib/taskjuggler/RichText.rb
  * @see docs/taskjuggler/lib/taskjuggler/RichText/RTFWithQuerySupport.rb
@@ -56,10 +55,10 @@ export class RichTextIntermediate {
     this.richText = richText;
   }
 
-  /** Registra um handler de função pelo seu nome. */
+  /** Registra um handler de função pelo seu nome (copia via `dup`). */
   registerFunctionHandler(handler: RichTextFunctionHandler,): void {
     if (!handler) throw new Error("Bad function handler",);
-    this.functionHandlers.set(handler.function, handler,);
+    this.functionHandlers.set(handler.function, handler.dup(),);
   }
 
   /** Retorna o handler da função `name`, ou `null`. */

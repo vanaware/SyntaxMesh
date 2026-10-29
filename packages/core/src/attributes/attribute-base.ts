@@ -229,7 +229,9 @@ export abstract class AttributeBase<T,> {
    * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:to_rti
    */
   to_rti(): unknown {
-    // Ancorado: Fase 12 — to_rti depende de RichTextFactory (entregue em 12.18).
+    // Ancorado: Fase 14 — to_rti por atributo depende do contexto de relatório
+    // (query/RTFHandlers); a Fase 12 entregou o subsistema RichText, mas o wiring
+    // G5 (template `query.listItem`) vive nos reports (Fase 14).
     throw new NotYetImplementedError("12", "to_rti",);
   }
 
@@ -239,7 +241,8 @@ export abstract class AttributeBase<T,> {
    * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:to_tjp
    */
   to_tjp(): string {
-    // Ancorado: Fase 12 — to_tjp para atributos rich-text precisa de RichText (12.18).
+    // Ancorado: Fase 13/14 — to_tjp de atributos rich-text exige round-trip
+    // RTI→markup (Markdown/Fase 13) consumido pelos relatórios (Fase 14).
     throw new NotYetImplementedError("12", "to_tjp",);
   }
 

@@ -26,7 +26,7 @@
 | G2  | `logical-scheduler-driven_test.ts` relaxado (§6.11) | 7 | Fechar (reapertar) | fechado — metade 1 e 2 passam com asserções fortes | `tests/integration/logical-scheduler-driven_test.ts` |
 | G3  | Golden tests do scheduler não comparam `start`/`end`/`effort` | 7/21 | Fechar (regenerar) | fechado — e2e sobre 9 MWEs + hardcoded tj3 dates no mwe004 (milestones + containers) cobrem o mesmo papel do golden Ruby; golden .rb + .json completo fica para 21. | `tests/integration/parser-scheduler_e2e_test.ts` (mwe004 tj3 dates) |
 | G4  | Testes end-to-end parser → schedule → report ausentes | 7/9/10 | Fechar | fechado — 22 casos cobrindo os 9 MWEs en + mwe001 pt-BR/es + milestones específicos | `tests/integration/parser-scheduler_e2e_test.ts` |
-| G5  | `to_rti` × 5 stubs (`attribute-base`, `reference-attribute`, `resource-list-attribute`, `query.ts`, `project-file-parser`) | 12 (12.18) | Verificar entrega | ancorado em 12 (Fase 12 em andamento; os 5 stubs têm `// Ancorado: Fase 12 — RichTextFactory (12.18)`); a Fase 12 substituirá por implementações reais em 12.18 | `scripts/check-stubs.ts` |
+| G5  | `to_rti` × 5 stubs (`attribute-base`, `reference-attribute`, `resource-list-attribute`, `query.ts`, `project-file-parser`) | 14 (era 12/12.18) | Verificar entrega | ancorado — reavaliado no fechamento da Fase 12 (2026-10-29): o wiring `to_rti`/`to_tjp` por atributo **não** integra os 215 critérios atômicos de 12 (nem §2 nem §7); depende de `query.listItem`/`ReportContext` (**Fase 14**). 4 stubs re-ancorados para `// Ancorado: Fase 14` (base `to_tjp` → Fase 13/14); `query.to_rti` delega a `attr.to_rti()`; `parser.newRichText` já usa a fábrica real (12.18 ✓) | `scripts/check-stubs.ts` |
 | G6  | `isoncriticalpath` — stub (não existe slack/float no Ruby) | 14 | Ancorar em 14 | ancorado | `scripts/check-stubs.ts` |
 | G7  | `TaskJuggler#freeze` — stub (escreve arquivo) | 14 | Ancorar em 14 | ancorado | `scripts/check-stubs.ts` |
 | G8  | `project.defaultAccount` — regra 4 do `resolveAccount` é no-op | 8.2 | Ancorar em 8.2 | ancorado | `scripts/check-stubs.ts` |
@@ -46,12 +46,14 @@
 
 ## Notas
 
-- **Fase 12 em andamento (Bloco K varrido em 2026-10-28):** G5 está
-  **parcialmente entregue** (RichTextFactory chega em 12.18). Os 5 stubs têm
-  âncora `Fase 12` válida; o `check:stubs` passa. Ao fechar 12.18, as
-  âncoras são removidas e os stubs viram implementações reais — o gate
-  `gaps:audit` permanece verde porque a linha fica `ancorado` até o sweep
-  final.
+- **Fase 12 concluída (2026-10-29) — reavaliação de G5:** o subsistema RichText
+  (12.0–12.20) foi inteiramente entregue; `check:all` exit 0, suíte core
+  335/3586/0, golden RichText 32 casos idempotentes. **G5 (wiring `to_rti` por
+  atributo)** ficou de fora dos 215 critérios atômicos: os 4 stubs restantes
+  dependem de `query.listItem`/`ReportContext` (**Fase 14**) e foram re-ancorados
+  para `// Ancorado: Fase 14` (base `to_tjp` → Fase 13/14). `query.to_rti` delega
+  a `attr.to_rti()`; `parser.newRichText` usa a fábrica real. O gate `gaps:audit`
+  permanece verde (linha segue `ancorado`) até o sweep final da Fase 14.
 - **G3:** o golden .rb completo fica para a Fase 21 (compatibilidade e
   qualidade); enquanto isso o e2e com 8 datas hard-coded do mwe004
   (`AcSo`, `AcSo.spec`, `AcSo.software`, `AcSo.software.database`,

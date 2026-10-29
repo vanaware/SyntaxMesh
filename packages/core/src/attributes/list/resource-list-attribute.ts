@@ -50,8 +50,8 @@ export class ResourceListAttribute extends ListAttributeBase<
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ResourceListAttribute#to_rti
    */
   override to_rti(): unknown {
-    // Ancorado: Fase 12 — ResourceListAttribute#to_rti precisa de RichTextFactory (12.18).
-    // TODO(@djones) Fase 12: usar RichText quando disponível
+    // Ancorado: Fase 14 — ResourceListAttribute#to_rti depende de `query.listItem`
+    // (template de lista dos relatórios); RichText + RTFHandlers já entregues (12.18).
     throw new NotYetImplementedError("12", "to_rti",);
   }
 }

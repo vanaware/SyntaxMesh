@@ -5,9 +5,9 @@
  * journalentry em conta) e C3.2.3 (supplement account com journalentry e
  * semântica de "uma única vez" para atributos singleton).
  *
- * Nota: `note` depende de RichText (Fase 12). `newRichText` lança
- * `NotYetImplementedError`, o que comprova que a gramática alcançou a action
- * de `note` (falha apenas na dependência futura, não no parse).
+ * Nota: `note` depende de RichText (entregue na Fase 12). Com a
+ * `RichTextFactory` real plugada em `newRichText`, `note "…"` é aceito e
+ * produz um `RichTextIntermediate` no atributo (sem mais lançar stub).
  */
 import { describe, it, } from "@std/testing/bdd";
 import { assert, assertEquals, } from "@std/assert";
@@ -29,13 +29,15 @@ describe("C3.2.1 note/journalentry em resource", () => {
     assertEquals(entries[0]!.headline, "Reunião",);
   });
 
-  it("resource aceita nota (gramática alcança action de note)", () => {
-    const { threw, } = parseProject(
+  it("resource aceita nota (RichText real, entregue na Fase 12)", () => {
+    const { parser, messageIds, threw, result, } = parseProject(
       PROJECT_HEADER + 'resource r "Bob" {\nnote "Observação"\n}\n',
     );
-    // RichText é Fase 12: a action de `note` lança NotYetImplementedError,
-    // provando que `note` é aceito na gramática de resource.
-    assertEquals(threw?.name, "NotYetImplementedError",);
+    assertEquals(threw, null, `messages=${messageIds.join(",",)}`,);
+    assert(result !== false, `parse failed: ${messageIds.join(",",)}`,);
+    const r = parser.project!.resource("r",) as Resource;
+    const note = r.get("note",) as { to_s(): string };
+    assertEquals(note.to_s(), "Observação",);
   });
 });
 
@@ -53,11 +55,15 @@ describe("C3.2.2 note/journalentry em account", () => {
     assertEquals(entries[0]!.headline, "Fatura recebida",);
   });
 
-  it("account aceita nota (gramática alcança action de note)", () => {
-    const { threw, } = parseProject(
+  it("account aceita nota (RichText real, entregue na Fase 12)", () => {
+    const { parser, messageIds, threw, result, } = parseProject(
       PROJECT_HEADER + 'account a "Custo" {\nnote "Observação"\n}\n',
     );
-    assertEquals(threw?.name, "NotYetImplementedError",);
+    assertEquals(threw, null, `messages=${messageIds.join(",",)}`,);
+    assert(result !== false, `parse failed: ${messageIds.join(",",)}`,);
+    const a = parser.project!.account("a",) as Account;
+    const note = a.get("note",) as { to_s(): string };
+    assertEquals(note.to_s(), "Observação",);
   });
 });
 

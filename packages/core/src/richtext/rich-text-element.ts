@@ -447,7 +447,7 @@ export class RichTextElement {
         post = "</ref>";
         break;
       case "href":
-        pre = `<a href="${this.data}" ${
+        pre = `<a href="${this.hrefUrl()}" ${
           this.richText.linkTarget ? `target="${this.richText.linkTarget}"` : ""
         }>`;
         post = "</a>";
@@ -593,7 +593,7 @@ export class RichTextElement {
         break;
       }
       case "href": {
-        const a = new SimpleXMLElement("a", { href: String(this.data,), },);
+        const a = new SimpleXMLElement("a", { href: this.hrefUrl(), },);
         if (rt.linkTarget) a.attrs["target"] = rt.linkTarget;
         html = a;
         break;
@@ -665,6 +665,13 @@ export class RichTextElement {
     if (this.richText.functionHandler(name,) === null) {
       throw new Error(`No handler for ${name} registered`,);
     }
+  }
+
+  /** URL de um `href`: normaliza `data` (subtree `richtext` ou string) para texto. */
+  private hrefUrl(): string {
+    return this.data instanceof RichTextElement
+      ? this.data.to_s()
+      : String(this.data,);
   }
 
   /** Normaliza `text` para um ID aceitável em HTML (Element.rb:510-519). */

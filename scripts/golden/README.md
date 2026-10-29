@@ -25,6 +25,7 @@ paritária.
 | `finance-variations.rb`                                       | 8    | `finance-variations.golden.json`  | `finance_golden_test.ts`             |
 | `parser-mwe001..009.rb` + `parser-syntax-{correct,errors}.rb` | 10   | `parser.golden.json`              | `parser_golden_test.ts`              |
 | `logical-expressions.rb`                                      | 11   | `logical-expressions.golden.json` | `logical-expressions_golden_test.ts` |
+| `richtext.rb`                                                 | 12   | `richtext.golden.json`            | `richtext_golden_test.ts`            |
 
 ## Fluxo de trabalho
 
@@ -240,3 +241,47 @@ será criado quando as fases de scheduling (7) e financeiro (8) entregarem
 esses métodos. A ponte `Query.process` (dispatch
 `customData → property.query_X → data[scIdx].query_X → atributo base`) já é
 coberta por `query_test.ts` e `integration/query-task_test.ts`.
+
+## RichText Golden Tests (Fase 12.19)
+
+Validam as três serializações do subsistema RichText (`to_s`, `to_tagged`,
+`to_html`) contra o TaskJuggler Ruby real como oracle.
+
+### Arquivos
+
+- `scripts/golden/richtext.rb` — itera ~32 markups de exemplo (parágrafos,
+  títulos aninhados, negrito/itálico, listas, código, nowiki, links `href`/`ref`
+  com âncora, tabela, citação, entidade, escape, `sectionNumbers=false`),
+  instancia `RichText.new(input)`, gera o `RichTextIntermediate` e grava
+  `{ id, description, input, sectionNumbers, expected: { plain, tagged, html } }`
+  em `packages/core/tests/richtext/golden/richtext.golden.json`.
+- `packages/core/tests/richtext/golden/richtext_golden_test.ts` — reproduz cada
+  markup no TS e compara as três saídas.
+
+### Tolerâncias de comparação (12.19.8)
+
+1. **`plain` (to_s):** whitespace colapsado (`\s+` → espaço) — o
+   `textBlockFormat` do Ruby quebra linhas conforme a largura.
+2. **`tagged` (to_tagged):** comparado byte-a-byte.
+3. **`html` (to_html):** normaliza apenas a **formatação de serialização** —
+   remove whitespace *entre tags* (`>\s+<` → `><`) e antes de auto-fechamento
+   (`\s+/>` → `/>`). O **conteúdo** (tags, atributos, escapes) é comparado
+   rigorosamente. A divergência de indentação vem do `SimpleXMLElement` mínimo
+   desta fase; a Fase 17 (elemento `XMLElement` real) a elimina.
+
+### Casos excluídos (Ruby é o oracle)
+
+Dois markups são **recusados pelo próprio Ruby** e ficam fora do golden (sem
+expectativa do oracle): `=====` (título de nível 5, inexistente → `NameError`)
+e `'''…''…'''` (aninhamento ambíguo de negrito/itálico → erro de token). O port
+TS é mais leniente nesses dois casos; a coincidência de comportamento será
+reavaliada na Fase 21 (compatibilidade).
+
+### Regras específicas
+
+1. **Parser singleton resetado por caso.** `RichText.class_variable_set(:@@parser,
+   nil)` antes de cada markup evita vazamento de estado do contador de seções.
+2. **`trapSetup = true`** converte erros de parse em exceção (não `exit 1`),
+   como no harness de parser da Fase 10.
+3. **Nunca editar `richtext.golden.json` à mão** — regerer com
+   `deno task golden:generate`.

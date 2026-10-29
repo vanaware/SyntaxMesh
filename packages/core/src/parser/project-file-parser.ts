@@ -24,7 +24,6 @@ import { ProjectFileScanner, } from "../lexer/project-file-scanner.ts";
 import { MessageHandlerInstance, } from "../message-handler.ts";
 import { Limits, } from "../scheduling/limits.ts";
 import type { ScoreboardInterval, } from "../time/scoreboard-interval.ts";
-import { NotYetImplementedError, } from "../model/errors.ts";
 import { SourceFileInfo, } from "../source-file-info.ts";
 import { TimeInterval, } from "../time/time-interval.ts";
 import { TjTime, } from "../time/tj-time.ts";
@@ -34,6 +33,11 @@ import { Project, } from "../model/project.ts";
 import { Report, } from "../model/report.ts";
 import { Resource, } from "../model/resource.ts";
 import { Task, } from "../model/task.ts";
+import {
+  type RichTextFactory,
+  RichTextFactoryImpl,
+} from "../richtext/factory.ts";
+import type { RichTextIntermediate, } from "../richtext/rich-text-intermediate.ts";
 import type { Rule, } from "./rule.ts";
 import { TokenDoc, } from "../lexer/token-doc.ts";
 import { type ParserToken, TextParser, } from "./text-parser.ts";
@@ -59,6 +63,11 @@ export function detectLanguage(content: string,): string | null {
 export class ProjectFileParser extends TextParser {
   /** Projeto em processamento (Ruby @project). */
   project: Project | null = null;
+  /**
+   * Fábrica de RichText injetada (Fase 12.18). Quando ausente, `newRichText`
+   * cria uma {@link RichTextFactoryImpl} sob demanda com o projeto corrente.
+   */
+  richTextFactory: RichTextFactory | null = null;
   /** Propriedade-alvo dos atributos em processamento (Ruby @property). */
   property: PropertyTreeNode | null = null;
   /** Índice do cenário corrente (Ruby @scenarioIdx). */
@@ -451,17 +460,35 @@ export class ProjectFileParser extends TextParser {
   }
 
   /**
-   * Wrapper de RichText. A implementação real chega na Fase 12; até lá
-   * registra um erro não-fatal e devolve null (as actions ignoram o valor
-   * em contextos de teste do parser).
+   * Injeta a fábrica de RichText usada por {@link newRichText} (Fase 12.18.3).
+   * O parser da Fase 10 chamava um stub ancorado; com a fábrica real plugada,
+   * `note`/`details`/etc. passam a produzir `RichTextIntermediate` de verdade.
+   */
+  setRichTextFactory(factory: RichTextFactory,): void {
+    this.richTextFactory = factory;
+  }
+
+  /**
+   * Wrapper de RichText (ProjectFileParser.rb:221-233). Cria o
+   * `RichTextIntermediate` via a fábrica, fazendo o baseline do SourceFileInfo
+   * para que mensagens do parser de RichText apontem para o arquivo de origem.
    */
   newRichText(
-    _text: string,
-    _sfi: SourceFileInfo | null,
-    _tokenSet?: string[] | null,
-  ): never {
-    // Ancorado: Fase 12 — RichText real depende de RichTextFactory (12.18).
-    throw new NotYetImplementedError("12", "RichText",);
+    text: string,
+    sfi: SourceFileInfo | null,
+    tokenSet: string[] | null = null,
+  ): RichTextIntermediate {
+    const factory = this.richTextFactory ??
+      new RichTextFactoryImpl(this.project, sfi,);
+    const mh = MessageHandlerInstance.instance;
+    mh.baselineSFI = sfi;
+    try {
+      const rti = factory.create(text, tokenSet,);
+      rti.sectionNumbers = false;
+      return rti;
+    } finally {
+      mh.baselineSFI = null;
+    }
   }
 
   /**

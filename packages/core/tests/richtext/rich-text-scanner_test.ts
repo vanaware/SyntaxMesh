@@ -13,7 +13,9 @@ import type { ScannerToken, } from "../../src/lexer/scanner.ts";
 
 /** Abre _text_ como buffer e acumula todos os tokens até EOF. */
 function scanAll(text: string,): ScannerToken[] {
-  const scanner = new RichTextScanner(text + "\n", Log,);
+  // Não injeta `\n` final: cada teste escolhe sua própria terminação para
+  // evitar LINEBREAKs duplicados (`\s*\n` guloso engole `\n\n` de uma vez).
+  const scanner = new RichTextScanner(text, Log,);
   scanner.open(true,);
   const tokens: ScannerToken[] = [];
   for (;;) {
@@ -70,23 +72,28 @@ describe("RichTextScanner (Fase 12.5)", () => {
   });
 
   it("LINEBREAK separa parágrafos; SPACE dentro da linha", () => {
-    const toks = pairs("a b\nc\n",);
+    // Ruby Scanner.rb: LINEBREAK só aparece em :bol/:bop. Uma quebra
+    // seguida de texto vira SPACE com `\n` no valor (inline) + LINEBREAK
+    // quando o scanner chega em :bol.
+    const toks = pairs("a b\nc",);
     assertEquals(toks.map((t,) => t[0]), [
       "WORD",
       "SPACE",
       "WORD",
-      "LINEBREAK",
+      "SPACE",
       "WORD",
-      "LINEBREAK",
     ],);
+    // Ruby `space()` zera o match quando contém `\n` (linha 113 de Scanner.rb:
+    // `match = ''`), apenas mudando para :bol.
+    assertEquals(toks[3]![1], "",);
   });
 
   it("PRE: linha iniciada por espaço vira PRE sem o 1º espaço", () => {
-    const toks = pairs("   code line\nword\n",);
-    // Ruby Scanner.rb#pre: `match[1..-1]` remove só o espaço líder.
+    // Ruby `match[1..-1]` remove só o espaço líder (LF fica no match).
+    const toks = pairs(" code line\nword",);
     const preTok = toks.find((t,) => t[0] === "PRE");
     assert(preTok, "tem PRE",);
-    assertEquals(preTok![1], "  code line",);
+    assertEquals(preTok![1], "code line\n",);
   });
 
   it("HLINE: ---- vira HLINE e muda para :inline", () => {
@@ -121,7 +128,7 @@ describe("RichTextScanner (Fase 12.5)", () => {
     // Ruby: `error('bad_color_name', ...)` no scanner base. MessageHandler#error
     // só lança quando trapSetup=true (paridade Ruby, ver §MessageHandler).
     const mh = MessageHandlerInstance.instance;
-    mh.setup();
+    mh.reset();
     mh.trapSetup = true;
     let threw = false;
     try {
@@ -144,27 +151,32 @@ describe("RichTextScanner (Fase 12.5)", () => {
   });
 
   it("html: <html>...multi-line...</html> → HTMLBLOB(s)", () => {
-    const toks = pairs("<html><b>x</b>\n<c>y</c></html>\n",);
+    const toks = pairs("<html><b>x</b>\n<c>y</c></html>",);
     const blobs = toks.filter((t,) => t[0] === "HTMLBLOB");
     assert(blobs.length >= 2, "HTMLBLOB linha-a-linha",);
-    assertEquals(blobs[0], ["HTMLBLOB", "<b>x</b>\n",],);
-    const last = blobs[blobs.length - 1]!;
-    assertEquals(last[1], "<c>y</c>",); // </html> removido por htmlEnd
+    assertEquals(blobs[0]![1], "<b>x</b>\n",);
+    // Ruby `match[0..-8]` remove `</html>` (7 chars do fim).
+    assertEquals(blobs[1]![1], "<c>y</c>",);
   });
 
-  it("block function: <[name arg=val]> → BLOCKFUNCSTART/ID/STRING/BLOCKFUNCEND", () => {
-    const toks = pairs("<[query attribute=effort]>\n",);
+  it("block function: <[name arg=val]> → BLOCKFUNCSTART/ID/LITERAL/ID/STRING/BLOCKFUNCEND", () => {
+    const toks = pairs("<[query attribute=effort]>",);
     assertEquals(toks[0], ["BLOCKFUNCSTART", "<[",],);
     assertEquals(toks[1], ["ID", "query",],);
     assertEquals(toks[2], ["ID", "attribute",],);
-    assertEquals(toks[3], ["STRING", "effort",],);
+    assertEquals(toks[3], ["LITERAL", "=",],);
+    assertEquals(toks[4], ["ID", "effort",],);
     assert(toks.some((t,) => t[0] === "BLOCKFUNCEND"), "BLOCKFUNCEND",);
   });
 
   it("inline function: <-query attr=effort-> → INLINEFUNCSTART/.../INLINEFUNCEND", () => {
-    const toks = pairs("x <-query attr=effort-> y\n",);
-    assertEquals(toks[1], ["INLINEFUNCSTART", "<-",],);
+    const toks = pairs("x <-query attr=effort-> y",);
+    // Ruby: em :bop "x" é WORD (muda para :inline), SPACE separa, depois
+    // o `<-` em :inline dispara INLINEFUNCSTART.
+    assertEquals(toks[0]![0], "WORD",);
+    assertEquals(toks[2]![0], "INLINEFUNCSTART",);
     assert(toks.some((t,) => t[0] === "INLINEFUNCEND"), "INLINEFUNCEND",);
+    assert(toks.some((t,) => t[0] === "ID" && t[1] === "query"), "ID query",);
   });
 
   it("QUERY dentro de href/ref: [http://x <-q->] preserva QUERY", () => {
@@ -184,12 +196,13 @@ describe("RichTextScanner (Fase 12.5)", () => {
   });
 
   it("palavra simples vira WORD e alterna modos bop/bol → inline", () => {
-    const toks = pairs("hello world\n",);
+    // Ruby: em :inline uma `\n` isolada é SPACE, não LINEBREAK.
+    const toks = pairs("hello world",);
     assertEquals(
       toks.map((t,) => t[0]),
-      ["WORD", "SPACE", "WORD", "LINEBREAK",],
+      ["WORD", "SPACE", "WORD",],
     );
-    assertEquals(values("hello world\n",), ["hello", " ", "world", "\n",],);
+    assertEquals(values("hello world",), ["hello", " ", "world",],);
   });
 
   it("reutilização: duas instâncias são independentes", () => {

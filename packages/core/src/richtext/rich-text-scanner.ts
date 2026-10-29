@@ -216,12 +216,24 @@ export class RichTextScanner extends Scanner {
       ["SPACE", /[ \t]+/, RT_MODES.nowiki, null,],
       ["LINEBREAK", /\s*\n/, RT_MODES.nowiki, null,],
       // :html
-      // Ruby `(.|\n)*<\/html>` captura a linha até `</html>` e inclui o `\n`
-      // final (StringScanner#gets preserva o LF). `.*<\/html>\n?` reproduz
-      // fielmente no nosso `LineScanner` (linha-a-linha).
+      // Ruby `(.|\n)*<\/html>` + `match[0..-8]`: o blob para exatamente antes
+      // de `</html>` e o tag nunca entra no valor. Linha-a-linha:
+      //   (a) `</html>` com mais algo após o tag na mesma linha (nada a
+      //       cortar além do próprio tag);
+      //   (b) `</html>` seguido de `\n` ou EOL — corta os 7 chars do tag;
+      //   (c) fração intermediária de blobs multi-linha (Ruby junta os
+      //       fragmentos num só HTMLBLOB via buffer multi-linha; aqui o
+      //       parser guarda cada linha como fragmento e o `htmlblob` join
+      //       refaz o valor completo).
       [
         "HTMLBLOB",
-        /.*<\/html>\n?/,
+        /.*<\/html>(?=[^\n])/,
+        RT_MODES.html,
+        (t, m,) => this.htmlEnd(t, m,),
+      ],
+      [
+        "HTMLBLOB",
+        /.*<\/html>/,
         RT_MODES.html,
         (t, m,) => this.htmlEnd(t, m,),
       ],

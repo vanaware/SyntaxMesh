@@ -14,7 +14,6 @@ import { AttributeBase, } from "../../src/attributes/attribute-base.ts";
 import { detectLanguage, ProjectFileParser, } from "../../src/parser/mod.ts";
 import type { ParserToken, } from "../../src/parser/text-parser.ts";
 import { FileStreamHandle, } from "../../src/lexer/stream-handle.ts";
-import { NotYetImplementedError, } from "../../src/model/errors.ts";
 import { Project, } from "../../src/model/project.ts";
 import { PropertyTreeNode, } from "../../src/model/property-tree-node.ts";
 import { Task, } from "../../src/model/task.ts";
@@ -322,12 +321,12 @@ describe("ProjectFileParser — helpers de regras (10.10.5)", () => {
     assert(messageIds().includes("interval_start_in_range",),);
   });
 
-  it("newRichText lança NotYetImplementedError (Fase 12)", () => {
+  it("newRichText produz RichTextIntermediate real (Fase 12)", () => {
     const parser = new ProjectFileParser();
-    assertThrows(
-      () => parser.newRichText("text", null, null,),
-      NotYetImplementedError,
-    );
+    const rti = parser.newRichText("texto rico", null, null,);
+    assertEquals(rti.to_s(), "texto rico",);
+    // sectionNumbers desligado no caminho do parser (ProjectFileParser.rb).
+    assertEquals(rti.sectionNumbers, false,);
   });
 
   it("singlePattern + newRule criam regra consultável pelo FSM", () => {

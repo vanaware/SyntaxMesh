@@ -49,6 +49,18 @@ export abstract class RichTextFunctionHandler {
   /** Representação marcada (`<func:…>`); `null` quando não suportada. */
   abstract to_tagged(args: RichTextFunctionArgs,): string | null;
 
+  /**
+   * Cópia rasa do handler (equivalente ao `Object#dup` do Ruby). Usada por
+   * `RichTextIntermediate.registerFunctionHandler` para que cada RichText tenha
+   * sua própria instância (o `@query` dos handlers é mutável). Subclasses com
+   * estado além dos campos próprios não precisam sobrescrever — a cópia
+   * preserva todos os campos enumeráveis via `Object.assign`.
+   */
+  dup(): this {
+    const copy = Object.create(Object.getPrototypeOf(this,),) as this;
+    return Object.assign(copy, this,);
+  }
+
   /** Registra um erro não-fatal no MessageHandler (equivalente ao Ruby). */
   protected error(id: string, message: string,): void {
     MessageHandlerInstance.instance.error(id, message, this.sourceFileInfo,);

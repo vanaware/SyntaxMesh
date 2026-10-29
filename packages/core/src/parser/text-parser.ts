@@ -115,6 +115,15 @@ export abstract class TextParser {
   }
 
   /**
+   * Limpa o conjunto de tokens bloqueados (Ruby `@blockedVariables = {}` no
+   * `RichTextParser#reuse`). Protegido: só subclasses que reusam o singleton
+   * precisam deste reset explícito entre parses.
+   */
+  protected clearBlockedVariables(): void {
+    this._blockedVariables = new Map();
+  }
+
+  /**
    * Chama todos os métodos `rule_*` para inicializar as regras.
    * Em Ruby usa reflection (methods.grep(/^rule_/)); em TS a lista é
    * explícita via `ruleMethods` (cheat-sheet §12 Category B).

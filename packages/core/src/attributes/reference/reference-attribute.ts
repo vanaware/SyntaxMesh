@@ -38,8 +38,8 @@ export class ReferenceAttribute
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ReferenceAttribute#to_rti
    */
   override to_rti(): unknown {
-    // Ancorado: Fase 12 — ReferenceAttribute#to_rti precisa de RichTextFactory (12.18).
-    // TODO(@djones) Fase 12: usar RichText quando disponível
+    // Ancorado: Fase 14 — ReferenceAttribute#to_rti é consumido pelo pipeline de
+    // relatórios (query + RTFHandlers); o subsistema RichText já foi entregue (12.18).
     throw new NotYetImplementedError("12", "to_rti",);
   }
 
