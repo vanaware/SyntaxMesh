@@ -99,7 +99,7 @@ Esta fase **completa stubs** das Fases 5, 11 e 14. A ordem importa:
 [ ] 16.3  Journal (core + queries)                  —   0/28
 [ ] 16.4  Leave + LeaveList + LeaveAllowance        —   0/18
 [ ] 16.5  Substituir stubs de LeaveList (Fase 5)    —   0/6
-[ ] 16.6  TextFormatter                             —   0/10
+[x] 16.6  TextFormatter                             —  10/10  ✅ ANTECIPADA na Fase 12 (2026-10-28): dependência pura de `RichTextElement#to_s`; port fiel de `TextFormatter.rb:21-184` (`indent`/`format` FSM/`appendWord`, code points UTF-8), expectations conferidas contra o Ruby real; 15 testes em `tests/utils/text-formatter_test.ts`; exportado via `utils/mod.ts`
 [ ] 16.7  FileList + FileRecord                     —   0/8
 [ ] 16.8  URLParameter                              —   0/6
 [ ] 16.9  TernarySearchTree                         —   0/12

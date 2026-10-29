@@ -7,7 +7,7 @@
 
 # Exported Context from Project SyntaxMesh [v0.0.2-mtvrt8od] - Mode: SW
 
-Automatically generated at: 2026-10-25T14:49:59.922Z
+Automatically generated at: 2026-10-28T21:19:03.408Z
 
 ---
 
@@ -219,8 +219,8 @@ export async function handleCacheFetch(
 declare const self: ServiceWorkerGlobalScope;
 
 import EventBus from "../utils/eventbus.ts";
-import { APP_VERSION } from "../utils/config.ts";
-import { addDebugLog } from "../utils/debug.ts";
+import { APP_VERSION, } from "../utils/config.ts";
+import { addDebugLog, } from "../utils/debug.ts";
 
 // === HANDLERS NATIVOS EXISTENTES (INFRAESTRUTURA) ===
 import { handleActivate, handleCacheFetch, handleInstall, } from "./cache.ts";
@@ -360,7 +360,7 @@ export function addDebugLog(
     // addDebugLog(message)
     message = arg1;
   }
-  console.debug(`[SW-DEBUG] ${message}`);
+  console.debug(`[SW-DEBUG] ${message}`,);
 }
 
 ```
@@ -374,31 +374,32 @@ export function addDebugLog(
 // Substituto local de @syntaxmesh/utils/eventbus (pacote removido na simplificação de arquitetura).
 // Event bus simples para comunicação interna — o código real do SW ainda não foi desenvolvido.
 
-export type EventCallback = (data?: unknown) => void;
+export type EventCallback = (data?: unknown,) => void;
 
 export class EventBus {
   private listeners: Map<string, Set<EventCallback>> = new Map();
 
-  on(event: string, callback: EventCallback): void {
-    if (!this.listeners.has(event)) {
-      this.listeners.set(event, new Set());
+  on(event: string, callback: EventCallback,): void {
+    if (!this.listeners.has(event,)) {
+      this.listeners.set(event, new Set(),);
     }
-    this.listeners.get(event)!.add(callback);
+    this.listeners.get(event,)!.add(callback,);
   }
 
-  off(event: string, callback: EventCallback): void {
-    const set = this.listeners.get(event);
-    set?.delete(callback);
+  off(event: string, callback: EventCallback,): void {
+    const set = this.listeners.get(event,);
+    set?.delete(callback,);
   }
 
-  emit(event: string, data?: unknown): void {
-    const set = this.listeners.get(event);
-    set?.forEach((callback) => callback(data));
+  emit(event: string, data?: unknown,): void {
+    const set = this.listeners.get(event,);
+    set?.forEach((callback,) => callback(data,));
   }
 }
 
 const eventBus = new EventBus();
 export default eventBus;
+
 ```
 
 ---
@@ -407,8 +408,8 @@ export default eventBus;
 
 ```ts
 // monorepo/service-worker/src/utils/mod.ts
-import { addDebugLog } from "./debug.ts";
-import { APP_VERSION } from "./config.ts";
+import { addDebugLog, } from "./debug.ts";
+import { APP_VERSION, } from "./config.ts";
 import EventBus from "./eventbus.ts";
 
 let uiAdapterInitialized = false;

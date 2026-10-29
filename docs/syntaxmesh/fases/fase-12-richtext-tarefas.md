@@ -94,12 +94,12 @@ Nada na Fase 10 precisa mudar; apenas o parser passa a usar a implementação re
 [x] 12.0  ADR 025 (RichText e handlers)            —  5/5  ⚠️ renúmerado 024→025 (024 = expressões lógicas, Fase 11)
 [x] 12.1  XMLElementLike + SimpleXMLElement        —  8/8  (15 testes)
 [x] 12.2  RichTextImage                            —  4/4  (2 testes)
-[ ] 12.3  RichTextElement                          —  0/28
-[ ] 12.4  RichTextIntermediate                     —  0/18
+[x] 12.3  RichTextElement                          —  28/28  (19 testes / 60 passos; to_s e to_tagged conferidos contra o Ruby real via harness Element.rb; to_html validado estruturalmente — XMLElement.rb injeta whitespace)
+[x] 12.4  RichTextIntermediate                     —  18/18  (4 testes; setQuery via duck-typing — RTFWithQuerySupport concreto fica em 12.13; registerFunctionHandler sem .dup até os handlers concretos implementarem dup)
 [ ] 12.5  RichTextScanner                          —  0/20
 [ ] 12.6  RichTextParser + SyntaxRules             —  0/22
-[ ] 12.7  TOCEntry                                 —  0/5
-[ ] 12.8  TableOfContents                          —  0/5
+[x] 12.7  TOCEntry                                 —  5/5  (5 testes; estrutura conferida contra TOCEntry.rb real)
+[x] 12.8  TableOfContents                          —  5/5  (3 testes)
 [ ] 12.9  RichTextSnip                             —  0/8
 [ ] 12.10 RichTextDocument                         —  0/10
 [x] 12.11 RichTextFunctionHandler                  —  6/6  (5 testes; base abstrata + error/warning via MessageHandlerInstance)

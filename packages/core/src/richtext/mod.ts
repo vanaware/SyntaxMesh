@@ -19,3 +19,11 @@ export {
 export { RichTextImage, } from "./rich-text-image.ts";
 export type { RichTextFunctionArgs, } from "./handlers/function-handler.ts";
 export { RichTextFunctionHandler, } from "./handlers/function-handler.ts";
+export type {
+  RichTextCategory,
+  RichTextFuncData,
+} from "./rich-text-element.ts";
+export { RichTextElement, } from "./rich-text-element.ts";
+export { RichTextIntermediate, } from "./rich-text-intermediate.ts";
+export { TOCEntry, } from "./toc-entry.ts";
+export { TableOfContents, } from "./table-of-contents.ts";
