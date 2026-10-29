@@ -229,6 +229,7 @@ export abstract class AttributeBase<T,> {
    * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:to_rti
    */
   to_rti(): unknown {
+    // Ancorado: Fase 12 — to_rti depende de RichTextFactory (entregue em 12.18).
     throw new NotYetImplementedError("12", "to_rti",);
   }
 
@@ -238,6 +239,7 @@ export abstract class AttributeBase<T,> {
    * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:to_tjp
    */
   to_tjp(): string {
+    // Ancorado: Fase 12 — to_tjp para atributos rich-text precisa de RichText (12.18).
     throw new NotYetImplementedError("12", "to_tjp",);
   }
 

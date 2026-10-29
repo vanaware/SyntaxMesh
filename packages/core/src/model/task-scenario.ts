@@ -476,20 +476,23 @@ export class TaskScenario extends ScenarioData {
 
   markAsMilestone(): void {
     const milestone = this.a("milestone",) as boolean;
-    if (milestone && (this.getProperty() as Task).container?.()) {
+    const property = this.getProperty() as Task;
+    if (milestone && property.container?.()) {
       this.error(
         "container_milestone",
-        `Container task ${
-          (this.getProperty() as Task).fullId
-        } may not be marked as a milestone.`,
+        `Container task ${property.fullId} may not be marked as a milestone.`,
       );
       return;
     }
 
+    // Ruby: `return if @property.container? || @hasDurationSpec ||
+    //   !@booking.empty? || !@allocate.empty?`. A promoção automática só
+    // acontece quando booking E allocate estão ambos vazios.
+    const bookingLen = (this.a("booking",) as unknown[])?.length ?? 0;
+    const allocateLen = (this.a("allocate",) as Allocation[])?.length ?? 0;
     if (
-      (this.getProperty() as Task).container?.() || this._hasDurationSpec ||
-      !(this.a("booking",) as unknown[])?.length ||
-      !(this.a("allocate",) as Allocation[])?.length
+      property.container?.() || this._hasDurationSpec || bookingLen ||
+      allocateLen
     ) {
       return;
     }
@@ -506,20 +509,15 @@ export class TaskScenario extends ScenarioData {
 
     if (newMilestone) {
       this._hasDurationSpec = true;
+      // Ruby: `@milestone = true` — espelha no bag para leituras `a("milestone")`.
+      property.forceForScenario("milestone", true, this.getScenarioIdx(),);
       const start = this.a("start",) as TjTime;
       const end = this.a("end",) as TjTime;
       if (start && !end) {
-        (this.getProperty() as Task).setForScenario(
-          "end",
-          start,
-          this.getScenarioIdx(),
-        );
+        // Ruby `@end = @start` — ivar assignment sem guarda de `provided`.
+        property.forceForScenario("end", start, this.getScenarioIdx(),);
       } else if (!start && end) {
-        (this.getProperty() as Task).setForScenario(
-          "start",
-          end,
-          this.getScenarioIdx(),
-        );
+        property.forceForScenario("start", end, this.getScenarioIdx(),);
       }
     }
   }
@@ -634,17 +632,22 @@ export class TaskScenario extends ScenarioData {
    * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:preScheduleCheck
    */
   preScheduleCheck(): void {
-    const chargeset = this.a("chargeset",) as Map<Account, number>[];
+    // Ruby: `@chargeset.each do |chargeset| chargeset.each do |account, share|`.
+    // No port, `chargeset` é `ChargeSet[]` (ChargeSetListAttribute) e cada
+    // `ChargeSet` expõe `.each(cb)` sobre um `Map<Account, number>` interno.
+    const chargeset = this.a("chargeset",) as {
+      each(fn: (account: Account, share: number | null,) => void,): void;
+    }[];
     if (chargeset) {
       for (const chargesetItem of chargeset) {
-        for (const [account, share,] of chargesetItem) {
+        chargesetItem.each((account, _share,) => {
           if (account && !account.leaf?.()) {
             this.error(
               "account_no_leaf",
               `Chargesets may not include group account ${account.fullId}.`,
             );
           }
-        }
+        },);
       }
     }
 

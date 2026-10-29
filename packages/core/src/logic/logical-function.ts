@@ -170,6 +170,8 @@ export class LogicalFunction {
     // [aridade, fase, kind].
     const ext = FUNCTIONS_EXT.get(this.name,);
     if (ext && ext[2] === "blocked") {
+      // Ancorado: Fase dinâmica — `ext[1]` carrega a fase da função bloqueada
+      // (ver tabela FUNCTIONS_EXT); cada extensão é liberada pela fase âncora.
       throw new NotYetImplementedError(ext[1], this.name,);
     }
     switch (this.name) {
@@ -290,6 +292,7 @@ export class LogicalFunction {
   // --------------------------------------------------
 
   private hasalert(_expr: LogicalExpression,): boolean {
+    // Ancorado: Fase 16 — hasalert real depende de Journal.currentEntries (Fase 16).
     // TODO(@djones) Fase 16: hasalert real (Journal.currentEntries).
     throw new NotYetImplementedError("16", "hasalert",);
   }

@@ -61,6 +61,47 @@ i18n (10.15+) em `packages/core/src/i18n/`.
 - **Fase 10 Complemento — Extensões RDO/orçamento ✅ Concluída (2026-10-27):** Blocos C0–C4 de `fase-10-complemento-tarefas.md` implementados e testadas (material no parser + modelo registrado, `note`/`journal` estendidos a resource/account/material, `picture`/`format`, `timebasis` #6/#6a com `distribution.ts`, `breakdownreport`/`rdoreport`, colunas novas + `hidejournalentry`, i18n en/pt-BR/es com AST equivalente, golden parser idêntico + fixtures de extensão). Adendos de fases futuras (13/14/16/18/19/20/21) permanecem pendentes nessas fases. Suíte core: **279 testes / 2994 passos, 0 falhas**.
 - **Fase 11 — Expressões Lógicas e Queries ✅ Concluída (2026-10-27):** Motor lógico em `packages/core/src/logic/` (`LogicalOperation`/`LogicalAttribute`/`LogicalFlag`/`LogicalFunction` com 14 funções/`LogicalExpression` + type-guards), `Query` completa em `src/query/` (estrutura, `process` pipeline a–j, accessors, scale, `assignList`, `resolvePropertyId`, `setCustomData`) e `SimpleQueryExpander`. Shim `src/logical/` reconectado ao parser (Fase 10). ADR 024 (expressões sem precedência, `&`/`|` lazy, coerção pelo `operand1`). Golden de **expressões lógicas** do Ruby (25 casos) + smoke `tests/integration/smoke_after_phase_11_test.ts`. **Bloqueado por pré-requisito de modelo:** métodos concretos `query_*` (effort/duration/complete/cost/…) ainda não existem no modelo (só `query_balance`/`query_turnover`), então 11.12 (integração) e 11.13 (golden de queries) foram validados só por duck-typing e ficam a cargo das Fases de scheduling/finance. `hasalert` e `LogicalFlag`-Journal permanecem stubs sancionados (Fase 16). Suíte core: **295 testes / 3155 passos, 0 falhas** (via `deno task test`, que roda com `--no-check`); `deno check` nos arquivos da Fase 11 + `mod.ts`, `deno lint` e `deno fmt --check` verdes. Obs.: os **24 erros pré-existentes** de `deno task check:all` em `tests/accounting/extended-charge-timebasis_test.ts` e `tests/golden/timebasis-parity_golden_test.ts` foram **corrigidos (2026-10-27)** — os testes escreviam campos internos inexistentes de `TaskScenario` (`scheduledStart`/`actualEnd`/`duration`/`durationType`) e usavam assinaturas antigas de `Project`/`Account`/`Material`; como `Charge`/`ExtendedCharge`/`MaterialAllocation` leem apenas os atributos de cenário `start`/`end`, os writes internos foram removidos e os construtores alinhados à API real (`createTestProject()`). `deno task check:all` agora verde.
 - Fase 12 — RichText (compatibilidade TJP) 🟡 Em andamento (fundação entregue 2026-10-28): **ADR 025** criado (⚠️ o plano pedia "ADR 024", mas 024 foi alocado às expressões lógicas da Fase 11; README já reservava 025 → usamos **025 RichText e function handlers**). Primeira leva de código em `packages/core/src/richtext/`: **12.1** `XMLElementLike` + `SimpleXMLElement` (`xml-like.ts`, serialização fiel a `XMLElement.rb` — escapa `&<>` no texto, `&"` em atributo, void auto-fecham, fragmentos; 15 testes), **12.2** `RichTextImage` (`rich-text-image.ts`, port trivial de `Element.rb:22`; 2 testes), **12.11** `RichTextFunctionHandler` (`handlers/function-handler.ts`, base abstrata `to_s`/`to_html`/`to_tagged` + `error`/`warning` via `MessageHandlerInstance`; 5 testes). `mod.ts` exporta o núcleo entregue. Suíte core: **307 passed / 3270 steps / 0 failed**. **2ª leva (2026-10-28): core da árvore entregue** — **12.3** `RichTextElement` (`rich-text-element.ts`, port fiel de `Element.rb:40-581`: `to_s`/`to_tagged`/`to_html`/`cleanUp`/`tableOfContents`/`internalReferences`/`convertToID`; 19 testes), **12.4** `RichTextIntermediate` (`rich-text-intermediate.ts`, port de `RichText.rb:141-233` + `setQuery` de `RTFWithQuerySupport.rb:35-45`; 4 testes), **12.7** `TOCEntry` e **12.8** `TableOfContents` (8 testes). **Pull-in: `TextFormatter` (tarefa 16.6) portado para `src/utils/text-formatter.ts`** — dependência pura de `to_s` (16.6 marcada como antecipada). Fiel ao Ruby inclusive onde o upstream usa `when` vazio (`:italic`/`:bold`/`:code`/`:text`/`:ref`/`:href`/`:blockfunc` são pass-through em `to_s`; só `:inlinefunc` despacha handler; só `:htmlblob` retorna '' — semântica verificada contra o interpretador Ruby). `to_html` exige filhos `:text` (o Ruby estoura `NoMethodError` em String crua — o parser 12.6 deve embrulhar texto inline; o port é leniente). Expectativas de `to_s`/`to_tagged`/TOC conferidas contra harness Ruby real (`Element.rb` + `TOCEntry.rb` com `FakeRT`). Suíte core: **319 passed / 3333 steps / 0 failed**; `deno task check:all` exit 0. Restam (ordem do plano): **12.5 RichTextScanner + 12.6 RichTextParser/SyntaxRules** (FSM herdado de `Scanner`/`TextParser` da Fase 10, 7 modos/~40 patterns), **12.9–12.10** Snip/Document, **12.12–12.17** handlers (`RTFQuery` real; `RTFReport`/`RTFReportLink`/`RTFNavigator` stubs → Fase 14), **12.18** `RichText`+`RichTextFactory`+integração (substitui o stub `newRichText` do parser), **12.19** golden, **12.20** verificação.
+- **Fase 11 (Gaps) — Fechamento e Auditoria ✅ Concluída (2026-10-28):**
+  `fase-11-logical-gaps.md` + `fase-11-logical-gaps-tarefas.md`. Fase de
+  auditoria sem features novas; fecha G1–G4, ancora G6–G12, varre G21 e
+  libera o gate da Fase 13.
+  - **G1 (placement)** — destravado além dos 4 bugs anteriores: mais três
+    fixes encadeados (a) `TaskScenario#preScheduleCheck` iterando chargeset
+    com `for…of` em vez de `ChargeSet#each(cb)`; (b) guard **invertido**
+    em `markAsMilestone` (`!booking.length` quando Ruby faz `!booking.empty?`)
+    — milestones `AcSo.deliveries.start`/`.beta` só aparecem agora;
+    (c) `project.ts vacation` gravava tuplas cruas `[type, name, start, end]`
+    em vez de `Leave` objects com `.interval.start/.end` —
+    `Project#initScoreboards` estourava em mwe005.
+  - **G2 (sentinela)** — `tests/integration/logical-scheduler-driven_test.ts`
+    reabilitado com 3 asserts fortes (start/end/effort != null, bookings > 0,
+    `isallocated`/`startsafter` contra agenda real).
+  - **G3/G4 (e2e + golden)** — `tests/integration/parser-scheduler_e2e_test.ts`
+    com 22 passos: 9 MWEs en agendam sem exceção, mwe004 com 8 datas
+    hard-coded iguais ao `tj3`, mwe001 em pt-BR/es equivalem ao en, milestones
+    mwe003/mwe007 verificados. Golden .rb completo adiado para Fase 21.
+  - **G14/G16/G17/G18/G19/G20** — `tests/integration/gaps_verification_test.ts`
+    prova com testes cada verificação da auditoria.
+  - **G5–G12 ancorados** — 14 stubs com `// Ancorado: Fase N — <razão>`;
+    `scripts/check-stubs.ts` garante a política.
+  - **Invariantes + fuzz** — `tests/invariants/scheduler_invariants_test.ts`
+    (7 invariantes sobre modelo rico) +
+    `tests/fuzz/scheduler_fuzz_test.ts` (20 projetos Mulberry32 seed=42,
+    todos verdes).
+  - **Infraestrutura** — `debug/schedule_probe.ts` (ferramenta de diagnóstico
+    commitada), `scripts/check-stubs.ts`, `scripts/gaps/audit.ts`,
+    `scripts/gaps/deferred.ts`, `docs/syntaxmesh/fases/completude-matrix.md`.
+  - **Gate** — `deno task gate:phase-13` composto de
+    `check:all && test:integration && test:invariants && test:fuzz &&
+    test:golden:scheduler && check:stubs && gaps:audit && test:deferred`.
+    `gate:phase-13:partial` = `check:stubs + gaps:audit + test:deferred`
+    disponível durante a Fase 12.
+  - **ADR 032** — Gate de saída para Fase 13 e política de stubs (Aceito,
+    2026-10-28). G5 (to_rti × 5) fica ancorado em Fase 12 — 12.18 entrega;
+    G21 (sweep dos deferidos) fecha vazio: nenhum teste com
+    `// Gate: fase-11-logical-gaps` sobrou.
+  - **Suite core: 319 passed / 3333 steps / 0 failed** (invariante desde a
+    2ª leva da Fase 12).
 - **Fase 11 Complemento — Funções/atributos/flags lógicas ✅ Concluída (2026-10-27):** `fase-11-logical-complemento.md`. Conciliação: `LogicalFunction.rb` tem exatamente as 14 funções já portadas (fiel, ADR 011); as demais da documentação são **extensões** (0 ocorrências no TJ vendorizado). 1ª onda: LC-A/LC-B/LC-D + LF.1 (isParentOf/isAn*/isAccount/isMaterial/isTaskOfProject + flags declarados + stubs). **2ª onda (§6.9): G1–G5 executadas** — `TaskScenario.getAllocatedTime` portado fiel (Ruby 1562–1588; cache omitido c/ ResourceScenario), `isactive` tipado, args-data validados (`TjTime.fromString` não lança p/ lixo → validação NaN explícita), 10 funções implementadas (startsafter/startsbefore/endsafter/endsbefore, isallocated(ToProject), hasassignment, isusedat/isused/isusedatproject via `materialallocations`+`quantityIn`+`CostEvent`), FUNCTIONS_EXT 10× blocked→feasible, **LF.5a**: parser de material agora aceita `flags` (antes `unexpctd_token`), LF.4/LF.6 testados; LA.1–LA.5 auditados (nada faltando). Restam só bloqueios reais com âncora: isoncriticalpath (sem slack/float nem no Ruby) → Fase 14/15, istaskstatus → Fase 18, ramo-Journal/hasalert → Fase 16, golden/i18n round-trip → Fase 21, aplicação hidematerial/rollup → 14.26. **Pós-onda (§6.10): G1.4 fechado com âncora** — `tests/integration/logical-scheduler-driven_test.ts` fixa por regression que o scheduler atual não coloca agenda nem bookings (gap núcleo da Fase 7; metade pós-Fase-7 comentada no arquivo) — e **review (a)–(g) aplicado**: limiar meia-slot (`hasAllocatedTime`), agenda parcial não superavalia `hasassignment`/`materialUsedIn`, id inválido agora lança (`targetForId`), `Project#dateToIdx` corrigido fiel ao Ruby (`forceIntoProject` clampava nada → índices negativos vazavam; beneficia todo scheduler/queries), recursão de container filtra `instanceof Task`, regressões dateArg/`unit` quoted travadas. Suíte core: **302 testes / 3242 passos, 0 falhas**; `deno task check:all` exit 0. **§6.11 (auditoria final de gaps Fases 2–11, 2026-10-27)**: varredura de `NotYetImplementedError`/`TODO` no `src`, cada candidato contra o Ruby. **Desenvolvido agora** — (1) `ScenarioData#error/warning/info` agora roteia ao `MessageHandlerInstance` (raiz do G1.4 / sobra da Fase 9); (2) `TaskJuggler#errors` reflete o handler (era `0` hardcoded); (3) `AllocationAttribute#to_s` fiel ao Ruby; (4) `LogicalExpression`/`…List` `to_tjp` fiel (herdado de `AttributeBase`). **Não-gaps (fiéis ao Ruby, comentados)**: `ColumnList#to_s`="TODO", `Allocation#to_tjp` (incompleto no upstream), `Date#to_s` (formato via pipeline de Query), `project.defaultAccount`=`null` (extensão SyntaxMesh). **Ancorados nas fases donas (dependem de 12–21)**: `to_rti`→F12; `isoncriticalpath`/`freeze`→F14; `defaultAccount`→F8.2; `parse/parseFile/parseContent`→F19; `checkTimeSheet`/`checkStatusSheet`/`istaskstatus`→F18; `hasalert`/`Journal`/leave-allowance→F16 (estes já ancorados, verificados). Suíte: **303 testes / 3248 passos, 0 falhas**.
 - Fase 13 — Markdown (novo, futuro) ⬜ Não iniciada
 - Fase 14 — Relatórios ⬜ Não iniciada
@@ -139,11 +180,11 @@ O ambiente está pré-configurado para rodar TaskJuggler. Execute `tj3` diretame
      `_endpreds` ignorando `onEnd` (Ruby 166-180), e `dependency.task` nunca
      era atribuído (Ruby `TaskDependency#resolve`) — a cadeia t1→t2→t3 não
      propagava start. `earliestStart`/`latestEnd` dependem de `dependency.task`.
-  Teste âncora `tests/integration/logical-scheduler-driven_test.ts` reescrito
-  para fixar o COMPORTAMENTO PÓS-Fase-7 (start/end reais, bookings, `effort`
-  em horas-slot = 16 e não 57600). `console.log` de debug do scheduler
-  removidos (Ruby usa `Log.*`, silencioso por padrão). As mensagens do
-  scheduler já roteavam ao `MessageHandlerInstance` (§6.11).
+     Teste âncora `tests/integration/logical-scheduler-driven_test.ts` reescrito
+     para fixar o COMPORTAMENTO PÓS-Fase-7 (start/end reais, bookings, `effort`
+     em horas-slot = 16 e não 57600). `console.log` de debug do scheduler
+     removidos (Ruby usa `Log.*`, silencioso por padrão). As mensagens do
+     scheduler já roteavam ao `MessageHandlerInstance` (§6.11).
 - **Semântica do MessageHandler:** `error()` só lança `TjRuntimeError` com
   `trapSetup = true` (Ruby MessageHandler.rb l.291-298); drivers golden e
   testes que esperam abort precisam ativar o trap explicitamente.

@@ -27,6 +27,7 @@ export class LeaveAllowanceListAttribute extends ListAttributeBase<unknown> {
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:LeaveAllowanceListAttribute#to_tjp
    */
   override to_tjp(): string {
+    // Ancorado: Fase 16 — LeaveAllowanceList#to_tjp depende do modelo Leave/Allowance (Fase 16).
     throw new NotYetImplementedError("16", "to_tjp",);
   }
 }

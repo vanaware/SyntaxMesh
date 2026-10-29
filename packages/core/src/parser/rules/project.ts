@@ -18,6 +18,8 @@ import { TjTime, } from "../../time/tj-time.ts";
 import { RealFormat, } from "../../format/real-format.ts";
 import { Project, } from "../../model/project.ts";
 import { Journal, } from "../../model/journal.ts";
+import { Leave, } from "../../model/leave.ts";
+import { ScoreboardInterval, } from "../../time/scoreboard-interval.ts";
 import { WorkingHours, } from "../../calendar/working-hours.ts";
 import { Macro, } from "../../lexer/macro-table.ts";
 import { AttributeOverwrite, } from "../../model/errors.ts";
@@ -653,18 +655,12 @@ export function registerProjectRules(p: ProjectFileParser,): void {
     p.pattern(
       ["_vacation", "!vacationName", "!intervals",],
       function (this: ProjectFileParser,): unknown {
-        // CCB (Fase 16): Leave ainda não portado; registramos férias como
-        // tuplas [tipo, inicio, fim] em `leaves`.
-        const leaves = listAttr(this, "leaves",) as unknown[];
-        const name = this.val[1] as string;
-        for (
-          const interval of this.val[2] as Array<{
-            start: TjTime;
-            end: TjTime;
-          }>
-        ) {
-          leaves.push(["holiday", name, interval.start, interval.end,],);
-        }
+        // Fiel a resource.ts/shift.ts: as férias globais viram `Leave` com
+        // `interval`. O `Project#initScoreboards` espera `.interval.start/end`.
+        const leaves = (this.val[2] as ScoreboardInterval[]).map(
+          (iv,) => new Leave("holiday", iv,),
+        );
+        this.appendScListAttribute("leaves", leaves,);
         return null;
       },
     );

@@ -460,6 +460,7 @@ export class ProjectFileParser extends TextParser {
     _sfi: SourceFileInfo | null,
     _tokenSet?: string[] | null,
   ): never {
+    // Ancorado: Fase 12 — RichText real depende de RichTextFactory (12.18).
     throw new NotYetImplementedError("12", "RichText",);
   }
 

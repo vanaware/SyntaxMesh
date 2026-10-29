@@ -26,6 +26,7 @@ export class TaskJuggler {
   }
 
   parse(files: string[], keepParser = false,): boolean {
+    // Ancorado: Fase 19 — loading de arquivos .tjp depende do storage/browser (Fase 19/PWA).
     throw new NotYetImplementedError("10", "parse",);
   }
 
@@ -35,7 +36,7 @@ export class TaskJuggler {
   }
 
   parseContent(content: string,): boolean {
-    // Stub — Fase 19 (variante para aceitar conteúdo direto)
+    // Ancorado: Fase 19 — variante para conteúdo direto, usada pelo UI/PWA (Fase 19/20).
     throw new NotYetImplementedError("19", "parseContent",);
   }
 
@@ -88,14 +89,17 @@ export class TaskJuggler {
   }
 
   freeze(freezeDate: unknown, taskBookings: boolean,): boolean {
+    // Ancorado: Fase 14 — freeze depende do pipeline de relatórios (Fase 14).
     throw new NotYetImplementedError("14", "freeze",);
   }
 
   checkTimeSheet(fileName: string,): boolean {
+    // Ancorado: Fase 18 — checkTimeSheet depende das time sheets (Fase 18).
     throw new NotYetImplementedError("18", "checkTimeSheet",);
   }
 
   checkStatusSheet(fileName: string,): boolean {
+    // Ancorado: Fase 18 — checkStatusSheet depende das status sheets (Fase 18).
     throw new NotYetImplementedError("18", "checkStatusSheet",);
   }
 

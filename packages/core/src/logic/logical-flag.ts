@@ -33,6 +33,7 @@ export class LogicalFlag extends LogicalOperation {
     if (isQuery(expr.query,)) {
       return hasFlag(expr.query, this.operand1 as string,);
     }
+    // Ancorado: Fase 16 — ramo Journal depende do Journal/Traverser (Fase 16).
     // Ramo Journal: completo na Fase 16.
     throw new NotYetImplementedError("16", "LogicalFlag (Journal)",);
   }

@@ -89,5 +89,6 @@ O que foi decidido? Seja específico e acionável.
 | 029 | Journal e AlertLevel em TypeScript | Proposto | — |
 | 030 | Arquitetura simplificada: todo código principal em `packages/core` | Aceito | 2026-10-24 |
 | 031 | Modelo Contábil Estendido (repete 020; ver arquivo) | Proposto | — |
+| 032 | Gate de saída para Fase 13 e política de stubs | Aceito | 2026-10-28 |
 
 > **Nota:** Manter esta tabela atualizada manualmente ou via script ao adicionar novos ADRs.

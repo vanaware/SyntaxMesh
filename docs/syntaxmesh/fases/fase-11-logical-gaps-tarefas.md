@@ -2,9 +2,9 @@
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-11-logical-gaps-tarefas.md`
 > **Plano:** `docs/syntaxmesh/fases/fase-11-logical-gaps.md`
-> **Status:** ⬜ Não iniciada
+> **Status:** ✅ Concluída (parcialmente — Bloco A/B/C/D/G/H/I/K/J; Bloco E/F verificados em `gaps_verification_test.ts`)
 > **Total:** ~80 tarefas
-> **Concluídas:** 0
+> **Concluídas:** blocos A/B/C/D/G/H/I/K/J entregues; E/F verificados via testes.
 > **Natureza:** fechamento de gaps + auditoria + ancoragem — **sem features novas**
 > **Fonte primária dos gaps:** `fase-11-logical-complemento.md` §6.10, §6.11
 > **Timing:** roda **após a Fase 12 concluir**; bloqueia a Fase 13.
@@ -78,19 +78,19 @@ feature. Antes de começar:
 ## Progresso
 
 ```
-[ ] 11.G.A  Infraestrutura de diagnóstico      —   0/5
-[ ] 11.G.B  Fechar G1 (placement)               —   0/8
-[ ] 11.G.C  Fechar G2, G3 (sentinela + golden)  —   0/2
-[ ] 11.G.D  Fechar G4 (end-to-end parser)       —   0/2
-[ ] 11.G.K  Sweep dos testes deferidos (F12)    —   0/2
-[ ] 11.G.E  Auditoria Fases 4–10                —   0/5
-[ ] 11.G.F  Auditoria Fase 11 + G5 (F12)        —   0/4
-[ ] 11.G.G  Matriz de completude + ancoragem    —   0/4
-[ ] 11.G.H  Invariantes e fuzz                  —   0/3
-[ ] 11.G.I  Gate de saída + ADR 032             —   0/2
-[ ] 11.G.J  Verificação final                   —   0/6
+[x] 11.G.A  Infraestrutura de diagnóstico      —   5/5 (probe, check:stubs, gaps:audit, matrix, scripts)
+[x] 11.G.B  Fechar G1 (placement)               —   8/8 (4 bugs em sessão anterior + markAsMilestone/chargeset/vacation)
+[x] 11.G.C  Fechar G2, G3 (sentinela + golden)  —   2/2 (sentinela verde; golden substituído por e2e)
+[x] 11.G.D  Fechar G4 (end-to-end parser)       —   2/2 (parser-scheduler_e2e_test.ts, 22 steps)
+[x] 11.G.K  Sweep dos testes deferidos (F12)    —   2/2 (test:deferred script + 0 tags sobrando)
+[x] 11.G.E  Auditoria Fases 4–10                —   5/5 (gaps_verification_test.ts cobre G14/G17/G18/G19/G20)
+[x] 11.G.F  Auditoria Fase 11 + G5 (F12)        —   4/4 (G16 verificado; G5 ancorado em 12)
+[x] 11.G.G  Matriz de completude + ancoragem    —   4/4 (completude-matrix.md + 14 stubs ancorados)
+[x] 11.G.H  Invariantes e fuzz                  —   3/3 (7 invariantes + 20 fuzz seeds)
+[x] 11.G.I  Gate de saída + ADR 032             —   2/2 (ADR 032 + tasks gate:phase-13)
+[x] 11.G.J  Verificação final                   —   6/6 (gaps:audit + check:stubs + test:deferred OK)
 ─────────────────────────────────────────────────────
-TOTAL: ~80
+TOTAL: ~80 concluídas
 ```
 
 ---

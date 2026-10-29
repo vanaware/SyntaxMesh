@@ -44,21 +44,21 @@ interface ProbeReport {
   file: string;
   parseErrors: number;
   scheduleErrors: number;
-  messages: Array<{ id: string; text: string; }>;
+  /** Preenchido quando `schedule()` lança (exceção não-Tj capturada). */
+  scheduleException?: string;
+  messages: Array<{ id: string; text: string }>;
   tasks: TaskProbe[];
   resources: ResourceProbe[];
-  dataCache: { hits: number; misses: number; collisions: number; };
+  dataCache: { hits: number; misses: number; collisions: number };
 }
 
-/** Achata a árvore de um PropertySet em lista plana (ordem de DFS). */
-function flatten(root: PropertyTreeNode,): PropertyTreeNode[] {
-  const out: PropertyTreeNode[] = [];
-  const walk = (n: PropertyTreeNode,): void => {
-    out.push(n,);
-    for (const c of n.children) walk(c,);
-  };
-  for (const c of root.children) walk(c,);
-  return out;
+/** Lista plana das entidades do set. `PropertySet#toArray()` já devolve o
+ * índice flat (Ruby: `PropertySet.each`); não precisamos recursar em
+ * `children` — isso duplicaria os filhos. */
+function listAll(
+  set: { toArray(): PropertyTreeNode[] },
+): PropertyTreeNode[] {
+  return set.toArray();
 }
 
 function dayOf(v: unknown,): string | null {
@@ -79,44 +79,48 @@ function probe(tjpPath: string,): ProbeReport {
   MessageHandlerInstance.instance.errors = 0;
 
   let scheduleErrors = 0;
+  let scheduleException: string | undefined;
   if (result && result instanceof Object) {
     try {
       result.schedule();
-    } catch (_e) {
-      scheduleErrors = -1; // exceção em vez de contagem
+    } catch (e) {
+      scheduleException = (e as Error).stack ?? (e as Error).message;
+      scheduleErrors = -1;
     }
-    scheduleErrors = scheduleErrors === -1
-      ? scheduleErrors
-      : MessageHandlerInstance.instance.errors;
+    if (scheduleErrors !== -1) {
+      scheduleErrors = MessageHandlerInstance.instance.errors;
+    }
   }
 
   const messages = MessageHandlerInstance.instance.messages.map((m,) => ({
     id: m.id,
-    text: (m as unknown as { message?: string; }).message ?? "",
+    text: (m as unknown as { message?: string }).message ?? "",
   }));
 
-  const tasks: TaskProbe[] = result ? flatten(result.tasks,).map((n,) => {
-    const sc = (n as Task).scenarioData(0,) as TaskScenario;
-    return {
-      fullId: n.fullId,
-      start: dayOf(n.getForScenario("start", 0,)),
-      end: dayOf(n.getForScenario("end", 0,)),
-      doneEffort: sc.doneEffort(),
-      isRunAway: sc.isRunAway(),
-      // `scheduled` é espelhado no bag por `markAsScheduled` (forceForScenario).
-      scheduled: Boolean(n.getForScenario("scheduled", 0,)),
-      durationType: sc.durationType(),
-    };
-  }) : [];
+  const tasks: TaskProbe[] = result ?
+    listAll(result.tasks,).map((n,) => {
+      const sc = (n as Task).scenarioData(0,) as TaskScenario;
+      return {
+        fullId: n.fullId,
+        start: dayOf(n.getForScenario("start", 0,),),
+        end: dayOf(n.getForScenario("end", 0,),),
+        doneEffort: sc.doneEffort(),
+        isRunAway: sc.isRunAway(),
+        // `scheduled` é espelhado no bag por `markAsScheduled` (forceForScenario).
+        scheduled: Boolean(n.getForScenario("scheduled", 0,),),
+        durationType: sc.durationType(),
+      };
+    },) :
+    [];
 
   const resources: ResourceProbe[] = result
-    ? flatten(result.resources,).map((n,) => ({
+    ? listAll(result.resources,).map((n,) => ({
       fullId: n.fullId,
       // Esforço total do recurso é um runtime attribute (não exposto como
       // método público no port); leitura defensiva do bag.
-      effort: Number(n.getForScenario("effort", 0,) ?? 0),
+      effort: Number(n.getForScenario("effort", 0,) ?? 0,),
       duties: ((n.getForScenario("duties", 0,) as unknown[]) ?? []).length,
-    }),)
+    }))
     : [];
 
   const cache = DataCache.instance;
@@ -124,6 +128,7 @@ function probe(tjpPath: string,): ProbeReport {
     file: tjpPath,
     parseErrors,
     scheduleErrors,
+    ...(scheduleException ? { scheduleException, } : {}),
     messages,
     tasks,
     resources,
@@ -142,14 +147,14 @@ export { probe, type ProbeReport, };
 if (import.meta.main) {
   const arg = Deno.args[0];
   if (!arg) {
-    console.error("uso: deno task probe <arquivo.tjp>");
-    Deno.exit(2);
+    console.error("uso: deno task probe <arquivo.tjp>",);
+    Deno.exit(2,);
   }
   try {
     const report = probe(arg,);
-    console.log(JSON.stringify(report, null, 2,));
+    console.log(JSON.stringify(report, null, 2,),);
   } catch (e) {
-    console.error(`probe falhou em ${arg}: ${(e as Error).message}`);
-    Deno.exit(1);
+    console.error(`probe falhou em ${arg}: ${(e as Error).message}`,);
+    Deno.exit(1,);
   }
 }
