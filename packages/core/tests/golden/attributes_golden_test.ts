@@ -70,7 +70,8 @@ interface GoldenCase {
 interface GoldenFile {
   version: string;
   description: string;
-  generated_at: string;
+  // Opcional: o golden não grava mais timestamp (idempotência byte-a-byte).
+  generated_at?: string;
   cases: GoldenCase[];
 }
 
@@ -91,8 +92,17 @@ function loadGoldenFile(): GoldenFile {
 }
 
 /**
- * Rehydrates a value, restoring `to_s`/`getWorkingHours` proc markers into
- * callable functions so attribute implementations can invoke them.
+ * Rehidrata valores do golden, restaurando marcadores de objeto Ruby em
+ * chamáveis. O `scripts/golden/attributes.rb` não serializa mais Procs reais
+ * (`#<Proc:0x… arquivo:LINHA>`, que embutem endereço de memória volátil e número
+ * de linha → golden não-idempotente + teste frágil acoplado a linhas). Em vez
+ * disso emite tokens estáveis, reidratados aqui sem depender de número de linha:
+ *   - `{ __to_s_seq__: [v1, v2, …] }` → função stateful que devolve um valor por
+ *     chamada (esgotada a lista, `""`). Estado POR ELEMENTO (não global), então a
+ *     ordem dos casos não interfere — cada mock mantém sua própria sequência.
+ *   - `{ __wh_intervals__: { "0": [[s, e], …] } }` → `getWorkingHours(day)`
+ *     devolve os intervalos daquele dia (stateless). Fiel a `day == 0 ?
+ *     [[3600, 7200]] : []`.
  */
 function rehydrate(value: unknown,): unknown {
   if (Array.isArray(value,)) {
@@ -100,66 +110,24 @@ function rehydrate(value: unknown,): unknown {
   }
   if (value && typeof value === "object") {
     const obj = value as Record<string, unknown>;
+    const seq = obj["__to_s_seq__"];
+    if (Array.isArray(seq,)) {
+      const values = seq.map((s,) => String(s,));
+      let i = 0;
+      return () => (i < values.length ? values[i++] : "");
+    }
+    const wh = obj["__wh_intervals__"];
+    if (wh && typeof wh === "object") {
+      const map = wh as Record<string, unknown>;
+      return (day: number,) => (map[String(day,)] as [number, number,][]) ?? [];
+    }
     const out: Record<string, unknown> = {};
     for (const [k, v,] of Object.entries(obj,)) {
       out[k] = rehydrate(v,);
     }
-    if (typeof out.to_s === "string" && out.to_s.startsWith("#<Proc",)) {
-      const marker = out.to_s as string;
-      const match = marker.match(
-        /#<Proc:0x[0-9a-f]+ .+\/scripts\/golden\/attributes\.rb:(\d+) \(lambda\)>/,
-      );
-      const line = match ? Number.parseInt(match[1] ?? "", 10,) : 0;
-      out.to_s = () => procTo_s(line,);
-    }
-    if (
-      typeof out.getWorkingHours === "string" &&
-      out.getWorkingHours.startsWith("#<Proc",)
-    ) {
-      out.getWorkingHours = (day: number,) => procGetWorkingHours(day,);
-    }
     return out;
   }
   return value;
-}
-
-/**
- * Maps a proc marker line from `scripts/golden/attributes.rb` to the string
- * that the corresponding lambda returns.
- */
-const procCallCounts = new Map<number, number>();
-
-function procTo_s(line: number,): string {
-  const count = (procCallCounts.get(line,) || 0) + 1;
-  procCallCounts.set(line, count,);
-
-  switch (line) {
-    case 163:
-      return count === 1 ? "cs1" : "";
-    case 166:
-      return count === 1 ? "cs1" : "";
-    case 187:
-      return count === 1 ? "b1" : "";
-    case 190:
-      return count === 1 ? "b1" : "";
-    case 211:
-      return count === 1 ? "1h-2h" : count === 2 ? "3h-4h" : "";
-    case 214:
-      return count === 1 ? "1h-2h" : count === 2 ? "3h-4h" : "";
-    case 299:
-      return count === 1 ? "hello" : "";
-    case 302:
-      return count === 1 ? "hello" : "";
-    default:
-      return "";
-  }
-}
-
-/**
- * Maps the working-hours proc marker to its interval array.
- */
-function procGetWorkingHours(day: number,): [number, number,][] {
-  return day === 0 ? [[3600, 7200,],] : [];
 }
 
 function runCase(c: GoldenCase,): void {

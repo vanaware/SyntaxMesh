@@ -480,10 +480,10 @@ tc("beginOfMonth in timezone Asia/Tokyo",
    timezone: "Asia/Tokyo")
 
 # Generate the JSON output
+# (sem `generated_at` — timestamp quebraria a idempotência do golden)
 output = {
   version: "1.0",
   description: "Golden test cases for TjTime compatibility (Cat. B bugs)",
-  generated_at: Time.now.utc.to_s,
   cases: $golden_cases,
 }
 

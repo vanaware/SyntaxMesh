@@ -158,12 +158,16 @@ tc("ChargeListAttribute to_s com charges",
    { value: [{ amount: 100 }] }, "100")
 
 # --- ChargeSetListAttribute ---
+# Elementos com `to_s` são marcadores estáveis (__to_s_seq__) em vez de Procs
+# Ruby: serializar um Proc embute endereço de memória + número de linha, tornando
+# o golden não-idempotente e o teste frágil (switch por linha). O TS rehidrata o
+# token como função stateful que devolve os valores da sequência, 1 por chamada.
 tc("ChargeSetListAttribute to_tjp com chargeSet",
    "to_tjp", "ChargeSetList",
-   { value: [{ to_s: -> { "cs1" } }] }, "chargeset cs1")
+   { value: [{ to_s: { __to_s_seq__: ["cs1"] } }] }, "chargeset cs1")
 tc("ChargeSetListAttribute to_s com chargeSet",
    "to_s", "ChargeSetList",
-   { value: [{ to_s: -> { "cs1" } }] }, "cs1")
+   { value: [{ to_s: { __to_s_seq__: ["cs1"] } }] }, "cs1")
 
 # --- AccountCreditListAttribute ---
 tc("AccountCreditListAttribute to_tjp com credits",
@@ -185,10 +189,10 @@ tc("AllocationAttribute to_s com alocação",
 # --- BookingListAttribute ---
 tc("BookingListAttribute to_tjp lança",
    "to_tjp", "BookingList",
-   { value: [{ to_s: -> { "b1" } }] }, :throws)
+   { value: [{ to_s: { __to_s_seq__: ["b1"] } }] }, :throws)
 tc("BookingListAttribute to_s com booking",
    "to_s", "BookingList",
-   { value: [{ to_s: -> { "b1" } }] }, "b1")
+   { value: [{ to_s: { __to_s_seq__: ["b1"] } }] }, "b1")
 
 # --- LogicalExpressionAttribute ---
 # Ruby herda AttributeBase#to_tjp (AttributeBase.rb:169) = "<type.id> <get.to_s>";
@@ -211,10 +215,10 @@ tc("LogicalExpressionListAttribute to_s com expr",
 # --- TimeIntervalListAttribute ---
 tc("TimeIntervalListAttribute to_tjp com intervalos",
    "to_tjp", "TimeIntervalList",
-   { value: [{ to_s: -> { "1h-2h" } }, { to_s: -> { "3h-4h" } }] }, "intervallist 1h-2h, 3h-4h")
+   { value: [{ to_s: { __to_s_seq__: ["1h-2h"] } }, { to_s: { __to_s_seq__: ["3h-4h"] } }] }, "intervallist 1h-2h, 3h-4h")
 tc("TimeIntervalListAttribute to_s com intervalos",
    "to_s", "TimeIntervalList",
-   { value: [{ to_s: -> { "1h-2h" } }, { to_s: -> { "3h-4h" } }] }, "1h-2h, 3h-4h")
+   { value: [{ to_s: { __to_s_seq__: ["1h-2h"] } }, { to_s: { __to_s_seq__: ["3h-4h"] } }] }, "1h-2h, 3h-4h")
 
 # --- LeaveListAttribute ---
 tc("LeaveListAttribute to_tjp com feriados",
@@ -251,10 +255,10 @@ tc("ShiftAssignmentsAttribute to_s com atribuições",
 # --- WorkingHoursAttribute ---
 tc("WorkingHoursAttribute to_tjp com horários",
    "to_tjp", "WorkingHours",
-   { value: { getWorkingHours: ->(day) { day == 0 ? [[3600, 7200]] : [] } } }, "workinghours sun 1:00 - 2:00\nworkinghours mon off\nworkinghours tue off\nworkinghours wed off\nworkinghours thu off\nworkinghours fri off\nworkinghours sat off")
+   { value: { getWorkingHours: { __wh_intervals__: { "0": [[3600, 7200]] } } } }, "workinghours sun 1:00 - 2:00\nworkinghours mon off\nworkinghours tue off\nworkinghours wed off\nworkinghours thu off\nworkinghours fri off\nworkinghours sat off")
 tc("WorkingHoursAttribute to_s com horários",
    "to_s", "WorkingHours",
-   { value: { getWorkingHours: ->(day) { day == 0 ? [[3600, 7200]] : [] } } }, "sun 1:00 - 2:00")
+   { value: { getWorkingHours: { __wh_intervals__: { "0": [[3600, 7200]] } } } }, "sun 1:00 - 2:00")
 
 # --- RealFormatAttribute ---
 tc("RealFormatAttribute to_tjp com formato",
@@ -299,10 +303,10 @@ tc("JournalSortListAttribute to_s com journalSorting",
 # --- RichTextAttribute ---
 tc("RichTextAttribute to_tjp com richText",
    "to_tjp", "RichText",
-   { value: { richText: { inputText: "hello" }, to_s: -> { "hello" } } }, "richtext \"hello\"")
+   { value: { richText: { inputText: "hello" }, to_s: { __to_s_seq__: ["hello"] } } }, "richtext \"hello\"")
 tc("RichTextAttribute to_s com richText",
    "to_s", "RichText",
-   { value: { richText: { inputText: "hello" }, to_s: -> { "hello" } } }, "hello")
+   { value: { richText: { inputText: "hello" }, to_s: { __to_s_seq__: ["hello"] } } }, "hello")
 
 # --- DefinitionListAttribute ---
 tc("DefinitionListAttribute to_tjp com definitions",
@@ -566,10 +570,11 @@ tc("diverge — DefinitionList mismatch",
    { value: ["def1", "def2"] }, ["def3", "def4"])
 
 # Generate the JSON output
+# Obs.: sem `generated_at` — timestamp de wall-clock quebraria a idempotência
+# byte-a-byte do golden (dif churn a cada regen). Proveniência = git.
 output = {
   version: "1.0",
   description: "Golden test cases for Attribute attributes (Phase 3)",
-  generated_at: Time.now.utc.to_s,
   cases: $golden_cases,
 }
 

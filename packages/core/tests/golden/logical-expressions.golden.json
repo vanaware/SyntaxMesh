@@ -1,176 +1,414 @@
 {
   "cases": [
     {
-      "description": "5 > 3 \u00e9 true",
-      "tree": { "op1": { "lit": 5 }, "operator": ">", "op2": { "lit": 3 } },
-      "expected": true
-    },
-    {
-      "description": "3 > 5 \u00e9 false",
-      "tree": { "op1": { "lit": 3 }, "operator": ">", "op2": { "lit": 5 } },
-      "expected": false
-    },
-    {
-      "description": "5 >= 5 \u00e9 true",
-      "tree": { "op1": { "lit": 5 }, "operator": ">=", "op2": { "lit": 5 } },
-      "expected": true
-    },
-    {
-      "description": "5 >= 6 \u00e9 false",
-      "tree": { "op1": { "lit": 5 }, "operator": ">=", "op2": { "lit": 6 } },
-      "expected": false
-    },
-    {
-      "description": "5 = 5 \u00e9 true",
-      "tree": { "op1": { "lit": 5 }, "operator": "=", "op2": { "lit": 5 } },
-      "expected": true
-    },
-    {
-      "description": "5 = 6 \u00e9 false",
-      "tree": { "op1": { "lit": 5 }, "operator": "=", "op2": { "lit": 6 } },
-      "expected": false
-    },
-    {
-      "description": "3 < 5 \u00e9 true",
-      "tree": { "op1": { "lit": 3 }, "operator": "<", "op2": { "lit": 5 } },
-      "expected": true
-    },
-    {
-      "description": "6 < 5 \u00e9 false",
-      "tree": { "op1": { "lit": 6 }, "operator": "<", "op2": { "lit": 5 } },
-      "expected": false
-    },
-    {
-      "description": "5 <= 5 \u00e9 true",
-      "tree": { "op1": { "lit": 5 }, "operator": "<=", "op2": { "lit": 5 } },
-      "expected": true
-    },
-    {
-      "description": "6 <= 5 \u00e9 false",
-      "tree": { "op1": { "lit": 6 }, "operator": "<=", "op2": { "lit": 5 } },
-      "expected": false
-    },
-    {
-      "description": "5 != 6 \u00e9 true",
-      "tree": { "op1": { "lit": 5 }, "operator": "!=", "op2": { "lit": 6 } },
-      "expected": true
-    },
-    {
-      "description": "5 != 5 \u00e9 false",
-      "tree": { "op1": { "lit": 5 }, "operator": "!=", "op2": { "lit": 5 } },
-      "expected": false
-    },
-    {
-      "description": "'apple' < 'banana' \u00e9 true",
-      "tree": {
-        "op1": { "lit": "apple" },
-        "operator": "<",
-        "op2": { "lit": "banana" }
-      },
-      "expected": true
-    },
-    {
-      "description": "'b' = 'a' \u00e9 false",
-      "tree": { "op1": { "lit": "b" }, "operator": "=", "op2": { "lit": "a" } },
-      "expected": false
-    },
-    {
-      "description": "(5 > 3) & (2 < 4) \u00e9 true",
-      "tree": {
-        "op1": { "op1": { "lit": 5 }, "operator": ">", "op2": { "lit": 3 } },
-        "operator": "&",
-        "op2": { "op1": { "lit": 2 }, "operator": "<", "op2": { "lit": 4 } }
-      },
-      "expected": true
-    },
-    {
-      "description": "(5 > 3) & (4 < 2) \u00e9 false",
-      "tree": {
-        "op1": { "op1": { "lit": 5 }, "operator": ">", "op2": { "lit": 3 } },
-        "operator": "&",
-        "op2": { "op1": { "lit": 4 }, "operator": "<", "op2": { "lit": 2 } }
-      },
-      "expected": false
-    },
-    {
-      "description": "(5 < 3) | (2 < 4) \u00e9 true",
-      "tree": {
-        "op1": { "op1": { "lit": 5 }, "operator": "<", "op2": { "lit": 3 } },
-        "operator": "|",
-        "op2": { "op1": { "lit": 2 }, "operator": "<", "op2": { "lit": 4 } }
-      },
-      "expected": true
-    },
-    {
-      "description": "(5 < 3) | (2 > 4) \u00e9 false",
-      "tree": {
-        "op1": { "op1": { "lit": 5 }, "operator": "<", "op2": { "lit": 3 } },
-        "operator": "|",
-        "op2": { "op1": { "lit": 2 }, "operator": ">", "op2": { "lit": 4 } }
-      },
-      "expected": false
-    },
-    {
-      "description": "~(5 > 3) \u00e9 false",
-      "tree": {
-        "op1": { "op1": { "lit": 5 }, "operator": ">", "op2": { "lit": 3 } },
-        "operator": "~",
-        "op2": null
-      },
-      "expected": false
-    },
-    {
-      "description": "~(5 < 3) \u00e9 true",
-      "tree": {
-        "op1": { "op1": { "lit": 5 }, "operator": "<", "op2": { "lit": 3 } },
-        "operator": "~",
-        "op2": null
-      },
-      "expected": true
-    },
-    {
-      "description": "& lazy: false & (erro) \u00e9 false sem avaliar operand2",
-      "tree": {
-        "op1": { "lit": false },
-        "operator": "&",
-        "op2": { "op1": { "lit": 1 }, "operator": "?", "op2": { "lit": 2 } }
-      },
-      "expected": false
-    },
-    {
-      "description": "| lazy: true | (erro) \u00e9 true sem avaliar operand2",
-      "tree": {
-        "op1": { "lit": true },
-        "operator": "|",
-        "op2": { "op1": { "lit": 1 }, "operator": "?", "op2": { "lit": 2 } }
-      },
-      "expected": true
-    },
-    {
-      "description": "a | b & c = (a | b) & c \u00e9 false (sem preced\u00eancia)",
+      "description": "5 > 3 é true",
       "tree": {
         "op1": {
-          "op1": { "op1": { "lit": true }, "operator": null, "op2": null },
-          "operator": "|",
-          "op2": { "op1": { "lit": false }, "operator": null, "op2": null }
+          "lit": 5
+        },
+        "operator": ">",
+        "op2": {
+          "lit": 3
+        }
+      },
+      "expected": true
+    },
+    {
+      "description": "3 > 5 é false",
+      "tree": {
+        "op1": {
+          "lit": 3
+        },
+        "operator": ">",
+        "op2": {
+          "lit": 5
+        }
+      },
+      "expected": false
+    },
+    {
+      "description": "5 >= 5 é true",
+      "tree": {
+        "op1": {
+          "lit": 5
+        },
+        "operator": ">=",
+        "op2": {
+          "lit": 5
+        }
+      },
+      "expected": true
+    },
+    {
+      "description": "5 >= 6 é false",
+      "tree": {
+        "op1": {
+          "lit": 5
+        },
+        "operator": ">=",
+        "op2": {
+          "lit": 6
+        }
+      },
+      "expected": false
+    },
+    {
+      "description": "5 = 5 é true",
+      "tree": {
+        "op1": {
+          "lit": 5
+        },
+        "operator": "=",
+        "op2": {
+          "lit": 5
+        }
+      },
+      "expected": true
+    },
+    {
+      "description": "5 = 6 é false",
+      "tree": {
+        "op1": {
+          "lit": 5
+        },
+        "operator": "=",
+        "op2": {
+          "lit": 6
+        }
+      },
+      "expected": false
+    },
+    {
+      "description": "3 < 5 é true",
+      "tree": {
+        "op1": {
+          "lit": 3
+        },
+        "operator": "<",
+        "op2": {
+          "lit": 5
+        }
+      },
+      "expected": true
+    },
+    {
+      "description": "6 < 5 é false",
+      "tree": {
+        "op1": {
+          "lit": 6
+        },
+        "operator": "<",
+        "op2": {
+          "lit": 5
+        }
+      },
+      "expected": false
+    },
+    {
+      "description": "5 <= 5 é true",
+      "tree": {
+        "op1": {
+          "lit": 5
+        },
+        "operator": "<=",
+        "op2": {
+          "lit": 5
+        }
+      },
+      "expected": true
+    },
+    {
+      "description": "6 <= 5 é false",
+      "tree": {
+        "op1": {
+          "lit": 6
+        },
+        "operator": "<=",
+        "op2": {
+          "lit": 5
+        }
+      },
+      "expected": false
+    },
+    {
+      "description": "5 != 6 é true",
+      "tree": {
+        "op1": {
+          "lit": 5
+        },
+        "operator": "!=",
+        "op2": {
+          "lit": 6
+        }
+      },
+      "expected": true
+    },
+    {
+      "description": "5 != 5 é false",
+      "tree": {
+        "op1": {
+          "lit": 5
+        },
+        "operator": "!=",
+        "op2": {
+          "lit": 5
+        }
+      },
+      "expected": false
+    },
+    {
+      "description": "'apple' < 'banana' é true",
+      "tree": {
+        "op1": {
+          "lit": "apple"
+        },
+        "operator": "<",
+        "op2": {
+          "lit": "banana"
+        }
+      },
+      "expected": true
+    },
+    {
+      "description": "'b' = 'a' é false",
+      "tree": {
+        "op1": {
+          "lit": "b"
+        },
+        "operator": "=",
+        "op2": {
+          "lit": "a"
+        }
+      },
+      "expected": false
+    },
+    {
+      "description": "(5 > 3) & (2 < 4) é true",
+      "tree": {
+        "op1": {
+          "op1": {
+            "lit": 5
+          },
+          "operator": ">",
+          "op2": {
+            "lit": 3
+          }
         },
         "operator": "&",
-        "op2": { "op1": { "lit": false }, "operator": null, "op2": null }
+        "op2": {
+          "op1": {
+            "lit": 2
+          },
+          "operator": "<",
+          "op2": {
+            "lit": 4
+          }
+        }
+      },
+      "expected": true
+    },
+    {
+      "description": "(5 > 3) & (4 < 2) é false",
+      "tree": {
+        "op1": {
+          "op1": {
+            "lit": 5
+          },
+          "operator": ">",
+          "op2": {
+            "lit": 3
+          }
+        },
+        "operator": "&",
+        "op2": {
+          "op1": {
+            "lit": 4
+          },
+          "operator": "<",
+          "op2": {
+            "lit": 2
+          }
+        }
+      },
+      "expected": false
+    },
+    {
+      "description": "(5 < 3) | (2 < 4) é true",
+      "tree": {
+        "op1": {
+          "op1": {
+            "lit": 5
+          },
+          "operator": "<",
+          "op2": {
+            "lit": 3
+          }
+        },
+        "operator": "|",
+        "op2": {
+          "op1": {
+            "lit": 2
+          },
+          "operator": "<",
+          "op2": {
+            "lit": 4
+          }
+        }
+      },
+      "expected": true
+    },
+    {
+      "description": "(5 < 3) | (2 > 4) é false",
+      "tree": {
+        "op1": {
+          "op1": {
+            "lit": 5
+          },
+          "operator": "<",
+          "op2": {
+            "lit": 3
+          }
+        },
+        "operator": "|",
+        "op2": {
+          "op1": {
+            "lit": 2
+          },
+          "operator": ">",
+          "op2": {
+            "lit": 4
+          }
+        }
+      },
+      "expected": false
+    },
+    {
+      "description": "~(5 > 3) é false",
+      "tree": {
+        "op1": {
+          "op1": {
+            "lit": 5
+          },
+          "operator": ">",
+          "op2": {
+            "lit": 3
+          }
+        },
+        "operator": "~",
+        "op2": null
+      },
+      "expected": false
+    },
+    {
+      "description": "~(5 < 3) é true",
+      "tree": {
+        "op1": {
+          "op1": {
+            "lit": 5
+          },
+          "operator": "<",
+          "op2": {
+            "lit": 3
+          }
+        },
+        "operator": "~",
+        "op2": null
+      },
+      "expected": true
+    },
+    {
+      "description": "& lazy: false & (erro) é false sem avaliar operand2",
+      "tree": {
+        "op1": {
+          "lit": false
+        },
+        "operator": "&",
+        "op2": {
+          "op1": {
+            "lit": 1
+          },
+          "operator": "?",
+          "op2": {
+            "lit": 2
+          }
+        }
+      },
+      "expected": false
+    },
+    {
+      "description": "| lazy: true | (erro) é true sem avaliar operand2",
+      "tree": {
+        "op1": {
+          "lit": true
+        },
+        "operator": "|",
+        "op2": {
+          "op1": {
+            "lit": 1
+          },
+          "operator": "?",
+          "op2": {
+            "lit": 2
+          }
+        }
+      },
+      "expected": true
+    },
+    {
+      "description": "a | b & c = (a | b) & c é false (sem precedência)",
+      "tree": {
+        "op1": {
+          "op1": {
+            "op1": {
+              "lit": true
+            },
+            "operator": null,
+            "op2": null
+          },
+          "operator": "|",
+          "op2": {
+            "op1": {
+              "lit": false
+            },
+            "operator": null,
+            "op2": null
+          }
+        },
+        "operator": "&",
+        "op2": {
+          "op1": {
+            "lit": false
+          },
+          "operator": null,
+          "op2": null
+        }
       },
       "expected": false
     },
     {
       "description": "operador desconhecido gera erro",
       "tree": {
-        "op1": { "lit": true },
+        "op1": {
+          "lit": true
+        },
         "operator": "?",
-        "op2": { "lit": false }
+        "op2": {
+          "lit": false
+        }
       },
       "expected": "error"
     },
     {
-      "description": "operand1 booleano em compara\u00e7\u00e3o gera erro",
-      "tree": { "op1": { "lit": true }, "operator": "=", "op2": { "lit": 1 } },
+      "description": "operand1 booleano em comparação gera erro",
+      "tree": {
+        "op1": {
+          "lit": true
+        },
+        "operator": "=",
+        "op2": {
+          "lit": 1
+        }
+      },
       "expected": "error"
     }
   ]

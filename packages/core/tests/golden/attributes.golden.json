@@ -1,7 +1,6 @@
 {
   "version": "1.0",
   "description": "Golden test cases for Attribute attributes (Phase 3)",
-  "generated_at": "2026-10-27 10:54:58 UTC",
   "cases": [
     {
       "description": "StringAttribute to_tjp com texto simples",
@@ -400,7 +399,11 @@
       "input": {
         "value": [
           {
-            "to_s": "#<Proc:0x000000000000 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:163 (lambda)>"
+            "to_s": {
+              "__to_s_seq__": [
+                "cs1"
+              ]
+            }
           }
         ]
       },
@@ -413,7 +416,11 @@
       "input": {
         "value": [
           {
-            "to_s": "#<Proc:0x000000000000 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:166 (lambda)>"
+            "to_s": {
+              "__to_s_seq__": [
+                "cs1"
+              ]
+            }
           }
         ]
       },
@@ -488,7 +495,11 @@
       "input": {
         "value": [
           {
-            "to_s": "#<Proc:0x000000000000 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:187 (lambda)>"
+            "to_s": {
+              "__to_s_seq__": [
+                "b1"
+              ]
+            }
           }
         ]
       },
@@ -501,7 +512,11 @@
       "input": {
         "value": [
           {
-            "to_s": "#<Proc:0x000000000000 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:190 (lambda)>"
+            "to_s": {
+              "__to_s_seq__": [
+                "b1"
+              ]
+            }
           }
         ]
       },
@@ -554,10 +569,18 @@
       "input": {
         "value": [
           {
-            "to_s": "#<Proc:0x000000000000 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:211 (lambda)>"
+            "to_s": {
+              "__to_s_seq__": [
+                "1h-2h"
+              ]
+            }
           },
           {
-            "to_s": "#<Proc:0x000000000000 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:211 (lambda)>"
+            "to_s": {
+              "__to_s_seq__": [
+                "3h-4h"
+              ]
+            }
           }
         ]
       },
@@ -570,10 +593,18 @@
       "input": {
         "value": [
           {
-            "to_s": "#<Proc:0x000000000000 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:214 (lambda)>"
+            "to_s": {
+              "__to_s_seq__": [
+                "1h-2h"
+              ]
+            }
           },
           {
-            "to_s": "#<Proc:0x000000000000 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:214 (lambda)>"
+            "to_s": {
+              "__to_s_seq__": [
+                "3h-4h"
+              ]
+            }
           }
         ]
       },
@@ -689,7 +720,16 @@
       "type": "WorkingHours",
       "input": {
         "value": {
-          "getWorkingHours": "#<Proc:0x000000000000 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:251 (lambda)>"
+          "getWorkingHours": {
+            "__wh_intervals__": {
+              "0": [
+                [
+                  3600,
+                  7200
+                ]
+              ]
+            }
+          }
         }
       },
       "expected": "workinghours sun 1:00 - 2:00\nworkinghours mon off\nworkinghours tue off\nworkinghours wed off\nworkinghours thu off\nworkinghours fri off\nworkinghours sat off"
@@ -700,7 +740,16 @@
       "type": "WorkingHours",
       "input": {
         "value": {
-          "getWorkingHours": "#<Proc:0x000000000000 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:254 (lambda)>"
+          "getWorkingHours": {
+            "__wh_intervals__": {
+              "0": [
+                [
+                  3600,
+                  7200
+                ]
+              ]
+            }
+          }
         }
       },
       "expected": "sun 1:00 - 2:00"
@@ -824,7 +873,11 @@
           "richText": {
             "inputText": "hello"
           },
-          "to_s": "#<Proc:0x000000000000 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:299 (lambda)>"
+          "to_s": {
+            "__to_s_seq__": [
+              "hello"
+            ]
+          }
         }
       },
       "expected": "richtext \"hello\""
@@ -838,7 +891,11 @@
           "richText": {
             "inputText": "hello"
           },
-          "to_s": "#<Proc:0x000000000000 /home/aarvati/github/syntaxmesh/scripts/golden/attributes.rb:302 (lambda)>"
+          "to_s": {
+            "__to_s_seq__": [
+              "hello"
+            ]
+          }
         }
       },
       "expected": "hello"
@@ -930,9 +987,9 @@
       "method": "deepClone",
       "type": "Float",
       "input": {
-        "value": 0.0
+        "value": 0
       },
-      "expected": 0.0
+      "expected": 0
     },
     {
       "description": "deepClone — Boolean default false",

@@ -30,13 +30,18 @@ if (!result.success) {
 
 const stdout = new TextDecoder().decode(result.stdout,);
 
-// Validate JSON before writing
+// Validar e re-serializar no estilo do `deno fmt` (JSON.stringify indent 2):
+// o `JSON.pretty_generate` do Ruby formata arrays vazias em várias linhas.
+let parsed: unknown;
 try {
-  JSON.parse(stdout,);
+  parsed = JSON.parse(stdout,);
 } catch (e) {
   console.error("Ruby output is not valid JSON:", e,);
   Deno.exit(1,);
 }
 
-await Deno.writeTextFile(outputPath, stdout + "\n",);
+await Deno.writeTextFile(
+  outputPath,
+  JSON.stringify(parsed, null, 2,) + "\n",
+);
 console.log(`Generated ${outputPath.pathname}`,);

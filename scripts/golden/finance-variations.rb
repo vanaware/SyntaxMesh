@@ -130,10 +130,10 @@ REPORT_SCENARIOS.each do |report_name, (scenario, id_prefix)|
 end
 
 # Create golden JSON structure
+# (sem `generated_at` — timestamp de wall-clock quebraria a idempotência do golden)
 golden = {
   "version" => "1.0",
   "description" => "Casos financeiros extraidos de mwe004/variaveis.tjp (8 taskreports isolando variacoes de chargeset, charge modes, credit, balance order)",
-  "generated_at" => Time.now.strftime("%Y-%m-%dT%H:%M:%S%z"),
   "cases" => cases
 }
 

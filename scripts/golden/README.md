@@ -69,6 +69,21 @@ Os testes golden estão em `packages/core/tests/golden/*_golden_test.ts`.
    `*.golden.json` manualmente — regere via script.
 4. **Cada caso deve ter `description` em português** e os campos
    `method`, `type`, `input`, `expected`.
+5. **Idempotência byte-a-byte.** Os `.rb` não gravam `generated_at`
+   (proveniência = git) nem serializam objetos Ruby voláteis
+   (`#<Proc:0x…>`, `#<Interval:0x…>`). Quando o Ruby precisa simular
+   comportamento de objeto (ex.: `to_s` de um mock), emita **token
+   estável** — p.ex. `{ __to_s_seq__: ["v1"] }` ou
+   `{ __wh_intervals__: { "0": [[s, e]] } }` — e o teste TS rehidrata
+   o token em closure (ver `attributes_golden_test.ts`). Os geradores
+   (`generate_golden.ts`, `generate_property_tree_golden.ts`)
+   re-serializam com `JSON.stringify(…, null, 2)` para casar com o
+   `deno fmt`. Assim, `deno task golden:generate` rodado duas vezes
+   produz saída idêntica para **todos** os `*.golden.json`.
+   Exceção conhecida: os `.html` de relatório escritos de brinde pelos
+   scripts de finance embutem timestamp do tj3 ("Created on …") e não
+   são consumidos por teste algum — reverta-os
+   (`git checkout -- packages/core/tests/golden/*.html`) após gerar.
 
 ## Estrutura de um caso
 
@@ -264,7 +279,7 @@ Validam as três serializações do subsistema RichText (`to_s`, `to_tagged`,
    `textBlockFormat` do Ruby quebra linhas conforme a largura.
 2. **`tagged` (to_tagged):** comparado byte-a-byte.
 3. **`html` (to_html):** normaliza apenas a **formatação de serialização** —
-   remove whitespace *entre tags* (`>\s+<` → `><`) e antes de auto-fechamento
+   remove whitespace _entre tags_ (`>\s+<` → `><`) e antes de auto-fechamento
    (`\s+/>` → `/>`). O **conteúdo** (tags, atributos, escapes) é comparado
    rigorosamente. A divergência de indentação vem do `SimpleXMLElement` mínimo
    desta fase; a Fase 17 (elemento `XMLElement` real) a elimina.

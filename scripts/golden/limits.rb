@@ -88,10 +88,11 @@ limits.inc(0)
 l.reset(0)
 tc("limit dailymax after reset ok?(0,true) true", "ok?", { name: 'dailymax', index: 0, upper: true }, l.ok?(0, true, nil))
 
+# Sem `generated_at`: timestamp de wall-clock quebraria a idempotência
+# byte-a-byte do golden regenerado (proveniência = git).
 output = {
   version: "1.0",
   description: "Golden test cases for Limits compatibility (Phase 6)",
-  generated_at: Time.now.utc.to_s,
   cases: $golden_cases,
 }
 

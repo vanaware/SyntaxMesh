@@ -121,7 +121,9 @@ assignments2.addAssignment(TaskJuggler::ShiftAssignment.new(
 ))
 
 actual = assignments.hashKey == assignments2.hashKey
-tc("ShiftAssignments hashKey identical instances", "hashKey", { assignments: assignments }, actual)
+# Rótulo estável em vez do objeto: `to_s` de ShiftAssignments embute o Interval
+# (`#<TaskJuggler::Interval:0x…>`), cujo endereço de memória muda a cada run.
+tc("ShiftAssignments hashKey identical instances", "hashKey", { assignments: "shift1 [Mon 9-17, Tue 10-18]" }, actual)
 
 # Test hashKey for different instances
 assignments3 = TaskJuggler::ShiftAssignments.new
@@ -131,12 +133,13 @@ assignments3.addAssignment(TaskJuggler::ShiftAssignment.new(
 ))
 
 actual = assignments.hashKey == assignments3.hashKey
-tc("ShiftAssignments hashKey different instances", "hashKey", { assignments: assignments3 }, actual)
+tc("ShiftAssignments hashKey different instances", "hashKey", { assignments: "shift1 [Mon 9-17]" }, actual)
 
+# Sem `generated_at`: timestamp de wall-clock quebraria a idempotência
+# byte-a-byte do golden regenerado (proveniência = git).
 output = {
   version: "1.0",
   description: "Golden test cases for ShiftAssignments compatibility (Phase 6)",
-  generated_at: Time.now.utc.to_s,
   cases: $golden_cases,
 }
 

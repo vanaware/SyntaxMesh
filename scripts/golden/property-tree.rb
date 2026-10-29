@@ -293,10 +293,11 @@ testAdoption
 testBackupRestore
 testFlatNamespace
 
+# Sem `generated_at`: timestamp de wall-clock quebraria a idempotência
+# byte-a-byte do golden regenerado (proveniência = git).
 output = {
   version: "1.0",
   description: "Golden test cases for PropertyTreeNode, PropertySet, ScenarioData, Scenario, PTNProxy (Phase 4)",
-  generated_at: Time.now.utc.to_s,
   cases: $golden_cases,
 }
 

@@ -99,11 +99,16 @@ for (const { name, rubyScript, outputPath, } of scripts) {
     Deno.exit(1,);
   }
 
+  // Normaliza a serialização para o estilo do `deno fmt` (JSON.stringify com
+  // indent 2): o `JSON.pretty_generate` do Ruby formata arrays vazias em várias
+  // linhas (`[\n\n]`), o que quebraria o `deno fmt --check` do golden commitado.
+  // Re-stringificar aqui garante que a saída de `golden:generate` seja sempre
+  // byte-idêntica ao arquivo commitado (idempotência + fmt limpo).
   let stdout = new TextDecoder().decode(result.stdout,);
 
   // Normalize Ruby proc memory addresses to a stable placeholder.
-  // The address is non-deterministic between runs; the path and line number
-  // are preserved because the rehydration regex extracts the line number.
+  // Legado: `attributes.rb` agora emit tokens estáveis (__to_s_seq__ etc.),
+  // então não há Procs a normalizar; o regex permanece como no-op defensivo.
   stdout = stdout.replace(
     /#<Proc:(0x[0-9a-f]+) (.+\/scripts\/golden\/\w+\.rb:\d+ \(lambda\))>/g,
     "#<Proc:0x000000000000 $2>",
@@ -120,15 +125,19 @@ for (const { name, rubyScript, outputPath, } of scripts) {
   stdout = jsonMatch[0];
 
   // Validate JSON before writing
+  let parsed: unknown;
   try {
-    JSON.parse(stdout,);
+    parsed = JSON.parse(stdout,);
   } catch (e) {
     console.error(`Ruby output ${name} is not valid JSON:`, e,);
     console.error(`Raw output:\n${stdout}`,);
     Deno.exit(1,);
   }
 
-  await Deno.writeTextFile(outputPath, stdout + "\n",);
+  await Deno.writeTextFile(
+    outputPath,
+    JSON.stringify(parsed, null, 2,) + "\n",
+  );
   console.log(`Generated ${outputPath.pathname}`,);
 }
 

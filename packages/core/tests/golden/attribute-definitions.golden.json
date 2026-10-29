@@ -1,7 +1,6 @@
 {
   "version": "1.0",
   "description": "Golden test for AttributeDefinitions",
-  "generated_at": "2026-10-27T10:54:58Z",
   "cases": [
     {
       "id": "accountroot",
@@ -50,7 +49,7 @@
       "inheritedFromParent": false,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": 0.0,
+      "default": 0,
       "userDefined": false
     },
     {
@@ -240,7 +239,7 @@
       "inheritedFromParent": false,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": 0.0,
+      "default": 0,
       "userDefined": false
     },
     {
@@ -250,7 +249,7 @@
       "inheritedFromParent": false,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": 0.0,
+      "default": 0,
       "userDefined": false
     },
     {
@@ -322,7 +321,7 @@
       "inheritedFromParent": true,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": 1.0,
+      "default": 1,
       "userDefined": false
     },
     {
@@ -1079,7 +1078,7 @@
       "inheritedFromParent": false,
       "inheritedFromProject": false,
       "scenarioSpecific": true,
-      "default": 0.0,
+      "default": 0,
       "userDefined": false
     },
     {
@@ -1149,7 +1148,7 @@
       "inheritedFromParent": true,
       "inheritedFromProject": true,
       "scenarioSpecific": true,
-      "default": 0.0,
+      "default": 0,
       "userDefined": false
     },
     {

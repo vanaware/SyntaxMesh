@@ -135,10 +135,10 @@ resource_doc.xpath('//table[@class="tj_table"]//tr[@class="tabline"][td[@class="
 end
 
 # Create golden JSON structure
+# (sem `generated_at` — timestamp de wall-clock quebraria a idempotência do golden)
 golden = {
   "version" => "1.0",
   "description" => "Casos financeiros extraídos de mwe004/tutorial.tjp (overview taskreport + resourceGraph resourcereport)",
-  "generated_at" => Time.now.utc.iso8601,
   "cases" => cases
 }
 

@@ -179,11 +179,10 @@ attribute_definitions << {
 # Ordena por id para corresponder ao Ruby (já ordenado por cadaAttributeDefinition)
 attribute_definitions.sort_by! { |ad| ad['id'] }
 
-# Gera o JSON
+# Gera o JSON (sem `generated_at` — timestamp quebraria a idempotência do golden)
 json_output = {
   'version' => '1.0',
   'description' => 'Golden test for AttributeDefinitions',
-  'generated_at' => Time.now.utc.iso8601,
   'cases' => attribute_definitions,
 }
 

@@ -1,7 +1,6 @@
 {
   "version": "1.0",
   "description": "Casos financeiros extraídos de mwe004/tutorial.tjp (overview taskreport + resourceGraph resourcereport)",
-  "generated_at": "2026-10-27T10:54:59Z",
   "cases": [
     {
       "description": "Accounting Software\n           \n          \n            ID: AcSo (WBS 1)",
@@ -11,9 +10,9 @@
         "value": null
       },
       "expected": {
-        "effort": 750.0,
+        "effort": 750,
         "cost": 36526.25,
-        "revenue": 34000.0,
+        "revenue": 34000,
         "balance": -2526.25,
         "turnover": 70526.25
       }
@@ -26,11 +25,11 @@
         "value": null
       },
       "expected": {
-        "effort": 0.0,
-        "cost": 0.0,
-        "revenue": 34000.0,
-        "balance": 34000.0,
-        "turnover": 34000.0
+        "effort": 0,
+        "cost": 0,
+        "revenue": 34000,
+        "balance": 34000,
+        "turnover": 34000
       }
     },
     {
@@ -41,11 +40,11 @@
         "value": null
       },
       "expected": {
-        "effort": 0.0,
-        "cost": 0.0,
-        "revenue": 21000.0,
-        "balance": 21000.0,
-        "turnover": 21000.0
+        "effort": 0,
+        "cost": 0,
+        "revenue": 21000,
+        "balance": 21000,
+        "turnover": 21000
       }
     },
     {
@@ -56,11 +55,11 @@
         "value": null
       },
       "expected": {
-        "effort": 0.0,
-        "cost": 0.0,
-        "revenue": 13000.0,
-        "balance": 13000.0,
-        "turnover": 13000.0
+        "effort": 0,
+        "cost": 0,
+        "revenue": 13000,
+        "balance": 13000,
+        "turnover": 13000
       }
     },
     {
@@ -71,11 +70,11 @@
         "value": null
       },
       "expected": {
-        "effort": 200.0,
-        "cost": 6500.0,
-        "revenue": 0.0,
-        "balance": -6500.0,
-        "turnover": 6500.0
+        "effort": 200,
+        "cost": 6500,
+        "revenue": 0,
+        "balance": -6500,
+        "turnover": 6500
       }
     },
     {
@@ -86,11 +85,11 @@
         "value": null
       },
       "expected": {
-        "effort": 550.0,
-        "cost": 17000.0,
-        "revenue": 0.0,
-        "balance": -17000.0,
-        "turnover": 17000.0
+        "effort": 550,
+        "cost": 17000,
+        "revenue": 0,
+        "balance": -17000,
+        "turnover": 17000
       }
     },
     {
@@ -101,11 +100,11 @@
         "value": null
       },
       "expected": {
-        "effort": 200.0,
-        "cost": 6500.0,
-        "revenue": 0.0,
-        "balance": -6500.0,
-        "turnover": 6500.0
+        "effort": 200,
+        "cost": 6500,
+        "revenue": 0,
+        "balance": -6500,
+        "turnover": 6500
       }
     },
     {
@@ -116,11 +115,11 @@
         "value": null
       },
       "expected": {
-        "effort": 350.0,
-        "cost": 10500.0,
-        "revenue": 0.0,
-        "balance": -10500.0,
-        "turnover": 10500.0
+        "effort": 350,
+        "cost": 10500,
+        "revenue": 0,
+        "balance": -10500,
+        "turnover": 10500
       }
     },
     {
@@ -131,12 +130,12 @@
         "value": null
       },
       "expected": {
-        "effort": 28.0,
-        "rate": 350.0,
-        "cost": 9800.0,
-        "revenue": 0.0,
-        "balance": -9800.0,
-        "turnover": 9800.0
+        "effort": 28,
+        "rate": 350,
+        "cost": 9800,
+        "revenue": 0,
+        "balance": -9800,
+        "turnover": 9800
       }
     },
     {
@@ -147,12 +146,12 @@
         "value": null
       },
       "expected": {
-        "effort": 75.0,
-        "rate": 300.0,
-        "cost": 22500.0,
-        "revenue": 0.0,
-        "balance": -22500.0,
-        "turnover": 22500.0
+        "effort": 75,
+        "rate": 300,
+        "cost": 22500,
+        "revenue": 0,
+        "balance": -22500,
+        "turnover": 22500
       }
     }
   ]

@@ -1,7 +1,6 @@
 {
   "version": "1.0",
   "description": "Golden test cases for TjTime compatibility (Cat. B bugs)",
-  "generated_at": "2026-09-20 17:30:40 UTC",
   "cases": [
     {
       "description": "sameTimeNextDay advances to next day same time",

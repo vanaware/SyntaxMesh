@@ -34,7 +34,8 @@ interface GoldenCase {
 interface GoldenFile {
   version: string;
   description: string;
-  generated_at: string;
+  // Opcional: os goldens não gravam mais timestamp (idempotência byte-a-byte).
+  generated_at?: string;
   cases: GoldenCase[];
 }
 
