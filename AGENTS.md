@@ -67,7 +67,7 @@ This project follows a **21-phase development plan** (previously 8 phases). The 
 | Fase 10 Complemento — Extensões RDO/orçamento | `material` no parser, `note`/`journal` estendidos, `picture`/`format`/`rdoreport`/`breakdownreport`, `timebasis` (#6/#6a). | ⬜ Não iniciada (`fase-10-complemento-tarefas.md` + adendos 13/14/16/18/19/20/21) |
 | Fase 11 — Expressões Lógicas e Queries | Motor de expressões lógicas e ponte para reports. | ⬜ Não iniciada |
 | Fase 12 — RichText (compatibilidade TJP) | Manter Markup MediaWiki para compatibilidade total com `.tjp`. | ⬜ Não iniciada |
-| Fase 13 — Markdown (novo, futuro) | Formato going-forward. Wrapper sobre `@deno/gfm` + extensões. | ⬜ Não iniciada |
+| Fase 13 — Markdown (novo, futuro) | Formato going-forward. `micromark` + `mdast-util-from-markdown` + GFM + extensões. | ✅ Concluída (13.0–13.13; 13.14 imagens parcial → Fases 19/14) |
 | Fase 14 — Relatórios | Pipeline completo de relatórios. | ⬜ Não iniciada |
 | Fase 15 — Gantt | Gantt chart completo em HTML+CSS. | ⬜ Não iniciada |
 | Fase 16 — Apoio | Estruturas auxiliares. | ⬜ Não iniciada |

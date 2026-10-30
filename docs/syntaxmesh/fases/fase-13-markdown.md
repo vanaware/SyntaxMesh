@@ -79,7 +79,7 @@ Ao final desta fase:
 - `to_tagged` (usado em testes) equivalente ao RichText.
 - Conversor `richTextToMarkdown` (one-way, para migração).
 - **≥ 80 testes unitários**.
-- ADR 025 registrado.
+- ADR 026 registrado.
 - `deno task check-all` verde.
 
 ---
@@ -216,7 +216,7 @@ Markdown não tem i18n de keywords (não é a mesma sintaxe do `.tjp`). Não apl
 
 ---
 
-### 13.0 — ADR 025 (Markdown como formato going-forward)
+### 13.0 — ADR 026 (Markdown como formato going-forward)
 
 #### Contexto
 
@@ -260,7 +260,7 @@ Criar `docs/syntaxmesh/decisoes/025-markdown-going-forward.md`.
 
 #### Critério de aceite
 
-- ADR 025 criado.
+- ADR 026 criado.
 - Tabela atualizada.
 
 ---
@@ -898,7 +898,7 @@ Congelar snapshots.
 ## 6. Ordem de execução sugerida
 
 ```text
-13.0  ADR 025
+13.0  ADR 026
       ↓
 13.1  Integração micromark
       ↓
@@ -942,7 +942,7 @@ passa, e:
 - [ ] **≥ 80 testes unitários**.
 - [ ] **≥ 20 snapshot tests**.
 - [ ] Nenhum `any` em `src/` (exceto onde justificado).
-- [ ] ADR 025 criado.
+- [ ] ADR 026 criado.
 
 ---
 
@@ -1003,7 +1003,7 @@ passa, e:
 
 ---
 
-## 11. ADR 025 (referência rápida)
+## 11. ADR 026 (referência rápida)
 
 Criado como subfase 13.0. Conteúdo esperado:
 

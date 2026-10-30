@@ -15,7 +15,12 @@
   },
   "imports": {
     "@std/assert": "jsr:@std/assert@^1",
-    "@std/testing/bdd": "jsr:@std/testing@^1/bdd"
+    "@std/testing/bdd": "jsr:@std/testing@^1/bdd",
+    "micromark": "npm:micromark@^4",
+    "micromark-extension-gfm": "npm:micromark-extension-gfm@^3",
+    "mdast-util-from-markdown": "npm:mdast-util-from-markdown@^2",
+    "mdast-util-gfm": "npm:mdast-util-gfm@^3",
+    "mdast": "npm:@types/mdast@^4"
   },
   "tasks": {
     "test": "deno test --allow-env --allow-net --allow-read --allow-write tests/",

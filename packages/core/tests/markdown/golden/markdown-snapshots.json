@@ -1,0 +1,217 @@
+{
+  "generated_by": "generate_snapshots.ts",
+  "snapshots": [
+    {
+      "name": "heading",
+      "group": "simple",
+      "input": "# Hello",
+      "to_tagged": "<div><h1>1 [Hello]</h1>\n\n</div>",
+      "to_markdown": "# Hello\n\n",
+      "to_s": "1) Hello",
+      "to_html": "<div><h1 id=\"Hello\">1 Hello</h1></div>"
+    },
+    {
+      "name": "paragraph",
+      "group": "simple",
+      "input": "Hello world",
+      "to_tagged": "<div><p>[Hello world]</p>\n\n</div>",
+      "to_markdown": "Hello world\n\n",
+      "to_s": "Hello world",
+      "to_html": "<div><p>Hello world</p></div>"
+    },
+    {
+      "name": "bold",
+      "group": "simple",
+      "input": "This is **bold** text",
+      "to_tagged": "<div><p>[This is ]<b>[bold]</b>[ text]</p>\n\n</div>",
+      "to_markdown": "This is **bold** text\n\n",
+      "to_s": "This is bold text",
+      "to_html": "<div><p>This is <b>bold</b> text</p></div>"
+    },
+    {
+      "name": "italic",
+      "group": "simple",
+      "input": "Some *emph*",
+      "to_tagged": "<div><p>[Some ]<i>[emph]</i></p>\n\n</div>",
+      "to_markdown": "Some *emph*\n\n",
+      "to_s": "Some emph",
+      "to_html": "<div><p>Some <i>emph</i></p></div>"
+    },
+    {
+      "name": "unordered-list",
+      "group": "simple",
+      "input": "- a\n- b",
+      "to_tagged": "<div><ul><li>* [a]</li>\n<li>* [b]</li>\n</ul></div>",
+      "to_markdown": "- a\n- b\n",
+      "to_s": " * a\n\n * b",
+      "to_html": "<div><ul><li>a</li><li>b</li></ul></div>"
+    },
+    {
+      "name": "ordered-list",
+      "group": "simple",
+      "input": "1. one\n2. two",
+      "to_tagged": "<div><ol><li>1 [one]</li>\n<li>2 [two]</li>\n</ol></div>",
+      "to_markdown": "1. one\n2. two\n",
+      "to_s": " 1. one\n\n 2. two",
+      "to_html": "<div><ol><li>one</li><li>two</li></ol></div>"
+    },
+    {
+      "name": "fontcol",
+      "group": "extensions",
+      "input": "<fcol:red>CAUTION</fcol>",
+      "to_tagged": "<div><p><fcol:red>[CAUTION]</fcol></p>\n\n</div>",
+      "to_markdown": "<fcol:red>CAUTION</fcol>\n\n",
+      "to_s": "CAUTION",
+      "to_html": "<div><p><span style=\"color:red\">CAUTION</span></p></div>"
+    },
+    {
+      "name": "fontcol-mix",
+      "group": "extensions",
+      "input": "<fcol:green>OK</fcol> and `code`",
+      "to_tagged": "<div><p><fcol:green>[OK]</fcol>[ and ]<code>code</code></p>\n\n</div>",
+      "to_markdown": "<fcol:green>OK</fcol> and `code`\n\n",
+      "to_s": "OK and code",
+      "to_html": "<div><p><span style=\"color:green\">OK</span> and <code>code</code></p></div>"
+    },
+    {
+      "name": "function-query",
+      "group": "extensions",
+      "input": "Effort: [[query:attribute=effort]]",
+      "to_tagged": "<div><p>[Effort: ]<inlinefunc:query attribute=\"effort\"/></p>\n\n</div>",
+      "to_markdown": "Effort: [[query:attribute=effort]]\n\n"
+    },
+    {
+      "name": "miniquery",
+      "group": "extensions",
+      "input": "Cost <-cost-> total",
+      "to_tagged": "<div><p>[Cost ]<inlinefunc:query attribute=\"cost\"/>[ total]</p>\n\n</div>",
+      "to_markdown": "Cost [[query:attribute=cost]] total\n\n"
+    },
+    {
+      "name": "fontcol-hex",
+      "group": "extensions",
+      "input": "<fcol:#ff0000>hex</fcol>",
+      "to_tagged": "<div><p><fcol:#ff0000>[hex]</fcol></p>\n\n</div>",
+      "to_markdown": "<fcol:#ff0000>hex</fcol>\n\n",
+      "to_s": "hex",
+      "to_html": "<div><p><span style=\"color:#ff0000\">hex</span></p></div>"
+    },
+    {
+      "name": "html-span",
+      "group": "html",
+      "input": "<span class='x'>hi</span>",
+      "to_tagged": "<div><p><html><span class=\"x\"></html>[hi]<html></span></html></p>\n\n</div>",
+      "to_markdown": "<span class=\"x\">hi</span>\n\n",
+      "to_s": "hi",
+      "to_html": "<div><p><span class=\"x\">hi</span></p></div>"
+    },
+    {
+      "name": "html-script-stripped",
+      "group": "html",
+      "input": "<script>alert(1)</script>ok",
+      "to_tagged": "<div><html>ok</html></div>",
+      "to_markdown": "ok",
+      "to_s": "",
+      "to_html": "<div>ok</div>"
+    },
+    {
+      "name": "html-iframe-stripped",
+      "group": "html",
+      "input": "<iframe src='http://e'></iframe>text",
+      "to_tagged": "<div><html>text</html></div>",
+      "to_markdown": "text",
+      "to_s": "",
+      "to_html": "<div>text</div>"
+    },
+    {
+      "name": "html-event-stripped",
+      "group": "html",
+      "input": "<a href=\"http://x\" onclick=\"evil()\">link</a>",
+      "to_tagged": "<div><p><html><a href=\"http://x\"></html>[link]<html></a></html></p>\n\n</div>",
+      "to_markdown": "<a href=\"http://x\">link</a>\n\n",
+      "to_s": "link",
+      "to_html": "<div><p><a href=\"http://x\">link</a></p></div>"
+    },
+    {
+      "name": "html-raw-bold",
+      "group": "html",
+      "input": "<b>raw bold</b>",
+      "to_tagged": "<div><p><html><b></html>[raw bold]<html></b></html></p>\n\n</div>",
+      "to_markdown": "<b>raw bold</b>\n\n",
+      "to_s": "raw bold",
+      "to_html": "<div><p><b>raw bold</b></p></div>"
+    },
+    {
+      "name": "inline-code",
+      "group": "misc",
+      "input": "`code`",
+      "to_tagged": "<div><p><code>code</code></p>\n\n</div>",
+      "to_markdown": "`code`\n\n",
+      "to_s": "code",
+      "to_html": "<div><p><code>code</code></p></div>"
+    },
+    {
+      "name": "code-block",
+      "group": "misc",
+      "input": "```\nx = 1\n```",
+      "to_tagged": "<div><pre>x = 1</pre>\n\n</div>",
+      "to_markdown": "```\nx = 1\n```\n\n",
+      "to_s": "x = 1",
+      "to_html": "<div><div codesection=\"1\"><pre codesection=\"1\">x = 1</pre></div></div>"
+    },
+    {
+      "name": "blockquote",
+      "group": "misc",
+      "input": "> quoted",
+      "to_tagged": "<div><p>[> ]<p>[quoted]</p>\n\n</p>\n\n</div>",
+      "to_markdown": "> quoted\n\n\n\n",
+      "to_s": "> quoted",
+      "to_html": "<div><p>&gt; <p>quoted</p></p></div>"
+    },
+    {
+      "name": "thematic-break",
+      "group": "misc",
+      "input": "a\n\n---\n\nb",
+      "to_tagged": "<div><p>[a]</p>\n\n<hr></hr>\n<p>[b]</p>\n\n</div>",
+      "to_markdown": "a\n\n---\n\nb\n\n",
+      "to_s": "a\n\n--------------------------------------------------------------------------------\nb",
+      "to_html": "<div><p>a</p><hr /><p>b</p></div>"
+    },
+    {
+      "name": "link",
+      "group": "misc",
+      "input": "[text](http://x.com)",
+      "to_tagged": "<div><p><a href=\"http://x.com\" >[text]</a></p>\n\n</div>",
+      "to_markdown": "[text](http://x.com)\n\n",
+      "to_s": "text",
+      "to_html": "<div><p><a href=\"http://x.com\">text</a></p></div>"
+    },
+    {
+      "name": "image",
+      "group": "misc",
+      "input": "![alt](img.png)",
+      "to_tagged": "<div><p><img file=\"img.png\"/></p>\n\n</div>",
+      "to_markdown": "![alt](img.png)\n\n",
+      "to_s": "alt",
+      "to_html": "<div><p><object alt=\"alt\" data=\"img.png\" type=\"image/png\"></object></p></div>"
+    },
+    {
+      "name": "image-external",
+      "group": "misc",
+      "input": "![logo](https://cdn.example.com/l.png)",
+      "to_tagged": "<div><p><img file=\"https://cdn.example.com/l.png\"/></p>\n\n</div>",
+      "to_markdown": "![logo](https://cdn.example.com/l.png)\n\n",
+      "to_s": "logo",
+      "to_html": "<div><p><object alt=\"logo\" data=\"https://cdn.example.com/l.png\" type=\"image/png\"></object></p></div>"
+    },
+    {
+      "name": "heading-blockquote",
+      "group": "misc",
+      "input": "# T\n\n> quote **bold**",
+      "to_tagged": "<div><h1>1 [T]</h1>\n\n<p>[> ]<p>[quote ]<b>[bold]</b></p>\n\n</p>\n\n</div>",
+      "to_markdown": "# T\n\n> quote **bold**\n\n\n\n",
+      "to_s": "1) T\n\n> quote bold",
+      "to_html": "<div><h1 id=\"T\">1 T</h1><p>&gt; <p>quote <b>bold</b></p></p></div>"
+    }
+  ]
+}

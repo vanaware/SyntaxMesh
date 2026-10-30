@@ -110,4 +110,9 @@ export class RichTextIntermediate {
   to_tagged(): string {
     return this.tree ? this.tree.to_tagged() : "";
   }
+
+  /** Serializa a árvore para Markdown (Fase 13.9). */
+  to_markdown(): string {
+    return this.tree ? this.tree.to_markdown() : "";
+  }
 }

@@ -83,7 +83,7 @@ O que foi decidido? Seja específico e acionável.
 | 023 | i18n de keywords via LanguageRegistry | Aceito | 2026-10-23 |
 | 024 | Expressões lógicas sem precedência | Aceito | 2026-10-27 |
 | 025 | RichText e function handlers | Aceito | 2026-10-28 |
-| 026 | Markdown como formato going-forward | Proposto | — |
+| 026 | Markdown como formato going-forward | Aceito | 2026-10-29 |
 | 027 | Reports no browser: retorno de strings | Proposto | — |
 | 028 | Gantt HTML+CSS | Proposto | — |
 | 029 | Journal e AlertLevel em TypeScript | Proposto | — |

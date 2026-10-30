@@ -760,4 +760,120 @@ export class RichTextElement {
       label + str,
     );
   }
+
+  /**
+   * Serializa a árvore para Markdown (Fase 13.9).
+   * One-way: não garante round-trip perfeito com o parser Markdown.
+   */
+  to_markdown(): string {
+    switch (this.category) {
+      case "richtext":
+        return this.children_markdown();
+      case "title1":
+        return `# ${this.children_markdown()}\n\n`;
+      case "title2":
+        return `## ${this.children_markdown()}\n\n`;
+      case "title3":
+        return `### ${this.children_markdown()}\n\n`;
+      case "title4":
+        return `#### ${this.children_markdown()}\n\n`;
+      case "hline":
+        return "---\n\n";
+      case "paragraph":
+        return this.children_markdown() + "\n\n";
+      case "pre": {
+        const raw = this.children.map((c,) =>
+          c instanceof RichTextElement ? c.to_markdown() : String(c,)
+        ).join("",);
+        return "```\n" + raw + "\n```\n\n";
+      }
+      case "bulletlist1":
+      case "bulletlist2":
+      case "bulletlist3":
+      case "bulletlist4":
+        return this.children_markdown();
+      case "bulletitem1":
+        return `- ${this.children_markdown()}\n`;
+      case "bulletitem2":
+        return `  - ${this.children_markdown()}\n`;
+      case "bulletitem3":
+        return `    - ${this.children_markdown()}\n`;
+      case "bulletitem4":
+        return `      - ${this.children_markdown()}\n`;
+      case "numberlist1":
+      case "numberlist2":
+      case "numberlist3":
+      case "numberlist4":
+        return this.children_markdown();
+      case "numberitem1": {
+        const d = this.data as number[];
+        return `${d[0]}. ${this.children_markdown()}\n`;
+      }
+      case "numberitem2": {
+        const d = this.data as number[];
+        return `  ${d[1] ?? 1}. ${this.children_markdown()}\n`;
+      }
+      case "numberitem3": {
+        const d = this.data as number[];
+        return `    ${d[2] ?? 1}. ${this.children_markdown()}\n`;
+      }
+      case "numberitem4": {
+        const d = this.data as number[];
+        return `      ${d[3] ?? 1}. ${this.children_markdown()}\n`;
+      }
+      case "img": {
+        const img = this.data as RichTextImage;
+        return `![${img.altText ?? ""}](${img.fileName})`;
+      }
+      case "ref":
+        return `[[${String(this.data,)}]]`;
+      case "href":
+        return `[${this.children_markdown()}](${this.hrefUrl()})`;
+      case "blockfunc": {
+        const [name, args,] = this.data as RichTextFuncData;
+        return `[[${name}:${this.formatFuncArgs(args,)}]]\n\n`;
+      }
+      case "inlinefunc": {
+        const [name, args,] = this.data as RichTextFuncData;
+        return `[[${name}:${this.formatFuncArgs(args,)}]]`;
+      }
+      case "italic":
+        return `*${this.children_markdown()}*`;
+      case "bold":
+        return `**${this.children_markdown()}**`;
+      case "fontCol":
+        return `<fcol:${this.data}>${this.children_markdown()}</fcol>`;
+      case "code": {
+        const inner = this.children_markdown();
+        return "`" + inner + "`";
+      }
+      case "htmlblob":
+        return String(this.children[0] ?? "",);
+      case "text":
+        return String(this.children[0] ?? "",);
+      default:
+        throw new Error(`Unknown category for to_markdown: ${this.category}`,);
+    }
+  }
+
+  /** Concatena a serialização Markdown dos filhos. */
+  private children_markdown(): string {
+    let out = "";
+    for (const c of this.children) {
+      const s = c instanceof RichTextElement ? c.to_markdown() : String(c,);
+      out += s + (c instanceof RichTextElement && c.appendSpace ? " " : "");
+    }
+    return out;
+  }
+
+  /** Formata args de função como `key=value key2="val 2"`. */
+  private formatFuncArgs(args: Record<string, string> | null,): string {
+    if (!args) return "";
+    const parts: string[] = [];
+    for (const [key, value,] of Object.entries(args,)) {
+      if (value.includes(" ",)) parts.push(`${key}="${value}"`,);
+      else parts.push(`${key}=${value}`,);
+    }
+    return parts.join(" ",);
+  }
 }

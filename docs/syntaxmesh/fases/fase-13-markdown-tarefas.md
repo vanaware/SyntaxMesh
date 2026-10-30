@@ -63,33 +63,42 @@ A Fase 13 depende de:
 ## Progresso
 
 ```
-[ ] 13.0  ADR 025 (Markdown going-forward)         —  0/5
-[ ] 13.1  Integração micromark                     —  0/12
-[ ] 13.2  MdastToRichText                          —  0/14
-[ ] 13.3  MarkdownFactory                          —  0/6
-[ ] 13.4  Extensão: color                          —  0/6
-[ ] 13.5  Extensão: HTML sanitizer                 —  0/8
-[ ] 13.6  Extensão: functions                      —  0/10
-[ ] 13.7  Extensão: mini-queries                   —  0/5
-[ ] 13.8  Pipeline pré/pós-processamento           —  0/6
-[ ] 13.9  to_markdown em RichTextIntermediate      —  0/14
-[ ] 13.10 richTextToMarkdown                       —  0/8
-[ ] 13.11 Integração                               —  0/5
-[ ] 13.12 Snapshot tests                           —  0/8
-[ ] 13.13 Verificação final                        —  0/8
+[x] 13.0  ADR 026 (Markdown going-forward)         —  5/5
+[x] 13.1  Integração micromark                     —  12/12
+[x] 13.2  MdastToRichText                          —  14/14
+[x] 13.3  MarkdownFactory                          —  6/6
+[x] 13.4  Extensão: color                          —  6/6
+[x] 13.5  Extensão: HTML sanitizer                 —  8/8
+[x] 13.6  Extensão: functions                      —  10/10
+[x] 13.7  Extensão: mini-queries                   —  5/5
+[x] 13.8  Pipeline pré/pós-processamento           —  6/6
+[x] 13.9  to_markdown em RichTextIntermediate      —  14/14
+[x] 13.10 richTextToMarkdown                       —  8/8
+[x] 13.11 Integração                               —  5/5
+[x] 13.12 Snapshot tests                           —  8/8
+[x] 13.13 Verificação final                        —  8/8
+[~] 13.14 Adendo: imagens (parcial — ver nota)    —  .1/.2/.3/.5 ok; .4 adiado
 ─────────────────────────────────────────────────────
 TOTAL: ~115
 ```
+
+> **13.14 (parcial):** `images.ts` implementa `isExternalImageRef` + `resolveImageRef`
+> com `ImageStore` injetável (contrato Fase 19) e fallback `dataDirs`; testes com
+> `fakeOpfs()` cobrem externa/OPFS/dataDir/unresolved. O `URL.createObjectURL`
+> concreto (13.14.3) fica na implementação Fase 19 do store (core é DOM-free,
+> ADR 001 — devolve descritor). O roteamento `format richtext` (13.14.4, `render.ts`)
+> depende do pipeline de reports da Fase 14 e do parser `format` da Fase 10
+> Complemento — adiado.
 
 ---
 
 ## Bloco A — Fundação
 
-### 13.0 — ADR 025 (Markdown como formato going-forward)
+### 13.0 — ADR 026 (Markdown como formato going-forward)
 
 **Objetivo:** formalizar a implementação do Markdown e a coexistência com RichText.
 
-**⚠️ Nota:** o plano usa `ADR 024`, mas o ADR 024 foi alocado para `richtext-handlers` (Fase 12). Aqui usamos **ADR 025**.
+**⚠️ Nota:** o plano usa `ADR 024`, mas 024 e 025 já foram alocados (expressões lógicas e RichText handlers, Fase 12). Aqui usamos **ADR 026**.
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
@@ -488,7 +497,7 @@ TOTAL: ~115
 ### 13.13 — Verificação
 
 - **Sem stubs.**
-- **ADR 025 (não 024).**
+- **ADR 026 (não 024/025).**
 
 ---
 
