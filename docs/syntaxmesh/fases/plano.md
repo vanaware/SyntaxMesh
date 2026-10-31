@@ -619,9 +619,9 @@ Tarefas: `docs/syntaxmesh/fases/fase-8.2-tarefas.md`.
 | 10-C | core | — (extensões RDO/orçamento/timebasis) | **Alta** | ✅ Concluída (2026-10-27; Blocos C0–C4; adendos nas fases 13/14/16/18/19/20/21 permanecem p/ fases futuras) |
 | 11 | core | LogicalExpression, LogicalOperation, LogicalFunction, Query, SimpleQueryExpander | **Crítica** | ✅ Concluída (2026-10-27; motor lógico + Query + expander testados; 11.12/11.13 de queries parcialmente bloqueados — métodos `query_*` concretos dependem de scheduling/finance) |
 | 11-C | core | — (extensões: funções/atributos/flags lógicas de material/charge + registrar funções-doc) | **Alta** | 🟡 Em andamento (`fase-11-logical-complemento.md`; 1ª onda 2026-10-27: LC-A/LC-B/LC-D + LF.1. **2ª onda §6.9 executada 2026-10-27**: G1–G5 — `TaskScenario#getAllocatedTime` portado, 10 funções de datas/alocações/material implementadas, `flags` no parser de material habilitado. **§6.10: G1.4 ancorado + review (a)–(g) aplicado** — `Project#dateToIdx` corrigido fiel ao Ruby, semânticas estritas (id inválido, agenda parcial, limiar de alocação); sobem só bloqueios reais ancorados nas Fases 14/16/18/21) |
-| 12 | core (richtext) | RichText, RichText/* | **Alta** | ⬜ Não iniciada |
-| 13 | core (markdown) | — | Baixa (futuro) | ⬜ Não iniciada (adendo 13.14) |
-| 14 | core (report) | reports/* | **Crítica** | ⬜ Não iniciada (adendos 14.25, 14.26) |
+| 12 | core (richtext) | RichText, RichText/* | **Alta** | ✅ Concluída (2026-10-29, 12.0–12.20; G5 `to_rti`/`to_tjp` re-ancorado e entregue na Fase 14) |
+| 13 | core (markdown) | — | Baixa (futuro) | ✅ Concluída (2026-10-29, 13.0–13.13; 13.14 parcial — `objectURL`/render dependem das Fases 19/10-C) |
+| 14 | core (report) | reports/* | **Crítica** | ✅ Concluída (2026-10-31, 14.0–14.24; adendos 14.25/14.26 dependem do Journal — Fase 16) |
 | 15 | core (report) | Gantt* | **Alta** | ⬜ Não iniciada |
 | 16 | core | Journal, AlertLevelDefinitions, LeaveList, TernarySearchTree, etc. | **Alta** | ⬜ Não iniciada (adendo 16.21) |
 | 17 | core (report) | XMLDocument, XMLElement, HTMLDocument, HTMLElements, ICalendar | **Média** | ⬜ Não iniciada |

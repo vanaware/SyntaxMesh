@@ -169,11 +169,11 @@ describe("AttributeBase", () => {
     assertEquals(attr.to_sort(), "",);
   });
 
-  it("to_rti lança NotYetImplementedError", () => {
-    assertThrows(
-      () => attr.to_rti(),
-      NotYetImplementedError,
-    );
+  it("to_rti retorna null para valor não rich-text (fiel a Ruby)", () => {
+    container.setStoredValue("test.attr", "texto",);
+    assertEquals(attr.to_rti(), null,);
+    container.setStoredValue("test.attr", null,);
+    assertEquals(attr.to_rti(), null,);
   });
 
   it("to_tjp lança NotYetImplementedError", () => {

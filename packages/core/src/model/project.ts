@@ -55,6 +55,12 @@ export class Project implements ProjectLike {
   readonly tasks: PropertySet;
   readonly reports: PropertySet;
   readonly materials: PropertySet;
+  /**
+   * Navigators definidos via diretiva `navigator "id"` (Ruby:
+   * `@project['navigators']`). Copiados pelo parser durante o parse; o
+   * `RTFNavigator` consulta este mapa para renderizar a barra.
+   */
+  readonly navigators: Map<string, unknown>;
   readonly inputFiles: string[];
   readonly timeSheets: TimeSheets;
   readonly reportContexts: ReportContext[];
@@ -180,6 +186,7 @@ export class Project implements ProjectLike {
     this.reports = new PropertySet(this, false,);
     // Materials: IDs hierárquicos como tasks (rollup de allocations C1).
     this.materials = new PropertySet(this, false,);
+    this.navigators = new Map();
     this.attributes.set("scheduleGranularity", 3600,);
     this.attributes.set("timezone", TjTime.getTimeZone(),);
     this.attributes.set("weekStartsMonday", true,);

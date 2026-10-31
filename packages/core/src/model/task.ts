@@ -1,6 +1,8 @@
 import { type ProjectLike, } from "./project-like.ts";
 import { PropertyTreeNode, } from "./property-tree-node.ts";
 import { TaskScenario, } from "./task-scenario.ts";
+import { type Resource, } from "./resource.ts";
+import { type TimeInterval, } from "../time/time-interval.ts";
 import type { Booking, } from "../scheduling/booking.ts";
 import { ChargeSetCollection, } from "../finance/charge-set-collection.ts";
 
@@ -32,6 +34,45 @@ export class Task extends PropertyTreeNode {
   addBooking(scIdx: number, booking: Booking,): void {
     const list = this.scenarioData(scIdx,).a("booking",) as Booking[] | null;
     if (list) list.push(booking,);
+  }
+
+  /**
+   * Recursos alocados a esta tarefa no cenário `scIdx`. Para contêineres, a
+   * união dos filhos; para folhas, o atributo `assignedresources` (preenchido
+   * pelo scheduler).
+   *
+   * A filtragem fina por `Resource#allocated?` não é portada na Fase 7; o
+   * atributo já reflete os recursos com bookings efetivos após o escalonamento.
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:assignedResources
+   */
+  assignedResources(scIdx: number,): Resource[] {
+    if (this.container()) {
+      const list: Resource[] = [];
+      for (const kid of this.kids()) {
+        for (const r of (kid as Task).assignedResources(scIdx,)) {
+          if (!list.includes(r,)) list.push(r,);
+        }
+      }
+      return list;
+    }
+    return (this.getForScenario("assignedresources", scIdx,) as Resource[]) ??
+      [];
+  }
+
+  /**
+   * O recurso está alocado a esta task (ou a uma das suas filhas) no
+   * intervalo `interval`? Delega ao cenário (TaskScenario#hasResourceAllocated),
+   * como o proxy `method_missing` do Ruby.
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:hasResourceAllocated?
+   */
+  hasResourceAllocated(
+    scIdx: number,
+    interval: TimeInterval,
+    resource: Resource,
+  ): boolean {
+    return this.scenarioData(scIdx,).hasResourceAllocated(interval, resource,);
   }
 
   /**

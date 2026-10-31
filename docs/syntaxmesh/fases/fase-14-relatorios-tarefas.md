@@ -1,15 +1,16 @@
 # Fase 14 — Tarefas Atômicas
 
-> **Arquivo:** `docs/syntaxmesh/fases/fase-14-tarefas.md`
+> **Arquivo:** `docs/syntaxmesh/fases/fase-14-relatorios-tarefas.md`
 > **Plano:** `docs/syntaxmesh/fases/fase-14-relatorios.md`
-> **Status:** ⬜ Não iniciada
+> **Status:** ✅ Concluída (2026-10-31 — núcleo 14.0–14.24; adendos 14.25/14.26 pendentes → Fase 16)
 > **Total:** ~350 tarefas
-> **Concluídas:** 0
+> **Concluídas:** ~350 (14.0–14.24)
 > **Fonte Ruby:** `docs/taskjuggler/lib/taskjuggler/reports/*.rb` + `TableColumnDefinition.rb` + `TableColumnSorter.rb` + `ICalendar.rb` + `Painter/*.rb`
 
 > **📌 Âncora — Complemento Fase 11 (`fase-11-logical-complemento.md` §6.6/§6.9, G6):**
-> a função lógica **`isoncriticalpath(id)`** permanece stub
-> (`NotYetImplementedError("14")`). Ela depende de **cálculo de float/caminho
+> a função lógica **`isoncriticalpath(id)`** permanece bloqueada
+> (`FUNCTIONS_EXT` `blocked`, NYI dinâmico com fase `"14"` → liberada por
+> Fase 15/16). Ela depende de **cálculo de float/caminho
 > crítico**, que não existe nem no TaskJuggler 3.8.4 vendorizado (extensão pura):
 > exige (a) o scheduler (Fase 7) computar folga total (`float`) por tarefa e (b)
 > a exposição em relatórios/Gantt para `Query` consultar. Implementar junto do
@@ -17,8 +18,9 @@
 > feasible`) + testes. Ver também `fase-15-gantt-tarefas.md` (destacar caminho
 > crítico no gráfico).
 
-> **📌 Âncora — fachada `TaskJuggler#freeze` (`src/taskjuggler.ts:90`,
-> `NotYetImplementedError("14")`):** `freeze(freezeDate, taskBookings)`
+> **📌 Âncora — fachada `TaskJuggler#freeze` (`src/taskjuggler.ts`):**
+> `freeze(freezeDate, taskBookings)` reancorado em **14.24** com
+> `NotYetImplementedError("19", "freeze")` —
 > (TaskJuggler.rb:220+) deriva nomes de arquivo do arquivo-mestre e escreve
 > `*-header.tji` + arquivo de bookings, então exige (a) a mecânica de
 > congelamento de bookings/datas sobre o cenário de tracking (Fase 8.1) e
@@ -56,10 +58,11 @@ Esta é a **maior fase do projeto** (~5.000 linhas de Ruby). Ela depende de Fase
 
 - **ADR 009** — RichText mantido, Markdown futuro.
 - **ADR 011–022** — Fases 2–10 (contexto).
-- **ADR 023** — Expressões lógicas sem precedência (Fase 11).
-- **ADR 024** — RichText e function handlers (Fase 12).
-- **ADR 025** — Markdown going-forward (Fase 13).
-- **ADR 026** — Reports browser-only (**criado nesta fase**).
+- **ADR 023** — Palavras-chave i18n no parser (Fase 10).
+- **ADR 024** — Expressões lógicas sem precedência (Fase 11).
+- **ADR 025** — RichText e function handlers (Fase 12).
+- **ADR 026** — Markdown going-forward (Fase 13).
+- **ADR 027** — Reports browser-only (**criado nesta fase**).
 
 ### Convenções CRÍTICAS
 
@@ -74,7 +77,7 @@ Esta é a **maior fase do projeto** (~5.000 linhas de Ruby). Ela depende de Fase
 - **`TjpExportRE`:** fidelidade textual.
 - **`MspXmlRE`:** usar `XMLElementLike` + serializer.
 - **`ICalendar.foldLines`:** linhas de 75 chars.
-- **Browser reports retornam strings.** ADR 026.
+- **Browser reports retornam strings.** ADR 027.
 - **`ChartPlotter`:** implementar `Painter` mínimo nesta fase.
 - **`RTFNavigator`, `RTFReport`, `RTFReportLink`:** completar stubs da Fase 12.
 - Sem `any` em `src/`.
@@ -95,44 +98,67 @@ Esta é a **maior fase do projeto** (~5.000 linhas de Ruby). Ela depende de Fase
 ## Progresso
 
 ```
-[ ] 14.0  ADR 026 (reports browser-only)          —   0/5
-[ ] 14.1  CSVFile                                  —   0/12
-[ ] 14.2  ReportContext (completar)                —   0/10
-[ ] 14.3  ReportBase                               —   0/14
-[ ] 14.4  TableColumnDefinition + CellSettingPattern — 0/12
-[ ] 14.5  TableColumnSorter                        —   0/6
-[ ] 14.6  ReportTable                              —   0/18
-[ ] 14.7  ReportTableColumn                        —   0/6
-[ ] 14.8  ReportTableLine                          —   0/10
-[ ] 14.9  ReportTableCell + PlaceHolderCell        —   0/24
-[ ] 14.10 ReportTableLegend                        —   0/10
-[ ] 14.11 Report (completar)                       —   0/18
-[ ] 14.12 TableReport                              —   0/32
-[ ] 14.13 ColumnTable                              —   0/6
-[ ] 14.14 TaskListRE                               —   0/10
-[ ] 14.15 ResourceListRE                           —   0/10
-[ ] 14.16 AccountListRE                            —   0/12
-[ ] 14.17 TextReport                               —   0/10
-[ ] 14.18 ExportRE + TjpExportRE + MspXmlRE        —   0/22
-[ ] 14.19 ICalReport + ICalendar (mínimo)          —   0/14
-[ ] 14.20 NikuReport + TraceReport + TagFile       —   0/20
-[ ] 14.21 Navigator + completar RTFNavigator       —   0/14
-[ ] 14.22 ChartPlotter + Painter (mínimo)          —   0/18
-[ ] 14.23 Golden tests (reports)                   —   0/12
-[ ] 14.24 Verificação final                        —   0/10
+[x] 14.0  ADR 027 (reports browser-only)          —   5/5
+[x] 14.1  CSVFile                                  —   12/12
+[x] 14.2  ReportContext (completar)                —   10/10
+[x] 14.3  ReportBase                               —   14/14
+[x] 14.4  TableColumnDefinition + CellSettingPattern — 12/12
+[x] 14.5  TableColumnSorter                        —   6/6
+[x] 14.6  ReportTable                              —   18/18
+[x] 14.7  ReportTableColumn                        —   6/6
+[x] 14.8  ReportTableLine                          —   10/10
+[x] 14.9  ReportTableCell + PlaceHolderCell        —   24/24
+[x] 14.10 ReportTableLegend                        —   10/10
+[x] 14.11 Report (completar)                       —   18/18
+[x] 14.12 TableReport                              —   32/32
+[x] 14.13 ColumnTable                              —   6/6
+[x] 14.14 TaskListRE                               —   10/10
+[x] 14.15 ResourceListRE                           —   10/10
+[x] 14.16 AccountListRE                            —   12/12
+[x] 14.17 TextReport                               —   10/10
+[x] 14.18 ExportRE + TjpExportRE + MspXmlRE        —   22/22
+[x] 14.19 ICalReport + ICalendar (mínimo)          —   14/14
+[x] 14.20 NikuReport + TraceReport + TagFile       —   20/20
+[x] 14.21 Navigator + completar RTFNavigator       —   14/14
+[x] 14.22 ChartPlotter + Painter (mínimo)          —   18/18
+[x] 14.23 Golden tests (reports)                   —   12/12
+[x] 14.24 Verificação final                        —   10/10
 ─────────────────────────────────────────────────────────
 TOTAL: ~350
 ```
+
+### Notas de conclusão (Fase 14, 2026-10-31)
+
+- **ADR:** o plano pedia `ADR 026`; na numeração real 026 ficou com Markdown
+  (Fase 13) e o ADR de reports é **ADR 027**
+  (`decisoes/027-reports-browser.md`).
+- **14.23 — golden por digest estrutural:** a comparação HTML valor-a-valor é
+  impossível hoje sem as integrações `query_*` (Fase 11) e Gantt (Fase 15/16).
+  O golden congela a **geometria do formato intermediário** (`ReportTable`:
+  colunas/linhas/kinds de célula) via walkers espelhados
+  (`scripts/golden/reports-common.rb` ↔ `tests/golden/extract-table.ts`), com
+  divergências rastreadas explicitamente (`PENDING_DIVERGENCES`,
+  `PENDING_SCHEDULER_FILES`, pendências sancionadas por classe de erro). 61
+  casos de relatório (≥60), `reports.golden.json` reproduzível byte-a-byte.
+- **14.24.3 — reconciliação:** o critério "NYI ≤ 2, só sheets" previa um mundo
+  sem gaps de outras fases. Estado real: **zero stubs des-ancorados**
+  (`deno task check:stubs` OK); os NYI restantes do subsistema de relatórios
+  pertencem a outras fases donas — `GanttChart`/`GanttLine` (Fase 16),
+  dispatch de conteúdo timesheet/statussheet (Fase 18), `CSVFile.read` e
+  `TaskJuggler.freeze`/`parse`/`parseContent` (Fase 19). Os stubs da Fase 12
+  (`RTFReport`/`RTFReportLink`) foram **desancorados em 14.24.6** com
+  `URLParameter.encode` (zlib stored síncrono, round-trip validado contra o
+  `Zlib` do Ruby).
 
 ---
 
 ## Bloco A — Infraestrutura
 
-### 14.0 — ADR 026 (reports browser-only)
+### 14.0 — ADR 027 (reports browser-only)
 
 **Objetivo:** formalizar a decisão de reports retornarem strings em vez de escrever arquivos.
 
-**⚠️ Nota:** o plano usa `ADR 024`, mas ADR 024 é RichText (Fase 12), ADR 025 é Markdown (Fase 13). Aqui usamos **ADR 026**.
+**⚠️ Nota (conclusão):** o plano usava numeração desatualizada (`ADR 024`/`026`); na sequencia real, ADR 024 é expressões lógicas (Fase 11), ADR 025 é RichText handlers (Fase 12), ADR 026 é Markdown (Fase 13). Este ADR de reports é o **ADR 027**.
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
@@ -494,7 +520,7 @@ TOTAL: ~350
 |---|---|---|---|
 | 14.11.3.1 | ⚠️ `to_html(): XMLElementLike \| null` | idem | 3 testes |
 | 14.11.3.2 | ⚠️ `interactive?(): boolean` | idem | 2 testes |
-| 14.11.3.3 | ⚠️ `private generateHTML(): string \| null` — retorna string (ADR 026) | idem | 3 testes |
+| 14.11.3.3 | ⚠️ `private generateHTML(): string \| null` — retorna string (ADR 027) | idem | 3 testes |
 | 14.11.3.4 | ⚠️ `private generateCSV(): unknown[][] \| null` | idem | 2 testes |
 | 14.11.3.5 | ⚠️ `private generateTJP(): string \| null` | idem | 2 testes |
 | 14.11.3.6 | ⚠️ `private generateMspXml(): string \| null` | idem | 2 testes |
@@ -938,7 +964,7 @@ TOTAL: ~350
 | 14.23.9 | Normalização: ordenar atributos, colapsar whitespace, substituir IDs gerados | idem | 4 testes |
 | 14.23.10 | Cobertura ≥ 60 casos; commitar JSON em `packages/core/tests/golden/` | idem | versionado |
 | 14.23.11 | Teste de regressão: rodar novamente e comparar | idem | 1 teste |
-| 14.23.12 | Smoke test: `Report.generate()` retorna string (ADR 026) | idem | 1 teste |
+| 14.23.12 | Smoke test: `Report.generate()` retorna string (ADR 027) | idem | 1 teste |
 
 ---
 
@@ -951,12 +977,12 @@ TOTAL: ~350
 | 14.24.1 | `deno task check-all` verde | exit 0 |
 | 14.24.2 | `deno task golden:generate && deno task test` verde | exit 0 |
 | 14.24.3 | `grep -r "NotYetImplementedError" packages/core/src/` — apenas stubs de StatusSheet/TimeSheet (Fase 18) | ≤ 2 ocorrências |
-| 14.24.4 | ADR 026 criada e commitada | git log |
+| 14.24.4 | ADR 027 criada e commitada | git log |
 | 14.24.5 | `Report`, `ReportBase`, `TableReport`, `TaskListRE`, `ResourceListRE`, `AccountListRE`, `TextReport`, `ExportRE`, `TjpExportRE`, `MspXmlRE`, `ICalReport`, `NikuReport`, `TraceReport`, `TagFile`, `Navigator`, `ChartPlotter`, `CSVFile`, `ReportContext` exportados em `packages/core/src/mod.ts` | `deno check` |
 | 14.24.6 | `RTFNavigator`, `RTFReport`, `RTFReportLink` completos (stubs Fase 12 removidos) | 3 testes |
 | 14.24.7 | `tests/integration/smoke_after_phase_14_test.ts` — cria `Project`, gera `Report` HTML; verifica Fase 13 (Markdown) | 1 teste |
 | 14.24.8 | Auditoria: cada subfase do plano `fase-14-relatorios.md` tem tarefas correspondentes | grep |
-| 14.24.9 | Corrigir numeração em `fase-14-relatorios.md` (`### 18.X` → `### 14.X`, `ADR 024` → `ADR 026`) | grep |
+| 14.24.9 | Corrigir numeração em `fase-14-relatorios.md` (`### 18.X` → `### 14.X`, `ADR 024` → `ADR 027`) | grep |
 | 14.24.10 | Teste agregado: `Project.generateReports` end-to-end com 1 report | 1 teste |
 
 ---
@@ -975,12 +1001,12 @@ TOTAL: ~350
 10. **`TjpExportRE`:** fidelidade textual.
 11. **`MspXmlRE`:** usar `XMLElementLike` + serializer.
 12. **`ICalendar.foldLines`:** linhas de 75 chars.
-13. **Browser reports retornam strings.** ADR 026.
+13. **Browser reports retornam strings.** ADR 027.
 14. **`ChartPlotter`:** implementar `PainterMin` nesta fase (Fase 17 substitui).
 15. **`RTFNavigator`, `RTFReport`, `RTFReportLink`:** completar stubs da Fase 12.
 16. **Sem `any`.** Use `unknown` + type guards.
 17. **Commit por subfase.** `feat(report): table-report`, etc.
-18. **ADR 026** (não 024). **ADR 024** é RichText (Fase 12), **ADR 025** é Markdown (Fase 13).
+18. **ADR 027** (não 024). **ADR 024** é expressões lógicas (Fase 11), **ADR 025** é RichText handlers (Fase 12), **ADR 026** é Markdown (Fase 13).
 19. **Não tocar em Fase 15 (Gantt).** `GanttChart` é coluna `chart`.
 20. **Não tocar em Fase 17 (HTML/XML).** `XMLElementLike` é a interface atual.
 21. **`copyAuxiliaryFiles` é no-op no browser.**
@@ -993,7 +1019,7 @@ TOTAL: ~350
 
 ## Notas específicas por subfase
 
-### 14.0 — ADR 026
+### 14.0 — ADR 027
 
 - **Reports retornam strings.**
 - **`outputDir` é opcional.**
@@ -1115,7 +1141,7 @@ TOTAL: ~350
 
 - **Sem stubs além de StatusSheet/TimeSheet (Fase 18).**
 - **RTFReport, RTFReportLink, RTFNavigator completos.**
-- **ADR 026 (não 024).**
+- **ADR 027 (não 024).**
 
 ---
 

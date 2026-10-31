@@ -7,8 +7,9 @@
  * Notas de port (Fase 10):
  * - As defaults de cabeçalho de relatório usam `newReport(..., defaultAttrs)`;
  *   `this.property` já aponta para o novo Report dentro do callback.
- * - Os atributos de RichText (caption/header/footer/...) guardam a String
- *   bruta: `newRichText` lança `NotYetImplementedError` até a Fase 12.
+ * - Os atributos de RichText (caption/header/footer/...) guardam o
+ *   `RichTextIntermediate` produzido por `newRichText` (Fase 12.18), como no
+ *   Ruby.
  * - `!logicalExpression`, `!flagLogicalExpression` e `!nodeIdList` são regras
  *   do bloco 4 (10.14); aqui ficam como placeholders resolvidos por
  *   `ensurePlaceholders`.
@@ -38,9 +39,17 @@ const asProp = (parser: ProjectFileParser,): NonNullable<
   ProjectFileParser["property"]
 > => parser.property!;
 
-/** Atributos de RichText: guarda a String bruta (RichText chega na Fase 12). */
-const richText = (parser: ProjectFileParser, idx: number,): string =>
-  String(parser.val[idx],);
+/**
+ * Atributos de RichText: `newRichText` como em TjpSyntaxRules.rb (Fase 12.18).
+ * Guarda o `RichTextIntermediate` — não a String bruta — para que os reports
+ * (`ReportBase#generateIntermediateFormat`, `TableReport`) possam chamar
+ * `setQuery`/`to_html` sobre ele.
+ */
+const richText = (parser: ProjectFileParser, idx: number,) =>
+  parser.newRichText(
+    String(parser.val[idx],),
+    parser.sourceFileInfo[idx] ?? null,
+  );
 
 /** `LogicalExpression.new(LogicalOperation.new(op))` — default de hide/rollup. */
 const logicOp = (op: number,): LogicalExpression =>

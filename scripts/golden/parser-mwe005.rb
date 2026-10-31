@@ -7,7 +7,9 @@
 # Os MWEs são syntaxe limpa: qualquer mensagem do tj3 vira ok=false.
 
 require 'json'
+require 'fileutils'
 
+FileUtils.mkdir_p('/tmp/tjgolden')
 ROOT = File.expand_path('../..', __dir__)
 REL = 'docs/Learning/mwe005/tutorial.tjp'
 file = File.join(ROOT, REL)

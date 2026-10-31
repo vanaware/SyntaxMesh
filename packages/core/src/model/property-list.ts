@@ -1,6 +1,8 @@
 import { PropertyTreeNode, } from "./property-tree-node.ts";
 import { PropertySet, } from "./property-set.ts";
 import { SourceFileInfo, } from "../source-file-info.ts";
+import type { Query, } from "../query/query.ts";
+import type { AttributeType, } from "../attributes/attribute-type.ts";
 
 export class PropertyList<T extends PropertyTreeNode = PropertyTreeNode,> {
   private items: T[];
@@ -9,6 +11,9 @@ export class PropertyList<T extends PropertyTreeNode = PropertyTreeNode,> {
   private sortingCriteria: string[];
   private sortingUp: boolean[];
   private scenarioIdx: number[];
+  // `attr_accessor :query` de Ruby (PropertyList.rb). Guardado para os relatórios
+  // de tabela (Fase 14.12); o `sort()` atual não resolve critérios por query.
+  query: Query | null = null;
 
   constructor(arg: PropertySet | PropertyList<T>, copyItems: boolean = true,) {
     // Estado de ordenação começa zerado; o ramo de `PropertyList` pode
@@ -174,6 +179,19 @@ export class PropertyList<T extends PropertyTreeNode = PropertyTreeNode,> {
   treeMode(): boolean {
     return this.sortingCriteria.length > 0 &&
       this.sortingCriteria[0] === "tree";
+  }
+
+  /** Tipo do atributo `id` no `propertySet` (ou `undefined`). */
+  attributeType(id: string,): AttributeType | undefined {
+    return this.propertySet.attributeType(id,);
+  }
+
+  /**
+   * `scenarioSpecific?(attr)` público de Ruby: informa se o atributo `id` tem
+   * valores por cenário. (Diferente do predicado privado de ordenação.)
+   */
+  attributeIsScenarioSpecific(id: string,): boolean {
+    return this.propertySet.scenarioSpecific?.(id,) ?? false;
   }
 
   sort(): void {

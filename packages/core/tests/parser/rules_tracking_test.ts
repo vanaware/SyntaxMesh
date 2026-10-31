@@ -80,10 +80,16 @@ describe("rule_navigator (10.14.5.4)", () => {
     assertEquals(navigatorOf(out, "nv",)!.hideReport?.toString(), "isleaf()",);
   });
 
-  it("navigator sem corpo deixa hideReport nulo", () => {
+  it("navigator sem corpo mantém hideReport default false (Ruby: LogicalOperation.new(0))", () => {
     const out = parseProject(BASE + "navigator nv {\n}\n",);
-    project(out,);
-    assertEquals(navigatorOf(out, "nv",)!.hideReport, null,);
+    const p = project(out,);
+    const nav = navigatorOf(out, "nv",)!;
+    // Fase 14.21: alinhado com o Ruby — default é uma expressão false, não null.
+    assert(nav.hideReport !== null, "hideReport inicializado",);
+    const ctx = p.reportContexts.at(-1,);
+    if (ctx) {
+      assertEquals(nav.hideReport.eval(ctx.query,), false,);
+    }
   });
 
   it("navigator duplicado dispara navigator_exists", () => {

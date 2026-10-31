@@ -1250,6 +1250,28 @@ export class TaskScenario extends ScenarioData {
     return this.scenarioIdx;
   }
 
+  /**
+   * Verdadeiro se `resource` está alocado a esta task (ou a qualquer filha)
+   * no intervalo dado. Proxy de `PropertyTreeNode` → `Resource#allocated?`
+   * como no Ruby (a chamada no Kids loop usa a proxy do filho).
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:hasResourceAllocated?
+   */
+  hasResourceAllocated(interval: TimeInterval, resource: Resource,): boolean {
+    const assigned = (this.a("assignedresources",) as Resource[]) ?? [];
+    if (!assigned.includes(resource,)) return false;
+
+    const task = this.getProperty();
+    if (task.leaf()) {
+      return resource.allocated(this.scenarioIdx, interval, task,);
+    }
+    for (const kid of task.kids()) {
+      const kidSc = (kid as Task).scenarioData(this.scenarioIdx,);
+      if (kidSc.hasResourceAllocated(interval, resource,)) return true;
+    }
+    return false;
+  }
+
   override a(attr: string,): unknown {
     return super.a(attr,);
   }

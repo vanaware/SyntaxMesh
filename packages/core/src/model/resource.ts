@@ -2,6 +2,9 @@ import { type ProjectLike, } from "./project-like.ts";
 import { PropertyTreeNode, } from "./property-tree-node.ts";
 import { ResourceScenario, } from "./resource-scenario.ts";
 import { ChargeSetCollection, } from "../finance/charge-set-collection.ts";
+import { type Task, } from "./task.ts";
+import { type Booking, } from "../scheduling/booking.ts";
+import { type TimeInterval, } from "../time/time-interval.ts";
 
 export class Resource extends PropertyTreeNode {
   private chargeset_: ChargeSetCollection;
@@ -49,5 +52,35 @@ export class Resource extends PropertyTreeNode {
    */
   bookedEffort(scIdx: number,): number {
     return this.scenarioData(scIdx,).bookedEffort();
+  }
+
+  /**
+   * Retorna os bookings do recurso no cenário `scIdx`, opcionalmente limitados
+   * ao intervalo `iv`. Hash por tarefa quando `hashByTask`, senão array plano.
+   *
+   * Envolve `ResourceScenario#getBookings` (Ruby delega via method_missing).
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/ResourceScenario.rb:getBookings
+   */
+  getBookings(
+    scIdx: number,
+    iv: TimeInterval | null = null,
+    hashByTask = true,
+  ): Map<Task, Booking> | Booking[] {
+    return this.scenarioData(scIdx,).getBookings(iv, hashByTask,);
+  }
+
+  /**
+   * O recurso (ou um dos seus filhos) está alocado a `task` no intervalo `iv`?
+   * Delega ao cenário, como o `method_missing` do Ruby.
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/ResourceScenario.rb:allocated?
+   */
+  allocated(
+    scIdx: number,
+    iv: TimeInterval,
+    task: Task | null = null,
+  ): boolean {
+    return this.scenarioData(scIdx,).allocated(iv, task,);
   }
 }

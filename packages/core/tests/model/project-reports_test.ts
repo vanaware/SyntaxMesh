@@ -1,8 +1,33 @@
-import { beforeEach, describe, it, } from "@std/testing/bdd";
+import { afterEach, beforeEach, describe, it, } from "@std/testing/bdd";
 import { assert, assertEquals, assertExists, assertThrows, } from "@std/assert";
 import { Project, } from "../../src/model/project.ts";
 import { Report, } from "../../src/model/report.ts";
 import { ReportType, } from "../../src/model/report-type.ts";
+import {
+  contentFactories,
+  registerContentFactory,
+  type ReportContent,
+} from "../../src/model/report-content.ts";
+
+/**
+ * Fábrica de conteúdo mínima: `generate()` precisa de um tipo conhecido com
+ * uma fábrica registrada (fiel a `Report.rb`). O conteúdo here é um stub que
+ * só registra que foi instanciado.
+ */
+function useStubContent(typeSpec: string,): { created: ReportContent[] } {
+  const created: ReportContent[] = [];
+  registerContentFactory(typeSpec, (report: unknown,): ReportContent => {
+    const content: ReportContent = {
+      generateIntermediateFormat(): void {},
+      to_html() {
+        return "";
+      },
+    };
+    created.push(content,);
+    return content;
+  },);
+  return { created, };
+}
 
 describe("Project.checkReports", () => {
   let project: Project;
@@ -31,10 +56,14 @@ describe("Project.generateReports", () => {
 
   beforeEach(() => {
     project = new Project("test-project", "Test Project", "1.0.0",);
+    useStubContent("taskreport",);
     // Add a report with formats
     const report = new Report(project, "report1", "Report 1", null,);
+    report.typeSpec = ReportType.TaskReport;
     report.set("formats", ["html",],);
   },);
+
+  afterEach(() => contentFactories.clear());
 
   it("itera reports com formats", () => {
     // Should not throw
@@ -66,9 +95,13 @@ describe("Project.generateReport", () => {
 
   beforeEach(() => {
     project = new Project("test-project", "Test Project", "1.0.0",);
+    useStubContent("taskreport",);
     const report = new Report(project, "report1", "Report 1", null,);
+    report.typeSpec = ReportType.TaskReport;
     report.set("formats", ["html",],);
   },);
+
+  afterEach(() => contentFactories.clear());
 
   it("gera report com id exato", () => {
     project.generateReport("report1", false,);

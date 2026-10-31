@@ -7,10 +7,12 @@ import { type PropertyLike, } from "./property-like.ts";
 import { type PropertyTreeNode, } from "./property-tree-node.ts";
 import { type AttributeBase, } from "../attributes/attribute-base.ts";
 import { Scoreboard, } from "../time/scoreboard.ts";
+import { ScoreboardInterval, } from "../time/scoreboard-interval.ts";
 import { Task, } from "./task.ts";
 import { Resource, } from "./resource.ts";
 import { type Account, } from "./account.ts";
 import { TjTime, } from "../time/tj-time.ts";
+import { TimeInterval, } from "../time/time-interval.ts";
 import { ChargeSet, } from "../finance/charge-set.ts";
 import { type ProjectLike, } from "./project-like.ts";
 import { CostLine, resolveAccount, } from "../accounting/attribution.ts";
@@ -678,6 +680,143 @@ export class ResourceScenario extends ScenarioData {
       this.initScoreboard();
     }
     return this.maxslot;
+  }
+
+  /**
+   * Alocado? Verdadeiro se `task` tem slots de agenda dentro de `iv` neste
+   * recurso (ou nos seus filhos).
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/ResourceScenario.rb:allocated?
+   */
+  allocated(iv: TimeInterval, task: Task | null = null,): boolean {
+    if (task && !this.duties.includes(task,)) return false;
+
+    const project = this.getProperty().project as ProjectLike;
+    let startIdx = project.dateToIdx(iv.start,);
+    let endIdx = project.dateToIdx(iv.end,);
+    [startIdx, endIdx,] = this.fitIndicies(startIdx, endIdx, task,);
+    return startIdx < endIdx && this.allocatedSub(startIdx, endIdx, task,);
+  }
+
+  /**
+   * Varre o scoreboard: em contêineres, qualquer filho alocado; em folhas,
+   * algum slot igual a `task`.
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/ResourceScenario.rb:allocatedSub
+   */
+  allocatedSub(startIdx: number, endIdx: number, task: Task | null,): boolean {
+    const property = this.getProperty();
+    if (property.container()) {
+      for (const kid of property.kids()) {
+        const kidSc = (kid as Resource).scenarioData(this.scenarioIdx,);
+        if (kidSc.allocatedSub(startIdx, endIdx, task,)) return true;
+      }
+    } else {
+      if (!this.scoreboard || !task || !this.duties.includes(task,)) {
+        return false;
+      }
+      let [s, e,] = this.fitIndicies(startIdx, endIdx, task,);
+      if (s >= e) return false;
+      for (; s < e; s++) {
+        if (this.scoreboard.get(s,) === task) return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Collect the bookings of this resource, hashed by task (`hashByTask`) or as
+   * a flat array of `Booking`. Rebuilds contiguous booking intervals by
+   * scanning the scoreboard between the first and last booked slots, optionally
+   * clipped to `iv`.
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/ResourceScenario.rb:getBookings
+   */
+  getBookings(
+    iv: TimeInterval | null = null,
+    hashByTask = true,
+  ): Map<Task, Booking> | Booking[] {
+    const bookings: Map<Task, Booking> | Booking[] = hashByTask
+      ? new Map()
+      : [];
+    const property = this.getProperty() as PropertyTreeNode;
+    if (
+      property.container() || this.scoreboard === null ||
+      this.firstBookedSlot === null || this.lastBookedSlot === null
+    ) {
+      return bookings;
+    }
+
+    const sb = this.scoreboard;
+    let startIdx = this.firstBookedSlot;
+    let endIdx = this.lastBookedSlot + 1;
+
+    const project = property.project;
+    if (iv) {
+      const ivStartIdx = project.dateToIdx(iv.start,);
+      const ivEndIdx = project.dateToIdx(iv.end,);
+      if (ivStartIdx > startIdx) startIdx = ivStartIdx;
+      if (ivEndIdx < endIdx) endIdx = ivEndIdx;
+    }
+
+    const sbStart = TjTime.fromDate(sb.startDate,);
+    const slotDuration = sb.resolution;
+    const appendInterval = (booking: Booking, from: number, to: number,) => {
+      booking.intervals.push(
+        new ScoreboardInterval(sbStart, slotDuration, from, to,),
+      );
+    };
+
+    let lastTask: Task | null = null;
+    let bookingStart: number | null = null;
+
+    for (let idx = startIdx; idx <= endIdx; idx++) {
+      const slot = sb.get(idx,);
+      const task = slot instanceof Task ? slot : null;
+      const isTaskSlot = slot instanceof Task;
+      if (
+        task !== lastTask ||
+        (isTaskSlot && (lastTask === null || idx === endIdx))
+      ) {
+        if (lastTask) {
+          if (hashByTask) {
+            const map = bookings as Map<Task, Booking>;
+            let booking = map.get(lastTask,);
+            if (!booking) {
+              booking = new Booking(
+                property as Resource,
+                lastTask,
+                [],
+              );
+              map.set(lastTask, booking,);
+            }
+            appendInterval(booking, bookingStart!, idx,);
+          } else {
+            const arr = bookings as Booking[];
+            const last = arr.length > 0 ? arr[arr.length - 1] : undefined;
+            if (!last || last.task !== lastTask) {
+              const nb = new Booking(
+                property as Resource,
+                lastTask,
+                [],
+              );
+              arr.push(nb,);
+              appendInterval(nb, bookingStart!, idx,);
+            } else {
+              appendInterval(last, bookingStart!, idx,);
+            }
+          }
+        }
+        if (isTaskSlot) {
+          lastTask = task;
+          bookingStart = idx;
+        } else {
+          lastTask = null;
+          bookingStart = null;
+        }
+      }
+    }
+    return bookings;
   }
 
   /**

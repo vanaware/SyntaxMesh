@@ -53,6 +53,9 @@ export function registerTrackingRules(p: ProjectFileParser,): void {
     ): unknown {
       const nav = this.navigator as Navigator;
       this.navigators.set(nav.id, nav,);
+      // Ruby: `@project['navigators']`. Espelha no Project para que o
+      // `RTFNavigator` (Fase 14.21) possa localizar a barra pelo id.
+      if (this.project) this.project.navigators.set(nav.id, nav,);
       return null;
     },);
   },);

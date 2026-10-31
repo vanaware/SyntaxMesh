@@ -22,6 +22,7 @@ export * from "./account-scenario.ts";
 export * from "./shift.ts";
 export * from "./shift-scenario.ts";
 export * from "./report.ts";
+export * from "./report-content.ts";
 export * from "./report-scenario.ts";
 export * from "./report-type.ts";
 export * from "./material.ts";

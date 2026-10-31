@@ -1,7 +1,7 @@
 # Fase 14 — Relatórios
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-14-relatorios.md`
-> **Status:** ⬜ Não iniciada
+> **Status:** ✅ Concluída (2026-10-31, 14.0–14.24; adendos 14.25/14.26 dependem do Journal — Fase 16)
 > **Duração estimada:** 18–22 dias
 > **Depende de:** Fases 2–13
 > **Bloqueia:** Fases 15, 17, 20, 21
@@ -76,7 +76,7 @@ Ao final desta fase:
 - **Completar stubs:** `RTFReport`, `RTFReportLink`, `RTFNavigator` (Fase 12).
 - **Integrar `Project.generateReports`** (Fase 9).
 - **≥ 350 testes unitários** + **≥ 60 golden tests** (reports dos 9 MWEs + TestSuite).
-- ADR 026 registrado.
+- ADR 027 registrado.
 - `deno task check-all` verde.
 
 ---
@@ -260,7 +260,7 @@ Fase 12 deixou stubs. Aqui completamos.
 
 **Decisão:** `Report.generate` no browser **retorna** o conteúdo (string) em vez de escrever. API: `generateReport(): string[]` — array de outputs.
 
-**Nota:** isso muda a assinatura do Ruby. Documentar em ADR 026.
+**Nota:** isso muda a assinatura do Ruby. Documentar em ADR 027.
 
 ---
 
@@ -280,7 +280,7 @@ Fase 12 deixou stubs. Aqui completamos.
 
 ---
 
-### 14.0 — ADR 026 (reports browser-only)
+### 14.0 — ADR 027 (reports browser-only)
 
 #### Contexto
 
@@ -315,7 +315,7 @@ Criar `docs/syntaxmesh/decisoes/025-reports-browser.md`.
 
 #### Critério de aceite
 
-- ADR 026 criado.
+- ADR 027 criado.
 - Tabela atualizada.
 
 ---
@@ -967,7 +967,7 @@ Completar `Report`.
   - `content.generateIntermediateFormat()`.
 - [ ] `to_html(): XMLElementLike | null`.
 - [ ] `interactive?(): boolean`.
-- [ ] Private `generateHTML(): string | null` — retorna HTML como string (ADR 026).
+- [ ] Private `generateHTML(): string | null` — retorna HTML como string (ADR 027).
 - [ ] Private `generateCSV(): unknown[][] | null`.
 - [ ] Private `generateTJP(): string | null`.
 - [ ] Private `generateMspXml(): string | null`.
@@ -1742,7 +1742,7 @@ deno task test
 ## 6. Ordem de execução sugerida
 
 ```text
-14.0  ADR 026
+14.0  ADR 027
       ↓
 14.1  CSVFile
 14.2  ReportContext (completar)
@@ -1798,7 +1798,7 @@ passa, e:
 - [ ] **≥ 350 testes unitários**.
 - [ ] **≥ 60 golden tests**.
 - [ ] Nenhum `any` em `src/` (exceto onde justificado).
-- [ ] ADR 026 criado.
+- [ ] ADR 027 criado.
 
 ---
 
@@ -1816,7 +1816,7 @@ passa, e:
 | `ICalendar.foldLines` com UTF-8 | Médio | Testes com emojis/acentos |
 | `filterTaskList` com `isdutyof()` | Alto | Teste com recursos aninhados |
 | `copyAuxiliaryFiles` no-op | Médio | Aceito; Fase 20 |
-| `outputDir` no browser | Médio | ADR 026 |
+| `outputDir` no browser | Médio | ADR 027 |
 | `Painter` mínimo vs real | Médio | Fase 17 substitui |
 | Performance de `generateHTML` | Médio | Benchmarks |
 
@@ -1866,7 +1866,7 @@ passa, e:
 9. **`TjpExportRE`:** fidelidade textual.
 10. **`MspXmlRE`:** usar `XMLElementLike` + serializer.
 11. **`ICalendar.foldLines`:** linhas de 75 chars.
-12. **Browser reports retornam strings.** ADR 026.
+12. **Browser reports retornam strings.** ADR 027.
 13. **`ChartPlotter`:** implementar `Painter` mínimo nesta fase.
 14. **`RTFNavigator`, `RTFReport`, `RTFReportLink`:** completar stubs da Fase 12.
 15. **Sem `any`.** Use `unknown` + type guards.
@@ -1874,7 +1874,7 @@ passa, e:
 
 ---
 
-## 11. ADR 026 (referência rápida)
+## 11. ADR 027 (referência rápida)
 
 Criado como subfase 14.0. Conteúdo esperado:
 

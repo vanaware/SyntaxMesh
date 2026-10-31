@@ -1,0 +1,543 @@
+/**
+ * NikuReport (Fase 14.20.1) — exporta alocações de recursos em formato XOG
+ * (Clarity/CA PPM).
+ *
+ * Porta de `docs/taskjuggler/lib/taskjuggler/reports/NikuReport.rb`. O formato
+ * Niku XOG é voltado a um caso de uso estreito: transferir a alocação de
+ * recursos por projeto para o Clarity. Requer três atributos customizados:
+ * `ClarityRID` (Resource), `ClarityPID` e `ClarityPName` (Task). A lógica é
+ * fiel a Ruby nos três passos: `computeResourceTotals`, `collectProjects`,
+ * `computeProjectAllocations`; as saídas (`to_html`, `to_niku`, `to_csv`)
+ * produzem a estrutura esperada sem byte-exatidão (comentário de cabeçalho,
+ * ordenação por id/name, células vazias quando o valor é zero).
+ *
+ * ⚠️ Browser (ADR 027): `to_niku()` retorna string; nenhuma escrita a disco.
+ *
+ * @see docs/syntaxmesh/fases/fase-14-relatorios-tarefas.md (14.20.1)
+ * @see docs/taskjuggler/lib/taskjuggler/reports/NikuReport.rb
+ */
+import { Report, } from "../model/report.ts";
+import type { Project, } from "../model/project.ts";
+import type { Task, } from "../model/task.ts";
+import type { Resource, } from "../model/resource.ts";
+import { PropertyList, } from "../model/property-list.ts";
+import { Query, } from "../query/query.ts";
+import { TjTime, } from "../time/tj-time.ts";
+import { AppConfig, } from "../app-config.ts";
+import { ReportBase, } from "./report-base.ts";
+import { XMLBlob, XMLComment, XMLDocument, XMLElement, } from "./xml-node.ts";
+import type { XMLElementLike, } from "../richtext/xml-like.ts";
+import { SimpleXMLElement, } from "../richtext/xml-like.ts";
+import { registerContentFactory, } from "../model/report-content.ts";
+import type { RealFormat, } from "../format/real-format.ts";
+
+/** Projeto Clarity (agrega tasks com mesmo `ClarityPID`). */
+export class NikuProject {
+  readonly tasks: Task[] = [];
+  readonly resources: Map<string, NikuResource> = new Map();
+  constructor(readonly id: string, readonly name: string,) {}
+}
+
+/** Alocação de um recurso em um NikuProject. */
+export class NikuResource {
+  sum = 0.0;
+  constructor(readonly id: string,) {}
+}
+
+export class NikuReport extends ReportBase {
+  readonly projects = new Map<string, NikuProject>();
+  readonly resources = new Map<string, Resource>();
+  readonly resourcesFreeWork = new Map<string, number>();
+  readonly resourcesTotalEffort = new Map<string, number>();
+  private scenarioIdx!: number;
+
+  constructor(report: Report,) {
+    super(report,);
+  }
+
+  override generateIntermediateFormat(): void {
+    super.generateIntermediateFormat();
+    const scenarios = (this.a("scenarios",) as number[]) ?? [];
+    this.scenarioIdx = scenarios[0] ?? 0;
+
+    this.computeResourceTotals();
+    this.collectProjects();
+    this.computeProjectAllocations();
+  }
+
+  /** Soma (dia a dia) de effort alocado a uma tarefa, em resource-days. */
+  sum(projectId: string, resourceId: string,): number {
+    const project = this.projects.get(projectId,);
+    if (!project) return 0.0;
+    const resource = project.resources.get(resourceId,);
+    const total = this.resourcesTotalEffort.get(resourceId,);
+    if (!resource || !total) return 0.0;
+    return resource.sum / total;
+  }
+
+  resourceTotal(resourceId: string,): number {
+    let total = 0.0;
+    for (const projectId of this.projects.keys()) {
+      total += this.sum(projectId, resourceId,);
+    }
+    return total;
+  }
+
+  projectTotal(projectId: string,): number {
+    let total = 0.0;
+    for (const resourceId of this.resources.keys()) {
+      total += this.sum(projectId, resourceId,);
+    }
+    return total;
+  }
+
+  total(): number {
+    let total = 0.0;
+    for (const projectId of this.projects.keys()) {
+      for (const resourceId of this.resources.keys()) {
+        total += this.sum(projectId, resourceId,);
+      }
+    }
+    return total;
+  }
+
+  /** Célula de cabeçalho/corpo da tabela HTML (equivalente a `htmlTabCell`). */
+  htmlTabCell(
+    text: string,
+    headerCell = false,
+    align = "right",
+  ): XMLElementLike {
+    const td = new SimpleXMLElement("td", {
+      class: headerCell ? "tabhead" : "taskcell1",
+    },);
+    const div = new SimpleXMLElement("div", {
+      class: headerCell ? "headercelldiv" : "celldiv",
+      style: `text-align:${align}`,
+    },);
+    div.append(text,);
+    td.append(div,);
+    return td;
+  }
+
+  to_html(): XMLElementLike {
+    const tableFrame = this.generateHtmlTableFrame() as SimpleXMLElement;
+    const tr0 = new SimpleXMLElement("tr",);
+    const td0 = new SimpleXMLElement("td",);
+    const table = new SimpleXMLElement("table", {
+      class: "tj_table",
+      cellspacing: "1",
+    },);
+    td0.append(table,);
+    tr0.append(td0,);
+    tableFrame.append(tr0,);
+
+    const thead = new SimpleXMLElement("thead",);
+    const projectIds = [...this.projects.keys(),].sort();
+    const numberFormat = this.numberFormat();
+
+    // Linha 1: nomes de projeto.
+    const tr1 = new SimpleXMLElement("tr", { class: "tabline", },);
+    tr1.append(this.htmlTabCell("Project", true, "right",),);
+    for (const projectId of projectIds) {
+      if (this.projectTotal(projectId,) <= 0.0) continue;
+      const name = this.projects.get(projectId,)!.name;
+      const shown = name.length > 15 ?
+        "..." + name.slice(name.length - 15,) :
+        name;
+      tr1.append(this.htmlTabCell(shown, true, "center",),);
+    }
+    tr1.append(this.htmlTabCell("", true,),);
+    thead.append(tr1,);
+
+    // Linha 2: IDs de projeto.
+    const tr2 = new SimpleXMLElement("tr", { class: "tabline", },);
+    tr2.append(this.htmlTabCell("Resource", true, "left",),);
+    for (const projectId of projectIds) {
+      if (this.projectTotal(projectId,) <= 0.0) continue;
+      tr2.append(this.htmlTabCell(projectId, true, "center",),);
+    }
+    tr2.append(this.htmlTabCell("Total", true, "center",),);
+    thead.append(tr2,);
+    table.append(thead,);
+
+    const tbody = new SimpleXMLElement("tbody",);
+    const resourceIds = [...this.resourcesTotalEffort.keys(),].sort();
+    for (const resourceId of resourceIds) {
+      const tr = new SimpleXMLElement("tr", { class: "tabline", },);
+      const res = this.resources.get(resourceId,);
+      tr.append(
+        this.htmlTabCell(`${res?.name ?? ""} (${resourceId})`, true, "left",),
+      );
+      for (const projectId of projectIds) {
+        if (this.projectTotal(projectId,) <= 0.0) continue;
+        const value = this.sum(projectId, resourceId,);
+        const formatted = numberFormat ?
+          numberFormat.format(value,) :
+          String(value,);
+        tr.append(
+          this.htmlTabCell(parseFloat(formatted,) === 0.0 ? "" : formatted,),
+        );
+      }
+      const rt = this.resourceTotal(resourceId,);
+      tr.append(
+        this.htmlTabCell(
+          numberFormat ? numberFormat.format(rt,) : String(rt,),
+          true,
+        ),
+      );
+      tbody.append(tr,);
+    }
+
+    // Linha de totais por projeto.
+    const trTot = new SimpleXMLElement("tr", { class: "tabline", },);
+    trTot.append(this.htmlTabCell("Total", true, "left",),);
+    for (const projectId of projectIds) {
+      const pTotal = this.projectTotal(projectId,);
+      if (pTotal <= 0.0) continue;
+      trTot.append(
+        this.htmlTabCell(
+          numberFormat ? numberFormat.format(pTotal,) : String(pTotal,),
+          true,
+          "right",
+        ),
+      );
+    }
+    const grand = this.total();
+    trTot.append(
+      this.htmlTabCell(
+        numberFormat ? numberFormat.format(grand,) : String(grand,),
+        true,
+        "right",
+      ),
+    );
+    tbody.append(trTot,);
+    table.append(tbody,);
+
+    return tableFrame;
+  }
+
+  to_niku(): string {
+    const xml = new XMLDocument();
+    xml.push(
+      new XMLComment(
+        `Generated by ${AppConfig.softwareName} v${AppConfig.version} on ` +
+          `${String(TjTime.now(),)}\n` +
+          `For more information about ${AppConfig.softwareName} see ` +
+          `${AppConfig.contact}.\n` +
+          `Project: ${String(this.project.get("name",),)}\n` +
+          `Date:    ${String(this.project.get("now",),)}\n`,
+      ),
+    );
+    const nikuDataBus = new XMLElement("NikuDataBus", {
+      "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
+      "xsi:noNamespaceSchemaLocation": "../xsd/nikuxog_project.xsd",
+    },);
+    xml.push(nikuDataBus,);
+    nikuDataBus.push(
+      new XMLElement("Header", {
+        action: "write",
+        externalSource: "NIKU",
+        objectType: "project",
+        version: "7.5.0",
+      },),
+    );
+    const projects = new XMLElement("Projects",);
+    nikuDataBus.push(projects,);
+
+    const timeFormat = "%Y-%m-%dT%H:%M:%S";
+    const numberFormat = this.numberFormat();
+    const start = this.a("start",) as TjTime;
+    const end = this.a("end",) as TjTime;
+
+    for (const projectId of [...this.projects.keys(),].sort()) {
+      const prj = this.projects.get(projectId,)!;
+      const project = new XMLElement("Project", {
+        name: prj.name,
+        projectID: prj.id,
+      },);
+      projects.push(project,);
+      const resources = new XMLElement("Resources",);
+      project.push(resources,);
+      for (const clarityRID of [...this.resources.keys(),].sort()) {
+        const resource = new XMLElement("Resource", {
+          resourceID: clarityRID,
+          defaultAllocation: "0",
+        },);
+        resources.push(resource,);
+        const allocCurve = new XMLElement("AllocCurve",);
+        resource.push(allocCurve,);
+        const s = this.sum(prj.id, clarityRID,);
+        allocCurve.push(
+          new XMLElement("Segment", {
+            start: start.to_s(timeFormat,),
+            finish: end.subSeconds(1,).to_s(timeFormat,),
+            sum: numberFormat ? numberFormat.format(s,) : String(s,),
+          },),
+        );
+      }
+      // Título do relatório é usado como blob de XML customizado (Ruby).
+      const title = this.a("title",);
+      if (title && String(title,).length > 0) {
+        project.push(new XMLBlob(String(title,),),);
+      }
+    }
+
+    return xml.to_s();
+  }
+
+  to_csv(): unknown[][] {
+    const table: unknown[][] = [];
+    const projectIds = [...this.projects.keys(),].sort();
+
+    const rowNames: unknown[] = ["",];
+    for (const projectId of projectIds) {
+      rowNames.push(this.projects.get(projectId,)?.name ?? "",);
+    }
+    table.push(rowNames,);
+
+    const rowIds: unknown[] = ["Resource",];
+    for (const projectId of projectIds) rowIds.push(projectId,);
+    table.push(rowIds,);
+
+    for (const resourceId of [...this.resourcesTotalEffort.keys(),].sort()) {
+      const row: unknown[] = [
+        `${this.resources.get(resourceId,)?.name ?? ""} (${resourceId})`,
+      ];
+      for (const projectId of projectIds) {
+        row.push(this.sum(projectId, resourceId,),);
+      }
+      table.push(row,);
+    }
+    return table;
+  }
+
+  private numberFormat(): RealFormat | null {
+    return (this.a("numberFormat",) as RealFormat | null) ?? null;
+  }
+
+  /**
+   * Soma o effort total de cada recurso folha com `ClarityRID` no período
+   * reportado e calcula o "free work" (dias sem alocação).
+   */
+  private computeResourceTotals(): void {
+    const project = this.project as Project;
+
+    let resourceList = new PropertyList<Resource>(project.resources,);
+    resourceList.setSorting(
+      (this.a("sortResources",) as Array<[string, boolean, number,]>) ?? [],
+    );
+    resourceList = this.filterResourceList(
+      resourceList,
+      null,
+      this.a("hideResource",) as never,
+      this.a("rollupResource",) as never,
+      this.a("openNodes",) as never,
+    );
+
+    const query = this.newQuery(project,);
+
+    // Dias úteis no intervalo reportado.
+    const start = this.a("start",) as TjTime;
+    const end = this.a("end",) as TjTime;
+    const workingDays = Math.max(
+      project.workingDays({
+        start: project.dateToIdx(start,),
+        end: project.dateToIdx(end,),
+      },),
+      1,
+    );
+
+    for (const resource of resourceList.toArray()) {
+      if (!resource.leaf()) continue;
+      const resourceIdRaw = resource.get("ClarityRID",);
+      if (resourceIdRaw === null || resourceIdRaw === undefined) continue;
+      const resourceId = String(resourceIdRaw,);
+      if (resourceId === "") continue;
+
+      query.property = resource;
+      query.attributeId = "effort";
+      query.scenarioIdx = this.scenarioIdx;
+      query.start = start;
+      query.end = end;
+      query.process();
+      const effort = (query.to_num() ?? 0) / 86400; // segundos → dias
+
+      // Esforço acima dos dias úteis é considerado overtime não pago.
+      let total = effort;
+      if (total >= workingDays) {
+        this.resourcesFreeWork.set(resourceId, 0.0,);
+      } else {
+        this.resourcesFreeWork.set(resourceId, workingDays - total,);
+        total = workingDays;
+      }
+      this.resources.set(resourceId, resource,);
+      this.resourcesTotalEffort.set(resourceId, total,);
+    }
+
+    if (this.resourcesTotalEffort.size === 0) {
+      throw new Error(
+        "No resources with the custom attribute ClarityRID were found!",
+      );
+    }
+  }
+
+  /**
+   * Constrói um NikuProject por `ClarityPID` distinto; valida consistência de
+   * `ClarityPName`. Se `timeOffId`/`timeOffName` estiverem postos, cria um
+   * projeto extra para as férias.
+   */
+  private collectProjects(): void {
+    const project = this.project as Project;
+
+    let taskList = new PropertyList<Task>(project.tasks,);
+    taskList.setSorting(
+      (this.a("sortTasks",) as Array<[string, boolean, number,]>) ?? [],
+    );
+    taskList = this.filterTaskList(
+      taskList,
+      null,
+      this.a("hideTask",) as never,
+      this.a("rollupTask",) as never,
+      this.a("openNodes",) as never,
+    );
+
+    for (const task of taskList.toArray()) {
+      const assigned = (task.getForScenario(
+        "assignedresources",
+        this.scenarioIdx,
+      ) as Resource[]) ?? [];
+      // Ruby: `next unless task.leaf? || assigned.empty?`
+      if (!task.leaf() && assigned.length === 0) continue;
+
+      const idRaw = task.get("ClarityPID",);
+      if (idRaw === null || idRaw === undefined) continue;
+      const id = String(idRaw,);
+      if (id === "") {
+        throw new Error(
+          `ClarityPID of task ${task.fullId} may not be empty`,
+        );
+      }
+      const nameRaw = task.get("ClarityPName",);
+      if (nameRaw === null || nameRaw === undefined) {
+        throw new Error(
+          `ClarityPName of task ${task.fullId} has not been set!`,
+        );
+      }
+      const name = String(nameRaw,);
+      if (name === "") {
+        throw new Error(
+          `ClarityPName of task ${task.fullId} may not be empty!`,
+        );
+      }
+
+      let prj = this.projects.get(id,);
+      if (!prj) {
+        prj = new NikuProject(id, name,);
+        this.projects.set(id, prj,);
+      } else {
+        const first = prj.tasks[0];
+        const firstName = first ?
+          String(first.get("ClarityPName",) ?? "",) :
+          name;
+        if (firstName !== name) {
+          throw new Error(
+            `Task ${task.fullId} and task ${first?.fullId ?? ""} have same ` +
+              `ClarityPID (${id}) but different ClarityPName (${name}/` +
+              `${firstName})`,
+          );
+        }
+      }
+      prj.tasks.push(task,);
+    }
+
+    if (this.projects.size === 0) {
+      throw new Error(
+        "No tasks with the custom attributes ClarityPID and ClarityPName " +
+          "were found!",
+      );
+    }
+
+    const timeOffIdRaw = this.report.get("timeOffId",);
+    const timeOffNameRaw = this.report.get("timeOffName",);
+    if (timeOffIdRaw && timeOffNameRaw) {
+      const id = String(timeOffIdRaw,);
+      const name = String(timeOffNameRaw,);
+      const p = new NikuProject(id, name,);
+      this.projects.set(id, p,);
+      for (const [resourceId,] of this.resources) {
+        const nr = new NikuResource(resourceId,);
+        nr.sum = this.resourcesFreeWork.get(resourceId,) ?? 0.0;
+        p.resources.set(resourceId, nr,);
+      }
+    }
+  }
+
+  /** Soma o effort alocado por recurso em cada projeto Clarity. */
+  private computeProjectAllocations(): void {
+    const project = this.project as Project;
+    const query = this.newQuery(project,);
+
+    const timeOffIdRaw = this.report.get("timeOffId",);
+    const timeOffId = timeOffIdRaw ? String(timeOffIdRaw,) : null;
+    const start = this.a("start",) as TjTime;
+    const end = this.a("end",) as TjTime;
+
+    for (const prj of this.projects.values()) {
+      if (timeOffId !== null && prj.id === timeOffId) continue;
+      for (const task of prj.tasks) {
+        const assigned = (task.getForScenario(
+          "assignedresources",
+          this.scenarioIdx,
+        ) as Resource[]) ?? [];
+        for (const resource of assigned) {
+          const ridRaw = resource.get("ClarityRID",);
+          if (!ridRaw) continue;
+          const rid = String(ridRaw,);
+          if (!this.resources.has(rid,)) continue;
+
+          query.property = task;
+          query.scopeProperty = resource;
+          query.attributeId = "effort";
+          query.scenarioIdx = this.scenarioIdx;
+          query.start = start;
+          query.end = end;
+          query.process();
+          const work = (query.to_num() ?? 0) / 86400;
+          if (work <= 0.0) continue;
+
+          let rec = prj.resources.get(rid,);
+          if (!rec) {
+            rec = new NikuResource(rid,);
+            prj.resources.set(rid, rec,);
+          }
+          rec.sum += work;
+        }
+      }
+    }
+  }
+
+  private newQuery(project: Project,): Query {
+    return new Query({
+      project,
+      scopeProperty: null,
+      scenarioIdx: this.scenarioIdx,
+      loadUnit: (this.a("loadUnit",) as string | null) ?? null,
+      numberFormat: this.numberFormat(),
+      timeFormat: (this.a("timeFormat",) as string | null) ?? null,
+      currencyFormat: (this.a("currencyFormat",) as RealFormat | null) ?? null,
+      start: this.a("start",) as TjTime,
+      end: this.a("end",) as TjTime,
+      journalMode: (this.a("journalMode",) as string | null) ?? null,
+      journalAttributes: (this.a("journalAttributes",) as string[] | null) ??
+        null,
+      costAccount: (this.a("costaccount",) as string | null) ?? null,
+      revenueAccount: (this.a("revenueaccount",) as string | null) ?? null,
+    },);
+  }
+}
+
+// Registra a fábrica de conteúdo `niku` (14.11 dispatch).
+registerContentFactory(
+  "niku",
+  (report: unknown,): NikuReport => new NikuReport(report as Report,),
+);

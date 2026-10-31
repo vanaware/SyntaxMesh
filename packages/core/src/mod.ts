@@ -67,3 +67,10 @@ export * from "./logic/type-guards.ts";
 export { Query, type QueryParams, } from "./query/query.ts";
 export * from "./query/custom-data.ts";
 export * from "./query/simple-query-expander.ts";
+
+// Fase 14 — relatórios (formato intermediário + geração no browser, ADR 027)
+export * from "./reports/mod.ts";
+
+// Fase 14.22 — pincel SVG mínimo + ChartPlotter (Painter real é Fase 17)
+export * from "./painter-min.ts";
+export * from "./chart-plotter.ts";

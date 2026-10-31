@@ -226,13 +226,18 @@ export abstract class AttributeBase<T,> {
   /**
    * Converte o valor para RTI (Rich Text Intermediate).
    *
+   * Fiel a Ruby: apenas valores rich-text são RTI; os demais retornam `null`
+   * (o chamador — `Query.to_rti`, usado pelos relatórios — cai em `to_s`).
+   *
    * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:to_rti
    */
   to_rti(): unknown {
-    // Ancorado: Fase 14 — to_rti por atributo depende do contexto de relatório
-    // (query/RTFHandlers); a Fase 12 entregou o subsistema RichText, mas o wiring
-    // G5 (template `query.listItem`) vive nos reports (Fase 14).
-    throw new NotYetImplementedError("12", "to_rti",);
+    const val = this.get();
+    // Duck-typing fiel ao `is_a?(RichTextIntermediate)` de Ruby: o RTI porta
+    // a marca `richText` (mesma detecção usada em RichTextAttribute).
+    return typeof val === "object" && val !== null && "richText" in val
+      ? val
+      : null;
   }
 
   /**

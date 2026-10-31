@@ -202,3 +202,72 @@ await Deno.writeTextFile(
 console.log(
   `Generated ${parserOut.pathname} (${parserCases.length} cases)`,
 );
+
+// ---------------------------------------------------------------------------
+// Reports golden (14.23): 9 scripts de MWE + TestSuite (ReportGenerator/
+// Correct + HTML-Reports + CSV-Reports), todos via reports-common.rb (tj3 real,
+// formato intermediário). Mesclados em reports.golden.json.
+// ---------------------------------------------------------------------------
+
+type ReportRef = {
+  id: string;
+  name: string;
+  type: string;
+  formats: string[];
+  table?: { header: unknown[]; rows: unknown[][] };
+  error?: string;
+};
+type ReportCase = {
+  file: string;
+  tz: string;
+  error: string | null;
+  reports: ReportRef[];
+};
+
+const reportScripts = [
+  ...Array.from(
+    { length: 9, },
+    (_, i,) => `reports-mwe${String(i + 1,).padStart(3, "0",)}.rb`,
+  ),
+  "reports-syntax-correct.rb",
+];
+
+const reportCases: ReportCase[] = [];
+for (const script of reportScripts) {
+  const url = new URL(`../../../../scripts/golden/${script}`, import.meta.url,);
+  const proc = new Deno.Command("ruby", {
+    args: [url.pathname,],
+    stdout: "piped",
+    stderr: "piped",
+  },);
+  const result = proc.outputSync();
+  if (!result.success) {
+    console.error(
+      `Ruby script ${script} failed:\n` +
+        new TextDecoder().decode(result.stderr,),
+    );
+    Deno.exit(1,);
+  }
+  const text = new TextDecoder().decode(result.stdout,);
+  const jsonMatch = text.match(/\{[\s\S]*\}/,);
+  if (!jsonMatch) {
+    console.error(`Ruby output ${script} has no JSON object:\n${text}`,);
+    Deno.exit(1,);
+  }
+  const parsed = JSON.parse(jsonMatch[0],) as {
+    cases?: ReportCase[];
+    file?: string;
+  };
+  if (parsed.cases) reportCases.push(...parsed.cases,);
+  else reportCases.push(parsed as ReportCase,);
+}
+
+const reportsOut = new URL("./reports.golden.json", import.meta.url,);
+await Deno.writeTextFile(
+  reportsOut,
+  JSON.stringify({ cases: reportCases, }, null, 2,) + "\n",
+);
+const reportCount = reportCases.reduce((n, c,) => n + c.reports.length, 0,);
+console.log(
+  `Generated ${reportsOut.pathname} (${reportCases.length} files, ${reportCount} reports)`,
+);

@@ -1,0 +1,90 @@
+# ADR 027 — Reports no browser: retorno de strings
+
+> **Status:** ✅ Aceito
+> **Data:** 2026-10-30
+> **Autores:** Qoder
+
+## Resumo
+
+O `Report.generate` do TaskJuggler escreve arquivos em disco (HTML, CSV, TJP,
+MSP XML, iCal, Niku, ctags). O SyntaxMesh roda 100% no browser, sem filesystem
+direto. Decidimos que **relatórios retornam o conteúdo como `string`** em vez de
+escrever em disco; a persistência (download, OPFS, IndexedDB) é responsabilidade
+das camadas de UI/Storage (Fases 19/20).
+
+> **Nota de numeração:** o plano (`fase-14-relatorios.md`) e o arquivo de tarefas
+> pedem "ADR 024/025/026" para esta decisão, mas todos já foram consumidos
+> (024 = expressões lógicas, 025 = RichText, 026 = Markdown). O README já
+> reservava o **027** para *Reports no browser: retorno de strings*; usamos 027.
+
+## Contexto
+
+No Ruby, `Report#generate` percorre os formatos pedidos e, para cada um, abre um
+arquivo em `AppConfig.outputDir` e escreve o resultado (`generateHTML`,
+`generateCSV`, `generateTJP`, `generateMspXml`, `generateNiku`, `generateICal`,
+`generateCTags`). Há também `copyAuxiliaryFiles`, que copia CSS/ícones para o
+diretório de saída.
+
+No browser:
+
+- não há `File.open` nem filesystem síncrono;
+- escrever arquivo exigiria OPFS/`worker-db` (Fase 19) ou um download via UI
+  (Fase 20);
+- o core é DOM-free e não conhece storage (ADR 001, ADR 003).
+
+## Decisão
+
+1. **`Report#generate` retorna strings.** Em vez de escrever em disco, cada
+   gerador produz o conteúdo e o expõe. A API pública é:
+   - `generate(requestedFormats?): number` — orquestra e acumula saídas
+     (mantém o retorno numérico do Ruby para contagem de erros);
+   - `lastOutputs(): ReportOutput[]` — array de `{ format, name, content }`
+     produzido pela última geração, para a UI consumir.
+   Os geradores privados (`generateHTML`, `generateCSV`, …) retornam
+   `string | null` / `unknown[][] | null` em vez de escrever.
+2. **`outputDir` é mantido por compatibilidade, mas opcional.** `Report` ainda
+   lê/resolve `outputDir` e `absoluteFileName` (nome lógico do artefato), só que
+   nenhum caminho toca o disco. A UI usa `name` como sugestão de filename no
+   download.
+3. **`copyAuxiliaryFiles` é no-op.** CSS/ícones são servidos via `fetch` +
+   Service Worker na Fase 20; o core não copia assets.
+4. **`CSVFile.write/read` adaptados ao browser.** `write('.')` é sem efeito
+   (a string já está disponível via `to_s()`); `read(fileName)` exige um
+   `FileStore` injetável — sem ele, lança `NotYetImplementedError` (Fase 19).
+5. **XML/HTML usam `XMLElementLike`.** Até a Fase 17 entregar `XMLElement`/
+   `HTMLDocument`, os relatórios montam a árvore via `XMLElementLike`
+   (Fase 12) e a serializam com `toHTML()`. Um `HTMLDocument` mínimo local é
+   suficiente para embrulhar o corpo do relatório.
+
+## Consequências
+
+### Positivas
+
+- Core permanece DOM-free e storage-free (ADR 001/003): relatórios são funções
+  puras `modelo → string`.
+- Testável sem filesystem: basta comparar a string retornada (golden tests
+  normalizam HTML/CSV).
+- A camada de UI decide o destino (preview, download, OPFS) sem o core saber.
+
+### Negativas / Riscos
+
+- **Assinatura diverge do Ruby** (`generate` não escreve). Mitigação: documentar
+  aqui; o `name` preserva o nome de arquivo lógico.
+- `lastOutputs` é estado mutável do `Report`; chamadas concorrentes precisam de
+  instâncias separadas (já é o modelo por-report).
+- Relatórios gigantes ficam inteiramente na memória como string. Aceito para os
+  MWEs; otimização de streaming fica para Fase 21.
+
+### Neutras / Observações
+
+- `timeSheet`/`statusSheet` permanecem stubs ancorados na Fase 18.
+- `ICalendar`/`Painter` são implementados em versão **mínima** nesta fase;
+  a Fase 17 os substitui por completo.
+
+---
+
+**Status:** Aceito
+**Data:** 2026-10-30
+**Autor(es):** Qoder
+**Implementação:** `packages/core/src/reports/` (Fase 14)
+**Referências:** ADR 001, ADR 003, ADR 025, `docs/syntaxmesh/fases/fase-14-relatorios.md`

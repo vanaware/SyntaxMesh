@@ -84,7 +84,7 @@ O que foi decidido? Seja específico e acionável.
 | 024 | Expressões lógicas sem precedência | Aceito | 2026-10-27 |
 | 025 | RichText e function handlers | Aceito | 2026-10-28 |
 | 026 | Markdown como formato going-forward | Aceito | 2026-10-29 |
-| 027 | Reports no browser: retorno de strings | Proposto | — |
+| 027 | Reports no browser: retorno de strings | Aceito | 2026-10-30 |
 | 028 | Gantt HTML+CSS | Proposto | — |
 | 029 | Journal e AlertLevel em TypeScript | Proposto | — |
 | 030 | Arquitetura simplificada: todo código principal em `packages/core` | Aceito | 2026-10-24 |

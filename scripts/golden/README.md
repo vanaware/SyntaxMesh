@@ -26,6 +26,7 @@ paritária.
 | `parser-mwe001..009.rb` + `parser-syntax-{correct,errors}.rb` | 10   | `parser.golden.json`              | `parser_golden_test.ts`              |
 | `logical-expressions.rb`                                      | 11   | `logical-expressions.golden.json` | `logical-expressions_golden_test.ts` |
 | `richtext.rb`                                                 | 12   | `richtext.golden.json`            | `richtext_golden_test.ts`            |
+| `reports-mwe001..009.rb` + `reports-syntax-correct.rb`        | 14   | `reports.golden.json`             | `reports_golden_test.ts`             |
 
 ## Fluxo de trabalho
 
@@ -299,4 +300,55 @@ reavaliada na Fase 21 (compatibilidade).
 2. **`trapSetup = true`** converte erros de parse em exceção (não `exit 1`),
    como no harness de parser da Fase 10.
 3. **Nunca editar `richtext.golden.json` à mão** — regerer com
+   `deno task golden:generate`.
+
+## Reports Golden Tests (Fase 14.23)
+
+Validam o **formato intermediário** dos relatórios (`ReportTable`) contra o
+tj3 real: para cada `.tjp`, roda parse → schedule → `generateIntermediateFormat`
+sobre cada relatório com `formats` e extrai a tabela (cabeçalho das colunas +
+linhas de dados) via walker compartilhado.
+
+### Arquivos
+
+- `reports-common.rb` — harness compartilhado (`run`, `extract_table`,
+  `case_for`, `cases_for_list`). Espelhado do lado TS por
+  `packages/core/tests/golden/extract-table.ts` (mesmo walker, mesma
+  serialização).
+- `reports-mwe001.rb` … `reports-mwe009.rb` — um script por MWE
+  (`docs/Learning/mweNNN/tutorial.tjp`).
+- `reports-syntax-correct.rb` — itera `TestSuite/{ReportGenerator/Correct,
+  HTML-Reports,CSV-Reports}`.
+- `packages/core/tests/golden/reports_golden_test.ts` — 61 casos de relatório
+  (≥60 exigidos), comparando o **digest estrutural** (nº de colunas, nº de
+  linhas, sequência de kinds de célula por linha) por relatório.
+
+### Por que digest estrutural e não HTML/valores
+
+O markup HTML difere por design (ADR 027, browser) e os **valores** de célula
+(`name`, datas, `query_*`) dependem de integrações pendentes: colunas
+computadas `query_*` (Fase 11), `chart`/GanttChart (Fase 15/16), `to_rti`
+(Fase 12/14). O golden congela a **geometria do pipeline de relatórios**
+(dispatch de conteúdo, colunas, linhas, célula especial vs texto).
+
+### Divergências rastreadas (não são xfail silencioso)
+
+- Relatórios que o TS **não monta** (Gantt/query/to_rti) são classificados
+  `pending` pela **classe do erro** — erro inesperado falha o teste.
+- Relatórios montados com geometria divergente (sub-linhas dependentes de
+  alocação/query) estão em `PENDING_DIVERGENCES` explícita, por
+  `arquivo:relatório`; saem da lista quando a integração chegar.
+- Arquivos cujo **schedule TS** ainda estoura (gap de scheduler de fase
+  anterior, ex.: `CSV-Reports/alert.tjp`) estão em `PENDING_SCHEDULER_FILES`.
+
+### Regras específicas
+
+1. **Silenciar o MessageHandler** (`outputLevel = :none`, `trapSetup = true`)
+   — como no harness de parser — para erros de parse do TestSuite não
+   poluírem o stdout JSON nem abortarem o processo.
+2. **RichText de célula precisa de Query registrado** antes de `to_s`
+   (`cell_text_text` espelha `ReportTableCell#to_html`); sem isso o walker
+   levanta "No Query has been registered…".
+3. **Cabeçalho vem das colunas** (`cell1`/`cell2`), não das `@lines`.
+4. **Nunca editar `reports.golden.json` à mão** — regerer com
    `deno task golden:generate`.

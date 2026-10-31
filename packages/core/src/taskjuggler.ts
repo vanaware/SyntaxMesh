@@ -4,6 +4,11 @@ import { TjTime, } from "./time/tj-time.ts";
 import { NotYetImplementedError, } from "./model/errors.ts";
 import { MessageHandlerInstance, } from "./message-handler.ts";
 
+// Efeito colateral: registra as fábricas de conteúdo dos relatórios
+// (TaskListRE, ResourceListRE, …) no `contentFactories` do modelo, como o
+// `require` das classes de conteúdo em TaskJuggler.rb (Fase 14.23).
+import "./reports/mod.ts";
+
 /**
  * TaskJuggler — fachada top-level para CLI/apps.
  *
@@ -27,7 +32,7 @@ export class TaskJuggler {
 
   parse(files: string[], keepParser = false,): boolean {
     // Ancorado: Fase 19 — loading de arquivos .tjp depende do storage/browser (Fase 19/PWA).
-    throw new NotYetImplementedError("10", "parse",);
+    throw new NotYetImplementedError("19", "parse",);
   }
 
   parseFile(fileName: string, rule: unknown,): unknown {
@@ -89,8 +94,9 @@ export class TaskJuggler {
   }
 
   freeze(freezeDate: unknown, taskBookings: boolean,): boolean {
-    // Ancorado: Fase 14 — freeze depende do pipeline de relatórios (Fase 14).
-    throw new NotYetImplementedError("14", "freeze",);
+    // Ancorado: Fase 19 — freeze reescreve o master file .tjp; depende de
+    // storage e não tem uso no pipeline browser (ADR 027).
+    throw new NotYetImplementedError("19", "freeze",);
   }
 
   checkTimeSheet(fileName: string,): boolean {

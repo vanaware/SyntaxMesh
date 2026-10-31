@@ -1,11 +1,12 @@
 /**
- * RTFNavigator — handler da função `[[navigator:…]]` (Fase 12.17, STUB).
+ * RTFNavigator — handler da função `[[navigator:…]]` (Fase 12.17/14.21).
  *
- * Gera uma barra de navegação para os relatórios que casam com uma
- * `LogicalExpression`. Depende de `Navigator` (**Fase 14**); aqui só a
- * estrutura e a validação do argumento `id` são portadas e `to_html` é stub.
+ * Gera uma barra de navegação para os relatórios que casam com a
+ * `LogicalExpression` do `Navigator` referido pelo argumento `id`. A
+ * construção efetiva da árvore HTML está em `Navigator.to_html()` (Fase 14.21);
+ * este handler só resolve o id no mapa `project.navigators` e delega.
  *
- * Port de `RichText/RTFNavigator.rb` (estrutura; corpo adiado).
+ * Port de `RichText/RTFNavigator.rb`.
  *
  * @see docs/taskjuggler/lib/taskjuggler/RichText/RTFNavigator.rb
  * @see ADR 025 (RichText e function handlers)
@@ -16,7 +17,7 @@ import type { RichTextFunctionArgs, } from "./function-handler.ts";
 import type { XMLElementLike, } from "../xml-like.ts";
 import type { SourceFileInfo, } from "../../source-file-info.ts";
 import type { Project, } from "../../model/project.ts";
-import { NotYetImplementedError, } from "../../model/errors.ts";
+import type { Navigator, } from "../../reports/navigator.ts";
 
 export class RTFNavigator extends RichTextFunctionHandler {
   private readonly project: Project | null;
@@ -41,14 +42,23 @@ export class RTFNavigator extends RichTextFunctionHandler {
   }
 
   override to_html(args: RichTextFunctionArgs,): XMLElementLike | null {
-    // Validação do argumento obrigatório, fiel ao Ruby, antes do stub.
-    if (args === null || args["id"] === undefined || args["id"] === null) {
+    // Ruby: `if args.nil? || (id = args['id']).nil? → error`.
+    if (
+      args === null || args === undefined || args["id"] === undefined ||
+      args["id"] === null
+    ) {
       this.error(
         "rtf_nav_id_missing",
         "Argument 'id' missing to specify the navigator to be used.",
       );
+      return null;
     }
-    // Ancorado: Fase 14 — Navigator (barra de navegação de relatórios).
-    throw new NotYetImplementedError("14", "RTFNavigator",);
+    const id = String(args["id"],);
+    const navBar = this.project?.navigators.get(id,) as Navigator | undefined;
+    if (!navBar) {
+      this.error("rtf_nav_unknown_id", `Unknown navigator ${id}`,);
+      return null;
+    }
+    return navBar.to_html();
   }
 }
