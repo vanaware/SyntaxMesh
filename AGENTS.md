@@ -68,7 +68,8 @@ This project follows a **21-phase development plan** (previously 8 phases). The 
 | Fase 11 — Expressões Lógicas e Queries | Motor de expressões lógicas e ponte para reports. | ✅ Concluída (2026-10-27; queries `query_*` concretos a cargo de scheduling/finance) |
 | Fase 12 — RichText (compatibilidade TJP) | Manter Markup MediaWiki para compatibilidade total com `.tjp`. | ✅ Concluída (2026-10-29, 12.0–12.20) |
 | Fase 13 — Markdown (novo, futuro) | Formato going-forward. `micromark` + `mdast-util-from-markdown` + GFM + extensões. | ✅ Concluída (13.0–13.13; 13.14 imagens parcial → Fases 19/14) |
-| Fase 14 — Relatórios | Pipeline completo de relatórios. | ✅ Concluída (2026-10-31, 14.0–14.24; adendos 14.25/14.26 → Fase 16) |
+| Fase 14 — Relatórios | Pipeline completo de relatórios. | ✅ Concluída (2026-10-31, 14.0–14.24; adendos 14.25/14.26 → Fase 14-C) |
+| Fase 14 Complemento — Materiais/RDO/MspXml/Markdown nos relatórios | `materialreport`, `breakdownreport`, `rdoreport`, MSPDI completo, `format markdown` em reports, hide/rollup de material/picture. | 🟡 Planejada (`fase-14-relatorios-complemento.md` + `-tarefas.md`) |
 | Fase 15 — Gantt | Gantt chart completo em HTML+CSS. | ⬜ Não iniciada |
 | Fase 16 — Apoio | Estruturas auxiliares. | ⬜ Não iniciada |
 | Fase 17 — HTML/XML | Geradores de HTML/XML. | ⬜ Não iniciada |

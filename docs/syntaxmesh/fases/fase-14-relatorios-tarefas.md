@@ -1147,6 +1147,12 @@ TOTAL: ~350
 
 ## 14.25 — Adendo Fase 10 Complemento: `BreakdownReport`, `RdoReport` e colunas novas
 
+> **⤷ TRANSFERIDO (2026-10-31):** estas tarefas foram absorvidas pela
+> **Fase 14 Complemento** — `fase-14-relatorios-complemento-tarefas.md`
+> (14.25.1–5 → Bloco 14C.2; 14.25.6–10 → Bloco 14C.3; 14.25.11–13 →
+> 14C.1.7–9; 14.25.14 → 14C.1.21). O conteúdo abaixo é histórico; executar
+> pelo arquivo do complemento.
+
 > **Origem:** `fase-10-complemento1.md` §5 (#4 `breakdownreport`) e §6 (#5 `rdoreport`); `fase-10-complemento2.md` §7.4 (coluna `timebasis`). O parser (Bloco C3.5–C3.7 de `fase-10-complemento-tarefas.md`) apenas **reconhece** a sintaxe; a **execução** dos relatórios é aqui. Depende do Journal estendido (adendo Fase 16).
 
 ### 14.25.1 — `BreakdownReport` (#4)
@@ -1183,6 +1189,11 @@ TOTAL: ~350
 ---
 
 ## 14.26 — Adendo Fase 11 Complemento: `hide`/`rollup` de todas as entidades + `hidepicture`
+
+> **⤷ TRANSFERIDO (2026-10-31):** absorvido pela **Fase 14 Complemento**
+> — `fase-14-relatorios-complemento-tarefas.md`, Bloco 14C.6 (auditoria
+> 14.26.1a–c → 14C.6.1; novas opções 14.26.2a–g → 14C.6.2–10). Conteúdo
+> abaixo é histórico.
 
 > **Origem:** `fase-11-logical-complemento.md` §2 (atributos lógicos de
 > material/charge) e o pedido de opções de relatório. As expressões lógicas já
