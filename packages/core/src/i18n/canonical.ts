@@ -103,6 +103,7 @@ export const CANONICAL_KEYWORDS = [
   "journalattributes",
   "journalentry",
   "journalmode",
+  "json",
   "label",
   "language",
   "leaveallowances",
@@ -120,6 +121,10 @@ export const CANONICAL_KEYWORDS = [
   "markdate",
   "markdown",
   "material",
+  // Fase 14 Complemento C1.13 — export de alocações de material (extensão).
+  "materialallocations",
+  // Fase 14 Complemento C1.2 — relatório de materiais (extensão SyntaxMesh).
+  "materialreport",
   "materials",
   "maxend",
   "maximum",
@@ -197,6 +202,8 @@ export const CANONICAL_KEYWORDS = [
   "shorttimeformat",
   "sloppy",
   "sortaccounts",
+  // Fase 14 Complemento C1.2 — ordenação dos relatórios de extensão.
+  "sortby",
   "sortjournalentries",
   "sortresources",
   "sorttasks",

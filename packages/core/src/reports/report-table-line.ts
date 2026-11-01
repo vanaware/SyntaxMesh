@@ -93,4 +93,12 @@ export class ReportTableLine {
     }
     return columnIdx - startColumn;
   }
+
+  /** Descritor JSON da linha (extensão SyntaxMesh — 14C.0.3). */
+  toJSON(): { indent: number; cells: unknown[] } {
+    return {
+      indent: this.indentation,
+      cells: this.cells.map((cell,) => cell.toJSON()),
+    };
+  }
 }

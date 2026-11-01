@@ -1402,6 +1402,17 @@
       "userDefined": false
     },
     {
+      "id": "sortBy",
+      "name": "Sort By",
+      "objClass": "TaskJuggler::SortListAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": [],
+      "userDefined": false,
+      "extension": "reports"
+    },
+    {
       "id": "sortJournalEntries",
       "name": "Sort Journal Entries",
       "objClass": "TaskJuggler::JournalSortListAttribute",

@@ -37,7 +37,25 @@ export { TableReport, } from "./table-report.ts";
 export { TaskListRE, } from "./task-list-re.ts";
 export { ResourceListRE, } from "./resource-list-re.ts";
 export { AccountListRE, } from "./account-list-re.ts";
+export { MaterialListRE, } from "./material-list-re.ts";
+export {
+  type BreakdownContributor,
+  type BreakdownContributorKind,
+  type BreakdownGroup,
+  type BreakdownGroupBy,
+  BreakdownReport,
+  type BreakdownTotals,
+} from "./breakdown-report.ts";
 export { TextReport, } from "./text-report.ts";
+export {
+  type RdoEntry,
+  type RdoGroup,
+  type RdoGroupBy,
+  type RdoImage,
+  RdoReport,
+  type RdoTableKind,
+  type RdoTableRow,
+} from "./rdo-report.ts";
 export { daytimeToS, durationToMsp, MspXmlRE, } from "./msp-xml-re.ts";
 export { TjpExportRE, } from "./tjp-export-re.ts";
 export { ExportRE, } from "./export-re.ts";
@@ -54,6 +72,7 @@ export { ICalReport, } from "./i-cal-report.ts";
 export { TagFile, TagFileEntry, type TagKind, } from "./tag-file.ts";
 export { NikuProject, NikuReport, NikuResource, } from "./niku-report.ts";
 export { TraceReport, type TraceTable, } from "./trace-report.ts";
+export { picturesToHtml, } from "./gallery.ts";
 export { Navigator, NavigatorElement, } from "./navigator.ts";
 export {
   XMLBlob,

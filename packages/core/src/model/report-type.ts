@@ -5,9 +5,13 @@
  */
 export enum ReportType {
   AccountReport = "AccountReport",
+  // Extensões SyntaxMesh (Fase 14 Complemento): tipos sem equivalente no TJ.
+  BreakdownReport = "BreakdownReport",
   Export = "Export",
   ICal = "ICal",
+  MaterialReport = "MaterialReport",
   Niku = "Niku",
+  RdoReport = "RdoReport",
   ResourceReport = "ResourceReport",
   TagFile = "TagFile",
   TextReport = "TextReport",

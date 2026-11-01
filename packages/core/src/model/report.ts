@@ -129,6 +129,10 @@ export class Report extends PropertyTreeNode {
         case "csv":
           this.generateCSV();
           break;
+        // Extensão SyntaxMesh (14C.0.1): JSON de primeira classe.
+        case "json":
+          this.generateJSON();
+          break;
         case "ctags":
           this.generateCTags();
           break;
@@ -182,6 +186,12 @@ export class Report extends PropertyTreeNode {
     if (!factory) {
       // Todos os conteúdos da Fase 14 estão registrados (reports/mod.ts);
       // os tipos conhecidos sem fábrica restante são as sheets.
+      // As extensões do Fase 14 Complemento têm âncora própria (C1/C2/C3).
+      const block = EXTENSION_TYPE_BLOCKS.get(key!,);
+      if (block) {
+        // Ancorado: Fase 14C — conteúdo do complemento ainda não registrado.
+        throw new NotYetImplementedError(block.id, `Report content '${type}'`,);
+      }
       // Ancorado: Fase 18 — conteúdos timesheet/statussheet não portados.
       throw new NotYetImplementedError("18", `Report content '${type}'`,);
     }
@@ -309,6 +319,20 @@ export class Report extends PropertyTreeNode {
     return csv;
   }
 
+  /** JSON do relatório como string (extensão SyntaxMesh — 14C.0.1). */
+  private generateJSON(): string | null {
+    if (!this.content?.toJSON) {
+      this.warnUnsupported("json",);
+      return null;
+    }
+    const json = this.content.toJSON();
+    this.outputFileName = this.name === "." ?
+      "."
+      : this.absoluteFileName(this.name,) + ".json";
+    this.output = json;
+    return json;
+  }
+
   /** Relatório em formato TJP (.tjp se exporta projeto, .tji caso contrário). */
   private generateTJP(): string | null {
     if (!this.content?.to_tjp) {
@@ -404,9 +428,12 @@ export class Report extends PropertyTreeNode {
  */
 const KNOWN_TYPE_SPECS = new Set<string>([
   ReportType.AccountReport,
+  ReportType.BreakdownReport,
   ReportType.Export,
   ReportType.ICal,
+  ReportType.MaterialReport,
   ReportType.Niku,
+  ReportType.RdoReport,
   ReportType.ResourceReport,
   ReportType.TagFile,
   ReportType.TextReport,
@@ -415,3 +442,13 @@ const KNOWN_TYPE_SPECS = new Set<string>([
   ReportType.StatusSheet,
   ReportType.TimeSheet,
 ].map((t,) => String(t,).toLowerCase()),);
+
+/**
+ * Tipos do Fase 14 Complemento sem fábrica registrada ainda: a âncora é o
+ * bloco de tarefas que os entrega (14C.1/14C.2/14C.3), não o `Unknown report
+ * type` genérico. Removidas quando as fábricas forem registradas (14C.7.4).
+ *
+ * Vazio desde 14C.3.1 (`materialreport` = 14C.1.4, `breakdownreport` = 14C.2.1,
+ * `rdoreport` = 14C.3.1): o mecanismo permanece para as extensões seguintes.
+ */
+const EXTENSION_TYPE_BLOCKS = new Map<string, { id: string }>([],);

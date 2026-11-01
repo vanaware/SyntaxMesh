@@ -17,6 +17,7 @@ import { Limits, } from "../scheduling/limits.ts";
 import { ShiftAssignments, } from "../scheduling/shift-assignments.ts";
 import { TimeSheets, } from "../scheduling/time-sheets.ts";
 import { Journal, } from "./journal.ts";
+import { defaultAlertLevels, } from "./alert-levels.ts";
 import { ReportContext, } from "../reports/report-context.ts";
 import { Report, } from "./report.ts";
 import { ReportType, } from "./report-type.ts";
@@ -199,14 +200,10 @@ export class Project implements ProjectLike {
     this.attributes.set("timebasis", "duration",);
     this.attributes.set("now", TjTime.now().align(3600,),);
 
-    // Alert levels padrão (Ruby AlertLevelDefinitions#initialize).
-    // Tupla [id, nome, cor]. Podem ser substituídos pela diretiva
-    // `alertlevels` no bloco project.
-    this.attributes.set("alertLevels", [
-      ["green", "Green", "#008000",],
-      ["yellow", "Yellow", "#BEA800",],
-      ["red", "Red", "#C00000",],
-    ],);
+    // Alert levels padrão (Ruby AlertLevelDefinitions#initialize; módulo
+    // trazido forward em 14C.0.7). Objetos {id, name, color}; podem ser
+    // substituídos pela diretiva `alertlevels` no bloco project.
+    this.attributes.set("alertLevels", defaultAlertLevels(),);
 
     // Register attributes synchronously
     registerScenarioAttributes(this.scenarios,);

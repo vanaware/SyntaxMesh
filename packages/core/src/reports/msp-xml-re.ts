@@ -10,16 +10,31 @@
  * é Fase 17). A serialização é compacta (sem a indentação byte-a-byte do Ruby);
  * os testes verificam estrutura/elementos, não a igualdade byte exata.
  *
+ * **14C.4 (Fase 14 Complemento):** além do subconjunto do Ruby, exportamos as
+ * entidades que só existem no SyntaxMesh — recursos de material e de custo,
+ * `<Assignment>` com `Units`/`Cost` e série de custo, `<ActualWork>`/
+ * `<RemainingWork>` (`effortdone`), `<Notes>`, `<Exceptions>` de calendário e
+ * `<LinkLag>`/`<LagFormat>`. Essas extensões **não têm oracle** no tj3: são
+ * validadas por testes estruturais e pelo snapshot `reports-extensions.golden`.
+ *
  * @see docs/syntaxmesh/fases/fase-14-relatorios-tarefas.md (14.18.3)
+ * @see docs/syntaxmesh/fases/fase-14-relatorios-complemento-tarefas.md (14C.4)
  */
 import type { Report, } from "../model/report.ts";
 import type { Task, } from "../model/task.ts";
 import type { Resource, } from "../model/resource.ts";
+import type { Material, } from "../model/material.ts";
+import type { MaterialAllocation, } from "../model/material-allocation.ts";
+import type { Charge, } from "../finance/charge.ts";
+import type { Leave, } from "../model/leave.ts";
+import type { TaskDependency, } from "../scheduling/task-dependency.ts";
 import { PropertyList, } from "../model/property-list.ts";
 import type { SourceFileInfo, } from "../source-file-info.ts";
 import type { Query, } from "../query/query.ts";
 import type { WorkingHours, } from "../calendar/working-hours.ts";
 import { TjTime, } from "../time/tj-time.ts";
+import { TimeInterval, } from "../time/time-interval.ts";
+import { ScoreboardInterval, } from "../time/scoreboard-interval.ts";
 import { AppConfig, } from "../app-config.ts";
 import { ReportBase, } from "./report-base.ts";
 import {
@@ -48,12 +63,62 @@ const LOAD_UNITS_MAP: Record<string, number> = {
   longAuto: 3,
 };
 
+/**
+ * `<Resource><Type>` — esquema MSPDI (2007), `Type` sob `Resource`:
+ * `0` = material (consumível), `1` = trabalho (pessoas/equipamentos),
+ * `2` = custo.
+ *
+ * ⚠️ `docs/tj3-engine/mspdi.md` §3.1 invertia material (2) e custo (0) —
+ * corrigido em 2026-11-01; a tabela oficial do esquema (e o `MspXmlRE.rb`, que
+ * já usa `1` para trabalho) prevalece. Ver 14C.4.2 na tabela de evidências.
+ */
+export const RESOURCE_TYPE_MATERIAL = "0";
+export const RESOURCE_TYPE_WORK = "1";
+export const RESOURCE_TYPE_COST = "2";
+
+/** `<DurationFormat>`/`<LagFormat>` (§2.2): `7` = dias úteis, `8` = dias corridos. */
+export const DURATION_FORMAT_DAYS = "7";
+export const DURATION_FORMAT_ELAPSED_DAYS = "8";
+
+/** `<TimephasedData><Type>`: `1` = trabalho restante, `6` = custo real. */
+const TIMEPHASED_WORK = "1";
+const TIMEPHASED_COST = "6";
+
+/** `<TimephasedData><Unit>`: `2` = dias (valor em `PT{H}H{M}M{S}S`). */
+const TIMEPHASED_UNIT = "2";
+
 /** Converte um valor de atributo em string (respeita `to_s` de RichText). */
 function asString(value: unknown,): string {
   if (value === null || value === undefined) return "";
   const maybe = value as { to_s?: () => string };
   if (typeof maybe.to_s === "function") return maybe.to_s();
   return String(value,);
+}
+
+/**
+ * Formata um número como decimal MSPDI.
+ *
+ * O Ruby serializa `Float#to_s` (`1.0`, `0.0`, `62.5`); o JS escreveria `1`,
+ * `0`. O MS Project espera taxas/unidades decimais (mspdi §3.2/§4.1), então
+ * inteiros ganham o sufixo `.0` para casar com o oracle tj3.
+ */
+export function asDecimal(value: number,): string {
+  if (!Number.isFinite(value,)) return String(value,);
+  return Number.isInteger(value,) ? `${value}.0` : String(value,);
+}
+
+/** Recurso material derivado de um `Material` (14C.4.2). */
+interface MaterialResource {
+  uid: string;
+  material: Material;
+}
+
+/** Recurso de custo derivado de um `Charge` de tarefa (14C.4.4). */
+interface CostResource {
+  uid: string;
+  task: Task;
+  charge: Charge;
+  index: number;
 }
 
 export class MspXmlRE extends ReportBase {
@@ -63,6 +128,9 @@ export class MspXmlRE extends ReportBase {
   private resourceList!: PropertyList<Resource>;
   private taskList!: PropertyList<Task>;
   private file!: XMLDocument;
+  /** Recursos material/custo (espaço de UID global, após os humanos). */
+  private materialResources: MaterialResource[] = [];
+  private costResources: CostResource[] = [];
 
   constructor(report: Report,) {
     super(report,);
@@ -123,6 +191,11 @@ export class MspXmlRE extends ReportBase {
     this.taskList.checkForDuplicates(
       this.report.sourceFileInfo as SourceFileInfo,
     );
+
+    // Recursos material/custo derivados das entidades SyntaxMesh (14C.4.2–4.4).
+    // A lista é vazia quando o projeto não usa materiais/charges, de modo que o
+    // subconjunto fiel ao `MspXmlRE.rb` permanece inalterado (oracle 14C.4.14).
+    this.collectExtensionResources();
 
     this.file = new XMLDocument();
     this.file.push(
@@ -221,7 +294,7 @@ export class MspXmlRE extends ReportBase {
     );
     p.push(new XMLNamedText("1", "NewTasksAreManual",),);
     p.push(new XMLNamedText("0", "SpreadPercentComplete",),);
-    const rate = String(
+    const rate = asDecimal(
       (this.project.get("rate",) as number) /
         this.project.dailyWorkingHours(),
     );
@@ -246,6 +319,7 @@ export class MspXmlRE extends ReportBase {
       calendars,
       this.project.get("workinghours",) as WorkingHours,
       "Standard",
+      this.projectLeaves(),
     );
 
     return calendars;
@@ -268,24 +342,39 @@ export class MspXmlRE extends ReportBase {
     for (const resource of this.resourceList.toArray()) {
       this.generateResource(resources, resource, calendars,);
     }
+    // Recursos material e custo ocupam UIDs após os recursos humanos.
+    for (const ref of this.materialResources) {
+      this.generateMaterialResource(resources, ref,);
+    }
+    for (const ref of this.costResources) {
+      this.generateCostResource(resources, ref,);
+    }
   }
 
   private generateAssignments(project: XMLElement,): void {
     const assignments = new XMLElement("Assignments",);
     project.push(assignments,);
     let i = 0;
-    const rollupTask = this.a("rollupTask",) as {
-      eval: (q: unknown,) => boolean;
-    } | null;
     for (const task of this.taskList.toArray()) {
-      this.query.property = task;
-      this.query.scopeProperty = null;
       // Só geramos assignments para folhas e contêineres enrollados.
-      if (task.container() && !(rollupTask && rollupTask.eval(this.query,))) {
-        continue;
-      }
+      if (!this.inAssignmentScope(task,)) continue;
       for (const resource of task.assignedResources(this.scenarioIdx,)) {
         this.generateAssignment(assignments, task, resource, i,);
+        i++;
+      }
+      // Materiais alocados (14C.4.3): Units = quantidade, Cost = qtd × preço.
+      for (const allocation of this.taskMaterialAllocations(task,)) {
+        const ref = this.materialResources.find((r,) =>
+          r.material === allocation.material
+        );
+        if (!ref) continue;
+        this.generateMaterialAssignment(assignments, task, allocation, ref, i,);
+        i++;
+      }
+      // Charges flat da tarefa (14C.4.4): recurso de custo com `<Cost>` direto.
+      for (const ref of this.costResources) {
+        if (ref.task !== task) continue;
+        this.generateCostAssignment(assignments, task, ref, i,);
         i++;
       }
     }
@@ -295,6 +384,7 @@ export class MspXmlRE extends ReportBase {
     calendars: XMLElement,
     workinghours: WorkingHours,
     name: string,
+    exceptions: Leave[] = [],
   ): void {
     const cal = new XMLElement("Calendar",);
     calendars.push(cal,);
@@ -329,6 +419,31 @@ export class MspXmlRE extends ReportBase {
         }
       }
     }
+
+    // Feriados/licenças do projeto viram `<Exception>` do calendário base
+    // (14C.4.9). O `MspXmlRE.rb` não emite este bloco: mantemos apenas no
+    // calendário base e somente quando `Project.leaves` tem entradas.
+    if (exceptions.length > 0) {
+      const exs = new XMLElement("Exceptions",);
+      cal.push(exs,);
+      exceptions.forEach((leave, idx,) => {
+        const from = this.leaveBound(leave, "start",);
+        const to = this.leaveBound(leave, "end",);
+        if (!from || !to) return;
+        const ex = new XMLElement("Exception",);
+        exs.push(ex,);
+        ex.push(new XMLNamedText(String(idx + 1,), "Index",),);
+        const reason = leave.reason && leave.reason !== ""
+          ? `${leave.type}: ${leave.reason}`
+          : leave.type;
+        ex.push(new XMLNamedText(reason, "Name",),);
+        const period = new XMLElement("TimePeriod",);
+        ex.push(period,);
+        period.push(new XMLNamedText(from.to_s(TIMEFORMAT,), "FromDate",),);
+        period.push(new XMLNamedText(to.to_s(TIMEFORMAT,), "ToDate",),);
+        ex.push(new XMLNamedText("0", "DayWorking",),);
+      },);
+    }
   }
 
   private generateTask(tasks: XMLElement, task: Task,): void {
@@ -346,7 +461,7 @@ export class MspXmlRE extends ReportBase {
     t.push(new XMLNamedText("1", "Active",),);
     t.push(new XMLNamedText("0", "Type",),);
     t.push(new XMLNamedText("0", "IsNull",),);
-    t.push(new XMLNamedText(asString(task.get("name",),), "Name",),);
+    t.push(new XMLNamedText(task.name, "Name",),);
     const bsi = asString(task.get("bsi",),);
     t.push(new XMLNamedText(bsi, "WBS",),);
     t.push(new XMLNamedText(bsi, "OutlineNumber",),);
@@ -396,7 +511,13 @@ export class MspXmlRE extends ReportBase {
       t.push(new XMLNamedText("1", "Manual",),);
       t.push(new XMLNamedText("0", "Summary",),);
       t.push(new XMLNamedText("0", "Estimated",),);
-      t.push(new XMLNamedText("7", "DurationFormat",),);
+      // 7 = dias úteis; 8 = dias corridos (`ed`, mspdi §8).
+      t.push(
+        new XMLNamedText(
+          this.durationFormatFor(task, start, end, sc,),
+          "DurationFormat",
+        ),
+      );
       if (task.getForScenario("milestone", sc,)) {
         t.push(new XMLNamedText("1", "Milestone",),);
       } else {
@@ -409,6 +530,7 @@ export class MspXmlRE extends ReportBase {
         t.push(new XMLNamedText(pct, "PercentComplete",),);
         t.push(new XMLNamedText(pct, "PercentWorkComplete",),);
       }
+      this.appendTaskProgress(t, task, sc, end,);
     }
 
     this.appendPredecessors(t, task, true,);
@@ -445,6 +567,51 @@ export class MspXmlRE extends ReportBase {
       // startpreds: onEnd ? 1 (FS) : 3 (SS); endpreds: onEnd ? 0 : 2.
       const type = fromStart ? (onEnd ? "1" : "3") : (onEnd ? "0" : "2");
       pl.push(new XMLNamedText(type, "Type",),);
+      this.appendLag(pl, task, canon, onEnd, fromStart,);
+    }
+  }
+
+  /**
+   * Emite `<LinkLag>`/`<LagFormat>` da dependência com lag (14C.4.11).
+   *
+   * A dependência vive no atributo `depends`/`precedes` do próprio nó, então
+   * procuramos o par (tarefa, onEnd) na lista correspondente. `gaplength` é
+   * tempo de trabalho (dias úteis → `LagFormat` 7); `gapduration` é tempo de
+   * calendário (dias corridos → `LagFormat` 8). `<LinkLag>` é expresso em
+   * décimos de minuto, como no esquema MSPDI.
+   */
+  private appendLag(
+    pl: XMLElement,
+    task: Task,
+    pred: Task,
+    onEnd: boolean,
+    fromStart: boolean,
+  ): void {
+    const attrId = fromStart ? "depends" : "precedes";
+    const list = (task.getForScenario(attrId, this.scenarioIdx,) ??
+      []) as TaskDependency[];
+    const dep = list.find((d,) => d.task === pred && d.onEnd === onEnd);
+    if (!dep) return;
+    const dailyMinutes = this.project.dailyWorkingHours() * 60;
+    if (dep.gapLength > 0) {
+      // `gapLength` é armazenado em slots (segundos ÷ granularidade).
+      const gapSeconds = dep.gapLength * this.granularity();
+      const days = gapSeconds / (this.project.dailyWorkingHours() * 3600);
+      pl.push(
+        new XMLNamedText(
+          String(Math.round(days * dailyMinutes * 10,),),
+          "LinkLag",
+        ),
+      );
+      pl.push(new XMLNamedText(DURATION_FORMAT_DAYS, "LagFormat",),);
+      return;
+    }
+    if (dep.gapDuration > 0) {
+      const days = dep.gapDuration / (24 * 60 * 60);
+      pl.push(
+        new XMLNamedText(String(Math.round(days * 24 * 60 * 10,),), "LinkLag",),
+      );
+      pl.push(new XMLNamedText(DURATION_FORMAT_ELAPSED_DAYS, "LagFormat",),);
     }
   }
 
@@ -461,10 +628,10 @@ export class MspXmlRE extends ReportBase {
     resources.push(r,);
     r.push(new XMLNamedText(String(resource.get("index",),), "UID",),);
     // Cada recurso TJ é pessoa ou equipamento.
-    r.push(new XMLNamedText("1", "Type",),);
+    r.push(new XMLNamedText(RESOURCE_TYPE_WORK, "Type",),);
     r.push(new XMLNamedText(resource.name, "Name",),);
     r.push(new XMLNamedText(resource.id, "Initials",),);
-    const rate = String(
+    const rate = asDecimal(
       (resource.getForScenario("rate", sc,) as number) /
         this.project.dailyWorkingHours(),
     );
@@ -472,12 +639,14 @@ export class MspXmlRE extends ReportBase {
     r.push(new XMLNamedText(rate, "OvertimeRate",),);
     r.push(
       new XMLNamedText(
-        String(resource.getForScenario("efficiency", sc,) ?? 0,),
+        asDecimal((resource.getForScenario("efficiency", sc,) as number) ?? 0,),
         "MaxUnits",
       ),
     );
     const email = resource.get("email",);
     if (email) r.push(new XMLNamedText(asString(email,), "EmailAddress",),);
+    const note = resource.get("note",);
+    if (note) r.push(new XMLNamedText(asString(note,), "Notes",),);
     if (resource.parent) {
       r.push(
         new XMLNamedText(
@@ -492,6 +661,7 @@ export class MspXmlRE extends ReportBase {
       calendars,
       resource.getForScenario("workinghours", sc,) as WorkingHours,
       calName,
+      this.resourceLeaves(resource, sc,),
     );
     r.push(
       new XMLNamedText(this.calendarUIDs[calName] ?? "0", "CalendarUID",),
@@ -516,7 +686,7 @@ export class MspXmlRE extends ReportBase {
     );
     a.push(
       new XMLNamedText(
-        String(resource.getForScenario("efficiency", sc,) ?? 0,),
+        asDecimal((resource.getForScenario("efficiency", sc,) as number) ?? 0,),
         "Units",
       ),
     );
@@ -532,6 +702,7 @@ export class MspXmlRE extends ReportBase {
     if (responsible !== "") {
       a.push(new XMLNamedText(responsible, "AssnOwner",),);
     }
+    this.appendAssignmentProgress(a, task, resource, taskStart, taskEnd, sc,);
 
     // Configura a query para esta tarefa e recurso.
     this.query.property = resource;
@@ -559,18 +730,18 @@ export class MspXmlRE extends ReportBase {
       this.query.start = tc;
       this.query.end = tnc;
       this.query.process();
-      const workSeconds = (this.query.to_num() ?? 0) *
+      const workSeconds = this.assignmentWork(resource, task, tc, tnc, sc,) *
         this.project.dailyWorkingHours() * 3600;
       const td = new XMLElement("TimephasedData",);
       a.push(td,);
       td.push(new XMLNamedText(String(uid,), "UID",),);
       // O Type deve ser 1; caso contrário o MS Project demora muito a carregar.
-      td.push(new XMLNamedText("1", "Type",),);
+      td.push(new XMLNamedText(TIMEPHASED_WORK, "Type",),);
       td.push(new XMLNamedText(tc.to_s(TIMEFORMAT,), "Start",),);
       td.push(
         new XMLNamedText(tnc.subSeconds(1,).to_s(TIMEFORMAT,), "Finish",),
       );
-      td.push(new XMLNamedText("2", "Unit",),);
+      td.push(new XMLNamedText(TIMEPHASED_UNIT, "Unit",),);
       td.push(
         new XMLNamedText(durationToMsp(workSeconds,), "Value",),
       );
@@ -583,6 +754,435 @@ export class MspXmlRE extends ReportBase {
     const list = (task.getForScenario("responsible", sc,) as Resource[]) ??
       [];
     return list.map((r,) => r.name).join(", ",);
+  }
+
+  /**
+   * Trabalho efetivo (em dias) do recurso na tarefa dentro de `[start, end)`.
+   *
+   * O Ruby obtém o mesmo número via `Query#to_num`, que despacha para
+   * `ResourceScenario#query_effort` → `getEffectiveWork(startIdx, endIdx,
+   * scopeProperty)`. Chamamos o método do modelo diretamente: o `query_effort`
+   * concreto ainda não está portado (Fase 11) e devolvia 0, zerando toda a
+   * série `TimephasedData` (14C.4.8).
+   */
+  private assignmentWork(
+    resource: Resource,
+    task: Task,
+    start: TjTime,
+    end: TjTime,
+    sc: number,
+  ): number {
+    const scIdxData = resource.scenarioData(sc,) as unknown as {
+      getEffectiveWork(
+        s: number,
+        e: number,
+        t: Task | null,
+      ): number;
+    };
+    const startIdx = this.project.dateToIdx(start,);
+    const endIdx = this.project.dateToIdx(end,);
+    return scIdxData.getEffectiveWork(startIdx, endIdx, task,);
+  }
+
+  // ------------------------------------------------------------------
+  // Extensões SyntaxMesh (14C.4.2–4.9)
+  // ------------------------------------------------------------------
+
+  /**
+   * Coleta os recursos material/custo do relatório (14C.4.2/14C.4.4).
+   *
+   * Os UIDs continuam o maior UID dos recursos humanos: o MSPDI exige um
+   * espaço de UID único em `<Resources>`.
+   */
+  private collectExtensionResources(): void {
+    this.materialResources = [];
+    this.costResources = [];
+    const seenMaterials = new Set<string>();
+    let nextUid = this.maxResourceUid() + 1;
+    for (const task of this.taskList.toArray()) {
+      if (!this.inAssignmentScope(task,)) continue;
+      for (const allocation of this.taskMaterialAllocations(task,)) {
+        const material = allocation.material;
+        if (seenMaterials.has(material.id,) || this.hiddenMaterial(material,)) {
+          continue;
+        }
+        seenMaterials.add(material.id,);
+        this.materialResources.push({ uid: String(nextUid++,), material, },);
+      }
+      this.taskCharges(task,).forEach((charge, index,) => {
+        this.costResources.push(
+          { uid: String(nextUid++,), task, charge, index, },
+        );
+      },);
+    }
+  }
+
+  /** Maior UID entre os recursos humanos exportados (folhas). */
+  private maxResourceUid(): number {
+    let max = 0;
+    for (const resource of this.resourceList.toArray()) {
+      if (!resource.leaf()) continue;
+      max = Math.max(max, Number(resource.get("index",) ?? 0,),);
+    }
+    return max;
+  }
+
+  /**
+   * A tarefa recebe `<Assignment>`? Folhas sim; contêineres só com `rollupTask`.
+   */
+  private inAssignmentScope(task: Task,): boolean {
+    if (!task.container()) return true;
+    const rollupTask = this.a("rollupTask",) as {
+      eval: (q: unknown,) => boolean;
+    } | null;
+    if (!rollupTask) return false;
+    this.query.property = task;
+    this.query.scopeProperty = null;
+    return rollupTask.eval(this.query,);
+  }
+
+  /** Alocações de material da tarefa no cenário do relatório. */
+  private taskMaterialAllocations(task: Task,): MaterialAllocation[] {
+    return (task.getForScenario("materialallocations", this.scenarioIdx,) ??
+      []) as MaterialAllocation[];
+  }
+
+  /** Charges flat declarados na tarefa (`charge`, cenário do relatório). */
+  private taskCharges(task: Task,): Charge[] {
+    return (task.getForScenario("charge", this.scenarioIdx,) ?? []) as Charge[];
+  }
+
+  /** `hideMaterial` (14C.4.10) aplicado a um material. */
+  private hiddenMaterial(material: Material,): boolean {
+    if (!this.report.attributeDefinition("hideMaterial",)) return false;
+    const expression = this.a("hideMaterial",) as
+      | { eval?: (query: unknown,) => unknown }
+      | null;
+    if (!expression || typeof expression.eval !== "function") return false;
+    const query = this.currentQuery().dup();
+    query.property = material as never;
+    return !!expression.eval(query,);
+  }
+
+  /** Granularidade do scoreboard (segundos por slot), usada para converter
+   * `effort`/`effortdone`/`gapLength` (armazenados em slots) em segundos. */
+  private granularity(): number {
+    return (this.project.get("scheduleGranularity",) as number | null) ?? 3600;
+  }
+
+  /** `<Exception>` do calendário base: leaves/feriados do projeto (14C.4.9). */
+  private projectLeaves(): Leave[] {
+    return (this.project.get("leaves",) ?? []) as Leave[];
+  }
+
+  /** Leaves/feriados do recurso (viram `<Exception>` do calendário dele). */
+  private resourceLeaves(resource: Resource, sc: number,): Leave[] {
+    return (resource.getForScenario("leaves", sc,) ?? []) as Leave[];
+  }
+
+  /**
+   * Início/fim de um leave como `TjTime`.
+   *
+   * `Leave.interval` pode ser um `ScoreboardInterval` (índices de slot); nesse
+   * caso a data sai de `sbStart + índice × slotDuration`.
+   */
+  private leaveBound(leave: Leave, which: "start" | "end",): TjTime | null {
+    const interval = leave.interval;
+    if (interval instanceof ScoreboardInterval) {
+      const idx = which === "start" ? interval.start : interval.end;
+      return interval.sbStart.addSeconds(idx * interval.slotDuration,);
+    }
+    const value = (interval as { start: TjTime; end: TjTime })[which];
+    return value instanceof TjTime ? value : null;
+  }
+
+  /** `<Resource>` de um `Material` (14C.4.2). */
+  private generateMaterialResource(
+    resources: XMLElement,
+    ref: MaterialResource,
+  ): void {
+    const material = ref.material;
+    const r = new XMLElement("Resource",);
+    resources.push(r,);
+    r.push(new XMLNamedText(ref.uid, "UID",),);
+    r.push(new XMLNamedText(RESOURCE_TYPE_MATERIAL, "Type",),);
+    r.push(new XMLNamedText(asString(material.name,), "Name",),);
+    r.push(new XMLNamedText(material.id, "Initials",),);
+    // §3.2: rótulo de unidade e preço unitário entram em MaterialLabel/rate.
+    r.push(new XMLNamedText(material.unitValue(), "MaterialLabel",),);
+    r.push(
+      new XMLNamedText(asDecimal(material.unitPriceValue(),), "StandardRate",),
+    );
+    const note = material.get("note",);
+    if (note) r.push(new XMLNamedText(asString(note,), "Notes",),);
+  }
+
+  /** `<Resource>` de custo para um `Charge` flat da tarefa (14C.4.4). */
+  private generateCostResource(
+    resources: XMLElement,
+    ref: CostResource,
+  ): void {
+    const r = new XMLElement("Resource",);
+    resources.push(r,);
+    r.push(new XMLNamedText(ref.uid, "UID",),);
+    r.push(new XMLNamedText(RESOURCE_TYPE_COST, "Type",),);
+    r.push(
+      new XMLNamedText(`Charges ${ref.task.id} #${ref.index + 1}`, "Name",),
+    );
+    r.push(new XMLNamedText(`charge${ref.index + 1}`, "Initials",),);
+    // Sem taxa: o valor vai direto em `<Cost>` da atribuição (§3.2).
+    r.push(
+      new XMLNamedText(asDecimal(ref.charge.amount,), "StandardRate",),
+    );
+    // O modelo não marca recursos orçamentários: um charge é despesa.
+    r.push(new XMLNamedText("0", "IsBudget",),);
+  }
+
+  /** `<Assignment>` de material: `Units` = quantidade, `Cost` = qtd × preço. */
+  private generateMaterialAssignment(
+    assignments: XMLElement,
+    task: Task,
+    allocation: MaterialAllocation,
+    ref: MaterialResource,
+    uid: number,
+  ): void {
+    const sc = this.scenarioIdx;
+    const start = task.getForScenario("start", sc,) as TjTime;
+    const end = task.getForScenario("end", sc,) as TjTime;
+    const unitPrice = ref.material.unitPriceValue();
+    const a = new XMLElement("Assignment",);
+    assignments.push(a,);
+    a.push(new XMLNamedText(String(uid,), "UID",),);
+    a.push(new XMLNamedText(String(task.get("index",),), "TaskUID",),);
+    a.push(new XMLNamedText(ref.uid, "ResourceUID",),);
+    a.push(new XMLNamedText(asDecimal(allocation.quantity,), "Units",),);
+    a.push(new XMLNamedText(start.to_s(TIMEFORMAT,), "start",),);
+    a.push(new XMLNamedText(end.to_s(TIMEFORMAT,), "finish",),);
+    a.push(
+      new XMLNamedText(
+        asDecimal(allocation.quantity * unitPrice,),
+        "Cost",
+      ),
+    );
+    a.push(new XMLNamedText("0", "PercentWorkComplete",),);
+
+    // Série de custo por dia (§7.1): `quantityIn` depende de `attach()` (não
+    // chamado pelo scheduler), então distribuímos pela ordem cronológica.
+    const periods = this.dailyPeriods(start, end,);
+    const shares = this.materialShares(allocation, periods.length,);
+    periods.forEach(([ps, pe,], idx,) => {
+      this.appendCostTimephased(
+        a,
+        uid,
+        ps,
+        pe,
+        (shares[idx] ?? 0) * unitPrice,
+      );
+    },);
+  }
+
+  /** `<Assignment>` de custo: `Cost` direto do charge (14C.4.4). */
+  private generateCostAssignment(
+    assignments: XMLElement,
+    task: Task,
+    ref: CostResource,
+    uid: number,
+  ): void {
+    const sc = this.scenarioIdx;
+    const start = task.getForScenario("start", sc,) as TjTime;
+    const end = task.getForScenario("end", sc,) as TjTime;
+    const a = new XMLElement("Assignment",);
+    assignments.push(a,);
+    a.push(new XMLNamedText(String(uid,), "UID",),);
+    a.push(new XMLNamedText(String(task.get("index",),), "TaskUID",),);
+    a.push(new XMLNamedText(ref.uid, "ResourceUID",),);
+    a.push(new XMLNamedText(asDecimal(1,), "Units",),);
+    a.push(new XMLNamedText(start.to_s(TIMEFORMAT,), "start",),);
+    a.push(new XMLNamedText(end.to_s(TIMEFORMAT,), "finish",),);
+    a.push(new XMLNamedText(asDecimal(ref.charge.amount,), "Cost",),);
+    a.push(new XMLNamedText("0", "PercentWorkComplete",),);
+
+    // `Charge#turnover` distribui onStart/onEnd/perDiem por período.
+    for (const [ps, pe,] of this.dailyPeriods(start, end,)) {
+      const amount = ref.charge.turnover(new TimeInterval(ps, pe,),);
+      if (amount === 0) continue;
+      this.appendCostTimephased(a, uid, ps, pe, amount,);
+    }
+  }
+
+  /**
+   * Fração da quantidade de material consumida em cada período.
+   *
+   * `onstart`/`onend` concentram tudo na primeira/última fatia; os demais
+   * modificadores são distribuídos uniformemente (sem `DistributionContext`).
+   */
+  private materialShares(
+    allocation: MaterialAllocation,
+    count: number,
+  ): number[] {
+    if (count === 0) return [];
+    const shares = new Array<number>(count,).fill(
+      allocation.quantity / count,
+    );
+    if (allocation.modifier === "onstart") {
+      shares.fill(0,);
+      shares[0] = allocation.quantity;
+    } else if (allocation.modifier === "onend") {
+      shares.fill(0,);
+      shares[count - 1] = allocation.quantity;
+    }
+    return shares;
+  }
+
+  /** `<TimephasedData>` de custo por período (`Type` 6, §7.1). */
+  private appendCostTimephased(
+    a: XMLElement,
+    uid: number,
+    start: TjTime,
+    end: TjTime,
+    cost: number,
+  ): void {
+    const td = new XMLElement("TimephasedData",);
+    a.push(td,);
+    td.push(new XMLNamedText(String(uid,), "UID",),);
+    td.push(new XMLNamedText(TIMEPHASED_COST, "Type",),);
+    td.push(new XMLNamedText(start.to_s(TIMEFORMAT,), "Start",),);
+    td.push(
+      new XMLNamedText(end.subSeconds(1,).to_s(TIMEFORMAT,), "Finish",),
+    );
+    td.push(new XMLNamedText(TIMEPHASED_UNIT, "Unit",),);
+    td.push(new XMLNamedText(asDecimal(cost,), "Value",),);
+  }
+
+  /** Fatias diárias de `[start, end)` clampadas ao intervalo do relatório. */
+  private dailyPeriods(
+    start: TjTime,
+    end: TjTime,
+  ): Array<[TjTime, TjTime,]> {
+    const reportStart = this.a("start",) as TjTime | null;
+    const reportEnd = this.a("end",) as TjTime | null;
+    const periods: Array<[TjTime, TjTime,]> = [];
+    let t = start.midnight();
+    while (t.lessThan(end,)) {
+      const tn = t.sameTimeNextDay();
+      let ps = t.lessThan(start,) ? start : t;
+      if (reportStart && ps.lessThan(reportStart,)) ps = reportStart;
+      let pe = tn.greaterThan(end,) ? end : tn;
+      if (reportEnd && pe.greaterThan(reportEnd,)) pe = reportEnd;
+      periods.push([ps, pe,],);
+      t = tn;
+    }
+    return periods;
+  }
+
+  /**
+   * `<DurationFormat>` da tarefa folha (§2.2/§8, 14C.4.5).
+   *
+   * Uma duração é “corrida” (`8`) quando a tarefa não consome tempo
+   * não-produtivo: o intervalo de calendário é igual ao esforço — típico de
+   * calendários 24×7. O guarda de um dia útil evita classificar tarefas
+   * curtas (8 h em 8 h) como `ed`. Nunca usamos `9` (semanas) para `ed`.
+   */
+  private durationFormatFor(
+    task: Task,
+    start: TjTime,
+    end: TjTime,
+    sc: number,
+  ): string {
+    const effort = task.getForScenario("effort", sc,) as number | null;
+    if (!effort || effort <= 0) return DURATION_FORMAT_DAYS;
+    const dailySeconds = this.project.dailyWorkingHours() * 3600;
+    const wallClock = end.diff(start,);
+    // `effort` é armazenado em slots, não em segundos.
+    const workSeconds = effort * this.granularity();
+    return wallClock === workSeconds && wallClock > dailySeconds
+      ? DURATION_FORMAT_ELAPSED_DAYS
+      : DURATION_FORMAT_DAYS;
+  }
+
+  /** `<ActualWork>`/`<RemainingWork>`/`<ActualCost>`/`<RemainingCost>` da tarefa. */
+  private appendTaskProgress(
+    t: XMLElement,
+    task: Task,
+    sc: number,
+    end: TjTime,
+  ): void {
+    const effort = (task.getForScenario("effort", sc,) as number) ?? 0;
+    const done = (task.getForScenario("effortdone", sc,) as number) ?? 0;
+    if (effort <= 0 || done <= 0) return;
+    // `effort`/`effortdone` são armazenados em slots, não em dias.
+    const granularity = this.granularity();
+    const actualWork = done * granularity;
+    const remainingWork = Math.max(0, effort - done,) * granularity;
+    t.push(new XMLNamedText(durationToMsp(actualWork,), "ActualWork",),);
+    t.push(
+      new XMLNamedText(durationToMsp(remainingWork,), "RemainingWork",),
+    );
+    const actualCost = this.costEvents(task, "actual",);
+    const plannedCost = this.costEvents(task, "planned",);
+    if (actualCost > 0 || plannedCost > 0) {
+      t.push(new XMLNamedText(asDecimal(actualCost,), "ActualCost",),);
+      t.push(
+        new XMLNamedText(
+          asDecimal(Math.max(0, plannedCost - actualCost,),),
+          "RemainingCost",
+        ),
+      );
+    }
+    // `end` permanece no contrato para futuras fatias de custo por período.
+    void end;
+  }
+
+  /** Progresso de uma atribuição humana (proporcional ao esforço da tarefa). */
+  private appendAssignmentProgress(
+    a: XMLElement,
+    task: Task,
+    resource: Resource,
+    start: TjTime,
+    end: TjTime,
+    sc: number,
+  ): void {
+    const effort = (task.getForScenario("effort", sc,) as number) ?? 0;
+    const done = (task.getForScenario("effortdone", sc,) as number) ?? 0;
+    if (effort <= 0 || done <= 0) return;
+    const ratio = Math.min(1, done / effort,);
+    const work = this.assignmentWork(resource, task, start, end, sc,) *
+      this.project.dailyWorkingHours() * 3600;
+    a.push(
+      new XMLNamedText(durationToMsp(work * ratio,), "ActualWork",),
+    );
+    a.push(
+      new XMLNamedText(durationToMsp(work * (1 - ratio),), "RemainingWork",),
+    );
+    const actualCost = this.costEvents(task, "actual", resource,);
+    const plannedCost = this.costEvents(task, "planned", resource,);
+    if (actualCost > 0 || plannedCost > 0) {
+      a.push(new XMLNamedText(asDecimal(actualCost,), "ActualCost",),);
+      a.push(
+        new XMLNamedText(
+          asDecimal(Math.max(0, plannedCost - actualCost,),),
+          "RemainingCost",
+        ),
+      );
+    }
+  }
+
+  /**
+   * Soma dos `CostEvent` da tarefa (8.2) por modo e, opcionalmente, recurso.
+   */
+  private costEvents(
+    task: Task,
+    mode: "planned" | "actual",
+    resource?: Resource,
+  ): number {
+    let sum = 0;
+    for (const event of this.project.costEvents) {
+      if (event.scenarioIdx !== this.scenarioIdx) continue;
+      if (event.mode !== mode || event.task !== task) continue;
+      if (resource && event.resource !== resource) continue;
+      sum += event.amount;
+    }
+    return sum;
   }
 }
 

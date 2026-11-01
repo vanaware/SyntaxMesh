@@ -69,6 +69,7 @@ export function registerReportRules(p: ProjectFileParser,): void {
     p.pattern(["!accountReport",],);
     p.pattern(["!breakdownReport",],);
     p.pattern(["!export",],);
+    p.pattern(["!materialReport",],);
     p.pattern(["!rdoReport",],);
     p.pattern(["!resourceReport",],);
     p.pattern(["!taskReport",],);
@@ -271,6 +272,72 @@ export function registerReportRules(p: ProjectFileParser,): void {
         return null;
       },
     );
+  },);
+
+  // ------------------------------------------------------------------
+  // Fase 14 Complemento C1.2 — materialreport (extensão SyntaxMesh).
+  // Agregador análogo a `resourceReport`: lista de materiais com as
+  // variantes de coluna do `MaterialListRE` (C1.4–C1.7). O corpo reutiliza
+  // `reportBody` (columns / formats html|csv|json / hidetask / hideresource
+  // / sortby / period / hidejournalentry).
+  // ------------------------------------------------------------------
+  rule(p, "materialReport", () => {
+    p.pattern(["!materialReportHeader", "!reportBody",], function (
+      this: ProjectFileParser,
+    ): unknown {
+      this.property = asProp(this,).parent;
+      return null;
+    },);
+  },);
+
+  rule(p, "materialReportHeader", () => {
+    p.pattern(
+      ["_materialreport", "!optionalID", "!reportName",],
+      function (this: ProjectFileParser,): unknown {
+        this.newReport(
+          this.val[1] as string | null,
+          String(this.val[2],),
+          "materialreport",
+          this.sourceFileInfo[0] ?? null,
+          function (this: ProjectFileParser,): void {
+            const rep = asProp(this,);
+            if (!rep.modified("columns",)) {
+              const cols =
+                (rep.get("columns",) as TableColumnDefinition[] | null) ?? [];
+              for (
+                const col of ["no", "name", "unit", "unitprice", "totalcost",]
+              ) {
+                cols.push(
+                  new TableColumnDefinition(col, this.columnTitle(col,),),
+                );
+              }
+              rep.set("columns", cols,);
+            }
+            if (!rep.modified("hideTask",)) {
+              rep.set("hideTask", logicOp(1,),);
+            }
+            if (!rep.modified("sortTasks",)) {
+              rep.set("sortTasks", [
+                ["tree", true, -1,],
+                ["start", true, 0,],
+                ["seqno", true, -1,],
+              ] as SortCriterion[],);
+            }
+            if (!rep.modified("hideResource",)) {
+              rep.set("hideResource", logicOp(1,),);
+            }
+            if (!rep.modified("sortResources",)) {
+              rep.set(
+                "sortResources",
+                [["id", true, -1,],] as SortCriterion[],
+              );
+            }
+          },
+        );
+        return null;
+      },
+    );
+    p.arg(2, "name", "The name of the report.",);
   },);
 
   rule(p, "accountReport", () => {
@@ -754,6 +821,8 @@ export function registerReportRules(p: ProjectFileParser,): void {
     p.pattern(["!sortJournalEntries",],);
     p.pattern(["!sortResources",],);
     p.pattern(["!sortTasks",],);
+    // Fase 14 Complemento C1.2 — ordenação dos relatórios de extensão.
+    p.pattern(["!sortBy",],);
 
     p.pattern(["!reportStart",],);
 
@@ -1037,6 +1106,67 @@ export function registerReportRules(p: ProjectFileParser,): void {
   },);
 
   // ------------------------------------------------------------------
+  // Fase 14 Complemento C1.2 — `sortby` (extensão SyntaxMesh).
+  // Ordenação genérica dos relatórios de extensão (materialreport,
+  // breakdownreport, rdoreport). Diferente de `sorttasks`/`sortresources`, os
+  // critérios NÃO são validados contra um PropertySet: aplicam-se às linhas do
+  // próprio relatório (colunas do MaterialListRE/BreakdownReport).
+  // ------------------------------------------------------------------
+  rule(p, "sortBy", () => {
+    p.pattern(["_sortby", "!sortByCriteria",], function (
+      this: ProjectFileParser,
+    ): unknown {
+      asProp(this,).set("sortBy", this.val[1],);
+      return null;
+    },);
+    p.arg(1, "criteria", "List of attributes to sort the report rows by",);
+  },);
+
+  rule(p, "sortByCriteria", () => {
+    p.pattern(["!sortByCriterium", "!moreSortByCriteria",], function (
+      this: ProjectFileParser,
+    ): unknown {
+      const rest = this.val[1] as SortCriterion[] | null;
+      return [this.val[0] as SortCriterion,].concat(rest ?? [],);
+    },);
+  },);
+
+  rule(p, "moreSortByCriteria", () => {
+    p.commaListRule("!sortByCriterium",);
+  },);
+
+  rule(p, "sortByCriterium", () => {
+    p.pattern(["$ABSOLUTE_ID",], function (this: ProjectFileParser,): unknown {
+      const args = String(this.val[0],).split(".",);
+      const attribute = args[0]!;
+      let direction = false;
+      if (args.length === 2) {
+        if (args[1] !== "up" && args[1] !== "down") {
+          this.error(
+            "sort_direction",
+            "Sorting direction must be 'up' or 'down'",
+            this.sourceFileInfo[0] ?? null,
+          );
+        }
+        direction = args[1] === "up";
+      } else if (args.length > 2) {
+        this.error(
+          "sorting_crit_exptd1",
+          "Sorting criterium expected (e.g. tree, name.up or unitprice.down).",
+          this.sourceFileInfo[0] ?? null,
+        );
+      }
+      return [attribute, direction, -1,] as SortCriterion;
+    },);
+    // Extensão SyntaxMesh: aceita também o atributo sem direção (`.up`/
+    // `.down` é opcional aqui, diferente de `sorttasks`/`sortresources`).
+    p.pattern(["$ID",], function (this: ProjectFileParser,): unknown {
+      return [String(this.val[0],), false, -1,] as SortCriterion;
+    },);
+    p.arg(0, "criterium", "Attribute name, optionally with .up or .down",);
+  },);
+
+  // ------------------------------------------------------------------
   // 10.13.2.5 — ordenação de journal entries
   // ------------------------------------------------------------------
   rule(p, "sortJournalEntries", () => {
@@ -1153,6 +1283,9 @@ export function registerReportRules(p: ProjectFileParser,): void {
     p.pattern(["_csv",], () => "csv",);
     p.pattern(["_html",], () => "html",);
     p.descr("Generate a web page (HTML file)",);
+    // Extensão SyntaxMesh (14C.0.2): JSON de primeira classe.
+    p.pattern(["_json",], () => "json",);
+    p.descr("Generate a JSON file (SyntaxMesh extension)",);
     p.pattern(["_niku",], () => "niku",);
     p.descr("Generate an XOG XML file to be used with Clarity.",);
   },);
@@ -1309,6 +1442,9 @@ export function registerReportRules(p: ProjectFileParser,): void {
       projecids: "Include project IDs",
       tasks: "Include task definitions",
       resources: "Include resource definitions",
+      // Fase 14 Complemento C1.13 — extensão SyntaxMesh (o TJ 3.8.4 não
+      // exporta materiais).
+      materials: "Include material definitions",
     },);
 
     p.pattern(["_formats", "!exportFormats",], function (
@@ -1367,6 +1503,8 @@ export function registerReportRules(p: ProjectFileParser,): void {
       complete: "Include completion values",
       depends: "Include dependencies",
       flags: "Include flags",
+      // Fase 14 Complemento C1.13 — alocações `material <id> <qtd>` da tarefa.
+      materialallocations: "Include material allocations",
       maxend: "Include maximum end dates",
       maxstart: "Include maximum start dates",
       minend: "Include minimum end dates",

@@ -1,0 +1,106 @@
+# 14C.0.11 — Fixture base do Fase 14 Complemento.
+# Projeto com materiais + alocações, charges, diários (journalentries) com
+# picture/format/alert anexados a task, resource, material e account, e os
+# três relatórios de extensão (materialreport pendente; breakdown/rdoreport
+# já validados pelo parser na 10-C). Consumido pelos snapshots de extensão
+# (reports-extensions.golden.json) e pelos testes dos blocos C1–C7.
+
+project rdo "RDO Budget 14C" "1.0" 2026-01-01 - 2026-12-31 {
+  timezone "Europe/Berlin"
+  currency "EUR"
+}
+
+account mat_costs "Materiais" {
+  aggregate materials
+  journalentry 2026-01-20 "Verba de material liberada" {
+    summary "Orçamento aprovado pela direção"
+    alert green
+    format markdown
+  }
+}
+
+account dev_acct "Desenvolvimento" {
+  aggregate tasks
+}
+
+material steel "Aço" {
+  unit "kg"
+  unitprice 2.5
+  totalquantity 1000
+  chargeset mat_costs 100%
+  journalentry 2026-01-05 "Chegada do aço" {
+    summary "Lote 1 recebido no canteiro"
+    alert green
+    picture "img/steel-1.png" {
+      caption "Empilhamento no estoque"
+      align left
+      width 320
+      alt "Pilha de aço"
+    }
+    picture "https://cdn.example.com/nf.png" {
+      caption "Nota fiscal"
+      align center
+    }
+    format markdown
+  }
+}
+
+material concrete "Concreto" {
+  unit "m3"
+  unitprice 120
+  totalquantity 50
+  chargeset mat_costs 100%
+}
+
+resource team "Equipe de obra" {
+  journalentry 2026-02-15 "Kick-off da fundação" {
+    summary "Reunião inicial com a turma"
+    alert yellow
+    format markdown
+  }
+}
+
+task phase1 "Fase 1 - Fundação" {
+  start 2026-02-01
+  effort 5d
+  chargeset dev_acct 100%
+  charge 200 perday
+  material steel 200 perday
+  use concrete 10
+  journalentry 2026-02-10 "Diário da obra" {
+    summary "Fundação concluída dentro do prazo"
+    alert red
+    picture "img/site.png" {
+      caption "Vista lateral da vala"
+      align right
+      width 640
+    }
+    format markdown
+  }
+  journalentry 2026-03-03 "Concretagem" {
+    details "Turma noturna; aditivo de 4 m3"
+    alert green
+    format richtext
+  }
+}
+
+taskreport tr "Tasks 14C" {
+  columns name, effort, materials, charges
+  formats html, csv, json
+}
+
+breakdownreport br "Breakdown por Conta" {
+  groupby account
+  period 2026-01-01 - 2026-12-31
+  formats html, json
+  columns bsi, name, materials, charges
+}
+
+rdoreport rdo "RDO Diário" {
+  period 2026-02-01 - 2026-03-31
+  groupby date
+  maxpictures 5
+  journalattributes headline, date, summary, alert
+  journalmode journal
+  formats html, json
+}

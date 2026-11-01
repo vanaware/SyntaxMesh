@@ -23,6 +23,7 @@ import type { Report, } from "../model/report.ts";
 import type { Account, } from "../model/account.ts";
 import type { Resource, } from "../model/resource.ts";
 import type { Task, } from "../model/task.ts";
+import type { Material, } from "../model/material.ts";
 import type { PropertyTreeNode, } from "../model/property-tree-node.ts";
 import { PropertyList, } from "../model/property-list.ts";
 import { Query, } from "../query/query.ts";
@@ -137,12 +138,20 @@ export class TraceReport extends ReportBase {
     );
     taskList.sort();
 
-    // Cabeçalho: coluna Date + colunas de contas/recursos/tarefas.
+    // Materiais (extensão SyntaxMesh — 14C.1.14). `Query.process` já resolve
+    // atributos de material (14C.1.20), então as colunas `<-%...%->`
+    // funcionam; sem materiais a lista é vazia e o cabeçalho não muda.
+    // Os filtros `hidematerial`/`rollupmaterial` chegam em 14C.6.
+    const materialList = new PropertyList<Material>(this.project.materials,);
+    materialList.query = query;
+
+    // Cabeçalho: coluna Date + colunas de contas/recursos/tarefas/materiais.
     const headers: string[] = [
       "Date",
       ...this.generatePropertyListHeader(accountList, query,),
       ...this.generatePropertyListHeader(resourceList, query,),
       ...this.generatePropertyListHeader(taskList, query,),
+      ...this.generatePropertyListHeader(materialList, query,),
     ];
 
     let discontinuedColumns = 0;
@@ -204,6 +213,7 @@ export class TraceReport extends ReportBase {
     this.generatePropertyListValues(idx, accountList, ctxQuery,);
     this.generatePropertyListValues(idx, resourceList, ctxQuery,);
     this.generatePropertyListValues(idx, taskList, ctxQuery,);
+    this.generatePropertyListValues(idx, materialList, ctxQuery,);
 
     // Preenche colunas descontinuadas com valores antigos ou null.
     (this.table[idx] as unknown[]).push(...discColumnValues,);

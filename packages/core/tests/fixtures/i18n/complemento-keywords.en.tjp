@@ -28,3 +28,8 @@ rdoreport rdo "R" {
   maxpictures 5
   columns name
 }
+materialreport mr "M" {
+  columns name, note
+  formats html, csv, json
+  sortby name.up, note
+}

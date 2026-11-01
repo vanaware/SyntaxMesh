@@ -39,6 +39,11 @@ export class Material extends PropertyTreeNode {
     this.unitPrice = unitPrice;
     this.chargeset = chargeset ?? new ChargeSetCollection();
     this.totalQuantity = totalQuantity;
+    // Atributos base espelhados em `AttributeBase` para que consultas Query
+    // (`<-name->`/`<-id->`, 14C.1.14) devolvam o identificador do material: o
+    // PTN guarda esses dois valores em campos, não no atributo.
+    this.set("name", id,);
+    this.set("id", id,);
     for (let i = 0; i < project.scenarioCount; i++) {
       this.data[i] = new MaterialScenario(
         this,
@@ -54,10 +59,47 @@ export class Material extends PropertyTreeNode {
 
   /**
    * Custo total do material (quantidade × preço unitário).
+   *
+   * Os atributos canônicos (`totalquantity`, `cost` — os que o parser
+   * preenche) têm precedência sobre os campos do construtor, que ficam como
+   * defaults para materiais criados por código.
    */
   totalCost(): number {
-    const quantity = this.totalQuantity ?? 0;
-    return quantity * this.unitPrice;
+    return this.totalQuantityValue() * this.unitPriceValue();
+  }
+
+  /**
+   * Preço unitário efetivo: o atributo `cost` quando o parser/usuário o
+   * forneceu, senão o campo do construtor (default para materiais criados por
+   * código).
+   */
+  unitPriceValue(): number {
+    return this.providedNumber("cost",) ?? this.unitPrice;
+  }
+
+  /** Quantidade total efetiva (`totalquantity` fornecido ou campo). */
+  totalQuantityValue(): number {
+    return this.providedNumber("totalquantity",) ?? this.totalQuantity ?? 0;
+  }
+
+  /**
+   * Unidade efetiva: o atributo `unit` quando preenchido (o default canônico
+   * `"{}"` significa “não informado”), senão o campo do construtor.
+   */
+  unitValue(): string {
+    const unit = this.get("unit",);
+    if (typeof unit === "string" && unit !== "" && unit !== "{}") return unit;
+    return this.unit;
+  }
+
+  /**
+   * Valor numérico do atributo se ele foi explicitamente fornecido (parser,
+   * `set`), senão `null` — deixa os campos do construtor valerem como default.
+   */
+  private providedNumber(id: string,): number | null {
+    const attr = this.getAttribute(id,);
+    const value = attr.get();
+    return attr.provided && typeof value === "number" ? value : null;
   }
 
   /**

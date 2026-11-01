@@ -1,0 +1,72 @@
+# 14C.4 — Fixture das extensões MSPDI (SyntaxMesh-only, sem oracle Ruby).
+#
+# Cobre os blocos que o `MspXmlRE.rb` não exporta e que a Fase 14 Complemento
+# adiciona (14C.4.2–4.11):
+#   - recursos material (`material`) e de custo (`charge`);
+#   - `<Assignment>` de material com `Units`/`Cost` e série de custo;
+#   - `<DurationFormat>` 8 (dias corridos) na tarefa do recurso 24×7;
+#   - `<ActualWork>`/`<RemainingWork>` via `effortdone`;
+#   - `<Notes>` de tarefa e material;
+#   - `<Exceptions>` do calendário do recurso a partir de `vacation`;
+#   - `<LinkLag>`/`<LagFormat>` de dependência com `gaplength`.
+#
+# As datas absolutas são fixas (`start` por tarefa) para não depender do gap de
+# propagação de dependências (Fase 7 / CURRENT.md).
+
+project mspext "MSP Export 14C Ext" "1.0" 2026-03-02 - 2026-06-30 {
+  timezone "UTC"
+  timeformat "%Y-%m-%d"
+  now 2026-03-02
+  currency "EUR"
+  workinghours mon - fri 09:00 - 12:00, 13:00 - 17:00
+  workinghours sat, sun off
+}
+
+account costs "Custos" {
+}
+
+material steel "Aço" {
+  unit "kg"
+  unitprice 2.5
+  totalquantity 1000
+  note "Lote único de aço."
+}
+
+resource team "Equipe" {
+  resource alice "Alice" {
+    email "alice@example.com"
+    note "Engenheira responsável."
+    vacation "Carnaval" 2026-03-16 - 2026-03-17
+  }
+  resource robot "Processo contínuo" {
+    workinghours mon - sun 00:00 - 24:00
+  }
+}
+
+task fase "Fase 1" {
+  task design "Design" {
+    start 2026-03-02
+    effort 4d
+    allocate alice
+    material steel 200 perday
+    chargeset costs 100%
+    charge 500 onstart
+    effortdone 2d
+    note "Detalhar a arquitetura."
+  }
+  task cure "Cura" {
+    start 2026-03-09
+    effort 3d
+    allocate robot
+  }
+  task entrega "Entrega" {
+    start 2026-03-23
+    milestone
+    depends !cure { gaplength 2d }
+  }
+}
+
+export "MS Project" {
+  formats mspxml
+  loadunit days
+}

@@ -22,6 +22,8 @@ export interface ReportContent {
 
   to_html?(): XMLElementLike[] | XMLElementLike | string;
   to_csv?(): unknown[][] | null;
+  /** JSON do formato intermediário (extensão SyntaxMesh — 14C.0.1). */
+  toJSON?(): string;
   to_tjp?(): string;
   to_mspxml?(): string;
   to_niku?(): string;
@@ -34,9 +36,10 @@ export type ReportContentFactory = (report: unknown,) => ReportContent;
 
 /**
  * Registro por `typeSpec` normalizado em minúsculas (`accountreport`,
- * `export`, `ical`, `niku`, `resourcereport`, `tagfile`, `textreport`,
- * `taskreport`, `tracereport`, `statussheet`, `timesheet`). As classes de
- * conteúdo se registram aqui ao serem implementadas (14.12–14.20).
+ * `breakdownreport`, `export`, `ical`, `materialreport`, `niku`, `rdoreport`,
+ * `resourcereport`, `tagfile`, `textreport`, `taskreport`, `tracereport`,
+ * `statussheet`, `timesheet`). As classes de conteúdo se registram aqui ao
+ * serem implementadas (14.12–14.20; extensões 14C.1–14C.3).
  */
 export const contentFactories = new Map<string, ReportContentFactory>();
 

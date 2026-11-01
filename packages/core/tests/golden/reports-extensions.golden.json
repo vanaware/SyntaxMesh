@@ -1,0 +1,797 @@
+{
+  "schema": "syntaxmesh-reports-extensions/v1",
+  "fixture": "14c-rdo-budget",
+  "fixture14c": {
+    "entities": {
+      "tasks": [
+        "phase1"
+      ],
+      "resources": [
+        "team"
+      ],
+      "materials": [
+        "steel",
+        "concrete"
+      ],
+      "accounts": [
+        "mat_costs",
+        "dev_acct"
+      ]
+    },
+    "alertLevels": [
+      [
+        "green",
+        "Green",
+        "#008000"
+      ],
+      [
+        "yellow",
+        "Yellow",
+        "#BEA800"
+      ],
+      [
+        "red",
+        "Red",
+        "#C00000"
+      ]
+    ],
+    "journal": {
+      "total": 5,
+      "byTask": {
+        "phase1": [
+          "Diário da obra",
+          "Concretagem"
+        ]
+      },
+      "byResource": {
+        "team": [
+          "Kick-off da fundação"
+        ]
+      },
+      "byMaterial": {
+        "steel": [
+          "Chegada do aço"
+        ]
+      },
+      "byAccount": {
+        "mat_costs": [
+          "Verba de material liberada"
+        ]
+      },
+      "entries": [
+        {
+          "headline": "Verba de material liberada",
+          "alertLevel": 0,
+          "format": "markdown",
+          "property": "mat_costs",
+          "pictures": []
+        },
+        {
+          "headline": "Chegada do aço",
+          "alertLevel": 0,
+          "format": "markdown",
+          "property": "steel",
+          "pictures": [
+            "img/steel-1.png",
+            "https://cdn.example.com/nf.png"
+          ]
+        },
+        {
+          "headline": "Kick-off da fundação",
+          "alertLevel": 1,
+          "format": "markdown",
+          "property": "team",
+          "pictures": []
+        },
+        {
+          "headline": "Diário da obra",
+          "alertLevel": 2,
+          "format": "markdown",
+          "property": "phase1",
+          "pictures": [
+            "img/site.png"
+          ]
+        },
+        {
+          "headline": "Concretagem",
+          "alertLevel": 0,
+          "format": "richtext",
+          "property": "phase1",
+          "pictures": []
+        }
+      ]
+    },
+    "reports": [
+      {
+        "id": "tr",
+        "typeSpec": "taskreport",
+        "formats": [
+          "html",
+          "csv",
+          "json"
+        ],
+        "groupby": null,
+        "maxpictures": 0,
+        "journalMode": "journal"
+      },
+      {
+        "id": "br",
+        "typeSpec": "breakdownreport",
+        "formats": [
+          "html",
+          "json"
+        ],
+        "groupby": "account",
+        "maxpictures": 0,
+        "journalMode": "journal"
+      },
+      {
+        "id": "rdo",
+        "typeSpec": "rdoreport",
+        "formats": [
+          "html",
+          "json"
+        ],
+        "groupby": "date",
+        "maxpictures": 5,
+        "journalMode": "journal"
+      }
+    ]
+  },
+  "probes": {
+    "tableToJson": "{\n \"format\": \"table\",\n \"columns\": [\n  {\n   \"id\": \"name\",\n   \"title\": \"Name\"\n  },\n  {\n   \"id\": \"\",\n   \"title\": \"Cal\"\n  }\n ],\n \"lines\": [\n  {\n   \"indent\": 0,\n   \"cells\": [\n    {\n     \"text\": \"Alpha\",\n     \"indent\": 0,\n     \"alignment\": \"left\",\n     \"bold\": false\n    },\n    {\n     \"type\": \"calendar\"\n    }\n   ]\n  }\n ]\n}",
+    "pictureHtml": [
+      "<img alt=\"\" src=\"https://cdn.example.com/a.png\" />",
+      "<figure class=\"tj_figure tj_figure_align_center\"><img alt=\"\" class=\"tj_picture_align_center\" src=\"img/aca.png\" width=\"300\" /><figcaption>Peça</figcaption></figure>"
+    ],
+    "galleryCapped": "<div class=\"tj_gallery\">\n<img alt=\"\" src=\"https://cdn.example.com/a.png\" />\n<figure class=\"tj_figure tj_figure_align_center\"><img alt=\"\" class=\"tj_picture_align_center\" src=\"img/aca.png\" width=\"300\" /><figcaption>Peça</figcaption></figure>\n</div>"
+  },
+  "breakdown": [
+    {
+      "groupby": "account",
+      "groups": [
+        {
+          "id": "mat_costs",
+          "name": "Materiais",
+          "contributors": [
+            {
+              "kind": "material",
+              "id": "concrete",
+              "name": "concrete",
+              "quantity": 50,
+              "unit": "m3",
+              "cost": 6000,
+              "mode": "chargeset"
+            },
+            {
+              "kind": "material",
+              "id": "steel",
+              "name": "steel",
+              "quantity": 1000,
+              "unit": "kg",
+              "cost": 2500,
+              "mode": "chargeset"
+            }
+          ],
+          "totals": {
+            "resources": 0,
+            "materials": 8500,
+            "charges": 0,
+            "total": 8500
+          }
+        }
+      ],
+      "html": [
+        "<table cellspacing=\"1\" class=\"tj_table\"><tbody><tr class=\"tabhead\" style=\"height:19px; font-size:15px;\"><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">Name</td></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">Resources</td></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">Materials</td></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">Charges</td></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">Total</td></tr></table></td></tr><tr class=\"tabhead\" style=\"height:19px; font-size:15px;\"><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr></tr></table></td></tr><tr class=\"tabline\" style=\"font-size:12px; \"><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:left; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">Materiais</td></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">8500</td></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">8500</td></tr></table></td></tr><tr class=\"tabline\" style=\"font-size:12px; \"><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:left; \"><tr><td style=\"width:8px; \"></td><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; \">concrete</td></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; \">6000</td></tr></table></td></tr><tr class=\"tabline\" style=\"font-size:12px; \"><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:left; \"><tr><td style=\"width:8px; \"></td><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; \">steel</td></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; \">2500</td></tr></table></td></tr></tbody></table>"
+      ],
+      "csv": [
+        [
+          "Entity",
+          "Type",
+          "Effort/Quantity",
+          "Cost",
+          "Total"
+        ],
+        [
+          "Materiais",
+          "total",
+          "",
+          8500,
+          8500
+        ],
+        [
+          "Materiais",
+          "material",
+          "50 m3",
+          6000,
+          ""
+        ],
+        [
+          "Materiais",
+          "material",
+          "1000 kg",
+          2500,
+          ""
+        ]
+      ],
+      "json": {
+        "groupby": "account",
+        "groups": [
+          {
+            "id": "mat_costs",
+            "name": "Materiais",
+            "totals": {
+              "resources": 0,
+              "materials": 8500,
+              "charges": 0,
+              "total": 8500
+            },
+            "contributors": [
+              {
+                "kind": "material",
+                "id": "concrete",
+                "name": "concrete",
+                "quantity": 50,
+                "unit": "m3",
+                "cost": 6000,
+                "mode": "chargeset"
+              },
+              {
+                "kind": "material",
+                "id": "steel",
+                "name": "steel",
+                "quantity": 1000,
+                "unit": "kg",
+                "cost": 2500,
+                "mode": "chargeset"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "groupby": "task",
+      "groups": [
+        {
+          "id": "phase1",
+          "name": "Fase 1 - Fundação",
+          "contributors": [
+            {
+              "kind": "charge",
+              "id": "charge-0",
+              "name": "charge 1",
+              "quantity": 1,
+              "unit": "",
+              "cost": 200,
+              "mode": "declared"
+            },
+            {
+              "kind": "material",
+              "id": "concrete",
+              "name": "concrete",
+              "quantity": 10,
+              "unit": "m3",
+              "cost": 1200,
+              "mode": "allocated"
+            },
+            {
+              "kind": "material",
+              "id": "steel",
+              "name": "steel",
+              "quantity": 200,
+              "unit": "kg",
+              "cost": 500,
+              "mode": "allocated"
+            }
+          ],
+          "totals": {
+            "resources": 0,
+            "materials": 1700,
+            "charges": 200,
+            "total": 1900
+          }
+        }
+      ],
+      "html": [
+        "<table cellspacing=\"1\" class=\"tj_table\"><tbody><tr class=\"tabhead\" style=\"height:19px; font-size:15px;\"><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">Name</td></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">Resources</td></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">Materials</td></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">Charges</td></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">Total</td></tr></table></td></tr><tr class=\"tabhead\" style=\"height:19px; font-size:15px;\"><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr></tr></table></td></tr><tr class=\"tabline\" style=\"font-size:12px; \"><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:left; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">Fase 1 - Fundação</td></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">1700</td></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">200</td></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">1900</td></tr></table></td></tr><tr class=\"tabline\" style=\"font-size:12px; \"><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:left; \"><tr><td style=\"width:8px; \"></td><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; \">charge 1</td></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; \">200</td></tr></table></td></tr><tr class=\"tabline\" style=\"font-size:12px; \"><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:left; \"><tr><td style=\"width:8px; \"></td><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; \">concrete</td></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; \">1200</td></tr></table></td></tr><tr class=\"tabline\" style=\"font-size:12px; \"><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:left; \"><tr><td style=\"width:8px; \"></td><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; \">steel</td></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; \">500</td></tr></table></td></tr></tbody></table>"
+      ],
+      "csv": [
+        [
+          "Entity",
+          "Type",
+          "Effort/Quantity",
+          "Cost",
+          "Total"
+        ],
+        [
+          "Fase 1 - Fundação",
+          "total",
+          "",
+          1900,
+          1900
+        ],
+        [
+          "Fase 1 - Fundação",
+          "charge",
+          "declared",
+          200,
+          ""
+        ],
+        [
+          "Fase 1 - Fundação",
+          "material",
+          "10 m3",
+          1200,
+          ""
+        ],
+        [
+          "Fase 1 - Fundação",
+          "material",
+          "200 kg",
+          500,
+          ""
+        ]
+      ],
+      "json": {
+        "groupby": "task",
+        "groups": [
+          {
+            "id": "phase1",
+            "name": "Fase 1 - Fundação",
+            "totals": {
+              "resources": 0,
+              "materials": 1700,
+              "charges": 200,
+              "total": 1900
+            },
+            "contributors": [
+              {
+                "kind": "charge",
+                "id": "charge-0",
+                "name": "charge 1",
+                "quantity": 1,
+                "unit": "",
+                "cost": 200,
+                "mode": "declared"
+              },
+              {
+                "kind": "material",
+                "id": "concrete",
+                "name": "concrete",
+                "quantity": 10,
+                "unit": "m3",
+                "cost": 1200,
+                "mode": "allocated"
+              },
+              {
+                "kind": "material",
+                "id": "steel",
+                "name": "steel",
+                "quantity": 200,
+                "unit": "kg",
+                "cost": 500,
+                "mode": "allocated"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "rdo": [
+    {
+      "groupby": "date",
+      "groups": [
+        {
+          "id": "2026-02-10",
+          "name": "2026-02-10",
+          "entries": [
+            {
+              "date": "2026-02-10",
+              "headline": "Diário da obra",
+              "summary": "Fundação concluída dentro do prazo",
+              "details": null,
+              "author": null,
+              "alert": "Red",
+              "alertId": "red",
+              "alertLevel": 2,
+              "flags": [],
+              "entity": "phase1",
+              "format": "markdown",
+              "pictures": [
+                {
+                  "path": "img/site.png",
+                  "alt": null,
+                  "caption": "Vista lateral da vala",
+                  "align": "right",
+                  "width": 640
+                }
+              ]
+            }
+          ],
+          "pictures": [
+            {
+              "path": "img/site.png",
+              "caption": "Vista lateral da vala",
+              "align": "right",
+              "width": 640,
+              "alt": null
+            }
+          ],
+          "responsible": null,
+          "resources": [],
+          "materials": [
+            {
+              "id": "concrete",
+              "name": "concrete",
+              "detail": "10 m3",
+              "amount": 1200
+            },
+            {
+              "id": "steel",
+              "name": "steel",
+              "detail": "200 kg",
+              "amount": 500
+            }
+          ],
+          "charges": [
+            {
+              "id": "phase1-charge-0",
+              "name": "Fase 1 - Fundação charge 1",
+              "detail": "perDiem",
+              "amount": 200
+            }
+          ]
+        },
+        {
+          "id": "2026-02-15",
+          "name": "2026-02-15",
+          "entries": [
+            {
+              "date": "2026-02-15",
+              "headline": "Kick-off da fundação",
+              "summary": "Reunião inicial com a turma",
+              "details": null,
+              "author": null,
+              "alert": "Yellow",
+              "alertId": "yellow",
+              "alertLevel": 1,
+              "flags": [],
+              "entity": "team",
+              "format": "markdown",
+              "pictures": []
+            }
+          ],
+          "pictures": [],
+          "responsible": null,
+          "resources": [],
+          "materials": [],
+          "charges": []
+        },
+        {
+          "id": "2026-03-03",
+          "name": "2026-03-03",
+          "entries": [
+            {
+              "date": "2026-03-03",
+              "headline": "Concretagem",
+              "summary": null,
+              "details": "Turma noturna; aditivo de 4 m3",
+              "author": null,
+              "alert": "Green",
+              "alertId": "green",
+              "alertLevel": 0,
+              "flags": [],
+              "entity": "phase1",
+              "format": "richtext",
+              "pictures": []
+            }
+          ],
+          "pictures": [],
+          "responsible": null,
+          "resources": [],
+          "materials": [
+            {
+              "id": "concrete",
+              "name": "concrete",
+              "detail": "10 m3",
+              "amount": 1200
+            },
+            {
+              "id": "steel",
+              "name": "steel",
+              "detail": "200 kg",
+              "amount": 500
+            }
+          ],
+          "charges": [
+            {
+              "id": "phase1-charge-0",
+              "name": "Fase 1 - Fundação charge 1",
+              "detail": "perDiem",
+              "amount": 200
+            }
+          ]
+        }
+      ],
+      "html": [
+        "<div class=\"tj_rdo_frame\"><section class=\"tj_rdo\"><article class=\"tj_rdo_block\" data-group=\"2026-02-10\"><header><h3>2026-02-10</h3></header><div class=\"tj_rdo_journal\"><div class=\"tj_rdo_entry\"><div class=\"tj_rdo_date\">2026-02-10</div><h4 class=\"tj_rdo_headline\">Diário da obra</h4><div class=\"tj_rdo_alert tj_alert_red\">Red</div><div class=\"tj_rdo_summary\">Fundação concluída dentro do prazo</div></div></div><div class=\"tj_gallery\">\n<figure class=\"tj_figure tj_figure_align_right\"><img alt=\"\" class=\"tj_picture_align_right\" src=\"img/site.png\" width=\"640\" /><figcaption>Vista lateral da vala</figcaption></figure>\n</div><table class=\"tj_rdo_table tj_rdo_materials\"><tr><th>Name</th><th>Detail</th><th>Amount</th></tr><tr><td>concrete</td><td>10 m3</td><td>1200</td></tr><tr><td>steel</td><td>200 kg</td><td>500</td></tr></table><table class=\"tj_rdo_table tj_rdo_charges\"><tr><th>Name</th><th>Detail</th><th>Amount</th></tr><tr><td>Fase 1 - Fundação charge 1</td><td>perDiem</td><td>200</td></tr></table></article><article class=\"tj_rdo_block\" data-group=\"2026-02-15\"><header><h3>2026-02-15</h3></header><div class=\"tj_rdo_journal\"><div class=\"tj_rdo_entry\"><div class=\"tj_rdo_date\">2026-02-15</div><h4 class=\"tj_rdo_headline\">Kick-off da fundação</h4><div class=\"tj_rdo_alert tj_alert_yellow\">Yellow</div><div class=\"tj_rdo_summary\">Reunião inicial com a turma</div></div></div></article><article class=\"tj_rdo_block\" data-group=\"2026-03-03\"><header><h3>2026-03-03</h3></header><div class=\"tj_rdo_journal\"><div class=\"tj_rdo_entry\"><div class=\"tj_rdo_date\">2026-03-03</div><h4 class=\"tj_rdo_headline\">Concretagem</h4><div class=\"tj_rdo_alert tj_alert_green\">Green</div></div></div><table class=\"tj_rdo_table tj_rdo_materials\"><tr><th>Name</th><th>Detail</th><th>Amount</th></tr><tr><td>concrete</td><td>10 m3</td><td>1200</td></tr><tr><td>steel</td><td>200 kg</td><td>500</td></tr></table><table class=\"tj_rdo_table tj_rdo_charges\"><tr><th>Name</th><th>Detail</th><th>Amount</th></tr><tr><td>Fase 1 - Fundação charge 1</td><td>perDiem</td><td>200</td></tr></table></article></section></div>"
+      ],
+      "json": {
+        "groupby": "date",
+        "period": {
+          "start": "2026-02-01",
+          "end": "2026-03-31"
+        },
+        "groups": [
+          {
+            "id": "2026-02-10",
+            "name": "2026-02-10",
+            "entries": [
+              {
+                "date": "2026-02-10",
+                "headline": "Diário da obra",
+                "summary": "Fundação concluída dentro do prazo",
+                "details": null,
+                "author": null,
+                "alert": "Red",
+                "alertId": "red",
+                "alertLevel": 2,
+                "flags": [],
+                "entity": "phase1",
+                "format": "markdown",
+                "pictures": [
+                  {
+                    "path": "img/site.png",
+                    "alt": null,
+                    "caption": "Vista lateral da vala",
+                    "align": "right",
+                    "width": 640
+                  }
+                ]
+              }
+            ],
+            "pictures": [
+              {
+                "path": "img/site.png",
+                "caption": "Vista lateral da vala",
+                "align": "right",
+                "width": 640,
+                "alt": null
+              }
+            ],
+            "responsible": null,
+            "resources": [],
+            "materials": [
+              {
+                "id": "concrete",
+                "name": "concrete",
+                "detail": "10 m3",
+                "amount": 1200
+              },
+              {
+                "id": "steel",
+                "name": "steel",
+                "detail": "200 kg",
+                "amount": 500
+              }
+            ],
+            "charges": [
+              {
+                "id": "phase1-charge-0",
+                "name": "Fase 1 - Fundação charge 1",
+                "detail": "perDiem",
+                "amount": 200
+              }
+            ]
+          },
+          {
+            "id": "2026-02-15",
+            "name": "2026-02-15",
+            "entries": [
+              {
+                "date": "2026-02-15",
+                "headline": "Kick-off da fundação",
+                "summary": "Reunião inicial com a turma",
+                "details": null,
+                "author": null,
+                "alert": "Yellow",
+                "alertId": "yellow",
+                "alertLevel": 1,
+                "flags": [],
+                "entity": "team",
+                "format": "markdown",
+                "pictures": []
+              }
+            ],
+            "pictures": [],
+            "responsible": null,
+            "resources": [],
+            "materials": [],
+            "charges": []
+          },
+          {
+            "id": "2026-03-03",
+            "name": "2026-03-03",
+            "entries": [
+              {
+                "date": "2026-03-03",
+                "headline": "Concretagem",
+                "summary": null,
+                "details": "Turma noturna; aditivo de 4 m3",
+                "author": null,
+                "alert": "Green",
+                "alertId": "green",
+                "alertLevel": 0,
+                "flags": [],
+                "entity": "phase1",
+                "format": "richtext",
+                "pictures": []
+              }
+            ],
+            "pictures": [],
+            "responsible": null,
+            "resources": [],
+            "materials": [
+              {
+                "id": "concrete",
+                "name": "concrete",
+                "detail": "10 m3",
+                "amount": 1200
+              },
+              {
+                "id": "steel",
+                "name": "steel",
+                "detail": "200 kg",
+                "amount": 500
+              }
+            ],
+            "charges": [
+              {
+                "id": "phase1-charge-0",
+                "name": "Fase 1 - Fundação charge 1",
+                "detail": "perDiem",
+                "amount": 200
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "groupby": "material",
+      "groups": [
+        {
+          "id": "steel",
+          "name": "steel",
+          "entries": [
+            {
+              "date": "2026-01-05",
+              "headline": "Chegada do aço",
+              "summary": "Lote 1 recebido no canteiro",
+              "details": null,
+              "author": null,
+              "alert": "Green",
+              "alertId": "green",
+              "alertLevel": 0,
+              "flags": [],
+              "entity": "steel",
+              "format": "markdown",
+              "pictures": [
+                {
+                  "path": "img/steel-1.png",
+                  "alt": "Pilha de aço",
+                  "caption": "Empilhamento no estoque",
+                  "align": "left",
+                  "width": 320
+                },
+                {
+                  "path": "https://cdn.example.com/nf.png",
+                  "alt": null,
+                  "caption": "Nota fiscal",
+                  "align": "center",
+                  "width": null
+                }
+              ]
+            }
+          ],
+          "pictures": [
+            {
+              "path": "img/steel-1.png",
+              "caption": "Empilhamento no estoque",
+              "align": "left",
+              "width": 320,
+              "alt": "Pilha de aço"
+            },
+            {
+              "path": "https://cdn.example.com/nf.png",
+              "caption": "Nota fiscal",
+              "align": "center",
+              "width": null,
+              "alt": null
+            }
+          ],
+          "responsible": null,
+          "resources": [],
+          "materials": [],
+          "charges": []
+        }
+      ],
+      "html": [
+        "<div class=\"tj_rdo_frame\"><section class=\"tj_rdo\"><article class=\"tj_rdo_block\" data-group=\"steel\"><header><h3>steel</h3></header><div class=\"tj_rdo_journal\"><div class=\"tj_rdo_entry\"><div class=\"tj_rdo_date\">2026-01-05</div><h4 class=\"tj_rdo_headline\">Chegada do aço</h4><div class=\"tj_rdo_alert tj_alert_green\">Green</div><div class=\"tj_rdo_summary\">Lote 1 recebido no canteiro</div></div></div><div class=\"tj_gallery\">\n<figure class=\"tj_figure tj_figure_align_left\"><img alt=\"Pilha de aço\" class=\"tj_picture_align_left\" src=\"img/steel-1.png\" width=\"320\" /><figcaption>Empilhamento no estoque</figcaption></figure>\n<figure class=\"tj_figure tj_figure_align_center\"><img alt=\"\" class=\"tj_picture_align_center\" src=\"https://cdn.example.com/nf.png\" /><figcaption>Nota fiscal</figcaption></figure>\n</div></article></section></div>"
+      ],
+      "json": {
+        "groupby": "material",
+        "period": {
+          "start": "2026-01-01",
+          "end": "2026-12-31"
+        },
+        "groups": [
+          {
+            "id": "steel",
+            "name": "steel",
+            "entries": [
+              {
+                "date": "2026-01-05",
+                "headline": "Chegada do aço",
+                "summary": "Lote 1 recebido no canteiro",
+                "details": null,
+                "author": null,
+                "alert": "Green",
+                "alertId": "green",
+                "alertLevel": 0,
+                "flags": [],
+                "entity": "steel",
+                "format": "markdown",
+                "pictures": [
+                  {
+                    "path": "img/steel-1.png",
+                    "alt": "Pilha de aço",
+                    "caption": "Empilhamento no estoque",
+                    "align": "left",
+                    "width": 320
+                  },
+                  {
+                    "path": "https://cdn.example.com/nf.png",
+                    "alt": null,
+                    "caption": "Nota fiscal",
+                    "align": "center",
+                    "width": null
+                  }
+                ]
+              }
+            ],
+            "pictures": [
+              {
+                "path": "img/steel-1.png",
+                "caption": "Empilhamento no estoque",
+                "align": "left",
+                "width": 320,
+                "alt": "Pilha de aço"
+              },
+              {
+                "path": "https://cdn.example.com/nf.png",
+                "caption": "Nota fiscal",
+                "align": "center",
+                "width": null,
+                "alt": null
+              }
+            ],
+            "responsible": null,
+            "resources": [],
+            "materials": [],
+            "charges": []
+          }
+        ]
+      }
+    }
+  ],
+  "mspdi": {
+    "fixture": "14c-mspdi-ext",
+    "calendars": "<Calendars><Calendar><UID>0</UID><Name>Standard</Name><IsBaseCalendar>1</IsBaseCalendar><BaseCalendarUID>-1</BaseCalendarUID><WeekDays><WeekDay><DayType>1</DayType><DayWorking>0</DayWorking></WeekDay><WeekDay><DayType>2</DayType><DayWorking>1</DayWorking><WorkingTimes><WorkingTime><FromTime>09:00:00</FromTime><ToTime>12:00:00</ToTime></WorkingTime><WorkingTime><FromTime>13:00:00</FromTime><ToTime>17:00:00</ToTime></WorkingTime></WorkingTimes></WeekDay><WeekDay><DayType>3</DayType><DayWorking>1</DayWorking><WorkingTimes><WorkingTime><FromTime>09:00:00</FromTime><ToTime>12:00:00</ToTime></WorkingTime><WorkingTime><FromTime>13:00:00</FromTime><ToTime>17:00:00</ToTime></WorkingTime></WorkingTimes></WeekDay><WeekDay><DayType>4</DayType><DayWorking>1</DayWorking><WorkingTimes><WorkingTime><FromTime>09:00:00</FromTime><ToTime>12:00:00</ToTime></WorkingTime><WorkingTime><FromTime>13:00:00</FromTime><ToTime>17:00:00</ToTime></WorkingTime></WorkingTimes></WeekDay><WeekDay><DayType>5</DayType><DayWorking>1</DayWorking><WorkingTimes><WorkingTime><FromTime>09:00:00</FromTime><ToTime>12:00:00</ToTime></WorkingTime><WorkingTime><FromTime>13:00:00</FromTime><ToTime>17:00:00</ToTime></WorkingTime></WorkingTimes></WeekDay><WeekDay><DayType>6</DayType><DayWorking>1</DayWorking><WorkingTimes><WorkingTime><FromTime>09:00:00</FromTime><ToTime>12:00:00</ToTime></WorkingTime><WorkingTime><FromTime>13:00:00</FromTime><ToTime>17:00:00</ToTime></WorkingTime></WorkingTimes></WeekDay><WeekDay><DayType>7</DayType><DayWorking>0</DayWorking></WeekDay></WeekDays></Calendar><Calendar><UID>1</UID><Name>Calendar Alice</Name><IsBaseCalendar>1</IsBaseCalendar><BaseCalendarUID>-1</BaseCalendarUID><WeekDays><WeekDay><DayType>1</DayType><DayWorking>0</DayWorking></WeekDay><WeekDay><DayType>2</DayType><DayWorking>1</DayWorking><WorkingTimes><WorkingTime><FromTime>09:00:00</FromTime><ToTime>12:00:00</ToTime></WorkingTime><WorkingTime><FromTime>13:00:00</FromTime><ToTime>17:00:00</ToTime></WorkingTime></WorkingTimes></WeekDay><WeekDay><DayType>3</DayType><DayWorking>1</DayWorking><WorkingTimes><WorkingTime><FromTime>09:00:00</FromTime><ToTime>12:00:00</ToTime></WorkingTime><WorkingTime><FromTime>13:00:00</FromTime><ToTime>17:00:00</ToTime></WorkingTime></WorkingTimes></WeekDay><WeekDay><DayType>4</DayType><DayWorking>1</DayWorking><WorkingTimes><WorkingTime><FromTime>09:00:00</FromTime><ToTime>12:00:00</ToTime></WorkingTime><WorkingTime><FromTime>13:00:00</FromTime><ToTime>17:00:00</ToTime></WorkingTime></WorkingTimes></WeekDay><WeekDay><DayType>5</DayType><DayWorking>1</DayWorking><WorkingTimes><WorkingTime><FromTime>09:00:00</FromTime><ToTime>12:00:00</ToTime></WorkingTime><WorkingTime><FromTime>13:00:00</FromTime><ToTime>17:00:00</ToTime></WorkingTime></WorkingTimes></WeekDay><WeekDay><DayType>6</DayType><DayWorking>1</DayWorking><WorkingTimes><WorkingTime><FromTime>09:00:00</FromTime><ToTime>12:00:00</ToTime></WorkingTime><WorkingTime><FromTime>13:00:00</FromTime><ToTime>17:00:00</ToTime></WorkingTime></WorkingTimes></WeekDay><WeekDay><DayType>7</DayType><DayWorking>0</DayWorking></WeekDay></WeekDays><Exceptions><Exception><Index>1</Index><Name>holiday</Name><TimePeriod><FromDate>2026-03-16T00:00:00</FromDate><ToDate>2026-03-17T00:00:00</ToDate></TimePeriod><DayWorking>0</DayWorking></Exception></Exceptions></Calendar><Calendar><UID>2</UID><Name>Calendar Processo contínuo</Name><IsBaseCalendar>1</IsBaseCalendar><BaseCalendarUID>-1</BaseCalendarUID><WeekDays><WeekDay><DayType>1</DayType><DayWorking>1</DayWorking><WorkingTimes><WorkingTime><FromTime>00:00:00</FromTime><ToTime>24:00:00</ToTime></WorkingTime></WorkingTimes></WeekDay><WeekDay><DayType>2</DayType><DayWorking>1</DayWorking><WorkingTimes><WorkingTime><FromTime>00:00:00</FromTime><ToTime>24:00:00</ToTime></WorkingTime></WorkingTimes></WeekDay><WeekDay><DayType>3</DayType><DayWorking>1</DayWorking><WorkingTimes><WorkingTime><FromTime>00:00:00</FromTime><ToTime>24:00:00</ToTime></WorkingTime></WorkingTimes></WeekDay><WeekDay><DayType>4</DayType><DayWorking>1</DayWorking><WorkingTimes><WorkingTime><FromTime>00:00:00</FromTime><ToTime>24:00:00</ToTime></WorkingTime></WorkingTimes></WeekDay><WeekDay><DayType>5</DayType><DayWorking>1</DayWorking><WorkingTimes><WorkingTime><FromTime>00:00:00</FromTime><ToTime>24:00:00</ToTime></WorkingTime></WorkingTimes></WeekDay><WeekDay><DayType>6</DayType><DayWorking>1</DayWorking><WorkingTimes><WorkingTime><FromTime>00:00:00</FromTime><ToTime>24:00:00</ToTime></WorkingTime></WorkingTimes></WeekDay><WeekDay><DayType>7</DayType><DayWorking>1</DayWorking><WorkingTimes><WorkingTime><FromTime>00:00:00</FromTime><ToTime>24:00:00</ToTime></WorkingTime></WorkingTimes></WeekDay></WeekDays></Calendar></Calendars>",
+    "tasks": "<Tasks><Task><UID>1</UID><ID>1</ID><Active>1</Active><Type>0</Type><IsNull>0</IsNull><Name>Fase 1</Name><WBS>1</WBS><OutlineNumber>1</OutlineNumber><OutlineLevel>0</OutlineLevel><Priority>500</Priority><Start>2026-03-02T09:00:00</Start><Finish>2026-03-23T00:00:00</Finish><ManualStart>2026-03-02T09:00:00</ManualStart><ManualFinish>2026-03-23T00:00:00</ManualFinish><ActualStart>2026-03-02T09:00:00</ActualStart><ActualFinish>2026-03-23T00:00:00</ActualFinish><ConstraintType>2</ConstraintType><ConstraintDate>2026-03-02T09:00:00</ConstraintDate><FixedCostAccrual>3</FixedCostAccrual><Manual>0</Manual><Summary>1</Summary></Task><Task><UID>2</UID><ID>2</ID><Active>1</Active><Type>0</Type><IsNull>0</IsNull><Name>Design</Name><WBS>1.1</WBS><OutlineNumber>1.1</OutlineNumber><OutlineLevel>1</OutlineLevel><Priority>500</Priority><Start>2026-03-02T09:00:00</Start><Finish>2026-03-06T14:00:00</Finish><ManualStart>2026-03-02T09:00:00</ManualStart><ManualFinish>2026-03-06T14:00:00</ManualFinish><ActualStart>2026-03-02T09:00:00</ActualStart><ActualFinish>2026-03-06T14:00:00</ActualFinish><ConstraintType>2</ConstraintType><ConstraintDate>2026-03-02T09:00:00</ConstraintDate><FixedCostAccrual>3</FixedCostAccrual><Notes>Detalhar a arquitetura.</Notes><Manual>1</Manual><Summary>0</Summary><Estimated>0</Estimated><DurationFormat>7</DurationFormat><Duration>PT101H0M0S</Duration><Work>PT101H0M0S</Work><Milestone>0</Milestone><EffortDriven>1</EffortDriven><PercentComplete>0</PercentComplete><PercentWorkComplete>0</PercentWorkComplete><ActualWork>PT16H0M0S</ActualWork><RemainingWork>PT16H0M0S</RemainingWork></Task><Task><UID>3</UID><ID>3</ID><Active>1</Active><Type>0</Type><IsNull>0</IsNull><Name>Cura</Name><WBS>1.2</WBS><OutlineNumber>1.2</OutlineNumber><OutlineLevel>1</OutlineLevel><Priority>500</Priority><Start>2026-03-09T00:00:00</Start><Finish>2026-03-10T00:00:00</Finish><ManualStart>2026-03-09T00:00:00</ManualStart><ManualFinish>2026-03-10T00:00:00</ManualFinish><ActualStart>2026-03-09T00:00:00</ActualStart><ActualFinish>2026-03-10T00:00:00</ActualFinish><ConstraintType>2</ConstraintType><ConstraintDate>2026-03-09T00:00:00</ConstraintDate><FixedCostAccrual>3</FixedCostAccrual><Manual>1</Manual><Summary>0</Summary><Estimated>0</Estimated><DurationFormat>8</DurationFormat><Duration>PT24H0M0S</Duration><Work>PT24H0M0S</Work><Milestone>0</Milestone><EffortDriven>1</EffortDriven><PercentComplete>0</PercentComplete><PercentWorkComplete>0</PercentWorkComplete></Task><Task><UID>4</UID><ID>4</ID><Active>1</Active><Type>0</Type><IsNull>0</IsNull><Name>Entrega</Name><WBS>1.3</WBS><OutlineNumber>1.3</OutlineNumber><OutlineLevel>1</OutlineLevel><Priority>500</Priority><Start>2026-03-23T00:00:00</Start><Finish>2026-03-23T00:00:00</Finish><ManualStart>2026-03-23T00:00:00</ManualStart><ManualFinish>2026-03-23T00:00:00</ManualFinish><ActualStart>2026-03-23T00:00:00</ActualStart><ActualFinish>2026-03-23T00:00:00</ActualFinish><ConstraintType>2</ConstraintType><ConstraintDate>2026-03-23T00:00:00</ConstraintDate><FixedCostAccrual>3</FixedCostAccrual><Manual>1</Manual><Summary>0</Summary><Estimated>0</Estimated><DurationFormat>7</DurationFormat><Milestone>1</Milestone><PredecessorLink><PredecessorUID>3</PredecessorUID><Type>1</Type><LinkLag>9600</LinkLag><LagFormat>7</LagFormat></PredecessorLink></Task></Tasks>",
+    "resources": "<Resources><Resource><UID>2</UID><Type>1</Type><Name>Alice</Name><Initials>alice</Initials><StandardRate>0.0</StandardRate><OvertimeRate>0.0</OvertimeRate><MaxUnits>1.0</MaxUnits><EmailAddress>alice@example.com</EmailAddress><Notes>Engenheira responsável.</Notes><Group>Equipe</Group><CalendarUID>1</CalendarUID></Resource><Resource><UID>3</UID><Type>1</Type><Name>Processo contínuo</Name><Initials>robot</Initials><StandardRate>0.0</StandardRate><OvertimeRate>0.0</OvertimeRate><MaxUnits>1.0</MaxUnits><Group>Equipe</Group><CalendarUID>2</CalendarUID></Resource><Resource><UID>4</UID><Type>0</Type><Name>steel</Name><Initials>steel</Initials><MaterialLabel>kg</MaterialLabel><StandardRate>2.5</StandardRate><Notes>Lote único de aço.</Notes></Resource><Resource><UID>5</UID><Type>2</Type><Name>Charges fase.design #1</Name><Initials>charge1</Initials><StandardRate>500.0</StandardRate><IsBudget>0</IsBudget></Resource></Resources>",
+    "assignments": "<Assignments><Assignment><UID>0</UID><TaskUID>2</TaskUID><ResourceUID>2</ResourceUID><Units>1.0</Units><start>2026-03-02T09:00:00</start><finish>2026-03-06T14:00:00</finish><Cost>100.0</Cost><WorkContour>8</WorkContour><PercentWorkComplete>0</PercentWorkComplete><ActualWork>PT16H0M0S</ActualWork><RemainingWork>PT16H0M0S</RemainingWork><TimephasedData><UID>0</UID><Type>1</Type><Start>2026-03-02T09:00:00</Start><Finish>2026-03-02T23:59:59</Finish><Unit>2</Unit><Value>PT7H0M0S</Value></TimephasedData><TimephasedData><UID>0</UID><Type>1</Type><Start>2026-03-03T00:00:00</Start><Finish>2026-03-03T23:59:59</Finish><Unit>2</Unit><Value>PT7H0M0S</Value></TimephasedData><TimephasedData><UID>0</UID><Type>1</Type><Start>2026-03-04T00:00:00</Start><Finish>2026-03-04T23:59:59</Finish><Unit>2</Unit><Value>PT7H0M0S</Value></TimephasedData><TimephasedData><UID>0</UID><Type>1</Type><Start>2026-03-05T00:00:00</Start><Finish>2026-03-05T23:59:59</Finish><Unit>2</Unit><Value>PT7H0M0S</Value></TimephasedData><TimephasedData><UID>0</UID><Type>1</Type><Start>2026-03-06T00:00:00</Start><Finish>2026-03-06T13:59:59</Finish><Unit>2</Unit><Value>PT4H0M0S</Value></TimephasedData></Assignment><Assignment><UID>1</UID><TaskUID>2</TaskUID><ResourceUID>4</ResourceUID><Units>200.0</Units><start>2026-03-02T09:00:00</start><finish>2026-03-06T14:00:00</finish><Cost>500.0</Cost><PercentWorkComplete>0</PercentWorkComplete><TimephasedData><UID>1</UID><Type>6</Type><Start>2026-03-02T09:00:00</Start><Finish>2026-03-02T23:59:59</Finish><Unit>2</Unit><Value>100.0</Value></TimephasedData><TimephasedData><UID>1</UID><Type>6</Type><Start>2026-03-03T00:00:00</Start><Finish>2026-03-03T23:59:59</Finish><Unit>2</Unit><Value>100.0</Value></TimephasedData><TimephasedData><UID>1</UID><Type>6</Type><Start>2026-03-04T00:00:00</Start><Finish>2026-03-04T23:59:59</Finish><Unit>2</Unit><Value>100.0</Value></TimephasedData><TimephasedData><UID>1</UID><Type>6</Type><Start>2026-03-05T00:00:00</Start><Finish>2026-03-05T23:59:59</Finish><Unit>2</Unit><Value>100.0</Value></TimephasedData><TimephasedData><UID>1</UID><Type>6</Type><Start>2026-03-06T00:00:00</Start><Finish>2026-03-06T13:59:59</Finish><Unit>2</Unit><Value>100.0</Value></TimephasedData></Assignment><Assignment><UID>2</UID><TaskUID>2</TaskUID><ResourceUID>5</ResourceUID><Units>1.0</Units><start>2026-03-02T09:00:00</start><finish>2026-03-06T14:00:00</finish><Cost>500.0</Cost><PercentWorkComplete>0</PercentWorkComplete><TimephasedData><UID>2</UID><Type>6</Type><Start>2026-03-02T09:00:00</Start><Finish>2026-03-02T23:59:59</Finish><Unit>2</Unit><Value>500.0</Value></TimephasedData></Assignment><Assignment><UID>3</UID><TaskUID>3</TaskUID><ResourceUID>3</ResourceUID><Units>1.0</Units><start>2026-03-09T00:00:00</start><finish>2026-03-10T00:00:00</finish><Cost>100.0</Cost><WorkContour>8</WorkContour><PercentWorkComplete>0</PercentWorkComplete><TimephasedData><UID>3</UID><Type>1</Type><Start>2026-03-09T00:00:00</Start><Finish>2026-03-09T23:59:59</Finish><Unit>2</Unit><Value>PT24H0M0S</Value></TimephasedData></Assignment></Assignments>"
+  }
+}

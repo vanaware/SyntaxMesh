@@ -175,6 +175,20 @@ attribute_definitions << {
   'userDefined' => false,
   'extension' => 'reports',
 }
+# Extensão documentada do port (Fase 14 Complemento C1.2): sortBy em Report.
+# Ordenação genérica dos relatórios de extensão (materialreport, breakdownreport,
+# rdoreport). Não existe no TJ Ruby.
+attribute_definitions << {
+  'id' => 'sortBy',
+  'name' => 'Sort By',
+  'objClass' => 'TaskJuggler::SortListAttribute',
+  'inheritedFromParent' => false,
+  'inheritedFromProject' => false,
+  'scenarioSpecific' => false,
+  'default' => [],
+  'userDefined' => false,
+  'extension' => 'reports',
+}
 
 # Ordena por id para corresponder ao Ruby (já ordenado por cadaAttributeDefinition)
 attribute_definitions.sort_by! { |ad| ad['id'] }

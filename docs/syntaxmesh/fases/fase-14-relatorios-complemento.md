@@ -2,7 +2,7 @@
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-14-relatorios-complemento.md`
 > **Tarefas:** `docs/syntaxmesh/fases/fase-14-relatorios-complemento-tarefas.md`
-> **Status:** 🟡 planejada (não iniciada)
+> **Status:** 🟡 em andamento — C0 ✅ 2026-10-31 · C1 ✅ 2026-11-01 · C2 ✅ 2026-11-01 · C3 ✅ 2026-11-01 · C4 ✅ 2026-11-01 · C5–C7 pendentes
 > **Duração estimada:** 8–12 dias
 > **Depende de:** Fases 8.1/8.2 (material + modelo contábil), 10 Complemento (parser reconhece `material`/`picture`/`format`/`breakdownreport`/`rdoreport`), 11 (motor lógico/Query), 12 (RichText), 13 (Markdown), 14 (pipeline de relatórios — concluída 2026-10-31)
 > **Bloqueia:** adendos de UI (Fase 20) que exibem RDO/breakdown; nada no núcleo 15/16/17
@@ -61,6 +61,15 @@ saídas como string, DOM-free, sem disco).
 | **C5** | Markdown nos relatórios: `format markdown` em header/footer/prolog/epilog/caption, handlers RTF dentro de Markdown, imagens em `details`, RTFReport/URLParameter sob Markdown | pedido neste doc + 13.14.4 (roteamento adiado) |
 | **C6** | `hidematerial`/`rollupmaterial`/`hidepicture` (parser+i18n+aplicação) + auditoria da aplicação de hide/rollup já existentes | 11-C F14 + 14.26 |
 | **C7** | Golden/fixture tests das extensões, regressão do núcleo 14, smoke, verificação final e docs | padrão da casa |
+
+> **C4 ✅ 2026-11-01.** Oracle Ruby real (`scripts/golden/mspdi-tj3.rb` →
+> `mspdi.golden.json`, paridade campo a campo no subconjunto que o tj3 exporta)
+> + extensões SyntaxMesh (material/custo/`effortdone`/`vacation`/lag) validadas
+> por estrutura e snapshot. **Correção:** `docs/tj3-engine/mspdi.md` §3.1
+> invertia `<Resource><Type>`; a ordem oficial é 0 = material, 1 = trabalho,
+> 2 = custo. **Limitações registradas:** sem `<Baseline>`/`<ExtendedAttribute>`
+> (o modelo não tem os dados), `Project` não possui store `leaves` (exceções de
+> calendário vêm dos recursos) e `hideMaterial` fica inerte até a C6.
 
 ## 4. Fora de escopo
 

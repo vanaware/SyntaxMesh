@@ -194,8 +194,9 @@ export class AccountScenario extends ScenarioData {
           }
         },);
       } else if (aggregate === "materials") {
-        // Material aggregation: sum totalCost of all materials.
-        project.resources.each?.((material,) => {
+        // Material aggregation: sum totalCost of all materials (14C.1.19 —
+        // materiais vivem em `project.materials`, não em `project.resources`).
+        project.materials.each?.((material,) => {
           const materialObj = material as unknown as {
             totalCost?: () => number;
           };

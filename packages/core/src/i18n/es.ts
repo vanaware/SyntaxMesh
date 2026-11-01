@@ -103,6 +103,7 @@ const keywords: Record<CanonicalKeyword, string[]> = {
   journalattributes: ["atributosasiento",],
   journalentry: ["asiento",],
   journalmode: ["modoasiento",],
+  json: ["json",],
   label: ["etiqueta",],
   // Diretiva de controle: sempre a forma inglesa literal (pré-scan regex).
   language: ["language",],
@@ -121,6 +122,10 @@ const keywords: Record<CanonicalKeyword, string[]> = {
   markdate: ["fechamarca",],
   markdown: ["markdown",],
   material: ["material",],
+  // Fase 14 Complemento C1.13 — export de alocações de material (extensão).
+  materialallocations: ["asignacionesdematerial",],
+  // Fase 14 Complemento C1.3 — relatório de materiais (extensão SyntaxMesh).
+  materialreport: ["infomaterial",],
   materials: ["materiales",],
   maxend: ["finmaximo",],
   maximum: ["maximo",],
@@ -198,6 +203,8 @@ const keywords: Record<CanonicalKeyword, string[]> = {
   shorttimeformat: ["formatocorto",],
   sloppy: ["descuidado",],
   sortaccounts: ["ordenarcuentas",],
+  // Fase 14 Complemento C1.3 — ordenação dos relatórios de extensão.
+  sortby: ["ordenarpor",],
   sortjournalentries: ["ordenarasientos",],
   sortresources: ["ordenarrecursos",],
   sorttasks: ["ordenartareas",],

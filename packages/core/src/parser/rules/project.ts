@@ -23,17 +23,22 @@ import { ScoreboardInterval, } from "../../time/scoreboard-interval.ts";
 import { WorkingHours, } from "../../calendar/working-hours.ts";
 import { Macro, } from "../../lexer/macro-table.ts";
 import { AttributeOverwrite, } from "../../model/errors.ts";
+import {
+  type AlertLevelDefinition,
+  alertLevelIds,
+  alertLevelIndexById,
+} from "../../model/alert-levels.ts";
 import type { PropertyTreeNode, } from "../../model/property-tree-node.ts";
 import type { ProjectFileParser, } from "../project-file-parser.ts";
 import { rule, } from "./helpers.ts";
 
-/** Nível de alerta: [id, nome, cor] (AlertLevelDefinition simplificado). */
-type AlertLevelTuple = [string, string, string,];
+/** Nível de alerta: objeto {id, name, color} (módulo 14C.0.7). */
+type AlertLevel = AlertLevelDefinition;
 
-/** Lê `project['alertLevels']` como lista de tuplas (fallback []). */
-function alertLevels(parser: ProjectFileParser,): AlertLevelTuple[] {
+/** Lê `project['alertLevels']` como lista de níveis (fallback []). */
+function alertLevels(parser: ProjectFileParser,): AlertLevel[] {
   let levels = parser.project?.get("alertLevels",) as
-    | AlertLevelTuple[]
+    | AlertLevel[]
     | undefined;
   if (!levels) {
     levels = [];
@@ -154,7 +159,7 @@ export function registerProjectRules(p: ProjectFileParser,): void {
     p.pattern(
       ["_alertlevels", "!alertLevelDefinitions",],
       function (this: ProjectFileParser,): unknown {
-        const defs = this.val[1] as AlertLevelTuple[];
+        const defs = this.val[1] as AlertLevel[];
         if (defs.length < 2) {
           this.error(
             "too_few_alert_levels",
@@ -165,17 +170,17 @@ export function registerProjectRules(p: ProjectFileParser,): void {
         const levels = alertLevels(this,);
         levels.length = 0;
         for (const level of defs) {
-          if (levels.some((l,) => l[0] === level[0])) {
+          if (levels.some((l,) => l.id === level.id)) {
             this.error(
               "alert_level_redef",
-              `Alert level '${level[0]}' has been defined multiple times.`,
+              `Alert level '${level.id}' has been defined multiple times.`,
               this.sourceFileInfo[1] ?? null,
             );
           }
-          if (levels.some((l,) => l[1] === level[1])) {
+          if (levels.some((l,) => l.name === level.name)) {
             this.error(
               "alert_name_redef",
-              `Alert level name '${level[1]}' has been defined multiple ` +
+              `Alert level name '${level.name}' has been defined multiple ` +
                 "times.",
               this.sourceFileInfo[1] ?? null,
             );
@@ -785,17 +790,19 @@ export function registerProjectRules(p: ProjectFileParser,): void {
     p.pattern(
       ["$ID",],
       function (this: ProjectFileParser,): unknown {
+        // Ruby (TjpSyntaxRules.rb:199-208): devolve o ÍNDICE do nível
+        // (`indexById`) — é o número que JournalEntry#alertLevel guarda.
         const levels = alertLevels(this,);
-        const level = levels.find((l,) => l[0] === this.val[0]) ?? null;
-        if (!level) {
+        const index = alertLevelIndexById(levels, String(this.val[0],),);
+        if (index === null) {
           this.error(
             "bad_alert",
             `Unknown alert level ${String(this.val[0],)}. Must be one of ` +
-              levels.map((l,) => l[0]).join(", ",),
+              alertLevelIds(levels,).join(", ",),
             this.sourceFileInfo[0] ?? null,
           );
         }
-        return level;
+        return index ?? 0;
       },
     );
     p.arg(
@@ -809,7 +816,11 @@ export function registerProjectRules(p: ProjectFileParser,): void {
     p.pattern(
       ["$ID", "$STRING", "!color",],
       function (this: ProjectFileParser,): unknown {
-        return [this.val[0], this.val[1], this.val[2],];
+        return {
+          id: String(this.val[0],),
+          name: String(this.val[1],),
+          color: String(this.val[2],),
+        } satisfies AlertLevel;
       },
     );
     p.arg(0, "ID", "A unique ID for the alert level",);

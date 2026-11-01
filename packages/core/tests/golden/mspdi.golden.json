@@ -1,0 +1,2301 @@
+{
+  "cases": [
+    {
+      "file": "packages/core/tests/fixtures/ext/14c-mspdi.tjp",
+      "report": "MS Project",
+      "tz": "UTC",
+      "error": null,
+      "project": {
+        "tag": "Project",
+        "text": null,
+        "children": [
+          {
+            "tag": "SaveVersion",
+            "text": "14",
+            "children": []
+          },
+          {
+            "tag": "Name",
+            "text": "MS Project.xml",
+            "children": []
+          },
+          {
+            "tag": "ScheduleFromStart",
+            "text": "1",
+            "children": []
+          },
+          {
+            "tag": "StartDate",
+            "text": "2026-02-02T00:00:00",
+            "children": []
+          },
+          {
+            "tag": "FinishDate",
+            "text": "2026-04-30T00:00:00",
+            "children": []
+          },
+          {
+            "tag": "DefaultStartTime",
+            "text": "09:00:00",
+            "children": []
+          },
+          {
+            "tag": "DefaultFinishTime",
+            "text": "17:00:00",
+            "children": []
+          },
+          {
+            "tag": "CalendarUID",
+            "text": "1",
+            "children": []
+          },
+          {
+            "tag": "MinutesPerDay",
+            "text": "480",
+            "children": []
+          },
+          {
+            "tag": "MinutesPerWeek",
+            "text": "2100",
+            "children": []
+          },
+          {
+            "tag": "DaysPerMonth",
+            "text": "21.726166666666668",
+            "children": []
+          },
+          {
+            "tag": "WorkFormat",
+            "text": "3",
+            "children": []
+          },
+          {
+            "tag": "NewTasksAreManual",
+            "text": "1",
+            "children": []
+          },
+          {
+            "tag": "SpreadPercentComplete",
+            "text": "0",
+            "children": []
+          },
+          {
+            "tag": "StandardRate",
+            "text": "0.0",
+            "children": []
+          },
+          {
+            "tag": "OvertimeRate",
+            "text": "0.0",
+            "children": []
+          },
+          {
+            "tag": "CurrencySymbol",
+            "text": "EUR",
+            "children": []
+          },
+          {
+            "tag": "CurrencyCode",
+            "text": "EUR",
+            "children": []
+          },
+          {
+            "tag": "Calendars",
+            "text": null,
+            "children": [
+              {
+                "tag": "Calendar",
+                "text": null,
+                "children": [
+                  {
+                    "tag": "UID",
+                    "text": "0",
+                    "children": []
+                  },
+                  {
+                    "tag": "Name",
+                    "text": "Standard",
+                    "children": []
+                  },
+                  {
+                    "tag": "IsBaseCalendar",
+                    "text": "1",
+                    "children": []
+                  },
+                  {
+                    "tag": "BaseCalendarUID",
+                    "text": "-1",
+                    "children": []
+                  },
+                  {
+                    "tag": "WeekDays",
+                    "text": null,
+                    "children": [
+                      {
+                        "tag": "WeekDay",
+                        "text": null,
+                        "children": [
+                          {
+                            "tag": "DayType",
+                            "text": "1",
+                            "children": []
+                          },
+                          {
+                            "tag": "DayWorking",
+                            "text": "0",
+                            "children": []
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "WeekDay",
+                        "text": null,
+                        "children": [
+                          {
+                            "tag": "DayType",
+                            "text": "2",
+                            "children": []
+                          },
+                          {
+                            "tag": "DayWorking",
+                            "text": "1",
+                            "children": []
+                          },
+                          {
+                            "tag": "WorkingTimes",
+                            "text": null,
+                            "children": [
+                              {
+                                "tag": "WorkingTime",
+                                "text": null,
+                                "children": [
+                                  {
+                                    "tag": "FromTime",
+                                    "text": "09:00:00",
+                                    "children": []
+                                  },
+                                  {
+                                    "tag": "ToTime",
+                                    "text": "12:00:00",
+                                    "children": []
+                                  }
+                                ]
+                              },
+                              {
+                                "tag": "WorkingTime",
+                                "text": null,
+                                "children": [
+                                  {
+                                    "tag": "FromTime",
+                                    "text": "13:00:00",
+                                    "children": []
+                                  },
+                                  {
+                                    "tag": "ToTime",
+                                    "text": "17:00:00",
+                                    "children": []
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "WeekDay",
+                        "text": null,
+                        "children": [
+                          {
+                            "tag": "DayType",
+                            "text": "3",
+                            "children": []
+                          },
+                          {
+                            "tag": "DayWorking",
+                            "text": "1",
+                            "children": []
+                          },
+                          {
+                            "tag": "WorkingTimes",
+                            "text": null,
+                            "children": [
+                              {
+                                "tag": "WorkingTime",
+                                "text": null,
+                                "children": [
+                                  {
+                                    "tag": "FromTime",
+                                    "text": "09:00:00",
+                                    "children": []
+                                  },
+                                  {
+                                    "tag": "ToTime",
+                                    "text": "12:00:00",
+                                    "children": []
+                                  }
+                                ]
+                              },
+                              {
+                                "tag": "WorkingTime",
+                                "text": null,
+                                "children": [
+                                  {
+                                    "tag": "FromTime",
+                                    "text": "13:00:00",
+                                    "children": []
+                                  },
+                                  {
+                                    "tag": "ToTime",
+                                    "text": "17:00:00",
+                                    "children": []
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "WeekDay",
+                        "text": null,
+                        "children": [
+                          {
+                            "tag": "DayType",
+                            "text": "4",
+                            "children": []
+                          },
+                          {
+                            "tag": "DayWorking",
+                            "text": "1",
+                            "children": []
+                          },
+                          {
+                            "tag": "WorkingTimes",
+                            "text": null,
+                            "children": [
+                              {
+                                "tag": "WorkingTime",
+                                "text": null,
+                                "children": [
+                                  {
+                                    "tag": "FromTime",
+                                    "text": "09:00:00",
+                                    "children": []
+                                  },
+                                  {
+                                    "tag": "ToTime",
+                                    "text": "12:00:00",
+                                    "children": []
+                                  }
+                                ]
+                              },
+                              {
+                                "tag": "WorkingTime",
+                                "text": null,
+                                "children": [
+                                  {
+                                    "tag": "FromTime",
+                                    "text": "13:00:00",
+                                    "children": []
+                                  },
+                                  {
+                                    "tag": "ToTime",
+                                    "text": "17:00:00",
+                                    "children": []
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "WeekDay",
+                        "text": null,
+                        "children": [
+                          {
+                            "tag": "DayType",
+                            "text": "5",
+                            "children": []
+                          },
+                          {
+                            "tag": "DayWorking",
+                            "text": "1",
+                            "children": []
+                          },
+                          {
+                            "tag": "WorkingTimes",
+                            "text": null,
+                            "children": [
+                              {
+                                "tag": "WorkingTime",
+                                "text": null,
+                                "children": [
+                                  {
+                                    "tag": "FromTime",
+                                    "text": "09:00:00",
+                                    "children": []
+                                  },
+                                  {
+                                    "tag": "ToTime",
+                                    "text": "12:00:00",
+                                    "children": []
+                                  }
+                                ]
+                              },
+                              {
+                                "tag": "WorkingTime",
+                                "text": null,
+                                "children": [
+                                  {
+                                    "tag": "FromTime",
+                                    "text": "13:00:00",
+                                    "children": []
+                                  },
+                                  {
+                                    "tag": "ToTime",
+                                    "text": "17:00:00",
+                                    "children": []
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "WeekDay",
+                        "text": null,
+                        "children": [
+                          {
+                            "tag": "DayType",
+                            "text": "6",
+                            "children": []
+                          },
+                          {
+                            "tag": "DayWorking",
+                            "text": "1",
+                            "children": []
+                          },
+                          {
+                            "tag": "WorkingTimes",
+                            "text": null,
+                            "children": [
+                              {
+                                "tag": "WorkingTime",
+                                "text": null,
+                                "children": [
+                                  {
+                                    "tag": "FromTime",
+                                    "text": "09:00:00",
+                                    "children": []
+                                  },
+                                  {
+                                    "tag": "ToTime",
+                                    "text": "12:00:00",
+                                    "children": []
+                                  }
+                                ]
+                              },
+                              {
+                                "tag": "WorkingTime",
+                                "text": null,
+                                "children": [
+                                  {
+                                    "tag": "FromTime",
+                                    "text": "13:00:00",
+                                    "children": []
+                                  },
+                                  {
+                                    "tag": "ToTime",
+                                    "text": "17:00:00",
+                                    "children": []
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "WeekDay",
+                        "text": null,
+                        "children": [
+                          {
+                            "tag": "DayType",
+                            "text": "7",
+                            "children": []
+                          },
+                          {
+                            "tag": "DayWorking",
+                            "text": "0",
+                            "children": []
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "Calendar",
+                "text": null,
+                "children": [
+                  {
+                    "tag": "UID",
+                    "text": "1",
+                    "children": []
+                  },
+                  {
+                    "tag": "Name",
+                    "text": "Calendar Alice",
+                    "children": []
+                  },
+                  {
+                    "tag": "IsBaseCalendar",
+                    "text": "1",
+                    "children": []
+                  },
+                  {
+                    "tag": "BaseCalendarUID",
+                    "text": "-1",
+                    "children": []
+                  },
+                  {
+                    "tag": "WeekDays",
+                    "text": null,
+                    "children": [
+                      {
+                        "tag": "WeekDay",
+                        "text": null,
+                        "children": [
+                          {
+                            "tag": "DayType",
+                            "text": "1",
+                            "children": []
+                          },
+                          {
+                            "tag": "DayWorking",
+                            "text": "0",
+                            "children": []
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "WeekDay",
+                        "text": null,
+                        "children": [
+                          {
+                            "tag": "DayType",
+                            "text": "2",
+                            "children": []
+                          },
+                          {
+                            "tag": "DayWorking",
+                            "text": "1",
+                            "children": []
+                          },
+                          {
+                            "tag": "WorkingTimes",
+                            "text": null,
+                            "children": [
+                              {
+                                "tag": "WorkingTime",
+                                "text": null,
+                                "children": [
+                                  {
+                                    "tag": "FromTime",
+                                    "text": "09:00:00",
+                                    "children": []
+                                  },
+                                  {
+                                    "tag": "ToTime",
+                                    "text": "12:00:00",
+                                    "children": []
+                                  }
+                                ]
+                              },
+                              {
+                                "tag": "WorkingTime",
+                                "text": null,
+                                "children": [
+                                  {
+                                    "tag": "FromTime",
+                                    "text": "13:00:00",
+                                    "children": []
+                                  },
+                                  {
+                                    "tag": "ToTime",
+                                    "text": "17:00:00",
+                                    "children": []
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "WeekDay",
+                        "text": null,
+                        "children": [
+                          {
+                            "tag": "DayType",
+                            "text": "3",
+                            "children": []
+                          },
+                          {
+                            "tag": "DayWorking",
+                            "text": "1",
+                            "children": []
+                          },
+                          {
+                            "tag": "WorkingTimes",
+                            "text": null,
+                            "children": [
+                              {
+                                "tag": "WorkingTime",
+                                "text": null,
+                                "children": [
+                                  {
+                                    "tag": "FromTime",
+                                    "text": "09:00:00",
+                                    "children": []
+                                  },
+                                  {
+                                    "tag": "ToTime",
+                                    "text": "12:00:00",
+                                    "children": []
+                                  }
+                                ]
+                              },
+                              {
+                                "tag": "WorkingTime",
+                                "text": null,
+                                "children": [
+                                  {
+                                    "tag": "FromTime",
+                                    "text": "13:00:00",
+                                    "children": []
+                                  },
+                                  {
+                                    "tag": "ToTime",
+                                    "text": "17:00:00",
+                                    "children": []
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "WeekDay",
+                        "text": null,
+                        "children": [
+                          {
+                            "tag": "DayType",
+                            "text": "4",
+                            "children": []
+                          },
+                          {
+                            "tag": "DayWorking",
+                            "text": "1",
+                            "children": []
+                          },
+                          {
+                            "tag": "WorkingTimes",
+                            "text": null,
+                            "children": [
+                              {
+                                "tag": "WorkingTime",
+                                "text": null,
+                                "children": [
+                                  {
+                                    "tag": "FromTime",
+                                    "text": "09:00:00",
+                                    "children": []
+                                  },
+                                  {
+                                    "tag": "ToTime",
+                                    "text": "12:00:00",
+                                    "children": []
+                                  }
+                                ]
+                              },
+                              {
+                                "tag": "WorkingTime",
+                                "text": null,
+                                "children": [
+                                  {
+                                    "tag": "FromTime",
+                                    "text": "13:00:00",
+                                    "children": []
+                                  },
+                                  {
+                                    "tag": "ToTime",
+                                    "text": "17:00:00",
+                                    "children": []
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "WeekDay",
+                        "text": null,
+                        "children": [
+                          {
+                            "tag": "DayType",
+                            "text": "5",
+                            "children": []
+                          },
+                          {
+                            "tag": "DayWorking",
+                            "text": "1",
+                            "children": []
+                          },
+                          {
+                            "tag": "WorkingTimes",
+                            "text": null,
+                            "children": [
+                              {
+                                "tag": "WorkingTime",
+                                "text": null,
+                                "children": [
+                                  {
+                                    "tag": "FromTime",
+                                    "text": "09:00:00",
+                                    "children": []
+                                  },
+                                  {
+                                    "tag": "ToTime",
+                                    "text": "12:00:00",
+                                    "children": []
+                                  }
+                                ]
+                              },
+                              {
+                                "tag": "WorkingTime",
+                                "text": null,
+                                "children": [
+                                  {
+                                    "tag": "FromTime",
+                                    "text": "13:00:00",
+                                    "children": []
+                                  },
+                                  {
+                                    "tag": "ToTime",
+                                    "text": "17:00:00",
+                                    "children": []
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "WeekDay",
+                        "text": null,
+                        "children": [
+                          {
+                            "tag": "DayType",
+                            "text": "6",
+                            "children": []
+                          },
+                          {
+                            "tag": "DayWorking",
+                            "text": "1",
+                            "children": []
+                          },
+                          {
+                            "tag": "WorkingTimes",
+                            "text": null,
+                            "children": [
+                              {
+                                "tag": "WorkingTime",
+                                "text": null,
+                                "children": [
+                                  {
+                                    "tag": "FromTime",
+                                    "text": "09:00:00",
+                                    "children": []
+                                  },
+                                  {
+                                    "tag": "ToTime",
+                                    "text": "12:00:00",
+                                    "children": []
+                                  }
+                                ]
+                              },
+                              {
+                                "tag": "WorkingTime",
+                                "text": null,
+                                "children": [
+                                  {
+                                    "tag": "FromTime",
+                                    "text": "13:00:00",
+                                    "children": []
+                                  },
+                                  {
+                                    "tag": "ToTime",
+                                    "text": "17:00:00",
+                                    "children": []
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "WeekDay",
+                        "text": null,
+                        "children": [
+                          {
+                            "tag": "DayType",
+                            "text": "7",
+                            "children": []
+                          },
+                          {
+                            "tag": "DayWorking",
+                            "text": "0",
+                            "children": []
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "Calendar",
+                "text": null,
+                "children": [
+                  {
+                    "tag": "UID",
+                    "text": "2",
+                    "children": []
+                  },
+                  {
+                    "tag": "Name",
+                    "text": "Calendar Bob",
+                    "children": []
+                  },
+                  {
+                    "tag": "IsBaseCalendar",
+                    "text": "1",
+                    "children": []
+                  },
+                  {
+                    "tag": "BaseCalendarUID",
+                    "text": "-1",
+                    "children": []
+                  },
+                  {
+                    "tag": "WeekDays",
+                    "text": null,
+                    "children": [
+                      {
+                        "tag": "WeekDay",
+                        "text": null,
+                        "children": [
+                          {
+                            "tag": "DayType",
+                            "text": "1",
+                            "children": []
+                          },
+                          {
+                            "tag": "DayWorking",
+                            "text": "0",
+                            "children": []
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "WeekDay",
+                        "text": null,
+                        "children": [
+                          {
+                            "tag": "DayType",
+                            "text": "2",
+                            "children": []
+                          },
+                          {
+                            "tag": "DayWorking",
+                            "text": "1",
+                            "children": []
+                          },
+                          {
+                            "tag": "WorkingTimes",
+                            "text": null,
+                            "children": [
+                              {
+                                "tag": "WorkingTime",
+                                "text": null,
+                                "children": [
+                                  {
+                                    "tag": "FromTime",
+                                    "text": "09:00:00",
+                                    "children": []
+                                  },
+                                  {
+                                    "tag": "ToTime",
+                                    "text": "13:00:00",
+                                    "children": []
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "WeekDay",
+                        "text": null,
+                        "children": [
+                          {
+                            "tag": "DayType",
+                            "text": "3",
+                            "children": []
+                          },
+                          {
+                            "tag": "DayWorking",
+                            "text": "1",
+                            "children": []
+                          },
+                          {
+                            "tag": "WorkingTimes",
+                            "text": null,
+                            "children": [
+                              {
+                                "tag": "WorkingTime",
+                                "text": null,
+                                "children": [
+                                  {
+                                    "tag": "FromTime",
+                                    "text": "09:00:00",
+                                    "children": []
+                                  },
+                                  {
+                                    "tag": "ToTime",
+                                    "text": "13:00:00",
+                                    "children": []
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "WeekDay",
+                        "text": null,
+                        "children": [
+                          {
+                            "tag": "DayType",
+                            "text": "4",
+                            "children": []
+                          },
+                          {
+                            "tag": "DayWorking",
+                            "text": "1",
+                            "children": []
+                          },
+                          {
+                            "tag": "WorkingTimes",
+                            "text": null,
+                            "children": [
+                              {
+                                "tag": "WorkingTime",
+                                "text": null,
+                                "children": [
+                                  {
+                                    "tag": "FromTime",
+                                    "text": "09:00:00",
+                                    "children": []
+                                  },
+                                  {
+                                    "tag": "ToTime",
+                                    "text": "13:00:00",
+                                    "children": []
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "WeekDay",
+                        "text": null,
+                        "children": [
+                          {
+                            "tag": "DayType",
+                            "text": "5",
+                            "children": []
+                          },
+                          {
+                            "tag": "DayWorking",
+                            "text": "0",
+                            "children": []
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "WeekDay",
+                        "text": null,
+                        "children": [
+                          {
+                            "tag": "DayType",
+                            "text": "6",
+                            "children": []
+                          },
+                          {
+                            "tag": "DayWorking",
+                            "text": "0",
+                            "children": []
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "WeekDay",
+                        "text": null,
+                        "children": [
+                          {
+                            "tag": "DayType",
+                            "text": "7",
+                            "children": []
+                          },
+                          {
+                            "tag": "DayWorking",
+                            "text": "0",
+                            "children": []
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "Tasks",
+            "text": null,
+            "children": [
+              {
+                "tag": "Task",
+                "text": null,
+                "children": [
+                  {
+                    "tag": "UID",
+                    "text": "1",
+                    "children": []
+                  },
+                  {
+                    "tag": "ID",
+                    "text": "1",
+                    "children": []
+                  },
+                  {
+                    "tag": "Active",
+                    "text": "1",
+                    "children": []
+                  },
+                  {
+                    "tag": "Type",
+                    "text": "0",
+                    "children": []
+                  },
+                  {
+                    "tag": "IsNull",
+                    "text": "0",
+                    "children": []
+                  },
+                  {
+                    "tag": "Name",
+                    "text": "Fase 1",
+                    "children": []
+                  },
+                  {
+                    "tag": "WBS",
+                    "text": "1",
+                    "children": []
+                  },
+                  {
+                    "tag": "OutlineNumber",
+                    "text": "1",
+                    "children": []
+                  },
+                  {
+                    "tag": "OutlineLevel",
+                    "text": "0",
+                    "children": []
+                  },
+                  {
+                    "tag": "Priority",
+                    "text": "500",
+                    "children": []
+                  },
+                  {
+                    "tag": "Start",
+                    "text": "2026-02-02T09:00:00",
+                    "children": []
+                  },
+                  {
+                    "tag": "Finish",
+                    "text": "2026-02-20T00:00:00",
+                    "children": []
+                  },
+                  {
+                    "tag": "ManualStart",
+                    "text": "2026-02-02T09:00:00",
+                    "children": []
+                  },
+                  {
+                    "tag": "ManualFinish",
+                    "text": "2026-02-20T00:00:00",
+                    "children": []
+                  },
+                  {
+                    "tag": "ActualStart",
+                    "text": "2026-02-02T09:00:00",
+                    "children": []
+                  },
+                  {
+                    "tag": "ActualFinish",
+                    "text": "2026-02-20T00:00:00",
+                    "children": []
+                  },
+                  {
+                    "tag": "ConstraintType",
+                    "text": "2",
+                    "children": []
+                  },
+                  {
+                    "tag": "ConstraintDate",
+                    "text": "2026-02-02T09:00:00",
+                    "children": []
+                  },
+                  {
+                    "tag": "FixedCostAccrual",
+                    "text": "3",
+                    "children": []
+                  },
+                  {
+                    "tag": "Manual",
+                    "text": "0",
+                    "children": []
+                  },
+                  {
+                    "tag": "Summary",
+                    "text": "1",
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "tag": "Task",
+                "text": null,
+                "children": [
+                  {
+                    "tag": "UID",
+                    "text": "2",
+                    "children": []
+                  },
+                  {
+                    "tag": "ID",
+                    "text": "2",
+                    "children": []
+                  },
+                  {
+                    "tag": "Active",
+                    "text": "1",
+                    "children": []
+                  },
+                  {
+                    "tag": "Type",
+                    "text": "0",
+                    "children": []
+                  },
+                  {
+                    "tag": "IsNull",
+                    "text": "0",
+                    "children": []
+                  },
+                  {
+                    "tag": "Name",
+                    "text": "Design",
+                    "children": []
+                  },
+                  {
+                    "tag": "WBS",
+                    "text": "1.1",
+                    "children": []
+                  },
+                  {
+                    "tag": "OutlineNumber",
+                    "text": "1.1",
+                    "children": []
+                  },
+                  {
+                    "tag": "OutlineLevel",
+                    "text": "1",
+                    "children": []
+                  },
+                  {
+                    "tag": "Priority",
+                    "text": "500",
+                    "children": []
+                  },
+                  {
+                    "tag": "Start",
+                    "text": "2026-02-02T09:00:00",
+                    "children": []
+                  },
+                  {
+                    "tag": "Finish",
+                    "text": "2026-02-06T14:00:00",
+                    "children": []
+                  },
+                  {
+                    "tag": "ManualStart",
+                    "text": "2026-02-02T09:00:00",
+                    "children": []
+                  },
+                  {
+                    "tag": "ManualFinish",
+                    "text": "2026-02-06T14:00:00",
+                    "children": []
+                  },
+                  {
+                    "tag": "ActualStart",
+                    "text": "2026-02-02T09:00:00",
+                    "children": []
+                  },
+                  {
+                    "tag": "ActualFinish",
+                    "text": "2026-02-06T14:00:00",
+                    "children": []
+                  },
+                  {
+                    "tag": "ConstraintType",
+                    "text": "2",
+                    "children": []
+                  },
+                  {
+                    "tag": "ConstraintDate",
+                    "text": "2026-02-02T09:00:00",
+                    "children": []
+                  },
+                  {
+                    "tag": "FixedCostAccrual",
+                    "text": "3",
+                    "children": []
+                  },
+                  {
+                    "tag": "Notes",
+                    "text": "Detalhar a arquitetura.",
+                    "children": []
+                  },
+                  {
+                    "tag": "Manual",
+                    "text": "1",
+                    "children": []
+                  },
+                  {
+                    "tag": "Summary",
+                    "text": "0",
+                    "children": []
+                  },
+                  {
+                    "tag": "Estimated",
+                    "text": "0",
+                    "children": []
+                  },
+                  {
+                    "tag": "DurationFormat",
+                    "text": "7",
+                    "children": []
+                  },
+                  {
+                    "tag": "Duration",
+                    "text": "PT101H0M0S",
+                    "children": []
+                  },
+                  {
+                    "tag": "Work",
+                    "text": "PT101H0M0S",
+                    "children": []
+                  },
+                  {
+                    "tag": "Milestone",
+                    "text": "0",
+                    "children": []
+                  },
+                  {
+                    "tag": "EffortDriven",
+                    "text": "1",
+                    "children": []
+                  },
+                  {
+                    "tag": "PercentComplete",
+                    "text": "0",
+                    "children": []
+                  },
+                  {
+                    "tag": "PercentWorkComplete",
+                    "text": "0",
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "tag": "Task",
+                "text": null,
+                "children": [
+                  {
+                    "tag": "UID",
+                    "text": "3",
+                    "children": []
+                  },
+                  {
+                    "tag": "ID",
+                    "text": "3",
+                    "children": []
+                  },
+                  {
+                    "tag": "Active",
+                    "text": "1",
+                    "children": []
+                  },
+                  {
+                    "tag": "Type",
+                    "text": "0",
+                    "children": []
+                  },
+                  {
+                    "tag": "IsNull",
+                    "text": "0",
+                    "children": []
+                  },
+                  {
+                    "tag": "Name",
+                    "text": "Build",
+                    "children": []
+                  },
+                  {
+                    "tag": "WBS",
+                    "text": "1.2",
+                    "children": []
+                  },
+                  {
+                    "tag": "OutlineNumber",
+                    "text": "1.2",
+                    "children": []
+                  },
+                  {
+                    "tag": "OutlineLevel",
+                    "text": "1",
+                    "children": []
+                  },
+                  {
+                    "tag": "Priority",
+                    "text": "500",
+                    "children": []
+                  },
+                  {
+                    "tag": "Start",
+                    "text": "2026-02-09T09:00:00",
+                    "children": []
+                  },
+                  {
+                    "tag": "Finish",
+                    "text": "2026-02-18T13:00:00",
+                    "children": []
+                  },
+                  {
+                    "tag": "ManualStart",
+                    "text": "2026-02-09T09:00:00",
+                    "children": []
+                  },
+                  {
+                    "tag": "ManualFinish",
+                    "text": "2026-02-18T13:00:00",
+                    "children": []
+                  },
+                  {
+                    "tag": "ActualStart",
+                    "text": "2026-02-09T09:00:00",
+                    "children": []
+                  },
+                  {
+                    "tag": "ActualFinish",
+                    "text": "2026-02-18T13:00:00",
+                    "children": []
+                  },
+                  {
+                    "tag": "ConstraintType",
+                    "text": "2",
+                    "children": []
+                  },
+                  {
+                    "tag": "ConstraintDate",
+                    "text": "2026-02-09T09:00:00",
+                    "children": []
+                  },
+                  {
+                    "tag": "FixedCostAccrual",
+                    "text": "3",
+                    "children": []
+                  },
+                  {
+                    "tag": "Manual",
+                    "text": "1",
+                    "children": []
+                  },
+                  {
+                    "tag": "Summary",
+                    "text": "0",
+                    "children": []
+                  },
+                  {
+                    "tag": "Estimated",
+                    "text": "0",
+                    "children": []
+                  },
+                  {
+                    "tag": "DurationFormat",
+                    "text": "7",
+                    "children": []
+                  },
+                  {
+                    "tag": "Duration",
+                    "text": "PT220H0M0S",
+                    "children": []
+                  },
+                  {
+                    "tag": "Work",
+                    "text": "PT220H0M0S",
+                    "children": []
+                  },
+                  {
+                    "tag": "Milestone",
+                    "text": "0",
+                    "children": []
+                  },
+                  {
+                    "tag": "EffortDriven",
+                    "text": "1",
+                    "children": []
+                  },
+                  {
+                    "tag": "PercentComplete",
+                    "text": "0",
+                    "children": []
+                  },
+                  {
+                    "tag": "PercentWorkComplete",
+                    "text": "0",
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "tag": "Task",
+                "text": null,
+                "children": [
+                  {
+                    "tag": "UID",
+                    "text": "4",
+                    "children": []
+                  },
+                  {
+                    "tag": "ID",
+                    "text": "4",
+                    "children": []
+                  },
+                  {
+                    "tag": "Active",
+                    "text": "1",
+                    "children": []
+                  },
+                  {
+                    "tag": "Type",
+                    "text": "0",
+                    "children": []
+                  },
+                  {
+                    "tag": "IsNull",
+                    "text": "0",
+                    "children": []
+                  },
+                  {
+                    "tag": "Name",
+                    "text": "Entrega",
+                    "children": []
+                  },
+                  {
+                    "tag": "WBS",
+                    "text": "1.3",
+                    "children": []
+                  },
+                  {
+                    "tag": "OutlineNumber",
+                    "text": "1.3",
+                    "children": []
+                  },
+                  {
+                    "tag": "OutlineLevel",
+                    "text": "1",
+                    "children": []
+                  },
+                  {
+                    "tag": "Priority",
+                    "text": "500",
+                    "children": []
+                  },
+                  {
+                    "tag": "Start",
+                    "text": "2026-02-20T00:00:00",
+                    "children": []
+                  },
+                  {
+                    "tag": "Finish",
+                    "text": "2026-02-20T00:00:00",
+                    "children": []
+                  },
+                  {
+                    "tag": "ManualStart",
+                    "text": "2026-02-20T00:00:00",
+                    "children": []
+                  },
+                  {
+                    "tag": "ManualFinish",
+                    "text": "2026-02-20T00:00:00",
+                    "children": []
+                  },
+                  {
+                    "tag": "ActualStart",
+                    "text": "2026-02-20T00:00:00",
+                    "children": []
+                  },
+                  {
+                    "tag": "ActualFinish",
+                    "text": "2026-02-20T00:00:00",
+                    "children": []
+                  },
+                  {
+                    "tag": "ConstraintType",
+                    "text": "2",
+                    "children": []
+                  },
+                  {
+                    "tag": "ConstraintDate",
+                    "text": "2026-02-20T00:00:00",
+                    "children": []
+                  },
+                  {
+                    "tag": "FixedCostAccrual",
+                    "text": "3",
+                    "children": []
+                  },
+                  {
+                    "tag": "Manual",
+                    "text": "1",
+                    "children": []
+                  },
+                  {
+                    "tag": "Summary",
+                    "text": "0",
+                    "children": []
+                  },
+                  {
+                    "tag": "Estimated",
+                    "text": "0",
+                    "children": []
+                  },
+                  {
+                    "tag": "DurationFormat",
+                    "text": "7",
+                    "children": []
+                  },
+                  {
+                    "tag": "Milestone",
+                    "text": "1",
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "Resources",
+            "text": null,
+            "children": [
+              {
+                "tag": "Resource",
+                "text": null,
+                "children": [
+                  {
+                    "tag": "UID",
+                    "text": "2",
+                    "children": []
+                  },
+                  {
+                    "tag": "Type",
+                    "text": "1",
+                    "children": []
+                  },
+                  {
+                    "tag": "Name",
+                    "text": "Alice",
+                    "children": []
+                  },
+                  {
+                    "tag": "Initials",
+                    "text": "alice",
+                    "children": []
+                  },
+                  {
+                    "tag": "StandardRate",
+                    "text": "0.0",
+                    "children": []
+                  },
+                  {
+                    "tag": "OvertimeRate",
+                    "text": "0.0",
+                    "children": []
+                  },
+                  {
+                    "tag": "MaxUnits",
+                    "text": "1.0",
+                    "children": []
+                  },
+                  {
+                    "tag": "EmailAddress",
+                    "text": "alice@example.com",
+                    "children": []
+                  },
+                  {
+                    "tag": "Group",
+                    "text": "Equipe",
+                    "children": []
+                  },
+                  {
+                    "tag": "CalendarUID",
+                    "text": "1",
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "tag": "Resource",
+                "text": null,
+                "children": [
+                  {
+                    "tag": "UID",
+                    "text": "3",
+                    "children": []
+                  },
+                  {
+                    "tag": "Type",
+                    "text": "1",
+                    "children": []
+                  },
+                  {
+                    "tag": "Name",
+                    "text": "Bob",
+                    "children": []
+                  },
+                  {
+                    "tag": "Initials",
+                    "text": "bob",
+                    "children": []
+                  },
+                  {
+                    "tag": "StandardRate",
+                    "text": "0.0",
+                    "children": []
+                  },
+                  {
+                    "tag": "OvertimeRate",
+                    "text": "0.0",
+                    "children": []
+                  },
+                  {
+                    "tag": "MaxUnits",
+                    "text": "1.0",
+                    "children": []
+                  },
+                  {
+                    "tag": "Group",
+                    "text": "Equipe",
+                    "children": []
+                  },
+                  {
+                    "tag": "CalendarUID",
+                    "text": "2",
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "Assignments",
+            "text": null,
+            "children": [
+              {
+                "tag": "Assignment",
+                "text": null,
+                "children": [
+                  {
+                    "tag": "UID",
+                    "text": "0",
+                    "children": []
+                  },
+                  {
+                    "tag": "TaskUID",
+                    "text": "2",
+                    "children": []
+                  },
+                  {
+                    "tag": "ResourceUID",
+                    "text": "2",
+                    "children": []
+                  },
+                  {
+                    "tag": "Units",
+                    "text": "1.0",
+                    "children": []
+                  },
+                  {
+                    "tag": "start",
+                    "text": "2026-02-02T09:00:00",
+                    "children": []
+                  },
+                  {
+                    "tag": "finish",
+                    "text": "2026-02-06T14:00:00",
+                    "children": []
+                  },
+                  {
+                    "tag": "Cost",
+                    "text": "100.0",
+                    "children": []
+                  },
+                  {
+                    "tag": "WorkContour",
+                    "text": "8",
+                    "children": []
+                  },
+                  {
+                    "tag": "PercentWorkComplete",
+                    "text": "0",
+                    "children": []
+                  },
+                  {
+                    "tag": "TimephasedData",
+                    "text": null,
+                    "children": [
+                      {
+                        "tag": "UID",
+                        "text": "0",
+                        "children": []
+                      },
+                      {
+                        "tag": "Type",
+                        "text": "1",
+                        "children": []
+                      },
+                      {
+                        "tag": "Start",
+                        "text": "2026-02-02T09:00:00",
+                        "children": []
+                      },
+                      {
+                        "tag": "Finish",
+                        "text": "2026-02-02T23:59:59",
+                        "children": []
+                      },
+                      {
+                        "tag": "Unit",
+                        "text": "2",
+                        "children": []
+                      },
+                      {
+                        "tag": "Value",
+                        "text": "PT7H0M0S",
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "TimephasedData",
+                    "text": null,
+                    "children": [
+                      {
+                        "tag": "UID",
+                        "text": "0",
+                        "children": []
+                      },
+                      {
+                        "tag": "Type",
+                        "text": "1",
+                        "children": []
+                      },
+                      {
+                        "tag": "Start",
+                        "text": "2026-02-03T00:00:00",
+                        "children": []
+                      },
+                      {
+                        "tag": "Finish",
+                        "text": "2026-02-03T23:59:59",
+                        "children": []
+                      },
+                      {
+                        "tag": "Unit",
+                        "text": "2",
+                        "children": []
+                      },
+                      {
+                        "tag": "Value",
+                        "text": "PT7H0M0S",
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "TimephasedData",
+                    "text": null,
+                    "children": [
+                      {
+                        "tag": "UID",
+                        "text": "0",
+                        "children": []
+                      },
+                      {
+                        "tag": "Type",
+                        "text": "1",
+                        "children": []
+                      },
+                      {
+                        "tag": "Start",
+                        "text": "2026-02-04T00:00:00",
+                        "children": []
+                      },
+                      {
+                        "tag": "Finish",
+                        "text": "2026-02-04T23:59:59",
+                        "children": []
+                      },
+                      {
+                        "tag": "Unit",
+                        "text": "2",
+                        "children": []
+                      },
+                      {
+                        "tag": "Value",
+                        "text": "PT7H0M0S",
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "TimephasedData",
+                    "text": null,
+                    "children": [
+                      {
+                        "tag": "UID",
+                        "text": "0",
+                        "children": []
+                      },
+                      {
+                        "tag": "Type",
+                        "text": "1",
+                        "children": []
+                      },
+                      {
+                        "tag": "Start",
+                        "text": "2026-02-05T00:00:00",
+                        "children": []
+                      },
+                      {
+                        "tag": "Finish",
+                        "text": "2026-02-05T23:59:59",
+                        "children": []
+                      },
+                      {
+                        "tag": "Unit",
+                        "text": "2",
+                        "children": []
+                      },
+                      {
+                        "tag": "Value",
+                        "text": "PT7H0M0S",
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "TimephasedData",
+                    "text": null,
+                    "children": [
+                      {
+                        "tag": "UID",
+                        "text": "0",
+                        "children": []
+                      },
+                      {
+                        "tag": "Type",
+                        "text": "1",
+                        "children": []
+                      },
+                      {
+                        "tag": "Start",
+                        "text": "2026-02-06T00:00:00",
+                        "children": []
+                      },
+                      {
+                        "tag": "Finish",
+                        "text": "2026-02-06T13:59:59",
+                        "children": []
+                      },
+                      {
+                        "tag": "Unit",
+                        "text": "2",
+                        "children": []
+                      },
+                      {
+                        "tag": "Value",
+                        "text": "PT4H0M0S",
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "Assignment",
+                "text": null,
+                "children": [
+                  {
+                    "tag": "UID",
+                    "text": "1",
+                    "children": []
+                  },
+                  {
+                    "tag": "TaskUID",
+                    "text": "3",
+                    "children": []
+                  },
+                  {
+                    "tag": "ResourceUID",
+                    "text": "3",
+                    "children": []
+                  },
+                  {
+                    "tag": "Units",
+                    "text": "1.0",
+                    "children": []
+                  },
+                  {
+                    "tag": "start",
+                    "text": "2026-02-09T09:00:00",
+                    "children": []
+                  },
+                  {
+                    "tag": "finish",
+                    "text": "2026-02-18T13:00:00",
+                    "children": []
+                  },
+                  {
+                    "tag": "Cost",
+                    "text": "100.0",
+                    "children": []
+                  },
+                  {
+                    "tag": "WorkContour",
+                    "text": "8",
+                    "children": []
+                  },
+                  {
+                    "tag": "PercentWorkComplete",
+                    "text": "0",
+                    "children": []
+                  },
+                  {
+                    "tag": "TimephasedData",
+                    "text": null,
+                    "children": [
+                      {
+                        "tag": "UID",
+                        "text": "1",
+                        "children": []
+                      },
+                      {
+                        "tag": "Type",
+                        "text": "1",
+                        "children": []
+                      },
+                      {
+                        "tag": "Start",
+                        "text": "2026-02-09T09:00:00",
+                        "children": []
+                      },
+                      {
+                        "tag": "Finish",
+                        "text": "2026-02-09T23:59:59",
+                        "children": []
+                      },
+                      {
+                        "tag": "Unit",
+                        "text": "2",
+                        "children": []
+                      },
+                      {
+                        "tag": "Value",
+                        "text": "PT4H0M0S",
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "TimephasedData",
+                    "text": null,
+                    "children": [
+                      {
+                        "tag": "UID",
+                        "text": "1",
+                        "children": []
+                      },
+                      {
+                        "tag": "Type",
+                        "text": "1",
+                        "children": []
+                      },
+                      {
+                        "tag": "Start",
+                        "text": "2026-02-10T00:00:00",
+                        "children": []
+                      },
+                      {
+                        "tag": "Finish",
+                        "text": "2026-02-10T23:59:59",
+                        "children": []
+                      },
+                      {
+                        "tag": "Unit",
+                        "text": "2",
+                        "children": []
+                      },
+                      {
+                        "tag": "Value",
+                        "text": "PT4H0M0S",
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "TimephasedData",
+                    "text": null,
+                    "children": [
+                      {
+                        "tag": "UID",
+                        "text": "1",
+                        "children": []
+                      },
+                      {
+                        "tag": "Type",
+                        "text": "1",
+                        "children": []
+                      },
+                      {
+                        "tag": "Start",
+                        "text": "2026-02-11T00:00:00",
+                        "children": []
+                      },
+                      {
+                        "tag": "Finish",
+                        "text": "2026-02-11T23:59:59",
+                        "children": []
+                      },
+                      {
+                        "tag": "Unit",
+                        "text": "2",
+                        "children": []
+                      },
+                      {
+                        "tag": "Value",
+                        "text": "PT4H0M0S",
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "TimephasedData",
+                    "text": null,
+                    "children": [
+                      {
+                        "tag": "UID",
+                        "text": "1",
+                        "children": []
+                      },
+                      {
+                        "tag": "Type",
+                        "text": "1",
+                        "children": []
+                      },
+                      {
+                        "tag": "Start",
+                        "text": "2026-02-12T00:00:00",
+                        "children": []
+                      },
+                      {
+                        "tag": "Finish",
+                        "text": "2026-02-12T23:59:59",
+                        "children": []
+                      },
+                      {
+                        "tag": "Unit",
+                        "text": "2",
+                        "children": []
+                      },
+                      {
+                        "tag": "Value",
+                        "text": "PT0H0M0S",
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "TimephasedData",
+                    "text": null,
+                    "children": [
+                      {
+                        "tag": "UID",
+                        "text": "1",
+                        "children": []
+                      },
+                      {
+                        "tag": "Type",
+                        "text": "1",
+                        "children": []
+                      },
+                      {
+                        "tag": "Start",
+                        "text": "2026-02-13T00:00:00",
+                        "children": []
+                      },
+                      {
+                        "tag": "Finish",
+                        "text": "2026-02-13T23:59:59",
+                        "children": []
+                      },
+                      {
+                        "tag": "Unit",
+                        "text": "2",
+                        "children": []
+                      },
+                      {
+                        "tag": "Value",
+                        "text": "PT0H0M0S",
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "TimephasedData",
+                    "text": null,
+                    "children": [
+                      {
+                        "tag": "UID",
+                        "text": "1",
+                        "children": []
+                      },
+                      {
+                        "tag": "Type",
+                        "text": "1",
+                        "children": []
+                      },
+                      {
+                        "tag": "Start",
+                        "text": "2026-02-14T00:00:00",
+                        "children": []
+                      },
+                      {
+                        "tag": "Finish",
+                        "text": "2026-02-14T23:59:59",
+                        "children": []
+                      },
+                      {
+                        "tag": "Unit",
+                        "text": "2",
+                        "children": []
+                      },
+                      {
+                        "tag": "Value",
+                        "text": "PT0H0M0S",
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "TimephasedData",
+                    "text": null,
+                    "children": [
+                      {
+                        "tag": "UID",
+                        "text": "1",
+                        "children": []
+                      },
+                      {
+                        "tag": "Type",
+                        "text": "1",
+                        "children": []
+                      },
+                      {
+                        "tag": "Start",
+                        "text": "2026-02-15T00:00:00",
+                        "children": []
+                      },
+                      {
+                        "tag": "Finish",
+                        "text": "2026-02-15T23:59:59",
+                        "children": []
+                      },
+                      {
+                        "tag": "Unit",
+                        "text": "2",
+                        "children": []
+                      },
+                      {
+                        "tag": "Value",
+                        "text": "PT0H0M0S",
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "TimephasedData",
+                    "text": null,
+                    "children": [
+                      {
+                        "tag": "UID",
+                        "text": "1",
+                        "children": []
+                      },
+                      {
+                        "tag": "Type",
+                        "text": "1",
+                        "children": []
+                      },
+                      {
+                        "tag": "Start",
+                        "text": "2026-02-16T00:00:00",
+                        "children": []
+                      },
+                      {
+                        "tag": "Finish",
+                        "text": "2026-02-16T23:59:59",
+                        "children": []
+                      },
+                      {
+                        "tag": "Unit",
+                        "text": "2",
+                        "children": []
+                      },
+                      {
+                        "tag": "Value",
+                        "text": "PT4H0M0S",
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "TimephasedData",
+                    "text": null,
+                    "children": [
+                      {
+                        "tag": "UID",
+                        "text": "1",
+                        "children": []
+                      },
+                      {
+                        "tag": "Type",
+                        "text": "1",
+                        "children": []
+                      },
+                      {
+                        "tag": "Start",
+                        "text": "2026-02-17T00:00:00",
+                        "children": []
+                      },
+                      {
+                        "tag": "Finish",
+                        "text": "2026-02-17T23:59:59",
+                        "children": []
+                      },
+                      {
+                        "tag": "Unit",
+                        "text": "2",
+                        "children": []
+                      },
+                      {
+                        "tag": "Value",
+                        "text": "PT4H0M0S",
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "TimephasedData",
+                    "text": null,
+                    "children": [
+                      {
+                        "tag": "UID",
+                        "text": "1",
+                        "children": []
+                      },
+                      {
+                        "tag": "Type",
+                        "text": "1",
+                        "children": []
+                      },
+                      {
+                        "tag": "Start",
+                        "text": "2026-02-18T00:00:00",
+                        "children": []
+                      },
+                      {
+                        "tag": "Finish",
+                        "text": "2026-02-18T12:59:59",
+                        "children": []
+                      },
+                      {
+                        "tag": "Unit",
+                        "text": "2",
+                        "children": []
+                      },
+                      {
+                        "tag": "Value",
+                        "text": "PT4H0M0S",
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

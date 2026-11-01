@@ -787,9 +787,9 @@ export function registerTaskRules(p: ProjectFileParser,): void {
     p.pattern(
       ["_alert", "!alertLevel",],
       function (this: ProjectFileParser,): unknown {
-        (this.journalEntry as JournalEntry).alertLevel = this.val[1] === null
-          ? 0
-          : 0;
+        // Ruby (TjpSyntaxRules rule_journalEntryAttributes): a regra devolve o
+        // índice numérico do nível (módulo alert-levels, 14C.0.7).
+        (this.journalEntry as JournalEntry).alertLevel = this.val[1] as number;
         return null;
       },
     );

@@ -636,6 +636,10 @@ export class Query {
         return this.project.task(pId,);
       case "Resource":
         return this.project.resource(pId,);
+      case "Material":
+        // Extensão SyntaxMesh (14C.1.20): materiais são "pontos" de query
+        // como tarefas/recursos, com atributos próprios (`unit`, `cost`, …).
+        return this.project.material(pId,);
       default:
         throw new Error(`Unknown property type ${pType}`,);
     }

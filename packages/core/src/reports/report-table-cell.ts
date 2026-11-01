@@ -234,6 +234,25 @@ export class ReportTableCell {
     return columns;
   }
 
+  /** Descritor JSON da célula (extensão SyntaxMesh — 14C.0.3). */
+  toJSON(): unknown {
+    if (this.hidden) return null;
+    // Células especiais (calendários ColumnTable) viram descritor fixo.
+    if (this.special) return { type: "calendar", };
+    let text: string;
+    if (typeof this.text === "string") {
+      text = this.text;
+    } else {
+      text = (this.text as RichTextIntermediate).to_s();
+    }
+    return {
+      text,
+      indent: this.indent ?? 0,
+      alignment: this.alignment,
+      bold: this.bold,
+    };
+  }
+
   private selfcontained(): boolean {
     return !!this.line?.table.selfcontained;
   }
@@ -447,6 +466,19 @@ export class PlaceHolderCell {
 
   to_html(): null {
     return null;
+  }
+
+  /** Descritor JSON: linha embutida (calendário) vira tipo + células. */
+  toJSON(): unknown {
+    const line = this.embeddedLine as unknown as {
+      indentation: number;
+      cells: Array<{ toJSON(): unknown }>;
+    };
+    return {
+      type: "embedded",
+      indent: line.indentation,
+      cells: line.cells.map((c,) => c.toJSON()),
+    };
   }
 }
 

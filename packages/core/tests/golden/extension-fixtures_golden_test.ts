@@ -125,3 +125,56 @@ describe("C4.2 ext fixture: timebasis-branches", () => {
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// 14C.0.11 — fixture base do complemento (materials + diários + relatórios).
+// ---------------------------------------------------------------------------
+describe("14C.0.11 ext fixture: 14c-rdo-budget", () => {
+  it("carrega sem mensagens e registra entidades por índice", () => {
+    const out = parseExt("14c-rdo-budget",);
+    assertEquals(
+      out.messageIds,
+      [],
+      `msgs=${out.messages.map((m,) => `${m.id}:${m.text}`).join(" | ",)}`,
+    );
+    const p = asProject(out,);
+    // Materiais + alocações + charges.
+    assert(p.material("steel",) !== null,);
+    assert(p.material("concrete",) !== null,);
+    const allocs = p.task("phase1",)!.getForScenario(
+      "materialallocations",
+      0,
+    ) as unknown[];
+    assertEquals(allocs.length, 2,);
+    const charges = p.task("phase1",)!.getForScenario(
+      "charge",
+      0,
+    ) as unknown[];
+    assertEquals(charges.length, 1,);
+    // Diários indexados por entidade (14C.0.4).
+    const j = p.journal;
+    assertEquals(j.entries.length, 5,);
+    assertEquals(j.entriesByTask.size, 1,);
+    assertEquals(j.entriesByResource.size, 1,);
+    assertEquals(j.entriesByMaterial.size, 1,);
+    assertEquals(j.entriesByAccount.size, 1,);
+    // Pictures e formato nas entradas.
+    const steel = j.entriesByMaterial.get(p.material("steel",)!,)!;
+    assertEquals(steel[0]!.pictures.length, 2,);
+    assertEquals(steel[0]!.format, "markdown",);
+    assertEquals(steel[0]!.alertLevel, 0,); // green = índice 0
+  });
+
+  it("registra os três relatórios com formats json quando pedido", () => {
+    const p = asProject(parseExt("14c-rdo-budget",),);
+    const tr = p.report("tr",) as Report;
+    assertEquals(tr.get("formats",), ["html", "csv", "json",],);
+    const br = p.report("br",) as Report;
+    assertEquals(br.typeSpec, "breakdownreport",);
+    assertEquals(br.get("groupby",), "account",);
+    const rdo = p.report("rdo",) as Report;
+    assertEquals(rdo.typeSpec, "rdoreport",);
+    assertEquals(rdo.get("maxpictures",), 5,);
+    assertEquals(rdo.get("journalMode",), "journal",);
+  });
+});

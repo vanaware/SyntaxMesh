@@ -543,8 +543,9 @@ TOTAL: ~185
 | 18.17.5 | `TimeSheetSummary` agrega status de material (contagem, alertas) | `sheets/time-sheet-summary.ts` | 1 teste |
 | 18.17.6 | `picture` (e `format`) em `status`: `JournalEntry` do status recebe `pictures`/`format` (modelo C3.3.5); `picture` ausente → comportamento atual inalterado | `sheets/time-sheet-record.ts` | 2 testes |
 | 18.17.7 | **Regressão:** timesheets sem material/picture geram resultado idêntico ao atual | testes existentes | verde |
+| 18.17.8 | **Status sheet lista materiais** (requisito registrado pela Fase 14 Complemento, 14C.1.18): `StatusSheetReport` emite, por tarefa, as alocações de material e os `MaterialScenario.effortdone`/`effortleft` do cenário de tracking — análogo às linhas de recurso de hoje | `reports/status-sheet-report.ts` | 2 testes (fixture 14c com material + status) |
 
-**Critério de aceite do adendo:** um `.tjp`/timesheet pode reportar `work`/`remaining` de material sem quebrar a validação de slots; `status` com `picture` chega ao Journal intacto.
+**Critério de aceite do adendo:** um `.tjp`/timesheet pode reportar `work`/`remaining` de material sem quebrar a validação de slots; `status` com `picture` chega ao Journal intacto; o status sheet mostra materiais por tarefa.
 
 ---
 

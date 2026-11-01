@@ -94,9 +94,14 @@ O `<DurationFormat>` é um valor inteiro que, combinado com o `<Duration>`, dete
 
 | Elemento | Valor | Significado |
 |:---|:---|:---|
+| `<Type>` | `0` | Recurso material (consumíveis) |
 | `<Type>` | `1` | Recurso de trabalho (pessoas/equipamentos) |
-| `<Type>` | `2` | Recurso material (consumíveis) |
-| `<Type>` | `0` | Recurso de custo (despesas) |
+| `<Type>` | `2` | Recurso de custo (despesas) |
+
+> **Correção (2026-11-01, Fase 14-C / 14C.4):** esta tabela trazia `2` =
+> material e `0` = custo, o inverso do esquema. A tabela oficial do elemento
+> `Type` (Microsoft) define **0 = material, 1 = trabalho, 2 = custo**, e é a
+> ordem usada por `reports/msp-xml-re.ts`.
 
 ### 3.2 Campos Específicos por Tipo
 

@@ -1,0 +1,60 @@
+# 14C.4.1 — Fixture do oracle MSPDI (`mspdi.golden.json`).
+# Subconjunto **compatível com o tj3 real** (nada de material/charge/markdown:
+# essas extensões não têm oracle e são cobertas pelo snapshot de extensão,
+# 14C.4.15). Contém o essencial do exportador MSP:
+#   • project com workinghours explícito + vacation → calendário/Exceptions;
+#   • hierarquia de recursos (grupo + folhas), e-mail e jornada própria;
+#   • container + folhas com `start`/`effort`/`allocate`;
+#   • milestone para o ramo de duração zero;
+#   • `note` na tarefa → `<Notes>`;
+#   • bloco `export` com `formats mspxml`.
+#
+# Sem `depends` de propósito: o scheduler TS ainda não propaga datas de
+# dependência (gap de `TaskScenario.propagateDateToDep`, CURRENT.md) e as datas
+# ficariam divergentes do tj3. Os `PredecessorLink`/lag são cobertos por testes
+# estruturais em `tests/reports/msp-xml-re_14c_test.ts` (14C.4.11).
+
+project mspdi "MSP Export 14C" "1.0" 2026-02-02 - 2026-04-30 {
+  timezone "UTC"
+  timeformat "%Y-%m-%d"
+  now 2026-02-02
+  currency "EUR"
+  workinghours mon - fri 09:00 - 12:00, 13:00 - 17:00
+  workinghours sat, sun off
+}
+
+# Sem `vacation`: `<Exceptions>` é adição SyntaxMesh (o `MspXmlRE.rb` não as
+# exporta), validada no fixture de extensão (14C.4.9/14C.4.15).
+
+resource team "Equipe" {
+  resource alice "Alice" {
+    email "alice@example.com"
+  }
+  resource bob "Bob" {
+    workinghours mon, tue, wed 09:00 - 13:00
+    workinghours thu, fri, sat, sun off
+  }
+}
+
+task fase "Fase 1" {
+  task design "Design" {
+    start 2026-02-02
+    effort 4d
+    allocate alice
+    note "Detalhar a arquitetura."
+  }
+  task build "Build" {
+    start 2026-02-09
+    effort 3d
+    allocate bob
+  }
+  task entrega "Entrega" {
+    start 2026-02-20
+    milestone
+  }
+}
+
+export "MS Project" {
+  formats mspxml
+  loadunit days
+}

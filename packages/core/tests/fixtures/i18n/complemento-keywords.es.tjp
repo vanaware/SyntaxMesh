@@ -29,3 +29,8 @@ infodiarioobra rdo "R" {
   maxfotos 5
   columnas name
 }
+infomaterial mr "M" {
+  columnas name, nota
+  formatos html, csv, json
+  ordenarpor name.up, note
+}

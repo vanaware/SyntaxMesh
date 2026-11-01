@@ -65,4 +65,12 @@ export class ReportTableColumn {
   to_csv(csv: unknown[][], startColumn: number,): number {
     return this.cell1.to_csv(csv, startColumn, 0,);
   }
+
+  /** Descritor JSON da coluna (extensão SyntaxMesh — 14C.0.3). */
+  toJSON(): { id: string; title: string } {
+    return {
+      id: this.definition?.id ?? "",
+      title: String(this.cell1.text,),
+    };
+  }
 }

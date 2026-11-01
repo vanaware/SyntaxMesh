@@ -1050,4 +1050,22 @@ export function registerReportAttributes(propertySet: PropertySet,): void {
       false, // inheritedFromProject
     ),
   );
+
+  // sortBy: Sort By (SortListAttribute) — extensão Fase 14 Complemento C1.2.
+  // Ordenação genérica dos relatórios de extensão (materialreport,
+  // breakdownreport, rdoreport); os REs consomem a lista de critérios.
+  propertySet.addAttributeType(
+    new AttributeDefinition(
+      "sortBy",
+      "Sort By",
+      AttributeType.SortList,
+      [],
+      false, // userDefined
+      false, // isList
+      false, // isSingleton
+      false, // isScenarioAttribute
+      false, // inheritedFromParent
+      false, // inheritedFromProject
+    ),
+  );
 }

@@ -18,6 +18,8 @@ import type { PropertyTreeNode, } from "../model/property-tree-node.ts";
 import { PropertyList, } from "../model/property-list.ts";
 import type { Task, } from "../model/task.ts";
 import type { Resource, } from "../model/resource.ts";
+import type { Material, } from "../model/material.ts";
+import type { MaterialAllocation, } from "../model/material-allocation.ts";
 import type { Shift, } from "../model/shift.ts";
 import type { Scenario, } from "../model/scenario.ts";
 import type { AttributeDefinition, } from "../attributes/attribute-definition.ts";
@@ -106,6 +108,7 @@ export class TjpExportRE extends ReportBase {
     if (definitions.includes("projectids",)) this.generateProjectIDs();
     if (definitions.includes("shifts",)) this.generateShiftList();
     if (definitions.includes("resources",)) this.generateResourceList();
+    if (definitions.includes("materials",)) this.generateMaterialList();
     if (definitions.includes("tasks",)) this.generateTaskList();
 
     const taskAttributes = (this.a("taskAttributes",) as string[]) ?? [];
@@ -196,9 +199,12 @@ export class TjpExportRE extends ReportBase {
 
   private generateFlagDeclaration(): void {
     const flags: string[] = [];
+    // Materiais são uma extensão SyntaxMesh; suas flags também precisam ser
+    // declaradas (14C.1.13).
     const properties: PropertyTreeNode[] = [
       ...this.resourceList.toArray(),
       ...this.taskList.toArray(),
+      ...(this.project.materials.toArray() as Material[]),
     ];
     for (const property of properties) {
       for (const scenarioIdx of this.scenarioList()) {
@@ -281,6 +287,60 @@ export class TjpExportRE extends ReportBase {
     }
   }
 
+  // ------------------------------------------------------------------
+  // Materiais (extensão SyntaxMesh — ver 14C.1.13)
+  // ------------------------------------------------------------------
+
+  /**
+   * Emite as declarações `material <id> "<nome>" { ... }`, aninhando
+   * sub-materiais como em `resource`/`task`.
+   *
+   * Extensão SyntaxMesh: o `TjpExportRE` do TJ 3.8.4 não conhece materiais.
+   * O filtro `hidematerial`/`rollupmaterial` só existe a partir de 14C.6.
+   */
+  private generateMaterialList(): void {
+    const materials = this.project.materials.toArray() as Material[];
+    for (const material of materials) {
+      if (material.parent === null) this.generateMaterial(material, 0,);
+    }
+    if (materials.length > 0) this.file += "\n";
+  }
+
+  private generateMaterial(material: Material, indent: number,): void {
+    this.file += " ".repeat(indent,) + `material ${material.id} ` +
+      `${quotedString(material.name,)} {\n`;
+
+    // `unit`/`cost`/`totalquantity` são atributos não-cenário; o parser usa a
+    // palavra-chave `unitprice` para o atributo `cost`.
+    const unit = material.get("unit",);
+    if (typeof unit === "string" && unit !== "" && unit !== "{}") {
+      this.generateAttributeText(
+        `unit ${quotedString(unit,)}`,
+        indent + 2,
+      );
+    }
+    const unitPrice = material.get("cost",);
+    if (typeof unitPrice === "number" && unitPrice !== 0) {
+      this.generateAttributeText(`unitprice ${unitPrice}`, indent + 2,);
+    }
+    const totalQuantity = material.get("totalquantity",);
+    if (typeof totalQuantity === "number" && totalQuantity !== 0) {
+      this.generateAttributeText(
+        `totalquantity ${totalQuantity}`,
+        indent + 2,
+      );
+    }
+    for (const scenarioIdx of this.scenarioList()) {
+      this.generateAttribute(material, "flags", indent + 2, scenarioIdx,);
+    }
+    this.generateAttribute(material, "note", indent + 2,);
+
+    for (const sub of material.children as Material[]) {
+      this.generateMaterial(sub, indent + 2,);
+    }
+    this.file += " ".repeat(indent,) + "}\n";
+  }
+
   private generateTask(task: Task, indent: number,): void {
     if (task.sequenceNo % 100 === 0) Log.activity();
     this.file += " ".repeat(indent,) + `task ${task.subId} ` +
@@ -291,6 +351,11 @@ export class TjpExportRE extends ReportBase {
       for (const scenarioIdx of this.scenarioList()) {
         this.generateTaskDependency(scenarioIdx, task, "depends", indent + 2,);
         this.generateTaskDependency(scenarioIdx, task, "precedes", indent + 2,);
+      }
+    }
+    if (taskAttributes.includes("materialallocations",)) {
+      for (const scenarioIdx of this.scenarioList()) {
+        this.generateMaterialAllocations(task, indent + 2, scenarioIdx,);
       }
     }
 
@@ -362,6 +427,35 @@ export class TjpExportRE extends ReportBase {
       str += dep.task.fullId;
     }
     if (!first) this.generateAttributeText(str, indent, scenarioIdx,);
+  }
+
+  /**
+   * Emite as alocações de material da tarefa no cenário dado.
+   *
+   * A forma `material <id> <quantidade> [modificador]` é a canônica aceita
+   * pelo parser (`materialAllocation`); o modificador padrão `distributed` é
+   * omitido para preservar o round-trip mínimo.
+   */
+  private generateMaterialAllocations(
+    task: Task,
+    indent: number,
+    scenarioIdx: number,
+  ): void {
+    const allocations =
+      (task.getForScenario("materialallocations", scenarioIdx,) ??
+        []) as MaterialAllocation[];
+    for (const allocation of allocations) {
+      const modifier = allocation.modifier &&
+          allocation.modifier !== "distributed"
+        ? ` ${allocation.modifier}`
+        : "";
+      this.generateAttributeText(
+        `material ${allocation.material.fullId} ${allocation.quantity}` +
+          modifier,
+        indent,
+        scenarioIdx,
+      );
+    }
   }
 
   // ------------------------------------------------------------------

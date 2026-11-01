@@ -155,6 +155,14 @@ export class ReportTable {
     return csv;
   }
 
+  /** Forma JSON intermediária (extensão SyntaxMesh — 14C.0.3): colunas + linhas. */
+  toJSON(): { columns: unknown[]; lines: unknown[] } {
+    return {
+      columns: this.columns.map((col,) => col.toJSON()),
+      lines: this.lines.map((line,) => line.toJSON()),
+    };
+  }
+
   /** Maior indentação entre todas as linhas (modo árvore). */
   protected determineMaxIndents(): void {
     this.maxIndent = 0;

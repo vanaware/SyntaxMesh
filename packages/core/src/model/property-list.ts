@@ -200,6 +200,10 @@ export class PropertyList<T extends PropertyTreeNode = PropertyTreeNode,> {
     } else {
       this.sortInternal();
     }
+    // Ruby (PropertyList.rb:sort!): após ordenar, os atributos 'index' são
+    // recalculados na ordem final. O `MspXmlRE` depende disso para derivar os
+    // UIDs (1..n) de tarefas/recursos.
+    this.index();
   }
 
   private sortTreeMode(): void {
@@ -282,7 +286,12 @@ export class PropertyList<T extends PropertyTreeNode = PropertyTreeNode,> {
 
   index(): void {
     this.items.forEach((item, index,) => {
-      item.set("index", index + 1,);
+      // `index` é definido em Task/Resource (e derivados usados por relatórios);
+      // nós sem o atributo (ex.: `TestProperty` dos testes) são ignorados em
+      // vez de estourar `TjArgumentError` na ordenação.
+      if (!item.attributeDefinition("index",)) return;
+      // Ruby usa `force`: o índice é recalculado a cada ordenação.
+      item.force("index", index + 1,);
     },);
   }
 

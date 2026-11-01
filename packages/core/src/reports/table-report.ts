@@ -17,6 +17,7 @@ import type { Report, } from "../model/report.ts";
 import { Task, } from "../model/task.ts";
 import { Resource, } from "../model/resource.ts";
 import { Account, } from "../model/account.ts";
+import { Material, } from "../model/material.ts";
 import type { PropertyTreeNode, } from "../model/property-tree-node.ts";
 import type { PropertyList, } from "../model/property-list.ts";
 import type { PropertySet, } from "../model/property-set.ts";
@@ -104,6 +105,68 @@ export abstract class TableReport extends ReportBase {
     ["status", ["Status", false, "left", true,],],
     ["targets", ["Targets", false, "left", true,],],
     ["unpaidleave", ["Unpaid Leave", true, "right", true,],],
+  ],);
+
+  /**
+   * Metadados das colunas específicas de material (extensão SyntaxMesh,
+   * Fase 14 Complemento C1). Só é consultado em linhas cujo `property` é
+   * `Material`; por isso pode compartilhar ids com colunas de task
+   * (`journal`, etc.) sem afetar os relatórios do núcleo.
+   */
+  static readonly materialPropertiesById: Map<
+    string,
+    [string, ColumnAlign,]
+  > = new Map<string, [string, ColumnAlign,]>([
+    ["allocations", ["Allocations", "left",],],
+    ["actualcost", ["Actual Cost", "right",],],
+    ["journal", ["Journal", "left",],],
+    ["journal_sub", ["Journal", "left",],],
+    ["journalmessages", ["Journal Messages", "left",],],
+    ["journalsummaries", ["Journal Summaries", "left",],],
+    ["scheduledcost", ["Scheduled Cost", "right",],],
+    ["totalcost", ["Total Cost", "right",],],
+    ["unit", ["Unit", "left",],],
+    ["unitprice", ["Unit Price", "right",],],
+  ],);
+
+  /** Colunas de material resolvidas por atributo (keyword → attributeId). */
+  static readonly materialAttributeColumns: Map<string, string> = new Map<
+    string,
+    string
+  >([
+    ["note", "note",],
+    ["totalquantity", "totalquantity",],
+    ["unit", "unit",],
+    ["unitprice", "cost",],
+  ],);
+
+  /** Colunas numéricas calculadas de material (alinhamento à direita). */
+  static readonly materialNumericColumns: Set<string> = new Set<string>([
+    "actualcost",
+    "scheduledcost",
+    "totalcost",
+  ],);
+
+  /**
+   * Colunas de journal. `journal_sub`, `journalmessages` e
+   * `journalsummaries` são aliases depreciados de `journal` no parser
+   * (`_journal_sub` etc. → `_journal`), mas continuam no mapa de títulos.
+   * Todas são resolvidas pelo mesmo caminho (14C.1.7).
+   */
+  static readonly journalColumns: Set<string> = new Set<string>([
+    "journal",
+    "journal_sub",
+    "journalmessages",
+    "journalsummaries",
+  ],);
+
+  /**
+   * Colunas de material numa linha de tarefa (extensão SyntaxMesh, 14C.1.11):
+   * `materials` lista as alocações da tarefa e `materialcost` soma o custo.
+   */
+  static readonly taskMaterialColumns: Set<string> = new Set<string>([
+    "materials",
+    "materialcost",
   ],);
 
   /** Comportamento padrão por tipo de atributo: [indent, alinhamento]. */
@@ -251,6 +314,18 @@ export abstract class TableReport extends ReportBase {
   /** Converte a tabela em Array-de-Arrays. */
   to_csv(): unknown[][] {
     return (this.table ? this.table.to_csv() : [[],]) as unknown[][];
+  }
+
+  /**
+   * Tabela intermediária em JSON (extensão SyntaxMesh — 14C.0.3): colunas +
+   * linhas com texto normalizado; células de calendário viram descritor; a
+   * legenda não entra. Estrutura estável e documentada nos testes do bloco.
+   */
+  toJSON(): string {
+    const table = this.table
+      ? this.table.toJSON()
+      : { columns: [], lines: [], };
+    return JSON.stringify({ format: "table", ...table, }, null, 1,);
   }
 
   // ------------------------------------------------------------------
@@ -483,6 +558,39 @@ export abstract class TableReport extends ReportBase {
     return lineNo;
   }
 
+  /**
+   * Gera uma linha da tabela para cada material de `materialList`
+   * (extensão SyntaxMesh, Fase 14 Complemento C1.4).
+   */
+  protected generateMaterialList(
+    materialList: PropertyList<Material>,
+    lineOffset: number,
+  ): number {
+    materialList.query = this.currentQuery().dup();
+    const query = materialList.query!;
+    materialList.sort();
+
+    let no = lineOffset;
+    let lineNo = lineOffset;
+    let line: ReportTableLine | null = null;
+    for (const material of materialList.toArray()) {
+      query.property = material;
+      no += 1;
+      lineNo += 1;
+      for (const scenarioIdx of this.scenarioList()) {
+        query.scenarioIdx = scenarioIdx;
+        line = new ReportTableLine(this.table!, material, null,);
+        line.no = no;
+        line.lineNo = lineNo;
+        line.subLineNo = this.table!.linesCount();
+        for (const columnDef of this.columnList()) {
+          this.generateTableCell(line, columnDef, query,);
+        }
+      }
+    }
+    return lineNo;
+  }
+
   /** Gera linhas de tarefa (e recursivamente de recursos atribuídos). */
   protected generateTaskList(
     taskList: PropertyList<Task>,
@@ -694,6 +802,21 @@ export abstract class TableReport extends ReportBase {
         sameTimeNext = (t,) => t.sameTimeNextYear();
         break;
       default:
+        if (TableReport.journalColumns.has(columnDef.id,)) {
+          return this.genJournalCell(q, line, columnDef,);
+        }
+        if (columnDef.id === "timebasis") {
+          return this.genTimebasisCell(q, line, columnDef,);
+        }
+        if (
+          line.property instanceof Task &&
+          TableReport.taskMaterialColumns.has(columnDef.id,)
+        ) {
+          return this.genTaskMaterialCell(q, line, columnDef,);
+        }
+        if (line.property instanceof Material) {
+          return this.genMaterialCell(q, line, columnDef,);
+        }
         if (TableReport.calculated(columnDef.id,)) {
           return this.genCalculatedCell(q, line, columnDef,);
         }
@@ -849,6 +972,416 @@ export abstract class TableReport extends ReportBase {
     this.setCustomCellAttributes(cell, columnDef, query,);
     this.checkCellText(cell,);
     return true;
+  }
+
+  /**
+   * Célula das colunas de material numa tarefa (14C.1.11): `materials` lista
+   * as alocações da tarefa (`material (quantidade)`) e `materialcost` soma os
+   * `CostEvent` `material_usage` da tarefa — com queda para
+   * `quantidade × preço` quando não há eventos.
+   */
+  private genTaskMaterialCell(
+    query: Query,
+    line: ReportTableLine,
+    columnDef: TableColumnDefinition,
+  ): boolean {
+    const task = line.property as Task;
+    const scIdx = query.scenarioIdx ?? 0;
+    const cell = this.newCell(query, line,);
+    if (!this.setScenarioSettings(cell, scIdx, false,)) {
+      return false;
+    }
+    this.setStandardCellAttributes(
+      query,
+      cell,
+      columnDef,
+      columnDef.id === "materialcost" ? AttributeType.Float : undefined,
+      line,
+    );
+
+    if (columnDef.id === "materials") {
+      const allocs = this.taskMaterialAllocations(task, scIdx,);
+      cell.text = allocs
+        .map((a,) => `${a.material.id} (${a.quantity})`)
+        .join(", ",);
+    } else {
+      cell.text = this.formatMaterialNumber(
+        this.taskMaterialCost(task, scIdx,),
+      );
+    }
+
+    const cdText = columnDef.cellText.getPattern(query,);
+    if (cdText) cell.text = cdText as never;
+
+    this.setCustomCellAttributes(cell, columnDef, query,);
+    // `materials` admite lista vazia (tarefa sem material).
+    if (columnDef.id !== "materials") this.checkCellText(cell,);
+    return true;
+  }
+
+  /**
+   * Célula da coluna `timebasis` (14C.1.9): exibe o `resolvedTimebasis`
+   * canônico do cenário (`duration`/`length`, resolvido em
+   * `TaskScenario.prepareScheduling`), e não o valor cru do atributo — que
+   * fica `nil` quando o usuário não declarou nada. Só tarefas têm timebasis;
+   * nos demais tipos cai na célula padrão.
+   */
+  private genTimebasisCell(
+    query: Query,
+    line: ReportTableLine,
+    columnDef: TableColumnDefinition,
+  ): boolean {
+    const property = query.property;
+    if (!(property instanceof Task)) {
+      return this.genStandardCell(query, line, columnDef,);
+    }
+    const cell = this.newCell(query, line,);
+    if (!this.setScenarioSettings(cell, query.scenarioIdx ?? 0, true,)) {
+      return false;
+    }
+    this.setStandardCellAttributes(query, cell, columnDef, undefined, line,);
+
+    const scenarioData = property.data[query.scenarioIdx ?? 0] as unknown as {
+      resolvedTimebasis?: string;
+    };
+    cell.text = scenarioData?.resolvedTimebasis ?? "duration";
+
+    const cdText = columnDef.cellText.getPattern(query,);
+    if (cdText) cell.text = cdText as never;
+
+    this.setCustomCellAttributes(cell, columnDef, query,);
+    this.checkCellText(cell,);
+    return true;
+  }
+
+  /**
+   * Célula de journal (14C.1.7): porta o caminho `query_journal` do Ruby para
+   * qualquer entidade — tarefa, recurso, material e conta. O modo vem do
+   * atributo `journalMode` do relatório (default `journal`), como no Ruby.
+   *
+   * `journal_sub`, `journalmessages` e `journalsummaries` são aliases
+   * depreciados de `journal` no parser; quando chegam aqui por API, são
+   * resolvidos pelos caminhos equivalentes (`entriesByTaskR` e
+   * `currentEntries`).
+   */
+  private genJournalCell(
+    query: Query,
+    line: ReportTableLine,
+    columnDef: TableColumnDefinition,
+  ): boolean {
+    const cell = this.newCell(query, line,);
+    if (!this.setScenarioSettings(cell, query.scenarioIdx ?? 0, false,)) {
+      return false;
+    }
+    this.setStandardCellAttributes(query, cell, columnDef, undefined, line,);
+
+    const journal = this.project.journal;
+    if (
+      columnDef.id === "journalmessages" ||
+      columnDef.id === "journalsummaries"
+    ) {
+      const property = query.property;
+      const entries = property
+        ? journal.currentEntries(
+          query.end ?? null,
+          property,
+          0,
+          query.start ?? null,
+          query.hideJournalEntry,
+        )
+        : [];
+      const rti = journal.messagesRti(
+        entries,
+        query,
+        columnDef.id === "journalmessages",
+      );
+      if (rti) cell.text = rti as never;
+    } else {
+      query.journalMode = (this.a("journalMode",) as string | null) ??
+        "journal";
+      journal.to_rti(query,);
+      if (query.rti) cell.text = query.rti as never;
+    }
+
+    const cdText = columnDef.cellText.getPattern(query,);
+    if (cdText) cell.text = cdText as never;
+
+    this.setCustomCellAttributes(cell, columnDef, query,);
+    this.checkCellText(cell,);
+    return true;
+  }
+
+  /**
+   * Célula de material (extensão SyntaxMesh, Fase 14 Complemento C1.4).
+   * Colunas backed por atributo (`unit`, `unitprice`→`cost`, `note`,
+   * `totalquantity`) reutilizam o pipeline `Query`/`to_rti` para a formatação
+   * canônica; colunas calculadas (`no`, `id`, `name`, `totalcost`) são
+   * resolvidas aqui. Alocações/custos/journal são estendidos nas sub-tarefas
+   * C1.5–C1.7.
+   */
+  private genMaterialCell(
+    query: Query,
+    line: ReportTableLine,
+    columnDef: TableColumnDefinition,
+  ): boolean {
+    const material = line.property as Material;
+    const scIdx = query.scenarioIdx ?? 0;
+    const cell = this.newCell(query, line,);
+
+    // Colunas backed por atributo (o keyword pode diferir do attributeId).
+    const attrId = TableReport.materialAttributeColumns.get(columnDef.id,);
+    if (attrId !== undefined) {
+      const q = query.dup();
+      q.attributeId = attrId;
+      const scenarioSpecific =
+        this.project.materials.scenarioSpecific?.(attrId,) ?? false;
+      if (!this.setScenarioSettings(cell, scIdx, scenarioSpecific,)) {
+        return false;
+      }
+      this.setStandardCellAttributes(
+        q,
+        cell,
+        columnDef,
+        this.project.materials.attributeType(attrId,),
+        line,
+      );
+      if (q.process()) {
+        const rti = q.to_rti();
+        cell.text = (rti ? rti : q.to_s()) as never;
+      }
+      this.setCustomCellAttributes(cell, columnDef, q,);
+      this.checkCellText(cell,);
+      return true;
+    }
+
+    this.setStandardCellAttributes(
+      query,
+      cell,
+      columnDef,
+      TableReport.materialNumericColumns.has(columnDef.id,)
+        ? AttributeType.Float
+        : undefined,
+      line,
+    );
+
+    switch (columnDef.id) {
+      case "no":
+        cell.text = String(line.no,);
+        break;
+      case "id":
+        cell.text = material.id;
+        break;
+      case "name":
+        cell.text = material.name as never;
+        break;
+      case "allocations": {
+        const allocs = this.materialAllocations(material, scIdx,);
+        cell.text = allocs
+          .map((a,) => `${a.task.fullId} (${a.quantity})`)
+          .join(", ",);
+        break;
+      }
+      case "scheduledcost":
+        cell.text = this.formatMaterialNumber(
+          this.materialScheduledCost(material, scIdx,),
+        );
+        break;
+      case "actualcost":
+        cell.text = this.formatMaterialNumber(
+          this.materialCost(material, scIdx, "actual",),
+        );
+        break;
+      case "totalcost":
+        cell.text = this.formatMaterialNumber(
+          this.materialTotalCost(material, scIdx,),
+        );
+        break;
+      default:
+        if (query.process()) {
+          const rti = query.to_rti();
+          cell.text = (rti ? rti : query.to_s()) as never;
+        }
+        break;
+    }
+
+    this.setCustomCellAttributes(cell, columnDef, query,);
+    // A coluna `allocations` admite lista vazia (material sem consumo);
+    // as demais colunas calculadas exigem texto.
+    if (columnDef.id !== "allocations") this.checkCellText(cell,);
+    return true;
+  }
+
+  /** Alocações de material de `task` no cenário `scIdx` (14C.1.11). */
+  private taskMaterialAllocations(
+    task: Task,
+    scIdx: number,
+  ): Array<{ material: Material; quantity: number }> {
+    return (task.getForScenario("materialallocations", scIdx,) as
+      | Array<{ material: Material; quantity: number }>
+      | null) ?? [];
+  }
+
+  /**
+   * Custo de material de `task`: `CostEvent` `material_usage` da tarefa ou,
+   * sem eventos, `quantidade × preço` das alocações (14C.1.11).
+   */
+  private taskMaterialCost(task: Task, scIdx: number,): number {
+    let sum = 0;
+    let hasEvents = false;
+    for (const ce of this.project.costEvents) {
+      if (
+        ce.type !== "material_usage" || ce.task !== task ||
+        ce.scenarioIdx !== scIdx
+      ) {
+        continue;
+      }
+      sum += ce.amount;
+      hasEvents = true;
+    }
+    if (hasEvents) return sum;
+    for (const a of this.taskMaterialAllocations(task, scIdx,)) {
+      sum += a.quantity * this.materialUnitPrice(a.material,);
+    }
+    return sum;
+  }
+
+  /** Alocações de `material` nas tarefas do projeto para o cenário `scIdx`. */
+  private materialAllocations(
+    material: Material,
+    scIdx: number,
+  ): Array<{ task: Task; quantity: number }> {
+    const out: Array<{ task: Task; quantity: number }> = [];
+    for (const node of this.project.tasks.toArray()) {
+      if (!(node instanceof Task)) continue;
+      for (const a of this.taskMaterialAllocations(node, scIdx,)) {
+        if (a.material === material) {
+          out.push({ task: node, quantity: a.quantity, },);
+        }
+      }
+    }
+    return out;
+  }
+
+  /** Há `CostEvent` `material_usage` de `material` no cenário? */
+  private materialHasCostEvents(material: Material, scIdx: number,): boolean {
+    return this.project.costEvents.some((ce,) =>
+      ce.type === "material_usage" && ce.material === material &&
+      ce.scenarioIdx === scIdx
+    );
+  }
+
+  /**
+   * Soma de `CostEvent` `material_usage` de `material` no cenário. `mode`
+   * `null` soma planejado + realizado.
+   */
+  private materialCost(
+    material: Material,
+    scIdx: number,
+    mode: "planned" | "actual" | null,
+  ): number {
+    let sum = 0;
+    for (const ce of this.project.costEvents) {
+      if (
+        ce.type !== "material_usage" || ce.material !== material ||
+        ce.scenarioIdx !== scIdx
+      ) {
+        continue;
+      }
+      if (mode === null || ce.mode === mode) sum += ce.amount;
+    }
+    return sum;
+  }
+
+  /** Preço unitário canônico do material (atributo `cost` ou campo legado). */
+  private materialUnitPrice(material: Material,): number {
+    const cost = material.get("cost",);
+    return typeof cost === "number" ? cost : material.unitPrice;
+  }
+
+  /**
+   * A tarefa de uma alocação cruza o período do relatório? Sem agenda, a
+   * alocação é considerada (não há como recortar).
+   */
+  private materialTaskInPeriod(
+    task: Task,
+    scIdx: number,
+    start: TjTime | null,
+    end: TjTime | null,
+  ): boolean {
+    if (!start || !end) return true;
+    const s = task.getForScenario("start", scIdx,) as TjTime | null;
+    const e = task.getForScenario("end", scIdx,) as TjTime | null;
+    if (!s || !e) return true;
+    return !(e.compareTo(start,) < 0 || s.compareTo(end,) > 0);
+  }
+
+  /**
+   * Custo de material a partir das `MaterialAllocation`, recortado pelo
+   * período do relatório (C1.6). Sem alocações, `null`.
+   */
+  private materialAllocationCost(
+    material: Material,
+    scIdx: number,
+  ): number | null {
+    const allocs = this.materialAllocations(material, scIdx,);
+    if (allocs.length === 0) return null;
+    const start = (this.a("start",) as TjTime | null) ?? null;
+    const end = (this.a("end",) as TjTime | null) ?? null;
+    const price = this.materialUnitPrice(material,);
+    let sum = 0;
+    for (const { task, quantity, } of allocs) {
+      if (!this.materialTaskInPeriod(task, scIdx, start, end,)) continue;
+      sum += quantity * price;
+    }
+    return sum;
+  }
+
+  /**
+   * Custo total sem alocações nem eventos: `totalquantity × preço` canônico
+   * (atributos `totalquantity`/`cost`, que é o que o parser preenche), com
+   * queda para os campos do construtor (`Material#totalCost`).
+   */
+  private materialLegacyTotalCost(material: Material,): number {
+    const qty = material.get("totalquantity",);
+    if (typeof qty === "number") {
+      return qty * this.materialUnitPrice(material,);
+    }
+    return material.totalCost();
+  }
+
+  /**
+   * Custo planejado: `CostEvent` `planned` > alocações no período >
+   * `totalquantity × unitPrice` (fallback legado).
+   */
+  private materialScheduledCost(material: Material, scIdx: number,): number {
+    if (this.materialHasCostEvents(material, scIdx,)) {
+      return this.materialCost(material, scIdx, "planned",);
+    }
+    const allocCost = this.materialAllocationCost(material, scIdx,);
+    return allocCost !== null
+      ? allocCost
+      : this.materialLegacyTotalCost(material,);
+  }
+
+  /** Custo total: `CostEvent` (planejado + realizado) > alocações > legado. */
+  private materialTotalCost(material: Material, scIdx: number,): number {
+    if (this.materialHasCostEvents(material, scIdx,)) {
+      return this.materialCost(material, scIdx, null,);
+    }
+    const allocCost = this.materialAllocationCost(material, scIdx,);
+    return allocCost !== null
+      ? allocCost
+      : this.materialLegacyTotalCost(material,);
+  }
+
+  /** Formata valores monetários de material (`numberFormat` do relatório). */
+  private formatMaterialNumber(value: number,): string {
+    const fmt = this.a("numberFormat",) as
+      | { format(n: number,): string }
+      | null;
+    if (fmt && typeof fmt.format === "function") return fmt.format(value,);
+    // Mesma formatação dos atributos Float do núcleo (`AttributeBase#to_s`).
+    return String(value,);
   }
 
   /** Células de calendário para contas (attributeId 'balance'). */

@@ -16,17 +16,18 @@ paritária.
 
 ## Arquivos
 
-| Arquivo                                                       | Fase | Gera                              | Usado por                            |
-| ------------------------------------------------------------- | ---- | --------------------------------- | ------------------------------------ |
-| `attributes.rb`                                               | 3    | `attributes.golden.json`          | `attributes_golden_test.ts`          |
-| `tjtime.rb`                                                   | 2    | `tjtime.golden.json`              | `tjtime.golden.test.ts`              |
-| `compute_golden.rb`                                           | 2    | `compat-fix.golden.json`          | `compat_golden_test.ts`              |
-| `finance-mwe004.rb`                                           | 8    | `finance-mwe004.golden.json`      | `finance_golden_test.ts`             |
-| `finance-variations.rb`                                       | 8    | `finance-variations.golden.json`  | `finance_golden_test.ts`             |
-| `parser-mwe001..009.rb` + `parser-syntax-{correct,errors}.rb` | 10   | `parser.golden.json`              | `parser_golden_test.ts`              |
-| `logical-expressions.rb`                                      | 11   | `logical-expressions.golden.json` | `logical-expressions_golden_test.ts` |
-| `richtext.rb`                                                 | 12   | `richtext.golden.json`            | `richtext_golden_test.ts`            |
-| `reports-mwe001..009.rb` + `reports-syntax-correct.rb`        | 14   | `reports.golden.json`             | `reports_golden_test.ts`             |
+| Arquivo                                                                         | Fase | Gera                              | Usado por                            |
+| ------------------------------------------------------------------------------- | ---- | --------------------------------- | ------------------------------------ |
+| `attributes.rb`                                                                 | 3    | `attributes.golden.json`          | `attributes_golden_test.ts`          |
+| `tjtime.rb`                                                                     | 2    | `tjtime.golden.json`              | `tjtime.golden.test.ts`              |
+| `compute_golden.rb`                                                             | 2    | `compat-fix.golden.json`          | `compat_golden_test.ts`              |
+| `finance-mwe004.rb`                                                             | 8    | `finance-mwe004.golden.json`      | `finance_golden_test.ts`             |
+| `finance-variations.rb`                                                         | 8    | `finance-variations.golden.json`  | `finance_golden_test.ts`             |
+| `parser-mwe001..009.rb` + `parser-syntax-{correct,errors}.rb`                   | 10   | `parser.golden.json`              | `parser_golden_test.ts`              |
+| `logical-expressions.rb`                                                        | 11   | `logical-expressions.golden.json` | `logical-expressions_golden_test.ts` |
+| `richtext.rb`                                                                   | 12   | `richtext.golden.json`            | `richtext_golden_test.ts`            |
+| `reports-mwe001..009.rb` + `reports-syntax-correct.rb`                          | 14   | `reports.golden.json`             | `reports_golden_test.ts`             |
+| `packages/core/tests/golden/generate_extension_golden.ts` (TS puro, sem oracle) | 14C  | `reports-extensions.golden.json`  | `reports-extensions_golden_test.ts`  |
 
 ## Fluxo de trabalho
 
@@ -352,3 +353,27 @@ computadas `query_*` (Fase 11), `chart`/GanttChart (Fase 15/16), `to_rti`
 3. **Cabeçalho vem das colunas** (`cell1`/`cell2`), não das `@lines`.
 4. **Nunca editar `reports.golden.json` à mão** — regerer com
    `deno task golden:generate`.
+
+## Snapshots de Extensão (Fase 14 Complemento, 14C.0.12)
+
+As extensões do complemento (formato `json` de tabela, `Picture.to_html`,
+`maxpictures`, índices do Journal, materialreport/breakdown/rdoreport…) **não
+existem no TaskJuggler Ruby** — não há oracle `tj3`. A fonte de verdade é um
+snapshot TS determinístico:
+
+- `packages/core/tests/golden/extension-snapshot.ts` — monta o snapshot
+  (fixture `tests/fixtures/ext/14c-rdo-budget.tjp` + probes de render com
+  entradas constantes; sem timestamps/fusos no payload).
+- `packages/core/tests/golden/generate_extension_golden.ts` — grava
+  `reports-extensions.golden.json` (`JSON.stringify(…, null, 2)` + `\n`).
+- `packages/core/tests/golden/reports-extensions_golden_test.ts` — re-gera em
+  memória e compara **byte-a-byte** com o commitado.
+
+```bash
+deno task golden:generate:extensions   # regerar apenas o snapshot TS
+deno task golden:generate              # ruby + extensões (encadeados)
+```
+
+Cada bloco C1–C7 deve estender `buildExtensionSnapshot()` com novos probes
+(materialreport html/csv/json, breakdown, RDO, markdown) em vez de criar
+outro mecanismo de comparação.

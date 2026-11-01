@@ -29,3 +29,8 @@ relatoriodiarioobra rdo "R" {
   maxfotos 5
   colunas name
 }
+relatoriomaterial mr "M" {
+  colunas name, nota
+  formatos html, csv, json
+  ordenarpor name.up, note
+}

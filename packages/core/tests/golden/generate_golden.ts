@@ -271,3 +271,49 @@ const reportCount = reportCases.reduce((n, c,) => n + c.reports.length, 0,);
 console.log(
   `Generated ${reportsOut.pathname} (${reportCases.length} files, ${reportCount} reports)`,
 );
+
+// ---------------------------------------------------------------------------
+// MSPDI golden (14C.4.1): exportador MSP do tj3 real sobre o fixture
+// `14c-mspdi.tjp`, normalizado pelo walker REXML de `scripts/golden/mspdi-tj3.rb`
+// (espelhado em `mspdi-normalize.ts` no lado TS).
+// ---------------------------------------------------------------------------
+
+const mspdiUrl = new URL(
+  "../../../../scripts/golden/mspdi-tj3.rb",
+  import.meta.url,
+);
+const mspdiProc = new Deno.Command("ruby", {
+  args: [mspdiUrl.pathname,],
+  stdout: "piped",
+  stderr: "piped",
+},);
+const mspdiResult = mspdiProc.outputSync();
+if (!mspdiResult.success) {
+  console.error(
+    "Ruby script mspdi-tj3 failed:\n" +
+      new TextDecoder().decode(mspdiResult.stderr,),
+  );
+  Deno.exit(1,);
+}
+const mspdiText = new TextDecoder().decode(mspdiResult.stdout,);
+const mspdiMatch = mspdiText.match(/\{[\s\S]*\}/,);
+if (!mspdiMatch) {
+  console.error(`Ruby output mspdi-tj3 has no JSON object:\n${mspdiText}`,);
+  Deno.exit(1,);
+}
+const mspdiParsed = JSON.parse(mspdiMatch[0],) as {
+  cases: Array<{ error: string | null }>;
+};
+if (mspdiParsed.cases.some((c,) => c.error !== null)) {
+  console.error(
+    "Ruby mspdi-tj3 reportou erro: " +
+      JSON.stringify(mspdiParsed.cases.map((c,) => c.error),),
+  );
+  Deno.exit(1,);
+}
+const mspdiOut = new URL("./mspdi.golden.json", import.meta.url,);
+await Deno.writeTextFile(
+  mspdiOut,
+  JSON.stringify(mspdiParsed, null, 2,) + "\n",
+);
+console.log(`Generated ${mspdiOut.pathname}`,);
