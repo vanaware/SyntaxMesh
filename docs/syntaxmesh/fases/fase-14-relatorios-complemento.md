@@ -741,9 +741,11 @@ syntax novo não aparece em fixture existente.
   (`<descrição>` usa `$STRING`, `value` usa o literal `_value`: tokens
   disjuntos, sem ambiguidade; probe 26/26).
 - Modelo `ChargeBooking` (`model/charge-booking.ts`) com montante **podendo
-  ser negativo** (estorno) e `description: string | null` — coerente com
-  `ExtendedBooking` (Fase 8.1), que é modelo órfão: nada no parser o usava;
-  fica como está e não é tocado.
+  ser negativo** (estorno) e `description: string | null`. É a fonte única do
+  booking de charge: o órfão `ExtendedBooking` (Fase 8.1, genérico
+  `effort|charge|material` que nada no parser usava) foi **removido em
+  2026-11-02** — esforço e material já têm `Booking` e `MaterialBooking`.
+  Ver pendência §13.7.
 - **Fora de escopo**: carga contábil de `booking charge` (duplicaria com o
   atributo `charge` planejado) e o cálculo de *remaining* a partir de bookings
   (Fase 18 — tracking/timesheet). Registrado em 13.7.
@@ -837,6 +839,14 @@ comportamento.
   tracking scenario consome os bookings.
 - `ExtendedBooking` (Fase 8.1) continua sem uso: a 14C.15 introduziu
   `ChargeBooking` próprio; uma futura limpeza deve apagar ou unir os dois.
+  **Resolvido em 2026-11-02 — `ExtendedBooking` apagado** (órfão genérico
+  `effort|charge|material`; nada no parser/engine o instanciava). Esforço e
+  material já vivem em `Booking` e `MaterialBooking`; o merge foi descartado
+  porque as duas classes têm formas incompatíveis (`ChargeBooking` traz
+  `owner`/`taskRef`/`resolveTask`; o `scenarioIdx` de `ExtendedBooking` é
+  redundante — bookings já moram em atributos de cenário) e unificá-las daria
+  uma união com campos mortos. Removidos `model/extended-booking.ts`, seu teste
+  e o re-export em `model/mod.ts`; `ChargeBooking` fica como fonte única.
 
 ## 14. C18 — Colunas de estoque `stockquantity`/`stockcost` (2026-11-02)
 
@@ -890,9 +900,19 @@ materialreport mr "Materiais" {
   fora de um relatório 2026), material sem movimentos = 0, booking com tarefa
   não conta.
 - `tests/reports/stock-columns_14c_test.ts` — 2 describes / 7 steps.
+- **Limpeza §13.7 (`ExtendedBooking`)** — o órfão `ExtendedBooking` (Fase 8.1,
+  genérico `effort|charge|material` que nada no parser/engine instanciava) foi
+  **apagado**: removidos `model/extended-booking.ts`, seu teste
+  (`tests/model/extended-booking_test.ts`, 7 steps) e o re-export em
+  `model/mod.ts`. O **merge** com `ChargeBooking` foi **descartado**: as duas
+  classes têm formas incompatíveis (`ChargeBooking` traz `owner`/`taskRef`/
+  `resolveTask`; o `scenarioIdx` de `ExtendedBooking` é redundante — bookings já
+  moram em atributos de cenário), e esforço/material já vivem em `Booking` e
+  `MaterialBooking` — unificar daria uma classe com campos mortos. `ChargeBooking`
+  fica como fonte única do booking de charge.
 - Suíte afetada (parser + reports + golden + query): **213 testes / 2000
-  passos / 0 falhas**; suíte core completa **484 testes / 4941 passos /
-  0 falhas** · `deno task check:all` exit 0 · `check:stubs` OK; goldens
-  byte-idênticos (as keywords novas não aparecem em fixture existente);
-  `deno fmt --check` limpo (590 arquivos); `deno lint` limpo nos arquivos
-  tocados.
+  passos / 0 falhas**; suíte core completa **483 testes / 4934 passos /
+  0 falhas** (−1 teste / −7 passos pela remoção do teste órfão) · `deno task
+  check:all` exit 0 · `check:stubs` OK; goldens byte-idênticos (as keywords
+  novas não aparecem em fixture existente); `deno fmt --check` limpo (588
+  arquivos); `deno lint` limpo nos arquivos tocados.

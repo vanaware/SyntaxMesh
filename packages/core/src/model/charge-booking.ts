@@ -20,9 +20,10 @@ import type { TjTime, } from "../time/tj-time.ts";
  * `resolveAccount`) senão a conta default do projeto (regra 4), exatamente
  * como um `charge` declarado no corpo da tarefa.
  *
- * Diferente de `ExtendedBooking` (Fase 8.1, modelo órfão que nada no parser
- * usava): este é o modelo canônico da gramática nova e fica isolado dele, cf.
- * a pendência registrada no plano §13.7.
+ * Fonte única de verdade do booking de charge: o órfão `ExtendedBooking`
+ * (Fase 8.1, genérico `effort|charge|material` que nada no parser usava) foi
+ * removido em 2026-11-02 — esforço e material já têm `Booking` e
+ * `MaterialBooking`; o charge vive exclusivamente aqui. Ver plano §13.7.
  *
  * @see docs/syntaxmesh/fases/fase-14-relatorios-complemento.md §13.3
  */

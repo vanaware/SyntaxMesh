@@ -816,14 +816,16 @@ integração futura apareça como diff explícito.
 | 14C.18.1 | Keywords `stockquantity`/`stockcost` no i18n (canonical + pt-BR + es) | `i18n/canonical.ts`, `i18n/pt-BR.ts`, `i18n/es.ts` | parser + golden i18n |
 | 14C.18.2 | Parser: `singlePattern` em `reportableAttributes` (com `descr`) + títulos em `MATERIAL_COLUMN_TITLES` | `parser/rules/report.ts` | 2 testes |
 | 14C.18.3 | `TableReport`: metadados (`materialPropertiesById`, `materialNumericColumns`), `defaultColumnTitle` como segundo dicionário, casos de célula em `genMaterialCell` + helpers de período/soma | `reports/table-report.ts` | 5 testes |
+| 14C.18.4 | Limpeza da pendência §13.7: apagar o órfão `ExtendedBooking` (Fase 8.1), sem instanciadores no parser/engine; `ChargeBooking` fica como fonte única do booking de charge (merge descartado — formas incompatíveis) | `model/extended-booking.ts` (delete), `model/mod.ts`, comentário `model/charge-booking.ts` | `deno check` + suíte sem o teste órfão |
 
-#### Evidências 14C.18.1–14C.18.3 (preenchido 2026-11-02)
+#### Evidências 14C.18.1–14C.18.4 (preenchido 2026-11-02)
 
 | # | Implementação | Verificação |
 |---|---------------|-------------|
 | 14C.18.1 | `"stockcost"`/`"stockquantity"` em `canonical.ts`; pt-BR `custoestoque`/`quantidadeestoque`; es `costoexistencias`/`cantidadexistencias` | `columns stockquantity, stockcost` parseia limpo (`tests/reports/stock-columns_14c_test.ts` — 1 step); keyword desconhecida rejeitada — 1 step |
 | 14C.18.2 | Par `_stockquantity`/`_stockcost` no fim de `reportableAttributes` (após os itens da 10-C) com `descr()`; títulos “Stock Quantity”/“Stock Cost” em `MATERIAL_COLUMN_TITLES` | idem — 1 step (ids e títulos das colunas parseadas) |
 | 14C.18.3 | Σ algébrico dos bookings `isInventory()` com data em `[start, end]` (`stockBookingsInPeriod`); preço efetivo `booking.cost()` (booking → material); `defaultColumnTitle` consulta `materialPropertiesById` após `propertiesById` | idem — 5 steps (soma 400/4000, precedência 50/700, recorte de período 500/5000, sem movimentos 0/0, booking com tarefa não entra) |
+| 14C.18.4 | `ExtendedBooking` + teste + re-export removidos; comentário de `ChargeBooking` atualizado para "fonte única" | `deno check packages/core/mod.ts` limpo; suíte core verde sem as 7 etapas do teste órfão |
 
 ---
 

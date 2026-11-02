@@ -28,7 +28,6 @@ export * from "./report-type.ts";
 export * from "./material.ts";
 export * from "./material-allocation.ts";
 export * from "./extended-charge.ts";
-export * from "./extended-booking.ts";
 export * from "./tracking-scenario.ts";
 export * from "../accounting/cost-event.ts";
 export * from "../finance/charge-set-collection.ts";
