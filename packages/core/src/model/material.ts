@@ -2,7 +2,11 @@ import { PropertyTreeNode, } from "./property-tree-node.ts";
 import { type ProjectLike, } from "./project-like.ts";
 import { MaterialScenario, } from "./material-scenario.ts";
 import type { MaterialAllocation, } from "./material-allocation.ts";
+import type { MaterialBooking, } from "./material-booking.ts";
 import { ChargeSetCollection, } from "../finance/charge-set-collection.ts";
+import type { ChargeSet, } from "../finance/charge-set.ts";
+import type { Account, } from "./account.ts";
+import { MaterialComponent, } from "./material-component.ts";
 
 /**
  * Entidade de primeira classe representando um insumo físico do projeto
@@ -26,6 +30,18 @@ export class Material extends PropertyTreeNode {
   readonly unit: string;
   readonly unitPrice: number;
   readonly chargeset: ChargeSetCollection;
+  /**
+   * Bookings de estoque que já geraram `CostEvent` (14C.13.7). A comparação é
+   * por **identidade** — os bookings são imutáveis, então um Set basta e o
+   * turnover, que pode rodar muitas vezes no mesmo parse, não duplica o
+   * evento.
+   */
+  private readonly emittedStockBookings = new Set<MaterialBooking>();
+  /**
+   * Pilha de visitação da composição (14C.14.4): impede que um ciclo entre
+   * materiais provoque recursão infinita em `unitPriceValue()`.
+   */
+  private pricingStack: Set<string> | null = null;
 
   constructor(
     project: ProjectLike,
@@ -96,12 +112,125 @@ export class Material extends PropertyTreeNode {
   }
 
   /**
-   * Preço unitário efetivo: o atributo `cost` quando o parser/usuário o
-   * forneceu, senão o campo do construtor (default para materiais criados por
-   * código).
+   * Preço unitário efetivo do material, na precedência do Adendo Extra §12.2
+   * (confirmada em §12.4):
+   *
+   * 1. `cost` explícito (`unitprice` no bloco ou gravado por código);
+   * 2. **calculado** pela composição — Σ `quantidade × preço do componente`,
+   *    recursivamente (um componente pode ser composto);
+   * 3. campo do construtor (default para materiais criados por código).
+   *
+   * Ciclo de composição (impossível via parser — 14C.14.6) devolve 0 em vez de
+   * estourar a pilha.
    */
   unitPriceValue(): number {
-    return this.providedNumber("cost",) ?? this.unitPrice;
+    const declared = this.providedNumber("cost",);
+    if (declared !== null) return declared;
+    const components = this.components(0,);
+    if (components.length > 0) {
+      const stack = this.pricingStack ?? new Set<string>();
+      const ownsStack = this.pricingStack === null;
+      if (stack.has(this.fullId,)) {
+        // Ciclo: devolve 0 (o parser já sinalizou o problema).
+        return 0;
+      }
+      stack.add(this.fullId,);
+      this.pricingStack = stack;
+      let total = 0;
+      for (const component of components) {
+        total += component.quantity * component.material.unitPriceValue();
+      }
+      stack.delete(this.fullId,);
+      if (ownsStack) this.pricingStack = null;
+      return total;
+    }
+    return this.unitPrice;
+  }
+
+  // ------------------------------------------------------------------
+  // Composição (Adendo Extra §12.2 — 14C.14)
+  // ------------------------------------------------------------------
+
+  /** Componentes declarados no bloco do material (por unidade do composto). */
+  components(scIdx: number,): MaterialComponent[] {
+    return (this.getForScenario("materialcomponents", scIdx,) ??
+      []) as MaterialComponent[];
+  }
+
+  /** O material é composto (preço calculado, não declarado)? */
+  hasComponents(scIdx: number,): boolean {
+    return this.components(scIdx,).length > 0;
+  }
+
+  /**
+   * percorre o alcance de composição a partir deste material procurando
+   * `target` — usado pelo parser para rejeitar ciclos antes de anexar o
+   * componente (14C.14.6).
+   */
+  composes(target: string, scIdx: number,): boolean {
+    for (const component of this.components(scIdx,)) {
+      if (component.material.fullId === target) return true;
+      if (component.material.composes(target, scIdx,)) return true;
+    }
+    return false;
+  }
+
+  // ------------------------------------------------------------------
+  // Booking de estoque (Adendo Extra §12.1 — 14C.13.6)
+  // ------------------------------------------------------------------
+
+  /**
+   * Movimentos de estoque declarados no próprio bloco de material (sem
+   * tarefa): positiva = entrada, negativa = saída/estorno.
+   */
+  stockBookings(scIdx: number,): MaterialBooking[] {
+    return (this.getForScenario("stockbookings", scIdx,) ??
+      []) as MaterialBooking[];
+  }
+
+  /** Quantidade em estoque: Σ dos bookings de movimento no cenário. */
+  stockQuantity(scIdx: number,): number {
+    return this.stockBookings(scIdx,).reduce(
+      (sum, b,) => sum + b.quantity,
+      0,
+    );
+  }
+
+  /**
+   * Valor monetário dos movimentos de estoque no cenário (o estorno entra
+   * com sinal negativo). Não confundi-lo com `allocatedCost`: aqui é o que
+   * entrou/saiu do estoque, não o que as tarefas consumiram.
+   */
+  stockCost(scIdx: number,): number {
+    return this.stockBookings(scIdx,).reduce((sum, b,) => sum + b.cost(), 0,);
+  }
+
+  /**
+   * Conta que recebe os movimentos de estoque: o chargeset do material no
+   * cenário (regra 2 de `resolveAccount`) senão a conta default do projeto
+   * para material (regra 4). `null` quando não há conta — o parser rejeita
+   * booking de estoque nessa situação (14C.13.5).
+   */
+  stockAccount(scIdx: number,): Account | null {
+    const sets = (this.getForScenario("chargeset", scIdx,) ??
+      []) as ChargeSet[];
+    for (const set of sets) {
+      if (set.master) return set.master;
+    }
+    return this.project.defaultAccountFor?.("material",) ?? null;
+  }
+
+  /**
+   * Marca/consulta o booking de estoque como tendo gerado seu `CostEvent`
+   * (emissão idempotente do turnover, 14C.13.7).
+   */
+  stockBookingEmitted(booking: MaterialBooking,): boolean {
+    return this.emittedStockBookings.has(booking,);
+  }
+
+  /** Registra `booking` como emitido. */
+  markStockBookingEmitted(booking: MaterialBooking,): void {
+    this.emittedStockBookings.add(booking,);
   }
 
   /**

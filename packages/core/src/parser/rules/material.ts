@@ -17,12 +17,14 @@
  * @see docs/syntaxmesh/fases/fase-14-relatorios-complemento.md §11.4
  */
 import { Material, } from "../../model/material.ts";
+import { MaterialComponent, } from "../../model/material-component.ts";
 import {
   MaterialAllocation,
   type MaterialAllocationModifier,
 } from "../../model/material-allocation.ts";
 import { MaterialBooking, } from "../../model/material-booking.ts";
 import { Task, } from "../../model/task.ts";
+import type { ChargeSet, } from "../../finance/charge-set.ts";
 import type { ProjectFileParser, } from "../project-file-parser.ts";
 import type { TjTime, } from "../../time/tj-time.ts";
 import { rule, } from "./helpers.ts";
@@ -48,18 +50,26 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
   // ------------------------------------------------------------------
   // material / header / body / attributes
   // ------------------------------------------------------------------
+  // ------------------------------------------------------------------
+  // Regra funil `material` (Adendo Extra §12.2, 14C.14.3).
+  //
+  // `material <id> "<nome>" { ... }` declara um material (aninhado ou não) e
+  // `material <referencia> <quantidade>` declara um **componente de composição**
+  // (preço de unidade calculado). As duas formas partilham o prefixo `_material
+  // <id|nome>` e só divergem no token seguinte — `{`/`"<nome>"` contra um número.
+  // Como a FSM só admite uma transição por token em cada estado
+  // (`state.ts:139-157`), as duas ramificações vivem dentro desta única regra:
+  // `materialNameRef` consome o identificador uma vez e `materialStatementTail`
+  // decide pelo token seguinte.
+  // ------------------------------------------------------------------
   rule(p, "material", () => {
-    p.pattern(
-      ["!materialHeader", "!materialBody",],
-      function (this: ProjectFileParser,): unknown {
-        this.property = asProp(this,).parent;
-        return null;
-      },
-    );
+    p.pattern(["_material", "!materialNameRef", "!materialStatementTail",],);
     p.doc(
       "material",
       "Materials are physical inputs (steel, concrete, paint) consumed by " +
-        "tasks, with a quantity, a unit price and a temporal distribution.",
+        "tasks, with a quantity, a unit price and a temporal distribution. " +
+        "Inside a material block, `material <reference> <quantity>` declares " +
+        "a composition component instead of a nested material.",
     );
   },);
 
@@ -67,6 +77,8 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
     p.repeatable();
     p.optional();
 
+    // `!material` cobre tanto a declaração aninhada quanto a composição: o
+    // prefixo compartilhado é resolvido dentro da regra funil (14C.14.3).
     p.pattern(["!material",],);
     p.pattern(["!materialScenarioAttributes",],);
     p.pattern(
@@ -83,39 +95,56 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
     p.optionsRule("materialAttributes",);
   },);
 
-  rule(p, "materialHeader", () => {
+  // Identificador logo após `material`: ID ou nome citado. Empurrado para
+  // `pendingMaterialRef` — é o novo ID na declaração, a referência existente na
+  // composição. A FSM consome um único token aqui e ramifica adiante.
+  rule(p, "materialNameRef", () => {
+    p.pattern(["$ID",], function (this: ProjectFileParser,): unknown {
+      this.pendingMaterialRef = String(this.val[0],);
+      return this.pendingMaterialRef;
+    },);
+    p.pattern(["$STRING",], function (this: ProjectFileParser,): unknown {
+      this.pendingMaterialRef = String(this.val[0],);
+      return this.pendingMaterialRef;
+    },);
+    p.arg(0, "material", "The ID or name of the material or component.",);
+  },);
+
+  // Ramificação pelo token seguinte ao identificador: número → composição;
+  // nome + corpo → declaração. `{` (corpo) nunca aparece sem um nome entre
+  // colchetes, então as transições (NUMBER/FLOAT vs STRING) não colidem.
+  rule(p, "materialStatementTail", () => {
+    // Composição: `material <referencia> <quantidade>`.
+    p.pattern(["!number",], addMaterialComponent,);
+    p.arg(0, "quantity", "Quantity of the component needed for one unit.",);
+    p.doc(
+      "material.component",
+      "Declare a component of the composed material: the quantity of the " +
+        "component needed for one unit of it. Composed materials calculate " +
+        "their unit price and cannot declare `unitprice`.",
+    );
+
+    // Declaração: `material <id> "<nome>" { ... }`. O material é criado em
+    // `materialDeclName` (antes do corpo) e a conta/validação roda no fecho.
     p.pattern(
-      ["_material", "!optionalID", "$STRING",],
+      ["!materialDeclName", "!materialBody",],
       function (this: ProjectFileParser,): unknown {
-        const project = this.project!;
-        const rawId = this.val[1] as string | null;
-        const name = String(this.val[2],);
-        // Materiais precisam de ID endereçável (alocações os referenciam);
-        // sem ID explícito usamos o nome como identificador.
-        const id = rawId ?? name;
-        if (project.material(id,)) {
-          this.error(
-            "material_exists",
-            `Material ${id} has already been defined.`,
-            this.sourceFileInfo[1] ?? this.getSourceFileInfo()!,
-            this.property,
-          );
-        }
-        this.property = new Material(
-          project,
-          id,
-          "{}",
-          0,
-          undefined,
-          this.property as Material | null,
-        );
-        this.property.sourceFileInfo = this.sourceFileInfo[0] ?? null;
-        this.property.inheritAttributes();
-        this.scenarioIdx = 0;
+        validateStockBookings(this,);
+        validateUnitPriceDeclaration(this,);
+        this.property = asProp(this,).parent;
         return null;
       },
     );
-    p.arg(2, "name", "A name or short description of the material.",);
+  },);
+
+  // Consome o `"<nome>"` da declaração e cria o Material (equivalente ao antigo
+  // `materialHeader`), para que o corpo seguinte se anexe a ele.
+  rule(p, "materialDeclName", () => {
+    p.pattern(["$STRING",], function (this: ProjectFileParser,): unknown {
+      createMaterial(this, this.pendingMaterialRef!, String(this.val[0],),);
+      return null;
+    },);
+    p.arg(0, "name", "A name or short description of the material.",);
   },);
 
   // ------------------------------------------------------------------
@@ -123,12 +152,10 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
   // ------------------------------------------------------------------
   rule(p, "materialId", () => {
     p.pattern(["$ID",], function (this: ProjectFileParser,): unknown {
-      let id = String(this.val[0],);
-      // Supplement aninhado: precisa prefixar o ID do pai.
-      const prop = this.property;
-      if (prop && prop instanceof Material) {
-        id = prop.fullId + "." + id;
-      }
+      const id = String(this.val[0],);
+      // Composição e alocações referenciam materiais **globais** por ID; a
+      // declaração de sub-material aninhada saiu do corpo (Adendo Extra §12.2,
+      // 14C.14.3), então não prefixamos mais o ID do pai.
       const material = this.project!.material(id,);
       if (!material) {
         this.error(
@@ -173,7 +200,20 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
     p.pattern(
       ["_unitprice", "!number",],
       function (this: ProjectFileParser,): unknown {
-        asProp(this,).set("cost", Number(this.val[1],),);
+        // `unitprice` é proibido em material composto, qualquer que seja a
+        // ordem (14C.14.5) — aqui pega o caso `unitprice` **antes** dos
+        // componentes.
+        const material = asProp(this,) as unknown as Material;
+        if (scList(this, "materialcomponents",).length > 0) {
+          this.error(
+            "unitprice_with_components",
+            "The unit price of a composed material is calculated from its " +
+              "components; `unitprice` cannot be declared.",
+            this.sourceFileInfo[0] ?? null,
+            material,
+          );
+        }
+        material.set("cost", Number(this.val[1],),);
         return null;
       },
     );
@@ -201,42 +241,20 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
       "Removed: the material quantity is derived from its allocations.",
     );
 
-    // booking <task> quantity <q> [unitprice <p>] on <date>
-    //
-    // Consumo realizado declarado a partir do bloco do material. A tarefa pode
-    // ser declarada depois (referência futura): o booking fica em
-    // `Project.pendingBookings` e é ligado à tarefa no flush (14C.11.5).
-    p.pattern(
-      [
-        "_booking",
-        "!materialBookingTaskRef",
-        "_quantity",
-        "!number",
-        "!materialBookingUnitPrice",
-        "_on",
-        "!date",
-      ],
-      function (this: ProjectFileParser,): unknown {
-        const material = asProp(this,) as unknown as Material;
-        addMaterialBooking(
-          this,
-          material,
-          String(this.val[1],),
-          Number(this.val[3],),
-          this.val[4] as number | null,
-          this.val[6] as TjTime,
-        );
-        return null;
-      },
-    );
+    // Consumo realizado e movimento de estoque a partir do bloco do material,
+    // além de `booking charge` (14C.15.7). Todos partilham o prefixo `_booking`
+    // — a FSM só admite uma transição por token em cada estado
+    // (`state.ts:139-157`), então as formas ramificam dentro da regra
+    // `materialBookingBody` (padrão idêntico ao de task/resource).
+    p.pattern(["_booking", "!materialBookingBody",],);
     p.doc(
       "booking.material",
       "Record the actual consumption of the material by a task on a date, " +
-        "optionally overriding the unit price.",
+        "optionally overriding the unit price. Without a task the booking is " +
+        "a stock movement: positive quantity adds to the stock, negative " +
+        "quantity removes from it. The `charge` form books a real expense " +
+        "against the referenced task.",
     );
-    p.arg(1, "task", "The task that consumed the material.",);
-    p.arg(3, "quantity", "The quantity consumed.",);
-    p.arg(6, "date", "The date of the consumption.",);
 
     p.pattern(["!chargeset",],);
 
@@ -324,13 +342,13 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
   },);
 
   // ------------------------------------------------------------------
-  // Booking de material (`booking material <id> quantity <q> ...`)
+  // Booking de material (`booking material <id> [quantity] <q> ...`)
   // ------------------------------------------------------------------
   rule(p, "materialBooking", () => {
     p.pattern(
       [
         "!materialId",
-        "_quantity",
+        "!bookingQuantity",
         "!number",
         "!materialBookingUnitPrice",
         "_on",
@@ -355,9 +373,74 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
     p.arg(5, "date", "The date of the consumption.",);
   },);
 
+  // ------------------------------------------------------------------
+  // Corpo do `booking` no bloco do material (Adendo Extra §12.1/§12.3).
+  // A FSM só admite uma transição por token em cada estado, então as duas
+  // formas (`booking [quantity] ...` de consumo/estoque e `booking charge ...`)
+  // ramificam pelo segundo token: `!materialBookingTaskRef` (opcional, resolve
+  // para `$ID`/`$STRING` ou para os literais seguintes) versus `_charge`.
+  // ------------------------------------------------------------------
+  rule(p, "materialBookingBody", () => {
+    // Consumo por tarefa (referência futura → `pendingBookings`) ou movimento
+    // de estoque (sem referência), com quantidade assinada (estorno).
+    p.pattern(
+      [
+        "!materialBookingTaskRef",
+        "!bookingQuantity",
+        "!signedNumber",
+        "!materialBookingUnitPrice",
+        "_on",
+        "!date",
+      ],
+      function (this: ProjectFileParser,): unknown {
+        const material = asProp(this,) as unknown as Material;
+        const taskRef = this.val[0] as string | null;
+        const quantity = Number(this.val[2],);
+        const unitPrice = this.val[3] as number | null;
+        const date = this.val[5] as TjTime;
+        if (taskRef === null) {
+          addStockBooking(this, material, quantity, unitPrice, date,);
+        } else {
+          addMaterialBooking(
+            this,
+            material,
+            taskRef,
+            quantity,
+            unitPrice,
+            date,
+          );
+        }
+        return null;
+      },
+    );
+    p.arg(0, "task", "The task that consumed the material.",);
+    p.arg(2, "quantity", "The quantity consumed or moved.",);
+    p.arg(5, "date", "The date of the consumption.",);
+
+    // 14C.15.7: `booking charge <tarefa> [value] <montante> on <data>`.
+    p.pattern(["!materialChargeBookingHeader",],);
+    p.doc(
+      "booking.charge.material",
+      "Book a charge against the referenced task from the material block.",
+    );
+  },);
+
+  /**
+   * A keyword `quantity` passa a ser **opcional** em booking de material
+   * (Adendo Extra §12.3, 14C.15.3): `booking material "Aço" 2100 on ...` é
+   * a forma curta canônica. O literal não colide com o `$ID`/`$STRING` da
+   * referência de tarefa porque `State#transition` prefere o literal.
+   */
+  rule(p, "bookingQuantity", () => {
+    p.optional();
+    p.pattern(["_quantity",], () => "quantity",);
+  },);
+
   // Referência de tarefa no booking do corpo do material. Aceita ID ou nome;
   // a resolução pode ser futura (a tarefa pode vir depois do material).
+  // **Opcional** (14C.13.4): ausente, o booking é um movimento de estoque.
   rule(p, "materialBookingTaskRef", () => {
+    p.optional();
     p.pattern(["$ID",], function (this: ProjectFileParser,): unknown {
       return String(this.val[0],);
     },);
@@ -462,6 +545,163 @@ export function appendBooking(
     "materialbookings",
     current.concat([booking,],),
     parser.scenarioIdx,
+  );
+}
+
+/**
+ * Booking de estoque (Adendo Extra §12.1, 14C.13.4): movimento de material
+ * sem tarefa dona — entrada (positiva) ou saída/estorno (negativa). Vai para
+ * o atributo de cenário `stockbookings` do próprio material.
+ */
+function addStockBooking(
+  parser: ProjectFileParser,
+  material: Material,
+  quantity: number,
+  unitPrice: number | null,
+  date: TjTime,
+): void {
+  const booking = new MaterialBooking(
+    material,
+    null,
+    quantity,
+    date,
+    unitPrice ?? undefined,
+  );
+  material.setForScenario(
+    "stockbookings",
+    scList(parser, "stockbookings",).concat([booking,],),
+    parser.scenarioIdx,
+  );
+}
+
+/**
+ * O booking de estoque só tem efeito contábil se houver conta para receber o
+ * valor: o `chargeset` do material (regra 2 de `resolveAccount`) ou a conta
+ * default do projeto para material (regra 4). Sem nenhum dos dois, o custo se
+ * perderia — o Adendo Extra §12.1 exige o chargeset, então isso é **erro**
+ * (14C.13.5). Roda no fim do bloco porque o `chargeset` pode vir depois do
+ * `booking`.
+ */
+function validateStockBookings(parser: ProjectFileParser,): void {
+  const material = parser.property;
+  if (!(material instanceof Material)) return;
+  const hasStockBookings = scList(parser, "stockbookings",).length > 0;
+  if (!hasStockBookings) return;
+
+  const sets = (material.getForScenario("chargeset", parser.scenarioIdx,) ??
+    []) as ChargeSet[];
+  if (sets.some((set,) => set.master !== null)) return;
+
+  const defaultAccount = parser.project?.defaultAccountFor?.("material",);
+  if (defaultAccount) return;
+
+  parser.error(
+    "stock_booking_without_chargeset",
+    "A stock booking (booking without a task) needs an account to book " +
+      "the cost against: declare a `chargeset` in the material block or a " +
+      "`defaultaccount material` in the project.",
+    parser.sourceFileInfo[0] ?? null,
+    material,
+  );
+}
+
+/**
+ * Cria o Material de uma declaração `material <id> "<nome>" { ... }` (equivalente
+ * ao antigo `materialHeader`), com o bloco externo como pai. Roda ANTES do corpo
+ * para que os atributos aninhados se anexem ao material recém-criado. Preserva o
+ * comportamento original: o identificador endereço o material e o `name` base
+ * espelhado em `AttributeBase` é o próprio ID.
+ */
+function createMaterial(
+  parser: ProjectFileParser,
+  id: string,
+  name: string,
+): void {
+  const project = parser.project!;
+  // Materiais precisam de ID endereçável (alocações os referenciam). O nome
+  // citado é aceito pela gramática, mas o ID continua sendo o identificador.
+  void name;
+  if (project.material(id,)) {
+    parser.error(
+      "material_exists",
+      `Material ${id} has already been defined.`,
+      parser.sourceFileInfo[1] ?? parser.getSourceFileInfo()!,
+      parser.property,
+    );
+  }
+  parser.property = new Material(
+    project,
+    id,
+    "{}",
+    0,
+    undefined,
+    parser.property as Material | null,
+  );
+  parser.property.sourceFileInfo = parser.sourceFileInfo[0] ?? null;
+  parser.property.inheritAttributes();
+  parser.scenarioIdx = 0;
+}
+
+/**
+ * Anexa o componente de composição (14C.14.3) ao atributo de cenário
+ * `materialcomponents` do material dono do bloco, rejeitando ciclo antes de
+ * anexar (14C.14.6). A referência vem de `pendingMaterialRef` (ID ou nome) e
+ * precisa apontar para um material já declarado; a quantidade é `val[0]`.
+ */
+function addMaterialComponent(this: ProjectFileParser,): unknown {
+  this.checkContainer("material",);
+  const material = asProp(this,) as unknown as Material;
+  const ref = this.pendingMaterialRef;
+  const component = ref === null ? null : findMaterial(this, ref,);
+  if (!component) {
+    this.error(
+      "unknown_material",
+      `Unknown material ${ref}`,
+      this.sourceFileInfo[0] ?? this.getSourceFileInfo()!,
+    );
+    return null;
+  }
+  const quantity = Number(this.val[0],);
+  if (
+    component.fullId === material.fullId ||
+    component.composes(material.fullId, this.scenarioIdx,)
+  ) {
+    this.error(
+      "material_composition_cycle",
+      `Material ${component.fullId} cannot be a component of ` +
+        `${material.fullId}: the composition would be circular.`,
+      this.sourceFileInfo[0] ?? null,
+      material,
+    );
+    return null;
+  }
+  material.setForScenario(
+    "materialcomponents",
+    scList(this, "materialcomponents",).concat([
+      new MaterialComponent(component, quantity,),
+    ],),
+    this.scenarioIdx,
+  );
+  return null;
+}
+
+/**
+ * `unitprice` e composição são mutuamente exclusivos (Adendo Extra §12.2).
+ * O caso `unitprice` **depois** dos componentes é pego direto na regra;
+ * este passe pega o inverso (`unitprice` antes dos componentes), quando o
+ * `cost` já foi gravado mas o bloco acabou tendo componentes (14C.14.5).
+ */
+function validateUnitPriceDeclaration(parser: ProjectFileParser,): void {
+  const material = parser.property;
+  if (!(material instanceof Material)) return;
+  if (!material.hasComponents(parser.scenarioIdx,)) return;
+  if (!material.getAttribute("cost",).provided) return;
+  parser.error(
+    "unitprice_with_components",
+    "The unit price of a composed material is calculated from its " +
+      "components; `unitprice` cannot be declared.",
+    parser.sourceFileInfo[0] ?? null,
+    material,
   );
 }
 

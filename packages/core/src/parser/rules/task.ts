@@ -655,13 +655,16 @@ export function registerTaskRules(p: ProjectFileParser,): void {
   // Bookings (task-side)
   // ------------------------------------------------------------------
   rule(p, "taskBooking", () => {
-    // 14C.11.4: booking de **material** (`booking material <id> quantity <q>
+    // 14C.11.4: booking de **material** (`booking material <id> [quantity] <q>
     // [unitprice <p>] on <date>`). Fica na mesma regra do booking de recurso
     // porque as duas formas começam com `_booking` em `taskBody` — separá-las
     // em duas referências distintas em `taskScenarioAttributes` tornava a
     // transição ambígua para a FSM. Aqui o segundo token (`material` vs um ID
     // de recurso) desfaz a ambiguidade.
     p.pattern(["_material", "!materialBooking",],);
+    // 14C.15.5: `booking charge <recurso> [value] <montante> on <data>` —
+    // mesma lógica de desambiguação pelo segundo token (Adendo Extra §12.3).
+    p.pattern(["!taskChargeBookingHeader",],);
     p.pattern(
       ["!taskBookingHeader", "!bookingBody",],
       function (this: ProjectFileParser,): unknown {
@@ -682,16 +685,19 @@ export function registerTaskRules(p: ProjectFileParser,): void {
   },);
 
   rule(p, "taskBookingHeader", () => {
+    // `effort` é opcional (Adendo Extra §12.3, 14C.15.1): a forma curta
+    // `booking <recurso> <intervalo>` é a canônica do TJ.
     p.pattern(
-      ["!resourceId", "!valIntervals",],
+      ["!bookingEffortKeyword", "!resourceId", "!valIntervals",],
       function (this: ProjectFileParser,): unknown {
-        this.checkBooking(asProp(this,) as Task, this.val[0] as Resource,);
+        const sfi = this.sourceFileInfo[1] ?? null;
+        this.checkBooking(asProp(this,) as Task, this.val[1] as Resource, sfi,);
         const booking = new Booking(
-          this.val[0] as Resource,
+          this.val[1] as Resource,
           asProp(this,) as Task,
-          (this.val[1] as unknown[]) as never,
+          (this.val[2] as unknown[]) as never,
         );
-        booking.sourceFileInfo = this.sourceFileInfo[0] ?? null;
+        booking.sourceFileInfo = sfi;
         this.booking = booking;
         return booking;
       },

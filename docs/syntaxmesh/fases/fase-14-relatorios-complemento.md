@@ -2,7 +2,7 @@
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-14-relatorios-complemento.md`
 > **Tarefas:** `docs/syntaxmesh/fases/fase-14-relatorios-complemento-tarefas.md`
-> **Status:** ✅ concluída — C0 ✅ 2026-10-31 · C1–C7 ✅ 2026-11-01 (450 testes / 4841 passos) · adendo §10 → C8–C12 ✅ 2026-11-01 (472 testes / 4909 passos) — ver §11
+> **Status:** ✅ concluída — C0 ✅ 2026-10-31 · C1–C7 ✅ 2026-11-01 (450 testes / 4841 passos) · adendo §10 → C8–C12 ✅ 2026-11-01 (472 testes / 4909 passos) — ver §11 · adendo extra §12 → C13–C17 ✅ 2026-11-02 (482 testes / 4934 passos, incl. a revisão de `booking charge`) — ver §13 · pendência §13.7 → C18 ✅ 2026-11-02 — ver §14
 > **Duração estimada:** 8–12 dias
 > **Depende de:** Fases 8.1/8.2 (material + modelo contábil), 10 Complemento (parser reconhece `material`/`picture`/`format`/`breakdownreport`/`rdoreport`), 11 (motor lógico/Query), 12 (RichText), 13 (Markdown), 14 (pipeline de relatórios — concluída 2026-10-31)
 > **Bloqueia:** adendos de UI (Fase 20) que exibem RDO/breakdown; nada no núcleo 15/16/17
@@ -585,6 +585,12 @@ material "Steel 2" {
 
 Permitir o uso de "booking charge" dentro da definição de material, assim como é permitido dentro de resource.
 
+> **Revisão 2026-11-02 (exemplo da linha 560):** `booking charge` no corpo da
+> tarefa **não leva referência de recurso** — o `"Software"` do exemplo não é
+> recurso nem conta; a forma canônica da tarefa é
+> `booking charge ["<descrição>"] [value] <montante> on <data>`, e o `<montante>`
+> sozinho já basta (o dono do gasto é a própria tarefa). Especificado em §13.3.
+
 
 ### Observação importante - confirmação sobre turnover
 
@@ -612,13 +618,19 @@ no desenvolvimento de unitprice podendo ser alterado na alocação do tarefa , o
 
 #### Diferenças prováveis (a confirmar no código)
 
-| Ponto | TaskJuggler | SyntaxMesh (conforme doc) |
+> **Corrigido em C17 (2026-11-02):** a tabela abaixo foi escrita antes da
+> sondagem ao código; todas as suspeitas se resolveram a favor do port —
+> **não há divergência**. A tabela correta (com evidência Ruby/arquivo/linha) é
+> a de §13.5 abaixo. Os testes `scenario-nesting_14c_test.ts` confirmam por
+> execução que o SyntaxMesh implementa o comportamento idêntico ao Ruby.
+
+| Ponto | TaskJuggler | SyntaxMesh (conforme doc) → **código real** |
 |---|---|---|
-| Top-level | Só `plan` | Indefinido (flat permite vários) |
-| Aninhamento | Sim (`scenario plan { scenario real { } }`) | Indefinido (parser não recursivo documentado) |
-| Herança | Pelo aninhamento | `inheritParent=true` em `projection` (inerte se flat) |
-| `fullId` de `real` | `plan.real` | `real` (flat) |
-| `projection` | Atributo de modo | Parece estar ligado a herança |
+| Top-level | Só `plan` | ✅ `clearProperties` garante só o último top-level → igual |
+| Aninhamento | Sim (`scenario plan { scenario real { } }`) | ✅ `scenarioAttributes` inclui `p.pattern(["!scenario"])` — recursivo |
+| Herança | Pelo aninhamento | ✅ `inheritedFromParent = true` → resolve via parent chain |
+| `fullId` de `real` | ~~`plan.real`~~ → **`real`** (`flatNamespace=true`, `PropertyTreeNode.rb:294-303`) | ✅ `real` (flat) — igual |
+| `projection` | Atributo de modo **e** herda do pai cenarístico | ✅ `inheritedFromParent = true` → igual |
 
 #### O que verificar no código do SyntaxMesh
 
@@ -628,3 +640,259 @@ no desenvolvimento de unitprice podendo ser alterado na alocação do tarefa , o
 4. `packages/core/tests/model/scenario_test.ts` — há teste com 2 níveis de cenário?
 
 **Objetivo:** apenas registrar se o SyntaxMesh implementa o comportamento do TaskJuggler (nested, um top-level) ou diverge (flat, vários top-level). Não é para decidir correção — só para informar a diferença para decidirmos o que fazer . Preciso entender primeiro qual o real comportamento do taskjuggler
+
+## 13. Adendo Extra (§12) — execução (blocos C13–C17)
+
+O §12 virou cinco blocos. A disciplina é a mesma de C8–C12: parser + i18n
+en/pt-BR/es, testes BDD, evidência por tarefa, goldens byte-idênticos quando o
+syntax novo não aparece em fixture existente.
+
+| Bloco | Conteúdo | Origem no §12 |
+|---|---|---|
+| **C13** | Booking de **estoque**: `booking [quantity] <n> [unitprice <p>] on <data>` sem referência de tarefa dentro do bloco de material, com quantidade **positiva ou negativa**; conta de destino = `chargeset` do material (obrigatório) | “Material em estoque e saida de estoque” |
+| **C14** | **Unit price calculado** por composição: `material <id> <quantidade>` dentro do bloco de material declara componente; `unitprice` passa a ser derivado (Σ componente × preço do componente) e é **proibido** junto com componentes | “Unit Price Calculado” |
+| **C15** | Palavras `effort`, `quantity` e `value` **opcionais** em booking (nas duas origens) + `booking charge` aceito também no bloco de material | “keyword quantity e value” |
+| **C16** | **Turnover da conta** com a precedência de preço (booking → alocação → material, sendo o material explícito ou calculado) — auditoria com teste por rota | “Observação importante — confirmação sobre turnover” |
+| **C17** | **Registro** do comportamento real de cenários (TaskJuggler × SyntaxMesh), sem decidir correção | “comportamento de scenarios” |
+
+### 13.1 C13 — Booking de estoque
+
+- **Dois papéis do mesmo verbo.** `booking` *com* tarefa = consumo realizado
+  (C11, sempre positivo). `booking` *sem* tarefa = movimento de estoque:
+  entrada (positiva) ou saída/estorno (negativa). A regra zero vale também
+  aqui: nada de inventário implícito — se não há tarefa, o dinheiro tem de
+  ter para onde ir.
+- **Modelo**: `MaterialBooking.taskId: string | null` e `task: Task | null`.
+  A validação do construtor passa a rejeitar quantidade negativa **somente
+  quando há tarefa** (`MaterialBooking` em `model/material-booking.ts`).
+- **Atributo novo**: `stockbookings` (lista, específico de cenário) no
+  PropertySet de material — os bookings de estoque vivem no material, porque
+  não há tarefa hospedeira.
+- **Sinal negativo**: o lexer do port (fiel a `ProjectFileScanner.rb:95-98`)
+  não produz número com sinal — `-` cai no literal de caractere único. Nova
+  regra `signedNumber` (`!number` | `_- !number`) usada **só** pela gramática
+  de estoque; o resto da gramática continua exatamente como o TJ.
+- **Conta**: `AccountScenario#turnover` no ramo `aggregate materials` passa a
+  somar, além de `Material#allocatedCost`, os bookings de estoque cuja data
+  está em `[start, end)` e cuja conta resolvida (`resolveAccount`: regra 2 —
+  chargeset do material — senão regra 4 — `defaultaccount material`) é esta
+  conta ou descendente dela. Datas filtram (como `@credits` em
+  `AccountScenario.rb:57-68`); emissão idempotente de `CostEvent`
+  `material_usage` (modo `actual`) para alimentar `breakdownreport`/RDO.
+- **Chargeset obrigatório**: se o material não tem `chargeset` **nem** existe
+  `defaultaccount material`, o parser emite `stock_booking_without_chargeset`
+  (erro, não aviso) — sem conta, o valor se perderia.
+- **Fora de escopo de C13**: colunas novas em `materialreport`
+  (`stockquantity`/`stockcost`) ficam registradas como pendência; a quantidade
+  `totalquantity` do relatório continua sendo Σ alocações (14C.11.10), para
+  não misturar planejado com estoque.
+
+### 13.2 C14 — Unit price calculado por composição
+
+- **Gramática**: `material <materialId> <quantidade>` no corpo do material.
+  Choca com a declaração de **sub-material** aninhada (`p.pattern(["!material"])`
+  em `materialAttributes`): as duas formas começam por `_material` e o FSM só
+  admite uma transição por token por estado (`state.ts:139-157`). Decisão: a
+  **declaração aninhada de material sai do corpo do material** — nenhum
+  fixture, teste ou corpus usa a forma, `report-base.ts:200` já registra que
+  materiais não têm raiz própria, e a árvore (`parent` do construtor, IDs
+  hierárquicos porque `project.materials` é `flatNamespace = false`) continua
+  intacta para uso por código. O espaço semântico de “material dentro de
+  material” passa a significar composição.
+- **Modelo**: `MaterialComponent { material, quantity }`
+  (`model/material-component.ts`) + atributo de cenário `materialcomponents`.
+- **Preço** (`Material#unitPriceValue()`): `cost` fornecido → componente →
+  campo do construtor. Composição recursiva: o componente pode ter os seus
+  próprios componentes.
+- **Erros**: `unitprice_with_components` (nas duas ordens — componente depois
+  de `unitprice` e `unitprice` depois de componente) e
+  `material_composition_cycle` (DFS de alcance antes de anexar).
+- **Propagação**: como alocações e bookings já leem o preço por
+  `unitPriceFor`, o preço calculado aparece de graça em `materialreport`,
+  `breakdownreport`, RDO, MSPDI e no turnover (C16 cobre com teste).
+
+### 13.3 C15 — Keywords opcionais e `booking charge`
+
+- `effort` passa a ser **opcional** nas duas origens (`booking effort "X" …` e
+  `booking "X" …`); a forma curta é a canônica do TJ
+  (`TjpSyntaxRules.rb:6001`, `:4771`) e a explícita é a da Fase 8.1.
+  Desambiguação: `State#transition` prefere o literal ao `$ID` variável, então
+  `_effort` antes de `!resourceId`/`!taskId` não cria conflito.
+- `quantity` passa a ser opcional em booking de material (tarefa e material),
+  `value` opcional em booking de charge (regra `bookingQuantity` /
+  `bookingValueKeyword` com `p.optional()` — o sufixo `!rule?` não existe no
+  FSM, lição da 14C.11).
+- **`booking charge`** — implementado do zero nas três origens, armazenado no
+  atributo de cenário `chargebookings` da **tarefa** (o dinheiro é da tarefa,
+  quem declara é o outro lado), com a mesma fila de referência futura de
+  `pendingBookings`. **Revisão 2026-11-02 (decisão do usuário):** no corpo da
+  tarefa **não existe referência de recurso** — booking de charge não consome
+  esforço, a outra ponta é a própria tarefa; recurso só é obrigatório no
+  booking de effort (`TjpSyntaxRules.rb:6001`). Gramática final:
+
+  ```tjp
+  task t "T"     { booking charge ["<descrição>"] [value] <montante> on <data> }
+  resource r "R" { booking charge <tarefa> ["<descrição>"] [value] <montante> on <data> }
+  material m "M" { booking charge <tarefa> ["<descrição>"] [value] <montante> on <data> }
+  ```
+
+  A `description` (`$STRING`, regra `chargeBookingDescription` com
+  `p.optional()`) é texto livre — o FSM encadeia os dois opcionais
+  (`<descrição>` usa `$STRING`, `value` usa o literal `_value`: tokens
+  disjuntos, sem ambiguidade; probe 26/26).
+- Modelo `ChargeBooking` (`model/charge-booking.ts`) com montante **podendo
+  ser negativo** (estorno) e `description: string | null` — coerente com
+  `ExtendedBooking` (Fase 8.1), que é modelo órfão: nada no parser o usava;
+  fica como está e não é tocado.
+- **Fora de escopo**: carga contábil de `booking charge` (duplicaria com o
+  atributo `charge` planejado) e o cálculo de *remaining* a partir de bookings
+  (Fase 18 — tracking/timesheet). Registrado em 13.7.
+
+### 13.4 C16 — Turnover com precedência de preço
+
+Roteiro de auditoria (cada rota com teste próprio):
+
+| Rota | Preço efetivo em jogo | Efeito esperado |
+|---|---|---|
+| `Material#allocatedCost` (agregado `materials`) | alocação → material (explícito ou calculado) | booking não tem alocação a relembrar; já usa `unitPriceFor` |
+| Bookings de estoque (novos `CostEvent`) | booking → material | entrada soma, saída negativa estorna, ambos na conta do chargeset |
+| `materialreport` `actualcost` | booking → alocação → material | entregue em 14C.11.7; revalidado aqui |
+| Booking **com** tarefa no turnover | — | **não** entra: a mesma quantidade já está no planejado da alocação; incluir o booking duplicaria o custo. Decisão explícita, com teste-âncora |
+
+### 13.5 C17 — Cenários: o que o TaskJuggler realmente faz
+
+A tabela do §12 estava parcialmente errada (foi escrita a partir da
+_documentação_ das fases, não do código). Verificado contra a fonte Ruby:
+
+| Ponto | TaskJuggler (fonte) | SyntaxMesh (código) |
+|---|---|---|
+| Namespace | **flat**: `Project.rb:117` `PropertySet.new(self, true)` | `project.ts:259` `new PropertySet(this, true)` — igual |
+| `fullId` de `real` aninhado em `plan` | `real` (`PropertyTreeNode.rb:294-303`: com flatNamespace devolve `@subId`) — **não** `plan.real` | idem — igual |
+| Top-level único | `TjpSyntaxRules.rb:5184` `clearProperties` quando `@property.nil?` | `scenario.ts:184` `if (!this.property) project.scenarios.clearProperties()` — igual |
+| Aninhamento | `rule_scenario` → `!scenarioHeader !scenarioBody` com `@property = @property.parent` (`:5091-5093`) | `scenario.ts:108-120` + `p.pattern(["!scenario"])` em `scenarioAttributes` (`:163`) — recursivo, igual |
+| Herança | pelo aninhamento, via `inheritedFromParent` (`Project.rb:122-129`) | `scenario-attributes.ts` idem (`projection`/`active` com `inheritedFromParent = true`) — igual |
+| `projection` | flag de modo **e** herda do pai cenarístico (`Project.rb:128-129`) | `scenario-attributes.ts:92-95` — igual |
+
+**Conclusão registrada:** não há divergência de cenários entre SyntaxMesh e
+TaskJuggler; as três suspeitas do §12 (flat vs nested, `plan.real`,
+`projection` ligada a herança) se resolvem a favor do port. O bloco entrega
+**testes de caracterização** (2 níveis, herança, `fullId`, `clearProperties`)
+para que a afirmação fique verificável, e corrige a tabela do §12 — sem mudar
+comportamento.
+
+### 13.6 Critério de aceite do Adendo Extra
+
+1. Os quatro exemplos do §12 (estoque ±, composição de concreto a 234,95,
+   `booking` curto nas três origens, `booking charge` no material) parseiam
+   sem erro e produzem os objetos de modelo esperados.
+2. `deno task check:all`, `fmt:check`, `lint`, `check:stubs` e a suíte
+   completa verdes; goldens inalterados (nenhum fixture novo em `golden/`).
+3. Turnover da conta reflete preço de alocação, preço de material e preço
+   calculado por composição, e o booking com tarefa não duplica custo.
+4. §13.5 registrado com evidência Ruby/arquivo/linha e testes de
+   caracterização de cenários de 2 níveis.
+5. Status propagado: `plano.md`, `AGENTS.md`, `CURRENT.md`, tabela de
+   evidências em `-tarefas.md`.
+
+**Resultado (2026-11-02):** ✅ os cinco critérios cumpridos.
+
+- Os quatro exemplos do §12 parseiam limpos — cobertos pelos testes de parser
+  de C13/C14/C15 e pelos testes de modelo/turnover de C16.
+- `deno task check:all` exit 0 · suíte core **482 testes / 4934 passos /
+  0 falhas** (inclui a revisão 2026-11-02 de `booking charge`: descrição
+  opcional nas três origens e remoção da referência de recurso no corpo da
+  tarefa, com `rules_booking_charge_14c_test.ts` — 8 steps) · `check:stubs`
+  OK · `deno fmt --check` limpo (589 arquivos) ·
+  `deno lint` limpo nos arquivos novos.
+- Goldens: `reports.golden.json`/`parser.golden.json`/`mspdi.golden.json`/
+  `reports-extensions.golden.json` byte-idênticos ao HEAD; único regenerado de
+  propósito foi `attribute-definitions.golden.json` (173 → 174 casos, o novo
+  atributo `chargebookings` — evidência 14C.15.4).
+- Turnover verificado por rota em `turnover-price-precedence_14c_test.ts`
+  (11 passos), inclusive a âncora de que booking com tarefa não duplica custo.
+- §13.5 registrado com evidência Ruby/arquivo/linha e travado por testes de
+  caracterização em `scenario-nesting_14c_test.ts` (5 passos); tabela do §12
+  corrigida (14C.17.4).
+- `plano.md` (linha 14-C), `AGENTS.md` (tabela das 21 fases) e `CURRENT.md`
+  atualizados; tabelas de evidência 14C.13–14C.17 preenchidas em
+  `-tarefas.md`.
+
+### 13.7 Rastreabilidade e pendências registradas
+
+| Pedido do §12 | Tarefa |
+|---|---|
+| Booking sem tarefa ±, chargeset obrigatório | 14C.13.1–13.8 |
+| Unit price calculado por composição | 14C.14.1–14C.14.7 |
+| `quantity`/`value`/`effort` opcionais; `booking charge` no material | 14C.15.1–14C.15.8 |
+| Turnover com precedência | 14C.16.1–14C.16.5 |
+| Cenários (registro) | 14C.17.1–14C.17.4 |
+
+**Pendências** (não implementadas aqui, com dono):
+
+- Colunas `stockquantity`/`stockcost` no `materialreport` e nos demais
+  conteúdos de material — deixa para a próxima rodada de relatórios de
+  material (mesma família do 14C.1.19). **Entregue em 2026-11-02 — ver §14.**
+- Carga contábil de `booking charge` e cálculo de *remaining* (planned −
+  booking) a partir de bookings — **Fase 18** (tracking/timesheet), onde o
+  tracking scenario consome os bookings.
+- `ExtendedBooking` (Fase 8.1) continua sem uso: a 14C.15 introduziu
+  `ChargeBooking` próprio; uma futura limpeza deve apagar ou unir os dois.
+
+## 14. C18 — Colunas de estoque `stockquantity`/`stockcost` (2026-11-02)
+
+Pendência registrada em §13.7 (origem: “Fora de escopo de C13”, §13.1). Mesma
+família do 14C.1.19: material nos conteúdos de relatório.
+
+### 14.1 Especificação
+
+Duas colunas novas, aceitas em `columns` de qualquer relatório de tabela
+(extensão SyntaxMesh — não existem no TJ Ruby; o par completo é
+`singlePattern` em `reportableAttributes`, `rules/report.ts`):
+
+```tjp
+materialreport mr "Materiais" {
+  columns no, name, unit, stockquantity, stockcost
+}
+```
+
+- **`stockquantity`** — Σ algébrico das quantidades dos bookings de **estoque**
+  do material (movimentos **sem** tarefa, `isInventory()`, 14C.13.1 —
+  atributo de cenário `stockbookings`) cuja data cai no período do relatório
+  (`[start, end]` fechado, a mesma convenção do recorte de alocações
+  `materialTaskInPeriod`). Entrada positiva, saída/estorno negativa.
+- **`stockcost`** — Σ dos valores desses movimentos, com o preço efetivo do
+  booking (`unitPriceFor`: booking → material; alocação não se aplica, o
+  movimento não tem tarefa).
+- **Resolução**: casos `stockquantity`/`stockcost` em
+  `TableReport.genMaterialCell` (linhas de `Material`), com as helpers
+  `stockBookingsInPeriod`/`materialStockQuantity`/`materialStockCost` —
+  portanto valem para **todo conteúdo de tabela que lista materiais**, não só
+  o `materialreport` (o dispatch de linhas de material é do `TableReport`
+  compartilhado). Booking **com** tarefa (consumo) não entra: âncora de
+  separação dos dois papéis (14C.16.4), travada por teste.
+- **Metadados**: `materialPropertiesById` (título/align),
+  `materialNumericColumns` (Float, align right), `MATERIAL_COLUMN_TITLES`
+  (títulos das colunas padrão). Desde C18, `defaultColumnTitle` consulta
+  `materialPropertiesById` como segundo dicionário (o núcleo tem prioridade —
+  ids como `journal` são compartilhados), de modo que colunas de material
+  **declaradas pelo usuário** em `columns` saem com título também em
+  relatórios fora do `materialreport`.
+- **i18n**: keywords `stockcost`/`stockquantity` em `canonical.ts` + pt-BR
+  (`custoestoque`/`quantidadeestoque`) + es (`costoexistencias`/
+  `cantidadexistencias`).
+
+### 14.2 Verificação
+
+- Parser: `columns stockquantity, stockcost` aceito com títulos próprios;
+  keyword desconhecida continua rejeitada pelo FSM.
+- Células: soma algébrica (500 − 100 = 400; × 10 = 4000), precedência de preço
+  do booking (100 × 12 − 50 × 10 = 700), recorte de período (movimento de 2027
+  fora de um relatório 2026), material sem movimentos = 0, booking com tarefa
+  não conta.
+- `tests/reports/stock-columns_14c_test.ts` — 2 describes / 7 steps.
+- Suíte afetada (parser + reports + golden + query): **213 testes / 2000
+  passos / 0 falhas**; suíte core completa **484 testes / 4941 passos /
+  0 falhas** · `deno task check:all` exit 0 · `check:stubs` OK; goldens
+  byte-idênticos (as keywords novas não aparecem em fixture existente);
+  `deno fmt --check` limpo (590 arquivos); `deno lint` limpo nos arquivos
+  tocados.

@@ -370,6 +370,9 @@ export function registerResourceRules(p: ProjectFileParser,): void {
   // Booking (resource-side)
   // ------------------------------------------------------------------
   rule(p, "resourceBooking", () => {
+    // 14C.15.6: `booking charge <tarefa> [value] <montante> on <data>` — a
+    // palavra `charge` desambigua do booking de esforço (Adendo Extra §12.3).
+    p.pattern(["!resourceChargeBookingHeader",],);
     p.pattern(
       ["!resourceBookingHeader", "!bookingBody",],
       function (this: ProjectFileParser,): unknown {
@@ -390,23 +393,25 @@ export function registerResourceRules(p: ProjectFileParser,): void {
   },);
 
   rule(p, "resourceBookingHeader", () => {
+    // `effort` opcional (Adendo Extra §12.3, 14C.15.2).
     p.pattern(
-      ["!taskId", "!valIntervals",],
+      ["!bookingEffortKeyword", "!taskId", "!valIntervals",],
       function (this: ProjectFileParser,): unknown {
-        const task = this.val[0] as Task;
+        const task = this.val[1] as Task;
         const resource = asProp(this,) as unknown as Resource;
-        this.checkBooking(task, resource,);
+        const sfi = this.sourceFileInfo[1] ?? null;
+        this.checkBooking(task, resource, sfi,);
         const booking = new Booking(
           resource,
           task,
-          (this.val[1] as unknown[]) as never,
+          (this.val[2] as unknown[]) as never,
         );
-        booking.sourceFileInfo = this.sourceFileInfo[0] ?? null;
+        booking.sourceFileInfo = sfi;
         this.booking = booking;
         return booking;
       },
     );
-    p.arg(0, "id", "Absolute ID of a defined task",);
+    p.arg(1, "id", "Absolute ID of a defined task",);
   },);
 
   // ------------------------------------------------------------------

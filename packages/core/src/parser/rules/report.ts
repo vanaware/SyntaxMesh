@@ -48,6 +48,8 @@ const asProp = (parser: ProjectFileParser,): Report =>
  */
 const MATERIAL_COLUMN_TITLES: Record<string, string> = {
   no: "No.",
+  stockcost: "Stock Cost",
+  stockquantity: "Stock Quantity",
   totalcost: "Total Cost",
   unit: "Unit",
   unitprice: "Unit Price",
@@ -2589,5 +2591,16 @@ export function registerReportRules(p: ProjectFileParser,): void {
     p.singlePattern("_charges",);
     p.singlePattern("_pictures",);
     p.singlePattern("_timebasis",);
+    // Fase 14 Complemento C18 (Adendo Extra §13.7) — colunas de estoque do
+    // `materialreport` (extensão SyntaxMesh): Σ dos bookings de estoque
+    // (movimentos sem tarefa) recortados pelo período do relatório.
+    p.singlePattern("_stockquantity",);
+    p.descr(
+      "Net stock quantity (stock bookings without a task) in the period",
+    );
+    p.singlePattern("_stockcost",);
+    p.descr(
+      "Net stock cost (stock bookings without a task) in the period",
+    );
   },);
 }

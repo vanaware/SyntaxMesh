@@ -102,6 +102,13 @@ export class ProjectFileParser extends TextParser {
   picture: unknown = null;
   taskDependency: unknown = null;
   navigator: unknown = null;
+  /**
+   * Identificador (`<id>` ou `"<nome>"`) lido logo após a keyword `material`,
+   * na regra funil `material` (Adendo Extra §12.2, 14C.14.3). Serve tanto para
+   * o ID do material em declaração quanto para a referência do componente em
+   * composição — a FSM consome o token único e só ramifica no seguinte.
+   */
+  pendingMaterialRef: string | null = null;
   /** Navigators definidos (Ruby `@project['navigators']`). */
   readonly navigators = new Map<string, unknown>();
   limits: Limits | null = null;
@@ -377,13 +384,22 @@ export class ProjectFileParser extends TextParser {
     }
   }
 
-  /** Valida integridade de um statement 'booking'. */
-  checkBooking(task: Task, resource: Resource,): void {
+  /**
+   * Valida integridade de um statement 'booking'. `sfi` é a origem da linha do
+   * erro — o token do id (tarefa/recurso). Com o `effort` opcional anteposto na
+   * gramática (14C.15.1-2), `sourceFileInfo[0]` não é mais o id, então o chamador
+   * passa o índice correto explicitamente.
+   */
+  checkBooking(
+    task: Task,
+    resource: Resource,
+    sfi: SourceFileInfo | null = this.sourceFileInfo[0] ?? null,
+  ): void {
     if (!task.leaf()) {
       this.error(
         "booking_no_leaf",
         `${task.fullId} is not a leaf task`,
-        this.sourceFileInfo[0] ?? null,
+        sfi,
         task,
       );
     }
@@ -391,7 +407,7 @@ export class ProjectFileParser extends TextParser {
       this.error(
         "booking_milestone",
         "You cannot add bookings to a milestone",
-        this.sourceFileInfo[0] ?? null,
+        sfi,
         task,
       );
     }
@@ -399,7 +415,7 @@ export class ProjectFileParser extends TextParser {
       this.error(
         "booking_group",
         "You cannot book a group resource",
-        this.sourceFileInfo[0] ?? null,
+        sfi,
         resource,
       );
     }

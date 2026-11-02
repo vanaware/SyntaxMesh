@@ -225,6 +225,9 @@ export const CANONICAL_KEYWORDS = [
   "status",
   "statussheet",
   "statussheetreport",
+  // Fase 14 Complemento C18 — colunas de estoque do materialreport (extensão).
+  "stockcost",
+  "stockquantity",
   "strict",
   "summary",
   "sun",
@@ -260,6 +263,7 @@ export const CANONICAL_KEYWORDS = [
   "unitprice",
   "use",
   "vacation",
+  "value",
   "w",
   "warn",
   "wed",

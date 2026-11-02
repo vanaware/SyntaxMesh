@@ -56,6 +56,42 @@ export function registerCommonRules(p: ProjectFileParser,): void {
     p.singlePattern("$FLOAT",);
   },);
 
+  /**
+   * Número com sinal (Adendo Extra §12.1, 14C.13.3).
+   *
+   * O scanner fiel a `ProjectFileScanner.rb:95-98` não produz número
+   * com sinal — o `-` cai no literal de caractere único. Esta regra só
+   * é usada pela gramática de booking de estoque (quantidade negativa =
+   * saída/estorno); o resto da gramática continua igual ao TJ.
+   */
+  rule(p, "signedNumber", () => {
+    p.pattern(["!number",], function (this: ProjectFileParser,): unknown {
+      return Number(this.val[0],);
+    },);
+    p.pattern(["_-", "!number",], function (this: ProjectFileParser,): unknown {
+      return -Number(this.val[1],);
+    },);
+  },);
+
+  /**
+   * Keyword `effort` **opcional** em booking (Adendo Extra §12.3, 14C.15.1–2).
+   *
+   * A forma curta (`booking <ref> <intervalo>`) é a canônica do TJ
+   * (`TjpSyntaxRules.rb:6001`, `:4771`); a explícita veio da Fase 8.1. Não há
+   * ambiguidade com a referência de recurso/tarefa porque `State#transition`
+   * prefere o literal `_effort` ao `$ID`/`$STRING` variável.
+   */
+  rule(p, "bookingEffortKeyword", () => {
+    p.optional();
+    p.pattern(["_effort",], () => "effort",);
+  },);
+
+  /** Keyword `value` opcional em `booking charge` (Adendo Extra §12.3). */
+  rule(p, "bookingValueKeyword", () => {
+    p.optional();
+    p.pattern(["_value",], () => "value",);
+  },);
+
   rule(p, "durationUnit", () => {
     p.pattern(["_min",], function (this: ProjectFileParser,): unknown {
       return 0;

@@ -16,6 +16,7 @@ import { registerJournalRules, } from "./journal.ts";
 import { registerResourceRules, } from "./resource.ts";
 import { registerAccountRules, } from "./account.ts";
 import { registerMaterialRules, } from "./material.ts";
+import { registerBookingRules, } from "./booking.ts";
 import { registerShiftRules, } from "./shift.ts";
 import { registerScenarioRules, } from "./scenario.ts";
 import { registerReportRules, } from "./report.ts";
@@ -34,6 +35,7 @@ export function registerTjpRules(parser: ProjectFileParser,): void {
   registerResourceRules(parser,);
   registerAccountRules(parser,);
   registerMaterialRules(parser,);
+  registerBookingRules(parser,);
   registerShiftRules(parser,);
   registerScenarioRules(parser,);
   registerReportRules(parser,);

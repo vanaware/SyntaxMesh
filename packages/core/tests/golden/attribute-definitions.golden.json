@@ -924,6 +924,17 @@
       "extension": "tasks"
     },
     {
+      "id": "chargebookings",
+      "name": "Charge Bookings",
+      "objClass": "TaskJuggler::NodeListAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": [],
+      "userDefined": false,
+      "extension": "tasks"
+    },
+    {
       "id": "maxend",
       "name": "Max. End",
       "objClass": "TaskJuggler::DateAttribute",

@@ -7,6 +7,10 @@ import { type AccountCredit, } from "../finance/account-credit.ts";
 import { type TjTime, } from "../time/tj-time.ts";
 import { PropertyTreeNode, } from "./property-tree-node.ts";
 import { TjInternalError, } from "./errors.ts";
+import { Material, } from "./material.ts";
+import type { MaterialBooking, } from "./material-booking.ts";
+import { type CostLine, resolveAccount, } from "../accounting/attribution.ts";
+import { createCostEvent, } from "../accounting/cost-event.ts";
 
 /**
  * Interface para query de relatório (balance/turnover).
@@ -208,6 +212,16 @@ export class AccountScenario extends ScenarioData {
             this.buckets.material += materialAmount;
           }
         },);
+        // Bookings de estoque (Adendo Extra §12.1 / 14C.13.7): entram na
+        // conta que o material resolve (chargeset → defaultaccount material),
+        // com a data dentro de `[start, end)` — como `@credits` acima e
+        // `AccountScenario.rb:57-68`. Diferentemente das alocações, o booking
+        // de estoque é um valor **real** (modo `actual`) e estorna quando a
+        // quantidade é negativa.
+        for (const node of project.materials.toArray()) {
+          if (!(node instanceof Material)) continue;
+          amount += this.addStockBookings(node, project, startIdx, endIdx,);
+        }
       } else {
         throw new Error(`Unknown aggregation type ${aggregate}`,);
       }
@@ -254,6 +268,63 @@ export class AccountScenario extends ScenarioData {
    */
   getBuckets(): AccountBuckets {
     return { ...this.buckets, };
+  }
+
+  /**
+   * Soma os bookings de estoque de `material` que pertencem **a esta conta**
+   * (chargeset do material → regra 2 de `resolveAccount`; conta default do
+   * projeto para material → regra 4) e cuja data está em `[start, end)`.
+   * Cada booking também emite um `CostEvent` de `material_usage` no modo
+   * `actual` para os relatórios auditáveis (`breakdownreport`, RDO) — a
+   * emissão é idempotente: um booking já emitido não entra de novo em
+   * chamadas seguintes do turnover.
+   *
+   * @returns O valor (positivo = entrada, negativo = estorno) a somar.
+   */
+  private addStockBookings(
+    material: Material,
+    project: ProjectLike,
+    startIdx: number,
+    endIdx: number,
+  ): number {
+    const account = this.property as unknown as Account;
+    const scIdx = this.scenarioIdx;
+    const startDate = project.idxToDate(startIdx,);
+    const endDate = project.idxToDate(endIdx,);
+    const destination = material.stockAccount(scIdx,);
+    if (!destination) return 0;
+    const isMine = destination === account ||
+      destination.isChildOf(account as unknown as PropertyTreeNode,);
+    if (!isMine) return 0;
+
+    let added = 0;
+    for (const booking of material.stockBookings(scIdx,)) {
+      if (!(startDate <= booking.date && booking.date < endDate)) continue;
+      const value = booking.cost();
+      if (value === 0) continue;
+      if (!material.stockBookingEmitted(booking,)) {
+        const line: CostLine = {
+          type: "material_usage",
+          amount: value,
+          material,
+          project,
+        };
+        const attribution = resolveAccount(line,);
+        project.costEvents.push(
+          createCostEvent(
+            line,
+            attribution.account,
+            attribution.rule,
+            scIdx,
+            "actual",
+          ),
+        );
+        material.markStockBookingEmitted(booking,);
+      }
+      this.buckets.material += value;
+      added += value;
+    }
+    return added;
   }
 
   /**

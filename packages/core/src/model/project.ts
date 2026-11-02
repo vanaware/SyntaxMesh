@@ -44,15 +44,19 @@ import { registerTaskAttributes, } from "../model/attributes/task-attributes.ts"
 import { registerReportAttributes, } from "../model/attributes/report-attributes.ts";
 import { registerMaterialAttributes, } from "../model/attributes/material-attributes.ts";
 import type { MaterialBooking, } from "./material-booking.ts";
+import type { ChargeBooking, } from "./charge-booking.ts";
 
 /**
- * Booking de material aguardando a declaração da tarefa dona. O `booking`
- * declarado no corpo do material pode preceder o `task` que ele referencia;
- * guardamos também o cenário em que surgiu (14C.11.5).
+ * Booking aguardando a declaração da tarefa dona. O `booking` declarado no
+ * corpo do material ou do recurso pode preceder o `task` que ele referencia;
+ * guardamos também o cenário em que surgiu (14C.11.5) e o atributo da tarefa
+ * onde deve entrar — `materialbookings` ou `chargebookings` (14C.15.7).
  */
 export interface PendingMaterialBooking {
-  booking: MaterialBooking;
+  booking: MaterialBooking | ChargeBooking;
   scenarioIdx: number;
+  /** Atributo de cenário da tarefa que recebe o booking resolvido. */
+  attrId?: string;
 }
 
 export class Project implements ProjectLike {
@@ -97,17 +101,17 @@ export class Project implements ProjectLike {
    */
   readonly defaultAccountIds: Map<CostType, string>;
   /**
-   * Bookings de material lidos no corpo do material cuja tarefa ainda não
-   * estava declarada (referência futura). Esvaziada por
-   * `flushPendingBookings()` ao final do parse.
+   * Bookings de material (ou charge) lidos antes da declaração da tarefa dona
+   * (referência futura). Esvaziada por `flushPendingBookings()` ao final do
+   * parse.
    */
   readonly pendingBookings: PendingMaterialBooking[] = [];
 
   /**
    * Liga os bookings pendentes às suas tarefas e anexa cada um ao atributo de
-   * cenário `materialbookings` da tarefa. Idempotente: o que continua sem
-   * tarefa permanece na fila para uma chamada futura. Devolve quantos foram
-   * resolvidos nesta passada.
+   * cenário da tarefa (`materialbookings` ou `chargebookings`, 14C.15.7).
+   * Idempotente: o que continua sem tarefa permanece na fila para uma chamada
+   * futura. Devolve quantos foram resolvidos nesta passada.
    */
   flushPendingBookings(): number {
     if (this.pendingBookings.length === 0) return 0;
@@ -122,12 +126,17 @@ export class Project implements ProjectLike {
         continue;
       }
       const task = entry.booking.task!;
+      const attrId = entry.attrId ?? "materialbookings";
       const current = (task.getForScenario(
-        "materialbookings",
+        attrId,
         entry.scenarioIdx,
-      ) ?? []) as MaterialBooking[];
+      ) ?? []) as unknown[];
+      if (current.includes(entry.booking,)) {
+        resolved++;
+        continue;
+      }
       task.setForScenario(
-        "materialbookings",
+        attrId,
         current.concat([entry.booking,],),
         entry.scenarioIdx,
       );

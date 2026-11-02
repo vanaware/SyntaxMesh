@@ -328,6 +328,12 @@ export class TjpExportRE extends ReportBase {
     if (typeof unitPrice === "number" && unitPrice !== 0) {
       this.generateAttributeText(`unitprice ${unitPrice}`, indent + 2,);
     }
+    // Bookings de estoque (Adendo Extra §12.1 / 14C.13.8): saem na forma do
+    // corpo do material, `booking quantity <n> [unitprice <p>] on <data>` —
+    // sem referência de tarefa, com o sinal preservado (estorno negativo).
+    for (const scenarioIdx of this.scenarioList()) {
+      this.generateStockBookings(material, indent + 2, scenarioIdx,);
+    }
     for (const scenarioIdx of this.scenarioList()) {
       this.generateAttribute(material, "flags", indent + 2, scenarioIdx,);
     }
@@ -489,6 +495,34 @@ export class TjpExportRE extends ReportBase {
       this.generateAttributeText(
         `booking material ${booking.material.fullId} quantity ` +
           `${booking.quantity}${unitPrice} on ${String(booking.date,)}`,
+        indent,
+        scenarioIdx,
+      );
+    }
+  }
+
+  /**
+   * Emite os movimentos de estoque do próprio material (14C.13.8):
+   * `booking quantity <n> [unitprice <p>] on <data>` — a forma sem tarefa,
+   * agora aceita pelo parser, com a quantidade assinada (negativa = estorno).
+   */
+  private generateStockBookings(
+    material: Material,
+    indent: number,
+    scenarioIdx: number,
+  ): void {
+    if (this.hiddenBy("hideMaterial", material,)) return;
+    const bookings = (material.getForScenario(
+      "stockbookings",
+      scenarioIdx,
+    ) ?? []) as MaterialBooking[];
+    for (const booking of bookings) {
+      const unitPrice = booking.unitPrice !== undefined
+        ? ` unitprice ${booking.unitPrice}`
+        : "";
+      this.generateAttributeText(
+        `booking quantity ${booking.quantity}${unitPrice} ` +
+          `on ${String(booking.date,)}`,
         indent,
         scenarioIdx,
       );

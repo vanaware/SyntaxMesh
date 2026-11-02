@@ -4,10 +4,17 @@ import { TaskScenario, } from "./task-scenario.ts";
 import { type Resource, } from "./resource.ts";
 import { type TimeInterval, } from "../time/time-interval.ts";
 import type { Booking, } from "../scheduling/booking.ts";
+import type { ChargeBooking, } from "./charge-booking.ts";
 import { ChargeSetCollection, } from "../finance/charge-set-collection.ts";
 
 export class Task extends PropertyTreeNode {
   private chargeset_: ChargeSetCollection;
+  /**
+   * Bookings de charge que já geraram `CostEvent` no turnover (14C.15.4).
+   * Comparação por identidade: os bookings são imutáveis e o turnover pode
+   * rodar várias vezes no mesmo parse.
+   */
+  private readonly emittedChargeBookings = new Set<ChargeBooking>();
 
   constructor(
     project: ProjectLike,
@@ -34,6 +41,25 @@ export class Task extends PropertyTreeNode {
   addBooking(scIdx: number, booking: Booking,): void {
     const list = this.scenarioData(scIdx,).a("booking",) as Booking[] | null;
     if (list) list.push(booking,);
+  }
+
+  /**
+   * Bookings de charge (`booking charge …`, Adendo Extra §12.3) desta tarefa no
+   * cenário `scIdx` — declarados nela, num recurso ou num material.
+   */
+  chargeBookings(scIdx: number,): ChargeBooking[] {
+    return (this.getForScenario("chargebookings", scIdx,) ??
+      []) as ChargeBooking[];
+  }
+
+  /** O booking de charge já gerou seu `CostEvent`? (emissão idempotente) */
+  chargeBookingEmitted(booking: ChargeBooking,): boolean {
+    return this.emittedChargeBookings.has(booking,);
+  }
+
+  /** Registra `booking` como emitido. */
+  markChargeBookingEmitted(booking: ChargeBooking,): void {
+    this.emittedChargeBookings.add(booking,);
   }
 
   /**

@@ -128,6 +128,8 @@ export abstract class TableReport extends ReportBase {
     ["journalmessages", ["Journal Messages", "left",],],
     ["journalsummaries", ["Journal Summaries", "left",],],
     ["scheduledcost", ["Scheduled Cost", "right",],],
+    ["stockcost", ["Stock Cost", "right",],],
+    ["stockquantity", ["Stock Quantity", "right",],],
     ["totalcost", ["Total Cost", "right",],],
     ["unit", ["Unit", "left",],],
     ["unitprice", ["Unit Price", "right",],],
@@ -145,11 +147,14 @@ export abstract class TableReport extends ReportBase {
 
   /**
    * Colunas numéricas calculadas de material (alinhamento à direita).
-   * `totalquantity` é derivada das alocações desde a 14C.11.10.
+   * `totalquantity` é derivada das alocações desde a 14C.11.10; `stockcost`/
+   * `stockquantity` são derivadas dos bookings de estoque desde a C18.
    */
   static readonly materialNumericColumns: Set<string> = new Set<string>([
     "actualcost",
     "scheduledcost",
+    "stockcost",
+    "stockquantity",
     "totalcost",
     "totalquantity",
   ],);
@@ -234,7 +239,12 @@ export abstract class TableReport extends ReportBase {
     ];
     if (specials.includes(id,)) return "";
     const entry = TableReport.propertiesById.get(id,);
-    return entry ? entry[0] : null;
+    if (entry) return entry[0];
+    // Colunas exclusivas do materialreport (extensão SyntaxMesh): o mapa é
+    // consultado em segundo lugar porque pode compartilhar ids com colunas de
+    // task (`journal`, etc.) — o núcleo tem prioridade (C18).
+    const material = TableReport.materialPropertiesById.get(id,);
+    return material ? material[0] : null;
   }
 
   /** A coluna deve ser indentada? (por `colId` ou por tipo de propriedade). */
@@ -1237,6 +1247,19 @@ export abstract class TableReport extends ReportBase {
           this.materialTotalCost(material, scIdx,),
         );
         break;
+      // C18 (Adendo Extra §13.7): Σ algébrico dos bookings de estoque
+      // (movimentos **sem** tarefa, 14C.13.1) do material cuja data cai no
+      // período do relatório — entrada positiva, saída/estorno negativa.
+      case "stockquantity":
+        cell.text = this.formatMaterialNumber(
+          this.materialStockQuantity(material, scIdx,),
+        );
+        break;
+      case "stockcost":
+        cell.text = this.formatMaterialNumber(
+          this.materialStockCost(material, scIdx,),
+        );
+        break;
       default:
         if (query.process()) {
           const rti = query.to_rti();
@@ -1509,6 +1532,48 @@ export abstract class TableReport extends ReportBase {
     }
     return (this.materialAllocationCost(material, scIdx,) ?? 0) +
       (this.materialBookingCost(material, scIdx,) ?? 0);
+  }
+
+  /**
+   * Bookings de **estoque** de `material` no período do relatório (C18,
+   * Adendo Extra §13.7): os movimentos **sem** tarefa declarados no corpo do
+   * material (14C.13.1, atributo `stockbookings`). Período fechado
+   * `[start, end]` — a mesma convenção do recorte de alocações
+   * (`materialTaskInPeriod`); sem período, todos os movimentos contam.
+   */
+  private stockBookingsInPeriod(
+    material: Material,
+    scIdx: number,
+  ): MaterialBooking[] {
+    const start = (this.a("start",) as TjTime | null) ?? null;
+    const end = (this.a("end",) as TjTime | null) ?? null;
+    return material.stockBookings(scIdx,).filter((booking,) => {
+      if (!booking.isInventory()) return false;
+      if (!start || !end) return true;
+      return booking.date.compareTo(start,) >= 0 &&
+        booking.date.compareTo(end,) <= 0;
+    },);
+  }
+
+  /** `stockquantity`: Σ algébrico das quantidades de estoque no período. */
+  private materialStockQuantity(material: Material, scIdx: number,): number {
+    let sum = 0;
+    for (const booking of this.stockBookingsInPeriod(material, scIdx,)) {
+      sum += booking.quantity;
+    }
+    return sum;
+  }
+
+  /**
+   * `stockcost`: Σ algébrico dos valores de estoque no período, com o preço
+   * efetivo do booking (booking → material, via `unitPriceFor`).
+   */
+  private materialStockCost(material: Material, scIdx: number,): number {
+    let sum = 0;
+    for (const booking of this.stockBookingsInPeriod(material, scIdx,)) {
+      sum += booking.cost();
+    }
+    return sum;
   }
 
   /** Formata valores monetários de material (`numberFormat` do relatório). */

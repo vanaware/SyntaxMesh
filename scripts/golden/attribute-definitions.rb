@@ -153,6 +153,21 @@ attribute_definitions << {
   'extension' => 'tasks',
 }
 
+# Extensão documentada do port (Fase 14 Complemento 14C.15.4): chargebookings
+# em Task (NodeListAttribute, cenário-específico) — gastos realizados de
+# `booking charge`. Não existe no TJ Ruby.
+attribute_definitions << {
+  'id' => 'chargebookings',
+  'name' => 'Charge Bookings',
+  'objClass' => 'TaskJuggler::NodeListAttribute',
+  'inheritedFromParent' => false,
+  'inheritedFromProject' => false,
+  'scenarioSpecific' => true,
+  'default' => [],
+  'userDefined' => false,
+  'extension' => 'tasks',
+}
+
 project.reports.eachAttributeDefinition do |attr_def|
   attribute_definitions << {
     'id' => attr_def.id,

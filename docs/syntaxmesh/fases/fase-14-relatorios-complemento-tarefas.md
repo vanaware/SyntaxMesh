@@ -2,8 +2,8 @@
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-14-relatorios-complemento-tarefas.md`
 > **Plano:** `docs/syntaxmesh/fases/fase-14-relatorios-complemento.md`
-> **Status:** ✅ Concluída (C0 2026-10-31; C1–C7 2026-11-01; C8–C12 2026-11-01)
-> **Total:** 145 tarefas
+> **Status:** ✅ Concluída (C0 2026-10-31; C1–C7 2026-11-01; C8–C12 2026-11-01; C13–C17 em desenvolvimento)
+> **Total:** 177 tarefas
 > **Concluídas:** 145
 > **Fonte Ruby (parcial):** `docs/taskjuggler/lib/taskjuggler/reports/MspXmlRE.rb` +
 > `Journal.rb` + `AlertLevelDefinitions.rb` (o restante — materialreport,
@@ -27,14 +27,22 @@
 [x] 14C.10 MSPDI `<Baseline>` via `baseline <scenario>`                        — 7
 [x] 14C.11 Unit price por alocação/booking + remoção de `totalquantity`       — 12
 [x] 14C.12 Auditoria G1.4 (scheduler) + verificação do adendo                 — 6
+[ ] 14C.13 Booking de estoque (sem tarefa, quantidade ±)                      — 8
+[ ] 14C.14 Unit price calculado por composição                                 — 7
+[ ] 14C.15 Keywords opcionais + `booking charge`                               — 8
+[ ] 14C.16 Turnover com precedência de unit price                              — 5
+[ ] 14C.17 Cenários: registro do comportamento real                            — 4
 ─────────────────────────────────────────────────────────
-TOTAL: 145
+TOTAL: 177
 ```
 
 **Ordem:** C0 → C1 → C2 → C3 → C4 → C5 → C6 → C7 → **C8 → C9 → C10 → C11 → C12**
 (adendo §10 do plano). C4 e C5 independem de C2/C3 (podem paralelizar).
 C6.5+ depende de C2/C3 (aplica hide nos novos geradores). C8–C12 vêm depois
 de C7 porque o adendo só foi escrito ao final da fase.
+**C13 → C14 → C15 → C16 → C17** (Adendo Extra §12): C14 depende de C13
+(mesma regra de booking no corpo do material), C16 depende de C13 + C14
+(turnover consome os dois), C17 é independente.
 
 ## Convenções (herdam a Fase 14)
 
@@ -685,6 +693,140 @@ integração futura apareça como diff explícito.
 
 > **Nota (14C.12):** a auditoria **não** reescreveu o scheduler. O único código de produção tocado foi o guard de nulidade em `task-scenario.ts`; o resto é âncora de teste e documentação. O efeito colateral positivo (destravar `alert.tjp`) veio da mesma correção.
 
+## 14C.13 — Booking de estoque (material sem tarefa, quantidade ±)
+
+| # | Tarefa | Arquivos | Verificação |
+|---|--------|----------|-------------|
+| 14C.13.1 | `MaterialBooking.taskId: string \| null`; quantidade negativa rejeitada **só** quando há tarefa | `model/material-booking.ts` | 3 testes |
+| 14C.13.2 | Atributo de cenário `stockbookings` no PropertySet de material | `model/attributes/material-attributes.ts` | 2 testes |
+| 14C.13.3 | Regra `signedNumber` (`!number` \| `_- !number`) usada pela gramática de estoque | `parser/rules/common.ts`, `parser/rules/material.ts` | 2 testes |
+| 14C.13.4 | Parser: `booking [quantity] <n> [unitprice <p>] on <data>` sem tarefa no corpo do material | `parser/rules/material.ts` | 3 testes |
+| 14C.13.5 | Erro `stock_booking_without_chargeset` quando não há `chargeset` nem `defaultaccount material` | `parser/rules/material.ts` | 2 testes |
+| 14C.13.6 | `Material#stockQuantity` / `#stockCost` derivados | `model/material.ts` | 2 testes |
+| 14C.13.7 | Turnover: bookings de estoque com data em `[start, end)` entram na conta resolvida (regra 2 → regra 4) | `model/account-scenario.ts` | 3 testes |
+| 14C.13.8 | Export TJP round-trip do booking de estoque + verificação final do bloco | `reports/tjp-export-re.ts` | 2 testes |
+
+## 14C.14 — Unit price calculado por composição
+
+| # | Tarefa | Arquivos | Verificação |
+|---|--------|----------|-------------|
+| 14C.14.1 | `MaterialComponent { material, quantity }` | `model/material-component.ts` (novo) | 2 testes |
+| 14C.14.2 | Atributo de cenário `materialcomponents` no material | `model/attributes/material-attributes.ts` | 1 teste |
+| 14C.14.3 | Parser: `material <id> <quantidade>` no corpo do material; `!material` (declaração aninhada) sai de `materialAttributes` | `parser/rules/material.ts` | 3 testes |
+| 14C.14.4 | `Material#unitPriceValue()` com componentes (recursivo, com guard de pilha) | `model/material.ts` | 3 testes |
+| 14C.14.5 | Erro `unitprice_with_components` nas duas ordens | `parser/rules/material.ts` | 2 testes |
+| 14C.14.6 | Erro `material_composition_cycle` (DFS de alcance antes de anexar) | `parser/rules/material.ts` | 2 testes |
+| 14C.14.7 | Exemplo do §12 (concreto a 234,95) de ponta a ponta: parse → preço calculado → alocação → custo | `tests/fixtures/ext/*` | 2 testes |
+
+## 14C.15 — Keywords opcionais (`effort`/`quantity`/`value`) + `booking charge`
+
+| # | Tarefa | Arquivos | Verificação |
+|---|--------|----------|-------------|
+| 14C.15.1 | `effort` opcional no booking de tarefa (`taskBookingHeader`) | `parser/rules/task.ts` | 2 testes |
+| 14C.15.2 | `effort` opcional no booking de recurso (`resourceBookingHeader`) | `parser/rules/resource.ts` | 1 teste |
+| 14C.15.3 | `quantity` opcional no booking de material (corpo da tarefa e corpo do material) | `parser/rules/material.ts` | 3 testes |
+| 14C.15.4 | `ChargeBooking` (dono, tarefa, montante ±, data, descrição) + atributo `chargebookings` da tarefa | `model/charge-booking.ts` (novo), `model/attributes/task-attributes.ts` | 3 testes |
+| 14C.15.5 | Parser: `booking charge ["<descrição>"] [value] <n> on <data>` no corpo da tarefa — **sem** referência de recurso (revisão 2026-11-02) | `parser/rules/booking.ts`, `parser/rules/task.ts` | 5 testes |
+| 14C.15.6 | Parser: `booking charge <tarefa> ["<descrição>"] [value] <n> on <data>` no corpo do recurso | `parser/rules/booking.ts`, `parser/rules/resource.ts` | 2 testes |
+| 14C.15.7 | Mesma forma no corpo do material (com referência futura) | `parser/rules/booking.ts`, `parser/rules/material.ts`, `model/project.ts` | 2 testes |
+| 14C.15.8 | i18n pt-BR/es das keywords novas + export TJP de `booking charge` | `i18n/*`, `reports/tjp-export-re.ts` | 3 testes |
+
+## 14C.16 — Turnover com precedência de unit price
+
+| # | Tarefa | Arquivos | Verificação |
+|---|--------|----------|-------------|
+| 14C.16.1 | Auditoria das rotas de custo de material até a conta (alocação, estoque, relatório) | doc + testes | 4 testes |
+| 14C.16.2 | Preço de **alocação** vence o do material no turnover | `model/account-scenario.ts` | 1 teste |
+| 14C.16.3 | Preço **calculado** por composição chega ao turnover | `model/material.ts` | 1 teste |
+| 14C.16.4 | Booking **com tarefa** não duplica custo no turnover (decisão §13.4) | idem | 1 teste-âncora |
+| 14C.16.5 | Estorno: booking de estoque negativo subtrai da conta | idem | 1 teste |
+
+## 14C.17 — Cenários: registro do comportamento real
+
+| # | Tarefa | Arquivos | Verificação |
+|---|--------|----------|-------------|
+| 14C.17.1 | Sondar o código nos 4 pontos do §12 e confrontar com a fonte Ruby | doc (plano §13.5) | — |
+| 14C.17.2 | Teste de caracterização: cenário de 2 níveis, `fullId` curto, herança por aninhamento | `tests/model/scenario-nesting_14c_test.ts` (novo) | 4 testes |
+| 14C.17.3 | Teste: redeclarar o top-level limpa os cenários (`clearProperties`) | idem | 1 teste |
+| 14C.17.4 | Corrigir a tabela do §12 no plano (não há divergência) | `fase-14-relatorios-complemento.md` | diff |
+
+## Notas de conclusão
+
+#### Evidências 14C.13.1–14C.13.8 (preenchido 2026-11-02)
+
+| # | Implementação | Verificação |
+|---|---------------|-------------|
+| 14C.13.1 | `MaterialBooking.taskId: string \| null` + `task: Task \| null`; construtor rejeita quantidade negativa só quando `taskId !== null` | `tests/model/material-booking_14c_test.ts` — 3 steps (erro de negativo, campos, isInventory) |
+| 14C.13.2 | `stockbookings` (`NodeListAttribute`, `isScenarioAttribute=true`) registrado em `material-attributes.ts` | `tests/attributes/material-attributes_test.ts` + contagem |
+| 14C.13.3 | `signedNumber` (`p.optional(‘-‘) !number`) em `parser/rules/common.ts` + referenciada pela gramática de estoque | `debug/adendo_extra_probe.ts` casos estoque +/− (2 steps) |
+| 14C.13.4 | `materialBookingBody` com `!materialBookingTaskRef` opcional; `addStockBooking` grava em `stockbookings` do material | `debug/adendo_extra_probe.ts` — 2 steps (estoque + / −, sem task) |
+| 14C.13.5 | `validateStockBookings` emitido no fechamento de `materialBody`; erro `stock_booking_without_chargeset` | `debug/adendo_extra_probe.ts` — 1 step (m8: erro esperado sem chargeset) |
+| 14C.13.6 | `Material#stockQuantity(scIdx)` / `#stockCost(scIdx)` derivados | `turnover-price-precedence_14c_test.ts` — rota de estoque (4 steps) |
+| 14C.13.7 | `AccountScenario#addStockBookings`: data ∈ [start,end), conta = `stockAccount` (chargeset→defaultaccount), `CostEvent material_usage` idempotente | `turnover-price-precedence_14c_test.ts` 14C.16.5 — 2 steps (estorno, soma) |
+| 14C.13.8 | Export TJP: `booking [quantity] <n> [unitprice <p>] on <data>` no corpo do material | `tjp-export-re.ts` (booking export já coberto em 14C.11.8) |
+
+#### Evidências 14C.14.1–14C.14.7 (preenchido 2026-11-02)
+
+| # | Implementação | Verificação |
+|---|---------------|-------------|
+| 14C.14.1 | `model/material-component.ts` (`MaterialComponent { material, quantity }`) | `turnover-price-precedence_14c_test.ts` 14C.16.3 (1 step) |
+| 14C.14.2 | `materialcomponents` (`NodeListAttribute`, `isScenarioAttribute=true`) em `material-attributes.ts` | contagem em `material-attributes_test.ts` |
+| 14C.14.3 | Regra funil `material` → `materialNameRef` + `materialStatementTail`; `material <ref> <qtd>` via `addMaterialComponent` | `debug/adendo_extra_probe.ts` (caso m9: composição, 1 step) |
+| 14C.14.4 | `Material#unitPriceValue()` recursivo com `pricingStack` (ciclo → 0) | `turnover-price-precedence_14c_test.ts` 14C.16.3 (1 step) |
+| 14C.14.5 | `unitprice_with_components` — nas duas ordens | `debug/adendo_extra_probe.ts` |
+| 14C.14.6 | `material_composition_cycle` via DFS de alcance (`composes()`) | `debug/adendo_extra_probe.ts` |
+| 14C.14.7 | Exemplo do §12 (Concreto a 234,95) ponta a ponta | `turnover-price-precedence_14c_test.ts` 14C.16.3 — 1 step |
+
+#### Evidências 14C.15.1–14C.15.8 (preenchido 2026-11-02)
+
+| # | Implementação | Verificação |
+|---|---------------|-------------|
+| 14C.15.1 | `bookingEffortKeyword` (`p.optional()` com `_effort`) referenciado em `taskBooking` | `debug/adendo_extra_probe.ts` — caso “task: booking curtos” (2 steps) |
+| 14C.15.2 | `bookingEffortKeyword` em `resourceBookingHeader` | idem — “resource: booking <task> <interval>” |
+| 14C.15.3 | `bookingQuantity` (`p.optional()` com `_quantity`) em `bookingEffort` e em `materialBooking` | `debug/adendo_extra_probe.ts` — casos material curto +/− (3 steps) |
+| 14C.15.4 | `ChargeBooking` (`model/charge-booking.ts`) + `chargebookings` em `task-attributes.ts`; campo `description` (revisão 2026-11-02) | `tests/attributes/task-attributes_test.ts` 46→47; `attribute-definitions.golden.json` regenerado |
+| 14C.15.5 | `taskChargeBookingHeader` **sem** referência de recurso + descrição `$STRING` opcional (regra `chargeBookingDescription`); antigo `booking charge <recurso>` passa a ser rejeitado | `tests/parser/rules_booking_charge_14c_test.ts` — 5 steps (sem ref/desc, `value`, descrição, estorno com descrição, recurso rejeitado) |
+| 14C.15.6 | `resourceChargeBookingHeader` com `!chargeBookingTaskRef` + descrição opcional (índices 2/4/6) | idem — 2 steps (descrição gravada, `unknown_task` mantido) + probe `debug/adendo_extra_probe.ts` |
+| 14C.15.7 | `materialChargeBookingHeader` idem + fila `pendingBookings` (referência futura resolve por **ID**, como o booking de material) | idem — 1 step (fila drenada, descrição preservada) + probe — 4 steps |
+| 14C.15.8 | i18n `effort`/`quantity`/`value` pt-BR/es (value=quantia para evitar colisão com `charge`=valor); `booking charge` no export TJP | `i18n/pt-BR.ts`, `i18n/es.ts` + golden parser |
+
+#### Evidências 14C.16.1–14C.16.5 (preenchido 2026-11-02)
+
+| # | Implementação | Verificação |
+|---|---------------|-------------|
+| 14C.16.1 | Auditoria: `allocatedCost` usa `unitPriceFor(allocation)`; `booking.cost()` sem alocação usa `unitPrice ?? unitPriceValue()`; `addStockBookings` só itera `stockbookings` (não `materialbookings`); precedência booking→alocação→material na rota de relatório | `tests/reports/turnover-price-precedence_14c_test.ts` — 6 steps |
+| 14C.16.2 | Preço da alocação (unitPrice=20) vence o do material (unitPrice=10) no `turnover(aggregate=materials)` | idem — 1 step (turnover = 5×20 = 100) |
+| 14C.16.3 | Preço calculado por composição (Σ componente×preço) chega a `allocatedCost` e ao turnover quando não há unitPrice na alocação | idem — 1 step (2×204,75 = 409,5) |
+| 14C.16.4 | Booking com tarefa (`taskId !== null`) fica em `materialbookings` da tarefa, **não** em `stockbookings` do material — não entra no `addStockBookings` | idem — 1 step (parser: stockBookings vazio) |
+| 14C.16.5 | Booking de estoque negativo (−100 × 10) subtrai 1000 do turnover da conta; soma algébrica de entrada e saída | idem — 2 steps |
+
+#### Evidências 14C.17.1–14C.17.4 (preenchido 2026-11-02)
+
+| # | Implementação | Verificação |
+|---|---------------|-------------|
+| 14C.17.1 | Sondados os 4 pontos (§13.5): `project.ts:268` `PropertySet(this, true)` ✓; `scenario.ts:163` `p.pattern(["!scenario"])` recursivo ✓; `scenario.ts:196` usa `this.property` como parent ✓; sem teste prévio de 2 níveis → nova arquivo | doc (tabela §13.5 preenchida com arquivo/linha) |
+| 14C.17.2 | Cenário de 2 níveis: ambos registrados, `real.fullId === "real"`, `real.parent === plan`, `real` herda `active` de `plan` por aninhamento | `tests/model/scenario-nesting_14c_test.ts` — 4 steps |
+| 14C.17.3 | Segundo `scenario` top-level limpa os anteriores (`clearProperties` quando `!this.property`) | idem — 1 step (só s2 sobrevive) |
+| 14C.17.4 | Tabela “Diferenças prováveis” do §12 corrigida com nota de confirmação e evidência Ruby (`PropertyTreeNode.rb:294-303`); §13.5 mantém-se como fonte canônica | diff em `fase-14-relatorios-complemento.md` |
+
+## 14C.18 — Colunas de estoque `stockquantity`/`stockcost` (pendência §13.7)
+
+| # | Tarefa | Arquivos | Verificação |
+|---|--------|----------|-------------|
+| 14C.18.1 | Keywords `stockquantity`/`stockcost` no i18n (canonical + pt-BR + es) | `i18n/canonical.ts`, `i18n/pt-BR.ts`, `i18n/es.ts` | parser + golden i18n |
+| 14C.18.2 | Parser: `singlePattern` em `reportableAttributes` (com `descr`) + títulos em `MATERIAL_COLUMN_TITLES` | `parser/rules/report.ts` | 2 testes |
+| 14C.18.3 | `TableReport`: metadados (`materialPropertiesById`, `materialNumericColumns`), `defaultColumnTitle` como segundo dicionário, casos de célula em `genMaterialCell` + helpers de período/soma | `reports/table-report.ts` | 5 testes |
+
+#### Evidências 14C.18.1–14C.18.3 (preenchido 2026-11-02)
+
+| # | Implementação | Verificação |
+|---|---------------|-------------|
+| 14C.18.1 | `"stockcost"`/`"stockquantity"` em `canonical.ts`; pt-BR `custoestoque`/`quantidadeestoque`; es `costoexistencias`/`cantidadexistencias` | `columns stockquantity, stockcost` parseia limpo (`tests/reports/stock-columns_14c_test.ts` — 1 step); keyword desconhecida rejeitada — 1 step |
+| 14C.18.2 | Par `_stockquantity`/`_stockcost` no fim de `reportableAttributes` (após os itens da 10-C) com `descr()`; títulos “Stock Quantity”/“Stock Cost” em `MATERIAL_COLUMN_TITLES` | idem — 1 step (ids e títulos das colunas parseadas) |
+| 14C.18.3 | Σ algébrico dos bookings `isInventory()` com data em `[start, end]` (`stockBookingsInPeriod`); preço efetivo `booking.cost()` (booking → material); `defaultColumnTitle` consulta `materialPropertiesById` após `propertiesById` | idem — 5 steps (soma 400/4000, precedência 50/700, recorte de período 500/5000, sem movimentos 0/0, booking com tarefa não entra) |
+
+---
+
 ## Notas de conclusão
 
 - **ADRs afetados:** 027 (adendo 14C.5.12 — default `richtext`/opt-in
@@ -693,7 +835,12 @@ integração futura apareça como diff explícito.
 - **Divergências rastreadas (não corrigidas):** `Material#name` espelha o id
   (14C.6.8) — TJP/MSPDI mostram `aco`, não o texto do cabeçalho;
   `name`/`projectid`/`version` do projeto não são consultáveis por `query`
-  (14C.5); `columns unit|unitprice|totalcost` via `.tjp` (acima).
+  (14C.5); `columns unit|unitprice|totalcost` via `.tjp` continua rejeitado
+  por `reportableAttributes` (os keywords não são `singlePattern`) — o que C18
+  resolveu foi o **título**: `defaultColumnTitle` passou a consultar
+  `materialPropertiesById`, então toda coluna de material aceita em `.tjp`
+  (inclusive as novas de estoque) sai cabeçada também fora do
+  `materialreport`.
 - **Vereditos da 14C.1.15–1.18:** `resourcereport`, `icalendar`/`niku`/`tagfile`/
   `chartplotter` e as grades `Calendar` não listam material (decisão);
   `htmlstatusreport`/`xmlreport` não existem no TJ 3.8.4 e o requisito

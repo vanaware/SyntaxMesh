@@ -131,6 +131,50 @@ export function registerMaterialAttributes(propertySet: PropertySet,): void {
   // derivada das alocações das tarefas (`Material#allocatedQuantity`), não
   // declarada no bloco de definição.
 
+  // stockbookings: Stock Bookings (NodeListAttribute,
+  // inheritedFromParent=false, inheritedFromProject=false,
+  // isScenarioAttribute=true, default=[]).
+  // Adendo Extra §12.1 (14C.13.2) — movimentos de estoque declarados no
+  // próprio bloco de material: `booking [quantity] <n> [unitprice <p>] on
+  // <data>` **sem** referência de tarefa. Quantidade positiva = entrada,
+  // negativa = saída/estorno. Vivem no material porque não há tarefa dona.
+  propertySet.addAttributeType(
+    new AttributeDefinition(
+      "stockbookings",
+      "Stock Bookings",
+      AttributeType.NodeList,
+      [],
+      false, // userDefined
+      false, // isList
+      false, // isSingleton
+      true, // isScenarioAttribute
+      false, // inheritedFromParent
+      false, // inheritedFromProject
+    ),
+  );
+
+  // materialcomponents: Material Components (NodeListAttribute,
+  // inheritedFromParent=false, inheritedFromProject=false,
+  // isScenarioAttribute=true, default=[]).
+  // Adendo Extra §12.2 (14C.14.2) — composição de um material: `material <id>
+  // <quantidade>` dentro do bloco declara quanto de cada componente entra em
+  // **uma** unidade do material composto. Com componentes o `unitprice` deixa
+  // de ser declarado e passa a ser calculado (Σ componente × preço dele).
+  propertySet.addAttributeType(
+    new AttributeDefinition(
+      "materialcomponents",
+      "Material Components",
+      AttributeType.NodeList,
+      [],
+      false, // userDefined
+      false, // isList
+      false, // isSingleton
+      true, // isScenarioAttribute
+      false, // inheritedFromParent
+      false, // inheritedFromProject
+    ),
+  );
+
   // flags: Flags (FlagListAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=true, default=[])
   // Complemento Fase 11 (LF.1) — permite testar flags de material em
   // expressões lógicas (`LogicalFlag`), análogo a task/resource/account.

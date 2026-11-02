@@ -7,7 +7,7 @@
 
 # Exported Context from Project SyntaxMesh - Mode: DOCS
 
-Automatically generated at: 2026-11-01T23:11:52.483Z
+Automatically generated at: 2026-11-02T17:56:39.773Z
 
 ---
 
@@ -21893,9 +21893,9 @@ Criado como subfase 13.0. Conteúdo esperado:
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-14-relatorios-complemento-tarefas.md`
 > **Plano:** `docs/syntaxmesh/fases/fase-14-relatorios-complemento.md`
-> **Status:** 🟡 Em andamento (C0 2026-10-31; C1–C6 2026-11-01)
-> **Total:** ~104 tarefas
-> **Concluídas:** 96
+> **Status:** ✅ Concluída (C0 2026-10-31; C1–C7 2026-11-01; C8–C12 2026-11-01; C13–C17 em desenvolvimento)
+> **Total:** 177 tarefas
+> **Concluídas:** 145
 > **Fonte Ruby (parcial):** `docs/taskjuggler/lib/taskjuggler/reports/MspXmlRE.rb` +
 > `Journal.rb` + `AlertLevelDefinitions.rb` (o restante — materialreport,
 > breakdown, RDO, markdown em reports — são **extensões SyntaxMesh sem oracle**)
@@ -21912,13 +21912,28 @@ Criado como subfase 13.0. Conteúdo esperado:
 [x] 14C.4 MspXml → MSPDI (mspdi.md)                                             — 16
 [x] 14C.5 Markdown nos relatórios                                               — 12
 [x] 14C.6 hidematerial/rollupmaterial/hidepicture + auditoria hide/rollup       — 10
-[ ] 14C.7 Golden/fixture + verificação final + docs                             — 8
+[x] 14C.7 Golden/fixture + verificação final + docs                             — 8
+[x] 14C.8 Saída markdown (`formats markdown` + `md*report`)                   — 8
+[x] 14C.9 `defaultaccount` (universal + variantes) + `to_rti` × 4              — 8
+[x] 14C.10 MSPDI `<Baseline>` via `baseline <scenario>`                        — 7
+[x] 14C.11 Unit price por alocação/booking + remoção de `totalquantity`       — 12
+[x] 14C.12 Auditoria G1.4 (scheduler) + verificação do adendo                 — 6
+[ ] 14C.13 Booking de estoque (sem tarefa, quantidade ±)                      — 8
+[ ] 14C.14 Unit price calculado por composição                                 — 7
+[ ] 14C.15 Keywords opcionais + `booking charge`                               — 8
+[ ] 14C.16 Turnover com precedência de unit price                              — 5
+[ ] 14C.17 Cenários: registro do comportamento real                            — 4
 ─────────────────────────────────────────────────────────
-TOTAL: 104
+TOTAL: 177
 ```
 
-**Ordem:** C0 → C1 → C2 → C3 → C4 → C5 → C6 → C7. C4 e C5 independem de C2/C3
-(podem paralelizar). C6.5+ depende de C2/C3 (aplica hide nos novos geradores).
+**Ordem:** C0 → C1 → C2 → C3 → C4 → C5 → C6 → C7 → **C8 → C9 → C10 → C11 → C12**
+(adendo §10 do plano). C4 e C5 independem de C2/C3 (podem paralelizar).
+C6.5+ depende de C2/C3 (aplica hide nos novos geradores). C8–C12 vêm depois
+de C7 porque o adendo só foi escrito ao final da fase.
+**C13 → C14 → C15 → C16 → C17** (Adendo Extra §12): C14 depende de C13
+(mesma regra de booking no corpo do material), C16 depende de C13 + C14
+(turnover consome os dois), C17 é independente.
 
 ## Convenções (herdam a Fase 14)
 
@@ -22373,12 +22388,343 @@ integração futura apareça como diff explícito.
 | 14C.7.7 | Docs: status ✅ no header deste arquivo e do plano; `plano.md`/`AGENTS.md`/`CURRENT.md` atualizados; requisito de materiais na statussheet registrado na Fase 18 | diff |
 | 14C.7.8 | Contagem final de testes documentada em CURRENT.md (linha Fase 14 Complemento) | doc |
 
+#### Evidências 14C.7.1–14C.7.8 (preenchido 2026-11-01)
+
+| # | Implementação | Verificação |
+|---|---------------|-------------|
+| 14C.7.1 | `deno task check:all` (type check de todos os pacotes) exit 0; `deno fmt --check` limpo em 571 arquivos; `deno lint` **restrito aos arquivos do complemento** (parser/reports/model + testes novos) limpo em 36 arquivos | exit 0 / `Checked 571 files` / `Checked 36 files` |
+| 14C.7.2 | `golden:generate:extensions` roda 2× e produz **bytes idênticos** (`reports-extensions.golden.json`, 50.738 bytes, mesmo md5 nas duas gerações); `reports.golden.json`, `parser.golden.json` e `mspdi.golden.json` **não aparecem** em `git status` — byte-idênticos ao HEAD (núcleo 14 intocado) | `diff` dos md5 = vazio |
+| 14C.7.3 | `deno task test` (suíte completa, todos os pacotes) | **450 testes / 4841 passos / 0 falhas** (5m52s) |
+| 14C.7.4 | `deno task check:stubs`: nenhuma âncora perdida; `EXTENSION_TYPE_BLOCKS` está **vazio** desde 14C.3.1 (as três fábricas registradas) e os NYI restantes pertencem às Fases 16/18/19 | `check:stubs OK — todos os stubs anotados.` |
+| 14C.7.5 | `tests/integration/smoke_after_phase_14c_test.ts` + fixture `fixtures/ext/14c-smoke.tjp` (materiais com `chargeset`, alocações, diários com `picture`, os quatro relatórios): materialreport (html/csv/json), breakdown (`groupby account`, totais 4900 = `Material#totalCost()`), RDO `groupby date` com galeria e MSPDI com o material como `<Resource>`. O `outputDir` do projeto aponta para um tmpdir e o teste **falha se algo for escrito** | 1 teste / 4 steps verdes |
+| 14C.7.6 | Auditoria de escopo com tabela de rastreabilidade (abaixo): os quatro itens do pedido (§1) e os adendos absorvidos têm entrega ou veredito; a saída markdown em arquivo `.md` e os prefixos `md*report` do adendo §10 ficam **explicitamente fora da entrega** (veredito registrado) | tabela abaixo |
+| 14C.7.7 | Status ✅ no header deste arquivo e do `fase-14-relatorios-complemento.md`; `plano.md` (linha `14-C`), `AGENTS.md` (tabela das 21 fases) e `CURRENT.md` atualizados; requisito de materiais na statussheet já registrado como **18.17.8** em `fase-18-time-status-sheets-tarefas.md` (14C.1.18) | `diff` / grep |
+| 14C.7.8 | `CURRENT.md`, linha da Fase 14 Complemento: `450 testes / 4841 passos / 0 falhas` + pendências herdadas | doc |
+
+#### Rastreabilidade do pedido original (14C.7.6)
+
+| Item do pedido | Origem | Entrega | Evidência |
+|---|---|---|---|
+| “Nenhum relatório lista materiais” | plano §1 | **Entregue (C1)**: `materialreport` (`MaterialListRE`) com `name`/`id`/`note`/`unit`/`unitprice`/`allocations`/`scheduledcost`/`actualcost`/`totalcost`/`journal`/`timebasis`; colunas `materials`/`materialcost` no `taskreport`; `note`/`journal` em material e account; `tracereport` e `accountreport` (`aggregate materials`) integrados; vereditos de `resourcereport`/`icalendar`/`niku`/`tagfile`/`chartplotter`/`Calendar` (14C.1.15–17) | 14C.1.5–1.11, 1.14, 1.19–1.20 + vereditos 1.12/1.15–1.18 |
+| “`picture` + RDO sem engine fotográfico” | plano §1 (10-C #5) | **Entregue (C3)**: `RdoReport` com `groupby date|task|resource|material|account`, `journalmode`/`journalattributes`, galeria `picturesToHtml` + `maxpictures`, imagens do `details` (`picturesFromDetails`) e `setImageResolver` para OPFS na Fase 19 | 14C.3.1–3.13 + `gallery_14c_test.ts` |
+| “MspXml pobre vs. MSPDI real” | plano §1 + `mspdi.md` | **Entregue (C4)**: recursos material/custo, `<Assignment>` rico com `TimephasedData`, `DurationFormat` 7/8, `ActualWork`/`Remaining*`, `<Notes>`, `<Exceptions>`, `<LinkLag>`; correção do `mspdi.md` §3.1 (0 material / 1 trabalho / 2 custo); limitações registradas (sem `<Baseline>`/`<ExtendedAttribute>`) | 14C.4.1–4.16 + oracle `mspdi.golden.json` + snapshot |
+| “Markdown nos relatórios” (dialeto) | plano §1 + 13.14.4 | **Entregue (C5)**: atributo `format` (`richtext` default, opt-in `markdown`), roteamento `MarkdownFactory` com independência de ordem, handlers `[[query:]]`/`[[report:]]`/`[[reportlink:]]`/`[[navigator:]]` e `<-attr->` dentro de markdown, `note`/`celltext` reinterpretados, sanitização por nó; adendo na ADR 027 | 14C.5.1–5.12 |
+| Adendos 14.25.1–5 (BreakdownReport) | Fase 14 | **Entregue (C2)**: `groupby account|task`, html/csv/json, contribuintes e totais | 14C.2.1–2.10 |
+| Adendos 14.25.6–10 (RdoReport/galeria) | Fase 14 | **Entregue (C3)** | 14C.3.1–3.13 |
+| Adendos 14.25.11–13 (`note`/`journal`/`timebasis`) | Fase 14 | **Entregue (C1.7–1.9)** | 14C.1.8/1.9 + `note-timebasis_14c_test.ts` |
+| Adendos 14.26.1a–2g (`hidematerial`/`rollupmaterial`/`hidepicture` + auditoria) | Fase 11-C F14 / Fase 14 | **Entregue (C6)**: três diretivas com parser+i18n, `Query`/`ReportContext`, aplicação em materialreport/RDO/colunas/breakdown/TJP/MSPDI e auditoria de `hide*`/`rollup*` | 14C.6.1–6.10 + `hide-material-picture_14c_test.ts` |
+| **Adendo §10 do plano** — `formats markdown` gerando arquivo `.md` e prefixos `md*report` (`mdtaskreport`, `mdresourcereport`, …) | plano §10 | **Não entregue (veredito)**: a C5 entrega o **dialeto** markdown dentro do conteúdo dos relatórios (header/footer/note/celltext) e o `format` por relatório; uma **saída** markdown exige um gerador `ReportTable`→tabela de pipes + `generateMarkdown()` + extensão `.md` em `Report#outputFileName` + alias `md*` no dispatch — escopo novo, registrado em `CURRENT.md` como pendência para um adendo futuro (14C-MD-output) | este veredito |
+
+> **Divergências/limitações encontradas na 14C.7:**
+>
+> - **Corrigido:** as colunas **padrão** do `materialreport` (definidas no
+>   `materialReportHeader`) saíam sem título — `columnTitle()` lê
+>   `Project#attributeName`, que não conhece `no`/`unit`/`unitprice`/`totalcost`,
+>   então o cabeçalho HTML vinha vazio e o CSV trazia `null`. O parser agora usa
+>   `MATERIAL_COLUMN_TITLES` (espelho de `TableReport.materialPropertiesById`)
+>   com fallback para `columnTitle`. Achado pelo smoke da 14C.7.5.
+> - **Não corrigido (rastreado):** declarar `columns unit, unitprice, totalcost`
+>   (ou `allocations`/`scheduledcost`/`actualcost`) em um `.tjp` continua sendo
+>   rejeitado por `reportableAttributes` — só `name`/`id`/`note`/`journal` e as
+>   colunas do núcleo são aceitas como id de coluna. As variantes de material
+>   funcionam quando chegam por API (colunas padrão, fixtures de teste). Fechar
+>   exige keywords canônicas novas (`totalcost`, `allocations`, …) + regra de
+>   coluna por tipo de relatório — registrado em `CURRENT.md`.
+> - **Manutenção:** `MATERIAL_COLUMN_TITLES` duplica os títulos de
+>   `TableReport.materialPropertiesById`; se um terceiro consumidor precisar, o
+>   mapa deve subir para um módulo comum em `reports/`.
+
 ---
 
-## Notas de conclusão (preencher ao final)
+## 14C.8 — Saída Markdown (`formats markdown` + `md*report`)
 
-- (espelho do padrão da casa: ADRs afetados, divergências rastreadas,
-  vereditos de 14C.1.15–18, limitações de Mspdi 14C.4.12)
+> Fecha o veredito da 14C.7.6. A C5 entregou o **dialeto** markdown dentro do
+> conteúdo; aqui o markdown vira **formato de arquivo** (`.md`), com
+> renderização pura (tabelas de pipes, links, imagens) e aliases de header.
+
+| # | Tarefa | Arquivos | Verificação |
+|---|--------|----------|-------------|
+| 14C.8.1 | Módulo puro de renderização markdown: `markdownCell` (escapa `\\`/`|` e converte quebra de linha em `<br>`), `markdownText` (aceita RTI via `to_markdown`), `markdownTable` (GFM + alinhamento `---:` para colunas numéricas), `markdownSections`, `markdownHeading`, `markdownImage` | `reports/markdown.ts` (novo) | 5 testes (célula, tabela, linha curta, seções, título/imagem) |
+| 14C.8.2 | `ReportTable#to_markdown` (cabeçalho = `cell1`+`cell2`, corpo = grade do `to_csv`) e `ReportBase#rt_to_markdown` | `reports/report-table.ts`, `reports/report-base.ts` | `deno check` + cobertura via 8.3–8.6 |
+| 14C.8.3 | `to_markdown()` em `TableReport` (header/tabela/footer) e `BreakdownReport` | `reports/table-report.ts`, `reports/breakdown-report.ts` | testes de 8.7 |
+| 14C.8.4 | `to_markdown()` em `TextReport` (header/left/center/right/footer) | `reports/text-report.ts` | idem |
+| 14C.8.5 | `to_markdown()` em `RdoReport`: blocos, meta linha, galeria e tabelas de recursos/materiais/charges | `reports/rdo-report.ts` | idem (sem `<table>`/`<div>` na saída) |
+| 14C.8.6 | `ReportContent` ganha `to_markdown?`; `Report.generate()` ganha `case "markdown"` + `generateMarkdown()` (título, `.md` em `outputFileName`, corpo em `output`) | `model/report-content.ts`, `model/report.ts` | 2 testes (formato roteado, sufixo `.md` uma única vez) |
+| 14C.8.7 | Parser: `taskReportKeyword`/`resourceReportKeyword`/`materialReportKeyword`/`accountReportKeyword` com `md` alias + `markdownReportDefaults()` (preseta `formats` sem sobrescrever corpo) + `outputFormat markdown` | `parser/rules/report.ts` | 3 testes (alias preseta, `formats` explícito vence, `formats markdown` em `taskreport`) |
+| 14C.8.8 | i18n `mdtaskreport`/`mdresourcereport`/`mdmaterialreport`/`mdaccountreport` (canonical + pt-BR + es) e correções de port encontradas (`defaultColumnTitle`→`null`, `Project#attributeName` por tasks/resources, `columnTitle` com fallback) | `i18n/*`, `reports/table-report.ts`, `model/project.ts`, `parser/project-file-parser.ts` | 2 testes i18n + golden `attribute-definitions` idempotente |
+
+#### Evidências 14C.8.1–14C.8.8 (preenchido 2026-11-01)
+
+| # | Implementação | Verificação |
+|---|---------------|-------------|
+| 14C.8.1 | `reports/markdown.ts`: `markdownCell` escapa `\\`/`|` e troca quebra de linha por `<br>`; `markdownTable` alinha `---:` pelas colunas marcadas numéricas; `markdownSections`/`markdownHeading`/`markdownImage` completam o conjunto | `tests/reports/markdown-content_14c_test.ts` |
+| 14C.8.2 | `ReportTable#to_markdown` (cabeçalho `cell1`+`cell2`, corpo pela grade do `to_csv`) e `ReportBase#rt_to_markdown` | `tests/reports/markdown-content_14c_test.ts` |
+| 14C.8.3 | `TableReport#to_markdown` + `BreakdownReport#to_markdown` (tabela hierárquica com `bsi`) | `tests/reports/markdown-output_14c_test.ts` |
+| 14C.8.4 | `TextReport#to_markdown` (header/left/center/right/footer, sem grade) | idem |
+| 14C.8.5 | `RdoReport#to_markdown`: blocos, meta, galeria (`![](path "caption")`) e as três tabelas; nenhuma tag de relatório vaza | idem (asserções `!includes("<table")`/`"<div"`) |
+| 14C.8.6 | `ReportContent#to_markdown?` + `Report#generateMarkdown` com `outputFileName` trocando a extensão por `.md` uma única vez | idem |
+| 14C.8.7 | `taskReportKeyword`/`resourceReportKeyword`/`materialReportKeyword`/`accountReportKeyword` devolvem boolean; `markdownReportDefaults()` preseta `formats ["markdown"]` só quando o corpo não declara `formats`; `outputFormat markdown` aceito | `tests/parser/rules_report_markdown_14c_test.ts` (fixture `14c-markdown-report.tjp`) |
+| 14C.8.8 | `mdtaskreport`/`mdresourcereport`/`mdmaterialreport`/`mdaccountreport` em `canonical.ts` + pt-BR + es; `TableReport.defaultColumnTitle` devolve `null` para coluna desconhecida (fiel ao Ruby) e `Project#attributeName` consulta `tasks` → `resources` | registry híbrido AST-equivalente en/pt-BR/es + golden `attribute-definitions` regenerado |
+
+> **Nota (14C.8.6):** `Report#generate` roteia `case "markdown"` para `generateMarkdown()`, que é **puro** (string em `output`), preservando a ADR 027 — nenhuma escrita em disco.
+
+## 14C.9 — `defaultaccount` (universal + variantes) + `to_rti` × 4
+
+| # | Tarefa | Arquivos | Verificação |
+|---|--------|----------|-------------|
+| 14C.9.1 | `Project.defaultAccountId` + `Project.defaultAccountIds: Map<CostType, string>` + `defaultAccountFor(type)` (variante precede a universal; IDs resolvidos sob demanda) | `model/project.ts` | 4 testes |
+| 14C.9.2 | `CostLine.project?` e regra 4 de `resolveAccount` usando a conta default (sem `defaultaccount` preserva `account: null`) | `accounting/attribution.ts` | 4 testes |
+| 14C.9.3 | Parser do bloco `project`: `defaultaccount $ID` e `defaultaccount (material|resource|charge) $ID` — guarda o **ID** (referência futura: o bloco `project` precede as declarações de `account`), resolvido em `defaultAccountFor` | `parser/rules/project.ts` | 5 testes (universal, 3 variantes, referência futura, conta desconhecida) |
+| 14C.9.4 | Regra `defaultAccountType` (`_material`/`_resource`/`_charge` → `CostType`) e mapeamento `charge` → `task` | idem | 3 testes |
+| 14C.9.5 | i18n `defaultaccount` (pt-BR `contapadrao`, es `cuentapredeterminada`) com AST equivalente | `i18n/*` | 2 testes |
+| 14C.9.6 | `ReferenceAttribute#to_rti` (URL+label → RichText `[url label]`) | `attributes/reference/reference-attribute.ts` | 2 testes |
+| 14C.9.7 | `ListAttributeBase#to_rti` (`query.listItem` → `<nowiki>` por item + `assignList`; sem query → lista em RichText) | `attributes/list-attribute-base.ts` | 3 testes |
+| 14C.9.8 | Auditoria dos `to_rti` restantes (base já implementado; `Journal#to_rti` fica na Fase 16) documentada + `Query#assignList` gera o RTI do texto montado (Ruby `Query.rb:234`) | doc, `query/query.ts` | revisão + 1 teste |
+
+#### Evidências 14C.9.1–14C.9.8 (preenchido 2026-11-01)
+
+| # | Implementação | Verificação |
+|---|---------------|-------------|
+| 14C.9.1 | `Project#defaultAccountId`/`#defaultAccountIds` + `#defaultAccountFor(type)` (variante do tipo → universal → `null`). Guards de tipo `CostType` de `model/account.ts`; `defaultAccountFor` entra em `ProjectLike` como opcional (o `CostLine` aceita projeto nulo) | `tests/model/default-account_14c_test.ts` — 4 steps |
+| 14C.9.2 | `CostLine.project?` + `projectDefaultResult()` aplicado nas **duas** saídas da regra 4 de `resolveAccount`; `resource-scenario.ts` passa `project:` ao emitir `resource_effort`. Sem conta default o resultado segue `account: null`/`projectDefault: {}` | `tests/accounting/attribution_default-account_14c_test.ts` — 5 steps |
+| 14C.9.3 | Regra `defaultAccountType` (opcional) + padrão `["_defaultaccount", "!defaultAccountType", "$ID"]` em `projectBodyAttributes`, logo após `currency`; o ID vai para `defaultAccountId`/`defaultAccountIds` **sem validar** no parse (referência futura) | `tests/parser/rules_defaultaccount_14c_test.ts` — 5 steps |
+| 14C.9.4 | `_material`→`material`, `_resource`→`resource`, `_charge`→`task`; `charge` mapeia para `CostType` `task` (mesmo vocabulário do chargeset) | idem (variantes resource/charge) |
+| 14C.9.5 | `"defaultaccount"` em `CANONICAL_KEYWORDS` antes de `definitions`; pt-BR `contapadrao`, es `cuentapredeterminada`. O lexer deriva `_defaultaccount` automaticamente | idem — registry + AST equivalente en/pt-BR/es |
+| 14C.9.6 | `ReferenceAttribute#to_rti` = `RichText("[url label]")` sem handlers (Ruby `Attributes.rb:462`); valor vazio → `null`. O teste antigo que exigia `NotYetImplementedError` foi substituído | `tests/attributes/reference-attributes_test.ts` (2 steps) + `tests/attributes/to-rti_14c_test.ts` |
+| 14C.9.7 | `ListAttributeBase#to_rti(query?)` portado de `Attributes.rb:498`: sem query → um RTI com os nomes; com `query.listItem` → `<nowiki>` por item com `q.property = item` + `query.assignList`; sem template → `<nowiki>name</nowiki>` | `tests/attributes/to-rti_14c_test.ts` (3 steps) + `list-primitive-attributes_test.ts` |
+| 14C.9.8 | Auditoria: `AttributeBase#to_rti` já devolvia `null` (fiel a Ruby); `Journal#to_rti` já implementado desde a 14C.0/13 (`JournalEntry#to_rText`); `Query#to_rti` passa a repassar `this` e `Query#assignList` gera o RTI (`RichText(list)`) — o placeholder "Fase 12" foi fechado | `tests/query/query_test.ts` (assignList) |
+
+> **Decisão de port (14C.9.3):** `defaultaccount` é **extensão SyntaxMesh** (não existe no TJ 3.8.4 — busca em `docs/taskjuggler/lib/taskjuggler/` sem resultado). Como o bloco `project` sempre precede as declarações de `account`, o parser guarda o **ID** e a resolução acontece em `Project#defaultAccountFor` via `Project#account(id)`. Conta inexistente **não** falha o parse e resolve para `null` (regra 4 continua sem atribuição) — validação antecipada exigiria um segundo passe.
+
+## 14C.10 — MSPDI `<Baseline>` via `baseline <scenario>`
+
+| # | Tarefa | Arquivos | Verificação |
+|---|--------|----------|-------------|
+| 14C.10.1 | Atributo de report `baseline` (IntegerAttribute/`scenarioIdx`, não herdado) | `model/attributes/report-attributes.ts` | 1 teste |
+| 14C.10.2 | Parser do corpo de `export`: `baseline <scenario_id>` (reusa `!scenarioId`) | `parser/rules/report.ts` | 2 testes |
+| 14C.10.3 | i18n `baseline` (pt-BR `linhadebase`, es `lineabase`) | `i18n/*` | 1 teste |
+| 14C.10.4 | `MspXmlRE`: `<Baseline>` do projeto (Number 0) com Start/Finish/Cost do cenário | `reports/msp-xml-re.ts` | 2 testes |
+| 14C.10.5 | `MspXmlRE`: `<Baseline>` por tarefa (Start/Finish/Cost do cenário, omitido sem data) | idem | 3 testes |
+| 14C.10.6 | Sem `baseline`, documento byte-idêntico (regressão do oracle `mspdi.golden.json`) | — | golden verde |
+| 14C.10.7 | Golden de extensão: fixture com `baseline` + snapshot em `reports-extensions.golden.json` | `tests/golden/*` | idempotente 2× |
+
+### Evidências 14C.10.1–14C.10.7
+
+| # | Implementação | Verificação |
+|---|---------------|-------------|
+| 14C.10.1 | `baseline` registrado em `report-attributes.ts` entre `balance` e `booking` (`IntegerAttribute`, default `null`, `isScenarioAttribute=false`, nem herdado do pai nem do projeto). Guarda o **índice** do cenário, não um `Scenario` | `tests/reports/baseline_14c_test.ts` — 2 steps (definição + ausência no default); contagem em `report-attributes_test.ts` 66 → 67 |
+| 14C.10.2 | `p.pattern(["_baseline", "!scenarioId"])` em `exportAttributes` após `p.level("beta")`; `asProp(this).set("baseline", sc)`; `sc` não numérico (ID desconhecido já reportado) não grava nada; cenário inativo → aviso `baseline_sc_disabled` mantendo o índice | `tests/reports/baseline_14c_test.ts` — 3 steps (índice, `unknown_scenario_id`, aviso) |
+| 14C.10.3 | `"baseline"` em `canonical.ts` entre `balance` e `booking`; pt-BR `linhadebase`, es `lineabase`; `en` deriva do canônico | idem — registry + AST pt-BR (`cenário`/`exportar`/`formatos`/`linhadebase`) |
+| 14C.10.4 | `generateProjectBaseline` agrega min(`start`)/max(`end`) das tarefas do cenário e `scenarioCost(null, sc)`; `appendBaseline` escreve `Number` 0, `Start`, `Finish` e `<Cost>` só quando há `CostEvent`. Sem datas → `baseline_not_scheduled` e nenhum `<Baseline>` do projeto | idem — 3 steps (datas do fixture, `<Cost>` 500.0 com dois eventos sintéticos, omissão + aviso) |
+| 14C.10.5 | Em `generateTask`, após `appendPredecessors`: `baselineDates(task, baselineIdx)` nulo pula a tarefa; `scenarioCost(task, baselineIdx)` restringe o `<Cost>` aos eventos dela | idem — 2 steps (Alpha/Beta com Number/Start/Finish; cenário sem datas ⇒ nenhum `<Baseline>`) |
+| 14C.10.6 | Nenhum código roda quando `baselineIdx === null`: `mspdi.golden.json` e o snapshot `mspdi` de `reports-extensions` ficam byte-idênticos | `mspdi_oracle_14c_test.ts` + `reports-extensions_golden_test.ts` verdes; `baseline_14c_test.ts` confirma ausência de `<Baseline>` no fixture sem o atributo |
+| 14C.10.7 | `snapshotBaseline()` em `extension-snapshot.ts` (fixture `14c-baseline`): `baselineScenario` 1, `<Baseline>` do projeto (02/03 09:00 → 11/03 17:00) e por tarefa (Alpha/Beta). Só blocos sem timestamp entram no snapshot | `deno task golden:generate:extensions` + `reports-extensions_golden_test.ts` (idempotente 2×) |
+
+> **Decisão de port (14C.10.1):** `baseline` é **extensão SyntaxMesh** — o §6 de `docs/tj3-engine/mspdi.md` descreve `<Baseline>`/`<Baseline>` por tarefa, mas o `MspXmlRE.rb` do TJ 3.8.4 nunca os emite (busca em `docs/taskjuggler/lib/taskjuggler/reports/` sem resultado), logo não há oracle Ruby. O atributo é `IntegerAttribute` (índice) e **não** `ScenarioAttribute`: `ScenarioAttribute` faria o valor variar por cenário, enquanto aqui o relatório aponta para um cenário fixo.
+>
+> **Decisão de port (14C.10.4):** o `<Cost>` do baseline sai de `project.costEvents` (Fase 8.2), filtrado por `scenarioIdx` e, nas tarefas, por identidade da tarefa. Nenhum fixture `.tjp` atual gera `CostEvent` (o caminho depende de chargeset de recurso com `rate`), então o teste de custo injeta dois eventos no projeto já agendado — o caminho de soma fica coberto sem inventar um cenário de rates que o scheduler ainda não produz.
+
+## 14C.11 — Unit price por alocação/booking + remoção de `totalquantity`
+
+| # | Tarefa | Arquivos | Verificação |
+|---|--------|----------|-------------|
+| 14C.11.1 | `MaterialAllocation.unitPrice?` + `unitPriceFor(material)` (precedência alocação → material) | `model/material-allocation.ts` | 3 testes |
+| 14C.11.2 | Parser: `unitprice <n>` opcional depois do modificador na alocação de tarefa | `parser/rules/material.ts` | 3 testes |
+| 14C.11.3 | `MaterialBooking` (material, quantity, unitPrice, date, task) + atributo de cenário `materialbookings` | `model/material-booking.ts`, `model/attributes/task-attributes.ts` | 3 testes |
+| 14C.11.4 | Parser: `booking material "X" quantity <q> [unitprice <p>] on <data>` no corpo da tarefa | `parser/rules/task.ts` | 3 testes |
+| 14C.11.5 | Parser: mesma forma no corpo do material, com `task <id>` para amarrar a tarefa | `parser/rules/material.ts` | 2 testes |
+| 14C.11.6 | Preço efetivo nos relatórios: alocação (`table-report`, `breakdown-report`, `rdo-report`, `msp-xml-re`) usa `unitPriceFor` | `reports/*` | 4 testes |
+| 14C.11.7 | Custo realizado do material = Σ bookings (quantidade × preço do booking → alocação → material) quando não houver `CostEvent` | `reports/table-report.ts` | 2 testes |
+| 14C.11.8 | Export TJP: `unitprice` na alocação e no booking; round-trip | `reports/tjp-export-re.ts` | 2 testes |
+| 14C.11.9 | Remover `totalquantity` da gramática do material | `parser/rules/material.ts` | 2 testes (token rejeitado; fixture migrada) |
+| 14C.11.10 | Remover o atributo `totalquantity` e derivar a quantidade (Σ alocações) em `materialreport`/`breakdown`/`rdo` | `model/attributes/material-attributes.ts`, `reports/*` | 3 testes |
+| 14C.11.11 | Export TJP deixa de emitir `totalquantity`; fixtures e goldens de extensão migrados | `reports/tjp-export-re.ts`, `tests/fixtures/ext/*` | golden idempotente |
+| 14C.11.12 | Requisito `unitprice` no timesheet registrado na Fase 18 (parser de timesheet sem bloco de material) | `docs/syntaxmesh/fases/fase-18-time-status-sheets-tarefas.md` | doc |
+
+#### Evidências 14C.11.1–14C.11.12 (preenchido 2026-11-01)
+
+| # | Implementação | Verificação |
+|---|---------------|-------------|
+| 14C.11.1 | `MaterialAllocation#unitPrice?` (5º argumento do construtor) + `#unitPriceFor(material = this.material)` = `unitPrice ?? material.unitPriceValue()` | `tests/model/material-allocation_test.ts` — 3 steps (sem preço → material, com preço, material alternativo) |
+| 14C.11.2 | Regra `materialAllocationUnitPrice` (`p.optional()` + `_unitprice !number`) referenciada por `materialAllocation` e pelo alias `use`; `addMaterialAllocation` grava `this.val[4]` | `tests/parser/rules_material_booking_14c_test.ts` — 3 steps (com modificador, sem preço, `use` sem modificador) |
+| 14C.11.3 | `model/material-booking.ts` (`material`, `taskId`, `quantity`, `date`, `unitPrice?`, `task` resolvível) + `materialbookings` em `task-attributes.ts` (`NodeListAttribute`, `scenarioSpecific`, default `[]`) | `tests/model/material-booking_14c_test.ts` — 3 steps; `attribute-definitions.golden.json` (173 casos) e `task-attributes_test.ts` 45 → 46 |
+| 14C.11.4 | `taskBooking` ganha o padrão `["_material", "!materialBooking"]`; a regra `materialBooking` (`!materialId _quantity !number !materialBookingUnitPrice _on !date`) fica **aninhada** no booking de recurso — duas regras irmãs começando por `_booking` geravam ambiguidade de FSM | idem — 3 steps (com preço, sem preço + herança, convivência com o booking de recurso) |
+| 14C.11.5 | Padrão `_booking !materialBookingTaskRef _quantity !number !materialBookingUnitPrice _on !date` no corpo do material; tarefa ausente vai para `Project.pendingBookings` (drenado por `flushPendingBookings()` no fim da regra `project`) | idem — 2 steps (referência futura + nome entre aspas) |
+| 14C.11.6 | `unitPriceFor` nas rotas de relatório: `table-report` (`taskMaterialCost`, `materialAllocationCost`, `bookingCost`), `breakdown-report`, `rdo-report`, `msp-xml-re` | `tests/reports/material-booking-cost_14c_test.ts` — 1 step (alocação vence o material) + migrações de `trace-report-material`/`task-material-columns` |
+| 14C.11.7 | `taskMaterialCost` soma alocações **e** bookings quando não há `CostEvent`; `materialActualCost` = Σ bookings no período; `totalcost` = planejado + realizado | idem — 2 steps (booking alimenta `actualcost`/`totalcost`; precedência cai para a alocação) |
+| 14C.11.8 | `generateMaterialAllocations` emite `unitprice` só quando declarado; `generateMaterialBookings` emite `booking material <id> quantity <q> [unitprice <p>] on <data>` sob `taskattributes materialbookings` | `tests/reports/tjp-export-material_14c_test.ts` — 3 steps (linha + round-trip do booking + ausência de material) |
+| 14C.11.9 | `totalquantity` fora do corpo do material; padrão `["_totalquantity", "!number"]` **reservado** emite `totalquantity_removed` com instrução de migração | `tests/parser/rules_material_test.ts` — 2 steps (rejeição direcionada + corpo canônico) |
+| 14C.11.10 | `totalquantity` fora de `material-attributes.ts`; `Material#allocations`/`#allocatedQuantity`/`#allocatedCost` derivam das alocações; a coluna `totalquantity` do `materialreport` passou a ser **calculada** (`materialNumericColumns`) | `tests/reports/material-report-output_14c_test.ts`, `material-list-re_test.ts`, `query-material_14c_test.ts`, `markdown-output_14c_test.ts` |
+| 14C.11.11 | `TjpExportRE` não emite mais `totalquantity`; as três fixtures de extensão migradas para alocação | `reports-extensions.golden.json` regenerado (concrete 50 → 10 @1200, steel 1000 → 200 @500) |
+| 14C.11.12 | Fase 18 ganha **18.17.9** (record de material com `unitprice` → `MaterialBooking`) e **18.17.10** (parser/sender do sheet) | `fase-18-time-status-sheets-tarefas.md` §18.17 |
+
+> **Nota (14C.11.9):** `totalquantity` continua em `CANONICAL_KEYWORDS` e nos dicionários pt-BR (`quantidadetotal`)/es (`cantidadtotal`) **de propósito**: é o que permite ao lexer emitir `_totalquantity` e a regra reservada produzir `totalquantity_removed` em vez de `unexpctd_token`. O token não é mais um atributo do modelo.
+
+## 14C.12 — Auditoria G1.4 (scheduler) + verificação do adendo
+
+| # | Tarefa | Verificação |
+|---|--------|-------------|
+| 14C.12.1 | Inventário dos 4 bugs corrigidos (PropertyList items, `doneEffort`, `propagateDate`, Xref) com arquivo/linha | doc |
+| 14C.12.2 | Probe ao vivo: modelo construído à mão (`start`+`effort`+`allocate`) via `Project.schedule()` | 1 teste (âncora: passa quando o placement evoluir) |
+| 14C.12.3 | Varredura de bugs remanescentes (`toSeconds` null em `propagateDateToDep`, `ScenarioData#error` stub) | doc + testes |
+| 14C.12.4 | Registrar achados no adendo 2026-10-27 da Fase 7 (sem reabrir a fase) | doc |
+| 14C.12.5 | `check:all`, `check:stubs`, suíte completa e goldens byte-idênticos | exit 0 / 0 falhas |
+| 14C.12.6 | Docs: `CURRENT.md`, `plano.md`, `AGENTS.md` + rastreabilidade §11.7 do plano | diff |
+
+#### Evidências 14C.12.1–14C.12.6 (preenchido 2026-11-01)
+
+| # | Implementação | Verificação |
+|---|---------------|-------------|
+| 14C.12.1 | Inventário dos quatro correções do adendo de 2026-10-27: `PropertyList.items = arg.to_ary` (o loop não via tarefa alguma), `doneEffort()` lendo `_doneEffort` (não o atributo de usuário `effortdone`), `Xref`/`checkDependency` resolvendo `dependency.task`, `propagateDate` gravando `start`/`end` e propagando a dependentes/filhos/containers | `tests/integration/logical-scheduler-driven_test.ts` + cabeçalho de `scheduler-g1_4-audit_14c_test.ts` |
+| 14C.12.2 | Probe: modelo à mão (`start` + `effort 16` + `allocate` + 1 recurso 24h/dia) → `Project.schedule()` devolve `true`, `start`/`end` não nulos e `doneEffort() === 16` | `scheduler-g1_4-audit_14c_test.ts` — step “probe: modelo à mão recebe start/end” |
+| 14C.12.3 | Bug remanescente da varredura: a variante sem argumentos de `TaskScenario#propagateDateToDep()` fazia `(this.a("end") as TjTime).toSeconds()` sem guard → `TypeError` em tarefa nunca agendada. Reescrita com `own`/`other` locais e `continue` quando `null`. O outro item da varredura (`ScenarioData#error` stub) já estava fechado antes desta subfase | idem — 2 steps (nada propagate sem data própria; dependente reprogramado quando a data muda) |
+| 14C.12.4 | Adendo **2026-11-01** em `fase-7-scheduler-core-tarefas.md`: fix do null-deref + divergência de `finishScheduling` (o Ruby recursa, mescla `assignedresources` no pai e anula as listas de candidatos; o port calcula completion/status/gauge, chama `propagateDateToDep()` e grava `_scheduled`) registrada sem reabrir a Fase 7 | doc + 3 steps verdes |
+| 14C.12.5 | Com o guard, `CSV-Reports/alert.tjp` passou a agendar: `PENDING_SCHEDULER_FILES` em `tests/golden/reports_golden_test.ts` ficou **vazio** e o arquivo passou a ser comparado com o oracle Ruby (112 passos). Nenhum golden precisou ser regenerado | `deno test -A packages/core/tests/golden/reports_golden_test.ts` — ok, 0 falhas |
+| 14C.12.6 | `CURRENT.md`, `plano.md` (linha 14-C) e `AGENTS.md` atualizados; tabelas de evidência 14C.8–14C.12 preenchidas; `deno task check-all` verde | este documento + diff |
+
+> **Nota (14C.12):** a auditoria **não** reescreveu o scheduler. O único código de produção tocado foi o guard de nulidade em `task-scenario.ts`; o resto é âncora de teste e documentação. O efeito colateral positivo (destravar `alert.tjp`) veio da mesma correção.
+
+## 14C.13 — Booking de estoque (material sem tarefa, quantidade ±)
+
+| # | Tarefa | Arquivos | Verificação |
+|---|--------|----------|-------------|
+| 14C.13.1 | `MaterialBooking.taskId: string \| null`; quantidade negativa rejeitada **só** quando há tarefa | `model/material-booking.ts` | 3 testes |
+| 14C.13.2 | Atributo de cenário `stockbookings` no PropertySet de material | `model/attributes/material-attributes.ts` | 2 testes |
+| 14C.13.3 | Regra `signedNumber` (`!number` \| `_- !number`) usada pela gramática de estoque | `parser/rules/common.ts`, `parser/rules/material.ts` | 2 testes |
+| 14C.13.4 | Parser: `booking [quantity] <n> [unitprice <p>] on <data>` sem tarefa no corpo do material | `parser/rules/material.ts` | 3 testes |
+| 14C.13.5 | Erro `stock_booking_without_chargeset` quando não há `chargeset` nem `defaultaccount material` | `parser/rules/material.ts` | 2 testes |
+| 14C.13.6 | `Material#stockQuantity` / `#stockCost` derivados | `model/material.ts` | 2 testes |
+| 14C.13.7 | Turnover: bookings de estoque com data em `[start, end)` entram na conta resolvida (regra 2 → regra 4) | `model/account-scenario.ts` | 3 testes |
+| 14C.13.8 | Export TJP round-trip do booking de estoque + verificação final do bloco | `reports/tjp-export-re.ts` | 2 testes |
+
+## 14C.14 — Unit price calculado por composição
+
+| # | Tarefa | Arquivos | Verificação |
+|---|--------|----------|-------------|
+| 14C.14.1 | `MaterialComponent { material, quantity }` | `model/material-component.ts` (novo) | 2 testes |
+| 14C.14.2 | Atributo de cenário `materialcomponents` no material | `model/attributes/material-attributes.ts` | 1 teste |
+| 14C.14.3 | Parser: `material <id> <quantidade>` no corpo do material; `!material` (declaração aninhada) sai de `materialAttributes` | `parser/rules/material.ts` | 3 testes |
+| 14C.14.4 | `Material#unitPriceValue()` com componentes (recursivo, com guard de pilha) | `model/material.ts` | 3 testes |
+| 14C.14.5 | Erro `unitprice_with_components` nas duas ordens | `parser/rules/material.ts` | 2 testes |
+| 14C.14.6 | Erro `material_composition_cycle` (DFS de alcance antes de anexar) | `parser/rules/material.ts` | 2 testes |
+| 14C.14.7 | Exemplo do §12 (concreto a 234,95) de ponta a ponta: parse → preço calculado → alocação → custo | `tests/fixtures/ext/*` | 2 testes |
+
+## 14C.15 — Keywords opcionais (`effort`/`quantity`/`value`) + `booking charge`
+
+| # | Tarefa | Arquivos | Verificação |
+|---|--------|----------|-------------|
+| 14C.15.1 | `effort` opcional no booking de tarefa (`taskBookingHeader`) | `parser/rules/task.ts` | 2 testes |
+| 14C.15.2 | `effort` opcional no booking de recurso (`resourceBookingHeader`) | `parser/rules/resource.ts` | 1 teste |
+| 14C.15.3 | `quantity` opcional no booking de material (corpo da tarefa e corpo do material) | `parser/rules/material.ts` | 3 testes |
+| 14C.15.4 | `ChargeBooking` (dono, tarefa, montante ±, data, descrição) + atributo `chargebookings` da tarefa | `model/charge-booking.ts` (novo), `model/attributes/task-attributes.ts` | 3 testes |
+| 14C.15.5 | Parser: `booking charge ["<descrição>"] [value] <n> on <data>` no corpo da tarefa — **sem** referência de recurso (revisão 2026-11-02) | `parser/rules/booking.ts`, `parser/rules/task.ts` | 5 testes |
+| 14C.15.6 | Parser: `booking charge <tarefa> ["<descrição>"] [value] <n> on <data>` no corpo do recurso | `parser/rules/booking.ts`, `parser/rules/resource.ts` | 2 testes |
+| 14C.15.7 | Mesma forma no corpo do material (com referência futura) | `parser/rules/booking.ts`, `parser/rules/material.ts`, `model/project.ts` | 2 testes |
+| 14C.15.8 | i18n pt-BR/es das keywords novas + export TJP de `booking charge` | `i18n/*`, `reports/tjp-export-re.ts` | 3 testes |
+
+## 14C.16 — Turnover com precedência de unit price
+
+| # | Tarefa | Arquivos | Verificação |
+|---|--------|----------|-------------|
+| 14C.16.1 | Auditoria das rotas de custo de material até a conta (alocação, estoque, relatório) | doc + testes | 4 testes |
+| 14C.16.2 | Preço de **alocação** vence o do material no turnover | `model/account-scenario.ts` | 1 teste |
+| 14C.16.3 | Preço **calculado** por composição chega ao turnover | `model/material.ts` | 1 teste |
+| 14C.16.4 | Booking **com tarefa** não duplica custo no turnover (decisão §13.4) | idem | 1 teste-âncora |
+| 14C.16.5 | Estorno: booking de estoque negativo subtrai da conta | idem | 1 teste |
+
+## 14C.17 — Cenários: registro do comportamento real
+
+| # | Tarefa | Arquivos | Verificação |
+|---|--------|----------|-------------|
+| 14C.17.1 | Sondar o código nos 4 pontos do §12 e confrontar com a fonte Ruby | doc (plano §13.5) | — |
+| 14C.17.2 | Teste de caracterização: cenário de 2 níveis, `fullId` curto, herança por aninhamento | `tests/model/scenario-nesting_14c_test.ts` (novo) | 4 testes |
+| 14C.17.3 | Teste: redeclarar o top-level limpa os cenários (`clearProperties`) | idem | 1 teste |
+| 14C.17.4 | Corrigir a tabela do §12 no plano (não há divergência) | `fase-14-relatorios-complemento.md` | diff |
+
+## Notas de conclusão
+
+#### Evidências 14C.13.1–14C.13.8 (preenchido 2026-11-02)
+
+| # | Implementação | Verificação |
+|---|---------------|-------------|
+| 14C.13.1 | `MaterialBooking.taskId: string \| null` + `task: Task \| null`; construtor rejeita quantidade negativa só quando `taskId !== null` | `tests/model/material-booking_14c_test.ts` — 3 steps (erro de negativo, campos, isInventory) |
+| 14C.13.2 | `stockbookings` (`NodeListAttribute`, `isScenarioAttribute=true`) registrado em `material-attributes.ts` | `tests/attributes/material-attributes_test.ts` + contagem |
+| 14C.13.3 | `signedNumber` (`p.optional(‘-‘) !number`) em `parser/rules/common.ts` + referenciada pela gramática de estoque | `debug/adendo_extra_probe.ts` casos estoque +/− (2 steps) |
+| 14C.13.4 | `materialBookingBody` com `!materialBookingTaskRef` opcional; `addStockBooking` grava em `stockbookings` do material | `debug/adendo_extra_probe.ts` — 2 steps (estoque + / −, sem task) |
+| 14C.13.5 | `validateStockBookings` emitido no fechamento de `materialBody`; erro `stock_booking_without_chargeset` | `debug/adendo_extra_probe.ts` — 1 step (m8: erro esperado sem chargeset) |
+| 14C.13.6 | `Material#stockQuantity(scIdx)` / `#stockCost(scIdx)` derivados | `turnover-price-precedence_14c_test.ts` — rota de estoque (4 steps) |
+| 14C.13.7 | `AccountScenario#addStockBookings`: data ∈ [start,end), conta = `stockAccount` (chargeset→defaultaccount), `CostEvent material_usage` idempotente | `turnover-price-precedence_14c_test.ts` 14C.16.5 — 2 steps (estorno, soma) |
+| 14C.13.8 | Export TJP: `booking [quantity] <n> [unitprice <p>] on <data>` no corpo do material | `tjp-export-re.ts` (booking export já coberto em 14C.11.8) |
+
+#### Evidências 14C.14.1–14C.14.7 (preenchido 2026-11-02)
+
+| # | Implementação | Verificação |
+|---|---------------|-------------|
+| 14C.14.1 | `model/material-component.ts` (`MaterialComponent { material, quantity }`) | `turnover-price-precedence_14c_test.ts` 14C.16.3 (1 step) |
+| 14C.14.2 | `materialcomponents` (`NodeListAttribute`, `isScenarioAttribute=true`) em `material-attributes.ts` | contagem em `material-attributes_test.ts` |
+| 14C.14.3 | Regra funil `material` → `materialNameRef` + `materialStatementTail`; `material <ref> <qtd>` via `addMaterialComponent` | `debug/adendo_extra_probe.ts` (caso m9: composição, 1 step) |
+| 14C.14.4 | `Material#unitPriceValue()` recursivo com `pricingStack` (ciclo → 0) | `turnover-price-precedence_14c_test.ts` 14C.16.3 (1 step) |
+| 14C.14.5 | `unitprice_with_components` — nas duas ordens | `debug/adendo_extra_probe.ts` |
+| 14C.14.6 | `material_composition_cycle` via DFS de alcance (`composes()`) | `debug/adendo_extra_probe.ts` |
+| 14C.14.7 | Exemplo do §12 (Concreto a 234,95) ponta a ponta | `turnover-price-precedence_14c_test.ts` 14C.16.3 — 1 step |
+
+#### Evidências 14C.15.1–14C.15.8 (preenchido 2026-11-02)
+
+| # | Implementação | Verificação |
+|---|---------------|-------------|
+| 14C.15.1 | `bookingEffortKeyword` (`p.optional()` com `_effort`) referenciado em `taskBooking` | `debug/adendo_extra_probe.ts` — caso “task: booking curtos” (2 steps) |
+| 14C.15.2 | `bookingEffortKeyword` em `resourceBookingHeader` | idem — “resource: booking <task> <interval>” |
+| 14C.15.3 | `bookingQuantity` (`p.optional()` com `_quantity`) em `bookingEffort` e em `materialBooking` | `debug/adendo_extra_probe.ts` — casos material curto +/− (3 steps) |
+| 14C.15.4 | `ChargeBooking` (`model/charge-booking.ts`) + `chargebookings` em `task-attributes.ts`; campo `description` (revisão 2026-11-02) | `tests/attributes/task-attributes_test.ts` 46→47; `attribute-definitions.golden.json` regenerado |
+| 14C.15.5 | `taskChargeBookingHeader` **sem** referência de recurso + descrição `$STRING` opcional (regra `chargeBookingDescription`); antigo `booking charge <recurso>` passa a ser rejeitado | `tests/parser/rules_booking_charge_14c_test.ts` — 5 steps (sem ref/desc, `value`, descrição, estorno com descrição, recurso rejeitado) |
+| 14C.15.6 | `resourceChargeBookingHeader` com `!chargeBookingTaskRef` + descrição opcional (índices 2/4/6) | idem — 2 steps (descrição gravada, `unknown_task` mantido) + probe `debug/adendo_extra_probe.ts` |
+| 14C.15.7 | `materialChargeBookingHeader` idem + fila `pendingBookings` (referência futura resolve por **ID**, como o booking de material) | idem — 1 step (fila drenada, descrição preservada) + probe — 4 steps |
+| 14C.15.8 | i18n `effort`/`quantity`/`value` pt-BR/es (value=quantia para evitar colisão com `charge`=valor); `booking charge` no export TJP | `i18n/pt-BR.ts`, `i18n/es.ts` + golden parser |
+
+#### Evidências 14C.16.1–14C.16.5 (preenchido 2026-11-02)
+
+| # | Implementação | Verificação |
+|---|---------------|-------------|
+| 14C.16.1 | Auditoria: `allocatedCost` usa `unitPriceFor(allocation)`; `booking.cost()` sem alocação usa `unitPrice ?? unitPriceValue()`; `addStockBookings` só itera `stockbookings` (não `materialbookings`); precedência booking→alocação→material na rota de relatório | `tests/reports/turnover-price-precedence_14c_test.ts` — 6 steps |
+| 14C.16.2 | Preço da alocação (unitPrice=20) vence o do material (unitPrice=10) no `turnover(aggregate=materials)` | idem — 1 step (turnover = 5×20 = 100) |
+| 14C.16.3 | Preço calculado por composição (Σ componente×preço) chega a `allocatedCost` e ao turnover quando não há unitPrice na alocação | idem — 1 step (2×204,75 = 409,5) |
+| 14C.16.4 | Booking com tarefa (`taskId !== null`) fica em `materialbookings` da tarefa, **não** em `stockbookings` do material — não entra no `addStockBookings` | idem — 1 step (parser: stockBookings vazio) |
+| 14C.16.5 | Booking de estoque negativo (−100 × 10) subtrai 1000 do turnover da conta; soma algébrica de entrada e saída | idem — 2 steps |
+
+#### Evidências 14C.17.1–14C.17.4 (preenchido 2026-11-02)
+
+| # | Implementação | Verificação |
+|---|---------------|-------------|
+| 14C.17.1 | Sondados os 4 pontos (§13.5): `project.ts:268` `PropertySet(this, true)` ✓; `scenario.ts:163` `p.pattern(["!scenario"])` recursivo ✓; `scenario.ts:196` usa `this.property` como parent ✓; sem teste prévio de 2 níveis → nova arquivo | doc (tabela §13.5 preenchida com arquivo/linha) |
+| 14C.17.2 | Cenário de 2 níveis: ambos registrados, `real.fullId === "real"`, `real.parent === plan`, `real` herda `active` de `plan` por aninhamento | `tests/model/scenario-nesting_14c_test.ts` — 4 steps |
+| 14C.17.3 | Segundo `scenario` top-level limpa os anteriores (`clearProperties` quando `!this.property`) | idem — 1 step (só s2 sobrevive) |
+| 14C.17.4 | Tabela “Diferenças prováveis” do §12 corrigida com nota de confirmação e evidência Ruby (`PropertyTreeNode.rb:294-303`); §13.5 mantém-se como fonte canônica | diff em `fase-14-relatorios-complemento.md` |
+
+---
+
+## Notas de conclusão
+
+- **ADRs afetados:** 027 (adendo 14C.5.12 — default `richtext`/opt-in
+  `markdown` nos reports); nenhum ADR novo (as três diretivas de C6 são
+  extensões documentadas aqui e nas tabelas de atributos).
+- **Divergências rastreadas (não corrigidas):** `Material#name` espelha o id
+  (14C.6.8) — TJP/MSPDI mostram `aco`, não o texto do cabeçalho;
+  `name`/`projectid`/`version` do projeto não são consultáveis por `query`
+  (14C.5); `columns unit|unitprice|totalcost` via `.tjp` (acima).
+- **Vereditos da 14C.1.15–1.18:** `resourcereport`, `icalendar`/`niku`/`tagfile`/
+  `chartplotter` e as grades `Calendar` não listam material (decisão);
+  `htmlstatusreport`/`xmlreport` não existem no TJ 3.8.4 e o requisito
+  “statussheet lista materiais” está na **18.17.8**.
+- **Limitações do MSPDI (14C.4.12):** sem `<Baseline>`/`<ExtendedAttribute>`
+  (o modelo não tem os dados); `CalendarUID` completo por recurso limitado a
+  `<Exceptions>`; `Project` não tem store `leaves`.
+- **Pendências herdadas:** a saída markdown `.md` + prefixos `md*report` foi
+  entregue na 14C.8; o requisito de `unitprice` no timesheet ficou registrado
+  como **18.17.9/18.17.10** e o status sheet com materiais como **18.17.8**
+  (Fase 18).
+- **Fechado na 14C.12:** `PENDING_SCHEDULER_FILES` (golden de reports) ficou
+  vazio — `alert.tjp` agora é comparado contra o oracle Ruby; a divergência de
+  `finishScheduling` segue aberta só na documentação da Fase 7.
 
 ````
 
@@ -22386,12 +22732,12 @@ integração futura apareça como diff explícito.
 
 ## File: `docs/syntaxmesh/fases/fase-14-relatorios-complemento.md`
 
-```md
+````md
 # Fase 14 Complemento — Relatórios: Materiais, RDO, MspXml e Markdown
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-14-relatorios-complemento.md`
 > **Tarefas:** `docs/syntaxmesh/fases/fase-14-relatorios-complemento-tarefas.md`
-> **Status:** 🟡 em andamento — C0 ✅ 2026-10-31 · C1 ✅ 2026-11-01 · C2 ✅ 2026-11-01 · C3 ✅ 2026-11-01 · C4 ✅ 2026-11-01 · C5 ✅ 2026-11-01 · C6 ✅ 2026-11-01 · C7 pendente
+> **Status:** ✅ concluída — C0 ✅ 2026-10-31 · C1–C7 ✅ 2026-11-01 (450 testes / 4841 passos) · adendo §10 → C8–C12 ✅ 2026-11-01 (472 testes / 4909 passos) — ver §11 · adendo extra §12 → C13–C17 ✅ 2026-11-02 (480 testes / 4926 passos) — ver §13
 > **Duração estimada:** 8–12 dias
 > **Depende de:** Fases 8.1/8.2 (material + modelo contábil), 10 Complemento (parser reconhece `material`/`picture`/`format`/`breakdownreport`/`rdoreport`), 11 (motor lógico/Query), 12 (RichText), 13 (Markdown), 14 (pipeline de relatórios — concluída 2026-10-31)
 > **Bloqueia:** adendos de UI (Fase 20) que exibem RDO/breakdown; nada no núcleo 15/16/17
@@ -22557,6 +22903,13 @@ saídas como string, DOM-free, sem disco).
 
 ## 10. Adendo para incluir no plano e tarefas
 
+> **Execução:** este adendo virou os blocos **C8–C12** (§11). Os vereditos
+> originais ficam abaixo como registro do pedido; o que foi entregue, o que
+> foi transferido para outra fase e o que ficou rastreado está na tabela de
+> rastreabilidade §11.7.
+
+### Formato Markdown 
+
 Durante a execução da fase 14 complementar verificamos a necessidade de incluir o formato de saida markdown aos variados reports que o syntaxmesh tem atualmente. são reports que teriam um arquivo de extensão ".md" 
 
 Então teremos um novo formats que poderá ser escolhido : "markdown".
@@ -22570,7 +22923,654 @@ O prefixo "md" poderá ser usado também, por exemplo:
 * mdmaterialreport 
 
 O markdown tambem aceita o uso de html, elementos mais complexos como gráficos poderiam usar de elementos html para renderizar, mas prefirimos que antes seja viabilizado o uso de markdown puro.
+
+> **Veredito da 14C.7.6:** a Fase 14 Complemento entregou o **dialeto** markdown
+> no conteúdo dos relatórios (C5: `format markdown` em header/footer/prolog/
+> epilog/caption/`note`/`celltext` + handlers RTF), mas **não** a saída markdown
+> como formato de arquivo (`formats markdown` → `.md`, tabelas em pipes) nem os
+> prefixos `md*report`. Esse item do pedido fica como pendência herdada para um
+> adendo futuro (14C-MD-output), registrado em `CURRENT.md`.
+
+### Resolver pendencias anteriores
+
+resolveAccount regra 4,	project_default no-op (sem Project.defaultAccount),	Documentado em ADR 031 §5 marcado para resolver na Fase 14.
+vamos usar a key word "defaultaccount <id>" (default universal). mas podemos ter as variantes (que teriam precedencia ao default universal):
+* defaultaccount material <id>
+* defaultaccount resource <id>
+* defaultaccount charge <id>
+
+to_rti × 4,	Wiring por atributo depende de query.listItem/ReportContext (Fase 14), estavam	Re-ancorados para 14.
+
+MSPDI limitado,	<Baseline> poderia ser um cenario que é definido dentro do bloco de definição do report: "baseline <scenario_id>" . Assim os dados do cenário (datas de niicio e fim e valores) são os que serão exportados como baseline para o MSPDI report
+
+Gap técnico real no núcleo é o G1.4 (placement de datas em modelo construído à mão, sem parser) — o caminho parser → schedule funciona nos 9 MWEs. G1.4, Project.schedule() não coloca datas em modelo construído à mão (parser e2e funciona nos 9 MWEs). Esta resolvido Parcial? Temos 4 bugs corrigidos (PropertyList items, doneEffort, propagateDate, Xref). Tem mais algum bug para ser resolvido ? ver fase-7-scheduler-core-tarefas.md Adendo 2026-10-27 e planejar resolução de bugs ainda não tratados. 
+
+### Adendo ao Unit Price de material
+
+O material tem um valor de custo definido como unitprice dentro de seu bloco de definição.
+
+```tjp
+material "Steel" {
+  unit "kg"
+  unitPrice 25.0
+}
 ```
+
+Teremos a opção de modificar o unit price no material da tarefa (valido para apenas aquela atribuição) logo após a definição de sua quantidade. se unit price omitido na atribuição da tarefa usa o unit price definido no material.
+```tjp
+task "Foundation" {
+  material "Steel" 500 onstart unitprice 26.0
+  material "Concrete" 300 distributed unitprice 600.0
+  material "Paint" 20 perweek unitprice 55.0
+  material "Sand" 100 distribution { 0.3, 0.5, 0.2 }  unitprice 106.0
+}
+```
+
+Teremos a opção TAMBÉM de indicar o unit price real do material no booking (valido para apenas aquele booking) logo após a definição de sua quantidade. se unit price omitido no booking usa-se o unitprice definido na alocação de tarefa e na falta deste, o unit price definido no material.
+```tjp
+material "Steel" {
+  unit "kg"
+  unitPrice 25.0
+  booking "Foundation" quantity 500 unitprice 26.5 on 2026-11-01
+}
+
+task "Foundation" {
+  material "Steel" 500 onstart unitprice 26.0
+  material "Concrete" 300 distributed unitprice 600.0
+  material "Paint" 20 perweek unitprice 55.0
+  material "Sand" 100 distribution { 0.3, 0.5, 0.2 }  unitprice 106.0
+
+  booking material "Steel" quantity 550 unitprice 27.0 on 2026-11-03
+}
+```
+
+Podendo tambem ser modificado no timesheet
+```tjp
+timesheet "Engineer" 2026-11-01 - 2026-11-07 {
+  material "Steel" {
+    work 90%          # 90% da quantidade planejada consumida
+    remaining 10%     # 10% restante
+    unitprice 25.5
+  }
+}
+```
+
+Retirar a definição de totalquantity do bloco de definições de material. totalquantity pode ser uma informação de relatório apenas se for possivel somar das alocações (Σ MaterialAllocation.quantity).
+
+---
+
+## 11. Adendo §10 — execução (blocos C8–C12)
+
+O adendo §10 foi transformado em cinco blocos com a mesma disciplina dos
+blocos anteriores: ADR 027 (saída string, zero disco/DOM), parser + i18n
+en/pt-BR/es, testes BDD, evidência por tarefa e regressão de golden.
+
+| Bloco | Conteúdo | Origem |
+|---|---|---|
+| **C8** | Saída markdown: `formats markdown` → `.md` + prefixos `md<X>report` (`mdtaskreport`, `mdresourcereport`, `mdaccountreport`, `mdmaterialreport`) + geradores puros (pipes GFM, links, imagens) em todos os conteúdos que já produzem tabela | §10 “Formato Markdown” + veredito 14C.7.6 |
+| **C9** | `defaultaccount <id>` universal + variantes `defaultaccount material|resource|charge <id>` (variante tem precedência) resolvendo `resolveAccount` regra 4 (`project_default`); fechar os `to_rti` × 4 que estavam re-ancorados | §10 “Resolver pendências anteriores” |
+| **C10** | MSPDI `<Baseline>`: atributo `baseline <scenario_id>` no bloco do report de exportação; o cenário indicado fornece início/fim/custos da linha de base | §10 “MSPDI limitado” |
+| **C11** | Unit price por alocação (`material "X" 500 onstart unitprice 26.0`), por booking (`booking material "X" quantity 550 unitprice 27.0 on …`) e remoção de `totalquantity` do bloco de material (quantidade passa a ser derivada de Σ `MaterialAllocation.quantity`) | §10 “Adendo ao Unit Price de material” |
+| **C12** | Auditoria G1.4 do scheduler (Fase 7 — adendo 2026-10-27): inventário dos bugs já corrigidos, probe ao vivo do modelo construído à mão, decisão sobre os bugs remanescentes | §10 “Gap técnico real no núcleo é o G1.4” |
+
+### 11.1 C8 — Saída Markdown (✅ 2026-11-01)
+
+- `reports/markdown.ts` concentra a renderização **pura** (sem HTML de
+  relatório): `markdownCell` (escapa `\`, `|`, converte quebra de linha em
+  `<br>`), `markdownText` (aceita `RichTextIntermediate#to_markdown`),
+  `markdownTable` (GFM com alinhamento numérico `---:`), `markdownSections`,
+  `markdownHeading`, `markdownImage`.
+- `ReportTable#to_markdown`, `ReportBase#rt_to_markdown` e `to_markdown()` em
+  `TableReport` (task/resource/account/material), `BreakdownReport`,
+  `TextReport` e `RdoReport` (blocos, galeria e as três tabelas de recursos/
+  materiais/charges).
+- `Report.generate()` ganha `case "markdown"` + `generateMarkdown()` (título
+  `# <projeto> - <título|nome>`, `.md` em `outputFileName`, corpo em `output`).
+- Parser: regras `taskReportKeyword`/`resourceReportKeyword`/
+  `materialReportKeyword`/`accountReportKeyword` devolvem boolean
+  (`_<tipo>report` → false, `_md<tipo>report` → true) e a regra de header usa
+  `markdownReportDefaults()` para **presetar** `formats ["markdown"]` só
+  quando o corpo não declarar `formats` (independência de ordem preservada).
+- Correções de port encontradas no caminho: `TableReport.defaultColumnTitle`
+  devolve `null` para coluna desconhecida (Ruby) e `Project#attributeName`
+  consulta `tasks` → `resources` (não o dicionário de projeto).
+
+### 11.2 C9 — `defaultaccount` + `to_rti` × 4 (✅ 2026-11-01)
+
+Gramática (extensão SyntaxMesh; não existe no TJ 3.8.4):
+
+```tjp
+project p "P" 2026-01-01 - 2026-12-31 {
+  defaultaccount cost              # universal (regra 4 para qualquer tipo)
+  defaultaccount material m.acc    # variante por tipo (precede a universal)
+  defaultaccount resource r.acc
+  defaultaccount charge   t.acc    # `charge` = CostType `task`
+}
+```
+
+- `Project.defaultAccountId` (universal) + `Project.defaultAccountIds:
+  Map<CostType, string>` (variantes) e `Project#defaultAccountFor(type)`
+  (variante do tipo → universal → `null`). O parser guarda o **ID**, não a
+  conta: o bloco `project` precede as declarações de `account`, então a
+  resolução é sob demanda em `Project#account(id)` (referência futura). Conta
+  inexistente resolve para `null` sem falhar o parse.
+- `CostLine.project` (opcional) alimenta `resolveAccount` regra 4: com conta
+  default resolvida, `account` passa a ser a conta e `projectDefault` carrega
+  essa conta; sem `defaultaccount`, o comportamento anterior
+  (`account: null`) é preservado. `resource-scenario.ts` passa `project:` ao
+  emitir `resource_effort`.
+- i18n `defaultaccount` (pt-BR `contapadrao`, es `cuentapredeterminada`);
+  `material`/`resource`/`charge` já são canônicos.
+- **`to_rti` × 4**: `ReferenceAttribute#to_rti` (URL+label → `[url label]`)
+  e `ListAttributeBase#to_rti` (lista com `query.listItem` → `<nowiki>` por
+  item + `query.assignList`) deixam de lançar `NotYetImplementedError`;
+  `AttributeBase#to_rti` já estava implementado (RichText) e o
+  `Journal#to_rti` já existe desde a 14C.0 (modos de journal). Fechamento
+  adicional: `Query#assignList` gera o RTI do texto montado (Ruby
+  `Query.rb:234`) — antes gravava `null` com um TODO da Fase 12.
+- Testes: `tests/model/default-account_14c_test.ts` (4),
+  `tests/accounting/attribution_default-account_14c_test.ts` (5),
+  `tests/parser/rules_defaultaccount_14c_test.ts` (7),
+  `tests/attributes/to-rti_14c_test.ts` (5).
+
+### 11.3 C10 — MSPDI `<Baseline>` (✅ 2026-11-01)
+
+- Atributo de report `baseline` (`IntegerAttribute`, default `null`, **não**
+  cenário-específico) que guarda o **índice** do cenário; aceito no corpo de
+  `export` como `baseline <scenario_id>` (reusa `!scenarioId`, logo o índice já
+  sai resolvido e um ID desconhecido vira `unknown_scenario_id` sem gravar o
+  atributo). Cenário inativo emite o aviso `baseline_sc_disabled` e mantém o
+  índice — quem decide omitir o `<Baseline>` é o exportador.
+- `MspXmlRE` emite `<Baseline>` do **projeto** (Number 0, antes de `<Tasks>`)
+  com o menor `Start` e o maior `Finish` das tarefas agendadas no cenário e
+  `<Cost>` = Σ `CostEvent` do cenário; e um `<Baseline>` por tarefa (Start/
+  Finish do cenário + `Cost` dos eventos daquela tarefa). Nunca inventa dados:
+  sem datas no cenário a tarefa é pulada, e se **nenhuma** tarefa tiver datas
+  o `<Baseline>` do projeto é omitido com o aviso `baseline_not_scheduled`.
+- Sem o atributo o documento fica idêntico ao atual (golden oracle intocado).
+- Testes: `tests/reports/baseline_14c_test.ts` (13 steps), fixtures
+  `tests/fixtures/ext/14c-baseline.tjp` (cenário `base` agendado) e
+  `14c-baseline-gap.tjp` (cenário `base` inativo), snapshot em
+  `reports-extensions.golden.json` (`baseline`).
+- `<ExtendedAttribute>` e granularidade de tempo do baseline continuam fora
+  de escopo.
+
+### 11.4 C11 — Unit price por alocação e booking; `totalquantity` removido (✅ 2026-11-01)
+
+Precedência do preço unitário efetivo (do mais específico ao mais geral):
+
+1. `MaterialBooking.unitPrice` (valor real do booking);
+2. `MaterialAllocation.unitPrice` (valor daquela atribuição de tarefa);
+3. preço do material (`unitprice` do bloco / campo `unitPrice`).
+
+- `MaterialAllocation` ganha `unitPrice?: number` (construtor + `unitPriceFor`),
+  sintaxe `material "X" <qtd> [modificador] [unitprice <n>]`.
+- Novo `MaterialBooking` (`material`, `quantity`, `unitPrice`, `date`,
+  `task`) com o atributo de cenário `materialbookings` da tarefa; gramática
+  `booking material "X" quantity <q> [unitprice <p>] on <data>` aceita no
+  corpo da tarefa **e** no corpo do material (com `task <id>` para amarrar a
+  tarefa). O booking alimenta o custo **realizado** do material; o custo
+  planejado continua vindo das alocações.
+- `totalquantity` sai do bloco de material (gramática, definição de atributo,
+  export TJP e leitura de relatório). A quantidade de um material passa a
+  ser **derivada**: Σ `MaterialAllocation.quantity` (coluna `allocations`
+  lista as alocações; quando não há alocação, 0).
+- Timesheet: a sintaxe proposta no §10 (`material "X" { work/remaining/
+  unitprice }`) é registrada como requisito da **Fase 18** (dona do bloco de
+  timesheet) — o parser de timesheet ainda não tem entrada de material.
+
+#### Detalhes de implementação (2026-11-01)
+
+- **Referência futura no booking.** `booking "<task>" …` no corpo do material
+  pode preceder a declaração da tarefa. Em vez de resolver no ponto do parse,
+  o parser enfileira em `Project.pendingBookings` (`scenarioIdx` incluído) e o
+  fim da regra `project` chama `Project#flushPendingBookings()`, que resolve a
+  tarefa e escreve `materialbookings` no cenário certo; bookings que continuam
+  sem tarefa permanecem na fila (e o erro já foi reportado no parse).
+- **Quantidade derivada no modelo, não no relatório.**
+  `Material#allocations(scIdx)`/`#allocatedQuantity`/`#allocatedCost`
+  concentram a regra (Σ de `MaterialAllocation.quantity` e
+  `quantity × unitPriceFor(this)`), de modo que `materialreport`,
+  `breakdownreport` (contribuintes de conta) e `aggregate materials` do
+  `AccountScenario` compartilham a mesma semântica. `materialreport` mantém
+  `totalquantity` apenas como **coluna calculada** (`materialNumericColumns`),
+  não como atributo consultável.
+- **Precedência aplicada nos relatórios.** `booking → alocação → material` é
+  resolvida por `MaterialAllocation#unitPriceFor` e pelo par
+  `taskMaterialAllocations`/`taskMaterialBookings` do `TableReport`:
+  `scheduledcost` = `CostEvent` planejado ou, na falta, Σ alocações;
+  `actualcost` = `CostEvent` realizado ou Σ bookings; `totalcost` = ambos.
+- **`totalquantity` fica reservado.** A palavra continua em
+  `CANONICAL_KEYWORDS` (pt-BR `quantidadetotal`, es `cantidadtotal`) **apenas**
+  para que a regra dedicada emita `totalquantity_removed` em vez de
+  `unexpctd_token` — qualquer outro uso segue rejeitado.
+- **Export TJP.** Alocações emitem `unitprice <n>` quando definido e os
+  bookings viram `booking material <id> quantity <q> [unitprice <p>] on <data>`
+  só sob `taskattributes materialbookings`; nada disso muda a saída de quem não
+  usa material.
+
+### 11.5 C12 — Auditoria G1.4 do scheduler (✅ 2026-11-01)
+
+- Inventário dos quatro bugs já corrigidos (PropertyList items, `doneEffort`,
+  `propagateDate`, Xref) e probe ao vivo com modelo construído à mão.
+- Cada bug remanescente encontrado vira tarefa corretiva **aqui** se for de
+  reports/custos; caso contrário é registrado no adendo da Fase 7 com
+  evidência (probe + arquivo/linha) para não reabrir a fase.
+- **Resultado (2026-11-01):** o probe confirma o placement (start/end/effort
+  concluído) em modelo construído à mão; a varredura encontrou **um** bug
+  remanescente — `propagateDateToDep()` comparava `toSeconds()` de `null`
+  quando a tarefa não tinha a data daquele lado. O guard de nulidade destravou
+  `docs/taskjuggler/test/TestSuite/CSV-Reports/alert.tjp`, que estava na lista
+  `PENDING_SCHEDULER_FILES` do golden de relatórios: essa lista ficou **vazia**
+  e o arquivo passou a ser comparado contra o oracle do `tj3` (112 passos
+  verdes). A divergência de `finishScheduling` (que no port marca a tarefa como
+  agendada e calcula completion/status/gauge, enquanto o Ruby recursa em
+  filhos e consolida `assignedresources` nos pais) foi **registrada** no adendo
+  da Fase 7, sem reescrita do scheduler.
+
+### 11.6 Critério de aceite do adendo
+
+- `deno task check:all` exit 0 · suíte verde · `deno task check:stubs` OK.
+- `reports.golden.json`, `parser.golden.json` e `mspdi.golden.json`
+  byte-idênticos (o adendo só acrescenta comportamento opt-in);
+  `reports-extensions.golden.json` idempotente 2×.
+- Tabelas de evidência 14C.8–14C.12 preenchidas em
+  `fase-14-relatorios-complemento-tarefas.md` e rastreabilidade §11.7.
+- `CURRENT.md`, `plano.md` e `AGENTS.md` atualizados.
+
+**Resultado (2026-11-01):** ✅ os quatro critérios cumpridos.
+
+- `deno task check:all` exit 0 (check + lint + fmt + test); `check:stubs` OK.
+- Os três goldens do núcleo seguem byte-idênticos ao HEAD;
+  `reports-extensions.golden.json` e `attribute-definitions.golden.json` foram
+  **regenerados de propósito** (material com quantidade/custo derivados das
+  alocações, bloco `baseline` e o atributo `materialbookings` — 167 → 173
+  casos), com a geração repetida 2× para provar idempotência.
+- As tabelas de evidência 14C.8–14C.12 estão preenchidas no arquivo de tarefas
+  (incluindo as 11 steps novas de `MaterialBooking`/booking no parser e as
+  3 do custo por booking nos relatórios).
+- `CURRENT.md` (linha da Fase 14-C + fechamento do `PENDING_SCHEDULER_FILES`),
+  `plano.md` (linha 14-C) e `AGENTS.md` (tabela das 21 fases) atualizados.
+
+> **Nota:** `alert.tjp` deixou de ser exceção — com o guard da 14C.12.3 ele
+> agenda e é comparado contra o oracle Ruby, então a única pendência de
+> scheduler que restou é a divergência **documentada** de `finishScheduling`.
+
+### 11.7 Rastreabilidade do adendo §10
+
+| Item do §10 | Bloco | Entrega |
+|---|---|---|
+| `formats markdown` gerando `.md` | C8 | `Report#generateMarkdown` + `outputFileName` `.md` |
+| prefixos `md*report` | C8 | `mdtaskreport`/`mdresourcereport`/`mdmaterialreport`/`mdaccountreport` (aliases com `formats` presetado) |
+| markdown puro antes de HTML | C8 | `reports/markdown.ts` (pipes, links, imagens, sem `<table>`/`<div>`) |
+| `defaultaccount <id>` + variantes | C9 | `Project.defaultAccount(s)` + regra 4 de `resolveAccount` |
+| `to_rti` × 4 | C9 | `ReferenceAttribute`/`ListAttributeBase` implementados; base e Journal documentados |
+| MSPDI `<Baseline>` via `baseline <scenario>` | C10 | atributo `baseline` + `<Baseline>` de projeto/tarefa |
+| `unitprice` na alocação de tarefa | C11 | `MaterialAllocation.unitPrice` + gramática |
+| `unitprice` no booking | C11 | `MaterialBooking` + gramática nas duas formas |
+| `unitprice` no timesheet | C11 → Fase 18 | requisito registrado como **18.17.9** (record de material com `unitprice` → `MaterialBooking`) + **18.17.10** (parser/sender do sheet) |
+| remover `totalquantity` | C11 | gramática/atributo/export removidos; quantidade derivada das alocações |
+| G1.4 — bugs remanescentes | C12 | inventário + probe + registro na Fase 7 |
+
+## 12. Adendo Extra
+
+### Material em estoque e saida de estoque
+
+Permitir dentro de material o booking sem task podendo ser com quantidade positiva e negativo, somente neste caso. Quando tem alocação de tarefa, somente positivo.
+
+```tjp
+
+account "Costs" {
+  account "Materials" {
+    aggregate materials
+  }
+}
+
+material "Steel" {
+  unit "kg"
+  unitPrice 25.0
+  booking "Foundation" quantity 500 unitprice 26.5 on 2026-11-01 // somente positivo
+
+  chargeset "Costs.Materials"
+
+  booking quantity 100 unitprice 26.5 on 2026-11-01 // sem alocação de tarefa
+  booking quantity -100 unitprice 26.5 on 2026-11-02 // negativo e sem alocação de tarefa
+
+  booking "Foundation 2" quantity 100 unitprice 26.5 on 2026-11-02
+}
+```
+
+Assim, temos a opção de registrar o material que ainda não foi alocado (por exemplo ficou em estoque) mas depois saiu do estoque e foi usado e alocado adequadamente.
+
+Nesta situação de booking em material sem task , é obrigatório que se tenha informado o chargeset padrão daquele material, para o syntaxmesh usar esta conta para incluir o custo do material sem tarefa ou estornar este custo (quantidade negativa)
+
+### Unit Price Calculado
+
+Podemos ter o unit price calculado a partir de componentes informados no material, veja exemplo:
+
+```tjp
+material "Cement" {
+  unit "kg"
+  unitPrice 0.450
+}
+
+material "Sand" {
+  unit "m³"
+  unitPrice 35.0
+}
+
+material "Gravel" {
+  unit "m³"
+  unitPrice 30.0
+}
+
+material "Admixtures" {
+  unit "vb"
+  unitPrice 5.0
+}
+
+material "Concrete" {
+  unit "m³"
+  material "Cement" 420 // 420 kg/m³
+  material "Sand" 0.45 // 0.45 m³/m³
+  material "Gravel" 0.84 // 0.84 m³/m³
+  material "Admixtures" 1 // 1 vb/m³
+  // unitPrice - não permitido ele será calculado
+  chargeset "Costs.Materials.Concrete"
+}
+```
+
+O unitprice será calculado , resultando em : 234,95
+* Cement: 420 kg × 0,450 = 189,00
+* Sand: 0,45 m³ × 35,00 = 15,75
+* Gravel: 0,84 m³ × 30,00 = 25,20
+* Admixtures: 1 vb × 5,00 = 5,00
+
+Unitprice = Custo Total (1 m³): 189+15,75+25,20+5 = 234,95
+
+### keyword quantity e value
+
+A palavra quantity ou value não são necessárias em booking dentro de tarefas, exemplos:
+* booking effort "Engineer" 2026-02-01 - 2026-02-10 { sloppy 2 }
+* booking charge "Software" 48000 on 2026-02-15 // does not need keyword value - é um booking charge
+* booking material "Steel" 2100 on 2026-02-05 // does not need keyword quantity - é um booking material
+
+nem se o booking for no bloco de origem:
+```tjp
+# Booking de effort no bloco do resource
+resource "Engineer" {
+  booking "Foundation" 2026-02-01 - 2026-02-10 { sloppy 2 } // sem keyword effort
+}
+
+# Booking de charge no bloco do resource
+resource "Engineer 2" {
+  booking charge "Foundation" 48000 on 2026-02-15 // sem keyword value
+}
+
+# Booking de material no bloco do material
+material "Steel" {
+  booking "Foundation" 2100 on 2026-02-05 // sem keyword quantity e sem keyword material
+}
+
+# Booking de charge no bloco do material
+material "Steel 2" {
+  booking charge "Foundation" 48000 on 2026-02-15 // sem keyword value
+}
+```
+
+Permitir o uso de "booking charge" dentro da definição de material, assim como é permitido dentro de resource.
+
+> **Revisão 2026-11-02 (exemplo da linha 560):** `booking charge` no corpo da
+> tarefa **não leva referência de recurso** — o `"Software"` do exemplo não é
+> recurso nem conta; a forma canônica da tarefa é
+> `booking charge ["<descrição>"] [value] <montante> on <data>`, e o `<montante>`
+> sozinho já basta (o dono do gasto é a própria tarefa). Especificado em §13.3.
+
+
+### Observação importante - confirmação sobre turnover
+
+no desenvolvimento de unitprice podendo ser alterado na alocação do tarefa , ou no booking, precisamos garantir que o calculo do custo dentro do account (turnover da conta) utiliza estes novos unitprice adequadamente. na seguinte ordem:
+* se tem unitprice em booking usa o unit price do booking;
+* senão e existir o unitprice da tarefa usa o unitprice da alocação na tarefa
+* se não tiver unitprice da tarefa usa o unitprice informado ou calculado no bloco de definição do material.
+
+
+### comportamento de scenarios — Diferenças no tratamento de cenários: TaskJuggler × SyntaxMesh
+
+#### TaskJuggler (comportamento oficial)
+
+- **Só um cenário top-level.** O `plan` é o único cenário de primeiro nível; qualquer outro é derivado dele.
+- **Cenários são aninhados:** `scenario plan { scenario real { } }`. O keyword `scenario` é aceito dentro de `project` **e** dentro de `scenario`.
+- **Herança pelo aninhamento:** `real` herda todos os atributos de `plan` (tasks, resources, datas) exceto os que redefinir.
+- **`fullId` reflete a hierarquia:** `plan.real`.
+- **`projection` não é herança.** É um atributo que ativa o modo de projeção (bookings fixos até `now`).
+
+#### SyntaxMesh (o que a documentação diz hoje)
+
+- **`fase-9-orquestrador-cache.md` §9.6.1.8:** `scenarios` é `PropertySet` com **`flatNamespace = true`** — IDs curtos (`real`), sem hierarquia.
+- **`fase-5-tarefas.md` §5.7.2:** `projection` é `inheritParent = true` — flag que só faz sentido se cenários tiverem parent.
+- **`fase-10-tarefas.md` §10.12.4.1:** `rule_scenario` está no `projectBody`, sem indicação de recursão para dentro de `scenarioBody`.
+
+#### Diferenças prováveis (a confirmar no código)
+
+> **Corrigido em C17 (2026-11-02):** a tabela abaixo foi escrita antes da
+> sondagem ao código; todas as suspeitas se resolveram a favor do port —
+> **não há divergência**. A tabela correta (com evidência Ruby/arquivo/linha) é
+> a de §13.5 abaixo. Os testes `scenario-nesting_14c_test.ts` confirmam por
+> execução que o SyntaxMesh implementa o comportamento idêntico ao Ruby.
+
+| Ponto | TaskJuggler | SyntaxMesh (conforme doc) → **código real** |
+|---|---|---|
+| Top-level | Só `plan` | ✅ `clearProperties` garante só o último top-level → igual |
+| Aninhamento | Sim (`scenario plan { scenario real { } }`) | ✅ `scenarioAttributes` inclui `p.pattern(["!scenario"])` — recursivo |
+| Herança | Pelo aninhamento | ✅ `inheritedFromParent = true` → resolve via parent chain |
+| `fullId` de `real` | ~~`plan.real`~~ → **`real`** (`flatNamespace=true`, `PropertyTreeNode.rb:294-303`) | ✅ `real` (flat) — igual |
+| `projection` | Atributo de modo **e** herda do pai cenarístico | ✅ `inheritedFromParent = true` → igual |
+
+#### O que verificar no código do SyntaxMesh
+
+1. `src/model/project.ts` — `new PropertySet(this, true)` ou `false`?
+2. `src/parser/rules/scenario.ts` — `rule_scenarioBody` inclui `scenario` (recursivo)?
+3. `src/model/scenario.ts` — `constructor(..., parent)` usa o `parent` ou força `null`?
+4. `packages/core/tests/model/scenario_test.ts` — há teste com 2 níveis de cenário?
+
+**Objetivo:** apenas registrar se o SyntaxMesh implementa o comportamento do TaskJuggler (nested, um top-level) ou diverge (flat, vários top-level). Não é para decidir correção — só para informar a diferença para decidirmos o que fazer . Preciso entender primeiro qual o real comportamento do taskjuggler
+
+## 13. Adendo Extra (§12) — execução (blocos C13–C17)
+
+O §12 virou cinco blocos. A disciplina é a mesma de C8–C12: parser + i18n
+en/pt-BR/es, testes BDD, evidência por tarefa, goldens byte-idênticos quando o
+syntax novo não aparece em fixture existente.
+
+| Bloco | Conteúdo | Origem no §12 |
+|---|---|---|
+| **C13** | Booking de **estoque**: `booking [quantity] <n> [unitprice <p>] on <data>` sem referência de tarefa dentro do bloco de material, com quantidade **positiva ou negativa**; conta de destino = `chargeset` do material (obrigatório) | “Material em estoque e saida de estoque” |
+| **C14** | **Unit price calculado** por composição: `material <id> <quantidade>` dentro do bloco de material declara componente; `unitprice` passa a ser derivado (Σ componente × preço do componente) e é **proibido** junto com componentes | “Unit Price Calculado” |
+| **C15** | Palavras `effort`, `quantity` e `value` **opcionais** em booking (nas duas origens) + `booking charge` aceito também no bloco de material | “keyword quantity e value” |
+| **C16** | **Turnover da conta** com a precedência de preço (booking → alocação → material, sendo o material explícito ou calculado) — auditoria com teste por rota | “Observação importante — confirmação sobre turnover” |
+| **C17** | **Registro** do comportamento real de cenários (TaskJuggler × SyntaxMesh), sem decidir correção | “comportamento de scenarios” |
+
+### 13.1 C13 — Booking de estoque
+
+- **Dois papéis do mesmo verbo.** `booking` *com* tarefa = consumo realizado
+  (C11, sempre positivo). `booking` *sem* tarefa = movimento de estoque:
+  entrada (positiva) ou saída/estorno (negativa). A regra zero vale também
+  aqui: nada de inventário implícito — se não há tarefa, o dinheiro tem de
+  ter para onde ir.
+- **Modelo**: `MaterialBooking.taskId: string | null` e `task: Task | null`.
+  A validação do construtor passa a rejeitar quantidade negativa **somente
+  quando há tarefa** (`MaterialBooking` em `model/material-booking.ts`).
+- **Atributo novo**: `stockbookings` (lista, específico de cenário) no
+  PropertySet de material — os bookings de estoque vivem no material, porque
+  não há tarefa hospedeira.
+- **Sinal negativo**: o lexer do port (fiel a `ProjectFileScanner.rb:95-98`)
+  não produz número com sinal — `-` cai no literal de caractere único. Nova
+  regra `signedNumber` (`!number` | `_- !number`) usada **só** pela gramática
+  de estoque; o resto da gramática continua exatamente como o TJ.
+- **Conta**: `AccountScenario#turnover` no ramo `aggregate materials` passa a
+  somar, além de `Material#allocatedCost`, os bookings de estoque cuja data
+  está em `[start, end)` e cuja conta resolvida (`resolveAccount`: regra 2 —
+  chargeset do material — senão regra 4 — `defaultaccount material`) é esta
+  conta ou descendente dela. Datas filtram (como `@credits` em
+  `AccountScenario.rb:57-68`); emissão idempotente de `CostEvent`
+  `material_usage` (modo `actual`) para alimentar `breakdownreport`/RDO.
+- **Chargeset obrigatório**: se o material não tem `chargeset` **nem** existe
+  `defaultaccount material`, o parser emite `stock_booking_without_chargeset`
+  (erro, não aviso) — sem conta, o valor se perderia.
+- **Fora de escopo de C13**: colunas novas em `materialreport`
+  (`stockquantity`/`stockcost`) ficam registradas como pendência; a quantidade
+  `totalquantity` do relatório continua sendo Σ alocações (14C.11.10), para
+  não misturar planejado com estoque.
+
+### 13.2 C14 — Unit price calculado por composição
+
+- **Gramática**: `material <materialId> <quantidade>` no corpo do material.
+  Choca com a declaração de **sub-material** aninhada (`p.pattern(["!material"])`
+  em `materialAttributes`): as duas formas começam por `_material` e o FSM só
+  admite uma transição por token por estado (`state.ts:139-157`). Decisão: a
+  **declaração aninhada de material sai do corpo do material** — nenhum
+  fixture, teste ou corpus usa a forma, `report-base.ts:200` já registra que
+  materiais não têm raiz própria, e a árvore (`parent` do construtor, IDs
+  hierárquicos porque `project.materials` é `flatNamespace = false`) continua
+  intacta para uso por código. O espaço semântico de “material dentro de
+  material” passa a significar composição.
+- **Modelo**: `MaterialComponent { material, quantity }`
+  (`model/material-component.ts`) + atributo de cenário `materialcomponents`.
+- **Preço** (`Material#unitPriceValue()`): `cost` fornecido → componente →
+  campo do construtor. Composição recursiva: o componente pode ter os seus
+  próprios componentes.
+- **Erros**: `unitprice_with_components` (nas duas ordens — componente depois
+  de `unitprice` e `unitprice` depois de componente) e
+  `material_composition_cycle` (DFS de alcance antes de anexar).
+- **Propagação**: como alocações e bookings já leem o preço por
+  `unitPriceFor`, o preço calculado aparece de graça em `materialreport`,
+  `breakdownreport`, RDO, MSPDI e no turnover (C16 cobre com teste).
+
+### 13.3 C15 — Keywords opcionais e `booking charge`
+
+- `effort` passa a ser **opcional** nas duas origens (`booking effort "X" …` e
+  `booking "X" …`); a forma curta é a canônica do TJ
+  (`TjpSyntaxRules.rb:6001`, `:4771`) e a explícita é a da Fase 8.1.
+  Desambiguação: `State#transition` prefere o literal ao `$ID` variável, então
+  `_effort` antes de `!resourceId`/`!taskId` não cria conflito.
+- `quantity` passa a ser opcional em booking de material (tarefa e material),
+  `value` opcional em booking de charge (regra `bookingQuantity` /
+  `bookingValueKeyword` com `p.optional()` — o sufixo `!rule?` não existe no
+  FSM, lição da 14C.11).
+- **`booking charge`** — implementado do zero nas três origens, armazenado no
+  atributo de cenário `chargebookings` da **tarefa** (o dinheiro é da tarefa,
+  quem declara é o outro lado), com a mesma fila de referência futura de
+  `pendingBookings`. **Revisão 2026-11-02 (decisão do dono):** no corpo da
+  tarefa **não existe referência de recurso** — booking de charge não consome
+  esforço, a outra ponta é a própria tarefa; recurso só é obrigatório no
+  booking de effort (`TjpSyntaxRules.rb:6001`). Gramática final:
+
+  ```tjp
+  task t "T"     { booking charge ["<descrição>"] [value] <montante> on <data> }
+  resource r "R" { booking charge <tarefa> ["<descrição>"] [value] <montante> on <data> }
+  material m "M" { booking charge <tarefa> ["<descrição>"] [value] <montante> on <data> }
+  ```
+
+  A `description` (`$STRING`, regra `chargeBookingDescription` com
+  `p.optional()`) é texto livre — o FSM encadeia os dois opcionais
+  (`<descrição>` usa `$STRING`, `value` usa o literal `_value`: tokens
+  disjuntos, sem ambiguidade; probe 26/26).
+- Modelo `ChargeBooking` (`model/charge-booking.ts`) com montante **podendo
+  ser negativo** (estorno) e `description: string | null` — coerente com
+  `ExtendedBooking` (Fase 8.1), que é modelo órfão: nada no parser o usava;
+  fica como está e não é tocado.
+- **Fora de escopo**: carga contábil de `booking charge` (duplicaria com o
+  atributo `charge` planejado) e o cálculo de *remaining* a partir de bookings
+  (Fase 18 — tracking/timesheet). Registrado em 13.7.
+
+### 13.4 C16 — Turnover com precedência de preço
+
+Roteiro de auditoria (cada rota com teste próprio):
+
+| Rota | Preço efetivo em jogo | Efeito esperado |
+|---|---|---|
+| `Material#allocatedCost` (agregado `materials`) | alocação → material (explícito ou calculado) | booking não tem alocação a relembrar; já usa `unitPriceFor` |
+| Bookings de estoque (novos `CostEvent`) | booking → material | entrada soma, saída negativa estorna, ambos na conta do chargeset |
+| `materialreport` `actualcost` | booking → alocação → material | entregue em 14C.11.7; revalidado aqui |
+| Booking **com** tarefa no turnover | — | **não** entra: a mesma quantidade já está no planejado da alocação; incluir o booking duplicaria o custo. Decisão explícita, com teste-âncora |
+
+### 13.5 C17 — Cenários: o que o TaskJuggler realmente faz
+
+A tabela do §12 estava parcialmente errada (foi escrita a partir da
+_documentação_ das fases, não do código). Verificado contra a fonte Ruby:
+
+| Ponto | TaskJuggler (fonte) | SyntaxMesh (código) |
+|---|---|---|
+| Namespace | **flat**: `Project.rb:117` `PropertySet.new(self, true)` | `project.ts:259` `new PropertySet(this, true)` — igual |
+| `fullId` de `real` aninhado em `plan` | `real` (`PropertyTreeNode.rb:294-303`: com flatNamespace devolve `@subId`) — **não** `plan.real` | idem — igual |
+| Top-level único | `TjpSyntaxRules.rb:5184` `clearProperties` quando `@property.nil?` | `scenario.ts:184` `if (!this.property) project.scenarios.clearProperties()` — igual |
+| Aninhamento | `rule_scenario` → `!scenarioHeader !scenarioBody` com `@property = @property.parent` (`:5091-5093`) | `scenario.ts:108-120` + `p.pattern(["!scenario"])` em `scenarioAttributes` (`:163`) — recursivo, igual |
+| Herança | pelo aninhamento, via `inheritedFromParent` (`Project.rb:122-129`) | `scenario-attributes.ts` idem (`projection`/`active` com `inheritedFromParent = true`) — igual |
+| `projection` | flag de modo **e** herda do pai cenarístico (`Project.rb:128-129`) | `scenario-attributes.ts:92-95` — igual |
+
+**Conclusão registrada:** não há divergência de cenários entre SyntaxMesh e
+TaskJuggler; as três suspeitas do §12 (flat vs nested, `plan.real`,
+`projection` ligada a herança) se resolvem a favor do port. O bloco entrega
+**testes de caracterização** (2 níveis, herança, `fullId`, `clearProperties`)
+para que a afirmação fique verificável, e corrige a tabela do §12 — sem mudar
+comportamento.
+
+### 13.6 Critério de aceite do Adendo Extra
+
+1. Os quatro exemplos do §12 (estoque ±, composição de concreto a 234,95,
+   `booking` curto nas três origens, `booking charge` no material) parseiam
+   sem erro e produzem os objetos de modelo esperados.
+2. `deno task check:all`, `fmt:check`, `lint`, `check:stubs` e a suíte
+   completa verdes; goldens inalterados (nenhum fixture novo em `golden/`).
+3. Turnover da conta reflete preço de alocação, preço de material e preço
+   calculado por composição, e o booking com tarefa não duplica custo.
+4. §13.5 registrado com evidência Ruby/arquivo/linha e testes de
+   caracterização de cenários de 2 níveis.
+5. Status propagado: `plano.md`, `AGENTS.md`, `CURRENT.md`, tabela de
+   evidências em `-tarefas.md`.
+
+**Resultado (2026-11-02):** ✅ os cinco critérios cumpridos.
+
+- Os quatro exemplos do §12 parseiam limpos — cobertos pelos testes de parser
+  de C13/C14/C15 e pelos testes de modelo/turnover de C16.
+- `deno task check:all` exit 0 · suíte core **480 testes / 4926 passos /
+  0 falhas** · `check:stubs` OK · `deno fmt --check` limpo (588 arquivos) ·
+  `deno lint` limpo nos arquivos novos.
+- Goldens: `reports.golden.json`/`parser.golden.json`/`mspdi.golden.json`/
+  `reports-extensions.golden.json` byte-idênticos ao HEAD; único regenerado de
+  propósito foi `attribute-definitions.golden.json` (173 → 174 casos, o novo
+  atributo `chargebookings` — evidência 14C.15.4).
+- Turnover verificado por rota em `turnover-price-precedence_14c_test.ts`
+  (11 passos), inclusive a âncora de que booking com tarefa não duplica custo.
+- §13.5 registrado com evidência Ruby/arquivo/linha e travado por testes de
+  caracterização em `scenario-nesting_14c_test.ts` (5 passos); tabela do §12
+  corrigida (14C.17.4).
+- `plano.md` (linha 14-C), `AGENTS.md` (tabela das 21 fases) e `CURRENT.md`
+  atualizados; tabelas de evidência 14C.13–14C.17 preenchidas em
+  `-tarefas.md`.
+
+### 13.7 Rastreabilidade e pendências registradas
+
+| Pedido do §12 | Tarefa |
+|---|---|
+| Booking sem tarefa ±, chargeset obrigatório | 14C.13.1–13.8 |
+| Unit price calculado por composição | 14C.14.1–14C.14.7 |
+| `quantity`/`value`/`effort` opcionais; `booking charge` no material | 14C.15.1–14C.15.8 |
+| Turnover com precedência | 14C.16.1–14C.16.5 |
+| Cenários (registro) | 14C.17.1–14C.17.4 |
+
+**Pendências** (não implementadas aqui, com dono):
+
+- Colunas `stockquantity`/`stockcost` no `materialreport` e nos demais
+  conteúdos de material — deixa para a próxima rodada de relatórios de
+  material (mesma família do 14C.1.19).
+- Carga contábil de `booking charge` e cálculo de *remaining* (planned −
+  booking) a partir de bookings — **Fase 18** (tracking/timesheet), onde o
+  tracking scenario consome os bookings.
+- `ExtendedBooking` (Fase 8.1) continua sem uso: a 14C.15 introduziu
+  `ChargeBooking` próprio; uma futura limpeza deve apagar ou unir os dois.
+
+````
 
 ---
 
@@ -32953,8 +33953,12 @@ TOTAL: ~185
 | 18.17.6 | `picture` (e `format`) em `status`: `JournalEntry` do status recebe `pictures`/`format` (modelo C3.3.5); `picture` ausente → comportamento atual inalterado | `sheets/time-sheet-record.ts` | 2 testes |
 | 18.17.7 | **Regressão:** timesheets sem material/picture geram resultado idêntico ao atual | testes existentes | verde |
 | 18.17.8 | **Status sheet lista materiais** (requisito registrado pela Fase 14 Complemento, 14C.1.18): `StatusSheetReport` emite, por tarefa, as alocações de material e os `MaterialScenario.effortdone`/`effortleft` do cenário de tracking — análogo às linhas de recurso de hoje | `reports/status-sheet-report.ts` | 2 testes (fixture 14c com material + status) |
+| 18.17.9 | **`unitprice` no registro de material** (requisito registrado pela Fase 14 Complemento, 14C.11.12): `TimeSheetRecord` de material aceita `unitprice` opcional ao lado de `work`/`remaining`; o registro gera um `MaterialBooking` (14C.11.3) com quantidade, data do record, tarefa dona e o preço informado, anexado a `materialbookings` do cenário. Sem `unitprice` o booking fica com `unitPrice` indefinido e o custo cai para a alocação → material (precedência de `MaterialBooking#unitPriceFor`) | `sheets/time-sheet-record.ts` | 3 testes (com preço, sem preço + precedência, tarefa dona) |
+| 18.17.10 | **Parser de sheet com bloco de material completo**: `timeSheetFile`/`statusSheetFile` reconhecem `material "<id>" { work/remaining/unitprice }` (hoje só `work`/`remaining` são previstos) e o `SheetSender` reemite `unitprice` apenas quando presente, preservando o round-trip dos sheets sem preço | `parser/rules/sheet.ts`, `sheets/sheet-sender.ts` | 2 testes (parse do bloco + round-trip) |
 
-**Critério de aceite do adendo:** um `.tjp`/timesheet pode reportar `work`/`remaining` de material sem quebrar a validação de slots; `status` com `picture` chega ao Journal intacto; o status sheet mostra materiais por tarefa.
+**Critério de aceite do adendo:** um `.tjp`/timesheet pode reportar `work`/`remaining` de material sem quebrar a validação de slots; `status` com `picture` chega ao Journal intacto; o status sheet mostra materiais por tarefa; um registro de material com `unitprice` vira `MaterialBooking` e o custo realizado aparece no `materialreport` (`actualcost`).
+
+> **Origem de 18.17.9/18.17.10 (Fase 14 Complemento, 14C.11.12):** a 14C.11 levou o preço unitário para a alocação (`material <id> <q> [modificador] unitprice <p>`) e para o booking (`booking material <id> quantity <q> [unitprice <p>] on <data>`), com precedência booking → alocação → material. O consumo **realizado** chega pelo timesheet, então o preço do booking precisa ser declarável no sheet — caso contrário o `actualcost` do `materialreport` só herda o preço planejado e a variação de preço real fica invisível. Ver `docs/syntaxmesh/fases/fase-14-relatorios-complemento.md` §11.4.
 
 ---
 
@@ -50270,6 +51274,41 @@ mwe001 com folga — o modelo está correto; o ajuste é do scheduler.
 
 ---
 
+## Adendo (2026-11-01) — Auditoria do G1.4 pela Fase 14 Complemento (14C.12)
+
+O adendo de 2026-10-27 registrou o gap de placement; a **14C.12** voltou ao
+assunto só para **auditar e fixar âncora**, sem reabrir a fase. Resultado:
+
+- **Gap fechado.** `Project.schedule()` coloca `start`/`end` e consome o
+esforço num modelo construído à mão (`start` + `effort` + `allocate`). O probe
+de 14C.12.2 (`tests/integration/scheduler-g1_4-audit_14c_test.ts`) tem
+`start !== null`, `end !== null` e `doneEffort() === 16`. As quatro correções
+de port do adendo de 2026-10-27 (`PropertyList.items`, `doneEffort()`,
+`Xref`/`checkDependency`, `propagateDate`) são as responsáveis.
+- **Bug remanescente corrigido (14C.12.3).** A variante sem argumentos de
+`TaskScenario#propagateDateToDep()` (chamada no fim de `finishScheduling`)
+fazia `(this.a("end") as TjTime).toSeconds()` sem checar ausência de data:
+uma tarefa nunca agendada isso é `TypeError: Cannot read properties of null`.
+O guard de nulidade ("nada a comparar") preserva a semântica do Ruby — lá o
+caminho só roda com `@start`/`@end` já definidos.
+- **Impacto no corpus:** com o guard, `CSV-Reports/alert.tjp` passou a agendar.
+`PENDING_SCHEDULER_FILES` em `tests/golden/reports_golden_test.ts` ficou
+**vazio** e o arquivo passou a ser comparado contra o oracle Ruby (112 passos
+verdes). Nenhum golden precisou ser regenerado (as saídas já batiam).
+- **Divergência registrada, não corrigida (14C.12.4).** O `finishScheduling`
+do Ruby (`TaskScenario.rb:410-430`) recursa nos filhos, mescla
+`assignedresources` no pai e anula as listas de candidatos, terminando em
+`markAsScheduled`; o port calcula `calcCompletion`/`calcStatus`/`calcGauge`,
+chama `propagateDateToDep()` e grava `_scheduled = true`. Nenhum golden da
+suíte depende da diferença hoje, mas o port **não** faz a mesclagem de
+`assignedresources` no container — fica registrado aqui para quem retomar o
+scheduler (Fase 15/Gantt ou revisão dedicada).
+
+**A Fase 7 segue concluída; a 14C.12 não alterou escopo, só documentou e
+corrigiu o null-deref da propagação de datas.**
+
+---
+
 **Fim do arquivo de tarefas da Fase 7.**
 ````
 
@@ -58589,7 +59628,7 @@ Tarefas: `docs/syntaxmesh/fases/fase-8.2-tarefas.md`.
 | 12 | core (richtext) | RichText, RichText/* | **Alta** | ✅ Concluída (2026-10-29, 12.0–12.20; G5 `to_rti`/`to_tjp` re-ancorado e entregue na Fase 14) |
 | 13 | core (markdown) | — | Baixa (futuro) | ✅ Concluída (2026-10-29, 13.0–13.13; 13.14 parcial — `objectURL`/render dependem das Fases 19/10-C) |
 | 14 | core (report) | reports/* | **Crítica** | ✅ Concluída (2026-10-31, 14.0–14.24; adendos 14.25/14.26 transferidos p/ Fase 14-C) |
-| 14-C | core (report) | MspXmlRE.rb + extensões SyntaxMesh (material/picture/RDO/markdown) | **Alta** | 🟡 planejada (`fase-14-relatorios-complemento.md` + `-tarefas.md`; Blocos C0–C7; bring-forwards do Journal/alert-levels [F16] justificados no §6) |
+| 14-C | core (report) | MspXmlRE.rb + extensões SyntaxMesh (material/picture/RDO/markdown) | **Alta** | ✅ Concluída (2026-11-01, C0–C12; adendo extra §12 → C13–C17 ✅ 2026-11-02) — inclui o adendo §10: saída markdown `.md` + prefixos `md*report` (C8), `defaultaccount` (C9), `<Baseline>` do MSPDI (C10), unit price por alocação/booking + remoção de `totalquantity` (C11) e auditoria do G1.4 (C12); e o adendo extra §12: booking de estoque ± com chargeset obrigatório (C13), unit price calculado por composição (C14), keywords `effort`/`quantity`/`value` opcionais + `booking charge` no material (C15), turnover com precedência de preço (C16) e registro do comportamento de cenários (C17). Ver tabelas de evidência 14C.8–14C.17 em `fase-14-relatorios-complemento-tarefas.md` |
 | 15 | core (report) | Gantt* | **Alta** | ⬜ Não iniciada |
 | 16 | core | Journal, AlertLevelDefinitions, LeaveList, TernarySearchTree, etc. | **Alta** | ⬜ Não iniciada (adendo 16.21) |
 | 17 | core (report) | XMLDocument, XMLElement, HTMLDocument, HTMLElements, ICalendar | **Média** | ⬜ Não iniciada |

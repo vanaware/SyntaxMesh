@@ -63,6 +63,27 @@ export function registerTaskAttributes(propertySet: PropertySet,): void {
     ),
   );
 
+  // chargebookings: Charge Bookings (NodeListAttribute,
+  // inheritedFromParent=false, inheritedFromProject=false,
+  // isScenarioAttribute=true, default=[]).
+  // Adendo Extra §12.3 (14C.15.4) — gastos realizados declarados por
+  // `booking charge <ref> [value] <montante> on <data>` no corpo da tarefa,
+  // de um recurso ou de um material. Vivem na tarefa porque o dinheiro é dela.
+  propertySet.addAttributeType(
+    new AttributeDefinition(
+      "chargebookings",
+      "Charge Bookings",
+      AttributeType.NodeList,
+      [],
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+    ),
+  );
+
   // assignedresources: Assigned Resources (ResourceListAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=true, default=[])
   propertySet.addAttributeType(
     new AttributeDefinition(

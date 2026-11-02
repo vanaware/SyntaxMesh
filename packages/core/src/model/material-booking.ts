@@ -12,10 +12,16 @@ import type { MaterialAllocation, } from "./material-allocation.ts";
  * `MaterialAllocation` — a alocação descreve o consumo *planejado* (dividido
  * no tempo pelo modificador), o booking registra o consumo *real* de um dia.
  *
+ * Fase 14 Complemento (14C.13.1, Adendo Extra §12): dois papéis do mesmo
+ * verbo. Com tarefa (`taskId` presente) o booking é consumo realizado e a
+ * quantidade é **sempre positiva**. Sem tarefa (`taskId === null`) o booking é
+ * movimento de **estoque**: entrada (positiva) ou saída/estorno (negativa) —
+ * único caso em que quantidade negativa é admitida.
+ *
  * Precedência do preço unitário efetivo (`unitPriceFor`), do mais específico
  * ao mais geral: booking → alocação de tarefa → material.
  *
- * @see docs/syntaxmesh/fases/fase-14-relatorios-complemento.md §11.4
+ * @see docs/syntaxmesh/fases/fase-14-relatorios-complemento.md §11.4, §13.1
  */
 export class MaterialBooking {
   readonly material: Material;
@@ -23,8 +29,11 @@ export class MaterialBooking {
   /** Preço unitário real do booking (opcional: cai para alocação/material). */
   readonly unitPrice?: number;
   readonly date: TjTime;
-  /** ID da tarefa dona do consumo (o objeto pode não existir no parse). */
-  readonly taskId: string;
+  /**
+   * ID da tarefa dona do consumo; `null` nos bookings de estoque (sem tarefa,
+   * 14C.13.1). O objeto pode ainda não existir no parse (referência futura).
+   */
+  readonly taskId: string | null;
   /**
    * Tarefa resolvida. `null` enquanto a declaração da tarefa não foi lida —
    * o `booking` no corpo do material pode preceder o `task` que ele referencia
@@ -34,14 +43,17 @@ export class MaterialBooking {
 
   constructor(
     material: Material,
-    taskId: string,
+    taskId: string | null,
     quantity: number,
     date: TjTime,
     unitPrice?: number,
     task: Task | null = null,
   ) {
-    if (quantity < 0) {
-      throw new Error("Material booking quantity cannot be negative",);
+    // Quantidade negativa só faz sentido como saída de estoque (sem tarefa).
+    if (quantity < 0 && taskId !== null) {
+      throw new Error(
+        "Material booking quantity cannot be negative for a task",
+      );
     }
     this.material = material;
     this.taskId = taskId;
@@ -49,6 +61,11 @@ export class MaterialBooking {
     this.date = date;
     this.unitPrice = unitPrice;
     this.task = task;
+  }
+
+  /** Booking de estoque (movimento de entrada/saída sem tarefa, 14C.13.1). */
+  isInventory(): boolean {
+    return this.taskId === null;
   }
 
   /**
@@ -68,9 +85,11 @@ export class MaterialBooking {
 
   /**
    * Resolve a tarefa a partir do projeto (referência futura). Devolve `true`
-   * quando a tarefa passa a existir.
+   * quando a tarefa passa a existir — ou quando o booking é de estoque (sem
+   * tarefa para resolver, 14C.13.1).
    */
   resolveTask(project: ProjectLike,): boolean {
+    if (this.taskId === null) return true;
     if (this.task !== null) return true;
     const task = project.task(this.taskId,);
     if (!task) return false;

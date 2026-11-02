@@ -27,7 +27,7 @@ describe("TaskAttributes", () => {
       ps = new PropertySet(project, false,);
     },);
 
-    it("registra 46 atributos específicos (excluindo base id, name, seqno, index)", async () => {
+    it("registra 47 atributos específicos (excluindo base id, name, seqno, index)", async () => {
       const { registerTaskAttributes, } = await import(
         "../../src/model/attributes/task-attributes.ts"
       );
@@ -39,7 +39,7 @@ describe("TaskAttributes", () => {
           count++;
         }
       },);
-      assertEquals(count, 46,);
+      assertEquals(count, 47,);
     });
 
     it("registra allocate com atributos corretos", async () => {
