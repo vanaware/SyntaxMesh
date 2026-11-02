@@ -17,6 +17,7 @@ import type { Report, } from "../model/report.ts";
 import type { Task, } from "../model/task.ts";
 import type { Resource, } from "../model/resource.ts";
 import type { Account, } from "../model/account.ts";
+import type { Material, } from "../model/material.ts";
 import type { PropertyTreeNode, } from "../model/property-tree-node.ts";
 import { PropertyList, } from "../model/property-list.ts";
 import type { Query, } from "../query/query.ts";
@@ -24,6 +25,8 @@ import type { LogicalExpression, } from "../logic/logical-expression.ts";
 import { TimeInterval, } from "../time/time-interval.ts";
 import type { TjTime, } from "../time/tj-time.ts";
 import type { RichTextIntermediate, } from "../richtext/rich-text-intermediate.ts";
+import { RichText, } from "../richtext/rich-text.ts";
+import { MarkdownFactory, } from "../markdown/factory.ts";
 import type { XMLElementLike, } from "../richtext/xml-like.ts";
 import { SimpleXMLElement, } from "../richtext/xml-like.ts";
 
@@ -191,6 +194,46 @@ export abstract class ReportBase {
   }
 
   /**
+   * Remove materiais que casam com a expressão de ocultação/consolidação
+   * (extensão SyntaxMesh 14C.6.6/6.9).
+   *
+   * Materiais não têm raiz própria (`materialroot` não existe): só os filtros
+   * de `hide`/`rollup` são aplicados, sem recorte de subárvore.
+   */
+  filterMaterialList(
+    list_: PropertyList<Material> | Iterable<Material>,
+    hideExpr: LogicalExpression | null,
+    rollupExpr: LogicalExpression | null,
+    openNodes: OpenNodes | null,
+  ): PropertyList<Material> {
+    const list = new PropertyList<Material>(
+      list_ as PropertyList<Material>,
+    );
+    return this.standardFilterOps(
+      list,
+      hideExpr,
+      rollupExpr,
+      openNodes,
+      null,
+      null,
+    );
+  }
+
+  /**
+   * Avalia uma expressão de ocultação do relatório contra uma propriedade
+   * (14C.6.5). Promovido do `RdoReport` para uso em todos os relatórios.
+   */
+  protected hiddenBy(attribute: string, property: PropertyTreeNode,): boolean {
+    const expression = this.a(attribute,) as
+      | { eval?: (query: unknown,) => unknown }
+      | null;
+    if (!expression || typeof expression.eval !== "function") return false;
+    const query = this.currentQuery().dup();
+    query.property = property;
+    return !!expression.eval(query,);
+  }
+
+  /**
    * Filtragem genérica para todas as listas: remove itens ocultos pela
    * `hideExpr`, remove descendentes de nós enrollados (`rollupExpr`/`openNodes`)
    * e, em modo árvore, readiciona os pais dos itens mantidos.
@@ -295,6 +338,19 @@ export abstract class ReportBase {
     return rt.to_html();
   }
 
+  /**
+   * Converte o bloco RichText `name` em Markdown (extensão SyntaxMesh —
+   * adendo §10). Sem numeração de seção, como no HTML do relatório.
+   */
+  protected rt_to_markdown(name: string,): string | null {
+    const obj = this.a(name,);
+    if (!obj) return null;
+    const rt = obj as RichTextIntermediate;
+    rt.sectionNumbers = false;
+    const md = rt.to_markdown();
+    return md === "" ? null : md;
+  }
+
   /** Retorna o `Query` do contexto de relatório corrente. */
   protected currentQuery(): Query {
     const ctx = this.project.reportContexts.at(-1,);
@@ -302,6 +358,42 @@ export abstract class ReportBase {
       throw new Error("ReportBase: no active ReportContext",);
     }
     return ctx.query;
+  }
+
+  /**
+   * Adapta um `RichTextIntermediate` de propriedade (`note` de task/resource/
+   * material/account — 14C.5.7) ao dialeto do relatório.
+   *
+   * O `note` é lido no carregamento do projeto, quando não existe relatório
+   * corrente, então nasce sempre no default richtext. Quando o relatório pede
+   * `format markdown`, o RTI é reconstruído a partir do texto de origem
+   * (`RichText#inputText`) pelo {@link MarkdownFactory}. Nos demais casos o RTI
+   * volta intacto — a regressão dos `.tjp` sem `format` fica garantida.
+   */
+  protected rtiForReport(
+    rti: RichTextIntermediate,
+  ): RichTextIntermediate {
+    if (this.report.richTextFormat() !== "markdown") return rti;
+    if (!(rti.richText instanceof RichText)) return rti;
+    return new MarkdownFactory(this.project, this.report.sourceFileInfo,)
+      .create(rti.richText.inputText,);
+  }
+
+  /**
+   * Texto de célula (`celltext`) no dialeto do relatório (14C.5.7).
+   *
+   * `celltext` é uma string crua no TaskJuggler (o Ruby a atribui a
+   * `cell.text` sem markup). Em relatórios `format markdown` ela passa pelo
+   * pipeline markdown — a extensão SyntaxMesh para permitir negrito/links no
+   * rótulo da célula. Fora do markdown o comportamento é o do Ruby (texto
+   * literal).
+   */
+  protected cellTextForReport(
+    text: string,
+  ): string | RichTextIntermediate {
+    if (this.report.richTextFormat() !== "markdown") return text;
+    return new MarkdownFactory(this.project, this.report.sourceFileInfo,)
+      .create(text,);
   }
 }
 

@@ -2,10 +2,12 @@
  * Testes do `export`/TjpExportRE com materiais (Fase 14 Complemento 14C.1.13).
  *
  * Cobre a extensão SyntaxMesh ao TjpExportRE: `definitions materials` emite
- * `material <id> "<nome>" { unit/unitprice/totalquantity/flags/note }` e
+ * `material <id> "<nome>" { unit/unitprice/flags/note }` e
  * `taskattributes materialallocations` emite `material <id> <qtd>
- * [modificador]` dentro do bloco da tarefa. O round-trip
- * parse → export → parse preserva os dados; sem materiais a saída não muda.
+ * [modificador] [unitprice <preço>]` e `taskattributes materialbookings`
+ * emite `booking material <id> quantity <q> [unitprice <p>] on <data>` dentro
+ * do bloco da tarefa (14C.11.8). O round-trip parse → export → parse preserva
+ * os dados; sem materiais a saída não muda.
  *
  * @see docs/syntaxmesh/fases/fase-14-relatorios-complemento-tarefas.md (14C.1.13)
  */
@@ -16,6 +18,7 @@ import type { Project, } from "../../src/model/project.ts";
 import { Report, } from "../../src/model/report.ts";
 import type { Material, } from "../../src/model/material.ts";
 import type { MaterialAllocation, } from "../../src/model/material-allocation.ts";
+import type { MaterialBooking, } from "../../src/model/material-booking.ts";
 import { TjTime, } from "../../src/time/tj-time.ts";
 import { ReportContext, } from "../../src/reports/report-context.ts";
 import { TjpExportRE, } from "../../src/reports/tjp-export-re.ts";
@@ -25,13 +28,12 @@ const SOURCE = PROJECT_HEADER +
   'material steel "steel" {\n' +
   '  unit "kg"\n' +
   "  unitprice 2.5\n" +
-  "  totalquantity 100\n" +
   "  flags critical\n" +
   "}\n" +
   'task t1 "T1" {\n' +
   "  start 2026-01-05\n" +
   "  end 2026-01-09\n" +
-  "  material steel 200 onstart\n" +
+  "  material steel 200 onstart unitprice 3.5\n" +
   "}\n";
 
 /** Monta um relatório de export pronto para uso. */
@@ -73,9 +75,11 @@ describe("TjpExportRE com materiais (14C.1.13)", () => {
     assert(tjp.includes('material steel "steel" {',), `declaração:\n${tjp}`,);
     assert(tjp.includes('unit "kg"',), `unit:\n${tjp}`,);
     assert(tjp.includes("unitprice 2.5",), `unitprice:\n${tjp}`,);
-    assert(tjp.includes("totalquantity 100",), `totalquantity:\n${tjp}`,);
-    // Alocação dentro do bloco da tarefa (com modificador não-padrão).
-    assert(tjp.includes("material steel 200 onstart",), `alocação:\n${tjp}`,);
+    // Alocação dentro do bloco da tarefa (modificador e preço próprios).
+    assert(
+      tjp.includes("material steel 200 onstart unitprice 3.5",),
+      `alocação:\n${tjp}`,
+    );
 
     // Round-trip: parse do export preserva material e flags. As tarefas ficam
     // de fora porque `DateAttribute#to_tjp` emite `date <valor>` (fiel ao
@@ -94,7 +98,6 @@ describe("TjpExportRE com materiais (14C.1.13)", () => {
     assert(steel, "material steel re-importado",);
     assertEquals(steel.get("unit",), "kg",);
     assertEquals(steel.get("cost",), 2.5,);
-    assertEquals(steel.get("totalquantity",), 100,);
     assertEquals(steel.getForScenario("flags", 0,), ["critical",],);
 
     const task = reparsed.task("t1",);
@@ -125,6 +128,66 @@ describe("TjpExportRE com materiais (14C.1.13)", () => {
     assertEquals(allocation.material.id, "steel",);
     assertEquals(allocation.quantity, 200,);
     assertEquals(allocation.modifier, "onstart",);
+    assertEquals(allocation.unitPrice, 3.5,);
+  });
+
+  it("14C.11.8 exporta o booking de material e faz round-trip", () => {
+    const parsed = parseProject(
+      PROJECT_HEADER +
+        'material steel "steel" {\n  unit "kg"\n  unitprice 2.5\n}\n' +
+        'task t1 "T1" {\n  start 2026-01-05\n  end 2026-01-09\n' +
+        "  material steel 200 onstart unitprice 3.5\n" +
+        "  booking material steel quantity 40 unitprice 4.25 on 2026-02-10\n" +
+        "}\n",
+    );
+    assertEquals(
+      parsed.threw,
+      null,
+      `messages=${parsed.messageIds.join(",",)}`,
+    );
+    const project = parsed.result as Project;
+
+    const tjp = new TjpExportRE(
+      exportReport(project, ["flags", "materials", "tasks",], [
+        "materialallocations",
+        "materialbookings",
+      ],),
+    ).to_tjp();
+
+    assert(
+      tjp.includes(
+        "booking material steel quantity 40 unitprice 4.25 on 2026-02-10",
+      ),
+      `booking:\n${tjp}`,
+    );
+
+    // Round-trip: a linha exportada volta como `MaterialBooking` completo.
+    const bookingLine = tjp.split("\n",).find((line,) =>
+      line.trim().startsWith("booking material steel",)
+    );
+    assert(bookingLine, `linha de booking ausente:\n${tjp}`,);
+    const again = parseProject(
+      PROJECT_HEADER +
+        'material steel "steel" {\n  unit "kg"\n  unitprice 2.5\n}\n' +
+        'task t1 "T1" {\n  ' + bookingLine!.trim() + "\n}\n",
+    );
+    assertEquals(
+      again.messageIds,
+      [],
+      `booking re-lido: ${again.messageIds.join(",",)}`,
+    );
+    const bookings = (again.result as Project).task("t1",)!.getForScenario(
+      "materialbookings",
+      0,
+    ) as MaterialBooking[];
+    assertEquals(bookings.length, 1,);
+    assertEquals(bookings[0]!.material.id, "steel",);
+    assertEquals(bookings[0]!.quantity, 40,);
+    assertEquals(bookings[0]!.unitPrice, 4.25,);
+    assertEquals(
+      String(bookings[0]!.date,),
+      "2026-02-10",
+    );
   });
 
   it("sem materiais a saída permanece sem menções a material", () => {

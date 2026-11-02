@@ -73,6 +73,17 @@
       "userDefined": false
     },
     {
+      "id": "baseline",
+      "name": "Baseline",
+      "objClass": "TaskJuggler::IntegerAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false,
+      "extension": "reports"
+    },
+    {
       "id": "booking",
       "name": "Bookings",
       "objClass": "TaskJuggler::BookingListAttribute",
@@ -495,6 +506,17 @@
       "userDefined": false
     },
     {
+      "id": "format",
+      "name": "Markup Format",
+      "objClass": "TaskJuggler::SymbolAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": "richtext",
+      "userDefined": false,
+      "extension": "reports"
+    },
+    {
       "id": "formats",
       "name": "Formats",
       "objClass": "TaskJuggler::FormatListAttribute",
@@ -594,6 +616,28 @@
       "scenarioSpecific": false,
       "default": null,
       "userDefined": false
+    },
+    {
+      "id": "hideMaterial",
+      "name": "Hide Material",
+      "objClass": "TaskJuggler::LogicalExpressionAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false,
+      "extension": "reports"
+    },
+    {
+      "id": "hidePicture",
+      "name": "Hide Picture",
+      "objClass": "TaskJuggler::LogicalExpressionAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false,
+      "extension": "reports"
     },
     {
       "id": "hideResource",
@@ -860,6 +904,17 @@
     {
       "id": "materialallocations",
       "name": "Material Allocations",
+      "objClass": "TaskJuggler::NodeListAttribute",
+      "inheritedFromParent": false,
+      "inheritedFromProject": false,
+      "scenarioSpecific": true,
+      "default": [],
+      "userDefined": false,
+      "extension": "tasks"
+    },
+    {
+      "id": "materialbookings",
+      "name": "Material Bookings",
       "objClass": "TaskJuggler::NodeListAttribute",
       "inheritedFromParent": false,
       "inheritedFromProject": false,
@@ -1242,6 +1297,17 @@
       "scenarioSpecific": false,
       "default": null,
       "userDefined": false
+    },
+    {
+      "id": "rollupMaterial",
+      "name": "Rollup Material",
+      "objClass": "TaskJuggler::LogicalExpressionAttribute",
+      "inheritedFromParent": true,
+      "inheritedFromProject": false,
+      "scenarioSpecific": false,
+      "default": null,
+      "userDefined": false,
+      "extension": "reports"
     },
     {
       "id": "rollupResource",

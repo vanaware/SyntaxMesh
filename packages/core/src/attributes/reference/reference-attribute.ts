@@ -8,7 +8,7 @@ import { type PropertyLike, } from "../../model/property-like.ts";
 import { type AttributeContainer, } from "../attribute-container.ts";
 import { type AttributeDefinition, } from "../attribute-definition.ts";
 import { AttributeBase, } from "../attribute-base.ts";
-import { NotYetImplementedError, } from "../errors.ts";
+import { RichText, } from "../../richtext/rich-text.ts";
 
 /**
  * Atributo de referência (URL + label opcional).
@@ -35,12 +35,18 @@ export class ReferenceAttribute
   /**
    * Converte o valor para RTI (Rich Text Intermediate).
    *
+   * Ruby: um link RichText `[url label]` (label opcional); valor vazio →
+   * `nil`. Sem function handlers (Ruby: `RichText.new(...)` default).
+   * Consumido pelos relatórios via `Query#to_rti` (14C.9).
+   *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ReferenceAttribute#to_rti
    */
   override to_rti(): unknown {
-    // Ancorado: Fase 14 — ReferenceAttribute#to_rti é consumido pelo pipeline de
-    // relatórios (query + RTFHandlers); o subsistema RichText já foi entregue (12.18).
-    throw new NotYetImplementedError("12", "to_rti",);
+    const val = this.get();
+    if (!val) return null;
+    const label = val.label ?? val.url;
+    return new RichText(`[${val.url} ${label}]`,)
+      .generateIntermediateFormat();
   }
 
   /**

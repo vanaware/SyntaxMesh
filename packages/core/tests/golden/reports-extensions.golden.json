@@ -158,31 +158,31 @@
               "kind": "material",
               "id": "concrete",
               "name": "concrete",
-              "quantity": 50,
+              "quantity": 10,
               "unit": "m3",
-              "cost": 6000,
+              "cost": 1200,
               "mode": "chargeset"
             },
             {
               "kind": "material",
               "id": "steel",
               "name": "steel",
-              "quantity": 1000,
+              "quantity": 200,
               "unit": "kg",
-              "cost": 2500,
+              "cost": 500,
               "mode": "chargeset"
             }
           ],
           "totals": {
             "resources": 0,
-            "materials": 8500,
+            "materials": 1700,
             "charges": 0,
-            "total": 8500
+            "total": 1700
           }
         }
       ],
       "html": [
-        "<table cellspacing=\"1\" class=\"tj_table\"><tbody><tr class=\"tabhead\" style=\"height:19px; font-size:15px;\"><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">Name</td></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">Resources</td></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">Materials</td></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">Charges</td></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">Total</td></tr></table></td></tr><tr class=\"tabhead\" style=\"height:19px; font-size:15px;\"><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr></tr></table></td></tr><tr class=\"tabline\" style=\"font-size:12px; \"><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:left; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">Materiais</td></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">8500</td></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">8500</td></tr></table></td></tr><tr class=\"tabline\" style=\"font-size:12px; \"><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:left; \"><tr><td style=\"width:8px; \"></td><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; \">concrete</td></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; \">6000</td></tr></table></td></tr><tr class=\"tabline\" style=\"font-size:12px; \"><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:left; \"><tr><td style=\"width:8px; \"></td><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; \">steel</td></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; \">2500</td></tr></table></td></tr></tbody></table>"
+        "<table cellspacing=\"1\" class=\"tj_table\"><tbody><tr class=\"tabhead\" style=\"height:19px; font-size:15px;\"><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">Name</td></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">Resources</td></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">Materials</td></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">Charges</td></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">Total</td></tr></table></td></tr><tr class=\"tabhead\" style=\"height:19px; font-size:15px;\"><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr></tr></table></td></tr><tr class=\"tabline\" style=\"font-size:12px; \"><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:left; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">Materiais</td></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">1700</td></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">1700</td></tr></table></td></tr><tr class=\"tabline\" style=\"font-size:12px; \"><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:left; \"><tr><td style=\"width:8px; \"></td><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; \">concrete</td></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; \">1200</td></tr></table></td></tr><tr class=\"tabline\" style=\"font-size:12px; \"><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:left; \"><tr><td style=\"width:8px; \"></td><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; \">steel</td></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr></tr></table></td><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:right; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; \">500</td></tr></table></td></tr></tbody></table>"
       ],
       "csv": [
         [
@@ -196,21 +196,21 @@
           "Materiais",
           "total",
           "",
-          8500,
-          8500
+          1700,
+          1700
         ],
         [
           "Materiais",
           "material",
-          "50 m3",
-          6000,
+          "10 m3",
+          1200,
           ""
         ],
         [
           "Materiais",
           "material",
-          "1000 kg",
-          2500,
+          "200 kg",
+          500,
           ""
         ]
       ],
@@ -222,27 +222,27 @@
             "name": "Materiais",
             "totals": {
               "resources": 0,
-              "materials": 8500,
+              "materials": 1700,
               "charges": 0,
-              "total": 8500
+              "total": 1700
             },
             "contributors": [
               {
                 "kind": "material",
                 "id": "concrete",
                 "name": "concrete",
-                "quantity": 50,
+                "quantity": 10,
                 "unit": "m3",
-                "cost": 6000,
+                "cost": 1200,
                 "mode": "chargeset"
               },
               {
                 "kind": "material",
                 "id": "steel",
                 "name": "steel",
-                "quantity": 1000,
+                "quantity": 200,
                 "unit": "kg",
-                "cost": 2500,
+                "cost": 500,
                 "mode": "chargeset"
               }
             ]
@@ -793,5 +793,56 @@
     "tasks": "<Tasks><Task><UID>1</UID><ID>1</ID><Active>1</Active><Type>0</Type><IsNull>0</IsNull><Name>Fase 1</Name><WBS>1</WBS><OutlineNumber>1</OutlineNumber><OutlineLevel>0</OutlineLevel><Priority>500</Priority><Start>2026-03-02T09:00:00</Start><Finish>2026-03-23T00:00:00</Finish><ManualStart>2026-03-02T09:00:00</ManualStart><ManualFinish>2026-03-23T00:00:00</ManualFinish><ActualStart>2026-03-02T09:00:00</ActualStart><ActualFinish>2026-03-23T00:00:00</ActualFinish><ConstraintType>2</ConstraintType><ConstraintDate>2026-03-02T09:00:00</ConstraintDate><FixedCostAccrual>3</FixedCostAccrual><Manual>0</Manual><Summary>1</Summary></Task><Task><UID>2</UID><ID>2</ID><Active>1</Active><Type>0</Type><IsNull>0</IsNull><Name>Design</Name><WBS>1.1</WBS><OutlineNumber>1.1</OutlineNumber><OutlineLevel>1</OutlineLevel><Priority>500</Priority><Start>2026-03-02T09:00:00</Start><Finish>2026-03-06T14:00:00</Finish><ManualStart>2026-03-02T09:00:00</ManualStart><ManualFinish>2026-03-06T14:00:00</ManualFinish><ActualStart>2026-03-02T09:00:00</ActualStart><ActualFinish>2026-03-06T14:00:00</ActualFinish><ConstraintType>2</ConstraintType><ConstraintDate>2026-03-02T09:00:00</ConstraintDate><FixedCostAccrual>3</FixedCostAccrual><Notes>Detalhar a arquitetura.</Notes><Manual>1</Manual><Summary>0</Summary><Estimated>0</Estimated><DurationFormat>7</DurationFormat><Duration>PT101H0M0S</Duration><Work>PT101H0M0S</Work><Milestone>0</Milestone><EffortDriven>1</EffortDriven><PercentComplete>0</PercentComplete><PercentWorkComplete>0</PercentWorkComplete><ActualWork>PT16H0M0S</ActualWork><RemainingWork>PT16H0M0S</RemainingWork></Task><Task><UID>3</UID><ID>3</ID><Active>1</Active><Type>0</Type><IsNull>0</IsNull><Name>Cura</Name><WBS>1.2</WBS><OutlineNumber>1.2</OutlineNumber><OutlineLevel>1</OutlineLevel><Priority>500</Priority><Start>2026-03-09T00:00:00</Start><Finish>2026-03-10T00:00:00</Finish><ManualStart>2026-03-09T00:00:00</ManualStart><ManualFinish>2026-03-10T00:00:00</ManualFinish><ActualStart>2026-03-09T00:00:00</ActualStart><ActualFinish>2026-03-10T00:00:00</ActualFinish><ConstraintType>2</ConstraintType><ConstraintDate>2026-03-09T00:00:00</ConstraintDate><FixedCostAccrual>3</FixedCostAccrual><Manual>1</Manual><Summary>0</Summary><Estimated>0</Estimated><DurationFormat>8</DurationFormat><Duration>PT24H0M0S</Duration><Work>PT24H0M0S</Work><Milestone>0</Milestone><EffortDriven>1</EffortDriven><PercentComplete>0</PercentComplete><PercentWorkComplete>0</PercentWorkComplete></Task><Task><UID>4</UID><ID>4</ID><Active>1</Active><Type>0</Type><IsNull>0</IsNull><Name>Entrega</Name><WBS>1.3</WBS><OutlineNumber>1.3</OutlineNumber><OutlineLevel>1</OutlineLevel><Priority>500</Priority><Start>2026-03-23T00:00:00</Start><Finish>2026-03-23T00:00:00</Finish><ManualStart>2026-03-23T00:00:00</ManualStart><ManualFinish>2026-03-23T00:00:00</ManualFinish><ActualStart>2026-03-23T00:00:00</ActualStart><ActualFinish>2026-03-23T00:00:00</ActualFinish><ConstraintType>2</ConstraintType><ConstraintDate>2026-03-23T00:00:00</ConstraintDate><FixedCostAccrual>3</FixedCostAccrual><Manual>1</Manual><Summary>0</Summary><Estimated>0</Estimated><DurationFormat>7</DurationFormat><Milestone>1</Milestone><PredecessorLink><PredecessorUID>3</PredecessorUID><Type>1</Type><LinkLag>9600</LinkLag><LagFormat>7</LagFormat></PredecessorLink></Task></Tasks>",
     "resources": "<Resources><Resource><UID>2</UID><Type>1</Type><Name>Alice</Name><Initials>alice</Initials><StandardRate>0.0</StandardRate><OvertimeRate>0.0</OvertimeRate><MaxUnits>1.0</MaxUnits><EmailAddress>alice@example.com</EmailAddress><Notes>Engenheira responsável.</Notes><Group>Equipe</Group><CalendarUID>1</CalendarUID></Resource><Resource><UID>3</UID><Type>1</Type><Name>Processo contínuo</Name><Initials>robot</Initials><StandardRate>0.0</StandardRate><OvertimeRate>0.0</OvertimeRate><MaxUnits>1.0</MaxUnits><Group>Equipe</Group><CalendarUID>2</CalendarUID></Resource><Resource><UID>4</UID><Type>0</Type><Name>steel</Name><Initials>steel</Initials><MaterialLabel>kg</MaterialLabel><StandardRate>2.5</StandardRate><Notes>Lote único de aço.</Notes></Resource><Resource><UID>5</UID><Type>2</Type><Name>Charges fase.design #1</Name><Initials>charge1</Initials><StandardRate>500.0</StandardRate><IsBudget>0</IsBudget></Resource></Resources>",
     "assignments": "<Assignments><Assignment><UID>0</UID><TaskUID>2</TaskUID><ResourceUID>2</ResourceUID><Units>1.0</Units><start>2026-03-02T09:00:00</start><finish>2026-03-06T14:00:00</finish><Cost>100.0</Cost><WorkContour>8</WorkContour><PercentWorkComplete>0</PercentWorkComplete><ActualWork>PT16H0M0S</ActualWork><RemainingWork>PT16H0M0S</RemainingWork><TimephasedData><UID>0</UID><Type>1</Type><Start>2026-03-02T09:00:00</Start><Finish>2026-03-02T23:59:59</Finish><Unit>2</Unit><Value>PT7H0M0S</Value></TimephasedData><TimephasedData><UID>0</UID><Type>1</Type><Start>2026-03-03T00:00:00</Start><Finish>2026-03-03T23:59:59</Finish><Unit>2</Unit><Value>PT7H0M0S</Value></TimephasedData><TimephasedData><UID>0</UID><Type>1</Type><Start>2026-03-04T00:00:00</Start><Finish>2026-03-04T23:59:59</Finish><Unit>2</Unit><Value>PT7H0M0S</Value></TimephasedData><TimephasedData><UID>0</UID><Type>1</Type><Start>2026-03-05T00:00:00</Start><Finish>2026-03-05T23:59:59</Finish><Unit>2</Unit><Value>PT7H0M0S</Value></TimephasedData><TimephasedData><UID>0</UID><Type>1</Type><Start>2026-03-06T00:00:00</Start><Finish>2026-03-06T13:59:59</Finish><Unit>2</Unit><Value>PT4H0M0S</Value></TimephasedData></Assignment><Assignment><UID>1</UID><TaskUID>2</TaskUID><ResourceUID>4</ResourceUID><Units>200.0</Units><start>2026-03-02T09:00:00</start><finish>2026-03-06T14:00:00</finish><Cost>500.0</Cost><PercentWorkComplete>0</PercentWorkComplete><TimephasedData><UID>1</UID><Type>6</Type><Start>2026-03-02T09:00:00</Start><Finish>2026-03-02T23:59:59</Finish><Unit>2</Unit><Value>100.0</Value></TimephasedData><TimephasedData><UID>1</UID><Type>6</Type><Start>2026-03-03T00:00:00</Start><Finish>2026-03-03T23:59:59</Finish><Unit>2</Unit><Value>100.0</Value></TimephasedData><TimephasedData><UID>1</UID><Type>6</Type><Start>2026-03-04T00:00:00</Start><Finish>2026-03-04T23:59:59</Finish><Unit>2</Unit><Value>100.0</Value></TimephasedData><TimephasedData><UID>1</UID><Type>6</Type><Start>2026-03-05T00:00:00</Start><Finish>2026-03-05T23:59:59</Finish><Unit>2</Unit><Value>100.0</Value></TimephasedData><TimephasedData><UID>1</UID><Type>6</Type><Start>2026-03-06T00:00:00</Start><Finish>2026-03-06T13:59:59</Finish><Unit>2</Unit><Value>100.0</Value></TimephasedData></Assignment><Assignment><UID>2</UID><TaskUID>2</TaskUID><ResourceUID>5</ResourceUID><Units>1.0</Units><start>2026-03-02T09:00:00</start><finish>2026-03-06T14:00:00</finish><Cost>500.0</Cost><PercentWorkComplete>0</PercentWorkComplete><TimephasedData><UID>2</UID><Type>6</Type><Start>2026-03-02T09:00:00</Start><Finish>2026-03-02T23:59:59</Finish><Unit>2</Unit><Value>500.0</Value></TimephasedData></Assignment><Assignment><UID>3</UID><TaskUID>3</TaskUID><ResourceUID>3</ResourceUID><Units>1.0</Units><start>2026-03-09T00:00:00</start><finish>2026-03-10T00:00:00</finish><Cost>100.0</Cost><WorkContour>8</WorkContour><PercentWorkComplete>0</PercentWorkComplete><TimephasedData><UID>3</UID><Type>1</Type><Start>2026-03-09T00:00:00</Start><Finish>2026-03-09T23:59:59</Finish><Unit>2</Unit><Value>PT24H0M0S</Value></TimephasedData></Assignment></Assignments>"
-  }
+  },
+  "baseline": {
+    "fixture": "14c-baseline",
+    "baselineScenario": 1,
+    "project": "<Baseline><Number>0</Number><Start>2026-03-02T09:00:00</Start><Finish>2026-03-11T17:00:00</Finish></Baseline>",
+    "tasks": [
+      {
+        "name": "Alpha",
+        "baseline": "<Baseline><Number>0</Number><Start>2026-03-02T09:00:00</Start><Finish>2026-03-06T17:00:00</Finish></Baseline>"
+      },
+      {
+        "name": "Beta",
+        "baseline": "<Baseline><Number>0</Number><Start>2026-03-09T09:00:00</Start><Finish>2026-03-11T17:00:00</Finish></Baseline>"
+      }
+    ]
+  },
+  "markdownReports": [
+    {
+      "id": "mdfuncs",
+      "format": "markdown",
+      "header": "<div><p><span>2026-03-02</span></p><p><a href=\"md-default.html\">md-default</a></p><p><div class=\"navbar_container\"><hr class=\"navbar_topruler\" /><div class=\"navbar\"><span class=\"navbar_current\">md-funcs</span></div><hr class=\"navbar_bottomruler\" /></div></p><p><!-- Dynamic Report ID: 0.0 --><div><b>Forte</b> e //itálico//</div><table cellspacing=\"1\" class=\"tj_table_frame\"><tr><td><table cellspacing=\"1\" class=\"tj_table\"><tbody><tr class=\"tabhead\" style=\"height:39px; font-size:15px;\"><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">Name</td></tr></table></td></tr><tr class=\"tabline\" style=\"font-size:12px; \"><td class=\"taskcell1\"><table cellspacing=\"0\" class=\"tj_table_cell\" style=\"text-align:left; \"><tr><td class=\"tj_table_cell_icon\" onclick=\"TagToTip('ID1', TITLE, '')\" style=\"cursor:help; \"><img alt=\"Icon\" src=\"icons/taskgroup.png\" /></td><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; color:#FF0000; \">&lt;Error&gt;</td></tr></table><div class=\"tj_tooltip_box\" id=\"ID1\" style=\"cursor:help\"><div><b>ID:</b> fase</div></div></td></tr><tr class=\"tabline\" style=\"font-size:12px; \"><td class=\"taskcell2\"><table cellspacing=\"0\" class=\"tj_table_cell\" style=\"text-align:left; \"><tr><td class=\"tj_table_cell_icon\" onclick=\"TagToTip('ID2', TITLE, '')\" style=\"cursor:help; \"><img alt=\"Icon\" src=\"icons/task.png\" /></td><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; color:#FF0000; \">&lt;Error&gt;</td></tr></table><div class=\"tj_tooltip_box\" id=\"ID2\" style=\"cursor:help\"><div><b>ID:</b> fase.t1</div></div></td></tr></tbody></table></td></tr><tr><td></td></tr></table></p></div>",
+      "footer": "<div><p>Fim: <span>2026-03-31</span></p></div>",
+      "html": [
+        "<!-- Dynamic Report ID: 0 -->",
+        "<div><p><span>2026-03-02</span></p><p><a href=\"md-default.html\">md-default</a></p><p><div class=\"navbar_container\"><hr class=\"navbar_topruler\" /><div class=\"navbar\"><span class=\"navbar_current\">md-funcs</span></div><hr class=\"navbar_bottomruler\" /></div></p><p><!-- Dynamic Report ID: 0.1 --><div><b>Forte</b> e //itálico//</div><table cellspacing=\"1\" class=\"tj_table_frame\"><tr><td><table cellspacing=\"1\" class=\"tj_table\"><tbody><tr class=\"tabhead\" style=\"height:39px; font-size:15px;\"><td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">Name</td></tr></table></td></tr><tr class=\"tabline\" style=\"font-size:12px; \"><td class=\"taskcell1\"><table cellspacing=\"0\" class=\"tj_table_cell\" style=\"text-align:left; \"><tr><td class=\"tj_table_cell_icon\" onclick=\"TagToTip('ID3', TITLE, '')\" style=\"cursor:help; \"><img alt=\"Icon\" src=\"icons/taskgroup.png\" /></td><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; color:#FF0000; \">&lt;Error&gt;</td></tr></table><div class=\"tj_tooltip_box\" id=\"ID3\" style=\"cursor:help\"><div><b>ID:</b> fase</div></div></td></tr><tr class=\"tabline\" style=\"font-size:12px; \"><td class=\"taskcell2\"><table cellspacing=\"0\" class=\"tj_table_cell\" style=\"text-align:left; \"><tr><td class=\"tj_table_cell_icon\" onclick=\"TagToTip('ID4', TITLE, '')\" style=\"cursor:help; \"><img alt=\"Icon\" src=\"icons/task.png\" /></td><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; color:#FF0000; \">&lt;Error&gt;</td></tr></table><div class=\"tj_tooltip_box\" id=\"ID4\" style=\"cursor:help\"><div><b>ID:</b> fase.t1</div></div></td></tr></tbody></table></td></tr><tr><td></td></tr></table></p></div>",
+        "<table cellspacing=\"1\" class=\"tj_table_frame\"><tr><td></td></tr></table>",
+        "<div><p>Fim: <span>2026-03-31</span></p></div>"
+      ]
+    },
+    {
+      "id": "rtquery",
+      "format": "richtext",
+      "header": "<div><span>2026-03-02</span></div>",
+      "footer": null,
+      "html": [
+        "<!-- Dynamic Report ID: 0 -->",
+        "<div><span>2026-03-02</span></div>",
+        "<table cellspacing=\"1\" class=\"tj_table_frame\"><tr><td></td></tr></table>"
+      ]
+    },
+    {
+      "id": "mddefault",
+      "format": "richtext",
+      "header": "<div><b>Forte</b> e //itálico//</div>",
+      "footer": null,
+      "html": [
+        "<!-- Dynamic Report ID: 0 -->",
+        "<div><b>Forte</b> e //itálico//</div>",
+        "<table cellspacing=\"1\" class=\"tj_table_frame\"><tr><td></td></tr></table>"
+      ]
+    }
+  ]
 }

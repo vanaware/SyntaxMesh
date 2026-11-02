@@ -83,6 +83,66 @@ No browser:
 
 ---
 
+## Adendo (14C.5.12) — dialeto do RichText nos relatórios: default `richtext`, markdown opt-in
+
+O conteúdo RichText de um relatório (`header`, `footer`, `prolog`, `epilog`,
+`intro`, `caption` e o `details` de `journalentry`) é MediaWiki por default.
+Markdown entra apenas por `format markdown` explícito no escopo do relatório
+(ou da entrada do diário), nunca por detecção de sintaxe nem por configuração
+global.
+
+**Decisão**
+
+- O atributo `format` (`Symbol`, default `richtext`, `inheritedFromParent`) foi
+  adicionado em `report-attributes.ts`; o parser escolhe a fábrica
+  (`RichTextFactoryImpl` × `MarkdownFactory`, Fase 13) ao criar o RTI
+  (`newRichText(text, sfi, tokenSet, format)`).
+- A ordem dos atributos não importa: o parser registra cada fonte em
+  `Report.richTextSources` e `applyReportFormat()` reconstrói os RTIs já lidos
+  (via `force()`, porque `set()` dispara `AttributeOverwrite`).
+- As duas fábricas produzem o **mesmo** `RichTextIntermediate`, então
+  `rt_to_html()`/`rt_to_s()`, `TableReport` e `TextReport` não mudaram de API.
+  O único ajuste foi reinterpretar RTIs que nascem como MediaWiki (`note` de
+  propriedade, `celltext` crua) com a fábrica markdown quando o relatório pede
+  (`ReportBase#rtiForReport`/`#cellTextForReport`).
+
+**Por quê**
+
+- Compatibilidade `.tjp`: os arquivos existentes (e os goldens do Ruby) usam
+  `'''forte'''`, `//itálico//`, `== seção ==`; trocar o default quebraria todos
+  de uma vez e tornaria a divergência indistinguível de bug.
+- Coexistência: o mesmo projeto pode ter um relatório legado e outro novo;
+  herança pelo relatório-pai permite `format markdown` num bloco e esquecer do
+  resto.
+
+**Alternativas rejeitadas**
+
+- Detecção automática de sintaxe: ambíguo (`#` é título em markdown e texto em
+  MediaWiki), impossível de testar deterministicamente.
+- Default markdown: quebra os `.tjp` existentes e os goldens do Ruby.
+- Atributo global de projeto: impede migração incremental por relatório.
+
+**Consequências / limites conhecidos**
+
+- A galeria do RDO (`picturesFromDetails`, 14C.3.7) é agnóstica de dialeto:
+  coleta `![alt](path)` e `[[Image:path|alt]]` na mesma varredura, então o
+  `format` da entrada decide a renderização do texto, não a coleta.
+- A sanitização de HTML cru é **por nó mdast** (`mdast-to-richtext`): tags
+  bloqueadas e atributos de evento não atravessam, mas o corpo de um
+  `<script>` pode sobrar como texto inerte (escape), não como código.
+- `celltext` é string crua no TaskJuggler; num relatório markdown ela é
+  interpretada como markdown — desvio consciente para manter paridade de
+  leitura com `note`/`header`.
+- `[[query:attribute=name]]` continua vazio: `name`/`projectid`/`version` do
+  projeto são campos (`Project.name`), não atributos consultáveis (gap
+  pré-existente, fora do escopo deste adendo).
+
+**Verificação:** `markdown-report_14c_test.ts`, `markdown-handlers_14c_test.ts`
+e `markdown-content_14c_test.ts` (14C.5.1–5.9) + bloco `markdownReports` do
+`reports-extensions.golden.json` (14C.5.11).
+
+---
+
 **Status:** Aceito
 **Data:** 2026-10-30
 **Autor(es):** Qoder

@@ -1,0 +1,159 @@
+# 14C.5 — Fixture de markdown nos relatórios (SyntaxMesh-only, sem oracle Ruby).
+#
+# O default de `report` permanece `richtext` (compatibilidade `.tjp`); markdown
+# é opt-in por `format markdown` no escopo do relatório (14C.5.1). Cobre:
+#   - `format markdown` antes do texto (RTI nasce markdown);
+#   - `format markdown` DEPOIS do texto (a ordem dos atributos não importa);
+#   - relatório sem `format` (regressão richtext — `'''forte'''`);
+#   - `format` herdado do relatório-pai por um relatório aninhado;
+#   - handlers de função (`[[query:]]`, `[[report:]]`, `[[reportlink:]]`,
+#     `[[navigator:]]`) e o açúcar `<-attr->` dentro do markdown (14C.5.3);
+#   - pares markdown/richtext do mesmo `reportlink` para comparar semântica
+#     (14C.5.5).
+#
+# `[[query:attribute=name]]` não é usado: no port o `name` do projeto é campo
+# (`Project.name`), não atributo, então a query renderiza vazia (gap
+# pré-existente, anotado no quadro de evidências da 14C.5). Os atributos de
+# projeto resolvíveis por query são `start`, `end`, `now`, `currency`,
+# `journal` e `copyright`.
+#
+# Os IDs de relatório não usam `-`: em TaskJuggler o ID casa com
+# `[a-zA-Z_]\w*` (ProjectFileScanner.rb l.86).
+
+project mdrep "Markdown Reports 14C" "1.0" 2026-03-02 - 2026-03-31 {
+  timezone "UTC"
+  timeformat "%Y-%m-%d"
+  now 2026-03-02
+  workinghours mon - fri 09:00 - 12:00, 13:00 - 17:00
+  workinghours sat, sun off
+}
+
+resource alice "Alice" {
+}
+
+navigator nav1 {
+}
+
+task fase "Fase" {
+  note "**Importante** (nota da tarefa)"
+  task t1 "Tarefa 1" {
+    start 2026-03-02
+    effort 2d
+    allocate alice
+  }
+}
+
+taskreport mdfirst "md-first" {
+  formats html
+  format markdown
+  header "# Cabeçalho
+
+Texto com **forte** e *ênfase*."
+  footer "- rodapé"
+  columns name, start
+}
+
+taskreport mdlate "md-late" {
+  formats html
+  header "# Cabeçalho tardio"
+  footer "**Rodapé tardio**"
+  format markdown
+  columns name
+}
+
+taskreport mddefault "md-default" {
+  formats html
+  header "'''Forte''' e //itálico//"
+  columns name
+}
+
+taskreport mdparent "md-parent" {
+  formats html
+  format markdown
+  columns name
+  taskreport mdchild "md-child" {
+    formats html
+    header "## Herdado"
+    columns name
+  }
+}
+
+taskreport mdfuncs "md-funcs" {
+  formats html
+  format markdown
+  columns name
+  header "[[query:attribute=start]]
+
+[[reportlink:id=mddefault]]
+
+[[navigator:id=nav1]]
+
+[[report:id=mddefault]]"
+  footer "Fim: <-end->"
+}
+
+# Contraparte richtext do handler `query`: mesma data de início do projeto,
+# sem o `<p>` que o markdown acrescenta ao parágrafo (14C.5.4).
+taskreport rtquery "rt-query" {
+  formats html
+  columns name
+  header "<-query attribute=\"start\"->"
+}
+
+# Par markdown/richtext do mesmo `reportlink` interativo (14C.5.5): o payload
+# `[nome, args]` do pipeline markdown precisa chegar igual ao handler.
+taskreport mdlink "md-link" {
+  formats html
+  format markdown
+  columns name
+  header "[[reportlink:id=mddefault attributes=\"x=1\"]]"
+}
+
+taskreport rtlink "rt-link" {
+  formats html
+  columns name
+  header "<-reportlink id=\"mddefault\" attributes=\"x=1\"->"
+}
+
+# 14C.5.7 — `note` de propriedade nasce richtext (lido antes de qualquer
+# relatório) e é reinterpretado conforme o `format` de quem o exibe. O par
+# markdown/richtext mostra as duas leituras da mesma string.
+taskreport mdnote "md-note" {
+  formats html
+  format markdown
+  columns name { celltext 1 "**Célula**" }, note
+}
+
+taskreport rtnote "rt-note" {
+  formats html
+  columns name { celltext 1 "**Célula**" }, note
+}
+
+# 14C.5.8 — mesmo conteúdo em markdown e em MediaWiki para comparar o `to_s`
+# (texto plano) dos blocos de header/footer.
+textreport mdtext "md-text" {
+  formats html
+  format markdown
+  header "# Título
+
+Texto **forte**"
+  footer "*fim*"
+}
+
+textreport rttext "rt-text" {
+  formats html
+  header "== Título ==
+
+Texto '''forte'''"
+  footer "//fim//"
+}
+
+# 14C.5.9 — HTML cru num atributo markdown do relatório sai sanitizado: a tag
+# bloqueada (`<script>`) é descartada e o atributo de evento (`onerror`) também,
+# mas o texto entre as tags permanece como texto inerte.
+taskreport mdxss "md-xss" {
+  formats html
+  format markdown
+  columns name
+  caption "Antes <script>alert(1)</script> depois <img src=\"x.png\" onerror=\"alert(2)\">"
+}

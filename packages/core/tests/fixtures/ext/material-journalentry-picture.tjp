@@ -9,7 +9,6 @@ account costs "Custos" {
 material steel "Aço" {
   unit "kg"
   unitprice 2.5
-  totalquantity 1000
   journalentry 2026-01-05 "Chegada do aço" {
     summary "Lote 1 recebido"
     picture "a.png" {
@@ -29,7 +28,6 @@ material steel "Aço" {
 material concrete "Concreto" {
   unit "m3"
   unitprice 120
-  totalquantity 50
 }
 
 task build "Construção" {

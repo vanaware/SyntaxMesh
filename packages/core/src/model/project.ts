@@ -25,7 +25,7 @@ import { Task, } from "./task.ts";
 import { Resource, } from "./resource.ts";
 import { TaskScenario, } from "./task-scenario.ts";
 import { ResourceScenario, } from "./resource-scenario.ts";
-import { Account, } from "./account.ts";
+import { Account, type CostType, } from "./account.ts";
 import { Shift, } from "./shift.ts";
 import { Scenario, } from "./scenario.ts";
 import { PropertyList, } from "./property-list.ts";
@@ -43,6 +43,17 @@ import { registerResourceAttributes, } from "../model/attributes/resource-attrib
 import { registerTaskAttributes, } from "../model/attributes/task-attributes.ts";
 import { registerReportAttributes, } from "../model/attributes/report-attributes.ts";
 import { registerMaterialAttributes, } from "../model/attributes/material-attributes.ts";
+import type { MaterialBooking, } from "./material-booking.ts";
+
+/**
+ * Booking de material aguardando a declaração da tarefa dona. O `booking`
+ * declarado no corpo do material pode preceder o `task` que ele referencia;
+ * guardamos também o cenário em que surgiu (14C.11.5).
+ */
+export interface PendingMaterialBooking {
+  booking: MaterialBooking;
+  scenarioIdx: number;
+}
 
 export class Project implements ProjectLike {
   readonly id: string;
@@ -72,6 +83,70 @@ export class Project implements ProjectLike {
   resourceAvailability: Scoreboard<boolean> | null;
   readonly costEvents: CostEvent[];
   readonly trackingScenario: string | null;
+  /**
+   * ID da conta default universal (`defaultaccount <id>`, adendo §10 / 14C.9).
+   * É a regra 4 de `resolveAccount` quando não há conta explícita, chargeset
+   * da origem nem chargeset da tarefa. Guardado como **ID** porque o bloco
+   * `project` vem antes das declarações de `account` (referência futura).
+   */
+  defaultAccountId: string | null;
+  /**
+   * IDs das contas default por tipo (`defaultaccount material|resource|charge
+   * <id>`). Uma variante presente **precede** a universal no seu tipo. O tipo
+   * `charge` mapeia para `CostType` `task`.
+   */
+  readonly defaultAccountIds: Map<CostType, string>;
+  /**
+   * Bookings de material lidos no corpo do material cuja tarefa ainda não
+   * estava declarada (referência futura). Esvaziada por
+   * `flushPendingBookings()` ao final do parse.
+   */
+  readonly pendingBookings: PendingMaterialBooking[] = [];
+
+  /**
+   * Liga os bookings pendentes às suas tarefas e anexa cada um ao atributo de
+   * cenário `materialbookings` da tarefa. Idempotente: o que continua sem
+   * tarefa permanece na fila para uma chamada futura. Devolve quantos foram
+   * resolvidos nesta passada.
+   */
+  flushPendingBookings(): number {
+    if (this.pendingBookings.length === 0) return 0;
+    const pending = this.pendingBookings.splice(
+      0,
+      this.pendingBookings.length,
+    );
+    let resolved = 0;
+    for (const entry of pending) {
+      if (!entry.booking.resolveTask(this,)) {
+        this.pendingBookings.push(entry,);
+        continue;
+      }
+      const task = entry.booking.task!;
+      const current = (task.getForScenario(
+        "materialbookings",
+        entry.scenarioIdx,
+      ) ?? []) as MaterialBooking[];
+      task.setForScenario(
+        "materialbookings",
+        current.concat([entry.booking,],),
+        entry.scenarioIdx,
+      );
+      resolved++;
+    }
+    return resolved;
+  }
+
+  /**
+   * Conta default para um tipo de custo: variante do tipo → universal →
+   * `null`. Resolve o ID no PropertySet de contas a cada chamada (o parser
+   * aceita referência futura). `type` nulo resolve só a universal.
+   */
+  defaultAccountFor(type: CostType | null,): Account | null {
+    const id = (type ? this.defaultAccountIds.get(type,) : undefined) ??
+      this.defaultAccountId;
+    return id === null || id === undefined ? null : this.account(id,);
+  }
+
   hasBookings(_scIdx: number,): boolean {
     return false;
   }
@@ -167,6 +242,8 @@ export class Project implements ProjectLike {
     this.resourceAvailability = null;
     this.costEvents = [];
     this.trackingScenario = null;
+    this.defaultAccountId = null;
+    this.defaultAccountIds = new Map();
 
     // Initialize AppConfig
     initTj3Config();
@@ -488,9 +565,17 @@ export class Project implements ProjectLike {
     return null;
   }
 
+  /**
+   * Nome de exibição de um atributo de tarefa ou de recurso.
+   *
+   * Porta de `Project#attributeName` (Ruby l.1038): o Ruby consulta o
+   * dicionário de tarefas e, se não achar, o de recursos — nunca o dicionário
+   * do próprio projeto. A versão anterior olhava `scenarios`, que só conhece
+   * atributos de projeto, e por isso os cabeçalhos de coluna como `start`,
+   * `end` e `effort` saíam vazios nos relatórios.
+   */
   attributeName(id: string,): string | undefined {
-    const attrDef = this.scenarios.attributeDefinition(id,);
-    return attrDef?.name;
+    return this.tasks.attributeName(id,) ?? this.resources.attributeName(id,);
   }
 
   to_s(): string {

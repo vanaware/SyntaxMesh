@@ -54,13 +54,16 @@ describe("C4.2 ext fixture: material-journalentry-picture", () => {
     assertEquals(out.messageIds, [], `msgs=${out.messageIds.join(",",)}`,);
   });
 
-  it("registra materials com unit/unitprice/totalquantity", () => {
+  it("registra materials com unit/unitprice e quantidade derivada", () => {
     const p = asProject(parseExt("material-journalentry-picture",),);
     const steel = p.material("steel",) as Material;
     assert(steel !== null, "material steel não registrado",);
     assertEquals(steel.get("unit",), "kg",);
     assertEquals(steel.get("cost",), 2.5,);
-    assertEquals(steel.get("totalquantity",), 1000,);
+    // `totalquantity` foi removido: a quantidade vem das alocações da task
+    // (`material steel 200 perday`, 14C.11.10).
+    assertEquals(steel.allocatedQuantity(0,), 200,);
+    assertEquals(steel.allocatedCost(0,), 500,);
     assert(p.material("concrete",) !== null, "material concrete ausente",);
   });
 

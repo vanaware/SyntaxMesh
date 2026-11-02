@@ -20,6 +20,7 @@ import { Report, } from "../../model/report.ts";
 import { TjTime, } from "../../time/tj-time.ts";
 import { RealFormat, } from "../../format/real-format.ts";
 import { JournalEntry, } from "../../model/journal.ts";
+import type { EntryFormat, } from "../../model/journal.ts";
 import {
   LogicalExpression,
   LogicalOperation,
@@ -35,25 +36,89 @@ import {
 import type { ProjectFileParser, } from "../project-file-parser.ts";
 import { rule, } from "./helpers.ts";
 
-const asProp = (parser: ProjectFileParser,): NonNullable<
-  ProjectFileParser["property"]
-> => parser.property!;
+/** Propriedade corrente do parser, com certeza um `Report` neste bloco. */
+const asProp = (parser: ProjectFileParser,): Report =>
+  parser.property as Report;
+
+/**
+ * Títulos das colunas exclusivas do `materialreport` (14C.1.5). Elas não são
+ * atributos do projeto, então `columnTitle` devolveria `undefined` e o
+ * cabeçalho das colunas padrão sairia vazio (CSV com `null`). Espelham
+ * `TableReport.materialPropertiesById`.
+ */
+const MATERIAL_COLUMN_TITLES: Record<string, string> = {
+  no: "No.",
+  totalcost: "Total Cost",
+  unit: "Unit",
+  unitprice: "Unit Price",
+};
 
 /**
  * Atributos de RichText: `newRichText` como em TjpSyntaxRules.rb (Fase 12.18).
  * Guarda o `RichTextIntermediate` — não a String bruta — para que os reports
  * (`ReportBase#generateIntermediateFormat`, `TableReport`) possam chamar
  * `setQuery`/`to_html` sobre ele.
+ *
+ * O dialeto vem de `format` no relatório (14C.5.1): `richtext` (default) ou
+ * `markdown`. A fonte bruta fica registrada em `Report.richTextSources` para
+ * que `applyReportFormat` possa reconstruir o RTI caso `format` apareça depois
+ * do texto. `attrId` é `null` para RichText que não é atributo do relatório
+ * (ex.: `listItem` de coluna), que só aproveita o dialeto.
  */
-const richText = (parser: ProjectFileParser, idx: number,) =>
-  parser.newRichText(
-    String(parser.val[idx],),
-    parser.sourceFileInfo[idx] ?? null,
-  );
+const richText = (
+  parser: ProjectFileParser,
+  idx: number,
+  attrId: string | null,
+) => {
+  const prop = asProp(parser,);
+  const text = String(parser.val[idx],);
+  const sfi = parser.sourceFileInfo[idx] ?? null;
+  if (attrId !== null) prop.richTextSources.set(attrId, { text, sfi, },);
+  return parser.newRichText(text, sfi, null, prop.richTextFormat(),);
+};
+
+/**
+ * Aplica `format <dialeto>` a um relatório (14C.5.1).
+ *
+ * Além de gravar o atributo, reconstrói os atributos RichText já lidos
+ * (`header`, `footer`, `caption`, `headline`, `center`, `left`, `right`,
+ * `prolog`, `epilog`) com o pipeline do dialeto escolhido: em TJP a ordem dos
+ * atributos não deve importar.
+ */
+export function applyReportFormat(
+  parser: ProjectFileParser,
+  report: Report,
+  format: EntryFormat,
+): void {
+  report.set("format", format,);
+  for (const [attrId, src,] of report.richTextSources) {
+    // `force`: os atributos RichText já foram gravados pelo parser; `set`
+    // dispararia `AttributeOverwrite` (guarda de redefinição de atributo).
+    report.force(attrId, parser.newRichText(src.text, src.sfi, null, format,),);
+  }
+}
 
 /** `LogicalExpression.new(LogicalOperation.new(op))` — default de hide/rollup. */
 const logicOp = (op: number,): LogicalExpression =>
   new LogicalExpression(new LogicalOperation(op,),);
+
+/**
+ * Envolve os defaults de um `<tipo>report` para o alias `md<tipo>report`
+ * (adendo §10 / 14C.8): mesmo bloco, com `formats markdown` como default
+ * herdado. Um `formats` explícito no corpo continua vencendo — o parser grava o
+ * atributo em modo definido, sobrescrevendo o default herdado.
+ */
+function markdownReportDefaults(
+  defaults: (this: ProjectFileParser,) => void,
+): (this: ProjectFileParser,) => void {
+  return function (this: ProjectFileParser,): void {
+    defaults.call(this,);
+    const rep = asProp(this,);
+    if (!rep.modified("formats",)) {
+      rep.set("formats", ["markdown",],);
+    }
+  };
+}
 
 /** Lista de critérios de ordenação padrão (Ruby `[ [ 'x', bool, n ] ]`). */
 type SortCriterion = [string, boolean, number,];
@@ -75,6 +140,31 @@ export function registerReportRules(p: ProjectFileParser,): void {
     p.pattern(["!taskReport",],);
     p.pattern(["!textReport",],);
     p.pattern(["!traceReport",],);
+  },);
+
+  // ------------------------------------------------------------------
+  // Adendo §10 / 14C.8 — aliases `md<tipo>report`: o mesmo bloco de tabela,
+  // com `formats markdown` por default. O valor devolvido diz ao header se o
+  // relatório foi declarado com o prefixo `md`.
+  // ------------------------------------------------------------------
+  rule(p, "taskReportKeyword", () => {
+    p.pattern(["_taskreport",], () => false,);
+    p.pattern(["_mdtaskreport",], () => true,);
+  },);
+
+  rule(p, "resourceReportKeyword", () => {
+    p.pattern(["_resourcereport",], () => false,);
+    p.pattern(["_mdresourcereport",], () => true,);
+  },);
+
+  rule(p, "materialReportKeyword", () => {
+    p.pattern(["_materialreport",], () => false,);
+    p.pattern(["_mdmaterialreport",], () => true,);
+  },);
+
+  rule(p, "accountReportKeyword", () => {
+    p.pattern(["_accountreport",], () => false,);
+    p.pattern(["_mdaccountreport",], () => true,);
   },);
 
   // ------------------------------------------------------------------
@@ -171,47 +261,49 @@ export function registerReportRules(p: ProjectFileParser,): void {
 
   rule(p, "taskReportHeader", () => {
     p.pattern(
-      ["_taskreport", "!optionalID", "!reportName",],
+      ["!taskReportKeyword", "!optionalID", "!reportName",],
       function (this: ProjectFileParser,): unknown {
+        const md = this.val[0] === true;
+        const defaults = function (this: ProjectFileParser,): void {
+          const rep = asProp(this,);
+          if (!rep.modified("columns",)) {
+            const cols =
+              (rep.get("columns",) as TableColumnDefinition[] | null) ?? [];
+            for (
+              const col of ["bsi", "name", "start", "end", "effort", "chart",]
+            ) {
+              cols.push(
+                new TableColumnDefinition(col, this.columnTitle(col,),),
+              );
+            }
+            rep.set("columns", cols,);
+          }
+          if (!rep.modified("hideTask",)) {
+            rep.set("hideTask", logicOp(0,),);
+          }
+          if (!rep.modified("sortTasks",)) {
+            rep.set("sortTasks", [
+              ["tree", true, -1,],
+              ["start", true, 0,],
+              ["seqno", true, -1,],
+            ] as SortCriterion[],);
+          }
+          if (!rep.modified("hideResource",)) {
+            rep.set("hideResource", logicOp(1,),);
+          }
+          if (!rep.modified("sortResources",)) {
+            rep.set(
+              "sortResources",
+              [["id", true, -1,],] as SortCriterion[],
+            );
+          }
+        };
         this.newReport(
           this.val[1] as string | null,
           String(this.val[2],),
           "taskreport",
           this.sourceFileInfo[0] ?? null,
-          function (this: ProjectFileParser,): void {
-            const rep = asProp(this,);
-            if (!rep.modified("columns",)) {
-              const cols =
-                (rep.get("columns",) as TableColumnDefinition[] | null) ?? [];
-              for (
-                const col of ["bsi", "name", "start", "end", "effort", "chart",]
-              ) {
-                cols.push(
-                  new TableColumnDefinition(col, this.columnTitle(col,),),
-                );
-              }
-              rep.set("columns", cols,);
-            }
-            if (!rep.modified("hideTask",)) {
-              rep.set("hideTask", logicOp(0,),);
-            }
-            if (!rep.modified("sortTasks",)) {
-              rep.set("sortTasks", [
-                ["tree", true, -1,],
-                ["start", true, 0,],
-                ["seqno", true, -1,],
-              ] as SortCriterion[],);
-            }
-            if (!rep.modified("hideResource",)) {
-              rep.set("hideResource", logicOp(1,),);
-            }
-            if (!rep.modified("sortResources",)) {
-              rep.set(
-                "sortResources",
-                [["id", true, -1,],] as SortCriterion[],
-              );
-            }
-          },
+          md ? markdownReportDefaults(defaults,) : defaults,
         );
         return null;
       },
@@ -229,45 +321,47 @@ export function registerReportRules(p: ProjectFileParser,): void {
 
   rule(p, "resourceReportHeader", () => {
     p.pattern(
-      ["_resourcereport", "!optionalID", "!reportName",],
+      ["!resourceReportKeyword", "!optionalID", "!reportName",],
       function (this: ProjectFileParser,): unknown {
+        const md = this.val[0] === true;
+        const defaults = function (this: ProjectFileParser,): void {
+          const rep = asProp(this,);
+          if (!rep.modified("columns",)) {
+            const cols =
+              (rep.get("columns",) as TableColumnDefinition[] | null) ?? [];
+            for (const col of ["no", "name",]) {
+              cols.push(
+                new TableColumnDefinition(col, this.columnTitle(col,),),
+              );
+            }
+            rep.set("columns", cols,);
+          }
+          if (!rep.modified("hideResource",)) {
+            rep.set("hideResource", logicOp(0,),);
+          }
+          if (!rep.modified("sortResources",)) {
+            rep.set("sortResources", [
+              ["tree", true, -1,],
+              ["id", true, -1,],
+            ] as SortCriterion[],);
+          }
+          if (!rep.modified("hideTask",)) {
+            rep.set("hideTask", logicOp(1,),);
+          }
+          if (!rep.modified("sortTasks",)) {
+            rep.set("sortTasks", [
+              ["tree", true, -1,],
+              ["start", true, 0,],
+              ["seqno", true, -1,],
+            ] as SortCriterion[],);
+          }
+        };
         this.newReport(
           this.val[1] as string | null,
           String(this.val[2],),
           "resourcereport",
           this.sourceFileInfo[0] ?? null,
-          function (this: ProjectFileParser,): void {
-            const rep = asProp(this,);
-            if (!rep.modified("columns",)) {
-              const cols =
-                (rep.get("columns",) as TableColumnDefinition[] | null) ?? [];
-              for (const col of ["no", "name",]) {
-                cols.push(
-                  new TableColumnDefinition(col, this.columnTitle(col,),),
-                );
-              }
-              rep.set("columns", cols,);
-            }
-            if (!rep.modified("hideResource",)) {
-              rep.set("hideResource", logicOp(0,),);
-            }
-            if (!rep.modified("sortResources",)) {
-              rep.set("sortResources", [
-                ["tree", true, -1,],
-                ["id", true, -1,],
-              ] as SortCriterion[],);
-            }
-            if (!rep.modified("hideTask",)) {
-              rep.set("hideTask", logicOp(1,),);
-            }
-            if (!rep.modified("sortTasks",)) {
-              rep.set("sortTasks", [
-                ["tree", true, -1,],
-                ["start", true, 0,],
-                ["seqno", true, -1,],
-              ] as SortCriterion[],);
-            }
-          },
+          md ? markdownReportDefaults(defaults,) : defaults,
         );
         return null;
       },
@@ -292,47 +386,52 @@ export function registerReportRules(p: ProjectFileParser,): void {
 
   rule(p, "materialReportHeader", () => {
     p.pattern(
-      ["_materialreport", "!optionalID", "!reportName",],
+      ["!materialReportKeyword", "!optionalID", "!reportName",],
       function (this: ProjectFileParser,): unknown {
+        const md = this.val[0] === true;
+        const defaults = function (this: ProjectFileParser,): void {
+          const rep = asProp(this,);
+          if (!rep.modified("columns",)) {
+            const cols =
+              (rep.get("columns",) as TableColumnDefinition[] | null) ?? [];
+            for (
+              const col of ["no", "name", "unit", "unitprice", "totalcost",]
+            ) {
+              cols.push(
+                new TableColumnDefinition(
+                  col,
+                  MATERIAL_COLUMN_TITLES[col] ?? this.columnTitle(col,),
+                ),
+              );
+            }
+            rep.set("columns", cols,);
+          }
+          if (!rep.modified("hideTask",)) {
+            rep.set("hideTask", logicOp(1,),);
+          }
+          if (!rep.modified("sortTasks",)) {
+            rep.set("sortTasks", [
+              ["tree", true, -1,],
+              ["start", true, 0,],
+              ["seqno", true, -1,],
+            ] as SortCriterion[],);
+          }
+          if (!rep.modified("hideResource",)) {
+            rep.set("hideResource", logicOp(1,),);
+          }
+          if (!rep.modified("sortResources",)) {
+            rep.set(
+              "sortResources",
+              [["id", true, -1,],] as SortCriterion[],
+            );
+          }
+        };
         this.newReport(
           this.val[1] as string | null,
           String(this.val[2],),
           "materialreport",
           this.sourceFileInfo[0] ?? null,
-          function (this: ProjectFileParser,): void {
-            const rep = asProp(this,);
-            if (!rep.modified("columns",)) {
-              const cols =
-                (rep.get("columns",) as TableColumnDefinition[] | null) ?? [];
-              for (
-                const col of ["no", "name", "unit", "unitprice", "totalcost",]
-              ) {
-                cols.push(
-                  new TableColumnDefinition(col, this.columnTitle(col,),),
-                );
-              }
-              rep.set("columns", cols,);
-            }
-            if (!rep.modified("hideTask",)) {
-              rep.set("hideTask", logicOp(1,),);
-            }
-            if (!rep.modified("sortTasks",)) {
-              rep.set("sortTasks", [
-                ["tree", true, -1,],
-                ["start", true, 0,],
-                ["seqno", true, -1,],
-              ] as SortCriterion[],);
-            }
-            if (!rep.modified("hideResource",)) {
-              rep.set("hideResource", logicOp(1,),);
-            }
-            if (!rep.modified("sortResources",)) {
-              rep.set(
-                "sortResources",
-                [["id", true, -1,],] as SortCriterion[],
-              );
-            }
-          },
+          md ? markdownReportDefaults(defaults,) : defaults,
         );
         return null;
       },
@@ -353,35 +452,37 @@ export function registerReportRules(p: ProjectFileParser,): void {
 
   rule(p, "accountReportHeader", () => {
     p.pattern(
-      ["_accountreport", "!optionalID", "!reportName",],
+      ["!accountReportKeyword", "!optionalID", "!reportName",],
       function (this: ProjectFileParser,): unknown {
+        const md = this.val[0] === true;
+        const defaults = function (this: ProjectFileParser,): void {
+          const rep = asProp(this,);
+          if (!rep.modified("columns",)) {
+            const cols =
+              (rep.get("columns",) as TableColumnDefinition[] | null) ?? [];
+            for (const col of ["bsi", "name", "monthly",]) {
+              cols.push(
+                new TableColumnDefinition(col, this.columnTitle(col,),),
+              );
+            }
+            rep.set("columns", cols,);
+          }
+          if (!rep.modified("hideAccount",)) {
+            rep.set("hideAccount", logicOp(0,),);
+          }
+          if (!rep.modified("sortAccounts",)) {
+            rep.set("sortAccounts", [
+              ["tree", true, -1,],
+              ["seqno", true, -1,],
+            ] as SortCriterion[],);
+          }
+        };
         this.newReport(
           this.val[1] as string | null,
           String(this.val[2],),
           "accountreport",
           this.sourceFileInfo[0] ?? null,
-          function (this: ProjectFileParser,): void {
-            const rep = asProp(this,);
-            if (!rep.modified("columns",)) {
-              const cols =
-                (rep.get("columns",) as TableColumnDefinition[] | null) ?? [];
-              for (const col of ["bsi", "name", "monthly",]) {
-                cols.push(
-                  new TableColumnDefinition(col, this.columnTitle(col,),),
-                );
-              }
-              rep.set("columns", cols,);
-            }
-            if (!rep.modified("hideAccount",)) {
-              rep.set("hideAccount", logicOp(0,),);
-            }
-            if (!rep.modified("sortAccounts",)) {
-              rep.set("sortAccounts", [
-                ["tree", true, -1,],
-                ["seqno", true, -1,],
-              ] as SortCriterion[],);
-            }
-          },
+          md ? markdownReportDefaults(defaults,) : defaults,
         );
         return null;
       },
@@ -585,7 +686,7 @@ export function registerReportRules(p: ProjectFileParser,): void {
     p.pattern(["_headline", "$STRING",], function (
       this: ProjectFileParser,
     ): unknown {
-      asProp(this,).set("headline", richText(this, 1,),);
+      asProp(this,).set("headline", richText(this, 1, "headline",),);
       return null;
     },);
   },);
@@ -631,7 +732,7 @@ export function registerReportRules(p: ProjectFileParser,): void {
     p.pattern(["_caption", "$STRING",], function (
       this: ProjectFileParser,
     ): unknown {
-      asProp(this,).set("caption", richText(this, 1,),);
+      asProp(this,).set("caption", richText(this, 1, "caption",),);
       return null;
     },);
     p.arg(1, "text", "The caption text.",);
@@ -640,7 +741,7 @@ export function registerReportRules(p: ProjectFileParser,): void {
     p.pattern(["_center", "$STRING",], function (
       this: ProjectFileParser,
     ): unknown {
-      asProp(this,).set("center", richText(this, 1,),);
+      asProp(this,).set("center", richText(this, 1, "center",),);
       return null;
     },);
     p.arg(1, "text", "The text",);
@@ -668,7 +769,7 @@ export function registerReportRules(p: ProjectFileParser,): void {
     p.pattern(["_epilog", "$STRING",], function (
       this: ProjectFileParser,
     ): unknown {
-      asProp(this,).set("epilog", richText(this, 1,),);
+      asProp(this,).set("epilog", richText(this, 1, "epilog",),);
       return null;
     },);
     p.also(["footer", "header", "prolog",],);
@@ -678,11 +779,14 @@ export function registerReportRules(p: ProjectFileParser,): void {
     p.pattern(["_footer", "$STRING",], function (
       this: ProjectFileParser,
     ): unknown {
-      asProp(this,).set("footer", richText(this, 1,),);
+      asProp(this,).set("footer", richText(this, 1, "footer",),);
       return null;
     },);
     p.example("textreport",);
     p.also(["epilog", "header", "prolog",],);
+
+    // 14C.5.1 — dialeto dos atributos RichText do relatório (default richtext).
+    p.pattern(["!format",],);
 
     p.pattern(["!formats",],);
 
@@ -705,7 +809,7 @@ export function registerReportRules(p: ProjectFileParser,): void {
     p.pattern(["_header", "$STRING",], function (
       this: ProjectFileParser,
     ): unknown {
-      asProp(this,).set("header", richText(this, 1,),);
+      asProp(this,).set("header", richText(this, 1, "header",),);
       return null;
     },);
     p.example("textreport",);
@@ -714,6 +818,8 @@ export function registerReportRules(p: ProjectFileParser,): void {
     p.pattern(["!headline",],);
     p.pattern(["!hidejournalentry",],);
     p.pattern(["!hideaccount",],);
+    p.pattern(["!hidematerial",],);
+    p.pattern(["!hidepicture",],);
     p.pattern(["!hideresource",],);
     p.pattern(["!hidetask",],);
 
@@ -743,7 +849,7 @@ export function registerReportRules(p: ProjectFileParser,): void {
     p.pattern(["_left", "$STRING",], function (
       this: ProjectFileParser,
     ): unknown {
-      asProp(this,).set("left", richText(this, 1,),);
+      asProp(this,).set("left", richText(this, 1, "left",),);
       return null;
     },);
     p.example("textreport",);
@@ -770,7 +876,7 @@ export function registerReportRules(p: ProjectFileParser,): void {
     p.pattern(["_prolog", "$STRING",], function (
       this: ProjectFileParser,
     ): unknown {
-      asProp(this,).set("prolog", richText(this, 1,),);
+      asProp(this,).set("prolog", richText(this, 1, "prolog",),);
       return null;
     },);
     p.also(["epilog", "footer", "header",],);
@@ -789,12 +895,13 @@ export function registerReportRules(p: ProjectFileParser,): void {
     p.pattern(["_right", "$STRING",], function (
       this: ProjectFileParser,
     ): unknown {
-      asProp(this,).set("right", richText(this, 1,),);
+      asProp(this,).set("right", richText(this, 1, "right",),);
       return null;
     },);
     p.example("textreport",);
 
     p.pattern(["!rollupaccount",],);
+    p.pattern(["!rollupmaterial",],);
     p.pattern(["!rollupresource",],);
     p.pattern(["!rolluptask",],);
 
@@ -922,6 +1029,26 @@ export function registerReportRules(p: ProjectFileParser,): void {
     },);
   },);
 
+  // 14C.6.2 — hideMaterial <expr> (extensão SyntaxMesh, ver ADR 027).
+  rule(p, "hidematerial", () => {
+    p.pattern(["_hidematerial", "!logicalExpression",], function (
+      this: ProjectFileParser,
+    ): unknown {
+      asProp(this,).set("hideMaterial", this.val[1],);
+      return null;
+    },);
+  },);
+
+  // 14C.6.3 — hidePicture <expr> (extensão SyntaxMesh, ver ADR 027).
+  rule(p, "hidepicture", () => {
+    p.pattern(["_hidepicture", "!logicalExpression",], function (
+      this: ProjectFileParser,
+    ): unknown {
+      asProp(this,).set("hidePicture", this.val[1],);
+      return null;
+    },);
+  },);
+
   rule(p, "rollupresource", () => {
     p.pattern(["_rollupresource", "!logicalExpression",], function (
       this: ProjectFileParser,
@@ -930,6 +1057,16 @@ export function registerReportRules(p: ProjectFileParser,): void {
       return null;
     },);
     p.example("RollupResource",);
+  },);
+
+  // 14C.6.4 — rollupMaterial <expr> (extensão SyntaxMesh, par de rollupresource).
+  rule(p, "rollupmaterial", () => {
+    p.pattern(["_rollupmaterial", "!logicalExpression",], function (
+      this: ProjectFileParser,
+    ): unknown {
+      asProp(this,).set("rollupMaterial", this.val[1],);
+      return null;
+    },);
   },);
 
   rule(p, "rollupaccount", () => {
@@ -1286,6 +1423,9 @@ export function registerReportRules(p: ProjectFileParser,): void {
     // Extensão SyntaxMesh (14C.0.2): JSON de primeira classe.
     p.pattern(["_json",], () => "json",);
     p.descr("Generate a JSON file (SyntaxMesh extension)",);
+    // Extensão SyntaxMesh (adendo §10 / 14C.8): saída Markdown (`.md`).
+    p.pattern(["_markdown",], () => "markdown",);
+    p.descr("Generate a Markdown file (SyntaxMesh extension)",);
     p.pattern(["_niku",], () => "niku",);
     p.descr("Generate an XOG XML file to be used with Clarity.",);
   },);
@@ -1455,6 +1595,32 @@ export function registerReportRules(p: ProjectFileParser,): void {
     },);
     p.level("beta",);
 
+    // baseline (extensão SyntaxMesh — adendo §10 / 14C.10): cenário que
+    // fornece as datas/custos da linha de base do export MSPDI.
+    p.pattern(["_baseline", "!scenarioId",], function (
+      this: ProjectFileParser,
+    ): unknown {
+      const sc = this.val[1] as number | undefined;
+      // `!scenarioId` já reportou `unknown_scenario_id`: não gravar lixo.
+      if (typeof sc !== "number") return null;
+      if (!this.project!.scenario(sc,)?.get("active",)) {
+        this.warning(
+          "baseline_sc_disabled",
+          `Scenario ${sc} has been disabled`,
+        );
+      }
+      asProp(this,).set("baseline", sc,);
+      return null;
+    },);
+    p.doc(
+      "baseline",
+      "Scenario whose scheduled dates and costs are exported as the MSPDI " +
+        "baseline (`<Baseline>`). Only the mspxml export uses it.",
+    );
+    p.arg(1, "scenario", "ID of a defined scenario",);
+
+    p.pattern(["!hidematerial",],);
+    p.pattern(["!hidepicture",],);
     p.pattern(["!hideresource",],);
     p.pattern(["!hidetask",],);
     p.pattern(["!loadunit",],);
@@ -1477,6 +1643,7 @@ export function registerReportRules(p: ProjectFileParser,): void {
       workinghours: "Include working hours",
     },);
 
+    p.pattern(["!rollupmaterial",],);
     p.pattern(["!rollupresource",],);
     p.pattern(["!rolluptask",],);
 
@@ -1614,12 +1781,15 @@ export function registerReportRules(p: ProjectFileParser,): void {
     p.optional();
     p.repeatable();
 
+    p.pattern(["!hidematerial",],);
+    p.pattern(["!hidepicture",],);
     p.pattern(["!hideresource",],);
     p.pattern(["!hidejournalentry",],);
     p.pattern(["!hidetask",],);
     p.pattern(["!reportEnd",],);
     p.pattern(["!reportPeriod",],);
     p.pattern(["!reportStart",],);
+    p.pattern(["!rollupmaterial",],);
     p.pattern(["!rollupresource",],);
     p.pattern(["!rolluptask",],);
 
@@ -1690,6 +1860,8 @@ export function registerReportRules(p: ProjectFileParser,): void {
 
     p.pattern(["!formats",],);
     p.pattern(["!headline",],);
+    p.pattern(["!hidematerial",],);
+    p.pattern(["!hidepicture",],);
     p.pattern(["!hideresource",],);
     p.pattern(["!hidetask",],);
 
@@ -1765,8 +1937,11 @@ export function registerReportRules(p: ProjectFileParser,): void {
     p.optional();
     p.repeatable();
 
+    p.pattern(["!hidematerial",],);
+    p.pattern(["!hidepicture",],);
     p.pattern(["!hideresource",],);
     p.pattern(["!hidetask",],);
+    p.pattern(["!rollupmaterial",],);
     p.pattern(["!rollupresource",],);
     p.pattern(["!rolluptask",],);
   },);
@@ -1888,6 +2063,8 @@ export function registerReportRules(p: ProjectFileParser,): void {
     p.optional();
     p.repeatable();
 
+    p.pattern(["!hidematerial",],);
+    p.pattern(["!hidepicture",],);
     p.pattern(["!hideresource",],);
     p.pattern(["!hidetask",],);
     p.pattern(["!reportEnd",],);
@@ -2007,6 +2184,8 @@ export function registerReportRules(p: ProjectFileParser,): void {
     p.optional();
     p.repeatable();
 
+    p.pattern(["!hidematerial",],);
+    p.pattern(["!hidepicture",],);
     p.pattern(["!hideresource",],);
     p.pattern(["!hidetask",],);
     p.pattern(["!reportEnd",],);
@@ -2118,7 +2297,7 @@ export function registerReportRules(p: ProjectFileParser,): void {
     p.pattern(["_listitem", "$STRING",], function (
       this: ProjectFileParser,
     ): unknown {
-      col(this,).listItem = richText(this, 1,);
+      col(this,).listItem = richText(this, 1, null,);
       return null;
     },);
 

@@ -127,23 +127,9 @@ export function registerMaterialAttributes(propertySet: PropertySet,): void {
     ),
   );
 
-  // totalquantity: Total Quantity (FloatAttribute, inheritedFromParent=false,
-  // inheritedFromProject=false, isScenarioAttribute=false, default=0.0).
-  // Fase 10 Complemento C3.1.1 — quantidade total planejada do insumo.
-  propertySet.addAttributeType(
-    new AttributeDefinition(
-      "totalquantity",
-      "Total Quantity",
-      AttributeType.Float,
-      0.0,
-      false, // userDefined
-      false, // isList
-      false, // isSingleton
-      false, // isScenarioAttribute
-      false, // inheritedFromParent
-      false, // inheritedFromProject
-    ),
-  );
+  // `totalquantity` foi removido na 14C.11.10: a quantidade de um material é
+  // derivada das alocações das tarefas (`Material#allocatedQuantity`), não
+  // declarada no bloco de definição.
 
   // flags: Flags (FlagListAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=true, default=[])
   // Complemento Fase 11 (LF.1) — permite testar flags de material em

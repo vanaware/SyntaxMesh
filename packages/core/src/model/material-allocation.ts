@@ -39,6 +39,11 @@ export class MaterialAllocation {
   readonly quantity: number;
   readonly modifier: MaterialAllocationModifier;
   readonly distribution?: number[];
+  /**
+   * Preço unitário próprio desta alocação (`unitprice <n>` após a
+   * quantidade, 14C.11.1). Ausente ⇒ vale o `unitprice` do material.
+   */
+  readonly unitPrice?: number;
 
   private _task: Task | null = null;
   private _scIdx: number = 0;
@@ -49,11 +54,13 @@ export class MaterialAllocation {
     quantity: number,
     modifier: MaterialAllocationModifier,
     distribution?: number[],
+    unitPrice?: number,
   ) {
     this.material = material;
     this.quantity = quantity;
     this.modifier = modifier;
     this.distribution = distribution;
+    this.unitPrice = unitPrice;
 
     // Validação
     if (quantity < 0) {
@@ -154,6 +161,14 @@ export class MaterialAllocation {
       default:
         return 0;
     }
+  }
+
+  /**
+   * Preço unitário efetivo: o da alocação → o do material informado (default
+   * `this.material`). O material resolve `unitprice`/campo legado sozinho.
+   */
+  unitPriceFor(material: Material = this.material,): number {
+    return this.unitPrice ?? material.unitPriceValue();
   }
 
   /**

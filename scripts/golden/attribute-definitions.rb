@@ -138,6 +138,20 @@ attribute_definitions << {
   'userDefined' => false,
   'extension' => 'tasks',
 }
+# Extensão documentada do port (Fase 14 Complemento 14C.11.3): materialbookings
+# em Task (NodeListAttribute, cenário-específico) — consumo realizado de
+# material (quantidade + preço próprio numa data). Não existe no TJ Ruby.
+attribute_definitions << {
+  'id' => 'materialbookings',
+  'name' => 'Material Bookings',
+  'objClass' => 'TaskJuggler::NodeListAttribute',
+  'inheritedFromParent' => false,
+  'inheritedFromProject' => false,
+  'scenarioSpecific' => true,
+  'default' => [],
+  'userDefined' => false,
+  'extension' => 'tasks',
+}
 
 project.reports.eachAttributeDefinition do |attr_def|
   attribute_definitions << {
@@ -190,7 +204,61 @@ attribute_definitions << {
   'extension' => 'reports',
 }
 
+# Extensão documentada do port (Fase 14 Complemento C5.1): format em Report.
+# Dialeto dos atributos RichText do relatório (`richtext` — default — ou
+# `markdown`). Não existe no TJ Ruby, que só conhece RichText.
+attribute_definitions << {
+  'id' => 'format',
+  'name' => 'Markup Format',
+  'objClass' => 'TaskJuggler::SymbolAttribute',
+  'inheritedFromParent' => true,
+  'inheritedFromProject' => false,
+  'scenarioSpecific' => false,
+  'default' => 'richtext',
+  'userDefined' => false,
+  'extension' => 'reports',
+}
+
+# Extensão documentada do port (Fase 14 Complemento C10 / adendo §10): baseline
+# em Report (IntegerAttribute, não herdada) — cenário cujas datas/custos formam
+# a linha de base do export MSPDI. Não existe no TJ Ruby.
+attribute_definitions << {
+  'id' => 'baseline',
+  'name' => 'Baseline',
+  'objClass' => 'TaskJuggler::IntegerAttribute',
+  'inheritedFromParent' => false,
+  'inheritedFromProject' => false,
+  'scenarioSpecific' => false,
+  'default' => nil,
+  'userDefined' => false,
+  'extension' => 'reports',
+}
+
 # Ordena por id para corresponder ao Ruby (já ordenado por cadaAttributeDefinition)
+attribute_definitions.sort_by! { |ad| ad['id'] }
+
+# Extensões documentadas do port (Fase 14 Complemento C6.2–C6.4): ocultação de
+# material/picture e consolidação de material. Não existem no TJ Ruby (que só
+# tem hideTask/hideResource/hideAccount/hideJournalEntry e os rollup* pareados).
+[
+  ['hideMaterial', 'Hide Material', 'TaskJuggler::LogicalExpressionAttribute'],
+  ['hidePicture', 'Hide Picture', 'TaskJuggler::LogicalExpressionAttribute'],
+  ['rollupMaterial', 'Rollup Material', 'TaskJuggler::LogicalExpressionAttribute'],
+].each do |id, name, obj_class|
+  attribute_definitions << {
+    'id' => id,
+    'name' => name,
+    'objClass' => obj_class,
+    'inheritedFromParent' => true,
+    'inheritedFromProject' => false,
+    'scenarioSpecific' => false,
+    'default' => nil,
+    'userDefined' => false,
+    'extension' => 'reports',
+  }
+end
+
+# Reordena após as extensões para manter o JSON ordenado por id.
 attribute_definitions.sort_by! { |ad| ad['id'] }
 
 # Gera o JSON (sem `generated_at` — timestamp quebraria a idempotência do golden)

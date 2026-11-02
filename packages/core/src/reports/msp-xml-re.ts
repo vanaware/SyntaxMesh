@@ -36,6 +36,7 @@ import { TjTime, } from "../time/tj-time.ts";
 import { TimeInterval, } from "../time/time-interval.ts";
 import { ScoreboardInterval, } from "../time/scoreboard-interval.ts";
 import { AppConfig, } from "../app-config.ts";
+import { MessageHandlerInstance, } from "../message-handler.ts";
 import { ReportBase, } from "./report-base.ts";
 import {
   XMLBlob,
@@ -123,6 +124,12 @@ interface CostResource {
 
 export class MspXmlRE extends ReportBase {
   private readonly scenarioIdx: number;
+  /**
+   * Cenário usado como linha de base (`baseline <scenario>`, 14C.10) ou `null`.
+   * Com ele o documento ganha `<Baseline>` do projeto e por tarefa; sem ele a
+   * saída é idêntica à anterior (oracle `mspdi.golden.json` intocado).
+   */
+  private readonly baselineIdx: number | null;
   private calendarUIDs: Record<string, string> = {};
   private query!: Query;
   private resourceList!: PropertyList<Resource>;
@@ -137,6 +144,8 @@ export class MspXmlRE extends ReportBase {
     // Este tipo de relatório suporta apenas um cenário: usa o primeiro.
     const scenarios = (this.a("scenarios",) as number[]) ?? [];
     this.scenarioIdx = scenarios[0] ?? 0;
+    const baseline = this.a("baseline",);
+    this.baselineIdx = typeof baseline === "number" ? baseline : null;
   }
 
   /** Não há formato intermediário para o exportador MSP. */
@@ -219,6 +228,7 @@ export class MspXmlRE extends ReportBase {
     this.file.push(project,);
 
     const calendars = this.generateProjectAttributes(project,);
+    if (this.baselineIdx !== null) this.generateProjectBaseline(project,);
     this.generateTasks(project,);
     this.generateResources(project, calendars,);
     this.generateAssignments(project,);
@@ -330,6 +340,83 @@ export class MspXmlRE extends ReportBase {
     project.push(tasks,);
     for (const task of this.taskList.toArray()) {
       this.generateTask(tasks, task,);
+    }
+  }
+
+  /**
+   * `<Baseline>` do **projeto** (`Number` 0), a partir das datas agendadas no
+   * cenário de linha de base (adendo §10 / 14C.10.4).
+   *
+   * O intervalo vem do primeiro início e do último fim entre as tarefas
+   * agendadas; o custo é a soma dos `CostEvent` do cenário quando existirem.
+   * Sem nenhuma tarefa agendada o elemento é omitido com aviso — o exportador
+   * nunca inventa datas.
+   */
+  private generateProjectBaseline(project: XMLElement,): void {
+    const sc = this.baselineIdx as number;
+    let first: TjTime | null = null;
+    let last: TjTime | null = null;
+    for (const task of this.taskList.toArray()) {
+      const dates = this.baselineDates(task, sc,);
+      if (!dates) continue;
+      if (!first || dates.start.compareTo(first,) < 0) first = dates.start;
+      if (!last || dates.end.compareTo(last,) > 0) last = dates.end;
+    }
+    if (!first || !last) {
+      MessageHandlerInstance.instance.warning(
+        "baseline_not_scheduled",
+        `Baseline scenario ${sc} has no scheduled dates; ` +
+          "MSPDI <Baseline> omitted.",
+      );
+      return;
+    }
+    this.appendBaseline(project, first, last, this.scenarioCost(null, sc,),);
+  }
+
+  /**
+   * Datas agendadas de `task` no cenário `scIdx`, ou `null` quando o cenário
+   * não foi escalonado para ela.
+   */
+  private baselineDates(
+    task: Task,
+    scIdx: number,
+  ): { start: TjTime; end: TjTime } | null {
+    const start = task.getForScenario("start", scIdx,) as TjTime | null;
+    const end = task.getForScenario("end", scIdx,) as TjTime | null;
+    if (!start || !end) return null;
+    return { start, end, };
+  }
+
+  /**
+   * Custo do cenário `scIdx` (Σ `CostEvent` do cenário), restrito a `task`
+   * quando fornecida. `null` quando não há eventos — o `<Cost>` é omitido.
+   */
+  private scenarioCost(task: Task | null, scIdx: number,): number | null {
+    let sum = 0;
+    let found = false;
+    for (const ce of this.project.costEvents) {
+      if (ce.scenarioIdx !== scIdx) continue;
+      if (task !== null && ce.task !== task) continue;
+      sum += ce.amount;
+      found = true;
+    }
+    return found ? sum : null;
+  }
+
+  /** Anexa `<Baseline Number="0">` com `Start`/`Finish` e `Cost` opcional. */
+  private appendBaseline(
+    parent: XMLElement,
+    start: TjTime,
+    end: TjTime,
+    cost: number | null,
+  ): void {
+    const b = new XMLElement("Baseline",);
+    parent.push(b,);
+    b.push(new XMLNamedText("0", "Number",),);
+    b.push(new XMLNamedText(start.to_s(TIMEFORMAT,), "Start",),);
+    b.push(new XMLNamedText(end.to_s(TIMEFORMAT,), "Finish",),);
+    if (cost !== null) {
+      b.push(new XMLNamedText(asDecimal(cost,), "Cost",),);
     }
   }
 
@@ -535,6 +622,20 @@ export class MspXmlRE extends ReportBase {
 
     this.appendPredecessors(t, task, true,);
     this.appendPredecessors(t, task, false,);
+
+    // `<Baseline>` por tarefa (14C.10.5): só quando o cenário de linha de base
+    // tem datas agendadas para ela.
+    if (this.baselineIdx !== null) {
+      const dates = this.baselineDates(task, this.baselineIdx,);
+      if (dates) {
+        this.appendBaseline(
+          t,
+          dates.start,
+          dates.end,
+          this.scenarioCost(task, this.baselineIdx,),
+        );
+      }
+    }
   }
 
   /**
@@ -852,16 +953,9 @@ export class MspXmlRE extends ReportBase {
     return (task.getForScenario("charge", this.scenarioIdx,) ?? []) as Charge[];
   }
 
-  /** `hideMaterial` (14C.4.10) aplicado a um material. */
+  /** `hideMaterial` (14C.4.10/14C.6.8) aplicado a um material. */
   private hiddenMaterial(material: Material,): boolean {
-    if (!this.report.attributeDefinition("hideMaterial",)) return false;
-    const expression = this.a("hideMaterial",) as
-      | { eval?: (query: unknown,) => unknown }
-      | null;
-    if (!expression || typeof expression.eval !== "function") return false;
-    const query = this.currentQuery().dup();
-    query.property = material as never;
-    return !!expression.eval(query,);
+    return this.hiddenBy("hideMaterial", material,);
   }
 
   /** Granularidade do scoreboard (segundos por slot), usada para converter

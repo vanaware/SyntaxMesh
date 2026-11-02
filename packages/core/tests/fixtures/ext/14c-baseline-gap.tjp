@@ -1,0 +1,37 @@
+# 14C.10 — Fixture do MSPDI com cenário de linha de base **inativo**.
+#
+# `active no` no cenário `base` faz o agendador pulá-lo: as tarefas ficam sem
+# `start`/`end` nesse cenário. O exportador precisa então
+#   • avisar `baseline_sc_disabled` no parse (14C.10.2);
+#   • omitir o `<Baseline>` de cada tarefa e o do projeto;
+#   • avisar `baseline_not_scheduled` em vez de escrever datas nulas
+#     (14C.10.4/14C.10.5).
+
+project mspgap "MSP Baseline gap 14C" "1.0" 2026-03-02 - 2026-04-30 {
+  timezone "UTC"
+  timeformat "%Y-%m-%d"
+  now 2026-03-02
+  currency "EUR"
+  scenario plan "Plan" {
+    scenario base "Baseline" {
+      active no
+    }
+    scenario atual "Atual" {
+    }
+  }
+}
+
+resource dev "Developer"
+
+task alpha "Alpha" {
+  start 2026-03-02
+  effort 5d
+  allocate dev
+}
+
+export "MS Project" {
+  formats mspxml
+  loadunit days
+  scenarios atual
+  baseline base
+}

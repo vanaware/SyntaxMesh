@@ -16,6 +16,7 @@ import { Account, } from "../../src/model/account.ts";
 import { Material, } from "../../src/model/material.ts";
 import { CostEvent, } from "../../src/model/cost-event.ts";
 import { Task, } from "../../src/model/task.ts";
+import { MaterialAllocation, } from "../../src/model/material-allocation.ts";
 import type { AccountScenario, } from "../../src/model/account-scenario.ts";
 
 describe("materiais no accountreport (14C.1.19)", () => {
@@ -29,8 +30,14 @@ describe("materiais no accountreport (14C.1.19)", () => {
     steel = new Material(project, "steel", "kg", 2.5,);
     steel.set("unit", "kg",);
     steel.set("cost", 2.5,);
-    steel.set("totalquantity", 100,);
+    // `totalquantity` foi removido (14C.11.10): a quantidade vem das
+    // alocações das tarefas.
     const task = new Task(project, "t1", "T1", null,);
+    task.setForScenario(
+      "materialallocations",
+      [new MaterialAllocation(steel, 100, "distributed",),],
+      0,
+    );
     project.costEvents.push(
       new CostEvent(
         "material_usage",
@@ -55,7 +62,7 @@ describe("materiais no accountreport (14C.1.19)", () => {
     assertEquals(scenarioData.turnoverByType(0, end, "task",), 0,);
   });
 
-  it("aggregate materials soma Material#totalCost() de project.materials", () => {
+  it("aggregate materials soma o custo derivado das alocações", () => {
     // Projeto limpo (sem CostEvent) para isolar a agregação por material: a
     // invariante 8.2 `sum(buckets) === total` não admite a soma dupla.
     const clean = createTestProject(1,);
@@ -64,17 +71,24 @@ describe("materiais no accountreport (14C.1.19)", () => {
     const steel = new Material(clean, "steel", "kg", 2.5,);
     steel.set("unit", "kg",);
     steel.set("cost", 2.5,);
-    steel.set("totalquantity", 100,);
     const cement = new Material(clean, "cement", "bag", 10,);
     cement.set("cost", 10,);
-    cement.set("totalquantity", 5,);
+    const build = new Task(clean, "build", "Build", null,);
+    build.setForScenario(
+      "materialallocations",
+      [
+        new MaterialAllocation(steel, 100, "distributed",),
+        new MaterialAllocation(cement, 5, "distributed",),
+      ],
+      0,
+    );
 
     const scenarioData = costAccount.scenarioData(0,) as AccountScenario;
     const end = clean.dateToIdx(
       clean.get("end",) as never,
     );
-    // `aggregate materials` percorre `project.materials` (e não
-    // `project.resources`, como antes): 100 × 2.5 + 5 × 10 = 300.
+    // `aggregate materials` percorre `project.materials` e soma o custo
+    // derivado das alocações (14C.11.10): 100 × 2.5 + 5 × 10 = 300.
     assertEquals(scenarioData.turnover(0, end,), 300,);
     assertEquals(scenarioData.getBuckets().material, 300,);
     assertEquals(scenarioData.getBuckets().task, 0,);

@@ -20,6 +20,7 @@ import type { Task, } from "../model/task.ts";
 import type { Resource, } from "../model/resource.ts";
 import type { Material, } from "../model/material.ts";
 import type { MaterialAllocation, } from "../model/material-allocation.ts";
+import type { MaterialBooking, } from "../model/material-booking.ts";
 import type { Shift, } from "../model/shift.ts";
 import type { Scenario, } from "../model/scenario.ts";
 import type { AttributeDefinition, } from "../attributes/attribute-definition.ts";
@@ -296,10 +297,13 @@ export class TjpExportRE extends ReportBase {
    * sub-materiais como em `resource`/`task`.
    *
    * Extensão SyntaxMesh: o `TjpExportRE` do TJ 3.8.4 não conhece materiais.
-   * O filtro `hidematerial`/`rollupmaterial` só existe a partir de 14C.6.
+   * `hidematerial` (14C.6.8) omite o material da exportação e das alocações
+   * das tarefas. `rollupmaterial` não altera o arquivo: a exportação é a
+   * própria fonte TJP e reescrever a árvore quebraria o round-trip.
    */
   private generateMaterialList(): void {
-    const materials = this.project.materials.toArray() as Material[];
+    const materials = (this.project.materials.toArray() as Material[])
+      .filter((material,) => !this.hiddenBy("hideMaterial", material,));
     for (const material of materials) {
       if (material.parent === null) this.generateMaterial(material, 0,);
     }
@@ -310,8 +314,9 @@ export class TjpExportRE extends ReportBase {
     this.file += " ".repeat(indent,) + `material ${material.id} ` +
       `${quotedString(material.name,)} {\n`;
 
-    // `unit`/`cost`/`totalquantity` são atributos não-cenário; o parser usa a
-    // palavra-chave `unitprice` para o atributo `cost`.
+    // `unit`/`cost` são atributos não-cenário; o parser usa a palavra-chave
+    // `unitprice` para o atributo `cost`. `totalquantity` foi removido na
+    // 14C.11.10 — a quantidade é derivada das alocações.
     const unit = material.get("unit",);
     if (typeof unit === "string" && unit !== "" && unit !== "{}") {
       this.generateAttributeText(
@@ -323,19 +328,13 @@ export class TjpExportRE extends ReportBase {
     if (typeof unitPrice === "number" && unitPrice !== 0) {
       this.generateAttributeText(`unitprice ${unitPrice}`, indent + 2,);
     }
-    const totalQuantity = material.get("totalquantity",);
-    if (typeof totalQuantity === "number" && totalQuantity !== 0) {
-      this.generateAttributeText(
-        `totalquantity ${totalQuantity}`,
-        indent + 2,
-      );
-    }
     for (const scenarioIdx of this.scenarioList()) {
       this.generateAttribute(material, "flags", indent + 2, scenarioIdx,);
     }
     this.generateAttribute(material, "note", indent + 2,);
 
     for (const sub of material.children as Material[]) {
+      if (this.hiddenBy("hideMaterial", sub,)) continue;
       this.generateMaterial(sub, indent + 2,);
     }
     this.file += " ".repeat(indent,) + "}\n";
@@ -356,6 +355,11 @@ export class TjpExportRE extends ReportBase {
     if (taskAttributes.includes("materialallocations",)) {
       for (const scenarioIdx of this.scenarioList()) {
         this.generateMaterialAllocations(task, indent + 2, scenarioIdx,);
+      }
+    }
+    if (taskAttributes.includes("materialbookings",)) {
+      for (const scenarioIdx of this.scenarioList()) {
+        this.generateMaterialBookings(task, indent + 2, scenarioIdx,);
       }
     }
 
@@ -445,13 +449,46 @@ export class TjpExportRE extends ReportBase {
       (task.getForScenario("materialallocations", scenarioIdx,) ??
         []) as MaterialAllocation[];
     for (const allocation of allocations) {
+      if (this.hiddenBy("hideMaterial", allocation.material,)) continue;
       const modifier = allocation.modifier &&
           allocation.modifier !== "distributed"
         ? ` ${allocation.modifier}`
         : "";
+      // Preço unitário próprio da alocação (14C.11.2/11.8): só sai quando
+      // declarado, para o round-trip não inventar `unitprice` no material.
+      const unitPrice = allocation.unitPrice !== undefined
+        ? ` unitprice ${allocation.unitPrice}`
+        : "";
       this.generateAttributeText(
         `material ${allocation.material.fullId} ${allocation.quantity}` +
-          modifier,
+          modifier + unitPrice,
+        indent,
+        scenarioIdx,
+      );
+    }
+  }
+
+  /**
+   * Emite os bookings de material da tarefa (14C.11.4/11.8) na forma do
+   * corpo da tarefa: `booking material <id> quantity <q> [unitprice <p>] on
+   * <data>`. A data usa `%Y-%m-%d` (mesmo `TjTime#toString`), formato aceito
+   * pelo parser.
+   */
+  private generateMaterialBookings(
+    task: Task,
+    indent: number,
+    scenarioIdx: number,
+  ): void {
+    const bookings = (task.getForScenario("materialbookings", scenarioIdx,) ??
+      []) as MaterialBooking[];
+    for (const booking of bookings) {
+      if (this.hiddenBy("hideMaterial", booking.material,)) continue;
+      const unitPrice = booking.unitPrice !== undefined
+        ? ` unitprice ${booking.unitPrice}`
+        : "";
+      this.generateAttributeText(
+        `booking material ${booking.material.fullId} quantity ` +
+          `${booking.quantity}${unitPrice} on ${String(booking.date,)}`,
         indent,
         scenarioIdx,
       );

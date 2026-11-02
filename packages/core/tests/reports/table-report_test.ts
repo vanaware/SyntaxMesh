@@ -96,7 +96,7 @@ describe("TableReport (14.12)", () => {
       assertEquals(TableReport.defaultColumnTitle("effort",), "Effort",);
       assertEquals(TableReport.defaultColumnTitle("chart",), "",);
       assertEquals(TableReport.defaultColumnTitle("daily",), "",);
-      assertEquals(TableReport.defaultColumnTitle("desconhecida",), "",);
+      assertEquals(TableReport.defaultColumnTitle("desconhecida",), null,);
     });
 
     it("indent respeita id e depois tipo", () => {

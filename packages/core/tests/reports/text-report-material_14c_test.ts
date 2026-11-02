@@ -41,7 +41,6 @@ describe("textreport com materiais (14C.1.12)", () => {
     const steel = new Material(project, "steel", "kg", 2.5,);
     steel.set("unit", "kg",);
     steel.set("cost", 2.5,);
-    steel.set("totalquantity", 100,);
 
     report = new Report(project, "tx", "tx.html", null,);
     report.typeSpec = ReportType.TextReport;

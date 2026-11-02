@@ -2587,6 +2587,12 @@ export class TaskScenario extends ScenarioData {
   /**
    * Variante sem argumentos que percorre `depends` e reinicia scheduling
    * de dependentes já agendados (uso interno legado).
+   *
+   * 14C.12.3: no Ruby este caminho só roda com `@start`/`@end` já definidos
+   * (a variante sem argumentos não existe em `TaskScenario.rb`); aqui a data
+   * própria pode estar indefinida (tarefa nunca agendada), então a ausência
+   * é tratada como "nada a comparar" em vez de estourar `TypeError` em
+   * `toSeconds()` de `null`.
    */
   propagateDateToDep(): void;
   propagateDateToDep(task?: Task, atEnd?: boolean,): void {
@@ -2606,13 +2612,18 @@ export class TaskScenario extends ScenarioData {
         continue;
       }
 
+      const own = this.a(dependency.onEnd ? "end" : "start",) as
+        | TjTime
+        | null;
+      if (own === null) continue;
+      const other = dependentScenarioData.a(
+        dependency.onEnd ? "start" : "end",
+      ) as TjTime | null;
+      if (other === null) continue;
+
       const changed = dependency.onEnd
-        ? dependentScenarioData.a("start",) !== null &&
-          (dependentScenarioData.a("start",) as TjTime).toSeconds() <
-            (this.a("end",) as TjTime).toSeconds()
-        : dependentScenarioData.a("end",) !== null &&
-          (dependentScenarioData.a("end",) as TjTime).toSeconds() >
-            (this.a("start",) as TjTime).toSeconds();
+        ? other.toSeconds() < own.toSeconds()
+        : other.toSeconds() > own.toSeconds();
 
       if (changed) {
         dependent.scenarioData(this.getScenarioIdx(),).finishScheduling();

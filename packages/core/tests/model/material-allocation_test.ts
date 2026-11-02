@@ -65,3 +65,39 @@ describe("MaterialAllocation", () => {
     );
   });
 });
+
+/**
+ * 14C.11.1 — preço unitário próprio da alocação. Sem `unitPrice` a alocação
+ * delega ao material; com ele, o da alocação vence.
+ */
+describe("MaterialAllocation unitPrice (14C.11.1)", () => {
+  const project = createTestProject();
+  const steel = new Material(project, "steel", "kg", 25.0,);
+
+  it("sem preço próprio: unitPrice indefinido e herda o do material", () => {
+    const alloc = new MaterialAllocation(steel, 500, "onstart",);
+    assertEquals(alloc.unitPrice, undefined,);
+    assertEquals(alloc.unitPriceFor(), 25,);
+  });
+
+  it("com preço próprio: unitPriceFor devolve o da alocação", () => {
+    const alloc = new MaterialAllocation(steel, 500, "onstart", undefined, 30,);
+    assertEquals(alloc.unitPrice, 30,);
+    assertEquals(alloc.unitPriceFor(), 30,);
+  });
+
+  it("unitPriceFor(material) aceita um material alternativo", () => {
+    const other = new Material(project, "concrete", "m3", 9,);
+    const plain = new MaterialAllocation(steel, 10, "distributed",);
+    assertEquals(plain.unitPriceFor(other,), 9,);
+    // O preço próprio sempre vence, mesmo com material alternativo.
+    const priced = new MaterialAllocation(
+      steel,
+      10,
+      "distributed",
+      undefined,
+      12,
+    );
+    assertEquals(priced.unitPriceFor(other,), 12,);
+  });
+});

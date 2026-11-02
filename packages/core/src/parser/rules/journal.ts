@@ -7,16 +7,44 @@
  * (path + caption/align/width/alt). Ambos operam sobre `this.journalEntry`,
  * que as regras de journalentry (task.ts) e de status (tracking.ts) preenchem.
  *
+ * Desde a Fase 14 Complemento (14C.5.1) a MESMA regra `format` também atende
+ * ao escopo de **report** (header/footer/prolog/epilog/caption/…): o dialeto
+ * lá é `richtext` por default, para preservar os `.tjp` existentes.
+ *
  * @see docs/syntaxmesh/fases/fase-10-complemento-tarefas.md (Bloco C3.3)
+ * @see docs/syntaxmesh/fases/fase-14-relatorios-complemento-tarefas.md (14C.5.1)
  */
 import { Picture, type PictureAlign, } from "../../model/picture.ts";
 import { type EntryFormat, type JournalEntry, } from "../../model/journal.ts";
+import { Report, } from "../../model/report.ts";
+import { applyReportFormat, } from "./report.ts";
 import type { ProjectFileParser, } from "../project-file-parser.ts";
 import { rule, } from "./helpers.ts";
 
 /** Entry corrente em processamento (journalentry ou status). */
 const asEntry = (parser: ProjectFileParser,): JournalEntry | null =>
   (parser.journalEntry as JournalEntry | null) ?? null;
+
+/**
+ * Aplica `format <dialeto>` ao escopo corrente (mecanismo compartilhado entre
+ * `journalentry`/`status` e `report`).
+ *
+ * O dialeto de um `report` é propagado aos atributos RichText já lidos pelo
+ * parser (`applyReportFormat`), então `format` pode vir antes ou depois de
+ * `header`/`footer`/… — a ordem dos atributos não importa em TJP.
+ */
+export function applyFormat(
+  parser: ProjectFileParser,
+  format: EntryFormat,
+): void {
+  const entry = asEntry(parser,);
+  if (entry) {
+    entry.format = format;
+    return;
+  }
+  const prop = parser.property;
+  if (prop instanceof Report) applyReportFormat(parser, prop, format,);
+}
 
 /** Registra as regras de `picture` e `format`. */
 export function registerJournalRules(p: ProjectFileParser,): void {
@@ -106,20 +134,19 @@ export function registerJournalRules(p: ProjectFileParser,): void {
   },);
 
   // ------------------------------------------------------------------
-  // format markdown|richtext (default markdown)
+  // format markdown|richtext (default markdown em entries, richtext em reports)
   // ------------------------------------------------------------------
   rule(p, "format", () => {
     p.pattern(
       ["_format", "!formatKeyword",],
       function (this: ProjectFileParser,): unknown {
-        const entry = asEntry(this,);
-        if (entry) entry.format = this.val[1] as EntryFormat;
+        applyFormat(this, this.val[1] as EntryFormat,);
         return null;
       },
     );
     p.doc(
       "format",
-      "Selects the markup dialect of the entry body: markdown or richtext.",
+      "Selects the markup dialect of the body: markdown or richtext.",
     );
   },);
 

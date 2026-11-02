@@ -3,11 +3,12 @@ proyecto prj "Test" "1.0" 2026-01-01 - 2026-12-31
 material steel "Steel" {
   unit "kg"
   unitprice 2
-  totalquantity 100
 }
 tarea t1 "T1" {
   esfuerzo 2d
   base_temporal duration
+  material steel 10 preciounitario 3
+  asignacion material steel cantidad 5 preciounitario 4 en 2026-01-06
   asiento 2026-01-05 "Entry" {
     imagen "a.png" {
       leyenda "Cap"

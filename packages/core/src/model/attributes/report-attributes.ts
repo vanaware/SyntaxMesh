@@ -40,6 +40,24 @@ export function registerReportAttributes(propertySet: PropertySet,): void {
     ),
   );
 
+  // baseline: Baseline (IntegerAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
+  // Extensão SyntaxMesh (adendo §10 / 14C.10): cenário cujas datas e custos
+  // formam a linha de base exportada como `<Baseline>` no MSPDI.
+  propertySet.addAttributeType(
+    new AttributeDefinition(
+      "baseline",
+      "Baseline",
+      AttributeType.Integer,
+      null,
+      false, // userDefined
+      false, // isList
+      false, // isSingleton
+      false, // isScenarioAttribute
+      false, // inheritedFromParent
+      false, // inheritedFromProject
+    ),
+  );
+
   // bsi: BSI (StringAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default="")
   propertySet.addAttributeType(
     new AttributeDefinition(
@@ -317,6 +335,41 @@ export function registerReportAttributes(propertySet: PropertySet,): void {
     new AttributeDefinition(
       "hideJournalEntry",
       "Hide JournalEntry",
+      AttributeType.LogicalExpression,
+      null,
+      false, // userDefined
+      false, // isList
+      false, // isSingleton
+      false, // isScenarioAttribute
+      true, // inheritedFromParent
+      false, // inheritedFromProject
+    ),
+  );
+
+  // hideMaterial: Hide Material (extensão SyntaxMesh — Fase 14 Complemento
+  // C6.2/C6.5). Mesmo formato de `hideResource`, avaliado com a propriedade
+  // `Material` no papel de `query.property`.
+  propertySet.addAttributeType(
+    new AttributeDefinition(
+      "hideMaterial",
+      "Hide Material",
+      AttributeType.LogicalExpression,
+      null,
+      false, // userDefined
+      false, // isList
+      false, // isSingleton
+      false, // isScenarioAttribute
+      true, // inheritedFromParent
+      false, // inheritedFromProject
+    ),
+  );
+
+  // hidePicture: Hide Picture (extensão SyntaxMesh — Fase 14 Complemento
+  // C6.3/C6.5). Oculta `Picture`s da galeria dos relatórios.
+  propertySet.addAttributeType(
+    new AttributeDefinition(
+      "hidePicture",
+      "Hide Picture",
       AttributeType.LogicalExpression,
       null,
       false, // userDefined
@@ -653,6 +706,24 @@ export function registerReportAttributes(propertySet: PropertySet,): void {
     new AttributeDefinition(
       "rollupAccount",
       "Rollup Account",
+      AttributeType.LogicalExpression,
+      null,
+      false, // userDefined
+      false, // isList
+      false, // isSingleton
+      false, // isScenarioAttribute
+      true, // inheritedFromParent
+      false, // inheritedFromProject
+    ),
+  );
+
+  // rollupMaterial: Rollup Material (extensão SyntaxMesh — Fase 14 Complemento
+  // C6.4/C6.9). Parceiro de `rollupResource`: material envolvido não gera
+  // linha própria nas listas que exibem materiais.
+  propertySet.addAttributeType(
+    new AttributeDefinition(
+      "rollupMaterial",
+      "Rollup Material",
       AttributeType.LogicalExpression,
       null,
       false, // userDefined
@@ -1065,6 +1136,25 @@ export function registerReportAttributes(propertySet: PropertySet,): void {
       false, // isSingleton
       false, // isScenarioAttribute
       false, // inheritedFromParent
+      false, // inheritedFromProject
+    ),
+  );
+
+  // format: Markup format of the report RichText attributes (SymbolAttribute)
+  // — extensão Fase 14 Complemento C5.1. `richtext` (default) preserva os
+  // `.tjp` existentes; `markdown` é opt-in (ADR 026/027). Herdado de
+  // relatórios-pai, como os demais atributos RichText (`caption`, `header`…).
+  propertySet.addAttributeType(
+    new AttributeDefinition(
+      "format",
+      "Markup Format",
+      AttributeType.Symbol,
+      "richtext",
+      false, // userDefined
+      false, // isList
+      false, // isSingleton
+      false, // isScenarioAttribute
+      true, // inheritedFromParent
       false, // inheritedFromProject
     ),
   );

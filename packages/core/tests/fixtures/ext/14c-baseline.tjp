@@ -1,0 +1,45 @@
+# 14C.10 — Fixture do MSPDI com linha de base (extensão SyntaxMesh).
+#
+# Três cenários: `plan` (topo), com as folhas `base` (linha de base) e `atual`
+# (cenário do relatório). O `baseline base` no bloco de export faz o exportador
+# emitir `<Baseline><Number>0</Number>…` no projeto e em cada tarefa agendada no
+# cenário `base` (14C.10.4/14C.10.5). Sem `baseline`, o documento é idêntico ao
+# anterior (oracle `mspdi.golden.json` intocado).
+#
+# Tarefas de topo com `start` + `effort` + `allocate` explícitos: evita tanto a
+# propagação de dependências quanto o rollup de datas de contêiner (Fase 7 /
+# CURRENT.md, G1.4).
+
+project mspbase "MSP Baseline 14C" "1.0" 2026-03-02 - 2026-04-30 {
+  timezone "UTC"
+  timeformat "%Y-%m-%d"
+  now 2026-03-02
+  currency "EUR"
+  scenario plan "Plan" {
+    scenario base "Baseline" {
+    }
+    scenario atual "Atual" {
+    }
+  }
+}
+
+resource dev "Developer"
+
+task alpha "Alpha" {
+  start 2026-03-02
+  effort 5d
+  allocate dev
+}
+
+task beta "Beta" {
+  start 2026-03-09
+  effort 3d
+  allocate dev
+}
+
+export "MS Project" {
+  formats mspxml
+  loadunit days
+  scenarios atual
+  baseline base
+}

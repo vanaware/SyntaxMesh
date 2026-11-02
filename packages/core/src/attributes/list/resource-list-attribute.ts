@@ -8,7 +8,6 @@ import { type PropertyLike, } from "../../model/property-like.ts";
 import { type AttributeContainer, } from "../attribute-container.ts";
 import { type AttributeDefinition, } from "../attribute-definition.ts";
 import { ListAttributeBase, } from "../list-attribute-base.ts";
-import { NotYetImplementedError, } from "../errors.ts";
 
 /**
  * Atributo de lista de recursos.
@@ -42,16 +41,5 @@ export class ResourceListAttribute extends ListAttributeBase<
     const val = this.get();
     const out = val ? val.map((item,) => item.fullId) : [];
     return `${this.type.id} ${out.join(", ",)}`;
-  }
-
-  /**
-   * Converte o valor para RTI (Rich Text Intermediate).
-   *
-   * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ResourceListAttribute#to_rti
-   */
-  override to_rti(): unknown {
-    // Ancorado: Fase 14 — ResourceListAttribute#to_rti depende de `query.listItem`
-    // (template de lista dos relatórios); RichText + RTFHandlers já entregues (12.18).
-    throw new NotYetImplementedError("12", "to_rti",);
   }
 }

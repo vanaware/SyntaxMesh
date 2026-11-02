@@ -53,6 +53,10 @@ export class ReportContext {
       start: report.get("start",) as never,
       end: report.get("end",) as never,
       hideJournalEntry: report.get("hideJournalEntry",),
+      // Extensão SyntaxMesh (14C.6.5): parceiras de `hideJournalEntry`.
+      hideMaterial: report.get("hideMaterial",),
+      rollupMaterial: report.get("rollupMaterial",),
+      hidePicture: report.get("hidePicture",),
       journalMode: report.get("journalMode",) as string | null,
       journalAttributes: report.get("journalAttributes",) as string[] | null,
       sortJournalEntries: report.get("sortJournalEntries",),

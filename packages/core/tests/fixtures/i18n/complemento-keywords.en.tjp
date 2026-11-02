@@ -2,11 +2,12 @@ project prj "Test" "1.0" 2026-01-01 - 2026-12-31
 material steel "Steel" {
   unit "kg"
   unitprice 2
-  totalquantity 100
 }
 task t1 "T1" {
   effort 2d
   timebasis duration
+  material steel 10 unitprice 3
+  booking material steel quantity 5 unitprice 4 on 2026-01-06
   journalentry 2026-01-05 "Entry" {
     picture "a.png" {
       caption "Cap"

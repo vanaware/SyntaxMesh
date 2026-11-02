@@ -231,7 +231,7 @@ export abstract class AttributeBase<T,> {
    *
    * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:to_rti
    */
-  to_rti(): unknown {
+  to_rti(_query?: unknown,): unknown {
     const val = this.get();
     // Duck-typing fiel ao `is_a?(RichTextIntermediate)` de Ruby: o RTI porta
     // a marca `richText` (mesma detecção usada em RichTextAttribute).

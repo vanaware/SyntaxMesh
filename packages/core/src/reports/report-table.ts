@@ -13,6 +13,7 @@ import {
   SimpleXMLElement,
   type XMLElementLike,
 } from "../richtext/xml-like.ts";
+import { markdownTable, markdownText, } from "./markdown.ts";
 import type { ReportTableColumn, } from "./report-table-column.ts";
 import type { ReportTableLine, } from "./report-table-line.ts";
 
@@ -161,6 +162,27 @@ export class ReportTable {
       columns: this.columns.map((col,) => col.toJSON()),
       lines: this.lines.map((line,) => line.toJSON()),
     };
+  }
+
+  /**
+   * Tabela em Markdown (GFM) — extensão SyntaxMesh (adendo §10).
+   *
+   * O cabeçalho de uma coluna tem até duas células; como o Markdown só aceita
+   * uma linha de cabeçalho, elas são unidas (`celula1 celula2`). A grade de
+   * dados é a mesma do CSV (`to_csv`), que já resolve `colspan`/tabelas
+   * embutidas.
+   */
+  to_markdown(): string {
+    const headers = this.columns.map((col,) => {
+      const top = markdownText(col.cell1.text,);
+      const bottom = markdownText(col.cell2.text,);
+      if (top === "") return bottom;
+      if (bottom === "") return top;
+      return `${top} ${bottom}`;
+    },);
+    const csv = this.to_csv();
+    const rows = Array.isArray(csv,) ? csv.slice(1,) : [];
+    return markdownTable(headers, rows,);
   }
 
   /** Maior indentação entre todas as linhas (modo árvore). */

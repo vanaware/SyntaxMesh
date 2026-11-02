@@ -28,7 +28,6 @@ account costs "Custos" {
 material steel "Aço" {
   unit "kg"
   unitprice 2.5
-  totalquantity 1000
   note "Lote único de aço."
 }
 

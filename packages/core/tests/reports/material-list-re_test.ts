@@ -51,26 +51,36 @@ function makeReport(
   return report;
 }
 
-/** Cria um material com atributos canônicos (unit/cost/totalquantity). */
+/** Cria um material com atributos canônicos (unit/cost). */
 function makeMaterial(
   project: Project,
   id: string,
   unit: string,
   unitPrice: number,
-  totalQuantity: number,
 ): Material {
-  const material = new Material(
-    project,
-    id,
-    unit,
-    unitPrice,
-    undefined,
-    totalQuantity,
-  );
+  const material = new Material(project, id, unit, unitPrice,);
   material.set("unit", unit,);
   material.set("cost", unitPrice,);
-  material.set("totalquantity", totalQuantity,);
   return material;
+}
+
+/**
+ * Aloca `quantity` do material numa tarefa (14C.11.10: a quantidade do
+ * material vem das alocações; `totalquantity` foi removido).
+ */
+function allocate(
+  project: Project,
+  material: Material,
+  quantity: number,
+  taskId = "t0",
+): Task {
+  const task = new Task(project, taskId, taskId, null,);
+  task.setForScenario(
+    "materialallocations",
+    [new MaterialAllocation(material, quantity, "distributed",),],
+    0,
+  );
+  return task;
 }
 
 /** Texto de cada célula não-nula de uma linha. */
@@ -88,8 +98,8 @@ describe("MaterialListRE (14C.1.4)", () => {
 
   beforeEach(() => {
     project = createTestProject(1,);
-    steel = makeMaterial(project, "steel", "kg", 2.5, 100,);
-    concrete = makeMaterial(project, "concrete", "m3", 80, 10,);
+    steel = makeMaterial(project, "steel", "kg", 2.5,);
+    concrete = makeMaterial(project, "concrete", "m3", 80,);
   },);
 
   describe("registro na fábrica", () => {
@@ -113,6 +123,7 @@ describe("MaterialListRE (14C.1.4)", () => {
     });
 
     it("preenche as colunas padrão sem erros de célula", () => {
+      allocate(project, steel, 100,);
       const report = makeReport(project,);
       const re = new MaterialListRE(report,);
       re.generateIntermediateFormat();
@@ -123,7 +134,7 @@ describe("MaterialListRE (14C.1.4)", () => {
       assertEquals(texts[1], "steel",); // name
       assertEquals(texts[2], "kg",); // unit
       assertEquals(texts[3], "2.5",); // unitprice (cost, float do núcleo)
-      assertEquals(texts[4], "250",); // totalcost (100 * 2.5)
+      assertEquals(texts[4], "250",); // totalcost (100 × 2.5 da alocação)
       assert(
         !texts.includes("<Error>",),
         `célula com erro: ${texts.join(" | ",)}`,
@@ -206,7 +217,8 @@ describe("MaterialListRE (14C.1.4)", () => {
       assertEquals(texts[3], "150",);
     });
 
-    it("sem CostEvents, totalcost cai em totalQuantity × unitPrice", () => {
+    it("sem CostEvents, totalcost vem das alocações (14C.11.10)", () => {
+      allocate(project, steel, 100,);
       const report = makeReport(project, [
         new TableColumnDefinition("name", "Name",),
         new TableColumnDefinition("totalcost", "Total",),

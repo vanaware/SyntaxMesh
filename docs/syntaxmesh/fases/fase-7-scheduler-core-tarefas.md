@@ -1004,4 +1004,39 @@ mwe001 com folga — o modelo está correto; o ajuste é do scheduler.
 
 ---
 
+## Adendo (2026-11-01) — Auditoria do G1.4 pela Fase 14 Complemento (14C.12)
+
+O adendo de 2026-10-27 registrou o gap de placement; a **14C.12** voltou ao
+assunto só para **auditar e fixar âncora**, sem reabrir a fase. Resultado:
+
+- **Gap fechado.** `Project.schedule()` coloca `start`/`end` e consome o
+esforço num modelo construído à mão (`start` + `effort` + `allocate`). O probe
+de 14C.12.2 (`tests/integration/scheduler-g1_4-audit_14c_test.ts`) tem
+`start !== null`, `end !== null` e `doneEffort() === 16`. As quatro correções
+de port do adendo de 2026-10-27 (`PropertyList.items`, `doneEffort()`,
+`Xref`/`checkDependency`, `propagateDate`) são as responsáveis.
+- **Bug remanescente corrigido (14C.12.3).** A variante sem argumentos de
+`TaskScenario#propagateDateToDep()` (chamada no fim de `finishScheduling`)
+fazia `(this.a("end") as TjTime).toSeconds()` sem checar ausência de data:
+uma tarefa nunca agendada isso é `TypeError: Cannot read properties of null`.
+O guard de nulidade ("nada a comparar") preserva a semântica do Ruby — lá o
+caminho só roda com `@start`/`@end` já definidos.
+- **Impacto no corpus:** com o guard, `CSV-Reports/alert.tjp` passou a agendar.
+`PENDING_SCHEDULER_FILES` em `tests/golden/reports_golden_test.ts` ficou
+**vazio** e o arquivo passou a ser comparado contra o oracle Ruby (112 passos
+verdes). Nenhum golden precisou ser regenerado (as saídas já batiam).
+- **Divergência registrada, não corrigida (14C.12.4).** O `finishScheduling`
+do Ruby (`TaskScenario.rb:410-430`) recursa nos filhos, mescla
+`assignedresources` no pai e anula as listas de candidatos, terminando em
+`markAsScheduled`; o port calcula `calcCompletion`/`calcStatus`/`calcGauge`,
+chama `propagateDateToDep()` e grava `_scheduled = true`. Nenhum golden da
+suíte depende da diferença hoje, mas o port **não** faz a mesclagem de
+`assignedresources` no container — fica registrado aqui para quem retomar o
+scheduler (Fase 15/Gantt ou revisão dedicada).
+
+**A Fase 7 segue concluída; a 14C.12 não alterou escopo, só documentou e
+corrigiu o null-deref da propagação de datas.**
+
+---
+
 **Fim do arquivo de tarefas da Fase 7.**

@@ -622,7 +622,7 @@ Tarefas: `docs/syntaxmesh/fases/fase-8.2-tarefas.md`.
 | 12 | core (richtext) | RichText, RichText/* | **Alta** | ✅ Concluída (2026-10-29, 12.0–12.20; G5 `to_rti`/`to_tjp` re-ancorado e entregue na Fase 14) |
 | 13 | core (markdown) | — | Baixa (futuro) | ✅ Concluída (2026-10-29, 13.0–13.13; 13.14 parcial — `objectURL`/render dependem das Fases 19/10-C) |
 | 14 | core (report) | reports/* | **Crítica** | ✅ Concluída (2026-10-31, 14.0–14.24; adendos 14.25/14.26 transferidos p/ Fase 14-C) |
-| 14-C | core (report) | MspXmlRE.rb + extensões SyntaxMesh (material/picture/RDO/markdown) | **Alta** | 🟡 planejada (`fase-14-relatorios-complemento.md` + `-tarefas.md`; Blocos C0–C7; bring-forwards do Journal/alert-levels [F16] justificados no §6) |
+| 14-C | core (report) | MspXmlRE.rb + extensões SyntaxMesh (material/picture/RDO/markdown) | **Alta** | ✅ Concluída (2026-11-01, C0–C12) — inclui o adendo §10: saída markdown `.md` + prefixos `md*report` (C8), `defaultaccount` (C9), `<Baseline>` do MSPDI (C10), unit price por alocação/booking + remoção de `totalquantity` (C11) e auditoria do G1.4 (C12). Ver tabelas de evidência 14C.8–14C.12 em `fase-14-relatorios-complemento-tarefas.md` |
 | 15 | core (report) | Gantt* | **Alta** | ⬜ Não iniciada |
 | 16 | core | Journal, AlertLevelDefinitions, LeaveList, TernarySearchTree, etc. | **Alta** | ⬜ Não iniciada (adendo 16.21) |
 | 17 | core (report) | XMLDocument, XMLElement, HTMLDocument, HTMLElements, ICalendar | **Média** | ⬜ Não iniciada |

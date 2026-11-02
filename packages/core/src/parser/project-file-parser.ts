@@ -28,6 +28,7 @@ import { SourceFileInfo, } from "../source-file-info.ts";
 import { TimeInterval, } from "../time/time-interval.ts";
 import { TjTime, } from "../time/tj-time.ts";
 import { PropertySet, } from "../model/property-set.ts";
+import { TableReport, } from "../reports/table-report.ts";
 import { PropertyTreeNode, } from "../model/property-tree-node.ts";
 import { Project, } from "../model/project.ts";
 import { Report, } from "../model/report.ts";
@@ -37,6 +38,8 @@ import {
   type RichTextFactory,
   RichTextFactoryImpl,
 } from "../richtext/factory.ts";
+import { MarkdownFactory, } from "../markdown/factory.ts";
+import type { EntryFormat, } from "../model/journal.ts";
 import type { RichTextIntermediate, } from "../richtext/rich-text-intermediate.ts";
 import type { Rule, } from "./rule.ts";
 import { TokenDoc, } from "../lexer/token-doc.ts";
@@ -68,6 +71,11 @@ export class ProjectFileParser extends TextParser {
    * cria uma {@link RichTextFactoryImpl} sob demanda com o projeto corrente.
    */
   richTextFactory: RichTextFactory | null = null;
+  /**
+   * Fábrica de Markdown injetada (14C.5.1). Quando ausente, `newRichText` cria
+   * uma {@link MarkdownFactory} sob demanda para escopos com `format markdown`.
+   */
+  markdownFactory: RichTextFactory | null = null;
   /** Propriedade-alvo dos atributos em processamento (Ruby @property). */
   property: PropertyTreeNode | null = null;
   /** Índice do cenário corrente (Ruby @scenarioIdx). */
@@ -468,18 +476,32 @@ export class ProjectFileParser extends TextParser {
     this.richTextFactory = factory;
   }
 
+  /** Injeta a fábrica de Markdown usada por `newRichText(..., "markdown")`. */
+  setMarkdownFactory(factory: RichTextFactory,): void {
+    this.markdownFactory = factory;
+  }
+
   /**
    * Wrapper de RichText (ProjectFileParser.rb:221-233). Cria o
-   * `RichTextIntermediate` via a fábrica, fazendo o baseline do SourceFileInfo
-   * para que mensagens do parser de RichText apontem para o arquivo de origem.
+   * `RichTextIntermediate` via a fábrica do dialeto pedido, fazendo o baseline
+   * do SourceFileInfo para que mensagens do parser de RichText apontem para o
+   * arquivo de origem.
+   *
+   * `format` (extensão 14C.5.1) escolhe o pipeline: `richtext` — default, o
+   * dialeto de `.tjp` — usa {@link RichTextFactoryImpl}; `markdown` usa
+   * {@link MarkdownFactory} (Fase 13). As duas produzem o mesmo
+   * `RichTextIntermediate`, então `to_s()`/`to_html()` dos relatórios não
+   * precisam saber qual foi usado.
    */
   newRichText(
     text: string,
     sfi: SourceFileInfo | null,
     tokenSet: string[] | null = null,
+    format: EntryFormat = "richtext",
   ): RichTextIntermediate {
-    const factory = this.richTextFactory ??
-      new RichTextFactoryImpl(this.project, sfi,);
+    const factory = format === "markdown"
+      ? (this.markdownFactory ?? new MarkdownFactory(this.project, sfi,))
+      : (this.richTextFactory ?? new RichTextFactoryImpl(this.project, sfi,));
     const mh = MessageHandlerInstance.instance;
     mh.baselineSFI = sfi;
     try {
@@ -758,7 +780,8 @@ export class ProjectFileParser extends TextParser {
     ) {
       return `<-id->:<-scenario->.${colId}`;
     }
-    return this.project?.attributeName(colId,);
+    return TableReport.defaultColumnTitle(colId,) ??
+      this.project?.attributeName(colId,);
   }
 
   // ---------------------------------------------------------------------

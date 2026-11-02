@@ -22,6 +22,8 @@ export interface ReportContent {
 
   to_html?(): XMLElementLike[] | XMLElementLike | string;
   to_csv?(): unknown[][] | null;
+  /** Markdown do formato intermediário (extensão SyntaxMesh — adendo §10). */
+  to_markdown?(): string | null;
   /** JSON do formato intermediário (extensão SyntaxMesh — 14C.0.1). */
   toJSON?(): string;
   to_tjp?(): string;

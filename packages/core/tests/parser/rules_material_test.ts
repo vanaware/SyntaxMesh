@@ -8,10 +8,10 @@ import { MaterialAllocation, } from "../../src/model/material-allocation.ts";
 import { parseProject, PROJECT_HEADER, } from "./parse-helper.ts";
 
 describe("C3.1.1 material body", () => {
-  it("material com unit/unitprice/totalquantity registra atributos", () => {
+  it("material com unit/unitprice registra atributos", () => {
     const { parser, messageIds, threw, result, } = parseProject(
       PROJECT_HEADER +
-        'material ac "Aço" {\nunit "kg"\nunitprice 5\ntotalquantity 100\n}\n',
+        'material ac "Aço" {\nunit "kg"\nunitprice 5\n}\n',
     );
     assertEquals(threw, null, `messages=${messageIds.join(",",)}`,);
     assert(result !== false, `parse failed: ${messageIds.join(",",)}`,);
@@ -19,7 +19,17 @@ describe("C3.1.1 material body", () => {
     assert(m !== null, "material ac não registrado",);
     assertEquals(m.get("unit",), "kg",);
     assertEquals(m.get("cost",), 5,);
-    assertEquals(m.get("totalquantity",), 100,);
+  });
+
+  it("14C.11.9 `totalquantity` é recusado com mensagem direcionada", () => {
+    const { messageIds, threw, } = parseProject(
+      PROJECT_HEADER + 'material ac "Aço" {\ntotalquantity 100\n}\n',
+    );
+    assert(threw !== null || messageIds.includes("totalquantity_removed",),);
+    assert(
+      messageIds.includes("totalquantity_removed",),
+      `mensagens=${messageIds.join(",",)}`,
+    );
   });
 
   it("material aceita chargeset (atributo de cenário)", () => {
@@ -82,13 +92,13 @@ describe("C3.1.3 supplement material", () => {
   it("supplement material atualiza atributos existentes", () => {
     const { parser, messageIds, threw, result, } = parseProject(
       PROJECT_HEADER +
-        'material ac "Aço" {\nunit "kg"\ntotalquantity 100\n}\n' +
-        "supplement material ac {\ntotalquantity 200\n}\n",
+        'material ac "Aço" {\nunit "kg"\nunitprice 5\n}\n' +
+        "supplement material ac {\nunitprice 6\n}\n",
     );
     assertEquals(threw, null, `messages=${messageIds.join(",",)}`,);
     assert(result !== false, `parse failed: ${messageIds.join(",",)}`,);
     const m = parser.project!.material("ac",)!;
-    assertEquals(m.get("totalquantity",), 200,);
+    assertEquals(m.get("cost",), 6,);
   });
 });
 

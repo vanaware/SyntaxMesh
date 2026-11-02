@@ -1,6 +1,8 @@
 import { beforeEach, describe, it, } from "@std/testing/bdd";
 import { assert, assertEquals, } from "@std/assert";
 import { Material, } from "../../src/model/material.ts";
+import { MaterialAllocation, } from "../../src/model/material-allocation.ts";
+import { Task, } from "../../src/model/task.ts";
 import { MaterialScenario, } from "../../src/model/material-scenario.ts";
 import { ChargeSetCollection, } from "../../src/finance/charge-set-collection.ts";
 import { createTestProject, } from "../fixtures/create-test-project.ts";
@@ -14,45 +16,38 @@ describe("Material", () => {
     assertEquals(material.unit, "kg",);
     assertEquals(material.unitPrice, 25.0,);
     assert(material.chargeset instanceof ChargeSetCollection,);
-    assertEquals(material.totalQuantity, undefined,);
   });
 
-  it("material sem totalQuantity opcional", () => {
+  it("quantidade derivada sem alocações é 0", () => {
     const project = createTestProject();
     const material = new Material(project, "Steel", "kg", 25.0,);
-    assertEquals(material.totalQuantity, undefined,);
+    assertEquals(material.allocatedQuantity(0,), 0,);
+    assertEquals(material.allocatedCost(0,), 0,);
   });
 
-  it("material com totalQuantity", () => {
-    const project = createTestProject();
-    const material = new Material(
-      project,
-      "Steel",
-      "kg",
-      25.0,
-      undefined,
-      500,
-    );
-    assertEquals(material.totalQuantity, 500,);
-  });
-
-  it("totalCost sem quantity", () => {
+  it("quantidade derivada soma as alocações das tarefas (14C.11.10)", () => {
     const project = createTestProject();
     const material = new Material(project, "Steel", "kg", 25.0,);
-    assertEquals(material.totalCost(), 0,);
+    const task = new Task(project, "t", "T", null,);
+    task.setForScenario(
+      "materialallocations",
+      [new MaterialAllocation(material, 100, "distributed",),],
+      0,
+    );
+    assertEquals(material.allocatedQuantity(0,), 100,);
+    assertEquals(material.allocatedCost(0,), 2500,);
   });
 
-  it("totalCost com quantity", () => {
+  it("custo derivado usa o preço da alocação quando declarado", () => {
     const project = createTestProject();
-    const material = new Material(
-      project,
-      "Steel",
-      "kg",
-      25.0,
-      undefined,
-      500,
+    const material = new Material(project, "Steel", "kg", 25.0,);
+    const task = new Task(project, "t", "T", null,);
+    task.setForScenario(
+      "materialallocations",
+      [new MaterialAllocation(material, 100, "distributed", undefined, 30,),],
+      0,
     );
-    assertEquals(material.totalCost(), 12500,);
+    assertEquals(material.allocatedCost(0,), 3000,);
   });
 });
 

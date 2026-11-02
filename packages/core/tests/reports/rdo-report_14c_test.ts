@@ -37,7 +37,6 @@ const BODY = `account acct "Conta Obra" {
 material steel "Aço" {
   unit "kg"
   unitprice 2.5
-  totalquantity 100
   journalentry 2026-03-05 "Chegada do aço" {
     summary "Lote único"
     alert yellow

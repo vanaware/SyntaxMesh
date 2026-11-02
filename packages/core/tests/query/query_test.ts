@@ -187,7 +187,9 @@ describe("Query — scale + assignList (11.9)", () => {
     q.assignList(["a", "b",],);
     assertEquals(q.string, "a, b",);
     assertEquals(q.sortable, "a, b",);
-    assertEquals(q.rti, null,);
+    // Ruby: `assignList` também gera o RTI a partir do texto montado (14C.9).
+    const rti = q.rti as { to_s(): string } | null;
+    assertEquals(rti?.to_s(), "a, b",);
   });
   it("assignList bullets", () => {
     const q = new Query({ listType: "bullets", },);

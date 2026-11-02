@@ -37,12 +37,20 @@ export class MaterialListRE extends TableReport {
 
     // Lista de materiais na ordenação do relatório (`sortby`). Sem `sortby`
     // mantém a ordem determinística do PropertySet (`seqno`).
-    const materialList = new PropertyList<Material>(this.project.materials,);
+    let materialList = new PropertyList<Material>(this.project.materials,);
     const sortBy = this.a("sortBy",) as
       | Array<[string, boolean, number,]>
       | null;
     if (sortBy && sortBy.length > 0) materialList.setSorting(sortBy,);
     materialList.query = this.currentQuery();
+    // `hidematerial`/`rollupmaterial` (14C.6.6/6.9): ocultação e consolidação
+    // da subárvore de materiais, na mesma semântica de `hideresource`.
+    materialList = this.filterMaterialList(
+      materialList,
+      this.a("hideMaterial",) as never,
+      this.a("rollupMaterial",) as never,
+      this.a("openNodes",) as never,
+    );
     materialList.sort();
 
     // Cabeçalho (uma coluna de cada vez). Materiais não derivam período de

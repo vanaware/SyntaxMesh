@@ -1195,6 +1195,9 @@ export class ResourceScenario extends ScenarioData {
           type: "resource_effort",
           amount: resourceCost,
           resource: resource,
+          // Regra 4 (`defaultaccount`, 14C.9): o projeto fornece a conta
+          // default quando não há chargeset da origem nem da tarefa.
+          project: project,
         };
         const attribution = resolveAccount(line,);
         // Emitir CostEvent

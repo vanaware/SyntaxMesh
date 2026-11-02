@@ -30,9 +30,13 @@ import { TableReport, } from "../../src/reports/table-report.ts";
 import { picturesToHtml, } from "../../src/reports/gallery.ts";
 import { BreakdownReport, } from "../../src/reports/breakdown-report.ts";
 import { RdoReport, } from "../../src/reports/rdo-report.ts";
+// Efeito colateral: registra as fábricas de conteúdo (TaskListRE, ...), sem as
+// quais `[[report:]]` (14C.5.11) não consegue instanciar o relatório embutido.
+import "../../src/reports/mod.ts";
 import { TjTime, } from "../../src/time/tj-time.ts";
 import { ReportType, } from "../../src/model/report-type.ts";
 import { createTestProject, } from "../fixtures/create-test-project.ts";
+import type { RichTextIntermediate, } from "../../src/richtext/rich-text-intermediate.ts";
 import type { AlertLevelDefinition, } from "../../src/model/alert-levels.ts";
 import { MspXmlRE, } from "../../src/reports/msp-xml-re.ts";
 
@@ -169,6 +173,8 @@ export function buildExtensionSnapshot() {
     breakdown: snapshotBreakdown(),
     rdo: snapshotRdo(),
     mspdi: snapshotMspdi(),
+    baseline: snapshotBaseline(),
+    markdownReports: snapshotMarkdownReports(),
   };
 }
 
@@ -281,4 +287,112 @@ function snapshotMspdi() {
     resources: section("Resources",),
     assignments: section("Assignments",),
   };
+}
+
+/**
+ * Snapshot do MSPDI com linha de base (14C.10.7).
+ *
+ * `baseline <cenário>` também é extensão SyntaxMesh (o `MspXmlRE.rb` nunca
+ * emite `<Baseline>`), então o snapshot é a fonte de verdade. Guardamos o
+ * `<Baseline>` do projeto e os de cada tarefa — blocos sem timestamp — em vez
+ * do documento inteiro.
+ */
+function snapshotBaseline() {
+  const fixture = "14c-baseline";
+  const out = parseProject(loadFixture(fixture,),);
+  if (out.threw !== null || out.result === false) {
+    throw new Error(
+      `fixture ${fixture} não carrega: ${out.threw?.message ?? "parse false"}`,
+    );
+  }
+  const project = out.result as Project;
+  project.schedule();
+  const report = (project.reports.toArray() as Report[]).find((r,) =>
+    r.name === "MS Project"
+  );
+  if (!report) throw new Error(`relatório MS Project ausente em ${fixture}`,);
+  project.reportContexts.push(new ReportContext(project, report,),);
+  const xml = new MspXmlRE(report,).to_mspxml();
+  const blocksOf = (text: string, tag: string,): string[] =>
+    [...text.matchAll(new RegExp(`<${tag}>[\\s\\S]*?</${tag}>`, "g",),),].map(
+      (m,) => m[0],
+    );
+  const head = xml.split("<Tasks>",)[0] ?? "";
+  const taskSection = xml.split("<Tasks>",)[1]?.split("</Tasks>",)[0] ?? "";
+  const tasks = blocksOf(taskSection, "Task",)
+    .map((block,) => ({
+      name: /<Name>([^<]*)<\/Name>/.exec(block,)?.[1] ?? null,
+      baseline: blocksOf(block, "Baseline",)[0] ?? null,
+    }))
+    .filter((entry,) => entry.baseline !== null);
+  return {
+    fixture,
+    baselineScenario: report.get("baseline",),
+    project: blocksOf(head, "Baseline",)[0] ?? null,
+    tasks,
+  };
+}
+
+/** Concreto só para instanciar: `TableReport` é abstrata sem membros pendentes. */
+class SnapshotMarkdownReport extends TableReport {}
+
+/**
+ * Snapshot do pipeline markdown nos relatórios (14C.5.11).
+ *
+ * `mdfuncs` exerce os três caminhos que o markdown acrescenta ao relatório:
+ * `[[query:]]` (handler sobre a `Query` do `ReportContext`),
+ * `[[reportlink:]]` (link estático para outro relatório) e `[[report:]]`
+ * (embed — só o bloco estrutural entra no snapshot, sem os `<link>`/`<meta>`
+ * do documento). `rtquery` é o par MediaWiki do mesmo `query` e `mddefault`
+ * confirma o default richtext (14C.5.10: `.tjp` sem `format` não muda).
+ *
+ * As células `<Error>` das tabelas são a divergência **conhecida e já
+ * rastreada** da coluna `name` (integração modelo↔relatório pendente, ver
+ * `reports_golden_test.ts` e `CURRENT.md`), não um efeito do markdown: o
+ * snapshot congela o que o pipeline produz hoje para que a integração futura
+ * apareça como diff explícito.
+ */
+function snapshotMarkdownReports() {
+  const fixture = "14c-markdown-report";
+  const htmlOf = (rti: RichTextIntermediate,): string => {
+    const out = rti.to_html() as
+      | { toHTML(): string }
+      | Array<{ toHTML(): string }>
+      | null;
+    if (out === null) return "";
+    const list = Array.isArray(out,) ? out : [out,];
+    return list.map((el,) => el.toHTML()).join("",);
+  };
+  const run = (id: string,) => {
+    const out = parseProject(loadFixture(fixture,),);
+    if (out.threw !== null || out.result === false) {
+      throw new Error(
+        `fixture ${fixture} não carrega: ${
+          out.threw?.message ?? "parse false"
+        }`,
+      );
+    }
+    const project = out.result as Project;
+    project.schedule();
+    const report = project.reports.get(id,) as Report;
+    project.reportContexts.push(new ReportContext(project, report,),);
+    try {
+      const re = new SnapshotMarkdownReport(report,);
+      re.generateIntermediateFormat();
+      const block = (attr: string,): string | null => {
+        const rti = report.get(attr,) as RichTextIntermediate | null;
+        return rti ? htmlOf(rti,) : null;
+      };
+      return {
+        id,
+        format: report.richTextFormat(),
+        header: block("header",),
+        footer: block("footer",),
+        html: re.to_html().map((el: { toHTML(): string },) => el.toHTML()),
+      };
+    } finally {
+      project.reportContexts.pop();
+    }
+  };
+  return [run("mdfuncs",), run("rtquery",), run("mddefault",),];
 }

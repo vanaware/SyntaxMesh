@@ -655,6 +655,13 @@ export function registerTaskRules(p: ProjectFileParser,): void {
   // Bookings (task-side)
   // ------------------------------------------------------------------
   rule(p, "taskBooking", () => {
+    // 14C.11.4: booking de **material** (`booking material <id> quantity <q>
+    // [unitprice <p>] on <date>`). Fica na mesma regra do booking de recurso
+    // porque as duas formas começam com `_booking` em `taskBody` — separá-las
+    // em duas referências distintas em `taskScenarioAttributes` tornava a
+    // transição ambígua para a FSM. Aqui o segundo token (`material` vs um ID
+    // de recurso) desfaz a ambiguidade.
+    p.pattern(["_material", "!materialBooking",],);
     p.pattern(
       ["!taskBookingHeader", "!bookingBody",],
       function (this: ProjectFileParser,): unknown {
@@ -833,6 +840,11 @@ export function registerTaskRules(p: ProjectFileParser,): void {
     p.doc(
       "booking.task",
       "Report actually completed work for the task.",
+    );
+    p.doc(
+      "booking.material.task",
+      "Report actually consumed material for the task: " +
+        "`booking material <id> quantity <q> [unitprice <p>] on <date>`.",
     );
 
     p.pattern(

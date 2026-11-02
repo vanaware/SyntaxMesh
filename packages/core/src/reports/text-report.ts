@@ -15,6 +15,7 @@ import type { XMLElementLike, } from "../richtext/xml-like.ts";
 import { SimpleXMLElement, } from "../richtext/xml-like.ts";
 import { MessageHandlerInstance, } from "../message-handler.ts";
 import { ReportBase, } from "./report-base.ts";
+import { markdownSections, } from "./markdown.ts";
 import { registerContentFactory, } from "../model/report-content.ts";
 
 export class TextReport extends ReportBase {
@@ -119,6 +120,21 @@ export class TextReport extends ReportBase {
       null,
     );
     return null;
+  }
+
+  /**
+   * Documento Markdown (extensão SyntaxMesh — adendo §10): header, as colunas
+   * left/center/right viram seções e o footer fecha. O texto puro do
+   * TaskJuggler não tem equivalente — aqui a ordem de leitura é preservada.
+   */
+  to_markdown(): string {
+    return markdownSections([
+      this.rt_to_markdown("header",),
+      this.rt_to_markdown("left",),
+      this.rt_to_markdown("center",),
+      this.rt_to_markdown("right",),
+      this.rt_to_markdown("footer",),
+    ],);
   }
 }
 

@@ -70,7 +70,6 @@ describe("coluna journal (14C.1.7)", () => {
     steel = new Material(project, "steel", "kg", 2.5,);
     steel.set("unit", "kg",);
     steel.set("cost", 2.5,);
-    steel.set("totalquantity", 100,);
   },);
 
   it("renderiza as entradas de um material (headline, data, flags e detalhes)", () => {

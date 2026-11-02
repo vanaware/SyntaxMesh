@@ -43,6 +43,26 @@ export function registerTaskAttributes(propertySet: PropertySet,): void {
     ),
   );
 
+  // materialbookings: Material Bookings (NodeListAttribute,
+  // inheritedFromParent=false, inheritedFromProject=false,
+  // isScenarioAttribute=true, default=[]).
+  // Fase 14 Complemento 14C.11.3 — consumo realizado de material (quantidade
+  // em uma data, com `unitprice` próprio).
+  propertySet.addAttributeType(
+    new AttributeDefinition(
+      "materialbookings",
+      "Material Bookings",
+      AttributeType.NodeList,
+      [],
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+    ),
+  );
+
   // assignedresources: Assigned Resources (ResourceListAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=true, default=[])
   propertySet.addAttributeType(
     new AttributeDefinition(

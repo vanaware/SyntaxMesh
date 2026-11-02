@@ -9,7 +9,6 @@ account revenue "Receita" {}
 material steel "Aço" {
   unit "kg"
   unitprice 2.5
-  totalquantity 1000
 }
 
 resource dev "Dev" {

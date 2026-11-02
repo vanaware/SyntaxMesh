@@ -1,5 +1,5 @@
 import { beforeEach, describe, it, } from "@std/testing/bdd";
-import { assertEquals, assertThrows, } from "@std/assert";
+import { assert, assertEquals, } from "@std/assert";
 import { AttributeBase, } from "../../src/attributes/attribute-base.ts";
 import { AttributeDefinition, } from "../../src/attributes/attribute-definition.ts";
 import { AttributeType, } from "../../src/attributes/attribute-type.ts";
@@ -10,7 +10,6 @@ import { ScenarioListAttribute, } from "../../src/attributes/list/scenario-list-
 import { NodeListAttribute, } from "../../src/attributes/list/node-list-attribute.ts";
 import { ResourceListAttribute, } from "../../src/attributes/list/resource-list-attribute.ts";
 import { TaskListAttribute, } from "../../src/attributes/list/task-list-attribute.ts";
-import { NotYetImplementedError, } from "../../src/attributes/errors.ts";
 
 class TestFlagListAttribute extends FlagListAttribute {
   constructor(
@@ -210,8 +209,14 @@ describe("ListPrimitiveAttributes", () => {
       assertEquals(ResourceListAttribute.tjpId, "resourcelist",);
     });
 
-    it("to_rti lança NotYetImplementedError", () => {
-      assertThrows(() => attr.to_rti(), NotYetImplementedError,);
+    it("to_rti sem query devolve a lista em RichText", () => {
+      attr.set([
+        { id: "r1", name: "Resource 1", project: null, fullId: "r1", },
+        { id: "r2", name: "Resource 2", project: null, fullId: "r2", },
+      ],);
+      const rti = attr.to_rti() as { to_s(): string } | null;
+      assert(rti !== null, "RTI esperado",);
+      assertEquals(rti!.to_s(), "Resource 1, Resource 2",);
     });
   });
 

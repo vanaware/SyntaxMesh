@@ -18,6 +18,8 @@ import { Task, } from "../model/task.ts";
 import { Resource, } from "../model/resource.ts";
 import { Account, } from "../model/account.ts";
 import { Material, } from "../model/material.ts";
+import type { MaterialAllocation, } from "../model/material-allocation.ts";
+import type { MaterialBooking, } from "../model/material-booking.ts";
 import type { PropertyTreeNode, } from "../model/property-tree-node.ts";
 import type { PropertyList, } from "../model/property-list.ts";
 import type { PropertySet, } from "../model/property-set.ts";
@@ -26,12 +28,14 @@ import { Query, } from "../query/query.ts";
 import { TjTime, } from "../time/tj-time.ts";
 import { TimeInterval, } from "../time/time-interval.ts";
 import { RichText, } from "../richtext/rich-text.ts";
+import type { RichTextIntermediate, } from "../richtext/rich-text-intermediate.ts";
 import {
   createComment,
   SimpleXMLElement,
   type XMLElementLike,
 } from "../richtext/xml-like.ts";
 import { ReportBase, } from "./report-base.ts";
+import { markdownSections, } from "./markdown.ts";
 import { ReportTable, } from "./report-table.ts";
 import { ReportTableColumn, } from "./report-table-column.ts";
 import { ReportTableLine, } from "./report-table-line.ts";
@@ -135,16 +139,19 @@ export abstract class TableReport extends ReportBase {
     string
   >([
     ["note", "note",],
-    ["totalquantity", "totalquantity",],
     ["unit", "unit",],
     ["unitprice", "cost",],
   ],);
 
-  /** Colunas numéricas calculadas de material (alinhamento à direita). */
+  /**
+   * Colunas numéricas calculadas de material (alinhamento à direita).
+   * `totalquantity` é derivada das alocações desde a 14C.11.10.
+   */
   static readonly materialNumericColumns: Set<string> = new Set<string>([
     "actualcost",
     "scheduledcost",
     "totalcost",
+    "totalquantity",
   ],);
 
   /**
@@ -206,8 +213,16 @@ export abstract class TableReport extends ReportBase {
   // Métodos estáticos (14.12.2)
   // ------------------------------------------------------------------
 
-  /** Título padrão da coluna `id` ('' para colunas especiais sem título). */
-  static defaultColumnTitle(id: string,): string {
+  /**
+   * Título padrão da coluna `id` (`""` para colunas especiais sem título e
+   * `null` quando a coluna não é pré-definida).
+   *
+   * Porta de `TableReport::defaultColumnTitle` (Ruby l.156). O `null` é o que
+   * permite ao parser cair no dicionário de tarefa/recurso
+   * (`ProjectFileParser#columnTitle`) — sem ele, `start`/`end`/`effort`
+   * ficariam sem cabeçalho porque `attributeName` os devolveria `undefined`.
+   */
+  static defaultColumnTitle(id: string,): string | null {
     const specials = [
       "chart",
       "hourly",
@@ -219,7 +234,7 @@ export abstract class TableReport extends ReportBase {
     ];
     if (specials.includes(id,)) return "";
     const entry = TableReport.propertiesById.get(id,);
-    return entry ? entry[0] : "";
+    return entry ? entry[0] : null;
   }
 
   /** A coluna deve ser indentada? (por `colId` ou por tipo de propriedade). */
@@ -326,6 +341,18 @@ export abstract class TableReport extends ReportBase {
       ? this.table.toJSON()
       : { columns: [], lines: [], };
     return JSON.stringify({ format: "table", ...table, }, null, 1,);
+  }
+
+  /**
+   * Documento Markdown (extensão SyntaxMesh — adendo §10): header RichText,
+   * tabela de pipes e footer RichText, sem HTML.
+   */
+  to_markdown(): string {
+    return markdownSections([
+      this.rt_to_markdown("header",),
+      this.table ? this.table.to_markdown() : null,
+      this.rt_to_markdown("footer",),
+    ],);
   }
 
   // ------------------------------------------------------------------
@@ -885,10 +912,12 @@ export abstract class TableReport extends ReportBase {
 
     const cdText = columnDef.cellText.getPattern(query,);
     if (cdText) {
-      cell.text = cdText as never;
+      cell.text = this.cellTextForReport(String(cdText,),) as never;
     } else if (query.process()) {
       const rti = query.to_rti();
-      cell.text = (rti ? rti : query.to_s()) as never;
+      cell.text = (rti
+        ? this.rtiForReport(rti as RichTextIntermediate,)
+        : query.to_s()) as never;
     }
 
     this.setCustomCellAttributes(cell, columnDef, query,);
@@ -918,7 +947,9 @@ export abstract class TableReport extends ReportBase {
 
     if (query.process()) {
       const rti = query.to_rti();
-      cell.text = (rti ? rti : query.to_s()) as never;
+      cell.text = (rti
+        ? this.rtiForReport(rti as RichTextIntermediate,)
+        : query.to_s()) as never;
     }
 
     switch (columnDef.id) {
@@ -967,7 +998,7 @@ export abstract class TableReport extends ReportBase {
     }
 
     const cdText = columnDef.cellText.getPattern(query,);
-    if (cdText) cell.text = cdText as never;
+    if (cdText) cell.text = this.cellTextForReport(String(cdText,),) as never;
 
     this.setCustomCellAttributes(cell, columnDef, query,);
     this.checkCellText(cell,);
@@ -1000,7 +1031,12 @@ export abstract class TableReport extends ReportBase {
     );
 
     if (columnDef.id === "materials") {
-      const allocs = this.taskMaterialAllocations(task, scIdx,);
+      // `hidematerial`/`rollupmaterial` (14C.6.6/6.9): material oculto ou
+      // consolidado não gera entrada própria na lista da tarefa.
+      const allocs = this.taskMaterialAllocations(task, scIdx,).filter((a,) =>
+        !this.hiddenBy("hideMaterial", a.material,) &&
+        !this.hiddenBy("rollupMaterial", a.material,)
+      );
       cell.text = allocs
         .map((a,) => `${a.material.id} (${a.quantity})`)
         .join(", ",);
@@ -1011,7 +1047,7 @@ export abstract class TableReport extends ReportBase {
     }
 
     const cdText = columnDef.cellText.getPattern(query,);
-    if (cdText) cell.text = cdText as never;
+    if (cdText) cell.text = this.cellTextForReport(String(cdText,),) as never;
 
     this.setCustomCellAttributes(cell, columnDef, query,);
     // `materials` admite lista vazia (tarefa sem material).
@@ -1113,11 +1149,11 @@ export abstract class TableReport extends ReportBase {
 
   /**
    * Célula de material (extensão SyntaxMesh, Fase 14 Complemento C1.4).
-   * Colunas backed por atributo (`unit`, `unitprice`→`cost`, `note`,
-   * `totalquantity`) reutilizam o pipeline `Query`/`to_rti` para a formatação
-   * canônica; colunas calculadas (`no`, `id`, `name`, `totalcost`) são
-   * resolvidas aqui. Alocações/custos/journal são estendidos nas sub-tarefas
-   * C1.5–C1.7.
+   * Colunas backed por atributo (`unit`, `unitprice`→`cost`, `note`)
+   * reutilizam o pipeline `Query`/`to_rti` para a formatação canônica; as
+   * colunas calculadas (`no`, `id`, `name`, `totalquantity`, custos) são
+   * resolvidas aqui. Desde a 14C.11.10 `totalquantity` é a soma das alocações
+   * (o atributo do material foi removido).
    */
   private genMaterialCell(
     query: Query,
@@ -1181,6 +1217,11 @@ export abstract class TableReport extends ReportBase {
           .join(", ",);
         break;
       }
+      case "totalquantity":
+        cell.text = this.formatMaterialNumber(
+          this.materialAllocatedQuantity(material, scIdx,),
+        );
+        break;
       case "scheduledcost":
         cell.text = this.formatMaterialNumber(
           this.materialScheduledCost(material, scIdx,),
@@ -1188,7 +1229,7 @@ export abstract class TableReport extends ReportBase {
         break;
       case "actualcost":
         cell.text = this.formatMaterialNumber(
-          this.materialCost(material, scIdx, "actual",),
+          this.materialActualCost(material, scIdx,),
         );
         break;
       case "totalcost":
@@ -1215,15 +1256,39 @@ export abstract class TableReport extends ReportBase {
   private taskMaterialAllocations(
     task: Task,
     scIdx: number,
-  ): Array<{ material: Material; quantity: number }> {
+  ): MaterialAllocation[] {
     return (task.getForScenario("materialallocations", scIdx,) as
-      | Array<{ material: Material; quantity: number }>
+      | MaterialAllocation[]
+      | null) ?? [];
+  }
+
+  /** Bookings (consumo realizado) de material de `task` (14C.11.3). */
+  private taskMaterialBookings(
+    task: Task,
+    scIdx: number,
+  ): MaterialBooking[] {
+    return (task.getForScenario("materialbookings", scIdx,) as
+      | MaterialBooking[]
       | null) ?? [];
   }
 
   /**
+   * Custo de um booking com o preço unitário efetivo (14C.11.6): booking →
+   * alocação da mesma tarefa e material → material.
+   */
+  private bookingCost(booking: MaterialBooking, scIdx: number,): number {
+    const task = booking.task;
+    const allocation = task
+      ? this.taskMaterialAllocations(task, scIdx,)
+        .find((a,) => a.material === booking.material) ?? null
+      : null;
+    return booking.cost(allocation,);
+  }
+
+  /**
    * Custo de material de `task`: `CostEvent` `material_usage` da tarefa ou,
-   * sem eventos, `quantidade × preço` das alocações (14C.1.11).
+   * sem eventos, alocações (planejado) + bookings (realizado), cada linha com
+   * o seu preço unitário efetivo (14C.1.11 / 14C.11.6).
    */
   private taskMaterialCost(task: Task, scIdx: number,): number {
     let sum = 0;
@@ -1235,27 +1300,70 @@ export abstract class TableReport extends ReportBase {
       ) {
         continue;
       }
+      // Material oculto pelo `hidematerial` não entra no custo (14C.6.6).
+      const material = ce.material as Material | null;
+      if (material && this.hiddenBy("hideMaterial", material,)) continue;
       sum += ce.amount;
       hasEvents = true;
     }
     if (hasEvents) return sum;
     for (const a of this.taskMaterialAllocations(task, scIdx,)) {
-      sum += a.quantity * this.materialUnitPrice(a.material,);
+      if (this.hiddenBy("hideMaterial", a.material,)) continue;
+      sum += a.quantity * a.unitPriceFor();
+    }
+    for (const booking of this.taskMaterialBookings(task, scIdx,)) {
+      if (this.hiddenBy("hideMaterial", booking.material,)) continue;
+      sum += this.bookingCost(booking, scIdx,);
     }
     return sum;
   }
 
-  /** Alocações de `material` nas tarefas do projeto para o cenário `scIdx`. */
+  /**
+   * Alocações de `material` nas tarefas do projeto para o cenário `scIdx`,
+   * com a própria `MaterialAllocation` (para o preço unitário efetivo).
+   */
   private materialAllocations(
     material: Material,
     scIdx: number,
-  ): Array<{ task: Task; quantity: number }> {
-    const out: Array<{ task: Task; quantity: number }> = [];
+  ): Array<{
+    task: Task;
+    quantity: number;
+    allocation: MaterialAllocation;
+  }> {
+    const out: Array<{
+      task: Task;
+      quantity: number;
+      allocation: MaterialAllocation;
+    }> = [];
     for (const node of this.project.tasks.toArray()) {
       if (!(node instanceof Task)) continue;
-      for (const a of this.taskMaterialAllocations(node, scIdx,)) {
-        if (a.material === material) {
-          out.push({ task: node, quantity: a.quantity, },);
+      for (const allocation of this.taskMaterialAllocations(node, scIdx,)) {
+        if (allocation.material === material) {
+          out.push({
+            task: node,
+            quantity: allocation.quantity,
+            allocation,
+          },);
+        }
+      }
+    }
+    return out;
+  }
+
+  /**
+   * Bookings de `material` nas tarefas do projeto para o cenário `scIdx`,
+   * com a tarefa dona do consumo (pode ser `null` no booking).
+   */
+  private materialBookings(
+    material: Material,
+    scIdx: number,
+  ): Array<{ task: Task; booking: MaterialBooking }> {
+    const out: Array<{ task: Task; booking: MaterialBooking }> = [];
+    for (const node of this.project.tasks.toArray()) {
+      if (!(node instanceof Task)) continue;
+      for (const booking of this.taskMaterialBookings(node, scIdx,)) {
+        if (booking.material === material) {
+          out.push({ task: node, booking, },);
         }
       }
     }
@@ -1292,12 +1400,6 @@ export abstract class TableReport extends ReportBase {
     return sum;
   }
 
-  /** Preço unitário canônico do material (atributo `cost` ou campo legado). */
-  private materialUnitPrice(material: Material,): number {
-    const cost = material.get("cost",);
-    return typeof cost === "number" ? cost : material.unitPrice;
-  }
-
   /**
    * A tarefa de uma alocação cruza o período do relatório? Sem agenda, a
    * alocação é considerada (não há como recortar).
@@ -1316,8 +1418,29 @@ export abstract class TableReport extends ReportBase {
   }
 
   /**
+   * Quantidade derivada do material (14C.11.10): Σ
+   * `MaterialAllocation.quantity` no período do relatório. Sem alocação, 0.
+   */
+  private materialAllocatedQuantity(
+    material: Material,
+    scIdx: number,
+  ): number {
+    const start = (this.a("start",) as TjTime | null) ?? null;
+    const end = (this.a("end",) as TjTime | null) ?? null;
+    let sum = 0;
+    for (
+      const { task, quantity, } of this.materialAllocations(material, scIdx,)
+    ) {
+      if (!this.materialTaskInPeriod(task, scIdx, start, end,)) continue;
+      sum += quantity;
+    }
+    return sum;
+  }
+
+  /**
    * Custo de material a partir das `MaterialAllocation`, recortado pelo
-   * período do relatório (C1.6). Sem alocações, `null`.
+   * período do relatório (C1.6) e com o preço unitário da própria alocação
+   * (14C.11.6). Sem alocações, `null`.
    */
   private materialAllocationCost(
     material: Material,
@@ -1327,51 +1450,65 @@ export abstract class TableReport extends ReportBase {
     if (allocs.length === 0) return null;
     const start = (this.a("start",) as TjTime | null) ?? null;
     const end = (this.a("end",) as TjTime | null) ?? null;
-    const price = this.materialUnitPrice(material,);
     let sum = 0;
-    for (const { task, quantity, } of allocs) {
+    for (const { task, allocation, } of allocs) {
       if (!this.materialTaskInPeriod(task, scIdx, start, end,)) continue;
-      sum += quantity * price;
+      sum += allocation.quantity * allocation.unitPriceFor(material,);
     }
     return sum;
   }
 
   /**
-   * Custo total sem alocações nem eventos: `totalquantity × preço` canônico
-   * (atributos `totalquantity`/`cost`, que é o que o parser preenche), com
-   * queda para os campos do construtor (`Material#totalCost`).
+   * Custo **realizado** a partir dos bookings (14C.11.7), recortado pelo
+   * período e com a precedência booking → alocação → material. Sem bookings,
+   * `null`.
    */
-  private materialLegacyTotalCost(material: Material,): number {
-    const qty = material.get("totalquantity",);
-    if (typeof qty === "number") {
-      return qty * this.materialUnitPrice(material,);
+  private materialBookingCost(
+    material: Material,
+    scIdx: number,
+  ): number | null {
+    const bookings = this.materialBookings(material, scIdx,);
+    if (bookings.length === 0) return null;
+    const start = (this.a("start",) as TjTime | null) ?? null;
+    const end = (this.a("end",) as TjTime | null) ?? null;
+    let sum = 0;
+    for (const { task, booking, } of bookings) {
+      if (!this.materialTaskInPeriod(task, scIdx, start, end,)) continue;
+      sum += this.bookingCost(booking, scIdx,);
     }
-    return material.totalCost();
+    return sum;
   }
 
   /**
-   * Custo planejado: `CostEvent` `planned` > alocações no período >
-   * `totalquantity × unitPrice` (fallback legado).
+   * Custo planejado: `CostEvent` `planned` > alocações no período. Sem
+   * alocação o material não tem custo planejado (`totalquantity` foi
+   * removido na 14C.11.10).
    */
   private materialScheduledCost(material: Material, scIdx: number,): number {
     if (this.materialHasCostEvents(material, scIdx,)) {
       return this.materialCost(material, scIdx, "planned",);
     }
-    const allocCost = this.materialAllocationCost(material, scIdx,);
-    return allocCost !== null
-      ? allocCost
-      : this.materialLegacyTotalCost(material,);
+    return this.materialAllocationCost(material, scIdx,) ?? 0;
   }
 
-  /** Custo total: `CostEvent` (planejado + realizado) > alocações > legado. */
+  /**
+   * Custo realizado: `CostEvent` `actual` > bookings no período. Sem bookings
+   * nem eventos, 0.
+   */
+  private materialActualCost(material: Material, scIdx: number,): number {
+    if (this.materialHasCostEvents(material, scIdx,)) {
+      return this.materialCost(material, scIdx, "actual",);
+    }
+    return this.materialBookingCost(material, scIdx,) ?? 0;
+  }
+
+  /** Custo total: `CostEvent` (planejado + realizado) > alocações + bookings. */
   private materialTotalCost(material: Material, scIdx: number,): number {
     if (this.materialHasCostEvents(material, scIdx,)) {
       return this.materialCost(material, scIdx, null,);
     }
-    const allocCost = this.materialAllocationCost(material, scIdx,);
-    return allocCost !== null
-      ? allocCost
-      : this.materialLegacyTotalCost(material,);
+    return (this.materialAllocationCost(material, scIdx,) ?? 0) +
+      (this.materialBookingCost(material, scIdx,) ?? 0);
   }
 
   /** Formata valores monetários de material (`numberFormat` do relatório). */

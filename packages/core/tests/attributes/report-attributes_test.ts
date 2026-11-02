@@ -27,7 +27,7 @@ describe("ReportAttributes", () => {
       ps = new PropertySet(project, false,);
     },);
 
-    it("registra 62 atributos específicos (excluindo base id, name, seqno, index)", async () => {
+    it("registra 67 atributos específicos (excluindo base id, name, seqno, index)", async () => {
       const { registerReportAttributes, } = await import(
         "../../src/model/attributes/report-attributes.ts"
       );
@@ -39,8 +39,9 @@ describe("ReportAttributes", () => {
           count++;
         }
       },);
-      // 61 (Fase 14) + sortBy (extensão 14C.1.2).
-      assertEquals(count, 62,);
+      // 61 (Fase 14) + sortBy (14C.1.2) + format (14C.5.1) +
+      // hideMaterial/hidePicture/rollupMaterial (14C.6.2–6.4) + baseline (14C.10.1).
+      assertEquals(count, 67,);
     });
 
     it("registra accountroot com atributos corretos", async () => {

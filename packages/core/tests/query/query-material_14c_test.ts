@@ -3,7 +3,7 @@
  *
  * Materiais passam a ser resolvidos por `Query.resolvePropertyId` com
  * `propertyType: "Material"`, reutilizando o pipeline `process`/`to_s` dos
- * atributos canônicos (`unit`, `cost`, `totalquantity`, `note`). O keyword
+ * atributos canônicos (`unit`, `cost`, `note`). O keyword
  * `unitprice` dos relatórios é um alias de `cost` e vive na camada de
  * relatórios (`TableReport.materialAttributeColumns`), não no atributo.
  *
@@ -24,7 +24,6 @@ describe("Query sobre Material (14C.1.20)", () => {
     const steel = new Material(project, "steel", "kg", 2.5,);
     steel.set("unit", "kg",);
     steel.set("cost", 2.5,);
-    steel.set("totalquantity", 100,);
     steel.set("note", "Aço CA-50",);
   },);
 

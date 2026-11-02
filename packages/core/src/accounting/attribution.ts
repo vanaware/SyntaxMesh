@@ -23,6 +23,29 @@ export interface CostLine {
   task?: Task;
   resource?: Resource;
   material?: Material;
+  /**
+   * Projeto dono da linha. Fornece a conta default da **regra 4**
+   * (`defaultaccount <id>` — adendo §10 / 14C.9). Opcional para manter os
+   * chamadores sem projeto (regra 4 cai em `account: null` como antes).
+   */
+  project?: { defaultAccountFor?(type: CostType | null,): Account | null };
+}
+
+/**
+ * Regra 4: conta default do projeto para o tipo da linha.
+ *
+ * Sem `defaultaccount` configurado o resultado é `account: null`; com conta
+ * default, `projectDefault` carrega a conta resolvida.
+ */
+function projectDefaultResult(line: CostLine,): AttributionResult {
+  const account = line.project?.defaultAccountFor?.(
+    costTypeFromEventType(line.type,),
+  ) ?? null;
+  return {
+    account,
+    rule: "project_default",
+    projectDefault: account ?? {},
+  };
 }
 
 /**
@@ -127,13 +150,7 @@ export function resolveAccount(line: CostLine,): AttributionResult {
     // usando a conta default do projeto (regra 4). Isso permite que charges
     // sejam emitidos como CostEvents mesmo sem um chargeset.
     if (type === "task_charge" || type === "resource_effort") {
-      // TODO: Implementar project.defaultAccount
-      // Nota: project.defaultAccount não está implementado ainda, usando {} como placeholder
-      return {
-        account: null,
-        rule: "project_default",
-        projectDefault: {},
-      };
+      return projectDefaultResult(line,);
     }
     // Task existe mas não tem chargeset do tipo → erro claro
     throw new TjArgumentError(
@@ -141,12 +158,6 @@ export function resolveAccount(line: CostLine,): AttributionResult {
     );
   }
 
-  // Regra 4: conta default do projeto (project.defaultAccount)
-  // Nota: project.defaultAccount não está implementado ainda, usando {} como placeholder
-  // TODO: Implementar project.defaultAccount
-  return {
-    account: null,
-    rule: "project_default",
-    projectDefault: {},
-  };
+  // Regra 4: conta default do projeto (`defaultaccount`, 14C.9).
+  return projectDefaultResult(line,);
 }

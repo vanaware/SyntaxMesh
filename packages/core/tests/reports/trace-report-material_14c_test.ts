@@ -44,12 +44,12 @@ describe("tracereport com materiais (14C.1.14)", () => {
     const steel = new Material(project, "steel", "kg", 2.5,);
     steel.set("unit", "kg",);
     steel.set("cost", 2.5,);
-    steel.set("totalquantity", 100,);
 
     report.set("columns", [
       new TableColumnDefinition("name", "<-name->",),
       new TableColumnDefinition("cost", "<-cost->",),
-      new TableColumnDefinition("totalquantity", "<-totalquantity->",),
+      // `totalquantity` foi removido na 14C.11.10; `unit` continua canônico.
+      new TableColumnDefinition("unit", "<-unit->",),
     ],);
 
     const tr = new TraceReport(report,);
@@ -58,14 +58,14 @@ describe("tracereport com materiais (14C.1.14)", () => {
     const header = table[0] as string[];
 
     // Date + 3 colunas × 1 cenário × 1 material (sem contas/recursos/tarefas).
-    assertEquals(header, ["Date", "steel", "2.5", "100",],);
+    assertEquals(header, ["Date", "steel", "2.5", "kg",],);
     const row = table[1]!;
     assertEquals(row[1], "steel",);
     // Células de valor usam `Query.result()`: o valor cru do atributo.
     assertEquals(row[2], 2.5,);
-    assertEquals(row[3], 100,);
+    assertEquals(row[3], "kg",);
     // CSV preserva a ordem das colunas do material.
-    assertEquals(tr.to_csv()[1]!.slice(1,), ["steel", 2.5, 100,],);
+    assertEquals(tr.to_csv()[1]!.slice(1,), ["steel", 2.5, "kg",],);
   });
 
   it("sem materiais o cabeçalho continua apenas com Date (regressão)", () => {

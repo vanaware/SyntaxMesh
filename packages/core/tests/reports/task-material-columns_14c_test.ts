@@ -77,7 +77,6 @@ describe("colunas de material no taskreport (14C.1.11)", () => {
     steel = new Material(project, "steel", "kg", 2.5,);
     steel.set("unit", "kg",);
     steel.set("cost", 2.5,);
-    steel.set("totalquantity", 100,);
   },);
 
   it("lista as alocações da tarefa no formato 'material (quantidade)'", () => {

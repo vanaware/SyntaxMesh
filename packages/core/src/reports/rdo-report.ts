@@ -44,6 +44,12 @@ import type { Picture, PictureAlign, } from "../model/picture.ts";
 import type { TjTime, } from "../time/tj-time.ts";
 import { PropertyList, } from "../model/property-list.ts";
 import { ReportBase, } from "./report-base.ts";
+import {
+  markdownHeading,
+  markdownImage,
+  markdownSections,
+  markdownTable,
+} from "./markdown.ts";
 import { picturesFromDetails, picturesToHtml, } from "./gallery.ts";
 import { createBlob, SimpleXMLElement, } from "../richtext/xml-like.ts";
 import { registerContentFactory, } from "../model/report-content.ts";
@@ -137,6 +143,13 @@ const JOURNAL_ATTRIBUTES = new Set([
 /** Formato de data usado nos blocos e nas entradas. */
 const DATE_FORMAT = "%Y-%m-%d";
 
+/** Tabelas do bloco, na ordem canônica, com o título markdown. */
+const RDO_TABLES: [RdoTableKind, string,][] = [
+  ["resources", "Resources",],
+  ["materials", "Materials",],
+  ["charges", "Charges",],
+];
+
 export class RdoReport extends ReportBase {
   private groups: RdoGroup[] = [];
   private html: XMLElementLike[] = [];
@@ -199,6 +212,61 @@ export class RdoReport extends ReportBase {
       null,
       2,
     );
+  }
+
+  /**
+   * Documento Markdown (extensão SyntaxMesh — adendo §10).
+   *
+   * Cada bloco vira `## <bloco>`; cada entrada de diário vira `### <manchete>`
+   * com um par de metadados em itálico, o texto e as imagens como `![alt](src)`.
+   * As tabelas de recursos/materiais/charges do bloco saem em pipes. Markdown
+   * puro: nenhuma tag HTML é emitida.
+   */
+  to_markdown(): string {
+    const sections: (string | null)[] = [this.rt_to_markdown("header",),];
+    for (const group of this.groups) {
+      sections.push(markdownHeading(2, group.name,),);
+      if (group.responsible) {
+        sections.push(`*${group.responsible}*`,);
+      }
+      for (const entry of group.entries) {
+        sections.push(this.entryMarkdown(entry,),);
+      }
+      for (const picture of group.pictures) {
+        sections.push(
+          markdownImage(picture.path, picture.alt, picture.caption,),
+        );
+      }
+      for (const [kind, title,] of RDO_TABLES) {
+        const rows = group[kind];
+        if (rows.length === 0) continue;
+        sections.push(markdownHeading(3, title,),);
+        sections.push(
+          markdownTable(
+            ["ID", "Name", "Detail", "Amount",],
+            rows.map((row,) => [row.id, row.name, row.detail, row.amount,]),
+          ),
+        );
+      }
+    }
+    sections.push(this.rt_to_markdown("footer",),);
+    return markdownSections(sections,);
+  }
+
+  /** Uma entrada de diário em markdown (manchete, metadados, texto, imagens). */
+  private entryMarkdown(entry: RdoEntry,): string {
+    const parts: string[] = [markdownHeading(3, entry.headline,).trimEnd(),];
+    const meta: string[] = [];
+    if (entry.date !== "") meta.push(entry.date,);
+    if (entry.author) meta.push(entry.author,);
+    if (entry.alert) meta.push(entry.alert,);
+    if (meta.length > 0) parts.push(`*${meta.join(" — ",)}*`,);
+    if (entry.summary) parts.push(entry.summary,);
+    if (entry.details) parts.push(entry.details,);
+    for (const picture of entry.pictures) {
+      parts.push(markdownImage(picture.path, picture.alt, picture.caption,),);
+    }
+    return parts.join("\n\n",);
   }
 
   // ------------------------------------------------------------------
@@ -285,11 +353,14 @@ export class RdoReport extends ReportBase {
     );
   }
 
-  /** Um bloco por material (sem engine de `hide` próprio — Fase 14C.6). */
+  /** Um bloco por material (`hideMaterial`/`rollupMaterial` — 14C.6.6/6.9). */
   private buildByMaterials(): RdoGroup[] {
     const list = this.project.materials.toArray()
       .map((raw,) => raw as Material)
-      .filter((material,) => !this.hiddenBy("hideMaterial", material,))
+      .filter((material,) =>
+        !this.hiddenBy("hideMaterial", material,) &&
+        !this.hiddenBy("rollupMaterial", material,)
+      )
       .sort((a, b,) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
     return this.entityGroups(
       list,
@@ -575,8 +646,16 @@ export class RdoReport extends ReportBase {
     };
   }
 
-  /** Imagens declaradas (`picture`) seguidas das embutidas em `details`. */
+  /**
+   * Imagens declaradas (`picture`) seguidas das embutidas em `details`.
+   *
+   * `hidepicture` (14C.6.7) é avaliado na **propriedade dona** da entrada: uma
+   * entrada cujo dono casa não contribui imagens — nem na lista da entrada nem
+   * na galeria do bloco (portanto também não conta para `maxpictures`).
+   */
   private picturesOf(entry: JournalEntry,): Picture[] {
+    const property = entry.property as PropertyTreeNode | null;
+    if (property && this.hiddenBy("hidePicture", property,)) return [];
     return [...entry.pictures, ...picturesFromDetails(entry.details,),];
   }
 
@@ -921,19 +1000,6 @@ export class RdoReport extends ReportBase {
   private scenarioIdxList(): number[] {
     const scenarios = this.a("scenarios",) as number[] | null;
     return scenarios && scenarios.length > 0 ? scenarios : [0,];
-  }
-
-  /** Expressão de ocultação do atributo aplicada a uma propriedade. */
-  private hiddenBy(attribute: string, property: PropertyTreeNode,): boolean {
-    // Atributos de ocultação de material só existem a partir de 14C.6.
-    if (!this.report.attributeDefinition(attribute,)) return false;
-    const expression = this.a(attribute,) as
-      | { eval?: (query: unknown,) => unknown }
-      | null;
-    if (!expression || typeof expression.eval !== "function") return false;
-    const query = this.currentQuery().dup();
-    query.property = property;
-    return !!expression.eval(query,);
   }
 
   /** Guard de tipo: a propriedade é uma `Task`? */

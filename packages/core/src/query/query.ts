@@ -21,6 +21,7 @@ import { DateAttribute, } from "../attributes/scalar/date-attribute.ts";
 import { ReferenceAttribute, } from "../attributes/reference/reference-attribute.ts";
 import { RichTextAttribute, } from "../attributes/rich/rich-text-attribute.ts";
 import { AttributeBase, } from "../attributes/attribute-base.ts";
+import { RichText, } from "../richtext/rich-text.ts";
 import { TjRuntimeError, } from "../model/errors.ts";
 import type { Project, } from "../model/project.ts";
 import type { PropertyTreeNode, } from "../model/property-tree-node.ts";
@@ -49,6 +50,11 @@ export interface QueryParams {
   listItem?: string | null;
   listType?: string | null;
   hideJournalEntry?: unknown;
+  // Extensão SyntaxMesh (14C.6.5): ocultação de material/picture e
+  // consolidação de material, parceiras de `hideJournalEntry`.
+  hideMaterial?: unknown;
+  rollupMaterial?: unknown;
+  hidePicture?: unknown;
   journalMode?: string | null;
   journalAttributes?: string[] | null;
   sortJournalEntries?: unknown;
@@ -140,6 +146,10 @@ export class Query {
   listType: string | null;
   // Campos de journal (11.6.1.7)
   hideJournalEntry: unknown;
+  // Extensão SyntaxMesh (14C.6.5)
+  hideMaterial: unknown;
+  rollupMaterial: unknown;
+  hidePicture: unknown;
   journalMode: string | null;
   journalAttributes: string[] | null;
   sortJournalEntries: unknown;
@@ -177,6 +187,9 @@ export class Query {
     this.listItem = params.listItem ?? null;
     this.listType = params.listType ?? null;
     this.hideJournalEntry = params.hideJournalEntry ?? null;
+    this.hideMaterial = params.hideMaterial ?? null;
+    this.rollupMaterial = params.rollupMaterial ?? null;
+    this.hidePicture = params.hidePicture ?? null;
     this.journalMode = params.journalMode ?? null;
     this.journalAttributes = params.journalAttributes ?? null;
     this.sortJournalEntries = params.sortJournalEntries ?? null;
@@ -273,6 +286,9 @@ export class Query {
     q.listItem = this.listItem;
     q.listType = this.listType;
     q.hideJournalEntry = this.hideJournalEntry;
+    q.hideMaterial = this.hideMaterial;
+    q.rollupMaterial = this.rollupMaterial;
+    q.hidePicture = this.hidePicture;
     q.journalMode = this.journalMode;
     q.journalAttributes = this.journalAttributes;
     q.sortJournalEntries = this.sortJournalEntries;
@@ -464,7 +480,9 @@ export class Query {
 
   to_rti(): unknown {
     if (this.attr instanceof RichTextAttribute) return this.attr.get();
-    return this.attr ? this.attr.to_rti() : this.rti;
+    // Ruby passa a própria query (`attr.to_rti(self)`): listas usam
+    // `listItem`/`assignList` e guardam a query reeavaliada por item (14C.9).
+    return this.attr ? this.attr.to_rti(this,) : this.rti;
   }
 
   result(): unknown {
@@ -577,7 +595,7 @@ export class Query {
     return numberFormat.format(value * (factors[idx] ?? 1),);
   }
 
-  /** Monta uma lista a partir de itens (11.9.3). Sem RichText nesta fase. */
+  /** Monta uma lista a partir de itens (11.9.3). */
   assignList(listItems: string[],): void {
     let list = "";
     for (const item of listItems) {
@@ -605,8 +623,9 @@ export class Query {
     }
     this.sortable = list;
     this.string = list;
-    // TODO(@djones) Fase 12: gerar RichTextIntermediate via RichTextFactory.
-    this.rti = null;
+    // Ruby (`Query#assignList`): o texto montado vira um RTI próprio. É o que
+    // os relatórios consomem quando uma coluna de lista é renderizada.
+    this.rti = new RichText(list,).generateIntermediateFormat();
   }
 
   // --------------------------------------------------

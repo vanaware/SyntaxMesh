@@ -13,6 +13,8 @@ import { createTestProject, } from "../fixtures/create-test-project.ts";
 import type { Project, } from "../../src/model/project.ts";
 import { Report, } from "../../src/model/report.ts";
 import { Material, } from "../../src/model/material.ts";
+import { Task, } from "../../src/model/task.ts";
+import { MaterialAllocation, } from "../../src/model/material-allocation.ts";
 import { TjTime, } from "../../src/time/tj-time.ts";
 import { ReportContext, } from "../../src/reports/report-context.ts";
 import { TableColumnDefinition, } from "../../src/reports/table-column-definition.ts";
@@ -36,6 +38,21 @@ function makeReport(project: Project,): Report {
   return report;
 }
 
+/** Aloca `quantity` do material numa tarefa (14C.11.10). */
+function allocate(
+  project: Project,
+  material: Material,
+  quantity: number,
+): Task {
+  const task = new Task(project, "t1", "T1", null,);
+  task.setForScenario(
+    "materialallocations",
+    [new MaterialAllocation(material, quantity, "distributed",),],
+    0,
+  );
+  return task;
+}
+
 /** Cria e gera um `MaterialListRE` a partir do projeto de teste. */
 function generate(project: Project,): MaterialListRE {
   const re = new MaterialListRE(makeReport(project,),);
@@ -51,7 +68,9 @@ describe("saídas do materialreport (14C.1.10)", () => {
     const steel = new Material(project, "steel", "kg", 2.5,);
     steel.set("unit", "kg",);
     steel.set("cost", 2.5,);
-    steel.set("totalquantity", 100,);
+    // 14C.11.10: `totalquantity` foi removido — a quantidade e o custo vêm
+    // das alocações das tarefas.
+    allocate(project, steel, 100,);
   },);
 
   it("to_csv devolve cabeçalho e uma linha por material", () => {

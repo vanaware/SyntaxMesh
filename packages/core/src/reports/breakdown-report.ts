@@ -29,13 +29,15 @@
  */
 import type { Report, } from "../model/report.ts";
 import type { Account, } from "../model/account.ts";
-import type { Task, } from "../model/task.ts";
+import { Task, } from "../model/task.ts";
 import type { Resource, } from "../model/resource.ts";
 import type { CostEvent, } from "../model/cost-event.ts";
 import type { Material, } from "../model/material.ts";
+import type { MaterialAllocation, } from "../model/material-allocation.ts";
 import type { TableColumnDefinition, } from "./table-column-definition.ts";
 import { PropertyList, } from "../model/property-list.ts";
 import { ReportBase, } from "./report-base.ts";
+import { markdownSections, } from "./markdown.ts";
 import { ReportTable, } from "./report-table.ts";
 import { ReportTableColumn, } from "./report-table-column.ts";
 import { ReportTableCell, } from "./report-table-cell.ts";
@@ -63,6 +65,8 @@ export interface BreakdownContributor {
   unit: string;
   cost: number;
   mode: string;
+  /** Consolidado por `rollupmaterial` (14C.6.9): soma nos totais, não lista. */
+  rolledUp?: boolean;
 }
 
 /** Totais por tipo de contribuinte (e o total do grupo). */
@@ -167,6 +171,7 @@ export class BreakdownReport extends ReportBase {
         group.totals.total,
       ],);
       for (const contributor of group.contributors) {
+        if (contributor.rolledUp) continue;
         csv.push([
           group.name,
           contributor.kind,
@@ -188,12 +193,24 @@ export class BreakdownReport extends ReportBase {
           id: group.id,
           name: group.name,
           totals: group.totals,
-          contributors: group.contributors,
+          contributors: group.contributors.filter((c,) => !c.rolledUp),
         })),
       },
       null,
       2,
     );
+  }
+
+  /**
+   * Documento Markdown (extensão SyntaxMesh — adendo §10): a tabela
+   * hierárquica é a mesma do HTML, em pipes.
+   */
+  to_markdown(): string {
+    return markdownSections([
+      this.rt_to_markdown("header",),
+      this.table ? this.table.to_markdown() : null,
+      this.rt_to_markdown("footer",),
+    ],);
   }
 
   // ------------------------------------------------------------------
@@ -291,26 +308,31 @@ export class BreakdownReport extends ReportBase {
     }
 
     // Materiais cujo `chargeset` aponta para a conta (ou conta `aggregate
-    // materials`): quantidade total e custo do material inteiro.
+    // materials`): quantidade derivada das alocações (Σ
+    // `MaterialAllocation.quantity`, 14C.11.10) e custo pela precedência
+    // booking → alocação → material (14C.11.6).
     const aggregate = account.get("aggregate",);
     for (const raw of this.project.materials.toArray()) {
       const material = raw as Material;
+      if (this.materialHidden(material,)) continue;
       if (
         aggregate !== "materials" &&
         !chargesetTouches(material, account,)
       ) {
         continue;
       }
+      const totals = this.materialAllocationTotals(material,);
       this.mergeContributor(
         byKey,
         {
           kind: "material",
           id: material.id,
           name: material.name,
-          quantity: material.totalQuantityValue(),
+          quantity: totals.quantity,
           unit: material.unitValue(),
-          cost: material.totalCost(),
+          cost: totals.cost,
           mode: "chargeset",
+          ...this.rolledUpFlag(material,),
         },
       );
     }
@@ -347,15 +369,14 @@ export class BreakdownReport extends ReportBase {
         );
       }
 
-      // Materiais alocados: sem `CostEvent`, custo = quantidade × preço.
+      // Materiais alocados: sem `CostEvent`, custo = quantidade × preço da
+      // própria alocação (14C.11.6).
       const allocations =
         (task.getForScenario("materialallocations", scenarioIdx,) ??
-          []) as Array<{
-            material: Material;
-            quantity: number;
-          }>;
+          []) as MaterialAllocation[];
       for (const allocation of allocations) {
         const material = allocation.material;
+        if (this.materialHidden(material,)) continue;
         this.mergeContributor(
           byKey,
           {
@@ -364,8 +385,9 @@ export class BreakdownReport extends ReportBase {
             name: material.name,
             quantity: allocation.quantity,
             unit: material.unitValue(),
-            cost: allocation.quantity * material.unitPriceValue(),
+            cost: allocation.quantity * allocation.unitPriceFor(material,),
             mode: "allocated",
+            ...this.rolledUpFlag(material,),
           },
         );
       }
@@ -535,6 +557,7 @@ export class BreakdownReport extends ReportBase {
     }
     existing.quantity += contributor.quantity;
     existing.cost += contributor.cost;
+    if (contributor.rolledUp) existing.rolledUp = true;
   }
 
   /** Troca o custo estimado pelo valor do `CostEvent` (fonte autoritativa). */
@@ -547,6 +570,11 @@ export class BreakdownReport extends ReportBase {
       | { id: string; name: string }
       | null;
     if (!entity) return;
+    // Material oculto pelo `hidematerial` não gera contribuinte (14C.6.6).
+    const material = kind === "material"
+      ? event.material as Material | null
+      : null;
+    if (material && this.materialHidden(material,)) return;
     const key = `${kind}:${entity.id}`;
     const existing = byKey.get(key,);
     if (existing) {
@@ -564,8 +592,48 @@ export class BreakdownReport extends ReportBase {
         unit: "",
         cost: event.amount,
         mode: event.mode,
+        ...this.rolledUpFlag(material,),
       },
     );
+  }
+
+  /** Material oculto por `hidematerial` (14C.6.6). */
+  private materialHidden(material: Material,): boolean {
+    return this.hiddenBy("hideMaterial", material,);
+  }
+
+  /**
+   * Quantidade e custo derivados das alocações do material (14C.11.10):
+   * Σ `MaterialAllocation.quantity` e Σ quantidade × preço efetivo da
+   * alocação. Material sem alocação contribui com 0 (o antigo
+   * `totalquantity` foi removido).
+   */
+  private materialAllocationTotals(
+    material: Material,
+  ): { quantity: number; cost: number } {
+    let quantity = 0;
+    let cost = 0;
+    for (const scenarioIdx of this.scenarioIdxList()) {
+      quantity += material.allocatedQuantity(scenarioIdx,);
+      cost += material.allocatedCost(scenarioIdx,);
+    }
+    return { quantity, cost, };
+  }
+
+  /** Material consolidado por `rollupmaterial` (14C.6.9). */
+  private materialRolledUp(material: Material,): boolean {
+    return this.hiddenBy("rollupMaterial", material,);
+  }
+
+  /**
+   * Fragmento com `rolledUp` apenas quando o material casa `rollupmaterial`.
+   * Manter a chave ausente nos demais casos preserva o shape do JSON de quem
+   * não usa a diretiva.
+   */
+  private rolledUpFlag(material: Material | null,): { rolledUp?: boolean } {
+    return material && this.materialRolledUp(material,)
+      ? { rolledUp: true, }
+      : {};
   }
 
   /** Monta o grupo com os totais por tipo. */
@@ -626,6 +694,7 @@ export class BreakdownReport extends ReportBase {
       }
 
       for (const contributor of group.contributors) {
+        if (contributor.rolledUp) continue;
         const line = new ReportTableLine(table, null, null,);
         line.indentation = 1;
         for (const id of columns) {

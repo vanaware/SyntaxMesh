@@ -176,13 +176,13 @@ function evaluateFile(gc: GoldenCase,): ReturnType<typeof runTsCase> {
 /**
  * Arquivos do TestSuite cujo agendamento TS ainda estoura (gap de scheduler de
  * fases anteriores, não de relatório). O golden de relatório é adiado junto.
+ *
+ * 14C.12.3 (2026-11-01): vazio. `CSV-Reports/alert.tjp` era o único membro —
+ * `propagateDateToDep` estourava em `null.toSeconds()` quando a tarefa não
+ * tinha a data do lado comparado; o guard de nulidade reabriu a comparação
+ * deste arquivo (antes adiada) e ele passou a ser verificado normalmente.
  */
-const PENDING_SCHEDULER_FILES = new Set<string>([
-  // `propagateDateToDep` estoura em `null.toSeconds` durante schedule (gap de
-  // scheduler/agendamento de fase anterior, não de relatório). Verificado
-  // empiricamente: tj3 processa este arquivo sem erro.
-  "docs/taskjuggler/test/TestSuite/CSV-Reports/alert.tjp",
-],);
+const PENDING_SCHEDULER_FILES = new Set<string>([],);
 
 const golden = loadGolden();
 const totalReports = golden.reduce((n, c,) => n + c.reports.length, 0,);

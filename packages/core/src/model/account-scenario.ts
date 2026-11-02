@@ -194,14 +194,16 @@ export class AccountScenario extends ScenarioData {
           }
         },);
       } else if (aggregate === "materials") {
-        // Material aggregation: sum totalCost of all materials (14C.1.19 —
-        // materiais vivem em `project.materials`, não em `project.resources`).
+        // Material aggregation: sum the allocation-derived cost of all
+        // materials (14C.1.19 / 14C.11.10 — materiais vivem em
+        // `project.materials`, a quantidade vem das alocações).
+        const scIdx = this.scenarioIdx;
         project.materials.each?.((material,) => {
           const materialObj = material as unknown as {
-            totalCost?: () => number;
+            allocatedCost?: (scIdx: number,) => number;
           };
-          if (typeof materialObj.totalCost === "function") {
-            const materialAmount = materialObj.totalCost();
+          if (typeof materialObj.allocatedCost === "function") {
+            const materialAmount = materialObj.allocatedCost(scIdx,);
             amount += materialAmount;
             this.buckets.material += materialAmount;
           }

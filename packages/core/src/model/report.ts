@@ -8,6 +8,8 @@ import { contentFactories, type ReportContent, } from "./report-content.ts";
 import { NotYetImplementedError, } from "./errors.ts";
 import { TjTime, } from "../time/tj-time.ts";
 import { createHtmlShell, type HtmlShell, } from "../richtext/html-shell.ts";
+import type { SourceFileInfo, } from "../source-file-info.ts";
+import type { EntryFormat, } from "./journal.ts";
 import {
   SimpleXMLElement,
   type XMLElementLike,
@@ -41,6 +43,27 @@ export class Report extends PropertyTreeNode {
   override scenarioData(scIdx: number,): ReportScenario {
     return this.data[scIdx]! as ReportScenario;
   }
+
+  /**
+   * Dialeto dos atributos RichText deste relatório (`format`, 14C.5.1).
+   *
+   * O default é `richtext` para não quebrar `.tjp` existentes; `markdown` é
+   * opt-in explícito (ADR 026). O valor é herdado de relatórios-pai.
+   */
+  richTextFormat(): EntryFormat {
+    return (this.get("format",) as EntryFormat | null) ?? "richtext";
+  }
+
+  /**
+   * Fontes brutas dos atributos RichText já lidos pelo parser (14C.5.1). Como o
+   * dialeto pode ser declarado depois do texto, a fonte fica guardada para
+   * reconstruir o `RichTextIntermediate` — em TJP a ordem dos atributos não
+   * deve importar.
+   */
+  readonly richTextSources = new Map<
+    string,
+    { text: string; sfi: SourceFileInfo | null }
+  >();
 
   /**
    * Rejeita nomes de arquivo com caracteres inválidos.
@@ -133,6 +156,10 @@ export class Report extends PropertyTreeNode {
         case "json":
           this.generateJSON();
           break;
+        // Extensão SyntaxMesh (adendo §10 / 14C.8): saída Markdown (`.md`).
+        case "markdown":
+          this.generateMarkdown();
+          break;
         case "ctags":
           this.generateCTags();
           break;
@@ -184,7 +211,7 @@ export class Report extends PropertyTreeNode {
       throw new Error("Unknown report type",);
     }
     if (!factory) {
-      // Todos os conteúdos da Fase 14 estão registrados (reports/mod.ts);
+      // Os conteúdos da Fase 14 estão registrados (reports/mod.ts);
       // os tipos conhecidos sem fábrica restante são as sheets.
       // As extensões do Fase 14 Complemento têm âncora própria (C1/C2/C3).
       const block = EXTENSION_TYPE_BLOCKS.get(key!,);
@@ -300,6 +327,39 @@ export class Report extends PropertyTreeNode {
         `${TjTime.now().to_s("%Y-%m-%d %H:%M:%S",)} with SyntaxMesh`,
     );
     return div;
+  }
+
+  /**
+   * Documento Markdown do relatório (extensão SyntaxMesh — adendo §10).
+   *
+   * O título segue o mesmo formato do HTML (`<projeto> - <título|nome>`); o
+   * corpo vem de `content.to_markdown()`. O nome lógico do arquivo termina em
+   * `.md`. Como no CSV/JSON, o conteúdo fica em `output` (ADR 027).
+   */
+  private generateMarkdown(): string | null {
+    if (!this.content?.to_markdown) {
+      this.warnUnsupported("markdown",);
+      return null;
+    }
+    const body = this.content.to_markdown();
+    if (body === null) return null;
+    // O nome do projeto vive no campo do `Project`, não no dicionário de
+    // atributos (não há `get("name")`); o título segue o mesmo formato do HTML.
+    const projectName = (this.project as unknown as { name?: string }).name ??
+      String(this.project.get("name",) ?? "",);
+    const heading = `# ${projectName} - ${
+      (this.get("title",) as string | null) ?? this.name
+    }`;
+    const text = body.replace(/\s+$/u, "",);
+    const md = text === "" ? `${heading}\n` : `${heading}\n\n${text}\n`;
+    // O nome do relatório é o nome do arquivo (como no HTML), então `plan.md`
+    // não vira `plan.md.md`; sem sufixo, ele é acrescentado.
+    const fileName = this.name.endsWith(".md",) ? this.name : this.name + ".md";
+    this.outputFileName = this.name === "."
+      ? "."
+      : this.absoluteFileName(fileName,);
+    this.output = md;
+    return md;
   }
 
   /** CSV do relatório como Array-de-Arrays (equivalente a CSVFile ';'). */

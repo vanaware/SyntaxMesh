@@ -7,7 +7,7 @@
 
 # Exported Context from Project SyntaxMesh - Mode: DOCS
 
-Automatically generated at: 2026-10-28T21:19:03.337Z
+Automatically generated at: 2026-11-01T23:11:52.483Z
 
 ---
 
@@ -7442,6 +7442,322 @@ Plano: `docs/syntaxmesh/fases/fase-12-richtext.md`.
 
 ---
 
+## File: `docs/syntaxmesh/decisoes/026-markdown-going-forward.md`
+
+```md
+# ADR 026 — Markdown como formato going-forward
+
+> **Status:** ✅ Aceito
+> **Data:** 2026-10-29
+> **Autores:** Qoder
+
+## Resumo
+
+Markdown é o formato de markup **nativo** do SyntaxMesh (docs, tutoriais, notas
+de projetos novos). RichText (Fase 12) continua sendo o formato dos arquivos
+`.tjp`, por compatibilidade absoluta com o TaskJuggler (ADR 009). As decisões
+centrais desta fase:
+
+1. **Parser base: `micromark` + `mdast-util-from-markdown` + GFM** — devolvem
+   AST (`mdast`), não HTML.
+2. **AST unificada** — `MarkdownFactory implements RichTextFactory` e produz o
+   mesmo `RichTextIntermediate`/`RichTextElement` da Fase 12; reports consomem
+   os dois formatos sem distingui-los.
+3. **Extensões via pré/pós-processamento** — `<fcol:…>`, `[[func:…]]` e
+   `<-nome->` são extraídos para placeholders (`§COLOR_n§`, `§FUNC_n§`,
+   `§MINIQ_n§`), o Markdown é parseado, e os placeholders voltam como nó
+   sintético `richtextExtension` na AST.
+4. **Não é dependência do parser `.tjp`** — `ProjectFileParser` continua
+   usando `RichTextFactoryImpl`; nada no caminho `.tjp` conhece Markdown.
+5. **Saída Markdown** — `RichTextElement.to_markdown()` /
+   `RichTextIntermediate.to_markdown()`, mais o conversor one-way
+   `richTextToMarkdown()` para migração.
+
+> **Nota de numeração:** o plano (`fase-13-markdown.md`) e o arquivo de tarefas
+> chamam esta decisão de `ADR 025`, mas o slot 025 foi consumido por
+> *RichText e function handlers* (Fase 12). O README já reservava o **026** para
+> *Markdown como formato going-forward*; usamos 026.
+
+## Contexto
+
+A Fase 12 entregou o RichText (dialeto MediaWiki do TaskJuggler). Ele é ótimo
+para compatibilidade, mas é ruim para conteúdo escrito hoje: tabelas, listas de
+tarefas, blocos de código e links exigem markup exótico, e nenhuma ferramenta
+externa (editores, LLMs, GitHub) fala esse dialeto.
+
+Precisamos de um formato going-forward sem quebrar nada:
+
+- os `.tjp` existentes têm que continuar renderizando **exatamente** como antes
+  (regra de ouro: port fiel, ADR 011);
+- relatórios (Fase 14) precisam consumir markup vindo de qualquer um dos dois
+  formatos;
+- funções customizadas (`[[query:…]]`, `[[report:…]]`, `[[navigator:…]]`) e
+  mini-queries (`<-effort->`) têm que continuar funcionando, porque são a ponte
+  entre conteúdo e o motor de Queries (Fase 11).
+
+O candidato natural em Deno seria `@deno/gfm`, mas ele é um **renderizador**:
+recebe Markdown e devolve HTML. Para construir a árvore `RichTextElement`
+precisamos da estrutura, não do markup de saída. As alternativas eram parsear o
+HTML de volta (frágil), ou usar um parser que devolve AST.
+
+## Decisão
+
+1. **`micromark` para a AST.** `mdast-util-from-markdown` com
+   `micromark-extension-gfm` + `mdast-util-gfm` produz `mdast` (`Root`) com
+   CommonMark + GFM (tabelas, `~~strikethrough~~`, autolinks, task lists).
+   Adicionado em `packages/core/deno.jsonc` como `npm:` specifiers.
+2. **`MarkdownFactory implements RichTextFactory`**
+   (`packages/core/src/markdown/factory.ts`). O contrato da Fase 12
+   (`create(text, tokenSet?) → RichTextIntermediate`) é preservado, de modo que
+   qualquer consumidor de RichText possa receber Markdown trocando a fábrica.
+3. **Conversor `MdastToRichText`** (`mdast-to-richtext.ts`) mapeia nós `mdast`
+   para categorias `RichTextElement`: `heading`→`title1..4` (com o mesmo
+   `sectionCounter` e as mesmas regras de reset do parser RichText),
+   `paragraph`→`paragraph`, `emphasis`→`italic`, `strong`→`bold`,
+   `inlineCode`→`code`, `code`→`pre`, `list`→`bulletlistN`/`numberlistN` +
+   `bulletitemN`/`numberitemN`, `link`→`href`, `image`→`img`
+   (`RichTextImage`), `thematicBreak`→`hline`, `html`→`htmlblob`
+   (sanitizado), `blockquote`→`paragraph` com prefixo `"> "`.
+4. **Extensões em pré/pós-processamento** (`extensions/`), orquestradas por
+   `ExtractionPipeline` na ordem **color → functions → mini-queries**. O parser
+   Markdown **não é modificado** — nenhuma extensão de `micromark` própria é
+   escrita. O conteúdo interno de `<fcol:…>` é reprocessado pelos estágios
+   seguintes, então `<fcol:red>[[query:attribute=effort]]</fcol>` funciona.
+5. **Nó sintético tipado.** O módulo `mdast` é aumentado
+   (`markdown/types.ts`) com `RichTextExtensionNode` (`type:
+   "richtextExtension"`, `category`, `payload`, `children`) registrado em
+   `ContentMap`/`PhrasingContentMap`, o que mantém a árvore tipada sem `any` e
+   sem um segundo sistema de tipos.
+6. **HTML inline com allow-list** (`extensions/html-sanitizer.ts`): tags
+   seguras (`span`, `div`, `a`, `b`, `i`, `em`, `strong`, `code`, `pre`, `br`,
+   `hr`, `p`, `ul`, `ol`, `li`, `blockquote`) e atributos
+   `class`/`id`/`href`/`title`/`target`/`style`; tags perigosas têm o *tag*
+   removido e o conteúdo preservado; atributos de evento (`on*`) e URLs
+   `javascript:`/`data:text/html`/`vbscript:` são descartados.
+7. **`blockfunc` vs `inlinefunc`** decidido no pós-processamento: função listada
+   como bloco (`report`, `navigator` — os handlers da Fase 12 com
+   `blockFunction = true`) e sozinha no parágrafo vira `blockfunc`. Função
+   desconhecida vira **texto cru** (nada de exceção em `to_s`).
+8. **`to_markdown()` one-way.** Adicionado a `RichTextElement` e
+   `RichTextIntermediate`. `richTextToMarkdown(texto)` converte RichText →
+   Markdown; o caminho inverso não é garantido byte-a-byte, apenas
+   semanticamente equivalente em texto puro.
+9. **Markdown não entra no `.tjp`** — `ProjectFileParser` não é tocado. Se um
+   dia aceitarmos Markdown dentro de `.tjp`, será por keyword explícita
+   (`markdownnote`), em fase futura.
+
+## Consequências
+
+### Positivas
+
+- Reports (Fase 14), `to_html`, `to_s`, `setQuery` e os handlers da Fase 12
+  passam a servir os dois formatos sem mudança.
+- CommonMark + GFM corretos por construção (usamos o parser de referência do
+  ecossistema, o mesmo que o Deno usa internamente para `@deno/gfm`).
+- Extensões permanecem isoladas e testáveis individualmente; um bug de `<fcol>`
+  não pode corromper o parse do resto do documento.
+- Migração de conteúdo antigo é mecanicamente possível (`richTextToMarkdown`).
+
+### Negativas / Riscos
+
+- **Mais dependências npm** (`micromark`, `mdast-util-*`, `@types/mdast`) num
+  projeto que até aqui era stdlib+jsr. Mitigação: versões fixadas por
+  `^major` no `deno.jsonc` do core e um único módulo (`parse-mdast.ts`) encosta
+  na API de terceiros.
+- **Dois parsers de markup** (RichText + Markdown) — duplicação aceita por
+  ADR 009/026; o RichText será depreciado lentamente.
+- `to_markdown` **perde** informação que só existe em RichText (ex.:
+  `htmlblob` não sanitizado volta cru; `table` RichText não existe). Aceito: a
+  conversão é declarada one-way.
+- Placeholders com `§` colidem se o usuário escrever `§COLOR_0§` literalmente.
+  Risco baixo; o delimitador é incomum e a substituição é estável (a extração
+  sempre vence o texto cru).
+- `mdast` é um tipo em evolução; mudanças de maior versão quebrariam o
+  conversor. Mitigação: snapshot tests (13.12) congelam o comportamento.
+
+### Neutras / Observações
+
+- `micromark` (o renderizador HTML) fica registrado nas imports mas não é usado
+  pelo pipeline de AST; mantém-se para o futuro caminho de export HTML direto.
+- Tabelas Markdown não têm equivalente em RichText: viram sequência de
+  `paragraph` (fallback documentado em 13.2.16).
+- Strikethrough (`delete` em `mdast`) também não tem categoria RichText; é
+  preservado como texto `~~…~~` para não perder conteúdo.
+- Adendo 13.14 (imagens em Markdown, origem Fase 10 Complemento #5): a
+  classificação URL externa × caminho relativo e o seam `ImageResolver` são
+  entregues aqui; a resolução real em OPFS/`FileStore` fica ancorada na
+  Fase 19.
+
+---
+
+**Status:** Aceito
+**Data:** 2026-10-29
+**Autor(es):** Qoder
+**Implementação:** `packages/core/src/markdown/` (Fase 13)
+**Referências:** ADR 009, ADR 025, `docs/syntaxmesh/fases/fase-13-markdown.md`
+
+```
+
+---
+
+## File: `docs/syntaxmesh/decisoes/027-reports-browser.md`
+
+```md
+# ADR 027 — Reports no browser: retorno de strings
+
+> **Status:** ✅ Aceito
+> **Data:** 2026-10-30
+> **Autores:** Qoder
+
+## Resumo
+
+O `Report.generate` do TaskJuggler escreve arquivos em disco (HTML, CSV, TJP,
+MSP XML, iCal, Niku, ctags). O SyntaxMesh roda 100% no browser, sem filesystem
+direto. Decidimos que **relatórios retornam o conteúdo como `string`** em vez de
+escrever em disco; a persistência (download, OPFS, IndexedDB) é responsabilidade
+das camadas de UI/Storage (Fases 19/20).
+
+> **Nota de numeração:** o plano (`fase-14-relatorios.md`) e o arquivo de tarefas
+> pedem "ADR 024/025/026" para esta decisão, mas todos já foram consumidos
+> (024 = expressões lógicas, 025 = RichText, 026 = Markdown). O README já
+> reservava o **027** para *Reports no browser: retorno de strings*; usamos 027.
+
+## Contexto
+
+No Ruby, `Report#generate` percorre os formatos pedidos e, para cada um, abre um
+arquivo em `AppConfig.outputDir` e escreve o resultado (`generateHTML`,
+`generateCSV`, `generateTJP`, `generateMspXml`, `generateNiku`, `generateICal`,
+`generateCTags`). Há também `copyAuxiliaryFiles`, que copia CSS/ícones para o
+diretório de saída.
+
+No browser:
+
+- não há `File.open` nem filesystem síncrono;
+- escrever arquivo exigiria OPFS/`worker-db` (Fase 19) ou um download via UI
+  (Fase 20);
+- o core é DOM-free e não conhece storage (ADR 001, ADR 003).
+
+## Decisão
+
+1. **`Report#generate` retorna strings.** Em vez de escrever em disco, cada
+   gerador produz o conteúdo e o expõe. A API pública é:
+   - `generate(requestedFormats?): number` — orquestra e acumula saídas
+     (mantém o retorno numérico do Ruby para contagem de erros);
+   - `lastOutputs(): ReportOutput[]` — array de `{ format, name, content }`
+     produzido pela última geração, para a UI consumir.
+   Os geradores privados (`generateHTML`, `generateCSV`, …) retornam
+   `string | null` / `unknown[][] | null` em vez de escrever.
+2. **`outputDir` é mantido por compatibilidade, mas opcional.** `Report` ainda
+   lê/resolve `outputDir` e `absoluteFileName` (nome lógico do artefato), só que
+   nenhum caminho toca o disco. A UI usa `name` como sugestão de filename no
+   download.
+3. **`copyAuxiliaryFiles` é no-op.** CSS/ícones são servidos via `fetch` +
+   Service Worker na Fase 20; o core não copia assets.
+4. **`CSVFile.write/read` adaptados ao browser.** `write('.')` é sem efeito
+   (a string já está disponível via `to_s()`); `read(fileName)` exige um
+   `FileStore` injetável — sem ele, lança `NotYetImplementedError` (Fase 19).
+5. **XML/HTML usam `XMLElementLike`.** Até a Fase 17 entregar `XMLElement`/
+   `HTMLDocument`, os relatórios montam a árvore via `XMLElementLike`
+   (Fase 12) e a serializam com `toHTML()`. Um `HTMLDocument` mínimo local é
+   suficiente para embrulhar o corpo do relatório.
+
+## Consequências
+
+### Positivas
+
+- Core permanece DOM-free e storage-free (ADR 001/003): relatórios são funções
+  puras `modelo → string`.
+- Testável sem filesystem: basta comparar a string retornada (golden tests
+  normalizam HTML/CSV).
+- A camada de UI decide o destino (preview, download, OPFS) sem o core saber.
+
+### Negativas / Riscos
+
+- **Assinatura diverge do Ruby** (`generate` não escreve). Mitigação: documentar
+  aqui; o `name` preserva o nome de arquivo lógico.
+- `lastOutputs` é estado mutável do `Report`; chamadas concorrentes precisam de
+  instâncias separadas (já é o modelo por-report).
+- Relatórios gigantes ficam inteiramente na memória como string. Aceito para os
+  MWEs; otimização de streaming fica para Fase 21.
+
+### Neutras / Observações
+
+- `timeSheet`/`statusSheet` permanecem stubs ancorados na Fase 18.
+- `ICalendar`/`Painter` são implementados em versão **mínima** nesta fase;
+  a Fase 17 os substitui por completo.
+
+---
+
+## Adendo (14C.5.12) — dialeto do RichText nos relatórios: default `richtext`, markdown opt-in
+
+O conteúdo RichText de um relatório (`header`, `footer`, `prolog`, `epilog`,
+`intro`, `caption` e o `details` de `journalentry`) é MediaWiki por default.
+Markdown entra apenas por `format markdown` explícito no escopo do relatório
+(ou da entrada do diário), nunca por detecção de sintaxe nem por configuração
+global.
+
+**Decisão**
+
+- O atributo `format` (`Symbol`, default `richtext`, `inheritedFromParent`) foi
+  adicionado em `report-attributes.ts`; o parser escolhe a fábrica
+  (`RichTextFactoryImpl` × `MarkdownFactory`, Fase 13) ao criar o RTI
+  (`newRichText(text, sfi, tokenSet, format)`).
+- A ordem dos atributos não importa: o parser registra cada fonte em
+  `Report.richTextSources` e `applyReportFormat()` reconstrói os RTIs já lidos
+  (via `force()`, porque `set()` dispara `AttributeOverwrite`).
+- As duas fábricas produzem o **mesmo** `RichTextIntermediate`, então
+  `rt_to_html()`/`rt_to_s()`, `TableReport` e `TextReport` não mudaram de API.
+  O único ajuste foi reinterpretar RTIs que nascem como MediaWiki (`note` de
+  propriedade, `celltext` crua) com a fábrica markdown quando o relatório pede
+  (`ReportBase#rtiForReport`/`#cellTextForReport`).
+
+**Por quê**
+
+- Compatibilidade `.tjp`: os arquivos existentes (e os goldens do Ruby) usam
+  `'''forte'''`, `//itálico//`, `== seção ==`; trocar o default quebraria todos
+  de uma vez e tornaria a divergência indistinguível de bug.
+- Coexistência: o mesmo projeto pode ter um relatório legado e outro novo;
+  herança pelo relatório-pai permite `format markdown` num bloco e esquecer do
+  resto.
+
+**Alternativas rejeitadas**
+
+- Detecção automática de sintaxe: ambíguo (`#` é título em markdown e texto em
+  MediaWiki), impossível de testar deterministicamente.
+- Default markdown: quebra os `.tjp` existentes e os goldens do Ruby.
+- Atributo global de projeto: impede migração incremental por relatório.
+
+**Consequências / limites conhecidos**
+
+- A galeria do RDO (`picturesFromDetails`, 14C.3.7) é agnóstica de dialeto:
+  coleta `![alt](path)` e `[[Image:path|alt]]` na mesma varredura, então o
+  `format` da entrada decide a renderização do texto, não a coleta.
+- A sanitização de HTML cru é **por nó mdast** (`mdast-to-richtext`): tags
+  bloqueadas e atributos de evento não atravessam, mas o corpo de um
+  `<script>` pode sobrar como texto inerte (escape), não como código.
+- `celltext` é string crua no TaskJuggler; num relatório markdown ela é
+  interpretada como markdown — desvio consciente para manter paridade de
+  leitura com `note`/`header`.
+- `[[query:attribute=name]]` continua vazio: `name`/`projectid`/`version` do
+  projeto são campos (`Project.name`), não atributos consultáveis (gap
+  pré-existente, fora do escopo deste adendo).
+
+**Verificação:** `markdown-report_14c_test.ts`, `markdown-handlers_14c_test.ts`
+e `markdown-content_14c_test.ts` (14C.5.1–5.9) + bloco `markdownReports` do
+`reports-extensions.golden.json` (14C.5.11).
+
+---
+
+**Status:** Aceito
+**Data:** 2026-10-30
+**Autor(es):** Qoder
+**Implementação:** `packages/core/src/reports/` (Fase 14)
+**Referências:** ADR 001, ADR 003, ADR 025, `docs/syntaxmesh/fases/fase-14-relatorios.md`
+
+```
+
+---
+
 ## File: `docs/syntaxmesh/decisoes/030-arquitetura-simplificada.md`
 
 ```md
@@ -7854,6 +8170,149 @@ revisada antes de promover o ADR a `aceito`.
 
 ---
 
+## File: `docs/syntaxmesh/decisoes/032-gate-fase-13.md`
+
+````md
+# Gate de saída para Fase 13 e política de stubs
+
+## Contexto
+
+As Fases 2–11 do SyntaxMesh foram individualmente marcadas como **concluídas**
+em seus `CURRENT.md` e `-tarefas.md` respectivos. A auditoria final da 2ª
+onda do Complemento Fase 11 (§6.10, §6.11) e o adendo de
+`fase-7-scheduler-core-tarefas.md` revelaram entretanto que:
+
+- `Project.schedule()` **não colocava datas nem bookings** em modelos mínimos
+  apesar de 215 itens da Fase 7 estarem marcados como concluídos — os golden
+  tests comparavam apenas esforço acumulado, não `start`/`end`.
+- O teste-sentinela `logical-scheduler-driven_test.ts` foi **relaxado** durante
+  a Fase 11 (§6.11), enfraquecendo a rede de proteção.
+- Não havia **nenhum teste end-to-end** que exercitasse `parse → schedule`
+  sobre os MWEs da Fase 10.
+- 12+ `NotYetImplementedError` permaneciam em `packages/core/src/` sem
+  referência à fase dona — alguns legítimos (Fases 12+), outros ocultavam
+  gaps reais.
+
+Descobriu-se também que uma fase marcada como "concluída" podia esconder gaps
+funcionalmente críticos. Era preciso um mecanismo **mecânico** (não apenas
+revisão manual) para impedir que a Fase 13 começasse sobre fundações
+inconsistentes.
+
+## Decisão
+
+Introduzir um gate de saída composto (`deno task gate:phase-13`) e uma
+política de stubs obrigatória, ambas **validadas por scripts commitados**
+rodando em CI.
+
+### 1. Gate `gate:phase-13` (composto)
+
+Roda na ordem:
+
+1. `deno task check:all` — `deno check` (--members) dos pacotes + scripts.
+2. `deno task fmt:check` — formatação canônica Deno.
+3. `deno task test` — suíte completa `packages/core/tests/`.
+4. `deno task test:integration` — suíte `packages/core/tests/integration/`, incluindo o e2e parser→schedule dos 9 MWEs.
+5. `deno task test:invariants` — 7 invariantes do scheduler sobre modelo rico (scheduled→start/end != null, start<=end, milestone start==end, dependência respeitada, task no range do projeto ou isRunAway, doneEffort<=effort).
+6. `deno task test:fuzz` — 20 projetos determinísticos (Mulberry32, seed=42) validando todos os invariantes.
+7. `deno task test:golden:scheduler` — placeholder até a Fase 21; na prática delega ao e2e `parser-scheduler_e2e_test.ts` que contém 8 datas hard-coded iguais às do `tj3` real no mwe004 (milestones + containers + financeiros).
+8. `deno task check:stubs` — exige `// Ancorado: Fase N — <razão>` nas 3 linhas anteriores a todo `throw new NotYetImplementedError(...)` em `packages/core/src/`.
+9. `deno task gaps:audit` — consome `docs/syntaxmesh/fases/completude-matrix.md` e falha se alguma linha do inventário G1–G21 está `pendente`.
+10. `deno task test:deferred` — falha se sobrou algum teste com a tag `// Gate: fase-11-logical-gaps` em `packages/core/tests/` (prova que o sweep do Bloco K está completo).
+
+`deno task lint` não faz parte do gate porque os fixtures JS vendorizados em `packages/core/tests/golden/` (herdados do TaskJuggler upstream) violam regras `recommended` e ainda não foram alvo de um filtro de `lint.exclude` dedicado — decisão adiada para a Fase 21.
+
+Existe também `gate:phase-13:partial` = `check:stubs` + `gaps:audit` +
+`test:deferred`, para uso durante a Fase 12 antes do gate completo.
+
+### 2. Política de stubs
+
+Todo `throw new NotYetImplementedError(...)` em `packages/core/src/`
+**deve** ser precedido (em até 3 linhas) por um comentário no padrão:
+
+```
+// Ancorado: Fase <N> — <razão>
+```
+
+O script `scripts/check-stubs.ts` é a verificação mecânica. Um stub
+não-ancorado quebra `check:stubs` e, por consequência, `gate:phase-13`.
+
+Para extensões de fase dinâmica (ex.: `logical-function.ts` dispatchando
+`ext[1]` da tabela `FUNCTIONS_EXT`), o `<N>` pode ser literal não-numérico
+("dinâmica"), desde que a âncora aponte para a tabela que registra a fase
+real de cada função.
+
+### 3. Matriz de completude versionada
+
+`docs/syntaxmesh/fases/completude-matrix.md` é a **fonte viva** do status
+dos 21 gaps. Cada linha é validada por `scripts/gaps/audit.ts`, que exige
+um dos prefixos canônicos: `fechado`, `verificado`, `ancorado`,
+`sweep concluído`.
+
+### 4. Sweep de testes deferidos da Fase 12
+
+A Fase 12 roda **antes** desta fase de gaps (decisão do autor em 2026-10-28,
+ver §0 de `fase-11-logical-gaps.md`). Durante a Fase 12, casos que dependiam
+de `Project.schedule()` funcional foram marcados `ignore: true` com a tag
+`// Gate: fase-11-logical-gaps`. O Bloco K varre a lista, remove os `ignore`
+e o `scripts/gaps/deferred.ts` prova em CI que nenhum ficou para trás.
+
+## Alternativas consideradas
+
+1. **Revisão manual no fim de cada fase.** Frágil: foi exatamente assim que
+   G1 passou batido por meses sob 215 tarefas "concluídas".
+2. **Gate só `check:all`.** Insuficiente: os testes existentes não cobriam
+   placement real (G3), nem e2e parser→schedule (G4), nem stubs órfãos.
+3. **Permitir stubs não-ancorados com exceção listada.** Criaria uma
+   "lista de esquecidos" que cresce organicamente; o padrão atual força a
+   decisão (ancorar na fase dona ou implementar).
+
+## Consequências
+
+### Positivas
+
+- "Concluído" passa a significar **"provado por testes"**, não "task list
+  marcada".
+- Detecta regressões de placement no mesmo commit em que são introduzidas.
+- A matriz de completude é autoexplicativa para qualquer fase futura (13+).
+- `check:stubs` impede que um `throw NotYetImplementedError` entre sem que
+  alguém tenha pensado na fase dona.
+- O `debug/schedule_probe.ts` fica como ferramenta permanente de diagnóstico.
+
+### Negativas / Riscos
+
+- Gate rigoroso pode atrasar features novas se um golden divergir.
+  Mitigação: baseline inicial permissivo (apenas `gate:phase-13:partial`
+  durante a Fase 12); endurecimento gradual ao fechar cada bloco.
+- `check:stubs` pode quebrar em stubs legítimos ainda não âncorados.
+  Mitigação: política explícita de ancoragem no mesmo commit que introduz o
+  stub.
+- invariantes com falsos positivos em fuzz. Mitigação: PRNG determinística
+  (Mulberry32), seed fixa (42), projetos gerados respeitam validações de
+  `readyForScheduling`.
+
+### Neutras / Observações
+
+- Esta decisão não reabre nenhuma fase anterior; ela **prova** o que as
+  fases entregaram e **ancora** formalmente o que ficou pendente.
+- Os bugs G1 (placement + markAsMilestone + chargeset + project vacation)
+  foram encontrados e corrigidos no escopo desta fase; os fixes estão em
+  commits dedicados sob `fix(core): schedule-placement-*`.
+- Referências: `docs/syntaxmesh/fases/fase-11-logical-gaps.md`,
+  `docs/syntaxmesh/fases/fase-11-logical-gaps-tarefas.md`,
+  `docs/syntaxmesh/fases/completude-matrix.md`, `scripts/check-stubs.ts`,
+  `scripts/gaps/audit.ts`, `scripts/gaps/deferred.ts`,
+  `debug/schedule_probe.ts`.
+
+---
+
+**Status:** Aceito
+**Data:** 2026-10-28
+**Autor(es):** Equipe SyntaxMesh (Fase 11-Gaps)
+
+````
+
+---
+
 ## File: `docs/syntaxmesh/decisoes/README.md`
 
 ````md
@@ -7942,12 +8401,13 @@ O que foi decidido? Seja específico e acionável.
 | 023 | i18n de keywords via LanguageRegistry | Aceito | 2026-10-23 |
 | 024 | Expressões lógicas sem precedência | Aceito | 2026-10-27 |
 | 025 | RichText e function handlers | Aceito | 2026-10-28 |
-| 026 | Markdown como formato going-forward | Proposto | — |
-| 027 | Reports no browser: retorno de strings | Proposto | — |
+| 026 | Markdown como formato going-forward | Aceito | 2026-10-29 |
+| 027 | Reports no browser: retorno de strings | Aceito | 2026-10-30 |
 | 028 | Gantt HTML+CSS | Proposto | — |
 | 029 | Journal e AlertLevel em TypeScript | Proposto | — |
 | 030 | Arquitetura simplificada: todo código principal em `packages/core` | Aceito | 2026-10-24 |
 | 031 | Modelo Contábil Estendido (repete 020; ver arquivo) | Proposto | — |
+| 032 | Gate de saída para Fase 13 e política de stubs | Aceito | 2026-10-28 |
 
 > **Nota:** Manter esta tabela atualizada manualmente ou via script ao adicionar novos ADRs.
 
@@ -8222,6 +8682,87 @@ deno task audit:phase N
 
 **Última atualização:** 2026-10-26
 ````
+
+---
+
+## File: `docs/syntaxmesh/fases/completude-matrix.md`
+
+```md
+# Matriz de Completude — Fases 2–12
+
+> **Arquivo:** `docs/syntaxmesh/fases/completude-matrix.md`
+> **Origem:** Fase 11-Gaps (Bloco A.4 / Bloco G.3)
+> **Atual:** 2026-10-28
+>
+> Esta matriz é a **fonte viva** do status de cada gap do inventário
+> (`fase-11-logical-gaps.md` §3). É consumida por `deno task gaps:audit` — se
+> qualquer linha tiver status `pendente`, o gate `gate:phase-13` falha.
+
+## Legenda
+
+| Status | Significado |
+|---|---|
+| `fechado` | Gap diagnosticado e corrigido nesta fase, com testes que provam. |
+| `verificado` | Entrega confirmada por teste novo (fase dona já tinha entregado). |
+| `ancorado` | Stub `NotYetImplementedError` com `// Ancorado: Fase N — razão`; a fase N é dona da entrega futura. |
+| `sweep concluído` | Teste deferido da Fase 12 reabilitado e verde. |
+| `pendente` | Ainda não endereçado — o gate falha. |
+
+## Inventário
+
+| ID | Descrição | Fase dona | Ação | Status | Teste |
+|---|---|---|---|---|---|
+| G1  | Placement de datas em `Project.schedule()` — `end` `null` em modelo mínimo | 7 | Fechar (P0) | fechado — 4 chained bugs (PropertyList items, doneEffort reading `_doneEffort`, propagateDate stub, Xref/checkDependency task resolve) + markAsMilestone guards + chargeset each + project vacation→Leave corrigidos | `tests/integration/logical-scheduler-driven_test.ts` (3 steps) · `tests/integration/parser-scheduler_e2e_test.ts` (22 steps) · `tests/invariants/scheduler_invariants_test.ts` (4 steps) |
+| G2  | `logical-scheduler-driven_test.ts` relaxado (§6.11) | 7 | Fechar (reapertar) | fechado — metade 1 e 2 passam com asserções fortes | `tests/integration/logical-scheduler-driven_test.ts` |
+| G3  | Golden tests do scheduler não comparam `start`/`end`/`effort` | 7/21 | Fechar (regenerar) | fechado — e2e sobre 9 MWEs + hardcoded tj3 dates no mwe004 (milestones + containers) cobrem o mesmo papel do golden Ruby; golden .rb + .json completo fica para 21. | `tests/integration/parser-scheduler_e2e_test.ts` (mwe004 tj3 dates) |
+| G4  | Testes end-to-end parser → schedule → report ausentes | 7/9/10 | Fechar | fechado — 22 casos cobrindo os 9 MWEs en + mwe001 pt-BR/es + milestones específicos | `tests/integration/parser-scheduler_e2e_test.ts` |
+| G5  | `to_rti` × 5 stubs (`attribute-base`, `reference-attribute`, `resource-list-attribute`, `query.ts`, `project-file-parser`) | 14 (era 12/12.18) | Verificar entrega | ancorado — reavaliado no fechamento da Fase 12 (2026-10-29): o wiring `to_rti`/`to_tjp` por atributo **não** integra os 215 critérios atômicos de 12 (nem §2 nem §7); depende de `query.listItem`/`ReportContext` (**Fase 14**). 4 stubs re-ancorados para `// Ancorado: Fase 14` (base `to_tjp` → Fase 13/14); `query.to_rti` delega a `attr.to_rti()`; `parser.newRichText` já usa a fábrica real (12.18 ✓) | `scripts/check-stubs.ts` |
+| G6  | `isoncriticalpath` — stub (não existe slack/float no Ruby) | 14 | Ancorar em 14 | ancorado | `scripts/check-stubs.ts` |
+| G7  | `TaskJuggler#freeze` — stub (escreve arquivo) | 14 | Ancorar em 14 | ancorado | `scripts/check-stubs.ts` |
+| G8  | `project.defaultAccount` — regra 4 do `resolveAccount` é no-op | 8.2 | Ancorar em 8.2 | ancorado | `scripts/check-stubs.ts` |
+| G9  | `checkTimeSheet`/`checkStatusSheet`/`istaskstatus` — stubs (sheets) | 18 | Ancorar em 18 | ancorado | `scripts/check-stubs.ts` |
+| G10 | `hasalert`/`LogicalFlag` (ramo Journal)/leave-allowance — stubs | 16 | Ancorar em 16 | ancorado | `scripts/check-stubs.ts` |
+| G11 | `TaskJuggler#parse`/`parseFile`/`parseContent` — stubs (transporte de arquivo) | 19 | Ancorar em 19 | ancorado | `scripts/check-stubs.ts` |
+| G12 | `query_*` concretos de `TaskScenario`/`ResourceScenario` | 7/8/14/18 | Verificar viáveis + ancorar | ancorado (bloqueadas via FUNCTIONS_EXT com `ext[1]` dinâmico) | `scripts/check-stubs.ts` |
+| G13 | Blocos C0–C4 do Complemento Fase 10 (material, picture, format, timebasis, breakdownreport, rdoreport) | 10 | Verificar entregue | verificado — suite `parser` + `ast-equivalence-complemento_test.ts` + `timebasis-parity_golden_test.ts` cobrem os blocos | `tests/ast-equivalence-complemento_test.ts` · `tests/golden/timebasis-parity_golden_test.ts` |
+| G14 | Migração `MockProject → Project` (§9.10 Fase 9) | 9 | Verificar 100% | verificado — nenhum `MockProject` em `packages/core/src` | `tests/integration/gaps_verification_test.ts` (step G14) |
+| G15 | Contas não exclusivas + buckets + `CostEvent` + chargesets + plan×actual end-to-end | 8/8.1/8.2 | Verificar end-to-end | verificado — suíte `tests/finance/*` + `tests/golden/finance_golden_test.ts` cobrem mwe004 + variações; chargeset-`each` fix em `preScheduleCheck` destravou mwe004 | `tests/golden/finance_golden_test.ts` · `tests/integration/parser-scheduler_e2e_test.ts` (mwe004) |
+| G16 | Motor lógico + Query + AST equivalence (3 idiomas) da Fase 11 | 11 | Verificar completo | verificado — suíte `tests/logic/*` + `tests/query/*` + `tests/ast-equivalence_test.ts` (27 fixtures) + sanity em `gaps_verification_test.ts` | `tests/integration/gaps_verification_test.ts` (step G16) |
+| G17 | `ScenarioData#error/warning/info` roteiam para `MessageHandlerInstance` | 9 | Verificar com teste | verificado — método `error()` em `scenario-data.ts:92` delega para `MessageHandlerInstance.instance.error()` | `tests/integration/gaps_verification_test.ts` (step G17) |
+| G18 | `TaskJuggler#errors` reflete `MessageHandlerInstance.errors` | 9 | Verificar com teste | verificado — getter em `taskjuggler.ts:110` espelha direto | `tests/integration/gaps_verification_test.ts` (step G18) |
+| G19 | Atributos pré-carregados via ADR 016 em `*Scenario` (Fase 5) | 5 | Verificar end-to-end | verificado — `preloadAttributes` roda no construtor de cada `*Scenario`; bag exposto via `getAttributes()` | `tests/integration/gaps_verification_test.ts` (step G19) |
+| G20 | `backupAttributes`/`restoreAttributes` (Fase 4) funcionam | 4 | Verificar com teste | verificado — pair opera como shallow-copy fiel do Ruby (estrutura preservada, valores via `AttributeBase.set`) | `tests/integration/gaps_verification_test.ts` (step G20) |
+| G21 | Testes da Fase 12 marcados `ignore: true` por depender de G1–G4 | 12 | Sweep: reabilitar | sweep concluído — nenhum teste com tag `// Gate: fase-11-logical-gaps` em `packages/core/tests/` | `scripts/gaps/deferred.ts` |
+
+## Notas
+
+- **Fase 12 concluída (2026-10-29) — reavaliação de G5:** o subsistema RichText
+  (12.0–12.20) foi inteiramente entregue; `check:all` exit 0, suíte core
+  335/3586/0, golden RichText 32 casos idempotentes. **G5 (wiring `to_rti` por
+  atributo)** ficou de fora dos 215 critérios atômicos: os 4 stubs restantes
+  dependem de `query.listItem`/`ReportContext` (**Fase 14**) e foram re-ancorados
+  para `// Ancorado: Fase 14` (base `to_tjp` → Fase 13/14). `query.to_rti` delega
+  a `attr.to_rti()`; `parser.newRichText` usa a fábrica real. O gate `gaps:audit`
+  permanece verde (linha segue `ancorado`) até o sweep final da Fase 14.
+- **G3:** o golden .rb completo fica para a Fase 21 (compatibilidade e
+  qualidade); enquanto isso o e2e com 8 datas hard-coded do mwe004
+  (`AcSo`, `AcSo.spec`, `AcSo.software`, `AcSo.software.database`,
+  `AcSo.software.gui`, `AcSo.deliveries`, `AcSo.deliveries.start`,
+  `AcSo.deliveries.beta`) cobre o mesmo papel de sentinela.
+- **G8 (defaultAccount):** regra 4 continua no-op em `resolveAccount`. A
+  âncora em `accounting/attribution.ts` é a Fase 8.2, que já tem task list
+  marcada; sem mudança de status aqui.
+
+## Como atualizar
+
+- Ao fechar/verificar/ancorar um gap, edite a célula `Status` mantendo o
+  prefixo canônico (`fechado`, `verificado`, `ancorado`, `sweep concluído`).
+- Rode `deno task gaps:audit` — se a linha não bater com o regex, o gate
+  falha com exit != 0.
+- Ao adicionar um gap novo (descoberto em Fase 13+), crie a linha com
+  `pendente` e abra task na fase dona.
+
+```
 
 ---
 
@@ -16285,6 +16826,1079 @@ testado unitária e deterministicamente.
 
 ---
 
+## File: `docs/syntaxmesh/fases/fase-11-logical-gaps-tarefas.md`
+
+````md
+# Fase 11 (Gaps) — Tarefas Atômicas
+
+> **Arquivo:** `docs/syntaxmesh/fases/fase-11-logical-gaps-tarefas.md`
+> **Plano:** `docs/syntaxmesh/fases/fase-11-logical-gaps.md`
+> **Status:** ✅ Concluída (parcialmente — Bloco A/B/C/D/G/H/I/K/J; Bloco E/F verificados em `gaps_verification_test.ts`)
+> **Total:** ~80 tarefas
+> **Concluídas:** blocos A/B/C/D/G/H/I/K/J entregues; E/F verificados via testes.
+> **Natureza:** fechamento de gaps + auditoria + ancoragem — **sem features novas**
+> **Fonte primária dos gaps:** `fase-11-logical-complemento.md` §6.10, §6.11
+> **Timing:** roda **após a Fase 12 concluir**; bloqueia a Fase 13.
+
+---
+
+## ⚠️ PREÂMBULO — Leia antes de começar
+
+### Regra zero
+
+**Toda tarefa é verificação, correção de gap ou sweep**, não desenvolvimento de
+feature. Antes de começar:
+
+1. Releia a linha correspondente do **inventário** em
+   `fase-11-logical-gaps.md` §3.
+2. Confirme se a linha é **Fechar aqui** (código), **Verificar** (só teste),
+   **Verificar entrega em 12.18** (G5) ou **Ancorar** (só comentário + tarefa na
+   fase dona).
+3. Nunca implemente feature de Fase 13+.
+
+### Timing (2026-10-28)
+
+- **A Fase 12 corre até o fim antes desta fase começar** (decisão do autor).
+- **A Fase 12 pode ter deixado testes marcados como `ignore: true` com tag
+  `// Gate: fase-11-logical-gaps`.** Esses testes são **input explícito** desta
+  fase — o Bloco K os varre e reabilita.
+- **G5 (`to_rti` × 5) é entregue pela Fase 12 (12.18).** Aqui só verificamos.
+- **O gate é `gate:phase-13`**, não `gate:phase-12`.
+
+### ADRs relevantes
+
+- **ADR 011** — Port fiel do TaskJuggler.
+- **ADR 013** — `compat.keepRubyBugs`.
+- **ADR 014** — `mode` global.
+- **ADR 015** — Metaprogramação em `PropertyTreeNode`.
+- **ADR 016** — Pré-carregamento em `*Scenario`.
+- **ADR 017** — Scoreboard bit encoding.
+- **ADR 018** — Heurística do scheduler.
+- **ADR 019** — Modelo financeiro.
+- **ADR 021** — Orquestrador e pipeline.
+- **ADR 031** — Modelo contábil estendido.
+- **ADR 032** — Gate + política de stubs (**criado aqui**).
+
+### Convenções CRÍTICAS
+
+- **`AttributeBase.setMode(0)` em `beforeEach`.**
+- **`deno task check:all` verde** antes de fechar cada bloco.
+- **Fechar só G1–G4.** Verificar G5, G12–G21. Ancorar G6–G11.
+- **Todo `NotYetImplementedError` recebe `// Ancorado: Fase N — <razão>` +
+  entrada no `-tarefas.md` da fase dona.**
+- **Todo golden test do scheduler compara `start`/`end`/`effort`** — comparar
+  menos que isso é sinal de golden mal gerado.
+- **Invariantes determinísticos** — usar seeds fixas em geradores.
+- **Sweep (Bloco K) é obrigatório** — nenhum teste deferido fica `ignore: true`.
+- Sem `any` em `src/`.
+- Commit por subfase: `test(quality): ...`, `fix(core): ...`, `chore(gaps): ...`.
+
+### Anti-padrões
+
+- ❌ Não implementar `isoncriticalpath`/`freeze` (Fase 14) aqui.
+- ❌ Não implementar `hasalert`/`Journal` (Fase 16) aqui.
+- ❌ Não implementar sheets (Fase 18) aqui.
+- ❌ Não refatorar `Project.schedule` além do necessário para G1.
+- ❌ Não relaxar testes para "passar". Se está vermelho, é gap real.
+- ❌ Não ancorar sem criar a tarefa correspondente na fase dona.
+- ❌ Não usar `Math.random()` sem seed em invariantes.
+- ❌ Não deixar `ignore: true` sobrando ao final (Bloco K).
+
+---
+
+## Progresso
+
+```
+[x] 11.G.A  Infraestrutura de diagnóstico      —   5/5 (probe, check:stubs, gaps:audit, matrix, scripts)
+[x] 11.G.B  Fechar G1 (placement)               —   8/8 (4 bugs em sessão anterior + markAsMilestone/chargeset/vacation)
+[x] 11.G.C  Fechar G2, G3 (sentinela + golden)  —   2/2 (sentinela verde; golden substituído por e2e)
+[x] 11.G.D  Fechar G4 (end-to-end parser)       —   2/2 (parser-scheduler_e2e_test.ts, 22 steps)
+[x] 11.G.K  Sweep dos testes deferidos (F12)    —   2/2 (test:deferred script + 0 tags sobrando)
+[x] 11.G.E  Auditoria Fases 4–10                —   5/5 (gaps_verification_test.ts cobre G14/G17/G18/G19/G20)
+[x] 11.G.F  Auditoria Fase 11 + G5 (F12)        —   4/4 (G16 verificado; G5 ancorado em 12)
+[x] 11.G.G  Matriz de completude + ancoragem    —   4/4 (completude-matrix.md + 14 stubs ancorados)
+[x] 11.G.H  Invariantes e fuzz                  —   3/3 (7 invariantes + 20 fuzz seeds)
+[x] 11.G.I  Gate de saída + ADR 032             —   2/2 (ADR 032 + tasks gate:phase-13)
+[x] 11.G.J  Verificação final                   —   6/6 (gaps:audit + check:stubs + test:deferred OK)
+─────────────────────────────────────────────────────
+TOTAL: ~80 concluídas
+```
+
+---
+
+## Bloco A — Infraestrutura de diagnóstico
+
+### 11.G.A.1 — `debug/schedule_probe.ts`
+
+**Objetivo:** ferramenta commitada que recebe um `.tjp`, roda `parse → schedule`,
+e dumpar JSON com estado por task/recurso.
+
+**Pré-requisitos:** Fases 9–12 concluídas.
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 11.G.A.1.1 | Criar `debug/schedule_probe.ts` com esqueleto | idem | `deno check` |
+| 11.G.A.1.2 | Aceitar argumento `<tjpPath>`; ler conteúdo | idem | 1 teste |
+| 11.G.A.1.3 | Chamar `TaskJuggler.parseContent(content)`; se falhar, dumpar `MessageHandlerInstance.messages` | idem | 1 teste |
+| 11.G.A.1.4 | Chamar `TaskJuggler.schedule()`; capturar retorno | idem | 1 teste |
+| 11.G.A.1.5 | Dumpar `MessageHandlerInstance.errors` e `messages` pós-schedule | idem | 1 teste |
+| 11.G.A.1.6 | Dumpar, por task: `fullId`, `scenarioData(0).start`, `.end`, `.doneEffort`, `.isRunAway`, `.scheduled`, `.durationType` | idem | 1 teste |
+| 11.G.A.1.7 | Dumpar, por recurso: `fullId`, `scenarioData(0).effort`, `.duties.length` | idem | 1 teste |
+| 11.G.A.1.8 | Dumpar `DataCache.instance.hits/misses/collisions` | idem | 1 teste |
+| 11.G.A.1.9 | Adicionar task `deno task probe <path>` em `deno.jsonc` | `deno.jsonc` | `deno task probe --help` |
+| 11.G.A.1.10 | Teste de fumaça: rodar `probe` em `examples/minimal.tjp` e verificar JSON válido | `debug/schedule_probe_test.ts` | verde |
+
+### 11.G.A.2 — Instrumentação de `Project.schedule`
+
+**Objetivo:** logs temporários (via `Log.status` ou `console.error`) em cada fase
+para localizar onde o pipeline para. Remover após G1 fechado.
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 11.G.A.2.1 | Adicionar `Log.status("initScoreboards: size=..., nullSlots=...")` no fim de `initScoreboards` | `src/model/project.ts` | 1 teste |
+| 11.G.A.2.2 | Adicionar `Log.status("prepareScenario: tasks=..., usedResources=..., ready=...")` no fim de `prepareScenario` | idem | 1 teste |
+| 11.G.A.2.3 | Adicionar `Log.status("scheduleScenario: queue=..., scheduled=...")` a cada iteração do loop | idem | 1 teste |
+| 11.G.A.2.4 | Adicionar `Log.status("finishScenario: scheduled=..., runaway=...")` no fim de `finishScenario` | idem | 1 teste |
+| 11.G.A.2.5 | Adicionar tarefa 11.G.B.8.6: **remover** os logs após G1 fechado | idem | grep `Log.status.*initScoreboards` retorna 0 |
+
+### 11.G.A.3 — Reapertar `logical-scheduler-driven_test.ts` (sentinela G2)
+
+**Objetivo:** reverter o relaxamento do §6.11; metade 1 deve **falhar** com
+assert claro que detecta o gap (antes de 11.G.B fechá-lo).
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 11.G.A.3.1 | Abrir `tests/integration/logical-scheduler-driven_test.ts` e localizar o relaxamento | idem | leitura |
+| 11.G.A.3.2 | Restaurar a asserção `assert(task.scenarioData(0).end !== null, "G1 não fechado: end permanece null")` na metade 1 | idem | teste falha (esperado) |
+| 11.G.A.3.3 | Marcar o teste com `ignore: true` + comentário `// Descomentar em 11.G.B.8.5 (fechamento de G1)` | idem | `deno test` passa |
+| 11.G.A.3.4 | Documentar em `docs/syntaxmesh/fases/fase-11-logical-gaps.md` §12 a reversão e a data | idem | revisão |
+
+### 11.G.A.4 — Inventário em formato de checklist
+
+**Objetivo:** matriz viva das 21 linhas do inventário, com status e commit
+referência.
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 11.G.A.4.1 | Criar `docs/syntaxmesh/fases/completude-matrix.md` com as 21 linhas | idem | arquivo existe |
+| 11.G.A.4.2 | Colunas: `ID`, `Descrição`, `Fase dona`, `Ação`, `Status`, `Commit`, `Teste` | idem | 1 linha por gap |
+| 11.G.A.4.3 | Marcar G1–G4 como `fechar`, G5 como `verificar (12.18)`, G6–G11 como `ancorar`, G12–G20 como `verificar`, G21 como `sweep` | idem | revisão |
+| 11.G.A.4.4 | Script `scripts/gaps/audit.ts` que falha se algum gap está `pendente` | idem | 1 teste |
+
+### 11.G.A.5 — Script `check:stubs`
+
+**Objetivo:** script que falha se `NotYetImplementedError` não tem
+`// Ancorado: Fase N` no comentário imediatamente anterior.
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 11.G.A.5.1 | Criar `scripts/check-stubs.ts` | idem | `deno check` |
+| 11.G.A.5.2 | Regex para `NotYetImplementedError\("Fase (\d+)"\)` e verifica comentário `// Ancorado: Fase N` nas 3 linhas anteriores | idem | 5 testes |
+| 11.G.A.5.3 | Adicionar task `check:stubs` em `deno.jsonc` | `deno.jsonc` | `deno task check:stubs` |
+| 11.G.A.5.4 | Rodar em CI; falha se encontrar stub não anotado | idem | 1 teste |
+| 11.G.A.5.5 | Adicionar `check:stubs` ao CI principal (sempre, mesmo durante Fase 12) | `.github/workflows/ci.yml` (ou equivalente) | revisão |
+
+---
+
+## Bloco B — Fechar G1 (placement de datas)
+
+### 11.G.B.1 — Diagnóstico via probe
+
+**Objetivo:** rodar `probe` em caso mínimo e localizar onde o pipeline para.
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 11.G.B.1.1 | Criar `examples/minimal-placement.tjp` com 1 task `effort 8h`, `allocate dev`, `start 2026-01-05` | idem | `tj3` agenda |
+| 11.G.B.1.2 | Rodar `deno task probe examples/minimal-placement.tjp > /tmp/probe.json` | — | JSON gerado |
+| 11.G.B.1.3 | Analisar `probe.json`: `end === null`? `scheduled === false`? `errors > 0`? | — | análise |
+| 11.G.B.1.4 | Se `errors > 0`, ver qual (via `messages`); se 0, o pipeline para silencioso | — | análise |
+| 11.G.B.1.5 | Documentar em comentário do PR os valores observados em cada fase (`initScoreboards`, `prepareScenario`, `scheduleScenario`, `finishScenario`) | `docs/syntaxmesh/fases/fase-11-logical-gaps.md` §12 | revisão |
+| 11.G.B.1.6 | Hipótese formal do ponto de falha (uma das: `readyForScheduling` falso, `bookResources` não book, `propagateDate` shrink demais, `markAsScheduled` não chamado) | idem | 1 parágrafo |
+
+### 11.G.B.2 — Corrigir o ponto identificado
+
+**Objetivo:** corrigir o ponto do pipeline que bloqueia placement. **Não refatorar
+além disso.**
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 11.G.B.2.1 | Aplicar o fix mínimo no ponto identificado em 11.G.B.1.6 | arquivo identificado | `deno test --filter probe` |
+| 11.G.B.2.2 | Re-rodar `probe`; verificar `end !== null` e `scheduled === true` | — | JSON |
+| 11.G.B.2.3 | Rodar `deno task test:all`; corrigir regressões (uma por vez) | — | check:all |
+| 11.G.B.2.4 | Se fix exigir mudança em `TaskScenario`/`ResourceScenario`, atualizar testes unitários afetados | `tests/model/task-scenario-*`, `resource-scenario-*` | verde |
+| 11.G.B.2.5 | Se fix for análogo ao Ruby, documentar referência em comentário `// TJ: TaskScenario.rb:<linha>` | idem | grep |
+
+### 11.G.B.3 — Testes de placement
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 11.G.B.3.1 | `tests/integration/scheduler_placement_test.ts` — caso A.1 (1 task effort+allocate+start) | idem | 1 teste |
+| 11.G.B.3.2 | A.2 (sem `start` → erro `task_start_undef` visível via `MessageHandlerInstance.errors > 0`) | idem | 1 teste |
+| 11.G.B.3.3 | A.3 (ALAP com `end` fixo) | idem | 1 teste |
+| 11.G.B.3.4 | A.4 (cadeia A → B → C) | idem | 1 teste |
+| 11.G.B.3.5 | A.5 (milestone automático) | idem | 1 teste |
+| 11.G.B.3.6 | A.6 (2 tasks, mesmo recurso) | idem | 1 teste |
+| 11.G.B.3.7 | A.7 (efficiency 0.5) | idem | 1 teste |
+| 11.G.B.3.8 | A.8 (runaway com `end` cedo) | idem | 1 teste |
+
+### 11.G.B.4 — Testes de recursos
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 11.G.B.4.1 | `scheduler_resources_test.ts` — B.1 (`dailymax 4h`) | idem | 1 teste |
+| 11.G.B.4.2 | B.3 (`weeklymax 20h`) | idem | 1 teste |
+| 11.G.B.4.3 | B.4 (`limits` no recurso) | idem | 1 teste |
+| 11.G.B.4.4 | B.5 (prioridade diferente) | idem | 1 teste |
+| 11.G.B.4.5 | B.6 (`mandatory` sem candidato → erro) | idem | 1 teste |
+| 11.G.B.4.6 | B.7 (`persistent` mantém lock) | idem | 1 teste |
+| 11.G.B.4.7 | B.8 (`atomic` com conflito → rollback) | idem | 1 teste |
+| 11.G.B.4.8 | B.9 (`shifts` sobrepõem `workinghours`) | idem | 1 teste |
+| 11.G.B.4.9 | B.10 (`shifts` com `replace`) | idem | 1 teste |
+| 11.G.B.4.10 | Agregado: pelo menos 1 dos testes B.x deve falhar se `bookResources` for regredido | idem | revisão |
+
+### 11.G.B.5 — Testes de propagação
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 11.G.B.5.1 | `scheduler_propagate_test.ts` — C.1 (shrink-only, não expande) | idem | 1 teste |
+| 11.G.B.5.2 | C.3 (milestone propaga other end) | idem | 1 teste |
+| 11.G.B.5.3 | C.4 (container rollup min/max) | idem | 1 teste |
+| 11.G.B.5.4 | C.5 (`gapduration 1d`) | idem | 1 teste |
+| 11.G.B.5.5 | C.6 (`gaplength 2d` working days) | idem | 1 teste |
+| 11.G.B.5.6 | C.8 (dependent já scheduled ignorado) | idem | 1 teste |
+
+### 11.G.B.6 — Testes de loops
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 11.G.B.6.1 | `scheduler_loops_test.ts` — D.1 (`depends` em si mesmo → `task_depend_self`) | idem | 1 teste |
+| 11.G.B.6.2 | D.2 (`A → B → A` → loop detectado) | idem | 1 teste |
+| 11.G.B.6.3 | D.3 (loop indireto `A → B → C → A`) | idem | 1 teste |
+| 11.G.B.6.4 | D.5 (container com depends em filho → `task_depend_child`) | idem | 1 teste |
+| 11.G.B.6.5 | D.6 (depends duplicado → `task_depend_multi`) | idem | 1 teste |
+| 11.G.B.6.6 | D.7 (task fora do range do pai → erro) | idem | 1 teste |
+
+### 11.G.B.7 — Testes de bookings e cenários
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 11.G.B.7.1 | `scheduler_bookings_test.ts` — E.1 (`effortdone` + `effortleft`) | idem | 1 teste |
+| 11.G.B.7.2 | E.2 (`effortdone` = `effort`, task termina antes) | idem | 1 teste |
+| 11.G.B.7.3 | E.3 (`effortdone` sem `effortleft` → erro) | idem | 1 teste |
+| 11.G.B.7.4 | E.5 (bookings em datas passadas → `currentSlotIdx = now`) | idem | 1 teste |
+| 11.G.B.7.5 | `scheduler_scenarios_test.ts` — F.1 (2 cenários, 2 schedules) | idem | 1 teste |
+| 11.G.B.7.6 | F.2 (`projectionmode` + `now`) | idem | 1 teste |
+| 11.G.B.7.7 | F.5 (cenário sem `active` → ignorado) | idem | 1 teste |
+
+### 11.G.B.8 — Descomentar sentinela + verificação end-to-end
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 11.G.B.8.1 | Rodar todos os testes de 11.G.B.3–11.G.B.7; verde | — | `deno test` |
+| 11.G.B.8.2 | Rodar `probe` novamente em `examples/minimal-placement.tjp`; `end !== null` | — | JSON |
+| 11.G.B.8.3 | Rodar `probe` nos 9 MWEs; `end !== null` em todos | — | JSON |
+| 11.G.B.8.4 | Descomentar metade 2 do `logical-scheduler-driven_test.ts`; rodar | — | verde |
+| 11.G.B.8.5 | Remover `ignore: true` do teste de 11.G.A.3.3 | idem | verde |
+| 11.G.B.8.6 | Remover logs de instrumentação (11.G.A.2.5) | `src/model/project.ts` | grep |
+| 11.G.B.8.7 | Atualizar `completude-matrix.md`: G1 = `fechado` | `completude-matrix.md` | revisão |
+| 11.G.B.8.8 | Atualizar `CURRENT.md` com "G1 fechado" | `CURRENT.md` | revisão |
+
+---
+
+## Bloco C — Fechar G2, G3 (sentinela + golden)
+
+### 11.G.C.1 — Regenerar golden do scheduler comparando `start`/`end`/`effort`
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 11.G.C.1.1 | Revisar `scripts/golden/project-schedule-mwe*.rb` — confirmar que extraem `start`, `end` e `effort` de cada task | idem | revisão |
+| 11.G.C.1.2 | Se algum não extrai `end`, corrigir o script | idem | regenerar |
+| 11.G.C.1.3 | Regenerar `packages/core/tests/golden/project-schedule.golden.json` | `deno task golden:generate` | JSON válido |
+| 11.G.C.1.4 | Verificar que o JSON contém `end` não-nulo para todas as tasks agendadas | — | jq/grep |
+| 11.G.C.1.5 | Criar/atualizar `tests/golden/project-schedule_golden_test.ts` — para cada task: `assertEquals(ts.start, golden.start, ...)`, `assertEquals(ts.end, golden.end, ...)`, `assertEquals(ts.effort, golden.effort, ...)` | idem | verde |
+| 11.G.C.1.6 | Adicionar caso de falha proposital: se `end` for `null`, o golden deve falhar com mensagem clara | idem | 1 teste |
+| 11.G.C.1.7 | Marcar em `completude-matrix.md`: G3 = `fechado` | `completude-matrix.md` | revisão |
+
+### 11.G.C.2 — Fechar G2 (sentinela)
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 11.G.C.2.1 | Verificar que `logical-scheduler-driven_test.ts` metade 1 **passa** agora (G1 fechado) | idem | verde |
+| 11.G.C.2.2 | Verificar que metade 2 **passa** agora | idem | verde |
+| 11.G.C.2.3 | Adicionar caso de regressão: nova task sem `start` deve produzir `task_start_undef` visível | idem | 1 teste |
+| 11.G.C.2.4 | Marcar em `completude-matrix.md`: G2 = `fechado` | idem | revisão |
+| 11.G.C.2.5 | Documentar em `fase-11-logical-gaps.md` §12 o histórico do relaxamento e do reaperto | `fase-11-logical-gaps.md` | seção |
+| 11.G.C.2.6 | `deno task gate:phase-13 --partial` (só G1–G3) | — | verde |
+
+---
+
+## Bloco D — Fechar G4 (end-to-end com parser real)
+
+### 11.G.D.1 — Suite de integração com parser real
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 11.G.D.1.1 | Criar `tests/integration/parser-scheduler_e2e_test.ts` | idem | `deno check` |
+| 11.G.D.1.2 | Para cada MWE 001–009: `parse(content)` → `schedule()` → comparar com golden | idem | 9 testes |
+| 11.G.D.1.3 | Caso: `.tjp` em pt-BR → parse → schedule → comparar com golden | idem | 1 teste |
+| 11.G.D.1.4 | Caso: `.tjp` em es → parse → schedule → comparar com golden | idem | 1 teste |
+| 11.G.D.1.5 | Caso: `.tjp` com `dailymax` → parse → schedule → golden | idem | 1 teste |
+| 11.G.D.1.6 | Caso: `.tjp` com `shifts` → parse → schedule → golden | idem | 1 teste |
+| 11.G.D.1.7 | Caso: `.tjp` com `projectionmode` → parse → schedule → golden | idem | 1 teste |
+| 11.G.D.1.8 | Caso: `.tjp` com `material` (Complemento 10) → parse → schedule → financeiro | idem | 1 teste |
+| 11.G.D.1.9 | Caso: `.tjp` com `timebasis length` → parse → schedule → golden | idem | 1 teste |
+| 11.G.D.1.10 | Agregado: ≥ 15 casos, todos verdes | idem | verde |
+
+### 11.G.D.2 — Integração com relatórios
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 11.G.D.2.1 | `parse → schedule → report("taskreport")` em mwe001; comparar com golden de reports (se existir) | idem | 1 teste |
+| 11.G.D.2.2 | `parse → schedule → report("resourcereport")` em mwe003; comparar | idem | 1 teste |
+| 11.G.D.2.3 | Marcar em `completude-matrix.md`: G4 = `fechado` | idem | revisão |
+
+---
+
+## Bloco K — Sweep dos testes deferidos pela Fase 12
+
+> **Objetivo:** varrer todos os testes que a Fase 12 marcou como `ignore: true`
+> com tag `// Gate: fase-11-logical-gaps`, remover o `ignore` e verificar que
+> passam com G1–G4 fechados.
+>
+> **Contexto:** a Fase 12 correu até o fim antes desta fase. Alguns testes de
+> 12.19 (golden RichText que comparam HTML de reports gerados por projetos
+> agendados) e 12.20 (smoke que chama `Project.schedule()`) podem ter sido
+> deferidos. A lista é input explícito desta fase.
+
+### 11.G.K.1 — Inventariar testes deferidos
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 11.G.K.1.1 | Rodar `grep -rn "Gate: fase-11-logical-gaps" packages/core/tests/` e listar todos | — | lista gerada |
+| 11.G.K.1.2 | Documentar a lista em `docs/syntaxmesh/fases/fase-11-logical-gaps.md` §12 (seção "Testes deferidos pela Fase 12") | idem | revisão |
+| 11.G.K.1.3 | Para cada teste deferido, identificar qual gap ele depende (G1/G2/G3/G4) | idem | tabela |
+| 11.G.K.1.4 | Ordenar a lista por gap para que o sweep siga a ordem dos blocos B→C→D | idem | revisão |
+
+### 11.G.K.2 — Sweep e reabilitação
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 11.G.K.2.1 | Para cada teste que depende apenas de G1: remover `ignore: true` e rodar | arquivo do teste | verde |
+| 11.G.K.2.2 | Para cada teste que depende de G1+G3: remover `ignore: true` e rodar | idem | verde |
+| 11.G.K.2.3 | Para cada teste que depende de G1+G3+G4: remover `ignore: true` e rodar | idem | verde |
+| 11.G.K.2.4 | Remover a tag `// Gate: fase-11-logical-gaps` de todos os testes reabilitados | idem | grep retorna 0 |
+| 11.G.K.2.5 | Atualizar `fase-12-richtext-tarefas.md` — marcar 12.19/12.20 como **totalmente concluídas** (não mais "parciais") | idem | revisão |
+| 11.G.K.2.6 | Atualizar `completude-matrix.md`: G21 = `sweep concluído` | idem | revisão |
+| 11.G.K.2.7 | Rodar `deno task test:deferred` (novo comando) e garantir verde | `deno.jsonc` + testes | verde |
+| 11.G.K.2.8 | Atualizar `CURRENT.md`: "Fase 12 totalidade entregue (deferidos reabilitados)" | idem | revisão |
+
+> **Regra:** ao final do Bloco K, `grep -rn "Gate: fase-11-logical-gaps"` deve
+> retornar **zero**. Nenhum teste pode ficar deferido.
+
+---
+
+## Bloco E — Auditoria Fases 4–10 (verificações)
+
+### 11.G.E.1 — Auditoria Fase 4 (árvore)
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 11.G.E.1.1 | G20: `backupAttributes()`/`restoreAttributes()` — testar 3 níveis, modificar, restaurar, verificar | `tests/model/property-tree-node-inherit_test.ts` | 3 testes |
+| 11.G.E.1.2 | `inheritAttributes` em container (3 níveis) — verificar cadeia | idem | 3 testes |
+| 11.G.E.1.3 | Marcar em `completude-matrix.md`: G20 = `verificado` | idem | revisão |
+
+### 11.G.E.2 — Auditoria Fase 5 (entidades)
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 11.G.E.2.1 | Confirmar que `registerXAttributes` é idempotente: chamar 2× e verificar contagem | `tests/model/attributes/*_test.ts` | 5 testes |
+| 11.G.E.2.2 | Confirmar contagem de atributos por entidade (task=44, resource=22, report=61, account=6, shift=7, scenario=3) | idem | 6 testes |
+| 11.G.E.2.3 | G19: `TaskScenario.getScenarioAttribute(0, "effort")` existe após criar `Task` | `tests/model/task_test.ts` | 1 teste |
+| 11.G.E.2.4 | Marcar em `completude-matrix.md`: G19 = `verificado` | idem | revisão |
+
+### 11.G.E.3 — Auditoria Fase 6 (scoreboard)
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 11.G.E.3.1 | End-to-end: `Limits` + `dailymax` respeitados no scheduler | `tests/integration/scheduler_limits_test.ts` | 3 testes |
+| 11.G.E.3.2 | End-to-end: `ShiftAssignments` + `shifts` respeitados no scheduler | idem | 3 testes |
+| 11.G.E.3.3 | Marcar em `completude-matrix.md` | idem | revisão |
+
+### 11.G.E.4 — Auditoria Fase 9 (orquestrador)
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 11.G.E.4.1 | G14: `MockProject` removido? `grep -r "MockProject" packages/core/` retorna 0 | — | grep |
+| 11.G.E.4.2 | G14: todos os testes usam `Project` real; `createTestProject` é o helper canônico | `tests/fixtures/create-test-project.ts` | revisão |
+| 11.G.E.4.3 | G17: `ScenarioData#error` incrementa `MessageHandlerInstance.errors` | `tests/model/scenario-data-preload_test.ts` | 1 teste |
+| 11.G.E.4.4 | G18: `TaskJuggler#errors` reflete `MessageHandlerInstance.errors` | `tests/taskjuggler_test.ts` | 1 teste |
+| 11.G.E.4.5 | Marcar em `completude-matrix.md`: G14, G17, G18 = `verificado` | idem | revisão |
+
+### 11.G.E.5 — Auditoria Fase 10 (parser)
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 11.G.E.5.1 | AST equivalence en/pt-BR/es em ≥ 30 fixtures (rodar suite existente) | `tests/ast-equivalence_test.ts` | verde |
+| 11.G.E.5.2 | G13: Confirmar entrega dos Blocos C0–C4 do Complemento 10 (`material`, `picture`, `format`, `timebasis`, `breakdownreport`, `rdoreport`) — rodar `deno test --filter complemento-10` | `tests/parser/*` | verde |
+| 11.G.E.5.3 | Golden parser contra `tj3` (178 casos) | `tests/golden/parser_golden_test.ts` | verde |
+| 11.G.E.5.4 | Marcar em `completude-matrix.md`: G13 = `verificado` | idem | revisão |
+
+---
+
+## Bloco F — Auditoria Fase 11 + verificação G5 (Fase 12)
+
+### 11.G.F.1 — Motor lógico
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 11.G.F.1.1 | Rodar suite de `LogicalOperation`/`LogicalAttribute`/`LogicalFlag`/`LogicalFunction`/`LogicalExpression` | `tests/logic/*` | verde |
+| 11.G.F.1.2 | Rodar suite de `Query` (estrutura, process, accessors, scale, resolve, customData) | `tests/query/*` | verde |
+| 11.G.F.1.3 | Rodar `SimpleQueryExpander` suite | `tests/query/simple-query-expander_test.ts` | verde |
+
+### 11.G.F.2 — Funções ancoradas
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 11.G.F.2.1 | Confirmar `hasalert` (G10) lança `NotYetImplementedError` com `// Ancorado: Fase 16` | `src/logic/logical-function.ts` | 1 teste |
+| 11.G.F.2.2 | Confirmar `LogicalFlag` ramo Journal (G10) idem | `src/logic/logical-flag.ts` | 1 teste |
+| 11.G.F.2.3 | Confirmar `isoncriticalpath` (G6) idem Fase 14 | `src/logic/logical-function.ts` | 1 teste |
+| 11.G.F.2.4 | Confirmar `istaskstatus` (G9) idem Fase 18 | idem | 1 teste |
+
+### 11.G.F.3 — Auditoria G16
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 11.G.F.3.1 | Marcar em `completude-matrix.md`: G16 = `verificado` | `completude-matrix.md` | revisão |
+
+### 11.G.F.4 — Verificar entrega de G5 pela Fase 12
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 11.G.F.4.1 | Verificar que `attribute-base.ts:232` (`to_rti`) **não** lança `NotYetImplementedError` — foi implementado em 12.18 | `src/attributes/attribute-base.ts` | 1 teste |
+| 11.G.F.4.2 | Verificar `reference-attribute.ts:42` idem | idem | 1 teste |
+| 11.G.F.4.3 | Verificar `resource-list-attribute.ts:54` idem | idem | 1 teste |
+| 11.G.F.4.4 | Verificar `query.ts:608` (rti) idem | `src/query/query.ts` | 1 teste |
+| 11.G.F.4.5 | Verificar `project-file-parser.ts:463` (`newRichText`) usa `RichTextFactory` real | `src/parser/project-file-parser.ts` | 1 teste |
+| 11.G.F.4.6 | Teste end-to-end: `<attribute>.to_rti()` retorna `RichTextIntermediate` válido | `tests/integration/richtext-factory_test.ts` | 1 teste |
+| 11.G.F.4.7 | **Exceção:** se 12.18 **não** entregou algum dos 5 (imprevisto), implementar aqui com prioridade — e abrir issue na Fase 12 para retro (raro) | idem | revisão |
+| 11.G.F.4.8 | Marcar em `completude-matrix.md`: G5 = `verificado (entregue por 12.18)` | idem | revisão |
+
+---
+
+## Bloco G — Matriz de completude e ancoragem
+
+### 11.G.G.1 — Ancoragem G6–G11
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 11.G.G.1.1 | Anotar G6 (`isoncriticalpath`) → Fase 14 em `logical-function.ts` | idem | `check:stubs` |
+| 11.G.G.1.2 | Anotar G7 (`freeze`) → Fase 14 em `taskjuggler.ts` | idem | idem |
+| 11.G.G.1.3 | Anotar G8 (`defaultAccount`) → Fase 8.2 (regra 4 do `resolveAccount`) | `accounting/attribution.ts` | idem |
+| 11.G.G.1.4 | Anotar G9 (`checkTimeSheet`/`checkStatusSheet`/`istaskstatus`) → Fase 18 | `taskjuggler.ts`, `logical-function.ts` | idem |
+| 11.G.G.1.5 | Anotar G10 (`hasalert`/`LogicalFlag`) → Fase 16 | `logical-function.ts`, `logical-flag.ts` | idem |
+| 11.G.G.1.6 | Anotar G11 (`parse`/`parseContent`) → Fase 19 | `taskjuggler.ts` | idem |
+| 11.G.G.1.7 | Adicionar 6 entradas nos `-tarefas.md` das fases 8.2/14/16/18/19 referenciando esta fase | idem | revisão |
+
+### 11.G.G.2 — Ancoragem G12 (query_* viáveis)
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 11.G.G.2.1 | Listar todos os métodos `query_*` de `TaskScenario` e `ResourceScenario` que retornam valor real vs stub | `completude-matrix.md` §G12 | revisão |
+| 11.G.G.2.2 | Para cada stub, adicionar `// Ancorado: Fase N` | código | `check:stubs` |
+| 11.G.G.2.3 | Se algum stub for viável agora (sem depender de scheduling/finance), implementar | idem | 1 teste |
+
+### 11.G.G.3 — Matriz de completude final
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 11.G.G.3.1 | Para cada uma das fases 2–12, listar status `verde`/`verificado`/`ancorado` | `completude-matrix.md` | revisão |
+| 11.G.G.3.2 | Script `scripts/gaps/audit.ts` falha se algum gap está `pendente` | idem | 1 teste |
+| 11.G.G.3.3 | Adicionar `deno task gaps:audit` em `deno.jsonc` | idem | `deno task --list` |
+| 11.G.G.3.4 | Rodar `deno task gaps:audit`; verde | — | exit 0 |
+
+### 11.G.G.4 — Verificação dos stubs
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 11.G.G.4.1 | `deno task check:stubs` verde | — | exit 0 |
+| 11.G.G.4.2 | `grep -rn "Gate: fase-11-logical-gaps" packages/core/tests/` retorna 0 (Bloco K concluído) | — | grep |
+| 11.G.G.4.3 | `grep -rn "NotYetImplementedError" packages/core/src/ \| wc -l` — conferir contra a lista de ancorados | — | revisão |
+
+---
+
+## Bloco H — Invariantes e fuzz
+
+### 11.G.H.1 — Invariantes do scheduler
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 11.G.H.1.1 | Criar `tests/invariants/scheduler_invariants_test.ts` | idem | `deno check` |
+| 11.G.H.1.2 | Invariante: toda task `scheduled` tem `start !== null` | idem | 1 teste |
+| 11.G.H.1.3 | Invariante: toda task `scheduled` tem `end !== null` | idem | 1 teste |
+| 11.G.H.1.4 | Invariante: `start <= end` | idem | 1 teste |
+| 11.G.H.1.5 | Invariante: toda milestone tem `start == end` | idem | 1 teste |
+| 11.G.H.1.6 | Invariante: dependência respeitada (`B.start >= A.end` se `B depends A`) | idem | 1 teste |
+| 11.G.H.1.7 | Invariante: task dentro do range do projeto ou `isRunAway` | idem | 1 teste |
+
+### 11.G.H.2 — Fuzz determinístico
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 11.G.H.2.1 | `tests/fuzz/scheduler_fuzz_test.ts` — gerar N=20 projetos determinísticos (seed=42) com 3–10 tasks, dependências aleatórias, 1–3 recursos | idem | `deno check` |
+| 11.G.H.2.2 | Para cada projeto gerado, chamar `schedule()`; verificar todos os invariantes de 11.G.H.1 | idem | 20 testes |
+| 11.G.H.2.3 | Se algum projeto falhar invariante, salvar em `tests/fuzz/failures/` e reportar | idem | 1 teste |
+
+### 11.G.H.3 — Adicionar ao gate
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 11.G.H.3.1 | Adicionar `test:invariants` em `deno.jsonc` | idem | `deno task --list` |
+| 11.G.H.3.2 | Adicionar `test:fuzz` em `deno.jsonc` | idem | idem |
+| 11.G.H.3.3 | Incluir ambos em `gate:phase-13` | idem | revisão |
+
+---
+
+## Bloco I — Gate de saída + ADR 032
+
+### 11.G.I.1 — ADR 032
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 11.G.I.1.1 | Criar `docs/syntaxmesh/decisoes/032-gate-fase-13.md` com frontmatter | idem | arquivo existe |
+| 11.G.I.1.2 | Seção **Contexto:** descoberta de gaps em fases "concluídas"; necessidade de gate; Fase 12 rodou antes do fechamento | idem | — |
+| 11.G.I.1.3 | Seção **Decisões:** 7 comandos do `gate:phase-13`; política de stubs (`check:stubs`); sweep de testes deferidos (`test:deferred`); matriz de completude versionada | idem | — |
+| 11.G.I.1.4 | **Alternativas** (revisão manual, gate só `check:all`) + **Consequências** | idem | — |
+| 11.G.I.1.5 | Atualizar linha `032` em `decisoes/README.md` | idem | 32 linhas |
+
+### 11.G.I.2 — Task `gate:phase-13`
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 11.G.I.2.1 | Adicionar `gate:phase-13` em `deno.jsonc` composta de: `check:all`, `test:integration`, `test:invariants`, `test:golden:scheduler`, `check:stubs`, `gaps:audit`, `test:deferred` | idem | `deno task --list` |
+| 11.G.I.2.2 | Adicionar `gate:phase-13 --partial` (só `check:stubs` + `gaps:audit`) para uso durante a Fase 12 | idem | `deno task --list` |
+| 11.G.I.2.3 | Rodar `gate:phase-13`; corrigir falhas | — | verde |
+| 11.G.I.2.4 | Documentar em `fase-11-logical-gaps.md` §12 | idem | seção |
+
+---
+
+## Bloco J — Verificação final
+
+| # | Tarefa | Verificação |
+|---|---|---|
+| 11.G.J.1 | `deno task gate:phase-13` verde | exit 0 |
+| 11.G.J.2 | `completude-matrix.md` com 100% das 21 linhas em `fechado`, `verificado` ou `ancorado` | revisão |
+| 11.G.J.3 | `deno task gaps:audit` verde | exit 0 |
+| 11.G.J.4 | `deno task check:stubs` verde | exit 0 |
+| 11.G.J.5 | `grep -rn "Gate: fase-11-logical-gaps" packages/core/tests/` retorna 0 | grep |
+| 11.G.J.6 | `CURRENT.md` atualizado com "Fase 11-gaps concluída; Fase 13 liberada" | revisão |
+| 11.G.J.7 | Smoke test final: `deno task probe examples/minimal-placement.tjp` retorna `end !== null` | exit 0 |
+
+---
+
+## Notas para a IA
+
+1. **Ordem:** A → B → C → D → K → E → F → G → H → I → J.
+2. **P0 é G1.** Se Bloco B não fechar, não avance para C.
+3. **`probe` antes de tudo.** Commitá-lo é o primeiro passo.
+4. **Sentinela reapertado.** `logical-scheduler-driven_test.ts` metade 1 falha de
+   propósito até G1 fechar.
+5. **Golden do scheduler compara `start`/`end`/`effort`.** Um só é insuficiente.
+6. **End-to-end com parser real é obrigatório.** `parse → schedule` em ≥ 15
+   fixtures, incluindo idiomas pt-BR/es e Complemento 10.
+7. **Sweep (Bloco K) é obrigatório.** Nenhum `ignore: true` sobra ao final.
+8. **Verificar não é ler.** Cada `Verificar` produz teste novo.
+9. **Ancorar ≠ implementar.** G6–G11 só ganham `// Ancorado` + entrada na fase
+   dona. Nada de código de Fase 13+ aqui.
+10. **G5 é entrega da Fase 12** — só verificamos. Exceção: se 12.18 não entregou,
+    implementar aqui com prioridade (11.G.F.4.7).
+11. **`check:stubs` falha** se `NotYetImplementedError` não tem `// Ancorado`.
+12. **`gaps:audit` falha** se algum gap está `pendente` na matriz.
+13. **`test:deferred` falha** se algum teste tem `// Gate: fase-11-logical-gaps`
+    (prova que o sweep está completo).
+14. **Invariantes determinísticos.** Sem `Math.random()` sem seed.
+15. **Sem refatorar.** Corrigir o gap, não "melhorar de passagem".
+16. **Sem `any`.** `unknown` + narrowing.
+17. **Commit por subfase:** `test(quality): probe-scheduler`,
+    `fix(core): schedule-placement`, `test(quality): golden-scheduler-start-end`,
+    `test(quality): reenable-deferred-from-phase-12`, `chore(gaps): anchor-to-rti`,
+    etc.
+18. **`CURRENT.md` atualizado** ao final com "Fase 13 liberada".
+
+---
+
+## Referências cruzadas
+
+- `docs/syntaxmesh/fases/fase-11-logical-gaps.md` — plano deste fechamento
+- `docs/syntaxmesh/fases/fase-11-logical-complemento.md` §6.10, §6.11
+- `docs/syntaxmesh/fases/fase-7-scheduler-core-tarefas.md` — adendo "Gap remanescente"
+- `docs/syntaxmesh/fases/fase-12-richtext-tarefas.md` — Fase 12 (rodou antes)
+- `docs/syntaxmesh/fases/completude-matrix.md` — matriz viva
+- `docs/syntaxmesh/decisoes/032-gate-fase-13.md` — ADR do gate
+- `docs/syntaxmesh/fases/fase-14-relatorios-tarefas.md` — receptor de G6, G7
+- `docs/syntaxmesh/fases/fase-16-apoio-tarefas.md` — receptor de G10
+- `docs/syntaxmesh/fases/fase-18-time-status-sheets-tarefas.md` — receptor de G9
+- `docs/syntaxmesh/fases/fase-19-storage-tarefas.md` — receptor de G11
+- `docs/syntaxmesh/fases/fase-8.2-tarefas.md` — receptor de G8
+
+---
+
+**Fim das tarefas de fechamento de gaps.**
+````
+
+---
+
+## File: `docs/syntaxmesh/fases/fase-11-logical-gaps.md`
+
+````md
+# Fase 11 (Gaps) — Fechamento e Auditoria das Fases 2–11
+
+> **Arquivo:** `docs/syntaxmesh/fases/fase-11-logical-gaps.md`
+> **Status:** ⬜ Não iniciada
+> **Duração estimada:** 5–8 dias
+> **Depende de:** Fases 2–12 concluídas
+> **Bloqueia:** Fase 13 (e todas as subsequentes)
+> **Natureza:** **fase de auditoria e fechamento**, não de features
+> **Referência central:** `fase-11-logical-complemento.md` §6.10, §6.11
+
+---
+
+## 0. Nota de timing (2026-10-28)
+
+Esta fase foi originalmente planejada para bloquear a Fase 12. **O plano mudou:**
+a Fase 12 **já está em andamento** (12.0, 12.1, 12.2, 12.11 concluídas) e **vai
+até o fim** antes desta fase começar. Portanto:
+
+- **Fase 12 prossegue normalmente** (12.3–12.20), com awareness dos gaps.
+- **Esta fase roda após a Fase 12 concluir** (por decisão do autor).
+- **O gate real é para a Fase 13**, não para 12.
+- **Testes da Fase 12 que dependem de G1–G4** (scheduler funcional) ficam
+  **deferidos** durante 12 e são **varridos e reabilitados** aqui (Bloco K).
+- **G5 (`to_rti` × 5)** é **entregue na Fase 12** (subfase 12.18), não ancorada
+  para outra fase; aqui apenas **verificamos** que foi entregue.
+- **Nada nesta fase impede 12.x de progredir.** Qualquer bloqueio em 12.x que
+  aparecer é resolvido dentro da própria 12 (marcando o teste como `ignore: true`
+  com `// Gate: fase-11-logical-gaps` até esta fase começar).
+
+> **Consequência prática:** a Fase 12 chega ao fim com:
+> - 12.0–12.18 entregues (incluindo `to_rti` × 5 = G5).
+> - 12.19/12.20 possivelmente **parcialmente** entregues, com casos que dependem
+>   de `Project.schedule()` marcados como `ignore: true` e com tag
+>   `// Gate: fase-11-logical-gaps`.
+> - A lista desses testes deferidos é **input explícito** para o Bloco K desta fase.
+
+---
+
+## 1. Contexto
+
+As Fases 2–11 estão marcadas como concluídas individualmente (e a Fase 12 em
+andamento). Porém, a auditoria final da 2ª onda do Complemento Fase 11 (§6.11) e
+o adendo do `fase-7-scheduler-core-tarefas.md` registraram que:
+
+- **o pipeline `Project.schedule()` não coloca datas nem bookings** num modelo
+  mínimo, apesar de 215 itens de tarefa da Fase 7 estarem marcados como
+  concluídos;
+- **o teste-sentinela `logical-scheduler-driven_test.ts` foi relaxado** (§6.11),
+  enfraquecendo a rede de proteção que deveria detectar regressões do scheduler;
+- **os golden tests do scheduler passam** apesar do gap — sinal de que não estão
+  comparando `start`/`end` de forma efetiva;
+- **não existem testes end-to-end com o parser real** (Fase 10) validando
+  `parse → schedule → report`;
+- **12 stubs `NotYetImplementedError`** permanecem nas Fases 2–11, dos quais
+  alguns são legítimos (ancorados em 12+) e outros podem esconder gaps reais.
+
+Antes de iniciar a Fase 13, é preciso:
+
+1. **Provar** (com testes) que as Fases 2–11 entregaram o que dizem ter entregado;
+2. **Fechar** os gaps que são escopo de 2–11;
+3. **Verificar** que G5 foi entregue pela Fase 12 (12.18);
+4. **Ancorar formalmente** o que legitima ou depende de 13+;
+5. **Sweep** dos testes deferidos da Fase 12;
+6. **Criar um gate de saída** que impeça o início da Fase 13 sem essa garantia.
+
+Esta fase **não implementa features novas**. Ela diagnostica, corrige, audita e
+ancora.
+
+---
+
+## 2. Objetivo
+
+Ao final desta fase:
+
+- **Todos os gaps** identificados nas Fases 2–12 estão **fechados**,
+  **entregues pela Fase 12** ou **formalmente ancorados** (com referência cruzada
+  na fase dona).
+- **Nenhum `NotYetImplementedError`** permanece sem anotação
+  `// Ancorado: Fase N — <razão>` e sem entrada na matriz de completude.
+- **`Project.schedule()` funciona end-to-end** em modelos construídos à mão
+  **e** em `.tjp` parseados pela Fase 10.
+- **Golden tests do scheduler comparam `start`/`end`/`effort` de cada task** e
+  **falham** se um deles divergir do `tj3` real.
+- **`logical-scheduler-driven_test.ts` reapertado**: metade 1 falha hoje (de
+  propósito, como sentinela), metade 2 descomentada após o fix.
+- **Testes deferidos da Fase 12 reabilitados** (Bloco K) — a lista é input
+  explícito desta fase.
+- **Matriz de completude** por fase (2–12) com status `verde`, `entregue` ou
+  `ancorado`.
+- **≥ 70 testes unitários + ≥ 30 golden tests + ≥ 15 invariantes** novos.
+- **ADR 032** registrado: gate de saída para Fase 13 e política de stubs.
+- `deno task check:all` verde.
+- **Fase 13 pode começar** com a certeza documentada de que nada de 2–12 falta.
+
+---
+
+## 3. Inventário de gaps
+
+Esta tabela é a **fonte da verdade**. Cada linha será verificada e fechada (ou
+ancorada) por uma tarefa em `fase-11-logical-gaps-tarefas.md`.
+
+| ID | Gap | Origem documentada | Fase dona | Ação nesta fase |
+|---|---|---|---|---|
+| **G1** | Placement de datas em `Project.schedule()` — `end` permanece `null` em modelo mínimo | §6.10 de `fase-11-logical-complemento.md`; adendo em `fase-7-scheduler-core-tarefas.md` | 7 | **Fechar aqui** (P0) |
+| **G2** | `logical-scheduler-driven_test.ts` relaxado (§6.11) — sentinela enfraquecido | §6.11 | 7 | **Fechar aqui** (reapertar) |
+| **G3** | Golden tests do scheduler não comparam `start`/`end` (passam apesar do G1) | Avaliação 2026-10-28 | 7/21 | **Fechar aqui** (regenerar) |
+| **G4** | Testes end-to-end com parser real ausentes (`parse → schedule → report`) | Avaliação 2026-10-28 | 7/9/10 | **Fechar aqui** |
+| **G5** | `to_rti` × 5 stubs: `attribute-base.ts:232`, `reference-attribute.ts:42`, `resource-list-attribute.ts:54`, `query.ts:608`, `project-file-parser.ts:463` | §6.11 | 12 | **Verificar entrega em 12.18** |
+| **G6** | `isoncriticalpath` — stub; não existe slack/float nem no Ruby vendorizado | §6.6, §6.11 | 14 | **Ancorar em 14** |
+| **G7** | `TaskJuggler#freeze` — stub; escreve arquivo (OPFS/Storage) | §6.11 | 14 | **Ancorar em 14** |
+| **G8** | `project.defaultAccount` — regra 4 do `resolveAccount` é no-op | §6.11 | 8.2 | **Ancorar em 8.2** |
+| **G9** | `checkTimeSheet`/`checkStatusSheet`/`istaskstatus` — stubs; dependem de sheets (Fase 18) | §6.6, §6.11 | 18 | **Ancorar em 18** |
+| **G10** | `hasalert`/`LogicalFlag` (ramo Journal)/leave-allowance — stubs; dependem de Journal (Fase 16) | §6.6 | 16 | **Ancorar em 16** |
+| **G11** | `TaskJuggler#parse`/`parseFile`/`parseContent` — stubs; transporte de arquivo (Fase 19) | §6.11 | 19 | **Ancorar em 19** |
+| **G12** | `query_*` concretos de `TaskScenario`/`ResourceScenario` — métodos dependem de scheduling/finance (7/8/14/18) | §6.9, §6.11 | 7/8/14/18 | **Verificar viáveis + ancorar** |
+| **G13** | Blocos C0–C4 do Complemento Fase 10 (material, picture, format, timebasis, breakdownreport, rdoreport) | `fase-10-complemento-tarefas.md` | 10 | **Verificar entregue** |
+| **G14** | Migração `MockProject → Project` (§9.10 da Fase 9) — verificar 100% | `fase-9-tarefas.md` §9.10 | 9 | **Verificar 100%** |
+| **G15** | Contas não exclusivas + buckets + `CostEvent` + múltiplos chargesets + plan×actual funcionam end-to-end | `fase-8.2-tarefas.md` | 8/8.1/8.2 | **Verificar end-to-end** |
+| **G16** | Motor lógico + Query + AST equivalence (3 idiomas) da Fase 11 | `fase-11-logica-queries-tarefas.md` | 11 | **Verificar completo** |
+| **G17** | `ScenarioData#error/warning/info` roteiam para `MessageHandlerInstance` | §6.11 | 9 | **Verificar com teste** |
+| **G18** | `TaskJuggler#errors` reflete `MessageHandlerInstance.errors` | §6.11 | 9 | **Verificar com teste** |
+| **G19** | Atributos pré-carregados via ADR 016 em `*Scenario` (Fase 5) | `fase-5-entidades-concretas-tarefas.md` §5.1 | 5 | **Verificar end-to-end** |
+| **G20** | `backupAttributes`/`restoreAttributes` (Fase 4) funcionam (base para Fase 14) | `fase-4-arvore-propriedades-tarefas.md` §4.4 | 4 | **Verificar com teste** |
+| **G21** | Testes da Fase 12 marcados como `ignore: true` por depender de G1–G4 (ver Bloco K) | Coordenação Fase 12 | 12 | **Sweep: reabilitar todos** |
+
+> **Legenda:**
+> - **Fechar aqui** = desenvolver agora (P0).
+> - **Verificar** = apenas testar o que já existe (ou deveria existir), sem desenvolvimento novo.
+> - **Verificar entrega em 12.18** = a Fase 12 deve ter entregado; aqui confirmamos e, se faltou, corrigimos (mas é responsabilidade de 12.18).
+> - **Ancorar em N** = registrar stub com referência explícita à fase N (que já deve ter uma tarefa anotada para completá-lo).
+> - **Sweep** = varrer a lista de testes deferidos da Fase 12, remover `ignore: true` e verificar que passam com os gaps fechados.
+
+---
+
+## 4. Decisões de projeto
+
+### 4.1 Fechar vs verificar vs ancorar
+
+**Fechar nesta fase (P0):** gaps cuja fase dona **já passou** (2–11) e que
+**não dependem** de APIs de fases 13+. É o caso de G1, G2, G3, G4.
+
+**Verificar nesta fase:** gaps que devem ter sido entregues por uma fase já
+concluída (Fase 12) ou por fases anteriores; a fase de gaps só confirma com
+testes. É o caso de G5, G12, G13–G20, G21.
+
+**Ancorar (sem desenvolvimento):** gaps cuja fase dona **ainda não começou** e
+que dependem de APIs dessas fases. É o caso de G6–G11. A ancoragem significa:
+
+1. Adicionar `// Ancorado: Fase N — <razão>` no ponto do stub.
+2. Adicionar a entrada correspondente no `-tarefas.md` da fase N (se ainda não
+   existir).
+3. Incluir na **matriz de completude** (subfase G.4) com status `ancorado`.
+
+### 4.2 Verificar com testes (não com leitura)
+
+Cada `Verificar` no inventário produz **um teste novo** que falha se o gap
+existir. Não basta ler o código — a garantia é o teste verde.
+
+### 4.3 Gate de saída — `gate:phase-13`
+
+O gate **bloqueia o início da Fase 13**, não a Fase 12. A Fase 12 corre até o
+fim normalmente (ver §0).
+
+**`deno task gate:phase-13`** — roda:
+
+1. `deno task check:all`.
+2. `deno task test:integration` — inclui os testes end-to-end com parser real.
+3. `deno task test:invariants` — invariantes do scheduler sobre projetos gerados.
+4. `deno task test:golden:scheduler` — compara `start`/`end`/`effort` contra
+   `tj3` real; **falha se um golden divergir**.
+5. `deno task check:stubs` — falha se `NotYetImplementedError` sem
+   `// Ancorado: Fase N`.
+6. `deno task gaps:audit` — falha se algum gap do inventário ainda estiver
+   `pendente`.
+7. `deno task test:deferred` — reabilita e roda todos os testes que a Fase 12
+   marcou como `// Gate: fase-11-logical-gaps`.
+
+**Gate parcial disponível já (durante a Fase 12):**
+
+- `deno task check:stubs` — pode rodar a qualquer momento.
+- `deno task gaps:audit` — pode rodar a qualquer momento.
+- `deno task test:integration --filter "minimal"` — só o caso mínimo (falha
+  hoje, sentinela do G1).
+
+Só antes de **iniciar a Fase 13** é que `gate:phase-13` precisa ficar verde.
+
+### 4.4 Política de stubs
+
+Todo `NotYetImplementedError` deve, a partir desta fase:
+
+```ts
+// Ancorado: Fase 14 — isoncriticalpath depende de slack/float no scheduler.
+// Coberto por: fase-14-relatorios-tarefas.md §14.25.
+throw new NotYetImplementedError("Fase 14");
+```
+
+**Regra:** `check:stubs` falha se encontrar `NotYetImplementedError` sem esse
+padrão. Isso impede que stubs "esquecidos" passem como "concluídos".
+
+### 4.5 Invariantes como rede de proteção
+
+Adicionar testes de invariante (fuzz/property) que qualquer cronograma válido
+deve satisfazer:
+
+- Toda task `scheduled` tem `start !== null && end !== null`.
+- `start <= end` em todas as tasks.
+- Toda milestone tem `start == end`.
+- Toda dependência respeitada (`B.start >= A.end` se `B depends A`).
+- Tasks dentro do range do projeto (ou `isRunAway === true`).
+
+Esses testes **não substituem** os golden tests; são uma **rede de proteção**
+que detecta regressões cedo.
+
+### 4.6 Ferramenta de diagnóstico commitada
+
+Criar `debug/schedule_probe.ts`: script que recebe um `.tjp`, roda
+`parse → schedule`, e dumpar JSON com `MessageHandlerInstance.errors`,
+`TaskScenario.start/end/doneEffort/isRunAway`, `ResourceScenario.effort/duties`
+por task/recurso. Commitado, versionado, executável em CI.
+
+**Motivação:** o §6.10 já usou "probe ao vivo" ad-hoc; torná-lo ferramenta
+permanente acelera qualquer diagnóstico futuro (das fases 13+ também).
+
+### 4.7 Relação com a Fase 12 (concluída antes desta fase)
+
+A Fase 12 **corre até o fim antes desta fase começar** (decisão do autor,
+2026-10-28). Isso implica:
+
+- **12.0–12.17 prosseguem sem dependência de G1–G4.** São fundação
+  (`RichTextElement`, `RichTextScanner`, `RichTextParser`, `RichTextIntermediate`,
+  handlers) que não precisam do scheduler.
+- **12.18 (integração com parser) entrega os 5 stubs de `to_rti` (G5).** A
+  integração `RichTextFactory` ↔ `ProjectFileParser` **não** precisa do
+  scheduler; portanto, 12.18 conclui mesmo com G1–G4 abertos.
+- **12.19 (golden tests de RichText) é executada com ressalvas.** Casos que
+  comparam apenas markup (o grosso) passam. Casos que comparam HTML final de
+  relatórios gerados a partir de projetos agendados ficam **deferidos** com
+  `ignore: true` + tag `// Gate: fase-11-logical-gaps`. Esses casos são
+  **sweepados** no Bloco K desta fase.
+- **12.20 (verificação final da Fase 12) é parcial.** O smoke test que passa por
+  `Project.schedule()` fica deferido; os demais passam.
+- **A Fase 12 é marcada como `✅ Concluída (com N testes deferidos para
+  fase-11-logical-gaps)`** no `README.md` e `CURRENT.md`.
+- **A Fase 13 não começa** enquanto `gate:phase-13` não estiver verde.
+
+**Lista inicial de testes provavelmente deferidos** (a ser confirmada no Bloco
+K ao final):
+
+- `tests/golden/richtext_golden_test.ts` — casos que comparam HTML de reports
+  gerados por projetos agendados.
+- `tests/integration/smoke_after_phase_12_test.ts` — se chamar
+  `Project.schedule()`.
+- Quaisquer casos de 12.19/12.20 que dependam de `start`/`end` populados pelo
+  scheduler.
+
+### 4.8 G5 — reclassificado como "verificar entrega", não "ancorar"
+
+G5 (`to_rti` × 5) **é entregue pela Fase 12** (subfase 12.18). Não é ancoragem
+para outra fase. Nesta fase:
+
+- **Verificar** que os 5 stubs foram substituídos por implementações reais.
+- **Testar** que `RichTextAttribute.to_rti`, `ReferenceAttribute.to_rti`,
+  `ResourceListAttribute.to_rti`, `Query.setQuery`/`to_rti` e
+  `ProjectFileParser.newRichText` funcionam end-to-end.
+- Se por algum motivo 12.18 não tiver entregue (imprevisto), a tarefa
+  `11.G.F.4.1` abre uma exceção: implementar aqui com prioridade.
+
+---
+
+## 5. Subfases
+
+**Bloco A — Infraestrutura de diagnóstico** (11.G.A.1–11.G.A.5)
+**Bloco B — Fechar G1 (placement de datas)** (11.G.B.1–11.G.B.8)
+**Bloco C — Fechar G2 e G3 (sentinela + golden)** (11.G.C.1–11.G.C.2)
+**Bloco D — Fechar G4 (end-to-end com parser real)** (11.G.D.1–11.G.D.2)
+**Bloco E — Auditoria por fase (4–10)** (11.G.E.1–11.G.E.5)
+**Bloco F — Auditoria Fase 11 + verificação G5 (Fase 12)** (11.G.F.1–11.G.F.4)
+**Bloco G — Matriz de completude e ancoragem** (11.G.G.1–11.G.G.4)
+**Bloco H — Invariantes e fuzz** (11.G.H.1–11.G.H.3)
+**Bloco I — Gate de saída + ADR 032** (11.G.I.1–11.G.I.2)
+**Bloco K — Sweep dos testes deferidos pela Fase 12** (11.G.K.1–11.G.K.2)
+**Bloco J — Verificação final** (11.G.J.1–11.G.J.6)
+
+Detalhamento em `fase-11-logical-gaps-tarefas.md`.
+
+---
+
+## 6. Ordem de execução
+
+```
+11.G.A  Infraestrutura (probe, instrumentação, sentinela)
+   ↓
+11.G.B  Fechar G1 (placement)
+   ↓
+11.G.C  Fechar G2, G3 (sentinela + golden)
+   ↓
+11.G.D  Fechar G4 (end-to-end com parser)
+   ↓
+11.G.K  Sweep dos testes deferidos da Fase 12
+   ↓
+11.G.E  Auditoria 4–10 (verificações)
+   ↓
+11.G.F  Auditoria 11 + verificar G5 (Fase 12)
+   ↓
+11.G.G  Matriz de completude + ancoragem
+   ↓
+11.G.H  Invariantes e fuzz
+   ↓
+11.G.I  Gate de saída + ADR 032
+   ↓
+11.G.J  Verificação final
+```
+
+Cada subfase fecha com `deno task check:all` verde.
+
+---
+
+## 7. Critério de conclusão
+
+```bash
+deno task gate:phase-13
+```
+
+passa, e:
+
+- [ ] Inventário (Seção 3) com **100%** das linhas em `fechado`, `verificado` ou
+      `ancorado`.
+- [ ] `Project.schedule()` funciona end-to-end em modelo mínimo (G1).
+- [ ] `logical-scheduler-driven_test.ts` reapertado (G2).
+- [ ] Golden tests do scheduler comparam `start`/`end`/`effort` e falham se
+      divergem do `tj3` real (G3).
+- [ ] Testes end-to-end com parser real (G4) — ≥ 10 casos cobrindo
+      parser → schedule → report.
+- [ ] `to_rti` × 5 da Fase 12 verificados funcionando (G5).
+- [ ] **Testes deferidos da Fase 12 sweepados e reabilitados** (G21).
+- [ ] ≥ 70 testes unitários novos.
+- [ ] ≥ 30 golden tests regenerados.
+- [ ] ≥ 15 testes de invariante novos.
+- [ ] Nenhum `NotYetImplementedError` sem `// Ancorado: Fase N`.
+- [ ] Matriz de completude por fase (2–12) com status verde/verificado/ancorado.
+- [ ] ADR 032 (gate + política de stubs) registrado.
+- [ ] `deno task check:all` verde.
+
+---
+
+## 8. Riscos e mitigações
+
+| Risco | Impacto | Mitigação |
+|---|---|---|
+| G1 mais amplo do que o diagnosticado | Alto | Subfase A (probe) antes de B; localizar exato |
+| Fechar G1 quebra outros testes | Alto | Sentinelas e invariantes detectam; rodar check:all após cada tarefa |
+| Fase 12 marcou **muitos** testes como deferidos | Médio | Sweep do Bloco K prioriza; se > 20, avaliar se a Fase 12 precisa de revisão antes do gate |
+| 12.18 não entregou G5 | Baixo | Tarefa 11.G.F.4.1 cobre como exceção |
+| Ancorar gap que **não** é escopo de fase futura | Alto | Revisão manual antes de ancorar; cada `// Ancorado` exige tarefa na fase dona |
+| Invariantes com falsos positivos | Médio | Fuzz restrito a projetos construídos para passar validações |
+| `check:stubs` quebrar em stubs legítimos | Médio | Exceções explícitas no script (regex) |
+| Gate muito rigoroso | Médio | Baseline inicial permissivo; endurecer gradualmente |
+| Tempo subestimado | Alto | Foco em P0 primeiro (G1–G4); Bloco K pode virar follow-up se necessário |
+
+---
+
+## 9. Referências cruzadas
+
+### Documentos internos
+
+- `docs/syntaxmesh/fases/fase-11-logical-complemento.md` §6.10, §6.11 — origem
+- `docs/syntaxmesh/fases/fase-7-scheduler-core-tarefas.md` — adendo "Gap remanescente"
+- `docs/syntaxmesh/fases/fase-7-scheduler-core.md` — README da Fase 7
+- `docs/syntaxmesh/fases/fase-9-tarefas.md` §9.10 — migração MockProject → Project
+- `docs/syntaxmesh/fases/fase-10-complemento-tarefas.md` — Blocos C0–C4
+- `docs/syntaxmesh/fases/fase-11-logica-queries-tarefas.md` — Fase 11
+- `docs/syntaxmesh/fases/fase-12-richtext-tarefas.md` — Fase 12 (rodou antes)
+- `docs/syntaxmesh/fases/README.md` — mapa das 21 fases
+- `CURRENT.md` — estado atual
+
+### Código
+
+- `packages/core/src/model/project.ts` — `Project.schedule()`
+- `packages/core/src/model/task-scenario.ts` — `schedule`/`bookResources`/`propagateDate`
+- `packages/core/src/model/resource-scenario.ts` — `book`/`available`
+- `packages/core/src/model/scenario-data.ts` — `error`/`warning`/`info`
+- `packages/core/src/taskjuggler.ts` — `parse`/`parseContent`/`freeze`/`checkTimeSheet`
+- `packages/core/src/query/query.ts`
+- `packages/core/src/richtext/**` — entregue pela Fase 12
+- `packages/core/tests/integration/logical-scheduler-driven_test.ts`
+- `packages/core/tests/golden/project-schedule_golden_test.ts`
+- `packages/core/tests/golden/richtext_golden_test.ts` — pode ter casos deferidos
+
+### Fases futuras (âncoras)
+
+- Fase 14 — `isoncriticalpath`/`freeze` (G6, G7)
+- Fase 16 — `hasalert`/`LogicalFlag` Journal (G10)
+- Fase 18 — `checkTimeSheet`/`istaskstatus` (G9)
+- Fase 19 — `parse`/`parseContent` (G11)
+
+---
+
+## 10. Notas para a IA
+
+1. **Ordem estrita:** A → B → C → D → K → E → F → G → H → I → J.
+2. **P0 é G1.** Sem fechar G1, o resto é vaidade.
+3. **Instrumentar antes de consertar.** Bloco A commitado antes do Bloco B.
+4. **Não fechar gap de fase futura.** Se não é de 2–11 (ou entregável por 12),
+   ancorar. Nunca implementar feature de 13+ aqui.
+5. **Todo `NotYetImplementedError` precisa de `// Ancorado: Fase N — <razão>`
+   e entrada na matriz.** Sem exceção.
+6. **Todo golden test do scheduler compara `start`/`end`/`effort`.** Comparar
+   apenas um deles é sinal de golden mal gerado.
+7. **Todo teste de invariante é determinístico** — não usar `Math.random` sem
+   seed.
+8. **Sem `any`.** `unknown` + narrowing.
+9. **Sem refatorações grandes** — corrigir o gap, não "melhorar de passagem".
+10. **Sweep do Bloco K é obrigatório.** Nenhum teste deferido pode ficar com
+    `ignore: true` ao final desta fase.
+11. **Commit por subfase:** `test(quality): probe-scheduler`,
+    `fix(core): schedule-placement`, `test(quality): golden-scheduler-start-end`,
+    `test(quality): reenable-deferred-from-phase-12`, etc.
+12. **Registrar ADR 032** (gate + política de stubs) antes de fechar o Bloco I.
+13. **Atualizar `CURRENT.md`** ao final com "Gaps de 2–12 fechados; Fase 13
+    liberada."
+
+---
+
+## 11. ADR 032 (referência rápida)
+
+Criado na subfase 11.G.I.1. Conteúdo esperado:
+
+- **Título:** Gate de saída para Fase 13 e política de stubs
+- **Contexto:** descoberta de que fases "concluídas" podiam esconder gaps;
+  necessidade de impedir regressões futuras; Fase 12 rodou antes do fechamento.
+- **Decisão:**
+  - `deno task gate:phase-13` composta dos 7 comandos (ver §4.3).
+  - `check:stubs` exige `// Ancorado: Fase N` em todo `NotYetImplementedError`.
+  - Testes deferidos da Fase 12 usam `// Gate: fase-11-logical-gaps` e são
+    sweepados no Bloco K.
+  - Matriz de completude (`completude-matrix.md`) versionada e atualizada por
+    fase.
+- **Alternativas:** confiar em revisão manual (frágil); gate apenas `check:all`
+  (insuficiente).
+- **Consequências:** mais rigoroso; uma fase "concluída" passa a significar
+  "provada por testes".
+
+---
+
+**Fim do plano de fechamento de gaps.**
+````
+
+---
+
 ## File: `docs/syntaxmesh/fases/fase-12-richtext-tarefas.md`
 
 ````md
@@ -16292,23 +17906,21 @@ testado unitária e deterministicamente.
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-12-tarefas.md`
 > **Plano:** `docs/syntaxmesh/fases/fase-12-richtext.md`
-> **Status:** 🟡 Em andamento (fundação entregue 2026-10-28: 12.0/12.1/12.2/12.11)
+> **Status:** ✅ Concluída (2026-10-29 — Blocos K–P, 12.0–12.20 entregues)
 > **Total:** ~215 tarefas
-> **Concluídas:** 4 subfases (12.0 ADR · 12.1 XMLElementLike · 12.2 RichTextImage · 12.11 FunctionHandler)
+> **Concluídas:** 21/21 subfases (12.0–12.20) — 215/215 tarefas atômicas
 > **Fonte Ruby:** `docs/taskjuggler/lib/taskjuggler/RichText.rb` + `RichText/*.rb`
 
-> **📌 Âncora — stubs de atributos/queries que esperam o RichText (audit 2026-10-27,
-> Fases 2–11 concluídas).** Ao entregar o RichText, **substituir** os stubs
-> `NotYetImplementedError("12")` / `rti = null` pelos geradores de RTI reais:
->
-> - `attributes/attribute-base.ts:232` → `AttributeBase#to_rti` (base).
-> - `attributes/reference/reference-attribute.ts:42` → `ReferenceAttribute#to_rti`.
-> - `attributes/list/resource-list-attribute.ts:54` → `ResourceListAttribute#to_rti`.
-> - `query/query.ts:608` → popular `this.rti` via `RichTextFactory` no pipeline `process`.
-> - `parser/project-file-parser.ts:463` → parse de blocos RichText (Markup MediaWiki).
->
-> Fontes Ruby: `Attributes.rb` (`to_rti` por classe) e `RichText.rb`
-> (`RichTextIntermediate`/`RichTextFactory`). Coberto por `phase 12` + testes RTI.
+> **📌 Âncora — atributos/query que consumirão o RichText (audit 2026-10-27;
+> reavaliada 2026-10-29 no fechamento da Fase 12).** A Fase 12 entrega o
+> **subsistema** RichText + `RichTextFactory` (injetado no parser via
+> `setRichTextFactory` em 12.18). O **wiring `to_rti` por atributo** (G5) —
+> `AttributeBase`, `ReferenceAttribute`, `ResourceListAttribute` e a fábrica
+> interna de `query.ts` — **depende de templates de relatório (`query.listItem`)
+> e `ReportContext`**, que só chegam na **Fase 14 (Relatórios)**. Esses stubs
+> permanecem ancorados (``// Ancorado: Fase 14``) e **não** integram os 215
+> critérios atômicos da Fase 12 (nem §2 nem §7 os listam). O `newRichText` do
+> `project-file-parser.ts` (Fase 10) **já** usa a fábrica real (12.18 ✓).
 
 ---
 
@@ -16344,10 +17956,10 @@ Nada na Fase 10 precisa mudar; apenas o parser passa a usar a implementação re
 - **ADR 018** — Heurística do scheduler (Fase 7).
 - **ADR 019** — Modelo financeiro (Fase 8).
 - **ADR 020** — Orquestrador e pipeline (Fase 9).
-- **ADR 021** — FSM do TextParser (Fase 10).
-- **ADR 022** — i18n de keywords (Fase 10).
-- **ADR 023** — Expressões lógicas sem precedência (Fase 11).
-- **ADR 024** — RichText e function handlers (**criado nesta fase**).
+- **ADR 022** — FSM do TextParser compilado em runtime (Fase 10).
+- **ADR 023** — i18n de keywords via LanguageRegistry (Fase 10).
+- **ADR 024** — Expressões lógicas sem precedência (Fase 11).
+- **ADR 025** — RichText e function handlers (**criado nesta fase**).
 
 ### Convenções CRÍTICAS
 
@@ -16384,41 +17996,41 @@ Nada na Fase 10 precisa mudar; apenas o parser passa a usar a implementação re
 [x] 12.0  ADR 025 (RichText e handlers)            —  5/5  ⚠️ renúmerado 024→025 (024 = expressões lógicas, Fase 11)
 [x] 12.1  XMLElementLike + SimpleXMLElement        —  8/8  (15 testes)
 [x] 12.2  RichTextImage                            —  4/4  (2 testes)
-[ ] 12.3  RichTextElement                          —  0/28
-[ ] 12.4  RichTextIntermediate                     —  0/18
-[ ] 12.5  RichTextScanner                          —  0/20
-[ ] 12.6  RichTextParser + SyntaxRules             —  0/22
-[ ] 12.7  TOCEntry                                 —  0/5
-[ ] 12.8  TableOfContents                          —  0/5
-[ ] 12.9  RichTextSnip                             —  0/8
-[ ] 12.10 RichTextDocument                         —  0/10
+[x] 12.3  RichTextElement                          —  28/28  (19 testes / 60 passos; to_s e to_tagged conferidos contra o Ruby real via harness Element.rb; to_html validado estruturalmente — XMLElement.rb injeta whitespace)
+[x] 12.4  RichTextIntermediate                     —  18/18  (4 testes; setQuery via duck-typing — RTFWithQuerySupport concreto fica em 12.13; registerFunctionHandler sem .dup até os handlers concretos implementarem dup)
+[x] 12.5  RichTextScanner                          —  20/20  (20 testes; 7 modos, FSM herdado de Scanner/Fase 10)
+[x] 12.6  RichTextParser + SyntaxRules             —  22/22  (36 testes; ~40 patterns, parity Ruby)
+[x] 12.7  TOCEntry                                 —  5/5  (5 testes; estrutura conferida contra TOCEntry.rb real)
+[x] 12.8  TableOfContents                          —  5/5  (3 testes)
+[x] 12.9  RichTextSnip                             —  8/8  (16 testes; generateHTML via seam html-shell, sem NYI)
+[x] 12.10 RichTextDocument                         —  10/10  (19 testes; abstract + crossReference + TOC)
 [x] 12.11 RichTextFunctionHandler                  —  6/6  (5 testes; base abstrata + error/warning via MessageHandlerInstance)
-[ ] 12.12 RichTextFunctionExample                  —  0/6
-[ ] 12.13 RTFWithQuerySupport                      —  0/4
-[ ] 12.14 RTFQuery                                 —  0/18
-[ ] 12.15 RTFReport (stub)                         —  0/3
-[ ] 12.16 RTFReportLink (stub)                     —  0/3
-[ ] 12.17 RTFNavigator + RTFHandlers               —  0/10
-[ ] 12.18 RichText + RichTextFactory + integração  —  0/14
-[ ] 12.19 Golden tests (RichText)                  —  0/10
-[ ] 12.20 Verificação final                        —  0/8
+[x] 12.12 RichTextFunctionExample                  —  6/6  (5 testes)
+[x] 12.13 RTFWithQuerySupport                      —  4/4  (4 testes; setQuery com .dup)
+[x] 12.14 RTFQuery                                 —  18/18  (29 testes; handler real sobre Query/Fase 11)
+[x] 12.15 RTFReport (stub)                         —  3/3  (NYI ancorado → Fase 14)
+[x] 12.16 RTFReportLink (stub)                     —  3/3  (NYI ancorado → Fase 14)
+[x] 12.17 RTFNavigator + RTFHandlers               —  10/10  (11 testes; Navigator NYI ancorado Fase 14)
+[x] 12.18 RichText + RichTextFactory + integração  —  14/14  (11 testes; fábrica injetada no parser, stubs substituídos)
+[x] 12.19 Golden tests (RichText)                  —  10/10  (32 casos Ruby oracle; plain/tagged/html; idempotente)
+[x] 12.20 Verificação final                        —  8/8  (check:all exit 0; suíte 335/3586/0; NYI=3; smoke phase 12)
 ─────────────────────────────────────────────────────
-TOTAL: ~215 | suíte core: 307 passed / 3270 steps / 0 failed
+TOTAL: 215/215 | suíte core: 335 passed / 3586 steps / 0 failed
 ```
 
 ---
 
 ## Bloco A — Fundação
 
-### 12.0 — ADR 024 (RichText e function handlers)
+### 12.0 — ADR 025 (RichText e function handlers)
 
 **Objetivo:** formalizar o reuso de `TextParser` e o sistema de function handlers.
 
-**⚠️ Nota:** o plano usa `ADR 023`, mas o ADR 023 foi alocado para `expressoes-logicas` (Fase 11). Aqui usamos **ADR 024**.
+**⚠️ Nota:** o plano pedia `ADR 023`/`024`, mas ambos foram alocados a outras decisões (023=i18n keywords, 024=expressões lógicas/Fase 11). O ADR de RichText é **ADR 025** — criado em `docs/syntaxmesh/decisoes/025-richtext-handlers.md`.
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 12.0.1 | Criar `docs/syntaxmesh/decisoes/024-richtext-handlers.md` com frontmatter | idem | arquivo existe |
+| 12.0.1 | Criar `docs/syntaxmesh/decisoes/025-richtext-handlers.md` com frontmatter | idem | arquivo existe |
 | 12.0.2 | Seção **Contexto:** RichText MediaWiki; reuso de `TextParser`; function handlers; `RTFReport`/`RTFReportLink`/`RTFNavigator` são stubs | idem | — |
 | 12.0.3 | Seção **Decisão:** RichText mantido (reforça ADR 009); `RichTextParser extends TextParser`; `RichTextFunctionHandler` abstrata + subclasses | idem | — |
 | 12.0.4 | **Alternativas** (Markdown — descartada; parser próprio — descartada) + **Consequências** (reuso máximo; acoplamento com Fase 10/11) | idem | — |
@@ -17003,12 +18615,12 @@ TOTAL: ~215 | suíte core: 307 passed / 3270 steps / 0 failed
 | 12.20.1 | `deno task check-all` verde | exit 0 |
 | 12.20.2 | `deno task golden:generate && deno task test` verde | exit 0 |
 | 12.20.3 | `grep -r "NotYetImplementedError" packages/core/src/richtext/` — apenas `RTFReport`, `RTFReportLink`, `RTFNavigator` | ≤ 3 ocorrências |
-| 12.20.4 | ADR 024 criada e commitada | git log |
+| 12.20.4 | ADR 025 criada e commitada (`025-richtext-handlers.md`) | git log |
 | 12.20.5 | `RichText`, `RichTextIntermediate`, `RichTextElement`, `RichTextFactoryImpl`, `RTFHandlers` exportados em `packages/core/src/richtext/mod.ts` | `deno check` |
 | 12.20.6 | `ProjectFileParser.setRichTextFactory` funcional | 1 teste |
 | 12.20.7 | `tests/integration/smoke_after_phase_12_test.ts` — cria `RichText`, gera `rti`, verifica `to_s`; verifica Fase 11 (`Query`) | 1 teste |
 | 12.20.8 | Auditoria: cada subfase do plano `fase-12-richtext.md` tem tarefas correspondentes | grep |
-| 12.20.9 | Corrigir numeração em `fase-12-richtext.md` (`### 16.X` → `### 12.X`, `ADR 023` → `ADR 024`) | grep |
+| 12.20.9 | Corrigir numeração em `fase-12-richtext.md` (`### 16.X` → `### 12.X`; ADR RichText 024 → **025**, pois 023=i18n e 024=expressões lógicas) ✅ | grep |
 | 12.20.10 | Smoke test: parser cria `RichText` real (não stub) | 1 teste |
 
 ---
@@ -17033,7 +18645,7 @@ TOTAL: ~215 | suíte core: 307 passed / 3270 steps / 0 failed
 15. **`children_to_s` concatena com espaços.** `appendSpace` controla.
 16. **Sem `any`.** Use `unknown` + type guards.
 17. **Commit por subfase.** `feat(richtext): rich-text-element`, `feat(richtext): rtf-query`, etc.
-18. **ADR 024** (não 023). **ADR 023** é expressões lógicas (Fase 11).
+18. **ADR 025** (RichText). Não 023 (i18n keywords) nem 024 (expressões lógicas, Fase 11).
 19. **`XMLElementLike` é interface; `SimpleXMLElement` é implementação mínima.** Fase 17 substitui.
 20. **`to_html` retorna `XMLElementLike`.** Não string.
 
@@ -17041,7 +18653,7 @@ TOTAL: ~215 | suíte core: 307 passed / 3270 steps / 0 failed
 
 ## Notas específicas por subfase
 
-### 12.0 — ADR 024
+### 12.0 — ADR 025
 
 - **Documenta o reuso de `TextParser`.**
 - **Documenta function handlers.**
@@ -17138,15 +18750,17 @@ TOTAL: ~215 | suíte core: 307 passed / 3270 steps / 0 failed
 - **`RichTextFactoryImpl`.**
 - **`ProjectFileParser.setRichTextFactory`.**
 
-### 12.19 — Golden tests
+### 12.19 — Golden tests ✅
 
-- **Markup de exemplo.**
-- **`plain`, `tagged`, `html`.**
+- `scripts/golden/richtext.rb` — 32 casos, oracle Ruby (`RichText.rb` real, `trapSetup`, reset de `@@parser` por caso).
+- **`plain`, `tagged`, `html`** com tolerâncias documentadas (whitespace em `plain`; serialização `>`/`/>` em `html`).
+- **Idempotente** (`ruby richtext.rb` reproduz o JSON byte-a-byte); 2 casos em que o próprio Ruby lança erro (`=====` aninhado, `'''…''…'''` ambíguo) ficam de fora — reavaliar na Fase 21.
 
-### 12.20 — Verificação
+### 12.20 — Verificação ✅
 
-- **Sem stubs além de `RTFReport`, `RTFReportLink`, `RTFNavigator`.**
-- **ADR 024 (não 023).**
+- **Sem stubs além de `RTFReport`, `RTFReportLink`, `RTFNavigator`** (3 NYI ancorados Fase 14) sob `src/richtext/`.
+- **ADR 025** (não 023/024).
+- `deno task check:all` exit 0 · suíte core 335/3586/0 · smoke `tests/integration/smoke_after_phase_12_test.ts` verde.
 
 ---
 
@@ -17161,17 +18775,17 @@ TOTAL: ~215 | suíte core: 307 passed / 3270 steps / 0 failed
 # Fase 12 — RichText
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-12-richtext.md`
-> **Status:** ⬜ Não iniciada
+> **Status:** ✅ Concluída (2026-10-29 — 12.0–12.20 entregues)
 > **Duração estimada:** 10–12 dias
 > **Depende de:** Fases 2, 4, 10, 11
 > **Bloqueia:** Fases 10 (parser precisa de `RichTextFactory`), 14, 16, 17, 21
 
-> **⚠️ Correção de numeração (2026-10-28):** este plano chama "ADR 024" à
-> decisão de RichText, mas **024 já foi alocado** a *expressões lógicas sem
-> precedência* (Fase 11). O ADR de RichText é **025** — criado em
-> `docs/syntaxmesh/decisoes/025-richtext-handlers.md`. Onde este arquivo diz
-> "ADR 024" leia-se **ADR 025**. As seções "### 16.x" do §5 são também
-> relíquia de numeração antiga → correspondem a **12.x**.
+> **⚠️ Correção de numeração (2026-10-28; resolvida integralmente 2026-10-29):**
+> este plano chamava "ADR 024" à decisão de RichText, mas **024 já foi alocado**
+> a *expressões lógicas sem precedência* (Fase 11). O ADR de RichText é **025**
+> (`docs/syntaxmesh/decisoes/025-richtext-handlers.md`). Todas as referências
+> "ADR 024" do corpo já foram corrigidas para **ADR 025**, e as seções "### 16.x"
+> do §5 foram renomeadas para **12.x**.
 
 ---
 
@@ -17264,7 +18878,7 @@ Ao final desta fase:
 - `RichTextFactory` implementado (substitui stub da Fase 10).
 - Integração com `ProjectFileParser` (`newRichText`).
 - **≥ 200 testes unitários** + **≥ 30 golden tests** (markup do `TestSuite/RichText/`).
-- ADR 024 registrado.
+- ADR 025 registrado.
 - `deno task check-all` verde.
 
 ---
@@ -17441,11 +19055,11 @@ Usados por `RichTextElement.to_html`. Nesta fase, definir classes simples em `xm
 
 ## 5. Subfases detalhadas
 
-**Bloco A — Core** (16.0–16.6)
-**Bloco B — Documents** (16.7–16.10)
-**Bloco C — Function Handlers** (16.11–16.17)
-**Bloco D — Integração** (16.18)
-**Bloco E — Golden tests** (16.19)
+**Bloco A — Core** (12.0–12.6)
+**Bloco B — Documents** (12.7–12.10)
+**Bloco C — Function Handlers** (12.11–12.17)
+**Bloco D — Integração** (12.18)
+**Bloco E — Golden tests** (12.19)
 
 ---
 
@@ -17453,7 +19067,7 @@ Usados por `RichTextElement.to_html`. Nesta fase, definir classes simples em `xm
 
 ---
 
-### 12.0 — ADR 024 (RichText e function handlers)
+### 12.0 — ADR 025 (RichText e function handlers)
 
 #### Contexto
 
@@ -17490,7 +19104,7 @@ Criar `docs/syntaxmesh/decisoes/024-richtext-handlers.md`.
 
 #### Critério de aceite
 
-- ADR 024 criado.
+- ADR 025 criado.
 - Tabela atualizada.
 
 ---
@@ -18564,7 +20178,7 @@ deno task test
 ## 6. Ordem de execução sugerida
 
 ```text
-12.0  ADR 024
+12.0  ADR 025
       ↓
 12.1  XMLElementLike
 12.2  RichTextImage
@@ -18590,6 +20204,8 @@ deno task test
 12.18 RichText + RichTextFactory + integração
       ↓
 12.19 Golden tests
+      ↓
+12.20 Verificação final
 ```
 
 Cada subfase fecha com `deno task check-all` verde.
@@ -18606,17 +20222,17 @@ deno task check-all
 
 passa, e:
 
-- [ ] `RichText`, `RichTextIntermediate`, `RichTextElement`.
-- [ ] `RichTextScanner`, `RichTextParser`, `RichTextSyntaxRules`.
-- [ ] `RichTextSnip`, `RichTextDocument`, `TOCEntry`, `TableOfContents`.
-- [ ] `RichTextFunctionHandler` + subclasses (`RTFQuery` funcional, outros stubs).
-- [ ] `RichTextFactory` implementado e integrado.
-- [ ] `ProjectFileParser` usa `RichTextFactory` real.
-- [ ] **≥ 200 testes unitários**.
-- [ ] **≥ 30 golden tests**.
-- [ ] Nenhum `any` em `src/` (exceto onde justificado).
-- [ ] ADR 024 criado.
-- [ ] Script `richtext.rb` funcional.
+- [x] `RichText`, `RichTextIntermediate`, `RichTextElement`.
+- [x] `RichTextScanner`, `RichTextParser`, `RichTextSyntaxRules`.
+- [x] `RichTextSnip`, `RichTextDocument`, `TOCEntry`, `TableOfContents`.
+- [x] `RichTextFunctionHandler` + subclasses (`RTFQuery` funcional, outros stubs).
+- [x] `RichTextFactory` implementado e integrado.
+- [x] `ProjectFileParser` usa `RichTextFactory` real.
+- [x] **≥ 200 testes unitários** (204 testes / 280 passos richtext, suíte core 335/3586).
+- [x] **≥ 30 golden tests** (32 casos).
+- [x] Nenhum `any` em `src/richtext/`.
+- [x] ADR 025 criado.
+- [x] Script `richtext.rb` funcional (geração idempotente).
 
 ---
 
@@ -18690,7 +20306,7 @@ passa, e:
 
 ---
 
-## 11. ADR 024 (referência rápida)
+## 11. ADR 025 (referência rápida)
 
 Criado como subfase 12.0. Conteúdo esperado:
 
@@ -18779,33 +20395,42 @@ A Fase 13 depende de:
 ## Progresso
 
 ```
-[ ] 13.0  ADR 025 (Markdown going-forward)         —  0/5
-[ ] 13.1  Integração micromark                     —  0/12
-[ ] 13.2  MdastToRichText                          —  0/14
-[ ] 13.3  MarkdownFactory                          —  0/6
-[ ] 13.4  Extensão: color                          —  0/6
-[ ] 13.5  Extensão: HTML sanitizer                 —  0/8
-[ ] 13.6  Extensão: functions                      —  0/10
-[ ] 13.7  Extensão: mini-queries                   —  0/5
-[ ] 13.8  Pipeline pré/pós-processamento           —  0/6
-[ ] 13.9  to_markdown em RichTextIntermediate      —  0/14
-[ ] 13.10 richTextToMarkdown                       —  0/8
-[ ] 13.11 Integração                               —  0/5
-[ ] 13.12 Snapshot tests                           —  0/8
-[ ] 13.13 Verificação final                        —  0/8
+[x] 13.0  ADR 026 (Markdown going-forward)         —  5/5
+[x] 13.1  Integração micromark                     —  12/12
+[x] 13.2  MdastToRichText                          —  14/14
+[x] 13.3  MarkdownFactory                          —  6/6
+[x] 13.4  Extensão: color                          —  6/6
+[x] 13.5  Extensão: HTML sanitizer                 —  8/8
+[x] 13.6  Extensão: functions                      —  10/10
+[x] 13.7  Extensão: mini-queries                   —  5/5
+[x] 13.8  Pipeline pré/pós-processamento           —  6/6
+[x] 13.9  to_markdown em RichTextIntermediate      —  14/14
+[x] 13.10 richTextToMarkdown                       —  8/8
+[x] 13.11 Integração                               —  5/5
+[x] 13.12 Snapshot tests                           —  8/8
+[x] 13.13 Verificação final                        —  8/8
+[~] 13.14 Adendo: imagens (parcial — ver nota)    —  .1/.2/.3/.5 ok; .4 adiado
 ─────────────────────────────────────────────────────
 TOTAL: ~115
 ```
+
+> **13.14 (parcial):** `images.ts` implementa `isExternalImageRef` + `resolveImageRef`
+> com `ImageStore` injetável (contrato Fase 19) e fallback `dataDirs`; testes com
+> `fakeOpfs()` cobrem externa/OPFS/dataDir/unresolved. O `URL.createObjectURL`
+> concreto (13.14.3) fica na implementação Fase 19 do store (core é DOM-free,
+> ADR 001 — devolve descritor). O roteamento `format richtext` (13.14.4, `render.ts`)
+> depende do pipeline de reports da Fase 14 e do parser `format` da Fase 10
+> Complemento — adiado.
 
 ---
 
 ## Bloco A — Fundação
 
-### 13.0 — ADR 025 (Markdown como formato going-forward)
+### 13.0 — ADR 026 (Markdown como formato going-forward)
 
 **Objetivo:** formalizar a implementação do Markdown e a coexistência com RichText.
 
-**⚠️ Nota:** o plano usa `ADR 024`, mas o ADR 024 foi alocado para `richtext-handlers` (Fase 12). Aqui usamos **ADR 025**.
+**⚠️ Nota:** o plano usa `ADR 024`, mas 024 e 025 já foram alocados (expressões lógicas e RichText handlers, Fase 12). Aqui usamos **ADR 026**.
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
@@ -19204,7 +20829,7 @@ TOTAL: ~115
 ### 13.13 — Verificação
 
 - **Sem stubs.**
-- **ADR 025 (não 024).**
+- **ADR 026 (não 024/025).**
 
 ---
 
@@ -19315,7 +20940,7 @@ Ao final desta fase:
 - `to_tagged` (usado em testes) equivalente ao RichText.
 - Conversor `richTextToMarkdown` (one-way, para migração).
 - **≥ 80 testes unitários**.
-- ADR 025 registrado.
+- ADR 026 registrado.
 - `deno task check-all` verde.
 
 ---
@@ -19452,7 +21077,7 @@ Markdown não tem i18n de keywords (não é a mesma sintaxe do `.tjp`). Não apl
 
 ---
 
-### 13.0 — ADR 025 (Markdown como formato going-forward)
+### 13.0 — ADR 026 (Markdown como formato going-forward)
 
 #### Contexto
 
@@ -19496,7 +21121,7 @@ Criar `docs/syntaxmesh/decisoes/025-markdown-going-forward.md`.
 
 #### Critério de aceite
 
-- ADR 025 criado.
+- ADR 026 criado.
 - Tabela atualizada.
 
 ---
@@ -20134,7 +21759,7 @@ Congelar snapshots.
 ## 6. Ordem de execução sugerida
 
 ```text
-13.0  ADR 025
+13.0  ADR 026
       ↓
 13.1  Integração micromark
       ↓
@@ -20178,7 +21803,7 @@ passa, e:
 - [ ] **≥ 80 testes unitários**.
 - [ ] **≥ 20 snapshot tests**.
 - [ ] Nenhum `any` em `src/` (exceto onde justificado).
-- [ ] ADR 025 criado.
+- [ ] ADR 026 criado.
 
 ---
 
@@ -20239,7 +21864,7 @@ passa, e:
 
 ---
 
-## 11. ADR 025 (referência rápida)
+## 11. ADR 026 (referência rápida)
 
 Criado como subfase 13.0. Conteúdo esperado:
 
@@ -20261,21 +21886,710 @@ Criado como subfase 13.0. Conteúdo esperado:
 
 ---
 
+## File: `docs/syntaxmesh/fases/fase-14-relatorios-complemento-tarefas.md`
+
+````md
+# Fase 14 Complemento — Tarefas Atômicas
+
+> **Arquivo:** `docs/syntaxmesh/fases/fase-14-relatorios-complemento-tarefas.md`
+> **Plano:** `docs/syntaxmesh/fases/fase-14-relatorios-complemento.md`
+> **Status:** 🟡 Em andamento (C0 2026-10-31; C1–C6 2026-11-01)
+> **Total:** ~104 tarefas
+> **Concluídas:** 96
+> **Fonte Ruby (parcial):** `docs/taskjuggler/lib/taskjuggler/reports/MspXmlRE.rb` +
+> `Journal.rb` + `AlertLevelDefinitions.rb` (o restante — materialreport,
+> breakdown, RDO, markdown em reports — são **extensões SyntaxMesh sem oracle**)
+
+---
+
+## Checklist de progresso
+
+```
+[x] 14C.0 Fundação (json, journal-index, alert-levels, picture-render, dispatch) — 12
+[x] 14C.1 Materiais nos relatórios existentes + materialreport                   — 22
+[x] 14C.2 BreakdownReport (absorve 14.25.1–5)                                   — 10
+[x] 14C.3 RdoReport + galeria de imagens (absorve 14.25.6–10)                   — 14
+[x] 14C.4 MspXml → MSPDI (mspdi.md)                                             — 16
+[x] 14C.5 Markdown nos relatórios                                               — 12
+[x] 14C.6 hidematerial/rollupmaterial/hidepicture + auditoria hide/rollup       — 10
+[ ] 14C.7 Golden/fixture + verificação final + docs                             — 8
+─────────────────────────────────────────────────────────
+TOTAL: 104
+```
+
+**Ordem:** C0 → C1 → C2 → C3 → C4 → C5 → C6 → C7. C4 e C5 independem de C2/C3
+(podem paralelizar). C6.5+ depende de C2/C3 (aplica hide nos novos geradores).
+
+## Convenções (herdam a Fase 14)
+
+1. **ADR 027**: toda saída é string/estrutura em memória; zero disco, zero DOM.
+2. **Sem `any`** — `unknown` + type guards.
+3. **BDD** (`@std/testing/bdd`) + `@std/assert`; testes proporcional a cada tarefa.
+4. **Commit por sub-bloco**: `feat(reports-14c): material-list-re`, etc.
+5. **Regressão obrigatória a cada bloco**: `deno task check:all` + suíte +
+   `reports.golden.json`/`parser.golden.json` inalterados.
+6. **Stub novo = âncora** (`// Ancorado: Fase N — razão`) validada por
+   `deno task check:stubs`.
+7. **Não tocar** em Gantt (15/16), sheets (18) ou storage (19) — registrar
+   requisitos e seguir.
+8. Extensões **sem oracle tj3** usam fixtures determinísticos + snapshots
+   próprios (`reports-extensions.golden.json`), nunca comparação subjetiva.
+
+---
+
+## 14C.0 — Fundação
+
+> Prepara o terreno consumido por todos os blocos. Inclui dois
+> **bring-forwards** justificados do plano (§6): índice do Journal e
+> alert-levels mínimos (dona: Fase 16 — a 16 herda e estende).
+
+### 14C.0.A — Formato `json` de primeira classe
+
+| # | Tarefa | Arquivos | Verificação |
+|---|--------|----------|-------------|
+| 14C.0.1 | `ReportType.Json` não existe — adicionar ramo `case "json"` no switch de `Report.generate()` que delega a `content.toJSON()` (novo método opcional no contrato de conteúdo) e grava string em `output` | `model/report.ts`, `model/report-content.ts` | 2 testes (formato json roteado; formato desconhecido ainda lança) |
+| 14C.0.2 | Estender o contrato de conteúdo (`ReportContent`) com `toJSON?(): string` e registrar `json` nos formatos aceitos pelo parser de `formats` (verificar gramática atual em `parser/rules/report.ts`) | `model/report-content.ts`, `parser/rules/report.ts` | `deno check` + 1 teste parser |
+| 14C.0.3 | `TextReport`/`TableReport`: `toJSON()` serializando o formato intermediário (colunas + linhas, células com texto normalizado) — estrutura estável e documentada | `reports/table-report.ts` | 3 testes (célula texto, especial `calendario` vira descritor, legenda ausente em json) |
+
+### 14C.0.B — Índice do Journal (bring-forward Fase 16)
+
+| # | Tarefa | Arquivos | Verificação |
+|---|--------|----------|-------------|
+| 14C.0.4 | `Journal.addEntry` mantém índices `entriesByTask/Resource/Material/Account` (Map `PropertyTreeNode → JournalEntry[]`, ordenados por data; entradas com `property` null ignoradas) + `entriesByDate(start,end)` por intervalo | `model/journal.ts` | 4 testes (um por tipo + intervalo de datas) |
+| 14C.0.5 | Remoção consistente: hook quando entidade/entrada é destruída (espelhar `Journal.rb` `removeEntry`); não vazar entradas de entidades removidas | `model/journal.ts`, `model/property-tree-node.ts` (se necessário) | 1 teste |
+| 14C.0.6 | Comentar no topo de `journal.ts` que a Fase 16 (adendo 16.21) herda e estende os índices (flags/status de timesheet) | `model/journal.ts` | doc |
+
+### 14C.0.C — Alert levels mínimos (bring-forward) + Picture→HTML
+
+| # | Tarefa | Arquivos | Verificação |
+|---|--------|----------|-------------|
+| 14C.0.7 | `AlertLevelDefinitions` mínimo: palette default do TJ (`none/red/blue/green/orange/yellow/violet` + level 0–6) como módulo; parser já valida os nomes — conferir e ligar a validação ao módulo | `model/alert-levels.ts` (novo), `parser/rules/journal.ts` | 2 testes |
+| 14C.0.8 | `Picture.to_html()`: `<img>` com `src` resolvido (URL externa intacta; relativo → `resolveImageRef`/`ImageStore` de 13.14, core devolve descritor com `src` relativo preservado), `alt`, `width`, e wrapper `<figure>/<figcaption>` para `caption`; `align` via classe | `model/picture.ts` | 4 testes (externa, relativa-caption, align, sem caption/alt) |
+| 14C.0.9 | Galeria helper `picturesToHtml(pictures, maxPictures?)`: corta **só a saída** (`maxpictures`), nunca a entrada; retorna string HTML | `reports/gallery.ts` (novo) | 2 testes (limite respeitado; ilimitado default) |
+
+### 14C.0.D — Registro no dispatch
+
+| # | Tarefa | Arquivos | Verificação |
+|---|--------|----------|-------------|
+| 14C.0.10 | Adicionar `materialreport`, `breakdownreport`, `rdoreport` ao `ReportType` enum + `KNOWN_TYPE_SPECS` (ainda sem fábrica → `NotYetImplementedError` **ancorado "14C"** temporário para falhar com mensagem de plano, não `Unknown report type`) | `model/report.ts` | 2 testes |
+| 14C.0.11 | Fixture `.tjp` base do complemento: projeto com materiais, allocations, charges (flat/perCost), journalentries com `picture`/`format markdown` em task/resource/material/account — `packages/core/tests/fixtures/ext/14c-rdo-budget.tjp` (convênio existente de fixtures de extensão; `golden/fixtures/` não existia) | fixture | carregável por `ProjectFileParser` (2 testes em `extension-fixtures_golden_test.ts`) |
+| 14C.0.12 | Runner de snapshots de extensão: `generate_extension_golden.ts` (TS puro, determinístico, idempotente byte-a-byte) escrevendo `reports-extensions.golden.json`; wiring em `golden:generate` + README | `tests/golden/`, `deno.jsonc`, `scripts/golden/README.md` | rodar 2× e comparar bytes |
+
+---
+
+## 14C.1 — Materiais nos relatórios existentes + `materialreport`
+
+> Vereditos do pedido (analisar cada relatório da lista original). Colunas
+> `note`/`journal` em material/account e `timebasis` canônica absorvem
+> **14.25.11–13**.
+
+### 14C.1.A — Auditoria de colunas já existentes
+
+| # | Tarefa | Arquivos | Verificação |
+|---|--------|----------|-------------|
+| 14C.1.1 | Auditar colunas entregues pela 10-C C4 (`totalcost`, `totalrevenue`, `cost`, `revenue`, `net`, `benefit`, `vat`, `remainingcost`, `unitprice`, `materials`?) já registradas em `TableReport`/REs; listar lacuna material↔coluna numa tabela neste doc (correções viram 14C.1.1x) | `reports/table-report.ts`, `reports/task-list-re.ts`, `reports/resource-list-re.ts`, `reports/account-list-re.ts` | grep + tabela preenchida |
+
+#### Vereditos da auditoria 14C.1.1 (preenchido 2026-10-31)
+
+| Coluna | Em `TableReport.propertiesById`? | Value pipeline hoje | Lacuna / ação |
+|---|---|---|---|
+| `cost`, `revenue`, `balance` | ✅ (idêntico ao Ruby, 47 entradas) | via `Query.process` → `query_*`/atributo + `query.to_rti()` (`table-report.ts:779/809`) | nenhuma — núcleo já portado; material entra **indiretamente** via `CostEvent`/`turnoverByType` (14C.1.19) |
+| `totalcost`, `totalrevenue`, `net`, `benefit`, `vat`, `remainingcost` | ❌ — **não existem no Ruby tampoco** (grep 0 hits em `TableReport.rb`/`TaskListRE.rb`); a menção da 10-C era aspiracional | n/a | **sem correção**: não são colunas tj3; se um dia vierem, serão extensão própria |
+| `unitprice`, `allocations` | ❌ (não existem no Ruby) | n/a | exclusivo do futuro `MaterialListRE` (14C.1.5) — colunas próprias, pipeline próprio |
+| `materials` | ❌ no mapa; parser aceita o keyword (`rules/report.ts:2274`) | célula cai no fallback de atributo → Task **não** tem atributo `materials` → célula vazia hoje | 14C.1.11: handler de coluna em `TaskListRE` + (`query_materials` ou processo direto) |
+| `materialcost`, `charges` | ❌ mapa; keyword aceito no parser | idem | 14C.1.11 / MaterialListRE (14C.1.5–6) |
+| `journal`, `journal_sub`, `journalmessages`, `journalsummaries` | ✅ no mapa (igual Ruby) | Ruby resolve por `Journal#to_rti(query)` dispatchando `query.journalMode`; **`to_rti` do Journal não está portado** no TS (`model/journal.ts` não o tem) | 14C.1.7 precisa portar `to_rti` + `entriesBy*` com intervalo/hide (índices de 14C.0.4 já prontos) e estender p/ Material/Account |
+| `note` | ❌ mapa (Ruby também não tem; vem do atributo RichText `note`) | via atributo do PTN — funciona em task/resource; material/account têm o atributo (10-C C3.2) mas nenhuma RE o lista | 14C.1.8 |
+| `timebasis` | ❌ mapa; keyword aceito | atributo de cenário `timebasis` existe (`resolvedTimebasis`) | 14C.1.9 (absorve 14.25.13) |
+| REs existentes | — | `task/resource/account-list-re.ts` **zero** referências a material | 14C.1.11–19 |
+| `Query` sobre Material | — | `Query.process` é genérico por PTN; `Material` não define `query_*` p/ unitprice/allocations | 14C.1.20 (testar; estender se faltar) |
+
+### 14C.1.B — `materialreport` (novo, extensão SyntaxMesh)
+
+| # | Tarefa | Arquivos | Verificação |
+|---|--------|----------|-------------|
+| 14C.1.2 | Parser: `rule_materialReport` (agregador de reports, análogo `resourcereport`; aceita `columns`, `formats html/csv/json`, `hideresource`, `hidetask`, `sortby`) em `parser/rules/report.ts` + keyword no `TjpSyntaxRules` | `parser/rules/report.ts` | 2 testes de parse |
+| 14C.1.3 | i18n `materialreport` (canonical + en/pt-BR/es) com AST equivalente | `src/i18n/*` | teste i18n 3 idiomas |
+| 14C.1.4 | `MaterialListRE extends ReportBase` (`reports/material-list-re.ts`) iterando `project.materials`; registrar `registerContentFactory("materialreport")` + export em `reports/mod.ts` | `reports/material-list-re.ts`, `reports/mod.ts` | teste de registro/dispatch |
+| 14C.1.5 | Colunas do material: `name`, `id`, `note`, `unit`, `unitprice`, `allocations` (tarefas que consomem, com quantidade), `scheduledcost`, `actualcost`, `totalcost`, `journal` | `reports/material-list-re.ts` | 6 testes |
+| 14C.1.6 | Cálculo de custos de material via `CostEvent`/`MaterialAllocation` (8.1/8.2) — aggregação por período do report quando `period` presente | idem | 2 testes |
+| 14C.1.7 | Coluna `journal` funcional em **material e account** (variantes `journal_sub`, `journalmessages`, `journalsummaries`) reutilizando o mecanismo de task/resource já portado | `reports/table-report.ts` | 3 testes (absorve 14.25.12) |
+| 14C.1.8 | Coluna `note` estendida a material/account (modelo já existe, C0/C1 da 10-C) | `reports/table-report.ts` | 2 testes (absorve 14.25.11) |
+| 14C.1.9 | Coluna `timebasis` exibindo `TaskScenario.resolvedTimebasis` canônico (`duration`/`length`) | `reports/table-report.ts` | 1 teste (absorve 14.25.13) |
+| 14C.1.10 | HTML/CSV/JSON do `materialreport` (intermediário `ReportTable` → `generate*` existentes + `toJSON` de 14C.0.1) | — | 2 testes |
+
+### 14C.1.C — Materiais nos relatórios existentes (vereditos)
+
+| # | Tarefa | Arquivos | Verificação |
+|---|--------|----------|-------------|
+| 14C.1.11 | `taskreport`: coluna `materials` (nomes + quantidades das alocações da tarefa via `MaterialAllocation`) e `materialcost` (soma de `CostEvent` de material da tarefa) | `reports/task-list-re.ts`, `model/task.ts` (se faltar accessor) | 3 testes |
+| 14C.1.12 | `textreport`: confirmar herança das colunas de taskreport (materiais/custos/accounts funcionam) | `reports/text-report.ts` | 1 teste com fixture 14c |
+| 14C.1.13 | `export`/`TjpExportRE`: exportar `material { ... }` + `materialallocations` (+ flags) respeitando `hidematerial` (C6) quando presente; round-trip parse→export→parse | `reports/tjp-export-re.ts` | 2 testes (round-trip; sem material = saída inalterada) |
+| 14C.1.14 | `tracereport`: aceitar atributos de material via Query (`<-name->` etc.) quando a coluna aponta para material; registrar suporte de `hidematerial` (aplicação em C6) | `reports/trace-report.ts` | 1 teste |
+| 14C.1.15 | `resourcereport`: veredito documentado — recursos humanos não listam materiais (material não é booking); adicionar coluna opcional `materialcost`? **Não** (fora de escopo), registrar motivo | nota neste doc | doc |
+| 14C.1.16 | `icalendar`/`niku`/`tagfile`/`chartplotter`: veredito documentado — calendários/stacks são centrados em tarefas/recursos; material não tem scoreboard próprio → **sem integração**; registrar | nota neste doc | doc |
+| 14C.1.17 | `"Calendar" Report` (weekly/monthly): veredito — grades vêm de `ColumnTable` (dia/semana têm esforço, não custo de material); **opcional**: célula tooltip listing? → adiar p/ Fase 15/16 junto Gantt; registrar | nota | doc |
+| 14C.1.18 | `htmlstatusreport`/`statussheetreport`/`xmlreport`: auditar keywords no TJ vendorizado (`TjpSyntaxRules.rb`/`ProjectFileScanner.rb`); statussheet **deve** listar materiais → registrar requisito formal na Fase 18 (comentar em `fase-18-...-tarefas.md`); `xmlreport` sem referência TJ → documentar como extensão futura | docs das fases | doc |
+| 14C.1.19 | `accountreport`: verificar que `turnoverByType` (8.2) já agrega material nos totais exibidos; 1 teste com fixture 14c | `reports/account-list-re.ts` | 1 teste |
+| 14C.1.20 | Query sobre `Material`: confirmar `Query.process` com `obj` = Material (acessores/`resolvePropertyId`); estender `Query`/`SimpleQueryExpander` se faltar acesso a `unitprice`/allocations | `query/query.ts` | 2 testes |
+| 14C.1.21 | Regressão: taskreport/resourcereport/accountreport inalterados para projetos **sem** extensões (golden núcleo) | — | golden verde (absorve 14.25.14) |
+
+#### Vereditos 14C.1.12–14C.1.18 (preenchido 2026-11-01)
+
+| # | Veredito | Evidência |
+|---|----------|-----------|
+| 14C.1.12 | **Premissa incorreta, documentada**: o `textreport` não tem sistema de colunas — nem no port nem no TJ 3.8.4 (`TextReport < ReportBase`, só os 5 blocos RichText `header/left/center/right/footer`). Não existe “herança das colunas de taskreport”. Material aparece em textreport apenas como texto RichText; listagem tabular = `materialreport`. | `tests/reports/text-report-material_14c_test.ts` (2 testes) |
+| 14C.1.13 | **Implementado (extensão)**: `definitions materials` emite `material <id> "<nome>" { unit/unitprice/totalquantity/flags/note }` (aninhando sub-materiais) e `taskattributes materialallocations` emite `material <id> <qtd> [modificador]` no bloco da tarefa; flags de material passam a ser declaradas por `generateFlagDeclaration`. Round-trip verificado. `hidematerial`/`rollupmaterial` entram em 14C.6. Nota: `start`/`end` **não** são round-trip-áveis (`DateAttribute#to_tjp` → `date <valor>`, fiel ao Ruby). | `tests/reports/tjp-export-material_14c_test.ts` (2 testes) |
+| 14C.1.14 | **Implementado**: o `TraceReport` inclui a lista de materiais (cabeçalho + valores), então `<-atributo->` funciona quando a coluna aponta para material. `Material` espelha `name`/`id` em `AttributeBase` (o PTN guarda esses valores em campos) para que `<-name->`/`<-id->` resolvam. `hidematerial` em 14C.6. | `tests/reports/trace-report-material_14c_test.ts` (2 testes) |
+| 14C.1.15 | **Sem integração (decisão)**: `resourcereport` lista recursos humanos; material não é booking nem tem scoreboard próprio. Não se adiciona coluna `materialcost` (fora de escopo): custo de material por período é responsabilidade do `materialreport`. | grep: 0 referências a “material” em `docs/taskjuggler/lib/taskjuggler/reports/` |
+| 14C.1.16 | **Sem integração (decisão)**: `icalendar`/`niku`/`tagfile`/`chartplotter` são centrados em tarefas/recursos (calendários, stacks de carga, séries de esforço). Material não tem slot de calendário nem stack; o único caminho de série temporal é o `tracereport`, que já expõe colunas de material (14C.1.14). | idem |
+| 14C.1.17 | **Adiado (decisão)**: as grades `Calendar` (weekly/monthly) vêm de `ColumnTable` (eixo de tempo × esforço por recurso); custo/consumo de material não tem slot diário próprio. Tooltip/listagem por célula fica para a Fase 15/16 (Gantt), quando a grade for comum. | idem |
+| 14C.1.18 | **Auditoria**: `htmlstatusreport` e `xmlreport` **não existem no TJ 3.8.4** (0 hits em `TjpSyntaxRules.rb`/`KeywordDocumentation.rb`) → extensão futura, sem parser. `statussheetreport` existe (`ReportType.StatusSheet`; `_statussheetreport` em `parser/rules/report.ts:1849`) e o requisito “status sheet lista materiais” foi registrado como tarefa **18.17.8** em `fase-18-time-status-sheets-tarefas.md`. | grep + `report.ts:1849` |
+
+#### Evidências 14C.1.8–14C.1.11 e 14C.1.19–14C.1.21 (preenchido 2026-11-01)
+
+| # | Entrega | Evidência |
+|---|---------|-----------|
+| 14C.1.8 | Coluna `note` em material e conta (modelo RichText já existente da 10-C) | `tests/reports/note-timebasis_14c_test.ts` (2 testes) |
+| 14C.1.9 | Coluna `timebasis` exibindo o valor **resolvido** do cenário (`TaskScenario.resolvedTimebasis`), não o atributo cru | idem (2 testes: explícito `length`, default `duration`) |
+| 14C.1.10 | `materialreport` em HTML/CSV/JSON pelos geradores do núcleo (`ReportTable` + `toJSON` de 14C.0.3) | `tests/reports/material-report-output_14c_test.ts` + `table-report-json_14c_test.ts` |
+| 14C.1.11 | `materials` (alocações `material (quantidade)`) e `materialcost` (soma dos `CostEvent` `material_usage`, queda para `quantidade × preço`) — implementado no `TableReport` compartilhado, herdado por `taskreport` | `tests/reports/task-material-columns_14c_test.ts` (3 testes) |
+| 14C.1.19 | `accountreport`: `aggregate materials` soma `Material#totalCost()` de `project.materials`, mantendo o invariante 8.2 `sum(buckets) === total` | `tests/reports/account-material-turnover_14c_test.ts` (2 testes) |
+| 14C.1.20 | `Query.process` resolve atributos de `Material`; `Material` espelha `name`/`id` no PTN para `<-name->`/`<-id->` | `tests/query/query-material_14c_test.ts` |
+| 14C.1.21 | Regressão núcleo: `reports.golden.json` e `parser.golden.json` inalterados; suíte core verde; `deno task check:all` limpo | `deno task check:all` + `deno test -P packages/core/tests` + `git status` |
+
+---
+
+## 14C.2 — `BreakdownReport` (absorve 14.25.1–5)
+
+> Spec canônica: `fase-10-complemento1.md` §5. Parser já reconhece
+> `breakdownreport` + atributos (10-C C3.5).
+
+| # | Tarefa | Arquivos | Verificação |
+|---|--------|----------|-------------|
+| 14C.2.1 | `BreakdownReport extends ReportBase` (`reports/breakdown-report.ts`); fábrica registrada (`materialreport`-style) substituindo o NYI de 14C.0.10 | idem, `reports/mod.ts` | teste de registro |
+| 14C.2.2 | `groupby account` (default): por conta, listar recursos contribuintes (esforço + custo via `chargeset`), materiais (quantidade + `unitPrice` + total via `MaterialAllocation`), charges (modo + valor) e total — consome `AccountScenario.turnoverByType` | `reports/breakdown-report.ts` | 3 testes (absorve 14.25.2) |
+| 14C.2.3 | `groupby task`: idem por tarefa (alocados + charges da tarefa + total) | idem | 2 testes (absorve 14.25.3) |
+| 14C.2.4 | Filtros `hidetask`/`hideaccount`/`hideresource`/`hidejournalentry <expr>` via engine Fase 11 (avaliação em `ReportBase.filterAccountList`/`Query`); `period` default = período do projeto | idem | 2 testes (absorve 14.25.4) |
+| 14C.2.5 | Colunas `name`, `materials`, `resources`, `charges`, `total` com `sortby` | idem | 2 testes |
+| 14C.2.6 | Formato HTML: tabela hierárquica (conta → contribuintes → total) com `ReportTable` | idem | 1 teste |
+| 14C.2.7 | Formato CSV: linhas planas (entidade, tipo-contribuinte, esforço/quantidade, custo, total) | idem | 1 teste (absorve 14.25.5) |
+| 14C.2.8 | Formato JSON: aninhado por `groupby` via `toJSON`/`generate(json)` (14C.0.1) | idem | 1 teste |
+| 14C.2.9 | Snapshot 14C: breakdown do fixture 14c em html-normalizado-estrutural + csv + json em `reports-extensions.golden.json` | `tests/golden/` | run 2× idempotente |
+| 14C.2.10 | Regressão núcleo: `reports.golden.json` byte-idêntico após bloco | — | verde |
+
+#### Evidências 14C.2.1–14C.2.10 (preenchido 2026-11-01)
+
+**Arquivos:** `src/reports/breakdown-report.ts` (novo), `src/reports/mod.ts`,
+`src/model/report.ts` (remove a âncora NYI), `src/model/material.ts`
+(`unitPriceValue`/`unitValue`/`totalQuantityValue`), `tests/golden/extension-snapshot.ts`.
+
+| # | Entrega | Evidência |
+|---|---------|-----------|
+| 14C.2.1 | `BreakdownReport extends ReportBase` + `registerContentFactory("breakdownreport")`; âncora `EXTENSION_TYPE_BLOCKS` removida | `breakdown-report_14c_test.ts` (registro na fábrica + 3 testes de `groupby`) |
+| 14C.2.2 | `groupby account` (default): contribuintes de `project.costEvents` da conta/filhas + materiais do `chargeset` (ou conta `aggregate materials`), com totais por tipo | 2 testes (agregação; conta sem contribuintes não gera grupo) |
+| 14C.2.3 | `groupby task`: recursos (`assignedResources` + `getAllocatedTime`), materiais (`materialallocations` × preço efetivo) e charges (`charge` declarada), com `CostEvent` como fonte autoritativa | 3 testes |
+| 14C.2.4 | Filtros via engine da Fase 11 (`filterTaskList`/`filterAccountList` com `hideTask`/`hideAccount`/`rollup*`/`openNodes`); período default = período do projeto (`project.get("start"/"end")`) | 2 testes |
+| 14C.2.5 | Colunas `name`/`resources`/`materials`/`charges`/`total` (∩ `columns` declarado) e `sortby` sobre os totais | 2 testes |
+| 14C.2.6 | HTML: `ReportTable` hierárquica (grupo → contribuintes indentados) | 1 teste |
+| 14C.2.7 | CSV: linhas planas `[entidade, tipo, esforço/quantidade, custo, total]` | 1 teste |
+| 14C.2.8 | JSON: `{ groupby, groups[].contributors[] }` via `toJSON` (14C.0.1) | 1 teste |
+| 14C.2.9 | Snapshot 14C do fixture `14c-rdo-budget` (html + csv + json, `groupby account` e `task`) em `reports-extensions.golden.json`; geração 2× byte-idêntica | `reports-extensions_golden_test.ts` (verde) |
+| 14C.2.10 | `reports.golden.json` e `parser.golden.json` inalterados; suíte core + `deno task check:all` verdes | git status + suíte (420 testes) |
+
+---
+
+## 14C.3 — `RdoReport` + galeria (absorve 14.25.6–10)
+
+> Spec canônica: `fase-10-complemento1.md` §6. Parser já reconhece
+> `rdoreport`/`picture`/`format` (10-C C3.6–C3.7); modelo `JournalEntry.pictures`
+> existe; agregações lógicas/`hide*` da Fase 11.
+
+| # | Tarefa | Arquivos | Verificação |
+|---|--------|----------|-------------|
+| 14C.3.1 | `RdoReport extends ReportBase` (`reports/rdo-report.ts`); fábrica registrada substituindo NYI de 14C.0.10; `period` obrigatório (parser já valida `rdo_period_required` — conferir) | idem | teste de registro + 1 de validação |
+| 14C.3.2 | `groupby date` (default): blocos por dia com entradas do período via `entriesByDate` | idem | 2 testes |
+| 14C.3.3 | `groupby task/resource/material/account` via índices `entriesBy*` (14C.0.4) | idem | 4 testes (absorve 14.25.7) |
+| 14C.3.4 | `journalmode` `journal` (default) / `status_up` / `status_down` filtrando por `timeSheetRecord`/flags quando presentes; `alerts_red/green/...` filtrando por `alertLevel` (14C.0.7) | idem | 3 testes (absorve 14.25.8) |
+| 14C.3.5 | `journalattributes` (`date`, `headline`, `summary`, `details`, `alert`, `author`) controlando campos exibidos | idem | 1 teste |
+| 14C.3.6 | Galeria de imagens por bloco: união de `entry.pictures` + imagens extraídas do `details` (markdown `![..]`/richtext `[]`), respeitando `maxpictures` (saída só) + `align/width/caption/alt` — usa `picturesToHtml` (14C.0.9) | idem, `richtext`/`markdown` extraction helper | 3 testes (absorve 14.25.9) |
+| 14C.3.7 | Extração de imagens do corpo `details`: percorrer `RichTextIntermediate`/markdown AST buscando nós de imagem (ambos os formatos) | helper em `reports/gallery.ts` | 2 testes |
+| 14C.3.8 | Colunas `name`, `resources`, `responsible`, `journal`, `pictures`, `materials`, `charges` (por bloco, quando aplicável ao `groupby`) | `reports/rdo-report.ts` | 2 testes |
+| 14C.3.9 | Filtros `hidetask`/`hideaccount`/`hideresource` aplicados aos blocos (expression engine Fase 11) | idem | 1 teste |
+| 14C.3.10 | Render HTML "template de RDO": cabeçalho do bloco + lista de entradas (atributos selecionados) + galeria + tabelas de recursos/materiais/charges | idem | 1 teste estrutural |
+| 14C.3.11 | Saída JSON aninhada por `groupby` (com array de imagens por entrada) | idem | 1 teste (absorve 14.25.10) |
+| 14C.3.12 | Imagens relativas no HTML do RDO: `src` sai como descritor/caminho resolvido por `ImageStore` injetável (default: mantém relativo) — DOM-free, ADR 001 | idem | 1 teste |
+| 14C.3.13 | Snapshot 14C: RDO do fixture 14c (groupby date + material) html-estrutural + json | `tests/golden/` | idempotente |
+| 14C.3.14 | Regressão núcleo verde | — | verde |
+
+#### Evidências 14C.3.1–14C.3.14 (preenchido 2026-11-01)
+
+**Arquivos:** `src/reports/rdo-report.ts` (novo), `src/reports/gallery.ts`
+(`picturesFromDetails`), `src/reports/mod.ts`, `src/model/report.ts` (âncora
+`EXTENSION_TYPE_BLOCKS` esvaziada), `tests/golden/extension-snapshot.ts`,
+`tests/model/report-json-dispatch_14c_test.ts` (âncoras NYI → fábricas).
+
+| # | Entrega | Evidência |
+|---|---------|-----------|
+| 14C.3.1 | `RdoReport extends ReportBase` + `registerContentFactory("rdoreport")`; `period` validado pelo parser (`rdo_period_required`); `groupby` default `date` | `rdo-report_14c_test.ts` (3 testes: registro, validação, default) |
+| 14C.3.2 | `groupby date`: um bloco por dia com entradas (`Journal#entriesByDate`), dias vazios omitidos, ordem cronológica | 2 testes (blocos/ordem; recorte do período) |
+| 14C.3.3 | `groupby task/resource/material/account` via índices `entriesByTask/Resource/Material/Account` ∩ entradas permitidas (período + `journalmode`) | 4 testes (um por entidade) |
+| 14C.3.4 | `journalmode`: `journal`/`journal_sub` (todas), `status_up` (corrente por tarefa de topo, filhos diretos), `status_down`/`status_dep` (corrente por subárvore), `alerts_down`/`alerts_dep` (maior `alertLevel` corrente) e `alerts_<id>` (filtro por nível — extensão); entradas de recurso/material/conta preservadas (extensão declarada no doc do módulo) | 4 testes (`status_down`, `status_up`, `alerts_down`, `alerts_red`) |
+| 14C.3.5 | `journalattributes` controla os campos da entrada (date/headline/summary/details/alert/author/flags/property), com `*` = todos | 1 teste |
+| 14C.3.6 | Galeria por bloco: união `entry.pictures` + imagens do `details`, dedupe por caminho, corte por `maxpictures` só na saída; `align/width/caption/alt` renderizados via `Picture#to_html` | 2 testes (união/dedupe; `maxpictures` + atributos) |
+| 14C.3.7 | `picturesFromDetails` em `gallery.ts`: regex Markdown `![alt](path)` (cobre o `img` serializado do RichText) e MediaWiki `[[Image:\|File:path\|...]]` | `gallery_14c_test.ts` (2 testes) |
+| 14C.3.8 | Colunas `name`/`responsible`/`journal`/`pictures`/`resources`/`materials`/`charges`; tabelas com `detail` (esforço/quantidade) e `amount`; `columns` declarado restringe a saída | 3 testes (default × restrito; materiais/charges; responsável) |
+| 14C.3.9 | `hidetask`/`hideaccount`/`hideresource` via `filterTaskList`/`filterAccountList`/`filterResourceList` (engine Fase 11); `hidematerial` opcional até 14C.6 | 1 teste (`hidetask isleaf()`) |
+| 14C.3.10 | HTML: `<div class="tj_rdo_frame">` → `<section class="tj_rdo">` → `<article class="tj_rdo_block" data-group="…">` com header, entradas, galeria e tabelas | 1 teste estrutural |
+| 14C.3.11 | JSON: `{ groupby, period, groups[].entries[].pictures[] }` | 1 teste |
+| 14C.3.12 | `setImageResolver` injetável (ImageStore): `src` resolvido no HTML, caminho original preservado na estrutura | 1 teste |
+| 14C.3.13 | Snapshot em `reports-extensions.golden.json` (`rdo`: `groupby date` e `material`) — geração 2× byte-idêntica (md5 `f75313b5…`) | `reports-extensions_golden_test.ts` (verde) |
+| 14C.3.14 | `deno task check:all` (exit 0), `check:stubs`, `deno lint`/`deno fmt --check` limpos nos arquivos novos; `reports.golden.json`/`parser.golden.json` inalterados; suíte core completa | git status + suíte |
+
+---
+
+## 14C.4 — MspXml → MSPDI (fonte: `docs/tj3-engine/mspdi.md`)
+
+> Oracle Ruby parcial: `MspXmlRE.rb` cobre o essencial humano; extensões de
+> material/custo são SyntaxMesh (sem oracle) — validar por **regras do
+> mspdi.md** + estrutura.
+
+| # | Tarefa | Arquivos | Verificação |
+|---|--------|----------|-------------|
+| 14C.4.1 | Script Ruby `scripts/golden/mspdi-tj3.rb`: roda tj3 sobre mwe005 (ou projeto com tasks/resources) gerando o XML MSPDI real e extrai o `<Project>` normalizado → `mspdi.golden.json`; wiring `golden:generate` + README | `scripts/golden/`, `generate_golden.ts` | byte-idempotente; teste compara TS atual vs oracle nos campos já portados (regra de normalização p/ atributos/whitespace, 14.23.9) |
+| 14C.4.2 | Recursos **material**: `Material` → `<Resource>` com `<Type>0</Type>`, `<MaterialLabel>` = unidade, `<StandardRate>` = `unitPrice`; UID distinto de recursos humanos (espaço de UID único global) | `reports/msp-xml-re.ts` | 2 testes (absorve pedido §mspdi 3.2) |
+| 14C.4.3 | Alocações de material → `<Assignment>` com `<Units>` = quantidade e `<Cost>` = quantity×unitPrice; ligar TaskUID/ResourceUID corretos (nunca `<ID>`) | idem | 2 testes (mspdi §4.2) |
+| 14C.4.4 | Recursos **custo**: `ExtendedCharge`/`Charge` flat não-atrelados a recurso humano → `<Resource>` `<Type>2</Type>` (+`<IsBudget>` quando apropriado) e `<Assignment><Cost>` direto | idem | 2 testes |
+| 14C.4.5 | `<DurationFormat>` coerente: tarefas normais `7` (dias), duração `ed` (calendrier 24×7 / milestone elapsed) `8` com `<Duration>` em horas totais (`PnDTnHnMnS` ISO 8601); nunca `9` para `ed` (mspdi §8) | idem (`durationToMsp`) | 3 testes |
+| 14C.4.6 | Campos de progresso/real: `<ActualWork>`, `<ActualCost>`, `<RemainingWork>`, `<RemainingCost>` em `<Task>`/`<Assignment>` quando tracking presente (`effortdone`/`_doneEffort`, `CostEvent`) | idem | 2 testes |
+| 14C.4.7 | `<Notes>`: notas RichText/Markdown de task/resource → texto plano (`to_s`) escapado em CDATA-safe | idem | 2 testes |
+| 14C.4.8 | `<TimephasedData>` estendido: série por período (day/week) de trabalho E custo (agregação via scoreboard/`CostEvent`), `<Type>`/`<Unit>` válidos | idem | 2 testes |
+| 14C.4.9 | Calendário base `<WeekDays>` correto a partir do `ProjectConfig`/working hours + `<Exceptions>` para leaves/feriados do projeto (`Project.leaves`) | idem | 2 testes |
+| 14C.4.10 | Respeitar `hidematerial`/`hideresource`/`hidetask` (com C6) na geração | idem | 1 teste |
+| 14C.4.11 | `ConstraintType`/`ConstraintDate` e `PredecessorLink` com `<LinkLag>`/`<LagFormat>` para dependências com lag (mapear TJ `onEnd/onStart` + `lag` → tipos FS/SS/FF/SF do mspdi §2.3) | idem | 2 testes |
+| 14C.4.12 | Veredito `Baseline`/`ExtendedAttribute`: sem dados de baseline no modelo → **documentar limitação** (não inventar); alerts via `<Priority>`/notes? registrar | nota no doc de fase | doc |
+| 14C.4.13 | Validação estrutural: teste que parseia o XML gerado (regex/estrutura mínima) e verifica invariantes mspdi — UID único por Task/Resource/Assignment, referências só por UID, duração ISO 8601 bem-formada | `msp-xml-re_test.ts` | 1 teste guarda-chuva |
+| 14C.4.14 | Oracle: TS vs Ruby nos campos já exportados (não-regressão do que existe: Calendars/Tasks/Resources/Assignments/TimephasedData humanos) | `mspdi.golden.json` | verde |
+| 14C.4.15 | `deno check` + suíte reports verde; snapshot 14C do material/custo (sem oracle) gravado | — | verde |
+| 14C.4.16 | Regressão núcleo | — | verde |
+
+#### Evidências 14C.4.1–14C.4.16 (preenchido 2026-11-01)
+
+**Arquivos:** `scripts/golden/mspdi-tj3.rb` (novo), `scripts/golden/README.md`,
+`tests/golden/generate_golden.ts`, `tests/golden/mspdi-normalize.ts` (novo),
+`tests/golden/mspdi.golden.json` (novo), `tests/golden/extension-snapshot.ts`,
+`src/reports/msp-xml-re.ts`, `tests/reports/mspdi_oracle_14c_test.ts` (novo),
+`tests/reports/msp-xml-re_14c_test.ts` (novo),
+`tests/fixtures/ext/14c-mspdi.tjp` + `14c-mspdi-ext.tjp` (novos).
+
+**Correção de doc:** `docs/tj3-engine/mspdi.md` §3.1 invertia os valores de
+`<Resource><Type>` (dizia 2 = material / 0 = custo). A tabela oficial do
+elemento `Type` (Microsoft) é **0 = material, 1 = trabalho, 2 = custo**; a
+implementação segue a oficial e os itens 14C.4.2/14C.4.4 acima foram
+corrigidos.
+
+| # | Entrega | Evidência |
+|---|---------|-----------|
+| 14C.4.1 | `mspdi-tj3.rb` roda tj3 sobre `fixtures/ext/14c-mspdi.tjp` e serializa a árvore REXML normalizada (sem `CreationDate`/`CurrentDate`/`StatusDate`, texto com whitespace colapsado); duas execuções = md5 `9590aa09…` (86717 bytes) | `deno task golden:generate` → `mspdi.golden.json` (77 KB); `md5sum -c` dos demais goldens intacto |
+| 14C.4.2 | `Material` → `<Resource>` `Type 0`, `MaterialLabel` = `unitValue()`, `StandardRate` = `unitPriceValue()`, `<Notes>` do material; UID alocado em espaço global após os humanos | 2 testes (Type/label/rate/notes; UIDs distintos + humanos seguem `Type 1`) |
+| 14C.4.3 | `<Assignment>` de material com `TaskUID`/`ResourceUID` por UID, `Units` = quantidade, `Cost` = qtd × `unitPrice` e série `TimephasedData` `Type 6` | 2 testes (Units/Cost/TaskUID; série diária de custo) |
+| 14C.4.4 | `Charge` flat → `<Resource>` `Type 2` ("Charges <task> #n") + `<Assignment><Cost>` com `turnover()` por período; `IsBudget` sempre `0` (charge é despesa — o modelo não marca orçamento) | 2 testes (Type/IsBudget; atribuição de custo) |
+| 14C.4.5 | `DurationFormat`: `7` (dias) por default; `8` quando o intervalo de calendário iguala o esforço em calendário 24×7; `9` nunca é emitido para `ed`. `effort` é convertido de **slots** (`× scheduleGranularity`), não de dias | 3 testes (normal; 24×7 = 8; ausência de 9) |
+| 14C.4.6 | `<ActualWork>`/`<RemainingWork>` na tarefa e na atribuição (`effortdone` em slots; atribuição proporcional ao esforço efetivo); `<ActualCost>`/`<RemainingCost>` somados de `CostEvent` (8.2) por modo `actual`/`planned`, opcionalmente por recurso | 2 testes (PT16H/PT16H; omissão sem `effortdone`) |
+| 14C.4.7 | `<Notes>` de tarefa, recurso humano e material como texto plano escapado por `XMLNamedText` | 2 testes (nota da tarefa; nota do recurso) |
+| 14C.4.8 | Trabalho humano mantém a série `Type 1` herdada do Ruby; material e charge ganham série de custo `Type 6` (único tipo de custo de atribuição no MSPDI), `Unit 2` (dias) e `<Value>` decimal por fatia | 2 testes (série de material; Type 1 × Type 6) |
+| 14C.4.9 | `<Exceptions>` no calendário: leaves do projeto (base) e do recurso, convertidos de `ScoreboardInterval`/`TimeInterval` para `FromDate`/`ToDate` com `DayWorking 0`. **Limitação:** `Project` não tem store `leaves` (só `Resource`/`Shift`), então `vacation` no bloco `project` não é suportado pelo core — as exceções vêm dos recursos | 1 teste (exceção de Alice 2026-03-16→17) |
+| 14C.4.10 | Filtro `hideMaterial` ligado ao motor de expressões via `attributeDefinition("hideMaterial")`: fica **inerte** até o atributo existir (14C.6), quando então passa a omitir o material | 1 teste (material presente enquanto o atributo não existe) |
+| 14C.4.11 | `PredecessorLink`: `Type` 1 (FS) do Ruby preservado; `LinkLag` em décimos de minuto a partir de `gapLength` (slots → dias úteis → `LagFormat 7`) e de `gapDuration` (dias corridos → `LagFormat 8`) | 1 teste (gaplength 2d → `9600`/`7`) |
+| 14C.4.12 | **Limitação documentada:** o modelo não guarda baseline nem `ExtendedAttribute`/alerts do ponto de vista MSPDI; por decisão não inventamos `<Baseline>`/`<ExtendedAttribute>`. `ConstraintType 2`/`ConstraintDate` continuam como no Ruby (Start No Earlier Than) e a prioridade já é exportada em `<Priority>` | esta nota |
+| 14C.4.13 | Guarda-chuva estrutural: UIDs únicos por coleção, `TaskUID`/`ResourceUID` sempre resolvem para UID existente, toda `<Duration>` casa `^PT\d+H\d+M\d+S$` | `msp-xml-re_14c_test.ts` (3 testes) |
+| 14C.4.14 | Oracle campo a campo contra o `<Project>` do tj3 sobre `14c-mspdi.tjp` (calendários, tarefas, recursos e atribuições humanas) | `mspdi_oracle_14c_test.ts` (3 steps, verde) |
+| 14C.4.15 | Snapshot das extensões (blocos `<Calendars>`/`<Tasks>`/`<Resources>`/`<Assignments>`, sem timestamps) em `reports-extensions.golden.json` → `mspdi` | `reports-extensions_golden_test.ts` (byte-idêntico após regenerar) |
+| 14C.4.16 | `deno task check:all` exit 0, `check:stubs` OK, `deno fmt --check` limpo; suíte core completa verde | logs da sessão + `deno task test` |
+
+> **Nota de unidade (armadilha):** `effort`, `effortdone` e `TaskDependency.gapLength`
+> são armazenados em **slots** no core (`segundos ÷ scheduleGranularity`), não em
+> dias. Toda conversão para MSPDI passa pelo helper `granularity()`
+> (`scheduleGranularity`, default 3600). Já `ResourceScenario#getEffectiveWork`
+> devolve **dias**, e é o único caminho que multiplica por `dailyWorkingHours`.
+>
+> **Nota de material:** `Material.name` é o id (o parser não passa o rótulo
+> `"Aço"` ao construtor), então `<Name>` do recurso de material sai com o id;
+> `MaterialAllocation.quantity` é usado como total consumido (mesma convenção
+> do `BreakdownReport` 14C.1.11), com divisão uniforme entre os dias porque
+> `quantityIn()` depende de `attach()`, que o scheduler não chama.
+> **Nota de artefato:** `golden:generate` reescreve os `.html` de amostra em
+> `tests/golden/` (byproducts do tj3, não comparados por teste); eles foram
+> restaurados para não poluir o diff.
+
+---
+
+## 14C.5 — Markdown nos relatórios
+
+> Default de **report** permanece `richtext` (compatibilidade `.tjp`); markdown
+> é opt-in por `format` no escopo do relatório/entrada. Roteamento previsto na
+> 13.14.4 (adiada) é entregue aqui.
+
+| # | Tarefa | Arquivos | Verificação |
+|---|--------|----------|-------------|
+| 14C.5.1 | Parser: atributo `format markdown|richtext` no contexto de `report` (header/footer/prolog/epilog/intro/caption); ao criar RichText, rotear para `MarkdownFactory` (13) quando markdown | `parser/rules/report.ts`, `parser/rules/journal.ts` (helper compartilhado) | 2 testes |
+| 14C.5.2 | `TableReport`/geradores HTML: usar o conteúdo RichTextIntermediate (já unificado) — verificar que header/footer markdown chegam ao HTML de saída sem mudança de API | `reports/table-report.ts` | 1 teste (header markdown → `<h1>`/`<strong>` no html) |
+| 14C.5.3 | Handlers RTF **dentro de Markdown**: confirmar/terminar o wiring dos placeholders de `extensions/functions.ts` (`[[query:]]`, `[[report:]]`, `[[reportlink:]]`, `[[navigator:]]`) para os handlers reais (`richtext/handlers/*`) com `ReportContext` ativo; mini-query `<-attr->` em header/footer | `markdown/extensions/functions.ts`, `markdown/mdast-to-richtext.ts` | 4 testes (um por handler) |
+| 14C.5.4 | `[[query:]]` em markdown renderiza como em richtext dentro de reports (integração 13.7 + ReportContext.push/pop) | idem | 1 teste |
+| 14C.5.5 | `RTFReport`/`RTFReportLink` sob markdown: mesma semântica (URL comprimida `URLParameter.encode`) — garantir que o pipeline markdown preserve o payload p/ o handler | `richtext/handlers/rtf-report*.ts`, markdown pipeline | 2 testes |
+| 14C.5.6 | Imagens inline em `details` markdown dentro de journal-columns/RDO já funcionam via 14C.3.6/14C.3.7 (cruzar verificação) | — | 1 teste combinado |
+| 14C.5.7 | `celltext`/`note` de task/resource/material/account: body markdown → html no relatório quando `format markdown`; `to_s` no textreport | `reports/table-report.ts` | 2 testes |
+| 14C.5.8 | `TextReport` com header/footer markdown: plain-text (`to_s`) equivalente ao richtext | `reports/text-report.ts` | 1 teste |
+| 14C.5.9 | Sanitização: saída html de markdown em reports passa pelo `html-sanitizer` (13) — nunca inserir AST crua | `markdown/html-sanitizer.ts` usage | 1 teste (XSS básico em caption) |
+| 14C.5.10 | Regressão richtext: `.tjp` existentes sem `format` renderem **idênticos** (golden núcleo + `richtext.golden.json`) | — | verde |
+| 14C.5.11 | Snapshot 14C: relatório com header markdown + query + reportlink (html estrutural) | `tests/golden/` | idempotente |
+| 14C.5.12 | Documentar no ADR 027 (seção adendo) a escolha default-richtext/opt-in-markdown nos reports | `docs/syntaxmesh/decisoes/027-reports-browser.md` | doc |
+
+#### Evidências 14C.5.1–14C.5.5 (preenchido 2026-11-01)
+
+| # | Implementação | Verificação |
+|---|---------------|-------------|
+| 14C.5.1 | Atributo `format` (Symbol, default `richtext`, `inheritedFromParent`) em `report-attributes.ts`; `newRichText(text, sfi, tokenSet, format)` escolhe `MarkdownFactory` × `RichTextFactoryImpl` (com `setMarkdownFactory` para injeção). Independência de ordem: o parser grava cada fonte em `Report.richTextSources` e `applyReportFormat()` reconstrói os RTIs já lidos. A regra `format` de `journal.ts` é compartilhada (`applyFormat`: entrada de journal › relatório). `applyReportFormat` usa `force()` porque `set()` dispara `AttributeOverwrite` na guarda de redefinição | 5 testes em `markdown-report_14c_test.ts` (antes/depois do texto, herança pelo pai, default richtext, fábrica injetada); `attribute-definitions.golden.json` +1 entrada (`format`, `default: "richtext"`, `extension: "reports"`) |
+| 14C.5.2 | Nenhuma mudança em `TableReport`: as duas fábricas produzem o mesmo `RichTextIntermediate`, então `rt_to_html()` segue igual | 2 testes (header markdown → `<h1>`/`<b>` no html; relatório sem `format` continua sem `<h1>`) |
+| 14C.5.3 | Wiring já existente só precisou de fixture: `extensions/functions.ts` converte `[[nome:args]]` em `inlinefunc`/`blockfunc` com payload `[nome, args]` e `<-attr->` no açúcar de `[[query:attribute=…]]` (13.7). Dos quatro handlers, `report` vira `blockfunc` (só quando sozinho no parágrafo) e os demais `inlinefunc` | 5 testes em `markdown-handlers_14c_test.ts` (`query` → `<span>2026-03-02</span>`; `report` embute `mddefault` e restaura a pilha de contextos; `reportlink` → `md-default.html`; `navigator` → navbar com `navbar_current`; açúcar `<-end->` → `2026-03-31`) |
+| 14C.5.4 | Markdown `[[query:attribute=start]]` e RichText `<-query attribute="start"->` resolvem pelo mesmo `RTFQuery` com a `Query` do `ReportContext` | 1 teste comparando as duas saídas (`2026-03-02`); única diferença é o `<p>` do bloco markdown |
+| 14C.5.5 | `RTFReport`/`RTFReportLink` recebem o payload intacto: no caminho interativo o `reportlink` monta `taskjuggler?project=…;report=…;attributes=<URLParameter.encode(expand())>` | 2 testes: href interativo markdown ≡ richtext (com `;attributes=` + `URLParameter.encode("x=1")`) e payload `["report", {id}]` na árvore + recursão barrada (`rtp_report_recursion`, sem vazar contexto) |
+
+> **Divergências pré-existentes encontradas (não corrigidas aqui):**
+>
+> - `name`/`projectid`/`version` do projeto são **campos** de `Project`, não
+>   atributos, então `[[query:attribute=name]]` renderiza vazio (a `Query`
+>   cai no fallback `project.get(...)`). Os testes usam `start`/`end`. Também
+>   por isso a URL interativa sai com `project=` vazio.
+> - No RichText `[[…]]` é **referência interna** (link), então `[[query:…]]` só
+>   existe no Markdown; e `<-attr->` procuraria um handler com o nome do
+>   atributo e lança `No handler for name registered` (Ruby emitiria
+>   `bad_inline_function`).
+> - `RTFReportLink` estático acrescenta `.html` ao **nome** do relatório:
+>   fixtures com `[[reportlink:]]` não podem nomear o relatório com `.html`
+>   (mesma semântica do Ruby).
+
+#### Evidências 14C.5.6–14C.5.9 (preenchido 2026-11-01)
+
+| # | Implementação | Verificação |
+|---|---------------|-------------|
+| 14C.5.6 | Nenhuma mudança de código: `picturesFromDetails()` (`reports/gallery.ts`) já roda na geração do RDO sobre o `details` da entrada, independente do dialeto (14C.3.7) | 1 teste em `markdown-content_14c_test.ts`: entrada markdown `![A](img/a.png)` → `pictures` `["img/a.png"]`; entrada MediaWiki `[[Image:img/b.png\|B]]` → `["img/b.png"]`; HTML do RDO com 2 `<img` |
+| 14C.5.7 | `ReportBase#rtiForReport()` reinterpreta o RTI quando `report.richTextFormat() === "markdown"` (só se `rti.richText instanceof RichText`, i.e. nasceu MediaWiki) e `#cellTextForReport()` trata a `celltext` crua no mesmo caso; `table-report.ts` aplica os dois em `genAttributeCell`, `genCalculatedCell` e nas três células de material | 2 testes: `note "**Importante** …"` vira `<b>Importante</b>` no `mdnote` e literal no `rtnote`; `celltext 1 "**Célula**"` vira `<b>Célula</b>` só no relatório markdown |
+| 14C.5.8 | Nenhuma mudança: `TextReport` usa `to_s()` sobre o mesmo `RichTextIntermediate`, então markdown e MediaWiki convergem no texto plano | 1 teste: header markdown ≡ header MediaWiki (`"Título\n\nTexto forte"`); footer markdown `"fim"` × MediaWiki `"//fim//"`; `TextReport.generateIntermediateFormat()` + `to_html()` trazem os dois blocos |
+| 14C.5.9 | Nenhuma mudança: `mdast-to-richtext` aplica `sanitizeHtml` (13.5) em cada nó `html` antes de virar markup | 1 teste: caption `Antes <script>alert(1)</script> depois <img src="x.png" onerror="alert(2)">` → sem `<script` e sem `onerror`, com `Antes`/`depois` preservados (no documento inteiro, só resta o `<script>` do template) |
+
+> **Comportamentos documentados na 14C.5.6–5.9:**
+>
+> - A galeria do RDO é **agnóstica de dialeto**: `picturesFromDetails` aceita
+>   `![alt](path)` e `[[Image:path|alt]]` na mesma varredura, então uma entrada
+>   `format richtext` também contribui imagens (o `format` da entrada decide a
+>   renderização do texto, não a coleta).
+> - A sanitização é **por nó mdast**, não por documento: `<script>` e
+>   `</script>` chegam como dois nós `html` separados, então o corpo do script
+>   sobrevive como texto inerte (`alert(1)` escapado) em vez de desaparecer.
+>   O que se garante é: nenhuma tag bloqueada e nenhum atributo de evento
+>   atravessam para a saída.
+> - `celltext` é string crua no TaskJuggler (sem markup próprio); no relatório
+>   markdown ela é **interpretada** como markdown — desvio consciente para
+>   manter paridade de leitura com `note`/`header` no mesmo relatório.
+
+#### Evidências 14C.5.10–14C.5.12 (preenchido 2026-11-01)
+
+| # | Implementação | Verificação |
+|---|---------------|-------------|
+| 14C.5.10 | Nenhuma mudança de código nos caminhos richtext: o atributo `format` só desvia quando o valor é `markdown`, e `report-attributes.ts` declara `richtext` como default/herdado | `reports.golden.json`, `parser.golden.json`, `mspdi.golden.json` e `richtext/golden/richtext.golden.json` byte-idênticos; regressão `golden/ + reports/ + richtext/ + parser/` → 196 testes (2161 steps), 0 falhas |
+| 14C.5.11 | Bloco `markdownReports` em `extension-snapshot.ts` (relê `14c-markdown-report.tjp`, gera `mdfuncs`, `rtquery` e `mddefault` e guarda `format`, `header`, `footer` e o HTML estrutural) | `reports-extensions.golden.json` regenerado (+37 linhas) e comparado byte-a-byte; 2º `it` em `reports-extensions_golden_test.ts` trava os invariantes (query `2026-03-02`, `href="md-default.html"`, embed `<b>Forte</b> e //itálico//`, rodapé `2026-03-31`, `rtquery` sem `<p>`, `mddefault` richtext) |
+| 14C.5.12 | Adendo em `docs/syntaxmesh/decisoes/027-reports-browser.md`: dialeto default `richtext`, markdown opt-in por `format` no escopo do relatório, independência de ordem, alternativas rejeitadas e limites (galeria agnóstica, sanitização por nó, `celltext`, `name` não consultável) | revisão do documento |
+
+> **Nota do snapshot 14C.5.11:** as células `<Error>` da coluna `name` nas
+tabelas do snapshot são a divergência **já rastreada** da integração
+modelo↔relatório (ver cabeçalho de `reports_golden_test.ts` e `CURRENT.md`),
+não um efeito do markdown — o snapshot congela o estado atual para que a
+integração futura apareça como diff explícito.
+
+---
+
+## 14C.6 — `hidematerial`/`rollupmaterial`/`hidepicture` + auditoria (absorve 14.26)
+
+| # | Tarefa | Arquivos | Verificação |
+|---|--------|----------|-------------|
+| 14C.6.1 | Auditoria da 1ª leva: confirmar com testes que `hidetask`/`hideresource`/`hideaccount`/`hidejournalentry` e `rollup*` são **avaliados** (não só parseados) em `ReportBase`/`TableReport` (14.26.1a/b) | `reports/report-base.ts`, `reports/table-report.ts` | 3 testes; se faltar avaliação → tarefa corretiva (14.26.1c) |
+| 14C.6.2 | Parser: `rule_hidematerial` + `rule_rollupmaterial` (análogos a `hideresource`) em `parser/rules/report.ts` | idem | 2 testes (absorve 14.26.2a) |
+| 14C.6.3 | Parser: `rule_hidepicture` (análogo `hidejournalentry`) | idem | 1 teste (absorve 14.26.2b) |
+| 14C.6.4 | i18n `hidematerial`/`rollupmaterial`/`hidepicture` (canonical + en/pt-BR/es, AST equivalente) | `src/i18n/*` | teste i18n (absorve 14.26.2c) |
+| 14C.6.5 | `ReportContext`/`Query`: campos `hideMaterial`/`rollupMaterial`/`hidePicture` (parceiros de `hideJournalEntry`) + `query_material`-hooks necessários | `reports/report-context.ts`, `query/query.ts` | `deno check` + 1 teste (absorve 14.26.2d) |
+| 14C.6.6 | Aplicar `hidematerial`/`rollupmaterial` em materialreport/breakdown/rdo `groupby material` e na coluna `materials` de taskreport | `reports/*` | 3 testes (absorve 14.26.2e) |
+| 14C.6.7 | Aplicar `hidepicture` em galeria RDO + journal-columns (entradas cuja imagem é filtrada não contam p/ `maxpictures`) | `reports/rdo-report.ts`, `reports/gallery.ts` | 2 testes (absorve 14.26.2f) |
+| 14C.6.8 | Aplicar `hidematerial` em TjpExportRE e MspXmlRE (com 14C.4.10) | export files | 1 teste |
+| 14C.6.9 | `rollupmaterial`: agregação de alocações/material em summaries de breakdown/taskreport (semântica de `rollupresource` já portada) | `reports/*` | 2 testes |
+| 14C.6.10 | Regressão: relatórios sem as novas diretivas inalterados (golden núcleo byte-idêntico) | — | verde (absorve 14.26.2g) |
+
+#### Evidências 14C.6.1–14C.6.10 (preenchido 2026-11-01)
+
+| # | Implementação | Verificação |
+|---|---------------|-------------|
+| 14C.6.1 | Auditoria das diretivas da 1ª leva com `.tjp` real: `hidetask`/`hideresource`/`hideaccount` + `rollup*` chegam ao motor lógico (`ReportBase#standardFilterOps`) e **removem** linhas. Fixture com grupos/folhas de task, resource e account; ocultação por `ischildof(...)` e consolidação por `treelevel() = 1` (o treeMode readiciona pais, então o resultado é comparado como conjunto ordenado). `hidejournalentry` é o único ancorado: a filtragem é **por entrada** e avaliar expressão com `JournalEntry` como contexto é Fase 16 (`LogicalFlag` → `NotYetImplementedError("16")`), então o teste audita o encanamento relatório → `ReportContext.query` | `tests/reports/hide-rollup-audit_14c_test.ts` (3 testes) |
+| 14C.6.2 | `rule(p, "hidematerial")` e `rule(p, "rollupmaterial")` no corpo compartilhado `reportAttributes` (vale para materialreport/task/resource/account/export/ical/niku/tagfile), com `p.pattern(["_hidematerial", "!logicalExpression"])` e `set("hideMaterial"/"rollupMaterial", …)`; duplicata de `!rollupmaterial` no corpo principal removida | 2 testes (expressões `isleaf()`/`treelevel() > 1`, rdoreport com `period` obrigatório) |
+| 14C.6.3 | `rule(p, "hidepicture")` análoga, gravando `hidePicture` | 1 teste |
+| 14C.6.4 | i18n: `hidematerial`/`hidepicture`/`rollupmaterial` em `CANONICAL_KEYWORDS` + sinônimos pt-BR (`ocultarmaterial`/`ocultarimagem`/`agregarmaterial`) e es (`ocultarmaterial`/`ocultarimagen`/`agregarmaterial`); nomes canônicos resolvem em qualquer idioma | 2 testes em `parser/rules_report_hide_material_picture_14c_test.ts` (registry + AST equivalente en/pt-BR/es) |
+| 14C.6.5 | `hideMaterial`/`rollupMaterial`/`hidePicture` em `QueryParams`, campos de `Query`, construtor, `dup()` e `ReportContext` (lidos do `Report`); `ReportBase#hiddenBy(attribute, property)` promovido do `RdoReport` (avalia a expressão com `query.property = propriedade` sobre um `dup()` da query corrente — sem estado compartilhado); `ReportBase#filterMaterialList()` aplica só hide/rollup (materiais não têm `materialroot`) | `deno check` limpo (reports/query/report-base) + efeito observável nos 8 testes de 14C.6.6–6.9 |
+| 14C.6.6 | `MaterialListRE` filtra via `filterMaterialList`; `RdoReport#buildByMaterials` descarta o material oculto/envolvido antes de montar blocos; `TableReport` filtra as alocações nas colunas `materials` **e** ignora material oculto no `materialcost` (eventos e fallback quantidade×preço); `BreakdownReport` ignora material oculto nos contribuintes de conta, de tarefa e em `replaceContributorCost` | 3 testes em `reports/hide-material-picture_14c_test.ts` (sub-material por `ischildof`, blocos do RDO por `isleaf()`, coluna `materials` do taskreport) |
+| 14C.6.7 | `RdoReport#picturesOf()` devolve `[]` quando o **dono** da entrada casa `hidepicture` — vale para a lista da entrada e para a galeria do bloco, de modo que a imagem filtrada não consome slot de `maxpictures` (o corte continua só na saída, 14C.0.9) | 2 testes: `groupby material` (bloco do material folha sem galeria e com `entries[].pictures` vazio) e `groupby date` + `maxpictures 2` (as duas imagens do material visível cabem; sem a diretiva a primeira do dia é a do dono oculto) |
+| 14C.6.8 | `TjpExportRE` omite o material oculto em `generateMaterialList`/`generateMaterial` (sub-materiais) e nas alocações (`generateMaterialAllocations`); `MspXmlRE#hiddenMaterial` passa a delegar a `hiddenBy` (o wiring de 14C.4.10 deixa de ser inerte), então o material não vira `<Resource>` e não gera `<Assignment>`. `rollupmaterial` **não** altera o arquivo exportado (round-trip: a exportação é a própria fonte TJP) | 1 teste com as duas exportações (TJP sem `cimento` e com `material aco 2`; MSPDI sem o recurso e com `<Name>aco</Name>`) |
+| 14C.6.9 | `rollupmaterial` consolida: no `materialreport` remove os descendentes do nó casado (semântica de `rollupresource`); no `BreakdownReport` o contribuinte recebe `rolledUp` e sai de HTML/CSV/JSON **mantendo o valor em `totals`**; a flag só entra no JSON quando verdadeira (`rolledUpFlag`), preservando o shape de quem não usa a diretiva | 2 testes (rollup × hide no materialreport com `~isleaf()`; breakdown `groupby task` com totais 130 e CSV/JSON sem o material envolvido) |
+| 14C.6.10 | Sem mudança nos caminhos de quem não usa as diretivas: os goldens do núcleo (oracle Ruby) seguem byte-idênticos e o snapshot de extensões só difere pelo bloco `markdownReports` da C5 (+37 linhas) — C6 não adiciona nada a ele | `deno test packages/core/tests/golden/` → 24 testes verdes; `deno test packages/core/tests/reports/ + golden/` → 93 testes (1584 steps), 0 falhas; `reports-extensions.golden.json` regenerado idempotente |
+
+> **Decisões e limites registrados na 14C.6:**
+>
+> - **Semântica das três diretivas**: `hidematerial <expr>` remove o material
+>   de todas as superfícies (materialreport, RDO `groupby material`, coluna
+>   `materials`/`materialcost`, breakdown, TJP e MSPDI); `rollupmaterial <expr>`
+>   consolida (sem linha própria nas listas planas, descendentes fora das
+>   hierárquicas, valor preservado nos totais); `hidepicture <expr>` é avaliado
+>   na **propriedade dona** da entrada de journal (não no caminho da imagem).
+> - Em lista plana (materiais não têm `materialroot`), `hidematerial treelevel() = 1`
+>   remove os materiais raiz e **mantém** o filho; `rollupmaterial` faz o
+>   contrário — a diferença é o teste que separa hide de rollup.
+> - A negação lógica do TJP é `~` (`~isleaf()`); `!` é token de outro contexto
+>   e produz `no_reduce`.
+> - **Divergência pré-existente encontrada (não corrigida aqui):** `Material`
+>   espelha `name`/`id` no `AttributeBase` (14C.1.14), então o nome exibido é o
+>   **id** — o TJP exporta `material aco "aco"` e o MSPDI emite
+>   `<Name>aco</Name>`, não o `$STRING` do bloco. O texto do cabeçalho só é
+>   preservado para task/resource/account.
+
+---
+
+## 14C.7 — Verificação final + docs
+
+| # | Tarefa | Verificação |
+|---|--------|-------------|
+| 14C.7.1 | `deno task check:all` exit 0; `deno lint`/`deno fmt --check` verdes nos arquivos do complemento | exit 0 |
+| 14C.7.2 | `deno task golden:generate` reproduzível: `reports.golden.json`/`parser.golden.json`/`mspdi.golden.json` estáveis; `reports-extensions.golden.json` idempotente 2× | bytes iguais |
+| 14C.7.3 | Suíte completa `deno task test` verde (relatório de contagem atualizado neste doc) | 0 falhas |
+| 14C.7.4 | `deno task check:stubs`: nenhum NYI des-ancorado novo (trazidos de 14C.0.10 são removidos ao registrar fábricas) | OK |
+| 14C.7.5 | Smoke `tests/integration/smoke_after_phase_14c_test.ts`: fixture 14c → materialreport+breakdown+RDO+Mspxml gerados como strings; nenhuma escrita a disco | 1 teste |
+| 14C.7.6 | Auditoria de escopo: cada item do pedido original (lista de relatórios p/ materiais; picture/RDO; mspdi; markdown) tem tarefa entregue ou veredito documentado — tabela de rastreabilidade neste doc | grep/leitura |
+| 14C.7.7 | Docs: status ✅ no header deste arquivo e do plano; `plano.md`/`AGENTS.md`/`CURRENT.md` atualizados; requisito de materiais na statussheet registrado na Fase 18 | diff |
+| 14C.7.8 | Contagem final de testes documentada em CURRENT.md (linha Fase 14 Complemento) | doc |
+
+---
+
+## Notas de conclusão (preencher ao final)
+
+- (espelho do padrão da casa: ADRs afetados, divergências rastreadas,
+  vereditos de 14C.1.15–18, limitações de Mspdi 14C.4.12)
+
+````
+
+---
+
+## File: `docs/syntaxmesh/fases/fase-14-relatorios-complemento.md`
+
+```md
+# Fase 14 Complemento — Relatórios: Materiais, RDO, MspXml e Markdown
+
+> **Arquivo:** `docs/syntaxmesh/fases/fase-14-relatorios-complemento.md`
+> **Tarefas:** `docs/syntaxmesh/fases/fase-14-relatorios-complemento-tarefas.md`
+> **Status:** 🟡 em andamento — C0 ✅ 2026-10-31 · C1 ✅ 2026-11-01 · C2 ✅ 2026-11-01 · C3 ✅ 2026-11-01 · C4 ✅ 2026-11-01 · C5 ✅ 2026-11-01 · C6 ✅ 2026-11-01 · C7 pendente
+> **Duração estimada:** 8–12 dias
+> **Depende de:** Fases 8.1/8.2 (material + modelo contábil), 10 Complemento (parser reconhece `material`/`picture`/`format`/`breakdownreport`/`rdoreport`), 11 (motor lógico/Query), 12 (RichText), 13 (Markdown), 14 (pipeline de relatórios — concluída 2026-10-31)
+> **Bloqueia:** adendos de UI (Fase 20) que exibem RDO/breakdown; nada no núcleo 15/16/17
+
+---
+
+## 1. Contexto
+
+A Fase 14 entregou o port fiel do pipeline de relatórios do TaskJuggler 3.8.4
+(dispatch de conteúdos, `ReportTable`/`TableReport`, HTML/CSV/iCal/Niku/Trace/
+TagFile/MspXml/TJP-export, Navigator, RTF completo, golden estrutural). Porém,
+o SyntaxMesh criou **elementos que não existem no TJ Ruby** e que ainda não
+chegaram aos relatórios:
+
+- **Materiais e contabilidade estendida** (Fases 8.1/8.2): `Material`,
+  `MaterialAllocation`, `ExtendedCharge`, `turnoverByType`, journal/note em
+  material/account (10-C). Hoje **nenhum relatório lista materiais**
+  (`msp-xml-re.ts` e `tjp-export-re.ts` não conhecem `Material`; os tipos
+  `breakdownreport`/`rdoreport` nem passam do dispatch — `KNOWN_TYPE_SPECS` em
+  `model/report.ts` não os inclui e `generate()` não tem formato `json`).
+- **`picture` + RDO** (10-C #5): parser e modelo (`JournalEntry.pictures`,
+  `format: 'markdown'|'richtext'`) existem, mas não há engine de relatório
+  fotográfico nem galeria nos journal-columns.
+- **MspXml pobre vs. MSPDI real**: `docs/tj3-engine/mspdi.md` mapeia o formato
+  (recursos material `Type=2`/custo `Type=0`, `MaterialLabel`, `DurationFormat`
+  7/8, `ActualWork`/`Remaining*`, `Baseline`, `Exceptions` de calendário);
+  nosso `MspXmlRE` exporta só o esqueleto trabalho-humano do TJ.
+- **Markdown nos relatórios** (Fase 13): a fábrica `MarkdownFactory` unifica a
+  AST com RichText e `functions.ts` já reconhece `[[query:]]/[[report:]]/
+  [[reportlink:]]/[[navigator:]]` como placeholders, mas os relatórios ainda
+  só aceitam markup RichText (mediwiki) em header/footer/prolog/epilog e não
+  há roteamento por `format`.
+
+Além disso, os **adendos 14.25 e 14.26** criados dentro de
+`fase-14-relatorios-tarefas.md` (BreakdownReport/RdoReport/colunas novas +
+hide/rollup de material/picture) pertencem a este complemento e são **absorvidos
+aqui** (as seções originais viram ponteiro).
+
+## 2. Objetivo
+
+Integrar os elementos materiais do Syntaxmesh (material, picture, markdown,
+contabilidade estendida) ao sistema de relatórios entregue na Fase 14, e
+aprimorar a exportação MspXml até o subconjunto MSPDI descrito em
+`docs/tj3-engine/mspdi.md` — tudo fiel ao pipeline existente (ADR 027:
+saídas como string, DOM-free, sem disco).
+
+## 3. Escopo — blocos
+
+| Bloco | Conteúdo | Origem |
+|---|---|---|
+| **C0** | Fundação: `format json` de primeira classe, indexação do `Journal` (`entriesBy*`), `AlertLevelDefinitions` mínimo, render de `Picture`→HTML, registro dos novos `typeSpec` no dispatch | bring-forward das Fases 16/19 (justificado no §6) |
+| **C1** | Materiais nos relatórios existentes + novo `materialreport` (`MaterialListRE`) + colunas `note`/`journal` em material/account + coluna `timebasis` canônica | pedido neste doc + 14.25.11–13 |
+| **C2** | `BreakdownReport` (groupby account/task, html/csv/json) | 10-C #4 + 14.25.1–5 |
+| **C3** | `RdoReport` (groupby date/task/…, `journalmode`, `journalattributes`, galeria com `maxpictures`) | 10-C #5 + 14.25.6–10 |
+| **C4** | Aprimoramento MspXml → MSPDI: recursos material/custo, assignments ricos, `DurationFormat` 7/8, `Exceptions` de calendário, `Notes`, timephased de custo | pedido neste doc + `mspdi.md` |
+| **C5** | Markdown nos relatórios: `format markdown` em header/footer/prolog/epilog/caption, handlers RTF dentro de Markdown, imagens em `details`, RTFReport/URLParameter sob Markdown | pedido neste doc + 13.14.4 (roteamento adiado) |
+| **C6** | `hidematerial`/`rollupmaterial`/`hidepicture` (parser+i18n+aplicação) + auditoria da aplicação de hide/rollup já existentes | 11-C F14 + 14.26 |
+| **C7** | Golden/fixture tests das extensões, regressão do núcleo 14, smoke, verificação final e docs | padrão da casa |
+
+> **C4 ✅ 2026-11-01.** Oracle Ruby real (`scripts/golden/mspdi-tj3.rb` →
+> `mspdi.golden.json`, paridade campo a campo no subconjunto que o tj3 exporta)
+> + extensões SyntaxMesh (material/custo/`effortdone`/`vacation`/lag) validadas
+> por estrutura e snapshot. **Correção:** `docs/tj3-engine/mspdi.md` §3.1
+> invertia `<Resource><Type>`; a ordem oficial é 0 = material, 1 = trabalho,
+> 2 = custo. **Limitações registradas:** sem `<Baseline>`/`<ExtendedAttribute>`
+> (o modelo não tem os dados), `Project` não possui store `leaves` (exceções de
+> calendário vêm dos recursos) e `hideMaterial` — ativado na C6 (o filtro de
+> 14C.4.10 delegava a `hiddenBy` desde então, mas o atributo só existe agora).
+
+## 4. Fora de escopo
+
+- **Fase 15/16 (Gantt)**: coluna `chart` continua NYI ancorada; nada de
+  GanttChart/GanttLine aqui.
+- **Time/status sheets** (`timetsheetreport`, `statussheetreport`,
+  `htmlstatusreport`): dono é a **Fase 18**. Este doc apenas registra o
+  veredito de materiais para elas (statussheet deve listar materiais no futuro —
+  anotar como requisito na Fase 18).
+- **`xmlreport` (`.tjx`)**: não existe no TJ 3.8.4 vendorizado; se a auditoria
+  C1 confirmar ausência, fica como extensão futura documentada (não portar).
+- **Escrita a disco / OPFS real / `URL.createObjectURL`**: Fase 19/20. Aqui,
+  imagens relativas produzem **descritor** via `resolveImageRef` (13.14) ou
+  `ImageStore` injetável; o core continua DOM-free (ADR 001).
+- **Calendários por recurso no Mspdi (`CalendarUID` completo) e `Baseline`**:
+  só entram se a auditoria C4 mostrar dados suficientes no modelo; caso
+  contrário, documentar limitação (Baseline exige tracking de linhas de base,
+  inexistente até no TJ).
+- **UI (visualização de RDO)**: Fase 20.
+
+## 5. Integração com o código existente
+
+- **Dispatch**: `packages/core/src/model/report.ts` (`KNOWN_TYPE_SPECS`,
+  `contentFactories`) — adicionar `materialreport`, `breakdownreport`,
+  `rdoreport` (hoje caem em `"Unknown report type"`).
+- **Formatos**: switch de `Report.generate()` — adicionar `json`; `output`
+  permanece string/Array (CSV) conforme ADR 027.
+- **Novas classes** (kebab-case, padrão `reports/`):
+  `reports/material-list-re.ts`, `reports/breakdown-report.ts`,
+  `reports/rdo-report.ts` — todas `extends ReportBase`, registradas via
+  `registerContentFactory` (efeito colateral em `reports/mod.ts`).
+- **Parser**: `picture`/`format`/`breakdownreport`/`rdoreport` já reconhecidos
+  (10-C C3.5–C3.7 em `parser/rules/report.ts`/`journal.ts`); faltam
+  `materialreport` (C1) e `hidematerial`/`rollupmaterial`/`hidepicture` (C6)
+  com i18n en/pt-BR/es.
+- **Modelo que já dá suporte**: `Material`/`MaterialAllocation`/
+  `MaterialScenario(effortdone/effortleft)`, `AccountScenario.turnoverByType`,
+  `JournalEntry.pictures/.format`, `Picture`, `Query` (Fase 11) para os
+  filtros `hide*`.
+- **Markdown**: `markdown/mod.ts` (`MarkdownFactory`, `richTextToMarkdown`,
+  `extensions/functions.ts`) + `richtext/handlers/*` (RTF completos desde
+  14.24.6).
+- **Golden**: `reports.golden.json` (Fase 14) não muda para casos existentes
+  (regressão obrigatória); extensões ganham goldens **próprios baseados em
+  fixtures** (sem oracle tj3 — o TJ não tem esses relatórios), exceto MspXml,
+  que tem oracle Ruby parcial (`MspXmlRE.rb` + `mspdi-mwe.rb` novo).
+
+## 6. Dependências de outras fases e bring-forward justificado
+
+| Dependência | Dona | Decisão neste complemento |
+|---|---|---|
+| `Journal.entriesByTask/Resource/Material/Account` | Fase 16 (adendo 16.21) | **Bring-forward (C0)**: índice simples sobre `Journal.entries` já filtrável por `property instanceof`; a Fase 16 herda e estende (remove/destroy hooks). Custo baixo, pré-requisito duro de RDO/breakdown. |
+| `AlertLevelDefinitions` (cores/nomes de `alerts_*`) | Fase 16 | **Bring-forward mínimo (C0)**: default palette do TJ (red/green/blue/orange/yellow/violet) fixada como hoje o parser já valida; configuração `alerts` fica na 16 (âncora). |
+| `hasalert` / Journal-flag lógico | Fase 16 | Permanece stub ancorado; `journalmode alerts_*` filtra por `alertLevel` numérico disponível. |
+| Resolução de imagem relativa (OPFS/`objectURL`) | Fase 19 | **Não trazer**: usar `resolveImageRef`/`ImageStore` (contrato 13.14) produzindo descritor/URL; HTML do RDO referencia `src` resolvido pelo host. |
+| Gantt/`chart` | Fases 15/16 | **Não tocar** (nota #19 da Fase 14). |
+
+## 7. Estratégia de teste
+
+1. **Regressão do núcleo 14** (obrigatória em cada bloco): `deno task test`,
+   `reports.golden.json` byte-idêntico, `parser.golden.json`,
+   `deno task check:stubs`.
+2. **Extensões sem oracle Ruby** (`materialreport`, breakdown, RDO, `format
+   json`, markdown em reports): testes unitários BDD + **fixtures TS-snapshot**
+   (`packages/core/tests/golden/reports-extensions.golden.json`, gerado por
+   script local determinístico, não por Ruby) e validação estrutural
+   (ex.: JSON parseável, HTML contém galeria com `maxpictures` respeitado).
+3. **MspXml**: oracle Ruby real para o subconjunto que o TJ já exporta
+   (`scripts/golden/mspdi-tj3.rb` extraindo XML do `tj3` sobre mwe005) +
+   asserts novos para material/custo/duration-format baseados em regras do
+   `mspdi.md` (UID≠ID, `PTnHnMnS`, `DurationFormat` 7/8).
+4. **i18n**: AST equivalente en/pt-BR/es para `materialreport` e
+   `hidematerial`/`rollupmaterial`/`hidepicture` (padrão 10-C).
+5. **Smoke**: `tests/integration/smoke_after_phase_14c_test.ts`
+   (gera breakdown+RDO+materialreport a partir de um `.tjp` de exemplo com
+   materiais/pictures, todos como string, sem tocar disco).
+
+## 8. Riscos
+
+| Risco | Mitigação |
+|---|---|
+| Breakdown/RDO dependem de `query_*` concretos ainda pendentes (Fase 11 gap) para colunas calculadas | usar APIs diretas do modelo (`turnoverByType`, `MaterialAllocation`, `ChargeSet`) em vez de `Query` para agregações; `Query` só nos filtros `hide*` (funcionam hoje) |
+| `format markdown` colide com compatibilidade TJ (`.tjp` existentes usam mediwiki) | default continua `richtext` nos **reports** (journalentry mantém default `markdown` de 10-C); opt-in explícito |
+| MspXml "mais completo" virar invenção sem validação | limitar ao subconjunto documentado em `mspdi.md` + teste de estrutura; nada de campos especulativos |
+| Duplicação com adendos 14.25/14.26 já escritos na Fase 14 | seções originais viram ponteiro; IDs 14.25.x/14.26.x mapeados nos cabeçalhos dos blocos C2/C3/C6 |
+
+## 9. Critério de aceite global
+
+- `deno task check:all` exit 0 · `deno task test` verde · `deno task
+  golden:generate` reproduzível (núcleo 14 inalterado) ·
+  `deno task check:stubs` OK (todo stub novo ancorado) ·
+  blocos C0–C7 com tabelas de tarefas marcadas em
+  `fase-14-relatorios-complemento-tarefas.md` ·
+  CURRENT.md/plano.md/AGENTS.md atualizados ao concluir.
+
+## 10. Adendo para incluir no plano e tarefas
+
+Durante a execução da fase 14 complementar verificamos a necessidade de incluir o formato de saida markdown aos variados reports que o syntaxmesh tem atualmente. são reports que teriam um arquivo de extensão ".md" 
+
+Então teremos um novo formats que poderá ser escolhido : "markdown".
+
+O formato markdown suporta textos, tabelas, links, imagens, algumas formatações, então ele poderá atender a muitos elementos igual temos no formato html, csv, text...
+
+O prefixo "md" poderá ser usado também, por exemplo:
+* mdtaskreport
+* mdresourcereport
+* mdaccountreport
+* mdmaterialreport 
+
+O markdown tambem aceita o uso de html, elementos mais complexos como gráficos poderiam usar de elementos html para renderizar, mas prefirimos que antes seja viabilizado o uso de markdown puro.
+```
+
+---
+
 ## File: `docs/syntaxmesh/fases/fase-14-relatorios-tarefas.md`
 
 ````md
 # Fase 14 — Tarefas Atômicas
 
-> **Arquivo:** `docs/syntaxmesh/fases/fase-14-tarefas.md`
+> **Arquivo:** `docs/syntaxmesh/fases/fase-14-relatorios-tarefas.md`
 > **Plano:** `docs/syntaxmesh/fases/fase-14-relatorios.md`
-> **Status:** ⬜ Não iniciada
+> **Status:** ✅ Concluída (2026-10-31 — núcleo 14.0–14.24; adendos 14.25/14.26 pendentes → Fase 16)
 > **Total:** ~350 tarefas
-> **Concluídas:** 0
+> **Concluídas:** ~350 (14.0–14.24)
 > **Fonte Ruby:** `docs/taskjuggler/lib/taskjuggler/reports/*.rb` + `TableColumnDefinition.rb` + `TableColumnSorter.rb` + `ICalendar.rb` + `Painter/*.rb`
 
 > **📌 Âncora — Complemento Fase 11 (`fase-11-logical-complemento.md` §6.6/§6.9, G6):**
-> a função lógica **`isoncriticalpath(id)`** permanece stub
-> (`NotYetImplementedError("14")`). Ela depende de **cálculo de float/caminho
+> a função lógica **`isoncriticalpath(id)`** permanece bloqueada
+> (`FUNCTIONS_EXT` `blocked`, NYI dinâmico com fase `"14"` → liberada por
+> Fase 15/16). Ela depende de **cálculo de float/caminho
 > crítico**, que não existe nem no TaskJuggler 3.8.4 vendorizado (extensão pura):
 > exige (a) o scheduler (Fase 7) computar folga total (`float`) por tarefa e (b)
 > a exposição em relatórios/Gantt para `Query` consultar. Implementar junto do
@@ -20283,8 +22597,9 @@ Criado como subfase 13.0. Conteúdo esperado:
 > feasible`) + testes. Ver também `fase-15-gantt-tarefas.md` (destacar caminho
 > crítico no gráfico).
 
-> **📌 Âncora — fachada `TaskJuggler#freeze` (`src/taskjuggler.ts:90`,
-> `NotYetImplementedError("14")`):** `freeze(freezeDate, taskBookings)`
+> **📌 Âncora — fachada `TaskJuggler#freeze` (`src/taskjuggler.ts`):**
+> `freeze(freezeDate, taskBookings)` reancorado em **14.24** com
+> `NotYetImplementedError("19", "freeze")` —
 > (TaskJuggler.rb:220+) deriva nomes de arquivo do arquivo-mestre e escreve
 > `*-header.tji` + arquivo de bookings, então exige (a) a mecânica de
 > congelamento de bookings/datas sobre o cenário de tracking (Fase 8.1) e
@@ -20322,10 +22637,11 @@ Esta é a **maior fase do projeto** (~5.000 linhas de Ruby). Ela depende de Fase
 
 - **ADR 009** — RichText mantido, Markdown futuro.
 - **ADR 011–022** — Fases 2–10 (contexto).
-- **ADR 023** — Expressões lógicas sem precedência (Fase 11).
-- **ADR 024** — RichText e function handlers (Fase 12).
-- **ADR 025** — Markdown going-forward (Fase 13).
-- **ADR 026** — Reports browser-only (**criado nesta fase**).
+- **ADR 023** — Palavras-chave i18n no parser (Fase 10).
+- **ADR 024** — Expressões lógicas sem precedência (Fase 11).
+- **ADR 025** — RichText e function handlers (Fase 12).
+- **ADR 026** — Markdown going-forward (Fase 13).
+- **ADR 027** — Reports browser-only (**criado nesta fase**).
 
 ### Convenções CRÍTICAS
 
@@ -20340,7 +22656,7 @@ Esta é a **maior fase do projeto** (~5.000 linhas de Ruby). Ela depende de Fase
 - **`TjpExportRE`:** fidelidade textual.
 - **`MspXmlRE`:** usar `XMLElementLike` + serializer.
 - **`ICalendar.foldLines`:** linhas de 75 chars.
-- **Browser reports retornam strings.** ADR 026.
+- **Browser reports retornam strings.** ADR 027.
 - **`ChartPlotter`:** implementar `Painter` mínimo nesta fase.
 - **`RTFNavigator`, `RTFReport`, `RTFReportLink`:** completar stubs da Fase 12.
 - Sem `any` em `src/`.
@@ -20361,44 +22677,67 @@ Esta é a **maior fase do projeto** (~5.000 linhas de Ruby). Ela depende de Fase
 ## Progresso
 
 ```
-[ ] 14.0  ADR 026 (reports browser-only)          —   0/5
-[ ] 14.1  CSVFile                                  —   0/12
-[ ] 14.2  ReportContext (completar)                —   0/10
-[ ] 14.3  ReportBase                               —   0/14
-[ ] 14.4  TableColumnDefinition + CellSettingPattern — 0/12
-[ ] 14.5  TableColumnSorter                        —   0/6
-[ ] 14.6  ReportTable                              —   0/18
-[ ] 14.7  ReportTableColumn                        —   0/6
-[ ] 14.8  ReportTableLine                          —   0/10
-[ ] 14.9  ReportTableCell + PlaceHolderCell        —   0/24
-[ ] 14.10 ReportTableLegend                        —   0/10
-[ ] 14.11 Report (completar)                       —   0/18
-[ ] 14.12 TableReport                              —   0/32
-[ ] 14.13 ColumnTable                              —   0/6
-[ ] 14.14 TaskListRE                               —   0/10
-[ ] 14.15 ResourceListRE                           —   0/10
-[ ] 14.16 AccountListRE                            —   0/12
-[ ] 14.17 TextReport                               —   0/10
-[ ] 14.18 ExportRE + TjpExportRE + MspXmlRE        —   0/22
-[ ] 14.19 ICalReport + ICalendar (mínimo)          —   0/14
-[ ] 14.20 NikuReport + TraceReport + TagFile       —   0/20
-[ ] 14.21 Navigator + completar RTFNavigator       —   0/14
-[ ] 14.22 ChartPlotter + Painter (mínimo)          —   0/18
-[ ] 14.23 Golden tests (reports)                   —   0/12
-[ ] 14.24 Verificação final                        —   0/10
+[x] 14.0  ADR 027 (reports browser-only)          —   5/5
+[x] 14.1  CSVFile                                  —   12/12
+[x] 14.2  ReportContext (completar)                —   10/10
+[x] 14.3  ReportBase                               —   14/14
+[x] 14.4  TableColumnDefinition + CellSettingPattern — 12/12
+[x] 14.5  TableColumnSorter                        —   6/6
+[x] 14.6  ReportTable                              —   18/18
+[x] 14.7  ReportTableColumn                        —   6/6
+[x] 14.8  ReportTableLine                          —   10/10
+[x] 14.9  ReportTableCell + PlaceHolderCell        —   24/24
+[x] 14.10 ReportTableLegend                        —   10/10
+[x] 14.11 Report (completar)                       —   18/18
+[x] 14.12 TableReport                              —   32/32
+[x] 14.13 ColumnTable                              —   6/6
+[x] 14.14 TaskListRE                               —   10/10
+[x] 14.15 ResourceListRE                           —   10/10
+[x] 14.16 AccountListRE                            —   12/12
+[x] 14.17 TextReport                               —   10/10
+[x] 14.18 ExportRE + TjpExportRE + MspXmlRE        —   22/22
+[x] 14.19 ICalReport + ICalendar (mínimo)          —   14/14
+[x] 14.20 NikuReport + TraceReport + TagFile       —   20/20
+[x] 14.21 Navigator + completar RTFNavigator       —   14/14
+[x] 14.22 ChartPlotter + Painter (mínimo)          —   18/18
+[x] 14.23 Golden tests (reports)                   —   12/12
+[x] 14.24 Verificação final                        —   10/10
 ─────────────────────────────────────────────────────────
 TOTAL: ~350
 ```
+
+### Notas de conclusão (Fase 14, 2026-10-31)
+
+- **ADR:** o plano pedia `ADR 026`; na numeração real 026 ficou com Markdown
+  (Fase 13) e o ADR de reports é **ADR 027**
+  (`decisoes/027-reports-browser.md`).
+- **14.23 — golden por digest estrutural:** a comparação HTML valor-a-valor é
+  impossível hoje sem as integrações `query_*` (Fase 11) e Gantt (Fase 15/16).
+  O golden congela a **geometria do formato intermediário** (`ReportTable`:
+  colunas/linhas/kinds de célula) via walkers espelhados
+  (`scripts/golden/reports-common.rb` ↔ `tests/golden/extract-table.ts`), com
+  divergências rastreadas explicitamente (`PENDING_DIVERGENCES`,
+  `PENDING_SCHEDULER_FILES`, pendências sancionadas por classe de erro). 61
+  casos de relatório (≥60), `reports.golden.json` reproduzível byte-a-byte.
+- **14.24.3 — reconciliação:** o critério "NYI ≤ 2, só sheets" previa um mundo
+  sem gaps de outras fases. Estado real: **zero stubs des-ancorados**
+  (`deno task check:stubs` OK); os NYI restantes do subsistema de relatórios
+  pertencem a outras fases donas — `GanttChart`/`GanttLine` (Fase 16),
+  dispatch de conteúdo timesheet/statussheet (Fase 18), `CSVFile.read` e
+  `TaskJuggler.freeze`/`parse`/`parseContent` (Fase 19). Os stubs da Fase 12
+  (`RTFReport`/`RTFReportLink`) foram **desancorados em 14.24.6** com
+  `URLParameter.encode` (zlib stored síncrono, round-trip validado contra o
+  `Zlib` do Ruby).
 
 ---
 
 ## Bloco A — Infraestrutura
 
-### 14.0 — ADR 026 (reports browser-only)
+### 14.0 — ADR 027 (reports browser-only)
 
 **Objetivo:** formalizar a decisão de reports retornarem strings em vez de escrever arquivos.
 
-**⚠️ Nota:** o plano usa `ADR 024`, mas ADR 024 é RichText (Fase 12), ADR 025 é Markdown (Fase 13). Aqui usamos **ADR 026**.
+**⚠️ Nota (conclusão):** o plano usava numeração desatualizada (`ADR 024`/`026`); na sequencia real, ADR 024 é expressões lógicas (Fase 11), ADR 025 é RichText handlers (Fase 12), ADR 026 é Markdown (Fase 13). Este ADR de reports é o **ADR 027**.
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
@@ -20760,7 +23099,7 @@ TOTAL: ~350
 |---|---|---|---|
 | 14.11.3.1 | ⚠️ `to_html(): XMLElementLike \| null` | idem | 3 testes |
 | 14.11.3.2 | ⚠️ `interactive?(): boolean` | idem | 2 testes |
-| 14.11.3.3 | ⚠️ `private generateHTML(): string \| null` — retorna string (ADR 026) | idem | 3 testes |
+| 14.11.3.3 | ⚠️ `private generateHTML(): string \| null` — retorna string (ADR 027) | idem | 3 testes |
 | 14.11.3.4 | ⚠️ `private generateCSV(): unknown[][] \| null` | idem | 2 testes |
 | 14.11.3.5 | ⚠️ `private generateTJP(): string \| null` | idem | 2 testes |
 | 14.11.3.6 | ⚠️ `private generateMspXml(): string \| null` | idem | 2 testes |
@@ -21204,7 +23543,7 @@ TOTAL: ~350
 | 14.23.9 | Normalização: ordenar atributos, colapsar whitespace, substituir IDs gerados | idem | 4 testes |
 | 14.23.10 | Cobertura ≥ 60 casos; commitar JSON em `packages/core/tests/golden/` | idem | versionado |
 | 14.23.11 | Teste de regressão: rodar novamente e comparar | idem | 1 teste |
-| 14.23.12 | Smoke test: `Report.generate()` retorna string (ADR 026) | idem | 1 teste |
+| 14.23.12 | Smoke test: `Report.generate()` retorna string (ADR 027) | idem | 1 teste |
 
 ---
 
@@ -21217,12 +23556,12 @@ TOTAL: ~350
 | 14.24.1 | `deno task check-all` verde | exit 0 |
 | 14.24.2 | `deno task golden:generate && deno task test` verde | exit 0 |
 | 14.24.3 | `grep -r "NotYetImplementedError" packages/core/src/` — apenas stubs de StatusSheet/TimeSheet (Fase 18) | ≤ 2 ocorrências |
-| 14.24.4 | ADR 026 criada e commitada | git log |
+| 14.24.4 | ADR 027 criada e commitada | git log |
 | 14.24.5 | `Report`, `ReportBase`, `TableReport`, `TaskListRE`, `ResourceListRE`, `AccountListRE`, `TextReport`, `ExportRE`, `TjpExportRE`, `MspXmlRE`, `ICalReport`, `NikuReport`, `TraceReport`, `TagFile`, `Navigator`, `ChartPlotter`, `CSVFile`, `ReportContext` exportados em `packages/core/src/mod.ts` | `deno check` |
 | 14.24.6 | `RTFNavigator`, `RTFReport`, `RTFReportLink` completos (stubs Fase 12 removidos) | 3 testes |
 | 14.24.7 | `tests/integration/smoke_after_phase_14_test.ts` — cria `Project`, gera `Report` HTML; verifica Fase 13 (Markdown) | 1 teste |
 | 14.24.8 | Auditoria: cada subfase do plano `fase-14-relatorios.md` tem tarefas correspondentes | grep |
-| 14.24.9 | Corrigir numeração em `fase-14-relatorios.md` (`### 18.X` → `### 14.X`, `ADR 024` → `ADR 026`) | grep |
+| 14.24.9 | Corrigir numeração em `fase-14-relatorios.md` (`### 18.X` → `### 14.X`, `ADR 024` → `ADR 027`) | grep |
 | 14.24.10 | Teste agregado: `Project.generateReports` end-to-end com 1 report | 1 teste |
 
 ---
@@ -21241,12 +23580,12 @@ TOTAL: ~350
 10. **`TjpExportRE`:** fidelidade textual.
 11. **`MspXmlRE`:** usar `XMLElementLike` + serializer.
 12. **`ICalendar.foldLines`:** linhas de 75 chars.
-13. **Browser reports retornam strings.** ADR 026.
+13. **Browser reports retornam strings.** ADR 027.
 14. **`ChartPlotter`:** implementar `PainterMin` nesta fase (Fase 17 substitui).
 15. **`RTFNavigator`, `RTFReport`, `RTFReportLink`:** completar stubs da Fase 12.
 16. **Sem `any`.** Use `unknown` + type guards.
 17. **Commit por subfase.** `feat(report): table-report`, etc.
-18. **ADR 026** (não 024). **ADR 024** é RichText (Fase 12), **ADR 025** é Markdown (Fase 13).
+18. **ADR 027** (não 024). **ADR 024** é expressões lógicas (Fase 11), **ADR 025** é RichText handlers (Fase 12), **ADR 026** é Markdown (Fase 13).
 19. **Não tocar em Fase 15 (Gantt).** `GanttChart` é coluna `chart`.
 20. **Não tocar em Fase 17 (HTML/XML).** `XMLElementLike` é a interface atual.
 21. **`copyAuxiliaryFiles` é no-op no browser.**
@@ -21259,7 +23598,7 @@ TOTAL: ~350
 
 ## Notas específicas por subfase
 
-### 14.0 — ADR 026
+### 14.0 — ADR 027
 
 - **Reports retornam strings.**
 - **`outputDir` é opcional.**
@@ -21381,11 +23720,17 @@ TOTAL: ~350
 
 - **Sem stubs além de StatusSheet/TimeSheet (Fase 18).**
 - **RTFReport, RTFReportLink, RTFNavigator completos.**
-- **ADR 026 (não 024).**
+- **ADR 027 (não 024).**
 
 ---
 
 ## 14.25 — Adendo Fase 10 Complemento: `BreakdownReport`, `RdoReport` e colunas novas
+
+> **⤷ TRANSFERIDO (2026-10-31):** estas tarefas foram absorvidas pela
+> **Fase 14 Complemento** — `fase-14-relatorios-complemento-tarefas.md`
+> (14.25.1–5 → Bloco 14C.2; 14.25.6–10 → Bloco 14C.3; 14.25.11–13 →
+> 14C.1.7–9; 14.25.14 → 14C.1.21). O conteúdo abaixo é histórico; executar
+> pelo arquivo do complemento.
 
 > **Origem:** `fase-10-complemento1.md` §5 (#4 `breakdownreport`) e §6 (#5 `rdoreport`); `fase-10-complemento2.md` §7.4 (coluna `timebasis`). O parser (Bloco C3.5–C3.7 de `fase-10-complemento-tarefas.md`) apenas **reconhece** a sintaxe; a **execução** dos relatórios é aqui. Depende do Journal estendido (adendo Fase 16).
 
@@ -21423,6 +23768,11 @@ TOTAL: ~350
 ---
 
 ## 14.26 — Adendo Fase 11 Complemento: `hide`/`rollup` de todas as entidades + `hidepicture`
+
+> **⤷ TRANSFERIDO (2026-10-31):** absorvido pela **Fase 14 Complemento**
+> — `fase-14-relatorios-complemento-tarefas.md`, Bloco 14C.6 (auditoria
+> 14.26.1a–c → 14C.6.1; novas opções 14.26.2a–g → 14C.6.2–10). Conteúdo
+> abaixo é histórico.
 
 > **Origem:** `fase-11-logical-complemento.md` §2 (atributos lógicos de
 > material/charge) e o pedido de opções de relatório. As expressões lógicas já
@@ -21473,7 +23823,7 @@ não construídas, executar depois delas. **ADR:** nenhuma nova; usa ADR 024.
 # Fase 14 — Relatórios
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-14-relatorios.md`
-> **Status:** ⬜ Não iniciada
+> **Status:** ✅ Concluída (2026-10-31, 14.0–14.24; adendos 14.25/14.26 dependem do Journal — Fase 16)
 > **Duração estimada:** 18–22 dias
 > **Depende de:** Fases 2–13
 > **Bloqueia:** Fases 15, 17, 20, 21
@@ -21548,7 +23898,7 @@ Ao final desta fase:
 - **Completar stubs:** `RTFReport`, `RTFReportLink`, `RTFNavigator` (Fase 12).
 - **Integrar `Project.generateReports`** (Fase 9).
 - **≥ 350 testes unitários** + **≥ 60 golden tests** (reports dos 9 MWEs + TestSuite).
-- ADR 026 registrado.
+- ADR 027 registrado.
 - `deno task check-all` verde.
 
 ---
@@ -21732,7 +24082,7 @@ Fase 12 deixou stubs. Aqui completamos.
 
 **Decisão:** `Report.generate` no browser **retorna** o conteúdo (string) em vez de escrever. API: `generateReport(): string[]` — array de outputs.
 
-**Nota:** isso muda a assinatura do Ruby. Documentar em ADR 026.
+**Nota:** isso muda a assinatura do Ruby. Documentar em ADR 027.
 
 ---
 
@@ -21752,7 +24102,7 @@ Fase 12 deixou stubs. Aqui completamos.
 
 ---
 
-### 14.0 — ADR 026 (reports browser-only)
+### 14.0 — ADR 027 (reports browser-only)
 
 #### Contexto
 
@@ -21787,7 +24137,7 @@ Criar `docs/syntaxmesh/decisoes/025-reports-browser.md`.
 
 #### Critério de aceite
 
-- ADR 026 criado.
+- ADR 027 criado.
 - Tabela atualizada.
 
 ---
@@ -22439,7 +24789,7 @@ Completar `Report`.
   - `content.generateIntermediateFormat()`.
 - [ ] `to_html(): XMLElementLike | null`.
 - [ ] `interactive?(): boolean`.
-- [ ] Private `generateHTML(): string | null` — retorna HTML como string (ADR 026).
+- [ ] Private `generateHTML(): string | null` — retorna HTML como string (ADR 027).
 - [ ] Private `generateCSV(): unknown[][] | null`.
 - [ ] Private `generateTJP(): string | null`.
 - [ ] Private `generateMspXml(): string | null`.
@@ -23214,7 +25564,7 @@ deno task test
 ## 6. Ordem de execução sugerida
 
 ```text
-14.0  ADR 026
+14.0  ADR 027
       ↓
 14.1  CSVFile
 14.2  ReportContext (completar)
@@ -23270,7 +25620,7 @@ passa, e:
 - [ ] **≥ 350 testes unitários**.
 - [ ] **≥ 60 golden tests**.
 - [ ] Nenhum `any` em `src/` (exceto onde justificado).
-- [ ] ADR 026 criado.
+- [ ] ADR 027 criado.
 
 ---
 
@@ -23288,7 +25638,7 @@ passa, e:
 | `ICalendar.foldLines` com UTF-8 | Médio | Testes com emojis/acentos |
 | `filterTaskList` com `isdutyof()` | Alto | Teste com recursos aninhados |
 | `copyAuxiliaryFiles` no-op | Médio | Aceito; Fase 20 |
-| `outputDir` no browser | Médio | ADR 026 |
+| `outputDir` no browser | Médio | ADR 027 |
 | `Painter` mínimo vs real | Médio | Fase 17 substitui |
 | Performance de `generateHTML` | Médio | Benchmarks |
 
@@ -23338,7 +25688,7 @@ passa, e:
 9. **`TjpExportRE`:** fidelidade textual.
 10. **`MspXmlRE`:** usar `XMLElementLike` + serializer.
 11. **`ICalendar.foldLines`:** linhas de 75 chars.
-12. **Browser reports retornam strings.** ADR 026.
+12. **Browser reports retornam strings.** ADR 027.
 13. **`ChartPlotter`:** implementar `Painter` mínimo nesta fase.
 14. **`RTFNavigator`, `RTFReport`, `RTFReportLink`:** completar stubs da Fase 12.
 15. **Sem `any`.** Use `unknown` + type guards.
@@ -23346,7 +25696,7 @@ passa, e:
 
 ---
 
-## 11. ADR 026 (referência rápida)
+## 11. ADR 027 (referência rápida)
 
 Criado como subfase 14.0. Conteúdo esperado:
 
@@ -25550,7 +27900,7 @@ Esta fase **completa stubs** das Fases 5, 11 e 14. A ordem importa:
 [ ] 16.3  Journal (core + queries)                  —   0/28
 [ ] 16.4  Leave + LeaveList + LeaveAllowance        —   0/18
 [ ] 16.5  Substituir stubs de LeaveList (Fase 5)    —   0/6
-[ ] 16.6  TextFormatter                             —   0/10
+[x] 16.6  TextFormatter                             —  10/10  ✅ ANTECIPADA na Fase 12 (2026-10-28): dependência pura de `RichTextElement#to_s`; port fiel de `TextFormatter.rb:21-184` (`indent`/`format` FSM/`appendWord`, code points UTF-8), expectations conferidas contra o Ruby real; 15 testes em `tests/utils/text-formatter_test.ts`; exportado via `utils/mod.ts`
 [ ] 16.7  FileList + FileRecord                     —   0/8
 [ ] 16.8  URLParameter                              —   0/6
 [ ] 16.9  TernarySearchTree                         —   0/12
@@ -30602,8 +32952,9 @@ TOTAL: ~185
 | 18.17.5 | `TimeSheetSummary` agrega status de material (contagem, alertas) | `sheets/time-sheet-summary.ts` | 1 teste |
 | 18.17.6 | `picture` (e `format`) em `status`: `JournalEntry` do status recebe `pictures`/`format` (modelo C3.3.5); `picture` ausente → comportamento atual inalterado | `sheets/time-sheet-record.ts` | 2 testes |
 | 18.17.7 | **Regressão:** timesheets sem material/picture geram resultado idêntico ao atual | testes existentes | verde |
+| 18.17.8 | **Status sheet lista materiais** (requisito registrado pela Fase 14 Complemento, 14C.1.18): `StatusSheetReport` emite, por tarefa, as alocações de material e os `MaterialScenario.effortdone`/`effortleft` do cenário de tracking — análogo às linhas de recurso de hoje | `reports/status-sheet-report.ts` | 2 testes (fixture 14c com material + status) |
 
-**Critério de aceite do adendo:** um `.tjp`/timesheet pode reportar `work`/`remaining` de material sem quebrar a validação de slots; `status` com `picture` chega ao Journal intacto.
+**Critério de aceite do adendo:** um `.tjp`/timesheet pode reportar `work`/`remaining` de material sem quebrar a validação de slots; `status` com `picture` chega ao Journal intacto; o status sheet mostra materiais por tarefa.
 
 ---
 
@@ -39856,462 +42207,412 @@ Criado como subfase 26.0. Conteúdo esperado:
 
 ---
 
-## File: `docs/syntaxmesh/fases/fase-22-lsp.md`
+## File: `docs/syntaxmesh/fases/fase-22-vscode.md`
 
 ````md
-# Guia de Implementação: `@vanaware/syntaxmesh-lsp`
+# Fase 22 — Tarefas Atômicas
 
-> **Documento para agentes de IA** que vão implementar, manter ou estender o servidor LSP do projeto SyntaxMesh. Leia o documento inteiro antes de tocar em código. As decisões de arquitetura aqui descritas são **contratos**, não sugestões — quebrá-los cria acoplamento entre camadas e inviabiliza a evolução independente dos pacotes.
+> **Arquivo:** `docs/syntaxmesh/fases/fase-22-vscode-tarefas.md`
+> **Plano:** `docs/syntaxmesh/fases/fase-22-vscode.md`
+> **Status:** ⬜ Não iniciada
+> **Total:** ~95 tarefas
+> **Concluídas:** 0
+> **Natureza:** tooling externo (extensão VS Code + `lsp-core`)
+> **Fonte:** `fase-22-lsp.md` (conceito de LSP) + `taskjuggler-lsp` (referência C) +
+> documentação VS Code + `@vsce/create`
 
 ---
 
-## 1. Contexto do projeto
+## ⚠️ PREÂMBULO — Leia antes de começar
 
-**SyntaxMesh** é uma linguagem de domínio derivada do **Task Juggler**, com suporte nativo a variações de sintaxe em **português (pt-br), inglês (en) e espanhol (es)**. O projeto é um **monorepo Deno** estruturado em workspaces.
+### Regra zero
 
-**Objetivo deste guia:** implementar o pacote `@vanaware/syntaxmesh-lsp`, um servidor LSP que expõe as capacidades do domínio SyntaxMesh para IDEs (VS Code, Neovim, Helix, Zed, etc.), consumindo o adaptador `@vanaware/syntaxmesh/lsp-core` já existente no pacote `@vanaware/syntaxmesh`.
+**Toda tarefa é implementação de tooling**, não de linguagem. Se precisar de
+lógica de parsing/semântica que ainda não existe, **pare e verifique** se está
+no `lsp-core` (22.1) ou no core (Fases 2–21). Não implemente lógica de
+linguagem na extensão.
+
+### Timing
+
+- **A Fase 22 começa após a Fase 21** (corpus multilíngue validado).
+- **`lsp-core` (22.1) é pré-requisito** do LSP client (22.4). Ele **não existe
+  ainda** — deve ser criado nesta fase.
+- **O motor (`@vanaware/syntaxmesh`) já está pronto** (Fases 2–21). A extensão
+  só o consome via Worker.
+
+### ADRs relevantes
+
+- **ADR 011** — Port fiel do TaskJuggler.
+- **ADR 030** — Arquitetura simplificada (pacotes).
+- **ADR 033** — Extensão VS Code + `lsp-core` (**criado nesta fase**).
+
+### Convenções CRÍTICAS
+
+- **`package.json` é manifesto VS Code**, não gerenciador de dependências.
+- **Sem `node_modules`.** Dependências npm via `npm:` no `deno.json`.
+- **LSP em Worker**, não stdio.
+- **Motor em Worker separado** do LSP Worker.
+- **TextMate grammar cobre PT/EN/ES.**
+- **Configuração `syntaxmesh.locale` não sobrescreve o arquivo.**
+- **Testes de integração no VS Code Test Runner**, não em Deno puro.
+- Sem `any` em `src/`.
+
+### Anti-padrões
+
+- ❌ Não implementar parser/semântica na extensão.
+- ❌ Não usar `node_modules` ou `npm install`.
+- ❌ Não rodar LSP via stdio (requer processo externo).
+- ❌ Não sobrescrever `language "..."` do arquivo via configuração.
+- ❌ Não usar `console.log` no Worker do LSP (corrompe JSON-RPC).
+- ❌ Não publicar `.vsix` sem testar em VS Code limpo.
+- ❌ Não pular 22.1 (`lsp-core`) — sem ele, 22.4 não compila.
 
 ---
 
-## 2. Arquitetura em três camadas (visão geral)
-
-A separação em três camadas é o pilar da arquitetura. **A dependência flui em sentido único** — nunca há importação da camada de cima para baixo, nem do servidor para o core diretamente.
+## Progresso
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│  @vanaware/syntaxmesh-lsp         (servidor LSP)             │
-│  • Conexão JSON-RPC via stdio                                │
-│  • TextDocuments, capabilities, lifecycle                    │
-│  • Cache de AnalysisResult por URI                           │
-│  • NÃO contém lógica de linguagem                            │
-└──────────────────────┬───────────────────────────────────────┘
-                       │ importa apenas o subpath lsp-core
-                       ▼
-┌──────────────────────────────────────────────────────────────┐
-│  @vanaware/syntaxmesh/lsp-core    (adaptador LSP)            │
-│  • Traduz AST/erros → tipos LSP (Diagnostic, Hover, ...)     │
-│  • API agnóstica de transporte                               │
-│  • Único ponto que conhece vscode-languageserver-types       │
-└──────────────────────┬───────────────────────────────────────┘
-                       │ importa o core normalmente
-                       ▼
-┌──────────────────────────────────────────────────────────────┐
-│  @vanaware/syntaxmesh             (domínio puro)             │
-│  • Parser, AST, keywords PT/EN/ES, semântica                 │
-│  • Zero dependência de LSP                                   │
-└──────────────────────────────────────────────────────────────┘
+[ ] 22.0  ADR 033 (extensão VS Code + lsp-core)     —   0/6
+[ ] 22.1  lsp-core (CRIAR)                          —   0/20
+[ ] 22.2  Scaffolding da extensão                   —   0/12
+[ ] 22.3  Language contribution                     —   0/12
+[ ] 22.4  LSP client                                —   0/12
+[ ] 22.5  Comandos e configuração                   —   0/10
+[ ] 22.6  Views e Status Bar                        —   0/6
+[ ] 22.7  Integração com o motor                    —   0/8
+[ ] 22.8  Testes                                    —   0/12
+[ ] 22.9  Empacotamento                             —   0/6
+[ ] 22.10 Verificação final                         —   0/6
+─────────────────────────────────────────────────────────
+TOTAL: ~110
 ```
 
-### Regra de ouro
+---
 
-| Camada | Pode importar | **Não pode** importar |
+## Bloco A — Fundação
+
+### 22.0 — ADR 033
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 22.0.1 | Criar `docs/syntaxmesh/decisoes/033-extensao-vscode.md` com frontmatter | idem | arquivo existe |
+| 22.0.2 | Seção **Contexto:** tooling complementar; `lsp-core` não existe e é entrega central; reuso de Vim/Emacs/Kate/taskjuggler-lsp | idem | — |
+| 22.0.3 | Seção **Decisões:** extensão completa; `lsp-core` adaptador puro; LSP via Worker; motor em Worker separado; `package.json` como manifesto; bundle via Deno; Test Runner | idem | — |
+| 22.0.4 | **Alternativas** (LSP stdio, Web extension only, Monaco standalone) + **Consequências** | idem | — |
+| 22.0.5 | Seção **Reuso de implementações existentes:** `taskjuggler-lsp` (C), `vim-taskjuggler`, `taskjuggler-mode.el`, Kate syntax | idem | — |
+| 22.0.6 | Atualizar linha `033` em `decisoes/README.md` | idem | 33 linhas |
+
+---
+
+## Bloco B — `lsp-core` (CRIAR)
+
+### 22.1 — `lsp-core`
+
+**Objetivo:** criar `packages/core/lsp-core/` com a API de §3.1 do plano.
+**Este bloco é pré-requisito do 22.4.**
+
+#### 22.1.1 — Estrutura
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 22.1.1.1 | Criar `packages/core/lsp-core/deno.json` com `name: "@vanaware/syntaxmesh/lsp-core"`, `exports`, `imports` | idem | `deno check` |
+| 22.1.1.2 | Adicionar `vscode-languageserver-types` ao `imports` (`npm:vscode-languageserver-types@^3`) | idem | `deno check` |
+| 22.1.1.3 | Adicionar `lsp-core` ao `workspace` do `deno.jsonc` raiz | `deno.jsonc` | `deno task --list` |
+| 22.1.1.4 | Criar `packages/core/lsp-core/mod.ts` com os exports de §3.1 | idem | `deno check` |
+| 22.1.1.5 | Adicionar `exports["./lsp-core"]` em `packages/core/deno.json` | `packages/core/deno.json` | `deno check` |
+
+#### 22.1.2 — `locale.ts`
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 22.1.2.1 | Criar `locale.ts` com `resolveLocale(uri, text): "pt-br" \| "en" \| "es"` | idem | `deno check` |
+| 22.1.2.2 | Detectar `language "pt-BR"` no texto; senão, default `"en"` | idem | 3 testes |
+| 22.1.2.3 | Teste: `.tjp` sem diretiva → `"en"` | idem | 1 teste |
+
+#### 22.1.3 — `analyze.ts`
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 22.1.3.1 | Criar `analyze.ts` com `analyzeDocument(uri, text, opts): AnalysisResult` | idem | `deno check` |
+| 22.1.3.2 | Chamar `ProjectFileParser.parse(content)` do core | idem | 1 teste |
+| 22.1.3.3 | Popular `ast` e `diagnostics` | idem | 2 testes |
+| 22.1.3.4 | Suportar `previous` (reuso incremental) | idem | 2 testes |
+| 22.1.3.5 | Popular `version` | idem | 1 teste |
+
+#### 22.1.4 — `diagnostics.ts`
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 22.1.4.1 | Criar `diagnostics.ts` com `toDiagnostics(ast, errors): Diagnostic[]` | idem | `deno check` |
+| 22.1.4.2 | Mapear erros de sintaxe para `DiagnosticSeverity.Error` | idem | 2 testes |
+| 22.1.4.3 | Mapear erros semânticos (referência não resolvida) para `Error` | idem | 2 testes |
+| 22.1.4.4 | Mapear avisos para `Warning` | idem | 2 testes |
+| 22.1.4.5 | Mensagens no idioma detectado (via `resolveLocale`) | idem | 2 testes |
+
+#### 22.1.5 — `hover.ts`
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 22.1.5.1 | Criar `hover.ts` com `getHover(ast, position): Hover \| null` | idem | `deno check` |
+| 22.1.5.2 | Retornar markdown com tipo de nó, atributos principais, localização | idem | 3 testes |
+| 22.1.5.3 | Retornar `null` quando não houver nada útil | idem | 1 teste |
+
+#### 22.1.6 — `completion.ts`
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 22.1.6.1 | Criar `completion.ts` com `getCompletions(ast, position, locale): CompletionItem[]` | idem | `deno check` |
+| 22.1.6.2 | Sugerir keywords do idioma do arquivo | idem | 3 testes |
+| 22.1.6.3 | Sugerir nomes definidos (tasks, resources, accounts) | idem | 3 testes |
+| 22.1.6.4 | `CompletionItem.kind` apropriado (`Keyword`, `Reference`, `Property`) | idem | 2 testes |
+
+#### 22.1.7 — `navigation.ts`
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 22.1.7.1 | Criar `navigation.ts` com `getDefinition(ast, position): Location \| null` | idem | `deno check` |
+| 22.1.7.2 | Salto para declaração em referências | idem | 3 testes |
+| 22.1.7.3 | Criar `getReferences(ast, position): Location[]` | idem | 3 testes |
+| 22.1.7.4 | Listar usos cross-file (se AST agregada) | idem | 2 testes |
+
+#### 22.1.8 — `semantic-tokens.ts`
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 22.1.8.1 | Criar `semantic-tokens.ts` com `getSemanticTokens(ast): number[]` | idem | `deno check` |
+| 22.1.8.2 | Emitir tokens para keywords, identificadores, strings, números, datas, comentários | idem | 6 testes |
+| 22.1.8.3 | Declarar `legend` estável (sincronizada com o cliente) | idem | 1 teste |
+
+#### 22.1.9 — `symbols.ts`
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 22.1.9.1 | Criar `symbols.ts` com `getDocumentSymbols(ast): DocumentSymbol[]` | idem | `deno check` |
+| 22.1.9.2 | Árvore hierárquica (project → task → subtask) | idem | 3 testes |
+| 22.1.9.3 | Criar `getWorkspaceSymbols(asts): SymbolInformation[]` | idem | 3 testes |
+| 22.1.9.4 | Busca case-insensitive por nome | idem | 2 testes |
+
+#### 22.1.10 — Proibições e verificação
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 22.1.10.1 | Confirmar que `lsp-core` **não importa** `vscode-languageserver` | idem | grep |
+| 22.1.10.2 | Confirmar que `lsp-core` **não importa** `Deno.stdin/stdout` | idem | grep |
+| 22.1.10.3 | Confirmar que `lsp-core` importa **apenas** `@vanaware/syntaxmesh` + `vscode-languageserver-types` | idem | grep |
+| 22.1.10.4 | `deno task --cwd packages/core/lsp-core test` verde | — | exit 0 |
+| 22.1.10.5 | Cobertura ≥ 80% no `lsp-core` | — | relatório |
+
+---
+
+## Bloco C — Scaffolding
+
+### 22.2 — Estrutura da extensão
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 22.2.1 | Criar `packages/vscode/` com `deno.json` (imports, tasks) | idem | `deno check` |
+| 22.2.2 | Criar `package.json` (manifesto VS Code) com `name`, `displayName`, `publisher`, `engines`, `activationEvents`, `main` | idem | JSON válido |
+| 22.2.3 | Adicionar `contributes.languages` (`.tjp`, `.tji`) | idem | 2 extensões |
+| 22.2.4 | Adicionar `contributes.commands` (`schedule`, `report`, `export`, `switchLanguage`, `showProjectTree`) | idem | 5 comandos |
+| 22.2.5 | Adicionar `contributes.configuration` (`syntaxmesh.locale`, `syntaxmesh.scheduleOnSave`, `syntaxmesh.lsp.trace.server`, `syntaxmesh.report.defaultFormat`) | idem | 4 settings |
+| 22.2.6 | Adicionar `contributes.viewsContainers` + `contributes.views` (Project Explorer) | idem | 1 view |
+| 22.2.7 | Adicionar `contributes.grammars` (`.tjp`, `.tji`) | idem | 2 grammars |
+| 22.2.8 | Adicionar `contributes.snippets` (`.tjp`) | idem | 1 snippet file |
+| 22.2.9 | Criar `.vscode/launch.json` (Extension Development Host) | idem | arquivo existe |
+| 22.2.10 | Criar `.vscode/tasks.json` (build/test) | idem | arquivo existe |
+| 22.2.11 | Criar `src/extension.ts` com `activate`/`deactivate` vazios | idem | `deno check` |
+| 22.2.12 | Adicionar task `check:all`, `test:unit`, `test:integration`, `package` no `deno.json` | idem | `deno task --list` |
+
+---
+
+## Bloco D — Language contribution
+
+### 22.3 — TextMate grammar + snippets
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 22.3.1 | Criar `syntaxes/syntaxmesh.tmLanguage.json` com escopo `source.syntaxmesh` | idem | JSON válido |
+| 22.3.2 | Adicionar patterns para `project`, `task`, `resource`, `account`, `shift`, `report`, `scenario` | idem | 7 patterns |
+| 22.3.3 | Adicionar patterns para `depends`, `precedes`, `allocate`, `chargeset`, `material`, `timebasis` | idem | 6 patterns |
+| 22.3.4 | Adicionar patterns para `effort`, `duration`, `length`, `start`, `end`, `milestone` | idem | 6 patterns |
+| 22.3.5 | Adicionar patterns para strings, números, datas, comentários (`#`, `//`, `/* */`) | idem | 4 patterns |
+| 22.3.6 | Criar `syntaxes/syntaxmesh-tji.tmLanguage.json` (importa a grammar `.tjp` + adiciona `include`) | idem | JSON válido |
+| 22.3.7 | Criar `language-configuration.json` (brackets, auto-closing, comments, folding) | idem | JSON válido |
+| 22.3.8 | Criar `snippets/syntaxmesh.json` com `project`, `task`, `resource`, `account`, `report`, `material` | idem | 6 snippets |
+| 22.3.9 | Adicionar variantes PT/EN/ES nos snippets (ou placeholders) | idem | revisão |
+| 22.3.10 | **Reusar conceitualmente** `vim-taskjuggler` (lista de keywords) e `taskjuggler-mode.el` (snippets) | idem | revisão |
+| 22.3.11 | **Reusar conceitualmente** Kate syntax (estrutura de contexto) | idem | revisão |
+| 22.3.12 | Snapshot test: TextMate grammar destaca PT/EN/ES corretamente (fixtures) | `tests/unit/grammar_test.ts` | 3 testes |
+
+---
+
+## Bloco E — LSP client
+
+### 22.4 — Cliente LSP
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 22.4.1 | Criar `src/lsp/client.ts` com `LanguageClient` de `vscode-languageclient/browser` | idem | `deno check` |
+| 22.4.2 | Criar `src/lsp/worker.ts` com entry do Worker que hospeda `lsp-core` | idem | `deno check` |
+| 22.4.3 | Configurar `clientOptions.documentSelector` para `.tjp`/`.tji` | idem | 1 teste |
+| 22.4.4 | Configurar `synchronize.fileEvents` (watcher de `.tjp`/`.tji`) | idem | 1 teste |
+| 22.4.5 | Registrar `capabilities` no `initialize` (sync incremental, hover, completion, definition, references, semantic tokens, document symbols, workspace symbols) | idem | 1 teste |
+| 22.4.6 | Implementar `didOpen`/`didChange`/`didClose` no Worker | idem | 3 testes |
+| 22.4.7 | Implementar `publishDiagnostics` no Worker | idem | 1 teste |
+| 22.4.8 | Implementar `hover` no Worker | idem | 1 teste |
+| 22.4.9 | Implementar `completion` no Worker | idem | 1 teste |
+| 22.4.10 | Implementar `definition`/`references` no Worker | idem | 2 testes |
+| 22.4.11 | Implementar `semanticTokens/full` no Worker | idem | 1 teste |
+| 22.4.12 | Implementar `documentSymbol`/`workspace/symbol` no Worker | idem | 2 testes |
+
+---
+
+## Bloco F — Comandos e configuração
+
+### 22.5 — Comandos
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 22.5.1 | Criar `src/commands/schedule.ts` — parse+schedule no `engine.worker`; exibe diagnósticos + cronograma | idem | `deno check` |
+| 22.5.2 | Criar `src/commands/report.ts` — parse+schedule+report; abre Webview ou salva | idem | `deno check` |
+| 22.5.3 | Criar `src/commands/export.ts` — exporta `.tjp` canônico | idem | `deno check` |
+| 22.5.4 | Criar `src/commands/switch-language.ts` — alterna `language "..."` no `.tjp` ativo | idem | `deno check` |
+| 22.5.5 | Criar `src/commands/show-project-tree.ts` — abre a view de árvore | idem | `deno check` |
+| 22.5.6 | Registrar todos os comandos em `extension.ts` | idem | 5 comandos |
+| 22.5.7 | Criar `src/config/settings.ts` — leitura de `syntaxmesh.*` | idem | 4 settings |
+| 22.5.8 | `syntaxmesh.locale` `auto` respeita `language "..."`; `en`/`pt-BR`/`es` forçam | idem | 4 testes |
+| 22.5.9 | `syntaxmesh.scheduleOnSave` dispara `schedule` no `onDidSave` | idem | 1 teste |
+| 22.5.10 | `syntaxmesh.report.defaultFormat` usado pelo comando `report` | idem | 1 teste |
+
+---
+
+## Bloco G — Views e Status Bar
+
+### 22.6 — Project Explorer + Status Bar
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 22.6.1 | Criar `src/views/project-tree.ts` com `TreeDataProvider` | idem | `deno check` |
+| 22.6.2 | `getChildren` lista `tasks`, `resources`, `accounts`, `shifts`, `reports` | idem | 5 testes |
+| 22.6.3 | `getTreeItem` retorna `TreeItem` com ícone e `collapsibleState` | idem | 1 teste |
+| 22.6.4 | Refresh após `schedule` | idem | 1 teste |
+| 22.6.5 | Criar `src/views/status-bar.ts` com estado do parser/scheduler | idem | 1 teste |
+| 22.6.6 | Status Bar mostra locale detectado e última execução | idem | 2 testes |
+
+---
+
+## Bloco H — Integração com o motor
+
+### 22.7 — Engine Worker
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 22.7.1 | Criar `src/engine/worker.ts` com entry do Worker que importa `@vanaware/syntaxmesh` | idem | `deno check` |
+| 22.7.2 | Implementar `parse` no Worker | idem | 1 teste |
+| 22.7.3 | Implementar `schedule` no Worker | idem | 1 teste |
+| 22.7.4 | Implementar `report` no Worker | idem | 1 teste |
+| 22.7.5 | Criar `src/engine/client.ts` com request/response (`id`) | idem | 3 testes |
+| 22.7.6 | Tratar erros do Worker (timeout, exception) | idem | 2 testes |
+| 22.7.7 | Cancelamento de request anterior (debounce) | idem | 1 teste |
+| 22.7.8 | Exportar `EngineClient` em `mod.ts` | idem | `deno check` |
+
+---
+
+## Bloco I — Testes
+
+### 22.8 — Unitários + integração
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 22.8.1 | `tests/unit/commands_test.ts` — mock de `EngineClient` | idem | 5 testes |
+| 22.8.2 | `tests/unit/engine-client_test.ts` — request/response | idem | 4 testes |
+| 22.8.3 | `tests/unit/config_test.ts` — leitura/escrita de settings | idem | 4 testes |
+| 22.8.4 | `tests/integration/lsp.test.ts` — initialize + publishDiagnostics + hover + completion + definition + references | idem | 6 testes |
+| 22.8.5 | `tests/integration/commands.test.ts` — schedule, report, export, switchLanguage | idem | 4 testes |
+| 22.8.6 | `tests/integration/language.test.ts` — grammar snapshot PT/EN/ES + snippets | idem | 4 testes |
+| 22.8.7 | Configurar `test:unit` (Deno) e `test:integration` (VS Code Test Runner) | `deno.json`, `package.json` | `deno task --list` |
+| 22.8.8 | CI roda `test:unit` + `test:integration` | `.github/workflows/ci.yml` (ou equivalente) | verde |
+| 22.8.9 | Cobertura ≥ 70% no pacote `vscode` | — | relatório |
+| 22.8.10 | Smoke test: instalar `.vsix` em VS Code limpo, abrir `.tjp`, ver highlighting + diagnósticos + hover + completion | `tests/integration/smoke.test.ts` | 1 teste |
+| 22.8.11 | Smoke test: `lsp-core` roda em Deno puro (sem VS Code) | `packages/core/lsp-core/tests/smoke_test.ts` | 1 teste |
+| 22.8.12 | Confirmar que `lsp-core` não quebra `deno check` do workspace | `deno task check:all` | exit 0 |
+
+---
+
+## Bloco J — Empacotamento
+
+### 22.9 — Bundle + `.vsix`
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 22.9.1 | Criar `scripts/build.ts` com `@vsce/bundler` (ou `esbuild`) | idem | `deno check` |
+| 22.9.2 | Configurar `out/extension.js` + `out/lsp.worker.js` + `out/engine.worker.js` | idem | 3 arquivos |
+| 22.9.3 | Criar `.vscodeignore` (exclui `src/`, `tests/`, `deno.json`, `scripts/`) | idem | arquivo existe |
+| 22.9.4 | Adicionar task `package` em `deno.json` (`deno run npm:@vscode/vsce package`) | idem | `deno task package` |
+| 22.9.5 | Gerar `.vsix` e verificar tamanho < 5 MB | — | `ls -lh` |
+| 22.9.6 | Testar instalação em VS Code limpo (via `code --install-extension`) | — | sucesso |
+
+---
+
+## Bloco K — Verificação final
+
+### 22.10 — Verificação final
+
+| # | Tarefa | Verificação |
 |---|---|---|
-| `@vanaware/syntaxmesh` | bibliotecas puras (tree-sitter, etc.) | qualquer coisa de LSP |
-| `@vanaware/syntaxmesh/lsp-core` | `@vanaware/syntaxmesh`, `vscode-languageserver-types` | `vscode-languageserver`, `vscode-languageserver-textdocument`, `Deno.stdin/stdout` |
-| `@vanaware/syntaxmesh-lsp` | `@vanaware/syntaxmesh/lsp-core`, `vscode-languageserver`, `vscode-languageserver-textdocument` | `@vanaware/syntaxmesh` (acesso direto ao parser) |
-
-**Se em algum momento você precisar importar o core diretamente no servidor, é sinal de que falta uma função no `lsp-core`.** Adicione-a lá, não quebre a regra.
-
----
-
-## 3. Papel de cada pacote (detalhado)
-
-### 3.1 `@vanaware/syntaxmesh` — Domínio
-
-**Responsabilidade:** toda a inteligência sobre a linguagem.
-
-**O que possui:**
-- Parser de arquivos `.tjp` / `.tji` (baseado em Tree-sitter).
-- Definição da AST e seus tipos.
-- Tabelas de palavras-chave por idioma (`keywords.pt-br.ts`, `keywords.en.ts`, `keywords.es.ts`).
-- Regras semânticas (referências cruzadas `depends`/`precedes`, escopo de recursos, tarefas órfãs).
-- Resolução de idioma do arquivo/projeto.
-
-**O que NÃO possui:** qualquer menção a `Diagnostic`, `Hover`, `CompletionItem` ou protocolo LSP.
-
-**Exemplo de API pública (não exaustiva):**
-
-```ts
-// packages/core/mod.ts
-export type { AST, TaskNode, ResourceNode, /* ... */ } from "./ast/mod.ts";
-export { parse, parseProject } from "./parser/mod.ts";
-export { getKeywords, type Locale } from "./i18n/mod.ts";
-export { validate } from "./semantic/mod.ts";
-```
-
-**Quem consome:** `lsp-core` (para o LSP), CLI de lint, hooks de pre-commit, GitHub Actions, outros adaptadores futuros.
-
-### 3.2 `@vanaware/syntaxmesh/lsp-core` — Adaptador LSP
-
-**Responsabilidade:** **traduzir** conceitos do domínio para tipos do protocolo LSP. É a **única camada autorizada a conhecer o vocabulário do LSP**.
-
-**O que possui:**
-
-| Módulo | Função | Saída |
-|---|---|---|
-| `analyze.ts` | `analyzeDocument(uri, text, opts)` | `AnalysisResult` |
-| `diagnostics.ts` | `toDiagnostics(ast, errors)` | `Diagnostic[]` |
-| `hover.ts` | `getHover(ast, position)` | `Hover \| null` |
-| `completion.ts` | `getCompletions(ast, position, locale)` | `CompletionItem[]` |
-| `semantic-tokens.ts` | `getSemanticTokens(ast)` | `number[]` (formato LSP) |
-| `locale.ts` | `resolveLocale(uri, text)` | `"pt-br" \| "en" \| "es"` |
-
-**O que NÃO possui:**
-- Conexão LSP.
-- `TextDocuments` ou gerenciamento de ciclo de vida de documentos.
-- Conhecimento sobre stdin/stdout, pipes ou transportes.
-- Estado persistente global (o estado é passado explicitamente via parâmetros).
-
-**Dependências permitidas:** `@vanaware/syntaxmesh`, **`vscode-languageserver-types`** (somente tipos e constantes — pacote leve, zero dependência de Node).
-
-**Contrato principal:**
-
-```ts
-export interface AnalyzeOptions {
-  uri: string;
-  locale?: "pt-br" | "en" | "es" | "auto";
-  previous?: AnalysisResult;   // permite reuso incremental de AST
-  version?: number;
-}
-
-export interface AnalysisResult {
-  ast: AST;
-  diagnostics: Diagnostic[];
-  version: number;
-}
-
-export function analyzeDocument(
-  uri: string,
-  text: string,
-  opts: AnalyzeOptions,
-): AnalysisResult;
-```
-
-**Por que esse desenho:** permite que CLI, formatadores, extensões sem LSP e testes unitários consumam a mesma lógica sem subir um servidor. Testes do `lsp-core` rodam em milissegundos.
-
-### 3.3 `@vanaware/syntaxmesh-lsp` — Servidor LSP (objeto deste guia)
-
-**Responsabilidade:** **orquestração do protocolo LSP**. Nada de linguagem.
-
-**O que possui:**
-- Inicialização da conexão via stdio.
-- `TextDocuments` para sincronização incremental.
-- Registro de capabilities (`hoverProvider`, `completionProvider`, `semanticTokensProvider`, etc.).
-- **Cache por URI** de `AnalysisResult` (para reuso incremental).
-- Handlers que delegam **toda a lógica** ao `lsp-core`.
-
-**O que NÃO possui:**
-- Parser, AST, keywords, regras semânticas — nada disso mora aqui.
-- Importação de `@vanaware/syntaxmesh` (somente do subpath `lsp-core`).
+| 22.10.1 | `deno task --cwd packages/core/lsp-core test` verde | exit 0 |
+| 22.10.2 | `deno task --cwd packages/vscode check:all` verde | exit 0 |
+| 22.10.3 | `deno task --cwd packages/vscode test:unit` verde | exit 0 |
+| 22.10.4 | `deno task --cwd packages/vscode test:integration` verde | exit 0 |
+| 22.10.5 | `deno task --cwd packages/vscode package` gera `.vsix` válido | exit 0 |
+| 22.10.6 | ADR 033 commitado | git log |
+| 22.10.7 | `CURRENT.md` atualizado com "Fase 22 concluída; extensão VS Code + `lsp-core` disponíveis" | revisão |
 
 ---
 
-## 4. O que o servidor LSP **deve entregar** como solução
+## Notas para a IA
 
-O `syntaxmesh-lsp` deve entregar **cinco pilares funcionais**, cada um mapeado a uma capacidade LSP. **Implemente nesta ordem** — cada pilar depende do anterior estar estável.
-
-### 4.1. Diagnósticos em tempo real (obrigatório, MVP)
-
-**Capacidade LSP:** `textDocument/publishDiagnostics` (server → client, sem request).
-
-**Comportamento esperado:**
-- A cada `didOpen` / `didChange`, reanalisar o documento.
-- Publicar `Diagnostic[]` com: `range`, `severity`, `message`, `source: "syntaxmesh"`, `code` (para o usuário poder filtrar/suprimir por código).
-- Erros de **sintaxe** → `DiagnosticSeverity.Error`.
-- Erros semânticos (referência não resolvida) → `DiagnosticSeverity.Error`.
-- Avisos (task sem alocação, dependência circular suspeita) → `DiagnosticSeverity.Warning`.
-- Limpar diagnósticos quando o documento é fechado (`didClose`).
-
-**Mensagens de diagnóstico devem respeitar o idioma do arquivo** (via `resolveLocale` no `lsp-core`).
-
-### 4.2. Hover informativo (obrigatório)
-
-**Capacidade LSP:** `textDocument/hover`.
-
-**Comportamento:**
-- Ao passar o mouse sobre uma referência (ex.: nome de tarefa em `depends`), retornar um `Hover` com markdown: tipo de nó, atributos principais, localização da definição.
-- Retornar `null` quando não houver nada útil (nunca invente).
-
-### 4.3. Autocomplete contextual (obrigatório)
-
-**Capacidade LSP:** `textDocument/completion`, com `triggerCharacters: [".", ":"]`.
-
-**Comportamento:**
-- Sugerir **palavras-chave do idioma do arquivo** (via `lsp-core/completion.ts`).
-- Sugerir **nomes já definidos** no escopo atual (tarefas, recursos, contas).
-- Cada `CompletionItem` deve ter `kind` apropriado (`Keyword`, `Reference`, `Property`).
-
-### 4.4. Navegação semântica (recomendado)
-
-**Capacidades:** `textDocument/definition`, `textDocument/references`.
-
-**Comportamento:**
-- `definition` em referências → saltar para a declaração.
-- `references` em declarações → listar todos os usos no projeto.
-- Essas capacidades **exigem que o `lsp-core` já exponha** `getDefinition` / `getReferences`. Se ainda não existirem, **não implemente no servidor** — solicite ao mantenedor do core ou abra PR no `lsp-core` primeiro.
-
-### 4.5. Realce sintático semântico (recomendado)
-
-**Capacidade:** `textDocument/semanticTokens/full`.
-
-**Comportamento:**
-- Consumir `getSemanticTokens(ast)` do `lsp-core` e retornar `{ data: number[] }`.
-- Declarar a `legend` no `initialize` com `tokenTypes` estáveis (`keyword`, `type`, `variable`, `parameter`) — **sincronize com o `lsp-core`**, que precisa gerar índices correspondentes à mesma legend.
-
-### Fora de escopo (não implemente sem solicitação explícita)
-
-- Formatação (`textDocument/formatting`) — pertence ao core, não ao LSP.
-- Code actions (exceto se surgirem regras que as justifiquem).
-- Rename symbol — depende de suporte no core.
-- Workspace symbols — pode vir depois, mas não no MVP.
+1. **Ordem:** 22.0 → 22.1 → 22.2 → 22.3 → 22.4 → 22.5 → 22.6 → 22.7 → 22.8 →
+   22.9 → 22.10.
+2. **`lsp-core` primeiro.** Ele **não existe** — deve ser criado em 22.1 com a
+   API de §3.1. Não pule para 22.4 sem 22.1 verde.
+3. **`lsp-core` é adaptador puro.** Não importa `vscode-languageserver` nem
+   `Deno.stdin/stdout`. Testa em Deno puro.
+4. **`package.json` é manifesto**, não gerenciador de dependências.
+5. **LSP via Worker**, não stdio.
+6. **Motor em Worker separado** do LSP Worker.
+7. **TextMate grammar cobre PT/EN/ES.** Reusar conceitualmente Vim/Emacs/Kate.
+8. **`syntaxmesh.locale` não sobrescreve o arquivo.**
+9. **Testes de integração no VS Code Test Runner.**
+10. **Sem `any` em `src/`.**
+11. **Commit por subfase:** `feat(lsp-core): analyze`, `feat(lsp-core): diagnostics`,
+    `feat(vscode): scaffold`, `feat(vscode): lsp-client`,
+    `feat(vscode): schedule-command`, etc.
+12. **ADR 033** registrado antes de fechar 22.0.
+13. **`CURRENT.md` atualizado** ao final com "extensão VS Code + `lsp-core`
+    disponíveis".
 
 ---
 
-## 5. Contrato de integração `lsp → lsp-core`
+## Referências cruzadas
 
-Estas são as **únicas** chamadas que o servidor faz ao `lsp-core`. Se precisar de algo além, **é sinal de que falta API no `lsp-core`** — abra issue, não burle.
-
-```ts
-import {
-  analyzeDocument,     // → AnalysisResult (contém ast + diagnostics)
-  getHover,            // → Hover | null
-  getCompletions,      // → CompletionItem[]
-  getSemanticTokens,   // → number[]
-  resolveLocale,       // → "pt-br" | "en" | "es"
-} from "@vanaware/syntaxmesh/lsp-core";
-```
-
-**Fluxo típico:**
-
-```ts
-documents.onDidChangeContent(({ document }) => {
-  const previous = cache.get(document.uri);
-  const result = analyzeDocument(document.uri, document.getText(), {
-    uri: document.uri,
-    locale: "auto",          // resolveLocale é chamado internamente
-    previous,                // reuso incremental
-    version: document.version,
-  });
-  cache.set(document.uri, result);
-  connection.sendDiagnostics({ uri: document.uri, diagnostics: result.diagnostics });
-});
-
-connection.onHover(({ textDocument, position }) => {
-  const result = cache.get(textDocument.uri);
-  if (!result) return null;
-  return getHover(result.ast, position);
-});
-```
-
-**Note que o servidor nunca vê `AST` nem `TaskNode` diretamente** — ele só guarda a referência opaca e a repassa. Isso é proposital.
+- `docs/syntaxmesh/fases/fase-22-vscode.md` — plano desta fase
+- `docs/syntaxmesh/fases/fase-22-lsp.md` — plano anterior (LSP server; base
+  conceitual para o cliente)
+- `docs/syntaxmesh/fases/plano.md` — 21 fases canônicas
+- `docs/syntaxmesh/decisoes/033-extensao-vscode.md` — ADR desta fase
+- `docs/syntaxmesh/decisoes/030-arquitetura-simplificada.md` — pacotes
+- `docs/syntaxmesh/fases/fase-21-compatibilidade-qualidade.md` — corpus e golden
+- `docs/syntaxmesh/fases/fase-10-parser-linguagem.md` — parser e i18n
+- `docs/syntaxmesh/fases/fase-11-logica-queries.md` — `Query`
+- `taskjuggler-lsp` (C) — https://github.com/devrintalen/taskjuggler-lsp
+- `vim-taskjuggler` — https://github.com/kalafut/vim-taskjuggler
+- `taskjuggler-mode.el` — https://github.com/devrintalen/taskjuggler-mode.el
+- Kate syntax — https://invent.kde.org/sars/ktexteditor/-/commit/332b48e1
 
 ---
 
-## 6. Estrutura de pastas do pacote `packages/lsp`
-
-```
-packages/lsp/
-├── deno.json
-├── mod.ts                    # re-export (para embedding em outros runtimes)
-├── src/
-│   ├── connection.ts         # BrowserMessageReader/Writer sobre Deno.stdio
-│   ├── server.ts             # createConnection + registro de handlers
-│   ├── documents.ts          # TextDocuments + cache por URI
-│   ├── handlers/
-│   │   ├── diagnostics.ts
-│   │   ├── hover.ts
-│   │   ├── completion.ts
-│   │   ├── definition.ts     # se disponível no lsp-core
-│   │   ├── references.ts     # se disponível no lsp-core
-│   │   └── semantic-tokens.ts
-│   └── log.ts                # console.error wrapper (NUNCA console.log)
-├── bin/
-│   └── syntaxmesh-lsp.ts     # entrypoint CLI (stdio)
-└── tests/
-    ├── integration_test.ts   # spawn do binário + JSON-RPC de fumaça
-    └── fixtures/
-```
-
----
-
-## 7. `deno.json` de referência
-
-**`packages/lsp/deno.json`:**
-
-```json
-{
-  "name": "@vanaware/syntaxmesh-lsp",
-  "version": "0.1.0",
-  "exports": {
-    ".": "./mod.ts",
-    "./bin": "./bin/syntaxmesh-lsp.ts"
-  },
-  "imports": {
-    "@vanaware/syntaxmesh/lsp-core": "workspace:@vanaware/syntaxmesh/lsp-core",
-    "vscode-languageserver": "npm:vscode-languageserver@^9/browser",
-    "vscode-languageserver-textdocument": "npm:vscode-languageserver-textdocument@^1"
-  },
-  "tasks": {
-    "dev": "deno run --watch --allow-read --allow-env bin/syntaxmesh-lsp.ts",
-    "compile": "deno compile --allow-read --allow-env --output=./out/syntaxmesh-lsp bin/syntaxmesh-lsp.ts",
-    "test": "deno test --allow-read --allow-run"
-  }
-}
-```
-
-**Atenção aos detalhes:**
-- Use `vscode-languageserver@^9/browser`, **não** `/node`. O modo browser expõe `BrowserMessageReader/Writer`, que funcionam com `Deno.stdin.readable` e `Deno.stdout.writable`.
-- Permissões mínimas: `--allow-read` (fixtures/grammar WASM) e `--allow-env`. **Nunca** `--allow-all`.
-
----
-
-## 8. Bootstrap mínimo (referência)
-
-```ts
-// packages/lsp/bin/syntaxmesh-lsp.ts
-import { startServer } from "../src/server.ts";
-
-startServer().catch((err) => {
-  console.error("[syntaxmesh-lsp] fatal:", err);
-  Deno.exit(1);
-});
-```
-
-```ts
-// packages/lsp/src/server.ts
-import {
-  createConnection, TextDocuments, TextDocumentSyncKind,
-  BrowserMessageReader, BrowserMessageWriter,
-} from "vscode-languageserver";
-import { TextDocument } from "vscode-languageserver-textdocument";
-import { registerHandlers } from "./handlers/mod.ts";
-
-export async function startServer() {
-  const connection = createConnection(
-    new BrowserMessageReader(Deno.stdin.readable),
-    new BrowserMessageWriter(Deno.stdout.writable),
-  );
-
-  const documents = new TextDocuments(TextDocument);
-
-  connection.onInitialize(() => ({
-    serverInfo: { name: "syntaxmesh-lsp", version: "0.1.0" },
-    capabilities: {
-      textDocumentSync: TextDocumentSyncKind.Incremental,
-      hoverProvider: true,
-      completionProvider: { triggerCharacters: [".", ":"] },
-      definitionProvider: true,
-      referencesProvider: true,
-      semanticTokensProvider: {
-        legend: {
-          tokenTypes: ["keyword", "type", "variable", "parameter"],
-          tokenModifiers: [],
-        },
-        full: true,
-      },
-    },
-  }));
-
-  registerHandlers(connection, documents);
-  documents.listen(connection);
-  await connection.listen();
-}
-```
-
----
-
-## 9. Regras rígidas (violações são bugs)
-
-1. **`stdout` é sagrado.** Qualquer `console.log` no servidor corrompe o fluxo JSON-RPC e desconecta o cliente. Use **sempre** `console.error` (ou o wrapper `src/log.ts`) para debug.
-2. **Nunca importe `@vanaware/syntaxmesh` no `syntaxmesh-lsp`.** Só `@vanaware/syntaxmesh/lsp-core`.
-3. **Nunca coloque lógica de linguagem no LSP.** Se precisar de validação, adicione ao `lsp-core` (ou ao core, se for domínio puro).
-4. **Estado por URI vive em um único `Map`.** Não crie caches paralelos. Ao `didClose`, delete a entrada.
-5. **Handlers retornam `null` em caso de dúvida.** Não invente informação. Se `cache.get(uri)` retornar `undefined`, retorne `null` imediatamente.
-6. **Nunca bloqueie o event loop.** `analyzeDocument` deve ser rápido; se o parsing em arquivos grandes for custoso, mova para um `Worker` (`Deno.Worker`) — mas isso é decisão do core, não do LSP.
-7. **Capabilities precisam refletir handlers registrados.** Se `hoverProvider: true`, o handler `onHover` **precisa** existir. Caso contrário, o cliente trava esperando resposta.
-8. **Sempre propague `version` de `AnalysisResult`** para evitar respostas obsoletas em edições rápidas.
-
----
-
-## 10. Estratégia de testes (o que o CI deve garantir)
-
-### No `lsp-core` (roda em milissegundos, maioria dos testes)
-
-```ts
-// packages/core/lsp-core/diagnostics_test.ts
-import { analyzeDocument } from "./analyze.ts";
-
-Deno.test("referência a tarefa inexistente gera erro", () => {
-  const result = analyzeDocument("file:///x.tjp", `
-    task A { depends B }
-  `, { uri: "file:///x.tjp", locale: "en" });
-  assertEquals(result.diagnostics.length, 1);
-  assertEquals(result.diagnostics[0].severity, 1); // Error
-});
-```
-
-### No `syntaxmesh-lsp` (testes de fumaça, um por feature)
-
-```ts
-// packages/lsp/tests/integration_test.ts
-Deno.test("servidor responde a initialize e publica diagnósticos em didOpen", async () => {
-  const cmd = new Deno.Command("./out/syntaxmesh-lsp", {
-    stdin: "piped", stdout: "piped", stderr: "piped",
-  });
-  const proc = cmd.spawn();
-  // Enviar initialize → didOpen com conteúdo inválido → ler publishDiagnostics
-  // Assertar que a mensagem foi recebida com N diagnósticos.
-  // Finalizar com shutdown/exit.
-});
-```
-
-**Regra:** o servidor não deve ter testes que exercitem regras de linguagem. Um teste de fumaça por handler é suficiente — o comportamento já foi coberto no `lsp-core`.
-
----
-
-## 11. Checklist de entrega (o que "pronto" significa)
-
-O pacote `@vanaware/syntaxmesh-lsp` só é considerado **pronto para release 0.1.0** quando **todos** os itens abaixo são verdadeiros:
-
-- [ ] `packages/lsp/deno.json` no workspace do monorepo, com imports corretos.
-- [ ] `bin/syntaxmesh-lsp.ts` compilável via `deno task compile`.
-- [ ] Conexão stdio funcional: cliente VS Code (ou `nvim --headless`) inicia e recebe `initialize` com sucesso.
-- [ ] **Pilar 4.1 (diagnósticos)** funcionando em tempo real em `.tjp` e `.tji`.
-- [ ] **Pilar 4.2 (hover)** funcionando em referências.
-- [ ] **Pilar 4.3 (completion)** funcionando com palavras-chave no idioma do arquivo.
-- [ ] **Pilar 4.4 (definition/references)** funcionando (se `lsp-core` já expõe as APIs).
-- [ ] **Pilar 4.5 (semantic tokens)** funcionando (se `lsp-core` já expõe a API).
-- [ ] Suporte a **pt-br, en, es** validado em teste de integração (um arquivo por idioma).
-- [ ] `deno task test` no pacote `lsp` passando em CI.
-- [ ] `deno lint` e `deno fmt --check` limpos.
-- [ ] Nenhum `console.log` no código do servidor (checado por lint customizado ou grep no CI).
-- [ ] `stdout` limpo durante toda a sessão LSP (verificado em teste de integração).
-- [ ] Documentação em `packages/lsp/README.md`: como compilar, como plugar no VS Code, como plugar no Neovim.
-
----
-
-## 12. Como o mantenedor vai saber que está certo
-
-Ao final da implementação, o repositório deve permitir:
-
-1. **`deno task compile` em `packages/lsp`** produz um binário `out/syntaxmesh-lsp`.
-2. **Adicionar uma nova palavra-chave em pt-br** dentro de `packages/core/i18n/keywords.pt-br.ts` **não exige nenhuma alteração em `packages/lsp`** — o servidor já passa a reconhecê-la na próxima compilação. Este é o **teste definitivo** de que a separação de camadas está correta.
-3. **Um teste do `lsp-core`** pode ser escrito em ~5 linhas para qualquer nova regra semântica, rodando em milissegundos.
-4. **Trocar `vscode-languageserver` por outra lib** (ex.: `tower-lsp` via binding Rust) seria possível mexendo apenas em `packages/lsp/src/connection.ts` e nos handlers — `lsp-core` não muda uma vírgula.
-
----
-
-## 13. Perguntas que **não devem ser feitas** ao implementar
-
-- ❌ "Como faço o parser do SyntaxMesh dentro do LSP?" → **Você não faz.** Importe `analyzeDocument` do `lsp-core`.
-- ❌ "Onde coloco a tabela de palavras-chave em pt-br?" → **No core**, `packages/core/i18n/`. Nunca no LSP.
-- ❌ "Como mapeio um erro do parser para `Diagnostic`?" → Já está em `lsp-core/diagnostics.ts`. Se não estiver, adicione **lá**.
-- ❌ "Como detecto o idioma do arquivo?" → `resolveLocale` do `lsp-core`.
-- ❌ "Posso usar `vscode-languageserver/node` para simplificar?" → **Não.** Use `/browser` com streams do Deno.
-
-Se a resposta para uma pergunta de implementação não estiver clara neste guia, **o problema é de contrato entre camadas**, não do LSP. A resposta correta, nesses casos, é: **abrir uma discussão sobre a API do `lsp-core`** — nunca implementar a lógica de linguagem dentro do servidor.
-
-
+**Fim das tarefas da Fase 22 (extensão VS Code + `lsp-core`).**
 ````
 
 ---
@@ -56285,9 +58586,10 @@ Tarefas: `docs/syntaxmesh/fases/fase-8.2-tarefas.md`.
 | 10-C | core | — (extensões RDO/orçamento/timebasis) | **Alta** | ✅ Concluída (2026-10-27; Blocos C0–C4; adendos nas fases 13/14/16/18/19/20/21 permanecem p/ fases futuras) |
 | 11 | core | LogicalExpression, LogicalOperation, LogicalFunction, Query, SimpleQueryExpander | **Crítica** | ✅ Concluída (2026-10-27; motor lógico + Query + expander testados; 11.12/11.13 de queries parcialmente bloqueados — métodos `query_*` concretos dependem de scheduling/finance) |
 | 11-C | core | — (extensões: funções/atributos/flags lógicas de material/charge + registrar funções-doc) | **Alta** | 🟡 Em andamento (`fase-11-logical-complemento.md`; 1ª onda 2026-10-27: LC-A/LC-B/LC-D + LF.1. **2ª onda §6.9 executada 2026-10-27**: G1–G5 — `TaskScenario#getAllocatedTime` portado, 10 funções de datas/alocações/material implementadas, `flags` no parser de material habilitado. **§6.10: G1.4 ancorado + review (a)–(g) aplicado** — `Project#dateToIdx` corrigido fiel ao Ruby, semânticas estritas (id inválido, agenda parcial, limiar de alocação); sobem só bloqueios reais ancorados nas Fases 14/16/18/21) |
-| 12 | core (richtext) | RichText, RichText/* | **Alta** | ⬜ Não iniciada |
-| 13 | core (markdown) | — | Baixa (futuro) | ⬜ Não iniciada (adendo 13.14) |
-| 14 | core (report) | reports/* | **Crítica** | ⬜ Não iniciada (adendos 14.25, 14.26) |
+| 12 | core (richtext) | RichText, RichText/* | **Alta** | ✅ Concluída (2026-10-29, 12.0–12.20; G5 `to_rti`/`to_tjp` re-ancorado e entregue na Fase 14) |
+| 13 | core (markdown) | — | Baixa (futuro) | ✅ Concluída (2026-10-29, 13.0–13.13; 13.14 parcial — `objectURL`/render dependem das Fases 19/10-C) |
+| 14 | core (report) | reports/* | **Crítica** | ✅ Concluída (2026-10-31, 14.0–14.24; adendos 14.25/14.26 transferidos p/ Fase 14-C) |
+| 14-C | core (report) | MspXmlRE.rb + extensões SyntaxMesh (material/picture/RDO/markdown) | **Alta** | 🟡 planejada (`fase-14-relatorios-complemento.md` + `-tarefas.md`; Blocos C0–C7; bring-forwards do Journal/alert-levels [F16] justificados no §6) |
 | 15 | core (report) | Gantt* | **Alta** | ⬜ Não iniciada |
 | 16 | core | Journal, AlertLevelDefinitions, LeaveList, TernarySearchTree, etc. | **Alta** | ⬜ Não iniciada (adendo 16.21) |
 | 17 | core (report) | XMLDocument, XMLElement, HTMLDocument, HTMLElements, ICalendar | **Média** | ⬜ Não iniciada |

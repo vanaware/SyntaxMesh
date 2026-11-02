@@ -1,0 +1,99 @@
+# 14C.7.5 — Fixture do smoke test da Fase 14 Complemento.
+#
+# Projeto mínimo que exercita, de uma só vez, os quatro consumidores do
+# complemento verificados ponta-a-ponta pelo smoke:
+#   - `materialreport` (14C.1) — materiais com unit/unitprice e quantidade
+#     derivada das alocações (14C.11.10);
+#   - `breakdownreport` (14C.2) — contribuintes de material por conta;
+#   - `rdoreport` (14C.3) — diário por data com galeria de pictures;
+#   - `export` MSPDI (14C.4) — material como `<Resource>`.
+#
+# Todas as saídas são strings em memória (ADR 027): o smoke test não toca o
+# disco. Mantido separado de `14c-rdo-budget.tjp` para que o snapshot de
+# extensões (`reports-extensions.golden.json`) permaneça byte-estável.
+
+project smoke "Smoke 14C" "1.0" 2026-01-01 - 2026-12-31 {
+  timezone "UTC"
+  timeformat "%Y-%m-%d"
+  now 2026-02-02
+  currency "EUR"
+}
+
+account obras "Obras" {
+  aggregate tasks
+}
+
+# Custo de material exige uma conta que agregue materiais (como no
+# `14c-rdo-budget.tjp`); a conta de tarefas não pode receber chargeset de
+# material.
+account mat_costs "Materiais" {
+  aggregate materials
+}
+
+material aco "Aço" {
+  unit "kg"
+  unitprice 2.5
+  chargeset mat_costs 100%
+  journalentry 2026-01-05 "Chegada do aço" {
+    summary "Lote 1 recebido no canteiro"
+    picture "img/aco.png" {
+      caption "Estoque de aço"
+    }
+  }
+}
+
+material cimento "Cimento" {
+  unit "saco"
+  unitprice 12
+  chargeset mat_costs 100%
+}
+
+resource equipe "Equipe" {
+  resource pedro "Pedro" {
+  }
+}
+
+task obra "Obra" {
+  start 2026-02-02
+  effort 5d
+  chargeset obras 100%
+  allocate pedro
+  material aco 100
+  material cimento 20
+  journalentry 2026-02-03 "Início da obra" {
+    summary "Canteiro montado"
+    picture "img/obra.png" {
+      caption "Vista do canteiro"
+    }
+  }
+}
+
+materialreport mr "Materiais" {
+  formats html, csv, json
+}
+
+breakdownreport br "Breakdown de Obra" {
+  groupby account
+  period 2026-01-01 - 2026-12-31
+  formats html, json
+  columns bsi, name, materials, charges
+}
+
+rdoreport rdo "Diário de Obra" {
+  period 2026-02-01 - 2026-03-31
+  groupby date
+  maxpictures 5
+  journalattributes headline, date, summary
+  journalmode journal
+  formats html, json
+}
+
+# Adendo §10 (14C.8): alias `md<tipo>report` — mesmo bloco de materiais, com
+# `formats markdown` como default herdado.
+mdmaterialreport mdm "Materiais (Markdown)" {
+}
+
+export "MS Project" {
+  formats mspxml
+  loadunit days
+}

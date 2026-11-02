@@ -1,5 +1,5 @@
 import { beforeEach, describe, it, } from "@std/testing/bdd";
-import { assertEquals, assertThrows, } from "@std/assert";
+import { assert, assertEquals, } from "@std/assert";
 import { AttributeBase, } from "../../src/attributes/attribute-base.ts";
 import { AttributeDefinition, } from "../../src/attributes/attribute-definition.ts";
 import { AttributeType, } from "../../src/attributes/attribute-type.ts";
@@ -7,7 +7,6 @@ import { MockContainer, } from "./mock-container.ts";
 import { PropertyAttribute, } from "../../src/attributes/reference/property-attribute.ts";
 import { AccountAttribute, } from "../../src/attributes/reference/account-attribute.ts";
 import { ReferenceAttribute, } from "../../src/attributes/reference/reference-attribute.ts";
-import { NotYetImplementedError, } from "../../src/attributes/errors.ts";
 
 class TestPropertyAttribute extends PropertyAttribute {
   constructor(
@@ -178,8 +177,16 @@ describe("ReferenceAttributes", () => {
       assertEquals(ReferenceAttribute.tjpId, "reference",);
     });
 
-    it("to_rti lança NotYetImplementedError", () => {
-      assertThrows(() => attr.to_rti(), NotYetImplementedError,);
+    it("to_rti gera um link RichText '[url label]'", () => {
+      attr.set({ url: "https://example.com", label: "Docs", },);
+      const rti = attr.to_rti() as { to_s(): string } | null;
+      assert(rti !== null, "RTI esperado",);
+      assert(rti!.to_s().includes("Docs",), rti!.to_s(),);
+    });
+
+    it("to_rti sem valor retorna null", () => {
+      container.setStoredValue("reference", null,);
+      assertEquals(attr.to_rti(), null,);
     });
   });
 });

@@ -17,6 +17,7 @@
 import { TjTime, } from "../../time/tj-time.ts";
 import { RealFormat, } from "../../format/real-format.ts";
 import { Project, } from "../../model/project.ts";
+import type { CostType, } from "../../model/account.ts";
 import { Journal, } from "../../model/journal.ts";
 import { Leave, } from "../../model/leave.ts";
 import { ScoreboardInterval, } from "../../time/scoreboard-interval.ts";
@@ -66,6 +67,10 @@ export function registerProjectRules(p: ProjectFileParser,): void {
     p.pattern(
       ["!projectProlog", "!projectDeclaration", "!properties", ".",],
       function (this: ProjectFileParser,): unknown {
+        // Referências futuras de booking de material (14C.11.5): o corpo do
+        // material pode citar uma tarefa declarada depois, então a ligação só
+        // pode ser feita com o arquivo inteiro lido.
+        this.project?.flushPendingBookings();
         return this.val[1];
       },
     );
@@ -152,6 +157,19 @@ export function registerProjectRules(p: ProjectFileParser,): void {
     p.optionsRule("projectBodyAttributes",);
   },);
 
+  // Tipo opcional de `defaultaccount`: ausente = conta universal. As keywords
+  // `material`/`resource`/`charge` só são consultadas nesta regra (depois de
+  // `defaultaccount`), então não colidem com outros blocos.
+  rule(p, "defaultAccountType", () => {
+    p.optional();
+    p.pattern(["_material",], () => "material" as CostType,);
+    p.descr("Default account for material costs.",);
+    p.pattern(["_resource",], () => "resource" as CostType,);
+    p.descr("Default account for resource effort costs.",);
+    p.pattern(["_charge",], () => "task" as CostType,);
+    p.descr("Default account for task charge costs.",);
+  },);
+
   rule(p, "projectBodyAttributes", () => {
     p.repeatable();
     p.optional();
@@ -214,6 +232,36 @@ export function registerProjectRules(p: ProjectFileParser,): void {
     );
     p.doc("currency", "The default currency unit.",);
     p.arg(1, "symbol", "Currency symbol",);
+
+    // defaultaccount (extensão SyntaxMesh — adendo §10 / 14C.9): conta que
+    // recebe a regra 4 de `resolveAccount`. A forma sem tipo é a universal;
+    // as variantes por tipo têm precedência sobre ela.
+    p.pattern(
+      ["_defaultaccount", "!defaultAccountType", "$ID",],
+      function (this: ProjectFileParser,): unknown {
+        const type = this.val[1] as CostType | null;
+        const id = String(this.val[2],);
+        const project = this.project;
+        if (!project) return null;
+        // Guarda o ID (não a conta): o bloco `project` precede as declarações
+        // de `account`, então a resolução é feita sob demanda em
+        // `Project#defaultAccountFor`.
+        if (type === null) {
+          project.defaultAccountId = id;
+        } else {
+          project.defaultAccountIds.set(type, id,);
+        }
+        return null;
+      },
+    );
+    p.doc(
+      "defaultaccount",
+      "Account that receives costs which have no explicit account, no " +
+        "charge-set of the origin and no charge-set of the task. The " +
+        "per-type forms (material, resource, charge) take precedence over " +
+        "the universal one.",
+    );
+    p.arg(1, "account", "The absolute ID of an already defined account",);
 
     p.pattern(
       ["_dailyworkinghours", "!number",],
