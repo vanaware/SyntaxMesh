@@ -90,6 +90,14 @@ export class TaskScenario extends ScenarioData {
   private _gauge: string | null = null;
   private _errors: number = 0;
   private _scheduled: boolean = false;
+  // Guarda própria do passe de *finish* (recursão bottom-up + mescla de
+  // `assignedresources`). Separada de `_scheduled` porque `markAsScheduled()`
+  // já eleva `_scheduled` durante o passe principal, o que faria o guard de
+  // `_scheduled` anular o housekeeping aqui. `Project#finishScenario` chama
+  // `finishScheduling` uma vez por cenário (Ruby não tem guard — a árvore é
+  // percorrida uma vez); `_finishDone` replica esse "uma vez" com segurança
+  // frente à re-entrância de `propagateDateToDep`.
+  private _finishDone: boolean = false;
   private _durationType: string = "";
   /**
    * timebasis efetivo resolvido (§2.4), calculado em prepareScheduling()
@@ -2154,11 +2162,65 @@ export class TaskScenario extends ScenarioData {
   }
 
   /**
-   * Finish scheduling: compute completion and status.
+   * Finish scheduling: recursively descend into child tasks, compute
+   * completion/status/gauge, propagate dates and merge this task's assigned
+   * resources into every immediate parent (faithful to TaskScenario.rb).
    */
   finishScheduling(): void {
-    if (this._scheduled) return;
+    const task = this.getProperty() as Task;
+    const scIdx = this.getScenarioIdx();
 
+    // Ruby TaskScenario.rb:410-430 — o passe de finish desce nos filhos
+    // primeiro (bottom-up) e mescla os `assignedresources` desta tarefa em
+    // cada pai imediato, com dedupe. Idempotente pela flag `_finishDone`
+    // (a recursão abaixo só corre uma vez por tarefa).
+    if (!this._finishDone) {
+      // l.411-414: como os filhos terminam antes, a união já chega mesclada
+      // a este container e sobe um nível a cada chamada até a raiz.
+      for (const child of task.kids()) {
+        if (!(child instanceof Task)) continue;
+        child.scenarioData(scIdx,).finishScheduling();
+      }
+
+      // l.416-423: mescla os recursos designados desta tarefa na lista
+      // `assignedresources` de cada pai imediato (dedupe). Como os filhos já
+      // terminaram, `this.a("assignedresources")` já embute a união dos
+      // descendentes. Fecha a divergência 14C.12.4.
+      // Obs.: o nullify de `@candidates/@mandatories/@allLimits` (Ruby
+      // l.427-429) é só liberação de memória / detector de uso acidental;
+      // `limitsOk()` lê `allocation.candidates`, então não os anulamos aqui
+      // (sem diferença de resultado).
+      const assigned = (this.a("assignedresources",) as Resource[]) ?? [];
+      if (assigned.length > 0) {
+        for (const pTask of task.parents()) {
+          // `getForScenario` devolve `null` quando o pai (container) ainda não
+          // tem `assignedresources` gravado — o default de lista não é
+          // materializado. Coleta, mescla com dedupe e **grava de volta** via
+          // `forceForScenario` (escrita de runtime, um único cenário, sem a
+          // iteração cross-scenario de `setForScenario` no modo 0).
+          const parentList = (pTask.getForScenario(
+            "assignedresources",
+            scIdx,
+          ) as Resource[]) ?? [];
+          let changed = false;
+          for (const resource of assigned) {
+            if (!parentList.includes(resource,)) {
+              parentList.push(resource,);
+              changed = true;
+            }
+          }
+          if (changed) {
+            pTask.forceForScenario("assignedresources", parentList, scIdx,);
+          }
+        }
+      }
+      this._finishDone = true;
+    }
+
+    // Housekeeping de conclusão (guard pré-existente): mantém a semântica
+    // original — corre uma única vez e apenas para tarefas ainda não marcadas
+    // como agendadas (containers nunca passam por `markAsScheduled`).
+    if (this._scheduled) return;
     this.calcCompletion();
     this.calcStatus();
     this.calcGauge();

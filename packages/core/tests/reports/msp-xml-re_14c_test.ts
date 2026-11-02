@@ -96,7 +96,7 @@ function assignmentFor(
 describe("MspXmlRE — extensões MSPDI (14C.4)", () => {
   describe("recursos de material e de custo (14C.4.2/14C.4.4)", () => {
     it("exporta Material como <Resource> Type 0 com label, rate e notas", () => {
-      const steel = resourceNamed(generate(), "steel",);
+      const steel = resourceNamed(generate(), "Aço",);
       // 0 = material na tabela oficial do elemento Type (ver nota do módulo).
       assertEquals(field(steel, "Type",), "0",);
       assertEquals(field(steel, "MaterialLabel",), "kg",);
@@ -121,7 +121,7 @@ describe("MspXmlRE — extensões MSPDI (14C.4)", () => {
   describe("atribuições de material e de custo (14C.4.3/14C.4.4)", () => {
     it("liga atribuição de material por TaskUID/ResourceUID com Units e Cost", () => {
       const xml = generate();
-      const a = assignmentFor(xml, "Design", "steel",);
+      const a = assignmentFor(xml, "Design", "Aço",);
       assertEquals(field(a, "Units",), "200.0",);
       // 200 kg × 2,5 €/kg.
       assertEquals(field(a, "Cost",), "500.0",);
@@ -193,7 +193,7 @@ describe("MspXmlRE — extensões MSPDI (14C.4)", () => {
 
   describe("<TimephasedData> estendido (14C.4.8)", () => {
     it("emite série de custo (Type 6) por dia na atribuição de material", () => {
-      const a = assignmentFor(generate(), "Design", "steel",);
+      const a = assignmentFor(generate(), "Design", "Aço",);
       const series = blocks(a, "TimephasedData",);
       assertEquals(series.length, 5,);
       for (const td of series) {
@@ -280,7 +280,7 @@ describe("MspXmlRE — extensões MSPDI (14C.4)", () => {
       // O atributo `hideMaterial` chega com 14C.6; até lá o filtro é inerte e o
       // material precisa continuar exportado.
       const xml = generate();
-      assert(xml.includes("<Name>steel</Name>",),);
+      assert(xml.includes("<Name>Aço</Name>",),);
     });
   });
 });

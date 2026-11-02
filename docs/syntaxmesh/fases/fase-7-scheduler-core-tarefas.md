@@ -1025,14 +1025,21 @@ caminho só roda com `@start`/`@end` já definidos.
 `PENDING_SCHEDULER_FILES` em `tests/golden/reports_golden_test.ts` ficou
 **vazio** e o arquivo passou a ser comparado contra o oracle Ruby (112 passos
 verdes). Nenhum golden precisou ser regenerado (as saídas já batiam).
-- **Divergência registrada, não corrigida (14C.12.4).** O `finishScheduling`
-do Ruby (`TaskScenario.rb:410-430`) recursa nos filhos, mescla
-`assignedresources` no pai e anula as listas de candidatos, terminando em
-`markAsScheduled`; o port calcula `calcCompletion`/`calcStatus`/`calcGauge`,
-chama `propagateDateToDep()` e grava `_scheduled = true`. Nenhum golden da
-suíte depende da diferença hoje, mas o port **não** faz a mesclagem de
-`assignedresources` no container — fica registrado aqui para quem retomar o
-scheduler (Fase 15/Gantt ou revisão dedicada).
+- **Divergência ELIMINADA (14C.12.4).** O `finishScheduling` do Ruby
+(`TaskScenario.rb:410-430`) recursa nos filhos, mescla `assignedresources` no
+pai e anula as listas de candidatos. Em 14-C (Onda A1) o port passou a
+**espelhar fielmente** este passe: `finishScheduling()` desce nos filhos primeiro
+(bottom-up) e mescla, com dedupe, os `assignedresources` de cada tarefa na lista
+de cada pai imediato (via `forceForScenario`), de modo que a união transita pelo
+container até a raiz. O guard de idempotência é uma flag própria `_finishDone`
+(separada de `_scheduled`, que `markAsScheduled()` já eleva durante o passe
+principal — o guard antigo anulava o housekeeping). O nullify de
+`@candidates/@mandatories/@allLimits` (Ruby l.427-429) é deliberadamente omitido:
+é só liberação de memória / detector de uso acidental, e `limitsOk()` lê
+`allocation.candidates`, então não há diferença de resultado.
+- **Evidência:** `tests/scheduling/finish-scheduling-assignedresources_14c_test.ts`
+(4 passos: união com dedupe, transitividade bottom-up, leaf isolado, e invariante
+ponta-a-ponta após `project.schedule()`).
 
 **A Fase 7 segue concluída; a 14C.12 não alterou escopo, só documentou e
 corrigiu o null-deref da propagação de datas.**

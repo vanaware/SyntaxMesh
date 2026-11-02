@@ -608,9 +608,9 @@ function validateStockBookings(parser: ProjectFileParser,): void {
 /**
  * Cria o Material de uma declaração `material <id> "<nome>" { ... }` (equivalente
  * ao antigo `materialHeader`), com o bloco externo como pai. Roda ANTES do corpo
- * para que os atributos aninhados se anexem ao material recém-criado. Preserva o
- * comportamento original: o identificador endereço o material e o `name` base
- * espelhado em `AttributeBase` é o próprio ID.
+ * para que os atributos aninhados se anexem ao material recém-criado. O
+ * identificador endereço o material (fica como `id`), e o `"<nome>"` citado passa
+ * a ser o `name` base do material (rótulo legível) — fecha a pendência 14C.1.14.
  */
 function createMaterial(
   parser: ProjectFileParser,
@@ -618,9 +618,8 @@ function createMaterial(
   name: string,
 ): void {
   const project = parser.project!;
-  // Materiais precisam de ID endereçável (alocações os referenciam). O nome
-  // citado é aceito pela gramática, mas o ID continua sendo o identificador.
-  void name;
+  // Materiais precisam de ID endereçável (alocações os referenciam). O ID é o
+  // identificador; o `name` citado vira o rótulo (`label`) do material.
   if (project.material(id,)) {
     parser.error(
       "material_exists",
@@ -636,6 +635,7 @@ function createMaterial(
     0,
     undefined,
     parser.property as Material | null,
+    name,
   );
   parser.property.sourceFileInfo = parser.sourceFileInfo[0] ?? null;
   parser.property.inheritAttributes();

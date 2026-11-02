@@ -108,7 +108,7 @@ describe("C18.2 células de estoque no materialreport", () => {
         ["stockquantity", "Stock Quantity",],
         ["stockcost", "Stock Cost",],
       ],),
-      [1, "steel", 400, 4000,],
+      [1, "Steel", 400, 4000,],
     );
   });
 
@@ -124,7 +124,7 @@ describe("C18.2 células de estoque no materialreport", () => {
         ["stockquantity", "Stock Quantity",],
         ["stockcost", "Stock Cost",],
       ],),
-      [1, "steel", 50, 700,],
+      [1, "Steel", 50, 700,],
     );
   });
 
@@ -140,7 +140,7 @@ describe("C18.2 células de estoque no materialreport", () => {
         ["stockquantity", "Stock Quantity",],
         ["stockcost", "Stock Cost",],
       ],),
-      [1, "steel", 500, 5000,],
+      [1, "Steel", 500, 5000,],
     );
   });
 
@@ -151,7 +151,7 @@ describe("C18.2 células de estoque no materialreport", () => {
         ["stockquantity", "Stock Quantity",],
         ["stockcost", "Stock Cost",],
       ],),
-      [1, "steel", 0, 0,],
+      [1, "Steel", 0, 0,],
     );
   });
 

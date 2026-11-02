@@ -476,11 +476,15 @@ integração futura apareça como diff explícito.
 >   contrário — a diferença é o teste que separa hide de rollup.
 > - A negação lógica do TJP é `~` (`~isleaf()`); `!` é token de outro contexto
 >   e produz `no_reduce`.
-> - **Divergência pré-existente encontrada (não corrigida aqui):** `Material`
->   espelha `name`/`id` no `AttributeBase` (14C.1.14), então o nome exibido é o
->   **id** — o TJP exporta `material aco "aco"` e o MSPDI emite
->   `<Name>aco</Name>`, não o `$STRING` do bloco. O texto do cabeçalho só é
->   preservado para task/resource/account.
+> - **Divergência RESOLVIDA (14C.1.14, Onda A2):** antes o `Material` espelhava o
+>   **id** no `name` do `AttributeBase`, então o TJP exportava `material aco "aco"`
+>   e o MSPDI/report exibiam o id. Agora o construtor recebe o `label` do cabeçalho
+>   (`material <id> "<rótulo>"`) e o parser o repassa: `Material#name` = rótulo
+>   legível, `Material#id` permanece o identificador; sem rótulo declarado cai no id
+>   (compatível com `material steel` sem aspas). Consequência: colunas `name` do
+>   materialreport, `<Name>` do MSPDI, `[[...]]` de breakdown/RDO, markdown e o
+>   round-trip TJP (`material aco "Aço" {`) passam a mostrar o rótulo. Testes e o
+>   golden `reports-extensions` foram atualizados/regenerados só por essa mudança.
 
 ---
 

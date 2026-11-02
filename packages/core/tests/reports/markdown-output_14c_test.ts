@@ -187,7 +187,7 @@ describe("markdown nos conteúdos da 14C (14C.8)", () => {
       md.includes("| No. | Name | Unit | Unit Price | Total Cost |",),
       md,
     );
-    assert(md.includes("| aco |",), md,);
+    assert(md.includes("| Aço |",), md,);
     assert(md.includes("| ---: |",), md,);
   });
 

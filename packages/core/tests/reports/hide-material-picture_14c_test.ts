@@ -330,7 +330,7 @@ describe("14C.6.8 material oculto nas exportações", () => {
     activate(project, tjpReport,);
     const tjp = new TjpExportRE(tjpReport,).to_tjp();
 
-    assert(tjp.includes('material aco "aco" {',), `TJP:\n${tjp}`,);
+    assert(tjp.includes('material aco "Aço" {',), `TJP:\n${tjp}`,);
     assert(tjp.includes("material aco 2",), `alocação visível:\n${tjp}`,);
     assert(!tjp.includes("cimento",), `material oculto no TJP:\n${tjp}`,);
 
@@ -344,7 +344,7 @@ describe("14C.6.8 material oculto nas exportações", () => {
     activate(project, mspReport,);
     const xml = new MspXmlRE(mspReport,).to_mspxml();
 
-    assert(xml.includes("<Name>aco</Name>",), `MSPDI:\n${xml}`,);
+    assert(xml.includes("<Name>Aço</Name>",), `MSPDI:\n${xml}`,);
     assert(!xml.includes("cimento",), `recurso oculto no MSPDI:\n${xml}`,);
   });
 });

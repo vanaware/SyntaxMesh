@@ -7,7 +7,7 @@
 
 # Exported Context from Project SyntaxMesh - Mode: DOCS
 
-Automatically generated at: 2026-11-02T17:56:39.773Z
+Automatically generated at: 2026-11-02T19:34:37.845Z
 
 ---
 
@@ -22700,6 +22700,24 @@ integração futura apareça como diff explícito.
 | 14C.17.3 | Segundo `scenario` top-level limpa os anteriores (`clearProperties` quando `!this.property`) | idem — 1 step (só s2 sobrevive) |
 | 14C.17.4 | Tabela “Diferenças prováveis” do §12 corrigida com nota de confirmação e evidência Ruby (`PropertyTreeNode.rb:294-303`); §13.5 mantém-se como fonte canônica | diff em `fase-14-relatorios-complemento.md` |
 
+## 14C.18 — Colunas de estoque `stockquantity`/`stockcost` (pendência §13.7)
+
+| # | Tarefa | Arquivos | Verificação |
+|---|--------|----------|-------------|
+| 14C.18.1 | Keywords `stockquantity`/`stockcost` no i18n (canonical + pt-BR + es) | `i18n/canonical.ts`, `i18n/pt-BR.ts`, `i18n/es.ts` | parser + golden i18n |
+| 14C.18.2 | Parser: `singlePattern` em `reportableAttributes` (com `descr`) + títulos em `MATERIAL_COLUMN_TITLES` | `parser/rules/report.ts` | 2 testes |
+| 14C.18.3 | `TableReport`: metadados (`materialPropertiesById`, `materialNumericColumns`), `defaultColumnTitle` como segundo dicionário, casos de célula em `genMaterialCell` + helpers de período/soma | `reports/table-report.ts` | 5 testes |
+| 14C.18.4 | Limpeza da pendência §13.7: apagar o órfão `ExtendedBooking` (Fase 8.1), sem instanciadores no parser/engine; `ChargeBooking` fica como fonte única do booking de charge (merge descartado — formas incompatíveis) | `model/extended-booking.ts` (delete), `model/mod.ts`, comentário `model/charge-booking.ts` | `deno check` + suíte sem o teste órfão |
+
+#### Evidências 14C.18.1–14C.18.4 (preenchido 2026-11-02)
+
+| # | Implementação | Verificação |
+|---|---------------|-------------|
+| 14C.18.1 | `"stockcost"`/`"stockquantity"` em `canonical.ts`; pt-BR `custoestoque`/`quantidadeestoque`; es `costoexistencias`/`cantidadexistencias` | `columns stockquantity, stockcost` parseia limpo (`tests/reports/stock-columns_14c_test.ts` — 1 step); keyword desconhecida rejeitada — 1 step |
+| 14C.18.2 | Par `_stockquantity`/`_stockcost` no fim de `reportableAttributes` (após os itens da 10-C) com `descr()`; títulos “Stock Quantity”/“Stock Cost” em `MATERIAL_COLUMN_TITLES` | idem — 1 step (ids e títulos das colunas parseadas) |
+| 14C.18.3 | Σ algébrico dos bookings `isInventory()` com data em `[start, end]` (`stockBookingsInPeriod`); preço efetivo `booking.cost()` (booking → material); `defaultColumnTitle` consulta `materialPropertiesById` após `propertiesById` | idem — 5 steps (soma 400/4000, precedência 50/700, recorte de período 500/5000, sem movimentos 0/0, booking com tarefa não entra) |
+| 14C.18.4 | `ExtendedBooking` + teste + re-export removidos; comentário de `ChargeBooking` atualizado para "fonte única" | `deno check packages/core/mod.ts` limpo; suíte core verde sem as 7 etapas do teste órfão |
+
 ---
 
 ## Notas de conclusão
@@ -22710,7 +22728,12 @@ integração futura apareça como diff explícito.
 - **Divergências rastreadas (não corrigidas):** `Material#name` espelha o id
   (14C.6.8) — TJP/MSPDI mostram `aco`, não o texto do cabeçalho;
   `name`/`projectid`/`version` do projeto não são consultáveis por `query`
-  (14C.5); `columns unit|unitprice|totalcost` via `.tjp` (acima).
+  (14C.5); `columns unit|unitprice|totalcost` via `.tjp` continua rejeitado
+  por `reportableAttributes` (os keywords não são `singlePattern`) — o que C18
+  resolveu foi o **título**: `defaultColumnTitle` passou a consultar
+  `materialPropertiesById`, então toda coluna de material aceita em `.tjp`
+  (inclusive as novas de estoque) sai cabeçada também fora do
+  `materialreport`.
 - **Vereditos da 14C.1.15–1.18:** `resourcereport`, `icalendar`/`niku`/`tagfile`/
   `chartplotter` e as grades `Calendar` não listam material (decisão);
   `htmlstatusreport`/`xmlreport` não existem no TJ 3.8.4 e o requisito
@@ -22737,7 +22760,7 @@ integração futura apareça como diff explícito.
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-14-relatorios-complemento.md`
 > **Tarefas:** `docs/syntaxmesh/fases/fase-14-relatorios-complemento-tarefas.md`
-> **Status:** ✅ concluída — C0 ✅ 2026-10-31 · C1–C7 ✅ 2026-11-01 (450 testes / 4841 passos) · adendo §10 → C8–C12 ✅ 2026-11-01 (472 testes / 4909 passos) — ver §11 · adendo extra §12 → C13–C17 ✅ 2026-11-02 (480 testes / 4926 passos) — ver §13
+> **Status:** ✅ concluída — C0 ✅ 2026-10-31 · C1–C7 ✅ 2026-11-01 (450 testes / 4841 passos) · adendo §10 → C8–C12 ✅ 2026-11-01 (472 testes / 4909 passos) — ver §11 · adendo extra §12 → C13–C17 ✅ 2026-11-02 (482 testes / 4934 passos, incl. a revisão de `booking charge`) — ver §13 · pendência §13.7 → C18 ✅ 2026-11-02 — ver §14
 > **Duração estimada:** 8–12 dias
 > **Depende de:** Fases 8.1/8.2 (material + modelo contábil), 10 Complemento (parser reconhece `material`/`picture`/`format`/`breakdownreport`/`rdoreport`), 11 (motor lógico/Query), 12 (RichText), 13 (Markdown), 14 (pipeline de relatórios — concluída 2026-10-31)
 > **Bloqueia:** adendos de UI (Fase 20) que exibem RDO/breakdown; nada no núcleo 15/16/17
@@ -23460,7 +23483,7 @@ syntax novo não aparece em fixture existente.
 - **`booking charge`** — implementado do zero nas três origens, armazenado no
   atributo de cenário `chargebookings` da **tarefa** (o dinheiro é da tarefa,
   quem declara é o outro lado), com a mesma fila de referência futura de
-  `pendingBookings`. **Revisão 2026-11-02 (decisão do dono):** no corpo da
+  `pendingBookings`. **Revisão 2026-11-02 (decisão do usuário):** no corpo da
   tarefa **não existe referência de recurso** — booking de charge não consome
   esforço, a outra ponta é a própria tarefa; recurso só é obrigatório no
   booking de effort (`TjpSyntaxRules.rb:6001`). Gramática final:
@@ -23476,9 +23499,11 @@ syntax novo não aparece em fixture existente.
   (`<descrição>` usa `$STRING`, `value` usa o literal `_value`: tokens
   disjuntos, sem ambiguidade; probe 26/26).
 - Modelo `ChargeBooking` (`model/charge-booking.ts`) com montante **podendo
-  ser negativo** (estorno) e `description: string | null` — coerente com
-  `ExtendedBooking` (Fase 8.1), que é modelo órfão: nada no parser o usava;
-  fica como está e não é tocado.
+  ser negativo** (estorno) e `description: string | null`. É a fonte única do
+  booking de charge: o órfão `ExtendedBooking` (Fase 8.1, genérico
+  `effort|charge|material` que nada no parser usava) foi **removido em
+  2026-11-02** — esforço e material já têm `Booking` e `MaterialBooking`.
+  Ver pendência §13.7.
 - **Fora de escopo**: carga contábil de `booking charge` (duplicaria com o
   atributo `charge` planejado) e o cálculo de *remaining* a partir de bookings
   (Fase 18 — tracking/timesheet). Registrado em 13.7.
@@ -23533,8 +23558,11 @@ comportamento.
 
 - Os quatro exemplos do §12 parseiam limpos — cobertos pelos testes de parser
   de C13/C14/C15 e pelos testes de modelo/turnover de C16.
-- `deno task check:all` exit 0 · suíte core **480 testes / 4926 passos /
-  0 falhas** · `check:stubs` OK · `deno fmt --check` limpo (588 arquivos) ·
+- `deno task check:all` exit 0 · suíte core **482 testes / 4934 passos /
+  0 falhas** (inclui a revisão 2026-11-02 de `booking charge`: descrição
+  opcional nas três origens e remoção da referência de recurso no corpo da
+  tarefa, com `rules_booking_charge_14c_test.ts` — 8 steps) · `check:stubs`
+  OK · `deno fmt --check` limpo (589 arquivos) ·
   `deno lint` limpo nos arquivos novos.
 - Goldens: `reports.golden.json`/`parser.golden.json`/`mspdi.golden.json`/
   `reports-extensions.golden.json` byte-idênticos ao HEAD; único regenerado de
@@ -23563,12 +23591,89 @@ comportamento.
 
 - Colunas `stockquantity`/`stockcost` no `materialreport` e nos demais
   conteúdos de material — deixa para a próxima rodada de relatórios de
-  material (mesma família do 14C.1.19).
+  material (mesma família do 14C.1.19). **Entregue em 2026-11-02 — ver §14.**
 - Carga contábil de `booking charge` e cálculo de *remaining* (planned −
   booking) a partir de bookings — **Fase 18** (tracking/timesheet), onde o
   tracking scenario consome os bookings.
 - `ExtendedBooking` (Fase 8.1) continua sem uso: a 14C.15 introduziu
   `ChargeBooking` próprio; uma futura limpeza deve apagar ou unir os dois.
+  **Resolvido em 2026-11-02 — `ExtendedBooking` apagado** (órfão genérico
+  `effort|charge|material`; nada no parser/engine o instanciava). Esforço e
+  material já vivem em `Booking` e `MaterialBooking`; o merge foi descartado
+  porque as duas classes têm formas incompatíveis (`ChargeBooking` traz
+  `owner`/`taskRef`/`resolveTask`; o `scenarioIdx` de `ExtendedBooking` é
+  redundante — bookings já moram em atributos de cenário) e unificá-las daria
+  uma união com campos mortos. Removidos `model/extended-booking.ts`, seu teste
+  e o re-export em `model/mod.ts`; `ChargeBooking` fica como fonte única.
+
+## 14. C18 — Colunas de estoque `stockquantity`/`stockcost` (2026-11-02)
+
+Pendência registrada em §13.7 (origem: “Fora de escopo de C13”, §13.1). Mesma
+família do 14C.1.19: material nos conteúdos de relatório.
+
+### 14.1 Especificação
+
+Duas colunas novas, aceitas em `columns` de qualquer relatório de tabela
+(extensão SyntaxMesh — não existem no TJ Ruby; o par completo é
+`singlePattern` em `reportableAttributes`, `rules/report.ts`):
+
+```tjp
+materialreport mr "Materiais" {
+  columns no, name, unit, stockquantity, stockcost
+}
+```
+
+- **`stockquantity`** — Σ algébrico das quantidades dos bookings de **estoque**
+  do material (movimentos **sem** tarefa, `isInventory()`, 14C.13.1 —
+  atributo de cenário `stockbookings`) cuja data cai no período do relatório
+  (`[start, end]` fechado, a mesma convenção do recorte de alocações
+  `materialTaskInPeriod`). Entrada positiva, saída/estorno negativa.
+- **`stockcost`** — Σ dos valores desses movimentos, com o preço efetivo do
+  booking (`unitPriceFor`: booking → material; alocação não se aplica, o
+  movimento não tem tarefa).
+- **Resolução**: casos `stockquantity`/`stockcost` em
+  `TableReport.genMaterialCell` (linhas de `Material`), com as helpers
+  `stockBookingsInPeriod`/`materialStockQuantity`/`materialStockCost` —
+  portanto valem para **todo conteúdo de tabela que lista materiais**, não só
+  o `materialreport` (o dispatch de linhas de material é do `TableReport`
+  compartilhado). Booking **com** tarefa (consumo) não entra: âncora de
+  separação dos dois papéis (14C.16.4), travada por teste.
+- **Metadados**: `materialPropertiesById` (título/align),
+  `materialNumericColumns` (Float, align right), `MATERIAL_COLUMN_TITLES`
+  (títulos das colunas padrão). Desde C18, `defaultColumnTitle` consulta
+  `materialPropertiesById` como segundo dicionário (o núcleo tem prioridade —
+  ids como `journal` são compartilhados), de modo que colunas de material
+  **declaradas pelo usuário** em `columns` saem com título também em
+  relatórios fora do `materialreport`.
+- **i18n**: keywords `stockcost`/`stockquantity` em `canonical.ts` + pt-BR
+  (`custoestoque`/`quantidadeestoque`) + es (`costoexistencias`/
+  `cantidadexistencias`).
+
+### 14.2 Verificação
+
+- Parser: `columns stockquantity, stockcost` aceito com títulos próprios;
+  keyword desconhecida continua rejeitada pelo FSM.
+- Células: soma algébrica (500 − 100 = 400; × 10 = 4000), precedência de preço
+  do booking (100 × 12 − 50 × 10 = 700), recorte de período (movimento de 2027
+  fora de um relatório 2026), material sem movimentos = 0, booking com tarefa
+  não conta.
+- `tests/reports/stock-columns_14c_test.ts` — 2 describes / 7 steps.
+- **Limpeza §13.7 (`ExtendedBooking`)** — o órfão `ExtendedBooking` (Fase 8.1,
+  genérico `effort|charge|material` que nada no parser/engine instanciava) foi
+  **apagado**: removidos `model/extended-booking.ts`, seu teste
+  (`tests/model/extended-booking_test.ts`, 7 steps) e o re-export em
+  `model/mod.ts`. O **merge** com `ChargeBooking` foi **descartado**: as duas
+  classes têm formas incompatíveis (`ChargeBooking` traz `owner`/`taskRef`/
+  `resolveTask`; o `scenarioIdx` de `ExtendedBooking` é redundante — bookings já
+  moram em atributos de cenário), e esforço/material já vivem em `Booking` e
+  `MaterialBooking` — unificar daria uma classe com campos mortos. `ChargeBooking`
+  fica como fonte única do booking de charge.
+- Suíte afetada (parser + reports + golden + query): **213 testes / 2000
+  passos / 0 falhas**; suíte core completa **483 testes / 4934 passos /
+  0 falhas** (−1 teste / −7 passos pela remoção do teste órfão) · `deno task
+  check:all` exit 0 · `check:stubs` OK; goldens byte-idênticos (as keywords
+  novas não aparecem em fixture existente); `deno fmt --check` limpo (588
+  arquivos); `deno lint` limpo nos arquivos tocados.
 
 ````
 
@@ -59628,7 +59733,7 @@ Tarefas: `docs/syntaxmesh/fases/fase-8.2-tarefas.md`.
 | 12 | core (richtext) | RichText, RichText/* | **Alta** | ✅ Concluída (2026-10-29, 12.0–12.20; G5 `to_rti`/`to_tjp` re-ancorado e entregue na Fase 14) |
 | 13 | core (markdown) | — | Baixa (futuro) | ✅ Concluída (2026-10-29, 13.0–13.13; 13.14 parcial — `objectURL`/render dependem das Fases 19/10-C) |
 | 14 | core (report) | reports/* | **Crítica** | ✅ Concluída (2026-10-31, 14.0–14.24; adendos 14.25/14.26 transferidos p/ Fase 14-C) |
-| 14-C | core (report) | MspXmlRE.rb + extensões SyntaxMesh (material/picture/RDO/markdown) | **Alta** | ✅ Concluída (2026-11-01, C0–C12; adendo extra §12 → C13–C17 ✅ 2026-11-02) — inclui o adendo §10: saída markdown `.md` + prefixos `md*report` (C8), `defaultaccount` (C9), `<Baseline>` do MSPDI (C10), unit price por alocação/booking + remoção de `totalquantity` (C11) e auditoria do G1.4 (C12); e o adendo extra §12: booking de estoque ± com chargeset obrigatório (C13), unit price calculado por composição (C14), keywords `effort`/`quantity`/`value` opcionais + `booking charge` no material (C15), turnover com precedência de preço (C16) e registro do comportamento de cenários (C17). Ver tabelas de evidência 14C.8–14C.17 em `fase-14-relatorios-complemento-tarefas.md` |
+| 14-C | core (report) | MspXmlRE.rb + extensões SyntaxMesh (material/picture/RDO/markdown) | **Alta** | ✅ Concluída (2026-11-01, C0–C12; adendo extra §12 → C13–C17 ✅ 2026-11-02) — inclui o adendo §10: saída markdown `.md` + prefixos `md*report` (C8), `defaultaccount` (C9), `<Baseline>` do MSPDI (C10), unit price por alocação/booking + remoção de `totalquantity` (C11) e auditoria do G1.4 (C12); e o adendo extra §12: booking de estoque ± com chargeset obrigatório (C13), unit price calculado por composição (C14), keywords `effort`/`quantity`/`value` opcionais + `booking charge` no material (C15), turnover com precedência de preço (C16) e registro do comportamento de cenários (C17); da pendência §13.7: colunas de estoque `stockquantity`/`stockcost` nos conteúdos de material (C18, 2026-11-02). Ver tabelas de evidência 14C.8–14C.18 em `fase-14-relatorios-complemento-tarefas.md` |
 | 15 | core (report) | Gantt* | **Alta** | ⬜ Não iniciada |
 | 16 | core | Journal, AlertLevelDefinitions, LeaveList, TernarySearchTree, etc. | **Alta** | ⬜ Não iniciada (adendo 16.21) |
 | 17 | core (report) | XMLDocument, XMLElement, HTMLDocument, HTMLElements, ICalendar | **Média** | ⬜ Não iniciada |

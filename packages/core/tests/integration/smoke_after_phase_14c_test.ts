@@ -94,9 +94,9 @@ describe("Smoke test after Fase 14 Complemento (14C.7.5)", () => {
     try {
       const html = generate(project, "mr", "html",) as string;
       assert(html.includes("<table",), "materialreport html sem tabela",);
-      // `Material#name` espelha o id (divergência já rastreada na 14C.6.8), por
-      // isso a célula traz `aco` e não o título "Aço" do header.
-      assert(html.includes(">aco<",), "materialreport html sem o material",);
+      // `Material#name` agora é o rótulo do cabeçalho (14C.1.14 resolvido), então
+      // a coluna `Name` traz "Aço" (e não mais o id `aco`).
+      assert(html.includes(">Aço<",), "materialreport html sem o material",);
 
       const csv = generate(project, "mr", "csv",) as unknown[][];
       assertEquals(csv[0], [
@@ -108,7 +108,7 @@ describe("Smoke test after Fase 14 Complemento (14C.7.5)", () => {
       ],);
       // Dois materiais no fixture (`aco`, `cimento`) + a linha de cabeçalho.
       assertEquals(csv.length, 3,);
-      assertEquals(csv.slice(1,).map((row,) => row[1]), ["aco", "cimento",],);
+      assertEquals(csv.slice(1,).map((row,) => row[1]), ["Aço", "Cimento",],);
 
       const json = JSON.parse(generate(project, "mr", "json",) as string,) as {
         format: string;
@@ -188,7 +188,7 @@ describe("Smoke test after Fase 14 Complemento (14C.7.5)", () => {
         project.reportContexts.pop();
       }
       assert(xml.includes("<Resources>",), "MSPDI sem <Resources>",);
-      assert(xml.includes("<Name>aco</Name>",), "MSPDI sem o material aco",);
+      assert(xml.includes("<Name>Aço</Name>",), "MSPDI sem o material aco",);
       assertEquals(
         (xml.match(/<Assignment>/g,) ?? []).length > 0,
         true,
