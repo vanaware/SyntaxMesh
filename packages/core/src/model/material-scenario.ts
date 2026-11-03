@@ -98,8 +98,15 @@ export class MaterialScenario extends ScenarioData {
    * Custo **planejado** total no período (coluna `totalcost`): o custo que o
    * material representa ao longo do intervalo — `CostEvent` (planejado +
    * realizado) quando há eventos, senão alocações + bookings.
+   *
+   * Chama-se `query_totalcost` (não `query_cost`) de propósito: o atributo base
+   * `cost` do material é o **preço por unidade** (`unitPriceValue` lê
+   * `providedNumber("cost")`), e `Query.process` alcança `query_<attributeId>`
+   * antes do atributo-base. Um `query_cost` sequestraria `<-cost->` (que deve
+   * devolver o preço unitário, cf. `trace-report-material_14c_test.ts`). O nome
+   * `totalcost` casa com a keyword real da coluna do materialreport.
    */
-  query_cost(query: MaterialScenarioQuery,): void {
+  query_totalcost(query: MaterialScenarioQuery,): void {
     const [start, end,] = this.period(query,);
     this.setNum(query, this.mat.totalCostInPeriod(this.scIdx, start, end,),);
   }

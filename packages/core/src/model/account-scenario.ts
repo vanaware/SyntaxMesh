@@ -242,7 +242,7 @@ export class AccountScenario extends ScenarioData {
         // Verificar se o evento pertence a esta conta ou a um filho
         if (
           event.account === account ||
-          (event.account as any).isChildOf?.(account,)
+          (event.account as Account).isChildOf(account,)
         ) {
           // Classificar por tipo
           switch (event.type) {

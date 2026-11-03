@@ -1201,7 +1201,7 @@ export class ResourceScenario extends ScenarioData {
               if (
                 share !== null &&
                 share > 0.0 &&
-                (accnt === account || (accnt as any).isChildOf?.(account,))
+                (accnt === account || accnt.isChildOf(account,))
               ) {
                 amount += totalResourceCost * share;
               }
@@ -1246,7 +1246,7 @@ export class ResourceScenario extends ScenarioData {
         if (
           attribution.account &&
           (attribution.account === account ||
-            (attribution.account as any).isChildOf?.(account,))
+            (attribution.account as Account).isChildOf(account,))
         ) {
           amount += resourceCost;
         }

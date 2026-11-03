@@ -2,7 +2,7 @@
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-14-relatorios-complemento.md`
 > **Tarefas:** `docs/syntaxmesh/fases/fase-14-relatorios-complemento-tarefas.md`
-> **Status:** ✅ concluída — C0 ✅ 2026-10-31 · C1–C7 ✅ 2026-11-01 (450 testes / 4841 passos) · adendo §10 → C8–C12 ✅ 2026-11-01 (472 testes / 4909 passos) — ver §11 · adendo extra §12 → C13–C17 ✅ 2026-11-02 (482 testes / 4934 passos, incl. a revisão de `booking charge`) — ver §13 · pendência §13.7 → C18 ✅ 2026-11-02 — ver §14
+> **Status:** ✅ concluída — C0 ✅ 2026-10-31 · C1–C7 ✅ 2026-11-01 (450 testes / 4841 passos) · adendo §10 → C8–C12 ✅ 2026-11-01 (472 testes / 4909 passos) — ver §11 · adendo extra §12 → C13–C17 ✅ 2026-11-02 (482 testes / 4934 passos, incl. a revisão de `booking charge`) — ver §13 · pendência §13.7 → C18 ✅ 2026-11-02 — ver §14 · Ondas A–D (paridade `finishScheduling` + `query_*` + `Material#name`; D planejada) — ver §15
 > **Duração estimada:** 8–12 dias
 > **Depende de:** Fases 8.1/8.2 (material + modelo contábil), 10 Complemento (parser reconhece `material`/`picture`/`format`/`breakdownreport`/`rdoreport`), 11 (motor lógico/Query), 12 (RichText), 13 (Markdown), 14 (pipeline de relatórios — concluída 2026-10-31)
 > **Bloqueia:** adendos de UI (Fase 20) que exibem RDO/breakdown; nada no núcleo 15/16/17
@@ -916,3 +916,86 @@ materialreport mr "Materiais" {
   check:all` exit 0 · `check:stubs` OK; goldens byte-idênticos (as keywords
   novas não aparecem em fixture existente); `deno fmt --check` limpo (588
   arquivos); `deno lint` limpo nos arquivos tocados.
+
+---
+
+## 15. Ondas A–D — paridade de scheduling + motor de `query_*` + `Material#name` (2026-11-02/03)
+
+Plano `Scheduling_parity_and_query_engine`. Quatro frentes; A/B/C executadas,
+D investigada+planejada (entrega separada).
+
+### 15.1 Onda A — paridade `finishScheduling` + `Material#name`
+
+- **(A1)** `TaskScenario#finishScheduling` mescla `assignedresources` no pai
+  (fiel a `TaskScenario.rb:410-430`) — **elimina a divergência 14C.12.4**
+  (detalhe e evidência no adendo 2026-11-01 da Fase 7). Teste
+  `tests/scheduling/finish-scheduling-assignedresources_14c_test.ts`.
+- **(A2)** `Material#name` = **rótulo do cabeçalho** do parser (fecha pendência
+  14C.1.14); sem rótulo cai no id. `reports-extensions` golden regenerado só
+  por esta mudança.
+
+### 15.2 Onda B — `query_*` portáveis no motor de consultas
+
+O dispatch de `Query.process` alcança `query_<attributeId>` em
+property→scenarioData→atributo-base. Implementados **42 `query_*`**:
+
+- **PropertyTreeNode** (`model/property-tree-node.ts`, compartilhados): `children`,
+  `journal`, `journalmessages`, `journalsummaries`, `alert`, `alertmessages`,
+  `alertsummaries`, `alerttrend`.
+- **TaskScenario** (`model/task-scenario.ts`, 24): `activetasks, closedtasks,
+  competitorcount, complete, cost, duration, effortdone, effortleft, effort,
+  followers, gauge, headcount, inputs, maxend, maxstart, minend, minstart,
+  opentasks, precursors, resources, revenue, scheduling, status, targets`.
+- **ResourceScenario** (`model/resource-scenario.ts`, central): `cost, duties,
+  effort, effortdone, effortleft, headcount, rate, revenue, freetime, freework`.
+- **Ancorados** (stub `NotYetImplementedError` com âncora — dados ainda não
+  produzidos; só alcançados quando uma coluna/consulta os exige, caso contrário
+  o dispatch cai no atributo base, preservando a suíte verde):
+  `annualleave, annualleavelist, annualleavebalance, sickleave, specialleave,
+  timeoffdays, unpaidleave` (Fase 16 — LeaveList), `fte` (Fase 18 — horas de
+  contrato/calendário), `Resource#query_dashboard` (Fase 15).
+- **Semântica fiel registrada:** `query_effort` devolve **0** para tarefa não
+  agendada (`getEffectiveWork` do Ruby); `query_complete` honra primeiro um valor
+  `complete` gravado no cenário (trilha/ICal `PERCENT-COMPLETE`) e só senão
+  recalcula via `calcCompletion`. Os testes de dispatch/fallback da Fase 11 que
+  usavam `effort` como valor genérico passaram a usar `priority` (atributo de
+  cenário Integer **sem** `query_*`, bom stand-in para o atributo-base).
+- Testes BDD: `tests/logic/query-tasks_14c_test.ts`,
+  `query-resources_14c_test.ts`, `query-ptn_14c_test.ts`.
+
+### 15.3 Onda C — `MaterialScenario#query_*` (paridade com o materialreport)
+
+- `model/material-scenario.ts`: `unitprice, effort, cost, scheduledcost,
+  actualcost, remainingcost, remaining, stockquantity, stockcost`.
+- **Fonte única** (sem duplicar): o cálculo por período foi extraído para
+  `Material#*InPeriod` (`allocatedQuantityInPeriod`, `consumedQuantityInPeriod`,
+  `scheduledCostInPeriod`, `actualCostInPeriod`, `totalCostInPeriod`,
+  `stockQuantityInPeriod`, `stockCostInPeriod`), consumido **tanto** por
+  `TableReport.genMaterialCell` quanto pelas queries. Recorte fechado
+  `[start, end]`; caminho de `costEvents` ignora período (fiel ao relatório);
+  soma de estoque algébrica (negativo = estorno).
+- Roteamento corrigido: coluna `unitprice` do materialreport passou a casar com
+  `query_unitprice` (antes ia ao atributo-base `cost` = preço unitário),
+  liberando `cost` para `query_cost` (custo total planejado) sem sequestrar a
+  coluna.
+- Teste de paridade (BDD é a fonte de verdade, sem oracle Ruby):
+  `tests/reports/material-scenario-queries_14c_test.ts` — valor da query ==
+  valor da célula correspondente do materialreport, incluindo o corte de
+  período.
+
+### 15.4 Onda D — nova sintaxe de booking + nomenclatura de custos
+
+Investigada e planejada (**não implementada** — mudanção transversal). Plano em
+[`fase-14-c-onda-d-booking-sintaxe-nomenclatura.md`](./fase-14-c-onda-d-booking-sintaxe-nomenclatura.md):
+bucket `task`→`charge`, `aggregate charges` (com alias `tasks` p/ tj3), booking
+de charge/material/stock temporal com `<modifier>` (reusa `ExtendedCharge` /
+`distribution.ts` já portados) e `booking effort`→`booking resource`.
+
+### 15.5 Gate das ondas A–C
+
+`deno check packages/core/mod.ts` limpo · suíte core 0 falhas (contagem em
+`CURRENT.md`) · `deno task check:all` exit 0 · `check:stubs` OK (todos os
+ancorados com âncora válida) · testes golden 25 / 981 passos, 0 falhas ·
+`fmt`/`lint` limpos nos arquivos tocados. `PENDING_DIVERGENCES` reavaliado: as
+entradas CSV (`resourcereport_with_tasks`, `taskreport_with_resources`) ainda
+divergem (não satisfeitas pelos `query_*`), permanecem rastreadas.

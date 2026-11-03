@@ -687,4 +687,42 @@ TOTAL: ~195 (11.12/11.13 parcialmente bloqueados por pré-requisitos de modelo)
 
 ---
 
+## Adendo 14-C (2026-11-02/03) — 11.12/11.13 **desbloqueados** pelos `query_*` concretos
+
+A Fase 11 deixou 11.12 (dispatch de `query_*`) e 11.13 (golden de queries)
+parcialmente bloqueados porque **só** `query_balance`/`query_turnover` existiam
+no modelo. A **Fase 14 Complemento — Ondas B/C** implementou os métodos
+concretos e **fecha o pré-requisito**:
+
+- **PropertyTreeNode** (compartilhados): `children`, `journal`,
+  `journalmessages`, `journalsummaries`, `alert`, `alertmessages`,
+  `alertsummaries`, `alerttrend`.
+- **TaskScenario** (24): `activetasks`, `closedtasks`, `competitorcount`,
+  `complete`, `cost`, `duration`, `effortdone`, `effortleft`, `effort`,
+  `followers`, `gauge`, `headcount`, `inputs`, `maxend`, `maxstart`, `minend`,
+  `minstart`, `opentasks`, `precursors`, `resources`, `revenue`, `scheduling`,
+  `status`, `targets`.
+- **ResourceScenario** (central): `cost`, `duties`, `effort`, `effortdone`,
+  `effortleft`, `headcount`, `rate`, `revenue`, `freetime`, `freework`.
+- **MaterialScenario** (paridade com o materialreport, sem oracle): `unitprice`,
+  `effort`, `cost`, `scheduledcost`, `actualcost`, `remainingcost`, `remaining`,
+  `stockquantity`, `stockcost`.
+- **Ainda ancorados** (dados de leave/fte/dashboard não produzidos — ficam a
+  cargo das fases donas): `annualleave`, `annualleavelist`,
+  `annualleavebalance`, `sickleave`, `specialleave`, `timeoffdays`,
+  `unpaidleave` (Fase 16), `fte` (Fase 18), `Resource#query_dashboard`
+  (Fase 15). São stubs `NotYetImplementedError` com âncora; o dispatch só os
+  alcança quando uma coluna/consulta os exige (senão cai no atributo base).
+- **Nota de semântica:** `query_effort` devolve **0** para tarefa não agendada
+  (`getEffectiveWork` do Ruby) — por isso os testes de dispatch/fallback desta
+  Fase que usavam `effort` como valor genérico passaram a usar `priority`
+  (Integer de cenário **sem** `query_*`). Os stubs ancorados são observados como
+  `!query.process()` (`ok=false`), não como throw, porque `Query.process` captura
+  `TjRuntimeError`.
+- Testes BDD entregues: `tests/logic/query-tasks_14c_test.ts`,
+  `query-resources_14c_test.ts`, `query-ptn_14c_test.ts`,
+  `tests/reports/material-scenario-queries_14c_test.ts`.
+
+---
+
 **Fim do arquivo de tarefas da Fase 11.**

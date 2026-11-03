@@ -327,12 +327,25 @@ export class BufferStreamHandle extends StreamHandle {
   }
 }
 
+/**
+ * Shape mínimo do global `Deno`, lido de forma runtime-agnostic (o core pode
+ * rodar sem Deno, ex.: browser). Substitui `Record<string, any>` para
+ * satisfazer `no-explicit-any` sem perder a checagem dos métodos usados.
+ */
+interface DenoGlobal {
+  Deno?: {
+    readTextFileSync?: (fileName: string,) => string;
+    readFileSync?: (rid: number,) => Uint8Array;
+    stdin?: { rid?: number };
+  };
+}
+
 /** Lê o texto de um arquivo via hook injetado ou Deno filesystem. */
 export function loadFileText(fileName: string,): string {
   if (FileStreamHandle.fileLoader) {
     return FileStreamHandle.fileLoader(fileName,);
   }
-  const g = globalThis as Record<string, any>;
+  const g = globalThis as unknown as DenoGlobal;
   if (g.Deno?.readTextFileSync) {
     return g.Deno.readTextFileSync(fileName,);
   }
@@ -342,7 +355,7 @@ export function loadFileText(fileName: string,): string {
 }
 
 function readStdin(): string {
-  const g = globalThis as Record<string, any>;
+  const g = globalThis as unknown as DenoGlobal;
   if (g.Deno?.stdin && g.Deno.readFileSync) {
     const bytes: Uint8Array = g.Deno.readFileSync(g.Deno.stdin.rid ?? 0,);
     return new TextDecoder().decode(bytes,);

@@ -71,8 +71,10 @@ export class ProjectFileScanner extends Scanner {
    * Browser: substituído pela UI; padrão: `Deno.env` quando existir.
    */
   static envProvider: (name: string,) => string | null = (name,) => {
-    const g = globalThis as Record<string, any>;
-    return g.Deno?.env?.get(name,) ?? null;
+    const g = globalThis as unknown as {
+      Deno?: { env?: { get?: (name: string,) => string | undefined } };
+    };
+    return g.Deno?.env?.get?.(name,) ?? null;
   };
 
   constructor(
@@ -332,7 +334,7 @@ export class ProjectFileScanner extends Scanner {
       ["LITERAL", />=?/, undefined, null,],
       ["LITERAL", /!=?/, undefined, null,],
 
-      // Todo o resto é devolvido como literal de caractere único.
+      // O restante é devolvido como literal de caractere único.
       ["LITERAL", /./, undefined, null,],
     ];
 

@@ -92,12 +92,14 @@ export class ChargeSet {
    */
   complete(): void {
     let totalPercent = 0.0;
-    let undefined = 0;
+    // Ruby `ChargeSet.rb#complete` usa `undefined_count`; evitamos o nome
+    // `undefined` (sombrearia a global restrita).
+    let undefinedCount = 0;
     for (const share of this.set.values()) {
       if (share !== null) {
         totalPercent += share;
       } else {
-        undefined += 1;
+        undefinedCount += 1;
       }
     }
     if (totalPercent > 1.0) {
@@ -105,11 +107,11 @@ export class ChargeSet {
         `Total share of this set (${totalPercent * 100}%) exceeds 100%.`,
       );
     }
-    if (undefined > 0) {
-      const commonShare = (1.0 - totalPercent) / undefined;
+    if (undefinedCount > 0) {
+      const commonShare = (1.0 - totalPercent) / undefinedCount;
       if (commonShare <= 0) {
         throw new TjArgumentError(
-          `Total share is 100% but ${undefined} account(s) still exist.`,
+          `Total share is 100% but ${undefinedCount} account(s) still exist.`,
         );
       }
       for (const [account, share,] of this.set) {

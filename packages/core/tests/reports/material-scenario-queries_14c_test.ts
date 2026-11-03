@@ -127,7 +127,11 @@ describe("Onda C — paridade query_* ⇄ coluna do materialreport", () => {
       query: "actualcost",
       expected: 300,
     },
-    { column: ["totalcost", "Total Cost",], query: "cost", expected: 1300, },
+    {
+      column: ["totalcost", "Total Cost",],
+      query: "totalcost",
+      expected: 1300,
+    },
     {
       column: ["stockquantity", "Stock Quantity",],
       query: "stockquantity",
