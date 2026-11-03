@@ -23,10 +23,10 @@ import {
   type MaterialAllocationModifier,
 } from "../../model/material-allocation.ts";
 import { MaterialBooking, } from "../../model/material-booking.ts";
+import type { BookingTail, } from "../../model/booking-period.ts";
 import { Task, } from "../../model/task.ts";
 import type { ChargeSet, } from "../../finance/charge-set.ts";
 import type { ProjectFileParser, } from "../project-file-parser.ts";
-import type { TjTime, } from "../../time/tj-time.ts";
 import { rule, } from "./helpers.ts";
 
 const asProp = (parser: ProjectFileParser,): NonNullable<
@@ -286,27 +286,20 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
 
   // ------------------------------------------------------------------
   // Alocação de material numa tarefa
-  // (`material <id> <q> [modificador] [unitprice <p>]`)
+  // (`material <id> <q> ([unitprice <p>] <modifier> | <modifier> [unitprice <p>])`)
+  // Onda D4 (D-g): o `unitprice` também pode vir **antes** do modificador.
+  // A ordem fica na sub-regra `materialAllocationTail` — dois padrões na
+  // mesma regra com os mesmos tokens iniciais violam o FSM (`Ambiguous
+  // transition`); na tail os tokens de entrada dos dois padrões são
+  // disjuntos (literais do modifier vs `_unitprice`).
   // ------------------------------------------------------------------
   rule(p, "materialAllocation", () => {
     p.pattern(
-      [
-        "_material",
-        "!materialId",
-        "!number",
-        "!materialAllocationModifier",
-        "!materialAllocationUnitPrice",
-      ],
+      ["_material", "!materialId", "!number", "!materialAllocationTail",],
       addMaterialAllocation,
     );
     p.pattern(
-      [
-        "_use",
-        "!materialId",
-        "!number",
-        "!materialAllocationModifier",
-        "!materialAllocationUnitPrice",
-      ],
+      ["_use", "!materialId", "!number", "!materialAllocationTail",],
       addMaterialAllocation,
     );
     p.doc(
@@ -351,8 +344,7 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
         "!bookingQuantity",
         "!number",
         "!materialBookingUnitPrice",
-        "_on",
-        "!date",
+        "!bookingPeriodTail",
       ],
       function (this: ProjectFileParser,): unknown {
         this.checkContainer("material",);
@@ -363,14 +355,14 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
           task.fullId,
           Number(this.val[2],),
           this.val[3] as number | null,
-          this.val[5] as TjTime,
+          this.val[4] as BookingTail | null,
         );
         return null;
       },
     );
     p.arg(0, "material", "The ID of the material consumed.",);
     p.arg(2, "quantity", "The quantity consumed.",);
-    p.arg(5, "date", "The date of the consumption.",);
+    p.arg(4, "period", "`on <date>` or `<modifier> <interval>[, …]` (D3).",);
   },);
 
   // ------------------------------------------------------------------
@@ -389,17 +381,16 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
         "!bookingQuantity",
         "!signedNumber",
         "!materialBookingUnitPrice",
-        "_on",
-        "!date",
+        "!bookingPeriodTail",
       ],
       function (this: ProjectFileParser,): unknown {
         const material = asProp(this,) as unknown as Material;
         const taskRef = this.val[0] as string | null;
         const quantity = Number(this.val[2],);
         const unitPrice = this.val[3] as number | null;
-        const date = this.val[5] as TjTime;
+        const tail = this.val[4] as BookingTail | null;
         if (taskRef === null) {
-          addStockBooking(this, material, quantity, unitPrice, date,);
+          addStockBooking(this, material, quantity, unitPrice, tail,);
         } else {
           addMaterialBooking(
             this,
@@ -407,7 +398,7 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
             taskRef,
             quantity,
             unitPrice,
-            date,
+            tail,
           );
         }
         return null;
@@ -415,7 +406,7 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
     );
     p.arg(0, "task", "The task that consumed the material.",);
     p.arg(2, "quantity", "The quantity consumed or moved.",);
-    p.arg(5, "date", "The date of the consumption.",);
+    p.arg(4, "period", "`on <date>` or `<modifier> <interval>[, …]` (D3).",);
 
     // 14C.15.7: `booking charge <tarefa> [value] <montante> on <data>`.
     p.pattern(["!materialChargeBookingHeader",],);
@@ -452,6 +443,15 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
 
   rule(p, "materialAllocationModifier", () => {
     p.optional();
+    p.pattern(["!materialAllocationModifierKeyword",], function (
+      this: ProjectFileParser,
+    ): unknown {
+      return this.val[0];
+    },);
+  },);
+
+  /** Núcleo obrigatório dos literais de modifier (Onda D4, tail). */
+  rule(p, "materialAllocationModifierKeyword", () => {
     p.pattern(["_onstart",], () => "onstart",);
     p.descr("Consume the whole quantity on starting the task.",);
     p.pattern(["_onend",], () => "onend",);
@@ -467,12 +467,45 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
     p.pattern(["_distributed",], () => "distributed",);
     p.descr("Spread the quantity over the eligible days of the task.",);
   },);
+
+  /**
+   * Cauda da alocação, nas duas ordens (Onda D4, D-g): `<modifier>
+   * [unitprice]` ou `unitprice <p> [modifier]`. Retorna
+   * `{ modifier, unitPrice }` (ou null quando ausente — modifier default
+   * `distributed` fica com `addMaterialAllocation`). Os padrões têm tokens
+   * de entrada disjuntos para não violar o FSM.
+   */
+  rule(p, "materialAllocationTail", () => {
+    p.optional();
+    p.pattern(
+      ["!materialAllocationModifierKeyword", "!materialAllocationUnitPrice",],
+      function (this: ProjectFileParser,): unknown {
+        return {
+          modifier: this.val[0] as MaterialAllocationModifier,
+          unitPrice: this.val[1] as number | null,
+        };
+      },
+    );
+    p.pattern(
+      ["_unitprice", "!number", "!materialAllocationModifier",],
+      function (this: ProjectFileParser,): unknown {
+        return {
+          modifier: this.val[2] as MaterialAllocationModifier | null,
+          unitPrice: Number(this.val[1],),
+        };
+      },
+    );
+  },);
 }
 
 /**
  * Action compartilhada pelas formas `material`/`use`: constrói um
  * `MaterialAllocation` (com o `unitprice` opcional da alocação) e anexa-o à
  * lista de cenário `materialallocations`.
+ *
+ * O slot 3 é o objeto `{ modifier, unitPrice }` de
+ * `materialAllocationTail` (Onda D4, D-g — aceita as duas ordens); ausente
+ * ⇒ modifier `distributed` e preço do material.
  */
 function addMaterialAllocation(
   this: ProjectFileParser,
@@ -480,15 +513,16 @@ function addMaterialAllocation(
   this.checkContainer("material",);
   const material = this.val[1] as Material;
   const quantity = Number(this.val[2],);
-  const modifier = (this.val[3] as MaterialAllocationModifier | null) ??
-    "distributed";
-  const unitPrice = (this.val[4] as number | null) ?? undefined;
+  const tail = this.val[3] as {
+    modifier: MaterialAllocationModifier | null;
+    unitPrice: number | null;
+  } | null;
   const allocation = new MaterialAllocation(
     material,
     quantity,
-    modifier,
+    tail?.modifier ?? "distributed",
     undefined,
-    unitPrice,
+    tail?.unitPrice ?? undefined,
   );
   asProp(this,).setForScenario(
     "materialallocations",
@@ -509,17 +543,19 @@ function addMaterialBooking(
   taskRef: string,
   quantity: number,
   unitPrice: number | null,
-  date: TjTime,
+  tail: BookingTail | null,
 ): void {
+  if (!tail) return;
   const project = parser.project!;
   const task = findTask(parser, taskRef,);
   const booking = new MaterialBooking(
     material,
     task ? task.fullId : taskRef,
     quantity,
-    date,
+    tail.intervals[0]!.start,
     unitPrice ?? undefined,
     task,
+    tail,
   );
   if (task) {
     appendBooking(parser, task, booking,);
@@ -558,14 +594,17 @@ function addStockBooking(
   material: Material,
   quantity: number,
   unitPrice: number | null,
-  date: TjTime,
+  tail: BookingTail | null,
 ): void {
+  if (!tail) return;
   const booking = new MaterialBooking(
     material,
     null,
     quantity,
-    date,
+    tail.intervals[0]!.start,
     unitPrice ?? undefined,
+    null,
+    tail,
   );
   material.setForScenario(
     "stockbookings",

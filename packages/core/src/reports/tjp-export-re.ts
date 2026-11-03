@@ -21,6 +21,8 @@ import type { Resource, } from "../model/resource.ts";
 import type { Material, } from "../model/material.ts";
 import type { MaterialAllocation, } from "../model/material-allocation.ts";
 import type { MaterialBooking, } from "../model/material-booking.ts";
+import type { BookingTail, } from "../model/booking-period.ts";
+import type { TjTime, } from "../time/tj-time.ts";
 import type { Shift, } from "../model/shift.ts";
 import type { Scenario, } from "../model/scenario.ts";
 import type { AttributeDefinition, } from "../attributes/attribute-definition.ts";
@@ -475,10 +477,37 @@ export class TjpExportRE extends ReportBase {
   }
 
   /**
+   * Cauda temporal de um booking (Onda D3, round-trip): legado `on <data>`;
+   * temporal `<modifier> <i1>, <i2>`. O intervalo de um dia vira data única;
+   * os demais voltam como `start - end` com o **fim cru tal como o parser o
+   * guardou** (`B 00:00`, fim exclusivo) — `String` de uma meia-noite imprime
+   * só a data, então `A - B` re-importa no mesmo `TimeInterval`. `onstart` de
+   * um só intervalo vira `on <data>`: como o valor de `onstart` só depende do
+   * primeiro dia coberto, é equivalente para a contabilização.
+   */
+  private bookingTailText(booking: {
+    isTemporal(): boolean;
+    date: TjTime;
+    tail: BookingTail;
+  },): string {
+    if (!booking.isTemporal()) return `on ${String(booking.date,)}`;
+    const { modifier, intervals, } = booking.tail;
+    if (modifier === "onstart" && intervals.length === 1) {
+      return `on ${String(intervals[0]!.start,)}`;
+    }
+    const parts = intervals.map((iv,) =>
+      iv.end.toSeconds() - iv.start.toSeconds() <= 86400
+        ? String(iv.start,)
+        : `${iv.start.toString()} - ${iv.end.toString()}`
+    );
+    return `${modifier} ${parts.join(", ",)}`;
+  }
+
+  /**
    * Emite os bookings de material da tarefa (14C.11.4/11.8) na forma do
-   * corpo da tarefa: `booking material <id> quantity <q> [unitprice <p>] on
-   * <data>`. A data usa `%Y-%m-%d` (mesmo `TjTime#toString`), formato aceito
-   * pelo parser.
+   * corpo da tarefa: `booking material <id> quantity <q> [unitprice <p>]`
+   * seguido da cauda temporal (`on <data>` legado ou `<modifier> <intervalos>`,
+   * Onda D3). formato aceito pelo parser nos dois casos.
    */
   private generateMaterialBookings(
     task: Task,
@@ -494,7 +523,7 @@ export class TjpExportRE extends ReportBase {
         : "";
       this.generateAttributeText(
         `booking material ${booking.material.fullId} quantity ` +
-          `${booking.quantity}${unitPrice} on ${String(booking.date,)}`,
+          `${booking.quantity}${unitPrice} ` + this.bookingTailText(booking,),
         indent,
         scenarioIdx,
       );
@@ -503,8 +532,8 @@ export class TjpExportRE extends ReportBase {
 
   /**
    * Emite os movimentos de estoque do próprio material (14C.13.8):
-   * `booking quantity <n> [unitprice <p>] on <data>` — a forma sem tarefa,
-   * agora aceita pelo parser, com a quantidade assinada (negativa = estorno).
+   * `booking quantity <n> [unitprice <p>]` + cauda temporal (legado ou
+   * Onda D3), com a quantidade assinada (negativa = estorno).
    */
   private generateStockBookings(
     material: Material,
@@ -522,7 +551,7 @@ export class TjpExportRE extends ReportBase {
         : "";
       this.generateAttributeText(
         `booking quantity ${booking.quantity}${unitPrice} ` +
-          `on ${String(booking.date,)}`,
+          this.bookingTailText(booking,),
         indent,
         scenarioIdx,
       );

@@ -477,7 +477,9 @@ export function registerScenarioRules(p: ProjectFileParser,): void {
         const prop = this.property;
         let aggregate: string;
         if (prop instanceof Task) {
-          aggregate = "tasks";
+          // Onda D2: nomenclatura alvo `charges`; `tasks` (default Ruby
+          // :tasks e sintaxe tj3) permanece aceito como alias equivalente.
+          aggregate = "charges";
         } else if (prop instanceof Resource) {
           aggregate = "resources";
         } else if (prop instanceof Material) {
@@ -487,7 +489,11 @@ export function registerScenarioRules(p: ProjectFileParser,): void {
           throw new Error(`Unknown property type ${prop?.constructor.name}`,);
         }
         const account = this.val[0] as Account;
-        if (account.get("aggregate",) !== aggregate) {
+        const current = account.get("aggregate",) as string;
+        if (
+          current !== aggregate &&
+          !(aggregate === "charges" && current === "tasks")
+        ) {
           this.error(
             "account_bad_aggregate",
             `The account ${account.fullId} cannot aggregate amounts ` +

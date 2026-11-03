@@ -59,7 +59,7 @@ describe("materiais no accountreport (14C.1.19)", () => {
       project.get("end",) as never,
     );
     assertEquals(scenarioData.turnoverByType(0, end, "material",), 250,);
-    assertEquals(scenarioData.turnoverByType(0, end, "task",), 0,);
+    assertEquals(scenarioData.turnoverByType(0, end, "charge",), 0,);
   });
 
   it("aggregate materials soma o custo derivado das alocações", () => {
@@ -91,6 +91,6 @@ describe("materiais no accountreport (14C.1.19)", () => {
     // derivado das alocações (14C.11.10): 100 × 2.5 + 5 × 10 = 300.
     assertEquals(scenarioData.turnover(0, end,), 300,);
     assertEquals(scenarioData.getBuckets().material, 300,);
-    assertEquals(scenarioData.getBuckets().task, 0,);
+    assertEquals(scenarioData.getBuckets().charge, 0,);
   });
 });

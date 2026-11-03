@@ -25,10 +25,16 @@
 import type { Project, } from "../../model/project.ts";
 import type { ProjectFileParser, } from "../project-file-parser.ts";
 import { ChargeBooking, } from "../../model/charge-booking.ts";
+import { legacyTail, } from "../../model/booking-period.ts";
+import type {
+  BookingModifier,
+  BookingTail,
+} from "../../model/booking-period.ts";
 import type { Material, } from "../../model/material.ts";
 import { Resource, } from "../../model/resource.ts";
 import { Task, } from "../../model/task.ts";
 import type { TjTime, } from "../../time/tj-time.ts";
+import type { TimeInterval, } from "../../time/time-interval.ts";
 import { rule, } from "./helpers.ts";
 
 const asProp = (parser: ProjectFileParser,): NonNullable<
@@ -72,8 +78,67 @@ export function resolveTaskRef(
  * com referência futura), descrição opcional ($STRING) e os três cabeçalhos,
  * um por origem. O `value` é opcional (Adendo Extra §12.3) e o montante aceita
  * sinal (estorno), como o booking de estoque de material.
+ *
+ * Onda D3: a ponta temporal é a regra compartilhada `bookingPeriodTail` —
+ * `on <data>` (legado, ponto único) ou `<modifier> <intervalos>` / `<intervalos>`
+ * (distribuição calendar-based). Usada também pelos bookings de material/estoque.
  */
 export function registerBookingRules(p: ProjectFileParser,): void {
+  // Modificadores de distribuição do booking: mesmos literais da alocação de
+  // material (`materialAllocationModifierKeyword`), vocabulário único (Onda D).
+  rule(p, "bookingModifierKeyword", () => {
+    p.pattern(["_onstart",], () => "onstart",);
+    p.descr("Book the whole amount on the first day of the interval.",);
+    p.pattern(["_onend",], () => "onend",);
+    p.descr("Book the whole amount on the last day of the interval.",);
+    p.pattern(["_perhour",], () => "perhour",);
+    p.descr("Book the amount for every hour of the interval.",);
+    p.pattern(["_perday",], () => "perday",);
+    p.descr("Book the amount for every day of the interval.",);
+    p.pattern(["_perweek",], () => "perweek",);
+    p.descr("Book the amount for every week of the interval.",);
+    p.pattern(["_permonth",], () => "permonth",);
+    p.descr("Book the amount for every month of the interval.",);
+    p.pattern(["_distributed",], () => "distributed",);
+    p.descr("Spread the amount over the days of the interval.",);
+    p.arg(0, "modifier", "How the amount is distributed over the intervals.",);
+  },);
+
+  /**
+   * Cauda temporal de um booking (Onda D3). Três formas, com tokens iniciais
+   * disjointos (exigência da FSM):
+   *
+   * - `on <data>` — legado: tail degenerado de um dia (`onstart`),
+   *   `isTemporal() === false`, consumidores mantêm o caminho antigo.
+   * - `<modifier> <intervalos>` — distribuição explícita.
+   * - `<intervalos>` — sem modifier: `distributed` (default da alocação).
+   */
+  rule(p, "bookingPeriodTail", () => {
+    p.pattern(["_on", "!date",], function (this: ProjectFileParser,): unknown {
+      return legacyTail(this.val[1] as TjTime,);
+    },);
+    p.pattern(
+      ["!bookingModifierKeyword", "!valIntervals",],
+      function (this: ProjectFileParser,): unknown {
+        const intervals = (this.val[1] ?? []) as TimeInterval[];
+        if (intervals.length === 0) return null;
+        return {
+          modifier: this.val[0] as BookingModifier,
+          intervals,
+        } satisfies BookingTail;
+      },
+    );
+    p.pattern(["!valIntervals",], function (this: ProjectFileParser,): unknown {
+      const intervals = (this.val[0] ?? []) as TimeInterval[];
+      if (intervals.length === 0) return null;
+      return {
+        modifier: "distributed" as BookingModifier,
+        intervals,
+      } satisfies BookingTail;
+    },);
+    p.arg(0, "period", "`on <date>` or `<modifier> <interval>[, …]`.",);
+  },);
+
   rule(p, "chargeBookingTaskRef", () => {
     p.pattern(["$ID",], function (this: ProjectFileParser,): unknown {
       return String(this.val[0],);
@@ -96,8 +161,8 @@ export function registerBookingRules(p: ProjectFileParser,): void {
     },);
   },);
 
-  // `booking charge ["<descrição>"] [value] <montante> on <data>` — corpo da
-  // tarefa: sem referência de recurso (o dono do gasto é a própria tarefa).
+  // `booking charge ["<descrição>"] [value] <montante> <cauda-temporal>` — corpo
+  // da tarefa: sem referência de recurso (o dono do gasto é a própria tarefa).
   rule(p, "taskChargeBookingHeader", () => {
     p.pattern(
       [
@@ -105,8 +170,7 @@ export function registerBookingRules(p: ProjectFileParser,): void {
         "!chargeBookingDescription",
         "!bookingValueKeyword",
         "!signedNumber",
-        "_on",
-        "!date",
+        "!bookingPeriodTail",
       ],
       function (this: ProjectFileParser,): unknown {
         addChargeBooking(
@@ -115,7 +179,7 @@ export function registerBookingRules(p: ProjectFileParser,): void {
           asProp(this,) as unknown as Task,
           null,
           Number(this.val[3],),
-          this.val[5] as TjTime,
+          this.val[4] as BookingTail | null,
           this.val[1] as string | null,
         );
         return null;
@@ -124,15 +188,15 @@ export function registerBookingRules(p: ProjectFileParser,): void {
     p.doc(
       "booking.charge",
       "Book a real expense (or, with a negative amount, a reversal) against " +
-        "the task itself on a given date. The description and the `value` " +
-        "keyword are optional.",
+        "the task. The description and the `value` keyword are optional. The " +
+        "period is `on <date>` or `<modifier> <interval>[, …]` (Onda D3).",
     );
     p.arg(1, "description", "Free-text label for the charge.",);
     p.arg(3, "value", "The amount booked (negative reverses).",);
-    p.arg(5, "date", "The date of the charge.",);
+    p.arg(4, "period", "When the charge falls (point or distributed).",);
   },);
 
-  // `booking charge <tarefa> ["<descrição>"] [value] <montante> on <data>` —
+  // `booking charge <tarefa> ["<descrição>"] [value] <montante> <cauda>` —
   // corpo do recurso.
   rule(p, "resourceChargeBookingHeader", () => {
     p.pattern(
@@ -142,8 +206,7 @@ export function registerBookingRules(p: ProjectFileParser,): void {
         "!chargeBookingDescription",
         "!bookingValueKeyword",
         "!signedNumber",
-        "_on",
-        "!date",
+        "!bookingPeriodTail",
       ],
       chargeBookingFromOrigin,
     );
@@ -160,8 +223,7 @@ export function registerBookingRules(p: ProjectFileParser,): void {
         "!chargeBookingDescription",
         "!bookingValueKeyword",
         "!signedNumber",
-        "_on",
-        "!date",
+        "!bookingPeriodTail",
       ],
       chargeBookingFromOrigin,
     );
@@ -174,7 +236,7 @@ export function registerBookingRules(p: ProjectFileParser,): void {
  * Ação compartilhada pelos cabeçalhos de `booking charge` declarados por um
  * recurso ou um material: a referência é a **tarefa** e pode ser futura
  * (fila de pendências do projeto, 14C.15.7); o dono do bloco é o `owner`. A
- * descrição (índice 2) é opcional.
+ * descrição (índice 2) é opcional; a cauda temporal é o índice 5 (Onda D3).
  */
 function chargeBookingFromOrigin(this: ProjectFileParser,): unknown {
   const owner = asProp(this,) as unknown as Resource | Material;
@@ -193,7 +255,7 @@ function chargeBookingFromOrigin(this: ProjectFileParser,): unknown {
     task,
     task ? null : ref,
     Number(this.val[4],),
-    this.val[6] as TjTime,
+    this.val[5] as BookingTail | null,
     this.val[2] as string | null,
   );
   return null;
@@ -202,7 +264,9 @@ function chargeBookingFromOrigin(this: ProjectFileParser,): unknown {
 /**
  * Cria o `ChargeBooking` e o anexa à tarefa dona (quando já declarada) ou à
  * fila de referências futuras do projeto (14C.15.7). `taskRef` é o ID/nome
- * quando a referência ainda não resolveu; `task` quando já resolveu.
+ * quando a referência ainda não resolveu; `task` quando já resolveu. A
+ * `tail` (Onda D3) é o período com modifier; sem tail o construtor degenera
+ * o ponto legado a partir do início do primeiro intervalo.
  */
 export function addChargeBooking(
   parser: ProjectFileParser,
@@ -210,9 +274,11 @@ export function addChargeBooking(
   task: Task | null,
   taskRef: string | null,
   amount: number,
-  date: TjTime,
+  tail: BookingTail | null,
   description: string | null = null,
 ): void {
+  if (!tail) return;
+  const date = tail.intervals[0]!.start;
   const booking = new ChargeBooking(
     owner,
     task ? task.fullId : taskRef,
@@ -220,6 +286,7 @@ export function addChargeBooking(
     date,
     task,
     description,
+    tail,
   );
   if (task) {
     appendChargeBooking(parser, task, booking,);

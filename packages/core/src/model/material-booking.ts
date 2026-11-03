@@ -3,6 +3,13 @@ import type { Task, } from "./task.ts";
 import type { ProjectLike, } from "./project-like.ts";
 import type { TjTime, } from "../time/tj-time.ts";
 import type { MaterialAllocation, } from "./material-allocation.ts";
+import {
+  isTemporalTail,
+  legacyTail,
+  tailOverlaps,
+  valueInPeriod,
+} from "./booking-period.ts";
+import type { BookingTail, } from "./booking-period.ts";
 
 /**
  * Consumo **realizado** de um material: uma quantidade consumida em uma data
@@ -28,7 +35,10 @@ export class MaterialBooking {
   readonly quantity: number;
   /** Preço unitário real do booking (opcional: cai para alocação/material). */
   readonly unitPrice?: number;
+  /** Âncora do booking: início do primeiro intervalo (data em `on <data>`). */
   readonly date: TjTime;
+  /** Período + modifier (Onda D3): tail legado quando só a data existe. */
+  readonly tail: BookingTail;
   /**
    * ID da tarefa dona do consumo; `null` nos bookings de estoque (sem tarefa,
    * 14C.13.1). O objeto pode ainda não existir no parse (referência futura).
@@ -48,6 +58,7 @@ export class MaterialBooking {
     date: TjTime,
     unitPrice?: number,
     task: Task | null = null,
+    tail?: BookingTail,
   ) {
     // Quantidade negativa só faz sentido como saída de estoque (sem tarefa).
     if (quantity < 0 && taskId !== null) {
@@ -58,9 +69,28 @@ export class MaterialBooking {
     this.material = material;
     this.taskId = taskId;
     this.quantity = quantity;
-    this.date = date;
+    this.tail = tail ?? legacyTail(date,);
+    this.date = this.tail.intervals[0]!.start;
     this.unitPrice = unitPrice;
     this.task = task;
+  }
+
+  /** O booking expressa algo além do ponto legado `on <data>`? (Onda D3) */
+  isTemporal(): boolean {
+    return isTemporalTail(this.tail,);
+  }
+
+  /** Algum intervalo do tail cruza o período fechado `[start, end]`? */
+  overlapsPeriod(start: TjTime | null, end: TjTime | null,): boolean {
+    return tailOverlaps(this.tail, start, end,);
+  }
+
+  /**
+   * Parte da quantidade que cai no período fechado `[start, end]` sob o
+   * modifier do tail (Onda D3). Legado/sem período ⇒ quantidade cheia.
+   */
+  quantityInPeriod(start: TjTime | null, end: TjTime | null,): number {
+    return valueInPeriod(this.quantity, this.tail, start, end,);
   }
 
   /** Booking de estoque (movimento de entrada/saída sem tarefa, 14C.13.1). */
@@ -81,6 +111,18 @@ export class MaterialBooking {
   /** Custo do booking: quantidade × preço efetivo. */
   cost(allocation?: MaterialAllocation | null,): number {
     return this.quantity * this.unitPriceFor(allocation,);
+  }
+
+  /**
+   * Custo do booking restringido ao período fechado `[start, end]` (Onda D3):
+   * quantidade distribuída pelo modifier × preço efetivo.
+   */
+  costInPeriod(
+    start: TjTime | null,
+    end: TjTime | null,
+    allocation?: MaterialAllocation | null,
+  ): number {
+    return this.quantityInPeriod(start, end,) * this.unitPriceFor(allocation,);
   }
 
   /**

@@ -2,6 +2,12 @@ import type { Task, } from "./task.ts";
 import type { Resource, } from "./resource.ts";
 import type { Material, } from "./material.ts";
 import type { TjTime, } from "../time/tj-time.ts";
+import {
+  isTemporalTail,
+  legacyTail,
+  valueInPeriod,
+} from "./booking-period.ts";
+import type { BookingTail, } from "./booking-period.ts";
 
 /**
  * Booking de **charge** (Adendo Extra §12.3, 14C.15.4).
@@ -39,7 +45,10 @@ export class ChargeBooking {
   task: Task | null;
   /** Montante na moeda do projeto; negativo = estorno. */
   readonly amount: number;
+  /** Âncora do booking: início do primeiro intervalo (data em `on <data>`). */
   readonly date: TjTime;
+  /** Período + modifier (Onda D3): tail legado quando só a data existe. */
+  readonly tail: BookingTail;
   /** Texto livre opcional identificando o gasto (Adendo Extra §12.3). */
   readonly description: string | null;
 
@@ -50,6 +59,7 @@ export class ChargeBooking {
     date: TjTime,
     task: Task | null = null,
     description: string | null = null,
+    tail?: BookingTail,
   ) {
     if (taskRef === null && task === null) {
       throw new Error("Charge booking needs a task reference",);
@@ -57,9 +67,24 @@ export class ChargeBooking {
     this.owner = owner;
     this.taskRef = taskRef;
     this.amount = amount;
-    this.date = date;
+    this.tail = tail ?? legacyTail(date,);
+    this.date = this.tail.intervals[0]!.start;
     this.task = task;
     this.description = description;
+  }
+
+  /** O booking expressa algo além do ponto legado `on <data>`? (Onda D3) */
+  isTemporal(): boolean {
+    return isTemporalTail(this.tail,);
+  }
+
+  /**
+   * Parte do montante que cai no período fechado `[start, end]` sob o
+   * modifier do tail (Onda D3). Sem período ⇒ valor cheio; booking legado ⇒
+   * valor cheio quando o ponto está no período, 0 fora.
+   */
+  amountInPeriod(start: TjTime | null, end: TjTime | null,): number {
+    return valueInPeriod(this.amount, this.tail, start, end,);
   }
 
   /** Resolve a referência futura contra o projeto (true quando ligada). */

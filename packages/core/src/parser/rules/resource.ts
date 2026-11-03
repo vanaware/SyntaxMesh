@@ -393,9 +393,10 @@ export function registerResourceRules(p: ProjectFileParser,): void {
   },);
 
   rule(p, "resourceBookingHeader", () => {
-    // `effort` opcional (Adendo Extra §12.3, 14C.15.2).
+    // Keyword de tipo opcional (Adendo Extra §12.3, 14C.15.2; Onda D4:
+    // `booking resource <tarefa> …`, com `effort` como alias de leitura).
     p.pattern(
-      ["!bookingEffortKeyword", "!taskId", "!valIntervals",],
+      ["!bookingResourceKeyword", "!taskId", "!valIntervals",],
       function (this: ProjectFileParser,): unknown {
         const task = this.val[1] as Task;
         const resource = asProp(this,) as unknown as Resource;

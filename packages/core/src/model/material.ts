@@ -390,6 +390,15 @@ export class Material extends PropertyTreeNode {
     let sum = 0;
     for (const { task, booking, } of bookings) {
       if (!Material.crossesPeriod(task, scIdx, start, end,)) continue;
+      // Onda D3: booking temporal só conta a parte do período; legado usa
+      // o caminho antigo inteiro (gate por tarefa, valor cheio).
+      if (booking.isTemporal()) {
+        if (!booking.overlapsPeriod(start, end,)) continue;
+        const allocation = this.allocationsWithTask(scIdx,)
+          .find((a,) => a.task === task)?.allocation ?? null;
+        sum += booking.costInPeriod(start, end, allocation,);
+        continue;
+      }
       sum += this.bookingEffectiveCost(booking, scIdx,);
     }
     return sum;
@@ -418,6 +427,12 @@ export class Material extends PropertyTreeNode {
     let sum = 0;
     for (const { task, booking, } of this.bookingsWithTask(scIdx,)) {
       if (!Material.crossesPeriod(task, scIdx, start, end,)) continue;
+      // Onda D3: temporal ⇒ parte do período (com gate de sobreposição).
+      if (booking.isTemporal()) {
+        if (!booking.overlapsPeriod(start, end,)) continue;
+        sum += booking.quantityInPeriod(start, end,);
+        continue;
+      }
       sum += booking.quantity;
     }
     return sum;
@@ -465,6 +480,11 @@ export class Material extends PropertyTreeNode {
     return this.stockBookings(scIdx,).filter((booking,) => {
       if (!booking.isInventory()) return false;
       if (!start || !end) return true;
+      // Onda D3: temporal ⇒ qualquer intervalo cruzando o período; legado
+      // ⇒ comparação pontual antiga, intacta.
+      if (booking.isTemporal()) {
+        return booking.overlapsPeriod(start, end,);
+      }
       return booking.date.compareTo(start,) >= 0 &&
         booking.date.compareTo(end,) <= 0;
     },);
@@ -478,7 +498,9 @@ export class Material extends PropertyTreeNode {
   ): number {
     let sum = 0;
     for (const booking of this.stockBookingsInPeriod(scIdx, start, end,)) {
-      sum += booking.quantity;
+      sum += booking.isTemporal()
+        ? booking.quantityInPeriod(start, end,)
+        : booking.quantity;
     }
     return sum;
   }
@@ -491,7 +513,9 @@ export class Material extends PropertyTreeNode {
   ): number {
     let sum = 0;
     for (const booking of this.stockBookingsInPeriod(scIdx, start, end,)) {
-      sum += booking.cost();
+      sum += booking.isTemporal()
+        ? booking.costInPeriod(start, end,)
+        : booking.cost();
     }
     return sum;
   }

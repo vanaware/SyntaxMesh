@@ -149,4 +149,22 @@ describe("rule_chargeset (10.12.4.2)", () => {
     );
     assert(out.messageIds.includes("account_bad_aggregate",),);
   });
+
+  it("chargeset de task aceita aggregate charges (Onda D2)", () => {
+    const out = parseProject(
+      PROJECT_HEADER + 'account fin "F" {\naggregate charges\n}\n' +
+        'task t "T" {\nchargeset fin 100%\n}\n',
+    );
+    assert(!out.messageIds.includes("account_bad_aggregate",),);
+  });
+
+  it("chargeset de task aceita o alias tasks sem aggregate declarado", () => {
+    // Default Ruby :tasks permanece; o derivado `charges` trata os dois
+    // como o mesmo regime (Onda D2, alias de leitura tj3).
+    const out = parseProject(
+      PROJECT_HEADER + 'account fin "F" {\n}\n' +
+        'task t "T" {\nchargeset fin 100%\n}\n',
+    );
+    assert(!out.messageIds.includes("account_bad_aggregate",),);
+  });
 });

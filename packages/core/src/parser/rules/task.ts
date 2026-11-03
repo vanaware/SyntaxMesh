@@ -685,10 +685,11 @@ export function registerTaskRules(p: ProjectFileParser,): void {
   },);
 
   rule(p, "taskBookingHeader", () => {
-    // `effort` é opcional (Adendo Extra §12.3, 14C.15.1): a forma curta
-    // `booking <recurso> <intervalo>` é a canônica do TJ.
+    // Keyword de tipo opcional (Adendo Extra §12.3, 14C.15.1; Onda D4:
+    // `booking resource <recurso> …`, com `effort` como alias de leitura);
+    // a forma sem keyword `booking <recurso> <intervalo>` é a canônica do TJ.
     p.pattern(
-      ["!bookingEffortKeyword", "!resourceId", "!valIntervals",],
+      ["!bookingResourceKeyword", "!resourceId", "!valIntervals",],
       function (this: ProjectFileParser,): unknown {
         const sfi = this.sourceFileInfo[1] ?? null;
         this.checkBooking(asProp(this,) as Task, this.val[1] as Resource, sfi,);
@@ -1400,8 +1401,13 @@ export function registerTaskRules(p: ProjectFileParser,): void {
   rule(p, "aggregate", () => {
     p.pattern(["_resources",], () => "resources",);
     p.descr("Aggregate resources",);
+    // Onda D2: `charges` é a forma canônica (nomenclatura alvo
+    // charge|resource|material); `tasks` permanece como alias de leitura
+    // para `.tjp` do tj3 (AccountScenario trata os dois iguais).
+    p.pattern(["_charges",], () => "charges",);
+    p.descr("Aggregate charges of tasks",);
     p.pattern(["_tasks",], () => "tasks",);
-    p.descr("Aggregate tasks",);
+    p.descr("Alias of 'charges' (TaskJuggler 3.x syntax)",);
     p.pattern(["_materials",], () => "materials",);
     p.descr("Aggregate materials",);
   },);

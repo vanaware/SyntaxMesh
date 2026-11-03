@@ -31,10 +31,14 @@ export interface Query {
 }
 
 /**
- * Interface para subtotais por tipo (task/resource/material).
+ * Interface para subtotais por tipo de custo (charge/resource/material).
+ *
+ * O bucket `charge` recebe os eventos `task_charge` (booking/custo de charge de
+ * tarefa). O nome do **tipo de evento** (`task_charge`) é fiel ao Ruby e não
+ * muda; o que muda — Onda D1 — é o nome do bucket, antes `task`.
  */
 export interface AccountBuckets {
-  task: number;
+  charge: number;
   resource: number;
   material: number;
 }
@@ -46,7 +50,7 @@ export interface AccountBuckets {
 export const ACCOUNT_SCENARIO_ATTRS: string[] = ["credits",];
 
 export class AccountScenario extends ScenarioData {
-  private buckets: AccountBuckets = { task: 0, resource: 0, material: 0, };
+  private buckets: AccountBuckets = { charge: 0, resource: 0, material: 0, };
 
   constructor(
     account: unknown,
@@ -78,7 +82,7 @@ export class AccountScenario extends ScenarioData {
    */
   turnover(startIdx: number, endIdx: number,): number {
     // Reset buckets a cada chamada.
-    this.buckets = { task: 0, resource: 0, material: 0, };
+    this.buckets = { charge: 0, resource: 0, material: 0, };
 
     let amount = 0.0;
 
@@ -114,7 +118,7 @@ export class AccountScenario extends ScenarioData {
           // Buckets herdam dos filhos.
           const childBuckets = childAccount.scenarioData(this.scenarioIdx,)
             .getBuckets();
-          this.buckets.task += childBuckets.task;
+          this.buckets.charge += childBuckets.charge;
           this.buckets.resource += childBuckets.resource;
           this.buckets.material += childBuckets.material;
         }
@@ -134,7 +138,7 @@ export class AccountScenario extends ScenarioData {
         const revenueBuckets = (adoptees[1] as unknown as Account).scenarioData(
           this.scenarioIdx,
         ).getBuckets();
-        this.buckets.task += -costBuckets.task + revenueBuckets.task;
+        this.buckets.charge += -costBuckets.charge + revenueBuckets.charge;
         this.buckets.resource += -costBuckets.resource +
           revenueBuckets.resource;
         this.buckets.material += -costBuckets.material +
@@ -146,7 +150,9 @@ export class AccountScenario extends ScenarioData {
       const project =
         (this.property as PropertyLike & { project: ProjectLike }).project;
 
-      if (aggregate === "tasks") {
+      // Onda D2: `charges` é a forma canônica; `tasks` é alias de leitura
+      // (tj3 / default Ruby :tasks) — o mesmo regime de agregação.
+      if (aggregate === "charges" || aggregate === "tasks") {
         project.tasks.each((task,) => {
           // Cast to Account to access scenarioData, then to TaskScenario for turnover with 5 args
           const taskAccount = task as unknown as Account;
@@ -169,7 +175,7 @@ export class AccountScenario extends ScenarioData {
             false,
           );
           amount += taskAmount;
-          this.buckets.task += taskAmount;
+          this.buckets.charge += taskAmount;
         },);
       } else if (aggregate === "resources") {
         project.resources.each((resource,) => {
@@ -247,7 +253,7 @@ export class AccountScenario extends ScenarioData {
           // Classificar por tipo
           switch (event.type) {
             case "task_charge":
-              this.buckets.task += event.amount;
+              this.buckets.charge += event.amount;
               break;
             case "resource_effort":
               this.buckets.resource += event.amount;
@@ -299,8 +305,16 @@ export class AccountScenario extends ScenarioData {
 
     let added = 0;
     for (const booking of material.stockBookings(scIdx,)) {
-      if (!(startDate <= booking.date && booking.date < endDate)) continue;
-      const value = booking.cost();
+      let value: number;
+      if (booking.isTemporal()) {
+        // Onda D3 (D-e): booking temporal entra pela parte que cai na janela
+        // `[start, end]` do turnover; a janela entre buckets é `[start, end)`.
+        if (!booking.overlapsPeriod(startDate, endDate,)) continue;
+        value = booking.costInPeriod(startDate, endDate,);
+      } else {
+        if (!(startDate <= booking.date && booking.date < endDate)) continue;
+        value = booking.cost();
+      }
       if (value === 0) continue;
       if (!material.stockBookingEmitted(booking,)) {
         const line: CostLine = {
@@ -328,19 +342,19 @@ export class AccountScenario extends ScenarioData {
   }
 
   /**
-   * Calcula o turnover por tipo (task/resource/material).
+   * Calcula o turnover por tipo de custo (charge/resource/material).
    *
    * @see docs/taskjuggler/lib/taskjuggler/AccountScenario.rb#turnover
    */
   turnoverByType(
     startIdx: number,
     endIdx: number,
-    type: "task" | "resource" | "material",
+    type: "charge" | "resource" | "material",
   ): number {
     this.turnover(startIdx, endIdx,);
     switch (type) {
-      case "task":
-        return this.buckets.task;
+      case "charge":
+        return this.buckets.charge;
       case "resource":
         return this.buckets.resource;
       case "material":

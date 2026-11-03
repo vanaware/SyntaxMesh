@@ -217,15 +217,15 @@ describe("AccountScenario.turnoverByType + buckets", () => {
     const buckets = scenario.getBuckets();
     // Como não temos um custo real de task, esperamos que os buckets estejam zerados
     // Mas a implementação deve populá-los corretamente
-    assert(buckets.task >= 0,);
+    assert(buckets.charge >= 0,);
     assert(buckets.resource >= 0,);
     assert(buckets.material >= 0,);
   });
 
-  it("turnoverByType('task') chama turnover de tasks", () => {
+  it("turnoverByType('charge') chama turnover de tasks", () => {
     const scenario = root.scenarioData(0,);
     // Como não temos um custo real de task, esperamos 0
-    const taskTurnover = scenario.turnoverByType(0, 365, "task",);
+    const taskTurnover = scenario.turnoverByType(0, 365, "charge",);
     assertEquals(taskTurnover, 0.0,);
   });
 
@@ -248,7 +248,7 @@ describe("AccountScenario.turnoverByType + buckets", () => {
       scenario.turnoverByType(
         0,
         365,
-        "invalid" as "task" | "resource" | "material",
+        "invalid" as "charge" | "resource" | "material",
       );
       assert(false, "Deveria ter lançado TjInternalError",);
     } catch (e) {
@@ -257,11 +257,22 @@ describe("AccountScenario.turnoverByType + buckets", () => {
     }
   });
 
+  it("aggregate charges ≡ aggregate tasks no turnover (Onda D2)", () => {
+    // Contas leaf distintas (`set` não re-escreve atributo já definido):
+    // é aqui que `aggregate` seleciona o regime de agregação. Antes de D2,
+    // "charges" cairia em `Unknown aggregation type`.
+    child1.set("aggregate", "charges",);
+    child2.set("aggregate", "tasks",);
+    const withCharges = child1.scenarioData(0,).turnover(0, 365,);
+    const withTasks = child2.scenarioData(0,).turnover(0, 365,);
+    assertEquals(withCharges, withTasks,);
+  });
+
   it("invariante: sum(buckets) === total", () => {
     const scenario = root.scenarioData(0,);
     const total = scenario.turnover(0, 365,);
     const buckets = scenario.getBuckets();
-    const sum = buckets.task + buckets.resource + buckets.material;
+    const sum = buckets.charge + buckets.resource + buckets.material;
     assert(Math.abs(sum - total,) < 1e-6, `sum ${sum} !== total ${total}`,);
   });
 
@@ -273,24 +284,24 @@ describe("AccountScenario.turnoverByType + buckets", () => {
     const buckets = scenario.getBuckets();
     assertEquals(buckets.resource, 0.0,);
     assertEquals(buckets.material, 0.0,);
-    // task bucket pode ser > 0 se houver custo de task
+    // bucket charge pode ser > 0 se houver custo de task
   });
 
-  it("conta com aggregate resources → buckets task/material zerados", () => {
+  it("conta com aggregate resources → buckets charge/material zerados", () => {
     root.set("aggregate", "resources",);
     const scenario = root.scenarioData(0,);
     const total = scenario.turnover(0, 365,);
     const buckets = scenario.getBuckets();
-    assertEquals(buckets.task, 0.0,);
+    assertEquals(buckets.charge, 0.0,);
     assertEquals(buckets.material, 0.0,);
   });
 
-  it("conta com aggregate materials → buckets task/resource zerados", () => {
+  it("conta com aggregate materials → buckets charge/resource zerados", () => {
     root.set("aggregate", "materials",);
     const scenario = root.scenarioData(0,);
     const total = scenario.turnover(0, 365,);
     const buckets = scenario.getBuckets();
-    assertEquals(buckets.task, 0.0,);
+    assertEquals(buckets.charge, 0.0,);
     assertEquals(buckets.resource, 0.0,);
   });
 });

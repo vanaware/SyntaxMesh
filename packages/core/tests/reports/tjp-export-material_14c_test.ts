@@ -212,3 +212,155 @@ describe("TjpExportRE com materiais (14C.1.13)", () => {
     assert(!tjp.includes("material ",), `saída inesperada:\n${tjp}`,);
   });
 });
+
+/**
+ * Onda D3 — round-trip da cauda temporal (`<modifier> <intervalos>`) nos
+ * bookings de material e estoque: parse → export → parse preservam modifier,
+ * intervalos e a contabilização por período. O `on <data>` legado segue ponto
+ * não-temporal (coberto no teste 14C.11.8 acima).
+ */
+function materialBookings(
+  src: string,
+  taskId: string,
+): MaterialBooking[] {
+  const parsed = parseProject(src,);
+  assertEquals(
+    parsed.threw,
+    null,
+    `messages=${parsed.messageIds.join(",",)}`,
+  );
+  const project = parsed.result as Project;
+  const tjp = new TjpExportRE(
+    exportReport(project, ["flags", "materials", "tasks",], [
+      "materialbookings",
+    ],),
+  ).to_tjp();
+  const lines = tjp
+    .split("\n",)
+    .filter((l,) => l.trim().startsWith("booking material",))
+    .map((l,) => "  " + l.trim());
+  const again = parseProject(
+    PROJECT_HEADER +
+      'material ac "A" {\n  unit "kg"\n  unitprice 5\n}\n' +
+      `task ${taskId} "T" {\n${lines.join("\n",)}\n}\n`,
+  );
+  assertEquals(
+    again.messageIds,
+    [],
+    `round-trip: ${again.messageIds.join(",",)}\n${lines.join("\n",)}`,
+  );
+  return (again.result as Project).task(taskId,)!.getForScenario(
+    "materialbookings",
+    0,
+  ) as MaterialBooking[];
+}
+
+const P_DAY = TjTime.fromString("2026-01-01",);
+const P_END = TjTime.fromString("2026-12-31",);
+
+describe("Onda D3: round-trip do booking temporal (export)", () => {
+  it("perday preserva modifier e o intervalo de vários dias", () => {
+    const bookings = materialBookings(
+      PROJECT_HEADER +
+        'material ac "A" {\n  unit "kg"\n  unitprice 5\n}\n' +
+        'task t1 "T" {\n  booking material ac quantity 10 perday ' +
+        "2026-01-01 - 2026-01-04\n}\n",
+      "t1",
+    );
+    assertEquals(bookings.length, 1,);
+    const b = bookings[0]!;
+    assertEquals(b.quantity, 10,);
+    assertEquals(b.tail.modifier, "perday",);
+    assertEquals(b.isTemporal(), true,);
+    assertEquals(String(b.tail.intervals[0]!.start,), "2026-01-01",);
+    assertEquals(String(b.tail.intervals[0]!.end,), "2026-01-04",);
+    // 3 dias cobertos × 10 = 30 no período todo.
+    assertEquals(b.quantityInPeriod(P_DAY, P_END,), 30,);
+  });
+
+  it("distributed preserva múltiplos intervalos (faixa + data despida)", () => {
+    const bookings = materialBookings(
+      PROJECT_HEADER +
+        'material ac "A" {\n  unit "kg"\n  unitprice 5\n}\n' +
+        'task t1 "T" {\n  booking material ac quantity 200 distributed ' +
+        "2026-02-01 - 2026-02-06, 2026-03-01\n}\n",
+      "t1",
+    );
+    const b = bookings[0]!;
+    assertEquals(b.tail.modifier, "distributed",);
+    assertEquals(b.tail.intervals.length, 2,);
+    assertEquals(String(b.tail.intervals[0]!.end,), "2026-02-06",);
+    assertEquals(String(b.tail.intervals[1]!.start,), "2026-03-01",);
+    // 5 + 1 = 6 dias cobertos; distributed espalha o valor cheio no período.
+    assertEquals(b.quantityInPeriod(P_DAY, P_END,), 200,);
+  });
+
+  it("onend preserva o intervalo e concentra o valor no último dia", () => {
+    const bookings = materialBookings(
+      PROJECT_HEADER +
+        'material ac "A" {\n  unit "kg"\n  unitprice 5\n}\n' +
+        'task t1 "T" {\n  booking material ac quantity 30 onend ' +
+        "2026-04-01 - 2026-04-05\n}\n",
+      "t1",
+    );
+    const b = bookings[0]!;
+    assertEquals(b.tail.modifier, "onend",);
+    assertEquals(String(b.tail.intervals[0]!.end,), "2026-04-05",);
+    // Período que só alcança o último dia coberto (04-04) ⇒ valor integral.
+    assertEquals(
+      b.quantityInPeriod(
+        TjTime.fromString("2026-04-04",),
+        TjTime.fromString("2026-04-04",),
+      ),
+      30,
+    );
+    // Período antes do fim coberto ⇒ 0.
+    assertEquals(
+      b.quantityInPeriod(
+        TjTime.fromString("2026-04-01",),
+        TjTime.fromString("2026-04-03",),
+      ),
+      0,
+    );
+  });
+
+  it("estoque temporal faz round-trip pela forma do corpo do material", () => {
+    const parsed = parseProject(
+      PROJECT_HEADER +
+        'account mats "M" {\naggregate materials\n}\n' +
+        'material ac "A" {\n  unit "kg"\n  unitprice 5\n  chargeset mats 100%\n' +
+        "  booking quantity -100 perday 2026-01-01 - 2026-01-04\n}\n",
+    );
+    assertEquals(parsed.threw, null, `${parsed.messageIds.join(",",)}`,);
+    const project = parsed.result as Project;
+    const tjp = new TjpExportRE(
+      exportReport(project, ["flags", "materials", "tasks",], [],),
+    ).to_tjp();
+    const line = tjp
+      .split("\n",)
+      .find((l,) => l.trim().startsWith("booking quantity",));
+    assert(line, `estoque ausente:\n${tjp}`,);
+    assert(
+      line!.includes("perday 2026-01-01 - 2026-01-04",),
+      `cauda temporal:\n${line}`,
+    );
+    const again = parseProject(
+      PROJECT_HEADER +
+        'account mats "M" {\naggregate materials\n}\n' +
+        'material ac "A" {\n  unit "kg"\n  unitprice 5\n  chargeset mats 100%\n' +
+        "  " + line!.trim() + "\n}\n",
+    );
+    assertEquals(
+      again.messageIds,
+      [],
+      `re-importação: ${again.messageIds.join(",",)}`,
+    );
+    const stock = (again.result as Project).material("ac",)!.getForScenario(
+      "stockbookings",
+      0,
+    ) as MaterialBooking[];
+    assertEquals(stock[0]!.quantity, -100,);
+    assertEquals(stock[0]!.tail.modifier, "perday",);
+    assertEquals(stock[0]!.isTemporal(), true,);
+  });
+});

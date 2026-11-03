@@ -67,6 +67,15 @@ describe("rule_accountScenarioAttributes (10.12.2.2)", () => {
     assertEquals(p.account("dev",)!.get("aggregate",), "tasks",);
   });
 
+  it("aggregate charges é a forma canônica (Onda D2)", () => {
+    const p = project(
+      parseProject(
+        PROJECT_HEADER + 'account dev "D" {\naggregate charges\n}\n',
+      ),
+    );
+    assertEquals(p.account("dev",)!.get("aggregate",), "charges",);
+  });
+
   it("credits acumula AccountCredit com data, descrição e valor", () => {
     const p = project(
       parseProject(

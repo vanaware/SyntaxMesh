@@ -74,15 +74,19 @@ export function registerCommonRules(p: ProjectFileParser,): void {
   },);
 
   /**
-   * Keyword `effort` **opcional** em booking (Adendo Extra §12.3, 14C.15.1–2).
+   * Keyword de tipo do booking de recurso, **opcional** (Adendo Extra §12.3,
+   * 14C.15.1–2; Onda D4).
    *
-   * A forma curta (`booking <ref> <intervalo>`) é a canônica do TJ
-   * (`TjpSyntaxRules.rb:6001`, `:4771`); a explícita veio da Fase 8.1. Não há
-   * ambiguidade com a referência de recurso/tarefa porque `State#transition`
-   * prefere o literal `_effort` ao `$ID`/`$STRING` variável.
+   * `resource` é a forma explícita da nomenclatura alvo
+   * (charge|resource|material); `effort` permanece como alias de leitura
+   * (tj3, Fase 8.1); a ausência da keyword (`booking <ref> <intervalo>`) é a
+   * canônica do TJ (`TjpSyntaxRules.rb:6001`, `:4771`). Não há ambiguidade com
+   * a referência de recurso/tarefa porque `State#transition` prefere o literal
+   * (`_resource`/`_effort`) ao `$ID`/`$STRING` variável.
    */
-  rule(p, "bookingEffortKeyword", () => {
+  rule(p, "bookingResourceKeyword", () => {
     p.optional();
+    p.pattern(["_resource",], () => "resource",);
     p.pattern(["_effort",], () => "effort",);
   },);
 

@@ -1,10 +1,11 @@
 # Onda D — Nova sintaxe de booking + nomenclatura de custos (investigação e plano)
 
-> **Status:** investigação concluída + plano de implementação (esta entrega).
-> **A implementação em si não foi executada** — é um mudanção transversal
-> (gramática + modelo + relatórios + testes) e fica a cargo de uma sessão
-> dedicada. Este documento é a fonte de verdade do *como*, com âncoras de
-> código verificadas na árvore atual.
+> **Status:** ✅ **implementação concluída (2026-11-04)** — D1–D4 entregues.
+> Este documento permanece como a fonte de verdade do *como* (âncoras e
+> decisões de projeto); a execução registrou-se em `CURRENT.md` (linha
+> "14-C Onda D implementada") e os gates ficaram verdes (suíte core
+> **497 testes / 5005 passos / 0 falhas**; `check:all`/`check:stubs` OK;
+> goldens inalterados — nenhuma regeneração, o caminho legado ficou intacto).
 >
 > Escopo derivado do plano `Scheduling_parity_and_query_engine` — Onda D.
 > As Ondas A/B/C (paridade `finishScheduling`, `query_*` e `Material#name`)
@@ -236,11 +237,29 @@ e o caminho de cálculo de material já portado (`Material#*InPeriod`).
 
 ## 5. Rastreabilidade
 
-- Este documento é a entrega da **todo d0** (investigar + planejar a Onda D).
-- A implementação das sub-ondas D1–D4 fica como trabalho futuro; ao concluir
-  cada uma, registrar em `CURRENT.md` (linha "Fase 14 Complemento / Onda D") e
-  propagar a contagem de testes.
+- Este documento era a entrega da **todo d0** (investigar + planejar a Onda D).
+- **Implementação D1–D4 concluída em 2026-11-04** (`CURRENT.md`, linha
+  "14-C Onda D implementada"). Gate final verde: suíte core **497 testes /
+  5005 passos / 0 falhas** (era 488/4966) · `deno check packages/core/mod.ts`
+  limpo · `deno task check:all` exit 0 · `check:stubs` OK · goldens inalterados
+  (sem `golden:generate`, porque o caminho legado de `on <data>` ficou intacto
+  e nenhum `.tjp` do conjunto golden usa a sintaxe temporal nova) · `fmt`/`lint`
+  limpos nos arquivos tocados.
+- **Desvios do plano (§3) adotados na execução:**
+  - **D3 não reusa `ExtendedCharge`/`distribution.ts`** diretamente: a
+    distribuição do booking é um fato *real calendar-based* (dinheiro/material
+    em datas), não previsão sobre a agenda; a matemática vive em fonte única
+    própria `model/booking-period.ts`. Só o **vocabulário de literais** do
+    modifier é compartilhado com a alocação. `distribution.ts` é espelhado
+    apenas na **convenção de contagem de dias** (índice inteiro, iteração
+    inclusiva dia-a-dia).
+  - **Sem migração de fixtures**: `on <data>` permanece válido (tail degenerado
+    `onstart`/1-dia, `isTemporal()===false`); a decisão "migrar" do §3.D3.2 foi
+    substituída por **retro-compatibilidade preservada** — garantia de zero
+    drift de golden.
+  - **Charge é parse-only**: `ChargeBooking` guarda o tail mas ainda não tem
+    consumer contábil (carga no turnover) — fica a cargo da Fase 18, como
+    registrado no §13.7 da Fase 14 Complemento.
 - Relação com ondas já entregues: D3 reusa a **fonte única** de cálculo de
-  material introduzida na Onda C (`Material#*InPeriod` consumido tanto por
-  `TableReport.genMaterialCell` quanto por `MaterialScenario#query_*`); por isso
-  D3 deve mexer nesses métodos e não duplicar a matemática.
+  material da Onda C (`Material#*InPeriod`), adicionando-lhes o gate
+  `isTemporal()` (path legado intacto + path temporal via `booking-period.ts`).
