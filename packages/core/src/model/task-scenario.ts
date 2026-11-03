@@ -23,6 +23,8 @@ import { ChargeSet, } from "../finance/charge-set.ts";
 import { TimeInterval, } from "../time/time-interval.ts";
 import { CostLine, resolveAccount, } from "../accounting/attribution.ts";
 import { CostEvent, createCostEvent, } from "../accounting/cost-event.ts";
+import { RichText, } from "../richtext/rich-text.ts";
+import { RTFHandlers, } from "../richtext/handlers/rtf-handlers.ts";
 
 export const TASK_SCENARIO_ATTRS: string[] = [
   "allocate",
@@ -58,6 +60,47 @@ export const TASK_SCENARIO_ATTRS: string[] = [
   "status",
   "timebasis",
 ];
+
+/**
+ * Subconjunto estrutural de `Query` consumido pelos `query_*` de TaskScenario
+ * (Onda B2). Assim como `account-scenario.ts` declara o seu próprio `Query`, o
+ * modelo não importa a camada de queries (evita ciclo); o objeto real passado
+ * pelo `Query.process` satisfaz esta forma.
+ *
+ * @see docs/taskjuggler/lib/taskjuggler/Query.rb
+ */
+export interface TaskScenarioQuery {
+  readonly start: TjTime | null;
+  readonly end: TjTime | null;
+  readonly startIdx: number | null;
+  readonly endIdx: number | null;
+  scenarioIdx?: number | undefined;
+  property?: PropertyTreeNode | null;
+  scopeProperty?: PropertyTreeNode | null;
+  costAccount?: string | null;
+  revenueAccount?: string | null;
+  timeFormat?: string | null;
+  listItem?: string | null;
+  readonly numberFormat: { format(value: number,): string } | null;
+  readonly currencyFormat: { format(value: number,): string } | null;
+  sortable: unknown;
+  numerical: unknown;
+  string: string | null;
+  rti: unknown;
+  scaleDuration(value: number,): string;
+  scaleLoad(value: number,): string;
+  assignList(items: string[],): void;
+  dup(): TaskScenarioQuery;
+  setCustomData(
+    name: string,
+    data: {
+      string?: string;
+      numerical?: number;
+      sortable?: unknown;
+      rti?: unknown;
+    },
+  ): void;
+}
 
 export class TaskScenario extends ScenarioData {
   private _candidates: Resource[] = [];
@@ -2711,5 +2754,637 @@ export class TaskScenario extends ScenarioData {
     if (nDate === null) return;
 
     dep.propagateDate(nDate, atEnd, false,);
+  }
+
+  // ==================================================================
+  // Onda B2 — query_* portáveis (TaskScenario.rb:1290-1557) + helpers.
+  //
+  // Todos os acessores de base já existem (turnover, getAllocatedTime,
+  // complete/status/gauge, preds/succs, assignedResources por cenário) ou são
+  // portados abaixo. O dispatch de `Query.process` alcança estes métodos na
+  // etapa i (`data[scIdx].query_X`).
+  // ==================================================================
+
+  /**
+   * Work efetivo por período (port fiel de `TaskScenario#getEffectiveWork
+   * (startIdx, endIdx, resource)` — Ruby l.1592-1619). Distingue-se de
+   * `getAllocatedTime` por somar o *effective work* dos recursos.
+   */
+  private effWorkInPeriod(
+    startIdx: number,
+    endIdx: number,
+    resource: Resource | null,
+  ): number {
+    const task = this.getProperty() as Task;
+    const assigned = (this.a("assignedresources",) as Resource[]) ?? [];
+    const res = (resource ? (resource.ptn?.() ?? resource) : null) as
+      | Resource
+      | null;
+    if (
+      this.milestone() || startIdx >= endIdx ||
+      (res !== null && !assigned.some((r,) => (r.ptn?.() ?? r) === res))
+    ) {
+      return 0.0;
+    }
+    const scIdx = this.getScenarioIdx();
+    let workLoad = 0.0;
+    if (task.container()) {
+      for (const child of task.kids()) {
+        workLoad += (child as Task).scenarioData(scIdx,).effWorkInPeriod(
+          startIdx,
+          endIdx,
+          res,
+        );
+      }
+    } else if (res) {
+      workLoad += (res.scenarioData(scIdx,) as ResourceScenario)
+        .getEffectiveWork(
+          startIdx,
+          endIdx,
+          task,
+        );
+    } else {
+      for (const r of assigned) {
+        workLoad += (r.scenarioData(scIdx,) as ResourceScenario)
+          .getEffectiveWork(
+            startIdx,
+            endIdx,
+            task,
+          );
+      }
+    }
+    return workLoad;
+  }
+
+  /**
+   * Recursos alocados no intervalo (port fiel de `assignedResources`,
+   * Ruby l.1731-1749), filtrando por `Resource#allocated?`.
+   */
+  private taskAssignedResources(interval: TimeInterval | null,): Resource[] {
+    const scIdx = this.getScenarioIdx();
+    const iv = interval ??
+      new TimeInterval(
+        this.a("start",) as TjTime,
+        this.a("end",) as TjTime,
+      );
+    const task = this.getProperty() as Task;
+    const list: Resource[] = [];
+    if (task.container()) {
+      for (const child of task.kids()) {
+        for (
+          const r of (child as Task).scenarioData(scIdx,).taskAssignedResources(
+            iv,
+          )
+        ) {
+          if (!list.includes(r,)) list.push(r,);
+        }
+      }
+    } else {
+      const assigned = (this.a("assignedresources",) as Resource[]) ?? [];
+      for (const resource of assigned) {
+        if (resource.allocated(scIdx, iv, task,)) list.push(resource,);
+      }
+    }
+    return list;
+  }
+
+  /** Projeto com os helpers além de `ProjectLike` (dateToIdx force, carga). */
+  private projExt(): {
+    dateToIdx(date: TjTime, forceIntoProject?: boolean,): number;
+    convertToDailyLoad(seconds: number,): number;
+    get(name: string,): unknown;
+    accounts: { get(id: string,): unknown };
+  } {
+    return this.project() as unknown as {
+      dateToIdx(date: TjTime, forceIntoProject?: boolean,): number;
+      convertToDailyLoad(seconds: number,): number;
+      get(name: string,): unknown;
+      accounts: { get(id: string,): unknown };
+    };
+  }
+
+  /** Handlers RTF para o ramo `listItem` das listas de query. */
+  private rtfHandlers(): ReturnType<typeof RTFHandlers.create> {
+    return RTFHandlers.create(
+      this.project() as unknown as Parameters<typeof RTFHandlers.create>[0],
+    );
+  }
+
+  /** Renderiza um item de lista RichText (ramo `query.listItem`). */
+  private renderListItem(
+    query: TaskScenarioQuery,
+    property: PropertyTreeNode,
+    extra: (q: TaskScenarioQuery,) => void,
+  ): string | null {
+    if (!query.listItem) return null;
+    const rti = new RichText(query.listItem, this.rtfHandlers(),)
+      .generateIntermediateFormat();
+    if (!rti) return null;
+    const q = query.dup();
+    q.property = property;
+    extra(q,);
+    (rti as unknown as { setQuery(q: unknown,): void }).setQuery(q,);
+    return `<nowiki>${(rti as unknown as { to_s(): string }).to_s()}</nowiki>`;
+  }
+
+  /** Pré/sucessor com data (port `generateDepencyListItem`, Ruby l.2712). */
+  private generateDepencyListItem(
+    query: TaskScenarioQuery,
+    task: Task,
+    dep: string,
+    date: string,
+  ): string {
+    const rendered = this.renderListItem(query, task, (q,) => {
+      q.setCustomData("dependency", { string: dep, },);
+      q.setCustomData("date", { string: date, },);
+    },);
+    return rendered ??
+      `<nowiki>${task.name} (${task.fullId}) ${dep} ${date}</nowiki>`;
+  }
+
+  /** Lista de tarefas com start (port `generateTaskList`, Ruby l.2727). */
+  private generateTaskList(
+    taskList: Task[],
+    query: TaskScenarioQuery,
+  ): string[] {
+    const list: string[] = [];
+    const scIdx = this.getScenarioIdx();
+    const tf = (this.project().get("timeFormat",) as string | null) ??
+      query.timeFormat ?? undefined;
+    for (const task of taskList) {
+      const start = task.scenarioData(scIdx,).a("start",) as TjTime | null;
+      const date = start ? start.to_s(tf,) : "";
+      const rendered = this.renderListItem(query, task, (q,) => {
+        q.setCustomData("date", { string: date, },);
+      },);
+      list.push(
+        rendered ?? `<nowiki>${task.name} (${task.fullId}) ${date}</nowiki>`,
+      );
+    }
+    return list;
+  }
+
+  /** Limite de data ou sentinela -1 (port `queryDateLimit`, Ruby l.2762). */
+  private queryDateLimit(query: TaskScenarioQuery, date: TjTime | null,): void {
+    if (date) {
+      query.sortable = query.numerical = date;
+      query.string = date.to_s(query.timeFormat ?? undefined,);
+    } else {
+      query.sortable = query.numerical = -1;
+      query.string = "";
+    }
+  }
+
+  /** Sobrepõe a janela da query? (prefixo comum de active/closed/open). */
+  private overlapsQuery(query: TaskScenarioQuery,): boolean {
+    const start = this.a("start",) as TjTime | null;
+    const end = this.a("end",) as TjTime | null;
+    if (!start || !end || !query.start || !query.end) return false;
+    return new TimeInterval(start, end,).overlaps(
+      new TimeInterval(query.start, query.end,),
+    );
+  }
+
+  /** Tarefas ativas no período (port `activeTasks`, Ruby l.2534). */
+  private activeTasks(query: TaskScenarioQuery,): number {
+    if (!this.overlapsQuery(query,)) return 0;
+    const task = this.getProperty() as Task;
+    if (task.leaf()) {
+      const now = this.project().get("now",) as TjTime;
+      const start = this.a("start",) as TjTime;
+      const end = this.a("end",) as TjTime;
+      return start.toSeconds() <= now.toSeconds() &&
+          now.toSeconds() < end.toSeconds()
+        ? 1
+        : 0;
+    }
+    let cnt = 0;
+    for (const kid of task.kids()) {
+      cnt += (kid as Task).scenarioData(this.getScenarioIdx(),).closedTasks(
+        query,
+      );
+    }
+    return cnt;
+  }
+
+  /** Tarefas fechadas no período (port `closedTasks`, Ruby l.2550). */
+  private closedTasks(query: TaskScenarioQuery,): number {
+    if (!this.overlapsQuery(query,)) return 0;
+    const task = this.getProperty() as Task;
+    if (task.leaf()) {
+      const now = this.project().get("now",) as TjTime;
+      const end = this.a("end",) as TjTime;
+      return end.toSeconds() <= now.toSeconds() ? 1 : 0;
+    }
+    let cnt = 0;
+    for (const kid of task.kids()) {
+      cnt += (kid as Task).scenarioData(this.getScenarioIdx(),).closedTasks(
+        query,
+      );
+    }
+    return cnt;
+  }
+
+  /** Tarefas abertas no período (port `openTasks`, Ruby l.2565). */
+  private openTasks(query: TaskScenarioQuery,): number {
+    if (!this.overlapsQuery(query,)) return 0;
+    const task = this.getProperty() as Task;
+    if (task.leaf()) {
+      const now = this.project().get("now",) as TjTime;
+      const end = this.a("end",) as TjTime;
+      return end.toSeconds() > now.toSeconds() ? 1 : 0;
+    }
+    let cnt = 0;
+    for (const kid of task.kids()) {
+      cnt += (kid as Task).scenarioData(this.getScenarioIdx(),).openTasks(
+        query,
+      );
+    }
+    return cnt;
+  }
+
+  /** Alguma predecessância própria ou de ancestrais (Ruby l.2216). */
+  private hasPredecessors(): boolean {
+    let t = this.getProperty() as Task | null;
+    const scIdx = this.getScenarioIdx();
+    while (t) {
+      if (t.scenarioData(scIdx,).startpreds().length > 0) return true;
+      t = t.parent as Task | null;
+    }
+    return false;
+  }
+
+  /** Alguma sucessância própria ou de ancestrais (Ruby l.2228). */
+  private hasSuccessors(): boolean {
+    let t = this.getProperty() as Task | null;
+    const scIdx = this.getScenarioIdx();
+    while (t) {
+      if (t.scenarioData(scIdx,).endsuccs().length > 0) return true;
+      t = t.parent as Task | null;
+    }
+    return false;
+  }
+
+  /** Entrada (milestone sem pred), recursivo (Ruby l.2582). */
+  private collectInputs(
+    foundInputs: Task[],
+    includeChildren: boolean,
+    checked: Set<string>,
+  ): void {
+    const task = this.getProperty() as Task;
+    const sig = `${task.fullId}|${includeChildren}`;
+    if (checked.has(sig,)) return;
+    checked.add(sig,);
+    if (task.leaf() && !this.hasPredecessors() && this.milestone()) {
+      foundInputs.push(task,);
+      return;
+    }
+    const scIdx = this.getScenarioIdx();
+    if (includeChildren) {
+      for (const child of task.kids()) {
+        (child as Task).scenarioData(scIdx,).collectInputs(
+          foundInputs,
+          true,
+          checked,
+        );
+      }
+    }
+    for (const [t,] of this.startpreds()) {
+      if (t) t.scenarioData(scIdx,).collectInputs(foundInputs, false, checked,);
+    }
+    if (task.parent) {
+      (task.parent as Task).scenarioData(scIdx,).collectInputs(
+        foundInputs,
+        false,
+        checked,
+      );
+    }
+  }
+
+  /** Saída (milestone sem succ), recursivo (Ruby l.2617). */
+  private collectTargets(
+    foundTargets: Task[],
+    includeChildren: boolean,
+    checked: Set<string>,
+  ): void {
+    const task = this.getProperty() as Task;
+    const sig = `${task.fullId}|${includeChildren}`;
+    if (checked.has(sig,)) return;
+    checked.add(sig,);
+    if (task.leaf() && !this.hasSuccessors() && this.milestone()) {
+      foundTargets.push(task,);
+      return;
+    }
+    const scIdx = this.getScenarioIdx();
+    for (const [t,] of this.endsuccs()) {
+      if (t) {
+        t.scenarioData(scIdx,).collectTargets(foundTargets, false, checked,);
+      }
+    }
+    if (task.parent) {
+      (task.parent as Task).scenarioData(scIdx,).collectTargets(
+        foundTargets,
+        false,
+        checked,
+      );
+    }
+    if (includeChildren) {
+      for (const child of task.kids()) {
+        (child as Task).scenarioData(scIdx,).collectTargets(
+          foundTargets,
+          true,
+          checked,
+        );
+      }
+    }
+  }
+
+  /** Ordena por start asc, desempate por seqno desc (Ruby setSorting). */
+  private sortTaskList(list: Task[],): void {
+    const scIdx = this.getScenarioIdx();
+    list.sort((a, b,) => {
+      const sa = a.scenarioData(scIdx,).a("start",) as TjTime | null;
+      const sb = b.scenarioData(scIdx,).a("start",) as TjTime | null;
+      const c = (sa ? sa.toSeconds() : 0) - (sb ? sb.toSeconds() : 0);
+      if (c !== 0) return c;
+      return b.sequenceNo - a.sequenceNo;
+    },);
+  }
+
+  // ---- os 24 query_* ----
+
+  query_activetasks(query: TaskScenarioQuery,): void {
+    const count = this.activeTasks(query,);
+    query.sortable = query.numerical = count;
+    query.string = `${Math.trunc(count,)}`;
+  }
+
+  query_closedtasks(query: TaskScenarioQuery,): void {
+    const count = this.closedTasks(query,);
+    query.sortable = query.numerical = count;
+    query.string = `${Math.trunc(count,)}`;
+  }
+
+  query_competitorcount(query: TaskScenarioQuery,): void {
+    const n = this._competitors.length;
+    query.sortable = query.numerical = n;
+    query.string = `${n}`;
+  }
+
+  query_complete(query: TaskScenarioQuery,): void {
+    // Ruby unifica o atributo de cenário `complete` com `@complete`: um valor
+    // gravado por `setForScenario` (ex.: trilha de tracking) é o que a consulta
+    // devolve; só quando não há valor declarado é que se recalcula via
+    // `calcCompletion`. Sem isto, relatórios que escrevem `complete` direto
+    // (iCal PERCENT-COMPLETE) deixariam de refletir a fonte gravada.
+    const declared = this.a("complete",) as number | null;
+    let val = typeof declared === "number" ? declared : null;
+    if (val === null) {
+      let c = this.complete();
+      if (c === null || c === undefined) {
+        this.calcCompletion();
+        c = this.complete();
+      }
+      val = c ?? 0;
+    }
+    query.sortable = query.numerical = val;
+    query.string = `${Math.trunc(val,)}%`;
+  }
+
+  query_cost(query: TaskScenarioQuery,): void {
+    const account = query.costAccount
+      ? (this.projExt().accounts.get(query.costAccount,) as Account | null)
+      : null;
+    if (account) {
+      const cost = this.turnover(
+        query.startIdx ?? 0,
+        query.endIdx ?? 0,
+        account,
+        query.scopeProperty as Resource | null,
+      );
+      query.sortable = query.numerical = cost;
+      query.string = query.currencyFormat
+        ? query.currencyFormat.format(cost,)
+        : String(cost,);
+    } else {
+      query.string = "No 'balance' defined!";
+    }
+  }
+
+  query_duration(query: TaskScenarioQuery,): void {
+    const start = this.a("start",) as TjTime | null;
+    const end = this.a("end",) as TjTime | null;
+    const duration = start && end
+      ? (end.toSeconds() - start.toSeconds()) / (60 * 60 * 24)
+      : 0;
+    query.sortable = query.numerical = duration;
+    query.string = query.scaleDuration(duration,);
+  }
+
+  query_effortdone(query: TaskScenarioQuery,): void {
+    const effortdone = this.a("effortdone",) as number | null;
+    let effort: number;
+    if (effortdone) {
+      effort = this.projExt().convertToDailyLoad(
+        effortdone * (this.project().get("scheduleGranularity",) as number),
+      );
+    } else {
+      const p = this.projExt();
+      effort = this.effWorkInPeriod(
+        p.dateToIdx(this.project().get("start",) as TjTime, false,),
+        p.dateToIdx(this.project().get("now",) as TjTime,),
+        query.scopeProperty as Resource | null,
+      );
+    }
+    query.sortable = query.numerical = effort;
+    query.string = query.scaleLoad(effort,);
+  }
+
+  query_effortleft(query: TaskScenarioQuery,): void {
+    const p = this.projExt();
+    const effort = this.effWorkInPeriod(
+      p.dateToIdx(this.project().get("now",) as TjTime,),
+      p.dateToIdx(this.project().get("end",) as TjTime, false,),
+      query.scopeProperty as Resource | null,
+    );
+    query.sortable = query.numerical = effort;
+    query.string = query.scaleLoad(effort,);
+  }
+
+  query_effort(query: TaskScenarioQuery,): void {
+    const work = this.effWorkInPeriod(
+      query.startIdx ?? 0,
+      query.endIdx ?? 0,
+      query.scopeProperty as Resource | null,
+    );
+    query.sortable = query.numerical = work;
+    query.string = query.scaleLoad(work,);
+  }
+
+  query_followers(query: TaskScenarioQuery,): void {
+    const scIdx = this.getScenarioIdx();
+    const tf = query.timeFormat ?? undefined;
+    const list: string[] = [];
+    for (const [task, onEnd,] of this.startsuccs()) {
+      if (!task) continue;
+      const d = task.getForScenario(onEnd ? "end" : "start", scIdx,) as
+        | TjTime
+        | null;
+      const dep = onEnd ? "[->]" : "[->[";
+      list.push(
+        this.generateDepencyListItem(query, task, dep, d ? d.to_s(tf,) : "",),
+      );
+    }
+    for (const [task, onEnd,] of this.endsuccs()) {
+      if (!task) continue;
+      const d = task.getForScenario(onEnd ? "end" : "start", scIdx,) as
+        | TjTime
+        | null;
+      const dep = onEnd ? "]->]" : "]->[";
+      list.push(
+        this.generateDepencyListItem(query, task, dep, d ? d.to_s(tf,) : "",),
+      );
+    }
+    query.assignList(list,);
+  }
+
+  query_gauge(query: TaskScenarioQuery,): void {
+    if (this.gauge() === null || this.gauge() === undefined) this.calcGauge();
+    query.string = this.gauge() ?? "";
+  }
+
+  query_headcount(query: TaskScenarioQuery,): void {
+    let headcount = 0;
+    const scIdx = this.getScenarioIdx();
+    const iv = query.start && query.end
+      ? new TimeInterval(query.start, query.end,)
+      : null;
+    for (const res of this.taskAssignedResources(iv,)) {
+      const eff = (res.getForScenario("efficiency", scIdx,) as number | null) ??
+        100;
+      headcount += Math.round(eff,);
+    }
+    query.sortable = query.numerical = headcount;
+    query.string = query.numberFormat
+      ? query.numberFormat.format(headcount,)
+      : String(headcount,);
+  }
+
+  query_inputs(query: TaskScenarioQuery,): void {
+    const found: Task[] = [];
+    this.collectInputs(found, true, new Set(),);
+    const task = this.getProperty() as Task;
+    const list = found.filter((t,) => t !== task);
+    this.sortTaskList(list,);
+    query.assignList(this.generateTaskList(list, query,),);
+  }
+
+  query_maxend(query: TaskScenarioQuery,): void {
+    this.queryDateLimit(query, this.a("maxend",) as TjTime | null,);
+  }
+
+  query_maxstart(query: TaskScenarioQuery,): void {
+    this.queryDateLimit(query, this.a("maxstart",) as TjTime | null,);
+  }
+
+  query_minend(query: TaskScenarioQuery,): void {
+    this.queryDateLimit(query, this.a("minend",) as TjTime | null,);
+  }
+
+  query_minstart(query: TaskScenarioQuery,): void {
+    this.queryDateLimit(query, this.a("minstart",) as TjTime | null,);
+  }
+
+  query_opentasks(query: TaskScenarioQuery,): void {
+    const count = this.openTasks(query,);
+    query.sortable = query.numerical = count;
+    query.string = `${Math.trunc(count,)}`;
+  }
+
+  query_precursors(query: TaskScenarioQuery,): void {
+    const scIdx = this.getScenarioIdx();
+    const tf = query.timeFormat ?? undefined;
+    const list: string[] = [];
+    for (const [task, onEnd,] of this.startpreds()) {
+      if (!task) continue;
+      const d = task.getForScenario(onEnd ? "end" : "start", scIdx,) as
+        | TjTime
+        | null;
+      const dep = onEnd ? "]->[" : "[->[";
+      list.push(
+        this.generateDepencyListItem(query, task, dep, d ? d.to_s(tf,) : "",),
+      );
+    }
+    for (const [task, onEnd,] of this.endpreds()) {
+      if (!task) continue;
+      const d = task.getForScenario(onEnd ? "end" : "start", scIdx,) as
+        | TjTime
+        | null;
+      const dep = onEnd ? "]->]" : "[->]";
+      list.push(
+        this.generateDepencyListItem(query, task, dep, d ? d.to_s(tf,) : "",),
+      );
+    }
+    query.assignList(list,);
+  }
+
+  query_resources(query: TaskScenarioQuery,): void {
+    const scIdx = this.getScenarioIdx();
+    const task = this.getProperty() as Task;
+    const iv = query.start && query.end
+      ? new TimeInterval(query.start, query.end,)
+      : null;
+    const list: string[] = [];
+    for (const resource of this.taskAssignedResources(iv,)) {
+      if (!resource.allocated(scIdx, iv as TimeInterval, task,)) continue;
+      const rendered = this.renderListItem(query, resource, (q,) => {
+        q.scopeProperty = task;
+      },);
+      list.push(
+        rendered ??
+          `<nowiki>${resource.name} (${resource.fullId})</nowiki>`,
+      );
+    }
+    query.assignList(list,);
+  }
+
+  query_revenue(query: TaskScenarioQuery,): void {
+    const account = query.revenueAccount
+      ? (this.projExt().accounts.get(query.revenueAccount,) as Account | null)
+      : null;
+    if (account) {
+      const revenue = this.turnover(
+        query.startIdx ?? 0,
+        query.endIdx ?? 0,
+        account,
+        query.scopeProperty as Resource | null,
+      );
+      query.sortable = query.numerical = revenue;
+      query.string = query.currencyFormat
+        ? query.currencyFormat.format(revenue,)
+        : String(revenue,);
+    } else {
+      query.string = "No 'balance' defined!";
+    }
+  }
+
+  query_scheduling(query: TaskScenarioQuery,): void {
+    // Ruby: `query.string = 'ASAP' if @property.leaf?` (containers ficam sem
+    // string). Mantido fiel.
+    if ((this.getProperty() as Task).leaf()) query.string = "ASAP";
+  }
+
+  query_status(query: TaskScenarioQuery,): void {
+    if (this.status() === "") this.calcStatus();
+    query.string = this.status();
+  }
+
+  query_targets(query: TaskScenarioQuery,): void {
+    const found: Task[] = [];
+    this.collectTargets(found, true, new Set(),);
+    const task = this.getProperty() as Task;
+    const list = found.filter((t,) => t !== task);
+    this.sortTaskList(list,);
+    query.assignList(this.generateTaskList(list, query,),);
   }
 }

@@ -135,14 +135,20 @@ export abstract class TableReport extends ReportBase {
     ["unitprice", ["Unit Price", "right",],],
   ],);
 
-  /** Colunas de material resolvidas por atributo (keyword → attributeId). */
+  /**
+   * Colunas de material resolvidas por atributo/consulta (keyword → attributeId).
+   * `unitprice` roteia para a consulta própria `query_unitprice` (preço unitário
+   * efetivo) em vez do atributo base `cost` — assim `cost` fica livre para a
+   * consulta `query_cost` (custo total planejado) sem sequestrar a coluna
+   * (Onda C).
+   */
   static readonly materialAttributeColumns: Map<string, string> = new Map<
     string,
     string
   >([
     ["note", "note",],
     ["unit", "unit",],
-    ["unitprice", "cost",],
+    ["unitprice", "unitprice",],
   ],);
 
   /**
@@ -1374,75 +1380,10 @@ export abstract class TableReport extends ReportBase {
   }
 
   /**
-   * Bookings de `material` nas tarefas do projeto para o cenário `scIdx`,
-   * com a tarefa dona do consumo (pode ser `null` no booking).
-   */
-  private materialBookings(
-    material: Material,
-    scIdx: number,
-  ): Array<{ task: Task; booking: MaterialBooking }> {
-    const out: Array<{ task: Task; booking: MaterialBooking }> = [];
-    for (const node of this.project.tasks.toArray()) {
-      if (!(node instanceof Task)) continue;
-      for (const booking of this.taskMaterialBookings(node, scIdx,)) {
-        if (booking.material === material) {
-          out.push({ task: node, booking, },);
-        }
-      }
-    }
-    return out;
-  }
-
-  /** Há `CostEvent` `material_usage` de `material` no cenário? */
-  private materialHasCostEvents(material: Material, scIdx: number,): boolean {
-    return this.project.costEvents.some((ce,) =>
-      ce.type === "material_usage" && ce.material === material &&
-      ce.scenarioIdx === scIdx
-    );
-  }
-
-  /**
-   * Soma de `CostEvent` `material_usage` de `material` no cenário. `mode`
-   * `null` soma planejado + realizado.
-   */
-  private materialCost(
-    material: Material,
-    scIdx: number,
-    mode: "planned" | "actual" | null,
-  ): number {
-    let sum = 0;
-    for (const ce of this.project.costEvents) {
-      if (
-        ce.type !== "material_usage" || ce.material !== material ||
-        ce.scenarioIdx !== scIdx
-      ) {
-        continue;
-      }
-      if (mode === null || ce.mode === mode) sum += ce.amount;
-    }
-    return sum;
-  }
-
-  /**
-   * A tarefa de uma alocação cruza o período do relatório? Sem agenda, a
-   * alocação é considerada (não há como recortar).
-   */
-  private materialTaskInPeriod(
-    task: Task,
-    scIdx: number,
-    start: TjTime | null,
-    end: TjTime | null,
-  ): boolean {
-    if (!start || !end) return true;
-    const s = task.getForScenario("start", scIdx,) as TjTime | null;
-    const e = task.getForScenario("end", scIdx,) as TjTime | null;
-    if (!s || !e) return true;
-    return !(e.compareTo(start,) < 0 || s.compareTo(end,) > 0);
-  }
-
-  /**
    * Quantidade derivada do material (14C.11.10): Σ
    * `MaterialAllocation.quantity` no período do relatório. Sem alocação, 0.
+   * Delega à fonte única `Material.allocatedQuantityInPeriod` (Onda C),
+   * compartilhada com `MaterialScenario#query_effort`.
    */
   private materialAllocatedQuantity(
     material: Material,
@@ -1450,118 +1391,42 @@ export abstract class TableReport extends ReportBase {
   ): number {
     const start = (this.a("start",) as TjTime | null) ?? null;
     const end = (this.a("end",) as TjTime | null) ?? null;
-    let sum = 0;
-    for (
-      const { task, quantity, } of this.materialAllocations(material, scIdx,)
-    ) {
-      if (!this.materialTaskInPeriod(task, scIdx, start, end,)) continue;
-      sum += quantity;
-    }
-    return sum;
-  }
-
-  /**
-   * Custo de material a partir das `MaterialAllocation`, recortado pelo
-   * período do relatório (C1.6) e com o preço unitário da própria alocação
-   * (14C.11.6). Sem alocações, `null`.
-   */
-  private materialAllocationCost(
-    material: Material,
-    scIdx: number,
-  ): number | null {
-    const allocs = this.materialAllocations(material, scIdx,);
-    if (allocs.length === 0) return null;
-    const start = (this.a("start",) as TjTime | null) ?? null;
-    const end = (this.a("end",) as TjTime | null) ?? null;
-    let sum = 0;
-    for (const { task, allocation, } of allocs) {
-      if (!this.materialTaskInPeriod(task, scIdx, start, end,)) continue;
-      sum += allocation.quantity * allocation.unitPriceFor(material,);
-    }
-    return sum;
-  }
-
-  /**
-   * Custo **realizado** a partir dos bookings (14C.11.7), recortado pelo
-   * período e com a precedência booking → alocação → material. Sem bookings,
-   * `null`.
-   */
-  private materialBookingCost(
-    material: Material,
-    scIdx: number,
-  ): number | null {
-    const bookings = this.materialBookings(material, scIdx,);
-    if (bookings.length === 0) return null;
-    const start = (this.a("start",) as TjTime | null) ?? null;
-    const end = (this.a("end",) as TjTime | null) ?? null;
-    let sum = 0;
-    for (const { task, booking, } of bookings) {
-      if (!this.materialTaskInPeriod(task, scIdx, start, end,)) continue;
-      sum += this.bookingCost(booking, scIdx,);
-    }
-    return sum;
+    return material.allocatedQuantityInPeriod(scIdx, start, end,);
   }
 
   /**
    * Custo planejado: `CostEvent` `planned` > alocações no período. Sem
    * alocação o material não tem custo planejado (`totalquantity` foi
-   * removido na 14C.11.10).
+   * removido na 14C.11.10). Delega à fonte única (Onda C).
    */
   private materialScheduledCost(material: Material, scIdx: number,): number {
-    if (this.materialHasCostEvents(material, scIdx,)) {
-      return this.materialCost(material, scIdx, "planned",);
-    }
-    return this.materialAllocationCost(material, scIdx,) ?? 0;
+    const start = (this.a("start",) as TjTime | null) ?? null;
+    const end = (this.a("end",) as TjTime | null) ?? null;
+    return material.scheduledCostInPeriod(scIdx, start, end,);
   }
 
   /**
    * Custo realizado: `CostEvent` `actual` > bookings no período. Sem bookings
-   * nem eventos, 0.
+   * nem eventos, 0. Delega à fonte única (Onda C).
    */
   private materialActualCost(material: Material, scIdx: number,): number {
-    if (this.materialHasCostEvents(material, scIdx,)) {
-      return this.materialCost(material, scIdx, "actual",);
-    }
-    return this.materialBookingCost(material, scIdx,) ?? 0;
+    const start = (this.a("start",) as TjTime | null) ?? null;
+    const end = (this.a("end",) as TjTime | null) ?? null;
+    return material.actualCostInPeriod(scIdx, start, end,);
   }
 
   /** Custo total: `CostEvent` (planejado + realizado) > alocações + bookings. */
   private materialTotalCost(material: Material, scIdx: number,): number {
-    if (this.materialHasCostEvents(material, scIdx,)) {
-      return this.materialCost(material, scIdx, null,);
-    }
-    return (this.materialAllocationCost(material, scIdx,) ?? 0) +
-      (this.materialBookingCost(material, scIdx,) ?? 0);
-  }
-
-  /**
-   * Bookings de **estoque** de `material` no período do relatório (C18,
-   * Adendo Extra §13.7): os movimentos **sem** tarefa declarados no corpo do
-   * material (14C.13.1, atributo `stockbookings`). Período fechado
-   * `[start, end]` — a mesma convenção do recorte de alocações
-   * (`materialTaskInPeriod`); sem período, todos os movimentos contam.
-   */
-  private stockBookingsInPeriod(
-    material: Material,
-    scIdx: number,
-  ): MaterialBooking[] {
     const start = (this.a("start",) as TjTime | null) ?? null;
     const end = (this.a("end",) as TjTime | null) ?? null;
-    return material.stockBookings(scIdx,).filter((booking,) => {
-      if (!booking.isInventory()) return false;
-      if (!start || !end) return true;
-      return booking.date.compareTo(start,) >= 0 &&
-        booking.date.compareTo(end,) <= 0;
-    },);
+    return material.totalCostInPeriod(scIdx, start, end,);
   }
 
   /** `stockquantity`: Σ algébrico das quantidades de estoque no período. */
   private materialStockQuantity(material: Material, scIdx: number,): number {
-    let sum = 0;
-    for (const booking of this.stockBookingsInPeriod(material, scIdx,)) {
-      sum += booking.quantity;
-    }
-    return sum;
+    const start = (this.a("start",) as TjTime | null) ?? null;
+    const end = (this.a("end",) as TjTime | null) ?? null;
+    return material.stockQuantityInPeriod(scIdx, start, end,);
   }
 
   /**
@@ -1569,11 +1434,9 @@ export abstract class TableReport extends ReportBase {
    * efetivo do booking (booking → material, via `unitPriceFor`).
    */
   private materialStockCost(material: Material, scIdx: number,): number {
-    let sum = 0;
-    for (const booking of this.stockBookingsInPeriod(material, scIdx,)) {
-      sum += booking.cost();
-    }
-    return sum;
+    const start = (this.a("start",) as TjTime | null) ?? null;
+    const end = (this.a("end",) as TjTime | null) ?? null;
+    return material.stockCostInPeriod(scIdx, start, end,);
   }
 
   /** Formata valores monetários de material (`numberFormat` do relatório). */

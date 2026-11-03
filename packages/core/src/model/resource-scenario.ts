@@ -17,6 +17,9 @@ import { ChargeSet, } from "../finance/charge-set.ts";
 import { type ProjectLike, } from "./project-like.ts";
 import { CostLine, resolveAccount, } from "../accounting/attribution.ts";
 import { CostEvent, createCostEvent, } from "../accounting/cost-event.ts";
+import { RichText, } from "../richtext/rich-text.ts";
+import { RTFHandlers, } from "../richtext/handlers/rtf-handlers.ts";
+import { NotYetImplementedError, } from "./errors.ts";
 
 /**
  * Shape of a leave entry as stored on the `leaves` attribute.
@@ -68,6 +71,36 @@ export const RESOURCE_SCENARIO_ATTRS: string[] = [
   "leaveallowances",
   "workinghours",
 ];
+
+/**
+ * Subconjunto estrutural de `Query` consumido pelos `query_*` de
+ * ResourceScenario (Onda B3). Mesma filosofia de `account-scenario.ts`:
+ * o modelo não importa a camada de queries (evita ciclo); o objeto real
+ * do `Query.process` satisfaz esta forma.
+ */
+export interface ResourceScenarioQuery {
+  readonly start: TjTime | null;
+  readonly end: TjTime | null;
+  readonly startIdx: number | null;
+  readonly endIdx: number | null;
+  scenarioIdx?: number | undefined;
+  property?: PropertyTreeNode | null;
+  scopeProperty?: PropertyTreeNode | null;
+  costAccount?: string | null;
+  revenueAccount?: string | null;
+  timeFormat?: string | null;
+  listItem?: string | null;
+  readonly numberFormat: { format(value: number,): string } | null;
+  readonly currencyFormat: { format(value: number,): string } | null;
+  sortable: unknown;
+  numerical: unknown;
+  string: string | null;
+  rti: unknown;
+  scaleDuration(value: number,): string;
+  scaleLoad(value: number,): string;
+  assignList(items: string[],): void;
+  dup(): ResourceScenarioQuery;
+}
 
 export class ResourceScenario extends ScenarioData {
   public scoreboard: Scoreboard<number | null | Task> | null = null;
@@ -1250,5 +1283,246 @@ export class ResourceScenario extends ScenarioData {
       },);
     }
     return empty;
+  }
+
+  // ==================================================================
+  // Onda B3 — query_* portáveis de ResourceScenario (Ruby l.315-463).
+  //
+  // Subconjunto central apoiado em bookings/scoreboard/finance já portados.
+  // Os `query_*` de leave/fte/dashboard ficam ancorados na Onda B4.
+  // ==================================================================
+
+  /** Projeto com helpers além de `ProjectLike` (para dateToIdx force). */
+  private projExt(): {
+    dateToIdx(date: TjTime, forceIntoProject?: boolean,): number;
+    get(name: string,): unknown;
+    accounts: { get(id: string,): unknown };
+  } {
+    return this.project() as unknown as {
+      dateToIdx(date: TjTime, forceIntoProject?: boolean,): number;
+      get(name: string,): unknown;
+      accounts: { get(id: string,): unknown };
+    };
+  }
+
+  /** Handlers RTF para o ramo `listItem` de `query_duties`. */
+  private rtfHandlers(): ReturnType<typeof RTFHandlers.create> {
+    return RTFHandlers.create(
+      this.project() as unknown as Parameters<typeof RTFHandlers.create>[0],
+    );
+  }
+
+  query_cost(query: ResourceScenarioQuery,): void {
+    const account = query.costAccount
+      ? (this.projExt().accounts.get(query.costAccount,) as Account | null)
+      : null;
+    if (account) {
+      const cost = this.turnover(
+        query.startIdx ?? 0,
+        query.endIdx ?? 0,
+        account,
+        query.scopeProperty as Task | null,
+        true,
+      );
+      query.sortable = query.numerical = cost;
+      query.string = query.currencyFormat
+        ? query.currencyFormat.format(cost,)
+        : String(cost,);
+    } else {
+      query.string = "No 'balance' defined!";
+    }
+  }
+
+  query_duties(query: ResourceScenarioQuery,): void {
+    const list: string[] = [];
+    const iv = new TimeInterval(query.start as TjTime, query.end as TjTime,);
+    const resource = this.getProperty();
+    for (const task of this.duties) {
+      if (!task.hasResourceAllocated(this.getScenarioIdx(), iv, resource,)) {
+        continue;
+      }
+      if (query.listItem) {
+        const rti = new RichText(query.listItem, this.rtfHandlers(),)
+          .generateIntermediateFormat();
+        if (rti) {
+          const q = query.dup();
+          q.property = task;
+          q.scopeProperty = resource;
+          (rti as unknown as { setQuery(q: unknown,): void }).setQuery(q,);
+          list.push(
+            `<nowiki>${(rti as unknown as { to_s(): string }).to_s()}</nowiki>`,
+          );
+          continue;
+        }
+      }
+      list.push(`<nowiki>${task.name} (${task.id})</nowiki>`,);
+    }
+    query.assignList(list,);
+  }
+
+  query_effort(query: ResourceScenarioQuery,): void {
+    const effort = this.getEffectiveWork(
+      query.startIdx ?? 0,
+      query.endIdx ?? 0,
+      query.scopeProperty as Task | null,
+    );
+    query.sortable = query.numerical = effort;
+    query.string = query.scaleLoad(effort,);
+  }
+
+  query_effortdone(query: ResourceScenarioQuery,): void {
+    const p = this.projExt();
+    const effort = this.getEffectiveWork(
+      p.dateToIdx(this.project().get("start",) as TjTime, false,),
+      p.dateToIdx(this.project().get("now",) as TjTime,),
+      query.scopeProperty as Task | null,
+    );
+    query.sortable = query.numerical = effort;
+    query.string = query.scaleLoad(effort,);
+  }
+
+  query_effortleft(query: ResourceScenarioQuery,): void {
+    const p = this.projExt();
+    const effort = this.getEffectiveWork(
+      p.dateToIdx(this.project().get("now",) as TjTime,),
+      p.dateToIdx(this.project().get("end",) as TjTime, false,),
+      query.scopeProperty as Task | null,
+    );
+    query.sortable = query.numerical = effort;
+    query.string = query.scaleLoad(effort,);
+  }
+
+  query_freetime(query: ResourceScenarioQuery,): void {
+    const time =
+      this.getEffectiveFreeTime(query.startIdx ?? 0, query.endIdx ?? 0,) /
+      (60 * 60 * 24);
+    query.sortable = query.numerical = time;
+    query.string = query.scaleDuration(time,);
+  }
+
+  query_freework(query: ResourceScenarioQuery,): void {
+    const work = this.getEffectiveFreeWork(
+      query.startIdx ?? 0,
+      query.endIdx ?? 0,
+    );
+    query.sortable = query.numerical = work;
+    query.string = query.scaleLoad(work,);
+  }
+
+  query_headcount(query: ResourceScenarioQuery,): void {
+    let headcount = 0;
+    const property = this.getProperty();
+    if ((property as PropertyTreeNode).container?.()) {
+      for (const child of (property as PropertyTreeNode).kids()) {
+        const q = query.dup();
+        (child as Resource).scenarioData(this.getScenarioIdx(),)
+          .query_headcount(
+            q,
+          );
+        headcount += typeof q.numerical === "number" ? q.numerical : 0;
+      }
+    } else {
+      if (this.employed(this.projExt().dateToIdx(query.start as TjTime,),)) {
+        headcount += Math.round((this.a("efficiency",) as number) ?? 1,);
+      }
+    }
+    query.sortable = query.numerical = headcount;
+    query.string = query.numberFormat
+      ? query.numberFormat.format(headcount,)
+      : String(headcount,);
+  }
+
+  query_rate(query: ResourceScenarioQuery,): void {
+    const r = this.rate();
+    query.sortable = query.numerical = r;
+    query.string = query.currencyFormat
+      ? query.currencyFormat.format(r,)
+      : String(r,);
+  }
+
+  query_revenue(query: ResourceScenarioQuery,): void {
+    const account = query.revenueAccount
+      ? (this.projExt().accounts.get(query.revenueAccount,) as Account | null)
+      : null;
+    if (account) {
+      const revenue = this.turnover(
+        query.startIdx ?? 0,
+        query.endIdx ?? 0,
+        account,
+        query.scopeProperty as Task | null,
+      );
+      query.sortable = query.numerical = revenue;
+      query.string = query.currencyFormat
+        ? query.currencyFormat.format(revenue,)
+        : String(revenue,);
+    } else {
+      query.string = "No 'balance' defined!";
+    }
+  }
+
+  // ==================================================================
+  // Onda B4 — query_* ancorados (dados de leave/fte ainda não produzidos).
+  //
+  // Não implementamos; deixamos o stub com âncora (política check:stubs).
+  // Só são alcançados quando uma coluna/consulta os exige; caso contrário o
+  // dispatch cai no atributo base, preservando a suíte verde.
+  // ==================================================================
+
+  // Ancorado: Fase 16 — férias (LeaveList annual) ainda não produzidas.
+  query_annualleave(_query: ResourceScenarioQuery,): void {
+    throw new NotYetImplementedError(
+      "16",
+      "ResourceScenario#query_annualleave",
+    );
+  }
+
+  // Ancorado: Fase 16 — lista de LeaveList anual não portada.
+  query_annualleavelist(_query: ResourceScenarioQuery,): void {
+    throw new NotYetImplementedError(
+      "16",
+      "ResourceScenario#query_annualleavelist",
+    );
+  }
+
+  // Ancorado: Fase 16 — saldo de LeaveList anual não portado.
+  query_annualleavebalance(_query: ResourceScenarioQuery,): void {
+    throw new NotYetImplementedError(
+      "16",
+      "ResourceScenario#query_annualleavebalance",
+    );
+  }
+
+  // Ancorado: Fase 16 — sick leave (LeaveList) não portado.
+  query_sickleave(_query: ResourceScenarioQuery,): void {
+    throw new NotYetImplementedError("16", "ResourceScenario#query_sickleave",);
+  }
+
+  // Ancorado: Fase 16 — special leave (LeaveList) não portado.
+  query_specialleave(_query: ResourceScenarioQuery,): void {
+    throw new NotYetImplementedError(
+      "16",
+      "ResourceScenario#query_specialleave",
+    );
+  }
+
+  // Ancorado: Fase 16 — dias de folga (time off) não portados.
+  query_timeoffdays(_query: ResourceScenarioQuery,): void {
+    throw new NotYetImplementedError(
+      "16",
+      "ResourceScenario#query_timeoffdays",
+    );
+  }
+
+  // Ancorado: Fase 16 — unpaid leave (LeaveList) não portado.
+  query_unpaidleave(_query: ResourceScenarioQuery,): void {
+    throw new NotYetImplementedError(
+      "16",
+      "ResourceScenario#query_unpaidleave",
+    );
+  }
+
+  // Ancorado: Fase 18 — FTE exige horas de contrato/calendário não portadas.
+  query_fte(_query: ResourceScenarioQuery,): void {
+    throw new NotYetImplementedError("18", "ResourceScenario#query_fte",);
   }
 }

@@ -121,11 +121,13 @@ describe("Bloco E — auditoria Fases 4–11 (Fase 11-Gaps)", () => {
   });
 
   // ── G16 · Motor lógico + Query (Fase 11) ──────────────────────────
-  it("G16: LogicalExpression sobre 'effort > 0' via Query real", () => {
+  it("G16: LogicalExpression sobre 'priority > 0' via Query real", () => {
     const project = createTestProject(1,);
     const task = new Task(project, "t1", "T1", null,);
-    task.setForScenario("effort", 8, 0,);
-    const attr = new LogicalAttribute("effort", project.scenario(0,)!,);
+    // `priority` (sem `query_*`) continua a ponte lógico+Query; `effort` hoje
+    // resolve via query_effort fiel (0 para tarefa não agendada).
+    task.setForScenario("priority", 8, 0,);
+    const attr = new LogicalAttribute("priority", project.scenario(0,)!,);
     const op = new LogicalOperation(attr, ">", new LogicalOperation(0,),);
     const expr = new LogicalExpression(op,);
     const q = new Query({ project, property: task, },);

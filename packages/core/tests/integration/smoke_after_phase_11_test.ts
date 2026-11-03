@@ -5,8 +5,12 @@
  * e ao shim do parser (Fase 10):
  *  1. As classes `Logical*` exportadas pelo shim `src/logical/` são as MESMAS
  *     do `src/logic/` (o parser e o motor compartilham identidade de classe).
- *  2. Uma `Query` com `attributeId='effort'` resolve via `process()`.
- *  3. Uma `LogicalExpression` real (`effort > 0`) avalia contra uma `Task`.
+ *  2. Uma `Query` com `attributeId='priority'` resolve via `process()`.
+ *  3. Uma `LogicalExpression` real (`priority > 0`) avalia contra uma `Task`.
+ *
+ * Obs.: usa `priority` (atributo de cenário numérico sem `query_*`) em vez de
+ * `effort`, pois desde a Onda B2 `query_effort` existe e devolve 0 para uma
+ * tarefa não agendada — aqui o objetivo é a ponte Query↔atributo base.
  */
 import { assert, assertEquals, } from "@std/assert";
 import { describe, it, } from "@std/testing/bdd";
@@ -30,25 +34,25 @@ describe("Smoke test after Phase 11 (logical engine + Query)", () => {
     assertEquals(ShimExpr, LogicalExpression,);
   });
 
-  it("Query resolve attributeId='effort' via process()", () => {
+  it("Query resolve attributeId='priority' via process()", () => {
     const project = createTestProject(1,);
     const task = new Task(project, "t1", "T1", null,);
-    task.setForScenario("effort", 8, 0,);
+    task.setForScenario("priority", 8, 0,);
     const q = new Query({
       project,
       property: task,
-      attributeId: "effort",
+      attributeId: "priority",
       scenarioIdx: 0,
     },);
     assert(q.process(), q.errorMessage ?? "process falhou",);
     assertEquals(q.to_num(), 8,);
   });
 
-  it("LogicalExpression 'effort > 0' avalia contra uma Task real", () => {
+  it("LogicalExpression 'priority > 0' avalia contra uma Task real", () => {
     const project = createTestProject(1,);
     const task = new Task(project, "t1", "T1", null,);
-    task.setForScenario("effort", 8, 0,);
-    const attr = new LogicalAttribute("effort", project.scenario(0,)!,);
+    task.setForScenario("priority", 8, 0,);
+    const attr = new LogicalAttribute("priority", project.scenario(0,)!,);
     const op = new LogicalOperation(attr, ">", new LogicalOperation(0,),);
     const expr = new LogicalExpression(op,);
     const query = new Query({ project, property: task, },);

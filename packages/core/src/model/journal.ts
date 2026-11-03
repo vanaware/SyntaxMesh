@@ -45,6 +45,7 @@ export interface JournalQueryLike {
   journalAttributes?: string[] | null;
   sortJournalEntries?: unknown;
   hideJournalEntry?: unknown;
+  scenarioIdx?: number | undefined;
   rti?: unknown;
 }
 
@@ -479,6 +480,136 @@ export class Journal {
     }
     if (logExp) pEntries = pEntries.filter((e,) => !hidden(e, logExp,));
     return pEntries;
+  }
+
+  /**
+   * Versão recursiva de `currentEntries` (Ruby `Journal#currentEntriesR`,
+   * l.657-734): percorre a árvore de propriedade de baixo para cima, e
+   * (mode `status_dep`/`alerts_dep`) as dependências end->start de Tasks,
+   * retornando as últimas entradas até `date` de cada propriedade, a menos
+   * que um filho/dependência tenha entrada mais recente ou de nível maior.
+   * O `DataCache` do Ruby é otimização e fica omitido (não altera resultado).
+   */
+  currentEntriesR(
+    date: TjTime | null,
+    property: PropertyTreeNode,
+    minLevel: number,
+    minDate: TjTime | null,
+    query: JournalQueryLike,
+  ): JournalEntry[] {
+    if (!date) return [];
+    // Entradas correntes desta propriedade (o filtro usa `==` minLevel, fiel
+    // ao Ruby l.665-668 — distinto de `currentEntries`).
+    const pEntries = this.lastBefore(property, date,).filter((e,) =>
+      e.headline !== "" && e.alertLevel >= minLevel &&
+      !(e.alertLevel === minLevel && minDate &&
+        e.date.compareTo(minDate,) < 0)
+    );
+    let maxPAlertLevel = 0;
+    for (const e of pEntries) {
+      if (e.alertLevel > maxPAlertLevel) maxPAlertLevel = e.alertLevel;
+    }
+
+    const cEntries: JournalEntry[] = [];
+    let latestDate: TjTime | null = null;
+    let maxAlertLevel = 0;
+    // Se há entrada desta propriedade, só interessam entradas de filhos
+    // posteriores (`date + 1` = +86400s, fiel ao Ruby l.681).
+    const childMinDate = pEntries.length > 0
+      ? pEntries[0]!.date.addSeconds(86400,)
+      : minDate;
+
+    const absorb = (entries: JournalEntry[],): void => {
+      for (const e of entries) {
+        if (latestDate === null || e.date.compareTo(latestDate,) > 0) {
+          latestDate = e.date;
+        }
+        if (e.alertLevel > maxAlertLevel) maxAlertLevel = e.alertLevel;
+        if (!cEntries.includes(e,)) cEntries.push(e,);
+      }
+    };
+
+    for (const p of property.kids()) {
+      absorb(
+        this.currentEntriesR(date, p, minLevel, childMinDate, query,),
+      );
+    }
+
+    // Somente Tasks têm dependências (Ruby l.695-712).
+    const mode = query.journalMode;
+    if (
+      (mode === "status_dep" || mode === "alerts_dep") &&
+      property instanceof Task
+    ) {
+      const scIdx = query.scenarioIdx ?? 0;
+      for (
+        const [depTask, onEnd,] of property.scenarioData(scIdx,).startpreds()
+      ) {
+        // Só seguimos dependências end->start.
+        if (!onEnd || !depTask) continue;
+        absorb(
+          this.currentEntriesR(date, depTask, minLevel, childMinDate, query,),
+        );
+      }
+    }
+
+    let entries: JournalEntry[];
+    if (
+      pEntries.length > 0 &&
+      (maxPAlertLevel > maxAlertLevel || latestDate === null ||
+        pEntries[0]!.date.compareTo(latestDate,) >= 0)
+    ) {
+      entries = pEntries;
+    } else {
+      entries = cEntries;
+    }
+
+    if (query.hideJournalEntry) {
+      entries = entries.filter((e,) => !hidden(e, query.hideJournalEntry,));
+    }
+    return entries;
+  }
+
+  /**
+   * Nível de alerta efetivo de `property` em `date` (Ruby `Journal#alertLevel`,
+   * l.584-592): máximo nível entre as entradas correntes recursivas.
+   */
+  alertLevel(
+    date: TjTime | null,
+    property: PropertyTreeNode,
+    query: JournalQueryLike,
+  ): number {
+    let maxLevel = 0;
+    for (const e of this.currentEntriesR(date, property, 0, null, query,)) {
+      if (maxLevel < e.alertLevel) maxLevel = e.alertLevel;
+    }
+    return maxLevel;
+  }
+
+  /**
+   * Entradas de alerta de `property` (Ruby `Journal#alertEntries`, l.598-612):
+   * apenas as de maior nível global entre as entradas correntes recursivas.
+   */
+  alertEntries(
+    date: TjTime | null,
+    property: PropertyTreeNode,
+    minLevel: number,
+    minDate: TjTime | null,
+    query: JournalQueryLike,
+  ): JournalEntry[] {
+    let maxLevel = 0;
+    let entries: JournalEntry[] = [];
+    for (
+      const e of this.currentEntriesR(date, property, minLevel, minDate, query,)
+    ) {
+      if (maxLevel < e.alertLevel) {
+        maxLevel = e.alertLevel;
+        entries = [e,];
+      } else if (maxLevel === e.alertLevel) {
+        entries.push(e,);
+      }
+    }
+    return entries;
   }
 
   /**

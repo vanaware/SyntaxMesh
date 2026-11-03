@@ -75,9 +75,11 @@ describe("Query — estrutura (11.6)", () => {
 
   it("process resetta resultados antes de reavaliar (11.6.3.4/11.7.1.1)", () => {
     const task = new Task(project, "t1", "T1", null,);
-    task.setForScenario("effort", 5, 0,);
+    // `priority` é um atributo de cenário numérico sem `query_*`, cai no
+    // fallback de atributo base (effort hoje resolve via query_effort fiel).
+    task.setForScenario("priority", 5, 0,);
     const q = new Query(
-      { project, property: task, attributeId: "effort", scenarioIdx: 0, },
+      { project, property: task, attributeId: "priority", scenarioIdx: 0, },
     );
     q.process();
     assertEquals(q.to_num(), 5,);
@@ -95,6 +97,7 @@ describe("Query — process (11.7)", () => {
     project = createTestProject(1,);
     task = new Task(project, "t1", "T1", null,);
     task.setForScenario("effort", 5, 0,);
+    task.setForScenario("priority", 5, 0,);
   },);
 
   it("customData tem prioridade sobre atributo (11.7.2.2)", () => {
@@ -110,8 +113,9 @@ describe("Query — process (11.7)", () => {
   });
 
   it("fallback para atributo base (11.7.2.5-9)", () => {
+    // `priority` (sem `query_*`) confirma a etapa j: atributo base do cenário.
     const q = new Query(
-      { project, property: task, attributeId: "effort", scenarioIdx: 0, },
+      { project, property: task, attributeId: "priority", scenarioIdx: 0, },
     );
     assert(q.process(),);
     assertEquals(q.to_num(), 5,);

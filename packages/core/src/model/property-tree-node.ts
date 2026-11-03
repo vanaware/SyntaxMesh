@@ -12,6 +12,10 @@ import { ScenarioData, } from "./scenario-data.ts";
 import { Scenario, } from "./scenario.ts";
 import { PropertySet, } from "./property-set.ts";
 import type { SourceFileInfo, } from "../source-file-info.ts";
+import { RichText, } from "../richtext/rich-text.ts";
+import { RTFHandlers, } from "../richtext/handlers/rtf-handlers.ts";
+import type { Query, } from "../query/query.ts";
+import type { JournalEntry, } from "./journal.ts";
 export { PropertySet, };
 export type { SourceFileInfo, };
 
@@ -606,5 +610,171 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
         this.scenarioAttributes[scIdx].set(key, value,);
       },);
     },);
+  }
+
+  // ------------------------------------------------------------------
+  // query_* compartilhados (Onda B1 — porta PropertyTreeNode.rb:594-673).
+  //
+  // O dispatch de `Query.process` resolve `query_<atributo>` primeiro na
+  // propriedade (etapa h) e depois no ScenarioData (etapa i). Estes métodos
+  // são a etapa h: valem para qualquer propriedade (task/resource/account/...
+  //). Delegam ao `Journal` já portado (currentEntriesR/alertLevel/
+  // alertEntries/to_rti/messagesRti).
+  // ------------------------------------------------------------------
+
+  /**
+   * Filhos da propriedade como lista (Ruby `query_children`, l.594-610).
+   * Com `query.listItem`, cada item é renderizado como RichText com a query
+   * reencaminhada para o filho; senão usa `"nome (fullId)"`.
+   */
+  query_children(query: Query,): void {
+    const list: string[] = [];
+    for (const property of this.kids()) {
+      if (query.listItem) {
+        const rti = new RichText(
+          query.listItem,
+          RTFHandlers.create(query.project ?? null,),
+        ).generateIntermediateFormat();
+        if (!rti) continue;
+        const q = query.dup();
+        q.property = property;
+        rti.setQuery(q,);
+        list.push(`<nowiki>${rti.to_s()}</nowiki>`,);
+      } else {
+        list.push(`<nowiki>${property.name} (${property.fullId})</nowiki>`,);
+      }
+    }
+    query.assignList(list,);
+  }
+
+  /** Journal completo da propriedade (Ruby `query_journal`, l.612-614). */
+  query_journal(query: Query,): void {
+    query.project?.journal.to_rti(query,);
+  }
+
+  /**
+   * Nível de alerta efetivo em `query.end` (Ruby `query_alert`, l.616-631):
+   * numérico/ordenável = nível; texto/RTI = nome colorido do nível.
+   */
+  query_alert(query: Query,): void {
+    const journal = query.project?.journal;
+    if (!journal) return;
+    const alert = journal.alertLevel(query.end, this, query,);
+    query.sortable = query.numerical = alert;
+    const levels = query.project?.get("alertLevels",) as
+      | Array<{ id: string; name: string; color: string }>
+      | undefined;
+    const alertLevel = levels?.[alert];
+    if (!alertLevel) return;
+    query.string = alertLevel.name;
+    const rText = `<fcol:${alertLevel.color}><nowiki>${alertLevel.name}` +
+      "</nowiki></fcol>";
+    const rti = new RichText(
+      rText,
+      RTFHandlers.create(query.project ?? null,),
+    ).generateIntermediateFormat();
+    if (!rti) return;
+    rti.blockMode = false;
+    query.rti = rti;
+  }
+
+  /** Mensagens de alerta (Ruby `query_alertmessages`, l.633-637). */
+  query_alertmessages(query: Query,): void {
+    this.journalMessages(
+      query.project!.journal.alertEntries(
+        query.end,
+        this,
+        1,
+        query.start,
+        query,
+      ),
+      query,
+      true,
+    );
+  }
+
+  /** Resumos de alerta (Ruby `query_alertsummaries`, l.639-643). */
+  query_alertsummaries(query: Query,): void {
+    this.journalMessages(
+      query.project!.journal.alertEntries(
+        query.end,
+        this,
+        1,
+        query.start,
+        query,
+      ),
+      query,
+      false,
+    );
+  }
+
+  /** Mensagens de journal (Ruby `query_journalmessages`, l.645-650). */
+  query_journalmessages(query: Query,): void {
+    this.journalMessages(
+      query.project!.journal.currentEntries(
+        query.end,
+        this,
+        0,
+        query.start,
+        query.hideJournalEntry,
+      ),
+      query,
+      true,
+    );
+  }
+
+  /** Resumos de journal (Ruby `query_journalsummaries`, l.652-657). */
+  query_journalsummaries(query: Query,): void {
+    this.journalMessages(
+      query.project!.journal.currentEntries(
+        query.end,
+        this,
+        0,
+        query.start,
+        query.hideJournalEntry,
+      ),
+      query,
+      false,
+    );
+  }
+
+  /**
+   * Tendência do nível de alerta entre `query.start` e `query.end` (Ruby
+   * `query_alerttrend`, l.659-673): Up (0) / Flat (1) / Down (2). Portável
+   * porque `alertLevel` usa `currentEntriesR` já implementado.
+   */
+  query_alerttrend(query: Query,): void {
+    const journal = query.project?.journal;
+    if (!journal) return;
+    const startAlert = journal.alertLevel(query.start, this, query,);
+    const endAlert = journal.alertLevel(query.end, this, query,);
+    if (startAlert < endAlert) {
+      query.sortable = 0;
+      query.string = "Up";
+    } else if (startAlert > endAlert) {
+      query.sortable = 2;
+      query.string = "Down";
+    } else {
+      query.sortable = 1;
+      query.string = "Flat";
+    }
+  }
+
+  /**
+   * Compõe o RTI blog-style das entradas (Ruby `journalMessages`, l.719-753),
+   * delegando o markup a {@link Journal.messagesRti}.
+   */
+  private journalMessages(
+    entries: JournalEntry[],
+    query: Query,
+    longVersion: boolean,
+  ): void {
+    const rti = query.project!.journal.messagesRti(
+      entries,
+      query,
+      longVersion,
+    );
+    if (!rti) return;
+    query.rti = rti;
   }
 }

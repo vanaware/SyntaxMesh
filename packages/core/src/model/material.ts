@@ -3,6 +3,8 @@ import { type ProjectLike, } from "./project-like.ts";
 import { MaterialScenario, } from "./material-scenario.ts";
 import type { MaterialAllocation, } from "./material-allocation.ts";
 import type { MaterialBooking, } from "./material-booking.ts";
+import type { Task, } from "./task.ts";
+import type { TjTime, } from "../time/tj-time.ts";
 import { ChargeSetCollection, } from "../finance/charge-set-collection.ts";
 import type { ChargeSet, } from "../finance/charge-set.ts";
 import type { Account, } from "./account.ts";
@@ -256,6 +258,242 @@ export class Material extends PropertyTreeNode {
     const attr = this.getAttribute(id,);
     const value = attr.get();
     return attr.provided && typeof value === "number" ? value : null;
+  }
+
+  // ==================================================================
+  // Cálculos derivados por período (Onda C — fonte única de verdade).
+  //
+  // Compartilhados entre as colunas calculadas do materialreport
+  // (`TableReport.genMaterialCell`) e os `query_*` de `MaterialScenario`, para
+  // que `query_X` devolva exatamente o valor da célula correspondente
+  // (paridade query ⇄ coluna). O recorte é o período fechado `[start, end]`;
+  // `start`/`end` nulos significam “sem recorte”. Quando há `CostEvent`
+  // `material_usage`, o custo vem dos eventos **sem** recorte de período — a
+  // mesma convenção histórica do relatório (14C.11.7 / C18).
+  // ==================================================================
+
+  /** Alocações deste material com a tarefa dona (14C.11.10). */
+  private allocationsWithTask(
+    scIdx: number,
+  ): Array<{ task: Task; quantity: number; allocation: MaterialAllocation }> {
+    const out: Array<
+      { task: Task; quantity: number; allocation: MaterialAllocation }
+    > = [];
+    for (const node of this.project.tasks.toArray()) {
+      const list = (node.getForScenario("materialallocations", scIdx,) ??
+        []) as MaterialAllocation[];
+      for (const allocation of list) {
+        if (allocation.material === this) {
+          out.push({
+            task: node as Task,
+            quantity: allocation.quantity,
+            allocation,
+          },);
+        }
+      }
+    }
+    return out;
+  }
+
+  /** Bookings (consumo realizado) deste material com a tarefa dona. */
+  private bookingsWithTask(
+    scIdx: number,
+  ): Array<{ task: Task; booking: MaterialBooking }> {
+    const out: Array<{ task: Task; booking: MaterialBooking }> = [];
+    for (const node of this.project.tasks.toArray()) {
+      const list = (node.getForScenario("materialbookings", scIdx,) ??
+        []) as MaterialBooking[];
+      for (const booking of list) {
+        if (booking.material === this) {
+          out.push({ task: node as Task, booking, },);
+        }
+      }
+    }
+    return out;
+  }
+
+  /** A tarefa dona cruza o período `[start, end]`? Sem agenda, sempre sim. */
+  private static crossesPeriod(
+    task: Task,
+    scIdx: number,
+    start: TjTime | null,
+    end: TjTime | null,
+  ): boolean {
+    if (!start || !end) return true;
+    const s = task.getForScenario("start", scIdx,) as TjTime | null;
+    const e = task.getForScenario("end", scIdx,) as TjTime | null;
+    if (!s || !e) return true;
+    return !(e.compareTo(start,) < 0 || s.compareTo(end,) > 0);
+  }
+
+  /** Custo efetivo de um booking (precedência booking → alocação → material). */
+  private bookingEffectiveCost(
+    booking: MaterialBooking,
+    scIdx: number,
+  ): number {
+    const task = booking.task;
+    const allocation = task
+      ? this.allocationsWithTask(scIdx,)
+        .find((a,) => a.task === task)?.allocation ?? null
+      : null;
+    return booking.cost(allocation,);
+  }
+
+  /** Há `CostEvent` `material_usage` deste material no cenário? */
+  private hasCostEvents(scIdx: number,): boolean {
+    return this.project.costEvents.some((ce,) =>
+      ce.type === "material_usage" && ce.material === this &&
+      ce.scenarioIdx === scIdx
+    );
+  }
+
+  /** Soma dos `CostEvent` `material_usage`; `mode` null = planejado + real. */
+  private costEventsSum(
+    scIdx: number,
+    mode: "planned" | "actual" | null,
+  ): number {
+    let sum = 0;
+    for (const ce of this.project.costEvents) {
+      if (
+        ce.type !== "material_usage" || ce.material !== this ||
+        ce.scenarioIdx !== scIdx
+      ) continue;
+      if (mode === null || ce.mode === mode) sum += ce.amount;
+    }
+    return sum;
+  }
+
+  /** Custo das alocações no período (com preço efetivo da alocação). */
+  private allocationCostInPeriod(
+    scIdx: number,
+    start: TjTime | null,
+    end: TjTime | null,
+  ): number | null {
+    const allocs = this.allocationsWithTask(scIdx,);
+    if (allocs.length === 0) return null;
+    let sum = 0;
+    for (const { task, allocation, } of allocs) {
+      if (!Material.crossesPeriod(task, scIdx, start, end,)) continue;
+      sum += allocation.quantity * allocation.unitPriceFor(this,);
+    }
+    return sum;
+  }
+
+  /** Custo dos bookings no período (com preço efetivo do booking). */
+  private bookingCostInPeriod(
+    scIdx: number,
+    start: TjTime | null,
+    end: TjTime | null,
+  ): number | null {
+    const bookings = this.bookingsWithTask(scIdx,);
+    if (bookings.length === 0) return null;
+    let sum = 0;
+    for (const { task, booking, } of bookings) {
+      if (!Material.crossesPeriod(task, scIdx, start, end,)) continue;
+      sum += this.bookingEffectiveCost(booking, scIdx,);
+    }
+    return sum;
+  }
+
+  /** `totalquantity`: Σ quantidades alocadas no período. */
+  allocatedQuantityInPeriod(
+    scIdx: number,
+    start: TjTime | null,
+    end: TjTime | null,
+  ): number {
+    let sum = 0;
+    for (const { task, quantity, } of this.allocationsWithTask(scIdx,)) {
+      if (!Material.crossesPeriod(task, scIdx, start, end,)) continue;
+      sum += quantity;
+    }
+    return sum;
+  }
+
+  /** Quantidade consumida (Σ bookings com tarefa no período). */
+  consumedQuantityInPeriod(
+    scIdx: number,
+    start: TjTime | null,
+    end: TjTime | null,
+  ): number {
+    let sum = 0;
+    for (const { task, booking, } of this.bookingsWithTask(scIdx,)) {
+      if (!Material.crossesPeriod(task, scIdx, start, end,)) continue;
+      sum += booking.quantity;
+    }
+    return sum;
+  }
+
+  /** `scheduledcost`: planejado (`CostEvent` > alocações no período). */
+  scheduledCostInPeriod(
+    scIdx: number,
+    start: TjTime | null,
+    end: TjTime | null,
+  ): number {
+    if (this.hasCostEvents(scIdx,)) {
+      return this.costEventsSum(scIdx, "planned",);
+    }
+    return this.allocationCostInPeriod(scIdx, start, end,) ?? 0;
+  }
+
+  /** `actualcost`: realizado (`CostEvent` > bookings no período). */
+  actualCostInPeriod(
+    scIdx: number,
+    start: TjTime | null,
+    end: TjTime | null,
+  ): number {
+    if (this.hasCostEvents(scIdx,)) return this.costEventsSum(scIdx, "actual",);
+    return this.bookingCostInPeriod(scIdx, start, end,) ?? 0;
+  }
+
+  /** `totalcost`: planejado + realizado (`CostEvent` > alocações + bookings). */
+  totalCostInPeriod(
+    scIdx: number,
+    start: TjTime | null,
+    end: TjTime | null,
+  ): number {
+    if (this.hasCostEvents(scIdx,)) return this.costEventsSum(scIdx, null,);
+    return (this.allocationCostInPeriod(scIdx, start, end,) ?? 0) +
+      (this.bookingCostInPeriod(scIdx, start, end,) ?? 0);
+  }
+
+  /** Bookings de estoque (movimentos **sem** tarefa) no período fechado. */
+  private stockBookingsInPeriod(
+    scIdx: number,
+    start: TjTime | null,
+    end: TjTime | null,
+  ): MaterialBooking[] {
+    return this.stockBookings(scIdx,).filter((booking,) => {
+      if (!booking.isInventory()) return false;
+      if (!start || !end) return true;
+      return booking.date.compareTo(start,) >= 0 &&
+        booking.date.compareTo(end,) <= 0;
+    },);
+  }
+
+  /** `stockquantity`: Σ algébrico das quantidades de estoque no período. */
+  stockQuantityInPeriod(
+    scIdx: number,
+    start: TjTime | null,
+    end: TjTime | null,
+  ): number {
+    let sum = 0;
+    for (const booking of this.stockBookingsInPeriod(scIdx, start, end,)) {
+      sum += booking.quantity;
+    }
+    return sum;
+  }
+
+  /** `stockcost`: Σ algébrico dos valores de estoque no período. */
+  stockCostInPeriod(
+    scIdx: number,
+    start: TjTime | null,
+    end: TjTime | null,
+  ): number {
+    let sum = 0;
+    for (const booking of this.stockBookingsInPeriod(scIdx, start, end,)) {
+      sum += booking.cost();
+    }
+    return sum;
   }
 
   /**

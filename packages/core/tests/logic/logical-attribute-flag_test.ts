@@ -56,7 +56,10 @@ describe("LogicalAttribute (11.2.1)", () => {
 
   it("eval lê valor de atributo via Query", () => {
     const scenario = project.scenario(0,)!;
-    const attr = new LogicalAttribute("effort", scenario,);
+    // `priority` (sem `query_*`) lê via fallback de atributo base; `effort`
+    // hoje passa por query_effort (0 sem scoreboard).
+    task.setForScenario("priority", 5, 0,);
+    const attr = new LogicalAttribute("priority", scenario,);
     const expr = new LogicalExpression(attr,);
     expr.query = new Query({ project, property: task, },);
     assertEquals(attr.eval(expr,), 5,);
