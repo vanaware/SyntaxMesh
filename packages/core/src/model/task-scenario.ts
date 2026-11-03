@@ -2759,7 +2759,7 @@ export class TaskScenario extends ScenarioData {
   // ==================================================================
   // Onda B2 — query_* portáveis (TaskScenario.rb:1290-1557) + helpers.
   //
-  // Todos os acessores de base já existem (turnover, getAllocatedTime,
+  // Os acessores de base já existem (turnover, getAllocatedTime,
   // complete/status/gauge, preds/succs, assignedResources por cenário) ou são
   // portados abaixo. O dispatch de `Query.process` alcança estes métodos na
   // etapa i (`data[scIdx].query_X`).
