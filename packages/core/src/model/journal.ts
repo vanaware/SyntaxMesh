@@ -22,7 +22,10 @@ import { type Picture, } from "./picture.ts";
 import { RichText, } from "../richtext/rich-text.ts";
 import { RTFHandlers, } from "../richtext/handlers/rtf-handlers.ts";
 import type { RichTextIntermediate, } from "../richtext/rich-text-intermediate.ts";
-import { NotYetImplementedError, } from "./errors.ts";
+import {
+  JournalEntryList,
+  type JournalSorting,
+} from "./journal-entry-list.ts";
 import type { Project, } from "./project.ts";
 
 /** Formato do corpo de uma entrada (`markdown` é o default). */
@@ -74,6 +77,31 @@ function hidden(entry: JournalEntry, logExp: unknown,): boolean {
   if (logExp === null || logExp === undefined) return false;
   const exp = logExp as { eval?: (e: JournalEntry,) => unknown };
   return typeof exp.eval === "function" ? !!exp.eval(entry,) : false;
+}
+
+/**
+ * `property.ptn` do Ruby: para um `PTNProxy` devolve o nó real; para o próprio
+ * `PropertyTreeNode` devolve ele mesmo (Ruby `PropertyTreeNode#ptn`→`self`).
+ */
+function unwrap(
+  property: PropertyTreeNode | null,
+): PropertyTreeNode | null {
+  if (property === null) return null;
+  const maybe = property as unknown as { ptn?: () => PropertyTreeNode };
+  return typeof maybe.ptn === "function" ? maybe.ptn() : property;
+}
+
+/** `entry.property.isChildOf?(property)` do Ruby (l.570). */
+function isChildOf(
+  child: PropertyTreeNode | null,
+  ancestor: PropertyTreeNode,
+): boolean {
+  return child === null ? false : child.isChildOf(ancestor,);
+}
+
+/** Acrescenta entradas já calculadas (arrays) a uma `JournalEntryList`. */
+function addAll(target: JournalEntryList, entries: JournalEntry[],): void {
+  for (const entry of entries) target.push(entry,);
 }
 
 export class JournalEntry {
@@ -192,54 +220,89 @@ function byDate(a: JournalEntry, b: JournalEntry,): number {
 }
 
 export class Journal {
-  readonly entries: JournalEntry[] = [];
+  /** Lista canônica de todas as entradas (Ruby `@entries`). */
+  readonly entryList = new JournalEntryList();
 
-  /** Índices por entidade, ordenados por data (14C.0.4 — Fase 16 estende). */
-  readonly entriesByTask = new Map<Task, JournalEntry[]>();
-  readonly entriesByResource = new Map<Resource, JournalEntry[]>();
-  readonly entriesByMaterial = new Map<Material, JournalEntry[]>();
-  readonly entriesByAccount = new Map<Account, JournalEntry[]>();
+  /** Entradas por propriedade (Ruby `@propertyToEntries`), ordem de chegada. */
+  private readonly propertyToEntries = new Map<
+    PropertyTreeNode,
+    JournalEntryList
+  >();
+
+  /**
+   * Índices por entidade, ordenados por data (14C.0.4 — consumidos por
+   * `rdo-report`). A API pública de consulta é `entriesBy*()`.
+   */
+  readonly indexByTask = new Map<Task, JournalEntry[]>();
+  readonly indexByResource = new Map<Resource, JournalEntry[]>();
+  readonly indexByMaterial = new Map<Material, JournalEntry[]>();
+  readonly indexByAccount = new Map<Account, JournalEntry[]>();
+
+  /**
+   * Visão em array de todas as entradas (ordem de chegada).
+   *
+   * No Ruby `@entries` é uma `JournalEntryList`; aqui a lista é
+   * {@link entryList} e este getter mantém a leitura simples usada pelos
+   * relatórios (`journal.entries.length`, spread).
+   */
+  get entries(): JournalEntry[] {
+    return this.entryList.unsorted();
+  }
 
   /**
    * Insere a entrada na lista e no índice da entidade correspondente
-   * (equivalente ao `Journal#<<` do Ruby mais o índice — entradas com
-   * `property` null ficam só em `entries`).
+   * (equivalente ao `Journal#addEntry` do Ruby; entradas com `property` null
+   * ficam só na lista principal).
    */
   addEntry(entry: JournalEntry,): void {
-    this.entries.push(entry,);
+    if (this.entryList.include(entry,)) return;
+    this.entryList.push(entry,);
     const prop = entry.property;
     if (!prop) return;
+
+    // Ruby: usa a PropertyTreeNode "real" (`entry.property.ptn`), nunca o
+    // proxy do cenário.
+    let list = this.propertyToEntries.get(prop,);
+    if (!list) {
+      list = new JournalEntryList();
+      this.propertyToEntries.set(prop, list,);
+    }
+    list.push(entry,);
+
     const bucket = this.indexFor(prop,);
     if (!bucket) return;
-    let list = bucket.get(prop as IndexedEntity,);
-    if (!list) {
-      list = [];
-      bucket.set(prop as IndexedEntity, list,);
+    let sorted = bucket.get(prop as IndexedEntity,);
+    if (!sorted) {
+      sorted = [];
+      bucket.set(prop as IndexedEntity, sorted,);
     }
     // Inserção ordenada por data (estável: empata = ordem de chegada).
-    const at = lowerBound(list, entry,);
-    list.splice(at, 0, entry,);
+    sorted.splice(lowerBound(sorted, entry,), 0, entry,);
   }
 
   /** Remove uma entrada (espelho do `Journal#delete` do Ruby). */
   removeEntry(entry: JournalEntry,): void {
-    const i = this.entries.indexOf(entry,);
-    if (i >= 0) this.entries.splice(i, 1,);
+    this.entryList.delete(entry,);
     const prop = entry.property as IndexedEntity | null;
     if (!prop) return;
+    const list = this.propertyToEntries.get(prop,);
+    if (list) {
+      list.delete(entry,);
+      if (list.empty()) this.propertyToEntries.delete(prop,);
+    }
     for (
       const bucket of [
-        this.entriesByTask,
-        this.entriesByResource,
-        this.entriesByMaterial,
-        this.entriesByAccount,
+        this.indexByTask,
+        this.indexByResource,
+        this.indexByMaterial,
+        this.indexByAccount,
       ] as Map<PropertyTreeNode, JournalEntry[]>[]
     ) {
-      const list = bucket.get(prop,);
-      if (!list) continue;
-      const j = list.indexOf(entry,);
-      if (j >= 0) list.splice(j, 1,);
-      if (list.length === 0) bucket.delete(prop,);
+      const entries = bucket.get(prop,);
+      if (!entries) continue;
+      const j = entries.indexOf(entry,);
+      if (j >= 0) entries.splice(j, 1,);
+      if (entries.length === 0) bucket.delete(prop,);
     }
   }
 
@@ -249,15 +312,33 @@ export class Journal {
    * (não vazam entradas de entidades removidas — 14C.0.5).
    */
   deleteIf(pred: (e: JournalEntry,) => boolean,): void {
-    for (let i = this.entries.length - 1; i >= 0; i--) {
-      const entry = this.entries[i]!;
+    for (const entry of this.entryList.toArray().reverse()) {
       if (pred(entry,)) this.removeEntry(entry,);
     }
   }
 
-  /** Entradas da propriedade (ou globais quando `property` é null). */
+  /**
+   * Entradas da propriedade (Ruby `getEntries`), na ordem de chegada;
+   * `null` quando a propriedade não tem nenhuma.
+   */
+  getEntries(property: PropertyTreeNode,): JournalEntryList | null {
+    return this.propertyToEntries.get(property,) ?? null;
+  }
+
+  /**
+   * Entradas da propriedade (ou globais quando `property` é null).
+   *
+   * Para entidades indexáveis devolve o índice ordenado por data (14C.0.4);
+   * caso contrário, varre a lista canônica preservando a ordem de chegada.
+   */
   entriesFor(property: PropertyTreeNode | null,): JournalEntry[] {
-    return this.entries.filter((e,) => e.property === property);
+    if (property === null) {
+      return this.entries.filter((e,) => e.property === null);
+    }
+    const indexed = this.indexFor(property,)?.get(property as IndexedEntity,);
+    if (indexed) return indexed.slice();
+    const ptn = unwrap(property,);
+    return this.entries.filter((e,) => unwrap(e.property,) === ptn);
   }
 
   /** Entradas no intervalo de datas (inclusive), ordenadas por data. */
@@ -271,15 +352,15 @@ export class Journal {
   private indexFor(
     prop: PropertyTreeNode,
   ): Map<IndexedEntity, JournalEntry[]> | null {
-    if (prop instanceof Task) return this.entriesByTask;
-    if (prop instanceof Resource) return this.entriesByResource;
-    if (prop instanceof Material) return this.entriesByMaterial;
-    if (prop instanceof Account) return this.entriesByAccount;
+    if (prop instanceof Task) return this.indexByTask;
+    if (prop instanceof Resource) return this.indexByResource;
+    if (prop instanceof Material) return this.indexByMaterial;
+    if (prop instanceof Account) return this.indexByAccount;
     return null;
   }
 
   get empty(): boolean {
-    return this.entries.length === 0;
+    return this.entryList.empty();
   }
 
   // ------------------------------------------------------------------
@@ -287,62 +368,98 @@ export class Journal {
   // ------------------------------------------------------------------
 
   /**
-   * Monta o RTI do journal de uma propriedade (porta `Journal#to_rti`).
+   * Monta o RTI do journal de uma propriedade (porta `Journal#to_rti`,
+   * `Journal.rb` l.404-497).
    *
-   * Modos suportados: `journal`, `journal_sub` (entidade + descendentes),
-   * `journalmessages` e `journalsummaries` (última entrada corrente). Os
-   * modos `status_*`/`alerts_*` dependem do scheduling completo e ficam com a
-   * Fase 16. O resultado é gravado em `query.rti`.
+   * Modos (Ruby): `journal`, `journal_sub`, `status_up`, `status_down`,
+   * `status_dep`, `alerts_down`, `alerts_dep`; mais os dois modos de coluna
+   * do port (`journalmessages`/`journalsummaries`, 14C.1.7), que renderizam
+   * só as entradas correntes. O resultado é gravado em `query.rti`.
    */
   to_rti(query: JournalQueryLike,): void {
     const mode = query.journalMode ?? "journal";
     const property = query.property ?? null;
     const start = query.start ?? null;
     const end = query.end ?? null;
-    let entries: JournalEntry[];
+    const logExp = query.hideJournalEntry;
+    const entries = new JournalEntryList();
 
     switch (mode) {
       case "journal":
-        entries = property
-          ? this.propertyEntries(property, start, end, query.hideJournalEntry,)
-          : this.rangeEntries(start, end, query.hideJournalEntry,);
+        // Entradas datadas no intervalo; com propriedade, só as dela.
+        if (property) {
+          if (property instanceof Task) {
+            entries.add(
+              this.entriesByTask(property, start, end, logExp,),
+            );
+          } else if (property instanceof Resource) {
+            entries.add(
+              this.entriesByResource(property, start, end, logExp,),
+            );
+          } else {
+            // Extensão 16.21.5: material e conta entram como folha.
+            entries.add(this.entriesByLeaf(property, start, end, logExp,),);
+          }
+        } else {
+          entries.add(this.rangeEntries(start, end, logExp,),);
+        }
         break;
       case "journal_sub":
-        entries = property
-          ? this.propertyEntries(
-            property,
-            start,
-            end,
-            query.hideJournalEntry,
-            true,
-          )
-          : [];
+        // Propriedade + descendentes. O Ruby só trata `Task` aqui; o port
+        // estende a recursão a recurso/conta (14C.1.7) — material, por ser
+        // folha, cai no mesmo caminho e devolve só as próprias entradas
+        // (equivale a `journal`).
+        if (property) {
+          entries.add(this.entriesByTaskR(property, start, end, logExp,),);
+        }
+        break;
+      case "status_up":
+        // Últimas entradas antes de `end` de cada task, sem descendentes.
+        for (const task of this.rootProperties(property, query, Task,)) {
+          addAll(entries, this.currentEntries(end, task, 0, start, logExp,),);
+          entries.uniq();
+        }
+        break;
+      case "status_down":
+      case "status_dep":
+        // Últimas entradas antes de `end` incluindo sub-tasks (e dependências).
+        for (const task of this.rootProperties(property, query, Task,)) {
+          addAll(entries, this.currentEntriesR(end, task, 0, start, query,),);
+          entries.uniq();
+        }
+        break;
+      case "alerts_down":
+      case "alerts_dep":
+        // Idem, mas só as de maior nível de alerta.
+        for (const task of this.rootProperties(property, query, Task,)) {
+          addAll(entries, this.alertEntries(end, task, 1, start, query,),);
+          entries.uniq();
+        }
         break;
       case "journalmessages":
       case "journalsummaries":
-        entries = property
-          ? this.currentEntries(
-            end,
-            property,
-            0,
-            start,
-            query.hideJournalEntry,
-          )
-          : [];
+        // Extensão do port (14C.1.7): entradas correntes da propriedade.
+        if (property) {
+          addAll(
+            entries,
+            this.currentEntries(end, property, 0, start, logExp,),
+          );
+        }
         break;
-      case "status_up":
-      case "status_down":
-      case "status_dep":
-      case "alerts_down":
-      case "alerts_dep":
-        // Ancorado: Fase 16 — modos de status/alerta dependem do scheduling.
-        throw new NotYetImplementedError("16", `Journal#to_rti(${mode})`,);
       default:
         throw new Error(`Unknown journal mode: ${mode}`,);
     }
 
-    entries = this.sortEntries(entries, query.sortJournalEntries,);
-    const markup = entries.map((e,) => e.to_rText(query,)).join("",);
+    // Ordena segundo o usuário (default date/alert/seqno).
+    const sorting = query.sortJournalEntries;
+    if (Array.isArray(sorting,) && sorting.length > 0) {
+      entries.setSorting(sorting as JournalSorting,);
+    }
+    entries.sort();
+
+    let markup = "";
+    for (const entry of entries) markup += entry.to_rText(query,);
+
     const rti = new RichText(
       markup,
       RTFHandlers.create(query.project ?? null,),
@@ -351,6 +468,22 @@ export class Journal {
     rti.sectionNumbers = false;
     rti.cssClass = "tj_journal";
     query.rti = rti;
+  }
+
+  /**
+   * Propriedades-raiz do modo: a própria (se der) ou as tasks top-level do
+   * projeto (Ruby: `query.project.tasks` pulando as que têm `parent`).
+   */
+  private rootProperties(
+    property: PropertyTreeNode | null,
+    query: JournalQueryLike,
+    kind: typeof Task,
+  ): PropertyTreeNode[] {
+    if (property) return property instanceof kind ? [property,] : [];
+    const project = query.project ?? null;
+    if (!project) return [];
+    return (project.tasks.toArray() as unknown as PropertyTreeNode[])
+      .filter((t,) => t instanceof kind && t.parent === null);
   }
 
   /**
@@ -390,27 +523,174 @@ export class Journal {
   }
 
   /**
-   * Entradas no intervalo (Ruby `Journal#entries`): sem propriedade, o
-   * journal inteiro; com propriedade, ela e os descendentes.
+   * Entradas de uma task no intervalo `[start, end)` (Ruby `entriesByTask`,
+   * l.529-543). Entradas sem headline vazio são descartadas — o Ruby também
+   * descarta (`!entry.headline.empty?`).
+   */
+  entriesByTask(
+    task: PropertyTreeNode,
+    startDate: TjTime | null = null,
+    endDate: TjTime | null = null,
+    logExp: unknown = null,
+    resource: Resource | null = null,
+    alertLevel: number | null = null,
+  ): JournalEntryList {
+    const list = new JournalEntryList();
+    const prop = unwrap(task,);
+    for (const entry of this.entryList) {
+      if (unwrap(entry.property,) !== prop) continue;
+      if (startDate && entry.date.compareTo(startDate,) < 0) continue;
+      if (endDate && entry.date.compareTo(endDate,) >= 0) continue;
+      if (resource && entry.author !== resource) continue;
+      if (alertLevel !== null && entry.alertLevel < alertLevel) continue;
+      if (entry.headline === "" || hidden(entry, logExp,)) continue;
+      list.push(entry,);
+    }
+    return list;
+  }
+
+  /** Task + sub-tasks (Ruby `entriesByTaskR`, l.550-561). */
+  entriesByTaskR(
+    task: PropertyTreeNode,
+    startDate: TjTime | null = null,
+    endDate: TjTime | null = null,
+    logExp: unknown = null,
+    resource: Resource | null = null,
+    alertLevel: number | null = null,
+  ): JournalEntryList {
+    const list = this.entriesByTask(
+      task,
+      startDate,
+      endDate,
+      logExp,
+      resource,
+      alertLevel,
+    );
+    for (const kid of task.kids()) {
+      list.add(
+        this.entriesByTaskR(
+          kid,
+          startDate,
+          endDate,
+          logExp,
+          resource,
+          alertLevel,
+        ),
+      );
+    }
+    return list;
+  }
+
+  /**
+   * Entradas de um recurso como **autor** (Ruby `entriesByResource`,
+   * l.504-522). Atenção às bordas: `startDate` é exclusivo e `endDate`
+   * inclusivo (diferente de `entriesByTask`).
+   */
+  entriesByResource(
+    resource: Resource,
+    startDate: TjTime | null = null,
+    endDate: TjTime | null = null,
+    logExp: unknown = null,
+    task: PropertyTreeNode | null = null,
+    alertLevel: number | null = null,
+  ): JournalEntryList {
+    const list = new JournalEntryList();
+    const prop = unwrap(resource,);
+    const taskPtn = task ? unwrap(task,) : null;
+    for (const entry of this.entryList) {
+      if (unwrap(entry.author as PropertyTreeNode | null,) !== prop) continue;
+      if (startDate && entry.date.compareTo(startDate,) <= 0) continue;
+      if (endDate && entry.date.compareTo(endDate,) > 0) continue;
+      if (taskPtn && unwrap(entry.property,) !== taskPtn) continue;
+      if (alertLevel !== null && entry.alertLevel < alertLevel) continue;
+      if (entry.headline === "" || hidden(entry, logExp,)) continue;
+      list.push(entry,);
+    }
+    return list;
+  }
+
+  /** Entradas de um material (extensão 16.21.2; bordas como `entriesByTask`). */
+  entriesByMaterial(
+    material: Material,
+    startDate: TjTime | null = null,
+    endDate: TjTime | null = null,
+    logExp: unknown = null,
+    alertLevel: number | null = null,
+  ): JournalEntryList {
+    return this.entriesByLeaf(
+      material,
+      startDate,
+      endDate,
+      logExp,
+      alertLevel,
+    );
+  }
+
+  /** Entradas de uma conta (extensão 16.21.3; bordas como `entriesByTask`). */
+  entriesByAccount(
+    account: Account,
+    startDate: TjTime | null = null,
+    endDate: TjTime | null = null,
+    logExp: unknown = null,
+    alertLevel: number | null = null,
+  ): JournalEntryList {
+    return this.entriesByLeaf(account, startDate, endDate, logExp, alertLevel,);
+  }
+
+  /**
+   * Entradas de uma propriedade folha sem sub-journal (material/conta).
+   * Reaproveita a semântica de `entriesByTask` (start inclusivo).
+   */
+  private entriesByLeaf(
+    property: PropertyTreeNode,
+    startDate: TjTime | null,
+    endDate: TjTime | null,
+    logExp: unknown,
+    alertLevel: number | null = null,
+  ): JournalEntryList {
+    return this.entriesByTask(
+      property,
+      startDate,
+      endDate,
+      logExp,
+      null,
+      alertLevel,
+    );
+  }
+
+  /**
+   * Entradas no intervalo (Ruby `Journal#entries`, l.563-577): sem
+   * propriedade, o journal inteiro; com propriedade, ela e descendentes.
+   *
+   * Divergência de nome apenas: o Ruby chama este método de `entries`, mas
+   * aqui `entries` é a visão de leitura da lista canônica.
    */
   rangeEntries(
     start: TjTime | null,
     end: TjTime | null,
     logExp: unknown,
     property: PropertyTreeNode | null = null,
-  ): JournalEntry[] {
-    return this.entries.filter((e,) => {
-      if (start && e.date.compareTo(start,) < 0) return false;
-      if (end && e.date.compareTo(end,) > 0) return false;
-      if (property && e.property !== property) return false;
-      return !hidden(e, logExp,);
-    },);
+    alertLevel: number | null = null,
+  ): JournalEntryList {
+    const list = new JournalEntryList();
+    const prop = property ? unwrap(property,) : null;
+    for (const entry of this.entryList) {
+      if (start && entry.date.compareTo(start,) < 0) continue;
+      if (end && entry.date.compareTo(end,) > 0) continue;
+      if (prop) {
+        const ep = unwrap(entry.property,);
+        if (ep !== prop && !isChildOf(ep, prop,)) continue;
+      }
+      if (alertLevel !== null && entry.alertLevel !== alertLevel) continue;
+      if (hidden(entry, logExp,)) continue;
+      list.push(entry,);
+    }
+    return list;
   }
 
   /**
-   * Entradas de `property` no intervalo `[start, end)` (Ruby
-   * `entriesByTask`/`entriesByResource`, estendido a material e conta em
-   * 14C.1.7). Com `recursive`, inclui os descendentes (`entriesByTaskR`).
+   * Entradas de `property` no intervalo `[start, end)` (implementação
+   * anterior, mantida para quem já a chamava; delega a `entriesByTask`).
    */
   propertyEntries(
     property: PropertyTreeNode,
@@ -419,19 +699,9 @@ export class Journal {
     logExp: unknown,
     recursive = false,
   ): JournalEntry[] {
-    const out: JournalEntry[] = [];
-    const visit = (p: PropertyTreeNode,): void => {
-      for (const e of this.entries) {
-        if (e.property !== p || e.headline === "") continue;
-        if (start && e.date.compareTo(start,) < 0) continue;
-        if (end && e.date.compareTo(end,) >= 0) continue;
-        if (hidden(e, logExp,)) continue;
-        out.push(e,);
-      }
-      if (recursive) { for (const kid of p.kids()) visit(kid,); }
-    };
-    visit(property,);
-    return out;
+    return (recursive
+      ? this.entriesByTaskR(property, start, end, logExp,)
+      : this.entriesByTask(property, start, end, logExp,)).toArray();
   }
 
   /**

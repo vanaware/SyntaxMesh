@@ -77,7 +77,7 @@ A Fase 13 depende de:
 [x] 13.11 Integração                               —  5/5
 [x] 13.12 Snapshot tests                           —  8/8
 [x] 13.13 Verificação final                        —  8/8
-[~] 13.14 Adendo: imagens (parcial — ver nota)    —  .1/.2/.3/.5 ok; .4 adiado
+[~] 13.14 Adendo: imagens (parcial — ver nota)    —  .1/.2/.5 ok; .3 → F24/F19; .4 → F14-C ✅
 ─────────────────────────────────────────────────────
 TOTAL: ~115
 ```
@@ -85,10 +85,13 @@ TOTAL: ~115
 > **13.14 (parcial):** `images.ts` implementa `isExternalImageRef` + `resolveImageRef`
 > com `ImageStore` injetável (contrato Fase 19) e fallback `dataDirs`; testes com
 > `fakeOpfs()` cobrem externa/OPFS/dataDir/unresolved. O `URL.createObjectURL`
-> concreto (13.14.3) fica na implementação Fase 19 do store (core é DOM-free,
-> ADR 001 — devolve descritor). O roteamento `format richtext` (13.14.4, `render.ts`)
-> depende do pipeline de reports da Fase 14 e do parser `format` da Fase 10
-> Complemento — adiado.
+> concreto (13.14.3) sai desta fase: o core é DOM-free (ADR 001) e devolve descritor;
+> a concretização fica com a **Fase 24** (CLI: leitura de imagem do disco via provedor
+> de conteúdo injetado) e com a **Fase 19** (OPFS/blob na PWA). Reancorado em
+> 2026-11-03 — xray §4.
+> O roteamento `format richtext` (13.14.4, `render.ts`) é de responsabilidade da
+> **Fase 14 Complemento** e já foi **entregue por C5** (atributo `format` com default
+> `richtext` e opt-in `markdown`, `14C.5.1–5.12`).
 
 ---
 
@@ -511,11 +514,14 @@ TOTAL: ~115
 |---|---|---|---|
 | 13.14.1 | Extensão de imagem `![alt](path)` distingue **URL externa** (`http(s)://`, passa intacta) de **caminho relativo** | `markdown/extensions/images.ts` | 2 testes |
 | 13.14.2 | Caminho relativo resolve **OPFS primeiro** via `FileStore` injetado (Fase 19 `image-store`, adendo próprio); fallback `dataDirs` do projeto | `markdown/extensions/images.ts` | 2 testes |
-| 13.14.3 | Imagem OPFS vira `Blob` → `URL.createObjectURL` (ou data URI) para funcionar **offline** na PWA | `markdown/extensions/images.ts` | 1 teste |
-| 13.14.4 | `format richtext` (default para `.tjp` existentes no TJ) continua roteando para o renderizador RichText da Fase 12 — Markdown **não** interfere | `markdown/render.ts` | regressão |
+| 13.14.3 | **→ Fase 24 (CLI) + Fase 19 (PWA)** — adiado em 2026-11-03 (xray §4): imagem vira `Blob` → `URL.createObjectURL` (ou data URI) para funcionar **offline** na PWA. Aqui o core apenas devolve o descritor do `ImageStore` | `markdown/extensions/images.ts` (contrato) | 1 teste (consumidor F19/F24) |
+| 13.14.4 | **→ Fase 14 Complemento (✅ entregue por C5)** — `format richtext` (default para `.tjp` existentes no TJ) continua roteando para o renderizador RichText da Fase 12; Markdown não interfere. Entregue em `14C.5.1–5.12` | `markdown/render.ts` → `reports/*` | regressão (F14-C) |
 | 13.14.5 | Testes BDD com `fakeOpfs()`: imagem existente, imagem ausente (fallback `dataDirs`), URL externa intocada | `tests/markdown/images_test.ts` | 3+ testes |
 
-**Critério de aceite do adendo:** `![x](fotos/a.jpg)` renderiza offline quando `fotos/a.jpg` existe no OPFS do projeto; URL externa é preservada; `format richtext` continua idêntico ao comportamento atual.
+**Critério de aceite do adendo:** `![x](fotos/a.jpg)` resolve para um descritor de imagem
+que a Fase 19 (OPFS) e a Fase 24 (CLI/disco) transformam em URL offline; URL externa é
+preservada; `format richtext` continua idêntico ao comportamento atual (garantido pela
+Fase 14-C).
 
 ---
 

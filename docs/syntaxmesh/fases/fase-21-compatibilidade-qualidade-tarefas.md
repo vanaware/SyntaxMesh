@@ -3,7 +3,7 @@
 > **Arquivo:** `docs/syntaxmesh/fases/fase-21-tarefas.md`
 > **Plano:** `docs/syntaxmesh/fases/fase-21-compatibilidade-qualidade.md`
 > **Status:** ⬜ Não iniciada
-> **Total:** ~140 tarefas
+> **Total:** ~143 tarefas
 > **Concluídas:** 0
 > **Foco:** Golden tests, i18n, performance, segurança, cross-browser, release
 
@@ -15,6 +15,14 @@
 > (`isaccount`/`ismaterial`/`isparentof`/`istaskofproject`) em AST-equivalence;
 > extensões sem correspondente Ruby permanecem **fora** do golden (política em
 > `scripts/golden/README.md`).
+
+> **🔢 Numeração (xray §5.6):** as tarefas deste arquivo usam o esquema antigo
+> `26.x` (equivale às subfases da Fase 21). **Não renumerar agora** — normalizar na
+> abertura da fase, mantendo o mapa 26.N ↔ 21.N no preâmbulo.
+
+> **📌 Adendo xray (2026-11-03, §5.5):** a **1ª onda** desta fase inclui a
+> **regeneração da `completude-matrix.md`** a partir das âncoras do código
+> (tarefas 26.22.9–26.22.11) e a reconciliação da cadeia de ADRs 033–037.
 
 ---
 
@@ -95,12 +103,12 @@
 [ ] 26.19 Build de produção                         —   0/6
 [ ] 26.20 CHANGELOG e release notes                 —   0/4
 [ ] 26.21 Versionamento                             —   0/4
-[ ] 26.22 Documentação final                        —   0/8
+[ ] 26.22 Documentação final + matriz de completude  —   0/11
 [ ] 26.23 Templates de issues                       —   0/4
 [ ] 26.24 CI/CD final                               —   0/8
 [ ] 26.25 Verificação final                         —   0/8
 ─────────────────────────────────────────────────────────
-TOTAL: ~140
+TOTAL: ~143
 ```
 
 ---
@@ -426,6 +434,14 @@ TOTAL: ~140
 | 26.22.6 | Teste: README tem seções mínimas | idem | 1 teste |
 | 26.22.7 | Teste: manual cobre features principais | idem | 1 teste |
 | 26.22.8 | Teste: guia de migração cobre divergências | idem | 1 teste |
+
+**Adendo xray (2026-11-03, §5.5) — regeneração da matriz de completude:**
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 26.22.9 | **Regenerar `completude-matrix.md` a partir do código**: varrer as âncoras `// Ancorado: Fase N — razão` (mesma fonte de `scripts/check-stubs.ts`) e produzir uma linha por stub com fase dona | `docs/syntaxmesh/fases/completude-matrix.md` + script auxiliar em `scripts/gaps/` | matriz cobre F2–F20; `deno task gaps:audit` verde |
+| 26.22.10 | Conciliar a matriz com as realocações da varredura xray (F16 16.9/16.10/16.14–16.15, F18 18.18–18.20, F22 22.1b, F24 24.9/24.10) e com os gaps hoje só em `CURRENT.md` (F13/F14/F14-C/F15) | idem | nenhuma linha `pendente` sem dono |
+| 26.22.11 | Reconciliar a cadeia de ADR **033–037** (reservados) com os arquivos realmente criados nas Fases 22/23/24/18; atualizar `decisoes/README.md` | `decisoes/README.md` | tabela sem números duplicados nem vagos |
 
 ---
 

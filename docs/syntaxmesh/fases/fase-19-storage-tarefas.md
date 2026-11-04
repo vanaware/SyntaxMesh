@@ -8,18 +8,28 @@
 > **Fonte:** `@vanaware/workerdb` (já pronto) + extensão SyntaxMesh
 
 > **📌 Âncora — fachada CLI `TaskJuggler` que depende de fonte/destino de
-> arquivo (audit 2026-10-27, Fases 2–11).** O motor de parse (Fase 10) está
-> pronto e testado via `ProjectFileParser` (conteúdo em buffer); o que falta é
-> o **transporte de arquivo** que esses três stubs da fachada exigem:
+> arquivo (audit 2026-10-27; re-ancorada 2026-11-03 — xray §4/§8).** O motor de
+> parse (Fase 10) está pronto e testado via `ProjectFileParser` (conteúdo em
+> buffer); o que falta é o **transporte de arquivo** que esses três stubs da
+> fachada exigem:
 >
-> - `taskjuggler.ts:28` `parse(files, keepParser)` (`NotYetImplementedError("10")`)
+> - `taskjuggler.ts` `parse(files, keepParser)` (`NotYetImplementedError("24")`)
 >   — TaskJuggler.rb:46-101: abrir cada arquivo + `parse(:project)`/`:propertiesFile`.
-> - `taskjuggler.ts:31` `parseFile(fileName, rule)` — stub (TaskJuggler.rb:105+).
-> - `taskjuggler.ts:36` `parseContent(content)` (`NotYetImplementedError("19")`)
+> - `taskjuggler.ts` `parseFile(fileName, rule)` (`NotYetImplementedError("24")`)
+>   — TaskJuggler.rb:105+.
+> - `taskjuggler.ts` `parseContent(content)` (`NotYetImplementedError("24")`)
 >   — variante com conteúdo direto (já referenciado por `ProjectLoader`, 24.8.5).
 >
-> No PWA, `files`/`fileName` vir do `FileStore` (`worker-db`/OPFS), não do `fs`
-> do Node. Implementar os três sobre o `FileStore`/`ProjectLoader` desta fase.
+> **Decisão 2026-11-03:** esses quatro stubs (incluindo `freeze`) passaram a ser da
+> **Fase 24** — a CLI injeta o provedor de conteúdo (`io.readText`/`io.writeText`).
+> Esta fase (19) entrega o `FileStore` (workerdb/OPFS) que a **UI/PWA (Fase 20)**
+> injeta no **mesmo contrato**; nenhuma tarefa daqui chama `fs` do Node nem a
+> fachada `TaskJuggler` diretamente.
+
+> **🔢 Numeração (xray §5.6):** as tarefas deste arquivo usam o esquema antigo
+> `24.x` (herdado da numeração pré-21-fases). **Não renumerar agora** — as
+> referências cruzadas já feitas em outros docs usam esses números; normalizar na
+> abertura da Fase 19.
 
 ---
 
@@ -357,7 +367,7 @@ Criado como subfase 24.0. Conteúdo esperado:
 ```
 [ ] 24.14  image-store.ts                        —  0/4
 [ ] 24.15  Imagens em export/backup              —  0/2
-[ ] 24.16  Integração Markdown/RDO (doc)         —  0/1
+[ ] 24.16  Integração Markdown/RDO (doc)         —  0/2
 ```
 
 | # | Tarefa | Arquivos | Verificação |
@@ -369,6 +379,7 @@ Criado como subfase 24.0. Conteúdo esperado:
 | 24.15.1 | Imagens entram no export/backup do projeto junto dos `.tjp` | `storage/import-export.ts` | 1 teste |
 | 24.15.2 | `DATA_SCHEMA_VERSION`: imagens não exigem migração (FS, não KV) — registrar em ADR 030 | decisoes/… | — |
 | 24.16.1 | Contrato: `FileStore` injetável no renderizador Markdown (Fase 13, tarefa 13.14.2) e no `RdoReport` (Fase 14, tarefa 14.25.9) | doc no plano da fase | — |
+| 24.16.2 | **13.14.3 (xray §4, posse reancorada 2026-11-03)**: aqui (browser) o descritor devolvido por `resolveImageRef` vira `Blob` → `URL.createObjectURL` (ou data URI) para imagem offline na PWA; a variante CLI (disco) mora na Fase 24, subfase 24.10.8 | `markdown/extensions/images.ts` + UI (F20) | teste com `fakeOpfs()` |
 
 ---
 

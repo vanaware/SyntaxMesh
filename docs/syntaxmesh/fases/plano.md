@@ -657,22 +657,32 @@ suite para a extensão VS Code (após a 22); 3ª adapta para a PWA + UI (após a
 | 11 | core | LogicalExpression, LogicalOperation, LogicalFunction, Query, SimpleQueryExpander | **Crítica** | ✅ Concluída (2026-10-27; motor lógico + Query + expander testados; 11.12/11.13 de queries parcialmente bloqueados — métodos `query_*` concretos dependem de scheduling/finance) |
 | 11-C | core | — (extensões: funções/atributos/flags lógicas de material/charge + registrar funções-doc) | **Alta** | 🟡 Em andamento (`fase-11-logical-complemento.md`; 1ª onda 2026-10-27: LC-A/LC-B/LC-D + LF.1. **2ª onda §6.9 executada 2026-10-27**: G1–G5 — `TaskScenario#getAllocatedTime` portado, 10 funções de datas/alocações/material implementadas, `flags` no parser de material habilitado. **§6.10: G1.4 ancorado + review (a)–(g) aplicado** — `Project#dateToIdx` corrigido fiel ao Ruby, semânticas estritas (id inválido, agenda parcial, limiar de alocação); sobem só bloqueios reais ancorados nas Fases 14/16/18/21) |
 | 12 | core (richtext) | RichText, RichText/* | **Alta** | ✅ Concluída (2026-10-29, 12.0–12.20; G5 `to_rti`/`to_tjp` re-ancorado e entregue na Fase 14) |
-| 13 | core (markdown) | — | Baixa (futuro) | ✅ Concluída (2026-10-29, 13.0–13.13; 13.14 parcial — `objectURL`/render dependem das Fases 19/10-C) |
+| 13 | core (markdown) | — | Baixa (futuro) | ✅ Concluída (2026-10-29, 13.0–13.13; 13.14 parcial — **13.14.3 → Fases 24 (24.10.8)/19 (OPFS)** e **13.14.4 → Fase 14-C (entregue em `14C.5.1–5.12`)**; re-ancorado 2026-11-03, xray §4/§8) |
 | 14 | core (report) | reports/* | **Crítica** | ✅ Concluída (2026-10-31, 14.0–14.24; adendos 14.25/14.26 transferidos p/ Fase 14-C) |
 | 14-C | core (report) | MspXmlRE.rb + extensões SyntaxMesh (material/picture/RDO/markdown) | **Alta** | ✅ Concluída (2026-11-01, C0–C12; adendo extra §12 → C13–C17 ✅ 2026-11-02) — inclui o adendo §10: saída markdown `.md` + prefixos `md*report` (C8), `defaultaccount` (C9), `<Baseline>` do MSPDI (C10), unit price por alocação/booking + remoção de `totalquantity` (C11) e auditoria do G1.4 (C12); e o adendo extra §12: booking de estoque ± com chargeset obrigatório (C13), unit price calculado por composição (C14), keywords `effort`/`quantity`/`value` opcionais + `booking charge` no material (C15), turnover com precedência de preço (C16) e registro do comportamento de cenários (C17); da pendência §13.7: colunas de estoque `stockquantity`/`stockcost` nos conteúdos de material (C18, 2026-11-02). Ver tabelas de evidência 14C.8–14C.18 em `fase-14-relatorios-complemento-tarefas.md` |
-| 15 | core (report) | Gantt* | **Alta** | ⬜ Não iniciada |
-| 16 | core | Journal, AlertLevelDefinitions, LeaveList, TernarySearchTree, etc. | **Alta** | ⬜ Não iniciada (adendo 16.21) |
+| 15 | core (report) | Gantt* | **Alta** | ✅ **Concluída (2026-11-03, 15.0–15.14)** — 11 módulos em `gantt/`, golden de 12 charts vs `tj3` real, ADR 028 (xray §5.1) |
+| 16 | core | Journal, AlertLevelDefinitions, LeaveList, FileList/StdIoWrapper/UTF8String, query_dashboard | **Alta** | ⬜ Não iniciada (adendo 16.21; **escopo ajustado pela varredura xray 2026-11-03**: 16.10 `AlgorithmDiff` **CANCELADO**; 16.9/16.14/16.15 **MOVIDOS** p/ a F22 `doc-core`; 16.7/16.11/16.12 com consumidores F18/F24; **dono único de `query_dashboard`**) |
 | 17 | core (report) | XMLDocument, XMLElement, HTMLDocument, HTMLElements, ICalendar | **Média** | ⬜ Não iniciada |
-| 18 | core (sheets) | TimeSheets, Sheet* | **Média** | ⬜ Não iniciada (adendo 18.17) |
+| 18 | core (sheets) | TimeSheets, Sheet*, Tj3SheetAppBase + apps de sheets | **Média** | ⬜ Não iniciada (adendos **18.17** e, pós-xray 2026-11-03, **18.18** núcleo dos apps de sheet, **18.19** `dynamicAttributes`/`parseReportAttributes`, **18.20** `MessageHandler#checkLevel`; ADRs **036**/037) |
 | 19 | storage | — | **Alta** | ⬜ Não iniciada (adendo 24.14–24.16) |
 | 20 | ui + service-worker | — | **Média** | ⬜ Não iniciada (adendo 25.30–25.31) |
-| 21 | tests/ | MWEs, TestSuite | **Crítica** | ⬜ Não iniciada — **3 ondas** (após 24, após 22, após 20); harness = CLI da Fase 24 (adendo 26.26–26.28) |
-| 22 | tooling (vsextension + `lsp-core` no core) | — | Média | ⬜ Não iniciada (após 21¹; plano `fase-22-vscode-extension.md`) |
+| 21 | tests/ | MWEs, TestSuite | **Crítica** | ⬜ Não iniciada — **3 ondas** (após 24, após 22, após 20); harness = CLI da Fase 24 (adendo 26.26–26.28); **1ª onda inclui regenerar a `completude-matrix.md` a partir das âncoras do código e reconciliar ADRs 033–037** (26.22.9–26.22.11 — xray §5.5) |
+| 22 | tooling (vsextension + `lsp-core` + **`doc-core`** no core) | apps/Tj3Man.rb, UserManual, SyntaxReference, KeywordDocumentation, TjpExample, TernarySearchTree, KateSyntax/VimSyntax | Média | ⬜ Não iniciada (após 21¹; plano `fase-22-vscode-extension.md`; **subfase 22.1b = `doc-core`** inteiro — decisão xray 2026-11-03; também entrega o equivalente do tj3client/tj3daemon/tj3webd) |
 | 23 | core (lexer/parser — extensão TS-only `template`) | — (engine Vento) | Alta | ⬜ Não iniciada (antes da 24; plano `fase-23-template.md`) |
-| 24 | cli (novo pacote `packages/cli`) | apps/Tj3.rb, man/tj3.1 | **Alta** | ⬜ Não iniciada (após 23, antes de 21¹; plano `fase-24-cli.md`) |
+| 24 | cli (novo pacote `packages/cli`) | apps/Tj3.rb, man/tj3.1 + `apps/Tj3Man.rb` (`wz man`) + apps de sheets | **Alta** | ⬜ Não iniciada (após 23, antes de 21¹; plano `fase-24-cli.md`; **adendos 24.9/24.10** — `wz man`, `--freeze*`, `wz ts/ss send·receive·summary`, `--report --attr`, consumidores de `FileList`/`StdIoWrapper`/`UTF8String`, imagens 13.14.3 e regressão `format richtext`; âncoras `Fase 24` já no core para `parse/parseFile/parseContent/freeze`) |
 
 > **Pacotes (ADR 030):** todo o código de fases vive em `packages/core` (parser, i18n, richtext, markdown, report, sheets, journal, storage de nível lógico). `packages/server`, `packages/ui`, `packages/service-worker` são suporte. A coluna "Pacote" acima indica a camada lógica histórica, não um package físico.
 
 > **Fase 10 Complemento (2026-10-26):** especificações em `fase-10-complemento1.md` (#1–#5: journal/note em material/resource/account, `breakdownreport`, RDO com `picture`/`format`/`rdoreport`) e `fase-10-complemento2.md` (#6 `timebasis`, #6a distribuição temporal unificada). Tarefas de fases ≤ 10: `fase-10-complemento-tarefas.md` (Blocos C0–C4). Tarefas de fases futuras: adendos nos respectivos `-tarefas.md`.
 
 > **Fase 11 Complemento (2026-10-27):** `fase-11-logical-complemento.md` — funções/atributos/flags lógicas além do port fiel (14 funções Ruby). Funções viáveis hoje e extensões de flags/atributos de material/charge ficam na Fase 11; funções que exigem scheduling/financeiro são **registradas** (nome+aridade+i18n+stub) aqui e **avaliadas** nas Fases 7/8; a **aplicação** de `hidematerial`/`rollupmaterial`/`hidepicture` + verificação de hide/rollup de task/resource/account vira o adendo **14.26** na Fase 14.
+
+> **Varredura xray Ruby↔TS (2026-11-03):** `docs/syntaxmesh/xray.md` é o inventário
+> file-a-file e método-a-método do fonte TJ 3.8.4 contra o port. As decisões de escopo
+> tomadas a partir dela estão consolidadas no **§8 (“Resolução”)** daquele arquivo e já
+> refletem nas linhas de status acima: **F22** ganha o `doc-core` inteiro (22.1b);
+> **F24** empacota `wz man`/apps de sheets/dynamicAttributes/freeze e recebe as âncoras
+> de `parse*`; **F18** ganha 18.18/18.19/18.20 e os ADRs 036/037; **F16** cancela
+> 16.10 (`AlgorithmDiff`, DEAD), move 16.9/16.14/16.15 e passa a ser a dona de
+> `query_dashboard`; **13.14.3/13.14.4** vão para F24/F19 e F14-C. A matriz de
+> completude será **regenerada na 1ª onda da Fase 21** (§5.5).

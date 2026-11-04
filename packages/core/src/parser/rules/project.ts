@@ -25,7 +25,7 @@ import { WorkingHours, } from "../../calendar/working-hours.ts";
 import { Macro, } from "../../lexer/macro-table.ts";
 import { AttributeOverwrite, } from "../../model/errors.ts";
 import {
-  type AlertLevelDefinition,
+  AlertLevelDefinition,
   alertLevelIds,
   alertLevelIndexById,
 } from "../../model/alert-levels.ts";
@@ -33,7 +33,7 @@ import type { PropertyTreeNode, } from "../../model/property-tree-node.ts";
 import type { ProjectFileParser, } from "../project-file-parser.ts";
 import { rule, } from "./helpers.ts";
 
-/** Nível de alerta: objeto {id, name, color} (módulo 14C.0.7). */
+/** Nível de alerta: `AlertLevelDefinition` (id, nome e cor). */
 type AlertLevel = AlertLevelDefinition;
 
 /** Lê `project['alertLevels']` como lista de níveis (fallback []). */
@@ -864,11 +864,11 @@ export function registerProjectRules(p: ProjectFileParser,): void {
     p.pattern(
       ["$ID", "$STRING", "!color",],
       function (this: ProjectFileParser,): unknown {
-        return {
-          id: String(this.val[0],),
-          name: String(this.val[1],),
-          color: String(this.val[2],),
-        } satisfies AlertLevel;
+        return new AlertLevelDefinition(
+          String(this.val[0],),
+          String(this.val[1],),
+          String(this.val[2],),
+        ) satisfies AlertLevel;
       },
     );
     p.arg(0, "ID", "A unique ID for the alert level",);

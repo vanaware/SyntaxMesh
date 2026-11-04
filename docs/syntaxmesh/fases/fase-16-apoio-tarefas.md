@@ -2,9 +2,9 @@
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-16-tarefas.md`
 > **Plano:** `docs/syntaxmesh/fases/fase-16-apoio.md`
-> **Status:** ⬜ Não iniciada
+> **Status:** 🟡 Em andamento (16.0–16.3 concluídas em 2026-11-03)
 > **Total:** ~191 tarefas
-> **Concluídas:** 0
+> **Concluídas:** 4 (16.0, 16.1, 16.2, 16.3) + 16.6 e 16.16 herdadas prontas
 > **Fonte Ruby:** `docs/taskjuggler/lib/taskjuggler/{Journal,AlertLevelDefinitions,LeaveList,TernarySearchTree,AlgorithmDiff,TextFormatter,FileList,URLParameter,StdIoWrapper,UTF8String,KateSyntax,VimSyntax}.rb`
 
 > **📌 Âncora — Complemento Fase 11 (2ª onda, §6.5/§6.6 de `fase-11-logical-complemento.md`):**
@@ -12,6 +12,26 @@
 > (hoje só Query; `JournalEntry.flags: string[]` já existe no modelo),
 > **`hasalert`** real (substitui o stub `NotYetImplementedError("16")`) e
 > validação de flags de journalentry no `LogicalOperation`.
+
+---
+
+## 📋 Registro de progresso
+
+> Registro das micro-etapas efetivamente executadas (teste a cada execução).
+> Divergência de caminho: o subsistema de journal vive em
+> `packages/core/src/model/` (convenção já usada por `journal.ts`,
+> `alert-levels.ts` e `leave.ts` desde as Fases 10/12/14C), **não** em
+> `packages/core/src/journal/` como o plano original previa. As células
+> “arquivo” abaixo seguem o caminho real.
+
+| Subfase | Estado | Evidência |
+|---|---|---|
+| 16.0 — ADR 029 | ✅ 2026-11-03 | `decisoes/029-journal-alertlevel.md` (Resumo/Contexto/5 Decisões/Alternativas/Consequências); `decisoes/README.md` 029 → Aceito |
+| 16.1 — `AlertLevelDefinition`/`AlertLevelDefinitions` | ✅ 2026-11-03 | `model/alert-levels.ts` reescrito como classes (`to_s`, `clear`, `add` com unicidade, `indexById/Name/Color`, `map`, `to_tjp`, iterador); `parser/rules/project.ts` instancia `AlertLevelDefinition`; **7 passed (25 steps)** em `tests/model/alert-level-classes_test.ts` + `alert-levels_14c_test.ts` |
+| 16.2 — `JournalEntryList` | ✅ 2026-11-03 | `model/journal-entry-list.ts` (`setSorting` validado, `get/first/last/uniq/sort`, `unsorted()` para preservar ordem de chegada nos relatórios); **22 steps** em `tests/model/journal-entry-list_test.ts` |
+| 16.3 — `Journal` (queries + `to_rti`) | ✅ 2026-11-03 | `model/journal.ts`: `entryList`+`propertyToEntries`, `entriesByTask/TaskR/Resource/Material/Account`, `rangeEntries`, `to_rti` com 9 modos; índices renomeados para `indexBy*` e `entriesFor()` adicionado (`reports/rdo-report.ts` ajustado); **7 passed (31 steps)** em `tests/model/journal-queries_16_test.ts`; regressão `tests/reports/ tests/model/` → **152 passed (1242 steps)** |
+| 16.6 — `TextFormatter` | ✅ herdada | `utils/text-formatter.ts` (Fase 12) — sem pendências |
+| 16.16 — `TaskScenario.query_*` | ✅ herdada | `property-tree-node.ts` já expõe `query_journal/alert/alerttrend/alertmessages/alertsummaries/journalmessages/journalsummaries` |
 
 ---
 

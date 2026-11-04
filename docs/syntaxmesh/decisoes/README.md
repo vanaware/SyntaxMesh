@@ -86,9 +86,25 @@ O que foi decidido? Seja específico e acionável.
 | 026 | Markdown como formato going-forward | Aceito | 2026-10-29 |
 | 027 | Reports no browser: retorno de strings | Aceito | 2026-10-30 |
 | 028 | Gantt HTML+CSS | Aceito | 2026-11-03 |
-| 029 | Journal e AlertLevel em TypeScript | Proposto | — |
+| 029 | Journal e AlertLevel em TypeScript | Aceito | 2026-11-03 |
 | 030 | Arquitetura simplificada: todo código principal em `packages/core` | Aceito | 2026-10-24 |
 | 031 | Modelo Contábil Estendido (repete 020; ver arquivo) | Proposto | — |
 | 032 | Gate de saída para Fase 13 e política de stubs | Aceito | 2026-10-28 |
+| 033 | Reservado — Template (Vento), Fase 23 | Reservado | — |
+| 034 | Reservado — CLI (`packages/cli`), Fase 24 | Reservado | — |
+| 035 | Reservado — Extensão VS Code + lsp-core, Fase 22 | Reservado | — |
+| 036 | Reservado — Sheets sem SMTP: sender devolve o **texto do email**, receiver consome **texto de mensagem** (Fase 18; ADR da fase) | Reservado | 2026-11-03 |
+| 037 | Reservado — Injeção de provedor de conteúdo/`FileStore` no core (Fases 18/24) | Reservado | 2026-11-03 |
+
+> **Reserva de números (decisão 2026-11-03 — `docs/syntaxmesh/xray.md` §5.3):**
+> 029–032 já existem (029 ainda **sem arquivo** — será criado na tarefa **16.0.1**
+> como `029-journal-alertlevel.md`; a tabela já o dá como Aceito porque a decisão
+> está tomada no plano da Fase 16). **033–035** seguem a ordem oficial de execução
+> (23 → 24 → 22) e **036–037** foram reservados nesta varredura para as decisões
+> novas das Fases 18/24. **Nunca renumerar ADRs existentes** — os arquivos 027/028
+> já commitados são referência histórica; ao criar um ADR, conferir antes esta
+> tabela e usar o próximo número livre. A cadeia 033–037 deve ser **reconciliada na
+> Fase 21** (se alguém precisar de número antes, usa o próximo livre e atualiza esta
+> tabela).
 
 > **Nota:** Manter esta tabela atualizada manualmente ou via script ao adicionar novos ADRs.

@@ -7,6 +7,15 @@
 > Esta matriz é a **fonte viva** do status de cada gap do inventário
 > (`fase-11-logical-gaps.md` §3). É consumida por `deno task gaps:audit` — se
 > qualquer linha tiver status `pendente`, o gate `gate:phase-13` falha.
+>
+> ⚠️ **Regenerar na Fase 21 (decisão 2026-11-03 — `docs/syntaxmesh/xray.md` §5.5):**
+> esta matriz cobre só as **Fases 2–12**. Os gaps das Fases 13, 14, 14-C, 15 e as
+> realocações da varredura xray (F16/F18/F22/F24) estão hoje espalhados por
+> `CURRENT.md` e pelos `-tarefas.md` de cada fase. **Não re-escrever a matriz à mão
+> antes da 21** — na 1ª onda da Fase 21 ela deve ser **regenerada a partir do código**
+> (âncoras `// Ancorado: Fase N` lidas por `scripts/check-stubs.ts`) e estendida até a
+> Fase 20, passando a ser a fonte única de status de gaps. Enquanto isso, adicionar
+> linhas aqui só quando o gap for do inventário G1–G21.
 
 ## Legenda
 

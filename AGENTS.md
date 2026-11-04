@@ -42,13 +42,15 @@ Welcome to the SyntaxMesh project! This file (`AGENTS.md`) is automatically inje
 
 ## 7. Development Workflow & Continuous Validation
 - **Mandatory Verification**: After executing ANY task, feature request, or to-do list item, you MUST verify the project's integrity by running:
-  - Linter & Type Check: `npm run lint` (which runs `deno check` under the hood).
+  - Full quality gate: `deno task tests` (composite of `check:all` + `lint` + `fmt:check` + `lint:doc:all` + `test`).
+  - Linter & Type Check: `deno task check:all` (type check per package) and `deno task lint`. `npm run lint` is the platform bridge for `deno task lint` only.
   - Tests: `deno task test`.
+  - Stub-anchor gate: `deno task check:stubs` (every `NotYetImplementedError` must carry an `// Ancorado: Fase N — razão` comment; ADR 032).
 - **Proactive Unit Testing**: Whenever you implement new functions, utilities, or complex logic, you MUST proactively create unit tests for them using the `@std/testing/bdd` standard. Do not wait for the user to explicitly ask for tests.
 
-## 8. Current Development Plan (21 Phases)
+## 8. Current Development Plan (21 + 3 Phases)
 
-This project follows a **21-phase development plan** (previously 8 phases). The canonical plan is at `docs/syntaxmesh/fases/plano.md`. Each phase has a plan file and an atomic task file:
+This project follows a **21-phase canonical plan plus the complementary phases 22–24** (previously 8 phases). The canonical plan is at `docs/syntaxmesh/fases/plano.md`. Each phase has a plan file and an atomic task file:
 
 | Fase | Descrição | Status |
 |---|---|---|
@@ -67,19 +69,22 @@ This project follows a **21-phase development plan** (previously 8 phases). The 
 | Fase 10 Complemento — Extensões RDO/orçamento | `material` no parser, `note`/`journal` estendidos, `picture`/`format`/`rdoreport`/`breakdownreport`, `timebasis` (#6/#6a). | ⬜ Não iniciada (`fase-10-complemento-tarefas.md` + adendos 13/14/16/18/19/20/21) |
 | Fase 11 — Expressões Lógicas e Queries | Motor de expressões lógicas e ponte para reports. | ✅ Concluída (2026-10-27; queries `query_*` concretos a cargo de scheduling/finance) |
 | Fase 12 — RichText (compatibilidade TJP) | Manter Markup MediaWiki para compatibilidade total com `.tjp`. | ✅ Concluída (2026-10-29, 12.0–12.20) |
-| Fase 13 — Markdown (novo, futuro) | Formato going-forward. `micromark` + `mdast-util-from-markdown` + GFM + extensões. | ✅ Concluída (13.0–13.13; 13.14 imagens parcial → Fases 19/14) |
+| Fase 13 — Markdown (novo, futuro) | Formato going-forward. `micromark` + `mdast-util-from-markdown` + GFM + extensões. | ✅ Concluída (13.0–13.13; 13.14 parcial — 13.14.3 → Fases 24/19, 13.14.4 → Fase 14-C entregue em `14C.5`; xray §4/§8) |
 | Fase 14 — Relatórios | Pipeline completo de relatórios. | ✅ Concluída (2026-10-31, 14.0–14.24; adendos 14.25/14.26 → Fase 14-C) |
 | Fase 14 Complemento — Materiais/RDO/MspXml/Markdown nos relatórios | `materialreport`, `breakdownreport`, `rdoreport`, MSPDI completo, `format markdown` em reports, hide/rollup de material/picture, saída markdown `.md` (`md*report`), `defaultaccount`, `<Baseline>` do MSPDI, unit price por alocação/booking (remoção de `totalquantity`), auditoria do G1.4, booking de estoque ±, unit price calculado por composição, keywords opcionais em booking + `booking charge` no material, turnover com precedência de preço, registro do comportamento de cenários e colunas de estoque `stockquantity`/`stockcost` nos conteúdos de material. | ✅ Concluída — C0–C12 ✅ (2026-11-01) + adendo extra C13–C17 ✅ (2026-11-02) + C18 ✅ (2026-11-02, pendência §13.7) (`fase-14-relatorios-complemento.md` + `-tarefas.md`) |
 | Fase 15 — Gantt | Gantt chart completo em HTML+CSS. | ✅ Concluída (2026-11-03) |
-| Fase 16 — Apoio | Estruturas auxiliares. | ⬜ Não iniciada |
+| Fase 16 — Apoio | Estruturas auxiliares. | ⬜ Não iniciada (escopo ajustado pela varredura xray 2026-11-03: 16.10 `AlgorithmDiff` **cancelado** (DEAD); 16.9/16.14/16.15 **movidos** para a Fase 22; 16.7/16.11/16.12 permanecem no core com consumidores na F18/F24; **dona de `query_dashboard`**) |
 | Fase 17 — HTML/XML | Geradores de HTML/XML. | ⬜ Não iniciada |
-| Fase 18 — Time/Status Sheets | Time sheets e status sheets. | ⬜ Não iniciada |
-| Fase 19 — Storage | Persistência local via `@vanaware/workerdb` (ADR 030). | ⬜ Não iniciada |
+| Fase 18 — Time/Status Sheets | Time sheets e status sheets. | ⬜ Não iniciada (adendos 18.17 + **18.18** núcleo dos apps de sheet, **18.19** `dynamicAttributes`/`parseReportAttributes`, **18.20** `MessageHandler#checkLevel`; ADRs **036** sheets-sem-SMTP / **037** provedor de conteúdo) |
+| Fase 19 — Storage | Persistência local via `@vanaware/workerdb` (ADR 030). | ⬜ Não iniciada (tarefas numeradas `24.x` — drift registrado em xray §5.6) |
 | Fase 20 — PWA + UI | Service Worker, manifest, Preact + Signals + BeerCSS. | ⬜ Não iniciada |
-| Fase 21 — Compatibilidade e Qualidade | Golden tests, corpus multilíngue, performance, release. | ⬜ Não iniciada |
+| Fase 21 — Compatibilidade e Qualidade | Golden tests, corpus multilíngue, performance, release. | ⬜ Não iniciada — **3 ondas**; 1ª onda regenera a `completude-matrix.md` a partir das âncoras do código e reconcilia ADRs 033–037 (xray §5.5) |
+| Fase 22 — Extensão VS Code + `doc-core` | `lsp-core` + extensão; entrega o **`doc-core`** inteiro (subfase 22.1b): `SyntaxReference`, `KeywordDocumentation`, `TjpExample`, `UserManual`, `TernarySearchTree`, núcleo de highlight Kate/Vim; equivalente funcional do `tj3client`/`tj3daemon`/`tj3webd`. | ⬜ Não iniciada (`fase-22-vscode-extension.md`) |
+| Fase 23 — Template (Vento) | Extensão TS-only de templates no lexer/parser. | ⬜ Não iniciada (`fase-23-template.md`) |
+| Fase 24 — CLI (`packages/cli`) | Equivalente `tj3` multi-runtime; empacota o `doc-core` (`wz man`), os apps de sheets da F18 (sem SMTP — texto do email/texto da mensagem), `--report --attr` (dynamicAttributes), `--freeze*` e os utilitários `FileList`/`StdIoWrapper`/`UTF8String`. Dono das âncoras `parse/parseFile/parseContent/freeze`. | ⬜ Não iniciada (`fase-24-cli.md`; adendos 24.9/24.10) |
 
 **Arquivos de referência:**
-- `docs/syntaxmesh/fases/plano.md` — plano canônico de 21 fases.
+- `docs/syntaxmesh/fases/plano.md` — plano canônico (21 fases + complementares 22–24).
 - `docs/syntaxmesh/fases/fase-N-descricao.md` — plano da fase.
 - `docs/syntaxmesh/fases/fase-N-descricao-tarefas.md` — tarefas atômicas com testes unitários.
 - `docs/syntaxmesh/fases/` + `docs/syntaxmesh/decisoes/` — **fonte da verdade** de escopo e andamento; demais docs de `docs/syntaxmesh/` são referência histórica.
@@ -91,7 +96,7 @@ Golden tests are generated from Ruby scripts (`scripts/golden/*.rb`) and committ
 
 ## 10. Architecture Decision Records (ADRs)
 
-All important architectural decisions are documented as ADRs in `docs/syntaxmesh/decisoes/` (ADRs 001–031). Consult `docs/syntaxmesh/decisoes/README.md` for the full list. Create a new ADR for any significant architectural decision.
+All important architectural decisions are documented as ADRs in `docs/syntaxmesh/decisoes/` (ADRs 001–032 exist; **033–037 are reserved**: 033 template/F23, 034 CLI/F24, 035 VS Code/F22, 036 sheets-sem-SMTP/F18, 037 provedor de conteúdo/F18–F24). Consult `docs/syntaxmesh/decisoes/README.md` for the full list. Create a new ADR for any significant architectural decision, using the next free number and updating that README — **never renumber committed ADRs** (xray §5.3).
 
 ## 11. Ruby Source Files
 
@@ -99,11 +104,12 @@ The original TaskJuggler Ruby source files are in `docs/taskjuggler/lib/taskjugg
 
 ## 12. Quality Pipeline
 
-Run `deno task check-all` for full validation:
-- `deno check` (type check)
-- `deno lint` (lint)
-- `deno fmt --check` (formatting)
-- `deno test` (tests)
+Run `deno task tests` for full validation (the composite below). `deno task check-all` does **not** exist — the task is named `check:all`:
+- `deno task check:all` (type check per package)
+- `deno task lint` (lint)
+- `deno task fmt:check` (formatting)
+- `deno task test` (tests)
+- `deno task check:stubs` (stub-anchor gate, ADR 032)
 
 ## 13. Important Notes
 

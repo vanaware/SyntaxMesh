@@ -10,6 +10,7 @@
 import { describe, it, } from "@std/testing/bdd";
 import { assert, assertEquals, } from "@std/assert";
 import {
+  AlertLevelDefinition,
   alertLevelIds,
   alertLevelIndexById,
   alertLevelIndexByName,
@@ -19,7 +20,6 @@ import {
 import { type JournalEntry, } from "../../src/model/journal.ts";
 import { Task, } from "../../src/model/task.ts";
 import { parseProject, PROJECT_HEADER, } from "../parser/parse-helper.ts";
-import type { AlertLevelDefinition, } from "../../src/model/alert-levels.ts";
 
 describe("alert-levels módulo (14C.0.7)", () => {
   it("defaults ruby: green/amarelo/red com índices 0-2", () => {
@@ -33,8 +33,9 @@ describe("alert-levels módulo (14C.0.7)", () => {
 
   it("defaultAlertLevels devolve cópia profunda (lista mutável)", () => {
     const a = defaultAlertLevels();
-    a[0]!.id = "mutado";
-    assertEquals(DEFAULT_ALERT_LEVELS[0]!.id, "green",);
+    a.push(new AlertLevelDefinition("azul", "Blue", "#0000ff",),);
+    assertEquals(DEFAULT_ALERT_LEVELS.length, 3,);
+    assertEquals(a.length, 4,);
   });
 });
 

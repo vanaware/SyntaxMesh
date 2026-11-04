@@ -40,7 +40,7 @@ describe("Journal índices por entidade (14C.0.4)", () => {
     entry(project, t, "2026-03-01", "mar",);
     entry(project, t, "2026-01-15", "jan",);
     entry(project, t, "2026-02-20", "fev",);
-    const list = project.journal.entriesByTask.get(t,)!;
+    const list = project.journal.indexByTask.get(t,)!;
     assertEquals(list.length, 3,);
     assertEquals(list.map((e,) => e.headline), ["jan", "fev", "mar",],);
   });
@@ -52,15 +52,15 @@ describe("Journal índices por entidade (14C.0.4)", () => {
     entry(project, r, "2026-01-01",);
     entry(project, m, "2026-01-02",);
     entry(project, a, "2026-01-03",);
-    assertEquals(project.journal.entriesByResource.get(r,)!.length, 1,);
-    assertEquals(project.journal.entriesByMaterial.get(m,)!.length, 1,);
-    assertEquals(project.journal.entriesByAccount.get(a,)!.length, 1,);
+    assertEquals(project.journal.indexByResource.get(r,)!.length, 1,);
+    assertEquals(project.journal.indexByMaterial.get(m,)!.length, 1,);
+    assertEquals(project.journal.indexByAccount.get(a,)!.length, 1,);
   });
 
   it("entrada com property null fica apenas em entries (sem índice)", () => {
     entry(project, null, "2026-01-01",);
     assertEquals(project.journal.entries.length, 1,);
-    assertEquals(project.journal.entriesByTask.size, 0,);
+    assertEquals(project.journal.indexByTask.size, 0,);
   });
 
   it("entriesByDate filtra por intervalo inclusivo e ordena por data", () => {
@@ -95,8 +95,8 @@ describe("Journal remoção consistente (14C.0.5)", () => {
     const gone = entry(project, t, "2026-01-01", "gone",);
     project.journal.removeEntry(gone,);
     assertEquals(project.journal.entries.length, 1,);
-    assertEquals(project.journal.entriesByTask.get(t,)!.length, 1,);
-    assertEquals(project.journal.entriesByTask.get(t,)![0], keep,);
+    assertEquals(project.journal.indexByTask.get(t,)!.length, 1,);
+    assertEquals(project.journal.indexByTask.get(t,)![0], keep,);
   });
 
   it("deleteIf não vaza entradas: bucket vazio é removido do mapa", () => {
@@ -104,7 +104,7 @@ describe("Journal remoção consistente (14C.0.5)", () => {
     entry(project, t, "2026-01-01",);
     entry(project, t, "2026-02-01",);
     project.journal.deleteIf((e,) => e.property === t);
-    assert(!project.journal.entriesByTask.has(t,), "bucket vazio vazou",);
+    assert(!project.journal.indexByTask.has(t,), "bucket vazio vazou",);
     assertEquals(project.journal.entries.length, 0,);
   });
 });

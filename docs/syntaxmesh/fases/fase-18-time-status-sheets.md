@@ -100,7 +100,7 @@ Ao final desta fase:
 - `StatusSheetSender`, `StatusSheetReceiver`.
 - **Núcleo dos apps de sheet** (`Tj3SheetAppBase` + `ts_sender/ts_receiver/ts_summary/ss_sender/ss_receiver`) como classes puras do core, sem SMTP e sem subprocesso — **18.18**, adendo xray §3.3. O empacotamento CLI (`wz ts …`, `wz ss …`) é da **Fase 24**.
   - **Política de email (decisão 2026-11-03):** o **sender** monta e devolve o **texto do email** (To/Subject/corpo + anexo `.tji`/`.tjs` em base64) e **não** se conecta a nenhum app de envio; o **receiver** consome **texto de mensagem** fornecido pelo usuário (arquivo/stdin), não a mensagem inteira de um cliente de email.
-- **Pipeline `dynamicAttributes`** (`Project#generateReport` 4º argumento + `Report#backupAttributes`/`restoreAttributes` + `ProjectFileParser#parseReportAttributes` + `rule_dynamicAttributes`) — **18.19**, adendo xray §3.4. As três âncoras `// Ancorado: Fase 18` entram na política ADR 032.
+- **Pipeline `dynamicAttributes`** (`Project#generateReport` 4º argumento + backup/restore **já herdados de `PropertyTreeNode`** + `ProjectFileParser#parseReportAttributes` + `rule_dynamicAttributes`) — **18.19**, adendo xray §3.4. Os três passos, hoje comentados em `project.ts`, já levam a âncora `// Ancorado: Fase 18` (política ADR 032).
 - **`MessageHandler#checkLevel`** (validação de nível 0–5 nos setters de `outputLevel`/`logLevel`) — **18.20**, adendo xray §3.4.1.
 - Consumidores dos utilitários da Fase 16: `StdIoWrapper` (`TimeSheetSummary.getResourceJournal`).
 - Adaptações browser: `FileStore` injetado (Fase 19) via interface Core.
@@ -1363,20 +1363,31 @@ Ruby `Project.rb:778-812`: `generateReport(reportID, regExpMode, outputDir,
 **dynamicAttributes**)` faz `backupAttributes` → `parseReportAttributes` → gera →
 `restoreAttributes`. É assim que o `SheetSender` injeta colunas no template de
 time sheet e como o daemon/CLI pedem colunas extras (`-A`). No TS o parâmetro já
-existe, mas os três passos estão **comentados como `// stub` sem âncora**
-(`packages/core/src/model/project.ts`, dentro de `generateReport`) — viola a
+existe, mas os três passos estavam **comentados como `// stub` sem âncora**
+(`packages/core/src/model/project.ts`, dentro de `generateReport`) — violava a
 política ADR 032. **Decisão 2026-11-03 (xray §3.4):** núcleo entregue nesta fase.
+Em 2026-11-03 os três comentários já foram reescritos como
+`// Ancorado: Fase 18 — pipeline dynamicAttributes (xray §3.4)`.
+
+> **Já existe no core (verificado 2026-11-03):** `backupAttributes()` /
+> `restoreAttributes(backup)` estão implementados em
+> `packages/core/src/model/property-tree-node.ts` (l.609/619) e são **herdados por
+> `Report`**. Não criar métodos novos — o trabalho é **ligar as chamadas** no
+> pipeline e, se quiser um nome de tipo, extrair o tuplo `[Map, Map[]]` para um
+> alias `AttributeBackup`.
 
 #### Arquivos
 
 - `packages/core/src/model/project.ts` (descomentar + implementar os 3 passos)
 - `packages/core/src/parser/project-file-parser.ts` (`parseReportAttributes`)
-- `packages/core/src/reports/report.ts` (`backupAttributes` / `restoreAttributes`)
+- `packages/core/src/model/property-tree-node.ts` (backup/restore **já prontos** — só usar)
 - `packages/core/tests/model/project-dynamic-attributes_test.ts`
 
 #### Requisitos
 
-- [ ] `Report#backupAttributes(): AttributeBackup` e `Report#restoreAttributes(backup)`.
+- [ ] `report.backupAttributes()` / `report.restoreAttributes(backup)` **ligados** no
+  pipeline (métodos já herdados de `PropertyTreeNode`; opcionalmente extrair o alias
+  `AttributeBackup` para o tuplo `[Map, Map[]]`).
 - [ ] `ProjectFileParser#parseReportAttributes(report, attributes: string): void`
   usando a regra `rule_dynamicAttributes` já registrada
   (`rules/common.ts:784`) — colunas/atributos extras, herdados do report.
@@ -1384,9 +1395,10 @@ política ADR 032. **Decisão 2026-11-03 (xray §3.4):** núcleo entregue nesta 
   só executa backup/parse/restore quando `dynamicAttributes` não está vazio
   (fiel ao Ruby).
 - [ ] `SheetSender` (18.6) passa a usar o 4º argumento para as colunas do template.
-- [ ] **Âncoras:** enquanto não implementado, os três `// stub` viram
-  `// Ancorado: Fase 18 — pipeline dynamicAttributes (xray §3.4)` com
-  `NotYetImplementedError("18", …)`, para cobertura do `deno task check:stubs`.
+- [ ] **Âncoras:** aplicadas em 2026-11-03 — os três `// stub` de `generateReport`
+  viraram `// Ancorado: Fase 18 — pipeline dynamicAttributes (xray §3.4)`; ao
+  implementar, remover os comentários (o `check:stubs` não exige `throw` para código
+  já entregue, mas a âncora é o rastro de posse até lá).
 
 #### Referências
 

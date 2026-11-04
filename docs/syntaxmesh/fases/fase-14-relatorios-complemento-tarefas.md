@@ -352,7 +352,9 @@ corrigidos.
 
 > Default de **report** permanece `richtext` (compatibilidade `.tjp`); markdown
 > é opt-in por `format` no escopo do relatório/entrada. Roteamento previsto na
-> 13.14.4 (adiada) é entregue aqui.
+> 13.14.4 é **entregue aqui** — em 2026-11-03 a posse da 13.14.4 foi formalmente
+> transferida para esta fase (xray §4); a contraparte de materialização de
+> imagem (13.14.3) ficou com a Fase 24 (CLI/disco) e Fase 19 (OPFS/blob).
 
 | # | Tarefa | Arquivos | Verificação |
 |---|--------|----------|-------------|

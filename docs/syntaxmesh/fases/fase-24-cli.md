@@ -266,6 +266,8 @@ empacota, o core pensa"):
 | `wz ss send` / `wz ss receive` | `apps/Tj3SsSender/SsReceiver.rb` | **Fase 18** — `StatusSheetSender/Receiver` no core | F24 subfase 24.10 (mesma política texto-do-email) |
 | `--report <R> [attrs]` com atributos dinâmicos | `ReportServer`/`ReportServlet` (daemon) + `Project#generateReport(dynamicAttributes)` | **Fase 18** — núcleo `parseReportAttributes` + backup/restore (adendo F18; xray §3.4) | F24 subfase 24.10 |
 | Rastreio de arquivos de entrada / captura de saída | `FileList`/`StdIoWrapper`/`UTF8String` | **Fase 16** (16.7/16.11/16.12 — utilitários no core) | Consumidos por 24.2/24.10 |
+| Imagens em relatórios (`![x](…)`) | `ImageRouter`/`RdoReport` Ruby + `URL.createObjectURL` (browser) | **Fase 13** devolve só o descritor (`resolveImageRef`, core DOM-free) | F24 subfase 24.10.8 — materializa do disco via `io` (13.14.3, xray §4); fase 19 faz o equivalente OPFS na PWA |
+| `format richtext` como default na saída | roteador de formato dos reports | **Fase 14-C** (núcleo entregue em `14C.5.1–5.12`) | F24 subfase 24.10.9 — regressão golden dos dois formatos (13.14.4, xray §4) |
 
 > Nota: `freeze` (`--freeze*`) também reancorado para **Fase 24** (24.9) —
 > era Fase 19. O daemon em si (`tj3d`/`tj3webd`/`tj3client`) permanece **fora de

@@ -329,7 +329,7 @@ export class RdoReport extends ReportBase {
     return this.entityGroups(
       list.toArray(),
       (task,) => task.id,
-      (task,) => this.project.journal.entriesByTask.get(task,) ?? [],
+      (task,) => this.project.journal.entriesFor(task,),
     );
   }
 
@@ -349,7 +349,7 @@ export class RdoReport extends ReportBase {
       list.toArray(),
       (resource,) => resource.id,
       (resource,) =>
-        this.project.journal.entriesByResource.get(resource,) ?? [],
+        this.project.journal.entriesFor(resource,),
     );
   }
 
@@ -366,7 +366,7 @@ export class RdoReport extends ReportBase {
       list,
       (material,) => material.id,
       (material,) =>
-        this.project.journal.entriesByMaterial.get(material,) ?? [],
+        this.project.journal.entriesFor(material,),
     );
   }
 
@@ -384,7 +384,7 @@ export class RdoReport extends ReportBase {
     return this.entityGroups(
       list.toArray(),
       (account,) => account.id,
-      (account,) => this.project.journal.entriesByAccount.get(account,) ?? [],
+      (account,) => this.project.journal.entriesFor(account,),
     );
   }
 

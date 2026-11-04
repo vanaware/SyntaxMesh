@@ -596,11 +596,11 @@ TOTAL: ~206
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 18.19.1 | `Report#backupAttributes()` + `Report#restoreAttributes(backup)` | `reports/report.ts` | 2 testes |
+| 18.19.1 | **Ligar** `report.backupAttributes()` / `report.restoreAttributes(backup)` no pipeline — os métodos **já existem** em `model/property-tree-node.ts` (l.609/619) e `Report` os herda; extrair o alias `AttributeBackup` se quiser nome de tipo (verificado 2026-11-03) | `model/project.ts` (chamadas) | 2 testes de round-trip |
 | 18.19.2 | `ProjectFileParser#parseReportAttributes(report, attributes: string)` usando a regra já registrada em `rules/common.ts:784` | `parser/project-file-parser.ts` | 3 testes |
 | 18.19.3 | `Project#generateReport(id, regExpMode?, outputDir?, dynamicAttributes?: string)` executando backup → parse → gera → restore quando o argumento existe | `model/project.ts` | 3 testes |
 | 18.19.4 | `SheetSender` passa a usar o 4º argumento para as colunas do template (substitui o caminho ad-hoc atual) | `sheets/sheet-sender.ts` | 2 testes |
-| 18.19.5 | **Âncoras ADR 032:** enquanto não implementados, os três `// stub` de `project.ts` viram `// Ancorado: Fase 18 — pipeline dynamicAttributes (xray §3.4)` + `NotYetImplementedError("18", …)` | `model/project.ts` | `deno task check:stubs` verde |
+| 18.19.5 | **Âncoras ADR 032 — feitas em 2026-11-03:** os três `// stub` de `project.ts` já são `// Ancorado: Fase 18 — pipeline dynamicAttributes (xray §3.4)`; ao implementar 18.19.3, remover os comentários | `model/project.ts` | `deno task check:stubs` verde |
 | 18.19.6 | Erro de sintaxe em `dynamicAttributes` vira mensagem do `MessageHandler` (não exceção crua) | `parser/project-file-parser.ts` | 1 teste |
 | 18.19.7 | Golden: mesmo report com/sem `dynamicAttributes` (comparar com `tj3 -A`) | `scripts/golden/`, `tests/golden/` | ≥ 4 casos |
 | 18.19.8 | Registrar na F24 a flag equivalente a `-A` (`wz --report … --attr …`) | `fase-24-cli.md`, `-tarefas.md` | linha presente |

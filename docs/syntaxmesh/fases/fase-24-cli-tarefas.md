@@ -82,7 +82,11 @@ parallela na CLI.
 [ ] 24.7  Golden CLI vs tj3 Ruby                    —   0/10
 [ ] 24.8  Verificação final                         —   0/8
 ─────────────────────────────────────────────────────────
-TOTAL: ~100
+SUBTOTAL (1ª onda, bloqueia v1)                    ~100
+[ ] 24.9  Adendo: wz man + --freeze* (Bloco I)      —   0/5
+[ ] 24.10 Adendo: apps de sheets + dynamicAttr.     —   0/9
+─────────────────────────────────────────────────────────
+TOTAL: ~114
 ```
 
 ---
@@ -296,6 +300,8 @@ verdes; são extensões, não bloqueiam a 1ª onda da Fase 21.
 | 24.10.5 | `--report <R> [--attr "..."]`: aplica o pipeline `dynamicAttributes`/`parseReportAttributes` da F18 na CLI | `Project#generateReport` (4º arg) | teste com coluna dinâmica |
 | 24.10.6 | Usar `FileList` (16.7) para rastreio de inputs e `StdIoWrapper` (16.11) para captura de saída onde o Ruby usava | core F16 | grep: nenhuma reimplementação local |
 | 24.10.7 | `check-stubs`: âncoras `Fase 24` (freeze/parse/parseFile/parseContent) presentes e nenhuma órfã | `scripts/check-stubs.ts` | verde |
+| 24.10.8 | **Imagens em relatórios (13.14.3, xray §4)**: `resolveImageRef` do core devolve descritor; a CLI materializa a imagem do disco (`io.readBytes`) como data URI ou arquivo ao lado da saída. Ruby usava `URL.createObjectURL`/blob só no browser | `packages/cli/src/commands/report.ts` + `markdown/extensions/images.ts` | teste: `![x](fotos/a.jpg)` → arquivo/URI na saída |
+| 24.10.9 | **Regressão `format richtext` (13.14.4)** na saída da CLI: default `richtext` para `.tjp` legados; markdown só com `format markdown` explícito (núcleo entregue na F14-C, `14C.5.1–5.12`) | F14-C / `reports/*` | golden CLI com os dois formatos |
 
 ---
 
