@@ -4,6 +4,9 @@ import { SourceFileInfo, } from "../source-file-info.ts";
 import type { Query, } from "../query/query.ts";
 import type { AttributeType, } from "../attributes/attribute-type.ts";
 
+/** Valor com comparação própria (Ruby `<=>`), como `TjTime`. */
+type ComparableValue = { compareTo: (other: ComparableValue,) => number };
+
 export class PropertyList<T extends PropertyTreeNode = PropertyTreeNode,> {
   private items: T[];
   readonly propertySet: PropertySet;
@@ -206,17 +209,22 @@ export class PropertyList<T extends PropertyTreeNode = PropertyTreeNode,> {
     this.index();
   }
 
+  /**
+   * Ordenação em modo árvore (Ruby `PropertyList#sort!`): remove o critério
+   * `tree`, ordena a lista achatada pelos demais critérios, propaga essa
+   * ordem para o atributo `tree` (via `index`→`indexTree`) e reordena por ele.
+   *
+   * O re-sort final é o que garante "pai antes dos filhos, irmãos na ordem dos
+   * outros critérios". Sem ele a lista fica na ordem achatada (achatada por
+   * `start`, por exemplo) e a estrutura de árvore se perde.
+   */
   private sortTreeMode(): void {
-    if (this.sortingLevels > 1) {
-      this.removeFirstCriteria();
-      this.sortInternal();
-      this.index();
-      this.indexTree();
-      this.addFirstCriteria();
-      this.sortInternal();
-    } else {
-      this.sortInternal();
-    }
+    this.removeFirstCriteria();
+    this.sortInternal();
+    this.index();
+    this.indexTree();
+    this.addFirstCriteria();
+    this.sortInternal();
   }
 
   private removeFirstCriteria(): void {
@@ -228,13 +236,12 @@ export class PropertyList<T extends PropertyTreeNode = PropertyTreeNode,> {
     }
   }
 
+  /** Devolve o critério `tree` removido por `removeFirstCriteria`. */
   private addFirstCriteria(): void {
-    if (this.sortingCriteria.length === 0) {
-      this.sortingCriteria.unshift("tree",);
-      this.sortingUp.unshift(true,);
-      this.scenarioIdx.unshift(-1,);
-      this.sortingLevels++;
-    }
+    this.sortingCriteria.unshift("tree",);
+    this.sortingUp.unshift(true,);
+    this.scenarioIdx.unshift(-1,);
+    this.sortingLevels++;
   }
 
   private sortInternal(): void {
@@ -274,6 +281,20 @@ export class PropertyList<T extends PropertyTreeNode = PropertyTreeNode,> {
           return up ? aValue - bValue : bValue - aValue;
         }
 
+        // Objetos comparáveis (`TjTime` e derivados): Ruby usa `aVal <=> bVal`.
+        // Sem isto o fallback por string compararia apenas a parte de data de
+        // um `TjTime`, empatando tarefas que começam no mesmo dia em horários
+        // diferentes — e o desempate acabava mudando a ordem do relatório.
+        const aCmp = aValue as unknown as ComparableValue;
+        const bCmp = bValue as unknown as ComparableValue;
+        if (
+          typeof aCmp.compareTo === "function" &&
+          typeof bCmp.compareTo === "function"
+        ) {
+          const comparison = aCmp.compareTo(bCmp,);
+          return up ? comparison : -comparison;
+        }
+
         const aStr = String(aValue,);
         const bStr = String(bValue,);
         const comparison = aStr.localeCompare(bStr,);
@@ -295,20 +316,20 @@ export class PropertyList<T extends PropertyTreeNode = PropertyTreeNode,> {
     },);
   }
 
+  /**
+   * Propaga a ordem atual da lista para o atributo `tree`: concatena os
+   * `index` do nó e de seus ancestrais, cada um com 6 dígitos (Ruby
+   * `PropertyList#indexTree`). Assim a ordenação final por `tree` coloca cada
+   * pai antes dos filhos e mantém os irmãos na ordem corrente.
+   */
   private indexTree(): void {
-    this.items.forEach((item, index,) => {
-      const bsIdcs = item.getBSIndicies();
-      let bsi = "";
-      let first = true;
-      bsIdcs.forEach((idx,) => {
-        if (first) {
-          first = false;
-        } else {
-          bsi += ".";
-        }
-        bsi += idx.toString();
-      },);
-      item.force("bsi", bsi,);
+    this.items.forEach((item,) => {
+      let tree = "";
+      for (const idx of item.getIndicies()) {
+        // Ruby: `nil.to_s` → "" → completado com zeros.
+        tree += String(idx ?? "",).padStart(6, "0",);
+      }
+      item.force("tree", tree,);
     },);
   }
 

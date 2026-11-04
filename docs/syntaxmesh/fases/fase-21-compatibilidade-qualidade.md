@@ -2,15 +2,44 @@
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-21-compatibilidade-qualidade.md`
 > **Status:** ⬜ Não iniciada
-> **Duração estimada:** 12–15 dias
-> **Depende de:** Fases 1–20
-> **Bloqueia:** release
+> **Duração estimada:** 12–15 dias (somada das 3 ondas)
+> **Depende de:** execução em **3 ondas** — 1ª: Fases 15–18 + 23 + 24 concluídas; 2ª: Fase 22; 3ª: Fases 19–20
+> **Bloqueia:** release (ao fim da 3ª onda)
+
+---
+
+## 0. Reescopo (diretriz 2026-11-03): execução em 3 ondas
+
+A Fase 21 deixa de ser um bloco único "depois de tudo" e vira um **ciclo de
+validação que acompanha os consumidores do motor**. Ordem oficial
+(`plano.md`): `… 23 → 24 → 21¹ → 22 → 21² → 19 → 20 → 21³`.
+
+| Onda | Gatilho | Escopo | Subfases atuais (`-tarefas`) |
+|---|---|---|---|
+| **1ª** | após a Fase 24 | Fidelidade do **motor** contra o `tj3` real, rodando as fixtures **através da CLI `syntaxmesh`** (runner `tj3-ts` = CLI da 24; nada de runner próprio); corpus, AST-equivalence, snapshots, benchmarks de engine, divergências | 26.0–26.11, 26.14 |
+| **2ª** | após a Fase 22 | Suite **adaptado à extensão VS Code**: testes de integração LSP (`registerLspServer`/handlers), grammar sobre o corpus, performance de `lsp-core` (diagnósticos em arquivo grande), ajuda/manual EN, empacotamento `.vsix` | novas (adendo 21² no `-tarefas` no kickoff da 22) |
+| **3ª** | após a Fase 20 | Suite **adaptado à PWA + UI** e fecho: cross-browser (Playwright), acessibilidade, Lighthouse, CSP, segurança, build de produção, CHANGELOG, SemVer, CI/CD final | 26.12–26.13, 26.15–26.25 |
+
+**Consequências práticas:**
+
+- A regra "fase final, nada de features novas" vale **por onda**: cada onda
+  testa o que existe até ali e congela esses resultados como baseline para a
+  seguinte.
+- O ADR de estratégia de validação desta fase **não é mais o 033** (ocupado
+  pela CLI); assume o próximo número livre na criação (conferir
+  `decisoes/README.md`).
+- Divergência encontrada numa onda posterior pode corrigir a fase culpada; a
+  onda seguinte revalida sobre a correção (política de pendências do repo).
 
 ---
 
 ## 1. Contexto
 
-Esta é a **fase final de validação**. O motor está completo (Fases 2–19), a UI funciona (Fase 20). Agora provamos que o SyntaxMesh é **fiel ao TaskJuggler** e **pronto para produção**.
+Esta é a **fase de validação**, executada em três ondas (§0). Na **1ª onda** o
+motor está completo (Fases 2–18 + 23) e existe uma CLI headless (Fase 24) para
+rodar o corpus contra o `tj3` real; a extensão (22) e a UI (19–20) ainda não
+existem — por isso a validação foi fatiada. Ao fim da 3ª onda provamos que o
+SyntaxMesh é **fiel ao TaskJuggler** e **pronto para produção**.
 
 ### Objetivos centrais
 

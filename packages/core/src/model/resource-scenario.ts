@@ -7,6 +7,7 @@ import { type PropertyLike, } from "./property-like.ts";
 import { type PropertyTreeNode, } from "./property-tree-node.ts";
 import { type AttributeBase, } from "../attributes/attribute-base.ts";
 import { Scoreboard, } from "../time/scoreboard.ts";
+import { IntervalList, } from "../time/interval-list.ts";
 import { ScoreboardInterval, } from "../time/scoreboard-interval.ts";
 import { Task, } from "./task.ts";
 import { Resource, } from "./resource.ts";
@@ -111,7 +112,6 @@ export class ResourceScenario extends ScenarioData {
   private lastBookedSlots: Map<Task, number> = new Map();
   private minslot: number | null = null;
   private maxslot: number | null = null;
-  private duties: Task[] = [];
 
   constructor(
     property: PropertyLike,
@@ -124,6 +124,30 @@ export class ResourceScenario extends ScenarioData {
 
   project(): ProjectLike {
     return (this.getProperty() as Resource).project as ProjectLike;
+  }
+
+  /**
+   * Tarefas do recurso (Ruby `@duties`).
+   *
+   * RUBY-COMPAT-FIX: no Ruby `@duties` **é** o valor do atributo `duties`
+   * (instanciado em `ResourceScenario#initialize`), não uma lista paralela.
+   * Aqui o acesso passa pelo mesmo armazenamento do atributo; do contrário o
+   * `finishScheduling` — que grava os ancestrais das tarefas no atributo —
+   * escreveria numa lista que `getEffectiveWork`/`getAllocatedSlots` não leem,
+   * e toda alocação com escopo de tarefa-pai (container) sairia como 0.
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/ResourceScenario.rb:finishScheduling
+   */
+  private get duties(): Task[] {
+    const stored = this.a("duties",) as Task[] | null;
+    if (stored !== null) return stored;
+    const created: Task[] = [];
+    (this.getProperty() as PropertyTreeNode).forceForScenario(
+      "duties",
+      created,
+      this.getScenarioIdx(),
+    );
+    return created;
   }
 
   override getProperty(): Resource {
@@ -302,7 +326,7 @@ export class ResourceScenario extends ScenarioData {
     }
 
     // Add the parent tasks of each task to the duties list.
-    const duties = (this.a("duties",) as Task[]) ?? [];
+    const duties = this.duties;
     for (const task of duties) {
       for (const pTask of task.ancestors(true,)) {
         if (!duties.includes(pTask as Task,)) {
@@ -310,7 +334,6 @@ export class ResourceScenario extends ScenarioData {
         }
       }
     }
-    this.setStoredValue("duties", duties,);
 
     // Add the assigned task to the parent(s) resource duties list.
     for (const pResource of property.parents()) {
@@ -675,6 +698,29 @@ export class ResourceScenario extends ScenarioData {
   }
 
   /**
+   * Intervalos do scoreboard com duração mínima `minDuration` que contêm
+   * apenas slots fora de serviço/leave (máscara `0x3E`).
+   *
+   * Só recursos folha têm tempo fora relevante: grupos caem nas horas globais.
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/ResourceScenario.rb#collectTimeOffIntervals
+   */
+  collectTimeOffIntervals(
+    iv: TimeInterval,
+    minDuration: number,
+  ): IntervalList<TimeInterval> {
+    if (!(this.getProperty() as PropertyTreeNode).leaf()) {
+      return new IntervalList<TimeInterval>();
+    }
+    if (this.scoreboard === null) this.initScoreboard();
+    return this.scoreboard!.collectIntervals(
+      iv,
+      minDuration,
+      (v,) => typeof v === "number" && (v & 0x3E) !== 0,
+    );
+  }
+
+  /**
    * Return the number of working days that are blocked by leaves.
    *
    * @see docs/taskjuggler/lib/taskjuggler/ResourceScenario.rb:getTimeOffDays
@@ -792,11 +838,12 @@ export class ResourceScenario extends ScenarioData {
       if (ivEndIdx < endIdx) endIdx = ivEndIdx;
     }
 
-    const sbStart = TjTime.fromDate(sb.startDate,);
-    const slotDuration = sb.resolution;
     const appendInterval = (booking: Booking, from: number, to: number,) => {
+      // Ruby (ResourceScenario.rb:705): os intervalos reconstruídos são
+      // `TimeInterval`s de datas — não `ScoreboardInterval` (que carrega
+      // índices). `Booking#to_tjp` e o scheduling esperam datas.
       booking.intervals.push(
-        new ScoreboardInterval(sbStart, slotDuration, from, to,),
+        new TimeInterval(sb.idxToDate(from,), sb.idxToDate(to,),),
       );
     };
 

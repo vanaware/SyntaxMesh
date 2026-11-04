@@ -93,18 +93,22 @@ export class PTNProxy implements AttributeContainer {
     return false;
   }
 
-  getIndicies(): number[] {
-    const indices: number[] = [];
-    let current: PropertyTreeNode | null = this._ptn;
+  /**
+   * `index` do nó real seguido dos `index` dos ancestrais adotados, da raiz
+   * para o nó (Ruby `PTNProxy#getIndicies`). O proxy delega `get("index")` ao
+   * nó real, como o `method_missing` do Ruby.
+   */
+  getIndicies(): Array<number | null> {
+    const indices: Array<number | null> = [];
+    const own = this.get("index",);
+    indices.push(typeof own === "number" ? own : null,);
+    let current = this.parent as PropertyTreeNode | null;
     while (current) {
-      const parent = current.parents()[0];
-      if (parent && parent.propertySet.knownAttribute("index",)) {
-        const index = parent.get("index",);
-        if (index !== null && index !== undefined && index !== 0) {
-          indices.unshift(index as number,);
-        }
-      }
-      current = current.parents()[0] as PropertyTreeNode | null;
+      const index = current.attributeDefinition("index",)
+        ? current.get("index",)
+        : null;
+      indices.unshift(typeof index === "number" ? index : null,);
+      current = (current.parents()[0] as PropertyTreeNode | undefined) ?? null;
     }
     return indices;
   }

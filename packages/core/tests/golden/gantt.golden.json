@@ -1,0 +1,3346 @@
+{
+  "cases": [
+    {
+      "file": "docs/Learning/mwe001/tutorial.tjp",
+      "tz": "UTC",
+      "error": null,
+      "chartErrors": [],
+      "charts": [
+        {
+          "report": "report1",
+          "column": 4,
+          "scale": "week",
+          "startDate": 1715907600,
+          "endDate": 1719536399,
+          "width": 120,
+          "height": 127,
+          "viewWidth": 450,
+          "scrollbar": false,
+          "header": {
+            "height": 39,
+            "nowLineX": 42,
+            "markdateLineX": null,
+            "gridLines": [
+              41,
+              127
+            ],
+            "cellStartDates": [
+              1715558400,
+              1716163200,
+              1716768000,
+              1717372800,
+              1717977600,
+              1718582400,
+              1719187200,
+              1719792000
+            ]
+          },
+          "lines": [
+            {
+              "y": 40,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "container",
+                  "x": 49,
+                  "xEnd": 70,
+                  "y": 40
+                }
+              ]
+            },
+            {
+              "y": 62,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "taskbar",
+                  "x": 49,
+                  "xEnd": 53,
+                  "y": 62
+                }
+              ]
+            },
+            {
+              "y": 84,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "taskbar",
+                  "x": 55,
+                  "xEnd": 61,
+                  "y": 84
+                }
+              ]
+            },
+            {
+              "y": 106,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "taskbar",
+                  "x": 69,
+                  "xEnd": 70,
+                  "y": 106
+                }
+              ]
+            }
+          ],
+          "depArrows": [
+            [
+              [
+                54,
+                72
+              ],
+              [
+                59,
+                72
+              ],
+              [
+                59,
+                80
+              ],
+              [
+                44,
+                80
+              ],
+              [
+                44,
+                94
+              ],
+              [
+                54,
+                94
+              ]
+            ],
+            [
+              [
+                62,
+                94
+              ],
+              [
+                67,
+                94
+              ],
+              [
+                67,
+                102
+              ],
+              [
+                58,
+                102
+              ],
+              [
+                58,
+                116
+              ],
+              [
+                68,
+                116
+              ]
+            ]
+          ],
+          "arrowHeads": [
+            [
+              54,
+              94
+            ],
+            [
+              68,
+              116
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "file": "docs/Learning/mwe002/tutorial.tjp",
+      "tz": "UTC",
+      "error": null,
+      "chartErrors": [],
+      "charts": [
+        {
+          "report": "report1",
+          "column": 3,
+          "scale": "week",
+          "startDate": 1719361800,
+          "endDate": 1722990599,
+          "width": 120,
+          "height": 303,
+          "viewWidth": 450,
+          "scrollbar": false,
+          "header": {
+            "height": 39,
+            "nowLineX": 54,
+            "markdateLineX": null,
+            "gridLines": [
+              13,
+              101,
+              190
+            ],
+            "cellStartDates": [
+              1719187200,
+              1719792000,
+              1720396800,
+              1721001600,
+              1721606400,
+              1722211200,
+              1722816000,
+              1723420800
+            ]
+          },
+          "lines": [
+            {
+              "y": 40,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "container",
+                  "x": 55,
+                  "xEnd": 64,
+                  "y": 40
+                }
+              ]
+            },
+            {
+              "y": 62,
+              "height": 21,
+              "category": "resourcecell2",
+              "content": [
+                {
+                  "kind": "loadstack",
+                  "x": 56,
+                  "y": 62,
+                  "w": 8,
+                  "yLevels": [
+                    17,
+                    0,
+                    0
+                  ],
+                  "drawFrame": false
+                }
+              ]
+            },
+            {
+              "y": 84,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "container",
+                  "x": 55,
+                  "xEnd": 61,
+                  "y": 84
+                }
+              ]
+            },
+            {
+              "y": 106,
+              "height": 21,
+              "category": "resourcecell2",
+              "content": [
+                {
+                  "kind": "loadstack",
+                  "x": 56,
+                  "y": 106,
+                  "w": 5,
+                  "yLevels": [
+                    17,
+                    0,
+                    0
+                  ],
+                  "drawFrame": false
+                }
+              ]
+            },
+            {
+              "y": 128,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "taskbar",
+                  "x": 55,
+                  "xEnd": 56,
+                  "y": 128
+                }
+              ]
+            },
+            {
+              "y": 150,
+              "height": 21,
+              "category": "resourcecell2",
+              "content": [
+                {
+                  "kind": "loadstack",
+                  "x": 56,
+                  "y": 150,
+                  "w": 1,
+                  "yLevels": [
+                    17,
+                    0,
+                    0
+                  ],
+                  "drawFrame": false
+                }
+              ]
+            },
+            {
+              "y": 172,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "taskbar",
+                  "x": 58,
+                  "xEnd": 61,
+                  "y": 172
+                }
+              ]
+            },
+            {
+              "y": 194,
+              "height": 21,
+              "category": "resourcecell2",
+              "content": [
+                {
+                  "kind": "loadstack",
+                  "x": 59,
+                  "y": 194,
+                  "w": 2,
+                  "yLevels": [
+                    17,
+                    0,
+                    0
+                  ],
+                  "drawFrame": false
+                }
+              ]
+            },
+            {
+              "y": 216,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "container",
+                  "x": 63,
+                  "xEnd": 64,
+                  "y": 216
+                }
+              ]
+            },
+            {
+              "y": 238,
+              "height": 21,
+              "category": "resourcecell2",
+              "content": [
+                {
+                  "kind": "loadstack",
+                  "x": 64,
+                  "y": 238,
+                  "w": 1,
+                  "yLevels": [
+                    17,
+                    0,
+                    0
+                  ],
+                  "drawFrame": false
+                }
+              ]
+            },
+            {
+              "y": 260,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "taskbar",
+                  "x": 63,
+                  "xEnd": 64,
+                  "y": 260
+                }
+              ]
+            },
+            {
+              "y": 282,
+              "height": 21,
+              "category": "resourcecell2",
+              "content": [
+                {
+                  "kind": "loadstack",
+                  "x": 64,
+                  "y": 282,
+                  "w": 1,
+                  "yLevels": [
+                    17,
+                    0,
+                    0
+                  ],
+                  "drawFrame": false
+                }
+              ]
+            }
+          ],
+          "depArrows": [
+            [
+              [
+                66,
+                94
+              ],
+              [
+                71,
+                94
+              ],
+              [
+                71,
+                102
+              ],
+              [
+                45,
+                102
+              ],
+              [
+                45,
+                226
+              ],
+              [
+                58,
+                226
+              ]
+            ],
+            [
+              [
+                57,
+                138
+              ],
+              [
+                62,
+                138
+              ],
+              [
+                62,
+                146
+              ],
+              [
+                42,
+                146
+              ],
+              [
+                42,
+                182
+              ],
+              [
+                57,
+                182
+              ]
+            ]
+          ],
+          "arrowHeads": [
+            [
+              58,
+              226
+            ],
+            [
+              57,
+              182
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "file": "docs/Learning/mwe003/tutorial.tjp",
+      "tz": "UTC",
+      "error": null,
+      "chartErrors": [],
+      "charts": [
+        {
+          "report": "report1",
+          "column": 5,
+          "scale": "week",
+          "startDate": 1718406000,
+          "endDate": 1722034799,
+          "width": 120,
+          "height": 193,
+          "viewWidth": 450,
+          "scrollbar": false,
+          "header": {
+            "height": 39,
+            "nowLineX": 45,
+            "markdateLineX": null,
+            "gridLines": [
+              44,
+              133
+            ],
+            "cellStartDates": [
+              1717977600,
+              1718582400,
+              1719187200,
+              1719792000,
+              1720396800,
+              1721001600,
+              1721606400,
+              1722211200
+            ]
+          },
+          "lines": [
+            {
+              "y": 40,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "container",
+                  "x": 46,
+                  "xEnd": 73,
+                  "y": 40
+                }
+              ]
+            },
+            {
+              "y": 62,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "container",
+                  "x": 46,
+                  "xEnd": 59,
+                  "y": 62
+                }
+              ]
+            },
+            {
+              "y": 84,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "taskbar",
+                  "x": 46,
+                  "xEnd": 53,
+                  "y": 84
+                }
+              ]
+            },
+            {
+              "y": 106,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "taskbar",
+                  "x": 55,
+                  "xEnd": 59,
+                  "y": 106
+                }
+              ]
+            },
+            {
+              "y": 128,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 59,
+                  "y": 128
+                }
+              ]
+            },
+            {
+              "y": 150,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "container",
+                  "x": 66,
+                  "xEnd": 73,
+                  "y": 150
+                }
+              ]
+            },
+            {
+              "y": 172,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "taskbar",
+                  "x": 66,
+                  "xEnd": 73,
+                  "y": 172
+                }
+              ]
+            }
+          ],
+          "depArrows": [
+            [
+              [
+                64,
+                72
+              ],
+              [
+                69,
+                72
+              ],
+              [
+                69,
+                80
+              ],
+              [
+                36,
+                80
+              ],
+              [
+                36,
+                138
+              ],
+              [
+                53,
+                138
+              ]
+            ],
+            [
+              [
+                54,
+                94
+              ],
+              [
+                59,
+                94
+              ],
+              [
+                59,
+                102
+              ],
+              [
+                43,
+                102
+              ],
+              [
+                43,
+                116
+              ],
+              [
+                54,
+                116
+              ]
+            ],
+            [
+              [
+                65,
+                138
+              ],
+              [
+                70,
+                138
+              ],
+              [
+                70,
+                147
+              ],
+              [
+                51,
+                147
+              ],
+              [
+                51,
+                160
+              ],
+              [
+                61,
+                160
+              ]
+            ]
+          ],
+          "arrowHeads": [
+            [
+              53,
+              138
+            ],
+            [
+              54,
+              116
+            ],
+            [
+              61,
+              160
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "file": "docs/Learning/mwe004/tutorial.tjp",
+      "tz": "UTC",
+      "error": null,
+      "chartErrors": [],
+      "charts": [
+        {
+          "report": "overview",
+          "column": 7,
+          "scale": "week",
+          "startDate": 1721865600,
+          "endDate": 1729695600,
+          "width": 260,
+          "height": 215,
+          "viewWidth": 450,
+          "scrollbar": false,
+          "header": {
+            "height": 39,
+            "nowLineX": 148,
+            "markdateLineX": null,
+            "gridLines": [
+              18,
+              107,
+              193,
+              282
+            ],
+            "cellStartDates": [
+              1721599200,
+              1722204000,
+              1722808800,
+              1723413600,
+              1724018400,
+              1724623200,
+              1725228000,
+              1725832800,
+              1726437600,
+              1727042400,
+              1727647200,
+              1728252000,
+              1728856800,
+              1729461600,
+              1730070000
+            ]
+          },
+          "lines": [
+            {
+              "y": 40,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "container",
+                  "x": 20,
+                  "xEnd": 239,
+                  "y": 40
+                }
+              ]
+            },
+            {
+              "y": 62,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "container",
+                  "x": 20,
+                  "xEnd": 239,
+                  "y": 62
+                }
+              ]
+            },
+            {
+              "y": 84,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 20,
+                  "y": 84
+                }
+              ]
+            },
+            {
+              "y": 106,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 239,
+                  "y": 106
+                }
+              ]
+            },
+            {
+              "y": 128,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "taskbar",
+                  "x": 20,
+                  "xEnd": 59,
+                  "y": 128
+                }
+              ]
+            },
+            {
+              "y": 150,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "container",
+                  "x": 61,
+                  "xEnd": 239,
+                  "y": 150
+                }
+              ]
+            },
+            {
+              "y": 172,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "taskbar",
+                  "x": 61,
+                  "xEnd": 99,
+                  "y": 172
+                }
+              ]
+            },
+            {
+              "y": 194,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "taskbar",
+                  "x": 101,
+                  "xEnd": 239,
+                  "y": 194
+                }
+              ]
+            }
+          ],
+          "depArrows": [
+            [
+              [
+                60,
+                138
+              ],
+              [
+                65,
+                138
+              ],
+              [
+                65,
+                146
+              ],
+              [
+                46,
+                146
+              ],
+              [
+                46,
+                160
+              ],
+              [
+                56,
+                160
+              ]
+            ],
+            [
+              [
+                100,
+                182
+              ],
+              [
+                105,
+                182
+              ],
+              [
+                105,
+                190
+              ],
+              [
+                90,
+                190
+              ],
+              [
+                90,
+                204
+              ],
+              [
+                100,
+                204
+              ]
+            ],
+            [
+              [
+                240,
+                204
+              ],
+              [
+                245,
+                204
+              ],
+              [
+                245,
+                196
+              ],
+              [
+                223,
+                196
+              ],
+              [
+                223,
+                116
+              ],
+              [
+                233,
+                116
+              ]
+            ]
+          ],
+          "arrowHeads": [
+            [
+              56,
+              160
+            ],
+            [
+              100,
+              204
+            ],
+            [
+              233,
+              116
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "file": "docs/Learning/mwe006/tutorial.tjp",
+      "tz": "UTC",
+      "error": null,
+      "chartErrors": [],
+      "charts": [
+        {
+          "report": "report1",
+          "column": 9,
+          "scale": "week",
+          "startDate": 1726923600,
+          "endDate": 1730552399,
+          "width": 120,
+          "height": 105,
+          "viewWidth": 450,
+          "scrollbar": false,
+          "header": {
+            "height": 39,
+            "nowLineX": 67,
+            "markdateLineX": null,
+            "gridLines": [
+              26,
+              114,
+              200
+            ],
+            "cellStartDates": [
+              1726444800,
+              1727049600,
+              1727654400,
+              1728259200,
+              1728864000,
+              1729468800,
+              1730073600,
+              1730678400
+            ]
+          },
+          "lines": [
+            {
+              "y": 40,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "container",
+                  "x": 28,
+                  "xEnd": 91,
+                  "y": 40
+                }
+              ]
+            },
+            {
+              "y": 62,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "taskbar",
+                  "x": 28,
+                  "xEnd": 46,
+                  "y": 62
+                }
+              ]
+            },
+            {
+              "y": 84,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "taskbar",
+                  "x": 48,
+                  "xEnd": 91,
+                  "y": 84
+                }
+              ]
+            }
+          ],
+          "depArrows": [
+            [
+              [
+                47,
+                72
+              ],
+              [
+                52,
+                72
+              ],
+              [
+                52,
+                80
+              ],
+              [
+                37,
+                80
+              ],
+              [
+                37,
+                94
+              ],
+              [
+                47,
+                94
+              ]
+            ]
+          ],
+          "arrowHeads": [
+            [
+              47,
+              94
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "file": "docs/Learning/mwe008/tutorial.tjp",
+      "tz": "UTC",
+      "error": null,
+      "chartErrors": [],
+      "charts": [
+        {
+          "report": "report1",
+          "column": 5,
+          "scale": "week",
+          "startDate": 1732107600,
+          "endDate": 1735736399,
+          "width": 120,
+          "height": 105,
+          "viewWidth": 450,
+          "scrollbar": false,
+          "header": {
+            "height": 39,
+            "nowLineX": 29,
+            "markdateLineX": null,
+            "gridLines": [
+              28,
+              117,
+              206
+            ],
+            "cellStartDates": [
+              1731888000,
+              1732492800,
+              1733097600,
+              1733702400,
+              1734307200,
+              1734912000,
+              1735516800,
+              1736121600
+            ]
+          },
+          "lines": [
+            {
+              "y": 40,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "container",
+                  "x": 33,
+                  "xEnd": 86,
+                  "y": 40
+                }
+              ]
+            },
+            {
+              "y": 62,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "taskbar",
+                  "x": 33,
+                  "xEnd": 46,
+                  "y": 62
+                }
+              ]
+            },
+            {
+              "y": 84,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "taskbar",
+                  "x": 53,
+                  "xEnd": 86,
+                  "y": 84
+                }
+              ]
+            }
+          ],
+          "depArrows": [
+            [
+              [
+                47,
+                72
+              ],
+              [
+                52,
+                72
+              ],
+              [
+                52,
+                80
+              ],
+              [
+                42,
+                80
+              ],
+              [
+                42,
+                94
+              ],
+              [
+                52,
+                94
+              ]
+            ]
+          ],
+          "arrowHeads": [
+            [
+              52,
+              94
+            ]
+          ]
+        },
+        {
+          "report": "report2",
+          "column": 5,
+          "scale": "week",
+          "startDate": 1732323600,
+          "endDate": 1735952399,
+          "width": 120,
+          "height": 105,
+          "viewWidth": 450,
+          "scrollbar": false,
+          "header": {
+            "height": 39,
+            "nowLineX": 22,
+            "markdateLineX": null,
+            "gridLines": [
+              21,
+              110,
+              198
+            ],
+            "cellStartDates": [
+              1731888000,
+              1732492800,
+              1733097600,
+              1733702400,
+              1734307200,
+              1734912000,
+              1735516800,
+              1736121600
+            ]
+          },
+          "lines": [
+            {
+              "y": 40,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "container",
+                  "x": 26,
+                  "xEnd": 93,
+                  "y": 40
+                }
+              ]
+            },
+            {
+              "y": 62,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "taskbar",
+                  "x": 26,
+                  "xEnd": 53,
+                  "y": 62
+                }
+              ]
+            },
+            {
+              "y": 84,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "taskbar",
+                  "x": 55,
+                  "xEnd": 93,
+                  "y": 84
+                }
+              ]
+            }
+          ],
+          "depArrows": [
+            [
+              [
+                54,
+                72
+              ],
+              [
+                59,
+                72
+              ],
+              [
+                59,
+                80
+              ],
+              [
+                44,
+                80
+              ],
+              [
+                44,
+                94
+              ],
+              [
+                54,
+                94
+              ]
+            ]
+          ],
+          "arrowHeads": [
+            [
+              54,
+              94
+            ]
+          ]
+        },
+        {
+          "report": "report3",
+          "column": 5,
+          "scale": "week",
+          "startDate": 1732323600,
+          "endDate": 1735952399,
+          "width": 120,
+          "height": 171,
+          "viewWidth": 450,
+          "scrollbar": false,
+          "header": {
+            "height": 39,
+            "nowLineX": 22,
+            "markdateLineX": null,
+            "gridLines": [
+              21,
+              110,
+              198
+            ],
+            "cellStartDates": [
+              1731888000,
+              1732492800,
+              1733097600,
+              1733702400,
+              1734307200,
+              1734912000,
+              1735516800,
+              1736121600
+            ]
+          },
+          "lines": [
+            {
+              "y": 40,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "container",
+                  "x": 26,
+                  "xEnd": 79,
+                  "y": 40
+                }
+              ]
+            },
+            {
+              "y": 62,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "container",
+                  "x": 26,
+                  "xEnd": 93,
+                  "y": 62
+                }
+              ]
+            },
+            {
+              "y": 84,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "taskbar",
+                  "x": 26,
+                  "xEnd": 39,
+                  "y": 84
+                }
+              ]
+            },
+            {
+              "y": 106,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "taskbar",
+                  "x": 26,
+                  "xEnd": 53,
+                  "y": 106
+                }
+              ]
+            },
+            {
+              "y": 128,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "taskbar",
+                  "x": 46,
+                  "xEnd": 79,
+                  "y": 128
+                }
+              ]
+            },
+            {
+              "y": 150,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "taskbar",
+                  "x": 55,
+                  "xEnd": 93,
+                  "y": 150
+                }
+              ]
+            }
+          ],
+          "depArrows": [
+            [
+              [
+                40,
+                94
+              ],
+              [
+                45,
+                94
+              ],
+              [
+                45,
+                102
+              ],
+              [
+                35,
+                102
+              ],
+              [
+                35,
+                138
+              ],
+              [
+                45,
+                138
+              ]
+            ],
+            [
+              [
+                54,
+                116
+              ],
+              [
+                59,
+                116
+              ],
+              [
+                59,
+                124
+              ],
+              [
+                32,
+                124
+              ],
+              [
+                32,
+                160
+              ],
+              [
+                54,
+                160
+              ]
+            ]
+          ],
+          "arrowHeads": [
+            [
+              45,
+              138
+            ],
+            [
+              54,
+              160
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "file": "docs/Learning/mwe009/tutorial.tjp",
+      "tz": "UTC",
+      "error": null,
+      "chartErrors": [],
+      "charts": [
+        {
+          "report": "report1",
+          "column": 5,
+          "scale": "week",
+          "startDate": 1731632400,
+          "endDate": 1735261199,
+          "width": 120,
+          "height": 193,
+          "viewWidth": 450,
+          "scrollbar": false,
+          "header": {
+            "height": 39,
+            "nowLineX": 45,
+            "markdateLineX": null,
+            "gridLines": [
+              44,
+              133
+            ],
+            "cellStartDates": [
+              1731283200,
+              1731888000,
+              1732492800,
+              1733097600,
+              1733702400,
+              1734307200,
+              1734912000,
+              1735516800
+            ]
+          },
+          "lines": [
+            {
+              "y": 40,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "container",
+                  "x": 49,
+                  "xEnd": 70,
+                  "y": 40
+                }
+              ]
+            },
+            {
+              "y": 62,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "container",
+                  "x": 49,
+                  "xEnd": 58,
+                  "y": 62
+                }
+              ]
+            },
+            {
+              "y": 84,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "taskbar",
+                  "x": 49,
+                  "xEnd": 55,
+                  "y": 84
+                }
+              ]
+            },
+            {
+              "y": 106,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "taskbar",
+                  "x": 55,
+                  "xEnd": 58,
+                  "y": 106
+                }
+              ]
+            },
+            {
+              "y": 128,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "container",
+                  "x": 58,
+                  "xEnd": 70,
+                  "y": 128
+                }
+              ]
+            },
+            {
+              "y": 150,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "taskbar",
+                  "x": 58,
+                  "xEnd": 61,
+                  "y": 150
+                }
+              ]
+            },
+            {
+              "y": 172,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "taskbar",
+                  "x": 69,
+                  "xEnd": 70,
+                  "y": 172
+                }
+              ]
+            }
+          ],
+          "depArrows": [
+            [
+              [
+                63,
+                72
+              ],
+              [
+                68,
+                72
+              ],
+              [
+                68,
+                80
+              ],
+              [
+                39,
+                80
+              ],
+              [
+                39,
+                138
+              ],
+              [
+                53,
+                138
+              ]
+            ],
+            [
+              [
+                56,
+                94
+              ],
+              [
+                61,
+                94
+              ],
+              [
+                61,
+                102
+              ],
+              [
+                43,
+                102
+              ],
+              [
+                43,
+                116
+              ],
+              [
+                54,
+                116
+              ]
+            ],
+            [
+              [
+                62,
+                160
+              ],
+              [
+                67,
+                160
+              ],
+              [
+                67,
+                168
+              ],
+              [
+                55,
+                168
+              ],
+              [
+                55,
+                182
+              ],
+              [
+                68,
+                182
+              ]
+            ]
+          ],
+          "arrowHeads": [
+            [
+              53,
+              138
+            ],
+            [
+              54,
+              116
+            ],
+            [
+              68,
+              182
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/HTML-Reports/Calendars.tjp",
+      "tz": "UTC",
+      "error": null,
+      "chartErrors": [],
+      "charts": [
+        {
+          "report": "report1",
+          "column": 2,
+          "scale": "week",
+          "startDate": 1344988800,
+          "endDate": 1348617599,
+          "width": 120,
+          "height": 61,
+          "viewWidth": 450,
+          "scrollbar": false,
+          "header": {
+            "height": 39,
+            "nowLineX": 14839,
+            "markdateLineX": null,
+            "gridLines": [
+              47,
+              133
+            ],
+            "cellStartDates": [
+              1344816000,
+              1345420800,
+              1346025600,
+              1346630400,
+              1347235200,
+              1347840000,
+              1348444800,
+              1349049600
+            ]
+          },
+          "lines": [
+            {
+              "y": 40,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 59,
+                  "y": 40
+                }
+              ]
+            }
+          ],
+          "depArrows": [],
+          "arrowHeads": []
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/HTML-Reports/Sorting.tjp",
+      "tz": "UTC",
+      "error": null,
+      "chartErrors": [],
+      "charts": [
+        {
+          "report": "report1",
+          "column": 1,
+          "scale": "week",
+          "startDate": 1257292800,
+          "endDate": 1262736000,
+          "width": 180,
+          "height": 523,
+          "viewWidth": 450,
+          "scrollbar": false,
+          "header": {
+            "height": 39,
+            "nowLineX": 17739,
+            "markdateLineX": null,
+            "gridLines": [
+              76,
+              164,
+              253
+            ],
+            "cellStartDates": [
+              1257120000,
+              1257724800,
+              1258329600,
+              1258934400,
+              1259539200,
+              1260144000,
+              1260748800,
+              1261353600,
+              1261958400,
+              1262563200,
+              1263168000
+            ]
+          },
+          "lines": [
+            {
+              "y": 40,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "container",
+                  "x": 20,
+                  "xEnd": 160,
+                  "y": 40
+                }
+              ]
+            },
+            {
+              "y": 62,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "container",
+                  "x": 20,
+                  "xEnd": 45,
+                  "y": 62
+                }
+              ]
+            },
+            {
+              "y": 84,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 20,
+                  "y": 84
+                }
+              ]
+            },
+            {
+              "y": 106,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 28,
+                  "y": 106
+                }
+              ]
+            },
+            {
+              "y": 128,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 45,
+                  "y": 128
+                }
+              ]
+            },
+            {
+              "y": 150,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "container",
+                  "x": 20,
+                  "xEnd": 160,
+                  "y": 150
+                }
+              ]
+            },
+            {
+              "y": 172,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 20,
+                  "y": 172
+                }
+              ]
+            },
+            {
+              "y": 194,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "container",
+                  "x": 45,
+                  "xEnd": 102,
+                  "y": 194
+                }
+              ]
+            },
+            {
+              "y": 216,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 45,
+                  "y": 216
+                }
+              ]
+            },
+            {
+              "y": 238,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 74,
+                  "y": 238
+                }
+              ]
+            },
+            {
+              "y": 260,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 102,
+                  "y": 260
+                }
+              ]
+            },
+            {
+              "y": 282,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 45,
+                  "y": 282
+                }
+              ]
+            },
+            {
+              "y": 304,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 74,
+                  "y": 304
+                }
+              ]
+            },
+            {
+              "y": 326,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "container",
+                  "x": 77,
+                  "xEnd": 77,
+                  "y": 326
+                }
+              ]
+            },
+            {
+              "y": 348,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 77,
+                  "y": 348
+                }
+              ]
+            },
+            {
+              "y": 370,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "container",
+                  "x": 102,
+                  "xEnd": 160,
+                  "y": 370
+                }
+              ]
+            },
+            {
+              "y": 392,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 102,
+                  "y": 392
+                }
+              ]
+            },
+            {
+              "y": 414,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 131,
+                  "y": 414
+                }
+              ]
+            },
+            {
+              "y": 436,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 160,
+                  "y": 436
+                }
+              ]
+            },
+            {
+              "y": 458,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "container",
+                  "x": 45,
+                  "xEnd": 45,
+                  "y": 458
+                }
+              ]
+            },
+            {
+              "y": 480,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 45,
+                  "y": 480
+                }
+              ]
+            },
+            {
+              "y": 502,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 88,
+                  "y": 502
+                }
+              ]
+            }
+          ],
+          "depArrows": [],
+          "arrowHeads": []
+        }
+      ]
+    },
+    {
+      "file": "docs/taskjuggler/test/TestSuite/HTML-Reports/depArrows.tjp",
+      "tz": "UTC",
+      "error": null,
+      "chartErrors": [],
+      "charts": [
+        {
+          "report": "report1",
+          "column": 1,
+          "scale": "day",
+          "startDate": 1254700800,
+          "endDate": 1256255999,
+          "width": 360,
+          "height": 809,
+          "viewWidth": 450,
+          "scrollbar": false,
+          "header": {
+            "height": 39,
+            "nowLineX": 124779,
+            "markdateLineX": null,
+            "gridLines": [
+              539
+            ],
+            "cellStartDates": [
+              1254700800,
+              1254787200,
+              1254873600,
+              1254960000,
+              1255046400,
+              1255132800,
+              1255219200,
+              1255305600,
+              1255392000,
+              1255478400,
+              1255564800,
+              1255651200,
+              1255737600,
+              1255824000,
+              1255910400,
+              1255996800,
+              1256083200,
+              1256169600,
+              1256256000
+            ]
+          },
+          "lines": [
+            {
+              "y": 40,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 149,
+                  "y": 40
+                }
+              ]
+            },
+            {
+              "y": 62,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 159,
+                  "y": 62
+                }
+              ]
+            },
+            {
+              "y": 84,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 180,
+                  "y": 84
+                }
+              ]
+            },
+            {
+              "y": 106,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "taskbar",
+                  "x": 99,
+                  "xEnd": 139,
+                  "y": 106
+                }
+              ]
+            },
+            {
+              "y": 128,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 180,
+                  "y": 128
+                }
+              ]
+            },
+            {
+              "y": 150,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 159,
+                  "y": 150
+                }
+              ]
+            },
+            {
+              "y": 172,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 149,
+                  "y": 172
+                }
+              ]
+            },
+            {
+              "y": 194,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 109,
+                  "y": 194
+                }
+              ]
+            },
+            {
+              "y": 216,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 119,
+                  "y": 216
+                }
+              ]
+            },
+            {
+              "y": 238,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 139,
+                  "y": 238
+                }
+              ]
+            },
+            {
+              "y": 260,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "taskbar",
+                  "x": 99,
+                  "xEnd": 159,
+                  "y": 260
+                }
+              ]
+            },
+            {
+              "y": 282,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 139,
+                  "y": 282
+                }
+              ]
+            },
+            {
+              "y": 304,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 119,
+                  "y": 304
+                }
+              ]
+            },
+            {
+              "y": 326,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 109,
+                  "y": 326
+                }
+              ]
+            },
+            {
+              "y": 348,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 169,
+                  "y": 348
+                }
+              ]
+            },
+            {
+              "y": 370,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 180,
+                  "y": 370
+                }
+              ]
+            },
+            {
+              "y": 392,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 200,
+                  "y": 392
+                }
+              ]
+            },
+            {
+              "y": 414,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "taskbar",
+                  "x": 99,
+                  "xEnd": 159,
+                  "y": 414
+                }
+              ]
+            },
+            {
+              "y": 436,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 220,
+                  "y": 436
+                }
+              ]
+            },
+            {
+              "y": 458,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 240,
+                  "y": 458
+                }
+              ]
+            },
+            {
+              "y": 480,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 260,
+                  "y": 480
+                }
+              ]
+            },
+            {
+              "y": 502,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "taskbar",
+                  "x": 99,
+                  "xEnd": 119,
+                  "y": 502
+                }
+              ]
+            },
+            {
+              "y": 524,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 129,
+                  "y": 524
+                }
+              ]
+            },
+            {
+              "y": 546,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 139,
+                  "y": 546
+                }
+              ]
+            },
+            {
+              "y": 568,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 159,
+                  "y": 568
+                }
+              ]
+            },
+            {
+              "y": 590,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 180,
+                  "y": 590
+                }
+              ]
+            },
+            {
+              "y": 612,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 200,
+                  "y": 612
+                }
+              ]
+            },
+            {
+              "y": 634,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 220,
+                  "y": 634
+                }
+              ]
+            },
+            {
+              "y": 656,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 139,
+                  "y": 656
+                }
+              ]
+            },
+            {
+              "y": 678,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 139,
+                  "y": 678
+                }
+              ]
+            },
+            {
+              "y": 700,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 139,
+                  "y": 700
+                }
+              ]
+            },
+            {
+              "y": 722,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "taskbar",
+                  "x": 99,
+                  "xEnd": 119,
+                  "y": 722
+                }
+              ]
+            },
+            {
+              "y": 744,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 139,
+                  "y": 744
+                }
+              ]
+            },
+            {
+              "y": 766,
+              "height": 21,
+              "category": "taskcell2",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 139,
+                  "y": 766
+                }
+              ]
+            },
+            {
+              "y": 788,
+              "height": 21,
+              "category": "taskcell1",
+              "content": [
+                {
+                  "kind": "milestone",
+                  "x": 139,
+                  "y": 788
+                }
+              ]
+            }
+          ],
+          "depArrows": [
+            [
+              [
+                140,
+                116
+              ],
+              [
+                145,
+                116
+              ],
+              [
+                145,
+                108
+              ],
+              [
+                133,
+                108
+              ],
+              [
+                133,
+                50
+              ],
+              [
+                143,
+                50
+              ]
+            ],
+            [
+              [
+                140,
+                116
+              ],
+              [
+                145,
+                116
+              ],
+              [
+                145,
+                124
+              ],
+              [
+                133,
+                124
+              ],
+              [
+                133,
+                182
+              ],
+              [
+                143,
+                182
+              ]
+            ],
+            [
+              [
+                140,
+                116
+              ],
+              [
+                148,
+                116
+              ],
+              [
+                148,
+                105
+              ],
+              [
+                143,
+                105
+              ],
+              [
+                143,
+                72
+              ],
+              [
+                153,
+                72
+              ]
+            ],
+            [
+              [
+                140,
+                116
+              ],
+              [
+                148,
+                116
+              ],
+              [
+                148,
+                127
+              ],
+              [
+                143,
+                127
+              ],
+              [
+                143,
+                160
+              ],
+              [
+                153,
+                160
+              ]
+            ],
+            [
+              [
+                140,
+                116
+              ],
+              [
+                151,
+                116
+              ],
+              [
+                151,
+                94
+              ],
+              [
+                174,
+                94
+              ]
+            ],
+            [
+              [
+                140,
+                116
+              ],
+              [
+                151,
+                116
+              ],
+              [
+                151,
+                138
+              ],
+              [
+                174,
+                138
+              ]
+            ],
+            [
+              [
+                100,
+                270
+              ],
+              [
+                105,
+                270
+              ],
+              [
+                105,
+                278
+              ],
+              [
+                93,
+                278
+              ],
+              [
+                93,
+                336
+              ],
+              [
+                103,
+                336
+              ]
+            ],
+            [
+              [
+                100,
+                270
+              ],
+              [
+                105,
+                270
+              ],
+              [
+                105,
+                262
+              ],
+              [
+                93,
+                262
+              ],
+              [
+                93,
+                204
+              ],
+              [
+                103,
+                204
+              ]
+            ],
+            [
+              [
+                100,
+                270
+              ],
+              [
+                108,
+                270
+              ],
+              [
+                108,
+                281
+              ],
+              [
+                103,
+                281
+              ],
+              [
+                103,
+                314
+              ],
+              [
+                113,
+                314
+              ]
+            ],
+            [
+              [
+                100,
+                270
+              ],
+              [
+                108,
+                270
+              ],
+              [
+                108,
+                259
+              ],
+              [
+                103,
+                259
+              ],
+              [
+                103,
+                226
+              ],
+              [
+                113,
+                226
+              ]
+            ],
+            [
+              [
+                100,
+                270
+              ],
+              [
+                111,
+                270
+              ],
+              [
+                111,
+                248
+              ],
+              [
+                133,
+                248
+              ]
+            ],
+            [
+              [
+                100,
+                270
+              ],
+              [
+                111,
+                270
+              ],
+              [
+                111,
+                292
+              ],
+              [
+                133,
+                292
+              ]
+            ],
+            [
+              [
+                160,
+                424
+              ],
+              [
+                165,
+                424
+              ],
+              [
+                165,
+                416
+              ],
+              [
+                153,
+                416
+              ],
+              [
+                153,
+                358
+              ],
+              [
+                163,
+                358
+              ]
+            ],
+            [
+              [
+                160,
+                424
+              ],
+              [
+                168,
+                424
+              ],
+              [
+                168,
+                413
+              ],
+              [
+                164,
+                413
+              ],
+              [
+                164,
+                380
+              ],
+              [
+                174,
+                380
+              ]
+            ],
+            [
+              [
+                160,
+                424
+              ],
+              [
+                171,
+                424
+              ],
+              [
+                171,
+                402
+              ],
+              [
+                194,
+                402
+              ]
+            ],
+            [
+              [
+                160,
+                424
+              ],
+              [
+                165,
+                424
+              ],
+              [
+                165,
+                490
+              ],
+              [
+                254,
+                490
+              ]
+            ],
+            [
+              [
+                160,
+                424
+              ],
+              [
+                168,
+                424
+              ],
+              [
+                168,
+                468
+              ],
+              [
+                234,
+                468
+              ]
+            ],
+            [
+              [
+                160,
+                424
+              ],
+              [
+                171,
+                424
+              ],
+              [
+                171,
+                446
+              ],
+              [
+                214,
+                446
+              ]
+            ],
+            [
+              [
+                120,
+                512
+              ],
+              [
+                125,
+                512
+              ],
+              [
+                125,
+                520
+              ],
+              [
+                113,
+                520
+              ],
+              [
+                113,
+                534
+              ],
+              [
+                123,
+                534
+              ]
+            ],
+            [
+              [
+                120,
+                512
+              ],
+              [
+                128,
+                512
+              ],
+              [
+                128,
+                523
+              ],
+              [
+                110,
+                523
+              ],
+              [
+                110,
+                556
+              ],
+              [
+                133,
+                556
+              ]
+            ],
+            [
+              [
+                120,
+                512
+              ],
+              [
+                138,
+                512
+              ],
+              [
+                138,
+                543
+              ],
+              [
+                123,
+                543
+              ],
+              [
+                123,
+                578
+              ],
+              [
+                153,
+                578
+              ]
+            ],
+            [
+              [
+                120,
+                512
+              ],
+              [
+                141,
+                512
+              ],
+              [
+                141,
+                546
+              ],
+              [
+                120,
+                546
+              ],
+              [
+                120,
+                600
+              ],
+              [
+                174,
+                600
+              ]
+            ],
+            [
+              [
+                120,
+                512
+              ],
+              [
+                148,
+                512
+              ],
+              [
+                148,
+                565
+              ],
+              [
+                143,
+                565
+              ],
+              [
+                143,
+                622
+              ],
+              [
+                194,
+                622
+              ]
+            ],
+            [
+              [
+                120,
+                512
+              ],
+              [
+                151,
+                512
+              ],
+              [
+                151,
+                568
+              ],
+              [
+                140,
+                568
+              ],
+              [
+                140,
+                644
+              ],
+              [
+                214,
+                644
+              ]
+            ],
+            [
+              [
+                120,
+                732
+              ],
+              [
+                125,
+                732
+              ],
+              [
+                125,
+                724
+              ],
+              [
+                123,
+                724
+              ],
+              [
+                123,
+                710
+              ],
+              [
+                133,
+                710
+              ]
+            ],
+            [
+              [
+                120,
+                732
+              ],
+              [
+                125,
+                732
+              ],
+              [
+                125,
+                740
+              ],
+              [
+                123,
+                740
+              ],
+              [
+                123,
+                754
+              ],
+              [
+                133,
+                754
+              ]
+            ],
+            [
+              [
+                120,
+                732
+              ],
+              [
+                128,
+                732
+              ],
+              [
+                128,
+                721
+              ],
+              [
+                120,
+                721
+              ],
+              [
+                120,
+                666
+              ],
+              [
+                133,
+                666
+              ]
+            ],
+            [
+              [
+                120,
+                732
+              ],
+              [
+                128,
+                732
+              ],
+              [
+                128,
+                743
+              ],
+              [
+                120,
+                743
+              ],
+              [
+                120,
+                798
+              ],
+              [
+                133,
+                798
+              ]
+            ],
+            [
+              [
+                120,
+                732
+              ],
+              [
+                148,
+                732
+              ],
+              [
+                148,
+                701
+              ],
+              [
+                123,
+                701
+              ],
+              [
+                123,
+                688
+              ],
+              [
+                133,
+                688
+              ]
+            ],
+            [
+              [
+                120,
+                732
+              ],
+              [
+                148,
+                732
+              ],
+              [
+                148,
+                763
+              ],
+              [
+                123,
+                763
+              ],
+              [
+                123,
+                776
+              ],
+              [
+                133,
+                776
+              ]
+            ]
+          ],
+          "arrowHeads": [
+            [
+              143,
+              50
+            ],
+            [
+              143,
+              182
+            ],
+            [
+              153,
+              72
+            ],
+            [
+              153,
+              160
+            ],
+            [
+              174,
+              94
+            ],
+            [
+              174,
+              138
+            ],
+            [
+              103,
+              336
+            ],
+            [
+              103,
+              204
+            ],
+            [
+              113,
+              314
+            ],
+            [
+              113,
+              226
+            ],
+            [
+              133,
+              248
+            ],
+            [
+              133,
+              292
+            ],
+            [
+              163,
+              358
+            ],
+            [
+              174,
+              380
+            ],
+            [
+              194,
+              402
+            ],
+            [
+              254,
+              490
+            ],
+            [
+              234,
+              468
+            ],
+            [
+              214,
+              446
+            ],
+            [
+              123,
+              534
+            ],
+            [
+              133,
+              556
+            ],
+            [
+              153,
+              578
+            ],
+            [
+              174,
+              600
+            ],
+            [
+              194,
+              622
+            ],
+            [
+              214,
+              644
+            ],
+            [
+              133,
+              710
+            ],
+            [
+              133,
+              754
+            ],
+            [
+              133,
+              666
+            ],
+            [
+              133,
+              798
+            ],
+            [
+              133,
+              688
+            ],
+            [
+              133,
+              776
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}

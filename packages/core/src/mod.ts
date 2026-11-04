@@ -73,4 +73,7 @@ export * from "./reports/mod.ts";
 
 // Fase 14.22 — pincel SVG mínimo + ChartPlotter (Painter real é Fase 17)
 export * from "./painter-min.ts";
+
+// Fase 15 — Gantt (HTML+CSS puro, ADR 028)
+export * from "./gantt/mod.ts";
 export * from "./chart-plotter.ts";

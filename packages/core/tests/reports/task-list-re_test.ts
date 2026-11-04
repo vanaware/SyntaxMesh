@@ -21,10 +21,11 @@ import type { LogicalExpression, } from "../../src/logic/logical-expression.ts";
 import type { PropertyList, } from "../../src/model/property-list.ts";
 import { ReportContext, } from "../../src/reports/report-context.ts";
 import { ReportTable, } from "../../src/reports/report-table.ts";
+import { ReportTableColumn, } from "../../src/reports/report-table-column.ts";
 import { TableColumnDefinition, } from "../../src/reports/table-column-definition.ts";
 import { TaskListRE, } from "../../src/reports/task-list-re.ts";
 import { ReportType, } from "../../src/model/report-type.ts";
-import { NotYetImplementedError, } from "../../src/model/errors.ts";
+import { GanttChart, } from "../../src/gantt/gantt-chart.ts";
 import {
   contentFactories,
   type ReportContentFactory,
@@ -288,13 +289,20 @@ describe("TaskListRE (14.14)", () => {
       );
     });
 
-    it("coluna chart segue protegida por NotYetImplementedError", () => {
+    it("coluna chart integra o GanttChart ao taskreport (Fase 15.12)", () => {
       const chart = new TableColumnDefinition("chart", undefined,);
       setup([chart,],);
-      assertThrows(
-        () => re.generateIntermediateFormat(),
-        NotYetImplementedError,
-      );
+      // O `now` do chart vem do projeto por herança de atributos. Aqui o
+      // relatório é criado à mão (sem `inheritAttributes`), então o valor é
+      // definido explicitamente — igual ao que o parse real entrega.
+      report.set("now", TjTime.fromString("2026-06-01",),);
+      new Task(project, "t1", "T1", null,);
+      re.generateIntermediateFormat();
+      const table = re.getTable()!;
+      const col = table.getColumns()[0] as ReportTableColumn;
+      assert(col.cell1.special instanceof GanttChart,);
+      assertEquals(col.cell2.hidden, true,);
+      assertEquals(table.equiLines, true,);
     });
   });
 

@@ -3,7 +3,7 @@
 > **Arquivo:** `docs/syntaxmesh/fases/fase-16-tarefas.md`
 > **Plano:** `docs/syntaxmesh/fases/fase-16-apoio.md`
 > **Status:** ⬜ Não iniciada
-> **Total:** ~195 tarefas
+> **Total:** ~191 tarefas
 > **Concluídas:** 0
 > **Fonte Ruby:** `docs/taskjuggler/lib/taskjuggler/{Journal,AlertLevelDefinitions,LeaveList,TernarySearchTree,AlgorithmDiff,TextFormatter,FileList,URLParameter,StdIoWrapper,UTF8String,KateSyntax,VimSyntax}.rb`
 
@@ -31,10 +31,10 @@
 Esta fase **completa stubs** das Fases 5, 11 e 14. A ordem importa:
 
 1. **Bloco A** — `AlertLevelDefinitions` (usado por `Journal`).
-2. **Bloco B** — `Journal` (`JournalEntry`, `JournalEntryList`, `Journal`).
+2. **Bloco B** — `Journal` (`JournalEntry`, `JournalEntryList`, `Journal`). ⚠️ Incluir suporte ao elemento novo `picture`/`format` em `JournalEntry` — ver adendo **16.21**.
 3. **Bloco C** — `Leave` + `LeaveList` + `LeaveAllowance` (substitui stubs da Fase 5).
-4. **Bloco D** — utilitários (`TextFormatter`, `FileList`, `URLParameter`, `TernarySearchTree`, `AlgorithmDiff`, `StdIoWrapper`, `UTF8String`).
-5. **Bloco E** — dev tools (`KateSyntax`, `VimSyntax`).
+4. **Bloco D** — utilitários (`TextFormatter`, `FileList`, `URLParameter`, `TernarySearchTree`, `AlgorithmDiff`, `StdIoWrapper`, `UTF8String`). ⚠️ Escopo reduzido: desenvolver **apenas o core** de `URLParameter`, `TernarySearchTree` e `StdIoWrapper` (reusados na Fase 22 — LSP/help/manual e lib externa). Ver observações no plano.
+5. **Bloco E** — núcleo de sintaxe para ferramentas externas (`SyntaxCore`). ⚠️ Geradores finais `KateSyntax`/`VimSyntax` **CANCELADOS**; só as funções core, reusadas na Fase 22 (servidor LSP / extensão VSCode).
 6. **Bloco F** — integração: completar 8 queries de `TaskScenario` + `ResourceScenario.query_dashboard` + `LogicalFlag.eval` + `LogicalFunction.hasalert`.
 7. **Bloco G** — golden tests.
 8. **Bloco H** — verificação final.
@@ -62,30 +62,30 @@ Esta fase **completa stubs** das Fases 5, 11 e 14. A ordem importa:
 ### Convenções CRÍTICAS
 
 - **`Journal` é parte do `Project`** (inicializado no construtor — Fase 9).
-- **`JournalEntry.property` é `PropertyTreeNode | null`** (entrada global).
+- **`JournalEntry.property` é `PropertyTreeNode | null`** (entrada global). . ver observação feita no arquivo fase-16-apoio.md
 - **`AlertLevelDefinitions` default:** 3 níveis (`green`, `yellow`, `red`).
 - **`currentEntriesR` usa `DataCache`.**
 - **`alertLevel` retorna max dos filhos.**
 - **`Leave.typeIdx`** é o índice do tipo (1–7).
 - **`LeaveAllowance.slots`** pode ser negativo (expiração).
 - **`TextFormatter` com UTF-8.** Usar `[...str]`.
-- **`URLParameter` depende de `fflate`.** Fixar versão.
-- **`TernarySearchTree`** é opcional (só `tj3man`).
+- **`URLParameter` depende de `fflate`.** Fixar versão. Implementar **apenas o core** (encode/decode) — a Fase 22 usará funcionalidade parecida.
+- **`TernarySearchTree`** é **core only** (não ligar a `tj3man`); será reusado na Fase 22 (help/manual da extensão VSCode / LSP).
 - **`UTF8String` é no-op.** Funções delegate.
-- **`StdIoWrapper` em browser** com limitações.
-- **`KateSyntax` / `VimSyntax`** em `dev-tools/`.
+- **`StdIoWrapper`** implementar **apenas a função core** (captura de stdout/stderr); sem UI de browser — uso futuro por lib externa.
+- **`KateSyntax` / `VimSyntax`**: geradores finais **CANCELADOS**; apenas funções **core** reunidas em `SyntaxCore` (`dev-tools/`), reusadas na Fase 22 (LSP).
 - **`LogicalFlag`** distingue Query de JournalEntry.
 - **`hasalert`** usa `currentEntries`.
 - Sem `any` em `src/`.
 
 ### Anti-padrões
 
-- ❌ Não tocar em Fase 14 (reports) — apenas stubs de journal queries.
+- ❌ se precisar pode tocar em Fase 14 (reports) e ajustar
 - ❌ Não tocar em Fase 17 (HTML/XML).
 - ❌ Não tocar em Fase 18 (time sheets) — `TimeSheetRecord` é stub aqui.
 - ❌ Não implementar `Leave` real na Fase 5 — só aqui.
 - ❌ Não usar `Proxy`.
-- ❌ Não implementar `KateSyntax`/`VimSyntax` no `src/` público — só em `dev-tools/`.
+- ❌ Não implementar os **geradores finais** Kate/Vim (escrita de `.xml`/`.vim`) — CANCELADOS; só o núcleo `SyntaxCore` em `dev-tools/`.
 - ❌ Não tratar `UTF8String` como classe — só funções.
 
 ---
@@ -107,15 +107,15 @@ Esta fase **completa stubs** das Fases 5, 11 e 14. A ordem importa:
 [ ] 16.11 StdIoWrapper                              —   0/6
 [ ] 16.12 UTF8String (no-op)                        —   0/8
 [ ] 16.13 deepClone (revisar)                       —   0/4
-[ ] 16.14 KateSyntax                                —   0/6
-[ ] 16.15 VimSyntax                                 —   0/6
+[ ] 16.14 SyntaxCore (núcleo p/ Fase 22)            —   0/8
+[x] 16.15 VimSyntax (CANCELADO → geradores finais)  —   n/a
 [ ] 16.16 Completar TaskScenario query_* (8)        —   0/20
 [ ] 16.17 Completar ResourceScenario query_dashboard —  0/6
 [ ] 16.18 Completar LogicalFlag + hasalert          —   0/8
 [ ] 16.19 Golden tests (Journal + Leaves)           —   0/10
 [ ] 16.20 Verificação final                         —   0/10
 ─────────────────────────────────────────────────────────
-TOTAL: ~195
+TOTAL: ~191
 ```
 
 ---
@@ -182,6 +182,9 @@ TOTAL: ~195
 **⚠️ RUBY: `Journal.rb` — `JournalEntry` + `JournalEntryList` (~250 linhas do total)**
 
 **Pré-requisitos:** 16.1, Fase 5 (`PropertyTreeNode`, `Resource`), Fase 12 (`RichTextIntermediate`).
+
+> **Escopo (anotação do plano, item 1):** além dos campos clássicos, `JournalEntry`
+> deve prever suporte ao elemento novo **`picture`** (e `format`). Ver adendo **16.21**.
 
 #### 16.2.1 — `JournalEntry`
 
@@ -401,6 +404,10 @@ TOTAL: ~195
 
 **Pré-requisitos:** `fflate` adicionado ao `deno.jsonc`.
 
+> **Escopo (anotação do plano, item 8):** desenvolver **apenas o core**
+> (`encode`/`decode`). A Fase 22 reutilizará funcionalidade parecida (encoding de
+> parâmetros para LSP / URLs).
+
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
 | 16.8.1 | Adicionar `fflate` em `imports` (`npm:fflate@^0.8`) | `packages/core/deno.jsonc` | `deno check` |
@@ -416,6 +423,10 @@ TOTAL: ~195
 
 **⚠️ RUBY: `TernarySearchTree.rb` (~180 linhas)**
 **🔎 CHEAT: §3 recursão, §12 Categoria B (partial match)**
+
+> **Escopo (anotação do plano, item 4):** implementar **apenas o core** da estrutura
+> de dados (insert/find/balance/collect). **Não** ligar a `tj3man` nesta fase — a
+> mesma estrutura será reusada na Fase 22 para busca de help/manual (LSP / extensão VSCode).
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
@@ -461,6 +472,11 @@ TOTAL: ~195
 **⚠️ RUBY: `StdIoWrapper.rb` (~60 linhas)**
 **🔎 CHEAT: §7 `$stdout` → `console.log`, §12 Categoria B (limitações)**
 
+> **Escopo (anotação do plano, item 9):** desenvolver **apenas a função core** de
+> captura de stdout/stderr. Sem integração de UI de browser; será reusada no futuro
+> por lib externa. `TimeSheetSummary.getResourceJournal` (Fase 18) é o único consumo
+> previsto hoje.
+
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
 | 16.11.1 | Criar `packages/core/src/utils/std-io-wrapper.ts` com `interface Results<T>` | idem | `deno check` |
@@ -503,38 +519,43 @@ TOTAL: ~195
 
 ---
 
-## Bloco E — Dev tools
+## Bloco E — Núcleo de sintaxe para ferramentas externas (Fase 22)
 
-### 16.14 — `KateSyntax`
+> **Escopo (anotação do plano, itens 11 e 12):** os **geradores finais** Kate
+> (`KateSyntax.rb`) e Vim (`VimSyntax.rb`) estão **CANCELADOS** — nada de escrever
+> arquivos `.xml`/`.vim`. Implementar **apenas as funções core** (extração e
+> classificação de keywords/contexts/highlights a partir de `SyntaxReference`), que a
+> **Fase 22** reutilizará no servidor LSP / help e manual da extensão VSCode.
 
-**⚠️ RUBY: `KateSyntax.rb` (~250 linhas)**
-**🔎 CHEAT: §3 `class_eval` → métodos explícitos**
+### 16.14 — `SyntaxCore` (núcleo de realce e autocomplete)
 
-**Pré-requisitos:** Fase 14 (`SyntaxReference` — stub).
+**⚠️ RUBY: `KateSyntax.rb` (constructor `initialize` + `keywords`) e `VimSyntax.rb` (`prepareSyntax`) — só a lógica de coleta, NÃO a escrita de arquivo**
+**🔎 CHEAT: §3 `Hash#each_value` → `for...of`; §12 Categoria B (filtragem de keywords)**
+
+**Pré-requisitos:** Fase 14 (`SyntaxReference`, `KeywordDocumentation`).
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 16.14.1 | Criar `packages/core/src/dev-tools/kate-syntax.ts` com `class KateSyntax` | idem | `deno check` |
-| 16.14.2 | Campos: `private reference: SyntaxReference`, `private properties`, `private attributes` | idem | `deno check` |
-| 16.14.3 | Constructor: cria `SyntaxReference` (Fase 14); separa properties de attributes | idem | 2 testes |
-| 16.14.4 | ⚠️ `generate(file: string): void` — em browser: retorna XML em vez de escrever | idem | 3 testes |
-| 16.14.5 | ⚠️ `private header()`, `footer()`, `keywords()`, `contexts()`, `highlights()` | idem | 5 testes |
-| 16.14.6 | Teste: `generate` retorna XML com `<language>` | idem | 1 teste |
+| 16.14.1 | Criar `packages/core/src/dev-tools/syntax-core.ts` com `class SyntaxCore` | idem | `deno check` |
+| 16.14.2 | Campos: `private reference: SyntaxReference`, `private properties: KeywordDocumentation[]`, `private attributes: KeywordDocumentation[]` | idem | `deno check` |
+| 16.14.3 | ⚠️ Constructor: cria `SyntaxReference(null, true)`; separa `keywords` em `properties` (`isProperty()`) vs `attributes` — fiel a `KateSyntax.rb:24-40` | idem | 3 testes |
+| 16.14.4 | ⚠️ `keywordList(): string[]` — nomes de property (ignora `supplement`) e nomes de attribute (ignora `%`, `(`, `~`, `include`, `macro`, `project`, `supplement` e os `*report`) — reutiliza a filtragem de `KateSyntax#keywords` (`KateSyntax.rb:160-190`) | idem | 4 testes |
+| 16.14.5 | ⚠️ `categories(): { builtin: string[]; types: string[]; keywords: string[] }` — agrupa por categoria de realce (Builtin Function / Data Types / Keyword) | idem | 3 testes |
+| 16.14.6 | ⚠️ `contexts()` — devolve a definição **estrutural** de tokens (date, time, duration, string, comment, braces) como dados (objeto/array), **não** como XML/Vim | idem | 2 testes |
+| 16.14.7 | Teste: `keywordList` contém `task`, `resource`, `journal` | idem | 1 teste |
+| 16.14.8 | Re-exportar em `packages/core/mod.ts` | idem | `deno check` |
+
+> **Não implementar:** `generate(file)`, `header()`, `footer()`, `highlights()` como
+> escrita de arquivo, nem qualquer saída `.xml` (Kate) / `.vim` (Vim). Fica para a
+> Fase 22 (LSP / VSCode).
 
 ---
 
-### 16.15 — `VimSyntax`
+### 16.15 — (CANCELADO) Geradores Kate/Vim finais
 
-**⚠️ RUBY: `VimSyntax.rb` (~300 linhas)**
-
-| # | Tarefa | Arquivos | Verificação |
-|---|---|---|---|
-| 16.15.1 | Criar `packages/core/src/dev-tools/vim-syntax.ts` com `class VimSyntax` | idem | `deno check` |
-| 16.15.2 | Análogo a `KateSyntax` | idem | 3 testes |
-| 16.15.3 | ⚠️ `generate(file: string): void` — retorna conteúdo Vim | idem | 3 testes |
-| 16.15.4 | ⚠️ `private header()`, `setLocal()`, `keywords()`, `matches()`, `regions()`, `highlights()` | idem | 6 testes |
-| 16.15.5 | Teste: contém `syn keyword` | idem | 1 teste |
-| 16.15.6 | Re-exportar em `packages/core/mod.ts` | idem | `deno check` |
+> Anotado no plano (itens 11 e 12): os geradores de arquivos Kate e Vim estão
+> **cancelados**. Toda a lógica reutilizável já está em `SyntaxCore` (16.14).
+> Nenhuma tarefa de implementação aqui — mantido apenas como registro de escopo.
 
 ---
 
@@ -642,7 +663,7 @@ TOTAL: ~195
 | 16.20.3 | `grep -r "NotYetImplementedError" packages/core/src/journal/` = 0 | grep |
 | 16.20.4 | `grep -r "NotYetImplementedError" packages/core/src/model/task-scenario.ts` — apenas queries de Fase 8/18 | ≤ 2 ocorrências |
 | 16.20.5 | ADR 028 criada e commitada | git log |
-| 16.20.6 | `Journal`, `JournalEntry`, `AlertLevelDefinitions`, `Leave`, `LeaveList`, `LeaveAllowance`, `TextFormatter`, `FileList`, `URLParameter`, `TernarySearchTree`, `AlgorithmDiff`, `StdIoWrapper`, `KateSyntax`, `VimSyntax` exportados em `packages/core/mod.ts` | `deno check` |
+| 16.20.6 | `Journal`, `JournalEntry`, `AlertLevelDefinitions`, `Leave`, `LeaveList`, `LeaveAllowance`, `TextFormatter`, `FileList`, `URLParameter`, `TernarySearchTree`, `AlgorithmDiff`, `StdIoWrapper`, `SyntaxCore` exportados em `packages/core/mod.ts` | `deno check` |
 | 16.20.7 | `tests/integration/smoke_after_phase_16_test.ts` — cria `Journal`, adiciona 1 entrada, verifica `alertLevel`; verifica Fase 15 (Gantt HTML) | 1 teste |
 | 16.20.8 | Auditoria: cada subfase do plano `fase-16-apoio.md` tem tarefas correspondentes | grep |
 | 16.20.9 | Corrigir numeração em `fase-16-apoio.md` (`### 20.X` → `### 16.X`, `ADR 026` → `ADR 028`) | grep |
@@ -662,10 +683,10 @@ TOTAL: ~195
 8. **`LeaveAllowance.slots`** pode ser negativo (expiração).
 9. **`TextFormatter` com UTF-8.** Usar `[...str]`.
 10. **`URLParameter` depende de `fflate`.** Fixar versão.
-11. **`TernarySearchTree`** é opcional (só `tj3man`).
+11. **`TernarySearchTree`** é core only (reuso Fase 22; não ligar a `tj3man`).
 12. **`UTF8String` é no-op.** Funções delegate.
 13. **`StdIoWrapper` em browser** com limitações.
-14. **`KateSyntax` / `VimSyntax`** em `dev-tools/`.
+14. **`KateSyntax` / `VimSyntax`**: geradores finais **CANCELADOS**; só o núcleo `SyntaxCore` em `dev-tools/` (reuso Fase 22 / LSP).
 15. **`LogicalFlag`** distingue Query de JournalEntry.
 16. **`hasalert`** usa `currentEntries`.
 17. **Sem `any`.** Use `unknown` + narrowing.
@@ -753,10 +774,11 @@ TOTAL: ~195
 
 - **Revisar cobertura.**
 
-### 16.14–16.15 — KateSyntax + VimSyntax
+### 16.14–16.15 — SyntaxCore (núcleo p/ Fase 22)
 
-- **Dev tools.**
-- **Em `dev-tools/`.**
+- **Geradores finais Kate/Vim CANCELADOS** (itens 11 e 12 do plano).
+- **Só funções core** (extração/classificação de keywords/contexts/highlights).
+- **Em `dev-tools/`** (`syntax-core.ts`); consumo na Fase 22 (LSP / VSCode).
 
 ### 16.16–16.18 — Integração
 

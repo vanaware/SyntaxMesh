@@ -1,3 +1,30 @@
+## Ordem de execução (diretriz do usuário — 2026-11-03)
+
+Após a Fase 14 (✅), as fases pendentes executam nesta ordem:
+
+```
+15 → 16 → 17 → 18 → 23 → 24 → 21 (1ª onda) → 22 → 21 (2ª onda) → 19 → 20 → 21 (3ª onda)
+```
+
+- **Fase 23 (template)** antes da 24 e da 22: a keyword `template` já nasce
+  coberta pela CLI e pela grammar da extensão.
+- **Fase 24 (CLI)** antes da 21: a CLI `syntaxmesh` vira o **harness** dos
+  testes de compatibilidade — a 21 não constrói runner próprio.
+- **Fase 21 executa em 3 ondas** (reescopo; detalhes em
+  `fase-21-compatibilidade-qualidade.md` §0):
+  - **1ª onda (após a 24, antes da 22):** golden de fidelidade ao `tj3` real
+    do **motor** rodando as fixtures **através da CLI da Fase 24**; corpus, AST-
+    equivalence i18n, snapshots, benchmarks e divergências conhecidas.
+  - **2ª onda (após a 22):** o suite é adaptado para testar a **extensão VS
+    Code** (`lsp-core`, servidor LSP, grammar, empacotamento `.vsix`).
+  - **3ª onda (após a 20):** o suite é adaptado para testar a **PWA + UI**
+    (cross-browser, acessibilidade, Lighthouse, CSP, build de produção) e
+    conclui o release.
+- **Fases 19 e 20 por último:** storage e UI consomem motor já validado e a
+  extensão pronta.
+
+---
+
 ### FASE 1 — Fundação e Workspace Deno
 
 **Objetivo:** Esqueleto do monorepo, quality pipeline, ADRs.
@@ -449,15 +476,18 @@ Tarefas: `docs/syntaxmesh/fases/fase-8.2-tarefas.md`.
 - `lib/taskjuggler/reports/HTMLGraphics.rb`
 - `docs/tj3-engine/16-blueprint-gantt.md` ← **blueprint completo**
 
-**Subfases:**
+**Subfases** (numeração canônica = `fase-15-gantt.md` / `fase-15-gantt-tarefas.md`):
+- 15.0 — ADR 028 (Gantt HTML+CSS; número já reservado na tabela de ADRs).
 - 15.1 — `HTMLGraphics`: `lineToHTML`, `rectToHTML`, `jagToHTML`, `diamondToHTML`, `arrowHeadToHTML`.
 - 15.2 — `CollisionDetector`: `addBlockedZone`, `collision?`, `to_html`, `clip`, `addSegment`, `overlaps?`, `mergeable?`, `merge`.
 - 15.3 — `GanttRouter`: `routeLines`, `route`, `placeLine`, `addLineTo`, `justify`.
-- 15.4 — `GanttChart`: `start`, `end`, `now`, `weekStartsMonday`, `header`, `width`, `scale`, `scales`, `table`, `markdate`, `viewWidth`, `generateByScale`, `generateByWidth`, `to_html`, `to_csv`, `dateToX`, `addLine`, `addTask`, `hasScrollbar?`, `completeChart`, `generateDepLines`, `generateTaskDepLines`.
-- 15.5 — `GanttHeader`: `gridLines`, `nowLineX`, `markdateLineX`, `cellStartDates`, `height`, `to_html`, `generate`, `genHeaderScale`.
-- 15.6 — `GanttHeaderScaleItem`.
-- 15.7 — `GanttLine`: `chart`, `query`, `tooltip`, `category`, `y`, `height`, `lineIndex`, `timeOffZones`, `content`, `to_html`, `getTask`, `addBlockedZones`, `generate`, `generateTask`, `generateResource`, `generateTimeOffZones`, `addHtmlTooltip`.
-- 15.8 — `GanttTaskBar`, `GanttMilestone`, `GanttContainer`, `GanttLoadStack`.
+- 15.4 — `GanttTaskBar`; 15.5 — `GanttMilestone`; 15.6 — `GanttContainer`; 15.7 — `GanttLoadStack`.
+- 15.8 — `GanttHeaderScaleItem`; 15.9 — `GanttHeader`: `gridLines`, `nowLineX`, `markdateLineX`, `cellStartDates`, `height`, `to_html`, `generate`, `genHeaderScale`.
+- 15.10 — `GanttLine`: `chart`, `query`, `tooltip`, `category`, `y`, `height`, `lineIndex`, `timeOffZones`, `content`, `to_html`, `getTask`, `addBlockedZones`, `generate`, `generateTask`, `generateResource`, `generateTimeOffZones`, `addHtmlTooltip` + legenda (`addGanttItem`).
+- 15.11 — `GanttChart` (`SpecialCell`): `start`, `end`, `now`, `weekStartsMonday`, `header`, `width`, `scale`, `scales`, `table`, `markdate`, `viewWidth`, `generateByScale`, `generateByWidth`, `to_html`, `to_csv`, `dateToX`, `addLine`, `addTask`, `hasScrollbar?`, `completeChart`, `generateDepLines`, `generateTaskDepLines`.
+- 15.12 — Integração `TaskReport`/`ResourceReport`: substituir os 2 stubs `NotYetImplementedError("16")` do caso `chart` em `table-report.ts` (`generateHeaderCell`/`generateTableCell`).
+- 15.13 — Golden tests Gantt (`gantt-mweNNN.rb` + `generate_golden.ts` + `gantt.golden.json`).
+- 15.14 — Verificação final (`check-all`, `check:stubs`, exports via `gantt/mod.ts`, smoke).
 
 **Testes:** Gantt com granularidade week; dependency arrows; milestones; container tasks; load stacks.
 
@@ -583,6 +613,11 @@ Tarefas: `docs/syntaxmesh/fases/fase-8.2-tarefas.md`.
 ### FASE 21 — Compatibilidade e Qualidade
 
 **Objetivo:** Golden tests, corpus multilíngue, performance, release.
+**Reescopo (2026-11-03):** executa em **3 ondas** — 1ª valida o motor
+**usando a CLI da Fase 24 como runner** (após a 24, antes da 22); 2ª adapta o
+suite para a extensão VS Code (após a 22); 3ª adapta para a PWA + UI (após a
+20) e fecha o release. Ver Ordem de execução no topo deste arquivo e §0 de
+`fase-21-compatibilidade-qualidade.md`.
 
 **Referências TJ:**
 - `docs/Learning/mwe001–mwe009/` (9 MWEs)
@@ -596,7 +631,8 @@ Tarefas: `docs/syntaxmesh/fases/fase-8.2-tarefas.md`.
 - 21.5 — Segurança, regressão, cross-browser.
 - 21.6 — Build de produção, release.
 
-**Opcional:** `tj3.ts` CLI para rodar no Deno CLI (OPFS como filesystem normal). Não é foco.
+**Runner (era "Opcional"):** o runner `tj3-ts` das golden tests é a CLI
+`syntaxmesh` da **Fase 24** — não será construído runner próprio na Fase 21.
 
 ---
 
@@ -629,7 +665,10 @@ Tarefas: `docs/syntaxmesh/fases/fase-8.2-tarefas.md`.
 | 18 | core (sheets) | TimeSheets, Sheet* | **Média** | ⬜ Não iniciada (adendo 18.17) |
 | 19 | storage | — | **Alta** | ⬜ Não iniciada (adendo 24.14–24.16) |
 | 20 | ui + service-worker | — | **Média** | ⬜ Não iniciada (adendo 25.30–25.31) |
-| 21 | tests/ | MWEs, TestSuite | **Crítica** | ⬜ Não iniciada (adendo 26.26–26.28) |
+| 21 | tests/ | MWEs, TestSuite | **Crítica** | ⬜ Não iniciada — **3 ondas** (após 24, após 22, após 20); harness = CLI da Fase 24 (adendo 26.26–26.28) |
+| 22 | tooling (vsextension + `lsp-core` no core) | — | Média | ⬜ Não iniciada (após 21¹; plano `fase-22-vscode-extension.md`) |
+| 23 | core (lexer/parser — extensão TS-only `template`) | — (engine Vento) | Alta | ⬜ Não iniciada (antes da 24; plano `fase-23-template.md`) |
+| 24 | cli (novo pacote `packages/cli`) | apps/Tj3.rb, man/tj3.1 | **Alta** | ⬜ Não iniciada (após 23, antes de 21¹; plano `fase-24-cli.md`) |
 
 > **Pacotes (ADR 030):** todo o código de fases vive em `packages/core` (parser, i18n, richtext, markdown, report, sheets, journal, storage de nível lógico). `packages/server`, `packages/ui`, `packages/service-worker` são suporte. A coluna "Pacote" acima indica a camada lógica histórica, não um package físico.
 

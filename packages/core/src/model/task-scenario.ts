@@ -7,7 +7,10 @@ import { Task, } from "./task.ts";
 import { type Resource, } from "./resource.ts";
 import { type ProjectLike, } from "./project-like.ts";
 import { type PropertyLike, } from "./property-like.ts";
-import { PropertyTreeNode, } from "./property-tree-node.ts";
+import {
+  PropertyTreeNode,
+  type SourceFileInfo,
+} from "./property-tree-node.ts";
 import { type AttributeBase, } from "../attributes/attribute-base.ts";
 import { Booking, } from "../scheduling/booking.ts";
 import { TjTime, } from "../time/tj-time.ts";
@@ -21,10 +24,14 @@ import { ResourceScenario, } from "./resource-scenario.ts";
 import { Charge, } from "../finance/charge.ts";
 import { ChargeSet, } from "../finance/charge-set.ts";
 import { TimeInterval, } from "../time/time-interval.ts";
+import { IntervalList, } from "../time/interval-list.ts";
 import { CostLine, resolveAccount, } from "../accounting/attribution.ts";
 import { CostEvent, createCostEvent, } from "../accounting/cost-event.ts";
 import { RichText, } from "../richtext/rich-text.ts";
 import { RTFHandlers, } from "../richtext/handlers/rtf-handlers.ts";
+
+/** Entrada de `startsuccs`/`endsuccs`/`startpreds`/`endpreds` (Ruby par). */
+export type DependencyEntry = [Task | null, boolean,];
 
 export const TASK_SCENARIO_ATTRS: string[] = [
   "allocate",
@@ -57,6 +64,13 @@ export const TASK_SCENARIO_ATTRS: string[] = [
   "scheduled",
   "shifts",
   "start",
+  // Listas de dependências resolvidas em `Xref` (Ruby as instancia em
+  // `TaskScenario#initialize`). Precisam estar no mapa de atributos para que
+  // `a("startsuccs")`/`hasDependency` as enxerguem.
+  "startpreds",
+  "startsuccs",
+  "endpreds",
+  "endsuccs",
   "status",
   "timebasis",
 ];
@@ -121,10 +135,6 @@ export class TaskScenario extends ScenarioData {
   private _contendedResources: Map<Task, Map<Resource, number>> = new Map();
   private _mandatories: Allocation[] = [];
   private _competitors: Task[] = [];
-  private _startpreds: [Task | null, boolean,][] = [];
-  private _startsuccs: [Task | null, boolean,][] = [];
-  private _endpreds: [Task | null, boolean,][] = [];
-  private _endsuccs: [Task | null, boolean,][] = [];
   private _deadEndFlags: boolean[] = [false, false, false, false,];
   private _criticalness: number = 0.0;
   private _pathcriticalness: number | null = null;
@@ -149,6 +159,47 @@ export class TaskScenario extends ScenarioData {
    */
   resolvedTimebasis: Timebasis = "duration";
   private _shifts: ShiftAssignments | null = null;
+
+  /**
+   * Listas de dependências (entrada/saída, início/fim) do cenário.
+   *
+   * RUBY-COMPAT-FIX: no Ruby `@startsuccs`, `@endsuccs`, `@startpreds` e
+   * `@endpreds` **são** os valores dos atributos homônimos (instanciados em
+   * `TaskScenario#initialize`), os mesmos que o Gantt consulta via
+   * `task[kind, scenarioIdx]`. Com arrays paralelos, `hasDependency` — que lê
+   * o atributo — devolvia sempre `false` e o chart desenhava as setas das
+   * dependências herdadas (uma seta a mais por tarefa aninhada).
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:hasDependency?
+   */
+  private get _startpreds(): DependencyEntry[] {
+    return this.dependencyList("startpreds",);
+  }
+  private get _startsuccs(): DependencyEntry[] {
+    return this.dependencyList("startsuccs",);
+  }
+  private get _endpreds(): DependencyEntry[] {
+    return this.dependencyList("endpreds",);
+  }
+  private get _endsuccs(): DependencyEntry[] {
+    return this.dependencyList("endsuccs",);
+  }
+
+  /** Lista de dependências do atributo `id`, criando-a vazia se preciso. */
+  private dependencyList(id: string,): DependencyEntry[] {
+    const stored = this.a(id,) as DependencyEntry[] | null;
+    if (stored !== null) return stored;
+    const created: DependencyEntry[] = [];
+    // `forceForScenario` (= `attr.set`) em vez de `setForScenario`: o Ruby só
+    // instancia o atributo (`@property[attr, @scenarioIdx]`), sem propagar
+    // para os demais cenários.
+    (this.getProperty() as Task).forceForScenario(
+      id,
+      created,
+      this.getScenarioIdx(),
+    );
+    return created;
+  }
 
   constructor(
     task: Task,
@@ -295,17 +346,27 @@ export class TaskScenario extends ScenarioData {
     }
   }
 
+  /**
+   * `true` se a categoria `depType` (`startsuccs`, `endsuccs`, ...) contém o
+   * par `[target, onEnd]`.
+   *
+   * RUBY-COMPAT-FIX: as listas guardam **pares** `[task, flag]` (ver `Xref`),
+   * e o Ruby compara com `Array#include?([target, onEnd])`. Antes o port lia os
+   * itens como `TaskDependency` (`dependency.task`), então todo par dava
+   * `false` e o Gantt não filtrava as dependências herdadas.
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:hasDependency?
+   */
   hasDependency(
     depType: string,
     target: Task | null,
     onEnd: boolean,
   ): boolean {
-    const list = this.a(depType,) as TaskDependency[];
-    return list
-      ? list.some((dependency,) =>
-        dependency.task === target && dependency.onEnd === onEnd
-      )
-      : false;
+    const list = this.a(depType,) as DependencyEntry[] | null;
+    if (!list) return false;
+    return list.some(([task, entryOnEnd,],) =>
+      task === target && entryOnEnd === onEnd
+    );
   }
 
   /**
@@ -574,27 +635,308 @@ export class TaskScenario extends ScenarioData {
   }
 
   /**
-   * Reserva as vagas definidas nas bookins da tarefa.
+   * Registra as bookings do usuário nos scoreboards do recurso e deriva o
+   * estado "já realizado" da tarefa.
+   *
+   * Além de reservar os slots, é este método que acumula `doneEffort`,
+   * `doneLength`/`doneDuration` e posiciona `currentSlotIdx` em `now` — sem
+   * isso a tarefa reagendaria o esforço inteiro desde o início (em vez de
+   * retomar de `now` o que falta), e o `end` reportado sai adiantado em dias.
+   * Foi o que o golden de Gantt do mwe006 expôs (t2 terminava 2 dias antes).
    *
    * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:bookBookings
    */
   bookBookings(): void {
-    const bookings = this.a("booking",) as Booking[];
-    if (!bookings) return;
+    const task = this.getProperty() as Task;
+    const project = this.project();
     const scIdx = this.getScenarioIdx();
-    for (const booking of bookings) {
-      for (const interval of booking.intervals) {
-        const startIdx = this.project().dateToIdx(
-          this.project().idxToDate(interval.start,),
+    let firstSlotIdx: number | null = null;
+    let lastSlotIdx: number | null = null;
+
+    const effortdone = this.a("effortdone",) as number | null;
+    const effortleft = this.a("effortleft",) as number | null;
+    const effort = this.a("effort",) as number;
+    const length = this.a("length",) as number;
+    const duration = this.a("duration",) as number;
+    const slotDuration = project.get("scheduleGranularity",) as number;
+
+    if (effortdone || effortleft) {
+      // Force task to be scheduled in ASAP mode.
+      task.forceForScenario("forward", true, scIdx,);
+      if (!this.a("start",)) {
+        this.error(
+          "effort_done_left_start_missing",
+          `Task ${task.fullId} has 'effortdone' or 'effortleft' ` +
+            "attribute but no start date specified.",
         );
-        const endIdx = this.project().dateToIdx(
-          this.project().idxToDate(interval.end,),
+      }
+      if (!(effort > 0)) {
+        this.error(
+          "effort_missing",
+          `Task ${task.fullId} has 'effortdone' or 'effortleft' ` +
+            "attribute but no 'effort'.",
         );
-        for (let idx = startIdx; idx < endIdx; idx++) {
-          booking.resource.scenarioData(scIdx,).bookBooking(idx, booking,);
+      }
+      if (effortdone) {
+        if (effortdone > effort) {
+          this.error(
+            "effort_done_larger_effort",
+            `Task ${task.fullId} has larger 'effortdone' than 'effort'.`,
+          );
+        }
+        this._doneEffort = effortdone;
+        if (effortleft) {
+          this.error(
+            "effort_done_and_left",
+            "A task cannot have the 'effortdone' and 'effortleft' attribute.",
+          );
+        }
+      } else {
+        if ((effortleft as number) > effort) {
+          this.error(
+            "effort_left_larger_effort",
+            `Task ${task.fullId} has larger 'effortleft' than 'effort'.`,
+          );
+        }
+        this._doneEffort = effort - (effortleft as number);
+      }
+      firstSlotIdx = project.dateToIdx(this.a("start",) as TjTime,);
+      lastSlotIdx = project.dateToIdx(project.get("now",) as TjTime,);
+    }
+
+    const bookings = this.findBookings();
+    if (bookings.length > 0) {
+      if (effortdone || effortleft) {
+        this.error(
+          "bookings_and_effort",
+          "Bookings cannot be used together with 'effortdone' or " +
+            "'effortleft' attributes.",
+        );
+      }
+      for (const booking of bookings) {
+        const resource = booking.resource;
+        if (!resource.leaf()) {
+          this.error(
+            "booking_resource_not_leaf",
+            "Booked resources may not be group resources",
+            booking.sourceFileInfo,
+          );
+        }
+        if (!(this.a("forward",) as boolean) && !this._scheduled) {
+          this.error(
+            "booking_forward_only",
+            "Only forward scheduled tasks may have booking statements.",
+          );
+        }
+        let booked = false;
+        for (const interval of booking.intervals) {
+          // `false` = sem clamp: booking fora do projeto é erro, como no Ruby.
+          const startIdx = project.dateToIdx(interval.start, false,);
+          const endIdx = project.dateToIdx(interval.end, false,);
+          for (let idx = startIdx; idx <= endIdx - 1; idx++) {
+            if (resource.scenarioData(scIdx,).bookBooking(idx, booking,)) {
+              // Booking was successful for this time slot.
+              this._doneEffort += resource.getForScenario(
+                "efficiency",
+                scIdx,
+              ) as number;
+              booked = true;
+
+              // Store the indexes of the first slot and the slot after the
+              // last slot.
+              if (firstSlotIdx === null || firstSlotIdx > idx) {
+                firstSlotIdx = idx;
+              }
+              if (lastSlotIdx === null || lastSlotIdx < idx) lastSlotIdx = idx;
+            }
+          }
+        }
+        if (booked) {
+          const assigned = this.a("assignedresources",) as Resource[] | null;
+          if (assigned && !assigned.includes(resource,)) {
+            assigned.push(resource,);
+          }
         }
       }
     }
+
+    // For effort based tasks, or tasks without a start date, with bookings
+    // that have not yet been marked as scheduled we set the start date to
+    // the date of the first booked slot.
+    const start = this.a("start",) as TjTime | null;
+    if (
+      (start === null || (this._doneEffort > 0 && effort > 0)) &&
+      !this._scheduled && firstSlotIdx !== null
+    ) {
+      const firstSlotDate = project.idxToDate(firstSlotIdx,);
+      if (start === null || firstSlotDate.compareTo(start,) > 0) {
+        task.forceForScenario("start", firstSlotDate, scIdx,);
+      }
+    }
+
+    // Check if the the duration criteria has already been reached by the
+    // supplied bookings and set the task end to the last booked slot.
+    // Also the task is marked as scheduled.
+    if (lastSlotIdx !== null && !this._scheduled) {
+      const tentativeEnd = project.idxToDate(lastSlotIdx + 1,);
+
+      if (effort > 0) {
+        if (this._doneEffort >= effort) {
+          task.forceForScenario("end", tentativeEnd, scIdx,);
+          this.markAsScheduled();
+        }
+      } else if (length > 0) {
+        this._doneLength = 0;
+        let date = this.a("start",) as TjTime;
+        const startIdx = project.dateToIdx(date,);
+        const endIdx = project.dateToIdx(project.get("now",) as TjTime,);
+        for (let idx = startIdx; idx <= endIdx; idx++) {
+          if (this.onShift(idx,)) this._doneLength += 1;
+          date = date.addSeconds(slotDuration,);
+          // Continue not only until the `length` has been reached, but also
+          // the tentativeEnd date. This allows us to detect overbookings.
+          if (
+            this._doneLength >= length && date.compareTo(tentativeEnd,) >= 0
+          ) {
+            const endDate = project.idxToDate(idx + 1,);
+            task.forceForScenario(
+              "end",
+              endDate.compareTo(tentativeEnd,) > 0 ? endDate : tentativeEnd,
+              scIdx,
+            );
+            this.markAsScheduled();
+            break;
+          }
+        }
+      } else if (duration > 0) {
+        this._doneDuration = Math.trunc(
+          tentativeEnd.diff(this.a("start",) as TjTime,) / slotDuration,
+        );
+        if (this._doneDuration >= duration) {
+          task.forceForScenario("end", tentativeEnd, scIdx,);
+          this.markAsScheduled();
+        } else if (
+          duration * slotDuration <
+            (project.get("now",) as TjTime).diff(this.a("start",) as TjTime,)
+        ) {
+          // This handles the case where the bookings don't provide enough
+          // doneDuration to reach the duration, but the now date would be
+          // after the start + duration date.
+          task.forceForScenario(
+            "end",
+            (this.a("start",) as TjTime).addSeconds(duration * slotDuration,),
+            scIdx,
+          );
+          this.markAsScheduled();
+        }
+      }
+    }
+
+    // If the task has bookings, we assume that the bookings describe all
+    // work up to the 'now' date.
+    if (this._doneEffort > 0) {
+      this._currentSlotIdx = project.dateToIdx(project.get("now",) as TjTime,);
+      if (Deno.env.get("TJ_DEBUG_BK",)) {
+        console.error(
+          `BOOK-RESUME ${task.fullId} doneEffort=${this._doneEffort} slot=${this._currentSlotIdx}`,
+        );
+      }
+    }
+
+    // Finally, we check if the bookings caused more effort, length or
+    // duration than was requested by the user. This is only flagged as a
+    // warning.
+    const dailyWorkingHours = project.get("dailyworkinghours",) as number;
+    if (effort > 0) {
+      const effortDays = project.slotsToDays(this._doneEffort,);
+      const effortHours = effortDays * dailyWorkingHours;
+      const requestedEffort = project.slotsToDays(effort,);
+      const requestedEffortHours = requestedEffort * dailyWorkingHours;
+      if (effortDays > requestedEffort) {
+        this.warning(
+          "overbooked_effort",
+          `The total effort (${effortDays}d or ${effortHours}h) of the ` +
+            `provided bookings for task ${task.fullId} exceeds the specified ` +
+            `effort of ${requestedEffort}d or ${requestedEffortHours}h.`,
+        );
+      }
+    }
+    if (length > 0 && this._doneLength > length) {
+      const lengthDays = project.slotsToDays(this._doneLength,);
+      const requestedLength = project.slotsToDays(length,);
+      this.warning(
+        "overbooked_length",
+        `The total length (${lengthDays}d) of the provided bookings for task ` +
+          `${task.fullId} exceeds the specified length of ` +
+          `${requestedLength}d.`,
+      );
+    }
+    if (duration > 0 && this._doneDuration > duration) {
+      const durationDays = this._doneDuration * slotDuration / (60.0 * 60 * 24);
+      const requestedDuration = duration * slotDuration / (60.0 * 60 * 24);
+      this.warning(
+        "overbooked_duration",
+        `The total duration (${durationDays}d) of the provided bookings for ` +
+          `task ${task.fullId} exceeds the specified duration of ` +
+          `${requestedDuration}d.`,
+      );
+    }
+
+    // If a task has only bookings but no effort, length or duration and is
+    // not a milestone but marked as being scheduled, we set the start and
+    // end date according to the first/last booking date unless the date has
+    // been set already.
+    if (
+      this._scheduled && effort === 0 && length === 0 && duration === 0 &&
+      !(this.a("milestone",) as boolean)
+    ) {
+      if (!this.a("start",) && firstSlotIdx !== null) {
+        task.forceForScenario(
+          "start",
+          project.idxToDate(firstSlotIdx,),
+          scIdx,
+        );
+      }
+      if (!this.a("end",) && lastSlotIdx !== null) {
+        task.forceForScenario(
+          "end",
+          project.idxToDate(lastSlotIdx + 1,),
+          scIdx,
+        );
+      }
+    }
+  }
+
+  /**
+   * Bookings efetivas do cenário, herdando do cenário pai enquanto
+   * `ownbookings` for falso (o cenário de topo nunca herda).
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:findBookings
+   */
+  private findBookings(): Booking[] {
+    // Reconcilia a assinatura de `scenario()` (a de `ProjectLike` devolve só
+    // `{ id, fullId }`) com o nó `Scenario` que carrega `ownbookings`/`parent`.
+    const project = this.project() as unknown as {
+      scenario(idx: number,): {
+        readonly fullId: string;
+        readonly parent: unknown;
+        get(name: string,): unknown;
+      } | null;
+      scenarioIdx(sc: string,): number | undefined;
+    };
+    let scenario = project.scenario(this.getScenarioIdx(),);
+    if (!scenario) return [];
+    // Check if the current scenario should inherit its bookings from the
+    // parent. If so, redirect 'scenario' to the parent.
+    while (!scenario.get("ownbookings",)) {
+      const parent = scenario.parent;
+      if (!parent) break;
+      scenario = parent as typeof scenario;
+    }
+    const scIdx = project.scenarioIdx(scenario.fullId,);
+    if (scIdx === undefined) return [];
+    return ((this.getProperty() as Task).getForScenario("booking", scIdx,) ??
+      []) as Booking[];
   }
 
   /**
@@ -1556,7 +1898,7 @@ export class TaskScenario extends ScenarioData {
   override error(
     id: string,
     text: string,
-    sfi?: string,
+    sfi?: string | SourceFileInfo | null,
     property?: PropertyLike,
   ): void {
     super.error(id, text, sfi, property,);
@@ -1576,7 +1918,11 @@ export class TaskScenario extends ScenarioData {
     // Check if the task has already been scheduled e.g. by propagateDate()
     if (this._scheduled) return true;
 
-    this.prepareScheduling();
+    // RUBY-COMPAT-FIX: `prepareScheduling` roda **uma vez** por cenário, em
+    // `Project#prepareScenario` (Project.rb:1096) — `TaskScenario#schedule`
+    // (TaskScenario.rb:931) não a chama. Chamá-la aqui zerava as listas
+    // `startsuccs`/`endsuccs` já resolvidas pelo `Xref` da tarefa, e o Gantt
+    // perdia as dependências que saem dela (setas faltando).
 
     // Compute the date of the next slot this task wants to have scheduled.
     if (this.forward()) {
@@ -2770,7 +3116,7 @@ export class TaskScenario extends ScenarioData {
    * (startIdx, endIdx, resource)` — Ruby l.1592-1619). Distingue-se de
    * `getAllocatedTime` por somar o *effective work* dos recursos.
    */
-  private effWorkInPeriod(
+  effWorkInPeriod(
     startIdx: number,
     endIdx: number,
     resource: Resource | null,
@@ -2814,6 +3160,64 @@ export class TaskScenario extends ScenarioData {
       }
     }
     return workLoad;
+  }
+
+  /**
+   * Intervalos de tempo fora (off-duty/leave) comuns aos recursos da tarefa.
+   *
+   * Uma folha herda os intervalos dos recursos designados (intersecção) ou,
+   * sem recursos, os leaves globais do projeto. Um container intersecta os
+   * intervalos dos filhos. O resultado sempre começa restrito ao intervalo
+   * `[project['start'], project['end']]`.
+   *
+   * Port fiel de `TaskScenario.rb#collectTimeOffIntervals` (l.1623-1649);
+   * omite o `@dCache` como em `getAllocatedTime`.
+   */
+  collectTimeOffIntervals(
+    iv: TimeInterval,
+    minDuration: number,
+  ): IntervalList<TimeInterval> {
+    const task = this.getProperty() as Task;
+    const project = task.project;
+    let il = new IntervalList<TimeInterval>();
+    il.push(
+      new TimeInterval(
+        project.get("start",) as TjTime,
+        project.get("end",) as TjTime,
+      ),
+    );
+
+    const scIdx = this.getScenarioIdx();
+    if (task.leaf()) {
+      const resources = (this.a("assignedresources",) as Resource[]) ?? [];
+      if (resources.length > 0) {
+        // Tarefa com recursos: usa os intervalos comuns a eles.
+        for (const resource of resources) {
+          il = il.intersect(
+            resource.scenarioData(scIdx,).collectTimeOffIntervals(
+              iv,
+              minDuration,
+            ),
+          );
+        }
+      } else {
+        // Sem recursos designados: usa os leaves globais.
+        il = il.intersect(
+          project.collectTimeOffIntervals?.(iv, minDuration,) ??
+            new IntervalList<TimeInterval>(),
+        );
+      }
+    } else {
+      for (const kid of task.kids()) {
+        il = il.intersect(
+          (kid as Task).scenarioData(scIdx,).collectTimeOffIntervals(
+            iv,
+            minDuration,
+          ),
+        );
+      }
+    }
+    return il;
   }
 
   /**

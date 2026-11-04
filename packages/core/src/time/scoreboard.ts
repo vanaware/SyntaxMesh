@@ -139,8 +139,13 @@ export class Scoreboard<T,> {
     // does not guard the sentinel slot-zero logic with compat.keepRubyBugs.
     // This is a Category B bug — guarded by compat.keepRubyBugs flag.
     if (!compat.keepRubyBugs) {
-      let startIdx = this.dateToIdx(iv.start.toDate(), false,);
-      let endIdx = this.dateToIdx(iv.end.toDate(), false,);
+      // RUBY-COMPAT-FIX (Fase 15.12): `Scoreboard.rb:125-126` chama
+      // `dateToIdx(iv.start)` com o default `forceIntoProject = true`, ou seja
+      // **clampa** em vez de lançar. O período do chart Gantt costuma começar
+      // antes do projeto (alinhamento na escala), então lançar aqui quebrava
+      // qualquer relatório com coluna `chart`.
+      let startIdx = this.dateToIdx(iv.start.toDate(),);
+      let endIdx = this.dateToIdx(iv.end.toDate(),);
 
       const minSlots = Math.ceil(minDuration / this.resolution,);
 
@@ -182,8 +187,8 @@ export class Scoreboard<T,> {
     }
 
     // Original implementation with sentinel slot-zero guard
-    let startIdx = this.dateToIdx(iv.start.toDate(), false,);
-    let endIdx = this.dateToIdx(iv.end.toDate(), false,);
+    let startIdx = this.dateToIdx(iv.start.toDate(),);
+    let endIdx = this.dateToIdx(iv.end.toDate(),);
 
     const minSlots = Math.ceil(minDuration / this.resolution,);
 

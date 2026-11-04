@@ -317,3 +317,120 @@ await Deno.writeTextFile(
   JSON.stringify(mspdiParsed, null, 2,) + "\n",
 );
 console.log(`Generated ${mspdiOut.pathname}`,);
+
+// ---------------------------------------------------------------------------
+// Gantt golden (15.13): 7 MWEs com coluna `chart` + o corpus HTML-Reports do
+// TestSuite, todos via gantt-common.rb (tj3 real, geometria do chart).
+// Mesclados em gantt.golden.json.
+// ---------------------------------------------------------------------------
+
+type GanttContentSnapshot = {
+  kind: string;
+  x?: number;
+  end?: number;
+  y?: number;
+  w?: number;
+  yLevels?: number[] | null;
+  drawFrame?: boolean;
+};
+type GanttLineSnapshot = {
+  y: number;
+  height: number;
+  category: string | null;
+  content: GanttContentSnapshot[];
+};
+type GanttChartSnapshot = {
+  report: string;
+  column?: number;
+  error?: string;
+  scale?: string;
+  start?: number;
+  end?: number;
+  width?: number;
+  height?: number;
+  viewWidth?: number | null;
+  scrollbar?: boolean;
+  header?: {
+    height: number;
+    nowLineX: number | null;
+    markdateLineX: number | null;
+    gridLines: number[];
+    cellStartDates: number[];
+  };
+  lines?: GanttLineSnapshot[];
+  depArrows?: number[][][];
+  arrowHeads?: number[][];
+};
+type GanttCase = {
+  file: string;
+  tz: string;
+  error: string | null;
+  chartErrors?: Array<{ report: string; error: string }>;
+  charts: GanttChartSnapshot[];
+};
+
+// Só os MWEs que têm coluna `chart` (mwe005 e mwe007 não têm) — ver 15.13.1.
+const ganttScripts = [
+  "001",
+  "002",
+  "003",
+  "004",
+  "006",
+  "008",
+  "009",
+].map((n,) => `gantt-mwe${n}.rb`).concat("gantt-testsuite.rb",);
+
+const ganttCases: GanttCase[] = [];
+for (const script of ganttScripts) {
+  const url = new URL(`../../../../scripts/golden/${script}`, import.meta.url,);
+  const proc = new Deno.Command("ruby", {
+    args: [url.pathname,],
+    stdout: "piped",
+    stderr: "piped",
+  },);
+  const result = proc.outputSync();
+  if (!result.success) {
+    console.error(
+      `Ruby script ${script} failed:\n` +
+        new TextDecoder().decode(result.stderr,),
+    );
+    Deno.exit(1,);
+  }
+  const text = new TextDecoder().decode(result.stdout,);
+  const jsonMatch = text.match(/\{[\s\S]*\}/,);
+  if (!jsonMatch) {
+    console.error(`Ruby output ${script} has no JSON object:\n${text}`,);
+    Deno.exit(1,);
+  }
+  const parsed = JSON.parse(jsonMatch[0],) as {
+    cases?: GanttCase[];
+    file?: string;
+    charts?: GanttChartSnapshot[];
+  };
+  if (parsed.cases) {
+    // `gantt-testsuite.rb` devolve o envelope; descarta arquivos sem chart.
+    // Casos com `chartErrors` mas nenhum chart ficam: o motivo da falha do
+    // tj3 deve aparecer no teste (como `it` pulado), não desaparecer.
+    ganttCases.push(
+      ...parsed.cases.filter((c,) =>
+        (c.charts ?? []).length > 0 || (c.chartErrors ?? []).length > 0
+      ),
+    );
+  } else {
+    ganttCases.push(parsed as GanttCase,);
+  }
+}
+
+const ganttOut = new URL("./gantt.golden.json", import.meta.url,);
+await Deno.writeTextFile(
+  ganttOut,
+  JSON.stringify({ cases: ganttCases, }, null, 2,) + "\n",
+);
+const ganttChartCount = ganttCases.reduce((n, c,) => n + c.charts.length, 0,);
+const ganttLineCount = ganttCases.reduce(
+  (n, c,) => n + c.charts.reduce((m, ch,) => m + (ch.lines?.length ?? 0), 0,),
+  0,
+);
+console.log(
+  `Generated ${ganttOut.pathname} (${ganttCases.length} files, ${ganttChartCount} charts, ${ganttLineCount} lines)`,
+);

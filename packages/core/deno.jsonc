@@ -1,5 +1,5 @@
 {
-  "name": "@syntaxmesh/core",
+  "name": "@vanaware/syntaxmesh", // usar este nome no registro
   "compilerOptions": {
     "lib": [
       "dom",

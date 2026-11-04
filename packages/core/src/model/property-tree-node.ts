@@ -107,6 +107,11 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
 
     this.id = this.fullId;
     this.sequenceNo = this.propertySet.items + 1;
+    // RUBY-COMPAT-FIX: `PropertyTreeNode.rb:121` grava o número de sequência no
+    // atributo `seqno`. Sem isso o critério de ordenação padrão dos relatórios
+    // (`sortTasks seqno.up`) compara `null` com `null` e a ordem passa a ser a
+    // de inserção, divergindo do tj3 em qualquer desempate.
+    this.set("seqno", this.sequenceNo,);
 
     if (parent) {
       parent.addChild(this,);
@@ -263,20 +268,26 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
     return indices;
   }
 
-  getIndicies(): number[] {
-    const indices: number[] = [];
-    const collect = (node: PropertyTreeNode | undefined,): void => {
-      if (!node) return;
-      const parent = node.parents()[0];
-      if (parent && parent.propertySet.knownAttribute("index",)) {
-        const index = parent.get("index",);
-        if (index !== null && index !== undefined && index !== 0) {
-          indices.unshift(index as number,);
-        }
-      }
-      collect(parent,);
-    };
-    collect(this,);
+  /**
+   * Atributos `index` deste nó e de todos os seus ancestrais, da raiz para o
+   * nó (Ruby `getIndicies`). É a base do atributo `tree`, usado pela ordenação
+   * em modo árvore (`PropertyList#indexTree`).
+   *
+   * Diferente de `getBSIndicies` (posição estrutural, sempre definida), aqui
+   * entra o valor do atributo `index`, recalculado pela última ordenação — e
+   * `null` quando o nó ainda não tem o atributo.
+   */
+  getIndicies(): Array<number | null> {
+    const indices: Array<number | null> = [];
+    let node: PropertyTreeNode | null = this;
+    while (node) {
+      // Ruby: `p.get('index')`, que é nil quando o nó não tem o atributo.
+      const index = node.attributeDefinition("index",)
+        ? node.get("index",)
+        : null;
+      indices.unshift(typeof index === "number" ? index : null,);
+      node = (node.parents()[0] as PropertyTreeNode | undefined) ?? null;
+    }
     return indices;
   }
 
@@ -422,29 +433,33 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
       this.set(id, value,);
       return;
     }
-    const attr = this.scenarioAttribute(scIdx, id,);
-    let overwrite = attr.provided && !attr.isList();
+    let overwrite = false;
     if (AttributeBase.mode === 0) {
-      // In mode 0, we need to iterate over ALL scenarios in the project,
-      // not just the scenario's children. The Ruby implementation uses
-      // @project.scenario(scenario).all which returns all scenarios.
-      // In TypeScript, we need to iterate over all scenarios in the scenarios PropertySet.
-      const allScenarios = this.project.scenarios.toArray();
-      allScenarios.forEach((sc,) => {
+      // RUBY-COMPAT-FIX: o Ruby percorre `@project.scenario(scIdx).all`
+      // (PropertyTreeNode.rb#[]=), isto é, o cenário alvo **e seus
+      // descendentes** — não todos os cenários do projeto. Percorrer o projeto
+      // inteiro fazia o override de um subcenário (`delayed:effort 8d`) ser
+      // herdado pelo cenário pai (`baseline`), e o relatório do pai saía com
+      // as datas do filho (golden de Gantt do mwe008).
+      const target = this.project.scenario(scIdx,) as unknown as
+        | Scenario
+        | null;
+      const affected: Scenario[] = target ? target.all() : [];
+      for (const sc of affected) {
         const scenarioIdx = this.project.scenarioIdx(sc.fullId,);
-        if (scenarioIdx !== undefined) {
-          const scenarioAttr = this.scenarioAttribute(scenarioIdx, id,);
-          if (scenarioIdx === scIdx) {
-            if (scenarioAttr.provided && !scenarioAttr.isList()) {
-              overwrite = true;
-            }
-            scenarioAttr.set(value as never,);
-          } else {
-            scenarioAttr.inherit(value as never,);
-          }
+        if (scenarioIdx === undefined) continue;
+        const scenarioAttr = this.scenarioAttribute(scenarioIdx, id,);
+        // Atribuições a atributos de lista sempre acumulam; não é overwrite.
+        if (scenarioAttr.provided && !scenarioAttr.isList()) overwrite = true;
+        if (scenarioIdx === scIdx) {
+          scenarioAttr.set(value as never,);
+        } else {
+          scenarioAttr.inherit(value as never,);
         }
-      },);
+      }
     } else {
+      const attr = this.scenarioAttribute(scIdx, id,);
+      overwrite = attr.provided && !attr.isList();
       attr.set(value as never,);
     }
     if (overwrite) {

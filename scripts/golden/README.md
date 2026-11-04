@@ -27,6 +27,7 @@ paritária.
 | `logical-expressions.rb`                                                        | 11   | `logical-expressions.golden.json` | `logical-expressions_golden_test.ts` |
 | `richtext.rb`                                                                   | 12   | `richtext.golden.json`            | `richtext_golden_test.ts`            |
 | `reports-mwe001..009.rb` + `reports-syntax-correct.rb`                          | 14   | `reports.golden.json`             | `reports_golden_test.ts`             |
+| `gantt-mwe001..009.rb` + `gantt-testsuite.rb`                                    | 15   | `gantt.golden.json`               | `gantt_golden_test.ts`               |
 | `packages/core/tests/golden/generate_extension_golden.ts` (TS puro, sem oracle) | 14C  | `reports-extensions.golden.json`  | `reports-extensions_golden_test.ts`  |
 
 ## Fluxo de trabalho
@@ -353,6 +354,72 @@ computadas `query_*` (Fase 11), `chart`/GanttChart (Fase 15/16), `to_rti`
 3. **Cabeçalho vem das colunas** (`cell1`/`cell2`), não das `@lines`.
 4. **Nunca editar `reports.golden.json` à mão** — regerer com
    `deno task golden:generate`.
+
+## Gantt Golden Tests (Fase 15.13)
+
+Validam a **geometria** do Gantt chart (coluna `chart` dos relatórios) contra o
+tj3 real. Complementam os reports golden: lá a coluna `chart` é comparada apenas
+estruturalmente (`<gantt>`), porque nasceu na Fase 14, antes do Gantt existir.
+
+### Arquivos
+
+- `gantt-common.rb` — harness compartilhado (`run`, `charts_of`,
+  `chart_snapshot`, `line_snapshot`, `content_snapshot`, `case_for`,
+  `cases_for_list`, `tjp_dir`). Espelhado do lado TS por
+  `packages/core/tests/golden/gantt-extract.ts` (mesmo walker, mesma
+  serialização, mesma tolerância).
+- `gantt-mwe001.rb` … `gantt-mwe009.rb` — **só os MWEs com coluna `chart`**
+  (001, 002, 003, 004, 006, 008, 009; mwe005 e mwe007 não têm).
+- `gantt-testsuite.rb` — itera `TestSuite/HTML-Reports` (13 arquivos; 5 têm
+  `chart`). `depArrows.tjp` é o caso forte do roteador: 35 linhas e 30 setas.
+- `packages/core/tests/golden/gantt_golden_test.ts` — um `it` por coluna
+  `chart`, mais os testes do comparador e da cobertura mínima.
+
+### O que é comparado
+
+```
+{ report, column, scale, startDate, endDate, width, height, viewWidth, scrollbar,
+  header: { height, nowLineX, markdateLineX, gridLines, cellStartDates },
+  lines: [ { y, height, category, content: [ { kind, x, xEnd, y, w, yLevels, drawFrame } ] } ],
+  depArrows: [ [ [x, y], … ] ], arrowHeads: [ [x, y] ] }
+```
+
+- `startDate`/`endDate`/`cellStartDates` são **segundos desde a época**
+  (`TjTime#to_i` no Ruby, `toSeconds()` no TS) — independem do fuso do processo.
+- `depArrows` são as polilinhas ortogonais do `GanttRouter`;
+  `arrowHeads` os pontos finais deduplicados.
+- **Tolerância:** posições em pixels aceitam **1px** (`POSITION_TOLERANCE`);
+  datas, contagens, `kind`, `category` e booleanos são exatos.
+
+### Por que `to_html` no oracle
+
+`GanttChart#completeChart` — que cria o router, roteia as dependências e
+preenche `@depArrows`/`@arrowHeads` — só roda dentro de `to_html`. O oracle chama
+`chart.to_html` de propósito (e o walker TS faz o mesmo); sem isso as setas não
+existem no momento da extração.
+
+### `instance_variable_get` de propósito
+
+`GanttTaskBar`/`GanttMilestone`/`GanttContainer`/`GanttLoadStack` guardam a
+geometria em ivars **sem `attr_reader`**. O oracle lê via
+`instance_variable_get`; o walker TS lê os campos `private` equivalentes por
+cast (em TS `private` só existe em tempo de compilação). Expor getters públicos
+só de snapshot seria API de produção criada para o teste.
+
+### Regras específicas
+
+1. **Mesmo harness do reports golden** (`outputLevel = :none`,
+   `trapSetup = true`, `TASKJUGGLER_DATA_PATH`) — logs nunca no stdout JSON.
+2. **Arquivos sem `chart` produzem `charts: []`** e são descartados pelo
+   gerador (`gantt-testsuite.rb`); não viram caso.
+3. **Nunca editar `gantt.golden.json` à mão** — regerer com
+   `deno task golden:generate`.
+
+```bash
+ruby scripts/golden/gantt-mwe001.rb          # um caso, para depurar
+ruby scripts/golden/gantt-testsuite.rb      # corpus HTML-Reports
+deno task golden:generate                   # todos (grava gantt.golden.json)
+```
 
 ## Snapshots de Extensão (Fase 14 Complemento, 14C.0.12)
 

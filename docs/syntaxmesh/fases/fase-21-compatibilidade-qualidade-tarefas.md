@@ -34,6 +34,14 @@
 
 ### Contexto crítico
 
+- **Reescopo 2026-11-03 — 3 ondas** (plano §0): 1ª testa o motor **após a
+  Fase 24** (subfases 26.0–26.11, 26.14); 2ª adapta o suite à **extensão VS
+  Code** (após a 22); 3ª adapta à **PWA + UI** e fecha o release (após a 20).
+- **Runner `tj3-ts` (26.3):** usar a **CLI `syntaxmesh` da Fase 24**; não
+  construir runner próprio.
+- **ADR de validação:** o número 033 foi ocupado pela CLI — atribuir o próximo
+  livre em 26.0.1 (conferir `decisoes/README.md`).
+
 - Esta é a **fase final de validação**. Nada de features novas.
 - **Golden tests** contra `tj3` real são o critério primário.
 - **AST equivalence** entre en/pt-BR/es normaliza `name`.
@@ -48,7 +56,7 @@
 
 ### Pré-requisitos
 
-- **Todas as fases 1–20 concluídas.**
+- **Onda atual.** 1ª: Fases 15–18 + 23 + 24 concluídas. 2ª: Fase 22. 3ª: Fases 19–20.
 - `tj3` instalado e funcional (Ruby gem).
 - Corpus de fixtures organizado.
 

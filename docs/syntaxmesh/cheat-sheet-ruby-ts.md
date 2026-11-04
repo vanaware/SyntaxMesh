@@ -243,6 +243,10 @@ Nunca disparam em uso normal. Corrigir é invisível para o usuário. Não preci
 | `Interval#combine` | Retorna `[Interval]` (Array) em 2 branches, `Interval` no 3º | Sempre `Interval` |
 | `Scoreboard#idxToDate` | Typo `kdx` (variável inexistente) no branch `forceIntoProject && idx < 0` | Usar `idx` |
 | `WorkingHours.@days` | 7 referências ao **mesmo** array `[]` via `Array.new(7, [])` | `Array.from({length:7}, () => [])` |
+| `GanttRouter#routeLines` | `Math.asin(Math::PI/2 - sinus)` no ramo `adjLeg < 0`: argumento fora de `[-1, 1]` → `Math::DomainError` | Clamp do argumento em `[-1, 1]` (idêntico a todo caso em que o Ruby funciona) |
+| `GanttRouter#route` | `raise "Routing failed" unless ySeg\|x1\|x2` é inalcançável: `placeLine` sempre devolve `Integer` | Removidos (comentário `RUBY-COMPAT-DOC`) |
+| `GanttLine#generateTask` | `@query.project.reportContexts.last.report.get('rollupTask')` sem checar `nil`: `NoMethodError` se a lista de contextos estiver vazia | Sem contexto ou sem `rollupTask` → não é rollup (`isRollupTask()` devolve `false`) |
+| `Project#collectTimeOffIntervals` | Assume `@scoreboard` não-nil → `NoMethodError` antes do scheduling | Lista de intervalos vazia quando `scoreboard === null` |
 
 ### Categoria B — Afetam output (flag global `compat.keepRubyBugs`)
 
@@ -275,6 +279,8 @@ Produzem resultados diferentes em casos legítimos. Precisam de paridade com `tj
 | `TjTime#to_s` (sem formato) | Usa `this.time.sec` (original) para decidir `:%S` | Usar sec local |
 | `Integer#round` em `-X.5` | `-2.5.round == -3` (half-away-from-zero) | `-2` (JS native) |
 | `Scoreboard#collectIntervals` | Sentinel `start === 0` perde slot 0 | Sentinel `-1` |
+| `GanttRouter#addLineTo` | No ramo horizontal testa `x1 >= @height` (provável typo de `y1 >= @height`), descartando zonas horizontais legítimas | `y1 >= @height` |
+| `GanttHeader#genHeaderScale` | `scale == @largeScale` compara **conteúdo** (`Array#==`): na escala `year` a escala grande fica vazia, então a 1ª célula é tratada como "grande" e sua data vai para `gridLines` em vez de `cellStartDates` | Comparação por identidade (`scale === @largeScale`) |
 
 ### Categoria C — Comportamentos documentados (sempre replicar)
 

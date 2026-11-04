@@ -2,7 +2,7 @@
 
 Leia os arquivos:
 
-- docs/syntaxmesh/fases/plano.md (plano canônico de 21 fases — fonte da verdade de escopo e andamento)
+- docs/syntaxmesh/fases/plano.md (plano canônico de 21 fases + complementares 22–24 — fonte da verdade de escopo, andamento e **ordem de execução**)
 - docs/syntaxmesh/fases/README.md (convenções de arquivos, protocolo TDD, mapa de fases)
 - docs/syntaxmesh/09-regras-para-ia.md (regras de ouro)
 
@@ -109,13 +109,28 @@ i18n (10.15+) em `packages/core/src/i18n/`.
 - **14-C Onda A — paridade de scheduling + `Material#name` (2026-11-02):** duas frentes independentes destravadas. **(A1)** `TaskScenario#finishScheduling` agora **espelha fielmente** `TaskScenario.rb:410-430`: recursa nos filhos (bottom-up) e mescla, com dedupe, os `assignedresources` de cada tarefa em cada pai imediato (via `forceForScenario`), de modo que a união transita pelo container até a raiz — **elimina a divergência 14C.12.4**. Guard de idempotência próprio (`_finishDone`), separado de `_scheduled` que `markAsScheduled()` já eleva no passe principal; nullify de `@candidates/@mandatories/@allLimits` omitido (só liberação de memória; `limitsOk()` lê `allocation.candidates`). Teste: `tests/scheduling/finish-scheduling-assignedresources_14c_test.ts` (4 passos). **(A2)** `Material#name` passa a ser o **rótulo do cabeçalho** (`material <id> "<rótulo>"`) em vez do id — construtor recebe `label?`, parser (`createMaterial`) repassa o `$STRING`; sem rótulo cai no id (compatível com `material steel` sem aspas). Fecha a pendência 14C.1.14. Consequência: colunas `name` do materialreport, `<Name>` do MSPDI, breakdown/RDO/markdown e round-trip TJP (`material aco "Aço" {`) exibem o rótulo. Testes atualizados (stock-columns, msp-xml-re, smoke, hide-material, markdown) + golden `reports-extensions` regenerado **só** por essa mudança. Verificação: suíte core **484 testes / 4938 passos / 0 falhas** · `deno task check:all` exit 0 · `check:stubs` OK · `fmt`/`lint` limpos nos arquivos tocados.
 - **14-C Ondas B–D — motor de `query_*` + `MaterialScenario` + plano da Onda D (2026-11-02/03):** **(B)** 42 `query_*` portados no dispatch de `Query.process` (property→scenarioData→atributo-base): PropertyTreeNode `children/journal/journalmessages/journalsummaries/alert/alertmessages/alertsummaries/alerttrend`; TaskScenario 24 (`activetasks`…`targets`); ResourceScenario central `cost/duties/effort/effortdone/effortleft/headcount/rate/revenue/freetime/freework`. **Ancorados** com âncora válida (dados não produzidos — `NotYetImplementedError`, observável como `!query.process()`, não throw): `annualleave/annualleavelist/annualleavebalance/sickleave/specialleave/timeoffdays/unpaidleave` (Fase 16), `fte` (Fase 18), `Resource#query_dashboard` (Fase 15). Semântica fiel: `query_effort`=0 p/ não-agendada; `query_complete` honra valor `complete` gravado antes de recalcular. Os testes de dispatch da Fase 11 que usavam `effort` como valor genérico migraram p/ `priority` (Integer de cenário sem `query_*`). **(C)** `MaterialScenario` `query_*` (`unitprice/effort/cost→totalcost/scheduledcost/actualcost/remainingcost/remaining/stockquantity/stockcost`) **sem duplicar**: o cálculo por período foi extraído p/ `Material#*InPeriod` (fonte única consumida por `TableReport.genMaterialCell` **e** pelas queries); coluna `unitprice` do materialreport reroteada p/ `query_unitprice`. **(Regressão corrigida)** o nome `query_cost` sequestrava `<-cost->` (atributo-base `cost`=preço unitário, cf. `trace-report-material_14c_test.ts`) → renomeado p/ `query_totalcost`, alinhado à keyword real da coluna `totalcost`. **(D)** investigada e **planejada** (não implementada — mudanção transversal): bucket `task`→`charge`, `aggregate charges` (alias `tasks` p/ tj3), booking charge/material/stock temporal com `<modifier>` (reusa `ExtendedCharge`/`distribution.ts`) e `booking effort`→`booking resource` — plano em `docs/syntaxmesh/fases/fase-14-c-onda-d-booking-sintaxe-nomenclatura.md`. Testes BDD novos: `tests/logic/query-{tasks,resources,ptn}_14c_test.ts`, `tests/reports/material-scenario-queries_14c_test.ts`. Docs: rastreabilidade em `fase-14-relatorios-complemento.md §15` e `fase-11-logica-queries-tarefas.md` (adendo 14-C — 11.12/11.13 desbloqueados). Verificação: suíte core **488 testes / 4966 passos / 0 falhas** · `deno check packages/core/mod.ts` limpo · `deno task check:all` exit 0 · `check:stubs` OK · goldens **25 testes / 981 passos / 0 falhas** (sem drift; `PENDING_DIVERGENCES` CSV reavaliado — ainda divergem, permanecem rastreadas) · `fmt`/`lint` limpos nos arquivos tocados.
 - **14-C Onda D implementada — nomenclatura + booking temporal (2026-11-04):** execução do plano `fase-14-c-onda-d-booking-sintaxe-nomenclatura.md`. **D1** bucket de custo `task`→`charge` em `AccountBuckets` e todos os usos (`account-scenario.ts`); nome interno só — relatórios/golden inalterados. **D2** `aggregate charges` com `tasks` mantido como **alias de leitura** tj3 (parser `rule("aggregate")`, default em `scenario.ts`, runtime `account-scenario.ts` trata `charges`≡`tasks`). **D4** keyword de tipo `booking resource <ref>` (com `effort` alias de leitura; `booking <id>` continua canônico TJ) e `unitprice <p>` **opcional antes do modifier** na alocação de material. **D3 (o mudanção)** — booking de **charge/material/estoque** aceita cauda temporal `<modifier> <intervalos>[,…]` (`onstart|onend|perhour|perday|perweek|permonth|distributed`), fonte única `model/booking-period.ts` (`BookingTail` + `valueInPeriod`/`overlapDays`/`isTemporalTail`/`legacyTail`). Convenção de dias: **índice inteiro de calendário** com **fim exclusivo** no intervalo (`d+24h`≡1 dia; `A - B` cobre A..B−1) e **período inclusivo** em ambas as pontas — espelha a iteração dia-a-dia de `distribution.ts`. `on <data>` vira tail degenerado `onstart`/1-dia com **`isTemporal()===false`**; todos os consumidores (`Material#*InPeriod`, `AccountScenario#addStockBookings`) mantêm o **caminho legado intacto** e só usam a matemática temporal quando `isTemporal()` — **zero drift de golden** garantido. Charge é armazenamento de parsing (sem consumer contábil ainda — Fase 18). Export TJP (`tjp-export-re.ts#bookingTailText`) **reemite** a sintaxe temporal com o fim cru (`String` de meia-noite ⇒ só a data), fechando o round-trip `parse→export→parse` idêntico. Testes BDD novos: `tests/model/booking-period_test.ts` (unit: legacyTail/overlapDays/isTemporalTail/valueInPeriod por modifier) + `tests/parser/rules_onda_d_14c_test.ts` (D3/D4 por origem) + round-trip por modifier em `tests/reports/tjp-export-material_14c_test.ts`. Verificação: suíte core **497 testes / 5005 passos / 0 falhas** (era 488/4966) · `deno check packages/core/mod.ts` limpo · `deno task check:all` exit 0 · `check:stubs` OK · goldens inalterados (sem regeneração) · `fmt`/`lint` limpos nos arquivos tocados.
+- **Ordem de execução oficial (diretriz do usuário, 2026-11-03; seção
+  "Ordem de execução" do `plano.md`):**
+  `15 → 16 → 17 → 18 → 23 → 24 → 21 (1ª onda) → 22 → 21 (2ª onda) → 19 → 20 → 21 (3ª onda)`
+- **Fase 23 — Template (Vento)** ⬜ — plano `fase-23-template.md` + tarefas
+  `fase-23-template-tarefas.md` (~95). Depois da 18, antes da 24/22; estende o
+  baseline de macros da Fase 10 (auditoria 23.1b), não re-porta.
+- **Fase 24 — CLI (`packages/cli`)** ⬜ — plano `fase-24-cli.md` + tarefas
+  `fase-24-cli-tarefas.md` (~100). Depois da 23, antes da 21¹; tj3-equivalente
+  multi-runtime (Deno/Bun/Node); a **1ª onda da Fase 21 usa esta CLI como
+  runner** dos golden tests contra o `tj3` real.
+- **Fase 21 — Compatibilidade e Qualidade ⬜ — reescopada em 3 ondas**
+  (`fase-21-compatibilidade-qualidade.md` §0): 1ª valida o **motor** via CLI da
+  24 (antes da 22); 2ª adapta o suite à **extensão VS Code** (depois da 22);
+  3ª adapta à **PWA + UI** (depois da 20) e fecha o release.
+- **Fase 22 — Extensão VS Code** ⬜ — plano `fase-22-vscode-extension.md`
+  (tarefas a criar no kickoff). Após a 21¹, antes das Fases 19/20; v1 EN.
 - Fase 15 — Gantt ⬜ Não iniciada
 - Fase 16 — Apoio ⬜ Não iniciada
 - Fase 17 — HTML/XML ⬜ Não iniciada
 - Fase 18 — Time/Status Sheets ⬜ Não iniciada
-- Fase 19 — Storage ⬜ Não iniciada
-- Fase 20 — PWA + UI ⬜ Não iniciada
-- Fase 21 — Compatibilidade e Qualidade ⬜ Não iniciada
+- Fase 19 — Storage ⬜ Não iniciada (por último, após a 21²)
+- Fase 20 — PWA + UI ⬜ Não iniciada (antes da 21³)
 
 ## Arquivos de tarefas atômicas (TDD)
 
@@ -126,7 +141,7 @@ Cada fase tem um arquivo de tarefas atômicas separado:
 
 ## Decisões arquitetônicas (ADR)
 
-Todas as decisões arquitetônicas importantes estão documentadas em `docs/syntaxmesh/decisoes/` (ADRs 001–032). Consulte `docs/syntaxmesh/decisoes/README.md` para a lista completa.
+Todas as decisões arquitetônicas importantes estão documentadas em `docs/syntaxmesh/decisoes/` (ADRs 001–032). Consulte `docs/syntaxmesh/decisoes/README.md` para a lista completa. Cadeia reservada pela ordem oficial de execução: **033 = template (Fase 23), 034 = CLI (Fase 24), 035 = extensão VS Code (Fase 22)**; a estratégia de validação da Fase 21 assume o próximo livre na criação (conferir o README antes de criar).
 
 ## Regras de ouro para IA
 

@@ -3,8 +3,9 @@
 > **Arquivo:** `docs/syntaxmesh/fases/fase-15-gantt.md`
 > **Status:** ⬜ Não iniciada
 > **Duração estimada:** 12–15 dias
-> **Depende de:** Fases 2, 4, 5, 7, 11, 14
-> **Bloqueia:** Fases 14 (reports com chart column), 20, 21
+> **Depende de:** Fases 2, 5, 7, 11, 14 (joints `chart` já stubados em `TableReport`)
+> **Bloqueia:** Fases 20 (UI exibe o Gantt) e 21 (golden tests / visual diff).
+> A coluna `chart` de `TableReport` (Fase 14) está stubada com `NotYetImplementedError("16", …)` — âncora que será corrigida para **Fase 15** nesta fase.
 
 ---
 
@@ -30,7 +31,11 @@ O Gantt chart do TaskJuggler é um dos componentes mais icônicos do software. �
 
 ### Integração com TableReport
 
-O Gantt chart é **uma coluna** de `TableReport` (Fase 14). O `columnDef.id === 'chart'` aciona a geração. A coluna tem `ReportTableColumn` com `cell1.special = ganttChart`.
+O Gantt chart é **uma coluna** de `TableReport` (Fase 14). O `columnDef.id === 'chart'` aciona a geração. No port TS vigente, o joint existe e está stubado:
+
+- `packages/core/src/reports/table-report.ts` → `generateHeaderCell`, `case "chart"` → `throw new NotYetImplementedError("16", "GanttChart")` (linha ~491). **Substituir pelo port real nesta fase.**
+- `packages/core/src/reports/table-report.ts` → `generateTableCell`, `case "chart"` → `throw new NotYetImplementedError("16", "GanttLine")` (linha ~820). **Substituir pelo port real nesta fase.**
+- O `GanttChart` implementa a interface `SpecialCell` (`report-table-cell.ts`: `to_html(): XMLElementLike | null; to_csv(csv, startColumn): number`), exatamente como `ColumnTable` já faz para as colunas de calendário (`hourly`…`yearly`).
 
 ### Fluxo
 
@@ -54,13 +59,13 @@ GanttChart.to_html()
 
 ### Escalas
 
-6 escalas disponíveis:
+6 escalas disponíveis (valores fiéis a `@@scales` em `GanttChart.rb`; `minTimeOff` em segundos):
 | Nome | stepSize | Função | minTimeOff |
 |---|---|---|---|
-| `hour` | 20px | `hoursTo` | 5 min |
-| `day` | 20px | `daysTo` | 6h |
-| `week` | 20px | `weeksTo` | 1 dia |
-| `month` | 35px | `monthsTo` | 5 dias |
+| `hour` | 20px | `hoursTo` | 300 (5 min) |
+| `day` | 20px | `daysTo` | 21600 (6h) |
+| `week` | 20px | `weeksTo` | 86400 (1 dia) |
+| `month` | 35px | `monthsTo` | 432000 (5 dias) |
 | `quarter` | 28px | `quartersTo` | -1 (sempre mostra) |
 | `year` | 20px | `yearsTo` | -1 (sempre mostra) |
 
@@ -94,9 +99,11 @@ Ao final desta fase:
 - Setas de dependência ortogonais.
 - Now line e markdate line.
 - Time-off zones (férias/feriados).
-- **≥ 200 testes unitários** + **≥ 30 golden tests** (Gantt dos MWEs).
-- ADR 026 registrado.
-- `deno task check-all` verde.
+- [ ] Integração real em `TableReport` (substitui os 2 stubs `NotYetImplementedError("16")` por `GanttChart`/`GanttLine`).
+- [ ] Legenda: `ReportTableLegend.addGanttItem` para `offduty`/`nowline`/`markdateline` (já existe em TS).
+- [ ] **≥ 200 testes unitários** + **≥ 30 golden tests** (Gantt dos MWEs).
+- [ ] ADR 028 registrado (`028-gantt-html-css.md`, número já reservado em `decisoes/README.md`).
+- [ ] `deno task check-all` verde.
 
 ---
 
@@ -136,6 +143,29 @@ Todos em `docs/taskjuggler/lib/taskjuggler/reports/`:
 ### 3.4 Golden tests
 
 Scripts Ruby que rodam `tj3` em MWEs, extraem HTML do chart e serializam. Teste TS compara posições e dependências.
+
+A pipeline de golden já existe: `deno task golden:generate` → `golden:generate:ruby` (`packages/core/tests/golden/generate_golden.ts`, que invoca os scripts `scripts/golden/*.rb` com o `tj3` do ambiente) e `golden:generate:extensions` (snapshots TS-only). Ver memória "Separate golden task for TS-only extension snapshots vs Ruby oracle pipeline".
+
+### 3.5 Joints TypeScript já existentes (verificado no código)
+
+Todo o suporte que o Gantt consome já foi portado nas Fases 2–14. Confirmado:
+
+| Necessidade | Onde (TS) | Status |
+|---|---|---|
+| `XMLElementLike` / `SimpleXMLElement` | `packages/core/src/richtext/xml-like.ts` | ✅ |
+| Interface `SpecialCell` (`to_html`/`to_csv`) | `packages/core/src/reports/report-table-cell.ts` | ✅ |
+| `TableColumnDefinition` (`scale='week'`, `width`, `tooltip: CellSettingPatternList`) | `packages/core/src/reports/table-column-definition.ts` | ✅ |
+| `ReportTable.headerLineHeight = 19`, `equiLines` | `packages/core/src/reports/report-table.ts` | ✅ |
+| `ReportTableLegend.addGanttItem` / `showGanttItems` | `packages/core/src/reports/report-table-legend.ts` | ✅ |
+| `Query` (`property`, `scopeProperty`, `scenarioIdx`, `start`, `end`, `listItem/listType`) | `packages/core/src/query/query.ts` | ✅ |
+| `TjTime.hoursTo/daysTo/weeksTo/monthsTo/quartersTo/yearsTo` + `beginOf*` + `sameTimeNext*` + `midnight` | `packages/core/src/time/tj-time.ts` | ✅ |
+| `Project.dateToIdx`, `Project.collectTimeOffIntervals` | `packages/core/src/model/project.ts` | ✅ |
+| `TaskScenario`/`ResourceScenario`.`collectTimeOffIntervals`, `getEffectiveWork`, `getEffectiveFreeWork` | `packages/core/src/model/*-scenario.ts` | ✅ |
+| `TableReport.adjustPeriod4Columns` com `mwMap` da coluna `chart` | `packages/core/src/reports/table-report.ts` (~linhas 437–465) | ✅ |
+| Parser `_scale`/`chartScale` (`hourly…yearly`) e coluna `chart` | `packages/core/src/parser/rules/report.ts` | ✅ |
+| Diretório `packages/core/src/gantt/` | — | ⬜ criar nesta fase |
+
+> Consequência prática: **nenhuma dependência de fase futura** é necessária. A Fase 15 é implementável 100% hoje; os únicos pontos de contato com código existente são os 2 stubs em `table-report.ts` e o arquivo de política de âncoras do `check:stubs`.
 
 ---
 
@@ -211,7 +241,11 @@ Se `scopeProperty` não é null (nested):
 
 `@timeOffZones` = intervalos onde o recurso está de férias/feriado. Renderizadas como `<div class="offduty">`.
 
-`GanttChart.scale['minTimeOff']` determina o mínimo para mostrar.
+`GanttChart.scale['minTimeOff']` determina o mínimo para mostrar (valores em segundos: ver tabela de escalas; `-1` em `quarter`/`year` desativa as zonas).
+
+Em Ruby, quem implementa `collectTimeOffIntervals(iv, minDuration)` são `Project`, `TaskScenario`, `ResourceScenario` e `ShiftAssignments` — todos já portados em TS (`packages/core/src/model/`). O `GanttLine` chama `query.property.collectTimeOffIntervals(...)` na property da linha.
+
+Cada `addGanttItem('Off-duty period', 'offduty')` alimenta a legenda (`ReportTableLegend` — já portado, com `showGanttItems`).
 
 ### 4.9 Now line e markdate line
 
@@ -228,10 +262,10 @@ Linhas verticais na escala maior. Renderizadas em cada linha.
 
 `hasScrollbar?() = viewWidth !== null && viewWidth < width`.
 
-Quando true:
-- `div` externo com `overflow: auto`, `width: viewWidth`.
+Quando true (fiel a `GanttChart.rb:145-200`):
+- `div` externo com `overflow: auto`, `width: viewWidth`, `height: total + SCROLLBARHEIGHT` (o `to_html` do chart já infla a altura em 20px para a barra horizontal).
 - `div` interno com `width: width`, `position: absolute`.
-- `ReportTable` gera linha extra para scrollbar.
+- `ReportTable` com `column.scrollbar = true` reserva uma linha extra de scrollbar no rodapé da tabela (mecanismo idêntico ao das colunas de calendário, já portado).
 
 ### 4.12 `complete` nas task bars
 
@@ -239,7 +273,9 @@ Quando true:
 
 ### 4.13 Tooltips
 
-`addHtmlTooltip` adiciona `onclick="TagToTip(...)"` + `<div>` hidden. Requer `wz_tooltip.js` (Fase 20 carrega).
+`addHtmlTooltip` adiciona `onclick="TagToTip(...)"` + `<div>` hidden. Requer `wz_tooltip.js` (Fase 20 carrega; já existe em `scripts/wz_tooltip.js`).
+
+O tooltip vem de `columnDef.tooltip`, um `CellSettingPatternList` (Fase 14, `table-column-definition.ts`): `getPattern(query)` devolve o `setting` do primeiro padrão cuja expressão lógica casa — fiel a `CellSettingPatternList#getPattern`.
 
 ### 4.14 `HTMLGraphics` — módulo de helpers
 
@@ -259,6 +295,20 @@ Só é chamado em `to_html()`. Faz:
 5. Deduplica arrow heads.
 
 **Não chamar antes.**
+
+**Integração com `TableReport` (fiel a `TableReport.rb:341-357`):** em `generateHeaderCell`, caso `chart`:
+```ts
+const gantt = new GanttChart(this.a("now"), this.a("weekStartsMonday"), columnDef, this, this.a("markdate"));
+gantt.generateByScale(rStart, rEnd, columnDef.scale);
+gantt.header.height = this.table!.headerLineHeight * 2 + 1; // alinhar com o header da tabela
+gantt.viewWidth = columnDef.width !== null ? columnDef.width : 450;
+const column = new ReportTableColumn(this.table!, columnDef, "");
+column.cell1.special = gantt;      // GanttChart implementa SpecialCell
+column.cell2.hidden = true;
+column.scrollbar = gantt.hasScrollbar();
+this.table!.equiLines = true;
+```
+e em `generateTableCell`, caso `chart` (fiel a `TableReport.rb:652-659`): célula oculta + `new GanttLine(chart, query, (line.subLineNo - 1) * (line.height + 1), line.height, line.subLineNo, selfcontained ? null : columnDef.tooltip)`, onde `chart = (columnDef.column as ReportTableColumn).cell1.special`.
 
 ### 4.17 `Painter` não é usado
 
@@ -286,13 +336,14 @@ Replicar.
 
 ## 5. Subfases detalhadas
 
-**Bloco A — Utilitários** (19.0–19.3)
-**Bloco B — Content** (19.4–19.7)
-**Bloco C — Header** (19.8–19.9)
-**Bloco D — Line** (19.10)
-**Bloco E — Chart** (19.11)
-**Bloco F — Integração** (19.12)
-**Bloco G — Golden tests** (19.13)
+**Bloco A — Utilitários** (15.0–15.3)
+**Bloco B — Content** (15.4–15.7)
+**Bloco C — Header** (15.8–15.9)
+**Bloco D — Line** (15.10)
+**Bloco E — Chart** (15.11)
+**Bloco F — Integração** (15.12)
+**Bloco G — Golden tests** (15.13)
+**Bloco H — Verificação final** (15.14, apenas no arquivo de tarefas)
 
 ---
 
@@ -300,20 +351,22 @@ Replicar.
 
 ---
 
-### 15.0 — ADR 026 (Gantt HTML+CSS)
+### 15.0 — ADR 028 (Gantt HTML+CSS)
 
 #### Contexto
 
 O Gantt chart do TaskJuggler é HTML + CSS puro. Nada de SVG ou Canvas. Precisamos registrar essa decisão e suas consequências.
 
+> **Numeração:** o ADR 028 já está **reservado** na tabela de `docs/syntaxmesh/decisoes/README.md` ("028 | Gantt HTML+CSS | Proposto | —"), mas o arquivo ainda não existe. Não criar ADR 026 (é Markdown, Fase 13) nem 027 (é reports browser, Fase 14).
+
 #### Objetivo
 
-Criar `docs/syntaxmesh/decisoes/026-gantt-html-css.md`.
+Criar `docs/syntaxmesh/decisoes/028-gantt-html-css.md`.
 
 #### Arquivos
 
-- `docs/syntaxmesh/decisoes/026-gantt-html-css.md` (novo)
-- `docs/syntaxmesh/decisoes/README.md` (atualizar tabela)
+- `docs/syntaxmesh/decisoes/028-gantt-html-css.md` (novo)
+- `docs/syntaxmesh/decisoes/README.md` (atualizar status da linha 028 para Aceito)
 
 #### Requisitos
 
@@ -323,16 +376,18 @@ Criar `docs/syntaxmesh/decisoes/026-gantt-html-css.md`.
 - [ ] **Consequências:**
   - **Positivas:** sem dependências, interativo, testável.
   - **Negativas:** muitos `<div>` em charts grandes; sem anti-aliasing.
-- [ ] Tabela em `README.md` atualizada.
+- [ ] Frontmatter/convenção conforme os ADRs vizinhos (título, Contexto, Decisão, Consequências).
+- [ ] Tabela em `README.md`: status da linha `028` atualizado de `Proposto` para `Aceito` com a data.
 
 #### Referências
 
 - `docs/taskjuggler/lib/taskjuggler/reports/GanttChart.rb`.
 - `docs/tj3-engine/16-blueprint-gantt.md`.
+- `docs/syntaxmesh/decisoes/README.md` (tabela — linha 028 já reservada).
 
 #### Critério de aceite
 
-- ADR 026 criado.
+- ADR 028 criado.
 - Tabela atualizada.
 
 ---
@@ -933,9 +988,10 @@ Implementar `GanttLine`.
 - [ ] Private `generateTimeOffZones(): void`:
   - Pega `minTimeOff` de `chart.scale`.
   - Se `<= 0`, retorna.
-  - `property.collectTimeOffIntervals(iv, minTimeOff)`.
+  - `property.collectTimeOffIntervals(iv, minTimeOff)` (já portado em `TaskScenario`/`ResourceScenario`/`Project`).
   - Converte para `[x, w]`.
-- [ ] Private `addHtmlTooltip(tooltip, query, trigger, hook?)`.
+  - ⚠️ Ruby chama `@chart.table.legend.addGanttItem('Off-duty period', 'offduty')` quando há zonas (`GanttLine.rb:232,271,279`) — `ReportTableLegend.addGanttItem` já existe em TS.
+- [ ] Private `addHtmlTooltip(tooltip: CellSettingPatternList, query, trigger, hook?)`.
 
 #### Referências
 
@@ -984,7 +1040,8 @@ Implementar `GanttChart`.
 #### Requisitos
 
 - [ ] Constante: `SCROLLBARHEIGHT = 20`.
-- [ ] `class GanttChart`:
+- [ ] `class GanttChart` implementa `SpecialCell` (`to_html(): XMLElementLike | null` + `to_csv(csv, startColumn): number`) — mesmo contrato que `ColumnTable` (calendários) já usa em `cell1.special`.
+- [ ] Campos:
   - `start: TjTime | null`
   - `end: TjTime | null`
   - `readonly now: TjTime`
@@ -1096,15 +1153,24 @@ Testes end-to-end.
 
 #### Requisitos
 
+**Joints reais no TS vigente (substituir stubs):**
+
+- [ ] `packages/core/src/reports/table-report.ts` → `generateHeaderCell`, `case "chart"` (linha ~491): trocar `throw new NotYetImplementedError("16", "GanttChart")` pelo port fiel de `TableReport.rb:335-357` (ver §4.16): `new GanttChart(a('now'), a('weekStartsMonday'), columnDef, this, a('markdate'))` → `generateByScale(rStart, rEnd, columnDef.scale)` → `header.height = table.headerLineHeight * 2 + 1` → `viewWidth = columnDef.width ?? 450` → `ReportTableColumn` com `cell1.special = gantt`, `cell2.hidden = true`, `scrollbar = gantt.hasScrollbar()`, `table.equiLines = true`.
+- [ ] `packages/core/src/reports/table-report.ts` → `generateTableCell`, `case "chart"` (linha ~820): trocar o stub `NotYetImplementedError("16", "GanttLine")` pelo port fiel de `TableReport.rb:645-659`: célula oculta (`ReportTableCell` com `hidden = true`, `text = null`) + `new GanttLine(chart, query, (line.subLineNo - 1) * (line.height + 1), line.height, line.subLineNo, selfcontained ? null : columnDef.tooltip)`, com `chart` recuperado de `(columnDef.column as ReportTableColumn).cell1.special`.
+- [ ] ⚠️ Política de stubs (ADR 032 / `deno task check:stubs`): os 2 comentários `// Ancorado: Fase 16 — …` desaparecem junto com os throws; confirmar que `check:stubs` continua verde.
+
+**Comportamento end-to-end:**
+
 - [ ] `TaskReport` com coluna `chart`:
-  - `columnDef.id === 'chart'` → `GanttChart` no header.
+  - `columnDef.id === 'chart'` → `GanttChart` no header (`cell1.special`).
   - `generateTableCell` cria `GanttLine` para cada task.
   - `to_html()` retorna HTML completo com barras e setas.
 - [ ] `ResourceReport` com coluna `chart`:
   - Idem, mas `GanttLine` gera `GanttLoadStack`.
-- [ ] `rollupTask` esconde children.
+- [ ] `rollupTask` esconde children (barra do container some, linhas filhas continuam).
 - [ ] `milestone` gera losango.
-- [ ] Nested resources geram load stacks.
+- [ ] Nested resources geram load stacks (task-in-resource e resource-in-task).
+- [ ] `selfcontained` afeta tooltip (nil vs `columnDef.tooltip`).
 
 #### Referências
 
@@ -1151,15 +1217,20 @@ Scripts Ruby que rodam `tj3` nos MWEs e extraem HTML do chart.
 
 #### Requisitos
 
-**Scripts Ruby:**
+**Scripts Ruby (`scripts/golden/`):**
 
 - [ ] Para cada MWE com `chart` column:
-  - Roda `tj3`.
-  - Extrai `chartcell` do HTML.
-  - Normaliza (remove whitespace, ordena atributos).
+  - Roda `tj3` (mesmo harness de `reports-common.rb` / `reports-mweNNN.rb`).
+  - Extrai o HTML da coluna chart (`chartcell`).
+  - Normaliza (remove whitespace, ordena atributos; estabiliza tokens voláteis — ver memória "golden volatility tokens").
   - Serializa: `{ taskBars: [{id, xStart, xEnd, y, completion}], milestones: [...], containers: [...], depArrows: [...] }`.
 
-**Teste TS:**
+**Pipeline de geração:**
+
+- [ ] Estender `packages/core/tests/golden/generate_golden.ts` com um conjunto `gantt-mweNNN.rb` (mesmo padrão de `parser-mweNNN.rb` / `reports-mweNNN.rb`), escrevendo `packages/core/tests/golden/gantt.golden.json`.
+- [ ] `deno task golden:generate` continua sendo o entry point (não criar task nova).
+
+**Teste TS (`gantt_golden_test.ts`):**
 
 - [ ] Compara com tolerância de 1px.
 - [ ] Verifica:
@@ -1167,10 +1238,6 @@ Scripts Ruby que rodam `tj3` nos MWEs e extraem HTML do chart.
   - Posições X.
   - Número de setas.
   - Y de cada linha.
-
-**Task `golden:generate`:**
-
-- [ ] Adicionar.
 
 #### Referências
 
@@ -1201,7 +1268,7 @@ deno task test
 ## 6. Ordem de execução sugerida
 
 ```text
-15.0  ADR 026
+15.0  ADR 028
       ↓
 15.1  HTMLGraphics
 15.2  CollisionDetector
@@ -1242,14 +1309,14 @@ passa, e:
 - [ ] `GanttTaskBar`, `GanttMilestone`, `GanttContainer`, `GanttLoadStack`.
 - [ ] `GanttHeader` + `GanttHeaderScaleItem`.
 - [ ] `GanttLine`, `GanttChart`.
-- [ ] Integração com `TaskReport` e `ResourceReport`.
+- [ ] Integração com `TaskReport` e `ResourceReport` (stubs `NotYetImplementedError("16")` de `table-report.ts` substituídos; `check:stubs` verde).
 - [ ] Setas de dependência ortogonais funcionando.
 - [ ] Now line + markdate line.
-- [ ] Time-off zones.
+- [ ] Time-off zones + legenda (`addGanttItem`).
 - [ ] **≥ 200 testes unitários**.
 - [ ] **≥ 30 golden tests**.
 - [ ] Nenhum `any` em `src/` (exceto onde justificado).
-- [ ] ADR 026 criado.
+- [ ] ADR 028 criado (`028-gantt-html-css.md`) e tabela de ADRs atualizada.
 
 ---
 
@@ -1295,7 +1362,7 @@ passa, e:
 
 ### Documentos do projeto
 
-- `docs/syntaxmesh/decisoes/026-gantt-html-css.md` (novo)
+- `docs/syntaxmesh/decisoes/028-gantt-html-css.md` (novo; número reservado na tabela)
 - `docs/syntaxmesh/03-arquitetura.md`
 
 ### Fases dependentes
@@ -1325,12 +1392,15 @@ passa, e:
 15. **Sem `any`.** Use `unknown` + type guards.
 16. **Commit por subfase.** `feat(report): gantt-chart`, etc.
 17. **Nunca expandir `GanttRouter` para diagonal.** Ortogonal é decisão.
+18. **ADR 028**, não 026/027: 026 = Markdown (Fase 13), 027 = reports browser (Fase 14). A linha `028 | Gantt HTML+CSS | Proposto` já está reservada em `decisoes/README.md` — basta criar o arquivo e virar o status para Aceito.
+19. **Os 2 stubs em `table-report.ts`** (`case "chart"` em `generateHeaderCell` e `generateTableCell`) são os únicos joints de integração com código existente; a âncora `// Ancorado: Fase 16` deve ser corrigida/removida junto com o port.
+20. **Não reimplementar infraestrutura**: `XMLElementLike`, `SpecialCell`, `ColumnTable`, `ReportTableLegend.addGanttItem`, `TjTime.*To/*Next*`, `collectTimeOffIntervals`, `getEffectiveWork/FreeWork`, `dateToIdx` — tudo já existe (ver §3.5).
 
 ---
 
-## 11. ADR 026 (referência rápida)
+## 11. ADR 028 (referência rápida)
 
-Criado como subfase 15.0. Conteúdo esperado:
+Criado como subfase 15.0 (número já reservado na tabela de ADRs). Conteúdo esperado:
 
 - **Título:** Gantt HTML+CSS
 - **Contexto:** TJ usa HTML+CSS; alternativas SVG/Canvas.

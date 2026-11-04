@@ -12,6 +12,8 @@ import { AttributeType, } from "../attributes/attribute-type.ts";
 import { TjTime, } from "../time/tj-time.ts";
 import { getOffsetSeconds, } from "../time/timezone.ts";
 import { Scoreboard, } from "../time/scoreboard.ts";
+import { IntervalList, } from "../time/interval-list.ts";
+import { TimeInterval, } from "../time/time-interval.ts";
 import { WorkingHours, } from "../calendar/working-hours.ts";
 import { Limits, } from "../scheduling/limits.ts";
 import { ShiftAssignments, } from "../scheduling/shift-assignments.ts";
@@ -567,11 +569,24 @@ export class Project implements ProjectLike {
     return this.resourceAvailability?.get(sbIdx,) || false;
   }
 
+  /**
+   * Intervalos de tempo fora (off-duty/leave) globais do projeto.
+   *
+   * Port fiel de `Project.rb#collectTimeOffIntervals` (l.976-981): filtra o
+   * scoreboard do projeto por slots cujo bit de fora-de-expediente/leave
+   * (máscara `0x3E`) está ligado. Sem scoreboard (projeto ainda não
+   * agendado) não há como saber os leaves → lista vazia.
+   */
   collectTimeOffIntervals(
-    iv: { start: number; end: number },
+    iv: TimeInterval,
     minDuration: number,
-  ): unknown {
-    return null;
+  ): IntervalList<TimeInterval> {
+    if (this.scoreboard === null) return new IntervalList<TimeInterval>();
+    return this.scoreboard.collectIntervals(
+      iv,
+      minDuration,
+      (v,) => typeof v === "number" && (v & 0x3E) !== 0,
+    );
   }
 
   /**

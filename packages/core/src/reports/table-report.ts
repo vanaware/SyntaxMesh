@@ -7,9 +7,9 @@
  * (padrão, calculada ou de calendário). `to_html` monta a moldura HTML e
  * `to_csv` delega à tabela.
  *
- * A coluna `chart` exige `GanttChart` (Fase 15/16); enquanto não portada, é
- * guardada com `NotYetImplementedError`. Nenhuma escrita a disco acontece (ADR
- * 027) — as saídas retornam estruturas/strings.
+ * A coluna `chart` (Gantt, Fase 15) é tratada por `generateHeaderCell` /
+ * `generateTableCell`, que criam o `GanttChart` e as `GanttLine`s. Nenhuma
+ * escrita a disco acontece (ADR 027) — as saídas retornam estruturas/strings.
  *
  * @see docs/syntaxmesh/fases/fase-14-relatorios-tarefas.md (14.12)
  */
@@ -48,7 +48,8 @@ import { ReportTableLegend, } from "./report-table-legend.ts";
 import { ColumnTable, } from "./column-table.ts";
 import type { TableColumnDefinition, } from "./table-column-definition.ts";
 import { TableReportColumn, } from "./table-report-column.ts";
-import { NotYetImplementedError, } from "../model/errors.ts";
+import { GanttChart, } from "../gantt/gantt-chart.ts";
+import { GanttLine, } from "../gantt/gantt-line.ts";
 
 /** Alinhamento de coluna (subconjunto de `CellAlignment` usado nas tabelas). */
 type ColumnAlign = "left" | "right";
@@ -466,7 +467,12 @@ export abstract class TableReport extends ReportBase {
 
     if (!(doNotAdjustStart && doNotAdjustEnd)) {
       if (minWidth > (rEnd.diff(rStart,) + 1)) {
-        margin = Math.floor((minWidth - (rEnd.diff(rStart,) + 1)) / 2,);
+        // RUBY-COMPAT-FIX: no Ruby, `TjTime - TjTime` devolve **Float**
+        // (`Time#-`), então esta margem tem .5s quando o resto é ímpar e o
+        // período do chart fica deslocado meio segundo (que `to_i` trunca
+        // para baixo). Com divisão inteira a borda esquerda saía 1s maior que
+        // a do tj3 e todas as posições em pixel deslizavam junto.
+        margin = (minWidth - (rEnd.diff(rStart,) + 1)) / 2;
       }
       rStart = rStart.addSeconds(-margin,);
       rEnd = rEnd.addSeconds(margin,);
@@ -488,9 +494,31 @@ export abstract class TableReport extends ReportBase {
     const rEnd = colInfo!.end!;
 
     switch (columnDef.id) {
-      case "chart":
-        // Ancorado: Fase 16 — GanttChart (coluna `chart`) não portado.
-        throw new NotYetImplementedError("16", "GanttChart",);
+      case "chart": {
+        // Para a coluna `chart` o cabeçalho carrega um `GanttChart`. As alturas
+        // são ajustadas para que as linhas do chart coincidam com as da tabela.
+        const gantt = new GanttChart(
+          this.a("now",) as TjTime,
+          this.a("weekStartsMonday",) as boolean,
+          columnDef,
+          // Ruby passa `self` (o relatório), não `@table`: é dele que sai
+          // `legend` para o `GanttLine`.
+          this,
+          this.a("markdate",) as TjTime | null,
+        );
+        gantt.generateByScale(rStart, rEnd, columnDef.scale,);
+        // O cabeçalho tem 2 linhas separadas por uma borda de 1px.
+        gantt.header!.height = this.table.headerLineHeight * 2 + 1;
+        // Largura máxima do chart. Se precisar de mais espaço, aparece uma
+        // barra de rolagem (ou o chart é truncado, conforme o formato).
+        gantt.viewWidth = columnDef.width ?? 450;
+        const column = new ReportTableColumn(this.table, columnDef, "",);
+        column.cell1.special = gantt;
+        column.cell2.hidden = true;
+        column.scrollbar = gantt.hasScrollbar();
+        this.table.equiLines = true;
+        break;
+      }
       case "hourly":
         this.genCalChartHeader(
           columnDef,
@@ -817,9 +845,34 @@ export abstract class TableReport extends ReportBase {
     let start: TjTime;
     let sameTimeNext: SameTimeNext;
     switch (columnDef.id) {
-      case "chart":
-        // Ancorado: Fase 16 — GanttLine (coluna `chart`) não portado.
-        throw new NotYetImplementedError("16", "GanttLine",);
+      case "chart": {
+        // Célula oculta: o conteúdo real está no `GanttLine`/chart, não aqui.
+        // O Ruby atribui `cell.text = nil`; `""` é falsy em TS e produz o
+        // mesmo `null` no CSV.
+        const cell = new ReportTableCell(line, q, "",);
+        cell.hidden = true;
+        // O chart é alcançável pela variável `special` do cabeçalho da coluna.
+        const special = (columnDef.column as ReportTableColumn).cell1.special;
+        // O Ruby confia no `send` dinâmico; aqui a pré-condição é verificada.
+        if (!(special instanceof GanttChart)) {
+          throw new Error(
+            `Column 'chart' has no GanttChart in its header cell`,
+          );
+        }
+        const gantt = special;
+        // RUBY-COMPAT-DOC: `subLineNo` já conta a própria linha (1-based),
+        // então a primeira linha do chart fica em y = 0.
+        const subLineNo = line.subLineNo ?? 0;
+        new GanttLine(
+          gantt.asLineChart(),
+          q,
+          (subLineNo - 1) * (line.height + 1),
+          line.height,
+          subLineNo,
+          this.a("selfcontained",) ? null : columnDef.tooltip,
+        );
+        return true;
+      }
       case "hourly":
         start = q.start!.midnight();
         sameTimeNext = (t,) => t.sameTimeNextHour();

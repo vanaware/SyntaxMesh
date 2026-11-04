@@ -20,7 +20,6 @@ import { AttributeType, } from "../../src/attributes/attribute-type.ts";
 import { Query, } from "../../src/query/query.ts";
 import { TjTime, } from "../../src/time/tj-time.ts";
 import { type XMLElementLike, } from "../../src/richtext/xml-like.ts";
-import { NotYetImplementedError, } from "../../src/model/errors.ts";
 import { ReportContext, } from "../../src/reports/report-context.ts";
 import { ReportTable, } from "../../src/reports/report-table.ts";
 import { ReportTableColumn, } from "../../src/reports/report-table-column.ts";
@@ -30,6 +29,7 @@ import { ColumnTable, } from "../../src/reports/column-table.ts";
 import { TableColumnDefinition, } from "../../src/reports/table-column-definition.ts";
 import { TableReport, } from "../../src/reports/table-report.ts";
 import type { TableReportColumn, } from "../../src/reports/table-report-column.ts";
+import { GanttChart, } from "../../src/gantt/gantt-chart.ts";
 
 /** Subclasse concreta que expõe os membros protegidos de TableReport. */
 class TestTableReport extends TableReport {
@@ -240,12 +240,17 @@ describe("TableReport (14.12)", () => {
       assertEquals(col.cell1.text, "Name",);
     });
 
-    it("coluna chart lança NotYetImplementedError (GanttChart)", () => {
+    it("coluna chart cria um GanttChart no cabeçalho (Fase 15.12)", () => {
+      report.force("now", TjTime.fromString("2026-10-05",),);
       const def = new TableColumnDefinition("chart", undefined,);
       def.start = TjTime.fromString("2026-10-01",);
       def.end = TjTime.fromString("2026-10-10",);
       tr.adj(def, [], [],);
-      assertThrows(() => tr.header(def,), NotYetImplementedError,);
+      tr.header(def,);
+      const col = def.column as ReportTableColumn;
+      assert(col.cell1.special instanceof GanttChart,);
+      assertEquals(col.cell2.hidden, true,);
+      assertEquals(tr.getTable()!.equiLines, true,);
     });
 
     it("coluna daily embute uma ColumnTable com scrollbar", () => {

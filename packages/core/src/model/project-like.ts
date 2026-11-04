@@ -8,6 +8,8 @@ import type { Task, } from "./task.ts";
 import type { Report, } from "./report.ts";
 import type { Material, } from "./material.ts";
 import type { TjTime, } from "../time/tj-time.ts";
+import type { TimeInterval, } from "../time/time-interval.ts";
+import type { IntervalList, } from "../time/interval-list.ts";
 import type { CostEvent, } from "./cost-event.ts";
 
 export interface ProjectLike {
@@ -61,6 +63,17 @@ export interface ProjectLike {
   resource(id: string,): Resource | null;
 
   /**
+   * Intervalos de tempo fora (off-duty/leave) globais do projeto.
+   *
+   * Opcional: mocks e modelos construídos à mão não precisam fornecê-la —
+   * `TaskScenario.collectTimeOffIntervals` cai em lista vazia nesse caso.
+   */
+  collectTimeOffIntervals?(
+    iv: TimeInterval,
+    minDuration: number,
+  ): IntervalList<TimeInterval>;
+
+  /**
    * Resolve um ID de material em um objeto `Material` (Fase 10 Complemento C1).
    */
   material(id: string,): Material | null;
@@ -70,8 +83,13 @@ export interface ProjectLike {
    *
    * Usado por `TaskScenario.prepareScheduling()` para calcular
    * o índice do dia atual.
+   *
+   * `forceIntoProject` (Ruby `Project#dateToIdx`, l.961) clampa datas fora do
+   * plano aos extremos; com `false` a data fora do intervalo vira erro. As
+   * bookings passam `false` para não serem silenciosamente movidas para a
+   * borda do projeto.
    */
-  dateToIdx(date: TjTime,): number;
+  dateToIdx(date: TjTime, forceIntoProject?: boolean,): number;
 
   /**
    * Converte um índice de slot para uma data `TjTime`.

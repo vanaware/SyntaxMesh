@@ -1,188 +1,429 @@
-# Plano de Desenvolvimento da Extensão VS Code do SyntaxMesh
+# Fase 22 — Extensão VS Code (`lsp-core` + tooling de edição)
 
-## 1. Visão Geral
+> **Arquivo:** `docs/syntaxmesh/fases/fase-22-vscode-extension.md` **Tarefas:**
+> `docs/syntaxmesh/fases/fase-22-vscode-extension-tarefas.md` (a criar no
+> kickoff) **Status:** ⬜ Não iniciada **Duração estimada:** 10–14 dias
+> **Depende de:** Fases 2–14 (motor completo: parser, i18n, queries,
+> relatórios). **Não depende** das Fases 15–21. **Bloqueia:** nada — tooling
+> externo ao runtime PWA **Posicionamento (ordem oficial 2026-11-03):**
+> executada **após a 1ª onda da Fase 21** (que valida o motor via CLI da 24) e
+> **antes** das Fases 19 (Storage), 20 (PWA + UI) e das 2ª/3ª ondas da 21 — a
+> 2ª onda da 21 adapta o suite para testar esta extensão **Natureza:**
+> tooling externo (extensão VS Code + `lsp-core` + servidor LSP CLI)
 
-Este documento detalha o planejamento para o desenvolvimento da extensão VS Code do SyntaxMesh, uma linguagem de planejamento de projetos compatível com TaskJuggler, com palavras-chave adicionais (`material`, uso de `scenario` em `charge`). O projeto é um monorepo Deno, onde o pacote `core` concentra toda a lógica (análise, planejamento, geração de relatórios e lógica LSP), e os demais pacotes (`vsextension`, `lsp`) são adaptadores que consomem o que o core exporta.
+---
 
-A extensão deve ser compatível com o **Node.js Extension Host** (desktop/remoto) e o **Web Extension Host** (vscode.dev), seguindo o modelo do tj3d/tj3client/tj3webd do TaskJuggler para separar edição (LSP) de modelo de projeto estável (daemon).
+## 1. Contexto
 
-## 2. Estrutura de Pacotes
+O motor — pacote core **renomeado para `@vanaware/syntaxmesh`**, o pacote
+principal do projeto — está completo nas Fases 2–14: parser TJP multilíngue,
+scheduler, financeiro e relatórios. A Fase 22 entrega o **tooling de edição**:
+uma extensão VS Code que reúne tudo o que apoia o usuário a entender e usar a
+sintaxe de planejamento — highlight, autocomplete, diagnósticos, hover,
+navegação, **help e manual** — além da integração com o motor (agendamento,
+geração de relatórios).
+
+A fase é executada **antes** das Fases 19–21 porque consome o core diretamente
+(parse/schedule/reports) e não precisa de Storage (19), UI PWA (20) nem do
+corpus multilíngue certificado (21).
+
+O design segue o modelo do TaskJuggler original (**tj3d / tj3client /
+tj3webd**): separar **edição** (LSP, análise incremental do buffer) de **modelo
+de projeto estável** (daemon alimentado sob demanda pelo usuário) e de
+**relatórios** (geração a partir do modelo em cache).
+
+A extensão deve ser compatível com dois Extension Hosts:
+
+- **Node.js Extension Host** (desktop e sessão remota).
+- **Web Extension Host** (vscode.dev), sem `node:*` e sem processos externos.
+
+Toda a lógica de linguagem (parsing, semântica, regras LSP, help/manual) vive no
+**core**, exportada como **`@vanaware/syntaxmesh/lsp-core`** — um contrato puro,
+testável em Deno sem VS Code. A extensão e o CLI são **adaptadores finos**.
+
+### Escopo v1 — inglês
+
+A primeira iteração da extensão é **monolíngue (`en`)**: grammar TextMate,
+snippets, completions, diagnósticos, help e manual apenas em inglês. O i18n do
+motor (Fase 10) e o `resolveLocale` do `lsp-core` continuam existentes e prontos
+— a UX da extensão apenas os fixa em `en`. Suporte PT/ES na extensão vira
+**adendo**, a ser executado após a Fase 21.
+
+### Reuso de implementações existentes
+
+| Fonte                                                          | O que aproveitar                             |
+| -------------------------------------------------------------- | -------------------------------------------- |
+| `taskjuggler-lsp` (C) — github.com/devrintalen/taskjuggler-lsp | Referência de gramática e comportamentos LSP |
+| `vim-taskjuggler` — github.com/kalafut/vim-taskjuggler         | Lista de keywords para a grammar TextMate    |
+| `taskjuggler-mode.el`                                          | Snippets e estrutura de edição               |
+| Kate syntax (ktexteditor)                                      | Estrutura de contextos de highlight          |
+
+---
+
+## 2. Objetivo
+
+Ao final desta fase:
+
+- Renomear o pacote core para `@vanaware/syntaxmesh` (pacote principal), com
+  exports `"."` e `"./lsp-core"`; ajustar o `name` do `deno.jsonc` raiz
+  (colisão) e os imports de `server`/`ui`/`service-worker`.
+- `lsp-core` exportado pelo core (`@vanaware/syntaxmesh/lsp-core`) com handlers
+  puros: diagnostics, hover, completion, definition/references, semantic tokens,
+  document/workspace symbols, **help/manual** (referência de keywords e
+  documentação embutida), DocumentStore incremental, resolução de locale e
+  **registro do servidor** (`registerLspServer`). Toda a inteligência do LSP
+  mora no core; extensão e CLI são bootstrap mínimo.
+- **v1 em inglês** (grammar, snippets, completions, mensagens, help); PT/ES como
+  adendo pós-Fase 21.
+- Extensão VS Code (`packages/vsextension`) funcional em **desktop** e
+  **vscode.dev**:
+  - Language contribution: `contributes.languages` (id `syntaxmesh`, extensões
+    `.tjp`/`.tji`), grammar TextMate (**EN na v1**),
+    `language-configuration.json`, snippets.
+  - Cliente LSP + servidor embutido — o servidor é apenas bootstrap de
+    transporte; o wiring do protocolo vem do `lsp-core` (`registerLspServer`).
+  - Daemon de projetos (adicionar/remover/listar/recarregar) **sem escuta
+    automática**.
+  - Relatórios: listagem a partir do modelo em cache, Webview para HTML, salvar
+    no workspace para CSV/XML/texto.
+  - Views (árvore do projeto) e Status Bar (locale detectado, última execução).
+- Servidor LSP CLI independente (`packages/lsp`, `--stdio`) para Neovim/Helix.
+- `.vsix` empacotado (< 5 MB), testado em instalação limpa.
+- ADR da fase registrado (**035** na cadeia da ordem oficial; conferir README).
+- Testes: unitários do `lsp-core` em Deno puro (cobertura ≥ 80%), integração no
+  VS Code Test Runner (cobertura ≥ 70% no pacote da extensão).
+
+---
+
+## 3. Arquitetura: três camadas
+
+```
+Arquivo .tjp
+    │
+    ├─ Camada 1 — Edição (LSP): highlight, autocomplete, hover, diagnósticos.
+    │       Análise incremental do buffer; NUNCA alimenta o daemon.
+    │
+    ├─ Camada 2 — Daemon: usuário aciona "Adicionar/Recarregar Projeto".
+    │       core (parse + schedule) → ProjectModel estável em cache.
+    │
+    └─ Camada 3 — Relatórios: lista do modelo em cache → gerar HTML (Webview)
+            ou CSV/XML/texto (salvar no workspace). Sem reanálise.
+```
+
+### 3.1 Camada de edição (LSP)
+
+- Responsável por highlight, autocomplete, ajuda/manuais e diagnóstico **durante
+  a edição**.
+- Analisa incrementalmente o buffer em edição, mas **não alimenta o daemon**:
+  estados intermediários com sintaxe incompleta nunca entram no modelo de
+  projeto estável.
+- `vsextension/src/client/`: `LanguageClient` inicia o servidor embutido e
+  registra capacidades.
+- O **registro do servidor LSP vive no `lsp-core`** (`registerLspServer`):
+  capabilities, sincronização de documentos e todos os handlers são conectados a
+  uma conexão LSP via **interface estrutural mínima** — sem importar
+  `vscode-languageserver` (o `Connection` do `vscode-languageserver` satisfaz a
+  interface estruturalmente).
+- `vsextension/src/server/mod.ts` e `packages/lsp/mod.ts`: apenas **bootstrap de
+  transporte** — criar a conexão (IPC/port/stdio) e chamar
+  `registerLspServer(connection)`. Nenhuma inteligência de LSP neles.
+- `package.json` declara `contributes.languages` e `contributes.grammars`
+  (TextMate para coloração básica); `contributes.commands` expõe comandos de
+  ajuda/manuais (Webview ou navegador).
+
+### 3.2 Camada de daemon (análogo ao tj3d/tj3client)
+
+- Mantém modelos de projeto **estáveis e agendados** em memória.
+- **Comandos de gerenciamento** (análogos ao tj3client):
+  - `SyntaxMesh: Adicionar Projeto ao Daemon` — seleciona `.tjp`, analisa,
+    agenda, armazena em cache.
+  - `SyntaxMesh: Remover Projeto do Daemon`
+  - `SyntaxMesh: Listar Projetos`
+  - `SyntaxMesh: Recarregar Projeto` (após o usuário concluir a edição)
+- **Sem escuta automática**: não vincular `onDidChangeTextDocument` nem
+  `onDidSaveTextDocument` ao daemon. O usuário controla explicitamente quando o
+  modelo é atualizado. _(Esta decisão substitui o antigo
+  `syntaxmesh.scheduleOnSave`.)_
+- **Cache**: `Map<string, ProjectModel>` chaveado pelo `uri.toString()` do
+  `.tjp`.
+  - **Desktop**: serializar em `context.storageUri`, carregar na inicialização;
+    recarga manual após edição.
+  - **Web**: apenas em memória (IndexedDB do Web Worker Host tem origem
+    instável).
+- **Consistência**: ao adicionar, ler o buffer em edição (`document.getText()`)
+  ou o disco, conforme escolha do usuário; ao recarregar, sempre ler o estado
+  atual.
+
+### 3.3 Camada de relatórios (análogo ao tj3webd)
+
+- **Listagem**: relatórios definidos no `.tjp` (nome, formato), lidos do modelo
+  em cache — análogo a `tj3client list-reports <project_id>`.
+- **Seleção**: QuickPick ou Webview para escolher relatórios e destino.
+- **Ramificação por formato**:
+  - **HTML**: Webview; recursos associados (CSS/JS/imagens) empacotados e
+    injetados como URIs `vscode-webview-resource`; botão "Salvar no Workspace"
+    (inclui recursos).
+  - **CSV / XML (MSPDI) / texto puro**: **não** exibir na Webview; oferecer
+    diretamente "Salvar no Workspace" via `workspace.fs.writeFile`.
+- **Geração**: consome o modelo em cache (sem reanálise), serializa e
+  apresenta/salva.
+
+---
+
+## 4. Estrutura de pacotes
 
 ```
 packages/
-├── core/                    # Fonte da verdade: análise, planejamento, relatórios E lógica LSP
-│   ├── deno.json            # name: @syntaxmesh/core
-│   │                        # exports: { ".": "./mod.ts",
-│   │                        #            "./lsp-core": "./src/lsp/mod.ts" }
+├── core/                    # Pacote principal: análise, planejamento, relatórios, LSP, help/manual
+│   ├── deno.jsonc           # name: @vanaware/syntaxmesh
+│   │                        # exports: { ".": "./mod.ts", "./lsp-core": "./src/lsp/mod.ts" }
 │   ├── mod.ts               # Exporta análise/planejamento/relatórios
 │   └── src/
-│       ├── analysis/        # Análise sintática, planejamento, geração de relatórios
-│       ├── lsp/             # Lógica LSP pura (sem vscode-languageserver)
-│       │   ├── mod.ts       # Exporta o "contrato LSP" (lsp-core)
-│       │   ├── capabilities.ts  # ServerCapabilities (objeto puro)
-│       │   ├── handlers.ts      # Funções puras: completion, hover, diagnostics...
-│       │   └── documents.ts     # DocumentStore puro (Map<string, string>)
-│       └── types/
-│           └── lsp.ts       # Tipos LSP próprios (CompletionItem, Diagnostic...)
-├── vsextension/            # Extensão VS Code (adaptador: cliente + servidor LSP + daemon)
-│   ├── deno.json            # name: @syntaxmesh/vsextension
-│   │                        # exports: { ".": "./src/extension.node.ts",
-│   │                        #            "./server": "./src/server/mod.ts" }
-│   ├── package.json         # Manifesto VS Code (obrigatório)
+│       ├── parser/ …        # (existente) engine já implementada nas Fases 2–14
+│       └── lsp/             # lsp-core: apoio ao usuário (lógica pura, sem vscode-languageserver)
+│           ├── mod.ts       # Ponto de entrada "./lsp-core"
+│           ├── capabilities.ts  # ServerCapabilities como objeto puro
+│           ├── documents.ts # DocumentStore puro (Map<string, string>, sync incremental)
+│           ├── locale.ts    # resolveLocale(uri, text): "pt-br" | "en" | "es" (v1 da extensão usa "en")
+│           ├── help.ts      # Referência de keywords/sintaxe + manual embutido (v1: EN)
+│           ├── analyze.ts   # analyzeDocument: parse + AST + erros (reuso incremental)
+│           ├── diagnostics.ts   # erros/avisos → Diagnostic[] (LSP types)
+│           ├── hover.ts         # hover markdown sobre nós da AST
+│           ├── completion.ts    # keywords do idioma + nomes definidos
+│           ├── navigation.ts    # definition / references
+│           ├── semantic-tokens.ts # tokens + legend estável
+│           ├── symbols.ts       # documentSymbol (hierárquico) / workspaceSymbol
+│           └── server.ts        # registerLspServer(connection): wiring do protocolo (interface estrutural)
+├── vsextension/             # Extensão VS Code (adaptador: cliente + servidor + daemon + relatórios)
+│   ├── deno.jsonc           # name: @vanaware/syntaxmesh-vscode
+│   │                        # exports: { ".": "./src/extension.node.ts" }
+│   ├── package.json         # Manifesto VS Code (obrigatório; não gerencia dependências)
+│   ├── syntaxes/            # Grammars TextMate (.tjp, .tji)
+│   ├── snippets/            # syntaxmesh.json
 │   ├── src/
-│   │   ├── extension.node.ts    # Entrada Node.js
-│   │   ├── extension.web.ts     # Entrada Web (vscode.dev)
-│   │   ├── client/              # Cliente LSP (LanguageClient)
-│   │   ├── server/              # Adaptador fino: traduz core/lsp-core para vscode-languageserver
+│   │   ├── extension.node.ts    # Entrada Node.js (main)
+│   │   ├── extension.web.ts     # Entrada Web (browser)
+│   │   ├── client/              # LanguageClient (node e browser variants)
+│   │   ├── server/              # Bootstrap de conexão: createConnection + registerLspServer do core
 │   │   ├── daemon/              # Gerenciador de projetos (análogo ao tj3d)
 │   │   ├── reports/             # Seleção e geração de relatórios (análogo ao tj3webd)
+│   │   ├── views/               # Project tree (TreeDataProvider) + status bar
+│   │   ├── commands/            # Comandos (daemon, relatórios, export, switch-language)
+│   │   ├── config/              # Leitura de settings syntaxmesh.*
 │   │   └── webview/             # Painéis de relatório
 │   ├── scripts/build.ts
 │   └── dist/
 │       ├── extension.node.js
 │       └── extension.web.js
-└── lsp/                    # Servidor CLI independente (adaptador)
-    ├── deno.json            # name: @syntaxmesh/lsp
-    ├── mod.ts              # Importa @syntaxmesh/vsextension/server, wrapper CLI
+└── lsp/                     # Servidor LSP CLI independente (adaptador)
+    ├── deno.jsonc           # name: @vanaware/syntaxmesh-lsp
+    ├── mod.ts               # CLI --stdio: createConnection + registerLspServer do lsp-core
     └── scripts/build.ts
 ```
 
-## 3. Responsabilidades por Pacote
+> **Nota:** a alternativa anterior (pacote `packages/core/lsp-core/` separado e
+> LSP hospedado em Worker com o motor em Worker próprio) foi **substituída**:
+> `lsp-core` vive em `core/src/lsp/` como subpath export, e o servidor LSP roda
+> embutido no bundle da extensão (IPC no desktop, Worker/port no Web). O motor é
+> invocado pela camada de daemon dentro do Extension Host, não por Worker
+> separado.
 
-### `core`
-- **Função**: análise sintática, motor de planejamento, geração de relatórios **e toda a lógica LSP**.
-- **Dependências**: nenhuma dependência de runtime (compatível com browser bundle). **Não importa** `vscode` nem `vscode-languageserver`.
-- **Exporta dois pontos de entrada**:
-  - `"."` → `mod.ts`: funções de análise/planejamento/relatório (I/O injetado pelo chamador), incluindo listagem de relatórios definidos no `.tjp`.
-  - `"./lsp-core"` → `src/lsp/mod.ts`: contrato LSP puro — `capabilities`, handlers (`handleCompletion`, `handleHover`, `handleDiagnostics`), `DocumentStore` e tipos LSP próprios.
-- **I/O**: a leitura de arquivos é injetada pelo chamador (extensão VS Code usa `vscode.workspace.fs`; CLI usa `Deno.readTextFile` ou `node:fs`).
+### 4.1 Responsabilidades por pacote
 
-### `vsextension`
-- **Função**: extensão VS Code completa — cliente LSP, servidor LSP embutido (adaptador), daemon de projetos, seleção e geração de relatórios, Webview, operações Git, publicação.
-- **Dependências**: `vscode` (cliente), `vscode-languageserver` (adaptador do servidor).
-- **Entradas duplas**: `extension.node.ts` e `extension.web.ts`; o VS Code escolhe pelo campo `browser` do `package.json`.
-- **Servidor embutido**: `src/server/mod.ts` é a **única fonte do adaptador LSP**, compartilhado com o pacote `lsp` via subpath export `./server`. Ele traduz os tipos do `core/lsp-core` para a API do `vscode-languageserver` e gerencia a conexão.
+#### `core`
 
-### `lsp`
-- **Função**: servidor LSP CLI independente para Neovim, Helix e outras ferramentas.
-- **Dependências**: `vscode-languageserver`, e importa `@syntaxmesh/vsextension/server` (o adaptador).
-- **Empacotamento**: bundle separado em executável CLI (`syntaxmesh-lsp`), com suporte a `--stdio`.
+- **Função:** análise sintática, motor de planejamento, geração de relatórios
+  **e toda a lógica LSP**.
+- **Dependências:** nenhuma dependência de runtime (compatível com browser
+  bundle). **Não importa** `vscode` nem `vscode-languageserver`.
+- **Dois pontos de entrada:**
+  - `"."` → `mod.ts`: análise/planejamento/relatório (I/O injetado pelo
+    chamador), incluindo listagem de relatórios definidos no `.tjp`.
+  - `"./lsp-core"` → `src/lsp/mod.ts`: contrato LSP puro — `capabilities`,
+    handlers, `DocumentStore`, `help`/manual, `registerLspServer`, tipos. Tudo o
+    que apoia o usuário a entender a sintaxe e o uso do SyntaxMesh (highlight,
+    autocomplete, hover, help, manual) — incluindo o wiring do servidor LSP.
+- **I/O:** leitura de arquivos é injetada pelo chamador (extensão usa
+  `vscode.workspace.fs`; CLI usa `Deno.readTextFile` ou `node:fs`).
+- **Única dependência nova:** `npm:vscode-languageserver-types@^3` (apenas
+  tipos) no `imports` do core.
 
-## 4. Arquivos `deno.json`
+#### `vsextension`
 
-**`deno.json` da raiz (orquestração do workspace)**
+- **Função:** extensão completa — cliente LSP, servidor LSP embutido
+  (adaptador), daemon, relatórios, Webview, views, publicação.
+- **Dependências:** `vscode` (API de extensão), `vscode-languageclient` +
+  `vscode-languageserver` (adaptadores).
+- **Entradas duplas:** `extension.node.ts` e `extension.web.ts`; o VS Code
+  escolhe pelo campo `browser` do `package.json`.
+- **Servidor embutido:** `src/server/mod.ts` é apenas **bootstrap de
+  transporte** — cria a conexão (`vscode-languageserver/node` ou `/browser`) e
+  chama `registerLspServer` do `@vanaware/syntaxmesh/lsp-core`. A inteligência
+  do servidor LSP **não mora aqui**, morando no core junto dos handlers.
 
-```json
+#### `lsp`
+
+- **Função:** servidor LSP CLI independente para Neovim, Helix e outras
+  ferramentas.
+- **Dependências:** `vscode-languageserver` (apenas para o transporte stdio);
+  usa `@vanaware/syntaxmesh/lsp-core` diretamente — nada é compartilhado com a
+  extensão além do próprio core.
+- **Empacotamento:** bundle executável (`syntaxmesh-lsp`) com suporte a
+  `--stdio`.
+
+### 4.2 Workspace `deno.jsonc` (raiz) — renome e junção
+
+Tarefas preliminares do bloco 22.1:
+
+1. **Renomear** o pacote core de `@syntaxmesh/core` para `@vanaware/syntaxmesh`
+   — pacote principal do projeto. O `deno.jsonc` **raiz** hoje carrega esse
+   mesmo `name`: removê-lo (ou renomeá-lo, ex.: `@vanaware/syntaxmesh-dev`) para
+   evitar colisão de nomes no workspace Deno.
+2. Atualizar os imports de `server`, `ui` e `service-worker` (`@syntaxmesh/core`
+   → `@vanaware/syntaxmesh`) e as referências em docs.
+3. Adicionar `"./packages/vsextension"` e `"./packages/lsp"` ao array
+   `workspace`.
+4. Criar os exports `"."` + `"./lsp-core"` no core e as tarefas agregadas:
+
+```jsonc
 {
-  "workspace": [
-    "./packages/core",
-    "./packages/vsextension",
-    "./packages/lsp"
-  ],
-  "imports": {
-    "@vsce/bundler": "jsr:@vsce/bundler@^1"
-  },
   "tasks": {
     "build:vsext": "cd packages/vsextension && deno task build",
-    "build:lsp": "cd packages/lsp && deno task build",
-    "build": "deno task build:vsext && deno task build:lsp"
+    "build:lsp": "cd packages/lsp && deno task build"
   }
 }
 ```
 
-**`packages/core/deno.json`**
+---
 
-```json
-{
-  "name": "@syntaxmesh/core",
-  "version": "0.1.0",
-  "exports": {
-    ".": "./mod.ts",
-    "./lsp-core": "./src/lsp/mod.ts"
-  }
-}
-```
+## 5. Contrato `lsp-core`
 
-**`packages/vsextension/deno.json`**
+API exportada por `@vanaware/syntaxmesh/lsp-core` (funções puras;
+posições/intervalos nos tipos do `vscode-languageserver-types`). **v1:
+mensagens, help e manual apenas em inglês** — as assinaturas com `locale` já
+existem para o adendo multilíngue pós-Fase 21.
 
-```json
-{
-  "name": "@syntaxmesh/vsextension",
-  "version": "0.1.0",
-  "exports": {
-    ".": "./src/extension.node.ts",
-    "./server": "./src/server/mod.ts"
-  },
-  "imports": {
-    "@syntaxmesh/core": "jsr:@syntaxmesh/core@^0.1.0",
-    "@syntaxmesh/core/lsp-core": "jsr:@syntaxmesh/core@^0.1.0/lsp-core"
-  },
-  "tasks": {
-    "build": "deno run -A scripts/build.ts"
-  }
-}
-```
+| Função                                                    | Responsabilidade                                                                                                                                                                                                                                                                                                                       |
+| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `resolveLocale(uri, text): "pt-br" \| "en" \| "es"`       | Detecta `language "..."` no texto; default `"en"` (v1 da extensão sempre consome `"en"`)                                                                                                                                                                                                                                               |
+| `analyzeDocument(uri, text, opts): AnalysisResult`        | `ProjectFileParser.parse`; popula AST, erros, `version`; aceita `previous` para reuso incremental                                                                                                                                                                                                                                      |
+| `toDiagnostics(ast, errors): Diagnostic[]`                | Erros de sintaxe e referência → `Error`; avisos → `Warning`; mensagens em inglês (v1)                                                                                                                                                                                                                                                  |
+| `getHover(ast, position): Hover \| null`                  | Markdown com tipo do nó, atributos principais, localização; `null` quando não há nada útil                                                                                                                                                                                                                                             |
+| `getCompletions(ast, position, locale): CompletionItem[]` | Keywords do idioma (v1: `en`) + nomes definidos (tasks, resources, accounts); `kind` apropriado (`Keyword`, `Reference`, `Property`)                                                                                                                                                                                                   |
+| `getKeywordHelp(keyword, locale): MarkdownString \| null` | Referência embutida da sintaxe/uso de cada keyword (v1: `en`) — alimenta o hover "ver manual" e o comando de ajuda                                                                                                                                                                                                                     |
+| `getManualToc() / getManualPage(id): MarkdownString`      | Manual do usuário embutido no pacote: formato `.tjp`, conceitos de planejamento, exemplos (v1: `en`)                                                                                                                                                                                                                                   |
+| `getDefinition(ast, position): Location \| null`          | Salto para declaração em referências (`!id`, nomes)                                                                                                                                                                                                                                                                                    |
+| `getReferences(ast, position): Location[]`                | Usos do símbolo; cross-file quando ASTs agregadas                                                                                                                                                                                                                                                                                      |
+| `getSemanticTokens(ast): number[]`                        | Keywords, identificadores, strings, números, datas, comentários; `legend` estável sincronizada com o cliente                                                                                                                                                                                                                           |
+| `getDocumentSymbols(ast): DocumentSymbol[]`               | Árvore hierárquica (project → task → subtask)                                                                                                                                                                                                                                                                                          |
+| `getWorkspaceSymbols(asts): SymbolInformation[]`          | Busca case-insensitive por nome                                                                                                                                                                                                                                                                                                        |
+| `DocumentStore`                                           | `Map<uri, text>` com aplicação de `didChange` incremental (range edits)                                                                                                                                                                                                                                                                |
+| `capabilities`                                            | Objeto puro de `ServerCapabilities` (sync incremental, hover, completion, definition, references, semantic tokens, document/workspace symbols)                                                                                                                                                                                         |
+| `registerLspServer(connection): void`                     | Wiring do protocolo LSP: aplica `capabilities` no `initialize`, conecta `DocumentStore` (`didOpen`/`didChange`/`didClose`), emite `publishDiagnostics` e registra todos os handlers. Recebe uma **interface estrutural mínima** (`ServerConnection`) que o `Connection` do `vscode-languageserver` satisfaz — o core não importa a lib |
 
-**`packages/lsp/deno.json`**
+### 5.1 Proibições do `lsp-core` (verificáveis por grep)
 
-```json
-{
-  "name": "@syntaxmesh/lsp",
-  "version": "0.1.0",
-  "exports": "./mod.ts",
-  "imports": {
-    "@syntaxmesh/vsextension/server": "jsr:@syntaxmesh/vsextension@^0.1.0/server"
-  },
-  "tasks": {
-    "build": "deno run -A scripts/build.ts"
-  }
-}
-```
+- ❌ **Não importa** `vscode-languageserver` nem `vscode-languageclient` (só
+  `-types`).
+- ❌ **Não importa** `vscode`, `Deno.stdin`/`Deno.stdout`, `node:*`.
+- ❌ **Não abre conexões nem transports** — criar a conexão pertence aos
+  bootstrap (vscode/CLI); o wiring do protocolo (`registerLspServer`) sim, pois
+  recebe a conexão por interface estrutural.
+- ✅ Roda e é testado **em Deno puro** e em browser (smoke test sem VS Code).
 
-> O `core` declara um objeto `exports` com `"."` e `"./lsp-core"`. O `vsextension` importa `@syntaxmesh/core/lsp-core` dentro do adaptador `src/server/mod.ts`.
+---
 
-## 5. Arquitetura das Três Camadas
+## 6. Language contribution (TextMate + snippets)
 
-### 5.1 Camada de Edição (LSP)
+- `syntaxes/syntaxmesh.tmLanguage.json` (escopo `source.syntaxmesh`) com
+  patterns para:
+  - Estruturas: `project`, `task`, `resource`, `account`, `shift`, `report`,
+    `scenario`.
+  - Relações/estendidas: `depends`, `precedes`, `allocate`, `chargeset`,
+    `material`, `timebasis`.
+  - Tempo/esforço: `effort`, `duration`, `length`, `start`, `end`, `milestone`.
+  - Literais: strings, números, datas, comentários (`#`, `//`, `/* */`).
+- `syntaxes/syntaxmesh-tji.tmLanguage.json` (escopo `source.syntaxmesh.tji`):
+  importa a grammar `.tjp` + `include`.
+- **v1: grammar apenas em inglês** (lista de keywords `en` do módulo i18n do
+  core; reaproveitar conceitualmente Vim/Emacs/Kate). Variante PT/ES é
+  **adendo** executado após a Fase 21.
+- `language-configuration.json`: brackets, auto-closing, comentários, folding.
+- `snippets/syntaxmesh.json`: `project`, `task`, `resource`, `account`,
+  `report`, `material` — em inglês (v1), com placeholders para idiomas futuros.
+- Semantic tokens (via `lsp-core`) refinam o highlight básico do TextMate.
 
-Responsável por highlight, autocomplete, ajuda/manuais e diagnóstico **durante a edição**. O LSP analisa incrementalmente o buffer em edição, mas **não alimenta o daemon**. Estados intermediários com sintaxe incompleta nunca entram no modelo de projeto estável.
+---
 
-- `vsextension/src/client/`: `LanguageClient` inicia o servidor embutido e registra capacidades no VS Code.
-- `vsextension/src/server/mod.ts`: adaptador que consome `@syntaxmesh/core/lsp-core` e registra handlers na conexão `vscode-languageserver`.
-- `package.json` declara `contributes.languages` (id `syntaxmesh`, extensões `.tjp`) e `contributes.grammars` (TextMate para coloração básica).
-- `contributes.commands` expõe comandos de ajuda/manuais que abrem páginas estáticas no Webview ou no navegador.
+## 7. Cliente e servidor LSP — transporte por host
 
-### 5.2 Camada de Daemon (análogo ao tj3d/tj3client)
+| Host                                 | Servidor                                                    | Transporte                                               |
+| ------------------------------------ | ----------------------------------------------------------- | -------------------------------------------------------- |
+| **Desktop (Node Extension Host)**    | bootstrap `src/server/mod.ts` + `registerLspServer` do core | `vscode-languageclient/node` (IPC)                       |
+| **Web (vscode.dev)**                 | Mesmo adaptador, empacotado para browser                    | `vscode-languageclient/browser` sobre Worker/MessagePort |
+| **Editores externos (Neovim/Helix)** | `packages/lsp` (CLI) — mesmo `registerLspServer` do core    | `--stdio`                                                |
 
-Responsável por manter modelos de projeto **estáveis e agendados** em memória, sem reanálise automática a cada alteração de arquivo.
+Regras:
 
-- **Comandos de gerenciamento** (análogos ao tj3client):
-  - "SyntaxMesh: Adicionar Projeto ao Daemon" → seleciona um `.tjp`, analisa, agenda e armazena em cache.
-  - "SyntaxMesh: Remover Projeto do Daemon"
-  - "SyntaxMesh: Listar Projetos"
-  - "SyntaxMesh: Recarregar Projeto" (após o usuário concluir a edição)
-- **Sem escuta automática**: não vincular `onDidChangeTextDocument` nem `onDidSaveTextDocument` para atualizar o daemon. O usuário controla explicitamente quando o modelo é atualizado.
-- **Cache**: `Map<string, ProjectModel>` em memória, chaveado pelo `uri.toString()` do `.tjp`.
-  - **Desktop**: serializar o modelo agendado em `context.storageUri`, carregar na inicialização; o usuário recarrega manualmente após editar.
-  - **Web**: apenas em memória (devido à instabilidade de origem do IndexedDB).
-- **Consistência**: ao adicionar, ler o conteúdo do buffer em edição (`document.getText()`) ou do disco, conforme a escolha do usuário; ao recarregar, sempre ler o estado atual.
+- O `registerLspServer` (no `lsp-core`) registra `initialize` com as
+  `capabilities`, cuida de `didOpen`/`didChange` (incremental)/`didClose` sobre
+  o `DocumentStore` e emite `publishDiagnostics` após cada análise. As entradas
+  da extensão e do CLI **só criam a conexão** — nenhum handler ou regra de
+  protocolo fora do core.
+- `clientOptions.documentSelector` restrito a `syntaxmesh` (`.tjp`/`.tji`);
+  `synchronize.fileEvents` com watcher de `.tjp`/`.tji` para reanálise de
+  arquivos fechados.
+- ❌ **Nunca** `console.log` no canal do servidor LSP (corrompe JSON-RPC); usar
+  `connection.console`/`vscode.window` loggers.
+- Debounce de reanálise no cliente; cancelamento de request anterior.
 
-### 5.3 Camada de Relatórios (análogo ao tj3webd)
+---
 
-Responsável por listar relatórios disponíveis, gerar e apresentar/salvar.
+## 8. Views, Status Bar e configuração
 
-- **Listagem**: ler do modelo em cache a lista de definições de relatório (nome, formato), análoga ao `tj3client list-reports <project_id>`.
-- **Seleção**: Webview ou QuickPick para o usuário escolher quais relatórios gerar e o destino de cada um.
-- **Ramificação por formato**:
-  - **HTML**: exibir na Webview. Recursos associados (CSS/JS/imagens) são empacotados e injetados como URIs de `vscode-webview-resource`; a Webview também oferece botão "Salvar no Workspace" (incluindo recursos associados).
-  - **CSV / XML (niku) / texto puro**: **não** exibir na Webview; oferecer diretamente "Salvar no Workspace".
-- **Geração**: consumir o modelo em cache (sem reanálise), serializar o relatório e apresentar/salvar.
+### 8.1 Project Explorer + Status Bar
 
-## 6. Compatibilidade com Web Extension (vscode.dev)
+- `src/views/project-tree.ts`: `TreeDataProvider` sobre o modelo do daemon —
+  `getChildren` lista tasks, resources, accounts, shifts, reports; `getTreeItem`
+  com ícone e `collapsibleState`; refresh após add/reload/schedule.
+- `src/views/status-bar.ts`: estado do parser/daemon, locale detectado e última
+  execução.
 
-### 6.1 Como habilitar
+### 8.2 Comandos
 
-No `package.json` do `vsextension`:
+| Comando                                   | Camada     | Descrição                                                       |
+| ----------------------------------------- | ---------- | --------------------------------------------------------------- |
+| `SyntaxMesh: Adicionar Projeto ao Daemon` | Daemon     | Seleciona `.tjp`, analisa+agenda, cacheia                       |
+| `SyntaxMesh: Remover Projeto do Daemon`   | Daemon     | Remove e invalida cache                                         |
+| `SyntaxMesh: Listar Projetos`             | Daemon     | QuickPick com projetos em cache                                 |
+| `SyntaxMesh: Recarregar Projeto`          | Daemon     | Re-analisa+agenda a partir do estado atual                      |
+| `SyntaxMesh: Gerar Relatório`             | Relatórios | Lista relatórios do modelo, seleciona, gera (Webview ou salvar) |
+| `SyntaxMesh: Exportar .tjp`               | Relatórios | Serialização canônica do modelo                                 |
+| `SyntaxMesh: Alternar Idioma`             | Edição     | Reescreve `language "..."` no `.tjp` ativo                      |
+| `SyntaxMesh: Mostrar Árvore do Projeto`   | Views      | Abre/foca a view                                                |
+| `SyntaxMesh: Abrir Manual`                | Edição     | Help no Webview/navegador                                       |
+
+### 8.3 Configuração (`contributes.configuration`)
+
+| Setting                           | Default  | Comportamento                                                                                                                                                                  |
+| --------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `syntaxmesh.locale`               | `"auto"` | `auto` respeita `language "..."` do arquivo; `en`/`pt-BR`/`es` atuam apenas como **default quando o arquivo não tem diretiva** — a diretiva do arquivo **nunca é sobrescrita** |
+| `syntaxmesh.lsp.trace.server`     | `"off"`  | Trace LSP (`off`/`messages`/`verbose`)                                                                                                                                         |
+| `syntaxmesh.report.defaultFormat` | `"html"` | Formato preferido no comando Gerar Relatório                                                                                                                                   |
+
+> ❌ Removido do plano anterior: `syntaxmesh.scheduleOnSave` — substituído pelo
+> modelo de daemon com atualização manual explícita (§3.2).
+
+### 8.4 Segurança / Workspace Trust
+
+- Não executar planejamento automaticamente em workspaces não confiáveis; gatear
+  comandos de daemon/relatórios com `vscode.workspace.isTrusted`.
+
+---
+
+## 9. Compatibilidade Web (vscode.dev) e armazenamento
+
+### 9.1 Habilitação
 
 ```json
 {
@@ -191,138 +432,195 @@ No `package.json` do `vsextension`:
 }
 ```
 
-### 6.2 Limitações do ambiente Web
+### 9.2 Limitações do ambiente Web
 
-- **Sem `node:*`**: `extension.web.ts` e dependências não podem importar módulos nativos do Node.js. O `core` já é compatível com browser.
-- **`storageUri` pode estar ausente**: no Web Host não há caminho de sistema de arquivos real; `context.storageUri` / `globalStorageUri` podem ser `undefined`.
-- **Operações Git indisponíveis**: não é possível iniciar processos externos; comandos Git devem ser desabilitados na entrada Web ou exibir mensagem amigável.
-- **IndexedDB não confiável**: o Web Worker Extension Host do VS Code gera uma nova origem a cada carregamento; não confiar em IndexedDB/OPFS para persistência.
-- **Escrita no workspace**: `workspace.fs.writeFile` só pode ser acionado por interação do usuário e dentro de uma janela de permissão curta. A solução stub (escrever arquivo vazio imediatamente após o clique, depois sobrescrever) é o fallback.
+- **Sem `node:*`** em `extension.web.ts` e suas dependências (o core já é
+  browser-compatível).
+- **`storageUri`/`globalStorageUri` podem ser `undefined`**.
+- **Operações Git indisponíveis** (sem `child_process`): desabilitar ou exibir
+  mensagem amigável na entrada Web.
+- **IndexedDB/OPFS não confiáveis** no Web Worker Extension Host (origem nova a
+  cada carregamento) — não usar diretamente.
+- **Escrita no workspace**: `workspace.fs.writeFile` só por interação do usuário
+  e em janela de permissão curta; fallback stub (escrever arquivo vazio
+  imediatamente após o clique, depois sobrescrever).
 
-## 7. Estratégia de Armazenamento (Node.js vs Web)
+### 9.3 Estratégia de armazenamento
 
-| API | Escopo | Adequado para | Comportamento no Web |
-| :--- | :--- | :--- | :--- |
-| `context.globalState` | Global | Chave-valor pequeno, configurações | Persiste via IndexedDB interno do VS Code |
-| `context.workspaceState` | Workspace | Chave-valor pequeno por projeto | Persiste via IndexedDB interno do VS Code |
-| `context.storageUri` | Workspace | Arquivos grandes por projeto; cache serializado do daemon | **Pode ser `undefined`** |
-| `context.globalStorageUri` | Global | Arquivos grandes globais | **Pode ser `undefined`** |
-| `context.secrets` | Global | Dados sensíveis (tokens) | Criptografia DKE no Web |
+| API                        | Escopo    | Adequado para                      | Comportamento no Web                      |
+| -------------------------- | --------- | ---------------------------------- | ----------------------------------------- |
+| `context.globalState`      | Global    | Chave-valor pequeno, configurações | Persiste via IndexedDB interno do VS Code |
+| `context.workspaceState`   | Workspace | Chave-valor pequeno por projeto    | Persiste via IndexedDB interno do VS Code |
+| `context.storageUri`       | Workspace | Cache serializado do daemon        | **Pode ser `undefined`**                  |
+| `context.globalStorageUri` | Global    | Arquivos grandes globais           | **Pode ser `undefined`**                  |
+| `context.secrets`          | Global    | Dados sensíveis (tokens)           | Criptografia DKE no Web                   |
 
-**Não usar** `localStorage` / `IndexedDB` / OPFS diretamente, devido à instabilidade de origem do Web Worker Extension Host.
-
-**Estratégia para o SyntaxMesh**:
-- Dados pequenos (configurações, último estado): `globalState` / `workspaceState`.
-- Cache do daemon: Desktop em `storageUri` (serializado, carregado na inicialização, atualização manual); Web apenas em memória.
-- Relatórios grandes: Node usa `storageUri`; Web gera sob demanda e exibe no Webview, sem persistência entre recarregamentos.
-
-## 8. Fluxo de Dados
-
-```
-Arquivo .tjp
-    │
-    ├─ Edição: LSP (highlight, autocomplete, help) — análise incremental, não alimenta o daemon
-    │
-    ├─ Usuário aciona "Adicionar Projeto ao Daemon"
-    │       │
-    │       └─ core (análise/planejamento) → ProjectModel em cache
-    │
-    ├─ Usuário aciona "Gerar Relatório"
-    │       │
-    │       ├─ HTML → Webview (recursos associados injetados) / Salvar no Workspace
-    │       └─ CSV/XML/texto → Salvar no Workspace (workspace.fs)
-    │
-    └─ CLI: Deno.readTextFile / node:fs → core → stdout / arquivo
-```
-
-## 9. Estratégia de Build
-
-| Pacote | Ferramenta | Saída | Observação |
-| :--- | :--- | :--- | :--- |
-| `core` | `deno bundle` ou esbuild | `dist/core.js` (opcional) | `vsextension`/`lsp` importam o source TS via workspace |
-| `vsextension` (Node) | `@vsce/bundler` | `dist/extension.node.js` | `vscode` external; pode incluir `node:*` |
-| `vsextension` (Web) | `@vsce/bundler` (platform: browser) | `dist/extension.web.js` | **Sem `node:*`**; `vscode` external |
-| `lsp` | esbuild / deno bundler | `dist/syntaxmesh-lsp.js` | Wrapper CLI com shebang, `--stdio` |
-
-## 10. Pontos de Atenção
-
-- **`core` não importa `vscode` nem `vscode-languageserver`**: mantém independência de runtime e compatibilidade com browser.
-- **`core/lsp-core` é a fonte da verdade LSP**: handlers, capabilities, DocumentStore e tipos vivem no core.
-- **`vsextension/src/server/` é adaptador fino**: traduz tipos do core para `vscode-languageserver`; não contém lógica de linguagem.
-- **`lsp` importa `@syntaxmesh/vsextension/server`**: fonte única do adaptador.
-- **Daemon não escuta automaticamente**: o usuário adiciona/recarrega projetos explicitamente; estados intermediários com sintaxe incompleta nunca entram no modelo.
-- **Leitura de arquivos na extensão**: sempre `vscode.workspace.fs`, nunca `node:fs` direto.
-- **Workspace Trust**: não executar planejamento automaticamente em workspaces não confiáveis; usar `vscode.workspace.isTrusted`.
-- **I/O no core**: não chamar `Deno.readTextFile` diretamente; a leitura é injetada.
-- **Web Extension**: `extension.web.ts` não pode usar `child_process`; comandos Git desabilitados ou redirecionados.
-- **Armazenamento no Web**: usar `globalState`/`workspaceState`; `storageUri` pode ser `undefined`.
-- **Escrita no workspace na Web**: usar `workspace.fs.writeFile` com `TextEncoder`; stub imediato após interação do usuário como fallback.
-- **Relatórios HTML na Webview**: reescrever caminhos de recursos associados ou empacotá-los; oferecer "Salvar no Workspace" incluindo recursos.
-- **`package.json` obrigatório**: o `deno.json` não substitui o manifesto VS Code; ambos coexistem.
-
-## 11. Tarefas Detalhadas
-
-### Fase 1 — Core mínimo e extensão Node com relatório
-1. Criar `packages/core` com `deno.json` (`exports: { ".": "./mod.ts", "./lsp-core": "./src/lsp/mod.ts" }`).
-2. Implementar `mod.ts`: análise sintática mínima do `.tjp` (blocos `{}`, IDs hierárquicos, `!` relativo, macros `${}`), motor de planejamento básico, gerador de relatório HTML e listagem de definições de relatório.
-3. Criar `packages/vsextension` com `deno.json`, `package.json` (`main` apontando para `dist/extension.node.js`) e `src/extension.node.ts`.
-4. Implementar comando "SyntaxMesh: Adicionar Projeto ao Daemon": seleciona `.tjp`, lê via `vscode.workspace.fs`, analisa com o core, armazena `ProjectModel` em memória.
-5. Implementar Webview de relatório HTML simples: comando "SyntaxMesh: Gerar Relatório" lê do cache, gera HTML, exibe no `WebviewPanel`.
-6. Configurar `scripts/build.ts` com `@vsce/bundler` para gerar `dist/extension.node.js`.
-7. Testar no VS Code desktop: abrir `.tjp`, adicionar ao daemon, gerar relatório, ver Webview.
-
-### Fase 2 — Lógica LSP no core e servidor embutido
-1. Implementar `core/src/lsp/`: `capabilities.ts`, `handlers.ts` (completion, hover, diagnostics), `documents.ts` (DocumentStore puro), `types/lsp.ts`.
-2. Exportar tudo em `core/src/lsp/mod.ts` (ponto de entrada `./lsp-core`).
-3. Criar `vsextension/src/server/mod.ts`: adaptador que importa `@syntaxmesh/core/lsp-core`, registra handlers na conexão `vscode-languageserver` e implementa `startServer(connection)`.
-4. Criar `vsextension/src/client/`: `LanguageClient` que inicia o servidor embutido (mesmo bundle) e registra capacidades.
-5. No `package.json`, declarar `contributes.languages` (id `syntaxmesh`, extensões `.tjp`), `contributes.grammars` (TextMate) e `contributes.commands` (adicionar/remover/listar/recarregar projeto, gerar relatório, abrir manuais).
-6. Testar: preenchimento automático, diagnóstico, hover no VS Code.
-
-### Fase 3 — Daemon e relatórios completos
-1. Implementar `vsextension/src/daemon/`: gerenciador com `add`/`remove`/`list`/`reload`, cache em memória, persistência em `storageUri` (Node).
-2. Implementar `vsextension/src/reports/`: listagem de relatórios do modelo em cache, seleção via QuickPick/Webview, ramificação por formato.
-3. HTML: Webview com recursos associados injetados (`vscode-webview-resource`), botão "Salvar no Workspace".
-4. CSV/XML/texto: comando "Salvar no Workspace" via `workspace.fs.writeFile` com `TextEncoder`.
-5. Implementar "Recarregar Projeto" e persistência do cache (Node), com invalidação ao remover.
-6. Testar: adicionar múltiplos projetos, listar, recarregar após edição, gerar relatórios HTML e CSV.
-
-### Fase 4 — Web Extension (vscode.dev)
-1. Criar `src/extension.web.ts` sem imports `node:*`; detectar `vscode.env.uiKind === vscode.UIKind.Web`.
-2. No `package.json`, adicionar `"browser": "./dist/extension.web.js"`.
-3. Ajustar `scripts/build.ts` para gerar também `dist/extension.web.js` (platform browser).
-4. Desabilitar/redirecionar comandos Git na entrada Web; exibir mensagem explicativa.
-5. Implementar fallback stub na exportação: escrever arquivo vazio imediatamente após o clique, depois sobrescrever com o conteúdo real.
-6. Daemon na Web: apenas em memória; relatórios HTML na Webview com recursos injetados; CSV/XML via `workspace.fs`.
-7. Documentar no README as diferenças de armazenamento (globalState funciona; storageUri pode ser undefined; sem persistência entre recarregamentos; janela de permissão de escrita).
-8. Testar em vscode.dev: adicionar projeto, gerar relatório HTML na Webview, salvar CSV no workspace.
-
-### Fase 5 — Recursos avançados da extensão Node
-1. Operações Git via `child_process.spawn` (apenas Node).
-2. Publicação de relatórios via `fetch` (ambos) com tratamento de CORS no Web.
-3. Cache do daemon persistido em `storageUri` com versionamento (invalidar se o formato do modelo mudar).
-4. Simulação estilo `tj3d`/`tj3webd`: manter estado em memória no Webview, sem persistência entre recarregamentos.
-
-### Fase 6 — UI web offline-first separada
-1. Criar workspace separado consumindo o bundle do `core`.
-2. Implementar UI offline-first (PWA) com armazenamento próprio (IndexedDB/OPFS no contexto da própria UI, onde a origem é estável).
-3. Reutilizar a lógica do core para análise/planejamento/relatórios.
-
-## 12. Resumo das Decisões
-
-| Decisão | Escolha |
-| :--- | :--- |
-| Fonte da verdade LSP | `core/lsp-core`, sem dependência de runtime |
-| Adaptador LSP | `vsextension/src/server/`, compartilhado com `lsp` |
-| Atualização do daemon | Manual (adicionar/recarregar), sem escuta automática |
-| Cache do daemon | Memória (ambos); `storageUri` (Node) com atualização manual |
-| Relatórios HTML | Webview com recursos injetados + opção salvar |
-| Relatórios não-HTML | Salvar no workspace via `workspace.fs` |
-| Escrita no workspace (Web) | `workspace.fs.writeFile` + stub imediato como fallback |
-| Armazenamento no Web | `globalState`/`workspaceState`; sem IndexedDB/OPFS direto |
-| Entradas da extensão | `extension.node.ts` + `extension.web.ts` (`browser` no `package.json`) |
-| Build | `@vsce/bundler` para Node e Web; `lsp` com esbuild/deno bundler |
+**Estratégia SyntaxMesh:** dados pequenos → `globalState`/`workspaceState`;
+cache do daemon → memória (ambos) + `storageUri` no Desktop com versionamento do
+formato (invalidar cache se o formato do modelo mudar); relatórios grandes →
+Node usa `storageUri`, Web gera sob demanda sem persistência entre
+recarregamentos.
 
 ---
 
-Este documento cobre a arquitetura, os arquivos de configuração, as três camadas (edição/LSP, daemon, relatórios), a compatibilidade Web, a estratégia de armazenamento, o fluxo de dados, o build, os pontos de atenção e as tarefas detalhadas por fase. Se quiser, posso detalhar o conteúdo de `core/src/lsp/documents.ts` (DocumentStore puro), o `scripts/build.ts` completo com `@vsce/bundler`, ou o esboço do gerenciador de daemon (`src/daemon/`).
+## 10. Estratégia de build e empacotamento
+
+| Pacote               | Ferramenta                                        | Saída                          | Observação                                                        |
+| -------------------- | ------------------------------------------------- | ------------------------------ | ----------------------------------------------------------------- |
+| `core`               | — (source TS via workspace)                       | —                              | `vsextension`/`lsp` importam do source                            |
+| `vsextension` (Node) | `@vsce/bundler` (jsr:@vsce/bundler@^1) ou esbuild | `dist/extension.node.js`       | `vscode` external; pode incluir `node:*`                          |
+| `vsextension` (Web)  | mesmo bundler, platform browser                   | `dist/extension.web.js`        | **Sem `node:*`**; `vscode` external                               |
+| `lsp`                | esbuild / Deno bundler                            | `dist/syntaxmesh-lsp.js`       | Shebang, `--stdio`                                                |
+| `.vsix`              | `deno run npm:@vscode/vsce package`               | `syntaxmesh-vscode-x.y.z.vsix` | `.vscodeignore` exclui `src/`, `tests/`, `deno.json*`, `scripts/` |
+
+- Tamanho do `.vsix` < 5 MB.
+- Testar instalação em VS Code limpo (`code --install-extension`) antes de
+  fechar a fase.
+- ❌ Sem `node_modules`/`npm install` no repositório — dependências via
+  `npm:`/`jsr:` no `deno.json(c)`; `package.json` da extensão é **manifesto VS
+  Code**, não gerenciador de dependências (os dois coexistem com o `deno.json`).
+
+---
+
+## 11. Estratégia de testes
+
+| Alvo                 | Sujeito                                                                                                                       | Ferramenta                                  | Critério                                  |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- | ----------------------------------------- |
+| Unitários `lsp-core` | analyze/diagnostics/hover/completion/navigation/semantic-tokens/symbols/locale/documents/help-manual                          | `deno test` + `@std/testing/bdd` (no core)  | Cobertura ≥ 80%; roda sem VS Code (smoke) |
+| Unitários extensão   | commands (com mock do daemon/client), config, engine/daemon cache                                                             | Deno (lógica pura extraída)                 | Cobertura ≥ 70% no pacote                 |
+| Grammar              | TextMate destaca EN (v1); snippets expandem                                                                                   | Snapshot fixtures                           | 1 idioma (EN); PT/ES no adendo            |
+| Integração LSP       | initialize + didOpen/didChange + publishDiagnostics + hover + completion + definition + references + semanticTokens + symbols | **VS Code Test Runner**                     | —                                         |
+| Integração comandos  | add/reload daemon, gerar relatório HTML/CSV, export, switch-language                                                          | VS Code Test Runner                         | —                                         |
+| Smoke `.vsix`        | instalar em VS Code limpo, abrir `.tjp`, ver highlight + diagnósticos + hover + completion                                    | manual + teste automatizado quando possível | 1 cenário                                 |
+| Workspace            | `lsp-core` não quebra `deno check` do workspace                                                                               | `deno task check-all`                       | exit 0                                    |
+
+Convenções: BDD (`@std/testing/bdd` + `@std/assert`); sem `any` em `src/`; TDD
+para handlers novos; fixtures de entrada: MWEs (`docs/Learning/mwe001–009`) e
+`docs/taskjuggler/test/TestSuite/` em inglês — já versionados no repositório;
+**não** depende do corpus da Fase 21.
+
+---
+
+## 12. Convenções e anti-padrões
+
+### Convenções
+
+1. `package.json` é **manifesto VS Code**; `deno.json(c)` gerencia
+   dependências/tasks.
+2. Lógica de linguagem **e wiring do servidor LSP** somente no `lsp-core`/core;
+   extensão e CLI são bootstrap de transporte (criar conexão
+   - `registerLspServer`).
+3. Transporte LSP por host: IPC (desktop), Worker/port (Web), `--stdio` (CLI) —
+   nunca dentro do core.
+4. TextMate grammar v1 cobre **apenas EN** (PT/ES = adendo pós-Fase 21);
+   semantic tokens refinam o básico.
+5. `language "..."` do arquivo é soberano; configuração é apenas default.
+6. Daemon **sem escuta automática**; recarga explícita pelo usuário.
+7. Testes de integração no **VS Code Test Runner**; unitários do core em Deno
+   puro.
+8. Paths relativos nos assets da extensão (consistente com o resto do projeto).
+
+### Anti-padrões
+
+- ❌ Implementar parser/semântica na extensão ou no CLI.
+- ❌ Importar `vscode-languageserver` (fora do bootstrap de transporte
+  vscode/CLI), `vscode`, `node:*` ou `Deno.stdin/stdout` dentro do
+  core/`lsp-core`.
+- ❌ Usar `node_modules` ou `npm install`.
+- ❌ `console.log` no canal do servidor LSP.
+- ❌ sobrescrever `language "..."` do arquivo via configuração.
+- ❌ Vincular save/change automático ao daemon (reintroduzir `scheduleOnSave`).
+- ❌ Confiar em IndexedDB/OPFS/`localStorage` direto no Web Extension Host.
+- ❌ Publicar `.vsix` sem testar em VS Code limpo.
+- ❌ Executar planejamento em workspace não confiável.
+
+---
+
+## 13. Subfases (índice para o arquivo de tarefas)
+
+O detalhamento atômico vai em `fase-22-vscode-extension-tarefas.md` (criar no
+kickoff), no padrão dos blocos A–K das fases anteriores:
+
+| #     | Subfase                 | Entrega                                                                                                              | Pré-requisito |
+| ----- | ----------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------- |
+| 22.0  | ADR da fase             | `decisoes/0NN-extensao-vscode.md` (035 na cadeia oficial) + linha no README                                            | —             |
+| 22.1  | Renome + `lsp-core`     | Core renomeado `@vanaware/syntaxmesh` (§4.2) + `core/src/lsp/` completo (§5, v1 EN), exports, testes unitários ≥ 80% | —             |
+| 22.2  | Scaffolding             | `packages/vsextension/` + `package.json` manifesto + entradas node/web vazias + tasks                                | 22.0          |
+| 22.3  | Language contribution   | Grammar EN (v1) + language-configuration + snippets + snapshots                                                      | 22.2          |
+| 22.4  | Cliente + servidor LSP  | `registerLspServer` no core + `client/` e bootstrap `server/mod.ts`; transporte desktop e Web; integração LSP verde  | 22.1, 22.2    |
+| 22.5  | Daemon                  | `daemon/` add/remove/list/reload; cache memória + `storageUri` (Node); trust gate                                    | 22.4          |
+| 22.6  | Relatórios              | `reports/` + `webview/`; listagem, seleção, HTML com recursos, salvar CSV/XML                                        | 22.5          |
+| 22.7  | Comandos, config, views | comando export/switch-language/ajuda; settings; project tree + status bar                                            | 22.5          |
+| 22.8  | Web extension           | `extension.web.ts` sem `node:*`; fallback stub de escrita; testes vscode.dev                                         | 22.4–22.7     |
+| 22.9  | CLI `packages/lsp`      | `mod.ts` `--stdio` via `lsp-core` direto (`createConnection` + `registerLspServer`); build do executável             | 22.4          |
+| 22.10 | Empacotamento           | `scripts/build.ts`, `.vscodeignore`, task `package`, `.vsix` < 5 MB testado                                          | 22.8          |
+| 22.11 | Verificação final       | `check-all` + testes unit/integração + ADR + `CURRENT.md` + `plano.md`                                               | todas         |
+
+Ordem de execução: 22.0 → 22.1 → 22.2 → 22.3 → 22.4 → 22.5 → 22.6 → 22.7 → 22.8
+→ 22.9 → 22.10 → 22.11. **22.1 (`lsp-core`) é pré-requisito de 22.4** — não
+avançar sem ele verde.
+
+Como a fase depende apenas das Fases 2–14, ela pode ser executada
+**imediatamente após a Fase 14**, antes das Fases 15–18
+(Gantt/apoio/XML/sheets), 19 (Storage), 20 (PWA + UI) e 21 (Compatibilidade e
+Qualidade). Os relatórios gerados pela camada 3 usam o pipeline da Fase 14;
+formatos das Fases 15–18 ficam para um adendo. Registrar o reposicionamento em
+`plano.md` ao iniciar a fase.
+
+Commits por subfase: `feat(lsp-core): …`, `feat(vscode): scaffold`,
+`feat(vscode): lsp-client`, `feat(vscode): daemon`, `feat(vscode): reports`,
+`feat(lsp): cli`, `chore(vscode): package`.
+
+---
+
+## 14. ADR da fase (035) — Extensão VS Code + `lsp-core`
+
+Criar `docs/syntaxmesh/decisoes/0NN-extensao-vscode.md` em 22.0 (0NN =
+próximo livre; **035** se a cadeia oficial foi seguida) com:
+
+- **Contexto:** tooling complementar pós-engine; reuso de
+  Vim/Emacs/Kate/`taskjuggler-lsp`; inspiração tj3d/tj3client/tj3webd.
+- **Decisões:** extensão completa; `lsp-core` como contrato puro dentro do core
+  (subpath export `@vanaware/syntaxmesh/lsp-core`, incluindo help/manual);
+  renome do core para `@vanaware/syntaxmesh` (pacote principal); **wiring do
+  servidor LSP no core** (`registerLspServer` via interface estrutural), com
+  entradas vscode/CLI reduzidas a bootstrap de transporte; transporte por host
+  (IPC/Worker/stdio); daemon com atualização manual; entradas duplas node/web;
+  `package.json` como manifesto; build via `@vsce/bundler`; **v1 monolíngue EN**
+  (PT/ES como adendo pós-Fase 21); fase executada antes das Fases 19–21.
+- **Alternativas rejeitadas:** pacote `lsp-core` separado; LSP-only em Worker
+  sem suporte desktop stdio; Monaco standalone; reutilizar `taskjuggler-lsp` C
+  diretamente.
+- **Consequências:** core ganha dependência de tipos (aceitável); extensão não
+  roda sem VS Code; cache do daemon pode ficar obsoleto entre versões (versionar
+  formato).
+
+> ⚠️ **Numeração (resolvida 2026-11-03):** a ordem oficial em `plano.md`
+> (`… 23 → 24 → 21¹ → 22 …`) define a cadeia de criação **033 = template**
+> (Fase 23), **034 = CLI** (Fase 24), **035 = esta extensão**; a validação da
+> Fase 21 usa ADR próprio (próximo livre). Conferir `decisoes/README.md` antes
+> de criar.
+
+---
+
+## 15. Referências cruzadas
+
+- `docs/syntaxmesh/fases/plano.md` — plano canônico de fases.
+- `docs/syntaxmesh/decisoes/030-arquitetura-simplificada.md` —
+  pacotes/workspace.
+- `docs/syntaxmesh/decisoes/011-port-fiel-taskjuggler.md` — port fiel do
+  TaskJuggler (regra zero).
+- `docs/syntaxmesh/fases/fase-10-parser-linguagem.md` — parser e i18n.
+- `docs/syntaxmesh/fases/fase-11-logica-queries.md` — `Query`.
+- `docs/syntaxmesh/fases/fase-14-relatorios.md` — pipeline de relatórios.
+- `docs/syntaxmesh/fases/fase-21-compatibilidade-qualidade.md` — corpus e golden
+  tests.
+- `docs/tj3-engine/` — blueprints do engine original.
+- Referências externas: `taskjuggler-lsp` (C), `vim-taskjuggler`,
+  `taskjuggler-mode.el`, Kate syntax.
+- Documentação VS Code: Extension APIs, Language Extensions, Web Extensions,
+  Publish.
+
+---
+
+**Fim do plano da Fase 22 (extensão VS Code + `lsp-core` + LSP CLI).**

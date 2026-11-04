@@ -1,7 +1,7 @@
-import { ScoreboardInterval, } from "../time/scoreboard-interval.ts";
 import { Resource, } from "../model/resource.ts";
 import { Task, } from "../model/task.ts";
 import { type SourceFileInfo, } from "../model/property-tree-node.ts";
+import { TimeInterval, } from "../time/time-interval.ts";
 
 /**
  * Tipo para o atributo `overtime` de um Booking.
@@ -31,7 +31,7 @@ export type Sloppy = number;
 export class Booking {
   readonly resource: Resource;
   readonly task: Task;
-  readonly intervals: ScoreboardInterval[];
+  readonly intervals: TimeInterval[];
   sourceFileInfo: SourceFileInfo | null;
   overtime: Overtime;
   sloppy: Sloppy;
@@ -39,7 +39,7 @@ export class Booking {
   constructor(
     resource: Resource,
     task: Task,
-    intervals: ScoreboardInterval[],
+    intervals: TimeInterval[],
   ) {
     this.resource = resource;
     this.task = task;

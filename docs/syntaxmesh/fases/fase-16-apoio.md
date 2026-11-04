@@ -12,13 +12,13 @@
 
 Esta fase completa **estruturas de apoio** que ficaram pendentes em fases anteriores:
 
-1. **`Journal`** — sistema de entradas (journal entries) com alertas, resumos e detalhes. **Fase 14** deixou `query_journal`, `query_alert`, etc. como stubs. Aqui completamos.
+1. **`Journal`** — sistema de entradas (journal entries) com alertas, resumos e detalhes. **Fase 14** deixou `query_journal`, `query_alert`, etc. como stubs. Aqui completamos. Importante adicionar o suporte ao elemento novo picture
 
 2. **`AlertLevelDefinitions`** — níveis de alerta (green/yellow/red por padrão). Usado por `Journal` e por `query_alert`.
 
 3. **`LeaveList`** — substitui os stubs da Fase 5 (`class LeaveList extends Array<unknown>`). Contém `Leave` e `LeaveAllowance`.
 
-4. **`TernarySearchTree`** — árvore de busca ternária. Usada por `tj3man` (CLI) para busca de keywords.
+4. **`TernarySearchTree`** — árvore de busca ternária. Usada por `tj3man` (CLI) para busca de keywords. Desenvolver apenas o core pois a funcionalidade podera ser util na fase 22  para disponibilizar help e manual para a extensão vscode ou servidor lsp
 
 5. **`AlgorithmDiff`** — algoritmo de diff (tipo UNIX `diff`). Usado em debugging e testes.
 
@@ -26,15 +26,15 @@ Esta fase completa **estruturas de apoio** que ficaram pendentes em fases anteri
 
 7. **`FileList`** — lista de arquivos com mtime. No browser, mantém apenas os nomes (sem mtime).
 
-8. **`URLParameter`** — encode/decode de strings para URLs. Usado pelo daemon (fora de escopo) e por `RTFReportLink` (Fase 14).
+8. **`URLParameter`** — encode/decode de strings para URLs. Usado pelo daemon (fora de escopo) e por `RTFReportLink` (Fase 14). Importante desenvolver o core pois usaremos funcionalidade parecida na fase 22.
 
-9. **`StdIoWrapper`** — captura de stdout/stderr. Adaptado para browser (limitação).
+9. **`StdIoWrapper`** — captura de stdout/stderr. Adaptado para browser (limitação). Apenas desenvolver funcionalidade core para ser usado no futuro por lib externa
 
 10. **`UTF8String`** — extensões de String. Em TS, usar nativo (`for (const c of str)`).
 
-11. **`KateSyntax`** — gerador de syntax highlighting para Kate editor. Dev tool.
+11. **`KateSyntax`** — gerador de syntax highlighting para Kate editor. Dev tool. CANCELADO eleborar o gerador final apenas elaborar as funções core para serem usados na fase 22 para o servidor LSP
 
-12. **`VimSyntax`** — gerador de syntax highlighting para Vim. Dev tool.
+12. **`VimSyntax`** — gerador de syntax highlighting para Vim. Dev tool. CANCELADO eleborar o gerador final apenas elaborar as funções core para serem usados na fase 22 para o servidor LSP
 
 ### Prioridade
 
