@@ -33,9 +33,9 @@ Esta fase **completa stubs** das Fases 5, 11 e 14. A ordem importa:
 1. **Bloco A** — `AlertLevelDefinitions` (usado por `Journal`).
 2. **Bloco B** — `Journal` (`JournalEntry`, `JournalEntryList`, `Journal`). ⚠️ Incluir suporte ao elemento novo `picture`/`format` em `JournalEntry` — ver adendo **16.21**.
 3. **Bloco C** — `Leave` + `LeaveList` + `LeaveAllowance` (substitui stubs da Fase 5).
-4. **Bloco D** — utilitários (`TextFormatter`, `FileList`, `URLParameter`, `TernarySearchTree`, `AlgorithmDiff`, `StdIoWrapper`, `UTF8String`). ⚠️ Escopo reduzido: desenvolver **apenas o core** de `URLParameter`, `TernarySearchTree` e `StdIoWrapper` (reusados na Fase 22 — LSP/help/manual e lib externa). Ver observações no plano.
-5. **Bloco E** — núcleo de sintaxe para ferramentas externas (`SyntaxCore`). ⚠️ Geradores finais `KateSyntax`/`VimSyntax` **CANCELADOS**; só as funções core, reusadas na Fase 22 (servidor LSP / extensão VSCode).
-6. **Bloco F** — integração: completar 8 queries de `TaskScenario` + `ResourceScenario.query_dashboard` + `LogicalFlag.eval` + `LogicalFunction.hasalert`.
+4. **Bloco D** — utilitários (`TextFormatter`, `FileList`, `URLParameter`, `StdIoWrapper`, `UTF8String`). ⚠️ Escopo reduzido: desenvolver **apenas o core** de `URLParameter` e `StdIoWrapper`. **Adendo 2026-11-03 (xray):** `TernarySearchTree` (16.9) foi **MOVIDO** para a Fase 22 (`doc-core` 22.1b); `AlgorithmDiff` (16.10) foi **CANCELADO** (DEAD no upstream); `FileList` (16.7), `StdIoWrapper` (16.11) e `UTF8String` (16.12) permanecem no core e têm como **consumidor a Fase 24** (CLI — `fase-24-cli.md` §5.4; `StdIoWrapper` também F18).
+5. **Bloco E** — núcleo de sintaxe para ferramentas externas (`SyntaxCore`). ⚠️ **Adendo 2026-11-03: MOVIDO inteiro para a Fase 22** (subfase 22.1b `doc-core`, que passa a possuir `SyntaxReference`/`KeywordDocumentation`/`TjpExample`/`UserManual` + este núcleo + o TST). Geradores finais `KateSyntax`/`VimSyntax` continuam **CANCELADOS**.
+6. **Bloco F** — integração: completar 8 queries de `TaskScenario` + `ResourceScenario.query_dashboard` (**dono único: Fase 16** — âncora do código reancorada de 15 para 16 em 2026-11-03, xray §5.2) + `LogicalFlag.eval` + `LogicalFunction.hasalert`.
 7. **Bloco G** — golden tests.
 8. **Bloco H** — verificação final.
 
@@ -49,15 +49,19 @@ Esta fase **completa stubs** das Fases 5, 11 e 14. A ordem importa:
 - **ADR 017** — Scoreboard bit encoding.
 - **ADR 018** — Heurística do scheduler.
 - **ADR 019** — Modelo financeiro.
-- **ADR 020** — Orquestrador e pipeline.
-- **ADR 021** — FSM do TextParser.
-- **ADR 022** — i18n de keywords.
-- **ADR 023** — Expressões lógicas sem precedência.
-- **ADR 024** — RichText e function handlers.
-- **ADR 025** — Markdown going-forward.
-- **ADR 026** — Reports browser-only.
-- **ADR 027** — Gantt HTML+CSS.
-- **ADR 028** — Journal e AlertLevel (**criado nesta fase**).
+- **ADR 021** — Orquestrador e pipeline.
+- **ADR 022** — FSM do TextParser.
+- **ADR 023** — i18n de keywords.
+- **ADR 024** — Expressões lógicas sem precedência.
+- **ADR 025** — RichText e function handlers.
+- **ADR 026** — Markdown going-forward.
+- **ADR 027** — Reports no browser (strings).
+- **ADR 028** — Gantt HTML+CSS.
+- **ADR 029** — Journal e AlertLevel (**criado nesta fase**; já reservado no
+  `decisoes/README.md`). Renumerado em 2026-11-03 — xray §5.3: o plano dizia
+  “ADR 026/027/028” para esta decisão, mas esses números já pertencem a
+  Markdown, Reports e Gantt. O ADR das **sheets** (email → texto/download) é
+  **036** e o da injeção de `FileStore` é **037** (Fase 18).
 
 ### Convenções CRÍTICAS
 
@@ -70,10 +74,11 @@ Esta fase **completa stubs** das Fases 5, 11 e 14. A ordem importa:
 - **`LeaveAllowance.slots`** pode ser negativo (expiração).
 - **`TextFormatter` com UTF-8.** Usar `[...str]`.
 - **`URLParameter` depende de `fflate`.** Fixar versão. Implementar **apenas o core** (encode/decode) — a Fase 22 usará funcionalidade parecida.
-- **`TernarySearchTree`** é **core only** (não ligar a `tj3man`); será reusado na Fase 22 (help/manual da extensão VSCode / LSP).
-- **`UTF8String` é no-op.** Funções delegate.
-- **`StdIoWrapper`** implementar **apenas a função core** (captura de stdout/stderr); sem UI de browser — uso futuro por lib externa.
-- **`KateSyntax` / `VimSyntax`**: geradores finais **CANCELADOS**; apenas funções **core** reunidas em `SyntaxCore` (`dev-tools/`), reusadas na Fase 22 (LSP).
+- **`TernarySearchTree`**: **MOVIDO para a Fase 22** (22.1b `doc-core`) em 2026-11-03 — não desenvolver nesta fase.
+- **`UTF8String` é no-op.** Funções delegate. Consumidor: Fase 24 (CLI).
+- **`StdIoWrapper`** implementar **apenas a função core** (captura de stdout/stderr); sem UI de browser. Consumidores: **Fase 18** (`TimeSheetSummary.getResourceJournal`) e **Fase 24** (apps de sheet — `ts/ss send`, 24.10.6).
+- **`FileList`** (16.7): core no `utils/`; **consumidor a Fase 24** (rastreio de arquivos de entrada da CLI — xray §3, adendo 2026-11-03).
+- **`KateSyntax` / `VimSyntax`**: geradores finais **CANCELADOS**; o núcleo (`SyntaxCore`, 16.14) foi **MOVIDO para a Fase 22** (22.1b `doc-core`).
 - **`LogicalFlag`** distingue Query de JournalEntry.
 - **`hasalert`** usa `currentEntries`.
 - Sem `any` em `src/`.
@@ -93,24 +98,24 @@ Esta fase **completa stubs** das Fases 5, 11 e 14. A ordem importa:
 ## Progresso
 
 ```
-[ ] 16.0  ADR 028 (Journal e AlertLevel)            —   0/5
+[ ] 16.0  ADR 029 (Journal e AlertLevel)            —   0/5
 [ ] 16.1  AlertLevelDefinition + AlertLevelDefinitions — 0/14
 [ ] 16.2  JournalEntry + JournalEntryList           —   0/16
 [ ] 16.3  Journal (core + queries)                  —   0/28
 [ ] 16.4  Leave + LeaveList + LeaveAllowance        —   0/18
 [ ] 16.5  Substituir stubs de LeaveList (Fase 5)    —   0/6
 [x] 16.6  TextFormatter                             —  10/10  ✅ ANTECIPADA na Fase 12 (2026-10-28): dependência pura de `RichTextElement#to_s`; port fiel de `TextFormatter.rb:21-184` (`indent`/`format` FSM/`appendWord`, code points UTF-8), expectations conferidas contra o Ruby real; 15 testes em `tests/utils/text-formatter_test.ts`; exportado via `utils/mod.ts`
-[ ] 16.7  FileList + FileRecord                     —   0/8
+[ ] 16.7  FileList + FileRecord                     —   0/8   (consumidor: Fase 24 — §5.4)
 [ ] 16.8  URLParameter                              —   0/6
-[ ] 16.9  TernarySearchTree                         —   0/12
-[ ] 16.10 AlgorithmDiff                             —   0/12
-[ ] 16.11 StdIoWrapper                              —   0/6
-[ ] 16.12 UTF8String (no-op)                        —   0/8
+[x] 16.9  TernarySearchTree (MOVIDO → F22 22.1b)    —   n/a   — decisão 2026-11-03 (xray §3.2): o núcleo de docs/sintaxe inteiro vive na Fase 22
+[x] 16.10 AlgorithmDiff (CANCELADO — DEAD)          —   n/a   — decisão 2026-11-03 (xray §2.2): zero chamadores no upstream; ver §16.10
+[ ] 16.11 StdIoWrapper                              —   0/6   (consumidores: Fase 18 + Fase 24)
+[ ] 16.12 UTF8String (no-op)                        —   0/8   (consumidor: Fase 24)
 [ ] 16.13 deepClone (revisar)                       —   0/4
-[ ] 16.14 SyntaxCore (núcleo p/ Fase 22)            —   0/8
+[x] 16.14 SyntaxCore (MOVIDO → F22 22.1b)           —   n/a   — decisão 2026-11-03; 16.15 permanece CANCELADO
 [x] 16.15 VimSyntax (CANCELADO → geradores finais)  —   n/a
 [ ] 16.16 Completar TaskScenario query_* (8)        —   0/20
-[ ] 16.17 Completar ResourceScenario query_dashboard —  0/6
+[ ] 16.17 Completar ResourceScenario query_dashboard —  0/6   (dono único: F16; âncora em `resource.ts` reancorada de 15→16)
 [ ] 16.18 Completar LogicalFlag + hasalert          —   0/8
 [ ] 16.19 Golden tests (Journal + Leaves)           —   0/10
 [ ] 16.20 Verificação final                         —   0/10
@@ -122,19 +127,23 @@ TOTAL: ~191
 
 ## Bloco A — Fundação
 
-### 16.0 — ADR 028 (Journal e AlertLevel)
+### 16.0 — ADR 029 (Journal e AlertLevel)
 
 **Objetivo:** formalizar o sistema de journal + alert levels.
 
-**⚠️ Nota:** o plano usa `ADR 026`, mas ADR 026 é reports (Fase 14), ADR 027 é Gantt (Fase 15). Aqui usamos **ADR 028**.
+**⚠️ Nota (corrigida 2026-11-03):** o plano usava `ADR 026`/`ADR 027`/`ADR 028` para
+esta decisão em momentos diferentes. Na numeração real do repositório: **026** é
+Markdown (Fase 13), **027** é reports no browser (Fase 14), **028** é Gantt (Fase 15)
+e **029** está reservado a Journal e AlertLevel no `decisoes/README.md`. Aqui usamos
+**ADR 029** (arquivo `decisoes/029-journal-alertlevel.md`).
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 16.0.1 | Criar `docs/syntaxmesh/decisoes/028-journal-alertlevel.md` com frontmatter | idem | arquivo existe |
+| 16.0.1 | Criar `docs/syntaxmesh/decisoes/029-journal-alertlevel.md` com frontmatter | idem | arquivo existe |
 | 16.0.2 | Seção **Contexto:** Journal + AlertLevel; uso em tracking; tracking de projetos | idem | — |
 | 16.0.3 | Seção **Decisão 1:** `Journal` é parte do `Project` (Fase 9 já preparou) | idem | — |
 | 16.0.4 | Seção **Decisão 2:** `JournalEntry.property` é `PropertyTreeNode \| null` (entrada global); **Decisão 3:** Alert levels configuráveis (default 3) | idem | — |
-| 16.0.5 | **Alternativas** + **Consequências** (sistema de tracking completo); atualizar linha `028` em `decisoes/README.md` | idem | 28 linhas |
+| 16.0.5 | **Alternativas** + **Consequências** (sistema de tracking completo); atualizar a linha `029` em `decisoes/README.md` (de “Proposto” para Aceito + data) | idem | linha 029 atualizada |
 
 ---
 
@@ -421,12 +430,14 @@ TOTAL: ~191
 
 ### 16.9 — `TernarySearchTree`
 
+> **MOVIDO (2026-11-03 — decisão do usuário sobre o xray §3.2):** desenvolvido
+> na **Fase 22**, subfase **22.1b `doc-core`** (`@vanaware/syntaxmesh/doc-core`),
+> junto com `SyntaxReference`/`KeywordDocumentation`/`TjpExample`/`UserManual`
+> e o `SyntaxCore`. As 12 tarefas abaixo movem-se com a subfase (referência
+> histórica mantida).
+
 **⚠️ RUBY: `TernarySearchTree.rb` (~180 linhas)**
 **🔎 CHEAT: §3 recursão, §12 Categoria B (partial match)**
-
-> **Escopo (anotação do plano, item 4):** implementar **apenas o core** da estrutura
-> de dados (insert/find/balance/collect). **Não** ligar a `tj3man` nesta fase — a
-> mesma estrutura será reusada na Fase 22 para busca de help/manual (LSP / extensão VSCode).
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
@@ -445,25 +456,18 @@ TOTAL: ~191
 
 ---
 
-### 16.10 — `AlgorithmDiff`
+### 16.10 — `AlgorithmDiff` — **CANCELADO (2026-11-03)**
 
-**⚠️ RUBY: `AlgorithmDiff.rb` (arquivo inteiro — ~250 linhas)**
-**🔎 CHEAT: §3 `Array`, §12 Categoria B (LCS)**
-
-| # | Tarefa | Arquivos | Verificação |
-|---|---|---|---|
-| 16.10.1 | Criar `packages/core/src/utils/diff.ts` com `class Hunk` | idem | `deno check` |
-| 16.10.2 | Campos: `aIdx`, `bIdx`, `insertValues`, `deleteValues` | idem | `deno check` |
-| 16.10.3 | ⚠️ `insert?()`, `delete?()`, `to_s()` | idem | 3 testes |
-| 16.10.4 | Criar `class Diff` com `constructor(a, b)` | idem | 2 testes |
-| 16.10.5 | ⚠️ `private diff(a, b)` — LCS-like | idem | 3 testes |
-| 16.10.6 | ⚠️ `private computeIndexTranslations(a, b)` | idem | 2 testes |
-| 16.10.7 | ⚠️ `patch(values): unknown[]` | idem | 4 testes |
-| 16.10.8 | ⚠️ `editScript(): string[]` | idem | 3 testes |
-| 16.10.9 | ⚠️ `to_s(): string` — formato UNIX diff | idem | 3 testes |
-| 16.10.10 | `interface Diffable` (`diff(b)`, `patch(diff)`) | idem | `deno check` |
-| 16.10.11 | Teste: `diff` replace | idem | 1 teste |
-| 16.10.12 | Re-exportar em `packages/core/mod.ts` | idem | `deno check` |
+> **Registro de cancelamento (decisão do usuário sobre a varredura
+> `docs/syntaxmesh/xray.md` §2.2):** `AlgorithmDiff.rb` é **DEAD no próprio
+> TaskJuggler** — `class Diff` não tem **nenhum chamador** em todo
+> `docs/taskjuggler/lib` (verificado por grep na varredura). O port foi
+> **cancelado**: nenhuma tarefa desta fase o desenvolve.
+> Se um dia vier a ser necessário (ex.: diff de status sheets na Fase 18),
+> reabrir como task própria da fase consumidora, com justificativa.
+>
+> ~~Tarefas 16.10.1–16.10.12 (`utils/diff.ts`: `Hunk`, `Diff`, `patch`,
+> `editScript`, `to_s` UNIX-diff, `Diffable`)~~ — removidas com o cancelamento.
 
 ---
 
@@ -472,10 +476,10 @@ TOTAL: ~191
 **⚠️ RUBY: `StdIoWrapper.rb` (~60 linhas)**
 **🔎 CHEAT: §7 `$stdout` → `console.log`, §12 Categoria B (limitações)**
 
-> **Escopo (anotação do plano, item 9):** desenvolver **apenas a função core** de
-> captura de stdout/stderr. Sem integração de UI de browser; será reusada no futuro
-> por lib externa. `TimeSheetSummary.getResourceJournal` (Fase 18) é o único consumo
-> previsto hoje.
+> **Escopo (anotação do plano, item 9 + adendo 2026-11-03):** desenvolver **apenas
+> a função core** de captura de stdout/stderr. Sem integração de UI de browser.
+> Consumidores previstos: **Fase 18** (`TimeSheetSummary.getResourceJournal`) e
+> **Fase 24** (apps de sheet `ts/ss send` — 24.10.6; captura de saída para anexos).
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
@@ -529,10 +533,17 @@ TOTAL: ~191
 
 ### 16.14 — `SyntaxCore` (núcleo de realce e autocomplete)
 
+> **MOVIDO (2026-11-03 — decisão do usuário sobre o xray §3.2):** esta subfase
+> integra-se ao **`doc-core` da Fase 22 (22.1b)**, que passa a possuir também
+> `SyntaxReference`, `KeywordDocumentation`, `TjpExample` e `UserManual`.
+> As tarefas abaixo executam sob a F22 (referência histórica mantida na F16).
+
 **⚠️ RUBY: `KateSyntax.rb` (constructor `initialize` + `keywords`) e `VimSyntax.rb` (`prepareSyntax`) — só a lógica de coleta, NÃO a escrita de arquivo**
 **🔎 CHEAT: §3 `Hash#each_value` → `for...of`; §12 Categoria B (filtragem de keywords)**
 
-**Pré-requisitos:** Fase 14 (`SyntaxReference`, `KeywordDocumentation`).
+**Pré-requisitos:** ~~Fase 14~~ — **corrigido 2026-11-03**: `SyntaxReference` e
+`KeywordDocumentation` **não** foram entregues na Fase 14; tornam-se conteúdo
+da própria subfase 22.1b (`doc-core`).
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
@@ -662,11 +673,11 @@ TOTAL: ~191
 | 16.20.2 | `deno task golden:generate && deno task test` verde | exit 0 |
 | 16.20.3 | `grep -r "NotYetImplementedError" packages/core/src/journal/` = 0 | grep |
 | 16.20.4 | `grep -r "NotYetImplementedError" packages/core/src/model/task-scenario.ts` — apenas queries de Fase 8/18 | ≤ 2 ocorrências |
-| 16.20.5 | ADR 028 criada e commitada | git log |
-| 16.20.6 | `Journal`, `JournalEntry`, `AlertLevelDefinitions`, `Leave`, `LeaveList`, `LeaveAllowance`, `TextFormatter`, `FileList`, `URLParameter`, `TernarySearchTree`, `AlgorithmDiff`, `StdIoWrapper`, `SyntaxCore` exportados em `packages/core/mod.ts` | `deno check` |
+| 16.20.5 | ADR 029 criada e commitada | git log |
+| 16.20.6 | `Journal`, `JournalEntry`, `AlertLevelDefinitions`, `Leave`, `LeaveList`, `LeaveAllowance`, `TextFormatter`, `FileList`, `URLParameter`, `StdIoWrapper` exportados em `packages/core/mod.ts` — **não** `TernarySearchTree`/`SyntaxCore` (movidos para a F22) nem `AlgorithmDiff` (cancelado) | `deno check` |
 | 16.20.7 | `tests/integration/smoke_after_phase_16_test.ts` — cria `Journal`, adiciona 1 entrada, verifica `alertLevel`; verifica Fase 15 (Gantt HTML) | 1 teste |
 | 16.20.8 | Auditoria: cada subfase do plano `fase-16-apoio.md` tem tarefas correspondentes | grep |
-| 16.20.9 | Corrigir numeração em `fase-16-apoio.md` (`### 20.X` → `### 16.X`, `ADR 026` → `ADR 028`) | grep |
+| 16.20.9 | Corrigir numeração em `fase-16-apoio.md` (`### 20.X` → `### 16.X`, `ADR 027` → **`ADR 029`** para Journal/AlertLevel) | grep |
 | 16.20.10 | Teste agregado: `TaskScenario.query_journal` retorna `RichTextIntermediate` com entradas | 1 teste |
 
 ---
@@ -691,7 +702,8 @@ TOTAL: ~191
 16. **`hasalert`** usa `currentEntries`.
 17. **Sem `any`.** Use `unknown` + narrowing.
 18. **Commit por subfase.** `feat(core): journal`, etc.
-19. **ADR 028** (não 026). **ADR 026** é reports (Fase 14), **ADR 027** é Gantt (Fase 15).
+19. **ADR 029** para Journal/AlertLevel. Na numeração real: **026** Markdown, **027**
+    reports no browser, **028** Gantt, **029** Journal (este), **036/037** Fase 18.
 20. **Não tocar em Fase 14 (reports) além dos stubs de journal.**
 21. **Não tocar em Fase 17 (HTML/XML).**
 22. **Não tocar em Fase 18 (time sheets).** `TimeSheetRecord` é stub aqui.
@@ -703,7 +715,7 @@ TOTAL: ~191
 
 ## Notas específicas por subfase
 
-### 16.0 — ADR 028
+### 16.0 — ADR 029
 
 - **Journal + AlertLevel.**
 - **`Journal` no `Project`.**
@@ -754,12 +766,14 @@ TOTAL: ~191
 
 ### 16.9 — TernarySearchTree
 
+- **MOVIDO → F22 (22.1b `doc-core`)** — 2026-11-03.
 - **Inserção + find + balance.**
 
 ### 16.10 — AlgorithmDiff
 
-- **LCS-like.**
-- **`patch` + `editScript`.**
+- **CANCELADO (DEAD no upstream)** — 2026-11-03; ver §16.10.
+- ~~**LCS-like.**~~
+- ~~**`patch` + `editScript`.**~~
 
 ### 16.11 — StdIoWrapper
 
@@ -774,8 +788,9 @@ TOTAL: ~191
 
 - **Revisar cobertura.**
 
-### 16.14–16.15 — SyntaxCore (núcleo p/ Fase 22)
+### 16.14–16.15 — SyntaxCore (MOVIDO → F22 22.1b `doc-core`)
 
+- **MOVIDO para a Fase 22** (decisão 2026-11-03; xray §3.2).
 - **Geradores finais Kate/Vim CANCELADOS** (itens 11 e 12 do plano).
 - **Só funções core** (extração/classificação de keywords/contexts/highlights).
 - **Em `dev-tools/`** (`syntax-core.ts`); consumo na Fase 22 (LSP / VSCode).
@@ -794,7 +809,7 @@ TOTAL: ~191
 ### 16.20 — Verificação
 
 - **Sem stubs em `journal/`.**
-- **ADR 028.**
+- **ADR 029.**
 
 ---
 

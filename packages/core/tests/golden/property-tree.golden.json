@@ -560,7 +560,7 @@
         "value": null,
         "scenarioIdx": 0
       },
-      "expected": true,
+      "expected": false,
       "node": "root",
       "attr": "effort"
     },
@@ -584,31 +584,7 @@
         "value": null,
         "scenarioIdx": 1
       },
-      "expected": true,
-      "node": "root",
-      "attr": "effort"
-    },
-    {
-      "description": "cenario 1 provided",
-      "method": "provided",
-      "type": "TestProperty",
-      "input": {
-        "value": null,
-        "scenarioIdx": 1
-      },
-      "expected": true,
-      "node": "root",
-      "attr": "effort"
-    },
-    {
-      "description": "cenario 0 ainda provided",
-      "method": "provided",
-      "type": "TestProperty",
-      "input": {
-        "value": null,
-        "scenarioIdx": 0
-      },
-      "expected": true,
+      "expected": false,
       "node": "root",
       "attr": "effort"
     },

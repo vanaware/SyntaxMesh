@@ -1657,6 +1657,18 @@
       ]
     },
     {
+      "file": "docs/taskjuggler/test/TestSuite/HTML-Reports/Alerts-2.tjp",
+      "tz": "UTC",
+      "error": null,
+      "chartErrors": [
+        {
+          "report": "report1",
+          "error": "ArgumentError: comparison of TaskJuggler::Task with TaskJuggler::PTNProxy failed"
+        }
+      ],
+      "charts": []
+    },
+    {
       "file": "docs/taskjuggler/test/TestSuite/HTML-Reports/Calendars.tjp",
       "tz": "UTC",
       "error": null,
@@ -1674,7 +1686,7 @@
           "scrollbar": false,
           "header": {
             "height": 39,
-            "nowLineX": 14839,
+            "nowLineX": 14840,
             "markdateLineX": null,
             "gridLines": [
               47,
@@ -1711,6 +1723,18 @@
       ]
     },
     {
+      "file": "docs/taskjuggler/test/TestSuite/HTML-Reports/IsOngoing.tjp",
+      "tz": "UTC",
+      "error": null,
+      "chartErrors": [
+        {
+          "report": "report1",
+          "error": "TaskJuggler::TjException: /home/aarvati/github/syntaxmesh/docs/taskjuggler/test/TestSuite/HTML-Reports/IsOngoing.tjp:31: ~isongoing(planx)"
+        }
+      ],
+      "charts": []
+    },
+    {
       "file": "docs/taskjuggler/test/TestSuite/HTML-Reports/Sorting.tjp",
       "tz": "UTC",
       "error": null,
@@ -1728,7 +1752,7 @@
           "scrollbar": false,
           "header": {
             "height": 39,
-            "nowLineX": 17739,
+            "nowLineX": 17740,
             "markdateLineX": null,
             "gridLines": [
               76,
@@ -2045,7 +2069,7 @@
           "scrollbar": false,
           "header": {
             "height": 39,
-            "nowLineX": 124779,
+            "nowLineX": 124780,
             "markdateLineX": null,
             "gridLines": [
               539

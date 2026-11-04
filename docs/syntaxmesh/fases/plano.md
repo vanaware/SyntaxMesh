@@ -1,9 +1,10 @@
 ## Ordem de execução (diretriz do usuário — 2026-11-03)
 
-Após a Fase 14 (✅), as fases pendentes executam nesta ordem:
+Após a Fase 15 (✅ — Gantt HTML+CSS, 2026-11-03), as fases pendentes
+executam nesta ordem:
 
 ```
-15 → 16 → 17 → 18 → 23 → 24 → 21 (1ª onda) → 22 → 21 (2ª onda) → 19 → 20 → 21 (3ª onda)
+16 → 17 → 18 → 23 → 24 → 21 (1ª onda) → 22 → 21 (2ª onda) → 19 → 20 → 21 (3ª onda)
 ```
 
 - **Fase 23 (template)** antes da 24 e da 22: a keyword `template` já nasce

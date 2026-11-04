@@ -8,7 +8,7 @@ import { TaskDependency, } from "../../src/scheduling/task-dependency.ts";
 import { DurationType, } from "../../src/scheduling/mod.ts";
 import { TjTime, } from "../../src/time/tj-time.ts";
 import { Resource, } from "../../src/model/resource.ts";
-import { ScoreboardInterval, } from "../../src/time/scoreboard-interval.ts";
+import { TimeInterval, } from "../../src/time/time-interval.ts";
 import { Booking, } from "../../src/scheduling/booking.ts";
 import { Allocation, } from "../../src/scheduling/allocation.ts";
 
@@ -86,11 +86,11 @@ describe("TaskScenario", () => {
   it("preScheduleCheck falha para milestone com bookings", () => {
     // Create a real Booking for the milestone
     const resource = new Resource(project, "r1", "Resource 1", null,);
-    const interval = new ScoreboardInterval(
+    const interval = new TimeInterval(
       project.get("start",) as TjTime,
-      (project.get("scheduleGranularity",) as number) ?? 3600,
-      0,
-      1,
+      project.idxToDate(
+        project.dateToIdx(project.get("start",) as TjTime,) + 1,
+      ),
     );
     const booking = new Booking(resource, task, [interval,],);
     task.setForScenario("milestone", true, 0,);
@@ -183,6 +183,9 @@ describe("TaskScenario", () => {
   it("schedule agenda tarefa sem esforço", () => {
     task.setForScenario("start", TjTime.fromString("2026-01-01",), 0,);
     task.setForScenario("end", TjTime.fromString("2026-01-02",), 0,);
+    // Ruby: `prepareScheduling` define o `durationType` e marca tasks
+    // start-end sem alocação como agendadas (TaskScenario.rb:105-123).
+    taskScenario.prepareScheduling();
     const result = taskScenario.schedule();
     assertEquals(result, true,);
   });
@@ -190,8 +193,31 @@ describe("TaskScenario", () => {
   it("scheduleSlot agenda slot para tarefa", () => {
     task.setForScenario("start", TjTime.fromString("2026-01-01",), 0,);
     task.setForScenario("end", TjTime.fromString("2026-01-02",), 0,);
+    taskScenario.prepareScheduling();
     taskScenario.schedule();
     // schedule() already completed the task, so scheduleSlot() returns false
+    assertEquals(taskScenario.scheduleSlot(), false,);
+  });
+
+  it("prepareScheduling marca start-end sem alocação como agendada", () => {
+    task.setForScenario("start", TjTime.fromString("2026-01-01",), 0,);
+    task.setForScenario("end", TjTime.fromString("2026-01-02",), 0,);
+    // Ruby (TaskScenario.rb:121-123): sem alocação não há nada a agendar —
+    // `prepareScheduling` já chama `markAsScheduled` (`scheduled` vai ao bag).
+    taskScenario.prepareScheduling();
+    assertEquals(taskScenario.a("scheduled",), true,);
+    // E `schedule()` continua devolvendo `true` (Ruby: `return true if
+    // @scheduled`).
+    assertEquals(taskScenario.schedule(), true,);
+  });
+
+  it("scheduleSlot é no-op em tarefa já agendada (guard do port)", () => {
+    task.setForScenario("start", TjTime.fromString("2026-01-01",), 0,);
+    task.setForScenario("end", TjTime.fromString("2026-01-02",), 0,);
+    taskScenario.prepareScheduling();
+    assertEquals(taskScenario.a("scheduled",), true,);
+    // Chamada direta (API/testes) não pode operar com `currentSlotIdx` nulo;
+    // devolve `false` sem lançar, como o `schedule` antecipado do Ruby.
     assertEquals(taskScenario.scheduleSlot(), false,);
   });
 
@@ -201,6 +227,7 @@ describe("TaskScenario", () => {
     task.setForScenario("allocate", [allocation,], 0,);
     task.setForScenario("start", TjTime.fromString("2026-01-01",), 0,);
     task.setForScenario("end", TjTime.fromString("2026-01-02",), 0,);
+    taskScenario.prepareScheduling();
     taskScenario.schedule();
     taskScenario.bookResources();
     assertEquals(taskScenario.schedule(), true,);
@@ -212,6 +239,7 @@ describe("TaskScenario", () => {
     task.setForScenario("allocate", [allocation,], 0,);
     task.setForScenario("start", TjTime.fromString("2026-01-01",), 0,);
     task.setForScenario("end", TjTime.fromString("2026-01-02",), 0,);
+    taskScenario.prepareScheduling();
     taskScenario.schedule();
     taskScenario.bookResource(resource,);
     assertEquals(taskScenario.schedule(), true,);
@@ -223,6 +251,7 @@ describe("TaskScenario", () => {
     task.setForScenario("allocate", [allocation,], 0,);
     task.setForScenario("start", TjTime.fromString("2026-01-01",), 0,);
     task.setForScenario("end", TjTime.fromString("2026-01-02",), 0,);
+    taskScenario.prepareScheduling();
     taskScenario.schedule();
     taskScenario.bookResources();
     taskScenario.rollbackBookings();
@@ -238,6 +267,7 @@ describe("TaskScenario", () => {
     // Child must have start+end for scheduleContainer to compute bounds
     childTask.setForScenario("start", TjTime.fromString("2026-01-01",), 0,);
     childTask.setForScenario("end", TjTime.fromString("2026-01-02",), 0,);
+    taskScenario.prepareScheduling();
     taskScenario.schedule();
     taskScenario.scheduleContainer();
     assertEquals(taskScenario.schedule(), true,);
@@ -256,6 +286,7 @@ describe("TaskScenario", () => {
   it("finishScheduling finaliza agendamento", () => {
     task.setForScenario("start", TjTime.fromString("2026-01-01",), 0,);
     task.setForScenario("end", TjTime.fromString("2026-01-02",), 0,);
+    taskScenario.prepareScheduling();
     taskScenario.schedule();
     taskScenario.finishScheduling();
     assertEquals(taskScenario.schedule(), true,);
@@ -264,6 +295,7 @@ describe("TaskScenario", () => {
   it("preScheduleCheck verifica após agendamento", () => {
     task.setForScenario("start", TjTime.fromString("2026-01-01",), 0,);
     task.setForScenario("end", TjTime.fromString("2026-01-02",), 0,);
+    taskScenario.prepareScheduling();
     taskScenario.schedule();
     taskScenario.preScheduleCheck();
     assertEquals(taskScenario.errors(), 0,);
@@ -319,6 +351,7 @@ describe("TaskScenario", () => {
     task.setForScenario("effort", 3600, 0,);
     task.setForScenario("start", TjTime.fromString("2026-01-01",), 0,);
     task.setForScenario("end", TjTime.fromString("2026-01-02",), 0,);
+    taskScenario.prepareScheduling();
     taskScenario.schedule();
     taskScenario.propagateDateToDep();
     assertEquals(taskScenario.errors(), 0,);

@@ -86,6 +86,11 @@
       "scripts/**/*.ts",
       "packages/**/src/**/*.{ts,tsx}",
       "packages/**/tests/**/*test.ts"
+    ],
+    "exclude": [
+      // Cópia vendorizada do `wz_tooltip.js` (asset dos goldens de relatório,
+      // `var` em todo o arquivo) — não é código nosso e não é editável.
+      "packages/core/tests/golden/scripts/"
     ]
   },
   "test": {

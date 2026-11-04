@@ -73,6 +73,15 @@ Ao final desta fase:
   documentação embutida), DocumentStore incremental, resolução de locale e
   **registro do servidor** (`registerLspServer`). Toda a inteligência do LSP
   mora no core; extensão e CLI são bootstrap mínimo.
+- **`doc-core` — núcleo de documentação e sintaxe inteiro nesta fase** (novo
+  subpath export `@vanaware/syntaxmesh/doc-core`, decidido 2026-11-03): port
+  completo de `SyntaxReference.rb`, `KeywordDocumentation.rb`, `TjpExample.rb`
+  e `UserManual.rb` (base do help/manual do LSP e dos exemplos `[[[…]]]`),
+  **mais** o `TernarySearchTree` (16.9 **MOVIDO** para cá) e o `SyntaxCore`/
+  highlight (núcleo de `KateSyntax`/`VimSyntax`, 16.14 **MOVIDO** para cá) —
+  o núcleo de docs/sintaxe todo desenvolvido nesta fase, como subfase 22.1b.
+  A **Fase 24** expõe esse núcleo como comando `man` da CLI (equivalente ao
+  `tj3man`) — ver `fase-24-cli.md` §5.4.
 - **v1 em inglês** (grammar, snippets, completions, mensagens, help); PT/ES como
   adendo pós-Fase 21.
 - Extensão VS Code (`packages/vsextension`) funcional em **desktop** e
@@ -545,6 +554,7 @@ kickoff), no padrão dos blocos A–K das fases anteriores:
 | ----- | ----------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------- |
 | 22.0  | ADR da fase             | `decisoes/0NN-extensao-vscode.md` (035 na cadeia oficial) + linha no README                                            | —             |
 | 22.1  | Renome + `lsp-core`     | Core renomeado `@vanaware/syntaxmesh` (§4.2) + `core/src/lsp/` completo (§5, v1 EN), exports, testes unitários ≥ 80% | —             |
+| 22.1b | `doc-core`              | `core/src/docgen/` (`@vanaware/syntaxmesh/doc-core`): port fiel de `SyntaxReference`, `KeywordDocumentation`, `TjpExample`, `UserManual` + `TernarySearchTree` (16.9 movido) + `SyntaxCore`/highlight (16.14 movido); alimenta help/manual do LSP e o `man` da CLI (F24) | 22.1          |
 | 22.2  | Scaffolding             | `packages/vsextension/` + `package.json` manifesto + entradas node/web vazias + tasks                                | 22.0          |
 | 22.3  | Language contribution   | Grammar EN (v1) + language-configuration + snippets + snapshots                                                      | 22.2          |
 | 22.4  | Cliente + servidor LSP  | `registerLspServer` no core + `client/` e bootstrap `server/mod.ts`; transporte desktop e Web; integração LSP verde  | 22.1, 22.2    |
@@ -556,9 +566,13 @@ kickoff), no padrão dos blocos A–K das fases anteriores:
 | 22.10 | Empacotamento           | `scripts/build.ts`, `.vscodeignore`, task `package`, `.vsix` < 5 MB testado                                          | 22.8          |
 | 22.11 | Verificação final       | `check-all` + testes unit/integração + ADR + `CURRENT.md` + `plano.md`                                               | todas         |
 
-Ordem de execução: 22.0 → 22.1 → 22.2 → 22.3 → 22.4 → 22.5 → 22.6 → 22.7 → 22.8
+Ordem de execução: 22.0 → 22.1 → 22.1b → 22.2 → 22.3 → 22.4 → 22.5 → 22.6 → 22.7 → 22.8
 → 22.9 → 22.10 → 22.11. **22.1 (`lsp-core`) é pré-requisito de 22.4** — não
-avançar sem ele verde.
+avançar sem ele verde. **22.1b (`doc-core`) é pré-requisito do help/manual do
+LSP (22.1/22.4) e do `man` da Fase 24** — decisão 2026-11-03: o núcleo de
+docs/sintaxe inteiro (inclusive `TernarySearchTree` 16.9 e `SyntaxCore` 16.14)
+foi **movido da Fase 16 para esta fase**; a F16 mantém apenas os utilitários
+que ela já possuía (FileList, URLParameter, StdIoWrapper, UTF8String).
 
 Como a fase depende apenas das Fases 2–14, ela pode ser executada
 **imediatamente após a Fase 14**, antes das Fases 15–18

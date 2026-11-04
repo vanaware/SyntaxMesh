@@ -276,6 +276,20 @@ export class TaskScenario extends ScenarioData {
 
     this.markAsMilestone();
 
+    // Ruby (TaskScenario.rb:121-123): tarefas start-end sem alocação não têm
+    // nada a agendar — basta marcar como agendadas. Faltava esta atalho no
+    // port: essas tarefas caíam no loop de `scheduleSlot` com `durationType`
+    // `startEndTask`/sem datas e estouravam `Unknown task duration type`
+    // quando `schedule()` era chamado sem passar por `prepareScheduling`.
+    if (durationType === "startEndTask") {
+      const start = this.a("start",) as TjTime | null;
+      const end = this.a("end",) as TjTime | null;
+      const allocate = this.a("allocate",) as Allocation[] | null;
+      if (start && end && !allocate?.length) {
+        this.markAsScheduled();
+      }
+    }
+
     this._allLimits = [];
     let task: PropertyTreeNode | null = this.getProperty();
     while (task) {
@@ -836,11 +850,6 @@ export class TaskScenario extends ScenarioData {
     // work up to the 'now' date.
     if (this._doneEffort > 0) {
       this._currentSlotIdx = project.dateToIdx(project.get("now",) as TjTime,);
-      if (Deno.env.get("TJ_DEBUG_BK",)) {
-        console.error(
-          `BOOK-RESUME ${task.fullId} doneEffort=${this._doneEffort} slot=${this._currentSlotIdx}`,
-        );
-      }
     }
 
     // Finally, we check if the bookings caused more effort, length or
@@ -1977,6 +1986,10 @@ export class TaskScenario extends ScenarioData {
    * Schedule a single slot. Returns false if the task has been completely scheduled.
    */
   scheduleSlot(): boolean {
+    // Ruby nunca chama `scheduleSlot` de uma tarefa já agendada: `schedule`
+    // retorna antes (`TaskScenario.rb:932`). O guard existe para chamadas
+    // diretas (APIs/testes) e evita operar com `currentSlotIdx` nulo.
+    if (this._scheduled) return false;
     switch (this.durationType()) {
       case "effortTask":
         this.bookResources();

@@ -1265,6 +1265,57 @@ deno task test
 
 ---
 
+## Bloco H — Verificação final
+
+---
+
+### 15.14 — Verificação final
+
+#### Contexto
+
+Fecha a fase: garante que o port do Gantt não regrediu nada das Fases 2–14 e
+que o gate de stubs (ADR 032) e a ADR 028 estão coerentes.
+
+#### Objetivo
+
+Um único checklist executável, com evidência registrada em
+`fase-15-gantt-tarefas.md`.
+
+#### Requisitos
+
+- [ ] `deno task check-all` verde (check + lint + fmt + test).
+- [ ] `deno task golden:generate && deno task test` verde.
+- [ ] `deno task check:stubs` verde — os 2 stubs `Ancorado: Fase 16` da coluna
+  `chart` não existem mais; nenhum `NotYetImplementedError` novo sem âncora.
+- [ ] `grep -riE "(svg|canvas)" packages/core/src/gantt/` retorna 0 (HTML puro;
+  `painter-min.ts`/`chart-plotter.ts` são outro subsistema e ficam de fora).
+- [ ] ADR 028 criada e tabela `decisoes/README.md` com status `Aceito`.
+- [ ] `HTMLGraphics`, `CollisionDetector`, `GanttRouter`, `GanttChart`,
+  `GanttHeader`, `GanttHeaderScaleItem`, `GanttLine`, `GanttTaskBar`,
+  `GanttMilestone`, `GanttContainer`, `GanttLoadStack` exportados via
+  `packages/core/src/gantt/mod.ts` → `packages/core/src/mod.ts`.
+- [ ] `tests/integration/smoke_after_phase_15_test.ts` — cria `Project`, gera
+  `TaskReport` com coluna `chart`; verifica Fase 14 (reports HTML) intacto +
+  smoke dos MWEs com `chart`.
+- [ ] Auditoria: cada subfase deste plano tem tarefas correspondentes em
+  `fase-15-gantt-tarefas.md` (plano e tarefas consistentes).
+
+#### Arquivos
+
+- `packages/core/tests/integration/smoke_after_phase_15_test.ts`
+- `docs/syntaxmesh/fases/fase-15-gantt-tarefas.md` (§15.14 — evidências)
+
+#### Critério de aceite
+
+```bash
+deno task tests        # check:all + lint + fmt:check + lint:doc:all + test
+deno task check:stubs
+```
+
+- exit 0 em ambos, com os números registrados no documento de tarefas.
+
+---
+
 ## 6. Ordem de execução sugerida
 
 ```text
@@ -1289,6 +1340,8 @@ deno task test
 15.12 Integração TaskReport/ResourceReport
       ↓
 15.13 Golden tests
+      ↓
+15.14 Verificação final
 ```
 
 Cada subfase fecha com `deno task check-all` verde.
@@ -1303,20 +1356,21 @@ A Fase 15 é considerada concluída quando:
 deno task check-all
 ```
 
-passa, e:
+passa, e (checklist fechado em 2026-11-03 — evidências em
+`fase-15-gantt-tarefas.md` §15.14):
 
-- [ ] `HTMLGraphics`, `CollisionDetector`, `GanttRouter`.
-- [ ] `GanttTaskBar`, `GanttMilestone`, `GanttContainer`, `GanttLoadStack`.
-- [ ] `GanttHeader` + `GanttHeaderScaleItem`.
-- [ ] `GanttLine`, `GanttChart`.
-- [ ] Integração com `TaskReport` e `ResourceReport` (stubs `NotYetImplementedError("16")` de `table-report.ts` substituídos; `check:stubs` verde).
-- [ ] Setas de dependência ortogonais funcionando.
-- [ ] Now line + markdate line.
-- [ ] Time-off zones + legenda (`addGanttItem`).
-- [ ] **≥ 200 testes unitários**.
-- [ ] **≥ 30 golden tests**.
-- [ ] Nenhum `any` em `src/` (exceto onde justificado).
-- [ ] ADR 028 criado (`028-gantt-html-css.md`) e tabela de ADRs atualizada.
+- [x] `HTMLGraphics`, `CollisionDetector`, `GanttRouter`.
+- [x] `GanttTaskBar`, `GanttMilestone`, `GanttContainer`, `GanttLoadStack`.
+- [x] `GanttHeader` + `GanttHeaderScaleItem`.
+- [x] `GanttLine`, `GanttChart`.
+- [x] Integração com `TaskReport` e `ResourceReport` (stubs `NotYetImplementedError("16")` de `table-report.ts` substituídos; `check:stubs` verde).
+- [x] Setas de dependência ortogonais funcionando (48 setas no golden).
+- [x] Now line + markdate line (`nowLineX`/`markdateLineX` no golden do header).
+- [x] Time-off zones + legenda (`addGanttItem`).
+- [x] **≥ 200 testes unitários** — `tests/gantt/`: **12 arquivos / 247 passos**.
+- [x] **≥ 30 golden tests** — `gantt_golden_test.ts`: **33 passos** (12 charts, 111 linhas, 48 setas).
+- [x] Nenhum `any` em `src/` (exceto onde justificado) — `packages/core/src/gantt/`: 0 ocorrências.
+- [x] ADR 028 criado (`028-gantt-html-css.md`) e tabela de ADRs atualizada (`Aceito`, 2026-11-03).
 
 ---
 

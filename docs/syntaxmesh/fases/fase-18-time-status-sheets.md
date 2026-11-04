@@ -39,6 +39,9 @@ O `Project.schedule()` (Fase 9) processa esses `.tji` como entrada, gerando book
 | `SheetHandlerBase` | Base comuns (email, SCM). |
 | `SheetSender` | Base para senders. |
 | `SheetReceiver` | Base para receivers. |
+| `Tj3SheetAppBase` + `apps/Tj3Ts{Sender,Receiver,Summary}.rb` + `apps/Tj3Ss{Sender,Receiver}.rb` | **Núcleo dos front-ends** (opções, config, montagem do sender/receiver/summary). **Adendo 2026-11-03 (xray §3.3):** o núcleo é entregue **aqui** (18.18); o empacotamento CLI é da **Fase 24**. |
+| `Project#generateReport(..., dynamicAttributes)` + `ProjectFileParser#parseReportAttributes` | Atributos/colunas dinâmicos de report. **Adendo 2026-11-03 (xray §3.4):** núcleo entregue aqui (18.19); usado pelo `SheetSender` e exposto pela CLI (F24). |
+| `MessageHandler#checkLevel` | Validação de nível 0–5. **Adendo 2026-11-03 (xray §3.4.1):** entregue em 18.20. |
 
 ### Diferenças no browser
 
@@ -59,7 +62,7 @@ No browser, essas capacidades mudam:
 | `tj3client` | Chamada direta ao `Project` (in-process) |
 | YAML | JSON (nativo) |
 
-**Decisão central:** o SyntaxMesh **gera** time sheet templates e **processa** submissões, mas o transporte (email) é responsabilidade do usuário (download/anexar email, ou Web Share API futura). Registrado em ADR 029.
+**Decisão central:** o SyntaxMesh **gera** time sheet templates e **processa** submissões, mas o transporte (email) é responsabilidade do usuário (download/anexar email, ou Web Share API futura). Registrado em **ADR 036** (renumerado em 2026-11-03 — o número 029 pertence à decisão (a) *Journal e AlertLevel* da Fase 16; ver xray §5.3).
 
 ### Injeção de `FileStore` (novo)
 
@@ -95,14 +98,19 @@ Ao final desta fase:
 - `SheetHandlerBase`, `SheetSender`, `SheetReceiver`.
 - `TimeSheetSender`, `TimeSheetReceiver`, `TimeSheetSummary`.
 - `StatusSheetSender`, `StatusSheetReceiver`.
+- **Núcleo dos apps de sheet** (`Tj3SheetAppBase` + `ts_sender/ts_receiver/ts_summary/ss_sender/ss_receiver`) como classes puras do core, sem SMTP e sem subprocesso — **18.18**, adendo xray §3.3. O empacotamento CLI (`wz ts …`, `wz ss …`) é da **Fase 24**.
+  - **Política de email (decisão 2026-11-03):** o **sender** monta e devolve o **texto do email** (To/Subject/corpo + anexo `.tji`/`.tjs` em base64) e **não** se conecta a nenhum app de envio; o **receiver** consome **texto de mensagem** fornecido pelo usuário (arquivo/stdin), não a mensagem inteira de um cliente de email.
+- **Pipeline `dynamicAttributes`** (`Project#generateReport` 4º argumento + `Report#backupAttributes`/`restoreAttributes` + `ProjectFileParser#parseReportAttributes` + `rule_dynamicAttributes`) — **18.19**, adendo xray §3.4. As três âncoras `// Ancorado: Fase 18` entram na política ADR 032.
+- **`MessageHandler#checkLevel`** (validação de nível 0–5 nos setters de `outputLevel`/`logLevel`) — **18.20**, adendo xray §3.4.1.
+- Consumidores dos utilitários da Fase 16: `StdIoWrapper` (`TimeSheetSummary.getResourceJournal`).
 - Adaptações browser: `FileStore` injetado (Fase 19) via interface Core.
 - `Project.timeSheets` funcional.
 - `Project.checkTimeSheets()` funcional.
 - `TaskJuggler.checkTimeSheet` / `checkStatusSheet` completos.
 - Parser estendido para `timeSheetFile` / `statusSheetFile` (Fase 10).
 - **≥ 140 testes unitários** + **≥ 20 golden tests** (time sheets dos MWEs).
-- ADRs 029 e 031 registrados.
-- `deno task check-all` verde.
+- ADRs **036** (sheets: email → download/texto) e **037** (injeção de `FileStore`) registrados.
+- `deno task check-all` + `deno task check:stubs` verdes.
 
 ---
 
@@ -154,7 +162,7 @@ Scripts Ruby que rodam `tj3` com `--check-ts` / `--check-ss` em `.tji` de exempl
 - **Web Share API** (futuro): compartilhar via Web Share Level 2 em browsers suportados.
 - **Clipboard**: copiar `.tji` para colar em email manualmente.
 
-Registrado em ADR 029.
+Registrado em **ADR 036**.
 
 ### 4.2 SCM → `FileStore` injetado (Fase 19)
 
@@ -306,14 +314,22 @@ export interface FileStore {
 
 ---
 
-### 18.0 — ADRs 029 e 031
+### 18.0 — ADRs 036 e 037
+
+> **Renumeração (decisão 2026-11-03; xray §5.3):** este plano citava “ADR 029” e
+> “ADR 031”, mas ambos já estão tomados — **029** está reservado a *Journal e
+> AlertLevel* (Fase 16, subfase 16.0) e **031** a *Modelo Contábil Estendido*.
+> As decisões desta fase passam a ser **036** (sheets) e **037** (`FileStore`).
+> Os números 033–035 estão reivindicados pela cadeia das fases seguintes
+> (template F23 / CLI F24 / extensão F22, com a validação F21 a reconciliar) —
+> a tabela de ADRs é conferida na Fase 21.
 
 #### Contexto
 
 Duas decisões críticas:
 
-1. **ADR 029:** Email → download/upload em browser.
-2. **ADR 031:** Injeção de `FileStore` no Core (interface, sem importar Storage).
+1. **ADR 036:** Email → download/upload (e texto de email) em browser.
+2. **ADR 037:** Injeção de `FileStore` no Core (interface, sem importar Storage).
 
 #### Objetivo
 
@@ -321,13 +337,13 @@ Criar ambos.
 
 #### Arquivos
 
-- `docs/syntaxmesh/decisoes/029-timesheet-browser.md` (novo)
-- `docs/syntaxmesh/decisoes/031-filestore-injection.md` (novo)
-- `docs/syntaxmesh/decisoes/README.md` (atualizar tabela)
+- `docs/syntaxmesh/decisoes/036-sheets-sem-smtp.md` (novo)
+- `docs/syntaxmesh/decisoes/037-filestore-injection.md` (novo)
+- `docs/syntaxmesh/decisoes/README.md` (atualizar tabela; confirmar 029 = Journal)
 
 #### Requisitos
 
-**ADR 029 — Time sheets no browser:**
+**ADR 036 — Time sheets no browser:**
 
 - [ ] **Contexto:** SMTP vs browser.
 - [ ] **Decisões:**
@@ -338,7 +354,7 @@ Criar ambos.
   - **YAML** → JSON.
 - [ ] **Consequências:** fluxo manual.
 
-**ADR 031 — FileStore injection no Core:**
+**ADR 037 — FileStore injection no Core:**
 
 - [ ] **Contexto:** Core não pode importar Storage (ADR 001). Precisa escrever arquivos.
 - [ ] **Decisões:**
@@ -357,8 +373,8 @@ Criar ambos.
 
 #### Critério de aceite
 
-- ADRs 029 e 031 criados.
-- Tabela atualizada.
+- ADRs 036 e 037 criados.
+- Tabela atualizada (029 permanece como Journal e AlertLevel).
 
 ---
 
@@ -396,7 +412,7 @@ Definir interface.
 
 #### Referências
 
-- ADR 001, ADR 010, ADR 031.
+- ADR 001, ADR 010, ADR 037.
 
 #### Critério de aceite
 
@@ -686,7 +702,7 @@ Implementar `SheetHandlerBase`.
 
 - `docs/taskjuggler/lib/taskjuggler/SheetHandlerBase.rb` — arquivo completo.
 - `docs/tj3-engine/12-blueprint-timesheet.md` — §1.
-- ADR 031.
+- ADR 037.
 
 #### Critério de aceite
 
@@ -1198,7 +1214,7 @@ Testes de conformidade.
 
 #### Referências
 
-- ADR 031.
+- ADR 037.
 
 #### Critério de aceite
 
@@ -1265,34 +1281,204 @@ deno task test
 
 ---
 
+### Bloco G — Adendo 2026-11-03 (varredura xray): apps de sheet, `dynamicAttributes`, `checkLevel`
+
+---
+
+### 18.18 — Núcleo dos apps de sheet (`SheetAppBase` + 5 apps)
+
+#### Contexto
+
+No Ruby os front-ends de linha de comando são `Tj3SheetAppBase` (herda de
+`Tj3AppBase`) e `apps/Tj3TsSender.rb`, `Tj3TsReceiver.rb`, `Tj3TsSummary.rb`,
+`Tj3SsSender.rb`, `Tj3SsReceiver.rb`. O plano desta fase só tinha as classes de
+core (`SheetSender`/`SheetReceiver`/`*Summary`). **Decisão 2026-11-03 (xray §3.3):**
+o **núcleo** dos apps nasce aqui, como classes puras e testáveis do core; a
+**Fase 24** apenas empacota subcomandos (`wz ts send|receive|summary`,
+`wz ss send|receive`).
+
+#### Política de email (inversível)
+
+| App | Ruby | SyntaxMesh |
+|---|---|---|
+| sender (`ts_sender`, `ss_sender`) | `Mail`/SMTP | Monta o **texto do email** (To/Cc/Subject/corpo texto+HTML + anexo `.tji`/`.tjs` em base64) e devolve/ escreve essa string. **Nenhuma conexão com app de envio.** |
+| receiver (`ts_receiver`, `ss_receiver`) | lê mbox/IMAP | Consome **texto de mensagem** fornecido pelo usuário (arquivo ou stdin), não a mensagem inteira de um cliente de email. |
+| summary (`ts_summary`) | envia emails | Idem sender: produz texto(s) de email + relatório consolidado. |
+
+#### Arquivos
+
+- `packages/core/src/sheets/app-base.ts` (`SheetAppBase`)
+- `packages/core/src/sheets/ts-sender-app.ts`, `ts-receiver-app.ts`, `ts-summary-app.ts`
+- `packages/core/src/sheets/ss-sender-app.ts`, `ss-receiver-app.ts`
+- `packages/core/tests/sheets/*_app_test.ts`
+
+#### Requisitos
+
+- [ ] `class SheetAppBase`: opções tipadas (`workingDir`, `dryRun`, `config`,
+      `endDate`), `configureTarget(sheet)` aplicando `AppConfig` nas seções
+      `global` / `timesheets` / `timesheets.<app>` (equivalente `@rc.configure`).
+- [ ] `date` default = `TjTime.now().nextDayOfWeek(1).toString('%Y-%m-%d')` (fiel a
+      `Tj3TsSender#initialize`).
+- [ ] `optsEndDate`: `-e`/`--end-date <END_DATE>`.
+- [ ] Apps: `ts send` (`-r/--resource`, `-f/--force`, `intervalDuration`),
+      `ts receive` (trata texto de mensagem), `ts summary` (`-r`, `-t/--to`,
+      `--sheet`, `--digest`), `ss send`, `ss receive`.
+- [ ] Sem `OptionParser`/sem subprocesso: recebe `argv` já parseado pela CLI (F24)
+      ou objeto de opções direto (UI F20).
+- [ ] Códigos de saída e mensagens fiel a `Tj3AppBase` (`0` sucesso, `1` erro).
+- [ ] `StdIoWrapper` (F16.11) usado onde o Ruby captura stdout para o corpo do email.
+
+#### Referências
+
+- `docs/taskjuggler/lib/taskjuggler/Tj3SheetAppBase.rb` — `initialize`,
+  `processArguments`, `optsEndDate`.
+- `docs/taskjuggler/lib/taskjuggler/apps/Tj3Ts{Sender,Receiver,Summary}.rb`,
+  `apps/Tj3Ss{Sender,Receiver}.rb`.
+- `docs/syntaxmesh/fases/fase-24-cli.md` §5.4 e tarefas 24.10.x (empacotamento CLI).
+
+#### Critério de aceite
+
+```ts
+const app = new TsSenderApp({ endDate: '2026-11-09', resources: ['dev'] });
+const mail = await app.run(project); // EmailMessage { to, subject, text, html, attachment }
+assert(mail.attachment.includes('timesheet dev'));
+```
+
+#### Testes
+
+- `sheet-app-base_test.ts`: defaults de data, `configureTarget`, opções.
+- `ts-sender-app_test.ts` / `ss-sender-app_test.ts`: montagem do texto de email,
+  anexo base64, `--force`, `--resource`.
+- `ts-receiver-app_test.ts` / `ss-receiver-app_test.ts`: consumo de texto de
+  mensagem (arquivo/stdin), rejeição de anexo ausente.
+- `ts-summary-app_test.ts`: destinatários `--sheet`/`--digest` separados.
+
+---
+
+### 18.19 — Pipeline `dynamicAttributes` + `parseReportAttributes`
+
+#### Contexto
+
+Ruby `Project.rb:778-812`: `generateReport(reportID, regExpMode, outputDir,
+**dynamicAttributes**)` faz `backupAttributes` → `parseReportAttributes` → gera →
+`restoreAttributes`. É assim que o `SheetSender` injeta colunas no template de
+time sheet e como o daemon/CLI pedem colunas extras (`-A`). No TS o parâmetro já
+existe, mas os três passos estão **comentados como `// stub` sem âncora**
+(`packages/core/src/model/project.ts`, dentro de `generateReport`) — viola a
+política ADR 032. **Decisão 2026-11-03 (xray §3.4):** núcleo entregue nesta fase.
+
+#### Arquivos
+
+- `packages/core/src/model/project.ts` (descomentar + implementar os 3 passos)
+- `packages/core/src/parser/project-file-parser.ts` (`parseReportAttributes`)
+- `packages/core/src/reports/report.ts` (`backupAttributes` / `restoreAttributes`)
+- `packages/core/tests/model/project-dynamic-attributes_test.ts`
+
+#### Requisitos
+
+- [ ] `Report#backupAttributes(): AttributeBackup` e `Report#restoreAttributes(backup)`.
+- [ ] `ProjectFileParser#parseReportAttributes(report, attributes: string): void`
+  usando a regra `rule_dynamicAttributes` já registrada
+  (`rules/common.ts:784`) — colunas/atributos extras, herdados do report.
+- [ ] `Project#generateReport(id, regExpMode?, outputDir?, dynamicAttributes?: string)`:
+  só executa backup/parse/restore quando `dynamicAttributes` não está vazio
+  (fiel ao Ruby).
+- [ ] `SheetSender` (18.6) passa a usar o 4º argumento para as colunas do template.
+- [ ] **Âncoras:** enquanto não implementado, os três `// stub` viram
+  `// Ancorado: Fase 18 — pipeline dynamicAttributes (xray §3.4)` com
+  `NotYetImplementedError("18", …)`, para cobertura do `deno task check:stubs`.
+
+#### Referências
+
+- `docs/taskjuggler/lib/taskjuggler/Project.rb:778-812`.
+- `docs/taskjuggler/lib/taskjuggler/ProjectFileParser.rb#parseReportAttributes`.
+- `docs/taskjuggler/lib/taskjuggler/TjpSyntaxRules.rb:1034` (`rule_dynamicAttributes`).
+
+#### Critério de aceite
+
+```ts
+await project.generateReport('ts', false, undefined, "task { name 'Tracking Status' }");
+// o relatório gerado contém a coluna extra 'Tracking Status'
+```
+
+#### Testes
+
+- `it("backup/restore preserva atributos")`.
+- `it("parseReportAttributes adiciona coluna")`.
+- `it("generateReport sem dynamicAttributes não altera o report")`.
+- `it("dynamicAttributes inválido gera mensagem de erro")`.
+
+---
+
+### 18.20 — `MessageHandler#checkLevel`
+
+#### Contexto
+
+xray §3.4.1. O Ruby valida o intervalo 0–5 nos setters de `outputLevel` /
+`logLevel` (`MessageHandler#checkLevel`); o TS expõe campos públicos sem
+validação (`packages/core/src/base/message-handler.ts:9-10`). Esta fase já toca
+`MessageHandler` (resumos e avisos dos sheets), então a micro-dívida é quitada aqui.
+
+#### Arquivos
+
+- `packages/core/src/base/message-handler.ts`
+- `packages/core/tests/base/message-handler_test.ts`
+
+#### Requisitos
+
+- [ ] `set outputLevel(v: number)` / `set logLevel(v: number)` validando
+      `0 <= v <= 5` e lançando `TjArgumentError` com a mesma mensagem do Ruby.
+- [ ] Callers da CLI/UI (F24/F20) continuam passando pelo setter (sem escrita direta).
+
+#### Referências
+
+- `docs/taskjuggler/lib/taskjuggler/MessageHandler.rb` — `checkLevel`.
+
+#### Critério de aceite
+
+```ts
+assertThrows(() => { mh.outputLevel = 6; }, TjArgumentError);
+```
+
+#### Testes
+
+- `it("aceita 0..5")`, `it("rejeita 6")`, `it("rejeita -1")`, `it("logLevel idem")`.
+
+---
+
 ## 6. Ordem de execução sugerida
 
 ```text
-22.0  ADRs 029 e 031
-22.1  Interface FileStore em Core
+18.0  ADRs 036 e 037
+18.1  Interface FileStore em Core
       ↓
-22.2  TimeSheetRecord
-22.3  TimeSheet + TimeSheets
-22.4  Project.timeSheets + checkTimeSheets
+18.2  TimeSheetRecord
+18.3  TimeSheet + TimeSheets
+18.4  Project.timeSheets + checkTimeSheets
       ↓
-22.5  SheetHandlerBase (com FileStore injetado)
-22.6  SheetSender
-22.7  SheetReceiver
+18.5  SheetHandlerBase (com FileStore injetado)
+18.6  SheetSender
+18.7  SheetReceiver
       ↓
-22.8  TimeSheetSender
-22.9  TimeSheetReceiver
-22.10 StatusSheetSender + StatusSheetReceiver
+18.8  TimeSheetSender
+18.9  TimeSheetReceiver
+18.10 StatusSheetSender + StatusSheetReceiver
       ↓
-22.11 TimeSheetSummary
+18.11 TimeSheetSummary
       ↓
-22.12 Completar TaskJuggler.checkTimeSheet / checkStatusSheet
-22.13 Integração warnOnDelta
-22.14 Verificar interface FileStore
+18.12 Completar TaskJuggler.checkTimeSheet / checkStatusSheet
+18.13 Integração warnOnDelta
+18.14 Verificar interface FileStore
       ↓
-22.15 Golden tests
+18.19 Pipeline dynamicAttributes + parseReportAttributes   (adendo xray §3.4)
+18.18 Núcleo dos apps de sheet (SheetAppBase…)              (adendo xray §3.3)
+18.20 MessageHandler#checkLevel                              (adendo xray §3.4.1)
+      ↓
+18.15 Golden tests
+18.16 Verificação final
 ```
 
-Cada subfase fecha com `deno task check-all` verde.
+Cada subfase fecha com `deno task check-all` + `deno task check:stubs` verdes.
 
 ---
 
@@ -1310,14 +1496,19 @@ passa, e:
 - [ ] `SheetHandlerBase`, `SheetSender`, `SheetReceiver`.
 - [ ] `TimeSheetSender`, `TimeSheetReceiver`, `TimeSheetSummary`.
 - [ ] `StatusSheetSender`, `StatusSheetReceiver`.
-- [ ] Interface `FileStore` em Core (ADR 031).
+- [ ] Interface `FileStore` em Core (ADR 037).
 - [ ] Adaptações browser (`FileStore` injetado, in-process, JSON).
 - [ ] `Project.timeSheets` + `checkTimeSheets` completos.
 - [ ] `TaskJuggler.checkTimeSheet` / `checkStatusSheet` completos.
+- [ ] Núcleo dos apps de sheet (`SheetAppBase` + 5 apps) produzindo **texto de email**
+      e consumindo **texto de mensagem** — sem SMTP, sem subprocesso (18.18).
+- [ ] Pipeline `dynamicAttributes` (`backup`/`parse`/`restore` + 4º argumento de
+      `generateReport`) funcional e âncoras `check:stubs` coerentes (18.19).
+- [ ] `MessageHandler#checkLevel` validando 0–5 (18.20).
 - [ ] **≥ 140 testes unitários**.
 - [ ] **≥ 20 golden tests**.
 - [ ] Nenhum `any` em `src/` (exceto onde justificado).
-- [ ] ADRs 029 e 031 criados.
+- [ ] ADRs 036 e 037 criados (029 permanece como Journal e AlertLevel).
 
 ---
 
@@ -1327,7 +1518,7 @@ passa, e:
 |---|---|---|
 | `FileStore` de Core não bate com `fakeOpfs()` | Alto | Teste de conformidade (22.14) |
 | Core importar `@syntaxmesh/worker-db` por engano | **Alto** | Só interface; `fakeOpfs` só em testes |
-| SMTP não disponível | Alto | Stub + download (ADR 029) |
+| SMTP não disponível | Alto | Núcleo devolve **texto do email** + download (ADR 036) |
 | `checkSheet` in-process divergir do `tj3client` | Médio | Golden tests |
 | `TimeSheet.check` com total errado | Alto | Golden tests |
 | `warnOnDelta` com bookings | Médio | Testes específicos |
@@ -1399,12 +1590,19 @@ passa, e:
 19. **Todos os métodos que tocam FS são `async`.**
 20. **Sem `any`.** Use `unknown` + narrowing.
 21. **Commit por subfase.** `feat(core): time-sheet`, etc.
+22. **Apps de sheet:** o núcleo fica **aqui** (18.18); a CLI apenas empacota (F24,
+    subfase 24.10). Sender devolve **texto do email**; receiver consome **texto de
+    mensagem** (arquivo/stdin) — nunca conexão com app de email.
+23. **`dynamicAttributes`** (18.19) é pré-requisito do `-A`/`--report` da Fase 24 e
+    das colunas do template de timesheet.
+24. **ADRs:** 036 (sheets) e 037 (`FileStore`); **não** usar 029/031 (tomados por
+    Journal/AlertLevel e Modelo Contábil Estendido).
 
 ---
 
 ## 11. ADRs (referência rápida)
 
-**ADR 029 — Time sheets no browser: download/upload em vez de SMTP:**
+**ADR 036 — Time sheets no browser: download/upload (e texto de email) em vez de SMTP:**
 
 - **Contexto:** SMTP não existe em browser.
 - **Decisões:**
@@ -1415,7 +1613,7 @@ passa, e:
   - YAML → JSON.
 - **Consequências:** fluxo manual.
 
-**ADR 031 — FileStore injection no Core:**
+**ADR 037 — FileStore injection no Core:**
 
 - **Contexto:** Core não pode importar Storage (ADR 001). Precisa escrever arquivos.
 - **Decisões:**

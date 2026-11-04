@@ -5,7 +5,7 @@ import { Project, } from "../../src/model/project.ts";
 import { Resource, } from "../../src/model/resource.ts";
 import { Task, } from "../../src/model/task.ts";
 import { Booking, Overtime, Sloppy, } from "../../src/scheduling/booking.ts";
-import { ScoreboardInterval, } from "../../src/time/scoreboard-interval.ts";
+import { TimeInterval, } from "../../src/time/time-interval.ts";
 import { TjTime, } from "../../src/time/tj-time.ts";
 import { SourceFileInfo, } from "../../src/source-file-info.ts";
 
@@ -37,7 +37,7 @@ describe("Booking", () => {
   describe("constructor", () => {
     it("cria Booking com resource, task e intervals", () => {
       const sbStart = TjTime.fromDate(new Date("2024-01-01",),);
-      const iv = new ScoreboardInterval(sbStart, 3600, 0, 24,);
+      const iv = new TimeInterval(sbStart, sbStart.addSeconds(86400,),);
       const booking = new Booking(r1, t1, [iv,],);
       assertEquals(booking.resource, r1,);
       assertEquals(booking.task, t1,);
@@ -49,8 +49,11 @@ describe("Booking", () => {
 
     it("aceita múltiplos intervals", () => {
       const sbStart = TjTime.fromDate(new Date("2024-01-01",),);
-      const iv1 = new ScoreboardInterval(sbStart, 3600, 0, 24,);
-      const iv2 = new ScoreboardInterval(sbStart, 3600, 24, 48,);
+      const iv1 = new TimeInterval(sbStart, sbStart.addSeconds(86400,),);
+      const iv2 = new TimeInterval(
+        sbStart.addSeconds(86400,),
+        sbStart.addSeconds(172800,),
+      );
       const booking = new Booking(r1, t1, [iv1, iv2,],);
       assertEquals(booking.intervals.length, 2,);
     });
@@ -59,14 +62,14 @@ describe("Booking", () => {
   describe("sourceFileInfo", () => {
     it("é null por padrão", () => {
       const sbStart = TjTime.fromDate(new Date("2024-01-01",),);
-      const iv = new ScoreboardInterval(sbStart, 3600, 0, 24,);
+      const iv = new TimeInterval(sbStart, sbStart.addSeconds(86400,),);
       const booking = new Booking(r1, t1, [iv,],);
       assertEquals(booking.sourceFileInfo, null,);
     });
 
     it("pode ser definido", () => {
       const sbStart = TjTime.fromDate(new Date("2024-01-01",),);
-      const iv = new ScoreboardInterval(sbStart, 3600, 0, 24,);
+      const iv = new TimeInterval(sbStart, sbStart.addSeconds(86400,),);
       const booking = new Booking(r1, t1, [iv,],);
       booking.sourceFileInfo = new SourceFileInfo("test.tjp", 1, 0,);
       assertEquals(
@@ -79,14 +82,14 @@ describe("Booking", () => {
   describe("overtime", () => {
     it("é 0 por padrão", () => {
       const sbStart = TjTime.fromDate(new Date("2024-01-01",),);
-      const iv = new ScoreboardInterval(sbStart, 3600, 0, 24,);
+      const iv = new TimeInterval(sbStart, sbStart.addSeconds(86400,),);
       const booking = new Booking(r1, t1, [iv,],);
       assertEquals(booking.overtime, 0,);
     });
 
     it("pode ser definido", () => {
       const sbStart = TjTime.fromDate(new Date("2024-01-01",),);
-      const iv = new ScoreboardInterval(sbStart, 3600, 0, 24,);
+      const iv = new TimeInterval(sbStart, sbStart.addSeconds(86400,),);
       const booking = new Booking(r1, t1, [iv,],);
       booking.overtime = 2 as Overtime;
       assertEquals(booking.overtime, 2,);
@@ -96,14 +99,14 @@ describe("Booking", () => {
   describe("sloppy", () => {
     it("é 0 por padrão", () => {
       const sbStart = TjTime.fromDate(new Date("2024-01-01",),);
-      const iv = new ScoreboardInterval(sbStart, 3600, 0, 24,);
+      const iv = new TimeInterval(sbStart, sbStart.addSeconds(86400,),);
       const booking = new Booking(r1, t1, [iv,],);
       assertEquals(booking.sloppy, 0,);
     });
 
     it("pode ser definido", () => {
       const sbStart = TjTime.fromDate(new Date("2024-01-01",),);
-      const iv = new ScoreboardInterval(sbStart, 3600, 0, 24,);
+      const iv = new TimeInterval(sbStart, sbStart.addSeconds(86400,),);
       const booking = new Booking(r1, t1, [iv,],);
       booking.sloppy = 1 as Sloppy;
       assertEquals(booking.sloppy, 1,);
@@ -113,7 +116,7 @@ describe("Booking", () => {
   describe("to_s", () => {
     it("retorna resource.fullId seguido dos intervals", () => {
       const sbStart = TjTime.fromDate(new Date("2024-01-01",),);
-      const iv = new ScoreboardInterval(sbStart, 3600, 0, 24,);
+      const iv = new TimeInterval(sbStart, sbStart.addSeconds(86400,),);
       const booking = new Booking(r1, t1, [iv,],);
       const result = booking.to_s();
       assert(
@@ -124,8 +127,11 @@ describe("Booking", () => {
 
     it("formata múltiplos intervals com vírgula", () => {
       const sbStart = TjTime.fromDate(new Date("2024-01-01",),);
-      const iv1 = new ScoreboardInterval(sbStart, 3600, 0, 24,);
-      const iv2 = new ScoreboardInterval(sbStart, 3600, 24, 48,);
+      const iv1 = new TimeInterval(sbStart, sbStart.addSeconds(86400,),);
+      const iv2 = new TimeInterval(
+        sbStart.addSeconds(86400,),
+        sbStart.addSeconds(172800,),
+      );
       const booking = new Booking(r1, t1, [iv1, iv2,],);
       const result = booking.to_s();
       assert(
@@ -138,7 +144,7 @@ describe("Booking", () => {
   describe("to_tjp", () => {
     it("usa task.fullId quando taskMode é true", () => {
       const sbStart = TjTime.fromDate(new Date("2024-01-01",),);
-      const iv = new ScoreboardInterval(sbStart, 3600, 0, 24,);
+      const iv = new TimeInterval(sbStart, sbStart.addSeconds(86400,),);
       const booking = new Booking(r1, t1, [iv,],);
       const result = booking.to_tjp(true,);
       assert(
@@ -149,7 +155,7 @@ describe("Booking", () => {
 
     it("usa resource.fullId quando taskMode é false", () => {
       const sbStart = TjTime.fromDate(new Date("2024-01-01",),);
-      const iv = new ScoreboardInterval(sbStart, 3600, 0, 24,);
+      const iv = new TimeInterval(sbStart, sbStart.addSeconds(86400,),);
       const booking = new Booking(r1, t1, [iv,],);
       const result = booking.to_tjp(false,);
       assert(
@@ -160,7 +166,7 @@ describe("Booking", () => {
 
     it("inclui overtime no final", () => {
       const sbStart = TjTime.fromDate(new Date("2024-01-01",),);
-      const iv = new ScoreboardInterval(sbStart, 3600, 0, 24,);
+      const iv = new TimeInterval(sbStart, sbStart.addSeconds(86400,),);
       const booking = new Booking(r1, t1, [iv,],);
       const result = booking.to_tjp(false,);
       assert(
@@ -171,8 +177,11 @@ describe("Booking", () => {
 
     it("separa múltiplos intervals com vírgula e nova linha", () => {
       const sbStart = TjTime.fromDate(new Date("2024-01-01",),);
-      const iv1 = new ScoreboardInterval(sbStart, 3600, 0, 24,);
-      const iv2 = new ScoreboardInterval(sbStart, 3600, 24, 48,);
+      const iv1 = new TimeInterval(sbStart, sbStart.addSeconds(86400,),);
+      const iv2 = new TimeInterval(
+        sbStart.addSeconds(86400,),
+        sbStart.addSeconds(172800,),
+      );
       const booking = new Booking(r1, t1, [iv1, iv2,],);
       const result = booking.to_tjp(false,);
       assert(

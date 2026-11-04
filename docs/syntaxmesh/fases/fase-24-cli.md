@@ -55,12 +55,33 @@ Ao final desta fase:
   + detecção de runtime), **sem `any`** e sem ramificação de FS.
 - Implementação (desancoramento) de `TaskJuggler.parse()`/`parseContent()` no
   core via **provedor de conteúdo injetado** (a CLI fornece `io.readText`;
-  o core continua sem tocar em disco).
+  o core continua sem tocar em disco). Mesma injeção para `parseFile()` e
+  `freeze()`/`freezeByTask()`/`freezedate` (reescrita do master file via
+  `io.writeText`) — **dono: Fase 24** (reancorado em 2026-11-03; antes
+  apontava Fase 19).
 - Porta de opções fiel ao `tj3` no escopo v1 (§5): parse + schedule + geração
   de todos os relatórios declarados, `--check-syntax`, `--list-reports`,
   `--report/--reports`, `--output-dir`, `--no-reports`, `--force-reports`,
   `--silent`, `--no-color`, `--abort-on-warnings`, `--warn-ts-deltas`,
   `--add-trace`, `--config`, `--version`, `--help`.
+- **Complementos pós-`tj3` (decisão 2026-11-03 — §5.4):**
+  - `wz man` — gerador de referência de sintaxe/keywords/manual, consumindo o
+    **`doc-core` entregue na Fase 22** (`SyntaxReference`,
+    `KeywordDocumentation`, `TjpExample`, `UserManual`, `SyntaxCore`) — o
+    equivalente do `tj3man` Ruby (`apps/Tj3Man.rb`).
+  - Apps de sheets (equivalentes de `tj3ss_sender/receiver`,
+    `tj3ts_sender/receiver/summary`, base `Tj3SheetAppBase`): o **núcleo das
+    classes vive no core, entregue na Fase 18**; a CLI apenas empacota. **Sem
+    SMTP**: o sender monta e imprime/escreve o **texto do email** (corpo +
+    anexo `.tji`/`.tjs`); o receiver consome **texto de mensagem** fornecido
+    pelo usuário (arquivo/stdin), não a mensagem inteira de um cliente de email.
+  - `--report` com **atributos dinâmicos** (equivalente `-A`/`dynamicAttributes`
+    do ReportServer Ruby): usa o pipeline `parseReportAttributes` +
+    backup/restore **planejado na Fase 18** (§3.4 do xray).
+  - Consumidores dos utilitários do core da Fase 16: `FileList` (rastreio de
+    arquivos de entrada/repetibilidade — Ruby `Project.rb:478`), `StdIoWrapper`
+    (captura de stdout/stderr p/ anexos e saída dos apps de sheet) e
+    `UTF8String` (no-op, conforme 16.12).
 - Códigos de saída fiéis a `apps/Tj3.rb` (`0` sucesso, `1` erro; §5.3).
 - Mensagens do `MessageHandlerInstance` renderizadas no terminal (cores via
   Cliffy ANSI, respeitando `--no-color`/`--silent`).
@@ -216,8 +237,8 @@ Comportamento padrão (fiel a `apps/Tj3.rb: main()`):
 
 | Flag | Motivo | Âncora |
 |---|---|---|
-| `--freeze`, `--freeze-by-task`, `--freezedate` | reescreve master file (status sheets) | Fase 19 (já ancorado no core: `TaskJuggler.freeze`) |
-| `--check-time-sheet`, `--check-status-sheet` | sheets ainda não portadas | Fase 18 (já ancorado no core) |
+| `--freeze`, `--freeze-by-task`, `--freezedate` | reescreve master file (status sheets) | **Fase 24** (reancorado 2026-11-03; antes: Fase 19). Núcleo `TaskJuggler.freeze` no core; escrita via `io.writeText` (subfase 24.9) |
+| `--check-time-sheet`, `--check-status-sheet` | sheets ainda não portadas | Núcleo: **Fase 18** (já ancorado no core); empacotamento CLI: **Fase 24** (§5.4) |
 | `--debug`, `--debuglevel`, `--debugmodules` | hook de debug Ruby | descartado (sem equivalente no port; depurar via testes/`--add-trace`) |
 
 ### 5.3 Códigos de saída (fiéis a `apps/Tj3.rb`)
@@ -231,6 +252,26 @@ Mapear diretamente os retornos da fachada (`parse()`, `schedule()`,
 `generateReports()`, `generateReport()`, `errors > 0`), como no Ruby. Cliffy
 cuida de `--help`/`--version` (exit 0) e de erro de flag desconhecida (exit 1
 com mensagem própria).
+
+### 5.4 Complementos pós-`tj3` (decisão 2026-11-03 — varredura `docs/syntaxmesh/xray.md`)
+
+A porta do `tj3` (§5.1–5.3) continua o escopo central. Além dela, a CLI passa a
+empacotar recursos adicionais cujo **núcleo vive no core** (regra §3 — "a CLI
+empacota, o core pensa"):
+
+| Comando | Equivalente Ruby | Núcleo (quem entrega) | Empacotamento CLI |
+|---|---|---|---|
+| `wz man [--format html\|text\|tjp] [keyword…]` | `apps/Tj3Man.rb` + `UserManual`/`SyntaxReference`/`KeywordDocumentation`/`TjpExample` | **Fase 22** — `doc-core` (`@vanaware/syntaxmesh/doc-core`, subfase 22.1b) + `SyntaxCore`/`TernarySearchTree` da F16 | F24 subfase 24.9 |
+| `wz ts send` / `wz ts receive` / `wz ts summary` | `apps/Tj3TsSender/TsReceiver/TsSummary.rb` + `Tj3SheetAppBase` | **Fase 18** — classes `TimeSheetSender/Receiver/Summary` no core | F24 subfase 24.10. **Sem SMTP**: sender devolve o **texto do email** (corpo + anexo codificado) para o usuário enviar; receiver lê o **texto da mensagem** de arquivo/stdin — espelhando a decisão email→download da F18 (ADR da fase sheets) |
+| `wz ss send` / `wz ss receive` | `apps/Tj3SsSender/SsReceiver.rb` | **Fase 18** — `StatusSheetSender/Receiver` no core | F24 subfase 24.10 (mesma política texto-do-email) |
+| `--report <R> [attrs]` com atributos dinâmicos | `ReportServer`/`ReportServlet` (daemon) + `Project#generateReport(dynamicAttributes)` | **Fase 18** — núcleo `parseReportAttributes` + backup/restore (adendo F18; xray §3.4) | F24 subfase 24.10 |
+| Rastreio de arquivos de entrada / captura de saída | `FileList`/`StdIoWrapper`/`UTF8String` | **Fase 16** (16.7/16.11/16.12 — utilitários no core) | Consumidos por 24.2/24.10 |
+
+> Nota: `freeze` (`--freeze*`) também reancorado para **Fase 24** (24.9) —
+> era Fase 19. O daemon em si (`tj3d`/`tj3webd`/`tj3client`) permanece **fora de
+> escopo**: a funcionalidade análoga é entregue pela camada 3 da Fase 22
+> (relatórios embutidos no editor) e pela PWA (Fase 20) — registrar a rejeição
+> explícita no plano canônico (xray §3.1).
 
 ---
 
@@ -341,7 +382,8 @@ for seguida; a Fase 23 cria o 033 antes):
   de abstração de storage (overkill — problema é runtime, não storage; ver
   ADR 030).
 - **Consequências:** core ganha injeção de I/O na fachada (desejável p/ Fase 19/20);
-  `--debug*` e freeze/check sheets ficam fora da v1; `node:*` aparece no
+  `--debug*` fica fora da v1; freeze (24.9) e check/sheets (24.10) entram na v2
+  da CLI, dependentes das Fases 18/22; `node:*` aparece no
   workspace pela primeira vez, confinado a `io.ts`.
 
 > ⚠️ **Numeração (resolvida 2026-11-03):** com a ordem oficial
@@ -398,9 +440,13 @@ no padrão dos blocos das fases anteriores:
 | 24.6 | Multi-runtime + binário | smoke Bun/Node; `deno compile`; bundle node via `scripts/esbuild.ts`; README por runtime | 24.5 |
 | 24.7 | Fidelidade tj3 (golden CLI) | comparação stdout/exit/artefatos vs `tj3` Ruby no subset de fixtures; divergências documentadas (regra zero) | 24.5 |
 | 24.8 | Verificação final | `check-all` + `test` + cobertura ≥ 80% + ADR commitado + `CURRENT.md`/`plano.md` atualizados | todas |
+| 24.9 | `man` + `freeze` (§5.4) | comando `wz man` sobre o `doc-core` da F22 (html/text/tjp) + desancoramento e flags `--freeze*` via `io.writeText` | 24.3, F22 (22.1b) |
+| 24.10 | Apps de sheets (§5.4) | `ts/ss send·receive·summary` empacotando as classes da F18 (texto do email, sem SMTP) + `--report` com dynamicAttributes | 24.5, F18 |
 
 Ordem de execução: 24.0 → 24.1 → … → 24.8 (linear; 24.7 pode correr em
-paralelo com 24.6).
+paralelo com 24.6). **24.9/24.10 são extensões pós-v1** (§5.4) — executam depois
+de 24.8, quando F22 (`doc-core`) e F18 (sheets/dynamicAttributes) estiverem
+verdes.
 
 Commits por subfase: `feat(cli): scaffold+io`, `feat(core): file provider`,
 `feat(cli): options`, `feat(cli): reporter`, `feat(cli): reports-pipeline`,

@@ -21,7 +21,7 @@ import { MessageHandlerInstance, } from "../../src/message-handler.ts";
 import type { Project, } from "../../src/model/project.ts";
 import type { Report, } from "../../src/model/report.ts";
 import { ReportContext, } from "../../src/reports/report-context.ts";
-import { MspXmlRE, } from "../../src/reports/msp-xml-re.ts";
+import { asMoney, MspXmlRE, } from "../../src/reports/msp-xml-re.ts";
 
 /** XML gerado uma única vez para o fixture de extensões (memoizado). */
 let cached: string | null = null;
@@ -195,12 +195,22 @@ describe("MspXmlRE — extensões MSPDI (14C.4)", () => {
     it("emite série de custo (Type 6) por dia na atribuição de material", () => {
       const a = assignmentFor(generate(), "Design", "Aço",);
       const series = blocks(a, "TimephasedData",);
-      assertEquals(series.length, 5,);
+      // `Design` tem `effortdone 2d` e o projeto tem `now 2026-03-02`: o
+      // scheduler retoma de `now` (TaskScenario#bookBookings), então a janela
+      // fica 2026-03-02T00:00 → 2026-03-04T11:00 — três dias de calendário.
+      // Datas conferidas no tj3 3.8.4 real (Ruby: `design start=2026-03-02-00:00
+      // end=2026-03-04-11:00`). A expectativa anterior (5 fatias) vinha do
+      // `bookBookings` stub, que ignorava `effortdone`.
+      assertEquals(series.length, 3,);
       for (const td of series) {
         assertEquals(field(td, "Type",), "6",);
         assertEquals(field(td, "Unit",), "2",);
-        assertEquals(field(td, "Value",), "100.0",);
+        // 500 € (200 kg × 2,5 €/kg) em 3 fatias → 166,67 por dia.
+        assertEquals(field(td, "Value",), "166.67",);
       }
+      // A série cobre a janela inteira, uma fatia por dia de calendário.
+      assertEquals(field(series[0]!, "Start",), "2026-03-02T00:00:00",);
+      assertEquals(field(series[2]!, "Finish",), "2026-03-04T10:59:59",);
     });
 
     it("mantém Type 1 para trabalho humano e Type 6 para custo", () => {
@@ -281,6 +291,19 @@ describe("MspXmlRE — extensões MSPDI (14C.4)", () => {
       // material precisa continuar exportado.
       const xml = generate();
       assert(xml.includes("<Name>Aço</Name>",),);
+    });
+  });
+
+  describe("asMoney — arredondamento monetário (15.13)", () => {
+    it("arredonda à centavos sem ruído de ponto flutuante", () => {
+      // `500 / 3` em JS vaza 166.66666666666669 para o XML.
+      assertEquals(asMoney(500 / 3,), "166.67",);
+      assertEquals(asMoney(2.005,), "2.01",);
+    });
+
+    it("preserva o sufixo .0 dos inteiros (asDecimal)", () => {
+      assertEquals(asMoney(500,), "500.0",);
+      assertEquals(asMoney(0,), "0.0",);
     });
   });
 });

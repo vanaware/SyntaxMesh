@@ -7,6 +7,7 @@ import {
   PropertySet,
   PropertyTreeNode,
 } from "../../src/model/property-tree-node.ts";
+import { PropertyList, } from "../../src/model/property-list.ts";
 import {
   AttributeDefinition,
   AttributeType,
@@ -179,7 +180,10 @@ describe("PropertyTreeNode", () => {
       "grandchild",
       child,
     );
-    assertEquals(grandchild.getIndicies(), [],);
+    // Ruby `PropertyTreeNode#getIndicies` insere `p.get('index')` por nível
+    // (raiz → nó). Sem ordenação ainda, o atributo `index` é nil em todos os
+    // níveis — daí um slot por nível, não um array vazio.
+    assertEquals(grandchild.getIndicies(), [null, null, null,],);
   });
 
   it("retorna nível seq no", () => {
@@ -512,5 +516,56 @@ describe("PropertyTreeNode", () => {
     const backup = newRoot.backupAttributes();
     newRoot.restoreAttributes(backup,);
     assertEquals(newRoot.get("testAttr",), "value",);
+  });
+});
+
+/**
+ * `PropertyTreeNode.rb:111,115,121` grava `id` (fullId), `name` (rótulo) e
+ * `seqno` como **atributos**. Sem eles a ordenação de relatórios
+ * (`sortTasks name.up`) comparava `null` com `null`, `sortInternal` devolvia 0
+ * em todo par e a lista ficava na ordem de definição — divergência que só
+ * apareceu no golden de Gantt do `depArrows.tjp` (15.13).
+ */
+describe("PropertyTreeNode — atributos base de ordenação (15.13)", () => {
+  const newSet = (project: Project,): PropertySet => {
+    return new PropertySet(project, false,);
+  };
+
+  it("grava id, name e seqno como atributos", () => {
+    const set = newSet(createTestProject(1,),);
+    const parent = new TestProperty(set, "pai", "Pai", null,);
+    const child = new TestProperty(set, "filho", "Filho", parent,);
+    assertEquals(parent.get("id",), "pai",);
+    assertEquals(child.get("id",), "pai.filho",);
+    assertEquals(child.get("name",), "Filho",);
+    assertEquals(child.get("seqno",), child.sequenceNo,);
+  });
+
+  it("ordena por name.up pelo rótulo, não pela ordem de criação", () => {
+    const set = newSet(createTestProject(1,),);
+    new TestProperty(set, "zulu", "Zulu", null,);
+    new TestProperty(set, "alfa", "Alfa", null,);
+    new TestProperty(set, "mike", "Mike", null,);
+    const list = new PropertyList(set,);
+    list.setSorting([["name", true, -1,],],);
+    list.sort();
+    assertEquals(
+      (list.toArray() as TestProperty[]).map((p,) => p.name),
+      ["Alfa", "Mike", "Zulu",],
+    );
+  });
+
+  it("ordena por id.up pelo fullId (Ruby usa o fullId no critério id)", () => {
+    const set = newSet(createTestProject(1,),);
+    const root = new TestProperty(set, "raiz", "Raiz", null,);
+    new TestProperty(set, "raiz.zebra", "Zebra", root,);
+    new TestProperty(set, "raiz.abelha", "Abelha", root,);
+    const list = new PropertyList(set,);
+    list.setSorting([["id", true, -1,],],);
+    list.sort();
+    assertEquals(
+      (list.toArray() as TestProperty[]).map((p,) => p.id),
+      ["raiz", "raiz.abelha", "raiz.zebra",],
+    );
   });
 });

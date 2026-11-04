@@ -100,7 +100,12 @@ export class PTNProxy implements AttributeContainer {
    */
   getIndicies(): Array<number | null> {
     const indices: Array<number | null> = [];
-    const own = this.get("index",);
+    // Mesma tolerância de `PropertyTreeNode#getIndicies`: nós sem o atributo
+    // `index` (ex.: `TestProperty` dos testes) contribuem com `null` em vez de
+    // estourar `TjArgumentError` ao delegar `get('index')`.
+    const own = this.ptn().attributeDefinition("index",)
+      ? this.get("index",)
+      : null;
     indices.push(typeof own === "number" ? own : null,);
     let current = this.parent as PropertyTreeNode | null;
     while (current) {

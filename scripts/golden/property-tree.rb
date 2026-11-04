@@ -43,7 +43,11 @@ class ScenarioWrapper
     @project = project
     @scenario_data = scenario_data
   end
-  def all; []; end
+  # `@project.scenario(idx).all` do Ruby real devolve o próprio cenário e seus
+  # descendentes. Devolver `[]` fazia `PropertyTreeNode#[]=` descartar todo
+  # `root["effort", i] = ...` — o golden saía com `provided`/`inherited`
+  # falsos e não exercitava nada.
+  def all; [@scenario_data]; end
   def get(name); @project.get(name); end
   def set(name, value); @project.set(name, value); end
 end
@@ -62,7 +66,12 @@ class MockProject
   def get(name); @store[name]; end
   def set(name, value); @store[name] = value; end
   def scenario(idx); return nil if idx < 0 || idx >= @scenarios.length; ScenarioWrapper.new(self, @scenarios[idx]); end
-  def scenarioIdx(sc); @scenarios.each_index { |i| return i if @scenarios[i][:id] == sc || @scenarios[i][:fullId] == sc }; nil; end
+  def scenarioIdx(sc)
+    # `PropertyTreeNode#[]=` repassa cada item de `all` (aqui, o cenário em si).
+    sc = sc[:fullId] if sc.is_a?(Hash)
+    @scenarios.each_index { |i| return i if @scenarios[i][:id] == sc || @scenarios[i][:fullId] == sc }
+    nil
+  end
   def addScenario(scenario); @scenarios << scenario; @scenarioCount = @scenarios.length; end
 end
 
@@ -195,17 +204,20 @@ def testScenarioSpecificInheritance
 
   root = TestProperty.new(ps, "root", "Root", nil)
 
+  # As duas atribuições vêm ANTES dos casos: o runner TS monta o nó uma única
+  # vez (com `setForScenario` em 0 e 1) e avalia todos os casos nesse estado
+  # final — um caso intermediário ("antes de setar o cenário 1") nunca poderia
+  # bater com o lado TypeScript.
   root["effort", 0] = 3600
-
-  tc("cenario 0 provided", "provided", "TestProperty", { value: nil, scenarioIdx: 0 }, root.provided("effort", 0), node: "root")
-  tc("cenario 0 inherited", "inherited", "TestProperty", { value: nil, scenarioIdx: 0 }, root.inherited("effort", 0), node: "root")
-  tc("cenario 1 provided", "provided", "TestProperty", { value: nil, scenarioIdx: 1 }, root.provided("effort", 1), node: "root")
-  tc("cenario 1 inherited", "inherited", "TestProperty", { value: nil, scenarioIdx: 1 }, root.inherited("effort", 1), node: "root")
-
   root["effort", 1] = 7200
 
-  tc("cenario 1 provided", "provided", "TestProperty", { value: nil, scenarioIdx: 1 }, root.provided("effort", 1), node: "root")
-  tc("cenario 0 ainda provided", "provided", "TestProperty", { value: nil, scenarioIdx: 0 }, root.provided("effort", 0), node: "root")
+  # `attr` explícito: o runner TS cai em "priority" (atributo que este
+  # PropertySet não define) quando o campo falta — o golden ficaria verde sem
+  # testar nada.
+  tc("cenario 0 provided", "provided", "TestProperty", { value: nil, scenarioIdx: 0 }, root.provided("effort", 0), node: "root", attr: "effort")
+  tc("cenario 0 inherited", "inherited", "TestProperty", { value: nil, scenarioIdx: 0 }, root.inherited("effort", 0), node: "root", attr: "effort")
+  tc("cenario 1 provided", "provided", "TestProperty", { value: nil, scenarioIdx: 1 }, root.provided("effort", 1), node: "root", attr: "effort")
+  tc("cenario 1 inherited", "inherited", "TestProperty", { value: nil, scenarioIdx: 1 }, root.inherited("effort", 1), node: "root", attr: "effort")
 end
 
 def testAdoption

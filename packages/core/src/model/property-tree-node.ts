@@ -106,6 +106,14 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
     }
 
     this.id = this.fullId;
+    // RUBY-COMPAT-FIX: `PropertyTreeNode.rb:111,115` gravam `id` (o fullId) e
+    // `name` como ATRIBUTOS. Sem eles `sortTasks id.up`/`name.up` comparava
+    // `null` com `null`, `sortInternal` devolvia 0 em todos os pares e a lista
+    // ficava na ordem de definição — divergindo do tj3 (golden do
+    // depArrows.tjp, cujas linhas do chart saíam fora da ordem alfabética).
+    this.set("id", this.id,);
+    this.set("name", name,);
+
     this.sequenceNo = this.propertySet.items + 1;
     // RUBY-COMPAT-FIX: `PropertyTreeNode.rb:121` grava o número de sequência no
     // atributo `seqno`. Sem isso o critério de ordenação padrão dos relatórios
@@ -279,15 +287,17 @@ export class PropertyTreeNode implements PropertyLike, AttributeContainer {
    */
   getIndicies(): Array<number | null> {
     const indices: Array<number | null> = [];
-    let node: PropertyTreeNode | null = this;
-    while (node) {
+    // Sobe até a raiz inserindo `index` na frente: a ordem final é raiz → nó.
+    const collect = (node: PropertyTreeNode,): void => {
       // Ruby: `p.get('index')`, que é nil quando o nó não tem o atributo.
       const index = node.attributeDefinition("index",)
         ? node.get("index",)
         : null;
       indices.unshift(typeof index === "number" ? index : null,);
-      node = (node.parents()[0] as PropertyTreeNode | undefined) ?? null;
-    }
+      const parent = node.parents()[0] as PropertyTreeNode | undefined;
+      if (parent) collect(parent,);
+    };
+    collect(this,);
     return indices;
   }
 

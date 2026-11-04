@@ -18,6 +18,7 @@ import { WorkingHours, } from "../calendar/working-hours.ts";
 import { Limits, } from "../scheduling/limits.ts";
 import { ShiftAssignments, } from "../scheduling/shift-assignments.ts";
 import { TimeSheets, } from "../scheduling/time-sheets.ts";
+import { DataCache, } from "../scheduling/data-cache.ts";
 import { Journal, } from "./journal.ts";
 import { defaultAlertLevels, } from "./alert-levels.ts";
 import { ReportContext, } from "../reports/report-context.ts";
@@ -645,7 +646,10 @@ export class Project implements ProjectLike {
       this.reportContexts.pop();
       Log.stopProgressMeter();
     }
-    // DataCache.instance.flush(); // stub
+    // Ruby `Project#generateReports` limpa o cache de dados ao final.
+    // (`data-cache.ts` já implementa `flush()` — o antigo `// stub` era resíduo.
+    //  xray §5.4, corrigido 2026-11-03.)
+    DataCache.instance.flush();
   }
 
   generateReport(
@@ -678,12 +682,18 @@ export class Project implements ProjectLike {
       }
       this.reportContexts.push(new ReportContext(this, report as Report,),);
       if (dynamicAttributes) {
-        // report.backupAttributes(); // stub
-        // parseReportAttributes(report, dynamicAttributes); // stub
+        // Ancorado: Fase 18 — pipeline dynamicAttributes (xray §3.4): backup de
+        // atributos do report antes de injetar as colunas dinâmicas.
+        // report.backupAttributes();
+        // Ancorado: Fase 18 — pipeline dynamicAttributes (xray §3.4): parse da
+        // string de atributos via `rule_dynamicAttributes` (já registrada).
+        // parseReportAttributes(report, dynamicAttributes);
       }
       (report as Report).generate(formats as string[] | undefined,);
       if (dynamicAttributes) {
-        // report.restoreAttributes(...); // stub
+        // Ancorado: Fase 18 — pipeline dynamicAttributes (xray §3.4): restore dos
+        // atributos após a geração.
+        // report.restoreAttributes(...);
       }
       this.reportContexts.pop();
     }

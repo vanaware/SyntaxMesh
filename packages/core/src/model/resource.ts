@@ -90,8 +90,9 @@ export class Resource extends PropertyTreeNode {
    * Painel de status das tarefas sob responsabilidade deste recurso (Ruby
    * `Resource#query_dashboard`, l.45-47).
    */
-  // Ancorado: Fase 15 — dashboard exige trackingscenario + alertas correntes.
+  // Ancorado: Fase 16 — dono único do query_dashboard (xray §4/§5.2;
+  // reancorado em 2026-11-03 — antes apontava Fase 15).
   query_dashboard(_query: ResourceScenarioQuery,): void {
-    throw new NotYetImplementedError("15", "Resource#query_dashboard",);
+    throw new NotYetImplementedError("16", "Resource#query_dashboard",);
   }
 }

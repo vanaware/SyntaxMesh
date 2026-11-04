@@ -56,8 +56,11 @@ A ordem **dentro** da fase importa:
 - **ADR 010** — worker-db centraliza storage.
 - **ADR 011** — Port fiel do TaskJuggler.
 - **ADR 013** — `compat.keepRubyBugs`.
-- **ADR 030** — Time sheets no browser (download/upload em vez de SMTP). **Criado nesta fase.**
-- **ADR 031** — FileStore injection no Core. **Criado nesta fase.**
+- **ADR 036** — Sheets no browser: email → download/**texto de email**. **Criado nesta fase.**
+  (Renumerado em 2026-11-03; o plano chamava 029, que pertence a Journal/AlertLevel — xray §5.3.)
+- **ADR 037** — FileStore injection no Core. **Criado nesta fase.**
+  (Renumerado em 2026-11-03; o plano chamava 031, que já é Modelo Contábil Estendido.)
+- **ADR 029** — *Journal e AlertLevel em TypeScript* (Fase 16, subfase 16.0). **Não usar aqui.**
 
 ### Convenções CRÍTICAS
 
@@ -66,7 +69,11 @@ A ordem **dentro** da fase importa:
 - **Testes usam `fakeOpfs()`** de `@syntaxmesh/worker-db`.
 - **`SheetHandlerBase.setFileStore(fs)`** injeta.
 - **`addToScm`** delega ao `FileStore` (se `scmCommand !== null` → warning).
-- **Email → download/upload.** SMTP não existe em browser.
+- **Email → download/upload.** SMTP não existe em browser. **Política (2026-11-03):**
+  o sender entrega o **texto do email** (cabeçalhos + corpo + anexo base64) e **não**
+  se conecta a app de envio; o receiver consome **texto de mensagem** (arquivo/stdin),
+  não a mensagem inteira.
+- **Núcleo dos apps de sheet mora aqui (18.18); empacotamento CLI mora na Fase 24.**
 - **`tj3client` → in-process.** Chamar `Project` diretamente.
 - **YAML → JSON.** `resources.yml` vira `resources.json`.
 - **`TimeSheetRecord.work=`** aceita `Integer` (slots) ou `Float` (percentual).
@@ -85,6 +92,8 @@ A ordem **dentro** da fase importa:
 ### Anti-padrões
 
 - ❌ Não introduzir SMTP no browser.
+- ❌ Não chamar app/lib de envio de email a partir do sender — só produzir texto.
+- ❌ Não fazer o receiver ler mailbox/IMAP — recebe texto de mensagem.
 - ❌ Não importar `@syntaxmesh/worker-db` em `packages/core/src/`.
 - ❌ Não confundir `TimeSheet` (singular) com `TimeSheets` (plural).
 - ❌ Não usar `fs.write` síncrono (não existe em OPFS).
@@ -98,7 +107,7 @@ A ordem **dentro** da fase importa:
 ## Progresso
 
 ```
-[ ] 18.0  Correção de numeração de ADRs + ADRs 030/031  —   0/8
+[ ] 18.0  ADRs 036/037 (numeração corrigida)         —   0/8
 [ ] 18.1  Interface FileStore em Core                    —   0/8
 [ ] 18.2  TimeSheetRecord                                —   0/24
 [ ] 18.3  TimeSheet + TimeSheets                         —   0/22
@@ -115,56 +124,59 @@ A ordem **dentro** da fase importa:
 [ ] 18.14 Verificar conformidade FileStore               —   0/4
 [ ] 18.15 Golden tests (timesheets)                      —   0/8
 [ ] 18.16 Verificação final                              —   0/10
+[ ] 18.17 Adendo F10-C: material + picture em sheets     —   0/10
+[ ] 18.18 Núcleo dos apps de sheet (xray §3.3)           —   0/9
+[ ] 18.19 Pipeline dynamicAttributes (xray §3.4)         —   0/8
+[ ] 18.20 MessageHandler#checkLevel (xray §3.4.1)        —   0/4
 ─────────────────────────────────────────────────────────
-TOTAL: ~185
+TOTAL: ~206
 ```
 
 ---
 
-## Bloco 0 — Correção de numeração + ADRs 030/031
+## Bloco 0 — ADRs 036/037
 
-### 18.0 — Correção de numeração + criação dos ADRs 030/031
+### 18.0 — Criação dos ADRs 036/037
 
-**Objetivo:** alinhar a numeração de ADRs com o plano consolidado e criar os dois ADRs desta fase.
+**Objetivo:** registrar as duas decisões desta fase com a numeração correta.
 
-#### 18.0.1 — Corrigir numeração nos planos de fase
+#### 18.0.1 — Varredura de referências (escopo reduzido em 2026-11-03)
 
-| # | Tarefa | Arquivos | Verificação |
-|---|---|---|---|
-| 18.0.1.1 | Substituir "ADR 025" por "ADR 026" em `fase-14-relatorios.md` | idem | `grep "ADR 026"` retorna ≥ 1 |
-| 18.0.1.2 | Substituir "ADR 026" por "ADR 027" em `fase-15-gantt.md` | idem | `grep "ADR 027"` |
-| 18.0.1.3 | Substituir "ADR 027" por "ADR 028" em `fase-16-apoio.md` | idem | `grep "ADR 028"` |
-| 18.0.1.4 | Substituir "ADR 029" (timesheets) e "ADR 031" (FileStore) por "ADR 030" e "ADR 031" em `fase-18-time-status-sheets.md` | idem | `grep "ADR 030"` |
-| 18.0.1.5 | Substituir "ADR 030" (storage schema) por "ADR 032" em `fase-19-storage.md` | idem | `grep "ADR 032"` |
-| 18.0.1.6 | Substituir "ADR 032" (PWA) por "ADR 033" em `fase-20-pwa-ui.md` | idem | `grep "ADR 033"` |
-| 18.0.1.7 | Substituir "ADR 033" (validação) por "ADR 034" em `fase-21-compatibilidade-qualidade.md` | idem | `grep "ADR 034"` |
-| 18.0.1.8 | Reconstruir tabela em `decisoes/README.md` refletindo a numeração final | idem | 34 linhas |
-
-#### 18.0.2 — ADR 030 (Time sheets no browser)
+> **CANCELADO:** a varredura original (18.0.1.1–18.0.1.7), que shiftava "ADR 025→026→027→028→030/031→032→033→034" em cascata, **não será executada** — os números que ela propunha já estão ocupados por arquivos reais (`027-reports-browser`, `028-gantt-html-css`, `030-arquitetura-simplificada`, `031-modelo-contabil-estendido`, `032-gate-fase-13`) e as fases 14/15 já usam a numeração correta no README. Renumerar em cascata agora quebraria todas as referências históricas e os commits já feitos.
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 18.0.2.1 | Criar `docs/syntaxmesh/decisoes/030-timesheet-browser.md` com frontmatter | idem | arquivo existe |
+| 18.0.1.1 | Confirmar que `fase-14-relatorios.md` usa ADR **027** (reports no browser) e corrigir se divergir | `fase-14-relatorios.md` | `grep "ADR 027"` |
+| 18.0.1.2 | Confirmar que `fase-15-gantt*.md` usa ADR **028** (Gantt HTML+CSS) | `fase-15-gantt.md`, `-tarefas.md` | `grep "ADR 028"` |
+| 18.0.1.3 | Corrigir `fase-16-apoio*.md`: o ADR de Journal/AlertLevel é **029** (não 027) | `fase-16-apoio.md`, `-tarefas.md` | `grep "ADR 029"` |
+| 18.0.1.4 | Atualizar `decisoes/README.md`: 029 = Journal e AlertLevel; **reservar 036 (sheets) e 037 (`FileStore`)**; registrar a cadeia 033–035 como reivindicada por F21/F22/F23/F24, a reconciliar na Fase 21 | `decisoes/README.md` | linhas presentes |
+| 18.0.1.5 | ~~Substituir ADRs em cascata nas fases 19/20/21~~ **CANCELADO** (ver acima) | — | — |
+
+#### 18.0.2 — ADR 036 (Sheets no browser: email → texto/download)
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 18.0.2.1 | Criar `docs/syntaxmesh/decisoes/036-sheets-sem-smtp.md` com frontmatter | idem | arquivo existe |
 | 18.0.2.2 | **Contexto:** SMTP/SCM/filesystem vs browser | idem | — |
-| 18.0.2.3 | **Decisões:** Sender = download + Web Share API (futuro); Receiver = upload/drag-and-drop; SCM = `FileStore` injetado; `tj3client` = in-process; YAML → JSON | idem | — |
-| 18.0.2.4 | **Alternativas:** SMTP em browser (inviável), servidor backend (viola ADR 005). **Consequências:** fluxo manual; UI precisa botão de download/upload | idem | — |
-| 18.0.2.5 | Atualizar linha `030` em `decisoes/README.md` | idem | linha presente |
+| 18.0.2.3 | **Decisões:** Sender = **texto do email** (To/Subject/corpo + anexo base64) + download + Web Share API (futuro); Receiver = **texto de mensagem** (arquivo/stdin) ou upload/drag-and-drop; SCM = `FileStore` injetado; `tj3client` = in-process; YAML → JSON | idem | — |
+| 18.0.2.4 | **Alternativas:** SMTP em browser (inviável), servidor backend (viola ADR 005), leitura de mailbox (inviável no browser). **Consequências:** fluxo manual; UI/CLI precisam botão de download e entrada de texto | idem | — |
+| 18.0.2.5 | Atualizar linha `036` em `decisoes/README.md` | idem | linha presente |
 
-#### 18.0.3 — ADR 031 (FileStore injection)
+#### 18.0.3 — ADR 037 (FileStore injection)
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 18.0.3.1 | Criar `docs/syntaxmesh/decisoes/031-filestore-injection.md` com frontmatter | idem | arquivo existe |
+| 18.0.3.1 | Criar `docs/syntaxmesh/decisoes/037-filestore-injection.md` com frontmatter | idem | arquivo existe |
 | 18.0.3.2 | **Contexto:** Core não pode importar Storage (ADR 001, 003). `SheetHandlerBase` precisa ler/escrever arquivos | idem | — |
 | 18.0.3.3 | **Decisões:** Core define interface `FileStore` em `src/interfaces/file-store.ts`; Storage implementa; testes usam `fakeOpfs()`; injeção via `setFileStore(fs)` | idem | — |
 | 18.0.3.4 | **Alternativas:** Core importar Storage (viola ADR 001). **Consequências:** desacoplamento; testes rápidos | idem | — |
-| 18.0.3.5 | Atualizar linha `031` em `decisoes/README.md` | idem | linha presente |
+| 18.0.3.5 | Atualizar linha `037` em `decisoes/README.md` | idem | linha presente |
 
 #### 18.0.4 — Nota em `fase-18-time-status-sheets.md`
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 18.0.4.1 | Adicionar nota no plano: "numeração final é ADR 030 (timesheets) e ADR 031 (FileStore)" | `fase-18-time-status-sheets.md` | 1 linha |
+| 18.0.4.1 | Confirmar a nota de renumeração já registrada no plano (036 sheets / 037 FileStore; 029 = Journal) | `fase-18-time-status-sheets.md` | bloco 18.0 presente |
 
 ---
 
@@ -173,7 +185,7 @@ TOTAL: ~185
 ### 18.1 — Interface `FileStore` em Core
 
 **⚠️ RUBY: N/A (extensão SyntaxMesh).**
-**📎 ADR 031.**
+**📎 ADR 037.**
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
@@ -266,7 +278,7 @@ TOTAL: ~185
 ### 18.5 — `SheetHandlerBase` (com `FileStore` injetado)
 
 **⚠️ RUBY: `SheetHandlerBase.rb` (arquivo inteiro — ~300 linhas).**
-**📎 ADR 031.**
+**📎 ADR 037.**
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
@@ -453,7 +465,7 @@ TOTAL: ~185
 
 ### 18.14 — Verificar conformidade `FileStore`
 
-**📎 ADR 031.**
+**📎 ADR 037.**
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
@@ -495,7 +507,7 @@ TOTAL: ~185
 | 18.16.3 | `grep -r "NotYetImplementedError" packages/core/src/timesheet/ packages/core/src/sheets/` = 0 | grep |
 | 18.16.4 | `grep -r "NotYetImplementedError" packages/core/src/model/project.ts` — apenas stubs de fases 19+ | ≤ 2 ocorrências |
 | 18.16.5 | `grep -r "@syntaxmesh/worker-db" packages/core/src/` = 0 | grep |
-| 18.16.6 | ADRs 030 e 031 criados e commitados | git log |
+| 18.16.6 | ADRs 036 e 037 criados e commitados | git log |
 | 18.16.7 | `TimeSheet`, `TimeSheetRecord`, `TimeSheets`, `SheetHandlerBase`, `SheetSender`, `SheetReceiver`, `TimeSheetSender`, `TimeSheetReceiver`, `TimeSheetSummary`, `StatusSheetSender`, `StatusSheetReceiver`, `FileStore` exportados em `packages/core/mod.ts` | `deno check` |
 | 18.16.8 | `tests/integration/smoke_after_phase_18_test.ts` — cria `TimeSheet`, adiciona 1 record, verifica `check()`; verifica Fase 17 (`XMLElement`) | 1 teste |
 | 18.16.9 | Auditoria: cada subfase do plano `fase-18-time-status-sheets.md` tem tarefas correspondentes | grep |
@@ -505,8 +517,9 @@ TOTAL: ~185
 
 ## Notas para a IA
 
-1. **Ordem:** 18.0 → 18.1 → 18.2 → 18.3 → 18.4 → 18.5 → 18.6 → 18.7 → 18.8 → 18.9 → 18.10 → 18.11 → 18.12 → 18.13 → 18.14 → 18.15 → 18.16.
-2. **ADR 030 (timesheets browser)** e **ADR 031 (FileStore injection)** — não confundir com 029 (XML).
+1. **Ordem:** 18.0 → 18.1 → 18.2 → 18.3 → 18.4 → 18.5 → 18.6 → 18.7 → 18.8 → 18.9 → 18.10 → 18.11 → 18.12 → 18.13 → 18.14 → 18.15 → 18.16 → (adendos) 18.17 → 18.18 → 18.19 → 18.20.
+2. **ADR 036 (sheets browser: texto de email/download)** e **ADR 037 (FileStore injection)** —
+   **não** usar 029 (Journal e AlertLevel, Fase 16) nem 031 (Modelo Contábil Estendido).
 3. **Core define `FileStore` em `src/interfaces/`.** Storage implementa (Fase 19).
 4. **Core não importa `@syntaxmesh/worker-db`** — só em testes.
 5. **`fakeOpfs()`** em todos os testes que tocam FS.
@@ -550,6 +563,58 @@ TOTAL: ~185
 **Critério de aceite do adendo:** um `.tjp`/timesheet pode reportar `work`/`remaining` de material sem quebrar a validação de slots; `status` com `picture` chega ao Journal intacto; o status sheet mostra materiais por tarefa; um registro de material com `unitprice` vira `MaterialBooking` e o custo realizado aparece no `materialreport` (`actualcost`).
 
 > **Origem de 18.17.9/18.17.10 (Fase 14 Complemento, 14C.11.12):** a 14C.11 levou o preço unitário para a alocação (`material <id> <q> [modificador] unitprice <p>`) e para o booking (`booking material <id> quantity <q> [unitprice <p>] on <data>`), com precedência booking → alocação → material. O consumo **realizado** chega pelo timesheet, então o preço do booking precisa ser declarável no sheet — caso contrário o `actualcost` do `materialreport` só herda o preço planejado e a variação de preço real fica invisível. Ver `docs/syntaxmesh/fases/fase-14-relatorios-complemento.md` §11.4.
+
+---
+
+## Bloco H — Adendo 2026-11-03 (varredura xray): apps de sheet, `dynamicAttributes`, `checkLevel`
+
+> **Origem:** `docs/syntaxmesh/xray.md` §3.3, §3.4, §3.4.1. Escopo decidido em
+> 2026-11-03: o **núcleo** destas três lacunas vive no core **nesta fase**; a
+> **Fase 24** empacota para a CLI (subfases 24.9/24.10).
+
+### 18.18 — Núcleo dos apps de sheet (`SheetAppBase` + 5 apps)
+
+**⚠️ RUBY: `Tj3SheetAppBase.rb` + `apps/Tj3Ts{Sender,Receiver,Summary}.rb` + `apps/Tj3Ss{Sender,Receiver}.rb`.**
+**📎 ADR 036.** **Consumidor: Fase 24** (não implementar parsing de argv/OptionParser aqui).
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 18.18.1 | `class SheetAppBase` com opções tipadas (`workingDir`, `dryRun`, `config`, `endDate`) e `configureTarget(sheet)` aplicando `AppConfig` em `global` / `timesheets` / `timesheets.<app>` | `sheets/apps/app-base.ts` | 3 testes |
+| 18.18.2 | Default de `date` = `TjTime.now().nextDayOfWeek(1).toString('%Y-%m-%d')` (fiel a `Tj3TsSender#initialize`) | `sheets/apps/app-base.ts` | 1 teste |
+| 18.18.3 | `TsSenderApp` (`-r/--resource`, `-f/--force`, `intervalDuration`) → devolve `EmailMessage { to, subject, text, html, attachment }` com anexo `.tji` em base64; **sem** qualquer chamada de envio | `sheets/apps/ts-sender-app.ts` | 3 testes |
+| 18.18.4 | `TsReceiverApp` consome **texto de mensagem** (string vinda de arquivo/stdin) e extrai o anexo/corpo via `cutOut`/`processEmail` de 18.7 | `sheets/apps/ts-receiver-app.ts` | 3 testes |
+| 18.18.5 | `TsSummaryApp` (`-r`, `-t/--to`, `--sheet`, `--digest`) produzindo **textos** de email (um por recurso + digest) | `sheets/apps/ts-summary-app.ts` | 2 testes |
+| 18.18.6 | `SsSenderApp` / `SsReceiverApp` análogos para status sheets (`.tjs`) | `sheets/apps/ss-sender-app.ts`, `ss-receiver-app.ts` | 3 testes |
+| 18.18.7 | Corpo do email usa `htmlMailBody`/`textMailBody` de `SheetHandlerBase`; onde o Ruby captura stdout com `stdIoWrapper`, usar **16.11** | `sheets/apps/*.ts` | 1 teste |
+| 18.18.8 | Códigos de saída fiéis a `Tj3AppBase` (`0`/`1`) expostos como retorno, sem `Deno.exit` no core | `sheets/apps/app-base.ts` | 2 testes |
+| 18.18.9 | Exportar os apps em `packages/core/mod.ts` e registrar na F24 que o empacotamento é CLI-only | `mod.ts`, `fase-24-cli.md` §5.4 | `deno check` |
+
+### 18.19 — Pipeline `dynamicAttributes` + `parseReportAttributes`
+
+**⚠️ RUBY: `Project.rb:778-812` + `ProjectFileParser#parseReportAttributes` + `rule_dynamicAttributes` (`TjpSyntaxRules.rb:1034`).**
+**📎 xray §3.4.** **Consumidores:** `SheetSender` (18.6) e `wz --report` da **Fase 24**.
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 18.19.1 | `Report#backupAttributes()` + `Report#restoreAttributes(backup)` | `reports/report.ts` | 2 testes |
+| 18.19.2 | `ProjectFileParser#parseReportAttributes(report, attributes: string)` usando a regra já registrada em `rules/common.ts:784` | `parser/project-file-parser.ts` | 3 testes |
+| 18.19.3 | `Project#generateReport(id, regExpMode?, outputDir?, dynamicAttributes?: string)` executando backup → parse → gera → restore quando o argumento existe | `model/project.ts` | 3 testes |
+| 18.19.4 | `SheetSender` passa a usar o 4º argumento para as colunas do template (substitui o caminho ad-hoc atual) | `sheets/sheet-sender.ts` | 2 testes |
+| 18.19.5 | **Âncoras ADR 032:** enquanto não implementados, os três `// stub` de `project.ts` viram `// Ancorado: Fase 18 — pipeline dynamicAttributes (xray §3.4)` + `NotYetImplementedError("18", …)` | `model/project.ts` | `deno task check:stubs` verde |
+| 18.19.6 | Erro de sintaxe em `dynamicAttributes` vira mensagem do `MessageHandler` (não exceção crua) | `parser/project-file-parser.ts` | 1 teste |
+| 18.19.7 | Golden: mesmo report com/sem `dynamicAttributes` (comparar com `tj3 -A`) | `scripts/golden/`, `tests/golden/` | ≥ 4 casos |
+| 18.19.8 | Registrar na F24 a flag equivalente a `-A` (`wz --report … --attr …`) | `fase-24-cli.md`, `-tarefas.md` | linha presente |
+
+### 18.20 — `MessageHandler#checkLevel`
+
+**⚠️ RUBY: `MessageHandler.rb#checkLevel`.** **📎 xray §3.4.1.**
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 18.20.1 | Transformar `outputLevel`/`logLevel` em setters com validação `0..5` | `base/message-handler.ts` | `deno check` |
+| 18.20.2 | Lançar `TjArgumentError` com a mensagem do Ruby fora do intervalo | idem | 2 testes |
+| 18.20.3 | Callers (incl. F18 summary) passam a usar o setter | `sheets/*.ts` | `grep "\.outputLevel ="` só em testes |
+| 18.20.4 | `deno task check-all` verde após a mudança | — | exit 0 |
 
 ---
 

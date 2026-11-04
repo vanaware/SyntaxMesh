@@ -269,6 +269,36 @@ toca em FS (plano §6).
 
 ---
 
+## Adendo (2026-11-03 — varredura xray) — Blocos I/J (pós-v1)
+
+Escopo registrado em `fase-24-cli.md` §5.4. Executar **depois de 24.8**, quando
+F22 (`doc-core`) e F18 (sheets + dynamicAttributes + checkLevel) estiverem
+verdes; são extensões, não bloqueiam a 1ª onda da Fase 21.
+
+### 24.9 — `wz man` + `--freeze*` (Bloco I)
+
+| # | Tarefa | Fonte/Arquivos | Verificação |
+|---|---|---|---|
+| 24.9.1 | Comando Cliffy `man` com `--format html\|text\|tjp` e filtro por keyword | `packages/cli/src/commands/man.ts`; consome `@vanaware/syntaxmesh/doc-core` (F22 22.1b) | teste BDD por formato |
+| 24.9.2 | `wz man <keyword>` resolve via `TernarySearchTree`/`SyntaxReference` e imprime documentação (`KeywordDocumentation` + exemplos `TjpExample`) | idem | ≥ 3 keywords (task/resource/report) |
+| 24.9.3 | `wz man --format html` gera manual completo (`UserManual` do doc-core) em `--output-dir` | idem | snapshot estrutural |
+| 24.9.4 | Desancorar `TaskJuggler.freeze()` (âncora Fase 24 no core) — reescrita do master file via `io.writeText` | `packages/core/src/taskjuggler.ts` + `packages/cli` | teste com fixture `.tjp` congelável |
+| 24.9.5 | Flags `--freeze`, `--freeze-by-task`, `--freezedate` mapeadas (tj3 §5.2) | `options.ts` | teste de flags + exit codes |
+
+### 24.10 — Apps de sheets + dynamicAttributes (Bloco J)
+
+| # | Tarefa | Fonte/Arquivos | Verificação |
+|---|---|---|---|
+| 24.10.1 | `ts send`: gera template `.tji` + **texto do email** (corpo; sem SMTP — anexo codificado em base64 no próprio texto ou arquivo separado) | classes da F18 (`TimeSheetSender`); Ruby `apps/Tj3TsSender.rb` (structure, não transporte) | teste: saída contém corpo + anexo decodificável |
+| 24.10.2 | `ts receive --from <file|->`: consome **texto de mensagem** (arquivo/stdin), extrai anexo/processa como `TimeSheetReceiver` | Ruby `apps/Tj3TsReceiver.rb`; F18 | teste ponta a ponta com template round-trip |
+| 24.10.3 | `ts summary`: `TimeSheetSummary` sobre submissões (texto), saída texto/CSV | Ruby `apps/Tj3TsSummary.rb`; F18 | fixture da F18 |
+| 24.10.4 | `ss send` / `ss receive`: mesmos contratos para status sheets (`StatusSheetSender/Receiver`) | Ruby `apps/Tj3Ss{Sender,Receiver}.rb` | round-trip `.tjs` |
+| 24.10.5 | `--report <R> [--attr "..."]`: aplica o pipeline `dynamicAttributes`/`parseReportAttributes` da F18 na CLI | `Project#generateReport` (4º arg) | teste com coluna dinâmica |
+| 24.10.6 | Usar `FileList` (16.7) para rastreio de inputs e `StdIoWrapper` (16.11) para captura de saída onde o Ruby usava | core F16 | grep: nenhuma reimplementação local |
+| 24.10.7 | `check-stubs`: âncoras `Fase 24` (freeze/parse/parseFile/parseContent) presentes e nenhuma órfã | `scripts/check-stubs.ts` | verde |
+
+---
+
 ## Notas para a IA
 
 1. **Ordem:** 24.0 → 24.1 → 24.2 → 24.3 → 24.4 → 24.5 → 24.6 → 24.7 → 24.8

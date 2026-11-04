@@ -7,7 +7,7 @@ import { Task, } from "../../src/model/task.ts";
 import { ResourceScenario, } from "../../src/model/resource-scenario.ts";
 import { Account, } from "../../src/model/account.ts";
 import { Booking, } from "../../src/scheduling/booking.ts";
-import { ScoreboardInterval, } from "../../src/time/scoreboard-interval.ts";
+import { TimeInterval, } from "../../src/time/time-interval.ts";
 import { TjTime, } from "../../src/time/tj-time.ts";
 
 describe("ResourceScenario", () => {
@@ -107,11 +107,9 @@ describe("ResourceScenario", () => {
       resource2,
       task,
       [
-        new ScoreboardInterval(
+        new TimeInterval(
           TjTime.fromDate(new Date("2026-01-01T00:00:00Z",),),
-          3600,
-          0,
-          1,
+          TjTime.fromDate(new Date("2026-01-01T01:00:00Z",),),
         ),
       ],
     );

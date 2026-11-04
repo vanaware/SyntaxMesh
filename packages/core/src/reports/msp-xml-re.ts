@@ -108,6 +108,17 @@ export function asDecimal(value: number,): string {
   return Number.isInteger(value,) ? `${value}.0` : String(value,);
 }
 
+/**
+ * Formata um valor **monetário** como decimal MSPDI, arredondado a centavos.
+ *
+ * As séries `TimephasedData` de custo distribuem o total do período por
+ * fatias (`200/3`), e a aritmética binária do JS vazaria ruído
+ * (`166.66666666666669`) para o XML. Moeda no MSPDI é decimal — duas casas.
+ */
+export function asMoney(value: number,): string {
+  return asDecimal(Math.round(value * 100,) / 100,);
+}
+
 /** Recurso material derivado de um `Material` (14C.4.2). */
 interface MaterialResource {
   uid: string;
@@ -1054,7 +1065,7 @@ export class MspXmlRE extends ReportBase {
     a.push(new XMLNamedText(end.to_s(TIMEFORMAT,), "finish",),);
     a.push(
       new XMLNamedText(
-        asDecimal(allocation.quantity * unitPrice,),
+        asMoney(allocation.quantity * unitPrice,),
         "Cost",
       ),
     );
@@ -1093,7 +1104,7 @@ export class MspXmlRE extends ReportBase {
     a.push(new XMLNamedText(asDecimal(1,), "Units",),);
     a.push(new XMLNamedText(start.to_s(TIMEFORMAT,), "start",),);
     a.push(new XMLNamedText(end.to_s(TIMEFORMAT,), "finish",),);
-    a.push(new XMLNamedText(asDecimal(ref.charge.amount,), "Cost",),);
+    a.push(new XMLNamedText(asMoney(ref.charge.amount,), "Cost",),);
     a.push(new XMLNamedText("0", "PercentWorkComplete",),);
 
     // `Charge#turnover` distribui onStart/onEnd/perDiem por período.
@@ -1145,7 +1156,7 @@ export class MspXmlRE extends ReportBase {
       new XMLNamedText(end.subSeconds(1,).to_s(TIMEFORMAT,), "Finish",),
     );
     td.push(new XMLNamedText(TIMEPHASED_UNIT, "Unit",),);
-    td.push(new XMLNamedText(asDecimal(cost,), "Value",),);
+    td.push(new XMLNamedText(asMoney(cost,), "Value",),);
   }
 
   /** Fatias diárias de `[start, end)` clampadas ao intervalo do relatório. */

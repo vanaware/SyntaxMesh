@@ -18,29 +18,33 @@ Esta fase completa **estruturas de apoio** que ficaram pendentes em fases anteri
 
 3. **`LeaveList`** — substitui os stubs da Fase 5 (`class LeaveList extends Array<unknown>`). Contém `Leave` e `LeaveAllowance`.
 
-4. **`TernarySearchTree`** — árvore de busca ternária. Usada por `tj3man` (CLI) para busca de keywords. Desenvolver apenas o core pois a funcionalidade podera ser util na fase 22  para disponibilizar help e manual para a extensão vscode ou servidor lsp
+4. **`TernarySearchTree`** — **MOVIDO para a Fase 22** (subfase 22.1b `doc-core`, decisão 2026-11-03; xray §3.2/§5). A árvore é desenvolvida inteira na Fase 22 junto de `SyntaxReference`, `KeywordDocumentation`, `TjpExample` e `UserManual`, que a consomem para o help/manual do LSP e da extensão VS Code. A **Fase 24** expõe o resultado como `wz man`.
 
-5. **`AlgorithmDiff`** — algoritmo de diff (tipo UNIX `diff`). Usado em debugging e testes.
+5. **`AlgorithmDiff`** — **CANCELADO** (decisão 2026-11-03; registro em 16.10). `AlgorithmDiff.rb` é **DEAD no upstream**: nenhuma classe do TaskJuggler 3.8.4 o inclui, instancia ou chama (`Diff`/`Hunk`/`Diffable` não têm chamadores). xray §2.2.
 
 6. **`TextFormatter`** — formatação de texto (indentação, largura). Usada por `RichText` (Fase 12) e `KeywordDocumentation`.
 
-7. **`FileList`** — lista de arquivos com mtime. No browser, mantém apenas os nomes (sem mtime).
+7. **`FileList`** — lista de arquivos com mtime. No browser, mantém apenas os nomes (sem mtime). **Consumidor: Fase 24** (rastreio dos arquivos de entrada do master file — Ruby `Project.rb:478`); sem uso no browser.
 
 8. **`URLParameter`** — encode/decode de strings para URLs. Usado pelo daemon (fora de escopo) e por `RTFReportLink` (Fase 14). Importante desenvolver o core pois usaremos funcionalidade parecida na fase 22.
 
-9. **`StdIoWrapper`** — captura de stdout/stderr. Adaptado para browser (limitação). Apenas desenvolver funcionalidade core para ser usado no futuro por lib externa
+9. **`StdIoWrapper`** — captura de stdout/stderr. Adaptado para browser (limitação). Desenvolver apenas a funcionalidade core.
 
 10. **`UTF8String`** — extensões de String. Em TS, usar nativo (`for (const c of str)`).
 
-11. **`KateSyntax`** — gerador de syntax highlighting para Kate editor. Dev tool. CANCELADO eleborar o gerador final apenas elaborar as funções core para serem usados na fase 22 para o servidor LSP
+11. **`KateSyntax`** — **MOVIDO para a Fase 22** (subfase 22.1b `doc-core`). O gerador final para o editor Kate **não** é portado; o núcleo de produção de highlight (`SyntaxCore`) é desenvolvido inteiro na Fase 22 com o `doc-core` e alimenta o LSP/sintaxe dos editores.
 
-12. **`VimSyntax`** — gerador de syntax highlighting para Vim. Dev tool. CANCELADO eleborar o gerador final apenas elaborar as funções core para serem usados na fase 22 para o servidor LSP
+12. **`VimSyntax`** — **MOVIDO para a Fase 22** (subfase 22.1b `doc-core`). Idem 11: gerador final descartado, núcleo de highlight na Fase 22.
+
+> **Consumidores dos utilitários (decisão 2026-11-03):** `FileList`, `StdIoWrapper` e `UTF8String` são entregues como utilitários do core nesta fase e consumidos na **Fase 18** (`TimeSheetSummary.getResourceJournal` usa `StdIoWrapper`) e na **Fase 24** (apps de sheets e `man` da CLI).
 
 ### Prioridade
 
 - **Crítico:** `Journal`, `AlertLevelDefinitions`, `LeaveList`, `TextFormatter`, `FileList`.
-- **Médio:** `URLParameter`, `TernarySearchTree`, `AlgorithmDiff`.
-- **Baixa:** `StdIoWrapper`, `UTF8String`, `KateSyntax`, `VimSyntax`.
+- **Médio:** `URLParameter`.
+- **Baixa:** `StdIoWrapper`, `UTF8String` (consumidores: Fases 18 e 24).
+- **Movidos para a Fase 22 (22.1b `doc-core`):** `TernarySearchTree`, `KateSyntax`, `VimSyntax`.
+- **Cancelado:** `AlgorithmDiff` (DEAD no upstream).
 
 ### Journal — Completação de stubs
 
@@ -80,13 +84,14 @@ Ao final desta fase:
 - `TextFormatter` implementado.
 - `FileList` adaptado.
 - `URLParameter` implementado.
-- `TernarySearchTree` implementado.
-- `AlgorithmDiff` implementado.
-- `StdIoWrapper` adaptado (browser: no-op ou limitação documentada).
-- `UTF8String` no-op (nativo).
-- `KateSyntax` + `VimSyntax` implementados (dev tools).
+- ~~`TernarySearchTree`~~ → **Fase 22 (22.1b)**.
+- ~~`AlgorithmDiff`~~ → **CANCELADO** (DEAD no upstream).
+- `StdIoWrapper` adaptado (browser: no-op ou limitação documentada) — consumidor Fase 18/24.
+- `UTF8String` no-op (nativo) — consumidor Fase 24.
+- ~~`KateSyntax` + `VimSyntax`~~ → **Fase 22 (22.1b)**; só o núcleo de highlight.
+- `ResourceScenario.query_dashboard` completo — **dono único: Fase 16** (âncora do código reancorada de 15 para 16 em 2026-11-03; xray §5.2).
 - **≥ 180 testes unitários** + **≥ 25 golden tests** (journal entries, leaves).
-- ADR 027 registrado.
+- ADR 029 registrado.
 - `deno task check-all` verde.
 
 ---
@@ -105,12 +110,12 @@ Todos em `docs/taskjuggler/lib/taskjuggler/`:
 | `TextFormatter.rb` | ~180 | Média | Alta |
 | `FileList.rb` | ~80 | Baixa | Alta |
 | `URLParameter.rb` | ~30 | Trivial | Média |
-| `TernarySearchTree.rb` | ~180 | Média | Média |
-| `AlgorithmDiff.rb` | ~250 | **Alta** | Média |
-| `StdIoWrapper.rb` | ~60 | Baixa | Baixa |
-| `UTF8String.rb` | ~150 | Trivial | Baixa (no-op) |
-| `KateSyntax.rb` | ~250 | Média | Baixa |
-| `VimSyntax.rb` | ~300 | Média | Baixa |
+| `TernarySearchTree.rb` | ~180 | Média | **MOVIDO → F22 (22.1b)** |
+| `AlgorithmDiff.rb` | ~250 | **Alta** | **CANCELADO (DEAD)** |
+| `StdIoWrapper.rb` | ~60 | Baixa | Baixa (consumidor F18/F24) |
+| `UTF8String.rb` | ~150 | Trivial | Baixa (no-op; consumidor F24) |
+| `KateSyntax.rb` | ~250 | Média | **MOVIDO → F22 (22.1b)** |
+| `VimSyntax.rb` | ~300 | Média | **MOVIDO → F22 (22.1b)** |
 
 ### 3.2 Blueprints (fonte primária)
 
@@ -221,7 +226,7 @@ Sem lógica especial.
 
 ### 4.18 `FileList` — browser
 
-Em Ruby, `FileRecord` guarda `mtime`. Browser não tem. **Decisão:** `FileRecord` guarda só o nome; `modified?` retorna `false`.
+Em Ruby, `FileRecord` guarda `mtime`. Browser não tem. **Decisão:** `FileRecord` guarda só o nome; `modified?` retorna `false`. **Consumidor: Fase 24** (CLI).
 
 ### 4.19 `URLParameter` — Zlib + Base64
 
@@ -231,17 +236,20 @@ Ruby: `Zlib::Deflate` + Base64. TS: usar `pako` ou `fflate` para zlib + `btoa`/`
 
 ### 4.20 `TernarySearchTree` — Array de strings
 
-Estrutura de dados. Implementar fielmente.
+Estrutura de dados. Implementar fielmente. **(MOVIDO para a Fase 22, 22.1b
+`doc-core`, desde 2026-11-03 — a decisão de port permanece válida; só muda a fase.)**
 
 ### 4.21 `AlgorithmDiff` — algoritmo de diff
 
-Implementar `Diff`, `Hunk`, `Diffable`. Algoritmo LCS-like.
+~~Implementar `Diff`, `Hunk`, `Diffable`. Algoritmo LCS-like.~~
+**(CANCELADO 2026-11-03 — DEAD no upstream; sem chamadores no Ruby 3.8.4. Ver 16.10.)**
 
 ### 4.22 `StdIoWrapper` — browser
 
 Em Ruby, redireciona `$stdout`, `$stderr`, `$stdin`. Browser não tem. **Decisão:** implementar mas com limitações (só captura `console.log`).
 
-**Uso real:** apenas `TimeSheetSummary.getResourceJournal` (Fase 18). Pode ser ajustado.
+**Uso real:** `TimeSheetSummary.getResourceJournal` (Fase 18) e os apps de sheet da
+CLI (Fase 24). Pode ser ajustado.
 
 ### 4.23 `UTF8String` — no-op
 
@@ -251,7 +259,11 @@ Em TS, usar nativo. Sem classe.
 
 ### 4.24 `KateSyntax` + `VimSyntax` — dev tools
 
-Geradores de arquivos de syntax highlighting. Não são parte do engine. **Decisão:** implementar em `packages/core/src/dev-tools/`.
+Geradores de arquivos de syntax highlighting. Não são parte do engine. ~~**Decisão:**
+implementar em `packages/core/src/dev-tools/`.~~
+**(MOVIDO 2026-11-03:** o núcleo de realce (`SyntaxCore`) será desenvolvido na
+**Fase 22, 22.1b `doc-core`** em `packages/core/src/docgen/`; os geradores finais
+para Kate/Vim seguem descartados por falta de consumidor.**)**
 
 ### 4.25 `deep_copy` — `deepClone` utility
 
@@ -261,12 +273,13 @@ Já implementado na Fase 3 (`deep-clone.ts`).
 
 ## 5. Subfases detalhadas
 
-**Bloco A — Journal** (20.0–20.5)
-**Bloco B — Leaves** (20.6–20.7)
-**Bloco C — Utilitários** (20.8–20.13)
-**Bloco D — Dev tools** (20.14–20.15)
-**Bloco E — Integração e stubs** (20.16–20.18)
-**Bloco F — Golden tests** (20.19)
+**Bloco A — Journal** (16.0–16.5)
+**Bloco B — Utilitários** (16.6–16.8, 16.11–16.13)
+**Bloco C — Dev tools** (16.14–16.15) — **MOVIDO para a Fase 22 (subfase 22.1b `doc-core`)**
+**Bloco D — Integração e stubs** (16.16–16.18)
+**Bloco E — Golden tests** (16.19)
+
+> 16.9 (`TernarySearchTree`) e 16.10 (`AlgorithmDiff`) saem do escopo desta fase: **movido** para 22.1b e **cancelado** respectivamente (decisão 2026-11-03).
 
 ---
 
@@ -274,7 +287,14 @@ Já implementado na Fase 3 (`deep-clone.ts`).
 
 ---
 
-### 16.0 — ADR 027 (Journal e AlertLevel)
+### 16.0 — ADR 029 (Journal e AlertLevel)
+
+> **Renumeração (2026-11-03; xray §5.3):** este plano rotulava a decisão como
+> “ADR 027”, mas **027** já é *Reports no browser* (Fase 14) e **028** é *Gantt
+> HTML+CSS* (Fase 15). O número correto é **029**, reservado no
+> `decisoes/README.md` como “Journal e AlertLevel em TypeScript — Proposto”.
+> A decisão de *sheets* (email → texto/download), que a Fase 18 chamava de
+> “ADR 029”, passou a ser **ADR 036** (e injeção de `FileStore` = **ADR 037**).
 
 #### Contexto
 
@@ -288,11 +308,11 @@ Três decisões importantes:
 
 #### Objetivo
 
-Criar `docs/syntaxmesh/decisoes/027-journal-alertlevel.md`.
+Criar `docs/syntaxmesh/decisoes/029-journal-alertlevel.md`.
 
 #### Arquivos
 
-- `docs/syntaxmesh/decisoes/027-journal-alertlevel.md` (novo)
+- `docs/syntaxmesh/decisoes/029-journal-alertlevel.md` (novo)
 - `docs/syntaxmesh/decisoes/README.md` (atualizar tabela)
 
 #### Requisitos
@@ -311,7 +331,7 @@ Criar `docs/syntaxmesh/decisoes/027-journal-alertlevel.md`.
 
 #### Critério de aceite
 
-- ADR 027 criado.
+- ADR 029 criado (arquivo `029-journal-alertlevel.md`).
 - Tabela atualizada.
 
 ---
@@ -764,6 +784,10 @@ assert(result.includes('\n'));
 
 ### 16.7 — `FileList` + `FileRecord`
 
+> **Consumidor: Fase 24** (decisão 2026-11-03). Entregue como utilitário do core
+> nesta fase; quem usa é a CLI (`wz`), no rastreio dos arquivos de entrada do
+> master file — equivalente de `Project.rb:478` no Ruby. No browser permanece sem uso.
+
 #### Contexto
 
 Lista de arquivos com detecção de modificação. No browser, simplificado.
@@ -864,6 +888,13 @@ assertEquals(decoded, "Hello world");
 
 ### 16.9 — `TernarySearchTree`
 
+> **MOVIDO para a Fase 22 — subfase 22.1b `doc-core`** (decisão 2026-11-03; xray §3.2/§5.2).
+> O port fiel de `TernarySearchTree.rb` passa a ser feito na Fase 22, junto de
+> `SyntaxReference` / `KeywordDocumentation` / `TjpExample` / `UserManual`, que o
+> consomem para busca de keywords no help/manual do LSP. A **Fase 24** expõe o
+> resultado como `wz man` (equivalente do `tj3man`). O detalhamento abaixo fica
+> como referência de API para a subfase 22.1b — **não executar nesta fase**.
+
 #### Contexto
 
 Estrutura de dados para strings com prefixos comuns. Usada por `tj3man`.
@@ -925,61 +956,28 @@ assertEquals(tree.find('hel', true), ['hello', 'help']);
 
 ---
 
-### 16.10 — `AlgorithmDiff`
+### 16.10 — `AlgorithmDiff` — **CANCELADO (2026-11-03)**
 
-#### Contexto
-
-Algoritmo de diff (UNIX-style). Usado em debugging.
-
-#### Objetivo
-
-Implementar `Diff`, `Hunk`, `Diffable`.
-
-#### Arquivos
-
-- `packages/core/src/utils/diff.ts`
-- `packages/core/tests/utils/diff_test.ts`
-
-#### Requisitos
-
-- [ ] `class Hunk`:
-  - `aIdx`, `bIdx`, `insertValues`, `deleteValues`.
-  - `insert?()`, `delete?()`, `to_s()`.
-- [ ] `class Diff`:
-  - `constructor(a, b)`.
-  - `patch(values): unknown[]`.
-  - `editScript(): string[]`.
-  - `to_s(): string`.
-  - Private `diff(a, b)`.
-  - Private `computeIndexTranslations(a, b)`.
-- [ ] `Diffable` interface (`diff(b)`, `patch(diff)`).
-
-#### Referências
-
-- `docs/taskjuggler/lib/taskjuggler/AlgorithmDiff.rb` — arquivo completo.
-
-#### Critério de aceite
-
-```ts
-const d = new Diff([1, 2, 3], [1, 4, 3]);
-const patched = d.patch([1, 2, 3]);
-assertEquals(patched, [1, 4, 3]);
-```
-
-#### Testes
-
-- `diff_test.ts`:
-  - `it("diff igual")`.
-  - `it("diff insert")`.
-  - `it("diff delete")`.
-  - `it("diff replace")`.
-  - `it("patch")`.
-  - `it("editScript")`.
-  - `it("to_s formato UNIX")`.
+> **Registro de cancelamento do port.** `docs/taskjuggler/lib/taskjuggler/AlgorithmDiff.rb`
+> é **DEAD no upstream**: no TaskJuggler 3.8.4 nenhuma classe o `require`/inclui e
+> `Diff`, `Hunk` e `Diffable` não têm um único chamador no código Ruby (verificação
+> por grep no corpus; ver `docs/syntaxmesh/xray.md` §2.2). Não há comportamento a
+> portar e não há consumidor no SyntaxMesh.
+>
+> - **Ação:** tarefa removida do escopo da Fase 16. Nenhum stub, nenhuma âncora,
+>   nenhum teste de `diff` é criado.
+> - **Consequência:** o risco “`AlgorithmDiff` com listas grandes” sai da matriz de
+>   riscos (§8) e a subfase some da ordem de execução (§6).
+> - **Reabertura:** só com caso de uso real e demonstrável (ex.: diff de cenários de
+>   tracking ou comparação de golden outputs). Nesse caso, reabrir como tarefa nova
+>   com ADR próprio — não reativar este número.
 
 ---
 
 ### 16.11 — `StdIoWrapper`
+
+> **Consumidores: Fase 18** (`TimeSheetSummary.getResourceJournal`) e **Fase 24**
+> (apps de sheets da CLI — captura da saída gerada). Entregue aqui como núcleo.
 
 #### Contexto
 
@@ -1036,6 +1034,9 @@ assertEquals(results.stdOut, "hello\n");
 ---
 
 ### 16.12 — `UTF8String` (no-op)
+
+> **Consumidor: Fase 24** (apps de sheet / `man` da CLI). No browser é no-op por
+> decisão (TS já trata code points nativamente).
 
 #### Contexto
 
@@ -1118,9 +1119,20 @@ Garantir cobertura.
 
 ### Bloco C — Dev tools
 
+> **BLOCO MOVIDO para a Fase 22 — subfase 22.1b `doc-core`** (decisão 2026-11-03;
+> xray §3.2/§5.2). Nem `KateSyntax` nem `VimSyntax` são implementados nesta fase: o
+> **núcleo** de geração de realce (`SyntaxCore`) e a documentação de sintaxe que o
+> alimenta (`SyntaxReference`, `KeywordDocumentation`, `TjpExample`, `UserManual`,
+> `TernarySearchTree`) nascem inteiros na Fase 22. Os **geradores finais** para os
+> arquivos `.xml`/`.vim` dos editores continuam descartados (dev tools sem
+> consumidor). O conteúdo abaixo fica como referência de API.
+
 ---
 
-### 16.14 — `KateSyntax`
+### 16.14 — `KateSyntax` — **MOVIDO → Fase 22 (22.1b)**
+
+> Não executar na Fase 16. Gerador final **descartado**; núcleo de highlight na
+> subfase 22.1b, consumido pelo LSP (F22) e pelo `wz man` (F24).
 
 #### Contexto
 
@@ -1142,7 +1154,8 @@ Implementar.
   - `private properties: KeywordDocumentation[]`
   - `private attributes: KeywordDocumentation[]`
 - [ ] Constructor:
-  - Cria `SyntaxReference` (Fase 14).
+  - Cria `SyntaxReference` (~~Fase 14~~ **Fase 22, 22.1b `doc-core`** — corrigido
+    2026-11-03; `SyntaxReference` nunca foi entregue na Fase 14, xray §3.2).
   - Separa properties de attributes.
 - [ ] `generate(file: string): void`:
   - Gera XML.
@@ -1166,7 +1179,10 @@ Implementar.
 
 ---
 
-### 16.15 — `VimSyntax`
+### 16.15 — `VimSyntax` — **MOVIDO → Fase 22 (22.1b)**
+
+> Idem 16.14: não executar na Fase 16. Gerador final **descartado**; o núcleo
+> compartilhado de realce vive em `doc-core` (Fase 22).
 
 #### Contexto
 
@@ -1273,6 +1289,10 @@ Análogo.
 ---
 
 ### 16.17 — Completar `ResourceScenario.query_dashboard`
+
+> **Dono único: Fase 16** (decisão 2026-11-03; xray §5.2). A âncora no código
+> (`Resource#query_dashboard`) estava apontando para a Fase 15; reancorada para
+> **Fase 16** para coincidir com esta tarefa.
 
 #### Contexto
 
@@ -1436,7 +1456,7 @@ deno task test
 ## 6. Ordem de execução sugerida
 
 ```text
-16.0  ADR 027
+16.0  ADR 029
       ↓
 16.1  AlertLevelDefinitions
 16.2  JournalEntry + JournalEntryList
@@ -1446,16 +1466,16 @@ deno task test
 16.5  Substituir stubs de LeaveList
       ↓
 16.6  TextFormatter
-16.7  FileList
+16.7  FileList                          (consumidor: Fase 24)
 16.8  URLParameter
-16.9  TernarySearchTree
-16.10 AlgorithmDiff
-16.11 StdIoWrapper
-16.12 UTF8String
+16.11 StdIoWrapper                      (consumidor: Fases 18/24)
+16.12 UTF8String (no-op)                (consumidor: Fase 24)
 16.13 deepClone (revisar)
       ↓
-16.14 KateSyntax
-16.15 VimSyntax
+— 16.9 TernarySearchTree  → MOVIDO para a Fase 22 (22.1b doc-core)
+— 16.10 AlgorithmDiff      → CANCELADO (DEAD no upstream)
+— 16.14 KateSyntax /
+  16.15 VimSyntax         → MOVIDOS para a Fase 22 (22.1b doc-core)
       ↓
 16.16 Completar TaskScenario query_*
 16.17 Completar ResourceScenario query_dashboard
@@ -1482,15 +1502,16 @@ passa, e:
 - [ ] `Leave`, `LeaveList`, `LeaveAllowance` completos.
 - [ ] Stubs de `LeaveList` substituídos.
 - [ ] 8 queries de `TaskScenario` completadas.
-- [ ] `ResourceScenario.query_dashboard` completo.
+- [ ] `ResourceScenario.query_dashboard` completo (dono único: Fase 16).
 - [ ] `LogicalFlag.eval` para Journal completo.
 - [ ] `LogicalFunction.hasalert` completo.
-- [ ] `TextFormatter`, `FileList`, `URLParameter`, `TernarySearchTree`, `AlgorithmDiff`, `StdIoWrapper`, `UTF8String` completos.
-- [ ] `KateSyntax`, `VimSyntax` completos.
+- [ ] `TextFormatter`, `FileList`, `URLParameter`, `StdIoWrapper`, `UTF8String` completos.
+- [ ] ~~`TernarySearchTree`~~ (→ Fase 22 / 22.1b), ~~`AlgorithmDiff`~~ (cancelado),
+      ~~`KateSyntax` / `VimSyntax`~~ (→ Fase 22 / 22.1b): **não contam** para esta fase.
 - [ ] **≥ 180 testes unitários**.
 - [ ] **≥ 25 golden tests**.
 - [ ] Nenhum `any` em `src/` (exceto onde justificado).
-- [ ] ADR 027 criado.
+- [ ] ADR 029 criado.
 
 ---
 
@@ -1503,11 +1524,14 @@ passa, e:
 | `AlertLevelDefinitions` com redefinição | Médio | Testes com levels custom |
 | `TextFormatter.format` com UTF-8 | Médio | Usar `[...str]` em vez de `str[i]` |
 | `URLParameter` dependência `fflate` | Baixo | Fixar versão |
-| `AlgorithmDiff` com listas grandes | Médio | Benchmarks |
 | `StdIoWrapper` em browser | Baixo | Documentar limitações |
 | `UTF8String` no-op | Baixo | Delegar para nativo |
-| `KateSyntax`/`VimSyntax` sem `SyntaxReference` | Médio | Fase 14 implementa |
 | `TaskScenario.query_journal` com property null | Médio | Aceitar entrada global |
+
+> Riscos removidos em 2026-11-03: “`AlgorithmDiff` com listas grandes” (tarefa
+> cancelada) e “`KateSyntax`/`VimSyntax` sem `SyntaxReference`” (bloco movido para a
+> Fase 22, onde `SyntaxReference` é entregue na própria subfase 22.1b — o
+> pré-requisito falso “Fase 14” estava na origem do erro apontado no xray §3.2).
 
 ---
 
@@ -1521,12 +1545,12 @@ passa, e:
 - `docs/taskjuggler/lib/taskjuggler/TextFormatter.rb`
 - `docs/taskjuggler/lib/taskjuggler/FileList.rb`
 - `docs/taskjuggler/lib/taskjuggler/URLParameter.rb`
-- `docs/taskjuggler/lib/taskjuggler/TernarySearchTree.rb`
-- `docs/taskjuggler/lib/taskjuggler/AlgorithmDiff.rb`
+- `docs/taskjuggler/lib/taskjuggler/TernarySearchTree.rb` (→ Fase 22 / 22.1b)
+- `docs/taskjuggler/lib/taskjuggler/AlgorithmDiff.rb` (cancelado — DEAD)
 - `docs/taskjuggler/lib/taskjuggler/StdIoWrapper.rb`
 - `docs/taskjuggler/lib/taskjuggler/UTF8String.rb`
-- `docs/taskjuggler/lib/taskjuggler/KateSyntax.rb`
-- `docs/taskjuggler/lib/taskjuggler/VimSyntax.rb`
+- `docs/taskjuggler/lib/taskjuggler/KateSyntax.rb` (→ Fase 22 / 22.1b)
+- `docs/taskjuggler/lib/taskjuggler/VimSyntax.rb` (→ Fase 22 / 22.1b)
 
 ### Blueprints
 
@@ -1535,14 +1559,17 @@ passa, e:
 
 ### Documentos do projeto
 
-- `docs/syntaxmesh/decisoes/027-journal-alertlevel.md` (novo)
+- `docs/syntaxmesh/decisoes/029-journal-alertlevel.md` (novo)
 - `docs/syntaxmesh/03-arquitetura.md`
 
 ### Fases dependentes
 
 - **Fase 14 — Reports** (`query_journal`, `query_alert`).
-- **Fase 18 — Time/Status Sheets** (usa `Journal`).
-- **Fase 21 — Compatibilidade** (golden tests).
+- **Fase 18 — Time/Status Sheets** (usa `Journal`; consome `StdIoWrapper`; núcleo dos
+  apps de sheet + pipeline `dynamicAttributes` — ver xray §3.3/§3.4).
+- **Fase 22 — LSP/extensão** (recebe 16.9, 16.14, 16.15 como `doc-core` 22.1b).
+- **Fase 24 — CLI** (consome `FileList`, `StdIoWrapper`, `UTF8String` e o `doc-core`).
+- **Fase 21 — Compatibilidade** (golden tests; regeneração da matriz de completude).
 
 ---
 
@@ -1557,10 +1584,12 @@ passa, e:
 7. **`LeaveAllowance.slots`** pode ser negativo (expiração).
 8. **`TextFormatter` com UTF-8.** Usar `[...str]`.
 9. **`URLParameter` depende de `fflate`.** Fixar versão.
-10. **`TernarySearchTree`** é opcional (só `tj3man`).
-11. **`UTF8String` é no-op.** Funções delegate.
-12. **`StdIoWrapper` em browser** com limitações.
-13. **`KateSyntax` / `VimSyntax`** em `dev-tools/`.
+10. **`TernarySearchTree` movido para a Fase 22** (22.1b `doc-core`); não implementar aqui.
+11. **`UTF8String` é no-op.** Funções delegate; consumidor Fase 24.
+12. **`StdIoWrapper` em browser** com limitações; consumidores Fases 18/24.
+13. **`KateSyntax` / `VimSyntax` movidos para a Fase 22** (22.1b `doc-core`); os
+    geradores finais `.xml`/`.vim` seguem descartados e `AlgorithmDiff` está
+    **cancelado** (DEAD no upstream — 16.10).
 14. **`LogicalFlag`** distingue Query de JournalEntry.
 15. **`hasalert`** usa `currentEntries`.
 16. **Sem `any`.** Use `unknown` + narrowing.
@@ -1568,7 +1597,7 @@ passa, e:
 
 ---
 
-## 11. ADR 027 (referência rápida)
+## 11. ADR 029 (referência rápida)
 
 Criado como subfase 16.0. Conteúdo esperado:
 

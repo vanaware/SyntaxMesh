@@ -62,12 +62,9 @@ export class Material extends PropertyTreeNode {
     this.unit = unit;
     this.unitPrice = unitPrice;
     this.chargeset = chargeset ?? new ChargeSetCollection();
-    // Atributos base espelhados em `AttributeBase` para que consultas Query
-    // (`<-name->`/`<-id->`, 14C.1.14) devolvam o rótulo (name) e o identificador
-    // (id) do material: o PTN guarda esses dois valores em campos, não no
-    // atributo.
-    this.set("name", label ?? id,);
-    this.set("id", id,);
+    // Atributos base `name` (rótulo) e `id` já são gravados pelo construtor de
+    // `PropertyTreeNode` (fiel a `PropertyTreeNode.rb:111,115`) — daí consultas
+    // Query (`<-name->`/`<-id->`, 14C.1.14) devolverem rótulo e identificador.
     for (let i = 0; i < project.scenarioCount; i++) {
       this.data[i] = new MaterialScenario(
         this,

@@ -31,18 +31,24 @@ export class TaskJuggler {
   }
 
   parse(files: string[], keepParser = false,): boolean {
-    // Ancorado: Fase 19 — loading de arquivos .tjp depende do storage/browser (Fase 19/PWA).
-    throw new NotYetImplementedError("19", "parse",);
+    // Ancorado: Fase 24 — leitura de arquivos .tjp via provedor de conteúdo
+    // injetado (`io.readText`) fornecido pela CLI; o core não toca em disco.
+    // (Reancorado em 2026-11-03 — antes apontava Fase 19; xray §4.)
+    throw new NotYetImplementedError("24", "parse",);
   }
 
   parseFile(fileName: string, rule: unknown,): unknown {
-    // Stub — Fase 10
-    return null;
+    // Ancorado: Fase 24 — variante de um único arquivo, também dependente do
+    // provedor de conteúdo da CLI. (Antes era um stub silencioso `return null`,
+    // sem âncora — reancorado em 2026-11-03; xray §4/§5.2.)
+    throw new NotYetImplementedError("24", "parseFile",);
   }
 
   parseContent(content: string,): boolean {
-    // Ancorado: Fase 19 — variante para conteúdo direto, usada pelo UI/PWA (Fase 19/20).
-    throw new NotYetImplementedError("19", "parseContent",);
+    // Ancorado: Fase 24 — recebe conteúdo já carregado; a injeção do provedor é
+    // da CLI, e a UI/PWA (Fase 20) reusa o mesmo provedor.
+    // (Reancorado em 2026-11-03 — antes apontava Fase 19; xray §4.)
+    throw new NotYetImplementedError("24", "parseContent",);
   }
 
   schedule(): boolean {
@@ -94,9 +100,10 @@ export class TaskJuggler {
   }
 
   freeze(freezeDate: unknown, taskBookings: boolean,): boolean {
-    // Ancorado: Fase 19 — freeze reescreve o master file .tjp; depende de
-    // storage e não tem uso no pipeline browser (ADR 027).
-    throw new NotYetImplementedError("19", "freeze",);
+    // Ancorado: Fase 24 — freeze reescreve o master file .tjp (`io.writeText`);
+    // sem sentido no pipeline browser (ADR 027) e sem consumidor até a CLI.
+    // (Reancorado em 2026-11-03 — antes apontava Fase 19; xray §4.)
+    throw new NotYetImplementedError("24", "freeze",);
   }
 
   checkTimeSheet(fileName: string,): boolean {

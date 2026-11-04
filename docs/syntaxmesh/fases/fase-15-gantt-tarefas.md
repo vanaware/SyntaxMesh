@@ -1,8 +1,8 @@
 # Fase 15 — Tarefas Atômicas
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-15-gantt-tarefas.md` **Plano:**
-> `docs/syntaxmesh/fases/fase-15-gantt.md` **Status:** 🟡 Em andamento
-> **Total:** ~210 tarefas **Concluídas:** 201 (15.0–15.12) **Fonte Ruby:**
+> `docs/syntaxmesh/fases/fase-15-gantt.md` **Status:** ✅ Concluída (2026-11-03)
+> **Total:** ~210 tarefas **Concluídas:** 219 (15.0–15.14) **Fonte Ruby:**
 > `docs/taskjuggler/lib/taskjuggler/reports/{GanttChart,GanttHeader,GanttHeaderScaleItem,GanttLine,GanttTaskBar,GanttMilestone,GanttContainer,GanttLoadStack,GanttRouter,CollisionDetector,HTMLGraphics}.rb`
 
 ---
@@ -115,8 +115,8 @@ A ordem **dentro** da fase importa:
 [x] 15.10 GanttLine                                —  20/20 (+9 `it` de modelo)
 [x] 15.11 GanttChart                               —  29/24
 [x] 15.12 Integração TaskReport/ResourceReport     —  14/14
-[ ] 15.13 Golden tests (Gantt)                     —   0/10
-[ ] 15.14 Verificação final                        —   0/8
+[x] 15.13 Golden tests (Gantt)                     —  10/10
+[x] 15.14 Verificação final                        —   8/8
 ────────────────────────────────────────────────────────
 TOTAL: ~210
 ```
@@ -968,7 +968,91 @@ Ruby) vão para task/pipeline separada — ver memória "Separate golden task fo
 TS-only extension snapshots vs Ruby oracle pipeline". O Gantt usa o pipeline
 **Ruby oracle** (`tj3` real), pois o `chart` existe no TJ.
 
----
+#### Evidências 15.13.1–15.13.10 (preenchido 2026-11-03)
+
+| #         | Evidência                                                                                                                                                                                                                                                                                            | Verificação  |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| 15.13.1   | 10 arquivos `.tjp` com coluna `chart` → **12 charts** (mwe008 tem 3 relatórios: `report1`/`report2`/`report3`): mwe001, mwe002, mwe003, mwe004 (`overview`), mwe006, mwe008 ×3, mwe009, `HTML-Reports/{Calendars,Sorting,depArrows}`. Escalas: 11 × `week` + 1 × `day` (`depArrows`). `gantt-testsuite.rb` varre **todo** o diretório: os 12 casos incluem também `Alerts-2.tjp` e `IsOngoing.tjp`, que entram com `chartErrors` (o próprio `tj3` falha neles) e são pulados pelo teste | 12 casos (10 com chart) |
+| 15.13.2   | `scripts/golden/README.md` documenta os 10 scripts `gantt-*` (`gantt-common.rb` + 1 por caso + `gantt-testsuite.rb`)                                                                                                                                                                                  | existe       |
+| 15.13.3   | `scripts/golden/gantt-{mwe001,mwe002,mwe003,mwe004,mwe006,mwe008,mwe009}.rb` + `gantt-testsuite.rb` — rodam o `tj3` real e extraem, por linha, as posições HTML da célula `chart`                                                                                                                        | 9 arquivos   |
+| 15.13.4   | Normalização em `gantt-common.rb` (whitespace, ordem de atributos, tokens voláteis); o comparador do lado TS aplica a mesma tolerância                                                                                                                                                                | 2 testes     |
+| 15.13.5   | `gantt.golden.json` serializa por chart `{startDate, endDate, width, height, viewWidth, scrollbar, header, lines[], depArrows[], arrowHeads[]}`: **111 linhas** e **48 setas**                                                                                                                                 | JSON válido  |
+| 15.13.6   | `packages/core/tests/golden/generate_golden.ts` encadeia os `gantt-*.rb` no `deno task golden:generate` e escreve `gantt.golden.json`                                                                                                                                                                     | roda         |
+| 15.13.7   | `packages/core/tests/golden/gantt_golden_test.ts`: parseia o `.tjp`, agenda, gera o chart com a escala do golden e compara geometria + linhas + setas                                                                                                                                               | verde        |
+| 15.13.8   | `POSITION_TOLERANCE = 1` px em `x`/`y`; chaves `*Date` **nunca** toleradas (4 testes: aceita 1px, rejeita ≥2px, datas exatas, path de listas)                                                                                                                                                          | 4 testes     |
+| 15.13.9   | Número de linhas, `y` de cada linha, `depArrows`/`arrowHeads` e `x` das barras comparados campo a campo — **12 charts a 0 diffs**                                                                                                                                                                   | 12 charts    |
+| 15.13.10  | Cobertura declarada no próprio teste (≥ 30 unidades de comparação) e `gantt.golden.json` versionado                                                                                                                                                                                                  | 1 teste      |
+
+> **Execução:** `deno test --no-check -P packages/core/tests/golden/gantt_golden_test.ts`
+> → `ok | 1 passed (33 steps) | 0 failed`. Os 12 charts comparam 111 linhas e
+> 48 setas, todos a **0 diffs** contra o `tj3` real; os 2 casos com
+> `chartErrors` são pulados com a mensagem do `tj3` (ver G9).
+
+#### Adendo 15.13 — regressões expostas pela suíte completa (2026-11-03)
+
+Com o golden de Gantt verde, `deno task test` ainda acusava
+`FAILED | 505 passed (5181 steps) | 6 failed (16 steps)`. As causas raiz e as
+correções (todas ancoradas no Ruby):
+
+| #   | Falha                                                                                                                                         | Causa raiz                                                                                                                                                                                                                                                                                                                                                                     | Correção                                                                                                                                                                                                            |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| G1  | `depArrows.tjp` com 253 diffs: linhas do chart na ordem de definição, não na alfabética                                                       | `PropertyTreeNode#initialize` do Ruby grava `id` (fullId) e `name` **como atributos** (`PropertyTreeNode.rb:111,115`). O port só gravava `seqno`, então `sortInternal` comparava `null` com `null`, devolvia 0 em todo par e o `sortTasks name.up` do relatório era inerte | `property-tree-node.ts`: `set("id", this.id)` + `set("name", name)` no construtor (com `RUBY-COMPAT-FIX`); `material.ts` deixou de regravar os dois (evitava `AttributeOverwrite`)                                |
+| G2  | `MspXmlRE (14C.4.8)` › esperava 5 séries de custo, vinha 3                                                                                     | O teste foi escrito quando `bookBookings` era stub (ignorava `effortdone`). Com o port fiel, `Design` (que tem `effortdone 2d`, `now 2026-03-02`) retoma de `now` e termina em 2026-03-04T11:00 — **conferido no tj3 real**: `design start=2026-03-02-00:00 end=2026-03-04-11:00`                                                                                          | Teste atualizado para 3 fatias + `Start`/`Finish` pinados; `asMoney` (novo) arredonda valores monetários a centavos, que vazavam `166.66666666666669` para o XML                                                            |
+| G3  | `reports-extensions golden (14C.0.12)`: snapshot diferente do commitado                                                                        | Duas mudanças legítimas: (a) datas `<start>/<finish>` das assignments de `Design` + `ActualWork`/`RemainingWork` (16h→8h) por causa do `effortdone`; (b) células `Name` dos `markdownReports` deixaram de ser `<Error>` e passaram a mostrar o rótulo — efeito direto de G1                                                              | `deno task golden:generate:extensions` + revisão do diff (4 linhas)                                                                                                                                                 |
+| G4  | 9 testes de `TaskScenario` com `Error: Unknown task duration type`                                                                            | `schedule()` deixou de chamar `prepareScheduling` (removido em 15.12 para não zerar `startsuccs`/`endsuccs` do `Xref`) — o `durationType` só é definido ali. O Ruby ainda chama `markAsScheduled` para tasks start-end sem alocação dentro de `prepareScheduling` (`TaskScenario.rb:121-123`)                  | `task-scenario.ts`: atalho start-end em `prepareScheduling` + guard `if (this._scheduled) return false` em `scheduleSlot`; os testes passaram a chamar `prepareScheduling()` como o `Project#prepareScenario` faz       |
+| G5  | `PTNProxy` › `getIndicies` lançava `TjArgumentError: Unknown attribute 'index'`                                                                | `PTNProxy#getIndicies` delegava `get('index')` sem checar a definição, enquanto `PropertyTreeNode#getIndicies` é tolerante (`p.get('index')` = nil)                                                                                                                                                                                                                            | `ptn-proxy.ts`: `attributeDefinition("index")` antes do `get`                                                                                                                                                      |
+| G6  | `PropertyTreeNode golden` › `inherited` (cenário 0/1) e `retorna índices` esperando `[]`                                                      | (a) o oracle `scripts/golden/property-tree.rb` tinha `ScenarioWrapper#all` devolvendo `[]` — todo `root["effort", i] = ...` virava no-op; (b) a expectativa de `getIndicies` era da época de stub (Ruby devolve um slot por nível, `nil` quando `index` não foi calculado)                                                                                                     | Oracle corrigido (`all` → `[@scenario_data]`, `scenarioIdx` desembrulha Hash, `attr: "effort"` explícito), `property-tree.golden.json` regenerado e expectativa `[null, null, null]`                               |
+| G7  | `deno task tests` falhava no `check` com **19 × TS2322** (`ScoreboardInterval` não é `TimeInterval`) em `booking_test.ts`, `resource-scenario_test.ts` e `task-scenario_test.ts` | `Booking.intervals` passou a `TimeInterval[]` (datas, fiel a `ResourceScenario.rb:705`) em 15.12; os testes continuavam montando `ScoreboardInterval` (índices). O `deno task test` não pega porque roda com `--no-check`                                                                                    | Testes convertidos para `new TimeInterval(start, end)` com `TjTime`; os 3 arquivos passam `deno check`. **Lição:** `deno task test` verde não substitui `deno task tests` (que inclui `check` + `lint` + `fmt`) |
+| G8  | `deno lint` com 106 problemas                                                                                                                 | 1 real: `no-this-alias` em `PropertyTreeNode#getIndicies` (o `let node = this` do port). 105 herdados (fase 10): `var` no `wz_tooltip.js` vendorizado dos goldens de relatório                                                                                                                          | Loop reescrito com closure recursiva (sem alias de `this`); `packages/core/tests/golden/scripts/` excluído do `lint` no `deno.jsonc` (asset de terceiros, não editável). `deno lint` → `Checked 584 files`, 0 problemas |
+| G9  | `deno task golden:generate` produzia 11 arquivos extras modificados e `gantt.golden.json` com 2 casos a mais                                              | Três drifts **do oracle Ruby**, não do port: (a) os `.html` intermediários que o `tj3` grava em `tests/golden/` saem com a serialização do REXML **instalado** (indent 1 + `/>` em vez de indent 2 + ` />`) — nenhum teste consome esses arquivos; (b) `attribute-definitions.golden.json` reordena `chargebookings` (ordem de iteração de Hash no Ruby; o teste compara por id, insensível); (c) `gantt-testsuite.rb` varre o diretório inteiro: o golden commitado tinha 10 casos, a varredura dá 12 (`Alerts-2`, `IsOngoing`), e `nowLineX` de `Calendars.tjp` anda 1px (o `now` implícito é o relógio) | `.html` + `attribute-definitions.golden.json` revertidos (`git checkout --`) para não arrastar 11k linhas de churn de serialização; `gantt.golden.json` **mantido regenerado** (2 casos extras documentam falhas do próprio `tj3`) e o teste ficou verde com 33 steps — a tolerância de 1px absorve o `nowLineX` |
+
+> **Nota G1 — por que só o Gantt viu:** o golden de relatórios compara apenas
+> a **estrutura** das células (tipos), não o texto. O valor `name` vazio virou
+> `<Error>` no HTML (fallback `checkCellText`) e só aparece no snapshot de
+> extensões e na ordem final do chart.
+
+> **Nota G4 — o guard de `scheduleSlot`:** o Ruby nunca chama `scheduleSlot`
+> numa tarefa já agendada (`schedule` retorna antes, `TaskScenario.rb:925-932`).
+> O guard existe para chamadas diretas de API/teste e está documentado no
+> código.
+
+> **Limpeza:** `Deno.env.get("TJ_DEBUG_BK")` (instrumentação de depuração) foi
+> removido de `task-scenario.ts#bookBookings` — era o único `Deno.env` em
+> `packages/core/src` e quebrava `deno task golden:generate:extensions` por
+> falta de `--allow-env`. Os arquivos temporários de investigação (`.tmp/*.ts`,
+> `scripts/golden/.tmp/*.rb`) foram apagados — inclusive os `.tmp/chk*.ts` que
+> estavam **versionados** por engano desde `7682dc1` (scripts de sondagem com
+> caminho absoluto e `any`), que agora aparecem como *deleted* no `git status`
+> e saem do repositório.
+
+> **Testes adicionados (g13d):**
+> `property-tree-node_test.ts` › `PropertyTreeNode — atributos base de ordenação (15.13)`
+> (3 `it`: `id`/`name`/`seqno` como atributos, `name.up` alfabético, `id.up`
+> pelo fullId); `task-scenario_test.ts` (2 `it`: atalho start-end em
+> `prepareScheduling`, guard de `scheduleSlot`); `msp-xml-re_14c_test.ts` ›
+> `asMoney` (2 `it`).
+
+> **Verificação 15.13 (suíte completa, ao final):** `deno task test` →
+> `ok | 512 passed (5299 steps) | 0 failed | 0 ignored (1 step) (6m57s)`.
+> Por arquivo: `gantt_golden_test.ts` 29 steps ·
+> `property-tree-node_test.ts` 50 steps · `task-scenario_test.ts` 46 steps ·
+> `msp-xml-re_14c_test.ts` 29 steps · `reports-extensions_golden_test.ts`
+> 2 steps · `property-tree_golden_test.ts` 70 steps.
+>
+> Pipeline de qualidade (cada etapa rodada isoladamente): `check:all` exit 0 ·
+> `lint` `Checked 584 files`, 0 problemas · `fmt:check` exit 0 ·
+> `lint:doc:all` exit 0 · `check:stubs` OK.
+
+Micro-etapas executadas nesta sessão:
+
+| Etapa | Resultado                                                                                                                                   |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| g13a  | `mwe006` — offset do período do chart: causa raiz em `bookBookings` (retomada de `now`); chart a 0 diffs                                       |
+| g13b  | `mwe008` — `report1`/`report3` deslocados: causa raiz no `PropertyTreeNode#[]=` (só cenário alvo + descendentes); 0 diffs                     |
+| g13c  | `depArrows.tjp` (253 diffs) — atributos `id`/`name` ausentes no construtor (`PropertyTreeNode.rb:111,115`); 0 diffs                           |
+| g13d  | Testes BDD dos fixes (3+2+2 `it`) e remoção de `TJ_DEBUG_BK` + 19 arquivos temporários de investigação                                          |
+| g13e  | Pipeline completo verde: `check:all` (0 erros, após G7) + `lint` (0 problemas, após G8) + `fmt:check` + `lint:doc:all` + `check:stubs` + `test` → `512 passed (5299 steps) | 0 failed (6m57s)` |
+| g13f  | Este registro (15.13.1–15.13.10 + adendo G1–G8)                                                                                            |
 
 ## Bloco H — Verificação final
 
@@ -979,11 +1063,40 @@ TS-only extension snapshots vs Ruby oracle pipeline". O Gantt usa o pipeline
 | 15.14.1 | `deno task check-all` verde (check + lint + fmt + test)                                                                                                                                                                                                                 | exit 0                                                                                                                           |
 | 15.14.2 | `deno task golden:generate && deno task test` verde                                                                                                                                                                                                                     | exit 0                                                                                                                           |
 | 15.14.3 | `deno task check:stubs` verde — os 2 stubs `Ancorado: Fase 16` da coluna `chart` não existem mais; nenhum `NotYetImplementedError` novo sem âncora                                                                                                                      | exit 0                                                                                                                           |
-| 15.14.4 | `grep -riE "(svg                                                                                                                                                                                                                                                        | canvas)" packages/core/src/gantt/`retorna 0 (HTML puro;`painter-min.ts`/`chart-plotter.ts` são outro subsistema e ficam de fora) |
+| 15.14.4 | `grep -riE "(svg\|canvas)" packages/core/src/gantt/` retorna 0 (HTML puro; `painter-min.ts`/`chart-plotter.ts` são outro subsistema e ficam de fora) | 0 matches |
 | 15.14.5 | ADR 028 criada e tabela `decisoes/README.md` com status `Aceito`                                                                                                                                                                                                        | arquivo + tabela                                                                                                                 |
 | 15.14.6 | `HTMLGraphics`, `CollisionDetector`, `GanttRouter`, `GanttChart`, `GanttHeader`, `GanttHeaderScaleItem`, `GanttLine`, `GanttTaskBar`, `GanttMilestone`, `GanttContainer`, `GanttLoadStack` exportados via `packages/core/src/gantt/mod.ts` → `packages/core/src/mod.ts` | `deno check`                                                                                                                     |
 | 15.14.7 | `tests/integration/smoke_after_phase_15_test.ts` — cria `Project`, gera `TaskReport` com coluna `chart`; verifica Fase 14 (reports HTML) intacto + smoke dos MWEs com `chart`                                                                                           | 1+ testes                                                                                                                        |
 | 15.14.8 | Auditoria: cada subfase do plano `fase-15-gantt.md` tem tarefas correspondentes; plano e tarefas consistentes (ADR 028, escalas em segundos, tabela §3.5)                                                                                                               | grep/manual                                                                                                                      |
+
+#### Evidências 15.14.1–15.14.8 (preenchido 2026-11-03)
+
+| #       | Evidência                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | Verificação        |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------ |
+| 15.14.1 | `deno task tests` (= `check:all` + `lint` + `fmt:check` + `lint:doc:all` + `test`) → **EXIT=0**. `check` cobre os 4 membros do workspace + `scripts/**/*.ts`; `lint` `Checked 585 files`, 0 problemas; `fmt --check` `Checked 625 files`; suíte `ok \| 513 passed (5305 steps) \| 0 failed \| 0 ignored (1 step) (9m31s)`                                                                                                                                                                                                                                    | exit 0             |
+| 15.14.2 | `deno task golden:generate` → 12 goldens regravados pelo oracle (`gantt.golden.json`: **12 files, 12 charts, 111 lines**; `reports-extensions.golden.json` 50 648 bytes) e `deno task test` verde. Drift do oracle tratado em **G9**                                                                                                                                                                                                                                                                                                                         | exit 0             |
+| 15.14.3 | `deno task check:stubs` → `check:stubs OK — todos os stubs anotados.` Os 2 stubs `// Ancorado: Fase 16` do caso `chart` em `table-report.ts` foram substituídos em 15.12; `deno task test:deferred` também verde                                                                                                                                                                                                                                                                                                                                              | exit 0             |
+| 15.14.4 | `grep -riE "(svg\|canvas)" packages/core/src/gantt/` → **1** ocorrência, o comentário de `html-graphics.ts:5` que **declara** a decisão; filtrando linhas de comentário → **0**. Nenhum uso de SVG/Canvas (ADR 028)                                                                                                                                                                                                                                                                                                                                             | 0 usos             |
+| 15.14.5 | `decisoes/028-gantt-html-css.md` existe e `decisoes/README.md` traz a linha `\| 028 \| Gantt HTML+CSS \| Aceito \| 2026-11-03 \|`                                                                                                                                                                                                                                                                                                                                                                                                                                        | arquivo + tabela   |
+| 15.14.6 | `gantt/mod.ts` reexporta os 11 módulos e `core/src/mod.ts:78` faz `export * from "./gantt/mod.ts"`. 10 classes (`CollisionDetector`, `GanttRouter`, `GanttChart`, `GanttHeader`, `GanttHeaderScaleItem`, `GanttLine`, `GanttTaskBar`, `GanttMilestone`, `GanttContainer`, `GanttLoadStack`) + os 5 helpers de `HTMLGraphics` (`lineToHTML`, `rectToHTML`, `jagToHTML`, `diamondToHTML`, `arrowHeadToHTML`). **Nota:** no Ruby `HTMLGraphics` é um `module` com `module_function`; o port mantém as funções no nível do módulo (convenção do projeto, sem objeto-namespace), não uma classe | `deno check`       |
+| 15.14.7 | `packages/core/tests/integration/smoke_after_phase_15_test.ts` — 2 `it` / **2 steps**: (a) mwe001 pt-BR: tabela da Fase 14 intacta + `div.tabback`, `taskbar`, `tj_gantt_frame` e zero `<svg`/`<canvas`; (b) mwe003 + mwe008: **1 e 3 charts** (`assertEquals(charts, EXPECTED_CHARTS[mwe])`), todos os relatórios com `<table>`. Usa as variantes **pt-BR** (ADR 004)                                                                                                                                                                                       | 2 testes           |
+| 15.14.8 | Auditoria plano↔tarefas: `fase-15-gantt.md` ganhou o **Bloco H + 15.14** que só existia nas tarefas (e no `plano.md`); ordem de execução do plano atualizada. As 15 subfases (15.0–15.14) têm seção correspondente nas tarefas                                                                                                                                                                                                                                                                                                                           | 15/15              |
+
+> **Verificação final da Fase 15:** `deno task tests` EXIT=0 → `513 passed
+> (5305 steps) | 0 failed (9m31s)`; `check:stubs` OK; `test:deferred` OK;
+> `gantt_golden_test.ts` 33 steps (12 charts, 111 linhas, 48 setas) e
+> `smoke_after_phase_15_test.ts` 2 steps.
+
+Micro-etapas executadas nesta sessão (Bloco H):
+
+| Etapa | Resultado                                                                                                                                                                                            |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| g14a  | 15.14.2 — `deno task golden:generate`: 12 goldens regravados, `gantt.golden.json` com 12 casos (2 novos com `chartErrors`)                                                                           |
+| g14b  | G9 — drift do oracle separado do port: 11 arquivos (10 `.html` + `attribute-definitions.golden.json`) revertidos; `gantt.golden.json` mantido                                              |
+| g14c  | 15.14.3 — `check:stubs` OK; 15.14.4 — 0 usos de SVG/Canvas (1 match é o comentário da ADR 028)                                                                                                          |
+| g14d  | 15.14.5 — ADR 028 `Aceito` na tabela; 15.14.6 — 11 módulos exportados por `gantt/mod.ts` → `core/src/mod.ts`                                                                                            |
+| g14e  | 15.14.7 — `smoke_after_phase_15_test.ts` criado (2 `it`, mwe001/mwe003/mwe008 em pt-BR); `test`, `check`, `fmt` e `lint` no arquivo: verdes |
+| g14f  | 15.14.8 — `fase-15-gantt.md` com Bloco H + 15.14; 15.14.1 — `deno task tests` EXIT=0 (`513 passed / 5305 steps`)                                                                                      |
 
 ---
 
