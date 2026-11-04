@@ -2,9 +2,9 @@
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-16-tarefas.md`
 > **Plano:** `docs/syntaxmesh/fases/fase-16-apoio.md`
-> **Status:** 🟡 Em andamento (16.0–16.8, 16.11–16.13, 16.17–16.19 concluídas em 2026-11-03)
+> **Status:** 🟢 Concluída (2026-11-03; escopo ajustado pela varredura xray: 16.10 cancelada, 16.9/16.14/16.15 movidas para a Fase 22)
 > **Total:** ~191 tarefas
-> **Concluídas:** 15 (16.0–16.8, 16.11–16.13, 16.17–16.19) + 16.6 e 16.16 herdadas prontas
+> **Concluídas:** 16 subfases (16.0–16.8, 16.11–16.13, 16.17–16.20) + 16.6 e 16.16 herdadas prontas
 > **Fonte Ruby:** `docs/taskjuggler/lib/taskjuggler/{Journal,AlertLevelDefinitions,LeaveList,TernarySearchTree,AlgorithmDiff,TextFormatter,FileList,URLParameter,StdIoWrapper,UTF8String,KateSyntax,VimSyntax}.rb`
 
 > **📌 Âncora — Complemento Fase 11 (2ª onda, §6.5/§6.6 de `fase-11-logical-complemento.md`):**
@@ -41,6 +41,7 @@
 | 16.17 — `query_dashboard` + 7 consultas de licença | ✅ 2026-11-03 | `resource-scenario.ts`: `collectLeaveIntervals(iv, type)` (folha, máscara `(v & 0x3E) === typeIdx << 2`), `query_annualleave`, `query_annualleavelist` (data + fração do dia), `query_annualleavebalance` (provisões − tomados), `query_sickleave`, `query_specialleave`, `query_timeoffdays`, `query_unpaidleave`; stubs de Fase 16 removidos (só `query_fte` segue ancorado na 18). **RUBY-COMPAT-FIX (Cat. A):** a tabela legada `LEAVE_TYPES` (`vacation:3` etc.) foi substituída por `Leave::Types` — ela não casava com o encoding `typeIdx() << 2` do scoreboard e zerava toda consulta por nome. `Resource#query_dashboard` porta `Resource.rb:45-99` (mensagem de `trackingscenario` ausente agora **é devolvida**, Cat. A: no Ruby era sobrescrita pelo ramo de lista vazia); **6 passed (22 steps)** em `tests/model/resource-queries_16_test.ts` + 2 steps novos em `tests/logic/query-resources_14c_test.ts` |
 | 16.18 — `LogicalFlag` (journal) + `hasalert` | ✅ 2026-11-03 | `logic/logical-flag.ts`: ramo de journal implementado por duck-typing (`expr.query.flags` — o `LogicalExpression` recebe a `JournalEntry` em `journal.hideJournalEntry`), `to_s` idem; `NotYetImplementedError` removido. `logic/logical-function.ts`: `hasalert` usa `project.journal.currentEntries(query.end, property, Number(args[0]), query.start, query.hideJournalEntry)` e devolve `length > 0`. **5 passed (44 steps)** em `tests/logic/logical-attribute-flag_test.ts` + `logical-function_test.ts` (inclui `LogicalFlag` ocultando entrada real via `journal.rangeEntries`) |
 | 16.19 — Golden tests (journal + leaves) | ✅ 2026-11-03 | `scripts/golden/journal.rb` (oracle: `Project` mínimo + 6 `JournalEntry`, `to_rti` por `journalMode`, texto plano do RTI) → `tests/golden/journal.golden.json` (**17 casos**, cobre os 7 modos, `selfContained`, `hideJournalEntry` e atributos compactos); `scripts/golden/leaves.rb` → `tests/golden/leaves.golden.json` (**19 casos**: 7 `typeIdx`, 3 `to_s`, ordem da `LeaveList`, 7 `balance`, 2 erros de tipo); registrados em `generate_golden.ts` (task `golden:generate`); `tests/golden/journal_golden_test.ts` compara texto plano com whitespace colapsado (tolerância 12.19.8) e `leaves_golden_test.ts` fixa UTC em `beforeAll`/`afterAll`. **2 passed (40 steps)**; **36 casos** no total (≥ 25 exigidos). README dos goldens ganhou as seções 16.19 |
+| 16.20 — Verificação final | ✅ 2026-11-03 | `deno task check:all` exit 0 · `deno fmt --check` (642 arquivos) · `deno lint` (600 arquivos, 0 problemas) · `check:stubs` OK · **suíte 559 testes / 5542 passos / 0 falhas**. `NotYetImplementedError`: 0 em `model/journal.ts` — **não existe `src/journal/`** (desvio de caminho já registrado no topo) — e 0 em `task-scenario.ts`. ADR 029 commitada. Exports de `packages/core/mod.ts` verificados por `deno check`; duas colisões resolvidas no caminho: o `Journal` de `reports/i-calendar.ts` virou **`ICalJournal`** (o `Journal` do topo é o modelo da ADR 029) e o predicado numérico de `time/scoreboard-bits.ts` virou **`isScoreboardLeaveType`** (convive com `model/leave.ts#isLeaveType`). `StdIoWrapper` **não** existe como classe no port: o Ruby é módulo, então saem `stdIoWrapper` + `Results<T>` (16.20.6 atendido com esse nome). Smoke `tests/integration/smoke_after_phase_16_test.ts` — **3 passos**: entrada indexada + `alertLevel` 2 + nível default `red`; `TaskScenario.query_journal` devolve RTI `tj_journal` com `sectionNumbers=false` e o texto da entrada (16.20.10); Gantt da Fase 15 intacto (tabela + `taskbar`, sem SVG/Canvas). Auditoria 16.20.8: 16.0–16.19 têm seção correspondente no plano e a 16.20 só existe aqui. 16.20.9: `fase-16-apoio.md` já usa `### 16.X` e `ADR 029`. `deno task golden:generate` idempotente (12 goldens + extensões). **Dois flakes herdados corrigidos na verificação:** (a) `attribute-definitions` passou a comparar `LeaveList`/`LeaveAllowanceList` (subclasses de `Array` da 16.4) com o `[]` do Ruby via visão plana (`plainValue`); (b) **G10 da Fase 15** — `header.nowLineX` do golden de Gantt era o relógio da máquina (`TjTime.now().align(3600)`) e `depArrows` falhava sozinho horas após a geração; `gantt-common.rb` agora fixa `FROZEN_NOW = '2026-01-01'` (`report.set('now', …)`) e o teste reaplica o mesmo valor. `src/reports/rdo-report.ts` formatado e o alias `LeaveTypeLike` ajustado para `string & Record<never, never>` (regra `ban-types` do `deno lint`) |
 
 ---
 
@@ -147,7 +148,7 @@ Esta fase **completa stubs** das Fases 5, 11 e 14. A ordem importa:
 [x] 16.17 Completar ResourceScenario query_dashboard —  0/6   (dono único: F16; âncora em `resource.ts` reancorada de 15→16)
 [x] 16.18 Completar LogicalFlag + hasalert          —   0/8
 [x] 16.19 Golden tests (Journal + Leaves)           —   0/10
-[ ] 16.20 Verificação final                         —   0/10
+[x] 16.20 Verificação final                         —   0/10
 ─────────────────────────────────────────────────────────
 TOTAL: ~191
 ```
@@ -713,7 +714,7 @@ da própria subfase 22.1b (`doc-core`).
 
 ## Notas para a IA
 
-1. **Ordem:** 16.0 → 16.1 → 16.2 → 16.3 → 16.4 → 16.5 → 16.6 → 16.7 → 16.8 → 16.9 → 16.10 → 16.11 → 16.12 → 16.13 → 16.14 → 16.15 → 16.16 → 16.17 → 16.18 → 16.19 → 16.20.
+1. **Ordem:** 16.0 → 16.1 → 16.2 → 16.3 → 16.4 → 16.5 → 16.6 → 16.7 → 16.8 → 16.11 → 16.12 → 16.13 → 16.16 → 16.17 → 16.18 → 16.19 → 16.20. **16.9/16.14/16.15 foram movidas para a Fase 22 (`doc-core`) e 16.10 (AlgorithmDiff) foi cancelada** (xray 2026-11-03) — os números antigos ficam como registro, sem tarefa a executar.
 2. **`Journal` completa stubs da Fase 14.** 8 queries + dashboard.
 3. **`LeaveList` substitui stubs da Fase 5.** Re-rodar testes antigos.
 4. **`currentEntriesR` usa cache.** `DataCache.cached`.

@@ -494,38 +494,52 @@ Tarefas: `docs/syntaxmesh/fases/fase-8.2-tarefas.md`.
 
 ---
 
-### FASE 16 — Apoio
+### FASE 16 — Apoio ✅ Concluída (2026-11-03)
 
 **Objetivo:** Estruturas auxiliares.
+
+**Status:** 🟢 Concluída — código em `packages/core/src/{model,utils,logic}/`
+(desvio de caminho: não existe `src/journal/`), registro em
+`fase-16-apoio-tarefas.md`. Escopo ajustado pela varredura xray (2026-11-03):
+**16.10 `AlgorithmDiff` cancelada** (DEAD no upstream); **16.9/16.14/16.15
+movidas para a Fase 22** (`TernarySearchTree` + `KateSyntax`/`VimSyntax` →
+`doc-core`); a Fase 16 é **dona única de `Resource#query_dashboard`**.
 
 **Referências TJ:**
 - `lib/taskjuggler/Journal.rb`
 - `lib/taskjuggler/AlertLevelDefinitions.rb`
 - `lib/taskjuggler/LeaveList.rb`
-- `lib/taskjuggler/TernarySearchTree.rb`
-- `lib/taskjuggler/AlgorithmDiff.rb`
+- `lib/taskjuggler/TernarySearchTree.rb` (movida para a Fase 22)
+- `lib/taskjuggler/AlgorithmDiff.rb` (cancelada — DEAD)
 - `lib/taskjuggler/TextFormatter.rb`
 - `lib/taskjuggler/FileList.rb`
 - `lib/taskjuggler/URLParameter.rb`
 - `lib/taskjuggler/StdIoWrapper.rb`
 - `lib/taskjuggler/UTF8String.rb`
-- `lib/taskjuggler/KateSyntax.rb`
-- `lib/taskjuggler/VimSyntax.rb`
+- `lib/taskjuggler/KateSyntax.rb` (movida para a Fase 22)
+- `lib/taskjuggler/VimSyntax.rb` (movida para a Fase 22)
 
-**Subfases:**
-- 16.1 — `Journal` + `JournalEntry` + `JournalEntryList`: `addEntry`, `getEntries`, `entriesByTask`, `entriesByTaskR`, `entriesByResource`, `entries`, `alertLevel`, `alertEntries`, `currentEntries`, `currentEntriesR`, `to_rti`, `hidden`.
-- 16.2 — `AlertLevelDefinition` + `AlertLevelDefinitions`.
-- 16.3 — `Leave` + `LeaveList` + `LeaveAllowance` + `LeaveAllowanceList`.
-- 16.4 — `TernarySearchTree`.
-- 16.5 — `AlgorithmDiff` (Diff, Hunk, Diffable).
-- 16.6 — `TextFormatter`.
+**Subfases** (numeração canônica = `fase-16-apoio-tarefas.md`):
+- 16.0 — ADR 029 (Journal + AlertLevel).
+- 16.1 — `AlertLevelDefinition` + `AlertLevelDefinitions`.
+- 16.2 — `JournalEntryList`.
+- 16.3 — `Journal` + `JournalEntry` (índices `indexBy*`, `to_rti` com 7 modos + 2 extensões de mensagens).
+- 16.4/16.5 — `Leave` + `LeaveTypes` + `LeaveList` + `LeaveAllowance(List)` + `to_tjp` dos atributos.
+- 16.6 — `TextFormatter` (herdada da Fase 12).
 - 16.7 — `FileList` + `FileRecord`.
-- 16.8 — `URLParameter` (encode/decode).
-- 16.9 — `StdIoWrapper` (adaptado).
-- 16.10 — `UTF8String` (adaptado para TS nativo — `each_utf8_char`, `length_utf8`, `forceUTF8Encoding`).
-- 16.11 — `KateSyntax`, `VimSyntax` (geradores de syntax highlighting).
+- 16.8 — `URLParameter` (`encode`/`decode` com `fflate`).
+- 16.11 — `StdIoWrapper` (adaptado: `stdIoWrapper` + `Results<T>`).
+- 16.12 — `UTF8String` (no-op; helpers nativos).
+- 16.13 — `deepClone` (revisão para os tipos novos).
+- 16.16 — `TaskScenario.query_*` de journal/alert (herdada).
+- 16.17 — `Resource#query_dashboard` + 7 consultas de licença.
+- 16.18 — `LogicalFlag` (ramo Journal) + `hasalert`.
+- 16.19 — Golden tests (journal + leaves, oracle Ruby).
+- 16.20 — Verificação final.
 
-**Testes:** Journal.alertLevel com hierarquia; `currentEntriesR` com dependências; TernarySearchTree.
+**Testes:** Journal.alertLevel com hierarquia; `currentEntriesR` com dependências;
+`to_rti` nos 7 modos (golden 17 casos); leaves (`typeIdx`/`balance`, golden 19
+casos); smoke `tests/integration/smoke_after_phase_16_test.ts`.
 
 ---
 
@@ -661,7 +675,7 @@ suite para a extensão VS Code (após a 22); 3ª adapta para a PWA + UI (após a
 | 14 | core (report) | reports/* | **Crítica** | ✅ Concluída (2026-10-31, 14.0–14.24; adendos 14.25/14.26 transferidos p/ Fase 14-C) |
 | 14-C | core (report) | MspXmlRE.rb + extensões SyntaxMesh (material/picture/RDO/markdown) | **Alta** | ✅ Concluída (2026-11-01, C0–C12; adendo extra §12 → C13–C17 ✅ 2026-11-02) — inclui o adendo §10: saída markdown `.md` + prefixos `md*report` (C8), `defaultaccount` (C9), `<Baseline>` do MSPDI (C10), unit price por alocação/booking + remoção de `totalquantity` (C11) e auditoria do G1.4 (C12); e o adendo extra §12: booking de estoque ± com chargeset obrigatório (C13), unit price calculado por composição (C14), keywords `effort`/`quantity`/`value` opcionais + `booking charge` no material (C15), turnover com precedência de preço (C16) e registro do comportamento de cenários (C17); da pendência §13.7: colunas de estoque `stockquantity`/`stockcost` nos conteúdos de material (C18, 2026-11-02). Ver tabelas de evidência 14C.8–14C.18 em `fase-14-relatorios-complemento-tarefas.md` |
 | 15 | core (report) | Gantt* | **Alta** | ✅ **Concluída (2026-11-03, 15.0–15.14)** — 11 módulos em `gantt/`, golden de 12 charts vs `tj3` real, ADR 028 (xray §5.1) |
-| 16 | core | Journal, AlertLevelDefinitions, LeaveList, FileList/StdIoWrapper/UTF8String, query_dashboard | **Alta** | ⬜ Não iniciada (adendo 16.21; **escopo ajustado pela varredura xray 2026-11-03**: 16.10 `AlgorithmDiff` **CANCELADO**; 16.9/16.14/16.15 **MOVIDOS** p/ a F22 `doc-core`; 16.7/16.11/16.12 com consumidores F18/F24; **dono único de `query_dashboard`**) |
+| 16 | core | Journal, AlertLevelDefinitions, LeaveList, FileList/StdIoWrapper/UTF8String, query_dashboard | **Alta** | ✅ **Concluída (2026-11-03, 16.0–16.20)** — journal (ADR 029) + leaves + goldens (17 + 19 casos) + `hasalert`/`LogicalFlag` + `query_dashboard`; escopo xray: 16.10 `AlgorithmDiff` **CANCELADO**, 16.9/16.14/16.15 **MOVIDOS** p/ a F22 `doc-core`, 16.7/16.11/16.12 com consumidores F18/F24 |
 | 17 | core (report) | XMLDocument, XMLElement, HTMLDocument, HTMLElements, ICalendar | **Média** | ⬜ Não iniciada |
 | 18 | core (sheets) | TimeSheets, Sheet*, Tj3SheetAppBase + apps de sheets | **Média** | ⬜ Não iniciada (adendos **18.17** e, pós-xray 2026-11-03, **18.18** núcleo dos apps de sheet, **18.19** `dynamicAttributes`/`parseReportAttributes`, **18.20** `MessageHandler#checkLevel`; ADRs **036**/037) |
 | 19 | storage | — | **Alta** | ⬜ Não iniciada (adendo 24.14–24.16) |

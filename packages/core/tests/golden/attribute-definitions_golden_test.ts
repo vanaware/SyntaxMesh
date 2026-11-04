@@ -40,6 +40,18 @@ interface GoldenFile {
 }
 
 /**
+ * Visão plana de um valor para comparação com o oracle.
+ *
+ * O lado Ruby só conhece `Array`. Desde a 16.4/16.5 os defaults de `leaves` e
+ * `leaveallowances` são `LeaveList`/`LeaveAllowanceList` — subclasses de `Array`
+ * fiéis às classes do Ruby — e `assertEquals` distingue o protótipo, então
+ * comparamos as duas pontas como array simples.
+ */
+function plainValue(value: unknown,): unknown {
+  return Array.isArray(value,) ? Array.from(value,) : value;
+}
+
+/**
  * Maps Ruby objClass names (e.g. "TaskJuggler::StringAttribute") to
  * AttributeType enum values.
  */
@@ -262,8 +274,8 @@ describe("AttributeDefinitions golden tests", () => {
 
       // Verify default value
       assertEquals(
-        actual.default,
-        expected.default,
+        plainValue(actual.default,),
+        plainValue(expected.default,),
         `default mismatch for ${expected.id}`,
       );
 

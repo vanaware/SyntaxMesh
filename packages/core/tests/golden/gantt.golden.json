@@ -3,6 +3,7 @@
     {
       "file": "docs/Learning/mwe001/tutorial.tjp",
       "tz": "UTC",
+      "now": "2026-01-01",
       "error": null,
       "chartErrors": [],
       "charts": [
@@ -18,7 +19,7 @@
           "scrollbar": false,
           "header": {
             "height": 39,
-            "nowLineX": 42,
+            "nowLineX": 1697,
             "markdateLineX": null,
             "gridLines": [
               41,
@@ -159,6 +160,7 @@
     {
       "file": "docs/Learning/mwe002/tutorial.tjp",
       "tz": "UTC",
+      "now": "2026-01-01",
       "error": null,
       "chartErrors": [],
       "charts": [
@@ -174,7 +176,7 @@
           "scrollbar": false,
           "header": {
             "height": 39,
-            "nowLineX": 54,
+            "nowLineX": 1582,
             "markdateLineX": null,
             "gridLines": [
               13,
@@ -456,6 +458,7 @@
     {
       "file": "docs/Learning/mwe003/tutorial.tjp",
       "tz": "UTC",
+      "now": "2026-01-01",
       "error": null,
       "chartErrors": [],
       "charts": [
@@ -471,7 +474,7 @@
           "scrollbar": false,
           "header": {
             "height": 39,
-            "nowLineX": 45,
+            "nowLineX": 1614,
             "markdateLineX": null,
             "gridLines": [
               44,
@@ -680,6 +683,7 @@
     {
       "file": "docs/Learning/mwe004/tutorial.tjp",
       "tz": "UTC",
+      "now": "2026-01-01",
       "error": null,
       "chartErrors": [],
       "charts": [
@@ -695,7 +699,7 @@
           "scrollbar": false,
           "header": {
             "height": 39,
-            "nowLineX": 148,
+            "nowLineX": 1506,
             "markdateLineX": null,
             "gridLines": [
               18,
@@ -925,6 +929,7 @@
     {
       "file": "docs/Learning/mwe006/tutorial.tjp",
       "tz": "UTC",
+      "now": "2026-01-01",
       "error": null,
       "chartErrors": [],
       "charts": [
@@ -940,7 +945,7 @@
           "scrollbar": false,
           "header": {
             "height": 39,
-            "nowLineX": 67,
+            "nowLineX": 1332,
             "markdateLineX": null,
             "gridLines": [
               26,
@@ -1039,6 +1044,7 @@
     {
       "file": "docs/Learning/mwe008/tutorial.tjp",
       "tz": "UTC",
+      "now": "2026-01-01",
       "error": null,
       "chartErrors": [],
       "charts": [
@@ -1054,7 +1060,7 @@
           "scrollbar": false,
           "header": {
             "height": 39,
-            "nowLineX": 29,
+            "nowLineX": 1161,
             "markdateLineX": null,
             "gridLines": [
               28,
@@ -1160,7 +1166,7 @@
           "scrollbar": false,
           "header": {
             "height": 39,
-            "nowLineX": 22,
+            "nowLineX": 1154,
             "markdateLineX": null,
             "gridLines": [
               21,
@@ -1266,7 +1272,7 @@
           "scrollbar": false,
           "header": {
             "height": 39,
-            "nowLineX": 22,
+            "nowLineX": 1154,
             "markdateLineX": null,
             "gridLines": [
               21,
@@ -1434,6 +1440,7 @@
     {
       "file": "docs/Learning/mwe009/tutorial.tjp",
       "tz": "UTC",
+      "now": "2026-01-01",
       "error": null,
       "chartErrors": [],
       "charts": [
@@ -1449,7 +1456,7 @@
           "scrollbar": false,
           "header": {
             "height": 39,
-            "nowLineX": 45,
+            "nowLineX": 1177,
             "markdateLineX": null,
             "gridLines": [
               44,
@@ -1600,11 +1607,11 @@
                 102
               ],
               [
-                43,
+                44,
                 102
               ],
               [
-                43,
+                44,
                 116
               ],
               [
@@ -1659,6 +1666,7 @@
     {
       "file": "docs/taskjuggler/test/TestSuite/HTML-Reports/Alerts-2.tjp",
       "tz": "UTC",
+      "now": "2026-01-01",
       "error": null,
       "chartErrors": [
         {
@@ -1671,6 +1679,7 @@
     {
       "file": "docs/taskjuggler/test/TestSuite/HTML-Reports/Calendars.tjp",
       "tz": "UTC",
+      "now": "2026-01-01",
       "error": null,
       "chartErrors": [],
       "charts": [
@@ -1686,7 +1695,7 @@
           "scrollbar": false,
           "header": {
             "height": 39,
-            "nowLineX": 14840,
+            "nowLineX": 13962,
             "markdateLineX": null,
             "gridLines": [
               47,
@@ -1725,6 +1734,7 @@
     {
       "file": "docs/taskjuggler/test/TestSuite/HTML-Reports/IsOngoing.tjp",
       "tz": "UTC",
+      "now": "2026-01-01",
       "error": null,
       "chartErrors": [
         {
@@ -1737,6 +1747,7 @@
     {
       "file": "docs/taskjuggler/test/TestSuite/HTML-Reports/Sorting.tjp",
       "tz": "UTC",
+      "now": "2026-01-01",
       "error": null,
       "chartErrors": [],
       "charts": [
@@ -1752,7 +1763,7 @@
           "scrollbar": false,
           "header": {
             "height": 39,
-            "nowLineX": 17740,
+            "nowLineX": 16862,
             "markdateLineX": null,
             "gridLines": [
               76,
@@ -2054,6 +2065,7 @@
     {
       "file": "docs/taskjuggler/test/TestSuite/HTML-Reports/depArrows.tjp",
       "tz": "UTC",
+      "now": "2026-01-01",
       "error": null,
       "chartErrors": [],
       "charts": [
@@ -2069,7 +2081,7 @@
           "scrollbar": false,
           "header": {
             "height": 39,
-            "nowLineX": 124780,
+            "nowLineX": 118640,
             "markdateLineX": null,
             "gridLines": [
               539

@@ -1,7 +1,7 @@
 # Fase 16 — Apoio
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-16-apoio.md`
-> **Status:** ⬜ Não iniciada
+> **Status:** ✅ Concluída (2026-11-03, 16.0–16.20) — registro em `fase-16-apoio-tarefas.md`
 > **Duração estimada:** 8–10 dias
 > **Depende de:** Fases 2–15
 > **Bloqueia:** Fases 14 (Journal em reports), 21

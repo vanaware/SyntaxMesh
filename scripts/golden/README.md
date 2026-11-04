@@ -393,6 +393,20 @@ estruturalmente (`<gantt>`), porque nasceu na Fase 14, antes do Gantt existir.
 - **Tolerância:** posições em pixels aceitam **1px** (`POSITION_TOLERANCE`);
   datas, contagens, `kind`, `category` e booleanos são exatos.
 
+### Relógio fixo (`now`)
+
+`header.nowLineX` é `dateToX(now)` e o `now` de cada relatório herda o do
+projeto, que nasce como `TjTime.now.align(3600)` (`Project.rb`) — ou seja, **muda
+a cada hora**. Sem pino, `HTML-Reports/depArrows.tjp` falhava sozinho (124780 →
+124783) sem nenhuma alteração de código.
+
+Por isso `gantt-common.rb` fixa `FROZEN_NOW = '2026-01-01'`, aplica em
+`report.set('now', …)` antes de gerar e grava o valor em cada caso
+(`case.now`); `gantt_golden_test.ts` reaplica `report.set("now", …)` com o mesmo
+valor antes de `generateIntermediateFormat`. Efeito colateral: a zona de
+proteção da linha `nowline` no `GanttRouter` muda de posição, então `depArrows`
+(1px) e `nowLineX` são os únicos campos afetados pela nova geração.
+
 ### Por que `to_html` no oracle
 
 `GanttChart#completeChart` — que cria o router, roteia as dependências e
@@ -416,6 +430,8 @@ só de snapshot seria API de produção criada para o teste.
    gerador (`gantt-testsuite.rb`); não viram caso.
 3. **Nunca editar `gantt.golden.json` à mão** — regerer com
    `deno task golden:generate`.
+4. **O relógio é do golden, não do processo** — `FROZEN_NOW` no oracle e
+   `report.set("now", …)` no teste; nunca comparar contra `TjTime.now()`.
 
 ```bash
 ruby scripts/golden/gantt-mwe001.rb          # um caso, para depurar

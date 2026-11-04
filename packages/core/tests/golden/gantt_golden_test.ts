@@ -15,7 +15,9 @@
  *   • setas de dependência (`depArrows` como polilinhas) e cabeças de seta.
  *
  * Posições em pixels usam tolerância de **1px** (`POSITION_TOLERANCE`); datas,
- * contagens, strings e booleanos são exatos.
+ * contagens, strings e booleanos são exatos. O relógio é fixo
+ * (`GanttGolden::FROZEN_NOW`, reaplicado aqui em `report['now']`) porque
+ * `header.nowLineX` deriva de `now` e o do relatório nasce alinhado à hora.
  *
  * @see docs/syntaxmesh/fases/fase-15-gantt-tarefas.md (15.13)
  */
@@ -40,6 +42,8 @@ import {
 interface GoldenCase {
   file: string;
   tz: string;
+  /** Relógio fixo do oracle (`GanttGolden::FROZEN_NOW`). */
+  now: string;
   error: string | null;
   chartErrors: Array<{ report: string; error: string }>;
   charts: ChartSnapshot[];
@@ -93,6 +97,10 @@ function runTsFile(gc: GoldenCase,): TsFileOutcome {
   for (const report of project.reports.toArray() as Report[]) {
     const formats = report.get("formats",) as string[] | null;
     if (!formats || formats.length === 0) continue;
+    // `header.nowLineX` é `dateToX(now)` e o `now` do relatório nasce como
+    // `TjTime.now().align(3600)` (Project.rb) — sem o pino o golden muda a
+    // cada hora. O oracle Ruby aplica o mesmo valor (`FROZEN_NOW`).
+    report.set("now", TjTime.fromString(gc.now,),);
     project.reportContexts.push(new ReportContext(project, report,),);
     try {
       report.generateIntermediateFormat();

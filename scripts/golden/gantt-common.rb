@@ -38,6 +38,15 @@ require 'taskjuggler/reports/GanttContainer'
 require 'taskjuggler/reports/GanttLoadStack'
 
 module GanttGolden
+  # Relógio fixo do golden.
+  #
+  # `header.nowLineX` é `dateToX(now)` e o `now` do relatório herda o do
+  # projeto, que nasce como `TjTime.now.align(3600)` (Project.rb). Sem pino, o
+  # valor muda a cada hora e o caso de `depArrows.tjp` falha sozinho sem
+  # nenhuma mudança de código. O teste TS reaplica exatamente este valor nos
+  # relatórios antes de gerar o chart.
+  FROZEN_NOW = '2026-01-01'
+
   # Raiz do repositório (scripts/golden/../..).
   def self.root
     @root ||= File.expand_path('../..', __dir__)
@@ -65,7 +74,8 @@ module GanttGolden
     mh.outputLevel = :none
     mh.trapSetup = true
 
-    out = { 'charts' => [], 'chartErrors' => [], 'error' => nil, 'tz' => tz }
+    out = { 'charts' => [], 'chartErrors' => [], 'error' => nil, 'tz' => tz,
+            'now' => FROZEN_NOW }
     begin
       tj = TaskJuggler.new
       # O construtor reseta o fuso para UTC; registra o valor efetivo.
@@ -74,10 +84,13 @@ module GanttGolden
       return err(out, 'schedule failed') unless tj.schedule
 
       project = tj.project
+      frozen = TaskJuggler::TjTime.new(FROZEN_NOW)
       project.reports.each do |report|
         formats = report.get('formats')
         next unless formats && !formats.empty?
 
+        # Pino do relógio (ver FROZEN_NOW).
+        report.set('now', frozen)
         project.reportContexts << TaskJuggler::ReportContext.new(project, report)
         begin
           report.generateIntermediateFormat
@@ -208,6 +221,7 @@ module GanttGolden
     {
       'file' => rel_file,
       'tz' => result['tz'],
+      'now' => result['now'],
       'error' => result['error'],
       'chartErrors' => result['chartErrors'],
       'charts' => result['charts']

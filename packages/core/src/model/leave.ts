@@ -40,7 +40,7 @@ export const LeaveTypes = {
 export type LeaveType = keyof typeof LeaveTypes;
 
 /** Tipo aceito pelas APIs (string aberta na borda — parser/diretivas). */
-export type LeaveTypeLike = LeaveType | (string & {});
+export type LeaveTypeLike = LeaveType | (string & Record<never, never>);
 
 /** `true` quando `type` é um tipo de licença conhecido. */
 export function isLeaveType(type: string,): type is LeaveType {
