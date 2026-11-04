@@ -547,14 +547,17 @@ para handlers novos; fixtures de entrada: MWEs (`docs/Learning/mwe001–009`) e
 
 ## 13. Subfases (índice para o arquivo de tarefas)
 
-O detalhamento atômico vai em `fase-22-vscode-extension-tarefas.md` (criar no
-kickoff), no padrão dos blocos A–K das fases anteriores:
+O detalhamento atômico vive em `fase-22-vscode-extension-tarefas.md`. Nesta
+passagem **apenas a subfase 22.1b (`doc-core`) foi expandida** em tarefas
+atômicas (Blocos C–J do arquivo de tarefas, 108 tarefas com testes unitários e
+marcação de consumidor F24 × `lsp-core`); os demais blocos são detalhados no
+kickoff de cada subfase, no padrão dos blocos A–K das fases anteriores:
 
 | #     | Subfase                 | Entrega                                                                                                              | Pré-requisito |
 | ----- | ----------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------- |
 | 22.0  | ADR da fase             | `decisoes/0NN-extensao-vscode.md` (035 na cadeia oficial) + linha no README                                            | —             |
 | 22.1  | Renome + `lsp-core`     | Core renomeado `@vanaware/syntaxmesh` (§4.2) + `core/src/lsp/` completo (§5, v1 EN), exports, testes unitários ≥ 80% | —             |
-| 22.1b | `doc-core`              | `core/src/docgen/` (`@vanaware/syntaxmesh/doc-core`): port fiel de `SyntaxReference`, `KeywordDocumentation`, `TjpExample`, `UserManual` + `TernarySearchTree` (16.9 movido) + `SyntaxCore`/highlight (16.14 movido); alimenta help/manual do LSP e o `man` da CLI (F24) | 22.1          |
+| 22.1b | `doc-core`              | `core/src/docgen/` (`@vanaware/syntaxmesh/doc-core`): port fiel de `SyntaxReference`, `KeywordDocumentation`, `TjpExample`, `UserManual` + `TernarySearchTree` (16.9 movido) + `SyntaxCore`/highlight (16.14 movido); alimenta help/manual do LSP e o `man` da CLI (F24). **Detalhado** em `fase-22-vscode-extension-tarefas.md`: C=TernarySearchTree (12), D=SyntaxReference (15), E=KeywordDocumentation (29), F=TjpExample (10), G=UserManual+fontes (14), H=SyntaxCore (10), I=integração (10), J=verificação (8) | 22.1          |
 | 22.2  | Scaffolding             | `packages/vsextension/` + `package.json` manifesto + entradas node/web vazias + tasks                                | 22.0          |
 | 22.3  | Language contribution   | Grammar EN (v1) + language-configuration + snippets + snapshots                                                      | 22.2          |
 | 22.4  | Cliente + servidor LSP  | `registerLspServer` no core + `client/` e bootstrap `server/mod.ts`; transporte desktop e Web; integração LSP verde  | 22.1, 22.2    |

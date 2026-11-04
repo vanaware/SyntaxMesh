@@ -3,6 +3,7 @@ import { AttributeDefinition, } from "../../attributes/attribute-definition.ts";
 import { AttributeType, } from "../../attributes/attribute-type.ts";
 import { StringAttribute, } from "../../attributes/scalar/string-attribute.ts";
 import { LeaveListAttribute, } from "../../attributes/time-interval/leave-list-attribute.ts";
+import { LeaveList, } from "../leave.ts";
 import { BooleanAttribute, } from "../../attributes/scalar/boolean-attribute.ts";
 import { WorkingHoursAttribute, } from "../../attributes/time-interval/working-hours-attribute.ts";
 import { currentTimeZone, } from "../../time/timezone.ts";
@@ -68,7 +69,7 @@ export function registerShiftAttributes(propertySet: PropertySet,): void {
       "leaves",
       "Leaves",
       AttributeType.LeaveList,
-      [], // Default empty array for LeaveListAttribute
+      new LeaveList(), // Default vazio (Fase 16)
       false, // userDefined
       false, // isList
       false, // isSingleton

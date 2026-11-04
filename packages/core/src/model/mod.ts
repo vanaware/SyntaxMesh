@@ -29,6 +29,11 @@ export * from "./material.ts";
 export * from "./material-allocation.ts";
 export * from "./extended-charge.ts";
 export * from "./tracking-scenario.ts";
+// Fase 16 — apoio: journal (ADR 029), níveis de alerta e licenças.
+export * from "./journal.ts";
+export * from "./journal-entry-list.ts";
+export * from "./alert-levels.ts";
+export * from "./leave.ts";
 export * from "../accounting/cost-event.ts";
 export * from "../finance/charge-set-collection.ts";
 

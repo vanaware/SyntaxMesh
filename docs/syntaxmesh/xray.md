@@ -140,7 +140,7 @@
 | `TjpExample.rb` | — | PLA | **F22 22.1b** (§8) |
 | `UserManual.rb` | — | PLA | **F22 22.1b** (§8); saída HTML via `wz man --format html` na F24 |
 | `TernarySearchTree.rb` | — | PLA | **MOVIDO 16.9 → F22 22.1b** (o core de busca vive no `doc-core`; F24 consome) |
-| `KateSyntax.rb` / `VimSyntax.rb` | — | PLA | **MOVIDOS 16.14/16.15 → F22 22.1b**: núcleo de highlight (`docgen/`) no core; os geradores de arquivo (`.xml` do Kate, `.vim` do Vim) ficam como saída opcional da F24 |
+| `KateSyntax.rb` / `VimSyntax.rb` | — | PLA | **MOVIDOS 16.14/16.15 → F22 22.1b**: núcleo de highlight (`docgen/`) no core — **só os dados** (`categories`/`tokenRules`/`optionBlockRegions`, tarefa 22.1b.6); os geradores de arquivo (`.xml` do Kate, `.vim` do Vim) seguem cancelados, reativáveis como função pura se aparecer consumidor |
 | `AlgorithmDiff.rb` | — | **CANCELADO** | DEAD no upstream — **port cancelado e registrado na tarefa 16.10** (§8); nada a portar |
 | `FileList.rb` | — | PLA | núcleo **16.7** (F16); consumidores declarados: **F24** (rastreio de inputs) e F19 |
 | `StdIoWrapper.rb` | — | PLA | núcleo **16.11** (F16); consumidores: **F18** (`TimeSheetSummary`) e **F24** |
@@ -250,7 +250,7 @@ Registrados por completude — cada um já tem âncora verificada por
 | 5.4 | Comentário residual `// stub` no `DataCache.flush()` de `project.ts` — o flush **está implementado** (`data-cache.ts:55`) | visto na varredura | **✅ Resolvido:** `Project#generateReports` volta a chamar `DataCache.instance.flush()` fiel a `Project.rb:774` (import adicionado, comentário enganoso removido); suíte completa verde após a mudança. `parseFile` tratado no §4 |
 | 5.5 | `completude-matrix.md` cobre F2–F12 apenas; gaps de F13–F14C estão espalhados em `CURRENT.md` | cabeçalho da matriz | **✅ Registrado:** **regenerar a matriz na Fase 21** (nota adicionada ao topo de `completude-matrix.md`; tarefa da F21). Não re-escrever a matriz à mão agora |
 | 5.6 | **Drift de numeração nos `-tarefas.md`** de fases futuras: arquivos usam o esquema antigo (F19 → tarefas `24.x`, F21 → tarefas `26.x`; o plano da F16 tinha blocos rotulados `20.x`) | `fase-19-storage-tarefas.md`, `fase-21-compatibilidade-qualidade-tarefas.md`, `fase-16-apoio.md` | **Não renumerar agora** (quebraria referências cruzadas já feitas — ex.: `24.16.2` citado neste arquivo). A F16 foi corrigida em 2026-11-03 só onde foi reescrita; F19/F21 normalizar na sua abertura, com nota no preâmbulo de cada arquivo |
-| 5.7 | **`AGENTS.md` desatualizado quanto ao pipeline e ao plano**: citava `deno task check-all` (não existe — a task é `check:all`), dizia que `npm run lint` roda `deno check` (roda só `deno lint`), parava a tabela de fases na 21 e listava ADRs só até 031 | saída de `deno task` + `package.json` (`"lint": "… deno task lint"`) | **✅ Corrigido em 2026-11-03:** §7/§8/§10/§12 do `AGENTS.md` alinhados (gate real = `deno task tests`, âncora `check:stubs`, tabela com as Fases 22–24, ADRs 001–032 + reservados 033–037) |
+| 5.7 | **`AGENTS.md` desatualizado quanto ao pipeline e ao plano**: citava `deno task check-all` (não existe — a task é `check:all`), dizia que `npm run lint` roda `deno check` (roda só `deno lint`), parava a tabela de fases na 21 e listava ADRs só até 031 | saída de `deno task` + `package.json` (`"lint": "… deno task lint"`) | **✅ Corrigido em 2026-11-03:** §4/§7/§8/§10/§12 do `AGENTS.md` alinhados (gate real = `deno task tests`, type check = `check:all`, âncora `check:stubs`, tabela com as Fases 22–24, ADRs 001–032 + reservados 033–037) |
 
 ---
 
@@ -290,7 +290,7 @@ python3 .tmp/xray-diff2.py   # richtext/textparser/report-tables
 
 | Achado | Dono / decisão | Onde ficou registrado |
 |---|---|---|
-| §3.2 tj3man + cadeia de documentação | **Fase 22 — `doc-core`** (subfase **22.1b**): `SyntaxReference`, `KeywordDocumentation`, `TjpExample`, `UserManual`, `TernarySearchTree` e o **núcleo de highlight Kate/Vim** (`docgen/`). A CLI da **Fase 24** consome esse core como `wz man` (24.9) — o equivalente do `tj3man` | `fase-22-vscode-extension.md` §2/22.1b; `fase-24-cli.md` §2/§5.4 + 24.9; `fase-16-apoio.md` (16.9/16.14/16.15 MOVIDOS) |
+| §3.2 tj3man + cadeia de documentação | **Fase 22 — `doc-core`** (subfase **22.1b**): `SyntaxReference`, `KeywordDocumentation`, `TjpExample`, `UserManual`, `TernarySearchTree` e o **núcleo de highlight Kate/Vim** (`docgen/`). A CLI da **Fase 24** consome esse core como `wz man` (24.9) — o equivalente do `tj3man` | `fase-22-vscode-extension.md` §2/22.1b; **`fase-22-vscode-extension-tarefas.md` — subfase expandida em 108 tarefas atômicas (Blocos C–J, 2026-11-03) com marcação de consumidor 【24】/【LSP】**; `fase-24-cli.md` §2/§5.4 + 24.9 (24.9.1–24.9.3 apontando para 22.1b.x); `fase-16-apoio.md` (16.9/16.14/16.15 MOVIDOS) |
 | §3.1 daemon/webd/client | **Fase 22** entrega "algo parecido com tj3client/tj3daemon/tj3webd" (lsp-core + servidor da extensão + camada de relatórios) — mesma entrega, outra funcionalidade; sockets/SMTP/processos ficam fora | `fase-22-vscode-extension.md` §3.2/§3.3 |
 | §3.3 apps de sheets | Núcleo no **core da Fase 18 (18.18)**: `Tj3SheetAppBase` + sender/receiver/summary de TS e SS como classes puras. Empacotamento CLI na **Fase 24 (24.10)**. **Sem SMTP**: sender devolve o **texto do email**; receiver consome **texto de mensagem** (arquivo/stdin) — **ADR 036** | `fase-18-time-status-sheets.md` §18.18 + `-tarefas.md` Bloco H; `fase-24-cli.md` §5.4; `decisoes/README.md` |
 | §3.4 `dynamicAttributes` + `parseReportAttributes` | Núcleo na **Fase 18 (18.19)**; uso na **Fase 24** (`--report … --attr`, 24.10.5). `backupAttributes`/`restoreAttributes` já existem em `property-tree-node.ts` — tarefa é ligar as chamadas | `fase-18-…​.md` §18.19 + `-tarefas.md`; âncoras `// Ancorado: Fase 18` em `model/project.ts` |
@@ -306,3 +306,9 @@ python3 .tmp/xray-diff2.py   # richtext/textparser/report-tables
 **Verificação desta resolução:** `deno task check:stubs` OK · `deno task check:all`
 e `deno task lint` verdes (585 arquivos) · `deno fmt --check` limpo (625 arquivos) ·
 suíte completa **513 testes / 5305 passos / 0 falhas**.
+
+> **Nota de escopo do `deno fmt`:** `deno.jsonc` tem `exclude: ["docs", …]`, então os
+> `.md` em `docs/syntaxmesh/` **não** são formatados nem validados por `deno fmt`
+> (só `AGENTS.md` e `CURRENT.md`, na raiz, entram na checagem). Tabelas longas nos
+> planos de fase podem ficar desalinhadas sem que o pipeline reclame — alinhar à mão
+> quando for o caso. Verificado 2026-11-03.

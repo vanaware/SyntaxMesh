@@ -5,6 +5,7 @@
  */
 
 import { type PropertyLike, } from "../../model/property-like.ts";
+import { type Leave, } from "../../model/leave.ts";
 import { type AttributeContainer, } from "../attribute-container.ts";
 import { type AttributeDefinition, } from "../attribute-definition.ts";
 import { ListAttributeBase, } from "../list-attribute-base.ts";
@@ -12,9 +13,12 @@ import { ListAttributeBase, } from "../list-attribute-base.ts";
 /**
  * Atributo de lista de licenças.
  *
+ * Ruby `LeaveListAttribute#to_tjp` → `"leaves #{get.join(",\n")}"`, em que
+ * cada `Leave#to_s` já traz tipo/motivo/intervalo.
+ *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:LeaveListAttribute
  */
-export class LeaveListAttribute extends ListAttributeBase<string> {
+export class LeaveListAttribute extends ListAttributeBase<Leave> {
   /**
    * ID do tipo de atributo para LeaveListAttribute.
    */

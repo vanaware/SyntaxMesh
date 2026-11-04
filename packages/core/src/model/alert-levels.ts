@@ -40,6 +40,14 @@ export class AlertLevelDefinition {
   toString(): string {
     return this.to_s();
   }
+
+  /**
+   * Nível de alerta é imutável (`readonly`): a cópia devolve `this`
+   * (16.13.2), preservando a identidade usada por `indexById`/`indexByName`.
+   */
+  deepClone(): this {
+    return this;
+  }
 }
 
 /** Defaults do Ruby (`AlertLevelDefinitions#initialize`), severidade ascendente. */

@@ -39,3 +39,42 @@ describe("URLParameter.encode (14.24.6)", () => {
     assertEquals(await decode(URLParameter.encode(data,),), data,);
   });
 });
+
+/**
+ * Fixtures geradas pelo Ruby real:
+ * `ruby -rzlib -e 'puts [Zlib::Deflate.deflate(DATA)].pack("m")'`.
+ *
+ * São deflate zlib level-9 (Huffman), não stored blocks — é exatamente a
+ * saída que o `URLParameter.encode` do tj3 produz na URL.
+ */
+const RUBY_UTF8 = "eJzzzSwuPrw4X+HQcgVDAwMDhUcNUxQezZgKAHXKCiE=";
+const RUBY_EMPTY = "eJwDAAAAAAE=";
+
+describe("URLParameter.decode (16.8)", () => {
+  it("decodifica o que encode produziu", () => {
+    const data = "project=test;report=overview";
+    assertEquals(URLParameter.decode(URLParameter.encode(data,),), data,);
+  });
+
+  it("decodifica zlib level-9 do Ruby (UTF-8)", () => {
+    assertEquals(URLParameter.decode(RUBY_UTF8,), "Missão § 1000 — ☕",);
+  });
+
+  it("decodifica zlib vazio do Ruby", () => {
+    assertEquals(URLParameter.decode(RUBY_EMPTY,), "",);
+  });
+
+  it("ignora quebras de linha do pack('m')", () => {
+    const quebrado = RUBY_UTF8.replace(/(.{10})/g, "$1\n",);
+    assertEquals(URLParameter.decode(quebrado,), "Missão § 1000 — ☕",);
+  });
+
+  it("string vazia devolve string vazia", () => {
+    assertEquals(URLParameter.decode("",), "",);
+  });
+
+  it("round-trip de string longa (UTF-8 até 200 KB)", () => {
+    const data = "çãõ ".repeat(20_000,);
+    assertEquals(URLParameter.decode(URLParameter.encode(data,),), data,);
+  });
+});

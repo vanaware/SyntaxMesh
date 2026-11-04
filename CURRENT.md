@@ -117,7 +117,12 @@ i18n (10.15+) em `packages/core/src/i18n/`.
     `KeywordDocumentation`, `TjpExample`, `UserManual`, `TernarySearchTree` e o núcleo
     de highlight Kate/Vim (`docgen/`) — antes espalhados/em aberto na F16; a 22 também
     entrega o equivalente do `tj3client`/`tj3daemon`/`tj3webd` (mesmo resultado, outra
-    funcionalidade — lsp-core + servidor da extensão).
+    funcionalidade — lsp-core + servidor da extensão). **2026-11-03:** a subfase está
+    expandida em tarefas atômicas em `fase-22-vscode-extension-tarefas.md` (Blocos C–J,
+    **108 tarefas** com testes unitários; cada peça marcada pelo consumidor —
+    【24】 via `wz man`/24.9, 【LSP】 restrito ao `lsp-core`, 【24+LSP】 compartilhado;
+    geradores finais `.xml`/`.vim` continuam cancelados, só saem os **dados** de
+    highlight). Os outros blocos da F22 (22.0, 22.1, 22.2–22.11) ficam para o kickoff.
   - **Fase 24** empacota esse core: `wz man` (tj3man), `--freeze*`, apps de sheets,
     `--report` com dynamicAttributes, consumidores de `FileList`/`StdIoWrapper`/`UTF8String`
     (13.14.3 de imagens + regressão `format richtext` incluídas; adendos 24.9/24.10).
@@ -157,12 +162,15 @@ i18n (10.15+) em `packages/core/src/i18n/`.
   (`fase-21-compatibilidade-qualidade.md` §0): 1ª valida o **motor** via CLI da
   24 (antes da 22); 2ª adapta o suite à **extensão VS Code** (depois da 22);
   3ª adapta à **PWA + UI** (depois da 20) e fecha o release.
-- **Fase 22 — Extensão VS Code** ⬜ — plano `fase-22-vscode-extension.md`
-  (tarefas a criar no kickoff). Após a 21¹, antes das Fases 19/20; v1 EN.
+- **Fase 22 — Extensão VS Code** ⬜ — plano `fase-22-vscode-extension.md` +
+  tarefas `fase-22-vscode-extension-tarefas.md` (só a **subfase 22.1b** está
+  detalhada — Blocos C–J, 108 tarefas; demais blocos a criar no kickoff).
+  Após a 21¹, antes das Fases 19/20; v1 EN.
   Entrega também o **`doc-core`** (subfase 22.1b): `SyntaxReference`,
   `KeywordDocumentation`, `TjpExample`, `UserManual`, `TernarySearchTree` e o
-  núcleo de highlight Kate/Vim — consumidos pela CLI da Fase 24 (`wz man`) e
-  pelo lsp-core da própria 22 (decisão 2026-11-03, xray §2/§4).
+  núcleo de highlight Kate/Vim (`src/docgen/`) — consumidos pela CLI da Fase 24
+  (`wz man`, 24.9) e pelo lsp-core da própria 22 (decisão 2026-11-03, xray §2/§4).
+  O doc-core **não escreve em disco**: devolve `string`/`Record<nome, conteúdo>`.
 - Fase 15 — Gantt ✅ Concluída (2026-11-03)
 - Fase 16 — Apoio ⬜ Não iniciada (escopo ajustado pela varredura xray 2026-11-03:
   16.10 cancelado; 16.9/16.14/16.15 movidos p/ a 22; dono de `query_dashboard`)

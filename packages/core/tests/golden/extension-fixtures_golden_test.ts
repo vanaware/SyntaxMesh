@@ -154,15 +154,16 @@ describe("14C.0.11 ext fixture: 14c-rdo-budget", () => {
       0,
     ) as unknown[];
     assertEquals(charges.length, 1,);
-    // Diários indexados por entidade (14C.0.4).
+    // Diários indexados por entidade (14C.0.4). A API pública de consulta é
+    // `entriesBy*()`; os índices ordenados por data são `indexBy*`.
     const j = p.journal;
     assertEquals(j.entries.length, 5,);
-    assertEquals(j.entriesByTask.size, 1,);
-    assertEquals(j.entriesByResource.size, 1,);
-    assertEquals(j.entriesByMaterial.size, 1,);
-    assertEquals(j.entriesByAccount.size, 1,);
+    assertEquals(j.indexByTask.size, 1,);
+    assertEquals(j.indexByResource.size, 1,);
+    assertEquals(j.indexByMaterial.size, 1,);
+    assertEquals(j.indexByAccount.size, 1,);
     // Pictures e formato nas entradas.
-    const steel = j.entriesByMaterial.get(p.material("steel",)!,)!;
+    const steel = j.indexByMaterial.get(p.material("steel",)!,)!;
     assertEquals(steel[0]!.pictures.length, 2,);
     assertEquals(steel[0]!.format, "markdown",);
     assertEquals(steel[0]!.alertLevel, 0,); // green = índice 0

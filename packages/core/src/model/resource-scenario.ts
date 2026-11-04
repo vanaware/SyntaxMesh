@@ -1,4 +1,10 @@
 import { ScenarioData, } from "./scenario-data.ts";
+import {
+  isLeaveType,
+  type Leave,
+  LeaveAllowanceList,
+  LeaveTypes,
+} from "./leave.ts";
 import { ShiftAssignments, } from "../scheduling/shift-assignments.ts";
 import { Booking, } from "../scheduling/booking.ts";
 import { WorkingHours, } from "../calendar/working-hours.ts";
@@ -23,33 +29,38 @@ import { RTFHandlers, } from "../richtext/handlers/rtf-handlers.ts";
 import { NotYetImplementedError, } from "./errors.ts";
 
 /**
- * Shape of a leave entry as stored on the `leaves` attribute.
+ * Índice canônico de um tipo de licença (`Leave::Types[type]` do Ruby).
  *
- * The TS codebase does not yet have a dedicated `Leave` class (Phase 16
- * item); leaves are kept as plain objects with `interval`, `type` and
- * `reason` properties.
- *
- * @see docs/taskjuggler/lib/taskjuggler/LeaveList.rb:Leave
+ * RUBY-COMPAT-FIX (16.17): antes do port de `Leave::Types` esta camada usava
+ * uma tabela legada (`unavailable:0, on_leave:1, sick_leave:2, vacation:3,
+ * unemployed:4`) que não casa com o bit-encoding do scoreboard — ele grava
+ * `leave.typeIdx() << 2` com os índices 1–7. Com a tabela antiga toda consulta
+ * de licença por nome devolvia 0 slots.
  */
-interface Leave {
-  type: string | number;
-  interval: { start: { toDate(): Date }; end: { toDate(): Date } };
-  reason?: string;
-  typeIdx: number;
+function leaveTypeIdx(type: number | string,): number {
+  if (typeof type === "number") return type;
+  if (!isLeaveType(type,)) {
+    throw new Error(`Unsupported leave type ${type}`,);
+  }
+  return LeaveTypes[type];
 }
 
 /**
- * Leave type indices for scoreboard encoding.
+ * Índice de slot de uma borda de `Leave.interval`.
  *
- * @see docs/taskjuggler/lib/taskjuggler/ResourceScenario.rb:LEAVE_TYPES
+ * O parser só cria `TimeInterval`, mas `LeaveInterval` também aceita
+ * `ScoreboardInterval` (borda já em índice de slot) — aceitamos as duas.
  */
-const LEAVE_TYPES: Record<string, number> = {
-  unavailable: 0,
-  on_leave: 1,
-  sick_leave: 2,
-  vacation: 3,
-  unemployed: 4,
-};
+function leaveBoundIdx(
+  scoreboard: Scoreboard<unknown>,
+  leave: Leave,
+  which: "start" | "end",
+): number {
+  const bound = leave.interval[which];
+  return typeof bound === "number"
+    ? bound
+    : scoreboard.dateToIdx(bound.toDate(),);
+}
 
 /**
  * Lista exata de atributos pré-carregados pelo ResourceScenario do Ruby
@@ -721,6 +732,30 @@ export class ResourceScenario extends ScenarioData {
   }
 
   /**
+   * Intervalos do scoreboard tomados por licenças do `type` informado, com
+   * duração mínima de uma hora (Ruby `collectLeaveIntervals`, l.748-758).
+   *
+   * O casamento é por igualdade do tipo (`(val & 0x3E) === typeIdx << 2`),
+   * não por “qualquer licença” como em {@link collectTimeOffIntervals}.
+   */
+  collectLeaveIntervals(
+    iv: TimeInterval,
+    type: number | string,
+  ): IntervalList<TimeInterval> {
+    // Licenças só são úteis para recursos folha: grupos caem nas horas globais.
+    if (!(this.getProperty() as PropertyTreeNode).leaf()) {
+      return new IntervalList<TimeInterval>();
+    }
+    if (this.scoreboard === null) this.initScoreboard();
+    const mask = leaveTypeIdx(type,) << 2;
+    return this.scoreboard!.collectIntervals(
+      iv,
+      60 * 60,
+      (v,) => typeof v === "number" && (v & 0x3E) === mask,
+    );
+  }
+
+  /**
    * Return the number of working days that are blocked by leaves.
    *
    * @see docs/taskjuggler/lib/taskjuggler/ResourceScenario.rb:getTimeOffDays
@@ -935,14 +970,15 @@ export class ResourceScenario extends ScenarioData {
     const leaves = this.a("leaves",) as Leave[];
     if (leaves) {
       for (const leave of leaves) {
-        const startIdx = this.scoreboard.dateToIdx(
-          leave.interval.start.toDate(),
-        );
-        const endIdx = this.scoreboard.dateToIdx(leave.interval.end.toDate(),);
+        const startIdx = leaveBoundIdx(this.scoreboard, leave, "start",);
+        const endIdx = leaveBoundIdx(this.scoreboard, leave, "end",);
         for (let i = startIdx; i < endIdx; i++) {
           const sb = this.scoreboard.get(i,);
           // Preserve the work-time bit (#1).
-          this.scoreboard.set(i, (sb === null ? 0 : 2) | (leave.typeIdx << 2),);
+          this.scoreboard.set(
+            i,
+            (sb === null ? 0 : 2) | (leave.typeIdx() << 2),
+          );
         }
       }
     }
@@ -951,22 +987,20 @@ export class ResourceScenario extends ScenarioData {
     const resLeaves = this.a("leaves",) as Leave[];
     if (resLeaves) {
       for (const leave of resLeaves) {
-        const startIdx = this.scoreboard!.dateToIdx(
-          leave.interval.start.toDate(),
-        );
-        const endIdx = this.scoreboard!.dateToIdx(leave.interval.end.toDate(),);
+        const startIdx = leaveBoundIdx(this.scoreboard!, leave, "start",);
+        const endIdx = leaveBoundIdx(this.scoreboard!, leave, "end",);
         for (let i = startIdx; i < endIdx; i++) {
           const sb = this.scoreboard!.get(i,);
           if (sb !== null && typeof sb === "number") {
             // The slot is already marked as non-working slot. Override leave type
             // if the new type is larger than the old one.
             const leaveIdx = (sb & 0x3C) >> 2;
-            if (leave.typeIdx > leaveIdx) {
-              this.scoreboard!.set(i, (sb & 0x2) | (leave.typeIdx << 2),);
+            if (leave.typeIdx() > leaveIdx) {
+              this.scoreboard!.set(i, (sb & 0x2) | (leave.typeIdx() << 2),);
             }
           } else {
             // Mark a working time slot as a leave slot.
-            this.scoreboard!.set(i, leave.typeIdx << 2,);
+            this.scoreboard!.set(i, leave.typeIdx() << 2,);
           }
         }
       }
@@ -1069,7 +1103,7 @@ export class ResourceScenario extends ScenarioData {
     endIdx: number,
     type: number | string,
   ): number {
-    const leaveType = typeof type === "string" ? LEAVE_TYPES[type]! : type;
+    const leaveType = leaveTypeIdx(type,);
     return this.countSlots(
       startIdx,
       endIdx,
@@ -1188,9 +1222,7 @@ export class ResourceScenario extends ScenarioData {
     if (typeof val !== "number") return true;
 
     const leaveType = (val >> 2) & 0xF;
-    const unemployedType = LEAVE_TYPES["unemployed"];
-    if (unemployedType === undefined) return true;
-    return leaveType < unemployedType;
+    return leaveType < LeaveTypes.unemployed;
   }
 
   /**
@@ -1508,64 +1540,111 @@ export class ResourceScenario extends ScenarioData {
   }
 
   // ==================================================================
-  // Onda B4 — query_* ancorados (dados de leave/fte ainda não produzidos).
+  // Onda B4 — query_* ancorados.
   //
-  // Não implementamos; deixamos o stub com âncora (política check:stubs).
-  // Só são alcançados quando uma coluna/consulta os exige; caso contrário o
-  // dispatch cai no atributo base, preservando a suíte verde.
+  // 16.17: as consultas de licença (leave/férias) deixaram de ser stubs —
+  // dependiam de `Leave`/`LeaveAllowanceList` (16.4) e do encoding `typeIdx`
+  // do scoreboard. `query_fte` continua ancorado na Fase 18.
   // ==================================================================
 
-  // Ancorado: Fase 16 — férias (LeaveList annual) ainda não produzidas.
-  query_annualleave(_query: ResourceScenarioQuery,): void {
-    throw new NotYetImplementedError(
-      "16",
-      "ResourceScenario#query_annualleave",
+  /** Dias de férias no período da query (Ruby `query_annualleave`). */
+  query_annualleave(query: ResourceScenarioQuery,): void {
+    const val = this.getLeave(
+      query.startIdx ?? 0,
+      query.endIdx ?? 0,
+      "annual",
     );
+    query.sortable = query.numerical = val;
+    query.string = query.scaleLoad(val,);
   }
 
-  // Ancorado: Fase 16 — lista de LeaveList anual não portada.
-  query_annualleavelist(_query: ResourceScenarioQuery,): void {
-    throw new NotYetImplementedError(
-      "16",
-      "ResourceScenario#query_annualleavelist",
+  /**
+   * Lista de dias de férias: `data (fração do dia)` por intervalo
+   * (Ruby `query_annualleavelist`, l.286-298).
+   */
+  query_annualleavelist(query: ResourceScenarioQuery,): void {
+    const project = this.project();
+    const timeFormat = project.get("timeFormat",) as string | undefined;
+    const dailyWorkingHours = (project.get("dailyWorkingHours",) as number) ??
+      8;
+    const start = query.start ?? project.idxToDate(query.startIdx ?? 0,);
+    const end = query.end ?? project.idxToDate(query.endIdx ?? 0,);
+    const ivList = this.collectLeaveIntervals(
+      new TimeInterval(start, end,),
+      "annual",
     );
+    const list: string[] = [];
+    for (const iv of ivList) {
+      // O intervalo é de no máximo um dia útil: listamos a data do dia e
+      // quanto dele foi tomado (1.0 = dia inteiro, 0.5 = meio dia).
+      const day = iv.start.to_s(timeFormat,);
+      const days = iv.duration() / (60 * 60 * dailyWorkingHours);
+      list.push(`${day} (${days.toFixed(1,)})`,);
+    }
+    query.assignList(list,);
   }
 
-  // Ancorado: Fase 16 — saldo de LeaveList anual não portado.
-  query_annualleavebalance(_query: ResourceScenarioQuery,): void {
-    throw new NotYetImplementedError(
-      "16",
-      "ResourceScenario#query_annualleavebalance",
+  /**
+   * Saldo de férias: provisões menos dias tomados (Ruby
+   * `query_annualleavebalance`, l.300-309). Só faz sentido para folha.
+   */
+  query_annualleavebalance(query: ResourceScenarioQuery,): void {
+    if (!(this.getProperty() as PropertyTreeNode).leaf()) return;
+    const start = query.start;
+    const end = query.end;
+    if (!start || !end) return;
+    const leave = this.getLeave(
+      query.startIdx ?? 0,
+      query.endIdx ?? 0,
+      "annual",
     );
+    const allowances = (this.a("leaveallowances",) as
+      | LeaveAllowanceList
+      | null) ?? new LeaveAllowanceList();
+    const allowanceSlots = allowances.balance("annual", start, end,);
+    const allowance = this.project().slotsToDays(allowanceSlots,);
+    const val = allowance - leave;
+    query.sortable = query.numerical = val;
+    query.string = query.scaleLoad(val,);
   }
 
-  // Ancorado: Fase 16 — sick leave (LeaveList) não portado.
-  query_sickleave(_query: ResourceScenarioQuery,): void {
-    throw new NotYetImplementedError("16", "ResourceScenario#query_sickleave",);
+  /** Dias de licença médica no período (Ruby `query_sickleave`). */
+  query_sickleave(query: ResourceScenarioQuery,): void {
+    const val = this.getLeave(query.startIdx ?? 0, query.endIdx ?? 0, "sick",);
+    query.sortable = query.numerical = val;
+    query.string = query.scaleLoad(val,);
   }
 
-  // Ancorado: Fase 16 — special leave (LeaveList) não portado.
-  query_specialleave(_query: ResourceScenarioQuery,): void {
-    throw new NotYetImplementedError(
-      "16",
-      "ResourceScenario#query_specialleave",
+  /** Dias de licença especial no período (Ruby `query_specialleave`). */
+  query_specialleave(query: ResourceScenarioQuery,): void {
+    const val = this.getLeave(
+      query.startIdx ?? 0,
+      query.endIdx ?? 0,
+      "special",
     );
+    query.sortable = query.numerical = val;
+    query.string = query.scaleLoad(val,);
   }
 
-  // Ancorado: Fase 16 — dias de folga (time off) não portados.
-  query_timeoffdays(_query: ResourceScenarioQuery,): void {
-    throw new NotYetImplementedError(
-      "16",
-      "ResourceScenario#query_timeoffdays",
-    );
+  /**
+   * Dias úteis bloqueados por licenças no período (Ruby
+   * `query_timeoffdays`) — soma de todos os tipos, ponderada pela eficiência.
+   */
+  query_timeoffdays(query: ResourceScenarioQuery,): void {
+    const time = this.getTimeOffDays(query.startIdx ?? 0, query.endIdx ?? 0,);
+    query.sortable = query.numerical = time;
+    query.string = query.scaleLoad(time,);
   }
 
-  // Ancorado: Fase 16 — unpaid leave (LeaveList) não portado.
-  query_unpaidleave(_query: ResourceScenarioQuery,): void {
-    throw new NotYetImplementedError(
-      "16",
-      "ResourceScenario#query_unpaidleave",
+  /** Dias de licença não remunerada no período (Ruby `query_unpaidleave`). */
+  query_unpaidleave(query: ResourceScenarioQuery,): void {
+    const val = this.getLeave(
+      query.startIdx ?? 0,
+      query.endIdx ?? 0,
+      "unpaid",
     );
+    query.sortable = query.numerical = val;
+    query.string = query.scaleLoad(val,);
   }
 
   // Ancorado: Fase 18 — FTE exige horas de contrato/calendário não portadas.

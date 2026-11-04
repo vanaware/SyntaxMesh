@@ -1,0 +1,375 @@
+{
+  "cases": [
+    {
+      "description": "typeIdx de project é 1",
+      "method": "typeIdx",
+      "input": {
+        "type": "project"
+      },
+      "expected": 1,
+      "error": null
+    },
+    {
+      "description": "typeIdx de annual é 2",
+      "method": "typeIdx",
+      "input": {
+        "type": "annual"
+      },
+      "expected": 2,
+      "error": null
+    },
+    {
+      "description": "typeIdx de special é 3",
+      "method": "typeIdx",
+      "input": {
+        "type": "special"
+      },
+      "expected": 3,
+      "error": null
+    },
+    {
+      "description": "typeIdx de sick é 4",
+      "method": "typeIdx",
+      "input": {
+        "type": "sick"
+      },
+      "expected": 4,
+      "error": null
+    },
+    {
+      "description": "typeIdx de unpaid é 5",
+      "method": "typeIdx",
+      "input": {
+        "type": "unpaid"
+      },
+      "expected": 5,
+      "error": null
+    },
+    {
+      "description": "typeIdx de holiday é 6",
+      "method": "typeIdx",
+      "input": {
+        "type": "holiday"
+      },
+      "expected": 6,
+      "error": null
+    },
+    {
+      "description": "typeIdx de unemployed é 7",
+      "method": "typeIdx",
+      "input": {
+        "type": "unemployed"
+      },
+      "expected": 7,
+      "error": null
+    },
+    {
+      "description": "to_s sem motivo mantém os dois espaços do Ruby",
+      "method": "to_s",
+      "input": {
+        "type": "annual",
+        "start": "2026-01-05",
+        "end": "2026-01-06",
+        "reason": null
+      },
+      "expected": "annual  2026-01-05-00:00-+0000 - 2026-01-06-00:00-+0000",
+      "error": null
+    },
+    {
+      "description": "to_s com motivo entre aspas",
+      "method": "to_s",
+      "input": {
+        "type": "sick",
+        "start": "2026-02-01",
+        "end": "2026-02-02",
+        "reason": "gripe"
+      },
+      "expected": "sick \"gripe\" 2026-02-01-00:00-+0000 - 2026-02-02-00:00-+0000",
+      "error": null
+    },
+    {
+      "description": "to_s de ausência de vários dias",
+      "method": "to_s",
+      "input": {
+        "type": "unpaid",
+        "start": "2026-03-01",
+        "end": "2026-03-11",
+        "reason": "licença"
+      },
+      "expected": "unpaid \"licença\" 2026-03-01-00:00-+0000 - 2026-03-11-00:00-+0000",
+      "error": null
+    },
+    {
+      "description": "LeaveList preserva a ordem de inserção",
+      "method": "order",
+      "input": {
+        "leaves": [
+          {
+            "type": "holiday",
+            "start": "2026-04-01",
+            "end": "2026-04-02"
+          },
+          {
+            "type": "annual",
+            "start": "2026-04-01",
+            "end": "2026-04-02"
+          },
+          {
+            "type": "unemployed",
+            "start": "2026-04-01",
+            "end": "2026-04-02"
+          }
+        ]
+      },
+      "expected": [
+        6,
+        2,
+        7
+      ],
+      "error": null
+    },
+    {
+      "description": "balance de annual no ano soma provisões e expiração",
+      "method": "balance",
+      "input": {
+        "allowances": [
+          {
+            "type": "annual",
+            "date": "2026-01-01",
+            "slots": 5
+          },
+          {
+            "type": "annual",
+            "date": "2026-06-01",
+            "slots": -2
+          },
+          {
+            "type": "sick",
+            "date": "2026-03-01",
+            "slots": 3
+          },
+          {
+            "type": "annual",
+            "date": "2026-04-01",
+            "slots": 4
+          }
+        ],
+        "type": "annual",
+        "start": "2026-01-01",
+        "end": "2027-01-01"
+      },
+      "expected": 7,
+      "error": null
+    },
+    {
+      "description": "balance de sick no ano ignora outros tipos",
+      "method": "balance",
+      "input": {
+        "allowances": [
+          {
+            "type": "annual",
+            "date": "2026-01-01",
+            "slots": 5
+          },
+          {
+            "type": "annual",
+            "date": "2026-06-01",
+            "slots": -2
+          },
+          {
+            "type": "sick",
+            "date": "2026-03-01",
+            "slots": 3
+          },
+          {
+            "type": "annual",
+            "date": "2026-04-01",
+            "slots": 4
+          }
+        ],
+        "type": "sick",
+        "start": "2026-01-01",
+        "end": "2027-01-01"
+      },
+      "expected": 3,
+      "error": null
+    },
+    {
+      "description": "balance de annual no 1º trimestre exclui a expiração de junho",
+      "method": "balance",
+      "input": {
+        "allowances": [
+          {
+            "type": "annual",
+            "date": "2026-01-01",
+            "slots": 5
+          },
+          {
+            "type": "annual",
+            "date": "2026-06-01",
+            "slots": -2
+          },
+          {
+            "type": "sick",
+            "date": "2026-03-01",
+            "slots": 3
+          },
+          {
+            "type": "annual",
+            "date": "2026-04-01",
+            "slots": 4
+          }
+        ],
+        "type": "annual",
+        "start": "2026-01-01",
+        "end": "2026-04-01"
+      },
+      "expected": 5,
+      "error": null
+    },
+    {
+      "description": "balance de annual na janela [04-01, 05-01) inclui a data inicial",
+      "method": "balance",
+      "input": {
+        "allowances": [
+          {
+            "type": "annual",
+            "date": "2026-01-01",
+            "slots": 5
+          },
+          {
+            "type": "annual",
+            "date": "2026-06-01",
+            "slots": -2
+          },
+          {
+            "type": "sick",
+            "date": "2026-03-01",
+            "slots": 3
+          },
+          {
+            "type": "annual",
+            "date": "2026-04-01",
+            "slots": 4
+          }
+        ],
+        "type": "annual",
+        "start": "2026-04-01",
+        "end": "2026-05-01"
+      },
+      "expected": 4,
+      "error": null
+    },
+    {
+      "description": "balance de annual na janela [01-01, 04-01) exclui a data final",
+      "method": "balance",
+      "input": {
+        "allowances": [
+          {
+            "type": "annual",
+            "date": "2026-01-01",
+            "slots": 5
+          },
+          {
+            "type": "annual",
+            "date": "2026-06-01",
+            "slots": -2
+          },
+          {
+            "type": "sick",
+            "date": "2026-03-01",
+            "slots": 3
+          },
+          {
+            "type": "annual",
+            "date": "2026-04-01",
+            "slots": 4
+          }
+        ],
+        "type": "annual",
+        "start": "2026-01-01",
+        "end": "2026-04-01"
+      },
+      "expected": 5,
+      "error": null
+    },
+    {
+      "description": "balance de tipo sem provisões é 0",
+      "method": "balance",
+      "input": {
+        "allowances": [
+          {
+            "type": "annual",
+            "date": "2026-01-01",
+            "slots": 5
+          },
+          {
+            "type": "annual",
+            "date": "2026-06-01",
+            "slots": -2
+          },
+          {
+            "type": "sick",
+            "date": "2026-03-01",
+            "slots": 3
+          },
+          {
+            "type": "annual",
+            "date": "2026-04-01",
+            "slots": 4
+          }
+        ],
+        "type": "holiday",
+        "start": "2026-01-01",
+        "end": "2027-01-01"
+      },
+      "expected": 0,
+      "error": null
+    },
+    {
+      "description": "Leave com tipo inválido levanta ArgumentError",
+      "method": "to_s",
+      "input": {
+        "type": "bogus",
+        "start": "2026-01-05",
+        "end": "2026-01-06",
+        "reason": null
+      },
+      "expected": null,
+      "error": "Unsupported leave type bogus"
+    },
+    {
+      "description": "balance com tipo inválido levanta ArgumentError",
+      "method": "balance",
+      "input": {
+        "allowances": [
+          {
+            "type": "annual",
+            "date": "2026-01-01",
+            "slots": 5
+          },
+          {
+            "type": "annual",
+            "date": "2026-06-01",
+            "slots": -2
+          },
+          {
+            "type": "sick",
+            "date": "2026-03-01",
+            "slots": 3
+          },
+          {
+            "type": "annual",
+            "date": "2026-04-01",
+            "slots": 4
+          }
+        ],
+        "type": "bogus",
+        "start": "2026-01-01",
+        "end": "2027-01-01"
+      },
+      "expected": null,
+      "error": "Unsupported leave type bogus"
+    }
+  ]
+}

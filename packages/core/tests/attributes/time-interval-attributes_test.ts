@@ -10,7 +10,14 @@ import { LeaveAllowanceListAttribute, } from "../../src/attributes/time-interval
 import { LimitsAttribute, } from "../../src/attributes/time-interval/limits-attribute.ts";
 import { ShiftAssignmentsAttribute, } from "../../src/attributes/time-interval/shift-assignments-attribute.ts";
 import { WorkingHoursAttribute, } from "../../src/attributes/time-interval/working-hours-attribute.ts";
-import { NotYetImplementedError, } from "../../src/attributes/errors.ts";
+import {
+  Leave,
+  LeaveAllowance,
+  LeaveAllowanceList,
+  LeaveList,
+} from "../../src/model/leave.ts";
+import { TimeInterval, } from "../../src/time/time-interval.ts";
+import { TjTime, } from "../../src/time/tj-time.ts";
 
 class TestTimeIntervalListAttribute extends TimeIntervalListAttribute {
   constructor(
@@ -25,7 +32,7 @@ class TestTimeIntervalListAttribute extends TimeIntervalListAttribute {
 class TestLeaveListAttribute extends LeaveListAttribute {
   constructor(
     property: { id: string; name: string },
-    type: AttributeDefinition<string[]>,
+    type: AttributeDefinition<Leave[]>,
     container: MockContainer,
   ) {
     super(property, type, container,);
@@ -35,7 +42,7 @@ class TestLeaveListAttribute extends LeaveListAttribute {
 class TestLeaveAllowanceListAttribute extends LeaveAllowanceListAttribute {
   constructor(
     property: { id: string; name: string },
-    type: AttributeDefinition<unknown[]>,
+    type: AttributeDefinition<LeaveAllowance[]>,
     container: MockContainer,
   ) {
     super(property, type, container,);
@@ -134,7 +141,7 @@ describe("TimeIntervalAttributes", () => {
   });
 
   describe("LeaveListAttribute", () => {
-    let type: AttributeDefinition<string[]>;
+    let type: AttributeDefinition<Leave[]>;
     let attr: TestLeaveListAttribute;
 
     beforeEach(() => {
@@ -142,14 +149,35 @@ describe("TimeIntervalAttributes", () => {
         "leave",
         "Leave",
         AttributeType.LeaveList,
-        [],
+        new LeaveList(),
       );
       attr = new TestLeaveListAttribute(property, type, container,);
     },);
 
-    it("to_tjp com feriados", () => {
-      attr.set(["2026-01-01", "2026-02-01",],);
-      assertEquals(attr.to_tjp(), "leaves 2026-01-01,\n2026-02-01",);
+    it("to_tjp com tipos reais de Leave (16.5.1)", () => {
+      const d = (s: string,) => TjTime.fromString(s,);
+      const feriado = new Leave(
+        "holiday",
+        new TimeInterval(d("2026-01-01",), d("2026-01-02",),),
+        "Ano Novo",
+      );
+      const ferias = new Leave(
+        "annual",
+        new TimeInterval(d("2026-07-01",), d("2026-07-02",),),
+      );
+      const list = new LeaveList();
+      list.push(feriado, ferias,);
+      attr.set(list,);
+      assertEquals(
+        attr.to_tjp(),
+        `leaves ${feriado.to_s()},\n${ferias.to_s()}`,
+      );
+    });
+
+    it("to_tjp vazio", () => {
+      // `null` = atributo nunca definido (o tipo declarado é `Leave[]`).
+      attr.set(null as unknown as Leave[],);
+      assertEquals(attr.to_tjp(), "leaves ",);
     });
 
     it("tjpId é 'leave'", () => {
@@ -158,7 +186,7 @@ describe("TimeIntervalAttributes", () => {
   });
 
   describe("LeaveAllowanceListAttribute", () => {
-    let type: AttributeDefinition<unknown[]>;
+    let type: AttributeDefinition<LeaveAllowance[]>;
     let attr: TestLeaveAllowanceListAttribute;
 
     beforeEach(() => {
@@ -166,10 +194,28 @@ describe("TimeIntervalAttributes", () => {
         "leaveallowance",
         "Leave Allowance",
         AttributeType.LeaveAllowanceList,
-        [],
+        new LeaveAllowanceList(),
       );
       attr = new TestLeaveAllowanceListAttribute(property, type, container,);
     },);
+
+    it("to_tjp com provisões reais (16.5.2)", () => {
+      const d = (s: string,) => TjTime.fromString(s,);
+      const list = new LeaveAllowanceList();
+      list.push(new LeaveAllowance("annual", d("2026-01-01",), 10,),);
+      list.push(new LeaveAllowance("sick", d("2026-02-01",), -2,),);
+      attr.set(list,);
+      assertEquals(
+        attr.to_tjp(),
+        `leaveallowance ${list[0]!.to_s()},\n${list[1]!.to_s()}`,
+      );
+    });
+
+    it("to_tjp vazio", () => {
+      // `null` = atributo nunca definido (o tipo declarado é `LeaveAllowance[]`).
+      attr.set(null as unknown as LeaveAllowance[],);
+      assertEquals(attr.to_tjp(), "leaveallowance ",);
+    });
 
     it("tjpId é 'leaveallowance'", () => {
       assertEquals(LeaveAllowanceListAttribute.tjpId, "leaveallowance",);

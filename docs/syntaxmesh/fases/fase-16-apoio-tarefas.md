@@ -2,9 +2,9 @@
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-16-tarefas.md`
 > **Plano:** `docs/syntaxmesh/fases/fase-16-apoio.md`
-> **Status:** 🟡 Em andamento (16.0–16.3 concluídas em 2026-11-03)
+> **Status:** 🟡 Em andamento (16.0–16.8, 16.11–16.13, 16.17–16.19 concluídas em 2026-11-03)
 > **Total:** ~191 tarefas
-> **Concluídas:** 4 (16.0, 16.1, 16.2, 16.3) + 16.6 e 16.16 herdadas prontas
+> **Concluídas:** 15 (16.0–16.8, 16.11–16.13, 16.17–16.19) + 16.6 e 16.16 herdadas prontas
 > **Fonte Ruby:** `docs/taskjuggler/lib/taskjuggler/{Journal,AlertLevelDefinitions,LeaveList,TernarySearchTree,AlgorithmDiff,TextFormatter,FileList,URLParameter,StdIoWrapper,UTF8String,KateSyntax,VimSyntax}.rb`
 
 > **📌 Âncora — Complemento Fase 11 (2ª onda, §6.5/§6.6 de `fase-11-logical-complemento.md`):**
@@ -30,8 +30,17 @@
 | 16.1 — `AlertLevelDefinition`/`AlertLevelDefinitions` | ✅ 2026-11-03 | `model/alert-levels.ts` reescrito como classes (`to_s`, `clear`, `add` com unicidade, `indexById/Name/Color`, `map`, `to_tjp`, iterador); `parser/rules/project.ts` instancia `AlertLevelDefinition`; **7 passed (25 steps)** em `tests/model/alert-level-classes_test.ts` + `alert-levels_14c_test.ts` |
 | 16.2 — `JournalEntryList` | ✅ 2026-11-03 | `model/journal-entry-list.ts` (`setSorting` validado, `get/first/last/uniq/sort`, `unsorted()` para preservar ordem de chegada nos relatórios); **22 steps** em `tests/model/journal-entry-list_test.ts` |
 | 16.3 — `Journal` (queries + `to_rti`) | ✅ 2026-11-03 | `model/journal.ts`: `entryList`+`propertyToEntries`, `entriesByTask/TaskR/Resource/Material/Account`, `rangeEntries`, `to_rti` com 9 modos; índices renomeados para `indexBy*` e `entriesFor()` adicionado (`reports/rdo-report.ts` ajustado); **7 passed (31 steps)** em `tests/model/journal-queries_16_test.ts`; regressão `tests/reports/ tests/model/` → **152 passed (1242 steps)** |
-| 16.6 — `TextFormatter` | ✅ herdada | `utils/text-formatter.ts` (Fase 12) — sem pendências |
 | 16.16 — `TaskScenario.query_*` | ✅ herdada | `property-tree-node.ts` já expõe `query_journal/alert/alerttrend/alertmessages/alertsummaries/journalmessages/journalsummaries` |
+| 16.4/16.5 — `Leave` + listas + atributos | ✅ 2026-11-03 | `model/leave.ts` reescrito (`LeaveTypes as const`, `LeaveType`/`isLeaveType`, `Leave.Types`, `typeIdx()` **método**, `to_s` usando `interval.to_s`, `LeaveAllowance#to_s`, `LeaveAllowanceList#to_tjp`); `LeaveListAttribute` tipado com `Leave`; `LeaveAllowanceListAttribute#to_tjp` real (removeu o stub de Fase 16); defaults `new LeaveList()`/`new LeaveAllowanceList()` em resource/shift; `resource-scenario.ts` troca a interface local por `Leave` + helper `leaveBoundIdx`; `deep-clone` preserva protótipo de subclasses de Array/Map/Set; **24 steps** em `tests/model/leave_test.ts` + 9 steps novos em `shift_test`/`resource_test`/`time-interval-attributes`; regressão `tests/model tests/attributes` → **97 passed (937 steps)** |
+| 16.6 — `TextFormatter` | ✅ herdada | `utils/text-formatter.ts` (Fase 12) — sem pendências |
+| 16.7 — `FileList`/`FileRecord` | ✅ 2026-11-03 | `utils/file-list.ts` (`add` ignora `.` e duplicatas, `push`, `has`, `get`, `records`, `masterFile` = primeiro nome `.tjp` com `length >= 4`, `modified()` **sempre `false`** — Category B); **2 passed (16 steps)** em `tests/utils/file-list_test.ts` |
+| 16.8 — `URLParameter.decode` | ✅ 2026-11-03 | `deno.jsonc` do core ganhou `fflate@^0.8`; `utils/url-parameter.ts` mantém `encode` (stored-deflate determinístico + adler32) e ganhou `static decode` com `unzlibSync` + Base64 tolerante a espaços/quebras do `pack('m')`; fixtures geradas pelo Ruby real; **2 passed (10 steps)** em `tests/utils/url-parameter_test.ts` (decode de level-9 do Ruby, vazio, longa UTF-8) |
+| 16.11 — `StdIoWrapper` | ✅ 2026-11-03 | `utils/std-io-wrapper.ts` (`interface Results<T>`, `stdIoWrapper(stdIn, fn)` troca `console.log`/`console.error`, restaura em `finally`, `returnValue = 1` em exceção, `stdIn` aceito e ignorado — Category B); **4 passed (12 steps)** em `tests/utils/std-io-wrapper_test.ts` |
+| 16.12 — `UTF8String` (no-op) | ✅ 2026-11-03 | `utils/utf8.ts` com as 5 funções do plano (`eachUtf8Char`, `lengthUtf8`, `reverseUtf8`, `ljust`, `forceUTF8Encoding`); extras não previstos (`toBase64`/`unix2dos`/`toQuotedPrintable`) descartados por não terem consumidor e por `btoa` divergir do `pack64` UTF-8 do Ruby; **6 passed (14 steps)** em `tests/utils/utf8_test.ts` |
+| 16.13 — `deepClone` (revisão) | ✅ 2026-11-03 | `Leave`/`LeaveAllowance`/`AlertLevelDefinition`/`JournalEntry` ganharam `deepClone(): this` (objetos-valor imutáveis; a entrada de journal é objeto de identidade que referencia o `Journal`, copiar arrastaria o grafo inteiro). `LeaveList` continua clonada como `LeaveList` (ramo de `Array` antes do método) compartilhando os `Leave`; **2 passed (18 steps)** em `tests/attributes/deep-clone_test.ts` |
+| 16.17 — `query_dashboard` + 7 consultas de licença | ✅ 2026-11-03 | `resource-scenario.ts`: `collectLeaveIntervals(iv, type)` (folha, máscara `(v & 0x3E) === typeIdx << 2`), `query_annualleave`, `query_annualleavelist` (data + fração do dia), `query_annualleavebalance` (provisões − tomados), `query_sickleave`, `query_specialleave`, `query_timeoffdays`, `query_unpaidleave`; stubs de Fase 16 removidos (só `query_fte` segue ancorado na 18). **RUBY-COMPAT-FIX (Cat. A):** a tabela legada `LEAVE_TYPES` (`vacation:3` etc.) foi substituída por `Leave::Types` — ela não casava com o encoding `typeIdx() << 2` do scoreboard e zerava toda consulta por nome. `Resource#query_dashboard` porta `Resource.rb:45-99` (mensagem de `trackingscenario` ausente agora **é devolvida**, Cat. A: no Ruby era sobrescrita pelo ramo de lista vazia); **6 passed (22 steps)** em `tests/model/resource-queries_16_test.ts` + 2 steps novos em `tests/logic/query-resources_14c_test.ts` |
+| 16.18 — `LogicalFlag` (journal) + `hasalert` | ✅ 2026-11-03 | `logic/logical-flag.ts`: ramo de journal implementado por duck-typing (`expr.query.flags` — o `LogicalExpression` recebe a `JournalEntry` em `journal.hideJournalEntry`), `to_s` idem; `NotYetImplementedError` removido. `logic/logical-function.ts`: `hasalert` usa `project.journal.currentEntries(query.end, property, Number(args[0]), query.start, query.hideJournalEntry)` e devolve `length > 0`. **5 passed (44 steps)** em `tests/logic/logical-attribute-flag_test.ts` + `logical-function_test.ts` (inclui `LogicalFlag` ocultando entrada real via `journal.rangeEntries`) |
+| 16.19 — Golden tests (journal + leaves) | ✅ 2026-11-03 | `scripts/golden/journal.rb` (oracle: `Project` mínimo + 6 `JournalEntry`, `to_rti` por `journalMode`, texto plano do RTI) → `tests/golden/journal.golden.json` (**17 casos**, cobre os 7 modos, `selfContained`, `hideJournalEntry` e atributos compactos); `scripts/golden/leaves.rb` → `tests/golden/leaves.golden.json` (**19 casos**: 7 `typeIdx`, 3 `to_s`, ordem da `LeaveList`, 7 `balance`, 2 erros de tipo); registrados em `generate_golden.ts` (task `golden:generate`); `tests/golden/journal_golden_test.ts` compara texto plano com whitespace colapsado (tolerância 12.19.8) e `leaves_golden_test.ts` fixa UTC em `beforeAll`/`afterAll`. **2 passed (40 steps)**; **36 casos** no total (≥ 25 exigidos). README dos goldens ganhou as seções 16.19 |
 
 ---
 
@@ -135,9 +144,9 @@ Esta fase **completa stubs** das Fases 5, 11 e 14. A ordem importa:
 [x] 16.14 SyntaxCore (MOVIDO → F22 22.1b)           —   n/a   — decisão 2026-11-03; 16.15 permanece CANCELADO
 [x] 16.15 VimSyntax (CANCELADO → geradores finais)  —   n/a
 [ ] 16.16 Completar TaskScenario query_* (8)        —   0/20
-[ ] 16.17 Completar ResourceScenario query_dashboard —  0/6   (dono único: F16; âncora em `resource.ts` reancorada de 15→16)
-[ ] 16.18 Completar LogicalFlag + hasalert          —   0/8
-[ ] 16.19 Golden tests (Journal + Leaves)           —   0/10
+[x] 16.17 Completar ResourceScenario query_dashboard —  0/6   (dono único: F16; âncora em `resource.ts` reancorada de 15→16)
+[x] 16.18 Completar LogicalFlag + hasalert          —   0/8
+[x] 16.19 Golden tests (Journal + Leaves)           —   0/10
 [ ] 16.20 Verificação final                         —   0/10
 ─────────────────────────────────────────────────────────
 TOTAL: ~191

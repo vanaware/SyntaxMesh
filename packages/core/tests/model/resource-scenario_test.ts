@@ -6,6 +6,7 @@ import { Resource, } from "../../src/model/resource.ts";
 import { Task, } from "../../src/model/task.ts";
 import { ResourceScenario, } from "../../src/model/resource-scenario.ts";
 import { Account, } from "../../src/model/account.ts";
+import { LeaveAllowanceList, LeaveList, } from "../../src/model/leave.ts";
 import { Booking, } from "../../src/scheduling/booking.ts";
 import { TimeInterval, } from "../../src/time/time-interval.ts";
 import { TjTime, } from "../../src/time/tj-time.ts";
@@ -28,8 +29,16 @@ describe("ResourceScenario", () => {
     assertEquals(resourceScenario.a("limits",), null,);
     assertEquals(resourceScenario.a("shifts",), null,);
     assertEquals(resourceScenario.a("workinghours",), null,);
-    assertEquals(resourceScenario.a("leaves",), [],);
-    assertEquals(resourceScenario.a("leaveallowances",), [],);
+    // Fase 16: leaves/leaveallowances nascem como listas tipadas.
+    assert(resourceScenario.a("leaves",) instanceof LeaveList,);
+    assertEquals((resourceScenario.a("leaves",) as LeaveList).length, 0,);
+    assert(
+      resourceScenario.a("leaveallowances",) instanceof LeaveAllowanceList,
+    );
+    assertEquals(
+      (resourceScenario.a("leaveallowances",) as LeaveAllowanceList).length,
+      0,
+    );
     assertEquals(resourceScenario.a("managers",), [],);
     assertEquals(resourceScenario.a("reports",), [],);
     assertEquals(resourceScenario.a("duties",), [],);
@@ -174,6 +183,8 @@ describe("ResourceScenario", () => {
   });
 
   it("getLeave retorna folgas", () => {
-    assertEquals(resourceScenario.getLeave(0, 10, "vacation",), 0,);
+    // 16.17: o tipo agora é o canônico de `Leave::Types` (antes a tabela local
+    // aceitava 'vacation', que não existe no TaskJuggler 3.8.4).
+    assertEquals(resourceScenario.getLeave(0, 10, "annual",), 0,);
   });
 });

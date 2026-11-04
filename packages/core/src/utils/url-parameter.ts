@@ -14,13 +14,19 @@
  * Divergências documentadas:
  *   • `pack('m')` do Ruby quebra o Base64 em linhas de 60 chars; emitimos
  *     Base64 sem quebras (seguro para contexto de URL).
- *   • `decode` fica para a Fase 20 (PWA interativa lê URLs; o core nunca
- *     decodifica parâmetros). Um `decode` síncrono exigiria inflate
- *     Huffman completo — sem consumidor nesta fase.
+ *   • `decode` aceita Base64 com quebras/quebras de linha (o `pack('m')` do
+ *     Ruby as produz) e usa `fflate` (`unzlibSync`) — o `decode` síncrono é
+ *     pré-requisito da Fase 20 (PWA interativa lê parâmetros da URL).
+ *
+ * `encode` continua usando stored blocks (determinístico e sem dependência de
+ * compressor); `decode` entende **qualquer** deflate zlib, inclusive o
+ * level-9 do Ruby.
  *
  * @see docs/taskjuggler/lib/taskjuggler/URLParameter.rb
  * @see ADR 027 (reports browser-only, retornam strings)
  */
+
+import { unzlibSync, } from "fflate";
 
 /** Soma de verificação Adler-32 (RFC 1950 §8.3). */
 function adler32(bytes: Uint8Array,): number {
@@ -74,5 +80,19 @@ export class URLParameter {
     let binary = "";
     for (const b of deflated) binary += String.fromCharCode(b,);
     return btoa(binary,);
+  }
+
+  /**
+   * Decodifica o Base64+zlib produzido por {@link encode} (ou pelo
+   * `URLParameter.encode` do Ruby).
+   *
+   * Espaços/quebras de linha do Base64 são ignorados (`pack('m')` do Ruby
+   * quebra em 60 colunas).
+   */
+  static decode(data: string,): string {
+    const clean = data.replace(/\s+/g, "",);
+    if (clean === "") return "";
+    const raw = Uint8Array.from(atob(clean,), (c,) => c.charCodeAt(0,),);
+    return new TextDecoder().decode(unzlibSync(raw,),);
   }
 }

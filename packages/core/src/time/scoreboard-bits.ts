@@ -111,11 +111,15 @@ export function isLeave(val: number | null | undefined,): boolean {
 /**
  * Verifica se o valor indica leave de um tipo específico.
  *
+ * Nome distinto de `model/leave.ts#isLeaveType` (predicado de **nome** de
+ * tipo, ex.: `"annual"`) para não colidir no topo do pacote: aqui o tipo é o
+ * índice numérico do scoreboard (1–7).
+ *
  * @param val — valor do scoreboard.
  * @param type — um dos valores de LEAVE_TYPES.
  * @returns true se bits 2–5 correspondem ao tipo.
  */
-export function isLeaveType(
+export function isScoreboardLeaveType(
   val: number | null | undefined,
   type: number,
 ): boolean {

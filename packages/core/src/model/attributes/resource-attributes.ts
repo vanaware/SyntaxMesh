@@ -9,6 +9,7 @@ import { TaskListAttribute, } from "../../attributes/list/task-list-attribute.ts
 import { ResourceListAttribute, } from "../../attributes/list/resource-list-attribute.ts";
 import { LogicalExpressionListAttribute, } from "../../attributes/logical/logical-expression-list-attribute.ts";
 import { LeaveAllowanceListAttribute, } from "../../attributes/time-interval/leave-allowance-list-attribute.ts";
+import { LeaveAllowanceList, LeaveList, } from "../leave.ts";
 import { LeaveListAttribute, } from "../../attributes/time-interval/leave-list-attribute.ts";
 import { LimitsAttribute, } from "../../attributes/time-interval/limits-attribute.ts";
 import { ShiftAssignmentsAttribute, } from "../../attributes/time-interval/shift-assignments-attribute.ts";
@@ -251,7 +252,7 @@ export function registerResourceAttributes(propertySet: PropertySet,): void {
       "leaveallowances",
       "Leave Allowances",
       AttributeType.LeaveAllowanceList,
-      [], // Default empty array for LeaveAllowanceListAttribute
+      new LeaveAllowanceList(), // Default vazio (Fase 16)
       false, // userDefined
       false, // isList
       false, // isSingleton
@@ -267,7 +268,7 @@ export function registerResourceAttributes(propertySet: PropertySet,): void {
       "leaves",
       "Leaves",
       AttributeType.LeaveList,
-      [], // Default empty array for LeaveListAttribute
+      new LeaveList(), // Default vazio (Fase 16)
       false, // userDefined
       false, // isList
       false, // isSingleton

@@ -209,6 +209,16 @@ export class JournalEntry {
     }
     return rText;
   }
+
+  /**
+   * Entrada de journal é objeto de identidade: pertence à `entryList` e
+   * referencia o `Journal` (que por sua vez lista todas as entradas). Copiar
+   * duplicaria a entrada e arrastaria o grafo inteiro, então `deepClone`
+   * devolve `this` (16.13.3).
+   */
+  deepClone(): this {
+    return this;
+  }
 }
 
 /** Chaves do índice por entidade (bring-forward 14C.0.4). */

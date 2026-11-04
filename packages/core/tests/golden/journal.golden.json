@@ -1,0 +1,342 @@
+{
+  "cases": [
+    {
+      "description": "journal com propriedade t1 mostra Kickoff e Risk Found",
+      "mode": "journal",
+      "property": "t1",
+      "start": "2026-01-01",
+      "end": "2026-01-31",
+      "attributes": [
+        "alert",
+        "property",
+        "propertyid",
+        "headline",
+        "date",
+        "author",
+        "flags",
+        "summary",
+        "details"
+      ],
+      "selfContained": false,
+      "hideFlags": [],
+      "expected": "[Green]Design (ID: t1)\n\nKickoff\n\nReported on 2026-01-05 by Alice\n\n[Red]Design (ID: t1)\n\nRisk Found\n\nReported on 2026-01-10 by Bob\n\nFlags: risk\n\nSummary line\n\nDetails block"
+    },
+    {
+      "description": "journal sem propriedade inclui a entrada global e a de t2",
+      "mode": "journal",
+      "property": null,
+      "start": "2026-01-01",
+      "end": "2026-01-31",
+      "attributes": [
+        "alert",
+        "property",
+        "propertyid",
+        "headline",
+        "date",
+        "author",
+        "flags",
+        "summary",
+        "details"
+      ],
+      "selfContained": false,
+      "hideFlags": [],
+      "expected": "[Green]Design (ID: t1)\n\nKickoff\n\nReported on 2026-01-05 by Alice\n\n[Red]Design (ID: t1)\n\nRisk Found\n\nReported on 2026-01-10 by Bob\n\nFlags: risk\n\nSummary line\n\nDetails block\n\n[Green]Design Child (ID: t1.t1_1)\n\nChild Update\n\nReported on 2026-01-12 by Alice\n\n[Yellow]Build (ID: t2)\n\nBuild Late\n\nReported on 2026-01-15 by Bob\n\nFlags: late\n\n[Green]Global Note\n\nReported on 2026-01-18\n\n[Yellow]Build (ID: t2)\n\nSecret Note\n\nReported on 2026-01-28 by Bob\n\nFlags: secret"
+    },
+    {
+      "description": "journal com autor alice usa entriesByResource",
+      "mode": "journal",
+      "property": "alice",
+      "start": "2026-01-01",
+      "end": "2026-01-31",
+      "attributes": [
+        "alert",
+        "property",
+        "propertyid",
+        "headline",
+        "date",
+        "author",
+        "flags",
+        "summary",
+        "details"
+      ],
+      "selfContained": false,
+      "hideFlags": [],
+      "expected": "[Green]Design (ID: t1)\n\nKickoff\n\nReported on 2026-01-05 by Alice\n\n[Green]Design Child (ID: t1.t1_1)\n\nChild Update\n\nReported on 2026-01-12 by Alice"
+    },
+    {
+      "description": "journal com alerta self-contained usa fcol no lugar do ícone",
+      "mode": "journal",
+      "property": "t1",
+      "start": "2026-01-01",
+      "end": "2026-01-31",
+      "attributes": [
+        "alert",
+        "property",
+        "propertyid",
+        "headline",
+        "date",
+        "author",
+        "flags",
+        "summary",
+        "details"
+      ],
+      "selfContained": true,
+      "hideFlags": [],
+      "expected": "[Green] Design (ID: t1)\n\nKickoff\n\nReported on 2026-01-05 by Alice\n\n[Red] Design (ID: t1)\n\nRisk Found\n\nReported on 2026-01-10 by Bob\n\nFlags: risk\n\nSummary line\n\nDetails block"
+    },
+    {
+      "description": "journal com hideJournalEntry remove a entrada com flag secret",
+      "mode": "journal",
+      "property": null,
+      "start": "2026-01-01",
+      "end": "2026-01-31",
+      "attributes": [
+        "alert",
+        "property",
+        "propertyid",
+        "headline",
+        "date",
+        "author",
+        "flags",
+        "summary",
+        "details"
+      ],
+      "selfContained": false,
+      "hideFlags": [
+        "secret"
+      ],
+      "expected": "[Green]Design (ID: t1)\n\nKickoff\n\nReported on 2026-01-05 by Alice\n\n[Red]Design (ID: t1)\n\nRisk Found\n\nReported on 2026-01-10 by Bob\n\nFlags: risk\n\nSummary line\n\nDetails block\n\n[Green]Design Child (ID: t1.t1_1)\n\nChild Update\n\nReported on 2026-01-12 by Alice\n\n[Yellow]Build (ID: t2)\n\nBuild Late\n\nReported on 2026-01-15 by Bob\n\nFlags: late\n\n[Green]Global Note\n\nReported on 2026-01-18"
+    },
+    {
+      "description": "journal com atributos compactos mostra só headline e data",
+      "mode": "journal",
+      "property": null,
+      "start": "2026-01-01",
+      "end": "2026-01-31",
+      "attributes": [
+        "headline",
+        "date"
+      ],
+      "selfContained": false,
+      "hideFlags": [],
+      "expected": "Kickoff\n\nReported on 2026-01-05\n\nRisk Found\n\nReported on 2026-01-10\n\nChild Update\n\nReported on 2026-01-12\n\nBuild Late\n\nReported on 2026-01-15\n\nGlobal Note\n\nReported on 2026-01-18\n\nSecret Note\n\nReported on 2026-01-28"
+    },
+    {
+      "description": "journal_sub inclui as sub-tasks de t1",
+      "mode": "journal_sub",
+      "property": "t1",
+      "start": "2026-01-01",
+      "end": "2026-01-31",
+      "attributes": [
+        "alert",
+        "property",
+        "propertyid",
+        "headline",
+        "date",
+        "author",
+        "flags",
+        "summary",
+        "details"
+      ],
+      "selfContained": false,
+      "hideFlags": [],
+      "expected": "[Green]Design (ID: t1)\n\nKickoff\n\nReported on 2026-01-05 by Alice\n\n[Red]Design (ID: t1)\n\nRisk Found\n\nReported on 2026-01-10 by Bob\n\nFlags: risk\n\nSummary line\n\nDetails block\n\n[Green]Design Child (ID: t1.t1_1)\n\nChild Update\n\nReported on 2026-01-12 by Alice"
+    },
+    {
+      "description": "journal_sub com atributos compactos",
+      "mode": "journal_sub",
+      "property": "t1",
+      "start": "2026-01-01",
+      "end": "2026-01-31",
+      "attributes": [
+        "headline",
+        "date"
+      ],
+      "selfContained": false,
+      "hideFlags": [],
+      "expected": "Kickoff\n\nReported on 2026-01-05\n\nRisk Found\n\nReported on 2026-01-10\n\nChild Update\n\nReported on 2026-01-12"
+    },
+    {
+      "description": "status_up sem propriedade usa as últimas entradas por task raiz",
+      "mode": "status_up",
+      "property": null,
+      "start": "2026-01-01",
+      "end": "2026-01-31",
+      "attributes": [
+        "alert",
+        "property",
+        "propertyid",
+        "headline",
+        "date",
+        "author",
+        "flags",
+        "summary",
+        "details"
+      ],
+      "selfContained": false,
+      "hideFlags": [],
+      "expected": "[Red]Design (ID: t1)\n\nRisk Found\n\nReported on 2026-01-10 by Bob\n\nFlags: risk\n\nSummary line\n\nDetails block\n\n[Yellow]Build (ID: t2)\n\nSecret Note\n\nReported on 2026-01-28 by Bob\n\nFlags: secret"
+    },
+    {
+      "description": "status_up com propriedade t1",
+      "mode": "status_up",
+      "property": "t1",
+      "start": "2026-01-01",
+      "end": "2026-01-31",
+      "attributes": [
+        "alert",
+        "property",
+        "propertyid",
+        "headline",
+        "date",
+        "author",
+        "flags",
+        "summary",
+        "details"
+      ],
+      "selfContained": false,
+      "hideFlags": [],
+      "expected": "[Red]Design (ID: t1)\n\nRisk Found\n\nReported on 2026-01-10 by Bob\n\nFlags: risk\n\nSummary line\n\nDetails block"
+    },
+    {
+      "description": "status_up com a sub-task t1_1",
+      "mode": "status_up",
+      "property": "t1_1",
+      "start": "2026-01-01",
+      "end": "2026-01-31",
+      "attributes": [
+        "headline",
+        "date"
+      ],
+      "selfContained": false,
+      "hideFlags": [],
+      "expected": "Child Update\n\nReported on 2026-01-12"
+    },
+    {
+      "description": "status_down sem propriedade inclui sub-tasks",
+      "mode": "status_down",
+      "property": null,
+      "start": "2026-01-01",
+      "end": "2026-01-31",
+      "attributes": [
+        "alert",
+        "property",
+        "propertyid",
+        "headline",
+        "date",
+        "author",
+        "flags",
+        "summary",
+        "details"
+      ],
+      "selfContained": false,
+      "hideFlags": [],
+      "expected": "[Red]Design (ID: t1)\n\nRisk Found\n\nReported on 2026-01-10 by Bob\n\nFlags: risk\n\nSummary line\n\nDetails block\n\n[Yellow]Build (ID: t2)\n\nSecret Note\n\nReported on 2026-01-28 by Bob\n\nFlags: secret"
+    },
+    {
+      "description": "status_down com propriedade t1 mantém a entrada de alerta maior do pai",
+      "mode": "status_down",
+      "property": "t1",
+      "start": "2026-01-01",
+      "end": "2026-01-31",
+      "attributes": [
+        "alert",
+        "property",
+        "propertyid",
+        "headline",
+        "date",
+        "author",
+        "flags",
+        "summary",
+        "details"
+      ],
+      "selfContained": false,
+      "hideFlags": [],
+      "expected": "[Red]Design (ID: t1)\n\nRisk Found\n\nReported on 2026-01-10 by Bob\n\nFlags: risk\n\nSummary line\n\nDetails block"
+    },
+    {
+      "description": "status_dep com propriedade t1 (sem dependências) coincide com status_down",
+      "mode": "status_dep",
+      "property": "t1",
+      "start": "2026-01-01",
+      "end": "2026-01-31",
+      "attributes": [
+        "alert",
+        "property",
+        "propertyid",
+        "headline",
+        "date",
+        "author",
+        "flags",
+        "summary",
+        "details"
+      ],
+      "selfContained": false,
+      "hideFlags": [],
+      "expected": "[Red]Design (ID: t1)\n\nRisk Found\n\nReported on 2026-01-10 by Bob\n\nFlags: risk\n\nSummary line\n\nDetails block"
+    },
+    {
+      "description": "alerts_down sem propriedade filtra pelo maior nível de alerta",
+      "mode": "alerts_down",
+      "property": null,
+      "start": "2026-01-01",
+      "end": "2026-01-31",
+      "attributes": [
+        "alert",
+        "property",
+        "propertyid",
+        "headline",
+        "date",
+        "author",
+        "flags",
+        "summary",
+        "details"
+      ],
+      "selfContained": false,
+      "hideFlags": [],
+      "expected": "[Red]Design (ID: t1)\n\nRisk Found\n\nReported on 2026-01-10 by Bob\n\nFlags: risk\n\nSummary line\n\nDetails block\n\n[Yellow]Build (ID: t2)\n\nSecret Note\n\nReported on 2026-01-28 by Bob\n\nFlags: secret"
+    },
+    {
+      "description": "alerts_down com propriedade t1",
+      "mode": "alerts_down",
+      "property": "t1",
+      "start": "2026-01-01",
+      "end": "2026-01-31",
+      "attributes": [
+        "alert",
+        "property",
+        "propertyid",
+        "headline",
+        "date",
+        "author",
+        "flags",
+        "summary",
+        "details"
+      ],
+      "selfContained": false,
+      "hideFlags": [],
+      "expected": "[Red]Design (ID: t1)\n\nRisk Found\n\nReported on 2026-01-10 by Bob\n\nFlags: risk\n\nSummary line\n\nDetails block"
+    },
+    {
+      "description": "alerts_dep com propriedade t2 filtra pelo maior nível",
+      "mode": "alerts_dep",
+      "property": "t2",
+      "start": "2026-01-01",
+      "end": "2026-01-31",
+      "attributes": [
+        "alert",
+        "property",
+        "propertyid",
+        "headline",
+        "date",
+        "author",
+        "flags",
+        "summary",
+        "details"
+      ],
+      "selfContained": false,
+      "hideFlags": [],
+      "expected": "[Yellow]Build (ID: t2)\n\nSecret Note\n\nReported on 2026-01-28 by Bob\n\nFlags: secret"
+    }
+  ]
+}

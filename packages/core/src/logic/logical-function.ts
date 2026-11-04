@@ -6,7 +6,7 @@
  * `LogicalExpression`. Convenções:
  *  - Sufixo `_` inverte `property`/`scopeProperty` (11.3.1.4).
  *  - `&`/`|` e coerções são tratadas pelo `LogicalOperation`.
- *  - `hasalert` é stub (Fase 16).
+ *  - `hasalert` usa `Journal.currentEntries` (16.18 — Fase 16).
  *
  * Complemento Fase 11 (`fase-11-logical-complemento.md`): além das 14 funções
  * fiéis ao Ruby 3.8.4 (`FUNCTIONS_RUBY`), registramos **extensões SyntaxMesh**
@@ -291,10 +291,22 @@ export class LogicalFunction {
   // As 14 funções
   // --------------------------------------------------
 
-  private hasalert(_expr: LogicalExpression,): boolean {
-    // Ancorado: Fase 16 — hasalert real depende de Journal.currentEntries (Fase 16).
-    // TODO(@djones) Fase 16: hasalert real (Journal.currentEntries).
-    throw new NotYetImplementedError("16", "hasalert",);
+  private hasalert(expr: LogicalExpression,): boolean {
+    const [property,] = this.properties(expr,);
+    if (!property) return false;
+    const query = this.query(expr,);
+    const project = property.project as Project;
+    // Ruby: `currentEntries(query.end, property, args[0], query.start,
+    // query.hideJournalEntry)` — `args[0]` é o nível mínimo de alerta.
+    const minLevel = Number(this.arguments[0] ?? 0,);
+    const entries = project.journal.currentEntries(
+      query.end,
+      property,
+      minLevel,
+      query.start,
+      query.hideJournalEntry,
+    );
+    return entries.length > 0;
   }
 
   private isactive(expr: LogicalExpression,): boolean {

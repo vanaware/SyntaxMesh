@@ -2,7 +2,15 @@ import { describe, it, } from "@std/testing/bdd";
 import { assert, assertEquals, } from "@std/assert";
 import { deepClone, } from "../../src/utils/deep-clone.ts";
 import { TjTime, } from "../../src/time/tj-time.ts";
+import { TimeInterval, } from "../../src/time/time-interval.ts";
 import { RealFormat, } from "../../src/format/real-format.ts";
+import { Leave, LeaveAllowance, LeaveList, } from "../../src/model/leave.ts";
+import {
+  AlertLevelDefinition,
+  DEFAULT_ALERT_LEVELS,
+} from "../../src/model/alert-levels.ts";
+import { JournalEntry, } from "../../src/model/journal.ts";
+import { createTestProject, } from "../fixtures/create-test-project.ts";
 
 describe("deepClone", () => {
   it("clona primitivos", () => {
@@ -120,5 +128,63 @@ describe("deepClone", () => {
     const cloned = deepClone(holder,);
     assertEquals(cloned.callback, fn,);
     assertEquals(cloned.nested.fn, fn,);
+  });
+});
+
+describe("deepClone — tipos da Fase 16 (16.13)", () => {
+  const D = (s: string,) => TjTime.fromString(s,);
+  const interval = () => new TimeInterval(D("2026-01-01",), D("2026-01-31",),);
+
+  it("Leave imutável devolve a mesma referência (16.13.1)", () => {
+    const leave = new Leave("annual", interval(), "férias",);
+    assertEquals(deepClone(leave,), leave,);
+    assert(deepClone(leave,) === leave,);
+  });
+
+  it("LeaveAllowance imutável devolve a mesma referência (16.13.1)", () => {
+    const al = new LeaveAllowance("annual", D("2026-01-01",), 8,);
+    assertEquals(deepClone(al,), al,);
+    assert(deepClone(al,) === al,);
+  });
+
+  it("LeaveList é copiada como LeaveList compartilhando os Leaves", () => {
+    const leave = new Leave("sick", interval(),);
+    const list = new LeaveList();
+    list.push(leave,);
+    const cloned = deepClone(list,);
+    assert(cloned instanceof LeaveList,);
+    assert(cloned !== list,);
+    assertEquals(cloned.length, 1,);
+    assert(cloned[0] === leave,);
+  });
+
+  it("AlertLevelDefinition imutável devolve a mesma referência (16.13.2)", () => {
+    const level = DEFAULT_ALERT_LEVELS[0] as AlertLevelDefinition;
+    assertEquals(deepClone(level,), level,);
+    assert(deepClone(level,) === level,);
+  });
+
+  it("JournalEntry devolve a mesma referência (16.13.3)", () => {
+    const project = createTestProject(1,);
+    const entry = new JournalEntry(
+      project.journal,
+      D("2026-02-01",),
+      "marco",
+      null,
+    );
+    assertEquals(deepClone(entry,), entry,);
+    assert(deepClone(entry,) === entry,);
+  });
+
+  it("não duplica entradas no journal ao clonar (16.13.3)", () => {
+    const project = createTestProject(1,);
+    const entry = new JournalEntry(
+      project.journal,
+      D("2026-02-01",),
+      "marco",
+      null,
+    );
+    deepClone(entry,);
+    assertEquals(project.journal.entryList.length(), 1,);
   });
 });

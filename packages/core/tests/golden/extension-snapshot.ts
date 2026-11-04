@@ -94,10 +94,10 @@ function snapshotFixture(project: Project,) {
     ),
     journal: {
       total: j.entries.length,
-      byTask: index(j.entriesByTask,),
-      byResource: index(j.entriesByResource,),
-      byMaterial: index(j.entriesByMaterial,),
-      byAccount: index(j.entriesByAccount,),
+      byTask: index(j.indexByTask,),
+      byResource: index(j.indexByResource,),
+      byMaterial: index(j.indexByMaterial,),
+      byAccount: index(j.indexByAccount,),
       entries: j.entries.map((e,) => ({
         headline: e.headline,
         alertLevel: e.alertLevel,

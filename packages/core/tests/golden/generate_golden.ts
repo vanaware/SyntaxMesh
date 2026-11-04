@@ -82,6 +82,22 @@ const scripts: Array<{ name: string; rubyScript: URL; outputPath: URL }> = [
       import.meta.url,
     ),
   },
+  {
+    name: "journal",
+    rubyScript: new URL(
+      "../../../../scripts/golden/journal.rb",
+      import.meta.url,
+    ),
+    outputPath: new URL("./journal.golden.json", import.meta.url,),
+  },
+  {
+    name: "leaves",
+    rubyScript: new URL(
+      "../../../../scripts/golden/leaves.rb",
+      import.meta.url,
+    ),
+    outputPath: new URL("./leaves.golden.json", import.meta.url,),
+  },
 ];
 
 for (const { name, rubyScript, outputPath, } of scripts) {

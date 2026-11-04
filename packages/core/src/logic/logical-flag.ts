@@ -1,27 +1,37 @@
 /**
  * LogicalFlag — folha de operando que testa uma flag declarada (Fase 11.2.2).
  *
- * Port de `LogicalOperation.rb::LogicalFlag`. Avalia para `true` quando a
- * propriedade do contexto tem a flag atribuída. O contexto pode ser uma
- * `Query` (projeto/PTN) ou um `Journal` (Fase 16) — aqui só o ramo `Query`
- * é implementado.
+ * Port de `LogicalOperation.rb::LogicalFlag` (l.233-262). Avalia para `true`
+ * quando o contexto tem a flag: numa `Query` (projeto/PTN) a lista é
+ * `property['flags', 0]`; num `JournalEntry` (Fase 16, usado por
+ * `journal.hideJournalEntry`) é o array `entry.flags`.
  *
- * @see docs/taskjuggler/lib/taskjuggler/LogicalOperation.rb
+ * @see docs/taskjuggler/lib/taskjuggler/LogicalOperation.rb:233-262
  */
-import { NotYetImplementedError, } from "../model/errors.ts";
 import type { Query, } from "../query/query.ts";
 import type { LogicalExpression, } from "./logical-expression.ts";
 import { LogicalOperation, } from "./logical-operation.ts";
 import { isQuery, } from "./type-guards.ts";
 
 /** `flags` é scenario-specific; o Ruby lê com índice de cenário 0. */
-function hasFlag(query: Query, flag: string,): boolean {
+function queryFlags(query: Query,): string[] {
   const property = query.property;
-  if (!property) return false;
+  if (!property) return [];
   const flags =
-    (property.getForScenario("flags", 0,) as string[] | undefined) ??
-      [];
-  return flags.includes(flag,);
+    (property.getForScenario("flags", 0,) as string[] | undefined) ?? [];
+  return flags;
+}
+
+/**
+ * Flags do contexto de journal (`expr.query.flags` no Ruby).
+ *
+ * `LogicalExpression.query` é tipada como `Query`, mas quando a expressão é
+ * avaliada por `Journal.hidden` o valor em tempo de execução é um
+ * `JournalEntry` — daí a leitura por duck-typing.
+ */
+function entryFlags(context: unknown,): string[] {
+  const flags = (context as { flags?: unknown } | null)?.flags;
+  return Array.isArray(flags,) ? flags as string[] : [];
 }
 
 export class LogicalFlag extends LogicalOperation {
@@ -30,17 +40,18 @@ export class LogicalFlag extends LogicalOperation {
   }
 
   override eval(expr: LogicalExpression,): boolean {
-    if (isQuery(expr.query,)) {
-      return hasFlag(expr.query, this.operand1 as string,);
-    }
-    // Ancorado: Fase 16 — ramo Journal depende do Journal/Traverser (Fase 16).
-    // Ramo Journal: completo na Fase 16.
-    throw new NotYetImplementedError("16", "LogicalFlag (Journal)",);
+    const flag = this.operand1 as string;
+    // Ramo 1: projeto/PTN (`Query`). Ramo 2: entrada de journal (Fase 16).
+    if (isQuery(expr.query,)) return queryFlags(expr.query,).includes(flag,);
+    return entryFlags(expr.query,).includes(flag,);
   }
 
   override to_s(query: Query | null,): string {
     if (query) {
-      return hasFlag(query, this.operand1 as string,) ? "true" : "false";
+      const flags = isQuery(query,)
+        ? queryFlags(query,)
+        : entryFlags(query as unknown,);
+      return flags.includes(this.operand1 as string,) ? "true" : "false";
     }
     return String(this.operand1,);
   }

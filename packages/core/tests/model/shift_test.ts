@@ -5,6 +5,8 @@ import { Project, } from "../../src/model/project.ts";
 import { Shift, } from "../../src/model/shift.ts";
 import { ShiftScenario, } from "../../src/model/shift-scenario.ts";
 import { WorkingHours, } from "../../src/calendar/working-hours.ts";
+import { Leave, LeaveList, } from "../../src/model/leave.ts";
+import { TimeInterval, } from "../../src/time/time-interval.ts";
 import { TjTime, } from "../../src/time/tj-time.ts";
 
 describe("Shift", () => {
@@ -247,5 +249,27 @@ describe("ShiftScenario", () => {
   it("onLeave? retorna false para slot sem leave", () => {
     const date = TjTime.fromDate(new Date("2026-01-05T12:00:00Z",),);
     assertEquals(shiftScenario.onLeave(date,), false,);
+  });
+
+  it("leaves default é uma LeaveList real (16.5.4)", () => {
+    assert(shift.getForScenario("leaves", 0,) instanceof LeaveList,);
+  });
+
+  it("onLeave? funciona com Leave real (16.5.5)", () => {
+    const day = new TimeInterval(
+      TjTime.fromString("2026-01-05",),
+      TjTime.fromString("2026-01-06",),
+    );
+    const list = new LeaveList();
+    list.push(new Leave("holiday", day, "Feriado",),);
+    shift.setForScenario("leaves", list, 0,);
+    assertEquals(
+      shiftScenario.onLeave(TjTime.fromString("2026-01-05",),),
+      true,
+    );
+    assertEquals(
+      shiftScenario.onLeave(TjTime.fromString("2026-01-07",),),
+      false,
+    );
   });
 });

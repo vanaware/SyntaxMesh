@@ -35,6 +35,7 @@
     "npm:esbuild@*": "0.28.2",
     "npm:esbuild@~0.25.5": "0.25.12",
     "npm:esbuild@~0.28.2": "0.28.2",
+    "npm:fflate@0.8": "0.8.3",
     "npm:fflate@~0.8.3": "0.8.3",
     "npm:mdast-util-from-markdown@2": "2.1.0",
     "npm:mdast-util-gfm@3": "3.1.0",
@@ -170,7 +171,7 @@
     "@vanaware/workerdb@0.5.1": {
       "integrity": "5830592584a2fcccb2bfb4415039e129b0889e167c785641fa7d86696e47b7f1",
       "dependencies": [
-        "npm:fflate"
+        "npm:fflate@~0.8.3"
       ]
     }
   },
@@ -1383,6 +1384,7 @@
           "jsr:@std/assert@1",
           "jsr:@std/testing@1",
           "npm:@types/mdast@4",
+          "npm:fflate@0.8",
           "npm:mdast-util-from-markdown@2",
           "npm:mdast-util-gfm@3",
           "npm:micromark-extension-gfm@3",

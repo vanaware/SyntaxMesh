@@ -7,7 +7,7 @@ import {
   hasOverride,
   isAssigned,
   isLeave,
-  isLeaveType,
+  isScoreboardLeaveType,
   isTimeOff,
   isWorkingTime,
   LEAVE_MASK,
@@ -173,21 +173,21 @@ describe("scoreboard-bits", () => {
     });
   });
 
-  describe("isLeaveType", () => {
-    it("isLeaveType(8, 2) = true", () => {
-      assertEquals(isLeaveType(8, 2,), true,);
+  describe("isScoreboardLeaveType", () => {
+    it("isScoreboardLeaveType(8, 2) = true", () => {
+      assertEquals(isScoreboardLeaveType(8, 2,), true,);
     });
 
-    it("isLeaveType(8, 5) = false", () => {
-      assertEquals(isLeaveType(8, 5,), false,);
+    it("isScoreboardLeaveType(8, 5) = false", () => {
+      assertEquals(isScoreboardLeaveType(8, 5,), false,);
     });
 
-    it("isLeaveType(20, 5) = true", () => {
-      assertEquals(isLeaveType(20, 5,), true,);
+    it("isScoreboardLeaveType(20, 5) = true", () => {
+      assertEquals(isScoreboardLeaveType(20, 5,), true,);
     });
 
-    it("isLeaveType(null, 5) = false", () => {
-      assertEquals(isLeaveType(null, 5,), false,);
+    it("isScoreboardLeaveType(null, 5) = false", () => {
+      assertEquals(isScoreboardLeaveType(null, 5,), false,);
     });
   });
 

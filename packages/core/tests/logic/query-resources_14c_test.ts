@@ -1,7 +1,9 @@
 /**
  * Onda B (bt) — query_* portáveis de `ResourceScenario` (ResourceScenario.rb:315-463)
  * via dispatch do `Query.process` (etapa i), sobre um projeto agendado real, e
- * os `query_*` ancorados da Onda B4 (leave/fte) lançando `NotYetImplementedError`.
+ * o `query_fte` ainda ancorado na Fase 18 (`NotYetImplementedError`).
+ *
+ * As consultas de licença deixaram de ser stubs na 16.17 (Fase 16).
  *
  * @see docs/taskjuggler/lib/taskjuggler/ResourceScenario.rb:277-463
  */
@@ -85,9 +87,9 @@ describe("query_* ResourceScenario (Onda B3/B4)", () => {
     );
   });
 
-  it("query_fte e query_annualleave ficam ancorados (process falha com ok=false)", () => {
+  it("query_fte fica ancorado (process falha com ok=false)", () => {
     const { project, resource, } = scheduledFixture();
-    for (const attr of ["fte", "annualleave", "sickleave",]) {
+    for (const attr of ["fte",]) {
       const q = rq(project, resource, attr,);
       // `NotYetImplementedError extends TjRuntimeError` e `Query.process()` o
       // captura (query.ts:429-434): em vez de propagar, marca `ok = false`,
@@ -99,5 +101,29 @@ describe("query_* ResourceScenario (Onda B3/B4)", () => {
         `${attr} sem errorMessage de âncora`,
       );
     }
+  });
+
+  it("consultas de licença portadas devolvem número (16.17)", () => {
+    const { project, resource, } = scheduledFixture();
+    for (
+      const attr of [
+        "annualleave",
+        "sickleave",
+        "specialleave",
+        "unpaidleave",
+        "timeoffdays",
+      ]
+    ) {
+      const q = rq(project, resource, attr,);
+      assert(q.process(), `${attr}: ${q.errorMessage ?? ""}`,);
+      assertEquals(q.to_num(), 0, `${attr} sem licenças deveria ser 0`,);
+    }
+  });
+
+  it("annualleavelist devolve lista vazia sem licenças (16.17)", () => {
+    const { project, resource, } = scheduledFixture();
+    const q = rq(project, resource, "annualleavelist",);
+    assert(q.process(), q.errorMessage ?? "",);
+    assertEquals(q.string, "",);
   });
 });

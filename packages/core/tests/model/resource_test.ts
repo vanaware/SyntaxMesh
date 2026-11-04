@@ -14,6 +14,11 @@ import {
 } from "../../src/scheduling/shift-assignments.ts";
 import { TimeInterval, } from "../../src/time/time-interval.ts";
 import { TjTime, } from "../../src/time/tj-time.ts";
+import {
+  Leave,
+  LeaveAllowanceList,
+  LeaveList,
+} from "../../src/model/leave.ts";
 
 describe("Resource", () => {
   let project: Project;
@@ -274,6 +279,45 @@ describe("ResourceScenario.onShift?", () => {
     assertEquals(scenario.onShift(10,), true,);
     // sbIdx 20 = 20:00 (shift cobre e tem prioridade → true)
     assertEquals(scenario.onShift(20,), true,);
+  });
+});
+
+describe("Resource: atributos de licença (Fase 16)", () => {
+  let project: Project;
+
+  beforeEach(() => {
+    project = createTestProject(2,);
+  },);
+
+  it("leaves default é uma LeaveList real (16.5.3)", () => {
+    const resource = new Resource(project, "r1", "Engineer", null,);
+    assert(resource.getForScenario("leaves", 0,) instanceof LeaveList,);
+  });
+
+  it("leaveallowances default é uma LeaveAllowanceList real (16.5.3)", () => {
+    const resource = new Resource(project, "r1", "Engineer", null,);
+    assert(
+      resource.getForScenario("leaveallowances", 0,) instanceof
+        LeaveAllowanceList,
+    );
+  });
+
+  it("leaves aceita Leave real e o to_tjp reusa o to_s", () => {
+    const resource = new Resource(project, "r1", "Engineer", null,);
+    const leave = new Leave(
+      "holiday",
+      new TimeInterval(
+        TjTime.fromString("2026-01-01",),
+        TjTime.fromString("2026-01-02",),
+      ),
+      "Ano Novo",
+    );
+    const list = new LeaveList();
+    list.push(leave,);
+    resource.setForScenario("leaves", list, 0,);
+    const got = resource.getForScenario("leaves", 0,) as LeaveList;
+    assertEquals(got.length, 1,);
+    assertEquals(got[0]!.typeIdx(), 6,);
   });
 });
 

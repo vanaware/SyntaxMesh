@@ -28,6 +28,8 @@ paritária.
 | `richtext.rb`                                                                   | 12   | `richtext.golden.json`            | `richtext_golden_test.ts`            |
 | `reports-mwe001..009.rb` + `reports-syntax-correct.rb`                          | 14   | `reports.golden.json`             | `reports_golden_test.ts`             |
 | `gantt-mwe001..009.rb` + `gantt-testsuite.rb`                                    | 15   | `gantt.golden.json`               | `gantt_golden_test.ts`               |
+| `journal.rb`                                                                    | 16   | `journal.golden.json`             | `journal_golden_test.ts`             |
+| `leaves.rb`                                                                     | 16   | `leaves.golden.json`              | `leaves_golden_test.ts`              |
 | `packages/core/tests/golden/generate_extension_golden.ts` (TS puro, sem oracle) | 14C  | `reports-extensions.golden.json`  | `reports-extensions_golden_test.ts`  |
 
 ## Fluxo de trabalho
@@ -420,6 +422,77 @@ ruby scripts/golden/gantt-mwe001.rb          # um caso, para depurar
 ruby scripts/golden/gantt-testsuite.rb      # corpus HTML-Reports
 deno task golden:generate                   # todos (grava gantt.golden.json)
 ```
+
+## Journal Golden Tests (Fase 16.19)
+
+Validam a renderização do journal (`Journal#to_rti`) contra o TaskJuggler Ruby
+real. O oracle monta um `Project` mínimo (2 tasks raiz + 1 sub-task, 2
+resources), insere 6 `JournalEntry` (alertLevel, autor, flags, summary/details,
+uma entrada global e uma com flag `secret`) e, para cada `journalMode`
+(`journal`, `journal_sub`, `status_up`, `status_down`, `status_dep`,
+`alerts_down`, `alerts_dep`), chama `to_rti` e extrai o texto plano do
+`RichTextIntermediate`.
+
+### Arquivos
+
+- `journal.rb` — escreve `journal.golden.json` (17 casos) com
+  `{ description, mode, property, start, end, attributes, selfContained,
+  hideFlags, expected }`.
+- `packages/core/tests/golden/journal_golden_test.ts` — reconstrói a fixture
+  no TS e compara o texto plano de `query.rti`.
+
+### Tolerâncias
+
+1. **Texto plano com whitespace colapsado** (`\s+` → espaço) — mesma
+   tolerância do golden de RichText (12.19.8): o `textBlockFormat` do Ruby
+   reflui parágrafos conforme a largura.
+2. **Conteúdo exato:** alertas, nomes, `fullId`, datas, flags, summary e
+   details são comparados integralmente — a seleção e a ordem
+   (`date/alert/seqno`) de cada modo também, já que o texto é composto nessa
+   ordem.
+3. **`summary`/`details`**: o Ruby guarda o `RichTextIntermediate` e lê
+   `richText.inputText`; o port guarda o `inputText` direto. Mesmo efeito no
+   markup final.
+
+### Regras específicas
+
+1. **Fixture nova por caso** — `to_rti` ordena listas internas; recriar o
+   projeto isola os casos.
+2. **`scenarioIdx = 0` explícito** — o Ruby precisa do cenário para ler
+   `startpreds` em `status_dep`/`alerts_dep`.
+3. **`journalAttributes` explícito** — o default vive no contexto de
+   relatórios (`TaskJuggler.rb`), não em `Query`.
+4. **`hideJournalEntry` usa `LogicalExpression(LogicalFlag("secret"))`** —
+   exercita o caminho de journal da Fase 16.18.
+5. **Nunca editar `journal.golden.json` à mão** — regerer com
+   `deno task golden:generate`.
+
+## Leaves Golden Tests (Fase 16.19)
+
+Validam `Leave`, `LeaveList`, `LeaveAllowance` e `LeaveAllowanceList` contra o
+Ruby: `Leave::Types`/`typeIdx` (1–7), `Leave#to_s` (com e sem motivo; sem
+motivo mantém os dois espaços), ordem de inserção da `LeaveList` e
+`LeaveAllowanceList#balance` (janela `[start, end)`, provisões negativas de
+expiração, tipos misturados, data inicial inclusiva e final exclusiva), além
+dos `ArgumentError` de tipo inválido.
+
+### Arquivos
+
+- `leaves.rb` — escreve `leaves.golden.json` (19 casos) com `{ description,
+  method, input, expected, error }`; `method` ∈ `typeIdx` | `to_s` | `order` |
+  `balance`.
+- `packages/core/tests/golden/leaves_golden_test.ts` — reconstrói cada caso a
+  partir de `input` e compara valor (ou a mensagem de erro).
+
+### Regras específicas
+
+1. **Fuso UTC em ambos os lados** — `TjTime#to_s` embute o offset e
+   `Leave#to_s` interpola o intervalo; o teste fixa UTC em `beforeAll` e
+   restaura o fuso anterior em `afterAll`.
+2. **`TimeInterval`, não `Interval`** — só `TimeInterval` define `to_s` (o
+   parser do TJP também produz `TimeInterval` para licenças).
+3. **Nunca editar `leaves.golden.json` à mão** — regerer com
+   `deno task golden:generate`.
 
 ## Snapshots de Extensão (Fase 14 Complemento, 14C.0.12)
 

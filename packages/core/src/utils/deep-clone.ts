@@ -47,9 +47,11 @@ function deepCloneInner<T,>(
     return seen.get(value,) as T;
   }
 
-  // Array
+  // Array (preserva o protótipo: `LeaveList`, `JournalEntryList`… são
+  // subclasses de Array no port — Ruby `clone` + `collect!` mantém a classe)
   if (Array.isArray(value,)) {
     const copy: unknown[] = [];
+    Object.setPrototypeOf(copy, Object.getPrototypeOf(value,),);
     seen.set(value, copy,);
     for (const item of value) {
       copy.push(deepCloneInner(item, seen,),);
@@ -60,6 +62,7 @@ function deepCloneInner<T,>(
   // Map
   if (value instanceof Map) {
     const copy = new Map<unknown, unknown>();
+    Object.setPrototypeOf(copy, Object.getPrototypeOf(value,),);
     seen.set(value, copy,);
     for (const [key, val,] of value.entries()) {
       copy.set(deepCloneInner(key, seen,), deepCloneInner(val, seen,),);
@@ -70,6 +73,7 @@ function deepCloneInner<T,>(
   // Set
   if (value instanceof Set) {
     const copy = new Set<unknown>();
+    Object.setPrototypeOf(copy, Object.getPrototypeOf(value,),);
     seen.set(value, copy,);
     for (const item of value) {
       copy.add(deepCloneInner(item, seen,),);

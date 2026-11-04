@@ -7,6 +7,7 @@ import { MockContainer, } from "./mock-container.ts";
 import { createTestProject, } from "../fixtures/create-test-project.ts";
 import { Project, } from "../../src/model/project.ts";
 import { PropertySet, } from "../../src/model/property-set.ts";
+import { LeaveList, } from "../../src/model/leave.ts";
 
 describe("ShiftAttributes", () => {
   let container: MockContainer;
@@ -93,7 +94,11 @@ describe("ShiftAttributes", () => {
       assertEquals(attrDef.id, "leaves",);
       assertEquals(attrDef.name, "Leaves",);
       assertEquals(attrDef.type, AttributeType.LeaveList,);
-      assertEquals(attrDef.defaultValue, [],);
+      assert(
+        attrDef.defaultValue instanceof LeaveList,
+        "default deve ser LeaveList (Fase 16)",
+      );
+      assertEquals((attrDef.defaultValue as LeaveList).length, 0,);
       assertEquals(attrDef.userDefined, false,);
       assertEquals(attrDef.isList, false,);
       assertEquals(attrDef.isSingleton, false,);

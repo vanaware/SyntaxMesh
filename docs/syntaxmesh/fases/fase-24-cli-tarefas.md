@@ -283,9 +283,9 @@ verdes; são extensões, não bloqueiam a 1ª onda da Fase 21.
 
 | # | Tarefa | Fonte/Arquivos | Verificação |
 |---|---|---|---|
-| 24.9.1 | Comando Cliffy `man` com `--format html\|text\|tjp` e filtro por keyword | `packages/cli/src/commands/man.ts`; consome `@vanaware/syntaxmesh/doc-core` (F22 22.1b) | teste BDD por formato |
-| 24.9.2 | `wz man <keyword>` resolve via `TernarySearchTree`/`SyntaxReference` e imprime documentação (`KeywordDocumentation` + exemplos `TjpExample`) | idem | ≥ 3 keywords (task/resource/report) |
-| 24.9.3 | `wz man --format html` gera manual completo (`UserManual` do doc-core) em `--output-dir` | idem | snapshot estrutural |
+| 24.9.1 | Comando Cliffy `man` com `--format html\|text\|tjp` e filtro por keyword | `packages/cli/src/commands/man.ts`; consome `@vanaware/syntaxmesh/doc-core` (F22 22.1b — tarefas C–H do `fase-22-vscode-extension-tarefas.md`; contrato fixado em 22.1b.7.8) | teste BDD por formato |
+| 24.9.2 | `wz man <keyword>` resolve via `TernarySearchTree`/`SyntaxReference` e imprime documentação (`KeywordDocumentation` + exemplos `TjpExample`) | idem — `TernarySearchTree.find(prefix, true)` (22.1b.1.5), `SyntaxReference.all/toText` (22.1b.2.7/2.10), `KeywordDocumentation.toText` (22.1b.3.16–20), `TjpExample` (22.1b.4) | ≥ 3 keywords (task/resource/report) |
+| 24.9.3 | `wz man --format html` gera manual completo (`UserManual` do doc-core) em `--output-dir` | idem — `UserManual.generate(): Record<nome, conteúdo>` (22.1b.5.6) + `css/tjmanual.css` copiado do asset (22.1b.5.2); **a escrita em disco é da CLI**, o core não escreve | snapshot estrutural |
 | 24.9.4 | Desancorar `TaskJuggler.freeze()` (âncora Fase 24 no core) — reescrita do master file via `io.writeText` | `packages/core/src/taskjuggler.ts` + `packages/cli` | teste com fixture `.tjp` congelável |
 | 24.9.5 | Flags `--freeze`, `--freeze-by-task`, `--freezedate` mapeadas (tj3 §5.2) | `options.ts` | teste de flags + exit codes |
 

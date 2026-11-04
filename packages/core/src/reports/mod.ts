@@ -64,7 +64,9 @@ export {
   Event,
   foldLines,
   ICalendar,
-  Journal,
+  // Alias desde a Fase 16: `Journal` no topo do pacote é o modelo de journal
+  // (ADR 029); este é o componente `JOURNAL` do iCalendar (RFC 5545).
+  Journal as ICalJournal,
   Person,
   Todo,
 } from "./i-calendar.ts";

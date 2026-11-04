@@ -2,10 +2,11 @@
  * Testes BDD de `LogicalFunction` (Fase 11.3).
  *
  * Cobre estrutura, aridade, sufixo `_` (inverte property/scopeProperty) e as
- * funções avaliáveis contra o modelo real. `hasalert` é stub (Fase 16).
+ * funções avaliáveis contra o modelo real. `hasalert` foi completado na
+ * 16.18 (Fase 16) sobre `Journal.currentEntries`.
  */
 import { beforeEach, describe, it, } from "@std/testing/bdd";
-import { assert, assertEquals, assertThrows, } from "@std/assert";
+import { assert, assertEquals, } from "@std/assert";
 import { createTestProject, } from "../fixtures/create-test-project.ts";
 import { Project, } from "../../src/model/project.ts";
 import { Task, } from "../../src/model/task.ts";
@@ -18,7 +19,8 @@ import {
 import { LogicalExpression, } from "../../src/logic/logical-expression.ts";
 import { LogicalOperation, } from "../../src/logic/logical-operation.ts";
 import { Query, } from "../../src/query/query.ts";
-import { NotYetImplementedError, } from "../../src/model/errors.ts";
+import { JournalEntry, } from "../../src/model/journal.ts";
+import { TjTime, } from "../../src/time/tj-time.ts";
 
 /** Avalia uma função contra um `Query` com property/scopeProperty dados. */
 function evalFn(
@@ -31,6 +33,9 @@ function evalFn(
     project,
     property: opts.property ?? null,
     scopeProperty: opts.scope ?? null,
+    // Período padrão = ano do fixture (16.18: `hasalert` precisa do período).
+    start: TjTime.fromString("2026-01-01",),
+    end: TjTime.fromString("2026-12-31",),
   },);
   return fn.eval(expr,);
 }
@@ -160,13 +165,49 @@ describe("LogicalFunction", () => {
       );
     });
 
-    it("hasalert é stub (NotYetImplementedError)", () => {
+    it("hasalert: falso sem entradas no journal (16.18)", () => {
       const fn = new LogicalFunction("hasalert",);
       fn.setArguments([1,],);
-      assertThrows(
-        () => evalFn(fn, project, { property: task, },),
-        NotYetImplementedError,
+      assertEquals(evalFn(fn, project, { property: task, },), false,);
+    });
+
+    it("hasalert: verdadeiro com entrada de nível >= ao argumento", () => {
+      const entry = new JournalEntry(
+        project.journal,
+        TjTime.fromString("2026-01-10",),
+        "marco",
+        task,
       );
+      entry.alertLevel = 1;
+      const fn = new LogicalFunction("hasalert",);
+      fn.setArguments([1,],);
+      assertEquals(evalFn(fn, project, { property: task, },), true,);
+    });
+
+    it("hasalert: falso quando o nível é menor que o argumento", () => {
+      const entry = new JournalEntry(
+        project.journal,
+        TjTime.fromString("2026-01-10",),
+        "marco",
+        task,
+      );
+      entry.alertLevel = 0;
+      const fn = new LogicalFunction("hasalert",);
+      fn.setArguments([1,],);
+      assertEquals(evalFn(fn, project, { property: task, },), false,);
+    });
+
+    it("hasalert: falso quando a entrada está fora do período da query", () => {
+      const entry = new JournalEntry(
+        project.journal,
+        TjTime.fromString("2025-06-01",),
+        "antigo",
+        task,
+      );
+      entry.alertLevel = 2;
+      const fn = new LogicalFunction("hasalert",);
+      fn.setArguments([1,],);
+      assertEquals(evalFn(fn, project, { property: task, },), false,);
     });
   });
 });

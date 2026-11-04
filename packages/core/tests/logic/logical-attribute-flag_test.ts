@@ -14,7 +14,9 @@ import { LogicalExpression, } from "../../src/logic/logical-expression.ts";
 import { LogicalOperation, } from "../../src/logic/logical-operation.ts";
 import { isQuery, } from "../../src/logic/type-guards.ts";
 import { Query, } from "../../src/query/query.ts";
-import { NotYetImplementedError, TjError, } from "../../src/model/errors.ts";
+import { JournalEntry, } from "../../src/model/journal.ts";
+import { TjTime, } from "../../src/time/tj-time.ts";
+import { TjError, } from "../../src/model/errors.ts";
 
 describe("type-guards isQuery (11.2.3.1)", () => {
   it("true para Query", () => {
@@ -121,16 +123,74 @@ describe("LogicalFlag (11.2.2)", () => {
     assertEquals(new LogicalFlag("gamma",).to_s(query,), "false",);
   });
 
-  it("contexto não-Query (Journal) lança NotYetImplementedError", () => {
+  it("contexto de journal: usa entry.flags (16.18)", () => {
     const flag = new LogicalFlag("alpha",);
     const expr = new LogicalExpression(flag,);
-    // Journal (Fase 16): expr.query é um objeto não-Query.
+    // Journal (Fase 16): `expr.query` é a entrada avaliada por
+    // `journal.hideJournalEntry`.
     expr.query = { flags: ["alpha",], } as unknown as Query;
-    assertThrows(() => flag.eval(expr,), NotYetImplementedError,);
+    assertEquals(flag.eval(expr,), true,);
   });
 
-  it(" LogicalFlag é subclass de LogicalOperation", () => {
+  it("contexto de journal: false quando a flag não está na entrada", () => {
+    const flag = new LogicalFlag("gamma",);
+    const expr = new LogicalExpression(flag,);
+    expr.query = { flags: ["alpha",], } as unknown as Query;
+    assertEquals(flag.eval(expr,), false,);
+  });
+
+  it("contexto sem flags é tratado como lista vazia", () => {
+    const flag = new LogicalFlag("alpha",);
+    const expr = new LogicalExpression(flag,);
+    expr.query = null;
+    assertEquals(flag.eval(expr,), false,);
+  });
+
+  it("to_s com contexto de journal reflete as flags da entrada", () => {
+    const entry = { flags: ["alpha",], } as unknown as Query;
+    assertEquals(new LogicalFlag("alpha",).to_s(entry,), "true",);
+    assertEquals(new LogicalFlag("gamma",).to_s(entry,), "false",);
+  });
+
+  it("LogicalFlag é subclass de LogicalOperation", () => {
     const flag = new LogicalFlag("alpha",);
     assertEquals(flag instanceof LogicalOperation, true,);
+  });
+});
+
+describe("LogicalFlag como journal.hideJournalEntry (16.18)", () => {
+  it("oculta as entradas que carregam a flag", () => {
+    const project = createTestProject(1,);
+    const task = new Task(project, "t1", "T1", null,);
+    const secreta = new JournalEntry(
+      project.journal,
+      TjTime.fromString("2026-01-10",),
+      "secreta",
+      task,
+    );
+    secreta.flags = ["secret",];
+    new JournalEntry(
+      project.journal,
+      TjTime.fromString("2026-01-11",),
+      "publica",
+      task,
+    );
+
+    const exp = new LogicalExpression(new LogicalFlag("secret",),);
+    const visiveis = project.journal.rangeEntries(null, null, exp,);
+    assertEquals(visiveis.toArray().map((e,) => e.headline), ["publica",],);
+  });
+
+  it("sem a flag, nenhuma entrada é ocultada", () => {
+    const project = createTestProject(1,);
+    const task = new Task(project, "t1", "T1", null,);
+    new JournalEntry(
+      project.journal,
+      TjTime.fromString("2026-01-10",),
+      "uma",
+      task,
+    );
+    const exp = new LogicalExpression(new LogicalFlag("secret",),);
+    assertEquals(project.journal.rangeEntries(null, null, exp,).length(), 1,);
   });
 });
