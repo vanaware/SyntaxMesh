@@ -10,7 +10,7 @@
  * @see docs/syntaxmesh/fases/fase-14-relatorios-tarefas.md (14.11)
  * @see docs/taskjuggler/lib/taskjuggler/reports/Report.rb (generateIntermediateFormat)
  */
-import type { XMLElementLike, } from "../richtext/xml-like.ts";
+import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 
 /**
  * Interface estrutural do conteúdo de um relatório. `generateIntermediateFormat`

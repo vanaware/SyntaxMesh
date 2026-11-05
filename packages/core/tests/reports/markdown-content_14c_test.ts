@@ -30,7 +30,7 @@ import "../../src/reports/mod.ts";
 import { RdoReport, } from "../../src/reports/rdo-report.ts";
 import { TextReport, } from "../../src/reports/text-report.ts";
 import type { RichTextIntermediate, } from "../../src/richtext/rich-text-intermediate.ts";
-import type { XMLElementLike, } from "../../src/richtext/xml-like.ts";
+import type { XMLElementLike, } from "../../src/xml/xml-element-like.ts";
 import type { Project, } from "../../src/model/project.ts";
 import type { Report, } from "../../src/model/report.ts";
 

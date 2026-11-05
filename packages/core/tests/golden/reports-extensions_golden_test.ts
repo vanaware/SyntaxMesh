@@ -72,6 +72,6 @@ describe("reports-extensions golden (14C.0.12)", () => {
     // Default richtext (14C.5.10): `'''…'''` continua sendo o dialeto.
     const plain = byId.get("mddefault",)!;
     assertEquals(plain.format, "richtext",);
-    assertEquals(plain.header, "<div><b>Forte</b> e //itálico//</div>",);
+    assertEquals(plain.header, "<div>\n <b>Forte</b> e //itálico//</div>",);
   });
 });

@@ -21,10 +21,8 @@
 import type { Query, } from "../query/query.ts";
 import type { PropertyTreeNode, } from "../model/property-tree-node.ts";
 import { Task, } from "../model/task.ts";
-import {
-  SimpleXMLElement,
-  type XMLElementLike,
-} from "../richtext/xml-like.ts";
+import { XMLElement, } from "../xml/xml-element.ts";
+import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 import type { CellSettingPatternList, } from "../reports/table-column-definition.ts";
 import {
   lineToHTML as graphicsLineToHTML,
@@ -181,7 +179,7 @@ export class GanttLine implements LoadStackHost {
 
   /** Converte a linha abstrata em `<div>`s (Ruby `to_html`). */
   to_html(): XMLElementLike {
-    const div = new SimpleXMLElement("div", {
+    const div = new XMLElement("div", {
       class: this.category ?? "",
       style: "margin:0px; padding:0px; position:absolute; " +
         `left:0px; top:${this.y}px; ` +
@@ -586,7 +584,7 @@ export class GanttLine implements LoadStackHost {
     trigger.attrs["style"] = (trigger.attrs["style"] ?? "") + "cursor:help; ";
 
     const hookEl = hook ?? trigger;
-    const ltDiv = new SimpleXMLElement("div", {
+    const ltDiv = new XMLElement("div", {
       class: "tj_tooltip_box",
       id: `ID${id}`,
     },);

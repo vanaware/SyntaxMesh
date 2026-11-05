@@ -35,7 +35,7 @@
       "to_tagged": "<div><p>[Some ]<i>[emph]</i></p>\n\n</div>",
       "to_markdown": "Some *emph*\n\n",
       "to_s": "Some emph",
-      "to_html": "<div><p>Some <i>emph</i></p></div>"
+      "to_html": "<div><p>Some <i>emph</i>\n </p></div>"
     },
     {
       "name": "unordered-list",
@@ -44,7 +44,7 @@
       "to_tagged": "<div><ul><li>* [a]</li>\n<li>* [b]</li>\n</ul></div>",
       "to_markdown": "- a\n- b\n",
       "to_s": " * a\n\n * b",
-      "to_html": "<div><ul><li>a</li><li>b</li></ul></div>"
+      "to_html": "<div><ul>\n  <li>a</li>\n  <li>b</li>\n </ul></div>"
     },
     {
       "name": "ordered-list",
@@ -53,7 +53,7 @@
       "to_tagged": "<div><ol><li>1 [one]</li>\n<li>2 [two]</li>\n</ol></div>",
       "to_markdown": "1. one\n2. two\n",
       "to_s": " 1. one\n\n 2. two",
-      "to_html": "<div><ol><li>one</li><li>two</li></ol></div>"
+      "to_html": "<div><ol>\n  <li>one</li>\n  <li>two</li>\n </ol></div>"
     },
     {
       "name": "fontcol",
@@ -71,7 +71,7 @@
       "to_tagged": "<div><p><fcol:green>[OK]</fcol>[ and ]<code>code</code></p>\n\n</div>",
       "to_markdown": "<fcol:green>OK</fcol> and `code`\n\n",
       "to_s": "OK and code",
-      "to_html": "<div><p><span style=\"color:green\">OK</span> and <code>code</code></p></div>"
+      "to_html": "<div><p>\n  <span style=\"color:green\">OK</span> and <code>code</code>\n </p></div>"
     },
     {
       "name": "function-query",
@@ -103,7 +103,7 @@
       "to_tagged": "<div><p><html><span class=\"x\"></html>[hi]<html></span></html></p>\n\n</div>",
       "to_markdown": "<span class=\"x\">hi</span>\n\n",
       "to_s": "hi",
-      "to_html": "<div><p><span class=\"x\">hi</span></p></div>"
+      "to_html": "<div><p>\n  <span class=\"x\">hi</span>\n </p></div>"
     },
     {
       "name": "html-script-stripped",
@@ -130,7 +130,7 @@
       "to_tagged": "<div><p><html><a href=\"http://x\"></html>[link]<html></a></html></p>\n\n</div>",
       "to_markdown": "<a href=\"http://x\">link</a>\n\n",
       "to_s": "link",
-      "to_html": "<div><p><a href=\"http://x\">link</a></p></div>"
+      "to_html": "<div><p>\n  <a href=\"http://x\">link</a>\n </p></div>"
     },
     {
       "name": "html-raw-bold",
@@ -139,7 +139,7 @@
       "to_tagged": "<div><p><html><b></html>[raw bold]<html></b></html></p>\n\n</div>",
       "to_markdown": "<b>raw bold</b>\n\n",
       "to_s": "raw bold",
-      "to_html": "<div><p><b>raw bold</b></p></div>"
+      "to_html": "<div><p>\n  <b>raw bold</b>\n </p></div>"
     },
     {
       "name": "inline-code",
@@ -166,7 +166,7 @@
       "to_tagged": "<div><p>[> ]<p>[quoted]</p>\n\n</p>\n\n</div>",
       "to_markdown": "> quoted\n\n\n\n",
       "to_s": "> quoted",
-      "to_html": "<div><p>&gt; <p>quoted</p></p></div>"
+      "to_html": "<div><p>&gt; <p>quoted</p>\n </p></div>"
     },
     {
       "name": "thematic-break",
@@ -175,7 +175,7 @@
       "to_tagged": "<div><p>[a]</p>\n\n<hr></hr>\n<p>[b]</p>\n\n</div>",
       "to_markdown": "a\n\n---\n\nb\n\n",
       "to_s": "a\n\n--------------------------------------------------------------------------------\nb",
-      "to_html": "<div><p>a</p><hr /><p>b</p></div>"
+      "to_html": "<div>\n <p>a</p>\n <hr/>\n <p>b</p>\n</div>"
     },
     {
       "name": "link",
@@ -211,7 +211,7 @@
       "to_tagged": "<div><h1>1 [T]</h1>\n\n<p>[> ]<p>[quote ]<b>[bold]</b></p>\n\n</p>\n\n</div>",
       "to_markdown": "# T\n\n> quote **bold**\n\n\n\n",
       "to_s": "1) T\n\n> quote bold",
-      "to_html": "<div><h1 id=\"T\">1 T</h1><p>&gt; <p>quote <b>bold</b></p></p></div>"
+      "to_html": "<div>\n <h1 id=\"T\">1 T</h1>\n <p>&gt; <p>quote <b>bold</b>\n  </p>\n </p>\n</div>"
     }
   ]
 }

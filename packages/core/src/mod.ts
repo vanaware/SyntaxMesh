@@ -71,8 +71,21 @@ export * from "./query/simple-query-expander.ts";
 // Fase 14 — relatórios (formato intermediário + geração no browser, ADR 027)
 export * from "./reports/mod.ts";
 
-// Fase 14.22 — pincel SVG mínimo + ChartPlotter (Painter real é Fase 17)
-export * from "./painter-min.ts";
+// Fase 14.22 — o pincel SVG mínimo (`painter-min.ts`) foi apagado em 17.15;
+// `ChartPlotter` agora desenha com o Painter real do Bloco D abaixo.
+
+// Fase 17 (17.7) — Painter real: Color / Points / SVGSupport (ADR 038)
+export * from "./painter/mod.ts";
+
+// Fase 17 (17.12) — Bloco A: XMLElement/XMLDocument reais. O re-export estava
+// bloqueado por `reports/xml-node.ts` (duplicata mínima com os mesmos nomes),
+// apagado nesta tarefa; `msp-xml-re.ts` e `niku-report.ts` migram para cá.
+export * from "./xml/mod.ts";
+
+// Fase 17 (17.13) — Bloco B: HTMLDocument/HTMLElements reais. A casca mínima
+// `richtext/html-shell.ts` (`createHtmlShell`/`HtmlShell`) foi substituída por
+// este `HTMLDocument` e apagada; o re-export estava bloqueado até aqui (ADR 038).
+export * from "./html/mod.ts";
 
 // Fase 15 — Gantt (HTML+CSS puro, ADR 028)
 export * from "./gantt/mod.ts";

@@ -12,7 +12,7 @@ import { Query, } from "../../src/query/query.ts";
 import { Project, } from "../../src/model/project.ts";
 import { Task, } from "../../src/model/task.ts";
 import { TableColumnDefinition, } from "../../src/reports/table-column-definition.ts";
-import type { XMLElementLike, } from "../../src/richtext/xml-like.ts";
+import type { XMLElementLike, } from "../../src/xml/xml-element-like.ts";
 import { createTestProject, } from "../fixtures/create-test-project.ts";
 import { GanttChart, } from "../../src/gantt/gantt-chart.ts";
 import type { GanttChartTable, } from "../../src/gantt/gantt-chart.ts";
@@ -103,7 +103,7 @@ function chartDiv(td: XMLElementLike,): XMLElementLike {
 
 /** Classes dos filhos diretos (texto vira string vazia). */
 function classesOf(el: XMLElementLike,): string[] {
-  return el.children.map((c,) =>
+  return el.children.map((c: XMLElementLike | string,) =>
     typeof c === "string" ? c : (c.attrs.class ?? "")
   );
 }

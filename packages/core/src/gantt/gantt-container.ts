@@ -9,7 +9,7 @@
  * @see docs/syntaxmesh/fases/fase-15-gantt.md (15.6)
  */
 import { jagToHTML, rectToHTML, } from "./html-graphics.ts";
-import type { XMLElementLike, } from "../richtext/xml-like.ts";
+import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 import type { ZoneRouter, } from "./gantt-router.ts";
 
 /** Meia-altura da barra, em pixels. */

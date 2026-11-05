@@ -17,10 +17,8 @@ import { type PropertyTreeNode, } from "../../src/model/property-tree-node.ts";
 import { type Query, } from "../../src/query/query.ts";
 import { type LogicalExpression, } from "../../src/logic/logical-expression.ts";
 import { type RichTextIntermediate, } from "../../src/richtext/rich-text-intermediate.ts";
-import {
-  SimpleXMLElement,
-  type XMLElementLike,
-} from "../../src/richtext/xml-like.ts";
+import { XMLElement, } from "../../src/xml/xml-element.ts";
+import type { XMLElementLike, } from "../../src/xml/xml-element-like.ts";
 import { TimeInterval, } from "../../src/time/time-interval.ts";
 import { TjTime, } from "../../src/time/tj-time.ts";
 import { ReportContext, } from "../../src/reports/report-context.ts";
@@ -64,7 +62,7 @@ function fakeRichText(calls: Query[],): RichTextIntermediate {
       calls.push(q,);
     },
     to_html() {
-      return new SimpleXMLElement("span",);
+      return new XMLElement("span",);
     },
   } as unknown as RichTextIntermediate;
 }
@@ -372,7 +370,7 @@ describe("ReportBase (14.3)", () => {
 
     it("generateHtmlTableRow envolve célula em <tr>", () => {
       const rb = new TestReport(report,);
-      const cell = new SimpleXMLElement("td",);
+      const cell = new XMLElement("td",);
       const tr = rb.row(cell,);
       assertEquals(tr.tag, "tr",);
       assertEquals(tr.children[0], cell,);

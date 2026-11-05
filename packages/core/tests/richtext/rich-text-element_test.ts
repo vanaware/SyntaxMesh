@@ -21,10 +21,8 @@ import type { RichTextCategory, } from "../../src/richtext/rich-text-element.ts"
 import { RichTextIntermediate, } from "../../src/richtext/rich-text-intermediate.ts";
 import { RichTextImage, } from "../../src/richtext/rich-text-image.ts";
 import { TableOfContents, } from "../../src/richtext/table-of-contents.ts";
-import {
-  SimpleXMLElement,
-  type XMLElementLike,
-} from "../../src/richtext/xml-like.ts";
+import { XMLElement, } from "../../src/xml/xml-element.ts";
+import type { XMLElementLike, } from "../../src/xml/xml-element-like.ts";
 import {
   type RichTextFunctionArgs,
   RichTextFunctionHandler,
@@ -35,7 +33,7 @@ class EchoHandler extends RichTextFunctionHandler {
     return `s[${args.a ?? ""}]`;
   }
   to_html(args: RichTextFunctionArgs,): XMLElementLike {
-    return new SimpleXMLElement("span", { "data-a": args.a ?? "", },);
+    return new XMLElement("span", { "data-a": args.a ?? "", },);
   }
   to_tagged(): string {
     return "tagged";
@@ -259,7 +257,7 @@ describe("RichTextElement — to_html (12.3.6)", () => {
     const html = p.to_html()!;
     assertEquals(html.tag, "div",);
     assertEquals(html.attrs["codesection"], "1",);
-    const pre = html.children[0] as SimpleXMLElement;
+    const pre = html.children[0] as XMLElement;
     assertEquals(pre.tag, "pre",);
     assertEquals(
       p.to_html()!.toHTML(),
@@ -340,7 +338,10 @@ describe("RichTextElement — to_html (12.3.6)", () => {
     const b = new RichTextElement(rt, "bold", txt("n", rt,),);
     b.appendSpace = true;
     const p = new RichTextElement(rt, "paragraph", [b, txt("c", rt,),],);
-    assertEquals(p.to_html()!.toHTML(), "<p><b>n</b> c</p>",);
+    assertEquals(
+      p.to_html()!.toHTML().replace(/>\n +</g, "><",),
+      "<p><b>n</b> c</p>",
+    );
   });
 });
 

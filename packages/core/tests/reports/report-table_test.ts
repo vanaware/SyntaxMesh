@@ -10,7 +10,7 @@ import { ReportTable, } from "../../src/reports/report-table.ts";
 import { ReportTableColumn, } from "../../src/reports/report-table-column.ts";
 import { ReportTableLine, } from "../../src/reports/report-table-line.ts";
 import { ReportTableCell, } from "../../src/reports/report-table-cell.ts";
-import { SimpleXMLElement, } from "../../src/richtext/xml-like.ts";
+import { XMLElement, } from "../../src/xml/xml-element.ts";
 
 /** Subclasse de teste: expõe membros privados/protegidos de ReportTable. */
 class TestTable extends ReportTable {
@@ -123,7 +123,7 @@ describe("ReportTable (14.6)", () => {
     c1.cell1.rows = 2;
     const c2 = new ReportTableColumn(t, null, "B",);
     c2.cell1.special = {
-      to_html: () => new SimpleXMLElement("td",),
+      to_html: () => new XMLElement("td",),
       to_csv: () => 1,
     };
     const html = t.to_html().toHTML();

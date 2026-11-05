@@ -9,7 +9,13 @@ import { assertEquals, } from "@std/assert";
 import { describe, it, } from "@std/testing/bdd";
 import { TOCEntry, } from "../../src/richtext/toc-entry.ts";
 import { TableOfContents, } from "../../src/richtext/table-of-contents.ts";
-import type { SimpleXMLElement, } from "../../src/richtext/xml-like.ts";
+import { XMLElement, XMLText, } from "../../src/xml/xml-element.ts";
+import { compat, } from "../../src/compat.ts";
+
+/** Colapsa a indentação do `to_s` real (17.1) para comparar estrutura. */
+function flat(html: string,): string {
+  return html.replace(/\n\s*(?=<\/)/g, "",).replace(/\n\s+</g, "<",);
+}
 
 describe("TOCEntry (12.7)", () => {
   it("guarda number/title/file/tag (tag default null)", () => {
@@ -31,7 +37,7 @@ describe("TOCEntry (12.7)", () => {
       '<tr><td><div style="height:10px"></div></td></tr>',
     );
     assertEquals(
-      html[1]!.toHTML(),
+      flat(html[1]!.toHTML(),),
       '<tr style="font-size:20px;"><td style="width:30px;">1 </td>' +
         '<td><a href="chap1.html#Intro">Intro</a></td></tr>',
     );
@@ -42,7 +48,7 @@ describe("TOCEntry (12.7)", () => {
     const html = e.to_html();
     assertEquals(html.length, 1,);
     assertEquals(
-      html[0]!.toHTML(),
+      flat(html[0]!.toHTML(),),
       '<tr style="font-size:17px;"><td style="width:30px;"></td><td>' +
         '<span style="padding-right:15px;">1.1 </span>' +
         '<a href="chap1.html">Sub</a></td></tr>',
@@ -60,12 +66,22 @@ describe("TOCEntry (12.7)", () => {
     },);
   });
 
-  it('escapa texto e atributo como decide 12.1 (mínimo: & e ")', () => {
+  it('escapa texto e atributo como o XMLElement real (17.12: & e ")', () => {
     const e = new TOCEntry("1 ", "A & B <c>", 'f"x',);
     const html = e.to_html();
     const flat = html[html.length - 1]!.toHTML();
-    assertEquals(flat.includes('href="f&quot;x.html"',), true,);
-    assertEquals(flat.includes("A &amp; B &lt;c&gt;",), true,);
+    // Category B: com keepRubyBugs o Ruby emite `\"`; sem ele, `&quot;`.
+    const q = compat.keepRubyBugs ? '\\"' : "&quot;";
+    assertEquals(flat.includes(`href="f${q}x.html"`,), true, flat,);
+    assertEquals(flat.includes("A &amp; B &lt;c&gt;",), true, flat,);
+  });
+
+  it("dois filhos não-texto ganham \n + indent de 1 espaço (regra do 17.1)", () => {
+    const tr = new XMLElement("tr", {}, false, () => [
+      new XMLElement("td", {}, false, () => new XMLText("a",),),
+      new XMLElement("td", {}, false, () => new XMLText("b",),),
+    ],);
+    assertEquals(tr.toHTML(), "<tr>\n <td>a</td>\n <td>b</td>\n</tr>",);
   });
 });
 
@@ -92,10 +108,10 @@ describe("TableOfContents (12.8)", () => {
       "margin-left:15%; margin-right:15%;",
     );
     assertEquals(html.children.length, 1,);
-    const table = html.children[0] as SimpleXMLElement;
+    const table = html.children[0] as XMLElement;
     assertEquals(table.tag, "table",);
     assertEquals(table.children.length, 1,);
-    assertEquals((table.children[0] as SimpleXMLElement).tag, "tr",);
+    assertEquals((table.children[0] as XMLElement).tag, "tr",);
   });
 
   it("TOC vazio produz table sem linhas", () => {

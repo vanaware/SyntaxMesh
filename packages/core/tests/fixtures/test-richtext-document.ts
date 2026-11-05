@@ -8,8 +8,8 @@
  */
 
 import { RichTextDocument, } from "../../src/richtext/rich-text-document.ts";
-import { SimpleXMLElement, } from "../../src/richtext/xml-like.ts";
-import type { XMLElementLike, } from "../../src/richtext/xml-like.ts";
+import { XMLElement, } from "../../src/xml/xml-element.ts";
+import type { XMLElementLike, } from "../../src/xml/xml-element-like.ts";
 
 export interface NavArgs {
   prevName: string | null;
@@ -23,25 +23,25 @@ export class TestRichTextDocument extends RichTextDocument {
   lastNav: NavArgs | null = null;
 
   generateStyleSheet(): XMLElementLike {
-    const el = new SimpleXMLElement("style", { id: "mystyle", },);
+    const el = new XMLElement("style", { id: "mystyle", },);
     el.append("STYLESHEET_MARKER",);
     return el;
   }
 
   generateHTMLCover(): XMLElementLike {
-    const el = new SimpleXMLElement("p", {},);
+    const el = new XMLElement("p", {},);
     el.append("COVER_MARKER",);
     return el;
   }
 
   generateHTMLHeader(): XMLElementLike {
-    const el = new SimpleXMLElement("header", {},);
+    const el = new XMLElement("header", {},);
     el.append("HEADER_MARKER",);
     return el;
   }
 
   generateHTMLFooter(): XMLElementLike {
-    const el = new SimpleXMLElement("footer", {},);
+    const el = new XMLElement("footer", {},);
     el.append("FOOTER_MARKER",);
     return el;
   }
@@ -53,7 +53,7 @@ export class TestRichTextDocument extends RichTextDocument {
     nextFile: string | null,
   ): XMLElementLike {
     this.lastNav = { prevName, prevFile, nextName, nextFile, };
-    const el = new SimpleXMLElement("nav", {},);
+    const el = new XMLElement("nav", {},);
     el.append("NAV_MARKER",);
     return el;
   }

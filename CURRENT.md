@@ -129,6 +129,22 @@ i18n (10.15+) em `packages/core/src/i18n/`.
   `LeaveList`/`LeaveAllowanceList`; **G10 da F15** — o `nowLineX` do golden de
   Gantt era o relógio da máquina (agora `FROZEN_NOW` no oracle e
   `report.set('now', …)` no teste). Suíte: **559 testes / 5542 passos / 0 falhas**.
+- **Fase 17 — HTML/XML ✅ Concluída (2026-11-04, 17.0–17.17):** ports reais de
+  `XMLElement`/`XMLDocument` (`src/xml/`), `HTMLElements`/`HTMLDocument`
+  (`src/html/`), `ICalendar`+`Component`/`Todo`/`Event`/`Journal`/`Person`
+  (`src/ical/`) e do Painter SVG completo (`src/painter/`: `Color`/`Points`/
+  `SVGSupport`/`Element`/`Group`/`Primitives`/`BasicShapes`/`Text`/`Painter`/
+  `FontMetrics`/`FontMetricsData`/`FontData`) — ADR 038 substituiu e apagou os
+  5 mínimos herdados (F12/F14/F15): `SimpleXMLElement`+`xml-node.ts`,
+  `html-shell.ts`, `reports/i-calendar.ts`, `painter-min.ts`; contrato
+  `XMLElementLike` mantido (troca transparente p/ RichText/reports/Gantt).
+  `chart-plotter.ts` migrou p/ o Painter real (SVG com `\n`+indent fiel).
+  **Goldens 17.16:** `html-xml.rb` (25 casos) + `ical.rb` (11 casos; DTSTAMP
+  congelado no oráculo, fuso `Europe/Berlin` pinnado) = 36 casos byte-a-byte.
+  **17.17:** `check:all`/`fmt:check`/`lint`/`golden:generate` EXIT=0; smoke
+  `smoke_after_phase_17_test.ts` (4 steps, inclui `to_html()` → `XMLElement`
+  real e CRLF RFC 5545 do `foldLines`). Suíte: **638 testes / 5883 passos /
+  0 falhas**.
 - **Varredura xray Ruby↔TS e realocação de escopo (decisões do usuário,
   2026-11-03)** — `docs/syntaxmesh/xray.md` (legenda ASCII `OK/PAR/PLA/NPL/NA/DEAD/EXT`).
   Propagação feita nos docs de fase + código:
@@ -193,7 +209,8 @@ i18n (10.15+) em `packages/core/src/i18n/`.
 - Fase 15 — Gantt ✅ Concluída (2026-11-03)
 - Fase 16 — Apoio ✅ Concluída (2026-11-03, 16.0–16.20; escopo xray: 16.10
   cancelado; 16.9/16.14/16.15 movidos p/ a 22; dono de `query_dashboard`)
-- Fase 17 — HTML/XML ⬜ Não iniciada
+- Fase 17 — HTML/XML ✅ Concluída (2026-11-04, 17.0–17.17; ADR 038 —
+  substituição dos 5 mínimos; goldens html-xml+ical; smoke F17)
 - Fase 18 — Time/Status Sheets ⬜ Não iniciada (adendos 18.18 apps de sheets,
   18.19 dynamicAttributes, 18.20 `checkLevel`; ADRs 036/037)
 - Fase 19 — Storage ⬜ Não iniciada (por último, após a 21²)

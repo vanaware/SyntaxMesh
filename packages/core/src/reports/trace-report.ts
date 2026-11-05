@@ -36,7 +36,8 @@ import { TableColumnSorter, } from "./table-column-sorter.ts";
 import { ReportBase, } from "./report-base.ts";
 import type { OpenNodes, } from "./report-base.ts";
 import { ChartPlotter, ChartPlotterError, } from "../chart-plotter.ts";
-import { createBlob, type XMLElementLike, } from "../richtext/xml-like.ts";
+import { XMLBlob, } from "../xml/xml-element.ts";
+import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 import { registerContentFactory, } from "../model/report-content.ts";
 
 /** Data em formato ISO curto (`YYYY-MM-DD`) usada para round-trip do CSV. */
@@ -247,7 +248,7 @@ export class TraceReport extends ReportBase {
         this.table as unknown[][],
       );
       plotter.generate();
-      html.push(createBlob(plotter.to_svg(),),);
+      html.push(new XMLBlob(plotter.to_svg(),),);
     } catch (e) {
       if (e instanceof ChartPlotterError) {
         MessageHandlerInstance.instance.warning(

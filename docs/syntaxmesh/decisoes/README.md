@@ -95,11 +95,11 @@ O que foi decidido? Seja específico e acionável.
 | 035 | Reservado — Extensão VS Code + lsp-core, Fase 22 | Reservado | — |
 | 036 | Reservado — Sheets sem SMTP: sender devolve o **texto do email**, receiver consome **texto de mensagem** (Fase 18; ADR da fase) | Reservado | 2026-11-03 |
 | 037 | Reservado — Injeção de provedor de conteúdo/`FileStore` no core (Fases 18/24) | Reservado | 2026-11-03 |
+| 038 | Substituição de XML/HTML/ICalendar/Painter mínimos (Fase 17) | Aceito | 2026-11-04 |
 
 > **Reserva de números (decisão 2026-11-03 — `docs/syntaxmesh/xray.md` §5.3):**
-> 029–032 já existem (029 ainda **sem arquivo** — será criado na tarefa **16.0.1**
-> como `029-journal-alertlevel.md`; a tabela já o dá como Aceito porque a decisão
-> está tomada no plano da Fase 16). **033–035** seguem a ordem oficial de execução
+> 029–032 existem (`029-journal-alertlevel.md`, entregue na Fase 16 em
+> 2026-11-03). **033–035** seguem a ordem oficial de execução
 > (23 → 24 → 22) e **036–037** foram reservados nesta varredura para as decisões
 > novas das Fases 18/24. **Nunca renumerar ADRs existentes** — os arquivos 027/028
 > já commitados são referência histórica; ao criar um ADR, conferir antes esta

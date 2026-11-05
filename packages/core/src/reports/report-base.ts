@@ -27,8 +27,8 @@ import type { TjTime, } from "../time/tj-time.ts";
 import type { RichTextIntermediate, } from "../richtext/rich-text-intermediate.ts";
 import { RichText, } from "../richtext/rich-text.ts";
 import { MarkdownFactory, } from "../markdown/factory.ts";
-import type { XMLElementLike, } from "../richtext/xml-like.ts";
-import { SimpleXMLElement, } from "../richtext/xml-like.ts";
+import type { XMLElementLike, } from "../xml/xml-element-like.ts";
+import { XMLElement, } from "../xml/xml-element.ts";
 
 /**
  * Coleção de nós abertos, espelhando o `Set` de Ruby com entradas
@@ -304,15 +304,15 @@ export abstract class ReportBase {
 
   /** Monta a moldura da tabela HTML com a caixa de headline, se houver. */
   protected generateHtmlTableFrame(): XMLElementLike {
-    const table = new SimpleXMLElement("table", {
+    const table = new XMLElement("table", {
       class: "tj_table_frame",
       cellspacing: "1",
     },);
 
     const headline = this.a("headline",);
     if (headline) {
-      const td = new SimpleXMLElement("td",);
-      const div = new SimpleXMLElement("div", { class: "tj_table_headline", },);
+      const td = new XMLElement("td",);
+      const div = new XMLElement("div", { class: "tj_table_headline", },);
       const html = (headline as RichTextIntermediate).to_html();
       if (html) div.append(html,);
       td.append(div,);
@@ -324,7 +324,7 @@ export abstract class ReportBase {
 
   /** Cria uma linha `<tr>` contendo a célula fornecida. */
   protected generateHtmlTableRow(cell: XMLElementLike,): XMLElementLike {
-    const tr = new SimpleXMLElement("tr",);
+    const tr = new XMLElement("tr",);
     tr.append(cell,);
     return tr;
   }

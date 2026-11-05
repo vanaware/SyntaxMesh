@@ -16,7 +16,9 @@ describe("Picture.to_html (14C.0.8)", () => {
     const html = p.to_html().toHTML();
     assertEquals(
       html,
-      '<img alt="" src="https://cdn.example.com/a.png" />',
+      // `img` não é void no XMLElement real (sem `selfClosing`): assim como
+      // no Ruby (`ReportTableCell`), renderiza `<img ...></img>`.
+      '<img alt="" src="https://cdn.example.com/a.png"></img>',
     );
   });
 
@@ -26,8 +28,10 @@ describe("Picture.to_html (14C.0.8)", () => {
     const html = p.to_html().toHTML();
     assertEquals(
       html,
-      '<figure class="tj_figure"><img alt="" src="img/aca.png" />' +
-        "<figcaption>Peça</figcaption></figure>",
+      '<figure class="tj_figure">\n' +
+        ' <img alt="" src="img/aca.png"></img>\n' +
+        " <figcaption>Peça</figcaption>\n" +
+        "</figure>",
     );
   });
 

@@ -8,7 +8,7 @@ import { beforeEach, describe, it, } from "@std/testing/bdd";
 import { assertEquals, } from "@std/assert";
 import { RTFWithQuerySupport, } from "../../src/richtext/handlers/rtf-with-query-support.ts";
 import type { RichTextFunctionArgs, } from "../../src/richtext/handlers/function-handler.ts";
-import type { XMLElementLike, } from "../../src/richtext/xml-like.ts";
+import type { XMLElementLike, } from "../../src/xml/xml-element-like.ts";
 import { Query, } from "../../src/query/query.ts";
 import { MessageHandlerInstance, } from "../../src/message-handler.ts";
 

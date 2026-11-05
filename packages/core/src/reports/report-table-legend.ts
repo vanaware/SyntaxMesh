@@ -8,8 +8,8 @@
  *
  * @see docs/syntaxmesh/fases/fase-14-relatorios-tarefas.md (14.10)
  */
-import type { XMLElementLike, } from "../richtext/xml-like.ts";
-import { SimpleXMLElement, } from "../richtext/xml-like.ts";
+import type { XMLElementLike, } from "../xml/xml-element-like.ts";
+import { XMLElement, } from "../xml/xml-element.ts";
 
 /** Par [texto, cor] armazenado para itens de Gantt/calendário. */
 type LegendItem = [string, string,];
@@ -60,10 +60,10 @@ export class ReportTableLegend {
       return null;
     }
 
-    const frame = new SimpleXMLElement("div", {
+    const frame = new XMLElement("div", {
       class: "tj_table_legend_frame",
     },);
-    const legend = new SimpleXMLElement("table", {
+    const legend = new XMLElement("table", {
       class: "tj_table_legend",
       cellspacing: "1",
     },);
@@ -72,7 +72,7 @@ export class ReportTableLegend {
     appendNodes(legend, this.headlineToHTML("Gantt Chart Symbols:",),);
 
     if (this.showGanttItems) {
-      const row = new SimpleXMLElement("tr", { class: "tj_legend_row", },);
+      const row = new XMLElement("tr", { class: "tj_legend_row", },);
       appendNodes(
         row,
         this.ganttItemToHTML(
@@ -97,7 +97,7 @@ export class ReportTableLegend {
           20,
         ),
       );
-      row.append(new SimpleXMLElement("td", { class: "tj_legend_spacer", },),);
+      row.append(new XMLElement("td", { class: "tj_legend_spacer", },),);
       legend.append(row,);
     }
 
@@ -117,8 +117,8 @@ export class ReportTableLegend {
     if (this.calendarItems.length === 0 || this.ganttItems.length === 0) {
       return null;
     }
-    const tr = new SimpleXMLElement("tr", { class: "tj_legend_headline", },);
-    const td = new SimpleXMLElement("td", { colspan: "10", },);
+    const tr = new XMLElement("tr", { class: "tj_legend_headline", },);
+    const td = new XMLElement("td", { colspan: "10", },);
     td.append(text,);
     tr.append(td,);
     return tr;
@@ -131,10 +131,10 @@ export class ReportTableLegend {
     _width: number,
   ): XMLElementLike[] {
     const cells: XMLElementLike[] = [];
-    cells.push(new SimpleXMLElement("td", { class: "tj_legend_spacer", },),);
+    cells.push(new XMLElement("td", { class: "tj_legend_spacer", },),);
 
-    const symbolTd = new SimpleXMLElement("td", { class: "tj_legend_item", },);
-    const symbol = new SimpleXMLElement("div", {
+    const symbolTd = new XMLElement("td", { class: "tj_legend_item", },);
+    const symbol = new XMLElement("div", {
       class: "tj_legend_symbol",
       style: "top:3px",
     },);
@@ -142,8 +142,8 @@ export class ReportTableLegend {
     symbolTd.append(symbol,);
     cells.push(symbolTd,);
 
-    const labelTd = new SimpleXMLElement("td", { class: "tj_legend_item", },);
-    const label = new SimpleXMLElement("div", { class: "tj_legend_label", },);
+    const labelTd = new XMLElement("td", { class: "tj_legend_item", },);
+    const label = new XMLElement("div", { class: "tj_legend_label", },);
     label.append(name,);
     labelTd.append(label,);
     cells.push(labelTd,);
@@ -154,19 +154,19 @@ export class ReportTableLegend {
   /** Item colorido [texto, cor] → células [espaçador, símbolo, rótulo]. */
   protected itemToHTML(itemRef: LegendItem,): XMLElementLike[] {
     const cells: XMLElementLike[] = [];
-    cells.push(new SimpleXMLElement("td", { class: "tj_legend_spacer", },),);
+    cells.push(new XMLElement("td", { class: "tj_legend_spacer", },),);
 
-    const symbolTd = new SimpleXMLElement("td", { class: "tj_legend_item", },);
-    const symbol = new SimpleXMLElement("div", { class: "tj_legend_symbol", },);
-    const box = new SimpleXMLElement("div", {
+    const symbolTd = new XMLElement("td", { class: "tj_legend_item", },);
+    const symbol = new XMLElement("div", { class: "tj_legend_symbol", },);
+    const box = new XMLElement("div", {
       style: "position:relative; top:2px;width:20px; height:15px",
     },);
-    const frame = new SimpleXMLElement("div", {
+    const frame = new XMLElement("div", {
       class: "loadstackframe",
       style: "position:absolute; left:5px; width:16px; height:15px;",
     },);
     frame.append(
-      new SimpleXMLElement("div", {
+      new XMLElement("div", {
         class: itemRef[1],
         style: "position:absolute; left:1px; top:1px; width:14px; height:13px;",
       },),
@@ -176,8 +176,8 @@ export class ReportTableLegend {
     symbolTd.append(symbol,);
     cells.push(symbolTd,);
 
-    const labelTd = new SimpleXMLElement("td", { class: "tj_legend_item", },);
-    const label = new SimpleXMLElement("div", { class: "tj_legend_label", },);
+    const labelTd = new XMLElement("td", { class: "tj_legend_item", },);
+    const label = new XMLElement("div", { class: "tj_legend_label", },);
     label.append(itemRef[0],);
     labelTd.append(label,);
     cells.push(labelTd,);
@@ -194,7 +194,7 @@ export class ReportTableLegend {
 
     for (let i = 0; i < gridCells; i++) {
       if (i % 3 === 0) {
-        row = new SimpleXMLElement("tr", { class: "tj_legend_row", },);
+        row = new XMLElement("tr", { class: "tj_legend_row", },);
         rows.push(row,);
       }
       if (!row) continue;
@@ -202,7 +202,7 @@ export class ReportTableLegend {
         appendNodes(row, this.itemToHTML(items[i]!,),);
       } else {
         row.append(
-          new SimpleXMLElement("td", {
+          new XMLElement("td", {
             class: "tj_legend_item",
             colspan: "3",
           },),
@@ -210,7 +210,7 @@ export class ReportTableLegend {
       }
       if ((i + 1) % 3 === 0) {
         row.append(
-          new SimpleXMLElement("td", { class: "tj_legend_spacer", },),
+          new XMLElement("td", { class: "tj_legend_spacer", },),
         );
       }
     }
@@ -220,5 +220,5 @@ export class ReportTableLegend {
 
 /** Símbolo placeholder (substituído pelo Painter na Fase 14.22). */
 function placeholderSymbol(cls: string,): LegendSymbol {
-  return { to_html: () => new SimpleXMLElement("div", { class: cls, },), };
+  return { to_html: () => new XMLElement("div", { class: cls, },), };
 }

@@ -14,7 +14,7 @@ import { createTestProject, } from "../fixtures/create-test-project.ts";
 import type { Project, } from "../../src/model/project.ts";
 import { Report, } from "../../src/model/report.ts";
 import { RichText, } from "../../src/richtext/rich-text.ts";
-import { type XMLElementLike, } from "../../src/richtext/xml-like.ts";
+import type { XMLElementLike, } from "../../src/xml/xml-element-like.ts";
 import { ReportContext, } from "../../src/reports/report-context.ts";
 import { TextReport, } from "../../src/reports/text-report.ts";
 import { ReportType, } from "../../src/model/report-type.ts";

@@ -11,7 +11,7 @@ import {
   ReportTableLine,
 } from "../../src/reports/report-table-line.ts";
 import { ReportTableCell, } from "../../src/reports/report-table-cell.ts";
-import { type XMLElementLike, } from "../../src/richtext/xml-like.ts";
+import type { XMLElementLike, } from "../../src/xml/xml-element-like.ts";
 
 function fakeTable(
   overrides: Partial<LineTable> = {},

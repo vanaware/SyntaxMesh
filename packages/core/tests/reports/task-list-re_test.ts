@@ -31,7 +31,7 @@ import {
   type ReportContentFactory,
 } from "../../src/model/report-content.ts";
 import { ReportTableCell, } from "../../src/reports/report-table-cell.ts";
-import type { XMLElementLike, } from "../../src/richtext/xml-like.ts";
+import type { XMLElementLike, } from "../../src/xml/xml-element-like.ts";
 
 /** Subclasse que expõe a tabela e os protegidos usados nos testes. */
 class TestTaskListRE extends TaskListRE {

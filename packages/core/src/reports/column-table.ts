@@ -8,10 +8,8 @@
  *
  * @see docs/syntaxmesh/fases/fase-14-relatorios-tarefas.md (14.13)
  */
-import {
-  SimpleXMLElement,
-  type XMLElementLike,
-} from "../richtext/xml-like.ts";
+import { XMLElement, } from "../xml/xml-element.ts";
+import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 import { ReportTable, } from "./report-table.ts";
 
 export class ColumnTable extends ReportTable {
@@ -38,13 +36,13 @@ export class ColumnTable extends ReportTable {
     }
 
     // Não sabemos a largura final: sempre reservamos espaço para scrollbar.
-    const td = new SimpleXMLElement("td", {
+    const td = new XMLElement("td", {
       rowspan: `${2 + this.lines.length + 1}`,
       style: "padding:0px; vertical-align:top;",
     },);
 
     const width = this.viewWidth !== null ? this.viewWidth : this.minWidth();
-    const scrollDiv = new SimpleXMLElement("div", {
+    const scrollDiv = new XMLElement("div", {
       class: "tabback",
       style: "position:relative; overflow:auto; " +
         `width:${width}px; ` +
@@ -53,7 +51,7 @@ export class ColumnTable extends ReportTable {
     },);
     td.append(scrollDiv,);
 
-    const contentDiv = new SimpleXMLElement("div", {
+    const contentDiv = new XMLElement("div", {
       style: "margin: 0px; padding: 0px; position: absolute; top: 0px;" +
         "left: 0px; " + `width: ${this.viewWidth}px; height: ${height}px; `,
     },);

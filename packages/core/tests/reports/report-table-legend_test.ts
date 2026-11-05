@@ -7,10 +7,8 @@
 import { describe, it, } from "@std/testing/bdd";
 import { assert, assertEquals, } from "@std/assert";
 import { ReportTableLegend, } from "../../src/reports/report-table-legend.ts";
-import {
-  SimpleXMLElement,
-  type XMLElementLike,
-} from "../../src/richtext/xml-like.ts";
+import { XMLElement, XMLText, } from "../../src/xml/xml-element.ts";
+import type { XMLElementLike, } from "../../src/xml/xml-element-like.ts";
 
 /** Subclasse que expõe os helpers protegidos para teste direto. */
 class TestLegend extends ReportTableLegend {
@@ -33,7 +31,7 @@ class TestLegend extends ReportTableLegend {
 }
 
 const symbol = {
-  to_html: () => new SimpleXMLElement("div", { class: "x", },),
+  to_html: () => new XMLElement("div", { class: "x", },),
 };
 
 describe("ReportTableLegend (14.10)", () => {
@@ -107,7 +105,7 @@ describe("ReportTableLegend (14.10)", () => {
       const frame = l.to_html()!;
       const table = frame.children[0] as XMLElementLike;
       // Primeiro filho é headline (null → não adicionado); a linha de gantt vem.
-      const row = table.children.find((c,) =>
+      const row = table.children.find((c: XMLElementLike | string,) =>
         (c as XMLElementLike).tag === "tr"
       ) as
         | XMLElementLike
@@ -149,7 +147,7 @@ describe("ReportTableLegend (14.10)", () => {
       const l = new TestLegend();
       const cells = l.ganttItem(symbol, "Milestone", 20,);
       const label = cells[2]!.children[0] as XMLElementLike;
-      assertEquals(label.children[0], "Milestone",);
+      assertEquals((label.children[0] as XMLText).to_s(), "Milestone",);
     });
 
     it("ganttItem símbolo style top:3px", () => {
@@ -171,7 +169,7 @@ describe("ReportTableLegend (14.10)", () => {
       const l = new TestLegend();
       const cells = l.item(["Rótulo", "c",],);
       const label = cells[2]!.children[0] as XMLElementLike;
-      assertEquals(label.children[0], "Rótulo",);
+      assertEquals((label.children[0] as XMLText).to_s(), "Rótulo",);
     });
   });
 

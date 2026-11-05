@@ -11,8 +11,8 @@
  * @see docs/syntaxmesh/fases/fase-14-relatorios-tarefas.md (14.17)
  */
 import type { Report, } from "../model/report.ts";
-import type { XMLElementLike, } from "../richtext/xml-like.ts";
-import { SimpleXMLElement, } from "../richtext/xml-like.ts";
+import type { XMLElementLike, } from "../xml/xml-element-like.ts";
+import { XMLElement, } from "../xml/xml-element.ts";
 import { MessageHandlerInstance, } from "../message-handler.ts";
 import { ReportBase, } from "./report-base.ts";
 import { markdownSections, } from "./markdown.ts";
@@ -72,11 +72,11 @@ export class TextReport extends ReportBase {
     if (header) html.push(header,);
 
     if (this.a("left",) || this.a("center",) || this.a("right",)) {
-      const table = new SimpleXMLElement("table", {
+      const table = new XMLElement("table", {
         class: "tj_text_page",
         cellspacing: "0",
       },);
-      const row = new SimpleXMLElement("tr", { class: "tj_text_row", },);
+      const row = new XMLElement("tr", { class: "tj_text_row", },);
       const widths = { l: this.lWidth, c: this.cWidth, r: this.rWidth, };
       const paddings = {
         l: this.lPadding,
@@ -87,7 +87,7 @@ export class TextReport extends ReportBase {
         const key = name[0] as "l" | "c" | "r";
         const block = this.rt_to_html(name,);
         if (block) {
-          const col = new SimpleXMLElement("td", {
+          const col = new XMLElement("td", {
             class: `tj_column_${name}`,
           },);
           let style = "";

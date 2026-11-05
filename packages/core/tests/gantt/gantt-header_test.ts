@@ -16,7 +16,8 @@ import {
   GanttHeader,
   type GanttHeaderChart,
 } from "../../src/gantt/gantt-header.ts";
-import type { XMLElementLike, } from "../../src/richtext/xml-like.ts";
+import type { XMLElementLike, } from "../../src/xml/xml-element-like.ts";
+import { XMLText, } from "../../src/xml/xml-element.ts";
 
 /** Opções do chart falso. */
 interface FakeChartOptions {
@@ -90,7 +91,10 @@ function cell(header: GanttHeader, index: number,) {
 
 function labelOf(div: XMLElementLike,): string {
   const inner = childAt(div, 0,);
-  return String(inner.children[0] ?? "",);
+  const txt = inner.children[0];
+  // O rótulo é um nó XMLText (XMLElement real, ex-SimpleXMLElement).
+  if (txt instanceof XMLText) return txt.to_s();
+  return String(txt ?? "",);
 }
 
 describe("GanttHeader", () => {

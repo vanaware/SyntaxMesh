@@ -18,8 +18,8 @@
 
 import { RTFWithQuerySupport, } from "./rtf-with-query-support.ts";
 import type { RichTextFunctionArgs, } from "./function-handler.ts";
-import type { XMLElementLike, } from "../xml-like.ts";
-import { SimpleXMLElement, } from "../xml-like.ts";
+import type { XMLElementLike, } from "../../xml/xml-element-like.ts";
+import { XMLElement, } from "../../xml/xml-element.ts";
 import type { SourceFileInfo, } from "../../source-file-info.ts";
 import type { Query, } from "../../query/query.ts";
 import { SimpleQueryExpander, } from "../../query/simple-query-expander.ts";
@@ -126,7 +126,7 @@ export class RTFQuery extends RTFWithQuerySupport {
       if (hasToHtml(rti,)) return rti.to_html();
       const str = query.to_s();
       if (str) {
-        const span = new SimpleXMLElement("span",);
+        const span = new XMLElement("span",);
         span.append(str,);
         return span;
       }
@@ -136,7 +136,7 @@ export class RTFQuery extends RTFWithQuerySupport {
       "query_error",
       query.errorMessage! + this.recreateQuerySyntax(args,),
     );
-    const font = new SimpleXMLElement("font", { color: "#FF0000", },);
+    const font = new XMLElement("font", { color: "#FF0000", },);
     font.append("Query Error: " + query.errorMessage,);
     return font;
   }

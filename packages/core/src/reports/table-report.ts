@@ -29,11 +29,8 @@ import { TjTime, } from "../time/tj-time.ts";
 import { TimeInterval, } from "../time/time-interval.ts";
 import { RichText, } from "../richtext/rich-text.ts";
 import type { RichTextIntermediate, } from "../richtext/rich-text-intermediate.ts";
-import {
-  createComment,
-  SimpleXMLElement,
-  type XMLElementLike,
-} from "../richtext/xml-like.ts";
+import { XMLComment, XMLElement, } from "../xml/xml-element.ts";
+import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 import { ReportBase, } from "./report-base.ts";
 import { markdownSections, } from "./markdown.ts";
 import { ReportTable, } from "./report-table.ts";
@@ -299,9 +296,11 @@ export abstract class TableReport extends ReportBase {
   to_html(): XMLElementLike[] {
     const html: XMLElementLike[] = [];
     const ctx = this.project.reportContexts.at(-1,);
-    html.push(createComment(
-      `Dynamic Report ID: ${ctx ? ctx.dynamicReportId : ""}`,
-    ),);
+    html.push(
+      new XMLComment(
+        `Dynamic Report ID: ${ctx ? ctx.dynamicReportId : ""}`,
+      ),
+    );
 
     const header = this.rt_to_html("header",);
     if (header) html.push(header,);
@@ -311,7 +310,7 @@ export abstract class TableReport extends ReportBase {
 
     // A tabela de dados propriamente dita.
     if (this.table) {
-      const td = new SimpleXMLElement("td",);
+      const td = new XMLElement("td",);
       td.append(this.table.to_html(),);
       tableFrame.append(this.generateHtmlTableRow(td,),);
     }
@@ -322,8 +321,8 @@ export abstract class TableReport extends ReportBase {
       to_html(): XMLElementLike | null;
     } | null;
     if (caption) {
-      const td = new SimpleXMLElement("td",);
-      const div = new SimpleXMLElement("div", { class: "tj_table_caption", },);
+      const td = new XMLElement("td",);
+      const div = new XMLElement("div", { class: "tj_table_caption", },);
       caption.sectionNumbers = false;
       const capHtml = caption.to_html();
       if (capHtml) div.append(capHtml,);
@@ -332,7 +331,7 @@ export abstract class TableReport extends ReportBase {
     }
 
     // A legenda.
-    const legendTd = new SimpleXMLElement("td",);
+    const legendTd = new XMLElement("td",);
     const legendHtml = this.legend.to_html();
     if (legendHtml) legendTd.append(legendHtml,);
     tableFrame.append(this.generateHtmlTableRow(legendTd,),);

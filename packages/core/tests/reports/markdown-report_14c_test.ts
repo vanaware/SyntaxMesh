@@ -24,7 +24,7 @@ import { ReportContext, } from "../../src/reports/report-context.ts";
 import "../../src/reports/mod.ts";
 import { MarkdownFactory, } from "../../src/markdown/factory.ts";
 import { RichTextIntermediate, } from "../../src/richtext/rich-text-intermediate.ts";
-import type { XMLElementLike, } from "../../src/richtext/xml-like.ts";
+import type { XMLElementLike, } from "../../src/xml/xml-element-like.ts";
 import type { Project, } from "../../src/model/project.ts";
 import type { Report, } from "../../src/model/report.ts";
 

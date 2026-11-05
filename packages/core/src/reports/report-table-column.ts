@@ -8,7 +8,7 @@
  *
  * @see docs/syntaxmesh/fases/fase-14-relatorios-tarefas.md (14.7)
  */
-import type { XMLElementLike, } from "../richtext/xml-like.ts";
+import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 import { ReportTableCell, } from "./report-table-cell.ts";
 import type { TableColumnDefinition, } from "./table-column-definition.ts";
 

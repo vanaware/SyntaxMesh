@@ -42,7 +42,7 @@ import { ReportTable, } from "./report-table.ts";
 import { ReportTableColumn, } from "./report-table-column.ts";
 import { ReportTableCell, } from "./report-table-cell.ts";
 import { ReportTableLine, } from "./report-table-line.ts";
-import type { XMLElementLike, } from "../richtext/xml-like.ts";
+import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 import type { TjTime, } from "../time/tj-time.ts";
 import { registerContentFactory, } from "../model/report-content.ts";
 

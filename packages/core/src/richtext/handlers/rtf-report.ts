@@ -15,8 +15,8 @@
 
 import { RichTextFunctionHandler, } from "./function-handler.ts";
 import type { RichTextFunctionArgs, } from "./function-handler.ts";
-import { SimpleXMLElement, } from "../xml-like.ts";
-import type { XMLElementLike, } from "../xml-like.ts";
+import { Fragment, XMLElement, } from "../../xml/xml-element.ts";
+import type { XMLElementLike, } from "../../xml/xml-element-like.ts";
 import type { SourceFileInfo, } from "../../source-file-info.ts";
 import type { Project, } from "../../model/project.ts";
 import { ReportContext, } from "../../reports/report-context.ts";
@@ -89,12 +89,12 @@ export class RTFReport extends RichTextFunctionHandler {
       // `Report#to_html` admite string/array (conteúdos CSV/text); o RichText
       // embute um único nó — normaliza para fragmento.
       if (Array.isArray(html,)) {
-        const frag = new SimpleXMLElement(null,);
+        const frag = new Fragment();
         for (const el of html) frag.append(el,);
         return frag;
       }
       if (typeof html === "string") {
-        const frag = new SimpleXMLElement(null,);
+        const frag = new Fragment();
         frag.append(html,);
         return frag;
       }

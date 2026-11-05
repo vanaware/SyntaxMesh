@@ -10,9 +10,9 @@
  * - `to_tagged`: comparado **byte-a-byte** (formato canônico dos testes).
  * - `to_html`: comparado após **normalização de serialização** — remove o
  *   whitespace *entre tags* e antes de `/>`, que o `XMLElement` do Ruby imprime
- *   por indentação mas o `SimpleXMLElement` mínimo desta fase não. Essa
+ *   por indentação mas o `XMLElement` mínimo desta fase não. Essa
  *   divergência é puramente de formatação e desaparece quando a Fase 17 troca
- *   `SimpleXMLElement` pelo `XMLElement` real. O **conteúdo** (tags, atributos,
+ *   `XMLElement` pelo `XMLElement` real. O **conteúdo** (tags, atributos,
  *   texto escapado) é comparado rigorosamente.
  *
  * @see scripts/golden/richtext.rb
@@ -22,7 +22,7 @@
 import { describe, it, } from "@std/testing/bdd";
 import { assertEquals, } from "@std/assert";
 import { RichText, } from "../../../src/richtext/rich-text.ts";
-import type { XMLElementLike, } from "../../../src/richtext/xml-like.ts";
+import type { XMLElementLike, } from "../../../src/xml/xml-element-like.ts";
 
 interface GoldenCase {
   id: string;

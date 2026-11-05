@@ -19,7 +19,7 @@ import type { Query, } from "../query/query.ts";
 import { TjTime, } from "../time/tj-time.ts";
 import { AppConfig, } from "../app-config.ts";
 import { ReportBase, } from "./report-base.ts";
-import { Event, ICalendar, Journal, Todo, } from "./i-calendar.ts";
+import { Event, ICalendar, Journal, Todo, } from "../ical/mod.ts";
 import { registerContentFactory, } from "../model/report-content.ts";
 
 interface JournalSource {

@@ -19,7 +19,7 @@ import { Account, } from "../../src/model/account.ts";
 import { AttributeType, } from "../../src/attributes/attribute-type.ts";
 import { Query, } from "../../src/query/query.ts";
 import { TjTime, } from "../../src/time/tj-time.ts";
-import { type XMLElementLike, } from "../../src/richtext/xml-like.ts";
+import type { XMLElementLike, } from "../../src/xml/xml-element-like.ts";
 import { ReportContext, } from "../../src/reports/report-context.ts";
 import { ReportTable, } from "../../src/reports/report-table.ts";
 import { ReportTableColumn, } from "../../src/reports/report-table-column.ts";

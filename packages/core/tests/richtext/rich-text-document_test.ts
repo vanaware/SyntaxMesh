@@ -241,8 +241,8 @@ describe("RichTextDocument (12.10)", () => {
       const html = tocPage(doc,);
       assert(html.includes("<title>Index</title>",), html,);
       assert(html.includes("COVER_MARKER",), html,);
-      assert(html.includes("<br />",), html,);
-      assert(html.includes("<hr />",), html,);
+      assert(html.includes("<br/>",), html,);
+      assert(html.includes("<hr/>",), html,);
       assert(html.includes("FOOTER_MARKER",), html,);
       assert(html.includes('href="a.txt.html#Alpha"',), html,);
     });

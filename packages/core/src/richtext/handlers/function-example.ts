@@ -17,8 +17,8 @@
 
 import { RichTextFunctionHandler, } from "./function-handler.ts";
 import type { RichTextFunctionArgs, } from "./function-handler.ts";
-import type { XMLElementLike, } from "../xml-like.ts";
-import { SimpleXMLElement, } from "../xml-like.ts";
+import type { XMLElementLike, } from "../../xml/xml-element-like.ts";
+import { XMLElement, } from "../../xml/xml-element.ts";
 import type { SourceFileInfo, } from "../../source-file-info.ts";
 
 /** Extrai o texto do exemplo `file` para a `tag` dada (ou o arquivo inteiro). */
@@ -57,8 +57,8 @@ export class RichTextFunctionExample extends RichTextFunctionHandler {
     }
     const tag = args["tag"] ?? null;
 
-    const frame = new SimpleXMLElement("div", { class: "codeframe", },);
-    const pre = new SimpleXMLElement("pre", { class: "code", },);
+    const frame = new XMLElement("div", { class: "codeframe", },);
+    const pre = new XMLElement("pre", { class: "code", },);
     frame.append(pre,);
 
     const text = this.loader ? this.loader(file, tag,) : null;

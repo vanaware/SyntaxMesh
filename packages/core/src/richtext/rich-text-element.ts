@@ -19,11 +19,8 @@
  * @see ADR 025 (RichText e function handlers)
  */
 
-import {
-  createBlob,
-  SimpleXMLElement,
-  type XMLElementLike,
-} from "./xml-like.ts";
+import { XMLBlob, XMLElement, XMLText, } from "../xml/xml-element.ts";
+import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 import type { RichTextIntermediate, } from "./rich-text-intermediate.ts";
 import type { RichTextImage, } from "./rich-text-image.ts";
 import { TOCEntry, } from "./toc-entry.ts";
@@ -523,7 +520,7 @@ export class RichTextElement {
     let html: XMLElementLike | null = null;
     switch (this.category) {
       case "richtext":
-        html = new SimpleXMLElement(rt.blockMode ? "div" : "span", attrs,);
+        html = new XMLElement(rt.blockMode ? "div" : "span", attrs,);
         break;
       case "title1":
         html = this.htmlTitle(1,);
@@ -539,16 +536,16 @@ export class RichTextElement {
         break;
       case "hline":
         noChilds = true;
-        html = new SimpleXMLElement("hr", attrs,);
+        html = new XMLElement("hr", attrs, true,);
         break;
       case "paragraph":
-        html = new SimpleXMLElement("p", attrs,);
+        html = new XMLElement("p", attrs,);
         break;
       case "pre": {
         noChilds = true;
         attrs["codesection"] = "1";
-        const div = new SimpleXMLElement("div", attrs,);
-        const pre = new SimpleXMLElement("pre", attrs,);
+        const div = new XMLElement("div", attrs,);
+        const pre = new XMLElement("pre", attrs,);
         div.append(pre,);
         pre.append(String(this.children[0] ?? "",),);
         html = div;
@@ -558,25 +555,25 @@ export class RichTextElement {
       case "bulletlist2":
       case "bulletlist3":
       case "bulletlist4":
-        html = new SimpleXMLElement("ul", {},);
+        html = new XMLElement("ul", {},);
         break;
       case "bulletitem1":
       case "bulletitem2":
       case "bulletitem3":
       case "bulletitem4":
-        html = new SimpleXMLElement("li", {},);
+        html = new XMLElement("li", {},);
         break;
       case "numberlist1":
       case "numberlist2":
       case "numberlist3":
       case "numberlist4":
-        html = new SimpleXMLElement("ol", {},);
+        html = new XMLElement("ol", {},);
         break;
       case "numberitem1":
       case "numberitem2":
       case "numberitem3":
       case "numberitem4":
-        html = new SimpleXMLElement("li", {},);
+        html = new XMLElement("li", {},);
         break;
       case "img":
         html = this.htmlObject();
@@ -589,11 +586,11 @@ export class RichTextElement {
             return `${base}.html#${anchor}`;
           })()
           : `${data}.html`;
-        html = new SimpleXMLElement("a", { href: href, },);
+        html = new XMLElement("a", { href: href, },);
         break;
       }
       case "href": {
-        const a = new SimpleXMLElement("a", { href: this.hrefUrl(), },);
+        const a = new XMLElement("a", { href: this.hrefUrl(), },);
         if (rt.linkTarget) a.attrs["target"] = rt.linkTarget;
         html = a;
         break;
@@ -607,25 +604,24 @@ export class RichTextElement {
         break;
       }
       case "italic":
-        html = new SimpleXMLElement("i", {},);
+        html = new XMLElement("i", {},);
         break;
       case "bold":
-        html = new SimpleXMLElement("b", {},);
+        html = new XMLElement("b", {},);
         break;
       case "fontCol":
-        html = new SimpleXMLElement("span", { style: `color:${this.data}`, },);
+        html = new XMLElement("span", { style: `color:${this.data}`, },);
         break;
       case "code":
-        html = new SimpleXMLElement("code", attrs,);
+        html = new XMLElement("code", attrs,);
         break;
       case "htmlblob":
         noChilds = true;
-        html = createBlob(String(this.children[0] ?? "",),);
+        html = new XMLBlob(String(this.children[0] ?? "",),);
         break;
       case "text":
         noChilds = true;
-        html = new SimpleXMLElement(null, {},);
-        appendRichText(html, String(this.children[0] ?? "",),);
+        html = new XMLText(String(this.children[0] ?? "",),);
         break;
       default:
         throw new Error(`Unknown RichTextElement category ${this.category}`,);
@@ -709,7 +705,7 @@ export class RichTextElement {
       id: this.convertToID(this.children_to_s(),),
     };
     if (this.richText.cssClass) attrs["class"] = this.richText.cssClass;
-    const el = new SimpleXMLElement(`h${level}`, attrs,);
+    const el = new XMLElement(`h${level}`, attrs,);
     if (this.richText.sectionNumbers) {
       const d = this.data as number[];
       let s = "";
@@ -740,7 +736,7 @@ export class RichTextElement {
     if (!attributes) return null;
     attributes["data"] = img.fileName;
 
-    const el = new SimpleXMLElement("object", attributes,);
+    const el = new XMLElement("object", attributes,);
     if (img.altText) el.attrs["alt"] = img.altText;
     if (img.verticalAlign) {
       el.attrs["style"] = `vertical-align:${img.verticalAlign}; `;

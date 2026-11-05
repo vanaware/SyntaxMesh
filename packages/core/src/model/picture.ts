@@ -10,10 +10,8 @@
  * @see docs/syntaxmesh/fases/fase-14-relatorios-complemento-tarefas.md (14C.0.8)
  */
 import { isExternalImageRef, } from "../markdown/extensions/images.ts";
-import {
-  SimpleXMLElement,
-  type XMLElementLike,
-} from "../richtext/xml-like.ts";
+import { XMLElement, } from "../xml/xml-element.ts";
+import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 
 /** Alinhamento válido de uma imagem no relatório. */
 export type PictureAlign = "left" | "center" | "right";
@@ -57,16 +55,16 @@ export class Picture {
     attrs.alt = this.alt ?? "";
     if (this.width !== null) attrs.width = `${this.width}`;
     if (this.align) attrs.class = `tj_picture_align_${this.align}`;
-    const img = new SimpleXMLElement("img", attrs,);
+    const img = new XMLElement("img", attrs,);
 
     if (!this.caption) return img;
 
-    const figure = new SimpleXMLElement("figure", { class: "tj_figure", },);
+    const figure = new XMLElement("figure", { class: "tj_figure", },);
     if (this.align) {
       figure.attrs["class"] += ` tj_figure_align_${this.align}`;
     }
     figure.append(img,);
-    const figcaption = new SimpleXMLElement("figcaption",);
+    const figcaption = new XMLElement("figcaption",);
     figcaption.append(this.caption,);
     figure.append(figcaption,);
     return figure;

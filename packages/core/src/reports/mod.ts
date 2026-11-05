@@ -59,6 +59,8 @@ export {
 export { daytimeToS, durationToMsp, MspXmlRE, } from "./msp-xml-re.ts";
 export { TjpExportRE, } from "./tjp-export-re.ts";
 export { ExportRE, } from "./export-re.ts";
+// 17.14: o mínimo `reports/i-calendar.ts` foi apagado; os nomes vêm agora do
+// `ICalendar` real de `src/ical/` (port de `ICalendar.rb`, 17.5/17.6).
 export {
   Component,
   Event,
@@ -69,18 +71,10 @@ export {
   Journal as ICalJournal,
   Person,
   Todo,
-} from "./i-calendar.ts";
+} from "../ical/mod.ts";
 export { ICalReport, } from "./i-cal-report.ts";
 export { TagFile, TagFileEntry, type TagKind, } from "./tag-file.ts";
 export { NikuProject, NikuReport, NikuResource, } from "./niku-report.ts";
 export { TraceReport, type TraceTable, } from "./trace-report.ts";
 export { picturesToHtml, } from "./gallery.ts";
 export { Navigator, NavigatorElement, } from "./navigator.ts";
-export {
-  XMLBlob,
-  XMLComment,
-  XMLDocument,
-  XMLElement,
-  XMLNamedText,
-  type XmlNode,
-} from "./xml-node.ts";

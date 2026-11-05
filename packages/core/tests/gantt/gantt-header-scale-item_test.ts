@@ -10,6 +10,7 @@ import { assertEquals, } from "@std/assert";
 import {
   GanttHeaderScaleItem,
 } from "../../src/gantt/gantt-header-scale-item.ts";
+import { XMLText, } from "../../src/xml/xml-element.ts";
 
 describe("GanttHeaderScaleItem", () => {
   describe("constructor", () => {
@@ -52,7 +53,10 @@ describe("GanttHeaderScaleItem", () => {
       }
       assertEquals(inner.tag, "div",);
       assertEquals(inner.attrs.style, "padding:3px; ",);
-      assertEquals(inner.children, ["Jan 2027",],);
+      // O rótulo vira um nó XMLText (XMLElement real, ex-SimpleXMLElement).
+      const txt = inner.children[0];
+      assertEquals(txt instanceof XMLText, true,);
+      assertEquals((txt as XMLText).to_s(), "Jan 2027",);
     });
 
     it("serializa atributos em ordem alfabética (class antes de style)", () => {

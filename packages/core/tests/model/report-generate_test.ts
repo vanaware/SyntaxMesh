@@ -21,7 +21,7 @@ import {
   type ReportContent,
 } from "../../src/model/report-content.ts";
 import { NotYetImplementedError, } from "../../src/model/errors.ts";
-import { SimpleXMLElement, } from "../../src/richtext/xml-like.ts";
+import { XMLElement, } from "../../src/xml/xml-element.ts";
 
 /** Conteúdo falso: marca quantas vezes `generateIntermediateFormat` rodou. */
 function fakeContent(
@@ -102,7 +102,7 @@ describe("Report geração (14.11)", () => {
     it("retorna 0 e restaura o fuso", () => {
       registerContentFactory("taskreport", () =>
         fakeContent({
-          to_html: () => new SimpleXMLElement("div",),
+          to_html: () => new XMLElement("div",),
         },),);
       const r = newReport();
       r.typeSpec = "taskreport" as never;
@@ -113,7 +113,7 @@ describe("Report geração (14.11)", () => {
     it("html grava output e outputFileName com sufixo .html", () => {
       registerContentFactory("taskreport", () =>
         fakeContent({
-          to_html: () => new SimpleXMLElement("div",),
+          to_html: () => new XMLElement("div",),
         },),);
       const r = newReport("myreport",);
       r.typeSpec = "taskreport" as never;
@@ -126,7 +126,7 @@ describe("Report geração (14.11)", () => {
     it("name '.' envia html para stdout ('.')", () => {
       registerContentFactory("taskreport", () =>
         fakeContent({
-          to_html: () => new SimpleXMLElement("div",),
+          to_html: () => new XMLElement("div",),
         },),);
       const r = newReport(".",);
       r.typeSpec = "taskreport" as never;
@@ -248,7 +248,7 @@ describe("Report geração (14.11)", () => {
 
   describe("to_html / interactive?", () => {
     it("to_html delega ao conteúdo", () => {
-      const el = new SimpleXMLElement("div",);
+      const el = new XMLElement("div",);
       registerContentFactory("taskreport", () =>
         fakeContent({
           to_html: () => el,

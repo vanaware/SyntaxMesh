@@ -8,8 +8,8 @@
  * @see ADR 025 (RichText e function handlers)
  */
 
-import type { XMLElementLike, } from "./xml-like.ts";
-import { SimpleXMLElement, } from "./xml-like.ts";
+import type { XMLElementLike, } from "../xml/xml-element-like.ts";
+import { XMLElement, } from "../xml/xml-element.ts";
 import { TOCEntry, } from "./toc-entry.ts";
 
 export class TableOfContents {
@@ -35,10 +35,10 @@ export class TableOfContents {
 
   /** Árvore HTML (`div` > `table` > linhas da entrada). */
   to_html(): XMLElementLike {
-    const div = new SimpleXMLElement("div", {
+    const div = new XMLElement("div", {
       style: "margin-left:15%; margin-right:15%;",
     },);
-    const table = new SimpleXMLElement("table", {},);
+    const table = new XMLElement("table", {},);
     div.append(table,);
     for (const e of this.entries) {
       for (const el of e.to_html()) table.append(el,);

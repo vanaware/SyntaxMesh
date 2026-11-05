@@ -23,7 +23,7 @@
  * @see docs/syntaxmesh/fases/fase-15-gantt.md (15.3)
  */
 import { compat, } from "../compat.ts";
-import type { XMLElementLike, } from "../richtext/xml-like.ts";
+import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 import { CollisionDetector, type LineSegment, } from "./collision-detector.ts";
 
 /** Distância mínima entre o ponto inicial e a primeira curva. */

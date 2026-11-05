@@ -18,9 +18,9 @@
 import { RichText, } from "./rich-text.ts";
 import type { RichTextIntermediate, } from "./rich-text-intermediate.ts";
 import type { TableOfContents, } from "./table-of-contents.ts";
-import { createHtmlShell, } from "./html-shell.ts";
-import { SimpleXMLElement, } from "./xml-like.ts";
-import type { XMLElementLike, } from "./xml-like.ts";
+import { HTMLDocument, } from "../html/html-document.ts";
+import { XMLElement, } from "../xml/xml-element.ts";
+import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 // Referência circular — `import type` (Document importa Snip como valor).
 import type { RichTextDocument, } from "./rich-text-document.ts";
 
@@ -90,15 +90,18 @@ export class RichTextSnip {
    * header, navbar, div 90%, conteúdo, navbar, footer (Snip.rb:77-93).
    */
   generateHTML(): string {
-    const shell = createHtmlShell();
-    const head = shell.generateHead(this.name,);
+    const doc = new HTMLDocument();
+    // `generateHead` devolve `doc.html` (como no Ruby): o stylesheet entra
+    // como irmão do `<head>`, não dentro dele (Snip.rb:78-79).
+    const head = doc.generateHead(this.name,);
     head.append(this.document.generateStyleSheet(),);
 
-    const body = shell.body;
+    const body = new XMLElement("body",);
+    doc.html.append(body,);
     body.append(this.document.generateHTMLHeader(),);
     body.append(this.generateHTMLNavigationBar(),);
 
-    const div = new SimpleXMLElement("div", {
+    const div = new XMLElement("div", {
       style: "width:90%; margin-left:5%; margin-right:5%",
     },);
     const content = this.richText.to_html();
@@ -107,7 +110,9 @@ export class RichTextSnip {
     body.append(this.generateHTMLNavigationBar(),);
     body.append(this.document.generateHTMLFooter(),);
 
-    return shell.toHTML();
+    // `write('.')` é a forma `puts` de serializar (equivalente ao
+    // `html.write(filename)` do Ruby), com `\n` após cada elemento de topo.
+    return doc.write(".",) ?? "";
   }
 
   /** Barra de navegação prev/next (nomes + `.html`), como Snip.rb:97-103. */

@@ -5,10 +5,12 @@
  * Recebe a tabela `[["Date", ...labels], [TjTime, v1, v2, ...], ...]` (o
  * `TraceReport`), transpõe em colunas, valida os tipos (datas X na 1ª coluna;
  * colunas Y todas `number` **ou** todas `TjTime`), calcula a geometria e desenha
- * grade + séries + legenda sobre um {@link PainterMin}.
+ * grade + séries + legenda sobre um {@link Painter} (17.15: o mínimo
+ * `PainterMin` da Fase 14.22 foi substituído pelo Painter real de `src/painter/`).
  *
- * `Painter::FontMetrics` real é Fase 17; aqui estimamos métricas de texto com
- * aproximações determinísticas (suficiente para contagem de rótulos e layout).
+ * `Painter::FontMetrics` real existe desde a 17.11, mas o `ChartPlotter.rb`
+ * usa estimativas próprias para o layout ("10pt × ~0.55/char"); mantemos as
+ * aproximações determinísticas do port, fiéis ao comportamento do Ruby.
  *
  * Erros de dados viram {@link ChartPlotterError} (Ruby `ChartPlotterError`),
  * capturado pelo `TraceReport.to_html` como aviso (fiel ao `rescue`).
@@ -17,12 +19,10 @@
  * @see docs/syntaxmesh/fases/fase-14-relatorios-tarefas.md (14.22.2)
  */
 
-import {
-  colorFromHsv,
-  PainterMin,
-  PainterScope,
-  type PaintPoint,
-} from "./painter-min.ts";
+import { Color, } from "./painter/color.ts";
+import { Group, } from "./painter/group.ts";
+import type { Point, } from "./painter/points.ts";
+import { Painter, } from "./painter/painter.ts";
 import { TjTime, } from "./time/tj-time.ts";
 
 const DAY_SECONDS = 60 * 60 * 24;
@@ -80,7 +80,7 @@ export class ChartPlotter {
   private noXLabels = 0;
   private noYLabels = 0;
 
-  private painter: PainterMin | null = null;
+  private painter: Painter | null = null;
 
   constructor(width: number, height: number, data: unknown[][],) {
     this.width = width;
@@ -123,7 +123,7 @@ export class ChartPlotter {
   generate(): void {
     this.analyzeData();
     this.calcChartGeometry();
-    const painter = new PainterMin(this.width, this.height,);
+    const painter = new Painter(this.width, this.height,);
     this.painter = painter;
     this.drawGrid(painter,);
     for (let ci = 0; ci < this.yData.length; ci++) {
@@ -131,7 +131,9 @@ export class ChartPlotter {
       const round = Math.floor(ci / 6,);
       const hue = (60 * (ci % 6) + Math.floor(60 / (1 + round),)) % 360;
       const sat = 255 - Math.floor(ci / 8,);
-      const color = colorFromHsv(hue, sat, 230,);
+      // Ruby `Painter::Color.new(h, s, v, :hsv)` — o 4º argumento é ignorado
+      // no Ruby e no port (modo HSV vem da aridade 4).
+      const color = painter.color(hue, sat, 230, "hsv",);
       this.drawDataGraph(painter, ci, color,);
       this.drawLegendEntry(painter, ci, color,);
     }
@@ -140,7 +142,7 @@ export class ChartPlotter {
   /** Serializa o SVG (string). Gera sob demanda se necessário. */
   to_svg(): string {
     if (!this.painter) this.generate();
-    return (this.painter as PainterMin).to_svg().toHTML();
+    return (this.painter as Painter).to_svg().toHTML();
   }
 
   // ——— Conversores de coordenada (públicos para testes) ———
@@ -319,7 +321,7 @@ export class ChartPlotter {
     }
   }
 
-  private xLabels(painter: PainterScope,): void {
+  private xLabels(painter: Group,): void {
     const xMin = this.xMinDate as TjTime;
     const xMax = this.xMaxDate as TjTime;
     const labelInterval = xMax.diff(xMin,) / this.noXLabels;
@@ -348,7 +350,7 @@ export class ChartPlotter {
     );
   }
 
-  private yLabels(painter: PainterScope,): void {
+  private yLabels(painter: Group,): void {
     if (this.dataType === "date") {
       if (!(this.yMinDate && this.yMaxDate)) return;
       const yMin = this.yMinDate as TjTime;
@@ -420,7 +422,7 @@ export class ChartPlotter {
     throw new ChartPlotterError(`Unsupported dataType ${this.dataType}`,);
   }
 
-  private drawGrid(painter: PainterMin,): void {
+  private drawGrid(painter: Painter,): void {
     painter.group({ stroke: painter.color("black",), font_size: 11, }, (p,) => {
       p.line(
         this.x2c(0,),
@@ -440,9 +442,9 @@ export class ChartPlotter {
   }
 
   private drawDataGraph(
-    painter: PainterMin,
+    painter: Painter,
     ci: number,
-    color: string,
+    color: Color,
   ): void {
     const values = this.yData[ci] as CellValue[];
     const xData = this.xData as TjTime[];
@@ -470,9 +472,9 @@ export class ChartPlotter {
   }
 
   private drawLegendEntry(
-    painter: PainterMin,
+    painter: Painter,
     ci: number,
-    color: string,
+    color: Color,
   ): void {
     painter.group(
       { stroke_width: 3, stroke: color, fill: color, font_size: 11, },
@@ -502,7 +504,7 @@ export class ChartPlotter {
   }
 
   private setMarker(
-    p: PainterScope,
+    p: Group,
     type: number,
     x: number,
     y: number,
@@ -511,7 +513,7 @@ export class ChartPlotter {
     switch (Math.floor(type / 5,) % 5) {
       case 0: {
         // Losango.
-        const points: PaintPoint[] = [
+        const points: Point[] = [
           [x - r, y,],
           [x, y + r,],
           [x + r, y,],
@@ -529,7 +531,7 @@ export class ChartPlotter {
       }
       case 2: {
         // Triângulo para baixo.
-        const points: PaintPoint[] = [
+        const points: Point[] = [
           [x - r, y - r,],
           [x, y + r,],
           [x + r, y - r,],
@@ -540,7 +542,7 @@ export class ChartPlotter {
       }
       case 3: {
         // Triângulo para cima.
-        const points: PaintPoint[] = [
+        const points: Point[] = [
           [x - r, y + r,],
           [x, y - r,],
           [x + r, y + r,],

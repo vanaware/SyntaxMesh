@@ -10,7 +10,7 @@ import { RichTextFunctionHandler, } from "../../src/richtext/handlers/function-h
 import type {
   RichTextFunctionArgs,
 } from "../../src/richtext/handlers/function-handler.ts";
-import type { XMLElementLike, } from "../../src/richtext/xml-like.ts";
+import type { XMLElementLike, } from "../../src/xml/xml-element-like.ts";
 import { MessageHandlerInstance, } from "../../src/message-handler.ts";
 import { SourceFileInfo, } from "../../src/source-file-info.ts";
 

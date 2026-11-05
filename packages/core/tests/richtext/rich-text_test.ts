@@ -18,7 +18,7 @@ import { ProjectFileParser, } from "../../src/parser/project-file-parser.ts";
 import { MessageHandlerInstance, } from "../../src/message-handler.ts";
 import type { RichTextFunctionArgs, } from "../../src/richtext/handlers/function-handler.ts";
 import { RichTextFunctionHandler, } from "../../src/richtext/handlers/function-handler.ts";
-import type { XMLElementLike, } from "../../src/richtext/xml-like.ts";
+import type { XMLElementLike, } from "../../src/xml/xml-element-like.ts";
 
 /** Handler inline trivial para verificar cópia + despacho. */
 class InlineEcho extends RichTextFunctionHandler {

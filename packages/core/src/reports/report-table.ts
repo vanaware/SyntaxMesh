@@ -9,10 +9,8 @@
  *
  * @see docs/syntaxmesh/fases/fase-14-relatorios-tarefas.md (14.6)
  */
-import {
-  SimpleXMLElement,
-  type XMLElementLike,
-} from "../richtext/xml-like.ts";
+import { XMLElement, } from "../xml/xml-element.ts";
+import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 import { markdownTable, markdownText, } from "./markdown.ts";
 import type { ReportTableColumn, } from "./report-table-column.ts";
 import type { ReportTableLine, } from "./report-table-line.ts";
@@ -76,8 +74,8 @@ export class ReportTable {
       cellspacing: "1",
     };
     if (this.embedded) attr["style"] = "width:100%; ";
-    const table = new SimpleXMLElement("table", attr,);
-    const tbody = new SimpleXMLElement("tbody",);
+    const table = new XMLElement("table", attr,);
+    const tbody = new XMLElement("tbody",);
     table.append(tbody,);
 
     // Regra de cabeçalho: todas as colunas têm 2 linhas (ou special)?
@@ -94,7 +92,7 @@ export class ReportTable {
       lineHeight = this.headerLineHeight * 2 + 1;
     }
 
-    const tr1 = new SimpleXMLElement("tr", {
+    const tr1 = new XMLElement("tr", {
       class: "tabhead",
       style: `height:${lineHeight}px; font-size:${this.headerFontSize}px;`,
     },);
@@ -105,7 +103,7 @@ export class ReportTable {
     }
 
     if (!allCellsHave2Rows) {
-      const tr2 = new SimpleXMLElement("tr", {
+      const tr2 = new XMLElement("tr", {
         class: "tabhead",
         style:
           `height:${this.headerLineHeight}px; font-size:${this.headerFontSize}px;`,
@@ -122,11 +120,11 @@ export class ReportTable {
 
     // Linha extra para colunas sem barra de rolagem.
     if (this.hasScrollbar()) {
-      const tr = new SimpleXMLElement("tr", {
+      const tr = new XMLElement("tr", {
         style: `height:${ReportTable.SCROLLBARHEIGHT}px`,
       },);
       for (const column of this.columns) {
-        if (!column.scrollbar) tr.append(new SimpleXMLElement("td",),);
+        if (!column.scrollbar) tr.append(new XMLElement("td",),);
       }
       tbody.append(tr,);
     }

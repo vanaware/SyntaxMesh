@@ -9,8 +9,8 @@
  * @see ADR 025 (RichText e function handlers)
  */
 
-import type { XMLElementLike, } from "./xml-like.ts";
-import { SimpleXMLElement, } from "./xml-like.ts";
+import type { XMLElementLike, } from "../xml/xml-element-like.ts";
+import { XMLElement, } from "../xml/xml-element.ts";
 
 /** Tamanhos de fonte por nível de seção (Ruby: `[20, 17, 15, 14, 14]`). */
 const FONT_SIZES = [20, 17, 15, 14, 14,] as const;
@@ -47,34 +47,34 @@ export class TOCEntry {
 
     if (lev === 0) {
       // Linha extra para dar distância acima de capítulos principais.
-      const spacer = new SimpleXMLElement("tr", {},);
-      const td = new SimpleXMLElement("td", {},);
-      td.append(new SimpleXMLElement("div", { style: "height:10px", },),);
+      const spacer = new XMLElement("tr", {},);
+      const td = new XMLElement("td", {},);
+      td.append(new XMLElement("div", { style: "height:10px", },),);
       spacer.append(td,);
       html.push(spacer,);
     }
 
-    const tr = new SimpleXMLElement("tr", {
+    const tr = new XMLElement("tr", {
       style: `font-size:${
         FONT_SIZES[Math.min(lev, FONT_SIZES.length - 1,)]
       }px;`,
     },);
-    const tdNum = new SimpleXMLElement("td", { style: "width:30px;", },);
+    const tdNum = new XMLElement("td", { style: "width:30px;", },);
     // Capítulos de nível 0 têm o número na coluna esquerda.
     if (lev === 0) tdNum.append(this.number,);
     tr.append(tdNum,);
 
-    const td = new SimpleXMLElement("td", {},);
+    const td = new XMLElement("td", {},);
     if (lev > 0) {
       // Níveis inferiores têm o número à direita, junto do título.
-      const span = new SimpleXMLElement("span", {
+      const span = new XMLElement("span", {
         style: "padding-right:15px;",
       },);
       span.append(this.number,);
       td.append(span,);
     }
     const anchor = this.tag ? `#${this.tag}` : "";
-    const a = new SimpleXMLElement("a", {
+    const a = new XMLElement("a", {
       href: `${this.file}.html${anchor}`,
     },);
     a.append(this.title,);

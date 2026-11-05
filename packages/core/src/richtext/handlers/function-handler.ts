@@ -17,7 +17,7 @@
  */
 
 import type { SourceFileInfo, } from "../../source-file-info.ts";
-import type { XMLElementLike, } from "../xml-like.ts";
+import type { XMLElementLike, } from "../../xml/xml-element-like.ts";
 import { MessageHandlerInstance, } from "../../message-handler.ts";
 
 /** Argamento das funções: mapa chave→valor (ex.: `{ attribute: "effort" }`). */

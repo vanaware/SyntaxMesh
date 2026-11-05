@@ -19,8 +19,8 @@ import { PropertyList, } from "../model/property-list.ts";
 import { LogicalExpression, } from "../logic/logical-expression.ts";
 import { LogicalOperation, } from "../logic/logical-operation.ts";
 import { Query, } from "../query/query.ts";
-import { SimpleXMLElement, } from "../richtext/xml-like.ts";
-import type { XMLElementLike, } from "../richtext/xml-like.ts";
+import { XMLElement, } from "../xml/xml-element.ts";
+import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 import { MessageHandlerInstance, } from "../message-handler.ts";
 
 /**
@@ -56,17 +56,17 @@ export class NavigatorElement {
   to_html(html: XMLElementLike | null = null,): XMLElementLike {
     let first = true;
     const topLevel = html === null || html === undefined;
-    let container: SimpleXMLElement;
+    let container: XMLElement;
     if (topLevel) {
-      container = new SimpleXMLElement("div", { class: "navbar_container", },);
+      container = new XMLElement("div", { class: "navbar_container", },);
       container.append(
-        new SimpleXMLElement("hr", { class: "navbar_topruler", },),
+        new XMLElement("hr", { class: "navbar_topruler", },),
       );
     } else {
-      container = html as SimpleXMLElement;
+      container = html as XMLElement;
     }
 
-    const div = new SimpleXMLElement("div", { class: "navbar", },);
+    const div = new XMLElement("div", { class: "navbar", },);
     container.append(div,);
 
     for (const element of this.elements) {
@@ -76,14 +76,14 @@ export class NavigatorElement {
         div.append("|",);
       }
       if (element.current) {
-        const span = new SimpleXMLElement("span", {
+        const span = new XMLElement("span", {
           class: "navbar_current",
         },);
         span.append(element.label ?? "",);
         div.append(span,);
       } else {
-        const span = new SimpleXMLElement("span", { class: "navbar_other", },);
-        const a = new SimpleXMLElement("a", { href: element.url ?? "", },);
+        const span = new XMLElement("span", { class: "navbar_other", },);
+        const a = new XMLElement("a", { href: element.url ?? "", },);
         a.append(element.label ?? "",);
         span.append(a,);
         div.append(span,);
@@ -95,7 +95,7 @@ export class NavigatorElement {
       if (element.current && element.elements.length > 0) {
         if (!first) {
           container.append(
-            new SimpleXMLElement("hr", { class: "navbar_midruler", },),
+            new XMLElement("hr", { class: "navbar_midruler", },),
           );
         }
         element.to_html(container,);
@@ -105,7 +105,7 @@ export class NavigatorElement {
 
     if (topLevel) {
       container.append(
-        new SimpleXMLElement("hr", { class: "navbar_bottomruler", },),
+        new XMLElement("hr", { class: "navbar_bottomruler", },),
       );
     }
     return container;

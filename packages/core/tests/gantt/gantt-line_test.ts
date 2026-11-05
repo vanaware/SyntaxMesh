@@ -19,7 +19,8 @@ import {
   CellSettingPatternList,
 } from "../../src/reports/table-column-definition.ts";
 import type { LogicalExpression, } from "../../src/logical/logical-expression.ts";
-import type { XMLElementLike, } from "../../src/richtext/xml-like.ts";
+import type { XMLElementLike, } from "../../src/xml/xml-element-like.ts";
+import { XMLText, } from "../../src/xml/xml-element.ts";
 import { createTestProject, } from "../fixtures/create-test-project.ts";
 import { GanttRouter, } from "../../src/gantt/gantt-router.ts";
 import { GanttTaskBar, } from "../../src/gantt/gantt-task-bar.ts";
@@ -558,7 +559,10 @@ describe("GanttLine", () => {
       // elementos do conteúdo (`addHtmlTooltip(...)` precede `div << html`).
       const box = html.children[0] as XMLElementLike;
       assertEquals(box.attrs.class, "tj_tooltip_box",);
-      assertEquals(box.children, ["Dica",],);
+      // O texto do tooltip vira um nó XMLText (XMLElement real).
+      const tipText = box.children[0];
+      assertEquals(tipText instanceof XMLText, true,);
+      assertEquals((tipText as XMLText).to_s(), "Dica",);
     });
   });
 });

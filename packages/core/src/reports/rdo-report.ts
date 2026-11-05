@@ -39,7 +39,7 @@ import type { JournalEntry, } from "../model/journal.ts";
 import type { AlertLevelDefinition, } from "../model/alert-levels.ts";
 import type { PropertyTreeNode, } from "../model/property-tree-node.ts";
 import type { TableColumnDefinition, } from "./table-column-definition.ts";
-import type { XMLElementLike, } from "../richtext/xml-like.ts";
+import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 import type { Picture, PictureAlign, } from "../model/picture.ts";
 import type { TjTime, } from "../time/tj-time.ts";
 import { PropertyList, } from "../model/property-list.ts";
@@ -51,7 +51,7 @@ import {
   markdownTable,
 } from "./markdown.ts";
 import { picturesFromDetails, picturesToHtml, } from "./gallery.ts";
-import { createBlob, SimpleXMLElement, } from "../richtext/xml-like.ts";
+import { XMLBlob, XMLElement, } from "../xml/xml-element.ts";
 import { registerContentFactory, } from "../model/report-content.ts";
 
 /** Critério de agrupamento dos blocos (`groupby`). */
@@ -778,13 +778,13 @@ export class RdoReport extends ReportBase {
 
   /** Constrói as seções do RDO (14C.3.10). */
   private buildHtml(): void {
-    const section = new SimpleXMLElement("section", { class: "tj_rdo", },);
+    const section = new XMLElement("section", { class: "tj_rdo", },);
     const columns = this.columnOrder();
     for (const group of this.groups) {
       section.append(this.renderGroup(group, columns,),);
     }
 
-    const frame = new SimpleXMLElement("div", { class: "tj_rdo_frame", },);
+    const frame = new XMLElement("div", { class: "tj_rdo_frame", },);
     const header = this.rt_to_html("header",);
     if (header) frame.append(header,);
     const headline = this.rt_to_html("headline",);
@@ -798,17 +798,17 @@ export class RdoReport extends ReportBase {
 
   /** Renderiza um bloco: cabeçalho, entradas, galeria e tabelas. */
   private renderGroup(group: RdoGroup, columns: string[],): XMLElementLike {
-    const block = new SimpleXMLElement("article", {
+    const block = new XMLElement("article", {
       class: "tj_rdo_block",
       "data-group": group.id,
     },);
 
-    const header = new SimpleXMLElement("header",);
-    const title = new SimpleXMLElement("h3",);
+    const header = new XMLElement("header",);
+    const title = new XMLElement("h3",);
     title.append(columns.includes("name",) ? group.name : group.id,);
     header.append(title,);
     if (columns.includes("responsible",) && group.responsible) {
-      const responsible = new SimpleXMLElement("div", {
+      const responsible = new XMLElement("div", {
         class: "tj_rdo_responsible",
       },);
       responsible.append(group.responsible,);
@@ -817,7 +817,7 @@ export class RdoReport extends ReportBase {
     block.append(header,);
 
     if (columns.includes("journal",)) {
-      const journal = new SimpleXMLElement("div", {
+      const journal = new XMLElement("div", {
         class: "tj_rdo_journal",
       },);
       for (const entry of group.entries) {
@@ -832,7 +832,7 @@ export class RdoReport extends ReportBase {
         this.maxPictures(),
         this.resolveRelative ? { resolveRelative: this.resolveRelative, } : {},
       );
-      block.append(createBlob(gallery,),);
+      block.append(new XMLBlob(gallery,),);
     }
 
     if (columns.includes("resources",) && group.resources.length > 0) {
@@ -850,53 +850,53 @@ export class RdoReport extends ReportBase {
 
   /** Renderiza uma entrada respeitando `journalattributes` (14C.3.5). */
   private renderEntry(entry: RdoEntry,): XMLElementLike {
-    const div = new SimpleXMLElement("div", { class: "tj_rdo_entry", },);
+    const div = new XMLElement("div", { class: "tj_rdo_entry", },);
 
     if (this.hasJournalAttribute("date",)) {
-      const date = new SimpleXMLElement("div", { class: "tj_rdo_date", },);
+      const date = new XMLElement("div", { class: "tj_rdo_date", },);
       date.append(entry.date,);
       div.append(date,);
     }
     if (this.hasJournalAttribute("headline",)) {
-      const headline = new SimpleXMLElement("h4", {
+      const headline = new XMLElement("h4", {
         class: "tj_rdo_headline",
       },);
       headline.append(entry.headline,);
       div.append(headline,);
     }
     if (this.hasJournalAttribute("alert",) && entry.alert) {
-      const alert = new SimpleXMLElement("div", {
+      const alert = new XMLElement("div", {
         class: `tj_rdo_alert tj_alert_${entry.alertId ?? "none"}`,
       },);
       alert.append(entry.alert,);
       div.append(alert,);
     }
     if (this.hasJournalAttribute("author",) && entry.author) {
-      const author = new SimpleXMLElement("div", { class: "tj_rdo_author", },);
+      const author = new XMLElement("div", { class: "tj_rdo_author", },);
       author.append(entry.author,);
       div.append(author,);
     }
     if (this.hasJournalAttribute("flags",) && entry.flags.length > 0) {
-      const flags = new SimpleXMLElement("div", { class: "tj_rdo_flags", },);
+      const flags = new XMLElement("div", { class: "tj_rdo_flags", },);
       flags.append(entry.flags.join(", ",),);
       div.append(flags,);
     }
     if (this.hasJournalAttribute("property",) && entry.entity) {
-      const property = new SimpleXMLElement("div", {
+      const property = new XMLElement("div", {
         class: "tj_rdo_property",
       },);
       property.append(entry.entity,);
       div.append(property,);
     }
     if (this.hasJournalAttribute("summary",) && entry.summary) {
-      const summary = new SimpleXMLElement("div", {
+      const summary = new XMLElement("div", {
         class: "tj_rdo_summary",
       },);
       summary.append(entry.summary,);
       div.append(summary,);
     }
     if (this.hasJournalAttribute("details",) && entry.details) {
-      const details = new SimpleXMLElement("div", {
+      const details = new XMLElement("div", {
         class: "tj_rdo_details",
       },);
       details.append(entry.details,);
@@ -911,22 +911,22 @@ export class RdoReport extends ReportBase {
     kind: RdoTableKind,
     rows: RdoTableRow[],
   ): XMLElementLike {
-    const table = new SimpleXMLElement("table", {
+    const table = new XMLElement("table", {
       class: `tj_rdo_table tj_rdo_${kind}`,
     },);
 
-    const head = new SimpleXMLElement("tr",);
+    const head = new XMLElement("tr",);
     for (const title of ["Name", "Detail", "Amount",]) {
-      const th = new SimpleXMLElement("th",);
+      const th = new XMLElement("th",);
       th.append(title,);
       head.append(th,);
     }
     table.append(head,);
 
     for (const row of rows) {
-      const tr = new SimpleXMLElement("tr",);
+      const tr = new XMLElement("tr",);
       for (const value of [row.name, row.detail, formatNumber(row.amount,),]) {
-        const td = new SimpleXMLElement("td",);
+        const td = new XMLElement("td",);
         td.append(value,);
         tr.append(td,);
       }

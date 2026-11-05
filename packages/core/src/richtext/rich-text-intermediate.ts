@@ -16,8 +16,8 @@
  * @see ADR 025 (RichText e function handlers)
  */
 
-import type { XMLElementLike, } from "./xml-like.ts";
-import { SimpleXMLElement, } from "./xml-like.ts";
+import type { XMLElementLike, } from "../xml/xml-element-like.ts";
+import { XMLElement, } from "../xml/xml-element.ts";
 import type { RichTextElement, } from "./rich-text-element.ts";
 import type { RichTextFunctionHandler, } from "./handlers/function-handler.ts";
 import type { Query, } from "../query/query.ts";
@@ -103,7 +103,7 @@ export class RichTextIntermediate {
 
   /** Árvore HTML (elemento raiz), `<span>` vazio sem árvore, ou `null`. */
   to_html(): XMLElementLike | null {
-    return this.tree ? this.tree.to_html() : new SimpleXMLElement("span", {},);
+    return this.tree ? this.tree.to_html() : new XMLElement("span", {},);
   }
 
   /** Saída marcada para testes. */

@@ -16,10 +16,8 @@
  *
  * @see docs/syntaxmesh/fases/fase-14-relatorios-tarefas.md (14.9)
  */
-import {
-  SimpleXMLElement,
-  type XMLElementLike,
-} from "../richtext/xml-like.ts";
+import { XMLElement, XMLText, } from "../xml/xml-element.ts";
+import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 import type { RichTextIntermediate, } from "../richtext/rich-text-intermediate.ts";
 import type { Query, } from "../query/query.ts";
 import { CSVFile, } from "./csv-file.ts";
@@ -141,15 +139,15 @@ export class ReportTableCell {
     let style = "";
     if (this.cellColor) style += `background-color: ${this.cellColor}; `;
     if (style) attribs["style"] = style;
-    const cell = new SimpleXMLElement("td", attribs,);
+    const cell = new XMLElement("td", attribs,);
 
-    const table = new SimpleXMLElement("table", {
+    const table = new XMLElement("table", {
       class: this.category ? "tj_table_cell" : "tj_table_header_cell",
       cellspacing: "0",
       style: this.cellStyle(),
     },);
     cell.append(table,);
-    const row = new SimpleXMLElement("tr",);
+    const row = new XMLElement("tr",);
     table.append(row,);
 
     this.calculateIndentation();
@@ -157,7 +155,7 @@ export class ReportTableCell {
     // Célula de padding para a indentação esquerda.
     if (this.leftIndent > 0) {
       row.append(
-        new SimpleXMLElement("td", { style: `width:${this.leftIndent}px; `, },),
+        new XMLElement("td", { style: `width:${this.leftIndent}px; `, },),
       );
     }
     const icon = this.cellIcon(cell,);
@@ -170,9 +168,9 @@ export class ReportTableCell {
     const tooltip = this.tooltip ?? rawTooltip;
     if (tooltip && !isEmptyText(tooltip,) && !this.selfcontained()) {
       if (this.showTooltipHint) {
-        const td = new SimpleXMLElement("td",);
+        const td = new XMLElement("td",);
         td.append(
-          new SimpleXMLElement("img", {
+          new XMLElement("img", {
             src: `${this.auxDir()}icons/details.png`,
             class: "tj_table_cell_tooltip",
           },),
@@ -187,7 +185,7 @@ export class ReportTableCell {
     // Célula de padding para a indentação direita.
     if (this.rightIndent > 0) {
       row.append(
-        new SimpleXMLElement("td", {
+        new XMLElement("td", {
           style: `width:${this.rightIndent}px; `,
         },),
       );
@@ -288,9 +286,9 @@ export class ReportTableCell {
 
   protected cellIcon(cell: XMLElementLike,): XMLElementLike | null {
     if (this.icon && !this.selfcontained()) {
-      const td = new SimpleXMLElement("td", { class: "tj_table_cell_icon", },);
+      const td = new XMLElement("td", { class: "tj_table_cell_icon", },);
       td.append(
-        new SimpleXMLElement("img", {
+        new XMLElement("img", {
           src: `${this.auxDir()}icons/${this.icon}.png`,
           alt: "Icon",
         },),
@@ -354,7 +352,7 @@ export class ReportTableCell {
     } else {
       tl = this.isRichText(this.text,)
         ? (this.text as RichTextIntermediate).to_html() ??
-          new SimpleXMLElement(null,)
+          new XMLText("",)
         : this.text as string;
     }
 
@@ -362,7 +360,7 @@ export class ReportTableCell {
       style += `min-width: ${labelWidth}px; max-width: ${labelWidth}px; `;
     }
 
-    const td = new SimpleXMLElement("td", {
+    const td = new XMLElement("td", {
       class: "tj_table_cell_label",
       style,
     },);
@@ -412,7 +410,7 @@ export class ReportTableCell {
 
   protected addHtmlTooltip(
     tooltip: CellText | null,
-    trigger: SimpleXMLElement,
+    trigger: XMLElement,
     hook: XMLElementLike | null = null,
   ): void {
     if (!tooltip || isEmptyText(tooltip,) || this.selfcontained()) return;
@@ -434,7 +432,7 @@ export class ReportTableCell {
       title.replace(/'/g, "&apos;",)
     }')`;
     trigger.attrs["style"] = trigger.attrs["style"] ?? "cursor:help; ";
-    const ltDiv = new SimpleXMLElement("div", {
+    const ltDiv = new XMLElement("div", {
       class: "tj_tooltip_box",
       style: "cursor:help",
       id: `ID${id}`,
@@ -442,7 +440,7 @@ export class ReportTableCell {
     ltDiv.append(
       typeof (tooltip as RichTextIntermediate).to_html === "function"
         ? (tooltip as RichTextIntermediate).to_html() ??
-          new SimpleXMLElement(null,)
+          new XMLText("",)
         : tooltip as string,
     );
     hookEl.append(ltDiv,);

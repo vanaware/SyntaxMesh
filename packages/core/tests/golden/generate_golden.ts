@@ -98,6 +98,24 @@ const scripts: Array<{ name: string; rubyScript: URL; outputPath: URL }> = [
     ),
     outputPath: new URL("./leaves.golden.json", import.meta.url,),
   },
+  // 17.16: serialização XML/HTML (XMLElement..HTMLDocument) e iCalendar
+  // (ICalendar/Component + foldLines). DTSTAMP é normalizado no teste TS.
+  {
+    name: "html-xml",
+    rubyScript: new URL(
+      "../../../../scripts/golden/html-xml.rb",
+      import.meta.url,
+    ),
+    outputPath: new URL("./html-xml.golden.json", import.meta.url,),
+  },
+  {
+    name: "ical",
+    rubyScript: new URL(
+      "../../../../scripts/golden/ical.rb",
+      import.meta.url,
+    ),
+    outputPath: new URL("./ical.golden.json", import.meta.url,),
+  },
 ];
 
 for (const { name, rubyScript, outputPath, } of scripts) {

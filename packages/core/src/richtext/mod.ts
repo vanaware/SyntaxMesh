@@ -9,13 +9,8 @@
  * @see ADR 025 (RichText e function handlers)
  */
 
-export type { XMLElementLike, } from "./xml-like.ts";
-export {
-  createBlob,
-  createComment,
-  createText,
-  SimpleXMLElement,
-} from "./xml-like.ts";
+export type { XMLElementLike, } from "../xml/xml-element-like.ts";
+export { XMLElement, } from "../xml/xml-element.ts";
 export { RichTextImage, } from "./rich-text-image.ts";
 export type { RichTextFunctionArgs, } from "./handlers/function-handler.ts";
 export { RichTextFunctionHandler, } from "./handlers/function-handler.ts";
@@ -31,8 +26,6 @@ export { TOCEntry, } from "./toc-entry.ts";
 export { TableOfContents, } from "./table-of-contents.ts";
 export { RichTextSnip, } from "./rich-text-snip.ts";
 export { RichTextDocument, } from "./rich-text-document.ts";
-export type { HtmlShell, } from "./html-shell.ts";
-export { createHtmlShell, } from "./html-shell.ts";
 export { RTFWithQuerySupport, } from "./handlers/rtf-with-query-support.ts";
 export { RTFQuery, } from "./handlers/rtf-query.ts";
 export { RTFReport, } from "./handlers/rtf-report.ts";

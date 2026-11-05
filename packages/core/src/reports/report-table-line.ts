@@ -10,10 +10,8 @@
  *
  * @see docs/syntaxmesh/fases/fase-14-relatorios-tarefas.md (14.8)
  */
-import {
-  SimpleXMLElement,
-  type XMLElementLike,
-} from "../richtext/xml-like.ts";
+import { XMLElement, } from "../xml/xml-element.ts";
+import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 import type { PropertyTreeNode, } from "../model/property-tree-node.ts";
 import type { AnyTableCell, TableCellTable, } from "./report-table-cell.ts";
 
@@ -77,7 +75,7 @@ export class ReportTableLine {
     let style = "";
     if (this.table.equiLines) style += `height:${this.height}px; `;
     if (this.fontSize) style += `font-size:${this.fontSize}px; `;
-    const tr = new SimpleXMLElement("tr", { class: "tabline", style, },);
+    const tr = new XMLElement("tr", { class: "tabline", style, },);
     for (const cell of this.cells) {
       const el = cell.to_html();
       if (el) tr.append(el,);

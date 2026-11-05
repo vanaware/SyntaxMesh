@@ -11,7 +11,7 @@ import {
   ReportTableColumn,
 } from "../../src/reports/report-table-column.ts";
 import { TableColumnDefinition, } from "../../src/reports/table-column-definition.ts";
-import { type XMLElementLike, } from "../../src/richtext/xml-like.ts";
+import type { XMLElementLike, } from "../../src/xml/xml-element-like.ts";
 
 function fakeTable(): ColumnHost & { columns: ReportTableColumn[] } {
   const columns: ReportTableColumn[] = [];

@@ -1,7 +1,7 @@
 # Fase 17 — HTML/XML
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-17-html-xml.md`
-> **Status:** ⬜ Não iniciada
+> **Status:** 🟡 Em andamento (iniciada 2026-11-04)
 > **Duração estimada:** 6–8 dias
 > **Depende de:** Fases 12, 14, 15
 > **Bloqueia:** Fases 20, 21
@@ -60,7 +60,7 @@ Ao final desta fase:
 - **Substituição** de `ICalendar` mínimo por versão completa.
 - **Substituição** de `Painter` mínimo por versão completa.
 - **≥ 220 testes unitários** + **≥ 30 golden tests** (HTML/XML/sVG snapshots).
-- ADR 029 registrado.
+- ADR 038 registrado.
 - `deno task check-all` verde.
 
 ---
@@ -227,12 +227,13 @@ Decisão: SVG (mesmo do Ruby). Compatível com `Painter`.
 
 ## 5. Subfases detalhadas
 
-**Bloco A — XML** (21.0–21.4)
-**Bloco B — HTML** (21.5–21.7)
-**Bloco C — ICalendar** (21.8–21.9)
-**Bloco D — Painter** (21.10–21.15)
-**Bloco E — Substituição e integração** (21.16–21.17)
-**Bloco F — Golden tests** (21.18)
+**Bloco A — Fundação + XML** (17.0–17.2)
+**Bloco B — HTML** (17.3–17.4)
+**Bloco C — ICalendar** (17.5–17.6)
+**Bloco D — Painter** (17.7–17.11)
+**Bloco E — Substituição e integração** (17.12–17.15)
+**Bloco F — Golden tests** (17.16)
+**Bloco G — Verificação final** (17.17)
 
 ---
 
@@ -240,7 +241,7 @@ Decisão: SVG (mesmo do Ruby). Compatível com `Painter`.
 
 ---
 
-### 17.0 — ADR 029 (substituição de XML mínimo)
+### 17.0 — ADR 038 (substituição de XML mínimo)
 
 #### Contexto
 
@@ -250,11 +251,11 @@ Agora substituímos por implementações completas. Isso precisa ser registrado.
 
 #### Objetivo
 
-Criar `docs/syntaxmesh/decisoes/029-substituicao-xml.md`.
+Criar `docs/syntaxmesh/decisoes/038-substituicao-xml.md`.
 
 #### Arquivos
 
-- `docs/syntaxmesh/decisoes/029-substituicao-xml.md` (novo)
+- `docs/syntaxmesh/decisoes/038-substituicao-xml.md` (novo)
 - `docs/syntaxmesh/decisoes/README.md` (atualizar tabela)
 
 #### Requisitos
@@ -276,7 +277,7 @@ Criar `docs/syntaxmesh/decisoes/029-substituicao-xml.md`.
 
 #### Critério de aceite
 
-- ADR 029 criado.
+- ADR 038 criado.
 - Tabela atualizada.
 
 ---
@@ -1134,7 +1135,7 @@ Migrar.
 
 #### Referências
 
-- ADR 029.
+- ADR 038.
 
 #### Critério de aceite
 
@@ -1295,7 +1296,7 @@ deno task test
 ## 6. Ordem de execução sugerida
 
 ```text
-17.0  ADR 029
+17.0  ADR 038
       ↓
 17.1  XMLElement + XMLText + XMLNamedText + XMLComment + XMLBlob
 17.2  XMLDocument
@@ -1345,7 +1346,7 @@ passa, e:
 - [ ] **≥ 220 testes unitários**.
 - [ ] **≥ 30 golden tests**.
 - [ ] Nenhum `any` em `src/` (exceto onde justificado).
-- [ ] ADR 029 criado.
+- [ ] ADR 038 criado.
 
 ---
 
@@ -1358,7 +1359,7 @@ passa, e:
 | `ICalendar.foldLines` com UTF-8 | Médio | Testes com emojis/acentos |
 | `FontData.rb` (1000 linhas) copiado errado | Alto | Copiar byte-a-byte |
 | `Color.hsvToRgb` com precisão | Médio | Golden tests |
-| `Painter` mínimo vs real divergem | Alto | Substituição em 21.15 |
+| `Painter` mínimo vs real divergem | Alto | Substituição em 17.15 |
 | `XMLElement.escape` inconsistente | Alto | Testes com cada tipo |
 | `HTMLDocument.strict` com XHTML | Médio | Golden tests |
 | `to_s` com indentação diferente | Médio | Golden tests byte-a-byte |
@@ -1385,7 +1386,7 @@ passa, e:
 
 ### Documentos do projeto
 
-- `docs/syntaxmesh/decisoes/029-substituicao-xml.md` (novo)
+- `docs/syntaxmesh/decisoes/038-substituicao-xml.md` (novo)
 - `docs/syntaxmesh/03-arquitetura.md`
 
 ### Fases dependentes
@@ -1410,14 +1411,14 @@ passa, e:
 11. **`FontData.rb` copiado byte-a-byte.**
 12. **`FontMetrics.width`** aplica kerning.
 13. **`SVGSupport.valuesToSVG`** com `font_size` → `font-size` + `pt`.
-14. **Substituições em subfases separadas** (21.12–21.15).
+14. **Substituições em subfases separadas** (17.12–17.15).
 15. **Golden tests byte-a-byte** — normalizar apenas line endings.
 16. **Sem `any`.** Use `unknown` + narrowing.
 17. **Commit por subfase.** `feat(core): xml-element`, etc.
 
 ---
 
-## 11. ADR 029 (referência rápida)
+## 11. ADR 038 (referência rápida)
 
 Criado como subfase 17.0. Conteúdo esperado:
 

@@ -20,8 +20,8 @@ import type { SpecialCell, } from "../reports/report-table-cell.ts";
 import type { TableColumnDefinition, } from "../reports/table-column-definition.ts";
 import type { PropertyTreeNode, } from "../model/property-tree-node.ts";
 import type { Task, } from "../model/task.ts";
-import { SimpleXMLElement, } from "../richtext/xml-like.ts";
-import type { XMLElementLike, } from "../richtext/xml-like.ts";
+import { XMLElement, } from "../xml/xml-element.ts";
+import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 import type { TjTime, } from "../time/tj-time.ts";
 import {
   arrowHeadToHTML,
@@ -237,13 +237,13 @@ export class GanttChart implements SpecialCell {
     const scrollbar = this.hasScrollbar();
     // A célula cobre toda a altura da tabela: uma linha por linha do chart,
     // mais a do cabeçalho, mais a linha da barra de rolagem (se houver).
-    const td = new SimpleXMLElement("td", {
+    const td = new XMLElement("td", {
       rowspan: `${Math.trunc(2 + this.lines.length + (scrollbar ? 1 : 0),)}`,
       style: "padding:0px; vertical-align:top;",
     },);
 
     // `div` externa: a "view". Ganha `SCROLLBARHEIGHT` px quando há scrollbar.
-    const scrollDiv = new SimpleXMLElement("div", {
+    const scrollDiv = new XMLElement("div", {
       class: "tabback",
       style: "position:relative; overflow:auto; " +
         `width:${scrollbar ? this.viewWidth : this.width}px; ` +
@@ -253,7 +253,7 @@ export class GanttChart implements SpecialCell {
     },);
     td.append(scrollDiv,);
     // `div` interna: o chart em si, com coordenadas absolutas.
-    const div = new SimpleXMLElement("div", {
+    const div = new XMLElement("div", {
       style: "margin:0px; padding:0px; position:absolute; overflow:hidden; " +
         "top:0px; left:0px; " +
         `width:${this.width}px; ` +

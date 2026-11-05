@@ -18,8 +18,8 @@
 
 import { RTFWithQuerySupport, } from "./rtf-with-query-support.ts";
 import type { RichTextFunctionArgs, } from "./function-handler.ts";
-import { SimpleXMLElement, } from "../xml-like.ts";
-import type { XMLElementLike, } from "../xml-like.ts";
+import { XMLElement, } from "../../xml/xml-element.ts";
+import type { XMLElementLike, } from "../../xml/xml-element-like.ts";
 import type { SourceFileInfo, } from "../../source-file-info.ts";
 import type { Project, } from "../../model/project.ts";
 import type { Report, } from "../../model/report.ts";
@@ -73,7 +73,7 @@ export class RTFReportLink extends RTFWithQuerySupport {
       // Estático: o nome do relatório ganha extensão '.html'.
       url = `${report.name}.html`;
     }
-    const a = new SimpleXMLElement("a", { href: url, },);
+    const a = new XMLElement("a", { href: url, },);
     a.append(String(report.name,),);
     return a;
   }

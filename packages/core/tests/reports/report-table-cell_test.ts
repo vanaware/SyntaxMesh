@@ -13,10 +13,8 @@ import {
   type SpecialCell,
   type TableCellLine,
 } from "../../src/reports/report-table-cell.ts";
-import {
-  SimpleXMLElement,
-  type XMLElementLike,
-} from "../../src/richtext/xml-like.ts";
+import { XMLElement, } from "../../src/xml/xml-element.ts";
+import type { XMLElementLike, } from "../../src/xml/xml-element-like.ts";
 import { Query, } from "../../src/query/query.ts";
 
 class TestCell extends ReportTableCell {
@@ -36,7 +34,7 @@ class TestCell extends ReportTableCell {
   short(t: string, w: number | null,): [string, boolean,] {
     return this.shortVersion(t, w,);
   }
-  tip(tt: string, trig: SimpleXMLElement, hook?: XMLElementLike,): void {
+  tip(tt: string, trig: XMLElement, hook?: XMLElementLike,): void {
     this.addHtmlTooltip(tt, trig, hook,);
   }
 }
@@ -145,7 +143,7 @@ describe("ReportTableCell (14.9)", () => {
 
     it("special → delega a renderização", () => {
       const special: SpecialCell = {
-        to_html: () => new SimpleXMLElement("div", { class: "sp", },),
+        to_html: () => new XMLElement("div", { class: "sp", },),
         to_csv: () => 1,
       };
       const c = new TestCell(null, null, "X",);
@@ -291,7 +289,7 @@ describe("ReportTableCell (14.9)", () => {
 
     it("cellIcon null sem ícone", () => {
       const c = new TestCell(fakeLine(), null,);
-      assertEquals(c.iconCell(new SimpleXMLElement("td",),), null,);
+      assertEquals(c.iconCell(new XMLElement("td",),), null,);
     });
 
     it("cellLabel null para texto vazio", () => {
@@ -318,7 +316,7 @@ describe("ReportTableCell (14.9)", () => {
 
     it("addHtmlTooltip seta onclick e box", () => {
       const c = new TestCell(null, null,);
-      const trigger = new SimpleXMLElement("td",);
+      const trigger = new XMLElement("td",);
       c.tip("Tooltip", trigger,);
       assert((trigger.attrs.onclick ?? "").includes("TagToTip",),);
       assert(trigger.children.length >= 1,);

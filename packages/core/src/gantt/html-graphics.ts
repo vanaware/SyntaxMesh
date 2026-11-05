@@ -10,10 +10,8 @@
  * @see docs/syntaxmesh/decisoes/028-gantt-html-css.md (ADR 028)
  * @see docs/syntaxmesh/fases/fase-15-gantt.md (15.1)
  */
-import {
-  SimpleXMLElement,
-  type XMLElementLike,
-} from "../richtext/xml-like.ts";
+import { XMLElement, } from "../xml/xml-element.ts";
+import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 
 /** Trunca para inteiro como `Integer#to_i` do Ruby. */
 function toI(v: number,): number {
@@ -53,7 +51,7 @@ export function lineToHTML(
       `Can't draw diagonal line ${x0}/${y0} to ${x1}/${y1}!`,
     );
   }
-  return new SimpleXMLElement("div", { class: category, style, },);
+  return new XMLElement("div", { class: category, style, },);
 }
 
 /** Renderiza um retângulo preenchido (Ruby `rectToHTML`). */
@@ -66,12 +64,12 @@ export function rectToHTML(
 ): XMLElementLike {
   const style = `left:${toI(x,)}px; top:${toI(y,)}px; ` +
     `width:${toI(w,)}px; height:${toI(h,)}px;`;
-  return new SimpleXMLElement("div", { class: category, style, },);
+  return new XMLElement("div", { class: category, style, },);
 }
 
 /** Renderiza o "jag" (colchete) de uma barra de container. */
 export function jagToHTML(x: number, y: number,): XMLElementLike {
-  return new SimpleXMLElement("div", {
+  return new XMLElement("div", {
     class: "tj_gantt_jag",
     style: `left:${toI(x,) - 5}px; top:${toI(y,)}px;`,
   },);
@@ -80,11 +78,11 @@ export function jagToHTML(x: number, y: number,): XMLElementLike {
 /** Renderiza um losango (milestone) como dois `<div>` sobrepostos. */
 export function diamondToHTML(x: number, y: number,): XMLElementLike[] {
   return [
-    new SimpleXMLElement("div", {
+    new XMLElement("div", {
       class: "tj_diamond_top",
       style: `left:${toI(x,) - 6}px; top:${toI(y,) - 7}px;`,
     },),
-    new SimpleXMLElement("div", {
+    new XMLElement("div", {
       class: "tj_diamond_bottom",
       style: `left:${toI(x,) - 6}px; top:${toI(y,)}px;`,
     },),
@@ -93,7 +91,7 @@ export function diamondToHTML(x: number, y: number,): XMLElementLike[] {
 
 /** Renderiza a ponta de seta de uma dependência. */
 export function arrowHeadToHTML(x: number, y: number,): XMLElementLike {
-  return new SimpleXMLElement("div", {
+  return new XMLElement("div", {
     class: "tj_arrow_head",
     style: `left:${toI(x,) - 5}px; top:${toI(y,) - 5}px;`,
   },);

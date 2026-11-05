@@ -21,9 +21,9 @@
 import { RichTextSnip, } from "./rich-text-snip.ts";
 import { TableOfContents, } from "./table-of-contents.ts";
 import { MessageHandlerInstance, } from "../message-handler.ts";
-import { createHtmlShell, } from "./html-shell.ts";
-import { SimpleXMLElement, } from "./xml-like.ts";
-import type { XMLElementLike, } from "./xml-like.ts";
+import { HTMLDocument, } from "../html/html-document.ts";
+import { XMLElement, } from "../xml/xml-element.ts";
+import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 import type { RichTextFunctionHandler, } from "./handlers/function-handler.ts";
 
 export abstract class RichTextDocument {
@@ -152,17 +152,18 @@ export abstract class RichTextDocument {
 
   /** Página de índice: capa + TOC + rodapé (Document.rb:129-142). */
   private generateHTMLTableOfContents(): string {
-    const shell = createHtmlShell();
-    shell.generateHead("Index",);
-    const body = shell.body;
+    const doc = new HTMLDocument();
+    doc.generateHead("Index",);
+    const body = new XMLElement("body",);
+    doc.html.append(body,);
 
     body.append(this.generateHTMLCover(),);
     if (this.toc) body.append(this.toc.to_html(),);
-    body.append(new SimpleXMLElement("br",),);
-    body.append(new SimpleXMLElement("hr",),);
-    body.append(new SimpleXMLElement("br",),);
+    body.append(new XMLElement("br", {}, true,),);
+    body.append(new XMLElement("hr", {}, true,),);
+    body.append(new XMLElement("br", {}, true,),);
     body.append(this.generateHTMLFooter(),);
 
-    return shell.toHTML();
+    return doc.write(".",) ?? "";
   }
 }

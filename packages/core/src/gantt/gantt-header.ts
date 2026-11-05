@@ -21,10 +21,8 @@
 import { compat, } from "../compat.ts";
 import type { TableColumnDefinition, } from "../reports/table-column-definition.ts";
 import { TjTime, } from "../time/tj-time.ts";
-import {
-  SimpleXMLElement,
-  type XMLElementLike,
-} from "../richtext/xml-like.ts";
+import { XMLElement, } from "../xml/xml-element.ts";
+import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 import { GanttHeaderScaleItem, } from "./gantt-header-scale-item.ts";
 
 /** Visão mínima do chart consumida pelo cabeçalho. */
@@ -77,7 +75,7 @@ export class GanttHeader {
 
   /** Converte o cabeçalho em `<div class="tabback">` (Ruby `to_html`). */
   to_html(): XMLElementLike {
-    const div = new SimpleXMLElement("div", {
+    const div = new XMLElement("div", {
       class: "tabback",
       style: "margin:0px; padding:0px; position:relative; " +
         `width:${Math.trunc(this.chart.width,)}px; ` +

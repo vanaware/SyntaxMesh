@@ -14,7 +14,7 @@
 
 import { RichTextFunctionHandler, } from "./function-handler.ts";
 import type { RichTextFunctionArgs, } from "./function-handler.ts";
-import type { XMLElementLike, } from "../xml-like.ts";
+import type { XMLElementLike, } from "../../xml/xml-element-like.ts";
 import type { SourceFileInfo, } from "../../source-file-info.ts";
 import type { Project, } from "../../model/project.ts";
 import type { Navigator, } from "../../reports/navigator.ts";

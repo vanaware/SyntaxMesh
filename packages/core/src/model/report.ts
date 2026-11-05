@@ -7,13 +7,11 @@ import { MessageHandlerInstance, } from "../message-handler.ts";
 import { contentFactories, type ReportContent, } from "./report-content.ts";
 import { NotYetImplementedError, } from "./errors.ts";
 import { TjTime, } from "../time/tj-time.ts";
-import { createHtmlShell, type HtmlShell, } from "../richtext/html-shell.ts";
+import { HTMLDocument, } from "../html/html-document.ts";
 import type { SourceFileInfo, } from "../source-file-info.ts";
 import type { EntryFormat, } from "./journal.ts";
-import {
-  SimpleXMLElement,
-  type XMLElementLike,
-} from "../richtext/xml-like.ts";
+import { XMLElement, } from "../xml/xml-element.ts";
+import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 
 export class Report extends PropertyTreeNode {
   typeSpec: ReportType | null;
@@ -266,27 +264,31 @@ export class Report extends PropertyTreeNode {
     const title = `${this.project.get("name",)} - ${
       (this.get("title",) as string | null) ?? this.name
     }`;
-    const shell: HtmlShell = createHtmlShell();
-    shell.generateHead(title,);
+    const doc = new HTMLDocument();
+    // `generateHead` devolve `doc.html` (Ruby Report.rb:181-207): o `link` da
+    // stylesheet é irmão do `<head>`, não seu filho.
+    const head = doc.generateHead(title,);
 
     const auxDir = (this.get("auxdir",) as string | null) ?? "";
-    shell.head.append(
-      new SimpleXMLElement("link", {
+    head.append(
+      new XMLElement("link", {
         rel: "stylesheet",
         type: "text/css",
         href: `${auxDir}css/tjreport.css`,
       },),
     );
 
+    const body = new XMLElement("body",);
+    doc.html.append(body,);
     if (!this.get("selfcontained",)) {
-      shell.body.append(
-        new SimpleXMLElement("script", {
+      body.append(
+        new XMLElement("script", {
           type: "text/javascript",
           src: `${auxDir}scripts/wz_tooltip.js`,
         },),
       );
-      const noscript = new SimpleXMLElement("noscript",);
-      const nsdiv = new SimpleXMLElement("div", {
+      const noscript = new XMLElement("noscript",);
+      const nsdiv = new XMLElement("div", {
         style: "text-align:center; color:#FF0000",
       },);
       nsdiv.append(
@@ -294,11 +296,11 @@ export class Report extends PropertyTreeNode {
           "enable it in your browser settings!",
       );
       noscript.append(nsdiv,);
-      shell.body.append(noscript,);
+      body.append(noscript,);
     }
 
     // Moldura com margens ao redor do relatório.
-    const frame = new SimpleXMLElement("div", { class: "tj_page", },);
+    const frame = new XMLElement("div", { class: "tj_page", },);
     const contentHtml = this.content.to_html();
     for (
       const child of Array.isArray(contentHtml,) ? contentHtml : [contentHtml,]
@@ -306,19 +308,19 @@ export class Report extends PropertyTreeNode {
       frame.append(child,);
     }
     frame.append(this.copyrightDiv(),);
-    shell.body.append(frame,);
+    body.append(frame,);
 
     this.outputFileName = this.get("interactive",) || this.name === "."
       ? "."
       : this.absoluteFileName(this.name,) + ".html";
-    const html = shell.toHTML();
+    const html = doc.write(".",) ?? "";
     this.output = html;
     return html;
   }
 
   /** Rodapé administrativo (copyright, projeto, versão, data). */
-  private copyrightDiv(): SimpleXMLElement {
-    const div = new SimpleXMLElement("div", { class: "copyright", },);
+  private copyrightDiv(): XMLElement {
+    const div = new XMLElement("div", { class: "copyright", },);
     const copyright = this.project.get("copyright",) as string | null;
     if (copyright) div.append(`${copyright} - `,);
     div.append(

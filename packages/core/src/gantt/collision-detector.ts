@@ -13,7 +13,7 @@
  * @see docs/syntaxmesh/fases/fase-15-gantt.md (15.2)
  */
 import { lineToHTML, } from "./html-graphics.ts";
-import type { XMLElementLike, } from "../richtext/xml-like.ts";
+import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 
 /** Segmento bloqueado `[start, end]` (inclusivo nas duas pontas). */
 export type LineSegment = [number, number,];
