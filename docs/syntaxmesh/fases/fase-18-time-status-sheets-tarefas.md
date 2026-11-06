@@ -107,25 +107,25 @@ A ordem **dentro** da fase importa:
 ## Progresso
 
 ```
-[ ] 18.0  ADRs 036/037 (numeração corrigida)         —   0/8
-[ ] 18.1  Interface FileStore em Core                    —   0/8
-[ ] 18.2  TimeSheetRecord                                —   0/24
-[ ] 18.3  TimeSheet + TimeSheets                         —   0/22
-[ ] 18.4  Project.timeSheets + checkTimeSheets           —   0/6
-[ ] 18.5  SheetHandlerBase (com FileStore injetado)      —   0/22
-[ ] 18.6  SheetSender                                    —   0/20
-[ ] 18.7  SheetReceiver                                  —   0/22
-[ ] 18.8  TimeSheetSender                                —   0/6
-[ ] 18.9  TimeSheetReceiver                              —   0/6
-[ ] 18.10 StatusSheetSender + StatusSheetReceiver        —   0/10
-[ ] 18.11 TimeSheetSummary                               —   0/14
-[ ] 18.12 Completar TaskJuggler.checkTimeSheet/StatusSheet — 0/8
-[ ] 18.13 Integração warnOnDelta                         —   0/4
-[ ] 18.14 Verificar conformidade FileStore               —   0/4
-[ ] 18.15 Golden tests (timesheets)                      —   0/8
+[x] 18.0  ADRs 036/037 (numeração corrigida)         —   8/8
+[x] 18.1  Interface FileStore em Core                    —   8/8
+[x] 18.2  TimeSheetRecord                                —  24/24
+[x] 18.3  TimeSheet + TimeSheets                         —  22/22
+[x] 18.4  Project.timeSheets + checkTimeSheets           —   6/6
+[x] 18.5  SheetHandlerBase (com FileStore injetado)      —  22/22
+[x] 18.6  SheetSender                                    —  20/20
+[x] 18.7  SheetReceiver                                  —  22/22
+[x] 18.8  TimeSheetSender                                —   6/6
+[x] 18.9  TimeSheetReceiver                              —   6/6
+[x] 18.10 StatusSheetSender + StatusSheetReceiver        —  10/10
+[x] 18.11 TimeSheetSummary                               —  14/14
+[x] 18.12 Completar TaskJuggler.checkTimeSheet/StatusSheet — 8/8
+[x] 18.13 Integração warnOnDelta                         —   4/4
+[x] 18.14 Verificar conformidade FileStore               —   4/4
+[x] 18.15 Golden tests (timesheets)                      —   8/8
+[x] 18.17 Adendo F10-C: material + picture em sheets     —  10/10
+[x] 18.18 Núcleo dos apps de sheet (xray §3.3)           —   9/9
 [ ] 18.16 Verificação final                              —   0/10
-[ ] 18.17 Adendo F10-C: material + picture em sheets     —   0/10
-[ ] 18.18 Núcleo dos apps de sheet (xray §3.3)           —   0/9
 [ ] 18.19 Pipeline dynamicAttributes (xray §3.4)         —   0/8
 [ ] 18.20 MessageHandler#checkLevel (xray §3.4.1)        —   0/4
 ─────────────────────────────────────────────────────────
@@ -513,6 +513,25 @@ TOTAL: ~206
 | 18.16.9 | Auditoria: cada subfase do plano `fase-18-time-status-sheets.md` tem tarefas correspondentes | grep |
 | 18.16.10 | Corrigir numeração em `fase-18-time-status-sheets.md` (`### 22.X` → `### 18.X`) | grep |
 
+**Entregue (2026-11-05):** 10/10 — **Fase 18 concluída**.
+
+| # | Resultado |
+|---|---|
+| 18.16.1 | `deno task check:all` exit 0 (members + `scripts/**/*.ts`) |
+| 18.16.2 | `deno task golden:generate` exit 0 — o único artefato novo é `dynamic-attributes.golden.json`; os `.html` de apoio e o `attribute-definitions.golden.json` do oracle Ruby foram revertidos (drift de ordem de `Hash`, registrado na F15/G9) |
+| 18.16.3 | `NotYetImplementedError` em `timesheet/` + `sheets/` = **0** |
+| 18.16.4 | `project.ts`: só o `import` de `NotYetImplementedError` (stubs de fases 19+) |
+| 18.16.5 | `@syntaxmesh/worker-db` em `packages/core/src/` = **0** |
+| 18.16.6 | ADRs 036 (`036-sheets-sem-smtp.md`) e 037 (`037-filestore-injection.md`) criados |
+| 18.16.7 | 12 nomes exportados por `packages/core/mod.ts` (`FileStore` via `export type`, ADR 037) |
+| 18.16.8 | `tests/integration/smoke_after_phase_18_test.ts` (3 passos: barrel, `TimeSheet`+record+`check()`, `XMLElement` da F17) |
+| 18.16.9 | Auditoria plano↔tarefas: 18.0–18.20 com tabela; **18.17 ganhou seção no plano** (§5) e linha na ordem de execução (§6) |
+| 18.16.10 | Nenhum `### 22.X` restava no plano; numeração 18.0–18.20 conferida |
+
+**Gate final:** `deno task tests` exit 0 (`check:all` + `lint` + `fmt:check` +
+`lint:doc:all` + `test`) — **695 arquivos / 6207 passos / 0 falhas**;
+`deno task check:stubs` OK; nenhum `: any` em `packages/core/src`.
+
 ---
 
 ## Notas para a IA
@@ -560,6 +579,31 @@ TOTAL: ~206
 | 18.17.9 | **`unitprice` no registro de material** (requisito registrado pela Fase 14 Complemento, 14C.11.12): `TimeSheetRecord` de material aceita `unitprice` opcional ao lado de `work`/`remaining`; o registro gera um `MaterialBooking` (14C.11.3) com quantidade, data do record, tarefa dona e o preço informado, anexado a `materialbookings` do cenário. Sem `unitprice` o booking fica com `unitPrice` indefinido e o custo cai para a alocação → material (precedência de `MaterialBooking#unitPriceFor`) | `sheets/time-sheet-record.ts` | 3 testes (com preço, sem preço + precedência, tarefa dona) |
 | 18.17.10 | **Parser de sheet com bloco de material completo**: `timeSheetFile`/`statusSheetFile` reconhecem `material "<id>" { work/remaining/unitprice }` (hoje só `work`/`remaining` são previstos) e o `SheetSender` reemite `unitprice` apenas quando presente, preservando o round-trip dos sheets sem preço | `parser/rules/sheet.ts`, `sheets/sheet-sender.ts` | 2 testes (parse do bloco + round-trip) |
 
+**Entregue (2026-11-05):** 10/10 — sem oracle `tj3` (o Ruby não tem material em
+folhas), então a fonte de verdade são os testes BDD.
+
+- **Modelo** — `TimeSheetRecord` aceita `Material` como alvo (`task` passa a ser
+  `Task | Material | string | null`), guarda `ownerTask` e `unitPrice`, trata
+  `work`/`remaining` como **quantidades** e expõe `material`;
+  `applyToScenario()` leva `work`→`effortdone` e `remaining`→`effortleft`;
+  `applyMaterialBooking()` cria o `MaterialBooking` na tarefa dona (ou em
+  `stockbookings` sem tarefa). `TimeSheet.check` tira o material do total de
+  slots e `warnOnDelta` ignora o registro.
+- **Aplicação** — `TaskJuggler.checkTimeSheet` aplica a folha válida ao cenário
+  de tracking (é o que faz o custo realizado chegar ao `materialreport`).
+- **Parser** — regras `tsMaterial`/`tsMaterialHeader`/`tsMaterialBody`/
+  `tsMaterialAttributes` em `parser/rules/tracking.ts`, alcançáveis dentro de
+  `task` (time e status sheet) **e** no topo do `timesheet`; `unitprice` é
+  `!number` cru, e sem tarefa dona o registro vira movimento de estoque.
+- **Relatórios** — `TimeSheetReport` lista um esqueleto comentado
+  `material <id> { work/unitprice }` por alocação (preço só quando declarado);
+  `StatusSheetReport` lista as alocações da tarefa com
+  `effortdone`/`effortleft` do tracking; `TimeSheetSummary.tallyMaterials`
+  agrega registros/status/níveis e antepõe a linha ao bloco do recurso.
+- **Testes** — `tests/timesheet/material-sheet_test.ts` (18 testes),
+  `tests/timesheet/material-report_test.ts` (10). Os 41 testes de
+  `tests/timesheet` + `tests/sheets` permanecem verdes (regressão 18.17.7).
+
 **Critério de aceite do adendo:** um `.tjp`/timesheet pode reportar `work`/`remaining` de material sem quebrar a validação de slots; `status` com `picture` chega ao Journal intacto; o status sheet mostra materiais por tarefa; um registro de material com `unitprice` vira `MaterialBooking` e o custo realizado aparece no `materialreport` (`actualcost`).
 
 > **Origem de 18.17.9/18.17.10 (Fase 14 Complemento, 14C.11.12):** a 14C.11 levou o preço unitário para a alocação (`material <id> <q> [modificador] unitprice <p>`) e para o booking (`booking material <id> quantity <q> [unitprice <p>] on <data>`), com precedência booking → alocação → material. O consumo **realizado** chega pelo timesheet, então o preço do booking precisa ser declarável no sheet — caso contrário o `actualcost` do `materialreport` só herda o preço planejado e a variação de preço real fica invisível. Ver `docs/syntaxmesh/fases/fase-14-relatorios-complemento.md` §11.4.
@@ -589,6 +633,39 @@ TOTAL: ~206
 | 18.18.8 | Códigos de saída fiéis a `Tj3AppBase` (`0`/`1`) expostos como retorno, sem `Deno.exit` no core | `sheets/apps/app-base.ts` | 2 testes |
 | 18.18.9 | Exportar os apps em `packages/core/mod.ts` e registrar na F24 que o empacotamento é CLI-only | `mod.ts`, `fase-24-cli.md` §5.4 | `deno check` |
 
+**Entregue (2026-11-05):** 9/9.
+
+- **Base (18.18.1/18.18.2/18.18.8):** `sheets/apps/app-base.ts` — `SheetAppBase`
+  com `appName`/`workingDir`/`dryRun`/`config`/`date`, `configureTarget` (uma
+  seção) e `configureSheet` (`global` → `timesheets|statussheets` →
+  `<raiz>.<papel>`, último vence) reproduzindo `RuntimeConfig#configure`
+  (chaves `_<sec>`, só campos existentes, `Date` → `YYYY-MM-DD`). `parseEndDate`
+  aceita `YYYY-MM-DD` ou dia da semana (`arg.to_i % 7`, inválido = domingo);
+  `defaultDate(1)` = próxima segunda e `defaultDate(3)` = próxima quarta.
+  `run()` devolve `SHEET_APP_EXIT_OK`/`SHEET_APP_EXIT_ERROR` (0/1), captura
+  `TjRuntimeError` e compara o delta de `MessageHandlerInstance.errors` —
+  **sem `Deno.exit`**.
+- **Cinco apps (18.18.3–18.18.6):** `TsSenderApp` (`-r`, `-f`, `intervalDuration`),
+  `TsReceiverApp` (`rawEmail` → `processEmail`), `TsSummaryApp` (`-r`, `--sheet`,
+  `--digest`), `SsSenderApp` (`-r`, `-f`, `-i/--interval`, `--hideresource`,
+  default na quarta) e `SsReceiverApp`. Todos recebem `SheetAppContext`
+  (`project`, `fileStore`, `rawEmail`) e expõem as mensagens em `messages`
+  (novo `SheetHandlerBase#sentMessages`, alimentado em `sendEmail`).
+- **Corpo do email (18.18.7):** os senders chamam `sendEmail` com texto puro
+  (como `SheetSender.rb` l.197); summary/receivers usam `sendRichTextEmail`, e
+  o `html` sai do `htmlMailBody`. Não existe `textMailBody` no Ruby — o corpo
+  texto é a própria mensagem (divergência de redação do adendo).
+- **Exports (18.18.9):** `sheets/apps/mod.ts` reexportado por `sheets/mod.ts`
+  (logo, por `@vanaware/syntaxmesh`); F24 §5.4 registra que argv/stdin/exit
+  codes/`outbox` são empacotamento CLI-only.
+- **Divergência registrada:** o adendo fala em `.tjs` para status sheets; o
+  Ruby só reconhece `.tji` (`SheetReceiver#SHEET_EXTENSION`), e o round-trip
+  template → folha → receiver exige `.tji` nos dois tipos.
+- **Testes:** `tests/sheets/apps/app-base_test.ts` (9) e
+  `tests/sheets/apps/sheet-apps_test.ts` (13) — config, datas, códigos de saída,
+  `-r`/`-f`, anexo `.tji` em base64, aceite por corpo e por anexo, folhas +
+  digest, RichText/HTML e a extensão compartilhada.
+
 ### 18.19 — Pipeline `dynamicAttributes` + `parseReportAttributes`
 
 **⚠️ RUBY: `Project.rb:778-812` + `ProjectFileParser#parseReportAttributes` + `rule_dynamicAttributes` (`TjpSyntaxRules.rb:1034`).**
@@ -605,6 +682,46 @@ TOTAL: ~206
 | 18.19.7 | Golden: mesmo report com/sem `dynamicAttributes` (comparar com `tj3 -A`) | `scripts/golden/`, `tests/golden/` | ≥ 4 casos |
 | 18.19.8 | Registrar na F24 a flag equivalente a `-A` (`wz --report … --attr …`) | `fase-24-cli.md`, `-tarefas.md` | linha presente |
 
+**Entregue (2026-11-05):** 8/8.
+
+- **Pipeline (18.19.1–18.19.3):** `Project#generateReport(id, regExpMode,
+  formats, dynamicAttributes)` faz backup → `parseReportAttributes` →
+  `set('interactive', true)` → `generate` → `restoreAttributes`, e só entra no
+  pipeline quando o 4º argumento é **não-nulo** (string vazia marca interativo
+  sem backup, como o Ruby). O restore é **raso** (fiel ao
+  `@attributes.clone` do Ruby): o mapa volta ao estado anterior — `title` some,
+  `interactive` volta a `false` — mas os **valores** dos atributos que já
+  existiam não voltam; verificado no `tj3` 3.8.4, o relatório continua com as
+  colunas do snippet. O 3º parâmetro é `formats` (e não `outputDir`, como diz a
+  tabela acima): é a assinatura real de `Project.rb:778` —
+  `generateReport(reportId, regExpMode, formats = nil, dynamicAttributes = nil)`.
+  O diretório de saída continua sendo responsabilidade de
+  `Report#outputFileName` (prefixado pelo `--output-dir` da CLI na F24).
+- **SheetSender (18.19.4):** `templateAttributes` (o `-A` dos apps de sheet)
+  repassado por `genTemplates` → `generateReport` → 4º argumento do
+  `Project#generateReport`.
+- **Erro de sintaxe (18.19.6):** vira mensagem do `MessageHandler`, nunca
+  exceção. O FSM do port recupera e acumula a cascata (`no_reduce`,
+  `unexpctd_token`) e segue; o Ruby para no primeiro e aborta o processo —
+  divergência deliberada (`exit` não existe no core). A regra `_columns`
+  descarta as colunas `null` da redução parcial e não grava lista vazia; sem
+  isso uma coluna `null` estourava em `TableReport#adjustColumnPeriod` na
+  geração seguinte.
+- **Golden (18.19.7):** `scripts/golden/dynamic-attributes.rb` (6 casos: sem
+  `-A`, `columns id, name`, `columns name, id`, `hidetask plan.id = "b"`,
+  `hidetask plan.id = "a"`, coluna inexistente) →
+  `tests/golden/dynamic-attributes.golden.json` +
+  `tests/golden/dynamic-attributes_golden_test.ts` compara colunas,
+  cabeçalhos, tarefas visíveis e erros com o `tj3` real. Casos de erro usam o
+  contrato do port (relatório íntegro com a lista anterior) porque o Ruby
+  aborta.
+- **F24 (18.19.8):** `fase-24-cli.md` §5.4 e `fase-24-cli-tarefas.md` 24.10.5
+  registram `--report <R> --attr "<attrs>"` (alias `-A`) e que o núcleo já
+  está entregue — a CLI só traduz argv.
+- **Testes:** `tests/reports/dynamic-attributes_test.ts` (9),
+  `tests/golden/dynamic-attributes_golden_test.ts` (6 casos + sanity) e 2 em
+  `tests/sheets/sheet-sender_test.ts`.
+
 ### 18.20 — `MessageHandler#checkLevel`
 
 **⚠️ RUBY: `MessageHandler.rb#checkLevel`.** **📎 xray §3.4.1.**
@@ -615,6 +732,25 @@ TOTAL: ~206
 | 18.20.2 | Lançar `TjArgumentError` com a mensagem do Ruby fora do intervalo | idem | 2 testes |
 | 18.20.3 | Callers (incl. F18 summary) passam a usar o setter | `sheets/*.ts` | `grep "\.outputLevel ="` só em testes |
 | 18.20.4 | `deno task check-all` verde após a mudança | — | exit 0 |
+
+**Entregue (2026-11-05):** 4/4.
+
+- `outputLevel`/`logLevel` viraram **acessores** (`get`/`set`) sobre
+  `_outputLevel`/`_logLevel`, validados por `MessageHandlerInstance#checkLevel`
+  — espelho de `MessageHandler.rb:175-182` + `:233-245`.
+- `LOG_LEVELS` exportado reproduz o hash do Ruby (`none 0`, `fatal 1`,
+  `error 2`, `critical 2`, `warning 3`, `info 4`, `debug 5`); o setter aceita
+  inteiro ou nome.
+- Fora da faixa (`6`, `-1`) lança `TjArgumentError` com a redação do Ruby
+  (`Unsupported level 6` — verificado no `tj3` 3.8.4). Nome desconhecido e
+  fracionário (`2.5`, que não é `Integer`) caem no caminho do hash e repetem
+  o texto **sem** o valor (`"Unsupported level "`), como o Ruby — que zera
+  `level` dentro do `unless (level = LogLevels[level])`. Em ambos os erros o
+  valor anterior do field é preservado.
+- `reset()` continua atribuindo via setter; nenhum caller de produção escreve
+  os fields direto (`grep` só encontra testes e o próprio `reset`).
+  `SheetHandlerBase` não muda: o Ruby também usa ivars simples lá.
+- Testes: `tests/message-handler_test.ts` §`checkLevel (18.20)` (5).
 
 ---
 

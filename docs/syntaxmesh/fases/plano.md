@@ -335,7 +335,7 @@ Tarefas: `docs/syntaxmesh/fases/fase-8.2-tarefas.md`.
 
 **Testes:** lexing de cada tipo; parsing de `project`, `task`, `resource`, `account`, `shift`, `scenario`, `report`; i18n (AST igual em en/pt-BR/es); macros `${N}`; includes.
 
-**Complemento (extensões pós-Fase 10):** `fase-10-complemento1.md` (#1–#5) e `fase-10-complemento2.md` (#6/#6a) — tarefas em `fase-10-complemento-tarefas.md` (Blocos C0–C4, tocam Fases 5/7/8.1/10) e adendos nos `-tarefas.md` das Fases 13/14/16/18/19/20/21. O parser **não** cobria `material` (Fase 8.1 definiu só o modelo) nem `timebasis`/`picture`/`format`/`breakdownreport`/`rdoreport`.
+**Complemento (extensões pós-Fase 10):** `fase-10-complemento1.md` (#1–#5), `fase-10-complemento2.md` (#6/#6a) e `fase-10-complemento3.md` (tipo `markdown` em `extend`, ADR 039 — PLANEJADA 2026-11-06) — tarefas em `fase-10-complemento-tarefas.md` (Blocos C0–C4 + adendo C5, tocam Fases 5/7/8.1/10) e adendos nos `-tarefas.md` das Fases 13/14/16/18/19/20/21. O parser **não** cobria `material` (Fase 8.1 definiu só o modelo) nem `timebasis`/`picture`/`format`/`breakdownreport`/`rdoreport`.
 
 ---
 
@@ -688,6 +688,7 @@ suite para a extensão VS Code (após a 22); 3ª adapta para a PWA + UI (após a
 > **Pacotes (ADR 030):** todo o código de fases vive em `packages/core` (parser, i18n, richtext, markdown, report, sheets, journal, storage de nível lógico). `packages/server`, `packages/ui`, `packages/service-worker` são suporte. A coluna "Pacote" acima indica a camada lógica histórica, não um package físico.
 
 > **Fase 10 Complemento (2026-10-26):** especificações em `fase-10-complemento1.md` (#1–#5: journal/note em material/resource/account, `breakdownreport`, RDO com `picture`/`format`/`rdoreport`) e `fase-10-complemento2.md` (#6 `timebasis`, #6a distribuição temporal unificada). Tarefas de fases ≤ 10: `fase-10-complemento-tarefas.md` (Blocos C0–C4). Tarefas de fases futuras: adendos nos respectivos `-tarefas.md`.
+> **Fase 10 Complemento 3 (2026-11-06, PLANEJADA):** `fase-10-complemento3.md` — tipo `markdown` em `extend` (atributo dinâmico em Markdown; extensão sem oracle, ADR 039). Tarefas: Bloco **C5** em `fase-10-complemento-tarefas.md` + seção **14C.19** em `fase-14-relatorios-complemento-tarefas.md`. Inclui o fix fiel ao Ruby do tipo `richtext` em `extend` (String → RichText).
 
 > **Fase 11 Complemento (2026-10-27):** `fase-11-logical-complemento.md` — funções/atributos/flags lógicas além do port fiel (14 funções Ruby). Funções viáveis hoje e extensões de flags/atributos de material/charge ficam na Fase 11; funções que exigem scheduling/financeiro são **registradas** (nome+aridade+i18n+stub) aqui e **avaliadas** nas Fases 7/8; a **aplicação** de `hidematerial`/`rollupmaterial`/`hidepicture` + verificação de hide/rollup de task/resource/account vira o adendo **14.26** na Fase 14.
 

@@ -11,7 +11,7 @@ Reuna dicas e analise-as do arquivo: docs/syntaxmesh/cheat-sheet-ruby-ts.md
 
 Desenvolvimento atual (docs/syntaxmesh/fases/):
 
-- **Fase 10 Complemento** — `fase-10-complemento1.md` + `fase-10-complemento2.md` (especificações) → executar `fase-10-complemento-tarefas.md` (Blocos C0–C4, toca Fases 5/7/8.1/10) e os adendos "Adendo Fase 10 Complemento" nos `-tarefas.md` das Fases 13/14/16/18/19/20/21.
+- **Fase 10 Complemento** — `fase-10-complemento1.md` + `fase-10-complemento2.md` (especificações) → executar `fase-10-complemento-tarefas.md` (Blocos C0–C4, toca Fases 5/7/8.1/10) e os adendos "Adendo Fase 10 Complemento" nos `-tarefas.md` das Fases 13/14/16/18/19/20/21. **Adendo 2026-11-06 (PLANEJADA, não executada):** `fase-10-complemento3.md` — tipo `markdown` em `extend` (ADR 039); tarefas no **Bloco C5** (`fase-10-complemento-tarefas.md`) + **14C.19** (`fase-14-relatorios-complemento-tarefas.md`); inclui o fix fiel ao Ruby do tipo `richtext` em `extend` (C5.1).
 - Fase 11 (`fase-11-logica-queries-tarefas.md`), Fase 12 (`fase-12-richtext-tarefas.md`), Fase 13 (`fase-13-markdown-tarefas.md`), Fase 14 (`fase-14-relatorios-tarefas.md`, núcleo 14.0–14.24) e **Fase 14 Complemento** (`fase-14-relatorios-complemento.md` + `-tarefas.md`, Blocos C0–C18: materiais/RDO/breakdown nos relatórios, MspXml→MSPDI, markdown em reports, hide/rollup de material/picture, saída markdown `.md`, `defaultaccount`, `<Baseline>` do MSPDI, unit price por alocação/booking e auditoria G1.4, booking de estoque ±, unit price calculado por composição, keywords opcionais em booking + `booking charge` no material, turnover com precedência de preço, registro do comportamento de cenários e colunas de estoque `stockquantity`/`stockcost` nos conteúdos de material — absorve os adendos 14.25/14.26) — **todas concluídas**; **C0–C12 ✅** (2026-11-01) e **C13–C17 ✅** (2026-11-02, adendo extra §12) e **C18 ✅** (2026-11-02, pendência §13.7 — colunas de estoque `stockquantity`/`stockcost` + limpeza do órfão `ExtendedBooking` apagado, `ChargeBooking` como fonte única) na Fase 14 Complemento.
 
 IMPORTANTE
@@ -177,6 +177,28 @@ i18n (10.15+) em `packages/core/src/i18n/`.
     **036**; injeção de provedor de conteúdo = **037**; proibida a varredura de
     renumeração de ADRs existentes (cancelada na tarefa 18.0 do `-tarefas.md`).
   - **Matriz** `completude-matrix.md`: regenerar na **Fase 21** (xray §5.5).
+- **Fase 18 — Time/Status Sheets ✅ Concluída (2026-11-05, 18.0–18.20 + adendos):**
+  `timesheet/` (`TimeSheetRecord`/`TimeSheet`/`TimeSheets`/`ProjectTiming`) com
+  `check()`/`warnOnDelta` fiéis e integração em `Project.checkTimeSheets` e
+  `TaskJuggler.checkTimeSheet/checkStatusSheet`; `sheets/`
+  (`SheetHandlerBase`/`SheetSender`/`SheetReceiver`, senders e receivers de
+  status, `TimeSheetSummary`) mais os **5 apps** de núcleo (`SheetAppBase` +
+  `TsSender/TsReceiver/TsSummary/SsSender/SsReceiverApp`, 18.18) que devolvem
+  **texto de email** e consomem **texto de mensagem** — sem SMTP, sem
+  subprocesso (ADR 036) e com `FileStore` injetado (ADR 037); material/
+  `picture` nas sheets (18.17, adendo F10 Complemento). **18.19**: o backup é
+  **raso** como no Ruby — depois de gerar, o mapa de atributos volta mas os
+  valores das listas do snippet permanecem; só snippet não vazio restaura, e
+  `""` deixa `interactive` marcado (verificado no `tj3` 3.8.4). Erro de sintaxe
+  vira mensagem do FSM (cascata) em vez de `SystemExit`, e a regra `_columns`
+  descarta colunas `null` para não corromper a geração seguinte. **18.20**:
+  `outputLevel`/`logLevel` são acessores validados por `checkLevel` (0–5 ou
+  nome de `LOG_LEVELS`, `TjArgumentError` = `ArgumentError` do Ruby). **Goldens**:
+  `timesheets.rb` (22 casos) e `dynamic-attributes.rb` (6 casos, o caminho do
+  `-A`); CLI `--report/--attr` registrada na F24 (24.10.5). **Verificação:**
+  `deno task tests` exit 0 · suíte **695 arquivos / 6207 passos / 0 falhas** ·
+  `check:stubs` OK · sem `: any` em `packages/core/src` · smoke
+  `smoke_after_phase_18_test.ts`.
 - **Ordem de execução oficial (diretriz do usuário, 2026-11-03; seção
   "Ordem de execução" do `plano.md`):**
   `16 → 17 → 18 → 23 → 24 → 21 (1ª onda) → 22 → 21 (2ª onda) → 19 → 20 → 21 (3ª onda)`
@@ -211,8 +233,12 @@ i18n (10.15+) em `packages/core/src/i18n/`.
   cancelado; 16.9/16.14/16.15 movidos p/ a 22; dono de `query_dashboard`)
 - Fase 17 — HTML/XML ✅ Concluída (2026-11-04, 17.0–17.17; ADR 038 —
   substituição dos 5 mínimos; goldens html-xml+ical; smoke F17)
-- Fase 18 — Time/Status Sheets ⬜ Não iniciada (adendos 18.18 apps de sheets,
-  18.19 dynamicAttributes, 18.20 `checkLevel`; ADRs 036/037)
+- Fase 18 — Time/Status Sheets ✅ Concluída (2026-11-05, 18.0–18.20 + adendos)
+  — `TimeSheetRecord`/`TimeSheet`/`TimeSheets`; `SheetHandlerBase`+sender/receiver;
+  5 apps de sheet em texto-de-email (ADR 036) com `FileStore` injetado
+  (ADR 037); `Project#generateReport(…, dynamicAttributes)` com backup→parse→
+  `interactive`→gerar→restore (18.19); `MessageHandler#checkLevel` (18.20);
+  goldens `timesheets` (22 casos) e `dynamic-attributes` (6).
 - Fase 19 — Storage ⬜ Não iniciada (por último, após a 21²)
 - Fase 20 — PWA + UI ⬜ Não iniciada (antes da 21³)
 

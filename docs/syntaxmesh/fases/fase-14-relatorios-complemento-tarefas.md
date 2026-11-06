@@ -835,11 +835,25 @@ integração futura apareça como diff explícito.
 
 ---
 
+## 14C.19 — Atributo `markdown` de `extend` nos relatórios (ADR 039, origem 10-C Bloco C5)
+
+> **Dependência de execução:** só após **C5.1–C5.4** (`fase-10-complemento-tarefas.md`); especificação `fase-10-complemento3.md`. Verificação do que **não muda**: `report-table-cell.ts:72` já trata qualquer `RichTextIntermediate` por duck-typing e `MarkdownAttribute extends RichTextAttribute` vale para todo `instanceof` existente — o pipeline de reports não é tocado.
+
+| # | Tarefa | Arquivos | Verificação |
+|---|--------|----------|-------------|
+| 14C.19.1 | `TableReport`: linha `[AttributeType.Markdown, [false, "left"]]` nos metadados de célula ao lado da linha `RichText` (`table-report.ts:197`); coluna com atributo `markdown` em `taskreport` | `reports/table-report.ts` | 2 testes (célula `to_html` com `<strong>`, célula `to_s` sem markup) |
+| 14C.19.2 | `TextReport`/CSV: texto puro via `rti.to_s()` por herança — cobrir por teste, sem mudança de código esperada | `tests/reports/extend-markdown_14c_test.ts` (novo) | 1 teste |
+| 14C.19.3 | `rtiForReport`/`cellTextForReport` (14C.5.7) com atributo já markdown em report `format markdown`: reparse identity do `inputText` (mesmo resultado); atributo `richtext` mantém a releitura por report do 14C.5 | `reports/report-base.ts` (só se o teste expuser bug) | 2 testes |
+| 14C.19.4 | Sanificação: `to_html()` do atributo `markdown` passa pelo `html-sanitizer` (13.5) — tag bloqueada e `onerror` não vazam; smoke com fixture `10c-extend-markdown.tjp` + coluna de report | `tests/integration/` | 1 teste + suíte verde |
+
+---
+
 ## Notas de conclusão
 
 - **ADRs afetados:** 027 (adendo 14C.5.12 — default `richtext`/opt-in
-  `markdown` nos reports); nenhum ADR novo (as três diretivas de C6 são
-  extensões documentadas aqui e nas tabelas de atributos).
+  `markdown` nos reports); **039** (14C.19 / 10-C C5 — tipo `markdown` em
+  `extend`, PLANEJADA em 2026-11-06); nenhum outro ADR novo (as três diretivas
+  de C6 são extensões documentadas aqui e nas tabelas de atributos).
 - **Divergências rastreadas (não corrigidas):** `Material#name` espelha o id
   (14C.6.8) — TJP/MSPDI mostram `aco`, não o texto do cabeçalho;
   `name`/`projectid`/`version` do projeto não são consultáveis por `query`

@@ -11,6 +11,7 @@
  * @see docs/taskjuggler/lib/taskjuggler/TjpSyntaxRules.rb
  */
 import { TjTime, } from "../../time/tj-time.ts";
+import { Percent, } from "../../time/percent.ts";
 import { Project, } from "../../model/project.ts";
 import { TimeInterval, } from "../../time/time-interval.ts";
 import { Macro, } from "../../lexer/macro-table.ts";
@@ -178,7 +179,9 @@ export function registerCommonRules(p: ProjectFileParser,): void {
             this.sourceFileInfo[1] ?? null,
           );
         }
-        return Number(this.val[0],) / 100;
+        // `Percent` preserva a distinção Integer/Float do Ruby — sem ela
+        // `work 100%` (= 1.0) viraria 1 slot em `TimeSheetRecord#work=`.
+        return new Percent(Number(this.val[0],) / 100,);
       },
     );
     p.arg(0, "value", "A floating point or integer number",);

@@ -32,6 +32,8 @@ paritária.
 | `leaves.rb`                                                                     | 16   | `leaves.golden.json`              | `leaves_golden_test.ts`              |
 | `html-xml.rb`                                                                   | 17   | `html-xml.golden.json`            | `html-xml_golden_test.ts`            |
 | `ical.rb`                                                                       | 17   | `ical.golden.json`                | `ical_golden_test.ts`                |
+| `timesheets.rb`                                                                 | 18   | `timesheets.golden.json`          | `timesheets_golden_test.ts`          |
+| `dynamic-attributes.rb`                                                         | 18   | `dynamic-attributes.golden.json`  | `dynamic-attributes_golden_test.ts`  |
 | `packages/core/tests/golden/generate_extension_golden.ts` (TS puro, sem oracle) | 14C  | `reports-extensions.golden.json`  | `reports-extensions_golden_test.ts`  |
 
 ## Fluxo de trabalho
@@ -558,6 +560,89 @@ oráculos montam objetos diretos da biblioteca Ruby e gravam a string final.
    nem aparece no `to_s` — esquisitice replicada no port, nada a comparar.
 2. **Nunca editar `html-xml.golden.json`/`ical.golden.json` à mão** — regerer
    com `deno task golden:generate`.
+
+## Time Sheets (Fase 18, 18.15)
+
+### Arquivos
+
+- `timesheets.rb` — 22 casos sobre um projeto **agendado de verdade**
+  (`effortTask` 10d + `durationTask` 3d, recursos `dev` e `idle` com
+  `efficiency 0`, `trackingscenario plan`): 15 de `TimeSheet#check`
+  (`ts_no_remaining`, `ts_no_expected_end`, `ts_no_status_work`,
+  `ts_no_headline`, `ts_default_summary`, `ts_alert1/2_more_details`,
+  `ts_work_too_low/high`, `ts_work_not_null`, `ts_no_rem_or_end`, duas folhas
+  independentes) e 7 de `TimeSheet#warnOnDelta`
+  (`ts_res_work_delta`, `ts_res_remain_delta`, `ts_res_end_delta`,
+  `ts_res_new_task`). Cada caso é `{ description, kind, sheets, expected }`,
+  onde `sheets` é o **spec** (dias/percentual, nunca slots crus) e
+  `expected` traz as mensagens do `MessageHandler` + o snapshot da folha
+  (`percentageUsed`, `totalSlots`, `work`, `remaining`, `expectedEnd`,
+  `status`).
+- `timesheets_golden_test.ts` — reconstrói cada spec com `TimeSheet`/
+  `TimeSheetRecord` do port (`daysToSlots`/`percentToSlots`, `JournalEntry`
+  de status) e compara **mensagens + snapshot**.
+
+### Regras específicas
+
+1. **Dois `assert` por caso**: o snapshot das folhas (slots, dias, status)
+   é comparado **sem normalização** — é ele que prova que o cálculo bate; a
+   normalização textual existe só para formatação.
+2. **`@@DATE@@`** — `ts_res_end_delta` interpola o fim esperado; o Ruby usa
+   `TjTime#to_s` sem formato (`2026-02-10-00:00-+0000`) e o port `toString()`
+   (`2026-02-10`).
+3. **`4.0d` → `4d`** — `Float#to_s` do Ruby carrega o `.0`; o número JS não.
+4. **O oracle desarma o raise do `MessageHandler`** (`NonFatalErrors` em
+   `timesheets.rb`): com `trapSetup` o Ruby aborta no primeiro `error(...)`,
+   enquanto o port acumula todas as mensagens. O contador de erros continua
+   sendo incrementado.
+5. **Registro sem `work` não é caso de golden** — `totalSlots += nil` estoura
+   no Ruby; o `?? 0` do port é extensão leniente.
+
+## Dynamic Attributes (Fase 18, 18.19.7)
+
+### Arquivos
+
+- `dynamic-attributes.rb` — 6 casos sobre um projeto agendado (`prj`, tarefas
+  `a`/`b` com esforço e `allocate dev`, `taskreport dyn` com `columns id`),
+  chamando `Project#generateReport('dyn', false, nil, snippet)` — o caminho do
+  `tj3 -A`/`--attr`:
+
+  | `dynamic`                     | colunas   | cabeçalhos  | tarefas | erros |
+  | ----------------------------- | --------- | ----------- | ------- | ----- |
+  | `nil` (sem `-A`)              | `id`      | `Id`        | `a b`   | 0     |
+  | `columns id, name`            | `id name` | `Id Name`   | `a b`   | 0     |
+  | `columns name, id`            | `name id` | `Name Id`   | `a b`   | 0     |
+  | `hidetask plan.id = "b"`      | `id`      | `Id`        | `a`     | 0     |
+  | `hidetask plan.id = "a"`      | `id`      | `Id`        | `b`     | 0     |
+  | `columns id, naoExiste`       | `id`      | —           | —       | 1     |
+
+  Cada caso é `{ description, dynamic, columns, headers, tasks, errors,
+  errorIds, error }`. `columns` é lido **depois** da geração: o backup do
+  Ruby é raso, então as colunas do snippet permanecem no relatório.
+- `dynamic-attributes_golden_test.ts` — parseia o mesmo fixture, agenda e gera
+  com o 4º argumento de `Project#generateReport`, comparando colunas,
+  cabeçalhos, ids de tarefa e erros.
+
+### Regras específicas
+
+1. **Sintaxe TJP, não CLI** — `columns id, name` é lista (**sem aspas**);
+   palavras-chave de relatório são minúsculas (`hidetask`, `hideresource`) e
+   `hidetask plan.id = "b"` esconde a tarefa casada (o `~` ali é o operador
+   NOT, não parte do id).
+2. **Nome da tarefa não aparece** quando só a coluna `id` existe — o oracle
+   extrai as **células de conteúdo** e intersecta com `%w[a b]`; o teste TS faz
+   o mesmo filtro.
+3. **Erro de sintaxe é divergência registrada** — o Ruby para no primeiro
+   `no_reduce` e **aborta o processo** (`SystemExit`), então a tabela dele fica
+   vazia no caso ruim; o port acumula a cascata do FSM, descarta a coluna
+   inválida e gera a tabela com a lista anterior (`id`). O teste compara
+   `columns` com o golden e exige a tabela íntegra.
+4. **`MessageHandler` é zerado depois do `schedule()`** — o agendamento emite
+   avisos (`priority_inversion`, `*_check_unsupported`) alheios ao `-A`; o
+   golden guarda só os erros da geração.
+5. **`interactive`** — com snippet (inclusive `""`) o relatório é marcado
+   `interactive` e o Ruby escreve em `"."`; só com snippet **não vazio** há
+   backup/restore, então `""` deixa o atributo marcado (verificado no 3.8.4).
 
 ## Snapshots de Extensão (Fase 14 Complemento, 14C.0.12)
 

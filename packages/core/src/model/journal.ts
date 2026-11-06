@@ -328,6 +328,22 @@ export class Journal {
   }
 
   /**
+   * Esvazia o journal: lista principal, entradas por propriedade e índices.
+   *
+   * Equivale a `@project['journal'] = Journal.new` do Ruby
+   * (`TaskJuggler#checkTimeSheet`, l.307) — aqui o campo é `readonly`, então
+   * o descarte de dados antigos acontece no lugar.
+   */
+  clear(): void {
+    this.entryList.deleteIf(() => true);
+    this.propertyToEntries.clear();
+    this.indexByTask.clear();
+    this.indexByResource.clear();
+    this.indexByMaterial.clear();
+    this.indexByAccount.clear();
+  }
+
+  /**
    * Entradas da propriedade (Ruby `getEntries`), na ordem de chegada;
    * `null` quando a propriedade não tem nenhuma.
    */

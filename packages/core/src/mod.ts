@@ -25,6 +25,15 @@ export * from "./attributes/mod.ts";
 // Export utils module
 export * from "./utils/mod.ts";
 
+// Fase 18 — contratos de I/O injetáveis (ADR 037): FileStore/KeyValueStore
+export * from "./interfaces/mod.ts";
+
+// Fase 18 — time sheets (TimeSheetRecord/TimeSheet/TimeSheets)
+export * from "./timesheet/mod.ts";
+
+// Fase 18 — time/status sheets: EmailMessage e SheetHandlerBase (ADR 036/037)
+export * from "./sheets/mod.ts";
+
 // Phase 6 exports (re-export from sub-modules)
 export * from "./time/scoreboard-bits.ts";
 export * from "./scheduling/limits.ts";

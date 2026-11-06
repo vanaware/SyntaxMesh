@@ -78,3 +78,15 @@ export { NikuProject, NikuReport, NikuResource, } from "./niku-report.ts";
 export { TraceReport, type TraceTable, } from "./trace-report.ts";
 export { picturesToHtml, } from "./gallery.ts";
 export { Navigator, NavigatorElement, } from "./navigator.ts";
+// Fase 18 — templates de time/status sheet (18.6/18.8).
+export {
+  TimeSheetReport,
+  type TSResourceRecord,
+  type TSTaskRecord,
+} from "./time-sheet-report.ts";
+export {
+  indentBlock as indentStatusBlock,
+  ManagerResponsibilities,
+  ManagerStatusRecord,
+  StatusSheetReport,
+} from "./status-sheet-report.ts";

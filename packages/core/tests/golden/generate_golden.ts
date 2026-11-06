@@ -116,6 +116,29 @@ const scripts: Array<{ name: string; rubyScript: URL; outputPath: URL }> = [
     ),
     outputPath: new URL("./ical.golden.json", import.meta.url,),
   },
+  // 18.15: `TimeSheet#check` + `TimeSheet#warnOnDelta` sobre um projeto real
+  // agendado. As mensagens de `ts_res_end_delta` carregam datas no formato
+  // `TjTime#to_s` do Ruby; o teste TS normaliza (`@@DATE@@`) dos dois lados.
+  {
+    name: "timesheets",
+    rubyScript: new URL(
+      "../../../../scripts/golden/timesheets.rb",
+      import.meta.url,
+    ),
+    outputPath: new URL("./timesheets.golden.json", import.meta.url,),
+  },
+  // 18.19.7: `Project#generateReport` com `dynamicAttributes` (o `-A` do tj3):
+  // colunas/cabeçalhos/tarefas visíveis e erros do MessageHandler. O teste TS
+  // compara só o estado observável — no erro de sintaxe o Ruby aborta com uma
+  // única mensagem, enquanto o port acumula a cascata do FSM (18.19.6).
+  {
+    name: "dynamic-attributes",
+    rubyScript: new URL(
+      "../../../../scripts/golden/dynamic-attributes.rb",
+      import.meta.url,
+    ),
+    outputPath: new URL("./dynamic-attributes.golden.json", import.meta.url,),
+  },
 ];
 
 for (const { name, rubyScript, outputPath, } of scripts) {

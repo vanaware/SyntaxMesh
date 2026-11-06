@@ -264,10 +264,26 @@ empacota, o core pensa"):
 | `wz man [--format html\|text\|tjp] [keyword…]` | `apps/Tj3Man.rb` + `UserManual`/`SyntaxReference`/`KeywordDocumentation`/`TjpExample` | **Fase 22** — `doc-core` (`@vanaware/syntaxmesh/doc-core`, subfase 22.1b) + `SyntaxCore`/`TernarySearchTree` da F16 | F24 subfase 24.9 |
 | `wz ts send` / `wz ts receive` / `wz ts summary` | `apps/Tj3TsSender/TsReceiver/TsSummary.rb` + `Tj3SheetAppBase` | **Fase 18** — classes `TimeSheetSender/Receiver/Summary` no core | F24 subfase 24.10. **Sem SMTP**: sender devolve o **texto do email** (corpo + anexo codificado) para o usuário enviar; receiver lê o **texto da mensagem** de arquivo/stdin — espelhando a decisão email→download da F18 (ADR da fase sheets) |
 | `wz ss send` / `wz ss receive` | `apps/Tj3SsSender/SsReceiver.rb` | **Fase 18** — `StatusSheetSender/Receiver` no core | F24 subfase 24.10 (mesma política texto-do-email) |
-| `--report <R> [attrs]` com atributos dinâmicos | `ReportServer`/`ReportServlet` (daemon) + `Project#generateReport(dynamicAttributes)` | **Fase 18** — núcleo `parseReportAttributes` + backup/restore (adendo F18; xray §3.4) | F24 subfase 24.10 |
+| `--report <R> [--attr "<attrs>"]` (alias `-A`) com atributos dinâmicos | `ReportServer`/`ReportServlet` (daemon) + `Project#generateReport(dynamicAttributes)` | **Fase 18** — núcleo `parseReportAttributes` + backup/restore (adendo F18; xray §3.4). **Entregue em 18.19:** `Project#generateReport(id, regExpMode, formats, attrs)` faz backup → parse → `interactive` → gera → restore; a CLI só traduz `-A/--attr` para o 4º argumento | F24 subfase 24.10 |
 | Rastreio de arquivos de entrada / captura de saída | `FileList`/`StdIoWrapper`/`UTF8String` | **Fase 16** (16.7/16.11/16.12 — utilitários no core) | Consumidos por 24.2/24.10 |
 | Imagens em relatórios (`![x](…)`) | `ImageRouter`/`RdoReport` Ruby + `URL.createObjectURL` (browser) | **Fase 13** devolve só o descritor (`resolveImageRef`, core DOM-free) | F24 subfase 24.10.8 — materializa do disco via `io` (13.14.3, xray §4); fase 19 faz o equivalente OPFS na PWA |
 | `format richtext` como default na saída | roteador de formato dos reports | **Fase 14-C** (núcleo entregue em `14C.5.1–5.12`) | F24 subfase 24.10.9 — regressão golden dos dois formatos (13.14.4, xray §4) |
+
+**Núcleo dos apps de sheet (18.18, entregue 2026-11-05):** o core exporta
+`SheetAppBase` + `TsSenderApp`, `TsReceiverApp`, `TsSummaryApp`, `SsSenderApp` e
+`SsReceiverApp` (`@vanaware/syntaxmesh` → `src/sheets/apps/`). Eles recebem
+**opções já tipadas** (`workingDir`, `dryRun`, `config`, `endDate`, `resources`,
+`force`, `intervalDuration`, `hideResource`, `recipients`) e um
+`SheetAppContext` (`project`, `fileStore`, `rawEmail`) e **devolvem** o código de
+saída (`0`/`1`) por `run()`.
+
+> **Empacotamento é CLI-only (18.18.9):** parsing de argv (`OptionParser`),
+> leitura de `stdin`, `Deno.exit` e a escrita do `outbox/*.eml` ficam na F24
+> (24.10). O core nunca chama `Deno.exit` nem lê argv — `run()` só retorna
+> `SHEET_APP_EXIT_OK`/`SHEET_APP_EXIT_ERROR`. O anexo continua `.tji` nos dois
+tipos de sheet (o Ruby só reconhece essa extensão em
+`SheetReceiver#SHEET_EXTENSION`); o `.tjs` citado no adendo 18.18.6 é
+divergência de documentação, não de comportamento.
 
 > Nota: `freeze` (`--freeze*`) também reancorado para **Fase 24** (24.9) —
 > era Fase 19. O daemon em si (`tj3d`/`tj3webd`/`tj3client`) permanece **fora de

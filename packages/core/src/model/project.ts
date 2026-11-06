@@ -17,13 +17,17 @@ import { TimeInterval, } from "../time/time-interval.ts";
 import { WorkingHours, } from "../calendar/working-hours.ts";
 import { Limits, } from "../scheduling/limits.ts";
 import { ShiftAssignments, } from "../scheduling/shift-assignments.ts";
-import { TimeSheets, } from "../scheduling/time-sheets.ts";
+import { TimeSheets, } from "../timesheet/time-sheets.ts";
 import { DataCache, } from "../scheduling/data-cache.ts";
 import { Journal, } from "./journal.ts";
 import { defaultAlertLevels, } from "./alert-levels.ts";
 import { ReportContext, } from "../reports/report-context.ts";
 import { Report, } from "./report.ts";
 import { ReportType, } from "./report-type.ts";
+// Deliberado (Ruby `Project#generateReport` cria o parser): o ciclo
+// model → parser só é resolvido em runtime, pois a referência é usada dentro
+// do método, nunca na avaliação dos módulos.
+import { ProjectFileParser, } from "../parser/project-file-parser.ts";
 import { Task, } from "./task.ts";
 import { Resource, } from "./resource.ts";
 import { TaskScenario, } from "./task-scenario.ts";
@@ -681,20 +685,25 @@ export class Project implements ProjectLike {
         }
       }
       this.reportContexts.push(new ReportContext(this, report as Report,),);
-      if (dynamicAttributes) {
-        // Ancorado: Fase 18 — pipeline dynamicAttributes (xray §3.4): backup de
-        // atributos do report antes de injetar as colunas dinâmicas.
-        // report.backupAttributes();
-        // Ancorado: Fase 18 — pipeline dynamicAttributes (xray §3.4): parse da
-        // string de atributos via `rule_dynamicAttributes` (já registrada).
-        // parseReportAttributes(report, dynamicAttributes);
+      // Ruby l.795-811: com `dynamicAttributes` o relatório tem os atributos
+      // salvos, as colunas injetadas e depois restaurados — o `interactive`
+      // marca a geração como "veio do editor" (troca o nome do arquivo).
+      // O backup/restore só acontece com snippet **não vazio**: com `""` o
+      // Ruby só marca `interactive` e o atributo permanece depois da geração.
+      const attributes = dynamicAttributes ?? null;
+      const backup = attributes !== null && attributes !== ""
+        ? report.backupAttributes()
+        : null;
+      if (attributes !== null) {
+        if (attributes !== "") {
+          const parser = new ProjectFileParser();
+          parser.project = this;
+          parser.parseReportAttributes(report as Report, attributes,);
+        }
+        report.set("interactive", true,);
       }
       (report as Report).generate(formats as string[] | undefined,);
-      if (dynamicAttributes) {
-        // Ancorado: Fase 18 — pipeline dynamicAttributes (xray §3.4): restore dos
-        // atributos após a geração.
-        // report.restoreAttributes(...);
-      }
+      if (backup !== null) report.restoreAttributes(backup,);
       this.reportContexts.pop();
     }
   }

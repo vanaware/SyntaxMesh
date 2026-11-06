@@ -17,7 +17,10 @@
  */
 import { JournalEntry, } from "../../model/journal.ts";
 import { Navigator, } from "../../reports/navigator.ts";
-import { TimeSheet, TimeSheetRecord, } from "../../scheduling/time-sheet.ts";
+import { Task, } from "../../model/task.ts";
+import type { Resource, } from "../../model/resource.ts";
+import { TimeSheet, TimeSheetRecord, } from "../../timesheet/mod.ts";
+import type { Percent, } from "../../time/percent.ts";
 import type { TimeInterval, } from "../../time/time-interval.ts";
 import type { PropertyTreeNode, } from "../../model/property-tree-node.ts";
 import type { ProjectFileParser, } from "../project-file-parser.ts";
@@ -234,6 +237,7 @@ export function registerTrackingRules(p: ProjectFileParser,): void {
     p.repeatable();
     p.pattern(["!ssStatus",],);
     p.pattern(["!statusSheetTask",],);
+    p.pattern(["!tsMaterial",],);
   },);
 
   // ------------------------------------------------------------------
@@ -251,7 +255,7 @@ export function registerTrackingRules(p: ProjectFileParser,): void {
     p.pattern(
       ["_timesheet", "!resourceId", "!valIntervalOrDate",],
       function (this: ProjectFileParser,): unknown {
-        const author = this.val[1] as PropertyTreeNode;
+        const author = this.val[1] as Resource;
         this.sheetAuthor = author;
         this.property = null;
         if (!author.leaf()) {
@@ -305,6 +309,8 @@ export function registerTrackingRules(p: ProjectFileParser,): void {
 
     p.pattern(["!tsStatus",],);
 
+    p.pattern(["!tsMaterial",],);
+
     p.pattern(["!tsTaskHeader", "!tsTaskBody",], function (
       this: ProjectFileParser,
     ): unknown {
@@ -338,7 +344,7 @@ export function registerTrackingRules(p: ProjectFileParser,): void {
         }
         const record = new TimeSheetRecord(
           this.timeSheet as TimeSheet,
-          this.property,
+          this.property as Task | null,
         );
         record.sourceFileInfo = this.sourceFileInfo[0] ?? null;
         this.timeSheetRecord = record;
@@ -396,16 +402,22 @@ export function registerTrackingRules(p: ProjectFileParser,): void {
     p.pattern(["_remaining", "!workingDuration",], function (
       this: ProjectFileParser,
     ): unknown {
-      (this.timeSheetRecord as TimeSheetRecord).remaining = this.val[1];
+      (this.timeSheetRecord as TimeSheetRecord).remaining = this
+        .val[1] as number;
       return null;
     },);
 
     p.pattern(["!tsStatus",],);
 
+    // Extensão 18.17.10: `material <id> { … }` dentro do bloco da tarefa.
+    p.pattern(["!tsMaterial",],);
+
     p.pattern(["_work", "!workingDurationPercent",], function (
       this: ProjectFileParser,
     ): unknown {
-      (this.timeSheetRecord as TimeSheetRecord).work = this.val[1];
+      (this.timeSheetRecord as TimeSheetRecord).work = this.val[1] as
+        | number
+        | Percent;
       return null;
     },);
   },);
@@ -416,7 +428,7 @@ export function registerTrackingRules(p: ProjectFileParser,): void {
       function (this: ProjectFileParser,): unknown {
         const record = new TimeSheetRecord(
           this.timeSheet as TimeSheet,
-          this.val[1] as PropertyTreeNode,
+          this.val[1] as string,
         );
         record.name = String(this.val[2],);
         record.sourceFileInfo = this.sourceFileInfo[0] ?? null;
@@ -497,5 +509,96 @@ export function registerTrackingRules(p: ProjectFileParser,): void {
     // Fase 10 Complemento C3.3.4 — `picture`/`format` em status (estrutura).
     p.pattern(["!picture",],);
     p.pattern(["!format",],);
+  },);
+
+  // ------------------------------------------------------------------
+  // material dentro de uma folha (extensão 18.17.10)
+  //
+  // O Ruby não tem `material` em sheet: a extensão permite reportar a
+  // quantidade consumida por tarefa. O bloco vive **dentro** de `task` e a
+  // quantidade vem em unidades (não em duração/percentual como o `work` de
+  // tarefa), então os atributos usam `!number` cru.
+  // ------------------------------------------------------------------
+  rule(p, "tsMaterial", () => {
+    p.pattern(["!tsMaterialHeader", "!tsMaterialBody",], function (
+      this: ProjectFileParser,
+    ): unknown {
+      // Devolve o contexto da tarefa que envolvia o material.
+      this.property = (this.propertyStack.pop() as PropertyTreeNode) ?? null;
+      this.timeSheetRecord = this.sheetRecordStack.pop() ?? null;
+      return null;
+    },);
+  },);
+
+  rule(p, "tsMaterialHeader", () => {
+    p.pattern(
+      ["_material", "!materialNameRef",],
+      function (this: ProjectFileParser,): unknown {
+        const id = String(this.val[1] ?? "",);
+        const material = this.project!.material(id,);
+        if (!material) {
+          this.error(
+            "ts_unknown_material",
+            `Unknown material ${id}`,
+            this.sourceFileInfo[1] ?? null,
+          );
+        }
+        // A tarefa dona é o `property` corrente (o bloco está dentro de task).
+        const owner = this.property instanceof Task ? this.property : null;
+        this.propertyStack.push(this.property,);
+        this.sheetRecordStack.push(this.timeSheetRecord,);
+        this.property = material ?? null;
+
+        const record = new TimeSheetRecord(
+          this.timeSheet as TimeSheet,
+          material ?? null,
+        );
+        record.ownerTask = owner;
+        record.sourceFileInfo = this.sourceFileInfo[0] ?? null;
+        this.timeSheetRecord = record;
+        return null;
+      },
+    );
+  },);
+
+  rule(p, "tsMaterialBody", () => {
+    p.optional();
+    p.pattern(["_{", "!tsMaterialAttributes", "_}",],);
+  },);
+
+  rule(p, "tsMaterialAttributes", () => {
+    p.optional();
+    p.repeatable();
+
+    // `remaining`/`work` de material são **quantidades**, não slots.
+    p.pattern(
+      ["_remaining", "!number",],
+      function (this: ProjectFileParser,): unknown {
+        (this.timeSheetRecord as TimeSheetRecord).remaining = Number(
+          this.val[1],
+        );
+        return null;
+      },
+    );
+
+    p.pattern(["!tsStatus",],);
+
+    p.pattern(
+      ["_unitprice", "!number",],
+      function (this: ProjectFileParser,): unknown {
+        (this.timeSheetRecord as TimeSheetRecord).unitPrice = Number(
+          this.val[1],
+        );
+        return null;
+      },
+    );
+
+    p.pattern(
+      ["_work", "!number",],
+      function (this: ProjectFileParser,): unknown {
+        (this.timeSheetRecord as TimeSheetRecord).work = Number(this.val[1],);
+        return null;
+      },
+    );
   },);
 }

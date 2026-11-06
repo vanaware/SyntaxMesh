@@ -125,6 +125,12 @@ export class ProjectFileParser extends TextParser {
   sheetModerator: unknown = null;
   /** Pilha de propriedades p/ statusSheetTask aninhado (Ruby @propertyStack). */
   propertyStack: unknown[] = [];
+  /**
+   * Pilha de `timeSheetRecord` para blocos `material` dentro de um `task` num
+   * sheet (extensão 18.17.10): ao fechar o material, o registro da tarefa
+   * dona volta a ser o corrente.
+   */
+  sheetRecordStack: unknown[] = [];
   reportCounter = 0;
   projectId = "";
 
@@ -321,6 +327,28 @@ export class ProjectFileParser extends TextParser {
     this.property = report;
     this.project = report.project as unknown as Project;
     this.parse("dynamicAttributes",);
+  }
+
+  /**
+   * Aplica a um projeto **já parseado** um fragmento que contém apenas
+   * declarações de relatório (`resourcereport`, `timesheetreport`, …).
+   *
+   * Equivale ao `addFile` do `ReportServer` do Ruby:
+   * `@tj.parseFile(file, :reportPropertiesFile)`
+   * (docs/taskjuggler/lib/taskjuggler/daemon/ReportServer.rb l.109), chamado
+   * pelo `Tj3Client report prj <id> = <arquivo>`. O `SheetSender` (Fase 18)
+   * monta a definição em texto e precisa dela no projeto, in-process.
+   *
+   * Use `reportPropertiesFile` e não `reports`: a segunda é só a lista de
+   * relatórios de **tabela** (`resourcereport`, `taskreport`, …) e não aceita
+   * `timesheetreport`/`statussheetreport` — a primeira inclui
+   * `statusSheetReport`/`timeSheetReport` e termina com o token `.` (fim de
+   * arquivo), que encerra o fragmento limpo.
+   */
+  parseReportList(fragment: string,): void {
+    if (!this.project) return;
+    this.open(fragment, false, true,);
+    this.parse("reportPropertiesFile",);
   }
 
   // ---------------------------------------------------------------------

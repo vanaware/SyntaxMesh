@@ -1,0 +1,105 @@
+{
+  "cases": [
+    {
+      "description": "sem dynamicAttributes usa as colunas do arquivo",
+      "dynamic": null,
+      "columns": [
+        "id"
+      ],
+      "headers": [
+        "Id"
+      ],
+      "tasks": [
+        "a",
+        "b"
+      ],
+      "errors": 0,
+      "errorIds": [],
+      "error": null
+    },
+    {
+      "description": "columns acrescenta a coluna name",
+      "dynamic": "columns id, name",
+      "columns": [
+        "id",
+        "name"
+      ],
+      "headers": [
+        "Id",
+        "Name"
+      ],
+      "tasks": [
+        "a",
+        "b"
+      ],
+      "errors": 0,
+      "errorIds": [],
+      "error": null
+    },
+    {
+      "description": "columns respeita a ordem pedida",
+      "dynamic": "columns name, id",
+      "columns": [
+        "name",
+        "id"
+      ],
+      "headers": [
+        "Name",
+        "Id"
+      ],
+      "tasks": [
+        "a",
+        "b"
+      ],
+      "errors": 0,
+      "errorIds": [],
+      "error": null
+    },
+    {
+      "description": "hidetask remove uma tarefa da tabela",
+      "dynamic": "hidetask plan.id = \"b\"",
+      "columns": [
+        "id"
+      ],
+      "headers": [
+        "Id"
+      ],
+      "tasks": [
+        "a"
+      ],
+      "errors": 0,
+      "errorIds": [],
+      "error": null
+    },
+    {
+      "description": "hidetask pode inverter a seleção",
+      "dynamic": "hidetask plan.id = \"a\"",
+      "columns": [
+        "id"
+      ],
+      "headers": [
+        "Id"
+      ],
+      "tasks": [
+        "b"
+      ],
+      "errors": 0,
+      "errorIds": [],
+      "error": null
+    },
+    {
+      "description": "coluna desconhecida vira erro e não corrompe a lista",
+      "dynamic": "columns id, naoExiste",
+      "columns": [
+        "id"
+      ],
+      "headers": [],
+      "tasks": [],
+      "errors": 1,
+      "errorIds": [
+        "no_reduce"
+      ],
+      "error": null
+    }
+  ]
+}

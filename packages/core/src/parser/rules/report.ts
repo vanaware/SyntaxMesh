@@ -754,7 +754,15 @@ export function registerReportRules(p: ProjectFileParser,): void {
       function (this: ProjectFileParser,): unknown {
         const columns = [this.val[1],];
         if (this.val[2]) columns.push(...(this.val[2] as unknown[]),);
-        asProp(this,).set("columns", columns,);
+        // Depois de um erro de sintaxe (`columns id, naoExiste`) o FSM ainda
+        // reduz o padrão com `null` no lugar da coluna inválida. O Ruby não
+        // reduz e deixa o atributo intacto, então descartamos os nulos e não
+        // gravamos uma lista vazia (uma coluna `null` estouraria em
+        // `TableReport#adjustColumnPeriod` na geração seguinte).
+        const valid = columns.filter((column,) =>
+          column !== null && column !== undefined
+        );
+        if (valid.length > 0) asProp(this,).set("columns", valid,);
         return null;
       },
     );

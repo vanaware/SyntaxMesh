@@ -6,3 +6,4 @@ export * from "./time-interval.ts";
 export * from "./interval-list.ts";
 export * from "./interval.ts";
 export * from "./timezone.ts";
+export * from "./percent.ts";

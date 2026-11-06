@@ -93,15 +93,21 @@ O que foi decidido? Seja específico e acionável.
 | 033 | Reservado — Template (Vento), Fase 23 | Reservado | — |
 | 034 | Reservado — CLI (`packages/cli`), Fase 24 | Reservado | — |
 | 035 | Reservado — Extensão VS Code + lsp-core, Fase 22 | Reservado | — |
-| 036 | Reservado — Sheets sem SMTP: sender devolve o **texto do email**, receiver consome **texto de mensagem** (Fase 18; ADR da fase) | Reservado | 2026-11-03 |
-| 037 | Reservado — Injeção de provedor de conteúdo/`FileStore` no core (Fases 18/24) | Reservado | 2026-11-03 |
+| 036 | Sheets sem SMTP: sender devolve o **texto do email**, receiver consome **texto de mensagem** | Aceito | 2026-11-05 |
+| 037 | Injeção de `FileStore`/`KeyValueStore` no core | Aceito | 2026-11-05 |
 | 038 | Substituição de XML/HTML/ICalendar/Painter mínimos (Fase 17) | Aceito | 2026-11-04 |
+| 039 | Tipo `markdown` em `extend` (extensão SyntaxMesh — 10-C Bloco C5 / 14C.19) | Proposto | 2026-11-06 |
 
 > **Reserva de números (decisão 2026-11-03 — `docs/syntaxmesh/xray.md` §5.3):**
 > 029–032 existem (`029-journal-alertlevel.md`, entregue na Fase 16 em
 > 2026-11-03). **033–035** seguem a ordem oficial de execução
-> (23 → 24 → 22) e **036–037** foram reservados nesta varredura para as decisões
-> novas das Fases 18/24. **Nunca renumerar ADRs existentes** — os arquivos 027/028
+> (23 → 24 → 22). **036** (`036-sheets-sem-smtp.md`) e **037**
+> (`037-filestore-injection.md`) foram entregues na Fase 18 (2026-11-05).
+> **038** (`038-substituicao-xml.md`) foi entregue na Fase 17 (2026-11-04).
+> **039** (`039-extend-markdown.md`) aberta em 2026-11-06 como **Proposto**
+> (plano `fase-10-complemento3.md`; implementação pendente nos Blocos
+> C5/14C.19).
+> **Nunca renumerar ADRs existentes** — os arquivos 027/028
 > já commitados são referência histórica; ao criar um ADR, conferir antes esta
 > tabela e usar o próximo número livre. A cadeia 033–037 deve ser **reconciliada na
 > Fase 21** (se alguém precisar de número antes, usa o próximo livre e atualiza esta

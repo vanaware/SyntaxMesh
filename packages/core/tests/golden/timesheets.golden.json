@@ -1,0 +1,1127 @@
+{
+  "cases": [
+    {
+      "description": "folha completa e coerente passa sem mensagens",
+      "kind": "check",
+      "sheets": [
+        {
+          "resource": "dev",
+          "start": "2026-01-01",
+          "end": "2026-01-29",
+          "records": [
+            {
+              "task": "effortTask",
+              "workDays": 20,
+              "remainingDays": 0,
+              "status": {
+                "alertLevel": 0,
+                "headline": "Progresso normal"
+              }
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "messages": [],
+        "sheets": [
+          {
+            "resource": "dev",
+            "start": "2026-01-01",
+            "end": "2026-01-29",
+            "percentageUsed": false,
+            "totalSlots": 160,
+            "records": [
+              {
+                "task": "effortTask",
+                "work": 160,
+                "remaining": 0,
+                "expectedEnd": null,
+                "status": {
+                  "alertLevel": 0,
+                  "headline": "Progresso normal"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "work declarado em percentual usa percentToSlots e marca percentageUsed",
+      "kind": "check",
+      "sheets": [
+        {
+          "resource": "dev",
+          "start": "2026-01-01",
+          "end": "2026-01-29",
+          "records": [
+            {
+              "task": "effortTask",
+              "workPercent": 100,
+              "remainingDays": 0,
+              "status": {
+                "alertLevel": 0,
+                "headline": "Progresso normal"
+              }
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "messages": [],
+        "sheets": [
+          {
+            "resource": "dev",
+            "start": "2026-01-01",
+            "end": "2026-01-29",
+            "percentageUsed": true,
+            "totalSlots": 160,
+            "records": [
+              {
+                "task": "effortTask",
+                "work": 160,
+                "remaining": 0,
+                "expectedEnd": null,
+                "status": {
+                  "alertLevel": 0,
+                  "headline": "Progresso normal"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "tarefa de esforço sem remaining dispara ts_no_remaining",
+      "kind": "check",
+      "sheets": [
+        {
+          "resource": "dev",
+          "start": "2026-01-01",
+          "end": "2026-01-29",
+          "records": [
+            {
+              "task": "effortTask",
+              "workDays": 20,
+              "status": {
+                "alertLevel": 0,
+                "headline": "Progresso normal"
+              }
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "messages": [
+          {
+            "type": "error",
+            "id": "ts_no_remaining",
+            "message": "The time sheet record for task effortTask must have a 'remaining' attribute to specify how much effort is left for this task."
+          }
+        ],
+        "sheets": [
+          {
+            "resource": "dev",
+            "start": "2026-01-01",
+            "end": "2026-01-29",
+            "percentageUsed": false,
+            "totalSlots": 160,
+            "records": [
+              {
+                "task": "effortTask",
+                "work": 160,
+                "remaining": null,
+                "expectedEnd": null,
+                "status": {
+                  "alertLevel": 0,
+                  "headline": "Progresso normal"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "tarefa de duração sem end esperado dispara ts_no_expected_end",
+      "kind": "check",
+      "sheets": [
+        {
+          "resource": "dev",
+          "start": "2026-01-01",
+          "end": "2026-01-29",
+          "records": [
+            {
+              "task": "durationTask",
+              "workDays": 20,
+              "status": {
+                "alertLevel": 0,
+                "headline": "Progresso normal"
+              }
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "messages": [
+          {
+            "type": "error",
+            "id": "ts_no_expected_end",
+            "message": "The time sheet record for task durationTask must have an 'end' attribute to specify the expected end of this task."
+          }
+        ],
+        "sheets": [
+          {
+            "resource": "dev",
+            "start": "2026-01-01",
+            "end": "2026-01-29",
+            "percentageUsed": false,
+            "totalSlots": 160,
+            "records": [
+              {
+                "task": "durationTask",
+                "work": 160,
+                "remaining": null,
+                "expectedEnd": null,
+                "status": {
+                  "alertLevel": 0,
+                  "headline": "Progresso normal"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "trabalho de um dia ou mais sem status dispara ts_no_status_work",
+      "kind": "check",
+      "sheets": [
+        {
+          "resource": "dev",
+          "start": "2026-01-01",
+          "end": "2026-01-29",
+          "records": [
+            {
+              "task": "effortTask",
+              "workDays": 20,
+              "remainingDays": 0
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "messages": [
+          {
+            "type": "error",
+            "id": "ts_no_status_work",
+            "message": "You must specify a status for task effortTask. It was worked on for a day or more."
+          }
+        ],
+        "sheets": [
+          {
+            "resource": "dev",
+            "start": "2026-01-01",
+            "end": "2026-01-29",
+            "percentageUsed": false,
+            "totalSlots": 160,
+            "records": [
+              {
+                "task": "effortTask",
+                "work": 160,
+                "remaining": 0,
+                "expectedEnd": null,
+                "status": null
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "status com headline vazia dispara ts_no_headline",
+      "kind": "check",
+      "sheets": [
+        {
+          "resource": "dev",
+          "start": "2026-01-01",
+          "end": "2026-01-29",
+          "records": [
+            {
+              "task": "effortTask",
+              "workDays": 20,
+              "remainingDays": 0,
+              "status": {
+                "alertLevel": 0,
+                "headline": ""
+              }
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "messages": [
+          {
+            "type": "error",
+            "id": "ts_no_headline",
+            "message": "You must provide a headline for the status of task effortTask"
+          }
+        ],
+        "sheets": [
+          {
+            "resource": "dev",
+            "start": "2026-01-01",
+            "end": "2026-01-29",
+            "percentageUsed": false,
+            "totalSlots": 160,
+            "records": [
+              {
+                "task": "effortTask",
+                "work": 160,
+                "remaining": 0,
+                "expectedEnd": null,
+                "status": {
+                  "alertLevel": 0,
+                  "headline": ""
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "status com o summary default dispara ts_default_summary",
+      "kind": "check",
+      "sheets": [
+        {
+          "resource": "dev",
+          "start": "2026-01-01",
+          "end": "2026-01-29",
+          "records": [
+            {
+              "task": "effortTask",
+              "workDays": 20,
+              "remainingDays": 0,
+              "status": {
+                "alertLevel": 0,
+                "headline": "Ok",
+                "summary": "A summary text\n"
+              }
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "messages": [
+          {
+            "type": "error",
+            "id": "ts_default_summary",
+            "message": "You must change the default summary text of the status for task effortTask."
+          }
+        ],
+        "sheets": [
+          {
+            "resource": "dev",
+            "start": "2026-01-01",
+            "end": "2026-01-29",
+            "percentageUsed": false,
+            "totalSlots": 160,
+            "records": [
+              {
+                "task": "effortTask",
+                "work": 160,
+                "remaining": 0,
+                "expectedEnd": null,
+                "status": {
+                  "alertLevel": 0,
+                  "headline": "Ok"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "alerta elevado sem summary nem details dispara ts_alert1_more_details",
+      "kind": "check",
+      "sheets": [
+        {
+          "resource": "dev",
+          "start": "2026-01-01",
+          "end": "2026-01-29",
+          "records": [
+            {
+              "task": "effortTask",
+              "workDays": 20,
+              "remainingDays": 0,
+              "status": {
+                "alertLevel": 1,
+                "headline": "Atrasado"
+              }
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "messages": [
+          {
+            "type": "error",
+            "id": "ts_alert1_more_details",
+            "message": "Task effortTask has an elevated alert level and must have a summary or details section."
+          }
+        ],
+        "sheets": [
+          {
+            "resource": "dev",
+            "start": "2026-01-01",
+            "end": "2026-01-29",
+            "percentageUsed": false,
+            "totalSlots": 160,
+            "records": [
+              {
+                "task": "effortTask",
+                "work": 160,
+                "remaining": 0,
+                "expectedEnd": null,
+                "status": {
+                  "alertLevel": 1,
+                  "headline": "Atrasado"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "alerta alto sem details dispara ts_alert2_more_details",
+      "kind": "check",
+      "sheets": [
+        {
+          "resource": "dev",
+          "start": "2026-01-01",
+          "end": "2026-01-29",
+          "records": [
+            {
+              "task": "effortTask",
+              "workDays": 20,
+              "remainingDays": 0,
+              "status": {
+                "alertLevel": 2,
+                "headline": "Crítico",
+                "summary": "Resumo"
+              }
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "messages": [
+          {
+            "type": "error",
+            "id": "ts_alert2_more_details",
+            "message": "Task effortTask has a high alert level and must have a details section."
+          }
+        ],
+        "sheets": [
+          {
+            "resource": "dev",
+            "start": "2026-01-01",
+            "end": "2026-01-29",
+            "percentageUsed": false,
+            "totalSlots": 160,
+            "records": [
+              {
+                "task": "effortTask",
+                "work": 160,
+                "remaining": 0,
+                "expectedEnd": null,
+                "status": {
+                  "alertLevel": 2,
+                  "headline": "Crítico"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "alerta 1 com summary e alerta 2 com details passam",
+      "kind": "check",
+      "sheets": [
+        {
+          "resource": "dev",
+          "start": "2026-01-01",
+          "end": "2026-01-29",
+          "records": [
+            {
+              "task": "effortTask",
+              "workDays": 20,
+              "remainingDays": 0,
+              "status": {
+                "alertLevel": 1,
+                "headline": "Atrasado",
+                "summary": "Resumo"
+              }
+            },
+            {
+              "task": "durationTask",
+              "workDays": 0,
+              "expectedEnd": "2026-02-04",
+              "status": {
+                "alertLevel": 2,
+                "headline": "Crítico",
+                "summary": "Resumo",
+                "details": "Detalhes"
+              }
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "messages": [],
+        "sheets": [
+          {
+            "resource": "dev",
+            "start": "2026-01-01",
+            "end": "2026-01-29",
+            "percentageUsed": false,
+            "totalSlots": 160,
+            "records": [
+              {
+                "task": "effortTask",
+                "work": 160,
+                "remaining": 0,
+                "expectedEnd": null,
+                "status": {
+                  "alertLevel": 1,
+                  "headline": "Atrasado"
+                }
+              },
+              {
+                "task": "durationTask",
+                "work": 0,
+                "remaining": null,
+                "expectedEnd": "2026-02-04",
+                "status": {
+                  "alertLevel": 2,
+                  "headline": "Crítico"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "total reportado abaixo do período dispara ts_work_too_low",
+      "kind": "check",
+      "sheets": [
+        {
+          "resource": "dev",
+          "start": "2026-01-01",
+          "end": "2026-01-29",
+          "records": [
+            {
+              "task": "effortTask",
+              "workDays": 4,
+              "remainingDays": 40,
+              "status": {
+                "alertLevel": 0,
+                "headline": "Progresso normal"
+              }
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "messages": [
+          {
+            "type": "error",
+            "id": "ts_work_too_low",
+            "message": "The total work to be reported for this time sheet is 20.0 days but only 4.0 days were reported."
+          }
+        ],
+        "sheets": [
+          {
+            "resource": "dev",
+            "start": "2026-01-01",
+            "end": "2026-01-29",
+            "percentageUsed": false,
+            "totalSlots": 32,
+            "records": [
+              {
+                "task": "effortTask",
+                "work": 32,
+                "remaining": 320,
+                "expectedEnd": null,
+                "status": {
+                  "alertLevel": 0,
+                  "headline": "Progresso normal"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "total reportado acima do período dispara ts_work_too_high",
+      "kind": "check",
+      "sheets": [
+        {
+          "resource": "dev",
+          "start": "2026-01-01",
+          "end": "2026-01-29",
+          "records": [
+            {
+              "task": "effortTask",
+              "workDays": 30,
+              "remainingDays": 0,
+              "status": {
+                "alertLevel": 0,
+                "headline": "Progresso normal"
+              }
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "messages": [
+          {
+            "type": "error",
+            "id": "ts_work_too_high",
+            "message": "The total work to be reported for this time sheet is 20.0 days but 30.0 days were reported."
+          }
+        ],
+        "sheets": [
+          {
+            "resource": "dev",
+            "start": "2026-01-01",
+            "end": "2026-01-29",
+            "percentageUsed": false,
+            "totalSlots": 240,
+            "records": [
+              {
+                "task": "effortTask",
+                "work": 240,
+                "remaining": 0,
+                "expectedEnd": null,
+                "status": {
+                  "alertLevel": 0,
+                  "headline": "Progresso normal"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "recurso sem horas de trabalho reportando esforço dispara ts_work_not_null",
+      "kind": "check",
+      "sheets": [
+        {
+          "resource": "idle",
+          "start": "2026-01-01",
+          "end": "2026-01-29",
+          "records": [
+            {
+              "task": "effortTask",
+              "workDays": 4,
+              "remainingDays": 40,
+              "status": {
+                "alertLevel": 0,
+                "headline": "Progresso normal"
+              }
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "messages": [
+          {
+            "type": "error",
+            "id": "ts_work_not_null",
+            "message": "The reported work for non-working resources must be 0."
+          }
+        ],
+        "sheets": [
+          {
+            "resource": "idle",
+            "start": "2026-01-01",
+            "end": "2026-01-29",
+            "percentageUsed": false,
+            "totalSlots": 32,
+            "records": [
+              {
+                "task": "effortTask",
+                "work": 32,
+                "remaining": 320,
+                "expectedEnd": null,
+                "status": {
+                  "alertLevel": 0,
+                  "headline": "Progresso normal"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "newtask sem remaining nem end dispara ts_no_rem_or_end",
+      "kind": "check",
+      "sheets": [
+        {
+          "resource": "dev",
+          "start": "2026-01-01",
+          "end": "2026-01-29",
+          "records": [
+            {
+              "newtask": "nt1",
+              "name": "Tarefa nova",
+              "workDays": 4
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "messages": [
+          {
+            "type": "error",
+            "id": "ts_no_rem_or_end",
+            "message": "New task nt1 requires either a 'remaining' or a 'end' attribute."
+          },
+          {
+            "type": "error",
+            "id": "ts_no_status_work",
+            "message": "You must specify a status for task nt1. It was worked on for a day or more."
+          },
+          {
+            "type": "error",
+            "id": "ts_work_too_low",
+            "message": "The total work to be reported for this time sheet is 20.0 days but only 4.0 days were reported."
+          }
+        ],
+        "sheets": [
+          {
+            "resource": "dev",
+            "start": "2026-01-01",
+            "end": "2026-01-29",
+            "percentageUsed": false,
+            "totalSlots": 32,
+            "records": [
+              {
+                "task": "nt1",
+                "work": 32,
+                "remaining": null,
+                "expectedEnd": null,
+                "status": null
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "duas folhas são checadas de forma independente",
+      "kind": "check",
+      "sheets": [
+        {
+          "resource": "dev",
+          "start": "2026-01-01",
+          "end": "2026-01-29",
+          "records": [
+            {
+              "task": "effortTask",
+              "workDays": 20,
+              "remainingDays": 0,
+              "status": {
+                "alertLevel": 0,
+                "headline": "Progresso normal"
+              }
+            }
+          ]
+        },
+        {
+          "resource": "dev",
+          "start": "2026-01-01",
+          "end": "2026-01-29",
+          "records": [
+            {
+              "task": "effortTask",
+              "workDays": 4,
+              "remainingDays": 40,
+              "status": {
+                "alertLevel": 0,
+                "headline": "Progresso normal"
+              }
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "messages": [
+          {
+            "type": "error",
+            "id": "ts_work_too_low",
+            "message": "The total work to be reported for this time sheet is 20.0 days but only 4.0 days were reported."
+          }
+        ],
+        "sheets": [
+          {
+            "resource": "dev",
+            "start": "2026-01-01",
+            "end": "2026-01-29",
+            "percentageUsed": false,
+            "totalSlots": 160,
+            "records": [
+              {
+                "task": "effortTask",
+                "work": 160,
+                "remaining": 0,
+                "expectedEnd": null,
+                "status": {
+                  "alertLevel": 0,
+                  "headline": "Progresso normal"
+                }
+              }
+            ]
+          },
+          {
+            "resource": "dev",
+            "start": "2026-01-01",
+            "end": "2026-01-29",
+            "percentageUsed": false,
+            "totalSlots": 32,
+            "records": [
+              {
+                "task": "effortTask",
+                "work": 32,
+                "remaining": 320,
+                "expectedEnd": null,
+                "status": {
+                  "alertLevel": 0,
+                  "headline": "Progresso normal"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "trabalho e remaining abaixo do plano disparam os dois deltas",
+      "kind": "warnOnDelta",
+      "sheets": [
+        {
+          "resource": "dev",
+          "start": "2026-01-01",
+          "end": "2026-01-29",
+          "records": [
+            {
+              "task": "effortTask",
+              "workDays": 4,
+              "remainingDays": 40
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "messages": [
+          {
+            "type": "warning",
+            "id": "ts_res_work_delta",
+            "message": "Developer worked less on effortTask\n4.0d instead of 10.0d"
+          },
+          {
+            "type": "warning",
+            "id": "ts_res_remain_delta",
+            "message": "Developer requests more remaining effort for task effortTask\n40.0d instead of 0.0d"
+          }
+        ],
+        "sheets": [
+          {
+            "resource": "dev",
+            "start": "2026-01-01",
+            "end": "2026-01-29",
+            "percentageUsed": false,
+            "totalSlots": 32,
+            "records": [
+              {
+                "task": "effortTask",
+                "work": 32,
+                "remaining": 320,
+                "expectedEnd": null,
+                "status": null
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "trabalho acima do plano dispara ts_res_work_delta",
+      "kind": "warnOnDelta",
+      "sheets": [
+        {
+          "resource": "dev",
+          "start": "2026-01-01",
+          "end": "2026-01-29",
+          "records": [
+            {
+              "task": "effortTask",
+              "workDays": 20,
+              "remainingDays": 0
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "messages": [
+          {
+            "type": "warning",
+            "id": "ts_res_work_delta",
+            "message": "Developer worked more on effortTask\n20.0d instead of 10.0d"
+          }
+        ],
+        "sheets": [
+          {
+            "resource": "dev",
+            "start": "2026-01-01",
+            "end": "2026-01-29",
+            "percentageUsed": false,
+            "totalSlots": 160,
+            "records": [
+              {
+                "task": "effortTask",
+                "work": 160,
+                "remaining": 0,
+                "expectedEnd": null,
+                "status": null
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "remaining diferente do plano dispara ts_res_remain_delta",
+      "kind": "warnOnDelta",
+      "sheets": [
+        {
+          "resource": "dev",
+          "start": "2026-01-01",
+          "end": "2026-01-29",
+          "records": [
+            {
+              "task": "effortTask",
+              "workDays": 10,
+              "remainingDays": 5
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "messages": [
+          {
+            "type": "warning",
+            "id": "ts_res_remain_delta",
+            "message": "Developer requests more remaining effort for task effortTask\n5.0d instead of 0.0d"
+          }
+        ],
+        "sheets": [
+          {
+            "resource": "dev",
+            "start": "2026-01-01",
+            "end": "2026-01-29",
+            "percentageUsed": false,
+            "totalSlots": 80,
+            "records": [
+              {
+                "task": "effortTask",
+                "work": 80,
+                "remaining": 40,
+                "expectedEnd": null,
+                "status": null
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "tarefa de duração com end posterior ao plano dispara ts_res_end_delta",
+      "kind": "warnOnDelta",
+      "sheets": [
+        {
+          "resource": "dev",
+          "start": "2026-01-01",
+          "end": "2026-01-29",
+          "records": [
+            {
+              "task": "durationTask",
+              "workDays": 0,
+              "expectedEnd": "2026-02-10"
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "messages": [
+          {
+            "type": "warning",
+            "id": "ts_res_end_delta",
+            "message": "Developer requests later end (2026-02-10-00:00-+0000) for task durationTask. Planned end is 2026-02-05-00:00-+0000."
+          }
+        ],
+        "sheets": [
+          {
+            "resource": "dev",
+            "start": "2026-01-01",
+            "end": "2026-01-29",
+            "percentageUsed": false,
+            "totalSlots": 0,
+            "records": [
+              {
+                "task": "durationTask",
+                "work": 0,
+                "remaining": null,
+                "expectedEnd": "2026-02-10",
+                "status": null
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "tarefa de duração com o end do plano não gera mensagem de end",
+      "kind": "warnOnDelta",
+      "sheets": [
+        {
+          "resource": "dev",
+          "start": "2026-01-01",
+          "end": "2026-01-29",
+          "records": [
+            {
+              "task": "durationTask",
+              "workDays": 0,
+              "expectedEnd": "2026-02-05"
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "messages": [],
+        "sheets": [
+          {
+            "resource": "dev",
+            "start": "2026-01-01",
+            "end": "2026-01-29",
+            "percentageUsed": false,
+            "totalSlots": 0,
+            "records": [
+              {
+                "task": "durationTask",
+                "work": 0,
+                "remaining": null,
+                "expectedEnd": "2026-02-05",
+                "status": null
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "newtask gera ts_res_new_task com o effort restante",
+      "kind": "warnOnDelta",
+      "sheets": [
+        {
+          "resource": "dev",
+          "start": "2026-01-01",
+          "end": "2026-01-29",
+          "records": [
+            {
+              "newtask": "nt1",
+              "name": "Tarefa nova",
+              "workDays": 4,
+              "remainingDays": 6
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "messages": [
+          {
+            "type": "warning",
+            "id": "ts_res_new_task",
+            "message": "Developer is requesting a new task:\n  ID: nt1\n  Name: Tarefa nova\n  Work: 4.0d  Remaining: 6.0d"
+          }
+        ],
+        "sheets": [
+          {
+            "resource": "dev",
+            "start": "2026-01-01",
+            "end": "2026-01-29",
+            "percentageUsed": false,
+            "totalSlots": 32,
+            "records": [
+              {
+                "task": "nt1",
+                "work": 32,
+                "remaining": 48,
+                "expectedEnd": null,
+                "status": null
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "registro pessoal (sem tarefa) é ignorado pelo warnOnDelta",
+      "kind": "warnOnDelta",
+      "sheets": [
+        {
+          "resource": "dev",
+          "start": "2026-01-01",
+          "end": "2026-01-29",
+          "records": [
+            {
+              "workDays": 20,
+              "remainingDays": 0
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "messages": [],
+        "sheets": [
+          {
+            "resource": "dev",
+            "start": "2026-01-01",
+            "end": "2026-01-29",
+            "percentageUsed": false,
+            "totalSlots": 160,
+            "records": [
+              {
+                "task": null,
+                "work": 160,
+                "remaining": 0,
+                "expectedEnd": null,
+                "status": null
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

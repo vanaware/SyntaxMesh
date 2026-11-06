@@ -1,8 +1,15 @@
 import { beforeEach, describe, it, } from "@std/testing/bdd";
-import { assert, assertEquals, assertExists, assertThrows, } from "@std/assert";
+import {
+  assert,
+  assertEquals,
+  assertExists,
+  assertRejects,
+  assertThrows,
+} from "@std/assert";
 import { TaskJuggler, } from "../src/taskjuggler.ts";
 import { Project, } from "../src/model/project.ts";
 import { createTestProject, } from "./fixtures/create-test-project.ts";
+import { fakeOpfs, } from "./helpers/fake-opfs.ts";
 import { TjTime, } from "../src/time/tj-time.ts";
 import { Task, } from "../src/model/task.ts";
 import { NotYetImplementedError, } from "../src/model/errors.ts";
@@ -25,6 +32,17 @@ describe("TaskJuggler", () => {
     assertEquals(tj.generateTraces, false,);
     assertEquals(tj.project, null,);
     assertEquals(tj.parser, null,);
+    // 18.12 — I/O injetado e resultado da última checagem de sheet.
+    assertEquals(tj.fileStore, null,);
+    assertEquals(tj.lastSheetReport, null,);
+  });
+
+  it("setFileStore injeta e remove o store (18.12)", () => {
+    const store = fakeOpfs();
+    tj.setFileStore(store,);
+    assert(tj.fileStore === store,);
+    tj.setFileStore(null,);
+    assertEquals(tj.fileStore, null,);
   });
 
   it("parse lança NotYetImplemented", () => {
@@ -38,12 +56,20 @@ describe("TaskJuggler", () => {
     );
   });
 
-  it("checkTimeSheet lança NotYetImplemented", () => {
-    assertThrows(() => tj.checkTimeSheet("ts.tji",), NotYetImplementedError,);
+  it("checkTimeSheet sem projeto lança (18.12)", async () => {
+    await assertRejects(
+      () => tj.checkTimeSheet("ts.tji",),
+      Error,
+      "Project not set",
+    );
   });
 
-  it("checkStatusSheet lança NotYetImplemented", () => {
-    assertThrows(() => tj.checkStatusSheet("ss.tji",), NotYetImplementedError,);
+  it("checkStatusSheet sem projeto lança (18.12)", async () => {
+    await assertRejects(
+      () => tj.checkStatusSheet("ss.tji",),
+      Error,
+      "Project not set",
+    );
   });
 
   it("projectId/projectName null sem project", () => {

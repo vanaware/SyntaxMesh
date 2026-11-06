@@ -1285,6 +1285,21 @@ deno task test
 
 ---
 
+### 18.17 — Adendo Fase 10 Complemento: `material` em sheets + `picture` em `status`
+
+#### Contexto
+
+A Fase 10 Complemento entregou `material` no parser e `picture`/`format` dentro
+de `status` (Bloco C3.3), mas o consumo ficou aqui: sheets precisam aceitar
+material como alvo de `work`/`remaining`/`status` e `StatusSheetReport`
+precisa listar as alocações de material do cenário de tracking.
+
+> **Especificação completa e atômica:** `fase-18-time-status-sheets-tarefas.md`
+> §18.17 (9 tarefas, 18.17.1–18.17.9), incluindo `unitprice` no registro de
+> material (requisito 14C.11.12) e a regressão de sheets sem material.
+
+---
+
 ### 18.18 — Núcleo dos apps de sheet (`SheetAppBase` + 5 apps)
 
 #### Contexto
@@ -1485,6 +1500,7 @@ assertThrows(() => { mh.outputLevel = 6; }, TjArgumentError);
 18.19 Pipeline dynamicAttributes + parseReportAttributes   (adendo xray §3.4)
 18.18 Núcleo dos apps de sheet (SheetAppBase…)              (adendo xray §3.3)
 18.20 MessageHandler#checkLevel                              (adendo xray §3.4.1)
+18.17 Material/picture nas sheets                            (adendo F10 Complemento)
       ↓
 18.15 Golden tests
 18.16 Verificação final
@@ -1504,23 +1520,31 @@ deno task check-all
 
 passa, e:
 
-- [ ] `TimeSheetRecord`, `TimeSheet`, `TimeSheets` completos.
-- [ ] `SheetHandlerBase`, `SheetSender`, `SheetReceiver`.
-- [ ] `TimeSheetSender`, `TimeSheetReceiver`, `TimeSheetSummary`.
-- [ ] `StatusSheetSender`, `StatusSheetReceiver`.
-- [ ] Interface `FileStore` em Core (ADR 037).
-- [ ] Adaptações browser (`FileStore` injetado, in-process, JSON).
-- [ ] `Project.timeSheets` + `checkTimeSheets` completos.
-- [ ] `TaskJuggler.checkTimeSheet` / `checkStatusSheet` completos.
-- [ ] Núcleo dos apps de sheet (`SheetAppBase` + 5 apps) produzindo **texto de email**
+- [x] `TimeSheetRecord`, `TimeSheet`, `TimeSheets` completos.
+- [x] `SheetHandlerBase`, `SheetSender`, `SheetReceiver`.
+- [x] `TimeSheetSender`, `TimeSheetReceiver`, `TimeSheetSummary`.
+- [x] `StatusSheetSender`, `StatusSheetReceiver`.
+- [x] Interface `FileStore` em Core (ADR 037).
+- [x] Adaptações browser (`FileStore` injetado, in-process, JSON).
+- [x] `Project.timeSheets` + `checkTimeSheets` completos.
+- [x] `TaskJuggler.checkTimeSheet` / `checkStatusSheet` completos.
+- [x] Núcleo dos apps de sheet (`SheetAppBase` + 5 apps) produzindo **texto de email**
       e consumindo **texto de mensagem** — sem SMTP, sem subprocesso (18.18).
-- [ ] Pipeline `dynamicAttributes` (`backup`/`parse`/`restore` + 4º argumento de
+- [x] Pipeline `dynamicAttributes` (`backup`/`parse`/`restore` + 4º argumento de
       `generateReport`) funcional e âncoras `check:stubs` coerentes (18.19).
-- [ ] `MessageHandler#checkLevel` validando 0–5 (18.20).
-- [ ] **≥ 140 testes unitários**.
-- [ ] **≥ 20 golden tests**.
-- [ ] Nenhum `any` em `src/` (exceto onde justificado).
-- [ ] ADRs 036 e 037 criados (029 permanece como Journal e AlertLevel).
+- [x] `MessageHandler#checkLevel` validando 0–5 (18.20).
+- [x] **≥ 140 testes unitários** — 252 em `tests/timesheet/` (94) +
+      `tests/sheets/` (158), sem contar os goldens e o smoke.
+- [x] **≥ 20 golden tests** — 22 de `timesheets` (18.15) + 6 de
+      `dynamic-attributes` (18.19.7).
+- [x] Nenhum `any` em `src/` (exceto onde justificado).
+- [x] ADRs 036 e 037 criados (029 permanece como Journal e AlertLevel).
+
+**Verificação final (18.16, 2026-11-05):** `deno task tests` exit 0
+(`check:all` + `lint` + `fmt:check` + `lint:doc:all` + `test`) · suíte core
+**695 arquivos de teste / 6207 passos / 0 falhas** · goldens regenerados sem
+drift · `check:stubs` OK · smoke
+`tests/integration/smoke_after_phase_18_test.ts`.
 
 ---
 

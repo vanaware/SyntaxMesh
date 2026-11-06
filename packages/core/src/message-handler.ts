@@ -1,18 +1,35 @@
 import { Message, MessageType, } from "./message.ts";
 import { SourceFileInfo, } from "./source-file-info.ts";
-import { TjRuntimeError, } from "./model/errors.ts";
+import { TjArgumentError, TjRuntimeError, } from "./model/errors.ts";
 import { Scenario, } from "./model/scenario.ts";
+
+/**
+ * Níveis de log — espelho de `MessageHandler::LogLevels` (l.121-122). Note que
+ * `error` e `critical` compartilham o nível 2.
+ */
+export const LOG_LEVELS = {
+  none: 0,
+  fatal: 1,
+  error: 2,
+  critical: 2,
+  warning: 3,
+  info: 4,
+  debug: 5,
+} as const;
+
+export type LogLevelName = keyof typeof LOG_LEVELS;
 
 export class MessageHandlerInstance {
   messages: Message[] = [];
   errors: number = 0;
-  outputLevel: number = 2;
-  logLevel: number = 2;
   logFile: string | null = null;
   hideScenario: boolean = false;
   abortOnWarning: boolean = false;
   baselineSFI: SourceFileInfo | null = null;
   trapSetup: boolean = false;
+
+  private _outputLevel: number = 2;
+  private _logLevel: number = 2;
 
   private static _instance: MessageHandlerInstance | null = null;
 
@@ -40,6 +57,47 @@ export class MessageHandlerInstance {
     this.abortOnWarning = false;
     this.baselineSFI = null;
     this.trapSetup = false;
+  }
+
+  /** Nível de mensagens escritas no console (Ruby `outputLevel`, l.175). */
+  get outputLevel(): number {
+    return this._outputLevel;
+  }
+
+  set outputLevel(level: number | LogLevelName,) {
+    this._outputLevel = this.checkLevel(level,);
+  }
+
+  /** Nível de mensagens escritas no arquivo de log (Ruby `logLevel`, l.180). */
+  get logLevel(): number {
+    return this._logLevel;
+  }
+
+  set logLevel(level: number | LogLevelName,) {
+    this._logLevel = this.checkLevel(level,);
+  }
+
+  /**
+   * Valida um nível — espelho de `MessageHandler#checkLevel` (l.233-245).
+   *
+   * Aceita inteiro em `0..5` ou um nome de `LogLevels`. Fora disso lança
+   * `TjArgumentError` com a redação do Ruby (`ArgumentError` l.236/240): para
+   * inteiro fora da faixa a mensagem traz o número; para nome desconhecido o
+   * Ruby sobrescreve `level` com `nil` na atribuição do `unless`, então a
+   * mensagem sai sem o valor.
+   */
+  checkLevel(level: number | LogLevelName,): number {
+    if (typeof level === "number" && Number.isInteger(level,)) {
+      if (level < 0 || level > 5) {
+        throw new TjArgumentError(`Unsupported level ${level}`,);
+      }
+      return level;
+    }
+    const resolved = LOG_LEVELS[level as LogLevelName];
+    if (resolved === undefined) {
+      throw new TjArgumentError("Unsupported level ",);
+    }
+    return resolved;
   }
 
   clear(): void {
