@@ -837,14 +837,28 @@ integração futura apareça como diff explícito.
 
 ## 14C.19 — Atributo `markdown` de `extend` nos relatórios (ADR 039, origem 10-C Bloco C5)
 
+> **Status: ✅ Concluída (2026-11-06).** Testes em
+> `tests/reports/extend-markdown_14c_test.ts` (11 steps, consome o fixture
+> C5.8); suítes de escopo verdes (markdown/export/golden ext: 30 arquivos,
+> 464 steps).
+
 > **Dependência de execução:** só após **C5.1–C5.4** (`fase-10-complemento-tarefas.md`); especificação `fase-10-complemento3.md`. Verificação do que **não muda**: `report-table-cell.ts:72` já trata qualquer `RichTextIntermediate` por duck-typing e `MarkdownAttribute extends RichTextAttribute` vale para todo `instanceof` existente — o pipeline de reports não é tocado.
 
 | # | Tarefa | Arquivos | Verificação |
 |---|--------|----------|-------------|
-| 14C.19.1 | `TableReport`: linha `[AttributeType.Markdown, [false, "left"]]` nos metadados de célula ao lado da linha `RichText` (`table-report.ts:197`); coluna com atributo `markdown` em `taskreport` | `reports/table-report.ts` | 2 testes (célula `to_html` com `<strong>`, célula `to_s` sem markup) |
+| 14C.19.1 | `TableReport`: linha `[AttributeType.Markdown, [false, "left"]]` nos metadados de célula ao lado da linha `RichText` (`table-report.ts:197`); coluna com atributo `markdown` em `taskreport` | `reports/table-report.ts` | 2 testes (célula `to_html` com `<b>`, célula `to_s` sem markup) ✅ — nota: o `strong` do markdown vira `bold` no RichText e serializa `<b>`, nunca `<strong>` |
 | 14C.19.2 | `TextReport`/CSV: texto puro via `rti.to_s()` por herança — cobrir por teste, sem mudança de código esperada | `tests/reports/extend-markdown_14c_test.ts` (novo) | 1 teste |
 | 14C.19.3 | `rtiForReport`/`cellTextForReport` (14C.5.7) com atributo já markdown em report `format markdown`: reparse identity do `inputText` (mesmo resultado); atributo `richtext` mantém a releitura por report do 14C.5 | `reports/report-base.ts` (só se o teste expuser bug) | 2 testes |
-| 14C.19.4 | Sanificação: `to_html()` do atributo `markdown` passa pelo `html-sanitizer` (13.5) — tag bloqueada e `onerror` não vazam; smoke com fixture `10c-extend-markdown.tjp` + coluna de report | `tests/integration/` | 1 teste + suíte verde |
+| 14C.19.4 | Sanificação: `to_html()` do atributo `markdown` passa pelo `html-sanitizer` (13.5) — tag bloqueada e `onerror` não vazam; smoke com fixture `10c-extend-markdown.tjp` + coluna de report | `tests/reports/extend-markdown_14c_test.ts` (em vez de `tests/integration/`) | 1 teste + suíte verde ✅ |
+
+**Evidências de execução (14C.19):**
+
+| # | O que foi verificado | Resultado |
+|---|---|---|
+| 14C.19.1 | Linha Markdown em `propertiesByType`; `alignment("Claim", Markdown) == "left"`; célula da grade `mdcols` com `alignment left` e `to_html` `<b>Efetivo:</b>` | ✅ 2 steps |
+| 14C.19.2 | `to_s` da célula = `"Efetivo: 15 pedreiros"` (sem asteriscos); atributo sem markup idêntico em `to_s`/`to_html` | ✅ 2 steps |
+| 14C.19.3 | Célula markdown em report `format markdown` **é o próprio RTI armazenado** (guard `richText instanceof RichText` não reinterpreta); atributo `richtext` ao lado é **recriado** pelo pipeline markdown (`mdIntro.text !== storedIntro`), com `inputText` preservado (C5.7). A troca é de **dialeto**, não de ênfase: `'''…'''` MediaWiki não é sintaxe markdown e permanece literal no RTI recriado — comportamento 14C.5.7 inalterado, nenhum bug exposto em `report-base.ts` | ✅ 1 step (asserções reescritas para a realidade do motor) |
+| 14C.19.4 | `<script>`/`onerror` do bloco tesoura de `t2` não vazam na célula nem no documento HTML gerado; texto inerte sobrevive | ✅ 2 steps |
 
 ---
 
@@ -852,8 +866,9 @@ integração futura apareça como diff explícito.
 
 - **ADRs afetados:** 027 (adendo 14C.5.12 — default `richtext`/opt-in
   `markdown` nos reports); **039** (14C.19 / 10-C C5 — tipo `markdown` em
-  `extend`, PLANEJADA em 2026-11-06); nenhum outro ADR novo (as três diretivas
-  de C6 são extensões documentadas aqui e nas tabelas de atributos).
+  `extend`, entregue 2026-11-06: C5.1–C5.8 + 14C.19.1–14C.19.4); nenhum outro
+  ADR novo (as três diretivas de C6 são extensões documentadas aqui e nas
+  tabelas de atributos).
 - **Divergências rastreadas (não corrigidas):** `Material#name` espelha o id
   (14C.6.8) — TJP/MSPDI mostram `aco`, não o texto do cabeçalho;
   `name`/`projectid`/`version` do projeto não são consultáveis por `query`

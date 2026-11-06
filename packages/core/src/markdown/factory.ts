@@ -44,17 +44,28 @@ export class MarkdownFactory implements RichTextFactory {
     const preprocessed = pipeline.preprocess(text,);
     const mdast = parseMdast(preprocessed,);
     const postprocessed = pipeline.postprocessMdast(mdast,);
-    return this.buildRti(postprocessed,);
+    // C5.7 (ADR 039): o back-pointer `richText` do RTI carrega o texto de
+    // origem — `RichTextAttribute#to_tjp` (fiel a Ruby) lê `inputText` para o
+    // round-trip do export. O shim preserva `this` como factory para os
+    // consumidores que recriam o RTI (report-base 14C.5.7 guarda o instanceof
+    // RichText, então markdown nunca é reconvertido por engano).
+    return this.buildRti(postprocessed, text,);
   }
 
   /** Variante que aceita `mdast` já parseada (pula preprocess+parse). */
   createFromMdast(mdast: MdastRoot,): RichTextIntermediate {
-    return this.buildRti(mdast,);
+    return this.buildRti(mdast, "",);
   }
 
   /** Monta o RTI a partir da AST pós-processada. */
-  private buildRti(mdast: MdastRoot,): RichTextIntermediate {
-    const rti = new RichTextIntermediate(this,);
+  private buildRti(
+    mdast: MdastRoot,
+    sourceText: string,
+  ): RichTextIntermediate {
+    const rti = new RichTextIntermediate({
+      factory: this,
+      inputText: sourceText,
+    },);
     // Registra handlers padrão (query, report, reportlink, navigator).
     for (
       const handler of RTFHandlers.create(this.project, this.sourceFileInfo,)

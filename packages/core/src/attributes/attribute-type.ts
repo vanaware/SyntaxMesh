@@ -66,5 +66,10 @@ export enum AttributeType {
 
   // Ricos
   RichText = "richtext",
+  /**
+   * Extensão SyntaxMesh (ADR 039): `markdown` em `extend`. Mesmo contrato de
+   * `RichText`; o dialeto só importa para a reimpressão da declaração.
+   */
+  Markdown = "markdown",
   DefinitionList = "definitionlist",
 }

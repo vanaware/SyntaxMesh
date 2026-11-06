@@ -90,23 +90,23 @@ O que foi decidido? Seja específico e acionável.
 | 030 | Arquitetura simplificada: todo código principal em `packages/core` | Aceito | 2026-10-24 |
 | 031 | Modelo Contábil Estendido (repete 020; ver arquivo) | Proposto | — |
 | 032 | Gate de saída para Fase 13 e política de stubs | Aceito | 2026-10-28 |
-| 033 | Reservado — Template (Vento), Fase 23 | Reservado | — |
+| 033 | Elemento `template` (Vento) como extensão de linguagem | Aceito | 2026-11-06 |
 | 034 | Reservado — CLI (`packages/cli`), Fase 24 | Reservado | — |
 | 035 | Reservado — Extensão VS Code + lsp-core, Fase 22 | Reservado | — |
 | 036 | Sheets sem SMTP: sender devolve o **texto do email**, receiver consome **texto de mensagem** | Aceito | 2026-11-05 |
 | 037 | Injeção de `FileStore`/`KeyValueStore` no core | Aceito | 2026-11-05 |
 | 038 | Substituição de XML/HTML/ICalendar/Painter mínimos (Fase 17) | Aceito | 2026-11-04 |
-| 039 | Tipo `markdown` em `extend` (extensão SyntaxMesh — 10-C Bloco C5 / 14C.19) | Proposto | 2026-11-06 |
+| 039 | Tipo `markdown` em `extend` (extensão SyntaxMesh — 10-C Bloco C5 / 14C.19) | Aceito | 2026-11-06 |
 
 > **Reserva de números (decisão 2026-11-03 — `docs/syntaxmesh/xray.md` §5.3):**
 > 029–032 existem (`029-journal-alertlevel.md`, entregue na Fase 16 em
-> 2026-11-03). **033–035** seguem a ordem oficial de execução
-> (23 → 24 → 22). **036** (`036-sheets-sem-smtp.md`) e **037**
+> 2026-11-03). **033** (`033-elemento-template.md`) foi entregue na Fase 23
+> (2026-11-06); **034–035** seguem a ordem oficial de execução (24 → 22).
+> **036** (`036-sheets-sem-smtp.md`) e **037**
 > (`037-filestore-injection.md`) foram entregues na Fase 18 (2026-11-05).
 > **038** (`038-substituicao-xml.md`) foi entregue na Fase 17 (2026-11-04).
-> **039** (`039-extend-markdown.md`) aberta em 2026-11-06 como **Proposto**
-> (plano `fase-10-complemento3.md`; implementação pendente nos Blocos
-> C5/14C.19).
+> **039** (`039-extend-markdown.md`) aberta em 2026-11-06 e **aceita** no mesmo
+> dia (implementada nos Blocos C5/14C.19 — fixtures + testes verdes).
 > **Nunca renumerar ADRs existentes** — os arquivos 027/028
 > já commitados são referência histórica; ao criar um ADR, conferir antes esta
 > tabela e usar o próximo número livre. A cadeia 033–037 deve ser **reconciliada na

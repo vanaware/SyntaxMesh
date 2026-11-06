@@ -237,6 +237,8 @@ const keywords: Record<CanonicalKeyword, string[]> = {
   taskreport: ["infotarea",],
   taskroot: ["raiztarea",],
   tasks: ["tareas",],
+  // Fase 23 — elemento `template` (extensión SyntaxMesh).
+  template: ["plantilla",],
   text: ["texto",],
   textreport: ["infotexto",],
   thu: ["jue",],

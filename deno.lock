@@ -41,6 +41,8 @@
     "npm:mdast-util-gfm@3": "3.1.0",
     "npm:micromark-extension-gfm@3": "3.0.0",
     "npm:micromark@4": "4.0.3",
+    "npm:ventojs@*": "2.4.2",
+    "npm:ventojs@2.4.2": "2.4.2",
     "npm:wrangler@*": "4.149.0_@cloudflare+workers-types@5.20260830.1"
   },
   "jsr": {
@@ -1300,6 +1302,9 @@
         "unist-util-visit-parents"
       ]
     },
+    "ventojs@2.4.2": {
+      "integrity": "sha512-8s/OVgVTiw8njyJRd98qVVcLKmZ7VHLw8zeBDji8TiC6k+myEBHok2QvZcRnKEmlF6BbFlc2887XAWaBY5Ep7Q=="
+    },
     "workerd@1.20261006.1": {
       "integrity": "sha512-8MadBuffZ5NdpLwZjUmsqT5QlaKXq4gjgT6wzcKeynZTICNXyePhc+5QVoKiK7+MMhFTLNrRO2KXLlpk8Q6BkA==",
       "optionalDependencies": [
@@ -1388,7 +1393,8 @@
           "npm:mdast-util-from-markdown@2",
           "npm:mdast-util-gfm@3",
           "npm:micromark-extension-gfm@3",
-          "npm:micromark@4"
+          "npm:micromark@4",
+          "npm:ventojs@2.4.2"
         ]
       },
       "packages/server": {

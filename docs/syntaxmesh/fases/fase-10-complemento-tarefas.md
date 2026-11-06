@@ -7,7 +7,7 @@
 > **Concluídas:** Blocos C0–C4 implementados e testadas em `packages/core`. Modelo (`note`/`journal` em resource/account; `Material` registrado + `MaterialScenario` + `effortdone`/`effortleft`; `timebasis` + `resolveTimebasis` + `distribution.ts`), parser (`material`/`supplement material`/`note`/`journalentry`/`picture`/`format`/`timebasis`/`breakdownreport`/`rdoreport`/colunas novas/`hidejournalentry`), i18n (en/pt-BR/es com AST equivalente) e golden (regressão parser idêntica; fixtures de extensão). Suíte core: 279 testes / 2994 passos, 0 falhas; `golden:generate` idempotente; `fmt`/`lint`/`check` verdes. RichText (`note`) adiado para a Fase 12 (lança `NotYetImplementedError`).
 > **Fonte Ruby:** nada no `tj3` para `material`/`picture`/`rdoreport`/`breakdownreport`/`timebasis` (extensões). `note`/`journalentry`/`supplement` **existem** no TJ (task/resource/account) — portar fiel o que existe, estender onde é novo.
 > **Convenção:** seguir `docs/syntaxmesh/fases/modelo-tarefas.md` e as regras de `09-regras-para-ia.md`. Sem `any` em `src/`.
-> **Adendo 2026-11-06 (Bloco C5):** tipo `markdown` em `extend` — especificação `fase-10-complemento3.md`, ADR 039. **Status: PLANEJADA** (C5.1–C5.8 pendentes; único bloco aberto neste arquivo).
+> **Adendo 2026-11-06 (Bloco C5):** tipo `markdown` em `extend` — especificação `fase-10-complemento3.md`, ADR 039. **Status: ✅ CONCLUÍDO (2026-11-06)** — C5.1–C5.8 entregues; consumo em relatórios entregue na 14C.19.
 
 ---
 
@@ -224,9 +224,23 @@ Hoje `Material` (`model/material.ts`) **não** é registrado em um `PropertySet`
 | C5.3 | Criar `MarkdownAttribute extends RichTextAttribute` com `static readonly tjpId = "markdown"` e **zero métodos novos**; re-exportar no `mod.ts` dos atributos | `attributes/rich/markdown-attribute.ts` (novo), `attributes/mod.ts` | `deno check` + 1 teste (herança de `to_s`/`to_tjp` com prefixo `markdown`) |
 | C5.4 | Parser: padrão `["_markdown", "!extendId", "$STRING", "!extendOptionsBody"]` em `extendAttributes` chamando `extendAttr(this, AttributeType.Markdown, null, ["$STRING"], pr => pr.newRichText(text, sfi, null, "markdown"))` + `p.arg(2, "name", ...)` espelhando `_richtext` | `parser/rules/scenario.ts` | 1 teste (AST/registro no PropertySet) |
 | C5.5 | i18n/scanner: **verificar** (não desenvolver) — `markdown` já é canônica (`canonical.ts`/pt-BR/es, C3.9) e tokeniza `_markdown`; teste de equivalência de AST para `extend` com `markdown` nos 3 idiomas | `tests/lexer/`, `tests/ast-equivalence-complemento_test.ts` | 2+ testes |
-| C5.6 | Testes BDD de ponta a ponta: `extend task { markdown Claim "Claim" }` + `task t { Claim -8<-**x**->8- }` → `to_s() == "x"`, `to_html()` contém `<strong>x</strong>`; opções `scenariospecific`/`inherit` funcionam; id minúsculo → erro `extendId` | `tests/parser/extend-markdown_test.ts` (novo) | 4+ testes |
-| C5.7 | Round-trip TJP-export: `tjp-export-re` declara `markdown Claim "Claim"` (via `objClass.tjpId`) e o texto exportado re-parseia no mesmo dialeto (RTI markdown, não MediaWiki) | `tests/reports/tjp-export_test.ts` (ou novo `_roundtrip`) | 2 testes |
-| C5.8 | Fixture de extensão `tests/fixtures/ext/10c-extend-markdown.tjp` + exemplo documentado `examples/extend-markdown.tjp`; ADR 039 ligada do doc | `tests/fixtures/ext/`, `examples/` | fixture carrega; revisão |
+| C5.6 | Testes BDD de ponta a ponta: `extend task { markdown Claim "Claim" }` + `task t { Claim -8<-**x**->8- }` → `to_s() == "x"`, `to_html()` contém `<b>x</b>` (o `strong` do markdown vira `bold` no RichText — nunca `<strong>`); opções `scenariospecific`/`inherit` funcionam; id minúsculo → erro `extendId` | `tests/parser/extend-markdown_test.ts` (novo) | 4+ testes |
+| C5.7 | Round-trip TJP-export: `tjp-export-re` declara `markdown Claim "Claim"` (via `objClass.tjpId`) e o texto exportado re-parseia no mesmo dialeto (RTI markdown, não MediaWiki) | `tests/parser/extend-markdown_test.ts` (describe C5.7, em vez de `tjp-export_test.ts`) | 2 testes |
+| C5.8 | Fixture de extensão `tests/fixtures/ext/10c-extend-markdown.tjp` (o "exemplo documentado" vive na fixture + §2 de `fase-10-complemento3.md`: o repositório **não tem diretório `examples/`** — decisão de execução para não criar estrutura nova); ADR 039 ligada do doc | `tests/fixtures/ext/`, `tests/golden/extension-fixtures_golden_test.ts` | fixture carrega; revisão |
+
+**Evidências de execução (Bloco C5, 2026-11-06):**
+
+| # | Evidência | Resultado |
+|---|---|---|
+| C5.1 | `rules/scenario.ts`: padrão `_richtext` agora chama `extendAttr(this, AttributeType.RichText, ...)`; teste "tipo registrado" + TJP-export declara `richtext` | ✅ suíte `rules_scenario_test` + `rich-attributes` verdes |
+| C5.2/C5.3 | `AttributeType.Markdown` + switches em `attribute-definition.ts`; `MarkdownAttribute extends RichTextAttribute` (tjpId `markdown`, zero métodos novos) — a sobrescrita exigiu alargar `RichTextAttribute.tjpId` para `: string` (literal TS estreitava o static) | ✅ `deno check` limpo; herança `to_s`/`to_tjp` testada |
+| C5.4 | Padrão `["_markdown", "!extendId", "$STRING", "!extendOptionsBody"]` com callback `newRichText(..., "markdown")` | ✅ AST/registro no PropertySet testado |
+| C5.5 | i18n/scanner **verificados** (não desenvolvidos): `markdown` já era canônica; tokenização `_markdown` confirmada com trace do scanner; equivalência de AST en/pt-BR/es no describe i18n de `extend-markdown_test.ts` + `ast-equivalence-complemento_test.ts` | ✅ 15 arquivos / 49 steps verdes |
+| C5.6 | 7 steps: `to_s`/`to_html` (`<b>`), scissors, `scenariospecific`, `inherit`, id minúsculo → erro. Sanitização usa bloco tesoura: aspas desbalanceadas numa dq-string consomem até o EOF (`runaway_token`) — **fiel ao scanner Ruby** (`ProjectFileScanner.rb:103-107`), não bug do motor | ✅ |
+| C5.7 | Round-trip export→re-parse verde. Dois fixes de produção **fora do plano**, descobertos pelo teste: (1) `MarkdownFactory` agora grava `inputText` no back-pointer do RTI (shim `{ factory, inputText }`) — sem isso `RichTextAttribute#to_tjp` exportava `Claim ""`; (2) `tjp-export-re` `generateProjectProperty` usa os campos `p.id/p.name/p.version` como fallback (port os guarda como campos, não atributos) + espaçamento `extend task {` | ✅ 2 steps + regressão export/markdown (20 arquivos/427 steps) verde |
+| C5.8 | Fixture parseia com 0 mensagens; golden test com 3 steps (tipos de atributo, RTI vs RichTextAttribute, `scenariospecific`/`inherit`) — API notável: `project.task()` indexa por **fullId pontuado** (`"fase.t1"`) | ✅ 5 arquivos / 11 steps verdes |
+
+**Consumo de relatórios:** entregue em **14C.19** (`fase-14-relatorios-complemento-tarefas.md`), testes em `tests/reports/extend-markdown_14c_test.ts`.
 
 **Fora de escopo C5:** consumo em relatórios (→ 14C.19 no complemento da Fase 14); `format markdown` por atributo (o tipo já é o dialeto); migração de `note`/`details` internos.
 

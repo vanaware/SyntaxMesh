@@ -1,6 +1,6 @@
 # ADR 039 — Tipo `markdown` em `extend` (atributo dinâmico)
 
-**Status:** Proposto (planejado; implementação nos Blocos C5 / 14C.19)
+**Status:** Aceito (implementado e verificado em 2026-11-06 — Blocos C5/C5.1–C5.8 e 14C.19/14C.19.1–14C.19.4)
 **Data:** 2026-11-06
 **Fase:** 10 Complemento (parser/modelo) + 14 Complemento (consumo em relatórios)
 
@@ -67,8 +67,34 @@ Markdown: hoje `markdown Claim "Claim"` dentro de `extend` é erro de sintaxe.
 - `markdown` já é keyword canônica i18n (entregue em C3.9) — sem trabalho novo.
 - Atributos internos (`note`, `details`, `unitprice`...) permanecem `richtext`
   por default; migração fica a cargo do usuário.
-- Interação com report `format markdown`: reparse identity do `inputText`
-  (verificação 14C.19.3), sem mudança à semântica de 14C.5.
+- Interação com report `format markdown` (verificada em 14C.19.3): o guard
+  `richText instanceof RichText` de `rtiForReport` devolve o RTI armazenado
+  para atributos markdown (não há reconversão) e **recria** o RTI dos
+  atributos `richtext` no dialeto markdown — troca de dialeto, não de
+  ênfase: `'''…'''` MediaWiki não é sintaxe markdown e permanece literal.
+  Sem mudança à semântica de 14C.5.
+
+## Implementação (registro 2026-11-06)
+
+- Código: `parser/rules/scenario.ts` (padrões `_markdown` + fix `_richtext`),
+  `attributes/attribute-type.ts`, `attributes/attribute-definition.ts`,
+  `attributes/rich/markdown-attribute.ts` (novo), `reports/table-report.ts`
+  (linha Markdown em `propertiesByType`).
+- Fixes de produção descobertos pelo round-trip C5.7 (fora do plano):
+  `markdown/factory.ts` passa a gravar `inputText` no back-pointer do RTI
+  (shim `{ factory, inputText }`) — sem isso `to_tjp` exportava `Claim ""`;
+  `reports/tjp-export-re.ts` usa `p.id/p.name/p.version` como fallback no
+  cabeçalho `project` (o port guarda esses valores como campos, não
+  atributos) e emite `extend task {` com o espaço correto.
+- Testes: `tests/parser/extend-markdown_test.ts`,
+  `tests/golden/extension-fixtures_golden_test.ts` (describe C5.8),
+  `tests/reports/extend-markdown_14c_test.ts`, fixture
+  `tests/fixtures/ext/10c-extend-markdown.tjp`. O "exemplo documentado" de
+  C5.8 vive na fixture + §2 da especificação (não há diretório `examples/`
+  no repositório — decisão de execução).
+- Serialized HTML: o `strong` do markdown vira `bold` no RichText (`<b>`,
+  nunca `<strong>`) — as verificações C5.6/14C.19.1 foram escritas contra o
+  comportamento real do motor.
 
 ## Referências
 

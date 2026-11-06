@@ -21,6 +21,7 @@
     "mdast-util-from-markdown": "npm:mdast-util-from-markdown@^2",
     "mdast-util-gfm": "npm:mdast-util-gfm@^3",
     "mdast": "npm:@types/mdast@^4",
+    "vento": "npm:ventojs@2.4.2",
     "fflate": "npm:fflate@^0.8"
   },
   "tasks": {

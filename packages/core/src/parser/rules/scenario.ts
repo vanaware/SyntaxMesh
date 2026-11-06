@@ -308,15 +308,46 @@ export function registerScenarioRules(p: ProjectFileParser,): void {
     p.pattern(
       ["_richtext", "!extendId", "$STRING", "!extendOptionsBody",],
       function (this: ProjectFileParser,): unknown {
+        // C5.1 (ADR 039): fiel a Ruby — extendPropertySetDefinition(
+        // RichTextAttribute) (TjpSyntaxRules.rb:1322), não StringAttribute.
         extendAttr(
           this,
-          AttributeType.String,
+          AttributeType.RichText,
           null,
           ["$STRING",],
           (pr,) =>
             pr.newRichText(
               String(pr.val[1],),
               pr.sourceFileInfo[1] ?? pr.getSourceFileInfo()!,
+            ),
+        );
+        return null;
+      },
+    );
+    p.arg(
+      2,
+      "name",
+      "The name of the new attribute. It is used as header in report " +
+        "columns and the like.",
+    );
+
+    // Extensão SyntaxMesh (ADR 039): `markdown` em `extend` — mesmo valor
+    // (RichTextIntermediate) do `richtext`, produzido pela MarkdownFactory
+    // (seam 14C.5.1). Sem correspondente no TJ; o nome do tipo É o dialeto.
+    p.pattern(
+      ["_markdown", "!extendId", "$STRING", "!extendOptionsBody",],
+      function (this: ProjectFileParser,): unknown {
+        extendAttr(
+          this,
+          AttributeType.Markdown,
+          null,
+          ["$STRING",],
+          (pr,) =>
+            pr.newRichText(
+              String(pr.val[1],),
+              pr.sourceFileInfo[1] ?? pr.getSourceFileInfo()!,
+              null,
+              "markdown",
             ),
         );
         return null;

@@ -19,7 +19,9 @@ export class RichTextAttribute extends AttributeBase<unknown> {
   /**
    * ID do tipo de atributo para RichTextAttribute.
    */
-  static readonly tjpId = "richtext";
+  // `string` (não o literal) para permitir que MarkdownAttribute sobrescreva
+  // com `override` (C5.3, ADR 039) sem violar a tipagem estática da classe.
+  static readonly tjpId: string = "richtext";
 
   /**
    * Converte o valor para string.

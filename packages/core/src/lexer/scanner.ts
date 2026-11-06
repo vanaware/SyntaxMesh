@@ -10,7 +10,8 @@
 import { type MessageType, } from "../message.ts";
 import { MessageHandlerInstance, } from "../message-handler.ts";
 import { SourceFileInfo, } from "../source-file-info.ts";
-import { Macro, MacroTable, } from "./macro-table.ts";
+import { Macro, MacroTable, Template, } from "./macro-table.ts";
+import type { AddTemplateResult, } from "./macro-table.ts";
 import {
   BufferStreamHandle,
   FileStreamHandle,
@@ -296,9 +297,29 @@ export class Scanner implements ScannerHostLike {
     this.macroTable.add(macro,);
   }
 
-  /** true se a macro _name_ já foi definida (Ruby `macroDefined?`). */
+  /**
+   * Registra um template no namespace unificado (extensão Fase 23).
+   * Devolve o motivo da recusa para o chamador emitir a mensagem com o
+   * `SourceFileInfo` da definição (ADR 033).
+   */
+  addTemplate(template: Template,): AddTemplateResult {
+    return this.macroTable.addTemplate(template,);
+  }
+
+  /** true se _name_ é um template registrado (extensão Fase 23). */
+  templateDefined(name: string,): boolean {
+    return this.macroTable.templateDefined(name,);
+  }
+
+  /**
+   * true se a macro _name_ já foi definida (Ruby `macroDefined?`).
+   *
+   * Predicado **macro-only**: um template de mesmo nome não conta (o
+   * namespace é compartilhado, mas a redefinição de macro continua sendo o
+   * warning do Ruby — ADR 033).
+   */
   macroDefined(name: string,): boolean {
-    return this.macroTable.includes(name,);
+    return this.macroTable.macroDefined(name,);
   }
 
   /**

@@ -46,6 +46,7 @@ import { FormatListAttribute, } from "./format/format-list-attribute.ts";
 import { SortListAttribute, } from "./format/sort-list-attribute.ts";
 import { JournalSortListAttribute, } from "./format/journal-sort-list-attribute.ts";
 import { RichTextAttribute, } from "./rich/rich-text-attribute.ts";
+import { MarkdownAttribute, } from "./rich/markdown-attribute.ts";
 import { DefinitionListAttribute, } from "./rich/definition-list-attribute.ts";
 
 /**
@@ -244,6 +245,10 @@ export class AttributeDefinition<T,> {
         return "JournalSortListAttribute";
       case AttributeType.RichText:
         return "RichTextAttribute";
+      // Extensão SyntaxMesh (ADR 039): sem correspondente no Ruby — só
+      // user-defined em `extend`, nunca aparece nos goldens de atributos.
+      case AttributeType.Markdown:
+        return "MarkdownAttribute";
       case AttributeType.DefinitionList:
         return "DefinitionListAttribute";
       default:
@@ -477,6 +482,12 @@ export class AttributeDefinition<T,> {
         ) => AttributeBase<unknown>;
       case AttributeType.RichText:
         return RichTextAttribute as unknown as new (
+          property: PropertyLike,
+          type: AttributeDefinition<unknown>,
+          container: AttributeContainer,
+        ) => AttributeBase<unknown>;
+      case AttributeType.Markdown:
+        return MarkdownAttribute as unknown as new (
           property: PropertyLike,
           type: AttributeDefinition<unknown>,
           container: AttributeContainer,

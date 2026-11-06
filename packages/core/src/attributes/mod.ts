@@ -42,5 +42,6 @@ export * from "./format/format-list-attribute.ts";
 export * from "./format/sort-list-attribute.ts";
 export * from "./format/journal-sort-list-attribute.ts";
 export * from "./rich/rich-text-attribute.ts";
+export * from "./rich/markdown-attribute.ts";
 export * from "./rich/definition-list-attribute.ts";
 export * from "./rich/rich-text-port.ts";

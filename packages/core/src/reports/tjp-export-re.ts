@@ -129,8 +129,15 @@ export class TjpExportRE extends ReportBase {
 
   private generateProjectProperty(): void {
     const p = this.project;
-    this.file += `project ${p.get("projectid",)} "${p.get("name",)}" ` +
-      `"${p.get("version",)}" ${p.get("start",)} - ${p.get("end",)} {\n`;
+    // Ruby lê `@project['projectid'/'name'/'version']` (são atributos no TJ);
+    // no port esses três vivem como campos do `Project` e só entram no mapa
+    // de atributos quando declarados por `projectid`/`project`. O fallback
+    // mantém o round-trip (parse → export → parse) possível — C5.7/ADR 039.
+    const pid = p.get("projectid",) ?? p.id;
+    const pname = p.get("name",) ?? p.name;
+    const pver = p.get("version",) ?? p.version;
+    this.file += `project ${pid} "${pname}" ` +
+      `"${pver}" ${p.get("start",)} - ${p.get("end",)} {\n`;
     const granularity = p.get("scheduleGranularity",) as number;
     if (granularity !== 3600) {
       this.generateAttributeText(
@@ -183,7 +190,7 @@ export class TjpExportRE extends ReportBase {
     },);
     if (customAttributes === 0) return;
 
-    this.file += "  extend " + tag + "{\n";
+    this.file += "  extend " + tag + " {\n";
     propertySet.eachAttributeDefinition((ad,) => {
       if (!(ad.userDefined && attributes.includes(ad.id,))) return;
       const tjpId = (ad.objClass as unknown as { tjpId?: string }).tjpId ??

@@ -14,7 +14,7 @@ import { TjTime, } from "../../time/tj-time.ts";
 import { Percent, } from "../../time/percent.ts";
 import { Project, } from "../../model/project.ts";
 import { TimeInterval, } from "../../time/time-interval.ts";
-import { Macro, } from "../../lexer/macro-table.ts";
+import { Macro, Template, } from "../../lexer/macro-table.ts";
 import type { ProjectFileParser, } from "../project-file-parser.ts";
 import { rule, } from "./helpers.ts";
 
@@ -716,15 +716,22 @@ export function registerCommonRules(p: ProjectFileParser,): void {
       ["_macro", "$ID", "$MACRO",],
       function (this: ProjectFileParser,): unknown {
         const name = String(this.val[1],);
+        const sfi = this.sourceFileInfo[0] ?? this.getSourceFileInfo()!;
         if (this.scannerHasMacro(name,)) {
+          // Caminho congelado do Ruby (Fase 10): macro+macro é warning.
           this.warning("marco_redefinition", `Redefining macro ${name}`,);
+        } else if (this.scannerHasTemplate(name,)) {
+          // Namespace unificado (Fase 23, §4.5): colisão com template é erro.
+          this.error(
+            "name_redefined",
+            `'${name}' já definido como template; não pode ser redefinido ` +
+              "como macro",
+            sfi,
+          );
+          return null;
         }
         this.addScannerMacro(
-          new Macro(
-            name,
-            String(this.val[2],),
-            this.sourceFileInfo[0] ?? this.getSourceFileInfo()!,
-          ),
+          new Macro(name, String(this.val[2],), sfi,),
         );
         return null;
       },
@@ -736,6 +743,48 @@ export function registerCommonRules(p: ProjectFileParser,): void {
         "double-quoted. ${?foo} expands to nothing if foo is undefined.",
     );
     p.example("Macro-1",);
+  },);
+
+  // Extensão SyntaxMesh (Fase 23, ADR 033): `template` reusa a coleta de
+  // corpo da macro e acrescenta a lista de parâmetros nomeados.
+  rule(p, "template", () => {
+    p.pattern(
+      ["_template", "$ID", "$TEMPLATE",],
+      function (this: ProjectFileParser,): unknown {
+        const name = String(this.val[1],);
+        const body = String(this.val[2],);
+        const sfi = this.sourceFileInfo[0] ?? this.getSourceFileInfo()!;
+        const params = this.takeScannerTemplateParams();
+        const added = this.addScannerTemplate(
+          new Template(name, body, params, sfi,),
+        );
+        if (!added.ok) {
+          if (added.reason === "bad_name") {
+            this.error(
+              "template_bad_name",
+              "nome de template deve começar com letra maiúscula: " +
+                `'${name}'`,
+              sfi,
+            );
+          } else {
+            this.error(
+              "template_redefined",
+              `'${name}' já definido como ${added.existing}; não pode ser ` +
+                "redefinido como template",
+              sfi,
+            );
+          }
+        }
+        return null;
+      },
+    );
+    p.doc(
+      "template",
+      "Defines a template rendered by the Vento engine: template CARD " +
+        '[ task {{ id }} "{{ nome }}" ] (id, nome). Called with ${CARD ' +
+        'id="t1" nome="Design"}.',
+    );
+    p.example("Template-1",);
   },);
 
   const suppSet = function (this: ProjectFileParser,): unknown {

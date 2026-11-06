@@ -195,6 +195,10 @@ export abstract class TableReport extends ReportBase {
     [AttributeType.Float, [false, "right",],],
     [AttributeType.ResourceList, [false, "left",],],
     [AttributeType.RichText, [false, "left",],],
+    // 14C.19.1 (ADR 039): colunas de atributo `markdown` em `extend` são texto
+    // rico como as de `richtext` — sem esta linha o alinhamento caía em
+    // "center" (fallback de `alignment`).
+    [AttributeType.Markdown, [false, "left",],],
     [AttributeType.String, [false, "left",],],
   ],);
 

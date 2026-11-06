@@ -1,0 +1,84 @@
+# 10 Complemento 3 (Bloco C5, ADR 039) — tipo `markdown` em `extend`.
+#
+# Fixture de extensão (sem oracle no TaskJuggler Ruby: o TJ 3.8.4 só tem
+# `richtext` em `extend`, TjpSyntaxRules.rb:1321). Cobre:
+#   - `markdown` declarando atributo de task e de resource;
+#   - valor em string dupla e em bloco tesoura `-8<- ... ->8-`;
+#   - opções `scenariospecific` e `inherit`;
+#   - o fix C5.1: `richtext` em `extend` registra RichTextAttribute (não
+#     StringAttribute), então `'''markup'''` vira RTI de verdade;
+#   - consumo nos relatórios: coluna de table-report e export TJP (14C.19).
+#
+# Consomado por tests/golden/extension-fixtures_golden_test.ts e
+# tests/reports/extend-markdown_14c_test.ts.
+
+project extmd "Extend Markdown 10C" "1.0" 2026-04-01 - 2026-04-30 {
+  timezone "UTC"
+  now 2026-04-01
+
+  extend task {
+    markdown Claim "Claim"
+    markdown Risk "Risk" { scenariospecific }
+    markdown Note2 "Note 2" { inherit }
+    richtext Intro "Intro"
+  }
+
+  extend resource {
+    markdown Bio "Bio"
+  }
+}
+
+resource alice "Alice" {
+  Bio "**Senior** dev"
+}
+
+task fase "Fase" {
+  start 2026-04-01
+  end 2026-04-10
+
+  task t1 "Tarefa 1" {
+    start 2026-04-01
+    end 2026-04-05
+    Claim "**Efetivo:** 15 pedreiros"
+    Risk -8<-
+- **Alto**: chuva
+- **Baixo**: atraso de insumos
+->8-
+    Note2 "valor próprio da tarefa"
+    Intro "'''abertura'''"
+  }
+
+  task t2 "Tarefa 2" {
+    start 2026-04-06
+    end 2026-04-10
+    Claim "Sem markup, só texto"
+    # 14C.19.4 — HTML cru num bloco tesoura markdown: o `html-sanitizer` da
+    # 13.5 remove a tag e os atributos de evento; o texto permanece inerte.
+    Note2 -8<-
+Texto com <script>alert("inerte")</script> e <img src=x onerror="mau()">.
+->8-
+  }
+}
+
+# 14C.19.1/19.2 — coluna de atributo `markdown` numa grade: célula rica
+# (alinhada à esquerda, `to_html` com `<b>`) e texto puro no CSV.
+taskreport mdcols "Colunas markdown" {
+  formats html
+  columns name, start, effort, Claim, Risk, Note2, Intro
+}
+
+# 14C.19.3 — relatório `format markdown` exibindo um atributo que JÁ é
+# markdown (não pode ser reconvertido) ao lado de um `richtext` (que o
+# 14C.5.7 re-lê no dialeto do relatório).
+taskreport mdfmt "Colunas em format markdown" {
+  formats html
+  format markdown
+  columns name, Claim, Intro
+}
+
+# Contraparte default (richtext): os mesmos dois atributos no dialeto do
+# relatório, para comparar com mdfmt.
+taskreport rtfmt "Colunas no default richtext" {
+  formats html
+  columns name, Claim, Intro
+}

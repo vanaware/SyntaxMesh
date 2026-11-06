@@ -19,7 +19,8 @@ import { AttributeOverwrite, } from "../model/errors.ts";
 import { AttributeType, } from "../attributes/attribute-type.ts";
 import { globalRegistry, LanguageRegistry, } from "../i18n/mod.ts";
 import { loadFileText, type LogLike, } from "../lexer/stream-handle.ts";
-import { Macro, } from "../lexer/macro-table.ts";
+import { Macro, Template, } from "../lexer/macro-table.ts";
+import type { AddTemplateResult, } from "../lexer/macro-table.ts";
 import { ProjectFileScanner, } from "../lexer/project-file-scanner.ts";
 import { MessageHandlerInstance, } from "../message-handler.ts";
 import { Limits, } from "../scheduling/limits.ts";
@@ -169,6 +170,7 @@ export class ProjectFileParser extends TextParser {
       "ID_WITH_COLON",
       "ABSOLUTE_ID",
       "MACRO",
+      "TEMPLATE",
       "KEYWORD",
     ];
     this.language = language;
@@ -907,6 +909,23 @@ export class ProjectFileParser extends TextParser {
   /** Registra uma macro no scanner corrente. */
   addScannerMacro(macro: Macro,): void {
     this.tjpScanner?.addMacro(macro,);
+  }
+
+  /** true se o template _name_ já existe no scanner (Fase 23). */
+  scannerHasTemplate(name: string,): boolean {
+    return this.tjpScanner ? this.tjpScanner.templateDefined(name,) : false;
+  }
+
+  /** Registra um template no scanner corrente (Fase 23). */
+  addScannerTemplate(template: Template,): AddTemplateResult {
+    return this.tjpScanner
+      ? this.tjpScanner.addTemplate(template,)
+      : { ok: true, };
+  }
+
+  /** Parâmetros da última definição de template lida pelo scanner. */
+  takeScannerTemplateParams(): string[] {
+    return this.tjpScanner ? this.tjpScanner.takeTemplateParams() : [];
   }
 
   /** Acesso ao MessageHandler (regras verificam contagem de erros). */

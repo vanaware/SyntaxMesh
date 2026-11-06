@@ -9,14 +9,24 @@
  * Cobre: material + journalentry + picture (C3.1/C3.2/C3.3), timebasis
  * (5 ramos: duration/calendar/length/working + milestone → erro, C3.4) e
  * breakdownreport/rdoreport com colunas novas + hidejournalentry (C3.5–C3.7).
+ *
+ * C5.8 (ADR 039) acrescenta o fixture `10c-extend-markdown.tjp`: tipo
+ * `markdown` em `extend` (task e resource), `scenariospecific`/`inherit` e o
+ * fix C5.1 do `richtext`.
  */
 import { describe, it, } from "@std/testing/bdd";
 import { assert, assertEquals, } from "@std/assert";
 import { type ParseOutcome, parseProject, } from "../parser/parse-helper.ts";
+import { AttributeType, } from "../../src/attributes/attribute-type.ts";
+import { RichTextAttribute, } from "../../src/attributes/rich/rich-text-attribute.ts";
+import { MarkdownAttribute, } from "../../src/attributes/rich/markdown-attribute.ts";
+import { RichTextIntermediate, } from "../../src/richtext/rich-text-intermediate.ts";
 import type { Project, } from "../../src/model/project.ts";
 import type { Report, } from "../../src/model/report.ts";
 import type { JournalEntry, } from "../../src/model/journal.ts";
 import type { Material, } from "../../src/model/material.ts";
+import type { Resource, } from "../../src/model/resource.ts";
+import type { Task, } from "../../src/model/task.ts";
 
 function loadExt(name: string,): string {
   const url = new URL(`../fixtures/ext/${name}.tjp`, import.meta.url,);
@@ -180,5 +190,70 @@ describe("14C.0.11 ext fixture: 14c-rdo-budget", () => {
     assertEquals(rdo.typeSpec, "rdoreport",);
     assertEquals(rdo.get("maxpictures",), 5,);
     assertEquals(rdo.get("journalMode",), "journal",);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// C5.8 (ADR 039) — fixture `markdown` em `extend`.
+// ---------------------------------------------------------------------------
+describe("C5.8 ext fixture: 10c-extend-markdown", () => {
+  it("carrega sem mensagens de erro", () => {
+    const out = parseExt("10c-extend-markdown",);
+    assertEquals(
+      out.messageIds,
+      [],
+      `msgs=${out.messages.map((m,) => `${m.id}:${m.text}`).join(" | ",)}`,
+    );
+  });
+
+  it("registra os tipos de atributo corretos para markdown e richtext", () => {
+    const p = asProject(parseExt("10c-extend-markdown",),);
+    // C5.1: `richtext` em extend → AttributeType.RichText (não Text).
+    assertEquals(p.tasks.attributeType("Intro",), AttributeType.RichText,);
+    assertEquals(p.tasks.attributeType("Claim",), AttributeType.Markdown,);
+    assertEquals(p.resources.attributeType("Bio",), AttributeType.Markdown,);
+
+    const claim = p.task("fase.t1",)!.getAttribute(
+      "Claim",
+    ) as MarkdownAttribute;
+    assert(
+      claim instanceof MarkdownAttribute,
+      "Claim deveria ser MarkdownAttribute",
+    );
+    assert(
+      claim.get() instanceof RichTextIntermediate,
+      "valor de Claim deveria ser RichTextIntermediate",
+    );
+
+    const intro = p.task("fase.t1",)!.getAttribute(
+      "Intro",
+    ) as RichTextAttribute;
+    assert(
+      intro instanceof RichTextAttribute,
+      "Intro deveria ser RichTextAttribute",
+    );
+    assert(intro.to_s().includes("abertura",), `Intro: ${intro.to_s()}`,);
+
+    const bio = p.resource("alice",)!.getAttribute("Bio",) as MarkdownAttribute;
+    assert(
+      bio instanceof MarkdownAttribute,
+      "Bio deveria ser MarkdownAttribute",
+    );
+    assert(bio.to_s().includes("Senior",), `Bio: ${bio.to_s()}`,);
+  });
+
+  it("honra scenariospecific e inherit nas declarações de extend", () => {
+    const p = asProject(parseExt("10c-extend-markdown",),);
+    const t1 = p.task("fase.t1",)!;
+    // Risk é scenariospecific: o valor vive no ScenarioData, lido por índice.
+    const risk = t1.getForScenario("Risk", 0,) as RichTextIntermediate;
+    assert(
+      risk instanceof RichTextIntermediate,
+      "Risk deveria ser RichTextIntermediate",
+    );
+    assert(risk.to_s().includes("Alto",), `Risk: ${risk.to_s()}`,);
+    // Note2 tem `inherit`: a definição da tarefa aponta para a do projeto.
+    const note2 = t1.propertySet.attributeDefinition("Note2",)!;
+    assert(note2.inheritedFromParent, "Note2 deveria estar herdado do pai",);
   });
 });

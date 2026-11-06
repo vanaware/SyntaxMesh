@@ -53,7 +53,7 @@ class TokenProbeParser extends ProjectFileParser {
 }
 
 describe("ProjectFileParser — campos e constructor (10.10.1)", () => {
-  it("variables lista os 11 tipos de token do scanner TJP", () => {
+  it("variables lista os 12 tipos de token do scanner TJP", () => {
     const parser = new ProjectFileParser();
     assertEquals(parser.variables, [
       "INTEGER",
@@ -66,6 +66,8 @@ describe("ProjectFileParser — campos e constructor (10.10.1)", () => {
       "ID_WITH_COLON",
       "ABSOLUTE_ID",
       "MACRO",
+      // Extensão Fase 23: token exclusivo do elemento `template`.
+      "TEMPLATE",
       "KEYWORD",
     ],);
   });

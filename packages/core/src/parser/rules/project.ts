@@ -82,6 +82,7 @@ export function registerProjectRules(p: ProjectFileParser,): void {
     p.pattern(["!language",],);
     p.pattern(["!prologInclude",],);
     p.pattern(["!macro",],);
+    p.pattern(["!template",],);
   },);
 
   // Diretiva `language "xx"` — extensão SyntaxMesh (não existe no TJ).
@@ -497,6 +498,9 @@ export function registerProjectRules(p: ProjectFileParser,): void {
         "the conversion of working time units into each other.",
     );
     p.arg(1, "days", "Number of average working days for a year",);
+
+    // Extensão Fase 23: `template` pode ser declarado no corpo `{ }`.
+    p.pattern(["!template",],);
   },);
 
   // `include` dentro do cabeçalho do projeto: `_include <arquivo> <attrs> .`
@@ -532,6 +536,15 @@ export function registerProjectRules(p: ProjectFileParser,): void {
               "files.",
           );
         }
+        // Ruby l.1947-1949: o include efetivo acontece aqui (o arquivo entra
+        // na pilha do scanner e é processado pelo padrão que segue).
+        this.project?.inputFiles.push(
+          this.scannerRef!.include(
+            String(this.val[0],),
+            this.sourceFileInfo[0] ?? null,
+            () => this.popFileStack(),
+          ),
+        );
         return this.val[0];
       },
     );
@@ -641,6 +654,9 @@ export function registerProjectRules(p: ProjectFileParser,): void {
     p.pattern(["!limits",],);
 
     p.pattern(["!macro",],);
+
+    // Extensao Fase 23: `template` no nível superior do arquivo.
+    p.pattern(["!template",],);
 
     p.pattern(["!material",],);
 

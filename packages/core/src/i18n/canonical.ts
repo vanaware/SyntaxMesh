@@ -239,6 +239,8 @@ export const CANONICAL_KEYWORDS = [
   "taskreport",
   "taskroot",
   "tasks",
+  // Fase 23 — elemento `template` (extensão SyntaxMesh).
+  "template",
   "text",
   "textreport",
   "thu",

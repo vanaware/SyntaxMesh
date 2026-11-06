@@ -65,6 +65,15 @@ export class ProjectFileScanner extends Scanner {
   private macroCallPreviousMode = ":tjp";
   /** Texto da definição de macro em montagem (Ruby @macroDef). */
   private macroDef = "";
+  /**
+   * true quando a definição `[ ... ]` em montagem é de um **template**
+   * (extensão TS-only, Fase 23): o `]` pode ser seguido de `( params )` na
+   * mesma linha. Detecção em `startMacroDef`/`definitionLine` — nos dois
+   * casos o corpo é coletado pelo MESMO mecanismo da macro.
+   */
+  private templateBody = false;
+  /** Texto cru da lista de parâmetros da última definição de template. */
+  private lastTemplateParams: string | null = null;
 
   /**
    * Provedor de variáveis de ambiente (Ruby `ENV[name]`).
@@ -299,12 +308,23 @@ export class ProjectFileScanner extends Scanner {
         post((_, match,) => this.midStringSZR(match,)),
       ],
 
+      // Definição de template de linha única com parâmetros
+      // (`template T [ corpo ] (a, b)` — extensão TS-only, ADR 033). Precisa
+      // vir ANTES dos padrões de macro: se a linha não for uma definição de
+      // template, o pós-processador reproduz exatamente o caminho do Ruby.
+      [
+        null,
+        /\[.*\][ \t]*\([^)\n]*\)[ \t]*\n/,
+        ":tjp",
+        post((_, match,) => this.definitionLine(match,)),
+      ],
+
       // Definição de macro de linha única.
       [
         "MACRO",
         /\[.*\]\n/,
         ":tjp",
-        post((type, match,) => this.chop2nl(type, match,)),
+        post((type, match,) => this.definitionEndSingle(type, match,)),
       ],
 
       // Definição de macro multi-linha: início (muda para :macroDef).
@@ -314,12 +334,21 @@ export class ProjectFileScanner extends Scanner {
         ":tjp",
         post((_, match,) => this.startMacroDef(match,)),
       ],
+      // Fechamento de template com parâmetros: `] ( a, b )` no fim da linha
+      // (extensão TS-only). Em corpo de macro o pós-processador mantém o
+      // comportamento do Ruby (`]` só fecha no fim da linha).
+      [
+        null,
+        /.*\][ \t]*\([^)\n]*\)[ \t]*\n/,
+        ":macroDef",
+        post((type, match,) => this.definitionClose(type, match,)),
+      ],
       // Fim: ']' seguido imediatamente de quebra de linha (volta p/ :tjp).
       [
         "MACRO",
         /.*\]\n/,
         ":macroDef",
-        post((type, match,) => this.endMacroDef(type, match,)),
+        post((type, match,) => this.definitionEnd(type, match,)),
       ],
       // Qualquer linha sem início nem fim.
       [
@@ -489,10 +518,14 @@ export class ProjectFileScanner extends Scanner {
     return [null, "",];
   }
 
-  private startMacroDef(match: string,): [null, "",] {
+  private startMacroDef(match: string,): [null, string,] {
     this.mode = TJP_MODES.macroDef;
     // Remove o '[' inicial.
     this.macroDef = match.slice(1,);
+    // Extensão Fase 23: um corpo `[ ]` precedido de `template NOME` é um
+    // template, não uma macro. O restante do mecanismo (acumulação por linha
+    // e reentrada) é o mesmo da macro.
+    this.templateBody = this.isTemplateDefinition();
     return [null, "",];
   }
 
@@ -513,6 +546,113 @@ export class ProjectFileScanner extends Scanner {
       this.macroDef += match.slice(0, -1,);
     }
     return [type, this.macroDef,];
+  }
+
+  // ---------------------------------------------------------------------------
+  // Definição de `template` (extensão TS-only, Fase 23; ADR 033)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * true quando o `[` corrente abre o corpo de um **template**: o texto da
+   * linha imediatamente antes do colchete é `<keyword-template> <nome>`.
+   *
+   * A leitura usa `preMatch()` (texto já consumido da linha) em vez de um
+   * histórico de tokens: o keyword pode estar traduzido (`modelo`,
+   * `plantilla`), e é o `LanguageRegistry` que o traz para `template`.
+   */
+  private isTemplateDefinition(): boolean {
+    const scanner = this.cf?.scanner;
+    if (!scanner) return false;
+    const pre = (scanner.preMatch() ?? "").replace(/[ \t]+$/, "",);
+    const m = /(?:^|[ \t])([^ \t]+)[ \t]+([^ \t]+)$/u.exec(pre,);
+    if (!m) return false;
+    const keyword = m[1]!;
+    return this.registry.resolve(keyword, this.language,) === "template";
+  }
+
+  /**
+   * Parâmetros declarados na última definição de template.
+   *
+   * O token `TEMPLATE` carrega apenas o corpo (como `MACRO`); a lista de
+   * parâmetros sai por aqui, consumida pela action `template` da FSM.
+   * Devolve `[]` quando a lista foi omitida.
+   */
+  takeTemplateParams(): string[] {
+    const raw = this.lastTemplateParams;
+    this.lastTemplateParams = null;
+    if (raw === null) return [];
+    return raw
+      .split(",",)
+      .map((param,) => param.trim())
+      .filter((param,) => param.length > 0);
+  }
+
+  /**
+   * Definição de uma linha só: `template NOME [ corpo ] ( params )`.
+   *
+   * Quando a linha não é de template, delega ao caminho congelado do Ruby
+   * (`startMacroDef`), que deixa a linha como corpo de macro em montagem.
+   */
+  private definitionLine(match: string,): [string | null, string,] {
+    if (!this.isTemplateDefinition()) return this.startMacroDef(match,);
+    const tail = /^(.*)\][ \t]*\(([^)\n]*)\)[ \t]*\n$/s.exec(match,);
+    if (!tail) return this.startMacroDef(match,);
+    this.lastTemplateParams = tail[2]!;
+    return ["TEMPLATE", tail[1]!.slice(1,),];
+  }
+
+  /**
+   * Definição de linha única **sem** parâmetros (`[ corpo ]\n`): só vira
+   * `TEMPLATE` se o `[` foi aberto por um template; senão mantém o
+   * `chop2nl` do Ruby.
+   */
+  private definitionEndSingle(
+    type: string | null,
+    match: string,
+  ): [string | null, string,] {
+    // `templateBody` só é preenchido no caminho multi-linha; nesta linha o
+    // `[` é o próprio match, então a detecção vem do texto anterior a ele.
+    if (!this.templateBody && !this.isTemplateDefinition()) {
+      return this.chop2nl(type, match,);
+    }
+    this.templateBody = false;
+    this.lastTemplateParams = null;
+    // Mesma remoção do `chop2nl`: '[' e ']\n'.
+    return ["TEMPLATE", match.slice(1, -2,),];
+  }
+
+  /**
+   * Fechamento de corpo multi-linha com `] ( params )` no fim da linha.
+   *
+   * Em corpo de macro o `]` não está no fim da linha, então o Ruby acumula a
+   * linha inteira (`midMacroDef`); a delegação preserva isso byte a byte.
+   */
+  private definitionClose(
+    type: string | null,
+    match: string,
+  ): [string | null, string,] {
+    if (!this.templateBody) return this.midMacroDef(match,);
+    const tail = /^(.*)\][ \t]*\(([^)\n]*)\)[ \t]*\n$/s.exec(match,);
+    if (!tail) return this.definitionEnd(type, match,);
+    this.macroDef += tail[1]!;
+    this.lastTemplateParams = tail[2]!;
+    this.templateBody = false;
+    this.mode = TJP_MODES.tjp;
+    return ["TEMPLATE", this.macroDef,];
+  }
+
+  /**
+   * Fechamento `]\n` (sem parâmetros). Mantém `endMacroDef` do Ruby quando
+   * não é template; quando é, só troca o tipo do token.
+   */
+  private definitionEnd(
+    type: string | null,
+    match: string,
+  ): [string | null, string,] {
+    if (!this.templateBody) return this.endMacroDef(type, match,);
+    this.templateBody = false;
+    this.lastTemplateParams = null;
+    return this.endMacroDef("TEMPLATE", match,);
   }
 
   private startMacroCall(match: string,): [null, "",] {
