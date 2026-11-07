@@ -1,0 +1,36 @@
+# Fase 23 (23.7.1) — macro dentro de corpo de template.
+#
+# Guarda o cenário canônico do §4.4: a Fase 1 expande `${MACRO}` do corpo
+# **antes** do render Vento (Fase 2), então uma macro reaproveitada por um
+# template não perde nada do comportamento da Fase 10.
+#
+# Não há oracle no TaskJuggler Ruby — `template` é extensão SyntaxMesh (ADR 033).
+# Consumido por tests/golden/template_golden_test.ts (seção "macros").
+#
+# Colocação (23.9): `template` e `macro` vivem fora do bloco `{ }`, na mesma
+# condição — prolog ou nível de propriedades.
+
+project tmplmacro "Template Macros" "1.0" 2026-01-01 - 2026-03-31 {
+  timezone "UTC"
+  now 2026-01-01
+}
+
+template DEV_TASK [
+  task {{ id }} "{{ nome }}" {
+    effort {{ esforco }}
+    ${ALLOCATE_TEAM}
+  }
+] (id, nome, esforco)
+
+template PAID [ resource {{ id }} "{{ nome }}" { ${RATE "99"} } ] (id, nome)
+
+# Macros vizinhas ao namespace de template (mesma colocação).
+macro ALLOCATE_TEAM [ allocate tux1, tux2 ]
+macro RATE [ rate ${1} ]
+
+resource tux1 "Tux 1"
+resource tux2 "Tux 2"
+
+# --- Expansão ------------------------------------------------------------
+${DEV_TASK id="t1" nome="Setup" esforco="3d"}
+${PAID id="carol" nome="Carol"}

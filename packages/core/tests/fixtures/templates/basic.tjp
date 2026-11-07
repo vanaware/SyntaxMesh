@@ -1,0 +1,42 @@
+# Fase 23 (23.2.10 / 23.3.10) — fixture TS-only do elemento `template`.
+#
+# Declara os templates e depois os **chama** (23.3: expansão em duas fases —
+# macro no corpo via Fase 1, render Vento na Fase 2, texto reentrante).
+#
+# **Colocação (23.9):** `template` vive no mesmo lugar da `macro` — prolog
+# (antes de `project`) ou nível de propriedades (depois do `}`), nunca dentro do
+# bloco `{ }` do cabeçalho (regra da macro no Ruby, estendida ao template).
+#
+# O `# {{ project.name }}` do HEADER permanece literal: ele não é chamado.
+#
+# Não há oracle no TaskJuggler Ruby — `template` é extensão SyntaxMesh (ADR 033).
+# Consumido por tests/golden/template_golden_test.ts (seção "expansion" do
+# golden e bloco "23.2.10 template registry").
+
+project tmplbasic "Template Basic" "1.0" 2026-01-01 - 2026-03-31 {
+  timezone "UTC"
+  now 2026-01-01
+}
+
+# Chamada de uma linha, com parâmetros nomeados declarados.
+template CARD [ task {{ id }} "{{ nome }}" { effort {{ esforco }} } ] (id, nome, esforco)
+
+# Corpo multi-linha: `{{ }}` permanece texto cru no registro.
+template HEADER [
+  # Projeto: {{ project.name }}
+] ()
+
+# Sem lista de parâmetros.
+template FOOTER [ # fim do projeto ]
+
+# Macro convivendo no mesmo namespace e na mesma condição de colocação.
+macro ALLOCATE_TEAM [ allocate tux1, tux2, tux3 ]
+
+resource tux1 "Tux 1"
+resource tux2 "Tux 2"
+resource tux3 "Tux 3"
+
+# --- Expansão (23.3.10) --------------------------------------------------
+${CARD id="t1" nome="Design" esforco="5d"}
+${CARD id="t2" nome="Implementação" esforco="10d"}
+${FOOTER}

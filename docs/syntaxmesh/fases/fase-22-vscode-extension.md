@@ -57,6 +57,13 @@ motor (Fase 10) e o `resolveLocale` do `lsp-core` continuam existentes e prontos
 | `vim-taskjuggler` — github.com/kalafut/vim-taskjuggler         | Lista de keywords para a grammar TextMate    |
 | `taskjuggler-mode.el`                                          | Snippets e estrutura de edição               |
 | Kate syntax (ktexteditor)                                      | Estrutura de contextos de highlight          |
+| `docs/syntaxmesh/11-referencia-template.md` (Fase 23, 23.8.1)   | Grammar, completions, snippets e help de `template` já têm referência normativa pronta |
+
+A linha acima é insumo, não pendência: o elemento `template` (ADR 033) foi
+entregue na Fase 23 com declaração, chamada, tipos de valor, tabela de erros e
+mapa de testes em `docs/syntaxmesh/11-referencia-template.md`. A grammar TextMate
+e o `doc-core`/help do `lsp-core` devem cobri-lo em v1 (`en`, keyword
+`template`), sem esperar novo material de referência.
 
 ---
 

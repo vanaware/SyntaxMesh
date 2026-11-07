@@ -82,6 +82,9 @@ export function registerProjectRules(p: ProjectFileParser,): void {
     p.pattern(["!language",],);
     p.pattern(["!prologInclude",],);
     p.pattern(["!macro",],);
+    // Extensão Fase 23 (ADR 033): `template` segue a **mesma condição da
+    // macro** — prolog (antes de `project`) e nível de propriedades, nunca
+    // dentro do bloco `{ }` do cabeçalho (`projectBodyAttributes`).
     p.pattern(["!template",],);
   },);
 
@@ -498,9 +501,6 @@ export function registerProjectRules(p: ProjectFileParser,): void {
         "the conversion of working time units into each other.",
     );
     p.arg(1, "days", "Number of average working days for a year",);
-
-    // Extensão Fase 23: `template` pode ser declarado no corpo `{ }`.
-    p.pattern(["!template",],);
   },);
 
   // `include` dentro do cabeçalho do projeto: `_include <arquivo> <attrs> .`
@@ -655,7 +655,8 @@ export function registerProjectRules(p: ProjectFileParser,): void {
 
     p.pattern(["!macro",],);
 
-    // Extensao Fase 23: `template` no nível superior do arquivo.
+    // Extensão Fase 23: `template` no nível superior do arquivo (mesma
+    // condição da macro — fora do bloco `{ }` do cabeçalho).
     p.pattern(["!template",],);
 
     p.pattern(["!material",],);

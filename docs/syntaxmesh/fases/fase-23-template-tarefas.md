@@ -2,9 +2,10 @@
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-23-template-tarefas.md`
 > **Plano:** `docs/syntaxmesh/fases/fase-23-template.md`
-> **Status:** ⬜ Não iniciada
+> **Status:** ✅ Concluída (2026-11-06)
 > **Total:** ~95 tarefas
-> **Concluídas:** 0
+> **Concluídas:** 94/95 — única pendência: **23.7.7** (smoke da CLI), que
+> depende da Fase 24 e está registrada com nota na seção "Pendências"
 > **Foco:** elemento `template` (Vento), registro unificado macro/template, expansão em duas fases no scanner
 
 ---
@@ -84,18 +85,18 @@ macro (contra o Ruby), nunca uma adaptação do teste ao novo comportamento.
 ## Progresso
 
 ```
-[ ] 23.0   ADR + posicionamento                      —   0/6
-[ ] 23.1   Fundação: dep Vento + registro unificado  —   0/10
-[ ] 23.1b  Auditoria do baseline macro (Fase 10)     —   0/6
-[ ] 23.2   Parser: declaração `template`             —   0/12
-[ ] 23.3   Expansão em duas fases                    —   0/12
-[ ] 23.4   Chamada com argumentos nomeados           —   0/12
-[ ] 23.5   Proteções (recursão, ordem, limites)      —   0/8
-[ ] 23.6   Contexto e composição                     —   0/10
-[ ] 23.7   Testes, snapshots e integração            —   0/11
-[ ] 23.8   Documentação e verificação final          —   0/8
+[x] 23.0   ADR + posicionamento                      —   6/6
+[x] 23.1   Fundação: dep Vento + registro unificado  —  10/10
+[x] 23.1b  Auditoria do baseline macro (Fase 10)     —   6/6
+[x] 23.2   Parser: declaração `template`             —  12/12
+[x] 23.3   Expansão em duas fases                    —  12/12
+[x] 23.4   Chamada com argumentos nomeados           —  12/12
+[x] 23.5   Proteções (recursão, ordem, limites)      —   8/8
+[x] 23.6   Contexto e composição                     —  10/10
+[x] 23.7   Testes, snapshots e integração            —  10/11 (23.7.7 pendente)
+[x] 23.8   Documentação e verificação final          —   8/8
 ─────────────────────────────────────────────────────────
-TOTAL: ~95
+TOTAL: 94/95 — pendência única: 23.7.7 (CLI da Fase 24)
 ```
 
 ---
@@ -289,18 +290,38 @@ corrigida **aqui**, antes de 23.2.
 
 ---
 
-## Auditoria 23.1b (preencher no kickoff)
+## Auditoria 23.1b (preenchida — 2026-11-06)
 
 | Item | Ruby (file:line) | TS | Resultado |
 |---|---|---|---|
-| `resolve` `${1}`/`${2}` | `TextParser/MacroTable.rb` | `macro-table.ts` | ⬜ |
-| `${?OPT}` opcional | idem | idem | ⬜ |
-| `$${` → `${` | idem | idem | ⬜ |
-| Valor vazio | idem | idem | ⬜ |
-| Macro não definida (mensagem) | `parser/scanner.rb` | `scanner.ts` | ⬜ |
-| `expandMacro` fluxo | `parser/scanner.rb` l.450-464 | `scanner.ts` | ⬜ |
-| `injectMacro`/`macroStack`/`cleanup` | `parser/scanner.rb` | `project-file-scanner.ts` | ⬜ |
-| Corpo `macro` com `]` no fim da linha | parser/scanner | FSM | ⬜ |
+| `resolve` `${1}`/`${2}` | `TextParser/MacroTable.rb:71-75` | `macro-table.ts:209-215` (`substituteArguments`) | ✔ — `${0}`..`${n}` posicionais idênticos; fence caso 1 |
+| `${?OPT}` opcional | `TextParser/MacroTable.rb:63-68` | `macro-table.ts:184-195` | ✔ — indefinida → `[nil, ""]`; definida expande com `args[0]` ainda `?NAME`; fence caso 2 |
+| `$${` → `${` | `TextParser/MacroTable.rb:77` | `macro-table.ts:217` | ✔ — desescapa por último, como o `gsub!`; o texto volta ao stream **sem** re-escape (`Scanner.rb:92-100`), então `$${inner}` re-expande quando `inner` existe; fence casos 3–4 |
+| Valor vazio | `TextParser/MacroTable.rb:66` + `Scanner.rb:456` | `macro-table.ts:190` + `scanner.ts:419` | ✔ — `text === ""` retorna em silêncio; fence caso 7 |
+| Macro não definida (mensagem) | `TextParser/Scanner.rb:458` | `scanner.ts:422` | ✔ — `Undefined macro 'x' called` e id `undefined_macro`; fence caso 5 |
+| `expandMacro` fluxo | `TextParser/Scanner.rb:450-464` | `scanner.ts:413-436` | ✔ — prefixo + texto, `injectMacro`, `macro_stack_overflow`; ramo template é aditivo (ADR 033) |
+| `injectMacro`/`macroStack`/`cleanup` | `TextParser/Scanner.rb:92-100` | `stream-handle.ts:171` (`macroStack`), `:211-225` (`injectMacro`, teto 20), `:252-258` (`cleanupMacroStack`) | ✔ — teto `length > 20` e desempilhar por `endPos` fiéis (não em `project-file-scanner.ts`, como supunha o plano) |
+| Corpo `macro` com `]` no fim da linha | `ProjectFileScanner.rb:141-143` e `:327-346` | `project-file-scanner.ts:344-371` (padrões) e `:536-562` (post-processadores) | ✔ — `/.*\]\n/` em `:macroDef`, `[ :MACRO, @macroDef ]`; fence caso 6 |
+
+**Conclusão da auditoria (23.1b.5/23.1b.6):** nenhuma divergência encontrada —
+nada a corrigir, nenhum `fix(lexer): macro-baseline` necessário. A base foi
+congelada por uma cerca executável,
+`packages/core/tests/lexer/macro-baseline-regression_test.ts` (9 casos), que
+falha se qualquer um dos oito itens mudar de comportamento. `resolve`
+permanece **macro-only**: um template de mesmo nome nunca é resolvido por ele
+(`macro-table.ts:174-176`).
+
+---
+
+## Pendências
+
+| # | Tarefa | Motivo | Retomada |
+|---|---|---|---|
+| 23.7.7 | (Opcional) `syntaxmesh template-fixture.tjp --no-reports` exit 0 | A CLI é entregue na **Fase 24**, que ainda não existe (`packages/cli/` ausente) | Na F24, rodar o smoke sobre `packages/core/tests/fixtures/templates/basic.tjp` (política "7. Se a Fase 24 ainda não estiver pronta, marque 23.7.7 como pendente com nota") |
+
+A integração equivalente já está coberta sem CLI por
+`tests/integration/template-integration_23_test.ts`, que usa a fachada
+`TaskJuggler` diretamente (`parseFile` → `schedule` → `generateReports`).
 
 ---
 
@@ -311,7 +332,8 @@ corrigida **aqui**, antes de 23.2.
 - `docs/syntaxmesh/fases/fase-10-parser-linguagem-tarefas.md` — tarefas 10.2,
   10.8.6–10.8.7, 10.9 (baseline macro concluído em 2026-10-26).
 - `docs/taskjuggler/lib/taskjuggler/TextParser/MacroTable.rb` e
-  `docs/taskjuggler/lib/taskjuggler/parser/scanner.rb` — ground truth da
+  `docs/taskjuggler/lib/taskjuggler/TextParser/Scanner.rb` (o `ProjectFileScanner.rb`
+  fica em `docs/taskjuggler/lib/taskjuggler/`) — ground truth da
   auditoria 23.1b e do caminho de macro congelado.
 - `packages/core/src/lexer/macro-table.ts`, `scanner.ts`,
   `project-file-scanner.ts` — pontos de junção (ramo template em `expandMacro`).

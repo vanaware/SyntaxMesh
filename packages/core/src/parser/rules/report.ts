@@ -2438,6 +2438,9 @@ export function registerReportRules(p: ProjectFileParser,): void {
     p.repeatable();
 
     p.pattern(["!macro",],);
+    // Extensão Fase 23 (ADR 033): mesmo lugar da macro nos arquivos de
+    // propriedades de relatório — o namespace macro/template é único.
+    p.pattern(["!template",],);
     p.pattern(["!reportProperties",],);
   },);
 

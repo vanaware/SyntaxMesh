@@ -1,0 +1,48 @@
+# Fase 23 (23.10) — listas como argumento de template e `{{ for }}` no corpo.
+#
+# Como passar uma lista (§2.1): o valor é escrito entre colchetes na chamada,
+# `itens=["a", "b"]` ou `itens=[{ id: "r1", nome: "Ana" }]`. Dentro do corpo
+# ela chega como `Array` do JS e é iterada pelo `for` do Vento:
+#
+#   lista de strings   →  {{ for passo of passos }}      (só o valor)
+#   lista de objetos   →  {{ for p of pessoas }} p.id    (acesso a campo)
+#   mapa (objeto)      →  {{ for papel, quem of papeis }} (chave, valor)
+#   índice da lista    →  {{ for i, passo of passos }}   (índice, valor)
+#
+# O índice é **0-based** e vem **antes** do valor. Não existe `loop` no Vento:
+# `{{ loop.index }}` falha no render (`template_render_error`); use a forma
+# `for i, valor of lista`.
+#
+# Colocação (23.9): a definição fica **fora** do bloco `{ }`, como a macro.
+# Não há oracle no TaskJuggler Ruby — `template` é extensão SyntaxMesh (ADR 033).
+# Consumido por tests/lexer/template-lists_test.ts e pelo golden (seção "lists").
+
+project tmpllists "Template Lists" "1.0" 2026-01-01 - 2026-03-31 {
+  timezone "UTC"
+  now 2026-01-01
+}
+
+# Uma task por item de uma lista de strings, com id derivado do índice.
+template STEPS [
+{{ for i, passo of passos }}  task {{ id }}_{{ i }} "{{ passo }}" { effort 1d }
+{{ /for }}] (id, passos)
+
+# Um resource por item de uma lista de objetos.
+template PEOPLE [
+{{ for p of pessoas }}  resource {{ p.id }} "{{ p.nome }}"
+{{ /for }}] (pessoas)
+
+# Mapa (chave, valor) → uma linha `allocate` por entrada.
+template ALLOC [
+  task {{ id }} "Equipe" {
+{{ for papel, quem of papeis }}    allocate {{ quem }}
+{{ /for }}  }
+] (id, papeis)
+
+# Lista de referências `!id` preservadas como texto nativo do TJP.
+template CHAIN [ task {{ id }} "Encadeada" { depends {{ deps |> join(", ") }} } ] (id, deps)
+
+${STEPS id="s" passos=["Análise", "Design", "Build"]}
+${PEOPLE pessoas=[{ id: "ana", nome: "Ana" }, { id: "bia", nome: "Bia" }]}
+${ALLOC id="a" papeis={ dev: "ana", qa: "bia" }}
+${CHAIN id="c" deps=[!s_0, !s_1]}

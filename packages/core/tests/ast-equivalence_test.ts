@@ -297,3 +297,88 @@ for (const mwe of MWE_IDS) {
     });
   });
 }
+
+// ---------------------------------------------------------------------------
+// 23.7.8 — `template` nos três idiomas (extensão SyntaxMesh, ADR 033).
+//
+// O keyword é traduzido como qualquer outro de extensão (`modelo`/`plantilla`).
+// O corpo do template fica em keywords canônicos de propósito: o inglês é
+// sempre aceito como fallback pelo i18n (ver `project-file-scanner_test`), e
+// assim o caso mede só a tradução do declarador. A equivalência é do modelo
+// **já expandido** — é isso que o template produz.
+// ---------------------------------------------------------------------------
+
+// 23.9 — `template`/`modelo`/`plantilla` ficam **fora** do bloco `{ }` do
+// projeto, na mesma condição da macro (prolog ou nível de propriedades).
+const TEMPLATE_PROJECT: Record<string, string> = {
+  en: 'project tpl "Template i18n" "1.0" 2026-01-01 - 2026-12-31 {\n' +
+    '  timezone "UTC"\n' +
+    "  now 2026-01-01\n" +
+    "}\n" +
+    "template PHASE [\n" +
+    '  task {{ id }} "{{ id }}" {\n' +
+    "    effort {{ esforco }}\n" +
+    "    allocate tux\n" +
+    "  }\n" +
+    "] (id, esforco)\n" +
+    'resource tux "Tux"\n' +
+    '${PHASE id="t1" esforco="5d"}\n' +
+    '${PHASE id="t2" esforco="3d"}\n',
+  "pt-BR": 'project tpl "Template i18n" "1.0" 2026-01-01 - 2026-12-31 {\n' +
+    '  timezone "UTC"\n' +
+    "  now 2026-01-01\n" +
+    "}\n" +
+    "modelo PHASE [\n" +
+    '  task {{ id }} "{{ id }}" {\n' +
+    "    effort {{ esforco }}\n" +
+    "    allocate tux\n" +
+    "  }\n" +
+    "] (id, esforco)\n" +
+    'recurso tux "Tux"\n' +
+    '${PHASE id="t1" esforco="5d"}\n' +
+    '${PHASE id="t2" esforco="3d"}\n',
+  es: 'project tpl "Template i18n" "1.0" 2026-01-01 - 2026-12-31 {\n' +
+    '  timezone "UTC"\n' +
+    "  now 2026-01-01\n" +
+    "}\n" +
+    "plantilla PHASE [\n" +
+    '  task {{ id }} "{{ id }}" {\n' +
+    "    effort {{ esforco }}\n" +
+    "    allocate tux\n" +
+    "  }\n" +
+    "] (id, esforco)\n" +
+    'recurso tux "Tux"\n' +
+    '${PHASE id="t1" esforco="5d"}\n' +
+    '${PHASE id="t2" esforco="3d"}\n',
+};
+
+function parseTemplate(lang: string,) {
+  // O `language` rege o scanner (como nos fixtures de i18n da Fase 10).
+  return parseText(`language "${lang}"\n` + TEMPLATE_PROJECT[lang]!,);
+}
+
+describe("template: AST equivalente entre en/pt-BR/es (23.7.8)", () => {
+  it("as três versões parseiam sem mensagens e produzem as tasks", () => {
+    for (const lang of Object.keys(TEMPLATE_PROJECT,)) {
+      const out = parseTemplate(lang,);
+      assertEquals(out.messageIds, [], `${lang} mensagens`,);
+      assertEquals(
+        out.snap.sets.tasks!.map((t,) => t.fullId),
+        ["t1", "t2",],
+        `${lang} tasks`,
+      );
+    }
+  });
+
+  it("pt-BR (`modelo`) produz AST equivalente ao en (`template`)", () => {
+    const en = normalizeAST(parseTemplate("en",).snap,);
+    const pt = normalizeAST(parseTemplate("pt-BR",).snap,);
+    assertEquals(pt, en, "pt-BR ≠ en",);
+  });
+
+  it("es (`plantilla`) produz AST equivalente ao en (`template`)", () => {
+    const en = normalizeAST(parseTemplate("en",).snap,);
+    const es = normalizeAST(parseTemplate("es",).snap,);
+    assertEquals(es, en, "es ≠ en",);
+  });
+});

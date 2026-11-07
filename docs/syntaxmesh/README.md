@@ -46,6 +46,8 @@ O SyntaxMesh é um port em TypeScript do TaskJuggler, mantendo a essência e os 
 - `08-mvp.md` — conteúdo da primeira versão estável.
 - `09-regras-para-ia.md` — regras de ouro.
 - `10-futuro.md` — planos de melhorias.
+- `11-referencia-template.md` — referência normativa do elemento `template`
+  (Vento, ADR 033, Fase 23): declaração, chamada, tipos, erros e mapa de testes.
 - `fases/` — **planejamento canônico** (21 fases + complementos).
 - `decisoes/` — ADRs (Architecture Decision Records).
 - `cheat-sheet-ruby-ts.md` — dicas de conversão Ruby → TypeScript.

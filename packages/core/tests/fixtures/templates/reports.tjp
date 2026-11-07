@@ -1,0 +1,31 @@
+# Fase 23 (23.7.6) — template alimentando o pipeline de relatórios.
+#
+# O template `PHASE` gera tasks; o `taskreport` consome o modelo já agendado
+# pela fachada `TaskJuggler.generateReports` (integração 23.7.6). Saída é
+# string em memória (ADR 027): nada é escrito em disco.
+#
+# Não há oracle no TaskJuggler Ruby — `template` é extensão SyntaxMesh (ADR 033).
+# Colocação (23.9): a definição fica **fora** do bloco `{ }`, como a macro.
+
+project tmplreports "Template Reports" "1.0" 2026-01-01 - 2026-12-31 {
+  timezone "UTC"
+  timeformat "%Y-%m-%d"
+  now 2026-01-01
+}
+
+template PHASE [
+  task {{ id }} "{{ nome }}" {
+    effort {{ esforco }}
+    allocate tux
+  }
+] (id, nome, esforco)
+
+resource tux "Tux"
+
+${PHASE id="alpha" nome="Alfa" esforco="3d"}
+${PHASE id="beta" nome="Beta" esforco="4d"}
+
+taskreport tr "Cronograma de Template" {
+  formats html
+  columns id, name, effort
+}

@@ -2,13 +2,15 @@
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-23-template.md`
 > **Tarefas:** `docs/syntaxmesh/fases/fase-23-template-tarefas.md` (~95 tarefas atômicas)
-> **Status:** ⬜ Não iniciada
+> **Status:** ✅ Concluída (2026-11-06) — 23.0–23.8; verificação final em
+> `fase-23-template-tarefas.md` (94/95; **23.7.7** pendente com nota: smoke da
+> CLI depende da Fase 24). Referência normativa em `11-referencia-template.md`.
 > **Duração estimada:** 4–6 dias
 > **Depende de:** Fase 10 (lexer, macros, parser FSM, i18n) e Fase 14 (relatórios — para validar saída). **Não depende** das Fases 15–21.
 > **Bloqueia:** Fase 22 de forma suave — a grammar/completions da extensão VS Code devem cobrir a keyword `template`; rodar a 23 **antes** da 22 evita um adendo de grammar.
 > **Natureza:** extensão de linguagem (TS-only, sem correspondente no Ruby) — novo elemento `template` no parser, com expansão via engine Vento
 > **Posicionamento (ordem oficial 2026-11-03, `plano.md`):** executada após as Fases 15–18 e **antes** da Fase 24 (CLI) e da 22 — a keyword já nasce coberta pela CLI e pela grammar
-> **ADR:** próximo número livre na criação. Pela ordem oficial (`plano.md`), a 23 cria o seu antes da 24 e da 22 → **033 = template**, 034 = CLI, 035 = extensão VS Code. Conferir `decisoes/README.md` em 23.0.1.
+> **ADR:** **033** — `decisoes/033-elemento-template.md` (aceita; 034 = CLI, 035 = extensão VS Code).
 
 ---
 

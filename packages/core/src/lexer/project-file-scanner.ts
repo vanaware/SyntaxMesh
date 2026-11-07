@@ -124,6 +124,20 @@ export class ProjectFileScanner extends Scanner {
       // Linhas que não contêm nem início nem fim do comentário.
       [null, /.*\n/, ":cppComment", null,],
 
+      // Chamada de template com argumentos nomeados — extensão Fase 23
+      // (`${NOME k=v …}`). Precisa vir ANTES do padrão genérico de macro: o
+      // fechamento genérico só entende strings posicionais, então o `k=v`
+      // sobraria como `junk_at_eom`. Uma chamada com `ident=` nunca é uma
+      // macro válida, logo a ordem não altera o caminho congelado.
+      // Listas/objetos literais (`[a, b]`, `{ k: v }`) entram como valor; um
+      // `}` de objeto não encerra a chamada (§4.2).
+      [
+        null,
+        /\$\{\s*(\??[A-Za-z_]\w*)\s+[A-Za-z_]\w*=(?:[^}\n{]|\{[^}\n]*\}|\[[^\]\n]*\])*\}/,
+        ":tjp",
+        post((_, match,) => this.namedCall(match,)),
+      ],
+
       // Chamada de macro: o prefixo (número/identificador/parte de string)
       // é preservado e re-injetado junto com o texto expandido.
       [
@@ -662,6 +676,44 @@ export class ProjectFileScanner extends Scanner {
     return [null, "",];
   }
 
+  /**
+   * Chamada `${NOME k=v …}`: decide **antes** da divisão de strings do Ruby.
+   *
+   * Uma chamada com `nome=valor` é **forma de template** — macro nenhuma aceita
+   * isso —, então o nome desconhecido pode ser reportado como "não definido"
+   * (§5) sem tocar no caminho de macro. Se o nome existir como macro, o
+   * caminho congelado do Ruby roda igual (e reporta `junk_at_eom`, como
+   * sempre fez).
+   */
+  private namedCall(match: string,): [null, "",] {
+    const inner = match.slice(2, -1,).replace(/^\s+/, "",);
+    const nameMatch = /^(\??[A-Za-z_]\w*)/.exec(inner,);
+    const name = nameMatch ? nameMatch[1]! : "";
+    const rest = inner.slice(name.length,);
+    const target = this.templateCallTarget(name,);
+    if (target.template) {
+      this.expandTemplateCall("", name, rest, match.length,);
+    } else if (
+      target.optional && !this.macroTable.includes(name.slice(1,),)
+    ) {
+      // `${?NOME k=v}` com nome inexistente: vazio silencioso (§4.5.4),
+      // a mesma semântica da macro opcional do Ruby.
+    } else if (
+      this.macroTable.includes(name.slice(target.optional ? 1 : 0,),)
+    ) {
+      const { name: macroName, args, } = this.splitMacroArgs(name + rest,);
+      this.expandMacro("", [macroName, ...args,], match.length,);
+    } else {
+      const clean = target.optional ? name.slice(1,) : name;
+      this.error(
+        "template_not_defined",
+        `'${clean}' não definido`,
+        this.sourceFileInfo(),
+      );
+    }
+    return [null, "",];
+  }
+
   private midMacroCall(match: string,): [null, "",] {
     this.macroCall += match;
     return [null, "",];
@@ -685,34 +737,23 @@ export class ProjectFileScanner extends Scanner {
       .slice(2, -1,)
       .replace(/^[ \t\n]*(.*?)[ \t\n]*$/ms, "$1",);
 
-    const spaceIdx = argsStr.indexOf(" ",);
-    if (spaceIdx < 0) {
-      this.expandMacro(prefix, [argsStr,], macroCallLength,);
-    } else {
-      const macroName = argsStr.slice(0, spaceIdx,);
-      let rest = argsStr.slice(macroName.length,);
-      const args: string[] = [];
-      // StringScanner interno para limpar as aspas duplas dos argumentos.
-      for (;;) {
-        const open = /^\s*"/.exec(rest,);
-        if (!open) break;
-        rest = rest.slice(open[0].length,);
-        const body = /^(\\"|[^"])*/.exec(rest,)![0];
-        args.push(body.replaceAll('\\"', '"',),);
-        rest = rest.slice(body.length,);
-        const close = /^"\s*/.exec(rest,);
-        rest = close ? rest.slice(close[0].length,) : rest.slice(1,);
-      }
-
-      if (rest !== "") {
-        this.error(
-          "junk_at_eom",
-          `Junk found at end of macro: ${rest}`,
-        );
-      }
-
-      this.expandMacro(prefix, [macroName, ...args,], macroCallLength,);
+    // Extensão Fase 23: o template recebe os argumentos **crus** (nomeados),
+    // então o lookup precisa acontecer antes da divisão de strings do Ruby.
+    // O caminho de macro abaixo permanece exatamente o da Fase 10.
+    const callSpace = argsStr.indexOf(" ",);
+    const callName = callSpace < 0 ? argsStr : argsStr.slice(0, callSpace,);
+    if (this.templateCallTarget(callName,).template) {
+      this.expandTemplateCall(
+        prefix,
+        callName,
+        argsStr.slice(callName.length,),
+        macroCallLength,
+      );
+      return [null, "",];
     }
+
+    const { name: macroName, args, } = this.splitMacroArgs(argsStr,);
+    this.expandMacro(prefix, [macroName, ...args,], macroCallLength,);
 
     return [null, "",];
   }

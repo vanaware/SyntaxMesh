@@ -1,0 +1,19 @@
+# Fase 23 (23.7.1/23.7.9) — fixture de erro da tabela §5.
+#
+# Um único caso por arquivo: o primeiro erro é o que interessa, e o fixture
+# precisa continuar legível. Este cobre **parâmetro obrigatório faltante**
+# (a chamada omite `esforco`); a matriz completa dos sete casos do §5 vive em
+# tests/lexer/template-errors_test.ts (table-driven, fontes inline).
+#
+# Não há oracle no TaskJuggler Ruby — `template` é extensão SyntaxMesh (ADR 033).
+# Colocação (23.9): a definição fica **fora** do bloco `{ }`, como a macro.
+
+project tmplerror "Template Error" "1.0" 2026-01-01 - 2026-03-31 {
+  timezone "UTC"
+  now 2026-01-01
+}
+
+template CARD [ task {{ id }} "{{ nome }}" { effort {{ esforco }} } ] (id, nome, esforco)
+
+# Falta `esforco`: `template 'CARD': parâmetro 'esforco' não fornecido`.
+${CARD id="t1" nome="Sem esforço"}

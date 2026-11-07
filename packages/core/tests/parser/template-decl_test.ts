@@ -26,13 +26,16 @@ function templatesOf(parser: ProjectFileParser,): Template[] {
 
 const HEADER = PROJECT_HEADER;
 
+// 23.9 — `template` segue a condição da `macro`: prolog (antes de `project`)
+// ou nível de propriedades (depois do `}`), nunca dentro do bloco `{ }`.
+// `PROJECT_HEADER` não abre chaves, então as definições abaixo estão no nível
+// de propriedades.
+
 describe("template — corpo e parâmetros (23.2.1/23.2.4/23.2.5)", () => {
   it("registra template de linha única com lista de parâmetros", () => {
     const { parser, messageIds, threw, } = parseProject(
       HEADER +
-        "{\n" +
-        '  template CARD [ task t1 "x" ] (id, nome, esforco)\n' +
-        "}\n",
+        'template CARD [ task t1 "x" ] (id, nome, esforco)\n',
     );
     assertEquals(threw, null,);
     assertEquals(messageIds, [],);
@@ -47,13 +50,11 @@ describe("template — corpo e parâmetros (23.2.1/23.2.4/23.2.5)", () => {
   it("coleta corpo multi-linha e fecha no '] ( params )' da última linha", () => {
     const { parser, messageIds, } = parseProject(
       HEADER +
-        "{\n" +
-        "  template CARD [\n" +
-        '    task {{ id }} "{{ nome }}" {\n' +
-        "      effort {{ esforco }}\n" +
-        "    }\n" +
-        "  ] (id, nome, esforco)\n" +
-        "}\n",
+        "template CARD [\n" +
+        '  task {{ id }} "{{ nome }}" {\n' +
+        "    effort {{ esforco }}\n" +
+        "  }\n" +
+        "] (id, nome, esforco)\n",
     );
     assertEquals(messageIds, [],);
     const card = templatesOf(parser,)[0]!;
@@ -67,7 +68,7 @@ describe("template — corpo e parâmetros (23.2.1/23.2.4/23.2.5)", () => {
 
   it("aceita lista de parâmetros vazia '()'", () => {
     const { parser, messageIds, } = parseProject(
-      HEADER + "{\n" + "  template HEADER [ # vazio ] ()\n" + "}\n",
+      HEADER + "template HEADER [ # vazio ] ()\n",
     );
     assertEquals(messageIds, [],);
     const header = templatesOf(parser,)[0]!;
@@ -78,7 +79,7 @@ describe("template — corpo e parâmetros (23.2.1/23.2.4/23.2.5)", () => {
 
   it("aceita omissão completa dos parâmetros", () => {
     const { parser, messageIds, } = parseProject(
-      HEADER + "{\n" + '  template SOLO [ task t1 "solo" ]\n' + "}\n",
+      HEADER + 'template SOLO [ task t1 "solo" ]\n',
     );
     assertEquals(messageIds, [],);
     const solo = templatesOf(parser,)[0]!;
@@ -89,12 +90,10 @@ describe("template — corpo e parâmetros (23.2.1/23.2.4/23.2.5)", () => {
   it("aceita corpo de várias linhas sem parênteses", () => {
     const { parser, messageIds, } = parseProject(
       HEADER +
-        "{\n" +
-        "  template MULTI [\n" +
-        '    task t1 "a"\n' +
-        '    task t2 "b"\n' +
-        "  ]\n" +
-        "}\n",
+        "template MULTI [\n" +
+        '  task t1 "a"\n' +
+        '  task t2 "b"\n' +
+        "]\n",
     );
     assertEquals(messageIds, [],);
     const multi = templatesOf(parser,)[0]!;
@@ -107,9 +106,7 @@ describe("template — corpo é texto cru (23.2.6)", () => {
   it("preserva {{ }} e ${...} literais no registro", () => {
     const { parser, messageIds, } = parseProject(
       HEADER +
-        "{\n" +
-        '  template RAW [ task {{ id }} "${NOME}" ] (id)\n' +
-        "}\n",
+        'template RAW [ task {{ id }} "${NOME}" ] (id)\n',
     );
     assertEquals(messageIds, [],);
     const raw = templatesOf(parser,)[0]!;
@@ -121,7 +118,7 @@ describe("template — corpo é texto cru (23.2.6)", () => {
 describe("template — validação do nome (23.2.7)", () => {
   it("nome com minúscula inicial registra template_bad_name", () => {
     const { parser, messageIds, } = parseProject(
-      HEADER + "{\n" + '  template card [ task t1 "x" ]\n' + "}\n",
+      HEADER + 'template card [ task t1 "x" ]\n',
     );
     assert(
       messageIds.includes("template_bad_name",),
@@ -135,10 +132,8 @@ describe("template — namespace unificado (23.1.8 aplicado à definição)", ()
   it("template duplicado registra template_redefined", () => {
     const { messageIds, } = parseProject(
       HEADER +
-        "{\n" +
-        '  template CARD [ task t1 "a" ]\n' +
-        '  template CARD [ task t2 "b" ]\n' +
-        "}\n",
+        'template CARD [ task t1 "a" ]\n' +
+        'template CARD [ task t2 "b" ]\n',
     );
     assert(
       messageIds.includes("template_redefined",),
@@ -149,10 +144,8 @@ describe("template — namespace unificado (23.1.8 aplicado à definição)", ()
   it("macro declarada depois de template com o mesmo nome é erro", () => {
     const { messageIds, } = parseProject(
       HEADER +
-        "{\n" +
-        '  template CARD [ task t1 "a" ]\n' +
-        '  macro CARD [ task t2 "b" ]\n' +
-        "}\n",
+        'template CARD [ task t1 "a" ]\n' +
+        'macro CARD [ task t2 "b" ]\n',
     );
     assert(
       messageIds.includes("name_redefined",),
@@ -163,10 +156,8 @@ describe("template — namespace unificado (23.1.8 aplicado à definição)", ()
   it("macro+macro continua sendo o warning marco_redefinition do Ruby", () => {
     const { messageIds, } = parseProject(
       HEADER +
-        "{\n" +
-        "  macro GREET [ hello ]\n" +
-        "  macro GREET [ hi ]\n" +
-        "}\n",
+        "macro GREET [ hello ]\n" +
+        "macro GREET [ hi ]\n",
     );
     assert(
       messageIds.includes("marco_redefinition",),
@@ -178,7 +169,7 @@ describe("template — namespace unificado (23.1.8 aplicado à definição)", ()
 describe("template — i18n en/pt-BR/es (23.2.2/23.2.9)", () => {
   it("keyword canônica 'template' em en", () => {
     const { parser, messageIds, } = parseProject(
-      HEADER + "{\n" + '  template CARD [ task t1 "x" ]\n' + "}\n",
+      HEADER + 'template CARD [ task t1 "x" ]\n',
     );
     assertEquals(messageIds, [],);
     assertEquals(templatesOf(parser,)[0]!.name, "CARD",);
@@ -188,9 +179,7 @@ describe("template — i18n en/pt-BR/es (23.2.2/23.2.9)", () => {
     const { parser, messageIds, } = parseProject(
       'language "pt-BR"\n' +
         HEADER +
-        "{\n" +
-        '  modelo CARD [ task t1 "x" ] (id)\n' +
-        "}\n",
+        '  modelo CARD [ task t1 "x" ] (id)\n',
     );
     assertEquals(messageIds, [],);
     assertEquals(templatesOf(parser,)[0]!.name, "CARD",);
@@ -200,9 +189,7 @@ describe("template — i18n en/pt-BR/es (23.2.2/23.2.9)", () => {
     const { parser, messageIds, } = parseProject(
       'language "es"\n' +
         HEADER +
-        "{\n" +
-        '  plantilla CARD [ task t1 "x" ] (id)\n' +
-        "}\n",
+        '  plantilla CARD [ task t1 "x" ] (id)\n',
     );
     assertEquals(messageIds, [],);
     assertEquals(templatesOf(parser,)[0]!.name, "CARD",);
@@ -216,15 +203,17 @@ describe("template — include (23.2.8)", () => {
     FileStreamHandle.fileLoader = originalLoader;
   },);
 
-  it("template definido em .tji fica registrado no master", () => {
+  it("template definido em .tji incluído no prolog fica registrado no master", () => {
     FileStreamHandle.fileLoader = (name,) => {
       if (name.endsWith("cards.tji",)) {
         return 'template CARD [ task t1 "x" ] (id)\n';
       }
       return "";
     };
+    // `include` de prolog: o .tji é lido no contexto `projectProlog`, onde
+    // `macro` e `template` compartilham o namespace global (23.9).
     const { parser, messageIds, } = parseProject(
-      HEADER + "{\n" + '  include "cards.tji"\n' + "}\n",
+      'include "cards.tji"\n' + HEADER,
     );
     assertEquals(messageIds, [],);
     const card = templatesOf(parser,)[0];

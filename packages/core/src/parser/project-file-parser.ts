@@ -218,6 +218,11 @@ export class ProjectFileParser extends TextParser {
     this.scanner = scanner;
     this.language = language;
 
+    // Contexto de template (Fase 23, 23.6): `project` e `ids()` são lidos de
+    // forma **lazy** — as chamadas `${NOME …}` acontecem depois do cabeçalho.
+    scanner.setProjectContextProvider(() => this.templateProjectContext());
+    scanner.setTemplateIdResolver((id: string,) => this.templateResolveId(id,));
+
     // We need the ProjectFileScanner object for error reporting.
     if (
       master && !fileNameIsBuffer && file !== "." &&
@@ -242,6 +247,50 @@ export class ProjectFileParser extends TextParser {
     if (master && this.project) {
       this.setGlobalMacros();
     }
+  }
+
+  /**
+   * View **somente leitura** de `project` para o contexto de template (§4.7).
+   *
+   * Congelada em runtime (`Object.freeze`) e sem setters: um corpo de template
+   * pode ler `project.name`, `project.start` etc., mas não pode alterar o
+   * projeto. Devolve `null` antes do cabeçalho — o scanner usa uma view vazia.
+   */
+  private templateProjectContext(): Readonly<Record<string, unknown>> | null {
+    const project = this.project;
+    if (!project) return null;
+    return Object.freeze({
+      id: project.id,
+      name: project.name,
+      version: project.version,
+      start: project.get("start",),
+      end: project.get("end",),
+      now: project.get("now",),
+      currency: project.get("currency",),
+    },);
+  }
+
+  /**
+   * Resolve um ID de propriedade para o seu `fullId` (`ids()` do §4.7).
+   * ID desconhecido volta como veio: o template decide o que fazer, e o erro
+   * de referência em si é responsabilidade do interpretador TJP.
+   */
+  private templateResolveId(id: string,): string {
+    const project = this.project;
+    if (!project) return id;
+    const candidates = [
+      project.tasks,
+      project.resources,
+      project.accounts,
+      project.materials,
+      project.reports,
+      project.shifts,
+    ];
+    for (const set of candidates) {
+      const node = set.get(id,);
+      if (node) return node.fullId;
+    }
+    return id;
   }
 
   /** Fecha o scanner e limpa estruturas. */

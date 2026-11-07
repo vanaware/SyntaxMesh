@@ -12,6 +12,12 @@ import { MessageHandlerInstance, } from "../message-handler.ts";
 import { SourceFileInfo, } from "../source-file-info.ts";
 import { Macro, MacroTable, Template, } from "./macro-table.ts";
 import type { AddTemplateResult, } from "./macro-table.ts";
+import { templateEngine, } from "./template-engine.ts";
+import {
+  type ExpressionEvaluation,
+  parseTemplateArguments,
+  type TemplateArgumentValue,
+} from "./template-arguments.ts";
 import {
   BufferStreamHandle,
   FileStreamHandle,
@@ -39,6 +45,68 @@ export type ScannerToken = [string, unknown, SourceFileInfo | null,];
 
 /** Entrada da pilha de arquivos: handle, token em buffer e callback de EOF. */
 type FileStackEntry = [StreamHandle, ScannerToken | null, (() => void) | null,];
+
+/**
+ * Limite de passes da Fase 1 (macro dentro de corpo de template). Alinhado ao
+ * limite de 20 níveis do `macroStack` do Ruby.
+ */
+const BODY_EXPANSION_PASSES = 20;
+
+/**
+ * Profundidade máxima de templates em avaliação. É o **mesmo** 20 do
+ * `macroStack` (Ruby l.211): templates e macros empilham no mesmo mecanismo de
+ * injeção, então o teto é único e o backstop é o mesmo erro
+ * `macro_stack_overflow`. Recursão direta/mútua é pega antes por
+ * `template_recursion`.
+ */
+const TEMPLATE_DEPTH_LIMIT = 20;
+
+/** Args posicionais de uma chamada de macro (Ruby `endMacroCall`). */
+export interface PositionalMacroArgs {
+  name: string;
+  args: string[];
+}
+
+/** View vazia e congelada usada quando ainda não há projeto (§4.7). */
+const EMPTY_PROJECT_VIEW: Readonly<Record<string, unknown>> = Object.freeze(
+  {},
+);
+
+/**
+ * Converte um valor JS qualquer (vindo de `expandTemplate(nome, args)`) em
+ * `TemplateArgumentValue`, preservando números, booleanos, listas e objetos.
+ * O que não se encaixa vira texto — nunca `undefined`/`null` no contexto.
+ */
+export function toArgumentValue(value: unknown,): TemplateArgumentValue {
+  if (
+    typeof value === "string" || typeof value === "number" ||
+    typeof value === "boolean"
+  ) {
+    return value;
+  }
+  if (Array.isArray(value,)) {
+    return value.map((item,) => toArgumentValue(item,));
+  }
+  if (value && typeof value === "object") {
+    const out: { [key: string]: TemplateArgumentValue } = {};
+    for (const [key, item,] of Object.entries(value,)) {
+      out[key] = toArgumentValue(item,);
+    }
+    return out;
+  }
+  return String(value ?? "",);
+}
+
+/** Normaliza o objeto de argumentos de `expandTemplate` em mapa de params. */
+function toArgumentMap(args: unknown,): Record<string, TemplateArgumentValue> {
+  const out: Record<string, TemplateArgumentValue> = {};
+  if (args && typeof args === "object" && !Array.isArray(args,)) {
+    for (const [key, value,] of Object.entries(args,)) {
+      out[key] = toArgumentValue(value,);
+    }
+  }
+  return out;
+}
 
 export class Scanner implements ScannerHostLike {
   /** Nome do arquivo (ou texto) inicial (Ruby @masterFile). */
@@ -71,6 +139,21 @@ export class Scanner implements ScannerHostLike {
   masterPath = "";
   /** Token devolvido pendente (Ruby @tokenBuffer). */
   tokenBuffer: ScannerToken | null = null;
+  /**
+   * Motor de expressões lógicas injetado pela Fase 11 para valorar argumentos
+   * de template (subfase 23.4.6). `null` mantém a expressão como texto.
+   */
+  private expressionEvaluator:
+    | ((text: string,) => ExpressionEvaluation)
+    | null = null;
+  /** View somente-leitura dos metadados do projeto (`project` do §4.7). */
+  private projectContextProvider:
+    | (() => Readonly<Record<string, unknown>> | null)
+    | null = null;
+  /** Resolvedor de IDs (`ids()` do §4.7). */
+  private templateIdResolver: ((id: string,) => string) | null = null;
+  /** Templates em avaliação **inline** (`expandTemplate`), base → topo. */
+  private readonly inlineTemplateStack: string[] = [];
 
   constructor(
     masterFile: string,
@@ -350,6 +433,502 @@ export class Scanner implements ScannerHostLike {
     if (!injected) {
       this.error("macro_stack_overflow", "Too many nested macro calls.",);
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Extensão Fase 23 — expansão de `template` (ADR 033)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Expande uma chamada `${NOME k=v …}` de template (plano §4.4, duas fases):
+   *
+   * 1. Fase 1 — `${MACRO …}` do corpo é expandido textualmente;
+   * 2. Fase 2 — o corpo resultante é renderizado pelo Vento com os params;
+   *
+   * e o texto final reentra no stream pela mesma `injectMacro` das macros.
+   *
+   * O texto reentrante é reescaneado como TJP normal — é isso que faz uma
+   * chamada de template produzida pelo render (`${OUTRO …}`) expandir em
+   * cascata (23.3.9).
+   */
+  expandTemplateCall(
+    prefix: string,
+    name: string,
+    rawArgs: string,
+    callLength: number,
+    callSfi: SourceFileInfo = this.sourceFileInfo(),
+  ): void {
+    const target = this.templateCallTarget(name,);
+    const template = target.template;
+    if (!template) {
+      // `${?NOME …}` com template inexistente é vazio silencioso (§4.5.4).
+      if (target.optional) return;
+      // Inalcançável pelo caminho normal (o chamador decide pelo lookup), mas
+      // mantém a mesma mensagem da macro se o namespace mudar no meio.
+      this.error("undefined_macro", `Undefined macro '${name}' called`,);
+      return;
+    }
+    const cleanName = template.name;
+
+    // Proteções (§4.6): recursão com cadeia completa e teto de profundidade.
+    // Ambas checam antes de renderizar, então o corpo nunca é reexecutado
+    // indefinidamente.
+    const chain = this.templateCallChain();
+    const cycleAt = chain.indexOf(cleanName,);
+    if (cycleAt >= 0) {
+      const cycle = [...chain.slice(cycleAt,), cleanName,].join(" → ",);
+      this.error(
+        "template_recursion",
+        `recursão detectada: ${cycle}`,
+        callSfi,
+      );
+      return;
+    }
+    if (chain.length >= TEMPLATE_DEPTH_LIMIT) {
+      this.error("macro_stack_overflow", "Too many nested macro calls.",);
+      return;
+    }
+
+    const data = this.parseNamedArguments(cleanName, rawArgs, callSfi,);
+    if (data === null) return;
+    if (!this.validateTemplateArgs(template, data, callSfi,)) return;
+
+    const content = this.renderTemplate(template, data, callSfi,);
+    if (content === null) return;
+
+    const injected = this.cf
+      ? this.cf.injectMacro(
+        null,
+        [cleanName,],
+        (prefix ?? "") + content,
+        callLength,
+      )
+      : false;
+    if (!injected) {
+      this.error("macro_stack_overflow", "Too many nested macro calls.",);
+    }
+  }
+
+  /**
+   * Valida os argumentos contra a lista de parâmetros declarada (§5).
+   *
+   * Não declarado vem antes do faltante: um typo (`esforcoo`) costuma ser a
+   * causa do "parâmetro faltante" e a mensagem certa é a do typo.
+   */
+  protected validateTemplateArgs(
+    template: Template,
+    data: Record<string, TemplateArgumentValue>,
+    callSfi: SourceFileInfo,
+  ): boolean {
+    const name = template.name;
+    for (const key of Object.keys(data,)) {
+      if (!template.params.includes(key,)) {
+        this.error(
+          "template_unknown_param",
+          `template '${name}': parâmetro '${key}' não declarado`,
+          callSfi,
+        );
+        return false;
+      }
+    }
+    for (const param of template.params) {
+      if (!(param in data)) {
+        this.error(
+          "template_missing_param",
+          `template '${name}': parâmetro '${param}' não fornecido`,
+          callSfi,
+        );
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Núcleo de renderização (duas fases, §4.4) compartilhado pela chamada do
+   * stream (`${NOME …}`) e pela composição inline (`expandTemplate`).
+   *
+   * Devolve o texto renderizado ou `null` quando o erro já foi reportado.
+   */
+  protected renderTemplate(
+    template: Template,
+    data: Record<string, TemplateArgumentValue>,
+    callSfi: SourceFileInfo,
+  ): string | null {
+    const cleanName = template.name;
+
+    // Fase 1 — macros do corpo, antes do render.
+    const expandedBody = this.expandMacrosInText(template.body,);
+
+    // Fase 2 — render Vento com params + chaves globais no contexto (§4.7).
+    const context = this.buildTemplateContext(cleanName, data, callSfi,);
+    const rendered = templateEngine.render(expandedBody, context,);
+    if (!rendered.ok) {
+      const syntax = rendered.kind === "syntax";
+      const kind = syntax ? "erro de sintaxe" : "erro de execução";
+      // O corpo começa na linha da definição quando o texto segue o `[` na
+      // mesma linha; começa uma linha depois quando o `[` fecha a linha.
+      const offset = template.body.startsWith("\n",) ? 1 : 0;
+      const line = template.sourceFileInfo.lineNo + offset + rendered.line - 1;
+      this.error(
+        syntax ? "template_syntax_error" : "template_render_error",
+        `template '${cleanName}': ${kind} na linha ${rendered.line}: ${rendered.message}`,
+        new SourceFileInfo(
+          template.sourceFileInfo.fileName,
+          line,
+          rendered.column,
+        ),
+      );
+      return null;
+    }
+    return rendered.content;
+  }
+
+  /**
+   * Monta o contexto da renderização: chaves globais (§4.7) + parâmetros.
+   *
+   * O parâmetro **sobrescreve** a global homônima e a colisão vira warning
+   * com o `sfi` da chamada (23.6.5) — o template continua renderizando.
+   */
+  protected buildTemplateContext(
+    callName: string,
+    data: Record<string, TemplateArgumentValue>,
+    callSfi: SourceFileInfo,
+  ): Record<string, unknown> {
+    const context = this.templateGlobals(callSfi,);
+    for (const key of Object.keys(data,)) {
+      if (key in context) {
+        this.warning(
+          "template_shadowed_global",
+          `template '${callName}': parâmetro '${key}' sobrescreve a chave ` +
+            "global de mesmo nome",
+          callSfi,
+        );
+      }
+      context[key] = data[key];
+    }
+    return context;
+  }
+
+  /**
+   * Chaves globais disponíveis em qualquer corpo (§4.7): `project` (view
+   * congelada, somente leitura), `ids`, `expandTemplate`, `expandMacro` e
+   * `expandTemplateList`.
+   */
+  protected templateGlobals(
+    callSfi: SourceFileInfo,
+  ): Record<string, unknown> {
+    const view = this.projectContextProvider?.() ?? null;
+    return {
+      project: view ?? EMPTY_PROJECT_VIEW,
+      ids: (id: unknown,) =>
+        this.templateIdResolver?.(String(id ?? "",),) ?? "",
+      expandTemplate: (name: unknown, args: unknown,) =>
+        this.expandTemplateInline(String(name ?? "",), args, callSfi,),
+      expandMacro: (name: unknown, ...args: unknown[]) =>
+        this.expandMacroInline(
+          String(name ?? "",),
+          args.map((a,) => String(a ?? "",)),
+          callSfi,
+        ),
+      expandTemplateList: (name: unknown, list: unknown,) =>
+        this.expandTemplateListInline(String(name ?? "",), list, callSfi,),
+    };
+  }
+
+  /**
+   * `expandTemplate(nome, { … })` — renderiza outro template **inline** e
+   * devolve o texto (sem injetar no stream). É a forma de composição
+   * explícita recomendada pelo plano §4.4.
+   */
+  protected expandTemplateInline(
+    name: string,
+    args: unknown,
+    callSfi: SourceFileInfo,
+  ): string {
+    const target = this.templateCallTarget(name,);
+    const template = target.template;
+    if (!template) {
+      if (target.optional) return "";
+      const clean = name.replace(/^\?/, "",);
+      this.error("template_not_defined", `'${clean}' não definido`, callSfi,);
+      return "";
+    }
+    const cleanName = template.name;
+
+    // Recursão: a cadeia do stream + a pilha das chamadas inline em curso.
+    const chain = [...this.templateCallChain(), ...this.inlineTemplateStack,];
+    const cycleAt = chain.indexOf(cleanName,);
+    if (cycleAt >= 0) {
+      const cycle = [...chain.slice(cycleAt,), cleanName,].join(" → ",);
+      this.error(
+        "template_recursion",
+        `recursão detectada: ${cycle}`,
+        callSfi,
+      );
+      return "";
+    }
+
+    const data = toArgumentMap(args,);
+    if (!this.validateTemplateArgs(template, data, callSfi,)) return "";
+
+    this.inlineTemplateStack.push(cleanName,);
+    try {
+      return this.renderTemplate(template, data, callSfi,) ?? "";
+    } finally {
+      this.inlineTemplateStack.pop();
+    }
+  }
+
+  /**
+   * `expandMacro(nome, …)` — resolve a macro a partir de string (§4.7).
+   * A macro continua sendo substituição textual; o texto devolvido entra no
+   * corpo renderizado e é resscaneado normalmente.
+   */
+  protected expandMacroInline(
+    name: string,
+    args: string[],
+    callSfi: SourceFileInfo,
+  ): string {
+    const resolved = this.macroTable.resolve([name, ...args,], callSfi,);
+    if (!resolved) {
+      if (name.startsWith("?",)) return "";
+      this.error(
+        "undefined_macro",
+        `Undefined macro '${name}' called`,
+        callSfi,
+      );
+      return "";
+    }
+    return resolved[1];
+  }
+
+  /**
+   * `expandTemplateList(nome, lista)` — conveniência opcional do plano §4.7:
+   * renderiza o mesmo template para cada item e devolve o array de textos.
+   *
+   * Item que não é objeto é ligado ao **primeiro** parâmetro declarado: é o
+   * caso comum de uma lista de IDs (`["a", "b"]`).
+   */
+  protected expandTemplateListInline(
+    name: string,
+    list: unknown,
+    callSfi: SourceFileInfo,
+  ): string[] {
+    if (!Array.isArray(list,)) return [];
+    const params = this.templateCallTarget(name,).template?.params ?? [];
+    const first = params[0];
+    return list.map((item,) => {
+      const isObject = item !== null && typeof item === "object" &&
+        !Array.isArray(item,);
+      const args = isObject || first === undefined ? item : { [first]: item, };
+      return this.expandTemplateInline(name, args, callSfi,);
+    },);
+  }
+
+  /**
+   * Divide `NOME "a" "b"` em nome + args posicionais (Ruby `endMacroCall`).
+   * O texto residual é o erro `junk_at_eom` do Ruby — o caminho de macro é
+   * **congelado**: os dois chamadores (macro e Fase 1 do template) usam
+   * exatamente a mesma rotina.
+   */
+  protected splitMacroArgs(argsStr: string,): PositionalMacroArgs {
+    const spaceIdx = argsStr.indexOf(" ",);
+    if (spaceIdx < 0) return { name: argsStr, args: [], };
+
+    const name = argsStr.slice(0, spaceIdx,);
+    let rest = argsStr.slice(name.length,);
+    const args: string[] = [];
+    // StringScanner interno para limpar as aspas duplas dos argumentos.
+    for (;;) {
+      const open = /^\s*"/.exec(rest,);
+      if (!open) break;
+      rest = rest.slice(open[0].length,);
+      const body = /^(\\"|[^"])*/.exec(rest,)![0];
+      args.push(body.replaceAll('\\"', '"',),);
+      rest = rest.slice(body.length,);
+      const close = /^"\s*/.exec(rest,);
+      rest = close ? rest.slice(close[0].length,) : rest.slice(1,);
+    }
+
+    if (rest !== "") {
+      this.error(
+        "junk_at_eom",
+        `Junk found at end of macro: ${rest}`,
+      );
+    }
+
+    return { name, args, };
+  }
+
+  /**
+   * Fase 1 — expande as chamadas `${MACRO …}` de um corpo de template.
+   *
+   * Só **macros**: `${TEMPLATE …}` no corpo é texto (chamada de template usa
+   * `expandTemplate()` no contexto — plano §4.4). O escape `$${` perde um `$`
+   * e não expande, como no `MacroTable#resolve` do Ruby.
+   */
+  protected expandMacrosInText(body: string,): string {
+    let text = body;
+    for (let pass = 0; pass < BODY_EXPANSION_PASSES; pass++) {
+      let changed = false;
+      const callRe = /\$\{\s*(\??[A-Za-z_]\w*)((?:\s*"(?:\\"|[^"])*")*)\s*\}/g;
+      text = text.replaceAll(
+        callRe,
+        (
+          match: string,
+          rawName: string,
+          rawArgs: string,
+          offset: number,
+          whole: string,
+        ): string => {
+          if (offset > 0 && whole[offset - 1] === "$") return match;
+          const name = rawName.replace(/^\?/, "",);
+          // Template no corpo permanece texto (§4.4).
+          if (this.macroTable.template(name,)) return match;
+          const { name: macroName, args, } = this.splitMacroArgs(
+            rawName + rawArgs,
+          );
+          const resolved = this.macroTable.resolve(
+            [macroName, ...args,],
+            this.sourceFileInfo(),
+          );
+          if (!resolved) {
+            this.error(
+              "undefined_macro",
+              `Undefined macro '${macroName}' called`,
+            );
+            return match;
+          }
+          changed = true;
+          return resolved[1];
+        },
+      );
+      if (!changed) return text;
+    }
+    this.error("macro_stack_overflow", "Too many nested macro calls.",);
+    return text;
+  }
+
+  /**
+   * Decide se _name_ aponta para um template, respeitando o prefixo `?`
+   * (chamada opcional, §4.5.4). Devolve também o estado de opcionalidade
+   * para que o chamador saiba silenciar um nome inexistente.
+   */
+  templateCallTarget(
+    name: string,
+  ): { template: Template | null; optional: boolean } {
+    const optional = name.startsWith("?",);
+    const clean = optional ? name.slice(1,) : name;
+    return { template: this.macroTable.template(clean,), optional, };
+  }
+
+  /**
+   * Cadeia de templates atualmente em avaliação, da base ao topo.
+   *
+   * A ancoragem é a mesma das macros: entradas `macro === null` na pilha de
+   * expansões do stream, empilhadas por `injectMacro` e desempilhadas por
+   * `cleanupMacroStack` conforme o cursor avança. Por isso a detecção de
+   * recursão enxerga chamadas aninhadas produzidas pelo próprio render
+   * (reentrada do stream), não apenas o aninhamento sintático.
+   */
+  protected templateCallChain(): string[] {
+    const cf = this.cf;
+    if (!cf) return [];
+    const chain: string[] = [];
+    for (const entry of cf.macroStack) {
+      if (entry.macro === null && entry.args.length > 0) {
+        chain.push(entry.args[0]!,);
+      }
+    }
+    return chain;
+  }
+
+  /**
+   * Liga o motor de expressões lógicas da Fase 11 à expansão de argumentos.
+   * Sem avaliador, uma chamada como `isMilestone(!t1)` permanece texto.
+   */
+  setExpressionEvaluator(
+    evaluator: ((text: string,) => ExpressionEvaluation) | null,
+  ): void {
+    this.expressionEvaluator = evaluator;
+  }
+
+  /**
+   * Liga a view somente-leitura de `project` (§4.7). O provedor é **lazy**:
+   * a chamada `${NOME …}` acontece depois do cabeçalho do projeto.
+   */
+  setProjectContextProvider(
+    provider: (() => Readonly<Record<string, unknown>> | null) | null,
+  ): void {
+    this.projectContextProvider = provider;
+  }
+
+  /** Liga `ids()` (§4.7) ao resolvedor de IDs do projeto. */
+  setTemplateIdResolver(
+    resolver: ((id: string,) => string) | null,
+  ): void {
+    this.templateIdResolver = resolver;
+  }
+
+  /** Resultado do avaliador externo (`ok: false` quando não há motor). */
+  protected evaluateArgumentExpression(text: string,): ExpressionEvaluation {
+    return this.expressionEvaluator
+      ? this.expressionEvaluator(text,)
+      : { ok: false, };
+  }
+
+  /**
+   * Converte `k=v k2="v 2"` no contexto da chamada (subfase 23.4).
+   *
+   * A tipagem (string/número/booleano/`!id`/lista/objeto/expressão) vive em
+   * `template-arguments.ts`, que não conhece o scanner. Aqui só traduzimos a
+   * recusa em mensagem localizada. Devolve `null` quando o texto não é uma
+   * lista de pares válida (erro já reportado).
+   */
+  protected parseNamedArguments(
+    callName: string,
+    rawArgs: string,
+    callSfi: SourceFileInfo,
+  ): Record<string, TemplateArgumentValue> | null {
+    const parsed = parseTemplateArguments(rawArgs, {
+      evaluateExpression: (text: string,) =>
+        this.evaluateArgumentExpression(text,),
+    },);
+    if (parsed.ok) return parsed.args;
+
+    const prefix = `template '${callName}': `;
+    switch (parsed.reason) {
+      case "invalid_pair":
+        this.error(
+          "template_bad_argument",
+          `${prefix}argumento inválido em '${parsed.at}'`,
+          callSfi,
+        );
+        break;
+      case "missing_value":
+        this.error(
+          "template_bad_argument",
+          `${prefix}valor ausente para '${parsed.key}'`,
+          callSfi,
+        );
+        break;
+      case "unterminated_string":
+        this.error(
+          "template_bad_argument",
+          `${prefix}string não fechada em '${parsed.key}'`,
+          callSfi,
+        );
+        break;
+      case "unbalanced":
+        this.error(
+          "template_bad_argument",
+          `${prefix}delimitador não balanceado em '${parsed.key}'`,
+          callSfi,
+        );
+        break;
+    }
+    return null;
   }
 
   /** Erro relacionado ao texto processado (lança ≈ Ruby trapSetup). */

@@ -1,0 +1,50 @@
+# Fase 23 (23.6.9) — snapshot dos cenários de **composição**.
+#
+# Cada template compõe com outro mecanismo do §4.7:
+#   • WRAPPER  → expandTemplate com objeto de args (template renderiza template)
+#   • SLIM     → expandTemplate lendo `project.name` (contexto global)
+#   • SUMMARY  → expandTemplateList + `for` do Vento
+#   • DEV_TASK → macro dentro do corpo (Fase 1) + params tipados (Fase 2)
+#
+# Não há oracle no TaskJuggler Ruby — `template` é extensão SyntaxMesh (ADR 033).
+# Consumido por tests/golden/template_golden_test.ts (seção "compose").
+#
+# Colocação (23.9): as definições ficam **fora** do bloco `{ }`, como a macro.
+
+project tmplcompose "Template Compose" "1.0" 2026-01-01 - 2026-03-31 {
+  timezone "UTC"
+  now 2026-01-01
+}
+
+template PERSON [ resource {{ id }} "{{ nome }}" { rate {{ taxa }} } ] (id, nome, taxa)
+
+template TASK_LINE [ task {{ id }} "{{ nome }}" { effort {{ esforco }} } ] (id, nome, esforco)
+
+# `project.name` vem do contexto global (§4.7); `tarefas` é lista de objetos.
+template SUMMARY [
+# Projeto: {{ project.name }}
+{{ for linha of expandTemplateList("TASK_LINE", tarefas) }}{{ linha }}
+{{ /for }}
+] (tarefas)
+
+template WRAPPER [ {{ expandTemplate("PERSON", { id: id, nome: nome, taxa: 100 }) }} ] (id, nome)
+
+template SLIM [ {{ expandTemplate("PERSON", { id: id, nome: project.name, taxa: 200 }) }} ] (id)
+
+template DEV_TASK [
+  task {{ id }} "{{ nome }}" {
+    effort {{ esforco }}
+    ${ALLOCATE_TEAM}
+  }
+] (id, nome, esforco)
+
+macro ALLOCATE_TEAM [ allocate tux1, tux2 ]
+
+resource tux1 "Tux 1"
+resource tux2 "Tux 2"
+
+# --- Composição (23.6.9) -------------------------------------------------
+${WRAPPER id="alice" nome="Alice"}
+${SLIM id="bob"}
+${SUMMARY tarefas=[{ id: "c1", nome: "Composta", esforco: "2d" }]}
+${DEV_TASK id="d1" nome="Desenvolvimento" esforco="3d"}

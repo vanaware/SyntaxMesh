@@ -1,0 +1,239 @@
+{
+  "expansion": {
+    "fixture": "basic",
+    "messages": [],
+    "templates": [
+      {
+        "name": "CARD",
+        "params": [
+          "id",
+          "nome",
+          "esforco"
+        ],
+        "body": " task {{ id }} \"{{ nome }}\" { effort {{ esforco }} } "
+      },
+      {
+        "name": "HEADER",
+        "params": [],
+        "body": "\n    # Projeto: {{ project.name }}\n  "
+      },
+      {
+        "name": "FOOTER",
+        "params": [],
+        "body": " # fim do projeto "
+      }
+    ],
+    "tasks": [
+      {
+        "id": "t1",
+        "name": "Design",
+        "effort": 40,
+        "allocate": []
+      },
+      {
+        "id": "t2",
+        "name": "Implementação",
+        "effort": 80,
+        "allocate": []
+      }
+    ],
+    "resources": [
+      {
+        "id": "tux1",
+        "name": "Tux 1"
+      },
+      {
+        "id": "tux2",
+        "name": "Tux 2"
+      },
+      {
+        "id": "tux3",
+        "name": "Tux 3"
+      }
+    ]
+  },
+  "args": {
+    "fixture": "args-matrix",
+    "messages": [],
+    "templates": [
+      {
+        "name": "PROBE",
+        "params": [
+          "id",
+          "s",
+          "n",
+          "b",
+          "ref",
+          "lista",
+          "mapa",
+          "soma"
+        ],
+        "body": "\n    resource {{ id }} \"str={{ typeof s }};num={{ typeof n }};bool={{ typeof b }};ref={{ ref }};refType={{ typeof ref }};list={{ lista.length }};list1={{ lista[1] }};obj={{ mapa.k }};arith={{ soma }}\"\n  "
+      }
+    ],
+    "tasks": [],
+    "resources": [
+      {
+        "id": "r1",
+        "name": "str=string;num=number;bool=boolean;ref=!t1;refType=string;list=2;list1=c;obj=v;arith=7"
+      }
+    ]
+  },
+  "compose": {
+    "fixture": "composition",
+    "messages": [],
+    "templates": [
+      {
+        "name": "PERSON",
+        "params": [
+          "id",
+          "nome",
+          "taxa"
+        ],
+        "body": " resource {{ id }} \"{{ nome }}\" { rate {{ taxa }} } "
+      },
+      {
+        "name": "TASK_LINE",
+        "params": [
+          "id",
+          "nome",
+          "esforco"
+        ],
+        "body": " task {{ id }} \"{{ nome }}\" { effort {{ esforco }} } "
+      },
+      {
+        "name": "SUMMARY",
+        "params": [
+          "tarefas"
+        ],
+        "body": "\n# Projeto: {{ project.name }}\n{{ for linha of expandTemplateList(\"TASK_LINE\", tarefas) }}{{ linha }}\n{{ /for }}\n  "
+      },
+      {
+        "name": "WRAPPER",
+        "params": [
+          "id",
+          "nome"
+        ],
+        "body": " {{ expandTemplate(\"PERSON\", { id: id, nome: nome, taxa: 100 }) }} "
+      },
+      {
+        "name": "SLIM",
+        "params": [
+          "id"
+        ],
+        "body": " {{ expandTemplate(\"PERSON\", { id: id, nome: project.name, taxa: 200 }) }} "
+      },
+      {
+        "name": "DEV_TASK",
+        "params": [
+          "id",
+          "nome",
+          "esforco"
+        ],
+        "body": "\n  task {{ id }} \"{{ nome }}\" {\n    effort {{ esforco }}\n    ${ALLOCATE_TEAM}\n  }\n"
+      }
+    ],
+    "tasks": [
+      {
+        "id": "c1",
+        "name": "Composta",
+        "effort": 16,
+        "allocate": []
+      },
+      {
+        "id": "d1",
+        "name": "Desenvolvimento",
+        "effort": 24,
+        "allocate": [
+          "tux1",
+          "tux2"
+        ]
+      }
+    ],
+    "resources": [
+      {
+        "id": "tux1",
+        "name": "Tux 1"
+      },
+      {
+        "id": "tux2",
+        "name": "Tux 2"
+      },
+      {
+        "id": "alice",
+        "name": "Alice"
+      },
+      {
+        "id": "bob",
+        "name": "Template Compose"
+      }
+    ]
+  },
+  "macros": {
+    "fixture": "macros-in-template",
+    "messages": [],
+    "templates": [
+      {
+        "name": "DEV_TASK",
+        "params": [
+          "id",
+          "nome",
+          "esforco"
+        ],
+        "body": "\n  task {{ id }} \"{{ nome }}\" {\n    effort {{ esforco }}\n    ${ALLOCATE_TEAM}\n  }\n"
+      },
+      {
+        "name": "PAID",
+        "params": [
+          "id",
+          "nome"
+        ],
+        "body": " resource {{ id }} \"{{ nome }}\" { ${RATE \"99\"} } "
+      }
+    ],
+    "tasks": [
+      {
+        "id": "t1",
+        "name": "Setup",
+        "effort": 24,
+        "allocate": [
+          "tux1",
+          "tux2"
+        ]
+      }
+    ],
+    "resources": [
+      {
+        "id": "tux1",
+        "name": "Tux 1"
+      },
+      {
+        "id": "tux2",
+        "name": "Tux 2"
+      },
+      {
+        "id": "carol",
+        "name": "Carol"
+      }
+    ]
+  },
+  "errors": {
+    "fixture": "errors",
+    "messages": [
+      "template_missing_param:template 'CARD': parâmetro 'esforco' não fornecido"
+    ],
+    "templates": [
+      {
+        "name": "CARD",
+        "params": [
+          "id",
+          "nome",
+          "esforco"
+        ],
+        "body": " task {{ id }} \"{{ nome }}\" { effort {{ esforco }} } "
+      }
+    ],
+    "tasks": [],
+    "resources": []
+  }
+}

@@ -11,6 +11,13 @@ Reuna dicas e analise-as do arquivo: docs/syntaxmesh/cheat-sheet-ruby-ts.md
 
 Desenvolvimento atual (docs/syntaxmesh/fases/):
 
+- **Fase 23 — Template (Vento) ✅ CONCLUÍDA (2026-11-06)**: `fase-23-template.md`
+  (plano) + `fase-23-template-tarefas.md` (23.0–23.8) + ADR 033 + referência
+  normativa `docs/syntaxmesh/11-referencia-template.md`. Próxima da ordem oficial:
+  **Fase 24 (CLI)** — plano `fase-24-cli.md` + `fase-24-cli-tarefas.md`.
+  Única pendência da 23 é **23.7.7** (smoke `syntaxmesh template-fixture.tjp`),
+  que depende da própria CLI da F24.
+
 - **Fase 10 Complemento** — `fase-10-complemento1.md` + `fase-10-complemento2.md` (especificações) → executar `fase-10-complemento-tarefas.md` (Blocos C0–C4, toca Fases 5/7/8.1/10) e os adendos "Adendo Fase 10 Complemento" nos `-tarefas.md` das Fases 13/14/16/18/19/20/21. **Adendo 2026-11-06 (PLANEJADA, não executada):** `fase-10-complemento3.md` — tipo `markdown` em `extend` (ADR 039); tarefas no **Bloco C5** (`fase-10-complemento-tarefas.md`) + **14C.19** (`fase-14-relatorios-complemento-tarefas.md`); inclui o fix fiel ao Ruby do tipo `richtext` em `extend` (C5.1). **✅ Executado (2026-11-06):** C5.1–C5.8 + 14C.19.1–14C.19.4 verdes (fixture `10c-extend-markdown.tjp`, testes `extend-markdown_test.ts`/`extend-markdown_14c_test.ts` + golden C5.8); ADR 039 aceita. Dois fixes de produção fora do plano, achados no round-trip C5.7: `MarkdownFactory` grava `inputText` no back-pointer do RTI; `tjp-export-re` usa os campos `id/name/version` do projeto como fallback.
 - Fase 11 (`fase-11-logica-queries-tarefas.md`), Fase 12 (`fase-12-richtext-tarefas.md`), Fase 13 (`fase-13-markdown-tarefas.md`), Fase 14 (`fase-14-relatorios-tarefas.md`, núcleo 14.0–14.24) e **Fase 14 Complemento** (`fase-14-relatorios-complemento.md` + `-tarefas.md`, Blocos C0–C18: materiais/RDO/breakdown nos relatórios, MspXml→MSPDI, markdown em reports, hide/rollup de material/picture, saída markdown `.md`, `defaultaccount`, `<Baseline>` do MSPDI, unit price por alocação/booking e auditoria G1.4, booking de estoque ±, unit price calculado por composição, keywords opcionais em booking + `booking charge` no material, turnover com precedência de preço, registro do comportamento de cenários e colunas de estoque `stockquantity`/`stockcost` nos conteúdos de material — absorve os adendos 14.25/14.26) — **todas concluídas**; **C0–C12 ✅** (2026-11-01) e **C13–C17 ✅** (2026-11-02, adendo extra §12) e **C18 ✅** (2026-11-02, pendência §13.7 — colunas de estoque `stockquantity`/`stockcost` + limpeza do órfão `ExtendedBooking` apagado, `ChargeBooking` como fonte única) na Fase 14 Complemento.
 
@@ -202,9 +209,27 @@ i18n (10.15+) em `packages/core/src/i18n/`.
 - **Ordem de execução oficial (diretriz do usuário, 2026-11-03; seção
   "Ordem de execução" do `plano.md`):**
   `16 → 17 → 18 → 23 → 24 → 21 (1ª onda) → 22 → 21 (2ª onda) → 19 → 20 → 21 (3ª onda)`
-- **Fase 23 — Template (Vento)** ⬜ — plano `fase-23-template.md` + tarefas
-  `fase-23-template-tarefas.md` (~95). Depois da 18, antes da 24/22; estende o
-  baseline de macros da Fase 10 (auditoria 23.1b), não re-porta.
+- **Fase 23 — Template (Vento)** ✅ Concluída (2026-11-06, 23.0–23.8): keyword
+  `template` (`en`/`pt-BR` `modelo`/`es` `plantilla`) com corpo `[ ]` **cru** e
+  params `( )`, registrada no **namespace único** macro/template do `MacroTable`
+  (ramo interno, sem registro paralelo — ADR 033); expansão em **duas fases**
+  no `expandMacro` do scanner (macros do corpo antes do render Vento; texto
+  reentrante via `injectMacro`, sem autoescape); argumentos nomeados tipados
+  (string/número/boolean/`!id`/lista/objeto/aritmética) **sem `eval` próprio**;
+  proteções de recursão (cadeia `A → B → A`), profundidade 20, ordem de
+  definição e `${?NOME}` silencioso; contexto com `project` (view congelada),
+  `ids`, `expandTemplate`, `expandTemplateList`, `expandMacro`. **Caminho de
+  macro intocado** (auditoria 23.1b + cerca executável
+  `tests/lexer/macro-baseline-regression_test.ts`). Goldens TS-only
+  consolidados em `tests/golden/template.golden.json`; integração prova
+  schedule/financeiro idênticos ao projeto escrito à mão e relatório via
+  fachada `TaskJuggler`. Referência normativa em
+  `docs/syntaxmesh/11-referencia-template.md` (insumo do `lsp-core` da F22).
+  **23.7.7 pendente com nota** (smoke da CLI): a Fase 24 ainda não existe.
+  Verificação: `check:all`/`lint`/`fmt:check`/`check:stubs` exit 0; suíte
+  **730 testes / 6402 passos verdes**, com 1 falha **pré-existente** em
+  `tests/reports/markdown-report_14c_test.ts` (reproduzida em worktree limpo
+  do HEAD — não é regressão da F23).
 - **Fase 24 — CLI (`packages/cli`)** ⬜ — plano `fase-24-cli.md` + tarefas
   `fase-24-cli-tarefas.md` (~114, sendo ~100 da 1ª onda + adendos 24.9/24.10).
   Depois da 23, antes da 21¹; tj3-equivalente multi-runtime (Deno/Bun/Node); a
@@ -239,6 +264,12 @@ i18n (10.15+) em `packages/core/src/i18n/`.
   (ADR 037); `Project#generateReport(…, dynamicAttributes)` com backup→parse→
   `interactive`→gerar→restore (18.19); `MessageHandler#checkLevel` (18.20);
   goldens `timesheets` (22 casos) e `dynamic-attributes` (6).
+- Fase 23 — Template (Vento) ✅ Concluída (2026-11-06, 23.0–23.8) — elemento
+  TS-only `template` (ADR 033): declaração com corpo cru + params, namespace
+  único com macros, expansão em duas fases no `expandMacro`, argumentos
+  nomeados tipados, proteções (recursão/profundidade/ordem) e contexto de
+  composição; macros da Fase 10 **intocadas**; referência em
+  `docs/syntaxmesh/11-referencia-template.md`.
 - Fase 19 — Storage ⬜ Não iniciada (por último, após a 21²)
 - Fase 20 — PWA + UI ⬜ Não iniciada (antes da 21³)
 
@@ -251,7 +282,7 @@ Cada fase tem um arquivo de tarefas atômicas separado:
 
 ## Decisões arquitetônicas (ADR)
 
-Todas as decisões arquitetônicas importantes estão documentadas em `docs/syntaxmesh/decisoes/` (ADRs 001–037, sendo 033–037 **reservados**). Consulte `docs/syntaxmesh/decisoes/README.md` para a lista completa. Cadeia reservada pela ordem oficial de execução: **033 = template (Fase 23), 034 = CLI (Fase 24), 035 = extensão VS Code (Fase 22)**; reservados em 2026-11-03 pela varredura xray: **036 = sheets sem SMTP (email → texto), Fase 18** e **037 = injeção de provedor de conteúdo/`FileStore`, Fases 18/24**. **029** (Journal/AlertLevel) pertence à Fase 16 e foi entregue em `decisoes/029-journal-alertlevel.md` (16.0). Nunca renumerar ADRs já commitados; a cadeia 033–037 é reconciliada na Fase 21 (conferir o README antes de criar).
+Todas as decisões arquitetônicas importantes estão documentadas em `docs/syntaxmesh/decisoes/` (ADRs 001–039, sendo 034–037 **reservados**). Consulte `docs/syntaxmesh/decisoes/README.md` para a lista completa. Cadeia reservada pela ordem oficial de execução: **034 = CLI (Fase 24), 035 = extensão VS Code (Fase 22)**; reservados em 2026-11-03 pela varredura xray: **036 = sheets sem SMTP (email → texto), Fase 18** e **037 = injeção de provedor de conteúdo/`FileStore`, Fases 18/24**. **029** (Journal/AlertLevel) pertence à Fase 16 e foi entregue em `decisoes/029-journal-alertlevel.md` (16.0); **033** (elemento `template`) foi entregue em `decisoes/033-elemento-template.md` (Fase 23, 23.0); **038** (XML/HTML/ical/painter) na F17 e **039** (`extend` tipo `markdown`) na F10 Complemento. Nunca renumerar ADRs já commitados; a cadeia 034–037 é reconciliada na Fase 21 (conferir o README antes de criar).
 
 ## Regras de ouro para IA
 

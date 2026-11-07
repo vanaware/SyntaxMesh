@@ -1,0 +1,29 @@
+# Fase 23 (23.4.10) — matriz de tipos de argumento nomeado (§4.2).
+#
+# Uma única chamada exercita **todos** os tipos aceitos: string com espaços,
+# número, booleano, referência nativa `!id`, lista (com vírgula dentro de
+# string), objeto literal e expressão aritmética. O corpo do PROBE expõe o
+# `typeof` de cada valor, então o golden registra a **tipagem**, não só o texto.
+#
+# Não há oracle no TaskJuggler Ruby — `template` é extensão SyntaxMesh (ADR 033).
+# Consumido por tests/golden/template_golden_test.ts (seção "args").
+#
+# Colocação (23.9): a definição fica **fora** do bloco `{ }`, como a macro.
+
+project tmplargs "Template Args" "1.0" 2026-01-01 - 2026-03-31 {
+  timezone "UTC"
+  now 2026-01-01
+}
+
+template PROBE [
+  resource {{ id }} "str={{ typeof s }};num={{ typeof n }};bool={{ typeof b }};ref={{ ref }};refType={{ typeof ref }};list={{ lista.length }};list1={{ lista[1] }};obj={{ mapa.k }};arith={{ soma }}"
+] (id, s, n, b, ref, lista, mapa, soma)
+
+# --- Matriz de argumentos (23.4.10) --------------------------------------
+# `lista` tem uma vírgula *dentro* da string: o corte é por profundidade, não
+# por vírgula crua. `soma` referencia números literais (precedência `*` > `+`).
+${PROBE id="r1" s="texto livre" n=120 b=true ref=!t1 lista=["a, b", "c"] mapa={ k: "v" } soma=1 + 2 * 3}
+
+# --- Chamada opcional ausente (23.4.9) -----------------------------------
+# Não gera mensagem nem texto; o golden registra `messages: []`.
+${?OMITIDO id="r2" nome="Fantasma"}
