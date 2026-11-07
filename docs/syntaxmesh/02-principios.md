@@ -95,6 +95,15 @@ Cada tarefa deverá:
 
 Decisões arquitetônicas relevantes devem ser registradas em `docs/syntaxmesh/decisoes/` como ADR (Architecture Decision Record).
 
+## Ferramenta internacional em inglês (fase atual)
+
+Decisão 2026-11-07: durante a consolidação do engine/CLI/extensão do TaskJuggler, o SyntaxMesh é uma ferramenta **English-first em todas as superfícies que emite**:
+
+- Todas as **saídas** do código — mensagens de erro/aviso (`MessageHandler`, envelope `messages`), `help`, `version`, `man`, templates e corpo de emails de sheets, rótulos de interface de CLI — são **exclusivamente em inglês**. Nada de respostas do código em português ou espanhol nesta etapa.
+- O **i18n de keywords (Fase 10) é capacidade de entrada**: projetos `.smx`/`.tjp` com `language "pt-BR"` / `"es"` continuam sendo parseados (regra zero, goldens F21, corpus multilíngue). A diretiva `language` afeta **somente** o parsing do arquivo — nunca o idioma em que o tool responde.
+- ⚠️ **Parser pt-BR/es é experimental** (decisão 2026-11-07): vocabulário, sinônimos, unidades e cobertura de `man`/help estão **sujeitos a mudanças**. A **recomendação atual** é usar o **parser original em inglês** — `en` é a única superfície estável auditada pela regra zero (ADR 011) e a via recomendada nos goldens F21. Os fixtures pt/es permanecem como **piso de compatibilidade**, não como superfície publicitada. Ver `04-linguagem-multilingue.md`.
+- Consolidar o SyntaxMesh como ferramenta **internacional em inglês primeiro**; multilíngue de **saída/interface** é expansão futura (UI da Fase 20; adendo PT/ES da Fase 22 pós-Fase 21), sempre como adendo, nunca desvio silencioso.
+
 ## Tarefas de automação (deno.jsonc)
 
 Todas as tarefas de build, desenvolvimento, exportação e ferramentas de referência ficam centralizadas em `deno.jsonc`.

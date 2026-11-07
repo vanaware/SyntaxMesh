@@ -3,9 +3,9 @@
 > **Arquivo:** `docs/syntaxmesh/fases/fase-24-cli-tarefas.md`
 > **Plano:** `docs/syntaxmesh/fases/fase-24-cli.md`
 > **Status:** ⬜ Não iniciada
-> **Total:** ~136 tarefas
+> **Total:** ~144 tarefas
 > **Concluídas:** 0
-> **Foco:** CLI `packages/cli` (porta fiel do `tj3`), `io.ts` multi-runtime, desancoramento de I/O no core, **API de execução única `core.execute` → envelope JSON** (seções `check`/`listReports`/`reports`/`freeze`/`sheet`/`man`/`help`/`version`) + modificador `stdout` na DSL (adendo `fase-24-cli-adendo.md`)
+> **Foco:** CLI `packages/cli` (porta fiel do `tj3`), `io.ts` multi-runtime, desancoramento de I/O no core, **API de execução única `core.execute` → envelope JSON** (seções `check`/`listReports`/`reports`/`freeze`/`sheet`/`man`/`help`/`version`; entrada `request.files[]` de `{ path, content }` com o fechamento de `include`s — sem provedor, eco só dos caminhos; adendo v2.1 `fase-24-cli-adendo.md`) + modificador `stdout` na DSL
 
 ---
 
@@ -37,8 +37,11 @@ parallela na CLI.
 - **API de execução = envelope JSON (adendo v2, plano §5.5):** o core expõe
   `execute(request): Promise<ExecutionResult>` como **ponto único de entrada**
   das chamadas de linha de comando. O consumidor monta o `ExecutionRequest`
-  (opções já traduzidas) e recebe o envelope: `ok`, `exitCode` (dado), `options`
-  (eco normalizado — a CLI **não retém estado das opções**), `messages`
+  (opções já traduzidas + `files[]` de `{ path, content }` com o **fechamento
+  completo** de `include`s — o `execute` **não** recebe provedor/callback de
+  leitura, adendo v2.1) e recebe o envelope: `ok`, `exitCode` (dado), `options`
+  (eco normalizado — a CLI **não** retém estado das opções; dos arquivos o eco
+  traz **só os caminhos**, nunca os conteúdos), `messages`
   estruturadas e `results` com **apenas as seções pedidas** (`check`,
   `listReports`, `reports`, `freeze`, `sheet`, `man`, `help`, `version`). A
   seção `reports` traz o contrato `ReportsJson` (ordem de declaração, flag
@@ -78,7 +81,11 @@ parallela na CLI.
 ### Anti-padrões
 
 - ❌ Importar `Deno.*` ou `process` fora de `io.ts` (tasks/flags à parte).
-- ❌ Implementar resolução de `include`/macros na CLI (é do core/parser).
+- ❌ Implementar resolução de `include`/macros na CLI (é do core/parser — no
+  `execute`, por *lookup* contra `request.files`).
+- ❌ Passar provedor/callback de arquivo ao `execute` ou esperar os conteúdos
+  dos arquivos de volta no envelope — o conteúdo entra **inline** em
+  `request.files` e o eco traz só os caminhos (adendo v2.1).
 - ❌ Criar segunda camada de abstração de FS.
 - ❌ Emitir relatório pela CLI sem passar pela seção `reports` do envelope de
   `execute` — e, simetricamente, ❌ decidir destino de saída
@@ -87,9 +94,10 @@ parallela na CLI.
   opções no CLI — é trabalho do `core.execute`; a CLI consome o envelope.
 - ❌ Imprimir relatórios no terminal sem o delimitador
   `--- <name> [<format>] ---`, ou gravar com nome não sanitizado.
-- ❌ Desancorar `freeze`/`checkTimeSheet`/`checkStatusSheet` (âncoras reais das
-  Fases 19/18 — permanecem).
+- ❌ Desancorar `freeze` (âncora Fase 24 — 24.9). `checkTimeSheet`/`checkStatusSheet` mantêm a fachada com `FileStore` para o uso passo-a-passo, mas a via `execute` recebe a folha como **conteúdo** (grupo 5, 24.2.33) — não se passa caminho+store por essa fronteira.
 - ❌ Aceitar flags de `--debug*`/`--freeze` silenciosamente (v1 = erro âncora).
+- ❌ Criar arquivos de projeto SyntaxMesh com extensão `.tjp`/`.tji` em material **novo** — a extensão nativa é `.smx` (decisão 2026-11-07, plano §1.6); `.tjp`/`.tji` só existem como compatibilidade aceitada pelo core (24.2.36).
+- ❌ Emitir qualquer saída da ferramenta (mensagem, help, flag, template de sheet, README) que não seja em **inglês** — English-first é política da etapa atual (decisão 2026-11-07, plano §1.7, `02-principios.md`); i18n é só parsing de entrada.
 
 ---
 
@@ -98,19 +106,19 @@ parallela na CLI.
 ```
 [ ] 24.0  ADR da fase (0NN) + reposicionamento       —   0/7
 [ ] 24.1  Scaffold do pacote + io.ts                —   0/14
-[ ] 24.2  Injeção de I/O + API execute/envelope      —   0/30
-[ ] 24.3  Comando Cliffy + flags + exit codes       —   0/16
+[ ] 24.2  Injeção de I/O + API execute/envelope      —   0/37
+[ ] 24.3  Comando Cliffy + flags + exit codes       —   0/17
 [ ] 24.4  Saída no terminal (reporter + summary)    —   0/10
 [ ] 24.5  Política de saída + ponta a ponta         —   0/18
 [ ] 24.6  Multi-runtime + binário + README          —   0/9
 [ ] 24.7  Golden CLI vs tj3 Ruby                    —   0/10
 [ ] 24.8  Verificação final                         —   0/8
 ─────────────────────────────────────────────────────────
-SUBTOTAL (1ª onda, bloqueia v1)                    ~122
-[ ] 24.9  Adendo: wz man + --freeze* (Bloco I)      —   0/5
+SUBTOTAL (1ª onda, bloqueia v1)                    ~130
+[ ] 24.9  Adendo: syntaxmesh man + --freeze* (Bloco I) —   0/5
 [ ] 24.10 Adendo: apps de sheets + dynamicAttr.     —   0/9
 ─────────────────────────────────────────────────────────
-TOTAL: ~136
+TOTAL: ~144
 ```
 
 ---
@@ -125,7 +133,7 @@ TOTAL: ~136
 |---|---|---|---|
 | 24.0.1 | Criar `docs/syntaxmesh/decisoes/0NN-cli-multiruntime.md` com frontmatter (0NN = próximo livre; 034 se a 23 criou o 033 antes) | idem | arquivo existe |
 | 24.0.2 | Seção **Contexto:** CLI tj3 headless antes das Fases 19–22; requisito Deno/Bun/Node | idem | — |
-| 24.0.3 | Seção **Decisões:** `packages/cli` adaptador puro; Cliffy via JSR; `io.ts` único com `node:fs/promises` (zero ramificação de FS); exit codes 0/1 fiéis a `apps/Tj3.rb`; desancoramento de `TaskJuggler.parse/parseContent` por provedor injetado; contrato de saída = modificador `stdout` na DSL + `core.renderReports(): ReportsJson`, com política de terminal/arquivo exclusiva da CLI (adendo) | idem | — |
+| 24.0.3 | Seção **Decisões:** `packages/cli` adaptador puro; Cliffy via JSR; `io.ts` único com `node:fs/promises` (zero ramificação de FS); exit codes 0/1 fiéis a `apps/Tj3.rb`; desancoramento de `TaskJuggler.parse/parseContent` por provedor injetado (**só o caminho passo-a-passo**); API de execução única `core.execute` → envelope JSON — entrada por `request.files` (`{ path, content }`, fechamento de `include`s; sem provedor/disco; conteúdos não voltam no envelope — adendo v2/v2.1) — com contrato de saída = modificador `stdout` na DSL + seção `reports` (`ReportsJson`), política de terminal/arquivo exclusiva da CLI | idem | — |
 | 24.0.4 | Seções **Alternativas** (Deno-APIs puras, `@std/cli` sozinho, abstração de storage) e **Consequências** | idem | — |
 | 24.0.5 | Atualizar `decisoes/README.md` com a linha do novo ADR | idem | índice consistente |
 | 24.0.6 | Confirmar a seção **Ordem de execução** do `plano.md` (23 → 24 → 21¹ → 22) e a linha da Fase 24 no resumo executivo; ajustar se divergir | `plano.md` | ordem confere |
@@ -160,18 +168,21 @@ TOTAL: ~136
 
 ### 24.2 — Desancoramento de `parse/parseContent` + DSL `stdout` + fachada `execute` (envelope)
 
-**Objetivo:** a fachada recebe conteúdo de disco **por injeção** e expõe
-`execute(request)` como **ponto único de entrada** das chamadas de linha de
-comando, devolvendo o **envelope JSON** (eco `options`, `exitCode` como dado,
+**Objetivo:** a fachada passo-a-passo recebe conteúdo **por provedor
+injetado** e o `execute(request)` recebe o conteúdo **inline** em
+`request.files` (lista `{ path, content }` com o fechamento de `include`s,
+sem provedor/disco — adendo v2.1). `execute` é o **ponto único de entrada**
+das chamadas de linha de comando, devolvendo o **envelope JSON** (eco
+`options` só com os caminhos dos arquivos, `exitCode` como dado,
 `messages` estruturadas, `results` com **só as seções pedidas**; adendo §3). O
 core orquestra o pipeline por dentro, mas nunca toca em FS, nunca imprime,
 nunca decide destino nem chama `exit`/lê argv (plano §5.5/§6).
 
-**Grupo 1 — provedor de conteúdo (inalterado, sem `FileSink`):**
+**Grupo 1 — provedor de conteúdo do caminho passo-a-passo (inalterado, sem `FileSink`; no `execute` o conteúdo entra por `request.files` — grupo 4):**
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 24.2.1 | Definir tipo `FileContentProvider = (path: string) => string \| Promise<string>` e exportar de `mod.ts` (**não** criar `FileSink` — a saída passa a ser o `ReportsJson` do adendo; apagar a referência ao sink deste plano) | `packages/core/src/taskjuggler.ts`, `mod.ts` | `deno check` |
+| 24.2.1 | Definir tipo `FileContentProvider = (path: string) => string \| Promise<string>` e exportar de `mod.ts` (**não** criar `FileSink` — a saída passa a ser o `ReportsJson` do adendo; apagar a referência ao sink deste plano; provedor só alimenta `parse`/`parseContent` passo-a-passo — o `execute` não recebe provedor, adendo v2.1) | `packages/core/src/taskjuggler.ts`, `mod.ts` | `deno check` |
 | 24.2.2 | Teste que falha: `parse(["a.tjp"], provider)` com provider fake em Map → `project` montada | `packages/core/tests/taskjuggler_parse_test.ts` | falha correta |
 | 24.2.3 | Implementar `TaskJuggler.parse(files, provider, keepParser)` portado de `TaskJuggler.rb` (substitui `NotYetImplementedError("24")`) | `taskjuggler.ts` | teste passa |
 | 24.2.4 | Testes: `include` de `.tji` resolvido **relativo ao arquivo que inclui** (semântica `FileInstance`/`Dir` do Ruby); 2 fixtures aninhadas | idem | 2 testes |
@@ -207,15 +218,27 @@ nunca decide destino nem chama `exit`/lê argv (plano §5.5/§6).
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 24.2.22 | Definir tipos `ExecutionRequest`/`ExecutionResult` (contrato do adendo §3.2/§3.3) e exportar de `mod.ts`: campos **semânticos** apenas (file/content/configContent/checkSyntax/listReports/report/reportsIsRegex/dynamicAttributes/outputDir/noReports/forceReports/abortOnWarnings/warnTsDeltas/addTrace/freeze/help/version/man/app/appOptions); **sem** `silent`/`noColor` (renderer-only) | `packages/core/src/execution/types.ts`, `mod.ts` | `deno check` |
-| 24.2.23 | Implementar `TaskJuggler.execute(request): Promise<ExecutionResult>` portado do fluxo `apps/Tj3.rb: main()`: provedor injetado → `parse`/`parseContent` → gate `checkSyntax` → `schedule` → `checkReports` → render/operadores pontuais; sem FS, sem `exit`, sem argv | `packages/core/src/execution/execute.ts`, `taskjuggler.ts` | teste de integração 1 |
-| 24.2.24 | Construção do envelope: `ok`, `options` (eco do request normalizado com defaults aplicados), `messages` (snapshot estruturado do `MessageHandlerInstance`: `severity`/`id`/`text`/`file`/`line`) e `exitCode` pela matriz do plano §5.3 (fiel a `apps/Tj3.rb`, incluindo `abortOnWarnings`/`forceReports`) | `execution/envelope.ts` | ≥ 3 testes |
+| 24.2.22 | Definir tipos `ExecutionInputFile`/`ExecutionRequest`/`ExecutionResult` (contrato do adendo §3.2/§3.3 v2.1) e exportar de `mod.ts` (lib pública — adendo §3.6): tipos de **dados puros** (structured-cloneáveis, sem funções/instâncias — atravessam fronteira Worker/HTTP); `files: { path, content }[]` (fechamento completo de `include`s) + `entry?` (default `files[0].path`) e os demais campos **semânticos** apenas (configContent/checkSyntax/listReports/report/reportsIsRegex/dynamicAttributes/outputDir/noReports/forceReports/abortOnWarnings/warnTsDeltas/addTrace/freeze/help/version/man/app/appOptions); **sem** provedor/callback de arquivo e **sem** `silent`/`noColor` (renderer-only) | `packages/core/src/execution/types.ts`, `mod.ts` | `deno check` |
+| 24.2.23 | Implementar `TaskJuggler.execute(request): Promise<ExecutionResult>` portado do fluxo `apps/Tj3.rb: main()`: a partir de `request.files` — `include` resolvido por *lookup* em memória contra a lista (ausente ⇒ erro de arquivo não encontrado, nunca exceção de FS; sem provedor, sem disco) → parse → gate `checkSyntax` → `schedule` → `checkReports` → render/operadores pontuais; sem FS, sem `exit`, sem argv; **abre cada chamada repondo o snapshot do `MessageHandlerInstance` e usando instância `TaskJuggler`/`DataCache` dedicada por request (isolamento por chamada — adendo §3.6, requisito p/ uso em servidor)** | `packages/core/src/execution/execute.ts`, `taskjuggler.ts` | teste de integração 1 |
+| 24.2.24 | Construção do envelope: `ok`, `options` (eco do request normalizado com defaults aplicados — dos arquivos ecoa **só os caminhos**: `entry` + `path`s de `files`, nunca os conteúdos), `messages` (snapshot estruturado do `MessageHandlerInstance`: `severity`/`id`/`text`/`file`/`line`) e `exitCode` pela matriz do plano §5.3 (fiel a `apps/Tj3.rb`, incluindo `abortOnWarnings`/`forceReports`) | `execution/envelope.ts` | ≥ 3 testes |
 | 24.2.25 | Seções sob demanda: só a pedida aparece em `results` — `check` (`{valid}`, parse sem agenda), `listReports` (`[{name,type}]` na ordem de declaração), `reports` (invoca `renderReports`; `outputDir` presente **só** quando passado), `help` (`OptionSpec[]` do core), `version` (`AppConfig`/`metadata.json`) | `execution/sections.ts` | ≥ 5 testes |
 | 24.2.26 | Seções de extensão (forma do envelope + âncoras): `freeze` (`{fileName, contents}` — escrita é do consumidor; núcleo ainda ancorado Fase 24 → 24.9), `sheet` (apps F18 devolvem `emailText`/anexos via `appOptions.rawMessage`, sem SMTP/FS), `man` (doc-core F22 — âncora até 24.9). Cada uma só é preenchida quando o request a pede | `execution/sections.ts` | teste por seção (ou âncora explícita) |
 | 24.2.27 | `dynamicAttributes`: `execute` aplica o pipeline 18.19 **por dentro** antes de renderizar (a partir de `request.dynamicAttributes` cru) — a seção `reports` já sai processada; a CLI não reexamina a opção | `execute.ts` (usa `Project#generateReport` 4º arg) | 1 teste |
-| 24.2.28 | Pureza do `execute` (adendo §3.5/§5.2): nenhum `node:fs`/`Deno.*File`/`process`/`console`/`exit()`/argv no caminho; teste/audit dedicado; rodar suíte completa do core + goldens | `packages/core/tests/` | verde |
+| 24.2.28 | Pureza e transportabilidade do `execute` (adendo §3.5/§3.6/§5.2): nenhum `node:fs`/`Deno.*File`/`process`/`console`/`exit()`/argv no caminho; teste de round-trip JSON/structured-clone do request+envelope (sem funções/instâncias) e de duas chamadas concorrentes sem vazamento de `messages`/projeto; teste/audit dedicado; rodar suíte completa do core + goldens | `packages/core/tests/` | verde |
 | 24.2.29 | Registrar em `CURRENT.md` que a fachada `execute` passou a orquestrar o pipeline interno devolvendo o envelope (eco/`exitCode`/seções) e atualizar o comentário de âncora de `taskjuggler.ts` | idem | revisão |
 | 24.2.30 | Commits `feat(core): file provider` (grupo 1) e `feat(core): execute-envelope` (grupo 4) | — | git log |
+
+**Grupo 5 — refatoramento retroativo: costuras de `FileStore` injetado (fases anteriores, já "prontas") → dados como dados na fronteira do `execute`; + extensão única `.smx` (nota 2026-11-07, adendo §5.1):**
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 24.2.31 | Auditar as costuras de acesso a arquivo **entregues por fases anteriores** sob o conceito de injeção: F18/ADR 037 (`SheetAppContext.fileStore`, `SheetHandlerBase#setFileStore`/`requireFileStore`, templates/outbox/`resources.json` via store); `TaskJuggler.fileStore`/`setFileStore` + `checkTimeSheet(fileName)`/`checkStatusSheet(fileName)` (implementados, leem `.tji` pelo store); `CSVFile.read` (ADR 027); hook de escrita do `XMLDocument.write` (ADR 038 §5); `ImageResolver` (ADR 026/13.14.3). Entregável: classificação por costura — **permanece no caminho passo-a-passo/PWA** vs **refatorar para dados no `execute`** — **e** checagem de que nenhuma costura emite texto fora do inglês (English-first, plano §1.7); registrada em `CURRENT.md` | `taskjuggler.ts`, `sheets/`, ADRs 026/027/037/038 | revisão |
+| 24.2.32 | Refatorar os apps de sheet quando chamados pelo `execute` (24.10): o contexto recebe **dados** (conteúdos de template via `request.files`/`appOptions`, `rawMessage`) e o `run()` devolve **dados** (`emailText`, `attachments[{name,contents}]`, summaries); `requireFileStore` deixa de ser obrigatório nesse caminho — a interface `FileStore` (ADR 037) continua a servir consumidores passo-a-passo (F19/PWA) e chamadas diretas: **rebaixada, não revogada** | `sheets/apps/`, `sheet-{sender,receiver}.ts` + testes (fakeOpfs → fakes de dados) | suíte F18 verde |
+| 24.2.33 | Refatorar `checkTimeSheet`/`checkStatusSheet`: API baseada em **conteúdo** (ex.: `checkTimeSheetContent(text, fileName?)`) para o `execute` (`app="check-ts"/"check-ss"` — nada de store nem FS); a versão por caminho + `FileStore` permanece para o caminho passo-a-passo; o journal compilado sai pela seção `results.sheet` (substitui o campo mutável `lastSheetReport` na via envelope) | `taskjuggler.ts`, `execution/sections.ts` | 2 testes |
+| 24.2.34 | Leituras de arquivo por relatórios (`CSVFile.read`, imagens/`picture` via `ImageResolver`): no caminho `execute` **não** injetar provedor/store implícito — política v1: `path` referenciado ausente de `request.files` ⇒ mensagem de erro fiel via `MessageHandler`, suporte completo ancorado F19/passo-a-passo (imagens: consumo 24.10.8, a CLI lê o disco) | `reports/`, `markdown/extensions/images.ts` | 1 teste por costura ou âncora |
+| 24.2.35 | Regressão do grupo 5: suítes F18 sheets (migração fakeOpfs→fakes de dados), goldens F17/F14, testes de contrato/round-trip + `deno task test`; aditar os ADRs — 037 ("injeção vale só no caminho passo-a-passo/PWA; na fronteira `execute` todo conteúdo entra como dado — v2.1"), 026/027/038 onde a costura aparece | idem | verde |
+| 24.2.36 | **Extensão única `.smx` (decisão 2026-11-07, plano §1.6):** relaxar as três validações herdadas aceitando `.smx` junto com as extensões atuais — master `.tjp` obrigatório em `project-file-parser.ts:229` (aceitar `.smx`; msg de erro adaptada), include `.tji` obrigatório em `rules/project.ts:558` (aceitar `.smx`), e `sheet-receiver.ts` `SHEET_EXTENSION`/`INCLUSION_FILE` (gerar `.smx`; **reconhecer `.tji` por compatibilidade** — anexos em trânsito). ⚠️ ADAPTAÇÃO à regra zero (ADR 011): desvio validado do Ruby, documentado no aditamento de ADR (24.2.35) | `project-file-parser.ts`, `rules/project.ts`, `sheets/sheet-receiver.ts` + testes (`.smx` aceito; `.tjp`/`.tji` continuam; goldens intactos) | ≥ 3 testes |
+| 24.2.37 | Commit `refactor(core): filestore-to-data` + `feat(core): smx-extension` (grupo 5) | — | git log |
 
 ---
 
@@ -225,12 +248,12 @@ nunca decide destino nem chama `exit`/lê argv (plano §5.5/§6).
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 24.3.1 | Teste que falha: `parseArgs(["proj.tjp"])` → `{ file: "proj.tjp" }` (função pura, sem processo) | `tests/options_test.ts`, `src/options.ts` | falha correta |
-| 24.3.2 | Implementar `parseArgs(args): ExecutionRequest` cobrindo o mapa do plano §5.2: flags v1 mapeadas campo a campo para os campos semânticos do request; `--silent`/`--no-color` **não** entram no request (vão para um objeto de renderer à parte) | `src/options.ts` | 1 teste por flag |
+| 24.3.1 | Teste que falha: `parseArgs(["proj.tjp"])` → `{ entry: "proj.tjp" }` (função pura, sem processo) | `tests/options_test.ts`, `src/options.ts` | falha correta |
+| 24.3.2 | Implementar `parseArgs(args): ExecutionRequest` cobrindo o mapa do plano §5.2: flags v1 mapeadas campo a campo para os campos semânticos do request (posicional → `entry`; `files` é montado pelo chamador, 24.3.6); `--silent`/`--no-color` **não** entram no request (vão para um objeto de renderer à parte) | `src/options.ts` | 1 teste por flag |
 | 24.3.3 | Flags adiadas (`--freeze*`, `--check-time-sheet`, `--check-status-sheet`, `--debug*`) → erro com mensagem `not yet available (Fase 18/19)` e exit 1 | idem | 2 testes |
 | 24.3.4 | `exit` da CLI consome `result.exitCode` do envelope (função pura `resolveExit(result): 0 \| 1`; matriz testada no core em 24.2.24). Caso sem request (erro de flag do Cliffy) ⇒ exit 1 com mensagem própria | `src/cli.ts` ou `src/exit.ts` | 3 testes (forward exitCode 0/1; flag inválida sem request) |
-| 24.3.5 | `src/cli.ts`: montar `defineCommand` (nome `syntaxmesh`, versão de `AppConfig`, descrição, argumento `<file.tjp>`, options do §5.2, `--version`/`--help`) | idem | `deno task cli --help` |
-| 24.3.6 | **Fluxo único §5.1 (adendo v2):** argv → `parseArgs` → `ExecutionRequest` → **uma** chamada `core.execute(request)` (provedor de conteúdo = `io.readText`) → renderizar `messages` → despachar `results` pelo `output-policy.ts` (plano §5.5) → `exit(result.exitCode)`. A CLI **não** encadeia `parse`/`schedule`/`render` nem reexamina opções | `src/cli.ts` | teste de integração 1 |
+| 24.3.5 | `src/cli.ts`: montar `defineCommand` (nome `syntaxmesh`, versão de `AppConfig`, descrição, argumento `<file>` (`.smx`; `.tjp` por compat — decisão 2026-11-07), options do §5.2, `--version`/`--help`) | idem | `deno task cli --help` |
+| 24.3.6 | **Fluxo único §5.1 (adendo v2/v2.1):** argv → `parseArgs` → a CLI lê master + incluídos (`.smx`/`.tjp`/`.tji` indifferentemente — closure de `include`s é por caminho, não por extensão) via `io.readText` e monta `request.files` (fechamento completo de `include`s; `entry` = master) → **uma** chamada `core.execute(request)` (**sem** provedor de conteúdo) → renderizar `messages` → despachar `results` pelo `output-policy.ts` (plano §5.5) → `exit(result.exitCode)`. A CLI **não** encadeia `parse`/`schedule`/`render` nem reexamina opções; os conteúdos dos arquivos **não** voltam no envelope (eco só dos caminhos) | `src/cli.ts` | teste de integração 1 |
 | 24.3.7 | `--abort-on-warnings`, `--warn-ts-deltas`, `--add-trace`, `--force-reports`, `--no-reports` → campos do request (não ação na CLI; o core aplica no `execute`) | idem | 3 testes (mapeamento) |
 | 24.3.8 | `--output-dir` → `request.outputDir`; o `outputDir` ecoado na seção `reports` é o que a política usa para gravar os `stdout: false` (semântica de barra final como no core) | idem | 1 teste |
 | 24.3.9 | `--list-reports <RE>` → `request.listReports`; a CLI só imprime a seção `results.listReports` (o core já a produz sem agendar — comportamento tj3, exit 0) | idem | 2 testes |
@@ -240,7 +263,8 @@ nunca decide destino nem chama `exit`/lê argv (plano §5.5/§6).
 | 24.3.13 | Integração: subprocess `deno run cli.ts` em fixture válido → exit 0; inválido → exit 1 | `tests/cli.integration_test.ts` | 2 testes |
 | 24.3.14 | `deno task check-all` + testes verdes | — | exit 0 |
 | 24.3.15 | Smoke Bun e Node do comando completo (1 fixture) | — | mesmo resultado |
-| 24.3.16 | Commit `feat(cli): options+execute-call` | — | git log |
+| 24.3.16 | **English-first (plano §1.7, decisão 2026-11-07):** `--help`, mensagens de erro de flag e qualquer texto nativo da CLI são só em inglês; teste varre a saída do `--help` e dos erros de argv por caracteres/melodias não-inglesas (sem tradução de flags nesta etapa) | `src/cli.ts`, `src/options.ts` | 1 teste |
+| 24.3.17 | Commit `feat(cli): options+execute-call` | — | git log |
 
 ### 24.4 — Saída no terminal
 
@@ -274,7 +298,7 @@ nunca decide destino nem chama `exit`/lê argv (plano §5.5/§6).
 | 24.5.7 | Matriz de fixtures: `docs/Learning/mwe001–009` todos executam com exit 0 | idem | 9 testes |
 | 24.5.8 | Matriz de erro: subset `TestSuite/Syntax/Errors/` → exit 1 + mensagem com file:line | idem | ≥ 5 testes |
 | 24.5.9 | Subset `TestSuite/Scheduler/Correct/` → exit 0 | idem | ≥ 5 testes |
-| 24.5.10 | `include`/`.tji` E2E: fixture com 2 níveis de include gera relatório correto | fixtures próprios | 1 teste |
+| 24.5.10 | `include`/`.tji` E2E: fixture com 2 níveis de include gera relatório correto — a CLI monta o fechamento em `request.files` e o core resolve por *lookup* (nenhum acesso a disco no core; `path` ausente na lista ⇒ erro fiel ao `tj3`) | fixtures próprios | 1 teste |
 | 24.5.11 | `--no-reports`: agenda sem criar arquivos nem imprimir conteúdos | idem | 1 teste |
 | 24.5.12 | `--force-reports` com fixture que tem erro de schedule: renderiza/gera apesar de erros (comportamento tj3.rb:149) | idem | 1 teste |
 | 24.5.13 | `--reports <regex>` gera e imprime apenas os casados; `--list-reports` os enumera | idem | 2 testes |
@@ -356,15 +380,19 @@ verdes; são extensões, não bloqueiam a 1ª onda da Fase 21.
 > envelope** (`results.man`, `results.freeze`, `results.sheet`). A CLI só popula
 > `request.man`/`request.freeze`/`request.app`+`appOptions` e despacha a seção
 > devolvida; a produção real do conteúdo é do core (doc-core F22, apps F18),
-> com as formas de seção já ancoradas em 24.2.26.
+> com as formas de seção já ancoradas em 24.2.26. **Pré-requisito (nota
+> 2026-11-07):** as apps de sheet da F18 hoje exigem `FileStore` injetado (ADR
+> 037) — a via `execute` não aceita costura de arquivo injetada; o refatoramento
+> dados-como-dados sai do **grupo 5** (24.2.31–24.2.35) e a extensão `.smx` da
+> tarefa 24.2.36, antes de 24.10.1–4.
 
-### 24.9 — `wz man` + `--freeze*` (Bloco I)
+### 24.9 — `syntaxmesh man` + `--freeze*` (Bloco I)
 
 | # | Tarefa | Fonte/Arquivos | Verificação |
 |---|---|---|---|
 | 24.9.1 | Comando Cliffy `man` com `--format html\|text\|tjp` e filtro por keyword → popula `request.man`; a CLI **só imprime/gravava seção `results.man`** devolvida pelo `execute` | `packages/cli/src/commands/man.ts` + `output-policy.ts`; core consome `@vanaware/syntaxmesh/doc-core` (F22 22.1b — tarefas C–H do `fase-22-vscode-extension-tarefas.md`; contrato fixado em 22.1b.7.8) | teste BDD por formato |
-| 24.9.2 | `wz man <keyword>`: o core resolve via `TernarySearchTree`/`SyntaxReference` e devolve a documentação (`KeywordDocumentation` + exemplos `TjpExample`) na seção `man`; a CLI imprime | core — `TernarySearchTree.find(prefix, true)` (22.1b.1.5), `SyntaxReference.all/toText` (22.1b.2.7/2.10), `KeywordDocumentation.toText` (22.1b.3.16–20), `TjpExample` (22.1b.4) | ≥ 3 keywords (task/resource/report) |
-| 24.9.3 | `wz man --format html` gera manual completo (`UserManual` do doc-core) como conteúdo na seção `man`; **a escrita em disco é da CLI** no `--output-dir`, o core não escreve | core — `UserManual.generate(): Record<nome, conteúdo>` (22.1b.5.6) + `css/tjmanual.css` copiado do asset (22.1b.5.2) | snapshot estrutural |
+| 24.9.2 | `syntaxmesh man <keyword>`: o core resolve via `TernarySearchTree`/`SyntaxReference` e devolve a documentação (`KeywordDocumentation` + exemplos `TjpExample`) na seção `man`; a CLI imprime | core — `TernarySearchTree.find(prefix, true)` (22.1b.1.5), `SyntaxReference.all/toText` (22.1b.2.7/2.10), `KeywordDocumentation.toText` (22.1b.3.16–20), `TjpExample` (22.1b.4) | ≥ 3 keywords (task/resource/report) |
+| 24.9.3 | `syntaxmesh man --format html` gera manual completo (`UserManual` do doc-core) como conteúdo na seção `man`; **a escrita em disco é da CLI** no `--output-dir`, o core não escreve | core — `UserManual.generate(): Record<nome, conteúdo>` (22.1b.5.6) + `css/tjmanual.css` copiado do asset (22.1b.5.2) | snapshot estrutural |
 | 24.9.4 | Desancorar `TaskJuggler.freeze()` (âncora Fase 24 no core): o `execute` devolve `results.freeze` = `{ fileName, contents }`; **a reescrita do master file via `io.writeText` é da CLI** (com confirmação como no tj3) | `packages/core/src/taskjuggler.ts` + `packages/cli` | teste com fixture `.tjp` congelável |
 | 24.9.5 | Flags `--freeze`, `--freeze-by-task`, `--freezedate` mapeadas para `request.freeze` (tj3 §5.2) | `options.ts` | teste de flags + exit codes |
 
@@ -393,11 +421,17 @@ verdes; são extensões, não bloqueiam a 1ª onda da Fase 21.
    pacote inclui agora o parser do modificador `stdout`, o construtor da seção
    `reports` (`renderReports`/`ReportsJson`) e a **fachada `execute` que monta o
    envelope** (adendo v2 §3) — o core produz **JSON**, nunca imprime, grava,
-   chama `exit` nem lê argv.
-3. **A CLI não orquestra o pipeline** (adendo v2): 24.3 traduz argv →
-   `ExecutionRequest`, faz **uma** chamada `core.execute` e despacha o envelope
-   (24.5). As opções já chegam processadas/ecoadas — a CLI não reexamina flags
-   nem retém estado delas.
+   chama `exit` nem lê argv. O **grupo 5 (24.2.31–35)** é o trabalho
+   retroativo: refatora costuras de `FileStore` já entregues (ADR 037 —
+   sheets/check* da F18) para dados-como-dados na fronteira do `execute`, sem
+   criar funcionalidade nova; a **extensão única `.smx` (24.2.36)** relaxa as
+   validações herdadas de extensão (plano §1.6).
+3. **A CLI não orquestra o pipeline** (adendo v2/v2.1): 24.3 traduz argv →
+   `ExecutionRequest` e monta `request.files` (master + `include`s lidos via
+   `io.readText`), faz **uma** chamada `core.execute` (sem provedor) e despacha
+   o envelope (24.5). As opções já chegam processadas/ecoadas — a CLI não
+   reexamina flags nem retém estado delas; os conteúdos dos arquivos não
+   voltam no envelope.
 4. **Antes de 24.2.14**, auditar a saída atual do Fase 14 (ADR 027: `output`
    em memória por formato, sobrescrito a cada formato no loop de `generate()`) —
    a coleta `outputs: Map` e o `ReportsJson` reaproveitam esse mecanismo num

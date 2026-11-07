@@ -18,7 +18,7 @@ Esta fase completa **estruturas de apoio** que ficaram pendentes em fases anteri
 
 3. **`LeaveList`** — substitui os stubs da Fase 5 (`class LeaveList extends Array<unknown>`). Contém `Leave` e `LeaveAllowance`.
 
-4. **`TernarySearchTree`** — **MOVIDO para a Fase 22** (subfase 22.1b `doc-core`, decisão 2026-11-03; xray §3.2/§5). A árvore é desenvolvida inteira na Fase 22 junto de `SyntaxReference`, `KeywordDocumentation`, `TjpExample` e `UserManual`, que a consomem para o help/manual do LSP e da extensão VS Code. A **Fase 24** expõe o resultado como `wz man`.
+4. **`TernarySearchTree`** — **MOVIDO para a Fase 22** (subfase 22.1b `doc-core`, decisão 2026-11-03; xray §3.2/§5). A árvore é desenvolvida inteira na Fase 22 junto de `SyntaxReference`, `KeywordDocumentation`, `TjpExample` e `UserManual`, que a consomem para o help/manual do LSP e da extensão VS Code. A **Fase 24** expõe o resultado como `syntaxmesh man`.
 
 5. **`AlgorithmDiff`** — **CANCELADO** (decisão 2026-11-03; registro em 16.10). `AlgorithmDiff.rb` é **DEAD no upstream**: nenhuma classe do TaskJuggler 3.8.4 o inclui, instancia ou chama (`Diff`/`Hunk`/`Diffable` não têm chamadores). xray §2.2.
 
@@ -892,7 +892,7 @@ assertEquals(decoded, "Hello world");
 > O port fiel de `TernarySearchTree.rb` passa a ser feito na Fase 22, junto de
 > `SyntaxReference` / `KeywordDocumentation` / `TjpExample` / `UserManual`, que o
 > consomem para busca de keywords no help/manual do LSP. A **Fase 24** expõe o
-> resultado como `wz man` (equivalente do `tj3man`). O detalhamento abaixo fica
+> resultado como `syntaxmesh man` (equivalente do `tj3man`). O detalhamento abaixo fica
 > como referência de API para a subfase 22.1b — **não executar nesta fase**.
 
 #### Contexto
@@ -1132,7 +1132,7 @@ Garantir cobertura.
 ### 16.14 — `KateSyntax` — **MOVIDO → Fase 22 (22.1b)**
 
 > Não executar na Fase 16. Gerador final **descartado**; núcleo de highlight na
-> subfase 22.1b, consumido pelo LSP (F22) e pelo `wz man` (F24).
+> subfase 22.1b, consumido pelo LSP (F22) e pelo `syntaxmesh man` (F24).
 
 #### Contexto
 

@@ -1,5 +1,18 @@
 # Sintaxe multilíngue
 
+> ⚠️ **Experimental (decisão 2026-11-07).** O suporte a keywords **pt-BR** e
+> **es** neste documento é **experimental** e está **sujeito a mudanças** sem
+> aviso prévio (vocabulário, mapeamento de sinônimos, tratamento de unidades,
+> cobertura em `man`/help). A **recomendação atual** é usar o **parser original
+> em inglês** — a gramática canônica (`en`) é a única superfície estável e
+> auditada contra o TaskJuggler Ruby (regra zero, ADR 011) e a única suportada
+> pelos goldens F21 como via recomendada ao usuário. O caminho de entrada pt/es
+> continua existente no motor (fixtures `mwe00*.pt-BR.tjp` / `.es.tjp`, testes
+> de equivalência de AST), mas é **piso de compatibilidade**, não superfície
+> publicitada. Quando o i18n de **saída/interface** for adotado (Fase 20 UI,
+> Fase 22 adendo PT/ES pós-21), este documento será revisto e o vocabulário
+> pt/es poderá ser renegociado.
+
 Uma das características fundamentais do SyntaxMesh será permitir que a linguagem dos arquivos de projeto seja escolhida pelo usuário.
 
 Inicialmente serão previstas:

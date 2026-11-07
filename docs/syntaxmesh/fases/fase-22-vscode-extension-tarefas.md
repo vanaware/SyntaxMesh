@@ -28,7 +28,7 @@ cada subfase, mantendo o índice do §13 do plano como fonte:
 | **H** | **22.1b** | **`SyntaxCore`** (núcleo de highlight Kate/Vim) | ✅ detalhado aqui |
 | I | 22.1b | Integração `doc-core` (exports, `lsp-core`, CLI F24) | ✅ detalhado aqui |
 | J | 22.1b | Verificação da subfase | ✅ detalhado aqui |
-| K–S | 22.2–22.11 | Scaffolding, grammar, LSP, daemon, relatórios, web, CLI `lsp`, empacotamento | ⬜ a detalhar no kickoff |
+| K–S | 22.2–22.11 | Scaffolding, grammar, LSP, daemon, relatórios, web, CLI `lsp`, empacotamento — **daemon/relatórios via `execute` da F24 (nota abaixo)** | ⬜ a detalhar no kickoff |
 
 ## Convenções
 
@@ -41,7 +41,7 @@ cada subfase, mantendo o índice do §13 do plano como fonte:
 
 | Marca | Significado |
 |---|---|
-| **【24】** | Consumido pela **Fase 24** via `wz man` (`fase-24-cli-tarefas.md` 24.9.1–24.9.3) — texto, HTML e busca de keyword |
+| **【24】** | Consumido pela **Fase 24** via `syntaxmesh man` (`fase-24-cli-tarefas.md` 24.9.1–24.9.3) — texto, HTML e busca de keyword |
 | **【LSP】** | Fica **restrito ao `lsp-core`/extensão** (F22): o CLI não consome |
 | **【24+LSP】** | Núcleo compartilhado: serve os dois consumidores a partir da mesma API |
 | **【novo】** | Sem correspondente Ruby — extensão TS (markdown p/ hover, API de retorno) |
@@ -52,6 +52,31 @@ cada subfase, mantendo o índice do §13 do plano como fonte:
 > ou a extensão (buffer em memória). Padrão já usado em
 > `richtext/rich-text-document.ts::generateHTML` → `Record<string, string>` e na seam
 > `richtext/html-shell.ts` (ADR 025).
+
+### Nota de planejamento (2026-11-07) — reaproveitamento da API `execute` (Fase 24)
+
+As camadas **daemon** (22.5 — *tj3d/tj3client simulado*) e **relatórios**
+(22.6 — *tj3webd simulado*) usam **a mesma API de execução da CLI**:
+`core.execute(request)` → envelope JSON (`fase-24-cli-adendo.md`, v2/v2.1 —
+entrada `request.files` de `{ path, content }` com o fechamento de `include`s,
+sem provedor; conteúdos não voltam no envelope; `messages`/`exitCode` como
+dados). **Não existe fork de API para a extensão.** Os blocos K–S, ao serem
+detalhados no kickoff, devem incluir como tarefas:
+
+- **Auditoria de compatibilidade** do contrato atual com os conceitos
+  `tj3d`/`tj3client`/`tj3webd` (alimentar `request.files` com buffer
+  `document.getText()` + `workspace.fs`; consumir `listReports`/`reports`/`check`
+  no Problems panel, webview e `workspace.fs.writeFile`).
+- **Ampliação, se necessária, planejada**: p. ex. modelo de projeto persistente
+  no core (gerar relatório sem re-parse), semântica load/unload/list-projects —
+  o delta entra como **adendo à Fase 24** (source of truth da API), propagado
+  ao plano/tarefas da F24 e registrado em `CURRENT.md`; nunca improvisar API
+  paralela dentro da extensão.
+- **Alternativa sem delta já contratada**: fachada passo-a-passo
+  (`parse`/`parseContent` com provedor → `schedule` →
+  `generateReports`/`renderReports`), compartilhada com o caminho UI/PWA
+  (Fase 20) — usar apenas para manter o modelo em memória, jamais para
+  reorquestrar o fluxo que o `execute` já cobre.
 
 ---
 
@@ -84,7 +109,7 @@ nessas camadas além do §I.1 abaixo.
 **⚠️ RUBY: `TernarySearchTree.rb`** — árvore ternária clássica sobre elementos
 comparáveis (String/Array); `find(str, true)` devolve **todos os prefixos**.
 **🔎 CHEAT: §3 recursão, §12 Categoria B (partial match)**
-**Consumidor:** 【24+LSP】 — `wz man` usa para busca por prefixo/fuzzy
+**Consumidor:** 【24+LSP】 — `syntaxmesh man` usa para busca por prefixo/fuzzy
 (`Tj3Man.rb:30,76`); o LSP usa em `completion`/`workspaceSymbol`.
 
 | # | Tarefa | Arquivos | Verificação |
@@ -113,7 +138,7 @@ comparáveis (String/Array); `find(str, true)` devolve **todos os prefixos**.
 **⚠️ RUBY: `SyntaxReference.rb`** — construtor percorre **todas** as regras do
 `ProjectFileParser` e extrai os patterns documentados; depois faz duas passadas
 de pós-processamento (`crossReference`, `computeInheritance`).
-**Consumidor:** 【24+LSP】 — `wz man` (lista + texto + HTML) e hover/completion do LSP.
+**Consumidor:** 【24+LSP】 — `syntaxmesh man` (lista + texto + HTML) e hover/completion do LSP.
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
@@ -139,7 +164,7 @@ de pós-processamento (`crossReference`, `computeInheritance`).
 
 **⚠️ RUBY: `KeywordDocumentation.rb` (764 linhas)** — a maior classe da subfase.
 Dividir em três arquivos internos: dados/cross-ref, saída de texto, saída HTML.
-**Consumidor:** 【24+LSP】 (`toText` → `wz man`; HTML → `wz man --format html`;
+**Consumidor:** 【24+LSP】 (`toText` → `syntaxmesh man`; HTML → `syntaxmesh man --format html`;
 `toMarkdown` → hover do LSP).
 
 ### E.1 — Estrutura e referências cruzadas
@@ -160,7 +185,7 @@ Dividir em três arquivos internos: dados/cross-ref, saída de texto, saída HTM
 | 22.1b.3.12 | ⚠️ `computeInheritance(): void` — preencher `inheritedFromProject`/`inheritedFromParent` pelo property set | idem | 3 testes (ambos, só um, nenhum) |
 | 22.1b.3.13 | ⚠️ `title(): string` — `foo.bar` → `foo (bar)`; `foo` → `foo` | idem | 3 testes |
 
-### E.2 — Saída de texto (`wz man`)
+### E.2 — Saída de texto (`syntaxmesh man`)
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
@@ -192,7 +217,7 @@ Dividir em três arquivos internos: dados/cross-ref, saída de texto, saída HTM
 
 **⚠️ RUBY: `TjpExample.rb`** — extrai snips anotados de um arquivo `.tjp`;
 anotação `# *** EXAMPLE: <tag> +|−`.
-**Consumidor:** 【24+LSP】 — exemplos dentro das páginas HTML do `wz man`
+**Consumidor:** 【24+LSP】 — exemplos dentro das páginas HTML do `syntaxmesh man`
 e snippets de `completion`/hover do LSP.
 
 | # | Tarefa | Arquivos | Verificação |
@@ -204,7 +229,7 @@ e snippets de `completion`/hover do LSP.
 | 22.1b.4.5 | ⚠️ `private process()` parte 2: linhas normais vão para **todos** os snips ativos **e** para `full text`; linhas de anotação **não** entram em `full text` | idem | 3 testes |
 | 22.1b.4.6 | ⚠️ Remoção final de linha vazia à direita de cada snip (`snip[-1] === "\n"`, **uma** só) | idem | 2 testes |
 | 22.1b.4.7 | ⚠️ `toString(tag: string \| null = null): string \| null` — `null` para tag inexistente (Ruby devolve `nil`; **não** devolver string vazia) | idem | 3 testes |
-| 22.1b.4.8 | `tags(): string[]` 【novo】 — lista as snips (para o `wz man` validar tag e para completion de snippets) | idem | 2 testes |
+| 22.1b.4.8 | `tags(): string[]` 【novo】 — lista as snips (para o `syntaxmesh man` validar tag e para completion de snippets) | idem | 2 testes |
 | 22.1b.4.9 | Ligar ao handler existente: implementar o `ExampleLoader` de `richtext/handlers/function-example.ts` sobre `TjpExample` (cache por arquivo) | `src/docgen/example-loader.ts` | 3 testes (tag, arquivo inteiro, tag ausente) |
 | 22.1b.4.10 | Teste com fixtures reais de `docs/Learning/mwe00*/*.tjp` (cópia em `tests/docgen/fixtures/`) — 3 tags extraídas corretamente | `tests/docgen/tjp-example_test.ts` | verde |
 
@@ -214,7 +239,7 @@ e snippets de `completion`/hover do LSP.
 
 **⚠️ RUBY: `UserManual.rb`** — especializa `RichTextDocument`; gera capa, índice
 de frames, navegação e a **Appendix A** com o `SyntaxReference`.
-**Consumidor:** 【24】 para o HTML completo (`wz man -m` / `--format html`);
+**Consumidor:** 【24】 para o HTML completo (`syntaxmesh man -m` / `--format html`);
 【LSP】 para TOC e páginas em Markdown (`getManualToc`/`getManualPage`).
 
 ### G.1 — Fontes (assets)
@@ -300,12 +325,12 @@ grammar TextMate, folding). A CLI **não** consome este bloco.
 
 ## Resumo de quem consome o quê
 
-| Entrega 22.1b | Fase 24 (`wz man`, 24.9) | `lsp-core` / extensão (22.1–22.9) |
+| Entrega 22.1b | Fase 24 (`syntaxmesh man`, 24.9) | `lsp-core` / extensão (22.1–22.9) |
 |---|---|---|
-| `TernarySearchTree` | ✅ busca por prefixo (`wz man <parcial>`) — 24.9.2 | ✅ completion + `workspaceSymbol` |
+| `TernarySearchTree` | ✅ busca por prefixo (`syntaxmesh man <parcial>`) — 24.9.2 | ✅ completion + `workspaceSymbol` |
 | `SyntaxReference.all()` | ✅ listagem de keywords | ✅ lista de keywords do hover |
-| `SyntaxReference.toText()` | ✅ **saída padrão** `wz man <kw>` (texto ANSI) | — (o LSP usa `toMarkdown`) |
-| `SyntaxReference.generateHTMLreference/navbar` | ✅ `wz man --format html` (escreve no `--output-dir`) | — |
+| `SyntaxReference.toText()` | ✅ **saída padrão** `syntaxmesh man <kw>` (texto ANSI) | — (o LSP usa `toMarkdown`) |
+| `SyntaxReference.generateHTMLreference/navbar` | ✅ `syntaxmesh man --format html` (escreve no `--output-dir`) | — |
 | `KeywordDocumentation.toText()` | ✅ corpo da página de manual | — |
 | `KeywordDocumentation.toMarkdown()` 【novo】 | — | ✅ `getKeywordHelp` (hover/comando de ajuda) |
 | `KeywordDocumentation.generateHTML()` | ✅ páginas `<keyword>.html` | — |
@@ -344,6 +369,6 @@ Checklist de conclusão da subfase:
 - [ ] 22.1b.8 Verificação (J) — 8/8
 
 **Critério de aceite da subfase:** `deno task tests` verde; o golden
-`syntax-reference` igual ao oracle Ruby; `wz man <keyword>` (F24, quando existir)
+`syntax-reference` igual ao oracle Ruby; `syntaxmesh man <keyword>` (F24, quando existir)
 consegue ser servido **só** por `@vanaware/syntaxmesh/doc-core` sem tocar em
 `Deno.*`; e `src/lsp/help.ts` não reimplementa nada — apenas projeta o doc-core.

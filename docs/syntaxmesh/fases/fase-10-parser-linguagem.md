@@ -34,6 +34,16 @@ O parser do TaskJuggler é **diferente** dos parsers convencionais:
 - Diretiva `language "pt-BR"` no `.tjp`.
 - AST resultante sempre usa keywords canônicas em inglês.
 
+> ⚠️ **Experimental (decisão 2026-11-07).** O caminho pt-BR/es é **experimental**
+> e **sujeito a mudanças** (vocabulário, sinônimos, unidades, cobertura do
+> `man`/help). A **recomendação atual** é escrever projetos em **inglês** — a
+> gramática canônica `en` é a única superfície estável, auditada contra o TJ
+> Ruby (regra zero, ADR 011) e usada como via recomendada nos goldens F21. Os
+> fixtures pt/es (`mwe00*.pt-BR.tjp` / `.es.tjp`) e os testes de equivalência
+> de AST continuam existindo como **piso de compatibilidade** do parser, não
+> como superfície publicitada. Revisto quando o i18n de saída/interface for
+> adotado (F20 UI; F22 adendo PT/ES pós-21 — ver `04-linguagem-multilingue.md`).
+
 O parser Ruby tem ~300 regras em `TjpSyntaxRules.rb` (~7000 linhas). Dividimos em 4 subfases.
 
 **Nota crítica:** o parser é **a porta de entrada**. Um bug aqui quebra tudo. Golden tests são obrigatórios e cobrem:

@@ -44,7 +44,7 @@ SyntaxMesh é **fiel ao TaskJuggler** e **pronto para produção**.
 ### Objetivos centrais
 
 1. **Provar fidelidade** ao TaskJuggler 3.8.4 via golden tests.
-2. **Provar equivalência multilíngue** (en ↔ pt-BR ↔ es).
+2. **Provar equivalência multilíngue** (en ↔ pt-BR ↔ es). ⚠️ O caminho pt/es é **experimental** (decisão 2026-11-07) — os testes de equivalência provam que o parser aceita esses idiomas como **piso de compatibilidade**, não que essa seja a via recomendada ao usuário; a gramática `en` é a superfície estável auditada pela regra zero (ver `04-linguagem-multilingue.md`).
 3. **Provar robustez** em corpus real (MWEs + TestSuite).
 4. **Provar performance** aceitável.
 5. **Provar segurança** (XSS, sanitização, CSP).

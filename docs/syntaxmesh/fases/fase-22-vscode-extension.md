@@ -32,6 +32,17 @@ tj3webd**): separar **edição** (LSP, análise incremental do buffer) de **mode
 de projeto estável** (daemon alimentado sob demanda pelo usuário) e de
 **relatórios** (geração a partir do modelo em cache).
 
+**Nota (2026-11-07):** as camadas **daemon** e **relatórios** — o *tj3d
+simulado* — reaproveitam **a mesma API de execução `core.execute(request)`**
+criada para a CLI na Fase 24 (adendo `fase-24-cli-adendo.md`, v2/v2.1: envelope
+JSON com seções; entrada `request.files` de `{ path, content }` com o
+fechamento de `include`s, sem provedor; conteúdos não voltam no envelope). Não
+há fork de API para a extensão: se os conceitos de `tj3d`/`tj3client`/`tj3webd`
+exigarem algo que o contrato atual não cobre (p. ex. modelo de projeto
+persistente no core, load/unload/list, gerar relatório sem re-parse), **a
+própria API é ampliada** — o delta entra pelo adendo da Fase 24 (source of
+truth) com tarefas planejadas no kickoff de 22.5/22.6 (§3.2/§3.3).
+
 A extensão deve ser compatível com dois Extension Hosts:
 
 - **Node.js Extension Host** (desktop e sessão remota).
@@ -44,10 +55,21 @@ testável em Deno sem VS Code. A extensão e o CLI são **adaptadores finos**.
 ### Escopo v1 — inglês
 
 A primeira iteração da extensão é **monolíngue (`en`)**: grammar TextMate,
-snippets, completions, diagnósticos, help e manual apenas em inglês. O i18n do
+snippets, completions, diagnósticos, help e manual apenas em inglês. É também a
+política global da ferramenta nesta etapa — **English-first em toda saída**
+(decisão 2026-11-07, `02-principios.md` e `fase-24-cli.md` §1.7): o tool emite,
+responde e interage só em inglês; o i18n vale apenas para o **parsing** de
+arquivos de entrada. O i18n do
 motor (Fase 10) e o `resolveLocale` do `lsp-core` continuam existentes e prontos
 — a UX da extensão apenas os fixa em `en`. Suporte PT/ES na extensão vira
 **adendo**, a ser executado após a Fase 21.
+
+> ⚠️ O **parser pt-BR/es é experimental** (decisão 2026-11-07) e sujeito a
+> mudanças — vocabulário, sinônimos, unidades e cobertura podem ser
+> renegociados sem aviso. A **recomendação atual** ao usuário é escrever
+> projetos em **inglês**; a grammar TextMate v1, os snippets, o `doc-core` e o
+> `resolveLocale` tratam pt/es como **piso de compatibilidade** do motor (ver
+> `04-linguagem-multilingue.md` e `02-principios.md`).
 
 ### Reuso de implementações existentes
 
@@ -93,8 +115,9 @@ Ao final desta fase:
   adendo pós-Fase 21.
 - Extensão VS Code (`packages/vsextension`) funcional em **desktop** e
   **vscode.dev**:
-  - Language contribution: `contributes.languages` (id `syntaxmesh`, extensões
-    `.tjp`/`.tji`), grammar TextMate (**EN na v1**),
+  - Language contribution: `contributes.languages` (id `syntaxmesh`, extensão
+    nativa `.smx` + `.tjp`/`.tji` por compatibilidade — decisão 2026-11-07,
+    `fase-24-cli.md` §1.6), grammar TextMate (**EN na v1**),
     `language-configuration.json`, snippets.
   - Cliente LSP + servidor embutido — o servidor é apenas bootstrap de
     transporte; o wiring do protocolo vem do `lsp-core` (`registerLspServer`).
@@ -169,6 +192,25 @@ Arquivo .tjp
 - **Consistência**: ao adicionar, ler o buffer em edição (`document.getText()`)
   ou o disco, conforme escolha do usuário; ao recarregar, sempre ler o estado
   atual.
+- **Entrada do engine = `execute` (Fase 24, adendo v2/v2.1 — nota
+  2026-11-07)**: adicionar/recarregar é **uma** chamada
+  `core.execute(request)` com `request.files` montado pela extensão (master do
+  buffer `document.getText()` ou `workspace.fs.readFile`; fechamento de
+  `.smx`/`.tjp`/`.tji` (indiferente — o closure de `include`s é por caminho,
+  não por extensão) lido via `workspace.fs` — sem provedor e sem FS
+  no core). As `messages` do envelope alimentam o Problems panel; `exitCode`
+  vira status; o que for pedido sai como **dados** (`check`, `reports` etc.).
+  O cache multi-projeto (`Map<uri, ProjectModel>`) continua responsabilidade da
+  extensão — o core permanece puro, sem estado entre chamadas.
+- **Ampliação necessária = planejada, não improvisada**: o `execute` atual é
+  one-shot (parse → schedule → seções pedidas). Se convier manter o modelo
+  carregado no core (relatórios sem re-parse; semântica `tj3client`
+  load/unload/list-projects), a ampliação vira **adendo à Fase 24** (source of
+  truth) com propagação ao plano/tarefas da F24 — tarefa de auditoria de
+  compatibilidade no kickoff de 22.5. A alternativa sem delta já existente é a
+  fachada passo-a-passo (`parse`/`parseContent` com provedor → `schedule` →
+  `generateReports`/`renderReports`), compartilhada com o caminho UI/PWA
+  (Fase 20).
 
 ### 3.3 Camada de relatórios (análogo ao tj3webd)
 
@@ -183,6 +225,15 @@ Arquivo .tjp
     diretamente "Salvar no Workspace" via `workspace.fs.writeFile`.
 - **Geração**: consome o modelo em cache (sem reanálise), serializa e
   apresenta/salva.
+- **Mesma API (nota 2026-11-07)**: listagem e geração também fluem pelo
+  `execute` — `request.listReports` devolve a seção `listReports` (análogos
+  `tj3client list-reports`/`tj3webd` de índice) e `request.report`/
+  `reportsIsRegex` (com `outputDir` quando aplicável) devolvem a seção
+  `reports` com conteúdos como dados. Ramificação Webview/recursos e
+  `workspace.fs.writeFile` são **política de saída da extensão** (simétrica à
+  `output-policy.ts` da CLI). Se a auditoria de 22.5 optar por modelo
+  persistente no core, a geração sai da ampliação do adendo F24; se optar pela
+  fachada passo-a-passo, o contrato do envelope permanece intocado.
 
 ---
 
@@ -386,9 +437,9 @@ Regras:
   o `DocumentStore` e emite `publishDiagnostics` após cada análise. As entradas
   da extensão e do CLI **só criam a conexão** — nenhum handler ou regra de
   protocolo fora do core.
-- `clientOptions.documentSelector` restrito a `syntaxmesh` (`.tjp`/`.tji`);
-  `synchronize.fileEvents` com watcher de `.tjp`/`.tji` para reanálise de
-  arquivos fechados.
+- `clientOptions.documentSelector` restrito a `syntaxmesh` (`.smx` nativa +
+  `.tjp`/`.tji` por compat); `synchronize.fileEvents` com watcher dessas
+  extensões para reanálise de arquivos fechados.
 - ❌ **Nunca** `console.log` no canal do servidor LSP (corrompe JSON-RPC); usar
   `connection.console`/`vscode.window` loggers.
 - Debounce de reanálise no cliente; cancelamento de request anterior.
@@ -568,8 +619,8 @@ kickoff de cada subfase, no padrão dos blocos A–K das fases anteriores:
 | 22.2  | Scaffolding             | `packages/vsextension/` + `package.json` manifesto + entradas node/web vazias + tasks                                | 22.0          |
 | 22.3  | Language contribution   | Grammar EN (v1) + language-configuration + snippets + snapshots                                                      | 22.2          |
 | 22.4  | Cliente + servidor LSP  | `registerLspServer` no core + `client/` e bootstrap `server/mod.ts`; transporte desktop e Web; integração LSP verde  | 22.1, 22.2    |
-| 22.5  | Daemon                  | `daemon/` add/remove/list/reload; cache memória + `storageUri` (Node); trust gate                                    | 22.4          |
-| 22.6  | Relatórios              | `reports/` + `webview/`; listagem, seleção, HTML com recursos, salvar CSV/XML                                        | 22.5          |
+| 22.5  | Daemon                  | `daemon/` add/remove/list/reload **via `core.execute` (F24)** — auditoria de compatibilidade + ampliação ao adendo F24 se necessária (modelo persistente/load-unload-list); cache memória + `storageUri` (Node); trust gate                                    | 22.4          |
+| 22.6  | Relatórios              | `reports/` + `webview/`; listagem/seleção/geração **pelo `execute`** (seções `listReports`/`reports`), HTML com recursos, salvar CSV/XML                                        | 22.5          |
 | 22.7  | Comandos, config, views | comando export/switch-language/ajuda; settings; project tree + status bar                                            | 22.5          |
 | 22.8  | Web extension           | `extension.web.ts` sem `node:*`; fallback stub de escrita; testes vscode.dev                                         | 22.4–22.7     |
 | 22.9  | CLI `packages/lsp`      | `mod.ts` `--stdio` via `lsp-core` direto (`createConnection` + `registerLspServer`); build do executável             | 22.4          |
@@ -609,9 +660,13 @@ próximo livre; **035** se a cadeia oficial foi seguida) com:
   renome do core para `@vanaware/syntaxmesh` (pacote principal); **wiring do
   servidor LSP no core** (`registerLspServer` via interface estrutural), com
   entradas vscode/CLI reduzidas a bootstrap de transporte; transporte por host
-  (IPC/Worker/stdio); daemon com atualização manual; entradas duplas node/web;
-  `package.json` como manifesto; build via `@vsce/bundler`; **v1 monolíngue EN**
-  (PT/ES como adendo pós-Fase 21); fase executada antes das Fases 19–21.
+  (IPC/Worker/stdio); daemon com atualização manual; **reuso da API de
+  execução `execute` da Fase 24 (adendo v2/v2.1) pelas camadas daemon/
+  relatórios — o *tj3d/tj3webd simulado* consome a mesma API da CLI, sem fork;
+  ampliação necessária vira adendo à F24 (nota 2026-11-07)**; entradas duplas
+  node/web; `package.json` como manifesto; build via `@vsce/bundler`; **v1
+  monolíngue EN** (PT/ES como adendo pós-Fase 21); fase executada antes das
+  Fases 19–21.
 - **Alternativas rejeitadas:** pacote `lsp-core` separado; LSP-only em Worker
   sem suporte desktop stdio; Monaco standalone; reutilizar `taskjuggler-lsp` C
   diretamente.
@@ -637,6 +692,9 @@ próximo livre; **035** se a cadeia oficial foi seguida) com:
 - `docs/syntaxmesh/fases/fase-10-parser-linguagem.md` — parser e i18n.
 - `docs/syntaxmesh/fases/fase-11-logica-queries.md` — `Query`.
 - `docs/syntaxmesh/fases/fase-14-relatorios.md` — pipeline de relatórios.
+- `docs/syntaxmesh/fases/fase-24-cli.md` / `fase-24-cli-adendo.md` — API de
+  execução `execute` (envelope JSON, entrada `request.files`, adendo v2/v2.1)
+  **reutilizada pelas camadas daemon/relatórios desta fase** (nota 2026-11-07).
 - `docs/syntaxmesh/fases/fase-21-compatibilidade-qualidade.md` — corpus e golden
   tests.
 - `docs/tj3-engine/` — blueprints do engine original.

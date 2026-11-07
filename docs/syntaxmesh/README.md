@@ -82,4 +82,4 @@ A fase 8.1 estende o modelo financeiro do SyntaxMesh com quatro funcionalidades 
 - **chargeset reutilizado** — o material usa o mesmo `chargeset` que Resource/Task. Não criar um sistema paralelo.
 - **Testes obrigatórios** — toda nova funcionalidade tem testes unitários (regra 12).
 - **Incompatibilidade controlada** — a sintaxe de material/charge/booking não precisa ser compatível com o TaskJuggler original. Arquivos `.tjp` sem essas funcionalidades continuam funcionando.
-- **Inglês apenas (por enquanto)** — todas as novas keywords estão em inglês.
+- **Inglês apenas (por enquanto)** — todas as novas keywords estão em inglês e, desde a decisão 2026-11-07, **toda saída da ferramenta** (mensagens, help, man, templates, interface de CLI) é em inglês; o i18n de entrada (parsear projetos pt/es) permanece existente mas é **experimental e sujeito a mudanças** — a recomendação atual é escrever projetos em inglês. Ver `02-principios.md` e `04-linguagem-multilingue.md`.

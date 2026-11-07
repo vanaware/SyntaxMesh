@@ -1,8 +1,8 @@
 # Fase 24 — CLI (`packages/cli`)
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-24-cli.md`
-> **Adendo:** [`fase-24-cli-adendo.md`](./fase-24-cli-adendo.md) — API de execução do core (`execute`: envelope JSON com seções) + modificador `stdout` na DSL; é a source of truth de §5.5 e do contrato de saída de §6
-> **Tarefas:** `docs/syntaxmesh/fases/fase-24-cli-tarefas.md` (~136 tarefas atômicas)
+> **Adendo:** [`fase-24-cli-adendo.md`](./fase-24-cli-adendo.md) — API de execução do core (`execute`: envelope JSON com seções; entrada `request.files` de `{ path, content }` sem provedor — v2.1) + modificador `stdout` na DSL; é a source of truth de §5.5 e do contrato de saída de §6
+> **Tarefas:** `docs/syntaxmesh/fases/fase-24-cli-tarefas.md` (~144 tarefas atômicas)
 > **Status:** ⬜ Não iniciada
 > **Duração estimada:** 5–8 dias
 > **Depende de:** Fases 2–14 (motor completo: parser, i18n, scheduler, financeiro, relatórios). **Não depende** das Fases 15–23.
@@ -43,16 +43,55 @@ Decisões de alto nível (consolidadas do esboço):
    suportado pelos três).
 4. **Toda a lógica do SyntaxMesh permanece no core.** A CLI apenas empacota:
    lê argv, lê/escreve arquivos, chama a fachada `TaskJuggler` e formata saída.
-5. **API de execução única no core (adendo v2).** Uma só chamada
+5. **API de execução única no core (adendo v2/v2.1).** Uma só chamada
    `core.execute(request)` roda todo o fluxo do `tj3` (e das funções portadas
    dos demais CLIs do TaskJuggler — man, sheets, freeze) e devolve um
    **envelope JSON** com eco dos parâmetros, `exitCode` como dado, mensagens
    estruturadas e **seções identificadas** (`check`, `listReports`, `reports`,
-   `freeze`, `sheet`, `man`, `help`, `version`). O `.tjp` declara a *intenção*
-   `stdout`; o core devolve conteúdos como dados e a **CLI é o único
+   `freeze`, `sheet`, `man`, `help`, `version`). A **entrada de arquivos** é
+   uma lista completa `request.files[]` de `{ path, content }` (+ `entry`):
+   como um `.tjp` pode `include` outros `.tjp`/`.tji`, o consumidor passa o
+   fechamento todo e o core resolve `include` por *lookup* na lista — **sem
+   provedor e sem acesso a disco** — e os conteúdos **não voltam** no envelope
+   (eco só dos caminhos), para poupar tráfego/tamanho. O `.tjp` declara a
+   *intenção* `stdout`; o core devolve conteúdos como dados e a **CLI é o único
    componente que imprime no terminal ou grava arquivos** (§5.5). Este
    contrato **substitui** o desenho anterior de `FileSink` injetado em
    `generateReports` e o de orquestração do pipeline na CLI.
+6. **Nomenclatura e extensão próprias (decisão 2026-11-07).** Os CLIs são
+   clones de **comportamento** do `tj3`/`tj3man`/`tj3ts_*`/`tj3ss_*`, não de
+   nome: a família chama-se **`syntaxmesh`** (binário via `deno compile`; alias
+   curto **`smx`**) com subcomandos `man`, `ts|ss send·receive·summary`,
+   `check-ts`/`check-ss` — **todos pela mesma API `execute` com retorno JSON**.
+   A extensão nativa é **única**: **`.smx`**, substituindo o par `.tjp`/`.tji`.
+   A distinção master/include nunca foi funcional no engine (é uma *convenção
+   validada* pelo Ruby para evitar abrir fragmento como entrada ou incluir o
+   master); no SyntaxMesh ela passa a ser de **papel**: `entry` = master,
+   referenciados por `include` = fragmentos — exatamente a semântica de
+   `request.files`/`entry` do adendo v2.1, que dispensa duas extensões.
+   `.tjp`/`.tji` continuam **aceitos por compatibilidade** (projetos da regra
+   zero, goldens F21 contra o `tj3` real, anexos `.tji` já enviados por
+   usuários); a relaxação das três validações herdadas (parser F10, sheets
+   F18) é a tarefa 24.2.36 do grupo 5.
+7. **English-first em toda saída da ferramenta (decisão 2026-11-07).** Nesta
+   etapa de construção do clone do TaskJuggler, **todas as saídas e superfícies
+   interativas do SyntaxMesh são em inglês**: `messages` do envelope, `help`,
+   `version`, `man`, templates e corpo dos emails de sheet, nomes de seções,
+   flags e README. O i18n da Fase 10 é **entrada** (parsear `.tjp`/`.smx` com
+   keywords pt/es continua obrigatório para a regra zero e os goldens F21) e a
+   diretiva `language` afeta apenas o parsing do arquivo — o tool **emite,
+   responde e interage em inglês por default**; expansão multilíngue da saída
+   é adendo futuro (F20 UI, F22 adendo PT/ES pós-21). Consolidar o SyntaxMesh
+   como ferramenta internacional em inglês primeiro — princípio registrado em
+   `02-principios.md`.
+   **Corolário (decisão 2026-11-07):** o **parser pt-BR/es** é **experimental**
+   e **sujeito a mudanças** (vocabulário, sinônimos, unidades, cobertura do
+   `man`). A **recomendação atual** é escrever projetos em **inglês** — `en` é
+   a única gramática estável auditada pela regra zero (ADR 011) e a via
+   recomendada nos goldens F21; a CLI deve tratar o caminho pt/es como
+   **piso de compatibilidade** (fixa `language "en"` por default em exemplos
+   do `man`/help e não expõe flags de seleção de idioma na v1). Ver
+   `04-linguagem-multilingue.md` e `02-principios.md`.
 
 ---
 
@@ -65,8 +104,12 @@ Ao final desta fase:
 - Camada `io.ts` completa e testada (read/write/exists/mkdir/mkdtemp/exit/args
   + detecção de runtime), **sem `any`** e sem ramificação de FS.
 - Implementação (desancoramento) de `TaskJuggler.parse()`/`parseContent()` no
-  core via **provedor de conteúdo injetado** (a CLI fornece `io.readText`;
-  o core continua sem tocar em disco). Mesma injeção para `parseFile()` e
+  core com leitura de arquivo **injetada** — para o caminho passo-a-passo
+  (UI/PWA Fase 20) via provedor `(path) => string` (o chamador fornece
+  `io.readText`; o core continua sem tocar em disco). **`execute`, porém, não
+  usa provedor**: recebe `request.files` (lista `{ path, content }` com o
+  fechamento completo de `include`s) e resolve `include` por *lookup* contra
+  essa lista. Mesma injeção para `parseFile()` e
   `freeze()`/`freezeByTask()`/`freezedate` (reescrita do master file via
   `io.writeText`) — **dono: Fase 24** (reancorado em 2026-11-03; antes
   apontava Fase 19).
@@ -85,6 +128,12 @@ Ao final desta fase:
   `ok`, `exitCode` (dado), `options` (eco normalizado), `messages`
   (estruturadas) e `results` com **apenas as seções pedidas** (`check`,
   `listReports`, `reports`, `freeze`, `sheet`, `man`, `help`, `version`). A
+  **entrada de arquivos** é uma lista completa `request.files[]` de
+  `{ path, content }` (+ `entry` opcional, default `files[0]`): como um `.tjp`
+  pode `include` outros `.tjp`/`.tji`, o consumidor passa o fechamento completo
+  e o core resolve `include` por *lookup* na lista — **sem provedor, sem
+  disco**; os conteúdos **não voltam** no envelope (eco só dos caminhos), para
+  poupar tráfego/tamanho. A
   seção `reports` carrega o contrato v1 (`stdout`/`formats`/`errors` por
   relatório) e um campo `outputDir` presente **somente** quando o parâmetro
   foi passado. O que era trabalho do core chega processado: dynamic
@@ -95,7 +144,7 @@ Ao final desta fase:
   `.tjp` sem `stdout` continuam com comportamento idêntico ao anterior
   (gravação em arquivo).
 - **Complementos pós-`tj3` (decisão 2026-11-03 — §5.4):**
-  - `wz man` — gerador de referência de sintaxe/keywords/manual, consumindo o
+  - `syntaxmesh man` — gerador de referência de sintaxe/keywords/manual, consumindo o
     **`doc-core` entregue na Fase 22** (`SyntaxReference`,
     `KeywordDocumentation`, `TjpExample`, `UserManual`, `SyntaxCore`) — o
     equivalente do `tj3man` Ruby (`apps/Tj3Man.rb`).
@@ -103,7 +152,9 @@ Ao final desta fase:
     `tj3ts_sender/receiver/summary`, base `Tj3SheetAppBase`): o **núcleo das
     classes vive no core, entregue na Fase 18**; a CLI apenas empacota. **Sem
     SMTP**: o sender monta e imprime/escreve o **texto do email** (corpo +
-    anexo `.tji`/`.tjs`); o receiver consome **texto de mensagem** fornecido
+    anexo `.tji`/`.tjs`; desde 2026-11-07 o anexo gerado é `.smx`, com `.tji`
+    reconhecido por compatibilidade — 24.2.36); o receiver consome **texto de
+    mensagem** fornecido
     pelo usuário (arquivo/stdin), não a mensagem inteira de um cliente de email.
   - `--report` com **atributos dinâmicos** (equivalente `-A`/`dynamicAttributes`
     do ReportServer Ruby): usa o pipeline `parseReportAttributes` +
@@ -139,11 +190,14 @@ Ao final desta fase:
 | Definir flags, ajudar, cores, tabela de opções | `packages/cli` (Cliffy) |
 | Decidir o que/quando executar (pipeline tj3, §5.1) | `@vanaware/syntaxmesh` (core) — `execute()` roda o fluxo e devolve o envelope (adendo v2 §3) |
 | Renderizar relatórios/seções e devolver conteúdos como dados do envelope | `@vanaware/syntaxmesh` (core) — seções `results.*` (§5.5/§6) |
-| Traduzir argv → `ExecutionRequest` e despachar o envelope (terminal vs arquivo, delimitador, nome, sanitização, política de erro, `exit`) | `packages/cli` (`options.ts` + `output-policy.ts`, adendo §4) |
+| Traduzir argv → `ExecutionRequest` (lê master + `include`s via `io.ts` em `request.files`), despachar o envelope (terminal vs arquivo, delimitador, nome, sanitização, política de erro, `exit`) e escrever freeze/outbox | `packages/cli` (`options.ts` + `output-policy.ts`, adendo §4) |
 
 - O core **não** importa `node:fs`, `Deno.readTextFile` nem `process`, e **não
-  imprime nem grava nada**: conteúdo de arquivo entra por provedor injetado;
-  todo resultado sai como **envelope** de `execute` — conteúdos de relatório na
+  imprime nem grava nada**: no `execute`, o conteúdo de arquivo entra **inline**
+  em `request.files` (sem provedor de arquivo — provedor só no caminho
+  passo-a-passo UI/PWA); o core resolve `include` por *lookup* contra essa
+  lista e **não devolve** os conteúdos no envelope (eco só dos caminhos). Todo
+  resultado sai como **envelope** de `execute` — conteúdos de relatório na
   seção `results.reports` (`ReportsJson`), mensagens/`exitCode`/eco como dados
   (adendo §3.4). Toda decisão de execução da intenção `stdout` é do consumidor
   — na v1, a CLI.
@@ -242,10 +296,13 @@ syntaxmesh <arquivo.tjp> [opções]
 Comportamento padrão (fiel a `apps/Tj3.rb: main()`, agora **portada para dentro
 do core** pela API `execute`):
 
-1. A CLI traduz argv → `ExecutionRequest` e chama `core.execute(request)` uma
-   única vez; o core lê o arquivo via provedor injetado (`io.readText`) e
-   resolve `include`/`.tji` com caminhos relativos ao arquivo que inclui —
-   como `FileInstance` no Ruby.
+1. A CLI monta o `ExecutionRequest`: lê o master e os `.tjp`/`.tji` que ele
+   referencia (via `io.readText`) e os coloca em `request.files` (lista
+   `{ path, content }`, fechamento completo, `entry` = master); então chama
+   `core.execute(request)` **uma** única vez. O core resolve `include`/`.tji`
+   por *lookup* contra `request.files` (caminhos relativos ao arquivo que
+   inclui, como `FileInstance` no Ruby) — **sem provedor de arquivo e sem
+   tocar em disco**; os conteúdos não são devolvidos no envelope.
 2. O core roda internamente `parse()` → `schedule()` → renderização de **todos
    os relatórios declarados**, preenche as seções pedidas do envelope e a CLI
    aplica a política de saída (§5.5), a menos que `--no-reports`/
@@ -260,7 +317,7 @@ do core** pela API `execute`):
 
 | Flag | Efeito no tj3 | Implementação SyntaxMesh |
 |---|---|---|
-| `<file.tjp>` (posicional) | master file | `request.file`; o core lê via provedor injetado |
+| `<file>` (`.smx`; `.tjp` aceito por compat — decisão 2026-11-07) | master file | `request.entry` + o arquivo em `request.files` (a CLI lê via `io.readText` e monta o fechamento de `include`s); o core resolve `include` por *lookup* contra `request.files`, sem provedor/disco |
 | `--config <FILE>` | YAML de configuração | `request.configContent` (a CLI lê o YAML via `io.readText`; core valida/aplica — `Tj3Config`/`AppConfig` já portados em parte) |
 | `--silent` | suprime info/progresso | **renderer-only** (não entra no request); render quiet das `messages` |
 | `--no-color` | sem ANSI | **renderer-only**; desliga color do Cliffy ANSI |
@@ -304,9 +361,9 @@ empacota, o core pensa"):
 
 | Comando | Equivalente Ruby | Núcleo (quem entrega) | Empacotamento CLI |
 |---|---|---|---|
-| `wz man [--format html\|text\|tjp] [keyword…]` | `apps/Tj3Man.rb` + `UserManual`/`SyntaxReference`/`KeywordDocumentation`/`TjpExample` | **Fase 22** — `doc-core` (`@vanaware/syntaxmesh/doc-core`, subfase 22.1b) + `SyntaxCore`/`TernarySearchTree` da F16 | F24 subfase 24.9 |
-| `wz ts send` / `wz ts receive` / `wz ts summary` | `apps/Tj3TsSender/TsReceiver/TsSummary.rb` + `Tj3SheetAppBase` | **Fase 18** — classes `TimeSheetSender/Receiver/Summary` no core | F24 subfase 24.10. **Sem SMTP**: sender devolve o **texto do email** (corpo + anexo codificado) para o usuário enviar; receiver lê o **texto da mensagem** de arquivo/stdin — espelhando a decisão email→download da F18 (ADR da fase sheets) |
-| `wz ss send` / `wz ss receive` | `apps/Tj3SsSender/SsReceiver.rb` | **Fase 18** — `StatusSheetSender/Receiver` no core | F24 subfase 24.10 (mesma política texto-do-email) |
+| `syntaxmesh man [--format html\|text\|tjp] [keyword…]` | `apps/Tj3Man.rb` + `UserManual`/`SyntaxReference`/`KeywordDocumentation`/`TjpExample` | **Fase 22** — `doc-core` (`@vanaware/syntaxmesh/doc-core`, subfase 22.1b) + `SyntaxCore`/`TernarySearchTree` da F16 | F24 subfase 24.9 |
+| `syntaxmesh ts send` / `syntaxmesh ts receive` / `syntaxmesh ts summary` | `apps/Tj3TsSender/TsReceiver/TsSummary.rb` + `Tj3SheetAppBase` | **Fase 18** — classes `TimeSheetSender/Receiver/Summary` no core | F24 subfase 24.10. **Sem SMTP**: sender devolve o **texto do email** (corpo + anexo codificado) para o usuário enviar; receiver lê o **texto da mensagem** de arquivo/stdin — espelhando a decisão email→download da F18 (ADR da fase sheets) |
+| `syntaxmesh ss send` / `syntaxmesh ss receive` | `apps/Tj3SsSender/SsReceiver.rb` | **Fase 18** — `StatusSheetSender/Receiver` no core | F24 subfase 24.10 (mesma política texto-do-email) |
 | `--report <R> [--attr "<attrs>"]` (alias `-A`) com atributos dinâmicos | `ReportServer`/`ReportServlet` (daemon) + `Project#generateReport(dynamicAttributes)` | **Fase 18** — núcleo `parseReportAttributes` + backup/restore (adendo F18; xray §3.4). **Entregue em 18.19:** `Project#generateReport(id, regExpMode, formats, attrs)` faz backup → parse → `interactive` → gera → restore; a CLI só traduz `-A/--attr` para o 4º argumento | F24 subfase 24.10 |
 | Rastreio de arquivos de entrada / captura de saída | `FileList`/`StdIoWrapper`/`UTF8String` | **Fase 16** (16.7/16.11/16.12 — utilitários no core) | Consumidos por 24.2/24.10 |
 | Imagens em relatórios (`![x](…)`) | `ImageRouter`/`RdoReport` Ruby + `URL.createObjectURL` (browser) | **Fase 13** devolve só o descritor (`resolveImageRef`, core DOM-free) | F24 subfase 24.10.8 — materializa do disco via `io` (13.14.3, xray §4); fase 19 faz o equivalente OPFS na PWA |
@@ -323,16 +380,22 @@ saída (`0`/`1`) por `run()`.
 > **Empacotamento é CLI-only (18.18.9):** parsing de argv (`OptionParser`),
 > leitura de `stdin`, `Deno.exit` e a escrita do `outbox/*.eml` ficam na F24
 > (24.10). O core nunca chama `Deno.exit` nem lê argv — `run()` só retorna
-> `SHEET_APP_EXIT_OK`/`SHEET_APP_EXIT_ERROR`. O anexo continua `.tji` nos dois
-tipos de sheet (o Ruby só reconhece essa extensão em
-`SheetReceiver#SHEET_EXTENSION`); o `.tjs` citado no adendo 18.18.6 é
-divergência de documentação, não de comportamento.
+> `SHEET_APP_EXIT_OK`/`SHEET_APP_EXIT_ERROR`. O anexo nasce `.tji` no Ruby (o
+> receiver só reconhecia essa extensão em `SheetReceiver#SHEET_EXTENSION`);
+> desde a decisão 2026-11-07 o SyntaxMesh **gera `.smx`** e **reconhece `.tji`
+> por compatibilidade** (tarefa 24.2.36 — ADAPTAÇÃO à regra zero, plano §1.6);
+> o `.tjs` citado no adendo 18.18.6 é divergência de documentação, não de
+> comportamento.
 
 > Nota: `freeze` (`--freeze*`) também reancorado para **Fase 24** (24.9) —
 > era Fase 19. O daemon em si (`tj3d`/`tj3webd`/`tj3client`) permanece **fora de
 > escopo**: a funcionalidade análoga é entregue pela camada 3 da Fase 22
 > (relatórios embutidos no editor) e pela PWA (Fase 20) — registrar a rejeição
-> explícita no plano canônico (xray §3.1).
+> explícita no plano canônico (xray §3.1). **Nota 2026-11-07:** o *tj3d/tj3webd
+> simulado* da Fase 22 (camadas daemon/relatórios) **reaproveita esta mesma API
+> `execute`** (adendo §5.1 — consumidores planejados); eventual ampliação do
+> contrato (modelo persistente, load/unload/list, gerar sem re-parse) entra por
+> adendo a `fase-24-cli-adendo.md`, nunca por API paralela na extensão.
 
 ### 5.5 API de execução (`execute` → envelope JSON) e modificador `stdout` (adendo v2)
 
@@ -415,6 +478,18 @@ Resumo vinculante:
    Cliffy (fonte única, sem duplicação); `version` vem de
    `AppConfig`/`metadata.json`. A ajuda humana de argv (flag inválida) continua
    sendo do Cliffy, sem request ao core.
+9. **Contrato transportável (nota 2026-11-07, adendo §3.6):** request e
+   envelope são **dados puros JSON-serializáveis** (sem funções/callbacks) —
+   o desenho comportará, sem mudança de forma: (a) um **Web Worker** rodando
+   `execute` para a UI da Fase 20 via `postMessage`; (b) arquitetura
+   **cliente–servidor** (HTTP/RPC) com `execute` assíncrono e o mesmo envelope
+   de resposta — exigindo **isolamento por chamada** (singletons
+   `MessageHandlerInstance`/`DataCache` repostos/snapshotados a cada `execute`;
+   instância dedicada ou serialização por request no servidor); (c) uso como
+   **lib TypeScript** via export raiz do `@vanaware/syntaxmesh` (tipos
+   `ExecutionInputFile`/`ExecutionRequest`/`ExecutionResult` públicos). A
+   leitura do `project` em memória após o `execute` (resumo 24.4.5) é
+   conveniência **in-process**, nunca contrato.
 
 ---
 
@@ -426,22 +501,37 @@ Resumo vinculante:
       `(path: string) => Promise<string> | string`), substituindo os throws
       `NotYetImplementedError("24", ...)`. A resolução de `include` relativa ao
       arquivo-pai deve seguir `TaskJuggler.rb` (mesma semântica de
-      `FileInstance`/`Dir.getwd`).
+      `FileInstance`/`Dir.getwd`). **Escopo do provedor: só o caminho
+      passo-a-passo (UI/PWA Fase 20)** — no `execute` (adendo v2.1) o conteúdo
+      chega **inline** em `request.files`, sem provedor.
   - Os chamadores futuros (PWA/Fase 19–20) injetarão seu próprio provedor
-    (storage/workerdb); a CLI injeta `io.readText`. **Nada de FS no core.**
+    (storage/workerdb); a CLI lê master + `include`s via `io.readText` e monta
+    `request.files`. **Nada de FS no core.**
   - **Fachada `execute` (adendo v2 §3) — ponto único de entrada:** novo método
     `TaskJuggler.execute(request: ExecutionRequest): Promise<ExecutionResult>`.
     Ele **orquestra por dentro** o que antes a CLI coordenava manualmente
-    (provedor → `parse`/`parseContent` → gates → `schedule` → `checkReports` →
+    (a partir de `request.files`: `include` por *lookup* em memória → parse →
+    gates → `schedule` → `checkReports` →
     render/operadores pontuais `list`/`freeze`/`man`/sheets) e monta o
     **envelope**: `ok`, `exitCode` (matriz do §5.3, como dado), `options` (eco
-    normalizado do request), `messages` (snapshot estruturado do
+    normalizado do request — dos arquivos só os **caminhos**, nunca os
+    conteúdos), `messages` (snapshot estruturado do
     `MessageHandlerInstance`: `severity`/`id`/`text`/`file`/`line`) e `results`
     com **apenas as seções pedidas**. Os métodos passo-a-passo
     (`parse`/`schedule`/`generateReports`/`renderReports`/`freeze`)
     permanecem como blocos internos reutilizáveis — a fachada UI/PWA (Fase 20)
     continua orquestrando por eles; `execute` é o atalho canônico dos
     consumidores de linha de comando.
+  - **Refatoramento retroativo (nota 2026-11-07, grupo 5 das tarefas —
+    24.2.31–37):** as costuras de injeção de arquivo **já entregues** por fases
+    anteriores — apps de sheet da F18 com `FileStore` (ADR 036/037:
+    `setFileStore`/`requireFileStore`, `TaskJuggler.fileStore`,
+    `checkTimeSheet`/`checkStatusSheet` por caminho), `CSVFile.read` (ADR 027),
+    hooks de escrita do `XMLDocument` (ADR 038), `ImageResolver` (ADR 026) —
+    **não se aplicam na fronteira do `execute`**: conteúdo entra por
+    `request.files`/`appOptions` e sai por `results.*`. As interfaces seguem
+    válidas no caminho passo-a-passo (Fases 19–20) — rebaixadas, não revogadas
+    (adendo §5.1).
   - **Contrato de saída (adendo `stdout`), no lugar do antigo `FileSink`:**
     - **Parser:** keyword `stdout` registrado no lexer/i18n (extensão
       SyntaxMesh sem equivalente Ruby — nas tabelas pt-BR/es o keyword fica
@@ -540,7 +630,10 @@ packages/cli/
 
 Convenções: BDD (`@std/testing/bdd` + `@std/assert`); TDD para cada unidade
 nova; sem `any` em `src/`; fixtures em inglês (MWEs + TestSuite) — coerente com
-o escopo v1 monolíngue adotado também na Fase 22.
+o escopo v1 monolíngue adotado também na Fase 22. **English-first (decisão
+2026-11-07, §1.7):** toda saída da ferramenta (mensagens, help, man, templates
+de sheet, README) é em inglês; o i18n do core vale só para o parsing de
+arquivos de entrada.
 
 | Alvo | Método | Critério |
 |---|---|---|
@@ -661,14 +754,14 @@ no padrão dos blocos das fases anteriores:
 |---|---|---|---|
 | 24.0 | ADR da fase (0NN) + reposicionamento | `decisoes/0NN-cli-multiruntime.md` + linha no README + confirmação da ordem em `plano.md`/`CURRENT.md` (23 → 24 → 21¹) | — |
 | 24.1 | Scaffold + `io.ts` | `packages/cli/` no workspace; `io.ts` (§4.2) com testes unitários; task `cli` | 24.0 |
-| 24.2 | Injeção de I/O + API `stdout`/`execute` (envelope) no core | `parse/parseContent` desancorados via provedor injetado; parser do modificador `stdout` (+ keyword i18n e nome único); fachada `execute(request)` montando o envelope (`ok`/`exitCode`/`options`/`messages`/`results.*`) com `renderReports` como construtor da seção `reports`; testes de contrato, seções e pureza | 24.1 |
+| 24.2 | Injeção de I/O + API `stdout`/`execute` (envelope) no core | `parse/parseContent` desancorados via provedor injetado; parser do modificador `stdout` (+ keyword i18n e nome único); fachada `execute(request)` montando o envelope (`ok`/`exitCode`/`options`/`messages`/`results.*`) com `renderReports` como construtor da seção `reports`; testes de contrato, seções e pureza; **grupo 5 — refatoramento retroativo das costuras de `FileStore` injetado (F18/ADR 037, ADRs 026/027/038) para dados-como-dados na fronteira do `execute`, incl. extensão única `.smx` (24.2.36) (nota 2026-11-07)** | 24.1 |
 | 24.3 | Comando + flags + consumo do envelope | `cli.ts` com Cliffy; `options.ts` mapeando §5.2 para o `ExecutionRequest`; **uma** chamada `core.execute` + despacho de seções; exit via `exit(result.exitCode)` §5.3 | 24.2 |
 | 24.4 | Saída no terminal | `reporter.ts` (MessageHandler→stdout, cores, silent) + `summary.ts` | 24.3 |
 | 24.5 | Relatórios ponta a ponta + política de saída | `output-policy.ts` (terminal com delimitador vs `{name}.{ext}` sanitizado em `--output-dir`), `--report/--reports/--list-reports`, `--force-reports`, `--no-reports`; integração com fixtures mistos `stdout`/não-`stdout` e MWEs | 24.4 |
 | 24.6 | Multi-runtime + binário | smoke Bun/Node; `deno compile`; bundle node via `scripts/esbuild.ts`; README por runtime | 24.5 |
 | 24.7 | Fidelidade tj3 (golden CLI) | comparação stdout/exit/artefatos vs `tj3` Ruby no subset de fixtures; divergências documentadas (regra zero) | 24.5 |
 | 24.8 | Verificação final | `check-all` + `test` + cobertura ≥ 80% + ADR commitado + `CURRENT.md`/`plano.md` atualizados | todas |
-| 24.9 | `man` + `freeze` (§5.4) | comando `wz man` sobre o `doc-core` da F22 (html/text/tjp) + desancoramento e flags `--freeze*` via `io.writeText` | 24.3, F22 (22.1b) |
+| 24.9 | `man` + `freeze` (§5.4) | comando `syntaxmesh man` sobre o `doc-core` da F22 (html/text/tjp) + desancoramento e flags `--freeze*` via `io.writeText` | 24.3, F22 (22.1b) |
 | 24.10 | Apps de sheets (§5.4) | `ts/ss send·receive·summary` empacotando as classes da F18 (texto do email, sem SMTP) + `--report` com dynamicAttributes | 24.5, F18 |
 
 Ordem de execução: 24.0 → 24.1 → … → 24.8 (linear; 24.7 pode correr em

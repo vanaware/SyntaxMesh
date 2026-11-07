@@ -98,8 +98,8 @@ Ao final desta fase:
 - `SheetHandlerBase`, `SheetSender`, `SheetReceiver`.
 - `TimeSheetSender`, `TimeSheetReceiver`, `TimeSheetSummary`.
 - `StatusSheetSender`, `StatusSheetReceiver`.
-- **Núcleo dos apps de sheet** (`Tj3SheetAppBase` + `ts_sender/ts_receiver/ts_summary/ss_sender/ss_receiver`) como classes puras do core, sem SMTP e sem subprocesso — **18.18**, adendo xray §3.3. O empacotamento CLI (`wz ts …`, `wz ss …`) é da **Fase 24**.
-  - **Política de email (decisão 2026-11-03):** o **sender** monta e devolve o **texto do email** (To/Subject/corpo + anexo `.tji`/`.tjs` em base64) e **não** se conecta a nenhum app de envio; o **receiver** consome **texto de mensagem** fornecido pelo usuário (arquivo/stdin), não a mensagem inteira de um cliente de email.
+- **Núcleo dos apps de sheet** (`Tj3SheetAppBase` + `ts_sender/ts_receiver/ts_summary/ss_sender/ss_receiver`) como classes puras do core, sem SMTP e sem subprocesso — **18.18**, adendo xray §3.3. O empacotamento CLI (`syntaxmesh ts …`, `syntaxmesh ss …`) é da **Fase 24**.
+  - **Política de email (decisão 2026-11-03):** o **sender** monta e devolve o **texto do email** (To/Subject/corpo + anexo `.tji`/`.tjs` em base64 — desde a decisão 2026-11-07 o SyntaxMesh **gera** `.smx` e **reconhece** `.tji` por compatibilidade, F24 24.2.36) e **não** se conecta a nenhum app de envio; o **receiver** consome **texto de mensagem** fornecido pelo usuário (arquivo/stdin), não a mensagem inteira de um cliente de email.
 - **Pipeline `dynamicAttributes`** (`Project#generateReport` 4º argumento + backup/restore **já herdados de `PropertyTreeNode`** + `ProjectFileParser#parseReportAttributes` + `rule_dynamicAttributes`) — **18.19**, adendo xray §3.4. Os três passos, hoje comentados em `project.ts`, já levam a âncora `// Ancorado: Fase 18` (política ADR 032).
 - **`MessageHandler#checkLevel`** (validação de nível 0–5 nos setters de `outputLevel`/`logLevel`) — **18.20**, adendo xray §3.4.1.
 - Consumidores dos utilitários da Fase 16: `StdIoWrapper` (`TimeSheetSummary.getResourceJournal`).
@@ -1309,8 +1309,8 @@ No Ruby os front-ends de linha de comando são `Tj3SheetAppBase` (herda de
 `Tj3SsSender.rb`, `Tj3SsReceiver.rb`. O plano desta fase só tinha as classes de
 core (`SheetSender`/`SheetReceiver`/`*Summary`). **Decisão 2026-11-03 (xray §3.3):**
 o **núcleo** dos apps nasce aqui, como classes puras e testáveis do core; a
-**Fase 24** apenas empacota subcomandos (`wz ts send|receive|summary`,
-`wz ss send|receive`).
+**Fase 24** apenas empacota subcomandos (`syntaxmesh ts send|receive|summary`,
+`syntaxmesh ss send|receive`).
 
 #### Política de email (inversível)
 

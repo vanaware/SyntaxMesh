@@ -669,7 +669,7 @@ folhas), então a fonte de verdade são os testes BDD.
 ### 18.19 — Pipeline `dynamicAttributes` + `parseReportAttributes`
 
 **⚠️ RUBY: `Project.rb:778-812` + `ProjectFileParser#parseReportAttributes` + `rule_dynamicAttributes` (`TjpSyntaxRules.rb:1034`).**
-**📎 xray §3.4.** **Consumidores:** `SheetSender` (18.6) e `wz --report` da **Fase 24**.
+**📎 xray §3.4.** **Consumidores:** `SheetSender` (18.6) e `syntaxmesh --report` da **Fase 24**.
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
@@ -680,7 +680,7 @@ folhas), então a fonte de verdade são os testes BDD.
 | 18.19.5 | **Âncoras ADR 032 — feitas em 2026-11-03:** os três `// stub` de `project.ts` já são `// Ancorado: Fase 18 — pipeline dynamicAttributes (xray §3.4)`; ao implementar 18.19.3, remover os comentários | `model/project.ts` | `deno task check:stubs` verde |
 | 18.19.6 | Erro de sintaxe em `dynamicAttributes` vira mensagem do `MessageHandler` (não exceção crua) | `parser/project-file-parser.ts` | 1 teste |
 | 18.19.7 | Golden: mesmo report com/sem `dynamicAttributes` (comparar com `tj3 -A`) | `scripts/golden/`, `tests/golden/` | ≥ 4 casos |
-| 18.19.8 | Registrar na F24 a flag equivalente a `-A` (`wz --report … --attr …`) | `fase-24-cli.md`, `-tarefas.md` | linha presente |
+| 18.19.8 | Registrar na F24 a flag equivalente a `-A` (`syntaxmesh --report … --attr …`) | `fase-24-cli.md`, `-tarefas.md` | linha presente |
 
 **Entregue (2026-11-05):** 8/8.
 
