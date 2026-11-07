@@ -1,10 +1,16 @@
 # Fase 23 — Elemento estendido `template` (Vento)
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-23-template.md`
-> **Tarefas:** `docs/syntaxmesh/fases/fase-23-template-tarefas.md` (~95 tarefas atômicas)
+> **Tarefas:** `docs/syntaxmesh/fases/fase-23-template-tarefas.md` (~98 tarefas atômicas)
 > **Status:** ✅ Concluída (2026-11-06) — 23.0–23.8; verificação final em
-> `fase-23-template-tarefas.md` (94/95; **23.7.7** pendente com nota: smoke da
+> `fase-23-template-tarefas.md` (97/98; **23.7.7** pendente com nota: smoke da
 > CLI depende da Fase 24). Referência normativa em `11-referencia-template.md`.
+> **Fecho estendido (2026-11-07):** **23.9** — `template` passa a seguir a
+> **mesma condição da `macro`** (prolog ou nível de propriedades; nunca dentro
+> do bloco `{ }` do cabeçalho); **23.10** — listas como argumento e as três
+> formas de `{{ for }}` documentadas e fixadas em fixture/suíte; **23.11** —
+> correção do helper do teste 14C.5.1 (`rti.richText.factory`), o único failure
+> pré-existente do `deno task tests`.
 > **Duração estimada:** 4–6 dias
 > **Depende de:** Fase 10 (lexer, macros, parser FSM, i18n) e Fase 14 (relatórios — para validar saída). **Não depende** das Fases 15–21.
 > **Bloqueia:** Fase 22 de forma suave — a grammar/completions da extensão VS Code devem cobrir a keyword `template`; rodar a 23 **antes** da 22 evita um adendo de grammar.

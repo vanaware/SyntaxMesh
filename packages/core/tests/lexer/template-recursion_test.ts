@@ -55,9 +55,7 @@ afterEach(() => {
 describe("template — recursão (23.5.1/23.5.2)", () => {
   it("auto-referência direta vira template_recursion sem estourar a pilha", () => {
     const out = parse(
-      "{\n" +
-        '  template CARD [ task {{ id }} "x" ] (id)\n' +
-        "}\n" +
+      'template CARD [ task {{ id }} "x" ] (id)\n' +
         '${CARD id="a"}\n' +
         '${CARD id="b"}\n',
     );
@@ -68,11 +66,9 @@ describe("template — recursão (23.5.1/23.5.2)", () => {
 
   it("template que se chama no corpo relata a cadeia e continua o parse", () => {
     const out = parse(
-      "{\n" +
-        "  template CARD [\n" +
-        '    ${CARD id="inner"}\n' +
-        "  ] (id)\n" +
-        "}\n" +
+      "template CARD [\n" +
+        '  ${CARD id="inner"}\n' +
+        "] (id)\n" +
         '${CARD id="outer"}\n' +
         'resource r2 "Depois"\n',
     );
@@ -88,10 +84,8 @@ describe("template — recursão (23.5.1/23.5.2)", () => {
 describe("template — recursão mútua (23.5.3)", () => {
   it("A → B → A traz a cadeia completa", () => {
     const out = parse(
-      "{\n" +
-        '  template A [ {{ "$" }}{B} ]\n' +
-        '  template B [ {{ "$" }}{A} ]\n' +
-        "}\n" +
+      'template A [ {{ "$" }}{B} ]\n' +
+        'template B [ {{ "$" }}{A} ]\n' +
         "${A}\n",
     );
     const msg = messageFor("template_recursion",);
@@ -104,15 +98,15 @@ describe("template — recursão mútua (23.5.3)", () => {
 describe("template — profundidade (23.5.2)", () => {
   it("cadeia longa para no mesmo teto do mecanismo de macro (20)", () => {
     const depth = 24;
-    let body = "{\n";
+    let body = "";
     for (let i = 1; i <= depth; i++) {
       const id = String(i,).padStart(2, "0",);
       const next = String(i + 1,).padStart(2, "0",);
       body += i === depth
-        ? `  template T${id} [ resource r${id} "fim" ]\n`
-        : `  template T${id} [ {{ "$" }}{T${next}} ]\n`;
+        ? `template T${id} [ resource r${id} "fim" ]\n`
+        : `template T${id} [ {{ "$" }}{T${next}} ]\n`;
     }
-    body += "}\n${T01}\n";
+    body += "${T01}\n";
     const out = parse(body,);
     const msg = messageFor("macro_stack_overflow",);
     assert(msg, `ids: ${out.messageIds.join(",",)}`,);
@@ -123,13 +117,9 @@ describe("template — profundidade (23.5.2)", () => {
 describe("template — ordem de definição (23.5.4)", () => {
   it("chamada de template definido mais adiante no arquivo falha", () => {
     const out = parse(
-      "{\n" +
-        '  template OUTER [ {{ "$" }}{LATER id="x"} ]\n' +
-        "}\n" +
+      'template OUTER [ {{ "$" }}{LATER id="x"} ]\n' +
         "${OUTER}\n" +
-        "{\n" +
-        '  template LATER [ resource r1 "tarde" ]\n' +
-        "}\n",
+        'template LATER [ resource r1 "tarde" ]\n',
     );
     assert(
       out.messageIds.some((id,) =>
@@ -149,9 +139,7 @@ describe("template — ordem de definição (23.5.4)", () => {
 describe("template — guarda do lookup de macro (23.5.5)", () => {
   it("um template nunca é resolvido pelo caminho de macro", () => {
     const out = parse(
-      "{\n" +
-        '  template CARD [ task t1 "x" ]\n' +
-        "}\n" +
+      'template CARD [ task t1 "x" ]\n' +
         "macro SHOW [ ${CARD} ]\n" +
         "${SHOW}\n",
     );
@@ -173,9 +161,7 @@ describe("template — guarda do lookup de macro (23.5.5)", () => {
 describe("template — pré-processamento (23.5.7)", () => {
   it("a expansão acontece no parse, antes de qualquer agenda", () => {
     const out = parse(
-      "{\n" +
-        '  template TSK [ task {{ id }} "{{ nome }}" { effort {{ esforco }} } ] (id, nome, esforco)\n' +
-        "}\n" +
+      'template TSK [ task {{ id }} "{{ nome }}" { effort {{ esforco }} } ] (id, nome, esforco)\n' +
         '${TSK id="t1" nome="Antes" esforco="2d"}\n',
     );
     const p = out.result as Project;

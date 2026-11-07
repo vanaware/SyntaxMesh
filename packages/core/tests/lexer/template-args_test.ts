@@ -96,9 +96,7 @@ describe("template args — valores tipados (23.4.2)", () => {
   it("número chega ao contexto como number", () => {
     assertEquals(
       renderedName(
-        "{\n" +
-          '  template TYPED [ resource {{ id }} "{{ typeof n }}" ] (id, n)\n' +
-          "}\n" +
+        'template TYPED [ resource {{ id }} "{{ typeof n }}" ] (id, n)\n' +
           '${TYPED id="r1" n=120}\n',
         "r1",
       ),
@@ -109,9 +107,7 @@ describe("template args — valores tipados (23.4.2)", () => {
   it("string com espaços chega como string", () => {
     assertEquals(
       renderedName(
-        "{\n" +
-          '  template TYPED [ resource {{ id }} "{{ typeof s }}" ] (id, s)\n' +
-          "}\n" +
+        'template TYPED [ resource {{ id }} "{{ typeof s }}" ] (id, s)\n' +
           '${TYPED id="r1" s="texto livre"}\n',
         "r1",
       ),
@@ -122,9 +118,7 @@ describe("template args — valores tipados (23.4.2)", () => {
   it("booleano chega como boolean", () => {
     assertEquals(
       renderedName(
-        "{\n" +
-          '  template TYPED [ resource {{ id }} "{{ typeof b }}" ] (id, b)\n' +
-          "}\n" +
+        'template TYPED [ resource {{ id }} "{{ typeof b }}" ] (id, b)\n' +
           '${TYPED id="r1" b=true}\n',
         "r1",
       ),
@@ -137,9 +131,7 @@ describe("template args — referência nativa (23.4.3)", () => {
   it("`!id` é preservado como texto nativo", () => {
     assertEquals(
       renderedName(
-        "{\n" +
-          '  template REF [ resource {{ id }} "{{ ref }}" ] (id, ref)\n' +
-          "}\n" +
+        'template REF [ resource {{ id }} "{{ ref }}" ] (id, ref)\n' +
           '${REF id="r1" ref=!t1}\n',
         "r1",
       ),
@@ -152,9 +144,7 @@ describe("template args — listas e objetos (23.4.4)", () => {
   it("lista `[a, b, c]` vira array no contexto", () => {
     assertEquals(
       renderedName(
-        "{\n" +
-          '  template LIST [ resource {{ id }} "{{ tags.length }}-{{ tags[1] }}" ] (id, tags)\n' +
-          "}\n" +
+        'template LIST [ resource {{ id }} "{{ tags.length }}-{{ tags[1] }}" ] (id, tags)\n' +
           '${LIST id="r1" tags=["a", "b", "c"]}\n',
         "r1",
       ),
@@ -165,9 +155,7 @@ describe("template args — listas e objetos (23.4.4)", () => {
   it("vírgula dentro de string não divide a lista", () => {
     assertEquals(
       renderedName(
-        "{\n" +
-          '  template LIST [ resource {{ id }} "{{ tags.length }}|{{ tags[0] }}" ] (id, tags)\n' +
-          "}\n" +
+        'template LIST [ resource {{ id }} "{{ tags.length }}|{{ tags[0] }}" ] (id, tags)\n' +
           '${LIST id="r1" tags=["a,b", "c"]}\n',
         "r1",
       ),
@@ -178,9 +166,7 @@ describe("template args — listas e objetos (23.4.4)", () => {
   it("objeto literal `{ k: v }` vira objeto no contexto", () => {
     assertEquals(
       renderedName(
-        "{\n" +
-          '  template OBJ [ resource {{ id }} "{{ meta.k }}" ] (id, meta)\n' +
-          "}\n" +
+        'template OBJ [ resource {{ id }} "{{ meta.k }}" ] (id, meta)\n' +
           '${OBJ id="r1" meta={ k: "v" }}\n',
         "r1",
       ),
@@ -193,9 +179,7 @@ describe("template args — aritmética (23.4.5)", () => {
   it("expressão numérica literal é avaliada", () => {
     assertEquals(
       renderedName(
-        "{\n" +
-          '  template CALC [ resource {{ id }} "{{ n }}" ] (id, n)\n' +
-          "}\n" +
+        'template CALC [ resource {{ id }} "{{ n }}" ] (id, n)\n' +
           '${CALC id="r1" n=1 + 2}\n',
         "r1",
       ),
@@ -206,9 +190,7 @@ describe("template args — aritmética (23.4.5)", () => {
   it("aritmética referencia argumentos já lidos", () => {
     assertEquals(
       renderedName(
-        "{\n" +
-          '  template CALC [ resource {{ id }} "{{ factor }}" ] (id, base, factor)\n' +
-          "}\n" +
+        'template CALC [ resource {{ id }} "{{ factor }}" ] (id, base, factor)\n' +
           '${CALC id="r1" base=40 factor=base * 2}\n',
         "r1",
       ),
@@ -218,9 +200,7 @@ describe("template args — aritmética (23.4.5)", () => {
 });
 
 describe("template args — expressão lógica (23.4.6)", () => {
-  const BODY = "{\n" +
-    '  template COND [ resource {{ id }} "{{ flag }}" ] (id, flag)\n' +
-    "}\n" +
+  const BODY = 'template COND [ resource {{ id }} "{{ flag }}" ] (id, flag)\n' +
     '${COND id="r1" flag=isMilestone(!t1)}\n';
 
   it("sem motor injetado a expressão permanece texto", () => {
@@ -243,9 +223,7 @@ describe("template args — expressão lógica (23.4.6)", () => {
 describe("template args — validação (23.4.7/23.4.8)", () => {
   it("parâmetro obrigatório faltante aponta para a chamada", () => {
     const out = parse(
-      "{\n" +
-        '  template TSK [ task {{ id }} "t" { effort {{ esforco }} } ] (id, esforco)\n' +
-        "}\n" +
+      'template TSK [ task {{ id }} "t" { effort {{ esforco }} } ] (id, esforco)\n' +
         '${TSK id="t1"}\n',
     );
     const msg = messageFor(out, "template_missing_param",);
@@ -254,14 +232,12 @@ describe("template args — validação (23.4.7/23.4.8)", () => {
       (msg as unknown as { message: string }).message,
       "template 'TSK': parâmetro 'esforco' não fornecido",
     );
-    assertEquals(msg.sourceFileInfo?.lineNo, 5,);
+    assertEquals(msg.sourceFileInfo?.lineNo, 3,);
   });
 
   it("argumento não declarado é recusado", () => {
     const out = parse(
-      "{\n" +
-        '  template TSK [ task {{ id }} "t" { effort {{ esforco }} } ] (id, esforco)\n' +
-        "}\n" +
+      'template TSK [ task {{ id }} "t" { effort {{ esforco }} } ] (id, esforco)\n' +
         '${TSK id="t1" esforcoo=5}\n',
     );
     const msg = messageFor(out, "template_unknown_param",);
@@ -276,7 +252,7 @@ describe("template args — validação (23.4.7/23.4.8)", () => {
 describe("template args — chamada opcional (23.4.9)", () => {
   it("`${?NOME k=v}` com template inexistente é vazio silencioso", () => {
     const out = parse(
-      "{\n" + '  template NOPE [ task x "x" ]\n' + "}\n" +
+      'template NOPE [ task x "x" ]\n' +
         '${?MISSING id="r1" nome="X"}\n' +
         'resource r2 "Dois"\n',
     );
@@ -294,9 +270,7 @@ describe("template args — chamada opcional (23.4.9)", () => {
   it("`${?NOME k=v}` com template existente expande normalmente", () => {
     assertEquals(
       renderedName(
-        "{\n" +
-          '  template PERSON [ resource {{ id }} "{{ nome }}" ] (id, nome)\n' +
-          "}\n" +
+        'template PERSON [ resource {{ id }} "{{ nome }}" ] (id, nome)\n' +
           '${?PERSON id="r1" nome="Opcional"}\n',
         "r1",
       ),

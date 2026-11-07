@@ -30,24 +30,30 @@ template NOME [ corpo ] (param1, param2, ...)
 | Nome | `[A-Z][A-Za-z0-9_]*` — precisa começar com maiúscula. |
 | Corpo | Entre colchetes `[ ]`, com o `]` de fechamento **no fim da linha** (mesma regra da macro). |
 | Parâmetros | Lista entre parênteses, separada por vírgula. Pode ser vazia (`()`) ou omitida. |
-| Local | Nível do projeto (projétil ou corpo de propriedades). Não é aceito dentro de `task`, `resource` etc. |
+| Local | **A mesma condição da `macro`**: prolog (antes de `project`) ou nível de propriedades (depois do `}` do cabeçalho). **Nunca** dentro do bloco `{ }` do `project`, nem dentro de `task`, `resource` etc. |
 | Momento | O corpo é guardado **cru**: nada é interpretado no registro. |
 
 ```taskjuggler
 project acme "ACME" "1.0" 2026-01-01 - 2026-12-31 {
   timezone "UTC"
-
-  template CARD [
-    task {{ id }} "{{ nome }}" {
-      effort {{ esforco }}
-    }
-  ] (id, nome, esforco)
-
-  template HEADER [
-    # Projeto: {{ project.name }}
-  ] ()
 }
+
+# `template` fica fora do bloco `{ }` — igual à `macro`.
+template CARD [
+  task {{ id }} "{{ nome }}" {
+    effort {{ esforco }}
+  }
+] (id, nome, esforco)
+
+template HEADER [
+  # Projeto: {{ project.name }}
+] ()
 ```
+
+A regra vale também para `template`/`macro` num arquivo de propriedades de
+relatório (`reportPropertiesBody`): o namespace é único, a colocação idem.
+Definir um `template` dentro do bloco do cabeçalho produz
+`Unexpected token 'template' found.` (mesmo erro que a `macro` dava no Ruby).
 
 Uma definição com nome em minúscula (`template card …`) é **erro**, não
 reserva silenciosa: `template_bad_name`.
@@ -112,6 +118,46 @@ template PHASE [
 Suportado: `{{ valor }}`, `{{ if }}`/`{{ else if }}`/`{{ else }}`/`{{ /if }}`,
 `{{ for x of lista }}`/`{{ for k, v of obj }}`/`{{ /for }}`, `{{ set x = … }}`,
 pipes (`{{ nome |> toUpperCase }}`).
+
+### 3.1 Listas e `for`
+
+Listas entram como argumento em três sabores (ver §2.1):
+
+| Sabor | Chamada | Cada item é… |
+| --- | --- | --- |
+| Lista de strings/números | `passos=["Análise", "Design"]` | o valor |
+| Lista de objetos | `pessoas=[{ id: "ana", nome: "Ana" }]` | objeto — acessível por `.campo` |
+| Lista de referências | `deps=[!t1, !t2]` | o texto `!t1`, `!t2` |
+
+No corpo, o `for` do Vento tem três formas — **a ordem dos nomes importa**:
+
+```taskjuggler
+template STEPS [
+{{ for i, passo of passos }}
+  task {{ id }}_{{ i }} "{{ passo }}" { effort 1d }
+{{ /for }}
+] (id, passos)
+
+${STEPS id="s" passos=["Análise", "Design", "Build"]}
+```
+
+| Forma | Produz |
+| --- | --- |
+| `{{ for x of lista }}` | `x` = valor |
+| `{{ for i, x of lista }}` | `i` = **índice 0-based**, `x` = valor |
+| `{{ for k, v of mapa }}` | `k` = chave, `v` = valor (equivalente a `Object.entries`) |
+
+`toIterator` aceita array, objeto, string e número. Lista vazia **não** gera
+texto nem erro.
+
+> **Não existe `loop`.** `{{ loop.index }}` estoura com
+> `template_render_error` — use `for i, x of …`, que já entrega o índice.
+
+Um exemplo completo e copiável vive em
+`packages/core/tests/fixtures/templates/lists-for.tjp` (task por item de lista
+de strings, resource por item de lista de objetos, `allocate` por entrada de
+mapa e `depends` montado com o filtro `join`); o comportamento é fixado por
+`packages/core/tests/lexer/template-lists_test.ts`.
 
 ## 4. Macros dentro de templates (as duas fases)
 
@@ -231,6 +277,8 @@ aponta o conserto certo.
 | `packages/core/src/lexer/scanner.ts` | Ramo de expansão de template em `expandMacro` (§4.4), duas fases, contexto, proteções. |
 | `packages/core/src/lexer/project-file-scanner.ts` | Padrão de chamada `${NOME k=v …}` e token `TEMPLATE`. |
 | `packages/core/src/parser/rules/common.ts` | Rules `macro`/`template`: registro, colisão, nome inválido. |
+| `packages/core/src/parser/rules/project.ts` | Colocação (23.9): `!template` em `projectProlog` e `propertiesBody` — **não** em `projectBodyAttributes`. |
+| `packages/core/src/parser/rules/report.ts` | `!template` em `reportPropertiesBody`, ao lado de `!macro`. |
 | `packages/core/src/parser/project-file-parser.ts` | Provedores de contexto (`project`, `ids`) ligados no `open`. |
 
 Testes e fixtures:
@@ -244,9 +292,11 @@ Testes e fixtures:
 | `tests/lexer/template-recursion_test.ts` | Recursão, profundidade, ordem. |
 | `tests/lexer/template-context_test.ts` | Contexto e composição. |
 | `tests/lexer/template-errors_test.ts` | Matriz do §8 (table-driven). |
+| `tests/lexer/template-lists_test.ts` | Listas como argumento + as três formas de `for` (§3.1). |
+| `tests/parser/template-decl_test.ts` | Declaração, namespace e **colocação** (23.9). |
 | `tests/lexer/macro-baseline-regression_test.ts` | Cerca do caminho de macro congelado. |
-| `tests/fixtures/templates/` | Fixtures + índice (`README.md`). |
-| `tests/golden/template_golden_test.ts` | Golden TS-only (5 seções). |
+| `tests/fixtures/templates/` | Fixtures + índice (`README.md`); `lists-for.tjp` é o exemplo de listas/`for`. |
+| `tests/golden/template_golden_test.ts` | Golden TS-only (6 seções). |
 | `tests/integration/template-integration_23_test.ts` | Schedule/financeiro equivalentes ao manual + relatórios. |
 
 Regenerar o golden:

@@ -1,7 +1,8 @@
 # Fase 24 — CLI (`packages/cli`)
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-24-cli.md`
-> **Tarefas:** `docs/syntaxmesh/fases/fase-24-cli-tarefas.md` (~100 tarefas atômicas)
+> **Adendo:** [`fase-24-cli-adendo.md`](./fase-24-cli-adendo.md) — API de execução do core (`execute`: envelope JSON com seções) + modificador `stdout` na DSL; é a source of truth de §5.5 e do contrato de saída de §6
+> **Tarefas:** `docs/syntaxmesh/fases/fase-24-cli-tarefas.md` (~136 tarefas atômicas)
 > **Status:** ⬜ Não iniciada
 > **Duração estimada:** 5–8 dias
 > **Depende de:** Fases 2–14 (motor completo: parser, i18n, scheduler, financeiro, relatórios). **Não depende** das Fases 15–23.
@@ -42,6 +43,16 @@ Decisões de alto nível (consolidadas do esboço):
    suportado pelos três).
 4. **Toda a lógica do SyntaxMesh permanece no core.** A CLI apenas empacota:
    lê argv, lê/escreve arquivos, chama a fachada `TaskJuggler` e formata saída.
+5. **API de execução única no core (adendo v2).** Uma só chamada
+   `core.execute(request)` roda todo o fluxo do `tj3` (e das funções portadas
+   dos demais CLIs do TaskJuggler — man, sheets, freeze) e devolve um
+   **envelope JSON** com eco dos parâmetros, `exitCode` como dado, mensagens
+   estruturadas e **seções identificadas** (`check`, `listReports`, `reports`,
+   `freeze`, `sheet`, `man`, `help`, `version`). O `.tjp` declara a *intenção*
+   `stdout`; o core devolve conteúdos como dados e a **CLI é o único
+   componente que imprime no terminal ou grava arquivos** (§5.5). Este
+   contrato **substitui** o desenho anterior de `FileSink` injetado em
+   `generateReports` e o de orquestração do pipeline na CLI.
 
 ---
 
@@ -63,7 +74,26 @@ Ao final desta fase:
   de todos os relatórios declarados, `--check-syntax`, `--list-reports`,
   `--report/--reports`, `--output-dir`, `--no-reports`, `--force-reports`,
   `--silent`, `--no-color`, `--abort-on-warnings`, `--warn-ts-deltas`,
-  `--add-trace`, `--config`, `--version`, `--help`.
+  `--add-trace`, `--config`, `--version`, `--help` — todas traduzidas campo a
+  campo no `ExecutionRequest` da API `execute` (as de renderização, `--silent`/
+  `--no-color`, ficam só no renderer da CLI).
+- **API de execução única (adendo v2):** o parser reconhece o modificador
+  `stdout` em todos os cabeçalhos de relatório (posição única: após o nome,
+  antes das chaves; duplicata ou posição inválida = erro de sintaxe) e o core
+  expõe `execute(request)`, **ponto único de entrada** para todas as chamadas
+  de linha de comando: roda o pipeline interno e devolve o envelope JSON —
+  `ok`, `exitCode` (dado), `options` (eco normalizado), `messages`
+  (estruturadas) e `results` com **apenas as seções pedidas** (`check`,
+  `listReports`, `reports`, `freeze`, `sheet`, `man`, `help`, `version`). A
+  seção `reports` carrega o contrato v1 (`stdout`/`formats`/`errors` por
+  relatório) e um campo `outputDir` presente **somente** quando o parâmetro
+  foi passado. O que era trabalho do core chega processado: dynamic
+  attributes (pipeline 18.19) aplicados, e-mail dos sheets como texto, freeze
+  como conteúdo. A CLI só renderiza: `stdout: true` ⇒ imprimir no terminal
+  todos os formatos com delimitador `--- <name> [<format>] ---`; `stdout:
+  false` ⇒ gravar `{name}.{ext}` sanitizado no `outputDir` ecoado. Arquivos
+  `.tjp` sem `stdout` continuam com comportamento idêntico ao anterior
+  (gravação em arquivo).
 - **Complementos pós-`tj3` (decisão 2026-11-03 — §5.4):**
   - `wz man` — gerador de referência de sintaxe/keywords/manual, consumindo o
     **`doc-core` entregue na Fase 22** (`SyntaxReference`,
@@ -107,11 +137,16 @@ Ao final desta fase:
 | Parsing, scheduling, relatórios, mensagens, árvore de propriedades | `@vanaware/syntaxmesh` (core) — **já feito (Fases 2–14)** |
 | Ler arquivo `.tjp`/`.tji` do disco, escrever saídas, argv, exit | `packages/cli/src/io.ts` |
 | Definir flags, ajudar, cores, tabela de opções | `packages/cli` (Cliffy) |
-| Decidir o que/quando executar (pipeline tj3) | `packages/cli/src/cli.ts` chamando a fachada `TaskJuggler` |
+| Decidir o que/quando executar (pipeline tj3, §5.1) | `@vanaware/syntaxmesh` (core) — `execute()` roda o fluxo e devolve o envelope (adendo v2 §3) |
+| Renderizar relatórios/seções e devolver conteúdos como dados do envelope | `@vanaware/syntaxmesh` (core) — seções `results.*` (§5.5/§6) |
+| Traduzir argv → `ExecutionRequest` e despachar o envelope (terminal vs arquivo, delimitador, nome, sanitização, política de erro, `exit`) | `packages/cli` (`options.ts` + `output-policy.ts`, adendo §4) |
 
-- O core **não** importa `node:fs`, `Deno.readTextFile` nem `process`. Conteúdo
-  de arquivo entra por parâmetro/callback; conteúdo de relatório sai por
-  retorno/`FileSink`.
+- O core **não** importa `node:fs`, `Deno.readTextFile` nem `process`, e **não
+  imprime nem grava nada**: conteúdo de arquivo entra por provedor injetado;
+  todo resultado sai como **envelope** de `execute` — conteúdos de relatório na
+  seção `results.reports` (`ReportsJson`), mensagens/`exitCode`/eco como dados
+  (adendo §3.4). Toda decisão de execução da intenção `stdout` é do consumidor
+  — na v1, a CLI.
 - Se aparecer alguma lógica de linguagem na CLI → **pare**: ela pertence ao core
   (ou é bug do core).
 
@@ -204,40 +239,48 @@ export function exit(code = 0): never {
 syntaxmesh <arquivo.tjp> [opções]
 ```
 
-Comportamento padrão (fiel a `apps/Tj3.rb: main()`):
+Comportamento padrão (fiel a `apps/Tj3.rb: main()`, agora **portada para dentro
+do core** pela API `execute`):
 
-1. Lê o arquivo e resolve `include`/`.tji` (leitura via `io.readText`,
-   caminhos relativos ao arquivo que inclui — como `FileInstance` no Ruby).
-2. `TaskJuggler.parse()` → `schedule()` → gera **todos os relatórios
-   declarados**, a menos que `--no-reports`/`--check-syntax`.
-3. Não gera relatórios se houve erros (§5.2), a menos de `--force-reports`.
-4. Imprime resumo do projeto, mensagens do `MessageHandler` e progresso
-   (suprimíveis com `--silent`).
+1. A CLI traduz argv → `ExecutionRequest` e chama `core.execute(request)` uma
+   única vez; o core lê o arquivo via provedor injetado (`io.readText`) e
+   resolve `include`/`.tji` com caminhos relativos ao arquivo que inclui —
+   como `FileInstance` no Ruby.
+2. O core roda internamente `parse()` → `schedule()` → renderização de **todos
+   os relatórios declarados**, preenche as seções pedidas do envelope e a CLI
+   aplica a política de saída (§5.5), a menos que `--no-reports`/
+   `--check-syntax`.
+3. O core não inclui relatórios gerados se houve erros (gate do §5.2 no
+   envelope), a menos de `--force-reports`.
+4. A CLI imprime resumo do projeto e as `messages` do envelope (cores/
+   supressão a critério do renderer — `--silent`/`--no-color` não entram no
+   request) e sai com `exit(result.exitCode)`.
 
 ### 5.2 Mapa de opções v1 (fonte: `man/tj3.1` + `lib/taskjuggler/apps/Tj3.rb`)
 
 | Flag | Efeito no tj3 | Implementação SyntaxMesh |
 |---|---|---|
-| `<file.tjp>` (posicional) | master file | `io.readText` → `TaskJuggler.parse()` |
-| `--config <FILE>` | YAML de configuração | ler YAML via core (`Tj3Config`/`AppConfig` já portados em parte); validar |
-| `--silent` | suprime info/progresso | `MessageHandler` em modo quiet |
-| `--no-color` | sem ANSI | desliga color do Cliffy ANSI |
-| `--abort-on-warnings` | warning trata como erro | pós-parse: `warnings > 0` ⇒ exit 1 |
-| `--check-syntax` | só parseia (exit 0 se OK) | `parse()` e para; não agenda |
-| `--list-reports <RE>` | lista relatórios (regex) | `TaskJuggler.listReports(re, regExpMode)` |
-| `--no-reports` | agenda, não gera | pula `generateReports` |
-| `--report <R> <PID>` / `--reports <RE> <PID>` | gera específicos/regex | `generateReport(id, false/true)` |
-| `--output-dir <DIR>` | prefixo de saída | `generateReports(outputDir)` |
-| `--force-reports` | gera apesar de erros | pula o gate de erros |
-| `--warn-ts-deltas` | warnings de time sheet | `tj.warnTsDeltas = true` |
-| `--add-trace` | habilita trace reports | `tj.generateTraces = true` |
-| `--version`, `--help` | metadados/usagem | `AppConfig` + Cliffy embute |
+| `<file.tjp>` (posicional) | master file | `request.file`; o core lê via provedor injetado |
+| `--config <FILE>` | YAML de configuração | `request.configContent` (a CLI lê o YAML via `io.readText`; core valida/aplica — `Tj3Config`/`AppConfig` já portados em parte) |
+| `--silent` | suprime info/progresso | **renderer-only** (não entra no request); render quiet das `messages` |
+| `--no-color` | sem ANSI | **renderer-only**; desliga color do Cliffy ANSI |
+| `--abort-on-warnings` | warning trata como erro | `request.abortOnWarnings`; core computa `exitCode` 1 no envelope |
+| `--check-syntax` | só parseia (exit 0 se OK) | `request.checkSyntax` ⇒ seção `results.check` (sem agenda) |
+| `--list-reports <RE>` | lista relatórios (regex) | `request.listReports` ⇒ seção `results.listReports` (sem agenda) |
+| `--no-reports` | agenda, não gera | `request.noReports`; core omite a seção `reports` |
+| `--report <R> <PID>` / `--reports <RE> <PID>` | gera específicos/regex | `request.report` + `reportsIsRegex`; seção `reports` já vem filtrada (§5.5 ponto 4) |
+| `--report -A "<attrs>"` (§5.4) | atributos dinâmicos | `request.dynamicAttributes` cru como string; **o core aplica o pipeline 18.19 interno** antes de renderizar |
+| `--output-dir <DIR>` | prefixo de saída | `request.outputDir`; ecoado como campo `outputDir` da seção `reports` (§5.5) |
+| `--force-reports` | gera apesar de erros | `request.forceReports`; core dispensa o gate de erros no envelope |
+| `--warn-ts-deltas` | warnings de time sheet | `request.warnTsDeltas` |
+| `--add-trace` | habilita trace reports | `request.addTrace` |
+| `--version`, `--help` | metadados/usagem | `request.version`/`help` ⇒ seções `version`/`help` (dados estruturados); Cliffy mantém a ajuda humana de argv |
 
 **Adiados conscientemente (com âncora registrada):**
 
 | Flag | Motivo | Âncora |
 |---|---|---|
-| `--freeze`, `--freeze-by-task`, `--freezedate` | reescreve master file (status sheets) | **Fase 24** (reancorado 2026-11-03; antes: Fase 19). Núcleo `TaskJuggler.freeze` no core; escrita via `io.writeText` (subfase 24.9) |
+| `--freeze`, `--freeze-by-task`, `--freezedate` | reescreve master file (status sheets) | **Fase 24** (reancorado 2026-11-03; antes: Fase 19). Núcleo `TaskJuggler.freeze` no core; `execute` devolve `results.freeze.contents`; escrita via `io.writeText` (subfase 24.9) |
 | `--check-time-sheet`, `--check-status-sheet` | sheets ainda não portadas | Núcleo: **Fase 18** (já ancorado no core); empacotamento CLI: **Fase 24** (§5.4) |
 | `--debug`, `--debuglevel`, `--debugmodules` | hook de debug Ruby | descartado (sem equivalente no port; depurar via testes/`--add-trace`) |
 
@@ -248,10 +291,10 @@ Comportamento padrão (fiel a `apps/Tj3.rb: main()`):
 1  → erro de parse, erro de relatório, ou warnings com --abort-on-warnings
 ```
 
-Mapear diretamente os retornos da fachada (`parse()`, `schedule()`,
-`generateReports()`, `generateReport()`, `errors > 0`), como no Ruby. Cliffy
-cuida de `--help`/`--version` (exit 0) e de erro de flag desconhecida (exit 1
-com mensagem própria).
+O **core computa `exitCode`** dentro do envelope com essa matriz (mesma lógica
+de retornos/`errors > 0` do Ruby); a CLI apenas chama `io.exit(result.exitCode)`
+— nenhum `exit()` nasce no core. Cliffy cuida de erro de flag desconhecida
+(exit 1 com mensagem própria), caso em que nem há request.
 
 ### 5.4 Complementos pós-`tj3` (decisão 2026-11-03 — varredura `docs/syntaxmesh/xray.md`)
 
@@ -291,29 +334,156 @@ divergência de documentação, não de comportamento.
 > (relatórios embutidos no editor) e pela PWA (Fase 20) — registrar a rejeição
 > explícita no plano canônico (xray §3.1).
 
+### 5.5 API de execução (`execute` → envelope JSON) e modificador `stdout` (adendo v2)
+
+Especificação completa em [`fase-24-cli-adendo.md`](./fase-24-cli-adendo.md).
+Resumo vinculante:
+
+- **DSL:** `stdout` é um modificador booleano opcional posicionado **após o
+  nome do relatório e antes da abertura de chaves** (`taskreport "Tarefas"
+  stdout { ... }`). Ausência ⇒ `false`. Aplica-se a **todos** os tipos de
+  relatório, inclusive os que têm nome de arquivo como primeiro parâmetro
+  (`export`, `timesheetreport`, `statussheetreport`). É *intenção*, não ação:
+  a presença de `stdout` não altera a validação do relatório (múltiplos
+  formatos continuam válidos) e `.tjp` sem `stdout` comporta-se exatamente
+  como antes.
+- **Core:** `execute(request)` é o **ponto único de entrada** das chamadas de
+  linha de comando. Devolve o envelope — `ok`, `exitCode` (dado), `options`
+  (eco normalizado com defaults), `messages` estruturadas (`severity`, `id`,
+  `text`, `file`, `line`) e `results` com **apenas as seções pedidas**:
+  `check`, `listReports`, `reports`, `freeze`, `sheet`, `man`, `help`,
+  `version`. A seção `reports` tem o contrato v1 (`reports[]` na ordem de
+  declaração, `name` único com validação de duplicata, `stdout`, `formats[]`
+  `{ format, content }` como string, `errors[]` por relatório) + campo
+  `outputDir` **presente só quando passado no request**. O que era trabalho do
+  core chega processado (dynamic attributes, e-mail-texto dos sheets, conteúdo
+  do freeze). O core **não** acessa `fs`/`process.stdout`, não lê argv, não
+  chama `exit()`, não sanitiza nomes, não decide destino (adendo §3.5).
+- **CLI (política, adendo §4):** traduz argv → request, faz **uma** chamada e
+  despacha as seções — para cada report/format da seção `reports`:
+  `stdout: true` ⇒ imprime no terminal **todos** os formatos na ordem
+  declarada, com delimitador `--- <name> [<format>] ---` (nunca misturar
+  relatórios sem delimitador); `stdout: false` ⇒ grava `{name}.{ext}` com o
+  nome sanitizado no `outputDir` ecoado, sobrescrevendo por padrão. Seções
+  `freeze`/`sheet` viram escritas em disco (`io.writeText`, `outbox/*.eml`),
+  `check`/`listReports`/`help`/`version` viram impressão estruturada.
+  `report.errors` não-vazio ⇒ reportar com clareza; `ok: false` ⇒ reportar
+  falha global e não prosseguir com saída parcial (salvo configuração
+  explícita); no fim, `exit(result.exitCode)`. A política abortar/continuar
+  fica documentada no README da CLI (24.6.5).
+
+**Pontos de projeto (decididos aqui, para implementação fiel):**
+
+1. **Extensão de arquivo:** `{name}.{ext}` onde `ext` espelha a tabela de
+   sufixos que o core já calcula em `Report#generate*`/`outputFileName`
+   (`csv`→`csv`, `html`→`html`, `markdown`→`md`, `iCal`→`ics`,
+   `mspxml`/`niku`→`xml`, `tjp`→`tjp`/`tji` por `definitions`, `json`→`json`,
+   `ctags`→sem sufixo). Nos casos do adendo (`csv`, `html`, `txt`)
+   `ext === format`; a tabela existe justamente para não divergir do nome
+   lógico que o core já produz. Identificador de formato desconhecido/ não
+   suportado (ex.: `txt` não está no dispatch de `Report#generate` hoje) vira
+   entrada em `reports[].errors`, não throw da CLI.
+2. **Conteúdo por formato:** hoje `Report#generate()` sobrescreve `this.output`
+   a cada formato do loop (ADR 027 — nada é gravado). A coleta
+   `outputs: Map<format, string>` acontece num **único ponto** no loop de
+   dispatch de `generate()`, com normalização do CSV (Array-de-Arrays → texto
+   `;`, como `CSVFile`) — não em cada `generateXXX` (24.2.14).
+3. **Erros por relatório:** o construtor da seção `reports` tira snapshot do
+   comprimento de `MessageHandlerInstance.instance.messages` antes/depois de
+   cada relatório e atribui o delta (tipos `error`/`fatal`) a
+   `reports[].errors`; exceções de geração (formato unknown,
+   `NotYetImplementedError` de sheets) também viram entradas ali. A semântica
+   global de `errors`/`exitCode` (§5.3) permanece mandando — `errors[]` é por
+   relatório, para o consumidor decidir.
+4. **Filtro seletivo:** `--report/--reports` são campos do request
+   (`report`/`reportsIsRegex`); o construtor da seção aceita seleção interna,
+   mas **sem** seleção o contrato é exatamente o do adendo. `--force-reports`
+   continua gate do pipeline do core, dispensável pelo request.
+5. **Assets auxiliares:** o envelope transporta só o conteúdo de cada
+   relatório; a cópia de `css/`, `scripts/` (`wz_tooltip.js`) e `icons/`
+   exigida pelo HTML não-`selfcontained` é responsabilidade da política da CLI
+   (o core `copyAuxiliaryFiles` é no-op — ADR 027). Tarefa: 24.5.16.
+6. **Opções de renderização ficam fora do request:** `--silent`/`--no-color`
+   são do renderer da CLI; o envelope devolve `messages` estruturadas e o
+   consumidor decide cor/verbosidade. Estado de opções não se retém na CLI: o
+   eco `options` é a fonte.
+7. **`exitCode` como dado:** o core calcula a matriz do §5.3 no envelope; nenhum
+   `exit()`/`Deno.exit`/`process.exit` no core — precedente fiel já usado pelos
+   apps de sheet da F18 (`run()` devolve o código, não executa).
+8. **`help`/`version` estruturados:** a especificação de opções de execução
+   (`OptionSpec[]`) vive no core e alimenta a seção `help` **e** a definição
+   Cliffy (fonte única, sem duplicação); `version` vem de
+   `AppConfig`/`metadata.json`. A ajuda humana de argv (flag inválida) continua
+   sendo do Cliffy, sem request ao core.
+
 ---
 
-## 6. Integração com o core (desancoramento do `TaskJuggler`)
+## 6. Integração com o core (desancoramento + API `execute` → envelope JSON)
 
 - Mudança no **core** (única alteração de código fora do pacote CLI):
   - `TaskJuggler.parse(files, fileReader)` e `parseContent(content)` recebem um
     **provedor de conteúdo** injetado (assinatura:
       `(path: string) => Promise<string> | string`), substituindo os throws
-      `NotYetImplementedError("19", ...)`. A resolução de `include` relativa ao
+      `NotYetImplementedError("24", ...)`. A resolução de `include` relativa ao
       arquivo-pai deve seguir `TaskJuggler.rb` (mesma semântica de
       `FileInstance`/`Dir.getwd`).
   - Os chamadores futuros (PWA/Fase 19–20) injetarão seu próprio provedor
     (storage/workerdb); a CLI injeta `io.readText`. **Nada de FS no core.**
-  - Confirmar/ajustar o pipeline de escrita de relatórios: `generateReports`
-    deve entregar os conteúdos gerados por um **`FileSink` injetado**
-      `(path, contents) => Promise<void>` (se hoje já há mecanismo equivalente,
-    usá-lo; não inventar outro). Verificar em
-    `packages/core/src/reports/` antes de codar.
-  - Registrar em `CURRENT.md` que as âncoras 19 de `parse`/`parseContent`/sink
-    de relatórios foram **substituídas por injeção** nesta fase, mantendo a
-    âncora 19 apenas para o caminho PWA/storage.
-- A CLI mantém-se **100% burro**: monta a fachada, define flags, chama métodos
-  na ordem do §5.1 e repassa mensagens/saída.
+  - **Fachada `execute` (adendo v2 §3) — ponto único de entrada:** novo método
+    `TaskJuggler.execute(request: ExecutionRequest): Promise<ExecutionResult>`.
+    Ele **orquestra por dentro** o que antes a CLI coordenava manualmente
+    (provedor → `parse`/`parseContent` → gates → `schedule` → `checkReports` →
+    render/operadores pontuais `list`/`freeze`/`man`/sheets) e monta o
+    **envelope**: `ok`, `exitCode` (matriz do §5.3, como dado), `options` (eco
+    normalizado do request), `messages` (snapshot estruturado do
+    `MessageHandlerInstance`: `severity`/`id`/`text`/`file`/`line`) e `results`
+    com **apenas as seções pedidas**. Os métodos passo-a-passo
+    (`parse`/`schedule`/`generateReports`/`renderReports`/`freeze`)
+    permanecem como blocos internos reutilizáveis — a fachada UI/PWA (Fase 20)
+    continua orquestrando por eles; `execute` é o atalho canônico dos
+    consumidores de linha de comando.
+  - **Contrato de saída (adendo `stdout`), no lugar do antigo `FileSink`:**
+    - **Parser:** keyword `stdout` registrado no lexer/i18n (extensão
+      SyntaxMesh sem equivalente Ruby — nas tabelas pt-BR/es o keyword fica
+      invariado, mesmo padrão de `template`) e regra opcional
+      `reportStdoutFlag` (`p.optional()`, como `optionalID`) acrescentada ao
+      final de **todos** os `*ReportHeader` (inclusive aliases `md*`, `export`,
+      `rdo`/`breakdown` e cabeçalhos de timesheet/statussheet). A action faz
+      `rep.set("stdout", true)`; ausência ⇒ property não definida, lida como
+      `false`. Posição inválida (depois das chaves) e duplicata não casam
+      transição no FSM ⇒ erro de sintaxe padrão do parser (adendo §2.3).
+    - **Modelo:** `Report` lê a flag na renderização; **nome único** é
+      validado no registro dos relatórios (duplicata ⇒ erro de validação,
+      adendo §3.3).
+    - **Seção `results.reports` (`renderReports`):** novo módulo
+      `src/reports/reports-json.ts` com
+      `renderReports(project, selection?): ReportsJson` (tipos exportados no
+      `mod.ts`): percorre `project.reports` em ordem de declaração, reaproveita
+      o pipeline existente (`Report#generate` por formato + `outputFileName`),
+      coleta `formats[]` com conteúdo string (normalização CSV), captura
+      `errors[]` por delta do `MessageHandlerInstance` e define `ok`. Este
+      módulo é **o construtor interno da seção `reports`** do envelope (não o
+      ponto de entrada público); é implementado **sobre** o mecanismo que já
+      existe (ADR 027: `output` em memória, nada de disco) — não criar segundo
+      pipeline de render.
+    - **Outras seções:** `check` (parse sem agenda), `listReports`, `freeze`
+      (`{ fileName, contents }`, escrita é do consumidor), `sheet` (apps da
+      F18 devolvem `emailText`/anexos como dados via `appOptions.rawMessage`),
+      `man` (doc-core da F22), `help` (`OptionSpec[]`), `version`
+      (`AppConfig`/`metadata.json`). Cada seção só é preenchida quando o
+      request a pede (adendo §3.4).
+    - **Pureza:** nenhum acesso a `fs`/`process`/stdout real no core, nenhum
+      `exit()`, nenhum argv (adendo §5.2) — auditado por teste dedicado na
+      suíte do core.
+  - Registrar em `CURRENT.md` que as âncoras 19/24 de `parse`/`parseContent`
+    foram **substituídas por injeção** nesta fase, que a fachada `execute`
+    passou a orquestrar o pipeline interno devolvendo o envelope, que a
+    intenção `stdout` é consumida apenas pela política da CLI, e que o caminho
+    PWA/storage mantém a âncora 19.
+- A CLI mantém-se **100% burra**: monta o `ExecutionRequest`, faz **uma**
+  chamada `core.execute`, despacha as seções do envelope pela política de
+  §5.5 e sai com `exit(result.exitCode)` — não orquestra o pipeline nem retém
+  estado das opções (o eco `options` é a fonte).
 
 ---
 
@@ -325,14 +495,19 @@ packages/cli/
 │                            # imports: @cliffy/command (jsr), @vanaware/syntaxmesh (workspace)
 │                            # tasks: run / check / test / compile
 ├── src/
-│   ├── cli.ts               # entry: defineCommand(...) .parse(args) + pipeline §5.1
-│   ├── options.ts           # mapa flag → Tj3Options (testável isolado do Cliffy)
+│   ├── cli.ts               # entry: argv→ExecutionRequest + uma core.execute + despacho
+│   │                        #   das seções do envelope + exit(result.exitCode) (§5.1)
+│   ├── options.ts           # mapa flag → ExecutionRequest (testável isolado do Cliffy)
 │   ├── io.ts                # camada de compatibilidade (§4.2) — único lugar com node:*
+│   ├── output-policy.ts     # envelope → despacho de seções (§5.5): reports → terminal/
+│   │                        #   arquivo (delimitadores, {name}.{ext}, sanitização,
+│   │                        #   política ok/errors); freeze/sheet/man/check/help/version
 │   ├── reporter.ts          # MessageHandler → stdout (cores, silent, contagens)
 │   └── summary.ts           # resumo do projeto em terminal (task/resource/finanças)
 ├── tests/
 │   ├── io_test.ts
 │   ├── options_test.ts
+│   ├── output_policy_test.ts # imprime com delimitador; grava sanitizado; mistos
 │   ├── exit_test.ts         # matriz de exit codes (§5.3)
 │   ├── cli.integration_test.ts   # fixtures MWEs + TestSuite (end-to-end)
 │   └── golden_cli_test.ts        # comparação com saída do tj3 Ruby quando possível
@@ -373,6 +548,11 @@ o escopo v1 monolíngue adotado também na Fase 22.
 | `args` injetável | unit | parse de flags sem processo real |
 | Mapa flag→opção (§5.2) | unit | cada flag v1 mapeia; flags adiadas viram erro claro |
 | Exit codes (§5.3) | unit/int | matriz 0/1 incluindo abort-on-warnings e force-reports |
+| Parser `stdout` (adendo §2) | unit BDD no parser | aceito em todos os cabeçalhos; erro de posição; duplicata rejeitada; `.tjp` sem `stdout` inalterado (compatibilidade) |
+| Envelope `execute` (adendo §3) | unit no core | eco de `options` com defaults; só popula a seção pedida; `messages` estruturadas (`severity`/`id`/`text`/`file`/`line`); `exitCode` conforme matriz §5.3; `dynamicAttributes` aplicados por dentro |
+| Seção `reports` (`ReportsJson`, adendo §3) | unit no core | ordem de declaração, flag `stdout` refletida, `formats[]` completos com conteúdo string, `errors[]` por relatório, `outputDir` presente só quando passado, `ok` |
+| Pureza do core (adendo §5.2) | teste/audit estático | nenhum `node:fs`/`Deno.*File`/`process`/`exit`/argv além do já permitido no core |
+| Política de saída da CLI (adendo §4) | unit + integração | despacho de seções; delimitador por report/format; arquivo `{name}.{ext}` sanitizado; múltiplos formatos; fixture misto `stdout`/não-`stdout`; `exit(result.exitCode)` |
 | Pipeline completo | integração: `mwe001–009` + `TestSuite/Syntax/Correct` (subset) e `Syntax/Errors` | sucesso/erro esperados; relatórios escritos em `mktemp()` |
 | Fidelidade com tj3 Ruby | golden: comparar stdout/exit com `tj3` real nos mesmos fixtures (há harness em `scripts/golden/`) | divergência só nas normalizações já previstas (versão, paths, float 1e-6) |
 | Multi-runtime | smoke: `bun run` e `node dist/cli.js` em 1 fixture | exit 0 e mesmos artefatos |
@@ -394,13 +574,26 @@ for seguida; a Fase 23 cria o 033 antes):
   camada única `io.ts` com `node:fs/promises` (sem ramificação de FS); args com
   ramificação mínima por testabilidade; permissões Deno explícitas na task;
   desancoramento de `TaskJuggler.parse/parseContent` via provedor de conteúdo
-  injetado + `FileSink` para relatórios.
+  injetado; **API de execução única `core.execute(request)` devolvendo o
+  envelope JSON** (eco `options`, `exitCode` como dado, `messages`
+  estruturadas, seções `results.*`; a seção `reports` reusa o construtor
+  `ReportsJson` do modificador `stdout` na DSL) — core puro (sem FS/terminal/
+  política/`exit`/argv), CLI única decisora (terminal com delimitador vs
+  arquivo `{name}.{ext}` sanitizado).
 - **Alternativas rejeitadas:** `Deno.args`/`Deno.readTextFile` puros (mata
   Bun/Node); `@std/cli` sozinho (perde UX de ajuda/tabelas do Cliffy); driver
   de abstração de storage (overkill — problema é runtime, não storage; ver
-  ADR 030).
-- **Consequências:** core ganha injeção de I/O na fachada (desejável p/ Fase 19/20);
-  `--debug*` fica fora da v1; freeze (24.9) e check/sheets (24.10) entram na v2
+  ADR 030); `FileSink` injetado em `generateReports` (política de saída
+  vazando para o core — **substituído pelo adendo `stdout`**); **orquestrar o
+  pipeline na CLI com `renderReports` como entrada pública (desenho v1)** —
+  **substituído pela fachada única `execute`** (adendo v2), que move a
+  orquestração para o core e devolve todas as opções e resultados ecoados no
+  envelope, registro explícito nesta ADR.
+- **Consequências:** core ganha injeção de I/O na fachada e a API `execute` +
+  envelope (desejável p/ Fase 19/20 e para os consumidores da Fase 22 — MCP/
+  editor —, que leem o mesmo JSON); a CLI deixa de orquestrar o pipeline e passa
+  a ser transporte+renderização; `--debug*` fica fora da v1; freeze (24.9) e
+  check/sheets (24.10) entram na v2
   da CLI, dependentes das Fases 18/22; `node:*` aparece no
   workspace pela primeira vez, confinado a `io.ts`.
 
@@ -427,6 +620,15 @@ for seguida; a Fase 23 cria o 033 antes):
 6. Mensagens do terminal vêm do `MessageHandlerInstance` (core), formatados em
    `reporter.ts` — não reescrever mensagens na CLI.
 7. Cores/ANSI via utilitários do Cliffy; respeitar `--no-color` e não-TTY.
+8. `stdout` é **intenção no `.tjp`**, decidida pela CLI: o core só popula a
+   seção `reports` do envelope (adendo §3.4). Qualquer `console.log`/escrita
+   nascendo no core → pare.
+9. A política de §5.5 vive **inteira** em `output-policy.ts` (delimitadores,
+   tabela de extensões, sanitização, sobrescrita, abortar/continuar) — flags e
+   mensagens não espalham essa decisão pelo pacote.
+10. A **orquestração do pipeline é do core** (`execute`): a CLI monta o request,
+    faz uma chamada e consome o envelope — não encadeia `parse`→`schedule`→
+    `render` nem retém estado de opções (o eco `options` é a fonte).
 
 ### Anti-padrões
 
@@ -435,8 +637,16 @@ for seguida; a Fase 23 cria o 033 antes):
 - ❌ Introduzir `node_modules`/`npm install` — dependências via `jsr:`/`npm:`.
 - ❌ Usar `as any` (padrão do repo; usar interface de global tipada, §4.2).
 - ❌ Criar segunda camada de abstração de FS (além do `io.ts`).
-- ❌ Emitir texto de relatório direto do CLI sem passar pelo pipeline de
-  `generateReports` do core.
+- ❌ Emitir texto de relatório direto do CLI sem passar pela seção `reports`
+  do envelope de `execute` (o `generateReports` legado é o caminho da UI, não
+  da política da CLI).
+- ❌ Orquestrar o pipeline (`parse`→`schedule`→`render`) na CLI — isso é
+  trabalho do `core.execute`; a CLI só monta o request e consome o envelope.
+- ❌ Decidir destino de relatório no core (imprimir, gravar, sanitizar) — o
+  core produz o envelope (seção `reports` = `ReportsJson`); a decisão é do
+  consumidor (adendo §3.4).
+- ❌ Imprimir relatórios/formatos no terminal sem o delimitador
+  `--- <name> [<format>] ---`, ou gravar arquivo com nome não sanitizado.
 - ❌ Rodar relatórios em paralelo simulando scheduler (browser-core é single
   threaded; `maxCpuCores` fica 1).
 
@@ -451,10 +661,10 @@ no padrão dos blocos das fases anteriores:
 |---|---|---|---|
 | 24.0 | ADR da fase (0NN) + reposicionamento | `decisoes/0NN-cli-multiruntime.md` + linha no README + confirmação da ordem em `plano.md`/`CURRENT.md` (23 → 24 → 21¹) | — |
 | 24.1 | Scaffold + `io.ts` | `packages/cli/` no workspace; `io.ts` (§4.2) com testes unitários; task `cli` | 24.0 |
-| 24.2 | Injeção de I/O no core | `TaskJuggler.parse/parseContent` desancorados via provedor injetado; `FileSink` p/ relatórios; testes no core | 24.1 |
-| 24.3 | Comando + flags | `cli.ts` com Cliffy; `options.ts` mapeando §5.2; exit codes §5.3 | 24.2 |
+| 24.2 | Injeção de I/O + API `stdout`/`execute` (envelope) no core | `parse/parseContent` desancorados via provedor injetado; parser do modificador `stdout` (+ keyword i18n e nome único); fachada `execute(request)` montando o envelope (`ok`/`exitCode`/`options`/`messages`/`results.*`) com `renderReports` como construtor da seção `reports`; testes de contrato, seções e pureza | 24.1 |
+| 24.3 | Comando + flags + consumo do envelope | `cli.ts` com Cliffy; `options.ts` mapeando §5.2 para o `ExecutionRequest`; **uma** chamada `core.execute` + despacho de seções; exit via `exit(result.exitCode)` §5.3 | 24.2 |
 | 24.4 | Saída no terminal | `reporter.ts` (MessageHandler→stdout, cores, silent) + `summary.ts` | 24.3 |
-| 24.5 | Relatórios de ponta a ponta | geração em `--output-dir`, `--report/--reports/--list-reports`, `--force-reports`, `--no-reports`; integração em MWEs | 24.4 |
+| 24.5 | Relatórios ponta a ponta + política de saída | `output-policy.ts` (terminal com delimitador vs `{name}.{ext}` sanitizado em `--output-dir`), `--report/--reports/--list-reports`, `--force-reports`, `--no-reports`; integração com fixtures mistos `stdout`/não-`stdout` e MWEs | 24.4 |
 | 24.6 | Multi-runtime + binário | smoke Bun/Node; `deno compile`; bundle node via `scripts/esbuild.ts`; README por runtime | 24.5 |
 | 24.7 | Fidelidade tj3 (golden CLI) | comparação stdout/exit/artefatos vs `tj3` Ruby no subset de fixtures; divergências documentadas (regra zero) | 24.5 |
 | 24.8 | Verificação final | `check-all` + `test` + cobertura ≥ 80% + ADR commitado + `CURRENT.md`/`plano.md` atualizados | todas |
@@ -467,8 +677,10 @@ de 24.8, quando F22 (`doc-core`) e F18 (sheets/dynamicAttributes) estiverem
 verdes.
 
 Commits por subfase: `feat(cli): scaffold+io`, `feat(core): file provider`,
-`feat(cli): options`, `feat(cli): reporter`, `feat(cli): reports-pipeline`,
-`chore(cli): multi-runtime`, `test(cli): golden-tj3`, `docs(cli): ADR da fase`.
+`feat(core): stdout+reports-json`, `feat(core): execute-envelope`,
+`feat(cli): options+execute-call`, `feat(cli): reporter`,
+`feat(cli): reports-pipeline+output-policy`, `chore(cli): multi-runtime`,
+`test(cli): golden-tj3`, `docs(cli): ADR da fase`.
 
 ---
 
@@ -480,8 +692,13 @@ Commits por subfase: `feat(cli): scaffold+io`, `feat(core): file provider`,
   - `docs/taskjuggler/man/tj3.1` (lista completa de flags).
   - `docs/taskjuggler/lib/taskjuggler/TaskJuggler.rb` (`parse/parseFile` e
     semântica de `FileInstance`/include) — portar fielmente para a fachada já
-    existente em `packages/core/src/taskjuggler.ts`.
+    existente em `packages/core/src/taskjuggler.ts`; a fachada `execute` agrega
+    o fluxo do `apps/Tj3.rb: main()` no core (adendo v2 §3).
 - **Docs internos:**
+  - [`fase-24-cli-adendo.md`](./fase-24-cli-adendo.md) — especificação
+    vinculante da API `execute` (envelope JSON com seções), do modificador
+    `stdout`, do contrato `ReportsJson` (seção `reports`) e das
+    responsabilidades core/CLI (§5.5 deste plano).
   - `docs/syntaxmesh/09-regras-para-ia.md` (regra zero), ADRs 011 (port fiel),
     030 (pacotes), 006 (build pipeline), 007 (workspace), 008 (std/testing BDD).
   - `docs/syntaxmesh/fases/fase-22-vscode-extension.md` — compartilha o padrão

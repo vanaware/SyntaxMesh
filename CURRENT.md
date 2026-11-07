@@ -11,12 +11,19 @@ Reuna dicas e analise-as do arquivo: docs/syntaxmesh/cheat-sheet-ruby-ts.md
 
 Desenvolvimento atual (docs/syntaxmesh/fases/):
 
-- **Fase 23 — Template (Vento) ✅ CONCLUÍDA (2026-11-06)**: `fase-23-template.md`
-  (plano) + `fase-23-template-tarefas.md` (23.0–23.8) + ADR 033 + referência
-  normativa `docs/syntaxmesh/11-referencia-template.md`. Próxima da ordem oficial:
-  **Fase 24 (CLI)** — plano `fase-24-cli.md` + `fase-24-cli-tarefas.md`.
-  Única pendência da 23 é **23.7.7** (smoke `syntaxmesh template-fixture.tjp`),
-  que depende da própria CLI da F24.
+- **Fase 23 — Template (Vento) ✅ CONCLUÍDA (2026-11-06, fecho estendido 2026-11-07)**:
+  `fase-23-template.md` (plano) + `fase-23-template-tarefas.md` (23.0–23.10) +
+  ADR 033 + referência normativa `docs/syntaxmesh/11-referencia-template.md`.
+  Próxima da ordem oficial: **Fase 24 (CLI)** — plano `fase-24-cli.md` +
+  `fase-24-cli-tarefas.md`. Única pendência da 23 é **23.7.7** (smoke
+  `syntaxmesh template-fixture.tjp`), que depende da própria CLI da F24.
+  **23.9** corrigiu a colocação: `template` segue a condição da `macro` (prolog
+  ou nível de propriedades, **nunca** dentro do `{ }` do cabeçalho — regra do
+  Ruby em `TjpSyntaxRules.rb:3486`). **23.10** fixou listas como argumento e as
+  três formas de `{{ for }}` (fixture `tests/fixtures/templates/lists-for.tjp`
+  e suíte `tests/lexer/template-lists_test.ts`). **23.11** corrigiu o helper
+  `producedByMarkdown` do teste 14C.5.1 (lia `rti.richText` em vez de
+  `rti.richText.factory`; era a única falha pré-existente do `deno task tests`).
 
 - **Fase 10 Complemento** — `fase-10-complemento1.md` + `fase-10-complemento2.md` (especificações) → executar `fase-10-complemento-tarefas.md` (Blocos C0–C4, toca Fases 5/7/8.1/10) e os adendos "Adendo Fase 10 Complemento" nos `-tarefas.md` das Fases 13/14/16/18/19/20/21. **Adendo 2026-11-06 (PLANEJADA, não executada):** `fase-10-complemento3.md` — tipo `markdown` em `extend` (ADR 039); tarefas no **Bloco C5** (`fase-10-complemento-tarefas.md`) + **14C.19** (`fase-14-relatorios-complemento-tarefas.md`); inclui o fix fiel ao Ruby do tipo `richtext` em `extend` (C5.1). **✅ Executado (2026-11-06):** C5.1–C5.8 + 14C.19.1–14C.19.4 verdes (fixture `10c-extend-markdown.tjp`, testes `extend-markdown_test.ts`/`extend-markdown_14c_test.ts` + golden C5.8); ADR 039 aceita. Dois fixes de produção fora do plano, achados no round-trip C5.7: `MarkdownFactory` grava `inputText` no back-pointer do RTI; `tjp-export-re` usa os campos `id/name/version` do projeto como fallback.
 - Fase 11 (`fase-11-logica-queries-tarefas.md`), Fase 12 (`fase-12-richtext-tarefas.md`), Fase 13 (`fase-13-markdown-tarefas.md`), Fase 14 (`fase-14-relatorios-tarefas.md`, núcleo 14.0–14.24) e **Fase 14 Complemento** (`fase-14-relatorios-complemento.md` + `-tarefas.md`, Blocos C0–C18: materiais/RDO/breakdown nos relatórios, MspXml→MSPDI, markdown em reports, hide/rollup de material/picture, saída markdown `.md`, `defaultaccount`, `<Baseline>` do MSPDI, unit price por alocação/booking e auditoria G1.4, booking de estoque ±, unit price calculado por composição, keywords opcionais em booking + `booking charge` no material, turnover com precedência de preço, registro do comportamento de cenários e colunas de estoque `stockquantity`/`stockcost` nos conteúdos de material — absorve os adendos 14.25/14.26) — **todas concluídas**; **C0–C12 ✅** (2026-11-01) e **C13–C17 ✅** (2026-11-02, adendo extra §12) e **C18 ✅** (2026-11-02, pendência §13.7 — colunas de estoque `stockquantity`/`stockcost` + limpeza do órfão `ExtendedBooking` apagado, `ChargeBooking` como fonte única) na Fase 14 Complemento.

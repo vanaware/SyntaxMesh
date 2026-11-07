@@ -64,9 +64,7 @@ afterEach(() => {
 describe("template — contexto (23.6.1)", () => {
   it("parâmetros continuam disponíveis ao lado das globais", () => {
     const p = projectOf(
-      "{\n" +
-        '  template P [ resource {{ id }} "{{ nome }}@{{ project.name }}" ] (id, nome)\n' +
-        "}\n" +
+      'template P [ resource {{ id }} "{{ nome }}@{{ project.name }}" ] (id, nome)\n' +
         '${P id="r1" nome="Ana"}\n',
     );
     // `PROJECT_HEADER` declara `project prj "Test" "1.0"`.
@@ -75,9 +73,7 @@ describe("template — contexto (23.6.1)", () => {
 
   it("project expõe metadados somente leitura (id/name/version)", () => {
     const p = projectOf(
-      "{\n" +
-        '  template P [ resource {{ id }} "{{ project.id }}:{{ project.version }}" ] (id)\n' +
-        "}\n" +
+      'template P [ resource {{ id }} "{{ project.id }}:{{ project.version }}" ] (id)\n' +
         '${P id="r1"}\n',
     );
     assertEquals(p.resource("r1",)!.name, "prj:1.0",);
@@ -85,9 +81,7 @@ describe("template — contexto (23.6.1)", () => {
 
   it("ids() resolve o ID canônico e preserva um ID desconhecido", () => {
     const p = projectOf(
-      "{\n" +
-        "  template P [ resource {{ id }} \"{{ ids(origem) }}/{{ ids('nao.existe') }}\" ] (id, origem)\n" +
-        "}\n" +
+      "template P [ resource {{ id }} \"{{ ids(origem) }}/{{ ids('nao.existe') }}\" ] (id, origem)\n" +
         'resource base "Base"\n' +
         '${P id="r1" origem="base"}\n',
     );
@@ -98,10 +92,8 @@ describe("template — contexto (23.6.1)", () => {
 describe("template — expandTemplate (23.6.2)", () => {
   it("template renderiza template (exemplo WRAPPER do §4.4)", () => {
     const p = projectOf(
-      "{\n" +
-        '  template CARD [ task {{ id }} "{{ nome }}" ] (id, nome)\n' +
-        '  template WRAPPER [ {{ expandTemplate("CARD", { id: id, nome: nome }) }} ] (id, nome)\n' +
-        "}\n" +
+      'template CARD [ task {{ id }} "{{ nome }}" ] (id, nome)\n' +
+        'template WRAPPER [ {{ expandTemplate("CARD", { id: id, nome: nome }) }} ] (id, nome)\n' +
         '${WRAPPER id="t1" nome="Envolvido"}\n',
     );
     assertEquals(p.task("t1",)!.name, "Envolvido",);
@@ -109,10 +101,8 @@ describe("template — expandTemplate (23.6.2)", () => {
 
   it("o texto composto pode ser guardado com `set` antes de emitir", () => {
     const p = projectOf(
-      "{\n" +
-        '  template PERSON [ resource {{ id }} "{{ nome }}" ] (id, nome)\n' +
-        '  template TWO [ {{ set a = expandTemplate("PERSON", { id: id1, nome: n1 }) }}{{ set b = expandTemplate("PERSON", { id: id2, nome: n2 }) }}{{ a }}{{ b }} ] (id1, n1, id2, n2)\n' +
-        "}\n" +
+      'template PERSON [ resource {{ id }} "{{ nome }}" ] (id, nome)\n' +
+        'template TWO [ {{ set a = expandTemplate("PERSON", { id: id1, nome: n1 }) }}{{ set b = expandTemplate("PERSON", { id: id2, nome: n2 }) }}{{ a }}{{ b }} ] (id1, n1, id2, n2)\n' +
         '${TWO id1="r1" n1="Um" id2="r2" n2="Dois"}\n',
     );
     assertEquals(p.resource("r1",)!.name, "Um",);
@@ -121,9 +111,7 @@ describe("template — expandTemplate (23.6.2)", () => {
 
   it("expandTemplate de template inexistente reporta 'não definido'", () => {
     const out = parse(
-      "{\n" +
-        '  template W [ {{ expandTemplate("NOPE", {}) }} ]\n' +
-        "}\n" +
+      'template W [ {{ expandTemplate("NOPE", {}) }} ]\n' +
         "${W}\n",
     );
     assert(out.messageIds.includes("template_not_defined",),);
@@ -131,9 +119,7 @@ describe("template — expandTemplate (23.6.2)", () => {
 
   it("recursão via expandTemplate é detectada", () => {
     const out = parse(
-      "{\n" +
-        '  template R [ {{ expandTemplate("R", {}) }} ]\n' +
-        "}\n" +
+      'template R [ {{ expandTemplate("R", {}) }} ]\n' +
         "${R}\n",
     );
     const msg = MessageHandlerInstance.instance.messages.find((m,) =>
@@ -147,9 +133,7 @@ describe("template — expandTemplate (23.6.2)", () => {
 describe("template — expandMacro (23.6.3)", () => {
   it("macro explícita a partir de string", () => {
     const p = projectOf(
-      "{\n" +
-        '  template DEV [ task {{ id }} "d" { {{ expandMacro("ALLOCATE_TEAM") }} } ] (id)\n' +
-        "}\n" +
+      'template DEV [ task {{ id }} "d" { {{ expandMacro("ALLOCATE_TEAM") }} } ] (id)\n' +
         "macro ALLOCATE_TEAM [ allocate tux1, tux2 ]\n" +
         'resource tux1 "Tux 1"\n' +
         'resource tux2 "Tux 2"\n' +
@@ -160,9 +144,7 @@ describe("template — expandMacro (23.6.3)", () => {
 
   it("macro inexistente reporta undefined_macro", () => {
     const out = parse(
-      "{\n" +
-        '  template D [ {{ expandMacro("NAO_EXISTE") }} ]\n' +
-        "}\n" +
+      'template D [ {{ expandMacro("NAO_EXISTE") }} ]\n' +
         "${D}\n",
     );
     assert(out.messageIds.includes("undefined_macro",),);
@@ -172,13 +154,11 @@ describe("template — expandMacro (23.6.3)", () => {
 describe("template — expandTemplateList (23.6.4)", () => {
   it("renderiza o template para cada item da lista", () => {
     const p = projectOf(
-      "{\n" +
-        '  template LINE [ task {{ id }} "{{ id }}" ] (id)\n' +
-        "  template SUMMARY [\n" +
+      'template LINE [ task {{ id }} "{{ id }}" ] (id)\n' +
+        "template SUMMARY [\n" +
         '{{ for t of expandTemplateList("LINE", itens) }}{{ t }}\n' +
         "{{ /for }}\n" +
-        "  ] (itens)\n" +
-        "}\n" +
+        "] (itens)\n" +
         '${SUMMARY itens=["a", "b", "c"]}\n',
     );
     assertEquals(p.task("a",)!.name, "a",);
@@ -188,13 +168,11 @@ describe("template — expandTemplateList (23.6.4)", () => {
 
   it("itens-objeto alimentam os params por nome", () => {
     const p = projectOf(
-      "{\n" +
-        '  template LINE [ resource {{ id }} "{{ nome }}" ] (id, nome)\n' +
-        "  template SUMMARY [\n" +
+      'template LINE [ resource {{ id }} "{{ nome }}" ] (id, nome)\n' +
+        "template SUMMARY [\n" +
         '{{ for t of expandTemplateList("LINE", itens) }}{{ t }}\n' +
         "{{ /for }}\n" +
-        "  ] (itens)\n" +
-        "}\n" +
+        "] (itens)\n" +
         '${SUMMARY itens=[{ id: "r1", nome: "Um" }, { id: "r2", nome: "Dois" }]}\n',
     );
     assertEquals(p.resource("r1",)!.name, "Um",);
@@ -205,9 +183,7 @@ describe("template — expandTemplateList (23.6.4)", () => {
 describe("template — precedência e imutabilidade (23.6.5/23.6.6)", () => {
   it("parâmetro sobrescreve a global homônima e emite aviso", () => {
     const out = parse(
-      "{\n" +
-        '  template P [ resource {{ id }} "{{ ids }}" ] (id, ids)\n' +
-        "}\n" +
+      'template P [ resource {{ id }} "{{ ids }}" ] (id, ids)\n' +
         '${P id="r1" ids="sobrescrito"}\n',
     );
     const warn = MessageHandlerInstance.instance.messages.find((m,) =>
@@ -222,9 +198,7 @@ describe("template — precedência e imutabilidade (23.6.5/23.6.6)", () => {
 
   it("a view de project é congelada em runtime", () => {
     const p = projectOf(
-      "{\n" +
-        '  template P [ resource {{ id }} "{{ Object.isFrozen(project) }}" ] (id)\n' +
-        "}\n" +
+      'template P [ resource {{ id }} "{{ Object.isFrozen(project) }}" ] (id)\n' +
         '${P id="r1"}\n',
     );
     assertEquals(p.resource("r1",)!.name, "true",);
@@ -234,14 +208,12 @@ describe("template — precedência e imutabilidade (23.6.5/23.6.6)", () => {
 describe("template — exemplos canônicos (23.6.7/23.6.8)", () => {
   it("SUMMARY do §4.7 (project.name + for sobre expandTemplateList)", () => {
     const p = projectOf(
-      "{\n" +
-        '  template TASK_LINE [ task {{ id }} "Linha {{ id }}" ] (id)\n' +
-        "  template SUMMARY [\n" +
+      'template TASK_LINE [ task {{ id }} "Linha {{ id }}" ] (id)\n' +
+        "template SUMMARY [\n" +
         "# Projeto: {{ project.name }}\n" +
         '{{ for t of expandTemplateList("TASK_LINE", tarefas) }}{{ t }}\n' +
         "{{ /for }}\n" +
-        "  ] (tarefas)\n" +
-        "}\n" +
+        "] (tarefas)\n" +
         '${SUMMARY tarefas=["x1", "x2"]}\n',
     );
     assertEquals(p.task("x1",)!.name, "Linha x1",);
@@ -250,14 +222,12 @@ describe("template — exemplos canônicos (23.6.7/23.6.8)", () => {
 
   it("DEV_TASK do §4.4 (macro no corpo + params + render) de ponta a ponta", () => {
     const p = projectOf(
-      "{\n" +
-        "  template DEV_TASK [\n" +
-        '  task {{ id }} "{{ nome }}" {\n' +
-        "    effort {{ esforco }}\n" +
-        "    ${ALLOCATE_TEAM}\n" +
-        "  }\n" +
-        "] (id, nome, esforco)\n" +
+      "template DEV_TASK [\n" +
+        'task {{ id }} "{{ nome }}" {\n' +
+        "  effort {{ esforco }}\n" +
+        "  ${ALLOCATE_TEAM}\n" +
         "}\n" +
+        "] (id, nome, esforco)\n" +
         "macro ALLOCATE_TEAM [ allocate tux1, tux2, tux3 ]\n" +
         'resource tux1 "Tux 1"\n' +
         'resource tux2 "Tux 2"\n' +

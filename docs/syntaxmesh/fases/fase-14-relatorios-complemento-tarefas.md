@@ -394,6 +394,13 @@ corrigidos.
 > - `RTFReportLink` estático acrescenta `.html` ao **nome** do relatório:
 >   fixtures com `[[reportlink:]]` não podem nomear o relatório com `.html`
 >   (mesma semântica do Ruby).
+>
+> **Erro do helper de teste corrigido na Fase 23 (23.11, 2026-11-07):** o
+> helper `producedByMarkdown` de `markdown-report_14c_test.ts` comparava
+> `rti.richText instanceof MarkdownFactory`. O back-pointer do RTI **não** é a
+> fábrica: o pipeline markdown grava `{ factory, inputText }` (shim do C5.7) e o
+> richtext grava a instância de `RichText`. O produto sempre esteve correto; o
+> helper passou a ler `rti.richText.factory`.
 
 #### Evidências 14C.5.6–14C.5.9 (preenchido 2026-11-01)
 

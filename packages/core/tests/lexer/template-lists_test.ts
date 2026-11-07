@@ -84,8 +84,9 @@ describe("23.10 — listas como argumento e `{{ for }}` (fixture)", () => {
     const { project, } = fixtureProject();
     const task = project!.tasks.toArray().find((t,) => t.id === "c") as Task;
     assert(task, "task 'c' do template CHAIN",);
-    const deps = (task.getForScenario("depends", 0,) as Array<{ task: Task }>)
-      .map((d,) => d.task.fullId);
+    const deps = (task.getForScenario("depends", 0,) as Array<{
+      taskId: string;
+    }>).map((d,) => d.taskId);
     assertEquals(deps, ["s_0", "s_1",],);
   });
 });
@@ -100,11 +101,15 @@ describe("23.10 — semântica do `for` do Vento", () => {
 
   it("`for x of lista` percorre os valores", () => {
     const out = run(
-      "[ {{ for x of itens }}{{ x }} {{ /for }} ] (itens)",
+      '[ {{ for x of itens }}resource {{ x }} "{{ x }}"\n{{ /for }} ] (itens)',
       '${T itens=["a", "b", "c"]}',
     );
     assertEquals(out.messageIds, [],);
-    assertEquals(out.parser.project, null,); // corpo não gera TJP: só texto
+    const project = out.result as Project;
+    assertEquals(
+      project.resources.toArray().map((r,) => r.id),
+      ["a", "b", "c",],
+    );
   });
 
   it("`for i, x of lista` percorre índice (0-based) e valor", () => {

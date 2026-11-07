@@ -74,9 +74,7 @@ afterEach(() => {
 describe("template — expansão básica (23.3.1/23.3.4/23.3.5)", () => {
   it("chamada com params nomeados gera a task renderizada", () => {
     const p = projectOf(
-      "{\n" +
-        '  template CARD [ task {{ id }} "{{ nome }}" { effort {{ esforco }} } ] (id, nome, esforco)\n' +
-        "}\n" +
+      'template CARD [ task {{ id }} "{{ nome }}" { effort {{ esforco }} } ] (id, nome, esforco)\n' +
         '${CARD id="t1" nome="Design" esforco="5d"}\n' +
         'task manual "Manual" {\n  effort 5d\n}\n',
     );
@@ -93,9 +91,7 @@ describe("template — expansão básica (23.3.1/23.3.4/23.3.5)", () => {
 
   it("parâmetros chegam ao contexto (template de resource)", () => {
     const p = projectOf(
-      "{\n" +
-        '  template PERSON [ resource {{ id }} "{{ nome }}" ] (id, nome)\n' +
-        "}\n" +
+      'template PERSON [ resource {{ id }} "{{ nome }}" ] (id, nome)\n' +
         '${PERSON id="alice" nome="Alice Silva"}\n',
     );
     assertEquals(p.resource("alice",)!.name, "Alice Silva",);
@@ -103,9 +99,7 @@ describe("template — expansão básica (23.3.1/23.3.4/23.3.5)", () => {
 
   it("cada chamada injeta o seu texto; duas linhas seguidas expandem", () => {
     const p = projectOf(
-      "{\n" +
-        '  template PERSON [ resource {{ id }} "{{ nome }}" ] (id, nome)\n' +
-        "}\n" +
+      'template PERSON [ resource {{ id }} "{{ nome }}" ] (id, nome)\n' +
         '${PERSON id="r1" nome="Um"}\n' +
         '${PERSON id="r2" nome="Dois"}\n',
     );
@@ -115,13 +109,11 @@ describe("template — expansão básica (23.3.1/23.3.4/23.3.5)", () => {
 
   it("corpo multi-linha expande preservando as quebras de linha", () => {
     const p = projectOf(
-      "{\n" +
-        "  template BLOCK [\n" +
-        '    resource {{ id }} "{{ nome }}" {\n' +
-        "      rate {{ taxa }}\n" +
-        "    }\n" +
-        "  ] (id, nome, taxa)\n" +
-        "}\n" +
+      "template BLOCK [\n" +
+        '  resource {{ id }} "{{ nome }}" {\n' +
+        "    rate {{ taxa }}\n" +
+        "  }\n" +
+        "] (id, nome, taxa)\n" +
         '${BLOCK id="bob" nome="Bob" taxa="120"}\n',
     );
     const bob = p.resource("bob",)!;
@@ -131,9 +123,7 @@ describe("template — expansão básica (23.3.1/23.3.4/23.3.5)", () => {
 
   it("template sem parâmetros expande com corpo literal", () => {
     const p = projectOf(
-      "{\n" +
-        '  template SOLO [ task solo "Sozinho" { effort 1d } ]\n' +
-        "}\n" +
+      'template SOLO [ task solo "Sozinho" { effort 1d } ]\n' +
         "${SOLO}\n",
     );
     assertEquals(p.task("solo",)!.name, "Sozinho",);
@@ -170,10 +160,8 @@ describe("template — macros dentro do corpo (23.3.3)", () => {
 describe("template — composição reentrante (23.3.9)", () => {
   it("texto renderizado com ${OUTRO …} expande na reentrada do stream", () => {
     const p = projectOf(
-      "{\n" +
-        '  template INNER [ resource {{ id }} "{{ nome }}" ] (id, nome)\n' +
-        '  template OUTER [ {{ "$" }}{INNER id="r9" nome="Nove"} ]\n' +
-        "}\n" +
+      'template INNER [ resource {{ id }} "{{ nome }}" ] (id, nome)\n' +
+        'template OUTER [ {{ "$" }}{INNER id="r9" nome="Nove"} ]\n' +
         "${OUTER}\n",
     );
     assertEquals(p.resource("r9",)!.name, "Nove",);
@@ -183,7 +171,7 @@ describe("template — composição reentrante (23.3.9)", () => {
 describe("template — erros (23.3.7/23.3.8)", () => {
   it("erro de sintaxe Vento aponta para a definição", () => {
     const out = parse(
-      "{\n" + "  template BAD [ {{ if }} oops {{ /for }} ]\n" + "}\n" +
+      "template BAD [ {{ if }} oops {{ /for }} ]\n" +
         "${BAD}\n",
     );
     const msg = messagesOf(out,).find((m,) => m.id === "template_syntax_error");
@@ -192,15 +180,13 @@ describe("template — erros (23.3.7/23.3.8)", () => {
       msg.message.startsWith("template 'BAD': erro de sintaxe",),
       `mensagem: ${msg.message}`,
     );
-    // sfi da *definição* (linha 3 do arquivo: cabeçalho, `{`, `template BAD`).
-    assertEquals(msg.sourceFileInfo?.lineNo, 3,);
+    // sfi da *definição* (linha 2 do arquivo: cabeçalho, `template BAD`).
+    assertEquals(msg.sourceFileInfo?.lineNo, 2,);
   });
 
   it("erro na chamada (parâmetro faltante) aponta para a chamada", () => {
     const out = parse(
-      "{\n" +
-        '  template PERSON [ resource {{ id }} "{{ nome }}" ] (id, nome)\n' +
-        "}\n" +
+      'template PERSON [ resource {{ id }} "{{ nome }}" ] (id, nome)\n' +
         '${PERSON id="alice"}\n',
     );
     const msg = messagesOf(out,).find((m,) =>
@@ -211,6 +197,7 @@ describe("template — erros (23.3.7/23.3.8)", () => {
       msg.message,
       "template 'PERSON': parâmetro 'nome' não fornecido",
     );
-    assertEquals(msg.sourceFileInfo?.lineNo, 5,);
+    // Linha 3: cabeçalho, `template PERSON`, `${PERSON …}`.
+    assertEquals(msg.sourceFileInfo?.lineNo, 3,);
   });
 });

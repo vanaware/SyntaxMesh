@@ -2,9 +2,9 @@
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-23-template-tarefas.md`
 > **Plano:** `docs/syntaxmesh/fases/fase-23-template.md`
-> **Status:** ✅ Concluída (2026-11-06)
-> **Total:** ~95 tarefas
-> **Concluídas:** 94/95 — única pendência: **23.7.7** (smoke da CLI), que
+> **Status:** ✅ Concluída (2026-11-06) — fecho estendido em 2026-11-07 (23.9/23.10/23.11)
+> **Total:** ~98 tarefas
+> **Concluídas:** 97/98 — única pendência: **23.7.7** (smoke da CLI), que
 > depende da Fase 24 e está registrada com nota na seção "Pendências"
 > **Foco:** elemento `template` (Vento), registro unificado macro/template, expansão em duas fases no scanner
 
@@ -95,8 +95,11 @@ macro (contra o Ruby), nunca uma adaptação do teste ao novo comportamento.
 [x] 23.6   Contexto e composição                     —  10/10
 [x] 23.7   Testes, snapshots e integração            —  10/11 (23.7.7 pendente)
 [x] 23.8   Documentação e verificação final          —   8/8
+[x] 23.9   Colocação: template = macro                —   5/5
+[x] 23.10  Listas e `for` no corpo                    —   4/4
+[x] 23.11  Fix: helper do teste 14C.5.1 (richText)    —   1/1
 ─────────────────────────────────────────────────────────
-TOTAL: 94/95 — pendência única: 23.7.7 (CLI da Fase 24)
+TOTAL: 97/98 — pendência única: 23.7.7 (CLI da Fase 24)
 ```
 
 ---
@@ -266,6 +269,50 @@ corrigida **aqui**, antes de 23.2.
 | 23.8.6 | `CURRENT.md`: "Fase 23 concluída; `template` (Vento) disponível; macros intocadas; insumo lsp-core pronto" + status em `plano.md` | idem | revisão |
 | 23.8.7 | Progresso deste arquivo 100% (`[x]`, contadores, seção Auditoria 23.1b preenchida) | idem | revisão |
 | 23.8.8 | Commit final `chore(docs): template-reference` | — | git log |
+
+### 23.9 — Colocação: `template` na mesma condição da `macro`
+
+> **Descoberta durante a revisão de uso (2026-11-07).** O `template` havia
+> sido aceito dentro do bloco `{ }` do cabeçalho do projeto
+> (`projectBodyAttributes`), posição em que a `macro` **nunca** foi aceita no
+> Ruby (`TjpSyntaxRules.rb:3486` — `rule_projectProlog` lista só
+> `prologInclude` + `macro`). Era uma assimetria de linguagem: macro fora dos
+> colchetes, template dentro. Corrigida aqui, dentro da fase.
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 23.9.1 | Remover `p.pattern(["!template"])` de `projectBodyAttributes` (o bloco `{ }`), deixando `!template` só em `projectProlog` e `propertiesBody` | `src/parser/rules/project.ts` | teste de colocação |
+| 23.9.2 | Adicionar `!template` em `reportPropertiesBody` para paridade com `!macro` nos arquivos de propriedades de relatório | `src/parser/rules/report.ts` | macro e template no mesmo lugar |
+| 23.9.3 | Mover as definições para fora do `{ }` nos seis fixtures + comentário "Colocação (23.9)" em cada um | `tests/fixtures/templates/*.tjp` | parse sem mensagens |
+| 23.9.4 | Alinhar os testes existentes à regra nova: `template-decl_test.ts`, `template-errors_test.ts`, `template-args_test.ts`, `template-context_test.ts`, `template-expansion_test.ts`, `template-recursion_test.ts`, `ast-equivalence_test.ts`, `template-integration_23_test.ts` (e as linhas esperadas de erro, que caem em 2 linhas) | `tests/` | verde |
+| 23.9.5 | Prova de paridade ponta a ponta: `macro` e `template` no prolog e no nível de propriedades expandem; dentro do `{ }` os dois falham com a **mesma** mensagem (`Unexpected token 'macro\|template' found.`) | `tests/parser/template-decl_test.ts` | 2 casos espelhados |
+
+### 23.10 — Listas como argumento e `{{ for }}` no corpo
+
+> Pergunta de uso: "como passar uma lista para o template e como iterar?".
+> A resposta ficou fixada em fixture copiável + suíte própria, porque antes
+> só havia menção textual no plano §4.5.
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 23.10.1 | Fixture canônico `lists-for.tjp`: lista de strings (task por item, id pelo índice), lista de objetos (resource por item), mapa (uma `allocate` por entrada) e `!refs` + filtro `join` montando `depends` | `tests/fixtures/templates/lists-for.tjp` | parse limpo |
+| 23.10.2 | Suíte `template-lists_test.ts`: as três formas de `for` (`x of`, `i, x of`, `k, v of`), lista vazia silenciosa e `{{ loop.index }}` → `template_render_error` (o Vento não tem `loop`) | `tests/lexer/template-lists_test.ts` | 10 casos |
+| 23.10.3 | Seção `lists` no golden TS-only (sexta seção) + asserção semântica no `template_golden_test.ts` | `tests/golden/` | snapshot regenerado |
+| 23.10.4 | Documentar em `11-referencia-template.md` (§1 "Local" corrigido + §3.1 "Listas e `for`") e no README dos fixtures | `docs/syntaxmesh/` | revisão |
+
+### 23.11 — Correção de erro anterior achado no gate (14C.5.1)
+
+> O `deno task tests` acusava 3 falhas pré-existentes em
+> `tests/reports/markdown-report_14c_test.ts` (14C.5.1), presentes desde o
+> commit `eff97ea`. Investigação: o produto está correto — o header markdown de
+> `mdfirst`/`mdlate`/`mdparent.mdchild` renderiza `<h1>`/`<h2>`/`<b>`/`<i>` como
+> esperado. O defeito era do **helper do teste**: `rti.richText instanceof
+> MarkdownFactory` compara o back-pointer com a fábrica, mas o pipeline markdown
+> grava `{ factory, inputText }` (C5.7) — o `instanceof` era sempre falso.
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 23.11.1 | Corrigir `producedByMarkdown` para ler `rti.richText.factory`, com comentário apontando o shim do `MarkdownFactory` | `tests/reports/markdown-report_14c_test.ts` | 9/9 verdes |
 
 ---
 

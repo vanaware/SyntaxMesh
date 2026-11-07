@@ -134,6 +134,26 @@ que impede usá-la como está dentro do scanner.
 
 ---
 
+## Emenda 1 (2026-11-07) — colocação: mesma condição da `macro`
+
+A primeira implementação aceitava `template` também dentro do bloco `{ }` do
+cabeçalho do projeto (`projectBodyAttributes`), posição em que a `macro`
+**nunca** foi aceita — no Ruby, `rule_projectProlog`
+(`lib/taskjuggler/TextParser/TjpSyntaxRules.rb:3486`) lista apenas
+`!prologInclude` e `!macro`. A assimetria era acidental e foi removida:
+
+- `!template` **saiu** de `projectBodyAttributes`;
+- permanece em `projectProlog` (antes de `project`) e em `propertiesBody`
+  (nível de propriedades, depois do `}`);
+- `reportPropertiesBody` ganhou `!template` ao lado de `!macro`, já que o
+  namespace é único.
+
+Dentro do `{ }` as duas palavras agora falham com a **mesma** sequência de
+mensagens (`no_reduce`, `no_reduce`, `unexpctd_token`), provado em
+`tests/parser/template-decl_test.ts` (describe "colocação (23.9)").
+
+---
+
 **Status:** Aceito
 **Data:** 2026-11-06
 **Autor(es):** SyntaxMesh (port TS-only)

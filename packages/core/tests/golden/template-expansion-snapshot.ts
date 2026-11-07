@@ -6,9 +6,10 @@
  * `generate_template_expansion_golden.ts` e comparado byte-a-byte por
  * `template_golden_test.ts`.
  *
- * Os quatro fixtures vivem em `tests/fixtures/templates/` (ver o README de
+ * Os seis fixtures vivem em `tests/fixtures/templates/` (ver o README de
  * índice) e cobrem: expansão básica, matriz de tipos de argumento, composição
- * (`expandTemplate`/`expandTemplateList`) e macro dentro do corpo.
+ * (`expandTemplate`/`expandTemplateList`), macro dentro do corpo, a tabela de
+ * erros do §5 e listas + `{{ for }}` (23.10).
  *
  * Regras de determinismo:
  *   • insertion-order do `PropertySet` (ordem de expansão no stream);
@@ -16,7 +17,7 @@
  *   • `effort` em segundos, como o modelo guarda.
  *
  * @see docs/syntaxmesh/fases/fase-23-template-tarefas.md (23.3.10, 23.4.10,
- *      23.6.9, 23.7.2)
+ *      23.6.9, 23.7.2, 23.10)
  */
 import { parseProject, } from "../parser/parse-helper.ts";
 import type { Project, } from "../../src/model/project.ts";
@@ -38,6 +39,9 @@ export const TEMPLATE_MACROS_FIXTURE = "macros-in-template";
 
 /** Fixture de erro da tabela §5 (23.7.9). */
 export const TEMPLATE_ERRORS_FIXTURE = "errors";
+
+/** Fixture de listas como argumento e `{{ for }}` (23.10). */
+export const TEMPLATE_LISTS_FIXTURE = "lists-for";
 
 /** Lê um fixture de template pelo nome (sem extensão). */
 export function loadTemplateFixture(name: string,): string {
@@ -91,7 +95,7 @@ export function buildTemplateExpansionSnapshot(fixture: string,) {
   };
 }
 
-/** Snapshot consolidado dos cinco fixtures (arquivo único do golden). */
+/** Snapshot consolidado dos seis fixtures (arquivo único do golden). */
 export function buildTemplateGolden() {
   return {
     expansion: buildTemplateExpansionSnapshot(TEMPLATE_EXPANSION_FIXTURE,),
@@ -99,5 +103,6 @@ export function buildTemplateGolden() {
     compose: buildTemplateExpansionSnapshot(TEMPLATE_COMPOSE_FIXTURE,),
     macros: buildTemplateExpansionSnapshot(TEMPLATE_MACROS_FIXTURE,),
     errors: buildTemplateExpansionSnapshot(TEMPLATE_ERRORS_FIXTURE,),
+    lists: buildTemplateExpansionSnapshot(TEMPLATE_LISTS_FIXTURE,),
   };
 }

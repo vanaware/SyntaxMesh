@@ -15,7 +15,7 @@
       {
         "name": "HEADER",
         "params": [],
-        "body": "\n    # Projeto: {{ project.name }}\n  "
+        "body": "\n  # Projeto: {{ project.name }}\n"
       },
       {
         "name": "FOOTER",
@@ -68,7 +68,7 @@
           "mapa",
           "soma"
         ],
-        "body": "\n    resource {{ id }} \"str={{ typeof s }};num={{ typeof n }};bool={{ typeof b }};ref={{ ref }};refType={{ typeof ref }};list={{ lista.length }};list1={{ lista[1] }};obj={{ mapa.k }};arith={{ soma }}\"\n  "
+        "body": "\n  resource {{ id }} \"str={{ typeof s }};num={{ typeof n }};bool={{ typeof b }};ref={{ ref }};refType={{ typeof ref }};list={{ lista.length }};list1={{ lista[1] }};obj={{ mapa.k }};arith={{ soma }}\"\n"
       }
     ],
     "tasks": [],
@@ -106,7 +106,7 @@
         "params": [
           "tarefas"
         ],
-        "body": "\n# Projeto: {{ project.name }}\n{{ for linha of expandTemplateList(\"TASK_LINE\", tarefas) }}{{ linha }}\n{{ /for }}\n  "
+        "body": "\n# Projeto: {{ project.name }}\n{{ for linha of expandTemplateList(\"TASK_LINE\", tarefas) }}{{ linha }}\n{{ /for }}\n"
       },
       {
         "name": "WRAPPER",
@@ -235,5 +235,87 @@
     ],
     "tasks": [],
     "resources": []
+  },
+  "lists": {
+    "fixture": "lists-for",
+    "messages": [],
+    "templates": [
+      {
+        "name": "STEPS",
+        "params": [
+          "id",
+          "passos"
+        ],
+        "body": "\n{{ for i, passo of passos }}  task {{ id }}_{{ i }} \"{{ passo }}\" { effort 1d }\n{{ /for }}"
+      },
+      {
+        "name": "PEOPLE",
+        "params": [
+          "pessoas"
+        ],
+        "body": "\n{{ for p of pessoas }}  resource {{ p.id }} \"{{ p.nome }}\"\n{{ /for }}"
+      },
+      {
+        "name": "ALLOC",
+        "params": [
+          "id",
+          "papeis"
+        ],
+        "body": "\n  task {{ id }} \"Equipe\" {\n{{ for papel, quem of papeis }}    allocate {{ quem }}\n{{ /for }}  }\n"
+      },
+      {
+        "name": "CHAIN",
+        "params": [
+          "id",
+          "deps"
+        ],
+        "body": " task {{ id }} \"Encadeada\" { depends {{ deps |> join(\", \") }} } "
+      }
+    ],
+    "tasks": [
+      {
+        "id": "s_0",
+        "name": "Análise",
+        "effort": 8,
+        "allocate": []
+      },
+      {
+        "id": "s_1",
+        "name": "Design",
+        "effort": 8,
+        "allocate": []
+      },
+      {
+        "id": "s_2",
+        "name": "Build",
+        "effort": 8,
+        "allocate": []
+      },
+      {
+        "id": "a",
+        "name": "Equipe",
+        "effort": 0,
+        "allocate": [
+          "ana",
+          "bia"
+        ]
+      },
+      {
+        "id": "c",
+        "name": "Encadeada",
+        "effort": 0,
+        "allocate": []
+      }
+    ],
+    "resources": [
+      {
+        "id": "ana",
+        "name": "Ana"
+      },
+      {
+        "id": "bia",
+        "name": "Bia"
+      }
+    ]
   }
 }

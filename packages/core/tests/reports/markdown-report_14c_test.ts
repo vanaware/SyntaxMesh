@@ -35,9 +35,18 @@ const html = (rti: RichTextIntermediate,): string => {
   return list.map((el,) => el.toHTML()).join("",);
 };
 
-/** Fábrica que produziu o RTI (`richtext` vs `markdown`). */
+/**
+ * Fábrica que produziu o RTI (`richtext` vs `markdown`).
+ *
+ * O back-pointer `richText` **não** é a fábrica: o pipeline markdown grava
+ * `{ factory, inputText }` (o `inputText` é o round-trip do `to_tjp`, C5.7),
+ * enquanto o richtext grava a instância de `RichText`. O teste tem de olhar
+ * `.factory` — comparar o objeto direto com `instanceof MarkdownFactory` dava
+ * falso negativo para todo header markdown (corrigido na 23.11).
+ */
 const producedByMarkdown = (rti: RichTextIntermediate,): boolean =>
-  rti.richText instanceof MarkdownFactory;
+  (rti.richText as { factory?: unknown } | null)?.factory instanceof
+    MarkdownFactory;
 
 describe("format markdown nos relatórios (14C.5)", () => {
   let project: Project;

@@ -1,9 +1,9 @@
 /**
  * Golden TS-only do elemento `template` (Fase 23, 23.7.2).
  *
- * Arquivo único `template.golden.json` com cinco seções, uma por fixture de
+ * Arquivo único `template.golden.json` com seis seções, uma por fixture de
  * `tests/fixtures/templates/`: expansão básica, matriz de tipos de argumento,
- * composição, macro dentro do corpo e erros do §5.
+ * composição, macro dentro do corpo, erros do §5 e listas + `{{ for }}`.
  *
  * Regenerar: `deno task golden:generate:template`.
  */
@@ -92,6 +92,30 @@ describe("23.7.2 template — golden TS-only consolidado", () => {
       "template_missing_param:template 'CARD': parâmetro 'esforco' não fornecido",
     ],);
   });
+
+  it("listas e `for`: uma entidade por item de lista/mapa (23.10)", () => {
+    const snap = buildTemplateGolden().lists;
+    assertEquals(snap.messages, [],);
+    assertEquals(
+      snap.tasks.map((t,) => [t.id, t.name,]),
+      [
+        ["s_0", "Análise",],
+        ["s_1", "Design",],
+        ["s_2", "Build",],
+        ["a", "Equipe",],
+        ["c", "Encadeada",],
+      ],
+    );
+    assertEquals(
+      snap.resources.map((r,) => r.id),
+      ["ana", "bia",],
+    );
+    // `for papel, quem of papeis` sobre um mapa: uma alocação por entrada.
+    assertEquals(
+      snap.tasks.find((t,) => t.id === "a")!.allocate,
+      ["ana", "bia",],
+    );
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -129,7 +153,7 @@ describe("23.2.10 template registry: basic", () => {
         name: "HEADER",
         params: [],
         // Corpo cru: o `{{ }}` não é interpretado no registro (23.2.6).
-        body: "\n    # Projeto: {{ project.name }}\n  ",
+        body: "\n  # Projeto: {{ project.name }}\n",
       },
       { name: "FOOTER", params: [], body: " # fim do projeto ", },
     ],);

@@ -196,6 +196,47 @@ describe("template — i18n en/pt-BR/es (23.2.2/23.2.9)", () => {
   });
 });
 
+describe("template — colocação (23.9): mesma condição da macro", () => {
+  /** Cabeçalho com bloco `{ }` aberto, para testar a posição proibida. */
+  const OPEN_HEADER = 'project prj "Test" "1.0" 2026-01-01 - 2026-12-31 {\n';
+
+  it("no bloco `{ }` do projeto os dois são recusados com a mesma sequência", () => {
+    const macro = parseProject(
+      OPEN_HEADER + "  macro TEAM [ allocate tux ]\n}\n",
+    );
+    const template = parseProject(
+      OPEN_HEADER + "  template TEAM [ allocate tux ]\n}\n",
+    );
+    const expected = ["no_reduce", "no_reduce", "unexpctd_token",];
+    assertEquals(macro.messageIds, expected,);
+    assertEquals(template.messageIds, expected,);
+    // Mesmo texto, só trocando a palavra — é a prova de paridade.
+    assertEquals(
+      template.messages[0]!.text.replace("template", "macro",),
+      macro.messages[0]!.text,
+    );
+  });
+
+  it("no prolog e no nível de propriedades os dois são aceitos", () => {
+    const prolog = parseProject(
+      "macro TEAM [ allocate tux ]\n" + 'template CARD [ task t1 "x" ]\n' +
+        HEADER,
+    );
+    assertEquals(prolog.messageIds, [],);
+    assertEquals(
+      prolog.parser.scannerRef!.macroTable.macroDefined("TEAM",),
+      true,
+    );
+
+    const property = parseProject(
+      HEADER + "macro TEAM [ allocate tux ]\n" +
+        'template CARD [ task t1 "x" ]\n',
+    );
+    assertEquals(property.messageIds, [],);
+    assertEquals(templatesOf(property.parser,)[0]!.name, "CARD",);
+  });
+});
+
 describe("template — include (23.2.8)", () => {
   const originalLoader = FileStreamHandle.fileLoader;
 
@@ -203,17 +244,18 @@ describe("template — include (23.2.8)", () => {
     FileStreamHandle.fileLoader = originalLoader;
   },);
 
-  it("template definido em .tji incluído no prolog fica registrado no master", () => {
+  it("template definido em .tji incluído após o cabeçalho fica registrado no master", () => {
     FileStreamHandle.fileLoader = (name,) => {
       if (name.endsWith("cards.tji",)) {
         return 'template CARD [ task t1 "x" ] (id)\n';
       }
       return "";
     };
-    // `include` de prolog: o .tji é lido no contexto `projectProlog`, onde
-    // `macro` e `template` compartilham o namespace global (23.9).
+    // `include` precisa vir **depois** do cabeçalho (`include_before_project`
+    // é o erro do Ruby quando vem antes) e o conteúdo entra no nível de
+    // propriedades — onde `macro` e `template` compartilham o namespace (23.9).
     const { parser, messageIds, } = parseProject(
-      'include "cards.tji"\n' + HEADER,
+      HEADER + 'include "cards.tji"\n',
     );
     assertEquals(messageIds, [],);
     const card = templatesOf(parser,)[0];
