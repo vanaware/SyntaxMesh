@@ -1,0 +1,33 @@
+# Golden CLI vs tj3 (Fase 24.7) — CSV byte-a-byte, colunas de tarefa.
+#
+# Comparado com o `tj3` real: o script `scripts/golden/cli-tj3.rb` copia este
+# arquivo para um temporário com extensão `.tjp` (o `tj3` recusa `.smx`) e
+# guarda o CSV gerado; `golden_cli_test.ts` roda a CLI sobre o `.smx` original
+# e compara os bytes. Sem timestamps, sem `include`, sem Gantt: só o que os
+# dois lados devem escrever igual.
+project prj "Parity Tasks" "1.0" 2026-01-05 - 2026-02-15 {
+  timezone "UTC"
+  timeformat "%Y-%m-%d"
+  now 2026-01-05
+  currency "EUR"
+}
+
+resource dev "Developer" {
+  rate 100.0
+}
+
+task design "Design" {
+  effort 5d
+  allocate dev
+}
+
+task build "Build" {
+  effort 3d
+  allocate dev
+  depends !design
+}
+
+taskreport plan "tasks" {
+  formats csv
+  columns id, name, start, end, priority, complete
+}

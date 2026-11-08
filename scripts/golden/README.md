@@ -35,6 +35,7 @@ paritária.
 | `timesheets.rb`                                                                 | 18   | `timesheets.golden.json`          | `timesheets_golden_test.ts`          |
 | `dynamic-attributes.rb`                                                         | 18   | `dynamic-attributes.golden.json`  | `dynamic-attributes_golden_test.ts`  |
 | `packages/core/tests/golden/generate_extension_golden.ts` (TS puro, sem oracle) | 14C  | `reports-extensions.golden.json`  | `reports-extensions_golden_test.ts`  |
+| `cli-tj3.rb`                                                                    | 24   | `packages/cli/tests/golden/cli-tj3.golden.json` | `cli/tests/golden_cli_test.ts` |
 
 ## Fluxo de trabalho
 
@@ -667,3 +668,82 @@ deno task golden:generate              # ruby + extensões (encadeados)
 Cada bloco C1–C7 deve estender `buildExtensionSnapshot()` com novos probes
 (materialreport html/csv/json, breakdown, RDO, markdown) em vez de criar
 outro mecanismo de comparação.
+
+## Golden CLI × tj3 (Fase 24.7)
+
+Fidelidade **ponta a ponta da CLI**: não um método do core, mas o que o
+usuário vê — código de saída, arquivos gravados, mensagens e stdout. O oracle
+roda o `tj3` real sobre um **subset** de fixtures; o teste roda a CLI de
+verdade (subprocesso) sobre os mesmos fixtures.
+
+### Arquivos
+
+- `cli-tj3.rb` — roda `tj3 -o <tmp> <fixture>` por caso e grava
+  `{ id, path, kind, compare, exit, artifacts, messages, firstMessage,
+  stdout, stderr, outputs? }` em
+  `packages/cli/tests/golden/cli-tj3.golden.json` (34 casos).
+- `packages/cli/tests/golden_cli_test.ts` — um `it` por caso (24.7.4).
+- `packages/cli/tests/golden/canonical-dom.ts` — DOM canônico do HTML
+  (24.7.7) + `canonical_dom_test.ts` (unitários do canonicalizador).
+- `packages/cli/tests/golden/known_divergences.md` — divergências aceitas,
+  com âncora (24.7.5).
+- `packages/cli/tests/fixtures/golden/*.smx` — fixtures de paridade
+  escritas para este golden.
+
+### O subset (24.7.1)
+
+| Grupo | Quantos | Critério |
+| --- | --- | --- |
+| Projetos (`docs/Learning/mwe00{1,2,3,5,6,7,8,9}`) | 8 | exit + inventário de artefatos |
+| Projetos (`TestSuite/Syntax/Correct`) | 15 | idem (`Account`, `Booking`, `Celltext`, `Complete`, `Durations`, `Flags`, `Gap`, `Include`, `Limits-1`, `LoadUnits`, `Macro-1`, `Milestone`, `Period`, `Query`, `textreport`) |
+| Erros (`TestSuite/Syntax/Errors`) | 7 | idem + primeira mensagem com `file:line` (24.7.8) |
+| Paridade (`*.smx`) | 4 | exit + artefatos + **conteúdo** (2 CSV byte a byte, 1 DOM, 1 só inventário) |
+
+Um fixture novo entra no subset se, e só se, `exit`, inventário e stdout
+resíduo baterem hoje; divergência conhecida do **core** fica **fora** e é
+registrada em `known_divergences.md` (nunca `it.ignore` escondido).
+
+### O que é comparado, e como
+
+1. **`exit`** — exato. O `tj3` aborta no primeiro `MessageHandler#error`.
+2. **Inventário** — caminhos relativos ordenados de tudo sob o
+   `--output-dir`. Pega relatório faltando, sobrando ou renomeado.
+3. **stdout** — o `tj3` mistura banner GPL + barra de progresso (`\r`) +
+   resumo do produto; a CLI imprime o resumo do projeto (24.4.5). Os dois são
+   filtrados e sobra o **resíduo**, que tem de ser vazio: mensagem que vazou
+   para o stdout aparece na hora.
+4. **Primeira mensagem** (só `kind: errors`) — normalizada como no resto do
+   pipeline: caminho → `<PATH>`, float 1e-6 → `<NUM>`. O `tj3` ainda imprime a
+   linha de fonte ofensora depois da mensagem; só a linha de mensagem é
+   comparada.
+5. **Conteúdo** (`compare: exact`) — CSV byte a byte.
+6. **Conteúdo** (`compare: dom`) — HTML por árvore canônica: `<body>`,
+   comentários/`<script>`/`<style>`/`<link>` fora, atributos ordenados, texto
+   com espaço colapsado, ids de tooltip (`ID<n>`) e carimbo (`<TS>`)
+   estabilizados dos dois lados.
+
+### Normalizações compartilhadas com o golden de HTML (24.7.2)
+
+O Ruby aplica as mesmas substituições de `html-xml.rb`/`reports-*.rb` —
+`<PATH>`, `<VER>`, `<NUM>` — mais `ID<n>`/`<TS>` no HTML. O `:` fica **fora**
+da classe de `REPO_PATH`: `docs/…:3: Error:` só perde o caminho, não a
+localização. E só `docs/`/`packages/` entram na classe — `css/`, `icons/` e
+`scripts/` aparecem como **carga útil** dentro do relatório
+(`src="icons/task.png"`).
+
+### Regras específicas
+
+1. **`tj3 -o` exige diretório existente** — o oracle cria o temporário antes.
+2. **`tj3` recusa extensão diferente de `.tjp`** — os fixtures de paridade
+   (`.smx`) são copiados para um temporário `.tjp`.
+3. **Nunca editar `cli-tj3.golden.json` à mão** — regerer com
+   `deno task golden:generate:ruby`.
+4. **Divergência nova não vira `it.ignore`**: entra em
+   `known_divergences.md` com âncora (D1, D2, …) ou o caso sai do subset com a
+   justificativa no próprio `.rb`.
+
+```bash
+ruby scripts/golden/cli-tj3.rb                  # inspecionar o JSON (~15s)
+deno task golden:generate:ruby                  # regerar o commitado
+deno task cli:test                              # rodar a comparação (~25s)
+```

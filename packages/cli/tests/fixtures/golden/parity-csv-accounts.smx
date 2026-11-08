@@ -1,0 +1,29 @@
+# Golden CLI vs tj3 (Fase 24.7) — CSV byte-a-byte, contas sem `balance`.
+#
+# Lista simples de contas (`AccountListRE` fora do modo balance): o CSV traz
+# o índice sequencial e o nome, sem colunas de calendário. O texto do
+# relatório é o mesmo nos dois lados, byte a byte.
+#
+# O modo balance (com a linha `Total` automática e o índice reiniciado) é
+# divergência conhecida — ver `packages/cli/tests/golden/known_divergences.md`
+# e o fixture `parity-csv-balance.smx`.
+project prj "Parity Accounts" "1.0" 2026-01-05 - 2026-02-15 {
+  timezone "UTC"
+  timeformat "%Y-%m-%d"
+  now 2026-01-05
+  currency "EUR"
+}
+
+account project_cost "Project Cost"
+account customer "Customer Payments" {
+  credits 2026-01-05 "Down payment" 500.0
+}
+
+task work "Work" {
+  duration 3d
+}
+
+accountreport money "accounts" {
+  formats csv
+  columns index, name
+}

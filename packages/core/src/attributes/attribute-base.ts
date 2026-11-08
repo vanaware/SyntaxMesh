@@ -190,6 +190,13 @@ export abstract class AttributeBase<T,> {
   /**
    * Converte o valor para string.
    *
+   * Ruby: `get.to_s` (AttributeBase.rb l.134-136). O texto depende do **tipo
+   * do valor guardado no Ruby**, não do atributo: uma duração de `5d` vira
+   * `Float` de slots e sai `144000.0`, enquanto `3600` inteiro sai `3600`
+   * (`attributes.golden.json`). O `Number` do JS não carrega essa distinção,
+   * então o port mantém o texto numérico simples — a formatação de relatório
+   * vem de `Query#scaleDuration`/`scaleLoad` (com `numberFormat`).
+   *
    * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:to_s
    */
   to_s(): string {

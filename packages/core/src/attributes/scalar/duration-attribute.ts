@@ -13,6 +13,9 @@ import { formatDuration, } from "./duration-formatter.ts";
 /**
  * Atributo escalar duração.
  *
+ * O valor é um `Float` de horas no Ruby, então `to_s` (herdado de
+ * `AttributeBase`) sempre traz a parte decimal: `5.0`, `16.5`.
+ *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:DurationAttribute
  */
 export class DurationAttribute extends AttributeBase<number> {
@@ -20,16 +23,6 @@ export class DurationAttribute extends AttributeBase<number> {
    * ID do tipo de atributo para DurationAttribute.
    */
   static readonly tjpId = "duration";
-
-  /**
-   * Converte o valor para string.
-   *
-   * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:DurationAttribute#to_s
-   */
-  override to_s(): string {
-    const val = this.get();
-    return val !== null ? `${val}` : "";
-  }
 
   /**
    * Converte o valor para TJP (formato TaskJuggler).

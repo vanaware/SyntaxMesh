@@ -10,6 +10,7 @@ import { AttributeBase, } from "../attributes/attribute-base.ts";
 import { AttributeDefinition, } from "../attributes/attribute-definition.ts";
 import { AttributeType, } from "../attributes/attribute-type.ts";
 import { TjTime, } from "../time/tj-time.ts";
+import { RealFormat, } from "../format/real-format.ts";
 import { getOffsetSeconds, } from "../time/timezone.ts";
 import { Scoreboard, } from "../time/scoreboard.ts";
 import { IntervalList, } from "../time/interval-list.ts";
@@ -274,6 +275,21 @@ export class Project implements ProjectLike {
     this.attributes.set("name", name,);
     this.attributes.set("projectid", id,);
     this.attributes.set("version", version,);
+    this.attributes.set("projectids", [id,],);
+
+    // Formatos default do Ruby (Project.rb l.89-92): sem eles as células
+    // numéricas caem no fallback de 2 casas do `Query#scaleValue` e o CSV sai
+    // `4.33`/`5` onde o `tj3` escreve `4.3`/`5.0` (golden CLI, 24.7.6).
+    this.attributes.set(
+      "numberFormat",
+      new RealFormat(["-", "", "", ".", 1,],),
+    );
+    this.attributes.set(
+      "currencyFormat",
+      new RealFormat(["-", "", "", ",", 2,],),
+    );
+    this.attributes.set("timeFormat", "%Y-%m-%d",);
+    this.attributes.set("shortTimeFormat", "%H:%M",);
 
     // PropertySets: Ruby Project.rb fixa o namespace por conjunto —
     // scenarios/shifts/accounts/resources são flat (IDs curtos globais);
@@ -1112,10 +1128,28 @@ export class Project implements ProjectLike {
 
       // There should always be a task to be removed. If not, the scheduler
       // has found a set of tasks that deadlock each other.
+      //
+      // RUBY-COMPAT-FIX: os três caminhos de `Project.rb:1225-1239` precisam
+      // terminar o laço. Sem o `else` final, um projeto em que a primeira
+      // falha de agendamento aconteceu **e** depois nenhuma tarefa ficou
+      // pronta (ex.: `Syntax/Correct/AccountReport.tjp`) girava para sempre —
+      // o `tj3` encerra com "Some tasks did not fit into the project time
+      // frame". Golden CLI (24.7).
       if (taskToRemove) {
         const taskIndex = tasks.itemIndex(taskToRemove,);
         tasks.delete(taskIndex,);
       } else if (failedTasks.length === 0) {
+        this.warning(
+          "deadlock",
+          "Some tasks reference each other but don't provide " +
+            "enough information to start the scheduling. The " +
+            "scheduler does not know where to start scheduling " +
+            "these tasks. You need to provide more fixed dates " +
+            "or dependencies on already scheduled tasks.",
+        );
+        failedTasks.push(...tasks.toArray(),);
+        break;
+      } else {
         // We have some tasks that cannot be scheduled.
         break;
       }

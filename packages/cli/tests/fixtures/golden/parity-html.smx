@@ -1,0 +1,32 @@
+# Golden CLI vs tj3 (Fase 24.7) — HTML por DOM canônico.
+#
+# HTML externo (sem `selfcontained`): os dois lados escrevem `report.html` e
+# copiam `css/`, `icons/` e `scripts/wz_tooltip.js`, então o inventário de
+# artefatos também é comparado. O canonicalizador remove o que é por-construção
+# diferente (`<head>`, `<link>`, `<style>`, `<script>`, comentários e a linha de
+# copyright com o nome do produto) e compara o resto da árvore.
+project prj "Parity Html" "1.0" 2026-01-05 - 2026-02-15 {
+  timezone "UTC"
+  timeformat "%Y-%m-%d"
+  now 2026-01-05
+  currency "EUR"
+}
+
+resource dev "Developer" {
+  rate 90.0
+}
+
+task design "Design" {
+  effort 3d
+  allocate dev
+}
+
+task build "Build" {
+  duration 4d
+  depends !design
+}
+
+taskreport plan "report" {
+  formats html
+  columns id, name, start, end
+}

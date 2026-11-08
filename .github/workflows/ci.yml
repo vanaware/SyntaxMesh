@@ -1,0 +1,69 @@
+# CI — golden da CLI contra o `tj3` real (Fase 24.7.9)
+#
+# Este é o único job que precisa do TaskJuggler Ruby: o golden
+# `packages/cli/tests/golden/cli-tj3.golden.json` é gerado pelo `tj3` de
+# verdade, e o teste roda a CLI contra ele. Os demais gates (`deno task tests`)
+# não dependem de Ruby e pertencem ao job de qualidade da Fase 21.
+#
+# A saída do `tj3` é **cacheada** com chave no hash do oráculo + fixtures: se
+# o `.rb` ou um `.smx` mudar, o cache vira miss e o golden é regerado; se só o
+# port mudar, o golden continua válido e o job roda em segundos.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cli-golden:
+    name: CLI golden (tj3)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version-file: .tool-versions
+
+      # A versão fixa é a do oráculo: o golden foi gerado com 3.8.4 e o
+      # `normalize` do `.rb` casa a saída do binário (`<VER>`).
+      - name: Install tj3 3.8.4
+        run: gem install taskjuggler -v 3.8.4 --no-document
+
+      - name: Restore golden
+        id: golden
+        uses: actions/cache@v4
+        with:
+          path: packages/cli/tests/golden/cli-tj3.golden.json
+          key: cli-tj3-golden-${{ hashFiles('scripts/golden/cli-tj3.rb', 'packages/cli/tests/fixtures/golden/*.smx') }}
+
+      - name: Generate golden
+        if: steps.golden.outputs.cache-hit != 'true'
+        run: deno task golden:generate:ruby
+
+      # Falha se o golden commitado não é o que o `tj3` produz hoje — pega
+      # fixture alterada sem regeneração.
+      - name: Golden is in sync with the oracle
+        run: git diff --exit-code packages/cli/tests/golden/cli-tj3.golden.json
+
+      - name: Type check
+        run: deno task --cwd packages/cli check
+
+      - name: Lint
+        run: deno task lint
+
+      - name: Format check
+        run: deno task fmt:check
+
+      # 24.7.4/24.7.6/24.7.7/24.7.8: exit, artefatos, stdout, mensagens,
+      # CSV byte a byte e HTML por DOM canônico.
+      - name: CLI tests
+        run: deno task --cwd packages/cli test

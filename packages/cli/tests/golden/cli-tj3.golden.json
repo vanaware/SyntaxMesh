@@ -1,0 +1,736 @@
+{
+  "cases": [
+    {
+      "id": "mwe001",
+      "path": "docs/Learning/mwe001/tutorial.tjp",
+      "kind": "project",
+      "compare": "artifacts",
+      "exit": 0,
+      "artifacts": [
+        "Plan.html",
+        "css/tjmanual.css",
+        "css/tjreport.css",
+        "icons/details.png",
+        "icons/flag-green.png",
+        "icons/flag-red.png",
+        "icons/flag-yellow.png",
+        "icons/resource.png",
+        "icons/resourcegroup.png",
+        "icons/task.png",
+        "icons/taskgroup.png",
+        "icons/trend-down.png",
+        "icons/trend-flat.png",
+        "icons/trend-up.png",
+        "scripts/wz_tooltip.js"
+      ],
+      "messages": [],
+      "firstMessage": null,
+      "stdout": [],
+      "stderr": []
+    },
+    {
+      "id": "mwe002",
+      "path": "docs/Learning/mwe002/tutorial.tjp",
+      "kind": "project",
+      "compare": "artifacts",
+      "exit": 0,
+      "artifacts": [
+        "css/tjmanual.css",
+        "css/tjreport.css",
+        "icons/details.png",
+        "icons/flag-green.png",
+        "icons/flag-red.png",
+        "icons/flag-yellow.png",
+        "icons/resource.png",
+        "icons/resourcegroup.png",
+        "icons/task.png",
+        "icons/taskgroup.png",
+        "icons/trend-down.png",
+        "icons/trend-flat.png",
+        "icons/trend-up.png",
+        "resources.html",
+        "scripts/wz_tooltip.js",
+        "tasks.html"
+      ],
+      "messages": [],
+      "firstMessage": null,
+      "stdout": [],
+      "stderr": []
+    },
+    {
+      "id": "mwe003",
+      "path": "docs/Learning/mwe003/tutorial.tjp",
+      "kind": "project",
+      "compare": "artifacts",
+      "exit": 0,
+      "artifacts": [
+        "WBS.html",
+        "css/tjmanual.css",
+        "css/tjreport.css",
+        "icons/details.png",
+        "icons/flag-green.png",
+        "icons/flag-red.png",
+        "icons/flag-yellow.png",
+        "icons/resource.png",
+        "icons/resourcegroup.png",
+        "icons/task.png",
+        "icons/taskgroup.png",
+        "icons/trend-down.png",
+        "icons/trend-flat.png",
+        "icons/trend-up.png",
+        "scripts/wz_tooltip.js"
+      ],
+      "messages": [],
+      "firstMessage": null,
+      "stdout": [],
+      "stderr": []
+    },
+    {
+      "id": "mwe005",
+      "path": "docs/Learning/mwe005/tutorial.tjp",
+      "kind": "project",
+      "compare": "artifacts",
+      "exit": 0,
+      "artifacts": [
+        "ResourceSchedule.html",
+        "Schedule.html",
+        "css/tjmanual.css",
+        "css/tjreport.css",
+        "icons/details.png",
+        "icons/flag-green.png",
+        "icons/flag-red.png",
+        "icons/flag-yellow.png",
+        "icons/resource.png",
+        "icons/resourcegroup.png",
+        "icons/task.png",
+        "icons/taskgroup.png",
+        "icons/trend-down.png",
+        "icons/trend-flat.png",
+        "icons/trend-up.png",
+        "scripts/wz_tooltip.js"
+      ],
+      "messages": [],
+      "firstMessage": null,
+      "stdout": [],
+      "stderr": []
+    },
+    {
+      "id": "mwe006",
+      "path": "docs/Learning/mwe006/tutorial.tjp",
+      "kind": "project",
+      "compare": "artifacts",
+      "exit": 0,
+      "artifacts": [
+        "StatusReport.html",
+        "css/tjmanual.css",
+        "css/tjreport.css",
+        "icons/details.png",
+        "icons/flag-green.png",
+        "icons/flag-red.png",
+        "icons/flag-yellow.png",
+        "icons/resource.png",
+        "icons/resourcegroup.png",
+        "icons/task.png",
+        "icons/taskgroup.png",
+        "icons/trend-down.png",
+        "icons/trend-flat.png",
+        "icons/trend-up.png",
+        "scripts/wz_tooltip.js"
+      ],
+      "messages": [],
+      "firstMessage": null,
+      "stdout": [],
+      "stderr": []
+    },
+    {
+      "id": "mwe007",
+      "path": "docs/Learning/mwe007/tutorial.tjp",
+      "kind": "project",
+      "compare": "artifacts",
+      "exit": 0,
+      "artifacts": [
+        "ExportCSV.csv",
+        "ExportCalendar.ics"
+      ],
+      "messages": [],
+      "firstMessage": null,
+      "stdout": [],
+      "stderr": []
+    },
+    {
+      "id": "mwe008",
+      "path": "docs/Learning/mwe008/tutorial.tjp",
+      "kind": "project",
+      "compare": "artifacts",
+      "exit": 0,
+      "artifacts": [
+        "Comparison.html",
+        "DelayedView.html",
+        "PlanView.html",
+        "css/tjmanual.css",
+        "css/tjreport.css",
+        "icons/details.png",
+        "icons/flag-green.png",
+        "icons/flag-red.png",
+        "icons/flag-yellow.png",
+        "icons/resource.png",
+        "icons/resourcegroup.png",
+        "icons/task.png",
+        "icons/taskgroup.png",
+        "icons/trend-down.png",
+        "icons/trend-flat.png",
+        "icons/trend-up.png",
+        "scripts/wz_tooltip.js"
+      ],
+      "messages": [],
+      "firstMessage": null,
+      "stdout": [],
+      "stderr": []
+    },
+    {
+      "id": "mwe009",
+      "path": "docs/Learning/mwe009/tutorial.tjp",
+      "kind": "project",
+      "compare": "artifacts",
+      "exit": 0,
+      "artifacts": [
+        "MacroResult.html",
+        "css/tjmanual.css",
+        "css/tjreport.css",
+        "icons/details.png",
+        "icons/flag-green.png",
+        "icons/flag-red.png",
+        "icons/flag-yellow.png",
+        "icons/resource.png",
+        "icons/resourcegroup.png",
+        "icons/task.png",
+        "icons/taskgroup.png",
+        "icons/trend-down.png",
+        "icons/trend-flat.png",
+        "icons/trend-up.png",
+        "scripts/wz_tooltip.js"
+      ],
+      "messages": [],
+      "firstMessage": null,
+      "stdout": [],
+      "stderr": []
+    },
+    {
+      "id": "Account",
+      "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Account.tjp",
+      "kind": "project",
+      "compare": "artifacts",
+      "exit": 0,
+      "artifacts": [
+        "Account-1.html",
+        "Account-2.html",
+        "css/tjmanual.css",
+        "css/tjreport.css",
+        "icons/details.png",
+        "icons/flag-green.png",
+        "icons/flag-red.png",
+        "icons/flag-yellow.png",
+        "icons/resource.png",
+        "icons/resourcegroup.png",
+        "icons/task.png",
+        "icons/taskgroup.png",
+        "icons/trend-down.png",
+        "icons/trend-flat.png",
+        "icons/trend-up.png",
+        "scripts/wz_tooltip.js"
+      ],
+      "messages": [],
+      "firstMessage": null,
+      "stdout": [],
+      "stderr": []
+    },
+    {
+      "id": "Booking",
+      "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Booking.tjp",
+      "kind": "project",
+      "compare": "artifacts",
+      "exit": 0,
+      "artifacts": [],
+      "messages": [
+        "Warning: This project has no reports defined. No output data will be generated.",
+        "Warning: None of the reports has a 'formats' attribute. No output data will be generated."
+      ],
+      "firstMessage": "Warning: This project has no reports defined. No output data will be generated.",
+      "stdout": [],
+      "stderr": []
+    },
+    {
+      "id": "Celltext",
+      "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Celltext.tjp",
+      "kind": "project",
+      "compare": "artifacts",
+      "exit": 0,
+      "artifacts": [
+        "CombinedColumn.html",
+        "CustomTitle.html",
+        "SimpleReport.html",
+        "css/tjmanual.css",
+        "css/tjreport.css",
+        "icons/details.png",
+        "icons/flag-green.png",
+        "icons/flag-red.png",
+        "icons/flag-yellow.png",
+        "icons/resource.png",
+        "icons/resourcegroup.png",
+        "icons/task.png",
+        "icons/taskgroup.png",
+        "icons/trend-down.png",
+        "icons/trend-flat.png",
+        "icons/trend-up.png",
+        "scripts/wz_tooltip.js"
+      ],
+      "messages": [],
+      "firstMessage": null,
+      "stdout": [],
+      "stderr": []
+    },
+    {
+      "id": "Complete",
+      "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Complete.tjp",
+      "kind": "project",
+      "compare": "artifacts",
+      "exit": 0,
+      "artifacts": [
+        "Complete.html",
+        "css/tjmanual.css",
+        "css/tjreport.css",
+        "icons/details.png",
+        "icons/flag-green.png",
+        "icons/flag-red.png",
+        "icons/flag-yellow.png",
+        "icons/resource.png",
+        "icons/resourcegroup.png",
+        "icons/task.png",
+        "icons/taskgroup.png",
+        "icons/trend-down.png",
+        "icons/trend-flat.png",
+        "icons/trend-up.png",
+        "scripts/wz_tooltip.js"
+      ],
+      "messages": [],
+      "firstMessage": null,
+      "stdout": [],
+      "stderr": []
+    },
+    {
+      "id": "Durations",
+      "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Durations.tjp",
+      "kind": "project",
+      "compare": "artifacts",
+      "exit": 0,
+      "artifacts": [],
+      "messages": [
+        "Warning: This project has no reports defined. No output data will be generated.",
+        "Warning: None of the reports has a 'formats' attribute. No output data will be generated."
+      ],
+      "firstMessage": "Warning: This project has no reports defined. No output data will be generated.",
+      "stdout": [],
+      "stderr": []
+    },
+    {
+      "id": "Flags",
+      "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Flags.tjp",
+      "kind": "project",
+      "compare": "artifacts",
+      "exit": 0,
+      "artifacts": [
+        "My Tasks.html",
+        "css/tjmanual.css",
+        "css/tjreport.css",
+        "icons/details.png",
+        "icons/flag-green.png",
+        "icons/flag-red.png",
+        "icons/flag-yellow.png",
+        "icons/resource.png",
+        "icons/resourcegroup.png",
+        "icons/task.png",
+        "icons/taskgroup.png",
+        "icons/trend-down.png",
+        "icons/trend-flat.png",
+        "icons/trend-up.png",
+        "scripts/wz_tooltip.js"
+      ],
+      "messages": [],
+      "firstMessage": null,
+      "stdout": [],
+      "stderr": []
+    },
+    {
+      "id": "Gap",
+      "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Gap.tjp",
+      "kind": "project",
+      "compare": "artifacts",
+      "exit": 0,
+      "artifacts": [],
+      "messages": [
+        "Warning: This project has no reports defined. No output data will be generated.",
+        "Warning: None of the reports has a 'formats' attribute. No output data will be generated."
+      ],
+      "firstMessage": "Warning: This project has no reports defined. No output data will be generated.",
+      "stdout": [],
+      "stderr": []
+    },
+    {
+      "id": "Include",
+      "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Include.tjp",
+      "kind": "project",
+      "compare": "artifacts",
+      "exit": 0,
+      "artifacts": [],
+      "messages": [
+        "Warning: This project has no reports defined. No output data will be generated.",
+        "Warning: None of the reports has a 'formats' attribute. No output data will be generated."
+      ],
+      "firstMessage": "Warning: This project has no reports defined. No output data will be generated.",
+      "stdout": [],
+      "stderr": []
+    },
+    {
+      "id": "Limits-1",
+      "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Limits-1.tjp",
+      "kind": "project",
+      "compare": "artifacts",
+      "exit": 0,
+      "artifacts": [],
+      "messages": [
+        "Warning: This project has no reports defined. No output data will be generated.",
+        "Warning: None of the reports has a 'formats' attribute. No output data will be generated."
+      ],
+      "firstMessage": "Warning: This project has no reports defined. No output data will be generated.",
+      "stdout": [],
+      "stderr": []
+    },
+    {
+      "id": "LoadUnits",
+      "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/LoadUnits.tjp",
+      "kind": "project",
+      "compare": "artifacts",
+      "exit": 0,
+      "artifacts": [
+        "LoadUnits.html",
+        "css/tjmanual.css",
+        "css/tjreport.css",
+        "icons/details.png",
+        "icons/flag-green.png",
+        "icons/flag-red.png",
+        "icons/flag-yellow.png",
+        "icons/resource.png",
+        "icons/resourcegroup.png",
+        "icons/task.png",
+        "icons/taskgroup.png",
+        "icons/trend-down.png",
+        "icons/trend-flat.png",
+        "icons/trend-up.png",
+        "scripts/wz_tooltip.js"
+      ],
+      "messages": [],
+      "firstMessage": null,
+      "stdout": [],
+      "stderr": []
+    },
+    {
+      "id": "Macro-1",
+      "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Macro-1.tjp",
+      "kind": "project",
+      "compare": "artifacts",
+      "exit": 0,
+      "artifacts": [],
+      "messages": [
+        "Warning: This project has no reports defined. No output data will be generated.",
+        "Warning: None of the reports has a 'formats' attribute. No output data will be generated."
+      ],
+      "firstMessage": "Warning: This project has no reports defined. No output data will be generated.",
+      "stdout": [],
+      "stderr": []
+    },
+    {
+      "id": "Milestone",
+      "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Milestone.tjp",
+      "kind": "project",
+      "compare": "artifacts",
+      "exit": 0,
+      "artifacts": [],
+      "messages": [
+        "Warning: This project has no reports defined. No output data will be generated.",
+        "Warning: None of the reports has a 'formats' attribute. No output data will be generated."
+      ],
+      "firstMessage": "Warning: This project has no reports defined. No output data will be generated.",
+      "stdout": [],
+      "stderr": []
+    },
+    {
+      "id": "Period",
+      "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Period.tjp",
+      "kind": "project",
+      "compare": "artifacts",
+      "exit": 0,
+      "artifacts": [
+        "My Tasks.html",
+        "css/tjmanual.css",
+        "css/tjreport.css",
+        "icons/details.png",
+        "icons/flag-green.png",
+        "icons/flag-red.png",
+        "icons/flag-yellow.png",
+        "icons/resource.png",
+        "icons/resourcegroup.png",
+        "icons/task.png",
+        "icons/taskgroup.png",
+        "icons/trend-down.png",
+        "icons/trend-flat.png",
+        "icons/trend-up.png",
+        "scripts/wz_tooltip.js"
+      ],
+      "messages": [],
+      "firstMessage": null,
+      "stdout": [],
+      "stderr": []
+    },
+    {
+      "id": "Query",
+      "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Query.tjp",
+      "kind": "project",
+      "compare": "artifacts",
+      "exit": 0,
+      "artifacts": [
+        "QueryDemo.html",
+        "css/tjmanual.css",
+        "css/tjreport.css",
+        "icons/details.png",
+        "icons/flag-green.png",
+        "icons/flag-red.png",
+        "icons/flag-yellow.png",
+        "icons/resource.png",
+        "icons/resourcegroup.png",
+        "icons/task.png",
+        "icons/taskgroup.png",
+        "icons/trend-down.png",
+        "icons/trend-flat.png",
+        "icons/trend-up.png",
+        "scripts/wz_tooltip.js"
+      ],
+      "messages": [],
+      "firstMessage": null,
+      "stdout": [],
+      "stderr": []
+    },
+    {
+      "id": "textreport",
+      "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/textreport.tjp",
+      "kind": "project",
+      "compare": "artifacts",
+      "exit": 0,
+      "artifacts": [
+        "css/tjmanual.css",
+        "css/tjreport.css",
+        "icons/details.png",
+        "icons/flag-green.png",
+        "icons/flag-red.png",
+        "icons/flag-yellow.png",
+        "icons/resource.png",
+        "icons/resourcegroup.png",
+        "icons/task.png",
+        "icons/taskgroup.png",
+        "icons/trend-down.png",
+        "icons/trend-flat.png",
+        "icons/trend-up.png",
+        "scripts/wz_tooltip.js",
+        "textreport.html"
+      ],
+      "messages": [],
+      "firstMessage": null,
+      "stdout": [],
+      "stderr": []
+    },
+    {
+      "id": "bad_time_zone",
+      "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/bad_time_zone.tjp",
+      "kind": "errors",
+      "compare": "artifacts",
+      "exit": 1,
+      "artifacts": [],
+      "messages": [
+        "<PATH>:3: Error: foo/bar is not a known time zone"
+      ],
+      "firstMessage": "<PATH>:3: Error: foo/bar is not a known time zone",
+      "stdout": [],
+      "stderr": [
+        "  timezone \"foo/bar\""
+      ]
+    },
+    {
+      "id": "no_token_match1",
+      "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/no_token_match1.tjp",
+      "kind": "errors",
+      "compare": "artifacts",
+      "exit": 1,
+      "artifacts": [],
+      "messages": [
+        "<PATH>:5: Error: Unexpected characters found: '    ...'"
+      ],
+      "firstMessage": "<PATH>:5: Error: Unexpected characters found: '    ...'",
+      "stdout": [],
+      "stderr": []
+    },
+    {
+      "id": "include_recursion",
+      "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/include_recursion.tjp",
+      "kind": "errors",
+      "compare": "artifacts",
+      "exit": 1,
+      "artifacts": [],
+      "messages": [
+        "<PATH>:1: Error: Recursive inclusion of <PATH> detected"
+      ],
+      "firstMessage": "<PATH>:1: Error: Recursive inclusion of <PATH> detected",
+      "stdout": [],
+      "stderr": []
+    },
+    {
+      "id": "adopt_self",
+      "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/adopt_self.tjp",
+      "kind": "errors",
+      "compare": "artifacts",
+      "exit": 1,
+      "artifacts": [],
+      "messages": [
+        "Error: A property cannot adopt itself"
+      ],
+      "firstMessage": "Error: A property cannot adopt itself",
+      "stdout": [],
+      "stderr": []
+    },
+    {
+      "id": "bad_include",
+      "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/bad_include.tjp",
+      "kind": "errors",
+      "compare": "artifacts",
+      "exit": 1,
+      "artifacts": [],
+      "messages": [
+        "<PATH>:6: Error: Cannot open include file <PATH>"
+      ],
+      "firstMessage": "<PATH>:6: Error: Cannot open include file <PATH>",
+      "stdout": [],
+      "stderr": [
+        "task"
+      ]
+    },
+    {
+      "id": "chargeset",
+      "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/chargeset.tjp",
+      "kind": "errors",
+      "compare": "artifacts",
+      "exit": 1,
+      "artifacts": [],
+      "messages": [
+        "<PATH>:12: Error: Total share of this set is <NUM> instead of 100%."
+      ],
+      "firstMessage": "<PATH>:12: Error: Total share of this set is <NUM> instead of 100%.",
+      "stdout": [],
+      "stderr": [
+        "}"
+      ]
+    },
+    {
+      "id": "no_reduce",
+      "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/no_reduce.tjp",
+      "kind": "errors",
+      "compare": "artifacts",
+      "exit": 1,
+      "artifacts": [],
+      "messages": [
+        "<PATH>:5: Error: Unexpected token 'dd' found. Expecting one of 'min', 'h', 'd', 'w', 'm', 'y'"
+      ],
+      "firstMessage": "<PATH>:5: Error: Unexpected token 'dd' found. Expecting one of 'min', 'h', 'd', 'w', 'm', 'y'",
+      "stdout": [],
+      "stderr": [
+        "\teffort 1dd"
+      ]
+    },
+    {
+      "id": "parity-csv-tasks",
+      "path": "packages/cli/tests/fixtures/golden/parity-csv-tasks.smx",
+      "kind": "parity",
+      "compare": "exact",
+      "exit": 0,
+      "artifacts": [
+        "tasks.csv"
+      ],
+      "messages": [],
+      "firstMessage": null,
+      "stdout": [],
+      "stderr": [],
+      "outputs": {
+        "tasks.csv": "\"Id\";\"Name\";\"Start\";\"End\";\"Priority\";\"Completion\"\n\"design\";\"Design\";\"2026-01-05\";\"2026-01-09\";500;\"0%\"\n\"build\";\"Build\";\"2026-01-12\";\"2026-01-14\";500;\"0%\"\n"
+      }
+    },
+    {
+      "id": "parity-csv-accounts",
+      "path": "packages/cli/tests/fixtures/golden/parity-csv-accounts.smx",
+      "kind": "parity",
+      "compare": "exact",
+      "exit": 0,
+      "artifacts": [
+        "accounts.csv"
+      ],
+      "messages": [],
+      "firstMessage": null,
+      "stdout": [],
+      "stderr": [],
+      "outputs": {
+        "accounts.csv": "\"Index\";\"Name\"\n1;\"Project Cost\"\n2;\"Customer Payments\"\n"
+      }
+    },
+    {
+      "id": "parity-csv-balance",
+      "path": "packages/cli/tests/fixtures/golden/parity-csv-balance.smx",
+      "kind": "parity",
+      "compare": "artifacts",
+      "exit": 0,
+      "artifacts": [
+        "accounts.csv"
+      ],
+      "messages": [],
+      "firstMessage": null,
+      "stdout": [],
+      "stderr": []
+    },
+    {
+      "id": "parity-html",
+      "path": "packages/cli/tests/fixtures/golden/parity-html.smx",
+      "kind": "parity",
+      "compare": "dom",
+      "exit": 0,
+      "artifacts": [
+        "css/tjmanual.css",
+        "css/tjreport.css",
+        "icons/details.png",
+        "icons/flag-green.png",
+        "icons/flag-red.png",
+        "icons/flag-yellow.png",
+        "icons/resource.png",
+        "icons/resourcegroup.png",
+        "icons/task.png",
+        "icons/taskgroup.png",
+        "icons/trend-down.png",
+        "icons/trend-flat.png",
+        "icons/trend-up.png",
+        "report.html",
+        "scripts/wz_tooltip.js"
+      ],
+      "messages": [],
+      "firstMessage": null,
+      "stdout": [],
+      "stderr": [],
+      "outputs": {
+        "report.html": "<!DOCTYPE html>\n<!-- This file has been generated by tj3 v<VER> -->\n<html lang=\"en\" xml:lang=\"en\">\n <head>\n  <title>Parity Html - report</title>\n  <meta content=\"text/html; charset=utf-8\" http-equiv=\"Content-Type\"/>\n  <meta content=\"IE=9\" http-equiv=\"X-UA-Compatible\"/>\n  <meta content=\"TaskJuggler Report\" name=\"description\"/>\n  <meta content=\"taskjuggler, project, management\" name=\"keywords\"/>\n </head>\n <link href=\"css/tjreport.css\" rel=\"stylesheet\" type=\"text/css\"></link>\n <!-- Dynamic Report ID: 0 -->\n <body>\n  <script src=\"scripts/wz_tooltip.js\" type=\"text/javascript\"></script>\n  <noscript><div style=\"text-align:center; color:#FF0000\">This page requires Javascript for full functionality. Please enable it\nin your browser settings!\n</div></noscript>\n  <div class=\"tj_page\">\n   <!-- Dynamic Report ID: 0 -->\n   <table cellspacing=\"1\" class=\"tj_table_frame\">\n    <tr><td><table cellspacing=\"1\" class=\"tj_table\"><tbody>\n        <tr class=\"tabhead\" style=\"height:39px; font-size:15px;\">\n         <td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">Id</td></tr></table></td>\n         <td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">Name</td></tr></table></td>\n         <td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">Start</td></tr></table></td>\n         <td class=\"tabcell\"><table cellspacing=\"0\" class=\"tj_table_header_cell\" style=\"text-align:center; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; font-weight:bold; \">End</td></tr></table></td>\n        </tr>\n        <tr class=\"tabline\" style=\"font-size:12px; \">\n         <td class=\"taskcell1\"><table cellspacing=\"0\" class=\"tj_table_cell\" style=\"text-align:left; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; \">design</td></tr></table></td>\n         <td class=\"taskcell1\">\n          <table cellspacing=\"0\" class=\"tj_table_cell\" style=\"text-align:left; \"><tr>\n            <td class=\"tj_table_cell_icon\" onclick=\"TagToTip('ID<n>', TITLE, 'Design')\" style=\"cursor:help; \"><img alt=\"Icon\" src=\"icons/task.png\"></img></td>\n            <td class=\"tj_table_cell_label\" style=\"white-space:nowrap; \">Design</td>\n           </tr></table>\n          <div class=\"tj_tooltip_box\" id=\"ID<n>\" style=\"cursor:help\"><div>\n            <b>ID:</b> design</div></div>\n         </td>\n         <td class=\"taskcell1\"><table cellspacing=\"0\" class=\"tj_table_cell\" style=\"text-align:left; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; \">2026-01-05</td></tr></table></td>\n         <td class=\"taskcell1\"><table cellspacing=\"0\" class=\"tj_table_cell\" style=\"text-align:left; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; \">2026-01-07</td></tr></table></td>\n        </tr>\n        <tr class=\"tabline\" style=\"font-size:12px; \">\n         <td class=\"taskcell2\"><table cellspacing=\"0\" class=\"tj_table_cell\" style=\"text-align:left; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; \">build</td></tr></table></td>\n         <td class=\"taskcell2\">\n          <table cellspacing=\"0\" class=\"tj_table_cell\" style=\"text-align:left; \"><tr>\n            <td class=\"tj_table_cell_icon\" onclick=\"TagToTip('ID<n>', TITLE, 'Build')\" style=\"cursor:help; \"><img alt=\"Icon\" src=\"icons/task.png\"></img></td>\n            <td class=\"tj_table_cell_label\" style=\"white-space:nowrap; \">Build</td>\n           </tr></table>\n          <div class=\"tj_tooltip_box\" id=\"ID<n>\" style=\"cursor:help\"><div>\n            <b>ID:</b> build</div></div>\n         </td>\n         <td class=\"taskcell2\"><table cellspacing=\"0\" class=\"tj_table_cell\" style=\"text-align:left; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; \">2026-01-07</td></tr></table></td>\n         <td class=\"taskcell2\"><table cellspacing=\"0\" class=\"tj_table_cell\" style=\"text-align:left; \"><tr><td class=\"tj_table_cell_label\" style=\"white-space:nowrap; \">2026-01-11</td></tr></table></td>\n        </tr>\n       </tbody></table></td></tr>\n    <tr><td></td></tr>\n   </table>\n   <div class=\"copyright\">Project: Parity Html Version: 1.0 - <TS></div>\n  </div>\n </body>\n</html>\n"
+      }
+    }
+  ]
+}

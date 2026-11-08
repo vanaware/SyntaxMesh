@@ -1,0 +1,40 @@
+# Golden CLI vs tj3 (Fase 24.7) — CSV do modo `balance` (divergência D2).
+#
+# Este fixture **não** é comparado byte a byte: o `tj3` fecha a lista com uma
+# linha `Total` automática (um `Account` temporário que adota a conta de custo
+# e a de receita, `AccountListRE#generateIntermediateFormat`) e reinicia o
+# índice em cada lista. O port ainda não gera essa linha — detalhes e âncora
+# em `packages/cli/tests/golden/known_divergences.md`.
+#
+# O caso continua no subset para travar `exit` e inventário de artefatos: se a
+# geração do `accountreport` quebrar (era um crash de `currencyFormat`, 24.7),
+# o teste acusa na hora.
+project prj "Parity Balance" "1.0" 2026-01-05 - 2026-02-15 {
+  timezone "UTC"
+  timeformat "%Y-%m-%d"
+  now 2026-01-05
+  currency "EUR"
+}
+
+account project_cost "Project Cost"
+account customer "Customer Payments" {
+  credits 2026-01-05 "Down payment" 500.0
+}
+
+balance project_cost customer
+
+resource dev "Developer" {
+  rate 80.0
+}
+
+task work "Work" {
+  effort 4d
+  allocate dev
+  chargeset project_cost
+  charge 300.0 onstart
+}
+
+accountreport money "accounts" {
+  formats csv
+  columns index, name, weekly
+}

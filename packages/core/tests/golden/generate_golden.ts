@@ -139,6 +139,22 @@ const scripts: Array<{ name: string; rubyScript: URL; outputPath: URL }> = [
     ),
     outputPath: new URL("./dynamic-attributes.golden.json", import.meta.url,),
   },
+  // 24.7.2/24.7.3: fidelidade da CLI contra o `tj3` real sobre um subset de
+  // fixtures — código de saída, inventário de artefatos, primeira mensagem
+  // (fixtures de erro) e, nos fixtures de paridade, o conteúdo dos arquivos.
+  // O teste vive em `packages/cli/tests/golden_cli_test.ts` (o golden mora no
+  // pacote que o consome).
+  {
+    name: "cli-tj3",
+    rubyScript: new URL(
+      "../../../../scripts/golden/cli-tj3.rb",
+      import.meta.url,
+    ),
+    outputPath: new URL(
+      "../../../cli/tests/golden/cli-tj3.golden.json",
+      import.meta.url,
+    ),
+  },
 ];
 
 for (const { name, rubyScript, outputPath, } of scripts) {

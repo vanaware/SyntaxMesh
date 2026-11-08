@@ -1245,7 +1245,14 @@ export class TaskScenario extends ScenarioData {
     fromOutside: boolean,
     forward: boolean,
   ): void {
-    if (path.includes([this.getProperty() as Task, atEnd,],)) {
+    // RUBY-COMPAT-FIX: `path.include?([@property, atEnd])` do Ruby compara
+    // **estruturalmente** (`Array#==`); `Array#includes` do JS compara por
+    // referência e uma tupla recém-criada nunca é `===` à do `path`, então o
+    // laço nunca era detectado e o port morria em silêncio (exit 1 sem
+    // mensagem). Golden CLI (24.7): `tj3` emite `loop_detected` + `Aborting`.
+    if (
+      path.some(([task, end,],) => task === this.getProperty() && end === atEnd)
+    ) {
       this.warning(
         "loop_detected",
         `Dependency loop detected at ${atEnd ? "end" : "start"} of task ${
@@ -1261,7 +1268,9 @@ export class TaskScenario extends ScenarioData {
         if (!skip) {
           this.info(
             `loop_at_${e ? "end" : "start"}`,
-            `Loop contained at ${e ? "end" : "start"} of task ${t.fullId}`,
+            // `ctnd.` é o texto do Ruby (`TaskScenario.rb:642`), abreviado lá.
+            `Loop ctnd. at ${e ? "end" : "start"} of task ${t.fullId}`,
+            t.sourceFileInfo as unknown as SourceFileInfo | null,
           );
         }
       }
