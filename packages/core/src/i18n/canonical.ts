@@ -225,6 +225,8 @@ export const CANONICAL_KEYWORDS = [
   "status",
   "statussheet",
   "statussheetreport",
+  // Fase 24 — modificador `stdout` de relatórios (extensão SyntaxMesh).
+  "stdout",
   // Fase 14 Complemento C18 — colunas de estoque do materialreport (extensão).
   "stockcost",
   "stockquantity",

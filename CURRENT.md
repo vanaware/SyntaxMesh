@@ -237,7 +237,7 @@ i18n (10.15+) em `packages/core/src/i18n/`.
   **730 testes / 6402 passos verdes**, com 1 falha **pré-existente** em
   `tests/reports/markdown-report_14c_test.ts` (reproduzida em worktree limpo
   do HEAD — não é regressão da F23).
-- **Fase 24 — CLI (`packages/cli`)** ⬜ — plano `fase-24-cli.md` + tarefas
+- **Fase 24 — CLI (`packages/cli`)** 🟨 Em andamento (2026-11-07: 24.0–24.1 + 24.2 grupos 1–5 + 24.3 + 24.4 + 24.5 + 24.6 ✅) — plano `fase-24-cli.md` + tarefas
   `fase-24-cli-tarefas.md` (~114, sendo ~100 da 1ª onda + adendos 24.9/24.10).
   Depois da 23, antes da 21¹; tj3-equivalente multi-runtime (Deno/Bun/Node); a
   **1ª onda da Fase 21 usa esta CLI como runner** dos golden tests contra o `tj3`
@@ -246,7 +246,152 @@ i18n (10.15+) em `packages/core/src/i18n/`.
   núcleo da F18; **sem SMTP** — sender devolve o texto do email, receiver lê o
   texto da mensagem), `--report` com dynamicAttributes, `FileList`/`StdIoWrapper`
   da F16, imagens `13.14.3` e regressão `format richtext` (`13.14.4`).
-  Âncoras `Fase 24` já no core: `TaskJuggler.parse/parseFile/parseContent/freeze`.
+  **Desancorado do core (ADR 034):** `parse`/`parseFile`/`parseContent` recebem o
+  texto por **provedor injetado** (`FileContentProvider`) — o core não lê disco
+  nem terminal (storage da PWA continua na Fase 19). Só `TaskJuggler.freeze`
+  segue ancorado, porque reescrever o master `.tjp` é política da CLI.
+  **API nova entregue:** `Report#outputs: Map<format, texto>` (coleta num único
+  ponto do dispatch de `generate()`, CSV normalizado por `CSVFile`; `output`/
+  `outputFileName` legados intactos), módulo `src/reports/reports-json.ts`
+  (`ReportsJson`/`ReportJsonEntry`/`FormatContent` + `renderReports(project,
+  options)`: ordem de declaração, `errors[]` por relatório sem matar os demais,
+  `ok` global) e a fachada `TaskJuggler.renderReports(options?)` como construtor
+  reutilizável da seção `results.reports`.
+  **Extensão de DSL:** o modificador `stdout` (`taskreport r "T" stdout { … }`,
+  keyword i18n en/pt-BR/es + atributo booleano `stdout` do `PropertySet` de
+  relatórios, default `false`) registra apenas a **intenção**; quem imprime no
+  terminal é a política de saída da CLI (`output-policy.ts`, 24.5).
+  Compatibilidade: `.tjp` sem `stdout` parseia igual (golden de
+  `attribute-definitions` preservado — `SM_EXTENSION_IDS` no teste).
+  Pureza auditada por `tests/reports/purity_24_test.ts` (grep estático: sem
+  `node:fs`/`Deno.*` de I/O/`console.*` no pipeline de relatórios).
+  **Fachada `execute` (24.2.22–24.2.29):** `TaskJuggler.execute(request)`/
+  `core.execute(request)` **orquestra o pipeline interno** (parse → gates de
+  `--check-syntax`/`--list-reports` → schedule → `checkReports` → reports) e
+  devolve o envelope `{ ok, exitCode, options, messages, results }` do adendo
+  v2.1 §3: eco de opções (só caminhos, nunca o conteúdo), `exitCode` pela
+  matriz §5.3, mensagens estruturadas e **apenas** as seções pedidas
+  (`check`/`listReports`/`reports`/`help`/`version` + `freeze`/`sheet`/`man`
+  ancorados com `*_not_available`). O módulo `src/execution/` guarda
+  `types.ts`/`sections.ts`/`envelope.ts`/`execute.ts`/`mod.ts`; o
+  `include` é resolvido por lookup em memória via `normalizeInputPath`.
+  Como `MessageHandler`/`DataCache` são singletons, chamadas concorrentes são
+  **serializadas** por fila de processo (adendo §3.6) — `request`/envelope são
+  `structuredClone`áveis. `appOptions` usa `ExecutionSheetAppOptions` (sem o
+  `now` funcional da F18) para manter o contrato data-pure; `formats[]` vem de
+  `Report#outputs` após a geração (não do declarado), o que faz `-A` bater.
+  **Grupo 5 (24.2.31–24.2.36) — costuras de `FileStore` rebaixadas a dados:**
+  auditoria classificou cada costura herdada entre _permanece no caminho
+  passo-a-passo/PWA_ (`SheetAppContext.fileStore`, `setFileStore`/
+  `requireFileStore`, `TaskJuggler.fileStore`) e _refatorada para dados na
+  fronteira `execute`_ (`SheetHandlerBase`/sheets, `checkTimeSheet`/
+  `checkStatusSheet`, `CSVFile.read`, `XMLDocument.write`, `resolveImageRef` =
+  permanece DOM-free). Na via `execute` os apps recebem um `MemoryFileStore`
+  efêmero semeado com `request.files` (`sheets/app-data.ts` →
+  `runSheetAppData`) e devolvem `emails`/`attachments[{name,contents}]`/
+  `files`/`log`; `check-ts`/`check-ss` usam a API de conteúdo
+  (`checkTimeSheetContent`/`checkStatusSheetContent`) e o app roda **depois**
+  do `schedule`, como no `appMain` do Ruby. English-first: os avisos
+  `csv_write_noop` e `xml_document_write_noop` foram traduzidos. **Extensão
+  única `.smx`:** mestre aceita `.tjp`/`.smx`, `include` aceita `.tji`/`.smx`
+  (`parser/file-extensions.ts`) e sender/receiver/summary **gravam** `.smx`
+  (`all.smx`) reconhecendo `.tji`/`all.tji` na leitura (`sheet-extensions.ts` +
+  `findSheetFile`); desvio validado da regra zero, registrado no aditamento
+  v2.1 do ADR 037 e em notas dos ADRs 026/027/038. Pendente no bloco: só os
+  commits (24.2.30/24.2.37).
+  **Bloco D (24.3) — flags → request e chamada única.** `src/options.ts`
+  traduz `argv` **sem** processo/disco: posicional → `entry`, booleanas do §5.2
+  campo a campo, valores com `--flag=valor`, `--` terminador e
+  `--silent`/`--no-color` no objeto `renderer` (fora do request); `--config`
+  vira `configFile` (ler arquivo é I/O). Flags adiadas (`--freeze*`,
+  `--check-time-sheet`/`--check-status-sheet`, `--debug*`) lançam
+  `CliUsageError` com rótulo English-first derivado da subfase do `deferred`
+  (`phase 24.9`/`phase 24.10`); `resolveExit` projeta `0 | 1` sem inventar
+  sucesso. `src/cli.ts` cumpre o fluxo único do §5.1: `parseArgs` →
+  `collectInputFiles` (master + fechamento transitivo de `include`s via
+  `io.readText`, caminho canônico por `normalizeInputPath`, dedupe/ciclo) →
+  **uma** chamada `core.execute(request)` → mensagens/seções → `exit`. A
+  descoberta de `include`s é do core (`parser/include-references.ts`:
+  `includeKeywords`/`scanIncludeReferences`, comentário fora de string e
+  sinônimos i18n de `include` — `incluir`), porque é conhecimento de linguagem
+  e não de processo. `buildCommand()` monta a ajuda Cliffy a partir de
+  `OPTION_SPECS` (fonte única) com `--help` sem ANSI; o parsing continua no
+  `parseArgs` puro. Provas: `tests/options_test.ts` (20 passos),
+  `tests/cli_test.ts` (15), `tests/cli.integration_test.ts` (4 subprocessos:
+  `mwe001`→0, inválida→1, `.smx`+`include`→0, `--version` sem arquivo) e
+  `tests/parser/include-references_test.ts` (7). Pendências: aplicação do YAML
+  do `--config` (só aviso `not applied yet`; `Tj3Config` é stub), despacho de
+  `reports`/`freeze`/`sheet`/`man` (24.5/24.6) e smoke Bun (binário ausente).
+- **Bloco D (24.4) — reporter e resumo do projeto.** `src/reporter.ts`
+  reproduz `Message#to_s` do Ruby (`arquivo:linha: Tipo: texto`) com cores por
+  severidade e writers injetáveis; a contagem `X errors, Y warnings` sai só
+  quando `errors + warnings > 0`. Mensagens vão para **stderr** (como o
+  `MessageHandler` e para não corromper o stdout dos relatórios de
+  `stdout: true` da 24.5) e o stdout recebe as seções pedidas + o resumo.
+  `src/summary.ts` formata identidade, timezone, período, contagens e custo do
+  cenário do plano a partir de `lastExecutedProject()` — conveniência nova no
+  core (`execution/execute.ts`), reposta a `null` a cada `execute`, com o
+  envelope preservado como contrato. `io.ts` ganhou `isTty()` e a cor só liga
+  em terminal (`--no-color` sempre respeitado). `--silent` cala info/debug e o
+  resumo, mantendo avisos/erros. Provas: `tests/reporter_test.ts` (11),
+  `tests/summary_test.ts` (6), `isTty` em `tests/io_test.ts` (3),
+  `tests/cli_test.ts` (16, novo contrato de streams) e
+  `tests/cli.integration_test.ts` (4 subprocessos, `mwe001` com resumo).
+  Pendências: `reports`/`freeze`/`sheet`/`man` (24.5/24.9/24.10) e o commit
+  `feat(cli): reporter+summary`.
+- **Bloco E (24.5) — política de saída + relatórios ponta a ponta.**
+  `src/output-policy.ts` decide **onde** cada conteúdo vai, nunca como o disco
+  funciona: ramo terminal (`stdout: true` ou nome `.`) imprime todos os
+  formatos na ordem declarada com `--- <name> [<format>] ---` e apara um `\n`
+  final; ramo arquivo grava `{name}.{ext}` pela tabela do plano §5.5
+  (`markdown→md`, `iCal→ics`, `mspxml`/`niku→xml`, `ctags` sem sufixo) em
+  `--output-dir`/cwd, sanitizando o nome (só o último segmento sobrevive,
+  `[\\?%*:|"<>]→_`, vazio → `report`) e sobrescrevendo por default. Erro em
+  `reports[].errors` ou `ok: false` **aborta sem saída parcial** (nenhum
+  arquivo, nenhum asset) e as mensagens passam por `Reporter.error`. Assets do
+  HTML (`css/`, `icons/`, `scripts/wz_tooltip.js`) são copiados só quando sai
+  `html` de relatório não-`selfcontained` — o core passou a expor
+  `ReportJsonEntry.selfcontained`. Dois bugs de fronteira apareceram na matriz
+  e ficaram em `io.ts`: `copyTree` fazia `readdir` em arquivo (nova `isDir()`) e
+  `exists()` usava `access()`, que no shim `node:fs` do Deno exige `--allow-sys`
+  (`NotCapable: uid`) — reescrita sobre `stat`. `--reports` casa **ids**
+  (`report1`…), não nomes, fiel ao `tj3`. Provas: `tests/output_policy_test.ts`
+  (22 passos) e `tests/cli.integration_test.ts` (35 passos: MWEs, matrizes de
+  erro/scheduler, `include` em 2 níveis, `--no-reports`/`--force-reports`,
+  `--reports`/`--list-reports`, idempotência, formato desconhecido, assets);
+  suíte do pacote **29 testes / 137 passos**. Divergência **do core** (não da
+  CLI): `mwe004` sai 1 com `start date (2024-08-01) of task AcSo.deliveries is
+  before the start date (2024-08-01) of the enclosing task` — datas iguais na
+  mensagem, comparação por `toSeconds` — registrada como `it.ignore` e
+  encaminhada à 1ª onda da Fase 21. Pendente: commit
+  `feat(cli): reports-pipeline+output-policy`.
+- **Bloco F (24.6) — multi-runtime, binário e README.** `deno task build` produz
+  os dois artefatos: `dist/syntaxmesh` (`deno compile`, permissões embutidas) e
+  `dist/cli.js` + `dist/package.json` (`scripts/bundle-node.ts` → `deno bundle
+  --platform=deno`, shebang node, ESM). O bundle Node roda `mwe001` com todos
+  os assets (`css/`, `icons/`, `scripts/wz_tooltip.js`) porque `dist/` está a
+  três níveis da raiz; o binário compilado não os encontra (assets relativos
+  ao módulo) — limitação registrada. **Bug real de multi-runtime achado pelo
+  bundle:** `node dist/cli.js` morria com `Hour 24 out of range` porque o ICU
+  do Node mapeia `hour12: false` para o ciclo h24 (meia-noite = 24) enquanto o
+  Deno devolve 0; `timezone.ts` passou a usar `hourCycle: "h23"` (+ `% 24`
+  defensivo) com regressão em `tests/time/timezone_test.ts`.
+  **Versão única (24.6.6):** `version.ts` (0.0.2) alimenta `AppConfig.version`,
+  `initTj3Config` (que fixava `0.0.0`) e `CORE_VERSION`; goldens `html-xml`/
+  `ical`, o smoke da F17 (agora interpola `VERSION`) e `esbuild.jsonc#versionPaths`
+  foram alinhados. Medição de tamanho: 605 MB default, 349 MB com
+  `--node-modules-dir=none`, 114 MB em árvore isolada (o grafo da CLI tem 6
+  pacotes npm; o resto é `wrangler`/`workerd`/`sharp` de `packages/server`) e
+  `env -i ./dist/syntaxmesh --version` → 0. `packages/cli/README.md` documenta
+  uso, flags, destinos, tabela de extensões, política de aborto, permissões por
+  runtime e limitações (Deno Deploy sem FS, tamanho do binário, `--config`
+  stub, `sheet`/`man`/`--freeze*` pendentes). Provas:
+  `tests/distribution_test.ts` (bundle → shebang/ESM → `node --version` →
+  `node mwe001` + assets; Bun sondado e `it.ignore`) e `tests/version_test.ts`;
+  suíte do pacote **35 testes / 161 passos**. Correção colateral: os testes
+  18.12 voltaram a passar (`checkTimeSheet`/`checkStatusSheet` exigem projeto
+  antes do `FileStore`). Pendências: bun ausente (24.6.4) e o commit
+  `chore(cli): multi-runtime`.
 - **Fase 21 — Compatibilidade e Qualidade ⬜ — reescopada em 3 ondas**
   (`fase-21-compatibilidade-qualidade.md` §0): 1ª valida o **motor** via CLI da
   24 (antes da 22); 2ª adapta o suite à **extensão VS Code** (depois da 22);

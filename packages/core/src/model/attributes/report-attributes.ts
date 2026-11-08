@@ -1158,4 +1158,23 @@ export function registerReportAttributes(propertySet: PropertySet,): void {
       false, // inheritedFromProject
     ),
   );
+
+  // stdout: intenção de imprimir o relatório no terminal (BooleanAttribute)
+  // — extensão Fase 24 (adendo §2.2). Booleano de **intenção**: o core não
+  // imprime nada, só registra a property; a CLI decide o destino. Não é
+  // herdado (cada relatório declara a própria intenção); ausência lê `false`.
+  propertySet.addAttributeType(
+    new AttributeDefinition(
+      "stdout",
+      "Print To Stdout",
+      AttributeType.Boolean,
+      false,
+      false, // userDefined
+      false, // isList
+      false, // isSingleton
+      false, // isScenarioAttribute
+      false, // inheritedFromParent
+      false, // inheritedFromProject
+    ),
+  );
 }

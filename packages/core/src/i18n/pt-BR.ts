@@ -224,6 +224,8 @@ const keywords: Record<CanonicalKeyword, string[]> = {
   status: ["estado",],
   statussheet: ["folhaestado",],
   statussheetreport: ["relatoriofolhaestado",],
+  // Fase 24 — modificador `stdout` invariavelmente (extensão SyntaxMesh).
+  stdout: ["stdout",],
   stockcost: ["custoestoque",],
   stockquantity: ["quantidadeestoque",],
   strict: ["rigoroso",],

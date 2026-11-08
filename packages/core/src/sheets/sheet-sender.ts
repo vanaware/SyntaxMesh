@@ -34,6 +34,7 @@ import {
   type SheetType,
   sprintf,
 } from "./sheet-handler-base.ts";
+import { SHEET_EXTENSION, } from "./sheet-extensions.ts";
 
 /** Id fixo do `resourcereport` interno (Ruby `rl_21497214`). */
 export const RESOURCE_LIST_REPORT_ID = "rl_21497214";
@@ -264,7 +265,10 @@ export class SheetSender extends SheetHandlerBase {
   }
 
   /**
-   * Gera um `.tji` por recurso e habilita a assinatura (Ruby `genTemplates`).
+   * Gera um `.smx` por recurso e habilita a assinatura (Ruby `genTemplates`).
+   *
+   * Templates legados (`.tji`) continuam sendo reaproveitados quando `force`
+   * não é pedido (24.2.36).
    */
   protected async genTemplates(
     resources: SheetResourceInfo[],
@@ -277,12 +281,19 @@ export class SheetSender extends SheetHandlerBase {
       this.info(`Generating template for ${res}...`,);
       const reportId = `sheet_template_${res}`;
       const templateFile = `${this.templateDir}/${res}_${this.date}`;
-      // O primeiro template define o intervalo da folha.
-      if (firstTemplateFile === null) firstTemplateFile = `${templateFile}.tji`;
+      const nativeFile = `${templateFile}${SHEET_EXTENSION}`;
 
       // Não regenera templates existentes sem `force`.
-      if (!this.force && await store.exists(`${templateFile}.tji`,)) {
-        this.info(`Skipping already existing ${templateFile}.tji.`,);
+      const existing = await this.findSheetFile(
+        this.templateDir,
+        `${res}_${this.date}`,
+      );
+      const fileName = this.force || existing === null ? nativeFile : existing;
+      // O primeiro template define o intervalo da folha — mesmo quando é a
+      // forma legada que já estava na pasta (24.2.36).
+      if (firstTemplateFile === null) firstTemplateFile = fileName;
+      if (!this.force && existing !== null) {
+        this.info(`Skipping already existing ${existing}.`,);
         continue;
       }
 
@@ -298,7 +309,6 @@ export class SheetSender extends SheetHandlerBase {
         reportDef,
         this.templateAttributes,
       );
-      const fileName = `${templateFile}.tji`;
       await store.write(fileName, output,);
       this.writtenAt.set(fileName, this.clock().getTime(),);
     }
@@ -312,7 +322,7 @@ export class SheetSender extends SheetHandlerBase {
   }
 
   /**
-   * Envia um email por recurso com o `.tji` em anexo (Ruby
+   * Envia um email por recurso com o `.smx` em anexo (Ruby
    * `sendReportTemplates`, l.181-199).
    */
   protected async sendReportTemplates(
@@ -321,7 +331,11 @@ export class SheetSender extends SheetHandlerBase {
     const store = this.requireFileStore("sendReportTemplates",);
 
     for (const resource of resources) {
-      const attachment = `${this.templateDir}/${resource.id}_${this.date}.tji`;
+      const attachment = await this.findSheetFile(
+        this.templateDir,
+        `${resource.id}_${this.date}`,
+      ) ?? `${this.templateDir}/${resource.id}_${this.date}` +
+          SHEET_EXTENSION;
       if (!(await store.exists(attachment,))) {
         this.error(
           "sendReportTemplates: " +

@@ -37,6 +37,7 @@ import {
   rfc2822Date,
   toBase64,
 } from "./email-message.ts";
+import { SHEET_EXTENSIONS, } from "./sheet-extensions.ts";
 
 /** Como o email sairia do processo (inerte no browser — ADR 036). */
 export type EmailDeliveryMethod = "smtp" | "sendmail";
@@ -175,6 +176,27 @@ export class SheetHandlerBase {
   /** O `FileStore` injetado, ou `null`. */
   getFileStore(): FileStore | null {
     return this.fileStore;
+  }
+
+  /**
+   * Primeiro arquivo de folha existente para `dir`/`base`, nativo antes do
+   * legado (`.smx`, depois `.tji`).
+   *
+   * Decisão 2026-11-07 (24.2.36): o SyntaxMesh grava `.smx`, mas pastas e
+   * templates gerados pelo TaskJuggler continuam válidos — a leitura aceita as
+   * duas formas e devolve o nome que existe (ou `null`).
+   */
+  protected async findSheetFile(
+    dir: string,
+    base: string,
+  ): Promise<string | null> {
+    const store = this.fileStore;
+    if (!store) return null;
+    for (const ext of SHEET_EXTENSIONS) {
+      const candidate = `${dir}/${base}${ext}`;
+      if (await store.exists(candidate,)) return candidate;
+    }
+    return null;
   }
 
   /**

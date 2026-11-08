@@ -4,11 +4,13 @@
  * `email-message` descreve a mensagem como dado (ADR 036); `sheet-handler-base`
  * é a base comum de senders e receivers; `sheet-sender`/`sheet-receiver` são os
  * pipelines dos blocos B e C; `time-sheet-summary` fecha o bloco D; `apps/`
- * guarda o núcleo dos cinco executáveis (18.18).
+ * guarda o núcleo dos cinco executáveis (18.18); `app-data` é o caminho de
+ * dados da Fase 24 (24.2.32: `FileStore` em memória, saída como valor).
  *
  * @see docs/syntaxmesh/fases/fase-18-time-status-sheets.md
  */
 
+export * from "./app-data.ts";
 export * from "./apps/mod.ts";
 export * from "./email-message.ts";
 export * from "./sheet-handler-base.ts";

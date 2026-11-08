@@ -110,6 +110,11 @@ export function getLocalParts(
 ): LocalParts {
   try {
     // Create a formatter for the target timezone
+    //
+    // `hourCycle: "h23"` (e **não** `hour12: false`): o ICU do Node mapeia
+    // `hour12: false` para o ciclo `h24`, em que a meia-noite é **24** —
+    // `TjTime.fromParts` rejeita 24 e a CLI quebrava sob Node/bundle. `h23`
+    // devolve 0 em todos os runtimes (Deno, Node, Bun).
     const formatter = new Intl.DateTimeFormat("en-US", {
       timeZone: timeZone,
       year: "numeric",
@@ -118,7 +123,7 @@ export function getLocalParts(
       hour: "numeric",
       minute: "numeric",
       second: "numeric",
-      hour12: false,
+      hourCycle: "h23",
       weekday: "long",
     },);
 
@@ -148,7 +153,8 @@ export function getLocalParts(
           result.day = parseInt(part.value, 10,);
           break;
         case "hour":
-          result.hour = parseInt(part.value, 10,);
+          // Cinto e suspensório: nenhum runtime deve devolver 24 (ver h23).
+          result.hour = parseInt(part.value, 10,) % 24;
           break;
         case "minute":
           result.minute = parseInt(part.value, 10,);

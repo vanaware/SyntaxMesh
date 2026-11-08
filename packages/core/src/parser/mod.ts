@@ -20,3 +20,7 @@ export {
   tokenTypeToInt,
 } from "./text-parser.ts";
 export { detectLanguage, ProjectFileParser, } from "./project-file-parser.ts";
+export {
+  includeKeywords,
+  scanIncludeReferences,
+} from "./include-references.ts";

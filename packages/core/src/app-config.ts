@@ -1,10 +1,15 @@
 /**
  * AppConfig — metadados da aplicação.
  *
+ * A versão vem de `version.ts` (fonte única): `--version` da CLI, o banner e o
+ * atributo `version` de `Project` não podem divergir.
+ *
  * @see docs/taskjuggler/lib/taskjuggler/AppConfig.rb
  */
+import { VERSION, } from "./version.ts";
+
 export class AppConfig {
-  static version: string = "0.0.0";
+  static version: string = VERSION;
   static packageName: string = "@vanaware/syntaxmesh";
   static softwareName: string = "SyntaxMesh";
   static packageInfo: string = "SyntaxMesh - Project management, simplified";

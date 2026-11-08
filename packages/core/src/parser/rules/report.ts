@@ -185,7 +185,7 @@ export function registerReportRules(p: ProjectFileParser,): void {
 
   rule(p, "breakdownReportHeader", () => {
     p.pattern(
-      ["_breakdownreport", "!optionalID", "!reportName",],
+      ["_breakdownreport", "!optionalID", "!reportName", "!reportStdoutFlag",],
       function (this: ProjectFileParser,): unknown {
         this.newReport(
           this.val[1] as string | null,
@@ -226,7 +226,7 @@ export function registerReportRules(p: ProjectFileParser,): void {
 
   rule(p, "rdoReportHeader", () => {
     p.pattern(
-      ["_rdoreport", "!optionalID", "!reportName",],
+      ["_rdoreport", "!optionalID", "!reportName", "!reportStdoutFlag",],
       function (this: ProjectFileParser,): unknown {
         this.newReport(
           this.val[1] as string | null,
@@ -263,7 +263,12 @@ export function registerReportRules(p: ProjectFileParser,): void {
 
   rule(p, "taskReportHeader", () => {
     p.pattern(
-      ["!taskReportKeyword", "!optionalID", "!reportName",],
+      [
+        "!taskReportKeyword",
+        "!optionalID",
+        "!reportName",
+        "!reportStdoutFlag",
+      ],
       function (this: ProjectFileParser,): unknown {
         const md = this.val[0] === true;
         const defaults = function (this: ProjectFileParser,): void {
@@ -323,7 +328,12 @@ export function registerReportRules(p: ProjectFileParser,): void {
 
   rule(p, "resourceReportHeader", () => {
     p.pattern(
-      ["!resourceReportKeyword", "!optionalID", "!reportName",],
+      [
+        "!resourceReportKeyword",
+        "!optionalID",
+        "!reportName",
+        "!reportStdoutFlag",
+      ],
       function (this: ProjectFileParser,): unknown {
         const md = this.val[0] === true;
         const defaults = function (this: ProjectFileParser,): void {
@@ -388,7 +398,12 @@ export function registerReportRules(p: ProjectFileParser,): void {
 
   rule(p, "materialReportHeader", () => {
     p.pattern(
-      ["!materialReportKeyword", "!optionalID", "!reportName",],
+      [
+        "!materialReportKeyword",
+        "!optionalID",
+        "!reportName",
+        "!reportStdoutFlag",
+      ],
       function (this: ProjectFileParser,): unknown {
         const md = this.val[0] === true;
         const defaults = function (this: ProjectFileParser,): void {
@@ -454,7 +469,12 @@ export function registerReportRules(p: ProjectFileParser,): void {
 
   rule(p, "accountReportHeader", () => {
     p.pattern(
-      ["!accountReportKeyword", "!optionalID", "!reportName",],
+      [
+        "!accountReportKeyword",
+        "!optionalID",
+        "!reportName",
+        "!reportStdoutFlag",
+      ],
       function (this: ProjectFileParser,): unknown {
         const md = this.val[0] === true;
         const defaults = function (this: ProjectFileParser,): void {
@@ -503,7 +523,7 @@ export function registerReportRules(p: ProjectFileParser,): void {
 
   rule(p, "textReportHeader", () => {
     p.pattern(
-      ["_textreport", "!optionalID", "!reportName",],
+      ["_textreport", "!optionalID", "!reportName", "!reportStdoutFlag",],
       function (this: ProjectFileParser,): unknown {
         this.newReport(
           this.val[1] as string | null,
@@ -528,7 +548,7 @@ export function registerReportRules(p: ProjectFileParser,): void {
 
   rule(p, "traceReportHeader", () => {
     p.pattern(
-      ["_tracereport", "!optionalID", "!reportName",],
+      ["_tracereport", "!optionalID", "!reportName", "!reportStdoutFlag",],
       function (this: ProjectFileParser,): unknown {
         this.newReport(
           this.val[1] as string | null,
@@ -625,6 +645,23 @@ export function registerReportRules(p: ProjectFileParser,): void {
   rule(p, "reportName", () => {
     p.pattern(["$STRING",], function (this: ProjectFileParser,): unknown {
       return this.val[0];
+    },);
+  },);
+
+  /**
+   * Modificador opcional `stdout` dos cabeçalhos de relatório (Fase 24 —
+   * extensão SyntaxMesh, sem equivalente Ruby). Posiciona-se após o nome e
+   * antes das chaves (`taskreport "T" stdout { ... }`); devolve `true` quando
+   * presente. A intenção é gravada em `Report#stdout` por `newReport`, que
+   * consome `parser.stdoutRequested` — o core nunca imprime.
+   *
+   * @see docs/syntaxmesh/fases/fase-24-cli-adendo.md §2
+   */
+  rule(p, "reportStdoutFlag", () => {
+    p.optional();
+    p.pattern(["_stdout",], function (this: ProjectFileParser,): unknown {
+      this.stdoutRequested = true;
+      return true;
     },);
   },);
 
@@ -1530,7 +1567,7 @@ export function registerReportRules(p: ProjectFileParser,): void {
 
   rule(p, "exportHeader", () => {
     p.pattern(
-      ["_export", "!optionalID", "$STRING",],
+      ["_export", "!optionalID", "$STRING", "!reportStdoutFlag",],
       function (this: ProjectFileParser,): unknown {
         this.newReport(
           this.val[1] as string | null,
@@ -1753,7 +1790,7 @@ export function registerReportRules(p: ProjectFileParser,): void {
 
   rule(p, "iCalReportHeader", () => {
     p.pattern(
-      ["_icalreport", "!optionalID", "$STRING",],
+      ["_icalreport", "!optionalID", "$STRING", "!reportStdoutFlag",],
       function (this: ProjectFileParser,): unknown {
         this.newReport(
           this.val[1] as string | null,
@@ -1839,7 +1876,7 @@ export function registerReportRules(p: ProjectFileParser,): void {
 
   rule(p, "nikuReportHeader", () => {
     p.pattern(
-      ["_nikureport", "!optionalID", "$STRING",],
+      ["_nikureport", "!optionalID", "$STRING", "!reportStdoutFlag",],
       function (this: ProjectFileParser,): unknown {
         this.newReport(
           this.val[1] as string | null,
@@ -2031,7 +2068,7 @@ export function registerReportRules(p: ProjectFileParser,): void {
 
   rule(p, "ssReportHeader", () => {
     p.pattern(
-      ["_statussheetreport", "!optionalID", "$STRING",],
+      ["_statussheetreport", "!optionalID", "$STRING", "!reportStdoutFlag",],
       function (this: ProjectFileParser,): unknown {
         this.newReport(
           this.val[1] as string | null,
@@ -2141,7 +2178,7 @@ export function registerReportRules(p: ProjectFileParser,): void {
   // ------------------------------------------------------------------
   rule(p, "tsReportHeader", () => {
     p.pattern(
-      ["_timesheetreport", "!optionalID", "$STRING",],
+      ["_timesheetreport", "!optionalID", "$STRING", "!reportStdoutFlag",],
       function (this: ProjectFileParser,): unknown {
         this.newReport(
           this.val[1] as string | null,

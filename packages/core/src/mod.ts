@@ -1,12 +1,17 @@
 /**
  * @syntaxmesh/core
  *
- * Placeholder - implementacao em andamento (Fase 1).
  * O Core e independente de DOM, Preact, BeerCSS, IndexedDB, OPFS
  * e de globals de navegador.
  */
 
-export const CORE_VERSION = "0.0.0-placeholder";
+import { VERSION, } from "./version.ts";
+
+export const CORE_VERSION = VERSION;
+
+// Metadados da aplicação (nome, versão) — fonte das seções `version`/`help`
+// do envelope e do cabeçalho da CLI (Fase 24).
+export * from "./app-config.ts";
 
 // Export time module
 export * from "./time/mod.ts";
@@ -45,6 +50,11 @@ export * from "./finance/mod.ts";
 
 // 9.9.14 — export TaskJuggler
 export { TaskJuggler, } from "./taskjuggler.ts";
+// Fase 24 — provedor de conteúdo injetado (ADR 034)
+export type { FileContentProvider, } from "./taskjuggler.ts";
+// Fase 24 — `execute(request) → ExecutionResult` (envelope JSON, ADR 034) +
+// normalização de caminhos. Lib pública: tipos de dados puros (adendo §3.6).
+export * from "./execution/mod.ts";
 
 // Fase 10 — lexer e parser (port de TextParser/*)
 export * from "./lexer/mod.ts";

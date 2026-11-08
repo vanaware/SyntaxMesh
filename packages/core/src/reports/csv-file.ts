@@ -61,7 +61,7 @@ export class CSVFile {
     if (fileName === ".") return;
     MessageHandlerInstance.instance.warning(
       "csv_write_noop",
-      `CSVFile.write('${fileName}') é no-op no browser; use to_s()`,
+      `CSVFile.write('${fileName}') is a no-op in the browser; use to_s()`,
       null,
     );
   }

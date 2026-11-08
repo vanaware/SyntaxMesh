@@ -17,6 +17,12 @@ import { createCostEvent, } from "../accounting/cost-event.ts";
  *
  * Obrigatório: start, end, sortable, numerical, string, currencyFormat.
  *
+ * `currencyFormat` é **nulável** enquanto o projeto não define o default de
+ * moeda (o `Report` herda o atributo do projeto): sem a guarda, um relatório
+ * de conta estourava com `Cannot read properties of null (reading 'format')`
+ * em vez de formatar como os demais tipos (`task-scenario`/`resource-scenario`
+ * já checam o nulo).
+ *
  * @see docs/taskjuggler/lib/taskjuggler/AccountScenario.rb#query_balance
  */
 export interface Query {
@@ -27,7 +33,7 @@ export interface Query {
   string: string;
   readonly currencyFormat: {
     format(amount: number,): string;
-  };
+  } | null;
 }
 
 /**
@@ -378,7 +384,7 @@ export class AccountScenario extends ScenarioData {
 
     query.sortable = amount;
     query.numerical = amount;
-    query.string = query.currencyFormat.format(amount,);
+    query.string = formatCurrency(query, amount,);
   }
 
   /**
@@ -395,6 +401,20 @@ export class AccountScenario extends ScenarioData {
 
     query.sortable = amount;
     query.numerical = amount;
-    query.string = query.currencyFormat.format(amount,);
+    query.string = formatCurrency(query, amount,);
   }
+}
+
+/**
+ * Valor monetário com o `currencyFormat` do relatório.
+ *
+ * Sem formato herdado, cai em `String(amount)` — mesma saída de
+ * `AttributeBase#to_s` para Float, como fazem `task-scenario` e
+ * `resource-scenario`. O Ruby nunca vê o nulo porque o default do projeto
+ * (`Project.rb` l.77) sempre existe.
+ */
+function formatCurrency(query: Query, amount: number,): string {
+  return query.currencyFormat
+    ? query.currencyFormat.format(amount,)
+    : `${amount}`;
 }

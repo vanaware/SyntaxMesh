@@ -73,6 +73,42 @@ já fixou que os relatórios retornam strings e o pipeline é livre de I/O.
 6. O core **nunca** importa `@syntaxmesh/worker-db`, nem em `src/`
    (`grep` como gate em 18.14.4).
 
+## Aditamento v2.1 (2026-11-07) — injeção só no caminho passo-a-passo; na fronteira `execute` tudo entra como dado
+
+A Fase 24 introduziu a fachada `TaskJuggler.execute(request)` (ADR 034), cujo
+contrato é **dados puros**: `request.files` é o fechamento completo de
+`include`s em `{ path, content }` e o retorno é um envelope JSON. Nessa
+fronteira **não existe** `FileStore`: nenhum consumidor fornece store, caminho
+ou callback de leitura.
+
+1. **A injeção continua valendo no caminho passo-a-passo e na PWA.**
+   `SheetAppContext.fileStore`, `SheetHandlerBase#setFileStore`/
+   `requireFileStore`, `TaskJuggler#setFileStore` + `checkTimeSheet(fileName)`/
+   `checkStatusSheet(fileName)` seguem como estão: são o contrato dos
+   consumidores que operam sobre um diretório de trabalho real (F18, F19, F20).
+2. **Na via `execute` o conteúdo entra como dado.** `sheets/app-data.ts`
+   (`runSheetAppData`) injeta um `MemoryFileStore`
+   (`interfaces/memory-file-store.ts`) semeado com `request.files` e devolve o
+   que o app produziu — `emails`, `attachments[{name, contents}]`, `files` e
+   `log`. `requireFileStore` nunca fica sem store nesse caminho; o store é
+   efêmero, criado por chamada, e nada vaza entre requests.
+3. **Leituras por caminho viraram API de conteúdo onde a fronteira exige.**
+   `checkTimeSheetContent`/`checkStatusSheetContent` recebem o texto da folha;
+   as versões por caminho (`checkTimeSheet`/`checkStatusSheet`) são invólucros
+   finos sobre elas e permanecem para o uso com store.
+4. **Extensão nativa `.smx` (decisão 2026-11-07, plano §1.6).** Sender, receiver
+   e summary gravam `.smx` (`all.smx`); templates, folhas e arquivos de
+   inclusão legados (`.tji`/`all.tji`) continuam **reconhecidos na leitura** por
+   causa de anexos em trânsito. Os nomes listados no Contexto acima leem-se,
+   de hoje em diante, com a extensão nativa.
+5. **Resolução de nome único:** `findSheetFile` (em `sheet-handler-base.ts`)
+   procura o nativo e cai para o legado — é a única forma de resolver um nome
+   de folha a partir de `<recurso>_<data>`.
+
+**Consequência:** nenhuma costura desta ADR é revogada; a injeção é
+**rebaixada** a um consumidor a mais do core, e a fronteira `execute` fica livre
+de I/O (requisito de pureza da 24.2.28).
+
 ## Alternativas consideradas
 
 - **Core importar Storage** — viola o ADR 001 (core independente de DOM/Storage)

@@ -28,7 +28,12 @@ import {
 import type { SheetReceiverType, } from "../../src/sheets/sheet-handler-base.ts";
 import {
   emailDigest,
+  INCLUSION_FILE,
+  isInclusionFileName,
+  isSheetFileName,
+  LEGACY_INCLUSION_FILE,
   RESOURCE_LIST_FILE,
+  SHEET_EXTENSION,
   SheetReceiver,
 } from "../../src/sheets/sheet-receiver.ts";
 import { fakeOpfs, } from "../helpers/fake-opfs.ts";
@@ -367,16 +372,16 @@ describe("SheetReceiver", () => {
     assertEquals(receiver.attached, true,);
     assertEquals(receiver.address, "dev@example.com",);
     assertEquals(
-      store.files.get("TimeSheets/2026-05-18/dev_2026-05-18.tji",),
+      store.files.get("TimeSheets/2026-05-18/dev_2026-05-18.smx",),
       SHEET,
     );
     assertEquals(
-      store.files.get("TimeSheets/2026-05-18/all.tji",),
-      "include 'dev_2026-05-18.tji' { }\n",
+      store.files.get("TimeSheets/2026-05-18/all.smx",),
+      "include 'dev_2026-05-18.smx' { }\n",
     );
     assertEquals(
-      store.files.get("TimeSheets/all.tji",),
-      "\ninclude '2026-05-18/all.tji' { }",
+      store.files.get("TimeSheets/all.smx",),
+      "\ninclude '2026-05-18/all.smx' { }",
     );
     // A mensagem só fica em FailedMails enquanto não é aceita.
     assertEquals(
@@ -387,6 +392,68 @@ describe("SheetReceiver", () => {
     );
     // Confirmação enviada à pessoa certa.
     assertEquals(outboxFiles(store,).size, 1,);
+  });
+
+  it("processEmail aceita o anexo nativo .smx", async () => {
+    const store = makeStore();
+    const receiver = makeReceiver(store,);
+
+    const accepted = await receiver.processEmail(
+      makeMail({
+        attachment: SHEET,
+        attachmentName: `dev_${DATE}.smx`,
+      },),
+    );
+
+    assertEquals(accepted, true,);
+    assertEquals(receiver.attached, true,);
+    assertEquals(
+      store.files.get(`TimeSheets/${DATE}/dev_${DATE}.smx`,),
+      SHEET,
+    );
+  });
+
+  it("processEmail aceita anexo legado .tji e arquiva como .smx", async () => {
+    const store = makeStore();
+    const receiver = makeReceiver(store,);
+
+    const accepted = await receiver.processEmail(
+      makeMail({
+        attachment: SHEET,
+        attachmentName: `dev_${DATE}.tji`,
+      },),
+    );
+
+    assertEquals(accepted, true,);
+    assertEquals(receiver.attached, true,);
+    // Compatibilidade em trânsito (24.2.36): lê `.tji`, grava `.smx`.
+    assertEquals(
+      store.files.get(`TimeSheets/${DATE}/dev_${DATE}.smx`,),
+      SHEET,
+    );
+    assertEquals(
+      store.files.has(`TimeSheets/${DATE}/dev_${DATE}.tji`,),
+      false,
+    );
+  });
+
+  it("fileSheet herda o encadeamento legado do all.tji do topo", async () => {
+    const store = fakeOpfs({
+      [`${TEMPLATE_DIR}/${DATE}/${RESOURCE_LIST_FILE}`]: RESOURCES_JSON,
+      [`${TEMPLATE_DIR}/acceptable_intervals`]: `${SIGNATURE}\n`,
+      "TimeSheets/all.tji": "\ninclude '2026-05-11/all.tji' { }",
+    },);
+    const receiver = makeReceiver(store,);
+    await receiver.runCreateDirectories();
+    receiver.prepare("dev", DATE, "dev@example.com",);
+
+    await receiver.runFileSheet(SHEET,);
+
+    assertEquals(
+      store.files.get("TimeSheets/all.smx",),
+      "\ninclude '2026-05-11/all.tji' { }\n" +
+        `include '${DATE}/all.smx' { }`,
+    );
   });
 
   it("processEmail com a folha no corpo", async () => {
@@ -400,7 +467,7 @@ describe("SheetReceiver", () => {
     assertEquals(accepted, true,);
     assertEquals(receiver.attached, false,);
     assertEquals(
-      store.files.get("TimeSheets/2026-05-18/dev_2026-05-18.tji",),
+      store.files.get("TimeSheets/2026-05-18/dev_2026-05-18.smx",),
       SHEET,
     );
   });
@@ -423,7 +490,7 @@ describe("SheetReceiver", () => {
     );
   });
 
-  it("processEmail ignora anexos que não são .tji", async () => {
+  it("processEmail ignora anexos que não são de folha", async () => {
     const store = makeStore();
     const receiver = makeReceiver(store,);
 
@@ -439,7 +506,7 @@ describe("SheetReceiver", () => {
     assertEquals(receiver.attached, false,);
   });
 
-  it("processEmail tenta o corpo quando o anexo .tji é inválido", async () => {
+  it("processEmail tenta o corpo quando o anexo legado é inválido", async () => {
     const store = makeStore();
     const receiver = makeReceiver(store,);
 
@@ -541,7 +608,7 @@ describe("SheetReceiver", () => {
     assertEquals(await receiver.runCheckSheet(SHEET,), true,);
     assertEquals(MessageHandlerInstance.instance.errors, 0,);
     assertEquals(
-      store.files.has("TimeSheets/FailedSheets/dev-2026-05-18.tji",),
+      store.files.has("TimeSheets/FailedSheets/dev-2026-05-18.smx",),
       false,
     );
   });
@@ -558,7 +625,7 @@ describe("SheetReceiver", () => {
       "ts_no_remaining",
     );
     assertEquals(
-      store.files.get("TimeSheets/FailedSheets/dev-2026-05-18.tji",),
+      store.files.get("TimeSheets/FailedSheets/dev-2026-05-18.smx",),
       BAD_SHEET,
     );
   });
@@ -586,16 +653,16 @@ describe("SheetReceiver", () => {
     await receiver.runFileSheet(SHEET,);
 
     assertEquals(
-      store.files.get("TimeSheets/2026-05-18/dev_2026-05-18.tji",),
+      store.files.get("TimeSheets/2026-05-18/dev_2026-05-18.smx",),
       SHEET,
     );
     assertEquals(
-      store.files.get("TimeSheets/2026-05-18/all.tji",),
-      "include 'dev_2026-05-18.tji' { }\n",
+      store.files.get("TimeSheets/2026-05-18/all.smx",),
+      "include 'dev_2026-05-18.smx' { }\n",
     );
     assertEquals(
-      store.files.get("TimeSheets/all.tji",),
-      "\ninclude '2026-05-18/all.tji' { }",
+      store.files.get("TimeSheets/all.smx",),
+      "\ninclude '2026-05-18/all.smx' { }",
     );
     const reply = parseEmailMessage(
       [...outboxFiles(store,).values(),][0] ?? "",
@@ -628,7 +695,7 @@ describe("SheetReceiver", () => {
     assertStringIncludes(reply.content, "timesheet dev 2026-05-11",);
   });
 
-  it("fileSheet não repete a pasta no all.tji do topo", async () => {
+  it("fileSheet não repete a pasta no all.smx do topo", async () => {
     const store = makeStore();
     const receiver = makeReceiver(store,);
     await receiver.runCreateDirectories();
@@ -638,14 +705,14 @@ describe("SheetReceiver", () => {
     await receiver.runFileSheet(SHEET.replace("dev ", "alice ",),);
 
     assertEquals(
-      store.files.get("TimeSheets/2026-05-18/all.tji",),
-      "include 'alice_2026-05-18.tji' { }\n" +
-        "include 'dev_2026-05-18.tji' { }\n",
+      store.files.get("TimeSheets/2026-05-18/all.smx",),
+      "include 'alice_2026-05-18.smx' { }\n" +
+        "include 'dev_2026-05-18.smx' { }\n",
     );
     // Ordem alfabética das folhas — e a pasta entra uma única vez no topo.
     assertEquals(
-      store.files.get("TimeSheets/all.tji",),
-      "\ninclude '2026-05-18/all.tji' { }",
+      store.files.get("TimeSheets/all.smx",),
+      "\ninclude '2026-05-18/all.smx' { }",
     );
   });
 
@@ -707,5 +774,22 @@ describe("emailDigest", () => {
     assert(/^[0-9a-f]{32}$/u.test(digest,),);
     assertEquals(digest, emailDigest("<abc.123@example.com>",),);
     assert(digest !== emailDigest("<outra@example.com>",),);
+  });
+});
+
+describe("extensões de folha (24.2.36)", () => {
+  it("gera .smx e reconhece .tji na leitura", () => {
+    assertEquals(SHEET_EXTENSION, ".smx",);
+    assertEquals(INCLUSION_FILE, "all.smx",);
+    assertEquals(isSheetFileName(`dev_${DATE}.smx`,), true,);
+    assertEquals(isSheetFileName(`dev_${DATE}.tji`,), true,);
+    assertEquals(isSheetFileName(`dev_${DATE}.txt`,), false,);
+  });
+
+  it("reconhece o arquivo de inclusão nativo e o legado", () => {
+    assertEquals(isInclusionFileName(INCLUSION_FILE,), true,);
+    assertEquals(isInclusionFileName(LEGACY_INCLUSION_FILE,), true,);
+    assertEquals(isInclusionFileName(`2026-05-18/${INCLUSION_FILE}`,), true,);
+    assertEquals(isInclusionFileName(`dev_${DATE}.smx`,), false,);
   });
 });

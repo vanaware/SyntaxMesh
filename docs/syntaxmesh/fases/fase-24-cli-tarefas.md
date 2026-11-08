@@ -2,9 +2,9 @@
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-24-cli-tarefas.md`
 > **Plano:** `docs/syntaxmesh/fases/fase-24-cli.md`
-> **Status:** ⬜ Não iniciada
+> **Status:** 🟨 Em andamento (24.0–24.1 ✅ · 24.2 grupos 1–5 ✅ · 24.3 ✅ · 24.4 ✅ · 24.5 ✅ · 24.6 ✅)
 > **Total:** ~144 tarefas
-> **Concluídas:** 0
+> **Concluídas:** 95
 > **Foco:** CLI `packages/cli` (porta fiel do `tj3`), `io.ts` multi-runtime, desancoramento de I/O no core, **API de execução única `core.execute` → envelope JSON** (seções `check`/`listReports`/`reports`/`freeze`/`sheet`/`man`/`help`/`version`; entrada `request.files[]` de `{ path, content }` com o fechamento de `include`s — sem provedor, eco só dos caminhos; adendo v2.1 `fase-24-cli-adendo.md`) + modificador `stdout` na DSL
 
 ---
@@ -104,13 +104,13 @@ parallela na CLI.
 ## Progresso
 
 ```
-[ ] 24.0  ADR da fase (0NN) + reposicionamento       —   0/7
-[ ] 24.1  Scaffold do pacote + io.ts                —   0/14
-[ ] 24.2  Injeção de I/O + API execute/envelope      —   0/37
-[ ] 24.3  Comando Cliffy + flags + exit codes       —   0/17
-[ ] 24.4  Saída no terminal (reporter + summary)    —   0/10
-[ ] 24.5  Política de saída + ponta a ponta         —   0/18
-[ ] 24.6  Multi-runtime + binário + README          —   0/9
+[x] 24.0  ADR da fase (034) + reposicionamento       —   7/7  (2026-11-07)
+[x] 24.1  Scaffold do pacote + io.ts                —  13/14  (2026-11-07; 24.1.11 pendente — bun ausente)
+[~] 24.2  Injeção de I/O + API execute/envelope      —  35/37  (2026-11-07; grupos 1–5 ✅; 24.2.30/37 = commits pendentes)
+[x] 24.3  Comando Cliffy + flags + exit codes       —  16/17  (2026-11-07; 24.3.17 commit pendente)
+[x] 24.4  Saída no terminal (reporter + summary)    —   9/10  (2026-11-07; 24.4.10 commit pendente)
+[x] 24.5  Política de saída + ponta a ponta         —  17/18  (2026-11-07; 24.5.18 commit pendente)
+[x] 24.6  Multi-runtime + binário + README          —   7/9  (2026-11-07; 24.6.4 bun pendente, 24.6.9 commit pendente)
 [ ] 24.7  Golden CLI vs tj3 Ruby                    —   0/10
 [ ] 24.8  Verificação final                         —   0/8
 ─────────────────────────────────────────────────────────
@@ -125,9 +125,15 @@ TOTAL: ~144
 
 ## Bloco A — Fundação
 
-### 24.0 — ADR da fase (0NN) + reposicionamento
+### 24.0 — ADR da fase (034) + reposicionamento ✅ (2026-11-07)
 
 **Objetivo:** formalizar CLI multi-runtime e a nova ordem das fases.
+
+**Entregue:** `decisoes/034-cli-multiruntime.md` (ACEITO, 9 decisões +
+5 alternativas rejeitadas + consequências), linha 034 no `decisoes/README.md`
+(saiu de "Reservado"; a cadeia de reconciliação passou a 034–037),
+`plano.md` §"Ordem de execução" conferido (23 → 24 → 21¹ → 22) e
+`CURRENT.md` com a seção da Fase 24 reescrita no fecho da fase.
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
@@ -144,6 +150,24 @@ TOTAL: ~144
 ## Bloco B — Scaffold e fundação técnica
 
 ### 24.1 — `packages/cli` + `io.ts`
+
+**Entregue (2026-11-07):** `packages/cli/deno.jsonc` (nome
+`@vanaware/syntaxmesh-cli`, Cliffy 1.3.1 via JSR, core por
+`../../packages/core/mod.ts`, tasks `run`/`check`/`test`/`tests`/`compile`),
+`./packages/cli` no `workspace` raiz + tasks agregadas `cli`/`cli:test`/
+`cli:compile`, `src/io.ts` (fronteira única: `RuntimeGlobals` tipado — sem
+`any` —, `detectRuntime`/`resolveArgs`/`isEntrypoint`, `readText`/`writeText`/
+`readBytes`/`copy`/`exists`/`mkpath`/`mktemp`/`listDir`, `print`/`printerr`,
+`exit` injetável e reexport de `Command` do Cliffy), `src/cli.ts` mínimo
+(`main(argv)` + guarda `isEntrypoint`, um único entrypoint nos 3 runtimes) e
+`tests/io_test.ts` (5 grupos BDD / 22 steps). Smoke Node via
+`deno bundle --platform node` + `node dist` → mesma saída, exit 0. Notas:
+(a) `readBytes` normaliza `Buffer` → `Uint8Array` (igualdade estável nos três
+runtimes); (b) `exit` aceita globais injetáveis para teste, pois um `exit`
+real mataria o runner; (c) **24.1.11 pendente** — `bun` não existe neste
+ambiente (política de pendências, nota 10); (d) `isEntrypoint` substituiu
+`import.meta.main`, que não existe em bundle Node — evita um segundo
+entrypoint na 24.6.
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
@@ -178,6 +202,27 @@ das chamadas de linha de comando, devolvendo o **envelope JSON** (eco
 core orquestra o pipeline por dentro, mas nunca toca em FS, nunca imprime,
 nunca decide destino nem chama `exit`/lê argv (plano §5.5/§6).
 
+**Entregue (2026-11-07 — grupo 1, 24.2.1–24.2.7):**
+`FileContentProvider` (`src/taskjuggler.ts`, reexportado por `mod.ts`),
+`normalizeInputPath` (`src/execution/paths.ts` — canonicalização posix pura de
+`./a/b` e `a/../b`), costura de injeção por instância (`Scanner#setFileLoader`,
+`ProjectFileParser#setFileLoader`, 4º parâmetro opcional de
+`FileStreamHandle`; o estático `FileStreamHandle.fileLoader` dos testes legados
+permanece), `async parse(files, provider = null, keepParser = false)` — pré-carga
+em `contentCache` com `open_file` fiel ao Ruby para arquivo do topo ausente,
+`include` resolvido **relativo ao arquivo que inclui** e falha via
+`bad_include` —, `parseContent(content, fileName?, provider?)` (buffer com nome
+opcional em `inputFiles`) e `parseFile(fileName, rule)` (regra arbitrária com
+`criticalParse`). Notas: (a) `parse` passou a ser **assíncrono** porque o
+provedor pode ser assíncrono; provedores assíncronos só valem para os arquivos
+listados (pré-carregados) — `include` descoberto durante o lexing exige
+provedor **síncrono**; (b) o `execute` (grupo 4) **não** usa provedor: o
+conteúdo entra inline em `request.files`; (c) `freeze`/`checkTimeSheet`/
+`checkStatusSheet` seguem ancorados (24.2.7 conferido por grep); (d) testes:
+`packages/core/tests/taskjuggler_parse_test.ts` (8 steps) contra o corpus real
+`Include.tjp` + 7 `.tji`, regressão `tests/parser` + `tests/lexer` verde
+(134 testes).
+
 **Grupo 1 — provedor de conteúdo do caminho passo-a-passo (inalterado, sem `FileSink`; no `execute` o conteúdo entra por `request.files` — grupo 4):**
 
 | # | Tarefa | Arquivos | Verificação |
@@ -192,6 +237,28 @@ nunca decide destino nem chama `exit`/lê argv (plano §5.5/§6).
 
 **Grupo 2 — parser do modificador `stdout` (adendo §2):**
 
+**Entregue (2026-11-07 — grupo 2, 24.2.8–24.2.13):**
+keyword `stdout` em `i18n/canonical.ts` (extensão marcada) e invariavelmente em
+`pt-BR.ts`/`es.ts` (mesmo padrão de `template`); atributo
+`Report#stdout` (`AttributeType.Boolean`, `inheritedFromParent=false`,
+`model/attributes/report-attributes.ts`); regra `reportStdoutFlag`
+(`p.optional()` + `["_stdout"]`) que marca `parser.stdoutRequested`, consumido
+e zerado por `newReport` — todos os 13 cabeçalhos (`task`/`md*`/`resource`/
+`material`/`account`/`text`/`trace`/`breakdown`/`rdo`/`export`/`iCal`/`niku`/
+`statusSheet`/`timeSheet`) ganharam `!reportStdoutFlag` no fim do padrão, sem
+repetir código de escrita. Nome de relatório duplicado agora leva
+`sourceFileInfo` explícito (`report_redefinition` com `file:line`), e
+`Scanner#open` aceita um **nome de buffer** opcional (usado por
+`parseContent(content, fileName)`) que passa a nomear as mensagens — sem nome,
+comportamento legado intacto (`""`). Testes:
+`packages/core/tests/parser/rules_report_stdout_24_test.ts` (5 grupos / 22
+steps) cobre token i18n, os 13 cabeçalhos + sheets, ausência lida como `false`,
+posição inválida (após chaves/no corpo/duplicado), convivência com múltiplos
+formatos e nome único com `file:line`. Regressão: `tests/parser` + `tests/lexer`
++ `tests/i18n` → 141 testes; `tests/reports` + `tests/model` + taskjuggler →
+176 testes. Nota: `stdout` **não** é herdado de relatório-pai (cada um declara a
+própria intenção); a leitura canônica é `report.get("stdout") ?? false`.
+
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
 | 24.2.8 | Registrar keyword `stdout` (token `_stdout`) no lexer/i18n — SyntaxMesh extension sem equivalente Ruby: nas tabelas pt-BR/es o keyword fica invariado (mesmo padrão de `template`, ADR da F23) | `src/i18n/en.ts`, `pt-BR.ts`, `es.ts` | `deno check` + 1 teste de token |
@@ -202,6 +269,35 @@ nunca decide destino nem chama `exit`/lê argv (plano §5.5/§6).
 | 24.2.13 | Validação de **nome único** de relatório (adendo §3.3): duplicata ⇒ erro de validação no registro (`Project#addReport`/`checkReports`), com file:line | `model/project.ts` ou `model/report.ts` | 1 teste |
 
 **Grupo 3 — seção `results.reports` (`renderReports` / `ReportsJson`, adendo §3):**
+
+**Entregue (2026-11-07 — grupo 3, 24.2.14–24.2.20):**
+`Report#outputs: Map<format, string>` preenchido num **único ponto** do
+`switch` de `generate()` (`outputAsText()` normaliza CSV via `CSVFile` com
+separador `;`), com `outputs.clear()` no início e `output`/`outputFileName`
+legados intactos. Novo módulo `src/reports/reports-json.ts` com o contrato do
+adendo §3.2/§3.3 (`FormatContent`, `ReportJsonEntry`, `ReportsJson`,
+`RenderReportsOptions`) e `renderReports(project, options)`: ordem de
+declaração, seleção por id/regex (`Project#matchingReports`), `errors[]` por
+delta do `MessageHandler` + captura de exceção **por relatório** (um formato
+inválido não mata os demais), `formats[]` só quando não houve erro e `ok`
+global; `outputDir` entra **apenas** quando passado. Fachada
+`TaskJuggler.renderReports(options?)` delega ao módulo (`generateReports`
+continua como caminho legado da UI). Testes:
+`packages/core/tests/reports/reports_json_test.ts` (3 describes / 9 steps) e
+auditoria de pureza `packages/core/tests/reports/purity_24_test.ts` (3 steps):
+grep estático de `node:fs`/`node:process`/`process.stdout`/`Deno.*` de I/O/`console.*`
+no pipeline (`model/report.ts`, `reports/**`, `execution/**`, `taskjuggler.ts`) e
+allowlist `LEGACY_SINKS` verificada nos dois sentidos para o core inteiro.
+O golden `attribute-definitions_golden_test.ts` ganhou `SM_EXTENSION_IDS`
+(`stdout`) — o JSON do Ruby 3.8.4 permanece **intocado**, preservando a
+paridade. Âncoras: `freeze` segue na Fase 24 (só a política da CLI grava o
+master); `parse`/`parseContent` já recebem o texto por injeção (ADR 034).
+Registro no `CURRENT.md` (bloco da Fase 24) feito na mesma etapa. Nota: 24.2.21
+(commit) **não** foi executado — o harness proíbe commits sem pedido explícito.
+Regressão (24.2.19): suíte completa do core `deno test -P packages/core/tests` →
+**744 testes / 6459 passos**, com a única falha sendo a contagem de atributos de
+relatório (`tests/attributes/report-attributes_test.ts`: 67 → 68 por causa do
+`stdout`), corrigida e reconfirmada verde.
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
@@ -215,6 +311,42 @@ nunca decide destino nem chama `exit`/lê argv (plano §5.5/§6).
 | 24.2.21 | Commit `feat(core): stdout+reports-json` (grupos 2–3) | — | git log |
 
 **Grupo 4 — fachada `execute` + envelope JSON (adendo v2 §3):**
+
+**Entregue (2026-11-07 — grupo 4, 24.2.22–24.2.29):**
+`src/execution/types.ts` com o contrato do adendo v2.1 (dados puros,
+structured-cloneáveis): `ExecutionInputFile`/`ExecutionRequest`/
+`ExecutionResult`, `OptionSpec`, `ExecutionOptionsEcho`, seções
+`check`/`listReports`/`reports`/`freeze`/`sheet`/`man`/`help`/`version`.
+`appOptions` **não** reusa `SheetAppOptions` do F18 porque aquele tem `now`
+(função) — o envelope usa `ExecutionSheetAppOptions`, só dados.
+`envelope.ts`: `echoOptions` (defaults aplicados; dos arquivos só `entry` +
+`files[]` de caminhos), `snapshotMessages` (`severity`/`id`/`text`/`file`/
+`line`), `buildEnvelope`, `EXIT_OK`/`EXIT_ERROR`. `sections.ts`: `OPTION_SPECS`
+(fonte única da seção `help` e do Cliffy do 24.3, com `deferred` para as flags
+ancoradas), `checkSection`, `listReportsSection` (sem `console.log` — não usa o
+`Project#listReports` legado), `reportsSection`, `helpSection` (cópias),
+`versionSection` (`AppConfig`) e as formas `freezeSection`/`manSection`/
+`sheetSection`. `execute.ts` porta `Tj3.rb#appMain`: `--version`/`--help`
+sem projeto, `tj3_tjp_file_missing` sem arquivos, parse via provedor de
+*lookup* contra `request.files` (`bad_include` quando falta), `--check-syntax`
+antes da agenda, `--list-reports` antes da agenda, seções ancoradas
+(`freeze`/`sheet`/`man` → mensagem `*_not_available` + exit 1, sem quebrar a
+forma do envelope), `schedule` com `forceReports` como único perdão, gate de
+erros do §5.5.3 e `checkReports()` antes de renderizar. `dynamicAttributes` é
+aplicado **por dentro** (24.2.27) via `Project#generateReport` — a seção já sai
+processada e o `Report#formats` original é restaurado.
+**Isolamento (24.2.28):** `handler.reset()` por chamada, `TaskJuggler`
+dedicado, `DataCache.flush()` no fim e **fila de execução por processo**
+(`execute` serializa) — sem isso duas chamadas concorrentes misturavam
+mensagens; o adendo §3.6 sanciona a serialização. Testes:
+`tests/execution/execute_24_test.ts` (6 describes / 22 steps) cobre eco sem
+vazamento de conteúdo, `structuredClone`/JSON round-trip do request e do
+envelope, matriz de exit (0/1 incl. `abortOnWarnings` e parse quebrado),
+seções sob demanda, ancoradas, `dynamicAttributes` e concorrência.
+**Correção de contrato descoberta nesta etapa:** `formats[]` da seção passa a
+sair de `Report#outputs` **depois** da geração (a lista declarada antes do
+snippet `-A` divergia do que foi realmente renderizado).
+`check:stubs` verde após reordenar o comentário de âncora de `freeze`.
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
@@ -239,6 +371,55 @@ nunca decide destino nem chama `exit`/lê argv (plano §5.5/§6).
 | 24.2.35 | Regressão do grupo 5: suítes F18 sheets (migração fakeOpfs→fakes de dados), goldens F17/F14, testes de contrato/round-trip + `deno task test`; aditar os ADRs — 037 ("injeção vale só no caminho passo-a-passo/PWA; na fronteira `execute` todo conteúdo entra como dado — v2.1"), 026/027/038 onde a costura aparece | idem | verde |
 | 24.2.36 | **Extensão única `.smx` (decisão 2026-11-07, plano §1.6):** relaxar as três validações herdadas aceitando `.smx` junto com as extensões atuais — master `.tjp` obrigatório em `project-file-parser.ts:229` (aceitar `.smx`; msg de erro adaptada), include `.tji` obrigatório em `rules/project.ts:558` (aceitar `.smx`), e `sheet-receiver.ts` `SHEET_EXTENSION`/`INCLUSION_FILE` (gerar `.smx`; **reconhecer `.tji` por compatibilidade** — anexos em trânsito). ⚠️ ADAPTAÇÃO à regra zero (ADR 011): desvio validado do Ruby, documentado no aditamento de ADR (24.2.35) | `project-file-parser.ts`, `rules/project.ts`, `sheets/sheet-receiver.ts` + testes (`.smx` aceito; `.tjp`/`.tji` continuam; goldens intactos) | ≥ 3 testes |
 | 24.2.37 | Commit `refactor(core): filestore-to-data` + `feat(core): smx-extension` (grupo 5) | — | git log |
+
+**Grupo 5 — conclusão (2026-11-07; 24.2.31–24.2.36 ✅, commits em 24.2.30/37 pendentes).**
+
+_Auditoria das costuras (24.2.31) — classificação:_
+
+| Costura | Arquivo | Classificação |
+|---|---|---|
+| `SheetAppContext.fileStore` / `setFileStore` / `requireFileStore` | `sheets/sheet-handler-base.ts`, `sheets/apps/app-base.ts` | **permanece** (passo-a-passo/PWA); na via `execute` recebe `MemoryFileStore` semeado com `request.files` |
+| `SheetHandlerBase` (templates, `outbox/`, `resources.json`, `all.smx`) | `sheets/sheet-{sender,receiver}.ts`, `time-sheet-summary.ts` | **refatorado** para dados via `runSheetAppData` (saída = `emails`/`attachments`/`files`/`log`) |
+| `TaskJuggler.fileStore` + `checkTimeSheet(fileName)`/`checkStatusSheet(fileName)` | `taskjuggler.ts` | **refatorado**: API de conteúdo (`checkTimeSheetContent`) usada pelo `execute`; fachadas por caminho mantidas |
+| `CSVFile.read` | `reports/csv-file.ts` | **âncora F19** preservada; `write` no-op com aviso em inglês |
+| `XMLDocument.write` | `xml/xml-document.ts` | **consumidor grava**; no-op com aviso em inglês |
+| `ImageResolver`/`resolveImageRef` | `markdown/extensions/images.ts` | **permanece DOM-free**; materialização é do consumidor (24.10.8) |
+
+_English-first:_ dois avisos em português foram corrigidos — `csv_write_noop`
+(`CSVFile.write`) e `xml_document_write_noop` (`XMLDocument.write`); nenhuma
+outra costura emitia texto fora do inglês.
+
+_Entregas:_ `interfaces/memory-file-store.ts` (store efêmero com
+`toFiles`/`snapshot`, `list` por primeiro segmento, `write` criando pais) +
+`sheets/app-data.ts` (`runSheetAppData`) → 24.2.32;
+`SheetCheckResult`/`SHEET_CHECK_FAILED`/`checkTimeSheetContent`
+(`taskjuggler.ts`) + `checkSheetSection`/`anchoredSheetSection`
+(`execution/sections.ts`) e despacho dos apps **depois** do `schedule` em
+`execution/execute.ts` → 24.2.33; política de leituras por relatório → 24.2.34;
+`sheets/sheet-extensions.ts` + `parser/file-extensions.ts` (fonte única) →
+24.2.36.
+
+_Extensão única `.smx` (24.2.36):_ mestre aceita `.tjp`/`.smx`
+(`illegal_extension` cita os dois), `include` aceita `.tji`/`.smx`
+(`bad_include_suffix` idem), e sender/receiver/summary **gravam** `.smx`
+(`all.smx`) reconhecendo `.tji`/`all.tji` na leitura — inclusive herdando o
+encadeamento do `all.tji` do topo ao abrir uma pasta nova e reaproveitando
+template legado sem regenerar. ADAPTAÇÃO à regra zero (ADR 011), registrada no
+aditamento v2.1 do ADR 037 (e notas nos ADRs 026/027/038).
+
+_Testes novos:_ `tests/interfaces/memory-file-store_test.ts` (9),
+`tests/sheets/app-data_24_test.ts` (7), `tests/execution/sheet_check_24_test.ts`
+(8), `tests/reports/file_reads_24_test.ts` (7),
+`tests/parser/file-extensions_24_test.ts` (9) e os describes de extensão em
+`tests/sheets/sheet-receiver_test.ts` (2); suítes F18/F17/F14 ajustadas
+(`fakeOpfs` → dados e `.tji` → `.smx` onde o arquivo é **gerado**, mantendo
+`.tji` como caso de compatibilidade).
+
+_Pendência consciente da extensão (não é desta tarefa):_ `Report#generateTJP`
+(`model/report.ts`) ainda **nomeia** a saída gerada como `.tjp` (quando exporta
+`project`) ou `.tji`; renomear para `.smx` é decisão da política de saída
+(24.5) e do golden CLI×tj3 (24.7), porque mexe em nome de arquivo, não em
+validação de entrada. As três validações pedidas por 24.2.36 estão fechadas.
 
 ---
 
@@ -266,6 +447,69 @@ nunca decide destino nem chama `exit`/lê argv (plano §5.5/§6).
 | 24.3.16 | **English-first (plano §1.7, decisão 2026-11-07):** `--help`, mensagens de erro de flag e qualquer texto nativo da CLI são só em inglês; teste varre a saída do `--help` e dos erros de argv por caracteres/melodias não-inglesas (sem tradução de flags nesta etapa) | `src/cli.ts`, `src/options.ts` | 1 teste |
 | 24.3.17 | Commit `feat(cli): options+execute-call` | — | git log |
 
+#### Conclusão do 24.3 (2026-11-07) — flags, fechamento de `include`s e chamada única
+
+_Entregas._ `src/options.ts` (tradução **pura** de `argv`, sem processo/disco):
+posicional → `entry`; booleanas do §5.2 campo a campo; valores (`--config`,
+`--list-reports`, `--report`/`--reports` com `reportsIsRegex`, `-A`/`--dynamic-attributes`,
+`--output-dir`/`-o`, inclusive a forma inline `--flag=valor` e o `--` terminador);
+`--silent`/`--no-color` saem no objeto `renderer` (nunca no request) e
+`--config` vira `configFile` porque ler arquivo é I/O; `resolveExit(result): 0 | 1`
+projeta o `exitCode` do envelope sem inventar sucesso (código inesperado ⇒ 1).
+
+_Flags adiadas erram em voz alta_ (`CliUsageError` → `stderr` + exit 1):
+`--freeze`/`--freeze-by-task`/`--freezedate` → `phase 24.9`,
+`--check-time-sheet`/`--check-status-sheet` → `phase 24.10`,
+`--debug*` → `no equivalent in the port`. O rótulo é derivado do campo
+`deferred` do `OPTION_SPECS` (subfase extraída por regex) — **English-first**
+(plano §1.7): o texto do core continua em português para o leitor do código, a
+CLI mostra só a subfase em inglês.
+
+_Fluxo único (§5.1)._ `src/cli.ts`: `parseArgs` → `helpText()` (só
+`--help`) → `--config` lido por `io.readText` → `collectInputFiles` (master +
+fechamento transitivo de `include`s, caminho canônico por `normalizeInputPath`)
+→ **uma** chamada `execute(request)` → mensagens → seções → `resolveExit`.
+Nada de `parse`/`schedule`/`render` encadeados na CLI.
+
+_Fechamento de `include`s._ Novo `src/parser/include-references.ts` no core
+(`includeKeywords`/`scanIncludeReferences`): leitura **estática** por linha,
+comentário `#` fora de string descartado, keyword canônico **ou sinônimo
+localizado** (união dos idiomas registrados — `incluir` em pt-BR/es, ADR 023) e
+o primeiro literal entre aspas como caminho. Cobre as três formas da gramática
+(`prologInclude`, `projectBodyInclude`, `includeFile`). No `cli.ts`,
+`collectInputFiles(entry, read)` resolve cada referência contra o diretório do
+arquivo que inclui, canonicaliza, deduplica (corta ciclos) e separa `missing`:
+master ausente = fatal antes do `execute`; `include` ausente continua virando
+`bad_include` no core (fiel ao `tj3`).
+
+_Comando Cliffy (24.3.5)._ `buildCommand()` gera a definição a partir de
+`OPTION_SPECS` (fonte única com a seção `help`), com `.name`/`.version` de
+`AppConfig`, `<file>` e `--silent`/`--no-color`; `--help` sai por
+`getHelp()` com ANSI removido. O **parsing** continua no `parseArgs` puro —
+Cliffy é só a ajuda humana (plano §5.2, ponto 8).
+
+_Testes._ `tests/options_test.ts` (6 describes, 20 passos),
+`tests/cli_test.ts` (3 describes, 15 passos: fechamento de includes, fluxo
+único in-process com E/S injetada, English-first),
+`tests/cli.integration_test.ts` (4 passos por subprocesso: `mwe001` → 0,
+inválida → 1 com `error:`, master `.smx` + `include` → 0, `--version` sem
+arquivo) e `packages/core/tests/parser/include-references_test.ts` (7 passos).
+
+_Verificação._ `deno test -P -A packages/cli/tests` → 14 testes / 61 passos;
+`tests/parser` → 119/423; `deno task check:all`, `lint` (741 arquivos) e
+`check:stubs` verdes; `deno task cli --help` lista as 18 opções em inglês.
+
+_Pendências conscientes._ (a) 24.3.11: a leitura do YAML entra, mas a
+**aplicação** depende do porte completo de `Tj3Config` (hoje só valores fixos
+em `initTj3Config`) — a CLI avisa em `stderr` (`not applied yet`) e o conteúdo
+viaja em `configContent`; (b) a apresentação de mensagens é provisória
+(`cli.ts`, 24.4 substitui por `reporter.ts`) e `reports`/`freeze`/`sheet`/`man`
+não são despachados (24.5/24.9/24.10); (c) 24.3.15 (smoke Bun/Node) fica
+pendente — `bun` não está instalado no ambiente; o caminho de runtime já é
+único (`io.ts`, `node:fs/promises`).
+
+---
+
 ### 24.4 — Saída no terminal
 
 | # | Tarefa | Arquivos | Verificação |
@@ -280,6 +524,61 @@ nunca decide destino nem chama `exit`/lê argv (plano §5.5/§6).
 | 24.4.8 | Integração: saída de `mwe001` contém resumo + zero erros; fixture com erro contém localização | `tests/cli.integration_test.ts` | 2 testes |
 | 24.4.9 | `check-all` verde | — | exit 0 |
 | 24.4.10 | Commit `feat(cli): reporter+summary` | — | git log |
+
+#### Conclusão do 24.4 (2026-11-07) — reporter e resumo do projeto
+
+_Entregas._ `src/reporter.ts`: `formatMessage` reproduz `Message#to_s` do
+Ruby (`arquivo:linha: Tipo: texto`, caindo para `arquivo: Tipo:` e `Tipo:`),
+`COLORS` por severidade (fatal/error vermelho, warning magenta, info azul,
+debug verde) e `Reporter` com writers injetáveis (`out`/`err`). A contagem
+final `X errors, Y warnings` (singular/plural correto) só aparece quando há
+erro ou aviso — execução limpa fica silenciosa. `--silent` cala info/debug e
+suprime o resumo, mas **mantém** avisos, erros e a contagem (semântica do
+`MessageHandler`).
+
+_Divergência consciente (24.4.1)._ O texto da tarefa pede "stdout por nível";
+seguimos o Ruby (`MessageHandler` escreve em `$stderr`) e a política do
+adendo §4.1/§4.2 — o **stdout** é reservado ao conteúdo dos relatórios de
+`stdout: true`, então mensagens em `stdout` corromperiam a saída dos
+relatórios da 24.5. `stdout` recebe só as seções pedidas (`version`/`check`/
+`listReports`) e o resumo do projeto.
+
+_Divergência consciente (24.4.4)._ O `tj3` **não** imprime linha de
+totalização (varredura em `MessageHandler.rb`/`Tj3AppBase.rb`): a linha é
+adaptação documentada, com a redação pedida pela tarefa e impressa apenas
+quando `errors + warnings > 0`. Também **não** portamos o banner de AppConfig
+do `Tj3AppBase#main` (metadados já em `--version`; banner poluiria saída
+canalizada).
+
+`src/summary.ts`: `projectSummary(project)` + `formatSummary` (identidade
+`Project <id> "<name>" v<version>`, `timezone`, `period`, contagens de
+tasks/resources/accounts e custo do cenário do plano formatado na moeda). O
+projeto vem de `lastExecutedProject()` — conveniência in-process nova no core
+(`execution/execute.ts` + `execution/mod.ts`), reposta a `null` no início de
+cada `execute` e preenchida após o `parse`; **o envelope continua sendo o
+contrato** (plano §5.5 ponto 9).
+
+_Plumbing._ `io.ts` ganhou `isTty()` (Deno `stdout.isTerminal()` /
+`process.stdout.isTTY`, conservador quando ausente); `cli.ts` monta o reporter
+com `color: renderer.color && isTty()` — pipe nunca recebe ANSI (24.4.2).
+
+_Testes._ `tests/reporter_test.ts` (11 passos), `tests/summary_test.ts` (6),
+`describe("isTty")` em `tests/io_test.ts` (3), `tests/cli_test.ts` reescrito
+para o novo contrato de streams (16 passos: mensagens em `stderr`, resumo em
+`stdout`, `--silent` silenciando só info/debug) e
+`tests/cli.integration_test.ts` com 4 passos por subprocesso (`mwe001` → 0
+**com** resumo; inválida → 1 com `bad.smx:1: Error:` + `1 error, 0 warnings`
+em `stderr` e `stdout` vazio).
+
+_Verificação._ `deno test -P -A packages/cli/tests` → 20 testes / 85 passos;
+`deno task check:all`, `lint` (745 arquivos), `check:stubs` e `fmt:check`
+(794 arquivos) verdes.
+
+_Pendências conscientes._ (a) 24.4.10 (commit) pendente — nenhum commit é
+criado sem pedido explícito; (b) 24.4.6 é revisão: as mensagens do core já
+são literais em inglês (i18n cobre só palavras-chave de parsing), então nada
+a traduzir; (c) `sheet`/`man`/`freeze` continuam sem despacho próprio
+(24.5/24.9/24.10).
 
 ---
 
@@ -308,6 +607,70 @@ nunca decide destino nem chama `exit`/lê argv (plano §5.5/§6).
 | 24.5.17 | `check-all` + `deno test` verdes | — | exit 0 |
 | 24.5.18 | Commit `feat(cli): reports-pipeline+output-policy` | — | git log |
 
+#### Conclusão do 24.5 (2026-11-07) — política de saída + ponta a ponta
+
+_Entregas._ `src/output-policy.ts` é o **único** dono da decisão de destino:
+`extensionOf` (tabela do plano §5.5 ponto 1 — `markdown→md`, `iCal→ics`,
+`mspxml`/`niku→xml`, `ctags→` sem sufixo, desconhecido → só o nome),
+`sanitizeFileName` (só o último segmento sobrevive, `..` e `.` descartados,
+`[\\?%*:|"<>]→_`, vazio → `report`), `fileNameFor`, `delimiterFor`
+(`--- <name> [<format>] ---`), `goesToStdout` (`stdout: true` **ou** nome `.`),
+`dispatchReports` e `dispatchSections`. Ramo terminal imprime todos os formatos
+na ordem declarada e apara **um** `\n` final (sem linha em branco extra); ramo
+arquivo grava `{name}.{ext}` em `outputDir` (ou cwd), cria diretório uma vez por
+pasta via `mkpath`, sobrescreve por default e sanitiza nomes aninhados.
+
+_Aborto sem saída parcial (adendo §4.4)._ `reports[].errors` não-vazio **ou**
+`ok: false` ⇒ nenhuma escrita, nenhum asset, mensagens via `onError` →
+`Reporter.error` (mesmo formato `Message#to_s`, nunca silenciado) e o exit vem
+do envelope. Verificado com dois testes unitários e com a fixture de formato
+inexistente (exit 1, stdout vazio, zero arquivos).
+
+_Assets do HTML (24.5.16)._ `copyAuxiliaryFiles` é no-op no core (ADR 027),
+então a política copia `css/` e `icons/` (diretórios) + `scripts/wz_tooltip.js`
+(arquivo isolado, porque o `scripts/` do repo guarda ferramentas de build) para
+o `--output-dir` **somente** quando sai `html` de relatório não-`selfcontained`.
+Para isso o core passou a expor o dado no envelope: `ReportJsonEntry` ganhou
+`selfcontained: boolean` (`report.get("selfcontained") === true`) — nenhum teste
+do core comparava o objeto inteiro, então o campo é aditivo.
+
+_Dois bugs de fronteira achados pela matriz e corrigidos em `io.ts`._ (a)
+`copyTree` chamava `readdir` em arquivo (`ENOTDIR`) ⇒ nova `io.isDir()` baseada
+em `stat` e ramo de folha copiando direto; (b) `io.exists()` usava `access()`, que
+no shim `node:fs` do Deno exige `--allow-sys` (`uid`) e quebrava **toda** a CLI
+com `NotCapable` ⇒ reescrita sobre `stat` (sem permissão extra). Os testes de
+`io.ts` foram ajustados para a nova função.
+
+_Semântica de `--reports`._ O filtro casa **ids** de relatório, não nomes: o
+parser gera `report1`, `report2`… quando o `.tjp` não declara id (`newReport`),
+então `--reports report1` funciona e `--reports Plan` não casa nada — fiel ao
+`tj3` e coberto por teste.
+
+_Testes._ `tests/output_policy_test.ts` novo (9 `describe` / 22 passos, FS em
+memória tipado), `tests/cli.integration_test.ts` com 35 passos por subprocesso:
+matriz MWE001–009 (8 verdes), matriz de erros (5), matriz Scheduler/Correct
+(5), `include` em 2 níveis (`.smx → .tji → sub/.tji`), `--no-reports`,
+`--force-reports` (mwe004: exit 1 **com** artefatos, tj3.rb:149), `--reports`
+/`--list-reports`, idempotência, formato desconhecido e assets (`css/tjreport.css`
++ `icons/task.png` no `--output-dir`).
+
+_Divergência conhecida (não é da CLI)._ `mwe004` sai 1 no core com
+`The start date (2024-08-01) of task AcSo.deliveries is before the start date
+(2024-08-01) of the enclosing task.` — as datas impressas são iguais, logo a
+comparação falha por resolução interna (`toSeconds`), não por dado. Fica como
+`it.ignore` documentado e é item da 1ª onda da Fase 21 (reconciliação de
+divergências), fora do escopo da 24.5.
+
+_Verificação._ `deno test -P -A packages/cli/tests` → 29 testes / 137 passos (1
+passo ignorado = mwe004); core `reports_json` + `execution` → 12 / 39;
+`deno task check:all`, `lint` (747 arquivos), `check:stubs`, `fmt:check` (796
+arquivos) verdes.
+
+_Pendências conscientes._ (a) 24.5.18 (commit) pendente — nenhum commit sem
+pedido explícito; (b) 24.5.7 fica 8/9 pelo mwe004 acima; (c) `freeze`/`sheet`
+seguem com forma estável mas conteúdo delegado a 24.9/24.10 (a política só grava
+`freeze` quando o core devolve `contents` não-vazio).
+
 ---
 
 ## Bloco F — Distribuição
@@ -325,6 +688,65 @@ nunca decide destino nem chama `exit`/lê argv (plano §5.5/§6).
 | 24.6.7 | Documentar limitação conhecida: Deno Deploy sem FS fora de escopo (plano §4.3) | README | revisão |
 | 24.6.8 | `check-all` verde | — | exit 0 |
 | 24.6.9 | Commit `chore(cli): multi-runtime` | — | git log |
+
+#### Conclusão do 24.6 (2026-11-07) — multi-runtime, binário e README
+
+_Entregas._ `packages/cli/deno.jsonc` ganhou `build:node` (script
+`scripts/bundle-node.ts`), `build` (compile + bundle) e o `compile` passou a
+escrever em `dist/` com `--node-modules-dir=none`. `scripts/bundle-node.ts`
+chama `deno bundle --platform=deno --no-check --minify` (o único bundler do
+repo que resolve o import map `jsr:`/`npm:` sem `node_modules`), prepende
+`#!/usr/bin/env node`, grava `dist/cli.js` + `dist/package.json`
+(`{"type":"module"}`) e reporta o tamanho. `packages/cli/README.md` documenta
+uso, flags, destinos `stdout` vs `{name}.{ext}`, tabela de extensões, sanitização,
+política de aborto sem saída parcial, permissões por runtime, instalação e
+limitações conhecidas (24.6.5/24.6.7).
+
+_Bug real de multi-runtime encontrado pelo bundle (corrigido no core)._
+`node dist/cli.js mwe001.tjp` saía 1 com `Error: Plan: Hour 24 out of range
+(0 - 23)`: o ICU do Node mapeia `hour12: false` para o ciclo **h24** (meia-noite
+= 24) enquanto o Deno devolvia 0, e `TjTime.fromParts` rejeita 24. `timezone.ts`
+passou a usar `hourCycle: "h23"` (mais um `% 24` defensivo) com regressão em
+`tests/time/timezone_test.ts` (4 casos). Exatamente o que a fase existe para
+pegar — o mesmo código, dois runtimes.
+
+_Versão única (24.6.6)._ `version.ts` é a fonte (agora `0.0.2`, igual ao
+`package.json` da raiz e ao `deno.jsonc` do pacote); `AppConfig.version`,
+`initTj3Config` (que fixava `"0.0.0"` e sobrescrevia tudo) e `CORE_VERSION`
+derivam dela. `tests/version_test.ts` prova `--version` =
+`SyntaxMesh <VERSION>` e que os três manifestos concordam. Efeito colateral
+esperado: goldens `html-xml`/`ical` e o smoke da F17 citavam `0.0.0` — agora
+`0.0.2` (o smoke passou a interpolar `VERSION` para não quebrar no próximo
+bump) e `scripts/esbuild.jsonc#versionPaths` aponta para o arquivo real.
+
+_Distribuição medida (24.6.2)._ `deno compile` embute o layout npm do
+workspace: **605 MB** por default, **349 MB** com `--node-modules-dir=none` e
+**114 MB** compilado numa árvore isolada — o grafo da CLI tem só 6 pacotes npm
+(`micromark`, `mdast-util-*`, `vento`, `fflate`…), o resto vem de `wrangler`/
+`workerd`/`sharp` de `packages/server`. `env -i ./dist/syntaxmesh --version`
+→ 0 (sem dependência de runtime). O bundle Node fica em **903 kB** e roda
+`mwe001` com todos os assets (`css/`, `icons/`, `scripts/wz_tooltip.js`),
+porque `dist/` está a três níveis da raiz do repo.
+
+_Testes._ `tests/distribution_test.ts` (bundle → shebang/ESM → `node --version`
+→ `node mwe001` com assets; Bun sondado e `it.ignore` quando ausente) e
+`tests/version_test.ts` (4 passos). A suíte do pacote fecha em **35 testes /
+161 passos** (1 ignorado: mwe004; 1 passo ignorado: Bun).
+
+_Correção colateral na suíte (24.2). _ `TaskJuggler.checkTimeSheet`/
+`checkStatusSheet` devolviam `false` em vez de lançar sem projeto desde o grupo
+5 (`readSheet` → `null`). Restaurada a pré-condição `requireProject` **antes**
+do `FileStore` (o teste 18.12 já exigia isso).
+
+_Verificação._ `deno task check:all`, `lint` (751 arquivos), `check:stubs`,
+`fmt:check` (801 arquivos) verdes; `deno task test` sem falhas.
+
+_Pendências conscientes._ (a) 24.6.4 — `bun` não existe neste ambiente: o caso
+fica `it.ignore` e o artefato é o mesmo ESM que o Node validou; (b) 24.6.9
+(commit) pendente; (c) o binário compilado não encontra `css/`/`icons/`
+(assets relativos ao módulo, que no binário aponta para o FS virtual) — o HTML
+sai sem assets; empacotar assets junto ao binário fica para a tarefa de
+packaging registrada na Fase 21/24.8.
 
 ---
 

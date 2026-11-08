@@ -12,6 +12,7 @@ import type { SourceFileInfo, } from "../source-file-info.ts";
 import type { EntryFormat, } from "./journal.ts";
 import { XMLElement, } from "../xml/xml-element.ts";
 import type { XMLElementLike, } from "../xml/xml-element-like.ts";
+import { CSVFile, } from "../reports/csv-file.ts";
 
 export class Report extends PropertyTreeNode {
   typeSpec: ReportType | null;
@@ -120,6 +121,7 @@ export class Report extends PropertyTreeNode {
     const tz = this.get("timezone",) as string | null;
     const oldTimeZone = tz ? TjTime.setTimeZone(tz,) : null;
 
+    this.outputs.clear();
     this.generateIntermediateFormat();
 
     // Ou os formatos pedidos, ou os da definição do relatório.
@@ -173,10 +175,28 @@ export class Report extends PropertyTreeNode {
         default:
           throw new Error(`Unknown report output format ${format}.`,);
       }
+
+      // Único ponto de coleta por formato (Fase 24): cada `generate*` deixa o
+      // resultado em `output`; aqui ele vira texto no mapa da seção.
+      this.outputs.set(format, this.outputAsText(),);
     }
 
     if (oldTimeZone) TjTime.setTimeZone(oldTimeZone,);
     return 0;
+  }
+
+  /**
+   * Normaliza o `output` da última geração para texto: CSV (Array-de-Arrays)
+   * passa por `CSVFile` com o separador padrão `';'`; `null` (formato não
+   * suportado) vira string vazia.
+   */
+  private outputAsText(): string {
+    if (this.output === null || this.output === undefined) return "";
+    if (Array.isArray(this.output,)) {
+      const csv = new CSVFile(this.output as unknown[][],);
+      return csv.to_s();
+    }
+    return String(this.output,);
   }
 
   /**
@@ -250,6 +270,17 @@ export class Report extends PropertyTreeNode {
    * `generate()` lê o resultado daqui.
    */
   output: string | unknown[][] | null = null;
+
+  /**
+   * Conteúdo renderizado de **cada** formato na última `generate()` (Fase 24 —
+   * fonte da seção `results.reports` do envelope). A chave é o id do formato
+   * declarado; o valor já é texto (CSV normalizado por `CSVFile` e `null` de
+   * formato não suportado virando `""`). `output`/`outputFileName` legados
+   * continuam intactos para a UI.
+   *
+   * @see docs/syntaxmesh/fases/fase-24-cli-adendo.md §3.2/§3.3
+   */
+  readonly outputs: Map<string, string> = new Map();
 
   /**
    * HTML completo do relatório como string (ADR 026/027: sem escrita a disco).

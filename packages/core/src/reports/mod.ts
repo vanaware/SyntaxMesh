@@ -90,3 +90,12 @@ export {
   ManagerStatusRecord,
   StatusSheetReport,
 } from "./status-sheet-report.ts";
+
+// Fase 24 — seção `results.reports` do envelope de execução (ADR 034).
+export {
+  type FormatContent,
+  renderReports,
+  type RenderReportsOptions,
+  type ReportJsonEntry,
+  type ReportsJson,
+} from "./reports-json.ts";

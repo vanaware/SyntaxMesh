@@ -128,11 +128,14 @@ export class StatusSheetSender extends SheetSender {
       .filter((line,) => line !== "");
 
     // A folha pode ter sido entregue depois do `tj3ts_summary` (18.11).
+    // `.smx` é a forma nativa; `.tji` continua aceito (24.2.36).
     const pending: string[] = [];
     for (const id of ids) {
-      const sheet = `${this.timeSheetDir}/${timeSheetDir}/${id}_` +
-        `${timeSheetDir}.tji`;
-      if (!(await store.exists(sheet,))) pending.push(id,);
+      const sheet = await this.findSheetFile(
+        `${this.timeSheetDir}/${timeSheetDir}`,
+        `${id}_${timeSheetDir}`,
+      );
+      if (sheet === null) pending.push(id,);
     }
     return pending;
   }

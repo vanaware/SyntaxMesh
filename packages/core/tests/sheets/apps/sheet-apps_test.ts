@@ -212,7 +212,7 @@ describe("TsSenderApp", () => {
     MessageHandlerInstance.instance.reset();
   },);
 
-  it("manda um email por recurso com o .tji em base64", async () => {
+  it("manda um email por recurso com o .smx em base64", async () => {
     const store = fakeOpfs();
     const app = new TsSenderApp({
       endDate: DATE,
@@ -233,14 +233,14 @@ describe("TsSenderApp", () => {
     const dev = app.messages[1]!;
     assertEquals(dev.subject, `Your weekly time sheet template for ${DATE}`,);
     assertEquals(dev.from, "pm@example.com",);
-    assertEquals(dev.attachmentName, `dev_${DATE}.tji`,);
+    assertEquals(dev.attachmentName, `dev_${DATE}.smx`,);
     assert(dev.attachment !== null,);
     assertStringIncludes(dev.attachment, "timesheet dev",);
     assert(dev.attachmentBase64 !== null,);
     assertEquals(dev.attachmentBase64, toBase64(dev.attachment,),);
     // O template foi mesmo gravado no FileStore (ADR 037).
     assertEquals(
-      store.files.has(`${TEMPLATE_DIR}/${DATE}/dev_${DATE}.tji`,),
+      store.files.has(`${TEMPLATE_DIR}/${DATE}/dev_${DATE}.smx`,),
       true,
     );
   });
@@ -327,7 +327,7 @@ describe("TsReceiverApp", () => {
 
     // A folha foi arquivada no diretório do período.
     assertEquals(
-      store.files.get(`${SHEET_DIR}/${DATE}/dev_${DATE}.tji`,),
+      store.files.get(`${SHEET_DIR}/${DATE}/dev_${DATE}.smx`,),
       SHEET,
     );
     // Uma confirmação saiu, para o endereço cadastrado do recurso.
@@ -339,7 +339,7 @@ describe("TsReceiverApp", () => {
     );
   });
 
-  it("aceita a folha anexada como .tji", async () => {
+  it("aceita a folha anexada como .tji e arquiva como .smx", async () => {
     const store = receiverStore(TEMPLATE_DIR,);
     const app = new TsReceiverApp({ dryRun: true, config: CONFIG, },);
 
@@ -353,7 +353,7 @@ describe("TsReceiverApp", () => {
     );
 
     assertEquals(
-      store.files.get(`${SHEET_DIR}/${DATE}/dev_${DATE}.tji`,),
+      store.files.get(`${SHEET_DIR}/${DATE}/dev_${DATE}.smx`,),
       SHEET,
     );
   });
@@ -367,7 +367,7 @@ describe("TsReceiverApp", () => {
       SHEET_APP_EXIT_ERROR,
     );
     assertEquals(
-      store.files.has(`${SHEET_DIR}/${DATE}/dev_${DATE}.tji`,),
+      store.files.has(`${SHEET_DIR}/${DATE}/dev_${DATE}.smx`,),
       false,
     );
   });
@@ -476,14 +476,14 @@ describe("SsSenderApp / SsReceiverApp", () => {
     assertEquals(app.messages[0]!.to, "alice@example.com",);
     assertEquals(
       app.messages[0]!.attachmentName,
-      `alice_${DATE}.tji`,
+      `alice_${DATE}.smx`,
     );
     assertStringIncludes(
       app.messages[0]!.attachment ?? "",
       "statussheet alice",
     );
     assertEquals(
-      store.files.has(`${STATUS_TEMPLATE_DIR}/${DATE}/alice_${DATE}.tji`,),
+      store.files.has(`${STATUS_TEMPLATE_DIR}/${DATE}/alice_${DATE}.smx`,),
       true,
     );
   });
@@ -502,18 +502,17 @@ describe("SsSenderApp / SsReceiverApp", () => {
     );
 
     assertEquals(
-      store.files.get(`${STATUS_SHEET_DIR}/${DATE}/alice_${DATE}.tji`,),
+      store.files.get(`${STATUS_SHEET_DIR}/${DATE}/alice_${DATE}.smx`,),
       STATUS_SHEET,
     );
     assertEquals(app.messages.length, 1,);
     assertEquals(app.messages[0]!.to, "alice@example.com",);
   });
 
-  it("o anexo continua com extensão .tji nos dois tipos", async () => {
-    // Divergência registrada: o adendo 18.18.6 fala em `.tjs`, mas o Ruby
-    // aceita só `.tji` (SheetReceiver#SHEET_EXTENSION) — mudar quebraria o
-    // reenvio da folha de status.
-    assertEquals(SHEET_EXTENSION, ".tji",);
+  it("o anexo sai com a extensão nativa .smx nos dois tipos", async () => {
+    // Decisão 2026-11-07 (24.2.36): o SyntaxMesh gera `.smx`; a leitura
+    // continua aceitando o `.tji` legado.
+    assertEquals(SHEET_EXTENSION, ".smx",);
     const app = new SsSenderApp({
       endDate: DATE,
       dryRun: true,

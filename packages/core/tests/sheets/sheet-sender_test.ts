@@ -364,7 +364,7 @@ resource away "Away" {
     );
   });
 
-  it("genTemplates escreve um .tji por recurso", async () => {
+  it("genTemplates escreve um .smx por recurso", async () => {
     const store = fakeOpfs();
     const sender = makeSender(store,);
     await sender.runCreateDirectories();
@@ -372,7 +372,7 @@ resource away "Away" {
     await sender.runGenTemplates(list,);
     for (const id of ["alice", "dev",]) {
       const content = await store.read(
-        `${TEMPLATE_DIR}/${DATE}/${id}_${DATE}.tji`,
+        `${TEMPLATE_DIR}/${DATE}/${id}_${DATE}.smx`,
       );
       assertStringIncludes(content, `timesheet ${id} `,);
       assertStringIncludes(content, "# -------->8-------->8--------",);
@@ -389,7 +389,7 @@ resource away "Away" {
     const list = await sender.runGenResourceList([],);
     await sender.runGenTemplates(list,);
     const content = await store.read(
-      `${TEMPLATE_DIR}/${DATE}/alice_${DATE}.tji`,
+      `${TEMPLATE_DIR}/${DATE}/alice_${DATE}.smx`,
     );
     assertStringIncludes(content, "statussheet alice ",);
   });
@@ -431,7 +431,7 @@ resource away "Away" {
     assert(names.some((n,) => n.includes("dev@example.com",)),);
   });
 
-  it("sendReportTemplates anexa o .tji lido do FileStore", async () => {
+  it("sendReportTemplates anexa o .smx lido do FileStore", async () => {
     const store = fakeOpfs();
     const sender = makeSender(store,);
     await sender.runCreateDirectories();
@@ -448,7 +448,39 @@ resource away "Away" {
     assertEquals(sent.length, 2,);
     assertEquals(
       sent[0],
-      `alice@example.com|${TEMPLATE_DIR}/${DATE}/alice_${DATE}.tji`,
+      `alice@example.com|${TEMPLATE_DIR}/${DATE}/alice_${DATE}.smx`,
+    );
+  });
+
+  it("genTemplates reaproveita template legado .tji sem gerar .smx", async () => {
+    // Compatibilidade em trânsito (24.2.36): pasta gerada pelo TaskJuggler.
+    const store = fakeOpfs({
+      [`${TEMPLATE_DIR}/${DATE}/alice_${DATE}.tji`]: "timesheet alice " +
+        "2026-05-11-00:00-+0000 - 2026-05-18-00:00-+0000 {\n}\n",
+    },);
+    const sender = makeSender(store,);
+    await sender.runCreateDirectories();
+
+    await sender.runGenTemplates([
+      {
+        id: "alice",
+        name: "Alice",
+        email: "alice@example.com",
+        effort: 0,
+        freeWork: 0,
+      },
+    ],);
+
+    assertEquals(
+      store.files.has(`${TEMPLATE_DIR}/${DATE}/alice_${DATE}.smx`,),
+      false,
+    );
+    assert(
+      sender.logEntries.some((entry,) =>
+        entry.message.includes("Skipping already existing",) &&
+        entry.message.endsWith(".tji.",)
+      ),
+      JSON.stringify(sender.logEntries.map((entry,) => entry.message),),
     );
   });
 
@@ -598,7 +630,7 @@ describe("SheetSender#templateAttributes (18.19.4)", () => {
     const list = await sender.runGenResourceList([],);
     await sender.runGenTemplates(list,);
     const withSnippet = await store.read(
-      `${TEMPLATE_DIR}/${DATE}/dev_${DATE}.tji`,
+      `${TEMPLATE_DIR}/${DATE}/dev_${DATE}.smx`,
     );
     assertStringIncludes(withSnippet, "timesheet dev ",);
     assertStringIncludes(withSnippet, "timesheet alice ",);
@@ -609,7 +641,7 @@ describe("SheetSender#templateAttributes (18.19.4)", () => {
     await plain.runCreateDirectories();
     await plain.runGenTemplates(await plain.runGenResourceList([],),);
     const plainTemplate = await plainStore.read(
-      `${TEMPLATE_DIR}/${DATE}/dev_${DATE}.tji`,
+      `${TEMPLATE_DIR}/${DATE}/dev_${DATE}.smx`,
     );
     assertStringIncludes(plainTemplate, "timesheet dev ",);
     assertEquals(plainTemplate.includes("timesheet alice ",), false,);

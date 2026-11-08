@@ -304,10 +304,22 @@ export class FileStreamHandle extends StreamHandle {
   /** Hook de carregamento (testes/browser); padrão: Deno filesystem. */
   static fileLoader: FileTextLoader | null = null;
 
-  constructor(fileName: string, log: LogLike, textScanner: ScannerHostLike,) {
+  /**
+   * @param loader leitor injetado por instância (Fase 24): tem precedência
+   *   sobre o hook estático e sobre o `Deno` do ambiente. É por onde o
+   *   `TaskJuggler.parse` entrega o conteúdo sem tocar em disco.
+   */
+  constructor(
+    fileName: string,
+    log: LogLike,
+    textScanner: ScannerHostLike,
+    loader: FileTextLoader | null = null,
+  ) {
     super(log, textScanner,);
     this.fileName = fileName;
-    const data = fileName === "." ? readStdin() : loadFileText(fileName,);
+    const data = fileName === "."
+      ? readStdin()
+      : (loader ?? loadFileText)(fileName,);
     this.stream = new TextStream(data,);
     this.log.msg(() => `Parsing file ${this.fileName} ...`);
     this.log.startProgressMeter(`Reading file ${fileName}`,);

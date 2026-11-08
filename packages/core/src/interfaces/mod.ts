@@ -5,3 +5,9 @@
  */
 export type { FileStore, } from "./file-store.ts";
 export type { KeyValueStore, } from "./key-value-store.ts";
+export {
+  MemoryFileStore,
+  type MemoryStoreFile,
+  type MemoryStoreSeed,
+  normalizeStorePath,
+} from "./memory-file-store.ts";

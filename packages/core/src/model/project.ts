@@ -267,6 +267,13 @@ export class Project implements ProjectLike {
     // Default project attributes (Ruby defaults from Project.rb)
     this.attributes.set("dailyworkinghours", 8.0,);
     this.attributes.set("yearlyworkingdays", 260.714,);
+    // Identidade no mapa de atributos: o `@data` do Ruby traz `'name'`,
+    // `'projectid'` e `'version'` desde o construtor (Project.rb l.88-118) e
+    // vários pontos do port leem `project.get('name')` — o `<title>` do HTML
+    // (Report.rb `generateHTML`), o cabeçalho `Project: …` do niku/mspxml.
+    this.attributes.set("name", name,);
+    this.attributes.set("projectid", id,);
+    this.attributes.set("version", version,);
 
     // PropertySets: Ruby Project.rb fixa o namespace por conjunto —
     // scenarios/shifts/accounts/resources são flat (IDs curtos globais);

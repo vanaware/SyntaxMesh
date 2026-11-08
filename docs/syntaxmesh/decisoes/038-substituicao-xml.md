@@ -126,6 +126,11 @@ de texto sem raster).
   `docs/taskjuggler/lib/taskjuggler/Painter/*.rb`.
 - Fases impactadas: 12 (RichText), 14 (reports/iCal/trace), 15 (Gantt),
   20/21 (UI e compatibilidade, que consomem esta fase).
+- Nota 2026-11-07 (Fase 24, tarefa 24.2.34): `XMLDocument.write` é o hook de
+  escrita do documento; na fronteira `execute` ele só entrega/persiste o que
+  o consumidor pediu — nome `"."` devolve a string do documento, qualquer
+  outro nome é no-op com aviso **em inglês** (`xml_document_write_noop`).
+  Escrita em disco/OPFS é do consumidor (ADR 037, aditamento v2.1).
 
 ---
 

@@ -219,7 +219,7 @@ describe("generateReport com dynamicAttributes (18.19.3)", () => {
     // Durante a geração o snippet vale (o `<title>` do HTML o mostra).
     assertEquals(
       /<title>([^<]*)<\/title>/u.exec(String(report.output,),)?.[1],
-      "undefined - Custom",
+      "Dyn - Custom",
     );
     // Depois, o atributo que só o snippet criou é descartado...
     assertEquals(report.get("title",), null,);

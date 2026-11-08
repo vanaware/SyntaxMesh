@@ -141,6 +141,16 @@ HTML de volta (frágil), ou usar um parser que devolve AST.
   entregues aqui; a resolução real em OPFS/`FileStore` fica ancorada na
   Fase 19.
 
+### Nota 2026-11-07 — `ImageResolver` na fronteira `execute` (Fase 24)
+
+O seam `resolveImageRef` continua **DOM-free e sem I/O**: devolve o descritor
+(`external`, `dataDir`, `unresolved` ou `data:` inline). Na fronteira
+`execute` não se injeta provedor implícito (política da 24.2.34): caminho
+relativo que não esteja em `request.files` (ou que o consumidor não tenha
+materializado) resolve como `unresolved`, e a mensagem correspondente sai em
+**inglês** pelo `MessageHandler`. A materialização do arquivo é do consumidor
+(24.10.8 na CLI; Fase 19/20 na PWA) — ver ADR 037, aditamento v2.1.
+
 ---
 
 **Status:** Aceito

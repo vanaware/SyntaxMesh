@@ -4,7 +4,16 @@ import type { Resource, } from "./model/resource.ts";
 import { ProjectFileParser, } from "./parser/project-file-parser.ts";
 import { Query, } from "./query/query.ts";
 import type { FileStore, } from "./interfaces/file-store.ts";
+import { normalizeInputPath, } from "./execution/paths.ts";
+import type { FileTextLoader, } from "./lexer/stream-handle.ts";
 import type { TimeSheet, } from "./timesheet/time-sheet.ts";
+import {
+  renderReports,
+  type RenderReportsOptions,
+  type ReportsJson,
+} from "./reports/reports-json.ts";
+import { execute as executeRequest, } from "./execution/execute.ts";
+import type { ExecutionRequest, ExecutionResult, } from "./execution/types.ts";
 import { TjTime, } from "./time/tj-time.ts";
 import { NotYetImplementedError, } from "./model/errors.ts";
 import { MessageHandlerInstance, } from "./message-handler.ts";
@@ -15,7 +24,46 @@ import { MessageHandlerInstance, } from "./message-handler.ts";
 import "./reports/mod.ts";
 
 /**
+ * Provedor de conteúdo injetado (Fase 24 — ADR 034).
+ *
+ * Recebe o caminho como aparece no projeto (relativo ao arquivo que inclui ou
+ * o caminho do mestre) e devolve o texto. O core nunca lê disco: a CLI/PWA
+ * injeta este leitor. Um provedor **assíncrono** só serve para os arquivos
+ * listados em `parse(files, …)` — que são pré-carregados; `include`s são
+ * lidos durante o parse e exigem retorno síncrono.
+ */
+export type FileContentProvider = (path: string,) => string | Promise<string>;
+
+/**
+ * Resultado de uma checagem de folha sobre **conteúdo** (Fase 24, 24.2.33).
+ *
+ * `report` é o journal compilado que o Ruby imprimia com `puts`: no caminho
+ * de dados ele sai pela seção `results.sheet.reportText` do envelope, e o
+ * campo mutável `lastSheetReport` fica só para a via passo a passo.
+ */
+export interface SheetCheckResult {
+  valid: boolean;
+  report: string | null;
+}
+
+/** Falha de checagem (o diagnóstico já foi para o `MessageHandler`). */
+export const SHEET_CHECK_FAILED: SheetCheckResult = {
+  valid: false,
+  report: null,
+};
+
+/**
  * TaskJuggler — fachada top-level para CLI/apps.
+ *
+ * Fronteira da Fase 24 (ADR 034): o core não lê disco nem escreve terminal.
+ * `parse`/`parseFile`/`parseContent` recebem o texto por provedor injetado e
+ * `renderReports` devolve a seção `results.reports` em memória — imprimir ou
+ * gravar é política do consumidor. `freeze` segue ancorado na Fase 24 porque
+ * reescrever o master `.tjp` é decisão da CLI. O armazenamento da PWA continua
+ * na Fase 19 (`FileStore`/OPFS, ADR 030).
+ *
+ * A extensão de DSL `stdout` marca apenas a **intenção** do relatório; quem a
+ * consome é a política de saída da CLI (`output-policy.ts`, 24.5).
  *
  * @see docs/taskjuggler/lib/taskjuggler/TaskJuggler.rb
  */
@@ -39,6 +87,10 @@ export class TaskJuggler {
    * checagem bem-sucedida; a CLI/app decide onde exibir.
    */
   lastSheetReport: string | null;
+  /** Conteúdo já lido na chamada corrente (cache do provedor injetado). */
+  private contentCache = new Map<string, string>();
+  /** Provedor vigente — reusado por `parseFile`/`parseContent` (Fase 24). */
+  private fileProvider: FileContentProvider | null = null;
 
   constructor() {
     this.project = null;
@@ -56,25 +108,138 @@ export class TaskJuggler {
     this.fileStore = store;
   }
 
-  parse(files: string[], keepParser = false,): boolean {
-    // Ancorado: Fase 24 — leitura de arquivos .tjp via provedor de conteúdo
-    // injetado (`io.readText`) fornecido pela CLI; o core não toca em disco.
-    // (Reancorado em 2026-11-03 — antes apontava Fase 19; xray §4.)
-    throw new NotYetImplementedError("24", "parse",);
+  /**
+   * Lê os arquivos em _files_ e monta o `Project` (Ruby `parse`, l.44-104).
+   *
+   * Fase 24: o texto dos arquivos chega pelo provedor injetado — o core não
+   * toca em disco. Um `include` é resolvido pelo provedor **relativo ao
+   * arquivo que inclui**, como no Ruby. O primeiro arquivo é o mestre
+   * (`:project`); os demais alimentam o projeto (`:propertiesFile`).
+   *
+   * @returns `true` quando não restou nenhum erro no `MessageHandler`.
+   */
+  async parse(
+    files: string[],
+    provider: FileContentProvider | null = null,
+    keepParser = false,
+  ): Promise<boolean> {
+    // "Reset the MessageHandler to clear all errors" (Ruby l.45).
+    MessageHandlerInstance.instance.clear();
+    this.project = null;
+    this.fileProvider = provider;
+    this.parser = new ProjectFileParser();
+    const parser = this.parser;
+
+    if (provider !== null) {
+      // Pré-carrega a lista explícita (o provedor pode ser assíncrono); os
+      // `include`s descobertos durante o parse usam o cache/loader síncrono.
+      this.contentCache.clear();
+      for (const file of files) {
+        try {
+          this.contentCache.set(
+            normalizeInputPath(file,),
+            await provider(file,),
+          );
+        } catch (_error) {
+          // Ruby: `critical('parse', msg.message)` no `open` — sem exceção.
+          MessageHandlerInstance.instance.error(
+            "open_file",
+            `Cannot open file ${file}`,
+          );
+          return false;
+        }
+      }
+      parser.setFileLoader(this.createLoader(provider,),);
+    }
+
+    let master = true;
+    for (const file of files) {
+      try {
+        parser.open(file, master,);
+      } catch (error) {
+        this.criticalParse("parse", error,);
+        return false;
+      }
+      // `open` registra `open_file` e segue sem stream: nada a parsear.
+      if (parser.scannerRef?.cf === null) return false;
+
+      if (master) {
+        const parsed = parser.parse("project",);
+        if (parsed === false || parsed === null || parsed === undefined) {
+          return false;
+        }
+        this.project = parsed as Project;
+        master = false;
+      } else {
+        parser.setGlobalMacros();
+        if (parser.parse("propertiesFile",) === false) return false;
+      }
+      this.project?.inputFiles.push(file,);
+      parser.close();
+    }
+
+    if (!keepParser) this.parser = null;
+    return MessageHandlerInstance.instance.errors === 0;
   }
 
-  parseFile(fileName: string, rule: unknown,): unknown {
-    // Ancorado: Fase 24 — variante de um único arquivo, também dependente do
-    // provedor de conteúdo da CLI. (Antes era um stub silencioso `return null`,
-    // sem âncora — reancorado em 2026-11-03; xray §4/§5.2.)
-    throw new NotYetImplementedError("24", "parseFile",);
+  parseFile(fileName: string, rule: string,): unknown {
+    const project = this.project;
+    const parser = this.parser ?? new ProjectFileParser();
+    if (project) parser.project = project;
+    if (this.fileProvider !== null) {
+      parser.setFileLoader(this.createLoader(this.fileProvider,),);
+    }
+    try {
+      parser.open(fileName, false,);
+    } catch (error) {
+      this.criticalParse("parse_file", error,);
+      return null;
+    }
+    if (parser.scannerRef?.cf === null) return null;
+    project?.inputFiles.push(fileName,);
+
+    parser.setGlobalMacros();
+    const res = parser.parse(rule,);
+    if (res === false) return null;
+    parser.close();
+    return res;
   }
 
-  parseContent(content: string,): boolean {
-    // Ancorado: Fase 24 — recebe conteúdo já carregado; a injeção do provedor é
-    // da CLI, e a UI/PWA (Fase 20) reusa o mesmo provedor.
-    // (Reancorado em 2026-11-03 — antes apontava Fase 19; xray §4.)
-    throw new NotYetImplementedError("24", "parseContent",);
+  parseContent(
+    content: string,
+    fileName?: string,
+    provider: FileContentProvider | null = null,
+  ): boolean {
+    MessageHandlerInstance.instance.clear();
+    this.project = null;
+    this.fileProvider = provider;
+    const parser = new ProjectFileParser();
+    if (provider !== null) {
+      this.contentCache.clear();
+      parser.setFileLoader(this.createLoader(provider,),);
+    }
+
+    let project: Project | null;
+    try {
+      // Buffer com nome próprio: `inputFiles` e mensagens usam o nome, não o
+      // texto (extensão SyntaxMesh — não existe no Ruby).
+      parser.open(content, true, true, fileName,);
+      if (parser.scannerRef?.cf === null) return false;
+      const parsed = parser.parse("project",);
+      if (parsed === false || parsed === null || parsed === undefined) {
+        return false;
+      }
+      project = parsed as Project;
+      this.project = project;
+    } catch (error) {
+      this.criticalParse("parse", error,);
+      return false;
+    } finally {
+      parser.close();
+    }
+
+    if (fileName !== undefined) project.inputFiles.push(fileName,);
+    return MessageHandlerInstance.instance.errors === 0;
   }
 
   schedule(): boolean {
@@ -125,10 +290,44 @@ export class TaskJuggler {
     return true;
   }
 
+  /**
+   * Constrói a seção `results.reports` do envelope de execução (Fase 24).
+   *
+   * Devolve o conteúdo renderizado de cada relatório **em memória**: nada é
+   * impresso nem gravado — a política de destino é da CLI
+   * (`output-policy.ts`). Este método é o construtor reutilizável da seção; o
+   * ponto de entrada público continua sendo o `execute` do request.
+   *
+   * `generateReports(outputDir?)` permanece intacto como caminho legado da
+   * UI/Fase 20 (grava direto, sem envelope).
+   *
+   * @see docs/syntaxmesh/fases/fase-24-cli-adendo.md §3.2/§3.3
+   */
+  renderReports(options: RenderReportsOptions = {},): ReportsJson {
+    const project = this.requireProject("renderReports",);
+    return renderReports(project, options,);
+  }
+
+  /**
+   * Executa um `ExecutionRequest` e devolve o envelope completo (Fase 24).
+   *
+   * Delegado a `execution/execute.ts`, que cria uma instância própria desta
+   * fachada **por chamada** (isolamento do `MessageHandler`/`DataCache` —
+   * adendo §3.6): o estado desta instância não participa da execução. O
+   * consumidor (CLI/PWA/servidor) chama isto **uma vez** e só despacha o
+   * envelope; nenhum `exit`/IO nasce aqui.
+   *
+   * @see docs/syntaxmesh/fases/fase-24-cli-adendo.md §3.1/§3.6
+   */
+  execute(request: ExecutionRequest,): Promise<ExecutionResult> {
+    return executeRequest(request,);
+  }
+
   freeze(freezeDate: unknown, taskBookings: boolean,): boolean {
-    // Ancorado: Fase 24 — freeze reescreve o master file .tjp (`io.writeText`);
-    // sem sentido no pipeline browser (ADR 027) e sem consumidor até a CLI.
-    // (Reancorado em 2026-11-03 — antes apontava Fase 19; xray §4.)
+    // Sem sentido no pipeline browser (ADR 027). A CLI monta o texto via
+    // `results.freeze` e grava pelo `io.ts` (24.9); reancorado em 2026-11-03
+    // (antes apontava Fase 19; xray §4).
+    // Ancorado: Fase 24 — freeze reescreve o master file .tjp (`io.writeText`).
     throw new NotYetImplementedError("24", "freeze",);
   }
 
@@ -141,12 +340,34 @@ export class TaskJuggler {
    * validação roda in-process e o resultado fica em {@link lastSheetReport}
    * para a CLI/app imprimir — o core não escreve em stdout.
    *
+   * Esta é a via **passo a passo** (PWA/F19). O caminho de dados da Fase 24
+   * usa {@link checkTimeSheetContent} e recebe o texto do request (24.2.33).
+   *
    * @returns `true` quando a folha é válida e os totais fecham.
    */
   async checkTimeSheet(fileName: string,): Promise<boolean> {
+    // 18.12: sem projeto a chamada é erro de programação e lança **antes** de
+    // tocar no `FileStore` (o `readSheet` devolveria `null` e mascararia a
+    // pré-condição como `false`).
+    this.requireProject("checkTimeSheet",);
+    const content = await this.readSheet(fileName, "check_time_sheet",);
+    if (content === null) return false;
+    return this.checkTimeSheetContent(content, fileName,).valid;
+  }
+
+  /**
+   * Valida uma time sheet já em **memória** (Fase 24, 24.2.33).
+   *
+   * Mesma semântica de {@link checkTimeSheet}, sem `FileStore`: é a porta do
+   * `execute` (`app="check-ts"`), onde o texto da folha é dado do request.
+   */
+  checkTimeSheetContent(
+    content: string,
+    fileName = "<time sheet>",
+  ): SheetCheckResult {
     const project = this.requireProject("checkTimeSheet",);
     const scenarioIdx = this.trackingScenarioIdx(project, "check_time_sheet",);
-    if (scenarioIdx === null) return false;
+    if (scenarioIdx === null) return SHEET_CHECK_FAILED;
 
     // "Make sure we don't use data from old time sheets or Journal entries"
     // (Ruby l.305-307): o journal é recriado e as folhas, descartadas.
@@ -156,22 +377,19 @@ export class TaskJuggler {
     const handler = MessageHandlerInstance.instance;
     const errorCount = handler.errors;
 
-    const content = await this.readSheet(fileName, "check_time_sheet",);
-    if (content === null) return false;
-
     const ts = this.parseSheet<TimeSheet>(
       project,
       fileName,
       content,
       "timeSheetFile",
     );
-    if (ts === null) return false;
+    if (ts === null) return SHEET_CHECK_FAILED;
 
     // `TimeSheets#check` registra os problemas via `error(...)` e devolve a
     // própria lista (sempre truthy) — o `return false unless` do Ruby só
     // dispara em exceção. Aqui o sinal de falha é o delta de erros abaixo.
     project.checkTimeSheets();
-    if (handler.errors !== errorCount) return false;
+    if (handler.errors !== errorCount) return SHEET_CHECK_FAILED;
 
     // Extensão 18.17.1/18.17.9: uma folha válida é aplicada ao cenário de
     // tracking — `work`/`remaining` de material viram `effortdone`/
@@ -206,7 +424,7 @@ export class TaskJuggler {
     },);
     ts.resource.query_journal(query,);
     this.lastSheetReport = inputTextOf(query.rti,);
-    return true;
+    return { valid: true, report: this.lastSheetReport, };
   }
 
   /**
@@ -218,18 +436,32 @@ export class TaskJuggler {
    * entradas do mesmo autor/período antes de reescrever).
    */
   async checkStatusSheet(fileName: string,): Promise<boolean> {
+    // Mesma pré-condição da time sheet: sem projeto lança antes do store.
+    this.requireProject("checkStatusSheet",);
+    const content = await this.readSheet(fileName, "check_status_sheet",);
+    if (content === null) return false;
+    return this.checkStatusSheetContent(content, fileName,).valid;
+  }
+
+  /**
+   * Valida uma status sheet já em **memória** (Fase 24, 24.2.33).
+   *
+   * Espelha {@link checkStatusSheet} sem `FileStore` — porta do `execute`
+   * (`app="check-ss"`).
+   */
+  checkStatusSheetContent(
+    content: string,
+    fileName = "<status sheet>",
+  ): SheetCheckResult {
     const project = this.requireProject("checkStatusSheet",);
     const scenarioIdx = this.trackingScenarioIdx(
       project,
       "check_status_sheet",
     );
-    if (scenarioIdx === null) return false;
+    if (scenarioIdx === null) return SHEET_CHECK_FAILED;
 
     const handler = MessageHandlerInstance.instance;
     const errorCount = handler.errors;
-
-    const content = await this.readSheet(fileName, "check_status_sheet",);
-    if (content === null) return false;
 
     const parsed = this.parseSheet<[Resource, TjTime, TjTime,]>(
       project,
@@ -237,8 +469,8 @@ export class TaskJuggler {
       content,
       "statusSheetFile",
     );
-    if (parsed === null) return false;
-    if (handler.errors !== errorCount) return false;
+    if (parsed === null) return SHEET_CHECK_FAILED;
+    if (handler.errors !== errorCount) return SHEET_CHECK_FAILED;
 
     const [resource, start, end,] = parsed;
     const query = new Query({
@@ -253,7 +485,37 @@ export class TaskJuggler {
     },);
     resource.query_dashboard(query,);
     this.lastSheetReport = inputTextOf(query.rti,);
-    return true;
+    return { valid: true, report: this.lastSheetReport, };
+  }
+
+  /**
+   * Constrói o leitor síncrono que o scanner usa para mestre e `include`s.
+   *
+   * O caminho é canonizado antes do *lookup*: o scanner monta o nome do
+   * include como `dirname(pai) + "/" + nome`, o que produz `./a/b.tji`.
+   */
+  private createLoader(provider: FileContentProvider,): FileTextLoader {
+    return (path: string,): string => {
+      const key = normalizeInputPath(path,);
+      const cached = this.contentCache.get(key,);
+      if (cached !== undefined) return cached;
+
+      const value = provider(key,);
+      if (typeof value !== "string") {
+        throw new Error(
+          `Cannot open file ${path}: asynchronous providers must pre-load ` +
+            "every file passed to parse(files, provider)",
+        );
+      }
+      this.contentCache.set(key, value,);
+      return value;
+    };
+  }
+
+  /** Registra um erro de parse no `MessageHandler` (Ruby `critical(id, msg)`). */
+  private criticalParse(id: string, error: unknown,): void {
+    const text = error instanceof Error ? error.message : String(error,);
+    if (text) MessageHandlerInstance.instance.critical(id, text,);
   }
 
   /** Projeto carregado ou erro — pré-condição de agendar/relatar/checar. */

@@ -18,7 +18,11 @@ import { AttributeDefinition, } from "../attributes/attribute-definition.ts";
 import { AttributeOverwrite, } from "../model/errors.ts";
 import { AttributeType, } from "../attributes/attribute-type.ts";
 import { globalRegistry, LanguageRegistry, } from "../i18n/mod.ts";
-import { loadFileText, type LogLike, } from "../lexer/stream-handle.ts";
+import {
+  type FileTextLoader,
+  loadFileText,
+  type LogLike,
+} from "../lexer/stream-handle.ts";
 import { Macro, Template, } from "../lexer/macro-table.ts";
 import type { AddTemplateResult, } from "../lexer/macro-table.ts";
 import { ProjectFileScanner, } from "../lexer/project-file-scanner.ts";
@@ -46,6 +50,11 @@ import type { Rule, } from "./rule.ts";
 import { TokenDoc, } from "../lexer/token-doc.ts";
 import { type ParserToken, TextParser, } from "./text-parser.ts";
 import { registerTjpRules, } from "./rules/mod.ts";
+import {
+  formatExtensionList,
+  isProjectFileName,
+  PROJECT_FILE_EXTENSIONS,
+} from "./file-extensions.ts";
 
 /** LogLike no-op — o core não depende do Log concreto do app. */
 const NULL_LOG: LogLike = {
@@ -63,6 +72,18 @@ export function detectLanguage(content: string,): string | null {
   const m = content.match(/^\s*language\s+"([^"]+)"/m,);
   return m ? m[1]! : null;
 }
+
+/**
+ * Extensões aceitas para o arquivo **mestre** de um projeto.
+ *
+ * Reexportadas de `file-extensions.ts` (fonte única compartilhada com as
+ * regras de gramática) — ver 24.2.36.
+ */
+export {
+  formatExtensionList,
+  isProjectFileName,
+  PROJECT_FILE_EXTENSIONS,
+} from "./file-extensions.ts";
 
 export class ProjectFileParser extends TextParser {
   /** Projeto em processamento (Ruby @project). */
@@ -133,6 +154,12 @@ export class ProjectFileParser extends TextParser {
    */
   sheetRecordStack: unknown[] = [];
   reportCounter = 0;
+  /**
+   * `true` quando o modificador `stdout` (Fase 24 — extensão SyntaxMesh) foi
+   * lido no cabeçalho do relatório corrente. Consumido e zerado por
+   * `newReport`, que grava a property no relatório recém-criado (adendo §2.2).
+   */
+  stdoutRequested = false;
   projectId = "";
 
   sortProperty: string[] | null = null;
@@ -144,6 +171,14 @@ export class ProjectFileParser extends TextParser {
   language: string;
   /** Registro de idiomas usado pelo scanner. */
   registry: LanguageRegistry;
+  /**
+   * Leitor de conteúdo injetado (Fase 24 — ADR 034).
+   *
+   * `null` = comportamento legado (hook estático/`Deno`). Definido, todo
+   * arquivo aberto - mestre e `include`s - e a detecção de idioma leem por
+   * aqui, sem filesystem.
+   */
+  fileLoader: FileTextLoader | null = null;
 
   /** Scanner TJP corrente (estreitamento do `scanner` da base). */
   protected tjpScanner: ProjectFileScanner | null = null;
@@ -192,12 +227,15 @@ export class ProjectFileParser extends TextParser {
 
   /**
    * Abre um arquivo (ou buffer) para processamento. `master` marca o
-   * arquivo-raiz da hierarquia de includes.
+   * arquivo-raiz da hierarquia de includes. Em modo buffer, `bufferName` dá
+   * nome ao texto (entra em `inputFiles`/mensagens); sem ele o próprio texto
+   * faz o papel de nome (comportamento legado).
    */
   open(
     file: string,
     master: boolean,
     fileNameIsBuffer = false,
+    bufferName?: string,
   ): void {
     let language = this.language;
     if (master) {
@@ -208,11 +246,12 @@ export class ProjectFileParser extends TextParser {
       }
     }
     const scanner = new ProjectFileScanner(
-      file,
+      bufferName ?? file,
       NULL_LOG,
       language,
       this.registry,
     );
+    scanner.setFileLoader(this.fileLoader,);
     this.tjpScanner = scanner;
     // A base usa `this.scanner` para delegar error/warning/sourceFileInfo.
     this.scanner = scanner;
@@ -225,15 +264,19 @@ export class ProjectFileParser extends TextParser {
 
     // We need the ProjectFileScanner object for error reporting.
     if (
-      master && !fileNameIsBuffer && file !== "." &&
-      !file.endsWith(".tjp",)
+      master && !fileNameIsBuffer && file !== "." && !isProjectFileName(file,)
     ) {
       this.error(
         "illegal_extension",
-        "Project file name must end with '.tjp' extension",
+        "Project file name must end with " +
+          `${formatExtensionList(PROJECT_FILE_EXTENSIONS,)} extension`,
       );
     }
-    scanner.open(fileNameIsBuffer,);
+    scanner.open(
+      fileNameIsBuffer,
+      fileNameIsBuffer ? file : undefined,
+      bufferName,
+    );
 
     this.property = null;
     this.scenarioIdx = 0;
@@ -293,6 +336,11 @@ export class ProjectFileParser extends TextParser {
     return id;
   }
 
+  /** Define (ou limpa) o leitor de conteúdo injetado deste parser. */
+  setFileLoader(loader: FileTextLoader | null,): void {
+    this.fileLoader = loader;
+  }
+
   /** Fecha o scanner e limpa estruturas. */
   close(): void {
     if (this.tjpScanner) {
@@ -326,7 +374,9 @@ export class ProjectFileParser extends TextParser {
     fileNameIsBuffer: boolean,
   ): string | null {
     try {
-      const content = fileNameIsBuffer ? file : loadFileText(file,);
+      const content = fileNameIsBuffer
+        ? file
+        : (this.fileLoader ?? loadFileText)(file,);
       const lang = detectLanguage(content,);
       if (lang === null) return null;
       if (lang !== "en" && this.registry.get(lang,) === null) {
@@ -620,6 +670,9 @@ export class ProjectFileParser extends TextParser {
     defaultAttrs?: (this: ProjectFileParser,) => void,
   ): Report | null {
     if (!this.project) return null;
+    // Intenção `stdout` lida pelo `reportStdoutFlag` do cabeçalho (Fase 24).
+    const stdoutRequested = this.stdoutRequested;
+    this.stdoutRequested = false;
     // If there is no parent property and the report prefix is not empty,
     // the reportprefix defines the parent property.
     if (this.property === null && this.reportprefix !== "") {
@@ -646,6 +699,7 @@ export class ProjectFileParser extends TextParser {
         this.error(
           "report_redefinition",
           `A report with the name ${name} has already been defined.`,
+          sourceFileInfo,
         );
       }
     }
@@ -658,6 +712,7 @@ export class ProjectFileParser extends TextParser {
     report.typeSpec = type as never;
     report.sourceFileInfo = sourceFileInfo;
     report.inheritAttributes();
+    if (stdoutRequested) report.set("stdout", true,);
 
     // Ruby define @property = report ANTES do bloco de defaults, de modo que
     // defaultAttrs referencia o próprio relatório (columns/hideTask/...).

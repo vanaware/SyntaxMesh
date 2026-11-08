@@ -116,7 +116,7 @@ export class XMLDocument {
     }
     MessageHandlerInstance.instance.warning(
       "xml_document_write_noop",
-      `XMLDocument.write('${filename}') é no-op no browser; use to_s()`,
+      `XMLDocument.write('${filename}') is a no-op in the browser; use to_s()`,
       null,
     );
     return undefined;

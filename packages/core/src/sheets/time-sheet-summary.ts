@@ -145,13 +145,18 @@ export class TimeSheetSummary extends SheetReceiver {
         continue;
       }
 
-      const fileName = `${resource.id}_${date}${SHEET_EXTENSION}`;
-      const templateFile = `${this.templateDir}/${date}/${fileName}`;
-      const sheetFile = `${this.sheetDir}/${date}/${fileName}`;
+      const templateFile = await this.findSheetFile(
+        `${this.templateDir}/${date}`,
+        `${resource.id}_${date}`,
+      );
+      const sheetFile = await this.findSheetFile(
+        `${this.sheetDir}/${date}`,
+        `${resource.id}_${date}`,
+      );
       // Sem template o recurso não foi convidado a reportar neste período.
-      if (!(await store.exists(templateFile,))) continue;
+      if (templateFile === null) continue;
 
-      if (!(await store.exists(sheetFile,))) {
+      if (sheetFile === null) {
         defaulters.push(resource,);
         this.info(`Report from ${resource.id} is missing`,);
         continue;
@@ -277,8 +282,9 @@ export class TimeSheetSummary extends SheetReceiver {
    * Reenvia o template ao inadimplente junto com o texto de cobrança
    * (Ruby `sendReminder`, l.150-164).
    *
-   * O email é texto puro com o `.tji` anexado — o usuário pode preencher o
-   * anexo ou o corpo e devolver.
+   * O email é texto puro com a folha em anexo (`.smx`; template legado
+   * `.tji` também é aceito — 24.2.36) — o usuário pode preencher o anexo ou
+   * o corpo e devolver.
    */
   protected async sendReminder(
     id: string,
@@ -286,8 +292,11 @@ export class TimeSheetSummary extends SheetReceiver {
     email: string,
   ): Promise<void> {
     const store = this.requireFileStore("sendReminder",);
-    const attachment = `${this.templateDir}/${this.date}/${id}_` +
-      `${this.date}${SHEET_EXTENSION}`;
+    const attachment = await this.findSheetFile(
+      `${this.templateDir}/${this.date}`,
+      `${id}_${this.date}`,
+    ) ?? `${this.templateDir}/${this.date}/${id}_${this.date}` +
+        SHEET_EXTENSION;
     let sheet: string;
     try {
       sheet = await store.read(attachment,);

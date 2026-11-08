@@ -22,6 +22,11 @@ import { Journal, } from "../../model/journal.ts";
 import { Leave, } from "../../model/leave.ts";
 import { ScoreboardInterval, } from "../../time/scoreboard-interval.ts";
 import { WorkingHours, } from "../../calendar/working-hours.ts";
+import {
+  formatExtensionList,
+  INCLUDE_FILE_EXTENSIONS,
+  isIncludeFileName,
+} from "../file-extensions.ts";
 import { Macro, } from "../../lexer/macro-table.ts";
 import { AttributeOverwrite, } from "../../model/errors.ts";
 import {
@@ -555,10 +560,12 @@ export function registerProjectRules(p: ProjectFileParser,): void {
       ["$STRING",],
       function (this: ProjectFileParser,): unknown {
         const fileName = String(this.val[0],);
-        if (fileName.slice(-4,) !== ".tji") {
+        if (!isIncludeFileName(fileName,)) {
           this.error(
             "bad_include_suffix",
-            `Included files must have a '.tji' extension: '${fileName}'`,
+            "Included files must have " +
+              `${formatExtensionList(INCLUDE_FILE_EXTENSIONS,)} extension: ` +
+              `'${fileName}'`,
             this.sourceFileInfo[0] ?? null,
           );
         }
@@ -569,7 +576,9 @@ export function registerProjectRules(p: ProjectFileParser,): void {
     p.arg(
       0,
       "filename",
-      "Name of the file to include. Must have a '.tji' extension.",
+      `Name of the file to include. Must have ${
+        formatExtensionList(INCLUDE_FILE_EXTENSIONS,)
+      } extension.`,
     );
   },);
 

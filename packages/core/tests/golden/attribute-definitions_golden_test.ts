@@ -149,6 +149,19 @@ function collectAllAttributeDefinitions(project: Project,): GoldenCase[] {
   return result;
 }
 
+/**
+ * Atributos que existem **só** no SyntaxMesh (extensões documentadas da DSL).
+ *
+ * O golden é gerado a partir do TaskJuggler 3.8.4 e permanece intocado para
+ * preservar a paridade: estes ids são descartados do lado TS antes da
+ * comparação posicional. A lista é verificada nos dois sentidos, então não
+ * apodrece (id novo no TS ⇒ teste vermelho; id removido ⇒ teste vermelho).
+ *
+ * - `stdout` — modificador `stdout` de relatórios (Fase 24 / ADR 034), sem
+ *   equivalente no tj3; a intenção é consumida apenas pela política da CLI.
+ */
+const SM_EXTENSION_IDS = new Set(["stdout",],);
+
 function loadGoldenFile(): GoldenFile {
   const path = new URL("./attribute-definitions.golden.json", import.meta.url,);
   const content = Deno.readTextFileSync(path,);
@@ -178,7 +191,9 @@ function groupById<T extends { id: string },>(cases: T[],): Map<string, T[]> {
 describe("AttributeDefinitions golden tests", () => {
   const golden = loadGoldenFile();
   const project = createTestProject();
-  const tsDefinitions = collectAllAttributeDefinitions(project,);
+  const tsAll = collectAllAttributeDefinitions(project,);
+  const tsExtensions = tsAll.filter((c,) => SM_EXTENSION_IDS.has(c.id,));
+  const tsDefinitions = tsAll.filter((c,) => !SM_EXTENSION_IDS.has(c.id,));
 
   const goldenById = groupById(golden.cases,);
   const tsById = groupById(tsDefinitions,);
@@ -196,6 +211,13 @@ describe("AttributeDefinitions golden tests", () => {
     console.log("Missing in TS:", missingInTs,);
     console.log("Extra in TS:", extraInTs,);
   }
+
+  // A lista de extensões precisa refletir a realidade do modelo.
+  assertEquals(
+    tsExtensions.map((c,) => c.id).sort(),
+    [...SM_EXTENSION_IDS,].sort(),
+    "SM_EXTENSION_IDS divergiu dos atributos exclusivos do SyntaxMesh",
+  );
 
   // The golden file and TS implementation must have the same number of cases
   assertEquals(

@@ -9,6 +9,7 @@
  */
 import { type MessageType, } from "../message.ts";
 import { MessageHandlerInstance, } from "../message-handler.ts";
+import { TjError, } from "../model/errors.ts";
 import { SourceFileInfo, } from "../source-file-info.ts";
 import { Macro, MacroTable, Template, } from "./macro-table.ts";
 import type { AddTemplateResult, } from "./macro-table.ts";
@@ -21,6 +22,7 @@ import {
 import {
   BufferStreamHandle,
   FileStreamHandle,
+  type FileTextLoader,
   type LogLike,
   type ScannerHostLike,
   type StreamHandle,
@@ -152,6 +154,16 @@ export class Scanner implements ScannerHostLike {
     | null = null;
   /** Resolvedor de IDs (`ids()` do §4.7). */
   private templateIdResolver: ((id: string,) => string) | null = null;
+  /**
+   * Leitor de conteúdo injetado por instância (Fase 24 — ADR 034).
+   *
+   * Quando definido, todo `FileStreamHandle` criado por este scanner (master e
+   * `include`s) lê o texto por aqui — nunca pelo filesystem. `null` mantém o
+   * comportamento legado (`loadFileText`).
+   */
+  private fileLoader: FileTextLoader | null = null;
+  /** Nome opcional do buffer corrente (`parseContent(content, nome)`). */
+  private bufferName: string | null = null;
   /** Templates em avaliação **inline** (`expandTemplate`), base → topo. */
   private readonly inlineTemplateStack: string[] = [];
 
@@ -213,15 +225,36 @@ export class Scanner implements ScannerHostLike {
     return this.scannerMode;
   }
 
+  /** Define (ou limpa) o leitor de conteúdo injetado deste scanner. */
+  setFileLoader(loader: FileTextLoader | null,): void {
+    this.fileLoader = loader;
+  }
+
   /** Inicia o processamento; _fileNameIsBuffer_ opera sobre String. */
-  open(fileNameIsBuffer = false,): void {
+  open(
+    fileNameIsBuffer = false,
+    bufferText?: string,
+    bufferName?: string,
+  ): void {
     this.fileNameIsBuffer = fileNameIsBuffer;
+    // Nome opcional do buffer (extensão Fase 24): entra em `fileName()` e nas
+    // mensagens como `<nome>:<linha>`. Ausente mantém o legado (sem nome).
+    this.bufferName = fileNameIsBuffer ? (bufferName ?? null) : null;
     if (fileNameIsBuffer) {
-      this.cf = new BufferStreamHandle(this.masterFile, this.log, this,);
+      this.cf = new BufferStreamHandle(
+        bufferText ?? this.masterFile,
+        this.log,
+        this,
+      );
       this.fileStack = [[this.cf, null, null,],];
     } else {
       try {
-        this.cf = new FileStreamHandle(this.masterFile, this.log, this,);
+        this.cf = new FileStreamHandle(
+          this.masterFile,
+          this.log,
+          this,
+          this.fileLoader,
+        );
         this.fileStack = [[this.cf, null, null,],];
       } catch (e) {
         this.error("open_file", `Cannot open file ${this.masterFile}: ${e}`,);
@@ -266,6 +299,11 @@ export class Scanner implements ScannerHostLike {
           `Recursive inclusion of ${includeFileName} detected`,
           sfi,
         );
+        // O `tj3` morre aqui: sem `trapSetup` o `MessageHandler#error` faz
+        // `exit 1` (MessageHandler.rb l.289-298). Acumular a mensagem e
+        // continuar empilharia o mesmo arquivo para sempre (OOM). O aborto
+        // preserva a mensagem já registrada e falha o parse.
+        throw new TjError("",);
       }
     }
 
@@ -277,7 +315,12 @@ export class Scanner implements ScannerHostLike {
     this.finishLastFile = false;
 
     try {
-      const handle = new FileStreamHandle(includeFileName, this.log, this,);
+      const handle = new FileStreamHandle(
+        includeFileName,
+        this.log,
+        this,
+        this.fileLoader,
+      );
       this.cf = handle;
       this.fileStack.push([handle, null, onEof,],);
       this.log.msg(() => `Parsing file ${includeFileName}`);
@@ -305,7 +348,9 @@ export class Scanner implements ScannerHostLike {
 
   /** Nome do arquivo corrente (ou o próprio texto, em buffer). */
   fileName(): string {
-    return this.cf ? this.cf.fileName ?? "" : this.masterFile;
+    return this.cf
+      ? this.cf.fileName ?? this.bufferName ?? ""
+      : this.masterFile;
   }
 
   lineNo(): number {
@@ -1005,6 +1050,11 @@ export class Scanner implements ScannerHostLike {
             "no_token_match",
             `Unexpected characters found: '${this.cf.peek(10,)}...'`,
           );
+          // Nenhum padrão consumiu o cursor: repetir a volta do laço recasaria
+          // os mesmos padrões na mesma posição para sempre (o Ruby sai do
+          // processo em `MessageHandler#error` sem `trapSetup`). Aborta o parse
+          // — a mensagem acima já está no handler.
+          throw new TjError("",);
         }
       } else {
         // Remove macros expandidas completamente consumidas.

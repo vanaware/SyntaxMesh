@@ -10,8 +10,9 @@
  *    `async`.
  *
  * Fluxo do Ruby preservado: `processEmail` → `createDirectories` →
- * `processSheet` (anexos `.tji`, depois o corpo) → `checkSignature` →
- * `checkSheet` → `fileSheet` (arquiva + `all.tji` + email de confirmação).
+ * `processSheet` (anexos de folha — `.smx` ou o legado `.tji` —, depois o
+ * corpo) → `checkSignature` → `checkSheet` → `fileSheet` (arquiva + `all.smx`
+ * + email de confirmação).
  *
  * Divergências deliberadas (todas documentadas no método):
  *  - `Digest::MD5` não existe no Deno: {@link emailDigest} gera 32 caracteres
@@ -46,11 +47,20 @@ import {
   sprintf,
 } from "./sheet-handler-base.ts";
 
-/** Extensão que identifica um sheet anexado (Ruby `attachment.filename[-4..]`). */
-export const SHEET_EXTENSION = ".tji";
-
-/** Nome do arquivo de inclusão gerado em cada pasta de folhas. */
-export const INCLUSION_FILE = "all.tji";
+/**
+ * As extensões de folha (`.smx` nativa, `.tji` legada) vivem em
+ * `sheet-extensions.ts` — fonte única compartilhada com sender e summary
+ * (decisão 2026-11-07, plano §1.6; tarefa 24.2.36). Reexportadas aqui para
+ * manter a API histórica do módulo.
+ */
+export * from "./sheet-extensions.ts";
+import {
+  INCLUSION_FILE,
+  isInclusionFileName,
+  isSheetFileName,
+  LEGACY_INCLUSION_FILE,
+  SHEET_EXTENSION,
+} from "./sheet-extensions.ts";
 
 /** Lista de recursos gravada pelo `SheetSender` (18.6). */
 export const RESOURCE_LIST_FILE = "resources.json";
@@ -196,9 +206,10 @@ export class SheetReceiver extends SheetHandlerBase {
   /**
    * Processa uma mensagem completa (RFC 822).
    *
-   * Procura primeiro anexos `.tji` e, se nenhum servir, o corpo. A mensagem
-   * crua é guardada em `failedMailsDir` até ser aceita — é o que permite
-   * reprocessar uma submissão recusada (Ruby l.119-122).
+   * Procura primeiro anexos de folha (`.smx` ou `.tji` legado) e, se nenhum
+   * servir, o corpo. A mensagem crua é guardada em `failedMailsDir` até ser
+   * aceita — é o que permite reprocessar uma submissão recusada (Ruby
+   * l.119-122).
    *
    * @param rawMail mensagem completa (cabeçalhos + corpo).
    * @returns `true` se a folha foi aceita; erro em qualquer outro desfecho.
@@ -234,7 +245,7 @@ export class SheetReceiver extends SheetHandlerBase {
 
       // Primeiro os anexos...
       for (const attachment of mail.attachments) {
-        if (!(attachment.fileName ?? "").endsWith(SHEET_EXTENSION,)) continue;
+        if (!isSheetFileName(attachment.fileName ?? "",)) continue;
         this.sheetWasAttached = true;
         if (await this.processSheet(attachment.content,)) return true;
       }
@@ -322,7 +333,7 @@ export class SheetReceiver extends SheetHandlerBase {
    * Valida o conteúdo da folha (Ruby `checkSheet`, l.182-210).
    *
    * O Ruby gravava a folha em `failedSheetsDir` e chamava
-   * `tj3client --silent check-ts`; aqui o mesmo `.tji` é aplicado ao projeto
+   * `tj3client --silent check-ts`; aqui o mesmo conteúdo é aplicado ao projeto
    * in-process e o resultado vem do `MessageHandler` (erros que o processo
    * filho devolveria em stderr e no código de saída).
    */
@@ -363,8 +374,8 @@ export class SheetReceiver extends SheetHandlerBase {
   }
 
   /**
-   * Arquiva a folha aceita em `sheetDir/<date>/<recurso>_<date>.tji`, atualiza
-   * o `all.tji` da pasta e responde ao remetente (Ruby `fileSheet`, l.212-267).
+   * Arquiva a folha aceita em `sheetDir/<date>/<recurso>_<date>.smx`, atualiza
+   * o `all.smx` da pasta e responde ao remetente (Ruby `fileSheet`, l.212-267).
    */
   protected async fileSheet(sheet: string,): Promise<void> {
     const store = this.requireFileStore("fileSheet",);
@@ -395,13 +406,20 @@ export class SheetReceiver extends SheetHandlerBase {
     await this.generateInclusionFile(dir,);
 
     if (newDir) {
-      // O `all.tji` do topo encadeia as pastas de cada período.
+      // O `all.smx` do topo encadeia as pastas de cada período. Uma pasta
+      // gerada por versão antiga pode só ter `all.tji`: o encadeamento
+      // anterior é preservado na leitura (compatibilidade em trânsito).
       const allFile = `${this.sheetDir}/${INCLUSION_FILE}`;
-      const previous = (await store.exists(allFile,))
-        ? await store.read(allFile,)
-        : "";
-      await store.write(allFile, `${previous}\ninclude '${date}/all.tji' { }`,);
-      this.addToScm("Adding new directory to all.tji", allFile,);
+      const previous = await this.readInclusionFile(allFile,) ??
+        await this.readInclusionFile(
+          `${this.sheetDir}/${LEGACY_INCLUSION_FILE}`,
+        ) ??
+        "";
+      await store.write(
+        allFile,
+        `${previous}\ninclude '${date}/${INCLUSION_FILE}' { }`,
+      );
+      this.addToScm("Adding new directory to all.smx", allFile,);
     }
 
     const resourceName = await this.getResourceName(resourceId,);
@@ -430,15 +448,18 @@ export class SheetReceiver extends SheetHandlerBase {
   }
 
   /**
-   * Reescreve `<dir>/all.tji` com um `include` por folha da pasta
+   * Reescreve `<dir>/all.smx` com um `include` por folha da pasta
    * (Ruby `generateInclusionFile`, l.272-288).
+   *
+   * Folhas legadas (`.tji`) e o `all.tji` antigo continuam sendo reconhecidos
+   * na leitura, mas o arquivo gerado é sempre o nativo (24.2.36).
    */
   protected async generateInclusionFile(dir: string,): Promise<void> {
     const store = this.requireFileStore("generateInclusionFile",);
     try {
       const files = (await store.list(dir,))
         .filter((name,) =>
-          name.endsWith(SHEET_EXTENSION,) && baseName(name,) !== INCLUSION_FILE
+          isSheetFileName(name,) && !isInclusionFileName(name,)
         )
         .sort();
       const content = files
@@ -631,6 +652,22 @@ export class SheetReceiver extends SheetHandlerBase {
         this.pendingReplies.length,
       );
       for (const reply of replies) await reply;
+    }
+  }
+
+  /**
+   * Conteúdo de um arquivo de inclusão, ou `null` quando ele não existe.
+   *
+   * Usado para herdar o encadeamento de pastas de versões antigas
+   * (`all.tji`), sem transformar a ausência em erro (24.2.36).
+   */
+  private async readInclusionFile(fileName: string,): Promise<string | null> {
+    const store = this.requireFileStore("readInclusionFile",);
+    try {
+      if (!(await store.exists(fileName,))) return null;
+      return await store.read(fileName,);
+    } catch {
+      return null;
     }
   }
 

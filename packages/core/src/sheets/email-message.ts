@@ -26,7 +26,7 @@ export interface EmailAttachment {
  * - `string` — caminho lido do `FileStore` injetado (fidelidade ao Ruby, que
  *   recebia o nome de um arquivo em disco);
  * - {@link EmailAttachment} — conteúdo já em memória (usado pelos apps, que
- *   geram o `.tji` sem tocar disco).
+ *   geram o `.smx` sem tocar disco).
  */
 export type EmailAttachmentInput = string | EmailAttachment | null;
 
@@ -214,7 +214,7 @@ export function parseEmailHeaders(headerText: string,): EmailHeaders {
  * Decompõe `type/subtype; a=1; b="2"` em tipo e parâmetros.
  *
  * Divergência: separar por `;` sem respeitar aspas quebra nomes de arquivo que
- * contenham ponto e vírgula. Os sheets usam nomes gerados (`<res>_<data>.tji`).
+ * contenham ponto e vírgula. Os sheets usam nomes gerados (`<res>_<data>.smx`).
  */
 export function parseHeaderParams(
   value: string | undefined,

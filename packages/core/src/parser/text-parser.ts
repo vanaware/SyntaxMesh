@@ -478,6 +478,7 @@ export abstract class TextParser {
           this.error(
             "no_reduce",
             `Unexpected token '${token ? token[1] : "<END>"}' found. ` +
+              "Expecting " +
               `${expected.length > 1 ? "one of " : ""}` +
               `${expected.join(", ",)}`,
             token ? token[2] : null,

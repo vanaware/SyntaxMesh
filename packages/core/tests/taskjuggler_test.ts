@@ -45,8 +45,12 @@ describe("TaskJuggler", () => {
     assertEquals(tj.fileStore, null,);
   });
 
-  it("parse lança NotYetImplemented", () => {
-    assertThrows(() => tj.parse(["file.tjp",],), NotYetImplementedError,);
+  it("parse sem provedor lê pelo leitor legado e falha com `open_file`", async () => {
+    // Fase 24: `parse` deixou de ser âncora; sem provedor o leitor legado
+    // (`loadFileText`) é usado e um arquivo inexistente vira mensagem.
+    const ok = await tj.parse(["nao-existe.tjp",],);
+    assertEquals(ok, false,);
+    assertEquals(tj.project, null,);
   });
 
   it("freeze lança NotYetImplemented", () => {

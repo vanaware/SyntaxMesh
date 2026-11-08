@@ -130,6 +130,11 @@ global.
 - A sanitização de HTML cru é **por nó mdast** (`mdast-to-richtext`): tags
   bloqueadas e atributos de evento não atravessam, mas o corpo de um
   `<script>` pode sobrar como texto inerte (escape), não como código.
+- Nota 2026-11-07 (Fase 24, tarefa 24.2.34): na fronteira `execute` não há
+  provider de leitura — `CSVFile.read` continua ancorado (Fase 19) e falha
+  com `NotYetImplementedError` citando a fase; o caminho `write` é no-op e
+  **avisa em inglês** (`csv_write_noop`). Consumidores passo-a-passo/PWA
+  seguem livres para injetar leitura própria (ADR 037, aditamento v2.1).
 - `celltext` é string crua no TaskJuggler; num relatório markdown ela é
   interpretada como markdown — desvio consciente para manter paridade de
   leitura com `note`/`header`.

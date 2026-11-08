@@ -1,9 +1,7 @@
 {
   "$schema": "https://vanaware.github.io/buildit/schema/esbuild.json",
   "versionPaths": [
-    "packages/core/src/utils/version.ts",
-    "packages/service-worker/src/utils/version.ts",
-    "packages/ui/src/utils/version.ts"
+    "packages/core/src/version.ts"
   ],
   "forcepackagesversion": true,
   "targets": {
