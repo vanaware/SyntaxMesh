@@ -207,15 +207,19 @@ describe("handlers de função em markdown nos relatórios (14C.5)", () => {
       const mdHref = interactiveHref("mdlink",);
       const rtHref = interactiveHref("rtlink",);
       assertEquals(mdHref, rtHref,);
-      // `project=` fica vazio: `projectid` é campo de `Project`, não atributo.
+      // `project=` traz o `projectid`, que o Ruby inicializa com o **id do
+      // projeto** (`Project.rb:93`: `'projectid' => id || "prj"`) — a fixture
+      // não declara `projectid`, então sai `mdrep`.
       // O `report=` usa o `fullId` (id curto), não o nome do arquivo.
       assert(
-        mdHref.startsWith("taskjuggler?project=;report=mddefault;attributes=",),
+        mdHref.startsWith(
+          "taskjuggler?project=mdrep;report=mddefault;attributes=",
+        ),
         `esperava a URL interativa em ${mdHref}`,
       );
       assertEquals(
         mdHref,
-        "taskjuggler?project=;report=mddefault;attributes=" +
+        "taskjuggler?project=mdrep;report=mddefault;attributes=" +
           URLParameter.encode("x=1",),
       );
     });

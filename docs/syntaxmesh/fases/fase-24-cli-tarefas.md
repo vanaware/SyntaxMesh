@@ -111,8 +111,8 @@ parallela na CLI.
 [x] 24.4  Saída no terminal (reporter + summary)    —   9/10  (2026-11-07; 24.4.10 commit pendente)
 [x] 24.5  Política de saída + ponta a ponta         —  17/18  (2026-11-07; 24.5.18 commit pendente)
 [x] 24.6  Multi-runtime + binário + README          —   7/9  (2026-11-07; 24.6.4 bun pendente, 24.6.9 commit pendente)
-[ ] 24.7  Golden CLI vs tj3 Ruby                    —   0/10
-[ ] 24.8  Verificação final                         —   0/8
+[x] 24.7  Golden CLI vs tj3 Ruby                    —   9/10  (2026-11-08; 24.7.10 commit pendente)
+[x] 24.8  Verificação final                         —   8/8  (2026-11-08)
 ─────────────────────────────────────────────────────────
 SUBTOTAL (1ª onda, bloqueia v1)                    ~130
 [ ] 24.9  Adendo: syntaxmesh man + --freeze* (Bloco I) —   0/5
@@ -772,6 +772,111 @@ packaging registrada na Fase 21/24.8.
 > delimitador de terminal são extensões SyntaxMesh sem contraparte Ruby —
 > cobertas por 24.2.8–24.2.16 e 24.5.3/24.5.6, não pelo golden.
 
+#### Conclusão do 24.7 (2026-11-08) — golden CLI × tj3
+
+_Entregas._ `scripts/golden/cli-tj3.rb` roda o `tj3` 3.8.4 real sobre **34
+fixtures** — 8 MWEs (001–003, 005–009), 15 `Syntax/Correct`, 7 `Errors` e 4 de
+paridade (`parity-csv-{accounts,balance,tasks}`, `parity-html`) — e emite um
+objeto por caso com `exit`, `artifacts` (inventário relativo ordenado),
+`firstMessage`, `stdout`/`stderr` residuais e, nos casos de paridade, o conteúdo
+dos arquivos gerados. O subset, os critérios, as normalizações (`<PATH>` só para
+`docs/`/`packages/` — `css/`, `icons/`, `scripts/` são payload do relatório) e
+os comandos estão em `scripts/golden/README.md` §"Golden CLI × tj3 (Fase
+24.7)" (24.7.1/24.7.2). O golden mora no pacote que o consome
+(`packages/cli/tests/golden/cli-tj3.golden.json`) e é regerado pelo mesmo
+`deno task golden:generate:ruby` (entrada nova em
+`packages/core/tests/golden/generate_golden.ts`); o diff foi **só aditivo** —
+nenhum golden pré-existente mudou (24.7.3).
+
+_Contrato de comparação (24.7.4/6/7/8)._ `tests/golden_cli_test.ts` roda a CLI
+por subprocesso em diretório temporário, um `it` por caso, e compara: (a)
+`exit` exato; (b) inventário de artefatos; (c) **resíduo de stdout** — tudo o
+que o `tj3` imprime além de banner/progresso, descontado o resumo de projeto da
+própria CLI, tem de sair vazio (pega relatório indo para o terminal quando
+deveria virar arquivo); (d) a **primeira** mensagem de erro normalizada, com
+`file:line`, nos 7 fixtures de erro; (e) CSV **byte-a-byte** em 2 fixtures; (f)
+HTML por **DOM canônico** em 1. Nenhum caso é desligado por `it.ignore`:
+divergência aceita rebaixa o critério (`compare: "artifacts"`) e vai para o
+registro.
+
+_DOM canônico (24.7.7)._ `tests/golden/canonical-dom.ts` estabiliza (`ID\d+` →
+`ID<n>`, `Created on …` → `<TS>`), descarta envelope/`<head>`/`<link>`/
+`<script>`/`<style>`/comentários, emite **um token por linha** com atributos
+ordenados por nome e texto com espaço colapsado; `firstDifference` aponta a
+primeira linha divergente. Na fixture de paridade os dois lados fecham em **163
+linhas idênticas**. Testes próprios em `canonical_dom_test.ts` (inclui `>`
+dentro de atributo citado e documento sem `<body>`).
+
+_Divergências aceitas (24.7.5)._ `packages/cli/tests/golden/known_divergences.md`
+tabela D1–D9 com âncora e destino (normalização / critério mais fraco / fora do
+subset), mais sete comportamentos do `tj3` que **não** são divergência. Duas
+foram reescritas depois de medidas contra o oracle: D2 (`balance` — o Ruby
+reinicia o índice em 1 **por lista** e acrescenta a linha `Total`; o port numera
+1, 2 e não emite `Total`) e D3 (marshalling de célula CSV — `4.0` vs `4`, `""`
+vs vazio, `""` vs `<Error>`, e coluna de série temporal repetindo o cabeçalho de
+data).
+
+_Quatro correções no core que só o golden achou._ (a) `Project#schedule()` podia
+**não terminar**: faltava o ramo `else` de fim de laço de `Project.rb:1225` para
+o caso "primeira falha de agendamento **e** nenhuma tarefa pronta"
+(`Syntax/Correct/AccountReport.tjp`) — agora emite `deadlock` e sai com
+"Some tasks did not fit into the project time frame". (b) `checkForLoops` usava
+`Array#includes` (igualdade por **referência**) onde o Ruby usa
+`path.include?([@property, atEnd])` (estrutural): o ciclo nunca era detectado e
+a CLI morria com exit 1 **sem mensagem** — passou a `path.some(…)`, com o texto
+`Loop ctnd. at …` de `TaskScenario.rb:642` e a origem da tarefa na mensagem.
+(c) `Project` não fixava os formatos default de `Project.rb:89-92`
+(`numberFormat` 1 casa, `currencyFormat` 2 casas com `,`, `timeFormat`,
+`shortTimeFormat`) nem `projectids`, então toda célula numérica caía no fallback
+de 2 casas do `Query#scaleValue` e o CSV saía `4.33`/`5` onde o `tj3` escreve
+`4.3`/`5.0`. (d) `DurationAttribute#to_s` era um override que achatava a
+distinção `Integer`/`Float` do Ruby — saiu (o `to_s` do `AttributeBase` já
+espelha `get.to_s`) e o porquê ficou na doc da classe. Regressões em
+`tests/model/dependency-loop_24_test.ts` e
+`tests/model/project-format-defaults_24_test.ts`.
+
+_Dois testes pré-existentes corrigidos de passagem._ (a) `scanner_test` "include
+recursivo é reportado como erro" esperava que `Scanner#include` só registrasse a
+mensagem; o Ruby aborta no `MessageHandler#error` e o port lança `TjError` — é o
+`throw` que impede o arquivo de ser empilhado para sempre — passou a
+`assertThrows`. (b) `markdown-handlers_14c` "reportlink interativo" exigia
+`project=` vazio, mas o Ruby inicializa `projectid` com o **id do projeto**
+(`Project.rb:93`); a expectativa virou `project=mdrep` com a âncora.
+
+_Tarja de versão nos goldens de serialização._ `scripts/golden/ical.rb` e
+`html-xml.rb` fixavam `AppConfig.version = "0.0.0"`, então regerar depois do
+bump para 0.0.2 (24.6.6) reescrevia PRODID/`generated by` para trás e derrubava
+13 testes. Ambos passaram a ler `PORT_VERSION` de
+`packages/core/src/version.ts`; os dois goldens foram regerados e a regeneração
+é **byte-idêntica** ao estado esperado. O `.html` legado que
+`finance-variations.rb` grava em `packages/core/tests/golden/` continua byproduct
+do pipeline: é revertido conforme a regra 5 do README.
+
+_CI (24.7.9)._ O repo não tinha `.github/`; o workflow `CI` foi criado com Deno
+vindo da `.tool-versions`, `gem install taskjuggler -v 3.8.4`, cache do golden
+com chave `hashFiles('scripts/golden/cli-tj3.rb',
+'packages/cli/tests/fixtures/golden/*.smx')` (mudar o port não invalida o
+artefato caro), geração quando o cache erra, `git diff --exit-code` para provar
+que o golden commitado é o que o oracle produz hoje e as tarjas
+`check`/`lint`/`fmt:check`/`test` da CLI.
+
+_Verificação._ `deno test packages/cli/tests/golden_cli_test.ts` → **34/34 casos
+em 25 s**; `canonical_dom_test.ts` → 3 `describe` / 8 passos. Gate completo
+(`deno task tests`) **exit 0**: `check:all`, `lint` (757 arquivos), `fmt:check`
+(809), `lint:doc:all` e `test` → **808 testes / 6736 passos / 0 falhas / 0
+ignorados** (2 passos ignorados) — as 4 falhas que existiam antes do
+bloco (`html-xml` ×2, `ical` ×11 passos, `scanner` e `markdown-handlers_14c`)
+estão fechadas.
+
+_Pendências conscientes._ (a) 24.7.10 (commit) pendente — nenhum commit sem
+pedido explícito; (b) a ordem de `attribute-definitions.golden.json` é a do
+registro Ruby (a regeneração reproduz o arquivo byte-a-byte) e **não** é
+comparada posicionalmente pelo teste, que agrupa por `id`; (c) `mwe004`,
+`AccountReport` e `Leave` ficam fora do subset até a 1ª onda da Fase 21
+(D7/D8/D9) — o golden avalia fidelidade de **transporte** (exit/artefatos/
+stdout/mensagem), não geometria de Gantt nem conteúdo de relatório, que já têm
+goldens próprios nas fases 14/15/17/18.
+
 ---
 
 ## Bloco H — Encerramento
@@ -788,6 +893,52 @@ packaging registrada na Fase 21/24.8.
 | 24.8.6 | `CURRENT.md` com "Fase 24 concluída; CLI `syntaxmesh` disponível; âncoras parse/parseContent substituídas por injeção; fachada `execute` (envelope JSON) é o ponto único de entrada das chamadas de CLI" e nota de ajuste de import p/ rename da Fase 22 | revisão |
 | 24.8.7 | `plano.md` marcado com status da Fase 24 | revisão |
 | 24.8.8 | Progresso deste arquivo 100% (`[x]` em tudo, contadores atualizados) | revisão |
+
+#### Conclusão do 24.8 (2026-11-08) — verificação final da 1ª onda
+
+_Números._ `deno task tests` **exit 0** no workspace inteiro: `check:all` (por
+pacote), `lint` (757 arquivos), `fmt:check` (809), `lint:doc:all` e `test` →
+**808 testes / 6737 passos / 0 falhas / 0 ignorados** (2 passos ignorados). A
+suíte da CLI sozinha (`deno task --cwd packages/cli test`) verde, incluindo os
+34 casos do golden (24.7).
+
+_Cobertura de `packages/cli/src` (24.8.2)._ `deno test --coverage` +
+`deno coverage --include=packages/cli/src` → **92,7 % branch / 97,0 % função /
+95,4 % linha** (mínimo pedido: 80 %): `cli.ts` 95,0 linha, `io.ts` 97,6,
+`options.ts` 97,5, `output-policy.ts` 95,8, `reporter.ts` 89,0, `summary.ts`
+96,2.
+
+_Pureza (24.8.4)._ Grep em `packages/cli/src`: as **11** ocorrências de
+`node:`/`Deno.`/`process.` estão todas em `io.ts` — é a seam de runtime
+(`node:fs/promises`, `node:os`, `node:path`, `node:url` e os três acessos
+`g.Deno`); **zero** `as any` em `src/`.
+
+_ADR (24.8.5)._ `decisoes/034-cli-multiruntime.md` existe e está indexado na
+tabela de `decisoes/README.md` (Aceito, 2026-11-07).
+
+_Registro (24.8.6/7/8)._ `CURRENT.md` tem os blocos D–G com os números de cada
+um e a frase de estado da fase (CLI `syntaxmesh` disponível, `parse`/
+`parseContent` recebendo conteúdo por injeção, `execute` como ponto único de
+entrada); `plano.md` (linha da Fase 24) saiu de "⬜ Não iniciada" para
+"🟨 Em andamento — 24.0–24.8 ✅"; o bloco `## Progresso` deste arquivo foi
+atualizado.
+
+_23.7.7 fechada de passagem._ A F23 arrastava um único item pendente — o smoke
+`syntaxmesh template-fixture.tjp --no-reports` exit 0 — porque a CLI não
+existia. Com ela pronta, o smoke entrou em `cli.integration_test.ts` ("template
+da F23 renderiza pela CLI e sai 0") sobre `templates/reports.tjp`: a
+`basic.tjp` **não** serve de alvo, porque as tasks dela têm `effort` sem
+`allocate` e o scheduler erra de propósito (`Task t1 has an effort but no
+resource allocations`). `fase-23-template-tarefas.md` passou a 98/98 e
+`plano.md` deixou de listá-la como pendente.
+
+_Pendências conscientes._ (a) **Nenhum commit foi feito** — 24.2.30/24.2.37,
+24.3.17, 24.4.10, 24.5.18, 24.6.9 e 24.7.10 seguem pendentes (commit só a
+pedido explícito); o conteúdo está no worktree e no commit `5d81b81 "fase 24 em
+andamento"` criado fora desta sessão. (b) 24.6.4 (Bun) continua `it.ignore` —
+não existe `bun` neste ambiente. (c) Os adendos **24.9** (`syntaxmesh man`,
+`--freeze*`) e **24.10** (apps de sheets + `--attr`) são a 2ª onda da fase,
+explicitamente depois de 24.8.
 
 ---
 

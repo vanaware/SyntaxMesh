@@ -59,9 +59,18 @@ class TaskJuggler::TjTime
 end
 
 # Igualado aos defaults do port para PRODID/UID byte-idênticos.
+#
+# A versão vem de `packages/core/src/version.ts` — a **fonte única** do port
+# (`AppConfig.version` e o atributo `version` de `Project` derivam dela). Fixar
+# um literal aqui deixava o golden para trás a cada bump: em `0.0.0` o script
+# regerava PRODID/UID divergentes do que o teste compara (24.6.6).
+PORT_VERSION = File.read(
+  File.expand_path('../../packages/core/src/version.ts', __dir__)
+).match(/VERSION\s*=\s*"([^"]+)"/)[1]
+
 AppConfig.packageName = "@vanaware/syntaxmesh"
 AppConfig.softwareName = "SyntaxMesh"
-AppConfig.version = "0.0.0"
+AppConfig.version = PORT_VERSION
 
 $cases = []
 

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, it, } from "@std/testing/bdd";
 import { assert, assertEquals, assertThrows, } from "@std/assert";
 import { Log, } from "../../src/log.ts";
+import { TjError, } from "../../src/model/errors.ts";
 import { MessageHandlerInstance, } from "../../src/message-handler.ts";
 import { SourceFileInfo, } from "../../src/source-file-info.ts";
 import { Macro, } from "../../src/lexer/macro-table.ts";
@@ -293,7 +294,10 @@ describe("Scanner — open/close/include (10.8.3)", () => {
     FileStreamHandle.fileLoader = () => "ky\n";
     const s = new Scanner("dir/m.tjp", Log, basePatterns, ":tjp",);
     s.open();
-    s.include("m.tjp", null,);
+    // O `tj3` morre no `MessageHandler#error` (exit 1): o `Scanner` registra a
+    // mensagem e aborta com `TjError` — sem o `throw` o mesmo arquivo seria
+    // empilhado para sempre (ver o comentário em `Scanner#include`).
+    assertThrows(() => s.include("m.tjp", null,), TjError,);
     const msgs = MessageHandlerInstance.instance.messages;
     assert(msgs.some((m,) => m.id === "include_recursion"),);
   });

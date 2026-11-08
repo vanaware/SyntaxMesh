@@ -15,8 +15,10 @@ Desenvolvimento atual (docs/syntaxmesh/fases/):
   `fase-23-template.md` (plano) + `fase-23-template-tarefas.md` (23.0–23.10) +
   ADR 033 + referência normativa `docs/syntaxmesh/11-referencia-template.md`.
   Próxima da ordem oficial: **Fase 24 (CLI)** — plano `fase-24-cli.md` +
-  `fase-24-cli-tarefas.md`. Única pendência da 23 é **23.7.7** (smoke
-  `syntaxmesh template-fixture.tjp`), que depende da própria CLI da F24.
+  `fase-24-cli-tarefas.md`. Única pendência que restava da 23 era **23.7.7**
+  (smoke `syntaxmesh template-fixture.tjp`), **fechada em 2026-11-08** pela
+  24.8 — a fixture usada é `templates/reports.tjp` (a `basic.tjp` tem `effort`
+  sem `allocate` e o scheduler erra de propósito).
   **23.9** corrigiu a colocação: `template` segue a condição da `macro` (prolog
   ou nível de propriedades, **nunca** dentro do `{ }` do cabeçalho — regra do
   Ruby em `TjpSyntaxRules.rb:3486`). **23.10** fixou listas como argumento e as
@@ -237,7 +239,12 @@ i18n (10.15+) em `packages/core/src/i18n/`.
   **730 testes / 6402 passos verdes**, com 1 falha **pré-existente** em
   `tests/reports/markdown-report_14c_test.ts` (reproduzida em worktree limpo
   do HEAD — não é regressão da F23).
-- **Fase 24 — CLI (`packages/cli`)** 🟨 Em andamento (2026-11-07: 24.0–24.1 + 24.2 grupos 1–5 + 24.3 + 24.4 + 24.5 + 24.6 ✅) — plano `fase-24-cli.md` + tarefas
+- **Fase 24 — CLI (`packages/cli`)** 🟨 Em andamento — **1ª onda ✅ (24.0–24.8,
+  2026-11-08)**; adendos 24.9/24.10 pendentes. A CLI `syntaxmesh` está
+disponível e a fachada `execute` (envelope JSON) é o **ponto único** de entrada
+das chamadas de CLI; `parse`/`parseFile`/`parseContent` recebem o conteúdo por
+**injeção** (`FileContentProvider`) e o core deixou de ler disco (ADR 034).
+Plano `fase-24-cli.md` + tarefas
   `fase-24-cli-tarefas.md` (~114, sendo ~100 da 1ª onda + adendos 24.9/24.10).
   Depois da 23, antes da 21¹; tj3-equivalente multi-runtime (Deno/Bun/Node); a
   **1ª onda da Fase 21 usa esta CLI como runner** dos golden tests contra o `tj3`
@@ -392,6 +399,35 @@ i18n (10.15+) em `packages/core/src/i18n/`.
   18.12 voltaram a passar (`checkTimeSheet`/`checkStatusSheet` exigem projeto
   antes do `FileStore`). Pendências: bun ausente (24.6.4) e o commit
   `chore(cli): multi-runtime`.
+- **Bloco G (24.7) — golden CLI × tj3.** `scripts/golden/cli-tj3.rb` (oracle
+  Ruby) roda o `tj3` 3.8.4 real sobre **34 fixtures** — 8 MWEs, 15
+  `Syntax/Correct`, 7 `Errors` e 4 de paridade — e grava
+  `packages/cli/tests/golden/cli-tj3.golden.json` (exit, inventário de
+  artefatos, `firstMessage`, stdout/stderr residuais e, na paridade, o conteúdo
+  dos arquivos). `tests/golden_cli_test.ts` roda a CLI por subprocesso e compara
+  exit exato, inventário, **resíduo de stdout** (descontando banner do `tj3` e
+  o resumo da CLI), a primeira mensagem de erro com `file:line` nos 7 fixtures
+  de erro, 2 CSVs byte-a-byte e 1 HTML por **DOM canônico**
+  (`tests/golden/canonical-dom.ts`: estabiliza `ID*`/`Created on`, descarta
+  envelope/`head`, tokens ordenados — **163 linhas idênticas** na fixture).
+  Subset, critérios e normalizações em `scripts/golden/README.md`; divergências
+  aceitas em `known_divergences.md` (D1–D9, sem `it.ignore`). **Quatro correções
+  no core só apareceram com o golden:** `Project#schedule()` ganhou o ramo
+  terminal de `Project.rb:1225` (projeto em deadlock girava para sempre),
+  `checkForLoops` passou de `Array#includes` (referência) para comparação
+  **estrutural** (ciclo não detectado ⇒ exit 1 sem mensagem), `Project` passou a
+  fixar os formatos default de `Project.rb:89-92` + `projectids` (CSV saía
+  `4.33`/`5` onde o `tj3` escreve `4.3`/`5.0`) e o override
+  `DurationAttribute#to_s` saiu (achatava `Integer`/`Float`). Também corrigidos
+  dois testes pré-existentes: `scanner_test` (o `Scanner` lança `TjError`) e
+  `markdown-handlers_14c` (`projectid` default = id do projeto,
+  `Project.rb:93`). Goldens `ical`/`html-xml` voltaram a derivar a versão de
+  `version.ts` (`PORT_VERSION`) em vez do literal `0.0.0`. CI nova
+  (`.github/workflows/ci.yml`) cacheia o golden por hash do `.rb` + fixtures e
+  falha se o commitado divergir do oracle. Verificação: `deno task tests` exit 0
+  — **808 testes / 6737 passos / 0 falhas**; cobertura de `packages/cli/src`
+  92,7 % branch / 95,4 % linha. 23.7.7 (smoke do `template` pela CLI) foi fechada
+  aqui. Pendente: commit `test(cli): golden-tj3` (24.7.10).
 - **Fase 21 — Compatibilidade e Qualidade ⬜ — reescopada em 3 ondas**
   (`fase-21-compatibilidade-qualidade.md` §0): 1ª valida o **motor** via CLI da
   24 (antes da 22); 2ª adapta o suite à **extensão VS Code** (depois da 22);

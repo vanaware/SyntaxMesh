@@ -412,4 +412,26 @@ describe("output policy — ponta a ponta (24.5.6/24.5.10–24.5.16)", () => {
       Deno.removeSync(out, { recursive: true, },);
     }
   });
+
+  it("template da F23 renderiza pela CLI e sai 0 (23.7.7)", async () => {
+    // `template` é extensão SyntaxMesh (ADR 033), logo não há oracle Ruby: o
+    // smoke só prova que a expansão sobrevive ao caminho completo da CLI. A
+    // fixture `basic.tjp` não serve — as tasks dela têm `effort` sem
+    // `allocate`, então o scheduler erra **de propósito** (`Task t1 has an
+    // effort but no resource allocations`). `reports.tjp` usa o mesmo
+    // `template` e agenda limpo.
+    const cwd = outputDir();
+    const fixture = new URL(
+      "../../core/tests/fixtures/templates/reports.tjp",
+      import.meta.url,
+    ).pathname;
+    try {
+      const result = await runCli([fixture, "--no-reports",], cwd,);
+      assertEquals(result.code, 0, result.err,);
+      assertStringIncludes(result.out, "Template Reports",);
+      assertEquals(filesIn(cwd,), [],);
+    } finally {
+      Deno.removeSync(cwd, { recursive: true, },);
+    }
+  });
 });

@@ -2,10 +2,10 @@
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-23-template-tarefas.md`
 > **Plano:** `docs/syntaxmesh/fases/fase-23-template.md`
-> **Status:** ✅ Concluída (2026-11-06) — fecho estendido em 2026-11-07 (23.9/23.10/23.11)
+> **Status:** ✅ Concluída (2026-11-06) — fecho estendido em 2026-11-07 (23.9/23.10/23.11) e 2026-11-08 (23.7.7 pela F24)
 > **Total:** ~98 tarefas
-> **Concluídas:** 97/98 — única pendência: **23.7.7** (smoke da CLI), que
-> depende da Fase 24 e está registrada com nota na seção "Pendências"
+> **Concluídas:** 98/98 — **23.7.7 fechada em 2026-11-08** pela Fase 24.8
+> (smoke `syntaxmesh --no-reports` sobre a fixture de template)
 > **Foco:** elemento `template` (Vento), registro unificado macro/template, expansão em duas fases no scanner
 
 ---
@@ -93,13 +93,13 @@ macro (contra o Ruby), nunca uma adaptação do teste ao novo comportamento.
 [x] 23.4   Chamada com argumentos nomeados           —  12/12
 [x] 23.5   Proteções (recursão, ordem, limites)      —   8/8
 [x] 23.6   Contexto e composição                     —  10/10
-[x] 23.7   Testes, snapshots e integração            —  10/11 (23.7.7 pendente)
+[x] 23.7   Testes, snapshots e integração            —  11/11
 [x] 23.8   Documentação e verificação final          —   8/8
 [x] 23.9   Colocação: template = macro                —   5/5
 [x] 23.10  Listas e `for` no corpo                    —   4/4
 [x] 23.11  Fix: helper do teste 14C.5.1 (richText)    —   1/1
 ─────────────────────────────────────────────────────────
-TOTAL: 97/98 — pendência única: 23.7.7 (CLI da Fase 24)
+TOTAL: 98/98 — **23.7.7 executada em 2026-11-08** (CLI da F24)
 ```
 
 ---
@@ -251,7 +251,7 @@ corrigida **aqui**, antes de 23.2.
 | 23.7.4 | Integração com o motor: projeto com tasks geradas por template vs projeto equivalente escrito à mão → schedules idênticos (effort, deps, alocações, datas) | `tests/integration/` | 2 testes |
 | 23.7.5 | Integração com financeiro: template gerando `account`/`booking` produz mesmos totais do equivalente manual | idem | 1 teste |
 | 23.7.6 | Integração com relatórios: fixture com template gera relatório via fachada `TaskJuggler.generateReports` sem erro | idem | 1 teste |
-| 23.7.7 | (Opcional, se CLI Fase 24 disponível) `syntaxmesh template-fixture.tjp --no-reports` exit 0 | — | 1 teste |
+| 23.7.7 | (Opcional, se CLI Fase 24 disponível) `syntaxmesh template-fixture.tjp --no-reports` exit 0 | — | 1 teste (✅ 2026-11-08) |
 | 23.7.8 | i18n: AST-equivalence `template` en/pt-BR/es consolidada nos casos 10.18 | `tests/parser/` | 3 casos |
 | 23.7.9 | Matriz de erros §5 como suíte table-driven commitada | `tests/` | ≥ 7 casos |
 | 23.7.10 | Cobertura ≥ 80% nos módulos novos (`template-engine.ts`, ramos template em `macro-table.ts`/`scanner.ts`) | relatório | meta atingida |
@@ -364,7 +364,7 @@ permanece **macro-only**: um template de mesmo nome nunca é resolvido por ele
 
 | # | Tarefa | Motivo | Retomada |
 |---|---|---|---|
-| 23.7.7 | (Opcional) `syntaxmesh template-fixture.tjp --no-reports` exit 0 | A CLI é entregue na **Fase 24**, que ainda não existe (`packages/cli/` ausente) | Na F24, rodar o smoke sobre `packages/core/tests/fixtures/templates/basic.tjp` (política "7. Se a Fase 24 ainda não estiver pronta, marque 23.7.7 como pendente com nota") |
+| ~~23.7.7~~ | ~~(Opcional) `syntaxmesh template-fixture.tjp --no-reports` exit 0~~ | ✅ **Fechada em 2026-11-08** pela Fase 24.8 — a CLI existe | Feita em `packages/cli/tests/cli.integration_test.ts` ("template da F23 renderiza pela CLI e sai 0"), sobre `packages/core/tests/fixtures/templates/reports.tjp` e não `basic.tjp`: nesta última as tasks têm `effort` sem `allocate`, então o scheduler erra de propósito e o exit é 1 |
 
 A integração equivalente já está coberta sem CLI por
 `tests/integration/template-integration_23_test.ts`, que usa a fachada
