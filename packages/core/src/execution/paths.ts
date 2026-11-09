@@ -35,3 +35,28 @@ export function normalizeInputPath(path: string,): string {
   if (absolute) return `/${joined}`;
   return joined === "" ? "." : joined;
 }
+
+/**
+ * Diretório-pai posix de um caminho canônico (`"."` na raiz relativa).
+ *
+ * Puro como o resto do módulo: `a/b.tji` → `a`, `b.tji` → `.`, `/x` → `/`.
+ */
+export function dirnameOf(path: string,): string {
+  const index = path.lastIndexOf("/",);
+  if (index < 0) return ".";
+  if (index === 0) return "/";
+  return path.slice(0, index,);
+}
+
+/**
+ * Remove a extensão final (`master.tjp` → `master`).
+ *
+ * Só corta o último ponto do **basename**: `a.b/master` e `master` ficam
+ * intactos, como o `File.basename(f, ext)` implícito do freeze no Ruby.
+ */
+export function stripExtension(path: string,): string {
+  const slash = path.lastIndexOf("/",);
+  const dot = path.lastIndexOf(".",);
+  if (dot <= slash + 1) return path;
+  return path.slice(0, dot,);
+}

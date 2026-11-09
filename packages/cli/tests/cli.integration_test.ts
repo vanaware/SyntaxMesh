@@ -113,6 +113,35 @@ beforeAll(async () => {
     join(tempDir, "inc", "sub", "deep.tji",),
     'task t9 "Nove" { effort 2d\n  allocate dev\n}\n',
   );
+  // Congelável (24.9.5): `trackingscenario` é pré-requisito do `--freeze`.
+  await Deno.writeTextFile(
+    join(tempDir, "freeze.tjp",),
+    'project prj "Freeze" "1.0" 2026-01-01 - 2026-12-31 {\n' +
+      '  timezone "UTC"\n  now 2026-05-11\n' +
+      '  scenario plan "Plan" {\n  }\n  trackingscenario plan\n}\n' +
+      'resource dev "Developer" {\n  email "dev@example.com"\n}\n' +
+      'task t1 "Effort" {\n  effort 5d\n  allocate dev\n}\n',
+  );
+  // Configuração mínima dos apps de sheet (sem SMTP — ADR 036).
+  await Deno.writeTextFile(
+    join(tempDir, "sheet.yaml",),
+    "_global:\n  senderEmail: pm@example.com\n  smtpServer: localhost\n",
+  );
+  // Dialetos do relatório (24.10.9) e imagem relativa (24.10.8): o mesmo
+  // header nos dois `format`s e um relatório markdown que cita `fotos/a.jpg`.
+  await Deno.writeTextFile(
+    join(tempDir, "formats.tjp",),
+    'project prj "Formats" "1.0" 2026-01-01 - 2026-12-31 {\n' +
+      '  timezone "UTC"\n}\n' +
+      'resource dev "Dev"\n' +
+      'task t1 "Tarefa" {\n  start 2026-01-05\n  effort 2d\n  allocate dev\n}\n' +
+      'taskreport rt "rt" {\n  formats html\n' +
+      "  header \"'''forte''' e **forte**\"\n  columns name\n}\n" +
+      'taskreport md "md" {\n  formats html\n  format markdown\n' +
+      "  header \"'''forte''' e **forte**\"\n  columns name\n}\n" +
+      'taskreport img "img" {\n  formats html, markdown\n  format markdown\n' +
+      '  header "![Foto](fotos/a.jpg)"\n  columns name\n}\n',
+  );
 },);
 
 afterAll(async () => {
@@ -430,6 +459,150 @@ describe("output policy — ponta a ponta (24.5.6/24.5.10–24.5.16)", () => {
       assertEquals(result.code, 0, result.err,);
       assertStringIncludes(result.out, "Template Reports",);
       assertEquals(filesIn(cwd,), [],);
+    } finally {
+      Deno.removeSync(cwd, { recursive: true, },);
+    }
+  });
+});
+
+describe("freeze e apps de sheet pela CLI (24.9.5/24.10.1–24.10.4)", () => {
+  it("--freeze grava header e bookings ao lado do master", async () => {
+    const header = join(tempDir, "freeze-header.tji",);
+    const bookings = join(tempDir, "freeze-bookings.tji",);
+    try {
+      const result = await runCli([
+        join(tempDir, "freeze.tjp",),
+        "--freeze",
+        "--freezedate",
+        "2026-05-18",
+        "--no-reports",
+      ],);
+      assertEquals(result.code, 0, result.out + result.err,);
+      // Ruby: o header entra como include e só redefine `now`.
+      assertEquals(
+        Deno.readTextFileSync(header,),
+        "now 2026-05-18-00:00-+0000\n",
+      );
+      assertStringIncludes(
+        Deno.readTextFileSync(bookings,),
+        "supplement resource dev {",
+      );
+      // `--no-reports` para depois do freeze, como no tj3.
+      assertEquals(result.out.includes("--- ",), false,);
+    } finally {
+      Deno.removeSync(header, { recursive: true, },);
+      Deno.removeSync(bookings, { recursive: true, },);
+    }
+  });
+
+  it("--freezedate inválida falha em 1 sem gravar nada", async () => {
+    const result = await runCli([
+      join(tempDir, "freeze.tjp",),
+      "--freeze",
+      "--freezedate",
+      "ontem",
+    ],);
+    assertEquals(result.code, 1,);
+    assertStringIncludes(result.err, "Invalid freeze date",);
+    assertEquals(filesIn(tempDir,).includes("freeze-header.tji",), false,);
+  });
+
+  it("ts send gera o email, os templates e o outbox/.eml", async () => {
+    const cwd = outputDir();
+    try {
+      const result = await runCli([
+        "ts",
+        "send",
+        join(tempDir, "freeze.tjp",),
+        "--config",
+        join(tempDir, "sheet.yaml",),
+        "-e",
+        "2026-05-18",
+      ], cwd,);
+      assertEquals(result.code, 0, result.out + result.err,);
+      // O texto RFC 822 vai para o terminal; o arquivo é a entrega (sem SMTP).
+      assertStringIncludes(result.out, "Subject: ",);
+      assertStringIncludes(result.out, "X-TaskJuggler: ",);
+      const eml = join(cwd, "outbox", "001-dev@example.com.eml",);
+      assertStringIncludes(Deno.readTextFileSync(eml,), "Subject: ",);
+      assertEquals(
+        Deno.statSync(join(cwd, "TimeSheetTemplates", "2026-05-18",),)
+          .isDirectory,
+        true,
+      );
+    } finally {
+      Deno.removeSync(cwd, { recursive: true, },);
+    }
+  });
+
+  it("--check-time-sheet reprova uma folha que não é folha", async () => {
+    const sheet = join(tempDir, "nao-e-folha.tji",);
+    await Deno.writeTextFile(sheet, "isto nao e uma timesheet\n",);
+    const result = await runCli([
+      join(tempDir, "freeze.tjp",),
+      "--check-time-sheet",
+      sheet,
+    ],);
+    assertEquals(result.code, 1,);
+    assertStringIncludes(result.err, "Error",);
+  });
+});
+
+describe("dialetos e imagens nos relatórios (24.10.8/24.10.9)", () => {
+  /** Executa a fixture `formats.tjp` num cwd limpo e devolve o cwd usado. */
+  async function runFormats(): Promise<{ code: number; cwd: string }> {
+    const cwd = outputDir();
+    const result = await runCli([
+      join(tempDir, "formats.tjp",),
+      "--output-dir",
+      "out",
+    ], cwd,);
+    assertEquals(result.code, 0, result.out + result.err,);
+    return { code: result.code, cwd, };
+  }
+
+  it("default é richtext; markdown só com `format markdown` (24.10.9)", async () => {
+    const { cwd, } = await runFormats();
+    try {
+      // Mesmo header nos dois relatórios: cada dialeto lê a sua marcação.
+      const richtext = Deno.readTextFileSync(join(cwd, "out", "rt.html",),);
+      assertStringIncludes(richtext, "<b>forte</b>",);
+      assertStringIncludes(richtext, "**forte**",);
+
+      const markdown = Deno.readTextFileSync(join(cwd, "out", "md.html",),);
+      assertStringIncludes(markdown, "<b>forte</b>",);
+      assertStringIncludes(markdown, "'''forte'''",);
+    } finally {
+      Deno.removeSync(cwd, { recursive: true, },);
+    }
+  });
+
+  it("copia a imagem relativa para ao lado do relatório (24.10.8)", async () => {
+    const cwd = outputDir();
+    try {
+      // A imagem vive no cwd (raiz do projeto), não na pasta de saída.
+      await Deno.mkdir(join(cwd, "fotos",), { recursive: true, },);
+      await Deno.writeTextFile(join(cwd, "fotos", "a.jpg",), "JPEG",);
+      const result = await runCli([
+        join(tempDir, "formats.tjp",),
+        "--output-dir",
+        "out",
+      ], cwd,);
+      assertEquals(result.code, 0, result.out + result.err,);
+
+      assertStringIncludes(
+        Deno.readTextFileSync(join(cwd, "out", "img.html",),),
+        'data="fotos/a.jpg"',
+      );
+      // A referência não é reescrita; o arquivo é copiado para o mesmo caminho.
+      assertEquals(
+        Deno.readTextFileSync(join(cwd, "out", "fotos", "a.jpg",),),
+        "JPEG",
+      );
+      assertStringIncludes(
+        Deno.readTextFileSync(join(cwd, "out", "img.md",),),
+        "![Foto](fotos/a.jpg)",
+      );
     } finally {
       Deno.removeSync(cwd, { recursive: true, },);
     }

@@ -219,7 +219,7 @@ export function registerProjectRules(p: ProjectFileParser,): void {
     );
     p.doc(
       "alertlevels",
-      "By default TaskJuggler supports the pre-defined alert levels: green, " +
+      "By default SyntaxMesh supports the pre-defined alert levels: green, " +
         "yellow and red. This attribute can be used to replace them with " +
         "your own set of alert levels (minimum 2, ascending severity).",
     );
@@ -328,7 +328,7 @@ export function registerProjectRules(p: ProjectFileParser,): void {
     );
     p.doc(
       "now",
-      "Specify the date that TaskJuggler uses for calculation as current " +
+      "Specify the date that SyntaxMesh uses for calculation as current " +
         "date. If no value is specified, the system clock is used.",
     );
     p.arg(
@@ -356,7 +356,7 @@ export function registerProjectRules(p: ProjectFileParser,): void {
     );
     p.doc(
       "markdate",
-      "Specify the reference date that TaskJuggler uses as user-defined " +
+      "Specify the reference date that SyntaxMesh uses as user-defined " +
         "date to help with tracking tasks.",
     );
     p.arg(
@@ -576,9 +576,7 @@ export function registerProjectRules(p: ProjectFileParser,): void {
     p.arg(
       0,
       "filename",
-      `Name of the file to include. Must have ${
-        formatExtensionList(INCLUDE_FILE_EXTENSIONS,)
-      } extension.`,
+      "Name of the file to include. Must have a '.smx' extension.",
     );
   },);
 

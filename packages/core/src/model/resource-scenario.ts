@@ -877,8 +877,13 @@ export class ResourceScenario extends ScenarioData {
       // Ruby (ResourceScenario.rb:705): os intervalos reconstruídos são
       // `TimeInterval`s de datas — não `ScoreboardInterval` (que carrega
       // índices). `Booking#to_tjp` e o scheduling esperam datas.
+      // `Scoreboard#idxToDate` devolve `Date`; `TimeInterval` só aceita
+      // `TjTime`, então a conversão é explícita (como em `Project#idxToDate`).
       booking.intervals.push(
-        new TimeInterval(sb.idxToDate(from,), sb.idxToDate(to,),),
+        new TimeInterval(
+          TjTime.fromDate(sb.idxToDate(from,),),
+          TjTime.fromDate(sb.idxToDate(to,),),
+        ),
       );
     };
 

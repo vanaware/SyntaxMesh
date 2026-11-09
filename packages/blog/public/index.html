@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>mdBlog</title>
+    <meta name="description" content="Blog syntaxMesh" />
+    <meta property="og:title" content="Blog SyntaxMesh" />
+    <meta property="og:description"
+      content="Blog SyntaxMesh" />
+    <meta name="theme-color" content="#6750a4" />
+
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="./manifest.json" />
+
+    <!-- Favicon SVG Inline -->
+    <link rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔒</text></svg>" />
+
+    <!-- Auto-recovery from stale Service Worker caches -->
+    <script>
+    (function () {
+      // Unregisters every service worker, deletes every cache and reloads. The
+      // sessionStorage flag keeps a permanently broken asset from looping the
+      // page: the second load then reports the failure through the deadline set
+      // next to the mount point below instead of reloading again.
+      window.__mdbRecoverFromStaleCache = function () {
+        sessionStorage.setItem("sw_recovered", "1",);
+        var reload = function () {
+          window.location.reload();
+        };
+        if (!("serviceWorker" in navigator)) return reload();
+        navigator.serviceWorker.getRegistrations().then(function (regs,) {
+          return Promise.all(regs.map(function (r,) {
+            return r.unregister();
+          },),);
+        },).then(function () {
+          if (!("caches" in window)) return reload();
+          return caches.keys().then(function (keys,) {
+            return Promise.all(keys.map(function (k,) {
+              return caches.delete(k,);
+            },),).then(reload,);
+          },);
+        },).catch(reload,);
+      };
+
+      window.addEventListener("error", function (e,) {
+        if (
+          e.target && (e.target.tagName === "SCRIPT" || e.target.tagName === "LINK")
+        ) {
+          var src = e.target.src || e.target.href;
+          if (src && !sessionStorage.getItem("sw_recovered",)) {
+            window.__mdbRecoverFromStaleCache();
+          }
+        }
+      }, true,);
+    })();
+    </script>
+
+    <!-- BeerCSS and Material Symbols -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/beercss@3.7.12/dist/cdn/beer.min.css"
+      rel="stylesheet" />
+    <!-- The icon font ships inside beer.min.css as @font-face with
+         font-display: block: every <i> glyph stays invisible until the
+         stylesheet is parsed and the woff2 fetch has finished. Preloading it
+         starts that fetch in parallel with the stylesheet instead of behind
+         it. -->
+    <link rel="preload"
+      href="https://cdn.jsdelivr.net/npm/beercss@3.7.12/dist/cdn/material-symbols-outlined.woff2"
+      as="font" type="font/woff2" crossorigin />
+    <script type="module"
+      src="https://cdn.jsdelivr.net/npm/beercss@3.7.12/dist/cdn/beer.min.js"></script>
+    <script type="module"
+      src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.2/dist/cdn/material-dynamic-colors.min.js"></script>
+  </head>
+  <body class="auto">
+    <!-- Restores the saved theme before the first paint (avoids a theme flash) -->
+    <script>
+    try {
+      var savedTheme = localStorage.getItem("mdblog-theme",);
+      if (savedTheme === "dark" || savedTheme === "light") {
+        document.body.classList.remove("auto", "light", "dark",);
+        document.body.classList.add(savedTheme,);
+      }
+      // The shipped theme-color is the brand purple of the light palette; the
+      // chrome and splash should carry the background actually painted, so the
+      // restored mode is mirrored into the meta before the first paint.
+      var bootBg = getComputedStyle(document.body,).backgroundColor;
+      var bootMeta = document.querySelector("meta[name=theme-color]",);
+      if (bootBg && bootBg !== "transparent" && bootMeta) {
+        bootMeta.setAttribute("content", bootBg,);
+      }
+    } catch (e) {}
+    </script>
+
+    <!-- mdBlog application mount point -->
+    <div id="app"></div>
+
+    <!-- Bundled mdBlog library (automatically includes the default components when there is no app.js) -->
+    <script type="module" src="./mdblog.min.js"></script>
+
+    <!-- A request that never answers leaves an empty #app behind: the bundle is
+         fetched under the service worker, and a worker whose caches were deleted
+         underneath an open tab neither resolves nor fails. Without this, the
+         reader watches a page that appears to load forever; after the deadline
+         the shell says what it is waiting for and offers the two ways out. -->
+    <script>
+    window.setTimeout(function () {
+      var app = document.getElementById("app",);
+      if (!app || app.childElementCount > 0) return;
+
+      var main = document.createElement("main",);
+      main.className = "responsive max padding";
+
+      var notice = document.createElement("article",);
+      notice.className = "round padding margin";
+
+      var title = document.createElement("h6",);
+      title.className = "bold no-margin";
+      title.textContent = "mdBlog did not finish loading";
+
+      var text = document.createElement("p",);
+      text.className = "small-text secondary-text";
+      text.textContent =
+        "The page is still waiting for its own script. The copy the browser keeps usually no longer matches the site: discarding it reloads from the network.";
+
+      var actions = document.createElement("div",);
+      actions.className = "row";
+
+      var reload = document.createElement("button",);
+      reload.className = "primary small";
+      reload.textContent = "Reload the page";
+      reload.onclick = function () {
+        window.location.reload();
+      };
+
+      var discard = document.createElement("button",);
+      discard.className = "tertiary small";
+      discard.textContent = "Discard the cached copy";
+      discard.onclick = function () {
+        window.__mdbRecoverFromStaleCache();
+      };
+
+      actions.appendChild(reload,);
+      actions.appendChild(discard,);
+      notice.appendChild(title,);
+      notice.appendChild(text,);
+      notice.appendChild(actions,);
+      main.appendChild(notice,);
+      app.appendChild(main,);
+    }, 12000,);
+    </script>
+  </body>
+</html>

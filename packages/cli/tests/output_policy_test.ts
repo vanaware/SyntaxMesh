@@ -8,12 +8,17 @@
  * @see docs/syntaxmesh/fases/fase-24-cli-adendo.md §4
  * @see docs/syntaxmesh/fases/fase-24-cli-tarefas.md (24.5)
  */
-import { assertEquals, } from "@std/assert";
+import { assert, assertEquals, } from "@std/assert";
 import { describe, it, } from "@std/testing/bdd";
-import type { ReportJsonEntry, ReportsJson, } from "@vanaware/syntaxmesh";
+import type {
+  ExecutionResult,
+  ReportJsonEntry,
+  ReportsJson,
+} from "@vanaware/syntaxmesh";
 import {
   delimiterFor,
   dispatchReports,
+  dispatchSections,
   extensionOf,
   fileNameFor,
   type OutputPolicyIo,
@@ -318,5 +323,211 @@ describe("dispatchReports — assets do HTML (24.5.16)", () => {
     );
     assertEquals(outcome.assets, [],);
     assertEquals(fake.copies, [],);
+  });
+});
+
+/** Envelope mínimo com só as seções dadas (24.9/24.10). */
+function envelope(
+  results: ExecutionResult["results"],
+  ok = true,
+  options: Partial<ExecutionResult["options"]> = {},
+): ExecutionResult {
+  return {
+    ok,
+    exitCode: ok ? 0 : 1,
+    options: options as never,
+    messages: [],
+    results,
+  };
+}
+
+describe("dispatchSections — freeze (24.9.4/24.9.5)", () => {
+  it("grava os dois artefatos no caminho que o core derivou", async () => {
+    const fake = fakeIo();
+    const outcome = await dispatchSections(
+      envelope({
+        freeze: {
+          files: [
+            {
+              fileName: "out/proj-header.tji",
+              contents: "now 2026-05-18-00:00-+0000\n",
+            },
+            {
+              fileName: "out/proj-bookings.tji",
+              contents: "supplement resource dev {\n}\n",
+            },
+          ],
+        },
+      },),
+      { io: fake.io, },
+    );
+    assertEquals(outcome.written, [
+      "out/proj-header.tji",
+      "out/proj-bookings.tji",
+    ],);
+    assertEquals(
+      fake.files.get("out/proj-bookings.tji",),
+      "supplement resource dev {\n}\n",
+    );
+    assertEquals(fake.dirs, ["out",],);
+  });
+
+  it("artefato vazio é gravado (trunca o freeze anterior)", async () => {
+    // Ruby `File.open(…, 'w')`: sem bookings o arquivo sai vazio mesmo. Pular
+    // o artefato deixaria em disco o conteúdo do freeze anterior.
+    const fake = fakeIo();
+    const outcome = await dispatchSections(
+      envelope({
+        freeze: { files: [{ fileName: "proj-bookings.tji", contents: "", },], },
+      },),
+      { io: fake.io, },
+    );
+    assertEquals(outcome.written, ["proj-bookings.tji",],);
+    assertEquals(fake.files.get("proj-bookings.tji",), "",);
+  });
+});
+
+describe("dispatchSections — man (24.9.1–24.9.3)", () => {
+  it("imprime o texto da seção `man` sem linha em branco extra", async () => {
+    const fake = fakeIo();
+    const outcome = await dispatchSections(
+      envelope({
+        man: {
+          format: "text",
+          keywords: ["task",],
+          content: "Keyword: task\n",
+          files: [],
+        },
+      },),
+      { io: fake.io, },
+    );
+    assertEquals(fake.printed, ["Keyword: task",],);
+    assertEquals(outcome.written, [],);
+    assertEquals(fake.files.size, 0,);
+  });
+
+  it("grava o manual sob o --output-dir ecoado", async () => {
+    const fake = fakeIo();
+    const outcome = await dispatchSections(
+      envelope(
+        {
+          man: {
+            format: "html",
+            keywords: [],
+            content: "",
+            files: [
+              { name: "index.html", contents: "<html></html>", },
+              { name: "css/tjmanual.css", contents: "pre {}", },
+            ],
+          },
+        },
+        true,
+        { outputDir: "docs/manual", },
+      ),
+      { io: fake.io, },
+    );
+    assertEquals(outcome.written, [
+      "docs/manual/index.html",
+      "docs/manual/css/tjmanual.css",
+    ],);
+    assertEquals(fake.files.get("docs/manual/index.html",), "<html></html>",);
+    // O CSS do manual pede o diretório antes do arquivo.
+    assert(fake.dirs.includes("docs/manual/css",),);
+  });
+
+  it("sem arquivos (formato text/smx) nada é gravado", async () => {
+    const fake = fakeIo();
+    const outcome = await dispatchSections(
+      envelope({
+        man: { format: "smx", keywords: [], content: "# x\n", files: [], },
+      },),
+      { io: fake.io, },
+    );
+    assertEquals(outcome.written, [],);
+    assertEquals(fake.dirs, [],);
+  });
+});
+
+describe("dispatchSections — sheet (24.10.1–24.10.4)", () => {
+  it("imprime o resumo e grava arquivos sob a raiz do app", async () => {
+    const fake = fakeIo();
+    const outcome = await dispatchSections(
+      envelope({
+        sheet: {
+          app: "ts-summary",
+          exitCode: 0,
+          summaryText: "Subject: summary\n\nbody\n",
+          files: [
+            {
+              name: "TimeSheets/2026-05-18/dev.tji",
+              contents: "timesheet dev\n",
+            },
+          ],
+        },
+      },),
+      { io: fake.io, sheetBaseDir: "work", },
+    );
+    assertEquals(fake.printed, ["Subject: summary\n\nbody",],);
+    assertEquals(outcome.written, [
+      "work/TimeSheets/2026-05-18/dev.tji",
+    ],);
+    assertEquals(outcome.aborted, false,);
+  });
+
+  it("cada email vira outbox/NNN-<to>.eml, na ordem de emissão", async () => {
+    const fake = fakeIo();
+    const outcome = await dispatchSections(
+      envelope({
+        sheet: {
+          app: "ts-send",
+          exitCode: 0,
+          emails: [
+            { to: "dev@example.com", subject: "A", text: "to dev\n", },
+            { to: "ops@example.com", subject: "B", text: "to ops\n", },
+          ],
+          emailText: "to dev\n",
+        },
+      },),
+      { io: fake.io, },
+    );
+    assertEquals(outcome.written, [
+      "outbox/001-dev@example.com.eml",
+      "outbox/002-ops@example.com.eml",
+    ],);
+    // Sem resumo/relatório, o corpo do primeiro email é o que se imprime.
+    assertEquals(fake.printed, ["to dev",],);
+  });
+
+  it("check-ts imprime o relatório compilado", async () => {
+    const fake = fakeIo();
+    await dispatchSections(
+      envelope({
+        sheet: {
+          app: "check-ts",
+          exitCode: 0,
+          reportText: "Sheet is valid.\n",
+        },
+      },),
+      { io: fake.io, },
+    );
+    assertEquals(fake.printed, ["Sheet is valid.",],);
+    assertEquals(fake.files.size, 0,);
+  });
+
+  it("execução que falhou não entrega email nem grava folha", async () => {
+    const fake = fakeIo();
+    const outcome = await dispatchSections(
+      envelope({
+        sheet: {
+          app: "ts-receive",
+          exitCode: 1,
+          files: [{ name: "TimeSheets/x.tji", contents: "x", },],
+        },
+      }, false,),
+      { io: fake.io, },
+    );
+    assertEquals(outcome.aborted, true,);
+    assertEquals(outcome.written, [],);
+    assertEquals(fake.printed, [],);
   });
 });

@@ -23,9 +23,10 @@ import { ICalendar, Journal as ICalJournal, } from "../../src/ical/mod.ts";
 import { Journal, } from "../../src/model/journal.ts";
 import { RichText, } from "../../src/richtext/rich-text.ts";
 import { TjTime, } from "../../src/time/tj-time.ts";
-// Versão da fonte única (`version.ts`): o smoke não fixa o número para não
-// quebrar a cada bump promovido por `scripts/tag-version.ts` (24.6.6).
-import { VERSION, } from "../../src/version.ts";
+// Versão da fonte única (`version.ts`, reexportada como `VERSION` pelo barril do
+// pacote): o smoke não fixa o número para não quebrar a cada bump promovido por
+// `scripts/tag-version.ts` (24.6.6).
+import { VERSION, } from "../../src/mod.ts";
 
 describe("Smoke test after Fase 17 (HTML/XML/iCalendar/Painter)", () => {
   it("HTMLDocument('html5') serializa o DOCTYPE html5 e o <html> real", () => {

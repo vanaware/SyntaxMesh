@@ -16,9 +16,8 @@ export {
   fileKey,
   snapshotMessages,
 } from "./envelope.ts";
-export { normalizeInputPath, } from "./paths.ts";
+export { normalizeInputPath, stripExtension, } from "./paths.ts";
 export {
-  anchoredSheetSection,
   checkSection,
   checkSheetSection,
   freezeSection,
@@ -27,6 +26,7 @@ export {
   manSection,
   OPTION_SPECS,
   reportsSection,
+  runSheetSection,
   sheetSection,
   versionSection,
 } from "./sections.ts";
@@ -40,10 +40,12 @@ export type {
   ExecutionResult,
   ExecutionResults,
   ExecutionSheetAppOptions,
+  FreezeFile,
   FreezeSection,
   ListReportsEntry,
   ManSection,
   OptionSpec,
   SheetAppName,
+  SheetEmail,
   SheetSection,
 } from "./types.ts";

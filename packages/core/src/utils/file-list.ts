@@ -80,8 +80,23 @@ export class FileList {
    * devolvem `nil` por não alcançarem 4 caracteres.
    */
   get masterFile(): string | null {
+    return this.masterFileWith([".tjp",],);
+  }
+
+  /**
+   * Primeiro arquivo com uma das extensões dadas.
+   *
+   * A varredura do Ruby é a mesma (`file[-4, 4] == '.tjp'`); o port aceita
+   * `.smx` (extensão nativa, ADR 033/24.2.36), então os sufixos entram como
+   * parâmetro em vez de ficar repetidos pelo código.
+   */
+  masterFileWith(extensions: readonly string[],): string | null {
     for (const file of this.files.keys()) {
-      if (file.length >= 4 && file.slice(-4,) === ".tjp") return file;
+      for (const extension of extensions) {
+        if (file.length >= extension.length && file.endsWith(extension,)) {
+          return file;
+        }
+      }
     }
     return null;
   }

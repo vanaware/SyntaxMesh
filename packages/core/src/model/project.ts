@@ -41,7 +41,6 @@ import { MessageHandlerInstance, } from "../message-handler.ts";
 import { Log, } from "../log.ts";
 import { AppConfig, } from "../app-config.ts";
 import { initTj3Config, } from "../tj3-config.ts";
-import { VERSION, } from "../version.ts";
 
 // Import attribute registration functions statically (synchronous)
 import { registerScenarioAttributes, } from "../model/attributes/scenario-attributes.ts";

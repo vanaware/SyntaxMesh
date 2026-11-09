@@ -239,12 +239,13 @@ i18n (10.15+) em `packages/core/src/i18n/`.
   **730 testes / 6402 passos verdes**, com 1 falha **pré-existente** em
   `tests/reports/markdown-report_14c_test.ts` (reproduzida em worktree limpo
   do HEAD — não é regressão da F23).
-- **Fase 24 — CLI (`packages/cli`)** 🟨 Em andamento — **1ª onda ✅ (24.0–24.8,
-  2026-11-08)**; adendos 24.9/24.10 pendentes. A CLI `syntaxmesh` está
-disponível e a fachada `execute` (envelope JSON) é o **ponto único** de entrada
-das chamadas de CLI; `parse`/`parseFile`/`parseContent` recebem o conteúdo por
-**injeção** (`FileContentProvider`) e o core deixou de ler disco (ADR 034).
-Plano `fase-24-cli.md` + tarefas
+- **Fase 24 — CLI (`packages/cli`)** ✅ **Concluída (2026-11-08)** — **1ª onda
+  ✅ (24.0–24.8)** + **Bloco J ✅ (24.10.1–24.10.9)** + **Bloco I ✅
+  (24.9.1–24.9.5, com o `doc-core` da F22 construído na mesma sessão)**. A CLI `syntaxmesh` está
+  disponível e a fachada `execute` (envelope JSON) é o **ponto único** de entrada
+  das chamadas de CLI; `parse`/`parseFile`/`parseContent` recebem o conteúdo por
+  **injeção** (`FileContentProvider`) e o core deixou de ler disco (ADR 034).
+  Plano `fase-24-cli.md` + tarefas
   `fase-24-cli-tarefas.md` (~114, sendo ~100 da 1ª onda + adendos 24.9/24.10).
   Depois da 23, antes da 21¹; tj3-equivalente multi-runtime (Deno/Bun/Node); a
   **1ª onda da Fase 21 usa esta CLI como runner** dos golden tests contra o `tj3`
@@ -356,8 +357,9 @@ Plano `fase-24-cli.md` + tarefas
   `[\\?%*:|"<>]→_`, vazio → `report`) e sobrescrevendo por default. Erro em
   `reports[].errors` ou `ok: false` **aborta sem saída parcial** (nenhum
   arquivo, nenhum asset) e as mensagens passam por `Reporter.error`. Assets do
-  HTML (`css/`, `icons/`, `scripts/wz_tooltip.js`) são copiados só quando sai
-  `html` de relatório não-`selfcontained` — o core passou a expor
+  HTML (de `assets/css/`, `assets/icons/` e `assets/scripts/wz_tooltip.js`,
+  copiados para o `--output-dir` no **mesmo** layout relativo) são copiados só
+  quando sai `html` de relatório não-`selfcontained` — o core passou a expor
   `ReportJsonEntry.selfcontained`. Dois bugs de fronteira apareceram na matriz
   e ficaram em `io.ts`: `copyTree` fazia `readdir` em arquivo (nova `isDir()`) e
   `exists()` usava `access()`, que no shim `node:fs` do Deno exige `--allow-sys`
@@ -376,28 +378,38 @@ Plano `fase-24-cli.md` + tarefas
   os dois artefatos: `dist/syntaxmesh` (`deno compile`, permissões embutidas) e
   `dist/cli.js` + `dist/package.json` (`scripts/bundle-node.ts` → `deno bundle
   --platform=deno`, shebang node, ESM). O bundle Node roda `mwe001` com todos
-  os assets (`css/`, `icons/`, `scripts/wz_tooltip.js`) porque `dist/` está a
-  três níveis da raiz; o binário compilado não os encontra (assets relativos
-  ao módulo) — limitação registrada. **Bug real de multi-runtime achado pelo
+  os assets (de `assets/`) porque `dist/` está a três níveis da raiz; o binário
+  compilado não os encontra (assets relativos ao módulo) — limitação
+  registrada. **Bug real de multi-runtime achado pelo
   bundle:** `node dist/cli.js` morria com `Hour 24 out of range` porque o ICU
   do Node mapeia `hour12: false` para o ciclo h24 (meia-noite = 24) enquanto o
   Deno devolve 0; `timezone.ts` passou a usar `hourCycle: "h23"` (+ `% 24`
   defensivo) com regressão em `tests/time/timezone_test.ts`.
-  **Versão única (24.6.6):** `version.ts` (0.0.2) alimenta `AppConfig.version`,
-  `initTj3Config` (que fixava `0.0.0`) e `CORE_VERSION`; goldens `html-xml`/
-  `ical`, o smoke da F17 (agora interpola `VERSION`) e `esbuild.jsonc#versionPaths`
-  foram alinhados. Medição de tamanho: 605 MB default, 349 MB com
+  **Versão única (24.6.6, ADR 040):** `version.ts` segue o template do buildit
+  (`__APP_VERSION__` com fallback `""`; a definitiva só existe no bundle,
+  montada a partir do `deno.jsonc` da raiz) e o barril do pacote o publica como
+  `VERSION`; `AppConfig.version`, `initTj3Config` (que fixava `0.0.0`) e
+  `Project.version` derivam daí, e a CLI importa `VERSION` de
+  `@vanaware/syntaxmesh` (o service-worker usa o subcaminho `./version`).
+  Dentro do core `app-config.ts` importa o **folha**, nunca `./mod.ts`: o barril
+  ali fecha ciclo e derruba 4 testes de sheets por TDZ. Goldens `html-xml`/`ical`
+  leem a versão do `deno.jsonc` e a neutralizam em `@@VER@@`; o smoke da F17
+  interpola `VERSION`; `esbuild.jsonc#versionPaths` aponta para o arquivo real.
+  Nenhum teste fixa o número — só a derivação. Medição de tamanho: 605 MB
+  default, 349 MB com
   `--node-modules-dir=none`, 114 MB em árvore isolada (o grafo da CLI tem 6
   pacotes npm; o resto é `wrangler`/`workerd`/`sharp` de `packages/server`) e
   `env -i ./dist/syntaxmesh --version` → 0. `packages/cli/README.md` documenta
   uso, flags, destinos, tabela de extensões, política de aborto, permissões por
   runtime e limitações (Deno Deploy sem FS, tamanho do binário, `--config`
-  stub, `sheet`/`man`/`--freeze*` pendentes). Provas:
-  `tests/distribution_test.ts` (bundle → shebang/ESM → `node --version` →
-  `node mwe001` + assets; Bun sondado e `it.ignore`) e `tests/version_test.ts`;
-  suíte do pacote **35 testes / 161 passos**. Correção colateral: os testes
-  18.12 voltaram a passar (`checkTimeSheet`/`checkStatusSheet` exigem projeto
-  antes do `FileStore`). Pendências: bun ausente (24.6.4) e o commit
+  stub, `sheet`/`man`/`--freeze*` pendentes). Provas medidas à mão: o bundle
+  roda `node mwe001` com todos os assets e `env -i ./dist/syntaxmesh --version`
+  sai 0 sem runtime (o `distribution_test.ts` que automatizava isso foi
+  descartado e não está no repo). Suíte do pacote **33 testes / 181 passos** (o
+  `version_test.ts` da CLI saiu: `VERSION` agora só é confrontada com a
+  derivação, em `packages/core/tests/version_test.ts`). Correção colateral: os
+  testes 18.12 voltaram a passar (`checkTimeSheet`/`checkStatusSheet` exigem
+  projeto antes do `FileStore`). Pendências: bun ausente (24.6.4) e o commit
   `chore(cli): multi-runtime`.
 - **Bloco G (24.7) — golden CLI × tj3.** `scripts/golden/cli-tj3.rb` (oracle
   Ruby) roda o `tj3` 3.8.4 real sobre **34 fixtures** — 8 MWEs, 15
@@ -428,19 +440,85 @@ Plano `fase-24-cli.md` + tarefas
   — **808 testes / 6737 passos / 0 falhas**; cobertura de `packages/cli/src`
   92,7 % branch / 95,4 % linha. 23.7.7 (smoke do `template` pela CLI) foi fechada
   aqui. Pendente: commit `test(cli): golden-tj3` (24.7.10).
+- **Adendo I/J (24.9/24.10) — freeze e apps de sheet como seções do envelope.**
+  `TaskJuggler.freeze()` deixou de estar ancorado e devolve
+  `results.freeze.files[] = [{ fileName, contents }]` (`<master>-header.tji` +
+  `<master>-bookings.tji`); `--freeze`, `--freeze-by-task` (aceita também a
+  grafia do Ruby `--freezebytask`) e `--freezedate` acumulam e só montam
+  `request.freeze` no fim, então a ordem não importa — `--freezedate` sozinho
+  não liga o freeze (`Tj3.rb` l.86-106). Os cinco apps da F18 viraram
+  subcomandos `<proto> <ação>` (`ts send|receive|summary`, `ss send|receive`)
+  que preenchem `request.app` + `appOptions`; o `execute` roda sobre o
+  `MemoryFileStore` efêmero e devolve `results.sheet`, e a CLI imprime o texto
+  e grava `outbox/NNN-<to>.eml` + os arquivos criados (ADR 036/037). Fronteiras
+  que ficaram explícitas: `-d/--directory` é a **raiz do chamador**
+  (`sheetBaseDir`), nunca `appOptions.workingDir`; `--from <arquivo|->` dos
+  receivers é lido pela CLI (novo `readStdin` em `io.ts`) e chega em
+  `rawMessage`; `--config` passou a ser parseado (`@std/yaml`) para
+  `appOptions.config` nos apps de email; o eco do envelope reduz `files` a
+  caminhos (`ExecutionSheetAppOptionsEcho`) e o `execute` consome o request
+  original (vazamento de conteúdo corrigido). **24.10.5** já vinha de 24.2.27.
+  **24.10.6:** `TaskJuggler.masterFile()` delega a
+  `FileList.masterFileWith([".tjp", ".smx"])` (sem varredura duplicada).
+  **24.10.8:** `mod.ts` passou a exportar o barril da F13 (`markdown/mod.ts`) e
+  `packages/cli/src/images.ts` (`imageRefs`) + `dispatchReports` copiam cada
+  imagem relativa para ao lado do relatório — nada é reescrito, `imageDir`
+  (default cwd) é a origem, externas e `..` ficam de fora; o TJ3 emite
+  `<object data type="image/…">` e não `<img src>`, e o extrator cobre os dois.
+  **24.10.9:** golden de CLI com o **mesmo** `header` em dois relatórios prova
+  que o default é richtext (`'''forte'''`→`<b>`, `**forte**` literal) e que
+  markdown só entra com `format markdown` (o inverso). **Revisão (CodeReview,
+  2026-11-08):** `-t/--to` do `ts summary` alimenta **as duas** listas de
+  destinatários (`Tj3TsSummary.rb` l.52-57); `-f` é `--force-reports` no `tj3`
+  e `--force` nos apps (resolvido depois do subcomando, antes errava
+  “requires a sheet app”); `--version`/`--help` saem **antes** do projeto mesmo
+  com arquivos (`Tj3AppBase#on_tail`); repetir `--check-time-sheet` é erro de
+  uso em vez de reter a última; `imageRefs` recusa caminho absoluto e só
+  descarta `..` como **segmento**; o freeze grava artefato vazio (trunca o
+  anterior, `File.open(…, 'w')`); `outcome.aborted` ficou monotônico; e
+  `assetRoot()` trocou `URL.pathname` por `io.modulePath` (`fileURLToPath`).
+  Evidência: `check:all`, `lint` (759 arquivos), `fmt:check` (811),
+  `check:stubs` e as suítes verdes — global **819 testes / 6796 passos**,
+  pacote CLI **42 testes / 230 passos** (`images_test.ts` novo, 12 passos) e
+  integração com 45 passos.
+  **24.9.1–24.9.3 — `syntaxmesh man` (fechadas em 2026-11-08).** O `doc-core`
+  da F22 não existia, então foi construído junto (ver a entrada da Fase 22
+  abaixo) e publicado como `@vanaware/syntaxmesh/doc-core`. A CLI ganhou o
+  subcomando `man [<keyword>…]` com `--format text|html|smx` (default `text`);
+  os posicionais viram `request.man.keywords` e a política de saída imprime o
+  texto ou grava os arquivos do manual sob o `--output-dir` (o
+  `css/tjmanual.css` viaja **na própria seção**, então não depende do asset de
+  relatórios). `--format` fora do `man` é erro de uso. Divergências conscientes
+  do `tj3man`: o recorte de fonte chama-se `smx` (não `tjp`), prefixo que casa
+  uma única keyword é resolvido para ela, e a busca do Google na barra de
+  letras ficou de fora. Evidência: `packages/core/tests/docgen/man_test.ts`,
+  `user-manual_test.ts`, `execute_24_test.ts` (seção `man`) e
+  `output_policy_test.ts`/`options_test.ts` (subcomando e `--format`).
+  **Verificação final do adendo (2026-11-08):** `deno task test` → **834
+  arquivos / 6863 passos / 0 falhas** (97m46s) · `check:all` · `lint` (779
+  arquivos) · `fmt:check` (831 arquivos) · `check:doccore` · `check:stubs`, todos
+  exit 0.
 - **Fase 21 — Compatibilidade e Qualidade ⬜ — reescopada em 3 ondas**
   (`fase-21-compatibilidade-qualidade.md` §0): 1ª valida o **motor** via CLI da
   24 (antes da 22); 2ª adapta o suite à **extensão VS Code** (depois da 22);
   3ª adapta à **PWA + UI** (depois da 20) e fecha o release.
-- **Fase 22 — Extensão VS Code** ⬜ — plano `fase-22-vscode-extension.md` +
-  tarefas `fase-22-vscode-extension-tarefas.md` (só a **subfase 22.1b** está
-  detalhada — Blocos C–J, 108 tarefas; demais blocos a criar no kickoff).
+- **Fase 22 — Extensão VS Code** 🟨 **`doc-core` entregue (2026-11-08)**, extensão
+  não iniciada — plano `fase-22-vscode-extension.md` + tarefas
+  `fase-22-vscode-extension-tarefas.md` (só a **subfase 22.1b** está detalhada —
+  Blocos C–J, 108 tarefas; demais blocos a criar no kickoff).
   Após a 21¹, antes das Fases 19/20; v1 EN.
-  Entrega também o **`doc-core`** (subfase 22.1b): `SyntaxReference`,
-  `KeywordDocumentation`, `TjpExample`, `UserManual`, `TernarySearchTree` e o
-  núcleo de highlight Kate/Vim (`src/docgen/`) — consumidos pela CLI da Fase 24
-  (`wz man`, 24.9) e pelo lsp-core da própria 22 (decisão 2026-11-03, xray §2/§4).
-  O doc-core **não escreve em disco**: devolve `string`/`Record<nome, conteúdo>`.
+  **Entregue:** o `doc-core` (subfase 22.1b) com `TernarySearchTree`,
+  `SyntaxReference`, `KeywordDocumentation`, `ExampleSnippet` (`TjpExample`),
+  `UserManual` + capítulos em inglês, `ansi` e a fachada `generateMan`, em
+  `packages/core/src/docgen/`, exportado como `./doc-core` (subpath) e **não**
+  pelo `mod.ts` raiz. Gate de pureza próprio: `deno task check:doccore`
+  (nenhum `Deno.*`/`node:`/`process.*`), dentro do composite `deno task tests`.
+  Consumidores: CLI da F24 (24.9 ✅) e o `lsp-core` da própria 22 (ainda por
+  fazer). O doc-core **não escreve em disco**: devolve
+  `string`/`Record<nome, conteúdo>`. **Pendente na subfase:** bloco H
+  (`SyntaxCore` de highlight Kate/Vim), pontes `lsp-core` (7.5–7.7) e os
+  goldens Ruby (1.11, 2.14/2.15, 3.22) — progresso em
+  `fase-22-vscode-extension-tarefas.md` §Progresso.
 - Fase 15 — Gantt ✅ Concluída (2026-11-03)
 - Fase 16 — Apoio ✅ Concluída (2026-11-03, 16.0–16.20; escopo xray: 16.10
   cancelado; 16.9/16.14/16.15 movidos p/ a 22; dono de `query_dashboard`)
@@ -496,10 +574,21 @@ a task de type check é `check:all`):
 - `deno task check:all` (type check por pacote + `scripts/**/*.ts`)
 - `deno task lint` (lint)
 - `deno task fmt:check` (formatação)
-- `deno task lint:doc:all` (lint dos blocos de código dos docs)
+- `deno task lint:doc:all` (`deno doc --lint` da API pública, em **ratchet** —
+  ADR 041). Cada membro define `lint:doc` apontando as entradas do seu mapa
+  `exports`; `scripts/lint-doc.ts` compara a contagem por diagnóstico com o teto
+  de `scripts/lint-doc-baseline.json` e falha **acima** dele. Resultado de
+  2026-11-08: `server`/`ui`/`service-worker` em **zero**, `cli` em 6 (5
+  `private-type-ref` + o `missing-return-type` do `buildCommand`, cujo retorno é
+  o encadeamento do Cliffy) e `core` em 1698 (1548
+  `missing-jsdoc` + 107 `private-type-ref` + 37 `missing-explicit-type` + 6
+  `missing-return-type`). Símbolo público novo sem JSDoc estoura o teto; dívida
+  paga desce livre e o job sugere `deno task lint:doc:update:all` para apertar.
+  Entrada que não existe/erro de tipo **sempre** falha (foi assim que os
+  `exports` mortos de `service-worker` apareceram).
 - `deno task test` (testes)
-- fora do composite: `deno task check:stubs` (gate de âncoras, ADR 032) e
-  `deno task gaps:audit` (matriz de completude)
+- fora do composite: só `deno task gaps:audit` (matriz de completude, relatório) e
+  `deno task lint:doc:update:all` (reescreve o teto do ADR 041 — não é check)
 
 ## Comando tj3
 

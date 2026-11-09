@@ -345,30 +345,61 @@ grammar TextMate, folding). A CLI **não** consome este bloco.
 
 ## Progresso (subfase 22.1b)
 
-| Bloco | Tarefas | Concluídas |
-|---|---|---|
-| C — `TernarySearchTree` | 12 | 0 |
-| D — `SyntaxReference` | 15 | 0 |
-| E — `KeywordDocumentation` | 29 | 0 |
-| F — `TjpExample` | 10 | 0 |
-| G — `UserManual` + fontes | 14 | 0 |
-| H — `SyntaxCore` (highlight) | 10 | 0 |
-| I — Integração | 10 | 0 |
-| J — Verificação | 8 | 0 |
-| **Total 22.1b** | **108** | **0** |
+> **Entrega parcial 2026-11-08 (blocos C–G + I):** o `doc-core` foi construído
+> para desbloquear `syntaxmesh man` (F24, 24.9.1–24.9.3) — que era o único item
+> pendente da Fase 24. Todo o caminho `SyntaxReference` → `KeywordDocumentation`
+> → `UserManual` → `generateMan` está implementado, puro e coberto por teste
+> (`tests/docgen/`), e `man` responde nos três formatos. Ficaram de fora, por
+> serem consumidos **só** pela extensão/revisão, os blocos **H** (`SyntaxCore`
+> de highlight) e as pontes `lsp-core` de **I** (7.5–7.7), além dos oráculos
+> golden do Ruby (1.11, 2.14/2.15, 3.22) e de **J** 8.1/8.2/8.6.
+> Os capítulos do manual (G.1) não são os assets originais: são textos novos em
+> inglês, sem menção ao projeto de origem e citando apenas `.smx`.
+
+| Bloco | Tarefas | Concluídas | Observação |
+|---|---|---|---|
+| C — `TernarySearchTree` | 12 | 11 | falta só 1.11 (golden vs oracle Ruby) |
+| D — `SyntaxReference` | 15 | 12 | faltam 2.11 (`checkKeyword`) e 2.14/2.15 (golden) |
+| E — `KeywordDocumentation` | 29 | 27 | faltam 3.21 (`toMarkdown`, LSP) e 3.22 (golden) |
+| F — `TjpExample` | 10 | 10 | classe renomeada `ExampleSnippet` |
+| G — `UserManual` + fontes | 14 | 14 | capítulos em inglês (sem `.tjp`/`.tji`) + `manual-css.ts` |
+| H — `SyntaxCore` (highlight) | 10 | 0 | exclusivo da extensão; não bloqueia a F24 |
+| I — Integração | 10 | 7 | faltam 7.5–7.7 (pontes `lsp-core`) |
+| J — Verificação | 8 | 5 | 8.3–8.5 verdes; 8.1/8.2/8.6 pendentes |
+| **Total 22.1b** | **108** | **86** | |
 
 Checklist de conclusão da subfase:
 
-- [ ] 22.1b.1 `TernarySearchTree` (C) — 12/12
-- [ ] 22.1b.2 `SyntaxReference` (D) — 15/15
-- [ ] 22.1b.3 `KeywordDocumentation` (E) — 29/29
-- [ ] 22.1b.4 `TjpExample` (F) — 10/10
-- [ ] 22.1b.5 `UserManual` + fontes (G) — 14/14
-- [ ] 22.1b.6 `SyntaxCore` (H) — 10/10
-- [ ] 22.1b.7 Integração (I) — 10/10
-- [ ] 22.1b.8 Verificação (J) — 8/8
+- [~] 22.1b.1 `TernarySearchTree` (C) — 11/12
+- [~] 22.1b.2 `SyntaxReference` (D) — 12/15
+- [~] 22.1b.3 `KeywordDocumentation` (E) — 27/29
+- [x] 22.1b.4 `TjpExample` (F) — 10/10
+- [x] 22.1b.5 `UserManual` + fontes (G) — 14/14
+- [ ] 22.1b.6 `SyntaxCore` (H) — 0/10
+- [~] 22.1b.7 Integração (I) — 7/10
+- [~] 22.1b.8 Verificação (J) — 5/8
 
 **Critério de aceite da subfase:** `deno task tests` verde; o golden
 `syntax-reference` igual ao oracle Ruby; `syntaxmesh man <keyword>` (F24, quando existir)
 consegue ser servido **só** por `@vanaware/syntaxmesh/doc-core` sem tocar em
 `Deno.*`; e `src/lsp/help.ts` não reimplementa nada — apenas projeta o doc-core.
+
+## Notas de entrega (2026-11-08)
+
+- **Fachada `generateMan`** (`src/docgen/man.ts`): única porta usada pela Fase 24.
+  Formatos `text` (lista de keywords ou `to_s`), `html` (manual completo ou página
+  única) e `smx` (recorte colável: exemplo anotado do corpus, ou o esqueleto da
+  sintaxe). Erros de resolução (keyword inexistente, prefixo ambíguo) voltam
+  como `messages`, nunca como exceção — quem decide o `exitCode` é o `execute`.
+- **Gate de pureza** `deno task check:doccore` (`scripts/check-doccore.ts`)
+  varre `src/docgen/` e falha em `Deno.*`, `node:` ou `process.*`. Entra no
+  composite `deno task tests`.
+- **Exemplo do corpus** (`Pattern.exampleFile`/`exampleTag`): o `setExample`
+  passou a aceitar `null` (antes `""`), sem o que o bloco `smx` e a caixa
+  `<pre>` do HTML perdiam o exemplo da keyword.
+- **RichText dos `p.doc`**: três textos de regra (\`date\`, \`macro\`, \`template\`)
+  tinham `[`…`]` solto, que o scanner lia como HREF e quebrava a página;
+  passaram a usar `<nowiki>`. As referências `[[kw]]` sem âncora viraram
+  `''''kw''''` (código), e o texto de `p.doc` deixou de nomear o projeto de origem
+  (`alertlevels`, `now`, `markdate`, `aggregate`) ou a extensão antiga
+  (`include`).

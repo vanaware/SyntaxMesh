@@ -23,7 +23,9 @@ import type {
   ExecutionResult,
   ReportJsonEntry,
   ReportsJson,
+  SheetSection,
 } from "@vanaware/syntaxmesh";
+import { imageRefs, } from "./images.ts";
 
 /** E/S da política — subconjunto injetável de `io.ts`. */
 export interface OutputPolicyIo {
@@ -59,6 +61,18 @@ export interface OutputPolicyOptions {
   io: OutputPolicyIo;
   /** Assets do HTML; ausente desliga a cópia (24.5.16). */
   assets?: AssetOptions | null;
+  /**
+   * Raiz dos caminhos relativos da seção `sheet` (o `-d/--directory` do app,
+   * `""` = diretório corrente). Os nomes do envelope são relativos a ela.
+   */
+  sheetBaseDir?: string;
+  /**
+   * Raiz onde os caminhos relativos de imagem são **lidos** (default `""` = o
+   * diretório de trabalho do processo, de onde o master foi lido). A imagem é
+   * copiada para ao lado da saída preservando a referência; o texto do
+   * relatório nunca é reescrito (24.10.8).
+   */
+  imageDir?: string;
   /** Reporta um erro de relatório (reporter da CLI). */
   onError?: ((text: string,) => void) | null;
 }
@@ -200,6 +214,41 @@ async function copyTree(
 }
 
 /**
+ * Copia para ao lado do relatório as imagens relativas que ele cita (24.10.8).
+ *
+ * O `src` do HTML/Markdown já é o caminho relativo correto em relação ao
+ * arquivo de saída; o que falta é o arquivo existir ali. Referências externas
+ * (`http(s)://`, `data:`), caminhos absolutos e caminhos com segmento `..` ficam
+ * de fora — nenhuma leitura fora da raiz de imagens (adendo §4.3). Origem igual
+ * ao destino é ignorada.
+ */
+async function copyReportImages(
+  io: OutputPolicyIo,
+  options: OutputPolicyOptions,
+  format: { format: string; content: string },
+  reportPath: string,
+  created: Set<string>,
+  written: string[],
+): Promise<void> {
+  if (format.format !== "html" && format.format !== "markdown") return;
+  const root = options.imageDir ?? "";
+  const destDir = dirOf(reportPath,);
+  for (const ref of imageRefs(format.content, format.format,)) {
+    const from = joinPath(root, ref,);
+    const to = joinPath(destDir, ref,);
+    if (from === to) continue;
+    if (!(await io.exists(from,))) continue;
+    const dir = dirOf(to,);
+    if (dir !== "" && !created.has(dir,)) {
+      await io.mkpath(dir,);
+      created.add(dir,);
+    }
+    await io.copy(from, to,);
+    written.push(to,);
+  }
+}
+
+/**
  * Despacha a seção `reports` (adendo §4.2/§4.3).
  *
  * Com qualquer erro de relatório a função **aborta antes de produzir** — sem
@@ -249,6 +298,14 @@ export async function dispatchReports(
       }
       await io.write(path, format.content,);
       outcome.written.push(path,);
+      await copyReportImages(
+        io,
+        options,
+        format,
+        path,
+        created,
+        outcome.assets,
+      );
       if (format.format === "html" && !entry.selfcontained) wantsAssets = true;
     }
   }
@@ -301,18 +358,129 @@ function printSection(
     printed++;
   }
   if (sections.man !== undefined && sections.man.content !== "") {
-    io.print(sections.man.content,);
+    // O conteúdo do `man` termina em `\n`; `print` já fecha a linha.
+    io.print(trimTrailingNewline(sections.man.content,),);
     printed++;
   }
   return printed;
 }
 
+/** Grava um caminho criando o diretório-pai uma única vez por despacho. */
+async function writeWithDir(
+  io: OutputPolicyIo,
+  created: Set<string>,
+  path: string,
+  contents: string,
+): Promise<void> {
+  const dir = dirOf(path,);
+  if (dir !== "" && !created.has(dir,)) {
+    await io.mkpath(dir,);
+    created.add(dir,);
+  }
+  await io.write(path, contents,);
+}
+
+/**
+ * Despacha a seção `freeze` (24.9.4/24.9.5).
+ *
+ * O core devolve os dois artefatos (`-header.tji` e `-bookings.tji`) com o
+ * nome derivado do master; gravar é desta política, como no `tj3`. O Ruby
+ * trunca os dois arquivos (`File.open(…, 'w')`), então um `-bookings.tji`
+ * vazio **é** gravado — pular o artefato vazio deixaria em disco o conteúdo de
+ * um freeze anterior.
+ */
+async function dispatchFreeze(
+  result: ExecutionResult,
+  io: OutputPolicyIo,
+  outcome: OutputPolicyOutcome,
+  created: Set<string>,
+): Promise<void> {
+  const freeze = result.results.freeze;
+  if (freeze === undefined) return;
+  for (const file of freeze.files) {
+    await writeWithDir(io, created, file.fileName, file.contents,);
+    outcome.written.push(file.fileName,);
+  }
+}
+
+/**
+ * Despacha a seção `man` no formato `html` (24.9.1–24.9.3).
+ *
+ * O core devolve o manual inteiro como mapa `nome → conteúdo` (capítulos,
+ * uma página por keyword, `toc.html`, `alphabet.html`, `navbar.html`,
+ * `index.html` e a folha de estilos). Gravar é desta política: tudo vai para
+ * o `--output-dir` (default: diretório corrente, como o `-d` do `tj3man`).
+ *
+ * No formato `text`/`smx` não há arquivo nenhum — `content` já foi impresso por
+ * {@link printSection}.
+ */
+async function dispatchMan(
+  result: ExecutionResult,
+  io: OutputPolicyIo,
+  outcome: OutputPolicyOutcome,
+  created: Set<string>,
+): Promise<void> {
+  const man = result.results.man;
+  if (man === undefined || man.files.length === 0) return;
+  const base = result.options.outputDir ?? "";
+  for (const file of man.files) {
+    const path = joinPath(base, file.name,);
+    await writeWithDir(io, created, path, file.contents,);
+    outcome.written.push(path,);
+  }
+}
+
+/** Nome do `outbox/*.eml` de uma mensagem (`001-dev@example.com.eml`). */
+function emlName(index: number, to: string,): string {
+  const seq = String(index + 1,).padStart(3, "0",);
+  return `outbox/${seq}-${sanitizeFileName(to,)}.eml`;
+}
+
+/**
+ * Despacha a seção `sheet` (24.10.1–24.10.4).
+ *
+ * Sem SMTP (ADR 036), a entrega vira dado: o texto de diagnóstico/resumo vai
+ * para o terminal, cada mensagem vira `outbox/*.eml` e os arquivos que o app
+ * criou (templates, folhas) são gravados sob o diretório de trabalho. Anexos
+ * já estão entre esses arquivos — são **dados recebidos**, não um segundo
+ * destino.
+ */
+async function dispatchSheet(
+  section: SheetSection,
+  options: OutputPolicyOptions,
+  outcome: OutputPolicyOutcome,
+  created: Set<string>,
+): Promise<void> {
+  const { io, } = options;
+  const text = section.reportText ?? section.summaryText ?? section.emailText;
+  if (text !== undefined && text !== "") {
+    io.print(trimTrailingNewline(text,),);
+    outcome.printed++;
+  }
+
+  const base = options.sheetBaseDir ?? "";
+  const write = async (name: string, contents: string,): Promise<void> => {
+    const path = joinPath(base, name,);
+    await writeWithDir(io, created, path, contents,);
+    outcome.written.push(path,);
+  };
+
+  for (const file of section.files ?? []) {
+    await write(file.name, file.contents,);
+  }
+  const emails = section.emails ?? [];
+  for (const [index, email,] of emails.entries()) {
+    await write(emlName(index, email.to,), email.text,);
+  }
+}
+
 /**
  * Despacha **todas** as seções do envelope na ordem do adendo §4.1.
  *
- * `freeze` só grava quando o core já devolveu conteúdo (o desancoramento é da
- * 24.9); `sheet` é produzida pelos apps da 24.10. A forma é estável para que
- * essas subfases só preencham o conteúdo, sem mexer na política.
+ * `freeze` grava os dois artefatos que o core devolveu (24.9); `sheet` é a
+ * saída dos apps da F18 (24.10) e só é produzida quando a execução deu certo
+ * (adendo §4.4: nada de saída parcial em nome de uma execução que falhou).
+ * Os relatórios seguem a mesma regra dentro de `dispatchReports`.
  */
 export async function dispatchSections(
   result: ExecutionResult,
@@ -328,12 +496,19 @@ export async function dispatchSections(
 
   outcome.printed += printSection(io, result,);
 
-  const freeze = result.results.freeze;
-  if (freeze !== undefined && freeze.contents !== "") {
-    const dir = dirOf(freeze.fileName,);
-    if (dir !== "") await io.mkpath(dir,);
-    await io.write(freeze.fileName, freeze.contents,);
-    outcome.written.push(freeze.fileName,);
+  // Diretórios já criados neste despacho (freeze, man e sheet compartilham).
+  const created = new Set<string>();
+  await dispatchFreeze(result, io, outcome, created,);
+  await dispatchMan(result, io, outcome, created,);
+
+  const sheet = result.results.sheet;
+  if (sheet !== undefined) {
+    if (result.ok) {
+      await dispatchSheet(sheet, options, outcome, created,);
+    } else {
+      // Diagnóstico já foi do reporter; um app que falhou não entrega email.
+      outcome.aborted = true;
+    }
   }
 
   const reports = result.results.reports;
@@ -342,7 +517,9 @@ export async function dispatchSections(
     outcome.printed += dispatched.printed;
     outcome.written.push(...dispatched.written,);
     outcome.assets.push(...dispatched.assets,);
-    outcome.aborted = dispatched.aborted;
+    // Monotônico: um aborto anterior (sheet com falha) não é "desabortado"
+    // por um despacho de relatórios que correu bem.
+    outcome.aborted = outcome.aborted || dispatched.aborted;
   }
 
   return outcome;

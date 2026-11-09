@@ -17,6 +17,7 @@ import {
   listDir,
   mkpath,
   mktemp,
+  modulePath,
   print,
   printerr,
   readBytes,
@@ -114,6 +115,23 @@ describe("isEntrypoint", () => {
         process: { argv: [], exit: fakeExit, },
       },),
       false,
+    );
+  });
+});
+
+describe("modulePath", () => {
+  it("decodifica espaços e acentos do caminho do módulo", () => {
+    // `new URL(…).pathname` devolveria `/home/a%20b/` e o asset não seria achado.
+    assertEquals(
+      modulePath("file:///home/a%20b/pkg/src/cli.ts", "../",),
+      join("/home", "a b", "pkg",) + "/",
+    );
+  });
+
+  it("resolve o relativo contra o diretório do módulo", () => {
+    assertEquals(
+      modulePath("file:///app/src/cli.ts", "./io.ts",),
+      "/app/src/io.ts",
     );
   });
 });

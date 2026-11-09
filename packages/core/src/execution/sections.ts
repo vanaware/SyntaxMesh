@@ -10,9 +10,19 @@
 import { AppConfig, } from "../app-config.ts";
 import { MessageHandlerInstance, } from "../message-handler.ts";
 import type { SheetCheckResult, } from "../taskjuggler.ts";
+import { normalizeStorePath, } from "../interfaces/memory-file-store.ts";
+import { runSheetAppData, } from "../sheets/app-data.ts";
+import type { SheetAppBase, } from "../sheets/apps/app-base.ts";
+import { SsReceiverApp, } from "../sheets/apps/ss-receiver-app.ts";
+import { SsSenderApp, } from "../sheets/apps/ss-sender-app.ts";
+import { TsReceiverApp, } from "../sheets/apps/ts-receiver-app.ts";
+import { TsSenderApp, } from "../sheets/apps/ts-sender-app.ts";
+import { TsSummaryApp, } from "../sheets/apps/ts-summary-app.ts";
+import type { EmailMessage, } from "../sheets/email-message.ts";
 import { EXIT_ERROR, EXIT_OK, } from "./envelope.ts";
 import type { Project, } from "../model/project.ts";
 import type { Report, } from "../model/report.ts";
+import type { ManOutput, } from "../docgen/man.ts";
 import {
   renderReports,
   type RenderReportsOptions,
@@ -20,11 +30,13 @@ import {
 import type {
   ExecutionManRequest,
   ExecutionSheetAppOptions,
+  FreezeFile,
   FreezeSection,
   ListReportsEntry,
   ManSection,
   OptionSpec,
   SheetAppName,
+  SheetEmail,
   SheetSection,
 } from "./types.ts";
 
@@ -99,8 +111,18 @@ export const OPTION_SPECS: readonly OptionSpec[] = [
     description: "Directory the reports should go into.",
   },
   {
-    name: "force-reports",
+    name: "format",
     short: null,
+    type: "string",
+    argument: "<format>",
+    description:
+      "Output format of the 'man' command: text (default), html or smx.",
+  },
+  {
+    name: "force-reports",
+    // `Tj3.rb` l.148-151: `-f, --force-reports`. Nos apps de sheet o mesmo
+    // `-f` é `--force` (quem decide é o subcomando — ver `parseArgs`).
+    short: "f",
     type: "boolean",
     argument: null,
     description: "Generate reports even after errors were found.",
@@ -139,7 +161,6 @@ export const OPTION_SPECS: readonly OptionSpec[] = [
     type: "boolean",
     argument: null,
     description: "Generate a booking freeze file from the master file.",
-    deferred: "Fase 24 — 24.9 (reescrita do master .tjp pela política da CLI)",
   },
   {
     name: "freeze-by-task",
@@ -147,23 +168,27 @@ export const OPTION_SPECS: readonly OptionSpec[] = [
     type: "boolean",
     argument: null,
     description: "Group bookings by task instead of resource (with --freeze).",
-    deferred: "Fase 24 — 24.9",
+  },
+  {
+    name: "freezedate",
+    short: null,
+    type: "string",
+    argument: "<date>",
+    description: "Cut-off date of the booking file (default: now).",
   },
   {
     name: "check-time-sheet",
     short: null,
-    type: "boolean",
-    argument: null,
+    type: "string",
+    argument: "<tji-file>",
     description: "Validate a time sheet against the project.",
-    deferred: "Fase 24 — 24.10 (apps de sheet)",
   },
   {
     name: "check-status-sheet",
     short: null,
-    type: "boolean",
-    argument: null,
+    type: "string",
+    argument: "<tji-file>",
     description: "Validate a status sheet against the project.",
-    deferred: "Fase 24 — 24.10 (apps de sheet)",
   },
 ];
 
@@ -227,29 +252,31 @@ export function versionSection(): { name: string; version: string } {
 }
 
 /**
- * Seção `freeze` (24.2.26) — forma do envelope + âncora.
+ * Seção `freeze` (24.9.4) — artefatos do freeze como **dados**.
  *
- * O núcleo da reescrita do master `.tjp` continua ancorado na Fase 24 → 24.9:
- * o `execute` devolve `{ fileName, contents }` e a **gravação** é do consumidor
- * (`io.writeText`). Até 24.9 não há conteúdo a devolver, então a seção fica
- * ausente e o chamador registra a mensagem de indisponibilidade.
+ * O núcleo da geração está em `TaskJuggler.freeze` (header + export dos
+ * bookings); quem grava é o consumidor.
  */
-export function freezeSection(
-  fileName: string,
-  contents: string,
-): FreezeSection {
-  return { fileName, contents, };
+export function freezeSection(files: FreezeFile[],): FreezeSection {
+  return { files, };
 }
 
-/** Seção `man` (24.2.26) — forma do envelope; doc-core é da Fase 22. */
+/**
+ * Seção `man` (24.9.1–24.9.3) — documentação de sintaxe como **dado**.
+ *
+ * O conteúdo vem do `doc-core` da Fase 22 (`generateMan`): texto pronto em
+ * `content` e, no formato `html`, o mapa `nome → conteúdo` do manual em
+ * `files`. Gravar em disco é da política de saída da CLI (24.5).
+ */
 export function manSection(
   request: ExecutionManRequest,
-  content: string,
+  output: ManOutput,
 ): ManSection {
   return {
-    format: request.format,
-    keyword: request.keyword ?? null,
-    content,
+    format: output.format,
+    keywords: [...(request.keywords ?? []),],
+    content: output.content,
+    files: output.files,
   };
 }
 
@@ -329,19 +356,138 @@ export function checkSheetSection(
 }
 
 /**
- * Seção `sheet` para os apps ainda ancorados na Fase 24 (24.10).
+ * Constrói o app de sheet correspondente ao nome do request (24.10.1–4).
  *
- * `ts/ss` × `send`/`receive`/`summary` precisam da política de saída da CLI
- * (arquivos, destinatários) que só existe em 24.10; a mecânica de dados já
- * está pronta (`runSheetAppData`, 24.2.32).
+ * As opções chegam já tipadas do consumidor; o core só escolhe a classe. O
+ * ramo `check-ts`/`check-ss` **não** passa por aqui — é verificação de folha
+ * contra o projeto, não um app de email (§3.4 do adendo).
  */
-export function anchoredSheetSection(app: SheetAppName,): SheetSectionOutcome {
-  MessageHandlerInstance.instance.error(
-    "sheet_app_not_available",
-    `Sheet app '${app}' is not available yet (Phase 24 — task 24.10).`,
-  );
-  return {
-    section: sheetSection(app, { exitCode: EXIT_ERROR, },),
-    exitCode: EXIT_ERROR,
+function buildSheetApp(
+  app: Exclude<SheetAppName, "check-ts" | "check-ss">,
+  options: ExecutionSheetAppOptions,
+): SheetAppBase {
+  const common = {
+    workingDir: options.workingDir ?? null,
+    dryRun: options.dryRun ?? false,
+    config: options.config ?? null,
+    endDate: options.endDate ?? null,
   };
+  switch (app) {
+    case "ts-send":
+      return new TsSenderApp({
+        ...common,
+        resources: options.resources ?? [],
+        force: options.force ?? false,
+        intervalDuration: options.intervalDuration ?? null,
+      },);
+    case "ts-receive":
+      return new TsReceiverApp(common,);
+    case "ts-summary":
+      return new TsSummaryApp({
+        ...common,
+        resources: options.resources ?? [],
+        sheetRecipients: options.sheetRecipients ?? [],
+        digestRecipients: options.digestRecipients ?? [],
+      },);
+    case "ss-send":
+      return new SsSenderApp({
+        ...common,
+        resources: options.resources ?? [],
+        force: options.force ?? false,
+        intervalDuration: options.intervalDuration ?? null,
+        hideResource: options.hideResource ?? null,
+      },);
+    case "ss-receive":
+      return new SsReceiverApp(common,);
+  }
+}
+
+/** Mensagens do app como dado estruturado (`raw` é o RFC 822 completo). */
+function sheetEmails(emails: EmailMessage[],): SheetEmail[] {
+  return emails.map((email,) => ({
+    to: email.to,
+    subject: email.subject,
+    text: email.raw,
+  }));
+}
+
+/**
+ * Texto do resumo do `ts summary` (24.10.3).
+ *
+ * O app envia o resumo aos `digestRecipients` e, depois, os lembretes — por
+ * isso não basta pegar a última mensagem. A lista efetiva de destinatários vem
+ * do handler (config + opções), e o último email para ela é o resumo.
+ */
+function digestText(
+  app: SheetAppBase,
+  emails: EmailMessage[],
+): string | undefined {
+  if (!(app instanceof TsSummaryApp)) return undefined;
+  const recipients = app.handler.digestRecipients;
+  const digest = [...emails,].reverse().find((mail,) =>
+    recipients.includes(mail.to,)
+  );
+  return digest?.raw ?? emails.at(-1,)?.raw;
+}
+
+/**
+ * Arquivos que o app **criou ou alterou** no store efêmero.
+ *
+ * O delta contra a semente evita reescrever templates/folhas que o app apenas
+ * leu: só o que o pipeline produziu chega ao consumidor.
+ */
+function createdFiles(
+  seed: readonly { path: string; content: string }[],
+  produced: readonly { path: string; content: string }[],
+): Array<{ name: string; contents: string }> {
+  const before = new Map<string, string>();
+  for (const file of seed) {
+    before.set(normalizeStorePath(file.path,), file.content,);
+  }
+  const created: Array<{ name: string; contents: string }> = [];
+  for (const file of produced) {
+    const path = normalizeStorePath(file.path,);
+    if (before.get(path,) === file.content) continue;
+    created.push({ name: file.path, contents: file.content, },);
+  }
+  return created;
+}
+
+/**
+ * Seção `sheet` para os apps de email da Fase 18 (24.10.1–24.10.4).
+ *
+ * Roda o app sobre um `MemoryFileStore` semeado com `appOptions.files` e
+ * devolve o resultado como dado: emails completos, anexos, resumo e os
+ * arquivos gerados. Nada é lido de disco nem enviado por SMTP (ADR 036/037).
+ */
+export async function runSheetSection(
+  project: Project,
+  app: Exclude<SheetAppName, "check-ts" | "check-ss">,
+  options: ExecutionSheetAppOptions | null = {},
+): Promise<SheetSectionOutcome> {
+  const opts = options ?? {};
+  const seed = opts.files ?? [];
+  const instance = buildSheetApp(app, opts,);
+  const result = await runSheetAppData(instance, project, {
+    files: seed,
+    dirs: opts.dirs ?? [],
+    rawEmail: opts.rawMessage ?? null,
+  },);
+
+  const emails = sheetEmails(result.emails,);
+  const summary = digestText(instance, result.emails,);
+  const section = sheetSection(app, {
+    exitCode: result.exitCode,
+    ...(emails.length === 0 ? {} : { emailText: emails[0]!.text, }),
+    ...(emails.length === 0 ? {} : { emails, }),
+    ...(result.attachments.length === 0
+      ? {}
+      : { attachments: result.attachments, }),
+    ...(summary === undefined ? {} : { summaryText: summary, }),
+    files: createdFiles(seed, result.files,),
+  },);
+
+  const failed = result.exitCode !== EXIT_OK ||
+    MessageHandlerInstance.instance.errors > 0;
+  return { section, exitCode: failed ? EXIT_ERROR : EXIT_OK, };
 }

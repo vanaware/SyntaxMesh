@@ -5,9 +5,11 @@
  * e de globals de navegador.
  */
 
-import { VERSION, } from "./version.ts";
-
-export const CORE_VERSION = VERSION;
+// Versão do pacote — `version.ts` é gerado pelo buildit (`__APP_VERSION__`).
+// Consumidores **de fora do core** importam daqui (`VERSION`); módulos internos
+// que precisam da constante (`app-config.ts`, `tj3-config.ts`) importam o folha
+// `version.ts` direto, para não fechar ciclos de módulo pelo barril.
+export { APP_VERSION as VERSION, } from "./version.ts";
 
 // Metadados da aplicação (nome, versão) — fonte das seções `version`/`help`
 // do envelope e do cabeçalho da CLI (Fase 24).
@@ -109,3 +111,8 @@ export * from "./html/mod.ts";
 // Fase 15 — Gantt (HTML+CSS puro, ADR 028)
 export * from "./gantt/mod.ts";
 export * from "./chart-plotter.ts";
+
+// Fase 13 — Markdown (ADR 026): mdast, conversão e o descritor de imagem
+// (`resolveImageRef`/`isExternalImageRef`, 13.14.3) que a CLI da Fase 24 usa
+// para materializar mídia ao lado do relatório (24.10.8).
+export * from "./markdown/mod.ts";

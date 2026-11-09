@@ -9,8 +9,14 @@
  */
 import { assert, assertEquals, } from "@std/assert";
 import { describe, it, } from "@std/testing/bdd";
-import { VERSION, } from "../../core/src/version.ts";
-import { collectInputFiles, helpText, main, } from "../src/cli.ts";
+import { VERSION, } from "@vanaware/syntaxmesh";
+import {
+  type CliIo,
+  collectInputFiles,
+  collectSheetFiles,
+  helpText,
+  main,
+} from "../src/cli.ts";
 
 /** Cabeçalho de projeto válido para os fixtures em memória. */
 const HEADER = 'project prj "Test" "1.0" 2026-01-01 - 2026-12-31 {\n';
@@ -36,10 +42,15 @@ interface Captured {
   err: string[];
 }
 
-/** Roda `main` com E/S injetada. */
+/** Roda `main` com E/S injetada.
+ *
+ * `extra` cobre as leituras opcionais do `CliIo` (`--from -` e a varredura das
+ * árvores de folhas), que só existem quando o argv as pede.
+ */
 async function run(
   argv: string[],
   files: Record<string, string> = {},
+  extra: Partial<Pick<CliIo, "readStdin" | "listDir" | "isDir">> = {},
 ): Promise<Captured> {
   const out: string[] = [];
   const err: string[] = [];
@@ -47,8 +58,43 @@ async function run(
     read: memoryReader(files,),
     print: (text: string,) => out.push(text,),
     printerr: (text: string,) => err.push(text,),
+    ...extra,
   },);
   return { exit, out, err, };
+}
+
+/**
+ * E/S em memória para uma árvore de arquivos **com diretórios**.
+ *
+ * `collectSheetFiles` precisa distinguir arquivo de diretório, então o `read`
+ * aceita exatamente as chaves do mapa e o `isDir` só os prefixos declarados.
+ */
+function treeIo(tree: Record<string, string>,): CliIo {
+  const dirs = new Set<string>(["",],);
+  for (const path of Object.keys(tree,)) {
+    const parts = path.split("/",);
+    for (let i = 1; i < parts.length; i++) {
+      dirs.add(parts.slice(0, i,).join("/",),);
+    }
+  }
+  return {
+    read: memoryReader(tree,),
+    print: () => {},
+    printerr: () => {},
+    listDir: (path: string,) => {
+      const prefix = path === "" ? "" : `${path}/`;
+      const names = new Set<string>();
+      for (const file of Object.keys(tree,)) {
+        if (!file.startsWith(prefix,)) continue;
+        names.add(file.slice(prefix.length,).split("/",)[0]!,);
+      }
+      if (names.size === 0) {
+        return Promise.reject(new Error(`ENOENT: ${path}`,),);
+      }
+      return Promise.resolve([...names,],);
+    },
+    isDir: (path: string,) => Promise.resolve(dirs.has(path,),),
+  };
 }
 
 describe("collectInputFiles (24.3.6)", () => {
@@ -104,6 +150,85 @@ describe("collectInputFiles (24.3.6)", () => {
   });
 });
 
+describe("collectSheetFiles (24.10)", () => {
+  it("varre as quatro árvores com caminhos relativos à raiz", async () => {
+    const files = await collectSheetFiles(
+      "work",
+      treeIo({
+        "work/TimeSheets/2026-05-18/dev.tji": "timesheet dev\n",
+        "work/TimeSheetTemplates/week.tji": "timesheet dev\n",
+        "work/StatusSheets/2026-05-18/dev.tji": "status dev\n",
+        "work/StatusSheetTemplates/week.tji": "status dev\n",
+        // Fora das árvores conhecidas: nunca entra no seed.
+        "work/outros/ignore.tji": "x\n",
+      },),
+    );
+    assertEquals(files.map((file,) => file.path).sort(), [
+      "StatusSheetTemplates/week.tji",
+      "StatusSheets/2026-05-18/dev.tji",
+      "TimeSheetTemplates/week.tji",
+      "TimeSheets/2026-05-18/dev.tji",
+    ],);
+    assertEquals(
+      files.find((file,) => file.path === "TimeSheets/2026-05-18/dev.tji")
+        ?.content,
+      "timesheet dev\n",
+    );
+  });
+
+  it("raiz ausente devolve lista vazia, sem inventar dado", async () => {
+    assertEquals(await collectSheetFiles("nope", treeIo({},),), [],);
+  });
+
+  it("arquivo ilegível fica fora do seed", async () => {
+    const io = treeIo({
+      "TimeSheets/a.tji": "a\n",
+      "TimeSheets/b.tji": "b\n",
+    },);
+    const files = await collectSheetFiles("", {
+      ...io,
+      read: (path: string,) =>
+        path.endsWith("b.tji",)
+          ? Promise.reject(new Error("EACCES",),)
+          : io.read(path,),
+    },);
+    assertEquals(files.map((file,) => file.path), ["TimeSheets/a.tji",],);
+  });
+});
+
+describe("main — leituras pedidas pelo argv (24.10)", () => {
+  it("--from - lê a mensagem do stdin", async () => {
+    let reads = 0;
+    const result = await run(["ts", "receive", "--from", "-", "proj.smx",], {
+      "proj.smx": `${HEADER}}\n${BODY}`,
+    }, {
+      readStdin: () => {
+        reads++;
+        return Promise.resolve(
+          "From: dev@example.com\nSubject: sheet\n\nbody\n",
+        );
+      },
+    },);
+    assertEquals(reads, 1,);
+    assertEquals(
+      result.err.some((line,) => line.includes("Cannot read the email",)),
+      false,
+    );
+  });
+
+  it("--from - sem stdin termina em 1 com mensagem própria", async () => {
+    const result = await run(["ts", "receive", "--from", "-", "proj.smx",], {
+      "proj.smx": `${HEADER}}\n${BODY}`,
+    }, {
+      readStdin: () => Promise.reject(new Error("no stdin",),),
+    },);
+    assertEquals(result.exit, 1,);
+    assertEquals(result.err, [
+      "Cannot read the email message from '-'.",
+    ],);
+  });
+});
+
 describe("main — fluxo único (24.3.6)", () => {
   it("projeto válido com include termina em 0", async () => {
     const result = await run(["proj.smx", "--check-syntax",], {
@@ -149,6 +274,14 @@ describe("main — fluxo único (24.3.6)", () => {
     const result = await run(["--version",],);
     assertEquals(result.exit, 0,);
     assertEquals(result.out, [`SyntaxMesh ${VERSION}`,],);
+  });
+
+  it("--version sai antes de abrir o master (Ruby on_tail)", async () => {
+    // Com arquivo na linha de comando o nome nem precisa existir.
+    const result = await run(["--version", "nope.smx",],);
+    assertEquals(result.exit, 0,);
+    assertEquals(result.out, [`SyntaxMesh ${VERSION}`,],);
+    assertEquals(result.err, [],);
   });
 
   it("--help imprime a ajuda do Cliffy sem ANSI", async () => {
@@ -207,14 +340,14 @@ describe("English-first (24.3.16)", () => {
   });
 
   it("erros de argv e de flag adiada são ASCII", async () => {
-    const deferred = await run(["proj.smx", "--freeze",],);
+    const deferred = await run(["proj.smx", "--debug",],);
     const unknown = await run(["proj.smx", "--nope",],);
     for (const line of [...deferred.err, ...unknown.err,]) {
       assertEquals(/^[\x20-\x7E]*$/.test(line,), true, line,);
     }
     assertEquals(
       deferred.err[0],
-      "Option '--freeze' is not yet available (phase 24.9).",
+      "Option '--debug' is not yet available (no equivalent in the port).",
     );
   });
 });

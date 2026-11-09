@@ -1,12 +1,13 @@
 import { AppConfig, } from "./app-config.ts";
-import { VERSION, } from "./version.ts";
+import { APP_VERSION as VERSION, } from "./version.ts";
 
 /**
  * Inicializa AppConfig com valores do SyntaxMesh.
  *
- * A **versão** vem de `version.ts` (fonte única) — antes era literal `"0.0.0"`
- * aqui, o que fazia `--version`, banner e atributo `version` do projeto
- * divergirem do manifesto bumpado por `scripts/tag-version.ts`.
+ * A **versão** vem de `version.ts` (publicada como `VERSION` pelo barril do
+ * pacote) — antes era literal `"0.0.0"` aqui, o que fazia `--version`, banner e
+ * atributo `version` do projeto divergirem do manifesto bumpado por
+ * `scripts/tag-version.ts`.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Tj3Config.rb
  */

@@ -49,7 +49,7 @@ Welcome to the SyntaxMesh project! This file (`AGENTS.md`) is automatically inje
 ## 7. Development Workflow & Continuous Validation
 
 - **Mandatory Verification**: After executing ANY task, feature request, or to-do list item, you MUST verify the project's integrity by running:
-  - Full quality gate: `deno task tests` (composite of `check:all` + `lint` + `fmt:check` + `lint:doc:all` + `test`).
+  - Full quality gate: `deno task tests` (composite of `check:all` + `lint` + `fmt:check` + `lint:doc:all` + `check:doccore` + `check:stubs` + `test`).
   - Linter & Type Check: `deno task check:all` (type check per package) and `deno task lint`. `npm run lint` is the platform bridge for `deno task lint` only.
   - Tests: `deno task test`.
   - Stub-anchor gate: `deno task check:stubs` (every `NotYetImplementedError` must carry an `// Ancorado: Fase N — razão` comment; ADR 032).
@@ -117,8 +117,14 @@ Run `deno task tests` for full validation (the composite below). `deno task chec
 - `deno task check:all` (type check per package)
 - `deno task lint` (lint)
 - `deno task fmt:check` (formatting)
-- `deno task test` (tests)
+- `deno task lint:doc:all` (`deno doc --lint` of every package entry, ratchet
+  with a ceiling in `scripts/lint-doc-baseline.json` — ADR 041)
+- `deno task check:doccore` (the `doc-core` stays free of `Deno.*`/`node:`)
 - `deno task check:stubs` (stub-anchor gate, ADR 032)
+- `deno task test` (tests)
+
+Outside the composite: `deno task gaps:audit` (completeness matrix report) and
+`deno task lint:doc:update:all` (rewrites the ratchet ceiling — not a check).
 
 ## 13. Important Notes
 

@@ -55,7 +55,11 @@
     "test": "deno test --allow-env --allow-net tests/",
     "check": "deno check src/**/*.ts src/**/*.tsx tests/**/*.ts",
     "build": "deno run --allow-import --allow-read --allow-write --allow-env --allow-net --env-file --unstable-bundle ../esbuild.ts ui",
-    "tests": "deno task check && deno task test"
+    "tests": "deno task check && deno task test",
+    // `deno doc --lint` em ratchet (ADR 041): `.` e `./utils` são o mapa
+    // `exports` deste pacote.
+    "lint:doc": "deno run --allow-read --allow-run --allow-write --allow-env ../../scripts/lint-doc.ts src/mod.ts src/utils/mod.ts",
+    "lint:doc:update": "deno run --allow-read --allow-run --allow-write --allow-env ../../scripts/lint-doc.ts --update src/mod.ts src/utils/mod.ts"
   },
   "exclude": ["public/"],
   "exports": {

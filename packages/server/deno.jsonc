@@ -29,7 +29,11 @@
     "start": "deno run --allow-read --allow-write --allow-env --allow-net --env-file ./src/main.ts",
     "dev": "deno run --allow-read --allow-write --allow-env --allow-net --env-file --watch ./src/main.ts",
     "clean": "deno clean && rm -rf ./build && mkdir -p ./build/dist",
-    "deploy": "deno task init && ./deploy.sh"
+    "deploy": "deno task init && ./deploy.sh",
+    // `deno doc --lint` em ratchet (ADR 041); `main.ts` é o `exports` deste
+    // pacote e hoje não tem dívida de documentação.
+    "lint:doc": "deno run --allow-read --allow-run --allow-write --allow-env ../../scripts/lint-doc.ts src/main.ts",
+    "lint:doc:update": "deno run --allow-read --allow-run --allow-write --allow-env ../../scripts/lint-doc.ts --update src/main.ts"
   },
   "exports": "./src/main.ts",
   "exclude": ["./build/"]

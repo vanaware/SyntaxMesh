@@ -27,9 +27,23 @@
   "tasks": {
     "test": "deno test --allow-env --allow-net --allow-read --allow-write tests/",
     "check": "deno check src/**/*.ts tests/**/*.ts",
-    "tests": "deno task check && deno task test"
+    "tests": "deno task check && deno task test",
+    // `deno doc --lint` em ratchet (ADR 041): o teto está em
+    // `scripts/lint-doc-baseline.json`; entrada nova do mapa `exports` entra
+    // aqui para o gate medir a superfície publicada.
+    "lint:doc": "deno run --allow-read --allow-run --allow-write --allow-env ../../scripts/lint-doc.ts src/mod.ts src/docgen/mod.ts src/version.ts",
+    "lint:doc:update": "deno run --allow-read --allow-run --allow-write --allow-env ../../scripts/lint-doc.ts --update src/mod.ts src/docgen/mod.ts src/version.ts"
   },
   "exports": {
-    ".": "./src/mod.ts"
+    ".": "./src/mod.ts",
+    // Subcaminho só-version: consumidores que rodam em bundle próprio (ex.:
+    // service-worker) importam a constante sem arrastar o barril inteiro.
+    "./version": "./src/version.ts",
+    // `doc-core` (Fase 22, 22.1b): documentação de sintaxe como **dado** —
+    // `syntaxReference`, `KeywordDocumentation`, `UserManual` e a fachada
+    // `generateMan` do `syntaxmesh man`. Puro: sem `Deno.*` nem FS
+    // (`deno task check:doccore`). Fora do barril para a extensão/PWA
+    // carregarem só ele.
+    "./doc-core": "./src/docgen/mod.ts"
   }
 }

@@ -14,11 +14,12 @@
  *
  * Estado atual (24.3): a tradução de flags, o fechamento de `include`s e a
  * chamada única de `execute` estão entregues. A apresentação das mensagens é
- * provisória (24.4 — `reporter.ts`) e o despacho de `reports`/`freeze`/
- * `sheet`/`man` pertence a 24.5/24.9/24.10.
+ * provisória (24.4 — `reporter.ts`) e o despacho das seções mora em
+ * `output-policy.ts` (24.5); `parsed.sheetFile`/`messageFile`/`sheetDir` são
+ * as leituras pedidas pelo argv (24.9/24.10).
  *
  * @see docs/syntaxmesh/fases/fase-24-cli.md §5.1/§5.2/§5.3
- * @see docs/syntaxmesh/fases/fase-24-cli-tarefas.md (24.3)
+ * @see docs/syntaxmesh/fases/fase-24-cli-tarefas.md (24.3/24.9/24.10)
  */
 
 import {
@@ -26,10 +27,12 @@ import {
   execute,
   type ExecutionInputFile,
   type ExecutionRequest,
+  type ExecutionResult,
   normalizeInputPath,
   OPTION_SPECS,
   type OptionSpec,
   scanIncludeReferences,
+  type SheetAppName,
 } from "@vanaware/syntaxmesh";
 import {
   args,
@@ -42,8 +45,10 @@ import {
   isTty,
   listDir,
   mkpath,
+  modulePath,
   print,
   printerr,
+  readStdin,
   readText,
   writeText,
 } from "./io.ts";
@@ -51,9 +56,11 @@ import {
   CliUsageError,
   notAvailableLabel,
   parseArgs,
+  type ParsedArgs,
   type RendererOptions,
   resolveExit,
 } from "./options.ts";
+import { parse as parseYaml, } from "@std/yaml";
 import { dispatchSections, type OutputPolicyIo, } from "./output-policy.ts";
 import { Reporter, } from "./reporter.ts";
 import { lastSummaryLines, } from "./summary.ts";
@@ -66,6 +73,12 @@ export interface CliIo {
   print: (text: string,) => void;
   /** Escreve uma linha em `stderr`. */
   printerr: (text: string,) => void;
+  /** Lê o `stdin` inteiro (`--from -`; default: `io.readStdin`). */
+  readStdin?: () => Promise<string>;
+  /** Lista um diretório (default: `io.listDir`). */
+  listDir?: (path: string,) => Promise<string[]>;
+  /** `true` quando o caminho é diretório (default: `io.isDir`). */
+  isDir?: (path: string,) => Promise<boolean>;
 }
 
 /** Implementação de E/S do processo (`io.ts`). */
@@ -102,8 +115,11 @@ function descriptionOf(spec: OptionSpec,): string {
  * seção `help` do envelope — nunca duas tabelas divergentes (plano §5.2,
  * ponto 8). O parsing de argv é do `parseArgs` puro, não do Cliffy.
  *
- * Sem anotação de retorno: o tipo do Cliffy carrega o registro de opções no
- * genérico, e estreitá-lo à classe base `Command` quebra o encadeamento.
+ * Sem anotação de retorno própria: o tipo de retorno é o **próprio**
+ * encadeamento do Cliffy (o genérico carrega as flags declaradas). Estreitá-lo
+ * para `Command`, para `ReturnType<typeof …>` ou para um generic escrito à mão
+ * não compila / vira outro diagnóstico de `deno doc --lint` — a dívida está
+ * assumida no teto do `lint:doc` (ADR 041).
  */
 export function buildCommand() {
   const command = new Command()
@@ -111,7 +127,9 @@ export function buildCommand() {
     .version(AppConfig.version,)
     .description(
       "Project management, simplified. Runs a TaskJuggler-compatible " +
-        "project file (.smx; .tjp accepted for compatibility).",
+        "project file (.smx; .tjp accepted for compatibility). " +
+        "Use 'syntaxmesh man [<keyword>...]' for the documentation " +
+        "(--format text|html|smx; --output-dir for the html manual).",
     )
     .arguments("<file:string>",)
     .option("--silent", "Suppress informational output.",)
@@ -206,17 +224,149 @@ export async function collectInputFiles(
 }
 
 // ---------------------------------------------------------------------------
-// Configuração (24.3.11)
+// Leituras dos apps de sheet (24.10)
 // ---------------------------------------------------------------------------
 
 /**
- * Lê o YAML de `--config` para `request.configContent`.
+ * Árvores do diretório de trabalho que os apps de sheet leem (Fase 18).
  *
- * Ancorado: Fase 24 — 24.3.11. A leitura entra agora; a **aplicação** do YAML
- * depende do porte completo de `Tj3Config` (hoje só o `initTj3Config` com
- * valores fixos), então o conteúdo viaja no request e no eco `options` mas
- * ainda não muda o comportamento. Aviso explícito em `stderr` para o usuário
- * nunca achar que a configuração valeu.
+ * Só elas são varridas: a raiz inteira pode ser o repositório, e o app nunca
+ * abre nada fora dos templates e das folhas que ele mesmo escreve.
+ */
+const SHEET_TREES = [
+  "TimeSheetTemplates",
+  "TimeSheets",
+  "StatusSheetTemplates",
+  "StatusSheets",
+];
+
+/** Junta diretório e nome sem barra dupla (`.` e `""` são a raiz). */
+function joinDisk(dir: string, name: string,): string {
+  if (dir === "" || dir === ".") return name;
+  return `${dir.replace(/\/+$/u, "",)}/${name}`;
+}
+
+/**
+ * Lê uma árvore de folhas recursivamente como **dados** (24.10).
+ *
+ * O `path` do resultado é relativo à raiz (`TimeSheets/2026-05-18/dev.tji`),
+ * a mesma chave do `MemoryFileStore` — o core nunca vê caminho de disco. O que
+ * não puder ser lido fica fora do seed: o app reporta a folha ausente.
+ */
+async function collectTree(
+  diskDir: string,
+  relDir: string,
+  files: ExecutionInputFile[],
+  io: CliIo,
+): Promise<void> {
+  let names: string[];
+  try {
+    names = await (io.listDir ?? listDir)(diskDir,);
+  } catch {
+    return;
+  }
+  for (const name of names) {
+    const disk = joinDisk(diskDir, name,);
+    const rel = relDir === "" ? name : `${relDir}/${name}`;
+    if (await (io.isDir ?? isDir)(disk,)) {
+      await collectTree(disk, rel, files, io,);
+      continue;
+    }
+    try {
+      files.push({ path: rel, content: await io.read(disk,), },);
+    } catch {
+      // Arquivo ilegível (binário/permissão): fora do seed, sem inventar dado.
+    }
+  }
+}
+
+/** Fechamento de leitura dos apps de sheet a partir do diretório de trabalho. */
+export async function collectSheetFiles(
+  root: string,
+  io: CliIo = defaultIo,
+): Promise<ExecutionInputFile[]> {
+  const files: ExecutionInputFile[] = [];
+  for (const tree of SHEET_TREES) {
+    await collectTree(joinDisk(root, tree,), tree, files, io,);
+  }
+  return files;
+}
+
+/** Desfecho das leituras pedidas pelo argv. */
+interface ReadOutcome {
+  /** `1` quando um arquivo pedido não pôde ser lido; `null` segue o fluxo. */
+  exit: number | null;
+  /** Raiz dos caminhos relativos do app de sheet (`-d`, default `""`). */
+  sheetRoot: string;
+}
+
+/**
+ * Materializa em `appOptions` o que o argv aponta como **arquivo** (24.10).
+ *
+ * `--check-time-sheet`/`--check-status-sheet` viram `sheetContent` (dado),
+ * `--from` vira `rawMessage` (arquivo ou stdin) e o diretório de trabalho é
+ * varrido para o seed do app. A CLI lê; o core só recebe valor.
+ */
+async function applyReads(
+  parsed: ParsedArgs,
+  request: ExecutionRequest,
+  io: CliIo,
+): Promise<ReadOutcome> {
+  const appOptions = request.appOptions ?? {};
+  const sheetRoot = parsed.sheetDir ?? "";
+
+  if (parsed.sheetFile !== null) {
+    try {
+      appOptions.sheetContent = await io.read(parsed.sheetFile,);
+    } catch {
+      io.printerr(`Cannot open file '${parsed.sheetFile}'.`,);
+      return { exit: 1, sheetRoot, };
+    }
+    appOptions.sheetFile = parsed.sheetFile;
+  }
+
+  if (parsed.messageFile !== null) {
+    try {
+      appOptions.rawMessage = parsed.messageFile === "-"
+        ? await (io.readStdin ?? readStdin)()
+        : await io.read(parsed.messageFile,);
+    } catch {
+      io.printerr(
+        `Cannot read the email message from '${parsed.messageFile}'.`,
+      );
+      return { exit: 1, sheetRoot, };
+    }
+  }
+
+  const app = request.app;
+  if (app !== undefined && app !== "check-ts" && app !== "check-ss") {
+    const files = await collectSheetFiles(sheetRoot, io,);
+    if (files.length > 0) appOptions.files = files;
+  }
+
+  request.appOptions = Object.keys(appOptions,).length === 0
+    ? undefined
+    : appOptions;
+  return { exit: null, sheetRoot, };
+}
+
+// ---------------------------------------------------------------------------
+// Configuração (24.3.11)
+// ---------------------------------------------------------------------------
+
+/** `true` para os cinco apps de email da F18 (a config do `tj3` é deles). */
+function isEmailSheetApp(app: SheetAppName | undefined,): boolean {
+  return app !== undefined && app !== "check-ts" && app !== "check-ss";
+}
+
+/**
+ * Lê o YAML de `--config` (24.3.11).
+ *
+ * Os apps de sheet precisam da configuração **já parseada** (`appOptions.config`,
+ * o `RuntimeConfig` do Ruby — ADR 037), então para eles o YAML entra no
+ * request como objeto. No restante do pipeline a **aplicação** continua
+ * ancorada na 24.3.11: o texto viaja no request e um aviso explícito em
+ * `stderr` impede o usuário de achar que a configuração valeu.
  */
 async function applyConfig(
   configFile: string | null,
@@ -224,12 +374,27 @@ async function applyConfig(
   io: CliIo,
 ): Promise<number | null> {
   if (configFile === null) return null;
+  let content: string;
   try {
-    request.configContent = await io.read(configFile,);
+    content = await io.read(configFile,);
   } catch {
     io.printerr(`Cannot open configuration file '${configFile}'.`,);
     return 1;
   }
+  request.configContent = content;
+
+  if (isEmailSheetApp(request.app,)) {
+    let config: Record<string, unknown>;
+    try {
+      config = (parseYaml(content,) ?? {}) as Record<string, unknown>;
+    } catch {
+      io.printerr(`Cannot parse configuration file '${configFile}'.`,);
+      return 1;
+    }
+    request.appOptions = { ...(request.appOptions ?? {}), config, };
+    return null;
+  }
+
   io.printerr(
     "Warning: the YAML configuration is read but not applied yet " +
       "(phase 24 — task 24.3.11).",
@@ -277,12 +442,17 @@ function outputIo(io: CliIo,): OutputPolicyIo {
 /**
  * Raiz dos assets auxiliares do HTML (`css/`, `icons/`, `scripts/`).
  *
- * Relativa a este módulo: `packages/cli/src/cli.ts` → raiz do repositório.
+ * Relativa a este módulo: `packages/cli/src/cli.ts` → `<repo>/assets/`. A
+ * pasta existe separada porque o layout **de origem** é também o layout de
+ * **destino**: o HTML referencia `css/tjreport.css`, `icons/task.png` e
+ * `scripts/wz_tooltip.js`, então copiar `assets/<nome>` para
+ * `<saída>/<nome>` mantém as referências válidas sem reescrever o relatório.
+ *
  * Quando a distribuição não trouxer os assets ao lado do binário, a cópia é
  * silenciosamente pulada (`dispatchReports` só copia o que existe).
  */
 function assetRoot(): string {
-  return new URL("../../../", import.meta.url,).pathname;
+  return modulePath(import.meta.url, "../../../assets/",);
 }
 
 // ---------------------------------------------------------------------------
@@ -314,14 +484,50 @@ export async function main(
 
   const { request, renderer, configFile, } = parsed;
 
+  // `man`: a cor da saída textual é decisão do renderer (TTY + `--no-color`),
+  // nunca do disco — o request carrega só o booleano.
+  if (request.man !== undefined) {
+    request.man.color = renderer.color && isTty();
+  }
+
+  /** Apresenta o envelope e traduz o exit (caminho único de saída). */
+  const finish = async (
+    result: ExecutionResult,
+    sheetRoot: string,
+  ): Promise<number> => {
+    const reporter = makeReporter(renderer, io,);
+    reporter.report(result.messages,);
+    await dispatchSections(result, {
+      io: outputIo(io,),
+      assets: { root: assetRoot(), },
+      sheetBaseDir: sheetRoot,
+      onError: (text: string,) => reporter.error(text,),
+    },);
+    // Resumo do projeto (conveniência in-process — envelope é o contrato).
+    reporter.summary(lastSummaryLines(),);
+    return resolveExit(result,);
+  };
+
   // Ajuda humana de argv fica com o Cliffy (plano §5.2, ponto 8).
   if (request.help === true) {
     io.print(await helpText(),);
     return 0;
   }
 
+  // `--version` responde e sai **antes de qualquer leitura**
+  // (`Tj3AppBase#on_tail`): não abre master, `--config` nem folhas — com
+  // arquivos na linha de comando o nome deles nem precisa existir.
+  if (request.version === true) {
+    return await finish(await execute(request,), "",);
+  }
+
   const configExit = await applyConfig(configFile, request, io,);
   if (configExit !== null) return configExit;
+
+  // Leituras pedidas pelo argv (24.9/24.10): folha a checar, mensagem recebida
+  // e o seed do diretório de trabalho dos apps de sheet.
+  const reads = await applyReads(parsed, request, io,);
+  if (reads.exit !== null) return reads.exit;
 
   if (request.entry !== undefined) {
     const closure = await collectInputFiles(request.entry, io.read,);
@@ -333,17 +539,7 @@ export async function main(
   }
 
   // **Uma** chamada: o core roda parse → schedule → relatórios.
-  const result = await execute(request,);
-  const reporter = makeReporter(renderer, io,);
-  reporter.report(result.messages,);
-  await dispatchSections(result, {
-    io: outputIo(io,),
-    assets: { root: assetRoot(), },
-    onError: (text: string,) => reporter.error(text,),
-  },);
-  // Resumo do projeto (conveniência in-process — envelope é o contrato).
-  reporter.summary(lastSummaryLines(),);
-  return resolveExit(result,);
+  return await finish(await execute(request,), reads.sheetRoot,);
 }
 
 if (isEntrypoint(import.meta.url,)) {

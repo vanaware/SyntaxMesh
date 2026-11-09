@@ -60,13 +60,15 @@ end
 
 # Igualado aos defaults do port para PRODID/UID byte-idênticos.
 #
-# A versão vem de `packages/core/src/version.ts` — a **fonte única** do port
-# (`AppConfig.version` e o atributo `version` de `Project` derivam dela). Fixar
-# um literal aqui deixava o golden para trás a cada bump: em `0.0.0` o script
-# regerava PRODID/UID divergentes do que o teste compara (24.6.6).
-PORT_VERSION = File.read(
-  File.expand_path('../../packages/core/src/version.ts', __dir__)
-).match(/VERSION\s*=\s*"([^"]+)"/)[1]
+# A versão **definitiva** só existe depois do bundle do buildit (o
+# `__APP_VERSION__` é injetado a partir do `deno.jsonc`); em teste o port cai no
+# fallback do fonte. Então o oracle lê a mesma fonte que o build consome:
+# `"version"` do `deno.jsonc` da raiz. Fixar um literal aqui deixava o golden
+# para trás a cada bump (24.6.6); o teste ainda neutraliza o valor (`@@VER@@`),
+# porque os dois lados não veem necessariamente a mesma string.
+ROOT_DENO = File.expand_path('../../deno.jsonc', __dir__)
+PORT_VERSION = File.read(ROOT_DENO)[/"version"\s*:\s*"([^"]+)"/, 1]
+abort("sem \"version\" em #{ROOT_DENO}") unless PORT_VERSION
 
 AppConfig.packageName = "@vanaware/syntaxmesh"
 AppConfig.softwareName = "SyntaxMesh"

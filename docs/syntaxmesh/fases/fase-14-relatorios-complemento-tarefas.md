@@ -765,6 +765,13 @@ integração futura apareça como diff explícito.
 
 ## Notas de conclusão
 
+> As tabelas abaixo citam `debug/adendo_extra_probe.ts`, a sonda temporária usada
+> em 2026-11-02 para mapear o que o parser já aceitava. Ela foi removida do repo
+> na limpeza de `debug/` (2026-11-09): cada caso promovido virou teste
+> permanente em `packages/core/tests/`. A sonda que permanece é
+> `debug/schedule_probe.ts`, ligada a `deno task probe` (ADR 032) e agora coberta
+> por `check:all`, `lint` e `fmt`.
+
 #### Evidências 14C.13.1–14C.13.8 (preenchido 2026-11-02)
 
 | # | Implementação | Verificação |

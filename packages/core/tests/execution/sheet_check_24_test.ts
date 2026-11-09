@@ -101,7 +101,7 @@ describe("execute — check-ts sobre conteúdo (24.2.33)", () => {
   });
 });
 
-describe("execute — check-ss e âncoras (24.2.33)", () => {
+describe("execute — check-ss e apps de sheet (24.2.33/24.10)", () => {
   it("status sheet válida devolve o dashboard e exit 0", async () => {
     MessageHandlerInstance.instance.reset();
     const result = await execute(request({
@@ -118,18 +118,21 @@ describe("execute — check-ss e âncoras (24.2.33)", () => {
     );
   });
 
-  it("apps de envio/recebimento seguem ancorados em 24.10", async () => {
+  it("apps de envio/recebimento não são mais âncora (24.10)", async () => {
     MessageHandlerInstance.instance.reset();
     const result = await execute(request({ app: "ts-send", },),);
 
-    assertEquals(result.exitCode, 1,);
+    // O app roda de verdade: a seção existe com o próprio app e o id de
+    // indisponibilidade sumiu (a prova funcional está em
+    // `freeze_sheets_24_test.ts`).
+    assertEquals(result.results.sheet!.app, "ts-send",);
     assert(
-      result.messages.some((message,) =>
+      !result.messages.some((message,) =>
         message.id === "sheet_app_not_available"
       ),
       JSON.stringify(result.messages.map((message,) => message.id),),
     );
-    assertEquals(result.results.sheet!.exitCode, 1,);
+    assertEquals(result.exitCode, result.results.sheet!.exitCode,);
   });
 });
 

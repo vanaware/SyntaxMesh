@@ -135,7 +135,7 @@ export class Rule {
     this.patterns[this.patterns.length - 1]!.setSeeAlso(also,);
   }
 
-  setExample(file: string, tag: string,): void {
+  setExample(file: string, tag: string | null,): void {
     if (this.patterns.length === 0) {
       throw new Error("No pattern defined yet",);
     }
@@ -180,6 +180,7 @@ export class Rule {
       pStr += pat.to_syntax_r(stack, docs, rules, skip,);
     }
     if (pStr === "") {
+      stack.delete(this,);
       return "";
     }
     str += pStr;

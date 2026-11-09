@@ -1,4 +1,4 @@
-import { type TokenDoc, } from "../lexer/token-doc.ts";
+import { TokenDoc, } from "../lexer/token-doc.ts";
 import { State, stateKeyOf, type StateKeys, } from "./state.ts";
 import { Rule, } from "./rule.ts";
 
@@ -181,7 +181,7 @@ export class Pattern {
     this.seeAlso = also;
   }
 
-  setExample(file: string, tag: string,): void {
+  setExample(file: string, tag: string | null,): void {
     this.exampleFile = file;
     this.exampleTag = tag;
   }
@@ -345,19 +345,25 @@ export class Pattern {
                 `Unknown rule ${name} referenced in to_syntax_r`,
               );
             }
-            // Guarda anti-ciclo: referência a regra já em processamento.
-            if (stack.has(refRule,)) {
-              str += `<${name}, ...>`;
-              break;
-            }
-            stack.set(refRule, true,);
             const firstPattern = refRule.patterns[0];
             if (!firstPattern) {
-              stack.delete(refRule,);
               throw new Error(`Rule ${name} has no patterns`,);
             }
-            str += `<${firstPattern.keyword}>`;
-            stack.delete(refRule,);
+            // Regra com um único pattern documentado já é uma keyword:
+            // vira argumento (`<keyword>`) em vez de ser expandida.
+            if (
+              refRule.patterns.length === 1 && firstPattern.doc !== null
+            ) {
+              this.addArgDoc(
+                argDocs,
+                new TokenDoc(firstPattern.keyword, firstPattern,),
+              );
+              str += `<${firstPattern.keyword}>`;
+            } else {
+              // Demais referências são seguidas recursivamente
+              // (`Pattern.rb:379`); o guarda de ciclo fica no próprio pattern.
+              str += refRule.to_syntax(stack, argDocs, rules, 0,);
+            }
             break;
           }
         }

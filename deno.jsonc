@@ -46,11 +46,12 @@
     "test": "deno test --no-check -P",
     "lint": "deno lint",
     "fmt": "deno fmt",
-    "check:all": "deno task --members check && deno check scripts/**/*.ts",
+    "check:all": "deno task --members check && deno check scripts/**/*.ts debug/**/*.ts",
     "fmt:check": "deno fmt --check",
     "lint:fix": "deno lint --fix",
     "lint:doc:all": "deno task --members lint:doc",
-    "tests": "deno task check:all && deno task lint && deno task fmt:check && deno task lint:doc:all && deno task test",
+    "lint:doc:update:all": "deno task --members lint:doc:update",
+    "tests": "deno task check:all && deno task lint && deno task fmt:check && deno task lint:doc:all && deno task check:doccore && deno task check:stubs && deno task test",
     "cli": "deno run --allow-read --allow-write --allow-env packages/cli/src/cli.ts",
     "cli:test": "deno task --cwd packages/cli test",
     "cli:compile": "deno task --cwd packages/cli compile",
@@ -70,6 +71,7 @@
     "taskjuggler": "tj3 --no-color ",
     "probe": "deno run --allow-read --allow-env --allow-sys ./debug/schedule_probe.ts",
     "check:stubs": "deno run --allow-read ./scripts/check-stubs.ts",
+    "check:doccore": "deno run --allow-read ./scripts/check-doccore.ts",
     "gaps:audit": "deno run --allow-read ./scripts/gaps/audit.ts",
     "test:integration": "deno test --no-check -P packages/core/tests/integration/",
     "test:invariants": "deno test --no-check -P packages/core/tests/invariants/",
@@ -89,6 +91,7 @@
     },
     "include": [
       "scripts/**/*.ts",
+      "debug/**/*.ts",
       "packages/**/src/**/*.{ts,tsx}",
       "packages/**/tests/**/*test.ts"
     ],
@@ -134,6 +137,7 @@
     "newLineKind": "lf",
     "include": [
       "scripts/**/*.ts",
+      "debug/**/*.ts",
       "packages/**/src/**/*.{ts,tsx}",
       "packages/**/tests/**/*test.ts"
     ],

@@ -97,6 +97,8 @@ O que foi decidido? Seja específico e acionável.
 | 037 | Injeção de `FileStore`/`KeyValueStore` no core | Aceito | 2026-11-05 |
 | 038 | Substituição de XML/HTML/ICalendar/Painter mínimos (Fase 17) | Aceito | 2026-11-04 |
 | 039 | Tipo `markdown` em `extend` (extensão SyntaxMesh — 10-C Bloco C5 / 14C.19) | Aceito | 2026-11-06 |
+| 040 | Versão única: `version.ts` gerado pelo buildit, `VERSION` no barril do pacote | Aceito | 2026-11-08 |
+| 041 | Gate de documentação (`lint:doc`) de `deno doc --lint` como ratchet | Aceito | 2026-11-08 |
 
 > **Reserva de números (decisão 2026-11-03 — `docs/syntaxmesh/xray.md` §5.3):**
 > 029–032 existem (`029-journal-alertlevel.md`, entregue na Fase 16 em
@@ -108,6 +110,13 @@ O que foi decidido? Seja específico e acionável.
 > **038** (`038-substituicao-xml.md`) foi entregue na Fase 17 (2026-11-04).
 > **039** (`039-extend-markdown.md`) aberta em 2026-11-06 e **aceita** no mesmo
 > dia (implementada nos Blocos C5/14C.19 — fixtures + testes verdes).
+> **040** (`040-versao-unica.md`) aceita em 2026-11-08: a versão definitiva só
+> existe no bundle do buildit, então só o `deno.jsonc` da raiz e o
+> `version.ts` gerado tomam partido dela — testes e goldens não.
+> **041** (`041-gate-lint-doc.md`) aceita em 2026-11-08: o `lint:doc:all` passou
+> a medir `deno doc --lint` das entradas publicadas, com teto por pacote em
+> `scripts/lint-doc-baseline.json`; é o que faz o composite `deno task tests`
+> fechar ponta a ponta.
 > **Nunca renumerar ADRs existentes** — os arquivos 027/028
 > já commitados são referência histórica; ao criar um ADR, conferir antes esta
 > tabela e usar o próximo número livre. A cadeia 034–037 deve ser **reconciliada na

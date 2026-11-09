@@ -233,30 +233,60 @@ describe("execute — seções sob demanda (24.2.25)", () => {
     assertEquals(result.results.version!.name, "SyntaxMesh",);
     assertEquals(typeof result.results.version!.version, "string",);
   });
+
+  it("--version/--help saem antes do projeto (mesmo com arquivos)", async () => {
+    // Ruby `Tj3AppBase#on_tail`: imprime e sai. Antes disso o pipeline rodava
+    // inteiro quando havia arquivo na linha de comando.
+    const version = await run(request({ version: true, },),);
+    assertEquals(version.exitCode, 0,);
+    assertEquals(version.results.reports, undefined,);
+    assertEquals(version.messages.length, 0,);
+
+    const help = await run(request({ help: true, },),);
+    assertEquals(help.exitCode, 0,);
+    assertEquals(help.results.reports, undefined,);
+  });
 });
 
-describe("execute — seções ancoradas (24.2.26)", () => {
-  it("freeze devolve a forma e a mensagem de indisponibilidade", async () => {
-    const result = await run(request({ freeze: { byTask: true, }, },),);
-    assertEquals(result.exitCode, 1,);
-    assertEquals(result.results.freeze!.fileName, "proj.tjp",);
-    assertEquals(result.results.freeze!.contents, "",);
-    assert(
-      result.messages.some((m,) => m.id === "freeze_not_available"),
-      JSON.stringify(result.messages,),
-    );
+describe("execute — seção man (24.9.1–24.9.3)", () => {
+  // `freeze` e os apps de sheet saíram da âncora em 24.9/24.10 (prova em
+  // `freeze_sheets_24_test.ts`); `man` deixou de ser âncora em 24.9.1–3, com o
+  // `doc-core` da Fase 22 como fonte.
+  it("text devolve a documentação da keyword sem abrir projeto", async () => {
+    const man = await run({ man: { format: "text", keywords: ["task",], }, },);
+    assertEquals(man.exitCode, 0,);
+    assertEquals(man.results.man!.format, "text",);
+    assert(man.results.man!.content.includes("Keyword:",),);
+    assertEquals(man.results.man!.keywords, ["task",],);
+    assertEquals(man.results.man!.files, [],);
   });
 
-  it("man e app ficam ancorados com mensagem própria", async () => {
-    const man = await run(request({ man: { format: "text", }, },),);
-    assertEquals(man.exitCode, 1,);
-    assertEquals(man.results.man!.format, "text",);
-    assert(man.messages.some((m,) => m.id === "man_not_available"),);
+  it("text sem keyword lista todas as keywords documentadas", async () => {
+    const man = await run({ man: { format: "text", }, },);
+    assertEquals(man.exitCode, 0,);
+    const lines = man.results.man!.content.trimEnd().split("\n",);
+    assert(lines.length > 100,);
+    assert(lines.includes("task",),);
+    assertEquals(man.results.man!.keywords, [],);
+  });
 
-    const app = await run(request({ app: "ts-summary", },),);
-    assertEquals(app.exitCode, 1,);
-    assertEquals(app.results.sheet!.app, "ts-summary",);
-    assert(app.messages.some((m,) => m.id === "sheet_app_not_available"),);
+  it("keyword desconhecida vira erro de saída e exit 1", async () => {
+    const man = await run({
+      man: { format: "text", keywords: ["nosuchkeyword",], },
+    },);
+    assertEquals(man.exitCode, 1,);
+    assert(man.messages.some((m,) => m.id === "man_no_matches"),);
+  });
+
+  it("html devolve os arquivos do manual e não depende do .smx", async () => {
+    const man = await run({ man: { format: "html", }, },);
+    assertEquals(man.exitCode, 0,);
+    assertEquals(man.results.man!.format, "html",);
+    assertEquals(man.results.man!.content, "",);
+    const names = man.results.man!.files.map((f,) => f.name);
+    assert(names.includes("index.html",),);
+    assert(names.includes("css/tjmanual.css",),);
+    assert(!man.messages.some((m,) => m.id === "tj3_tjp_file_missing"),);
   });
 });
 

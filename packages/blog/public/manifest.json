@@ -1,0 +1,18 @@
+{
+  "name": "SyntaxMesh",
+  "short_name": "Blog SyntaxMesh",
+  "description": "Blog SyntaxMesh",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#141218",
+  "theme_color": "#6750a4",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

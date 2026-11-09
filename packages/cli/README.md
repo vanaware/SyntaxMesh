@@ -42,19 +42,25 @@ No `--allow-sys` is required: the CLI avoids `fs.access()` (in Deno's
 
 ## Flags
 
-| Flag                     | Meaning                                                                                              |
-| ------------------------ | ---------------------------------------------------------------------------------------------------- |
-| `--check-syntax`         | Parse only; prints `Syntax check passed.` and exits before scheduling                                |
-| `--list-reports <regex>` | Lists the matching reports (`<name> (<type>)`) and exits                                             |
-| `--reports <regex>`      | Generates only the reports whose **id** matches (`report1`, `report2`… when the file declares no id) |
-| `--no-reports`           | Schedules without generating or printing anything                                                    |
-| `--force-reports`        | Generates reports even when the scheduler reported errors (exit code still reflects the errors)      |
-| `--output-dir <dir>`     | Directory for written reports (default: current directory)                                           |
-| `--config <file>`        | Legacy `tj3` YAML config (parsed; application is still a stub)                                       |
-| `--silent`               | Hides `info`/`debug` messages (warnings, errors and the counters line stay)                          |
-| `--no-color`             | Disables ANSI colors (also automatic when stdout is not a TTY)                                       |
-| `--version`              | Prints `SyntaxMesh <version>`                                                                        |
-| `--help`                 | Prints the help text                                                                                 |
+| Flag                       | Meaning                                                                                              |
+| -------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `--check-syntax`           | Parse only; prints `Syntax check passed.` and exits before scheduling                                |
+| `--list-reports <regex>`   | Lists the matching reports (`<name> (<type>)`) and exits                                             |
+| `--reports <regex>`        | Generates only the reports whose **id** matches (`report1`, `report2`… when the file declares no id) |
+| `--no-reports`             | Schedules without generating or printing anything                                                    |
+| `--force-reports`          | Generates reports even when the scheduler reported errors (exit code still reflects the errors)      |
+| `-f`                       | `tj3` short form of `--force-reports`; inside a sheet app it means `--force`                         |
+| `--output-dir <dir>`       | Directory for written reports (default: current directory)                                           |
+| `--freeze`                 | Writes the frozen project (`<master>-header.tji` + `<master>-bookings.tji`) next to the master       |
+| `--freezedate <date>`      | Cut-off date for the bookings exported by `--freeze` (default: `now`)                                |
+| `--freeze-by-task`         | Groups the frozen bookings by task instead of by resource (`--freezebytask` also accepted)           |
+| `--check-time-sheet <f>`   | Validates a time sheet against the project and exits (one sheet per run)                             |
+| `--check-status-sheet <f>` | Validates a status sheet against the project and exits (one sheet per run)                           |
+| `--config <file>`          | Legacy `tj3` YAML config (applied to the sheet apps; a stub for the project pipeline)                |
+| `--silent`                 | Hides `info`/`debug` messages (warnings, errors and the counters line stay)                          |
+| `--no-color`               | Disables ANSI colors (also automatic when stdout is not a TTY)                                       |
+| `--version`                | Prints `SyntaxMesh <version>` and exits before reading any file                                      |
+| `--help`                   | Prints the help text                                                                                 |
 
 Exit codes: `0` success, `1` any error (parse, schedule, report). The code is
 always taken from the envelope — the CLI never invents success.
@@ -98,6 +104,50 @@ When an `html` report is written, the auxiliary assets (`css/`, `icons/` and
 module, so a binary or bundle that is moved away from the source tree keeps
 generating the HTML but without the assets next to it.
 
+Relative images cited by a written `html`/`markdown` report (`<img src>`,
+`<object data type="image/…">`, `![alt](path)`) are copied to the same relative
+path beside the report, so the reference keeps working without being rewritten.
+The source is the process working directory; external URLs (`http(s)://`,
+`//`, `data:`), absolute paths and paths with a `..` segment are left alone.
+
+## Freeze
+
+`--freeze` writes the frozen project next to the master file, as `tj3` does:
+
+```
+<master>-header.tji     now <--freezedate>-00:00-+0000
+<master>-bookings.tji   supplement resource|task … { booking … }
+```
+
+The project needs a `trackingscenario`; without one the command fails with
+`no_tracking_scen`. The three freeze flags are order independent and
+`--freezedate` alone does **not** turn the freeze on. Both artefacts are always
+written, truncating whatever a previous freeze left behind — an empty
+`<master>-bookings.tji` means “no bookings up to the cut-off”. After writing,
+the normal pipeline continues — combine with `--no-reports` to stop right there.
+
+## Time and status sheet apps
+
+`tj3` ships one binary per sheet app; here they are subcommands:
+
+| Command      | Purpose                                                    |
+| ------------ | ---------------------------------------------------------- |
+| `ts send`    | Writes the time sheet templates and one email per resource |
+| `ts receive` | Reads a submission (`--from <file\|->`) and records it     |
+| `ts summary` | Sends (and prints) the submission summary                  |
+| `ss send`    | Writes the status sheet templates and the reminder emails  |
+| `ss receive` | Reads a status sheet submission (`--from <file\|->`)       |
+
+There is no SMTP and no hidden transport: each message is printed and also
+written to `outbox/001-<recipient>.eml` (full RFC 822), and every file the app
+created is written under the working directory. Flags mirror the Ruby apps:
+`-e/--enddate`, `-r/--resource`, `-f`/`--force`, `--hideresource`, `-i/--interval`,
+`--sheet`, `--digest`, `--dryrun` and `-d/--directory` (the root for the files
+the command reads and writes). `-t/--to` of `ts summary` fills both the sheet and
+the digest recipient lists, exactly as `Tj3TsSummary.rb` does; use `--sheet` or
+`--digest` to target only one. `--config <file>` supplies the `tj3` YAML these
+apps expect (`senderEmail`, `smtpServer`, …); nothing is sent over the network.
+
 ## Failure policy
 
 There is no partial output. If the envelope reports `ok: false` or any
@@ -119,10 +169,12 @@ warnings` line is printed when there is at least one of either.
   `--node-modules-dir=none`, and 114 MB when compiled from an isolated tree
   (the CLI's own graph has only six npm packages). Shrinking it is a packaging
   task, not a runtime one.
-- `--config` parses the file but the YAML is not applied yet (`Tj3Config` is a
-  stub); a `not applied yet` warning is emitted.
-- `sheet`, `man` and `--freeze*` are still stubs of later sub-phases (24.9 /
-  24.10).
+- `--config` is applied to the sheet apps (`ts`/`ss`), which read it; the
+  project pipeline still only parses it and emits a `not applied yet` warning
+  (`Tj3Config` is a stub).
+- `man` is still missing: it needs the documentation core shipped by phase 22.
+  The envelope section and its printing are already in place, so the command
+  will only have to fill it.
 - Bun is not exercised in CI here (the runtime is not installed); the bundle is
   the same ESM file Node runs.
 

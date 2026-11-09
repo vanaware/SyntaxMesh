@@ -19,6 +19,7 @@
 import { DataCache, } from "../scheduling/data-cache.ts";
 import { MessageHandlerInstance, } from "../message-handler.ts";
 import { TaskJuggler, } from "../taskjuggler.ts";
+import { generateMan, } from "../docgen/man.ts";
 import {
   buildEnvelope,
   echoOptions,
@@ -28,7 +29,6 @@ import {
 } from "./envelope.ts";
 import { normalizeInputPath, } from "./paths.ts";
 import {
-  anchoredSheetSection,
   checkSection,
   checkSheetSection,
   freezeSection,
@@ -36,6 +36,7 @@ import {
   listReportsSection,
   manSection,
   reportsSection,
+  runSheetSection,
   versionSection,
 } from "./sections.ts";
 import type {
@@ -119,13 +120,47 @@ async function executeRequest(
   const options = echoOptions(request,);
   const results: ExecutionResults = {};
 
-  // `--version` / `--help` não abrem projeto (Ruby Tj3AppBase sai antes).
+  // `--version` / `--help` não abrem projeto: no Ruby o `on_tail` do
+  // `Tj3AppBase` imprime e **sai**, mesmo com arquivos na linha de comando.
   if (options.version) results.version = versionSection();
   if (options.help) results.help = helpSection();
   if (options.version || options.help) {
-    if (options.files.length === 0) {
-      return buildEnvelope(options, handler, results, EXIT_OK,);
+    return buildEnvelope(options, handler, results, EXIT_OK,);
+  }
+
+  // `syntaxmesh man` (24.9.1–24.9.3): documentação de sintaxe do `doc-core`
+  // (Fase 22). Não abre projeto, não grava nada — devolve texto e, no formato
+  // `html`, o mapa de arquivos do manual. A escrita é da CLI (24.5).
+  if (options.man !== null) {
+    const output = generateMan({
+      format: options.man.format,
+      keywords: options.man.keywords ?? [],
+      color: options.man.color ?? false,
+      ignoreOld: options.man.ignoreOld ?? false,
+    },);
+    // A consulta de documentação não é um projeto: `--abort-on-warnings` e o
+    // `trapSetup` do parse não valem aqui (o Ruby os trata em `tj3man`, um
+    // programa separado). `critical` registra sem levantar.
+    const abortOnWarning = handler.abortOnWarning;
+    handler.abortOnWarning = false;
+    try {
+      for (const message of output.messages) {
+        if (message.level === "error") {
+          handler.critical(message.id, message.text,);
+        } else {
+          handler.warning(message.id, message.text,);
+        }
+      }
+    } finally {
+      handler.abortOnWarning = abortOnWarning;
     }
+    results.man = manSection(options.man, output,);
+    return buildEnvelope(
+      options,
+      handler,
+      results,
+      handler.errors > 0 ? EXIT_ERROR : EXIT_OK,
+    );
   }
 
   if (options.files.length === 0) {
@@ -177,43 +212,22 @@ async function executeRequest(
     );
   }
 
-  // Operações pontuais ainda ancoradas (24.2.26) param antes de agendar.
-  if (options.freeze !== null) {
-    handler.error(
-      "freeze_not_available",
-      "Freeze is not available yet (Phase 24 — task 24.9).",
-    );
-    // Forma do envelope preservada: a seção existe, mas o conteúdo é do 24.9.
-    results.freeze = freezeSection(options.entry, "",);
-    return buildEnvelope(options, handler, results, EXIT_ERROR,);
-  }
-  if (options.man !== null) {
-    handler.error(
-      "man_not_available",
-      "Man pages are not available yet (Phase 22 doc-core — task 24.9).",
-    );
-    results.man = manSection(options.man, "",);
-    return buildEnvelope(options, handler, results, EXIT_ERROR,);
-  }
-
+  // Agenda primeiro (Ruby l.192-194): as operações abaixo dependem dela.
   let scheduled = false;
   try {
     scheduled = tj.schedule();
   } catch (_error) {
     scheduled = false;
   }
-  // Ruby l.192-194: falha de agenda só é fatal sem `--force-reports`.
+  // Falha de agenda só é fatal sem `--force-reports`.
   if (!scheduled && !options.forceReports) {
     return buildEnvelope(options, handler, results, EXIT_ERROR,);
   }
 
-  // Checagens de folha e apps da F18 (Ruby l.196-209). `check-ts`/`check-ss`
-  // já rodam sobre o conteúdo do request (24.2.33); os demais apps seguem
-  // ancorados em 24.10.
-  if (options.app !== null) {
-    const outcome = options.app === "check-ts" || options.app === "check-ss"
-      ? checkSheetSection(tj, options.app, options.appOptions,)
-      : anchoredSheetSection(options.app,);
+  // Verificação de folha contra o projeto (Ruby l.196-203) — antes do freeze,
+  // como no `tj3`: o `check-ts` só relê o projeto, nunca gera artefato.
+  if (options.app === "check-ts" || options.app === "check-ss") {
+    const outcome = checkSheetSection(tj, options.app, request.appOptions,);
     results.sheet = outcome.section;
     const failed = outcome.exitCode !== EXIT_OK || handler.errors > 0;
     return buildEnvelope(
@@ -224,6 +238,39 @@ async function executeRequest(
     );
   }
 
+  // `--freeze` (Ruby l.205-209): gera header + bookings como **dado**; a
+  // escrita dos dois arquivos é da CLI (24.9.5). O pipeline de relatórios
+  // continua depois, como no Ruby.
+  if (options.freeze !== null) {
+    const frozen = tj.freeze(
+      options.freeze.date ?? null,
+      options.freeze.byTask === true,
+    );
+    if (frozen !== null) results.freeze = freezeSection(frozen.files,);
+    if (frozen === null || handler.errors > 0) {
+      return buildEnvelope(options, handler, results, EXIT_ERROR,);
+    }
+  }
+
+  // Apps de email da F18 (24.10.1–24.10.4). No Ruby são programas próprios
+  // (`tj3ts_sender`, `tj3ss_receiver`, …); aqui rodam sobre o
+  // `MemoryFileStore` semeado com os dados do request e a chamada termina ali
+  // (ADR 036/037). O `request` é a fonte: o eco só carrega caminhos.
+  if (options.app !== null) {
+    const outcome = await runSheetSection(
+      tj.project!,
+      options.app,
+      request.appOptions ?? null,
+    );
+    results.sheet = outcome.section;
+    const failed = outcome.exitCode !== EXIT_OK || handler.errors > 0;
+    return buildEnvelope(
+      options,
+      handler,
+      results,
+      failed ? EXIT_ERROR : EXIT_OK,
+    );
+  }
   if (options.noReports) {
     return buildEnvelope(
       options,

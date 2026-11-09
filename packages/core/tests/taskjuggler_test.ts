@@ -12,7 +12,6 @@ import { createTestProject, } from "./fixtures/create-test-project.ts";
 import { fakeOpfs, } from "./helpers/fake-opfs.ts";
 import { TjTime, } from "../src/time/tj-time.ts";
 import { Task, } from "../src/model/task.ts";
-import { NotYetImplementedError, } from "../src/model/errors.ts";
 import { MessageHandlerInstance, } from "../src/message-handler.ts";
 
 describe("TaskJuggler", () => {
@@ -53,10 +52,11 @@ describe("TaskJuggler", () => {
     assertEquals(tj.project, null,);
   });
 
-  it("freeze lança NotYetImplemented", () => {
+  it("freeze sem projeto lança (24.9.4)", () => {
     assertThrows(
-      () => tj.freeze(TjTime.now(), false,),
-      NotYetImplementedError,
+      () => tj.freeze("2026-05-18", false,),
+      Error,
+      "Project not set",
     );
   });
 

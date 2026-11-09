@@ -2,11 +2,17 @@
  * AppConfig — metadados da aplicação.
  *
  * A versão vem de `version.ts` (fonte única): `--version` da CLI, o banner e o
- * atributo `version` de `Project` não podem divergir.
+ * atributo `version` de `Project` não podem divergir. O barril do pacote
+ * (`mod.ts`) publica a mesma constante como `VERSION`.
+ *
+ * Importa o módulo folha, **não** o barril: `app-config.ts` é dependência de
+ * quase tudo (inclusive `sheets/sheet-handler-base.ts`), e puxar `mod.ts` daqui
+ * fecha ciclos de classes (`Cannot access 'SheetHandlerBase' before
+ * initialization`).
  *
  * @see docs/taskjuggler/lib/taskjuggler/AppConfig.rb
  */
-import { VERSION, } from "./version.ts";
+import { APP_VERSION as VERSION, } from "./version.ts";
 
 export class AppConfig {
   static version: string = VERSION;

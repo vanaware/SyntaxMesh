@@ -24,7 +24,7 @@ import {
 } from "node:fs/promises";
 import { tmpdir, } from "node:os";
 import { join, resolve, } from "node:path";
-import { pathToFileURL, } from "node:url";
+import { fileURLToPath, pathToFileURL, } from "node:url";
 
 // Reexport de Cliffy na mesma fronteira: os demais módulos do pacote nunca
 // importam de `@cliffy/*` diretamente (24.1.8).
@@ -38,17 +38,21 @@ export type RuntimeName = "deno" | "bun" | "node";
  * `any` em `src/` — estende-se aqui quando um novo global for necessário.
  */
 export interface RuntimeGlobals {
+  /** Globais do Deno (runtime de referência do port). */
   Deno?: {
     args: string[];
     mainModule?: string;
     exit: (code?: number,) => never;
     stdout?: { isTerminal?: () => boolean };
   };
+  /** Globais do Bun (bundle alternativo do ADR 034). */
   Bun?: Record<string, unknown>;
+  /** Globais do Node (bundle alternativo do ADR 034). */
   process?: {
     argv: string[];
     exit: (code?: number,) => never;
     stdout?: { isTTY?: boolean };
+    stdin?: AsyncIterable<Uint8Array>;
   };
 }
 
@@ -92,6 +96,17 @@ export function isEntrypoint(
 export const globals: RuntimeGlobals = globalThis as unknown as RuntimeGlobals;
 
 /**
+ * Caminho de disco relativo ao módulo (`import.meta.url`).
+ *
+ * `new URL(…).pathname` percent-encoda espaços e acentos (`/com%20espaco/`) e
+ * no Windows começa com `/C:/…`, então um asset ao lado do módulo nunca seria
+ * encontrado. `fileURLToPath` resolve os dois casos.
+ */
+export function modulePath(metaUrl: string, relative = ".",): string {
+  return fileURLToPath(new URL(relative, metaUrl,),);
+}
+
+/**
  * `stdout` é um terminal?
  *
  * Em pipe/redirecionamento o reporter **não** emite ANSI (24.4.2). Deno e Node
@@ -116,6 +131,25 @@ export const args: string[] = resolveArgs(globals,);
 /** Lê um arquivo como UTF-8. */
 export const readText = (path: string,): Promise<string> =>
   readFile(path, "utf8",);
+
+/**
+ * Lê o `stdin` inteiro como UTF-8 (`--from -` dos receivers — 24.10.2).
+ *
+ * O stream vem do shim de `node:process`, presente nos três runtimes e já
+ * ligado ao descritor 0; a iteração assíncrona evita depender de `Deno.stdin`
+ * e de um caminho `-` especial. Sem `stdin` disponível a leitura devolve
+ * texto vazio — o consumidor (receiver) reporta a mensagem ausente.
+ */
+export async function readStdin(g: RuntimeGlobals = globals,): Promise<string> {
+  const stdin = g.process?.stdin;
+  if (stdin === undefined) return "";
+  const decoder = new TextDecoder();
+  let text = "";
+  for await (const chunk of stdin) {
+    text += decoder.decode(chunk, { stream: true, },);
+  }
+  return text + decoder.decode();
+}
 
 /** Escreve um arquivo UTF-8 (sobrescreve). */
 export const writeText = (path: string, data: string,): Promise<void> =>

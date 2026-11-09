@@ -3,7 +3,7 @@
  *
  * Consome `ical.golden.json` (oracle `scripts/golden/ical.rb`) e reconstrói
  * cada documento com o port de `src/ical/` (17.5/17.6), comparando a saída
- * completa (envelope + componentes já dobrados) byte-a-byte, com DUAS
+ * completa (envelope + componentes já dobrados) byte-a-byte, com TRÊS
  * normalizações documentadas:
  *   1. **DTSTAMP** — é a hora da serialização (`TjTime.new.utc` no Ruby,
  *      `TjTime.now()` no port), não determinística na natureza. O oracle a
@@ -12,6 +12,11 @@
  *      26 bytes (< 75), nunca é dobrada, então a substituição é segura.
  *   2. **Line endings** — aqui o CRLF É a carga útil (RFC 5545, convertido por
  *      `foldLines`); a normalização geral dos goldens é no-op de propósito.
+ *   3. **Versão** — a definitiva só existe depois do bundle do buildit
+ *      (`__APP_VERSION__`): em teste o port cai no fallback do fonte e o oracle
+ *      Ruby lê o `deno.jsonc` da raiz. Neutralizar o trecho do `PRODID`
+ *      (`SyntaxMesh @@VER@@//EN`, `@@VER@@` incluído) mantém o golden válido a
+ *      cada bump, em vez de exigir regeneração a troco de nada.
  *
  * Determinismo replicado dos dois lados: fuso fixo por caso (`spec.tz`,
  * mesmo padrão dos goldens de reports — `TjTime.setTimeZone` antes de montar
@@ -52,9 +57,24 @@ function newIcal(dates: Dates, tag = "proj",): ICalendar {
   return ical;
 }
 
-/** Substitui o valor não determinístico de DTSTAMP (ver header). */
+/**
+ * Neutraliza a versão do `PRODID` (ver item 3 do header). O valor sai do
+ * `AppConfig.version` em ambos os lados: fallback do fonte no port, `deno.jsonc`
+ * da raiz no oracle.
+ */
+function normalizeVersion(str: string,): string {
+  // Aceita versão vazia também: no fonte o `__APP_VERSION__` não foi injetado,
+  // então o port emite `SyntaxMesh //EN` e o oracle, que lê o `deno.jsonc`,
+  // emite `SyntaxMesh 0.0.2-mtvrt8od//EN`. Só o token muda de lado; o prefixo
+  // ("The SyntaxMesh Project/NONSGML") não casa porque contém `/`.
+  return str.replace(/(SyntaxMesh )([^\s\/]*)(\/\/EN)/g, "$1@@VER@@$3",);
+}
+
+/** Substitui os valores não determinísticos do envelope (ver header). */
 function normalize(str: string,): string {
-  return str.replace(/DTSTAMP:\d{8}T\d{6}Z/g, "DTSTAMP:@@NOW@@",);
+  return normalizeVersion(
+    str.replace(/DTSTAMP:\d{8}T\d{6}Z/g, "DTSTAMP:@@NOW@@",),
+  );
 }
 
 const builders: Record<string, (d: Dates,) => string> = {

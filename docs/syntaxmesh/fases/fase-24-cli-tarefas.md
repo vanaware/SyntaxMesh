@@ -115,9 +115,9 @@ parallela na CLI.
 [x] 24.8  Verificação final                         —   8/8  (2026-11-08)
 ─────────────────────────────────────────────────────────
 SUBTOTAL (1ª onda, bloqueia v1)                    ~130
-[ ] 24.9  Adendo: syntaxmesh man + --freeze* (Bloco I) —   0/5
-[ ] 24.10 Adendo: apps de sheets + dynamicAttr.     —   0/9
-─────────────────────────────────────────────────────────
+[x] 24.9  Adendo: syntaxmesh man + --freeze* (Bloco I) —   5/5  (2026-11-08; `doc-core` da F22 construído na mesma sessão)
+[x] 24.10 Adendo: apps de sheets + dynamicAttr.     —   9/9  (2026-11-08)
+─────────────────────────────────────────────────────
 TOTAL: ~144
 ```
 
@@ -354,7 +354,7 @@ snippet `-A` divergia do que foi realmente renderizado).
 | 24.2.23 | Implementar `TaskJuggler.execute(request): Promise<ExecutionResult>` portado do fluxo `apps/Tj3.rb: main()`: a partir de `request.files` — `include` resolvido por *lookup* em memória contra a lista (ausente ⇒ erro de arquivo não encontrado, nunca exceção de FS; sem provedor, sem disco) → parse → gate `checkSyntax` → `schedule` → `checkReports` → render/operadores pontuais; sem FS, sem `exit`, sem argv; **abre cada chamada repondo o snapshot do `MessageHandlerInstance` e usando instância `TaskJuggler`/`DataCache` dedicada por request (isolamento por chamada — adendo §3.6, requisito p/ uso em servidor)** | `packages/core/src/execution/execute.ts`, `taskjuggler.ts` | teste de integração 1 |
 | 24.2.24 | Construção do envelope: `ok`, `options` (eco do request normalizado com defaults aplicados — dos arquivos ecoa **só os caminhos**: `entry` + `path`s de `files`, nunca os conteúdos), `messages` (snapshot estruturado do `MessageHandlerInstance`: `severity`/`id`/`text`/`file`/`line`) e `exitCode` pela matriz do plano §5.3 (fiel a `apps/Tj3.rb`, incluindo `abortOnWarnings`/`forceReports`) | `execution/envelope.ts` | ≥ 3 testes |
 | 24.2.25 | Seções sob demanda: só a pedida aparece em `results` — `check` (`{valid}`, parse sem agenda), `listReports` (`[{name,type}]` na ordem de declaração), `reports` (invoca `renderReports`; `outputDir` presente **só** quando passado), `help` (`OptionSpec[]` do core), `version` (`AppConfig`/`metadata.json`) | `execution/sections.ts` | ≥ 5 testes |
-| 24.2.26 | Seções de extensão (forma do envelope + âncoras): `freeze` (`{fileName, contents}` — escrita é do consumidor; núcleo ainda ancorado Fase 24 → 24.9), `sheet` (apps F18 devolvem `emailText`/anexos via `appOptions.rawMessage`, sem SMTP/FS), `man` (doc-core F22 — âncora até 24.9). Cada uma só é preenchida quando o request a pede | `execution/sections.ts` | teste por seção (ou âncora explícita) |
+| 24.2.26 | Seções de extensão (forma do envelope + âncoras): `freeze` (`{fileName, contents}` — escrita é do consumidor; desancorado em 24.9.4), `sheet` (apps F18 devolvem `emailText`/anexos via `appOptions.rawMessage`, sem SMTP/FS), `man` (`{format, keywords, content, files}` — doc-core F22, desancorado em 24.9.1–3). Cada uma só é preenchida quando o request a pede | `execution/sections.ts` | teste por seção (`execute_24_test.ts`, `freeze_sheets_24_test.ts`, `output_policy_test.ts`) |
 | 24.2.27 | `dynamicAttributes`: `execute` aplica o pipeline 18.19 **por dentro** antes de renderizar (a partir de `request.dynamicAttributes` cru) — a seção `reports` já sai processada; a CLI não reexamina a opção | `execute.ts` (usa `Project#generateReport` 4º arg) | 1 teste |
 | 24.2.28 | Pureza e transportabilidade do `execute` (adendo §3.5/§3.6/§5.2): nenhum `node:fs`/`Deno.*File`/`process`/`console`/`exit()`/argv no caminho; teste de round-trip JSON/structured-clone do request+envelope (sem funções/instâncias) e de duas chamadas concorrentes sem vazamento de `messages`/projeto; teste/audit dedicado; rodar suíte completa do core + goldens | `packages/core/tests/` | verde |
 | 24.2.29 | Registrar em `CURRENT.md` que a fachada `execute` passou a orquestrar o pipeline interno devolvendo o envelope (eco/`exitCode`/seções) e atualizar o comentário de âncora de `taskjuggler.ts` | idem | revisão |
@@ -603,7 +603,7 @@ a traduzir; (c) `sheet`/`man`/`freeze` continuam sem despacho próprio
 | 24.5.13 | `--reports <regex>` gera e imprime apenas os casados; `--list-reports` os enumera | idem | 2 testes |
 | 24.5.14 | Idempotência: duas execuções no mesmo diretório produzem mesmo conteúdo (tolerância p/ timestamps por normalização) | idem | 1 teste |
 | 24.5.15 | Formato não suportado/unknown em relatório pedido ⇒ entrada em `reports[].errors` + exit 1, sem stack trace e sem saída parcial dos demais (ligação 24.2.15 ↔ política) | idem | 1 teste |
-| 24.5.16 | **Assets auxiliares do HTML** (plano §5.5 ponto 5): `copyAuxiliaryFiles` é no-op no core (ADR 027), então a política copia `css/`, `scripts/` (wz_tooltip.js) e `icons/` para o `--output-dir` quando houver relatório `html` não-`selfcontained` | `src/output-policy.ts` + 1 teste | 1 teste |
+| 24.5.16 | **Assets auxiliares do HTML** (plano §5.5 ponto 5): `copyAuxiliaryFiles` é no-op no core (ADR 027), então a política copia `assets/css/`, `assets/scripts/` (wz_tooltip.js) e `assets/icons/` para o `--output-dir` quando houver relatório `html` não-`selfcontained` | `src/output-policy.ts` + 1 teste | 1 teste |
 | 24.5.17 | `check-all` + `deno test` verdes | — | exit 0 |
 | 24.5.18 | Commit `feat(cli): reports-pipeline+output-policy` | — | git log |
 
@@ -630,6 +630,10 @@ _Assets do HTML (24.5.16)._ `copyAuxiliaryFiles` é no-op no core (ADR 027),
 então a política copia `css/` e `icons/` (diretórios) + `scripts/wz_tooltip.js`
 (arquivo isolado, porque o `scripts/` do repo guarda ferramentas de build) para
 o `--output-dir` **somente** quando sai `html` de relatório não-`selfcontained`.
+A origem é `<repo>/assets/` (`assetRoot()`), que guarda o payload do relatório
+fora da raiz e fora de `scripts/`; o layout interno de `assets/` é **idêntico**
+ao do `--output-dir` (`css/`, `icons/`, `scripts/wz_tooltip.js`), então copiar
+`assets/<nome>` → `<saída>/<nome>` preserva as referências do HTML.
 Para isso o core passou a expor o dado no envelope: `ReportJsonEntry` ganhou
 `selfcontained: boolean` (`report.get("selfcontained") === true`) — nenhum teste
 do core comparava o objeto inteiro, então o campo é aditivo.
@@ -710,14 +714,39 @@ passou a usar `hourCycle: "h23"` (mais um `% 24` defensivo) com regressão em
 `tests/time/timezone_test.ts` (4 casos). Exatamente o que a fase existe para
 pegar — o mesmo código, dois runtimes.
 
-_Versão única (24.6.6)._ `version.ts` é a fonte (agora `0.0.2`, igual ao
-`package.json` da raiz e ao `deno.jsonc` do pacote); `AppConfig.version`,
-`initTj3Config` (que fixava `"0.0.0"` e sobrescrevia tudo) e `CORE_VERSION`
-derivam dela. `tests/version_test.ts` prova `--version` =
-`SyntaxMesh <VERSION>` e que os três manifestos concordam. Efeito colateral
-esperado: goldens `html-xml`/`ical` e o smoke da F17 citavam `0.0.0` — agora
-`0.0.2` (o smoke passou a interpolar `VERSION` para não quebrar no próximo
-bump) e `scripts/esbuild.jsonc#versionPaths` aponta para o arquivo real.
+_Versão única (24.6.6, ADR 040)._ `version.ts` segue o template do buildit —
+declara `__APP_VERSION__` e cai em `""`; a **definitiva só existe depois do
+bundle**, montada a partir do `deno.jsonc` da raiz. O barril do pacote
+(`@vanaware/syntaxmesh`, via `mod.ts`) o publica como `VERSION`, e tudo deriva
+daí: `AppConfig.version`, `initTj3Config` (que fixava `"0.0.0"` e sobrescrevia
+tudo) e `Project.version`. Consumidores de fora importam `VERSION` de
+`@vanaware/syntaxmesh` — a CLI pelo barril e o service-worker pelo subcaminho
+`./version`, para não arrastar o core inteiro ao próprio bundle.
+
+_Dentro_ do core o import é do folha, não do barril: `app-config.ts` é
+dependência de quase todo o pacote, e `import ... from "./mod.ts"` ali fecha
+ciclos de módulo que derrubam `sheets/apps/app-base`,
+`sheets/status-sheet-sender`, `sheets/time-sheet-receiver` e
+`sheets/time-sheet-sender` com `Cannot access 'SheetHandlerBase' before
+initialization` (visto no gate completo, 4 falhas). `CORE_VERSION` saiu: era
+alias sem consumidor.
+
+**Nenhum teste fixa o número:** `packages/core/tests/version_test.ts` prova
+`VERSION === APP_VERSION` e `AppConfig.version === VERSION`, e
+`packages/cli/tests/cli_test.ts` prova `--version` = `SyntaxMesh ${VERSION}`.
+Um literal ("0.0.2", "0.0.0"…) só criaria atrito no bump sem provar nada além
+da derivação — foi por isso que o antigo `tests/version_test.ts` da CLI (que
+também exigia `package.json`/`deno.jsonc` iguais a `VERSION`) saiu. Efeito
+colateral esperado: goldens `html-xml`/`ical` e o smoke da F17 citavam `0.0.0`
+— agora o smoke interpola `VERSION`,
+`scripts/esbuild.jsonc#versionPaths` aponta para o arquivo real e os dois
+scripts Ruby de golden leem `"version"` do `deno.jsonc` da raiz (a mesma fonte
+que o buildit consome). Como o port em teste vê `""` e o oracle vê
+`0.0.2-mtvrt8od`, os dois goldens neutralizam o token em `@@VER@@` (mesmo
+tratamento do `DTSTAMP`): a versão definitiva só existe no bundle, então nem o
+golden nem o teste tomam partido dela. Gate completo depois do ajuste (2026-11-08):
+**807 testes / 6734 passos, 0 falhas**, `lint` 756 arquivos, `fmt:check` 808,
+`check:stubs` OK, suíte da CLI em 33 testes.
 
 _Distribuição medida (24.6.2)._ `deno compile` embute o layout npm do
 workspace: **605 MB** por default, **349 MB** com `--node-modules-dir=none` e
@@ -725,13 +754,14 @@ workspace: **605 MB** por default, **349 MB** com `--node-modules-dir=none` e
 (`micromark`, `mdast-util-*`, `vento`, `fflate`…), o resto vem de `wrangler`/
 `workerd`/`sharp` de `packages/server`. `env -i ./dist/syntaxmesh --version`
 → 0 (sem dependência de runtime). O bundle Node fica em **903 kB** e roda
-`mwe001` com todos os assets (`css/`, `icons/`, `scripts/wz_tooltip.js`),
-porque `dist/` está a três níveis da raiz do repo.
+`mwe001` com todos os assets (de `assets/`, copiados para `css/`, `icons/` e
+`scripts/wz_tooltip.js` no destino), porque `dist/` está a três níveis da raiz
+do repo.
 
-_Testes._ `tests/distribution_test.ts` (bundle → shebang/ESM → `node --version`
-→ `node mwe001` com assets; Bun sondado e `it.ignore` quando ausente) e
-`tests/version_test.ts` (4 passos). A suíte do pacote fecha em **35 testes /
-161 passos** (1 ignorado: mwe004; 1 passo ignorado: Bun).
+_Testes._ A suíte do pacote fecha em **33 testes / 181 passos** (1 passo
+ignorado). A distribuição foi medida à mão (bundle → shebang/ESM →
+`node --version` → `node mwe001` com assets; Bun sondado e `it.ignore`); o
+`distribution_test.ts` que automatizava isso foi descartado e não está no repo.
 
 _Correção colateral na suíte (24.2). _ `TaskJuggler.checkTimeSheet`/
 `checkStatusSheet` devolviam `false` em vez de lançar sem projeto desde o grupo
@@ -959,13 +989,13 @@ verdes; são extensões, não bloqueiam a 1ª onda da Fase 21.
 > dados-como-dados sai do **grupo 5** (24.2.31–24.2.35) e a extensão `.smx` da
 > tarefa 24.2.36, antes de 24.10.1–4.
 
-### 24.9 — `syntaxmesh man` + `--freeze*` (Bloco I)
+### 24.9 — `syntaxmesh man` + `--freeze*` (Bloco I) ✅ (2026-11-08)
 
 | # | Tarefa | Fonte/Arquivos | Verificação |
 |---|---|---|---|
-| 24.9.1 | Comando Cliffy `man` com `--format html\|text\|tjp` e filtro por keyword → popula `request.man`; a CLI **só imprime/gravava seção `results.man`** devolvida pelo `execute` | `packages/cli/src/commands/man.ts` + `output-policy.ts`; core consome `@vanaware/syntaxmesh/doc-core` (F22 22.1b — tarefas C–H do `fase-22-vscode-extension-tarefas.md`; contrato fixado em 22.1b.7.8) | teste BDD por formato |
-| 24.9.2 | `syntaxmesh man <keyword>`: o core resolve via `TernarySearchTree`/`SyntaxReference` e devolve a documentação (`KeywordDocumentation` + exemplos `TjpExample`) na seção `man`; a CLI imprime | core — `TernarySearchTree.find(prefix, true)` (22.1b.1.5), `SyntaxReference.all/toText` (22.1b.2.7/2.10), `KeywordDocumentation.toText` (22.1b.3.16–20), `TjpExample` (22.1b.4) | ≥ 3 keywords (task/resource/report) |
-| 24.9.3 | `syntaxmesh man --format html` gera manual completo (`UserManual` do doc-core) como conteúdo na seção `man`; **a escrita em disco é da CLI** no `--output-dir`, o core não escreve | core — `UserManual.generate(): Record<nome, conteúdo>` (22.1b.5.6) + `css/tjmanual.css` copiado do asset (22.1b.5.2) | snapshot estrutural |
+| 24.9.1 | Comando Cliffy `man` com `--format html\|text\|smx` e filtro por keyword → popula `request.man`; a CLI **só imprime/grava a seção `results.man`** devolvida pelo `execute` | `packages/cli/src/options.ts` + `output-policy.ts`; core consome `@vanaware/syntaxmesh/doc-core` (F22 22.1b — tarefas C–H do `fase-22-vscode-extension-tarefas.md`; contrato fixado em 22.1b.7.8) | ✅ teste BDD por formato (`options_test.ts`, `man_test.ts`) |
+| 24.9.2 | `syntaxmesh man <keyword>`: o core resolve via `TernarySearchTree`/`SyntaxReference` e devolve a documentação (`KeywordDocumentation` + exemplos `TjpExample`) na seção `man`; a CLI imprime | core — `TernarySearchTree.find(prefix, true)` (22.1b.1.5), `SyntaxReference.all/toText` (22.1b.2.7/2.10), `KeywordDocumentation.toText` (22.1b.3.16–20), `TjpExample` (22.1b.4) | ✅ `task`/`resource`/`shift` + prefixo único + ambíguo + inexistente |
+| 24.9.3 | `syntaxmesh man --format html` gera manual completo (`UserManual` do doc-core) como conteúdo na seção `man`; **a escrita em disco é da CLI** no `--output-dir`, o core não escreve | core — `UserManual.generate(): Record<nome, conteúdo>` (22.1b.5.6) + `css/tjmanual.css` copiado do asset (22.1b.5.2) | ✅ snapshot estrutural (`user-manual_test.ts`, `dispatchSections — man`) |
 | 24.9.4 | Desancorar `TaskJuggler.freeze()` (âncora Fase 24 no core): o `execute` devolve `results.freeze` = `{ fileName, contents }`; **a reescrita do master file via `io.writeText` é da CLI** (com confirmação como no tj3) | `packages/core/src/taskjuggler.ts` + `packages/cli` | teste com fixture `.tjp` congelável |
 | 24.9.5 | Flags `--freeze`, `--freeze-by-task`, `--freezedate` mapeadas para `request.freeze` (tj3 §5.2) | `options.ts` | teste de flags + exit codes |
 
@@ -982,6 +1012,172 @@ verdes; são extensões, não bloqueiam a 1ª onda da Fase 21.
 | 24.10.7 | `check-stubs`: âncoras `Fase 24` (freeze/parse/parseFile/parseContent) presentes e nenhuma órfã | `scripts/check-stubs.ts` | verde |
 | 24.10.8 | **Imagens em relatórios (13.14.3, xray §4)**: `resolveImageRef` do core devolve descritor; a CLI materializa a imagem do disco (`io.readBytes`) como data URI ou arquivo ao lado da saída. Ruby usava `URL.createObjectURL`/blob só no browser | `packages/cli/src/commands/report.ts` + `markdown/extensions/images.ts` | teste: `![x](fotos/a.jpg)` → arquivo/URI na saída |
 | 24.10.9 | **Regressão `format richtext` (13.14.4)** na saída da CLI: default `richtext` para `.tjp` legados; markdown só com `format markdown` explícito (núcleo entregue na F14-C, `14C.5.1–5.12`) | F14-C / `reports/*` | golden CLI com os dois formatos |
+
+#### Conclusão do adendo Bloco J (2026-11-08) — 24.10.1–24.10.9
+
+**24.10.1–24.10.4 — apps de sheet como subcomandos.** No Ruby cada app é um
+binário (`tj3ts_sender`, `tj3ts_receiver`, `tj3ts_summary`, `tj3ss_sender`,
+`tj3ss_receiver`); aqui viram `<proto> <ação>`: `ts send`, `ts receive`,
+`ts summary`, `ss send`, `ss receive`, mais os `--check-time-sheet` /
+`--check-status-sheet` da 1ª onda. `options.ts` traduz para `request.app` +
+`request.appOptions` (`SHEET_COMMANDS`, `SHEET_BOOLEAN_FLAGS`, `SHEET_VALUE_FLAGS`)
+e o **core carrega a chamada** (`execute` → `runSheetSection`) devolvendo
+`results.sheet` — sem SMTP (ADR 036) e sem disco (ADR 037, `MemoryFileStore`).
+A CLI imprime `reportText ?? summaryText ?? emailText` e grava o que o app criou
+sob `sheetBaseDir` + `outbox/NNN-<to>.eml` por mensagem (`dispatchSheet`).
+
+Duas decisões de fronteira, ambas para não vazar E/S para o core:
+
+- `-d/--directory` do app é a **raiz do chamador** (`ParsedArgs.sheetDir` →
+  `OutputPolicyOptions.sheetBaseDir`), **nunca** `appOptions.workingDir` — o
+  `FileStore` já está enraizado lá; mandar o mesmo caminho criaria
+  `dir/dir/…` no delta de arquivos.
+- `-e/--enddate`, `-r/--resource`, `-f/--force`, `--hideresource`, `-i`,
+  `--sheet`, `--digest` vão como dado (`endDate`, `resources`, `force`,
+  `hideResource`, `intervalDuration`, `sheetContent`, `digestRecipients`).
+  `--from <arquivo|->` (receivers) é lido pela CLI (`io.readText` ou
+  `readStdin`, novo em `io.ts`) e chega em `appOptions.rawMessage`; `-` só é
+  aceito por `ts receive`/`ss receive`.
+- `--config` deixou de ser decorativo para os apps de email: a CLI parseia o
+  YAML (`@std/yaml`, novo no `packages/cli/deno.jsonc`) e entrega
+  `appOptions.config` — antes o arquivo era lido e descartado (24.3.11).
+
+O eco do envelope não vaza conteúdo: `ExecutionSheetAppOptionsEcho` reduz
+`files` a **caminhos** (`echoAppOptions`) e o `execute` consome o
+`request.appOptions` original (foi um vazamento real, corrigido na mesma
+passada).
+
+**24.10.5 — `--report`/`-A`.** Já entregue por 24.2.27 (`options.ts` traduz,
+`execute` aplica pelo 4º argumento de `Project#generateReport`); coberto por
+`options_test.ts` (`-A` → `dynamicAttributes` cru),
+`tests/execution/execute_24_test.ts` e o golden
+`golden/dynamic-attributes_golden_test.ts` (18.19.7). Nada novo aqui.
+
+**24.10.6 — sem reimplementação local.** `TaskJuggler.masterFile()` passou a
+deleger a `FileList.masterFileWith([".tjp", ".smx"])` em vez de varrer a lista
+de arquivos por conta própria (`masterFile` continua `.tjp`-only, fiel ao
+Ruby); o `StdIoWrapper` da F16 segue como única captura de saída. `grep` por
+leitura/varrredura duplicada não acha candidato.
+
+**24.10.7 — âncoras.** `deno task check:stubs` verde (as âncoras da F24 em
+`freeze`/`parse`/`parseFile`/`parseContent`; `freeze` já desancorada na 24.9.4).
+
+**24.10.8 — imagens em relatórios.** Duas peças, na divisão já fixada: o core
+decide **se** a referência é externa (`isExternalImageRef`, 13.14.3) e a CLI
+materializa. `packages/core/src/mod.ts` passou a exportar o barril da F13
+(`./markdown/mod.ts`) — o descritor não era alcançável de fora do core.
+`packages/cli/src/images.ts` extrai as referências relativas (`imageRefs`) e
+`dispatchReports` copia cada uma para **ao lado do relatório**, preservando o
+caminho que o HTML/Markdown já cita (nada é reescrito, nenhum base64): origem
+`OutputPolicyOptions.imageDir` (default `""` = cwd do chamador), destino
+`dirOf(relatório) + ref`. Referências externas e caminhos com `..` ficam de
+fora (adendo §4.3); origem igual ao destino não é recopiada.
+
+O teste de integração corrigiu uma suposição errada: o `RichTextIntermediate`
+emite imagem como `<object alt data type="image/jpg">` (`Element.rb:551-570`),
+não `<img src>` — o extrator cobre os dois dialetos (e o `<object>` só entra
+quando `type` é `image/…`, porque o mesmo elemento serve a outras mídias).
+
+**24.10.9 — dialetos.** O núcleo já estava entregue (14C.5); o que faltava era
+travar o comportamento **na saída da CLI**. `cli.integration_test.ts` usa uma
+fixture com o **mesmo** `header` (`'''forte''' e **forte**`) em dois relatórios
+— um sem `format` (richtext, o default dos `.tjp` legados) e outro com
+`format markdown` — e compara os dois HTML: o primeiro renderiza
+`<b>forte</b>` a partir de `'''…'''` e deixa `**forte**` literal; o segundo
+faz o inverso (`<b>` de `**…**` e `'''forte'''` literal).
+
+_Evidência (pós-revisão)._ `deno task check:all` ✅ · `deno task lint` 759
+arquivos ✅ · `deno task fmt:check` 811 arquivos ✅ · `deno task check:stubs` ✅ ·
+suíte global **819 testes / 6796 passos / 0 falhas** (21m14s) · suíte do pacote
+CLI **42 testes / 230 passos** (`images_test.ts` novo: 2 describes / 12 passos) ·
+integração por subprocesso **45 passos** com os dois novos casos verdes.
+O composite `deno task tests` **fechou ponta a ponta** em 2026-11-08 (exit 0;
+`check:all` + `lint` 780 + `fmt:check` 832 + `lint:doc:all` + `check:doccore` +
+`check:stubs` + suíte **834 arquivos / 6863 passos / 0 falhas**). O
+defeito pré-existente do `lint:doc:all` (task inexistente desde `00dea6d`,
+1694 `missing-jsdoc` no core) foi resolvido no mesmo dia pelo **ratchet** de
+`deno doc --lint` — `scripts/lint-doc.ts` + teto em
+`scripts/lint-doc-baseline.json`, ADR 041.
+
+**24.9.4/24.9.5 — freeze.** `TaskJuggler.freeze()` devolve os dois artefatos
+(`<master>-header.tji` e `<master>-bookings.tji`) como **dado** em
+`results.freeze.files[]`; quem grava é `dispatchFreeze`. As flags
+(`--freeze`, `--freeze-by-task` — a grafia do Ruby `--freezebytask` também
+entra — e `--freezedate`) acumulam em variáveis e só montam
+`request.freeze` no fim, então a ordem não importa; `--freezedate` sozinho
+não liga o freeze (fiel ao `Tj3.rb` l.86-106, onde só `@freeze` dispara).
+Date inválida ⇒ `tj3_ivld_freeze_date` e exit 1 sem escrever nada.
+
+**24.9.1–24.9.3 — `syntaxmesh man`.** O `doc-core` da F22 (subfase 22.1b)
+não existia, então foi construído nesta mesma sessão: `TernarySearchTree`,
+`SyntaxReference`, `KeywordDocumentation`, `ExampleSnippet` (`TjpExample`),
+`UserManual` + capítulos em inglês e a fachada `generateMan` — tudo **puro**
+(devolve dado, não escreve/lê/imprime), publicado como
+`@vanaware/syntaxmesh/doc-core` e guardado por `deno task check:doccore`.
+
+A CLI ficou com o mínimo: `syntaxmesh man [<keyword>…]` com
+`--format text|html|smx` (default `text`) espalha os posicionais em
+`request.man.keywords` e a política de saída imprime o texto ou grava os
+arquivos do manual sob o `--output-dir` (o CSS `css/tjmanual.css` viaja **na
+própria seção**, então o manual não depende de asset do lado da CLI — fecha a
+dúvida que estava em aberto aqui). `--format` fora do subcomando é erro de uso.
+
+Três divergências conscientes do `tj3man`: (a) o recorte de fonte chama-se
+`smx`, não `tjp`, porque o manual só cita a extensão nova; (b) prefixo que casa
+**uma única** keyword é resolvido para ela (o Ruby repassava o texto digitado e
+imprimia nada); (c) a busca do Google na barra de letras ficou de fora — é
+serviço externo obsoleto.
+
+O manual gerado é verificado por teste: 184 arquivos (índice, sumário,
+capítulos, 170 keywords, navegação e CSS), prosa em inglês, **nenhuma menção ao
+projeto de origem** e **nenhuma citação de `.tjp`/`.tji`** — os textos vieram
+do `p.doc` das regras do parser, que também foi limpo (`alertlevels`, `now`,
+`markdate`, `aggregate` e o argumento de `include`).
+
+**Verificação do adendo (2026-11-08):** `deno task test` → **834 arquivos /
+6863 passos / 0 falhas** (97m46s) · `check:all` · `lint` (779 arquivos) ·
+`fmt:check` (831 arquivos) · `check:doccore` · `check:stubs` — todos exit 0.
+Novos testes: `docgen/man_test.ts` (16 passos), `docgen/user-manual_test.ts`
+(25), `docgen/manual-examples_test.ts` (4), `execution/execute_24_test.ts`
+(4, seção `man`), `cli/tests/options_test.ts` (+7) e
+`cli/tests/output_policy_test.ts` (+3).
+
+#### Revisão pós-entrega (CodeReview, 2026-11-08)
+
+Uma revisão única sobre o diff do adendo levantou 4 avisos e 6 sugestões. Foram
+corrigidos os que tocam **fidelidade ao Ruby** e **segurança de caminho**:
+
+- **`-t/--to` do `ts summary`** alimenta **as duas** listas
+  (`sheetRecipients` e `digestRecipients`), como `Tj3TsSummary.rb` l.52-57;
+  `--sheet`/`--digest` continuam alvejando uma só.
+- **`-f` deixou de ser capturado como `--force` de sheet**: no `tj3` é
+  `--force-reports` (`Tj3.rb` l.148-151). A flag acumula (`forceRequested`) e só
+  é resolvida depois do subcomando, então `syntaxmesh -f proj.smx` voltou a
+  valer — antes errava com “requires a sheet app”.
+- **`--version`/`--help` saem antes de tudo** (`execute.ts` **e** `cli.main`):
+  o `on_tail` do `Tj3AppBase` imprime e sai **mesmo com arquivos** na linha de
+  comando; antes o pipeline inteiro rodava e só então a seção era ecoada, e
+  `syntaxmesh --version nope.smx` morria em `Cannot open file` em vez de
+  responder 0.
+- **`--check-time-sheet`/`--check-status-sheet` repetidos** são erro de uso
+  (`accepts only one sheet per run`) em vez de reter a última em silêncio — o
+  Ruby acumula (`@timeSheets << arg`), o envelope checa uma por vez; trocar de
+  tipo continua caindo no conflito de app, que explica melhor.
+- **Imagens**: `imageRefs` recusa caminho absoluto (POSIX e letra de unidade) e
+  trata `..` como **segmento** (`fotos/a..b.jpg` é nome válido), então nada sai
+  da raiz de imagens.
+- **Freeze**: artefato vazio é **gravado**, truncando o arquivo do freeze
+  anterior, como o `File.open(…, 'w')` do Ruby.
+- **`outcome.aborted` é monotônico**: um despacho de relatórios bem-sucedido não
+  desfaz o aborto de uma seção `sheet` que falhou.
+- **`assetRoot()`** deixou de usar `URL.pathname` (percent-encoding de espaços e
+  `/C:/` no Windows): `io.modulePath` usa `fileURLToPath`, com teste próprio.
+
+Provas novas: `-f` nos dois caminhos e repetição de folha (`options_test.ts`),
+`collectSheetFiles` (árvores, raiz ausente, arquivo ilegível) e `--from -` via
+`readStdin` (sucesso e erro) em `cli_test.ts`, `--version`/`--help` com arquivos
+no request (`execute_24_test.ts`) e o artefato vazio do freeze
+(`output_policy_test.ts`).
 
 ---
 

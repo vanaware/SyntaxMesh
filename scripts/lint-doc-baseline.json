@@ -1,0 +1,15 @@
+{
+  "cli": {
+    "missing-return-type": 1,
+    "private-type-ref": 5
+  },
+  "core": {
+    "missing-explicit-type": 37,
+    "missing-jsdoc": 1548,
+    "missing-return-type": 6,
+    "private-type-ref": 107
+  },
+  "server": {},
+  "service-worker": {},
+  "ui": {}
+}

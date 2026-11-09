@@ -1407,7 +1407,7 @@ export function registerTaskRules(p: ProjectFileParser,): void {
     p.pattern(["_charges",], () => "charges",);
     p.descr("Aggregate charges of tasks",);
     p.pattern(["_tasks",], () => "tasks",);
-    p.descr("Alias of 'charges' (TaskJuggler 3.x syntax)",);
+    p.descr("Alias of 'charges' (legacy syntax)",);
     p.pattern(["_materials",], () => "materials",);
     p.descr("Aggregate materials",);
   },);

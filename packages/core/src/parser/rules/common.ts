@@ -264,7 +264,8 @@ export function registerCommonRules(p: ProjectFileParser,): void {
     p.doc(
       "date",
       "A DATE is a date and time specification similar to ISO 8601: " +
-        "YYYY-MM-DD[-hh:mm[:ss]][-TIMEZONE]. Dates must be aligned with the " +
+        "<nowiki>YYYY-MM-DD[-hh:mm[:ss]][-TIMEZONE]</nowiki>. " +
+        "Dates must be aligned with the " +
         "[[timingresolution]]. Simple date calculations are supported: " +
         "%{2009-11-01 + 8m}.",
     );
@@ -739,8 +740,9 @@ export function registerCommonRules(p: ProjectFileParser,): void {
     p.doc(
       "macro",
       "Defines a text fragment inserted via ${ID}. Body in square " +
-        "brackets: macro FOO [ This ${1} text ]. Arguments must be " +
-        "double-quoted. ${?foo} expands to nothing if foo is undefined.",
+        "brackets: macro FOO <nowiki>[ This ${1} text ]</nowiki>. " +
+        "Arguments must be double-quoted. ${?foo} expands to nothing if foo " +
+        "is undefined.",
     );
     p.example("Macro-1",);
   },);
@@ -781,8 +783,8 @@ export function registerCommonRules(p: ProjectFileParser,): void {
     p.doc(
       "template",
       "Defines a template rendered by the Vento engine: template CARD " +
-        '[ task {{ id }} "{{ nome }}" ] (id, nome). Called with ${CARD ' +
-        'id="t1" nome="Design"}.',
+        '<nowiki>[ task {{ id }} "{{ nome }}" ]</nowiki> (id, nome). ' +
+        'Called with ${CARD id="t1" nome="Design"}.',
     );
     p.example("Template-1",);
   },);

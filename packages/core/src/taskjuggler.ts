@@ -4,7 +4,8 @@ import type { Resource, } from "./model/resource.ts";
 import { ProjectFileParser, } from "./parser/project-file-parser.ts";
 import { Query, } from "./query/query.ts";
 import type { FileStore, } from "./interfaces/file-store.ts";
-import { normalizeInputPath, } from "./execution/paths.ts";
+import { normalizeInputPath, stripExtension, } from "./execution/paths.ts";
+import { FileList, } from "./utils/file-list.ts";
 import type { FileTextLoader, } from "./lexer/stream-handle.ts";
 import type { TimeSheet, } from "./timesheet/time-sheet.ts";
 import {
@@ -13,9 +14,17 @@ import {
   type ReportsJson,
 } from "./reports/reports-json.ts";
 import { execute as executeRequest, } from "./execution/execute.ts";
-import type { ExecutionRequest, ExecutionResult, } from "./execution/types.ts";
+import type {
+  ExecutionRequest,
+  ExecutionResult,
+  FreezeSection,
+} from "./execution/types.ts";
+import { Report, } from "./model/report.ts";
+import { ReportType, } from "./model/report-type.ts";
+import { ReportContext, } from "./reports/report-context.ts";
+import { LogicalExpression, } from "./logic/logical-expression.ts";
+import { LogicalOperation, } from "./logic/logical-operation.ts";
 import { TjTime, } from "./time/tj-time.ts";
-import { NotYetImplementedError, } from "./model/errors.ts";
 import { MessageHandlerInstance, } from "./message-handler.ts";
 
 // Efeito colateral: registra as fábricas de conteúdo dos relatórios
@@ -323,12 +332,157 @@ export class TaskJuggler {
     return executeRequest(request,);
   }
 
-  freeze(freezeDate: unknown, taskBookings: boolean,): boolean {
-    // Sem sentido no pipeline browser (ADR 027). A CLI monta o texto via
-    // `results.freeze` e grava pelo `io.ts` (24.9); reancorado em 2026-11-03
-    // (antes apontava Fase 19; xray §4).
-    // Ancorado: Fase 24 — freeze reescreve o master file .tjp (`io.writeText`).
-    throw new NotYetImplementedError("24", "freeze",);
+  /**
+   * Gera os artefatos do `--freeze` (Ruby `TaskJuggler#freeze`, l.220-290).
+   *
+   * Devolve **dados**: o include de header (com o novo `now`) e o export dos
+   * bookings até a data de corte. Nada é gravado — a escrita é do consumidor
+   * (`io.writeText` na CLI, 24.9.5).
+   *
+   * Desvios conscientes do Ruby, todos por falta de filesystem no core:
+   *  - o Ruby checa a existência dos dois includes e só emite `info`; aqui a
+   *    checagem não existe (o consumidor sabe se os arquivos estão lá);
+   *  - o Ruby deixa o relatório `_bookings_` no projeto e o pipeline normal de
+   *    `generateReports` escreve o `.tji`; aqui o export é gerado no próprio
+   *    freeze e o relatório sai da lista depois, para não duplicar a entrada em
+   *    `results.reports`;
+   *  - os nomes derivam do **master do request** (não de `Dir.pwd`), o que é
+   *    determinístico e testável.
+   *
+   * @returns artefatos na ordem de escrita, ou `null` em erro (já reportado).
+   */
+  freeze(
+    freezeDate: string | null = null,
+    taskBookings = false,
+  ): FreezeSection | null {
+    const project = this.requireProject("freeze",);
+    const handler = MessageHandlerInstance.instance;
+
+    const master = this.masterFile(project,);
+    if (master === null) {
+      handler.error(
+        "cannot_freeze_stdin",
+        "The project freeze feature can only be used when the master file " +
+          "is a real file, not standard input.",
+      );
+      return null;
+    }
+
+    let cutOff: TjTime;
+    try {
+      cutOff = freezeDate === null
+        ? TjTime.now().align(3600,)
+        // Ruby: `TjTime.new(arg)` (parse de string). No port o construtor é
+        // privado e `fromString` é a porta de parse ("YYYY-MM-DD[-HH:MM[:SS]]").
+        : TjTime.fromString(freezeDate,).align(3600,);
+    } catch (error) {
+      const text = error instanceof Error ? error.message : String(error,);
+      handler.error("tj3_ivld_freeze_date", `Invalid freeze date: ${text}`,);
+      return null;
+    }
+
+    const scenarioIdx = this.trackingScenarioIdx(project, "no_tracking_scen",);
+    if (scenarioIdx === null) return null;
+
+    const base = stripExtension(master,);
+    const headerFile = `${base}-header.tji`;
+    const bookingsFile = `${base}-bookings.tji`;
+
+    const report = this.buildBookingReport(
+      project,
+      `${base}-bookings`,
+      scenarioIdx,
+      cutOff,
+      taskBookings,
+    );
+
+    let bookingsContents: string;
+    try {
+      project.reportContexts.push(new ReportContext(project, report,),);
+      try {
+        report.generate();
+      } finally {
+        project.reportContexts.pop();
+      }
+      bookingsContents = report.outputs.get("tjp",) ?? "";
+    } catch (error) {
+      const text = error instanceof Error ? error.message : String(error,);
+      handler.error(
+        "freeze_failed",
+        `Cannot generate the booking file: ${text}`,
+      );
+      return null;
+    } finally {
+      // O relatório sintético não participa de `results.reports`.
+      project.reports.removeProperty(report,);
+    }
+
+    // Ruby: `now #{freezeDate}` — o `TjTime#to_s` sem formato usa
+    // `%Y-%m-%d-%H:%M[-%S]-%z`. O corte é alinhado à hora, então os segundos
+    // nunca aparecem; o offset fica explícito para o `.tji` recarregar igual.
+    const now = cutOff.to_s("%Y-%m-%d-%H:%M-%z",);
+    return {
+      files: [
+        { fileName: headerFile, contents: `now ${now}\n`, },
+        { fileName: bookingsFile, contents: bookingsContents, },
+      ],
+    };
+  }
+
+  /**
+   * Relatório sintético `_bookings_` do freeze (Ruby l.255-285).
+   *
+   * `inheritAttributes` vem **antes** dos `set` porque o Ruby herda os
+   * defaults de relatório do projeto e só depois sobrescreve (a ordem importa
+   * para `formats`/`scenarios`).
+   */
+  private buildBookingReport(
+    project: Project,
+    name: string,
+    scenarioIdx: number,
+    cutOff: TjTime,
+    taskBookings: boolean,
+  ): Report {
+    const report = new Report(project, "_bookings_", name, null,);
+    report.typeSpec = ReportType.Export;
+    report.set("formats", ["tjp",],);
+    report.inheritAttributes();
+
+    // Só o cenário de tracking entra no export.
+    report.set("scenarios", [scenarioIdx,],);
+    // Bookings só até a data de corte.
+    report.set("end", cutOff,);
+    // Todas as tarefas/recursos, por `seqno` decrescente (como o Ruby).
+    const showAll = new LogicalExpression(new LogicalOperation(0,),);
+    report.set("hideTask", showAll,);
+    report.set("sortTasks", [["seqno", true, -1,],],);
+    report.set("hideResource", showAll,);
+    report.set("sortResources", [["seqno", true, -1,],],);
+    // Só bookings: nenhuma definição nem outro atributo.
+    report.set("definitions", [],);
+    if (taskBookings) {
+      report.set("taskAttributes", ["booking",],);
+      report.set("resourceAttributes", [],);
+    } else {
+      report.set("taskAttributes", [],);
+      report.set("resourceAttributes", ["booking",],);
+    }
+    return report;
+  }
+
+  /**
+   * Master file do projeto (Ruby `FileList#masterFile`).
+   *
+   * O registro dos arquivos lidos é o `FileList` (16.7) — a mesma varredura do
+   * Ruby, com `.smx` somado a `.tjp` (extensão nativa, 24.2.36). Sem nenhum,
+   * cai no primeiro arquivo aberto: um projeto parseado a partir de conteúdo
+   * sem nome não tem master.
+   */
+  private masterFile(project: Project,): string | null {
+    const files = new FileList();
+    for (const file of project.inputFiles) files.add(file,);
+    return files.masterFileWith([".tjp", ".smx",],) ??
+      project.inputFiles[0] ?? null;
   }
 
   /**

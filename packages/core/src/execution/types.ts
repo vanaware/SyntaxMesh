@@ -36,13 +36,27 @@ export interface ExecutionFreezeRequest {
   byTask?: boolean;
 }
 
-/** `wz man` — documentação de sintaxe (doc-core da Fase 22). */
+/** `syntaxmesh man` — documentação de sintaxe (doc-core da Fase 22). */
 export interface ExecutionManRequest {
-  format: "html" | "text" | "tjp";
-  /** Keyword específica; ausente = documento completo. */
-  keyword?: string;
-  /** Diretório de saída desejado (o consumidor é quem grava). */
-  outputDir?: string;
+  /**
+   * Formato de saída.
+   *
+   * - `text` — documentação de terminal (default);
+   * - `html` — manual completo (ou página de uma keyword) em `files`;
+   * - `smx` — recorte de fonte `.smx` colável (exemplo anotado).
+   */
+  format: "html" | "text" | "smx";
+  /** Keywords pedidas; vazio/ausente = documento completo. */
+  keywords?: string[];
+  /**
+   * Colore a saída textual com ANSI.
+   *
+   * Vem do renderer (a CLI decide por `--no-color`/TTY), nunca do disco: é
+   * dado booleano como qualquer outro do request.
+   */
+  color?: boolean;
+  /** Omite keywords `deprecated`/`removed` do apêndice. */
+  ignoreOld?: boolean;
 }
 
 /** Apps de sheet empacotados pela CLI (Fase 18 + Fase 24). */
@@ -61,6 +75,9 @@ export type SheetAppName =
  * `now` (relógio injetável) fica de fora por contrato: função não atravessa a
  * fronteira do envelope (adendo §3.6). Quem precisa de data determinística
  * chama o app diretamente, in-process.
+ *
+ * As flags de cada app (`resources`, `force`, `recipients`, …) entram aqui na
+ * forma da 18.18; quais delas a CLI expõe é decisão de 24.10.
  */
 export interface ExecutionSheetAppOptions {
   workingDir?: string | null;
@@ -80,6 +97,38 @@ export interface ExecutionSheetAppOptions {
   sheetContent?: string | null;
   /** Nome usado nas mensagens e em `inputFiles` da checagem de folha. */
   sheetFile?: string | null;
+  /**
+   * Fechamento de leitura do app (24.10): o que o app abriria do disco
+   * (templates, `resources.json`, assinaturas, folhas) vem pronto aqui.
+   *
+   * O consumidor (CLI) lê a árvore do diretório de trabalho e entrega como
+   * dado; o core nunca abre arquivo.
+   */
+  files?: ExecutionInputFile[];
+  /** Diretórios que precisam existir antes do app rodar (pastas do período). */
+  dirs?: string[];
+  /** `-r/--resource <ID>` (repetível) — senders/summary. */
+  resources?: string[];
+  /** `-f/--force` — reenvia template já existente. */
+  force?: boolean;
+  /** `-i/--interval <DURATION>` — `ss send`. */
+  intervalDuration?: string | null;
+  /** `--hideresource <EXPR>` — `ss send`. */
+  hideResource?: string | null;
+  /** `--sheet <EMAIL>` — destinatários das folhas individuais (`ts summary`). */
+  sheetRecipients?: string[];
+  /** `--digest <EMAIL>` — destinatários do resumo (`ts summary`). */
+  digestRecipients?: string[];
+}
+
+/**
+ * Eco de `appOptions` (adendo §3.4): o fechamento de leitura sai como
+ * **caminhos**, nunca como conteúdo — o envelope não devolve arquivo.
+ */
+export interface ExecutionSheetAppOptionsEcho
+  extends Omit<ExecutionSheetAppOptions, "files"> {
+  /** Caminhos semeados no app (sem os conteúdos). */
+  files?: string[];
 }
 
 /** Pedido de execução — espelha o mapa de flags v1 (plano §5.2). */
@@ -185,7 +234,7 @@ export interface ExecutionOptionsEcho {
   version: boolean;
   man: ExecutionManRequest | null;
   app: SheetAppName | null;
-  appOptions: ExecutionSheetAppOptions | null;
+  appOptions: ExecutionSheetAppOptionsEcho | null;
 }
 
 /** `results.listReports[]`. */
@@ -196,31 +245,77 @@ export interface ListReportsEntry {
   type: string;
 }
 
-/** `results.freeze` — conteúdo do master reescrito; gravar é do consumidor. */
-export interface FreezeSection {
-  /** Arquivo lógico a sobrescrever. */
+/**
+ * Um arquivo produzido pelo freeze (24.9.4).
+ *
+ * O `tj3 --freeze` gera **dois** artefatos: o include de header com o novo
+ * `now` e o export dos bookings. Ambos saem como dado; gravar é do consumidor.
+ */
+export interface FreezeFile {
+  /** Nome lógico do arquivo (derivado do master, como no Ruby). */
   fileName: string;
-  /** Novo conteúdo completo. */
+  /** Conteúdo integral a gravar. */
   contents: string;
+}
+
+/**
+ * `results.freeze` — artefatos do freeze; a escrita é do consumidor.
+ *
+ * O Ruby reescreve dois arquivos ao lado do master (`-header.tji` e
+ * `-bookings.tji`); o envelope devolve os dois para que a CLI os grave sem
+ * reabrir o pipeline.
+ */
+export interface FreezeSection {
+  /** Artefatos na ordem de escrita (header primeiro). */
+  files: FreezeFile[];
+}
+
+/**
+ * Uma mensagem produzida por um app de sheet (24.10).
+ *
+ * `text` é o RFC 822 completo (mesma forma que o receiver consome): o
+ * consumidor imprime, grava `outbox/*.eml` ou entrega ao cliente de email.
+ * Nunca há transporte SMTP (ADR 036).
+ */
+export interface SheetEmail {
+  to: string;
+  subject: string;
+  text: string;
 }
 
 /** `results.sheet` — apps de sheet como **dados** (sem SMTP, sem FS). */
 export interface SheetSection {
   app: SheetAppName;
   exitCode?: number;
+  /** Primeira mensagem (`emails[0].text`) — atalho para app de 1 email. */
   emailText?: string;
+  /** Todas as mensagens geradas, na ordem de emissão. */
+  emails?: SheetEmail[];
   attachments?: Array<{ name: string; contents: string }>;
   summaryText?: string;
   reportText?: string;
+  /**
+   * Arquivos que o app **criou ou alterou** no store efêmero (24.10).
+   *
+   * É o delta contra a semente (`appOptions.files`): o consumidor grava só o
+   * que nasceu de fato, sem reescrever as entradas que só foram lidas.
+   */
+  files?: Array<{ name: string; contents: string }>;
 }
 
 /** `results.man` — documentação de sintaxe no formato pedido. */
 export interface ManSection {
-  format: "html" | "text" | "tjp";
-  /** Keyword documentada (`null` = documento completo). */
-  keyword: string | null;
-  /** Conteúdo renderizado (texto). */
+  format: "html" | "text" | "smx";
+  /** Keywords resolvidas (vazio = documento completo). */
+  keywords: string[];
+  /** Conteúdo renderizado (`text`/`smx`); vazio no formato `html`. */
   content: string;
+  /**
+   * Arquivos do manual, relativos ao `--output-dir` (só no formato `html`).
+   *
+   * O core devolve `Record<nome, conteúdo>` (22.1b.5); gravar é da CLI.
+   */
+  files: Array<{ name: string; contents: string }>;
 }
 
 /** Seções de resultado: **só** as pedidas aparecem (adendo §3.4). */

@@ -16,6 +16,8 @@ import type {
   ExecutionRequest,
   ExecutionResult,
   ExecutionResults,
+  ExecutionSheetAppOptions,
+  ExecutionSheetAppOptionsEcho,
 } from "./types.ts";
 
 /** Exit code de sucesso. */
@@ -34,6 +36,23 @@ export function snapshotMessages(
     file: message.sourceFileInfo?.fileName ?? null,
     line: message.sourceFileInfo?.lineNo ?? null,
   }));
+}
+
+/**
+ * `appOptions` do eco: o fechamento de leitura vira lista de caminhos.
+ *
+ * O contrato ecoa **só caminhos** (adendo §3.4); os conteúdos dos arquivos
+ * semeados ficam no request, de onde o `execute` os consome — o envelope nunca
+ * os devolve.
+ */
+function echoAppOptions(
+  options: ExecutionSheetAppOptions | undefined,
+): ExecutionSheetAppOptionsEcho | null {
+  if (options === undefined) return null;
+  const { files, ...rest } = options;
+  return files === undefined
+    ? { ...rest, }
+    : { ...rest, files: files.map((file,) => file.path), };
 }
 
 /**
@@ -68,7 +87,7 @@ export function echoOptions(request: ExecutionRequest,): ExecutionOptionsEcho {
     version: request.version === true,
     man: request.man ?? null,
     app: request.app ?? null,
-    appOptions: request.appOptions ?? null,
+    appOptions: echoAppOptions(request.appOptions,),
   };
 }
 

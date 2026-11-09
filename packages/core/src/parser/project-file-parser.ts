@@ -919,7 +919,7 @@ export class ProjectFileParser extends TextParser {
 
   /** Anexo de exemplo TJP à documentação do padrão. */
   example(file: string, tag: string | null = null,): void {
-    this.cr?.setExample(file, tag ?? "",);
+    this.cr?.setExample(file, tag,);
   }
 
   /** Título da coluna _colId_ em tabelas de relatório. */
