@@ -1,8 +1,9 @@
 /**
- * Barrel do pacote i18n (extensão SyntaxMesh — ADR 023).
+ * Barrel of the i18n package (SyntaxMesh extension — ADR 023).
  *
- * Expõe `globalRegistry` já populado com en, pt-BR e es. Scanner e parser
- * usam este registro por padrão; testes podem criar instâncias isoladas.
+ * Exposes `globalRegistry` already populated with en, pt-BR and es. The
+ * scanner and the parser use this registry by default; tests may create
+ * isolated instances.
  */
 import { LanguageRegistry, } from "./registry.ts";
 import { en, } from "./en.ts";
@@ -17,7 +18,7 @@ export { en, } from "./en.ts";
 export { ptBR, } from "./pt-BR.ts";
 export { es, } from "./es.ts";
 
-/** Registro padrão com os três idiomas suportados. */
+/** Default registry with the three supported languages. */
 export const globalRegistry: LanguageRegistry = new LanguageRegistry();
 globalRegistry.register(en,);
 globalRegistry.register(ptBR,);

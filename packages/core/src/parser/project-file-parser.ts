@@ -1,15 +1,14 @@
 /**
- * ProjectFileParser — especialização do TextParser para arquivos TJP.
+ * ProjectFileParser — specialisation of the `TextParser` for TJP files.
  *
- * Port de `ProjectFileParser.rb` (arquivo inteiro). Fornece os campos de
- * estado, `open`/`close`, delegação de tokens, macros globais e as funções
- * de convenção usadas pelas regras de sintaxe (`TjpSyntaxRules`, subfases
- * 10.11–10.14).
+ * Port of `ProjectFileParser.rb` (whole file). Provides the state fields,
+ * `open`/`close`, token delegation, the global macros and the convention
+ * helpers used by the syntax rules (`TjpSyntaxRules`, sub-phases 10.11–10.14).
  *
- * Extensão SyntaxMesh (ADR 023, subfase 10.17): `open` detecta a diretiva
- * `language "xx"` no arquivo mestre e cria o ProjectFileScanner no idioma
- * correspondente; o parser em si permanece agnóstico de idioma (keywords
- * canônicas).
+ * SyntaxMesh extension (ADR 023, sub-phase 10.17): `open` detects the
+ * `language "xx"` directive in the master file and creates the
+ * `ProjectFileScanner` in the matching language; the parser itself stays
+ * language-agnostic (canonical keywords).
  *
  * @see docs/taskjuggler/lib/taskjuggler/ProjectFileParser.rb
  */
@@ -56,7 +55,7 @@ import {
   PROJECT_FILE_EXTENSIONS,
 } from "./file-extensions.ts";
 
-/** LogLike no-op — o core não depende do Log concreto do app. */
+/** No-op LogLike — the core does not depend on the concrete Log of the app. */
 const NULL_LOG: LogLike = {
   msg: () => {},
   activity: () => {},
@@ -65,8 +64,11 @@ const NULL_LOG: LogLike = {
 };
 
 /**
- * Diretiva `language "pt-BR"` (subfase 10.17). Retorna o código do idioma
- * ou null quando ausente.
+ * `language "pt-BR"` directive (sub-phase 10.17). Returns the language code,
+ * or null when the directive is absent.
+ *
+ * @param content Text of the project file.
+ * @returns The declared language code, or `null`.
  */
 export function detectLanguage(content: string,): string | null {
   const m = content.match(/^\s*language\s+"([^"]+)"/m,);
@@ -74,10 +76,10 @@ export function detectLanguage(content: string,): string | null {
 }
 
 /**
- * Extensões aceitas para o arquivo **mestre** de um projeto.
+ * Extensions accepted for the **master** file of a project.
  *
- * Reexportadas de `file-extensions.ts` (fonte única compartilhada com as
- * regras de gramática) — ver 24.2.36.
+ * Re-exported from `file-extensions.ts` (single source shared with the grammar
+ * rules) — see 24.2.36.
  */
 export {
   formatExtensionList,
@@ -85,115 +87,150 @@ export {
   PROJECT_FILE_EXTENSIONS,
 } from "./file-extensions.ts";
 
+/**
+ * Parser of TJP project files: owns the grammar state while the FSM reduces the
+ * syntax rules, and creates the entities of the project being read.
+ */
 export class ProjectFileParser extends TextParser {
-  /** Projeto em processamento (Ruby @project). */
+  /** Project being processed (Ruby @project). */
   project: Project | null = null;
   /**
-   * Fábrica de RichText injetada (Fase 12.18). Quando ausente, `newRichText`
-   * cria uma {@link RichTextFactoryImpl} sob demanda com o projeto corrente.
+   * Injected RichText factory (phase 12.18). When absent, `newRichText` creates
+   * a {@link RichTextFactoryImpl} on demand with the current project.
    */
   richTextFactory: RichTextFactory | null = null;
   /**
-   * Fábrica de Markdown injetada (14C.5.1). Quando ausente, `newRichText` cria
-   * uma {@link MarkdownFactory} sob demanda para escopos com `format markdown`.
+   * Injected Markdown factory (14C.5.1). When absent, `newRichText` creates a
+   * {@link MarkdownFactory} on demand for scopes with `format markdown`.
    */
   markdownFactory: RichTextFactory | null = null;
-  /** Propriedade-alvo dos atributos em processamento (Ruby @property). */
+  /** Target property of the attributes being processed (Ruby @property). */
   property: PropertyTreeNode | null = null;
-  /** Índice do cenário corrente (Ruby @scenarioIdx). */
+  /** Index of the current scenario (Ruby @scenarioIdx). */
   scenarioIdx = 0;
-  /** Pilha de propriedades p/ 'supplement' aninhado (Ruby @idStack). */
+  /** Property stack for nested 'supplement' (Ruby @idStack). */
   idStack: Array<PropertyTreeNode | null> = [];
 
-  /** Variáveis com escopo de arquivo (Ruby @fileStackVariables). */
+  /** Variables with file scope (Ruby @fileStackVariables). */
   fileStackVariables: string[] = [];
-  /** Pilha de escopo de arquivo (Ruby @fileStack). */
+  /** File-scope stack (Ruby @fileStack). */
   fileStack: Array<Record<string, string>> = [];
 
-  // Prefixos herdados dos arquivos incluídos (Ruby @taskprefix etc.).
+  /** ID prefix inherited from the included files (Ruby @taskprefix etc.). */
   taskprefix = "";
+  /** ID prefix of the reports. */
   reportprefix = "";
+  /** ID prefix of the resources. */
   resourceprefix = "";
+  /** ID prefix of the accounts. */
   accountprefix = "";
 
-  // Estado de atributos em processamento (usado pelas regras 10.11+).
+  /** Allocation being processed (used by rules 10.11+). */
   allocate: unknown = null;
+  /** Booking being processed. */
   booking: unknown = null;
+  /** Journal entry being processed. */
   journalEntry: unknown = null;
-  /** Picture em processamento (Fase 10 Complemento C3.3). */
+  /** Picture being processed (phase 10 completion C3.3). */
   picture: unknown = null;
+  /** Task dependency being processed. */
   taskDependency: unknown = null;
+  /** Navigator being processed. */
   navigator: unknown = null;
   /**
-   * Identificador (`<id>` ou `"<nome>"`) lido logo após a keyword `material`,
-   * na regra funil `material` (Adendo Extra §12.2, 14C.14.3). Serve tanto para
-   * o ID do material em declaração quanto para a referência do componente em
-   * composição — a FSM consome o token único e só ramifica no seguinte.
+   * Identifier (`<id>` or `"<name>"`) read right after the `material` keyword,
+   * in the funnel rule `material` (Extra Addendum §12.2, 14C.14.3). It serves
+   * both as the material ID in a declaration and as the component reference in a
+   * composition — the FSM consumes the single token and only branches on the
+   * next one.
    */
   pendingMaterialRef: string | null = null;
-  /** Navigators definidos (Ruby `@project['navigators']`). */
+  /** Defined navigators (Ruby `@project['navigators']`). */
   readonly navigators = new Map<string, unknown>();
+  /** Limits block being processed. */
   limits: Limits | null = null;
+  /** Interval of the limits block being processed. */
   limitInterval: ScoreboardInterval | null = null;
+  /** Resources listed by the limits block being processed. */
   limitResources: Resource[] = [];
+  /** Shift assignments being processed. */
   shiftAssignments: unknown = null;
 
+  /** Column of a report being processed. */
   column: unknown = null;
+  /** Time sheet being processed. */
   timeSheet: unknown = null;
+  /** Time sheet record being processed. */
   timeSheetRecord: unknown = null;
+  /** Author of the time sheet being processed. */
   sheetAuthor: unknown = null;
+  /** Start of the time sheet being processed. */
   sheetStart: unknown = null;
+  /** End of the time sheet being processed. */
   sheetEnd: unknown = null;
+  /** Moderator of the time sheet being processed. */
   sheetModerator: unknown = null;
-  /** Pilha de propriedades p/ statusSheetTask aninhado (Ruby @propertyStack). */
+  /** Property stack for nested statusSheetTask (Ruby @propertyStack). */
   propertyStack: unknown[] = [];
   /**
-   * Pilha de `timeSheetRecord` para blocos `material` dentro de um `task` num
-   * sheet (extensão 18.17.10): ao fechar o material, o registro da tarefa
-   * dona volta a ser o corrente.
+   * Stack of `timeSheetRecord` for `material` blocks inside a `task` of a sheet
+   * (extension 18.17.10): when the material closes, the record of the owning
+   * task becomes current again.
    */
   sheetRecordStack: unknown[] = [];
+  /** Counter of the reports already created. */
   reportCounter = 0;
   /**
-   * `true` quando o modificador `stdout` (Fase 24 — extensão SyntaxMesh) foi
-   * lido no cabeçalho do relatório corrente. Consumido e zerado por
-   * `newReport`, que grava a property no relatório recém-criado (adendo §2.2).
+   * `true` when the `stdout` modifier (phase 24 — SyntaxMesh extension) was read
+   * in the header of the current report. Consumed and cleared by `newReport`,
+   * which writes the property into the freshly created report (addendum §2.2).
    */
   stdoutRequested = false;
+  /** ID of the project being read. */
   projectId = "";
 
+  /** Sort criteria of the report being processed. */
   sortProperty: string[] | null = null;
+  /** Rule to extend without a scenario. */
   ruleToExtend: Rule | null = null;
+  /** Rule to extend with a scenario. */
   ruleToExtendWithScenario: Rule | null = null;
+  /** Property set that receives the attributes being processed. */
   propertySet: PropertySet | null = null;
 
-  /** Idioma do arquivo (extensão SyntaxMesh — ADR 023). */
+  /** Language of the file (SyntaxMesh extension — ADR 023). */
   language: string;
-  /** Registro de idiomas usado pelo scanner. */
+  /** Language registry used by the scanner. */
   registry: LanguageRegistry;
   /**
-   * Leitor de conteúdo injetado (Fase 24 — ADR 034).
+   * Injected content reader (phase 24 — ADR 034).
    *
-   * `null` = comportamento legado (hook estático/`Deno`). Definido, todo
-   * arquivo aberto - mestre e `include`s - e a detecção de idioma leem por
-   * aqui, sem filesystem.
+   * `null` = legacy behaviour (static hook/`Deno`). When set, every file opened
+   * — master and `include`s — and the language detection read through it, with
+   * no filesystem access.
    */
   fileLoader: FileTextLoader | null = null;
 
-  /** Scanner TJP corrente (estreitamento do `scanner` da base). */
+  /** Current TJP scanner (narrowing of the `scanner` of the base class). */
   protected tjpScanner: ProjectFileScanner | null = null;
 
-  /** Acesso ao scanner para testes/macro inspeção. */
+  /** Access to the scanner for tests and macro inspection. */
   get scannerRef(): ProjectFileScanner | null {
     return this.tjpScanner;
   }
 
+  /**
+   * Creates the parser and compiles the TJP grammar.
+   *
+   * @param language Default language of the project files.
+   * @param registry Registry used to canonicalize keywords and units.
+   */
   constructor(
     language = "en",
     registry: LanguageRegistry = globalRegistry,
   ) {
     super();
-    // Tipos de token que o ProjectFileScanner pode devolver p/ variáveis.
+    // Token types the ProjectFileScanner may return for variables.
     this.variables = [
       "INTEGER",
       "FLOAT",
@@ -211,25 +248,30 @@ export class ProjectFileParser extends TextParser {
     this.language = language;
     this.registry = registry;
     this.project = null;
-    // Nada do parser deve ser marcado como 'herdado' durante o parse.
+    // Nothing of the parser must be flagged as 'inherited' during the parse.
     AttributeBase.setMode(0,);
     this.initRules();
     this.updateParserTables();
   }
 
   /**
-   * Registro das regras TJP. Substitui a reflection `rule_*` do Ruby:
-   * `TjpSyntaxRules` é portado como módulos de funções (10.11–10.14).
+   * Registration of the TJP rules. Replaces the Ruby `rule_*` reflection:
+   * `TjpSyntaxRules` is ported as function modules (10.11–10.14).
    */
   override initRules(): void {
     registerTjpRules(this,);
   }
 
   /**
-   * Abre um arquivo (ou buffer) para processamento. `master` marca o
-   * arquivo-raiz da hierarquia de includes. Em modo buffer, `bufferName` dá
-   * nome ao texto (entra em `inputFiles`/mensagens); sem ele o próprio texto
-   * faz o papel de nome (comportamento legado).
+   * Opens a file (or buffer) for processing. `master` marks the root file of the
+   * include hierarchy. In buffer mode, `bufferName` names the text (it enters
+   * `inputFiles`/messages); without it the text itself plays the role of name
+   * (legacy behaviour).
+   *
+   * @param file Path of the file, or the text itself in buffer mode.
+   * @param master Whether this is the root file of the include hierarchy.
+   * @param fileNameIsBuffer Whether `file` holds the text instead of a path.
+   * @param bufferName Optional buffer name used in messages.
    */
   open(
     file: string,
@@ -239,7 +281,7 @@ export class ProjectFileParser extends TextParser {
   ): void {
     let language = this.language;
     if (master) {
-      // 10.17: pré-scan da diretiva `language "..."` (somente no mestre).
+      // 10.17: pre-scan of the `language "..."` directive (master only).
       const detected = this.detectLanguageOfFile(file, fileNameIsBuffer,);
       if (detected !== null) {
         language = detected;
@@ -253,12 +295,12 @@ export class ProjectFileParser extends TextParser {
     );
     scanner.setFileLoader(this.fileLoader,);
     this.tjpScanner = scanner;
-    // A base usa `this.scanner` para delegar error/warning/sourceFileInfo.
+    // The base uses `this.scanner` to delegate error/warning/sourceFileInfo.
     this.scanner = scanner;
     this.language = language;
 
-    // Contexto de template (Fase 23, 23.6): `project` e `ids()` são lidos de
-    // forma **lazy** — as chamadas `${NOME …}` acontecem depois do cabeçalho.
+    // Template context (phase 23, 23.6): `project` and `ids()` are read
+    // **lazily** — the `${NAME …}` calls happen after the header.
     scanner.setProjectContextProvider(() => this.templateProjectContext());
     scanner.setTemplateIdResolver((id: string,) => this.templateResolveId(id,));
 
@@ -285,19 +327,19 @@ export class ProjectFileParser extends TextParser {
     // statements.
     this.idStack = [];
 
-    // Macros globais só fazem sentido quando já há um projeto (reabertura
-    // do mestre após 'project'); nas primeiras chamadas @project é null.
+    // Global macros only make sense when a project already exists (reopening
+    // the master after 'project'); on the first calls @project is null.
     if (master && this.project) {
       this.setGlobalMacros();
     }
   }
 
   /**
-   * View **somente leitura** de `project` para o contexto de template (§4.7).
+   * **Read-only** view of `project` for the template context (§4.7).
    *
-   * Congelada em runtime (`Object.freeze`) e sem setters: um corpo de template
-   * pode ler `project.name`, `project.start` etc., mas não pode alterar o
-   * projeto. Devolve `null` antes do cabeçalho — o scanner usa uma view vazia.
+   * Frozen at runtime (`Object.freeze`) and without setters: a template body may
+   * read `project.name`, `project.start` etc., but cannot change the project.
+   * Returns `null` before the header — the scanner then uses an empty view.
    */
   private templateProjectContext(): Readonly<Record<string, unknown>> | null {
     const project = this.project;
@@ -314,9 +356,9 @@ export class ProjectFileParser extends TextParser {
   }
 
   /**
-   * Resolve um ID de propriedade para o seu `fullId` (`ids()` do §4.7).
-   * ID desconhecido volta como veio: o template decide o que fazer, e o erro
-   * de referência em si é responsabilidade do interpretador TJP.
+   * Resolves a property ID to its `fullId` (`ids()` of §4.7).
+   * An unknown ID comes back unchanged: the template decides what to do, and the
+   * reference error itself is the responsibility of the TJP interpreter.
    */
   private templateResolveId(id: string,): string {
     const project = this.project;
@@ -336,12 +378,12 @@ export class ProjectFileParser extends TextParser {
     return id;
   }
 
-  /** Define (ou limpa) o leitor de conteúdo injetado deste parser. */
+  /** Sets (or clears) the injected content reader of this parser. */
   setFileLoader(loader: FileTextLoader | null,): void {
     this.fileLoader = loader;
   }
 
-  /** Fecha o scanner e limpa estruturas. */
+  /** Closes the scanner and clears the structures. */
   close(): void {
     if (this.tjpScanner) {
       this.tjpScanner.close();
@@ -350,7 +392,7 @@ export class ProjectFileParser extends TextParser {
     this.tjpScanner = null;
   }
 
-  /** Entrega o próximo token do scanner ao FSM. */
+  /** Hands the next token of the scanner to the FSM. */
   protected override nextToken(): ParserToken {
     if (!this.tjpScanner) {
       return ["endOfText", "", null,];
@@ -358,7 +400,7 @@ export class ProjectFileParser extends TextParser {
     return this.tjpScanner.nextToken() as ParserToken;
   }
 
-  /** Devolve o token ao scanner (push-back LIFO). */
+  /** Hands the token back to the scanner (LIFO push-back). */
   protected override returnToken(token: ParserToken | null,): void {
     if (this.tjpScanner && token) {
       this.tjpScanner.returnToken(token,);
@@ -366,8 +408,8 @@ export class ProjectFileParser extends TextParser {
   }
 
   /**
-   * Lê o texto do arquivo apenas para detectar o idioma (10.17).
-   * Silencioso em erro — a abertura posterior reportará o problema real.
+   * Reads the text of the file only to detect the language (10.17).
+   * Silent on error — the later open will report the real problem.
    */
   private detectLanguageOfFile(
     file: string,
@@ -393,8 +435,8 @@ export class ProjectFileParser extends TextParser {
   }
 
   /**
-   * Macros padrão presentes em todo arquivo após a leitura do cabeçalho
-   * do projeto (Ruby setGlobalMacros).
+   * Default macros present in every file after the project header has been read
+   * (Ruby setGlobalMacros).
    */
   setGlobalMacros(): void {
     if (!this.project || !this.tjpScanner) return;
@@ -422,7 +464,7 @@ export class ProjectFileParser extends TextParser {
     );
   }
 
-  /** Parse de atributos dinâmicos de um relatório (Ruby l.105-110). */
+  /** Parses the dynamic attributes of a report (Ruby l.105-110). */
   parseReportAttributes(report: Report, attributes: string,): void {
     this.open(attributes, false, true,);
     this.property = report;
@@ -431,20 +473,20 @@ export class ProjectFileParser extends TextParser {
   }
 
   /**
-   * Aplica a um projeto **já parseado** um fragmento que contém apenas
-   * declarações de relatório (`resourcereport`, `timesheetreport`, …).
+   * Applies to an **already parsed** project a fragment that contains only
+   * report declarations (`resourcereport`, `timesheetreport`, …).
    *
-   * Equivale ao `addFile` do `ReportServer` do Ruby:
+   * Equivalent to the `addFile` of the Ruby `ReportServer`:
    * `@tj.parseFile(file, :reportPropertiesFile)`
-   * (docs/taskjuggler/lib/taskjuggler/daemon/ReportServer.rb l.109), chamado
-   * pelo `Tj3Client report prj <id> = <arquivo>`. O `SheetSender` (Fase 18)
-   * monta a definição em texto e precisa dela no projeto, in-process.
+   * (docs/taskjuggler/lib/taskjuggler/daemon/ReportServer.rb l.109), called by
+   * `Tj3Client report prj <id> = <file>`. The `SheetSender` (phase 18) assembles
+   * the definition as text and needs it inside the project, in-process.
    *
-   * Use `reportPropertiesFile` e não `reports`: a segunda é só a lista de
-   * relatórios de **tabela** (`resourcereport`, `taskreport`, …) e não aceita
-   * `timesheetreport`/`statussheetreport` — a primeira inclui
-   * `statusSheetReport`/`timeSheetReport` e termina com o token `.` (fim de
-   * arquivo), que encerra o fragmento limpo.
+   * Use `reportPropertiesFile` and not `reports`: the second one is only the
+   * list of **table** reports (`resourcereport`, `taskreport`, …) and does not
+   * accept `timesheetreport`/`statussheetreport` — the first one includes
+   * `statusSheetReport`/`timeSheetReport` and ends with the `.` token (end of
+   * file), which closes the fragment cleanly.
    */
   parseReportList(fragment: string,): void {
     if (!this.project) return;
@@ -453,13 +495,16 @@ export class ProjectFileParser extends TextParser {
   }
 
   // ---------------------------------------------------------------------
-  // Helpers usados pelas actions das regras (TjpSyntaxRules).
+  // Helpers used by the rule actions (`TjpSyntaxRules`).
   // ---------------------------------------------------------------------
 
   /**
-   * Converte o nome de um dia de semana (val[0]) no índice 0=dom, 1=seg...
-   * Port de weekDay. Dias em outros idiomas já foram normalizados pelo
-   * scanner para as formas canônicas en (ADR 023).
+   * Converts the name of a weekday (val[0]) into the index 0=Sun, 1=Mon...
+   * Port of weekDay. Days in other languages were already normalized by the
+   * scanner to the canonical English forms (ADR 023).
+   *
+   * @param name Weekday name; defaults to the first pattern value.
+   * @returns The weekday index, or -1 when the name is unknown.
    */
   weekDay(name?: unknown,): number {
     const names = ["sun", "mon", "tue", "wed", "thu", "fri", "sat",];
@@ -473,7 +518,7 @@ export class ProjectFileParser extends TextParser {
     return day;
   }
 
-  /** Impede atributos após sub-propriedades (Ruby checkContainer). */
+  /** Rejects attributes after sub-properties (Ruby checkContainer). */
   checkContainer(attribute: string,): void {
     if (this.property && this.property.container()) {
       this.error(
@@ -486,7 +531,7 @@ export class ProjectFileParser extends TextParser {
     }
   }
 
-  /** TimeInterval deve caber inteiramente no período do projeto. */
+  /** The TimeInterval must fit entirely inside the project time frame. */
   checkInterval(iv: TimeInterval,): void {
     const start = this.project?.get("start",) as TjTime | undefined;
     const end = this.project?.get("end",) as TjTime | undefined;
@@ -514,10 +559,10 @@ export class ProjectFileParser extends TextParser {
   }
 
   /**
-   * Valida integridade de um statement 'booking'. `sfi` é a origem da linha do
-   * erro — o token do id (tarefa/recurso). Com o `effort` opcional anteposto na
-   * gramática (14C.15.1-2), `sourceFileInfo[0]` não é mais o id, então o chamador
-   * passa o índice correto explicitamente.
+   * Validates the integrity of a 'booking' statement. `sfi` is the origin of the
+   * error line — the token of the id (task/resource). With the optional `effort`
+   * placed first in the grammar (14C.15.1-2), `sourceFileInfo[0]` is no longer
+   * the id, so the caller passes the right index explicitly.
    */
   checkBooking(
     task: Task,
@@ -551,8 +596,12 @@ export class ProjectFileParser extends TextParser {
   }
 
   /**
-   * Estende o PropertySet corrente com um atributo definido pelo usuário
-   * (diretiva 'extend'). Retorna se o atributo é scenario-specific.
+   * Extends the current PropertySet with a user-defined attribute (the
+   * 'extend' directive). Returns whether the attribute is scenario-specific.
+   *
+   * @param type Type of the new attribute.
+   * @param defaultValue Default value of the new attribute.
+   * @returns Whether the attribute is scenario-specific.
    */
   extendPropertySetDefinition(
     type: AttributeType,
@@ -613,30 +662,38 @@ export class ProjectFileParser extends TextParser {
   }
 
   /**
-   * Injeta a fábrica de RichText usada por {@link newRichText} (Fase 12.18.3).
-   * O parser da Fase 10 chamava um stub ancorado; com a fábrica real plugada,
-   * `note`/`details`/etc. passam a produzir `RichTextIntermediate` de verdade.
+   * Injects the RichText factory used by {@link newRichText} (phase 12.18.3).
+   * The phase 10 parser called an anchored stub; with the real factory plugged
+   * in, `note`/`details`/etc. really produce a `RichTextIntermediate`.
+   *
+   * @param factory Factory that creates the rich-text trees.
    */
   setRichTextFactory(factory: RichTextFactory,): void {
     this.richTextFactory = factory;
   }
 
-  /** Injeta a fábrica de Markdown usada por `newRichText(..., "markdown")`. */
+  /** Injects the Markdown factory used by `newRichText(..., "markdown")`. */
   setMarkdownFactory(factory: RichTextFactory,): void {
     this.markdownFactory = factory;
   }
 
   /**
-   * Wrapper de RichText (ProjectFileParser.rb:221-233). Cria o
-   * `RichTextIntermediate` via a fábrica do dialeto pedido, fazendo o baseline
-   * do SourceFileInfo para que mensagens do parser de RichText apontem para o
-   * arquivo de origem.
+   * RichText wrapper (ProjectFileParser.rb:221-233). Creates the
+   * `RichTextIntermediate` through the factory of the requested dialect, setting
+   * the SourceFileInfo baseline so that messages from the RichText parser point
+   * to the source file.
    *
-   * `format` (extensão 14C.5.1) escolhe o pipeline: `richtext` — default, o
-   * dialeto de `.tjp` — usa {@link RichTextFactoryImpl}; `markdown` usa
-   * {@link MarkdownFactory} (Fase 13). As duas produzem o mesmo
-   * `RichTextIntermediate`, então `to_s()`/`to_html()` dos relatórios não
-   * precisam saber qual foi usado.
+   * `format` (extension 14C.5.1) chooses the pipeline: `richtext` — the default,
+   * the dialect of `.tjp` — uses {@link RichTextFactoryImpl}; `markdown` uses
+   * {@link MarkdownFactory} (phase 13). Both produce the same
+   * `RichTextIntermediate`, so `to_s()`/`to_html()` of the reports do not need to
+   * know which one was used.
+   *
+   * @param text Markup source of the rich text.
+   * @param sfi Location of the markup, used as the message baseline.
+   * @param tokenSet Tokens allowed by the inner parser, or `null` for all.
+   * @param format Pipeline that parses the markup.
+   * @returns The parsed rich text.
    */
   newRichText(
     text: string,
@@ -659,8 +716,15 @@ export class ProjectFileParser extends TextParser {
   }
 
   /**
-   * Cria um Report único com id/verificação de duplicidade.
-   * Port de newReport (Ruby l.240-280).
+   * Creates a unique Report with id/duplicate checks.
+   * Port of newReport (Ruby l.240-280).
+   *
+   * @param id ID of the report, or `null` to generate one.
+   * @param name Name of the report.
+   * @param type Type spec of the report (`taskreport`, …).
+   * @param sourceFileInfo Location of the declaration.
+   * @param defaultAttrs Hook that sets the default attributes of the type.
+   * @returns The new report, or `null` when there is no project.
    */
   newReport(
     id: string | null,
@@ -670,7 +734,7 @@ export class ProjectFileParser extends TextParser {
     defaultAttrs?: (this: ProjectFileParser,) => void,
   ): Report | null {
     if (!this.project) return null;
-    // Intenção `stdout` lida pelo `reportStdoutFlag` do cabeçalho (Fase 24).
+    // `stdout` intent read by the header's `reportStdoutFlag` (phase 24).
     const stdoutRequested = this.stdoutRequested;
     this.stdoutRequested = false;
     // If there is no parent property and the report prefix is not empty,
@@ -714,8 +778,8 @@ export class ProjectFileParser extends TextParser {
     report.inheritAttributes();
     if (stdoutRequested) report.set("stdout", true,);
 
-    // Ruby define @property = report ANTES do bloco de defaults, de modo que
-    // defaultAttrs referencia o próprio relatório (columns/hideTask/...).
+    // Ruby sets @property = report BEFORE the defaults block, so that
+    // defaultAttrs references the report itself (columns/hideTask/...).
     this.property = report;
     if (defaultAttrs) {
       // The default attribute values for this report type have to be set in
@@ -727,7 +791,7 @@ export class ProjectFileParser extends TextParser {
     return report;
   }
 
-  /** Cria Limits por recurso quando há lista de recursos (Ruby l.284). */
+  /** Creates Limits per resource when there is a resource list (Ruby l.284). */
   setLimit(
     name: string,
     value: number,
@@ -744,8 +808,11 @@ export class ProjectFileParser extends TextParser {
   }
 
   /**
-   * Marca o critério de duração da tarefa, resetando os demais
-   * (duration/length/effort/milestone são mutuamente exclusivos).
+   * Marks the duration criterion of the task, resetting the others
+   * (duration/length/effort/milestone are mutually exclusive).
+   *
+   * @param attribute Name of the duration attribute being provided.
+   * @param value Value of the attribute (default `true` for milestones).
    */
   setDurationAttribute(
     attribute: string,
@@ -776,10 +843,16 @@ export class ProjectFileParser extends TextParser {
   }
 
   // ---------------------------------------------------------------------
-  // Conveniências para definição da árvore de sintaxe (Ruby l.312-440).
+  // Convenience helpers for defining the syntax tree (Ruby l.312-440).
   // ---------------------------------------------------------------------
 
-  /** Lista de keywords com atalhos '*' (tudo) e '-' (nada). */
+  /**
+   * Rule for a keyword list that also accepts the shortcuts `*` (every item)
+   * and `-` (no item).
+   *
+   * @param name Name of the rule to create.
+   * @param items Accepted keywords, or a map of keyword to its description.
+   */
   allOrNothingListRule(
     name: string,
     items: string[] | Record<string, string | null>,
@@ -824,7 +897,12 @@ export class ProjectFileParser extends TextParser {
     },);
   }
 
-  /** Lista separada por vírgulas com detecção de duplicatas. */
+  /**
+   * Rule for a comma-separated list of _listItem_, reporting duplicates.
+   *
+   * @param name Name of the rule that holds the repeating tail.
+   * @param listItem Rule (or literal) of a single list item.
+   */
   listRule(name: string, listItem: string,): void {
     this.pattern(
       [listItem, `!${name}`,],
@@ -841,7 +919,11 @@ export class ProjectFileParser extends TextParser {
     },);
   }
 
-  /** Cauda repetível `_, item` de uma listRule. */
+  /**
+   * Repeating tail `_, item` of a `listRule` — optional and repeatable.
+   *
+   * @param listItem Rule (or literal) of a single list item.
+   */
   commaListRule(listItem: string,): void {
     this.optional();
     this.repeatable();
@@ -853,7 +935,11 @@ export class ProjectFileParser extends TextParser {
     );
   }
 
-  /** Bloco opcional `{ ... }` de atributos. */
+  /**
+   * Optional `{ ... }` block of attributes.
+   *
+   * @param attributes Rule that parses the attribute body.
+   */
   optionsRule(attributes: string,): void {
     this.optional();
     this.pattern(
@@ -864,19 +950,32 @@ export class ProjectFileParser extends TextParser {
     );
   }
 
-  /** Padrão de item único que devolve o próprio valor. */
+  /**
+   * Adds a single-item pattern that reduces to the item value itself.
+   *
+   * @param item Token of the pattern (a literal or a `!rule`/`$var` reference).
+   */
   singlePattern(item: string,): void {
     this.pattern([item,], function (this: ProjectFileParser,): unknown {
       return this.val[0];
     },);
   }
 
-  /** Documentação genérica do padrão corrente. */
+  /**
+   * Attaches generic documentation to the current pattern.
+   *
+   * @param keyword Short syntax being documented.
+   * @param text Description shown in the generated manual.
+   */
   doc(keyword: string, text: string,): void {
     this.cr?.setDoc(keyword, text,);
   }
 
-  /** Documentação para padrões de um único token terminal. */
+  /**
+   * Documents a pattern made of a single terminal token.
+   *
+   * @param text Description shown in the generated manual.
+   */
   descr(text: string,): void {
     const cr = this.cr;
     if (!cr) return;
@@ -892,7 +991,13 @@ export class ProjectFileParser extends TextParser {
     this.arg(0, null, text,);
   }
 
-  /** Documentação do argumento _idx_ do padrão corrente. */
+  /**
+   * Documents the argument at position _idx_ of the current pattern.
+   *
+   * @param idx Position of the argument in the pattern.
+   * @param name Argument name, or `null` for an unnamed argument.
+   * @param text Description of the argument.
+   */
   arg(
     idx: number,
     name: string | null,
@@ -901,28 +1006,50 @@ export class ProjectFileParser extends TextParser {
     this.cr?.setArg(idx, new TokenDoc(name, text,),);
   }
 
-  /** Restringe a sintaxe documentada aos primeiros _idx_ tokens. */
+  /**
+   * Limits the documented syntax to the first _idx_ tokens of the pattern.
+   *
+   * @param idx Number of tokens shown in the syntax summary.
+   */
   lastSyntaxToken(idx: number,): void {
     this.cr?.setLastSyntaxToken(idx,);
   }
 
-  /** Nível de suporte do padrão corrente ('current'|'deprecated'|'removed'). */
+  /**
+   * Sets the support level of the current pattern.
+   *
+   * @param level `'current'`, `'deprecated'` or `'removed'`.
+   */
   level(level: string,): void {
     this.cr?.setSupportLevel(level,);
   }
 
-  /** Referência cruzada na documentação ('see also'). */
+  /**
+   * Adds cross references ('see also') to the current pattern documentation.
+   *
+   * @param seeAlso One reference, or a list of references.
+   */
   also(seeAlso: string | string[],): void {
     const list = Array.isArray(seeAlso,) ? seeAlso : [seeAlso,];
     this.cr?.setSeeAlso(list,);
   }
 
-  /** Anexo de exemplo TJP à documentação do padrão. */
+  /**
+   * Attaches a TJP example excerpt to the current pattern documentation.
+   *
+   * @param file Name of the example file.
+   * @param tag Tag that delimits the excerpt inside the file.
+   */
   example(file: string, tag: string | null = null,): void {
     this.cr?.setExample(file, tag,);
   }
 
-  /** Título da coluna _colId_ em tabelas de relatório. */
+  /**
+   * Title of the column _colId_ in report tables.
+   *
+   * @param colId Column identifier.
+   * @returns The column title, or `undefined` when it cannot be resolved.
+   */
   columnTitle(colId: string,): string | undefined {
     if (
       this.property instanceof Report &&
@@ -935,10 +1062,10 @@ export class ProjectFileParser extends TextParser {
   }
 
   // ---------------------------------------------------------------------
-  // File stack — variáveis de escopo de arquivo (Ruby l.453-505).
+  // File stack — file-scope variables (Ruby l.453-505).
   // ---------------------------------------------------------------------
 
-  /** Cria/reseta a pilha de escopo de arquivo. */
+  /** Creates (or resets) the file-scope stack with the ID prefixes. */
   initFileStack(): void {
     this.fileStackVariables = [
       "taskprefix",
@@ -954,7 +1081,7 @@ export class ProjectFileParser extends TextParser {
     this.fileStack = [stackEntry,];
   }
 
-  /** Empurra o conjunto atual de variáveis de arquivo. */
+  /** Pushes the current set of file-scope variables onto the stack. */
   pushFileStack(): void {
     const stackEntry: Record<string, string> = {};
     for (const variable of this.fileStackVariables) {
@@ -964,7 +1091,11 @@ export class ProjectFileParser extends TextParser {
     this.fileStack.push(stackEntry,);
   }
 
-  /** Pop + restauração; @property volta a null (incluies aninhados). */
+  /**
+   * Pops the stack and restores the previous file-scope variables.
+   * `property` always returns to `null`, since nested includes are not allowed
+   * inside an attribute block.
+   */
   popFileStack(): void {
     const stackEntry = this.fileStack.pop();
     if (stackEntry) {
@@ -979,8 +1110,11 @@ export class ProjectFileParser extends TextParser {
   }
 
   /**
-   * Append seguro para listas scenario-specific: `<<` não marca 'provided',
-   * então forçamos um self-set (Ruby l.494-505).
+   * Safe append for scenario-specific lists: `<<` does not mark the attribute
+   * as 'provided', so a self-set is forced afterwards (Ruby l.494-505).
+   *
+   * @param attrId Identifier of the list attribute.
+   * @param list Values to append.
    */
   appendScListAttribute(
     attrId: string,
@@ -1005,34 +1139,58 @@ export class ProjectFileParser extends TextParser {
     }
   }
 
-  /** true se a macro _name_ já existe no scanner (Ruby macroDefined?). */
+  /**
+   * Whether the macro _name_ is already defined in the scanner
+   * (Ruby `macroDefined?`).
+   *
+   * @param name Name of the macro.
+   * @returns `true` when the macro exists.
+   */
   scannerHasMacro(name: string,): boolean {
     return this.tjpScanner ? this.tjpScanner.macroDefined(name,) : false;
   }
 
-  /** Registra uma macro no scanner corrente. */
+  /**
+   * Registers a macro in the current scanner.
+   *
+   * @param macro Macro to register.
+   */
   addScannerMacro(macro: Macro,): void {
     this.tjpScanner?.addMacro(macro,);
   }
 
-  /** true se o template _name_ já existe no scanner (Fase 23). */
+  /**
+   * Whether the template _name_ is already defined in the scanner (phase 23).
+   *
+   * @param name Name of the template.
+   * @returns `true` when the template exists.
+   */
   scannerHasTemplate(name: string,): boolean {
     return this.tjpScanner ? this.tjpScanner.templateDefined(name,) : false;
   }
 
-  /** Registra um template no scanner corrente (Fase 23). */
+  /**
+   * Registers a template in the current scanner (phase 23).
+   *
+   * @param template Template to register.
+   * @returns The result of the registration.
+   */
   addScannerTemplate(template: Template,): AddTemplateResult {
     return this.tjpScanner
       ? this.tjpScanner.addTemplate(template,)
       : { ok: true, };
   }
 
-  /** Parâmetros da última definição de template lida pelo scanner. */
+  /**
+   * Takes the parameters of the last template definition read by the scanner.
+   *
+   * @returns The declared parameter names, or an empty list.
+   */
   takeScannerTemplateParams(): string[] {
     return this.tjpScanner ? this.tjpScanner.takeTemplateParams() : [];
   }
 
-  /** Acesso ao MessageHandler (regras verificam contagem de erros). */
+  /** Access to the MessageHandler — rules check the error count. */
   get messageHandler(): MessageHandlerInstance {
     return MessageHandlerInstance.instance;
   }

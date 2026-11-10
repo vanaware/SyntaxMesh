@@ -10,9 +10,9 @@ import {
 } from "../model/cost-event.ts";
 
 /**
- * Representa um evento de custo auditável para um único valor monetário.
+ * Represents an auditable cost event for a single monetary amount.
  *
- * Semelhante a `MaterialAllocation`, mas para valores monetários.
+ * Similar to `MaterialAllocation`, but for monetary amounts.
  */
 export type CostEventType =
   | "task_charge"
@@ -20,53 +20,24 @@ export type CostEventType =
   | "material_usage";
 
 /**
- * Representa um evento de custo auditável para um único valor monetário.
+ * Re-export of the canonical `CostEvent`.
  *
- * Semelhante a `MaterialAllocation`, mas para valores monetários.
+ * The class lives in `model/cost-event.ts`, next to the attribution rule it
+ * carries; this barrel used to declare an identical copy, which made the type
+ * of `createCostEvent` unreachable from the package entry point.
  */
-export class CostEvent {
-  readonly type: CostEventType;
-  readonly amount: number;
-  readonly account: unknown;
-  readonly rule: AttributionRule;
-  readonly scenarioIdx: number;
-  readonly mode: "planned" | "actual";
-  readonly task?: unknown;
-  readonly resource?: unknown;
-  readonly material?: unknown;
-
-  constructor(
-    type: CostEventType,
-    amount: number,
-    account: unknown,
-    rule: AttributionRule,
-    scenarioIdx: number,
-    mode: "planned" | "actual",
-    task?: unknown,
-    resource?: unknown,
-    material?: unknown,
-  ) {
-    this.type = type;
-    this.amount = amount;
-    this.account = account;
-    this.rule = rule;
-    this.scenarioIdx = scenarioIdx;
-    this.mode = mode;
-    this.task = task;
-    this.resource = resource;
-    this.material = material;
-  }
-}
+export { CostEvent, } from "../model/cost-event.ts";
+import { CostEvent, } from "../model/cost-event.ts";
 
 /**
- * Factory para criar um CostEvent a partir de uma linha de custo.
+ * Factory that creates a CostEvent from a cost line.
  *
- * @param line - A linha de custo a ser convertida
- * @param account - A conta atribuída
- * @param rule - A regra de atribuição usada
- * @param scenarioIdx - O índice do cenário
- * @param mode - O modo (planned/actual)
- * @returns Um novo CostEvent
+ * @param line - The cost line to convert
+ * @param account - The assigned account
+ * @param rule - The attribution rule used
+ * @param scenarioIdx - The scenario index
+ * @param mode - The mode (planned/actual)
+ * @returns A new CostEvent
  */
 export function createCostEvent(
   line: {

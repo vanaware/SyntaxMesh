@@ -1,17 +1,18 @@
 /**
- * NikuReport (Fase 14.20.1) — exporta alocações de recursos em formato XOG
+ * NikuReport (phase 14.20.1) — exports resource allocations in XOG format
  * (Clarity/CA PPM).
  *
- * Porta de `docs/taskjuggler/lib/taskjuggler/reports/NikuReport.rb`. O formato
- * Niku XOG é voltado a um caso de uso estreito: transferir a alocação de
- * recursos por projeto para o Clarity. Requer três atributos customizados:
- * `ClarityRID` (Resource), `ClarityPID` e `ClarityPName` (Task). A lógica é
- * fiel a Ruby nos três passos: `computeResourceTotals`, `collectProjects`,
- * `computeProjectAllocations`; as saídas (`to_html`, `to_niku`, `to_csv`)
- * produzem a estrutura esperada sem byte-exatidão (comentário de cabeçalho,
- * ordenação por id/name, células vazias quando o valor é zero).
+ * Port of `docs/taskjuggler/lib/taskjuggler/reports/NikuReport.rb`. The Niku XOG
+ * format targets a narrow use case: moving the per-project resource allocation
+ * into Clarity. It requires three custom attributes: `ClarityRID` (Resource),
+ * `ClarityPID` and `ClarityPName` (Task). The logic follows Ruby in three steps:
+ * `computeResourceTotals`, `collectProjects`, `computeProjectAllocations`; the
+ * outputs (`to_html`, `to_niku`, `to_csv`) produce the expected structure
+ * without byte fidelity (header comment, ordering by id/name, empty cells when
+ * the value is zero).
  *
- * ⚠️ Browser (ADR 027): `to_niku()` retorna string; nenhuma escrita a disco.
+ * ⚠️ Browser (ADR 027): `to_niku()` returns a string; nothing is written to
+ * disk.
  *
  * @see docs/syntaxmesh/fases/fase-14-relatorios-tarefas.md (14.20.1)
  * @see docs/taskjuggler/lib/taskjuggler/reports/NikuReport.rb
@@ -36,30 +37,62 @@ import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 import { registerContentFactory, } from "../model/report-content.ts";
 import type { RealFormat, } from "../format/real-format.ts";
 
-/** Projeto Clarity (agrega tasks com mesmo `ClarityPID`). */
+/** A Clarity project (aggregates the tasks sharing the same `ClarityPID`). */
 export class NikuProject {
+  /** Tasks of the project. */
   readonly tasks: Task[] = [];
+  /** Allocation of every `ClarityRID` resource in the project. */
   readonly resources: Map<string, NikuResource> = new Map();
+
+  /**
+   * Creates a Clarity project.
+   *
+   * @param id `ClarityPID` shared by the tasks of the project.
+   * @param name `ClarityPName` shared by the tasks of the project.
+   */
   constructor(readonly id: string, readonly name: string,) {}
 }
 
-/** Alocação de um recurso em um NikuProject. */
+/** Allocation of one resource in a `NikuProject`. */
 export class NikuResource {
+  /** Allocated resource-days accumulated for the resource. */
   sum = 0.0;
+
+  /**
+   * Creates a resource allocation.
+   *
+   * @param id `ClarityRID` of the resource.
+   */
   constructor(readonly id: string,) {}
 }
 
+/**
+ * The Niku (Clarity XOG) exporter.
+ *
+ * The generator is registered under the `niku` report type.
+ */
 export class NikuReport extends ReportBase {
+  /** Clarity projects collected from the tasks. */
   readonly projects = new Map<string, NikuProject>();
+  /** Exported resources, keyed by `ClarityRID`. */
   readonly resources = new Map<string, Resource>();
+  /** Days of a resource not allocated to any project, keyed by `ClarityRID`. */
   readonly resourcesFreeWork = new Map<string, number>();
+  /** Total effort considered for a resource (working days as a floor). */
   readonly resourcesTotalEffort = new Map<string, number>();
+  /** Scenario the values are read from. */
   private scenarioIdx!: number;
 
+  /**
+   * Creates the Niku exporter of a report.
+   *
+   * @param report Report node the exporter renders.
+   */
   constructor(report: Report,) {
     super(report,);
   }
 
+  /** Computes the resource totals, collects the projects and their allocations. */
   override generateIntermediateFormat(): void {
     super.generateIntermediateFormat();
     const scenarios = (this.a("scenarios",) as number[]) ?? [];
@@ -70,7 +103,14 @@ export class NikuReport extends ReportBase {
     this.computeProjectAllocations();
   }
 
-  /** Soma (dia a dia) de effort alocado a uma tarefa, em resource-days. */
+  /**
+   * Allocation share (day by day) of a resource in a project, in resource-days.
+   *
+   * @param projectId `ClarityPID` of the project.
+   * @param resourceId `ClarityRID` of the resource.
+   * @returns The allocation, or `0` when the project, the resource or its total
+   *   effort is unknown.
+   */
   sum(projectId: string, resourceId: string,): number {
     const project = this.projects.get(projectId,);
     if (!project) return 0.0;
@@ -80,6 +120,12 @@ export class NikuReport extends ReportBase {
     return resource.sum / total;
   }
 
+  /**
+   * Total allocation of a resource across every project.
+   *
+   * @param resourceId `ClarityRID` of the resource.
+   * @returns Sum of the per-project shares of the resource.
+   */
   resourceTotal(resourceId: string,): number {
     let total = 0.0;
     for (const projectId of this.projects.keys()) {
@@ -88,6 +134,12 @@ export class NikuReport extends ReportBase {
     return total;
   }
 
+  /**
+   * Total allocation of a project across every resource.
+   *
+   * @param projectId `ClarityPID` of the project.
+   * @returns Sum of the per-resource shares of the project.
+   */
   projectTotal(projectId: string,): number {
     let total = 0.0;
     for (const resourceId of this.resources.keys()) {
@@ -96,6 +148,7 @@ export class NikuReport extends ReportBase {
     return total;
   }
 
+  /** Grand total of the allocation matrix, in resource-days. */
   total(): number {
     let total = 0.0;
     for (const projectId of this.projects.keys()) {
@@ -106,7 +159,7 @@ export class NikuReport extends ReportBase {
     return total;
   }
 
-  /** Célula de cabeçalho/corpo da tabela HTML (equivalente a `htmlTabCell`). */
+  /** Header/body cell of the HTML table (the equivalent of `htmlTabCell`). */
   htmlTabCell(
     text: string,
     headerCell = false,
@@ -124,6 +177,7 @@ export class NikuReport extends ReportBase {
     return td;
   }
 
+  /** Renders the allocation matrix as an HTML table. */
   to_html(): XMLElementLike {
     const tableFrame = this.generateHtmlTableFrame() as XMLElement;
     const tr0 = new XMLElement("tr",);
@@ -140,7 +194,7 @@ export class NikuReport extends ReportBase {
     const projectIds = [...this.projects.keys(),].sort();
     const numberFormat = this.numberFormat();
 
-    // Linha 1: nomes de projeto.
+    // Row 1: project names.
     const tr1 = new XMLElement("tr", { class: "tabline", },);
     tr1.append(this.htmlTabCell("Project", true, "right",),);
     for (const projectId of projectIds) {
@@ -154,7 +208,7 @@ export class NikuReport extends ReportBase {
     tr1.append(this.htmlTabCell("", true,),);
     thead.append(tr1,);
 
-    // Linha 2: IDs de projeto.
+    // Row 2: project ids.
     const tr2 = new XMLElement("tr", { class: "tabline", },);
     tr2.append(this.htmlTabCell("Resource", true, "left",),);
     for (const projectId of projectIds) {
@@ -193,7 +247,7 @@ export class NikuReport extends ReportBase {
       tbody.append(tr,);
     }
 
-    // Linha de totais por projeto.
+    // Totals row per project.
     const trTot = new XMLElement("tr", { class: "tabline", },);
     trTot.append(this.htmlTabCell("Total", true, "left",),);
     for (const projectId of projectIds) {
@@ -221,6 +275,7 @@ export class NikuReport extends ReportBase {
     return tableFrame;
   }
 
+  /** Renders the allocation matrix as a Niku XOG (Clarity) document. */
   to_niku(): string {
     const xml = new XMLDocument();
     xml.append(
@@ -280,7 +335,7 @@ export class NikuReport extends ReportBase {
           },),
         );
       }
-      // Título do relatório é usado como blob de XML customizado (Ruby).
+      // The report title is used as a custom XML blob (Ruby).
       const title = this.a("title",);
       if (title && String(title,).length > 0) {
         project.append(new XMLBlob(String(title,),),);
@@ -290,6 +345,7 @@ export class NikuReport extends ReportBase {
     return xml.to_s();
   }
 
+  /** Renders the allocation matrix as an array-of-arrays (CSV form). */
   to_csv(): unknown[][] {
     const table: unknown[][] = [];
     const projectIds = [...this.projects.keys(),].sort();
@@ -316,13 +372,16 @@ export class NikuReport extends ReportBase {
     return table;
   }
 
+  /** Number format declared by the report, or `null` for the default one. */
   private numberFormat(): RealFormat | null {
     return (this.a("numberFormat",) as RealFormat | null) ?? null;
   }
 
   /**
-   * Soma o effort total de cada recurso folha com `ClarityRID` no período
-   * reportado e calcula o "free work" (dias sem alocação).
+   * Sums the total effort of every leaf resource with a `ClarityRID` in the
+   * reported period and derives the "free work" (days without allocation).
+   *
+   * @throws Error When no resource declares the `ClarityRID` attribute.
    */
   private computeResourceTotals(): void {
     const project = this.project as Project;
@@ -341,7 +400,7 @@ export class NikuReport extends ReportBase {
 
     const query = this.newQuery(project,);
 
-    // Dias úteis no intervalo reportado.
+    // Working days in the reported interval.
     const start = this.a("start",) as TjTime;
     const end = this.a("end",) as TjTime;
     const workingDays = Math.max(
@@ -365,9 +424,9 @@ export class NikuReport extends ReportBase {
       query.start = start;
       query.end = end;
       query.process();
-      const effort = (query.to_num() ?? 0) / 86400; // segundos → dias
+      const effort = (query.to_num() ?? 0) / 86400; // seconds -> days
 
-      // Esforço acima dos dias úteis é considerado overtime não pago.
+      // Effort above the working days is treated as unpaid overtime.
       let total = effort;
       if (total >= workingDays) {
         this.resourcesFreeWork.set(resourceId, 0.0,);
@@ -387,9 +446,12 @@ export class NikuReport extends ReportBase {
   }
 
   /**
-   * Constrói um NikuProject por `ClarityPID` distinto; valida consistência de
-   * `ClarityPName`. Se `timeOffId`/`timeOffName` estiverem postos, cria um
-   * projeto extra para as férias.
+   * Builds one `NikuProject` per distinct `ClarityPID` and validates the
+   * `ClarityPName` consistency. When `timeOffId`/`timeOffName` are set, an extra
+   * project is created for the time off.
+   *
+   * @throws Error When a task lacks the Clarity attributes, when two tasks
+   *   disagree on `ClarityPName`, or when no task declares them at all.
    */
   private collectProjects(): void {
     const project = this.project as Project;
@@ -477,7 +539,7 @@ export class NikuReport extends ReportBase {
     }
   }
 
-  /** Soma o effort alocado por recurso em cada projeto Clarity. */
+  /** Sums the effort allocated per resource in each Clarity project. */
   private computeProjectAllocations(): void {
     const project = this.project as Project;
     const query = this.newQuery(project,);
@@ -521,6 +583,12 @@ export class NikuReport extends ReportBase {
     }
   }
 
+  /**
+   * Creates a query pre-configured with the report formatting options.
+   *
+   * @param project Project the query runs against.
+   * @returns A fresh query bound to the report scenario.
+   */
   private newQuery(project: Project,): Query {
     return new Query({
       project,
@@ -541,7 +609,7 @@ export class NikuReport extends ReportBase {
   }
 }
 
-// Registra a fábrica de conteúdo `niku` (14.11 dispatch).
+// Registers the `niku` content factory (14.11 dispatch).
 registerContentFactory(
   "niku",
   (report: unknown,): NikuReport => new NikuReport(report as Report,),

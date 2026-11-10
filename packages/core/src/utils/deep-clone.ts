@@ -1,27 +1,26 @@
 /**
- * Utilitário de cópia profunda para o sistema de atributos.
+ * Deep-copy utility for the attribute system.
  *
- * Replica o comportamento de `deep_copy.rb` do TaskJuggler: primitivos e
- * objetos frozen são devolvidos por referência; Array/Hash são copiados
- * recursivamente; qualquer outro objeto recebe cópia rasa dos seus instance
- * variables com clonagem profunda recursiva (protótipo preservado). Classes
- * que definem `deepClone()`/`deep_clone()` (PropertyTreeNode, Project,
- * ScenarioData …) controlam a própria cópia — tipicamente devolvendo `self`
- * para que referências a propriedades permaneçam referências.
+ * Replicates the behavior of TaskJuggler's `deep_copy.rb`: primitives and
+ * frozen objects come back by reference; Array/Hash are copied recursively;
+ * any other object gets a shallow copy of its instance variables with
+ * recursive deep cloning (prototype preserved). Classes that define
+ * `deepClone()`/`deep_clone()` (PropertyTreeNode, Project, ScenarioData …)
+ * control their own copy — typically returning `self` so that property
+ * references stay references.
  *
- * O fallback genérico NÃO usa `structuredClone`: ele lança em objetos que
- * alcançam funções/classes (ex.: Account → PropertySet → Project → mapas com
- * construtores de atributos) e descarta o protótipo — ambos divergentes do
- * Ruby.
+ * The generic fallback does NOT use `structuredClone`: it throws on objects
+ * reaching functions/classes (e.g. Account → PropertySet → Project → maps with
+ * attribute constructors) and drops the prototype — both diverge from Ruby.
  *
  * @see docs/taskjuggler/lib/taskjuggler/deep_copy.rb
  */
 
 /**
- * Copia profunda genérica de qualquer valor.
+ * Generic deep copy of any value.
  *
- * @param value - Valor a ser clonado (primitivo, array, map, set, objeto, etc.)
- * @returns Cópia profunda do valor
+ * @param value - Value to clone (primitive, array, map, set, object, etc.)
+ * @returns Deep copy of the value
  */
 export function deepClone<T,>(value: T,): T {
   return deepCloneInner(value, new Map<unknown, unknown>(),);
@@ -31,24 +30,24 @@ function deepCloneInner<T,>(
   value: T,
   seen: Map<unknown, unknown>,
 ): T {
-  // Primitivos (number, string, boolean, bigint, symbol, null, undefined) e
-  // funções são devolvidos como referência — Ruby: frozen?/Integer/Float/…
+  // Primitives (number, string, boolean, bigint, symbol, null, undefined) and
+  // functions are returned by reference — Ruby: frozen?/Integer/Float/…
   if (value === null || value === undefined || typeof value !== "object") {
     return value;
   }
-  // Date e RegExp são imutáveis no nosso uso (Ruby: frozen → self).
+  // Date and RegExp are immutable in our usage (Ruby: frozen → self).
   if (value instanceof Date || value instanceof RegExp) {
     return value;
   }
 
-  // Objetos já visitados no caminho de ciclo: devolver a cópia parcial.
-  // (Ruby usa o ivar temporário @clonedObject para o mesmo fim.)
+  // Objects already visited on the cycle path: return the partial copy.
+  // (Ruby uses the temporary ivar @clonedObject for the same purpose.)
   if (seen.has(value,)) {
     return seen.get(value,) as T;
   }
 
-  // Array (preserva o protótipo: `LeaveList`, `JournalEntryList`… são
-  // subclasses de Array no port — Ruby `clone` + `collect!` mantém a classe)
+  // Array (prototype preserved: `LeaveList`, `JournalEntryList`… are Array
+  // subclasses in the port — Ruby `clone` + `collect!` keeps the class)
   if (Array.isArray(value,)) {
     const copy: unknown[] = [];
     Object.setPrototypeOf(copy, Object.getPrototypeOf(value,),);
@@ -81,7 +80,7 @@ function deepCloneInner<T,>(
     return copy as unknown as T;
   }
 
-  // Objetos customizados que implementam método deepClone()
+  // Custom objects implementing a deepClone() method
   if (
     typeof (value as unknown as { deepClone?: () => T }).deepClone ===
       "function"
@@ -89,7 +88,7 @@ function deepCloneInner<T,>(
     return (value as unknown as { deepClone(): T }).deepClone();
   }
 
-  // Compatibilidade com método deep_clone() (compat.keepRubyBugs)
+  // Compatibility with the deep_clone() method (compat.keepRubyBugs)
   if (
     typeof (value as unknown as { deep_clone?: () => T }).deep_clone ===
       "function"
@@ -97,7 +96,7 @@ function deepCloneInner<T,>(
     return (value as unknown as { deep_clone(): T }).deep_clone();
   }
 
-  // TjTime e RealFormat — retornar referência (sem cópia profunda)
+  // TjTime and RealFormat — return the reference (no deep copy)
   if (
     value.constructor?.name === "TjTime" ||
     value.constructor?.name === "RealFormat"
@@ -105,9 +104,9 @@ function deepCloneInner<T,>(
     return value;
   }
 
-  // Caso genérico (plain Object e qualquer instância de classe): cópia rasa
-  // das propriedades próprias + recursão, preservando o protótipo.
-  // Equivale ao Object#deep_clone do Ruby (clone + ivars recursivos).
+  // Generic case (plain Object and any class instance): shallow copy of the
+  // own properties + recursion, preserving the prototype.
+  // Equivalent to Ruby's Object#deep_clone (clone + recursive ivars).
   const copy = Object.create(Object.getPrototypeOf(value,),);
   seen.set(value, copy,);
   for (const [key, val,] of Object.entries(value,)) {

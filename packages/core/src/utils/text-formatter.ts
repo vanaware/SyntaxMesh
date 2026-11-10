@@ -1,31 +1,40 @@
 /**
- * TextFormatter — formatação simples de blocos de texto puro (indentação e
- * largura de linha), usado pelo `RichTextElement.to_s` (Fase 12.3).
+ * TextFormatter — simple formatting of plain text blocks (indentation and line
+ * width), used by `RichTextElement.to_s` (phase 12.3).
  *
- * Tarefa 16.6 da Fase 16 **antecipada** para a Fase 12: é dependência pura de
- * `Element.rb#to_s`, sem ligação com o resto da Fase 16.
+ * Task 16.6 of phase 16 was **brought forward** into phase 12: it is a pure
+ * dependency of `Element.rb#to_s`, unrelated to the rest of phase 16.
  *
- * Port fiel de `TextFormatter.rb:21-184`:
- *   - `indent(str)` — insere `firstLineIndent`/`indentation` espaços no início
- *     de cada linha e descarta caracteres além de `width`; sempre termina com
- *     `\n`.
- *   - `format(str)` — FSM de quebra de linhas (estados `beginOfParagraph`,
- *     `inWord`, `betweenWords`, `betweenWordsOrLines`); `\r` força nova linha
- *     sem novo parágrafo; linha em branco termina o parágrafo.
- *   - iteração por **code point** (`each_utf8_char` → `[...str]`), como exige
- *     a nota UTF-8 da Fase 16.
+ * Faithful port of `TextFormatter.rb:21-184`:
+ *   - `indent(str)` — inserts `firstLineIndent`/`indentation` spaces at the
+ *     beginning of each line and drops characters beyond `width`; always ends
+ *     with `\n`.
+ *   - `format(str)` — line-breaking FSM (states `beginOfParagraph`, `inWord`,
+ *     `betweenWords`, `betweenWordsOrLines`); `\r` forces a new line without a
+ *     new paragraph; a blank line ends the paragraph.
+ *   - iteration by **code point** (`each_utf8_char` → `[...str]`), as required
+ *     by the UTF-8 note of phase 16.
  *
  * @see docs/taskjuggler/lib/taskjuggler/TextFormatter.rb
  */
 
+/** Indents and wraps plain text blocks at a fixed line width. */
 export class TextFormatter {
-  /** Largura máxima da linha, contando a indentação. */
+  /** Maximum line width, counting the indentation. */
   width: number;
-  /** Indentação das linhas após a primeira. */
+  /** Indentation of every line after the first. */
   indentation: number;
-  /** Indentação da primeira linha (default: `indentation`). */
+  /** Indentation of the first line (defaults to `indentation`). */
   firstLineIndent: number;
 
+  /**
+   * Ruby `initialize(width = 80, indentation = 0, firstLineIndent = nil)`.
+   *
+   * @param width Maximum line width, counting the indentation.
+   * @param indentation Indentation of the lines after the first.
+   * @param firstLineIndent Indentation of the first line; defaults to
+   *   `indentation`.
+   */
   constructor(width = 80, indentation = 0, firstLineIndent?: number,) {
     this.width = width;
     this.indentation = indentation;
@@ -33,17 +42,20 @@ export class TextFormatter {
   }
 
   /**
-   * Indenta cada linha de `str` (`firstLineIndent` na primeira, `indentation`
-   * nas demais) e corta o que exceder `width`. Sempre termina com `\n`.
+   * Indents each line of `str` (`firstLineIndent` on the first, `indentation`
+   * on the rest) and cuts whatever exceeds `width`. Always ends with `\n`.
+   *
+   * @param str Text to indent.
+   * @returns The indented text, terminated by a newline.
    */
   indent(str: string,): string {
     let out = "";
-    // Indentação pendente da linha atual; null quando já inserida.
+    // Pending indentation of the current line; null once it is written.
     let indentBuf: string | null = " ".repeat(this.firstLineIndent,);
     let linePos = 0;
     for (const c of [...str,]) {
       if (c === "\n") {
-        // Sem trailing whitespace: trocamos o buffer por uma quebra seca.
+        // No trailing whitespace: replace the buffer by a bare break.
         if (indentBuf !== null) out += "\n";
         indentBuf = "\n" + " ".repeat(this.indentation,);
       } else {
@@ -52,28 +64,33 @@ export class TextFormatter {
           linePos = indentBuf.replace(/\n/g, "",).length;
           indentBuf = null;
         }
-        // Descarta caracteres além da largura pedida.
+        // Drop characters beyond the requested width.
         if (linePos < this.width) {
           out += c;
           linePos += 1;
         }
       }
     }
-    // Sempre termina com quebra de linha.
+    // Always ends with a line break.
     if (!out.endsWith("\n",)) out += "\n";
     return out;
   }
 
-  /** Formata `str` (quebra de palavras na largura `width`). */
+  /**
+   * Formats `str` (word wrapping at the `width` boundary).
+   *
+   * @param str Text to wrap.
+   * @returns The wrapped text, terminated by a newline.
+   */
   format(str: string,): string {
     let out = "";
-    // Coluna do último caractere da linha atual.
+    // Column of the last character of the current line.
     let linePos = 0;
-    // Buffer da palavra em processamento.
+    // Buffer of the word being processed.
     let wordBuf = "";
-    // Verdadeiro se estamos no início de uma linha.
+    // True when we are at the beginning of a line.
     let beginOfLine = true;
-    // Buffer de indentação da próxima linha.
+    // Indentation buffer of the next line.
     let indentBuf = " ".repeat(this.firstLineIndent,);
     type State =
       | "beginOfParagraph"
@@ -86,7 +103,7 @@ export class TextFormatter {
       const wordLength = [...wordBuf,].length;
       if (wordLength === 0) return;
 
-      // Se a palavra não cabe na linha, iniciamos nova linha.
+      // If the word does not fit on the line, start a new one.
       if (linePos + 1 + wordLength > this.width) beginOfLine = true;
 
       if (beginOfLine) {
@@ -94,7 +111,7 @@ export class TextFormatter {
         linePos = indentBuf.replace(/\n/g, "",).length;
         indentBuf = "\n" + " ".repeat(this.indentation,);
       } else {
-        // Espaço separando palavras.
+        // Space separating words.
         out += " ";
         linePos += 1;
       }
@@ -119,7 +136,7 @@ export class TextFormatter {
             appendWord();
             state = c === " " ? "betweenWords" : "betweenWordsOrLines";
           } else if (c === "\r") {
-            // CR quebra a linha sem fechar o parágrafo.
+            // CR breaks the line without closing the paragraph.
             appendWord();
             indentBuf = "\n" + " ".repeat(this.firstLineIndent,);
             beginOfLine = true;
@@ -140,7 +157,7 @@ export class TextFormatter {
           break;
         case "betweenWordsOrLines":
           if (c === "\n") {
-            // Quebra dupla = fim de parágrafo.
+            // Double break = end of paragraph.
             indentBuf = "\n\n" + " ".repeat(this.firstLineIndent,);
             beginOfLine = true;
             state = "beginOfParagraph";
@@ -157,7 +174,7 @@ export class TextFormatter {
     }
     appendWord();
 
-    // Sempre termina com quebra de linha.
+    // Always ends with a line break.
     if (!out.endsWith("\n",)) out += "\n";
     return out;
   }

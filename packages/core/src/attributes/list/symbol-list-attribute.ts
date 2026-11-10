@@ -1,5 +1,5 @@
 /**
- * Atributo de lista de símbolos.
+ * Symbol list attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:SymbolListAttribute
  */
@@ -10,18 +10,18 @@ import { type AttributeDefinition, } from "../attribute-definition.ts";
 import { ListAttributeBase, } from "../list-attribute-base.ts";
 
 /**
- * Atributo de lista de símbolos.
+ * Symbol list attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:SymbolListAttribute
  */
 export class SymbolListAttribute extends ListAttributeBase<string> {
   /**
-   * ID do tipo de atributo para SymbolListAttribute.
+   * Attribute type ID for SymbolListAttribute.
    */
   static readonly tjpId = "symbollist";
 
   /**
-   * Converte o valor para TJP (formato TaskJuggler).
+   * Converts the value to TJP (TaskJuggler format).
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:SymbolListAttribute#to_tjp
    */

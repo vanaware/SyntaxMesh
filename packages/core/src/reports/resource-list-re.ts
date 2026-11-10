@@ -1,11 +1,13 @@
 /**
- * ResourceListRE (Fase 14.15) — relatório de listagem de recursos.
+ * ResourceListRE (phase 14.15) — resource list report.
  *
- * Porta fiel de `docs/taskjuggler/lib/taskjuggler/reports/ResourceListRE.rb`.
- * Especialização de `TableReport` que gera uma lista de recursos com as
- * tarefas atribuídas aninhadas sob cada linha de recurso.
+ * Faithful port of
+ * `docs/taskjuggler/lib/taskjuggler/reports/ResourceListRE.rb`. A specialization
+ * of `TableReport` that renders a list of resources with the assigned tasks
+ * nested under each resource line.
  *
- * O conteúdo é registrado na fábrica de conteúdo (14.11) sob `resourcereport`.
+ * The content is registered in the content factory (14.11) under
+ * `resourcereport`.
  *
  * @see docs/syntaxmesh/fases/fase-14-relatorios-tarefas.md (14.15)
  */
@@ -17,22 +19,28 @@ import { ReportTable, } from "./report-table.ts";
 import { TableReport, } from "./table-report.ts";
 import { registerContentFactory, } from "../model/report-content.ts";
 
+/** Renders the `resourcereport` list of resources. */
 export class ResourceListRE extends TableReport {
+  /**
+   * Creates the resource list generator.
+   *
+   * @param report Report node the generator renders.
+   */
   constructor(report: Report,) {
     super(report,);
-    // TableReport define `report.content = this`; aqui criamos a tabela
-    // intermediária real (14.6) que acumulará linhas e colunas.
+    // TableReport sets `report.content = this`; here we create the real
+    // intermediate table (14.6) that accumulates rows and columns.
     this.table = new ReportTable();
     this.table.selfcontained = !!this.a("selfcontained",);
     this.table.auxDir = (this.a("auxdir",) as string | undefined) ?? "";
   }
 
-  /** Constrói o formato intermediário (tabela) linha a linha. */
+  /** Builds the intermediate format (the table) row by row. */
   override generateIntermediateFormat(): void {
-    // Propaga o Query corrente aos blocos de RichText (ReportBase).
+    // Propagates the current Query to the RichText blocks (ReportBase).
     super.generateIntermediateFormat();
 
-    // Prepara a lista de recursos (filtrada).
+    // Prepares the resource list (filtered).
     let resourceList = new PropertyList<Resource>(this.project.resources,);
     resourceList.setSorting(
       this.a("sortResources",) as Array<[string, boolean, number,]>,
@@ -47,8 +55,8 @@ export class ResourceListRE extends TableReport {
     );
     resourceList.sort();
 
-    // Prepara a lista de tarefas. NÃO a filtramos ainda: isso quebraria as
-    // funções lógicas `*_()` usadas nas células.
+    // Prepares the task list. It is NOT filtered yet: doing so would break the
+    // `*_()` logical functions used inside the cells.
     const taskList = new PropertyList<Task>(this.project.tasks,);
     taskList.setSorting(
       this.a("sortTasks",) as Array<[string, boolean, number,]>,
@@ -56,7 +64,7 @@ export class ResourceListRE extends TableReport {
     taskList.query = this.currentQuery();
     taskList.sort();
 
-    // União das tarefas atribuídas a algum recurso reportado.
+    // Union of the tasks assigned to any reported resource.
     const assignedTaskList: Task[] = [];
     for (const resource of resourceList.toArray()) {
       const assigned = this.filterTaskList(
@@ -71,7 +79,7 @@ export class ResourceListRE extends TableReport {
       }
     }
 
-    // Gera o cabeçalho da tabela (uma coluna de cada vez).
+    // Generates the table header (one column at a time).
     for (const columnDef of this.columnList()) {
       this.adjustColumnPeriod(
         columnDef,
@@ -81,12 +89,12 @@ export class ResourceListRE extends TableReport {
       this.generateHeaderCell(columnDef,);
     }
 
-    // Gera a lista em si.
+    // Generates the list itself.
     this.generateResourceList(resourceList, taskList, null,);
   }
 }
 
-// Registra o conteúdo de `resourcereport` na fábrica (14.11).
+// Registers the `resourcereport` content in the factory (14.11).
 registerContentFactory(
   "resourcereport",
   (report: unknown,): ResourceListRE => new ResourceListRE(report as Report,),

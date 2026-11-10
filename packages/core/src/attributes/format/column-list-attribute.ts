@@ -1,5 +1,5 @@
 /**
- * Atributo de lista de colunas.
+ * Column list attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ColumnListAttribute
  */
@@ -10,23 +10,23 @@ import { type AttributeDefinition, } from "../attribute-definition.ts";
 import { ListAttributeBase, } from "../list-attribute-base.ts";
 
 /**
- * Atributo de lista de colunas.
+ * Column list attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ColumnListAttribute
  */
 export class ColumnListAttribute extends ListAttributeBase<string> {
   /**
-   * ID do tipo de atributo para ColumnListAttribute.
+   * Attribute type ID for ColumnListAttribute.
    */
   static readonly tjpId = "columns";
 
   /**
-   * Converte o valor para string.
+   * Converts the value to a string.
    *
-   * Fiel ao Ruby: `ColumnListAttribute#to_s` retorna literalmente a
-   * string "TODO" no upstream (Attributes.rb:196-198 — nunca implementado
-   * lá; as colunas são despejadas via `to_tjp`, não por `to_s`). Não é um
-   * gap nosso: mudar isto desviaria do comportamento de referência.
+   * Faithful to Ruby: `ColumnListAttribute#to_s` literally returns the string
+   * "TODO" upstream (Attributes.rb:196-198 — never implemented there; the
+   * columns are dumped through `to_tjp`, not through `to_s`). It is not a gap of
+   * ours: changing it would deviate from the reference behavior.
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ColumnListAttribute#to_s
    */
@@ -35,7 +35,7 @@ export class ColumnListAttribute extends ListAttributeBase<string> {
   }
 
   /**
-   * Converte o valor para TJP (formato TaskJuggler).
+   * Converts the value to TJP (TaskJuggler format).
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ColumnListAttribute#to_tjp
    */

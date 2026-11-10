@@ -1,5 +1,5 @@
 /**
- * Classe base para atributos que contêm listas (arrays).
+ * Base class for attributes that contain lists (arrays).
  *
  * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:ListAttributeBase
  */
@@ -12,19 +12,19 @@ import { RichText, } from "../richtext/rich-text.ts";
 import { RTFHandlers, } from "../richtext/handlers/rtf-handlers.ts";
 import type { Query, } from "../query/query.ts";
 
-/** Nome exibido de um item de lista (Ruby `r.name`). */
+/** Display name of a list item (Ruby `r.name`). */
 function itemName(item: { name?: string },): string {
   return item.name ?? "";
 }
 
 /**
- * Classe base para atributos de lista.
+ * Base class for list attributes.
  *
  * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:ListAttributeBase
  */
 export abstract class ListAttributeBase<T,> extends AttributeBase<T[]> {
   /**
-   * Verifica se o atributo é uma lista.
+   * Checks whether the attribute is a list.
    *
    * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:isList?
    */
@@ -33,7 +33,7 @@ export abstract class ListAttributeBase<T,> extends AttributeBase<T[]> {
   }
 
   /**
-   * Converte a lista para string (join com vírgula).
+   * Converts the list to a string (join with a comma).
    *
    * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:to_s
    */
@@ -46,14 +46,14 @@ export abstract class ListAttributeBase<T,> extends AttributeBase<T[]> {
   }
 
   /**
-   * Converte a lista para RTI (Rich Text Intermediate).
+   * Converts the list to an RTI (Rich Text Intermediate).
    *
-   * Port de `ListAttributeBase#to_rti` (Attributes.rb l.498):
-   * - com `query.listItem`, cada item vira um RTI do template (reavaliado com
-   *   `q.property = item`) dentro de `<nowiki>` e a lista é devolvida por
-   *   `query.assignList`;
-   * - sem template, cada item vira `<nowiki>name</nowiki>`;
-   * - sem query, a lista vira um único RTI `a, b, c`.
+   * Port of `ListAttributeBase#to_rti` (Attributes.rb l.498):
+   * - with `query.listItem`, each item becomes an RTI of the template
+   *   (re-evaluated with `q.property = item`) inside `<nowiki>` and the list is
+   *   returned through `query.assignList`;
+   * - without a template, each item becomes `<nowiki>name</nowiki>`;
+   * - without a query, the list becomes a single RTI `a, b, c`.
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ListAttributeBase#to_rti
    */
@@ -91,7 +91,7 @@ export abstract class ListAttributeBase<T,> extends AttributeBase<T[]> {
   }
 
   /**
-   * Converte o valor para TJP (formato TaskJuggler).
+   * Converts the value to TJP (TaskJuggler format).
    *
    * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:to_tjp
    */

@@ -1,19 +1,20 @@
 /**
- * RichTextElement — nó da árvore intermediária do RichText (Fase 12.3).
+ * RichTextElement — node of the intermediate RichText tree (Phase 12.3).
  *
- * Cada nó tem uma `category` (`richtext`, `title1`…, `paragraph`, `bulletitem1`…,
- * `inlinefunc`, …) e filhos que são outros elementos ou strings cruas. A partir
- * da árvore é possível gerar texto puro (`to_s`), saída marcada para testes
- * (`to_tagged`) e a árvore HTML (`to_html`, via `XMLElementLike`).
+ * Each node has a `category` (`richtext`, `title1`..., `paragraph`,
+ * `bulletitem1`..., `inlinefunc`, ...) and children that are either other
+ * elements or raw strings. From the tree it is possible to generate plain text
+ * (`to_s`), tagged output for tests (`to_tagged`) and the HTML tree (`to_html`,
+ * through `XMLElementLike`).
  *
- * Port fiel de `RichText/Element.rb` (RichTextElement, 40-581). Convenções do
- * port:
- *   - símbolos Ruby (`:title1`) viram strings idênticas sem os dois-pontos;
- *   - `@data` (polimórfico no Ruby) é `unknown` com casts locais por categoria;
- *   - `XMLText.new(s)` → `appendRichText()` (string cruas viram nós de texto
- *     escapeáveis e o null é ignorado, como no Ruby);
- *   - o 4º argumento do `XMLElement.new` (bloco) não tem equivalente e é
- *     ignorado pelo upstream em todas as categorias daqui.
+ * Faithful port of `RichText/Element.rb` (RichTextElement, 40-581). Port
+ * conventions:
+ *   - Ruby symbols (`:title1`) become identical strings without the colon;
+ *   - `@data` (polymorphic in Ruby) is `unknown` with local casts per category;
+ *   - `XMLText.new(s)` → `appendRichText()` (raw strings become escapable text
+ *     nodes and `null` is ignored, as in Ruby);
+ *   - the 4th argument of `XMLElement.new` (a block) has no equivalent and is
+ *     ignored upstream in every category here.
  *
  * @see docs/taskjuggler/lib/taskjuggler/RichText/Element.rb
  * @see ADR 025 (RichText e function handlers)
@@ -27,7 +28,7 @@ import { TOCEntry, } from "./toc-entry.ts";
 import type { TableOfContents, } from "./table-of-contents.ts";
 import { TextFormatter, } from "../utils/text-formatter.ts";
 
-/** Categorias reconhecidas (os símbolos de `Element.rb` sem os dois-pontos). */
+/** Recognized categories (the symbols of `Element.rb` without the colon). */
 export type RichTextCategory =
   | "richtext"
   | "title1"
@@ -65,13 +66,19 @@ export type RichTextCategory =
   | "text"
   | "htmlblob";
 
-/** Args de uma função embutida (`[[name: key value …]]`). */
-export type RichTextFunctionArgs = Record<string, string>;
+/**
+ * Arguments of an inline function (`[[name: key value …]]`).
+ *
+ * Re-exported from the handler base so both spellings resolve to the same
+ * type; `RichTextFuncData` below is built from it.
+ */
+export type { RichTextFunctionArgs, } from "./handlers/function-handler.ts";
+import type { RichTextFunctionArgs, } from "./handlers/function-handler.ts";
 
-/** `data` das categorias `*func`: `[nome, args | null]`. */
+/** `data` of the `*func` categories: `[name, args | null]`. */
 export type RichTextFuncData = [string, RichTextFunctionArgs | null,];
 
-/** Anexa `child` (elemento ou texto cruo) a `el`, ignorando `null`. */
+/** Appends `child` (element or raw text) to `el`, ignoring `null`. */
 function appendRichText(
   el: XMLElementLike,
   child: XMLElementLike | string | null,
@@ -79,21 +86,38 @@ function appendRichText(
   if (child !== null && child !== undefined) el.append(child,);
 }
 
+/**
+ * One node of the intermediate RichText tree.
+ */
 export class RichTextElement {
-  /** RTI dono deste elemento (fonte dos parâmetros de formatação). */
+  /** RTI that owns this element (source of the formatting parameters). */
   readonly richText: RichTextIntermediate;
+  /** Node category, which selects the serialization behaviour. */
   readonly category: RichTextCategory;
-  // `cleanUp` reatribui o array (promoção de filhos do paragraph), como no
-  // Ruby — daí não ser `readonly`.
+  /**
+   * Child nodes, in output order: nested elements or raw strings.
+   *
+   * Not `readonly` because `cleanUp` reassigns the array when it promotes the
+   * children of the single `paragraph` child, as in Ruby.
+   */
   children: Array<RichTextElement | string>;
   /**
-   * Dados adicionais por categoria: contadores (`title*`/`numberitem*`),
-   * `RichTextImage` (`img`), string (`ref`/`href`/`fontCol`) ou
-   * `[nome, args]` (`blockfunc`/`inlinefunc`).
+   * Additional data per category: counters (`title*`/`numberitem*`),
+   * `RichTextImage` (`img`), string (`ref`/`href`/`fontCol`) or `[name, args]`
+   * (`blockfunc`/`inlinefunc`).
    */
   data: unknown;
+  /** Whether a space must be appended after this node when serializing. */
   appendSpace: boolean;
 
+  /**
+   * Creates an element.
+   *
+   * @param rti Intermediate representation this element belongs to.
+   * @param category Node category.
+   * @param arg Initial child, list of children, or nothing.
+   * @throws {Error} When `arg` is not a supported child type.
+   */
   constructor(
     rti: RichTextIntermediate,
     category: RichTextCategory,
@@ -119,8 +143,8 @@ export class RichTextElement {
   }
 
   /**
-   * Remove o nó `paragraph` quando é o único filho de `richtext`, promovendo
-   * os filhos dele (Element.rb:76-82).
+   * Removes the `paragraph` node when it is the only child of `richtext`,
+   * promoting its children (Element.rb:76-82).
    */
   cleanUp(): RichTextElement {
     if (
@@ -133,12 +157,12 @@ export class RichTextElement {
     return this;
   }
 
-  /** Verdadeiro se a árvore `richtext` não tem filhos. */
+  /** True when the `richtext` tree has no children. */
   empty(): boolean {
     return this.category === "richtext" && this.children.length === 0;
   }
 
-  /** Coleta os títulos `title1-4` em `toc`, recursando pelos demais nós. */
+  /** Collects the `title1-4` titles into `toc`, recursing through the nodes. */
   tableOfContents(toc: TableOfContents, fileName: string,): void {
     let number: string | null = null;
     const counters = this.data as number[];
@@ -170,7 +194,7 @@ export class RichTextElement {
     }
   }
 
-  /** Nomes de snippets referenciados por `ref` internas (sem `:`). */
+  /** Names of the snippets referenced by internal `ref` links (without `:`). */
   internalReferences(): string[] {
     const references: string[] = [];
     if (this.category === "ref" && !String(this.data,).includes(":",)) {
@@ -182,11 +206,11 @@ export class RichTextElement {
         }
       }
     }
-    // Cada referência interessa só uma vez.
+    // Each reference only matters once.
     return [...new Set(references,),];
   }
 
-  /** Texto puro (Element.rb:143-235). */
+  /** Plain text (Element.rb:143-235). */
   to_s(): string {
     const rt = this.richText;
     let pre = "";
@@ -323,9 +347,10 @@ export class RichTextElement {
       case "ref":
       case "href":
       case "blockfunc":
-        // `when` vazio no Ruby (Element.rb:217-220): cai no tail e renderiza
-        // children_to_s. `ref`/`href` mostram o texto do link; `blockfunc` é
-        // um bloco sem filhos → ''. Somente `inlinefunc` despacha o handler.
+        // Empty `when` in Ruby (Element.rb:217-220): falls through to the tail
+        // and renders children_to_s. `ref`/`href` show the link text;
+        // `blockfunc` is a childless block → ''. Only `inlinefunc` dispatches
+        // to the handler.
         break;
       case "inlinefunc": {
         this.checkHandler();
@@ -338,10 +363,11 @@ export class RichTextElement {
       case "fontCol":
       case "code":
       case "text":
-        // `when` vazio → tail: o texto dos filhos é preservado na saída plana.
+        // Empty `when` → tail: the children text is preserved in the plain
+        // output.
         break;
       case "htmlblob":
-        // HTML cru não tem equivalente em texto puro.
+        // Raw HTML has no plain-text equivalent.
         return "";
       default:
         throw new Error(`Unknown RichTextElement category ${this.category}`,);
@@ -350,7 +376,7 @@ export class RichTextElement {
     return pre + this.children_to_s() + post;
   }
 
-  /** Saída marcada, para testes (Element.rb:240-374). */
+  /** Tagged output for tests (Element.rb:240-374). */
   to_tagged(): string {
     const d = this.data as number[];
     let pre = "";
@@ -510,7 +536,7 @@ export class RichTextElement {
     return pre + out + post;
   }
 
-  /** Árvore HTML (Element.rb:377-488). */
+  /** HTML tree (Element.rb:377-488). */
   to_html(): XMLElementLike | null {
     const rt = this.richText;
     let noChilds = false;
@@ -627,7 +653,7 @@ export class RichTextElement {
         throw new Error(`Unknown RichTextElement category ${this.category}`,);
     }
 
-    // Alguns elementos nunca têm folhas.
+    // Some elements never have leaves.
     if (noChilds || html === null) return html;
 
     for (const el of this.children) {
@@ -642,7 +668,7 @@ export class RichTextElement {
     return html;
   }
 
-  /** Concatena os filhos em texto puro, com espaço quando `appendSpace`. */
+  /** Concatenates the children into plain text, with a space when `appendSpace`. */
   children_to_s(): string {
     let text = "";
     for (const c of this.children) {
@@ -652,7 +678,7 @@ export class RichTextElement {
     return text;
   }
 
-  /** Valida o handler de função registrado para `data[0]`. */
+  /** Validates the function handler registered for `data[0]`. */
   checkHandler(): void {
     const [name,] = this.data as RichTextFuncData;
     if (!name || typeof name !== "string") {
@@ -663,14 +689,14 @@ export class RichTextElement {
     }
   }
 
-  /** URL de um `href`: normaliza `data` (subtree `richtext` ou string) para texto. */
+  /** URL of an `href`: normalizes `data` (a `richtext` subtree or a string) to text. */
   private hrefUrl(): string {
     return this.data instanceof RichTextElement
       ? this.data.to_s()
       : String(this.data,);
   }
 
-  /** Normaliza `text` para um ID aceitável em HTML (Element.rb:510-519). */
+  /** Normalizes `text` into an HTML-acceptable ID (Element.rb:510-519). */
   convertToID(text: string,): string {
     let out = "";
     for (const c of [...text,]) {
@@ -680,12 +706,12 @@ export class RichTextElement {
       ) out += c;
       if (c === " ") out += "_";
     }
-    // chomp('_'): remove um único underscore final.
+    // chomp('_'): removes a single trailing underscore.
     if (out.endsWith("_",)) out = out.slice(0, -1,);
     return out;
   }
 
-  /** Número da seção em texto puro: `"1.2) "` (ou '' se sem numeração). */
+  /** Section number in plain text: `"1.2) "` (or '' when unnumbered). */
   private sTitle(level: number,): string {
     let s = "";
     if (this.richText.sectionNumbers) {
@@ -699,7 +725,7 @@ export class RichTextElement {
     return s;
   }
 
-  /** `<hN id=…>` com número opcional (Element.rb:535-549). */
+  /** `<hN id=...>` with the optional number (Element.rb:535-549). */
   private htmlTitle(level: number,): XMLElementLike {
     const attrs: Record<string, string> = {
       id: this.convertToID(this.children_to_s(),),
@@ -719,7 +745,7 @@ export class RichTextElement {
     return el;
   }
 
-  /** `<object>` para imagens com extensão conhecida (Element.rb:551-570). */
+  /** `<object>` for images with a known extension (Element.rb:551-570). */
   private htmlObject(): XMLElementLike | null {
     const fileTypes: Record<string, Record<string, string>> = {
       "png": { "type": "image/png", },
@@ -727,7 +753,7 @@ export class RichTextElement {
       "jpg": { "type": "image/jpg", },
       "svg": { "type": "image/svg+xml", "class": "img", },
     };
-    // O parser já validou o arquivo; extensão desconhecida → sem elemento.
+    // The parser already validated the file; unknown extension → no element.
     const img = this.data as RichTextImage;
     const index = img.fileName.lastIndexOf(".",);
     if (index < 0) return null;
@@ -744,7 +770,7 @@ export class RichTextElement {
     return el;
   }
 
-  /** Formata um bloco de texto puro com rótulo悬挂 (Element.rb:572-575). */
+  /** Formats a plain-text block with a hanging label (Element.rb:572-575). */
   private textBlockFormat(
     indent: number,
     label: string,
@@ -758,8 +784,8 @@ export class RichTextElement {
   }
 
   /**
-   * Serializa a árvore para Markdown (Fase 13.9).
-   * One-way: não garante round-trip perfeito com o parser Markdown.
+   * Serializes the tree to Markdown (Phase 13.9).
+   * One-way: does not guarantee a perfect round-trip with the Markdown parser.
    */
   to_markdown(): string {
     switch (this.category) {
@@ -852,7 +878,7 @@ export class RichTextElement {
     }
   }
 
-  /** Concatena a serialização Markdown dos filhos. */
+  /** Concatenates the Markdown serialization of the children. */
   private children_markdown(): string {
     let out = "";
     for (const c of this.children) {
@@ -862,7 +888,7 @@ export class RichTextElement {
     return out;
   }
 
-  /** Formata args de função como `key=value key2="val 2"`. */
+  /** Formats function args as `key=value key2="val 2"`. */
   private formatFuncArgs(args: Record<string, string> | null,): string {
     if (!args) return "";
     const parts: string[] = [];

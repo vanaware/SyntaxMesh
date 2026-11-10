@@ -1,16 +1,16 @@
 /**
- * `chapters-usage.ts` — capítulos de uso: tutorial, relatórios e rotina
+ * `chapters-usage.ts` — usage chapters: tutorial, reports and routine
  * (22.1b.5).
  *
- * Mesmo contrato de {@link ./chapters-basics.ts}: texto-fonte RichText em
- * inglês, sem E/S, apenas a extensão `.smx`.
+ * Same contract as {@link ./chapters-basics.ts}: RichText source text in
+ * English, no I/O, only the `.smx` extension.
  *
  * @see ./chapters.ts
  */
 
 import type { ManualChapter, } from "./chapters-basics.ts";
 
-/** Tutorial, relatórios e o uso no dia a dia. */
+/** Tutorial, reports and day-to-day usage. */
 export const USAGE_CHAPTERS: readonly ManualChapter[] = [
   {
     name: "Tutorial",

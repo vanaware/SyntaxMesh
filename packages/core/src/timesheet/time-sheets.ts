@@ -1,38 +1,48 @@
 /**
- * TimeSheets — todas as folhas de ponto de um projeto.
+ * TimeSheets — every time sheet of a project.
  *
- * Port de `docs/taskjuggler/lib/taskjuggler/TimeSheets.rb` — classe
- * `TimeSheets < Array` (l.389-403).
+ * Port of `docs/taskjuggler/lib/taskjuggler/TimeSheets.rb` — the
+ * `TimeSheets < Array` class (l.389-403).
  *
  * @see docs/syntaxmesh/fases/fase-18-time-status-sheets.md (18.3)
  */
 import type { TimeSheet, } from "./time-sheet.ts";
 
+/**
+ * Collection of the time sheets loaded for a project.
+ */
 export class TimeSheets extends Array<TimeSheet> {
   /**
-   * Alias de coleção mantido do stub da Fase 9 (`project.timeSheets.sheets`).
-   * Em Ruby a própria instância **é** o Array; aqui expomos os dois acessos.
+   * Collection alias kept from the Phase 9 stub (`project.timeSheets.sheets`).
+   * In Ruby the instance **is** the array; here both accesses are exposed.
+   *
+   * @returns This same collection, typed as an array.
    */
   get sheets(): TimeSheet[] {
     return this;
   }
 
   /**
-   * Descarta as folhas carregadas (Ruby `Array#clear`), usado pelo
-   * `TaskJuggler#checkTimeSheet` para não reusar dados de folhas antigas.
+   * Drops the loaded sheets (Ruby `Array#clear`).
+   *
+   * Used by `TaskJuggler#checkTimeSheet` so stale sheet data is not reused.
    */
   clear(): void {
     this.length = 0;
   }
 
-  /** Ruby `TimeSheets#check`: checa cada folha. */
+  /**
+   * Ruby `TimeSheets#check`: validates every sheet.
+   */
   check(): void {
     for (const sheet of this) {
       sheet.check();
     }
   }
 
-  /** Ruby `TimeSheets#warnOnDelta`: compara cada folha com o plano. */
+  /**
+   * Ruby `TimeSheets#warnOnDelta`: compares every sheet with the plan.
+   */
   warnOnDelta(): void {
     for (const sheet of this) {
       sheet.warnOnDelta();

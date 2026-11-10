@@ -1,9 +1,10 @@
 /**
- * Montagem do envelope de execução (Fase 24 — adendo v2.1 §3.3/§3.4).
+ * Assembly of the execution envelope (phase 24 — addendum v2.1 §3.3/§3.4).
  *
- * O envelope é **dado puro**: mensagens estruturadas (sem ANSI), eco das
- * opções com defaults (só caminhos, nunca conteúdos) e `exitCode` calculado
- * pela matriz fiel a `apps/Tj3.rb` — o core **não** chama `exit`.
+ * The envelope is **pure data**: structured messages (no ANSI), echo of the
+ * options with defaults (paths only, never contents) and the `exitCode`
+ * computed by the matrix faithful to `apps/Tj3.rb` — the core does **not** call
+ * `exit`.
  *
  * @see docs/syntaxmesh/fases/fase-24-cli-adendo.md §3.3
  * @see docs/syntaxmesh/fases/fase-24-cli.md §5.3
@@ -20,12 +21,12 @@ import type {
   ExecutionSheetAppOptionsEcho,
 } from "./types.ts";
 
-/** Exit code de sucesso. */
+/** Success exit code. */
 export const EXIT_OK = 0;
-/** Exit code de erro (parse, relatório, warnings com `--abort-on-warnings`). */
+/** Error exit code (parse, report, warnings with `--abort-on-warnings`). */
 export const EXIT_ERROR = 1;
 
-/** Snapshot estruturado das mensagens do handler (adendo §3.3). */
+/** Structured snapshot of the handler messages (addendum §3.3). */
 export function snapshotMessages(
   handler: MessageHandlerInstance,
 ): ExecutionMessage[] {
@@ -39,11 +40,11 @@ export function snapshotMessages(
 }
 
 /**
- * `appOptions` do eco: o fechamento de leitura vira lista de caminhos.
+ * `appOptions` of the echo: the read closure becomes a list of paths.
  *
- * O contrato ecoa **só caminhos** (adendo §3.4); os conteúdos dos arquivos
- * semeados ficam no request, de onde o `execute` os consome — o envelope nunca
- * os devolve.
+ * The contract echoes **paths only** (addendum §3.4); the contents of the
+ * seeded files stay in the request, from where `execute` consumes them — the
+ * envelope never returns them.
  */
 function echoAppOptions(
   options: ExecutionSheetAppOptions | undefined,
@@ -56,10 +57,10 @@ function echoAppOptions(
 }
 
 /**
- * Eco do request com defaults aplicados (`options` do envelope).
+ * Echo of the request with the defaults applied (`options` of the envelope).
  *
- * Dos arquivos saem **apenas os caminhos**; `configContent` é o YAML que o
- * consumidor já possui (não é arquivo de projeto) e é ecoado como recebido.
+ * From the files only the **paths** come out; `configContent` is the YAML the
+ * consumer already holds (it is not a project file) and is echoed as received.
  */
 export function echoOptions(request: ExecutionRequest,): ExecutionOptionsEcho {
   const files = request.files ?? [];
@@ -71,7 +72,7 @@ export function echoOptions(request: ExecutionRequest,): ExecutionOptionsEcho {
     configContent: request.configContent ?? null,
     checkSyntax: request.checkSyntax === true,
     listReports: request.listReports ?? null,
-    // `--list-reports` é regex por definição no tj3 (default `*`).
+    // `--list-reports` is a regex by definition in tj3 (default `*`).
     listReportsIsRegex: request.listReportsIsRegex !== false,
     report: request.report ?? null,
     reportsIsRegex: request.reportsIsRegex === true,
@@ -91,12 +92,12 @@ export function echoOptions(request: ExecutionRequest,): ExecutionOptionsEcho {
   };
 }
 
-/** Chave canônica de path para o *lookup* em memória da lista do request. */
+/** Canonical path key for the in-memory lookup of the request list. */
 export function fileKey(path: string,): string {
   return normalizeInputPath(path,);
 }
 
-/** Monta o envelope final a partir das partes já calculadas. */
+/** Builds the final envelope from the parts already computed. */
 export function buildEnvelope(
   options: ExecutionOptionsEcho,
   handler: MessageHandlerInstance,

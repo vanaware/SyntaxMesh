@@ -1,30 +1,31 @@
 /**
- * RdoReport (Fase 14 Complemento C3) — Relatório Diário de Obra.
+ * RdoReport (phase 14 addendum C3) — Daily Construction Report.
  *
- * Extensão SyntaxMesh (sem equivalente no TJ Ruby): gera o RDO a partir de um
- * período selecionado, agrupando as entradas de diário por dia (`groupby date`,
- * default), tarefa, recurso, material ou conta. Cada bloco reúne as entradas do
- * grupo, a galeria de imagens (elementos `picture` + imagens embutidas em
- * `details`) e as tabelas de recursos/materiais/charges.
+ * SyntaxMesh extension (no equivalent in TJ Ruby): builds the RDO from a
+ * selected period, grouping the journal entries by day (`groupby date`, the
+ * default), task, resource, material or account. Each block collects the
+ * entries of the group, the image gallery (`picture` elements plus images
+ * embedded in `details`) and the resource/material/charge tables.
  *
- * Fontes de dados (todas já portadas):
+ * Data sources (all already ported):
  * - `Journal#entriesByDate` / `entriesByTask` / `entriesByResource` /
  *   `entriesByMaterial` / `entriesByAccount` (14C.0.4).
- * - `JournalEntry.pictures` + `picturesFromDetails` (14C.3.7).
- * - `project.alertLevels` (14C.0.7) para o nome/cor do nível de alerta.
- * - `assignedResources` + `getAllocatedTime`, `materialallocations` e `charge`
- *   para as tabelas do bloco (mesmas quedas do BreakdownReport, 14C.2.3).
+ * - `JournalEntry.pictures` plus `picturesFromDetails` (14C.3.7).
+ * - `project.alertLevels` (14C.0.7) for the alert level name/color.
+ * - `assignedResources` plus `getAllocatedTime`, `materialallocations` and
+ *   `charge` for the block tables (the same lookups as `BreakdownReport`,
+ *   14C.2.3).
  *
- * Saídas (ADR 027 — string/estrutura em memória, zero disco, zero DOM):
- * - HTML: seções por bloco com cabeçalho, entradas, galeria e tabelas.
- * - JSON: aninhado por `groupby` com o array de imagens de cada entrada.
+ * Outputs (ADR 027 — strings and in-memory structures, no disk, no DOM):
+ * - HTML: one section per block with header, entries, gallery and tables.
+ * - JSON: nested by `groupby` with the image array of every entry.
  *
- * Imagens relativas: o `src` é emitido como descritor relativo por default; um
- * `ImageStore` (Fase 19) injeta a resolução via {@link RdoReport.setImageResolver}
- * (14C.3.12).
+ * Relative images: `src` is emitted as a relative descriptor by default; an
+ * `ImageStore` (phase 19) injects the resolution through
+ * {@link RdoReport.setImageResolver} (14C.3.12).
  *
- * O tipo é registrado na fábrica de conteúdo sob `rdoreport`
- * (`ReportType.RdoReport`), removendo a âncora `NotYetImplementedError` de
+ * The type is registered in the content factory under `rdoreport`
+ * (`ReportType.RdoReport`), removing the `NotYetImplementedError` anchor of
  * 14C.0.10.
  *
  * @see docs/syntaxmesh/fases/fase-14-relatorios-complemento-tarefas.md (14C.3)
@@ -54,58 +55,87 @@ import { picturesFromDetails, picturesToHtml, } from "./gallery.ts";
 import { XMLBlob, XMLElement, } from "../xml/xml-element.ts";
 import { registerContentFactory, } from "../model/report-content.ts";
 
-/** Critério de agrupamento dos blocos (`groupby`). */
+/** Criterion used to group the blocks (`groupby`). */
 export type RdoGroupBy = "date" | "task" | "resource" | "material" | "account";
 
-/** Tipo de tabela do bloco (título/coluna correspondente no relatório). */
+/** Kind of block table (the matching title/column in the report). */
 export type RdoTableKind = "resources" | "materials" | "charges";
 
-/** Imagem serializada de uma entrada (JSON/HTML). */
+/** Serialized image of an entry (JSON/HTML). */
 export interface RdoImage {
+  /** Relative path of the image file. */
   path: string;
+  /** Alternative text, or `null` for none. */
   alt: string | null;
+  /** Caption rendered under the image, or `null` for none. */
   caption: string | null;
+  /** Horizontal alignment, or `null` for the default. */
   align: PictureAlign | null;
+  /** Rendered width in pixels, or `null` for the intrinsic size. */
   width: number | null;
 }
 
-/** Entrada de diário já resolvida para o RDO. */
+/** A journal entry already resolved for the RDO. */
 export interface RdoEntry {
+  /** Entry date formatted as `YYYY-MM-DD`. */
   date: string;
+  /** One-line headline of the entry. */
   headline: string;
+  /** Short summary, or `null` when the entry has none. */
   summary: string | null;
+  /** Full text of the entry, or `null` when the entry has none. */
   details: string | null;
+  /** Name of the entry author, or `null` when unknown. */
   author: string | null;
+  /** Display name of the alert level, or `null` when not set. */
   alert: string | null;
+  /** Id of the alert level (`green`/`yellow`/`red`), or `null`. */
   alertId: string | null;
+  /** Index of the alert level, `0` being the lowest. */
   alertLevel: number;
+  /** Free-form flags attached to the entry. */
   flags: string[];
+  /** Id of the property the entry belongs to, or `null` for project-level. */
   entity: string | null;
+  /** Markup format of `summary`/`details` (`wiki`, `markdown`, …). */
   format: string;
+  /** Images declared or embedded in the entry. */
   pictures: RdoImage[];
 }
 
-/** Linha das tabelas de recursos/materiais/charges de um bloco. */
+/** Row of the resource/material/charge tables of a block. */
 export interface RdoTableRow {
+  /** Id of the entity the row describes. */
   id: string;
+  /** Human-readable name of the entity. */
   name: string;
+  /** Extra detail (effort, quantity, charge mode, …). */
   detail: string;
+  /** Numeric amount (effort in days, cost, charge value, …). */
   amount: number;
 }
 
-/** Bloco do RDO: um dia, tarefa, recurso, material ou conta. */
+/** One RDO block: a day, task, resource, material or account. */
 export interface RdoGroup {
+  /** Id of the entity (or the date string) the block aggregates. */
   id: string;
+  /** Display name of the block. */
   name: string;
+  /** Journal entries of the block, sorted by date. */
   entries: RdoEntry[];
+  /** Gallery of the block, deduplicated by path. */
   pictures: Picture[];
+  /** Name of the responsible resource, or `null` when not declared. */
   responsible: string | null;
+  /** Resources allocated to the tasks of the block. */
   resources: RdoTableRow[];
+  /** Materials allocated to the tasks of the block. */
   materials: RdoTableRow[];
+  /** Charges declared on the tasks of the block. */
   charges: RdoTableRow[];
 }
 
-/** Títulos das colunas, na ordem canônica do relatório. */
+/** Column titles, in the canonical order of the report. */
 const COLUMN_TITLES: Record<string, string> = {
   name: "Name",
   responsible: "Responsible",
@@ -116,7 +146,7 @@ const COLUMN_TITLES: Record<string, string> = {
   charges: "Charges",
 };
 
-/** Ordem default quando o relatório não declara `columns`. */
+/** Default order used when the report does not declare `columns`. */
 const DEFAULT_COLUMN_ORDER = [
   "name",
   "responsible",
@@ -127,7 +157,7 @@ const DEFAULT_COLUMN_ORDER = [
   "charges",
 ];
 
-/** Atributos de `journalattributes` reconhecidos (14C.3.5). */
+/** `journalattributes` values recognized by the renderer (14C.3.5). */
 const JOURNAL_ATTRIBUTES = new Set([
   "alert",
   "author",
@@ -140,26 +170,41 @@ const JOURNAL_ATTRIBUTES = new Set([
   "summary",
 ],);
 
-/** Formato de data usado nos blocos e nas entradas. */
+/** Date format used for the blocks and for the entries. */
 const DATE_FORMAT = "%Y-%m-%d";
 
-/** Tabelas do bloco, na ordem canônica, com o título markdown. */
+/** Block tables, in the canonical order, with their markdown title. */
 const RDO_TABLES: [RdoTableKind, string,][] = [
   ["resources", "Resources",],
   ["materials", "Materials",],
   ["charges", "Charges",],
 ];
 
+/**
+ * The RDO content generator.
+ *
+ * `generateIntermediateFormat()` builds the blocks once and derives every
+ * output (HTML, JSON, Markdown) from them, so the sources are read only a
+ * single time per report.
+ */
 export class RdoReport extends ReportBase {
+  /** Blocks built by the last `generateIntermediateFormat()`. */
   private groups: RdoGroup[] = [];
+  /** HTML tree built by the last `generateIntermediateFormat()`. */
   private html: XMLElementLike[] = [];
+  /** Optional hook resolving a relative image path (phase 19 `ImageStore`). */
   private resolveRelative: ((path: string,) => string) | null = null;
 
+  /**
+   * Creates the content generator of an `rdoreport`.
+   *
+   * @param report Report node the generator renders.
+   */
   constructor(report: Report,) {
     super(report,);
   }
 
-  /** Critério de agrupamento efetivo (default `date`, como no parser). */
+  /** Effective grouping criterion (defaults to `date`, as in the parser). */
   groupby(): RdoGroupBy {
     const declared = this.a("groupby",);
     switch (declared) {
@@ -174,14 +219,18 @@ export class RdoReport extends ReportBase {
     }
   }
 
-  /** Blocos gerados (leitura, para testes e consumidores). */
+  /** Blocks generated by the last run (read by tests and consumers). */
   getGroups(): RdoGroup[] {
     return this.groups;
   }
 
   /**
-   * Registra o `ImageStore` (Fase 19) que resolve caminhos relativos no HTML
-   * (14C.3.12). `null` (default) mantém o caminho relativo como descritor.
+   * Registers the `ImageStore` (phase 19) that resolves relative paths in the
+   * HTML (14C.3.12). `null` (the default) keeps the relative path as a plain
+   * descriptor.
+   *
+   * @param resolve Hook turning a relative path into a renderable URL, or
+   *   `null` to disable the resolution.
    */
   setImageResolver(
     resolve: ((path: string,) => string) | null,
@@ -189,19 +238,19 @@ export class RdoReport extends ReportBase {
     this.resolveRelative = resolve;
   }
 
-  /** Monta os blocos e o HTML. As demais saídas derivam da mesma estrutura. */
+  /** Builds the blocks and the HTML; every other output derives from them. */
   override generateIntermediateFormat(): void {
     super.generateIntermediateFormat();
     this.groups = this.buildGroups();
     this.buildHtml();
   }
 
-  /** HTML completo do RDO (um elemento por bloco, dentro de `<section>`). */
+  /** Full RDO HTML (one element per block, inside a `<section>`). */
   to_html(): XMLElementLike[] {
     return this.html;
   }
 
-  /** JSON aninhado por `groupby` (14C.0.1 / 14C.3.11). */
+  /** JSON nested by `groupby` (14C.0.1 / 14C.3.11). */
   toJSON(): string {
     return JSON.stringify(
       {
@@ -215,12 +264,12 @@ export class RdoReport extends ReportBase {
   }
 
   /**
-   * Documento Markdown (extensão SyntaxMesh — adendo §10).
+   * Markdown document (SyntaxMesh extension — addendum §10).
    *
-   * Cada bloco vira `## <bloco>`; cada entrada de diário vira `### <manchete>`
-   * com um par de metadados em itálico, o texto e as imagens como `![alt](src)`.
-   * As tabelas de recursos/materiais/charges do bloco saem em pipes. Markdown
-   * puro: nenhuma tag HTML é emitida.
+   * Each block becomes `## <block>`; each journal entry becomes
+   * `### <headline>` followed by an italic metadata pair, the text and the
+   * images as `![alt](src)`. The resource/material/charge tables of the block
+   * are rendered as pipe tables. Plain Markdown: no HTML tag is emitted.
    */
   to_markdown(): string {
     const sections: (string | null)[] = [this.rt_to_markdown("header",),];
@@ -253,7 +302,7 @@ export class RdoReport extends ReportBase {
     return markdownSections(sections,);
   }
 
-  /** Uma entrada de diário em markdown (manchete, metadados, texto, imagens). */
+  /** One journal entry as markdown (headline, metadata, text, images). */
   private entryMarkdown(entry: RdoEntry,): string {
     const parts: string[] = [markdownHeading(3, entry.headline,).trimEnd(),];
     const meta: string[] = [];
@@ -270,10 +319,10 @@ export class RdoReport extends ReportBase {
   }
 
   // ------------------------------------------------------------------
-  // Construção dos blocos
+  // Block construction
   // ------------------------------------------------------------------
 
-  /** Despacha para o construtor do `groupby` corrente. */
+  /** Dispatches to the builder of the current `groupby`. */
   private buildGroups(): RdoGroup[] {
     switch (this.groupby()) {
       case "date":
@@ -289,7 +338,7 @@ export class RdoReport extends ReportBase {
     }
   }
 
-  /** Um bloco por dia com entradas (dias vazios não geram bloco). */
+  /** One block per day that has entries (empty days generate no block). */
   private buildByDate(): RdoGroup[] {
     const byDay = new Map<string, JournalEntry[]>();
     for (const entry of this.periodEntries()) {
@@ -314,7 +363,7 @@ export class RdoReport extends ReportBase {
     return groups;
   }
 
-  /** Um bloco por tarefa; `status_up` restringe às tarefas de topo. */
+  /** One block per task; `status_up` restricts the list to root tasks. */
   private buildByTasks(): RdoGroup[] {
     let list = new PropertyList<Task>(this.project.tasks,);
     list.query = this.currentQuery();
@@ -333,7 +382,7 @@ export class RdoReport extends ReportBase {
     );
   }
 
-  /** Um bloco por recurso (`hideresource` aplicado). */
+  /** One block per resource (`hideresource` applied). */
   private buildByResources(): RdoGroup[] {
     let list = new PropertyList<Resource>(this.project.resources,);
     list.query = this.currentQuery();
@@ -352,7 +401,7 @@ export class RdoReport extends ReportBase {
     );
   }
 
-  /** Um bloco por material (`hideMaterial`/`rollupMaterial` — 14C.6.6/6.9). */
+  /** One block per material (`hideMaterial`/`rollupMaterial` — 14C.6.6/6.9). */
   private buildByMaterials(): RdoGroup[] {
     const list = this.project.materials.toArray()
       .map((raw,) => raw as Material)
@@ -368,7 +417,7 @@ export class RdoReport extends ReportBase {
     );
   }
 
-  /** Um bloco por conta (`hideaccount`/`rollupaccount` aplicados). */
+  /** One block per account (`hideaccount`/`rollupaccount` applied). */
   private buildByAccounts(): RdoGroup[] {
     let list = new PropertyList<Account>(this.project.accounts,);
     list.query = this.currentQuery();
@@ -387,9 +436,14 @@ export class RdoReport extends ReportBase {
   }
 
   /**
-   * Constrói um bloco por entidade, usando o índice do journal (14C.0.4) para
-   * achar as entradas da entidade e intersectando com as entradas permitidas
-   * pelo período + `journalmode`. Entidades sem entradas não geram bloco.
+   * Builds one block per entity, using the journal index (14C.0.4) to find the
+   * entries of the entity and intersecting that with the entries allowed by the
+   * period plus `journalmode`. Entities without entries generate no block.
+   *
+   * @param entities Entities to iterate, already filtered and sorted.
+   * @param idOf Returns the id used as the block key.
+   * @param indexOf Returns every journal entry recorded for the entity.
+   * @returns One block per entity that has at least one allowed entry.
    */
   private entityGroups<T extends PropertyTreeNode,>(
     entities: T[],
@@ -417,7 +471,7 @@ export class RdoReport extends ReportBase {
     return groups;
   }
 
-  /** Monta o bloco completo (entradas, galeria, tabelas, responsável). */
+  /** Assembles the whole block (entries, gallery, tables, responsible). */
   private makeGroup(
     id: string,
     name: string,
@@ -442,8 +496,8 @@ export class RdoReport extends ReportBase {
   }
 
   /**
-   * Tarefas do bloco: a própria tarefa no `groupby task`, as tarefas das
-   * entradas no `groupby date` e nenhuma nos demais (tabelas vazias).
+   * Tasks of the block: the task itself under `groupby task`, the tasks of the
+   * entries under `groupby date`, and none otherwise (empty tables).
    */
   private tasksOf(
     entries: JournalEntry[],
@@ -465,10 +519,10 @@ export class RdoReport extends ReportBase {
   }
 
   // ------------------------------------------------------------------
-  // Entradas do período e modos de journal
+  // Entries of the period and journal modes
   // ------------------------------------------------------------------
 
-  /** Entradas do período do relatório, já sem as ocultas pelo `hideJournalEntry`. */
+  /** Entries of the report period, already minus those hidden by `hideJournalEntry`. */
   private periodEntries(): JournalEntry[] {
     const [start, end,] = this.periodRange();
     const journal = this.project.journal;
@@ -488,10 +542,13 @@ export class RdoReport extends ReportBase {
   }
 
   /**
-   * Aplica o `journalmode` (14C.3.4). Modos `status_*`/`alerts_*` selecionam a
-   * entrada corrente por tarefa (como o `Journal#to_rti` do Ruby); entradas de
-   * recursos/materiais/contas são preservadas (extensão SyntaxMesh — o Ruby só
-   * percorre tarefas nesses modos).
+   * Applies `journalmode` (14C.3.4). The `status_*`/`alerts_*` modes select the
+   * current entry per task (as Ruby's `Journal#to_rti`); entries of
+   * resources/materials/accounts are preserved (SyntaxMesh extension — Ruby only
+   * walks tasks in those modes).
+   *
+   * @param entries Entries of the period.
+   * @returns The entries selected by the declared mode.
    */
   private applyMode(entries: JournalEntry[],): JournalEntry[] {
     const mode = String(this.a("journalMode",) ?? "journal",);
@@ -517,8 +574,12 @@ export class RdoReport extends ReportBase {
   }
 
   /**
-   * Entradas correntes por tarefa de topo: a mais recente da própria tarefa
-   * ou, quando `deep`, a mais recente de toda a subárvore.
+   * Current entries per root task: the most recent one of the task itself or,
+   * when `deep`, the most recent one of the whole subtree.
+   *
+   * @param entries Entries to filter.
+   * @param deep Whether to descend into the whole subtree.
+   * @returns The selected entries, plus the non-task ones untouched.
    */
   private currentByTask(
     entries: JournalEntry[],
@@ -546,7 +607,7 @@ export class RdoReport extends ReportBase {
     return picked;
   }
 
-  /** Como {@link currentByTask}, mantendo só o maior nível de alerta do bloco. */
+  /** Like {@link currentByTask}, keeping only the highest alert level. */
   private alertByTask(entries: JournalEntry[],): JournalEntry[] {
     const current = this.currentByTask(entries, true,);
     const maxLevel = current.reduce(
@@ -556,7 +617,7 @@ export class RdoReport extends ReportBase {
     return current.filter((entry,) => entry.alertLevel === maxLevel);
   }
 
-  /** Tarefas de topo presentes nas entradas. */
+  /** Root tasks present in the entries. */
   private rootTasks(taskEntries: Map<Task, JournalEntry[]>,): Task[] {
     const roots = new Set<Task>();
     for (const task of taskEntries.keys()) {
@@ -572,8 +633,15 @@ export class RdoReport extends ReportBase {
   }
 
   /**
-   * Entrada corrente de uma tarefa: a mais recente da própria tarefa vence as
-   * dos filhos; `deep` desce por toda a subárvore, senão só os filhos diretos.
+   * Current entry of a task: the most recent one of the task itself wins over
+   * its children's; `deep` descends the whole subtree, otherwise only the direct
+   * children are considered.
+   *
+   * @param task Task whose current entry is being resolved.
+   * @param taskEntries Entries grouped by task.
+   * @param deep Whether to descend into the whole subtree.
+   * @returns The current entry, or `null` when neither the task nor its
+   *   descendants have one.
    */
   private currentOf(
     task: Task,
@@ -595,14 +663,14 @@ export class RdoReport extends ReportBase {
     return best;
   }
 
-  /** Nível de alerta pelo id (`green`/`yellow`/`red`); `null` se desconhecido. */
+  /** Alert level index by id (`green`/`yellow`/`red`); `null` when unknown. */
   private alertLevelIndex(id: string,): number | null {
     const levels = this.alertLevels();
     const index = levels.findIndex((level,) => level.id === id);
     return index < 0 ? null : index;
   }
 
-  /** Lista de níveis de alerta do projeto (default verde→vermelho). */
+  /** Alert level list of the project (defaults to green → red). */
   private alertLevels(): AlertLevelDefinition[] {
     const levels = this.project.get("alertLevels",) as
       | AlertLevelDefinition[]
@@ -611,10 +679,10 @@ export class RdoReport extends ReportBase {
   }
 
   // ------------------------------------------------------------------
-  // Conversão das entradas e das tabelas
+  // Conversion of the entries and tables
   // ------------------------------------------------------------------
 
-  /** Converte uma `JournalEntry` no registro serializável do RDO. */
+  /** Converts a `JournalEntry` into the serializable RDO record. */
   private makeEntry(entry: JournalEntry,): RdoEntry {
     const levels = this.alertLevels();
     const level = levels[entry.alertLevel];
@@ -645,11 +713,12 @@ export class RdoReport extends ReportBase {
   }
 
   /**
-   * Imagens declaradas (`picture`) seguidas das embutidas em `details`.
+   * Images declared (`picture`) followed by those embedded in `details`.
    *
-   * `hidepicture` (14C.6.7) é avaliado na **propriedade dona** da entrada: uma
-   * entrada cujo dono casa não contribui imagens — nem na lista da entrada nem
-   * na galeria do bloco (portanto também não conta para `maxpictures`).
+   * `hidepicture` (14C.6.7) is evaluated on the **owning property** of the entry:
+   * an entry whose owner matches contributes no images at all — neither in the
+   * entry list nor in the block gallery (and therefore it does not count towards
+   * `maxpictures` either).
    */
   private picturesOf(entry: JournalEntry,): Picture[] {
     const property = entry.property as PropertyTreeNode | null;
@@ -657,7 +726,7 @@ export class RdoReport extends ReportBase {
     return [...entry.pictures, ...picturesFromDetails(entry.details,),];
   }
 
-  /** Galeria do bloco: união das entradas, sem repetir o mesmo caminho. */
+  /** Gallery of the block: union of the entries, without repeating a path. */
   private groupPictures(entries: JournalEntry[],): Picture[] {
     const seen = new Set<string>();
     const pictures: Picture[] = [];
@@ -671,7 +740,7 @@ export class RdoReport extends ReportBase {
     return pictures;
   }
 
-  /** Recursos alocados às tarefas do bloco, com esforço no intervalo. */
+  /** Resources allocated to the tasks of the block, with effort in the range. */
   private resourceRows(
     tasks: Task[],
     range: [number, number,],
@@ -697,7 +766,7 @@ export class RdoReport extends ReportBase {
     return [...rows.values(),].sort(byId,);
   }
 
-  /** Materiais alocados às tarefas do bloco (quantidade × preço efetivo). */
+  /** Materials allocated to the tasks of the block (quantity × effective price). */
   private materialRows(tasks: Task[],): RdoTableRow[] {
     const rows = new Map<string, RdoTableRow>();
     for (const task of tasks) {
@@ -725,7 +794,7 @@ export class RdoReport extends ReportBase {
     return [...rows.values(),].sort(byId,);
   }
 
-  /** Charges declaradas nas tarefas do bloco. */
+  /** Charges declared on the tasks of the block. */
   private chargeRows(tasks: Task[],): RdoTableRow[] {
     const rows: RdoTableRow[] = [];
     for (const task of tasks) {
@@ -746,9 +815,9 @@ export class RdoReport extends ReportBase {
   }
 
   /**
-   * Responsável do bloco: o primeiro recurso de `responsible` (lista de
-   * recursos — pode vir resolvida como `Resource` ou como id, conforme o
-   * parser tenha resolvido a referência).
+   * Responsible of the block: the first resource of `responsible` (a resource
+   * list — it may arrive resolved as a `Resource` or as an id, depending on
+   * whether the parser resolved the reference).
    */
   private responsibleOf(tasks: Task[],): string | null {
     for (const task of tasks) {
@@ -776,7 +845,7 @@ export class RdoReport extends ReportBase {
   // HTML
   // ------------------------------------------------------------------
 
-  /** Constrói as seções do RDO (14C.3.10). */
+  /** Builds the RDO sections (14C.3.10). */
   private buildHtml(): void {
     const section = new XMLElement("section", { class: "tj_rdo", },);
     const columns = this.columnOrder();
@@ -796,7 +865,7 @@ export class RdoReport extends ReportBase {
     this.html = [frame,];
   }
 
-  /** Renderiza um bloco: cabeçalho, entradas, galeria e tabelas. */
+  /** Renders one block: header, entries, gallery and tables. */
   private renderGroup(group: RdoGroup, columns: string[],): XMLElementLike {
     const block = new XMLElement("article", {
       class: "tj_rdo_block",
@@ -848,7 +917,7 @@ export class RdoReport extends ReportBase {
     return block;
   }
 
-  /** Renderiza uma entrada respeitando `journalattributes` (14C.3.5). */
+  /** Renders one entry honouring `journalattributes` (14C.3.5). */
   private renderEntry(entry: RdoEntry,): XMLElementLike {
     const div = new XMLElement("div", { class: "tj_rdo_entry", },);
 
@@ -906,7 +975,7 @@ export class RdoReport extends ReportBase {
     return div;
   }
 
-  /** Renderiza uma tabela de linhas (`resources`/`materials`/`charges`). */
+  /** Renders a row table (`resources`/`materials`/`charges`). */
   private renderTable(
     kind: RdoTableKind,
     rows: RdoTableRow[],
@@ -936,10 +1005,10 @@ export class RdoReport extends ReportBase {
   }
 
   // ------------------------------------------------------------------
-  // Configuração
+  // Configuration
   // ------------------------------------------------------------------
 
-  /** Ordem efetiva das colunas (`columns` do relatório ∩ canônicas). */
+  /** Effective column order (`columns` of the report ∩ canonical ones). */
   private columnOrder(): string[] {
     const declared = this.a("columns",) as TableColumnDefinition[] | null;
     const ids = (declared ?? [])
@@ -948,7 +1017,7 @@ export class RdoReport extends ReportBase {
     return ids.length > 0 ? ids : [...DEFAULT_COLUMN_ORDER,];
   }
 
-  /** `journalattributes` contém `name`? (`*` = todos). */
+  /** Does `journalattributes` contain `name`? (`*` means all of them). */
   private hasJournalAttribute(name: string,): boolean {
     if (!JOURNAL_ATTRIBUTES.has(name,)) return false;
     const declared = this.a("journalAttributes",) as string[] | null;
@@ -956,13 +1025,13 @@ export class RdoReport extends ReportBase {
     return declared.includes(name,);
   }
 
-  /** Limite de imagens por bloco (`maxpictures`); `null` = ilimitado. */
+  /** Image limit per block (`maxpictures`); `null` means unlimited. */
   private maxPictures(): number | null {
     const declared = this.a("maxpictures",) as number | null;
     return declared && declared > 0 ? declared : null;
   }
 
-  /** Período do relatório (default: período do projeto). */
+  /** Period of the report (defaults to the project period). */
   private periodRange(): [TjTime | null, TjTime | null,] {
     const start = (this.a("start",) ?? this.project.get("start",)) as
       | TjTime
@@ -973,7 +1042,7 @@ export class RdoReport extends ReportBase {
     return [start ?? null, end ?? null,];
   }
 
-  /** Período serializado (`YYYY-MM-DD`) para o JSON. */
+  /** Period serialized as `YYYY-MM-DD` for the JSON output. */
   private periodJson(): { start: string | null; end: string | null } {
     const [start, end,] = this.periodRange();
     return {
@@ -982,7 +1051,7 @@ export class RdoReport extends ReportBase {
     };
   }
 
-  /** Converte um intervalo de datas em índices de slot. */
+  /** Converts a date interval into scheduling slot indices. */
   private idxRange(
     start: TjTime | null,
     end: TjTime | null,
@@ -994,30 +1063,30 @@ export class RdoReport extends ReportBase {
     ];
   }
 
-  /** Cenários reportados (default: cenário 0). */
+  /** Reported scenarios (defaults to scenario 0). */
   private scenarioIdxList(): number[] {
     const scenarios = this.a("scenarios",) as number[] | null;
     return scenarios && scenarios.length > 0 ? scenarios : [0,];
   }
 
-  /** Guard de tipo: a propriedade é uma `Task`? */
+  /** Type guard: is the property a `Task`? */
   private isTask(property: PropertyTreeNode,): boolean {
     return typeof (property as unknown as Task).container === "function" &&
       typeof (property as unknown as Task).assignedResources === "function";
   }
 }
 
-/** Formata um número sem casas decimais desnecessárias. */
+/** Formats a number without unnecessary decimals. */
 function formatNumber(value: number,): string {
   return Number.isInteger(value,) ? String(value,) : value.toFixed(2,);
 }
 
-/** Ordena linhas por id (determinismo das saídas). */
+/** Sorts rows by id (keeps the outputs deterministic). */
 function byId(a: RdoTableRow, b: RdoTableRow,): number {
   return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
 }
 
-// Registra o conteúdo de `rdoreport` na fábrica (14.11 / 14C.3.1).
+// Registers the `rdoreport` content in the factory (14.11 / 14C.3.1).
 registerContentFactory(
   "rdoreport",
   (report: unknown,): RdoReport => new RdoReport(report as Report,),

@@ -1,23 +1,23 @@
 /**
- * `man.ts` — fachada do `man` do `doc-core` (22.1b.7 / 24.9.1–24.9.3).
+ * `man.ts` — facade of the `doc-core` `man` command (22.1b.7 / 24.9.1–24.9.3).
  *
- * Reproduz o comportamento de `apps/Tj3Man.rb` sem tocar em disco, no
- * terminal ou no navegador: o resultado é **dado** — conteúdo textual e, no
- * formato HTML, o mapa de arquivos do manual. Quem imprime ou grava é a CLI.
+ * Reproduces the behaviour of `apps/Tj3Man.rb` without touching the disk, the
+ * terminal or the browser: the result is **data** — textual content and, in the
+ * HTML format, the manual's file map. The CLI is what prints or writes it.
  *
- * Três formatos:
+ * Three formats:
  *
- * - `text` — documentação de terminal (`KeywordDocumentation#to_s`); sem
- *   keyword, a lista de todas as keywords documentadas (`Tj3Man.rb:110-120`).
- * - `html` — o manual completo (`UserManual#generate`) ou uma única página;
- *   o resultado vem em `files`, pronto para o `--output-dir` da CLI.
- * - `smx` — recorte de fonte colável: o exemplo anotado da keyword
- *   (`Pattern#exampleFile`) ou, sem exemplo, o esqueleto da sintaxe. Sem
- *   keyword, uma folha de referência com todas as keywords em comentários.
+ * - `text` — terminal documentation (`KeywordDocumentation#to_s`); without a
+ *   keyword, the list of every documented keyword (`Tj3Man.rb:110-120`).
+ * - `html` — the complete manual (`UserManual#generate`) or a single page; the
+ *   result arrives in `files`, ready for the CLI `--output-dir`.
+ * - `smx` — a pasteable source excerpt: the annotated example of the keyword
+ *   (`Pattern#exampleFile`) or, without an example, the syntax skeleton.
+ *   Without a keyword, a reference sheet with every keyword in comments.
  *
- * A resolução de keywords usa o {@link TernarySearchTree} com casamento por
- * prefixo (`TernarySearchTree#find(prefix, true)`), como o `tj3man`; a
- * ambiguidade vira **aviso** com a lista de candidatos, não erro.
+ * Keyword resolution uses the {@link TernarySearchTree} with prefix matching
+ * (`TernarySearchTree#find(prefix, true)`), like `tj3man`; ambiguity becomes a
+ * **warning** listing the candidates, not an error.
  *
  * @see docs/taskjuggler/lib/taskjuggler/apps/Tj3Man.rb
  * @see docs/syntaxmesh/fases/fase-22-vscode-extension-tarefas.md §Bloco G
@@ -34,56 +34,57 @@ import {
   MANUAL_STYLESHEET_NAME,
 } from "./manual/manual-css.ts";
 
-/** Formatos de saída aceitos pela seção `man`. */
+/** Output formats accepted by the `man` section. */
 export type ManFormat = "text" | "html" | "smx";
 
-/** Arquivo produzido no formato `html` (a CLI grava no `--output-dir`). */
+/** A file produced in the `html` format (the CLI writes it to `--output-dir`). */
 export interface ManFile {
-  /** Caminho relativo ao diretório de saída. */
+  /** Path relative to the output directory. */
   name: string;
-  /** Conteúdo integral do arquivo. */
+  /** Full content of the file. */
   contents: string;
 }
 
-/** Aviso produzido pela resolução de keywords. */
+/** Warning produced by the keyword resolution. */
 export interface ManMessage {
-  /** `error` interrompe a saída daquela keyword; `warning` não. */
+  /** `error` interrupts the output of that keyword; `warning` does not. */
   level: "error" | "warning";
-  /** Identificador estável (`man_no_matches`, …). */
+  /** Stable identifier (`man_no_matches`, …). */
   id: string;
-  /** Texto em inglês, pronto para a CLI imprimir. */
+  /** Text in English, ready for the CLI to print. */
   text: string;
 }
 
-/** Pedido da seção `man`. */
+/** Request of the `man` section. */
 export interface ManRequest {
-  /** Formato desejado (default `text`). */
+  /** Desired format (default `text`). */
   format?: ManFormat;
-  /** Keywords pedidas; vazio = documento completo. */
+  /** Requested keywords; empty = the complete document. */
   keywords?: readonly string[];
-  /** Colore a saída textual com ANSI (`--no-color` desliga na CLI). */
+  /** Colors the textual output with ANSI (`--no-color` turns it off). */
   color?: boolean;
-  /** Omite keywords `deprecated`/`removed`. */
+  /** Omits `deprecated`/`removed` keywords. */
   ignoreOld?: boolean;
 }
 
-/** Resultado da seção `man`. */
+/** Result of the `man` section. */
 export interface ManOutput {
-  /** Formato efetivamente usado. */
+  /** Format actually used. */
   format: ManFormat;
-  /** Conteúdo textual (vazio no formato `html`, que usa `files`). */
+  /** Textual content (empty in the `html` format, which uses `files`). */
   content: string;
-  /** Arquivos do manual (só no formato `html`). */
+  /** Manual files (only in the `html` format). */
   files: ManFile[];
-  /** Avisos da resolução de keywords. */
+  /** Messages of the keyword resolution. */
   messages: ManMessage[];
 }
 
 /**
- * Gera a documentação pedida.
+ * Generates the requested documentation.
  *
- * Não lança para keyword desconhecida: a falha volta em `messages` para o
- * consumidor decidir o `exitCode` (a CLI usa `1`, como o `tj3man`).
+ * It does not throw for an unknown keyword: the failure comes back in
+ * `messages` so the consumer decides the `exitCode` (the CLI uses `1`, like
+ * `tj3man`).
  */
 export function generateMan(request: ManRequest = {},): ManOutput {
   const format = request.format ?? "text";
@@ -102,7 +103,7 @@ export function generateMan(request: ManRequest = {},): ManOutput {
 
 // --- Formatos ---------------------------------------------------------------
 
-/** Formato `text`: `to_s` de cada keyword, ou a lista completa. */
+/** `text` format: the `to_s` of every keyword, or the complete list. */
 function generateText(
   keywords: string[],
   request: ManRequest,
@@ -133,10 +134,10 @@ function generateText(
 }
 
 /**
- * Formato `smx`: exemplo anotado ou esqueleto da sintaxe.
+ * `smx` format: the annotated example or the syntax skeleton.
  *
- * O texto é pensado para colar num projeto — por isso usa o comentário do
- * próprio dialeto (`# …`) e não a marcação do manual.
+ * The text is meant to be pasted into a project — hence the dialect's own
+ * comment (`# …`) instead of the manual markup.
  */
 function generateSmx(
   keywords: string[],
@@ -174,7 +175,7 @@ function generateSmx(
   };
 }
 
-/** Formato `html`: manual completo, ou uma página. */
+/** `html` format: the complete manual, or one page. */
 function generateHtml(
   keywords: string[],
   request: ManRequest,
@@ -194,8 +195,8 @@ function generateHtml(
     };
   }
 
-  // Uma página só: não gera o manual inteiro, mas precisa da referência
-  // ligada ao manual (cabeçalho, rodapé, navegação e exemplos).
+  // A single page: it does not generate the whole manual, but needs the
+  // reference bound to the manual (header, footer, navigation and examples).
   const manual = new UserManual({ ignoreOld: request.ignoreOld ?? false, },);
   manual.reference.all();
 
@@ -217,9 +218,9 @@ function generateHtml(
   return { format: "html", content: "", files, messages, };
 }
 
-// --- Auxiliares -------------------------------------------------------------
+// --- Helpers ----------------------------------------------------------------
 
-/** Cabeçalho `# keyword: syntax`, exemplo anotado e propósito, nessa ordem. */
+/** `# keyword: syntax` header, annotated example and purpose, in that order. */
 function smxBlock(documentation: KeywordDocumentation,): string {
   const header = `# ${documentation.title()}: ${documentation.syntax}`;
   const example = exampleFor(documentation,);
@@ -229,12 +230,12 @@ function smxBlock(documentation: KeywordDocumentation,): string {
 }
 
 /**
- * Resolve cada keyword pedida, acumulando mensagens (fiel ao `Tj3Man`).
+ * Resolves every requested keyword, accumulating messages (faithful to
+ * `Tj3Man`).
  *
- * Um prefixo que casa **uma única** keyword é resolvido para ela: o `tj3man`
- * repassa o texto digitado ao `to_s` e imprime nada, o que só frustra quem
- * digita `syntaxmesh man effor`. A ambiguidade continua sendo aviso, como no
- * Ruby.
+ * A prefix matching **a single** keyword is resolved to it: `tj3man` forwards the
+ * typed text to `to_s` and prints nothing, which only frustrates whoever types
+ * `syntaxmesh man effor`. Ambiguity remains a warning, as in Ruby.
  */
 function resolveKeywords(
   reference: SyntaxReference,
@@ -275,10 +276,10 @@ function resolveKeywords(
   return resolved;
 }
 
-/** Cache dos arquivos de exemplo já processados (um por corpus). */
+/** Cache of the already processed example files (one per corpus). */
 const exampleCache = new Map<string, ExampleSnippet>();
 
-/** Exemplo anotado da keyword (ou `null` quando ela não declara um). */
+/** Annotated example of the keyword (or `null` when it declares none). */
 function exampleFor(documentation: KeywordDocumentation,): string | null {
   const file = documentation.pattern.exampleFile;
   if (!file) return null;

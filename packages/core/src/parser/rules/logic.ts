@@ -1,14 +1,14 @@
 /**
- * TjpSyntaxRules — bloco 4a: lógica (subfase 10.14.4).
+ * TjpSyntaxRules — block 4a: logic (sub-phase 10.14.4).
  *
- * Port das regras `logicalExpression` / `operation` / `operand` / `operator`
- * / `argument*` e das variantes `flag*` de `TjpSyntaxRules.rb`. O parser
- * constrói árvores `LogicalExpression`/`LogicalOperation` com folhas
- * `LogicalAttribute`/`LogicalFlag`/`LogicalFunction`; a avaliação (eval) e a
- * validação de aridade das funções chegam na Fase 11.
+ * Port of the `logicalExpression` / `operation` / `operand` / `operator` /
+ * `argument*` rules and of the `flag*` variants of `TjpSyntaxRules.rb`. The
+ * parser builds `LogicalExpression`/`LogicalOperation` trees with
+ * `LogicalAttribute`/`LogicalFlag`/`LogicalFunction` leaves; the evaluation
+ * (eval) and the function arity validation arrive in phase 11.
  *
- * `functions`/`functionsBody`/`functionPatterns` não são usadas pelo parser —
- * existem só para documentação (como no Ruby).
+ * `functions`/`functionsBody`/`functionPatterns` are not used by the parser —
+ * they exist for documentation only (as in Ruby).
  *
  * @see docs/taskjuggler/lib/taskjuggler/TjpSyntaxRules.rb
  */
@@ -22,14 +22,14 @@ import {
 import type { ProjectFileParser, } from "../project-file-parser.ts";
 import { rule, } from "./helpers.ts";
 
-/** Valor de `sourceFileInfo` do Ruby (SFI do primeiro token do padrão). */
+/** Value of Ruby's `sourceFileInfo` (SFI of the first token of the pattern). */
 const curSfi = (p: ProjectFileParser,) => p.sourceFileInfo[0] ?? null;
 
-/** Flags declaradas no projeto (Ruby `@project['flags']`). */
+/** Flags declared in the project (Ruby `@project['flags']`). */
 const projectFlags = (p: ProjectFileParser,): string[] =>
   (p.project?.get("flags",) as string[] | undefined) ?? [];
 
-/** Registra o bloco de regras de expressões lógicas. */
+/** Registers the logical expression rule block. */
 export function registerLogicRules(p: ProjectFileParser,): void {
   // ------------------------------------------------------------------
   // logicalExpression / operation / operand / operator (10.14.4.1-2)
@@ -137,7 +137,8 @@ export function registerLogicRules(p: ProjectFileParser,): void {
       }
       return new LogicalAttribute(
         attribute ?? scenario!,
-        // scenarioIdx já validado acima (erro se undefined); cenário 0 existe.
+        // scenarioIdx already validated above (error if undefined); scenario 0
+        // exists.
         this.project!.scenario(scenarioIdx ?? 0,)!,
       );
     },);
@@ -303,7 +304,7 @@ export function registerLogicRules(p: ProjectFileParser,): void {
   },);
 
   rule(p, "functionPatterns", () => {
-    // Regras apenas para documentação (não usadas pelo parser).
+    // Rules for documentation only (not used by the parser).
     p.pattern(["_hasalert", "_(", "$INTEGER", "_,", "!date", "_)",],);
     p.pattern(["_isactive", "_(", "$ID", "_)",],);
     p.pattern(["_ischildof", "_(", "$ID", "_)",],);

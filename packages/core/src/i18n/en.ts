@@ -1,8 +1,8 @@
 /**
- * Idioma en (canônico) da linguagem TJP.
+ * `en` (canonical) language of the TJP language.
  *
- * Cada keyword canônico tem a própria forma como único sinônimo — o
- * inglês é a língua nativa do Core; os demais idiomas traduzem para cá.
+ * Every canonical keyword has its own form as the only synonym — English is
+ * the native language of the Core; the other languages translate into it.
  */
 import type { LanguageDefinition, } from "./types.ts";
 import type { CanonicalKeyword, } from "./canonical.ts";
@@ -12,6 +12,7 @@ const keywords = Object.fromEntries(
   CANONICAL_KEYWORDS.map((k,) => [k, [k,],]),
 ) as Record<CanonicalKeyword, string[]>;
 
+/** Canonical English definition: every keyword maps to itself. */
 export const en: LanguageDefinition = {
   id: "en",
   name: "English",

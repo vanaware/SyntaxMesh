@@ -1,18 +1,18 @@
 /**
- * Interface mínima para o que `AttributeBase` precisa saber sobre
- * a propriedade que o contém.
+ * Minimal interface for what `AttributeBase` needs to know about the property
+ * that contains it.
  *
- * Na Fase 3, só temos `id` e `name`. A Fase 4 (PropertyTreeNode)
- * expande esta interface (adiciona `project`, `children`, `parent`, etc.).
+ * In phase 3 we only have `id` and `name`. Phase 4 (PropertyTreeNode) expands
+ * this interface (adds `project`, `children`, `parent`, etc.).
  *
- * Esta interface evita que a Fase 3 importe `PropertyTreeNode` (que só
- * existe na Fase 4). Quando a Fase 4 chegar, `PropertyTreeNode implements
- * PropertyLike` sem quebrar nada.
+ * This interface keeps phase 3 from importing `PropertyTreeNode` (which only
+ * exists in phase 4). Once phase 4 lands, `PropertyTreeNode implements
+ * PropertyLike` without breaking anything.
  */
 export interface PropertyLike {
-  /** ID completo da propriedade (ex: "proj.task1.subtask2"). */
+  /** Full ID of the property (e.g. "proj.task1.subtask2"). */
   readonly id: string;
 
-  /** Nome amigável da propriedade. */
+  /** Friendly name of the property. */
   readonly name: string;
 }

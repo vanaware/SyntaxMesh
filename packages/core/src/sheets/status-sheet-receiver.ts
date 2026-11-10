@@ -1,8 +1,8 @@
 /**
- * StatusSheetReceiver — receiver concreto de status sheets (18.10).
+ * StatusSheetReceiver — concrete receiver of status sheets (18.10).
  *
- * Port de `docs/taskjuggler/lib/taskjuggler/StatusSheetReceiver.rb`. Só
- * configuração: o fluxo vem de `SheetReceiver` (18.7).
+ * Port of `docs/taskjuggler/lib/taskjuggler/StatusSheetReceiver.rb`. Configuration
+ * only: the flow comes from `SheetReceiver` (18.7).
  *
  * @see docs/taskjuggler/lib/taskjuggler/StatusSheetReceiver.rb
  * @see docs/syntaxmesh/fases/fase-18-time-status-sheets.md (18.10)
@@ -10,7 +10,15 @@
 
 import { SheetReceiver, } from "./sheet-receiver.ts";
 
+/**
+ * Receiver that ingests returned status sheets.
+ */
 export class StatusSheetReceiver extends SheetReceiver {
+  /**
+   * Creates the receiver with the status sheet defaults.
+   *
+   * @param appName Name of the app that signs replies and the log.
+   */
   constructor(appName: string,) {
     super(appName, "status",);
 
@@ -23,10 +31,10 @@ export class StatusSheetReceiver extends SheetReceiver {
     this.signatureFile = `${this.templateDir}/acceptable_intervals`;
     this.logFile = "statussheets.log";
 
-    // Grupo 1 = recurso, grupo 2 = fim do período (`YYYY-MM-DD`).
+    // Group 1 = resource, group 2 = period end (`YYYY-MM-DD`).
     this.sheetHeader =
       /^[ ]*statussheet\s([a-zA-Z_][a-zA-Z0-9_]*)\s[0-9\-:+]*\s-\s([0-9]*-[0-9]*-[0-9]*)/mu;
-    // Grupo 1 = intervalo completo (a "assinatura" aceita pelo receiver).
+    // Group 1 = full interval (the "signature" accepted by the receiver).
     this.signatureFilter =
       /^[ ]*statussheet\s[a-zA-Z_][a-zA-Z0-9_]*\s([0-9:\-+]*\s-\s[0-9:\-+]*)/mu;
     this.emailSubject = "Status report from %s for %s";

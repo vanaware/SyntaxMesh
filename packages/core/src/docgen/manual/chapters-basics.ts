@@ -1,28 +1,29 @@
 /**
- * `chapters-basics.ts` — capítulos introdutórios do manual (22.1b.5).
+ * `chapters-basics.ts` — introductory manual chapters (22.1b.5).
  *
- * Texto-fonte em markup RichText (o mesmo dialeto dos `.tm` históricos), em
- * inglês e restrito ao universo SyntaxMesh: só a extensão `.smx` é citada.
- * O Ruby lê esses capítulos de `lib/taskjuggler/manual/*`; aqui eles são
- * **constantes** — o `doc-core` não faz E/S.
+ * Source text in RichText markup (the same dialect of the historic `.tm`
+ * files), in English and restricted to the SyntaxMesh universe: only the `.smx`
+ * extension is mentioned. Ruby reads these chapters from
+ * `lib/taskjuggler/manual/*`; here they are **constants** — `doc-core` performs
+ * no I/O.
  *
- * Regras do dialeto usadas: `== Título ==`, `=== Subtítulo ===`, linhas de
- * código indentadas por um espaço (viram `<pre>`), listas com `* ` e `# `,
- * referências internas com `[[keyword]]` e funções de bloco `<[example …]>`.
+ * Dialect rules used: `== Title ==`, `=== Subtitle ===`, code lines indented by
+ * one space (become `<pre>`), lists with `* ` and `# `, internal references
+ * with `[[keyword]]` and block functions `<[example …]>`.
  *
  * @see ./chapters.ts
  * @see docs/syntaxmesh/fases/fase-22-vscode-extension-tarefas.md §Bloco F
  */
 
-/** Um capítulo do manual: nome do arquivo (sem extensão) + texto. */
+/** One manual chapter: file name (without extension) + text. */
 export interface ManualChapter {
-  /** Nome do arquivo gerado (`<name>.html`) e âncora da tabela de conteúdos. */
+  /** Name of the generated file (`<name>.html`) and table-of-contents anchor. */
   readonly name: string;
-  /** Texto em markup RichText. */
+  /** Text in RichText markup. */
   readonly text: string;
 }
 
-/** Introdução, instalação e primeiros passos. */
+/** Introduction, installation and first steps. */
 export const BASIC_CHAPTERS: readonly ManualChapter[] = [
   {
     name: "Intro",

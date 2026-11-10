@@ -1,22 +1,24 @@
 /**
- * XMLDocument — port fiel de `XMLDocument.rb` (Fase 17.2).
+ * XMLDocument — faithful port of `XMLDocument.rb` (phase 17.2).
  *
- * Contentor de elementos de topo. Não é um `XMLElement`: apenas acumula
- * filhos e os concatena na serialização (`to_s` chama `element.to_s(0)` de
- * cada um, sem qualquer separador).
+ * Container of top-level elements. It is not an `XMLElement`: it only
+ * accumulates children and concatenates them on serialization (`to_s` calls
+ * `element.to_s(0)` on each one, with no separator at all).
  *
- * Diferenças entre `XMLDocument#<<` e `XMLElement#<<` que o port preserva:
- *   - `XMLDocument` **achata** o array (`arg.flatten`) e **não valida** o
- *     conteúdo — nem remove `nil` de dentro do array. No Ruby um `nil` ali
- *     vira `nil.to_s == ''`; o `to_s` daqui espelha isso (Categoria C).
- *     `XMLElement#<<` não achata e levanta para non-`XMLElement`.
- *   - `initialize(&block)` atribui o resultado do bloco **sem** qualquer
- *     processamento (o Ruby não aceita bloco que devolva elemento isolado).
+ * Differences between `XMLDocument#<<` and `XMLElement#<<` that the port
+ * preserves:
+ *   - `XMLDocument` **flattens** the array (`arg.flatten`) and **validates
+ *     nothing** — it does not even remove `nil` from inside the array. In Ruby
+ *     a `nil` there becomes `nil.to_s == ''`; our `to_s` mirrors that
+ *     (Category C). `XMLElement#<<` does not flatten and throws for
+ *     non-`XMLElement` values.
+ *   - `initialize(&block)` assigns the block result **without** any processing
+ *     (Ruby does not accept a block that returns a lone element).
  *
- * Escrita em arquivo (17.2.7): o browser não tem filesystem (ADR 027).
- * `write('.')` — que no Ruby despeja em `$stdout` — devolve a string do
- * documento; qualquer outro nome é no-op com warning, seguindo o precedente
- * de `CSVFile.write`. Escrita real fica ancorada na Fase 19 (ADR 037).
+ * Writing to a file (17.2.7): the browser has no filesystem (ADR 027).
+ * `write('.')` — which in Ruby dumps to `$stdout` — returns the document string;
+ * any other name is a no-op with a warning, following the precedent of
+ * `CSVFile.write`. Real writing is anchored in phase 19 (ADR 037).
  *
  * @see docs/taskjuggler/lib/taskjuggler/XMLDocument.rb
  * @see docs/syntaxmesh/decisoes/038-substituicao-xml.md
@@ -26,21 +28,21 @@
 import { MessageHandlerInstance, } from "../message-handler.ts";
 import { type XmlChild, XMLElement, } from "./xml-element.ts";
 
-/** Bloco do construtor: devolve a lista de elementos de topo. */
+/** Constructor block: returns the list of top-level elements. */
 export type XmlDocumentBlock = (
   block: XmlDocumentBlock,
 ) => XMLElement[] | void;
 
 /**
- * Argumento aceito por `append` (Ruby `<<`). Arrays aninhados são aceitos
- * porque o Ruby faz `arg.flatten` antes de acumular.
+ * Argument accepted by `append` (Ruby `<<`). Nested arrays are accepted because
+ * Ruby runs `arg.flatten` before accumulating.
  */
 export type XmlDocumentChild = XmlChild | XmlDocumentChild[];
 
 /**
- * Ruby `arg.flatten`: só achatou sub-arrays; `null` continua na lista (ao
- * contrário de `compact`). Implementação própria porque `Array.flat(Infinity)`
- * com o tipo recursivo `XmlDocumentChild` estoura a instanciação do TS.
+ * Ruby `arg.flatten`: flattens only sub-arrays; `null` stays in the list
+ * (unlike `compact`). Own implementation because `Array.flat(Infinity)` with the
+ * recursive type `XmlDocumentChild` blows up TS instantiation.
  */
 function flattenRuby(arg: XmlDocumentChild,): XmlDocumentChild[] {
   const out: XmlDocumentChild[] = [];
@@ -53,19 +55,30 @@ function flattenRuby(arg: XmlDocumentChild,): XmlDocumentChild[] {
   return out;
 }
 
-/** Documento XML: agregador de elementos de topo. */
+/** XML document: aggregator of top-level elements. */
 export class XMLDocument {
-  /** Elementos de topo (`@elements`). Protegido no Ruby; idem aqui. */
+  /** Top-level elements (Ruby `@elements`). Protected in Ruby; same here. */
   protected readonly elements: XMLElement[];
 
+  /**
+   * Ruby `initialize(&block)` — the block result becomes the element list.
+   *
+   * @param block Callback that returns the top-level elements.
+   */
   constructor(block?: XmlDocumentBlock,) {
     this.elements = block ? ((block(block,) ?? []) as XMLElement[]) : [];
   }
 
-  /** Ruby `<<` (17.2.4–5). */
+  /**
+   * Ruby `<<` (17.2.4–5): appends one element or flattens a list of them.
+   *
+   * @param arg Element or (nested) list of elements to append.
+   * @throws Error When the argument is neither an array, `null` nor an
+   *   `XMLElement`.
+   */
   append(arg: XmlDocumentChild,): void {
     if (Array.isArray(arg,)) {
-      // Ruby: `@elements += arg.flatten` — achatou e não valida nada.
+      // Ruby: `@elements += arg.flatten` — flattened and validated nothing.
       for (const item of flattenRuby(arg,)) {
         this.elements.push(item as XMLElement,);
       }
@@ -82,11 +95,15 @@ export class XMLDocument {
     }
   }
 
-  /** Ruby `to_s` (17.2.6) — concatena cada elemento com indentação zero. */
+  /**
+   * Ruby `to_s` (17.2.6) — concatenates every element with zero indentation.
+   *
+   * @returns The document as XML text.
+   */
   to_s(): string {
     let str = "";
     for (const element of this.elements) {
-      // Ruby chama `element.to_s` mesmo em `nil` → `nil.to_s == ''`.
+      // Ruby calls `element.to_s` even on `nil` → `nil.to_s == ''`.
       if (element === null || element === undefined) continue;
       str += element.to_s(0,);
     }
@@ -94,19 +111,23 @@ export class XMLDocument {
   }
 
   /**
-   * Ruby `write(filename)` (17.2.7): `'.'` vai para `$stdout`; nomes de
-   * arquivo abrem e fecham um `File`. No browser devolvemos a string no caso
-   * `'.'` e avisamos nos demais.
+   * Ruby `write(filename)` (17.2.7): `'.'` goes to `$stdout`; file names open
+   * and close a `File`. In the browser we return the string for the `'.'` case
+   * and warn for the others.
    *
-   * ⚠️ O Ruby usa `f.puts element.to_s(0)` — `puts` só acrescenta `\n` quando a
-   * string ainda não termina em `\n`. Isso faz `write('.')` **diferir** de
-   * `to_s()`, que concatena sem separador algum. O port preserva a diferença.
+   * ⚠️ Ruby uses `f.puts element.to_s(0)` — `puts` only appends `\n` when the
+   * string does not already end with `\n`. That makes `write('.')` **differ**
+   * from `to_s()`, which concatenates with no separator at all. The port
+   * preserves the difference.
+   *
+   * @param filename `'.'` for the document text; anything else is a no-op.
+   * @returns The document text for `'.'`, `undefined` otherwise.
    */
   write(filename: string,): string | undefined {
     if (filename === ".") {
       let str = "";
       for (const element of this.elements) {
-        // `nil.to_s == ''` no Ruby, e `puts ''` imprime uma linha em branco.
+        // `nil.to_s == ''` in Ruby, and `puts ''` prints a blank line.
         const text = element === null || element === undefined ?
           "" :
           element.to_s(0,);

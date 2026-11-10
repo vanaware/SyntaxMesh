@@ -1,17 +1,17 @@
 /**
- * TjpSyntaxRules — bloco 4b: tracking (subfase 10.14.1/2/5).
+ * TjpSyntaxRules — block 4b: tracking (sub-phase 10.14.1/2/5).
  *
- * Port das regras de entrada de dados `timeSheet*` / `tsTask*` / `tsStatus*`,
- * `statusSheet*`, `navigator*`, `nodeId*` e `projectProperties*` /
- * `propertiesFile` de `TjpSyntaxRules.rb`. Os relatórios correspondentes
- * (`statusSheetReport` / `timeSheetReport` / `ssStatus*`) já estão no bloco 3
- * (report.ts); aqui ficam apenas os blocos de captura de progresso.
+ * Port of the `timeSheet*` / `tsTask*` / `tsStatus*`, `statusSheet*`,
+ * `navigator*`, `nodeId*` and `projectProperties*` / `propertiesFile` data
+ * entry rules of `TjpSyntaxRules.rb`. The matching reports
+ * (`statusSheetReport` / `timeSheetReport` / `ssStatus*`) already live in
+ * block 3 (report.ts); only the progress capture blocks stay here.
  *
- * Notas de port (Fase 10):
- * - `TimeSheet` / `TimeSheetRecord` / `Navigator` são estruturas mínimas; a
- *   conversão em bookings, a validação de deltas e a geração de HTML chegam
- *   nas Fases 17/18. O parser só monta a estrutura.
- * - Atributos de RichText (details/summary) guardam a String bruta até Fase 12.
+ * Port notes (phase 10):
+ * - `TimeSheet` / `TimeSheetRecord` / `Navigator` are minimal structures; the
+ *   conversion into bookings, the delta validation and the HTML generation
+ *   arrive in phases 17/18. The parser only builds the structure.
+ * - RichText attributes (details/summary) keep the raw String until phase 12.
  *
  * @see docs/taskjuggler/lib/taskjuggler/TjpSyntaxRules.rb
  */
@@ -30,7 +30,7 @@ const asProp = (parser: ProjectFileParser,): NonNullable<
   ProjectFileParser["property"]
 > => parser.property!;
 
-/** Registra o bloco de regras de tracking (timesheet/statussheet/navigator). */
+/** Registers the tracking rule block (timesheet/statussheet/navigator). */
 export function registerTrackingRules(p: ProjectFileParser,): void {
   // ------------------------------------------------------------------
   // projectProperties / projectPropertiesBody / propertiesFile (doc-only)
@@ -56,8 +56,8 @@ export function registerTrackingRules(p: ProjectFileParser,): void {
     ): unknown {
       const nav = this.navigator as Navigator;
       this.navigators.set(nav.id, nav,);
-      // Ruby: `@project['navigators']`. Espelha no Project para que o
-      // `RTFNavigator` (Fase 14.21) possa localizar a barra pelo id.
+      // Ruby: `@project['navigators']`. Mirrored into the Project so that
+      // `RTFNavigator` (phase 14.21) can locate the bar by id.
       if (this.project) this.project.navigators.set(nav.id, nav,);
       return null;
     },);
@@ -150,7 +150,7 @@ export function registerTrackingRules(p: ProjectFileParser,): void {
   },);
 
   // ------------------------------------------------------------------
-  // statusSheet (entrada de dados — 10.14.2)
+  // statusSheet (data entry — 10.14.2)
   // ------------------------------------------------------------------
   rule(p, "statusSheet", () => {
     p.pattern(["!statusSheetHeader", "!statusSheetBody",], function (
@@ -164,8 +164,8 @@ export function registerTrackingRules(p: ProjectFileParser,): void {
     p.pattern(
       ["_statussheet", "!resourceId", "!valIntervalOrDate",],
       function (this: ProjectFileParser,): unknown {
-        // Ruby `unless @project['trackingScenarioIdx']`: idx 0 é truthy —
-        // só `nil`/false conta como ausente.
+        // Ruby `unless @project['trackingScenarioIdx']`: idx 0 is truthy —
+        // only `nil`/false counts as absent.
         if (this.project!.get("trackingScenarioIdx",) == null) {
           this.error(
             "ss_no_tracking_scenario",
@@ -177,8 +177,8 @@ export function registerTrackingRules(p: ProjectFileParser,): void {
         this.sheetModerator = this.val[1];
         this.sheetStart = iv.start;
         this.sheetEnd = iv.end;
-        // Reenvio da mesma folha: remove entradas antigas do mesmo autor
-        // para o mesmo período (Ruby l.5706-5710).
+        // Re-submission of the same sheet: drop the old entries of the same
+        // author for the same period (Ruby l.5706-5710).
         const moderator = this.sheetModerator;
         const end = this.sheetEnd;
         this.project!.journal.deleteIf((e,) =>
@@ -241,7 +241,7 @@ export function registerTrackingRules(p: ProjectFileParser,): void {
   },);
 
   // ------------------------------------------------------------------
-  // timeSheet (entrada de dados — 10.14.1)
+  // timeSheet (data entry — 10.14.1)
   // ------------------------------------------------------------------
   rule(p, "timeSheet", () => {
     p.pattern(["!timeSheetHeader", "!timeSheetBody",], function (
@@ -265,8 +265,8 @@ export function registerTrackingRules(p: ProjectFileParser,): void {
             this.sourceFileInfo[1] ?? null,
           );
         }
-        // Ruby `unless (scenarioIdx = @project['trackingScenarioIdx'])`: 0 é
-        // truthy em Ruby; em JS precisa comparar com null/undefined.
+        // Ruby `unless (scenarioIdx = @project['trackingScenarioIdx'])`: 0 is
+        // truthy in Ruby; in JS it must be compared with null/undefined.
         const scenarioIdx = this.project!.get("trackingScenarioIdx",) as number;
         if (scenarioIdx == null) {
           this.error(
@@ -409,7 +409,7 @@ export function registerTrackingRules(p: ProjectFileParser,): void {
 
     p.pattern(["!tsStatus",],);
 
-    // Extensão 18.17.10: `material <id> { … }` dentro do bloco da tarefa.
+    // Extension 18.17.10: `material <id> { … }` inside the task block.
     p.pattern(["!tsMaterial",],);
 
     p.pattern(["_work", "!workingDurationPercent",], function (
@@ -506,24 +506,24 @@ export function registerTrackingRules(p: ProjectFileParser,): void {
 
     p.pattern(["!summary",],);
 
-    // Fase 10 Complemento C3.3.4 — `picture`/`format` em status (estrutura).
+    // Phase 10 Complemento C3.3.4 — `picture`/`format` in status (structure).
     p.pattern(["!picture",],);
     p.pattern(["!format",],);
   },);
 
   // ------------------------------------------------------------------
-  // material dentro de uma folha (extensão 18.17.10)
+  // material inside a sheet (extension 18.17.10)
   //
-  // O Ruby não tem `material` em sheet: a extensão permite reportar a
-  // quantidade consumida por tarefa. O bloco vive **dentro** de `task` e a
-  // quantidade vem em unidades (não em duração/percentual como o `work` de
-  // tarefa), então os atributos usam `!number` cru.
+  // Ruby has no `material` in a sheet: the extension allows reporting the
+  // quantity consumed per task. The block lives **inside** `task` and the
+  // quantity comes in units (not in duration/percent like the task `work`),
+  // so the attributes use the raw `!number`.
   // ------------------------------------------------------------------
   rule(p, "tsMaterial", () => {
     p.pattern(["!tsMaterialHeader", "!tsMaterialBody",], function (
       this: ProjectFileParser,
     ): unknown {
-      // Devolve o contexto da tarefa que envolvia o material.
+      // Pops back the task context that wrapped the material.
       this.property = (this.propertyStack.pop() as PropertyTreeNode) ?? null;
       this.timeSheetRecord = this.sheetRecordStack.pop() ?? null;
       return null;
@@ -543,7 +543,7 @@ export function registerTrackingRules(p: ProjectFileParser,): void {
             this.sourceFileInfo[1] ?? null,
           );
         }
-        // A tarefa dona é o `property` corrente (o bloco está dentro de task).
+        // The owning task is the current `property` (the block is inside task).
         const owner = this.property instanceof Task ? this.property : null;
         this.propertyStack.push(this.property,);
         this.sheetRecordStack.push(this.timeSheetRecord,);
@@ -570,7 +570,7 @@ export function registerTrackingRules(p: ProjectFileParser,): void {
     p.optional();
     p.repeatable();
 
-    // `remaining`/`work` de material são **quantidades**, não slots.
+    // Material `remaining`/`work` are **quantities**, not slots.
     p.pattern(
       ["_remaining", "!number",],
       function (this: ProjectFileParser,): unknown {

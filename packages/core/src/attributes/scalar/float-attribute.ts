@@ -1,5 +1,5 @@
 /**
- * Atributo escalar float (número).
+ * Float scalar attribute (number).
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:FloatAttribute
  */
@@ -10,18 +10,18 @@ import { type AttributeDefinition, } from "../attribute-definition.ts";
 import { AttributeBase, } from "../attribute-base.ts";
 
 /**
- * Atributo escalar float (número).
+ * Float scalar attribute (number).
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:FloatAttribute
  */
 export class FloatAttribute extends AttributeBase<number> {
   /**
-   * ID do tipo de atributo para FloatAttribute.
+   * Attribute type ID for FloatAttribute.
    */
   static readonly tjpId = "number";
 
   /**
-   * Converte o valor para TJP (formato TaskJuggler).
+   * Converts the value to TJP (TaskJuggler format).
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:FloatAttribute#to_tjp
    */

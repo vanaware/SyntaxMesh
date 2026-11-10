@@ -12,9 +12,9 @@ import { compat, } from "../compat.ts";
 export { TjArgumentError, };
 
 /**
- * Semântica de Ruby `String#split(sep, limit)` com limit positivo: realiza
- * no máximo `limit - 1` divisões e guarda o restante no último campo.
- * (JS `split(sep, limit)` trunca o array, perdendo caudas não consumidas.)
+ * Ruby `String#split(sep, limit)` semantics with a positive limit: performs at
+ * most `limit - 1` splits and keeps the remainder in the last field.
+ * (JS `split(sep, limit)` truncates the array, losing unconsumed tails.)
  */
 function splitLimited(
   s: string,
@@ -34,9 +34,9 @@ function splitLimited(
 }
 
 /**
- * Parte temporal de `TjTime#parse` (TjTime.rb l.459-492): `time.split(':')`
- * com hora e minuto obrigatórios e segundo opcional. Devolve os valores
- * brutos; as faixas (0-23 / 0-59) são validadas pelo chamador.
+ * Time part of `TjTime#parse` (TjTime.rb l.459-492): `time.split(':')` with hour
+ * and minute mandatory and second optional. Returns the raw values; the ranges
+ * (0-23 / 0-59) are validated by the caller.
  */
 function parseTimePart(
   time: string,
@@ -53,6 +53,14 @@ function parseTimePart(
   };
 }
 
+/**
+ * Absolute instant in time, in seconds since the Unix epoch (UTC).
+ *
+ * Port of `TjTime.rb`. Instances are immutable: arithmetic and calendar
+ * helpers return new `TjTime` values, and formatting follows Ruby's
+ * `strftime` conventions. This is the single date type used across the engine
+ * (scoreboards, intervals, scheduling and reports).
+ */
 export class TjTime {
   private readonly seconds: number;
 
@@ -173,9 +181,9 @@ export class TjTime {
    * @param str - String to parse
    */
   static fromString(str: string,): TjTime {
-    // Ruby: t.split('-', 5) limita o número de SEPATIONS (4), preservando o
-    // resto em parts[4]. JS split(sep, 5) truncaria o array — semânticas
-    // diferentes para "...-14:30--0300" (JS descartaria o "-0300").
+    // Ruby: t.split('-', 5) limits the number of SEPARATIONS to 4, keeping the
+    // remainder in parts[4]. JS split(sep, 5) would truncate the array —
+    // different semantics for "...-14:30--0300" (JS would drop "-0300").
     const parts = splitLimited(str, "-", 5,);
     if (parts.length < 3) {
       throw new TjArgumentError(`Invalid date format: ${str}`,);
@@ -202,17 +210,17 @@ export class TjTime {
         second = parsed.second;
         tzPart = tzMatch[1];
       } else {
-        // Parse time part — Ruby aceita `H:MM[:SS]` com qualquer número de
-        // dígitos (TjTime#parse faz apenas `time.split(':')` + `to_i`); as
-        // faixas são validadas depois, em fromParts().
+        // Parse time part — Ruby accepts `H:MM[:SS]` with any number of
+        // digits (TjTime#parse only does `time.split(':')` + `to_i`); the
+        // ranges are validated later, in fromParts().
         const parsed = parseTimePart(parts[3]!, parts[3]!,);
         hour = parsed.hour;
         minute = parsed.minute;
         second = parsed.second;
       }
 
-      // Ruby: t.split('-', 5) — o sinal da zona vem em parts[4] (o '-' que
-      // precede é apenas o separador consumido pelo split). Ex.:
+      // Ruby: t.split('-', 5) — the zone sign comes in parts[4] (the preceding
+      // '-' is just the separator consumed by the split). E.g.:
       // "2024-08-01-00:00-+0000" → [+0000]; "...--0300" → [-0300].
       if (parts.length > 4) {
         tzPart = parts[4];
@@ -220,7 +228,7 @@ export class TjTime {
     }
 
     if (tzPart) {
-      // Ruby (TjTime#parse): prefixo obrigatório '+'/'-' e formato (+/-)HHMM.
+      // Ruby (TjTime#parse): mandatory '+'/'-' prefix and (+/-)HHMM format.
       if (tzPart[0] !== "-" && tzPart[0] !== "+") {
         throw new TjArgumentError(
           `Time zone adjustment must be prefixed by + or -, not ${
@@ -238,8 +246,8 @@ export class TjTime {
       const hours = parseInt(tzPart.substring(1, 3,),);
       const minutes = parseInt(tzPart.substring(3, 5,),);
 
-      // Ruby (TjTime#parse): valida apenas os minutos (0-59) e o offset
-      // composto no intervalo -1200..+1400 — horas de 13/14 são legais.
+      // Ruby (TjTime#parse): validates only the minutes (0-59) and the
+      // composed offset in the range -1200..+1400 — hours of 13/14 are legal.
       if (minutes < 0 || minutes > 59) {
         throw new TjArgumentError(
           `Time zone adjustment minute out of range (0 - 59) but is ${minutes}`,
@@ -1094,7 +1102,7 @@ export class TjTime {
     result = result.replace("%a", dayAbbr[parts.weekday] ?? "Unknown",);
     result = result.replace("%B", monthNames[parts.month] ?? "Unknown",);
     result = result.replace("%b", monthAbbr[parts.month] ?? "Unknown",);
-    // %z: UTC offset em formato Ruby strftime: +HHMM / -HHMM (sem dois-pontos)
+    // %z: UTC offset in Ruby strftime format: +HHMM / -HHMM (no colon)
     result = result.replace(
       "%z",
       formatTimezoneOffset(this.seconds, timeZone,),

@@ -1,9 +1,9 @@
 /**
- * `chapters.ts` — ordem canônica dos capítulos do manual (22.1b.5).
+ * `chapters.ts` — canonical order of the manual chapters (22.1b.5).
  *
- * A ordem importa: a navegação `<< anterior · próximo >>` e a numeração de
- * seções seguem a sequência dos snips, e o apêndice da referência entra
- * depois de todos os capítulos (`UserManual.rb:49-67`).
+ * The order matters: the `<< previous · next >>` navigation and the section
+ * numbering follow the sequence of the snippets, and the reference appendix
+ * comes after all chapters (`UserManual.rb:49-67`).
  *
  * @see ./user-manual.ts
  */
@@ -14,14 +14,14 @@ import { USAGE_CHAPTERS, } from "./chapters-usage.ts";
 
 export type { ManualChapter, };
 
-/** Capítulos na ordem em que aparecem no manual. */
+/** Chapters in the order they appear in the manual. */
 export const MANUAL_CHAPTERS: readonly ManualChapter[] = [
   ...BASIC_CHAPTERS,
   ...SYNTAX_CHAPTERS,
   ...USAGE_CHAPTERS,
 ];
 
-/** Nomes dos arquivos gerados, na ordem do manual. */
+/** Names of the generated files, in manual order. */
 export const MANUAL_CHAPTER_NAMES: readonly string[] = MANUAL_CHAPTERS.map(
   (chapter,) => chapter.name,
 );

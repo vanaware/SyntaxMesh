@@ -1,11 +1,11 @@
 /**
- * Barrel do subsistema de time/status sheets (Fase 18).
+ * Barrel of the time/status sheets subsystem (phase 18).
  *
- * `email-message` descreve a mensagem como dado (ADR 036); `sheet-handler-base`
- * é a base comum de senders e receivers; `sheet-sender`/`sheet-receiver` são os
- * pipelines dos blocos B e C; `time-sheet-summary` fecha o bloco D; `apps/`
- * guarda o núcleo dos cinco executáveis (18.18); `app-data` é o caminho de
- * dados da Fase 24 (24.2.32: `FileStore` em memória, saída como valor).
+ * `email-message` describes the message as data (ADR 036); `sheet-handler-base`
+ * is the common base for senders and receivers; `sheet-sender`/`sheet-receiver`
+ * are the pipelines of blocks B and C; `time-sheet-summary` closes block D;
+ * `apps/` holds the core of the five executables (18.18); `app-data` is the
+ * phase 24 data path (24.2.32: in-memory `FileStore`, output as a value).
  *
  * @see docs/syntaxmesh/fases/fase-18-time-status-sheets.md
  */

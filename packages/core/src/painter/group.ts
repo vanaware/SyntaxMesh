@@ -1,30 +1,31 @@
 /**
- * 17.8.6 — `Group`: agrupa elementos com atributos comuns (`Painter/Group.rb`).
+ * 17.8.6 — `Group`: groups elements under common attributes
+ * (`Painter/Group.rb`).
  *
- * Porta `TaskJuggler::Painter::Group`: valida as chaves contra a lista fixa
- * de atributos herdáveis, acumula elementos produzidos pelas primitivas
- * (`Primitives`, 17.9) e serializa como `<g>`.
+ * Ports `TaskJuggler::Painter::Group`: it validates the keys against the fixed
+ * list of inheritable attributes, accumulates the elements produced by the
+ * primitives (`Primitives`, 17.9) and serializes as `<g>`.
  *
- * Observações do oráculo Ruby (2026-11-04, `.tmp/element_ruby_check.rb`):
- * - A mensagem de erro é diferente da do `Element`: traz a lista sugerida —
- *   `"Unsupported attribute bogus. Use one of fill, font_family, font_size,
- *   stroke, stroke_width."` (os símbolos do Ruby viram texto sem `:`).
- * - `@values = values`: o Group **aliasa** o hash recebido (não copia, ao
- *   contrário do `Element`). Mutar o objeto depois de construir altera o SVG
- *   — replicado no port, que guarda a mesma referência.
- * - `to_svg` com um filho: `"<g fill=\"red\"><foo a=\"1\"></foo></g>"` — sem
- *   quebra de linha (regra do 17.1: só há `\n` com 2+ filhos não-`XMLText`).
- * - **Divergência (Categoria A)**: o Ruby aceita bloco de arity 0 via
- *   `instance_eval` (com `method_missing` delegado ao `self` original) e de
- *   arity 1 via `yield self`. Em TS não existe `instance_eval`; o bloco
- *   recebe sempre o grupo como parâmetro (`(g) => { g.line(…) }`), que é o
- *   caminho já usado pelo `Painter` do port.
+ * Notes from the Ruby oracle (2026-11-04, `.tmp/element_ruby_check.rb`):
+ * - The error message differs from the `Element` one: it carries the suggested
+ *   list — `"Unsupported attribute bogus. Use one of fill, font_family,
+ *   font_size, stroke, stroke_width."` (Ruby symbols become text without `:`).
+ * - `@values = values`: the Group **aliases** the received hash (it does not
+ *   copy, unlike `Element`). Mutating the object after construction changes the
+ *   SVG — replicated in the port, which keeps the same reference.
+ * - `to_svg` with one child: `"<g fill=\"red\"><foo a=\"1\"></foo></g>"` — no
+ *   line break (17.1 rule: `\n` only with 2+ non-`XMLText` children).
+ * - **Divergence (Category A)**: Ruby accepts an arity-0 block via
+ *   `instance_eval` (with `method_missing` delegated to the original `self`) and
+ *   an arity-1 block via `yield self`. TS has no `instance_eval`, so the block
+ *   always receives the group as a parameter (`(g) => { g.line(…) }`), which is
+ *   the path the port's `Painter` already uses.
  *
- * Integração com `Primitives` (17.9): no Ruby `Group` inclui `Primitives`, então
- * `Group extends Primitives` aqui. O campo `elements` (que alimenta `to_svg`) e
- * as formas (`line`, `rect`, `group`, …) vêm da base; `newGroup` é o gancho que
- * devolve um `Group` e mantém `primitives.ts` sem dependência de valor em
- * `group.ts`.
+ * Integration with `Primitives` (17.9): in Ruby `Group` includes `Primitives`,
+ * hence `Group extends Primitives` here. The `elements` field (which feeds
+ * `to_svg`) and the shapes (`line`, `rect`, `group`, …) come from the base;
+ * `newGroup` is the hook returning a `Group` while keeping `primitives.ts` free
+ * of a value dependency on `group.ts`.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Painter/Group.rb
  * @see docs/syntaxmesh/fases/fase-17-html-xml-tarefas.md (17.8)
@@ -35,10 +36,10 @@ import { XMLElement, } from "../xml/xml-element.ts";
 import { Primitives, } from "./primitives.ts";
 import { type SVGValues, valuesToSVG, } from "./svg-support.ts";
 
-/** Bloco do Ruby (`&block`): recebe o grupo em construção. */
+/** Ruby block (`&block`): receives the group being built. */
 export type GroupBlock = (group: Group,) => void;
 
-/** Atributos que um `<g>` pode herdar (`@attributes` do Ruby, na ordem). */
+/** Attributes a `<g>` can inherit (Ruby `@attributes`, in order). */
 export const GROUP_ATTRS: readonly string[] = [
   "fill",
   "font_family",
@@ -47,13 +48,20 @@ export const GROUP_ATTRS: readonly string[] = [
   "stroke_width",
 ];
 
+/** A `<g>` element grouping drawables under common attributes. */
 export class Group extends Primitives {
-  /** Chaves aceitas num grupo (`@attributes`). */
+  /** Keys accepted in a group (`@attributes`). */
   protected readonly attributes: readonly string[] = GROUP_ATTRS;
-  /** Atributos do grupo — aliasados do argumento, como no Ruby. */
+  /** Group attributes — aliased from the argument, as in Ruby. */
   protected values: SVGValues;
 
-  /** Ruby `initialize(values, &block)`. */
+  /**
+   * Ruby `initialize(values, &block)`.
+   *
+   * @param values Attributes of the group; stored by reference.
+   * @param block Callback that populates the group.
+   * @throws TjArgumentError When a key is not an inheritable attribute.
+   */
   constructor(values: SVGValues, block?: GroupBlock,) {
     super();
     for (const key of Object.keys(values,)) {
@@ -70,12 +78,22 @@ export class Group extends Primitives {
     block?.(this,);
   }
 
-  /** Gancho de `Primitives#group`: um grupo filho é um novo `Group`. */
+  /**
+   * Hook of `Primitives#group`: a child group is a new `Group`.
+   *
+   * @param attrs Attributes of the child group.
+   * @param block Callback that populates the child group.
+   * @returns The new child group.
+   */
   protected newGroup(attrs: SVGValues, block?: GroupBlock,): Group {
     return new Group(attrs, block,);
   }
 
-  /** `<g …>filhos</g>` — Ruby `XMLElement.new('g', valuesToSVG) { … }`. */
+  /**
+   * `<g …>children</g>` — Ruby `XMLElement.new('g', valuesToSVG) { … }`.
+   *
+   * @returns The SVG group element with all collected children.
+   */
   to_svg(): XMLElement {
     return new XMLElement(
       "g",

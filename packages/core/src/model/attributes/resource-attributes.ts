@@ -16,7 +16,7 @@ import { ShiftAssignmentsAttribute, } from "../../attributes/time-interval/shift
 import { WorkingHoursAttribute, } from "../../attributes/time-interval/working-hours-attribute.ts";
 
 /**
- * Registra os atributos específicos de resource (14 atributos).
+ * Registers the resource-specific attributes (14 attributes).
  *
  * @see docs/taskjuggler/lib/taskjuggler/Resource.rb
  */
@@ -311,7 +311,8 @@ export function registerResourceAttributes(propertySet: PropertySet,): void {
   );
 
   // note: Note (RichTextAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
-  // Extensão Fase 10 Complemento (#1 nota estática) — espelha task-attributes.ts.
+  // Phase 10, complement extension (#1 static note) — mirrors
+  // task-attributes.ts.
   propertySet.addAttributeType(
     new AttributeDefinition(
       "note",

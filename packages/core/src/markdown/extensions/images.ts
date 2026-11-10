@@ -1,77 +1,78 @@
 /**
- * Resolução de referências de imagem em Markdown (Adendo 13.14, #5 RDO).
+ * Resolution of image references in Markdown (Addendum 13.14, #5 RDO).
  *
- * `![alt](ref)` distingue **URL externa** (`http(s)://`, `//`, `data:` — passa
- * intacta) de **caminho relativo**. Caminhos relativos resolvem **OPFS primeiro**
- * via um `ImageStore` injetado (Fase 19 `image-store`); na ausência dele (ou
- * quando a imagem não existe no store), faz fallback para os `dataDirs` do
- * projeto. O core é independente de DOM (ADR 001): este módulo devolve um
- * **descritor** de resolução; a conversão em `Blob`/`objectURL` offline é
- * responsabilidade da camada de render (UI / Fase 19).
+ * `![alt](ref)` tells **external URLs** (`http(s)://`, `//`, `data:` — passed
+ * through untouched) apart from **relative paths**. Relative paths resolve
+ * **OPFS first** through an injected `ImageStore` (phase 19 `image-store`);
+ * when it is absent (or the image is not in the store), they fall back to the
+ * project `dataDirs`. The core is DOM-independent (ADR 001): this module
+ * returns a **resolution descriptor**; turning it into a `Blob`/`objectURL`
+ * offline is the responsibility of the render layer (UI / phase 19).
  *
  * @see docs/syntaxmesh/fases/fase-13-markdown-tarefas.md (13.14)
  * @see docs/syntaxmesh/fases/fase-19-storage.md (image-store)
  */
 
 /**
- * Contrato mínimo do armazém de imagens (implementado na Fase 19 via OPFS).
- * Mantido propositalmente pequeno para o core não depender de storage.
+ * Minimal contract of the image store (implemented in phase 19 over OPFS).
+ * Deliberately kept small so the core does not depend on storage.
  */
 export interface ImageStore {
-  /** `true` se a imagem existe no armazém sob `path` relativo. */
+  /** `true` when the image exists in the store under the relative `path`. */
   has(path: string,): Promise<boolean>;
   /**
-   * Devolve um `src` utilizável offline (data URI ou objectURL) para `path`,
-   * ou `null` se indisponível. A UI é livre para ignorar e usar `dataDirs`.
+   * Returns an offline-usable `src` (data URI or objectURL) for `path`, or
+   * `null` when unavailable. The UI is free to ignore it and use `dataDirs`.
    */
   resolve(path: string,): Promise<string | null>;
 }
 
-/** Origem determinada para uma referência de imagem. */
+/** Origin determined for an image reference. */
 export type ImageOrigin = "external" | "opfs" | "dataDir" | "unresolved";
 
-/** Resultado da resolução de uma referência de imagem. */
+/** Result of resolving an image reference. */
 export interface ResolvedImage {
-  /** Referências originais (para diagnóstico). */
+  /** Original reference (for diagnostics). */
   readonly ref: string;
-  /** Texto alternativo (`![alt](...)`), preservado. */
+  /** Alternative text (`![alt](...)`), preserved. */
   readonly alt: string | null;
-  /** Onde a imagem foi resolvida. */
+  /** Where the image was resolved. */
   readonly origin: ImageOrigin;
-  /** `src` pronto para uso (URL externa, objectURL/data URI do store ou caminho). */
+  /** Ready-to-use `src` (external URL, store objectURL/data URI or path). */
   readonly src: string;
 }
 
-/** Regex de referência externa: esquema http(s), data:, ou relativa de protocolo. */
+/** External-reference regex: http(s) scheme, data:, or protocol-relative. */
 const EXTERNAL_RE = /^(?:[a-zA-Z][a-zA-Z0-9+.-]*:)?\/\//;
 const DATA_RE = /^data:/i;
 
 /**
- * `true` se `ref` é uma URL externa (esquema explícito, protocol-relative `//`
- * ou `data:`). Tais referências passam intactas, sem resolução OPFS/dataDirs.
+ * `true` when `ref` is an external URL (explicit scheme, protocol-relative
+ * `//` or `data:`). Such references pass through untouched, with no OPFS or
+ * `dataDirs` resolution.
  */
 export function isExternalImageRef(ref: string,): boolean {
   return EXTERNAL_RE.test(ref,) || DATA_RE.test(ref,);
 }
 
-/** Opções de resolução de caminho relativo. */
+/** Options for relative-path resolution. */
 export interface ResolveOptions {
-  /** Armazém OPFS injetado (Fase 19). Opcional. */
+  /** Injected OPFS store (phase 19). Optional. */
   store?: ImageStore | null;
-  /** Diretórios de dados do projeto (fallback). Caminhos relativos a eles. */
+  /** Project data directories (fallback). Paths are relative to them. */
   dataDirs?: readonly string[];
-  /** Texto alternativo da imagem (`alt`). */
+  /** Alternative text of the image (`alt`). */
   alt?: string | null;
 }
 
 /**
- * Resolve uma referência de imagem (`![alt](ref)`).
+ * Resolves an image reference (`![alt](ref)`).
  *
- * - Externa → `origin: "external"`, `src === ref` (intacta).
- * - Relativa com `store` e imagem presente → `origin: "opfs"`, `src` do store.
- * - Relativa ausente no store (ou sem store) com `dataDirs` → tenta o primeiro
- *   diretório; `origin: "dataDir"`.
- * - Sem store e sem `dataDirs` → `origin: "unresolved"`, `src === ref` cru.
+ * - External → `origin: "external"`, `src === ref` (untouched).
+ * - Relative with a `store` holding the image → `origin: "opfs"`, store `src`.
+ * - Relative missing from the store (or no store) with `dataDirs` → tries the
+ *   first directory; `origin: "dataDir"`.
+ * - No store and no `dataDirs` → `origin: "unresolved"`, raw `src === ref`.
  */
 export async function resolveImageRef(
   ref: string,
@@ -83,7 +84,7 @@ export async function resolveImageRef(
     return { ref, alt, origin: "external", src: ref, };
   }
 
-  // OPFS primeiro quando há store injetado.
+  // OPFS first when a store is injected.
   const store = options.store;
   if (store) {
     if (await store.has(ref,)) {
@@ -94,7 +95,7 @@ export async function resolveImageRef(
     }
   }
 
-  // Fallback: dataDirs do projeto.
+  // Fallback: project dataDirs.
   const dirs = options.dataDirs ?? [];
   if (dirs.length > 0) {
     return { ref, alt, origin: "dataDir", src: joinDir(dirs[0]!, ref,), };
@@ -103,7 +104,7 @@ export async function resolveImageRef(
   return { ref, alt, origin: "unresolved", src: ref, };
 }
 
-/** Junta diretório e caminho sem duplicar separadores. */
+/** Joins directory and path without duplicating separators. */
 function joinDir(dir: string, path: string,): string {
   const cleanDir = dir.endsWith("/",) ? dir.slice(0, -1,) : dir;
   const cleanPath = path.startsWith("/",) ? path.slice(1,) : path;

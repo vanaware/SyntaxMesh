@@ -1,31 +1,31 @@
 /**
- * `manual-context.ts` — contrato mínimo que `KeywordDocumentation` pede ao
- * documento que o hospeda (22.1b.3/22.1b.5).
+ * `manual-context.ts` — minimal contract that `KeywordDocumentation` asks of
+ * the document hosting it (22.1b.3/22.1b.5).
  *
- * O Ruby usa `@manual` (uma instância concreta de `UserManual`) para quatro
- * callbacks de página (`generateStyleSheet`, `generateHTMLHeader`,
- * `generateHTMLFooter`, `generateHTMLNavigationBar`) e para o corpus de
- * exemplos (`TjpExample`). Aqui a dependência fica **estrutural**: o
- * `doc-core` renderiza uma página de keyword sem importar o `UserManual`, o que
- * evita o ciclo `user-manual → syntax-reference → keyword-documentation`.
+ * Ruby uses `@manual` (a concrete `UserManual` instance) for four page
+ * callbacks (`generateStyleSheet`, `generateHTMLHeader`, `generateHTMLFooter`,
+ * `generateHTMLNavigationBar`) and for the example corpus (`TjpExample`). Here
+ * the dependency is **structural**: `doc-core` renders a keyword page without
+ * importing `UserManual`, which avoids the cycle
+ * `user-manual → syntax-reference → keyword-documentation`.
  *
  * @see docs/taskjuggler/lib/taskjuggler/KeywordDocumentation.rb
  */
 
 import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 
-/** Documento que hospeda as páginas de keyword (o `UserManual`). */
+/** Document hosting the keyword pages (the `UserManual`). */
 export interface ManualPageContext {
-  /** `<link>` para a folha de estilos do manual. */
+  /** `<link>` to the manual stylesheet. */
   generateStyleSheet(): XMLElementLike;
-  /** Cabeçalho do topo de cada página. */
+  /** Header at the top of every page. */
   generateHTMLHeader(): XMLElementLike;
-  /** Rodapé de cada página. */
+  /** Footer of every page. */
   generateHTMLFooter(): XMLElementLike;
   /**
-   * Barra de navegação `<< anterior · índice · próximo >>`.
+   * Navigation bar `<< previous · index · next >>`.
    *
-   * Os quatro parâmetros são `null` quando não há vizinho (pontas da lista).
+   * The four parameters are `null` when there is no neighbor (list ends).
    */
   generateHTMLNavigationBar(
     predLabel: string | null,
@@ -34,8 +34,8 @@ export interface ManualPageContext {
     succUrl: string | null,
   ): XMLElementLike;
   /**
-   * Trecho de exemplo anotado (`# *** EXAMPLE: <tag> +`), ou `null` quando o
-   * arquivo não está no corpus distribuído.
+   * Snippet of the annotated example (`# *** EXAMPLE: <tag> +`), or `null`
+   * when the file is not in the distributed corpus.
    */
   exampleText(file: string, tag: string | null,): string | null;
 }

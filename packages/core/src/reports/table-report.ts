@@ -1,15 +1,15 @@
 /**
- * TableReport (Fase 14.12) — classe base de todos os relatórios tabulares.
+ * TableReport (phase 14.12) — base class of every tabular report.
  *
- * Porta fiel de `docs/taskjuggler/lib/taskjuggler/reports/TableReport.rb`.
- * Constrói o formato intermediário (`ReportTable`) linha a linha: gera as
- * colunas de cabeçalho, as listas de contas/tarefas/recursos e cada célula
- * (padrão, calculada ou de calendário). `to_html` monta a moldura HTML e
- * `to_csv` delega à tabela.
+ * Faithful port of `docs/taskjuggler/lib/taskjuggler/reports/TableReport.rb`.
+ * It builds the intermediate format (`ReportTable`) line by line: it generates
+ * the header columns, the account/task/resource lists and every cell (plain,
+ * calculated or calendar). `to_html` assembles the HTML frame and `to_csv`
+ * delegates to the table.
  *
- * A coluna `chart` (Gantt, Fase 15) é tratada por `generateHeaderCell` /
- * `generateTableCell`, que criam o `GanttChart` e as `GanttLine`s. Nenhuma
- * escrita a disco acontece (ADR 027) — as saídas retornam estruturas/strings.
+ * The `chart` column (Gantt, phase 15) is handled by `generateHeaderCell` /
+ * `generateTableCell`, which create the `GanttChart` and the `GanttLine`s.
+ * Nothing is written to disk (ADR 027) — the outputs return structures/strings.
  *
  * @see docs/syntaxmesh/fases/fase-14-relatorios-tarefas.md (14.12)
  */
@@ -48,14 +48,21 @@ import { TableReportColumn, } from "./table-report-column.ts";
 import { GanttChart, } from "../gantt/gantt-chart.ts";
 import { GanttLine, } from "../gantt/gantt-line.ts";
 
-/** Alinhamento de coluna (subconjunto de `CellAlignment` usado nas tabelas). */
+/** Column alignment (subset of `CellAlignment` used by the tables). */
 type ColumnAlign = "left" | "right";
 
-/** Callback que avança um `TjTime` para o próximo intervalo de coluna. */
+/** Callback advancing a `TjTime` to the next column interval. */
 type SameTimeNext = (t: TjTime,) => TjTime;
 
+/**
+ * Base class of the tabular reports (`taskreport`, `resourcereport`,
+ * `accountreport`, `materialreport`, …).
+ *
+ * A subclass supplies the entity lists and the collected values; this class
+ * owns the column metadata, the cell generation and the serialization.
+ */
 export abstract class TableReport extends ReportBase {
-  /** Metadados por coluna pré-definida: [título, indent, alinhamento, por-cenário]. */
+  /** Metadata per predefined column: [title, indent, alignment, per-scenario]. */
   static readonly propertiesById: Map<
     string,
     [string, boolean, ColumnAlign, boolean,]
@@ -110,10 +117,10 @@ export abstract class TableReport extends ReportBase {
   ],);
 
   /**
-   * Metadados das colunas específicas de material (extensão SyntaxMesh,
-   * Fase 14 Complemento C1). Só é consultado em linhas cujo `property` é
-   * `Material`; por isso pode compartilhar ids com colunas de task
-   * (`journal`, etc.) sem afetar os relatórios do núcleo.
+   * Metadata of the material-specific columns (SyntaxMesh extension, phase 14
+   * complement C1). It is only consulted on lines whose `property` is a
+   * `Material`, so it may share ids with task columns (`journal`, etc.) without
+   * affecting the core reports.
    */
   static readonly materialPropertiesById: Map<
     string,
@@ -134,11 +141,10 @@ export abstract class TableReport extends ReportBase {
   ],);
 
   /**
-   * Colunas de material resolvidas por atributo/consulta (keyword → attributeId).
-   * `unitprice` roteia para a consulta própria `query_unitprice` (preço unitário
-   * efetivo) em vez do atributo base `cost` — assim `cost` fica livre para a
-   * consulta `query_cost` (custo total planejado) sem sequestrar a coluna
-   * (Onda C).
+   * Material columns resolved by attribute/query (keyword → attributeId).
+   * `unitprice` routes to the dedicated `query_unitprice` (effective unit price)
+   * instead of the base `cost` attribute — that keeps `cost` free for the
+   * `query_cost` (total planned cost) without hijacking the column (wave C).
    */
   static readonly materialAttributeColumns: Map<string, string> = new Map<
     string,
@@ -150,9 +156,9 @@ export abstract class TableReport extends ReportBase {
   ],);
 
   /**
-   * Colunas numéricas calculadas de material (alinhamento à direita).
-   * `totalquantity` é derivada das alocações desde a 14C.11.10; `stockcost`/
-   * `stockquantity` são derivadas dos bookings de estoque desde a C18.
+   * Calculated numeric material columns (right-aligned). `totalquantity` is
+   * derived from the allocations since 14C.11.10; `stockcost`/`stockquantity`
+   * are derived from the stock bookings since C18.
    */
   static readonly materialNumericColumns: Set<string> = new Set<string>([
     "actualcost",
@@ -164,10 +170,10 @@ export abstract class TableReport extends ReportBase {
   ],);
 
   /**
-   * Colunas de journal. `journal_sub`, `journalmessages` e
-   * `journalsummaries` são aliases depreciados de `journal` no parser
-   * (`_journal_sub` etc. → `_journal`), mas continuam no mapa de títulos.
-   * Todas são resolvidas pelo mesmo caminho (14C.1.7).
+   * Journal columns. `journal_sub`, `journalmessages` and `journalsummaries` are
+   * deprecated aliases of `journal` in the parser (`_journal_sub` etc. →
+   * `_journal`), but they stay in the title map. All of them are resolved
+   * through the same path (14C.1.7).
    */
   static readonly journalColumns: Set<string> = new Set<string>([
     "journal",
@@ -177,15 +183,16 @@ export abstract class TableReport extends ReportBase {
   ],);
 
   /**
-   * Colunas de material numa linha de tarefa (extensão SyntaxMesh, 14C.1.11):
-   * `materials` lista as alocações da tarefa e `materialcost` soma o custo.
+   * Material columns on a task line (SyntaxMesh extension, 14C.1.11):
+   * `materials` lists the allocations of the task and `materialcost` sums the
+   * cost.
    */
   static readonly taskMaterialColumns: Set<string> = new Set<string>([
     "materials",
     "materialcost",
   ],);
 
-  /** Comportamento padrão por tipo de atributo: [indent, alinhamento]. */
+  /** Default behaviour per attribute type: [indent, alignment]. */
   static readonly propertiesByType: Map<
     AttributeType,
     [boolean, ColumnAlign,]
@@ -195,45 +202,54 @@ export abstract class TableReport extends ReportBase {
     [AttributeType.Float, [false, "right",],],
     [AttributeType.ResourceList, [false, "left",],],
     [AttributeType.RichText, [false, "left",],],
-    // 14C.19.1 (ADR 039): colunas de atributo `markdown` em `extend` são texto
-    // rico como as de `richtext` — sem esta linha o alinhamento caía em
-    // "center" (fallback de `alignment`).
+    // 14C.19.1 (ADR 039): `markdown` attribute columns in `extend` are rich
+    // text like the `richtext` ones — without this line the alignment fell back
+    // to "center" (the `alignment` fallback).
     [AttributeType.Markdown, [false, "left",],],
     [AttributeType.String, [false, "left",],],
   ],);
 
+  /** Legend collected while the table is built (Gantt and calendar symbols). */
   legend: ReportTableLegend;
+  /** Table built by the last `generateIntermediateFormat`. */
   protected table: ReportTable | null = null;
+  /** Computed interval of each column definition. */
   protected columns: Map<TableColumnDefinition, TableReportColumn> = new Map();
 
   /**
-   * Formato intermediário (ReportTable) gerado por `generateIntermediateFormat`.
-   * Exposição somente-leitura para os golden tests da Fase 14.23, que comparam
-   * a estrutura da tabela (e não o markup) entre o motor TS e o tj3 Ruby.
+   * Intermediate format (`ReportTable`) produced by
+   * `generateIntermediateFormat`. Read-only exposure for the phase 14.23 golden
+   * tests, which compare the table structure (not the markup) between the TS
+   * engine and the Ruby tj3.
    */
   getTable(): ReportTable | null {
     return this.table;
   }
 
+  /**
+   * Creates a tabular report and registers it as the report content.
+   *
+   * @param report Report definition being rendered.
+   */
   constructor(report: Report,) {
     super(report,);
-    // Este objeto passa a ser o conteúdo intermediário do relatório.
+    // This object becomes the intermediate content of the report.
     report.content = this as unknown as Report["content"];
     this.legend = new ReportTableLegend();
   }
 
   // ------------------------------------------------------------------
-  // Métodos estáticos (14.12.2)
+  // Static methods (14.12.2)
   // ------------------------------------------------------------------
 
   /**
-   * Título padrão da coluna `id` (`""` para colunas especiais sem título e
-   * `null` quando a coluna não é pré-definida).
+   * Default title of the column `id` (`""` for special columns with no title and
+   * `null` when the column is not predefined).
    *
-   * Porta de `TableReport::defaultColumnTitle` (Ruby l.156). O `null` é o que
-   * permite ao parser cair no dicionário de tarefa/recurso
-   * (`ProjectFileParser#columnTitle`) — sem ele, `start`/`end`/`effort`
-   * ficariam sem cabeçalho porque `attributeName` os devolveria `undefined`.
+   * Port of `TableReport::defaultColumnTitle` (Ruby l.156). The `null` is what
+   * lets the parser fall back to the task/resource dictionary
+   * (`ProjectFileParser#columnTitle`) — without it, `start`/`end`/`effort` would
+   * have no header because `attributeName` returns `undefined` for them.
    */
   static defaultColumnTitle(id: string,): string | null {
     const specials = [
@@ -248,14 +264,14 @@ export abstract class TableReport extends ReportBase {
     if (specials.includes(id,)) return "";
     const entry = TableReport.propertiesById.get(id,);
     if (entry) return entry[0];
-    // Colunas exclusivas do materialreport (extensão SyntaxMesh): o mapa é
-    // consultado em segundo lugar porque pode compartilhar ids com colunas de
-    // task (`journal`, etc.) — o núcleo tem prioridade (C18).
+    // Columns exclusive to the materialreport (SyntaxMesh extension): the map is
+    // consulted second because it may share ids with task columns (`journal`,
+    // etc.) — the core takes precedence (C18).
     const material = TableReport.materialPropertiesById.get(id,);
     return material ? material[0] : null;
   }
 
-  /** A coluna deve ser indentada? (por `colId` ou por tipo de propriedade). */
+  /** Should the column be indented? (per `colId` or per property type). */
   static indent(
     colId: string,
     propertyType: AttributeType | undefined,
@@ -268,7 +284,7 @@ export abstract class TableReport extends ReportBase {
     return byType ? byType[0] : false;
   }
 
-  /** Alinhamento da coluna. */
+  /** Alignment of the column. */
   static alignment(
     colId: string,
     attributeType: AttributeType | undefined,
@@ -281,22 +297,22 @@ export abstract class TableReport extends ReportBase {
     return byType ? byType[1] : "center";
   }
 
-  /** Os valores da coluna `colId` são calculados (não é atributo direto)? */
+  /** Are the values of column `colId` calculated (not a direct attribute)? */
   static calculated(colId: string,): boolean {
     return TableReport.propertiesById.has(colId,);
   }
 
-  /** Os valores da coluna `colId` são específicos de cenário? */
+  /** Are the values of column `colId` scenario specific? */
   static scenarioSpecific(colId: string,): boolean {
     const entry = TableReport.propertiesById.get(colId,);
     return entry ? entry[3] : false;
   }
 
   // ------------------------------------------------------------------
-  // Saídas (14.12.3)
+  // Outputs (14.12.3)
   // ------------------------------------------------------------------
 
-  /** Converte o relatório em uma árvore de elementos HTML. */
+  /** Renders the report as a tree of HTML elements. */
   to_html(): XMLElementLike[] {
     const html: XMLElementLike[] = [];
     const ctx = this.project.reportContexts.at(-1,);
@@ -312,14 +328,14 @@ export abstract class TableReport extends ReportBase {
     const tableFrame = this.generateHtmlTableFrame();
     html.push(tableFrame,);
 
-    // A tabela de dados propriamente dita.
+    // The data table proper.
     if (this.table) {
       const td = new XMLElement("td",);
       td.append(this.table.to_html(),);
       tableFrame.append(this.generateHtmlTableRow(td,),);
     }
 
-    // Legenda embutida como RichText no rodapé da tabela.
+    // Caption embedded as RichText in the table footer.
     const caption = this.a("caption",) as {
       sectionNumbers: boolean;
       to_html(): XMLElementLike | null;
@@ -334,7 +350,7 @@ export abstract class TableReport extends ReportBase {
       tableFrame.append(this.generateHtmlTableRow(td,),);
     }
 
-    // A legenda.
+    // The legend.
     const legendTd = new XMLElement("td",);
     const legendHtml = this.legend.to_html();
     if (legendHtml) legendTd.append(legendHtml,);
@@ -346,15 +362,15 @@ export abstract class TableReport extends ReportBase {
     return html;
   }
 
-  /** Converte a tabela em Array-de-Arrays. */
+  /** Renders the table as an array of arrays. */
   to_csv(): unknown[][] {
     return (this.table ? this.table.to_csv() : [[],]) as unknown[][];
   }
 
   /**
-   * Tabela intermediária em JSON (extensão SyntaxMesh — 14C.0.3): colunas +
-   * linhas com texto normalizado; células de calendário viram descritor; a
-   * legenda não entra. Estrutura estável e documentada nos testes do bloco.
+   * Intermediate table as JSON (SyntaxMesh extension — 14C.0.3): columns plus
+   * lines with normalized text; calendar cells become a descriptor; the legend
+   * is not included. The structure is stable and documented in the block tests.
    */
   toJSON(): string {
     const table = this.table
@@ -364,8 +380,8 @@ export abstract class TableReport extends ReportBase {
   }
 
   /**
-   * Documento Markdown (extensão SyntaxMesh — adendo §10): header RichText,
-   * tabela de pipes e footer RichText, sem HTML.
+   * Markdown document (SyntaxMesh extension — addendum §10): RichText header,
+   * pipe table and RichText footer, without HTML.
    */
   to_markdown(): string {
     return markdownSections([
@@ -376,13 +392,13 @@ export abstract class TableReport extends ReportBase {
   }
 
   // ------------------------------------------------------------------
-  // Helpers protegidos (14.12.4)
+  // Protected helpers (14.12.4)
   // ------------------------------------------------------------------
 
   /**
-   * Ajusta o período da coluna quando o usuário não fixou datas: encaixa todas
-   * as tarefas e adiciona ~5% de margem em cada ponta (para colunas chart e de
-   * calendário). Guarda o resultado (ajustado ou não) em `@columns`.
+   * Adjusts the column period when the user pinned no dates: it fits every task
+   * and adds ~5% of margin on each side (for chart and calendar columns). The
+   * result (adjusted or not) is stored in `@columns`.
    */
   protected adjustColumnPeriod(
     columnDef: TableColumnDefinition,
@@ -470,11 +486,11 @@ export abstract class TableReport extends ReportBase {
 
     if (!(doNotAdjustStart && doNotAdjustEnd)) {
       if (minWidth > (rEnd.diff(rStart,) + 1)) {
-        // RUBY-COMPAT-FIX: no Ruby, `TjTime - TjTime` devolve **Float**
-        // (`Time#-`), então esta margem tem .5s quando o resto é ímpar e o
-        // período do chart fica deslocado meio segundo (que `to_i` trunca
-        // para baixo). Com divisão inteira a borda esquerda saía 1s maior que
-        // a do tj3 e todas as posições em pixel deslizavam junto.
+        // RUBY-COMPAT-FIX: in Ruby `TjTime - TjTime` returns a **Float**
+        // (`Time#-`), so this margin carries .5s when the remainder is odd and
+        // the chart period is shifted by half a second (which `to_i` truncates
+        // down). With integer division the left edge came out 1s larger than
+        // tj3's and every pixel position slid along with it.
         margin = (minWidth - (rEnd.diff(rStart,) + 1)) / 2;
       }
       rStart = rStart.addSeconds(-margin,);
@@ -489,7 +505,7 @@ export abstract class TableReport extends ReportBase {
     }
   }
 
-  /** Gera a célula de cabeçalho da coluna `columnDef`. */
+  /** Emits the header cell of column `columnDef`. */
   protected generateHeaderCell(columnDef: TableColumnDefinition,): void {
     if (!this.table) return;
     const colInfo = this.columns.get(columnDef,);
@@ -498,22 +514,22 @@ export abstract class TableReport extends ReportBase {
 
     switch (columnDef.id) {
       case "chart": {
-        // Para a coluna `chart` o cabeçalho carrega um `GanttChart`. As alturas
-        // são ajustadas para que as linhas do chart coincidam com as da tabela.
+        // For the `chart` column the header carries a `GanttChart`. The heights
+        // are adjusted so the chart lines match the table lines.
         const gantt = new GanttChart(
           this.a("now",) as TjTime,
           this.a("weekStartsMonday",) as boolean,
           columnDef,
-          // Ruby passa `self` (o relatório), não `@table`: é dele que sai
-          // `legend` para o `GanttLine`.
+          // Ruby passes `self` (the report), not `@table`: it is where `legend`
+          // for the `GanttLine` comes from.
           this,
           this.a("markdate",) as TjTime | null,
         );
         gantt.generateByScale(rStart, rEnd, columnDef.scale,);
-        // O cabeçalho tem 2 linhas separadas por uma borda de 1px.
+        // The header has 2 lines separated by a 1px border.
         gantt.header!.height = this.table.headerLineHeight * 2 + 1;
-        // Largura máxima do chart. Se precisar de mais espaço, aparece uma
-        // barra de rolagem (ou o chart é truncado, conforme o formato).
+        // Maximum chart width. If more space is needed a scrollbar appears (or
+        // the chart is truncated, depending on the format).
         gantt.viewWidth = columnDef.width ?? 450;
         const column = new ReportTableColumn(this.table, columnDef, "",);
         column.cell1.special = gantt;
@@ -596,7 +612,7 @@ export abstract class TableReport extends ReportBase {
     }
   }
 
-  /** Gera uma linha da tabela para cada conta de `accountList`. */
+  /** Generates one table line per account of `accountList`. */
   protected generateAccountList(
     accountList: PropertyList<Account>,
     lineOffset: number,
@@ -633,8 +649,8 @@ export abstract class TableReport extends ReportBase {
   }
 
   /**
-   * Gera uma linha da tabela para cada material de `materialList`
-   * (extensão SyntaxMesh, Fase 14 Complemento C1.4).
+   * Emits one table line per material of `materialList` (SyntaxMesh extension,
+   * phase 14 complement C1.4).
    */
   protected generateMaterialList(
     materialList: PropertyList<Material>,
@@ -665,7 +681,7 @@ export abstract class TableReport extends ReportBase {
     return lineNo;
   }
 
-  /** Gera linhas de tarefa (e recursivamente de recursos atribuídos). */
+  /** Emits the task lines (and recursively those of the assigned resources). */
   protected generateTaskList(
     taskList: PropertyList<Task>,
     resourceList: PropertyList<Resource> | null,
@@ -718,7 +734,7 @@ export abstract class TableReport extends ReportBase {
     return lineNo;
   }
 
-  /** Gera linhas de recurso (e recursivamente de tarefas atribuídas). */
+  /** Generates the resource lines (and, recursively, the assigned tasks). */
   protected generateResourceList(
     resourceList: PropertyList<Resource>,
     taskList: PropertyList<Task> | null,
@@ -772,10 +788,10 @@ export abstract class TableReport extends ReportBase {
   }
 
   // ------------------------------------------------------------------
-  // Helpers privados (14.12.5 / 14.12.6)
+  // Private helpers (14.12.5 / 14.12.6)
   // ------------------------------------------------------------------
 
-  /** Cabeçalho das colunas de calendário (hourly..yearly) numa ColumnTable. */
+  /** Header of the calendar columns (hourly..yearly) in a ColumnTable. */
   private genCalChartHeader(
     columnDef: TableColumnDefinition,
     t: TjTime,
@@ -819,7 +835,7 @@ export abstract class TableReport extends ReportBase {
           column.cell1.hidden = true;
         }
         column.cell2.text = t.to_s(timeformat2 ?? undefined,);
-        // ~7 pixels por caractere, mínimo de 28 para boa aparência.
+        // ~7 pixels per character, minimum of 28 for a tidy look.
         const width = 8 + 7 * (column.cell2.text as string).length;
         column.cell2.width = width <= 28 ? 28 : width;
         if (!this.project.hasWorkingTime(this.project.dateToIdx(iv.start,),)) {
@@ -832,7 +848,7 @@ export abstract class TableReport extends ReportBase {
     }
   }
 
-  /** Gera a célula (padrão, calculada, calendário ou gráfico) de `line`. */
+  /** Emits the cell (plain, calculated, calendar or chart) of `line`. */
   private generateTableCell(
     line: ReportTableLine,
     columnDef: TableColumnDefinition,
@@ -849,22 +865,23 @@ export abstract class TableReport extends ReportBase {
     let sameTimeNext: SameTimeNext;
     switch (columnDef.id) {
       case "chart": {
-        // Célula oculta: o conteúdo real está no `GanttLine`/chart, não aqui.
-        // O Ruby atribui `cell.text = nil`; `""` é falsy em TS e produz o
-        // mesmo `null` no CSV.
+        // Hidden cell: the real content lives in the `GanttLine`/chart, not here.
+        // Ruby assigns `cell.text = nil`; `""` is falsy in TS and yields the
+        // same `null` in the CSV.
         const cell = new ReportTableCell(line, q, "",);
         cell.hidden = true;
-        // O chart é alcançável pela variável `special` do cabeçalho da coluna.
+        // The chart is reachable through the `special` variable of the column
+        // header.
         const special = (columnDef.column as ReportTableColumn).cell1.special;
-        // O Ruby confia no `send` dinâmico; aqui a pré-condição é verificada.
+        // Ruby relies on dynamic `send`; here the precondition is checked.
         if (!(special instanceof GanttChart)) {
           throw new Error(
             `Column 'chart' has no GanttChart in its header cell`,
           );
         }
         const gantt = special;
-        // RUBY-COMPAT-DOC: `subLineNo` já conta a própria linha (1-based),
-        // então a primeira linha do chart fica em y = 0.
+        // RUBY-COMPAT-DOC: `subLineNo` already counts its own line (1-based),
+        // so the first chart line lands at y = 0.
         const subLineNo = line.subLineNo ?? 0;
         new GanttLine(
           gantt.asLineChart(),
@@ -922,7 +939,7 @@ export abstract class TableReport extends ReportBase {
         return this.genStandardCell(q, line, columnDef,);
     }
 
-    // Células de calendário vivem numa ColumnTable embutida (via special).
+    // Calendar cells live in an embedded ColumnTable (through special).
     const embedded = (columnDef.column as ReportTableColumn).cell1
       .special as unknown as ColumnTable;
     const tcLine = new ReportTableLine(
@@ -946,7 +963,7 @@ export abstract class TableReport extends ReportBase {
     return true;
   }
 
-  /** Célula padrão: valor direto de um atributo da propriedade. */
+  /** Standard cell: value taken directly from a property attribute. */
   private genStandardCell(
     query: Query,
     line: ReportTableLine,
@@ -997,7 +1014,7 @@ export abstract class TableReport extends ReportBase {
     return true;
   }
 
-  /** Célula calculada: valor derivado (icons de alerta, name, bsi, etc.). */
+  /** Calculated cell: derived value (alert icons, name, bsi, etc.). */
   private genCalculatedCell(
     query: Query,
     line: ReportTableLine,
@@ -1078,10 +1095,10 @@ export abstract class TableReport extends ReportBase {
   }
 
   /**
-   * Célula das colunas de material numa tarefa (14C.1.11): `materials` lista
-   * as alocações da tarefa (`material (quantidade)`) e `materialcost` soma os
-   * `CostEvent` `material_usage` da tarefa — com queda para
-   * `quantidade × preço` quando não há eventos.
+   * Cell of the material columns on a task (14C.1.11): `materials` lists the
+   * allocations of the task (`material (quantity)`) and `materialcost` sums the
+   * `material_usage` `CostEvent`s of the task — falling back to
+   * `quantity × price` when there are no events.
    */
   private genTaskMaterialCell(
     query: Query,
@@ -1103,8 +1120,8 @@ export abstract class TableReport extends ReportBase {
     );
 
     if (columnDef.id === "materials") {
-      // `hidematerial`/`rollupmaterial` (14C.6.6/6.9): material oculto ou
-      // consolidado não gera entrada própria na lista da tarefa.
+      // `hidematerial`/`rollupmaterial` (14C.6.6/6.9): a hidden or rolled-up
+      // material yields no entry of its own in the task list.
       const allocs = this.taskMaterialAllocations(task, scIdx,).filter((a,) =>
         !this.hiddenBy("hideMaterial", a.material,) &&
         !this.hiddenBy("rollupMaterial", a.material,)
@@ -1122,17 +1139,17 @@ export abstract class TableReport extends ReportBase {
     if (cdText) cell.text = this.cellTextForReport(String(cdText,),) as never;
 
     this.setCustomCellAttributes(cell, columnDef, query,);
-    // `materials` admite lista vazia (tarefa sem material).
+    // `materials` accepts an empty list (task without materials).
     if (columnDef.id !== "materials") this.checkCellText(cell,);
     return true;
   }
 
   /**
-   * Célula da coluna `timebasis` (14C.1.9): exibe o `resolvedTimebasis`
-   * canônico do cenário (`duration`/`length`, resolvido em
-   * `TaskScenario.prepareScheduling`), e não o valor cru do atributo — que
-   * fica `nil` quando o usuário não declarou nada. Só tarefas têm timebasis;
-   * nos demais tipos cai na célula padrão.
+   * Cell of the `timebasis` column (14C.1.9): it shows the canonical
+   * `resolvedTimebasis` of the scenario (`duration`/`length`, resolved in
+   * `TaskScenario.prepareScheduling`) rather than the raw attribute value —
+   * which stays `nil` when the user declared nothing. Only tasks have a
+   * timebasis; every other entity falls back to the standard cell.
    */
   private genTimebasisCell(
     query: Query,
@@ -1163,13 +1180,13 @@ export abstract class TableReport extends ReportBase {
   }
 
   /**
-   * Célula de journal (14C.1.7): porta o caminho `query_journal` do Ruby para
-   * qualquer entidade — tarefa, recurso, material e conta. O modo vem do
-   * atributo `journalMode` do relatório (default `journal`), como no Ruby.
+   * Journal cell (14C.1.7): ports Ruby's `query_journal` path to any entity —
+   * task, resource, material and account. The mode comes from the `journalMode`
+   * attribute of the report (default `journal`), as in Ruby.
    *
-   * `journal_sub`, `journalmessages` e `journalsummaries` são aliases
-   * depreciados de `journal` no parser; quando chegam aqui por API, são
-   * resolvidos pelos caminhos equivalentes (`entriesByTaskR` e
+   * `journal_sub`, `journalmessages` and `journalsummaries` are deprecated
+   * aliases of `journal` in the parser; when they arrive here through the API
+   * they are resolved by the equivalent paths (`entriesByTaskR` and
    * `currentEntries`).
    */
   private genJournalCell(
@@ -1220,12 +1237,12 @@ export abstract class TableReport extends ReportBase {
   }
 
   /**
-   * Célula de material (extensão SyntaxMesh, Fase 14 Complemento C1.4).
-   * Colunas backed por atributo (`unit`, `unitprice`→`cost`, `note`)
-   * reutilizam o pipeline `Query`/`to_rti` para a formatação canônica; as
-   * colunas calculadas (`no`, `id`, `name`, `totalquantity`, custos) são
-   * resolvidas aqui. Desde a 14C.11.10 `totalquantity` é a soma das alocações
-   * (o atributo do material foi removido).
+   * Material cell (SyntaxMesh extension, phase 14 complement C1.4).
+   * Attribute-backed columns (`unit`, `unitprice`→`cost`, `note`) reuse the
+   * `Query`/`to_rti` pipeline for the canonical formatting; the calculated
+   * columns (`no`, `id`, `name`, `totalquantity`, costs) are resolved here.
+   * Since 14C.11.10 `totalquantity` is the sum of the allocations (the material
+   * attribute was removed).
    */
   private genMaterialCell(
     query: Query,
@@ -1236,7 +1253,7 @@ export abstract class TableReport extends ReportBase {
     const scIdx = query.scenarioIdx ?? 0;
     const cell = this.newCell(query, line,);
 
-    // Colunas backed por atributo (o keyword pode diferir do attributeId).
+    // Attribute-backed columns (the keyword may differ from the attributeId).
     const attrId = TableReport.materialAttributeColumns.get(columnDef.id,);
     if (attrId !== undefined) {
       const q = query.dup();
@@ -1309,9 +1326,10 @@ export abstract class TableReport extends ReportBase {
           this.materialTotalCost(material, scIdx,),
         );
         break;
-      // C18 (Adendo Extra §13.7): Σ algébrico dos bookings de estoque
-      // (movimentos **sem** tarefa, 14C.13.1) do material cuja data cai no
-      // período do relatório — entrada positiva, saída/estorno negativa.
+      // C18 (extra addendum §13.7): algebraic Σ of the stock bookings (movements
+      // **without** a task, 14C.13.1) of the material whose date falls in the
+      // report period — an inbound movement is positive, an outbound/reversal
+      // negative.
       case "stockquantity":
         cell.text = this.formatMaterialNumber(
           this.materialStockQuantity(material, scIdx,),
@@ -1331,13 +1349,13 @@ export abstract class TableReport extends ReportBase {
     }
 
     this.setCustomCellAttributes(cell, columnDef, query,);
-    // A coluna `allocations` admite lista vazia (material sem consumo);
-    // as demais colunas calculadas exigem texto.
+    // The `allocations` column accepts an empty list (material without
+    // consumption); the other calculated columns require text.
     if (columnDef.id !== "allocations") this.checkCellText(cell,);
     return true;
   }
 
-  /** Alocações de material de `task` no cenário `scIdx` (14C.1.11). */
+  /** Material allocations of `task` in scenario `scIdx` (14C.1.11). */
   private taskMaterialAllocations(
     task: Task,
     scIdx: number,
@@ -1347,7 +1365,7 @@ export abstract class TableReport extends ReportBase {
       | null) ?? [];
   }
 
-  /** Bookings (consumo realizado) de material de `task` (14C.11.3). */
+  /** (Actual consumption) material bookings of `task` (14C.11.3). */
   private taskMaterialBookings(
     task: Task,
     scIdx: number,
@@ -1358,8 +1376,8 @@ export abstract class TableReport extends ReportBase {
   }
 
   /**
-   * Custo de um booking com o preço unitário efetivo (14C.11.6): booking →
-   * alocação da mesma tarefa e material → material.
+   * Cost of a booking at the effective unit price (14C.11.6): booking →
+   * allocation of the same task and material → material.
    */
   private bookingCost(booking: MaterialBooking, scIdx: number,): number {
     const task = booking.task;
@@ -1371,9 +1389,9 @@ export abstract class TableReport extends ReportBase {
   }
 
   /**
-   * Custo de material de `task`: `CostEvent` `material_usage` da tarefa ou,
-   * sem eventos, alocações (planejado) + bookings (realizado), cada linha com
-   * o seu preço unitário efetivo (14C.1.11 / 14C.11.6).
+   * Material cost of `task`: the `material_usage` `CostEvent`s of the task or,
+   * without events, allocations (planned) plus bookings (actual), each line at
+   * its effective unit price (14C.1.11 / 14C.11.6).
    */
   private taskMaterialCost(task: Task, scIdx: number,): number {
     let sum = 0;
@@ -1385,7 +1403,7 @@ export abstract class TableReport extends ReportBase {
       ) {
         continue;
       }
-      // Material oculto pelo `hidematerial` não entra no custo (14C.6.6).
+      // A material hidden by `hidematerial` does not enter the cost (14C.6.6).
       const material = ce.material as Material | null;
       if (material && this.hiddenBy("hideMaterial", material,)) continue;
       sum += ce.amount;
@@ -1404,8 +1422,8 @@ export abstract class TableReport extends ReportBase {
   }
 
   /**
-   * Alocações de `material` nas tarefas do projeto para o cenário `scIdx`,
-   * com a própria `MaterialAllocation` (para o preço unitário efetivo).
+   * Allocations of `material` on the project tasks for scenario `scIdx`, with
+   * the `MaterialAllocation` itself (for the effective unit price).
    */
   private materialAllocations(
     material: Material,
@@ -1436,10 +1454,10 @@ export abstract class TableReport extends ReportBase {
   }
 
   /**
-   * Quantidade derivada do material (14C.11.10): Σ
-   * `MaterialAllocation.quantity` no período do relatório. Sem alocação, 0.
-   * Delega à fonte única `Material.allocatedQuantityInPeriod` (Onda C),
-   * compartilhada com `MaterialScenario#query_effort`.
+   * Quantity derived from the material (14C.11.10): Σ
+   * `MaterialAllocation.quantity` in the report period. Without an allocation,
+   * 0. It delegates to the single source `Material.allocatedQuantityInPeriod`
+   * (wave C), shared with `MaterialScenario#query_effort`.
    */
   private materialAllocatedQuantity(
     material: Material,
@@ -1451,9 +1469,9 @@ export abstract class TableReport extends ReportBase {
   }
 
   /**
-   * Custo planejado: `CostEvent` `planned` > alocações no período. Sem
-   * alocação o material não tem custo planejado (`totalquantity` foi
-   * removido na 14C.11.10). Delega à fonte única (Onda C).
+   * Planned cost: `planned` `CostEvent`s > allocations in the period. Without
+   * an allocation the material has no planned cost (`totalquantity` was removed
+   * in 14C.11.10). It delegates to the single source (wave C).
    */
   private materialScheduledCost(material: Material, scIdx: number,): number {
     const start = (this.a("start",) as TjTime | null) ?? null;
@@ -1462,8 +1480,8 @@ export abstract class TableReport extends ReportBase {
   }
 
   /**
-   * Custo realizado: `CostEvent` `actual` > bookings no período. Sem bookings
-   * nem eventos, 0. Delega à fonte única (Onda C).
+   * Actual cost: `actual` `CostEvent`s > bookings in the period. Without either,
+   * 0. It delegates to the single source (wave C).
    */
   private materialActualCost(material: Material, scIdx: number,): number {
     const start = (this.a("start",) as TjTime | null) ?? null;
@@ -1471,14 +1489,14 @@ export abstract class TableReport extends ReportBase {
     return material.actualCostInPeriod(scIdx, start, end,);
   }
 
-  /** Custo total: `CostEvent` (planejado + realizado) > alocações + bookings. */
+  /** Total cost: `CostEvent`s (planned + actual) > allocations + bookings. */
   private materialTotalCost(material: Material, scIdx: number,): number {
     const start = (this.a("start",) as TjTime | null) ?? null;
     const end = (this.a("end",) as TjTime | null) ?? null;
     return material.totalCostInPeriod(scIdx, start, end,);
   }
 
-  /** `stockquantity`: Σ algébrico das quantidades de estoque no período. */
+  /** `stockquantity`: algebraic Σ of the stock quantities in the period. */
   private materialStockQuantity(material: Material, scIdx: number,): number {
     const start = (this.a("start",) as TjTime | null) ?? null;
     const end = (this.a("end",) as TjTime | null) ?? null;
@@ -1486,8 +1504,8 @@ export abstract class TableReport extends ReportBase {
   }
 
   /**
-   * `stockcost`: Σ algébrico dos valores de estoque no período, com o preço
-   * efetivo do booking (booking → material, via `unitPriceFor`).
+   * `stockcost`: algebraic Σ of the stock values in the period, at the effective
+   * booking price (booking → material, through `unitPriceFor`).
    */
   private materialStockCost(material: Material, scIdx: number,): number {
     const start = (this.a("start",) as TjTime | null) ?? null;
@@ -1495,17 +1513,17 @@ export abstract class TableReport extends ReportBase {
     return material.stockCostInPeriod(scIdx, start, end,);
   }
 
-  /** Formata valores monetários de material (`numberFormat` do relatório). */
+  /** Formats material monetary values (the report `numberFormat`). */
   private formatMaterialNumber(value: number,): string {
     const fmt = this.a("numberFormat",) as
       | { format(n: number,): string }
       | null;
     if (fmt && typeof fmt.format === "function") return fmt.format(value,);
-    // Mesma formatação dos atributos Float do núcleo (`AttributeBase#to_s`).
+    // Same formatting as the core Float attributes (`AttributeBase#to_s`).
     return String(value,);
   }
 
-  /** Células de calendário para contas (attributeId 'balance'). */
+  /** Calendar cells for accounts (attributeId 'balance'). */
   private genCalChartAccountCell(
     query: Query,
     line: ReportTableLine,
@@ -1535,7 +1553,7 @@ export abstract class TableReport extends ReportBase {
     }
   }
 
-  /** Células de calendário para tarefas (categoria caltask/calconttask). */
+  /** Calendar cells for tasks (caltask/calconttask category). */
   private genCalChartTaskCell(
     query: Query,
     line: ReportTableLine,
@@ -1594,7 +1612,7 @@ export abstract class TableReport extends ReportBase {
     this.legend.addCalendarItem("Off duty time", "offduty",);
   }
 
-  /** Células de calendário para recursos (busy/loaded/free/offduty). */
+  /** Calendar cells for resources (busy/loaded/free/offduty). */
   private genCalChartResourceCell(
     query: Query,
     line: ReportTableLine,
@@ -1692,7 +1710,7 @@ export abstract class TableReport extends ReportBase {
     this.legend.addCalendarItem("Off duty time", "offduty",);
   }
 
-  /** Aplica indentação, alinhamento e cor de fundo padrão da célula. */
+  /** Applies the default indentation, alignment and background colour of the cell. */
   private setStandardCellAttributes(
     query: Query,
     cell: ReportTableCell,
@@ -1721,7 +1739,7 @@ export abstract class TableReport extends ReportBase {
     if (columnDef.width !== null) cell.width = columnDef.width;
   }
 
-  /** Aplica cores/alinhamento/tooltips personalizados do usuário à célula. */
+  /** Applies the user-defined colors/alignment/tooltips to the cell. */
   private setCustomCellAttributes(
     cell: ReportTableCell,
     columnDef: TableColumnDefinition,
@@ -1738,8 +1756,9 @@ export abstract class TableReport extends ReportBase {
   }
 
   /**
-   * Com múltiplos cenários, atributos não-específicos de cenário só aparecem
-   * na linha do primeiro cenário (com fonte maior); os demais são ocultos.
+   * With multiple scenarios, attributes that are not scenario specific appear
+   * only on the line of the first scenario (with a larger font); the others are
+   * hidden.
    */
   private setScenarioSettings(
     cell: ReportTableCell,
@@ -1759,7 +1778,7 @@ export abstract class TableReport extends ReportBase {
     return true;
   }
 
-  /** Cria uma célula nova; células de contêineres em linha bold são negrito. */
+  /** Creates a new cell; cells of container lines are bold in bold lines. */
   private newCell(query: Query, line: ReportTableLine,): ReportTableCell {
     const cell = new ReportTableCell(line, query,);
     const property = line.property;
@@ -1767,7 +1786,7 @@ export abstract class TableReport extends ReportBase {
     return cell;
   }
 
-  /** Define a indentação da linha (nível relativo à raiz; modo árvore). */
+  /** Sets the line indentation (level relative to the root; tree mode). */
   private setIndent(
     line: ReportTableLine,
     propertyRoot: PropertyTreeNode | null,
@@ -1783,7 +1802,7 @@ export abstract class TableReport extends ReportBase {
     }
   }
 
-  /** Categoria de fundo de célula de conta (custo/receita + zebra). */
+  /** Background category of an account cell (cost/revenue + zebra). */
   private setAccountCellBgColor(
     query: Query,
     line: ReportTableLine,
@@ -1808,7 +1827,7 @@ export abstract class TableReport extends ReportBase {
       ((line.subLineNo! ?? 0) % 2 === 1 ? "1" : "2");
   }
 
-  /** Garante texto válido; marca erro em vermelho se ausente. */
+  /** Guarantees valid text; flags the cell in red when it is missing. */
   private checkCellText(cell: ReportTableCell,): void {
     if (!cell.text) {
       cell.text = "<Error>";
@@ -1816,7 +1835,7 @@ export abstract class TableReport extends ReportBase {
     }
   }
 
-  /** Mescla células vazias consecutivas numa célula multi-coluna. */
+  /** Merges consecutive empty cells into a multi-column cell. */
   private tryCellMerging(
     cell: ReportTableCell,
     line: ReportTableLine,
@@ -1832,17 +1851,22 @@ export abstract class TableReport extends ReportBase {
   }
 
   // ------------------------------------------------------------------
-  // Acessores internos de atributos do relatório
+  // Internal accessors of report attributes
   // ------------------------------------------------------------------
 
+  /** Column definitions requested by the report, in declaration order. */
   protected columnList(): TableColumnDefinition[] {
     return (this.a("columns",) as TableColumnDefinition[] | undefined) ?? [];
   }
 
+  /** Scenario indices requested by the report, in declaration order. */
   protected scenarioList(): number[] {
     return (this.a("scenarios",) as number[] | undefined) ?? [];
   }
 
+  /**
+   * Date attribute `id` of `node` in scenario `scIdx`, or `null` when unset.
+   */
   private scenarioTime(
     node: Task | Resource | Account,
     id: string,

@@ -1,5 +1,5 @@
 /**
- * Atributo escalar inteiro.
+ * Integer scalar attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:IntegerAttribute
  */
@@ -10,18 +10,18 @@ import { type AttributeDefinition, } from "../attribute-definition.ts";
 import { AttributeBase, } from "../attribute-base.ts";
 
 /**
- * Atributo escalar inteiro.
+ * Integer scalar attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:IntegerAttribute
  */
 export class IntegerAttribute extends AttributeBase<number> {
   /**
-   * ID do tipo de atributo para IntegerAttribute.
+   * Attribute type ID for IntegerAttribute.
    */
   static readonly tjpId = "integer";
 
   /**
-   * Converte o valor para TJP (formato TaskJuggler).
+   * Converts the value to TJP (TaskJuggler format).
    *
    * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:to_tjp
    */

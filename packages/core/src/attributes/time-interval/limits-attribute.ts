@@ -1,5 +1,5 @@
 /**
- * Atributo de limites.
+ * Limits attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:LimitsAttribute
  */
@@ -11,18 +11,18 @@ import { AttributeBase, } from "../attribute-base.ts";
 import { NotYetImplementedError, } from "../errors.ts";
 
 /**
- * Atributo de limites.
+ * Limits attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:LimitsAttribute
  */
 export class LimitsAttribute extends AttributeBase<unknown> {
   /**
-   * ID do tipo de atributo para LimitsAttribute.
+   * Attribute type ID for LimitsAttribute.
    */
   static readonly tjpId = "limits";
 
   /**
-   * Converte o valor para TJP (formato TaskJuggler).
+   * Converts the value to TJP (TaskJuggler format).
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:LimitsAttribute#to_tjp
    */
@@ -33,7 +33,7 @@ export class LimitsAttribute extends AttributeBase<unknown> {
   }
 
   /**
-   * Converte o valor para string.
+   * Converts the value to a string.
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:LimitsAttribute#to_s
    */

@@ -1,13 +1,13 @@
 /**
- * Placeholders das extensões Markdown (Fase 13.4–13.8).
+ * Markdown extension placeholders (phase 13.4–13.8).
  *
- * As extensões (`<fcol:…>`, `[[func:…]]`, `<-nome->`) são arrancadas do texto
- * antes do parse `mdast` e voltam como nós sintéticos `richtextExtension`
- * depois. Este módulo centraliza a mecânica (divisão de texto, construção do
- * nó, expansão recursiva de conteúdo) para que cada extensão só descreva sua
- * regex e seu payload.
+ * The extensions (`<fcol:…>`, `[[func:…]]`, `<-name->`) are pulled out of the
+ * text before the `mdast` parse and come back as synthetic
+ * `richtextExtension` nodes afterwards. This module centralizes the machinery
+ * (text splitting, node building, recursive content expansion) so that each
+ * extension only has to describe its regex and its payload.
  *
- * @see ADR 026 (Markdown como formato going-forward)
+ * @see ADR 026 (Markdown as the going-forward format)
  * @see docs/syntaxmesh/fases/fase-13-markdown.md §4.2
  */
 
@@ -15,28 +15,28 @@ import type { PhrasingContent, } from "mdast";
 import { parseMdastInline, } from "../parse-mdast.ts";
 import type { Extraction, MdastExtension, MdastNode, } from "../types.ts";
 
-/** Divisor dos placeholders (`§COLOR_0§`). Deliberamente raro em Markdown. */
+/** Placeholder delimiter (`§COLOR_0§`). Deliberately rare in Markdown. */
 export const PLACEHOLDER_DELIM = "§";
 
-/** Constrói o placeholder de um tipo de extensão (`COLOR`, `FUNC`, `MINIQ`). */
+/** Builds the placeholder of an extension kind (`COLOR`, `FUNC`, `MINIQ`). */
 export function placeholderFor(kind: string, index: number,): string {
   return `${PLACEHOLDER_DELIM}${kind}_${index}${PLACEHOLDER_DELIM}`;
 }
 
-/** Um `Extraction` endereçável por placeholder. */
+/** An `Extraction` addressable by placeholder. */
 export interface ExtensionResolver {
-  /** Busca a extração do placeholder (ou `undefined` se não é extensão). */
+  /** Looks up the extraction of the placeholder (`undefined` if not one). */
   lookup(placeholder: string,): Extraction | undefined;
   /**
-   * Funções reconhecidas pelos handlers da Fase 12. Quando ausente, todas são
-   * aceitas; quando presente, função desconhecida volta como texto cru.
+   * Functions recognized by the phase 12 handlers. When absent, all of them
+   * are accepted; when present, an unknown function falls back to raw text.
    */
   isKnownFunction?(name: string,): boolean;
-  /** Funções que viram `blockfunc` quando sozinhas num parágrafo. */
+  /** Functions that become `blockfunc` when alone in a paragraph. */
   isBlockFunction?(name: string,): boolean;
 }
 
-/** Resolver backed por uma coleção de extrações (usado em testes e no pipeline). */
+/** Resolver backed by a collection of extractions (tests and pipeline). */
 export function mapResolver(
   extractions: Iterable<Extraction>,
   options: {
@@ -53,12 +53,12 @@ export function mapResolver(
   };
 }
 
-/** Fatia do texto resultante da divisão por placeholders. */
+/** Slice of the text resulting from splitting by placeholders. */
 export type TextSlice =
   | { kind: "text"; value: string }
   | { kind: "extension"; extraction: Extraction };
 
-/** Divide `value` nas ocorrências dos placeholders registrados no resolver. */
+/** Splits `value` at the occurrences of the placeholders in the resolver. */
 export function splitPlaceholders(
   value: string,
   resolver: ExtensionResolver,
@@ -68,7 +68,7 @@ export function splitPlaceholders(
   while (true) {
     let best: { index: number; length: number; extraction: Extraction } | null =
       null;
-    // Procuramos o placeholder mais à esquerda entre todos os registrados.
+    // Look for the leftmost placeholder among all registered ones.
     for (const candidate of knownPlaceholders(rest, resolver,)) {
       const e = resolver.lookup(candidate,);
       if (!e) continue;
@@ -90,7 +90,7 @@ export function splitPlaceholders(
   }
 }
 
-/** Placeholders (prefixo `§`) que aparecem em `text`. */
+/** Placeholders (prefix `§`) that appear in `text`. */
 function knownPlaceholders(
   text: string,
   resolver: ExtensionResolver,
@@ -100,21 +100,21 @@ function knownPlaceholders(
   return found.filter((p,) => resolver.lookup(p,) !== undefined);
 }
 
-/** Payload `[nome, args]` de uma função. */
+/** `[name, args]` payload of a function. */
 function funcPayload(e: Extraction,): [string, Record<string, string>,] | null {
   return Array.isArray(e.payload,)
     ? e.payload as [string, Record<string, string>,]
     : null;
 }
 
-/** Constrói o nó sintético de uma extração (com conteúdo recursivo em `fontCol`). */
+/** Builds the synthetic node of an extraction (recursive content in `fontCol`). */
 export function buildExtensionNode(
   e: Extraction,
   resolver: ExtensionResolver,
 ): MdastExtension | PhrasingContent {
   const func = funcPayload(e,);
   if (func && resolver.isKnownFunction && !resolver.isKnownFunction(func[0],)) {
-    // Função desconhecida → texto cru, sem markup e sem exceção em `to_s`.
+    // Unknown function → raw text, no markup and no exception in `to_s`.
     return { type: "text", value: e.source, };
   }
   const children: PhrasingContent[] = e.content !== undefined
@@ -128,7 +128,7 @@ export function buildExtensionNode(
   };
 }
 
-/** Parseia conteúdo inline de extensão e expande placeholders aninhados. */
+/** Parses inline extension content and expands nested placeholders. */
 export function expandInline(
   content: string,
   resolver: ExtensionResolver,
@@ -140,7 +140,7 @@ export function expandInline(
   return out;
 }
 
-/** Expande placeholders dentro de um nó inline (text → 0..n nós). */
+/** Expands placeholders inside an inline node (text → 0..n nodes). */
 function expandNodeInline(
   node: PhrasingContent,
   resolver: ExtensionResolver,
@@ -152,7 +152,7 @@ function expandNodeInline(
   return slicesToPhrasing(slices, resolver,);
 }
 
-/** Converte as fatias em nós `mdast` inline. */
+/** Converts the slices into inline `mdast` nodes. */
 function slicesToPhrasing(
   slices: TextSlice[],
   resolver: ExtensionResolver,
@@ -170,7 +170,7 @@ function slicesToPhrasing(
   return out;
 }
 
-/** Nós com `children` inline que precisamos percorrer. */
+/** Nodes with inline `children` that must be traversed. */
 interface HasChildren {
   children: PhrasingContent[];
 }
@@ -181,11 +181,11 @@ function hasInlineChildren(node: unknown,): node is HasChildren {
 }
 
 /**
- * Percorre `node` (mutando os arrays de filhos) expandindo placeholders e
- * promovendo funções de bloco solitárias a `blockfunc` (13.6.8).
+ * Walks `node` (mutating the child arrays) expanding placeholders and
+ * promoting lone block functions to `blockfunc` (13.6.8).
  *
- * Retorna o próprio nó, como pedem os `postprocess*` das extensões (13.4.5,
- * 13.6.8, 13.7.4).
+ * Returns the node itself, as the extension `postprocess*` hooks expect
+ * (13.4.5, 13.6.8, 13.7.4).
  */
 export function walkAndExpand(
   node: MdastNode,
@@ -221,7 +221,7 @@ function expandChildren(
   promoteLoneBlockFunction(parent, resolver,);
 }
 
-/** Parágrafo com uma única função de bloco vira `blockfunc`. */
+/** A paragraph holding a single block function becomes `blockfunc`. */
 function promoteLoneBlockFunction(
   parent: HasChildren,
   resolver: ExtensionResolver,

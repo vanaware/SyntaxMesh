@@ -1,21 +1,46 @@
 import { TjArgumentError, } from "./tj-time.ts";
 import { TjTime, } from "./tj-time.ts";
 
-// Type constraint for comparable values
+/** Values an {@link Interval} can hold. */
 export type Comparable = number | Date | TjTime;
 
+/**
+ * Interval — closed-open range `[start, end)` of comparable values.
+ *
+ * Port of `Interval.rb`. Subclasses may override the start/end accessors (see
+ * {@link ScoreboardInterval}, which works on slot indices).
+ */
 export class Interval<T extends Comparable,> {
+  /** First value of the range. */
   protected _start: T;
+  /** Value that closes the range (exclusive). */
   protected _end: T;
 
+  /**
+   * First value of the range.
+   *
+   * @returns The start value.
+   */
   get start(): T {
     return this._start;
   }
 
+  /**
+   * Value that closes the range (exclusive).
+   *
+   * @returns The end value.
+   */
   get end(): T {
     return this._end;
   }
 
+  /**
+   * Creates the interval.
+   *
+   * @param start First value of the range.
+   * @param end Value that closes the range (exclusive).
+   * @throws TjArgumentError When `end` is lower than `start`.
+   */
   constructor(start: T, end: T,) {
     if (this._lt(end, start,)) {
       throw new TjArgumentError(`Invalid interval (${start} - ${end})`,);
@@ -25,9 +50,10 @@ export class Interval<T extends Comparable,> {
   }
 
   /**
-   * Check if interval contains another interval or value
-   * @param arg - Interval or value to check
-   * @returns true if contained
+   * Tells whether the interval contains another interval or a value.
+   *
+   * @param arg Interval or value to test.
+   * @returns `true` when `arg` lies inside the interval.
    */
   contains(arg: T | Interval<T>,): boolean {
     this.checkClass(arg,);
@@ -39,9 +65,10 @@ export class Interval<T extends Comparable,> {
   }
 
   /**
-   * Check if interval overlaps with another interval or value
-   * @param arg - Interval or value to check
-   * @returns true if overlaps
+   * Tells whether the interval overlaps another interval or contains a value.
+   *
+   * @param arg Interval or value to test.
+   * @returns `true` when `arg` overlaps the interval.
    */
   overlaps(arg: T | Interval<T>,): boolean {
     this.checkClass(arg,);
@@ -53,9 +80,10 @@ export class Interval<T extends Comparable,> {
   }
 
   /**
-   * Get intersection of two intervals
-   * @param other - Other interval
-   * @returns Intersection interval or null if no overlap
+   * Intersection of two intervals.
+   *
+   * @param other Interval to intersect with.
+   * @returns The intersection, or `null` when they do not overlap.
    */
   intersection(other: Interval<T>,): Interval<T> | null {
     const newStart = this._gt(this.start, other.start,)
@@ -69,15 +97,15 @@ export class Interval<T extends Comparable,> {
   }
 
   /**
-   * Combine intervals.
+   * Combines two touching intervals.
    *
-   * RUBY-COMPAT-FIX (task 5.7.R.1 / 5.7.R.2): the original Ruby
-   * implementation returns an Array with a single Interval element.
-   * This is a Category A bug — it is always fixed regardless of
-   * compat.keepRubyBugs because the return type must be Interval.
+   * RUBY-COMPAT-FIX (task 5.7.R.1 / 5.7.R.2): the original Ruby implementation
+   * returns an Array with a single Interval element. This is a Category A bug —
+   * it is always fixed regardless of `compat.keepRubyBugs`, because the return
+   * type must be an Interval.
    *
-   * @param iv - Other interval
-   * @returns Combined interval
+   * @param iv Interval to combine with.
+   * @returns The merged interval, or this one when they do not touch.
    */
   combine(iv: Interval<T>,): Interval<T> {
     if (this._equals(iv.end, this.start,)) {
@@ -90,9 +118,11 @@ export class Interval<T extends Comparable,> {
   }
 
   /**
-   * Compare intervals
-   * @param iv - Other interval
-   * @returns -1 if end < iv.start, 1 if iv.end < start, 0 if overlaps
+   * Orders two intervals by their coverage.
+   *
+   * @param iv Interval to compare with.
+   * @returns `-1` when this interval ends before `iv` starts, `1` when `iv`
+   *   ends before this one starts, and `0` when they overlap.
    */
   compareTo(iv: Interval<T>,): -1 | 0 | 1 {
     if (this._lt(this.end, iv.start,)) {
@@ -105,9 +135,10 @@ export class Interval<T extends Comparable,> {
   }
 
   /**
-   * Check if intervals are equal
-   * @param iv - Other interval
-   * @returns true if same class and start/end
+   * Tells whether two intervals have the same bounds.
+   *
+   * @param iv Interval to compare with.
+   * @returns `true` when start and end are equal.
    */
   equals(iv: Interval<T>,): boolean {
     return this._equals(this.start, iv.start,) &&
@@ -115,18 +146,20 @@ export class Interval<T extends Comparable,> {
   }
 
   /**
-   * Check if another object is an Interval
-   * @param arg - Object to check
-   * @returns true if Interval
+   * Narrows a value to an {@link Interval}.
+   *
+   * @param arg Value to test.
+   * @returns `true` when `arg` is an `Interval`.
    */
   static isInterval<T extends Comparable,>(arg: unknown,): arg is Interval<T> {
     return arg instanceof Interval;
   }
 
   /**
-   * Private method to check class mismatch
-   * @param arg - Object to check
-   * @throws TjArgumentError if class mismatch
+   * Rejects values whose class does not match the interval.
+   *
+   * @param arg Value to test.
+   * @throws TjArgumentError When the class does not match.
    */
   private checkClass(arg: unknown,): void {
     if (arg instanceof Interval) {
@@ -143,6 +176,10 @@ export class Interval<T extends Comparable,> {
 
   /**
    * Less-than comparison that works for number, Date and TjTime.
+   *
+   * @param a Left value.
+   * @param b Right value.
+   * @returns `true` when `a` is lower than `b`.
    */
   private _lt(a: T, b: T,): boolean {
     if (a instanceof TjTime) {
@@ -153,6 +190,10 @@ export class Interval<T extends Comparable,> {
 
   /**
    * Less-than-or-equal comparison that works for number, Date and TjTime.
+   *
+   * @param a Left value.
+   * @param b Right value.
+   * @returns `true` when `a` is lower than or equal to `b`.
    */
   private _lte(a: T, b: T,): boolean {
     if (a instanceof TjTime) {
@@ -163,6 +204,10 @@ export class Interval<T extends Comparable,> {
 
   /**
    * Greater-than comparison that works for number, Date and TjTime.
+   *
+   * @param a Left value.
+   * @param b Right value.
+   * @returns `true` when `a` is greater than `b`.
    */
   private _gt(a: T, b: T,): boolean {
     if (a instanceof TjTime) {
@@ -173,6 +218,10 @@ export class Interval<T extends Comparable,> {
 
   /**
    * Equality comparison that works for number, Date and TjTime.
+   *
+   * @param a Left value.
+   * @param b Right value.
+   * @returns `true` when the values are equal.
    */
   private _equals(a: T, b: T,): boolean {
     if (a instanceof TjTime) {

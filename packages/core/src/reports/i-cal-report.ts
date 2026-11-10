@@ -1,13 +1,13 @@
 /**
- * ICalReport (Fase 14.19.2) — relatório que gera um arquivo iCalendar.
+ * ICalReport (phase 14.19.2) — report that produces an iCalendar file.
  *
- * Porta fiel de `docs/taskjuggler/lib/taskjuggler/reports/ICalReport.rb`. Para
- * cada tarefa gera um `VTODO`; para tarefas-folha não-milestone (quando
- * `novevents` é explicitamente `false`) gera um `VEVENT` adicional. As entradas
- * de `journal` geram `VJOURNAL` (o armazenamento de journal é Fase 16; aqui é
- * tratado de forma defensiva quando indisponível).
+ * Faithful port of `docs/taskjuggler/lib/taskjuggler/reports/ICalReport.rb`.
+ * Every task yields a `VTODO`; non-milestone leaf tasks (when `novevents` is
+ * explicitly `false`) also yield a `VEVENT`. Journal entries yield `VJOURNAL`
+ * (journal storage belongs to phase 16, so its absence is handled defensively
+ * here).
  *
- * ⚠️ Browser (ADR 027): `to_iCal()` retorna a string; nenhuma escrita a disco.
+ * ⚠️ Browser (ADR 027): `to_iCal()` returns the string; there is no disk write.
  *
  * @see docs/syntaxmesh/fases/fase-14-relatorios-tarefas.md (14.19.2)
  */
@@ -22,6 +22,10 @@ import { ReportBase, } from "./report-base.ts";
 import { Event, ICalendar, Journal, Todo, } from "../ical/mod.ts";
 import { registerContentFactory, } from "../model/report-content.ts";
 
+/**
+ * Structural view of `Project.journal`, which is only complete from phase 16
+ * on. The report calls it defensively while the storage is missing.
+ */
 interface JournalSource {
   entriesByTask?(
     task: Task,
@@ -37,21 +41,31 @@ interface JournalSource {
   }>;
 }
 
+/**
+ * The `ical` generator: one `VTODO` per task, plus the optional `VEVENT` and
+ * `VJOURNAL` entries.
+ */
 export class ICalReport extends ReportBase {
   private taskList!: PropertyList<Task>;
   private resourceList!: PropertyList<Resource>;
   private query!: Query;
   private ical: ICalendar;
 
+  /**
+   * Creates an iCalendar report.
+   *
+   * @param report Report definition being rendered.
+   */
   constructor(report: Report,) {
     super(report,);
     this.ical = new ICalendar("",);
   }
 
+  /** Fills the calendar with one `VTODO` per task and the optional extras. */
   override generateIntermediateFormat(): void {
     super.generateIntermediateFormat();
 
-    // Prepara a lista de tarefas (filtrada).
+    // Prepares the (filtered) task list.
     this.taskList = new PropertyList<Task>(this.project.tasks,);
     this.taskList.setSorting(
       (this.a("sortTasks",) as Array<[string, boolean, number,]>) ?? [],
@@ -65,7 +79,7 @@ export class ICalReport extends ReportBase {
     );
     this.taskList.sort();
 
-    // Prepara a lista de recursos.
+    // Prepares the resource list.
     this.resourceList = new PropertyList<Resource>(this.project.resources,);
     this.resourceList.setSorting(
       (this.a("sortResources",) as Array<[string, boolean, number,]>) ?? [],
@@ -84,15 +98,15 @@ export class ICalReport extends ReportBase {
     this.ical = new ICalendar(
       `${AppConfig.packageName}-${String(this.project.get("projectid",),)}`,
     );
-    // Data de criação: o mais antigo entre o início do projeto e agora.
+    // Creation date: the earliest of the project start and now.
     this.ical.creationDate = minTime(
       this.project.get("start",) as TjTime,
       TjTime.now(),
     );
-    // Última modificação: a data 'now' do projeto.
+    // Last modification: the 'now' date of the project.
     this.ical.lastModified = this.project.get("now",) as TjTime;
 
-    // Consideramos apenas o primeiro cenário solicitado.
+    // Only the first requested scenario is considered.
     const scenarios = (this.a("scenarios",) as number[]) ?? [];
     const scenarioIdx = scenarios[0] ?? 0;
     const allowEvents = noEventsDisabled(this.report,);
@@ -119,7 +133,7 @@ export class ICalReport extends ReportBase {
       this.query.process();
       todo.percentComplete = Math.trunc(this.query.to_num() ?? 0,);
 
-      // Converte a prioridade TJ (1-1000) para iCalendar (0-9).
+      // Converts the TJ priority (1-1000) to iCalendar's (0-9).
       const priority =
         (task.getForScenario("priority", scenarioIdx,) as number) ?? 500;
       todo.priority = Math.trunc((priority - 1) / 100,);
@@ -131,7 +145,7 @@ export class ICalReport extends ReportBase {
       const noteStr = note ? richTextToString(note,) : null;
       if (noteStr) todo.description = noteStr;
 
-      // Organizador: primeiro responsável com email, se reportado.
+      // Organizer: first responsible resource with an email, if reported.
       const responsible =
         (task.getForScenario("responsible", scenarioIdx,) as Resource[]) ??
           [];
@@ -144,7 +158,7 @@ export class ICalReport extends ReportBase {
         }
       }
 
-      // Recursos atribuídos viram participantes (attendees).
+      // Assigned resources become attendees.
       const attendees: Resource[] = [];
       const assigned = (task.getForScenario(
         "assignedresources",
@@ -159,7 +173,7 @@ export class ICalReport extends ReportBase {
         todo.addAttendee(resource.name, String(email,),);
       }
 
-      // VEVENT adicional para folhas não-milestone.
+      // Extra VEVENT for non-milestone leaves.
       const milestone = task.getForScenario("milestone", scenarioIdx,);
       if (task.leaf() && !milestone && allowEvents) {
         const event = new Event(
@@ -184,22 +198,30 @@ export class ICalReport extends ReportBase {
         }
       }
 
-      // VJOURNAL para as entradas de journal da tarefa (Fase 16).
+      // VJOURNAL for the journal entries of the task (phase 16).
       this.generateJournals(task, uidMap, scenarioIdx,);
     }
   }
 
+  /**
+   * Emits the `VJOURNAL` entries of one task.
+   *
+   * @param task Task whose journal entries are exported.
+   * @param uidMap UID already assigned to each task.
+   * @param scenarioIdx Index of the reported scenario.
+   */
   private generateJournals(
     task: Task,
     uidMap: Map<Task, string>,
     scenarioIdx: number,
   ): void {
     void scenarioIdx;
-    // `journal` é um campo do Project (não um atributo `get()`); o acesso por
-    // tarefa (`entriesByTask`) é Fase 16, então tratamos defensivamente.
+    // `journal` is a field of `Project` (not a `get()` attribute); the per-task
+    // access (`entriesByTask`) belongs to phase 16, so it is handled
+    // defensively.
     const journal = this.project.journal as unknown as JournalSource | null;
     if (!journal || typeof journal.entriesByTask !== "function") {
-      // Armazenamento de journal é Fase 16; sem ele, não há VJOURNAL.
+      // Journal storage belongs to phase 16; without it there is no VJOURNAL.
       return;
     }
     const entries = journal.entriesByTask(
@@ -227,13 +249,13 @@ export class ICalReport extends ReportBase {
     }
   }
 
-  /** Converte o formato intermediário em uma string iCalendar (CRLF). */
+  /** Renders the intermediate format as an iCalendar string (CRLF). */
   to_iCal(): string {
     return this.ical.to_s();
   }
 }
 
-/** Ruby: VEVENTs só são gerados quando `novevents` foi explicitamente posto a `false`. */
+/** Ruby: `VEVENT`s are only generated when `novevents` was explicitly set to `false`. */
 function noEventsDisabled(report: Report,): boolean {
   if (!report.provided("novevents",)) return false;
   const value = report.get("novevents",);
@@ -241,7 +263,7 @@ function noEventsDisabled(report: Report,): boolean {
   return bool === false;
 }
 
-/** `to_s` de RichText (ou string simples). */
+/** `to_s` of a RichText value (or a plain string). */
 function richTextToString(value: unknown,): string {
   if (value === null || value === undefined) return "";
   const maybe = value as { to_s?: () => string };
@@ -253,7 +275,7 @@ function minTime(a: TjTime, b: TjTime,): TjTime {
   return a.compareTo(b,) <= 0 ? a : b;
 }
 
-// Registra o conteúdo de `ical` na fábrica (14.11).
+// Registers the `ical` content in the factory (14.11).
 registerContentFactory(
   "ical",
   (report: unknown,): ICalReport => new ICalReport(report as Report,),

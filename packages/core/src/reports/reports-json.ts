@@ -1,14 +1,15 @@
 /**
- * Seção `results.reports` do envelope de execução (Fase 24 — ADR 034).
+ * The `results.reports` section of the execution envelope (phase 24 — ADR 034).
  *
- * Constrói o contrato `ReportsJson` a partir do `Project` **em memória**, sem
- * tocar em disco/teminal: cada relatório vira uma entrada com o nome exibido,
- * a intenção `stdout` da DSL, o conteúdo já renderizado de cada formato
- * declarado e os erros que ele produziu. Um relatório com erro **não** impede
- * a geração dos demais; o `ok` global reflete se houve qualquer erro.
+ * Builds the `ReportsJson` contract from the in-memory `Project`, never touching
+ * the disk or the terminal: each report becomes an entry with the displayed
+ * name, the `stdout` intent from the DSL, the already rendered content of every
+ * declared format and the errors it produced. A failing report does **not**
+ * prevent the others from being generated; the global `ok` reflects whether any
+ * error occurred.
  *
- * A política de destino (imprimir no terminal, gravar `{name}.{ext}`) é
- * exclusiva do consumidor (`output-policy.ts` da CLI).
+ * The destination policy (print to the terminal, write `{name}.{ext}`) belongs
+ * exclusively to the consumer (the CLI `output-policy.ts`).
  *
  * @see docs/syntaxmesh/fases/fase-24-cli-adendo.md §3.2/§3.3
  */
@@ -17,67 +18,68 @@ import type { Report, } from "../model/report.ts";
 import { ReportContext, } from "./report-context.ts";
 import { MessageHandlerInstance, } from "../message-handler.ts";
 
-/** Conteúdo de um formato de relatório, já renderizado como texto. */
+/** Content of one report format, already rendered as text. */
 export interface FormatContent {
-  /** Id do formato declarado no `.tjp` (`csv`, `html`, `markdown`, ...). */
+  /** Id of the format declared in the `.tjp` (`csv`, `html`, `markdown`, ...). */
   format: string;
-  /** Conteúdo integral do relatório naquele formato. */
+  /** Full content of the report in that format. */
   content: string;
 }
 
-/** Uma entrada de `results.reports`. */
+/** One entry of `results.reports`. */
 export interface ReportJsonEntry {
-  /** Nome exibido do relatório (`reportName` na DSL; único no projeto). */
+  /** Reported name of the report (`reportName` in the DSL; unique). */
   name: string;
-  /** Intenção `stdout` declarada no relatório (`false` quando ausente). */
+  /** `stdout` intent declared on the report (`false` when absent). */
   stdout: boolean;
   /**
-   * Atributo `selfcontained` do relatório (default `false`).
+   * The report's `selfcontained` attribute (default `false`).
    *
-   * Dado de **intenção de renderização**, como `stdout`: quando `false`, o
-   * HTML referencia `css/`, `scripts/` e `icons/` e o consumidor precisa
-   * copiar esses assets para o diretório de saída (política da CLI, 24.5.16).
+   * A **rendering intent**, like `stdout`: when `false`, the HTML references
+   * `css/`, `scripts/` and `icons/` and the consumer must copy those assets to
+   * the output directory (CLI policy, 24.5.16).
    */
   selfcontained: boolean;
-  /** Formatos na ordem declarada, cada um com o conteúdo renderizado. */
+  /** Formats in declaration order, each with its rendered content. */
   formats: FormatContent[];
-  /** Mensagens de erro/fatal produzidas por este relatório. */
+  /** Error/fatal messages produced by this report. */
   errors: string[];
 }
 
-/** Seção `results.reports` do envelope. */
+/** The `results.reports` section of the envelope. */
 export interface ReportsJson {
-  /** `false` quando algum relatório pedido falhou. */
+  /** `false` when any requested report failed. */
   ok: boolean;
-  /** Diretório de saída — presente **apenas** quando o request o passou. */
+  /** Output directory — present **only** when the request supplied it. */
   outputDir?: string;
-  /** Relatórios na ordem de declaração (filtrados pela seleção, se houver). */
+  /** Reports in declaration order (filtered by the selection, if any). */
   reports: ReportJsonEntry[];
 }
 
-/** Opções de `renderReports` (espelham `report`/`reportsIsRegex` do request). */
+/** Options of `renderReports` (mirror `report`/`reportsIsRegex`). */
 export interface RenderReportsOptions {
-  /** Id exato ou regex do relatório a gerar; ausente gera todos. */
+  /** Exact id or regex of the report to generate; absent generates all. */
   report?: string | null;
-  /** Interpretar `report` como expressão regular. */
+  /** Interpret `report` as a regular expression. */
   reportsIsRegex?: boolean;
-  /** Diretório de saída ecoado na seção (só entra quando definido). */
+  /** Output directory echoed into the section (only when set). */
   outputDir?: string | null;
   /**
-   * Snippet cru de atributos dinâmicos (`--report -A "<attrs>"`).
+   * Raw snippet of dynamic attributes (`--report -A "<attrs>"`).
    *
-   * Quando presente, a geração passa por `Project#generateReport` — que aplica
-   * o pipeline 18.19 (parse dos atributos, `interactive`, backup/restore) — em
-   * vez de chamar `Report#generate()` direto. O consumidor **não** reexamina a
-   * opção: a seção já sai processada.
+   * When present, generation goes through `Project#generateReport` — which
+   * applies the 18.19 pipeline (attribute parsing, `interactive`,
+   * backup/restore) — instead of calling `Report#generate()` directly. The
+   * consumer does **not** re-examine the option: the section is already
+   * processed.
    */
   dynamicAttributes?: string | null;
 }
 
 /**
- * Gera um relatório e devolve a entrada da seção. Erros **não** escapam: as
- * exceções (formato desconhecido, âncora de sheet) e as mensagens
- * `error`/`fatal` do `MessageHandler` viram `errors[]` da própria entrada.
+ * Generates one report and returns its section entry. Errors never escape: the
+ * exceptions (unknown format, sheet anchor) and the `error`/`fatal` messages of
+ * the `MessageHandler` become `errors[]` of the entry itself.
  */
 function renderEntry(
   project: Project,
@@ -88,14 +90,14 @@ function renderEntry(
   const messageMark = handler.messages.length;
   const errorCountMark = handler.errors;
   const errors: string[] = [];
-  // Profundidade inicial: uma exceção não pode deixar contexto pendurado nem
-  // remover o contexto de quem chamou `renderReports`.
+  // Initial depth: an exception must not leave a dangling context nor remove
+  // the context of whoever called `renderReports`.
   const contextMark = project.reportContexts.length;
 
   try {
     if (dynamicAttributes !== undefined && dynamicAttributes !== null) {
-      // Caminho com atributos dinâmicos: `Project#generateReport` já faz o
-      // push/pop do `ReportContext` e o backup/restore dos atributos.
+      // Dynamic-attributes path: `Project#generateReport` already does the
+      // `ReportContext` push/pop and the attribute backup/restore.
       project.generateReport(report.id, false, null, dynamicAttributes,);
     } else {
       project.reportContexts.push(new ReportContext(project, report,),);
@@ -113,24 +115,24 @@ function renderEntry(
     }
   }
 
-  // Mensagens de erro/fatal produzidas durante a geração deste relatório.
+  // Error/fatal messages produced while generating this report.
   for (const message of handler.messages.slice(messageMark,)) {
     if (message.type === "error" || message.type === "fatal") {
       const text = message.message || message.id;
       if (!errors.includes(text,)) errors.push(text,);
     }
   }
-  // Erros contados sem mensagem associada não podem desaparecer.
+  // Counted errors without an associated message must not disappear.
   if (errors.length === 0 && handler.errors > errorCountMark) {
     errors.push(`Report ${report.fullId} failed.`,);
   }
 
   const formats: FormatContent[] = [];
   if (errors.length === 0) {
-    // `outputs` é preenchido no dispatch de `generate()` — a ordem das chaves é
-    // a ordem em que os formatos foram renderizados (declarada na DSL ou
-    // reescrita por `dynamicAttributes`), que é exatamente o que o relatório
-    // **produziu**.  Lê-lo depois da geração evita divergir do snippet `-A`.
+    // `outputs` is filled in the `generate()` dispatch — the key order is the
+    // order in which the formats were rendered (declared in the DSL or rewritten
+    // by `dynamicAttributes`), which is exactly what the report **produced**.
+    // Reading it after generation avoids diverging from the `-A` snippet.
     for (const [format, content,] of report.outputs) {
       formats.push({ format, content, },);
     }
@@ -146,10 +148,10 @@ function renderEntry(
 }
 
 /**
- * Monta a seção `results.reports` a partir do projeto em memória.
+ * Assembles the `results.reports` section from the in-memory project.
  *
- * @param project Projeto já parseado (e, quando necessário, agendado).
- * @param options Seleção de relatórios e `outputDir` a ecoar.
+ * @param project Project already parsed (and scheduled when necessary).
+ * @param options Report selection and the `outputDir` to echo.
  */
 export function renderReports(
   project: Project,

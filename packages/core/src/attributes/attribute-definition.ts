@@ -1,7 +1,7 @@
 /**
- * Definição imutável de um atributo.
+ * Immutable definition of an attribute.
  *
- * @see docs/taskjuggler/lib/taskjuggler/AttributeDefinition.rb (arquivo inteiro)
+ * @see docs/taskjuggler/lib/taskjuggler/AttributeDefinition.rb (whole file)
  */
 
 import { AttributeType, } from "./attribute-type.ts";
@@ -50,54 +50,54 @@ import { MarkdownAttribute, } from "./rich/markdown-attribute.ts";
 import { DefinitionListAttribute, } from "./rich/definition-list-attribute.ts";
 
 /**
- * Definição de um atributo — blueprint imutável.
+ * Definition of an attribute — an immutable blueprint.
  *
  * @see docs/taskjuggler/lib/taskjuggler/AttributeDefinition.rb
  */
 export class AttributeDefinition<T,> {
   /**
-   * ID do atributo (ex: "effort", "responsible").
+   * Attribute id (e.g. "effort", "responsible").
    */
   readonly id: string;
 
   /**
-   * Nome amigável do atributo.
+   * Human-readable name of the attribute.
    */
   readonly name: string;
 
   /**
-   * Tipo do atributo.
+   * Type of the attribute.
    */
   readonly type: AttributeType;
 
   /**
-   * Valor padrão do atributo.
+   * Default value of the attribute.
    */
   readonly defaultValue: T;
 
   /**
-   * Se o atributo é definido pelo usuário (vs. pelo sistema).
+   * Whether the attribute is user-defined (as opposed to system-defined).
    */
   readonly userDefined: boolean;
 
   /**
-   * Se o atributo é uma lista.
+   * Whether the attribute is a list.
    */
   readonly isList: boolean;
 
   /**
-   * Se o atributo é um singleton (apenas um valor).
+   * Whether the attribute is a singleton (a single value only).
    */
   readonly isSingleton: boolean;
 
   /**
-   * Se o atributo é de escopo de cenário.
+   * Whether the attribute is scenario-scoped.
    */
   isScenarioAttribute: boolean;
 
   /**
-   * Construtor da classe de atributo correspondente (ex: StringAttribute).
-   * Usado em `new aType.objClass(propertySet, aType, this)`.
+   * Constructor of the matching attribute class (e.g. StringAttribute).
+   * Used in `new aType.objClass(propertySet, aType, this)`.
    */
   objClass: new (
     property: PropertyLike,
@@ -106,28 +106,31 @@ export class AttributeDefinition<T,> {
   ) => AttributeBase<unknown>;
 
   /**
-   * Se o atributo é herdado do pai (não-scenario ou scenario-specific).
+   * Whether the attribute is inherited from the parent (non-scenario or
+   * scenario-specific).
    */
   inheritedFromParent: boolean;
 
   /**
-   * Se o atributo é herdado do projeto (top-level).
+   * Whether the attribute is inherited from the project (top level).
    */
   inheritedFromProject: boolean;
 
   /**
-   * Constrói uma definição de atributo.
+   * Builds an attribute definition.
    *
-   * @param id - ID do atributo
-   * @param name - Nome amigável
-   * @param type - Tipo do atributo
-   * @param defaultValue - Valor padrão
-   * @param userDefined - Se é definido pelo usuário
-   * @param isList - Se é uma lista
-   * @param isSingleton - Se é singleton
-   * @param isScenarioAttribute - Se é de escopo de cenário
-   * @param inheritedFromParent - Se o atributo é herdado do pai
-   * @param inheritedFromProject - Se o atributo é herdado do projeto
+   * @param id - Attribute id
+   * @param name - Human-readable name
+   * @param type - Attribute type
+   * @param defaultValue - Default value
+   * @param userDefined - Whether it is user-defined
+   * @param isList - Whether it is a list
+   * @param isSingleton - Whether it is a singleton
+   * @param isScenarioAttribute - Whether it is scenario-scoped
+   * @param inheritedFromParent - Whether the attribute is inherited from the
+   *   parent
+   * @param inheritedFromProject - Whether the attribute is inherited from the
+   *   project
    */
   constructor(
     id: string,
@@ -165,8 +168,10 @@ export class AttributeDefinition<T,> {
   }
 
   /**
-   * Retorna o construtor correspondente para um tipo de atributo.
+   * Returns the matching constructor for an attribute type.
    *
+   * @param type Attribute type.
+   * @returns The class name of the attribute implementation.
    * @see docs/taskjuggler/lib/taskjuggler/AttributeDefinition.rb:attributeTypeClass
    */
   static attributeTypeClass(type: AttributeType,): unknown {
@@ -245,8 +250,8 @@ export class AttributeDefinition<T,> {
         return "JournalSortListAttribute";
       case AttributeType.RichText:
         return "RichTextAttribute";
-      // Extensão SyntaxMesh (ADR 039): sem correspondente no Ruby — só
-      // user-defined em `extend`, nunca aparece nos goldens de atributos.
+      // SyntaxMesh extension (ADR 039): no counterpart in Ruby — user-defined
+      // only in `extend`, never appears in the attribute goldens.
       case AttributeType.Markdown:
         return "MarkdownAttribute";
       case AttributeType.DefinitionList:
@@ -256,6 +261,13 @@ export class AttributeDefinition<T,> {
     }
   }
 
+  /**
+   * Returns the attribute class that implements `type`.
+   *
+   * @param type Attribute type.
+   * @returns The constructor of the matching attribute class.
+   * @throws TjArgumentError When the type has no implementation.
+   */
   static getObjClass(
     type: AttributeType,
   ): new (

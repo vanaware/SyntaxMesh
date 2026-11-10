@@ -1,31 +1,40 @@
 /**
- * TableColumnSorter (Fase 14.5) — reordena colunas de uma tabela segundo novos
- * cabeçalhos.
+ * TableColumnSorter (phase 14.5) — reorders the columns of a table according to
+ * new headers.
  *
- * Porta fiel de `docs/taskjuggler/lib/taskjuggler/TableColumnSorter.rb`. A
- * tabela é um array de linhas (cada linha um array); a primeira linha contém os
- * cabeçalhos. Colunas antigas ausentes dos novos cabeçalhos vão para o fim
- * (colunas descontinuadas); colunas novas são preenchidas com `null`.
+ * Faithful port of
+ * `docs/taskjuggler/lib/taskjuggler/TableColumnSorter.rb`. The table is an array
+ * of rows (each row an array); the first row holds the headers. Old columns
+ * missing from the new headers are moved to the end (discontinued columns); new
+ * columns are filled with `null`.
  *
  * @see docs/syntaxmesh/fases/fase-14-relatorios-tarefas.md (14.5)
  */
 export class TableColumnSorter {
+  /** Table registered for sorting (never mutated). */
   private readonly oldTable: unknown[][];
-  /** Número de colunas descontinuadas; `null` até `sort` ser chamado. */
+  /** Number of discontinued columns; `null` until `sort` is called. */
   discontinuedColumns: number | null;
 
+  /**
+   * Registers the table to be reordered.
+   *
+   * @param table Table whose first row holds the old headers.
+   */
   constructor(table: unknown[][],) {
     this.oldTable = table;
     this.discontinuedColumns = null;
   }
 
   /**
-   * Reorganiza a tabela registrada. A tabela antiga não é modificada. Retorna a
-   * nova tabela; as colunas antigas que não estão em `newHeaders` são anexadas
-   * ao final.
+   * Reorders the registered table. The old table is not modified: a new table is
+   * returned, with the old columns absent from `newHeaders` appended at the end.
+   *
+   * @param newHeaders Headers of the new column order.
+   * @returns A new table in the requested column order.
    */
   sort(newHeaders: string[],): unknown[][] {
-    // Mapeia índice antigo → índice novo.
+    // Maps the old index -> new index.
     const columnIdxMap = new Map<number, number>();
     let newHeaderIndex = newHeaders.length;
     const oldHeaders = this.oldTable[0] as unknown[];
@@ -33,17 +42,17 @@ export class TableColumnSorter {
     for (let i = 0; i < oldHeaders.length; i++) {
       const ni = newHeaders.findIndex((h,) => h === oldHeaders[i]);
       if (ni >= 0) {
-        // Coluna antiga ainda presente nos novos cabeçalhos.
+        // The old column is still present in the new headers.
         columnIdxMap.set(i, ni,);
       } else {
-        // Coluna descontinuada: anexada ao final.
+        // Discontinued column: appended at the end.
         columnIdxMap.set(i, newHeaderIndex,);
         discontinuedHeaders.push(oldHeaders[i],);
         newHeaderIndex += 1;
       }
     }
 
-    // Constrói uma nova tabela do zero, preenchendo com null.
+    // Builds a new table from scratch, filling it with null.
     const newTable: unknown[][] = [];
     for (let lineIdx = 0; lineIdx < this.oldTable.length; lineIdx++) {
       const oldLine = this.oldTable[lineIdx]!;
@@ -53,7 +62,7 @@ export class TableColumnSorter {
         newTable[lineIdx] = new Array(newHeaderIndex,).fill(null,);
       }
       const newLine = newTable[lineIdx]!;
-      // Copia cada coluna antiga para a nova posição.
+      // Copies every old column into its new position.
       for (const [oldColIdx, newColIdx,] of columnIdxMap) {
         newLine[newColIdx] = oldLine[oldColIdx];
       }

@@ -1,16 +1,16 @@
 /**
- * Leave, LeaveList, LeaveAllowance e LeaveAllowanceList.
+ * Leaves, leave lists, leave allowances and allowance lists.
  *
- * Port de `docs/taskjuggler/lib/taskjuggler/LeaveList.rb` (arquivo completo).
- * A ordem de {@link LeaveTypes} é semântica: um tipo de índice maior
- * sobrepõe-se ao anterior no mesmo slot (é assim que o scoreboard de
- * `ResourceScenario` codifica a ausência).
+ * Port of `docs/taskjuggler/lib/taskjuggler/LeaveList.rb` (the whole file). The
+ * order of {@link LeaveTypes} is semantic: a higher index overrides the lower
+ * one in the same slot, which is how the `ResourceScenario` scoreboard encodes
+ * absence.
  *
- * Divergências do Ruby (Category A/C — ver `cheat-sheet-ruby-ts.md` §12):
- * • `typeIdx` é **método** (`typeIdx()`), como no Ruby, e não getter;
- * • `LeaveAllowance#to_s` imprime `tipo data slots` (o `Struct#to_s` do Ruby
- *   devolve o `inspect` da struct, inútil para `to_tjp`);
- * • erros usam `Error` com a mesma mensagem do `ArgumentError` do Ruby.
+ * Divergences from Ruby (category A/C — see `cheat-sheet-ruby-ts.md` §12):
+ * • `typeIdx` is a **method** (`typeIdx()`), as in Ruby, not a getter;
+ * • `LeaveAllowance#to_s` prints `type date slots` (Ruby's `Struct#to_s`
+ *   returns the struct `inspect`, useless for `to_tjp`);
+ * • errors use `Error` with the same message as Ruby's `ArgumentError`.
  *
  * @see docs/taskjuggler/lib/taskjuggler/LeaveList.rb
  * @see docs/syntaxmesh/decisoes/029-journal-alertlevel.md
@@ -21,10 +21,10 @@ import { TimeInterval, } from "../time/time-interval.ts";
 import { ScoreboardInterval, } from "../time/scoreboard-interval.ts";
 
 /**
- * Tipos de licença suportados (`Leave::Types` do Ruby).
+ * Supported leave types (Ruby `Leave::Types`).
  *
- * A ordem importa: um tipo de índice maior sobrepõe-se ao anterior no mesmo
- * período.
+ * The order matters: a type with a higher index overrides the previous one over
+ * the same period.
  */
 export const LeaveTypes = {
   project: 1,
@@ -36,30 +36,47 @@ export const LeaveTypes = {
   unemployed: 7,
 } as const;
 
-/** Nome de um tipo de licença (`:project`, `:annual`, … no Ruby). */
+/** Name of a leave type (`:project`, `:annual`, … in Ruby). */
 export type LeaveType = keyof typeof LeaveTypes;
 
-/** Tipo aceito pelas APIs (string aberta na borda — parser/diretivas). */
+/** Type accepted by the APIs (open string at the boundary — parser, directives). */
 export type LeaveTypeLike = LeaveType | (string & Record<never, never>);
 
-/** `true` quando `type` é um tipo de licença conhecido. */
+/** `true` when `type` is a known leave type. */
 export function isLeaveType(type: string,): type is LeaveType {
-  // `hasOwnProperty` e não `in`: `in` aceitaria "constructor"/"toString".
+  // `hasOwnProperty` rather than `in`: `in` would accept "constructor"/
+  // "toString".
   return Object.prototype.hasOwnProperty.call(LeaveTypes, type,);
 }
 
-/** Intervalo aceito por uma ausência (data ou índice de slot). */
+/** Interval accepted by a leave (a date range or a slot index range). */
 export type LeaveInterval = TimeInterval | ScoreboardInterval;
 
-/** Uma ausência (férias, licença, feriado…) em um intervalo. */
+/**
+ * One absence (vacation, sick leave, holiday, …) over one interval.
+ *
+ * The class is a value object: it is compared by identity of its interval and
+ * never mutated, which is why `deepClone` returns `this`.
+ */
 export class Leave {
-  /** Mesmos tipos do Ruby, expostos como constante da classe. */
-  static readonly Types = LeaveTypes;
+  /** Same types as Ruby, exposed as a class constant. */
+  static readonly Types: typeof LeaveTypes = LeaveTypes;
 
+  /** Kind of absence. */
   readonly type: LeaveType;
+  /** Period the absence covers. */
   readonly interval: LeaveInterval;
+  /** Free-form reason, or `null` when none was given. */
   readonly reason: string | null;
 
+  /**
+   * Creates a leave.
+   *
+   * @param type Kind of absence; validated against {@link LeaveTypes}.
+   * @param interval Period covered.
+   * @param reason Free-form justification, when there is one.
+   * @throws {Error} When `type` is not a known leave type.
+   */
   constructor(
     type: LeaveTypeLike,
     interval: LeaveInterval,
@@ -73,15 +90,15 @@ export class Leave {
     this.reason = reason;
   }
 
-  /** Índice do tipo (1–7), usado no bit-encoding do scoreboard. */
+  /** Index of the type (1–7), used by the scoreboard bit encoding. */
   typeIdx(): number {
     return LeaveTypes[this.type];
   }
 
   /**
-   * Representação TJP (Ruby `Leave#to_s`): `tipo "motivo" intervalo`.
+   * TJP representation (Ruby `Leave#to_s`): `type "reason" interval`.
    *
-   * A ausência de motivo mantém os dois espaços do Ruby
+   * A missing reason keeps Ruby's two spaces
    * (`"#{type} #{reason ? … : ""} #{interval}"`).
    */
   to_s(): string {
@@ -89,29 +106,42 @@ export class Leave {
       this.interval.to_s();
   }
 
-  /** Alias idiomático de {@link to_s} (`join`/template string). */
+  /** Idiomatic alias of {@link to_s} (used by `join` and template strings). */
   toString(): string {
     return this.to_s();
   }
 
   /**
-   * Ausência é um objeto-valor imutável (16.13.1): a cópia devolve `this`,
-   * como os demais tipos frozen do Ruby em `deep_copy.rb`.
+   * A leave is an immutable value object (16.13.1): the copy returns `this`,
+   * like the other frozen Ruby types in `deep_copy.rb`.
    */
   deepClone(): this {
     return this;
   }
 }
 
-/** Lista de `Leave` (Ruby `LeaveList < Array`). */
+/** List of `Leave` (Ruby `LeaveList < Array`). */
 export class LeaveList extends Array<Leave> {}
 
-/** Provisão anual de licenças, em slots (horas) — pode ser negativa. */
+/**
+ * Yearly leave allowance, in slots (hours) — may be negative to model expiry.
+ */
 export class LeaveAllowance {
+  /** Kind of absence the allowance applies to. */
   readonly type: LeaveType;
+  /** Date the allowance is granted for. */
   readonly date: TjTime;
+  /** Allowance in slots; negative values subtract from the balance. */
   readonly slots: number;
 
+  /**
+   * Creates an allowance.
+   *
+   * @param type Kind of absence; validated against {@link LeaveTypes}.
+   * @param date Date the allowance is granted for.
+   * @param slots Allowance in slots (may be negative).
+   * @throws {Error} When `type` is not a known leave type.
+   */
   constructor(type: LeaveTypeLike, date: TjTime, slots: number,) {
     if (!isLeaveType(type,)) {
       throw new Error(`Unsupported leave type ${String(type,)}`,);
@@ -122,32 +152,37 @@ export class LeaveAllowance {
   }
 
   /**
-   * Formato `tipo data slots`.
+   * `type date slots` format.
    *
-   * O Ruby não define `to_s`: como `LeaveAllowance < Struct`, `to_s` devolve o
-   * `inspect` da struct, que não serve para `to_tjp`. Este formato é o
-   * consumido por {@link LeaveAllowanceList#to_tjp}.
+   * Ruby does not define `to_s`: as `LeaveAllowance < Struct`, `to_s` returns
+   * the struct `inspect`, which is useless for `to_tjp`. This format is the one
+   * {@link LeaveAllowanceList#to_tjp} consumes.
    */
   to_s(): string {
     return `${this.type} ${this.date.to_s()} ${this.slots}`;
   }
 
-  /** Alias idiomático de {@link to_s}. */
+  /** Idiomatic alias of {@link to_s}. */
   toString(): string {
     return this.to_s();
   }
 
-  /** Provisão é imutável: a cópia devolve `this` (16.13.1). */
+  /** An allowance is immutable: the copy returns `this` (16.13.1). */
   deepClone(): this {
     return this;
   }
 }
 
-/** Lista de `LeaveAllowance` com cálculo de saldo por período. */
+/** List of `LeaveAllowance` with per-period balance computation. */
 export class LeaveAllowanceList extends Array<LeaveAllowance> {
   /**
-   * Saldo do tipo `type` no intervalo `[startDate, endDate)` (Ruby
-   * `LeaveAllowanceList#balance`). `slots` negativos subtraem (expiração).
+   * Balance of type `type` inside `[startDate, endDate)` (Ruby
+   * `LeaveAllowanceList#balance`). Negative `slots` subtract (expiry).
+   *
+   * @param type Kind of absence.
+   * @param startDate Start of the period (inclusive).
+   * @param endDate End of the period (exclusive).
+   * @throws {Error} When `type` is not a known leave type.
    */
   balance(type: LeaveTypeLike, startDate: TjTime, endDate: TjTime,): number {
     if (!isLeaveType(type,)) {
@@ -165,7 +200,7 @@ export class LeaveAllowanceList extends Array<LeaveAllowance> {
     return balance;
   }
 
-  /** Uma provisão por linha (`leaveallowance <tipo> <data> <slots>`). */
+  /** One allowance per line (`leaveallowance <type> <date> <slots>`). */
   to_tjp(): string {
     return this.map((al,) => al.to_s()).join(",\n",);
   }

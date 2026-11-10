@@ -1,5 +1,5 @@
 /**
- * Módulo de atributos do TaskJuggler.
+ * TaskJuggler attributes module.
  *
  * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb
  * @see docs/taskjuggler/lib/taskjuggler/AttributeDefinition.rb

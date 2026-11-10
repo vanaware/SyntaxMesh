@@ -1,49 +1,61 @@
 /**
- * SsSenderApp — app `tj3ss_sender`: envia os templates de status sheet.
+ * SsSenderApp — the `tj3ss_sender` app: sends the status sheet templates.
  *
- * Port de `docs/taskjuggler/lib/taskjuggler/apps/Tj3SsSender.rb`. Idêntico ao
- * `TsSenderApp`, com três diferenças do Ruby: o default do período é a próxima
- * **quarta-feira** (`nextDayOfWeek(3)`), existe `--hideresource` e o
- * intervalo é ajustável (`-i/--interval`).
+ * Port of `docs/taskjuggler/lib/taskjuggler/apps/Tj3SsSender.rb`. Identical to
+ * `TsSenderApp`, with three differences from Ruby: the period defaults to the
+ * next **Wednesday** (`nextDayOfWeek(3)`), it has `--hideresource` and the
+ * interval is adjustable (`-i/--interval`).
  *
  * @see docs/taskjuggler/lib/taskjuggler/apps/Tj3SsSender.rb
  * @see docs/syntaxmesh/fases/fase-18-time-status-sheets-tarefas.md (18.18.6)
  */
 
 import { StatusSheetSender, } from "../status-sheet-sender.ts";
+import type { EmailMessage, } from "../email-message.ts";
 import {
   SheetAppBase,
   type SheetAppContext,
   type SheetAppOptions,
 } from "./app-base.ts";
 
-/** Opções específicas do `tj3ss_sender`. */
+/**
+ * Options specific to `tj3ss_sender`.
+ */
 export interface SsSenderAppOptions extends SheetAppOptions {
-  /** `-r/--resource <ID>` (repetível). */
+  /** `-r/--resource <ID>` (repeatable). */
   resources?: string[];
   /** `-f/--force`. */
   force?: boolean;
-  /** `-i/--interval <DURATION>` (`1w`, `5d`, `72h`…). */
+  /** `-i/--interval <DURATION>` (`1w`, `5d`, `72h`...). */
   intervalDuration?: string | null;
-  /** `--hideresource <EXPR>`: filtro dos recursos do template. */
+  /** `--hideresource <EXPR>`: filter applied to the template resources. */
   hideResource?: string | null;
 }
 
+/**
+ * App that emits one status sheet template per resource for the period.
+ */
 export class SsSenderApp extends SheetAppBase {
+  /** Sender that builds and queues the template emails. */
   readonly handler: StatusSheetSender;
 
-  /** `-r/--resource`: vazio = todos os recursos. */
+  /** `-r/--resource`: empty = every resource. */
   readonly resources: string[];
 
   /** `-f/--force`. */
   force: boolean;
 
-  /** `-i/--interval`, ou `null` para manter o default do sender. */
+  /** `-i/--interval`, or `null` to keep the sender default. */
   readonly intervalDuration: string | null;
 
-  /** `--hideresource`, ou `null` para manter o default do sender. */
+  /** `--hideresource`, or `null` to keep the sender default. */
   readonly hideResource: string | null;
 
+  /**
+   * Creates the app.
+   *
+   * @param options Typed options produced by the CLI layer.
+   */
   constructor(options: SsSenderAppOptions = {},) {
     // Ruby: `@date = TjTime.new.nextDayOfWeek(3).to_s('%Y-%m-%d')`.
     super("tj3ss_sender", 3, options,);
@@ -55,11 +67,21 @@ export class SsSenderApp extends SheetAppBase {
     this.hideResource = options.hideResource ?? null;
   }
 
-  /** Emails gerados nesta execução, na ordem de envio (ADR 036). */
-  get messages() {
+  /**
+   * Emails generated in this run, in send order (ADR 036).
+   *
+   * @returns The template emails produced by the sender.
+   */
+  get messages(): EmailMessage[] {
     return this.handler.sentMessages;
   }
 
+  /**
+   * Builds one status sheet template per requested resource and queues it as an
+   * email.
+   *
+   * @param context Project, file store and raw email of the run.
+   */
   protected async appMain(context: SheetAppContext,): Promise<void> {
     this.prepare(this.handler, "statussheets", "sender",);
     this.attach(this.handler, context,);

@@ -1,18 +1,18 @@
 /**
- * RichTextImage — representação de imagem no markup RichText (Fase 12.2).
+ * RichTextImage — image representation in the RichText markup (phase 12.2).
  *
- * Corresponde a `[[File:path.png alt=... middle]]` no MediaWiki/TJ. Port fiel
- * de `RichText/Element.rb:22` (`RichTextImage`): `fileName` é somente leitura,
- * `altText` e `verticalAlign` são acessores mutáveis (inicialmente `null`).
+ * Corresponds to `[[File:path.png alt=... middle]]` in MediaWiki/TJ. Faithful
+ * port of `RichText/Element.rb:22` (`RichTextImage`): `fileName` is read-only,
+ * `altText` and `verticalAlign` are mutable accessors (initially `null`).
  *
  * @see docs/taskjuggler/lib/taskjuggler/RichText/Element.rb:22-31
  */
 export class RichTextImage {
-  /** Nome/caminho do arquivo da imagem. */
+  /** File name/path of the image. */
   readonly fileName: string;
-  /** Texto alternativo (`alt=...`), opcional. */
+  /** Alternative text (`alt=...`), optional. */
   altText: string | null;
-  /** Alinhamento vertical (ex.: `middle`), opcional. */
+  /** Vertical alignment (e.g. `middle`), optional. */
   verticalAlign: string | null;
 
   constructor(fileName: string,) {

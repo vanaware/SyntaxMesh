@@ -1,35 +1,35 @@
 /**
- * `stdIoWrapper` — captura o que o bloco escreve em stdout/stderr.
+ * `stdIoWrapper` — captures what the block writes to stdout/stderr.
  *
- * Port de `docs/taskjuggler/lib/taskjuggler/StdIoWrapper.rb`. No Ruby o
- * wrapper troca `$stdout`/`$stderr` por `StringIO` e devolve
- * `Results(returnValue, stdOut, stdErr)`; qualquer erro dentro do bloco vale
- * como `returnValue = 1` (convenção dos apps `tj3*`).
+ * Port of `docs/taskjuggler/lib/taskjuggler/StdIoWrapper.rb`. In Ruby the
+ * wrapper swaps `$stdout`/`$stderr` for `StringIO` and returns
+ * `Results(returnValue, stdOut, stdErr)`; any error inside the block counts as
+ * `returnValue = 1` (the `tj3*` app convention).
  *
- * No browser (Category B — ver `cheat-sheet-ruby-ts.md` §12):
- * • `console.log`/`console.error` são globais compartilhados — a troca vale
- *   para o processo inteiro, não por thread (não há threads);
- * • `stdIn` não existe em `console`, então é aceito e ignorado;
- * • erros capturados são **qualquer** `Error`, não só `RuntimeError`.
+ * In the browser (Category B — see `cheat-sheet-ruby-ts.md` §12):
+ * • `console.log`/`console.error` are shared globals — the swap applies to the
+ *   whole process, not per thread (there are no threads);
+ * • `stdIn` does not exist in `console`, so it is accepted and ignored;
+ * • captured errors are **any** `Error`, not only `RuntimeError`.
  *
- * Consumidores previstos: Fase 18 (`TimeSheetSummary.getResourceJournal`) e
- * Fase 24 (apps de sheet).
+ * Planned consumers: phase 18 (`TimeSheetSummary.getResourceJournal`) and
+ * phase 24 (sheet apps).
  *
  * @see docs/taskjuggler/lib/taskjuggler/StdIoWrapper.rb
  * @see docs/syntaxmesh/fases/fase-16-apoio-tarefas.md (16.11)
  */
 
-/** Resultado da execução (Ruby `StdIoWrapper::Results`). */
+/** Execution result (Ruby `StdIoWrapper::Results`). */
 export interface Results<T,> {
-  /** Valor devolvido por `fn` (ou `1` quando `fn` lançou). */
+  /** Value returned by `fn` (or `1` when `fn` threw). */
   returnValue: T | 1;
-  /** Tudo que foi escrito em `console.log`. */
+  /** Everything written to `console.log`. */
   stdOut: string;
-  /** Tudo que foi escrito em `console.error`. */
+  /** Everything written to `console.error`. */
   stdErr: string;
 }
 
-/** Converte um argumento de `console.*` para texto (como o `puts` do Ruby). */
+/** Converts a `console.*` argument to text (like Ruby's `puts`). */
 function toText(value: unknown,): string {
   if (typeof value === "string") return value;
   if (typeof value === "symbol") return value.toString();
@@ -42,17 +42,17 @@ function toText(value: unknown,): string {
   }
 }
 
-/** Junta os argumentos de uma chamada de `console` numa linha. */
+/** Joins the arguments of a `console` call into one line. */
 function formatArgs(args: unknown[],): string {
   return args.map(toText,).join(" ",) + "\n";
 }
 
 /**
- * Executa `fn` capturando `console.log`/`console.error`.
+ * Runs `fn` capturing `console.log`/`console.error`.
  *
- * `stdIn` é aceito por compatibilidade com a assinatura Ruby e ignorado (o
- * browser não tem stdin). A saída capturada **não** é ecoada no console real,
- * como no Ruby (o `StringIO` engole a saída).
+ * `stdIn` is accepted for compatibility with the Ruby signature and ignored
+ * (the browser has no stdin). The captured output is **not** echoed to the real
+ * console, as in Ruby (the `StringIO` swallows the output).
  */
 export function stdIoWrapper<T,>(
   stdIn: string | null,

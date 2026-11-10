@@ -1,16 +1,16 @@
 /**
- * RTFReport — handler da função `[[report:…]]` (Fase 12.15 / 14.24).
+ * RTFReport — handler of the `[[report:…]]` function (phase 12.15 / 14.24).
  *
- * Inclui um relatório no output de RichText: resolve o `id`, detecta
- * recursão de aninhamento, empurra um `ReportContext`, gera o formato
- * intermediário e devolve o HTML do conteúdo. A geração de relatórios é a
- * Fase 14; o corpo foi desancorado em 14.24.6.
+ * Includes a report in the RichText output: resolves the `id`, detects nesting
+ * recursion, pushes a `ReportContext`, generates the intermediate format and
+ * returns the HTML of the content. Report generation is phase 14; the body was
+ * unanchored in 14.24.6.
  *
- * Port de `RichText/RTFReport.rb`.
+ * Port of `RichText/RTFReport.rb`.
  *
  * @see docs/taskjuggler/lib/taskjuggler/RichText/RTFReport.rb
- * @see ADR 025 (RichText e function handlers)
- * @see ADR 027 (reports retornam strings, browser)
+ * @see ADR 025 (RichText and function handlers)
+ * @see ADR 027 (reports return strings, browser)
  */
 
 import { RichTextFunctionHandler, } from "./function-handler.ts";
@@ -33,12 +33,12 @@ export class RTFReport extends RichTextFunctionHandler {
     this.blockFunction = true;
   }
 
-  /** Não suportado para esta função. */
+  /** Not supported for this function. */
   override to_s(_args: RichTextFunctionArgs,): string {
     return "";
   }
 
-  /** Não suportado para esta função. */
+  /** Not supported for this function. */
   override to_tagged(_args: RichTextFunctionArgs,): string | null {
     return null;
   }
@@ -62,8 +62,8 @@ export class RTFReport extends RichTextFunctionHandler {
       return null;
     }
 
-    // Detecta aninhamento recursivo (RTFReport.rb:46-65): o relatório já
-    // está na pilha de contextos → empilha mensagem com o caminho e aborta.
+    // Detects recursive nesting (RTFReport.rb:46-65): the report is already
+    // on the context stack → pushes a message with the path and aborts.
     const contexts = this.project!.reportContexts;
     if (contexts.some((c,) => c.report === report)) {
       let stack = "";
@@ -80,14 +80,15 @@ export class RTFReport extends RichTextFunctionHandler {
       return null;
     }
 
-    // Novo contexto para o relatório; gera; devolve o HTML do conteúdo.
-    // Ruby faz pop sem ensure — aqui `finally` não vaza contexto em erro.
+    // New context for the report; generate; return the HTML of the content.
+    // Ruby pops without ensure — here `finally` never leaks the context on
+    // error.
     contexts.push(new ReportContext(this.project!, report,),);
     try {
       report.generateIntermediateFormat();
       const html = report.to_html();
-      // `Report#to_html` admite string/array (conteúdos CSV/text); o RichText
-      // embute um único nó — normaliza para fragmento.
+      // `Report#to_html` accepts string/array (CSV/text contents); RichText
+      // embeds a single node — normalizes into a fragment.
       if (Array.isArray(html,)) {
         const frag = new Fragment();
         for (const el of html) frag.append(el,);

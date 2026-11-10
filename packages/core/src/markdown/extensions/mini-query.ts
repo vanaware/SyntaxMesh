@@ -1,29 +1,29 @@
 /**
- * Extensão de mini-queries `<-nome->` (Fase 13.7).
+ * Extension for `<-name->` mini-queries (phase 13.7).
  *
- * Equivalente açucarado de `[[query:attribute=nome]]` (13.6), e a mesma
- * sintaxe do RichText (`INLINEFUNCSTART`/`QUERY`, 12.5). O payload é o `data`
- * de `inlinefunc`: `['query', { attribute }]`.
+ * Sugary equivalent of `[[query:attribute=name]]` (13.6), and the same syntax
+ * as RichText (`INLINEFUNCSTART`/`QUERY`, 12.5). The payload is the `data` of
+ * `inlinefunc`: `['query', { attribute }]`.
  *
- * @see ADR 026 (Markdown como formato going-forward)
+ * @see ADR 026 (Markdown as the going-forward format)
  * @see packages/core/src/richtext/rich-text-syntax-rules.ts (`wordWithQueries`)
  */
 
 import type { Extraction, MdastNode, } from "../types.ts";
 import { placeholderFor, walkAndExpand, } from "./placeholders.ts";
 
-/** Extração de um `<-attribute->` (13.7.2). */
+/** Extraction of a `<-attribute->` (13.7.2). */
 export interface MiniQueryExtraction {
   placeholder: string;
   attribute: string;
-  /** Texto original (`<-effort->`). */
+  /** Original text (`<-effort->`). */
   source: string;
 }
 
-/** `<-identificador->` (13.7.2). */
+/** `<-identifier->` (13.7.2). */
 const MINI_QUERY_RE = /<-([a-zA-Z][_a-zA-Z0-9]*)->/g;
 
-/** Troca `<-nome->` por `§MINIQ_n§` (13.7.2, 13.7.3). */
+/** Replaces `<-name->` with `§MINIQ_n§` (13.7.2, 13.7.3). */
 export function preprocessMiniQueries(
   text: string,
   startIndex = 0,
@@ -38,7 +38,7 @@ export function preprocessMiniQueries(
   return { text: out, extractions, };
 }
 
-/** `['query', { attribute }]` — o `data` de `inlinefunc` (13.7.4). */
+/** `['query', { attribute }]` — the `data` of `inlinefunc` (13.7.4). */
 export function miniQueryToExtraction(e: MiniQueryExtraction,): Extraction {
   return {
     placeholder: e.placeholder,
@@ -48,7 +48,7 @@ export function miniQueryToExtraction(e: MiniQueryExtraction,): Extraction {
   };
 }
 
-/** Substitui os placeholders de mini-query por nós `richtextExtension`. */
+/** Replaces the mini-query placeholders with `richtextExtension` nodes. */
 export function postprocessMiniQueries(
   node: MdastNode,
   extractions: MiniQueryExtraction[],

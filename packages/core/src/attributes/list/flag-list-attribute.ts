@@ -1,5 +1,5 @@
 /**
- * Atributo de lista de flags.
+ * Flag list attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:FlagListAttribute
  */
@@ -10,18 +10,18 @@ import { type AttributeDefinition, } from "../attribute-definition.ts";
 import { ListAttributeBase, } from "../list-attribute-base.ts";
 
 /**
- * Atributo de lista de flags.
+ * Flag list attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:FlagListAttribute
  */
 export class FlagListAttribute extends ListAttributeBase<string> {
   /**
-   * ID do tipo de atributo para FlagListAttribute.
+   * Attribute type ID for FlagListAttribute.
    */
   static readonly tjpId = "flaglist";
 
   /**
-   * Converte o valor para string.
+   * Converts the value to a string.
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:FlagListAttribute#to_s
    */
@@ -31,7 +31,7 @@ export class FlagListAttribute extends ListAttributeBase<string> {
   }
 
   /**
-   * Converte o valor para TJP (formato TaskJuggler).
+   * Converts the value to TJP (TaskJuggler format).
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:FlagListAttribute#to_tjp
    */

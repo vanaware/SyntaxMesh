@@ -1,8 +1,9 @@
 /**
- * TjpSyntaxRules — bloco shift (subfase 10.12).
+ * TjpSyntaxRules — shift block (sub-phase 10.12).
  *
- * Port das regras `shift*` e do apoio `validTimeZone` de
- * `TjpSyntaxRules.rb`. `workinghoursShift` reusa `workinghours` (project.ts).
+ * Port of the `shift*` rules and of the `validTimeZone` supporting rule from
+ * `TjpSyntaxRules.rb`. `workinghoursShift` reuses `workinghours`
+ * (project.ts).
  *
  * @see docs/taskjuggler/lib/taskjuggler/TjpSyntaxRules.rb
  */
@@ -17,7 +18,7 @@ const asProp = (parser: ProjectFileParser,): NonNullable<
   ProjectFileParser["property"]
 > => parser.property!;
 
-/** Registra o bloco de regras de turnos. */
+/** Registers the shift rule block. */
 export function registerShiftRules(p: ProjectFileParser,): void {
   // ------------------------------------------------------------------
   // shift / header / body / attributes
@@ -100,7 +101,7 @@ export function registerShiftRules(p: ProjectFileParser,): void {
   },);
 
   // ------------------------------------------------------------------
-  // Atributos de cenário do shift
+  // Scenario attributes of shift
   // ------------------------------------------------------------------
   rule(p, "shiftScenarioAttributes", () => {
     p.pattern(
@@ -145,7 +146,7 @@ export function registerShiftRules(p: ProjectFileParser,): void {
     p.pattern(
       ["_vacation", "!vacationName", "!intervalsOptional",],
       function (this: ProjectFileParser,): unknown {
-        // O atributo antigo 'vacation' mapeia para feriados públicos.
+        // The old 'vacation' attribute maps to public holidays.
         const leaves = ((this.val[2] as ScoreboardInterval[] | null) ?? [])
           .map((iv,) => new Leave("holiday", iv,));
         this.appendScListAttribute("leaves", leaves,);
@@ -167,7 +168,7 @@ export function registerShiftRules(p: ProjectFileParser,): void {
   },);
 
   // ------------------------------------------------------------------
-  // Apoio: fuso horário válido (usado por shift e tracking).
+  // Support: valid time zone (used by shift and tracking).
   // ------------------------------------------------------------------
   rule(p, "validTimeZone", () => {
     p.pattern(["$STRING",], function (this: ProjectFileParser,): unknown {

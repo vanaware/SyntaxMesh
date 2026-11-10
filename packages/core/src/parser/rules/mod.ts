@@ -1,9 +1,9 @@
 /**
- * Registro das regras de sintaxe TJP (port de TjpSyntaxRules.rb).
+ * Registration of the TJP syntax rules (port of TjpSyntaxRules.rb).
  *
- * O Ruby usa um mixin com ~300 métodos `rule_*`; aqui cada bloco de regras
- * é um módulo com função de registro (subfases 10.11–10.14). A ordem de
- * registro não importa — o FSM é compilado por `updateParserTables()`.
+ * Ruby uses a mixin with ~300 `rule_*` methods; here each rules block is a
+ * module with a registration function (sub-phases 10.11–10.14). Registration
+ * order does not matter — the FSM is compiled by `updateParserTables()`.
  *
  * @see docs/taskjuggler/lib/taskjuggler/TjpSyntaxRules.rb
  */
@@ -24,8 +24,8 @@ import { registerTrackingRules, } from "./tracking.ts";
 import { registerLogicRules, } from "./logic.ts";
 
 /**
- * Registra todas as regras TJP no parser e recompila o FSM.
- * Chamado pelo construtor do ProjectFileParser via initRules().
+ * Registers all TJP rules in the parser and recompiles the FSM.
+ * Called by the ProjectFileParser constructor via initRules().
  */
 export function registerTjpRules(parser: ProjectFileParser,): void {
   registerCommonRules(parser,);
@@ -41,8 +41,8 @@ export function registerTjpRules(parser: ProjectFileParser,): void {
   registerReportRules(parser,);
   registerTrackingRules(parser,);
   registerLogicRules(parser,);
-  // Durante as subfases 10.11–10.14 blocos ainda vazios deixam referências
-  // pendentes; o sweep cobre o intervalo até o fecho. No estado final a
-  // lista retorna vazia.
+  // During sub-phases 10.11–10.14 still-empty blocks leave dangling
+  // references; the sweep covers the interval up to closure. In the final
+  // state the list comes back empty.
   ensurePlaceholders(parser,);
 }

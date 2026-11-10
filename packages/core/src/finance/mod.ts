@@ -1,5 +1,5 @@
 /**
- * Módulo financeiro do TaskJuggler.
+ * TaskJuggler financial module.
  *
  * @see docs/taskjuggler/lib/taskjuggler/AccountCredit.rb
  */

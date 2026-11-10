@@ -1,15 +1,15 @@
 /**
- * TjpSyntaxRules — bloco picture/format (Fase 10 Complemento C3.3).
+ * TjpSyntaxRules — picture/format block (phase 10, complement C3.3).
  *
- * `picture` e `format` são extensões SyntaxMesh anexadas a uma `journalentry`
- * ou a um `status` de timesheet/statussheet. `format` escolhe o dialeto do
- * corpo (`markdown` — default — ou `richtext`); `picture` registra uma imagem
- * (path + caption/align/width/alt). Ambos operam sobre `this.journalEntry`,
- * que as regras de journalentry (task.ts) e de status (tracking.ts) preenchem.
+ * `picture` and `format` are SyntaxMesh extensions attached to a `journalentry`
+ * or to a timesheet/statussheet `status`. `format` chooses the dialect of the
+ * body (`markdown` — default — or `richtext`); `picture` registers an image
+ * (path + caption/align/width/alt). Both operate on `this.journalEntry`, which
+ * the journalentry rules (task.ts) and the status rules (tracking.ts) fill in.
  *
- * Desde a Fase 14 Complemento (14C.5.1) a MESMA regra `format` também atende
- * ao escopo de **report** (header/footer/prolog/epilog/caption/…): o dialeto
- * lá é `richtext` por default, para preservar os `.tjp` existentes.
+ * Since the phase 14 complement (14C.5.1) the SAME `format` rule also serves
+ * the **report** scope (header/footer/prolog/epilog/caption/…): there the
+ * dialect is `richtext` by default, to preserve the existing `.tjp` files.
  *
  * @see docs/syntaxmesh/fases/fase-10-complemento-tarefas.md (Bloco C3.3)
  * @see docs/syntaxmesh/fases/fase-14-relatorios-complemento-tarefas.md (14C.5.1)
@@ -21,17 +21,17 @@ import { applyReportFormat, } from "./report.ts";
 import type { ProjectFileParser, } from "../project-file-parser.ts";
 import { rule, } from "./helpers.ts";
 
-/** Entry corrente em processamento (journalentry ou status). */
+/** Current entry being processed (journalentry or status). */
 const asEntry = (parser: ProjectFileParser,): JournalEntry | null =>
   (parser.journalEntry as JournalEntry | null) ?? null;
 
 /**
- * Aplica `format <dialeto>` ao escopo corrente (mecanismo compartilhado entre
- * `journalentry`/`status` e `report`).
+ * Applies `format <dialect>` to the current scope (mechanism shared between
+ * `journalentry`/`status` and `report`).
  *
- * O dialeto de um `report` é propagado aos atributos RichText já lidos pelo
- * parser (`applyReportFormat`), então `format` pode vir antes ou depois de
- * `header`/`footer`/… — a ordem dos atributos não importa em TJP.
+ * A `report` dialect is propagated to the RichText attributes already read by
+ * the parser (`applyReportFormat`), so `format` may come before or after
+ * `header`/`footer`/… — attribute order does not matter in TJP.
  */
 export function applyFormat(
   parser: ProjectFileParser,
@@ -46,7 +46,7 @@ export function applyFormat(
   if (prop instanceof Report) applyReportFormat(parser, prop, format,);
 }
 
-/** Registra as regras de `picture` e `format`. */
+/** Registers the `picture` and `format` rules. */
 export function registerJournalRules(p: ProjectFileParser,): void {
   // ------------------------------------------------------------------
   // picture "<path>" { caption/align/width/alt }

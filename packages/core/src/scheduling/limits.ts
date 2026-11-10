@@ -6,21 +6,41 @@ import { ProjectLike, } from "../model/project-like.ts";
 import { Resource, } from "../model/resource.ts";
 
 /**
- * Um único limite (daily, weekly, monthly, etc.) com um `Scoreboard<number>` de contadores.
+ * A single limit (daily, weekly, monthly, ...) backed by a `Scoreboard<number>`
+ * of counters.
  *
- * O `Limit` é usado por `TaskScenario` e `ResourceScenario` para verificar e
- * alocar tempo antes de book. Ele armazena contadores por período (daily, weekly, monthly).
+ * `Limit` is used by `TaskScenario` and `ResourceScenario` to check and reserve
+ * time before booking. It keeps one counter per period (daily, weekly,
+ * monthly).
  */
 export class Limit {
+  /** Limit name (`dailymax`, `weeklymax`, `monthlymax`, `maximum`, ...). */
   readonly name: string;
+  /** Grid the counters are tracked on. */
   readonly interval: ScoreboardInterval;
+  /** Length of one period, in seconds. */
   readonly period: number;
+  /** Threshold the counters are compared against. */
   readonly value: number;
+  /** `true` for an upper bound (max), `false` for a lower bound (min). */
   readonly upper: boolean;
+  /** Resource the limit applies to, or `null` for any resource. */
   resource: Resource | null;
+  /** Per-period counters. */
   private scoreboard: Scoreboard<number>;
+  /** `true` when a counter changed since the last reset. */
   private dirty: boolean;
 
+  /**
+   * Creates a limit.
+   *
+   * @param name Limit name.
+   * @param interval Grid the counters are tracked on.
+   * @param period Length of one period, in seconds.
+   * @param value Threshold the counters are compared against.
+   * @param upper `true` for an upper bound, `false` for a lower bound.
+   * @param resource Resource the limit applies to, or `null` for any.
+   */
   constructor(
     name: string,
     interval: ScoreboardInterval,
@@ -44,21 +64,31 @@ export class Limit {
     this.dirty = false;
   }
 
-  /** Retorna o scoreboard interno (para testes). */
+  /**
+   * Returns the internal scoreboard (for testing).
+   *
+   * @returns The per-period counters.
+   */
   getScoreboard(): Scoreboard<number> {
     return this.scoreboard;
   }
 
-  /** Retorna se o limite está sujo (para testes). */
+  /**
+   * Tells whether the limit changed since the last reset (for testing).
+   *
+   * @returns The dirty flag.
+   */
   getDirty(): boolean {
     return this.dirty;
   }
 
   /**
-   * Retorna uma cópia profunda deste limite.
+   * Returns a deep copy of this limit.
+   *
+   * @returns An independent `Limit` with the same counters.
    */
   copy(): Limit {
-    // Criar um novo ScoreboardInterval com os mesmos valores
+    // Build a new ScoreboardInterval with the same values
     const newInterval = new ScoreboardInterval(
       this.interval.sbStart,
       this.interval.slotDuration,
@@ -73,7 +103,7 @@ export class Limit {
       this.upper,
       this.resource,
     );
-    // Copiar o scoreboard
+    // Copy the scoreboard
     newLimit.scoreboard = new Scoreboard<number>(
       this.scoreboard.startDate,
       this.scoreboard.endDate,
@@ -88,9 +118,10 @@ export class Limit {
   }
 
   /**
-   * Reseta o limite para o valor inicial (0).
+   * Resets the limit to its initial value (0).
    *
-   * @param index — se fornecido, reseta apenas o slot para este índice (convertido de TjTime).
+   * @param index When given, resets only the slot for this index (a `TjTime` is
+   * converted first).
    */
   reset(index?: number | TjTime,): void {
     if (index !== undefined) {
@@ -107,10 +138,11 @@ export class Limit {
   }
 
   /**
-   * Incrementa o contador para o índice/tempo dado, se permitido.
+   * Increments the counter of the given index/time, when allowed.
    *
-   * @param index — índice dentro do intervalo do limite (convertido de TjTime).
-   * @param resource — recurso que está alocando (para filtrar).
+   * @param index Index inside the limit interval (a `TjTime` is converted
+   * first).
+   * @param resource Resource that is allocating (used for filtering).
    */
   inc(index: number | TjTime, resource: Resource | null,): void {
     const idx = typeof index === "number"
@@ -128,7 +160,11 @@ export class Limit {
   }
 
   /**
-   * Decrementa o contador para o índice/tempo dado, se permitido.
+   * Decrements the counter of the given index/time, when allowed.
+   *
+   * @param index Index inside the limit interval (a `TjTime` is converted
+   * first).
+   * @param resource Resource that is releasing (used for filtering).
    */
   dec(index: number | TjTime, resource: Resource | null,): void {
     const idx = typeof index === "number"
@@ -146,19 +182,20 @@ export class Limit {
   }
 
   /**
-   * Verifica se o limite é satisfatório para o índice/tempo dado.
+   * Tells whether the limit is satisfied for the given index/time.
    *
-   * @param index — índice dentro do intervalo do limite (convertido de TjTime). Se null, verifica todos os slots.
-   * @param upper — se deve verificar o limite superior (max) ou inferior (min).
-   * @param resource — recurso que está verificando (para filtrar).
-   * @returns true se o limite for satisfatório.
+   * @param index Index inside the limit interval (a `TjTime` is converted
+   * first). `null` checks every slot.
+   * @param upper Whether to check the upper bound (max) or the lower one (min).
+   * @param resource Resource that is checking (used for filtering).
+   * @returns `true` when the limit is satisfied.
    */
   ok(
     index: number | TjTime | null,
     upper: boolean,
     resource: Resource | null,
   ): boolean {
-    // Se upper !== this.upper ou resource filtrado, sempre retorna true
+    // If upper !== this.upper or the resource is filtered out, always true
     if (
       upper !== this.upper ||
       (this.resource !== null && this.resource !== resource)
@@ -167,7 +204,7 @@ export class Limit {
     }
 
     if (index === null) {
-      // Verificar todos os slots
+      // Check every slot
       for (let i = 0; i < this.scoreboard.size; i++) {
         const value = this.scoreboard.get(i,);
         if (this.upper) {
@@ -194,16 +231,19 @@ export class Limit {
     const value = this.scoreboard.get(sbIdx,);
 
     if (this.upper) {
-      // Limite superior: valor deve ser < this.value
+      // Upper bound: the value must be < this.value
       return value < this.value;
     } else {
-      // Limite inferior: valor deve ser >= this.value
+      // Lower bound: the value must be >= this.value
       return value >= this.value;
     }
   }
 
   /**
-   * Converte um índice do projeto para um índice do scoreboard do limite.
+   * Converts a project index into an index of the limit scoreboard.
+   *
+   * @param index Project slot index.
+   * @returns The corresponding limit slot index.
    */
   private idxToSbIdx(index: number,): number {
     return Math.trunc(
@@ -213,18 +253,26 @@ export class Limit {
 }
 
 /**
- * Coleção de limites (`Limit[]`) associada a um projeto.
+ * Collection of limits (`Limit[]`) attached to a project.
  *
- * `Limits` é usado por `TaskScenario` e `ResourceScenario` para gerenciar
- * múltiplos limites (dailymax, weeklymax, monthlymax, etc.).
+ * `Limits` is used by `TaskScenario` and `ResourceScenario` to manage several
+ * limits at once (dailymax, weeklymax, monthlymax, ...).
  */
 export class Limits {
+  /** Limits owned by this collection. */
   readonly limits: Limit[];
+  /** Project the limits are aligned with, once attached. */
   private project: ProjectLike | null;
 
+  /**
+   * Creates a limits collection.
+   *
+   * @param limits Another collection or an array of limits, both deep-copied;
+   * omit it for an empty collection.
+   */
   constructor(limits?: Limit[] | Limits,) {
     if (limits instanceof Limits) {
-      // Cópia profunda
+      // Deep copy
       this.limits = limits.limits.map((limit,) => limit.copy());
       this.project = limits.project;
     } else if (Array.isArray(limits,)) {
@@ -236,15 +284,20 @@ export class Limits {
     }
   }
 
-  /** Retorna o projeto associado (para testes). */
+  /**
+   * Returns the attached project (for testing).
+   *
+   * @returns The project, or `null` when none is attached.
+   */
   getProject(): ProjectLike | null {
     return this.project;
   }
 
   /**
-   * Associa este `Limits` a um projeto.
+   * Attaches this `Limits` collection to a project.
    *
-   * @throws TjArgumentError se `limits` não estiver vazio.
+   * @param project Project the limits are aligned with.
+   * @throws TjArgumentError When the collection is not empty.
    */
   setProject(project: ProjectLike,): void {
     if (this.limits.length > 0) {
@@ -256,7 +309,7 @@ export class Limits {
   }
 
   /**
-   * Reseta todos os limites para o valor inicial (0).
+   * Resets every limit to its initial value (0).
    */
   reset(): void {
     for (const limit of this.limits) {
@@ -265,12 +318,17 @@ export class Limits {
   }
 
   /**
-   * Adiciona ou substitui um limite.
+   * Adds or replaces a limit.
    *
-   * @param name — um dos tipos de limite (`dailymax`, `weeklymax`, `monthlymax`, `maximum`, `minimum`).
-   * @param value — valor do limite (em segundos para max/min, em segundos para daily/weekly/monthly).
-   * @param interval — opcional, `ScoreboardInterval` customizado. Se não fornecido, criado a partir do projeto.
-   * @param resource — opcional, recurso que este limite se aplica (para limites por recurso).
+   * @param name One of the limit kinds (`dailymax`, `weeklymax`, `monthlymax`,
+   * `maximum`, `minimum`).
+   * @param value Threshold of the limit, in seconds.
+   * @param interval Optional custom `ScoreboardInterval`; when omitted it is
+   * derived from the project.
+   * @param resource Optional resource the limit applies to (per-resource
+   * limits).
+   * @throws TjArgumentError When the name is unknown, the project is missing
+   * required attributes, or no interval can be derived.
    */
   setLimit(
     name: string,
@@ -278,24 +336,24 @@ export class Limits {
     interval?: ScoreboardInterval,
     resource?: Resource,
   ): void {
-    // Determinar tipo de limite e período
+    // Determine limit kind and period
     let period: number;
     let upper: boolean;
 
     switch (name) {
       case "dailymax":
       case "dailymin":
-        period = 86400; // 1 dia em segundos
+        period = 86400; // 1 day in seconds
         upper = name === "dailymax";
         break;
       case "weeklymax":
       case "weeklymin":
-        period = 604800; // 1 semana em segundos
+        period = 604800; // 1 week in seconds
         upper = name === "weeklymax";
         break;
       case "monthlymax":
       case "monthlymin":
-        period = 2592000; // ~30 dias em segundos
+        period = 2592000; // ~30 days in seconds
         upper = name === "monthlymax";
         break;
       case "maximum":
@@ -318,7 +376,7 @@ export class Limits {
         throw new TjArgumentError(`Unknown limit name: ${name}`,);
     }
 
-    // Se interval não fornecido, criar a partir do projeto
+    // When no interval is given, derive one from the project
     if (!interval && this.project) {
       const startDate = this.project.get("start",);
       const endDate = this.project.get("end",);
@@ -332,11 +390,11 @@ export class Limits {
         );
       }
 
-      // startDate e endDate já são TjTime (do Project)
+      // startDate and endDate are already TjTime (from the Project)
       const startTime = startDate as TjTime;
       const endTime = endDate as TjTime;
 
-      // Criar intervalo com o range completo do projeto
+      // Build an interval covering the whole project range
       const endIdx = Math.trunc(
         endTime.diff(startTime,) / scheduleGranularity,
       );
@@ -347,7 +405,7 @@ export class Limits {
         endIdx,
       );
 
-      // Alinhar início/fim conforme o tipo de limite (conforme Ruby Limits.rb)
+      // Align start/end with the limit kind (as in Ruby Limits.rb)
       interval.start = interval.startDate().midnight();
       interval.end = interval.endDate().midnight();
 
@@ -369,7 +427,7 @@ export class Limits {
       );
     }
 
-    // Remover limite existente com mesmo nome, startDate, endDate e resource
+    // Remove an existing limit with the same name, startDate, endDate, resource
     const startDate = interval.startDate(),
       endDate = interval.endDate();
     const existingIdx = this.limits.findIndex(
@@ -384,13 +442,16 @@ export class Limits {
       this.limits.splice(existingIdx, 1,);
     }
 
-    // Criar novo limite
+    // Create the new limit
     const limit = new Limit(name, interval, period, value, upper, resource,);
     this.limits.push(limit,);
   }
 
   /**
-   * Incrementa o contador para o índice/tempo dado em todos os limites.
+   * Increments the counter of the given index/time in every limit.
+   *
+   * @param index Index inside the limit intervals.
+   * @param resource Resource that is allocating.
    */
   inc(index: number | TjTime, resource?: Resource,): void {
     const r = resource ?? null;
@@ -400,7 +461,10 @@ export class Limits {
   }
 
   /**
-   * Decrementa o contador para o índice/tempo dado em todos os limites.
+   * Decrements the counter of the given index/time in every limit.
+   *
+   * @param index Index inside the limit intervals.
+   * @param resource Resource that is releasing.
    */
   dec(index: number | TjTime, resource?: Resource,): void {
     const r = resource ?? null;
@@ -410,7 +474,12 @@ export class Limits {
   }
 
   /**
-   * Verifica se todos os limites são satisfatórios para o índice/tempo dado.
+   * Tells whether every limit is satisfied for the given index/time.
+   *
+   * @param index Index inside the limit intervals, or `null` for all slots.
+   * @param upper Whether to check the upper bounds (default `true`).
+   * @param resource Resource that is checking.
+   * @returns `true` when every limit is satisfied.
    */
   ok(
     index: number | TjTime | null,

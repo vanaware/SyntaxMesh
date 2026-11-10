@@ -1,18 +1,19 @@
 /**
- * Gera IDs sequenciais estáveis para objetos, similar ao `object_id` do Ruby.
+ * Generates stable sequential IDs for objects, similar to Ruby's `object_id`.
  *
- * Usa um `WeakMap` para permitir GC dos objetos quando não referenciados mais.
- * Cada objeto recebe um ID único e estável durante a vida da aplicação.
+ * Uses a `WeakMap` so objects can be garbage-collected once no longer
+ * referenced. Each object receives a unique, stable ID for the lifetime of the
+ * application.
  */
 
 const projectIds = new WeakMap<object, number>();
 let nextProjectId = 1;
 
 /**
- * Retorna um ID sequencial único e estável para o objeto dado.
+ * Returns a unique, stable sequential ID for the given object.
  *
- * @param project — objeto para o qual gerar/retornar o ID.
- * @returns ID sequencial (começando em 1).
+ * @param project — object for which to generate/return the ID.
+ * @returns Sequential ID (starting at 1).
  */
 export function projectObjectId(project: object,): number {
   let id = projectIds.get(project,);

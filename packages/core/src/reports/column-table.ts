@@ -1,10 +1,12 @@
 /**
- * ColumnTable (Fase 14.13) — ReportTable embutível como coluna de outra tabela.
+ * ColumnTable (phase 14.13) — a `ReportTable` embeddable as the column of another
+ * table.
  *
- * Porta fiel de `docs/taskjuggler/lib/taskjuggler/reports/ColumnTable.rb`. É um
- * wrapper sobre `ReportTable` que permite aninhar uma tabela dentro de uma
- * coluna de outra (as colunas de calendário `hourly`/`daily`/…). Ambas devem
- * ter o mesmo número de linhas.
+ * Faithful port of
+ * `docs/taskjuggler/lib/taskjuggler/reports/ColumnTable.rb`. It is a wrapper
+ * around `ReportTable` that allows nesting a table inside a column of another
+ * one (the `hourly`/`daily`/… calendar columns). Both must have the same number
+ * of lines.
  *
  * @see docs/syntaxmesh/fases/fase-14-relatorios-tarefas.md (14.13)
  */
@@ -12,30 +14,32 @@ import { XMLElement, } from "../xml/xml-element.ts";
 import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 import { ReportTable, } from "./report-table.ts";
 
+/** A report table rendered inside a single cell of another table. */
 export class ColumnTable extends ReportTable {
-  /** Largura (px) pedida pelo usuário para a coluna (gráfico/calendário). */
+  /** Width in pixels requested by the user for the column (chart/calendar). */
   viewWidth: number | null = null;
 
+  /** Creates an embedded table with the smaller header used by the charts. */
   constructor() {
     super();
-    // O cabeçalho tem 2 linhas: usamos fonte menor (casa com GanttChart).
+    // The header has 2 lines: a smaller font is used (matches GanttChart).
     this.headerFontSize = 10;
-    // Esta é uma tabela embutida.
+    // This is an embedded table.
     this.embedded = true;
   }
 
   /**
-   * `td` com `rowspan` que envolve uma `div` rolável contendo a tabela
-   * aninhada (`super.to_html`).
+   * `td` with a `rowspan` wrapping a scrollable `div` that holds the nested
+   * table (`super.to_html`).
    */
   override to_html(): XMLElementLike {
     let height = 2 * this.headerLineHeight + 1;
     for (const line of this.lines) {
-      // Altura da linha + 1px de padding.
+      // Line height plus 1px of padding.
       height += line.height + 1;
     }
 
-    // Não sabemos a largura final: sempre reservamos espaço para scrollbar.
+    // The final width is unknown: space is always reserved for the scrollbar.
     const td = new XMLElement("td", {
       rowspan: `${2 + this.lines.length + 1}`,
       style: "padding:0px; vertical-align:top;",

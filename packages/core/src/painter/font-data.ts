@@ -1,12 +1,13 @@
 /**
  * 17.11.2 — `FontData` (`Painter/FontData.rb`).
  *
- * As métricas pré-calculadas das quatro variantes de LiberationSans (métrica-
- * compatível com Arial). Copiadas **byte a byte** de `FontData.rb` (a fonte da
- * verdade; em runtime o Ruby só lê estes dados, nunca chama `prawn`).
+ * The pre-computed metrics of the four LiberationSans variants (metric-
+ * compatible with Arial). Copied **byte for byte** from `FontData.rb` (the
+ * source of truth; at runtime Ruby only reads this data and never calls
+ * `prawn`).
  *
- * No Ruby são constantes dentro de `class FontMetrics`; aqui são módulos TS
- * exportados e consumidos por `FontMetrics`.
+ * In Ruby they are constants inside `class FontMetrics`; here they are TS
+ * modules exported and consumed by `FontMetrics`.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Painter/FontData.rb
  * @see docs/syntaxmesh/fases/fase-17-html-xml-tarefas.md (17.11.2)
@@ -14,6 +15,7 @@
 
 import { FontMetricsData, } from "./font-metrics-data.ts";
 
+/** Metrics of LiberationSans in the normal style. */
 export const Font_LiberationSans_normal = new FontMetricsData(
   "LiberationSans",
   "normal",
@@ -216,6 +218,7 @@ export const Font_LiberationSans_normal = new FontMetricsData(
   },
 );
 
+/** Metrics of LiberationSans in the italic style. */
 export const Font_LiberationSans_italic = new FontMetricsData(
   "LiberationSans",
   "italic",
@@ -412,6 +415,7 @@ export const Font_LiberationSans_italic = new FontMetricsData(
   },
 );
 
+/** Metrics of LiberationSans in the bold style. */
 export const Font_LiberationSans_bold = new FontMetricsData(
   "LiberationSans",
   "bold",
@@ -611,6 +615,7 @@ export const Font_LiberationSans_bold = new FontMetricsData(
   },
 );
 
+/** Metrics of LiberationSans in the bold italic style. */
 export const Font_LiberationSans_bold_italic = new FontMetricsData(
   "LiberationSans",
   "bold_italic",

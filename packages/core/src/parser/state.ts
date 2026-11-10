@@ -2,21 +2,29 @@ import { Pattern, } from "./pattern.ts";
 import { Rule, } from "./rule.ts";
 
 /**
- * StateKey — identificador único para um State no FSM.
- * [ruleName, patternName|null, index]
+ * StateKey — unique identifier of a `State` in the FSM:
+ * `[ruleName, patternName|null, index]`.
  */
 export type StateKey = [string, string | null, number,];
 
 /**
- * StateKeys — mapa de identidade equivalente a Ruby `states[[rule, pattern, index]]`.
- * Em TS objetos não são chave de Map por valor, então aninhamos Maps por
- * identidade: rule → pattern (null p/ starting node) → index → chave.
+ * StateKeys — identity map equivalent to the Ruby `states[[rule, pattern, index]]`.
+ * In TS objects are not Map keys by value, so we nest Maps by identity:
+ * rule → pattern (null for the starting node) → index → key.
  */
 export type StateKeys = Map<Rule, Map<Pattern | null, Map<number, string>>>;
 
 let stateKeyCounter = 0;
 
-/** Retorna a chave canônica de um estado, criando uma se necessário. */
+/**
+ * Returns the canonical key of a state, creating one when necessary.
+ *
+ * @param rule Rule of the state.
+ * @param pattern Pattern of the state, or `null` for the starting node.
+ * @param index Token index inside the pattern.
+ * @param keys Identity map that stores the keys.
+ * @returns The canonical key of the state.
+ */
 export function stateKeyOf(
   rule: Rule,
   pattern: Pattern | null,
@@ -42,14 +50,28 @@ export function stateKeyOf(
 }
 
 /**
- * StateTransition — mapeia um tipo de token para o próximo state.
+ * StateTransition — maps a token type to the next state (and the stack and loop
+ * flags that go with it).
  */
 export class StateTransition {
+  /** Token type that triggers the transition. */
   readonly tokenType: string | symbol;
+  /** State reached after the transition. */
   readonly state: State;
+  /** Stack snapshot taken when the transition was created. */
   readonly stateStack: State[];
+  /** Whether the transition loops back to a previous state. */
   readonly loopBack: boolean;
 
+  /**
+   * Creates a transition.
+   *
+   * @param descriptor Token type and text that trigger the transition.
+   * @param state State reached after the transition.
+   * @param stateStack Stack snapshot to store.
+   * @param loopBack Whether the transition loops back.
+   * @throws Error When a parameter has the wrong shape or type.
+   */
   constructor(
     descriptor: [string, string,],
     state: State,
@@ -77,6 +99,7 @@ export class StateTransition {
     this.loopBack = loopBack;
   }
 
+  /** Renders the transition target plus the stack and the loop flag. */
   to_s(): string {
     let str = `${this.state.rule.name}, ` +
       `${
@@ -98,15 +121,28 @@ export class StateTransition {
 }
 
 /**
- * State — descreve um estado do TextParser FSM.
+ * State — one state of the TextParser FSM: a rule plus, when it is not the
+ * starting node, a pattern and a token index inside it.
  */
 export class State {
+  /** Rule the state belongs to. */
   readonly rule: Rule;
+  /** Pattern of the state, or `null` for the starting node. */
   readonly pattern: Pattern | null;
+  /** Token index inside the pattern. */
   readonly index: number;
+  /** Transitions leaving the state, keyed by token type. */
   readonly transitions: Map<string | symbol, StateTransition>;
+  /** Whether the reduction is still forbidden in this state. */
   noReduce: boolean;
 
+  /**
+   * Creates a state.
+   *
+   * @param rule Rule the state belongs to.
+   * @param pattern Pattern of the state, or `null` for the starting node.
+   * @param index Token index inside the pattern.
+   */
   constructor(rule: Rule, pattern: Pattern | null = null, index: number = 0,) {
     this.rule = rule;
     this.pattern = pattern;
@@ -115,6 +151,13 @@ export class State {
     this.transitions = new Map();
   }
 
+  /**
+   * Registers every transition that leaves this state.
+   *
+   * @param states Every state of the automaton.
+   * @param rules Every rule of the grammar.
+   * @param keys Map of the canonical state keys.
+   */
   addTransitions(
     states: Map<string, State>,
     rules: Map<string, Rule>,
@@ -136,6 +179,15 @@ export class State {
     }
   }
 
+  /**
+   * Adds a single transition.
+   *
+   * @param token Token type and text that trigger the transition.
+   * @param nextState State reached after the transition.
+   * @param stateStack Stack snapshot to store.
+   * @param loopBack Whether the transition loops back.
+   * @throws Error When another transition already uses the same token type.
+   */
   addTransition(
     token: [string, string,],
     nextState: State,
@@ -156,6 +208,12 @@ export class State {
     this.transitions.set(tr.tokenType, tr,);
   }
 
+  /**
+   * Resolves the transition for a token, trying the literal text of IDs first.
+   *
+   * @param token Token type and text.
+   * @returns The transition, or `null` when the token is not accepted.
+   */
   transition(token: [string, string,],): StateTransition | null {
     if (token[0] === "ID") {
       const literalTr = this.transitions.get(token[1],);
@@ -169,6 +227,7 @@ export class State {
     return this.transitions.get(token[0],) || null;
   }
 
+  /** Token types accepted by this state, formatted for an error message. */
   expectedTokens(): string[] {
     const tokens: string[] = [];
     this.transitions.forEach((_, t,) => {
@@ -177,6 +236,12 @@ export class State {
     return tokens;
   }
 
+  /**
+   * Renders the state for debugging.
+   *
+   * @param short When true, prints only the rule/pattern/index header line.
+   * @returns The textual description of the state.
+   */
   to_s(short: boolean = false,): string {
     if (short) {
       if (this.pattern) {

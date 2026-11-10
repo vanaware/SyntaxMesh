@@ -1,7 +1,7 @@
 /**
- * Utilitário de meta-conta para cálculo de turnover.
+ * Meta-account utility for turnover computation.
  *
- * Calcula o turnover líquido como -cost + revenue.
+ * Computes the net turnover as -cost + revenue.
  *
  * @see docs/taskjuggler/lib/taskjuggler/BalanceAccount.rb
  */
@@ -11,51 +11,51 @@ import { AccountCredit, } from "./account-credit.ts";
 import { TjTime, } from "../time/tj-time.ts";
 
 /**
- * Contador de módulo para gerar IDs únicos para contas meta temporárias.
+ * Modulo counter used to generate unique IDs for temporary meta-accounts.
  *
- * Garante que cada conta meta criada por `createBalanceAccount` tenha um ID
- * único (`_balance_1`, `_balance_2`, ...), evitando colisões com a conta
- * especial `'0'` e com outras contas meta.
+ * Ensures every meta-account created by `createBalanceAccount` gets a unique
+ * ID (`_balance_1`, `_balance_2`, ...), avoiding collisions with the special
+ * `'0'` account and with other meta-accounts.
  */
 let balanceCounter = 0;
 
 /**
- * Calcula o turnover líquido para uma conta meta.
+ * Computes the net turnover for a meta-account.
  *
- * Uma conta meta consiste em duas subcontas:
- * - Uma conta "cost" (despesas)
- * - Uma conta "revenue" (receitas)
+ * A meta-account consists of two sub-accounts:
+ * - a "cost" account (expenses)
+ * - a "revenue" account (revenues)
  *
- * O turnover líquido é calculado como: -cost + revenue
+ * The net turnover is computed as: -cost + revenue
  *
- * @param metaAccount A conta meta (deve ter exatamente dois filhos:
- *                    um chamado "cost" e outro chamado "revenue").
- * @param startIdx Índice de início do intervalo de tempo.
- * @param endIdx Índice de fim do intervalo de tempo.
- * @returns O turnover líquido.
- * @throws TjArgumentError se a conta meta não tiver exatamente dois filhos
- *         ou se os filhos não forem chamados "cost" e "revenue".
+ * @param metaAccount The meta-account (must have exactly two children: one
+ *                    named "cost" and another named "revenue").
+ * @param startIdx Start index of the time interval.
+ * @param endIdx End index of the time interval.
+ * @returns The net turnover.
+ * @throws TjArgumentError when the meta-account does not have exactly two
+ *         children or when they are not named "cost" and "revenue".
  */
 export function balanceAccount(
   metaAccount: Account,
   startIdx: number,
   endIdx: number,
 ): number {
-  // Obter os filhos da conta meta
+  // Get the children of the meta-account
   const adoptees = metaAccount.adoptees;
 
-  // Validar que existem exatamente dois filhos
+  // Validate that there are exactly two children
   if (adoptees.length !== 2) {
     throw new Error(
       `Meta-account deve ter exatamente dois filhos, encontrado ${adoptees.length}.`,
     );
   }
 
-  // Usar os dois filhos diretamente (ordem: cost, revenue)
+  // Use the two children directly (order: cost, revenue)
   const costAccount = adoptees[0] as Account;
   const revenueAccount = adoptees[1] as Account;
 
-  // Calcular turnover líquido: -cost + revenue
+  // Compute the net turnover: -cost + revenue
   const costTurnover = costAccount.scenarioData(0,).turnover(startIdx, endIdx,);
   const revenueTurnover = revenueAccount.scenarioData(0,).turnover(
     startIdx,
@@ -66,15 +66,15 @@ export function balanceAccount(
 }
 
 /**
- * Calcula o turnover líquido para uma conta meta usando um objeto AccountScenario.
+ * Computes the net turnover for a meta-account using an AccountScenario.
  *
- * Esta é uma versão mais conveniente que aceita diretamente um AccountScenario
- * em vez de uma Account completa.
+ * A more convenient variant that accepts an AccountScenario directly instead
+ * of a complete Account.
  *
- * @param metaAccountScenario O AccountScenario da conta meta.
- * @param startIdx Índice de início do intervalo de tempo.
- * @param endIdx Índice de fim do intervalo de tempo.
- * @returns O turnover líquido.
+ * @param metaAccountScenario The AccountScenario of the meta-account.
+ * @param startIdx Start index of the time interval.
+ * @param endIdx End index of the time interval.
+ * @returns The net turnover.
  */
 export function balanceAccountScenario(
   metaAccountScenario: { getProperty(): Account },
@@ -86,15 +86,15 @@ export function balanceAccountScenario(
 }
 
 /**
- * Cria uma conta meta temporária para cálculo de balance.
+ * Creates a temporary meta-account for the balance computation.
  *
- * Esta é uma versão mais conveniente que aceita diretamente contas cost e revenue,
- * criando uma conta meta temporária que adota ambas.
+ * A more convenient variant that accepts the cost and revenue accounts
+ * directly, creating a temporary meta-account that adopts both.
  *
- * @param project O projeto.
- * @param costAccount A conta de custo.
- * @param revenueAccount A conta de receita.
- * @returns A conta meta temporária.
+ * @param project The project.
+ * @param costAccount The cost account.
+ * @param revenueAccount The revenue account.
+ * @returns The temporary meta-account.
  */
 export function createBalanceAccount(
   project: {
@@ -103,7 +103,7 @@ export function createBalanceAccount(
   costAccount: Account,
   revenueAccount: Account,
 ): Account {
-  // Criar uma conta meta temporária com um id único
+  // Create a temporary meta-account with a unique id
   const metaAccount = project.newAccount(
     "_balance_" + (++balanceCounter).toString(),
     "Total",
@@ -115,12 +115,12 @@ export function createBalanceAccount(
 }
 
 /**
- * Remove uma conta meta temporária.
+ * Removes a temporary meta-account.
  *
- * Esta função remove a conta meta e propaga a remoção para suas referências.
+ * Removes the meta-account and propagates the removal to its references.
  *
- * @param project O projeto.
- * @param account A conta meta a ser removida.
+ * @param project The project.
+ * @param account The meta-account to remove.
  */
 export function removeBalanceAccount(
   project: { removeAccount(account: Account,): void },

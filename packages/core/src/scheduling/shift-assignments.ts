@@ -16,24 +16,34 @@ import {
 } from "../time/scoreboard-bits.ts";
 
 /**
- * Representa uma atribuição de shift a um intervalo de tempo.
+ * Assignment of a shift to one time interval.
  *
- * Cada `ShiftAssignment` associa um `ShiftScenario` a um `TimeInterval`.
- * O encoding de bits é calculado lazy via `ShiftAssignments.getSbSlot`.
+ * Each `ShiftAssignment` pairs a `ShiftScenario` with a `TimeInterval`. The bit
+ * encoding is computed lazily by `ShiftAssignments.getSbSlot`.
  */
 export class ShiftAssignment {
+  /** Shift that is assigned to the interval. */
   readonly shiftScenario: ShiftScenario;
+  /** Interval covered by the assignment. */
   readonly interval: TimeInterval;
 
+  /**
+   * Creates an assignment.
+   *
+   * @param shiftScenario Shift assigned to the interval.
+   * @param interval Interval covered by the assignment.
+   */
   constructor(shiftScenario: ShiftScenario, interval: TimeInterval,) {
     this.shiftScenario = shiftScenario;
     this.interval = interval;
   }
 
   /**
-   * Retorna uma chave hash determinística para esta atribuição.
+   * Returns a deterministic hash key for this assignment.
    *
-   * Usada para compartilhamento de scoreboards entre instâncias com conteúdo idêntico.
+   * Used to share scoreboards between instances with identical content.
+   *
+   * @returns A key built from the project, scenario index and interval bounds.
    */
   hashKey(): string {
     const projectId = projectObjectId(this.shiftScenario.project,);
@@ -43,7 +53,9 @@ export class ShiftAssignment {
   }
 
   /**
-   * Retorna uma cópia profunda desta atribuição.
+   * Returns a deep copy of this assignment.
+   *
+   * @returns A new assignment holding a copied interval.
    */
   copy(): ShiftAssignment {
     return new ShiftAssignment(
@@ -53,21 +65,31 @@ export class ShiftAssignment {
   }
 
   /**
-   * Verifica se este intervalo se sobrepõe ao intervalo dado.
+   * Tells whether this interval overlaps the given one.
+   *
+   * @param iv Interval to test.
+   * @returns `true` when the two intervals overlap.
    */
   overlaps(iv: TimeInterval,): boolean {
     return this.interval.overlaps(iv,);
   }
 
   /**
-   * Verifica se a data está dentro do intervalo e o shift é de substituição.
+   * Tells whether the date falls inside the interval and the shift replaces the
+   * regular working hours.
+   *
+   * @param date Date to test.
+   * @returns `true` when the date is covered by a replacing shift.
    */
   replace(date: TjTime,): boolean {
     return this.assigned(date,) && this.shiftScenario.replace();
   }
 
   /**
-   * Verifica se a data está dentro do intervalo de atribuição.
+   * Tells whether the date falls inside the assignment interval.
+   *
+   * @param date Date to test.
+   * @returns `true` when `date` is in `[start, end)`.
    */
   assigned(date: TjTime,): boolean {
     return date.greaterThanOrEqual(this.interval.start,) &&
@@ -75,21 +97,29 @@ export class ShiftAssignment {
   }
 
   /**
-   * Verifica se a data tem tempo de trabalho definido pelo shift.
+   * Tells whether the shift defines working time on the given date.
+   *
+   * @param date Date to test.
+   * @returns `true` when the shift is on duty at `date`.
    */
   onShift(date: TjTime,): boolean {
     return this.shiftScenario.onShift(date,);
   }
 
   /**
-   * Verifica se a data tem leave definido pelo shift.
+   * Tells whether the shift defines a leave on the given date.
+   *
+   * @param date Date to test.
+   * @returns `true` when the shift marks a leave at `date`.
    */
   onLeave(date: TjTime,): boolean {
     return this.shiftScenario.onLeave(date,);
   }
 
   /**
-   * Representação textual desta atribuição.
+   * Textual representation of this assignment.
+   *
+   * @returns The scenario index followed by the interval.
    */
   to_s(): string {
     return `<${this.shiftScenario.scenarioIndex}> ${this.interval.to_s()}`;
@@ -97,25 +127,34 @@ export class ShiftAssignment {
 }
 
 /**
- * Gerencia atribuições de shifts a intervalos de tempo, com encoding de bits lazy.
+ * Manages shift assignments over time intervals, with lazy bit encoding.
  *
- * `ShiftAssignments` armazena as atribuições e calcula o encoding de bits
- * para cada slot de tempo sob demanda (lazy computation). Scoreboards são
- * compartilhados entre instâncias com o mesmo `hashKey` para economizar memória.
+ * `ShiftAssignments` stores the assignments and computes the bit encoding for
+ * each time slot on demand. Scoreboards are shared between instances that have
+ * the same `hashKey` to save memory.
  */
 export class ShiftAssignments {
+  /** Project the assignments belong to, or `null` before it is set. */
   project: ProjectLike | null;
+  /** Assignments in insertion order (sorted on demand by `hashKey`). */
   readonly assignments: ShiftAssignment[];
+  /** Cached bit-encoded scoreboard, or `null` until it is built. */
   private scoreboard: Scoreboard<number | null> | null;
+  /** Cached `hashKey`, invalidated when the assignment list changes. */
   private hashKeyCache: string | null;
 
+  /**
+   * Creates a shift assignment set, optionally as a copy of another one.
+   *
+   * @param sa Set to copy; when omitted an empty set is created.
+   */
   constructor(sa?: ShiftAssignments,) {
     if (sa) {
       this.assignments = sa.assignments.map((a,) => a.copy());
       this.project = sa.project;
       this.scoreboard = null;
       this.hashKeyCache = null;
-      // Criar/compartilhar scoreboard
+      // Create/share the scoreboard
       this.newScoreboard();
     } else {
       this.assignments = [];
@@ -126,12 +165,12 @@ export class ShiftAssignments {
   }
 
   /**
-   * Retorna uma cópia profunda desta instância.
+   * Returns a deep copy of this instance.
    *
-   * As atribuições são copiadas via `ShiftAssignment.copy()`.
-   * O scoreboard é reinicializado como null (computação lazy) para evitar
-   * efeitos colaterais durante a clonagem.
+   * The assignments are copied through `ShiftAssignment.copy()`. The scoreboard
+   * is reset to `null` (lazy computation) to avoid side effects while cloning.
    *
+   * @returns An independent copy of this instance.
    * @see deepClone
    */
   deepClone(): ShiftAssignments {
@@ -146,9 +185,10 @@ export class ShiftAssignments {
   }
 
   /**
-   * Adiciona uma atribuição se não houver sobreposição.
+   * Adds an assignment when it does not overlap an existing one.
    *
-   * @returns true se adicionada com sucesso, false se houver sobreposição.
+   * @param sa Assignment to add.
+   * @returns `true` when it was added, `false` on overlap.
    */
   addAssignment(sa: ShiftAssignment,): boolean {
     if (this.overlaps(sa.interval,)) {
@@ -160,7 +200,10 @@ export class ShiftAssignments {
   }
 
   /**
-   * Verifica se algum intervalo se sobrepõe ao intervalo dado.
+   * Tells whether any assignment overlaps the given interval.
+   *
+   * @param iv Interval to test.
+   * @returns `true` when at least one assignment overlaps it.
    */
   overlaps(iv: TimeInterval,): boolean {
     for (const sa of this.assignments) {
@@ -172,13 +215,17 @@ export class ShiftAssignments {
   }
 
   /**
-   * Retorna o slot do scoreboard para o índice dado, computando lazy se necessário.
+   * Returns the scoreboard slot for the given index, computing it lazily when
+   * needed.
    *
-   * O encoding de bits é:
-   * - Bit 0 (BIT_ASSIGNED): se alguma atribuição cobre este índice.
-   * - Bit 1 (BIT_OFF_WORK): se nenhuma atribuição tem tempo de trabalho.
-   * - Bits 2–5 (LEAVE_MASK): tipo de leave (holiday, annual, etc.).
-   * - Bit 8 (BIT_OVERRIDE): se alguma atribuição é de substituição.
+   * The bit encoding is:
+   * - Bit 0 (BIT_ASSIGNED): an assignment covers this index.
+   * - Bit 1 (BIT_OFF_WORK): no assignment provides working time.
+   * - Bits 2–5 (LEAVE_MASK): kind of leave (holiday, annual, ...).
+   * - Bit 8 (BIT_OVERRIDE): some assignment replaces the working hours.
+   *
+   * @param idx Scoreboard slot index.
+   * @returns The encoded value of the slot.
    */
   getSbSlot(idx: number,): number {
     if (!this.scoreboard) {
@@ -190,10 +237,10 @@ export class ShiftAssignments {
       return cached;
     }
 
-    // Converter idx para TjTime (conforme Ruby: getSbSlot usa a data do slot).
+    // Convert idx to TjTime (as in Ruby: getSbSlot uses the slot date).
     const date = TjTime.fromDate(this.scoreboard.idxToDate(idx,),);
 
-    // Computar encoding lazy
+    // Compute the lazy encoding
     let val = 0;
     let hasAssignment = false;
 
@@ -226,35 +273,51 @@ export class ShiftAssignments {
   }
 
   /**
-   * Verifica se há atribuição no índice dado.
+   * Tells whether an assignment covers the given index.
+   *
+   * @param idx Scoreboard slot index.
+   * @returns `true` when bit 0 is set.
    */
   assigned(idx: number,): boolean {
     return (this.getSbSlot(idx,) & BIT_ASSIGNED) !== 0;
   }
 
   /**
-   * Verifica se há tempo de trabalho disponível no índice dado.
+   * Tells whether working time is available at the given index.
+   *
+   * @param idx Scoreboard slot index.
+   * @returns `true` when bit 1 is clear.
    */
   onShift(idx: number,): boolean {
     return (this.getSbSlot(idx,) & BIT_OFF_WORK) === 0;
   }
 
   /**
-   * Verifica se há tempo de trabalho **não** disponível no índice dado.
+   * Tells whether working time is **not** available at the given index.
+   *
+   * @param idx Scoreboard slot index.
+   * @returns `true` when bit 1 is set.
    */
   timeOff(idx: number,): boolean {
     return (this.getSbSlot(idx,) & BIT_OFF_WORK) !== 0;
   }
 
   /**
-   * Verifica se há leave no índice dado.
+   * Tells whether a leave is registered at the given index.
+   *
+   * @param idx Scoreboard slot index.
+   * @returns `true` when any leave bit is set.
    */
   onLeave(idx: number,): boolean {
     return (this.getSbSlot(idx,) & LEAVE_MASK) !== 0;
   }
 
   /**
-   * Coleta intervalos de tempo fora (off-duty) com duração mínima.
+   * Collects the off-duty intervals of an interval, with a minimum duration.
+   *
+   * @param iv Interval to scan.
+   * @param minDuration Minimum length of a reported interval, in seconds.
+   * @returns The off-duty intervals found inside `iv`.
    */
   collectTimeOffIntervals(
     iv: TimeInterval,
@@ -271,16 +334,18 @@ export class ShiftAssignments {
   }
 
   /**
-   * Retorna uma chave hash determinística para todas as atribuições.
+   * Returns a deterministic hash key for the whole set of assignments.
    *
-   * As atribuições são ordenadas por `interval.start` antes de gerar o hash.
+   * The assignments are sorted by `interval.start` before the key is built.
+   *
+   * @returns The joined per-assignment hash keys.
    */
   hashKey(): string {
     if (this.hashKeyCache) {
       return this.hashKeyCache;
     }
 
-    // Ordenar assignments por interval.start (in-place, como Ruby)
+    // Sort assignments by interval.start (in place, as in Ruby)
     this.assignments.sort((a, b,) =>
       a.interval.start.toSeconds() - b.interval.start.toSeconds()
     );
@@ -291,8 +356,9 @@ export class ShiftAssignments {
   }
 
   /**
-   * Representação textual para depuração.
+   * Textual representation, for debugging.
    *
+   * @returns `"shifts ..."` followed by every assignment, or an empty string.
    * @see docs/taskjuggler/lib/taskjuggler/ShiftAssignments.rb:to_s
    */
   to_s(): string {
@@ -304,11 +370,15 @@ export class ShiftAssignments {
   }
 
   /**
-   * Cria ou retorna um scoreboard compartilhado para este hashKey.
+   * Creates or returns a scoreboard shared for this `hashKey`.
    *
-   * Se o hashKey já existe no cache estático, adiciona o objectId ao Set
-   * e retorna o scoreboard compartilhado. Senão, cria um novo scoreboard
-   * com initVal null (lazy computation) e registra no cache.
+   * When the key already exists in the static cache, the object id is added to
+   * its `Set` and the shared scoreboard is returned. Otherwise a new scoreboard
+   * is created with `initVal` `null` (lazy computation) and registered.
+   *
+   * @returns The shared scoreboard for the current assignments.
+   * @throws TjArgumentError When the project is not set or lacks the required
+   * attributes.
    */
   newScoreboard(): Scoreboard<number | null> {
     const key = this.hashKey();
@@ -346,22 +416,25 @@ export class ShiftAssignments {
     ids.add(objId,);
     ShiftAssignments.scoreboards.set(key, [ids, sb,],);
 
-    // Registrar FinalizationRegistry para limpar quando a instância for GC'ed
+    // Register a FinalizationRegistry entry to clean up when GC'ed
     ShiftAssignments.finalizer.register(this, { key, objId, },);
 
     return sb;
   }
 
   /**
-   * Limpa o cache estático de scoreboards (usado em testes).
+   * Clears the static scoreboard cache (used in tests).
    */
   static sbClear(): void {
     ShiftAssignments.scoreboards.clear();
   }
 
   /**
-   * Remove uma referência de objectId do cache estático.
-   * Se o Set ficar vazio, deleta a entrada do Map.
+   * Removes one object id reference from the static cache.
+   *
+   * When the `Set` becomes empty, the `Map` entry is deleted.
+   *
+   * @param objId Object id to remove.
    */
   static deleteScoreboard(objId: number,): void {
     for (const [key, [ids, sb,],] of ShiftAssignments.scoreboards) {
@@ -372,14 +445,15 @@ export class ShiftAssignments {
     }
   }
 
-  /** Cache estático de scoreboards compartilhados (hashKey → [Set<objectId>, Scoreboard]). */
+  /** Static cache of shared scoreboards (hashKey → [Set<objectId>, Scoreboard]). */
   static scoreboards: Map<string, [Set<number>, Scoreboard<number | null>,]> =
     new Map();
 
-  /** FinalizationRegistry para limpar cache quando instâncias são GC'ed. */
-  static finalizer = new FinalizationRegistry<{ key: string; objId: number }>(
-    (heldValue,) => {
-      ShiftAssignments.deleteScoreboard(heldValue.objId,);
-    },
-  );
+  /** FinalizationRegistry that cleans the cache when instances are GC'ed. */
+  static finalizer: FinalizationRegistry<{ key: string; objId: number }> =
+    new FinalizationRegistry<{ key: string; objId: number }>(
+      (heldValue,) => {
+        ShiftAssignments.deleteScoreboard(heldValue.objId,);
+      },
+    );
 }

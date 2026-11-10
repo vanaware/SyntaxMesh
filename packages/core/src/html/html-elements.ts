@@ -1,24 +1,25 @@
 /**
- * HTMLElements — port de `HTMLElements.rb` (Fase 17.3).
+ * HTMLElements — port of `HTMLElements.rb` (phase 17.3).
  *
- * No Ruby, `class_eval` gera uma classe em MAIÚSCULAS para cada tag da lista
- * `htmlTags`; o construtor apenas repete `super(tag, attrs, selfClosing)`,
- * onde `selfClosing` é a presença da tag em `closureTags`. TypeScript não
- * tem `class_eval`, então `createHTMLElementClass()` é a fábrica e cada classe
- * é exportada nominalmente (ADR 038, regra do plano: "map estático de classes").
+ * In Ruby, `class_eval` generates an UPPERCASE class for each tag of the
+ * `htmlTags` list; the constructor only repeats `super(tag, attrs, selfClosing)`,
+ * where `selfClosing` is the presence of the tag in `closureTags`. TypeScript has
+ * no `class_eval`, so `createHTMLElementClass()` is the factory and every class
+ * is exported nominally (ADR 038, plan rule: "static map of classes").
  *
- * Fidelidades preservadas do Ruby:
- *   - `initialize(attrs = {}, &block)` **encaminha o bloco** ao `super` (no
- *     Ruby o bloco é passado implicitamente mesmo com argumentos explícitos),
- *     então `DIV.new { block }` funciona como `XMLElement.new('div', …, block)`.
- *   - `closureTags` contém tags que não estão em `htmlTags` (`area`, `base`,
- *     `basefont`, `input`, `img`, `link`). O Ruby não gera classe para elas;
- *     a lista é mantida integral e a interseção decide o `selfClosing`.
- *   - Só `br`, `hr` e `meta` (as comuns às duas listas) nascem auto-fechadas.
+ * Ruby behaviours preserved:
+ *   - `initialize(attrs = {}, &block)` **forwards the block** to `super` (in Ruby
+ *     the block is passed implicitly even with explicit arguments), so
+ *     `DIV.new { block }` works like `XMLElement.new('div', …, block)`.
+ *   - `closureTags` holds tags that are not in `htmlTags` (`area`, `base`,
+ *     `basefont`, `input`, `img`, `link`). Ruby does not generate a class for
+ *     them; the list is kept whole and the intersection decides `selfClosing`.
+ *   - Only `br`, `hr` and `meta` (the ones common to both lists) start out
+ *     self-closed.
  *
- * Acréscimo não-idiomático ao TS (registrado no ADR 038): `Object.defineProperty`
- * dá à classe o nome em MAIÚSCULAS que o Ruby lhe daria, para que
- * `DIV.name === 'DIV'` — útil em mensagens de erro e introspecção.
+ * Non-idiomatic addition to TS (recorded in ADR 038): `Object.defineProperty`
+ * gives the class the UPPERCASE name Ruby would give it, so that
+ * `DIV.name === 'DIV'` — useful in error messages and introspection.
  *
  * @see docs/taskjuggler/lib/taskjuggler/HTMLElements.rb
  * @see docs/syntaxmesh/decisoes/038-substituicao-xml.md
@@ -27,7 +28,7 @@
 
 import { type XmlBlock, XMLElement, } from "../xml/xml-element.ts";
 
-/** As 25 tags suportadas (`htmlTags` do Ruby), na ordem do arquivo original. */
+/** The 25 supported tags (Ruby `htmlTags`), in the order of the original file. */
 export const htmlTags: readonly string[] = [
   "a",
   "b",
@@ -57,7 +58,7 @@ export const htmlTags: readonly string[] = [
   "tr",
 ];
 
-/** Tags auto-fechadas (`closureTags` do Ruby) — nem todas viram classe. */
+/** Self-closing tags (Ruby `closureTags`) — not all of them become a class. */
 export const closureTags: readonly string[] = [
   "area",
   "base",
@@ -71,8 +72,8 @@ export const closureTags: readonly string[] = [
 ];
 
 /**
- * Assinatura das classes geradas: o `attrs` do Ruby em primeiro lugar e o
- * bloco em segundo (o `name` da tag já está queimado na closure).
+ * Signature of the generated classes: the Ruby `attrs` first and the block
+ * second (the tag `name` is already baked into the closure).
  */
 export type HTMLElementConstructor = new (
   attrs?: Record<string, string>,
@@ -80,8 +81,11 @@ export type HTMLElementConstructor = new (
 ) => XMLElement;
 
 /**
- * Fábrica equivalente ao `class_eval` do Ruby (17.3.4): devolve uma subclasse
- * de `XMLElement` fixada na `tag` e no `selfClosing` correspondente.
+ * Factory equivalent to Ruby's `class_eval` (17.3.4): returns a subclass of
+ * `XMLElement` pinned to `tag` and to the matching `selfClosing` flag.
+ *
+ * @param tag HTML tag name the class represents.
+ * @returns A constructor of self-contained `XMLElement` subclasses.
  */
 export function createHTMLElementClass(tag: string,): HTMLElementConstructor {
   const selfClosing = closureTags.includes(tag,);
@@ -100,38 +104,68 @@ export function createHTMLElementClass(tag: string,): HTMLElementConstructor {
   return cls;
 }
 
-export const A = createHTMLElementClass("a",);
-export const B = createHTMLElementClass("b",);
-export const BODY = createHTMLElementClass("body",);
-export const BR = createHTMLElementClass("br",);
-export const CODE = createHTMLElementClass("code",);
-export const COL = createHTMLElementClass("col",);
-export const COLGROUP = createHTMLElementClass("colgroup",);
-export const DIV = createHTMLElementClass("div",);
-export const EM = createHTMLElementClass("em",);
-export const FRAME = createHTMLElementClass("frame",);
-export const FRAMESET = createHTMLElementClass("frameset",);
-export const FOOTER = createHTMLElementClass("footer",);
-export const H1 = createHTMLElementClass("h1",);
-export const H2 = createHTMLElementClass("h2",);
-export const H3 = createHTMLElementClass("h3",);
-export const HEAD = createHTMLElementClass("head",);
-export const HTML = createHTMLElementClass("html",);
-export const HR = createHTMLElementClass("hr",);
-export const META = createHTMLElementClass("meta",);
-export const P = createHTMLElementClass("p",);
-export const PRE = createHTMLElementClass("pre",);
-export const SPAN = createHTMLElementClass("span",);
-export const TABLE = createHTMLElementClass("table",);
-export const TD = createHTMLElementClass("td",);
-export const TITLE = createHTMLElementClass("title",);
-export const TR = createHTMLElementClass("tr",);
+/** HTML `<a>` element. */
+export const A: HTMLElementConstructor = createHTMLElementClass("a",);
+/** HTML `<b>` element. */
+export const B: HTMLElementConstructor = createHTMLElementClass("b",);
+/** HTML `<body>` element. */
+export const BODY: HTMLElementConstructor = createHTMLElementClass("body",);
+/** HTML `<br>` element (self-closing). */
+export const BR: HTMLElementConstructor = createHTMLElementClass("br",);
+/** HTML `<code>` element. */
+export const CODE: HTMLElementConstructor = createHTMLElementClass("code",);
+/** HTML `<col>` element. */
+export const COL: HTMLElementConstructor = createHTMLElementClass("col",);
+/** HTML `<colgroup>` element. */
+export const COLGROUP: HTMLElementConstructor = createHTMLElementClass(
+  "colgroup",
+);
+/** HTML `<div>` element. */
+export const DIV: HTMLElementConstructor = createHTMLElementClass("div",);
+/** HTML `<em>` element. */
+export const EM: HTMLElementConstructor = createHTMLElementClass("em",);
+/** HTML `<frame>` element. */
+export const FRAME: HTMLElementConstructor = createHTMLElementClass("frame",);
+/** HTML `<frameset>` element. */
+export const FRAMESET: HTMLElementConstructor = createHTMLElementClass(
+  "frameset",
+);
+/** HTML `<footer>` element. */
+export const FOOTER: HTMLElementConstructor = createHTMLElementClass("footer",);
+/** HTML `<h1>` element. */
+export const H1: HTMLElementConstructor = createHTMLElementClass("h1",);
+/** HTML `<h2>` element. */
+export const H2: HTMLElementConstructor = createHTMLElementClass("h2",);
+/** HTML `<h3>` element. */
+export const H3: HTMLElementConstructor = createHTMLElementClass("h3",);
+/** HTML `<head>` element. */
+export const HEAD: HTMLElementConstructor = createHTMLElementClass("head",);
+/** HTML `<html>` element. */
+export const HTML: HTMLElementConstructor = createHTMLElementClass("html",);
+/** HTML `<hr>` element (self-closing). */
+export const HR: HTMLElementConstructor = createHTMLElementClass("hr",);
+/** HTML `<meta>` element (self-closing). */
+export const META: HTMLElementConstructor = createHTMLElementClass("meta",);
+/** HTML `<p>` element. */
+export const P: HTMLElementConstructor = createHTMLElementClass("p",);
+/** HTML `<pre>` element. */
+export const PRE: HTMLElementConstructor = createHTMLElementClass("pre",);
+/** HTML `<span>` element. */
+export const SPAN: HTMLElementConstructor = createHTMLElementClass("span",);
+/** HTML `<table>` element. */
+export const TABLE: HTMLElementConstructor = createHTMLElementClass("table",);
+/** HTML `<td>` element. */
+export const TD: HTMLElementConstructor = createHTMLElementClass("td",);
+/** HTML `<title>` element. */
+export const TITLE: HTMLElementConstructor = createHTMLElementClass("title",);
+/** HTML `<tr>` element. */
+export const TR: HTMLElementConstructor = createHTMLElementClass("tr",);
 
 /**
- * Espelha o `module HTMLElements` do Ruby: uma constante por tag, acessível
- * por nome dinâmico (`HTMLElements['DIV']`), com **identidade** igual às
- * exportações nominais — como no Ruby, onde `HTMLElements::DIV` é a própria
- * classe. Útil quando o nome da tag só é conhecido em runtime.
+ * Mirrors Ruby's `module HTMLElements`: one constant per tag, reachable by
+ * dynamic name (`HTMLElements['DIV']`) and sharing **identity** with the
+ * nominal exports — as in Ruby, where `HTMLElements::DIV` is the class itself.
+ * Useful when the tag name is only known at runtime.
  */
 export const HTMLElements: Record<string, HTMLElementConstructor> = {
   A,

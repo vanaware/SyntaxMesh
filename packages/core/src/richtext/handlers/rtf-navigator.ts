@@ -1,12 +1,12 @@
 /**
- * RTFNavigator — handler da função `[[navigator:…]]` (Fase 12.17/14.21).
+ * RTFNavigator — handler for the `[[navigator:…]]` function (phase 12.17/14.21).
  *
- * Gera uma barra de navegação para os relatórios que casam com a
- * `LogicalExpression` do `Navigator` referido pelo argumento `id`. A
- * construção efetiva da árvore HTML está em `Navigator.to_html()` (Fase 14.21);
- * este handler só resolve o id no mapa `project.navigators` e delega.
+ * Generates a navigation bar for the reports matching the `LogicalExpression`
+ * of the `Navigator` referenced by the `id` argument. The actual construction
+ * of the HTML tree lives in `Navigator.to_html()` (phase 14.21); this handler
+ * only resolves the id in the `project.navigators` map and delegates.
  *
- * Port de `RichText/RTFNavigator.rb`.
+ * Port of `RichText/RTFNavigator.rb`.
  *
  * @see docs/taskjuggler/lib/taskjuggler/RichText/RTFNavigator.rb
  * @see ADR 025 (RichText e function handlers)
@@ -31,12 +31,12 @@ export class RTFNavigator extends RichTextFunctionHandler {
     this.blockFunction = true;
   }
 
-  /** Não suportado para esta função. */
+  /** Not supported for this function. */
   override to_s(_args: RichTextFunctionArgs,): string {
     return "";
   }
 
-  /** Não suportado para esta função. */
+  /** Not supported for this function. */
   override to_tagged(_args: RichTextFunctionArgs,): string | null {
     return null;
   }

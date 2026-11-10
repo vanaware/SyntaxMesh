@@ -1,7 +1,7 @@
 /**
- * Lista canônica de keywords da linguagem TJP (extensão SyntaxMesh).
- * Extraída dos literais de TjpSyntaxRules.rb + ProjectFileParser.rb.
- * O i18n traduz sinônimos locais para estas formas canônicas (inglês).
+ * Canonical list of TJP language keywords (SyntaxMesh extension).
+ * Extracted from the literals of TjpSyntaxRules.rb + ProjectFileParser.rb.
+ * i18n translates local synonyms into these canonical forms (English).
  *
  * @see docs/syntaxmesh/04-linguagem-multilingue.md
  * @see ADR 023 (i18n de keywords)
@@ -82,7 +82,7 @@ export const CANONICAL_KEYWORDS = [
   "height",
   "hideaccount",
   "hidejournalentry",
-  // Fase 14 Complemento C6.4 — ocultar material/picture (extensão SyntaxMesh).
+  // Phase 14 Complemento C6.4 — hide material/picture (SyntaxMesh extension).
   "hidematerial",
   "hidepicture",
   "hidereport",
@@ -126,9 +126,9 @@ export const CANONICAL_KEYWORDS = [
   "markdate",
   "markdown",
   "material",
-  // Fase 14 Complemento C1.13 — export de alocações de material (extensão).
+  // Phase 14 Complemento C1.13 — export of material allocations (extension).
   "materialallocations",
-  // Fase 14 Complemento C1.2 — relatório de materiais (extensão SyntaxMesh).
+  // Phase 14 Complemento C1.2 — material report (SyntaxMesh extension).
   "materialreport",
   "materials",
   "maxend",
@@ -197,7 +197,7 @@ export const CANONICAL_KEYWORDS = [
   "richtext",
   "right",
   "rollupaccount",
-  // Fase 14 Complemento C6.4 — consolidar material (extensão SyntaxMesh).
+  // Phase 14 Complemento C6.4 — roll up material (SyntaxMesh extension).
   "rollupmaterial",
   "rollupresource",
   "rolluptask",
@@ -215,7 +215,7 @@ export const CANONICAL_KEYWORDS = [
   "shorttimeformat",
   "sloppy",
   "sortaccounts",
-  // Fase 14 Complemento C1.2 — ordenação dos relatórios de extensão.
+  // Phase 14 Complemento C1.2 — ordering of the extension reports.
   "sortby",
   "sortjournalentries",
   "sortresources",
@@ -225,9 +225,9 @@ export const CANONICAL_KEYWORDS = [
   "status",
   "statussheet",
   "statussheetreport",
-  // Fase 24 — modificador `stdout` de relatórios (extensão SyntaxMesh).
+  // Phase 24 — report `stdout` modifier (SyntaxMesh extension).
   "stdout",
-  // Fase 14 Complemento C18 — colunas de estoque do materialreport (extensão).
+  // Phase 14 Complemento C18 — stock columns of materialreport (extension).
   "stockcost",
   "stockquantity",
   "strict",
@@ -241,7 +241,7 @@ export const CANONICAL_KEYWORDS = [
   "taskreport",
   "taskroot",
   "tasks",
-  // Fase 23 — elemento `template` (extensão SyntaxMesh).
+  // Phase 23 — `template` element (SyntaxMesh extension).
   "template",
   "text",
   "textreport",
@@ -284,5 +284,5 @@ export const CANONICAL_KEYWORDS = [
   "yes",
 ] as const;
 
-/** União dos ~200 keywords canônicos do TJP. */
+/** Union of the ~200 canonical TJP keywords. */
 export type CanonicalKeyword = (typeof CANONICAL_KEYWORDS)[number];

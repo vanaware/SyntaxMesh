@@ -1,5 +1,5 @@
 /**
- * Atributo escalar símbolo.
+ * Symbol scalar attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:SymbolAttribute
  */
@@ -10,18 +10,18 @@ import { type AttributeDefinition, } from "../attribute-definition.ts";
 import { AttributeBase, } from "../attribute-base.ts";
 
 /**
- * Atributo escalar símbolo.
+ * Symbol scalar attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:SymbolAttribute
  */
 export class SymbolAttribute extends AttributeBase<string> {
   /**
-   * ID do tipo de atributo para SymbolAttribute.
+   * Attribute type ID for SymbolAttribute.
    */
   static readonly tjpId = "symbol";
 
   /**
-   * Converte o valor para TJP (formato TaskJuggler).
+   * Converts the value to TJP (TaskJuggler format).
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:SymbolAttribute#to_tjp
    */

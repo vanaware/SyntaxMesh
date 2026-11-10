@@ -1,28 +1,28 @@
 /**
- * Interface para o container que armazena valores de atributos.
+ * Interface for the container that stores attribute values.
  *
- * O valor de um atributo nunca mora no próprio `AttributeBase` — é sempre
- * armazenado em um `AttributeContainer`. Isso permite herança e cenários
- * sem copiar dados.
+ * The value of an attribute never lives in `AttributeBase` itself — it is
+ * always stored in an `AttributeContainer`. That allows inheritance and
+ * scenarios without copying data.
  *
- * Implementações:
- * - `PropertyTreeNode` (Fase 4) para atributos não-escopo
- * - `ScenarioData` (Fase 7) para atributos específicos de cenário
+ * Implementations:
+ * - `PropertyTreeNode` (phase 4) for non-scoped attributes
+ * - `ScenarioData` (phase 7) for scenario-specific attributes
  */
 export interface AttributeContainer {
   /**
-   * Obtém o valor armazenado para um atributo.
+   * Gets the stored value of an attribute.
    *
-   * @param attributeId - ID do atributo (ex: "effort")
-   * @returns O valor armazenado ou `undefined` se não definido
+   * @param attributeId - Attribute ID (e.g. "effort")
+   * @returns The stored value, or `undefined` when not defined
    */
   getStoredValue(attributeId: string,): unknown;
 
   /**
-   * Armazena um valor para um atributo.
+   * Stores a value for an attribute.
    *
-   * @param attributeId - ID do atributo (ex: "effort")
-   * @param value - Valor a ser armazenado
+   * @param attributeId - Attribute ID (e.g. "effort")
+   * @param value - Value to be stored
    */
   setStoredValue(attributeId: string, value: unknown,): void;
 }

@@ -1,16 +1,16 @@
 /**
- * RichTextParser — parser FSM do markup MediaWiki (Fase 12.6).
+ * RichTextParser — FSM parser for the MediaWiki markup (phase 12.6).
  *
- * Herda de {@link TextParser} (Fase 10) e injeta o {@link RichTextScanner}
- * (12.5) como fonte de tokens. As regras de sintaxe vivem em
- * `rich-text-syntax-rules.ts` (port do mixin `RichTextSyntaxRules`). O
- * `RichText` (12.18) mantém uma única instância deste parser como singleton e
- * a reutiliza via {@link RichTextParser.reuse}, espelhando o `@@parser` do Ruby.
+ * Extends {@link TextParser} (phase 10) and injects the {@link RichTextScanner}
+ * (12.5) as the token source. The syntax rules live in
+ * `rich-text-syntax-rules.ts` (port of the `RichTextSyntaxRules` mixin).
+ * `RichText` (12.18) keeps a single instance of this parser as a singleton and
+ * reuses it through {@link RichTextParser.reuse}, mirroring Ruby's `@@parser`.
  *
- * Port fiel de `RichText/Parser.rb` (RichTextParser, 27-86).
+ * Faithful port of `RichText/Parser.rb` (RichTextParser, 27-86).
  *
  * @see docs/taskjuggler/lib/taskjuggler/RichText/Parser.rb
- * @see ADR 025 (RichText e function handlers)
+ * @see ADR 025 (RichText and function handlers)
  */
 
 import { Log, } from "../log.ts";
@@ -19,7 +19,7 @@ import { RichTextScanner, } from "./rich-text-scanner.ts";
 import type { RichTextIntermediate, } from "./rich-text-intermediate.ts";
 import { registerRichTextRules, } from "./rich-text-syntax-rules.ts";
 
-/** Tokens que o RichTextScanner pode devolver (Parser.rb l.37-48). */
+/** Tokens that RichTextScanner may return (Parser.rb l.37-48). */
 const RT_TOKENS = [
   "LINEBREAK",
   "SPACE",
@@ -63,13 +63,13 @@ const RT_TOKENS = [
 ];
 
 export class RichTextParser extends TextParser {
-  /** RTI dono da árvore produzida (Ruby @richTextI). */
+  /** RTI owning the produced tree (Ruby @richTextI). */
   richTextI: RichTextIntermediate;
-  /** Contadores de seção para numeração de títulos (Ruby @sectionCounter). */
+  /** Section counters for title numbering (Ruby @sectionCounter). */
   sectionCounter: number[];
-  /** Contadores para numeração de listas (Ruby @numberListCounter). */
+  /** Counters for list numbering (Ruby @numberListCounter). */
   numberListCounter: number[];
-  /** Scanner RichText corrente (estreitamento do `scanner` da base). */
+  /** Current RichText scanner (narrowing of the base `scanner`). */
   private rtScanner: RichTextScanner | null = null;
 
   constructor(
@@ -88,17 +88,17 @@ export class RichTextParser extends TextParser {
   }
 
   /**
-   * Registra o conjunto de regras RichText. Substitui o mixin
-   * `RichTextSyntaxRules` do Ruby por um módulo de funções (12.6.2).
+   * Registers the RichText rule set. Replaces Ruby's `RichTextSyntaxRules`
+   * mixin with a module of functions (12.6.2).
    */
   override initRules(): void {
     registerRichTextRules(this,);
   }
 
   /**
-   * Reutiliza o singleton para um novo RTI, resetando o estado mutável
-   * (Parser.rb l.59-66). O `@stack` volta a `null` e os tokens bloqueados são
-   * limpos antes de reaplicar o `tokenSet`.
+   * Reuses the singleton for a new RTI, resetting the mutable state
+   * (Parser.rb l.59-66). `@stack` goes back to `null` and the blocked tokens
+   * are cleared before reapplying the `tokenSet`.
    */
   reuse(
     rti: RichTextIntermediate,
@@ -113,19 +113,20 @@ export class RichTextParser extends TextParser {
   }
 
   /**
-   * Abre o texto para leitura. Garante terminação de linha dupla como no Ruby
-   * (Parser.rb l.69-74): novos `\n` extras são simplesmente ignorados pelo
-   * scanner e fecham o último bloco.
+   * Opens the text for reading. Guarantees a double line terminator as in Ruby
+   * (Parser.rb l.69-74): extra new `\n` are simply ignored by the scanner and
+   * close the last block.
    */
   open(text: string,): void {
     const scanner = new RichTextScanner(text + "\n\n", Log,);
     this.rtScanner = scanner;
-    // A base delega error/warning/sourceFileInfo ao `scanner` protegido.
+    // The base delegates error/warning/sourceFileInfo to the protected
+    // `scanner`.
     this.scanner = scanner;
     scanner.open(true,);
   }
 
-  /** Entrega o próximo token do scanner ao FSM. */
+  /** Hands the next token from the scanner to the FSM. */
   protected override nextToken(): ParserToken {
     if (!this.rtScanner) {
       return ["endOfText", "", null,];
@@ -133,7 +134,7 @@ export class RichTextParser extends TextParser {
     return this.rtScanner.nextToken() as ParserToken;
   }
 
-  /** Devolve o token ao scanner (push-back LIFO). */
+  /** Returns the token to the scanner (push-back LIFO). */
   protected override returnToken(token: ParserToken | null,): void {
     if (this.rtScanner && token) {
       this.rtScanner.returnToken(token,);

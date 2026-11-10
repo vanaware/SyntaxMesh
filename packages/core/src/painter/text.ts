@@ -1,26 +1,27 @@
 /**
- * 17.9.2 — `Text`: elemento de texto do Painter (`Painter/Text.rb`).
+ * 17.9.2 — `Text`: text element of the Painter (`Painter/Text.rb`).
  *
- * Porta `TaskJuggler::Painter::Text`: um `Element` de tag `text` com as
- * coordenadas `x`/`y` mais os atributos de texto (`TextAttrs`); o conteúdo é
- * guardado em `@text` e sai entre as tags.
+ * Ports `TaskJuggler::Painter::Text`: an `Element` with tag `text`, the `x`/`y`
+ * coordinates plus the text attributes (`TextAttrs`); the content is stored in
+ * `@text` and comes out between the tags.
  *
- * Definição de `TextAttrs` (Ruby `Primitives::TextAttrs`):
- * `FillAndStrokeAttrs + [:font_family, :font_size]`. Vive aqui — e não em
- * `primitives.ts` — para manter o grafo de módulos acíclico: `Primitives`
- * importa `Text`, então `Text` não pode importar `Primitives`. O conteúdo e a
- * ordem são os do Ruby.
+ * Definition of `TextAttrs` (Ruby `Primitives::TextAttrs`):
+ * `FillAndStrokeAttrs + [:font_family, :font_size]`. It lives here — and not in
+ * `primitives.ts` — to keep the module graph acyclic: `Primitives` imports
+ * `Text`, so `Text` cannot import `Primitives`. The content and the order are
+ * the Ruby ones.
  *
- * Saídas conferidas no oráculo (2026-11-04, `.tmp/shapes_ruby_check.rb`):
+ * Outputs checked against the oracle (2026-11-04,
+ * `.tmp/shapes_ruby_check.rb`):
  * - `Text.new('hi', {x: 1, y: 2}).to_svg.to_s` == `<text x="1" y="2">hi</text>`.
- * - `font_family`/`font_size` aceitos: `<text font-family="Arial"
+ * - `font_family`/`font_size` accepted: `<text font-family="Arial"
  *   font-size="10pt" x="1" y="2">hi</text>`.
- * - String vazia e `nil` ambos produzem `<text x="1" y="2"></text>`: no Ruby
- *   `''` é truthy e entra como `XMLText.new('')` (serializa vazio); `nil` fica
- *   de fora. O resultado textual é idêntico — o port usa `text !== null`, como
- *   em `Element`.
- * - Chave não listada → `ArgumentError: Unsupported attribute z` (herança do
- *   construtor de `Element`).
+ * - Empty string and `nil` both produce `<text x="1" y="2"></text>`: in Ruby `''`
+ *   is truthy and enters as `XMLText.new('')` (serializes empty), while `nil` is
+ *   left out. The textual result is identical — the port uses `text !== null`,
+ *   as in `Element`.
+ * - Unlisted key → `ArgumentError: Unsupported attribute z` (inherited from the
+ *   `Element` constructor).
  *
  * @see docs/taskjuggler/lib/taskjuggler/Painter/Text.rb
  * @see docs/syntaxmesh/fases/fase-17-html-xml-tarefas.md (17.9.2)
@@ -30,15 +31,22 @@ import { FillAndStrokeAttrs, } from "./basic-shapes.ts";
 import { Element, } from "./element.ts";
 import { type SVGValues, } from "./svg-support.ts";
 
-/** Atributos de texto (Ruby `Primitives::TextAttrs`), na ordem do Ruby. */
+/** Text attributes (Ruby `Primitives::TextAttrs`), in the Ruby order. */
 export const TextAttrs: readonly string[] = [
   ...FillAndStrokeAttrs,
   "font_family",
   "font_size",
 ];
 
+/** `<text>` element carrying a string between its tags. */
 export class Text extends Element {
-  /** Ruby `initialize(str, attrs)` — `str` é o conteúdo textual. */
+  /**
+   * Ruby `initialize(str, attrs)` — `str` is the textual content.
+   *
+   * @param str Text drawn inside the element.
+   * @param attrs Position and text attributes (`x`, `y`, font, colours).
+   * @throws TjArgumentError When a key is not a text attribute.
+   */
   constructor(str: string, attrs: SVGValues,) {
     super("text", [...["x", "y",], ...TextAttrs,], attrs,);
     this.text = str;

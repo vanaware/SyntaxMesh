@@ -1,21 +1,22 @@
 /**
- * RichTextSyntaxRules — gramática do markup MediaWiki (Fase 12.6.2).
+ * RichTextSyntaxRules — MediaWiki markup grammar (phase 12.6.2).
  *
- * Port fiel do mixin `RichTextSyntaxRules` (`RichText/SyntaxRules.rb`): cada
- * método `rule_X` vira um bloco registrado via {@link RichTextParser.newRule}.
- * As actions são funções comuns (sem arrow) cujo `this` é o parser; leem
- * `this.val` (equivalente ao `@val` do Ruby) e `this.richTextI`.
+ * Faithful port of the `RichTextSyntaxRules` mixin (`RichText/SyntaxRules.rb`):
+ * each `rule_X` method becomes a block registered through
+ * {@link RichTextParser.newRule}. The actions are plain (non-arrow) functions
+ * whose `this` is the parser; they read `this.val` (the equivalent of Ruby's
+ * `@val`) and `this.richTextI`.
  *
- * Convenções do port:
- *   - símbolos Ruby (`:title1`) viram as strings idênticas usadas por
- *     {@link RichTextElement} (sem os dois-pontos);
- *   - `@val[i].last` em arrays é `arr[arr.length - 1]`; `nil` vira `null`;
- *   - `Array#join` (Ruby, separador `""`) vira `join("")`;
- *   - `richTextI.richText.functionHandler(name, block)` — `richText` é opaco
- *     (`unknown`) aqui; o `RichText` real (12.18) fornece o método.
+ * Port conventions:
+ *   - Ruby symbols (`:title1`) become the identical strings used by
+ *     {@link RichTextElement} (without the colon);
+ *   - `@val[i].last` on arrays is `arr[arr.length - 1]`; `nil` becomes `null`;
+ *   - `Array#join` (Ruby, `""` separator) becomes `join("")`;
+ *   - `richTextI.richText.functionHandler(name, block)` — `richText` is opaque
+ *     (`unknown`) here; the real `RichText` (12.18) provides the method.
  *
  * @see docs/taskjuggler/lib/taskjuggler/RichText/SyntaxRules.rb
- * @see ADR 025 (RichText e function handlers)
+ * @see ADR 025 (RichText and function handlers)
  */
 
 import { RichTextElement, } from "./rich-text-element.ts";
@@ -24,19 +25,19 @@ import type { RichTextParser, } from "./rich-text-parser.ts";
 
 type Action = (this: RichTextParser,) => unknown;
 
-/** Cast de `@val[i]` (unknown) para o 3º arg do `RichTextElement`. */
+/** Cast of `@val[i]` (unknown) to the 3rd arg of `RichTextElement`. */
 function arg(
   v: unknown,
 ): RichTextElement | string | Array<RichTextElement | string> | null {
   return v as RichTextElement | string | Array<RichTextElement | string> | null;
 }
 
-/** Interface mínima do RichText dona deste RTI (12.18 implementa). */
+/** Minimal interface of the RichText owning this RTI (12.18 implements it). */
 interface RichTextOwner {
   functionHandler: (name: string, block: boolean,) => unknown;
 }
 
-/** Alinhamentos verticais aceitos em referências de imagem. */
+/** Vertical alignments accepted in image references. */
 const V_ALIGN = [
   "top",
   "middle",
@@ -48,15 +49,15 @@ const V_ALIGN = [
   "text-bottom",
 ];
 
-/** Extensões de imagem suportadas pela sintaxe `[[File:...]]`. */
+/** Image extensions supported by the `[[File:...]]` syntax. */
 const IMG_EXTS = ["jpg", "gif", "png", "svg",];
 
-/** Define (ou reafirma) a regra `name` e executa `body` com ela como corrente. */
+/** Defines (or reasserts) rule `name` and runs `body` with it as current. */
 function rtRule(p: RichTextParser, name: string, body: () => void,): void {
   p.newRule(name, body,);
 }
 
-/** Último elemento de um resultado de regra (array achatado ou elemento só). */
+/** Last element of a rule result (flattened array or a single element). */
 function lastEl(val: unknown,): RichTextElement | null {
   if (Array.isArray(val,)) {
     const l = val[val.length - 1];
@@ -65,13 +66,13 @@ function lastEl(val: unknown,): RichTextElement | null {
   return val instanceof RichTextElement ? val : null;
 }
 
-/** `@val[x].last.appendSpace = false` (somente quando há um último elemento). */
+/** `@val[x].last.appendSpace = false` (only when there is a last element). */
 function clearLastAppendSpace(val: unknown,): void {
   const el = lastEl(val,);
   if (el) el.appendSpace = false;
 }
 
-/** Registra todas as regras RichText no parser (chamado por `initRules`). */
+/** Registers all RichText rules in the parser (called by `initRules`). */
 export function registerRichTextRules(p: RichTextParser,): void {
   // ------------------------------------------------------------------
   // Entrada e blocos
@@ -149,7 +150,7 @@ export function registerRichTextRules(p: RichTextParser,): void {
   },);
 
   // ------------------------------------------------------------------
-  // Títulos (com contadores de seção)
+  // Titles (with section counters)
   // ------------------------------------------------------------------
   const title = (level: 1 | 2 | 3 | 4,): Action =>
     function (this: RichTextParser,): unknown {
@@ -160,7 +161,8 @@ export function registerRichTextRules(p: RichTextParser,): void {
         arg(this.val[2],),
       );
       sc[level - 1]! += 1;
-      // title1 zera [1,2]; title2 zera [2]; title3 zera [3]; title4 não zera.
+      // title1 resets [1,2]; title2 resets [2]; title3 resets [3]; title4 does
+      // not reset.
       if (level === 1) {
         sc[1] = 0;
         sc[2] = 0;
@@ -183,7 +185,7 @@ export function registerRichTextRules(p: RichTextParser,): void {
   }
 
   // ------------------------------------------------------------------
-  // Listas com marcadores (bullets)
+  // Bullet lists
   // ------------------------------------------------------------------
   const bulletList = (level: 1 | 2 | 3 | 4,): () => void => () => {
     if (level === 1) {
@@ -217,7 +219,7 @@ export function registerRichTextRules(p: RichTextParser,): void {
   }
 
   // ------------------------------------------------------------------
-  // Listas numeradas (com contadores próprios)
+  // Numbered lists (with their own counters)
   // ------------------------------------------------------------------
   const numberList = (level: 1 | 2 | 3 | 4,): () => void => () => {
     p.repeatable();
@@ -238,7 +240,7 @@ export function registerRichTextRules(p: RichTextParser,): void {
       p.pattern([`!numberList${level + 1}`,], function (
         this: RichTextParser,
       ): unknown {
-        // Ruby zera os contadores internos ao descer de nível.
+        // Ruby resets the inner counters when descending a level.
         if (level === 1) {
           this.numberListCounter[1] = 0;
           this.numberListCounter[2] = 0;
@@ -346,7 +348,7 @@ export function registerRichTextRules(p: RichTextParser,): void {
   },);
 
   // ------------------------------------------------------------------
-  // Texto plano, links e referências
+  // Plain text, links and references
   // ------------------------------------------------------------------
   rtRule(p, "plainTextWithLinks", () => {
     p.pattern(["!plainText",], function (this: RichTextParser,): unknown {
@@ -483,7 +485,7 @@ export function registerRichTextRules(p: RichTextParser,): void {
   },);
 
   // ------------------------------------------------------------------
-  // Espaços e linhas em branco
+  // Spaces and blank lines
   // ------------------------------------------------------------------
   rtRule(p, "space", () => {
     p.optional();
@@ -499,7 +501,7 @@ export function registerRichTextRules(p: RichTextParser,): void {
   },);
 
   // ------------------------------------------------------------------
-  // Funções embutidas
+  // Built-in functions
   // ------------------------------------------------------------------
   rtRule(p, "blockFunction", () => {
     p.pattern(
@@ -538,7 +540,7 @@ export function registerRichTextRules(p: RichTextParser,): void {
   },);
 }
 
-/** Monta um `img` a partir de uma referência `[[File:...]]` (12.6 ref branch). */
+/** Builds an `img` from a `[[File:...]]` reference (12.6 ref branch). */
 function makeImage(
   p: RichTextParser,
   locator: string,
@@ -573,8 +575,8 @@ function makeImage(
 }
 
 /**
- * Constrói o elemento `blockfunc`/`inlinefunc` a partir de
- * `$FUNCSTART $ID !functionArguments $FUNCEND`, validando o handler.
+ * Builds the `blockfunc`/`inlinefunc` element from
+ * `$FUNCSTART $ID !functionArguments $FUNCEND`, validating the handler.
  */
 function buildFunctionElement(
   p: RichTextParser,

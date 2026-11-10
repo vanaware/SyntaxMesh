@@ -1,13 +1,14 @@
 /**
- * StatusSheetSender — sender concreto de templates de status sheet (18.10).
+ * StatusSheetSender — concrete sender of status sheet templates (18.10).
  *
- * Port de `docs/taskjuggler/lib/taskjuggler/StatusSheetSender.rb`.
+ * Port of `docs/taskjuggler/lib/taskjuggler/StatusSheetSender.rb`.
  *
- * Além da configuração, o Ruby monta no construtor a lista de **inadimplentes**
- * (`defaulterList`): recursos que não entregaram o time sheet do período
- * anterior. Como `FileStore` é assíncrono (ADR 037), o construtor não pode
- * ler o disco; a lista entra em `introText` no início de `sendTemplates`, o que
- * mantém o efeito do Ruby sem bloquear a construção.
+ * Beyond the configuration, Ruby builds the **defaulter list** in the
+ * constructor (`defaulterList`): resources that did not deliver the previous
+ * period's time sheet. Because the `FileStore` is asynchronous (ADR 037), the
+ * constructor cannot read the disk; the list is appended to `introText` at the
+ * start of `sendTemplates`, which keeps Ruby's effect without blocking
+ * construction.
  *
  * @see docs/taskjuggler/lib/taskjuggler/StatusSheetSender.rb
  * @see docs/syntaxmesh/fases/fase-18-time-status-sheets.md (18.10)
@@ -16,7 +17,7 @@
 import { baseName, } from "./email-message.ts";
 import { SheetSender, } from "./sheet-sender.ts";
 
-/** Texto de introdução do email (Ruby `@introText`). */
+/** Introductory text of the email (Ruby `@introText`). */
 export const STATUS_SHEET_INTRO_TEXT =
   `Please find enclosed your weekly status report template. Please fill out the
 form and send it back to the sender of this email. You can either use the
@@ -27,7 +28,7 @@ end date must be in a single line that starts at the beginning of the line.
 
 `;
 
-/** Aviso anexado ao `introText` quando há inadimplentes (Ruby l.75-83). */
+/** Warning appended to `introText` when there are defaulters (Ruby l.75-83). */
 export const DEFAULTERS_WARNING_HEADER =
   `=============================== W A R N I N G ==============================
 
@@ -38,7 +39,7 @@ immediately and re-request this template.
 
 `;
 
-/** `YYYY-MM-DD` → `Date` local à meia-noite (Ruby `Time.local(*split('-'))`). */
+/** `YYYY-MM-DD` → local `Date` at midnight (Ruby `Time.local(*split('-'))`). */
 function parseLocalDate(text: string,): Date | null {
   const parts = text.split("-",);
   if (parts.length !== 3) return null;
@@ -51,10 +52,18 @@ function parseLocalDate(text: string,): Date | null {
   return new Date(year, month - 1, day,);
 }
 
+/**
+ * Sender that prepares status sheet templates.
+ */
 export class StatusSheetSender extends SheetSender {
-  /** Base dos time sheets já recebidos (Ruby `@timeSheetDir`). */
+  /** Base of the time sheets already received (Ruby `@timeSheetDir`). */
   timeSheetDir = "TimeSheets";
 
+  /**
+   * Creates the sender with the status sheet defaults.
+   *
+   * @param appName Name that signs the email (`X-TaskJuggler`) and the log.
+   */
   constructor(appName: string,) {
     super(appName, "status",);
 
@@ -69,23 +78,24 @@ export class StatusSheetSender extends SheetSender {
     this.mailSubject = "Your weekly status report template for %s";
   }
 
-  /** Acrescenta o aviso de inadimplentes antes de gerar/enviar os templates. */
+  /** Appends the defaulters warning before generating/sending the templates. */
   override async sendTemplates(resourceList: string[],): Promise<void> {
     await this.addDefaulterWarning();
     await super.sendTemplates(resourceList,);
   }
 
   /**
-   * Recursos que **não** entregaram o time sheet do período anterior
+   * Resources that did **not** file the time sheet of the previous period
    * (Ruby `defaulterList`, l.97-141).
    *
-   * Os intervalos do status sheet e do time sheet não são idênticos: o do
-   * status sheet é menor e um pouco posterior, mas sempre contém a data final
-   * do período do time sheet. Por isso a pasta de time sheets escolhida é a
-   * última com data **anterior** ao fim do período do status sheet.
+   * The status sheet and time sheet intervals are not identical: the status
+   * sheet one is shorter and slightly later, but always contains the end date
+   * of the time sheet period. That is why the chosen time sheet folder is the
+   * last one dated **before** the end of the status sheet period.
    *
-   * @returns IDs (na ordem do arquivo `missing-reports`); vazio quando não há
-   *   pasta correspondente, nem `missing-reports`, ou quando todos já enviaram.
+   * @returns IDs (in the order of the `missing-reports` file); empty when there
+   *   is no matching folder, no `missing-reports`, or when everyone has already
+   *   sent.
    */
   async defaulterList(): Promise<string[]> {
     const store = this.requireFileStore("defaulterList",);
@@ -94,7 +104,7 @@ export class StatusSheetSender extends SheetSender {
     try {
       names = await store.list(this.timeSheetDir,);
     } catch {
-      // Sem o diretório de time sheets não há como saber quem deve.
+      // Without the time sheet directory there is no way to know who is due.
       return [];
     }
 
@@ -127,8 +137,8 @@ export class StatusSheetSender extends SheetSender {
       .map((line,) => line.trim().replace(/\r$/u, "",))
       .filter((line,) => line !== "");
 
-    // A folha pode ter sido entregue depois do `tj3ts_summary` (18.11).
-    // `.smx` é a forma nativa; `.tji` continua aceito (24.2.36).
+    // The sheet may have been filed after `tj3ts_summary` (18.11).
+    // `.smx` is the native form; `.tji` stays accepted (24.2.36).
     const pending: string[] = [];
     for (const id of ids) {
       const sheet = await this.findSheetFile(
@@ -141,8 +151,8 @@ export class StatusSheetSender extends SheetSender {
   }
 
   /**
-   * Anexa o aviso de inadimplentes ao `introText` (Ruby fazia isso no
-   * construtor). Sem inadimplentes, o texto fica inalterado.
+   * Appends the defaulters warning to `introText` (Ruby did this in the
+   * constructor). Without defaulters, the text is left unchanged.
    */
   protected async addDefaulterWarning(): Promise<void> {
     const defaulters = await this.defaulterList();

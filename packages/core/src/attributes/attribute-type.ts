@@ -1,16 +1,16 @@
 /**
- * Enumerador de tipos de atributos do TaskJuggler.
+ * Enumerator of the TaskJuggler attribute types.
  *
  * @see docs/taskjuggler/lib/taskjuggler/AttributeDefinition.rb
  */
 
 /**
- * Tipos de atributos suportados pelo TaskJuggler.
+ * Attribute types supported by TaskJuggler.
  *
- * Cada tipo corresponde a uma subclasse em `Attributes.rb`.
+ * Each type corresponds to a subclass in `Attributes.rb`.
  */
 export enum AttributeType {
-  // Escalares
+  // Scalars
   String = "string",
   Integer = "integer",
   Float = "number",
@@ -19,12 +19,12 @@ export enum AttributeType {
   Date = "date",
   Duration = "duration",
 
-  // Referência
+  // Reference
   Property = "property",
   Account = "account",
   Reference = "reference",
 
-  // Listas primitivas
+  // Primitive lists
   FlagList = "flaglist",
   SymbolList = "symbollist",
   ScenarioList = "scenarios",
@@ -32,24 +32,24 @@ export enum AttributeType {
   ResourceList = "resourcelist",
   TaskList = "tasklist",
 
-  // Dependências
+  // Dependencies
   DependencyList = "dependencylist",
   TaskDepList = "taskdeplist",
 
-  // Financeiro
+  // Financial
   ChargeList = "charge",
   ChargeSetList = "chargeset",
   AccountCreditList = "credits",
 
-  // Alocação e booking
+  // Allocation and booking
   Allocation = "allocation",
   BookingList = "bookinglist",
 
-  // Expressões lógicas
+  // Logical expressions
   LogicalExpression = "logicalexpressions",
   LogicalExpressionList = "logicalexpressionslist",
 
-  // Tempo complexo
+  // Complex time
   TimeIntervalList = "intervallist",
   LeaveList = "leave",
   LeaveAllowanceList = "leaveallowance",
@@ -57,18 +57,18 @@ export enum AttributeType {
   ShiftAssignments = "shifts",
   WorkingHours = "workinghours",
 
-  // Formatação
+  // Formatting
   RealFormat = "realformat",
   ColumnList = "columns",
   FormatList = "formatlist",
   SortList = "sorting",
   JournalSortList = "journalsorting",
 
-  // Ricos
+  // Rich content
   RichText = "richtext",
   /**
-   * Extensão SyntaxMesh (ADR 039): `markdown` em `extend`. Mesmo contrato de
-   * `RichText`; o dialeto só importa para a reimpressão da declaração.
+   * SyntaxMesh extension (ADR 039): `markdown` in `extend`. Same contract as
+   * `RichText`; the dialect only matters for reprinting the declaration.
    */
   Markdown = "markdown",
   DefinitionList = "definitionlist",

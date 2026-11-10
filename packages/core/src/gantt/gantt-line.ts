@@ -1,19 +1,19 @@
 /**
- * GanttLine (Fase 15.10) — uma linha (propriedade) do Gantt.
+ * GanttLine (phase 15.10) — one (property) line of the Gantt chart.
  *
- * Port fiel de `docs/taskjuggler/lib/taskjuggler/reports/GanttLine.rb`.
+ * Faithful port of `docs/taskjuggler/lib/taskjuggler/reports/GanttLine.rb`.
  *
- * Cada linha representa uma property. Dependendo do tipo e do contexto:
- * - tarefa não aninhada → `GanttTaskBar`, `GanttMilestone` ou `GanttContainer`;
- * - tarefa aninhada em recurso → `GanttLoadStack` (trabalho no escopo);
- * - recurso (aninhado ou não) → `GanttLoadStack`.
+ * Each line represents a property. Depending on its type and context:
+ * - standalone task → `GanttTaskBar`, `GanttMilestone` or `GanttContainer`;
+ * - task nested in a resource → `GanttLoadStack` (work inside the scope);
+ * - resource (nested or not) → `GanttLoadStack`.
  *
- * O `chart` é consumido por uma **interface estrutural** (`GanttLineChart`)
- * para quebrar a referência circular com `GanttChart` (15.11). Como no Ruby,
- * as chamadas a `getEffectiveWork`/`getEffectiveFreeWork`/`getScenario` são
- * polimórficas (lá via `PropertyTreeNode#method_missing`): aqui a property é
- * vista como `GanttLineProperty`, cujo `scenarioData(scIdx)` expõe os três
- * métodos usados pela linha.
+ * The `chart` is consumed through a **structural interface** (`GanttLineChart`)
+ * to break the circular reference with `GanttChart` (15.11). As in Ruby, the
+ * calls to `getEffectiveWork`/`getEffectiveFreeWork`/`getScenario` are
+ * polymorphic (there via `PropertyTreeNode#method_missing`): here the property
+ * is seen as `GanttLineProperty`, whose `scenarioData(scIdx)` exposes the three
+ * methods used by the line.
  *
  * @see docs/syntaxmesh/decisoes/028-gantt-html-css.md (ADR 028)
  * @see docs/syntaxmesh/fases/fase-15-gantt.md (15.10)
@@ -35,125 +35,237 @@ import { GanttContainer, } from "./gantt-container.ts";
 import { GanttLoadStack, type LoadStackHost, } from "./gantt-load-stack.ts";
 import { GanttTaskBar, } from "./gantt-task-bar.ts";
 
-/** Intervalo devolvido por `collectTimeOffIntervals` (`[start, end]`). */
+/** Interval returned by `collectTimeOffIntervals` (`[start, end]`). */
 export interface TimeOffInterval {
+  /** First instant of the off-time interval. */
   readonly start: TjTime;
+  /** Last instant of the off-time interval. */
   readonly end: TjTime;
 }
 
-/** Subconjunto do *Scenario usado por `GanttLine` (Ruby `method_missing`). */
+/** Subset of `*Scenario` used by `GanttLine` (Ruby `method_missing`). */
 export interface GanttLineScenario {
   /**
-   * Ruby `getEffectiveWork(startIdx, endIdx[, scope])`: em `TaskScenario` é o
-   * *effective work* da tarefa (com `scope` = recurso); em `ResourceScenario`
-   * é o trabalho alocado (com `scope` = tarefa).
+   * Ruby `getEffectiveWork(startIdx, endIdx[, scope])`: in `TaskScenario` it is
+   * the *effective work* of the task (with `scope` = resource); in
+   * `ResourceScenario` it is the allocated work (with `scope` = task).
+   *
+   * @param startIdx First slot index of the period.
+   * @param endIdx Last slot index of the period.
+   * @param scope Property restricting the computation, when applicable.
+   * @returns The effective work of the period.
    */
   getEffectiveWork(
     startIdx: number,
     endIdx: number,
     scope?: GanttLineProperty,
   ): number;
-  /** Ruby `getEffectiveFreeWork(startIdx, endIdx)` (só em recursos). */
+  /**
+   * Ruby `getEffectiveFreeWork(startIdx, endIdx)` (resources only).
+   *
+   * @param startIdx First slot index of the period.
+   * @param endIdx Last slot index of the period.
+   * @returns The free work of the period.
+   */
   getEffectiveFreeWork(startIdx: number, endIdx: number,): number;
-  /** Ruby `collectTimeOffIntervals(iv, minDuration)`. */
+  /**
+   * Ruby `collectTimeOffIntervals(iv, minDuration)`.
+   *
+   * @param iv Period the off-time intervals are collected from.
+   * @param minDuration Ignore intervals shorter than this, in seconds.
+   * @returns The off-time intervals of the period.
+   */
   collectTimeOffIntervals(
     iv: TimeOffInterval,
     minDuration: number,
   ): readonly TimeOffInterval[];
 }
 
-/** Property (`Task`/`Resource`) vista pela linha. */
+/** Property (`Task`/`Resource`) as seen by the line. */
 export interface GanttLineProperty {
-  /** Ruby `property['id', scenarioIdx]`. */
+  /**
+   * Ruby `property['id', scenarioIdx]`.
+   *
+   * @param id Attribute id to read.
+   * @param scenarioIdx Scenario the value is read from.
+   * @returns The attribute value.
+   */
   getForScenario(id: string, scenarioIdx: number,): unknown;
   /** Ruby `property.container?`. */
   container(): boolean;
-  /** Ruby `property.getScenario(scenarioIdx)` (via `method_missing`). */
+  /**
+   * Ruby `property.getScenario(scenarioIdx)` (via `method_missing`).
+   *
+   * @param scenarioIdx Scenario to return.
+   * @returns The scenario view of the property.
+   */
   scenarioData(scenarioIdx: number,): GanttLineScenario;
 }
 
-/** Projeto visto pela linha. */
+/** Project as seen by the line. */
 export interface GanttLineProject {
-  /** Ruby `project['start']` / `project['end']`. */
+  /**
+   * Ruby `project['start']` / `project['end']`.
+   *
+   * @param id Attribute id to read.
+   * @returns The attribute value.
+   */
   get(id: string,): unknown;
-  /** Ruby `project.dateToIdx(date)`. */
+  /**
+   * Ruby `project.dateToIdx(date)`.
+   *
+   * @param date Date to convert.
+   * @returns The slot index of the date.
+   */
   dateToIdx(date: TjTime,): number;
-  /** Ruby `project.reportContexts` (para `rollupTask`). */
+  /** Ruby `project.reportContexts` (used by `rollupTask`). */
   readonly reportContexts: ReadonlyArray<{
     readonly report: { get(id: string,): unknown };
   }>;
 }
 
-/** Legenda do `TableReport` (Fase 14.14). */
+/** Legend of the `TableReport` (phase 14.14). */
 export interface GanttLineLegend {
+  /** Whether the fixed Gantt symbols are shown in the legend. */
   showGanttItems: boolean;
+  /**
+   * Adds one symbol to the legend.
+   *
+   * @param label Text shown next to the symbol.
+   * @param category CSS class of the colored box.
+   */
   addGanttItem(label: string, category: string,): void;
 }
 
-/** Cabeçalho consumido pela linha (15.9). */
+/** Header consumed by the line (15.9). */
 export interface GanttLineHeader {
+  /** Height of the header, in pixels. */
   readonly height: number;
+  /** X coordinates of the grid lines. */
   readonly gridLines: readonly number[];
+  /** Start dates of the small-scale cells. */
   readonly cellStartDates: readonly TjTime[];
+  /** X of the "now" line, or `null` when outside the chart. */
   readonly nowLineX: number | null;
+  /** X of the `markdate` line, or `null` when outside the chart. */
   readonly markdateLineX: number | null;
 }
 
-/** Chart consumido pela linha (15.11), em forma estrutural. */
+/** Chart consumed by the line (15.11), in structural form. */
 export interface GanttLineChart {
+  /** Width of the chart, in pixels. */
   readonly width: number;
+  /** First date of the reported period. */
   readonly start: TjTime;
+  /** Last date of the reported period. */
   readonly end: TjTime;
+  /** Header of the chart. */
   readonly header: GanttLineHeader;
-  /** Escala corrente: só `minTimeOff` importa aqui. */
+  /** Current scale: only `minTimeOff` matters here. */
   readonly scale: { readonly minTimeOff: number };
+  /** Table owning the chart, or `null` when there is none. */
   readonly table: { readonly legend: GanttLineLegend } | null;
-  /** Ruby `chart.dateToX(date)` (já truncado). */
+  /**
+   * Ruby `chart.dateToX(date)` (already truncated).
+   *
+   * @param date Date to map onto the X axis.
+   * @returns The X coordinate, in pixels.
+   */
   dateToX(date: TjTime,): number;
-  /** Ruby `chart.addLine(line)` (registra a linha). */
+  /**
+   * Ruby `chart.addLine(line)` (registers the line).
+   *
+   * @param line Line to register.
+   */
   addLine(line: GanttLine,): void;
-  /** Ruby `chart.addTask(task, line)` (linhas primárias de tarefa). */
+  /**
+   * Ruby `chart.addTask(task, line)` (primary task lines).
+   *
+   * @param task Task the line belongs to.
+   * @param line Line to register.
+   */
   addTask(task: PropertyTreeNode, line: GanttLine,): void;
 }
 
-/** Elemento de conteúdo de uma linha (barra, marco, container, pilha). */
+/** Content element of a line (bar, milestone, container, stack). */
 export interface GanttContent {
+  /**
+   * Renders the content element.
+   *
+   * @returns The HTML elements, or `null` when nothing is drawn.
+   */
   to_html(): XMLElementLike[] | null;
+  /**
+   * Registers the zones the routed lines must not cross.
+   *
+   * @param router Router receiving the blocked rectangles.
+   */
   addBlockedZones(router: ZoneRouter,): void;
 }
 
 /**
- * Conteúdo que expõe as âncoras das setas de dependência (15.11):
- * `GanttTaskBar`, `GanttMilestone` e `GanttContainer`.
+ * Content that exposes the anchors of the dependency arrows (15.11):
+ * `GanttTaskBar`, `GanttMilestone` and `GanttContainer`.
  */
 export interface DepLineContent extends GanttContent {
+  /**
+   * Where arrows leaving the start anchor begin.
+   *
+   * @returns The `[x, y]` point.
+   */
   startDepLineStart(): [number, number,];
+  /**
+   * Where arrows arriving at the start anchor end.
+   *
+   * @returns The `[x, y]` point.
+   */
   startDepLineEnd(): [number, number,];
+  /**
+   * Where arrows leaving the end anchor begin.
+   *
+   * @returns The `[x, y]` point.
+   */
   endDepLineStart(): [number, number,];
+  /**
+   * Where arrows arriving at the end anchor end.
+   *
+   * @returns The `[x, y]` point.
+   */
   endDepLineEnd(): [number, number,];
 }
 
-/** Expressão lógica do `rollupTask` (Fase 11). */
+/** Logical expression of `rollupTask` (phase 11). */
 interface RollupExpression {
   eval(query: Query,): boolean;
 }
 
-/** Uma linha do Gantt chart. */
+/** One line of the Gantt chart. */
 export class GanttLine implements LoadStackHost {
   private readonly chart: GanttLineChart;
+  /** Query holding the property and the scenario of the line. */
   readonly query: Query;
   private readonly tooltip: CellSettingPatternList | null;
-  /** Cor de fundo da linha (`taskcellN`/`resourcecellN`). */
+  /** Background colour of the line (`taskcellN`/`resourcecellN`). */
   private category: string | null = null;
-  /** Y absoluto do topo da linha (já inclui o cabeçalho). */
+  /** Absolute Y of the top of the line (header already included). */
   readonly y: number;
-  /** Altura da linha em pixels. */
+  /** Height of the line, in pixels. */
   readonly height: number;
   private readonly lineIndex: number;
-  /** Zonas de folga como `[startX, width]`. */
+  /** Off-time zones as `[startX, width]`. */
   private timeOffZones: Array<[number, number,]> = [];
   private content: GanttContent[] = [];
 
+  /**
+   * Creates a line, registers it on the chart and generates its content.
+   *
+   * @param chart Chart the line belongs to.
+   * @param query Query holding the property and the scenario of the line.
+   * @param y Top offset reported by the table, in pixels.
+   * @param height Height of the line, in pixels.
+   * @param lineIndex Index of the line inside the table.
+   * @param tooltip Tooltip definition of the column, or `null`.
+   */
   constructor(
     chart: GanttLineChart,
     query: Query,
@@ -163,7 +275,7 @@ export class GanttLine implements LoadStackHost {
     tooltip: CellSettingPatternList | null,
   ) {
     this.chart = chart;
-    // Registra a linha no chart (antes de tudo, como o Ruby).
+    // Registers the line on the chart (before anything else, as Ruby does).
     this.chart.addLine(this,);
 
     this.query = query;
@@ -177,7 +289,11 @@ export class GanttLine implements LoadStackHost {
     this.generate();
   }
 
-  /** Converte a linha abstrata em `<div>`s (Ruby `to_html`). */
+  /**
+   * Converts the abstract line into `<div>`s (Ruby `to_html`).
+   *
+   * @returns The line element with its zones, content and reference lines.
+   */
   to_html(): XMLElementLike {
     const div = new XMLElement("div", {
       class: this.category ?? "",
@@ -187,19 +303,19 @@ export class GanttLine implements LoadStackHost {
         `height:${this.height}px; ` +
         "font-size:10px;",
     },);
-    // Zonas de folga.
+    // Off-time zones.
     for (const zone of this.timeOffZones) {
       div.append(
         this.rectToHTML(zone[0], 0, zone[1], this.height, "offduty",),
       );
     }
 
-    // Linhas de grade (escala grande do cabeçalho).
+    // Grid lines (large scale of the header).
     for (const line of this.chart.header.gridLines) {
       div.append(this.rectToHTML(line, 0, 1, this.height, "tabvline",),);
     }
 
-    // Conteúdo (barras, marcos, pilhas de carga).
+    // Content (bars, milestones, load stacks).
     for (const c of this.content) {
       const html = c.to_html();
       if (html && html[0]) {
@@ -208,13 +324,13 @@ export class GanttLine implements LoadStackHost {
       }
     }
 
-    // Linha "now".
+    // "now" line.
     const nowLineX = this.chart.header.nowLineX;
     if (nowLineX !== null) {
       div.append(this.rectToHTML(nowLineX, 0, 1, this.height, "nowline",),);
     }
 
-    // Linha "markdate".
+    // "markdate" line.
     const markdateLineX = this.chart.header.markdateLineX;
     if (markdateLineX !== null) {
       div.append(
@@ -225,17 +341,36 @@ export class GanttLine implements LoadStackHost {
     return div;
   }
 
-  /** Só faz sentido para linhas primárias de tarefa (Ruby `getTask`). */
+  /**
+   * Only meaningful for primary task lines (Ruby `getTask`).
+   *
+   * @returns The single content element of the line, or `null` when the line
+   * does not hold exactly one.
+   */
   getTask(): GanttContent | null {
     return this.content.length === 1 ? this.content[0]! : null;
   }
 
-  /** Delega o registro das zonas bloqueadas ao conteúdo (Ruby idem). */
+  /**
+   * Delegates the registration of the blocked zones to the content (Ruby does
+   * the same).
+   *
+   * @param router Router receiving the blocked rectangles.
+   */
   addBlockedZones(router: ZoneRouter,): void {
     for (const c of this.content) c.addBlockedZones(router,);
   }
 
-  /** Ruby `HTMLGraphics#lineToHTML` (usado pelos `GanttLoadStack`). */
+  /**
+   * Ruby `HTMLGraphics#lineToHTML` (used by the `GanttLoadStack`s).
+   *
+   * @param xs Start X coordinate, in pixels.
+   * @param ys Start Y coordinate, in pixels.
+   * @param xe End X coordinate, in pixels.
+   * @param ye End Y coordinate, in pixels.
+   * @param category CSS class of the line.
+   * @returns The line element.
+   */
   lineToHTML(
     xs: number,
     ys: number,
@@ -246,7 +381,16 @@ export class GanttLine implements LoadStackHost {
     return graphicsLineToHTML(xs, ys, xe, ye, category,);
   }
 
-  /** Ruby `HTMLGraphics#rectToHTML` (usado pelos `GanttLoadStack`). */
+  /**
+   * Ruby `HTMLGraphics#rectToHTML` (used by the `GanttLoadStack`s).
+   *
+   * @param x Left offset, in pixels.
+   * @param y Top offset, in pixels.
+   * @param w Width, in pixels.
+   * @param h Height, in pixels.
+   * @param category CSS class of the rectangle.
+   * @returns The rectangle element.
+   */
   rectToHTML(
     x: number,
     y: number,
@@ -257,7 +401,7 @@ export class GanttLine implements LoadStackHost {
     return graphicsRectToHTML(x, y, w, h, category,);
   }
 
-  /** Gera o conteúdo abstrato desta linha (Ruby `generate`). */
+  /** Generates the abstract content of this line (Ruby `generate`). */
   private generate(): void {
     this.content = [];
     this.generateTimeOffZones();
@@ -269,17 +413,21 @@ export class GanttLine implements LoadStackHost {
     }
   }
 
-  /** `true` se a property é uma `Task` (Ruby `is_a?(Task)`). */
+  /**
+   * `true` when the property is a `Task` (Ruby `is_a?(Task)`).
+   *
+   * @returns Whether the line represents a task.
+   */
   private isTask(): boolean {
     return this.query.property instanceof Task;
   }
 
-  /** Property da consulta como fonte de trabalho. */
+  /** Query property as a source of work. */
   private get property(): GanttLineProperty {
     return asGanttProperty(this.propertyNode,)!;
   }
 
-  /** Nó real da property (para as APIs do modelo e para o chart). */
+  /** Real property node (for the model APIs and for the chart). */
   private get propertyNode(): PropertyTreeNode {
     const node = this.query.property;
     if (node === null) {
@@ -288,12 +436,12 @@ export class GanttLine implements LoadStackHost {
     return node;
   }
 
-  /** Property de escopo (recurso ou tarefa), se houver. */
+  /** Scope property (resource or task), when there is one. */
   private get scopeProperty(): GanttLineProperty | null {
     return asGanttProperty(this.query.scopeProperty,);
   }
 
-  /** Projeto da consulta (o Gantt sempre roda dentro de um projeto). */
+  /** Project of the query (the Gantt always runs inside a project). */
   private get project(): GanttLineProject {
     const project = this.query.project;
     if (project === null) {
@@ -302,12 +450,12 @@ export class GanttLine implements LoadStackHost {
     return project as unknown as GanttLineProject;
   }
 
-  /** Índice do cenário da consulta (0 quando ausente, como `TableReport`). */
+  /** Scenario index of the query (0 when absent, as in `TableReport`). */
   private get scenarioIdx(): number {
     return this.query.scenarioIdx ?? 0;
   }
 
-  /** Forma abstrata de uma linha de tarefa (Ruby `generateTask`). */
+  /** Abstract form of a task line (Ruby `generateTask`). */
   private generateTask(): void {
     this.category = `taskcell${(this.lineIndex + 1) % 2 + 1}`;
 
@@ -321,7 +469,7 @@ export class GanttLine implements LoadStackHost {
       project.get("end",)) as TjTime;
 
     if (scopeProperty) {
-      // Tarefa aninhada em recurso: pilha de carga relativa ao escopo.
+      // Task nested in a resource: load stack relative to the scope.
       let x: number | null = null;
       let startDate: TjTime | null = null;
       let endDate: TjTime | null = null;
@@ -338,19 +486,19 @@ export class GanttLine implements LoadStackHost {
         startDate = endDate!;
         endDate = date;
 
-        // Só interessam pilhas que sobrepõem o intervalo da tarefa de escopo.
+        // Only stacks overlapping the scope task interval matter.
         if (!taskStart.lessThan(endDate,) || !startDate.lessThan(taskEnd,)) {
           continue;
         }
         if (startDate.lessThan(taskStart,) && taskStart.lessThan(endDate,)) {
-          // Alinha a borda esquerda da primeira pilha ao início do escopo.
+          // Aligns the left edge of the first stack with the scope start.
           startDate = taskStart;
           x = this.chart.dateToX(startDate,);
           w = xNew - x + 1;
         } else if (
           startDate.lessThan(taskEnd,) && taskEnd.lessThan(endDate,)
         ) {
-          // Alinha a borda direita da última pilha ao fim do escopo.
+          // Aligns the right edge of the last stack with the scope end.
           endDate = taskEnd;
           w = this.chart.dateToX(endDate,) - x;
         }
@@ -365,7 +513,7 @@ export class GanttLine implements LoadStackHost {
           endIdx,
           scopeProperty,
         );
-        // Sem trabalho em nenhum dos lados: mostra uma moldura vazia.
+        // No work on either side: draw an empty frame.
         const values = overallWork === 0 && workThisTask === 0
           ? [0, 1,]
           : [workThisTask, overallWork - workThisTask,];
@@ -384,10 +532,10 @@ export class GanttLine implements LoadStackHost {
       return;
     }
 
-    // Tarefa primária: barra clássica, marco ou container.
+    // Primary task: classic bar, milestone or container.
     const xStart = this.chart.dateToX(taskStart,);
     const xEnd = this.chart.dateToX(taskEnd,);
-    // O chart indexa as linhas pelo nó real (`@tasks.include?(task)`).
+    // The chart indexes the lines by the real node (`@tasks.include?(task)`).
     this.chart.addTask(this.propertyNode, this,);
 
     if (property.getForScenario("milestone", scIdx,)) {
@@ -402,7 +550,7 @@ export class GanttLine implements LoadStackHost {
       );
     }
 
-    // Garante que a legenda inclua os símbolos do Gantt.
+    // Makes sure the legend includes the Gantt symbols.
     if (this.chart.table) {
       this.chart.table.legend.showGanttItems = true;
       this.chart.table.legend.addGanttItem("Off-duty period", "offduty",);
@@ -410,24 +558,26 @@ export class GanttLine implements LoadStackHost {
   }
 
   /**
-   * `true` quando o `rollupTask` do relatório casa com esta property (nesSe
-   * caso um container vira barra). Porta de `!rollupExpr.eval(@query)` com o
-   * `nil?` do Ruby.
+   * `true` when the report's `rollupTask` matches this property (in that case a
+   * container becomes a bar). Port of `!rollupExpr.eval(@query)` with Ruby's
+   * `nil?`.
+   *
+   * @returns Whether the task is rolled up by the report.
    */
   private isRollupTask(): boolean {
     const contexts = this.project.reportContexts;
     const last = contexts[contexts.length - 1];
-    // RUBY-COMPAT-FIX: o Ruby estouraria com `nil.report`; sem contexto de
-    // relatório o `rollupTask` é inexistente, logo não é rollup.
+    // RUBY-COMPAT-FIX: Ruby would blow up on `nil.report`; without a report
+    // context there is no `rollupTask`, hence no rollup.
     if (!last) return false;
     const rollupExpr = last.report.get("rollupTask",);
-    // RUBY-COMPAT-FIX: o Ruby estouraria com `nil.report`; sem `rollupTask`
-    // a tarefa não faz rollup.
+    // RUBY-COMPAT-FIX: Ruby would blow up on `nil.report`; without `rollupTask`
+    // the task is not rolled up.
     if (rollupExpr === null || rollupExpr === undefined) return false;
     return (rollupExpr as RollupExpression).eval(this.query,);
   }
 
-  /** Forma abstrata de uma linha de recurso (Ruby `generateResource`). */
+  /** Abstract form of a resource line (Ruby `generateResource`). */
   private generateResource(): void {
     this.category = `resourcecell${(this.lineIndex + 1) % 2 + 1}`;
 
@@ -440,7 +590,7 @@ export class GanttLine implements LoadStackHost {
     let taskStart: TjTime | null = null;
     let taskEnd: TjTime | null = null;
 
-    // Recurso aninhado em tarefa: alocado a esta tarefa, a outras e livre.
+    // Resource nested in a task: assigned to this task, to others, or free.
     if (scopeProperty) {
       categories = ["assigned", "busy", "free",];
       taskStart = (scopeProperty.getForScenario("start", scIdx,) ??
@@ -472,8 +622,8 @@ export class GanttLine implements LoadStackHost {
       }
     }
 
-    // O último elemento de `cellStartDates` é o fim da última célula: o
-    // deslocamento garante que cada pilha use [início, fim] da célula.
+    // The last element of `cellStartDates` is the end of the last cell: the
+    // shift guarantees each stack uses the [start, end] of its cell.
     let startDate: TjTime | null = null;
     let endDate: TjTime | null = null;
     for (const date of this.chart.header.cellStartDates) {
@@ -486,7 +636,7 @@ export class GanttLine implements LoadStackHost {
 
       let values: number[];
       if (scopeProperty && taskStart && taskEnd) {
-        // Só pilhas que sobrepõem o intervalo da tarefa de escopo.
+        // Only stacks overlapping the scope task interval matter.
         if (!taskStart.lessThan(endDate,) || !startDate.lessThan(taskEnd,)) {
           continue;
         }
@@ -525,8 +675,8 @@ export class GanttLine implements LoadStackHost {
   }
 
   /**
-   * Marca as zonas de folga da property (Ruby `generateTimeOffZones`). Só
-   * períodos maiores ou iguais a `minTimeOff` da escala são mostrados.
+   * Marks the off-time zones of the property (Ruby `generateTimeOffZones`).
+   * Only periods at least `minTimeOff` long for the scale are shown.
    */
   private generateTimeOffZones(): void {
     const iv: TimeOffInterval = {
@@ -534,12 +684,12 @@ export class GanttLine implements LoadStackHost {
       end: this.chart.end,
     };
     const minTimeOff = this.chart.scale.minTimeOff;
-    // Escalas grosseiras (trimestre/ano) desativam as zonas.
+    // Coarse scales (quarter/year) disable the zones.
     if (minTimeOff <= 0) return;
 
     const zones = this.property.scenarioData(this.scenarioIdx,)
       .collectTimeOffIntervals(iv, minTimeOff,);
-    // Converte datas em `[startX, width]`.
+    // Converts dates into `[startX, width]`.
     const result: Array<[number, number,]> = [];
     for (const zone of zones) {
       const s = this.chart.dateToX(zone.start,);
@@ -549,8 +699,13 @@ export class GanttLine implements LoadStackHost {
   }
 
   /**
-   * Acrescenta o tooltip do conteúdo (Ruby `addHtmlTooltip`): `onclick` com
-   * `TagToTip` mais a `div.tj_tooltip_box`.
+   * Appends the tooltip of the content (Ruby `addHtmlTooltip`): an `onclick`
+   * with `TagToTip` plus the `div.tj_tooltip_box`.
+   *
+   * @param tooltip Tooltip definition of the column, or `null`.
+   * @param query Query used to resolve the tooltip pattern.
+   * @param trigger Element that receives the `onclick` handler.
+   * @param hook Element the tooltip box is appended to (defaults to `trigger`).
    */
   private addHtmlTooltip(
     tooltip: CellSettingPatternList | null,
@@ -603,12 +758,15 @@ let idCounter = 0;
 const idMap = new WeakMap<object, number>();
 
 /**
- * Adapta uma property (`Task`/`Resource`) à visão estrutural da linha.
+ * Adapts a property (`Task`/`Resource`) to the structural view of the line.
  *
- * RUBY-COMPAT-DOC: em Ruby isto é o `PropertyTreeNode#method_missing`, que
- * delega qualquer método desconhecido ao `*Scenario` do cenário. Aqui a
- * delegação é explícita: `effWorkInPeriod` (Task) e `getEffectiveWork`
- * (Resource) têm a mesma semântica vista pela linha.
+ * RUBY-COMPAT-DOC: in Ruby this is `PropertyTreeNode#method_missing`, which
+ * forwards any unknown method to the `*Scenario` of the scenario. Here the
+ * delegation is explicit: `effWorkInPeriod` (Task) and `getEffectiveWork`
+ * (Resource) have the same semantics as seen by the line.
+ *
+ * @param node Property to adapt, or `null`.
+ * @returns The `GanttLineProperty` view, or `null` when `node` is `null`.
  */
 export function asGanttProperty(
   node: PropertyTreeNode | null,
@@ -620,15 +778,15 @@ export function asGanttProperty(
     scenarioData: (scenarioIdx,) =>
       adaptScenario(node.scenarioData(scenarioIdx,),),
   };
-  // O modelo espera o nó real (`Task`/`Resource`) nos argumentos de escopo.
+  // The model expects the real node (`Task`/`Resource`) in the scope arguments.
   nodes.set(source, node,);
   return source;
 }
 
-/** Wrapper → nó real do modelo (para repassar escopos às APIs do modelo). */
+/** Wrapper → real model node (to forward scopes to the model APIs). */
 const nodes = new WeakMap<GanttLineProperty, PropertyTreeNode>();
 
-/** Interface do `*Scenario` que a linha realmente utiliza. */
+/** Interface of the `*Scenario` the line actually uses. */
 interface ScenarioLike {
   effWorkInPeriod?(
     startIdx: number,
@@ -647,12 +805,12 @@ interface ScenarioLike {
   ): readonly TimeOffInterval[];
 }
 
-/** Adapta o `*Scenario` do modelo à visão usada pela linha. */
+/** Adapts the model's `*Scenario` to the view used by the line. */
 function adaptScenario(sd: unknown,): GanttLineScenario {
   const s = sd as ScenarioLike;
   return {
     // TaskScenario: `effWorkInPeriod`; ResourceScenario: `getEffectiveWork`.
-    // Os escopos voltam ao nó real (o modelo chama `ptn()` neles).
+    // The scopes go back to the real node (the model calls `ptn()` on them).
     getEffectiveWork: (startIdx, endIdx, scope,) => {
       const scopeNode = scope ? nodes.get(scope,) ?? null : null;
       return s.effWorkInPeriod
@@ -675,8 +833,11 @@ function adaptScenario(sd: unknown,): GanttLineScenario {
 }
 
 /**
- * Id único e estável por objeto (equivalente ao `object_id` do Ruby), usado
- * apenas para casar `onclick` com o `id` da `div` do tooltip.
+ * Unique and stable id per object (equivalent to Ruby's `object_id`), used only
+ * to match the `onclick` with the `id` of the tooltip `div`.
+ *
+ * @param obj Object to identify.
+ * @returns The stable numeric id of the object.
  */
 function objectId(obj: object,): number {
   let id = idMap.get(obj,);

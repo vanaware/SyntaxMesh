@@ -1,5 +1,5 @@
 /**
- * Atributo de lista de alocações.
+ * Allocation list attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:AllocationAttribute
  */
@@ -10,7 +10,7 @@ import { type AttributeDefinition, } from "../attribute-definition.ts";
 import { ListAttributeBase, } from "../list-attribute-base.ts";
 
 /**
- * Modos de seleção de alocação.
+ * Allocation selection modes.
  */
 export const ALLOCATION_MODES = [
   "order",
@@ -21,7 +21,7 @@ export const ALLOCATION_MODES = [
 ] as const;
 
 /**
- * Atributo de lista de alocações.
+ * Allocation list attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:AllocationAttribute
  */
@@ -32,17 +32,17 @@ export class AllocationAttribute extends ListAttributeBase<{
   persistent: boolean;
 }> {
   /**
-   * ID do tipo de atributo para AllocationAttribute.
+   * Attribute type ID for AllocationAttribute.
    */
   static readonly tjpId = "allocation";
 
   /**
-   * Converte o valor para string.
+   * Converts the value to a string.
    *
-   * Port fiel de `AllocationAttribute#to_s` (Attributes.rb:78-103): cada
-   * alocação vira `[ c1, c2 ] select by <modo> [mandatory ] [persistent ]`,
-   * e várias alocações são unidas por quebra de linha. `ALLOCATION_MODES`
-   * espelha o array de modos do Ruby (ordem = índice de `selectionMode`).
+   * Faithful port of `AllocationAttribute#to_s` (Attributes.rb:78-103): each
+   * allocation becomes `[ c1, c2 ] select by <mode> [mandatory ] [persistent ]`,
+   * and multiple allocations are joined by a newline. `ALLOCATION_MODES`
+   * mirrors the Ruby modes array (order = index of `selectionMode`).
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:AllocationAttribute#to_s
    */
@@ -70,7 +70,7 @@ export class AllocationAttribute extends ListAttributeBase<{
   }
 
   /**
-   * Converte o valor para TJP (formato TaskJuggler).
+   * Converts the value to TJP (TaskJuggler format).
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:AllocationAttribute#to_tjp
    */

@@ -1,24 +1,24 @@
 /**
- * Saída Markdown dos relatórios (Fase 14 — adendo §10 / bloco 14C.8).
+ * Markdown output of the reports (phase 14 — addendum §10 / block 14C.8).
  *
- * O pedido do adendo é markdown **puro** (texto, tabelas, links, imagens)
- * antes de qualquer elemento HTML embutido. Por isso as tabelas saem como
- * tabelas de pipes GFM e as células nunca carregam marcação do relatório: o
- * valor vem do formato intermediário (`ReportTable#to_csv`) e é escapado.
+ * The addendum asks for **pure** markdown (text, tables, links, images) before
+ * any embedded HTML element. That is why the tables come out as GFM pipe
+ * tables and the cells never carry report markup: the value comes from the
+ * intermediate format (`ReportTable#to_csv`) and is escaped.
  *
- * Extensão SyntaxMesh sem oracle Ruby: o TaskJuggler só conhece HTML, CSV,
- * TJP, iCal, niku e mspxml.
+ * SyntaxMesh extension without a Ruby oracle: TaskJuggler only knows HTML,
+ * CSV, TJP, iCal, niku and mspxml.
  *
  * @see docs/syntaxmesh/fases/fase-14-relatorios-complemento.md §10
  */
 
-/** Uma célula de tabela como texto markdown (escapado para a linha de pipes). */
+/** A table cell as markdown text (escaped for the pipe line). */
 export function markdownCell(value: unknown,): string {
   if (value === null || value === undefined) return "";
   let text = String(value,);
   if (text === "") return "";
   const multiLine = /[\r\n]/u.test(text,);
-  // `|` fecha a coluna e `\` escaparia o pipe escapado — ambos precisam sair.
+  // `|` closes the column and `\` would escape the escaped pipe — both go out.
   text = text.replace(/\\/gu, "\\\\",).replace(/\|/gu, "\\|",);
   if (multiLine) {
     text = text.replace(/\r\n?/gu, "\n",).replace(/\n/gu, "<br>",);
@@ -27,8 +27,8 @@ export function markdownCell(value: unknown,): string {
 }
 
 /**
- * Texto de uma célula/bloco do formato intermediário como markdown. Blocos
- * RichText são serializados pela árvore (12.x/13.x); strings passam intactas.
+ * Text of a cell/block of the intermediate format as markdown. RichText blocks
+ * are serialized by the tree (12.x/13.x); strings pass through untouched.
  */
 export function markdownText(value: unknown,): string {
   if (value === null || value === undefined) return "";
@@ -41,8 +41,8 @@ export function markdownText(value: unknown,): string {
 }
 
 /**
- * Alinhamento de uma coluna: valores numéricos à direita (`---:`), texto à
- * esquerda (`---`). Coluna sem valor nenhum fica neutra.
+ * Alignment of a column: numeric values to the right (`---:`), text to the left
+ * (`---`). A column with no value at all stays neutral.
  */
 function markdownAlignment(rows: unknown[][], index: number,): string {
   let numeric = false;
@@ -55,7 +55,7 @@ function markdownAlignment(rows: unknown[][], index: number,): string {
   return numeric ? "---:" : "---";
 }
 
-/** Largura da tabela: máximo entre cabeçalho e linhas. */
+/** Table width: the maximum between the header and the rows. */
 function tableWidth(headers: string[], rows: unknown[][],): number {
   let width = headers.length;
   for (const row of rows) {
@@ -79,9 +79,9 @@ function pipeLine(cells: string[],): string {
 }
 
 /**
- * Tabela GFM. `headers` vem das colunas do `ReportTable`; `rows` é a grade do
- * `to_csv` (uma linha por `ReportTableLine`). Linhas mais curtas que o
- * cabeçalho são completadas com células vazias.
+ * GFM table. `headers` comes from the `ReportTable` columns; `rows` is the
+ * `to_csv` grid (one row per `ReportTableLine`). Rows shorter than the header
+ * are padded with empty cells.
  */
 export function markdownTable(headers: string[], rows: unknown[][],): string {
   if (headers.length === 0 && rows.length === 0) return "";
@@ -101,7 +101,7 @@ export function markdownTable(headers: string[], rows: unknown[][],): string {
   return lines.join("\n",);
 }
 
-/** Seções de um documento markdown: separadas por uma linha em branco. */
+/** Sections of a markdown document: separated by a blank line. */
 export function markdownSections(
   sections: (string | null | undefined)[],
 ): string {
@@ -116,7 +116,7 @@ export function markdownSections(
   return parts.join("\n\n",) + "\n";
 }
 
-/** Cabeçalho de documento (`# título`). */
+/** Document heading (`# title`). */
 export function markdownHeading(level: number, text: string,): string {
   const title = text.replace(/\s+/gu, " ",).trim();
   if (title === "") return "";
@@ -124,7 +124,7 @@ export function markdownHeading(level: number, text: string,): string {
   return `${"#".repeat(clamped,)} ${title}\n`;
 }
 
-/** Imagem markdown; `caption` vira o `title` do link. */
+/** Markdown image; `caption` becomes the `title` of the link. */
 export function markdownImage(
   path: string,
   alt: string | null = null,

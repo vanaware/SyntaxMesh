@@ -1,5 +1,5 @@
 /**
- * Atributo de texto rico.
+ * Rich text attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:RichTextAttribute
  */
@@ -11,20 +11,20 @@ import { AttributeBase, } from "../attribute-base.ts";
 import { type RichTextIntermediate, } from "./rich-text-port.ts";
 
 /**
- * Atributo de texto rico.
+ * Rich text attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:RichTextAttribute
  */
 export class RichTextAttribute extends AttributeBase<unknown> {
   /**
-   * ID do tipo de atributo para RichTextAttribute.
+   * Attribute type ID for RichTextAttribute.
    */
-  // `string` (não o literal) para permitir que MarkdownAttribute sobrescreva
-  // com `override` (C5.3, ADR 039) sem violar a tipagem estática da classe.
+  // `string` (not the literal) so that MarkdownAttribute can override it with
+  // `override` (C5.3, ADR 039) without violating the class's static typing.
   static readonly tjpId: string = "richtext";
 
   /**
-   * Converte o valor para string.
+   * Converts the value to a string.
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:RichTextAttribute#to_s
    */
@@ -34,7 +34,7 @@ export class RichTextAttribute extends AttributeBase<unknown> {
   }
 
   /**
-   * Converte o valor para TJP (formato TaskJuggler).
+   * Converts the value to TJP (TaskJuggler format).
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:RichTextAttribute#to_tjp
    */

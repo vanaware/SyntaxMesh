@@ -1,29 +1,29 @@
 /**
- * Extensão de cor `<fcol:red>…</fcol>` (Fase 13.4).
+ * Color extension `<fcol:red>…</fcol>` (phase 13.4).
  *
- * Markdown não tem cor. A sintaxe é a mesma do RichText/Fase 12 (e do
- * TaskJuggler), com as mesmas 16 cores nomeadas + hex `#RGB`/`#RRGGBB`; cor
- * inválida não vira extensão — o texto fica cru, igual ao `RichTextScanner`
- * que registra o erro `bad_color_name` e segue o parse.
+ * Markdown has no color. The syntax is the same as RichText/phase 12 (and
+ * TaskJuggler), with the same 16 named colors plus hex `#RGB`/`#RRGGBB`; an
+ * invalid color does not become an extension — the text stays raw, just like
+ * `RichTextScanner`, which logs the `bad_color_name` error and keeps parsing.
  *
- * @see ADR 026 (Markdown como formato going-forward)
+ * @see ADR 026 (Markdown as the going-forward format)
  * @see packages/core/src/richtext/rich-text-scanner.ts (`fontColorStart`)
  */
 
 import type { Extraction, MdastNode, } from "../types.ts";
 import { placeholderFor, walkAndExpand, } from "./placeholders.ts";
 
-/** Extração de um `<fcol:cor>conteúdo</fcol>` (13.4.2). */
+/** Extraction of an `<fcol:color>content</fcol>` (13.4.2). */
 export interface ColorExtraction {
-  /** Placeholder deixado no texto (`§COLOR_0§`). */
+  /** Placeholder left in the text (`§COLOR_0§`). */
   placeholder: string;
-  /** Cor nomeada ou hex. */
+  /** Named or hex color. */
   color: string;
-  /** Conteúdo interno (pode conter outras extensões). */
+  /** Inner content (may contain other extensions). */
   content: string;
 }
 
-/** Cores nomeadas aceitas (RichText/Scanner.rb l.155-156). */
+/** Accepted named colors (RichText/Scanner.rb l.155-156). */
 export const NAMED_COLORS = [
   "black",
   "maroon",
@@ -45,19 +45,19 @@ export const NAMED_COLORS = [
 
 const HEX_RE = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/;
 
-/** Verdadeiro se `color` é nomeada (13.4.4) ou hex `#RGB`/`#RRGGBB`. */
+/** True when `color` is named (13.4.4) or hex `#RGB`/`#RRGGBB`. */
 export function isValidColor(color: string,): boolean {
   return NAMED_COLORS.includes(color.toLowerCase(),) || HEX_RE.test(color,);
 }
 
-/** `<fcol:cor>conteúdo</fcol>` (multiline, não-guloso). */
+/** `<fcol:color>content</fcol>` (multiline, non-greedy). */
 const COLOR_RE = /<fcol:([a-zA-Z]+|#[0-9A-Fa-f]{3,6})>([\s\S]*?)<\/fcol>/g;
 
 /**
- * Troca cada `<fcol:…>…</fcol>` válido por `§COLOR_n§` e registra o conteúdo.
+ * Replaces each valid `<fcol:…>…</fcol>` with `§COLOR_n§` and records the content.
  *
- * @param startIndex deslocador do contador, para o pipeline manter
- *                   placeholders únicos entre passadas (13.8).
+ * @param startIndex offset of the counter, so the pipeline keeps placeholders
+ *                   unique across passes (13.8).
  */
 export function preprocessColor(
   text: string,
@@ -68,7 +68,7 @@ export function preprocessColor(
   const out = text.replace(
     COLOR_RE,
     (match, color: string, content: string,) => {
-      if (!isValidColor(color,)) return match; // cor inválida → texto simples
+      if (!isValidColor(color,)) return match; // invalid color → plain text
       const placeholder = placeholderFor("COLOR", index++,);
       extractions.push({ placeholder, color, content, },);
       return placeholder;
@@ -77,7 +77,7 @@ export function preprocessColor(
   return { text: out, extractions, };
 }
 
-/** Converte a extração da extensão no `Extraction` genérico do pipeline. */
+/** Converts the extension extraction into the pipeline's generic `Extraction`. */
 export function colorToExtraction(e: ColorExtraction,): Extraction {
   return {
     placeholder: e.placeholder,
@@ -88,7 +88,7 @@ export function colorToExtraction(e: ColorExtraction,): Extraction {
   };
 }
 
-/** Substitui os placeholders de cor por nós `richtextExtension` (13.4.5). */
+/** Replaces the color placeholders with `richtextExtension` nodes (13.4.5). */
 export function postprocessColor(
   node: MdastNode,
   extractions: ColorExtraction[],

@@ -1,14 +1,16 @@
 /**
- * MarkdownFactory — implementa `RichTextFactory` via pipeline Markdown (13.3).
+ * MarkdownFactory — implements `RichTextFactory` through the Markdown pipeline
+ * (13.3).
  *
- * Recebe texto Markdown, pré/pós-processa extensões, parseia `mdast`, converte
- * para `RichTextElement[]` e monta o `RichTextIntermediate`. É a interface de
- * entrada do subsistema Markdown no ecossistema RichText/Fase 12.
+ * It takes Markdown text, pre/post-processes the extensions, parses the `mdast`,
+ * converts it to `RichTextElement[]` and assembles the `RichTextIntermediate`.
+ * It is the entry interface of the Markdown subsystem into the RichText
+ * ecosystem (phase 12).
  *
- * Registra os handlers `RTFHandlers.create(project, sfi)` no RTI de saída, de
- * modo que `inlinefunc`/`blockfunc` possam ser resolvidos em `to_s()`/`to_html()`.
+ * It registers the `RTFHandlers.create(project, sfi)` handlers on the outgoing
+ * RTI, so that `inlinefunc`/`blockfunc` can be resolved in `to_s()`/`to_html()`.
  *
- * @see ADR 026 (Markdown como formato going-forward)
+ * @see ADR 026 (Markdown as the going-forward format)
  * @see docs/syntaxmesh/fases/fase-13-markdown.md (13.3)
  */
 
@@ -23,10 +25,17 @@ import { parseMdast, } from "./parse-mdast.ts";
 import { MdastToRichText, } from "./mdast-to-richtext.ts";
 import type { MdastRoot, } from "./types.ts";
 
+/** Rich text factory that reads Markdown source. */
 export class MarkdownFactory implements RichTextFactory {
   private readonly project: Project | null;
   private readonly sourceFileInfo: SourceFileInfo | null;
 
+  /**
+   * Creates the factory.
+   *
+   * @param project Project used to resolve query/report handlers, or `null`.
+   * @param sourceFileInfo Source location attached to reported errors.
+   */
   constructor(
     project: Project | null,
     sourceFileInfo: SourceFileInfo | null = null,
@@ -36,28 +45,42 @@ export class MarkdownFactory implements RichTextFactory {
   }
 
   /**
-   * Pipeline completo: pré-processar → parseMdast → pós-processar → converter.
-   * Devolve um `RichTextIntermediate` com a árvore e handlers registrados.
+   * Full pipeline: preprocess → parseMdast → postprocess → convert.
+   *
+   * @param text Markdown source text.
+   * @param _tokenSet Unused; kept for `RichTextFactory` compatibility.
+   * @returns The intermediate representation with its tree and handlers.
    */
   create(text: string, _tokenSet?: string[] | null,): RichTextIntermediate {
     const pipeline = new ExtractionPipeline();
     const preprocessed = pipeline.preprocess(text,);
     const mdast = parseMdast(preprocessed,);
     const postprocessed = pipeline.postprocessMdast(mdast,);
-    // C5.7 (ADR 039): o back-pointer `richText` do RTI carrega o texto de
-    // origem — `RichTextAttribute#to_tjp` (fiel a Ruby) lê `inputText` para o
-    // round-trip do export. O shim preserva `this` como factory para os
-    // consumidores que recriam o RTI (report-base 14C.5.7 guarda o instanceof
-    // RichText, então markdown nunca é reconvertido por engano).
+    // C5.7 (ADR 039): the RTI `richText` back-pointer carries the source text —
+    // `RichTextAttribute#to_tjp` (faithful to Ruby) reads `inputText` for the
+    // export round-trip. The shim keeps `this` as the factory for consumers that
+    // recreate the RTI (report-base 14C.5.7 keeps the RichText instance, so
+    // markdown is never reconverted by mistake).
     return this.buildRti(postprocessed, text,);
   }
 
-  /** Variante que aceita `mdast` já parseada (pula preprocess+parse). */
+  /**
+   * Variant that takes an already parsed `mdast` (skips preprocess + parse).
+   *
+   * @param mdast Post-processed Markdown AST.
+   * @returns The intermediate representation of the AST.
+   */
   createFromMdast(mdast: MdastRoot,): RichTextIntermediate {
     return this.buildRti(mdast, "",);
   }
 
-  /** Monta o RTI a partir da AST pós-processada. */
+  /**
+   * Assembles the RTI from the post-processed AST.
+   *
+   * @param mdast Post-processed Markdown AST.
+   * @param sourceText Original Markdown text stored as `inputText`.
+   * @returns The intermediate representation with the standard handlers.
+   */
   private buildRti(
     mdast: MdastRoot,
     sourceText: string,
@@ -66,16 +89,16 @@ export class MarkdownFactory implements RichTextFactory {
       factory: this,
       inputText: sourceText,
     },);
-    // Registra handlers padrão (query, report, reportlink, navigator).
+    // Registers the standard handlers (query, report, reportlink, navigator).
     for (
       const handler of RTFHandlers.create(this.project, this.sourceFileInfo,)
     ) {
       rti.registerFunctionHandler(handler,);
     }
-    // Converte AST → elementos.
+    // Converts the AST into elements.
     const converter = new MdastToRichText(rti,);
     const elements = converter.convert(mdast,);
-    // Envelopa em raiz `richtext`.
+    // Wraps everything in the `richtext` root.
     rti.tree = new RichTextElement(rti, "richtext", elements,);
     return rti;
   }

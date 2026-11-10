@@ -1,5 +1,5 @@
 /**
- * Atributo escalar booleano.
+ * Boolean scalar attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:BooleanAttribute
  */
@@ -10,18 +10,18 @@ import { type AttributeDefinition, } from "../attribute-definition.ts";
 import { AttributeBase, } from "../attribute-base.ts";
 
 /**
- * Atributo escalar booleano.
+ * Boolean scalar attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:BooleanAttribute
  */
 export class BooleanAttribute extends AttributeBase<boolean> {
   /**
-   * ID do tipo de atributo para BooleanAttribute.
+   * Attribute type ID for BooleanAttribute.
    */
   static readonly tjpId = "boolean";
 
   /**
-   * Converte o valor para string.
+   * Converts the value to a string.
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:BooleanAttribute#to_s
    */
@@ -31,7 +31,7 @@ export class BooleanAttribute extends AttributeBase<boolean> {
   }
 
   /**
-   * Converte o valor para TJP (formato TaskJuggler).
+   * Converts the value to TJP (TaskJuggler format).
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:BooleanAttribute#to_tjp
    */

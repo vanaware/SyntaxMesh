@@ -1,12 +1,12 @@
 /**
- * TjpSyntaxRules — regras comuns (subfase 10.11.1).
+ * TjpSyntaxRules — common rules (sub-phase 10.11.1).
  *
- * Port do miolo alfabético de `TjpSyntaxRules.rb` que não pertence a um
- * bloco específico: datas, intervalos, números/durações, dias da semana,
- * horários, cenários, macros, supplement e utilitários de lista.
+ * Port of the alphabetical core of `TjpSyntaxRules.rb` that does not belong to a
+ * specific block: dates, intervals, numbers/durations, weekdays, times of day,
+ * scenarios, macros, supplement and list utilities.
  *
- * As actions são funções não-arrow: `this` é o ProjectFileParser e os
- * valores dos tokens estão em `this.val` (equivalente ao @val do Ruby).
+ * The actions are non-arrow functions: `this` is the `ProjectFileParser` and the
+ * token values live in `this.val` (the equivalent of Ruby's `@val`).
  *
  * @see docs/taskjuggler/lib/taskjuggler/TjpSyntaxRules.rb
  */
@@ -21,12 +21,12 @@ import { rule, } from "./helpers.ts";
 const asTime = (v: unknown,): TjTime => v as TjTime;
 const asIv = (v: unknown,): TimeInterval => v as TimeInterval;
 
-/** Fatores de conversão de calendário (segundos por unidade). */
+/** Calendar conversion factors (seconds per unit). */
 const CONV_CAL = [60, 3600, 86400, 604800, 2629440.48, 31536000,];
 
 /**
- * Fatores de conversão de trabalho (dias/semanas/etc. usam horas de
- * trabalho diárias do projeto). Índices 2+ dependem do projeto.
+ * Working-time conversion factors (days/weeks/etc. use the project's daily
+ * working hours). Indices 2+ depend on the project.
  */
 function convWork(parser: ProjectFileParser,): number[] {
   const daily = (parser.project?.get("dailyworkinghours",) as number) ?? 8;
@@ -47,10 +47,10 @@ function granularity(parser: ProjectFileParser,): number {
   return (parser.project?.get("scheduleGranularity",) as number) ?? 3600;
 }
 
-/** Registra o bloco de regras comuns. */
+/** Registers the common rule block. */
 export function registerCommonRules(p: ProjectFileParser,): void {
   // ------------------------------------------------------------------
-  // Números e durações
+  // Numbers and durations
   // ------------------------------------------------------------------
   rule(p, "number", () => {
     p.singlePattern("$INTEGER",);
@@ -58,12 +58,12 @@ export function registerCommonRules(p: ProjectFileParser,): void {
   },);
 
   /**
-   * Número com sinal (Adendo Extra §12.1, 14C.13.3).
+   * Signed number (Adendo Extra §12.1, 14C.13.3).
    *
-   * O scanner fiel a `ProjectFileScanner.rb:95-98` não produz número
-   * com sinal — o `-` cai no literal de caractere único. Esta regra só
-   * é usada pela gramática de booking de estoque (quantidade negativa =
-   * saída/estorno); o resto da gramática continua igual ao TJ.
+   * The scanner faithful to `ProjectFileScanner.rb:95-98` produces no signed
+   * number — the `-` falls into the single-character literal. Only the stock
+   * booking grammar uses this rule (a negative quantity = issue/reversal); the
+   * rest of the grammar stays as in TJ.
    */
   rule(p, "signedNumber", () => {
     p.pattern(["!number",], function (this: ProjectFileParser,): unknown {
@@ -75,15 +75,15 @@ export function registerCommonRules(p: ProjectFileParser,): void {
   },);
 
   /**
-   * Keyword de tipo do booking de recurso, **opcional** (Adendo Extra §12.3,
-   * 14C.15.1–2; Onda D4).
+   * Type keyword of the resource booking, **optional** (Adendo Extra §12.3,
+   * 14C.15.1–2; wave D4).
    *
-   * `resource` é a forma explícita da nomenclatura alvo
-   * (charge|resource|material); `effort` permanece como alias de leitura
-   * (tj3, Fase 8.1); a ausência da keyword (`booking <ref> <intervalo>`) é a
-   * canônica do TJ (`TjpSyntaxRules.rb:6001`, `:4771`). Não há ambiguidade com
-   * a referência de recurso/tarefa porque `State#transition` prefere o literal
-   * (`_resource`/`_effort`) ao `$ID`/`$STRING` variável.
+   * `resource` is the explicit form of the target naming
+   * (charge|resource|material); `effort` remains as a reading alias (tj3, phase
+   * 8.1); the absence of the keyword (`booking <ref> <interval>`) is the TJ
+   * canonical form (`TjpSyntaxRules.rb:6001`, `:4771`). There is no ambiguity
+   * with the resource/task reference because `State#transition` prefers the
+   * literal (`_resource`/`_effort`) over the variable `$ID`/`$STRING`.
    */
   rule(p, "bookingResourceKeyword", () => {
     p.optional();
@@ -91,7 +91,7 @@ export function registerCommonRules(p: ProjectFileParser,): void {
     p.pattern(["_effort",], () => "effort",);
   },);
 
-  /** Keyword `value` opcional em `booking charge` (Adendo Extra §12.3). */
+  /** Optional `value` keyword in `booking charge` (Adendo Extra §12.3). */
   rule(p, "bookingValueKeyword", () => {
     p.optional();
     p.pattern(["_value",], () => "value",);
@@ -179,8 +179,8 @@ export function registerCommonRules(p: ProjectFileParser,): void {
             this.sourceFileInfo[1] ?? null,
           );
         }
-        // `Percent` preserva a distinção Integer/Float do Ruby — sem ela
-        // `work 100%` (= 1.0) viraria 1 slot em `TimeSheetRecord#work=`.
+        // `Percent` preserves Ruby's Integer/Float distinction — without it
+        // `work 100%` (= 1.0) would become 1 slot in `TimeSheetRecord#work=`.
         return new Percent(Number(this.val[0],) / 100,);
       },
     );
@@ -583,7 +583,7 @@ export function registerCommonRules(p: ProjectFileParser,): void {
   },);
 
   // ------------------------------------------------------------------
-  // Cenários
+  // Scenarios
   // ------------------------------------------------------------------
   const scenarioIdxOf = (
     parser: ProjectFileParser,
@@ -710,7 +710,7 @@ export function registerCommonRules(p: ProjectFileParser,): void {
   },);
 
   // ------------------------------------------------------------------
-  // Macros e supplement
+  // Macros and supplement
   // ------------------------------------------------------------------
   rule(p, "macro", () => {
     p.pattern(
@@ -719,10 +719,11 @@ export function registerCommonRules(p: ProjectFileParser,): void {
         const name = String(this.val[1],);
         const sfi = this.sourceFileInfo[0] ?? this.getSourceFileInfo()!;
         if (this.scannerHasMacro(name,)) {
-          // Caminho congelado do Ruby (Fase 10): macro+macro é warning.
+          // Ruby's frozen path (phase 10): macro+macro is a warning.
           this.warning("marco_redefinition", `Redefining macro ${name}`,);
         } else if (this.scannerHasTemplate(name,)) {
-          // Namespace unificado (Fase 23, §4.5): colisão com template é erro.
+          // Unified namespace (phase 23, §4.5): a collision with a template is
+          // an error.
           this.error(
             "name_redefined",
             `'${name}' já definido como template; não pode ser redefinido ` +
@@ -747,8 +748,8 @@ export function registerCommonRules(p: ProjectFileParser,): void {
     p.example("Macro-1",);
   },);
 
-  // Extensão SyntaxMesh (Fase 23, ADR 033): `template` reusa a coleta de
-  // corpo da macro e acrescenta a lista de parâmetros nomeados.
+  // SyntaxMesh extension (phase 23, ADR 033): `template` reuses the macro body
+  // collection and adds the named parameter list.
   rule(p, "template", () => {
     p.pattern(
       ["_template", "$ID", "$TEMPLATE",],
@@ -833,7 +834,7 @@ export function registerCommonRules(p: ProjectFileParser,): void {
   },);
 
   // ------------------------------------------------------------------
-  // Atributos dinâmicos de relatórios (usado por parseReportAttributes)
+  // Dynamic report attributes (used by parseReportAttributes)
   // ------------------------------------------------------------------
   rule(p, "dynamicAttributes", () => {
     p.pattern(["!reportAttributes", ".",], null,);

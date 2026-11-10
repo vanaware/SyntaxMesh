@@ -1,10 +1,10 @@
 /**
- * Metadados de colunas calculadas de TableReport (Fase 10).
+ * Column metadata for the computed TableReport columns (phase 10).
  *
- * Extraído do mapa `@@propertiesById` de `reports/TableReport.rb`. Para o
- * parser só interessam duas consultas usadas pela validação de critérios de
- * ordenação (`sortNonTree`): a coluna é calculada? e é específica de
- * cenário? A construção real das colunas é da Fase 14.
+ * Extracted from the `@@propertiesById` map of `reports/TableReport.rb`. The
+ * parser only cares about two queries used by the sort-criteria validation
+ * (`sortNonTree`): is the column computed? and is it scenario-specific? The
+ * real construction of the columns belongs to phase 14.
  *
  * @see docs/taskjuggler/lib/taskjuggler/reports/TableReport.rb
  */

@@ -1,9 +1,10 @@
 /**
- * Módulo público do Gantt (Fase 15).
+ * Public Gantt module (phase 15).
  *
- * Porta fiel dos reports Ruby `Gantt*.rb`/`CollisionDetector.rb`/`HTMLGraphics.rb`.
- * O chart é HTML+CSS puro (ADR 028) e se pluga em `TableReport` pelo contrato
- * `SpecialCell` (coluna `chart`).
+ * Faithful port of the Ruby reports
+ * `Gantt*.rb`/`CollisionDetector.rb`/`HTMLGraphics.rb`. The chart is pure
+ * HTML+CSS (ADR 028) and plugs into `TableReport` through the `SpecialCell`
+ * contract (the `chart` column).
  *
  * @see docs/syntaxmesh/decisoes/028-gantt-html-css.md
  * @see docs/syntaxmesh/fases/fase-15-gantt.md

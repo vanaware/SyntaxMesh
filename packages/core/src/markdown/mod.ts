@@ -1,7 +1,7 @@
 /**
- * Barrel export do subsistema Markdown (Fase 13).
+ * Barrel export of the Markdown subsystem (phase 13).
  *
- * @see ADR 026 (Markdown como formato going-forward)
+ * @see ADR 026 (Markdown as the going-forward format)
  */
 
 export { parseMdast, parseMdastInline, } from "./parse-mdast.ts";
@@ -20,7 +20,9 @@ export type {
 export type {
   ExtensionCategory,
   Extraction,
+  MdastBlock,
   MdastExtension,
+  MdastInline,
   MdastNode,
   MdastRoot,
 } from "./types.ts";

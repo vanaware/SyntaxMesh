@@ -4,7 +4,7 @@ import { AttributeType, } from "../../attributes/attribute-type.ts";
 import { BooleanAttribute, } from "../../attributes/scalar/boolean-attribute.ts";
 
 /**
- * Registra os atributos específicos de cenário (6 atributos).
+ * Registers the scenario-specific attributes (6 attributes).
  *
  * @see docs/taskjuggler/lib/taskjuggler/Scenario.rb
  */

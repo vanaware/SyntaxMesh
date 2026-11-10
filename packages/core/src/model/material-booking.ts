@@ -12,45 +12,72 @@ import {
 import type { BookingTail, } from "./booking-period.ts";
 
 /**
- * Consumo **realizado** de um material: uma quantidade consumida em uma data
- * (factual, não distribuída) com preço unitário próprio.
+ * **Realized** consumption of a material: a quantity consumed on a date
+ * (factual, not distributed) with its own unit price.
  *
- * Fase 14 Complemento (14C.11.3, adendo §10): o `booking` complementa a
- * `MaterialAllocation` — a alocação descreve o consumo *planejado* (dividido
- * no tempo pelo modificador), o booking registra o consumo *real* de um dia.
+ * Phase 14 complement (14C.11.3, addendum §10): a `booking` complements the
+ * `MaterialAllocation` — the allocation describes the *planned* consumption
+ * (split over time by the modifier) while the booking records the *actual*
+ * consumption of a day.
  *
- * Fase 14 Complemento (14C.13.1, Adendo Extra §12): dois papéis do mesmo
- * verbo. Com tarefa (`taskId` presente) o booking é consumo realizado e a
- * quantidade é **sempre positiva**. Sem tarefa (`taskId === null`) o booking é
- * movimento de **estoque**: entrada (positiva) ou saída/estorno (negativa) —
- * único caso em que quantidade negativa é admitida.
+ * Phase 14 complement (14C.13.1, Extra Addendum §12): two roles of the same
+ * verb. With a task (`taskId` present) the booking is realized consumption and
+ * the quantity is **always positive**. Without a task (`taskId === null`) the
+ * booking is a **stock** movement: an inflow (positive) or an
+ * outflow/reversal (negative) — the only case where a negative quantity is
+ * accepted.
  *
- * Precedência do preço unitário efetivo (`unitPriceFor`), do mais específico
- * ao mais geral: booking → alocação de tarefa → material.
+ * Precedence of the effective unit price (`unitPriceFor`), from the most
+ * specific to the most general: booking → task allocation → material.
  *
  * @see docs/syntaxmesh/fases/fase-14-relatorios-complemento.md §11.4, §13.1
  */
 export class MaterialBooking {
+  /** Material being consumed or moved. */
   readonly material: Material;
+  /** Quantity consumed or moved; negative only for stock outflows. */
   readonly quantity: number;
-  /** Preço unitário real do booking (opcional: cai para alocação/material). */
+  /**
+   * Real unit price of the booking (optional: falls back to the allocation or
+   * the material).
+   */
   readonly unitPrice?: number;
-  /** Âncora do booking: início do primeiro intervalo (data em `on <data>`). */
+  /**
+   * Anchor of the booking: start of the first interval (the date in
+   * `on <date>`).
+   */
   readonly date: TjTime;
-  /** Período + modifier (Onda D3): tail legado quando só a data existe. */
+  /** Period + modifier (wave D3): a legacy tail when only the date exists. */
   readonly tail: BookingTail;
   /**
-   * ID da tarefa dona do consumo; `null` nos bookings de estoque (sem tarefa,
-   * 14C.13.1). O objeto pode ainda não existir no parse (referência futura).
+   * Id of the task that owns the consumption; `null` in stock bookings (no task,
+   * 14C.13.1). The object may not exist yet during the parse (forward
+   * reference).
    */
   readonly taskId: string | null;
   /**
-   * Tarefa resolvida. `null` enquanto a declaração da tarefa não foi lida —
-   * o `booking` no corpo do material pode preceder o `task` que ele referencia
-   * (referência futura). `Project#flushPendingBookings()` resolve depois.
+   * Resolved task.
+   *
+   * `null` while the task declaration has not been read — a `booking` in the
+   * material body may precede the `task` it references (forward reference).
+   * `Project#flushPendingBookings()` resolves it afterwards.
    */
   task: Task | null;
 
+  /**
+   * Creates a material booking.
+   *
+   * @param material Material being consumed or moved.
+   * @param taskId Id of the task that owns the consumption, or `null` for a
+   *   stock movement.
+   * @param quantity Quantity consumed or moved.
+   * @param date Date of the legacy `on` clause.
+   * @param unitPrice Explicit price for this booking only.
+   * @param task Already resolved task, when available.
+   * @param tail Explicit period + modifier; defaults to a legacy tail built from
+   *   `date`.
+   * @throws {Error} When a negative `quantity` is given for a task booking.
+   */
   constructor(
     material: Material,
     taskId: string | null,
@@ -60,7 +87,7 @@ export class MaterialBooking {
     task: Task | null = null,
     tail?: BookingTail,
   ) {
-    // Quantidade negativa só faz sentido como saída de estoque (sem tarefa).
+    // A negative quantity only makes sense as a stock outflow (no task).
     if (quantity < 0 && taskId !== null) {
       throw new Error(
         "Material booking quantity cannot be negative for a task",
@@ -75,32 +102,48 @@ export class MaterialBooking {
     this.task = task;
   }
 
-  /** O booking expressa algo além do ponto legado `on <data>`? (Onda D3) */
+  /**
+   * Whether the booking expresses anything beyond the legacy `on <date>` point
+   * (wave D3).
+   */
   isTemporal(): boolean {
     return isTemporalTail(this.tail,);
   }
 
-  /** Algum intervalo do tail cruza o período fechado `[start, end]`? */
+  /**
+   * Whether any interval of the tail crosses the closed period
+   * `[start, end]`.
+   *
+   * @param start Period start, or `null` for no lower bound.
+   * @param end Period end, or `null` for no upper bound.
+   */
   overlapsPeriod(start: TjTime | null, end: TjTime | null,): boolean {
     return tailOverlaps(this.tail, start, end,);
   }
 
   /**
-   * Parte da quantidade que cai no período fechado `[start, end]` sob o
-   * modifier do tail (Onda D3). Legado/sem período ⇒ quantidade cheia.
+   * Part of the quantity that falls inside the closed period `[start, end]`
+   * under the tail modifier (wave D3). Legacy/without period ⇒ full quantity.
+   *
+   * @param start Period start, or `null` for the full quantity.
+   * @param end Period end, or `null` for the full quantity.
    */
   quantityInPeriod(start: TjTime | null, end: TjTime | null,): number {
     return valueInPeriod(this.quantity, this.tail, start, end,);
   }
 
-  /** Booking de estoque (movimento de entrada/saída sem tarefa, 14C.13.1). */
+  /**
+   * Stock booking (an inflow/outflow movement without a task, 14C.13.1).
+   */
   isInventory(): boolean {
     return this.taskId === null;
   }
 
   /**
-   * Preço unitário efetivo: o do booking → o da alocação informada → o do
-   * material (`unitprice` do bloco).
+   * Effective unit price: the booking one, then the given allocation, then the
+   * material (`unitprice` of the block).
+   *
+   * @param allocation Allocation to fall back to, when the booking has no price.
    */
   unitPriceFor(allocation?: MaterialAllocation | null,): number {
     if (this.unitPrice !== undefined) return this.unitPrice;
@@ -108,14 +151,22 @@ export class MaterialBooking {
     return this.material.unitPriceValue();
   }
 
-  /** Custo do booking: quantidade × preço efetivo. */
+  /**
+   * Cost of the booking: quantity × effective price.
+   *
+   * @param allocation Allocation to fall back to, when the booking has no price.
+   */
   cost(allocation?: MaterialAllocation | null,): number {
     return this.quantity * this.unitPriceFor(allocation,);
   }
 
   /**
-   * Custo do booking restringido ao período fechado `[start, end]` (Onda D3):
-   * quantidade distribuída pelo modifier × preço efetivo.
+   * Cost of the booking restricted to the closed period `[start, end]`
+   * (wave D3): quantity distributed by the modifier × effective price.
+   *
+   * @param start Period start, or `null` for the full quantity.
+   * @param end Period end, or `null` for the full quantity.
+   * @param allocation Allocation to fall back to, when the booking has no price.
    */
   costInPeriod(
     start: TjTime | null,
@@ -126,9 +177,12 @@ export class MaterialBooking {
   }
 
   /**
-   * Resolve a tarefa a partir do projeto (referência futura). Devolve `true`
-   * quando a tarefa passa a existir — ou quando o booking é de estoque (sem
-   * tarefa para resolver, 14C.13.1).
+   * Resolves the task from the project (forward reference).
+   *
+   * Returns `true` once the task exists — or when the booking is a stock one
+   * (nothing to resolve, 14C.13.1).
+   *
+   * @param project Project that holds the task.
    */
   resolveTask(project: ProjectLike,): boolean {
     if (this.taskId === null) return true;
@@ -139,7 +193,7 @@ export class MaterialBooking {
     return true;
   }
 
-  /** Cópia profunda imutável (mesmo contrato das demais alocações). */
+  /** Immutable deep copy (same contract as the other allocations). */
   deepClone(): this {
     return this;
   }

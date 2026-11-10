@@ -14,10 +14,32 @@ import { XMLElement, } from "../xml/xml-element.ts";
 import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 import { CSVFile, } from "../reports/csv-file.ts";
 
+/**
+ * A report definition — the model node created by `taskreport`, `htmlreport`,
+ * `export`, and the other `*report` directives.
+ *
+ * The node stores only the declarative attributes. The actual rendering is
+ * delegated to a {@link ReportContent} implementation picked by `typeSpec` and
+ * instantiated by a factory registered in `report-content.ts`.
+ */
 export class Report extends PropertyTreeNode {
+  /** Report type requested by the directive (the `typeSpec` of Ruby). */
   typeSpec: ReportType | null;
+  /** Content generator created for `typeSpec`, or `null` before generation. */
   content: ReportContent | null;
 
+  /**
+   * Creates a report and registers it in the project.
+   *
+   * The file name is validated first, exactly like Ruby's
+   * `Report#initialize` (l.48-52), which calls `checkFileName` before
+   * `addReport`.
+   *
+   * @param project Project that owns the report.
+   * @param id Explicit id, or `null` to derive one from the parent path.
+   * @param name Output file name (`.` means stdout).
+   * @param parent Parent report, or `null` at the root of the hierarchy.
+   */
   constructor(
     project: ProjectLike,
     id: string | null,
@@ -25,7 +47,7 @@ export class Report extends PropertyTreeNode {
     parent: Report | null,
   ) {
     super(project.reports, id, name, parent,);
-    // Ruby Report#initialize (l.48-52): checkFileName antes de addReport.
+    // Ruby Report#initialize (l.48-52): checkFileName before addReport.
     this.checkFileName(name,);
     project.addReport(this,);
     this.typeSpec = null;
@@ -39,25 +61,34 @@ export class Report extends PropertyTreeNode {
     }
   }
 
+  /**
+   * Typed access to the scenario data of this report.
+   *
+   * @param scIdx Scenario index.
+   * @returns The `ReportScenario` of that scenario.
+   */
   override scenarioData(scIdx: number,): ReportScenario {
     return this.data[scIdx]! as ReportScenario;
   }
 
   /**
-   * Dialeto dos atributos RichText deste relatório (`format`, 14C.5.1).
+   * Dialect of the RichText attributes of this report (`format`, 14C.5.1).
    *
-   * O default é `richtext` para não quebrar `.tjp` existentes; `markdown` é
-   * opt-in explícito (ADR 026). O valor é herdado de relatórios-pai.
+   * The default is `richtext` so existing `.tjp` files keep working; `markdown`
+   * is an explicit opt-in (ADR 026). The value is inherited from parent
+   * reports.
    */
   richTextFormat(): EntryFormat {
     return (this.get("format",) as EntryFormat | null) ?? "richtext";
   }
 
   /**
-   * Fontes brutas dos atributos RichText já lidos pelo parser (14C.5.1). Como o
-   * dialeto pode ser declarado depois do texto, a fonte fica guardada para
-   * reconstruir o `RichTextIntermediate` — em TJP a ordem dos atributos não
-   * deve importar.
+   * Raw sources of the RichText attributes already read by the parser
+   * (14C.5.1).
+   *
+   * Because the dialect may be declared after the text, the source is kept so
+   * the `RichTextIntermediate` can be rebuilt — in TJP the order of attributes
+   * must not matter.
    */
   readonly richTextSources = new Map<
     string,
@@ -65,15 +96,16 @@ export class Report extends PropertyTreeNode {
   >();
 
   /**
-   * Rejeita nomes de arquivo com caracteres inválidos.
+   * Rejects file names containing invalid characters.
    *
+   * @param name File name to validate.
    * @see docs/taskjuggler/lib/taskjuggler/Report.rb:checkFileName
    */
   checkFileName(name: string,): void {
-    // Ruby (Report.rb l.455-466): no Linux a regex é /[\\?%*:|"<>]/.
+    // Ruby (Report.rb l.455-466): on Linux the regex is /[\\?%*:|"<>]/.
     const illegal = /[\\?%*:|"<>]/;
     if (illegal.test(name,)) {
-      // `sourceFileInfo` ainda é nil no construtor → linha null no golden.
+      // `sourceFileInfo` is still nil in the constructor → null line in golden.
       MessageHandlerInstance.instance.error(
         "invalid_file_name",
         "File names may not contain any of the following characters: " +
@@ -87,8 +119,10 @@ export class Report extends PropertyTreeNode {
   }
 
   /**
-   * Retorna o caminho absoluto, prependindo outputDir se relativo.
+   * Returns the absolute path, prepending `outputDir` when the name is
+   * relative.
    *
+   * @param name File name to resolve.
    * @see docs/taskjuggler/lib/taskjuggler/Report.rb:absoluteFileName
    */
   absoluteFileName(name: string,): string {
@@ -101,8 +135,9 @@ export class Report extends PropertyTreeNode {
   }
 
   /**
-   * Retorna true se o nome já é absoluto.
+   * Whether the name is already absolute.
    *
+   * @param name File name to test.
    * @see docs/taskjuggler/lib/taskjuggler/Report.rb:absoluteFileName?
    */
   absoluteFileNameExists(name: string,): boolean {
@@ -110,11 +145,16 @@ export class Report extends PropertyTreeNode {
   }
 
   /**
-   * Ponto de entrada da geração (Fase 14.11). Fixa o fuso do relatório,
-   * gera o formato intermediário e despacha cada formato pedido. No browser
-   * (ADR 027) nenhuma escrita a disco acontece: `generate` produz o conteúdo e
-   * registra o nome de arquivo lógico em `outputFileName`.
+   * Entry point of generation (phase 14.11): pins the report time zone,
+   * produces the intermediate format and dispatches every requested format.
    *
+   * In the browser (ADR 027) nothing is written to disk: `generate` produces the
+   * content and records the logical file name in `outputFileName`.
+   *
+   * @param requestedFormats Formats to render; defaults to the `formats`
+   *   attribute of the report.
+   * @returns `0` on success.
+   * @throws {Error} When a requested format is unknown.
    * @see docs/taskjuggler/lib/taskjuggler/reports/Report.rb:generate
    */
   generate(requestedFormats?: string[],): number {
@@ -124,7 +164,7 @@ export class Report extends PropertyTreeNode {
     this.outputs.clear();
     this.generateIntermediateFormat();
 
-    // Ou os formatos pedidos, ou os da definição do relatório.
+    // Either the requested formats or the ones from the report definition.
     for (
       const format of requestedFormats ??
         (this.get("formats",) as string[] | null) ?? []
@@ -152,11 +192,11 @@ export class Report extends PropertyTreeNode {
         case "csv":
           this.generateCSV();
           break;
-        // Extensão SyntaxMesh (14C.0.1): JSON de primeira classe.
+        // SyntaxMesh extension (14C.0.1): first-class JSON.
         case "json":
           this.generateJSON();
           break;
-        // Extensão SyntaxMesh (adendo §10 / 14C.8): saída Markdown (`.md`).
+        // SyntaxMesh extension (addendum §10 / 14C.8): Markdown output (`.md`).
         case "markdown":
           this.generateMarkdown();
           break;
@@ -176,8 +216,8 @@ export class Report extends PropertyTreeNode {
           throw new Error(`Unknown report output format ${format}.`,);
       }
 
-      // Único ponto de coleta por formato (Fase 24): cada `generate*` deixa o
-      // resultado em `output`; aqui ele vira texto no mapa da seção.
+      // Single collection point per format (phase 24): each `generate*` leaves
+      // the result in `output`; here it becomes text in the section map.
       this.outputs.set(format, this.outputAsText(),);
     }
 
@@ -186,9 +226,10 @@ export class Report extends PropertyTreeNode {
   }
 
   /**
-   * Normaliza o `output` da última geração para texto: CSV (Array-de-Arrays)
-   * passa por `CSVFile` com o separador padrão `';'`; `null` (formato não
-   * suportado) vira string vazia.
+   * Normalizes the `output` of the last generation to text.
+   *
+   * CSV (array of arrays) goes through `CSVFile` with the default `';'`
+   * separator; `null` (unsupported format) becomes an empty string.
    */
   private outputAsText(): string {
     if (this.output === null || this.output === undefined) return "";
@@ -200,9 +241,12 @@ export class Report extends PropertyTreeNode {
   }
 
   /**
-   * Gera o formato intermediário agnóstico de saída, instanciando o conteúdo
-   * registrado para `typeSpec` (ver `report-content.ts`).
+   * Produces the output-agnostic intermediate format by instantiating the
+   * content registered for `typeSpec` (see `report-content.ts`).
    *
+   * @throws {Error} When the report type is unknown.
+   * @throws {NotYetImplementedError} When the type is known but its content is
+   *   not ported yet.
    * @see docs/taskjuggler/lib/taskjuggler/reports/Report.rb:generateIntermediateFormat
    */
   generateIntermediateFormat(): void {
@@ -220,8 +264,8 @@ export class Report extends PropertyTreeNode {
     }
 
     this.content = null;
-    // Chave normalizada: o parser usa as keywords nuas (`iCal`, `statusSheet`)
-    // e o enum tem outros casing; o dispatch de Ruby casa os dois formatos.
+    // Normalized key: the parser uses the bare keywords (`iCal`, `statusSheet`)
+    // and the enum has other casing; Ruby's dispatch matches both forms.
     const type = this.typeSpec === null ? null : String(this.typeSpec,);
     const key = type === null ? null : type.toLowerCase();
     const factory = key === null ? undefined : contentFactories.get(key,);
@@ -229,31 +273,31 @@ export class Report extends PropertyTreeNode {
       throw new Error("Unknown report type",);
     }
     if (!factory) {
-      // Os conteúdos da Fase 14 estão registrados (reports/mod.ts);
-      // os tipos conhecidos sem fábrica restante são as sheets.
-      // As extensões do Fase 14 Complemento têm âncora própria (C1/C2/C3).
+      // The phase 14 contents are registered (reports/mod.ts); the known types
+      // without a remaining factory are the sheets.
+      // The phase 14 Complemento extensions have their own anchor (C1/C2/C3).
       const block = EXTENSION_TYPE_BLOCKS.get(key!,);
       if (block) {
-        // Ancorado: Fase 14C — conteúdo do complemento ainda não registrado.
+        // Ancorado: Fase 14C — complement content not registered yet.
         throw new NotYetImplementedError(block.id, `Report content '${type}'`,);
       }
-      // Ancorado: Fase 18 — conteúdos timesheet/statussheet não portados.
+      // Ancorado: Fase 18 — timesheet/statussheet contents not ported.
       throw new NotYetImplementedError("18", `Report content '${type}'`,);
     }
     this.content = factory(this,);
 
-    // A maioria das saídas é gerada a partir do formato intermediário.
+    // Most outputs are generated from the intermediate format.
     this.content?.generateIntermediateFormat();
   }
 
-  /** Conteúdo do relatório como HTML (sem a moldura do documento). */
+  /** Report content as HTML (without the document frame). */
   to_html(): XMLElementLike[] | XMLElementLike | string | null {
     return this.content?.to_html ? this.content.to_html() : null;
   }
 
   /**
-   * O relatório deve ser renderizado na versão interativa? O relatório de
-   * topo define o formato de saída e a configuração interativa.
+   * Whether the report should be rendered in interactive mode. The top-level
+   * report defines both the output format and the interactive setting.
    */
   "interactive?"(): boolean {
     const contexts = (this.project as Project).reportContexts;
@@ -261,29 +305,30 @@ export class Report extends PropertyTreeNode {
       contexts[0]!.report.get("interactive",) === true;
   }
 
-  /** Nome de arquivo lógico da última saída gerada (`.` = stdout). */
+  /** Logical file name of the last generated output (`.` = stdout). */
   outputFileName = "";
 
   /**
-   * Último conteúdo gerado por um dos `generate*` (string, ou Array-de-Arrays
-   * para CSV). No browser (ADR 027) não há escrita a disco — quem chama
-   * `generate()` lê o resultado daqui.
+   * Content produced by the last `generate*` (a string, or an array of arrays
+   * for CSV). In the browser (ADR 027) nothing is written to disk — callers of
+   * `generate()` read the result from here.
    */
   output: string | unknown[][] | null = null;
 
   /**
-   * Conteúdo renderizado de **cada** formato na última `generate()` (Fase 24 —
-   * fonte da seção `results.reports` do envelope). A chave é o id do formato
-   * declarado; o valor já é texto (CSV normalizado por `CSVFile` e `null` de
-   * formato não suportado virando `""`). `output`/`outputFileName` legados
-   * continuam intactos para a UI.
+   * Rendered content of **every** format in the last `generate()` (phase 24 —
+   * source of the `results.reports` section of the envelope).
+   *
+   * The key is the declared format id and the value is already text (CSV
+   * normalized by `CSVFile`, and `null` from an unsupported format turned into
+   * `""`). The legacy `output`/`outputFileName` stay untouched for the UI.
    *
    * @see docs/syntaxmesh/fases/fase-24-cli-adendo.md §3.2/§3.3
    */
   readonly outputs: Map<string, string> = new Map();
 
   /**
-   * HTML completo do relatório como string (ADR 026/027: sem escrita a disco).
+   * Full HTML of the report as a string (ADR 026/027: no disk writes).
    */
   private generateHTML(): string | null {
     if (!this.content) return null;
@@ -296,8 +341,8 @@ export class Report extends PropertyTreeNode {
       (this.get("title",) as string | null) ?? this.name
     }`;
     const doc = new HTMLDocument();
-    // `generateHead` devolve `doc.html` (Ruby Report.rb:181-207): o `link` da
-    // stylesheet é irmão do `<head>`, não seu filho.
+    // `generateHead` returns `doc.html` (Ruby Report.rb:181-207): the
+    // stylesheet `link` is a sibling of `<head>`, not its child.
     const head = doc.generateHead(title,);
 
     const auxDir = (this.get("auxdir",) as string | null) ?? "";
@@ -330,7 +375,7 @@ export class Report extends PropertyTreeNode {
       body.append(noscript,);
     }
 
-    // Moldura com margens ao redor do relatório.
+    // Frame with margins around the report.
     const frame = new XMLElement("div", { class: "tj_page", },);
     const contentHtml = this.content.to_html();
     for (
@@ -349,7 +394,7 @@ export class Report extends PropertyTreeNode {
     return html;
   }
 
-  /** Rodapé administrativo (copyright, projeto, versão, data). */
+  /** Administrative footer (copyright, project, version, date). */
   private copyrightDiv(): XMLElement {
     const div = new XMLElement("div", { class: "copyright", },);
     const copyright = this.project.get("copyright",) as string | null;
@@ -363,11 +408,12 @@ export class Report extends PropertyTreeNode {
   }
 
   /**
-   * Documento Markdown do relatório (extensão SyntaxMesh — adendo §10).
+   * Markdown document of the report (SyntaxMesh extension — addendum §10).
    *
-   * O título segue o mesmo formato do HTML (`<projeto> - <título|nome>`); o
-   * corpo vem de `content.to_markdown()`. O nome lógico do arquivo termina em
-   * `.md`. Como no CSV/JSON, o conteúdo fica em `output` (ADR 027).
+   * The heading follows the same format as the HTML one
+   * (`<project> - <title|name>`) and the body comes from `content.to_markdown()`.
+   * The logical file name ends in `.md`. As with CSV/JSON, the content lands in
+   * `output` (ADR 027).
    */
   private generateMarkdown(): string | null {
     if (!this.content?.to_markdown) {
@@ -376,8 +422,9 @@ export class Report extends PropertyTreeNode {
     }
     const body = this.content.to_markdown();
     if (body === null) return null;
-    // O nome do projeto vive no campo do `Project`, não no dicionário de
-    // atributos (não há `get("name")`); o título segue o mesmo formato do HTML.
+    // The project name lives in the `Project` field, not in the attribute
+    // dictionary (there is no `get("name")`); the title follows the same
+    // format as HTML.
     const projectName = (this.project as unknown as { name?: string }).name ??
       String(this.project.get("name",) ?? "",);
     const heading = `# ${projectName} - ${
@@ -385,8 +432,8 @@ export class Report extends PropertyTreeNode {
     }`;
     const text = body.replace(/\s+$/u, "",);
     const md = text === "" ? `${heading}\n` : `${heading}\n\n${text}\n`;
-    // O nome do relatório é o nome do arquivo (como no HTML), então `plan.md`
-    // não vira `plan.md.md`; sem sufixo, ele é acrescentado.
+    // The report name is the file name (as in HTML), so `plan.md` does not
+    // become `plan.md.md`; without the suffix, it is appended.
     const fileName = this.name.endsWith(".md",) ? this.name : this.name + ".md";
     this.outputFileName = this.name === "."
       ? "."
@@ -395,9 +442,9 @@ export class Report extends PropertyTreeNode {
     return md;
   }
 
-  /** CSV do relatório como Array-de-Arrays (equivalente a CSVFile ';'). */
+  /** CSV of the report as an array of arrays (equivalent to `CSVFile ';'`). */
   private generateCSV(): unknown[][] | null {
-    // O CSV só sabe tratar do primeiro elemento do relatório.
+    // CSV can only handle the first element of the report.
     if (!this.content) return null;
     if (!this.content.to_csv) {
       this.warnUnsupported("csv",);
@@ -412,7 +459,7 @@ export class Report extends PropertyTreeNode {
     return csv;
   }
 
-  /** JSON do relatório como string (extensão SyntaxMesh — 14C.0.1). */
+  /** JSON of the report as a string (SyntaxMesh extension — 14C.0.1). */
   private generateJSON(): string | null {
     if (!this.content?.toJSON) {
       this.warnUnsupported("json",);
@@ -426,7 +473,10 @@ export class Report extends PropertyTreeNode {
     return json;
   }
 
-  /** Relatório em formato TJP (.tjp se exporta projeto, .tji caso contrário). */
+  /**
+   * Report in TJP format (`.tjp` when it exports the project, `.tji`
+   * otherwise).
+   */
   private generateTJP(): string | null {
     if (!this.content?.to_tjp) {
       this.warnUnsupported("tjp",);
@@ -440,7 +490,7 @@ export class Report extends PropertyTreeNode {
     return tjp;
   }
 
-  /** Relatório em Microsoft Project XML. */
+  /** Report in Microsoft Project XML format. */
   private generateMspXml(): string | null {
     if (!this.content?.to_mspxml) {
       this.warnUnsupported("mspxml",);
@@ -454,7 +504,7 @@ export class Report extends PropertyTreeNode {
     return xml;
   }
 
-  /** Relatório em formato Niku (Clarity) XML. */
+  /** Report in Niku (Clarity) XML format. */
   private generateNiku(): string | null {
     if (!this.content?.to_niku) {
       this.warnUnsupported("niku",);
@@ -468,7 +518,7 @@ export class Report extends PropertyTreeNode {
     return this.output;
   }
 
-  /** Relatório em formato iCalendar. */
+  /** Report in iCalendar format. */
   private generateICal(): string | null {
     if (!this.content?.to_iCal) {
       this.warnUnsupported("ical",);
@@ -482,7 +532,7 @@ export class Report extends PropertyTreeNode {
     return this.output;
   }
 
-  /** Arquivo de tags ctags. */
+  /** ctags tag file. */
   private generateCTags(): string | null {
     if (!this.content?.to_ctags) {
       this.warnUnsupported("ctags",);
@@ -496,12 +546,18 @@ export class Report extends PropertyTreeNode {
     return this.output;
   }
 
-  /** No browser não há cópia de arquivos auxiliares (css/icons/scripts). */
+  /**
+   * No auxiliary files (css/icons/scripts) are copied in the browser.
+   */
   private copyAuxiliaryFiles(): void {
     // No-op por design (ADR 027).
   }
 
-  /** Avisa que um formato de saída não é suportado pelo tipo do relatório. */
+  /**
+   * Warns that an output format is not supported by the report type.
+   *
+   * @param format Format that the report type cannot render.
+   */
   private warnUnsupported(format: string,): void {
     MessageHandlerInstance.instance.warning(
       `${format}_not_supported`,
@@ -516,8 +572,8 @@ export class Report extends PropertyTreeNode {
 }
 
 /**
- * Todos os `typeSpec` aceitos por `generateIntermediateFormat`, espelhando o
- * `case` de Ruby. Tipos sem fábrica registrada são `NotYetImplementedError`.
+ * Every `typeSpec` accepted by `generateIntermediateFormat`, mirroring Ruby's
+ * `case`. Types without a registered factory raise `NotYetImplementedError`.
  */
 const KNOWN_TYPE_SPECS = new Set<string>([
   ReportType.AccountReport,
@@ -537,11 +593,13 @@ const KNOWN_TYPE_SPECS = new Set<string>([
 ].map((t,) => String(t,).toLowerCase()),);
 
 /**
- * Tipos do Fase 14 Complemento sem fábrica registrada ainda: a âncora é o
- * bloco de tarefas que os entrega (14C.1/14C.2/14C.3), não o `Unknown report
- * type` genérico. Removidas quando as fábricas forem registradas (14C.7.4).
+ * Types from the phase 14 complement that still have no registered factory: the
+ * anchor is the task block that delivers them (14C.1/14C.2/14C.3), not the
+ * generic `Unknown report type`. Removed once the factories are registered
+ * (14C.7.4).
  *
- * Vazio desde 14C.3.1 (`materialreport` = 14C.1.4, `breakdownreport` = 14C.2.1,
- * `rdoreport` = 14C.3.1): o mecanismo permanece para as extensões seguintes.
+ * Empty since 14C.3.1 (`materialreport` = 14C.1.4, `breakdownreport` =
+ * 14C.2.1, `rdoreport` = 14C.3.1): the mechanism is kept for the following
+ * extensions.
  */
 const EXTENSION_TYPE_BLOCKS = new Map<string, { id: string }>([],);

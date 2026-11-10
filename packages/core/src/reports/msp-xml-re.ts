@@ -1,22 +1,23 @@
 /**
- * MspXmlRE (Fase 14.18.3) — exporta dados do projeto em Microsoft Project XML.
+ * MspXmlRE (phase 14.18.3) — exports the project data as Microsoft Project XML.
  *
- * Porta fiel de `docs/taskjuggler/lib/taskjuggler/reports/MspXmlRE.rb`. Devido a
- * limitações do MS Project e desta implementação, apenas um subconjunto dos
- * dados núcleo é exportado (projeto já escalonado, com atribuição recurso/tarefa).
+ * Faithful port of `docs/taskjuggler/lib/taskjuggler/reports/MspXmlRE.rb`. Owing
+ * to MS Project and implementation limits, only a subset of the core data is
+ * exported (a project already scheduled, with resource/task assignments).
  *
- * ⚠️ Browser (ADR 027): `to_mspxml()` retorna a string; nenhuma escrita a disco.
- * Usa o `XMLElement`/`XMLDocument` real da Fase 17.1 (substituiu o mínimo
- * `xml-node.ts` na 17.12). A serialização é compacta (sem a indentação
- * byte-a-byte do Ruby); os testes verificam estrutura/elementos, não a
- * igualdade byte exata.
+ * ⚠️ Browser (ADR 027): `to_mspxml()` returns the string; there is no disk
+ * write. It uses the real `XMLElement`/`XMLDocument` of phase 17.1 (replacing
+ * the minimal `xml-node.ts` in 17.12). Serialization is compact (without the
+ * byte-for-byte indentation of Ruby); the tests assert structure and elements,
+ * not exact byte equality.
  *
- * **14C.4 (Fase 14 Complemento):** além do subconjunto do Ruby, exportamos as
- * entidades que só existem no SyntaxMesh — recursos de material e de custo,
- * `<Assignment>` com `Units`/`Cost` e série de custo, `<ActualWork>`/
- * `<RemainingWork>` (`effortdone`), `<Notes>`, `<Exceptions>` de calendário e
- * `<LinkLag>`/`<LagFormat>`. Essas extensões **não têm oracle** no tj3: são
- * validadas por testes estruturais e pelo snapshot `reports-extensions.golden`.
+ * **14C.4 (phase 14 complement):** beyond the Ruby subset, we export the
+ * entities that only exist in SyntaxMesh — material and cost resources,
+ * `<Assignment>` with `Units`/`Cost` and a cost series, `<ActualWork>`/
+ * `<RemainingWork>` (`effortdone`), `<Notes>`, calendar `<Exceptions>` and
+ * `<LinkLag>`/`<LagFormat>`. Those extensions have **no oracle** in tj3: they
+ * are validated by structural tests and by the `reports-extensions.golden`
+ * snapshot.
  *
  * @see docs/syntaxmesh/fases/fase-14-relatorios-tarefas.md (14.18.3)
  * @see docs/syntaxmesh/fases/fase-14-relatorios-complemento-tarefas.md (14C.4)
@@ -47,10 +48,10 @@ import {
 } from "../xml/xml-element.ts";
 import { XMLDocument, } from "../xml/xml-document.ts";
 
-/** Formato de data/hora do MSP XML (`%Y-%m-%dT%H:%M:%S`). */
+/** Date/time format of MSP XML (`%Y-%m-%dT%H:%M:%S`). */
 const TIMEFORMAT = "%Y-%m-%dT%H:%M:%S";
 
-/** Mapa `loadUnit` → código `WorkFormat` do MSP (fiel a Ruby). */
+/** `loadUnit` → MSP `WorkFormat` code map (faithful to Ruby). */
 const LOAD_UNITS_MAP: Record<string, number> = {
   minutes: 1,
   hours: 2,
@@ -66,30 +67,29 @@ const LOAD_UNITS_MAP: Record<string, number> = {
 };
 
 /**
- * `<Resource><Type>` — esquema MSPDI (2007), `Type` sob `Resource`:
- * `0` = material (consumível), `1` = trabalho (pessoas/equipamentos),
- * `2` = custo.
+ * `<Resource><Type>` — MSPDI (2007) schema, `Type` under `Resource`:
+ * `0` = material (consumable), `1` = work (people/equipment), `2` = cost.
  *
- * ⚠️ `docs/tj3-engine/mspdi.md` §3.1 invertia material (2) e custo (0) —
- * corrigido em 2026-11-01; a tabela oficial do esquema (e o `MspXmlRE.rb`, que
- * já usa `1` para trabalho) prevalece. Ver 14C.4.2 na tabela de evidências.
+ * ⚠️ `docs/tj3-engine/mspdi.md` §3.1 swapped material (2) and cost (0) —
+ * corrected on 2026-11-01; the official schema table (and `MspXmlRE.rb`, which
+ * already uses `1` for work) prevails. See 14C.4.2 in the evidence table.
  */
 export const RESOURCE_TYPE_MATERIAL = "0";
 export const RESOURCE_TYPE_WORK = "1";
 export const RESOURCE_TYPE_COST = "2";
 
-/** `<DurationFormat>`/`<LagFormat>` (§2.2): `7` = dias úteis, `8` = dias corridos. */
+/** `<DurationFormat>`/`<LagFormat>` (§2.2): `7` = working days, `8` = elapsed days. */
 export const DURATION_FORMAT_DAYS = "7";
 export const DURATION_FORMAT_ELAPSED_DAYS = "8";
 
-/** `<TimephasedData><Type>`: `1` = trabalho restante, `6` = custo real. */
+/** `<TimephasedData><Type>`: `1` = remaining work, `6` = actual cost. */
 const TIMEPHASED_WORK = "1";
 const TIMEPHASED_COST = "6";
 
-/** `<TimephasedData><Unit>`: `2` = dias (valor em `PT{H}H{M}M{S}S`). */
+/** `<TimephasedData><Unit>`: `2` = days (value in `PT{H}H{M}M{S}S`). */
 const TIMEPHASED_UNIT = "2";
 
-/** Converte um valor de atributo em string (respeita `to_s` de RichText). */
+/** Converts an attribute value to a string (honouring RichText `to_s`). */
 function asString(value: unknown,): string {
   if (value === null || value === undefined) return "";
   const maybe = value as { to_s?: () => string };
@@ -98,11 +98,11 @@ function asString(value: unknown,): string {
 }
 
 /**
- * Formata um número como decimal MSPDI.
+ * Formats a number as an MSPDI decimal.
  *
- * O Ruby serializa `Float#to_s` (`1.0`, `0.0`, `62.5`); o JS escreveria `1`,
- * `0`. O MS Project espera taxas/unidades decimais (mspdi §3.2/§4.1), então
- * inteiros ganham o sufixo `.0` para casar com o oracle tj3.
+ * Ruby serializes `Float#to_s` (`1.0`, `0.0`, `62.5`); JS would write `1`, `0`.
+ * MS Project expects decimal rates/units (mspdi §3.2/§4.1), so integers gain the
+ * `.0` suffix to match the tj3 oracle.
  */
 export function asDecimal(value: number,): string {
   if (!Number.isFinite(value,)) return String(value,);
@@ -110,23 +110,23 @@ export function asDecimal(value: number,): string {
 }
 
 /**
- * Formata um valor **monetário** como decimal MSPDI, arredondado a centavos.
+ * Formats a **monetary** value as an MSPDI decimal, rounded to cents.
  *
- * As séries `TimephasedData` de custo distribuem o total do período por
- * fatias (`200/3`), e a aritmética binária do JS vazaria ruído
- * (`166.66666666666669`) para o XML. Moeda no MSPDI é decimal — duas casas.
+ * The cost `TimephasedData` series split the period total into slices
+ * (`200/3`), and JS binary arithmetic would leak noise (`166.66666666666669`)
+ * into the XML. Currency in MSPDI is a decimal — two places.
  */
 export function asMoney(value: number,): string {
   return asDecimal(Math.round(value * 100,) / 100,);
 }
 
-/** Recurso material derivado de um `Material` (14C.4.2). */
+/** Material resource derived from a `Material` (14C.4.2). */
 interface MaterialResource {
   uid: string;
   material: Material;
 }
 
-/** Recurso de custo derivado de um `Charge` de tarefa (14C.4.4). */
+/** Cost resource derived from a task `Charge` (14C.4.4). */
 interface CostResource {
   uid: string;
   task: Task;
@@ -134,42 +134,53 @@ interface CostResource {
   index: number;
 }
 
+/**
+ * The `mspxml` generator: exports the project as Microsoft Project XML.
+ */
 export class MspXmlRE extends ReportBase {
+  /** Scenario exported by this report (only one is supported). */
   private readonly scenarioIdx: number;
   /**
-   * Cenário usado como linha de base (`baseline <scenario>`, 14C.10) ou `null`.
-   * Com ele o documento ganha `<Baseline>` do projeto e por tarefa; sem ele a
-   * saída é idêntica à anterior (oracle `mspdi.golden.json` intocado).
+   * Scenario used as the baseline (`baseline <scenario>`, 14C.10), or `null`.
+   * With it the document gains a project-level and per-task `<Baseline>`;
+   * without it the output is identical to the previous one (untouched
+   * `mspdi.golden.json` oracle).
    */
   private readonly baselineIdx: number | null;
+  /** Calendar name → UID map built while the calendars are emitted. */
   private calendarUIDs: Record<string, string> = {};
   private query!: Query;
   private resourceList!: PropertyList<Resource>;
   private taskList!: PropertyList<Task>;
   private file!: XMLDocument;
-  /** Recursos material/custo (espaço de UID global, após os humanos). */
+  /** Material/cost resources (global UID space, after the humans). */
   private materialResources: MaterialResource[] = [];
   private costResources: CostResource[] = [];
 
+  /**
+   * Creates the MSP XML exporter.
+   *
+   * @param report Report definition being rendered.
+   */
   constructor(report: Report,) {
     super(report,);
-    // Este tipo de relatório suporta apenas um cenário: usa o primeiro.
+    // This report kind supports a single scenario: the first one is used.
     const scenarios = (this.a("scenarios",) as number[]) ?? [];
     this.scenarioIdx = scenarios[0] ?? 0;
     const baseline = this.a("baseline",);
     this.baselineIdx = typeof baseline === "number" ? baseline : null;
   }
 
-  /** Não há formato intermediário para o exportador MSP. */
+  /** This exporter has no intermediate format. */
   override generateIntermediateFormat(): void {
     super.generateIntermediateFormat();
   }
 
-  /** Retorna os dados do projeto em Microsoft Project XML. */
+  /** Returns the project data as Microsoft Project XML. */
   to_mspxml(): string {
     this.query = this.currentQuery().dup();
 
-    // Prepara a lista de recursos.
+    // Prepares the resource list.
     this.resourceList = new PropertyList<Resource>(this.project.resources,);
     this.resourceList.setSorting(
       this.a("sortResources",) as Array<[string, boolean, number,]>,
@@ -183,8 +194,8 @@ export class MspXmlRE extends ReportBase {
     );
     this.resourceList.sort();
 
-    // Prepara a lista de tarefas. O MSP exige ordem de 'árvore'; ignoramos os
-    // critérios de ordenação do usuário de propósito.
+    // Prepares the task list. MSP requires 'tree' order; the user sorting
+    // criteria are ignored on purpose.
     this.taskList = new PropertyList<Task>(this.project.tasks,);
     this.taskList.includeAdopted();
     this.taskList.setSorting(
@@ -213,9 +224,10 @@ export class MspXmlRE extends ReportBase {
       this.report.sourceFileInfo as SourceFileInfo,
     );
 
-    // Recursos material/custo derivados das entidades SyntaxMesh (14C.4.2–4.4).
-    // A lista é vazia quando o projeto não usa materiais/charges, de modo que o
-    // subconjunto fiel ao `MspXmlRE.rb` permanece inalterado (oracle 14C.4.14).
+    // Material/cost resources derived from the SyntaxMesh entities
+    // (14C.4.2–4.4). The list is empty when the project uses no
+    // materials/charges, so the subset faithful to `MspXmlRE.rb` stays
+    // unchanged (14C.4.14 oracle).
     this.collectExtensionResources();
 
     this.file = new XMLDocument();
@@ -249,9 +261,16 @@ export class MspXmlRE extends ReportBase {
   }
 
   // ------------------------------------------------------------------
-  // Seções do documento
+  // Document sections
   // ------------------------------------------------------------------
 
+  /**
+   * Emits the `<Project>` attributes (scheduling, rates, currency) and the
+   * `<Calendars>` block.
+   *
+   * @param p `<Project>` element being filled.
+   * @returns The `<Calendars>` element, so resources can add their calendars.
+   */
   private generateProjectAttributes(p: XMLElement,): XMLElement {
     p.append(new XMLNamedText("14", "SaveVersion",),);
     p.append(new XMLNamedText(this.report.name + ".xml", "Name",),);
@@ -347,6 +366,11 @@ export class MspXmlRE extends ReportBase {
     return calendars;
   }
 
+  /**
+   * Emits the `<Tasks>` block.
+   *
+   * @param project `<Project>` element receiving the block.
+   */
   private generateTasks(project: XMLElement,): void {
     const tasks = new XMLElement("Tasks",);
     project.append(tasks,);
@@ -356,13 +380,13 @@ export class MspXmlRE extends ReportBase {
   }
 
   /**
-   * `<Baseline>` do **projeto** (`Number` 0), a partir das datas agendadas no
-   * cenário de linha de base (adendo §10 / 14C.10.4).
+   * `<Baseline>` of the **project** (`Number` 0), from the dates scheduled in
+   * the baseline scenario (addendum §10 / 14C.10.4).
    *
-   * O intervalo vem do primeiro início e do último fim entre as tarefas
-   * agendadas; o custo é a soma dos `CostEvent` do cenário quando existirem.
-   * Sem nenhuma tarefa agendada o elemento é omitido com aviso — o exportador
-   * nunca inventa datas.
+   * The interval comes from the first start and the last end among the
+   * scheduled tasks; the cost is the sum of the scenario `CostEvent`s when they
+   * exist. Without any scheduled task the element is omitted with a warning —
+   * the exporter never invents dates.
    */
   private generateProjectBaseline(project: XMLElement,): void {
     const sc = this.baselineIdx as number;
@@ -386,8 +410,8 @@ export class MspXmlRE extends ReportBase {
   }
 
   /**
-   * Datas agendadas de `task` no cenário `scIdx`, ou `null` quando o cenário
-   * não foi escalonado para ela.
+   * Dates scheduled for `task` in scenario `scIdx`, or `null` when the scenario
+   * was not scheduled for it.
    */
   private baselineDates(
     task: Task,
@@ -400,8 +424,8 @@ export class MspXmlRE extends ReportBase {
   }
 
   /**
-   * Custo do cenário `scIdx` (Σ `CostEvent` do cenário), restrito a `task`
-   * quando fornecida. `null` quando não há eventos — o `<Cost>` é omitido.
+   * Cost of scenario `scIdx` (Σ `CostEvent` of the scenario), restricted to
+   * `task` when given. `null` when there are no events — `<Cost>` is omitted.
    */
   private scenarioCost(task: Task | null, scIdx: number,): number | null {
     let sum = 0;
@@ -415,7 +439,7 @@ export class MspXmlRE extends ReportBase {
     return found ? sum : null;
   }
 
-  /** Anexa `<Baseline Number="0">` com `Start`/`Finish` e `Cost` opcional. */
+  /** Appends `<Baseline Number="0">` with `Start`/`Finish` and optional `Cost`. */
   private appendBaseline(
     parent: XMLElement,
     start: TjTime,
@@ -432,6 +456,13 @@ export class MspXmlRE extends ReportBase {
     }
   }
 
+  /**
+   * Emits the `<Resources>` block: people/equipment first, then the material and
+   * cost resources (SyntaxMesh extension, 14C.4.2–4.4).
+   *
+   * @param project `<Project>` element receiving the block.
+   * @param calendars `<Calendars>` element the resource calendars are added to.
+   */
   private generateResources(
     project: XMLElement,
     calendars: XMLElement,
@@ -441,7 +472,7 @@ export class MspXmlRE extends ReportBase {
     for (const resource of this.resourceList.toArray()) {
       this.generateResource(resources, resource, calendars,);
     }
-    // Recursos material e custo ocupam UIDs após os recursos humanos.
+    // Material and cost resources take UIDs after the human resources.
     for (const ref of this.materialResources) {
       this.generateMaterialResource(resources, ref,);
     }
@@ -450,18 +481,24 @@ export class MspXmlRE extends ReportBase {
     }
   }
 
+  /**
+   * Emits the `<Assignments>` block: one entry per resource allocated to a task,
+   * plus the material and cost assignments of the SyntaxMesh extensions.
+   *
+   * @param project `<Project>` element receiving the block.
+   */
   private generateAssignments(project: XMLElement,): void {
     const assignments = new XMLElement("Assignments",);
     project.append(assignments,);
     let i = 0;
     for (const task of this.taskList.toArray()) {
-      // Só geramos assignments para folhas e contêineres enrollados.
+      // Assignments are only generated for leaves and rolled-up containers.
       if (!this.inAssignmentScope(task,)) continue;
       for (const resource of task.assignedResources(this.scenarioIdx,)) {
         this.generateAssignment(assignments, task, resource, i,);
         i++;
       }
-      // Materiais alocados (14C.4.3): Units = quantidade, Cost = qtd × preço.
+      // Allocated materials (14C.4.3): Units = quantity, Cost = qty × price.
       for (const allocation of this.taskMaterialAllocations(task,)) {
         const ref = this.materialResources.find((r,) =>
           r.material === allocation.material
@@ -470,7 +507,7 @@ export class MspXmlRE extends ReportBase {
         this.generateMaterialAssignment(assignments, task, allocation, ref, i,);
         i++;
       }
-      // Charges flat da tarefa (14C.4.4): recurso de custo com `<Cost>` direto.
+      // Flat charges of the task (14C.4.4): a cost resource with a direct `<Cost>`.
       for (const ref of this.costResources) {
         if (ref.task !== task) continue;
         this.generateCostAssignment(assignments, task, ref, i,);
@@ -479,6 +516,14 @@ export class MspXmlRE extends ReportBase {
     }
   }
 
+  /**
+   * Emits one `<Calendar>` (weekdays, working times and optional exceptions).
+   *
+   * @param calendars `<Calendars>` element receiving the calendar.
+   * @param workinghours Working hours of the calendar owner.
+   * @param name Calendar name, also used as the UID key.
+   * @param exceptions Project or resource leaves turned into `<Exception>`.
+   */
   private generateCalendar(
     calendars: XMLElement,
     workinghours: WorkingHours,
@@ -519,9 +564,9 @@ export class MspXmlRE extends ReportBase {
       }
     }
 
-    // Feriados/licenças do projeto viram `<Exception>` do calendário base
-    // (14C.4.9). O `MspXmlRE.rb` não emite este bloco: mantemos apenas no
-    // calendário base e somente quando `Project.leaves` tem entradas.
+    // Project holidays/leaves become `<Exception>` of the base calendar (14C.4.9).
+    // `MspXmlRE.rb` emits no such block: it is kept on the base calendar only
+    // and only when `Project.leaves` has entries.
     if (exceptions.length > 0) {
       const exs = new XMLElement("Exceptions",);
       cal.append(exs,);
@@ -545,6 +590,13 @@ export class MspXmlRE extends ReportBase {
     }
   }
 
+  /**
+   * Emits one `<Task>` element: identifiers, dates, progress, predecessors and
+   * the optional per-task baseline.
+   *
+   * @param tasks `<Tasks>` element receiving the task.
+   * @param task Task being exported.
+   */
   private generateTask(tasks: XMLElement, task: Task,): void {
     const sc = this.scenarioIdx;
     this.query.property = task;
@@ -610,7 +662,7 @@ export class MspXmlRE extends ReportBase {
       t.append(new XMLNamedText("1", "Manual",),);
       t.append(new XMLNamedText("0", "Summary",),);
       t.append(new XMLNamedText("0", "Estimated",),);
-      // 7 = dias úteis; 8 = dias corridos (`ed`, mspdi §8).
+      // 7 = working days; 8 = elapsed days (`ed`, mspdi §8).
       t.append(
         new XMLNamedText(
           this.durationFormatFor(task, start, end, sc,),
@@ -635,8 +687,8 @@ export class MspXmlRE extends ReportBase {
     this.appendPredecessors(t, task, true,);
     this.appendPredecessors(t, task, false,);
 
-    // `<Baseline>` por tarefa (14C.10.5): só quando o cenário de linha de base
-    // tem datas agendadas para ela.
+    // Per-task `<Baseline>` (14C.10.5): only when the baseline scenario has
+    // scheduled dates for the task.
     if (this.baselineIdx !== null) {
       const dates = this.baselineDates(task, this.baselineIdx,);
       if (dates) {
@@ -651,8 +703,8 @@ export class MspXmlRE extends ReportBase {
   }
 
   /**
-   * Anexa os `PredecessorLink` de uma lista de precedências (start ou end).
-   * `fromStart` indica a semântica do tipo (startpreds vs endpreds).
+   * Appends the `PredecessorLink` entries of one precedence list (start or end).
+   * `fromStart` states which semantics is being walked (startpreds vs endpreds).
    */
   private appendPredecessors(
     t: XMLElement,
@@ -685,13 +737,13 @@ export class MspXmlRE extends ReportBase {
   }
 
   /**
-   * Emite `<LinkLag>`/`<LagFormat>` da dependência com lag (14C.4.11).
+   * Emits `<LinkLag>`/`<LagFormat>` of a dependency with lag (14C.4.11).
    *
-   * A dependência vive no atributo `depends`/`precedes` do próprio nó, então
-   * procuramos o par (tarefa, onEnd) na lista correspondente. `gaplength` é
-   * tempo de trabalho (dias úteis → `LagFormat` 7); `gapduration` é tempo de
-   * calendário (dias corridos → `LagFormat` 8). `<LinkLag>` é expresso em
-   * décimos de minuto, como no esquema MSPDI.
+   * The dependency lives in the `depends`/`precedes` attribute of the node
+   * itself, so the (task, onEnd) pair is looked up in the matching list.
+   * `gaplength` is working time (working days → `LagFormat` 7); `gapduration`
+   * is calendar time (elapsed days → `LagFormat` 8). `<LinkLag>` is expressed in
+   * tenths of a minute, as in the MSPDI schema.
    */
   private appendLag(
     pl: XMLElement,
@@ -707,7 +759,7 @@ export class MspXmlRE extends ReportBase {
     if (!dep) return;
     const dailyMinutes = this.project.dailyWorkingHours() * 60;
     if (dep.gapLength > 0) {
-      // `gapLength` é armazenado em slots (segundos ÷ granularidade).
+      // `gapLength` is stored in slots (seconds ÷ granularity).
       const gapSeconds = dep.gapLength * this.granularity();
       const days = gapSeconds / (this.project.dailyWorkingHours() * 3600);
       pl.append(
@@ -728,19 +780,26 @@ export class MspXmlRE extends ReportBase {
     }
   }
 
+  /**
+   * Emits one `<Resource>` element and its own calendar.
+   *
+   * @param resources `<Resources>` element receiving the resource.
+   * @param resource Resource being exported.
+   * @param calendars `<Calendars>` element receiving the resource calendar.
+   */
   private generateResource(
     resources: XMLElement,
     resource: Resource,
     calendars: XMLElement,
   ): void {
-    // O MS Project só lida com lista plana de recursos; não exportamos grupos.
+    // MS Project only handles a flat resource list; groups are not exported.
     if (!resource.leaf()) return;
 
     const sc = this.scenarioIdx;
     const r = new XMLElement("Resource",);
     resources.append(r,);
     r.append(new XMLNamedText(String(resource.get("index",),), "UID",),);
-    // Cada recurso TJ é pessoa ou equipamento.
+    // Every TJ resource is a person or a piece of equipment.
     r.append(new XMLNamedText(RESOURCE_TYPE_WORK, "Type",),);
     r.append(new XMLNamedText(resource.name, "Name",),);
     r.append(new XMLNamedText(resource.id, "Initials",),);
@@ -768,7 +827,7 @@ export class MspXmlRE extends ReportBase {
         ),
       );
     }
-    // Gera um calendário para este recurso e atribui-o.
+    // Generates a calendar for this resource and assigns it.
     const calName = `Calendar ${resource.name}`;
     this.generateCalendar(
       calendars,
@@ -781,6 +840,14 @@ export class MspXmlRE extends ReportBase {
     );
   }
 
+  /**
+   * Emits one `<Assignment>` linking a task to a resource.
+   *
+   * @param assignments `<Assignments>` element receiving the entry.
+   * @param task Task being assigned.
+   * @param resource Resource assigned to the task.
+   * @param uid Sequential UID of the assignment.
+   */
   private generateAssignment(
     assignments: XMLElement,
     task: Task,
@@ -809,7 +876,7 @@ export class MspXmlRE extends ReportBase {
     a.append(new XMLNamedText(taskEnd.to_s(TIMEFORMAT,), "finish",),);
     a.append(new XMLNamedText("100.0", "Cost",),);
     a.append(new XMLNamedText("8", "WorkContour",),);
-    // O PercentWorkComplete deve ser 0 para o MS Project não ignorar o trabalho.
+    // PercentWorkComplete must be 0, otherwise MS Project ignores the work.
     a.append(new XMLNamedText("0", "PercentWorkComplete",),);
     const responsible = this.responsibleNames(task, sc,);
     if (responsible !== "") {
@@ -817,7 +884,7 @@ export class MspXmlRE extends ReportBase {
     }
     this.appendAssignmentProgress(a, task, resource, taskStart, taskEnd, sc,);
 
-    // Configura a query para esta tarefa e recurso.
+    // Configures the query for this task and resource.
     this.query.property = resource;
     this.query.scopeProperty = task;
     this.query.attributeId = "effort";
@@ -829,13 +896,12 @@ export class MspXmlRE extends ReportBase {
     const reportStart = this.a("start",) as TjTime;
     const reportEnd = this.a("end",) as TjTime;
 
-    // Dados timephased por dia: o trabalho de cada dia entre início e fim.
+    // Timephased data per day: the work of every day between start and end.
     let t = taskStart.midnight();
     const tEnd = taskEnd;
     while (t.lessThan(tEnd,)) {
       const tn = t.sameTimeNextDay();
-      // Garante que os intervalos ficam dentro dos limites da tarefa e do
-      // relatório.
+      // Keeps the intervals inside the task and the report boundaries.
       let tc = t.lessThan(taskStart,) ? taskStart : t;
       tc = tc.lessThan(reportStart,) ? reportStart : tc;
       let tnc = tn.greaterThan(taskEnd,) ? taskEnd : tn;
@@ -848,7 +914,7 @@ export class MspXmlRE extends ReportBase {
       const td = new XMLElement("TimephasedData",);
       a.append(td,);
       td.append(new XMLNamedText(String(uid,), "UID",),);
-      // O Type deve ser 1; caso contrário o MS Project demora muito a carregar.
+      // Type must be 1; otherwise MS Project takes a long time to load.
       td.append(new XMLNamedText(TIMEPHASED_WORK, "Type",),);
       td.append(new XMLNamedText(tc.to_s(TIMEFORMAT,), "Start",),);
       td.append(
@@ -862,7 +928,7 @@ export class MspXmlRE extends ReportBase {
     }
   }
 
-  /** Nomes dos responsáveis da tarefa, unidos por vírgula. */
+  /** Names of the responsible resources of the task, joined by commas. */
   private responsibleNames(task: Task, sc: number,): string {
     const list = (task.getForScenario("responsible", sc,) as Resource[]) ??
       [];
@@ -870,13 +936,14 @@ export class MspXmlRE extends ReportBase {
   }
 
   /**
-   * Trabalho efetivo (em dias) do recurso na tarefa dentro de `[start, end)`.
+   * Effective work (in days) of the resource on the task within
+   * `[start, end)`.
    *
-   * O Ruby obtém o mesmo número via `Query#to_num`, que despacha para
+   * Ruby obtains the same number through `Query#to_num`, which dispatches to
    * `ResourceScenario#query_effort` → `getEffectiveWork(startIdx, endIdx,
-   * scopeProperty)`. Chamamos o método do modelo diretamente: o `query_effort`
-   * concreto ainda não está portado (Fase 11) e devolvia 0, zerando toda a
-   * série `TimephasedData` (14C.4.8).
+   * scopeProperty)`. We call the model method directly: the concrete
+   * `query_effort` is not ported yet (phase 11) and returned 0, zeroing the
+   * whole `TimephasedData` series (14C.4.8).
    */
   private assignmentWork(
     resource: Resource,
@@ -898,14 +965,14 @@ export class MspXmlRE extends ReportBase {
   }
 
   // ------------------------------------------------------------------
-  // Extensões SyntaxMesh (14C.4.2–4.9)
+  // SyntaxMesh extensions (14C.4.2–4.9)
   // ------------------------------------------------------------------
 
   /**
-   * Coleta os recursos material/custo do relatório (14C.4.2/14C.4.4).
+   * Collects the material/cost resources of the report (14C.4.2/14C.4.4).
    *
-   * Os UIDs continuam o maior UID dos recursos humanos: o MSPDI exige um
-   * espaço de UID único em `<Resources>`.
+   * The UIDs continue from the highest human resource UID: MSPDI requires a
+   * single UID space inside `<Resources>`.
    */
   private collectExtensionResources(): void {
     this.materialResources = [];
@@ -930,7 +997,7 @@ export class MspXmlRE extends ReportBase {
     }
   }
 
-  /** Maior UID entre os recursos humanos exportados (folhas). */
+  /** Highest UID among the exported human resources (leaves). */
   private maxResourceUid(): number {
     let max = 0;
     for (const resource of this.resourceList.toArray()) {
@@ -941,7 +1008,8 @@ export class MspXmlRE extends ReportBase {
   }
 
   /**
-   * A tarefa recebe `<Assignment>`? Folhas sim; contêineres só com `rollupTask`.
+   * Does the task receive an `<Assignment>`? Leaves yes; containers only with
+   * `rollupTask`.
    */
   private inAssignmentScope(task: Task,): boolean {
     if (!task.container()) return true;
@@ -954,43 +1022,43 @@ export class MspXmlRE extends ReportBase {
     return rollupTask.eval(this.query,);
   }
 
-  /** Alocações de material da tarefa no cenário do relatório. */
+  /** Material allocations of the task in the report scenario. */
   private taskMaterialAllocations(task: Task,): MaterialAllocation[] {
     return (task.getForScenario("materialallocations", this.scenarioIdx,) ??
       []) as MaterialAllocation[];
   }
 
-  /** Charges flat declarados na tarefa (`charge`, cenário do relatório). */
+  /** Flat charges declared on the task (`charge`, report scenario). */
   private taskCharges(task: Task,): Charge[] {
     return (task.getForScenario("charge", this.scenarioIdx,) ?? []) as Charge[];
   }
 
-  /** `hideMaterial` (14C.4.10/14C.6.8) aplicado a um material. */
+  /** `hideMaterial` (14C.4.10/14C.6.8) applied to a material. */
   private hiddenMaterial(material: Material,): boolean {
     return this.hiddenBy("hideMaterial", material,);
   }
 
-  /** Granularidade do scoreboard (segundos por slot), usada para converter
-   * `effort`/`effortdone`/`gapLength` (armazenados em slots) em segundos. */
+  /** Scoreboard granularity (seconds per slot), used to turn
+   * `effort`/`effortdone`/`gapLength` (stored in slots) into seconds. */
   private granularity(): number {
     return (this.project.get("scheduleGranularity",) as number | null) ?? 3600;
   }
 
-  /** `<Exception>` do calendário base: leaves/feriados do projeto (14C.4.9). */
+  /** `<Exception>` of the base calendar: project leaves/holidays (14C.4.9). */
   private projectLeaves(): Leave[] {
     return (this.project.get("leaves",) ?? []) as Leave[];
   }
 
-  /** Leaves/feriados do recurso (viram `<Exception>` do calendário dele). */
+  /** Leaves/holidays of the resource (they become `<Exception>` of its calendar). */
   private resourceLeaves(resource: Resource, sc: number,): Leave[] {
     return (resource.getForScenario("leaves", sc,) ?? []) as Leave[];
   }
 
   /**
-   * Início/fim de um leave como `TjTime`.
+   * Start/end of a leave as `TjTime`.
    *
-   * `Leave.interval` pode ser um `ScoreboardInterval` (índices de slot); nesse
-   * caso a data sai de `sbStart + índice × slotDuration`.
+   * `Leave.interval` may be a `ScoreboardInterval` (slot indices); in that case
+   * the date comes from `sbStart + index × slotDuration`.
    */
   private leaveBound(leave: Leave, which: "start" | "end",): TjTime | null {
     const interval = leave.interval;
@@ -1002,7 +1070,7 @@ export class MspXmlRE extends ReportBase {
     return value instanceof TjTime ? value : null;
   }
 
-  /** `<Resource>` de um `Material` (14C.4.2). */
+  /** `<Resource>` of a `Material` (14C.4.2). */
   private generateMaterialResource(
     resources: XMLElement,
     ref: MaterialResource,
@@ -1014,7 +1082,7 @@ export class MspXmlRE extends ReportBase {
     r.append(new XMLNamedText(RESOURCE_TYPE_MATERIAL, "Type",),);
     r.append(new XMLNamedText(asString(material.name,), "Name",),);
     r.append(new XMLNamedText(material.id, "Initials",),);
-    // §3.2: rótulo de unidade e preço unitário entram em MaterialLabel/rate.
+    // §3.2: unit label and unit price go into MaterialLabel/rate.
     r.append(new XMLNamedText(material.unitValue(), "MaterialLabel",),);
     r.append(
       new XMLNamedText(asDecimal(material.unitPriceValue(),), "StandardRate",),
@@ -1023,7 +1091,7 @@ export class MspXmlRE extends ReportBase {
     if (note) r.append(new XMLNamedText(asString(note,), "Notes",),);
   }
 
-  /** `<Resource>` de custo para um `Charge` flat da tarefa (14C.4.4). */
+  /** Cost `<Resource>` for a flat `Charge` of the task (14C.4.4). */
   private generateCostResource(
     resources: XMLElement,
     ref: CostResource,
@@ -1036,15 +1104,15 @@ export class MspXmlRE extends ReportBase {
       new XMLNamedText(`Charges ${ref.task.id} #${ref.index + 1}`, "Name",),
     );
     r.append(new XMLNamedText(`charge${ref.index + 1}`, "Initials",),);
-    // Sem taxa: o valor vai direto em `<Cost>` da atribuição (§3.2).
+    // No rate: the value goes straight into the `<Cost>` of the assignment (§3.2).
     r.append(
       new XMLNamedText(asDecimal(ref.charge.amount,), "StandardRate",),
     );
-    // O modelo não marca recursos orçamentários: um charge é despesa.
+    // The model does not mark budget resources: a charge is an expense.
     r.append(new XMLNamedText("0", "IsBudget",),);
   }
 
-  /** `<Assignment>` de material: `Units` = quantidade, `Cost` = qtd × preço. */
+  /** Material `<Assignment>`: `Units` = quantity, `Cost` = qty × price. */
   private generateMaterialAssignment(
     assignments: XMLElement,
     task: Task,
@@ -1072,8 +1140,8 @@ export class MspXmlRE extends ReportBase {
     );
     a.append(new XMLNamedText("0", "PercentWorkComplete",),);
 
-    // Série de custo por dia (§7.1): `quantityIn` depende de `attach()` (não
-    // chamado pelo scheduler), então distribuímos pela ordem cronológica.
+    // Daily cost series (§7.1): `quantityIn` depends on `attach()` (not called
+    // by the scheduler), so the quantity is spread in chronological order.
     const periods = this.dailyPeriods(start, end,);
     const shares = this.materialShares(allocation, periods.length,);
     periods.forEach(([ps, pe,], idx,) => {
@@ -1087,7 +1155,7 @@ export class MspXmlRE extends ReportBase {
     },);
   }
 
-  /** `<Assignment>` de custo: `Cost` direto do charge (14C.4.4). */
+  /** Cost `<Assignment>`: `Cost` straight from the charge (14C.4.4). */
   private generateCostAssignment(
     assignments: XMLElement,
     task: Task,
@@ -1108,7 +1176,7 @@ export class MspXmlRE extends ReportBase {
     a.append(new XMLNamedText(asMoney(ref.charge.amount,), "Cost",),);
     a.append(new XMLNamedText("0", "PercentWorkComplete",),);
 
-    // `Charge#turnover` distribui onStart/onEnd/perDiem por período.
+    // `Charge#turnover` spreads onStart/onEnd/perDiem over the periods.
     for (const [ps, pe,] of this.dailyPeriods(start, end,)) {
       const amount = ref.charge.turnover(new TimeInterval(ps, pe,),);
       if (amount === 0) continue;
@@ -1117,10 +1185,10 @@ export class MspXmlRE extends ReportBase {
   }
 
   /**
-   * Fração da quantidade de material consumida em cada período.
+   * Fraction of the material quantity consumed in each period.
    *
-   * `onstart`/`onend` concentram tudo na primeira/última fatia; os demais
-   * modificadores são distribuídos uniformemente (sem `DistributionContext`).
+   * `onstart`/`onend` concentrate everything in the first/last slice; the other
+   * modifiers are spread evenly (no `DistributionContext`).
    */
   private materialShares(
     allocation: MaterialAllocation,
@@ -1140,7 +1208,7 @@ export class MspXmlRE extends ReportBase {
     return shares;
   }
 
-  /** `<TimephasedData>` de custo por período (`Type` 6, §7.1). */
+  /** Cost `<TimephasedData>` per period (`Type` 6, §7.1). */
   private appendCostTimephased(
     a: XMLElement,
     uid: number,
@@ -1160,7 +1228,7 @@ export class MspXmlRE extends ReportBase {
     td.append(new XMLNamedText(asMoney(cost,), "Value",),);
   }
 
-  /** Fatias diárias de `[start, end)` clampadas ao intervalo do relatório. */
+  /** Daily slices of `[start, end)` clamped to the report interval. */
   private dailyPeriods(
     start: TjTime,
     end: TjTime,
@@ -1182,12 +1250,12 @@ export class MspXmlRE extends ReportBase {
   }
 
   /**
-   * `<DurationFormat>` da tarefa folha (§2.2/§8, 14C.4.5).
+   * `<DurationFormat>` of the leaf task (§2.2/§8, 14C.4.5).
    *
-   * Uma duração é “corrida” (`8`) quando a tarefa não consome tempo
-   * não-produtivo: o intervalo de calendário é igual ao esforço — típico de
-   * calendários 24×7. O guarda de um dia útil evita classificar tarefas
-   * curtas (8 h em 8 h) como `ed`. Nunca usamos `9` (semanas) para `ed`.
+   * A duration is “elapsed” (`8`) when the task consumes no non-productive time:
+   * the calendar interval equals the effort — typical of 24×7 calendars. The
+   * one-working-day guard avoids classifying short tasks (8 h in 8 h) as `ed`.
+   * `9` (weeks) is never used for `ed`.
    */
   private durationFormatFor(
     task: Task,
@@ -1199,14 +1267,14 @@ export class MspXmlRE extends ReportBase {
     if (!effort || effort <= 0) return DURATION_FORMAT_DAYS;
     const dailySeconds = this.project.dailyWorkingHours() * 3600;
     const wallClock = end.diff(start,);
-    // `effort` é armazenado em slots, não em segundos.
+    // `effort` is stored in slots, not in seconds.
     const workSeconds = effort * this.granularity();
     return wallClock === workSeconds && wallClock > dailySeconds
       ? DURATION_FORMAT_ELAPSED_DAYS
       : DURATION_FORMAT_DAYS;
   }
 
-  /** `<ActualWork>`/`<RemainingWork>`/`<ActualCost>`/`<RemainingCost>` da tarefa. */
+  /** `<ActualWork>`/`<RemainingWork>`/`<ActualCost>`/`<RemainingCost>` of the task. */
   private appendTaskProgress(
     t: XMLElement,
     task: Task,
@@ -1216,7 +1284,7 @@ export class MspXmlRE extends ReportBase {
     const effort = (task.getForScenario("effort", sc,) as number) ?? 0;
     const done = (task.getForScenario("effortdone", sc,) as number) ?? 0;
     if (effort <= 0 || done <= 0) return;
-    // `effort`/`effortdone` são armazenados em slots, não em dias.
+    // `effort`/`effortdone` are stored in slots, not in days.
     const granularity = this.granularity();
     const actualWork = done * granularity;
     const remainingWork = Math.max(0, effort - done,) * granularity;
@@ -1235,11 +1303,11 @@ export class MspXmlRE extends ReportBase {
         ),
       );
     }
-    // `end` permanece no contrato para futuras fatias de custo por período.
+    // `end` stays in the contract for future per-period cost slices.
     void end;
   }
 
-  /** Progresso de uma atribuição humana (proporcional ao esforço da tarefa). */
+  /** Progress of a human assignment (proportional to the task effort). */
   private appendAssignmentProgress(
     a: XMLElement,
     task: Task,
@@ -1274,7 +1342,7 @@ export class MspXmlRE extends ReportBase {
   }
 
   /**
-   * Soma dos `CostEvent` da tarefa (8.2) por modo e, opcionalmente, recurso.
+   * Sum of the `CostEvent`s of the task (8.2) by mode and, optionally, resource.
    */
   private costEvents(
     task: Task,
@@ -1292,7 +1360,7 @@ export class MspXmlRE extends ReportBase {
   }
 }
 
-/** Converte uma duração em segundos para o formato `PT{H}H{M}M{S}S` do MSP. */
+/** Converts a duration in seconds to the MSP `PT{H}H{M}M{S}S` form. */
 export function durationToMsp(duration: number,): string {
   const hours = Math.floor(duration / (60 * 60),);
   const minutes = Math.floor((duration - hours * 60 * 60) / 60,);
@@ -1300,7 +1368,7 @@ export function durationToMsp(duration: number,): string {
   return `PT${hours}H${minutes}M${seconds}S`;
 }
 
-/** Converte segundos desde a meia-noite para `HH:MM:SS`. */
+/** Converts seconds since midnight to `HH:MM:SS`. */
 export function daytimeToS(t: number,): string {
   const h = Math.floor(t / (60 * 60),);
   const m = Math.floor((t - h * 60 * 60) / 60,);
@@ -1312,7 +1380,7 @@ function pad2(n: number,): string {
   return n.toString().padStart(2, "0",);
 }
 
-/** Verificação de igualdade por valor de um par `[tarefa, onEnd]`. */
+/** Value equality check of a `[task, onEnd]` pair. */
 function predsInclude(
   preds: [Task | null, boolean,][],
   dt: Task,

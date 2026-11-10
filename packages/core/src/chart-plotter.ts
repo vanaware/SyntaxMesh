@@ -1,19 +1,22 @@
 /**
- * ChartPlotter (Fase 14.22.2) — SVG de linhas a partir da tabela de trace.
+ * ChartPlotter (phase 14.22.2) — line chart rendered as SVG from the trace
+ * table.
  *
- * Porta fiel de `docs/taskjuggler/lib/taskjuggler/reports/ChartPlotter.rb`.
- * Recebe a tabela `[["Date", ...labels], [TjTime, v1, v2, ...], ...]` (o
- * `TraceReport`), transpõe em colunas, valida os tipos (datas X na 1ª coluna;
- * colunas Y todas `number` **ou** todas `TjTime`), calcula a geometria e desenha
- * grade + séries + legenda sobre um {@link Painter} (17.15: o mínimo
- * `PainterMin` da Fase 14.22 foi substituído pelo Painter real de `src/painter/`).
+ * Faithful port of `docs/taskjuggler/lib/taskjuggler/reports/ChartPlotter.rb`.
+ * Receives the `[['Date', ...labels], [TjTime, v1, v2, ...], ...]` table (the
+ * `TraceReport`), transposes it into columns, validates the types (dates in the
+ * first column; Y columns all `number` **or** all `TjTime`), computes the
+ * geometry and draws grid + series + legend over a {@link Painter} (17.15: the
+ * minimal `PainterMin` of phase 14.22 was replaced by the real Painter from
+ * `src/painter/`).
  *
- * `Painter::FontMetrics` real existe desde a 17.11, mas o `ChartPlotter.rb`
- * usa estimativas próprias para o layout ("10pt × ~0.55/char"); mantemos as
- * aproximações determinísticas do port, fiéis ao comportamento do Ruby.
+ * `Painter::FontMetrics` exists since 17.11, but `ChartPlotter.rb` uses its own
+ * estimates for the layout ("10pt x ~0.55/char"); the deterministic
+ * approximations of the port are kept, faithful to the Ruby behaviour.
  *
- * Erros de dados viram {@link ChartPlotterError} (Ruby `ChartPlotterError`),
- * capturado pelo `TraceReport.to_html` como aviso (fiel ao `rescue`).
+ * Invalid data raises {@link ChartPlotterError} (Ruby `ChartPlotterError`),
+ * caught by `TraceReport.to_html` and reported as a warning (faithful to the
+ * `rescue`).
  *
  * @see docs/taskjuggler/lib/taskjuggler/reports/ChartPlotter.rb
  * @see docs/syntaxmesh/fases/fase-14-relatorios-tarefas.md (14.22.2)
@@ -27,15 +30,15 @@ import { TjTime, } from "./time/tj-time.ts";
 
 const DAY_SECONDS = 60 * 60 * 24;
 
-/** Lançado para dados inválidos do gráfico (equivalente ao Ruby). */
+/** Raised on invalid chart data (equivalent to the Ruby exception). */
 export class ChartPlotterError extends Error {}
 
-/** Valor de uma célula Y: data, número ou ausente. */
-type CellValue = TjTime | number | null | undefined;
+/** Value of a Y cell: a date, a number, or missing. */
+export type CellValue = TjTime | number | null | undefined;
 
 /**
- * Estimativa de métricas de fonte (substituto mínimo de `Painter::FontMetrics`).
- * Determinística e independente de backend de fontes.
+ * Font metric estimate (minimal replacement for `Painter::FontMetrics`).
+ * Deterministic and independent of any font backend.
  */
 function textWidth(fontSize: number, str: string,): number {
   return Math.round(str.length * fontSize * 0.55,);
@@ -44,12 +47,19 @@ function textHeight(fontSize: number,): number {
   return Math.round(fontSize * 1.16,);
 }
 
+/**
+ * ChartPlotter — plots one line series per column of the trace table.
+ *
+ * @see docs/taskjuggler/lib/taskjuggler/reports/ChartPlotter.rb
+ */
 export class ChartPlotter {
+  /** Width of the canvas in pixels. */
   readonly width: number;
+  /** Height of the canvas in pixels. */
   readonly height: number;
   private readonly data: unknown[][];
 
-  // Margens e geometria da legenda (valores literais do Ruby).
+  // Legend margins and geometry (literal values from the Ruby original).
   private readonly topMargin = 30;
   private readonly bottomMargin = 30;
   private readonly leftMargin = 70;
@@ -61,7 +71,7 @@ export class ChartPlotter {
   private readonly labelX: number;
   private labelHeight = 24;
 
-  // Origem (0,0) do sistema de coordenadas do gráfico.
+  // Origin (0,0) of the chart coordinate system.
   private readonly x0: number;
   private readonly y0: number;
 
@@ -82,6 +92,13 @@ export class ChartPlotter {
 
   private painter: Painter | null = null;
 
+  /**
+   * Creates a plotter for a canvas of the given size.
+   *
+   * @param width Width of the canvas in pixels.
+   * @param height Height of the canvas in pixels.
+   * @param data Trace table: header row followed by one row per data point.
+   */
   constructor(width: number, height: number, data: unknown[][],) {
     this.width = width;
     this.height = height;
@@ -93,33 +110,73 @@ export class ChartPlotter {
     this.y0 = height - this.bottomMargin;
   }
 
-  // ——— Estado derivado (inspeção/testes) ———
+  // ——— Derived state (inspection/testing) ———
+  /**
+   * Labels of the plotted series.
+   *
+   * @returns The header labels of the Y columns.
+   */
   getLabels(): readonly string[] {
     return this.labels;
   }
+  /**
+   * Values of every plotted series.
+   *
+   * @returns One array of cell values per series.
+   */
   getYData(): readonly CellValue[][] {
     return this.yData;
   }
+  /**
+   * X axis dates.
+   *
+   * @returns The dates of the first column, or `null` before analysis.
+   */
   getXData(): readonly TjTime[] | null {
     return this.xData;
   }
+  /**
+   * Data type detected for the Y columns.
+   *
+   * @returns `'date'`, `'number'`, or `null` before analysis.
+   */
   getDataType(): "date" | "number" | null {
     return this.dataType;
   }
+  /**
+   * Range of the X axis.
+   *
+   * @returns The minimum and maximum date, or `null` for an empty range.
+   */
   getXRange(): [TjTime | null, TjTime | null,] {
     return [this.xMinDate, this.xMaxDate,];
   }
+  /**
+   * Numeric range of the Y axis.
+   *
+   * @returns The minimum and maximum value, or `null` for an empty range.
+   */
   getYNumericRange(): [number | null, number | null,] {
     return [this.yMinVal, this.yMaxVal,];
   }
+  /**
+   * Number of labels drawn on the X axis.
+   *
+   * @returns The label count computed by the geometry pass.
+   */
   getNoXLabels(): number {
     return this.noXLabels;
   }
+  /**
+   * Number of labels drawn on the Y axis.
+   *
+   * @returns The label count computed by the geometry pass.
+   */
   getNoYLabels(): number {
     return this.noYLabels;
   }
 
-  /** Constrói o gráfico (Painter) a partir dos dados. */
+  /** Builds the chart in a `Painter` from the table data. */
   generate(): void {
     this.analyzeData();
     this.calcChartGeometry();
@@ -127,49 +184,78 @@ export class ChartPlotter {
     this.painter = painter;
     this.drawGrid(painter,);
     for (let ci = 0; ci < this.yData.length; ci++) {
-      // Matiz primário (60° apart) + shift por rodada + saturação decrescente.
+      // Primary hue (60° apart) + per-round shift + decreasing saturation.
       const round = Math.floor(ci / 6,);
       const hue = (60 * (ci % 6) + Math.floor(60 / (1 + round),)) % 360;
       const sat = 255 - Math.floor(ci / 8,);
-      // Ruby `Painter::Color.new(h, s, v, :hsv)` — o 4º argumento é ignorado
-      // no Ruby e no port (modo HSV vem da aridade 4).
+      // Ruby `Painter::Color.new(h, s, v, :hsv)` — the 4th argument is ignored
+      // in Ruby and in the port (HSV mode comes from the 4-argument arity).
       const color = painter.color(hue, sat, 230, "hsv",);
       this.drawDataGraph(painter, ci, color,);
       this.drawLegendEntry(painter, ci, color,);
     }
   }
 
-  /** Serializa o SVG (string). Gera sob demanda se necessário. */
+  /**
+   * Serializes the chart to SVG. The chart is generated on demand.
+   *
+   * @returns The SVG markup as a string.
+   */
   to_svg(): string {
     if (!this.painter) this.generate();
     return (this.painter as Painter).to_svg().toHTML();
   }
 
-  // ——— Conversores de coordenada (públicos para testes) ———
+  // ——— Coordinate conversions (public for tests) ———
 
-  /** Coordenada X do gráfico → canvas. */
+  /**
+   * Converts a chart X coordinate to the canvas.
+   *
+   * @param x X coordinate in the chart system.
+   * @returns The corresponding canvas X.
+   */
   x2c(x: number,): number {
     return this.x0 + x;
   }
-  /** Coordenada Y do gráfico → canvas (Y invertido). */
+  /**
+   * Converts a chart Y coordinate to the canvas (Y axis is inverted).
+   *
+   * @param y Y coordinate in the chart system.
+   * @returns The corresponding canvas Y.
+   */
   y2c(y: number,): number {
     return this.y0 - y;
   }
-  /** Data → X do canvas. */
+  /**
+   * Converts a date to a canvas X coordinate.
+   *
+   * @param date Position along the X axis.
+   * @returns The corresponding canvas X.
+   */
   xDate2c(date: TjTime,): number {
     const xMin = this.xMinDate as TjTime;
     const xMax = this.xMaxDate as TjTime;
     const px = this.width - (this.leftMargin + this.rightMargin);
     return this.x2c((date.diff(xMin,) * px) / xMax.diff(xMin,),);
   }
-  /** Data Y → Y do canvas. */
+  /**
+   * Converts a date to a canvas Y coordinate.
+   *
+   * @param date Position along the Y axis.
+   * @returns The corresponding canvas Y.
+   */
   yDate2c(date: TjTime,): number {
     const yMin = this.yMinDate as TjTime;
     const yMax = this.yMaxDate as TjTime;
     const px = this.height - (this.topMargin + this.bottomMargin);
     return this.y2c((date.diff(yMin,) * px) / yMax.diff(yMin,),);
   }
-  /** Valor numérico Y → Y do canvas. */
+  /**
+   * Converts a numeric value to a canvas Y coordinate.
+   *
+   * @param number Position along the numeric Y axis.
+   * @returns The corresponding canvas Y.
+   */
   yNum2c(number: number,): number {
     const yMin = this.yMinVal as number;
     const yMax = this.yMaxVal as number;
@@ -177,8 +263,13 @@ export class ChartPlotter {
     return this.y2c(((number - yMin) * px) / (yMax - yMin),);
   }
 
+  /**
+   * Transposes the table and validates the column types.
+   *
+   * @throws ChartPlotterError When the data is inconsistent.
+   */
   private analyzeData(): void {
-    // Transpõe linhas → colunas.
+    // Transposes rows into columns.
     const columns: unknown[][] = [];
     let ri = 0;
     for (const row of this.data) {
@@ -194,7 +285,7 @@ export class ChartPlotter {
       ri += 1;
     }
 
-    // Primeira coluna: cabeçalho "Date" + datas TjTime.
+    // First column: the 'Date' header followed by TjTime dates.
     let sawHeader = false;
     let line = 1;
     for (const date of columns[0] as unknown[]) {
@@ -228,7 +319,7 @@ export class ChartPlotter {
 
     this.xData = (columns[0] as unknown[]).slice(1,) as TjTime[];
 
-    // Demais colunas: valida consistência de tipo e acumula min/max.
+    // Remaining columns: validate type consistency and accumulate min/max.
     for (let colIdx = 1; colIdx < columns.length; colIdx++) {
       const col = columns[colIdx] as unknown[];
       let badCol = false;
@@ -282,6 +373,11 @@ export class ChartPlotter {
     }
   }
 
+  /**
+   * Computes the label counts, the date widths and the axis ranges.
+   *
+   * @throws ChartPlotterError When the data type is unsupported.
+   */
   private calcChartGeometry(): void {
     const xAxisPixels = this.width - (this.rightMargin + this.leftMargin);
     this.dateLabelWidth = textWidth(10.0, "2000-01-01",);
@@ -321,6 +417,11 @@ export class ChartPlotter {
     }
   }
 
+  /**
+   * Draws the date labels of the X axis.
+   *
+   * @param painter Group that receives the labels.
+   */
   private xLabels(painter: Group,): void {
     const xMin = this.xMinDate as TjTime;
     const xMax = this.xMaxDate as TjTime;
@@ -350,6 +451,12 @@ export class ChartPlotter {
     );
   }
 
+  /**
+   * Draws the labels of the Y axis (dates or numbers).
+   *
+   * @param painter Group that receives the labels.
+   * @throws ChartPlotterError When the data type is unsupported.
+   */
   private yLabels(painter: Group,): void {
     if (this.dataType === "date") {
       if (!(this.yMinDate && this.yMaxDate)) return;
@@ -383,7 +490,7 @@ export class ChartPlotter {
       if (!(this.yMinVal !== null && this.yMaxVal !== null)) return;
       const yInterval = (this.yMaxVal as number) - (this.yMinVal as number);
       let labelInterval = yInterval / this.noYLabels;
-      // Arredonda o intervalo para 1, 2 ou 5 como dígito mais significativo.
+      // Rounds the interval to 1, 2 or 5 as the most significant digit.
       const factor = 10 ** Math.floor(Math.log10(labelInterval,),);
       let msd = Math.ceil(labelInterval / factor,);
       if (msd === 3 || msd === 4) msd = 5;
@@ -422,6 +529,11 @@ export class ChartPlotter {
     throw new ChartPlotterError(`Unsupported dataType ${this.dataType}`,);
   }
 
+  /**
+   * Draws both axes and their labels.
+   *
+   * @param painter Painter that receives the grid.
+   */
   private drawGrid(painter: Painter,): void {
     painter.group({ stroke: painter.color("black",), font_size: 11, }, (p,) => {
       p.line(
@@ -441,6 +553,13 @@ export class ChartPlotter {
     },);
   }
 
+  /**
+   * Draws one series as a polyline with markers.
+   *
+   * @param painter Painter that receives the series.
+   * @param ci Index of the series.
+   * @param color Color of the series.
+   */
   private drawDataGraph(
     painter: Painter,
     ci: number,
@@ -471,6 +590,13 @@ export class ChartPlotter {
     );
   }
 
+  /**
+   * Draws the legend entry of one series.
+   *
+   * @param painter Painter that receives the entry.
+   * @param ci Index of the series.
+   * @param color Color of the series.
+   */
   private drawLegendEntry(
     painter: Painter,
     ci: number,
@@ -503,6 +629,14 @@ export class ChartPlotter {
     );
   }
 
+  /**
+   * Draws the marker shape of one series, rotating through five shapes.
+   *
+   * @param p Group that receives the marker.
+   * @param type Index of the series, used to pick the shape.
+   * @param x Canvas X of the marker.
+   * @param y Canvas Y of the marker.
+   */
   private setMarker(
     p: Group,
     type: number,
@@ -512,7 +646,7 @@ export class ChartPlotter {
     const r = 4;
     switch (Math.floor(type / 5,) % 5) {
       case 0: {
-        // Losango.
+        // Diamond.
         const points: Point[] = [
           [x - r, y,],
           [x, y + r,],
@@ -524,13 +658,13 @@ export class ChartPlotter {
         break;
       }
       case 1: {
-        // Quadrado.
+        // Square.
         const rr = Math.floor(r / Math.sqrt(2.0,),);
         p.rect(x - rr, y - rr, 2 * rr, 2 * rr,);
         break;
       }
       case 2: {
-        // Triângulo para baixo.
+        // Downward triangle.
         const points: Point[] = [
           [x - r, y - r,],
           [x, y + r,],
@@ -541,7 +675,7 @@ export class ChartPlotter {
         break;
       }
       case 3: {
-        // Triângulo para cima.
+        // Upward triangle.
         const points: Point[] = [
           [x - r, y + r,],
           [x, y - r,],
@@ -556,6 +690,12 @@ export class ChartPlotter {
     }
   }
 
+  /**
+   * Raises a {@link ChartPlotterError} for invalid data.
+   *
+   * @param msg Description of the problem.
+   * @throws ChartPlotterError Always.
+   */
   private error(msg: string,): never {
     throw new ChartPlotterError(msg,);
   }

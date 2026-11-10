@@ -4,10 +4,10 @@ import { type CostType, } from "../model/account.ts";
 import { ChargeSet, } from "./charge-set.ts";
 
 /**
- * Coleção de charge sets para Task, Resource e Material.
+ * Collection of charge sets for Task, Resource and Material.
  *
- * Substitui o chargeset singular do TaskJuggler por um modelo que suporta
- * múltiplos chargesets por propriedade, com validação por top-level account.
+ * Replaces TaskJuggler's singular chargeset with a model that supports
+ * multiple chargesets per property, validated per top-level account.
  *
  * @see docs/taskjuggler/lib/taskjuggler/ChargeSet.rb
  */
@@ -19,8 +19,8 @@ export class ChargeSetCollection {
   }
 
   /**
-   * Retorna o master (top-level account) do primeiro charge set na coleção.
-   * Retorna null se a coleção está vazia.
+   * Returns the master (top-level account) of the first charge set in the
+   * collection, or null when the collection is empty.
    */
   get master(): Account | null {
     const firstEntry = this.sets.values().next();
@@ -31,12 +31,12 @@ export class ChargeSetCollection {
   }
 
   /**
-   * Adiciona um charge set à coleção.
+   * Adds a charge set to the collection.
    *
-   * Regras:
-   * - O set deve ter um master (charge set não vazio)
-   * - Apenas um set por top-level account
-   * - Todos os membros devem pertencer ao mesmo top-level account
+   * Rules:
+   * - The set must have a master (non-empty charge set)
+   * - Only one set per top-level account
+   * - Every member must belong to the same top-level account
    */
   add(set: ChargeSet,): void {
     const top = set.master;
@@ -52,19 +52,19 @@ export class ChargeSetCollection {
   }
 
   /**
-   * Retorna o charge set para um top-level account específico.
+   * Returns the charge set for a specific top-level account.
    */
   forTop(top: Account,): ChargeSet | null {
     return this.sets.get(top,) ?? null;
   }
 
   /**
-   * Resolve um charge set por tipo de custo.
+   * Resolves a charge set by cost type.
    *
-   * Para um determinado tipo (task, resource, material), retorna o charge set
-   * apropriado. Quando chamado sem fonte, usa o primeiro (único) charge set
-   * da coleção. Quando chamado com fonte, usa o chargeset da entidade
-   * correspondente (task/resource/material).
+   * For a given type (task, resource, material) it returns the appropriate
+   * charge set. When called without a source it uses the first (only) charge
+   * set of the collection. When called with a source it uses the chargeset of
+   * the corresponding entity (task/resource/material).
    */
   forType(
     type: CostType,
@@ -72,7 +72,7 @@ export class ChargeSetCollection {
   ): ChargeSet | null {
     switch (type) {
       case "task":
-        // task_charge usa o chargeset da tarefa
+        // task_charge uses the task chargeset
         if (source?.task) {
           const task = source.task as unknown as {
             chargeset: ChargeSetCollection;
@@ -81,10 +81,10 @@ export class ChargeSetCollection {
           if (master === null) return null;
           return task.chargeset.forTop(master,);
         }
-        // Sem fonte: usar o primeiro chargeset da coleção
+        // No source: use the first chargeset of the collection
         return this.first();
       case "resource":
-        // resource_effort usa o chargeset da origem (resource)
+        // resource_effort uses the chargeset of the source (resource)
         if (source?.resource) {
           const resource = source.resource as unknown as {
             chargeset: ChargeSetCollection;
@@ -93,10 +93,10 @@ export class ChargeSetCollection {
           if (master === null) return null;
           return resource.chargeset.forTop(master,);
         }
-        // Sem fonte: usar o primeiro chargeset da coleção
+        // No source: use the first chargeset of the collection
         return this.first();
       case "material":
-        // material_usage usa o chargeset da origem (material)
+        // material_usage uses the chargeset of the source (material)
         if (source?.material) {
           const material = source.material as unknown as {
             chargeset: ChargeSetCollection;
@@ -105,7 +105,7 @@ export class ChargeSetCollection {
           if (master === null) return null;
           return material.chargeset.forTop(master,);
         }
-        // Sem fonte: usar o primeiro chargeset da coleção
+        // No source: use the first chargeset of the collection
         return this.first();
       default:
         return null;
@@ -113,7 +113,7 @@ export class ChargeSetCollection {
   }
 
   /**
-   * Retorna o primeiro charge set na coleção (ou null se vazia).
+   * Returns the first charge set in the collection (or null when empty).
    */
   private first(): ChargeSet | null {
     const firstEntry = this.sets.values().next();
@@ -124,21 +124,21 @@ export class ChargeSetCollection {
   }
 
   /**
-   * Retorna todos os charge sets na coleção.
+   * Returns every charge set in the collection.
    */
   all(): Iterable<ChargeSet> {
     return this.sets.values();
   }
 
   /**
-   * Verifica se a coleção está vazia.
+   * Tells whether the collection is empty.
    */
   empty(): boolean {
     return this.sets.size === 0;
   }
 
   /**
-   * Retorna o número de charge sets na coleção.
+   * Returns the number of charge sets in the collection.
    */
   size(): number {
     return this.sets.size;

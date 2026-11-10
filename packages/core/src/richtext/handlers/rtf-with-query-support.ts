@@ -1,18 +1,18 @@
 /**
- * RTFWithQuerySupport — base para handlers de função que resolvem um `Query`
- * (Fase 12.13).
+ * RTFWithQuerySupport — base for function handlers that resolve a `Query`
+ * (phase 12.13).
  *
- * Adiciona ao {@link RichTextFunctionHandler} um campo `query` (o modelo
- * preenchido pelo `ReportContext`) e um setter `setQuery` que **duplica** a
- * query recebida — o handler a modifica durante `prepareQuery`, então não pode
- * contaminar a instância original. `RichTextIntermediate.setQuery` propaga a
- * query aos handlers que expõem este método.
+ * Adds to {@link RichTextFunctionHandler} a `query` field (the model filled by
+ * the `ReportContext`) and a `setQuery` setter that **duplicates** the received
+ * query — the handler modifies it during `prepareQuery`, so it must not
+ * contaminate the original instance. `RichTextIntermediate.setQuery` propagates
+ * the query to the handlers exposing this method.
  *
- * Port fiel de `RichText/RTFWithQuerySupport.rb:19-33`. O `dup()` da base
- * (cópia rasa) preserva `query` automaticamente.
+ * Faithful port of `RichText/RTFWithQuerySupport.rb:19-33`. The base `dup()`
+ * (shallow copy) preserves `query` automatically.
  *
  * @see docs/taskjuggler/lib/taskjuggler/RichText/RTFWithQuerySupport.rb
- * @see ADR 025 (RichText e function handlers)
+ * @see ADR 025 (RichText and function handlers)
  */
 
 import { RichTextFunctionHandler, } from "./function-handler.ts";
@@ -20,7 +20,7 @@ import type { SourceFileInfo, } from "../../source-file-info.ts";
 import type { Query, } from "../../query/query.ts";
 
 export abstract class RTFWithQuerySupport extends RichTextFunctionHandler {
-  /** Query-modelo registrada pelo contexto; `null` até `setQuery`. */
+  /** Template query registered by the context; `null` until `setQuery`. */
   protected query: Query | null = null;
 
   constructor(
@@ -32,8 +32,8 @@ export abstract class RTFWithQuerySupport extends RichTextFunctionHandler {
   }
 
   /**
-   * Registra a `Query` usada para resolver as consultas. Duplica o objeto, pois
-   * ele será modificado (RTFWithQuerySupport.rb:29-31).
+   * Registers the `Query` used to resolve the lookups. Duplicates the object,
+   * since it will be modified (RTFWithQuerySupport.rb:29-31).
    */
   setQuery(query: Query,): void {
     this.query = query.dup();

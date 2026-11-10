@@ -1,42 +1,42 @@
 /**
- * `reporter.ts` — mensagens do envelope no terminal (24.4).
+ * `reporter.ts` — envelope messages in the terminal (24.4).
  *
- * A CLI **não** lê o `MessageHandlerInstance` vivo: as mensagens chegam
- * estruturadas em `result.messages` (`severity`/`id`/`text`/`file`/`line`), o
- * mesmo dado que o envelope transporta para a PWA. Formato fiel ao Ruby
- * (`Message#to_s`): `arquivo:linha: Tipo: texto`, com o tipo capitalizado.
+ * The CLI does **not** read the live `MessageHandlerInstance`: messages arrive
+ * structured in `result.messages` (`severity`/`id`/`text`/`file`/`line`), the same
+ * data the envelope carries to the PWA. Format faithful to Ruby
+ * (`Message#to_s`): `file:line: Type: text`, with the type capitalised.
  *
- * Saída em **stderr**, como `$stderr.puts msg.to_s` no Ruby: o `stdout` fica
- * reservado ao conteúdo dos relatórios (política de saída, 24.5), o que torna
- * `syntaxmesh proj.smx --report x > out.html` previsível.
+ * Output on **stderr**, as `$stderr.puts msg.to_s` in Ruby: `stdout` stays
+ * reserved for the report content (output policy, 24.5), which makes
+ * `syntaxmesh proj.smx --report x > out.html` predictable.
  *
  * @see docs/taskjuggler/lib/taskjuggler/MessageHandler.rb (Message#to_s)
  * @see docs/syntaxmesh/fases/fase-24-cli-tarefas.md (24.4)
  */
 import type { ExecutionMessage, } from "@vanaware/syntaxmesh";
 
-/** Escreve uma linha; injetável para os testes não usarem mock global. */
+/** Writes a line; injectable so tests need no global mock. */
 export type WriteLine = (text: string,) => void;
 
-/** Opções do renderer (resolvidas por `--silent`/`--no-color`/TTY). */
+/** Renderer options (resolved from `--silent`/`--no-color`/TTY). */
 export interface ReporterOptions {
-  /** `--silent`: suprime info/debug (erros e avisos continuam). */
+  /** `--silent`: suppresses info/debug (errors and warnings still appear). */
   silent?: boolean;
-  /** `false` desliga o ANSI (pipe, redirecionamento ou `--no-color`). */
+  /** `false` turns ANSI off (pipe, redirection or `--no-color`). */
   color?: boolean;
-  /** `stdout` (resumo do projeto, 24.4.5). */
+  /** `stdout` (project summary, 24.4.5). */
   out?: WriteLine;
-  /** `stderr` (mensagens e contagem final). */
+  /** `stderr` (messages and final count). */
   err?: WriteLine;
 }
 
-/** Contagem final, derivada do envelope. */
+/** Final count derived from the envelope. */
 export interface MessageCounts {
   errors: number;
   warnings: number;
 }
 
-/** Cor SGR por severidade (`Message#to_s` do Ruby). */
+/** SGR colour per severity (Ruby's `Message#to_s`). */
 const COLORS: Record<ExecutionMessage["severity"], string> = {
   fatal: "\u001b[31m",
   error: "\u001b[31m",
@@ -45,20 +45,20 @@ const COLORS: Record<ExecutionMessage["severity"], string> = {
   debug: "\u001b[32m",
 };
 
-/** Reset do ANSI. */
+/** ANSI reset. */
 const RESET = "\u001b[0m";
 
-/** Tipo capitalizado, como `@type.to_s.capitalize` no Ruby. */
+/** Capitalised type, as in Ruby's `@type.to_s.capitalize`. */
 function label(severity: ExecutionMessage["severity"],): string {
   return severity.charAt(0,).toUpperCase() + severity.slice(1,);
 }
 
 /**
- * Renderiza uma mensagem do envelope em uma linha.
+ * Renders one envelope message as a single line.
  *
- * `arquivo:linha: Tipo: texto` quando há origem; sem origem cai para
- * `Tipo: texto`. Os campos `file`/`line` do envelope já vêm separados, então a
- * formatação não depende de `SourceFileInfo`.
+ * `file:line: Type: text` when there is an origin; without an origin it falls
+ * back to `Type: text`. The `file`/`line` fields of the envelope already arrive
+ * separated, so the formatting does not depend on `SourceFileInfo`.
  */
 export function formatMessage(
   message: ExecutionMessage,
@@ -76,13 +76,13 @@ export function formatMessage(
     : body;
 }
 
-/** `--silent` esconde info e debug; erros/avisos sempre aparecem. */
+/** `--silent` hides info and debug; errors/warnings always appear. */
 function isHidden(message: ExecutionMessage, silent: boolean,): boolean {
   return silent &&
     (message.severity === "info" || message.severity === "debug");
 }
 
-/** Reporter de terminal: mensagens + contagem final. */
+/** Terminal reporter: messages plus the final count. */
 export class Reporter {
   private readonly silent: boolean;
   private readonly color: boolean;
@@ -96,17 +96,17 @@ export class Reporter {
     this.out = options.out ?? ((text: string,) => console.log(text,));
   }
 
-  /** Imprime uma mensagem respeitando nível, silêncio e cor. */
+  /** Prints a message respecting level, silence and colour. */
   message(message: ExecutionMessage,): void {
     if (isHidden(message, this.silent,)) return;
     this.err(formatMessage(message, this.color,),);
   }
 
   /**
-   * Erro nascido na CLI (não no envelope) — ex.: falha de um relatório.
+   * Error born in the CLI (not in the envelope) — e.g. a failed report.
    *
-   * Usa o mesmo formato de `Error:` do `Message#to_s` e **nunca** é silenciado:
-   * `--silent` cala progresso, não fracasso.
+   * Uses the same `Error:` format as `Message#to_s` and is **never** silenced:
+   * `--silent` mutes progress, not failure.
    */
   error(text: string,): void {
     this.err(
@@ -120,7 +120,7 @@ export class Reporter {
     );
   }
 
-  /** Conta erros/avisos do envelope (fatal conta como erro, como no Ruby). */
+  /** Counts envelope errors/warnings (fatal counts as an error, as in Ruby). */
   static count(messages: readonly ExecutionMessage[],): MessageCounts {
     let errors = 0;
     let warnings = 0;
@@ -135,11 +135,11 @@ export class Reporter {
   }
 
   /**
-   * Imprime todas as mensagens e devolve a contagem final.
+   * Prints every message and returns the final count.
    *
-   * A linha `N errors, M warnings` só aparece quando há algo a reportar — uma
-   * execução limpa não ganha ruído. **Adaptação** ao `tj3`: o Ruby não imprime
-   * contagem (as mensagens bastam), mas o plano 24.4.4 a pede como resumo.
+   * The `N errors, M warnings` line only appears when there is something to
+   * report — a clean run gets no noise. **Adaptation** to `tj3`: Ruby prints no
+   * count (the messages suffice), but plan 24.4.4 asks for it as a summary.
    */
   report(
     messages: readonly ExecutionMessage[],
@@ -152,14 +152,14 @@ export class Reporter {
     return counts;
   }
 
-  /** Linha de resumo do projeto (`summary.ts`); vazia é no-op. */
+  /** Project summary line (`summary.ts`); an empty list is a no-op. */
   summary(lines: readonly string[],): void {
     if (this.silent) return;
     for (const line of lines) this.out(line,);
   }
 }
 
-/** `2 errors, 5 warnings` — sempre com singular/plural corretos. */
+/** `2 errors, 5 warnings` — always with correct singular/plural. */
 export function summaryLine(counts: MessageCounts,): string {
   const plural = (count: number, noun: string,): string =>
     `${count} ${noun}${count === 1 ? "" : "s"}`;

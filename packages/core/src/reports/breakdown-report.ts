@@ -1,28 +1,29 @@
 /**
- * BreakdownReport (Fase 14 Complemento C2) — decomposição de custos.
+ * BreakdownReport (phase 14 addendum C2) — cost breakdown.
  *
- * Extensão SyntaxMesh (sem equivalente no TJ Ruby): lista, de forma unificada,
- * os materiais, recursos e charges que compõem os custos de uma conta
- * (`groupby account`, default) ou de uma tarefa (`groupby task`).
+ * SyntaxMesh extension (no equivalent in TJ Ruby): lists, in a unified way, the
+ * materials, resources and charges that make up the costs of an account
+ * (`groupby account`, the default) or of a task (`groupby task`).
  *
- * Fontes de dados (todas já portadas):
- * - `project.costEvents` (8.2) — eventos `task_charge` / `resource_effort` /
- *   `material_usage` com conta, tarefa, recurso e material atribuídos.
- * - `Task#assignedResources` + `TaskScenario#getAllocatedTime` — esforço por
- *   recurso.
- * - `materialallocations` (8.1) + `Material#unitPrice` — quantidade e preço
- *   unitário quando não há `CostEvent` de material (mesma queda da coluna
- *   `materialcost` do `taskreport`, 14C.1.11).
- * - atributo `charge` da tarefa — valor declarado quando não há `CostEvent`.
+ * Data sources (all already ported):
+ * - `project.costEvents` (8.2) — `task_charge` / `resource_effort` /
+ *   `material_usage` events with account, task, resource and material assigned.
+ * - `Task#assignedResources` plus `TaskScenario#getAllocatedTime` — effort per
+ *   resource.
+ * - `materialallocations` (8.1) plus `Material#unitPrice` — quantity and unit
+ *   price when there is no material `CostEvent` (the same fallback as the
+ *   `materialcost` column of `taskreport`, 14C.1.11).
+ * - the `charge` attribute of the task — declared value when there is no
+ *   `CostEvent`.
  *
- * Saídas (ADR 027 — string/estrutura em memória, zero disco, zero DOM):
- * - HTML: tabela hierárquica (`ReportTable`) grupo → contribuintes.
- * - CSV: linhas planas `[entidade, tipo, esforço/quantidade, custo, total]`.
- * - JSON: aninhado por `groupby` (`groups[].contributors[]`).
+ * Outputs (ADR 027 — strings and in-memory structures, no disk, no DOM):
+ * - HTML: hierarchical `ReportTable`, group → contributors.
+ * - CSV: flat rows `[entity, type, effort/quantity, cost, total]`.
+ * - JSON: nested by `groupby` (`groups[].contributors[]`).
  *
- * O tipo é registrado na fábrica de conteúdo sob `breakdownreport`
- * (`ReportType.BreakdownReport`), removendo a âncora `NotYetImplementedError`
- * de 14C.0.10.
+ * The type is registered in the content factory under `breakdownreport`
+ * (`ReportType.BreakdownReport`), removing the `NotYetImplementedError` anchor
+ * of 14C.0.10.
  *
  * @see docs/syntaxmesh/fases/fase-14-relatorios-complemento-tarefas.md (14C.2)
  * @see docs/syntaxmesh/fases/fase-10-complemento1.md §5
@@ -46,46 +47,62 @@ import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 import type { TjTime, } from "../time/tj-time.ts";
 import { registerContentFactory, } from "../model/report-content.ts";
 
-/** Critério de agrupamento (`groupby`). */
+/** Grouping criterion (`groupby`). */
 export type BreakdownGroupBy = "account" | "task";
 
-/** Tipo do contribuinte de um grupo. */
+/** Kind of contributor of a group. */
 export type BreakdownContributorKind = "resource" | "material" | "charge";
 
 /**
- * Contribuinte de um grupo: um recurso, um material ou uma charge.
- * `quantity` é esforço (dias) para recursos, quantidade para materiais e
- * número de eventos para charges; `unit` acompanha o material.
+ * Contributor of a group: a resource, a material or a charge.
+ *
+ * `quantity` is effort (days) for resources, quantity for materials and the
+ * number of events for charges; `unit` accompanies the material.
  */
 export interface BreakdownContributor {
+  /** Kind of the entity being accounted. */
   kind: BreakdownContributorKind;
+  /** Id of the entity. */
   id: string;
+  /** Human-readable name of the entity. */
   name: string;
+  /** Effort in days, quantity in `unit`, or `1` for a declared charge. */
   quantity: number;
+  /** Unit of `quantity` (empty for resources and charges). */
   unit: string;
+  /** Cost attributed to the contributor. */
   cost: number;
+  /** Source of the value (`chargeset`, `allocated`, `planned`, `actual`, …). */
   mode: string;
-  /** Consolidado por `rollupmaterial` (14C.6.9): soma nos totais, não lista. */
+  /** Consolidated by `rollupmaterial` (14C.6.9): counted in the totals, not listed. */
   rolledUp?: boolean;
 }
 
-/** Totais por tipo de contribuinte (e o total do grupo). */
+/** Totals per kind of contributor (plus the total of the group). */
 export interface BreakdownTotals {
+  /** Cost of the resources of the group. */
   resources: number;
+  /** Cost of the materials of the group. */
   materials: number;
+  /** Cost of the charges of the group. */
   charges: number;
+  /** Cost of the group as a whole. */
   total: number;
 }
 
-/** Grupo do breakdown: uma conta ou uma tarefa, com seus contribuintes. */
+/** Breakdown group: an account or a task, with its contributors. */
 export interface BreakdownGroup {
+  /** Id of the account or task the group aggregates. */
   id: string;
+  /** Display name of the group. */
   name: string;
+  /** Contributors of the group, sorted by kind and id. */
   contributors: BreakdownContributor[];
+  /** Totals of the group. */
   totals: BreakdownTotals;
 }
 
-/** Títulos das colunas HTML, na ordem canônica do relatório. */
+/** Titles of the HTML columns, in the canonical order of the report. */
 const COLUMN_TITLES: Record<string, string> = {
   name: "Name",
   resources: "Resources",
@@ -94,7 +111,7 @@ const COLUMN_TITLES: Record<string, string> = {
   total: "Total",
 };
 
-/** Ordem default quando o relatório não declara `columns`. */
+/** Default order used when the report does not declare `columns`. */
 const DEFAULT_COLUMN_ORDER = [
   "name",
   "resources",
@@ -103,10 +120,23 @@ const DEFAULT_COLUMN_ORDER = [
   "total",
 ];
 
+/**
+ * The cost breakdown generator.
+ *
+ * `generateIntermediateFormat()` builds the groups once and derives the HTML
+ * table, the CSV rows and the JSON from them.
+ */
 export class BreakdownReport extends ReportBase {
+  /** Groups built by the last `generateIntermediateFormat()`. */
   private groups: BreakdownGroup[] = [];
+  /** HTML table built by the last `generateIntermediateFormat()`. */
   private table: ReportTable | null = null;
 
+  /**
+   * Creates the breakdown generator of a report.
+   *
+   * @param report Report node the generator renders.
+   */
   constructor(report: Report,) {
     super(report,);
     this.table = new ReportTable();
@@ -114,28 +144,28 @@ export class BreakdownReport extends ReportBase {
     this.table.auxDir = (this.a("auxdir",) as string | undefined) ?? "";
   }
 
-  /** Critério de agrupamento efetivo (default `account`, como no parser). */
+  /** Effective grouping criterion (defaults to `account`, as in the parser). */
   groupby(): BreakdownGroupBy {
     return this.a("groupby",) === "task" ? "task" : "account";
   }
 
-  /** Grupos gerados (leitura, para testes e consumidores). */
+  /** Groups generated by the last run (read by tests and consumers). */
   getGroups(): BreakdownGroup[] {
     return this.groups;
   }
 
-  /** Tabela intermediária do HTML (leitura). */
+  /** Intermediate HTML table (read access). */
   getTable(): ReportTable | null {
     return this.table;
   }
 
   /**
-   * Monta os grupos a partir das contas ou tarefas filtradas e constrói a
-   * tabela HTML. Os formatos são derivados desta mesma estrutura (CSV/JSON),
-   * garantindo consistência entre saídas.
+   * Builds the groups from the filtered accounts or tasks and assembles the
+   * HTML table. The other formats derive from the same structure (CSV/JSON),
+   * which keeps the outputs consistent.
    */
   override generateIntermediateFormat(): void {
-    // Propaga o Query aos blocos de RichText (ReportBase).
+    // Propagates the Query to the RichText blocks (ReportBase).
     super.generateIntermediateFormat();
 
     this.groups = this.groupby() === "task"
@@ -145,14 +175,14 @@ export class BreakdownReport extends ReportBase {
     this.buildTable();
   }
 
-  /** HTML completo da tabela hierárquica. */
+  /** Full HTML of the hierarchical table. */
   to_html(): XMLElementLike[] {
     return this.table ? [this.table.to_html(),] : [];
   }
 
   /**
-   * CSV em linhas planas: uma linha de grupo (`total`) e uma por contribuinte.
-   * Colunas: entidade, tipo do contribuinte, esforço/quantidade, custo, total.
+   * CSV as flat rows: one `total` row per group and one per contributor.
+   * Columns: entity, contributor kind, effort/quantity, cost, total.
    */
   to_csv(): unknown[][] {
     const csv: unknown[][] = [[
@@ -184,7 +214,7 @@ export class BreakdownReport extends ReportBase {
     return csv;
   }
 
-  /** JSON aninhado por `groupby` (14C.0.1). */
+  /** JSON nested by `groupby` (14C.0.1). */
   toJSON(): string {
     return JSON.stringify(
       {
@@ -202,8 +232,8 @@ export class BreakdownReport extends ReportBase {
   }
 
   /**
-   * Documento Markdown (extensão SyntaxMesh — adendo §10): a tabela
-   * hierárquica é a mesma do HTML, em pipes.
+   * Markdown document (SyntaxMesh extension — addendum §10): the same
+   * hierarchical table as the HTML, rendered as pipes.
    */
   to_markdown(): string {
     return markdownSections([
@@ -214,10 +244,10 @@ export class BreakdownReport extends ReportBase {
   }
 
   // ------------------------------------------------------------------
-  // Construção dos grupos
+  // Block construction
   // ------------------------------------------------------------------
 
-  /** Grupos por conta (default): contribuintes atribuídos à conta ou filhas. */
+  /** Groups per account (the default): contributors assigned to the account or to its children. */
   private buildByAccount(): BreakdownGroup[] {
     let accountList = new PropertyList<Account>(this.project.accounts,);
     accountList.query = this.currentQuery();
@@ -238,7 +268,7 @@ export class BreakdownReport extends ReportBase {
     return groups;
   }
 
-  /** Grupos por tarefa (folhas e contêineres, conforme `hidetask`). */
+  /** Groups per task (leaves and containers, according to `hidetask`). */
   private buildByTask(): BreakdownGroup[] {
     let taskList = new PropertyList<Task>(this.project.tasks,);
     taskList.query = this.currentQuery();
@@ -253,7 +283,7 @@ export class BreakdownReport extends ReportBase {
 
     const groups: BreakdownGroup[] = [];
     for (const task of taskList.toArray()) {
-      // Contêineres agregam os filhos (mesma semântica de `assignedResources`).
+      // Containers aggregate their children (same semantics as `assignedResources`).
       const contributors = task.container()
         ? this.containerContributors(task,)
         : this.taskContributors(task,);
@@ -264,9 +294,9 @@ export class BreakdownReport extends ReportBase {
   }
 
   /**
-   * Aplica `sortby` (extensão 14C.1.2) aos grupos: `name` compara texto; os
-   * demais critérios (`resources`/`materials`/`charges`/`total`) comparam
-   * valores numéricos dos totais. Sem `sortby` preserva a ordem natural.
+   * Applies `sortby` (extension 14C.1.2) to the groups: `name` compares text;
+   * the other criteria (`resources`/`materials`/`charges`/`total`) compare the
+   * numeric totals. Without `sortby` the natural order is preserved.
    */
   private sortGroups(groups: BreakdownGroup[],): BreakdownGroup[] {
     const criteria = this.a("sortBy",) as
@@ -297,7 +327,7 @@ export class BreakdownReport extends ReportBase {
     },);
   }
 
-  /** Contribuintes diretos de uma conta (eventos + materiais do chargeset). */
+  /** Direct contributors of an account (events plus the materials of the chargeset). */
   private accountContributors(account: Account,): BreakdownContributor[] {
     const byKey = new Map<string, BreakdownContributor>();
     const [startIdx, endIdx,] = this.periodIdx();
@@ -307,10 +337,10 @@ export class BreakdownReport extends ReportBase {
       if (contributor) this.mergeContributor(byKey, contributor,);
     }
 
-    // Materiais cujo `chargeset` aponta para a conta (ou conta `aggregate
-    // materials`): quantidade derivada das alocações (Σ
-    // `MaterialAllocation.quantity`, 14C.11.10) e custo pela precedência
-    // booking → alocação → material (14C.11.6).
+    // Materials whose `chargeset` points at the account (or an `aggregate
+    // materials` account): the quantity is derived from the allocations (Σ
+    // `MaterialAllocation.quantity`, 14C.11.10) and the cost follows the
+    // booking → allocation → material precedence (14C.11.6).
     const aggregate = account.get("aggregate",);
     for (const raw of this.project.materials.toArray()) {
       const material = raw as Material;
@@ -340,13 +370,13 @@ export class BreakdownReport extends ReportBase {
     return sortContributors(byKey,);
   }
 
-  /** Contribuintes de uma tarefa: recursos, materiais e charges. */
+  /** Contributors of a task: resources, materials and charges. */
   private taskContributors(task: Task,): BreakdownContributor[] {
     const byKey = new Map<string, BreakdownContributor>();
     const [startIdx, endIdx,] = this.periodIdx();
 
     for (const scenarioIdx of this.scenarioIdxList()) {
-      // Recursos alocados: esforço via `getAllocatedTime`, custo via eventos.
+      // Allocated resources: effort through `getAllocatedTime`, cost through events.
       const taskScenario = task.scenarioData(scenarioIdx,);
       for (const raw of task.assignedResources(scenarioIdx,)) {
         const resource = (raw.ptn?.() ?? raw) as Resource;
@@ -369,8 +399,8 @@ export class BreakdownReport extends ReportBase {
         );
       }
 
-      // Materiais alocados: sem `CostEvent`, custo = quantidade × preço da
-      // própria alocação (14C.11.6).
+      // Allocated materials: without a `CostEvent` the cost is quantity × price
+      // of the allocation itself (14C.11.6).
       const allocations =
         (task.getForScenario("materialallocations", scenarioIdx,) ??
           []) as MaterialAllocation[];
@@ -393,7 +423,7 @@ export class BreakdownReport extends ReportBase {
       }
     }
 
-    // Custos: os `CostEvent` substituem a estimativa de materiais/recursos.
+    // Costs: the `CostEvent`s replace the estimate of materials/resources.
     for (const event of this.scopedEvents()) {
       if (event.task !== task) continue;
       if (event.type === "resource_effort") {
@@ -408,7 +438,7 @@ export class BreakdownReport extends ReportBase {
       if (contributor) this.mergeContributor(byKey, contributor,);
     }
 
-    // Charges declaradas no atributo, quando não há `CostEvent` de charge.
+    // Charges declared in the attribute, when there is no charge `CostEvent`.
     if (![...byKey.values(),].some((c,) => c.kind === "charge")) {
       const charges = (task.getForScenario("charge", 0,) ??
         []) as Array<{ amount: number }>;
@@ -431,7 +461,7 @@ export class BreakdownReport extends ReportBase {
     return sortContributors(byKey,);
   }
 
-  /** Contribuintes de um contêiner: união dos filhos. */
+  /** Contributors of a container: union of its children. */
   private containerContributors(task: Task,): BreakdownContributor[] {
     const byKey = new Map<string, BreakdownContributor>();
     for (const kid of task.kids()) {
@@ -448,10 +478,10 @@ export class BreakdownReport extends ReportBase {
   }
 
   // ------------------------------------------------------------------
-  // Helpers de dados
+  // Data helpers
   // ------------------------------------------------------------------
 
-  /** Índices do período do relatório (default: período do projeto). */
+  /** Slot indices of the report period (defaults to the project period). */
   private periodIdx(): [number, number,] {
     const start = (this.a("start",) ?? this.project.get("start",)) as
       | TjTime
@@ -466,13 +496,13 @@ export class BreakdownReport extends ReportBase {
     ];
   }
 
-  /** Cenários reportados (default: cenário 0). */
+  /** Reported scenarios (defaults to scenario 0). */
   private scenarioIdxList(): number[] {
     const scenarios = this.a("scenarios",) as number[] | null;
     return scenarios && scenarios.length > 0 ? scenarios : [0,];
   }
 
-  /** Eventos de custo restritos aos cenários reportados. */
+  /** Cost events restricted to the reported scenarios. */
   private scopedEvents(): CostEvent[] {
     const scenarios = this.scenarioIdxList();
     return this.project.costEvents.filter((event,) =>
@@ -480,7 +510,7 @@ export class BreakdownReport extends ReportBase {
     );
   }
 
-  /** O evento pertence à conta informada ou a uma de suas filhas? */
+  /** Does the event belong to the given account or to one of its children? */
   private eventBelongsToAccount(
     event: CostEvent,
     account: Account,
@@ -490,7 +520,7 @@ export class BreakdownReport extends ReportBase {
     return owner === account || owner.isChildOf(account,);
   }
 
-  /** Converte um `CostEvent` em contribuinte (quando tem entidade associada). */
+  /** Converts a `CostEvent` into a contributor (when it has an associated entity). */
   private contributorFromEvent(
     event: CostEvent,
     startIdx: number,
@@ -532,7 +562,7 @@ export class BreakdownReport extends ReportBase {
         mode: event.mode,
       };
     }
-    // `task_charge`: agregado por modo (planned/actual).
+    // `task_charge`: aggregated by mode (planned/actual).
     return {
       kind: "charge",
       id: event.mode,
@@ -544,7 +574,7 @@ export class BreakdownReport extends ReportBase {
     };
   }
 
-  /** Acumula um contribuinte já existente (mesma chave tipo:id). */
+  /** Accumulates into an existing contributor (same `kind:id` key). */
   private mergeContributor(
     byKey: Map<string, BreakdownContributor>,
     contributor: BreakdownContributor,
@@ -560,7 +590,7 @@ export class BreakdownReport extends ReportBase {
     if (contributor.rolledUp) existing.rolledUp = true;
   }
 
-  /** Troca o custo estimado pelo valor do `CostEvent` (fonte autoritativa). */
+  /** Replaces the estimated cost by the `CostEvent` value (authoritative source). */
   private replaceContributorCost(
     byKey: Map<string, BreakdownContributor>,
     kind: BreakdownContributorKind,
@@ -570,7 +600,7 @@ export class BreakdownReport extends ReportBase {
       | { id: string; name: string }
       | null;
     if (!entity) return;
-    // Material oculto pelo `hidematerial` não gera contribuinte (14C.6.6).
+    // A material hidden by `hidematerial` generates no contributor (14C.6.6).
     const material = kind === "material"
       ? event.material as Material | null
       : null;
@@ -597,16 +627,16 @@ export class BreakdownReport extends ReportBase {
     );
   }
 
-  /** Material oculto por `hidematerial` (14C.6.6). */
+  /** Material hidden by `hidematerial` (14C.6.6). */
   private materialHidden(material: Material,): boolean {
     return this.hiddenBy("hideMaterial", material,);
   }
 
   /**
-   * Quantidade e custo derivados das alocações do material (14C.11.10):
-   * Σ `MaterialAllocation.quantity` e Σ quantidade × preço efetivo da
-   * alocação. Material sem alocação contribui com 0 (o antigo
-   * `totalquantity` foi removido).
+   * Quantity and cost derived from the allocations of the material (14C.11.10):
+   * Σ `MaterialAllocation.quantity` and Σ quantity × effective price of the
+   * allocation. A material without allocations contributes 0 (the old
+   * `totalquantity` was removed).
    */
   private materialAllocationTotals(
     material: Material,
@@ -620,15 +650,15 @@ export class BreakdownReport extends ReportBase {
     return { quantity, cost, };
   }
 
-  /** Material consolidado por `rollupmaterial` (14C.6.9). */
+  /** Material consolidated by `rollupmaterial` (14C.6.9). */
   private materialRolledUp(material: Material,): boolean {
     return this.hiddenBy("rollupMaterial", material,);
   }
 
   /**
-   * Fragmento com `rolledUp` apenas quando o material casa `rollupmaterial`.
-   * Manter a chave ausente nos demais casos preserva o shape do JSON de quem
-   * não usa a diretiva.
+   * Fragment carrying `rolledUp` only when the material matches
+   * `rollupmaterial`. Keeping the key absent in the other cases preserves the
+   * JSON shape for callers that do not use the directive.
    */
   private rolledUpFlag(material: Material | null,): { rolledUp?: boolean } {
     return material && this.materialRolledUp(material,)
@@ -636,7 +666,7 @@ export class BreakdownReport extends ReportBase {
       : {};
   }
 
-  /** Monta o grupo com os totais por tipo. */
+  /** Builds the group with its totals per kind. */
   private makeGroup(
     id: string,
     name: string,
@@ -658,10 +688,10 @@ export class BreakdownReport extends ReportBase {
   }
 
   // ------------------------------------------------------------------
-  // Tabela HTML
+  // HTML table
   // ------------------------------------------------------------------
 
-  /** Ordem efetiva das colunas (`columns` do relatório ∩ canônicas). */
+  /** Effective column order (`columns` of the report ∩ canonical ones). */
   private columnOrder(): string[] {
     const declared = this.a("columns",) as TableColumnDefinition[] | null;
     const ids = (declared ?? [])
@@ -670,7 +700,7 @@ export class BreakdownReport extends ReportBase {
     return ids.length > 0 ? ids : [...DEFAULT_COLUMN_ORDER,];
   }
 
-  /** Constrói a `ReportTable` hierárquica (grupo → contribuintes). */
+  /** Builds the hierarchical `ReportTable` (group → contributors). */
   private buildTable(): void {
     const table = new ReportTable();
     table.selfcontained = !!this.a("selfcontained",);
@@ -707,7 +737,7 @@ export class BreakdownReport extends ReportBase {
     }
   }
 
-  /** Texto de uma célula na linha do grupo. */
+  /** Text of a cell in the group line. */
   private groupCellText(
     group: BreakdownGroup,
     columnId: string,
@@ -735,8 +765,8 @@ export class BreakdownReport extends ReportBase {
   }
 
   /**
-   * Texto de uma célula na linha do contribuinte: o nome na coluna `name`, a
-   * quantidade/esforço na coluna do seu tipo e o custo em `total`.
+   * Text of a cell in the contributor line: the name in the `name` column, the
+   * quantity/effort in the column of its kind and the cost in `total`.
    */
   private contributorCellText(
     contributor: BreakdownContributor,
@@ -748,7 +778,7 @@ export class BreakdownReport extends ReportBase {
     return this.quantityText(contributor,);
   }
 
-  /** Esforço/quantidade legível: `12 d`, `2 kg`, `planned`. */
+  /** Readable effort/quantity: `12 d`, `2 kg`, `planned`. */
   private quantityText(contributor: BreakdownContributor,): string {
     if (contributor.kind === "charge") return contributor.mode;
     const unit = contributor.unit;
@@ -760,12 +790,12 @@ export class BreakdownReport extends ReportBase {
   }
 }
 
-/** Formata um número sem casas decimais desnecessárias. */
+/** Formats a number without unnecessary decimals. */
 function formatNumber(value: number,): string {
   return Number.isInteger(value,) ? String(value,) : value.toFixed(2,);
 }
 
-/** O `chargeset` do material aponta para a conta (ou uma filha)? */
+/** Does the `chargeset` of the material point at the account (or a child)? */
 function chargesetTouches(material: Material, account: Account,): boolean {
   for (const set of material.chargeset.all()) {
     let touches = false;
@@ -777,7 +807,7 @@ function chargesetTouches(material: Material, account: Account,): boolean {
   return false;
 }
 
-/** Contribuintes ordenados por tipo e id (determinismo das saídas). */
+/** Contributors sorted by kind and id (keeps the outputs deterministic). */
 function sortContributors(
   byKey: Map<string, BreakdownContributor>,
 ): BreakdownContributor[] {
@@ -787,7 +817,7 @@ function sortContributors(
   },);
 }
 
-// Registra o conteúdo de `breakdownreport` na fábrica (14.11 / 14C.2.1).
+// Registers the `breakdownreport` content in the factory (14.11 / 14C.2.1).
 registerContentFactory(
   "breakdownreport",
   (report: unknown,): BreakdownReport => new BreakdownReport(report as Report,),

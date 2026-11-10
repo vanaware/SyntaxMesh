@@ -1,12 +1,13 @@
 /**
- * TaskListRE (Fase 14.14) — relatório de listagem de tarefas.
+ * TaskListRE (phase 14.14) — task list report.
  *
- * Porta fiel de `docs/taskjuggler/lib/taskjuggler/reports/TaskListRE.rb`.
- * Especialização de `TableReport` que gera uma lista de tarefas, opcionalmente
- * com os recursos alocados aninhados sob cada linha de tarefa.
+ * Faithful port of
+ * `docs/taskjuggler/lib/taskjuggler/reports/TaskListRE.rb`. A specialization of
+ * `TableReport` that renders a list of tasks, optionally with the allocated
+ * resources nested under each task line.
  *
- * O conteúdo é registrado na fábrica de conteúdo (14.11) sob `taskreport`,
- * permitindo que `Report.generateIntermediateFormat` o instancie.
+ * The content is registered in the content factory (14.11) under `taskreport`,
+ * so `Report.generateIntermediateFormat` can instantiate it.
  *
  * @see docs/syntaxmesh/fases/fase-14-relatorios-tarefas.md (14.14)
  */
@@ -18,22 +19,28 @@ import { ReportTable, } from "./report-table.ts";
 import { TableReport, } from "./table-report.ts";
 import { registerContentFactory, } from "../model/report-content.ts";
 
+/** Renders the `taskreport` list of tasks. */
 export class TaskListRE extends TableReport {
+  /**
+   * Creates the task list generator.
+   *
+   * @param report Report node the generator renders.
+   */
   constructor(report: Report,) {
     super(report,);
-    // O construtor de TableReport define `report.content = this`; aqui criamos
-    // a tabela intermediária real (14.6) que acumulará linhas e colunas.
+    // The TableReport constructor sets `report.content = this`; here we create
+    // the real intermediate table (14.6) that accumulates rows and columns.
     this.table = new ReportTable();
     this.table.selfcontained = !!this.a("selfcontained",);
     this.table.auxDir = (this.a("auxdir",) as string | undefined) ?? "";
   }
 
-  /** Constrói o formato intermediário (tabela) linha a linha. */
+  /** Builds the intermediate format (the table) row by row. */
   override generateIntermediateFormat(): void {
-    // Propaga o Query corrente aos blocos de RichText (ReportBase).
+    // Propagates the current Query to the RichText blocks (ReportBase).
     super.generateIntermediateFormat();
 
-    // Prepara a lista de tarefas.
+    // Prepares the task list.
     let taskList = new PropertyList<Task>(this.project.tasks,);
     taskList.includeAdopted();
     taskList.setSorting(
@@ -50,8 +57,8 @@ export class TaskListRE extends TableReport {
     taskList.sort();
     taskList.checkForDuplicates(this.report.sourceFileInfo as never,);
 
-    // Prepara a lista de recursos. NÃO a filtramos ainda: isso quebraria as
-    // funções lógicas `*_()` usadas nas células.
+    // Prepares the resource list. It is NOT filtered yet: doing so would break
+    // the `*_()` logical functions used inside the cells.
     const resourceList = new PropertyList<Resource>(this.project.resources,);
     resourceList.setSorting(
       this.a("sortResources",) as Array<[string, boolean, number,]>,
@@ -59,7 +66,7 @@ export class TaskListRE extends TableReport {
     resourceList.query = this.currentQuery();
     resourceList.sort();
 
-    // Gera o cabeçalho da tabela (uma coluna de cada vez).
+    // Generates the table header (one column at a time).
     for (const columnDef of this.columnList()) {
       this.adjustColumnPeriod(
         columnDef,
@@ -69,12 +76,12 @@ export class TaskListRE extends TableReport {
       this.generateHeaderCell(columnDef,);
     }
 
-    // Gera a lista em si.
+    // Generates the list itself.
     this.generateTaskList(taskList, resourceList, null,);
   }
 }
 
-// Registra o conteúdo de `taskreport` na fábrica (14.11).
+// Registers the `taskreport` content in the factory (14.11).
 registerContentFactory(
   "taskreport",
   (report: unknown,): TaskListRE => new TaskListRE(report as Report,),

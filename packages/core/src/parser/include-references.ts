@@ -1,32 +1,33 @@
 /**
- * Referências `include` de um texto TJP (Fase 24 — tarefa 24.3.6).
+ * `include` references of a TJP text (phase 24 — task 24.3.6).
  *
- * A CLI precisa entregar o **fechamento completo** de `include`s dentro de
- * `request.files` antes de chamar `execute`: o core resolve por *lookup* em
- * memória e nunca toca no disco. Como o parser só descobre os arquivos
- * incluídos durante o scan, esta função faz a leitura estática do texto.
+ * The CLI must deliver the **complete closure** of `include`s inside
+ * `request.files` before calling `execute`: the core resolves by *lookup* in
+ * memory and never touches the disk. Since the parser only discovers the
+ * included files during the scan, this function reads the text statically.
  *
- * Regras:
- *  - por linha, um comentário `#` fora de string é descartado;
- *  - o primeiro identificador da linha precisa ser o keyword `include` —
- *    canônico ou sinônimo de qualquer idioma registrado (`incluir` em pt-BR/es,
- *    ADR 023). É leitura estática: o idioma real do arquivo não é resolvido
- *    aqui, então o conjunto de sinônimos é a união de todos os registrados;
- *  - o caminho é o primeiro literal entre aspas.
+ * Rules:
+ *  - line by line, a `#` comment outside a string is discarded;
+ *  - the first identifier of the line must be the `include` keyword —
+ *    canonical or a synonym of any registered language (`incluir` in
+ *    pt-BR/es, ADR 023). This is a static read: the real language of the file
+ *    is not resolved here, so the synonym set is the union of all registered
+ *    ones;
+ *  - the path is the first quoted literal.
  *
- * Cobre as três formas da gramática: `prologInclude` (antes do cabeçalho),
- * `projectBodyInclude` (dentro do cabeçalho, com atributos) e `includeFile`
- * (`include "arquivo"` no corpo) — todas começam por `include "nome"`.
+ * Covers the three forms of the grammar: `prologInclude` (before the header),
+ * `projectBodyInclude` (inside the header, with attributes) and `includeFile`
+ * (`include "file"` in the body) — all of them start with `include "name"`.
  *
  * @see docs/syntaxmesh/fases/fase-24-cli.md §5.1
- * @see packages/core/src/parser/rules/project.ts (regras `include*`)
+ * @see packages/core/src/parser/rules/project.ts (`include*` rules)
  */
 import { globalRegistry, type LanguageRegistry, } from "../i18n/mod.ts";
 
 /**
- * Palavras que abrem um `include`, união de todos os idiomas registrados.
+ * Words that open an `include`, union of all registered languages.
  *
- * O canônico entra sempre, mesmo que nenhum idioma o liste.
+ * The canonical one is always present, even when no language lists it.
  */
 export function includeKeywords(
   registry: LanguageRegistry = globalRegistry,
@@ -40,7 +41,7 @@ export function includeKeywords(
   return [...words,];
 }
 
-/** Remove um comentário `#` que esteja fora de uma string. */
+/** Removes a `#` comment that is outside a string. */
 function stripComment(line: string,): string {
   let quoted = false;
   for (let i = 0; i < line.length; i++) {
@@ -54,14 +55,14 @@ function stripComment(line: string,): string {
   return line;
 }
 
-/** Identificador na coluna inicial seguido de string: `include "x"`. */
+/** Identifier in the first column followed by a string: `include "x"`. */
 const INCLUDE_LINE = /^\s*([A-Za-z_][\w-]*)\s+"([^"]*)"/;
 
 /**
- * Caminhos referenciados por `include` no texto, na ordem de aparição.
+ * Paths referenced by `include` in the text, in order of appearance.
  *
- * Devolve os nomes **como escritos** (relativos ao arquivo que inclui ou
- * absolutos); a resolução contra o caminho do pai é do chamador.
+ * Returns the names **as written** (relative to the including file or
+ * absolute); resolving them against the parent path is the caller's job.
  */
 export function scanIncludeReferences(
   content: string,

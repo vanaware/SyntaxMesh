@@ -3,7 +3,10 @@ import { assert, assertEquals, assertThrows, } from "@std/assert";
 import { createTestProject, } from "../fixtures/create-test-project.ts";
 import { Project, } from "../../src/model/project.ts";
 import { Account, } from "../../src/model/account.ts";
-import { AccountScenario, Query, } from "../../src/model/account-scenario.ts";
+import {
+  AccountScenario,
+  AccountScenarioQuery,
+} from "../../src/model/account-scenario.ts";
 import { AccountCredit, } from "../../src/finance/account-credit.ts";
 import { TjTime, } from "../../src/time/tj-time.ts";
 
@@ -144,7 +147,7 @@ describe("AccountScenario", () => {
         new AccountCredit(TjTime.fromString("2026-06-15",), "A", 5000,),
       ], 0,);
       const scenario = root.scenarioData(0,);
-      const query: Query = {
+      const query: AccountScenarioQuery = {
         start: TjTime.fromString("2026-07-01",),
         end: TjTime.fromString("2026-12-31",),
         sortable: 0,
@@ -167,7 +170,7 @@ describe("AccountScenario", () => {
         new AccountCredit(TjTime.fromString("2026-06-15",), "A", 5000,),
       ], 0,);
       const scenario = root.scenarioData(0,);
-      const query: Query = {
+      const query: AccountScenarioQuery = {
         start: TjTime.fromString("2026-01-01",),
         end: TjTime.fromString("2026-12-31",),
         sortable: 0,

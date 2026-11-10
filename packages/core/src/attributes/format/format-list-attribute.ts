@@ -1,5 +1,5 @@
 /**
- * Atributo de lista de formatos.
+ * Format list attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:FormatListAttribute
  */
@@ -10,18 +10,18 @@ import { type AttributeDefinition, } from "../attribute-definition.ts";
 import { ListAttributeBase, } from "../list-attribute-base.ts";
 
 /**
- * Atributo de lista de formatos.
+ * Format list attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:FormatListAttribute
  */
 export class FormatListAttribute extends ListAttributeBase<string> {
   /**
-   * ID do tipo de atributo para FormatListAttribute.
+   * Attribute type ID for FormatListAttribute.
    */
   static readonly tjpId = "formatlist";
 
   /**
-   * Converte o valor para string.
+   * Converts the value to a string.
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:FormatListAttribute#to_s
    */

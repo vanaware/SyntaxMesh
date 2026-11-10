@@ -1,15 +1,15 @@
 /**
- * `summary.ts` — resumo do projeto no terminal (24.4.5).
+ * `summary.ts` — project summary in the terminal (24.4.5).
  *
- * Lido do `project` carregado pela última chamada de `execute`
- * (`lastExecutedProject`), uma **conveniência in-process** (plano §5.5,
- * ponto 9): o envelope continua sendo o contrato dos resultados de comando.
- * Num consumidor remoto (worker/HTTP) este resumo simplesmente não existe.
+ * Read from the `project` loaded by the last `execute` call
+ * (`lastExecutedProject`), an **in-process convenience** (plan §5.5, point 9):
+ * the envelope remains the contract for command results. In a remote consumer
+ * (worker/HTTP) this summary simply does not exist.
  *
- * O `tj3` imprime um banner de `AppConfig` antes de rodar e nenhum resumo
- * final; aqui o banner não é portado (os mesmos dados já saem em `--version`) e
- * o resumo entra como **adaptação** pedida por 24.4.5. Tudo em inglês
- * (plano §1.7).
+ * `tj3` prints an `AppConfig` banner before running and no final summary; here
+ * the banner is not ported (the same data already comes out in `--version`) and
+ * the summary is an **adaptation** requested by 24.4.5. Everything in English
+ * (plan §1.7).
  *
  * @see docs/syntaxmesh/fases/fase-24-cli-tarefas.md (24.4.5)
  */
@@ -19,29 +19,29 @@ import {
   TjTime,
 } from "@vanaware/syntaxmesh";
 
-/** Dados do resumo — puro, sem referências ao modelo. */
+/** Summary data — pure, with no references to the model. */
 export interface ProjectSummary {
   id: string;
   name: string;
   version: string;
   timezone: string;
-  /** `YYYY-MM-DD`; `null` quando o projeto não declara o atributo. */
+  /** `YYYY-MM-DD`; `null` when the project does not declare the attribute. */
   start: string | null;
   end: string | null;
   tasks: number;
   resources: number;
   accounts: number;
-  /** Soma dos `costEvents` do cenário 0. */
+  /** Sum of the `costEvents` of scenario 0. */
   cost: number;
   currency: string;
 }
 
-/** Data `YYYY-MM-DD` de um atributo temporal do projeto. */
+/** `YYYY-MM-DD` date from a temporal attribute of the project. */
 function dateOf(value: unknown,): string | null {
   return value instanceof TjTime ? value.to_s("%Y-%m-%d",) : null;
 }
 
-/** Soma os custos do cenário do plano (índice 0). */
+/** Sums the costs of the plan scenario (index 0). */
 function plannedCost(project: Project,): number {
   let total = 0;
   for (const event of project.costEvents) {
@@ -50,7 +50,7 @@ function plannedCost(project: Project,): number {
   return total;
 }
 
-/** Extrai o resumo do projeto carregado. */
+/** Extracts the summary of the loaded project. */
 export function projectSummary(project: Project,): ProjectSummary {
   return {
     id: project.id,
@@ -67,16 +67,16 @@ export function projectSummary(project: Project,): ProjectSummary {
   };
 }
 
-/** Valor monetário com 2 casas e a moeda do projeto. */
+/** Monetary value with 2 decimals and the project currency. */
 function money(cost: number, currency: string,): string {
   const amount = cost.toFixed(2,);
   return currency === "" ? amount : `${amount} ${currency}`;
 }
 
 /**
- * Linhas do resumo, prontas para o terminal (nunca vazias para projeto válido).
+ * Summary lines, ready for the terminal (never empty for a valid project).
  *
- * Sem `start`/`end` a linha de período é omitida — o resumo não inventa dados.
+ * Without `start`/`end` the period line is omitted — the summary invents no data.
  */
 export function formatSummary(summary: ProjectSummary,): string[] {
   const lines = [
@@ -95,9 +95,9 @@ export function formatSummary(summary: ProjectSummary,): string[] {
 }
 
 /**
- * Resumo da última execução no processo.
+ * Summary of the last execution in this process.
  *
- * `[]` quando ninguém carregou projeto (ex.: `--version`, parse quebrado).
+ * `[]` when nobody loaded a project (e.g. `--version`, broken parse).
  */
 export function lastSummaryLines(): string[] {
   const project = lastExecutedProject();

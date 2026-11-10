@@ -1,5 +1,5 @@
 /**
- * Atributo de lista de permissões de licença.
+ * Leave allowance list attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:LeaveAllowanceListAttribute
  */
@@ -11,25 +11,25 @@ import { type AttributeDefinition, } from "../attribute-definition.ts";
 import { ListAttributeBase, } from "../list-attribute-base.ts";
 
 /**
- * Atributo de lista de permissões de licença.
+ * Leave allowance list attribute.
  *
- * O Ruby não sobrescreve `to_tjp` nem `to_s`: cai em
- * `AttributeBase#to_tjp` + `Array#to_s`, que devolve o `inspect` da struct —
- * inútil como TJP. Aqui o attr usa {@link LeaveAllowanceList#to_tjp}
- * (uma provisão por linha), que é re-parseável pela gramática
- * `leaveallowance`.
+ * Ruby does not override `to_tjp` nor `to_s`: it falls back to
+ * `AttributeBase#to_tjp` + `Array#to_s`, which returns the struct `inspect` —
+ * useless as TJP. Here the attribute uses {@link LeaveAllowanceList#to_tjp}
+ * (one allowance per line), which is re-parseable by the `leaveallowance`
+ * grammar.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:LeaveAllowanceListAttribute
  */
 export class LeaveAllowanceListAttribute
   extends ListAttributeBase<LeaveAllowance> {
   /**
-   * ID do tipo de atributo para LeaveAllowanceListAttribute.
+   * Attribute type ID for LeaveAllowanceListAttribute.
    */
   static readonly tjpId = "leaveallowance";
 
   /**
-   * Converte o valor para TJP (formato TaskJuggler).
+   * Converts the value to TJP (TaskJuggler format).
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:LeaveAllowanceListAttribute
    */

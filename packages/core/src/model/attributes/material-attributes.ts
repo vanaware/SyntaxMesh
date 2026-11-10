@@ -3,12 +3,12 @@ import { AttributeDefinition, } from "../../attributes/attribute-definition.ts";
 import { AttributeType, } from "../../attributes/attribute-type.ts";
 
 /**
- * Registra os atributos específicos de material (Fase 10 Complemento C1).
+ * Registers the material-specific attributes (phase 10 Complemento C1).
  *
- * `Material` é uma entidade nova (sem equivalente no TJ Ruby); a forma
- * espelha `resource-attributes.ts`/`account-attributes.ts`. `note` cobre a
- * nota estática (#1) e o par `effortdone`/`effortleft` dá suporte ao
- * rollup temporal dos allocations de material (#2).
+ * `Material` is a new entity (no counterpart in TJ Ruby); the shape mirrors
+ * `resource-attributes.ts`/`account-attributes.ts`. `note` covers the static
+ * note (#1) and the `effortdone`/`effortleft` pair supports the temporal
+ * rollup of the material allocations (#2).
  *
  * @see docs/syntaxmesh/fases/fase-10-complemento-tarefas.md (Bloco C1)
  */
@@ -63,7 +63,7 @@ export function registerMaterialAttributes(propertySet: PropertySet,): void {
   );
 
   // note: Note (RichTextAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
-  // Espelha task-attributes.ts — nota estática, não cenário, não herda.
+  // Mirrors task-attributes.ts — static note, not scenario, not inherited.
   propertySet.addAttributeType(
     new AttributeDefinition(
       "note",
@@ -127,17 +127,18 @@ export function registerMaterialAttributes(propertySet: PropertySet,): void {
     ),
   );
 
-  // `totalquantity` foi removido na 14C.11.10: a quantidade de um material é
-  // derivada das alocações das tarefas (`Material#allocatedQuantity`), não
-  // declarada no bloco de definição.
+  // `totalquantity` was removed in 14C.11.10: the quantity of a material is
+  // derived from the task allocations (`Material#allocatedQuantity`), not
+  // declared in the definition block.
 
   // stockbookings: Stock Bookings (NodeListAttribute,
   // inheritedFromParent=false, inheritedFromProject=false,
   // isScenarioAttribute=true, default=[]).
-  // Adendo Extra §12.1 (14C.13.2) — movimentos de estoque declarados no
-  // próprio bloco de material: `booking [quantity] <n> [unitprice <p>] on
-  // <data>` **sem** referência de tarefa. Quantidade positiva = entrada,
-  // negativa = saída/estorno. Vivem no material porque não há tarefa dona.
+  // Extra Addendum §12.1 (14C.13.2) — stock movements declared in the
+  // material block itself: `booking [quantity] <n> [unitprice <p>] on <date>`
+  // **without** a task reference. Positive quantity = inbound, negative =
+  // outbound/reversal. They live on the material because there is no owning
+  // task.
   propertySet.addAttributeType(
     new AttributeDefinition(
       "stockbookings",
@@ -156,10 +157,10 @@ export function registerMaterialAttributes(propertySet: PropertySet,): void {
   // materialcomponents: Material Components (NodeListAttribute,
   // inheritedFromParent=false, inheritedFromProject=false,
   // isScenarioAttribute=true, default=[]).
-  // Adendo Extra §12.2 (14C.14.2) — composição de um material: `material <id>
-  // <quantidade>` dentro do bloco declara quanto de cada componente entra em
-  // **uma** unidade do material composto. Com componentes o `unitprice` deixa
-  // de ser declarado e passa a ser calculado (Σ componente × preço dele).
+  // Extra Addendum §12.2 (14C.14.2) — composition of a material: `material <id>
+  // <quantity>` inside the block declares how much of each component goes into
+  // **one** unit of the composite material. With components the `unitprice` is
+  // no longer declared and becomes computed (Σ component × its price).
   propertySet.addAttributeType(
     new AttributeDefinition(
       "materialcomponents",
@@ -176,8 +177,8 @@ export function registerMaterialAttributes(propertySet: PropertySet,): void {
   );
 
   // flags: Flags (FlagListAttribute, inheritedFromParent=true, inheritedFromProject=false, isScenarioAttribute=true, default=[])
-  // Complemento Fase 11 (LF.1) — permite testar flags de material em
-  // expressões lógicas (`LogicalFlag`), análogo a task/resource/account.
+  // Phase 11 complement (LF.1) — allows testing material flags in logical
+  // expressions (`LogicalFlag`), analogous to task/resource/account.
   propertySet.addAttributeType(
     new AttributeDefinition(
       "flags",

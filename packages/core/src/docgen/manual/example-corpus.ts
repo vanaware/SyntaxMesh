@@ -1,20 +1,20 @@
 /**
- * `example-corpus.ts` — corpus de exemplos anotados do manual (22.1b.4).
+ * `example-corpus.ts` — annotated example corpus of the manual (22.1b.4).
  *
- * Os snippets que o `KeywordDocumentation` mostra nas páginas HTML vêm, no
- * Ruby, de `data/test/TestSuite/Syntax/Correct/*.tjp`: arquivos de projeto
- * reais com linhas `# *** EXAMPLE: <tag> +` / `-` delimitando trechos. Aqui o
- * corpus é **embutido como texto** (o `doc-core` não faz E/S) e reescrito na
- * sintaxe `SyntaxMesh` — apenas `.smx`, exemplos comuns ao domínio.
+ * The snippets that `KeywordDocumentation` shows on the HTML pages come, in
+ * Ruby, from `data/test/TestSuite/Syntax/Correct/*.tjp`: real project files
+ * with `# *** EXAMPLE: <tag> +` / `-` lines delimiting excerpts. Here the
+ * corpus is **embedded as text** (`doc-core` performs no I/O) and rewritten
+ * in the `SyntaxMesh` syntax — only `.smx`, examples shared with the domain.
  *
- * Chaves = `Pattern#exampleFile`; o valor é o texto integral do arquivo, com
- * as anotações. `UserManual` alimenta um {@link ExampleSnippet} por arquivo.
+ * Keys = `Pattern#exampleFile`; the value is the whole file text, with the
+ * annotations. `UserManual` feeds one {@link ExampleSnippet} per file.
  *
  * @see ./example-snippet.ts
  * @see docs/syntaxmesh/fases/fase-22-vscode-extension-tarefas.md §Bloco F
  */
 
-/** Texto anotado de cada arquivo de exemplo, indexado por nome. */
+/** Annotated text of each example file, indexed by name. */
 export const EXAMPLE_CORPUS: Readonly<Record<string, string>> = {
   "Macro-1": `# *** EXAMPLE: macro +
 macro plan "Plan the project" {

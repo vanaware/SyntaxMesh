@@ -1,45 +1,45 @@
 /**
- * `images.ts` — referências de imagem em relatórios (Fase 24 — 24.10.8).
+ * `images.ts` — image references in reports (phase 24 — 24.10.8).
  *
- * O core decide **se** uma referência é externa ou relativa e devolve um
- * descritor (`resolveImageRef`, 13.14.3); materializar o arquivo é da CLI.
- * Este módulo só extrai as referências relativas — sem disco, sem rede — para
- * que a política de saída copie a imagem para ao lado do relatório,
- * preservando o caminho relativo que o HTML/Markdown já cita (o browser
- * resolve o resto, como no `tj3`).
+ * The core decides **whether** a reference is external or relative and returns a
+ * descriptor (`resolveImageRef`, 13.14.3); materialising the file is the CLI's
+ * job. This module only extracts the relative references — no disk, no network —
+ * so the output policy can copy the image next to the report, preserving the
+ * relative path the HTML/Markdown already cites (the browser resolves the rest,
+ * as in `tj3`).
  *
- * Referências externas (`http(s)://`, `//`, `data:`) passam intactas: não há
- * arquivo para copiar. Caminhos absolutos e com segmento `..` são ignorados —
- * a política nunca lê fora da raiz de imagens (adendo §4.3).
+ * External references (`http(s)://`, `//`, `data:`) pass through untouched: there
+ * is no file to copy. Absolute paths and paths with a `..` segment are ignored —
+ * the policy never reads outside the image root (addendum §4.3).
  *
  * @see docs/syntaxmesh/fases/fase-13-markdown-tarefas.md (13.14.3)
  * @see docs/syntaxmesh/fases/fase-24-cli-tarefas.md (24.10.8)
  */
 import { isExternalImageRef, } from "@vanaware/syntaxmesh";
 
-/** Raiz de sistema (POSIX ou letra de unidade do Windows). */
+/** File-system root (POSIX or a Windows drive letter). */
 const ABSOLUTE_REF = /^(?:[\\/]|[A-Za-z]:[\\/])/u;
 
-/** `![alt](ref "title")` — o grupo 2 é o caminho. */
+/** `![alt](ref "title")` — group 2 is the path. */
 const MARKDOWN_IMAGE = /!\[([^\]]*)\]\(\s*([^)\s]+)(?:\s+"[^"]*")?\s*\)/gu;
 
-/** `<img … src="ref" …>` (aspas duplas ou simples). */
+/** `<img … src="ref" …>` (double or single quotes). */
 const HTML_IMAGE = /<img\b[^>]*?\bsrc\s*=\s*(?:"([^"]+)"|'([^']+)')/giu;
 
 /**
- * `<object … data="ref" type="image/…" …>` — como o `RichTextIntermediate`
- * emite imagem no HTML do `tj3` (`Element.rb:551-570`). Só tags cujo `type` é
- * `image/…` entram: `<object>` também serve para outros mídias no HTML.
+ * `<object … data="ref" type="image/…" …>` — the way `RichTextIntermediate`
+ * emits an image in `tj3`'s HTML (`Element.rb:551-570`). Only tags whose `type` is
+ * `image/…` qualify: `<object>` is also used for other media in HTML.
  */
 const HTML_OBJECT =
   /<object\b[^>]*?\bdata\s*=\s*(?:"([^"]+)"|'([^']+)')[^>]*>/giu;
 const OBJECT_TYPE = /\btype\s*=\s*(?:"|')(image\/[^"']*)/iu;
 
 /**
- * Caminhos relativos de imagem citados por um relatório.
+ * Relative image paths cited by a report.
  *
- * Aceita os formatos que carregam mídia (`markdown`, `html`); qualquer outro
- * devolve lista vazia. Duplicatas aparecem uma vez só, na ordem de citação.
+ * Accepts the formats that carry media (`markdown`, `html`); any other returns an
+ * empty list. Duplicates appear only once, in citation order.
  */
 export function imageRefs(content: string, format: string,): string[] {
   const refs: string[] = [];
@@ -47,11 +47,11 @@ export function imageRefs(content: string, format: string,): string[] {
 
   const push = (raw: string | undefined,): void => {
     if (raw === undefined || raw === "") return;
-    // `./fotos/a.jpg` e `fotos/a.jpg` são o mesmo arquivo: normaliza para que
-    // o destino (ao lado do relatório) não ganhe um `./` no meio do caminho.
+    // `./fotos/a.jpg` and `fotos/a.jpg` are the same file: normalise so the
+    // destination (next to the report) does not gain a `./` mid-path.
     const ref = raw.replace(/^\.\//u, "",);
     if (isExternalImageRef(ref,)) return;
-    // `..` conta como **segmento**: `fotos/a..b.jpg` é nome válido.
+    // `..` counts as a **segment**: `fotos/a..b.jpg` is a valid name.
     if (ABSOLUTE_REF.test(ref,) || ref.split("/",).includes("..",)) return;
     if (seen.has(ref,)) return;
     seen.add(ref,);

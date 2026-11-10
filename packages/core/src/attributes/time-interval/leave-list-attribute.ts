@@ -1,5 +1,5 @@
 /**
- * Atributo de lista de licenças.
+ * Leave list attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:LeaveListAttribute
  */
@@ -11,21 +11,21 @@ import { type AttributeDefinition, } from "../attribute-definition.ts";
 import { ListAttributeBase, } from "../list-attribute-base.ts";
 
 /**
- * Atributo de lista de licenças.
+ * Leave list attribute.
  *
- * Ruby `LeaveListAttribute#to_tjp` → `"leaves #{get.join(",\n")}"`, em que
- * cada `Leave#to_s` já traz tipo/motivo/intervalo.
+ * Ruby `LeaveListAttribute#to_tjp` → `"leaves #{get.join(",\n")}"`, where
+ * each `Leave#to_s` already carries type/reason/interval.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:LeaveListAttribute
  */
 export class LeaveListAttribute extends ListAttributeBase<Leave> {
   /**
-   * ID do tipo de atributo para LeaveListAttribute.
+   * Attribute type ID for LeaveListAttribute.
    */
   static readonly tjpId = "leave";
 
   /**
-   * Converte o valor para TJP (formato TaskJuggler).
+   * Converts the value to TJP (TaskJuggler format).
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:LeaveListAttribute#to_tjp
    */

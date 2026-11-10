@@ -1,11 +1,12 @@
 /**
- * HTMLGraphics (Fase 15.1) — primitivas gráficas como `<div>` absolutos.
+ * HTMLGraphics (phase 15.1) — graphical primitives as absolute `<div>`s.
  *
- * Port fiel de `docs/taskjuggler/lib/taskjuggler/reports/HTMLGraphics.rb`.
- * O Gantt do TaskJuggler não usa SVG nem Canvas: linhas, retângulos, jags,
- * losangos e pontas de seta são `div`s com `position: absolute` e `class` de
- * categoria CSS. Coordenadas são truncadas como `to_i` no Ruby
- * (cheat sheet §3: `Math.trunc`).
+ * Faithful port of
+ * `docs/taskjuggler/lib/taskjuggler/reports/HTMLGraphics.rb`. The TaskJuggler
+ * Gantt uses neither SVG nor Canvas: lines, rectangles, jags, diamonds and
+ * arrow heads are `div`s with `position: absolute` and a CSS category `class`.
+ * Coordinates are truncated like `to_i` in Ruby (cheat sheet §3:
+ * `Math.trunc`).
  *
  * @see docs/syntaxmesh/decisoes/028-gantt-html-css.md (ADR 028)
  * @see docs/syntaxmesh/fases/fase-15-gantt.md (15.1)
@@ -13,16 +14,16 @@
 import { XMLElement, } from "../xml/xml-element.ts";
 import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 
-/** Trunca para inteiro como `Integer#to_i` do Ruby. */
+/** Truncates to an integer like Ruby's `Integer#to_i`. */
 function toI(v: number,): number {
   return Math.trunc(v,);
 }
 
 /**
- * Renderiza uma linha horizontal ou vertical como `<div>` de 1px.
+ * Renders a horizontal or vertical line as a 1px `<div>`.
  *
- * Ruby `HTMLGraphics#lineToHTML`. Linhas diagonais não são suportadas (o
- * roteamento do Gantt é estritamente ortogonal) e lançam erro.
+ * Ruby `HTMLGraphics#lineToHTML`. Diagonal lines are not supported (the Gantt
+ * routing is strictly orthogonal) and throw an error.
  */
 export function lineToHTML(
   xs: number,
@@ -54,7 +55,7 @@ export function lineToHTML(
   return new XMLElement("div", { class: category, style, },);
 }
 
-/** Renderiza um retângulo preenchido (Ruby `rectToHTML`). */
+/** Renders a filled rectangle (Ruby `rectToHTML`). */
 export function rectToHTML(
   x: number,
   y: number,
@@ -67,7 +68,7 @@ export function rectToHTML(
   return new XMLElement("div", { class: category, style, },);
 }
 
-/** Renderiza o "jag" (colchete) de uma barra de container. */
+/** Renders the "jag" (bracket) of a container bar. */
 export function jagToHTML(x: number, y: number,): XMLElementLike {
   return new XMLElement("div", {
     class: "tj_gantt_jag",
@@ -75,7 +76,7 @@ export function jagToHTML(x: number, y: number,): XMLElementLike {
   },);
 }
 
-/** Renderiza um losango (milestone) como dois `<div>` sobrepostos. */
+/** Renders a diamond (milestone) as two overlapping `<div>` elements. */
 export function diamondToHTML(x: number, y: number,): XMLElementLike[] {
   return [
     new XMLElement("div", {
@@ -89,7 +90,7 @@ export function diamondToHTML(x: number, y: number,): XMLElementLike[] {
   ];
 }
 
-/** Renderiza a ponta de seta de uma dependência. */
+/** Renders the arrow head of a dependency. */
 export function arrowHeadToHTML(x: number, y: number,): XMLElementLike {
   return new XMLElement("div", {
     class: "tj_arrow_head",

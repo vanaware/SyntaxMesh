@@ -1,18 +1,18 @@
 /**
- * SheetAppBase — núcleo comum dos cinco apps de sheet.
+ * SheetAppBase — shared core of the five sheet apps.
  *
- * Port de `docs/taskjuggler/lib/taskjuggler/Tj3SheetAppBase.rb` mais a parte de
- * `Tj3AppBase.rb` que o núcleo pode assumir: montar o `RuntimeConfig`, definir
- * o fim do período e traduzir o desfecho em código de saída. O que **não** vem
- * para cá é o `OptionParser`: a Fase 24 lê argv/stdin e entrega opções já
- * tipadas (`workingDir`, `dryRun`, `config`, `endDate`, …) — ver
- * `docs/syntaxmesh/fases/fase-24-cli.md` §5.4.
+ * Port of `docs/taskjuggler/lib/taskjuggler/Tj3SheetAppBase.rb` plus the part of
+ * `Tj3AppBase.rb` the core can take over: building the `RuntimeConfig`, fixing
+ * the end of the period and turning the outcome into an exit code. What does
+ * **not** move here is the `OptionParser`: Phase 24 reads argv/stdin and hands
+ * over already-typed options (`workingDir`, `dryRun`, `config`, `endDate`, ...)
+ * — see `docs/syntaxmesh/fases/fase-24-cli.md` §5.4.
  *
- * Duas adaptações obrigatórias da fase:
- *  - **ADR 036** — não há SMTP: os senders devolvem `EmailMessage` e os
- *    receivers consomem o texto RFC 822 recebido como `string`.
- *  - **ADR 037** — o `FileStore` é injetado pelo chamador (aqui, via
- *    {@link SheetAppContext}), então `run()` é `async`.
+ * Two mandatory adaptations of the phase:
+ *  - **ADR 036** — there is no SMTP: the senders return `EmailMessage` and the
+ *    receivers consume the received RFC 822 text as a `string`.
+ *  - **ADR 037** — the `FileStore` is injected by the caller (here, via
+ *    {@link SheetAppContext}), so `run()` is `async`.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Tj3SheetAppBase.rb
  * @see docs/taskjuggler/lib/taskjuggler/RuntimeConfig.rb
@@ -28,62 +28,66 @@ import { TjTime, } from "../../time/tj-time.ts";
 import { SheetHandlerBase, } from "../sheet-handler-base.ts";
 import { localDate, } from "../sheet-sender.ts";
 
-/** Código de saída de sucesso (Ruby `appMain` → 0). */
+/** Success exit code (Ruby `appMain` → 0). */
 export const SHEET_APP_EXIT_OK = 0;
-/** Código de saída de falha (Ruby `main` → 1 após `TjRuntimeError`). */
+/** Failure exit code (Ruby `main` → 1 after `TjRuntimeError`). */
 export const SHEET_APP_EXIT_ERROR = 1;
 
 /**
- * Conteúdo de uma seção do arquivo de configuração (`RuntimeConfig`).
+ * Content of one section of the configuration file (`RuntimeConfig`).
  *
- * O YAML do Ruby vira um objeto JS já parseado; as chaves de seção levam o
- * prefixo `_` (`_global`, `_timesheets`, …), como o `p['_' + sec]` de
+ * Ruby's YAML becomes an already-parsed JS object; section keys carry the `_`
+ * prefix (`_global`, `_timesheets`, ...), like `p['_' + sec]` in
  * `RuntimeConfig#configure`.
  */
 export type SheetAppConfig = Record<string, unknown>;
 
-/** Nome da seção raiz de cada tipo de sheet no config (`_timesheets`/…). */
+/** Name of the root section of each sheet kind in the config (`_timesheets`/...). */
 export type SheetAppConfigRoot = "timesheets" | "statussheets";
 
-/** Papel do app dentro do subsistema, usado para achar a seção do config. */
+/** Role of the app inside the subsystem, used to locate the config section. */
 export type SheetAppRole = "sender" | "receiver" | "summary";
 
-/** Opções comuns aos cinco apps (o que o `OptionParser` preenche na F24). */
+/** Options common to the five apps (what the `OptionParser` fills in Phase 24). */
 export interface SheetAppOptions {
   /** `-d/--directory` (Ruby `@workingDir`). */
   workingDir?: string | null;
-  /** `--dryrun`: não grava emails nem faz commit de SCM (ADR 036). */
+  /** `--dryrun`: writes no emails and commits nothing to SCM (ADR 036). */
   dryRun?: boolean;
-  /** Configuração já lida do arquivo (Ruby `RuntimeConfig`) — ADR 037. */
+  /** Configuration already read from the file (Ruby `RuntimeConfig`) — ADR 037. */
   config?: SheetAppConfig | null;
   /**
-   * `-e/--enddate`: `YYYY-MM-DD` ou dia da semana (0=domingo … 6=sábado).
-   * Ausente = default de cada app (`nextDayOfWeek`).
+   * `-e/--enddate`: `YYYY-MM-DD` or a weekday (0=Sunday ... 6=Saturday).
+   * Absent = per-app default (`nextDayOfWeek`).
    */
   endDate?: string | number | null;
-  /** Relógio injetável: mantém `date` determinístico nos testes. */
+  /** Injectable clock: keeps `date` deterministic in tests. */
   now?: (() => Date) | null;
 }
 
 /**
- * Entrada do app — o que o Ruby obtinha de `tj3client` (projeto) e do STDIN
- * (mensagem). Sem subprocesso, ambos chegam prontos (ADR 036).
+ * App input — what Ruby obtained from `tj3client` (project) and from STDIN
+ * (message). Without a subprocess, both arrive ready (ADR 036).
  */
 export interface SheetAppContext {
-  /** Projeto já carregado (`ProjectFileParser`/`tj3client`). */
+  /** Project already loaded (`ProjectFileParser`/`tj3client`). */
   project: Project;
-  /** Destino de templates, folhas e `outbox/` (ADR 037). */
+  /** Destination of templates, sheets and `outbox/` (ADR 037). */
   fileStore?: FileStore | null;
-  /** Texto RFC 822 lido de arquivo/STDIN — usado pelos receivers. */
+  /** RFC 822 text read from a file/STDIN — used by the receivers. */
   rawEmail?: string | null;
 }
 
 /**
- * Interpreta `-e/--enddate` como o `optsEndDate` do Ruby.
+ * Interprets `-e/--enddate` like Ruby's `optsEndDate`.
  *
- * `YYYY-MM-DD` é aceito como data literal (`Time.mktime` normaliza dias fora
- * do mês, como o `Date` do JS); qualquer outra coisa é lida como dia da semana
- * (`arg.to_i % 7`, então texto inválido vira domingo, como no Ruby).
+ * `YYYY-MM-DD` is accepted as a literal date (`Time.mktime` normalises
+ * out-of-month days, like JS `Date`); anything else is read as a weekday
+ * (`arg.to_i % 7`, so invalid text becomes Sunday, as in Ruby).
+ *
+ * @param value Raw option value.
+ * @param now Reference date used when a weekday is given.
+ * @returns The resolved date as `YYYY-MM-DD`.
  */
 export function parseEndDate(
   value: string | number,
@@ -107,14 +111,14 @@ export function parseEndDate(
 }
 
 /**
- * Base dos apps de sheet (`tj3ts_sender`, `tj3ts_receiver`, `tj3ts_summary`,
+ * Base of the sheet apps (`tj3ts_sender`, `tj3ts_receiver`, `tj3ts_summary`,
  * `tj3ss_sender`, `tj3ss_receiver`).
  *
- * A subclasse só monta o handler e implementa {@link appMain}; configuração,
- * data e código de saída ficam aqui.
+ * The subclass only builds the handler and implements {@link appMain};
+ * configuration, date and exit code live here.
  */
 export abstract class SheetAppBase {
-  /** Nome que assina o email (`X-TaskJuggler`) e o log (Ruby `AppConfig.appName`). */
+  /** Name that signs the email (`X-TaskJuggler`) and the log (Ruby `AppConfig.appName`). */
   readonly appName: string;
 
   /** `-d/--directory` (Ruby `@workingDir`). */
@@ -123,15 +127,22 @@ export abstract class SheetAppBase {
   /** `--dryrun` (Ruby `@dryRun`). */
   dryRun: boolean;
 
-  /** Configuração já parseada (Ruby `RuntimeConfig`), ou `null`. */
+  /** Configuration already parsed (Ruby `RuntimeConfig`), or `null`. */
   config: SheetAppConfig | null;
 
-  /** Fim do período de reporte em `YYYY-MM-DD` (Ruby `@date`). */
+  /** End of the reporting period as `YYYY-MM-DD` (Ruby `@date`). */
   date: string;
 
-  /** Relógio injetável (Ruby `TjTime.new`). */
+  /** Injectable clock (Ruby `TjTime.new`). */
   protected readonly now: () => Date;
 
+  /**
+   * Creates the app.
+   *
+   * @param appName Name used to sign emails and log lines.
+   * @param defaultDayOfWeek Weekday used when `endDate` is absent.
+   * @param options Typed options produced by the CLI layer.
+   */
   constructor(
     appName: string,
     defaultDayOfWeek: number,
@@ -143,25 +154,28 @@ export abstract class SheetAppBase {
     this.config = options.config ?? null;
     this.now = options.now ?? (() => new Date());
 
-    // Ruby: cada app define `@date = TjTime.new.nextDayOfWeek(<dow>)` no
-    // construtor, e o `-e/--enddate` sobrescreve depois.
+    // Ruby: each app sets `@date = TjTime.new.nextDayOfWeek(<dow>)` in the
+    // constructor, and `-e/--enddate` overrides it afterwards.
     this.date = options.endDate === undefined || options.endDate === null
       ? this.defaultDate(defaultDayOfWeek,)
       : parseEndDate(options.endDate, this.now(),);
   }
 
-  /** Handler do app — os apps expõem o concreto (`sender`, `receiver`, …). */
+  /** Handler of the app — each app exposes the concrete one (`sender`, `receiver`, ...). */
   abstract readonly handler: SheetHandlerBase;
 
-  /** Corpo do app (Ruby `appMain`), sem código de saída. */
+  /** Body of the app (Ruby `appMain`), without the exit code. */
   protected abstract appMain(context: SheetAppContext,): Promise<void>;
 
   /**
-   * Executa o app e devolve o código de saída (Ruby `main`).
+   * Runs the app and returns the exit code (Ruby `main`).
    *
-   * `TjRuntimeError` já foi anunciado pelo `MessageHandler` (`error`/`fatal`);
-   * aqui só vira `1`. Erros de programação continuam propagando — o wrapper da
-   * F24 é quem os converte em `crash_trap`.
+   * A `TjRuntimeError` was already announced by the `MessageHandler`
+   * (`error`/`fatal`); here it only becomes `1`. Programming errors keep
+   * propagating — the Phase 24 wrapper is what turns them into `crash_trap`.
+   *
+   * @param context Project, file store and raw email handed to the app.
+   * @returns The process exit code.
    */
   async run(context: SheetAppContext,): Promise<number> {
     const errorsBefore = MessageHandlerInstance.instance.errors;
@@ -177,29 +191,39 @@ export abstract class SheetAppBase {
   }
 
   /**
-   * Default de `date`: próxima ocorrência do dia da semana informado.
+   * Default of `date`: the next occurrence of the given weekday.
    *
-   * Fiel a `Tj3TsSender#initialize` (`nextDayOfWeek(1)`) e a
+   * Faithful to `Tj3TsSender#initialize` (`nextDayOfWeek(1)`) and to
    * `Tj3SsSender#initialize` (`nextDayOfWeek(3)`).
+   *
+   * @param dayOfWeek Weekday index (0 = Sunday).
+   * @returns The resolved date as `YYYY-MM-DD`.
    */
   defaultDate(dayOfWeek: number,): string {
     return TjTime.fromDate(this.now(),).nextDayOfWeek(dayOfWeek,).toString();
   }
 
-  /** Reescreve `date` como o `optsEndDate` do Ruby. */
+  /**
+   * Rewrites `date` like Ruby's `optsEndDate`.
+   *
+   * @param value New value of `-e/--enddate`.
+   * @returns The resolved date as `YYYY-MM-DD`.
+   */
   setEndDate(value: string | number,): string {
     this.date = parseEndDate(value, this.now(),);
     return this.date;
   }
 
   /**
-   * Aplica uma seção do config no handler (Ruby `RuntimeConfig#configure`).
+   * Applies one config section to the handler (Ruby `RuntimeConfig#configure`).
    *
-   * Só campos que **existem** no objeto são copiados, como o Ruby faz ao
-   * percorrer as variáveis de instância — um nome errado no arquivo é ignorado
-   * em vez de criar um campo novo.
+   * Only fields that **exist** on the object are copied, as Ruby does when
+   * walking the instance variables — a wrong name in the file is ignored instead
+   * of creating a new field.
    *
-   * @returns `false` quando a seção não está no config.
+   * @param target Handler that receives the section values.
+   * @param section Section path, e.g. `"global"` or `"timesheets.sender"`.
+   * @returns `false` when the section is not in the config.
    */
   configureTarget(target: SheetHandlerBase, section: string,): boolean {
     const node = this.sectionNode(section,);
@@ -208,17 +232,20 @@ export abstract class SheetAppBase {
     const fields = target as unknown as Record<string, unknown>;
     for (const [key, value,] of Object.entries(node,)) {
       if (!(key in fields)) continue;
-      // O YAML do Ruby lê `2026-05-18` como `Date`; o campo `date` é string.
+      // Ruby's YAML reads `2026-05-18` as a `Date`; the `date` field is a string.
       fields[key] = value instanceof Date ? localDate(value,) : value;
     }
     return true;
   }
 
   /**
-   * Aplica as três seções do app, na ordem do Ruby (`global`, depois a raiz,
-   * depois o papel) — a última que define um campo vence.
+   * Applies the three app sections, in Ruby's order (`global`, then the root,
+   * then the role) — the last one to set a field wins.
    *
-   * @returns `true` se alguma seção existia no config.
+   * @param target Handler that receives the section values.
+   * @param root Root section (`timesheets` or `statussheets`).
+   * @param role Role section (`sender`, `receiver` or `summary`).
+   * @returns `true` when any section existed in the config.
    */
   configureSheet(
     target: SheetHandlerBase,
@@ -234,8 +261,12 @@ export abstract class SheetAppBase {
   }
 
   /**
-   * Prepara o handler: config → `workingDir` → `dryRun`, como cada `appMain`
-   * do Ruby fazia antes de chamar o pipeline.
+   * Prepares the handler: config → `workingDir` → `dryRun`, as each Ruby
+   * `appMain` did before calling the pipeline.
+   *
+   * @param handler Handler to configure.
+   * @param root Root section (`timesheets` or `statussheets`).
+   * @param role Role section (`sender`, `receiver` or `summary`).
    */
   protected prepare(
     handler: SheetHandlerBase,
@@ -247,7 +278,12 @@ export abstract class SheetAppBase {
     handler.dryRun = this.dryRun;
   }
 
-  /** Injeta o `FileStore` recebido no contexto (ADR 037). */
+  /**
+   * Injects the `FileStore` from the context into the handler (ADR 037).
+   *
+   * @param handler Handler that receives the store.
+   * @param context App context holding the optional store.
+   */
   protected attach(
     handler: SheetHandlerBase,
     context: SheetAppContext,
@@ -255,7 +291,12 @@ export abstract class SheetAppBase {
     if (context.fileStore) handler.setFileStore(context.fileStore,);
   }
 
-  /** Navega `config` até a seção (`_global`, `_timesheets.sender`, …). */
+  /**
+   * Walks `config` down to a section (`_global`, `_timesheets.sender`, ...).
+   *
+   * @param section Dotted section path.
+   * @returns The section object, or `null` when it does not exist.
+   */
   private sectionNode(section: string,): SheetAppConfig | null {
     let node: unknown = this.config;
     for (const name of section.split(".",)) {

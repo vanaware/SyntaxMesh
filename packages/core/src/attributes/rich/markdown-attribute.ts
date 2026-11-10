@@ -1,10 +1,11 @@
 /**
- * Atributo dinâmico em Markdown (extensão SyntaxMesh — ADR 039).
+ * Dynamic attribute in Markdown (SyntaxMesh extension — ADR 039).
  *
- * Idêntico ao `RichTextAttribute` em contrato (o valor é sempre um
- * `RichTextIntermediate`, produzido aqui pela `MarkdownFactory` no parser);
- * muda apenas o **dialeto de origem** do texto, que precisa ser preservado na
- * declaração de `extend` do TJP-export (`objClass.tjpId`, 14C.18/C5.7).
+ * Identical to `RichTextAttribute` in contract (the value is always a
+ * `RichTextIntermediate`, produced here by the `MarkdownFactory` in the
+ * parser); only the **source dialect** of the text differs, and it has to be
+ * preserved in the `extend` declaration of the TJP-export (`objClass.tjpId`,
+ * 14C.18/C5.7).
  *
  * @see docs/syntaxmesh/fases/fase-10-complemento3.md
  * @see docs/syntaxmesh/decisoes/039-extend-markdown.md
@@ -13,13 +14,13 @@
 import { RichTextAttribute, } from "./rich-text-attribute.ts";
 
 /**
- * Atributo `markdown` de `extend`. Herda todo o comportamento de
- * `RichTextAttribute` (`to_s`/`to_tjp`/`inputText` via RTI); só declara o
- * `tjpId` usado na reimpressão da declaração `extend`.
+ * `markdown` attribute of `extend`. Inherits all the behavior of
+ * `RichTextAttribute` (`to_s`/`to_tjp`/`inputText` via RTI); it only declares
+ * the `tjpId` used when reprinting the `extend` declaration.
  */
 export class MarkdownAttribute extends RichTextAttribute {
   /**
-   * ID do tipo de atributo para MarkdownAttribute (extensão; não existe no TJ).
+   * Attribute type ID for MarkdownAttribute (extension; absent in TJ).
    */
   static override readonly tjpId = "markdown";
 }

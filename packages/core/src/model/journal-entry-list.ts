@@ -1,16 +1,16 @@
 /**
- * `JournalEntryList` — lista ordenável de entradas de journal.
+ * `JournalEntryList` — a sortable list of journal entries.
  *
- * Port de `JournalEntryList` (`Journal.rb` l.193-337). No Ruby é um `Array`
- * com "twist": a lista se ordena sozinha antes de qualquer leitura
- * (`[]`, `each`, `first`, `last`) e a ordenação default é
- * `date ASC, alert ASC, seqno ASC` — a mesma do `to_rti`.
+ * Port of `JournalEntryList` (`Journal.rb` l.193-337). In Ruby it is an `Array`
+ * with a twist: the list sorts itself before any read (`[]`, `each`, `first`,
+ * `last`) and the default ordering is `date ASC, alert ASC, seqno ASC` — the same
+ * as `to_rti`.
  *
- * Divergências (Category A — o Ruby lança `NoMethodError`/`ArgumentError`):
- * • `last()` sem data devolve o grupo mais recente em vez de quebrar em
+ * Divergences (Category A — Ruby raises `NoMethodError`/`ArgumentError`):
+ * • `last()` without a date returns the most recent group instead of crashing on
  *   `e.date <= nil`;
- * • entradas globais (`property === null`) ordenam com `seqno` 0 em vez de
- *   quebrar em `@property.sequenceNo`.
+ * • global entries (`property === null`) sort with `seqno` 0 instead of crashing
+ *   on `@property.sequenceNo`.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Journal.rb
  * @see docs/syntaxmesh/decisoes/029-journal-alertlevel.md
@@ -19,22 +19,22 @@
 import type { TjTime, } from "../time/tj-time.ts";
 import type { JournalEntry, } from "./journal.ts";
 
-/** Atributos aceitos em `setSorting` (`JournalEntryList::SortingAttributes`). */
+/** Attributes accepted by `setSorting` (`JournalEntryList::SortingAttributes`). */
 export const JOURNAL_SORTING_ATTRIBUTES = ["alert", "date", "seqno",] as const;
 
-/** Atributo de ordenação. */
+/** Sorting attribute. */
 export type JournalSortingAttribute =
   (typeof JOURNAL_SORTING_ATTRIBUTES)[number];
 
-/** Direção: 1 ascendente, -1 descendente. */
+/** Direction: 1 ascending, -1 descending. */
 export type JournalSortingDirection = 1 | -1;
 
-/** Critério de ordenação (`[atributo, direção]`). */
+/** Sorting criterion (`[attribute, direction]`). */
 export type JournalSorting = Array<
   [JournalSortingAttribute, JournalSortingDirection,]
 >;
 
-/** Ordenação default do Ruby: data, depois severidade, depois sequência. */
+/** Ruby's default order: date, then severity, then sequence. */
 export const DEFAULT_JOURNAL_SORTING: JournalSorting = [
   ["date", 1,],
   ["alert", 1,],
@@ -42,16 +42,16 @@ export const DEFAULT_JOURNAL_SORTING: JournalSorting = [
 ];
 
 /**
- * Lista de `JournalEntry` auto-ordenável (Ruby `JournalEntryList`).
+ * Self-sorting list of `JournalEntry` (Ruby `JournalEntryList`).
  *
- * Utility class apenas: o armazenamento canônico é o {@link Journal}.
+ * A utility class only: the canonical storage is the {@link Journal}.
  */
 export class JournalEntryList {
   private entries: JournalEntry[] = [];
   private sorted = false;
   private sortBy: JournalSorting = DEFAULT_JOURNAL_SORTING;
 
-  /** Define os critérios; valida atributo e direção (Ruby l.203-214). */
+  /** Sets the criteria; validates attribute and direction (Ruby l.203-214). */
   setSorting(by: JournalSorting,): void {
     for (const [attr, direction,] of by) {
       if (!JOURNAL_SORTING_ATTRIBUTES.includes(attr,)) {
@@ -65,36 +65,36 @@ export class JournalEntryList {
     this.sorted = false;
   }
 
-  /** Número de entradas. */
+  /** Number of entries. */
   count(): number {
     return this.entries.length;
   }
 
-  /** Igual a {@link count} (Ruby `length`). */
+  /** Same as {@link count} (Ruby `length`). */
   length(): number {
     return this.entries.length;
   }
 
-  /** `true` quando não há entradas. */
+  /** `true` when there are no entries. */
   empty(): boolean {
     return this.entries.length === 0;
   }
 
-  /** Acrescenta uma entrada e marca a lista como não-ordenada (Ruby `<<`). */
+  /** Appends an entry and marks the list as unsorted (Ruby `<<`). */
   push(entry: JournalEntry,): this {
     this.entries.push(entry,);
     this.sorted = false;
     return this;
   }
 
-  /** Concatena outra lista (Ruby `+`); devolve `this` como o Ruby. */
+  /** Concatenates another list (Ruby `+`); returns `this`, as Ruby does. */
   add(list: JournalEntryList,): this {
     this.entries.push(...list.entries,);
     this.sorted = false;
     return this;
   }
 
-  /** Remove a entrada (Ruby `Array#delete`); devolve `true` se removeu. */
+  /** Removes the entry (Ruby `Array#delete`); returns `true` if it removed. */
   delete(entry: JournalEntry,): boolean {
     const i = this.entries.indexOf(entry,);
     if (i < 0) return false;
@@ -102,38 +102,38 @@ export class JournalEntryList {
     return true;
   }
 
-  /** Remove as entradas que satisfazem `pred` (Ruby `delete_if`). */
+  /** Removes the entries satisfying `pred` (Ruby `delete_if`). */
   deleteIf(pred: (e: JournalEntry,) => boolean,): void {
     this.entries = this.entries.filter((e,) => !pred(e,));
     this.sorted = false;
   }
 
-  /** `true` quando a entrada está na lista (Ruby `include?`). */
+  /** `true` when the entry is in the list (Ruby `include?`). */
   include(entry: JournalEntry,): boolean {
     return this.entries.includes(entry,);
   }
 
-  /** Entrada no índice (lista ordenada antes); `null` fora de faixa. */
+  /** Entry at the index (list sorted first); `null` when out of range. */
   get(index: number,): JournalEntry | null {
     this.sort();
     return this.entries[index] ?? null;
   }
 
-  /** Primeira entrada (lista ordenada antes); `null` se vazia. */
+  /** First entry (list sorted first); `null` when empty. */
   first(): JournalEntry | null {
     this.sort();
     return this.entries[0] ?? null;
   }
 
   /**
-   * Entradas de mesma data da última entrada antes de `date` (Ruby `last`).
+   * Entries sharing the date of the last entry before `date` (Ruby `last`).
    *
-   * `date` ausente/null devolve o grupo mais recente (ver divergências no
-   * topo). O resultado também volta ordenado, como no Ruby.
+   * An absent/`null` `date` returns the most recent group (see the divergences
+   * at the top). The result comes back sorted as well, as in Ruby.
    */
   last(date: TjTime | null = null,): JournalEntryList {
     this.sort();
-    // Data de corte: a da última entrada que ainda está antes de `date`.
+    // Cut-off date: that of the last entry still before `date`.
     let cut: TjTime | null = null;
     for (let i = this.entries.length - 1; i >= 0; i--) {
       const d = this.entries[i]!.date;
@@ -144,16 +144,16 @@ export class JournalEntryList {
     }
     const result = new JournalEntryList();
     if (cut === null) return result;
-    // Percorre na ordem de chegada para preservar a ordem das empates (o
-    // `sort!` do Ruby não é estável; o `Array#sort` do JS é, então evitamos
-    // depender do passo de ordenação para resolver empates de data).
+    // Walk in arrival order to preserve tie order (Ruby's `sort!` is not
+    // stable; JS `Array#sort` is, so we avoid depending on the sorting step to
+    // resolve date ties).
     for (const e of this.entries) {
       if (e.date.compareTo(cut,) === 0) result.push(e,);
     }
     return result.sort();
   }
 
-  /** Remove duplicatas preservando a ordem (Ruby `uniq!`). */
+  /** Removes duplicates preserving the order (Ruby `uniq!`). */
   uniq(): void {
     const seen = new Set<JournalEntry>();
     this.entries = this.entries.filter((e,) => {
@@ -165,10 +165,10 @@ export class JournalEntryList {
   }
 
   /**
-   * Ordena a lista pelos critérios correntes (Ruby `sort!`).
+   * Sorts the list by the current criteria (Ruby `sort!`).
    *
-   * Idempotente: uma vez ordenada, chamadas seguintes não reordenam até que
-   * algo seja adicionado/removido.
+   * Idempotent: once sorted, further calls do not re-sort until something is
+   * added or removed.
    */
   sort(): this {
     if (this.sorted) return this;
@@ -189,23 +189,23 @@ export class JournalEntryList {
     return this;
   }
 
-  /** Cópia ordenada das entradas (sem expor o array interno). */
+  /** Sorted copy of the entries (without exposing the internal array). */
   toArray(): JournalEntry[] {
     this.sort();
     return this.entries.slice();
   }
 
   /**
-   * Cópia na **ordem de chegada**, sem ordenar.
+   * Copy in **arrival order**, without sorting.
    *
-   * Necessário porque os relatórios preservam a ordem de inserção do journal
-   * (a ordenação é aplicada depois, por grupo/critério de exibição).
+   * Needed because the reports preserve the journal's insertion order (sorting
+   * is applied later, per group/display criterion).
    */
   unsorted(): JournalEntry[] {
     return this.entries.slice();
   }
 
-  /** Itera na ordem de ordenação (Ruby `each`). */
+  /** Iterates in sorting order (Ruby `each`). */
   [Symbol.iterator](): IterableIterator<JournalEntry> {
     this.sort();
     return this.entries[Symbol.iterator]();

@@ -1,36 +1,36 @@
 /**
- * `FileStore` — contrato de sistema de arquivos assíncrono do core (ADR 037).
+ * `FileStore` — the core's asynchronous filesystem contract (ADR 037).
  *
- * O core é independente de DOM/Storage (ADR 001/003): não conhece OPFS,
- * IndexedDB, `Deno.*` nem `node:fs`. Quem precisa ler/escrever arquivos — os
- * sheet handlers (Fase 18), o storage da PWA (Fase 19) e a CLI (Fase 24) —
- * recebe uma implementação desta interface por injeção.
+ * The core is free of DOM/Storage (ADR 001/003): it knows nothing about OPFS,
+ * IndexedDB, `Deno.*` or `node:fs`. Whoever needs to read/write files — the
+ * sheet handlers (phase 18), the PWA storage (phase 19) and the CLI (phase 24)
+ * — receives an implementation of this interface by injection.
  *
- * A interface é **estrutural**: qualquer objeto com a forma abaixo a satisfaz
- * (sem `implements`). Todos os métodos são assíncronos porque OPFS não oferece
- * escrita síncrona.
+ * The interface is **structural**: any object with the shape below satisfies
+ * it (no `implements`). Every method is asynchronous because OPFS offers no
+ * synchronous write.
  *
  * @see docs/syntaxmesh/decisoes/037-filestore-injection.md
  */
 export interface FileStore {
-  /** Conteúdo UTF-8 do arquivo; rejeita se ele não existir. */
+  /** UTF-8 contents of the file; rejects when it does not exist. */
   read(path: string,): Promise<string>;
-  /** Grava (cria ou sobrescreve) o arquivo com conteúdo UTF-8. */
+  /** Writes (creates or overwrites) the file with UTF-8 content. */
   write(path: string, content: string,): Promise<void>;
-  /** Remove o arquivo; rejeita se ele não existir. */
+  /** Removes the file; rejects when it does not exist. */
   delete(path: string,): Promise<void>;
   /**
-   * Nomes das **entradas** de um diretório (arquivos **e** subdiretórios),
-   * sem recursão — como `readdir`.
+   * Names of the **entries** of a directory (files **and** subdirectories),
+   * non-recursive — like `readdir`.
    *
-   * A forma dos nomes é do provedor (basename ou caminho completo); os
-   * consumidores do core só comparam sufixos e basenames. Devolver também os
-   * subdiretórios é o que permite ao `StatusSheetSender` descobrir as pastas
-   * de período `TimeSheets/<data>` (18.10).
+   * The shape of the names is up to the provider (basename or full path); the
+   * core consumers only compare suffixes and basenames. Returning the
+   * subdirectories too is what lets `StatusSheetSender` discover the
+   * `TimeSheets/<date>` period folders (18.10).
    */
   list(dir: string,): Promise<string[]>;
-  /** `true` se o caminho existir (arquivo ou diretório). */
+  /** `true` when the path exists (file or directory). */
   exists(path: string,): Promise<boolean>;
-  /** Cria o diretório (idempotente). */
+  /** Creates the directory (idempotent). */
   mkdir(path: string,): Promise<void>;
 }

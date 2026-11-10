@@ -1,9 +1,9 @@
 import type { AttributionRule, } from "./cost-event.ts";
 
 /**
- * Resultado de atribuição de custo.
+ * Cost attribution result.
  *
- * Define qual conta recebe um custo e qual regra de atribuição foi usada.
+ * Defines which account receives a cost and which attribution rule was used.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Charge.rb
  */

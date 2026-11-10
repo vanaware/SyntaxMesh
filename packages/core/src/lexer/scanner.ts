@@ -1,9 +1,10 @@
 /**
- * Scanner — scanner de texto modal com suporte a includes aninhados e macros.
+ * Scanner — modal text scanner with support for nested includes and macros.
  *
- * Port de `TextParser/Scanner.rb` (l.206-565). Classe abstrata: os padrões de
- * token são fornecidos pela subclasse (ex.: `ProjectFileScanner`). O scanner é
- * modal: cada modo usa apenas o subconjunto de padrões a ele atribuído.
+ * Port of `TextParser/Scanner.rb` (l.206-565). The token patterns are supplied
+ * by the subclass (e.g. `ProjectFileScanner`) and the scanner is modal: each
+ * mode uses only the subset of patterns assigned to it, so switching mode
+ * switches the whole lexing grammar at once.
  *
  * @see docs/taskjuggler/lib/taskjuggler/TextParser/Scanner.rb
  */
@@ -28,13 +29,16 @@ import {
   type StreamHandle,
 } from "./stream-handle.ts";
 
-/** Pós-processamento de token: pode reescrever [tipo, texto] após o match. */
+/** Token post-processing: may rewrite `[type, text]` after the match. */
 export type TokenPostProcessor = (
   type: string | null,
   text: string,
 ) => [string | null, unknown,];
 
-/** Padrão de token: [tipo (null = ignorar), regex, modo(s), pós-processamento]. */
+/**
+ * Token pattern:
+ * `[type (null = ignore), regex, mode(s), post-processing]`.
+ */
 export type TokenPattern = [
   string | null,
   RegExp,
@@ -42,42 +46,51 @@ export type TokenPattern = [
   TokenPostProcessor | null,
 ];
 
-/** Token produzido pelo scanner: [tipo, texto, origem]. */
+/** Token produced by the scanner: `[type, text, origin]`. */
 export type ScannerToken = [string, unknown, SourceFileInfo | null,];
 
-/** Entrada da pilha de arquivos: handle, token em buffer e callback de EOF. */
-type FileStackEntry = [StreamHandle, ScannerToken | null, (() => void) | null,];
+/** File-stack entry: handle, buffered token and EOF callback. */
+export type FileStackEntry = [
+  StreamHandle,
+  ScannerToken | null,
+  (() => void) | null,
+];
 
 /**
- * Limite de passes da Fase 1 (macro dentro de corpo de template). Alinhado ao
- * limite de 20 níveis do `macroStack` do Ruby.
+ * Pass limit of phase 1 (macros inside a template body). Aligned with the
+ * 20-level `macroStack` limit of Ruby.
  */
 const BODY_EXPANSION_PASSES = 20;
 
 /**
- * Profundidade máxima de templates em avaliação. É o **mesmo** 20 do
- * `macroStack` (Ruby l.211): templates e macros empilham no mesmo mecanismo de
- * injeção, então o teto é único e o backstop é o mesmo erro
- * `macro_stack_overflow`. Recursão direta/mútua é pega antes por
+ * Maximum depth of templates being evaluated. It is the **same** 20 of the
+ * `macroStack` (Ruby l.211): templates and macros pile up on the same injection
+ * mechanism, so the ceiling is single and the backstop is the same
+ * `macro_stack_overflow` error. Direct/mutual recursion is caught earlier by
  * `template_recursion`.
  */
 const TEMPLATE_DEPTH_LIMIT = 20;
 
-/** Args posicionais de uma chamada de macro (Ruby `endMacroCall`). */
+/** Positional arguments of a macro call (Ruby `endMacroCall`). */
 export interface PositionalMacroArgs {
+  /** Name of the macro being called. */
   name: string;
+  /** Arguments quoted with `"` and already unescaped. */
   args: string[];
 }
 
-/** View vazia e congelada usada quando ainda não há projeto (§4.7). */
+/** Empty frozen view used while there is no project yet (§4.7). */
 const EMPTY_PROJECT_VIEW: Readonly<Record<string, unknown>> = Object.freeze(
   {},
 );
 
 /**
- * Converte um valor JS qualquer (vindo de `expandTemplate(nome, args)`) em
- * `TemplateArgumentValue`, preservando números, booleanos, listas e objetos.
- * O que não se encaixa vira texto — nunca `undefined`/`null` no contexto.
+ * Converts any JS value (coming from `expandTemplate(name, args)`) into a
+ * `TemplateArgumentValue`, preserving numbers, booleans, lists and objects.
+ * Whatever does not fit becomes text — never `undefined`/`null` in the context.
+ *
+ * @param value External value to normalize.
+ * @returns The value as a template argument.
  */
 export function toArgumentValue(value: unknown,): TemplateArgumentValue {
   if (
@@ -99,7 +112,7 @@ export function toArgumentValue(value: unknown,): TemplateArgumentValue {
   return String(value ?? "",);
 }
 
-/** Normaliza o objeto de argumentos de `expandTemplate` em mapa de params. */
+/** Normalizes the argument object of `expandTemplate` into a params map. */
 function toArgumentMap(args: unknown,): Record<string, TemplateArgumentValue> {
   const out: Record<string, TemplateArgumentValue> = {};
   if (args && typeof args === "object" && !Array.isArray(args,)) {
@@ -110,63 +123,77 @@ function toArgumentMap(args: unknown,): Record<string, TemplateArgumentValue> {
   return out;
 }
 
+/**
+ * Abstract base of the token scanner: holds the pattern table, the file stack
+ * and the macro namespace, and turns text into tokens mode by mode.
+ */
 export class Scanner implements ScannerHostLike {
-  /** Nome do arquivo (ou texto) inicial (Ruby @masterFile). */
+  /** Name of the initial file (or text) (Ruby @masterFile). */
   readonly masterFile: string;
+  /** Handler that receives every error and warning. */
   protected messageHandler: MessageHandlerInstance;
+  /** Log used for progress and diagnostics. */
   protected log: LogLike;
-  /** Tabela de macro expansível durante o lexing (Ruby @macroTable). */
+  /** Macro table expandable during lexing (Ruby @macroTable). */
   readonly macroTable: MacroTable = new MacroTable();
-  /** Handle do stream correntemente processado (Ruby @cf). */
+  /** Handle of the stream currently being processed (Ruby @cf). */
   cf: StreamHandle | null = null;
-  /** Pilha de arquivos aninhados (Ruby @fileStack). */
+  /** Stack of the nested files (Ruby @fileStack). */
   fileStack: FileStackEntry[] = [];
-  /** true quando o último arquivo chegou ao fim (Ruby @finishLastFile). */
+  /** true once the last file reached its end (Ruby @finishLastFile). */
   finishLastFile = false;
-  /** true se o scanner opera sobre um buffer de texto. */
+  /** true when the scanner works on a text buffer instead of a file. */
   fileNameIsBuffer = false;
-  /** SourceFileInfo do início do token em processamento. */
+  /** `SourceFileInfo` of the start of the token being processed. */
   startOfToken: SourceFileInfo | null = null;
-  /** Correção de número de linha para mensagens de erro. */
+  /** Line-number correction applied to error messages. */
   lineDelta = 0;
-  /** Padrões agrupados por modo (Ruby @patternsByMode). */
+  /** Patterns grouped by mode (Ruby @patternsByMode). */
   readonly patternsByMode: Map<string, TokenPattern[]> = new Map();
-  /** Modo ativo corrente (Ruby @scannerMode). */
+  /** Mode currently active (Ruby @scannerMode). */
   scannerMode: string = "";
-  /** Modo inicial/final do arquivo (Ruby @defaultMode). */
+  /** Start/end mode of the file (Ruby @defaultMode). */
   readonly defaultMode: string;
-  /** Conjunto de padrões do modo ativo (ponteiro, não cópia). */
+  /** Pattern set of the active mode (a pointer, not a copy). */
   activePatterns: TokenPattern[] | null = null;
-  /** Caminho do arquivo mestre com barra final (Ruby @masterPath). */
+  /** Path of the master file with a trailing slash (Ruby @masterPath). */
   masterPath = "";
-  /** Token devolvido pendente (Ruby @tokenBuffer). */
+  /** Token pushed back and pending (Ruby @tokenBuffer). */
   tokenBuffer: ScannerToken | null = null;
   /**
-   * Motor de expressões lógicas injetado pela Fase 11 para valorar argumentos
-   * de template (subfase 23.4.6). `null` mantém a expressão como texto.
+   * Logical-expression engine injected by phase 11 to evaluate template
+   * arguments (sub-phase 23.4.6). `null` keeps the expression as text.
    */
   private expressionEvaluator:
     | ((text: string,) => ExpressionEvaluation)
     | null = null;
-  /** View somente-leitura dos metadados do projeto (`project` do §4.7). */
+  /** Read-only view of the project metadata (`project` of §4.7). */
   private projectContextProvider:
     | (() => Readonly<Record<string, unknown>> | null)
     | null = null;
-  /** Resolvedor de IDs (`ids()` do §4.7). */
+  /** Resolver of IDs (`ids()` of §4.7). */
   private templateIdResolver: ((id: string,) => string) | null = null;
   /**
-   * Leitor de conteúdo injetado por instância (Fase 24 — ADR 034).
+   * File-content reader injected per instance (phase 24 — ADR 034).
    *
-   * Quando definido, todo `FileStreamHandle` criado por este scanner (master e
-   * `include`s) lê o texto por aqui — nunca pelo filesystem. `null` mantém o
-   * comportamento legado (`loadFileText`).
+   * When set, every `FileStreamHandle` created by this scanner (master and
+   * `include`s) reads the text through it — never through the filesystem.
+   * `null` keeps the legacy behaviour (`loadFileText`).
    */
   private fileLoader: FileTextLoader | null = null;
-  /** Nome opcional do buffer corrente (`parseContent(content, nome)`). */
+  /** Optional name of the current buffer (`parseContent(content, name)`). */
   private bufferName: string | null = null;
-  /** Templates em avaliação **inline** (`expandTemplate`), base → topo. */
+  /** Templates being evaluated **inline** (`expandTemplate`), base → top. */
   private readonly inlineTemplateStack: string[] = [];
 
+  /**
+   * Creates a scanner over the master file and its token patterns.
+   *
+   * @param masterFile File name (or literal text, for a buffer).
+   * @param log Log used for progress and diagnostics.
+   * @param tokenPatterns Patterns of every mode, registered up front.
+   * @param defaultMode Mode active at the start and at the end of the file.
+   */
   constructor(
     masterFile: string,
     log: LogLike,
@@ -185,16 +212,21 @@ export class Scanner implements ScannerHostLike {
       const postProc = pat[3];
       this.addPattern(type, regExp, mode, postProc,);
     }
-    // Permite subclasses registrarem padrões após super(): se o modo ainda
-    // não existir, apenas guarda o nome; a subclasse reatribui `mode` depois.
+    // Lets subclasses register patterns after super(): if the mode does not
+    // exist yet, only the name is kept; the subclass reassigns `mode` later.
     this.activePatterns = this.patternsByMode.get(defaultMode,) ?? null;
     this.scannerMode = defaultMode;
   }
 
   /**
-   * Adiciona um padrão ao scanner. _type_ é null para tokens ignorados;
-   * _mode_ aceita um modo ou lista de modos. _postProc_ pode reescrever
-   * [tipo, texto] após o match (Ruby addPattern, l.261-273).
+   * Adds a pattern to the scanner. _type_ is null for ignored tokens;
+   * _mode_ accepts one mode or a list of modes. _postProc_ may rewrite
+   * `[type, text]` after the match (Ruby addPattern, l.261-273).
+   *
+   * @param type Token type, or `null` to match and discard.
+   * @param regExp Pattern that recognizes the token.
+   * @param mode Mode or modes in which the pattern is active.
+   * @param postProc Optional hook applied right after a match.
    */
   addPattern(
     type: string | null,
@@ -211,7 +243,7 @@ export class Scanner implements ScannerHostLike {
     }
   }
 
-  /** Troca o modo do scanner; apenas padrões do novo modo ficam ativos. */
+  /** Switches the scanner mode; only the patterns of the new mode stay active. */
   set mode(newMode: string,) {
     const active = this.patternsByMode.get(newMode,);
     if (!active) {
@@ -225,20 +257,26 @@ export class Scanner implements ScannerHostLike {
     return this.scannerMode;
   }
 
-  /** Define (ou limpa) o leitor de conteúdo injetado deste scanner. */
+  /** Sets (or clears) the injected content reader of this scanner. */
   setFileLoader(loader: FileTextLoader | null,): void {
     this.fileLoader = loader;
   }
 
-  /** Inicia o processamento; _fileNameIsBuffer_ opera sobre String. */
+  /**
+   * Starts processing; _fileNameIsBuffer_ works over a `String`.
+   *
+   * @param fileNameIsBuffer Whether `masterFile` is the text itself.
+   * @param bufferText Text to scan when running over a buffer.
+   * @param bufferName Optional buffer name used in messages.
+   */
   open(
     fileNameIsBuffer = false,
     bufferText?: string,
     bufferName?: string,
   ): void {
     this.fileNameIsBuffer = fileNameIsBuffer;
-    // Nome opcional do buffer (extensão Fase 24): entra em `fileName()` e nas
-    // mensagens como `<nome>:<linha>`. Ausente mantém o legado (sem nome).
+    // Optional buffer name (phase 24 extension): shows up in `fileName()` and
+    // in the messages as `<name>:<line>`. Absent keeps the legacy (unnamed).
     this.bufferName = fileNameIsBuffer ? (bufferName ?? null) : null;
     if (fileNameIsBuffer) {
       this.cf = new BufferStreamHandle(
@@ -264,7 +302,7 @@ export class Scanner implements ScannerHostLike {
     this.tokenBuffer = null;
   }
 
-  /** Termina o processamento e reseta as estruturas. */
+  /** Ends processing and resets the structures. */
   close(): void {
     if (!this.fileNameIsBuffer) {
       this.log.startProgressMeter(`Reading file ${this.masterFile}`,);
@@ -276,8 +314,13 @@ export class Scanner implements ScannerHostLike {
   }
 
   /**
-   * Passa a processar _includeFileName_ (relativo ao arquivo chamador);
-   * ao terminar, retoma o pai. Retorna o nome qualificado do incluído.
+   * Starts processing _includeFileName_ (relative to the calling file); on
+   * completion, resumes the parent. Returns the qualified name of the include.
+   *
+   * @param includeFileName File to include, as written in the source.
+   * @param sfi Location of the `include` call, for error messages.
+   * @param onEof Optional callback fired when the included file ends.
+   * @returns The qualified name of the included file.
    */
   include(
     includeFileName: string,
@@ -291,7 +334,7 @@ export class Scanner implements ScannerHostLike {
       includeFileName = path + includeFileName;
     }
 
-    // Detecção de inclusão recursiva (não pega links de filesystem).
+    // Detection of recursive inclusion (does not catch filesystem links).
     for (const entry of this.fileStack) {
       if (includeFileName === entry[0].fileName) {
         this.error(
@@ -299,15 +342,15 @@ export class Scanner implements ScannerHostLike {
           `Recursive inclusion of ${includeFileName} detected`,
           sfi,
         );
-        // O `tj3` morre aqui: sem `trapSetup` o `MessageHandler#error` faz
-        // `exit 1` (MessageHandler.rb l.289-298). Acumular a mensagem e
-        // continuar empilharia o mesmo arquivo para sempre (OOM). O aborto
-        // preserva a mensagem já registrada e falha o parse.
+        // `tj3` dies here: without `trapSetup` the `MessageHandler#error` does
+        // `exit 1` (MessageHandler.rb l.289-298). Accumulating the message and
+        // continuing would push the same file forever (OOM). The abort keeps
+        // the message already recorded and fails the parse.
         throw new TjError("",);
       }
     }
 
-    // Guarda o token em buffer do pai na pilha.
+    // Keeps the buffered token of the parent on the stack.
     if (this.fileStack.length > 0) {
       this.fileStack[this.fileStack.length - 1]![1] = this.tokenBuffer;
     }
@@ -335,7 +378,7 @@ export class Scanner implements ScannerHostLike {
     return includeFileName;
   }
 
-  /** SourceFileInfo da posição corrente de processamento. */
+  /** `SourceFileInfo` of the current processing position. */
   sourceFileInfo(): SourceFileInfo {
     return this.cf
       ? new SourceFileInfo(
@@ -346,32 +389,39 @@ export class Scanner implements ScannerHostLike {
       : new SourceFileInfo(this.masterFile, 0, 0,);
   }
 
-  /** Nome do arquivo corrente (ou o próprio texto, em buffer). */
+  /** Name of the current file (or the text itself, when running on a buffer). */
   fileName(): string {
     return this.cf
       ? this.cf.fileName ?? this.bufferName ?? ""
       : this.masterFile;
   }
 
+  /** Line number of the current position (0 before the first line). */
   lineNo(): number {
     return this.cf ? this.cf.lineNo() : 0;
   }
 
+  /**
+   * Column of the current position. Always 0: the scanner reports line-level
+   * locations only, exactly like the Ruby port.
+   */
   columnNo(): number {
     return 0;
   }
 
-  /** Linha corrente já consumida do arquivo ativo. */
+  /** Current line already consumed from the active file. */
   line(): string {
     return this.cf ? this.cf.currentLine() : "";
   }
 
   /**
-   * Próximo token do stream (com pilha de arquivos e EOFs de arquivo).
+   * Next token of the stream (handling the file stack and file EOFs).
    * Ruby nextToken (l.381-422).
+   *
+   * @returns The next token, or the `eof`/`endOfText` sentinel.
    */
   nextToken(): ScannerToken {
-    // Devolve primeiro um token empurrado de volta.
+    // Returns a pushed-back token first.
     if (this.tokenBuffer !== null) {
       const res = this.tokenBuffer;
       this.tokenBuffer = null;
@@ -379,7 +429,7 @@ export class Scanner implements ScannerHostLike {
     }
 
     if (this.finishLastFile) {
-      // O arquivo anterior foi realmente concluído: fecha e remove da pilha.
+      // The previous file was actually finished: close it and pop the stack.
       this.finishLastFile = false;
 
       const top = this.fileStack[this.fileStack.length - 1];
@@ -390,13 +440,13 @@ export class Scanner implements ScannerHostLike {
       this.fileStack.pop();
 
       if (this.fileStack.length === 0) {
-        // Fim do arquivo de nível superior.
+        // End of the top-level file.
         this.cf = null;
         this.tokenBuffer = null;
         this.finishLastFile = true;
         return ["endOfText", "<EOT>", this.startOfToken,];
       } else {
-        // Retoma o arquivo que incluíu o corrente.
+        // Resumes the file that included the current one.
         const entry = this.fileStack[this.fileStack.length - 1]!;
         this.cf = entry[0];
         const tokenBuffer = entry[1];
@@ -411,7 +461,7 @@ export class Scanner implements ScannerHostLike {
     return this.scanToken();
   }
 
-  /** Devolve um token para ser relido; só 1 por vez (Ruby l.426-433). */
+  /** Pushes a token back to be read again; only 1 at a time (Ruby l.426-433). */
   returnToken(token: ScannerToken,): void {
     if (this.tokenBuffer !== null) {
       console.error(this.tokenBuffer,);
@@ -420,47 +470,54 @@ export class Scanner implements ScannerHostLike {
     this.tokenBuffer = token;
   }
 
-  /** Adiciona uma macro à tabela de expansão. */
+  /** Adds a macro to the expansion table. */
   addMacro(macro: Macro,): void {
     this.macroTable.add(macro,);
   }
 
   /**
-   * Registra um template no namespace unificado (extensão Fase 23).
-   * Devolve o motivo da recusa para o chamador emitir a mensagem com o
-   * `SourceFileInfo` da definição (ADR 033).
+   * Registers a template in the unified namespace (phase 23 extension).
+   * Returns the refusal reason so the caller can emit the message with the
+   * `SourceFileInfo` of the definition (ADR 033).
+   *
+   * @param template Template to register.
+   * @returns Whether the registration succeeded, and why it failed.
    */
   addTemplate(template: Template,): AddTemplateResult {
     return this.macroTable.addTemplate(template,);
   }
 
-  /** true se _name_ é um template registrado (extensão Fase 23). */
+  /** true if _name_ is a registered template (phase 23 extension). */
   templateDefined(name: string,): boolean {
     return this.macroTable.templateDefined(name,);
   }
 
   /**
-   * true se a macro _name_ já foi definida (Ruby `macroDefined?`).
+   * true if the macro _name_ is already defined (Ruby `macroDefined?`).
    *
-   * Predicado **macro-only**: um template de mesmo nome não conta (o
-   * namespace é compartilhado, mas a redefinição de macro continua sendo o
-   * warning do Ruby — ADR 033).
+   * **Macro-only** predicate: a template with the same name does not count (the
+   * namespace is shared, but macro redefinition stays the Ruby warning —
+   * ADR 033).
    */
   macroDefined(name: string,): boolean {
     return this.macroTable.macroDefined(name,);
   }
 
   /**
-   * Expande uma macro e a injeta no stream. _prefix_ re-injeta o texto
-   * imediatamente antes da chamada; _callLength_ é o comprimento de
-   * `${...}` completo. Ruby expandMacro (l.450-464).
+   * Expands a macro and injects it into the stream. _prefix_ re-injects the text
+   * immediately before the call; _callLength_ is the length of the whole
+   * `${...}`. Ruby expandMacro (l.450-464).
+   *
+   * @param prefix Text to inject before the expansion.
+   * @param args Macro name followed by its positional arguments.
+   * @param callLength Length of the full call being replaced.
    */
   expandMacro(prefix: string, args: string[], callLength: number,): void {
     const resolved = this.macroTable.resolve(args, this.sourceFileInfo(),);
     const macro = resolved ? resolved[0] : null;
     const text = resolved ? resolved[1] : null;
 
-    // Macro expandida vazia: ignora silenciosamente.
+    // Macro expanded to nothing: ignored silently.
     if (text === "") return;
 
     if (!(macro && text)) {
@@ -481,20 +538,27 @@ export class Scanner implements ScannerHostLike {
   }
 
   // ---------------------------------------------------------------------------
-  // Extensão Fase 23 — expansão de `template` (ADR 033)
+  // Phase 23 extension — expansion of `template` (ADR 033)
   // ---------------------------------------------------------------------------
 
   /**
-   * Expande uma chamada `${NOME k=v …}` de template (plano §4.4, duas fases):
+   * Expands a `${NAME k=v …}` template call (plan §4.4, two phases):
    *
-   * 1. Fase 1 — `${MACRO …}` do corpo é expandido textualmente;
-   * 2. Fase 2 — o corpo resultante é renderizado pelo Vento com os params;
+   * 1. Phase 1 — the `${MACRO …}` of the body is expanded textually;
+   * 2. Phase 2 — the resulting body is rendered by Vento with the params;
    *
-   * e o texto final reentra no stream pela mesma `injectMacro` das macros.
+   * and the final text re-enters the stream through the same `injectMacro` used
+   * by macros.
    *
-   * O texto reentrante é reescaneado como TJP normal — é isso que faz uma
-   * chamada de template produzida pelo render (`${OUTRO …}`) expandir em
-   * cascata (23.3.9).
+   * The re-entrant text is rescanned as plain TJP — that is what makes a
+   * template call produced by the render (`${OTHER …}`) expand in cascade
+   * (23.3.9).
+   *
+   * @param prefix Text to inject before the rendered content.
+   * @param name Name of the template, possibly prefixed with `?`.
+   * @param rawArgs Raw named-argument list of the call.
+   * @param callLength Length of the full call being replaced.
+   * @param callSfi Location of the call, for error messages.
    */
   expandTemplateCall(
     prefix: string,
@@ -506,18 +570,17 @@ export class Scanner implements ScannerHostLike {
     const target = this.templateCallTarget(name,);
     const template = target.template;
     if (!template) {
-      // `${?NOME …}` com template inexistente é vazio silencioso (§4.5.4).
+      // `${?NAME …}` with a missing template is a silent no-op (§4.5.4).
       if (target.optional) return;
-      // Inalcançável pelo caminho normal (o chamador decide pelo lookup), mas
-      // mantém a mesma mensagem da macro se o namespace mudar no meio.
+      // Unreachable through the normal path (the caller decides by lookup), but
+      // keeps the same message as the macro if the namespace changes midway.
       this.error("undefined_macro", `Undefined macro '${name}' called`,);
       return;
     }
     const cleanName = template.name;
 
-    // Proteções (§4.6): recursão com cadeia completa e teto de profundidade.
-    // Ambas checam antes de renderizar, então o corpo nunca é reexecutado
-    // indefinidamente.
+    // Guards (§4.6): recursion with the full chain and a depth ceiling. Both
+    // check before rendering, so the body is never re-executed indefinitely.
     const chain = this.templateCallChain();
     const cycleAt = chain.indexOf(cleanName,);
     if (cycleAt >= 0) {
@@ -555,10 +618,15 @@ export class Scanner implements ScannerHostLike {
   }
 
   /**
-   * Valida os argumentos contra a lista de parâmetros declarada (§5).
+   * Validates the arguments against the declared parameter list (§5).
    *
-   * Não declarado vem antes do faltante: um typo (`esforcoo`) costuma ser a
-   * causa do "parâmetro faltante" e a mensagem certa é a do typo.
+   * Undeclared comes before missing: a typo (`effortt`) is usually the cause of
+   * the "missing parameter" and the right message is the typo one.
+   *
+   * @param template Template being called.
+   * @param data Arguments read from the call.
+   * @param callSfi Location of the call, for error messages.
+   * @returns `true` when the arguments match the declaration.
    */
   protected validateTemplateArgs(
     template: Template,
@@ -590,10 +658,15 @@ export class Scanner implements ScannerHostLike {
   }
 
   /**
-   * Núcleo de renderização (duas fases, §4.4) compartilhado pela chamada do
-   * stream (`${NOME …}`) e pela composição inline (`expandTemplate`).
+   * Rendering core (two phases, §4.4) shared by the stream call
+   * (`${NAME …}`) and by the inline composition (`expandTemplate`).
    *
-   * Devolve o texto renderizado ou `null` quando o erro já foi reportado.
+   * Returns the rendered text or `null` when the error was already reported.
+   *
+   * @param template Template to render.
+   * @param data Arguments of the call.
+   * @param callSfi Location of the call, for error messages.
+   * @returns The rendered text, or `null` on failure.
    */
   protected renderTemplate(
     template: Template,
@@ -602,17 +675,17 @@ export class Scanner implements ScannerHostLike {
   ): string | null {
     const cleanName = template.name;
 
-    // Fase 1 — macros do corpo, antes do render.
+    // Phase 1 — macros of the body, before the render.
     const expandedBody = this.expandMacrosInText(template.body,);
 
-    // Fase 2 — render Vento com params + chaves globais no contexto (§4.7).
+    // Phase 2 — Vento render with params + global keys in the context (§4.7).
     const context = this.buildTemplateContext(cleanName, data, callSfi,);
     const rendered = templateEngine.render(expandedBody, context,);
     if (!rendered.ok) {
       const syntax = rendered.kind === "syntax";
       const kind = syntax ? "erro de sintaxe" : "erro de execução";
-      // O corpo começa na linha da definição quando o texto segue o `[` na
-      // mesma linha; começa uma linha depois quando o `[` fecha a linha.
+      // The body starts on the definition line when the text follows the `[`
+      // on the same line; it starts one line later when `[` closes the line.
       const offset = template.body.startsWith("\n",) ? 1 : 0;
       const line = template.sourceFileInfo.lineNo + offset + rendered.line - 1;
       this.error(
@@ -630,10 +703,16 @@ export class Scanner implements ScannerHostLike {
   }
 
   /**
-   * Monta o contexto da renderização: chaves globais (§4.7) + parâmetros.
+   * Builds the rendering context: global keys (§4.7) + parameters.
    *
-   * O parâmetro **sobrescreve** a global homônima e a colisão vira warning
-   * com o `sfi` da chamada (23.6.5) — o template continua renderizando.
+   * The parameter **overrides** the homonymous global and the collision becomes
+   * a warning with the `sfi` of the call (23.6.5) — the template keeps
+   * rendering.
+   *
+   * @param callName Name of the template being called.
+   * @param data Arguments of the call.
+   * @param callSfi Location of the call, for the warning.
+   * @returns The context handed to the template engine.
    */
   protected buildTemplateContext(
     callName: string,
@@ -656,9 +735,11 @@ export class Scanner implements ScannerHostLike {
   }
 
   /**
-   * Chaves globais disponíveis em qualquer corpo (§4.7): `project` (view
-   * congelada, somente leitura), `ids`, `expandTemplate`, `expandMacro` e
-   * `expandTemplateList`.
+   * Global keys available in any body (§4.7): `project` (frozen, read-only
+   * view), `ids`, `expandTemplate`, `expandMacro` and `expandTemplateList`.
+   *
+   * @param callSfi Location of the call, propagated to the helpers.
+   * @returns The global part of the template context.
    */
   protected templateGlobals(
     callSfi: SourceFileInfo,
@@ -682,9 +763,14 @@ export class Scanner implements ScannerHostLike {
   }
 
   /**
-   * `expandTemplate(nome, { … })` — renderiza outro template **inline** e
-   * devolve o texto (sem injetar no stream). É a forma de composição
-   * explícita recomendada pelo plano §4.4.
+   * `expandTemplate(name, { … })` — renders another template **inline** and
+   * returns the text (without injecting it into the stream). It is the explicit
+   * composition form recommended by plan §4.4.
+   *
+   * @param name Name of the template, possibly prefixed with `?`.
+   * @param args Argument object handed to the template.
+   * @param callSfi Location of the call, for error messages.
+   * @returns The rendered text, or `""` on failure.
    */
   protected expandTemplateInline(
     name: string,
@@ -701,7 +787,7 @@ export class Scanner implements ScannerHostLike {
     }
     const cleanName = template.name;
 
-    // Recursão: a cadeia do stream + a pilha das chamadas inline em curso.
+    // Recursion: the stream chain + the stack of the inline calls in progress.
     const chain = [...this.templateCallChain(), ...this.inlineTemplateStack,];
     const cycleAt = chain.indexOf(cleanName,);
     if (cycleAt >= 0) {
@@ -726,9 +812,14 @@ export class Scanner implements ScannerHostLike {
   }
 
   /**
-   * `expandMacro(nome, …)` — resolve a macro a partir de string (§4.7).
-   * A macro continua sendo substituição textual; o texto devolvido entra no
-   * corpo renderizado e é resscaneado normalmente.
+   * `expandMacro(name, …)` — resolves the macro from a string (§4.7).
+   * The macro is still a textual substitution; the returned text enters the
+   * rendered body and is rescanned normally.
+   *
+   * @param name Name of the macro, possibly prefixed with `?`.
+   * @param args Positional arguments of the call.
+   * @param callSfi Location of the call, for error messages.
+   * @returns The macro body, or `""` when it does not exist.
    */
   protected expandMacroInline(
     name: string,
@@ -749,11 +840,16 @@ export class Scanner implements ScannerHostLike {
   }
 
   /**
-   * `expandTemplateList(nome, lista)` — conveniência opcional do plano §4.7:
-   * renderiza o mesmo template para cada item e devolve o array de textos.
+   * `expandTemplateList(name, list)` — optional convenience of plan §4.7:
+   * renders the same template for each item and returns the array of texts.
    *
-   * Item que não é objeto é ligado ao **primeiro** parâmetro declarado: é o
-   * caso comum de uma lista de IDs (`["a", "b"]`).
+   * An item that is not an object is bound to the **first** declared parameter:
+   * it is the common case of a list of IDs (`["a", "b"]`).
+   *
+   * @param name Name of the template to render.
+   * @param list Items rendered one by one.
+   * @param callSfi Location of the call, for error messages.
+   * @returns One rendered text per item.
    */
   protected expandTemplateListInline(
     name: string,
@@ -772,10 +868,13 @@ export class Scanner implements ScannerHostLike {
   }
 
   /**
-   * Divide `NOME "a" "b"` em nome + args posicionais (Ruby `endMacroCall`).
-   * O texto residual é o erro `junk_at_eom` do Ruby — o caminho de macro é
-   * **congelado**: os dois chamadores (macro e Fase 1 do template) usam
-   * exatamente a mesma rotina.
+   * Splits `NAME "a" "b"` into name + positional args (Ruby `endMacroCall`).
+   * The leftover text is the Ruby `junk_at_eom` error — the macro path is
+   * **frozen**: both callers (macro and phase 1 of the template) use exactly
+   * the same routine.
+   *
+   * @param argsStr Text of the call after `${` and before `}`.
+   * @returns Name of the macro plus its positional arguments.
    */
   protected splitMacroArgs(argsStr: string,): PositionalMacroArgs {
     const spaceIdx = argsStr.indexOf(" ",);
@@ -784,7 +883,7 @@ export class Scanner implements ScannerHostLike {
     const name = argsStr.slice(0, spaceIdx,);
     let rest = argsStr.slice(name.length,);
     const args: string[] = [];
-    // StringScanner interno para limpar as aspas duplas dos argumentos.
+    // Internal StringScanner to strip the double quotes of the arguments.
     for (;;) {
       const open = /^\s*"/.exec(rest,);
       if (!open) break;
@@ -807,11 +906,14 @@ export class Scanner implements ScannerHostLike {
   }
 
   /**
-   * Fase 1 — expande as chamadas `${MACRO …}` de um corpo de template.
+   * Phase 1 — expands the `${MACRO …}` calls of a template body.
    *
-   * Só **macros**: `${TEMPLATE …}` no corpo é texto (chamada de template usa
-   * `expandTemplate()` no contexto — plano §4.4). O escape `$${` perde um `$`
-   * e não expande, como no `MacroTable#resolve` do Ruby.
+   * **Macros only**: `${TEMPLATE …}` in the body is text (a template call uses
+   * `expandTemplate()` from the context — plan §4.4). The `$${` escape loses
+   * one `$` and does not expand, as in Ruby's `MacroTable#resolve`.
+   *
+   * @param body Raw body of the template.
+   * @returns The body with every macro call replaced by its value.
    */
   protected expandMacrosInText(body: string,): string {
     let text = body;
@@ -829,7 +931,7 @@ export class Scanner implements ScannerHostLike {
         ): string => {
           if (offset > 0 && whole[offset - 1] === "$") return match;
           const name = rawName.replace(/^\?/, "",);
-          // Template no corpo permanece texto (§4.4).
+          // A template in the body stays text (§4.4).
           if (this.macroTable.template(name,)) return match;
           const { name: macroName, args, } = this.splitMacroArgs(
             rawName + rawArgs,
@@ -856,9 +958,12 @@ export class Scanner implements ScannerHostLike {
   }
 
   /**
-   * Decide se _name_ aponta para um template, respeitando o prefixo `?`
-   * (chamada opcional, §4.5.4). Devolve também o estado de opcionalidade
-   * para que o chamador saiba silenciar um nome inexistente.
+   * Decides whether _name_ points to a template, honouring the `?` prefix
+   * (optional call, §4.5.4). It also returns the optionality state so the
+   * caller knows to silence a missing name.
+   *
+   * @param name Name as written in the call, possibly with `?`.
+   * @returns The template (or `null`) and whether the call was optional.
    */
   templateCallTarget(
     name: string,
@@ -869,13 +974,15 @@ export class Scanner implements ScannerHostLike {
   }
 
   /**
-   * Cadeia de templates atualmente em avaliação, da base ao topo.
+   * Chain of templates currently being evaluated, from base to top.
    *
-   * A ancoragem é a mesma das macros: entradas `macro === null` na pilha de
-   * expansões do stream, empilhadas por `injectMacro` e desempilhadas por
-   * `cleanupMacroStack` conforme o cursor avança. Por isso a detecção de
-   * recursão enxerga chamadas aninhadas produzidas pelo próprio render
-   * (reentrada do stream), não apenas o aninhamento sintático.
+   * The anchoring is the same as the macros': `macro === null` entries in the
+   * expansion stack of the stream, pushed by `injectMacro` and popped by
+   * `cleanupMacroStack` as the cursor advances. That is why recursion detection
+   * sees the nested calls produced by the render itself (stream re-entry), not
+   * only the syntactic nesting.
+   *
+   * @returns The names of the templates being evaluated, outermost first.
    */
   protected templateCallChain(): string[] {
     const cf = this.cf;
@@ -890,8 +997,10 @@ export class Scanner implements ScannerHostLike {
   }
 
   /**
-   * Liga o motor de expressões lógicas da Fase 11 à expansão de argumentos.
-   * Sem avaliador, uma chamada como `isMilestone(!t1)` permanece texto.
+   * Wires the logical-expression engine of phase 11 to the argument expansion.
+   * Without an evaluator, a call such as `isMilestone(!t1)` stays text.
+   *
+   * @param evaluator External evaluator, or `null` to detach it.
    */
   setExpressionEvaluator(
     evaluator: ((text: string,) => ExpressionEvaluation) | null,
@@ -900,8 +1009,10 @@ export class Scanner implements ScannerHostLike {
   }
 
   /**
-   * Liga a view somente-leitura de `project` (§4.7). O provedor é **lazy**:
-   * a chamada `${NOME …}` acontece depois do cabeçalho do projeto.
+   * Wires the read-only view of `project` (§4.7). The provider is **lazy**: the
+   * `${NAME …}` call happens after the project header.
+   *
+   * @param provider Supplier of the project view, or `null` to detach it.
    */
   setProjectContextProvider(
     provider: (() => Readonly<Record<string, unknown>> | null) | null,
@@ -909,14 +1020,14 @@ export class Scanner implements ScannerHostLike {
     this.projectContextProvider = provider;
   }
 
-  /** Liga `ids()` (§4.7) ao resolvedor de IDs do projeto. */
+  /** Wires `ids()` (§4.7) to the ID resolver of the project. */
   setTemplateIdResolver(
     resolver: ((id: string,) => string) | null,
   ): void {
     this.templateIdResolver = resolver;
   }
 
-  /** Resultado do avaliador externo (`ok: false` quando não há motor). */
+  /** Result of the external evaluator (`ok: false` when there is no engine). */
   protected evaluateArgumentExpression(text: string,): ExpressionEvaluation {
     return this.expressionEvaluator
       ? this.expressionEvaluator(text,)
@@ -924,12 +1035,17 @@ export class Scanner implements ScannerHostLike {
   }
 
   /**
-   * Converte `k=v k2="v 2"` no contexto da chamada (subfase 23.4).
+   * Converts `k=v k2="v 2"` into the call context (sub-phase 23.4).
    *
-   * A tipagem (string/número/booleano/`!id`/lista/objeto/expressão) vive em
-   * `template-arguments.ts`, que não conhece o scanner. Aqui só traduzimos a
-   * recusa em mensagem localizada. Devolve `null` quando o texto não é uma
-   * lista de pares válida (erro já reportado).
+   * The typing (string/number/boolean/`!id`/list/object/expression) lives in
+   * `template-arguments.ts`, which does not know the scanner. Here we only turn
+   * the refusal into a localized message. Returns `null` when the text is not a
+   * valid pair list (error already reported).
+   *
+   * @param callName Name of the template being called.
+   * @param rawArgs Raw named-argument list of the call.
+   * @param callSfi Location of the call, for error messages.
+   * @returns The typed arguments, or `null` on failure.
    */
   protected parseNamedArguments(
     callName: string,
@@ -976,7 +1092,14 @@ export class Scanner implements ScannerHostLike {
     return null;
   }
 
-  /** Erro relacionado ao texto processado (lança ≈ Ruby trapSetup). */
+  /**
+   * Error related to the processed text (throws ≈ Ruby trapSetup).
+   *
+   * @param id Message id used for deduplication.
+   * @param text Error text.
+   * @param sfi Location of the error, when known.
+   * @param data Extra payload handed to the handler.
+   */
   error(
     id: string,
     text: string,
@@ -986,6 +1109,14 @@ export class Scanner implements ScannerHostLike {
     this.message("error", id, text, sfi, data,);
   }
 
+  /**
+   * Warning related to the processed text: recorded but does not abort.
+   *
+   * @param id Message id used for deduplication.
+   * @param text Warning text.
+   * @param sfi Location of the warning, when known.
+   * @param data Extra payload handed to the handler.
+   */
   warning(
     id: string,
     text: string,
@@ -996,9 +1127,11 @@ export class Scanner implements ScannerHostLike {
   }
 
   /**
-   * Núcleo de lexing: casa padrões ativos, avançando linha a linha.
-   * Ruby scanToken (l.477-533). A variável `match` persiste entre voltas do
-   * loop externo exatamente como no Ruby (Categoria B preservada).
+   * Lexing core: matches the active patterns, advancing line by line.
+   * Ruby scanToken (l.477-533). The `match` variable persists across turns of
+   * the outer loop exactly as in Ruby (Category B preserved).
+   *
+   * @returns The next token of the active file.
    */
   private scanToken(): ScannerToken {
     this.startOfToken = this.sourceFileInfo();
@@ -1006,24 +1139,24 @@ export class Scanner implements ScannerHostLike {
     for (;;) {
       if (!this.cf || !this.cf.readyNextLine()) {
         if (this.scannerMode !== this.defaultMode) {
-          // O stream reinicia a contagem de linhas; compensa via lineDelta.
+          // The stream restarts the line count; compensate through lineDelta.
           this.lineDelta = -(this.startOfToken!.lineNo - 1);
           this.error(
             "runaway_token",
             `Unterminated token starting at line ${this.startOfToken}`,
           );
         }
-        // Fim do arquivo de entrada: token especial.
+        // End of the input file: special token.
         this.finishLastFile = true;
         return ["eof", "<END>", this.startOfToken,];
       }
 
       if (this.activePatterns) {
         for (const entry of this.activePatterns) {
-          // Ruby: `if (match = @cf.scan(re))` — a atribuição também zera
-          // `match` quando o padrão não casa. Sem isso, um token ignorado
-          // (type nil) deixaria `match` obsoleto e o loop nunca chegaria ao
-          // branch de erro (infinite loop em `no_token_match`).
+          // Ruby: `if (match = @cf.scan(re))` — the assignment also clears
+          // `match` when the pattern does not match. Without that, an ignored
+          // token (type nil) would leave `match` stale and the loop would never
+          // reach the error branch (infinite loop in `no_token_match`).
           match = this.cf.scan(entry[1],);
           if (match !== null) {
             let type: string | null = entry[0];
@@ -1033,7 +1166,7 @@ export class Scanner implements ScannerHostLike {
               [type, value,] = postProc(type, value as string,);
               match = value as string;
             }
-            if (type === null) break; // Token ignorado.
+            if (type === null) break; // Ignored token.
 
             this.cf.cleanupMacroStack();
             return [type, value, this.startOfToken,];
@@ -1042,7 +1175,7 @@ export class Scanner implements ScannerHostLike {
       }
 
       if (match === null) {
-        // Sem match: ou EOF inesperado, ou caractere não reconhecido.
+        // No match: either an unexpected EOF or an unrecognized character.
         if (this.cf.eof()) {
           this.error("unexpected_eof", "Unexpected end of file found",);
         } else {
@@ -1050,25 +1183,31 @@ export class Scanner implements ScannerHostLike {
             "no_token_match",
             `Unexpected characters found: '${this.cf.peek(10,)}...'`,
           );
-          // Nenhum padrão consumiu o cursor: repetir a volta do laço recasaria
-          // os mesmos padrões na mesma posição para sempre (o Ruby sai do
-          // processo em `MessageHandler#error` sem `trapSetup`). Aborta o parse
-          // — a mensagem acima já está no handler.
+          // No pattern consumed the cursor: repeating the loop turn would match
+          // the same patterns at the same position forever (Ruby leaves the
+          // process in `MessageHandler#error` without `trapSetup`). Aborts the
+          // parse — the message above is already in the handler.
           throw new TjError("",);
         }
       } else {
-        // Remove macros expandidas completamente consumidas.
+        // Removes fully consumed expanded macros.
         this.cf.cleanupMacroStack();
       }
     }
   }
 
   /**
-   * Loga no MessageHandler — equivalente ao `message` do Scanner.rb
-   * (l.535-563): erros e warnings passam por `MessageHandler#error/warning`,
-   * que LANÇA `TjRuntimeError` quando `trapSetup` está ativo (primeiro erro
-   * aborta o parse — é o comportamento que os golden tests gravam). Inclui
-   * histórico de macros como infos prévios.
+   * Logs into the MessageHandler — equivalent to `message` of Scanner.rb
+   * (l.535-563): errors and warnings go through `MessageHandler#error/warning`,
+   * which THROWS `TjRuntimeError` when `trapSetup` is active (the first error
+   * aborts the parse — that is the behaviour the golden tests record). Includes
+   * the macro history as previous infos.
+   *
+   * @param type Whether the message is an error or a warning.
+   * @param id Message id used for deduplication.
+   * @param text Message text.
+   * @param sfi Location of the message, when known.
+   * @param data Extra payload handed to the handler.
    */
   private message(
     type: MessageType,

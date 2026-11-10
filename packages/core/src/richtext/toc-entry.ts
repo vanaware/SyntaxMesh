@@ -1,8 +1,8 @@
 /**
- * TOCEntry — entrada de um TableOfContents (Fase 12.7).
+ * TOCEntry — one entry of a `TableOfContents` (Phase 12.7).
  *
- * Guarda o número da seção, o título, o arquivo e uma tag opcional dentro do
- * arquivo; converte-se em elementos HTML. Port fiel de
+ * Holds the section number, the title, the file and an optional tag inside that
+ * file; it renders itself as HTML elements. Faithful port of
  * `RichText/TOCEntry.rb:29-80`.
  *
  * @see docs/taskjuggler/lib/taskjuggler/RichText/TOCEntry.rb
@@ -12,19 +12,30 @@
 import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 import { XMLElement, } from "../xml/xml-element.ts";
 
-/** Tamanhos de fonte por nível de seção (Ruby: `[20, 17, 15, 14, 14]`). */
+/** Font sizes per section level (Ruby: `[20, 17, 15, 14, 14]`). */
 const FONT_SIZES = [20, 17, 15, 14, 14,] as const;
 
+/**
+ * One line of a table of contents.
+ */
 export class TOCEntry {
-  /** Número da seção como String (ex.: `1.2.3`). */
+  /** Section number as a string (e.g. `1.2.3`). */
   readonly number: string;
-  /** Título da seção. */
+  /** Section title. */
   readonly title: string;
-  /** Nome do arquivo (sem sufixo). */
+  /** File name (without extension). */
   readonly file: string;
-  /** Tag (âncora) opcional dentro do arquivo. */
+  /** Optional tag (anchor) inside the file. */
   readonly tag: string | null;
 
+  /**
+   * Creates an entry.
+   *
+   * @param number Section number, e.g. `1.2.3`.
+   * @param title Section title.
+   * @param file File name (without extension) the entry points to.
+   * @param tag Optional anchor inside the file.
+   */
   constructor(
     number: string,
     title: string,
@@ -38,15 +49,15 @@ export class TOCEntry {
   }
 
   /**
-   * Entradas HTML desta entrada de TOC (pode ser 2 linhas quando nível 0,
-   * com espaçamento extra acima de capítulos principais).
+   * HTML rows of this TOC entry (two rows at level 0, with extra spacing above
+   * top-level chapters).
    */
   to_html(): XMLElementLike[] {
     const html: XMLElementLike[] = [];
     const lev = this.level();
 
     if (lev === 0) {
-      // Linha extra para dar distância acima de capítulos principais.
+      // Extra row to leave room above top-level chapters.
       const spacer = new XMLElement("tr", {},);
       const td = new XMLElement("td", {},);
       td.append(new XMLElement("div", { style: "height:10px", },),);
@@ -60,13 +71,13 @@ export class TOCEntry {
       }px;`,
     },);
     const tdNum = new XMLElement("td", { style: "width:30px;", },);
-    // Capítulos de nível 0 têm o número na coluna esquerda.
+    // Level 0 chapters put the number in the left column.
     if (lev === 0) tdNum.append(this.number,);
     tr.append(tdNum,);
 
     const td = new XMLElement("td", {},);
     if (lev > 0) {
-      // Níveis inferiores têm o número à direita, junto do título.
+      // Lower levels put the number on the right, next to the title.
       const span = new XMLElement("span", {
         style: "padding-right:15px;",
       },);
@@ -86,9 +97,9 @@ export class TOCEntry {
   }
 
   /**
-   * Nível da seção — conta os pontos no número (`1` → 0, `1.2` → 1, …).
-   * Equivalente ao Ruby: só `.` é character-acceptable; a versão real usa o
-   * número formatado com pontos entre dígitos.
+   * Level of the section — counts the dots in the number (`1` → 0, `1.2` → 1,
+   * ...). Equivalent to Ruby: only `.` is character-acceptable; the real
+   * version uses the number formatted with dots between digits.
    */
   private level(): number {
     let lev = 0;

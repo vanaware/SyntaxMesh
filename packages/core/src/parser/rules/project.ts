@@ -1,16 +1,15 @@
 /**
- * TjpSyntaxRules — bloco project (subfase 10.11).
+ * TjpSyntaxRules — the project block (sub-phase 10.11).
  *
- * Port das regras `project*`, `include*` e apoios (`color`,
- * `alertLevel*`, `currencyFormat`, `numberFormat`, `timezone`,
- * `timeformat`, `extend*`, `workinghours*`, `properties*`) de
- * `TjpSyntaxRules.rb`.
+ * Port of the `project*`, `include*` and support rules (`color`,
+ * `alertLevel*`, `currencyFormat`, `numberFormat`, `timezone`, `timeformat`,
+ * `extend*`, `workinghours*`, `properties*`) from `TjpSyntaxRules.rb`.
  *
- * Regras de outros blocos (account, resource, shift, report, scenario,
- * journalentry, balance, leaves, limits, navigator, statusSheet,
- * timeSheet, vacationName, projectIDs, declareFlagList, ...) são
- * referenciadas por nome e resolvidas por `ensurePlaceholders()` até
- * serem portadas nas subfases 10.12–10.14.
+ * Rules of other blocks (account, resource, shift, report, scenario,
+ * journalentry, balance, leaves, limits, navigator, statusSheet, timeSheet,
+ * vacationName, projectIDs, declareFlagList, ...) are referenced by name and
+ * resolved by `ensurePlaceholders()` until they are ported in sub-phases
+ * 10.12–10.14.
  *
  * @see docs/taskjuggler/lib/taskjuggler/TjpSyntaxRules.rb
  */
@@ -38,10 +37,10 @@ import type { PropertyTreeNode, } from "../../model/property-tree-node.ts";
 import type { ProjectFileParser, } from "../project-file-parser.ts";
 import { rule, } from "./helpers.ts";
 
-/** Nível de alerta: `AlertLevelDefinition` (id, nome e cor). */
+/** Alert level: `AlertLevelDefinition` (id, name and color). */
 type AlertLevel = AlertLevelDefinition;
 
-/** Lê `project['alertLevels']` como lista de níveis (fallback []). */
+/** Reads `project['alertLevels']` as a level list (falls back to []). */
 function alertLevels(parser: ProjectFileParser,): AlertLevel[] {
   let levels = parser.project?.get("alertLevels",) as
     | AlertLevel[]
@@ -53,7 +52,7 @@ function alertLevels(parser: ProjectFileParser,): AlertLevel[] {
   return levels;
 }
 
-/** Lista defensiva para atributos do Project sem default no TS. */
+/** Defensive list for Project attributes that have no TS default. */
 function listAttr(parser: ProjectFileParser, name: string,): unknown[] {
   let list = parser.project?.get(name,) as unknown[] | undefined;
   if (!list) {
@@ -63,7 +62,7 @@ function listAttr(parser: ProjectFileParser, name: string,): unknown[] {
   return list;
 }
 
-/** Registra o bloco de regras do projeto. */
+/** Registers the project rule block. */
 export function registerProjectRules(p: ProjectFileParser,): void {
   // ------------------------------------------------------------------
   // project / prolog / declaration / header / body
@@ -72,9 +71,9 @@ export function registerProjectRules(p: ProjectFileParser,): void {
     p.pattern(
       ["!projectProlog", "!projectDeclaration", "!properties", ".",],
       function (this: ProjectFileParser,): unknown {
-        // Referências futuras de booking de material (14C.11.5): o corpo do
-        // material pode citar uma tarefa declarada depois, então a ligação só
-        // pode ser feita com o arquivo inteiro lido.
+        // Forward references of material bookings (14C.11.5): the material
+        // body may cite a task declared later, so the binding can only happen
+        // once the whole file has been read.
         this.project?.flushPendingBookings();
         return this.val[1];
       },
@@ -87,15 +86,15 @@ export function registerProjectRules(p: ProjectFileParser,): void {
     p.pattern(["!language",],);
     p.pattern(["!prologInclude",],);
     p.pattern(["!macro",],);
-    // Extensão Fase 23 (ADR 033): `template` segue a **mesma condição da
-    // macro** — prolog (antes de `project`) e nível de propriedades, nunca
-    // dentro do bloco `{ }` do cabeçalho (`projectBodyAttributes`).
+    // Phase 23 extension (ADR 033): `template` follows the **same condition as
+    // the macro** — prolog (before `project`) and property level, never inside
+    // the `{ }` block of the header (`projectBodyAttributes`).
     p.pattern(["!template",],);
   },);
 
-  // Diretiva `language "xx"` — extensão SyntaxMesh (não existe no TJ).
-  // O idioma é ativado pelo pré-scan em open() (10.17.3–5); a regra aqui
-  // apenas consome a diretiva no prolog do arquivo-mestre.
+  // The `language "xx"` directive — a SyntaxMesh extension (absent in TJ).
+  // The language is activated by the pre-scan in `open()` (10.17.3–5); the
+  // rule here only consumes the directive in the master file prolog.
   rule(p, "language", () => {
     p.pattern(["_language", "$STRING",], function (
       this: ProjectFileParser,
@@ -114,8 +113,8 @@ export function registerProjectRules(p: ProjectFileParser,): void {
     p.pattern(
       ["!projectHeader", "!projectBody",],
       function (this: ProjectFileParser,): unknown {
-        // Cenários-folha derivados do tracking scenario não podem ter
-        // bookings próprios (herdam do tracking scenario).
+        // Leaf scenarios derived from the tracking scenario cannot have their
+        // own bookings (they inherit from the tracking scenario).
         const idx = this.project?.get("trackingScenarioIdx",) as
           | number
           | undefined;
@@ -142,8 +141,8 @@ export function registerProjectRules(p: ProjectFileParser,): void {
       function (this: ProjectFileParser,): unknown {
         const id = (this.val[1] as string | null) ??
           String(this.val[2],).toLowerCase().replace(/[^a-z0-9]+/g, "_",);
-        // Ruby: optionalVersion ausente passa nil; a doc de optionalVersion
-        // diz que o default é "1.0".
+        // Ruby: a missing optionalVersion passes nil; the optionalVersion doc
+        // says the default is "1.0".
         const version = this.val[3] == null ? "1.0" : String(this.val[3],);
         this.project = new Project(
           id,
@@ -166,9 +165,9 @@ export function registerProjectRules(p: ProjectFileParser,): void {
     p.optionsRule("projectBodyAttributes",);
   },);
 
-  // Tipo opcional de `defaultaccount`: ausente = conta universal. As keywords
-  // `material`/`resource`/`charge` só são consultadas nesta regra (depois de
-  // `defaultaccount`), então não colidem com outros blocos.
+  // Optional type of `defaultaccount`: absent = the universal account. The
+  // `material`/`resource`/`charge` keywords are only consulted in this rule
+  // (after `defaultaccount`), so they do not collide with other blocks.
   rule(p, "defaultAccountType", () => {
     p.optional();
     p.pattern(["_material",], () => "material" as CostType,);
@@ -242,9 +241,9 @@ export function registerProjectRules(p: ProjectFileParser,): void {
     p.doc("currency", "The default currency unit.",);
     p.arg(1, "symbol", "Currency symbol",);
 
-    // defaultaccount (extensão SyntaxMesh — adendo §10 / 14C.9): conta que
-    // recebe a regra 4 de `resolveAccount`. A forma sem tipo é a universal;
-    // as variantes por tipo têm precedência sobre ela.
+    // defaultaccount (SyntaxMesh extension — appendix §10 / 14C.9): the account
+    // that receives rule 4 of `resolveAccount`. The form without a type is the
+    // universal one; the per-type variants take precedence over it.
     p.pattern(
       ["_defaultaccount", "!defaultAccountType", "$ID",],
       function (this: ProjectFileParser,): unknown {
@@ -252,8 +251,8 @@ export function registerProjectRules(p: ProjectFileParser,): void {
         const id = String(this.val[2],);
         const project = this.project;
         if (!project) return null;
-        // Guarda o ID (não a conta): o bloco `project` precede as declarações
-        // de `account`, então a resolução é feita sob demanda em
+        // Store the ID (not the account): the `project` block precedes the
+        // `account` declarations, so resolution is done on demand in
         // `Project#defaultAccountFor`.
         if (type === null) {
           project.defaultAccountId = id;
@@ -380,8 +379,8 @@ export function registerProjectRules(p: ProjectFileParser,): void {
         if (dir === "") {
           this.error("outdir_empty", "Output directory may not be empty.",);
         }
-        // CCB: a validação de existência (outdir_missing) depende do
-        // filesystem e é feita em tempo de geração de relatórios.
+        // CCB: the existence check (outdir_missing) depends on the filesystem
+        // and is done at report generation time.
         this.project?.set(
           "outputDir",
           dir.endsWith("/",) ? dir : dir + "/",
@@ -453,8 +452,8 @@ export function registerProjectRules(p: ProjectFileParser,): void {
       function (this: ProjectFileParser,): unknown {
         const idx = Number(this.val[1],);
         this.project?.set("trackingScenarioIdx", idx,);
-        // O tracking scenario e os cenários derivados são sempre
-        // agendados em modo projection.
+        // The tracking scenario and its derived scenarios are always
+        // scheduled in projection mode.
         this.project?.scenario(idx,)?.all().forEach((scenario,) => {
           scenario.set("projection", true,);
         },);
@@ -508,7 +507,7 @@ export function registerProjectRules(p: ProjectFileParser,): void {
     p.arg(1, "days", "Number of average working days for a year",);
   },);
 
-  // `include` dentro do cabeçalho do projeto: `_include <arquivo> <attrs> .`
+  // `include` inside the project header: `_include <file> <attrs> .`
   rule(p, "projectBodyInclude", () => {
     p.pattern(
       ["_include", "!includeFile", "!projectBodyAttributes", ".",],
@@ -532,8 +531,8 @@ export function registerProjectRules(p: ProjectFileParser,): void {
     p.pattern(
       ["!includeFileName",],
       function (this: ProjectFileParser,): unknown {
-        // Ruby rule_includeFile (TjpSyntaxRules.rb l.1940-1946): o erro é
-        // reportado sem sfi explícito → linha do último token (a STRING).
+        // Ruby rule_includeFile (TjpSyntaxRules.rb l.1940-1946): the error is
+        // reported without an explicit sfi → line of the last token (the STRING).
         if (!this.project) {
           this.error(
             "include_before_project",
@@ -541,8 +540,8 @@ export function registerProjectRules(p: ProjectFileParser,): void {
               "files.",
           );
         }
-        // Ruby l.1947-1949: o include efetivo acontece aqui (o arquivo entra
-        // na pilha do scanner e é processado pelo padrão que segue).
+        // Ruby l.1947-1949: the actual include happens here (the file enters
+        // the scanner stack and is processed by the following pattern).
         this.project?.inputFiles.push(
           this.scannerRef!.include(
             String(this.val[0],),
@@ -662,8 +661,8 @@ export function registerProjectRules(p: ProjectFileParser,): void {
 
     p.pattern(["!macro",],);
 
-    // Extensão Fase 23: `template` no nível superior do arquivo (mesma
-    // condição da macro — fora do bloco `{ }` do cabeçalho).
+    // Phase 23 extension: `template` at the top level of the file (the same
+    // condition as the macro — outside the `{ }` block of the header).
     p.pattern(["!template",],);
 
     p.pattern(["!material",],);
@@ -732,8 +731,9 @@ export function registerProjectRules(p: ProjectFileParser,): void {
     p.pattern(
       ["_vacation", "!vacationName", "!intervals",],
       function (this: ProjectFileParser,): unknown {
-        // Fiel a resource.ts/shift.ts: as férias globais viram `Leave` com
-        // `interval`. O `Project#initScoreboards` espera `.interval.start/end`.
+        // Faithful to resource.ts/shift.ts: global vacations become a `Leave`
+        // with an `interval`. `Project#initScoreboards` expects
+        // `.interval.start/end`.
         const leaves = (this.val[2] as ScoreboardInterval[]).map(
           (iv,) => new Leave("holiday", iv,),
         );
@@ -836,7 +836,7 @@ export function registerProjectRules(p: ProjectFileParser,): void {
   },);
 
   // ------------------------------------------------------------------
-  // Apoios usados pelo bloco project
+  // Supporting rules used by the project block
   // ------------------------------------------------------------------
   rule(p, "color", () => {
     p.pattern(
@@ -862,8 +862,8 @@ export function registerProjectRules(p: ProjectFileParser,): void {
     p.pattern(
       ["$ID",],
       function (this: ProjectFileParser,): unknown {
-        // Ruby (TjpSyntaxRules.rb:199-208): devolve o ÍNDICE do nível
-        // (`indexById`) — é o número que JournalEntry#alertLevel guarda.
+        // Ruby (TjpSyntaxRules.rb:199-208): returns the INDEX of the level
+        // (`indexById`) — that is the number `JournalEntry#alertLevel` keeps.
         const levels = alertLevels(this,);
         const index = alertLevelIndexById(levels, String(this.val[0],),);
         if (index === null) {
@@ -1038,7 +1038,7 @@ export function registerProjectRules(p: ProjectFileParser,): void {
     const times = this.val[2] as Array<[number, number,]>;
     let wh: WorkingHours | null = null;
     if (!this.property) {
-      // Estamos alterando as working hours globais do projeto.
+      // We are changing the project's global working hours.
       wh = (this.project?.get("workinghours",) as WorkingHours) ?? null;
     } else {
       try {
@@ -1050,7 +1050,7 @@ export function registerProjectRules(p: ProjectFileParser,): void {
         wh = null;
       }
       if (!wh) {
-        // A propriedade ainda não tem WorkingHours própria.
+        // The property has no WorkingHours of its own yet.
         const base = this.project?.get("workinghours",) as WorkingHours;
         wh = new WorkingHours(base,);
       }
@@ -1072,7 +1072,7 @@ export function registerProjectRules(p: ProjectFileParser,): void {
       try {
         this.property.setForScenario("workinghours", wh, this.scenarioIdx,);
       } catch (e) {
-        // Working hours podem ser redefinidas múltiplas vezes.
+        // Working hours may be redefined multiple times.
         if (!(e instanceof AttributeOverwrite)) throw e;
       }
     }

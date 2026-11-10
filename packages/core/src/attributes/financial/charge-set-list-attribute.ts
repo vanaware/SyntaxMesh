@@ -1,5 +1,5 @@
 /**
- * Atributo de lista de conjuntos de cobranças.
+ * Charge set list attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ChargeSetListAttribute
  */
@@ -10,19 +10,19 @@ import { type AttributeDefinition, } from "../attribute-definition.ts";
 import { ListAttributeBase, } from "../list-attribute-base.ts";
 
 /**
- * Atributo de lista de conjuntos de cobranças.
+ * Charge set list attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ChargeSetListAttribute
  */
 export class ChargeSetListAttribute
   extends ListAttributeBase<{ to_s(): string }> {
   /**
-   * ID do tipo de atributo para ChargeSetListAttribute.
+   * Attribute type ID for ChargeSetListAttribute.
    */
   static readonly tjpId = "chargeset";
 
   /**
-   * Converte o valor para string.
+   * Converts the value to a string.
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ChargeSetListAttribute#to_s
    */
@@ -38,7 +38,7 @@ export class ChargeSetListAttribute
   }
 
   /**
-   * Converte o valor para TJP (formato TaskJuggler).
+   * Converts the value to TJP (TaskJuggler format).
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ChargeSetListAttribute#to_tjp
    */

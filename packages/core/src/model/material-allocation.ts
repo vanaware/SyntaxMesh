@@ -11,8 +11,8 @@ import {
 } from "../accounting/distribution.ts";
 
 /**
- * Modificador de alocação de material — define como uma quantidade de material
- * é distribuída no tempo durante a execução de uma tarefa.
+ * Material allocation modifier — defines how a material quantity is distributed
+ * over time while a task runs.
  *
  * @see docs/syntaxmesh/fases/fase-8.1-nova-funcionalidade-custos.md
  */
@@ -27,21 +27,25 @@ export type MaterialAllocationModifier =
   | "distribution";
 
 /**
- * Representa uma alocação de material a uma tarefa, com um modificador
- * temporal que determina quando e como o material é consumido.
+ * An allocation of material to a task, with a temporal modifier that determines
+ * when and how the material is consumed.
  *
- * Fase 10 Complemento (C2.10): após `attach()`, `quantityIn(period)` delega
- * ao `distribution.ts` respeitando `timebasis` (mesma semântica de
- * ExtendedCharge, mas em unidades de material em vez de moeda).
+ * Phase 10 complement (C2.10): after `attach()`, `quantityIn(period)` delegates
+ * to `distribution.ts` respecting `timebasis` (the same semantics as
+ * `ExtendedCharge`, but in material units instead of money).
  */
 export class MaterialAllocation {
+  /** Material being allocated. */
   readonly material: Material;
+  /** Quantity allocated, always expressed per the task as a whole. */
   readonly quantity: number;
+  /** How the quantity is spread over the task execution. */
   readonly modifier: MaterialAllocationModifier;
+  /** Explicit factional split used when `modifier` is `"distribution"`. */
   readonly distribution?: number[];
   /**
-   * Preço unitário próprio desta alocação (`unitprice <n>` após a
-   * quantidade, 14C.11.1). Ausente ⇒ vale o `unitprice` do material.
+   * Unit price specific to this allocation (`unitprice <n>` after the quantity,
+   * 14C.11.1). When absent the material `unitprice` applies.
    */
   readonly unitPrice?: number;
 
@@ -49,6 +53,18 @@ export class MaterialAllocation {
   private _scIdx: number = 0;
   private _ctx: DistributionContext | null = null;
 
+  /**
+   * Creates an allocation.
+   *
+   * @param material Material being allocated.
+   * @param quantity Quantity allocated; must not be negative.
+   * @param modifier How the quantity is spread over time.
+   * @param distribution Fractions used by the `"distribution"` modifier; must
+   *   sum to 1.
+   * @param unitPrice Price override for this allocation only.
+   * @throws {Error} When `quantity` is negative or the fractions do not sum to
+   *   1.
+   */
   constructor(
     material: Material,
     quantity: number,
@@ -62,7 +78,7 @@ export class MaterialAllocation {
     this.distribution = distribution;
     this.unitPrice = unitPrice;
 
-    // Validação
+    // Validation
     if (quantity < 0) {
       throw new Error("Material allocation quantity cannot be negative",);
     }
@@ -77,14 +93,24 @@ export class MaterialAllocation {
     }
   }
 
-  /** Anexa o contexto de cálculo (tarefa, cenário, DistributionContext). */
+  /**
+   * Attaches the calculation context (task, scenario, `DistributionContext`).
+   *
+   * @param task Task the allocation belongs to.
+   * @param scIdx Scenario index.
+   * @param ctx Distribution context (calendar, leaves, timebasis).
+   */
   attach(task: Task, scIdx: number, ctx: DistributionContext,): void {
     this._task = task;
     this._scIdx = scIdx;
     this._ctx = ctx;
   }
 
-  /** Quantidade de material consumida dentro de `period` (§3.1–§3.6). */
+  /**
+   * Material quantity consumed inside `period` (§3.1–§3.6).
+   *
+   * @param period Window to measure.
+   */
   quantityIn(period: TimeInterval,): number {
     if (!this._task || !this._ctx) return 0;
     const scenario = this._task.scenarioData(this._scIdx,);
@@ -164,28 +190,33 @@ export class MaterialAllocation {
   }
 
   /**
-   * Preço unitário efetivo: o da alocação → o do material informado (default
-   * `this.material`). O material resolve `unitprice`/campo legado sozinho.
+   * Effective unit price: the allocation one, otherwise that of the given
+   * material (defaults to `this.material`).
+   *
+   * The material resolves `unitprice`/the legacy field on its own.
+   *
+   * @param material Material to ask for a price when the allocation has none.
    */
   unitPriceFor(material: Material = this.material,): number {
     return this.unitPrice ?? material.unitPriceValue();
   }
 
   /**
-   * Cópia profunda imutável.
-   * Retorna this (imutável) para compatibilidade com deepClone.
+   * Immutable deep copy.
+   *
+   * Returns `this` (immutable) for compatibility with `deepClone`.
    */
   deepClone(): this {
     return this;
   }
 }
 
-/** Meia-noite UTC de um Date (aritmética de dias fechada em UTC). */
+/** UTC midnight of a `Date` (day arithmetic kept in UTC). */
 function dayStartMs(d: Date,): number {
   return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(),);
 }
 
-/** Leave check — mesma semântica do ExtendedCharge. */
+/** Leave check — the same semantics used by `ExtendedCharge`. */
 function coveredByLeave(ms: number, ctx: DistributionContext,): boolean {
   for (const l of ctx.leaves) {
     const s = dayStartMs(l.start,);
@@ -195,7 +226,7 @@ function coveredByLeave(ms: number, ctx: DistributionContext,): boolean {
   return false;
 }
 
-/** Verifica se o dia UTC de `d` está dentro de `period` (inclusive). */
+/** Whether the UTC day of `d` falls inside `period` (inclusive). */
 function dayInPeriod(d: Date, period: TimeInterval,): boolean {
   const ms = dayStartMs(d,);
   return ms >= dayStartMs(period.start.toDate(),) &&

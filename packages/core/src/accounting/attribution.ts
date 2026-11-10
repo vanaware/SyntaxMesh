@@ -12,9 +12,9 @@ import type {
 } from "../model/cost-event.ts";
 
 /**
- * Representa uma linha de custo para atribuição.
+ * Represents a cost line for attribution.
  *
- * Semelhante a um evento de custo, mas usado para atribuição.
+ * Similar to a cost event, but used for attribution.
  */
 export interface CostLine {
   type: "task_charge" | "resource_effort" | "material_usage";
@@ -24,18 +24,19 @@ export interface CostLine {
   resource?: Resource;
   material?: Material;
   /**
-   * Projeto dono da linha. Fornece a conta default da **regra 4**
-   * (`defaultaccount <id>` — adendo §10 / 14C.9). Opcional para manter os
-   * chamadores sem projeto (regra 4 cai em `account: null` como antes).
+   * Project that owns the line. Provides the default account of **rule 4**
+   * (`defaultaccount <id>` — addendum §10 / 14C.9). Optional so that callers
+   * without a project keep working (rule 4 falls back to `account: null` as
+   * before).
    */
   project?: { defaultAccountFor?(type: CostType | null,): Account | null };
 }
 
 /**
- * Regra 4: conta default do projeto para o tipo da linha.
+ * Rule 4: project default account for the line type.
  *
- * Sem `defaultaccount` configurado o resultado é `account: null`; com conta
- * default, `projectDefault` carrega a conta resolvida.
+ * Without a configured `defaultaccount` the result is `account: null`; with a
+ * default account, `projectDefault` carries the resolved account.
  */
 function projectDefaultResult(line: CostLine,): AttributionResult {
   const account = line.project?.defaultAccountFor?.(
@@ -49,7 +50,7 @@ function projectDefaultResult(line: CostLine,): AttributionResult {
 }
 
 /**
- * Converte um CostEventType (linha de custo) para CostType (chargeset).
+ * Converts a CostEventType (cost line) into a CostType (chargeset).
  *
  * `task_charge` → `task`, `resource_effort` → `resource`,
  * `material_usage` → `material`.
@@ -68,19 +69,19 @@ function costTypeFromEventType(type: CostLine["type"],): CostType {
 }
 
 /**
- * Resolve uma linha de custo para uma conta e regra de atribuição.
+ * Resolves a cost line into an account and an attribution rule.
  *
- * Implementa as regras de atribuição conforme definido no TaskJuggler.
+ * Implements the attribution rules as defined in TaskJuggler.
  *
- * @param line - A linha de custo a ser atribuída
- * @returns O resultado da atribuição contendo a conta e a regra usada
- * @throws TjArgumentError se nenhum nível de conta puder ser encontrado
- * @throws TjInternalError se o tipo for desconhecido
+ * @param line - The cost line to be attributed
+ * @returns The attribution result containing the account and the rule used
+ * @throws TjArgumentError when no account level can be found
+ * @throws TjInternalError when the type is unknown
  */
 export function resolveAccount(line: CostLine,): AttributionResult {
   const { type, amount, explicitAccount, task, resource, material, } = line;
 
-  // Regra 1: explicitAccount presente → 'explicit'
+  // Rule 1: explicitAccount present → 'explicit'
   if (explicitAccount) {
     return {
       account: explicitAccount,
@@ -89,8 +90,8 @@ export function resolveAccount(line: CostLine,): AttributionResult {
     };
   }
 
-  // Regra 2: origin_chargeset (resource_effort ou material_usage)
-  // Regra 2: task_charge ignora origin (sem origem separada)
+  // Rule 2: origin_chargeset (resource_effort or material_usage)
+  // Rule 2: task_charge ignores origin (no separate origin)
   if (type !== "task_charge") {
     // Determine if force mode should skip rule 2.
     // force only skips rule 2 when the task HAS a chargeset of the type
@@ -134,7 +135,7 @@ export function resolveAccount(line: CostLine,): AttributionResult {
     }
   }
 
-  // Regra 3: task_chargeset_fallback (task.chargeset.forType(type))
+  // Rule 3: task_chargeset_fallback (task.chargeset.forType(type))
   if (task) {
     const chargeset = task.chargeset?.forType(costTypeFromEventType(type,), {
       task,
@@ -146,18 +147,18 @@ export function resolveAccount(line: CostLine,): AttributionResult {
         taskChargeset: chargeset,
       };
     }
-    // Se o tipo for task_charge ou resource_effort e não houver chargeset, ainda podemos resolver
-    // usando a conta default do projeto (regra 4). Isso permite que charges
-    // sejam emitidos como CostEvents mesmo sem um chargeset.
+    // If the type is task_charge or resource_effort and there is no chargeset,
+    // we can still resolve using the project default account (rule 4). This
+    // allows charges to be emitted as CostEvents even without a chargeset.
     if (type === "task_charge" || type === "resource_effort") {
       return projectDefaultResult(line,);
     }
-    // Task existe mas não tem chargeset do tipo → erro claro
+    // Task exists but has no chargeset of the type → clear error
     throw new TjArgumentError(
       `Nenhum chargeset encontrado para task '${task.id}' do tipo '${type}'`,
     );
   }
 
-  // Regra 4: conta default do projeto (`defaultaccount`, 14C.9).
+  // Rule 4: project default account (`defaultaccount`, 14C.9).
   return projectDefaultResult(line,);
 }

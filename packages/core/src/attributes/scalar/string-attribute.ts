@@ -1,5 +1,5 @@
 /**
- * Atributo escalar de texto.
+ * Text scalar attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:StringAttribute
  */
@@ -10,18 +10,18 @@ import { type AttributeDefinition, } from "../attribute-definition.ts";
 import { AttributeBase, } from "../attribute-base.ts";
 
 /**
- * Atributo escalar de texto.
+ * Text scalar attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:StringAttribute
  */
 export class StringAttribute extends AttributeBase<string> {
   /**
-   * ID do tipo de atributo para StringAttribute.
+   * Attribute type ID for StringAttribute.
    */
   static readonly tjpId = "text";
 
   /**
-   * Converte o valor para TJP (formato TaskJuggler).
+   * Converts the value to TJP (TaskJuggler format).
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:StringAttribute#to_tjp
    */

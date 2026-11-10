@@ -1,17 +1,17 @@
 /**
- * Extensão de funções customizadas `[[name:args]]` (Fase 13.6).
+ * Custom function extension `[[name:args]]` (phase 13.6).
  *
- * Markdown não tem `[[…]]` como função (no RichText, `[[…]]` é referência
- * interna). Aqui é a sintaxe going-forward para as funções da Fase 12
- * (`query`, `report`, `reportlink`, `navigator`). O payload convertido é o
- * mesmo `data` de `inlinefunc`/`blockfunc`: `[nome, args]`.
+ * Markdown has no `[[…]]` as a function (in RichText, `[[…]]` is an internal
+ * reference). Here it is the going-forward syntax for the phase 12 functions
+ * (`query`, `report`, `reportlink`, `navigator`). The converted payload is the
+ * same `data` of `inlinefunc`/`blockfunc`: `[name, args]`.
  *
- * Convenção de args (13.6.4): `chave=valor`, `chave="valor com espaço"` e
- * posicionais. Posicionais ganham chaves `_1`, `_2`, …; na função `query` um
- * posicional isolado é açucar para `attribute` (mesma semântica de
+ * Args convention (13.6.4): `key=value`, `key="value with spaces"` and
+ * positionals. Positionals get keys `_1`, `_2`, …; in the `query` function an
+ * isolated positional is sugar for `attribute` (same semantics as
  * `<-effort->`, 13.7).
  *
- * @see ADR 026 (Markdown como formato going-forward)
+ * @see ADR 026 (Markdown as the going-forward format)
  * @see packages/core/src/richtext/rich-text-syntax-rules.ts (`blockFunction`,
  *      `inlineFunction`, `functionArguments`)
  */
@@ -19,23 +19,23 @@
 import type { Extraction, MdastNode, } from "../types.ts";
 import { placeholderFor, walkAndExpand, } from "./placeholders.ts";
 
-/** Extração de um `[[name:args]]` (13.6.2). */
+/** Extraction of a `[[name:args]]` (13.6.2). */
 export interface FunctionExtraction {
   placeholder: string;
   name: string;
   args: Record<string, string>;
-  /** Texto original (`[[query:attribute=effort]]`). */
+  /** Original text (`[[query:attribute=effort]]`). */
   source: string;
 }
 
-/** `[[nome:argumentos]]` (13.6.3). */
+/** `[[name:arguments]]` (13.6.3). */
 const FUNCTION_RE = /\[\[([a-z]+):([^\]]+)\]\]/g;
 
-/** `chave="valor"`, `chave=valor` ou token posicional (13.6.4). */
+/** `key="value"`, `key=value` or positional token (13.6.4). */
 const ARG_RE = /([a-zA-Z_][\w-]*)="([^"]*)"|([a-zA-Z_][\w-]*)=(\S+)|(\S+)/g;
 
 /**
- * Parseia a string de argumentos de uma função.
+ * Parses the argument string of a function.
  *
  * ```ts
  * parseFunctionArgs("query", 'attribute="effort total" start=2024-01-01');
@@ -64,7 +64,7 @@ export function parseFunctionArgs(
   return args;
 }
 
-/** Troca `[[func:…]]` por `§FUNC_n§` (13.6.3, 13.6.7). */
+/** Replaces `[[func:…]]` with `§FUNC_n§` (13.6.3, 13.6.7). */
 export function preprocessFunctions(
   text: string,
   startIndex = 0,
@@ -87,7 +87,7 @@ export function preprocessFunctions(
   return { text: out, extractions, };
 }
 
-/** Converte para o `Extraction` genérico do pipeline. */
+/** Converts to the pipeline's generic `Extraction`. */
 export function functionToExtraction(e: FunctionExtraction,): Extraction {
   return {
     placeholder: e.placeholder,
@@ -98,10 +98,10 @@ export function functionToExtraction(e: FunctionExtraction,): Extraction {
 }
 
 /**
- * Substitui os placeholders de função por nós `richtextExtension` (13.6.8).
+ * Replaces the function placeholders with `richtextExtension` nodes (13.6.8).
  *
- * `[[report:…]]`/`[[navigator:…]]` sozinhos num parágrafo viram `blockfunc`;
- * função desconhecida volta como texto cru (13.6.10).
+ * `[[report:…]]`/`[[navigator:…]]` alone in a paragraph become `blockfunc`;
+ * an unknown function falls back to raw text (13.6.10).
  */
 export function postprocessFunctions(
   node: MdastNode,

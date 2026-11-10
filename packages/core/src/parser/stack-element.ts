@@ -1,22 +1,25 @@
 import { type SourceFileInfo, } from "../source-file-info.ts";
 
 /**
- * TextParserResultArray — Array especializado para múltiplos valores em um mesmo índice.
+ * TextParserResultArray — specialized array for multiple values at the same
+ * index.
  *
  * @see docs/taskjuggler/lib/taskjuggler/TextParser/StackElement.rb
  */
 export class TextParserResultArray<T,> extends Array<T> {
   /**
-   * Adiciona um valor. Apenas concatena se o item for *outro*
-   * TextParserResultArray (loop repetível aninhado), replicando o `<<`
-   * do Ruby (TextParser.rb l.69-75). Arrays "comuns" (p.ex. tuplas de
-   * critérios de ordenação) são armazenados como elemento único, sem
-   * achatar.
+   * Adds a value. It only concatenates when the item is *another*
+   * `TextParserResultArray` (nested repeatable loop), replicating the Ruby `<<`
+   * (TextParser.rb l.69-75). "Plain" arrays (e.g. sort-criteria tuples) are
+   * stored as a single element, without flattening.
+   *
+   * @param items Values to add.
+   * @returns The new length of the array.
    */
   override push(...items: (T | T[])[]): number {
     for (const item of items) {
       if (item instanceof TextParserResultArray) {
-        // Loop interno: mescla com o array externo.
+        // Inner loop: merge with the outer array.
         super.push(...item,);
       } else {
         super.push(item as T,);
@@ -27,18 +30,31 @@ export class TextParserResultArray<T,> extends Array<T> {
 }
 
 /**
- * StackElement — elemento da pilha do TextParser para rastrear estado.
+ * StackElement — element of the TextParser stack used to track the parser
+ * state while a rule is being reduced.
  *
  * @see docs/taskjuggler/lib/taskjuggler/TextParser/StackElement.rb
  */
 export class StackElement {
+  /** Values collected so far, one per pattern position. */
   readonly val: unknown[];
+  /** Source location of each collected value. */
   readonly sourceFileInfo: Array<SourceFileInfo | null>;
+  /** Location of the first collected value, kept for fast access. */
   firstSourceFileInfo: SourceFileInfo | null;
+  /** Position where the next `store` writes. */
   private position: number;
+  /** Interpreter hook of the rule being reduced, or `null`. */
   readonly function: ((...args: unknown[]) => unknown) | null;
+  /** Parser state attached to the element, when needed. */
   state: unknown | null;
 
+  /**
+   * Creates an empty stack element.
+   *
+   * @param fn Interpreter hook of the rule being reduced, or `null`.
+   * @param state Parser state to attach to the element.
+   */
   constructor(
     fn: ((...args: unknown[]) => unknown) | null,
     state: unknown | null = null,
@@ -52,8 +68,16 @@ export class StackElement {
   }
 
   /**
-   * Insere o valor _val_ na posição _index_.
-   * Se _multiValue_ for true, concatena em vez de substituir (usa TextParserResultArray).
+   * Inserts the value _val_ at the position _index_.
+   * When _multiValue_ is true, concatenates instead of replacing (through
+   * `TextParserResultArray`).
+   *
+   * @param index Position that receives the value.
+   * @param val Value to insert.
+   * @param sourceFileInfo Location of the value.
+   * @param multiValue Whether the position accumulates several values.
+   * @returns The inserted value.
+   * @throws Error When the position already holds a non-array value.
    */
   insert(
     index: number,
@@ -63,9 +87,9 @@ export class StackElement {
   ): unknown {
     if (multiValue) {
       if (this.val[index]) {
-        // Já temos um valor para esta posição.
+        // There is already a value for this position.
         if (!Array.isArray(this.val[index],)) {
-          // Isso não deveria acontecer.
+          // This should not happen.
           throw new Error(
             `${this.val[index].constructor.name} deve ser um Array`,
           );
@@ -73,13 +97,13 @@ export class StackElement {
       } else {
         this.val[index] = new TextParserResultArray<unknown>();
       }
-      // Apenas adiciona o valor e aplica a concatenação especial de Array.
+      // Only adds the value and applies the special Array concatenation.
       (this.val[index] as TextParserResultArray<unknown>).push(val,);
     } else {
       this.val[index] = val;
     }
     this.sourceFileInfo[index] = sourceFileInfo;
-    // Armazena o primeiro SFI para acesso mais rápido.
+    // Stores the first SFI for faster access.
     if (this.firstSourceFileInfo === null) {
       this.firstSourceFileInfo = sourceFileInfo;
     }
@@ -87,7 +111,10 @@ export class StackElement {
   }
 
   /**
-   * Armazena um valor coletado e avança a posição para o próximo padrão.
+   * Stores a collected value and advances the position to the next pattern.
+   *
+   * @param val Value to store.
+   * @param sourceFileInfo Location of the value.
    */
   store(val: unknown, sourceFileInfo: SourceFileInfo | null = null,): void {
     this.val[this.position] = val;
@@ -95,16 +122,12 @@ export class StackElement {
     this.position++;
   }
 
-  /**
-   * Itera sobre os valores armazenados.
-   */
+  /** Iterates over the stored values. */
   each(): IterableIterator<unknown> {
     return this.val[Symbol.iterator]();
   }
 
-  /**
-   * Retorna o número de valores armazenados.
-   */
+  /** Number of stored values. */
   length(): number {
     return this.val.length;
   }

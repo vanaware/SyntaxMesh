@@ -1,8 +1,8 @@
 /**
- * Barrel dos apps de sheet (18.18).
+ * Barrel of the sheet apps (18.18).
  *
- * O núcleo dos cinco executáveis (`tj3ts_*`, `tj3ss_*`) mora aqui; o
- * `OptionParser`, o `stdin` e o `Deno.exit` ficam com o wrapper da **Fase 24**
+ * The core of the five executables (`tj3ts_*`, `tj3ss_*`) lives here;
+ * `OptionParser`, `stdin` and `Deno.exit` stay with the **phase 24** wrapper
  * (`docs/syntaxmesh/fases/fase-24-cli.md` §5.4).
  *
  * @see docs/syntaxmesh/fases/fase-18-time-status-sheets-tarefas.md (18.18)

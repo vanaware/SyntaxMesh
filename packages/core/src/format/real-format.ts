@@ -2,13 +2,28 @@ import { TjArgumentError, } from "../time/tj-time.ts";
 import { compat, rubyRound, } from "../compat.ts";
 // RUBY-COMPAT: uses rubyRound (Category B) for negative number rounding
 
+/**
+ * RealFormat — number formatter configurable through the TJP `numberformat`
+ * directive (signs, thousands and fraction separators, fraction digits).
+ */
 export class RealFormat {
+  /** String placed before a negative number. */
   readonly signPrefix: string;
+  /** String placed after a negative number. */
   readonly signSuffix: string;
+  /** Separator inserted every three integer digits, or `""`. */
   readonly thousandsSeparator: string;
+  /** Separator between the integer and the fraction digits. */
   readonly fractionSeparator: string;
+  /** Number of digits kept after the fraction separator. */
   readonly fractionDigits: number;
 
+  /**
+   * Creates the formatter from a tuple or copies another one.
+   *
+   * @param args The five format settings in order, or a formatter to copy.
+   * @throws TjArgumentError When the tuple does not hold exactly five values.
+   */
   constructor(args: [string, string, string, string, number,] | RealFormat,) {
     if (Array.isArray(args,)) {
       if (args.length !== 5) {
@@ -30,6 +45,12 @@ export class RealFormat {
     }
   }
 
+  /**
+   * Formats a number with the configured separators and digits.
+   *
+   * @param number Value to format.
+   * @returns The formatted number, with the sign markers when negative.
+   */
   format(number: number,): string {
     const rounded = compat.keepRubyBugs
       ? rubyRound(number * (10 ** this.fractionDigits),)
@@ -69,6 +90,13 @@ export class RealFormat {
     return out;
   }
 
+  /**
+   * Formats a digit string that is shorter than the fraction width.
+   *
+   * @param padded Digits left-padded with zeros.
+   * @param negate Whether the number is negative.
+   * @returns The formatted number, with the sign markers when negative.
+   */
   private buildResult(padded: string, negate: boolean,): string {
     const fracPart = this.fractionDigits > 0
       ? this.fractionSeparator + padded.slice(-this.fractionDigits,)
@@ -96,6 +124,11 @@ export class RealFormat {
     return out;
   }
 
+  /**
+   * Renders the settings the way the TJP `numberformat` directive writes them.
+   *
+   * @returns The five quoted settings separated by spaces.
+   */
   to_s(): string {
     return [
       this.signPrefix,

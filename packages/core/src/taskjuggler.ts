@@ -27,80 +27,96 @@ import { LogicalOperation, } from "./logic/logical-operation.ts";
 import { TjTime, } from "./time/tj-time.ts";
 import { MessageHandlerInstance, } from "./message-handler.ts";
 
-// Efeito colateral: registra as fábricas de conteúdo dos relatórios
-// (TaskListRE, ResourceListRE, …) no `contentFactories` do modelo, como o
-// `require` das classes de conteúdo em TaskJuggler.rb (Fase 14.23).
+// Side effect: registers the report content factories
+// (TaskListRE, ResourceListRE, …) in the model's `contentFactories`, like the
+// `require` of the content classes in TaskJuggler.rb (phase 14.23).
 import "./reports/mod.ts";
 
 /**
- * Provedor de conteúdo injetado (Fase 24 — ADR 034).
+ * Injected content provider (phase 24 — ADR 034).
  *
- * Recebe o caminho como aparece no projeto (relativo ao arquivo que inclui ou
- * o caminho do mestre) e devolve o texto. O core nunca lê disco: a CLI/PWA
- * injeta este leitor. Um provedor **assíncrono** só serve para os arquivos
- * listados em `parse(files, …)` — que são pré-carregados; `include`s são
- * lidos durante o parse e exigem retorno síncrono.
+ * Receives a path as it appears in the project (relative to the including file,
+ * or the master path) and returns the text. The core never reads the disk: the
+ * CLI/PWA injects this reader. An **asynchronous** provider only works for the
+ * files listed in `parse(files, …)` — those are pre-loaded; `include`s are read
+ * during the parse and require a synchronous return.
  */
 export type FileContentProvider = (path: string,) => string | Promise<string>;
 
 /**
- * Resultado de uma checagem de folha sobre **conteúdo** (Fase 24, 24.2.33).
+ * Result of a sheet check over **content** (phase 24, task 24.2.33).
  *
- * `report` é o journal compilado que o Ruby imprimia com `puts`: no caminho
- * de dados ele sai pela seção `results.sheet.reportText` do envelope, e o
- * campo mutável `lastSheetReport` fica só para a via passo a passo.
+ * `report` is the compiled journal the Ruby printed with `puts`: on the data
+ * path it leaves through the `results.sheet.reportText` section of the
+ * envelope, and the mutable `lastSheetReport` field is kept only for the
+ * step-by-step path.
  */
 export interface SheetCheckResult {
+  /** `true` when the sheet parsed and every total balanced. */
   valid: boolean;
+  /**
+   * Compiled journal to display, or `null` when `valid` is `false`.
+   *
+   * The engine never prints it: the caller decides where it goes.
+   */
   report: string | null;
 }
 
-/** Falha de checagem (o diagnóstico já foi para o `MessageHandler`). */
+/** Check failure (the diagnostic already went to the `MessageHandler`). */
 export const SHEET_CHECK_FAILED: SheetCheckResult = {
   valid: false,
   report: null,
 };
 
 /**
- * TaskJuggler — fachada top-level para CLI/apps.
+ * TaskJuggler — top-level facade for the CLI and apps.
  *
- * Fronteira da Fase 24 (ADR 034): o core não lê disco nem escreve terminal.
- * `parse`/`parseFile`/`parseContent` recebem o texto por provedor injetado e
- * `renderReports` devolve a seção `results.reports` em memória — imprimir ou
- * gravar é política do consumidor. `freeze` segue ancorado na Fase 24 porque
- * reescrever o master `.tjp` é decisão da CLI. O armazenamento da PWA continua
- * na Fase 19 (`FileStore`/OPFS, ADR 030).
+ * Phase 24 boundary (ADR 034): the core neither reads the disk nor writes to a
+ * terminal. `parse`/`parseFile`/`parseContent` take the text from an injected
+ * provider and `renderReports` returns the `results.reports` section in memory —
+ * printing or writing is the consumer's policy. `freeze` stays anchored to
+ * phase 24 because rewriting the `.tjp` master is a CLI decision. PWA storage
+ * remains in phase 19 (`FileStore`/OPFS, ADR 030).
  *
- * A extensão de DSL `stdout` marca apenas a **intenção** do relatório; quem a
- * consome é a política de saída da CLI (`output-policy.ts`, 24.5).
+ * The `stdout` DSL extension expresses only the **intent** of the report; what
+ * consumes it is the CLI output policy (`output-policy.ts`, 24.5).
  *
  * @see docs/taskjuggler/lib/taskjuggler/TaskJuggler.rb
  */
 export class TaskJuggler {
+  /** Project built by the last successful parse, or `null` before one. */
   project: Project | null;
+  /** Parser kept alive between calls, or `null` when it was discarded. */
   parser: ProjectFileParser | null;
+  /** Worker budget forwarded to `Project.generateReports` (default `1`). */
   maxCpuCores: number;
+  /** When `true`, scheduling reports deviations in time-sheet bookings. */
   warnTsDeltas: boolean;
+  /** When `true`, scheduling records traces for the trace reports. */
   generateTraces: boolean;
   /**
-   * Armazenamento injetado para leitura dos `.tji` de sheet (ADR 037).
+   * Injected storage for reading the sheet `.tji` files (ADR 037).
    *
-   * No Ruby, `checkTimeSheet`/`checkStatusSheet` chamavam `tj3client` por
-   * subprocesso, que lia o arquivo do disco. Sem disco no core, o texto do
-   * sheet chega por este `FileStore`.
+   * In Ruby, `checkTimeSheet`/`checkStatusSheet` called `tj3client` through a
+   * subprocess, which read the file from disk. With no disk in the core, the
+   * sheet text arrives through this `FileStore`.
    */
   fileStore: FileStore | null;
   /**
-   * Resultado legível do último `checkTimeSheet`/`checkStatusSheet` — o
-   * journal compilado que o Ruby imprimia com `puts`. `null` até a primeira
-   * checagem bem-sucedida; a CLI/app decide onde exibir.
+   * Human-readable result of the last `checkTimeSheet`/`checkStatusSheet` — the
+   * compiled journal the Ruby printed with `puts`. `null` until the first
+   * successful check; the CLI/app decides where to display it.
    */
   lastSheetReport: string | null;
-  /** Conteúdo já lido na chamada corrente (cache do provedor injetado). */
+  /** Content already read in the current call (injected provider cache). */
   private contentCache = new Map<string, string>();
-  /** Provedor vigente — reusado por `parseFile`/`parseContent` (Fase 24). */
+  /** Current provider — reused by `parseFile`/`parseContent` (phase 24). */
   private fileProvider: FileContentProvider | null = null;
 
+  /**
+   * Initialises an empty facade: no project, no parser, one CPU core, tracing
+   * and delta warnings off — and pins `TjTime` to UTC.
+   */
   constructor() {
     this.project = null;
     this.parser = null;
@@ -112,20 +128,20 @@ export class TaskJuggler {
     TjTime.setTimeZone("UTC",);
   }
 
-  /** Injeta (ou remove, com `null`) o `FileStore` usado pelos sheets. */
+  /** Injects (or removes, with `null`) the `FileStore` used by the sheets. */
   setFileStore(store: FileStore | null,): void {
     this.fileStore = store;
   }
 
   /**
-   * Lê os arquivos em _files_ e monta o `Project` (Ruby `parse`, l.44-104).
+   * Reads the files in _files_ and builds the `Project` (Ruby `parse`, l.44-104).
    *
-   * Fase 24: o texto dos arquivos chega pelo provedor injetado — o core não
-   * toca em disco. Um `include` é resolvido pelo provedor **relativo ao
-   * arquivo que inclui**, como no Ruby. O primeiro arquivo é o mestre
-   * (`:project`); os demais alimentam o projeto (`:propertiesFile`).
+   * Phase 24: the file text arrives through the injected provider — the core
+   * never touches the disk. An `include` is resolved by the provider **relative
+   * to the including file**, as in Ruby. The first file is the master
+   * (`:project`); the others feed the project (`:propertiesFile`).
    *
-   * @returns `true` quando não restou nenhum erro no `MessageHandler`.
+   * @returns `true` when no error is left in the `MessageHandler`.
    */
   async parse(
     files: string[],
@@ -140,8 +156,8 @@ export class TaskJuggler {
     const parser = this.parser;
 
     if (provider !== null) {
-      // Pré-carrega a lista explícita (o provedor pode ser assíncrono); os
-      // `include`s descobertos durante o parse usam o cache/loader síncrono.
+      // Pre-loads the explicit list (the provider may be asynchronous); the
+      // `include`s found during the parse use the cache/synchronous loader.
       this.contentCache.clear();
       for (const file of files) {
         try {
@@ -150,7 +166,7 @@ export class TaskJuggler {
             await provider(file,),
           );
         } catch (_error) {
-          // Ruby: `critical('parse', msg.message)` no `open` — sem exceção.
+          // Ruby: `critical('parse', msg.message)` on `open` — no exception.
           MessageHandlerInstance.instance.error(
             "open_file",
             `Cannot open file ${file}`,
@@ -169,7 +185,8 @@ export class TaskJuggler {
         this.criticalParse("parse", error,);
         return false;
       }
-      // `open` registra `open_file` e segue sem stream: nada a parsear.
+      // `open` records `open_file` and continues without a stream: nothing to
+      // parse.
       if (parser.scannerRef?.cf === null) return false;
 
       if (master) {
@@ -191,6 +208,19 @@ export class TaskJuggler {
     return MessageHandlerInstance.instance.errors === 0;
   }
 
+  /**
+   * Parses a single file with an arbitrary grammar rule.
+   *
+   * Lower-level counterpart of {@link parse}: the caller picks the rule
+   * (`"project"`, `"propertiesFile"`, …) instead of letting the first file be
+   * the master. Used by consumers that feed one fragment at a time.
+   *
+   * @param fileName Path handed to the injected provider (or the raw text when
+   *   the scanner was opened on a buffer).
+   * @param rule Grammar rule to start from.
+   * @returns Whatever the rule produced, or `null` when the parse failed — the
+   *   diagnostics are already in the handler at that point.
+   */
   parseFile(fileName: string, rule: string,): unknown {
     const project = this.project;
     const parser = this.parser ?? new ProjectFileParser();
@@ -214,6 +244,19 @@ export class TaskJuggler {
     return res;
   }
 
+  /**
+   * Parses project source supplied as a string (SyntaxMesh extension — the
+   * Ruby CLI only ever read files).
+   *
+   * The `fileName` is used for diagnostics and for `Project.inputFiles`; it is
+   * not read. This is the entry point of the browser and of any caller that
+   * already holds the source text.
+   *
+   * @param content TaskJuggler source to parse.
+   * @param fileName Name to report the source under.
+   * @param provider Resolver for `include`s inside `content`.
+   * @returns `true` when the project was built and no error was recorded.
+   */
   parseContent(
     content: string,
     fileName?: string,
@@ -230,8 +273,8 @@ export class TaskJuggler {
 
     let project: Project | null;
     try {
-      // Buffer com nome próprio: `inputFiles` e mensagens usam o nome, não o
-      // texto (extensão SyntaxMesh — não existe no Ruby).
+      // Buffer with its own name: `inputFiles` and messages use the name, not
+      // the text (SyntaxMesh extension — absent from Ruby).
       parser.open(content, true, true, fileName,);
       if (parser.scannerRef?.cf === null) return false;
       const parsed = parser.parse("project",);
@@ -251,6 +294,15 @@ export class TaskJuggler {
     return MessageHandlerInstance.instance.errors === 0;
   }
 
+  /**
+   * Schedules the parsed project.
+   *
+   * Forwards {@link warnTsDeltas} so booking deviations are reported and
+   * records traces when {@link generateTraces} is on.
+   *
+   * @returns `true` when scheduling completed without a fatal condition.
+   * @throws If no project has been parsed yet.
+   */
   schedule(): boolean {
     if (!this.project) {
       throw new Error("Project not set",);
@@ -261,6 +313,18 @@ export class TaskJuggler {
     return res;
   }
 
+  /**
+   * Generates **every** report of the project through the legacy direct-write
+   * path.
+   *
+   * Kept for the UI (Phase 20); new code should prefer {@link renderReports},
+   * which returns report contents as data instead of writing them.
+   *
+   * @param outputDir Directory stored in `Project.outputDir`; omitted when the
+   *   caller wants whatever the project already configured.
+   * @returns Always `true`; failures are recorded in the message handler.
+   * @throws If no project has been parsed yet.
+   */
   generateReports(outputDir?: string,): boolean {
     if (!this.project) {
       throw new Error("Project not set",);
@@ -273,6 +337,16 @@ export class TaskJuggler {
     return true;
   }
 
+  /**
+   * Generates one report through the legacy direct-write path.
+   *
+   * @param reportId Id of the report, or a pattern when `regExpMode` is set.
+   * @param regExpMode Treat `reportId` as a regular expression.
+   * @param formats Output formats to force, or `null` for the report's own.
+   * @param dynamicAttributes Attribute definitions injected for this run.
+   * @returns Always `true`; failures are recorded in the message handler.
+   * @throws If no project has been parsed yet.
+   */
   generateReport(
     reportId: string,
     regExpMode: boolean,
@@ -291,6 +365,14 @@ export class TaskJuggler {
     return true;
   }
 
+  /**
+   * Lists the reports matching `reportId` in the message log.
+   *
+   * @param reportId Id of the report, or a pattern when `regExpMode` is set.
+   * @param regExpMode Treat `reportId` as a regular expression.
+   * @returns Always `true`; failures are recorded in the message handler.
+   * @throws If no project has been parsed yet.
+   */
   listReports(reportId: string, regExpMode: boolean,): boolean {
     if (!this.project) {
       throw new Error("Project not set",);
@@ -300,15 +382,15 @@ export class TaskJuggler {
   }
 
   /**
-   * Constrói a seção `results.reports` do envelope de execução (Fase 24).
+   * Builds the `results.reports` section of the execution envelope (phase 24).
    *
-   * Devolve o conteúdo renderizado de cada relatório **em memória**: nada é
-   * impresso nem gravado — a política de destino é da CLI
-   * (`output-policy.ts`). Este método é o construtor reutilizável da seção; o
-   * ponto de entrada público continua sendo o `execute` do request.
+   * Returns the rendered content of each report **in memory**: nothing is
+   * printed or written — the destination policy belongs to the CLI
+   * (`output-policy.ts`). This method is the reusable builder of the section; the
+   * public entry point remains the request's `execute`.
    *
-   * `generateReports(outputDir?)` permanece intacto como caminho legado da
-   * UI/Fase 20 (grava direto, sem envelope).
+   * `generateReports(outputDir?)` stays untouched as the legacy UI/phase 20
+   * path (writes directly, without an envelope).
    *
    * @see docs/syntaxmesh/fases/fase-24-cli-adendo.md §3.2/§3.3
    */
@@ -318,13 +400,13 @@ export class TaskJuggler {
   }
 
   /**
-   * Executa um `ExecutionRequest` e devolve o envelope completo (Fase 24).
+   * Runs an `ExecutionRequest` and returns the complete envelope (phase 24).
    *
-   * Delegado a `execution/execute.ts`, que cria uma instância própria desta
-   * fachada **por chamada** (isolamento do `MessageHandler`/`DataCache` —
-   * adendo §3.6): o estado desta instância não participa da execução. O
-   * consumidor (CLI/PWA/servidor) chama isto **uma vez** e só despacha o
-   * envelope; nenhum `exit`/IO nasce aqui.
+   * Delegated to `execution/execute.ts`, which creates its own instance of this
+   * facade **per call** (`MessageHandler`/`DataCache` isolation — addendum
+   * §3.6): the state of this instance takes no part in the execution. The
+   * consumer (CLI/PWA/server) calls this **once** and only dispatches the
+   * envelope; no `exit`/IO is born here.
    *
    * @see docs/syntaxmesh/fases/fase-24-cli-adendo.md §3.1/§3.6
    */
@@ -333,23 +415,23 @@ export class TaskJuggler {
   }
 
   /**
-   * Gera os artefatos do `--freeze` (Ruby `TaskJuggler#freeze`, l.220-290).
+   * Generates the `--freeze` artifacts (Ruby `TaskJuggler#freeze`, l.220-290).
    *
-   * Devolve **dados**: o include de header (com o novo `now`) e o export dos
-   * bookings até a data de corte. Nada é gravado — a escrita é do consumidor
-   * (`io.writeText` na CLI, 24.9.5).
+   * Returns **data**: the header include (with the new `now`) and the export of
+   * the bookings up to the cut-off date. Nothing is written — writing belongs to
+   * the consumer (`io.writeText` in the CLI, 24.9.5).
    *
-   * Desvios conscientes do Ruby, todos por falta de filesystem no core:
-   *  - o Ruby checa a existência dos dois includes e só emite `info`; aqui a
-   *    checagem não existe (o consumidor sabe se os arquivos estão lá);
-   *  - o Ruby deixa o relatório `_bookings_` no projeto e o pipeline normal de
-   *    `generateReports` escreve o `.tji`; aqui o export é gerado no próprio
-   *    freeze e o relatório sai da lista depois, para não duplicar a entrada em
-   *    `results.reports`;
-   *  - os nomes derivam do **master do request** (não de `Dir.pwd`), o que é
-   *    determinístico e testável.
+   * Deliberate deviations from Ruby, all because the core has no filesystem:
+   *  - Ruby checks that both includes exist and only emits `info`; here the check
+   *    does not exist (the consumer knows whether the files are there);
+   *  - Ruby leaves the `_bookings_` report in the project and the normal
+   *    `generateReports` pipeline writes the `.tji`; here the export is generated
+   *    in the freeze itself and the report leaves the list afterwards, so as not
+   *    to duplicate the entry in `results.reports`;
+   *  - the names derive from the **request master** (not `Dir.pwd`), which is
+   *    deterministic and testable.
    *
-   * @returns artefatos na ordem de escrita, ou `null` em erro (já reportado).
+   * @returns artifacts in write order, or `null` on error (already reported).
    */
   freeze(
     freezeDate: string | null = null,
@@ -372,8 +454,9 @@ export class TaskJuggler {
     try {
       cutOff = freezeDate === null
         ? TjTime.now().align(3600,)
-        // Ruby: `TjTime.new(arg)` (parse de string). No port o construtor é
-        // privado e `fromString` é a porta de parse ("YYYY-MM-DD[-HH:MM[:SS]]").
+        // Ruby: `TjTime.new(arg)` (string parsing). In the port the constructor
+        // is private and `fromString` is the parsing entry point
+        // ("YYYY-MM-DD[-HH:MM[:SS]]").
         : TjTime.fromString(freezeDate,).align(3600,);
     } catch (error) {
       const text = error instanceof Error ? error.message : String(error,);
@@ -413,13 +496,13 @@ export class TaskJuggler {
       );
       return null;
     } finally {
-      // O relatório sintético não participa de `results.reports`.
+      // The synthetic report takes no part in `results.reports`.
       project.reports.removeProperty(report,);
     }
 
-    // Ruby: `now #{freezeDate}` — o `TjTime#to_s` sem formato usa
-    // `%Y-%m-%d-%H:%M[-%S]-%z`. O corte é alinhado à hora, então os segundos
-    // nunca aparecem; o offset fica explícito para o `.tji` recarregar igual.
+    // Ruby: `now #{freezeDate}` — `TjTime#to_s` without a format uses
+    // `%Y-%m-%d-%H:%M[-%S]-%z`. The cut-off is aligned to the hour, so seconds
+    // never appear; the offset stays explicit so the `.tji` reloads identically.
     const now = cutOff.to_s("%Y-%m-%d-%H:%M-%z",);
     return {
       files: [
@@ -430,11 +513,11 @@ export class TaskJuggler {
   }
 
   /**
-   * Relatório sintético `_bookings_` do freeze (Ruby l.255-285).
+   * Synthetic `_bookings_` report of the freeze (Ruby l.255-285).
    *
-   * `inheritAttributes` vem **antes** dos `set` porque o Ruby herda os
-   * defaults de relatório do projeto e só depois sobrescreve (a ordem importa
-   * para `formats`/`scenarios`).
+   * `inheritAttributes` comes **before** the `set` calls because Ruby inherits
+   * the project's report defaults and only then overrides them (the order
+   * matters for `formats`/`scenarios`).
    */
   private buildBookingReport(
     project: Project,
@@ -448,17 +531,17 @@ export class TaskJuggler {
     report.set("formats", ["tjp",],);
     report.inheritAttributes();
 
-    // Só o cenário de tracking entra no export.
+    // Only the tracking scenario enters the export.
     report.set("scenarios", [scenarioIdx,],);
-    // Bookings só até a data de corte.
+    // Bookings only up to the cut-off date.
     report.set("end", cutOff,);
-    // Todas as tarefas/recursos, por `seqno` decrescente (como o Ruby).
+    // Every task/resource, by decreasing `seqno` (as in Ruby).
     const showAll = new LogicalExpression(new LogicalOperation(0,),);
     report.set("hideTask", showAll,);
     report.set("sortTasks", [["seqno", true, -1,],],);
     report.set("hideResource", showAll,);
     report.set("sortResources", [["seqno", true, -1,],],);
-    // Só bookings: nenhuma definição nem outro atributo.
+    // Bookings only: no definitions and no other attribute.
     report.set("definitions", [],);
     if (taskBookings) {
       report.set("taskAttributes", ["booking",],);
@@ -471,12 +554,12 @@ export class TaskJuggler {
   }
 
   /**
-   * Master file do projeto (Ruby `FileList#masterFile`).
+   * Master file of the project (Ruby `FileList#masterFile`).
    *
-   * O registro dos arquivos lidos é o `FileList` (16.7) — a mesma varredura do
-   * Ruby, com `.smx` somado a `.tjp` (extensão nativa, 24.2.36). Sem nenhum,
-   * cai no primeiro arquivo aberto: um projeto parseado a partir de conteúdo
-   * sem nome não tem master.
+   * The record of the read files is the `FileList` (16.7) — the same scan as
+   * Ruby, with `.smx` added to `.tjp` (native extension, 24.2.36). With none, it
+   * falls back to the first file opened: a project parsed from unnamed content
+   * has no master.
    */
   private masterFile(project: Project,): string | null {
     const files = new FileList();
@@ -486,23 +569,25 @@ export class TaskJuggler {
   }
 
   /**
-   * Valida uma time sheet contra o projeto carregado (Ruby `checkTimeSheet`,
+   * Validates a time sheet against the loaded project (Ruby `checkTimeSheet`,
    * l.295-334).
    *
-   * O Ruby chamava `tj3client check-ts` por subprocesso e imprimia o journal
-   * compilado; aqui o `.tji` é lido do `FileStore` injetado (ADR 037), a
-   * validação roda in-process e o resultado fica em {@link lastSheetReport}
-   * para a CLI/app imprimir — o core não escreve em stdout.
+   * Ruby called `tj3client check-ts` through a subprocess and printed the
+   * compiled journal; here the `.tji` is read from the injected `FileStore`
+   * (ADR 037), the validation runs in-process and the result stays in
+   * {@link lastSheetReport} for the CLI/app to print — the core does not write to
+   * stdout.
    *
-   * Esta é a via **passo a passo** (PWA/F19). O caminho de dados da Fase 24
-   * usa {@link checkTimeSheetContent} e recebe o texto do request (24.2.33).
+   * This is the **step-by-step** path (PWA/F19). The phase 24 data path uses
+   * {@link checkTimeSheetContent} and receives the sheet text from the request
+   * (24.2.33).
    *
-   * @returns `true` quando a folha é válida e os totais fecham.
+   * @returns `true` when the sheet is valid and every total balances.
    */
   async checkTimeSheet(fileName: string,): Promise<boolean> {
-    // 18.12: sem projeto a chamada é erro de programação e lança **antes** de
-    // tocar no `FileStore` (o `readSheet` devolveria `null` e mascararia a
-    // pré-condição como `false`).
+    // 18.12: without a project the call is a programming error and throws
+    // **before** touching the `FileStore` (`readSheet` would return `null` and
+    // mask the precondition as `false`).
     this.requireProject("checkTimeSheet",);
     const content = await this.readSheet(fileName, "check_time_sheet",);
     if (content === null) return false;
@@ -510,10 +595,10 @@ export class TaskJuggler {
   }
 
   /**
-   * Valida uma time sheet já em **memória** (Fase 24, 24.2.33).
+   * Validates a time sheet already **in memory** (phase 24, task 24.2.33).
    *
-   * Mesma semântica de {@link checkTimeSheet}, sem `FileStore`: é a porta do
-   * `execute` (`app="check-ts"`), onde o texto da folha é dado do request.
+   * Same semantics as {@link checkTimeSheet}, without a `FileStore`: it is the
+   * door of `execute` (`app="check-ts"`), where the sheet text is request data.
    */
   checkTimeSheetContent(
     content: string,
@@ -524,7 +609,7 @@ export class TaskJuggler {
     if (scenarioIdx === null) return SHEET_CHECK_FAILED;
 
     // "Make sure we don't use data from old time sheets or Journal entries"
-    // (Ruby l.305-307): o journal é recriado e as folhas, descartadas.
+    // (Ruby l.305-307): the journal is recreated and the sheets are discarded.
     project.timeSheets.clear();
     project.journal.clear();
 
@@ -539,16 +624,16 @@ export class TaskJuggler {
     );
     if (ts === null) return SHEET_CHECK_FAILED;
 
-    // `TimeSheets#check` registra os problemas via `error(...)` e devolve a
-    // própria lista (sempre truthy) — o `return false unless` do Ruby só
-    // dispara em exceção. Aqui o sinal de falha é o delta de erros abaixo.
+    // `TimeSheets#check` records the problems through `error(...)` and returns
+    // the list itself (always truthy) — Ruby's `return false unless` only fires
+    // on an exception. Here the failure signal is the error delta below.
     project.checkTimeSheets();
     if (handler.errors !== errorCount) return SHEET_CHECK_FAILED;
 
-    // Extensão 18.17.1/18.17.9: uma folha válida é aplicada ao cenário de
-    // tracking — `work`/`remaining` de material viram `effortdone`/
-    // `effortleft` e a quantidade consumida vira `MaterialBooking`, que é o
-    // que o `materialreport` lê como custo realizado (14C.11).
+    // Extension 18.17.1/18.17.9: a valid sheet is applied to the tracking
+    // scenario — material `work`/`remaining` become `effortdone`/`effortleft`
+    // and the consumed quantity becomes a `MaterialBooking`, which is what the
+    // `materialreport` reads as actual cost (14C.11).
     for (const record of ts.materialRecords) {
       record.applyToScenario(scenarioIdx,);
       record.applyMaterialBooking(scenarioIdx,);
@@ -582,15 +667,16 @@ export class TaskJuggler {
   }
 
   /**
-   * Valida uma status sheet contra o projeto carregado (Ruby
+   * Validates a status sheet against the loaded project (Ruby
    * `checkStatusSheet`, l.339-369).
    *
-   * Sem o `timeSheets.clear()` + recriação do journal do time sheet: status
-   * sheets convivem com o journal já existente (a própria gramática remove as
-   * entradas do mesmo autor/período antes de reescrever).
+   * Without the time sheet's `timeSheets.clear()` plus journal recreation:
+   * status sheets coexist with the existing journal (the grammar itself removes
+   * the entries of the same author/period before rewriting).
    */
   async checkStatusSheet(fileName: string,): Promise<boolean> {
-    // Mesma pré-condição da time sheet: sem projeto lança antes do store.
+    // Same precondition as the time sheet: without a project it throws before
+    // the store.
     this.requireProject("checkStatusSheet",);
     const content = await this.readSheet(fileName, "check_status_sheet",);
     if (content === null) return false;
@@ -598,10 +684,10 @@ export class TaskJuggler {
   }
 
   /**
-   * Valida uma status sheet já em **memória** (Fase 24, 24.2.33).
+   * Validates a status sheet already **in memory** (phase 24, task 24.2.33).
    *
-   * Espelha {@link checkStatusSheet} sem `FileStore` — porta do `execute`
-   * (`app="check-ss"`).
+   * Mirrors {@link checkStatusSheet} without a `FileStore` — the door of
+   * `execute` (`app="check-ss"`).
    */
   checkStatusSheetContent(
     content: string,
@@ -643,10 +729,11 @@ export class TaskJuggler {
   }
 
   /**
-   * Constrói o leitor síncrono que o scanner usa para mestre e `include`s.
+   * Builds the synchronous reader the scanner uses for the master and the
+   * `include`s.
    *
-   * O caminho é canonizado antes do *lookup*: o scanner monta o nome do
-   * include como `dirname(pai) + "/" + nome`, o que produz `./a/b.tji`.
+   * The path is canonicalised before the *lookup*: the scanner assembles the
+   * include name as `dirname(parent) + "/" + name`, which produces `./a/b.tji`.
    */
   private createLoader(provider: FileContentProvider,): FileTextLoader {
     return (path: string,): string => {
@@ -666,13 +753,13 @@ export class TaskJuggler {
     };
   }
 
-  /** Registra um erro de parse no `MessageHandler` (Ruby `critical(id, msg)`). */
+  /** Records a parse error in the `MessageHandler` (Ruby `critical(id, msg)`). */
   private criticalParse(id: string, error: unknown,): void {
     const text = error instanceof Error ? error.message : String(error,);
     if (text) MessageHandlerInstance.instance.critical(id, text,);
   }
 
-  /** Projeto carregado ou erro — pré-condição de agendar/relatar/checar. */
+  /** Loaded project or error — precondition of scheduling/reporting/checking. */
   private requireProject(method: string,): Project {
     if (!this.project) {
       throw new Error(`Project not set (${method})`,);
@@ -681,8 +768,8 @@ export class TaskJuggler {
   }
 
   /**
-   * `trackingScenarioIdx` do projeto, ou `null` após registrar o `critical`
-   * do Ruby (`raise TjException, 'No trackingscenario defined'`).
+   * `trackingScenarioIdx` of the project, or `null` after recording Ruby's
+   * `critical` (`raise TjException, 'No trackingscenario defined'`).
    */
   private trackingScenarioIdx(
     project: Project,
@@ -703,10 +790,10 @@ export class TaskJuggler {
   }
 
   /**
-   * Lê o texto de um `.tji` do `FileStore` injetado (ADR 037).
+   * Reads the text of a `.tji` from the injected `FileStore` (ADR 037).
    *
-   * Sem store — ou com arquivo ausente — registra `critical` e devolve
-   * `null`, como o `critical('parse_file', …)` do Ruby.
+   * Without a store — or with a missing file — records `critical` and returns
+   * `null`, like Ruby's `critical('parse_file', …)`.
    */
   private async readSheet(
     fileName: string,
@@ -733,13 +820,13 @@ export class TaskJuggler {
   }
 
   /**
-   * Aplica um sheet ao projeto já parseado (o `parseFile(fileName, rule)` do
-   * Ruby, l.105-121).
+   * Applies a sheet to the already parsed project (Ruby's
+   * `parseFile(fileName, rule)`, l.105-121).
    *
-   * `parseFile` segue ancorado à Fase 24 (o `.tjp` mestre depende do provedor
-   * de conteúdo da CLI); aqui o texto do sheet já está em memória.
+   * `parseFile` stays anchored to phase 24 (the `.tjp` master depends on the
+   * CLI content provider); here the sheet text is already in memory.
    *
-   * @returns o resultado da regra, ou `null` em erro de sintaxe (TjError).
+   * @returns the rule result, or `null` on a syntax error (TjError).
    */
   private parseSheet<T,>(
     project: Project,
@@ -752,16 +839,17 @@ export class TaskJuggler {
     let result: unknown;
     try {
       parser.open(content, false, true,);
-      // `@parser.setGlobalMacros` do Ruby (l.116): as macros de data
-      // (projectstart/now/…) precisam existir antes das regras rodarem.
+      // Ruby's `@parser.setGlobalMacros` (l.116): the date macros
+      // (projectstart/now/…) must exist before the rules run.
       parser.setGlobalMacros();
       result = parser.parse(rule,);
     } catch (error) {
-      // Extensão SyntaxMesh: o FSM do port tolera tokens faltantes e chega a
-      // executar a action com valores `undefined` (no Ruby o padrão não casa e
-      // a action nem roda), o que estoura lá dentro com erro genérico. Como o
-      // texto é entrada do usuário, isto vira folha inválida em vez de derrubar
-      // a app — com o id que o Ruby usa no `parseFile` (l.111).
+      // SyntaxMesh extension: the port's FSM tolerates missing tokens and even
+      // runs the action with `undefined` values (in Ruby the pattern does not
+      // match and the action never runs), which blows up inside with a generic
+      // error. Since the text is user input, this becomes an invalid sheet
+      // instead of crashing the app — with the id Ruby uses in `parseFile`
+      // (l.111).
       const text = error instanceof Error ? error.message : String(error,);
       MessageHandlerInstance.instance.critical("parse_file", text,);
       return null;
@@ -771,33 +859,40 @@ export class TaskJuggler {
     if (result === false || result === null || result === undefined) {
       return null;
     }
-    // `@project.inputFiles << fileName` do Ruby (l.110) só acontece na
-    // abertura bem-sucedida.
+    // Ruby's `@project.inputFiles << fileName` (l.110) only happens on a
+    // successful open.
     project.inputFiles.push(fileName,);
     return result as T;
   }
 
+  /** Id of the parsed project, or `null` when nothing was parsed. */
   get projectId(): string | null {
     return this.project?.id ?? null;
   }
 
+  /** Name of the parsed project, or `null` when nothing was parsed. */
   get projectName(): string | null {
     return this.project?.name ?? null;
   }
 
+  /**
+   * Number of errors recorded by the message handler so far.
+   *
+   * Mirrors TaskJuggler, where the facade simply reflects the handler count.
+   */
   get errors(): number {
-    // TaskJuggler.rb:384-386 — reflete a contagem do MessageHandler.
+    // TaskJuggler.rb:384-386 — mirrors the MessageHandler count.
     return MessageHandlerInstance.instance.errors;
   }
 }
 
 /**
- * Markup original de um RTI (`query.richText.inputText` no Ruby).
+ * Original markup of an RTI (`query.richText.inputText` in Ruby).
  *
- * Espelha o helper homônimo privado de `model/resource.ts`: o Ruby faz
- * `query_journal(query).richText.inputText` e imprime; aqui o texto é
- * devolvido para {@link TaskJuggler.lastSheetReport}. String vazia quando a
- * forma do RTI não é a esperada (só acontece com RTI de outra origem).
+ * Mirrors the same-named private helper of `model/resource.ts`: Ruby does
+ * `query_journal(query).richText.inputText` and prints it; here the text is
+ * returned for {@link TaskJuggler.lastSheetReport}. Empty string when the RTI
+ * shape is not the expected one (only happens with an RTI from another origin).
  */
 function inputTextOf(rti: unknown,): string {
   const source = (rti as { richText?: { inputText?: unknown } } | null)

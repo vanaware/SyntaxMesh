@@ -1,9 +1,8 @@
 /**
- * Conjunto de contas que descreve como um valor é distribuído entre contas.
+ * Set of accounts describing how an amount is distributed among accounts.
  *
- * Cada conta tem uma participação (share) entre 0.0 e 1.0. A soma total deve
- * ser 100% (1.0). Contas sem share definido são distribuídas igualmente pelo
- * método `complete()`.
+ * Each account has a share between 0.0 and 1.0. The total must be 100% (1.0).
+ * Accounts without a share are distributed evenly by the `complete()` method.
  *
  * @see docs/taskjuggler/lib/taskjuggler/ChargeSet.rb
  */
@@ -12,9 +11,9 @@ import { TjArgumentError, } from "../attributes/errors.ts";
 import { type Account, } from "../model/account.ts";
 
 /**
- * Conjunto de contas com participações (shares) para distribuição de custos.
+ * Set of accounts with shares for cost distribution.
  *
- * Fonte Ruby: `docs/taskjuggler/lib/taskjuggler/ChargeSet.rb`
+ * Ruby source: `docs/taskjuggler/lib/taskjuggler/ChargeSet.rb`
  */
 export class ChargeSet {
   private set: Map<Account, number | null>;
@@ -26,7 +25,7 @@ export class ChargeSet {
   }
 
   /**
-   * Conta raiz (master) do charge set — a primeira conta adicionada.
+   * Root account (master) of the charge set — the first account added.
    *
    * @see docs/taskjuggler/lib/taskjuggler/ChargeSet.rb#master
    */
@@ -35,14 +34,14 @@ export class ChargeSet {
   }
 
   /**
-   * Adiciona uma conta ao conjunto com sua participação.
+   * Adds an account to the set with its share.
    *
    * @see docs/taskjuggler/lib/taskjuggler/ChargeSet.rb#addAccount
    */
   addAccount(account: Account, share: number | null | undefined,): void {
-    // Ruby: optionalPercent ausente chega como nil. `undefined` residual do
-    // parser deve ser tratado igual (share === null), senão complete() soma
-    // NaN e reclama de "Total share ... NaN".
+    // Ruby: a missing optionalPercent arrives as nil. A residual `undefined`
+    // from the parser must be treated the same (share === null), otherwise
+    // complete() sums NaN and complains about "Total share ... NaN".
     const s = share ?? null;
     if (!account.leaf()) {
       throw new TjArgumentError(
@@ -75,7 +74,7 @@ export class ChargeSet {
   }
 
   /**
-   * Itera sobre todas as contas do conjunto.
+   * Iterates over all accounts of the set.
    *
    * @see docs/taskjuggler/lib/taskjuggler/ChargeSet.rb#each
    */
@@ -86,14 +85,15 @@ export class ChargeSet {
   }
 
   /**
-   * Distribui o restante até 100% igualmente entre as contas sem share.
+   * Distributes the remainder up to 100% evenly among the accounts without a
+   * share.
    *
    * @see docs/taskjuggler/lib/taskjuggler/ChargeSet.rb#complete
    */
   complete(): void {
     let totalPercent = 0.0;
-    // Ruby `ChargeSet.rb#complete` usa `undefined_count`; evitamos o nome
-    // `undefined` (sombrearia a global restrita).
+    // Ruby `ChargeSet.rb#complete` uses `undefined_count`; we avoid the name
+    // `undefined` (it would shadow the restricted global).
     let undefinedCount = 0;
     for (const share of this.set.values()) {
       if (share !== null) {
@@ -127,7 +127,7 @@ export class ChargeSet {
   }
 
   /**
-   * Retorna a participação de uma conta, ou null se não definida.
+   * Returns the share of an account, or null when not defined.
    *
    * @see docs/taskjuggler/lib/taskjuggler/ChargeSet.rb#share
    */
@@ -136,7 +136,7 @@ export class ChargeSet {
   }
 
   /**
-   * Representação textual do conjunto.
+   * Text representation of the set.
    *
    * @see docs/taskjuggler/lib/taskjuggler/ChargeSet.rb#to_s
    */

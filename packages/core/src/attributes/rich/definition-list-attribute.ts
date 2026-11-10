@@ -1,5 +1,5 @@
 /**
- * Atributo de lista de definições.
+ * Definition list attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:DefinitionListAttribute
  */
@@ -10,18 +10,18 @@ import { type AttributeDefinition, } from "../attribute-definition.ts";
 import { ListAttributeBase, } from "../list-attribute-base.ts";
 
 /**
- * Atributo de lista de definições.
+ * Definition list attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:DefinitionListAttribute
  */
 export class DefinitionListAttribute extends ListAttributeBase<unknown> {
   /**
-   * ID do tipo de atributo para DefinitionListAttribute.
+   * Attribute type ID for DefinitionListAttribute.
    */
   static readonly tjpId = "definitionlist";
 
   /**
-   * Converte o valor para TJP (formato TaskJuggler).
+   * Converts the value to TJP (TaskJuggler format).
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:DefinitionListAttribute#to_tjp
    */

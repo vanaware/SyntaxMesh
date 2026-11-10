@@ -1,10 +1,11 @@
 /**
- * TjpSyntaxRules — bloco resource (subfase 10.12).
+ * TjpSyntaxRules — resource block (sub-phase 10.12).
  *
- * Port das regras `resource*`, `booking` (resource-side), `leave*`,
- * `workinghoursResource` e apoios (`leafResourceId`, `undefResourceId`) de
- * `TjpSyntaxRules.rb`. As regras `workinghours*` de tempo e `bookingBody`
- * vivem em project.ts/task.ts; `taskId`, `valIntervals` etc. em common.ts.
+ * Port of the `resource*`, `booking` (resource-side), `leave*`,
+ * `workinghoursResource` rules and the supporting ones (`leafResourceId`,
+ * `undefResourceId`) from `TjpSyntaxRules.rb`. The time `workinghours*` rules
+ * and `bookingBody` live in project.ts/task.ts; `taskId`, `valIntervals` etc.
+ * in common.ts.
  *
  * @see docs/taskjuggler/lib/taskjuggler/TjpSyntaxRules.rb
  */
@@ -21,7 +22,7 @@ const asProp = (parser: ProjectFileParser,): NonNullable<
   ProjectFileParser["property"]
 > => parser.property!;
 
-/** Registra o bloco de regras de recursos. */
+/** Registers the resource rule block. */
 export function registerResourceRules(p: ProjectFileParser,): void {
   // ------------------------------------------------------------------
   // resource / header / body / attributes
@@ -57,7 +58,8 @@ export function registerResourceRules(p: ProjectFileParser,): void {
     );
     p.doc("email", "The email address of the resource.",);
 
-    // Fase 10 Complemento C3.2.1 — `note` em recurso (porta de rule_taskNote).
+    // Phase 10 Complement C3.2.1 — `note` on a resource (port of
+    // rule_taskNote).
     p.pattern(
       ["_note", "$STRING",],
       function (this: ProjectFileParser,): unknown {
@@ -99,7 +101,7 @@ export function registerResourceRules(p: ProjectFileParser,): void {
     );
     p.example("Supplement", "resource",);
 
-    // Outros atributos são adicionados automaticamente (dynamicAttributes).
+    // Other attributes are added automatically (dynamicAttributes).
   },);
 
   rule(p, "resourceBody", () => {
@@ -140,7 +142,7 @@ export function registerResourceRules(p: ProjectFileParser,): void {
   },);
 
   // ------------------------------------------------------------------
-  // IDs de recurso
+  // Resource IDs
   // ------------------------------------------------------------------
   rule(p, "resourceId", () => {
     p.pattern(["$ID",], function (this: ProjectFileParser,): unknown {
@@ -194,7 +196,7 @@ export function registerResourceRules(p: ProjectFileParser,): void {
   },);
 
   // ------------------------------------------------------------------
-  // Atributos de cenário do recurso
+  // Scenario attributes of the resource
   // ------------------------------------------------------------------
   rule(p, "resourceScenarioAttributes", () => {
     p.pattern(["!chargeset",],);
@@ -284,14 +286,14 @@ export function registerResourceRules(p: ProjectFileParser,): void {
     ): unknown {
       this.checkContainer("shifts",);
       try {
-        // Re-seta o mesmo valor para marcar o atributo como 'provided'.
+        // Sets the same value again to mark the attribute as 'provided'.
         asProp(this,).setForScenario(
           "shifts",
           this.shiftAssignments,
           this.scenarioIdx,
         );
       } catch (e) {
-        // Múltiplas atribuições de shift são idiomáticas: não avisa.
+        // Multiple shift assignments are idiomatic: no warning.
         if (!(e instanceof AttributeOverwrite)) throw e;
       }
       this.shiftAssignments = null;
@@ -321,7 +323,7 @@ export function registerResourceRules(p: ProjectFileParser,): void {
     p.pattern(
       ["_vacation", "!vacationName", "!intervals",],
       function (this: ProjectFileParser,): unknown {
-        // O atributo antigo 'vacation' mapeia para feriados públicos.
+        // The old 'vacation' attribute maps to public holidays.
         const leaves = (this.val[2] as ScoreboardInterval[]).map(
           (iv,) => new Leave("holiday", iv,),
         );
@@ -334,7 +336,7 @@ export function registerResourceRules(p: ProjectFileParser,): void {
     p.pattern(["!warn",],);
 
     p.pattern(["!workinghoursResource",],);
-    // Outros atributos são adicionados automaticamente.
+    // Other attributes are added automatically.
   },);
 
   rule(p, "workinghoursResource", () => {
@@ -370,8 +372,8 @@ export function registerResourceRules(p: ProjectFileParser,): void {
   // Booking (resource-side)
   // ------------------------------------------------------------------
   rule(p, "resourceBooking", () => {
-    // 14C.15.6: `booking charge <tarefa> [value] <montante> on <data>` — a
-    // palavra `charge` desambigua do booking de esforço (Adendo Extra §12.3).
+    // 14C.15.6: `booking charge <task> [value] <amount> on <date>` — the word
+    // `charge` disambiguates it from the effort booking (Extra Addendum §12.3).
     p.pattern(["!resourceChargeBookingHeader",],);
     p.pattern(
       ["!resourceBookingHeader", "!bookingBody",],
@@ -393,8 +395,8 @@ export function registerResourceRules(p: ProjectFileParser,): void {
   },);
 
   rule(p, "resourceBookingHeader", () => {
-    // Keyword de tipo opcional (Adendo Extra §12.3, 14C.15.2; Onda D4:
-    // `booking resource <tarefa> …`, com `effort` como alias de leitura).
+    // Optional type keyword (Extra Addendum §12.3, 14C.15.2; Wave D4:
+    // `booking resource <task> …`, with `effort` as the read alias).
     p.pattern(
       ["!bookingResourceKeyword", "!taskId", "!valIntervals",],
       function (this: ProjectFileParser,): unknown {
@@ -416,7 +418,7 @@ export function registerResourceRules(p: ProjectFileParser,): void {
   },);
 
   // ------------------------------------------------------------------
-  // Leaves / licenças
+  // Leaves / time off
   // ------------------------------------------------------------------
   rule(p, "leaves", () => {
     p.pattern(

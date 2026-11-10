@@ -2,22 +2,52 @@ import { TokenDoc, } from "../lexer/token-doc.ts";
 import { State, stateKeyOf, type StateKeys, } from "./state.ts";
 import { Rule, } from "./rule.ts";
 
+/** Kind of symbol a pattern token stands for. */
 export type TokenType = "reference" | "variable" | "literal" | "eof";
+
+/** Token of a pattern: its kind and its text (or the referenced rule name). */
 export type Token = [TokenType, string,];
 
+/**
+ * Pattern — one alternative of a grammar rule, written as a list of prefixed
+ * tokens: `!rule` (reference to another rule), `$var` (value), `_literal` or
+ * plain text (literal) and `.` (end of input).
+ *
+ * Port of `TextParser/Pattern.rb`. A pattern also carries the documentation of
+ * the keyword it describes (`keyword`, `doc`, `supportLevel`, `seeAlso`,
+ * examples) and the states built from it by the automaton.
+ */
 export class Pattern {
+  /** Keyword documented by this pattern, or `null`. */
   keyword: string | null;
+  /** Documentation text of the keyword, or `null`. */
   doc: string | null;
+  /** Support level of the keyword (`supported`, `deprecated`, …). */
   supportLevel: string;
+  /** Keywords to see also. */
   seeAlso: string[];
+  /** File of the documentation example. */
   exampleFile: string | null;
+  /** Tag of the example inside `exampleFile`. */
   exampleTag: string | null;
+  /** Tokens of the pattern, in grammar order. */
   tokens: Token[];
+  /** Interpreter hook executed when the pattern is reduced. */
   function: ((...args: unknown[]) => unknown) | null;
+  /** Documentation of each token, index-aligned with `tokens`. */
   args: Array<TokenDoc | null>;
+  /** Index of the last token that belongs to the syntax. */
   lastSyntaxToken: number;
+  /** Transitions registered for this pattern. */
   transitions: unknown[];
 
+  /**
+   * Builds a pattern from its prefixed token list.
+   *
+   * @param tokens Tokens, each starting with `!`, `$`, `_` or `.`.
+   * @param fn Interpreter hook, when the pattern reduces to a value.
+   * @throws Error When a token does not start with a known type prefix.
+   */
   constructor(
     tokens: string[],
     fn: ((...args: unknown[]) => unknown) | null = null,
@@ -55,6 +85,13 @@ export class Pattern {
     this.lastSyntaxToken = this.tokens.length - 1;
   }
 
+  /**
+   * Creates the automaton states of this pattern.
+   *
+   * @param rule Rule that owns the pattern.
+   * @param rules Every rule of the grammar, for the optionality check.
+   * @returns One state per token, in grammar order.
+   */
   generateStates(rule: Rule, rules: Map<string, Rule>,): State[] {
     let firstReduceableToken = this.tokens.length - 1;
     for (let i = this.tokens.length - 2; i >= 0; i--) {
@@ -68,7 +105,7 @@ export class Pattern {
     const states: State[] = [];
     for (let i = 0; i < this.tokens.length; i++) {
       const state = new State(rule, this, i,);
-      // Port fiel: em Ruby, `state.noReduce = false if i >= firstReduceableToken`
+      // Faithful port: in Ruby, `state.noReduce = false if i >= firstReduceableToken`
       if (i >= firstReduceableToken) {
         state.noReduce = false;
       }
@@ -77,6 +114,19 @@ export class Pattern {
     return states;
   }
 
+  /**
+   * Adds the transitions that leave `sourceState` through this pattern, starting
+   * at `destIndex`.
+   *
+   * @param states Every state of the automaton, keyed by `stateKeyOf`.
+   * @param rules Every rule of the grammar.
+   * @param keys Lookahead keys accepted by the source state.
+   * @param stateStack Stack used to break the recursion between rules.
+   * @param sourceState State that receives the transitions.
+   * @param destRule Rule that owns this pattern.
+   * @param destIndex Index of the first token to consume.
+   * @param loopBack Whether the transition loops back to a previous state.
+   */
   addTransitionsToState(
     states: Map<string, State>,
     rules: Map<string, Rule>,
@@ -118,10 +168,10 @@ export class Pattern {
         const skippedState = states.get(
           stateKeyOf(destRule, this, destIndexLocal, keys,),
         );
-        // Regras podem referenciar a si mesmas direta ou indiretamente; a
-        // proteção contra recursão infinita é o stateStack (Ruby l.181). O
-        // estado "pulada" é empilhado antes e desapertado depois da
-        // resolução da referência.
+        // Rules may reference themselves directly or indirectly; the guard
+        // against infinite recursion is the stateStack (Ruby l.181). The
+        // "skipped" state is pushed before and popped after the reference is
+        // resolved.
         if (skippedState && !stateStack.some((s,) => s === skippedState)) {
           stateStack.push(skippedState,);
           refRule.addTransitionsToState(
@@ -160,32 +210,72 @@ export class Pattern {
     }
   }
 
+  /**
+   * Records the keyword and its documentation.
+   *
+   * @param keyword Keyword described by this pattern.
+   * @param doc Documentation text.
+   */
   setDoc(keyword: string, doc: string,): void {
     this.keyword = keyword;
     this.doc = doc;
   }
 
+  /**
+   * Sets the documentation of one token.
+   *
+   * @param idx Index of the token.
+   * @param doc Documentation of the token, or `null` to clear it.
+   */
   setArg(idx: number, doc: TokenDoc | null,): void {
     this.args[idx] = doc;
   }
 
+  /**
+   * Sets the index of the last token that belongs to the syntax.
+   *
+   * @param idx Index of the token.
+   */
   setLastSyntaxToken(idx: number,): void {
     this.lastSyntaxToken = idx;
   }
 
+  /**
+   * Sets the support level of the keyword.
+   *
+   * @param level One of the support-level strings.
+   */
   setSupportLevel(level: string,): void {
     this.supportLevel = level;
   }
 
+  /**
+   * Sets the "see also" keywords.
+   *
+   * @param also Keywords to list as related.
+   */
   setSeeAlso(also: string[],): void {
     this.seeAlso = also;
   }
 
+  /**
+   * Sets the documentation example of the keyword.
+   *
+   * @param file File that holds the example.
+   * @param tag Tag of the example inside the file.
+   */
   setExample(file: string, tag: string | null,): void {
     this.exampleFile = file;
     this.exampleTag = tag;
   }
 
+  /**
+   * Token at an index.
+   *
+   * @param i Index of the token.
+   * @returns The token.
+   * @throws Error When the index is out of range.
+   */
   get(i: number,): Token {
     const t = this.tokens[i];
     if (!t) {
@@ -194,20 +284,30 @@ export class Pattern {
     return t;
   }
 
+  /** Iterates over the tokens of the pattern. */
   each(): IterableIterator<[TokenType, string,]> {
     return this.tokens[Symbol.iterator]() as IterableIterator<
       [TokenType, string,]
     >;
   }
 
+  /** Whether the pattern has no tokens at all. */
   empty(): boolean {
     return this.tokens.length === 0;
   }
 
+  /** Number of tokens of the pattern. */
   length(): number {
     return this.tokens.length;
   }
 
+  /**
+   * Whether every token of the pattern can be omitted, so the pattern matches
+   * the empty input.
+   *
+   * @param rules Every rule of the grammar, for the reference tokens.
+   * @returns `true` when the pattern is entirely optional.
+   */
   optional(rules: Map<string, Rule>,): boolean {
     for (const token of this.tokens) {
       const type = token[0];
@@ -224,6 +324,13 @@ export class Pattern {
     return true;
   }
 
+  /**
+   * Whether the token at an index is a reference to an optional rule.
+   *
+   * @param index Index of the token.
+   * @param rules Every rule of the grammar.
+   * @returns `true` when the token is an optional reference.
+   */
   private optionalToken(index: number, rules: Map<string, Rule>,): boolean {
     const token = this.tokens[index];
     if (!token) {
@@ -239,6 +346,12 @@ export class Pattern {
     return false;
   }
 
+  /**
+   * Whether the token at an index is a terminal symbol (variable or literal).
+   *
+   * @param i Index of the token.
+   * @returns `true` for `variable` and `literal` tokens.
+   */
   terminalSymbol(i: number,): boolean {
     const token = this.tokens[i];
     if (!token) {
@@ -248,6 +361,14 @@ export class Pattern {
     return type === "variable" || type === "literal";
   }
 
+  /**
+   * Terminal tokens reachable from the token at an index.
+   *
+   * @param rules Every rule of the grammar.
+   * @param index Index of the starting token.
+   * @returns Pairs of literal text and the pattern that owns it.
+   * @throws Error When the token index or a referenced rule is unknown.
+   */
   terminalTokens(
     rules: Map<string, Rule>,
     index: number = 0,
@@ -276,6 +397,14 @@ export class Pattern {
     throw new Error(`Unexpected token ${type} ${name}`,);
   }
 
+  /**
+   * Renders the syntax of the pattern for the documentation.
+   *
+   * @param argDocs Collector that receives the argument documentation.
+   * @param rules Every rule of the grammar.
+   * @param skip Number of leading tokens to skip.
+   * @returns The syntax string (e.g. `task <id> { <attributes> }`).
+   */
   to_syntax(
     argDocs: Array<TokenDoc>,
     rules: Map<string, Rule>,
@@ -285,6 +414,15 @@ export class Pattern {
     return this.to_syntax_r(stack, argDocs, rules, skip,);
   }
 
+  /**
+   * Recursive body of `to_syntax`, with the cycle guard in `stack`.
+   *
+   * @param stack Patterns already being rendered, to cut recursion.
+   * @param argDocs Collector that receives the argument documentation.
+   * @param rules Every rule of the grammar.
+   * @param skip Number of leading tokens to skip.
+   * @returns The syntax string.
+   */
   to_syntax_r(
     stack: Map<unknown, boolean>,
     argDocs: Array<TokenDoc>,
@@ -349,8 +487,8 @@ export class Pattern {
             if (!firstPattern) {
               throw new Error(`Rule ${name} has no patterns`,);
             }
-            // Regra com um único pattern documentado já é uma keyword:
-            // vira argumento (`<keyword>`) em vez de ser expandida.
+            // A rule with a single documented pattern is already a keyword: it
+            // becomes an argument (`<keyword>`) instead of being expanded.
             if (
               refRule.patterns.length === 1 && firstPattern.doc !== null
             ) {
@@ -360,8 +498,8 @@ export class Pattern {
               );
               str += `<${firstPattern.keyword}>`;
             } else {
-              // Demais referências são seguidas recursivamente
-              // (`Pattern.rb:379`); o guarda de ciclo fica no próprio pattern.
+              // The other references are followed recursively
+              // (`Pattern.rb:379`); the cycle guard lives in the pattern itself.
               str += refRule.to_syntax(stack, argDocs, rules, 0,);
             }
             break;
@@ -373,6 +511,7 @@ export class Pattern {
     return str;
   }
 
+  /** Renders the pattern in the internal `!rule $var _literal .` notation. */
   to_s(): string {
     let str = "";
     for (const token of this.tokens) {
@@ -398,6 +537,12 @@ export class Pattern {
     return str;
   }
 
+  /**
+   * Adds an argument documentation unless one with the same name is there.
+   *
+   * @param argDocs Collector of the argument documentation.
+   * @param argDoc Documentation to add.
+   */
   private addArgDoc(argDocs: Array<TokenDoc>, argDoc: TokenDoc,): void {
     for (const ad of argDocs) {
       if (ad.name === argDoc.name) {

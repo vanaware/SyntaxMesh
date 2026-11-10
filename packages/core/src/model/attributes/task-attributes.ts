@@ -3,7 +3,7 @@ import { AttributeDefinition, } from "../../attributes/attribute-definition.ts";
 import { AttributeType, } from "../../attributes/attribute-type.ts";
 
 /**
- * Registra os atributos específicos de task (28 atributos).
+ * Registers the task-specific attributes (28 attributes).
  *
  * @see docs/taskjuggler/lib/taskjuggler/Task.rb
  */
@@ -27,7 +27,8 @@ export function registerTaskAttributes(propertySet: PropertySet,): void {
   // materialallocations: Material Allocations (NodeListAttribute,
   // inheritedFromParent=false, inheritedFromProject=false,
   // isScenarioAttribute=true, default=[]).
-  // Fase 10 Complemento C3.1.2 — alocações de material (`material`/`use`) da task.
+  // Phase 10, complement C3.1.2 — material allocations (`material`/`use`) of
+  // the task.
   propertySet.addAttributeType(
     new AttributeDefinition(
       "materialallocations",
@@ -46,8 +47,8 @@ export function registerTaskAttributes(propertySet: PropertySet,): void {
   // materialbookings: Material Bookings (NodeListAttribute,
   // inheritedFromParent=false, inheritedFromProject=false,
   // isScenarioAttribute=true, default=[]).
-  // Fase 14 Complemento 14C.11.3 — consumo realizado de material (quantidade
-  // em uma data, com `unitprice` próprio).
+  // Phase 14, complement 14C.11.3 — actual material consumption (quantity
+  // on a date, with its own `unitprice`).
   propertySet.addAttributeType(
     new AttributeDefinition(
       "materialbookings",
@@ -66,9 +67,9 @@ export function registerTaskAttributes(propertySet: PropertySet,): void {
   // chargebookings: Charge Bookings (NodeListAttribute,
   // inheritedFromParent=false, inheritedFromProject=false,
   // isScenarioAttribute=true, default=[]).
-  // Adendo Extra §12.3 (14C.15.4) — gastos realizados declarados por
-  // `booking charge <ref> [value] <montante> on <data>` no corpo da tarefa,
-  // de um recurso ou de um material. Vivem na tarefa porque o dinheiro é dela.
+  // Extra Addendum §12.3 (14C.15.4) — actual expenses declared by
+  // `booking charge <ref> [value] <amount> on <date>` in the task body, for a
+  // resource or a material. They live on the task because the money is its own.
   propertySet.addAttributeType(
     new AttributeDefinition(
       "chargebookings",
@@ -789,8 +790,9 @@ export function registerTaskAttributes(propertySet: PropertySet,): void {
   );
 
   // timebasis: Time Basis (SymbolAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=true, default=nil)
-  // Extensão Fase 10 Complemento C2.1 (#6) — não existe no TJ Ruby. Valores
-  // canônicos `duration`/`length`; aliases normalizados no parser (C3.4.1).
+  // Phase 10, complement C2.1 extension (#6) — does not exist in TJ Ruby.
+  // Canonical values `duration`/`length`; aliases normalized in the parser
+  // (C3.4.1).
   propertySet.addAttributeType(
     new AttributeDefinition(
       "timebasis",

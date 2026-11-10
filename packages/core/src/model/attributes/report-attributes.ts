@@ -3,7 +3,7 @@ import { AttributeDefinition, } from "../../attributes/attribute-definition.ts";
 import { AttributeType, } from "../../attributes/attribute-type.ts";
 
 /**
- * Registra os atributos específicos de report (63 atributos).
+ * Registers the report-specific attributes (63 attributes).
  *
  * @see docs/taskjuggler/lib/taskjuggler/Report.rb
  */
@@ -41,8 +41,8 @@ export function registerReportAttributes(propertySet: PropertySet,): void {
   );
 
   // baseline: Baseline (IntegerAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
-  // Extensão SyntaxMesh (adendo §10 / 14C.10): cenário cujas datas e custos
-  // formam a linha de base exportada como `<Baseline>` no MSPDI.
+  // SyntaxMesh extension (addendum §10 / 14C.10): scenario whose dates and
+  // costs form the baseline exported as `<Baseline>` in MSPDI.
   propertySet.addAttributeType(
     new AttributeDefinition(
       "baseline",
@@ -346,9 +346,9 @@ export function registerReportAttributes(propertySet: PropertySet,): void {
     ),
   );
 
-  // hideMaterial: Hide Material (extensão SyntaxMesh — Fase 14 Complemento
-  // C6.2/C6.5). Mesmo formato de `hideResource`, avaliado com a propriedade
-  // `Material` no papel de `query.property`.
+  // hideMaterial: Hide Material (SyntaxMesh extension — phase 14 Complemento
+  // C6.2/C6.5). Same shape as `hideResource`, evaluated with the `Material`
+  // property in the role of `query.property`.
   propertySet.addAttributeType(
     new AttributeDefinition(
       "hideMaterial",
@@ -364,8 +364,8 @@ export function registerReportAttributes(propertySet: PropertySet,): void {
     ),
   );
 
-  // hidePicture: Hide Picture (extensão SyntaxMesh — Fase 14 Complemento
-  // C6.3/C6.5). Oculta `Picture`s da galeria dos relatórios.
+  // hidePicture: Hide Picture (SyntaxMesh extension — phase 14 Complemento
+  // C6.3/C6.5). Hides `Picture`s from the report gallery.
   propertySet.addAttributeType(
     new AttributeDefinition(
       "hidePicture",
@@ -717,9 +717,9 @@ export function registerReportAttributes(propertySet: PropertySet,): void {
     ),
   );
 
-  // rollupMaterial: Rollup Material (extensão SyntaxMesh — Fase 14 Complemento
-  // C6.4/C6.9). Parceiro de `rollupResource`: material envolvido não gera
-  // linha própria nas listas que exibem materiais.
+  // rollupMaterial: Rollup Material (SyntaxMesh extension — phase 14
+  // Complemento C6.4/C6.9). Partner of `rollupResource`: a rolled-up material
+  // does not produce its own row in the lists that display materials.
   propertySet.addAttributeType(
     new AttributeDefinition(
       "rollupMaterial",
@@ -1087,9 +1087,10 @@ export function registerReportAttributes(propertySet: PropertySet,): void {
     ),
   );
 
-  // groupby: Group By (SymbolAttribute) — extensão Fase 10 Complemento C3.5/C3.6.
-  // Critério de agrupamento dos relatórios breakdownreport (account|task) e
-  // rdoreport (date|task|resource|material|account). Execução na Fase 14.
+  // groupby: Group By (SymbolAttribute) — phase 10 Complemento extension
+  // C3.5/C3.6. Grouping criterion of the breakdownreport (account|task) and
+  // rdoreport (date|task|resource|material|account) reports. Execution in
+  // phase 14.
   propertySet.addAttributeType(
     new AttributeDefinition(
       "groupby",
@@ -1105,8 +1106,8 @@ export function registerReportAttributes(propertySet: PropertySet,): void {
     ),
   );
 
-  // maxpictures: Max Pictures (IntegerAttribute) — extensão Fase 10 C3.6 (rdoreport).
-  // Limite de imagens por período no RDO. Consumo na Fase 14.
+  // maxpictures: Max Pictures (IntegerAttribute) — phase 10 extension C3.6
+  // (rdoreport). Limit of images per period in the RDO. Consumed in phase 14.
   propertySet.addAttributeType(
     new AttributeDefinition(
       "maxpictures",
@@ -1122,9 +1123,9 @@ export function registerReportAttributes(propertySet: PropertySet,): void {
     ),
   );
 
-  // sortBy: Sort By (SortListAttribute) — extensão Fase 14 Complemento C1.2.
-  // Ordenação genérica dos relatórios de extensão (materialreport,
-  // breakdownreport, rdoreport); os REs consomem a lista de critérios.
+  // sortBy: Sort By (SortListAttribute) — phase 14 Complemento extension C1.2.
+  // Generic ordering of the extension reports (materialreport,
+  // breakdownreport, rdoreport); the REs consume the criteria list.
   propertySet.addAttributeType(
     new AttributeDefinition(
       "sortBy",
@@ -1141,9 +1142,9 @@ export function registerReportAttributes(propertySet: PropertySet,): void {
   );
 
   // format: Markup format of the report RichText attributes (SymbolAttribute)
-  // — extensão Fase 14 Complemento C5.1. `richtext` (default) preserva os
-  // `.tjp` existentes; `markdown` é opt-in (ADR 026/027). Herdado de
-  // relatórios-pai, como os demais atributos RichText (`caption`, `header`…).
+  // — phase 14 Complemento extension C5.1. `richtext` (default) preserves the
+  // existing `.tjp`; `markdown` is opt-in (ADR 026/027). Inherited from parent
+  // reports, like the other RichText attributes (`caption`, `header`…).
   propertySet.addAttributeType(
     new AttributeDefinition(
       "format",
@@ -1159,10 +1160,11 @@ export function registerReportAttributes(propertySet: PropertySet,): void {
     ),
   );
 
-  // stdout: intenção de imprimir o relatório no terminal (BooleanAttribute)
-  // — extensão Fase 24 (adendo §2.2). Booleano de **intenção**: o core não
-  // imprime nada, só registra a property; a CLI decide o destino. Não é
-  // herdado (cada relatório declara a própria intenção); ausência lê `false`.
+  // stdout: intent to print the report to the terminal (BooleanAttribute)
+  // — phase 24 extension (addendum §2.2). An **intent** boolean: the core
+  // prints nothing, it only records the property; the CLI decides the
+  // destination. Not inherited (each report declares its own intent); when
+  // absent it reads as `false`.
   propertySet.addAttributeType(
     new AttributeDefinition(
       "stdout",

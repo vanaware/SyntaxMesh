@@ -1,20 +1,21 @@
 /**
- * TimeSheetSummary — compila e distribui o resumo das time sheets do período.
+ * TimeSheetSummary — compiles and distributes the period's time sheet summary.
  *
- * Port de `docs/taskjuggler/lib/taskjuggler/TimeSheetSummary.rb`, herdeiro de
- * `SheetReceiver` (18.7) com as duas adaptações da fase — ADR 036 (sem SMTP:
- * as mensagens viram `outbox/*.eml`) e ADR 037 (todo I/O pelo `FileStore`
- * injetado, logo `sendSummary` é `async`).
+ * Port of `docs/taskjuggler/lib/taskjuggler/TimeSheetSummary.rb`, inherited from
+ * `SheetReceiver` (18.7) with the two adaptations of this phase — ADR 036 (no
+ * SMTP: messages become `outbox/*.eml` files) and ADR 037 (all I/O goes
+ * through the injected `FileStore`, so `sendSummary` is `async`).
  *
- * Fluxo do Ruby preservado: varre a lista de recursos do período, coleta as
- * folhas entregues (anexando cada uma ao resumo), registra os inadimplentes em
- * `missing-reports` (lido pelo `StatusSheetSender`, 18.10), envia o resumo aos
- * `digestRecipients` e cobra cada inadimplente com `sendReminder`.
+ * Ruby flow preserved: walks the period's resource list, collects the delivered
+ * sheets (attaching each one to the summary), records the defaulters in
+ * `missing-reports` (read by `StatusSheetSender`, 18.10), sends the summary to
+ * the `digestRecipients` and chases each defaulter with `sendReminder`.
  *
- * Divergência deliberada: o Ruby usava o stdout de `tj3client check-ts` como
- * corpo do resumo (a folha já em RichText). Aqui a validação roda in-process e
- * o trecho devolvido é a própria folha embrulhada em `<nowiki>` — TJP cru não
- * é RichText válido e faria o `sendRichTextEmail` abortar.
+ * Deliberate divergence: Ruby used the stdout of `tj3client check-ts` as the
+ * summary body (the sheet already in RichText). Here validation runs
+ * in-process and the returned excerpt is the sheet itself wrapped in
+ * `<nowiki>` — raw TJP is not valid RichText and would make
+ * `sendRichTextEmail` abort.
  *
  * @see docs/taskjuggler/lib/taskjuggler/TimeSheetSummary.rb
  * @see docs/syntaxmesh/decisoes/036-sheets-sem-smtp.md
@@ -29,10 +30,10 @@ import type { TimeSheet, } from "../timesheet/time-sheet.ts";
 import { type SheetResourceInfo, sprintf, } from "./sheet-handler-base.ts";
 import { SHEET_EXTENSION, SheetReceiver, } from "./sheet-receiver.ts";
 
-/** Título da seção de cada recurso no resumo (Ruby `@resourceIntro`). */
+/** Section title for each resource in the summary (Ruby `@resourceIntro`). */
 export const RESOURCE_INTRO = "== Weekly Report from <nowiki>%s</nowiki> ==\n";
 
-/** Texto de cobrança enviado aos inadimplentes (Ruby `@reminderText`). */
+/** Reminder text sent to the defaulters (Ruby `@reminderText`). */
 export const REMINDER_TEXT =
   `The deadline for your time sheet submission has passed but we haven't received
 it yet. Please submit your time sheet immediately so the content can still be
@@ -48,30 +49,30 @@ Thanks for your cooperation!
 
 `;
 
-/** Cabeçalho da lista de inadimplentes (Ruby `@defaulterHeader`). */
+/** Header of the defaulters list (Ruby `@defaulterHeader`). */
 export const DEFAULTER_HEADER =
   "The following %d person(s) have not yet submitted their time sheets:\n\n";
 
-/** Mensagem de um `catch` desconhecido (`$!` do Ruby). */
+/** Message of an unknown `catch` (Ruby's `$!`). */
 function errorText(error: unknown,): string {
   return error instanceof Error ? error.message : String(error,);
 }
 
-/** Contagem de status de material de uma folha (extensão 18.17.5). */
+/** Material status tally for a sheet (extension 18.17.5). */
 export interface MaterialStatusTally {
-  /** Registros de material entregues na folha. */
+  /** Material records delivered in the sheet. */
   records: number;
-  /** Quantos desses registros trazem `status`. */
+  /** How many of those records carry a `status`. */
   withStatus: number;
-  /** Quantidade por ID de nível de alerta (`green`, `yellow`, `red`, …). */
+  /** Count per alert level ID (`green`, `yellow`, `red`, …). */
   alerts: Record<string, number>;
 }
 
 /**
- * Linha do resumo com a contagem de materiais (extensão 18.17.5).
+ * Summary line with the material tally (extension 18.17.5).
  *
- * Vazia quando a folha não reporta material, para que o resumo de folhas
- * sem material fique idêntico ao de antes da extensão.
+ * Empty when the sheet reports no material, so that the summary of sheets
+ * without material stays identical to the one from before the extension.
  */
 export function materialTallyText(tally: MaterialStatusTally,): string {
   if (tally.records === 0) return "";
@@ -83,39 +84,45 @@ export function materialTallyText(tally: MaterialStatusTally,): string {
 }
 
 /**
- * Resumo semanal das time sheets recebidas.
+ * Weekly summary of the received time sheets.
  *
- * Configuração (todos públicos, como os `attr_accessor` do Ruby): `date`,
- * `sheetRecipients`, `digestRecipients`, `hideResource` e os textos dos
- * emails.
+ * Configuration (all public, mirroring Ruby's `attr_accessor`): `date`,
+ * `sheetRecipients`, `digestRecipients`, `hideResource` and the email texts.
  */
 export class TimeSheetSummary extends SheetReceiver {
-  /** Destinatários de cada folha individual (vazio = não envia). */
+  /** Recipients of each individual sheet (empty = do not send). */
   sheetRecipients: string[] = [];
-  /** Destinatários do resumo consolidado (vazio = não envia). */
+  /** Recipients of the consolidated summary (empty = do not send). */
   digestRecipients: string[] = [];
 
   /**
-   * Expressão lógica dos recursos fora do resumo (Ruby `@hideResource = '0'`).
+   * Logical expression of the resources left out of the summary (Ruby
+   * `@hideResource = '0'`).
    *
-   * Como no `SheetSender`, é repassada ao `resourcereport` que produz a lista
-   * de recursos — o `TimeSheetSummary` em si não filtra nada.
+   * As in `SheetSender`, it is forwarded to the `resourcereport` that produces
+   * the resource list — `TimeSheetSummary` itself filters nothing.
    */
-  hideResource = "0";
+  hideResource: string = "0";
 
-  /** Título de cada recurso no resumo. */
-  resourceIntro = RESOURCE_INTRO;
-  /** Assunto da folha individual (`%s` = data do período). */
-  resourceSheetSubject = "Weekly report %s";
-  /** Assunto do resumo (`%s` = data do período). */
-  summarySubject = "Weekly staff reports %s";
-  /** Assunto da cobrança (`%s` = data do período). */
-  reminderSubject = "Your time sheet for the period ending %s is overdue!";
-  /** Texto da cobrança; vazio desliga o envio dos lembretes. */
-  reminderText = REMINDER_TEXT;
-  /** Cabeçalho da lista de inadimplentes (`%d` = quantidade). */
-  defaulterHeader = DEFAULTER_HEADER;
+  /** Title of each resource in the summary. */
+  resourceIntro: string = RESOURCE_INTRO;
+  /** Subject of the individual sheet (`%s` = period date). */
+  resourceSheetSubject: string = "Weekly report %s";
+  /** Subject of the summary (`%s` = period date). */
+  summarySubject: string = "Weekly staff reports %s";
+  /** Subject of the reminder (`%s` = period date). */
+  reminderSubject: string =
+    "Your time sheet for the period ending %s is overdue!";
+  /** Reminder text; empty disables sending the reminders. */
+  reminderText: string = REMINDER_TEXT;
+  /** Header of the defaulters list (`%d` = count). */
+  defaulterHeader: string = DEFAULTER_HEADER;
 
+  /**
+   * Creates the summary app.
+   *
+   * @param appName Application name used in logs and in the CLI.
+   */
   constructor(appName = "tj3ts_summary",) {
     super(appName, "summary",);
 
@@ -125,11 +132,11 @@ export class TimeSheetSummary extends SheetReceiver {
   }
 
   /**
-   * Compila o resumo do período e dispara os emails
-   * (Ruby `sendSummary`, l.57-141).
+   * Compiles the period summary and dispatches the emails (Ruby
+   * `sendSummary`, l.57-141).
    *
-   * @param resourceIds restringe o resumo a estes recursos; vazio inclui todos
-   *   os que têm template no período.
+   * @param resourceIds restricts the summary to these resources; empty includes
+   *   every resource that has a template for the period.
    */
   async sendSummary(resourceIds: string[] = [],): Promise<void> {
     await this.setWorkingDir();
@@ -153,7 +160,8 @@ export class TimeSheetSummary extends SheetReceiver {
         `${this.sheetDir}/${date}`,
         `${resource.id}_${date}`,
       );
-      // Sem template o recurso não foi convidado a reportar neste período.
+      // Without a template the resource was not invited to report in this
+      // period.
       if (templateFile === null) continue;
 
       if (sheetFile === null) {
@@ -162,7 +170,7 @@ export class TimeSheetSummary extends SheetReceiver {
         continue;
       }
 
-      // Sem destinatários, compilar o resumo seria trabalho perdido.
+      // With no recipients, compiling the summary would be wasted work.
       if (
         this.digestRecipients.length === 0 && this.sheetRecipients.length === 0
       ) {
@@ -186,7 +194,7 @@ export class TimeSheetSummary extends SheetReceiver {
     }
 
     if (defaulters.length > 0) {
-      // A lista de inadimplentes abre o resumo.
+      // The defaulters list opens the summary.
       let text = sprintf(this.defaulterHeader, defaulters.length,);
       for (const resource of defaulters) {
         text += `* <nowiki>${resource.name}</nowiki>\n`;
@@ -204,7 +212,7 @@ export class TimeSheetSummary extends SheetReceiver {
       );
     }
 
-    // Cobrança opcional (o app pode desligá-la zerando `reminderText`).
+    // Optional reminder (the app can disable it by clearing `reminderText`).
     if (this.reminderText !== "") {
       for (const resource of defaulters) {
         await this.sendReminder(
@@ -217,12 +225,12 @@ export class TimeSheetSummary extends SheetReceiver {
   }
 
   /**
-   * Valida uma folha já arquivada e devolve o trecho que entra no resumo
-   * (Ruby `getResourceJournal`, l.166-190).
+   * Validates an already archived sheet and returns the excerpt that goes into
+   * the summary (Ruby `getResourceJournal`, l.166-190).
    *
-   * O Ruby chamava `tj3client check-ts` e usava o stdout; aqui a folha é
-   * aplicada in-process (mesmo caminho de `checkSheet`) e o resultado é a
-   * própria folha literal.
+   * Ruby called `tj3client check-ts` and used its stdout; here the sheet is
+   * applied in-process (same path as `checkSheet`) and the result is the sheet
+   * itself, verbatim.
    */
   protected async getResourceJournal(sheetFile: string,): Promise<string> {
     const store = this.requireFileStore("getResourceJournal",);
@@ -239,12 +247,12 @@ export class TimeSheetSummary extends SheetReceiver {
     try {
       applied = this.applySheet(sheet,);
     } catch (error) {
-      // Um `TjRuntimeError` já trouxe mensagem e resposta próprias.
+      // A `TjRuntimeError` already carries its own message and reply.
       if (error instanceof TjRuntimeError) throw error;
       this.fatal(`Cannot summarize sheet: ${errorText(error,)}`,);
     }
     if (handler.errors !== errorCount) {
-      // Ruby: `error("summary sheets: #{err}")`, com `err` sempre vazio.
+      // Ruby: `error("summary sheets: #{err}")`, with `err` always empty.
       this.error("summary sheets: ",);
     }
     return materialTallyText(
@@ -254,9 +262,9 @@ export class TimeSheetSummary extends SheetReceiver {
   }
 
   /**
-   * Agrega os status de material da folha aplicada (extensão 18.17.5):
-   * quantos registros vieram, quantos trazem `status` e a contagem por nível
-   * de alerta — os mesmos níveis que o `statussheet` usa.
+   * Aggregates the material statuses of the applied sheet (extension 18.17.5):
+   * how many records came in, how many carry a `status` and the count per alert
+   * level — the same levels the `statussheet` uses.
    */
   protected tallyMaterials(sheet: TimeSheet | null,): MaterialStatusTally {
     const tally: MaterialStatusTally = {
@@ -279,12 +287,12 @@ export class TimeSheetSummary extends SheetReceiver {
   }
 
   /**
-   * Reenvia o template ao inadimplente junto com o texto de cobrança
-   * (Ruby `sendReminder`, l.150-164).
+   * Resends the template to a defaulter together with the reminder text (Ruby
+   * `sendReminder`, l.150-164).
    *
-   * O email é texto puro com a folha em anexo (`.smx`; template legado
-   * `.tji` também é aceito — 24.2.36) — o usuário pode preencher o anexo ou
-   * o corpo e devolver.
+   * The email is plain text with the sheet attached (`.smx`; the legacy `.tji`
+   * template is also accepted — 24.2.36) — the user can fill in the attachment
+   * or the body and send it back.
    */
   protected async sendReminder(
     id: string,
@@ -317,9 +325,8 @@ export class TimeSheetSummary extends SheetReceiver {
   }
 
   /**
-   * Grava `<sheetDir>/<date>/missing-reports` com um ID por linha
-   * (Ruby l.116-126) — o arquivo que o `StatusSheetSender` lê em
-   * `defaulterList` (18.10).
+   * Writes `<sheetDir>/<date>/missing-reports` with one ID per line (Ruby
+   * l.116-126) — the file `StatusSheetSender` reads in `defaulterList` (18.10).
    */
   protected async writeMissingReports(
     defaulters: SheetResourceInfo[],
@@ -328,8 +335,8 @@ export class TimeSheetSummary extends SheetReceiver {
     const dir = `${this.sheetDir}/${this.date}`;
     const missingFile = `${dir}/missing-reports`;
     try {
-      // O Ruby contava com a pasta já criada pelo receiver; aqui o `write`
-      // exige o diretório-pai (ADR 037).
+      // Ruby relied on the folder already created by the receiver; here `write`
+      // requires the parent directory (ADR 037).
       await store.mkdir(dir,);
       await store.write(
         missingFile,

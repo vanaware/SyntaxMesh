@@ -1,16 +1,17 @@
 /**
- * `docgen/mod.ts` — barril do `doc-core` (subfase 22.1b).
+ * `docgen/mod.ts` — barrel of `doc-core` (sub-phase 22.1b).
  *
- * Ponto de entrada publicado como `@vanaware/syntaxmesh/doc-core`. Não é
- * reexportado pelo `mod.ts` da raiz: a referência de sintaxe monta as tabelas
- * do parser e custa caro, então quem não gera documentação não a paga.
+ * Entry point published as `@vanaware/syntaxmesh/doc-core`. It is not
+ * re-exported by the root `mod.ts`: the syntax reference builds the parser
+ * tables and is expensive, so whoever does not generate documentation does not
+ * pay for it.
  *
- * Restrição de fronteira (verificada por `deno task check:doccore`): nenhum
- * arquivo sob `src/docgen/` usa `Deno.*`, `node:` ou `npm:` — o pacote devolve
- * **dado** e nada escreve, lê, imprime ou encerra o processo.
+ * Boundary constraint (enforced by `deno task check:doccore`): no file under
+ * `src/docgen/` uses `Deno.*`, `node:` or `npm:` — the package returns
+ * **data** and never writes, reads, prints or exits the process.
  *
  * @see docs/syntaxmesh/fases/fase-22-vscode-extension-tarefas.md §Bloco D/F/G
- * @see ./man.ts (fachada usada pela seção `man` da Fase 24)
+ * @see ./man.ts (facade used by the `man` section of phase 24)
  */
 
 export { blue, bold, cyan, paint, red, } from "./ansi.ts";

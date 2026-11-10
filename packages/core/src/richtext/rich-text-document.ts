@@ -1,18 +1,19 @@
 /**
- * RichTextDocument — coleção de `RichTextSnip` em um documento único
- * (Fase 12.10).
+ * RichTextDocument — collection of `RichTextSnip` in a single document
+ * (Phase 12.10).
  *
- * Classe abstrata fiel a `RichText/Document.rb:27-144`: registra handlers,
- * adiciona snips, agrega a tabela de conteúdos transversal, valida referências
- * internas e orquestra a geração de HTML. As variações port-específicas:
+ * Abstract class faithful to `RichText/Document.rb:27-144`: registers handlers,
+ * adds snips, aggregates the cross-document table of contents, validates
+ * internal references and orchestrates HTML generation. The port-specific
+ * variations:
  *
- * - `addSnip(file, text)` recebe o **conteúdo** como parâmetro (o Ruby lê o
- *   arquivo via `File.open`; o navegador não tem filesystem).
- * - `generateHTML(directory)` **retorna um mapa nome→elemento HTML** em vez de
- *   escrever `directory + nome + '.html'` em disco (a escrita é delegada à
- *   camada de exportação / Fase 17).
- * - O aviso de referência desconhecida (`puts` no Ruby) vira
- *   `MessageHandlerInstance.warning('rt_doc_unknown_reference', …)`.
+ * - `addSnip(file, text)` receives the **content** as a parameter (Ruby reads the
+ *   file through `File.open`; the browser has no file system).
+ * - `generateHTML(directory)` **returns a map name→HTML element** instead of
+ *   writing `directory + name + '.html'` to disk (writing is delegated to the
+ *   export layer / Phase 17).
+ * - The unknown-reference warning (a `puts` in Ruby) becomes
+ *   `MessageHandlerInstance.warning('rt_doc_unknown_reference', ...)`.
  *
  * @see docs/taskjuggler/lib/taskjuggler/RichText/Document.rb
  * @see ADR 025 (RichText e function handlers)
@@ -26,31 +27,38 @@ import { XMLElement, } from "../xml/xml-element.ts";
 import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 import type { RichTextFunctionHandler, } from "./handlers/function-handler.ts";
 
+/**
+ * Base class of the multi-file RichText documents (user manual, tutorial, ...).
+ *
+ * Holds the shared function handlers, the snips in insertion order, the
+ * aggregated table of contents and the anchors/references used to validate
+ * internal links.
+ */
 export abstract class RichTextDocument {
-  /** Handlers de função compartilhados por todos os snips do documento. */
+  /** Function handlers shared by every snip of the document. */
   readonly functionHandlers: RichTextFunctionHandler[] = [];
-  /** Snips registrados, na ordem de adição. */
+  /** Registered snips, in insertion order. */
   readonly snippets: RichTextSnip[] = [];
-  /** Tabela de conteúdos agregada (criada por `tableOfContents()`). */
+  /** Aggregated table of contents (created by `tableOfContents()`). */
   toc: TableOfContents | null = null;
-  /** Contadores de seção compartilhados entre snips (Ruby `[0, 0, 0]`). */
+  /** Section counters shared between snips (Ruby `[0, 0, 0]`). */
   readonly sectionCounter: number[] = [0, 0, 0,];
-  /** Target de todos os links dos snips adicionados depois. */
+  /** Target of every link in the snips added afterwards. */
   linkTarget: string | null = null;
-  /** Âncoras conhecidas: nomes de snip + `arquivo#tag` das entradas de TOC. */
+  /** Known anchors: snip names + `file#tag` of the TOC entries. */
   readonly anchors: string[] = [];
-  /** Referências internas por snip (`snip.name → alvos`). */
+  /** Internal references per snip (`snip.name → targets`). */
   references: Record<string, string[]> = {};
 
-  /** Marca que há snips novos sem encadeamento prev/next feito (Ruby @dirty). */
-  private dirty = false;
+  /** Flags that there are new snips without prev/next wiring (Ruby @dirty). */
+  private dirty: boolean = false;
 
-  /** Registra um handler de função no documento (sem `dup`, como no Ruby). */
+  /** Registers a function handler on the document (no `dup`, as in Ruby). */
   registerFunctionHandler(handler: RichTextFunctionHandler,): void {
     this.functionHandlers.push(handler,);
   }
 
-  /** Adiciona um snip ao documento, propagando o `linkTarget` corrente. */
+  /** Adds a snip to the document, propagating the current `linkTarget`. */
   addSnip(file: string, text: string,): RichTextSnip {
     const snippet = new RichTextSnip(this, file, this.sectionCounter, text,);
     this.snippets.push(snippet,);
@@ -60,8 +68,8 @@ export abstract class RichTextDocument {
   }
 
   /**
-   * Gera a tabela de conteúdos de todos os snips e coleta âncoras/referências.
-   * Deve ser chamada antes de {@link checkInternalReferences}.
+   * Builds the table of contents of every snip and collects anchors/references.
+   * Must be called before {@link checkInternalReferences}.
    */
   tableOfContents(): void {
     this.toc = new TableOfContents();
@@ -80,7 +88,7 @@ export abstract class RichTextDocument {
     }
   }
 
-  /** Avisa sobre referências internas que apontam para âncoras desconhecidas. */
+  /** Warns about internal references that point to unknown anchors. */
   checkInternalReferences(): void {
     for (const snip of Object.keys(this.references,)) {
       for (const reference of this.references[snip] ?? []) {
@@ -95,9 +103,9 @@ export abstract class RichTextDocument {
   }
 
   /**
-   * Gera o HTML do documento: encadeia prev/next, monta o índice e cada snip.
-   * Retorna mapa `'toc.html'`/`'<snip>.html'` → string HTML completa (a
-   * escrita em disco é delegada à camada de exportação / Fase 17).
+   * Generates the document HTML: chains prev/next, builds the index and each
+   * snip. Returns the map `'toc.html'`/`'<snip>.html'` → complete HTML string
+   * (writing to disk is delegated to the export layer / Phase 17).
    */
   generateHTML(directory = "",): Record<string, string> {
     this.crossReference();
@@ -111,17 +119,17 @@ export abstract class RichTextDocument {
     return out;
   }
 
-  // --- Métodos abstratos (implementados pelas subclasses, ex.: UserManual) ---
+  // --- Abstract methods (implemented by subclasses, e.g. UserManual) ---
 
-  /** Folha de estilos do documento (Ruby: `generateStyleSheet`). */
+  /** Style sheet of the document (Ruby: `generateStyleSheet`). */
   abstract generateStyleSheet(): XMLElementLike;
-  /** Capa do índice (Ruby: `generateHTMLCover`). */
+  /** Index cover (Ruby: `generateHTMLCover`). */
   abstract generateHTMLCover(): XMLElementLike;
-  /** Cabeçalho de cada página (Ruby: `generateHTMLHeader`). */
+  /** Header of each page (Ruby: `generateHTMLHeader`). */
   abstract generateHTMLHeader(): XMLElementLike;
-  /** Rodapé de cada página (Ruby: `generateHTMLFooter`). */
+  /** Footer of each page (Ruby: `generateHTMLFooter`). */
   abstract generateHTMLFooter(): XMLElementLike;
-  /** Barra de navegação prev/next (Ruby: `generateHTMLNavigationBar`). */
+  /** Prev/next navigation bar (Ruby: `generateHTMLNavigationBar`). */
   abstract generateHTMLNavigationBar(
     prevName: string | null,
     prevFile: string | null,
@@ -129,11 +137,11 @@ export abstract class RichTextDocument {
     nextFile: string | null,
   ): XMLElementLike;
 
-  // --- Privados ---
+  // --- Private ---
 
   /**
-   * Encadeia `prevSnip`/`nextSnip` nos snips novos. Só executa se `dirty`
-   * (Document.rb:113-126) e limpa a marca ao terminar.
+   * Chains `prevSnip`/`nextSnip` on the new snips. Runs only when `dirty`
+   * (Document.rb:113-126) and clears the flag when done.
    */
   private crossReference(): void {
     if (!this.dirty) return;
@@ -150,7 +158,7 @@ export abstract class RichTextDocument {
     this.dirty = false;
   }
 
-  /** Página de índice: capa + TOC + rodapé (Document.rb:129-142). */
+  /** Index page: cover + TOC + footer (Document.rb:129-142). */
   private generateHTMLTableOfContents(): string {
     const doc = new HTMLDocument();
     doc.generateHead("Index",);

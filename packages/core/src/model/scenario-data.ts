@@ -6,9 +6,10 @@ import { type SourceFileInfo, } from "../model/property-tree-node.ts";
 import { MessageHandlerInstance, } from "../message-handler.ts";
 
 /**
- * Type guard to check if a PropertyLike is a PropertyTreeNode.
- * This is safe because ScenarioData is only used in Phase 4+ where
- * PropertyTreeNode exists.
+ * Role a `PropertyLike` has to play to serve as the owner of a `ScenarioData`.
+ *
+ * A property tree node qualifies; the guard keeps the base class usable with
+ * lighter stand-ins as long as they can resolve attribute definitions.
  */
 type PropertyTreeNodeLike = PropertyLike & {
   attributeDefinition(id: string,): AttributeDefinition<unknown> | undefined;
@@ -20,12 +21,35 @@ type PropertyTreeNodeLike = PropertyLike & {
 
 import { type AttributeDefinition, } from "../attributes/attribute-definition.ts";
 
+/**
+ * Per-scenario state of a property.
+ *
+ * Every model entity keeps one `ScenarioData` per declared scenario. The class
+ * is the base of `TaskScenario`, `ResourceScenario`, `AccountScenario` and the
+ * rest: it holds the attribute objects that belong to the scenario, a side map
+ * of raw values, and the scenario's own diagnostic channel. Scenario-specific
+ * values therefore never collide with the scenario-independent ones stored on
+ * the node itself.
+ */
 export class ScenarioData implements AttributeContainer {
+  /** Property this scenario state belongs to. */
   protected property: PropertyLike;
+  /** Index of the scenario this instance represents. */
   protected scenarioIdx: number;
   private attributes: Map<string, AttributeBase<unknown>>;
   private _values: Map<string, unknown>;
 
+  /**
+   * Creates the scenario state for a property.
+   *
+   * The attribute map passed in is kept by reference when the owning node
+   * already has one for this scenario; otherwise a fresh map is created.
+   *
+   * @param property Property the state belongs to.
+   * @param scenarioIdx Index of the scenario.
+   * @param attributes Scenario attribute map of the property (accepted for API
+   *   parity; the instance keeps its own map for lazily created attributes).
+   */
   constructor(
     property: PropertyLike,
     scenarioIdx: number,
@@ -38,26 +62,37 @@ export class ScenarioData implements AttributeContainer {
     this._values = new Map();
   }
 
+  /** Property this scenario state belongs to. */
   getProperty(): PropertyLike {
     return this.property;
   }
 
+  /** Index of the scenario this instance represents. */
   getScenarioIdx(): number {
     return this.scenarioIdx;
   }
 
+  /** Attribute objects created for (or pre-loaded into) this scenario. */
   getAttributes(): Map<string, AttributeBase<unknown>> {
     return this.attributes;
   }
 
+  /** Raw value stored outside the attribute layer, or `null`. */
   getStoredValue(attributeId: string,): unknown {
     return this._values.get(attributeId,) ?? null;
   }
 
+  /** Stores a value outside the attribute layer. */
   setStoredValue(attributeId: string, value: unknown,): void {
     this._values.set(attributeId, value,);
   }
 
+  /**
+   * Value of an already created scenario attribute (the Ruby `a` helper).
+   *
+   * Returns `null` — instead of creating the attribute — when it has not been
+   * materialised yet, which is what the scheduler expects while probing.
+   */
   a(attributeName: string,): unknown {
     const attr = this.attributes.get(attributeName,);
     if (!attr) {
@@ -67,13 +102,14 @@ export class ScenarioData implements AttributeContainer {
   }
 
   /**
-   * Canal de mensagens da propriedade (Fase 9 — integração com o
-   * MessageHandler). Espelha `ScenarioData.rb:46-65`: o handler recebe o
-   * SourceFileInfo (o argumento ou, ausente, o da própria propriedade), a
-   * propriedade portadora e o cenário do índice atual. Antes estes métodos
-   * eram stubs de `console.*`, o que fazia as falhas do scheduler
-   * (ex.: `not_scheduled`, `task_underspecified`) nunca chegarem ao
-   * MessageHandler (causa-raiz do gap G1.4).
+   * Assembles the arguments the message handler needs.
+   *
+   * Mirrors `ScenarioData.rb:46-65`: the handler receives the source file info
+   * (the given one, or the property's own when omitted), the carrying property
+   * and the scenario at the current index. These methods used to be `console.*`
+   * stubs, which is why scheduler failures (`not_scheduled`,
+   * `task_underspecified`) never reached the message handler (root cause of gap
+   * G1.4).
    */
   private messageArgs(
     sfi?: string | SourceFileInfo | null,
@@ -89,6 +125,14 @@ export class ScenarioData implements AttributeContainer {
     return [effectiveSfi, property ?? this.property, scenario,];
   }
 
+  /**
+   * Reports an error in this scenario's context.
+   *
+   * @param id Message id (stable, translated by the message handler).
+   * @param text Message text.
+   * @param sfi Source location, or the property's own when omitted.
+   * @param property Property the message is about.
+   */
   error(
     id: string,
     text: string,
@@ -106,6 +150,14 @@ export class ScenarioData implements AttributeContainer {
     );
   }
 
+  /**
+   * Reports a warning in this scenario's context.
+   *
+   * @param id Message id.
+   * @param text Message text.
+   * @param sfi Source location, or the property's own when omitted.
+   * @param property Property the message is about.
+   */
   warning(
     id: string,
     text: string,
@@ -123,6 +175,14 @@ export class ScenarioData implements AttributeContainer {
     );
   }
 
+  /**
+   * Reports an informational message in this scenario's context.
+   *
+   * @param id Message id.
+   * @param text Message text.
+   * @param sfi Source location, or the property's own when omitted.
+   * @param property Property the message is about.
+   */
   info(
     id: string,
     text: string,
@@ -140,14 +200,25 @@ export class ScenarioData implements AttributeContainer {
     );
   }
 
+  /**
+   * Returns the instance itself: scenario data is identity state, never copied.
+   *
+   * The values it holds belong to one node in one scenario; a copy would be a
+   * second, diverging source of truth.
+   */
   deepClone(): this {
     return this;
   }
 
   /**
-   * Pré-carrega atributos de cenário, criando cada AttributeBase
-   * se ainda não existir. Usado pelos *Scenario constructors
-   * (ADR 016) para replicar o comportamento do Ruby.
+   * Materialises scenario attributes up front.
+   *
+   * Creates each `AttributeBase` if it does not exist yet. The `*Scenario`
+   * constructors use it (ADR 016) to replicate the eager instantiation the Ruby
+   * implementation performs at initialisation time.
+   *
+   * @param ids Attribute names to pre-load.
+   * @throws {TjArgumentError} When one of the names is not a known attribute.
    */
   preloadAttributes(ids: string[],): void {
     for (const id of ids) {

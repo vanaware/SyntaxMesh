@@ -1,14 +1,12 @@
 /**
- * TjpSyntaxRules — bloco task (subfase 10.11).
+ * TjpSyntaxRules — task block (sub-phase 10.11).
  *
- * Port das regras `task*`, `allocate*`/`allocation*`, `booking*`
- * (task-side), `journalEntry*`, `shiftAssignment*` e apoios de
- * `TjpSyntaxRules.rb`.
+ * Port of the `task*`, `allocate*`/`allocation*`, `booking*` (task-side),
+ * `journalEntry*`, `shiftAssignment*` and support rules of `TjpSyntaxRules.rb`.
  *
- * Referências a regras de outros blocos (`resourceId`, `accountId`,
- * `chargeset`, `flags`, `limits`, `fail`, `warn`, `purge`,
- * `logicalExpression`, ...) são resolvidas por `ensurePlaceholders()`
- * até as subfases 10.12–10.14.
+ * References to rules of other blocks (`resourceId`, `accountId`, `chargeset`,
+ * `flags`, `limits`, `fail`, `warn`, `purge`, `logicalExpression`, ...) are
+ * resolved by `ensurePlaceholders()` until sub-phases 10.12–10.14.
  *
  * @see docs/taskjuggler/lib/taskjuggler/TjpSyntaxRules.rb
  */
@@ -41,7 +39,7 @@ function setForward(parser: ProjectFileParser, value: boolean,): void {
   }
 }
 
-/** Lê uma lista de cenário (charge/responsible etc.) com fallback []. */
+/** Reads a scenario list (charge/responsible etc.) with a [] fallback. */
 function scList(parser: ProjectFileParser, attrId: string,): unknown[] {
   const prop = parser.property;
   if (!prop) return [];
@@ -53,7 +51,7 @@ function scList(parser: ProjectFileParser, attrId: string,): unknown[] {
   }
 }
 
-/** Cria um Charge no critério de cenário corrente. */
+/** Creates a Charge on the current scenario criterion. */
 function makeCharge(
   parser: ProjectFileParser,
   amount: number,
@@ -62,7 +60,7 @@ function makeCharge(
   return new Charge(amount, mode, asProp(parser,), parser.scenarioIdx,);
 }
 
-/** Registra o bloco de regras de tarefas. */
+/** Registers the task rule block. */
 export function registerTaskRules(p: ProjectFileParser,): void {
   // ------------------------------------------------------------------
   // task / header / body
@@ -142,7 +140,7 @@ export function registerTaskRules(p: ProjectFileParser,): void {
 
     p.pattern(["!journalEntry",],);
 
-    // Fase 10 Complemento C3.1.2 — alocação de material na tarefa.
+    // Phase 10 Complemento C3.1.2 — material allocation on the task.
     p.pattern(["!materialAllocation",],);
 
     p.pattern(
@@ -183,12 +181,12 @@ export function registerTaskRules(p: ProjectFileParser,): void {
         return null;
       },
     );
-    // Outros atributos serão adicionados automaticamente
+    // Other attributes are added automatically
     // (extendProperty — 10.12).
   },);
 
   // ------------------------------------------------------------------
-  // IDs de tarefa
+  // Task IDs
   // ------------------------------------------------------------------
   rule(p, "taskIdUnverifd", () => {
     p.singlePattern("$ABSOLUTE_ID",);
@@ -244,7 +242,7 @@ export function registerTaskRules(p: ProjectFileParser,): void {
   },);
 
   // ------------------------------------------------------------------
-  // Dependências
+  // Dependencies
   // ------------------------------------------------------------------
   rule(p, "taskDepId", () => {
     p.singlePattern("$ABSOLUTE_ID",);
@@ -590,7 +588,7 @@ export function registerTaskRules(p: ProjectFileParser,): void {
     p.pattern(
       ["!shiftId", "!intervalOptional",],
       function (this: ProjectFileParser,): unknown {
-        // Garante um ShiftAssignments para a propriedade em questão.
+        // Guarantees a ShiftAssignments for the property in question.
         if (!this.shiftAssignments) {
           const sas = new ShiftAssignments();
           sas.project = this.project!;
@@ -655,15 +653,16 @@ export function registerTaskRules(p: ProjectFileParser,): void {
   // Bookings (task-side)
   // ------------------------------------------------------------------
   rule(p, "taskBooking", () => {
-    // 14C.11.4: booking de **material** (`booking material <id> [quantity] <q>
-    // [unitprice <p>] on <date>`). Fica na mesma regra do booking de recurso
-    // porque as duas formas começam com `_booking` em `taskBody` — separá-las
-    // em duas referências distintas em `taskScenarioAttributes` tornava a
-    // transição ambígua para a FSM. Aqui o segundo token (`material` vs um ID
-    // de recurso) desfaz a ambiguidade.
+    // 14C.11.4: **material** booking (`booking material <id> [quantity] <q>
+    // [unitprice <p>] on <date>`). It lives in the same rule as the resource
+    // booking because both forms start with `_booking` in `taskBody` —
+    // splitting them into two distinct references in `taskScenarioAttributes`
+    // made the transition ambiguous for the FSM. Here the second token
+    // (`material` vs a resource ID) removes the ambiguity.
     p.pattern(["_material", "!materialBooking",],);
-    // 14C.15.5: `booking charge <recurso> [value] <montante> on <data>` —
-    // mesma lógica de desambiguação pelo segundo token (Adendo Extra §12.3).
+    // 14C.15.5: `booking charge <resource> [value] <amount> on <date>` —
+    // same disambiguation logic through the second token (Extra Addendum
+    // §12.3).
     p.pattern(["!taskChargeBookingHeader",],);
     p.pattern(
       ["!taskBookingHeader", "!bookingBody",],
@@ -685,9 +684,10 @@ export function registerTaskRules(p: ProjectFileParser,): void {
   },);
 
   rule(p, "taskBookingHeader", () => {
-    // Keyword de tipo opcional (Adendo Extra §12.3, 14C.15.1; Onda D4:
-    // `booking resource <recurso> …`, com `effort` como alias de leitura);
-    // a forma sem keyword `booking <recurso> <intervalo>` é a canônica do TJ.
+    // Optional type keyword (Extra Addendum §12.3, 14C.15.1; wave D4:
+    // `booking resource <resource> …`, with `effort` as a reading alias);
+    // the keyword-less form `booking <resource> <interval>` is the TJ
+    // canonical one.
     p.pattern(
       ["!bookingResourceKeyword", "!resourceId", "!valIntervals",],
       function (this: ProjectFileParser,): unknown {
@@ -801,8 +801,8 @@ export function registerTaskRules(p: ProjectFileParser,): void {
     p.pattern(
       ["_alert", "!alertLevel",],
       function (this: ProjectFileParser,): unknown {
-        // Ruby (TjpSyntaxRules rule_journalEntryAttributes): a regra devolve o
-        // índice numérico do nível (módulo alert-levels, 14C.0.7).
+        // Ruby (TjpSyntaxRules rule_journalEntryAttributes): the rule returns
+        // the numeric index of the level (alert-levels module, 14C.0.7).
         (this.journalEntry as JournalEntry).alertLevel = this.val[1] as number;
         return null;
       },
@@ -835,7 +835,7 @@ export function registerTaskRules(p: ProjectFileParser,): void {
   },);
 
   // ------------------------------------------------------------------
-  // Atributos de cenário da tarefa
+  // Scenario attributes of the task
   // ------------------------------------------------------------------
   rule(p, "taskScenarioAttributes", () => {
     p.pattern(["_account", "$ID",], null,);
@@ -944,10 +944,10 @@ export function registerTaskRules(p: ProjectFileParser,): void {
       "Calendar time the task should last. 7d means one week.",
     );
 
-    // Fase 10 Complemento C3.4.1/C3.4.2 — `timebasis` como atributo de
-    // cenário. Normaliza aliases (`calendar` → `duration`, `working` →
-    // `length`) e registra `task_overspecified` quando a tarefa já tem
-    // `duration`/`length` explícito (§2.6).
+    // Phase 10 Complemento C3.4.1/C3.4.2 — `timebasis` as a scenario
+    // attribute. Normalizes aliases (`calendar` → `duration`, `working` →
+    // `length`) and logs `task_overspecified` when the task already has an
+    // explicit `duration`/`length` (§2.6).
     p.pattern(
       ["_timebasis", "!timebasisMode",],
       function (this: ProjectFileParser,): unknown {
@@ -973,7 +973,7 @@ export function registerTaskRules(p: ProjectFileParser,): void {
           );
           return null;
         }
-        // §2.6 timebasis_not_supported: milestone não aceita timebasis.
+        // §2.6 timebasis_not_supported: a milestone does not accept timebasis.
         if (prop.getForScenario("milestone", this.scenarioIdx,) === true) {
           this.error(
             "timebasis_not_supported",
@@ -1336,7 +1336,7 @@ export function registerTaskRules(p: ProjectFileParser,): void {
 
     p.pattern(["!taskPeriod",],);
     p.pattern(["!warn",],);
-    // Outros atributos serão adicionados automaticamente (10.12).
+    // Other attributes are added automatically (10.12).
   },);
 
   rule(p, "taskPeriod", () => {
@@ -1401,9 +1401,9 @@ export function registerTaskRules(p: ProjectFileParser,): void {
   rule(p, "aggregate", () => {
     p.pattern(["_resources",], () => "resources",);
     p.descr("Aggregate resources",);
-    // Onda D2: `charges` é a forma canônica (nomenclatura alvo
-    // charge|resource|material); `tasks` permanece como alias de leitura
-    // para `.tjp` do tj3 (AccountScenario trata os dois iguais).
+    // Wave D2: `charges` is the canonical form (target nomenclature
+    // charge|resource|material); `tasks` remains as a reading alias for tj3
+    // `.tjp` files (AccountScenario treats both the same).
     p.pattern(["_charges",], () => "charges",);
     p.descr("Aggregate charges of tasks",);
     p.pattern(["_tasks",], () => "tasks",);
@@ -1526,7 +1526,7 @@ const setAllocateShifts = function (this: ProjectFileParser,): unknown {
     (this.allocate as Allocation).shifts = this
       .shiftAssignments as ShiftAssignments;
   } catch (e) {
-    // Múltiplas atribuições de shift são um idioma comum.
+    // Multiple shift assignments are a common idiom.
     if (!(e instanceof AttributeOverwrite)) throw e;
   }
   this.shiftAssignments = null;
@@ -1538,7 +1538,7 @@ function setTaskShifts(keyword: string,): () => unknown {
   return function (this: ProjectFileParser,): unknown {
     this.checkContainer(keyword,);
     try {
-      // Redefinir o mesmo valor marca o atributo como 'provided'.
+      // Redefining the same value marks the attribute as 'provided'.
       asProp(this,).setForScenario(
         "shifts",
         this.shiftAssignments,

@@ -1,20 +1,21 @@
 /**
- * `syntax-reference.ts` — índice de todas as keywords documentadas (22.1b.2).
+ * `syntax-reference.ts` — index of every documented keyword (22.1b.2).
  *
- * Port fiel de `SyntaxReference.rb` (300 linhas). O construtor instancia o
- * `ProjectFileParser`, percorre **todas** as regras e guarda os patterns com
- * `doc` numa `KeywordDocumentation`; duas passadas seguem a ordem do Ruby:
- * `crossReference` em todos e depois `computeInheritance` em todos.
+ * Faithful port of `SyntaxReference.rb` (300 lines). The constructor
+ * instantiates the `ProjectFileParser`, walks **every** rule and keeps the
+ * patterns carrying a `doc` in a `KeywordDocumentation`; two passes follow the
+ * Ruby order: `crossReference` on all of them and then `computeInheritance` on
+ * all of them.
  *
- * A referência é **cara** (montar as tabelas do parser custa ~100 ms) e não
- * muda entre chamadas: {@link syntaxReference} memoiza e
- * {@link resetSyntaxReferenceCache} limpa (usado nos testes).
+ * The reference is **expensive** (building the parser tables costs ~100 ms) and
+ * does not change between calls: {@link syntaxReference} memoizes it and
+ * {@link resetSyntaxReferenceCache} clears the cache (used by the tests).
  *
- * Divergência consciente: o Ruby levanta quando dois patterns documentados têm
- * a mesma keyword. O port da gramática (Fase 10) declara cinco keywords em mais
- * de uma regra (`flags`, `rate`, `start`, `end`, `limits`), então aqui a
- * primeira ocorrência vence e as demais viram **aviso** em `warnings` — o
- * `man` continua funcionando e a divergência fica visível.
+ * Deliberate divergence: Ruby raises when two documented patterns share the same
+ * keyword. The grammar port (phase 10) declares five keywords in more than one
+ * rule (`flags`, `rate`, `start`, `end`, `limits`), so here the first occurrence
+ * wins and the others become a **warning** in `warnings` — `man` keeps working
+ * and the divergence stays visible.
  *
  * @see docs/taskjuggler/lib/taskjuggler/SyntaxReference.rb
  * @see docs/syntaxmesh/fases/fase-22-vscode-extension-tarefas.md §Bloco D
@@ -33,23 +34,23 @@ import { KeywordDocumentation, } from "./keyword-documentation.ts";
 import type { ManualPageContext, } from "./manual-context.ts";
 
 /**
- * Constrói o índice de keywords a partir das regras do parser.
+ * Builds the keyword index from the parser rules.
  */
 export class SyntaxReference {
-  /** Contexto padrão das páginas HTML (`UserManual` no uso normal). */
+  /** Default context of the HTML pages (`UserManual` in normal use). */
   readonly manual: ManualPageContext | null;
-  /** Keywords documentadas, indexadas pelo identificador (`scope.nome`). */
+  /** Documented keywords, indexed by identifier (`scope.name`). */
   readonly keywords = new Map<string, KeywordDocumentation>();
-  /** Avisos da construção (keyword duplicada, atributo não documentado). */
+  /** Build warnings (duplicate keyword, undocumented attribute). */
   readonly warnings: string[] = [];
-  /** Parser usado como fonte das regras (guardado para consultas). */
+  /** Parser used as the rule source (kept for lookups). */
   readonly parser: ProjectFileParser;
 
   /**
-   * Varre as regras documentadas do parser e monta o índice.
+   * Walks the documented rules of the parser and builds the index.
    *
-   * @param manual documento usado como contexto padrão das páginas HTML.
-   * @param ignoreOld omite keywords `deprecated`/`removed`.
+   * @param manual document used as the default context of the HTML pages.
+   * @param ignoreOld omits `deprecated`/`removed` keywords.
    */
   constructor(
     manual: ManualPageContext | null = null,
@@ -102,8 +103,8 @@ export class SyntaxReference {
   }
 
   /**
-   * Keywords em ordem alfabética; encadeia `predecessor`/`successor` para as
-   * barras de navegação (`SyntaxReference.rb:81-92`).
+   * Keywords in alphabetical order; chains `predecessor`/`successor` for the
+   * navigation bars (`SyntaxReference.rb:81-92`).
    */
   all(): string[] {
     const sorted = [...this.keywords.keys(),].sort();
@@ -118,8 +119,8 @@ export class SyntaxReference {
   }
 
   /**
-   * Acrescenta ao `toc` a seção "Syntax Reference" (`<prefix>`) e uma entrada
-   * por keyword (`<prefix>.1` … `<prefix>.N`).
+   * Adds the "Syntax Reference" section (`<prefix>`) to `toc` plus one entry
+   * per keyword (`<prefix>.1` … `<prefix>.N`).
    */
   tableOfContents(toc: TableOfContents, sectionPrefix: string,): void {
     const keywords = this.all();
@@ -139,7 +140,7 @@ export class SyntaxReference {
     },);
   }
 
-  /** Referências internas por keyword (sem duplicatas, sem listas vazias). */
+  /** Internal references per keyword (no duplicates, no empty lists). */
   internalReferences(): Record<string, string[]> {
     const references: Record<string, string[]> = {};
     for (const keyword of this.keywords.values()) {
@@ -150,16 +151,16 @@ export class SyntaxReference {
   }
 
   /**
-   * Documentação em texto puro de uma keyword.
+   * Plain-text documentation of one keyword.
    *
-   * @returns `""` quando a keyword não existe.
+   * @returns `""` when the keyword does not exist.
    */
   toText(keyword: string, color = false,): string {
     const documentation = this.keywords.get(keyword,);
     return documentation === undefined ? "" : documentation.toText(color,);
   }
 
-  /** Página HTML de uma keyword (ou `""` quando desconhecida). */
+  /** HTML page of one keyword (or `""` when unknown). */
   generateHTMLreference(
     keyword: string,
     manual: ManualPageContext | null = this.manual,
@@ -170,11 +171,11 @@ export class SyntaxReference {
   }
 
   /**
-   * `navbar.html` (índice alfabético com âncoras por letra) e
-   * `alphabet.html` (barra de letras).
+   * `navbar.html` (alphabetical index with per-letter anchors) and
+   * `alphabet.html` (letter bar).
    *
-   * O Ruby ainda embute uma busca no Google na barra de letras; aqui a página
-   * só linka as letras de `navbar.html`, sem depender de serviço externo.
+   * Ruby also embeds a Google search in the letter bar; here the page only links
+   * the letters of `navbar.html`, with no external service dependency.
    */
   generateHTMLnavbar(keywords: string[],): Record<string, string> {
     const normalized = new Map<string, string>();
@@ -239,21 +240,21 @@ export class SyntaxReference {
     };
   }
 
-  // --- Auxiliares (SyntaxReference.rb:205-272) ------------------------------
+  // --- Helpers (SyntaxReference.rb:205-272) --------------------------------
 
   /**
-   * Atributos do bloco opcional `{ … }` do pattern, indexados pelo pattern que
-   * os declara; o booleano marca atributos de cenário.
+   * Attributes of the optional `{ … }` block of the pattern, indexed by the
+   * pattern that declares them; the boolean marks scenario-specific attributes.
    */
   private optionalAttributes(
     pattern: Pattern,
     stack: Map<Pattern, boolean>,
   ): Map<Pattern, boolean> {
-    // Recursão infinita: o pattern já está na pilha.
+    // Infinite recursion: the pattern is already on the stack.
     if (stack.has(pattern,)) {
       return new Map();
     }
-    // Pattern aninhado que já é documentado não contribui com atributos.
+    // A nested pattern that is already documented contributes no attributes.
     if (stack.size > 0 && pattern.doc) {
       return new Map();
     }
@@ -267,7 +268,7 @@ export class SyntaxReference {
       if (type !== "reference") continue;
       const rule: Rule | undefined = this.parser.rules.get(name,);
       if (rule === undefined) continue;
-      // Regras com vários patterns não definem um conjunto único de atributos.
+      // Rules with several patterns do not define a single attribute set.
       if (rule.patterns.length > 1) continue;
       const inner = rule.patterns[0];
       if (inner === undefined) continue;
@@ -278,9 +279,9 @@ export class SyntaxReference {
   }
 
   /**
-   * Atributos da regra referenciada por `token`: cada pattern cujo primeiro
-   * token é literal entra como atributo; referências a `!scenarioIdCol` marcam
-   * os atributos seguintes como específicos de cenário.
+   * Attributes of the rule referenced by `token`: every pattern whose first
+   * token is a literal becomes an attribute; references to `!scenarioIdCol`
+   * mark the following attributes as scenario-specific.
    */
   private attributes(
     token: [string, string,],
@@ -324,12 +325,12 @@ export class SyntaxReference {
   }
 }
 
-/** Referência memoizada (uma construção de parser por processo). */
+/** Memoized reference (one parser construction per process). */
 let cachedReference: SyntaxReference | null = null;
-/** Opção `ignoreOld` com que a referência memoizada foi construída. */
+/** `ignoreOld` option the memoized reference was built with. */
 let cachedIgnoreOld = false;
 
-/** Índice compartilhado de keywords (memoizado). */
+/** Shared keyword index (memoized). */
 export function syntaxReference(
   manual: ManualPageContext | null = null,
   ignoreOld = false,
@@ -341,7 +342,7 @@ export function syntaxReference(
   return cachedReference;
 }
 
-/** Esquece a referência memoizada (testes e recarga de assets). */
+/** Forgets the memoized reference (tests and asset reloading). */
 export function resetSyntaxReferenceCache(): void {
   cachedReference = null;
   cachedIgnoreOld = false;

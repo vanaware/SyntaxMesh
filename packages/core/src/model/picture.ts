@@ -1,10 +1,9 @@
 /**
- * Picture (extensão SyntaxMesh — Fase 10 Complemento C3.3).
+ * Picture (SyntaxMesh extension — phase 10 Complemento C3.3).
  *
- * Imagem anexada a uma `journalentry` ou `status`. Não existe no TaskJuggler
- * original como entidade própria: é uma estrutura mínima que o parser preenche
- * e que os relatórios (Fase 14 Complemento C0.8) e o storage de imagens
- * (Fase 19) consomem.
+ * An image attached to a `journalentry` or `status`. TaskJuggler has no such
+ * entity: this is the minimal structure the parser fills and that the reports
+ * (phase 14 Complemento C0.8) and the image store (phase 19) consume.
  *
  * @see docs/syntaxmesh/fases/fase-10-complemento-tarefas.md (C3.3.5)
  * @see docs/syntaxmesh/fases/fase-14-relatorios-complemento-tarefas.md (14C.0.8)
@@ -13,36 +12,51 @@ import { isExternalImageRef, } from "../markdown/extensions/images.ts";
 import { XMLElement, } from "../xml/xml-element.ts";
 import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 
-/** Alinhamento válido de uma imagem no relatório. */
+/** Valid alignment of an image in a report. */
 export type PictureAlign = "left" | "center" | "right";
 
-/** Opções de render `to_html` (14C.0.8). */
+/** Options of the `to_html` renderer (14C.0.8). */
 export interface PictureHtmlOptions {
   /**
-   * Resolve o `src` de caminhos **relativos** (hook para `resolveImageRef`/
-   * `ImageStore` da Fase 19 assíncronos). Sem hook, o caminho relativo é
-   * preservado como descritor — o core é DOM-free (ADR 001).
+   * Resolves the `src` of **relative** paths (hook for the asynchronous
+   * `resolveImageRef`/`ImageStore` of phase 19). Without a hook the relative
+   * path is preserved as a descriptor, because the core stays DOM-free
+   * (ADR 001).
    */
   resolveRelative?: (path: string,) => string;
 }
 
-/** Imagem anexada a uma entrada de journal/status. */
+/** Image attached to a journal or status entry. */
 export class Picture {
+  /** Path or external URL of the image. */
   readonly path: string;
+  /** Caption rendered under the image, or `null` when there is none. */
   caption: string | null = null;
+  /** Alignment of the image inside the report. */
   align: PictureAlign | null = null;
+  /** Rendered width in pixels, or `null` for the natural size. */
   width: number | null = null;
+  /** Alternative text of the image. */
   alt: string | null = null;
 
+  /**
+   * Creates a picture pointing at `path`.
+   *
+   * @param path Relative path or external URL of the image.
+   */
   constructor(path: string,) {
     this.path = path;
   }
 
   /**
-   * `<img>` (ou `<figure>/<figcaption>` quando há caption) como elemento
-   * XML-like — serializável via `toHTML()`. URL externa passa intacta;
-   * relativo permanece como descritor salvo hook `resolveRelative`
-   * (contrato 13.14). `align` vira classe CSS do relatório.
+   * Builds the `<img>` (or `<figure>`/`<figcaption>` when there is a caption)
+   * as an XML-like element, serialisable through `toHTML()`.
+   *
+   * External URLs pass through untouched; relative paths stay as descriptors
+   * unless the `resolveRelative` hook is given (contract 13.14). `align`
+   * becomes the CSS class of the report.
+   *
+   * @param options Rendering options.
    */
   to_html(options: PictureHtmlOptions = {},): XMLElementLike {
     const src = isExternalImageRef(this.path,)

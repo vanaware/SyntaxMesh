@@ -1,10 +1,9 @@
 /**
- * Barrel do subsistema RichText (Fase 12).
+ * Barrel of the RichText subsystem (phase 12).
  *
- * Exporta incrementalmente as classes conforme as subfases 12.x são entregues.
- * A interface `RichTextIntermediate` de porta (em
- * `attributes/rich/rich-text-port.ts`) é implementada por
- * `RichTextIntermediate` real (12.4) quando disponível.
+ * Exports classes incrementally as sub-phases 12.x land. The port interface
+ * `RichTextIntermediate` (in `attributes/rich/rich-text-port.ts`) is implemented
+ * by the real `RichTextIntermediate` (12.4) once available.
  *
  * @see ADR 025 (RichText e function handlers)
  */

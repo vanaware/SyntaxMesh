@@ -1,7 +1,7 @@
 /**
- * GanttHeaderScaleItem (Fase 15.8) — célula de uma escala do cabeçalho.
+ * GanttHeaderScaleItem (phase 15.8) — one cell of a header scale.
  *
- * Port fiel de
+ * Faithful port of
  * `docs/taskjuggler/lib/taskjuggler/reports/GanttHeaderScaleItem.rb`.
  *
  * @see docs/syntaxmesh/decisoes/028-gantt-html-css.md (ADR 028)
@@ -11,18 +11,29 @@ import { XMLElement, } from "../xml/xml-element.ts";
 import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 
 /**
- * Célula de escala (ex.: "Jan 2027" na linha grande, "07" na pequena).
+ * A scale cell (e.g. "Jan 2027" on the large row, "07" on the small one).
  *
- * Nota: o Ruby também declara `attr_reader :pos`, mas `@pos` nunca é
- * atribuído (leitor morto) e nenhum consumidor o usa — omitido aqui.
+ * Note: Ruby also declares `attr_reader :pos`, but `@pos` is never assigned (a
+ * dead reader) and no consumer uses it — omitted here.
  */
 export class GanttHeaderScaleItem {
+  /** Text drawn inside the cell. */
   readonly label: string;
+  /** Width of the cell, in pixels. */
   readonly width: number;
   private readonly x: number;
   private readonly y: number;
   private readonly height: number;
 
+  /**
+   * Creates a scale cell.
+   *
+   * @param label Text drawn inside the cell.
+   * @param x Left offset of the cell, in pixels.
+   * @param y Top offset of the cell, in pixels.
+   * @param width Width of the cell, in pixels.
+   * @param height Height of the cell, in pixels.
+   */
   constructor(
     label: string,
     x: number,
@@ -37,9 +48,13 @@ export class GanttHeaderScaleItem {
     this.height = height;
   }
 
-  /** Converte a célula em `<div class="tabhead">` (Ruby `to_html`). */
+  /**
+   * Converts the cell into a `<div class="tabhead">` (Ruby `to_html`).
+   *
+   * @returns The positioned header cell element.
+   */
   to_html(): XMLElementLike {
-    // Os espaços finais nos estilos fazem parte da string do Ruby.
+    // The trailing spaces in the styles are part of the Ruby string.
     const div = new XMLElement("div", {
       class: "tabhead",
       style: "font-weight:bold; position:absolute; " +

@@ -1,7 +1,7 @@
 /**
- * Idioma pt-BR da linguagem TJP (extensão SyntaxMesh — ADR 023).
- * Cada keyword canônico (inglês) mapeia para seu sinônimo português.
- * O inglês continua válido como fallback via LanguageRegistry.
+ * `pt-BR` language of the TJP language (SyntaxMesh extension — ADR 023).
+ * Each canonical (English) keyword maps to its Portuguese synonym.
+ * English remains valid as a fallback through `LanguageRegistry`.
  */
 import type { LanguageDefinition, } from "./types.ts";
 import type { CanonicalKeyword, } from "./canonical.ts";
@@ -109,7 +109,7 @@ const keywords: Record<CanonicalKeyword, string[]> = {
   journalmode: ["modolancamento",],
   json: ["json",],
   label: ["rótulo",],
-  // Diretiva de controle: sempre a forma inglesa literal (pré-scan regex).
+  // Control directive: always the literal English form (pre-scan regex).
   language: ["language",],
   leaveallowances: ["abonos",],
   leaves: ["licenças",],
@@ -126,9 +126,9 @@ const keywords: Record<CanonicalKeyword, string[]> = {
   markdate: ["datamarcada",],
   markdown: ["markdown",],
   material: ["material",],
-  // Fase 14 Complemento C1.13 — export de alocações de material (extensão).
+  // Phase 14 Complement C1.13 — material allocations export (extension).
   materialallocations: ["alocaçõesdematerial",],
-  // Fase 14 Complemento C1.3 — relatório de materiais (extensão SyntaxMesh).
+  // Phase 14 Complement C1.3 — material report (SyntaxMesh extension).
   materialreport: ["relatoriomaterial",],
   materials: ["materiais",],
   maxend: ["fimmaximo",],
@@ -214,7 +214,7 @@ const keywords: Record<CanonicalKeyword, string[]> = {
   shorttimeformat: ["formatocurto",],
   sloppy: ["descuidado",],
   sortaccounts: ["ordenarcontas",],
-  // Fase 14 Complemento C1.3 — ordenação dos relatórios de extensão.
+  // Phase 14 Complement C1.3 — sorting of the extension reports.
   sortby: ["ordenarpor",],
   sortjournalentries: ["ordenarlancamentos",],
   sortresources: ["ordenarrecursos",],
@@ -224,7 +224,7 @@ const keywords: Record<CanonicalKeyword, string[]> = {
   status: ["estado",],
   statussheet: ["folhaestado",],
   statussheetreport: ["relatoriofolhaestado",],
-  // Fase 24 — modificador `stdout` invariavelmente (extensão SyntaxMesh).
+  // Phase 24 — `stdout` modifier invariably (SyntaxMesh extension).
   stdout: ["stdout",],
   stockcost: ["custoestoque",],
   stockquantity: ["quantidadeestoque",],
@@ -239,7 +239,7 @@ const keywords: Record<CanonicalKeyword, string[]> = {
   taskreport: ["relatoriotarefa",],
   taskroot: ["raiztarefa",],
   tasks: ["tarefas",],
-  // Fase 23 — elemento `template` (extensão SyntaxMesh).
+  // Phase 23 — `template` element (SyntaxMesh extension).
   template: ["modelo",],
   text: ["texto",],
   textreport: ["relatoriotexto",],
@@ -282,6 +282,7 @@ const keywords: Record<CanonicalKeyword, string[]> = {
   yes: ["sim",],
 };
 
+/** Portuguese (Brazil) definition: synonyms of every canonical keyword. */
 export const ptBR: LanguageDefinition = {
   id: "pt-BR",
   name: "Português (Brasil)",

@@ -1,9 +1,8 @@
 /**
- * Barrel do subsistema Reports (Fase 14).
+ * Barrel of the Reports subsystem (phase 14).
  *
- * Exporta incrementalmente as classes conforme as subfases 14.x são entregues.
- * Os relatórios rodam no browser e retornam strings (ADR 027); nenhuma escrita
- * a disco acontece no core.
+ * Exports classes incrementally as sub-phases 14.x land. Reports run in the
+ * browser and return strings (ADR 027); no disk writes happen in core.
  *
  * @see docs/syntaxmesh/decisoes/027-reports-browser.md
  */
@@ -59,15 +58,15 @@ export {
 export { daytimeToS, durationToMsp, MspXmlRE, } from "./msp-xml-re.ts";
 export { TjpExportRE, } from "./tjp-export-re.ts";
 export { ExportRE, } from "./export-re.ts";
-// 17.14: o mínimo `reports/i-calendar.ts` foi apagado; os nomes vêm agora do
-// `ICalendar` real de `src/ical/` (port de `ICalendar.rb`, 17.5/17.6).
+// 17.14: the minimal `reports/i-calendar.ts` was deleted; the names now come
+// from the real `ICalendar` in `src/ical/` (port of `ICalendar.rb`, 17.5/17.6).
 export {
   Component,
   Event,
   foldLines,
   ICalendar,
-  // Alias desde a Fase 16: `Journal` no topo do pacote é o modelo de journal
-  // (ADR 029); este é o componente `JOURNAL` do iCalendar (RFC 5545).
+  // Alias since phase 16: `Journal` at the top of the package is the journal
+  // model (ADR 029); this one is the iCalendar `JOURNAL` component (RFC 5545).
   Journal as ICalJournal,
   Person,
   Todo,
@@ -91,7 +90,7 @@ export {
   StatusSheetReport,
 } from "./status-sheet-report.ts";
 
-// Fase 24 — seção `results.reports` do envelope de execução (ADR 034).
+// Phase 24 — `results.reports` section of the execution envelope (ADR 034).
 export {
   type FormatContent,
   renderReports,

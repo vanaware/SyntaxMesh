@@ -1,17 +1,18 @@
 /**
- * Query — recupera qualquer atributo de propriedade após o scheduling
- * (Fase 11.6–11.10).
+ * Query — retrieves any property attribute after scheduling (phase
+ * 11.6–11.10).
  *
- * Port fiel de `Query.rb`. Uma `Query` identifica de forma única um atributo
- * (projeto + propriedade + cenário + attributeId + janela temporal) e resolve o
- * seu valor via pipeline `process()`: `customData` → `property.query_X` →
- * `property.data[scIdx].query_X` → atributo base. O resultado é exposto por
- * `to_s`/`to_num`/`to_sort`/`to_rti`/`result`.
+ * Faithful port of `Query.rb`. A `Query` uniquely identifies an attribute
+ * (project + property + scenario + attributeId + time window) and resolves its
+ * value through the `process()` pipeline: `customData` →
+ * `property.query_X` → `property.data[scIdx].query_X` → base attribute. The
+ * outcome is exposed by `to_s`/`to_num`/`to_sort`/`to_rti`/`result`.
  *
- * Pitfalls Ruby→TS tratados (cheat-sheet §8/falsy):
- *  - `scenarioIdx` 0 é truthy em Ruby mas falsy em TS → comparações explícitas
- *    com `undefined`, nunca `!scenarioIdx`.
- *  - `@start`/`@end` sincronizados com `@startIdx`/`@endIdx` via setters.
+ * Ruby→TS pitfalls handled (cheat-sheet §8/falsy):
+ *  - `scenarioIdx` 0 is truthy in Ruby but falsy in TS, so comparisons are
+ *    always explicit against `undefined`, never `!scenarioIdx`.
+ *  - `@start`/`@end` are kept in sync with `@startIdx`/`@endIdx` through the
+ *    setters.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Query.rb
  */
@@ -27,43 +28,73 @@ import type { Project, } from "../model/project.ts";
 import type { PropertyTreeNode, } from "../model/property-tree-node.ts";
 import type { CustomData, } from "./custom-data.ts";
 
-/** Parâmetros opcionais do constructor de `Query` (11.6.3.2). */
+/** Optional parameters of the `Query` constructor (11.6.3.2). */
 export interface QueryParams {
+  /** Project the query runs against. */
   project?: Project | null;
+  /** Property type used to resolve `propertyId` (`Task`, `Resource`, …). */
   propertyType?: string | null;
+  /** Id of the property to query; `!` prefixes walk up the hierarchy. */
   propertyId?: string | null;
+  /** Already resolved property. */
   property?: PropertyTreeNode | null;
+  /** Property type used to resolve `scopePropertyId`. */
   scopePropertyType?: string | null;
+  /** Id of the scope property. */
   scopePropertyId?: string | null;
+  /** Already resolved scope property. */
   scopeProperty?: PropertyTreeNode | null;
+  /** Attribute to read (`start`, `effort`, `cost`, …). */
   attributeId?: string | null;
+  /** Scenario name; resolved to `scenarioIdx` during `process()`. */
   scenario?: string | null;
+  /** Scenario index, when already known. */
   scenarioIdx?: number | undefined;
+  /** Window start. */
   start?: TjTime | null;
+  /** Window end. */
   end?: TjTime | null;
+  /** Window start as a scheduling slot index. */
   startIdx?: number | null;
+  /** Window end as a scheduling slot index. */
   endIdx?: number | null;
+  /** Output unit used by `scaleDuration`/`scaleLoad`. */
   loadUnit?: string | null;
+  /** Number format for numeric output. */
   numberFormat?: RealFormat | null;
+  /** Number format for monetary output. */
   currencyFormat?: RealFormat | null;
+  /** `strftime` format for dates. */
   timeFormat?: string | null;
+  /** Per-item prefix used by `assignList`. */
   listItem?: string | null;
+  /** List separator style: `comma`, `bullets` or `numbered`. */
   listType?: string | null;
+  /** Hides journal entries from `query_journalmessages`. */
   hideJournalEntry?: unknown;
-  // Extensão SyntaxMesh (14C.6.5): ocultação de material/picture e
-  // consolidação de material, parceiras de `hideJournalEntry`.
+  // SyntaxMesh extension (14C.6.5): hiding of materials/pictures and material
+  // consolidation, companions of `hideJournalEntry`.
+  /** Hides material lines in reports. */
   hideMaterial?: unknown;
+  /** Rolls material values up to the owning task. */
   rollupMaterial?: unknown;
+  /** Hides picture lines in reports. */
   hidePicture?: unknown;
+  /** Journal rendering mode (`journal` or `status`). */
   journalMode?: string | null;
+  /** Journal attributes to include in the output. */
   journalAttributes?: string[] | null;
+  /** Sorts the journal entries before rendering. */
   sortJournalEntries?: unknown;
+  /** Cost account filter. */
   costAccount?: string | null;
+  /** Revenue account filter. */
   revenueAccount?: string | null;
+  /** Renders HTML as a standalone document. */
   selfContained?: boolean;
 }
 
-/** Lista de unidades longas para `scaleValue` (longauto). */
+/** Long unit names used by `scaleValue` when the unit is `longauto`. */
 const LONG_UNITS_SINGULAR = [
   "minute",
   "hour",
@@ -93,7 +124,7 @@ const FIXED_UNITS = [
   "years",
 ];
 
-/** Atributos de projeto suportados no passo b de `process` (11.7.1.4). */
+/** Project attributes supported by step b of `process` (11.7.1.4). */
 const PROJECT_ATTRS = [
   "copyright",
   "currency",
@@ -106,7 +137,7 @@ const PROJECT_ATTRS = [
   "version",
 ];
 
-/** Recupera um membro de objeto como função (equivalente a `respond_to?`). */
+/** Reads an object member as a function (the equivalent of `respond_to?`). */
 function asMethod(
   obj: unknown,
   key: string,
@@ -117,58 +148,108 @@ function asMethod(
     : undefined;
 }
 
-/** Compara dois índices de unidade pelo comprimento da string (scaleValue). */
+/**
+ * A single attribute lookup after scheduling.
+ *
+ * Instances are cheap and meant to be reused: `process()` fills the result
+ * fields, the accessors read them, and `reset()` (called at the start of every
+ * `process()`) clears them.
+ */
 export class Query {
-  // Campos de projeto/propriedade (11.6.1.2)
+  // Project/property fields (11.6.1.2)
+  /** Project the query runs against; filled in lazily from `property`. */
   project: Project | null;
+  /** Property type used to resolve `propertyId`. */
   propertyType: string | null;
+  /** Id of the property to query. */
   propertyId: string | null;
+  /** Resolved property the attribute is read from. */
   property: PropertyTreeNode | null;
+  /** Property type used to resolve `scopePropertyId`. */
   scopePropertyType: string | null;
+  /** Id of the scope property. */
   scopePropertyId: string | null;
+  /** Resolved scope property. */
   scopeProperty: PropertyTreeNode | null;
-  // Campos de atributo/cenário (11.6.1.3)
+  // Attribute/scenario fields (11.6.1.3)
+  /** Attribute being read. */
   attributeId: string | null;
+  /** Scenario name as declared. */
   scenario: string | null;
+  /** Scenario index; `undefined` until resolved. */
   scenarioIdx: number | undefined;
-  // Campos privados de tempo sincronizados (11.6.1.4 / 11.6.2)
+  // Private time fields kept in sync (11.6.1.4 / 11.6.2)
   private _start: TjTime | null = null;
   private _end: TjTime | null = null;
   private _startIdx: number | null = null;
   private _endIdx: number | null = null;
-  // Campos de formatação (11.6.1.5)
+  // Formatting fields (11.6.1.5)
+  /** Output unit used by `scaleDuration`/`scaleLoad`. */
   loadUnit: string | null;
+  /** Number format for numeric output. */
   numberFormat: RealFormat | null;
+  /** Number format for monetary output. */
   currencyFormat: RealFormat | null;
+  /** `strftime` format for dates. */
   timeFormat: string | null;
-  // Campos de lista (11.6.1.6)
+  // List fields (11.6.1.6)
+  /** Per-item prefix used by `assignList`. */
   listItem: string | null;
+  /** List separator style. */
   listType: string | null;
-  // Campos de journal (11.6.1.7)
+  // Journal fields (11.6.1.7)
+  /** Hides journal entries from the journal queries. */
   hideJournalEntry: unknown;
-  // Extensão SyntaxMesh (14C.6.5)
+  // SyntaxMesh extension (14C.6.5)
+  /** Hides material lines in reports. */
   hideMaterial: unknown;
+  /** Rolls material values up to the owning task. */
   rollupMaterial: unknown;
+  /** Hides picture lines in reports. */
   hidePicture: unknown;
+  /** Journal rendering mode. */
   journalMode: string | null;
+  /** Journal attributes included in the output. */
   journalAttributes: string[] | null;
+  /** Sorts journal entries before rendering. */
   sortJournalEntries: unknown;
-  // Campos de contas (11.6.1.8)
+  // Account fields (11.6.1.8)
+  /** Cost account filter. */
   costAccount: string | null;
+  /** Revenue account filter. */
   revenueAccount: string | null;
-  // Campos diversos (11.6.1.9)
+  // Miscellaneous fields (11.6.1.9)
+  /** Renders HTML as a standalone document. */
   selfContained: boolean;
-  // Campos de resultado (11.6.1.10)
+  // Result fields (11.6.1.10)
+  /** Whether the last `process()` succeeded. */
   ok: boolean = true;
+  /** Message describing the last failure, or `null`. */
   errorMessage: string | null = null;
+  /** Base attribute resolved by the last `process()`, when the fallback ran. */
   attr: AttributeBase<unknown> | null = null;
+  /** Numeric result produced by a `query_*` handler. */
   numerical: unknown = null;
+  /** Sort key produced by a `query_*` handler. */
   sortable: unknown = null;
+  /** String result produced by a `query_*` handler. */
   string: string | null = null;
+  /** Rich-text result produced by a `query_*` handler. */
   rti: unknown = null;
   // customData (11.6.1.11)
+  /** Pseudo-attributes injected by the caller, keyed by attribute id. */
   customData: Map<string, CustomData>;
 
+  /**
+   * Creates a query from a bag of optional parameters.
+   *
+   * `start`/`end`/`startIdx`/`endIdx` go through the setters so both
+   * representations stay in sync, in Ruby's order: end, endIdx, start,
+   * startIdx.
+   *
+   * @param params Field values to initialize; everything else defaults to
+   *   `null` (or `false` for `selfContained`).
+   */
   constructor(params: QueryParams = {},) {
     this.project = params.project ?? null;
     this.propertyType = params.propertyType ?? null;
@@ -198,8 +279,8 @@ export class Query {
     this.selfContained = params.selfContained ?? false;
     this.customData = new Map();
 
-    // start/end/startIdx/endIdx passam pelos setters para sincronizar.
-    // Ordem do Ruby: end, endIdx, start, startIdx.
+    // start/end/startIdx/endIdx go through the setters to stay in sync.
+    // Ruby order: end, endIdx, start, startIdx.
     if (params.end) this.end = params.end;
     if (params.endIdx !== null && params.endIdx !== undefined) {
       this.endIdx = params.endIdx;
@@ -213,8 +294,11 @@ export class Query {
   }
 
   // --------------------------------------------------
-  // Getters/setters sincronizados (11.6.2)
+  // Synchronized getters/setters (11.6.2)
   // --------------------------------------------------
+  /**
+   * Window start; assigning it also recomputes `startIdx` from the project.
+   */
   get start(): TjTime | null {
     return this._start;
   }
@@ -226,6 +310,9 @@ export class Query {
     this._startIdx = this.project ? this.project.dateToIdx(date,) : null;
   }
 
+  /**
+   * Window end; assigning it also recomputes `endIdx` from the project.
+   */
   get end(): TjTime | null {
     return this._end;
   }
@@ -237,6 +324,9 @@ export class Query {
     this._endIdx = this.project ? this.project.dateToIdx(date,) : null;
   }
 
+  /**
+   * Window start as a slot index; assigning it also recomputes `start`.
+   */
   get startIdx(): number | null {
     return this._startIdx;
   }
@@ -248,6 +338,9 @@ export class Query {
     this._start = this.project ? this.project.idxToDate(idx,) : null;
   }
 
+  /**
+   * Window end as a slot index; assigning it also recomputes `end`.
+   */
   get endIdx(): number | null {
     return this._endIdx;
   }
@@ -262,7 +355,7 @@ export class Query {
   // --------------------------------------------------
   // dup + reset (11.6.3)
   // --------------------------------------------------
-  /** Cópia (customData novo; resultados resetados). 11.6.3.3. */
+  /** Copy with a fresh `customData` map and reset results (11.6.3.3). */
   dup(): Query {
     const q = new Query();
     q.project = this.project;
@@ -295,12 +388,12 @@ export class Query {
     q.costAccount = this.costAccount;
     q.revenueAccount = this.revenueAccount;
     q.selfContained = this.selfContained;
-    // customData é copiado por referência de valor (novo Map).
+    // customData is copied by value reference (a new Map).
     q.customData = new Map(this.customData,);
     return q;
   }
 
-  /** Limpa os campos de resultado para reuso da Query (11.6.3.4). */
+  /** Clears the result fields so the query can be reused (11.6.3.4). */
   private reset(): void {
     this.attr = null;
     this.numerical = null;
@@ -311,7 +404,12 @@ export class Query {
     this.errorMessage = null;
   }
 
-  /** Injeta um pseudo-atributo de resultado (11.10.9). */
+  /**
+   * Injects a pseudo-attribute result (11.10.9).
+   *
+   * @param name Attribute id the data answers for.
+   * @param data Pre-computed result.
+   */
   setCustomData(name: string, data: CustomData,): void {
     this.customData.set(name, data,);
   }
@@ -319,10 +417,23 @@ export class Query {
   // --------------------------------------------------
   // process (11.7)
   // --------------------------------------------------
+  /**
+   * Resolves the queried attribute into the result fields.
+   *
+   * The pipeline mirrors Ruby's `Query#process`: resolve the property (step a),
+   * handle project attributes (step b), resolve the scope property (step c),
+   * adopt the property's project (step d), resolve `scenario` to `scenarioIdx`
+   * (step e), then take the value from `customData` (step g),
+   * `property.query_X` (step h), `ScenarioData.query_X` (step i) or the base
+   * attribute (step j).
+   *
+   * @returns `true` when a value was resolved; `false` when `ok` is `false` and
+   *   `errorMessage` explains why.
+   */
   process(): boolean {
     this.reset();
     try {
-      // Passo a: resolve property reference from property ID.
+      // Step a: resolve the property reference from the property id.
       if (
         this.propertyId && (this.property === null ||
           this.propertyId[0] === "!")
@@ -339,7 +450,7 @@ export class Query {
       }
 
       if (!this.property) {
-        // Sem property: atributo de projeto.
+        // Without a property: project attribute.
         if (!this.attributeId || !PROJECT_ATTRS.includes(this.attributeId,)) {
           this.errorMessage =
             `Unsupported project attribute '${this.attributeId}'`;
@@ -369,7 +480,7 @@ export class Query {
         return true;
       }
 
-      // Passo c: resolve scope property.
+      // Step c: resolve the scope property.
       if (!this.scopeProperty && this.scopePropertyId) {
         this.scopeProperty = this.resolvePropertyId(
           this.scopePropertyType,
@@ -383,10 +494,10 @@ export class Query {
         }
       }
 
-      // Passo d: garante referência ao projeto.
+      // Step d: make sure there is a project reference.
       if (!this.project) this.project = this.property.project as Project;
 
-      // Passo e: resolve scenarioIdx a partir de scenario.
+      // Step e: resolve scenarioIdx from scenario.
       if (this.scenario && this.scenarioIdx === undefined) {
         const idx = this.project.scenarioIdx(this.scenario,);
         if (idx === undefined) {
@@ -399,7 +510,7 @@ export class Query {
       const queryMethodName = "query_" + attributeId;
       const data = this.customData.get(attributeId,);
       if (data) {
-        // Passo g: customData tem prioridade.
+        // Step g: customData has priority.
         this.sortable = data.sortable ?? null;
         this.numerical = data.numerical ?? null;
         this.string = data.string ?? null;
@@ -407,7 +518,7 @@ export class Query {
       } else {
         const propMethod = asMethod(this.property, queryMethodName,);
         if (propMethod) {
-          // Passo h: query_X na propriedade.
+          // Step h: query_X on the property.
           propMethod.call(this.property, this,);
         } else {
           const scenarioData = this.scenarioIdx !== undefined
@@ -417,10 +528,10 @@ export class Query {
             ? asMethod(scenarioData, queryMethodName,) :
             undefined;
           if (this.scenarioIdx !== undefined && dataMethod) {
-            // Passo i: query_X no ScenarioData (scenario-specific).
+            // Step i: query_X on the ScenarioData (scenario-specific).
             dataMethod.call(scenarioData, this,);
           } else {
-            // Passo j: atributo base.
+            // Step j: base attribute.
             this.processBaseAttribute(attributeId,);
             if (!this.ok) return false;
           }
@@ -438,7 +549,7 @@ export class Query {
     return true;
   }
 
-  /** Fallback de atributo base do `process` (11.7.2.5–9). */
+  /** Fallback to the base attribute inside `process` (11.7.2.5–9). */
   private processBaseAttribute(attributeId: string,): void {
     const property = this.property!;
     const aType = property.attributeDefinition(attributeId,);
@@ -460,6 +571,7 @@ export class Query {
   // --------------------------------------------------
   // accessors (11.8)
   // --------------------------------------------------
+  /** String representation of the result. */
   to_s(): string {
     if (this.attr) return this.attr.to_s();
     if (this.rti) {
@@ -469,22 +581,32 @@ export class Query {
     return this.string ?? "";
   }
 
+  /** Numeric representation of the result, or `null` when it has none. */
   to_num(): number | null {
     if (this.attr) return this.attr.to_num();
     return typeof this.numerical === "number" ? this.numerical : null;
   }
 
+  /** Sort key of the result. */
   to_sort(): unknown {
     return this.attr ? this.attr.to_sort() : this.sortable;
   }
 
+  /** Rich-text intermediate of the result. */
   to_rti(): unknown {
     if (this.attr instanceof RichTextAttribute) return this.attr.get();
-    // Ruby passa a própria query (`attr.to_rti(self)`): listas usam
-    // `listItem`/`assignList` e guardam a query reeavaliada por item (14C.9).
+    // Ruby passes the query itself (`attr.to_rti(self)`): lists use
+    // `listItem`/`assignList` and keep the per-item re-evaluated query (14C.9).
     return this.attr ? this.attr.to_rti(this,) : this.rti;
   }
 
+  /**
+   * Raw result: the attribute value first, then `numerical`, `rti` and
+   * `string`.
+   *
+   * A reference attribute returns only its first element, so callers do not
+   * have to unwrap the list themselves.
+   */
   result(): unknown {
     if (this.attr) {
       const v = this.attr.get();
@@ -503,6 +625,11 @@ export class Query {
   // --------------------------------------------------
   // scale + assignList (11.9)
   // --------------------------------------------------
+  /**
+   * Scales a duration (in slots) to `loadUnit` using time factors.
+   *
+   * @param value Duration in slots.
+   */
   scaleDuration(value: number,): string {
     return this.scaleValue(value, [
       24 * 60,
@@ -515,6 +642,11 @@ export class Query {
     ],);
   }
 
+  /**
+   * Scales a load to `loadUnit` using the project working-day factors.
+   *
+   * @param value Load in slots.
+   */
   scaleLoad(value: number,): string {
     const project = this.project!;
     return this.scaleValue(value, [
@@ -528,7 +660,11 @@ export class Query {
     ],);
   }
 
-  /** Algoritmo de escala de valor com unidades auto/fixas (11.9.1). */
+  /** Value-scaling algorithm with auto/fixed units (11.9.1).
+   *
+   * @param value Value to scale.
+   * @param factors Per-unit multipliers, from smallest to largest unit.
+   */
   scaleValue(value: number, factors: number[],): string {
     const numberFormat = this.numberFormat ??
       new RealFormat(["-", "", "", ".", 2,],);
@@ -595,7 +731,10 @@ export class Query {
     return numberFormat.format(value * (factors[idx] ?? 1),);
   }
 
-  /** Monta uma lista a partir de itens (11.9.3). */
+  /** Builds a list out of items (11.9.3).
+   *
+   * @param listItems Items to join according to `listType`.
+   */
   assignList(listItems: string[],): void {
     let list = "";
     for (const item of listItems) {
@@ -623,14 +762,25 @@ export class Query {
     }
     this.sortable = list;
     this.string = list;
-    // Ruby (`Query#assignList`): o texto montado vira um RTI próprio. É o que
-    // os relatórios consomem quando uma coluna de lista é renderizada.
+    // Ruby (`Query#assignList`): the assembled text becomes an RTI of its own.
+    // That is what the reports consume when rendering a list column.
     this.rti = new RichText(list,).generateIntermediateFormat();
   }
 
   // --------------------------------------------------
   // resolvePropertyId (11.10)
   // --------------------------------------------------
+  /**
+   * Resolves a property reference into a node.
+   *
+   * `!` prefixes walk up the hierarchy from the current property; otherwise
+   * `pType` selects the property set to search.
+   *
+   * @param pType Property set to search (`Task`, `Resource`, `Account`, …).
+   * @param pId Id to resolve, or `null` to keep the current property.
+   * @returns The resolved node, or `null` when it does not exist.
+   * @throws {Error} When there is no project, or when `pType` is unknown.
+   */
   resolvePropertyId(
     pType: string | null,
     pId: string | null,
@@ -640,7 +790,7 @@ export class Query {
     }
     if (!pId) return this.property;
     if (pId[0] === "!") {
-      // Cada '!' sobe um nível a partir da propriedade corrente.
+      // Each '!' climbs one level from the current property.
       let property = this.property;
       for (const c of pId) {
         if (c === "!") property = property?.parent ?? null;
@@ -656,8 +806,8 @@ export class Query {
       case "Resource":
         return this.project.resource(pId,);
       case "Material":
-        // Extensão SyntaxMesh (14C.1.20): materiais são "pontos" de query
-        // como tarefas/recursos, com atributos próprios (`unit`, `cost`, …).
+        // SyntaxMesh extension (14C.1.20): materials are query "points"
+        // like tasks/resources, with attributes of their own (`unit`, `cost`, …).
         return this.project.material(pId,);
       default:
         throw new Error(`Unknown property type ${pType}`,);

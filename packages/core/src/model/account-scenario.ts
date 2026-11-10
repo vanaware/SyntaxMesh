@@ -13,51 +13,76 @@ import { type CostLine, resolveAccount, } from "../accounting/attribution.ts";
 import { createCostEvent, } from "../accounting/cost-event.ts";
 
 /**
- * Interface para query de relatório (balance/turnover).
+ * The slice of a query the balance and turnover reports rely on.
  *
- * Obrigatório: start, end, sortable, numerical, string, currencyFormat.
+ * Required members: `start`, `end`, `sortable`, `numerical`, `string` and
+ * `currencyFormat`. The model declares its own shape instead of importing the
+ * query layer, so the two never form a cycle; the object handed over by
+ * `Query.process` satisfies it.
  *
- * `currencyFormat` é **nulável** enquanto o projeto não define o default de
- * moeda (o `Report` herda o atributo do projeto): sem a guarda, um relatório
- * de conta estourava com `Cannot read properties of null (reading 'format')`
- * em vez de formatar como os demais tipos (`task-scenario`/`resource-scenario`
- * já checam o nulo).
+ * `currencyFormat` is nullable while the project has no currency default: the
+ * report inherits the attribute from the project, and without the guard an
+ * account report failed with `Cannot read properties of null (reading
+ * 'format')` instead of falling back to plain formatting.
  *
  * @see docs/taskjuggler/lib/taskjuggler/AccountScenario.rb#query_balance
  */
-export interface Query {
+export interface AccountScenarioQuery {
+  /** Report interval start. */
   readonly start: TjTime;
+  /** Report interval end. */
   readonly end: TjTime;
+  /** Value used when the column is sorted. */
   sortable: number;
+  /** Value used when the column is aggregated. */
   numerical: number;
+  /** Textual value of the cell being produced. */
   string: string;
+  /** Formatter for money amounts, or `null` when no currency is known. */
   readonly currencyFormat: {
     format(amount: number,): string;
   } | null;
 }
 
 /**
- * Interface para subtotais por tipo de custo (charge/resource/material).
+ * Subtotals per kind of cost (charge, resource, material).
  *
- * O bucket `charge` recebe os eventos `task_charge` (booking/custo de charge de
- * tarefa). O nome do **tipo de evento** (`task_charge`) é fiel ao Ruby e não
- * muda; o que muda — Onda D1 — é o nome do bucket, antes `task`.
+ * The `charge` bucket receives the `task_charge` events (task charge booking or
+ * cost). The **event type** name (`task_charge`) is faithful to Ruby and does
+ * not change; what changed — wave D1 — is the bucket name, previously `task`.
  */
 export interface AccountBuckets {
+  /** Totals of `task_charge` events. */
   charge: number;
+  /** Totals of `resource_effort` events. */
   resource: number;
+  /** Totals of `material_usage` events. */
   material: number;
 }
 
 /**
- * Lista exata de atributos pré-carregados pelo AccountScenario do Ruby
- * (AccountScenario.rb, linhas 17–20).
+ * Attributes pre-loaded by the Ruby AccountScenario (AccountScenario.rb, lines
+ * 17–20).
  */
 export const ACCOUNT_SCENARIO_ATTRS: string[] = ["credits",];
 
+/**
+ * Accounting state of one account in one scenario.
+ *
+ * Holds the running subtotals (one bucket per kind of cost) plus the scenario
+ * attribute layer inherited from `ScenarioData`, from which the `balance`,
+ * `cost` and `revenue` columns are computed.
+ */
 export class AccountScenario extends ScenarioData {
   private buckets: AccountBuckets = { charge: 0, resource: 0, material: 0, };
 
+  /**
+   * Creates the accounting state and pre-loads the `credits` attribute.
+   *
+   * @param account Account this state belongs to.
+   * @param scIdx Scenario index.
+   * @param attributes Scenario attribute map of the account.
+   */
   constructor(
     account: unknown,
     scIdx: number,
@@ -72,27 +97,27 @@ export class AccountScenario extends ScenarioData {
   }
 
   /**
-   * Obtém o valor de um atributo da conta (não do cenário), incluindo
-   * herança e valores padrão. Usado para atributos como 'aggregate'.
+   * Returns the value of an account attribute (not of the scenario), including
+   * inheritance and default values. Used for attributes such as 'aggregate'.
    */
   getAccountAttribute(id: string,): unknown {
     return (this.property as PropertyTreeNode).get(id,);
   }
 
   /**
-   * Calcula o turnover para o período entre _startIdx_ e _endIdx_.
+   * Computes the turnover for the period between _startIdx_ and _endIdx_.
    *
-   * Replicando o método Ruby `AccountScenario#turnover`.
+   * Replicates the Ruby method `AccountScenario#turnover`.
    *
    * @see docs/taskjuggler/lib/taskjuggler/AccountScenario.rb#turnover
    */
   turnover(startIdx: number, endIdx: number,): number {
-    // Reset buckets a cada chamada.
+    // Reset the buckets on every call.
     this.buckets = { charge: 0, resource: 0, material: 0, };
 
     let amount = 0.0;
 
-    // 1. Credits (manuais)
+    // 1. Manual credits
     const credits = this.a("credits",) as AccountCredit[];
     if (credits && credits.length > 0) {
       const project =
@@ -106,7 +131,7 @@ export class AccountScenario extends ScenarioData {
       }
     }
 
-    // 2. Container logic (filhos ou meta-account)
+    // 2. Container logic (children or meta-account)
     const property = this.property as PropertyLike & {
       container?: () => boolean;
       adoptees?: PropertyLike[];
@@ -121,7 +146,7 @@ export class AccountScenario extends ScenarioData {
           const childAmount = childAccount.scenarioData(this.scenarioIdx,)
             .turnover(startIdx, endIdx,);
           amount += childAmount;
-          // Buckets herdam dos filhos.
+          // Buckets are inherited from the children.
           const childBuckets = childAccount.scenarioData(this.scenarioIdx,)
             .getBuckets();
           this.buckets.charge += childBuckets.charge;
@@ -156,8 +181,8 @@ export class AccountScenario extends ScenarioData {
       const project =
         (this.property as PropertyLike & { project: ProjectLike }).project;
 
-      // Onda D2: `charges` é a forma canônica; `tasks` é alias de leitura
-      // (tj3 / default Ruby :tasks) — o mesmo regime de agregação.
+      // Wave D2: `charges` is the canonical form; `tasks` is a reading alias
+      // (tj3 / Ruby default :tasks) — the same aggregation regime.
       if (aggregate === "charges" || aggregate === "tasks") {
         project.tasks.each((task,) => {
           // Cast to Account to access scenarioData, then to TaskScenario for turnover with 5 args
@@ -211,8 +236,8 @@ export class AccountScenario extends ScenarioData {
         },);
       } else if (aggregate === "materials") {
         // Material aggregation: sum the allocation-derived cost of all
-        // materials (14C.1.19 / 14C.11.10 — materiais vivem em
-        // `project.materials`, a quantidade vem das alocações).
+        // materials (14C.1.19 / 14C.11.10 — materials live in
+        // `project.materials`, the quantity comes from the allocations).
         const scIdx = this.scenarioIdx;
         project.materials.each?.((material,) => {
           const materialObj = material as unknown as {
@@ -224,12 +249,12 @@ export class AccountScenario extends ScenarioData {
             this.buckets.material += materialAmount;
           }
         },);
-        // Bookings de estoque (Adendo Extra §12.1 / 14C.13.7): entram na
-        // conta que o material resolve (chargeset → defaultaccount material),
-        // com a data dentro de `[start, end)` — como `@credits` acima e
-        // `AccountScenario.rb:57-68`. Diferentemente das alocações, o booking
-        // de estoque é um valor **real** (modo `actual`) e estorna quando a
-        // quantidade é negativa.
+        // Stock bookings (Extra Addendum §12.1 / 14C.13.7): they enter the
+        // account the material resolves to (chargeset → material
+        // defaultaccount), with the date inside `[start, end)` — like
+        // `@credits` above and `AccountScenario.rb:57-68`. Unlike the
+        // allocations, a stock booking is a **real** value (`actual` mode) and
+        // reverses when the quantity is negative.
         for (const node of project.materials.toArray()) {
           if (!(node instanceof Material)) continue;
           amount += this.addStockBookings(node, project, startIdx, endIdx,);
@@ -239,24 +264,25 @@ export class AccountScenario extends ScenarioData {
       }
     }
 
-    // Bloco I: Popula buckets a partir de CostEvents emitidos pelo motor de atribuição
-    // Este é o novo comportamento para contas leaf (não container)
+    // Block I: fills the buckets from the CostEvents emitted by the
+    // attribution engine. This is the new behavior for leaf (non-container)
+    // accounts.
     if (!property.container?.()) {
       const project =
         (this.property as PropertyLike & { project: ProjectLike }).project;
       const scIdx = this.scenarioIdx;
       const account = this.property as unknown as Account;
 
-      // Filtrar CostEvents para este cenário e conta (ou seus filhos)
+      // Filter the CostEvents for this scenario and account (or its children)
       for (const event of project.costEvents) {
         if (event.scenarioIdx !== scIdx) continue;
         if (!event.account) continue;
-        // Verificar se o evento pertence a esta conta ou a um filho
+        // Check whether the event belongs to this account or to a child
         if (
           event.account === account ||
           (event.account as Account).isChildOf(account,)
         ) {
-          // Classificar por tipo
+          // Classify by type
           switch (event.type) {
             case "task_charge":
               this.buckets.charge += event.amount;
@@ -276,22 +302,22 @@ export class AccountScenario extends ScenarioData {
   }
 
   /**
-   * Retorna os buckets atuais (última chamada de turnover).
+   * Returns the current buckets (as of the last turnover call).
    */
   getBuckets(): AccountBuckets {
     return { ...this.buckets, };
   }
 
   /**
-   * Soma os bookings de estoque de `material` que pertencem **a esta conta**
-   * (chargeset do material → regra 2 de `resolveAccount`; conta default do
-   * projeto para material → regra 4) e cuja data está em `[start, end)`.
-   * Cada booking também emite um `CostEvent` de `material_usage` no modo
-   * `actual` para os relatórios auditáveis (`breakdownreport`, RDO) — a
-   * emissão é idempotente: um booking já emitido não entra de novo em
-   * chamadas seguintes do turnover.
+   * Sums the stock bookings of `material` that belong **to this account**
+   * (material chargeset → rule 2 of `resolveAccount`; project default account
+   * for material → rule 4) and whose date is inside `[start, end)`.
+   * Each booking also emits a `material_usage` `CostEvent` in `actual` mode for
+   * the auditable reports (`breakdownreport`, RDO) — the emission is
+   * idempotent: an already emitted booking does not enter again on subsequent
+   * turnover calls.
    *
-   * @returns O valor (positivo = entrada, negativo = estorno) a somar.
+   * @returns The value (positive = incoming, negative = reversal) to add.
    */
   private addStockBookings(
     material: Material,
@@ -313,8 +339,9 @@ export class AccountScenario extends ScenarioData {
     for (const booking of material.stockBookings(scIdx,)) {
       let value: number;
       if (booking.isTemporal()) {
-        // Onda D3 (D-e): booking temporal entra pela parte que cai na janela
-        // `[start, end]` do turnover; a janela entre buckets é `[start, end)`.
+        // Wave D3 (D-e): a temporal booking enters with the part falling in
+        // the `[start, end]` turnover window; the window between buckets is
+        // `[start, end)`.
         if (!booking.overlapsPeriod(startDate, endDate,)) continue;
         value = booking.costInPeriod(startDate, endDate,);
       } else {
@@ -348,7 +375,7 @@ export class AccountScenario extends ScenarioData {
   }
 
   /**
-   * Calcula o turnover por tipo de custo (charge/resource/material).
+   * Computes the turnover per cost type (charge/resource/material).
    *
    * @see docs/taskjuggler/lib/taskjuggler/AccountScenario.rb#turnover
    */
@@ -371,11 +398,11 @@ export class AccountScenario extends ScenarioData {
   }
 
   /**
-   * Popula um query de balance (startIdx = 0, endIdx = dateToIdx(query.start)).
+   * Fills a balance query (startIdx = 0, endIdx = dateToIdx(query.start)).
    *
    * @see docs/taskjuggler/lib/taskjuggler/AccountScenario.rb#query_balance
    */
-  query_balance(query: Query,): void {
+  query_balance(query: AccountScenarioQuery,): void {
     const project =
       (this.property as PropertyLike & { project: ProjectLike }).project;
     const startIdx = 0;
@@ -388,11 +415,12 @@ export class AccountScenario extends ScenarioData {
   }
 
   /**
-   * Popula um query de turnover (startIdx = dateToIdx(query.start), endIdx = dateToIdx(query.end)).
+   * Fills a turnover query (startIdx = dateToIdx(query.start), endIdx =
+   * dateToIdx(query.end)).
    *
    * @see docs/taskjuggler/lib/taskjuggler/AccountScenario.rb#query_turnover
    */
-  query_turnover(query: Query,): void {
+  query_turnover(query: AccountScenarioQuery,): void {
     const project =
       (this.property as PropertyLike & { project: ProjectLike }).project;
     const startIdx = project.dateToIdx(query.start,);
@@ -406,14 +434,14 @@ export class AccountScenario extends ScenarioData {
 }
 
 /**
- * Valor monetário com o `currencyFormat` do relatório.
+ * Monetary value formatted with the report's `currencyFormat`.
  *
- * Sem formato herdado, cai em `String(amount)` — mesma saída de
- * `AttributeBase#to_s` para Float, como fazem `task-scenario` e
- * `resource-scenario`. O Ruby nunca vê o nulo porque o default do projeto
- * (`Project.rb` l.77) sempre existe.
+ * Without an inherited format it falls back to `String(amount)` — the same
+ * output as `AttributeBase#to_s` for Float, as `task-scenario` and
+ * `resource-scenario` do. Ruby never sees the null because the project default
+ * (`Project.rb` l.77) always exists.
  */
-function formatCurrency(query: Query, amount: number,): string {
+function formatCurrency(query: AccountScenarioQuery, amount: number,): string {
   return query.currencyFormat
     ? query.currencyFormat.format(amount,)
     : `${amount}`;

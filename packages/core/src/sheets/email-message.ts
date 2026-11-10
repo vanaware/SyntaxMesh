@@ -1,11 +1,11 @@
 /**
- * `EmailMessage` — a mensagem de email como **dado**, não como socket (ADR 036).
+ * `EmailMessage` — an email message as **data**, not as a socket (ADR 036).
  *
- * O TaskJuggler original monta um objeto `Mail` e chama `deliver` (SMTP ou
- * `sendmail`). O browser não abre portas de email, então o core monta a
- * mensagem e a **devolve**: a UI (Fase 20) oferece download/copiar, a CLI
- * (Fase 24) imprime em stdout. A serialização MIME é a mesma nos dois caminhos
- * e serve de entrada para o receiver, que reprocessa o texto.
+ * Upstream TaskJuggler builds a `Mail` object and calls `deliver` (SMTP or
+ * `sendmail`). The browser cannot open email ports, so the core builds the
+ * message and **returns** it: the UI (Phase 20) offers download/copy, the CLI
+ * (Phase 24) prints to stdout. The MIME serialisation is the same on both paths
+ * and serves as input to the receiver, which re-reads the text.
  *
  * @see docs/taskjuggler/lib/taskjuggler/SheetHandlerBase.rb (sendEmail)
  * @see docs/syntaxmesh/decisoes/036-sheets-sem-smtp.md
@@ -13,53 +13,54 @@
 
 import { AppConfig, } from "../app-config.ts";
 
-/** Anexo já materializado em memória (nome exibido + conteúdo claro). */
+/** Attachment already materialised in memory (display name + clear content). */
 export interface EmailAttachment {
-  /** Nome do arquivo, como aparece no cliente de email. */
+  /** File name, as shown by the email client. */
   name: string;
-  /** Conteúdo em claro (a codificação base64 é feita na serialização). */
+  /** Clear content (base64 encoding happens during serialisation). */
   content: string;
 }
 
 /**
- * Formas aceitas por `sendEmail`/`sendRichTextEmail`:
- * - `string` — caminho lido do `FileStore` injetado (fidelidade ao Ruby, que
- *   recebia o nome de um arquivo em disco);
- * - {@link EmailAttachment} — conteúdo já em memória (usado pelos apps, que
- *   geram o `.smx` sem tocar disco).
+ * Forms accepted by `sendEmail`/`sendRichTextEmail`:
+ * - `string` — path read from the injected `FileStore` (faithful to Ruby, which
+ *   received the name of a file on disk);
+ * - {@link EmailAttachment} — content already in memory (used by the apps, which
+ *   generate the `.smx` without touching disk).
  */
 export type EmailAttachmentInput = string | EmailAttachment | null;
 
-/** Mensagem pronta para ser entregue ao usuário (baixar, imprimir, enviar). */
+/** Message ready to be handed to the user (download, print, send). */
 export interface EmailMessage {
-  /** Destinatário (cabeçalho `To`). */
+  /** Recipient (`To` header). */
   to: string;
-  /** Remetente (cabeçalho `From`). */
+  /** Sender (`From` header). */
   from: string;
+  /** Subject (`Subject` header). */
   subject: string;
-  /** Data em formato RFC 2822 (`Date`). */
+  /** Date in RFC 2822 format (`Date`). */
   date: string;
-  /** Corpo `text/plain`, já decodificado. */
+  /** `text/plain` body, already decoded. */
   text: string;
-  /** Corpo `text/html`, ou `null` em `sendEmail`. */
+  /** `text/html` body, or `null` in `sendEmail`. */
   html: string | null;
-  /** Nome do anexo, ou `null` quando não há anexo. */
+  /** Attachment name, or `null` when there is no attachment. */
   attachmentName: string | null;
-  /** Conteúdo do anexo em claro — o que o app consome. */
+  /** Clear attachment content — what the app consumes. */
   attachment: string | null;
-  /** O mesmo conteúdo em base64 RFC 2045 (76 colunas), ou `null`. */
+  /** Same content in RFC 2045 base64 (76 columns), or `null`. */
   attachmentBase64: string | null;
-  /** Id da mensagem respondida, ou `null`. */
+  /** Id of the message being replied to, or `null`. */
   inReplyTo: string | null;
-  /** Valor de `X-TaskJuggler` — o app que originou a mensagem. */
+  /** Value of `X-TaskJuggler` — the app that originated the message. */
   appName: string;
-  /** Texto RFC 822 completo: é isto que o receiver consome. */
+  /** Full RFC 822 text: this is what the receiver consumes. */
   raw: string;
 }
 
 /**
- * Separador das partes MIME. O alfabeto base64 não contém `-`, então o
- * boundary nunca colide com um corpo codificado.
+ * Separator of the MIME parts. The base64 alphabet has no `-`, so the boundary
+ * never collides with an encoded body.
  */
 export const MAIL_BOUNDARY = "----=_SyntaxMesh_Mail_Part";
 
@@ -71,10 +72,11 @@ const B64_LOOKUP = new Map<string, number>(
 );
 
 /**
- * Codifica texto UTF-8 em base64.
+ * Encodes UTF-8 text as base64.
  *
- * Feito à mão (e não com `btoa`) porque `btoa` só aceita *binary strings*: um
- * acento em `ação` estouraria `InvalidCharacterError`.
+ * Hand-rolled (rather than `btoa`) because `btoa` only accepts *binary
+ * strings*: an accented character in `ação` would raise
+ * `InvalidCharacterError`.
  */
 export function toBase64(text: string,): string {
   const bytes = new TextEncoder().encode(text,);
@@ -93,7 +95,12 @@ export function toBase64(text: string,): string {
   return out;
 }
 
-/** Decodifica base64 (ignorando quebras de linha e espaços) para texto UTF-8. */
+/**
+ * Decodes base64 (ignoring line breaks and spaces) into UTF-8 text.
+ *
+ * @param encoded Base64 text.
+ * @returns The decoded string.
+ */
 export function fromBase64(encoded: string,): string {
   const bytes: number[] = [];
   let buffer = 0;
@@ -114,7 +121,13 @@ export function fromBase64(encoded: string,): string {
   return new TextDecoder().decode(new Uint8Array(bytes,),);
 }
 
-/** Quebra base64 em linhas de `width` colunas (RFC 2045 exige ≤ 76). */
+/**
+ * Wraps base64 into lines of `width` columns (RFC 2045 requires ≤ 76).
+ *
+ * @param encoded Base64 text.
+ * @param width Maximum line width.
+ * @returns The wrapped text.
+ */
 export function wrapBase64(encoded: string, width = 76,): string {
   const lines: string[] = [];
   for (let i = 0; i < encoded.length; i += width) {
@@ -123,12 +136,22 @@ export function wrapBase64(encoded: string, width = 76,): string {
   return lines.join("\n",);
 }
 
-/** Data RFC 2822 a partir de um `Date` (sempre em UTC: saída determinística). */
+/**
+ * RFC 2822 date from a `Date` (always UTC: deterministic output).
+ *
+ * @param date Date to format.
+ * @returns The RFC 2822 representation.
+ */
 export function rfc2822Date(date: Date,): string {
   return date.toUTCString();
 }
 
-/** `YYYY-MM-DD` (UTC) — usado no nome dos arquivos de `outbox/`. */
+/**
+ * `YYYY-MM-DD` (UTC) — used in the `outbox/` file names.
+ *
+ * @param date Date to format.
+ * @returns The ISO date string.
+ */
 export function isoDate(date: Date,): string {
   const pad = (value: number,): string => String(value,).padStart(2, "0",);
   return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1,)}-${
@@ -136,53 +159,71 @@ export function isoDate(date: Date,): string {
   }`;
 }
 
-/** Basename de um caminho no estilo POSIX (o `FileStore` fala `/`). */
+/**
+ * Basename of a POSIX-style path (the `FileStore` speaks `/`).
+ *
+ * @param path Full path.
+ * @returns The last path segment.
+ */
 export function baseName(path: string,): string {
   const idx = path.lastIndexOf("/",);
   return idx < 0 ? path : path.slice(idx + 1,);
 }
 
 // ---------------------------------------------------------------------------
-// Leitura (lado do receiver — 18.7)
+// Reading (receiver side — 18.7)
 // ---------------------------------------------------------------------------
 
-/** Cabeçalhos com as chaves em minúsculas (`content-type`, `message-id`, …). */
+/** Headers with lowercase keys (`content-type`, `message-id`, ...). */
 export type EmailHeaders = Record<string, string>;
 
-/** Parte de uma mensagem MIME já decodificada. */
+/** Part of a MIME message, already decoded. */
 export interface EmailPart {
-  /** Tipo MIME (`text/plain`, `application/octet-stream`, …); `""` se ausente. */
+  /** MIME type (`text/plain`, `application/octet-stream`, ...); `""` when absent. */
   contentType: string;
-  /** Nome do arquivo quando a parte é um anexo; `null` no corpo. */
+  /** File name when the part is an attachment; `null` for the body. */
   fileName: string | null;
-  /** Conteúdo em claro (base64 e quoted-printable já resolvidos). */
+  /** Clear content (base64 and quoted-printable already resolved). */
   content: string;
 }
 
 /**
- * Mensagem recebida, pronta para o `SheetReceiver` (18.7).
+ * Message that has been received, ready for the `SheetReceiver` (18.7).
  *
- * Equivale ao `Mail` do Ruby (`SheetReceiver.rb` l.89): `text` é o corpo
- * `text/plain` decodificado e `attachments` são as partes com nome de arquivo.
+ * Equivalent to Ruby's `Mail` (`SheetReceiver.rb` l.89): `text` is the decoded
+ * `text/plain` body and `attachments` are the parts with a file name.
  */
 export interface ParsedEmailMessage extends EmailPart {
-  /** Endereço do remetente, sem o nome de exibição. */
+  /** Sender address, without the display name. */
   from: string;
-  /** Endereço do destinatário (`To`). */
+  /** Recipient address (`To`). */
   to: string;
+  /** Value of the `Subject` header. */
   subject: string;
-  /** Valor de `Message-ID` (com os `<>`), ou `null`. */
+  /** Value of `Message-ID` (including the `<>`), or `null`. */
   messageId: string | null;
+  /** Every header of the top-level message, keyed in lowercase. */
   headers: EmailHeaders;
+  /** Parts that carry a file name. */
   attachments: EmailPart[];
 }
 
-/** Normaliza CRLF/CR em LF (o parser trabalha só com `\n`). */
+/**
+ * Normalises CRLF/CR into LF (the parser only works with `\n`).
+ *
+ * @param text Raw message text.
+ * @returns The normalised text.
+ */
 function normalizeEol(text: string,): string {
   return text.replace(/\r\n/gu, "\n",).replace(/\r/gu, "\n",);
 }
 
-/** Separa o bloco de cabeçalhos do corpo na primeira linha vazia. */
+/**
+ * Separates the header block from the body at the first empty line.
+ *
+ * @param raw Message text with normalised line endings.
+ * @returns The header text and the body.
+ */
 function splitHeaderBlock(raw: string,): { headerText: string; body: string } {
   const idx = raw.indexOf("\n\n",);
   if (idx < 0) return { headerText: raw, body: "", };
@@ -190,11 +231,11 @@ function splitHeaderBlock(raw: string,): { headerText: string; body: string } {
 }
 
 /**
- * Lê o bloco de cabeçalhos em um mapa.
+ * Reads the header block into a map.
  *
- * Linhas de continuação (começando com espaço ou tab) são unidas à anterior
- * (RFC 5322 §2.2.3). Em cabeçalhos repetidos vence o primeiro: as duplicatas
- * relevantes para os sheets (`Message-ID`, `From`) são únicas.
+ * Continuation lines (starting with a space or tab) are joined to the previous
+ * one (RFC 5322 §2.2.3). For repeated headers the first one wins: the duplicates
+ * relevant to the sheets (`Message-ID`, `From`) are unique.
  */
 export function parseEmailHeaders(headerText: string,): EmailHeaders {
   const headers: EmailHeaders = {};
@@ -211,10 +252,10 @@ export function parseEmailHeaders(headerText: string,): EmailHeaders {
 }
 
 /**
- * Decompõe `type/subtype; a=1; b="2"` em tipo e parâmetros.
+ * Splits `type/subtype; a=1; b="2"` into type and parameters.
  *
- * Divergência: separar por `;` sem respeitar aspas quebra nomes de arquivo que
- * contenham ponto e vírgula. Os sheets usam nomes gerados (`<res>_<data>.smx`).
+ * Divergence: splitting on `;` without honouring quotes breaks file names that
+ * contain a semicolon. The sheets use generated names (`<res>_<date>.smx`).
  */
 export function parseHeaderParams(
   value: string | undefined,
@@ -238,7 +279,12 @@ export function parseHeaderParams(
   return { type, params, };
 }
 
-/** Decodifica `quoted-printable` (RFC 2045 §6.7), inclusive soft breaks. */
+/**
+ * Decodes `quoted-printable` (RFC 2045 §6.7), including soft breaks.
+ *
+ * @param encoded Quoted-printable text.
+ * @returns The decoded string.
+ */
 export function fromQuotedPrintable(encoded: string,): string {
   const text = encoded.replace(/=\r?\n/gu, "",);
   const bytes: number[] = [];
@@ -255,7 +301,13 @@ export function fromQuotedPrintable(encoded: string,): string {
   return new TextDecoder().decode(new Uint8Array(bytes,),);
 }
 
-/** Aplica o `Content-Transfer-Encoding` de uma parte. */
+/**
+ * Applies the `Content-Transfer-Encoding` of a part.
+ *
+ * @param body Raw body of the part.
+ * @param encoding Value of the `Content-Transfer-Encoding` header.
+ * @returns The decoded body.
+ */
 export function decodeTransferEncoding(
   body: string,
   encoding: string | undefined,
@@ -271,10 +323,10 @@ export function decodeTransferEncoding(
 }
 
 /**
- * Divide um corpo `multipart/*` nas partes delimitadas por `--boundary`.
+ * Splits a `multipart/*` body into the parts delimited by `--boundary`.
  *
- * Preâmbulo e epílogo (fora dos delimitadores) são descartados, como no
- * `Mail` do Ruby.
+ * Preamble and epilogue (outside the delimiters) are discarded, as in Ruby's
+ * `Mail`.
  */
 function splitMultipart(body: string, boundary: string,): string[] {
   const delimiter = `--${boundary}`;
@@ -296,7 +348,7 @@ function splitMultipart(body: string, boundary: string,): string[] {
   return parts.filter((part,) => part.trim() !== "");
 }
 
-/** Parte crua (cabeçalhos + corpo) → cabeçalhos, parte decodificada e filhas. */
+/** Raw part (headers + body) → headers, decoded part and children. */
 function parsePart(raw: string,): {
   headers: EmailHeaders;
   part: EmailPart;
@@ -341,7 +393,12 @@ function parsePart(raw: string,): {
   };
 }
 
-/** Endereço de um cabeçalho: `Alice <a@b.c>` → `a@b.c`. */
+/**
+ * Address of a header: `Alice <a@b.c>` → `a@b.c`.
+ *
+ * @param value Raw header value.
+ * @returns The bare address.
+ */
 export function extractAddress(value: string,): string {
   const match = /<([^>]+)>/u.exec(value,);
   if (match !== null && match[1] !== undefined) return match[1].trim();
@@ -349,14 +406,17 @@ export function extractAddress(value: string,): string {
 }
 
 /**
- * Lê uma mensagem RFC 822/MIME completa — o inverso de
+ * Reads a complete RFC 822/MIME message — the inverse of
  * {@link formatEmailMessage}.
  *
- * O Ruby delega ao gem `mail`, indisponível no Deno; este parser cobre o que os
- * sheets usam: `multipart/mixed` (e aninhados), `base64` e `quoted-printable`,
- * `Content-Disposition`/`name` para o nome do anexo e o `text/plain` do corpo.
- * HTML é ignorado — o receiver só precisa do texto. O tipo do documento é
- * `text/plain` quando o cabeçalho não traz `Content-Type`.
+ * Ruby delegates to the `mail` gem, unavailable on Deno; this parser covers what
+ * the sheets use: `multipart/mixed` (and nested), `base64` and
+ * `quoted-printable`, `Content-Disposition`/`name` for the attachment name and
+ * the `text/plain` body. HTML is ignored — the receiver only needs the text. The
+ * document type is `text/plain` when the header carries no `Content-Type`.
+ *
+ * @param raw Full RFC 822/MIME text.
+ * @returns The parsed message.
  */
 export function parseEmailMessage(raw: string,): ParsedEmailMessage {
   const root = parsePart(normalizeEol(raw,),);
@@ -385,12 +445,15 @@ export function parseEmailMessage(raw: string,): ParsedEmailMessage {
 }
 
 /**
- * Serializa a mensagem em texto RFC 822 (multipart/mixed).
+ * Serialises the message into RFC 822 text (multipart/mixed).
  *
- * O Ruby delega ao `Mail#to_s`; aqui o formato é explícito porque é contrato
- * público — o receiver do próprio SyntaxMesh (e a CLI) reprocessam este texto.
- * Duas divergências deliberadas: as quebras de linha são `\r\n` (RFC 5322) e os
- * cabeçalhos carregam UTF-8 cru (RFC 6532) em vez de encoded-words.
+ * Ruby delegates to `Mail#to_s`; here the format is explicit because it is a
+ * public contract — SyntaxMesh's own receiver (and the CLI) re-read this text.
+ * Two deliberate divergences: line breaks are `\r\n` (RFC 5322) and the headers
+ * carry raw UTF-8 (RFC 6532) instead of encoded-words.
+ *
+ * @param message Message without its `raw` field yet.
+ * @returns The serialised RFC 822 text.
  */
 export function formatEmailMessage(
   message: Omit<EmailMessage, "raw">,

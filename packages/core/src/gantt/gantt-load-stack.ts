@@ -1,9 +1,9 @@
 /**
- * GanttLoadStack (Fase 15.7) — pilha de carga normalizada pela altura da linha.
+ * GanttLoadStack (phase 15.7) — load stack normalized by the line height.
  *
- * Port fiel de `docs/taskjuggler/lib/taskjuggler/reports/GanttLoadStack.rb`.
- * Usada para recursos (e tarefas aninhadas em recursos): mostra a fração de
- * trabalho alocado por categoria de cor.
+ * Faithful port of `docs/taskjuggler/lib/taskjuggler/reports/GanttLoadStack.rb`.
+ * Used for resources (and for tasks nested in resources): it shows the fraction
+ * of allocated work per colour category.
  *
  * @see docs/syntaxmesh/decisoes/028-gantt-html-css.md (ADR 028)
  * @see docs/syntaxmesh/fases/fase-15-gantt.md (15.7)
@@ -12,15 +12,25 @@ import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 import type { ZoneRouter, } from "./gantt-router.ts";
 
 /**
- * Contrato que `GanttLoadStack` espera da linha que o hospeda. Em Ruby ele
- * chama `@line.lineToHTML`/`@line.rectToHTML` (mix-in `HTMLGraphics`);
- * `GanttLine` (15.10) implementa estes dois métodos.
+ * Contract `GanttLoadStack` expects from the line hosting it. In Ruby it calls
+ * `@line.lineToHTML`/`@line.rectToHTML` (the `HTMLGraphics` mix-in); `GanttLine`
+ * (15.10) implements both methods.
  */
 export interface LoadStackHost {
-  /** Altura da linha em pixels (Ruby `line.height`). */
+  /** Height of the line in pixels (Ruby `line.height`). */
   readonly height: number;
-  /** Coordenada Y do topo da linha (Ruby `line.y`). */
+  /** Y coordinate of the top of the line (Ruby `line.y`). */
   readonly y: number;
+  /**
+   * Draws a line between two points.
+   *
+   * @param xs Start X coordinate, in pixels.
+   * @param ys Start Y coordinate, in pixels.
+   * @param xe End X coordinate, in pixels.
+   * @param ye End Y coordinate, in pixels.
+   * @param category CSS class of the line.
+   * @returns The line element.
+   */
   lineToHTML(
     xs: number,
     ys: number,
@@ -28,6 +38,16 @@ export interface LoadStackHost {
     ye: number,
     category: string,
   ): XMLElementLike;
+  /**
+   * Draws a filled rectangle.
+   *
+   * @param x Left offset, in pixels.
+   * @param y Top offset, in pixels.
+   * @param w Width, in pixels.
+   * @param h Height, in pixels.
+   * @param category CSS class of the rectangle.
+   * @returns The rectangle element.
+   */
   rectToHTML(
     x: number,
     y: number,
@@ -37,7 +57,7 @@ export interface LoadStackHost {
   ): XMLElementLike;
 }
 
-/** Pilha de carga de uma linha do Gantt. */
+/** Load stack of one Gantt line. */
 export class GanttLoadStack {
   private readonly line: LoadStackHost;
   private readonly lineHeight: number;
@@ -46,9 +66,19 @@ export class GanttLoadStack {
   private readonly w: number;
   private readonly drawFrame: boolean;
   private readonly categories: ReadonlyArray<string | null>;
-  /** Ladrilhos em coordenadas Y; `null` quando a soma dos valores é 0. */
+  /** Tiles in Y coordinates; `null` when the sum of the values is 0. */
   private readonly yLevels: number[] | null;
 
+  /**
+   * Builds the stack from the per-category values.
+   *
+   * @param line Line hosting the stack.
+   * @param x Left offset of the stack, in pixels.
+   * @param w Width of the stack, in pixels (values `<= 0` become 1).
+   * @param values Load value of each category.
+   * @param categories CSS class of each category, or `null` for the background.
+   * @throws Error When `values` and `categories` have different lengths.
+   */
   constructor(
     line: LoadStackHost,
     x: number,
@@ -60,7 +90,7 @@ export class GanttLoadStack {
     this.lineHeight = line.height;
     this.x = x;
     this.y = line.y;
-    // Larguras <= 0 viram 1px.
+    // Widths <= 0 become 1px.
     this.w = w <= 0 ? 1 : w;
     let drawFrame = false;
     if (values.length !== categories.length) {
@@ -70,7 +100,8 @@ export class GanttLoadStack {
     }
     this.categories = categories;
     for (let i = 0; i < categories.length; i++) {
-      // Categoria sem cor com valor > 0 deixa o fundo aparecendo → moldura.
+      // An uncoloured category with a value above 0 lets the background show
+      // through → draw the frame.
       if (categories[i] === null && (values[i] ?? 0) > 0) {
         drawFrame = true;
         break;
@@ -80,20 +111,24 @@ export class GanttLoadStack {
     let sum = 0;
     for (const v of values) sum += v;
     if (sum === 0) {
-      // Soma 0: nada a empilhar, mas a moldura é desenhada.
+      // Sum 0: nothing to stack, but the frame is still drawn.
       this.yLevels = null;
       drawFrame = true;
     } else {
-      // Sobra 1px em cima, 1px embaixo e 1px para a moldura.
-      // RUBY-COMPAT-DOC: o Ruby divide inteiros com `Integer#/` (floor); os
-      // valores reais vêm de `getEffectiveWork` (Float), então a divisão real
-      // do TS preserva o comportamento observável.
+      // Leaves 1px on top, 1px at the bottom and 1px for the frame.
+      // RUBY-COMPAT-DOC: Ruby divides integers with `Integer#/` (floor); the
+      // real values come from `getEffectiveWork` (Float), so the real TS
+      // division preserves the observable behaviour.
       this.yLevels = values.map((v,) => (this.lineHeight - 4) * v / sum);
     }
     this.drawFrame = drawFrame;
   }
 
-  /** Marca a zona horizontal da pilha (Ruby `addBlockedZones`). */
+  /**
+   * Marks the horizontal zone of the stack (Ruby `addBlockedZones`).
+   *
+   * @param router Router receiving the blocked rectangle.
+   */
   addBlockedZones(router: ZoneRouter,): void {
     router.addZone(
       this.x - 2,
@@ -105,9 +140,14 @@ export class GanttLoadStack {
     );
   }
 
-  /** Converte a pilha abstrata em `<div>`s (Ruby `to_html`). */
+  /**
+   * Converts the abstract stack into `<div>`s (Ruby `to_html`).
+   *
+   * @returns The frame plus the stacked bars, or `null` when there is nothing
+   * to draw.
+   */
   to_html(): XMLElementLike[] | null {
-    // Nada a desenhar quando todos os valores são 0.
+    // Nothing to draw when every value is 0.
     const levels = this.yLevels;
     if (!levels) return null;
 
@@ -115,8 +155,8 @@ export class GanttLoadStack {
     const top = 1;
     const bottom = this.lineHeight - 2;
     if (this.drawFrame) {
-      // Moldura explícita (4 linhas) para preservar o fundo quando a pilha
-      // não preenche a linha inteira.
+      // Explicit frame (4 lines) to preserve the background when the stack does
+      // not fill the whole line.
       html.push(
         this.line.lineToHTML(this.x, top, this.x + this.w - 1, top, FRAME,),
       );
@@ -146,7 +186,7 @@ export class GanttLoadStack {
     }
 
     let yPos = 2;
-    // Barras ligeiramente mais estreitas, empilhadas de baixo para cima.
+    // Slightly narrower bars, stacked from the bottom up.
     for (let i = levels.length - 1; i >= 0; i--) {
       const level = levels[i]!;
       if (level <= 0) continue;
@@ -169,5 +209,5 @@ export class GanttLoadStack {
   }
 }
 
-/** Classe CSS da moldura da pilha. */
+/** CSS class of the stack frame. */
 const FRAME = "loadstackframe";

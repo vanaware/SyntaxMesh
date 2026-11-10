@@ -1,13 +1,14 @@
 /**
- * ReportBase (Fase 14.3) — classe abstrata base de todos os relatórios.
+ * ReportBase (phase 14.3) — abstract base class of every report.
  *
- * Porta fiel de `docs/taskjuggler/lib/taskjuggler/reports/ReportBase.rb`.
- * Fornece acesso a atributos do relatório (`a`), propagação do `Query` aos
- * blocos de RichText (`generateIntermediateFormat`), os filtros de listas
- * (tasks/recursos/contas) com `standardFilterOps` e helpers de moldura HTML.
+ * Faithful port of `docs/taskjuggler/lib/taskjuggler/reports/ReportBase.rb`.
+ * It provides report attribute access (`a`), propagation of the `Query` to the
+ * RichText blocks (`generateIntermediateFormat`), the list filters
+ * (tasks/resources/accounts) backed by `standardFilterOps`, and HTML frame
+ * helpers.
  *
- * ⚠️ Browser (ADR 027): os relatórios retornam strings; nenhuma escrita a
- * disco acontece aqui. Os helpers HTML constroem árvores `XMLElementLike`.
+ * ⚠️ Browser (ADR 027): reports return strings; no disk write happens here.
+ * The HTML helpers build `XMLElementLike` trees.
  *
  * @see docs/syntaxmesh/fases/fase-14-relatorios-tarefas.md (14.3)
  */
@@ -31,12 +32,13 @@ import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 import { XMLElement, } from "../xml/xml-element.ts";
 
 /**
- * Coleção de nós abertos, espelhando o `Set` de Ruby com entradas
- * `[parent, scopeProperty]`. Usado por `openNodes` em `standardFilterOps`.
+ * Collection of open nodes, mirroring the Ruby `Set` of
+ * `[parent, scopeProperty]` entries. Used by `openNodes` in
+ * `standardFilterOps`.
  */
 export type OpenNodes = Array<[PropertyTreeNode, PropertyTreeNode | null,]>;
 
-/** Membros de RichText que o `generateIntermediateFormat` conhece. */
+/** RichText members known to `generateIntermediateFormat`. */
 const RICH_TEXT_BLOCKS = [
   "header",
   "left",
@@ -50,26 +52,38 @@ const RICH_TEXT_BLOCKS = [
 ] as const;
 
 /**
- * Base abstrata para todas as classes de relatório. As derivadas devem
- * implementar `generateIntermediateFormat` (sobrescrevendo) e os `to_*`.
+ * Abstract base for every report class. Subclasses are expected to override
+ * `generateIntermediateFormat` and implement the `to_*` converters.
  */
 export abstract class ReportBase {
+  /** Report this instance renders. */
   readonly report: Report;
+  /** Project the report belongs to. */
   readonly project: Project;
 
+  /**
+   * Creates the base state of a report.
+   *
+   * @param report Report being rendered.
+   */
   constructor(report: Report,) {
     this.report = report;
     this.project = report.project as Project;
   }
 
-  /** Atalho para acessar um atributo do relatório. */
+  /**
+   * Reads an attribute of the report.
+   *
+   * @param attribute Name of the report attribute.
+   * @returns The attribute value, or `undefined`-like when unset.
+   */
   a(attribute: string,): unknown {
     return this.report.get(attribute,);
   }
 
   /**
-   * Propaga o `Query` do contexto atual a todos os blocos de RichText do
-   * relatório. Blocos ausentes são ignorados.
+   * Propagates the `Query` of the current context to every RichText block of
+   * the report. Missing blocks are skipped.
    */
   generateIntermediateFormat(): void {
     const query = this.currentQuery();
@@ -81,8 +95,14 @@ export abstract class ReportBase {
   }
 
   /**
-   * Remove contas que casa com a expressão de ocultação/rollup ou que não são
-   * descendentes de `accountroot`.
+   * Removes accounts matching the hide/rollup expression or not descending
+   * from `accountroot`.
+   *
+   * @param list_ Accounts to filter.
+   * @param hideExpr Expression of the `hide` attribute, or `null` for none.
+   * @param rollupExpr Expression of the `rollup` attribute, or `null`.
+   * @param openNodes Explicitly opened nodes, or `null` for none.
+   * @returns The filtered list.
    */
   filterAccountList(
     list_: PropertyList<Account> | Iterable<Account>,
@@ -106,9 +126,17 @@ export abstract class ReportBase {
   }
 
   /**
-   * Remove tarefas que casa com hide/rollup ou não são descendentes de
-   * `taskroot`. Se `resource` for fornecido, uma tarefa só é mantida se o
-   * recurso estiver alocado a ela em algum cenário reportado.
+   * Removes tasks matching hide/rollup or not descending from `taskroot`.
+   *
+   * When `resource` is given, a task is kept only if that resource is
+   * allocated to it in some reported scenario.
+   *
+   * @param list_ Tasks to filter.
+   * @param resource Resource the tasks must be allocated to, or `null`.
+   * @param hideExpr Expression of the `hide` attribute, or `null`.
+   * @param rollupExpr Expression of the `rollup` attribute, or `null`.
+   * @param openNodes Explicitly opened nodes, or `null`.
+   * @returns The filtered list.
    */
   filterTaskList(
     list_: PropertyList<Task> | Iterable<Task>,
@@ -150,9 +178,18 @@ export abstract class ReportBase {
   }
 
   /**
-   * Remove recursos que casa com hide/rollup ou não são descendentes de
-   * `resourceroot`. Se `task` for fornecido, um recurso só é mantido se estiver
-   * alocado à tarefa em algum cenário reportado.
+   * Removes resources matching hide/rollup or not descending from
+   * `resourceroot`.
+   *
+   * When `task` is given, a resource is kept only if it is allocated to that
+   * task in some reported scenario.
+   *
+   * @param list_ Resources to filter.
+   * @param task Task the resources must be allocated to, or `null`.
+   * @param hideExpr Expression of the `hide` attribute, or `null`.
+   * @param rollupExpr Expression of the `rollup` attribute, or `null`.
+   * @param openNodes Explicitly opened nodes, or `null`.
+   * @returns The filtered list.
    */
   filterResourceList(
     list_: PropertyList<Resource> | Iterable<Resource>,
@@ -194,11 +231,17 @@ export abstract class ReportBase {
   }
 
   /**
-   * Remove materiais que casam com a expressão de ocultação/consolidação
-   * (extensão SyntaxMesh 14C.6.6/6.9).
+   * Removes materials matching the hide/rollup expression (SyntaxMesh extension
+   * 14C.6.6/6.9).
    *
-   * Materiais não têm raiz própria (`materialroot` não existe): só os filtros
-   * de `hide`/`rollup` são aplicados, sem recorte de subárvore.
+   * Materials have no root of their own (`materialroot` does not exist), so
+   * only the `hide`/`rollup` filters apply, without any subtree trimming.
+   *
+   * @param list_ Materials to filter.
+   * @param hideExpr Expression of the `hide` attribute, or `null`.
+   * @param rollupExpr Expression of the `rollup` attribute, or `null`.
+   * @param openNodes Explicitly opened nodes, or `null`.
+   * @returns The filtered list.
    */
   filterMaterialList(
     list_: PropertyList<Material> | Iterable<Material>,
@@ -220,8 +263,12 @@ export abstract class ReportBase {
   }
 
   /**
-   * Avalia uma expressão de ocultação do relatório contra uma propriedade
-   * (14C.6.5). Promovido do `RdoReport` para uso em todos os relatórios.
+   * Evaluates a report hide expression against a property (14C.6.5). Promoted
+   * from `RdoReport` so every report can use it.
+   *
+   * @param attribute Name of the report attribute holding the expression.
+   * @param property Property the expression is evaluated on.
+   * @returns `true` when the property is hidden by the expression.
    */
   protected hiddenBy(attribute: string, property: PropertyTreeNode,): boolean {
     const expression = this.a(attribute,) as
@@ -234,9 +281,17 @@ export abstract class ReportBase {
   }
 
   /**
-   * Filtragem genérica para todas as listas: remove itens ocultos pela
-   * `hideExpr`, remove descendentes de nós enrollados (`rollupExpr`/`openNodes`)
-   * e, em modo árvore, readiciona os pais dos itens mantidos.
+   * Generic filtering shared by every list: drops items hidden by `hideExpr`,
+   * drops descendants of rolled-up nodes (`rollupExpr`/`openNodes`) and, in tree
+   * mode, re-adds the parents of the kept items.
+   *
+   * @param list List being filtered in place.
+   * @param hideExpr Expression of the `hide` attribute, or `null`.
+   * @param rollupExpr Expression of the `rollup` attribute, or `null`.
+   * @param openNodes Explicitly opened nodes, or `null`.
+   * @param scopeProperty Property exposed as the query scope, or `null`.
+   * @param root Root of the tree, or `null` to walk up to the very top.
+   * @returns The same list, filtered.
    */
   protected standardFilterOps<T extends PropertyTreeNode,>(
     list: PropertyList<T>,
@@ -249,7 +304,7 @@ export abstract class ReportBase {
     const query = this.currentQuery().dup();
     query.scopeProperty = scopeProperty;
 
-    // Remove propriedades que o usuário deseja ocultar.
+    // Drops the properties the user asked to hide.
     if (hideExpr) {
       list.deleteIf((property,) => {
         query.property = property;
@@ -257,7 +312,7 @@ export abstract class ReportBase {
       },);
     }
 
-    // Remove filhos de propriedades que foram enrolladas.
+    // Drops the children of rolled-up properties.
     if (rollupExpr || openNodes) {
       list.deleteIf((property,) => {
         let parent = property.parent;
@@ -279,7 +334,7 @@ export abstract class ReportBase {
       },);
     }
 
-    // Readiciona pais em modo árvore.
+    // Re-adds the parents in tree mode.
     if (list.treeMode()) {
       const parents: T[] = [];
       for (const property of list.toArray()) {
@@ -302,7 +357,7 @@ export abstract class ReportBase {
     return list;
   }
 
-  /** Monta a moldura da tabela HTML com a caixa de headline, se houver. */
+  /** Builds the HTML table frame, with the headline box when present. */
   protected generateHtmlTableFrame(): XMLElementLike {
     const table = new XMLElement("table", {
       class: "tj_table_frame",
@@ -322,14 +377,14 @@ export abstract class ReportBase {
     return table;
   }
 
-  /** Cria uma linha `<tr>` contendo a célula fornecida. */
+  /** Creates a `<tr>` line wrapping the given cell. */
   protected generateHtmlTableRow(cell: XMLElementLike,): XMLElementLike {
     const tr = new XMLElement("tr",);
     tr.append(cell,);
     return tr;
   }
 
-  /** Converte o bloco RichText `name` em HTML, sem numeração de seção. */
+  /** Renders the RichText block `name` as HTML, without section numbering. */
   protected rt_to_html(name: string,): XMLElementLike | null {
     const obj = this.a(name,);
     if (!obj) return null;
@@ -339,8 +394,11 @@ export abstract class ReportBase {
   }
 
   /**
-   * Converte o bloco RichText `name` em Markdown (extensão SyntaxMesh —
-   * adendo §10). Sem numeração de seção, como no HTML do relatório.
+   * Renders the RichText block `name` as Markdown (SyntaxMesh extension —
+   * addendum §10). Without section numbering, as in the report HTML.
+   *
+   * @param name Name of the RichText block.
+   * @returns The Markdown text, or `null` when the block is absent or empty.
    */
   protected rt_to_markdown(name: string,): string | null {
     const obj = this.a(name,);
@@ -351,7 +409,11 @@ export abstract class ReportBase {
     return md === "" ? null : md;
   }
 
-  /** Retorna o `Query` do contexto de relatório corrente. */
+  /**
+   * Returns the `Query` of the current report context.
+   *
+   * @throws Error When no report context is active.
+   */
   protected currentQuery(): Query {
     const ctx = this.project.reportContexts.at(-1,);
     if (!ctx) {
@@ -361,14 +423,18 @@ export abstract class ReportBase {
   }
 
   /**
-   * Adapta um `RichTextIntermediate` de propriedade (`note` de task/resource/
-   * material/account — 14C.5.7) ao dialeto do relatório.
+   * Adapts a property `RichTextIntermediate` (the `note` of a task/resource/
+   * material/account — 14C.5.7) to the dialect of the report.
    *
-   * O `note` é lido no carregamento do projeto, quando não existe relatório
-   * corrente, então nasce sempre no default richtext. Quando o relatório pede
-   * `format markdown`, o RTI é reconstruído a partir do texto de origem
-   * (`RichText#inputText`) pelo {@link MarkdownFactory}. Nos demais casos o RTI
-   * volta intacto — a regressão dos `.tjp` sem `format` fica garantida.
+   * The `note` is read while loading the project, when no report is current,
+   * so it is always built with the default richtext. When the report asks for
+   * `format markdown`, the RTI is rebuilt from the source text
+   * (`RichText#inputText`) by the {@link MarkdownFactory}. Otherwise the RTI is
+   * returned untouched — the regression of `.tjp` files without `format` is
+   * thereby preserved.
+   *
+   * @param rti Intermediate representation of the property note.
+   * @returns The RTI adapted to the report dialect.
    */
   protected rtiForReport(
     rti: RichTextIntermediate,
@@ -380,13 +446,15 @@ export abstract class ReportBase {
   }
 
   /**
-   * Texto de célula (`celltext`) no dialeto do relatório (14C.5.7).
+   * Cell text (`celltext`) in the dialect of the report (14C.5.7).
    *
-   * `celltext` é uma string crua no TaskJuggler (o Ruby a atribui a
-   * `cell.text` sem markup). Em relatórios `format markdown` ela passa pelo
-   * pipeline markdown — a extensão SyntaxMesh para permitir negrito/links no
-   * rótulo da célula. Fora do markdown o comportamento é o do Ruby (texto
-   * literal).
+   * `celltext` is a raw string in TaskJuggler (Ruby assigns it to `cell.text`
+   * without any markup). In `format markdown` reports it goes through the
+   * Markdown pipeline — the SyntaxMesh extension that allows bold and links in
+   * the cell label. Outside Markdown the behaviour is Ruby's (literal text).
+   *
+   * @param text Raw cell text.
+   * @returns The literal text, or its Markdown intermediate representation.
    */
   protected cellTextForReport(
     text: string,
@@ -398,8 +466,9 @@ export abstract class ReportBase {
 }
 
 /**
- * Consulta se `resource` está alocado a `task` no cenário e intervalo dados.
- * Delegação direta a `Task#hasResourceAllocated` (engine, integrada em 14.23).
+ * Checks whether `resource` is allocated to `task` in the given scenario and
+ * interval. Thin delegation to `Task#hasResourceAllocated` (engine, integrated
+ * in 14.23).
  */
 function hasResourceAllocated(
   task: Task,

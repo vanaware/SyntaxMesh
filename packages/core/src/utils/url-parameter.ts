@@ -1,34 +1,40 @@
 /**
- * URLParameter — codificação de parâmetros de URL de relatórios interativos
- * (Fase 14.24, port de `URLParameter.rb`).
+ * URLParameter — encoding of the URL parameters of interactive reports
+ * (phase 14.24, port of `URLParameter.rb`).
  *
  * Ruby: `encode(data) = [Zlib::Deflate.deflate(data)].pack('m')` — zlib +
- * Base64. Aqui o core é browser-only e síncrono (`to_html` não pode ser
- * async), então `CompressionStream` não é utilizável. Implementamos o
- * **stream zlib ([RFC 1950]) com stored blocks (BTYPE=00, sem compressão)
- * + Adler-32**, que é um deflate zlib válido: `Zlib::Inflate.inflate`
- * (Ruby) e `DecompressionStream("deflate")` leem a saída normalmente
- * (testado em `url-parameter_test.ts`). O byte-a-byte com o level 9 do
- * Ruby não importa — a URL nunca é comparada como oracle.
+ * Base64. Here the core is browser-only and synchronous (`to_html` cannot be
+ * async), so `CompressionStream` is not usable. We implement the
+ * **zlib stream ([RFC 1950]) with stored blocks (BTYPE=00, no compression)
+ * + Adler-32**, which is a valid zlib deflate: `Zlib::Inflate.inflate`
+ * (Ruby) and `DecompressionStream("deflate")` read the output normally
+ * (tested in `url-parameter_test.ts`). Byte-for-byte equality with Ruby's
+ * level 9 does not matter — the URL is never compared as an oracle.
  *
- * Divergências documentadas:
- *   • `pack('m')` do Ruby quebra o Base64 em linhas de 60 chars; emitimos
- *     Base64 sem quebras (seguro para contexto de URL).
- *   • `decode` aceita Base64 com quebras/quebras de linha (o `pack('m')` do
- *     Ruby as produz) e usa `fflate` (`unzlibSync`) — o `decode` síncrono é
- *     pré-requisito da Fase 20 (PWA interativa lê parâmetros da URL).
+ * Documented divergences:
+ *   • Ruby's `pack('m')` breaks Base64 into 60-character lines; we emit
+ *     Base64 without line breaks (safe for a URL context).
+ *   • `decode` accepts Base64 with line breaks (Ruby's `pack('m')` produces
+ *     them) and uses `fflate` (`unzlibSync`) — the synchronous `decode` is a
+ *     prerequisite of phase 20 (the interactive PWA reads parameters from the
+ *     URL).
  *
- * `encode` continua usando stored blocks (determinístico e sem dependência de
- * compressor); `decode` entende **qualquer** deflate zlib, inclusive o
- * level-9 do Ruby.
+ * `encode` keeps using stored blocks (deterministic and free of a compressor
+ * dependency); `decode` understands **any** zlib deflate, including Ruby's
+ * level 9.
  *
  * @see docs/taskjuggler/lib/taskjuggler/URLParameter.rb
- * @see ADR 027 (reports browser-only, retornam strings)
+ * @see ADR 027 (reports browser-only, return strings)
  */
 
 import { unzlibSync, } from "fflate";
 
-/** Soma de verificação Adler-32 (RFC 1950 §8.3). */
+/**
+ * Adler-32 checksum (RFC 1950 §8.3).
+ *
+ * @param bytes Buffer whose checksum is computed.
+ * @returns The checksum as an unsigned 32-bit integer.
+ */
 function adler32(bytes: Uint8Array,): number {
   let a1 = 1;
   let a2 = 0;
@@ -40,16 +46,19 @@ function adler32(bytes: Uint8Array,): number {
 }
 
 /**
- * Stream zlib com blocos "stored" (sem compressão): cabeçalho 0x78 0x01
- * (CM=8, CINFO=7, FLEVEL=0, FCHECK válido), blocos de até 65535 bytes
- * (BFINAL no último; LEN/NLEN little-endian) e Adler-32 big-endian.
+ * zlib stream with "stored" blocks (no compression): header 0x78 0x01
+ * (CM=8, CINFO=7, FLEVEL=0, valid FCHECK), blocks of up to 65535 bytes
+ * (BFINAL on the last one; LEN/NLEN little-endian) and a big-endian Adler-32.
+ *
+ * @param bytes Payload to wrap.
+ * @returns The zlib stream containing the payload uncompressed.
  */
 function storedDeflate(bytes: Uint8Array,): Uint8Array {
   const out: number[] = [0x78, 0x01,];
   const max = 0xffff;
   let offset = 0;
   if (bytes.length === 0) {
-    // Bloco final vazio: BFINAL=1/BTYPE=00, LEN=0, NLEN=65535.
+    // Empty final block: BFINAL=1/BTYPE=00, LEN=0, NLEN=65535.
     out.push(0x01, 0x00, 0x00, 0xff, 0xff,);
   }
   while (offset < bytes.length) {
@@ -70,10 +79,14 @@ function storedDeflate(bytes: Uint8Array,): Uint8Array {
   return Uint8Array.from(out,);
 }
 
+/** zlib + Base64 codec for the parameters of interactive report URLs. */
 export class URLParameter {
   /**
-   * Codifica `data` como Base64 de um stream zlib (equivalente funcional do
-   * `URLParameter.encode` do Ruby — ver cabeçalho do arquivo).
+   * Encodes `data` as Base64 of a zlib stream (functional equivalent of
+   * Ruby's `URLParameter.encode` — see the file header).
+   *
+   * @param data Text to encode.
+   * @returns The Base64 string carrying the zlib stream.
    */
   static encode(data: string,): string {
     const deflated = storedDeflate(new TextEncoder().encode(data,),);
@@ -83,11 +96,14 @@ export class URLParameter {
   }
 
   /**
-   * Decodifica o Base64+zlib produzido por {@link encode} (ou pelo
-   * `URLParameter.encode` do Ruby).
+   * Decodes the Base64+zlib produced by {@link encode} (or by Ruby's
+   * `URLParameter.encode`).
    *
-   * Espaços/quebras de linha do Base64 são ignorados (`pack('m')` do Ruby
-   * quebra em 60 colunas).
+   * Spaces and line breaks in the Base64 are ignored (Ruby's `pack('m')`
+   * wraps at 60 columns).
+   *
+   * @param data Base64 string to decode.
+   * @returns The original text, or an empty string for empty input.
    */
   static decode(data: string,): string {
     const clean = data.replace(/\s+/g, "",);

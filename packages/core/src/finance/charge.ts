@@ -1,7 +1,7 @@
 /**
- * Atributo de cobrança (charge) associado a uma tarefa.
+ * Charge attribute associated with a task.
  *
- * Representa um custo com valor e modo de distribuição temporal.
+ * Represents a cost with a value and a temporal distribution mode.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Charge.rb
  */
@@ -13,26 +13,39 @@ import { TimeInterval, } from "../time/time-interval.ts";
 import { TjTime, } from "../time/tj-time.ts";
 
 /**
- * Modos de distribuição de um Charge.
+ * Distribution modes of a `Charge`.
  *
- * Corresponde ao Ruby `Charge#mode` (:onStart, :onEnd, :perDiem).
+ * Corresponds to Ruby's `Charge#mode` (`:onStart`, `:onEnd`, `:perDiem`).
  */
 export type ChargeMode = "onStart" | "onEnd" | "perDiem";
 
 /**
- * Representa um custo associado a uma tarefa.
+ * Represents a cost associated with a task.
  *
- * Cada Charge tem um valor (`amount`), um modo de distribuição (`mode`),
- * a tarefa dona (`task`) e o índice de cenário (`scenarioIdx`).
+ * Each `Charge` has an amount (`amount`), a distribution mode (`mode`), the
+ * owning task (`task`) and the scenario index (`scenarioIdx`).
  *
- * Fonte Ruby: `docs/taskjuggler/lib/taskjuggler/Charge.rb`
+ * Ruby source: `docs/taskjuggler/lib/taskjuggler/Charge.rb`
  */
 export class Charge {
+  /** Monetary amount of the charge. */
   readonly amount: number;
+  /** How the amount is spread over time. */
   readonly mode: ChargeMode;
+  /** Task the charge belongs to. */
   readonly task: Task;
+  /** Scenario index the attributes are read from. */
   readonly scenarioIdx: number;
 
+  /**
+   * Creates a charge.
+   *
+   * @param amount Monetary amount of the charge.
+   * @param mode Distribution mode of the amount.
+   * @param task Task the charge belongs to.
+   * @param scenarioIdx Scenario index the attributes are read from.
+   * @throws {TjArgumentError} When `mode` is not a supported distribution mode.
+   */
   constructor(
     amount: number,
     mode: ChargeMode,

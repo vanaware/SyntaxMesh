@@ -1,9 +1,9 @@
 /**
- * Galeria de imagens dos relatórios (extensão SyntaxMesh — 14C.0.9).
+ * Image gallery of the reports (SyntaxMesh extension — 14C.0.9).
  *
- * String HTML a partir de `Picture[]`, com corte por `maxpictures` aplicado
- * **somente à saída** (a entrada nunca é mutada). Usada pelo RdoReport
- * (14C.3.6) e pelas colunas de journal com fotos.
+ * HTML string from a `Picture[]`, with the `maxpictures` cut applied **to the
+ * output only** (the input is never mutated). Used by RdoReport (14C.3.6) and
+ * by the journal columns with photos.
  *
  * @see docs/syntaxmesh/fases/fase-14-relatorios-complemento-tarefas.md (14C.0.9)
  */
@@ -11,11 +11,11 @@ import type { Picture, PictureHtmlOptions, } from "../model/picture.ts";
 import { Picture as PictureClass, } from "../model/picture.ts";
 
 /**
- * Renderiza `pictures` como `<div class="tj_gallery">…</div>`.
+ * Renders `pictures` as `<div class="tj_gallery">…</div>`.
  *
- * @param pictures   Lista de origem (nunca alterada).
- * @param maxPictures Limite da SAÍDA (`undefined`/`null` = ilimitado).
- * @param options    Encaminhado a `Picture#to_html` (14C.0.8).
+ * @param pictures   Source list (never changed).
+ * @param maxPictures Limit of the OUTPUT (`undefined`/`null` = unlimited).
+ * @param options    Forwarded to `Picture#to_html` (14C.0.8).
  */
 export function picturesToHtml(
   pictures: readonly Picture[],
@@ -31,20 +31,20 @@ export function picturesToHtml(
   return `<div class="tj_gallery">\n${inner}\n</div>`;
 }
 
-/** Regex de imagem Markdown: `![alt](caminho)` (14C.3.7). */
+/** Markdown image regex: `![alt](path)` (14C.3.7). */
 const MARKDOWN_IMAGE = /!\[([^\]]*)\]\(([^)\s]+)\)/g;
 
-/** Regex de imagem RichText/MediaWiki: `[[Image:path|...]]` (14C.3.7). */
+/** RichText/MediaWiki image regex: `[[Image:path|...]]` (14C.3.7). */
 const RICHTEXT_IMAGE = /\[\[(?:Image|File):([^\]|]+)([^\]]*)\]\]/gi;
 
 /**
- * Extrai as imagens embutidas no corpo `details` de uma entrada de diário
- * (extensão SyntaxMesh — 14C.3.7).
+ * Extracts the images embedded in the `details` body of a journal entry
+ * (SyntaxMesh extension — 14C.3.7).
  *
- * Ambos os formatos são aceitos: Markdown (`![alt](path)`, incluindo a
- * serialização de nós `img` do RichText) e RichText/MediaWiki
- * (`[[Image:path|alt|...]]`). As imagens voltam na ordem de declaração, sem
- * deduplicação — a deduplicação com `entry.pictures` é do relatório.
+ * Both formats are accepted: Markdown (`![alt](path)`, including the `img` node
+ * serialization of RichText) and RichText/MediaWiki (`[[Image:path|alt|...]]`).
+ * The images come back in declaration order, without deduplication —
+ * deduplicating against `entry.pictures` is the job of the report.
  */
 export function picturesFromDetails(
   details: string | null | undefined,
@@ -59,7 +59,7 @@ export function picturesFromDetails(
   for (const match of details.matchAll(RICHTEXT_IMAGE,)) {
     const path = (match[1] ?? "").trim();
     if (path === "") continue;
-    // `match[2]` começa no `|` separador: descarta os campos vazios iniciais.
+    // `match[2]` starts at the separator `|`: drops the leading empty fields.
     const fields = (match[2] ?? "").split("|",).map((s,) => s.trim()).filter(
       (s,) => s !== "",
     );
@@ -68,7 +68,7 @@ export function picturesFromDetails(
   return out;
 }
 
-/** Picture a partir de caminho + alt (caption vazio). */
+/** Picture from path + alt (empty caption). */
 function makePicture(path: string, alt: string,): Picture {
   const picture = new PictureClass(path,);
   if (alt !== "") picture.alt = alt;

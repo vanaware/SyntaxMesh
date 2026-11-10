@@ -1,8 +1,8 @@
 /**
- * TimeSheetReceiver — receiver concreto de time sheets (18.9).
+ * TimeSheetReceiver — concrete receiver of time sheets (18.9).
  *
- * Port de `docs/taskjuggler/lib/taskjuggler/TimeSheetReceiver.rb`. Só
- * configuração: o fluxo vem de `SheetReceiver` (18.7).
+ * Port of `docs/taskjuggler/lib/taskjuggler/TimeSheetReceiver.rb`. Configuration
+ * only: the flow comes from `SheetReceiver` (18.7).
  *
  * @see docs/taskjuggler/lib/taskjuggler/TimeSheetReceiver.rb
  * @see docs/syntaxmesh/fases/fase-18-time-status-sheets.md (18.9)
@@ -10,7 +10,15 @@
 
 import { SheetReceiver, } from "./sheet-receiver.ts";
 
+/**
+ * Receiver that ingests returned time sheets.
+ */
 export class TimeSheetReceiver extends SheetReceiver {
+  /**
+   * Creates the receiver with the time sheet defaults.
+   *
+   * @param appName Name of the app that signs replies and the log.
+   */
   constructor(appName: string,) {
     super(appName, "time",);
 
@@ -23,10 +31,10 @@ export class TimeSheetReceiver extends SheetReceiver {
     this.signatureFile = `${this.templateDir}/acceptable_intervals`;
     this.logFile = "timesheets.log";
 
-    // Grupo 1 = recurso, grupo 2 = fim do período (`YYYY-MM-DD`).
+    // Group 1 = resource, group 2 = period end (`YYYY-MM-DD`).
     this.sheetHeader =
       /^[ ]*timesheet\s([a-zA-Z_][a-zA-Z0-9_]*)\s[0-9\-:+]*\s-\s([0-9]*-[0-9]*-[0-9]*)/mu;
-    // Grupo 1 = intervalo completo (a "assinatura" aceita pelo receiver).
+    // Group 1 = full interval (the "signature" accepted by the receiver).
     this.signatureFilter =
       /^[ ]*timesheet\s[a-zA-Z_][a-zA-Z0-9_]*\s([0-9:\-+]*\s-\s[0-9:\-+]*)/mu;
     this.emailSubject = "Report from %s for %s";

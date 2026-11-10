@@ -1,13 +1,13 @@
 /**
- * TimeSheetRecord — o que um recurso reportou para uma tarefa num período.
+ * TimeSheetRecord — what a resource reported for a task in one period.
  *
- * Port de `docs/taskjuggler/lib/taskjuggler/TimeSheets.rb` — classe
- * `TimeSheetRecord` (l.22-239).
+ * Port of `docs/taskjuggler/lib/taskjuggler/TimeSheets.rb` — the
+ * `TimeSheetRecord` class (l.22-239).
  *
- * Um registro pode apontar para uma `Task` existente ou, no caso de
- * `newtask`, para o ID (`string`) de uma tarefa que ainda não existe. O
- * trabalho é sempre medido em **slots**; `remaining` também. O `expectedEnd`
- * só é usado por tarefas de duração (não-esforço).
+ * A record may point to an existing `Task` or, for `newtask`, to the id
+ * (`string`) of a task that does not exist yet. Work is always measured in
+ * **slots**, and so is `remaining`. `expectedEnd` is only used by duration
+ * tasks (not effort tasks).
  *
  * @see docs/syntaxmesh/fases/fase-18-time-status-sheets.md (18.2)
  */
@@ -23,62 +23,80 @@ import { MessageHandlerInstance, } from "../message-handler.ts";
 import type { TimeSheet, } from "./time-sheet.ts";
 import type { ProjectTiming, } from "./project-timing.ts";
 
+/**
+ * One reported line of a timesheet.
+ */
 export class TimeSheetRecord {
+  /** Sheet the record belongs to. */
   readonly timeSheet: TimeSheet;
   /**
-   * Alvo do registro: `Task` existente, `Material` (extensão 18.17.1) ou o ID
-   * (`string`) de uma tarefa nova (`newtask`).
+   * Target of the record: an existing `Task`, a `Material` (extension 18.17.1)
+   * or the id (`string`) of a new task (`newtask`).
    */
   readonly task: Task | Material | string | null;
   /**
-   * Tarefa dona de um registro de material — a que envolve o bloco
-   * `material <id> { … }` no sheet (18.17.9). `null` fora desse contexto.
+   * Task that owns a material record — the one wrapping the
+   * `material <id> { … }` block in the sheet (18.17.9). `null` outside that
+   * context.
    */
   ownerTask: Task | null = null;
+  /** Name of the new task, used when `task` is a string. */
   name: string | null = null;
+  /** Source location of the record in the project file, when known. */
   sourceFileInfo: SourceFileInfo | null = null;
-  /** Fim esperado da tarefa (só para tarefas de duração). */
+  /** Expected end of the task (only for duration tasks). */
   expectedEnd: TjTime | null = null;
   /**
-   * Preço unitário informado para o material no sheet (extensão 18.17.9).
-   * `null` ⇒ o booking cai para a alocação/material (precedência da 14C.11.6).
+   * Unit price reported for the material in the sheet (extension 18.17.9).
+   * `null` ⇒ the booking falls back to the allocation/material price (14C.11.6
+   * precedence).
    */
   unitPrice: number | null = null;
-  /** Prioridade da tarefa nova (`ts_bad_priority` valida 1..1000). */
+  /** Priority of the new task (`ts_bad_priority` validates 1..1000). */
   priority = 0;
-  /** Esforço restante em slots (tarefas de esforço) ou quantidade (material). */
+  /** Remaining effort in slots (effort tasks) or quantity (material). */
   remaining: number | null = null;
-  /** Entrada de journal que carrega o status reportado. */
+  /** Journal entry carrying the reported status. */
   status: JournalEntry | null = null;
   /**
-   * Trabalho reportado: slots para tarefas (Ruby `attr_reader :work`) ou a
-   * quantidade consumida quando o alvo é um `Material`.
+   * Reported work: slots for tasks (Ruby `attr_reader :work`) or the consumed
+   * quantity when the target is a `Material`.
    */
   private workValue: number | null = null;
 
+  /**
+   * Creates a record and appends it to the sheet.
+   *
+   * @param timeSheet Sheet the record belongs to.
+   * @param task Target task, material or id of a new task.
+   */
   constructor(
     timeSheet: TimeSheet,
     task: Task | Material | string | null,
   ) {
     this.timeSheet = timeSheet;
     this.task = task;
-    // Ruby: `(@timeSheet = timeSheet) << self` (l.35) — o registro entra na
-    // folha já no construtor, com checagem de duplicata.
+    // Ruby: `(@timeSheet = timeSheet) << self` (l.35) — the record joins the
+    // sheet in the constructor, with a duplicate check.
     timeSheet.appendRecord(this,);
   }
 
-  /** Trabalho reportado, em slots (tarefa) ou unidades (material). */
+  /**
+   * Reported work, in slots (task) or units (material).
+   *
+   * @returns The reported amount, or `null` when nothing was reported.
+   */
   get work(): number | null {
     return this.workValue;
   }
 
   /**
-   * Ruby `TimeSheetRecord#work=` (l.53-60): um inteiro é atribuído direto
-   * (slots); um percentual (`Percent`, o antigo `Float` do Ruby) é convertido
-   * por `TimeSheet#percentToSlots`.
+   * Ruby `TimeSheetRecord#work=` (l.53-60): an integer is assigned directly
+   * (slots); a percentage (`Percent`, Ruby's former `Float`) is converted by
+   * `TimeSheet#percentToSlots`.
    *
-   * Extensão 18.17.1: para `Material` o valor é a **quantidade** consumida —
-   * não é percentual nem slot, então é atribuído cru.
+   * Extension 18.17.1: for a `Material` the value is the **quantity** consumed —
+   * neither a percentage nor slots — so it is assigned as is.
    */
   set work(value: number | Percent | null,) {
     if (value === null) {
@@ -96,12 +114,20 @@ export class TimeSheetRecord {
     }
   }
 
-  /** Alvo é um `Material` (extensão 18.17.1)? */
+  /**
+   * Tells whether the target is a `Material` (extension 18.17.1).
+   *
+   * @returns The material, or `null` when the target is a task or a new task id.
+   */
   get material(): Material | null {
     return this.task instanceof Material ? this.task : null;
   }
 
-  /** Ruby `TimeSheetRecord#taskId` (l.190-192). */
+  /**
+   * Ruby `TimeSheetRecord#taskId` (l.190-192).
+   *
+   * @returns The full id of the target, or the raw string of a new task.
+   */
   get taskId(): string {
     if (this.task instanceof Task || this.task instanceof Material) {
       return this.task.fullId;
@@ -109,23 +135,27 @@ export class TimeSheetRecord {
     return this.task ?? "";
   }
 
-  /** Tarefa nova (ainda não existe no projeto)? */
+  /**
+   * Tells whether the record targets a new task.
+   *
+   * @returns `true` when the task does not exist in the project yet.
+   */
   get isNewTask(): boolean {
     return typeof this.task === "string";
   }
 
   /**
-   * Consistência do registro (Ruby `TimeSheetRecord#check`, l.63-129).
+   * Record consistency check (Ruby `TimeSheetRecord#check`, l.63-129).
    *
-   * As mensagens vão para o `MessageHandlerInstance` com o `sourceFileInfo`
-   * do registro — o módulo `MessageHandler` do Ruby usa `nil` por padrão,
-   * mas o registro sempre tem a linha de origem do arquivo `.tji`.
+   * Messages go to `MessageHandlerInstance` with the record's
+   * `sourceFileInfo` — the Ruby `MessageHandler` module defaults to `nil`, but a
+   * record always has the source line of the `.tji` file.
    */
   check(): void {
     const scIdx = this.timeSheet.scenarioIdx;
     const taskId = this.taskId;
 
-    // Um registro sem 'work' não informa quanto foi feito (Ruby l.84-93).
+    // A record without 'work' does not say how much was done (Ruby l.84-93).
     if (this.work === null) {
       this.error(
         "ts_no_work",
@@ -136,7 +166,7 @@ export class TimeSheetRecord {
     }
 
     if (this.task instanceof Task) {
-      // Tarefa já conhecida: esforço pede 'remaining'; duração pede 'end'.
+      // Known task: effort needs 'remaining'; duration needs 'end'.
       if (this.effort(scIdx,) > 0) {
         if (this.remaining === null) {
           this.error(
@@ -154,10 +184,10 @@ export class TimeSheetRecord {
         );
       }
     } else if (this.material !== null) {
-      // Extensão 18.17.1: material não tem esforço planejado nem data de fim,
-      // então 'remaining'/'end' são opcionais; o preço também (18.17.9).
-      // A validação individual do material é só a de 'work' (acima) e a do
-      // 'status', quando houver.
+      // Extension 18.17.1: a material has no planned effort and no end date,
+      // so 'remaining'/'end' are optional; the price is too (18.17.9).
+      // The only per-material validation is 'work' (above) and 'status', when
+      // present.
     } else if (this.remaining === null && this.expectedEnd === null) {
       this.error(
         "ts_no_rem_or_end",
@@ -166,8 +196,8 @@ export class TimeSheetRecord {
       );
     }
 
-    // Extensão 18.17.1: a comparação é com um dia de **slots**, unidade que
-    // não existe para material (a quantidade é em unidades do insumo).
+    // Extension 18.17.1: the comparison is against a day of **slots**, a unit
+    // that does not exist for material (quantity is in units of the input).
     if (
       this.material === null && this.work !== null &&
       this.work >= this.timeSheet.daysToSlots(1,) &&
@@ -216,22 +246,25 @@ export class TimeSheetRecord {
   }
 
   /**
-   * Compara o reportado com o plano e emite warnings de delta
-   * (Ruby `TimeSheetRecord#warnOnDelta`, l.131-188).
+   * Compares the reported values with the plan and emits delta warnings (Ruby
+   * `TimeSheetRecord#warnOnDelta`, l.131-188).
+   *
+   * @param startIdx First slot of the reported period.
+   * @param endIdx Last slot of the reported period.
    */
   warnOnDelta(startIdx: number, endIdx: number,): void {
-    // Ruby: `return unless @task` — ignora entradas pessoais.
+    // Ruby: `return unless @task` — personal entries are ignored.
     if (this.task === null) return;
-    // Extensão 18.17.1: material não tem plano de esforço por recurso, logo
-    // não há delta a comparar (o realizado vira booking, 18.17.9).
+    // Extension 18.17.1: a material has no per-resource effort plan, so there
+    // is no delta to compare (the actuals become a booking, 18.17.9).
     if (this.material !== null) return;
 
     const resource = this.timeSheet.resource;
 
     if (typeof this.task === "string") {
-      // O recurso está pedindo a criação de uma tarefa nova.
-      // Ruby imprime `@end` (typo, ivar inexistente → string vazia); aqui
-      // usamos o `expectedEnd` de fato, que é o valor pretendido.
+      // The resource is asking for a new task to be created.
+      // Ruby prints `@end` (a typo, non-existent ivar → empty string); here the
+      // real `expectedEnd` is used, which is the intended value.
       const status = this.remaining !== null
         ? `Remaining: ${this.timeSheet.slotsToDays(this.remaining,)}d`
         : `End: ${this.expectedEnd?.toString() ?? ""}`;
@@ -250,7 +283,7 @@ export class TimeSheetRecord {
     const project = resource.project as unknown as ProjectTiming;
     const plannedWork = (task.scenarioData(scenarioIdx,) as TaskScenario)
       .effWorkInPeriod(startIdx, endIdx, resource,);
-    // Converte os slots reportados em carga diária.
+    // Convert the reported slots into a daily load.
     const granularity = Number(project.get("scheduleGranularity",),);
     const work = project.convertToDailyLoad((this.work ?? 0) * granularity,);
 
@@ -303,11 +336,13 @@ export class TimeSheetRecord {
   }
 
   /**
-   * Aplica o progresso reportado ao cenário do material (extensão 18.17.1):
+   * Applies the reported progress to the material scenario (extension 18.17.1):
    * `work` → `effortdone`, `remaining` → `effortleft`.
    *
-   * Registros de tarefa são ignorados: a folha só valida o que foi reportado
-   * (`check`), o planejado vem do agendamento.
+   * Task records are ignored: the sheet only validates what was reported
+   * (`check`); the plan comes from the scheduler.
+   *
+   * @param scenarioIdx Scenario to write to (defaults to the sheet's).
    */
   applyToScenario(scenarioIdx = this.timeSheet.scenarioIdx,): void {
     const material = this.material;
@@ -321,15 +356,17 @@ export class TimeSheetRecord {
   }
 
   /**
-   * Converte o registro de material no **consumo realizado** do cenário
-   * (extensão 18.17.9): um `MaterialBooking` com a quantidade reportada,
-   * datado no fim do período da folha e preso à tarefa dona — ou ao estoque do
-   * material, quando o bloco não estava dentro de uma tarefa.
+   * Turns the material record into the **actual consumption** of the scenario
+   * (extension 18.17.9): a `MaterialBooking` with the reported quantity dated
+   * at the end of the sheet period and attached to the owner task — or to the
+   * material stock, when the block was not inside a task.
    *
-   * O `unitprice` do sheet só entra quando informado; sem ele o custo segue a
-   * precedência booking → alocação → material (`MaterialBooking#unitPriceFor`).
+   * The sheet's `unitprice` is only used when provided; without it the cost
+   * follows the booking → allocation → material precedence
+   * (`MaterialBooking#unitPriceFor`).
    *
-   * @returns o booking criado, ou `null` se o alvo não é um material.
+   * @param scenarioIdx Scenario to write to (defaults to the sheet's).
+   * @returns The created booking, or `null` when the target is not a material.
    */
   applyMaterialBooking(
     scenarioIdx = this.timeSheet.scenarioIdx,
@@ -348,7 +385,7 @@ export class TimeSheetRecord {
     );
 
     if (task === null) {
-      // Sem tarefa dona o booking é movimento de estoque (14C.13.1).
+      // Without an owner task the booking is a stock movement (14C.13.1).
       const current = (material.getForScenario("stockbookings", scenarioIdx,) ??
         []) as MaterialBooking[];
       material.setForScenario(
@@ -368,12 +405,20 @@ export class TimeSheetRecord {
     return booking;
   }
 
-  /** Trabalho reportado em % (0.0-100.0) da jornada média. */
+  /**
+   * Reported work as a percentage (0.0-100.0) of the average working day.
+   *
+   * @returns The reported work in percent.
+   */
   actualWorkPercent(): number {
     return ((this.work ?? 0) / this.timeSheet.totalGrossWorkingSlots()) * 100.0;
   }
 
-  /** Trabalho planejado em % (0.0-100.0) da jornada média. */
+  /**
+   * Planned work as a percentage (0.0-100.0) of the average working day.
+   *
+   * @returns The planned work in percent.
+   */
   planWorkPercent(): number {
     const resource = this.timeSheet.resource;
     const project = resource.project as unknown as ProjectTiming;
@@ -388,14 +433,22 @@ export class TimeSheetRecord {
     return (allocated / this.timeSheet.totalGrossWorkingSlots()) * 100.0;
   }
 
-  /** Esforço restante reportado, em dias. */
+  /**
+   * Reported remaining effort, in days.
+   *
+   * @returns The remaining effort converted to days.
+   */
   actualRemaining(): number {
     const project = this.timeSheet.resource.project as unknown as ProjectTiming;
     const granularity = Number(project.get("scheduleGranularity",),);
     return project.convertToDailyLoad((this.remaining ?? 0) * granularity,);
   }
 
-  /** Esforço restante segundo o plano, em dias. */
+  /**
+   * Planned remaining effort, in days.
+   *
+   * @returns The effort planned from `now` to the end of the task.
+   */
   planRemaining(): number {
     if (!(this.task instanceof Task)) return 0;
     const resource = this.timeSheet.resource;
@@ -409,12 +462,20 @@ export class TimeSheetRecord {
       .effWorkInPeriod(startIdx, endIdx, resource,);
   }
 
-  /** Fim esperado reportado. */
+  /**
+   * Reported expected end.
+   *
+   * @returns The end date reported in the sheet.
+   */
   actualEnd(): TjTime | null {
     return this.expectedEnd;
   }
 
-  /** Fim planejado da tarefa. */
+  /**
+   * Planned end of the task.
+   *
+   * @returns The scheduled end, or `null` when the target is not a task.
+   */
   planEnd(): TjTime | null {
     if (!(this.task instanceof Task)) return null;
     return this.task.getForScenario("end", this.timeSheet.scenarioIdx,) as
@@ -422,12 +483,23 @@ export class TimeSheetRecord {
       | null;
   }
 
-  /** `effort` do cenário (0 para tarefas de duração/marco). */
+  /**
+   * Reads the `effort` attribute of the scenario.
+   *
+   * @param scIdx Scenario index.
+   * @returns The planned effort, or 0 for duration tasks and milestones.
+   */
   private effort(scIdx: number,): number {
     if (!(this.task instanceof Task)) return 0;
     return Number(this.task.getForScenario("effort", scIdx,) ?? 0,);
   }
 
+  /**
+   * Reports an error attached to this record.
+   *
+   * @param id Message identifier.
+   * @param text Message text.
+   */
   private error(id: string, text: string,): void {
     MessageHandlerInstance.instance.error(
       id,
@@ -439,6 +511,12 @@ export class TimeSheetRecord {
     );
   }
 
+  /**
+   * Reports a warning attached to this record.
+   *
+   * @param id Message identifier.
+   * @param text Message text.
+   */
   private warning(id: string, text: string,): void {
     MessageHandlerInstance.instance.warning(
       id,
@@ -451,7 +529,14 @@ export class TimeSheetRecord {
   }
 }
 
-/** Igualdade de datas tolerante a `null` (o Ruby usa `!=` de objetos). */
+/**
+ * Date equality tolerant to `null` (the Ruby version compares objects with
+ * `!=`).
+ *
+ * @param a Left date.
+ * @param b Right date.
+ * @returns `true` when both are `null` or both hold the same instant.
+ */
 function sameTime(a: TjTime | null, b: TjTime | null,): boolean {
   if (a === null || b === null) return a === b;
   return a.compareTo(b,) === 0;

@@ -1,13 +1,14 @@
 /**
- * CSVFile — parser/serializador CSV leve (Fase 14.1).
+ * CSVFile — lightweight CSV parser/serializer (phase 14.1).
  *
- * Port fiel de `reports/CSVFile.rb`. O Ruby usa sua própria classe (evita a
- * `CSV` da stdlib, que mudou entre 1.8 e 1.9). Usado pelos relatórios (saída
- * `to_csv`) e, no futuro, pelas time sheets (Fase 18).
+ * Faithful port of `reports/CSVFile.rb`. Ruby uses its own class (avoiding the
+ * stdlib `CSV`, which changed between 1.8 and 1.9). It backs the reports (`to_csv`
+ * output) and, later on, the time sheets (phase 18).
  *
- * **Adaptação browser (ADR 027):** `write` não toca disco — para `'.'` é no-op
- * (a string já está disponível via `to_s()`); para outro nome, emite warning.
- * `read` exige um `FileStore` (Fase 19) — sem ele, lança `NotYetImplementedError`.
+ * **Browser adaptation (ADR 027):** `write` never touches the disk — for `'.'`
+ * it is a no-op (the string is already available through `to_s()`); for any
+ * other name it emits a warning. `read` requires a `FileStore` (phase 19) and
+ * throws `NotYetImplementedError` without one.
  *
  * @see docs/taskjuggler/lib/taskjuggler/reports/CSVFile.rb
  * @see docs/syntaxmesh/fases/fase-14-relatorios.md (14.1)
@@ -16,7 +17,7 @@
 import { MessageHandlerInstance, } from "../message-handler.ts";
 import { NotYetImplementedError, } from "../model/errors.ts";
 
-/** Máquina de estados do `parse` (espelha os símbolos do Ruby). */
+/** State machine of `parse` (mirrors the Ruby symbols). */
 type ParseState =
   | "startOfRecord"
   | "startOfField"
@@ -26,16 +27,29 @@ type ParseState =
   | "fieldEnd"
   | "recordEnd";
 
-/** regex de número inteiro com sinal (Ruby `/^[-+]?\d+$/`). */
+/** Signed integer literal (Ruby `/^[-+]?\d+$/`). */
 const INTEGER_RE = /^[-+]?\d+$/;
-/** regex de número float/exponencial com sinal. */
+/** Signed float/exponential literal. */
 const FLOAT_RE = /^[-+]?\d*\.?\d+([eE][-+]?\d+)?$/;
 
+/**
+ * A CSV table held in memory, with a parser and a serializer.
+ */
 export class CSVFile {
+  /** Parsed/serialized rows; `null` for an empty table. */
   data: unknown[][] | null;
   private separator: string;
   private quote: string;
 
+  /**
+   * Creates a CSV table.
+   *
+   * @param data Initial rows, or `null` for an empty table.
+   * @param separator Field separator; must be a single char other than `.` and
+   *   `"`.
+   * @param quote Quoting character.
+   * @throws Error When the separator or the quote is illegal.
+   */
   constructor(
     data: unknown[][] | null = null,
     separator = ";",
@@ -54,8 +68,10 @@ export class CSVFile {
   }
 
   /**
-   * Escreve a tabela como CSV. No browser não há filesystem: `'.'` é no-op (o
-   * conteúdo está em `to_s()`); qualquer outro nome gera um warning.
+   * Writes the table as CSV. There is no filesystem in the browser: `'.'` is a
+   * no-op (the content is in `to_s()`); any other name raises a warning.
+   *
+   * @param fileName Target file name, or `'.'` for standard output.
    */
   write(fileName: string,): void {
     if (fileName === ".") return;
@@ -66,13 +82,18 @@ export class CSVFile {
     );
   }
 
-  /** Lê de arquivo — requer `FileStore` (Fase 19). */
+  /**
+   * Reads from a file — requires a `FileStore` (phase 19).
+   *
+   * @param _fileName Source file name.
+   * @throws NotYetImplementedError Always, until phase 19 provides a file store.
+   */
   read(_fileName: string,): unknown[][] {
-    // Ancorado: Fase 19 — leitura CSV depende do FileStore (workerdb).
+    // Ancorado: Fase 19 — CSV reading depends on the FileStore (workerdb).
     throw new NotYetImplementedError("19", "CSVFile.read",);
   }
 
-  /** Serializa a tabela para string CSV ( Ruby `to_s`). */
+  /** Serializes the table to a CSV string (Ruby `to_s`). */
   to_s(): string {
     if (!this.separator) throw new Error("No seperator defined.",);
     let s = "";
@@ -92,8 +113,12 @@ export class CSVFile {
   }
 
   /**
-   * Converte uma string CSV em Array de Arrays (máquina de estados fiel ao
-   * Ruby). Números não-citados viram `number`; campos citados ficam `string`.
+   * Parses a CSV string into an array of arrays (state machine faithful to
+   * Ruby). Unquoted numbers become `number`; quoted fields stay `string`.
+   *
+   * @param str CSV text to parse.
+   * @returns The parsed rows (also stored in {@link CSVFile.data}).
+   * @throws Error On an unexpected character or an unterminated quoted cell.
    */
   parse(str: string,): unknown[][] {
     const data: unknown[][] = [];
@@ -102,10 +127,10 @@ export class CSVFile {
     let field: string | null = null;
     let quoted = false;
 
-    // Garante que a entrada termina com fim de registro.
+    // Guarantees the input ends with a record terminator.
     if (!str.endsWith("\n",)) str += "\n";
 
-    // Se não há separador definido, tenta detectá-lo.
+    // Without a defined separator, try to detect one.
     if (!this.separator) this.separator = this.detectSeparator(str,);
 
     let line = 1;
@@ -202,8 +227,11 @@ export class CSVFile {
   }
 
   /**
-   * Converte string em tipo nativo (número) quando possível; mantém o resto.
-   * Port de `CSVFile.strToNative`.
+   * Converts a string into a native value (number) when possible; keeps the
+   * rest as is. Port of `CSVFile.strToNative`.
+   *
+   * @param str Raw field text, or `null`.
+   * @returns The parsed number, the original string, or `null`.
    */
   static strToNative(str: string | null,): unknown {
     if (str === null) return null;
@@ -212,7 +240,7 @@ export class CSVFile {
     return str;
   }
 
-  /** Envolve um campo em aspas ( Ruby `marshal`). */
+  /** Wraps a field in quotes (Ruby `marshal`). */
   private marshal(field: unknown,): string {
     if (field === null || field === undefined) return "";
     if (typeof field === "number") return field.toString();
@@ -223,13 +251,13 @@ export class CSVFile {
     return this.quote + f + this.quote;
   }
 
-  /** Converte um campo lido para tipo nativo ( Ruby `unMarshal`). */
+  /** Converts a read field to a native value (Ruby `unMarshal`). */
   private unMarshal(field: string | null, quoted: boolean,): unknown {
     if (quoted || field === null) return field;
     return CSVFile.strToNative(field,);
   }
 
-  /** Heurística de separador: o mais frequente entre tab, `;` e `:`. */
+  /** Separator heuristic: the most frequent among tab, `;` and `:`. */
   private detectSeparator(str: string,): string {
     let best: string | null = null;
     let bestCount = 0;

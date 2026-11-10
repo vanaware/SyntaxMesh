@@ -33,6 +33,13 @@ import { RTFHandlers, } from "../richtext/handlers/rtf-handlers.ts";
 /** Entrada de `startsuccs`/`endsuccs`/`startpreds`/`endpreds` (Ruby par). */
 export type DependencyEntry = [Task | null, boolean,];
 
+/**
+ * Every attribute name a task carries per scenario.
+ *
+ * The list is the attribute map of {@link TaskScenario}: `a(name)` only sees
+ * what is registered here, so dependency accessors (`startpreds`, …) must be
+ * present even though they are computed by `Xref` rather than parsed.
+ */
 export const TASK_SCENARIO_ATTRS: string[] = [
   "allocate",
   "assignedresources",
@@ -64,8 +71,8 @@ export const TASK_SCENARIO_ATTRS: string[] = [
   "scheduled",
   "shifts",
   "start",
-  // Listas de dependências resolvidas em `Xref` (Ruby as instancia em
-  // `TaskScenario#initialize`). Precisam estar no mapa de atributos para que
+  // Dependency lists resolved in `Xref` (Ruby instantiates them in
+  // `TaskScenario#initialize`). They must be in the attribute map so that
   // `a("startsuccs")`/`hasDependency` as enxerguem.
   "startpreds",
   "startsuccs",
@@ -76,35 +83,62 @@ export const TASK_SCENARIO_ATTRS: string[] = [
 ];
 
 /**
- * Subconjunto estrutural de `Query` consumido pelos `query_*` de TaskScenario
- * (Onda B2). Assim como `account-scenario.ts` declara o seu próprio `Query`, o
- * modelo não importa a camada de queries (evita ciclo); o objeto real passado
- * pelo `Query.process` satisfaz esta forma.
+ * Structural subset of `Query` consumed by the TaskScenario `query_*` methods
+ * (wave B2). Just as `account-scenario.ts` declares its own `Query`, the model
+ * does not import the query layer (avoids a cycle); the real object passed by
+ * `Query.process` satisfies this shape.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Query.rb
  */
 export interface TaskScenarioQuery {
+  /** Report interval start, or `null` for an open start. */
   readonly start: TjTime | null;
+  /** Report interval end, or `null` for an open end. */
   readonly end: TjTime | null;
+  /** Start slot of {@link TaskScenarioQuery.start}, or `null`. */
   readonly startIdx: number | null;
+  /** End slot of {@link TaskScenarioQuery.end}, or `null`. */
   readonly endIdx: number | null;
+  /** Index of the scenario being reported. */
   scenarioIdx?: number | undefined;
+  /** Property the query is rooted at, or `null` for the project itself. */
   property?: PropertyTreeNode | null;
+  /** Parent property that scopes the query, or `null` when unscoped. */
   scopeProperty?: PropertyTreeNode | null;
+  /** Cost account to bill against, or `null` for none. */
   costAccount?: string | null;
+  /** Revenue account to credit, or `null` for none. */
   revenueAccount?: string | null;
+  /** `strftime`-style pattern used for dates, or `null` for the default. */
   timeFormat?: string | null;
+  /** Bullet or label to prefix list items with, or `null`. */
   listItem?: string | null;
+  /** Formatter for plain numbers, or `null` when unformatted output is fine. */
   readonly numberFormat: { format(value: number,): string } | null;
+  /** Formatter for money amounts, or `null` for unformatted output. */
   readonly currencyFormat: { format(value: number,): string } | null;
+  /** Value used when the column is sorted; set by the processing step. */
   sortable: unknown;
+  /** Value used when the column is aggregated; set by the processing step. */
   numerical: unknown;
+  /** Textual value of the cell being produced, or `null` before any. */
   string: string | null;
+  /** Rich-text intermediate the report is being built into. */
   rti: unknown;
+  /** Formats a duration in project units for display. */
   scaleDuration(value: number,): string;
+  /** Formats a load (effort per period) for display. */
   scaleLoad(value: number,): string;
+  /** Appends an already-formatted list of items to the current cell. */
   assignList(items: string[],): void;
+  /** Shallow copy, so nested queries cannot mutate the caller's state. */
   dup(): TaskScenarioQuery;
+  /**
+   * Stores a dynamic-attribute value under `name`.
+   *
+   * @param name Column name of the dynamic attribute.
+   * @param data Value in every representation the report layer understands.
+   */
   setCustomData(
     name: string,
     data: {
@@ -116,6 +150,15 @@ export interface TaskScenarioQuery {
   ): void;
 }
 
+/**
+ * Scheduling state of a task in one scenario.
+ *
+ * One {@link TaskScenario} exists per task per scenario: it holds the parsed
+ * attributes, the computed schedule (start/end slots, duration, effort), the
+ * allocation and dependency bookkeeping the scheduler fills in, and the query
+ * methods (`query_*`) the reports call. Everything that differs between
+ * scenarios lives here; everything shared lives in {@link Task}.
+ */
 export class TaskScenario extends ScenarioData {
   private _candidates: Resource[] = [];
   private _isRunAway: boolean = false;
@@ -143,56 +186,60 @@ export class TaskScenario extends ScenarioData {
   private _gauge: string | null = null;
   private _errors: number = 0;
   private _scheduled: boolean = false;
-  // Guarda própria do passe de *finish* (recursão bottom-up + mescla de
-  // `assignedresources`). Separada de `_scheduled` porque `markAsScheduled()`
-  // já eleva `_scheduled` durante o passe principal, o que faria o guard de
-  // `_scheduled` anular o housekeeping aqui. `Project#finishScenario` chama
-  // `finishScheduling` uma vez por cenário (Ruby não tem guard — a árvore é
-  // percorrida uma vez); `_finishDone` replica esse "uma vez" com segurança
-  // frente à re-entrância de `propagateDateToDep`.
+  // Own guard of the *finish* pass (bottom-up recursion + merge of
+  // `assignedresources`). Separate from `_scheduled` because `markAsScheduled()`
+  // already raises `_scheduled` during the main pass, which would make the
+  // `_scheduled` guard skip the housekeeping here. `Project#finishScenario`
+  // calls `finishScheduling` once per scenario (Ruby has no guard — the tree is
+  // walked once); `_finishDone` replicates that "once" safely against the
+  // re-entrancy of `propagateDateToDep`.
   private _finishDone: boolean = false;
   private _durationType: string = "";
   /**
-   * timebasis efetivo resolvido (§2.4), calculado em prepareScheduling()
-   * (Fase 10 Complemento C2.5). Exclusivo para cálculo de custo — não
-   * altera agendamento.
+   * Effective time basis resolved during scheduling (§2.4), computed by
+   * `prepareScheduling()`.
+   *
+   * Used for cost calculation only — it never influences the schedule.
    */
   resolvedTimebasis: Timebasis = "duration";
   private _shifts: ShiftAssignments | null = null;
 
   /**
-   * Listas de dependências (entrada/saída, início/fim) do cenário.
+   * Dependency lists (incoming/outgoing, start/end) of the scenario.
    *
-   * RUBY-COMPAT-FIX: no Ruby `@startsuccs`, `@endsuccs`, `@startpreds` e
-   * `@endpreds` **são** os valores dos atributos homônimos (instanciados em
-   * `TaskScenario#initialize`), os mesmos que o Gantt consulta via
-   * `task[kind, scenarioIdx]`. Com arrays paralelos, `hasDependency` — que lê
-   * o atributo — devolvia sempre `false` e o chart desenhava as setas das
-   * dependências herdadas (uma seta a mais por tarefa aninhada).
+   * RUBY-COMPAT-FIX: in Ruby `@startsuccs`, `@endsuccs`, `@startpreds` and
+   * `@endpreds` **are** the values of the same-named attributes (instantiated in
+   * `TaskScenario#initialize`), the very ones the Gantt reads via
+   * `task[kind, scenarioIdx]`. With parallel arrays, `hasDependency` — which
+   * reads the attribute — always returned `false` and the chart drew arrows for
+   * the inherited dependencies (one arrow too many per nested task).
    *
    * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:hasDependency?
    */
   private get _startpreds(): DependencyEntry[] {
     return this.dependencyList("startpreds",);
   }
+  /** Start-successors list, read from the `startsuccs` attribute. */
   private get _startsuccs(): DependencyEntry[] {
     return this.dependencyList("startsuccs",);
   }
+  /** End-predecessors list, read from the `endpreds` attribute. */
   private get _endpreds(): DependencyEntry[] {
     return this.dependencyList("endpreds",);
   }
+  /** End-successors list, read from the `endsuccs` attribute. */
   private get _endsuccs(): DependencyEntry[] {
     return this.dependencyList("endsuccs",);
   }
 
-  /** Lista de dependências do atributo `id`, criando-a vazia se preciso. */
+  /** Dependency list of attribute `id`, created empty when needed. */
   private dependencyList(id: string,): DependencyEntry[] {
     const stored = this.a(id,) as DependencyEntry[] | null;
     if (stored !== null) return stored;
     const created: DependencyEntry[] = [];
-    // `forceForScenario` (= `attr.set`) em vez de `setForScenario`: o Ruby só
-    // instancia o atributo (`@property[attr, @scenarioIdx]`), sem propagar
-    // para os demais cenários.
+    // `forceForScenario` (= `attr.set`) instead of `setForScenario`: Ruby only
+    // instantiates the attribute (`@property[attr, @scenarioIdx]`), without
+    // propagating it to the other scenarios.
     (this.getProperty() as Task).forceForScenario(
       id,
       created,
@@ -201,6 +248,13 @@ export class TaskScenario extends ScenarioData {
     return created;
   }
 
+  /**
+   * Creates the per-scenario state of `task` and preloads the attribute map.
+   *
+   * @param task Task this state belongs to.
+   * @param scIdx Scenario index.
+   * @param attributes Attribute definitions shared by the project.
+   */
   constructor(
     task: Task,
     scIdx: number,
@@ -210,13 +264,19 @@ export class TaskScenario extends ScenarioData {
     this.preloadAttributes(TASK_SCENARIO_ATTRS,);
   }
 
+  /**
+   * Flags the task as scheduled, mirroring the flag into the property bag.
+   *
+   * Idempotent: the scheduler calls it from several passes, and the `scheduled`
+   * attribute is what later passes read to skip work.
+   */
   markAsScheduled(): void {
     if (this._scheduled) return;
     this._scheduled = true;
-    // Ruby: `scheduled` é runtime attribute lido via `@scheduled`
-    // (TaskScenario.rb:57-59). No port o bag é o canal de leitura
-    // (`a("scheduled")` em scheduleContainer/propagateDateToDep), então
-    // espelhamos o flag no property bag ao marcar.
+    // Ruby: `scheduled` is a runtime attribute read through `@scheduled`
+    // (TaskScenario.rb:57-59). In the port the bag is the read channel
+    // (`a("scheduled")` in scheduleContainer/propagateDateToDep), so we mirror
+    // the flag into the property bag when marking.
     (this.getProperty() as Task).forceForScenario(
       "scheduled",
       true,
@@ -224,6 +284,12 @@ export class TaskScenario extends ScenarioData {
     );
   }
 
+  /**
+   * Resets the per-scenario scheduling bookkeeping before a scheduling run.
+   *
+   * Empties the four dependency lists, clears the computed schedule and
+   * re-derives {@link resolvedTimebasis} from the task's `timebasis` attribute.
+   */
   prepareScheduling(): void {
     const scIdx = this.getScenarioIdx();
     (this.getProperty() as Task).setForScenario("startpreds", [], scIdx,);
@@ -266,8 +332,8 @@ export class TaskScenario extends ScenarioData {
     }
     this._durationType = durationType;
 
-    // C2.5: resolve o timebasis efetivo (§2.4) uma vez por ciclo de
-    // schedule. Não afeta o agendamento — só a distribuição de custo.
+    // C2.5: resolves the effective timebasis (§2.4) once per schedule cycle.
+    // Does not affect scheduling — only the cost distribution.
     this.resolvedTimebasis = resolveTimebasis(
       this.getProperty() as Task,
       scIdx,
@@ -276,11 +342,12 @@ export class TaskScenario extends ScenarioData {
 
     this.markAsMilestone();
 
-    // Ruby (TaskScenario.rb:121-123): tarefas start-end sem alocação não têm
-    // nada a agendar — basta marcar como agendadas. Faltava esta atalho no
-    // port: essas tarefas caíam no loop de `scheduleSlot` com `durationType`
-    // `startEndTask`/sem datas e estouravam `Unknown task duration type`
-    // quando `schedule()` era chamado sem passar por `prepareScheduling`.
+    // Ruby (TaskScenario.rb:121-123): start-end tasks without allocation have
+    // nothing to schedule — just mark them as scheduled. This shortcut was
+    // missing in the port: such tasks fell into the `scheduleSlot` loop with
+    // `durationType` `startEndTask`/no dates and blew up with
+    // `Unknown task duration type` when `schedule()` ran without
+    // `prepareScheduling`.
     if (durationType === "startEndTask") {
       const start = this.a("start",) as TjTime | null;
       const end = this.a("end",) as TjTime | null;
@@ -323,6 +390,14 @@ export class TaskScenario extends ScenarioData {
     }
   }
 
+  /**
+   * Resolves every parsed dependency into the four scenario lists.
+   *
+   * Run once per scenario after parsing: turns the symbolic `depends` and
+   * `precedes` attributes into concrete `startpreds`/`endsuccs` entries (and
+   * their inverses), reporting unknown or self-referencing tasks through the
+   * message handler.
+   */
   Xref(): void {
     const scIdx = this.getScenarioIdx();
     const depends = this.a("depends",) as TaskDependency[];
@@ -331,9 +406,9 @@ export class TaskScenario extends ScenarioData {
         const depTask = this.checkDependency(dependency, "depends",);
         if (depTask) {
           this._startpreds.push([depTask, dependency.onEnd,],);
-          // Ruby (TaskScenario.rb:170): o sucessor vai para `endsuccs` quando
-          // a dependência é on-end e para `startsuccs` caso contrário. O flag
-          // propagado ao dep é sempre false (define o start do dependente).
+          // Ruby (TaskScenario.rb:170): the successor goes to `endsuccs` when
+          // the dependency is on-end and to `startsuccs` otherwise. The flag
+          // propagated to the dep is always false (defines the dependent start).
           const depSc = depTask.scenarioData(scIdx,) as TaskScenario;
           (dependency.onEnd ? depSc._endsuccs : depSc._startsuccs).push([
             this.getProperty(),
@@ -348,8 +423,8 @@ export class TaskScenario extends ScenarioData {
         const predTask = this.checkDependency(dependency, "precedes",);
         if (predTask) {
           this._endsuccs.push([predTask, dependency.onEnd,],);
-          // Ruby (TaskScenario.rb:177): predecessor vai para `endpreds` quando
-          // on-end e para `startpreds` caso contrário. Flag propagado true.
+          // Ruby (TaskScenario.rb:177): the predecessor goes to `endpreds` when
+          // on-end and to `startpreds` otherwise. Propagated flag: true.
           const predSc = predTask.scenarioData(scIdx,) as TaskScenario;
           (dependency.onEnd ? predSc._endpreds : predSc._startpreds).push([
             this.getProperty(),
@@ -361,13 +436,13 @@ export class TaskScenario extends ScenarioData {
   }
 
   /**
-   * `true` se a categoria `depType` (`startsuccs`, `endsuccs`, ...) contém o
-   * par `[target, onEnd]`.
+   * `true` when the `depType` category (`startsuccs`, `endsuccs`, ...) contains
+   * the `[target, onEnd]` pair.
    *
-   * RUBY-COMPAT-FIX: as listas guardam **pares** `[task, flag]` (ver `Xref`),
-   * e o Ruby compara com `Array#include?([target, onEnd])`. Antes o port lia os
-   * itens como `TaskDependency` (`dependency.task`), então todo par dava
-   * `false` e o Gantt não filtrava as dependências herdadas.
+   * RUBY-COMPAT-FIX: the lists hold **pairs** `[task, flag]` (see `Xref`), and
+   * Ruby compares with `Array#include?([target, onEnd])`. Before, the port read
+   * the items as `TaskDependency` (`dependency.task`), so every pair gave
+   * `false` and the Gantt did not filter out the inherited dependencies.
    *
    * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:hasDependency?
    */
@@ -384,14 +459,14 @@ export class TaskScenario extends ScenarioData {
   }
 
   /**
-   * Verifica e resolve uma dependência cruzada.
+   * Checks and resolves a cross dependency.
    *
-   * Ruby (TaskScenario.rb:2318-2326) faz `dependency.resolve(@project)`, que
-   * atribui `@task = project.task(@taskId)` e o retorna. O port precisa dessa
-   * atribuição: `earliestStart`/`latestEnd` percorrem `depends` lendo
-   * `dependency.task` (TaskScenario.rb:1176-1178); sem ela a data do
-   * predecessor nunca é encontrada e o dependente nunca recebe o start
-   * propagado (gap de placement da Fase 7 em modelos vindos do parser).
+   * Ruby (TaskScenario.rb:2318-2326) calls `dependency.resolve(@project)`, which
+   * assigns `@task = project.task(@taskId)` and returns it. The port needs that
+   * assignment: `earliestStart`/`latestEnd` walk `depends` reading
+   * `dependency.task` (TaskScenario.rb:1176-1178); without it the predecessor
+   * date is never found and the dependent never receives the propagated start
+   * (phase 7 placement gap on models coming from the parser).
    *
    * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:checkDependency
    */
@@ -401,23 +476,22 @@ export class TaskScenario extends ScenarioData {
       this.error("unknown_task", `Unknown task '${dependency.taskId}'`,);
       return null;
     }
-    // Equivalente a `TaskDependency#resolve`: fixa a referência do alvo.
+    // Equivalent to `TaskDependency#resolve`: pins the target reference.
     dependency.task = task;
     return task;
   }
 
   /**
-   * Propaga uma data (start ou end) para a tarefa, para os dependentes
-   * diretos, para os filhos que podem herdar a data e para os containers
-   * enclosing.
+   * Propagates a date (start or end) to the task, to the direct dependents, to
+   * the children that may inherit the date and to the enclosing containers.
    *
-   * Port fiel de `TaskScenario.rb#propagateDate` (980-1074). A versão
-   * anterior guardava apenas `@startIdx`/`@endIdx` e nunca escrevia os
-   * atributos `start`/`end` no bag — as tarefas concluíam o effort mas
-   * ficavam sem data de fim (`task_end_undef`). No port o armazenamento
-   * das datas é o property bag via `setForScenario` (canal já usado por
-   * `scheduleContainer` e `prepareScheduling`), equivalente ao
-   * `instance_variable_set` + attribute do Ruby.
+   * Faithful port of `TaskScenario.rb#propagateDate` (980-1074). The previous
+   * version stored only `@startIdx`/`@endIdx` and never wrote the `start`/`end`
+   * attributes into the bag — tasks finished their effort but ended up with no
+   * end date (`task_end_undef`). In the port the date storage is the property
+   * bag via `setForScenario` (a channel already used by `scheduleContainer` and
+   * `prepareScheduling`), equivalent to Ruby's `instance_variable_set` plus
+   * attribute.
    *
    * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:propagateDate
    */
@@ -431,27 +505,27 @@ export class TaskScenario extends ScenarioData {
     const thisEnd = atEnd ? "end" : "start";
     const otherEnd = atEnd ? "start" : "end";
 
-    // Flags anti-duplicação durante propagateInitialValues().
+    // De-duplication flags during propagateInitialValues().
     if (atEnd) {
       this._endPropagated = true;
     } else {
       this._startPropagated = true;
     }
 
-    // Leaf tasks podem definir/encolher a data; containers só em
+    // Leaf tasks may set/shrink the date; containers only in
     // scheduleContainer().
     if (property.leaf?.()) {
       const setDate = this.a(thisEnd,) as TjTime | null;
-      // Se já temos data neste end, apenas encolhemos o período.
+      // If a date already exists for this end, we only shrink the period.
       if (
         setDate &&
         (atEnd ? date.compareTo(setDate,) > 0 : date.compareTo(setDate,) < 0)
       ) {
         return;
       }
-      // `forceForScenario` (sem guarda de sobrescrita): scheduler escreve
-      // valor de runtime, não input do parser — equivalente ao
-      // `instance_variable_set` do Ruby (TaskScenario.rb:1012).
+      // `forceForScenario` (no overwrite guard): the scheduler writes a runtime
+      // value, not parser input — equivalent to Ruby's `instance_variable_set`
+      // (TaskScenario.rb:1012).
       property.forceForScenario(thisEnd, date, scIdx,);
       if (this.durationType() === "startEndTask") {
         if (atEnd) {
@@ -463,7 +537,7 @@ export class TaskScenario extends ScenarioData {
     }
 
     if (this.a("milestone",)) {
-      // Start e end de um milestone são idênticos.
+      // The start and end of a milestone are identical.
       this.markAsScheduled();
       if (this.a(otherEnd,) === null) {
         this.propagateDate(this.a(thisEnd,) as TjTime, !atEnd,);
@@ -480,9 +554,9 @@ export class TaskScenario extends ScenarioData {
       this.markAsScheduled();
     }
 
-    // Propaga aos dependentes diretos. Para on-end-successors / on-start-
-    // preds de tarefa effort-based a data ainda pode mudar (bookResource()
-    // propaga a data final), exceto quando ignoreEffort.
+    // Propagates to the direct dependents. For on-end-successors / on-start
+    // preds of an effort-based task the date may still change (bookResource()
+    // propagates the end date), except when ignoreEffort.
     if (atEnd) {
       if (ignoreEffort || (this.a("effort",) as number) === 0) {
         for (const [task, onEnd,] of this._endpreds) {
@@ -503,7 +577,7 @@ export class TaskScenario extends ScenarioData {
       }
     }
 
-    // Data implícita dos filhos que podem herdar este end do pai.
+    // Implicit date of the children that may inherit this parent end.
     for (const child of property.children as Task[]) {
       const childSc = child.scenarioData(scIdx,) as TaskScenario;
       if (childSc.canInheritDate(atEnd,)) {
@@ -511,26 +585,28 @@ export class TaskScenario extends ScenarioData {
       }
     }
 
-    // A propagação pode ter completado o intervalo do container pai.
+    // The propagation may have completed the parent container's interval.
     for (const parent of property.parents()) {
       (parent as Task).scenarioData(scIdx,).scheduleContainer();
     }
   }
 
+  /** Start slot of the task, or `null` while it is still undetermined. */
   startIdx(): number | null {
     return this._startIdx;
   }
 
+  /** End slot of the task, or `null` while it is still undetermined. */
   endIdx(): number | null {
     return this._endIdx;
   }
 
   /**
-   * Verifica se a tarefa pode herdar uma data do cenário.
+   * Checks whether the task may inherit a date from the scenario.
    *
-   * Port fiel de `TaskScenario.rb#canInheritDate?` (1080-1121) usando as
-   * primitivas do bag (`a("start")`/`a("end")` no lugar dos ivars `@start`/
-   * `@end`).
+   * Port faithful to `TaskScenario.rb#canInheritDate?` (1080-1121) using the
+   * bag primitives (`a("start")`/`a("end")` in place of the `@start`/
+   * `@end` ivars).
    *
    * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:canInheritDate?
    */
@@ -538,11 +614,12 @@ export class TaskScenario extends ScenarioData {
     const thisEnd = end ? "end" : "start";
     const thatEnd = end ? "start" : "end";
 
-    // False se já temos data neste end ou se há dependência forte nele.
+    // False when a date already exists for this end or a strong dependency is
+    // on it.
     if (this.a(thisEnd,) !== null) return false;
     if (this.hasStrongDeps(end,)) return false;
 
-    // Containers herdam se não têm dependências neste end.
+    // Containers inherit when they have no dependencies on this end.
     if ((this.getProperty() as Task).container?.()) return true;
 
     const hasThatSpec = this.a(thatEnd,) !== null ||
@@ -554,26 +631,35 @@ export class TaskScenario extends ScenarioData {
     }
 
     if (this.forward() !== end) {
-      // A direção do agendamento aponta para longe deste end.
+      // The scheduling direction points away from this end.
       if (this._hasDurationSpec || this.bookingNotEmpty()) return true;
       return hasThatSpec;
     } else {
-      // A direção aponta para este end.
+      // The direction points towards this end.
       return this.a(thatEnd,) !== null && !this._hasDurationSpec &&
         !this.bookingNotEmpty();
     }
   }
 
+  /** `true` when at least one `allocate` entry is present. */
   private _allocateNotEmpty(): boolean {
     const allocate = this.a("allocate",) as Allocation[] | null;
     return !!allocate && allocate.length > 0;
   }
 
+  /** `true` when at least one `booking` entry is present. */
   private bookingNotEmpty(): boolean {
     const booking = this.a("booking",) as unknown[] | null;
     return !!booking && booking.length > 0;
   }
 
+  /**
+   * Seeds the schedule from the explicit start/end dates, then propagates.
+   *
+   * Counterpart of the first half of the Ruby `prepareScheduling`: a task that
+   * already knows one of its ends hands that date to its dependencies, which is
+   * what lets a partly-fixed plan be scheduled around the fixed points.
+   */
   propagateInitialValues(): void {
     const project = (this.getProperty() as Task).project as ProjectLike;
     if (!this._startPropagated) {
@@ -600,6 +686,13 @@ export class TaskScenario extends ScenarioData {
     }
   }
 
+  /**
+   * Validates and applies the `milestone` flag.
+   *
+   * A milestone must be a leaf with zero duration; a container marked as a
+   * milestone is rejected with `container_milestone` and a non-zero duration
+   * with `milestone_duration`.
+   */
   markAsMilestone(): void {
     const milestone = this.a("milestone",) as boolean;
     const property = this.getProperty() as Task;
@@ -612,8 +705,8 @@ export class TaskScenario extends ScenarioData {
     }
 
     // Ruby: `return if @property.container? || @hasDurationSpec ||
-    //   !@booking.empty? || !@allocate.empty?`. A promoção automática só
-    // acontece quando booking E allocate estão ambos vazios.
+    //   !@booking.empty? || !@allocate.empty?`. The automatic promotion only
+    // happens when booking AND allocate are both empty.
     const bookingLen = (this.a("booking",) as unknown[])?.length ?? 0;
     const allocateLen = (this.a("allocate",) as Allocation[])?.length ?? 0;
     if (
@@ -635,12 +728,13 @@ export class TaskScenario extends ScenarioData {
 
     if (newMilestone) {
       this._hasDurationSpec = true;
-      // Ruby: `@milestone = true` — espelha no bag para leituras `a("milestone")`.
+      // Ruby: `@milestone = true` — mirrors it into the bag for `a("milestone")`
+      // reads.
       property.forceForScenario("milestone", true, this.getScenarioIdx(),);
       const start = this.a("start",) as TjTime;
       const end = this.a("end",) as TjTime;
       if (start && !end) {
-        // Ruby `@end = @start` — ivar assignment sem guarda de `provided`.
+        // Ruby `@end = @start` — ivar assignment without the `provided` guard.
         property.forceForScenario("end", start, this.getScenarioIdx(),);
       } else if (!start && end) {
         property.forceForScenario("start", end, this.getScenarioIdx(),);
@@ -649,14 +743,15 @@ export class TaskScenario extends ScenarioData {
   }
 
   /**
-   * Registra as bookings do usuário nos scoreboards do recurso e deriva o
-   * estado "já realizado" da tarefa.
+   * Records the user bookings in the resource scoreboards and derives the
+   * "already done" state of the task.
    *
-   * Além de reservar os slots, é este método que acumula `doneEffort`,
-   * `doneLength`/`doneDuration` e posiciona `currentSlotIdx` em `now` — sem
-   * isso a tarefa reagendaria o esforço inteiro desde o início (em vez de
-   * retomar de `now` o que falta), e o `end` reportado sai adiantado em dias.
-   * Foi o que o golden de Gantt do mwe006 expôs (t2 terminava 2 dias antes).
+   * Besides reserving the slots, this method accumulates `doneEffort`,
+   * `doneLength`/`doneDuration` and positions `currentSlotIdx` at `now` —
+   * without it the task would reschedule the whole effort from the beginning
+   * (instead of resuming what is left from `now`), and the reported `end` comes
+   * out days early. That is what the mwe006 Gantt golden exposed (t2 ended two
+   * days early).
    *
    * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:bookBookings
    */
@@ -744,7 +839,8 @@ export class TaskScenario extends ScenarioData {
         }
         let booked = false;
         for (const interval of booking.intervals) {
-          // `false` = sem clamp: booking fora do projeto é erro, como no Ruby.
+          // `false` = no clamp: a booking outside the project is an error, as in
+          // Ruby.
           const startIdx = project.dateToIdx(interval.start, false,);
           const endIdx = project.dateToIdx(interval.end, false,);
           for (let idx = startIdx; idx <= endIdx - 1; idx++) {
@@ -917,14 +1013,15 @@ export class TaskScenario extends ScenarioData {
   }
 
   /**
-   * Bookings efetivas do cenário, herdando do cenário pai enquanto
-   * `ownbookings` for falso (o cenário de topo nunca herda).
+   * Effective bookings of the scenario, inherited from the parent scenario
+   * while `ownbookings` is false (the top scenario never inherits).
    *
    * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:findBookings
    */
   private findBookings(): Booking[] {
-    // Reconcilia a assinatura de `scenario()` (a de `ProjectLike` devolve só
-    // `{ id, fullId }`) com o nó `Scenario` que carrega `ownbookings`/`parent`.
+    // Reconciles the `scenario()` signature (the `ProjectLike` one returns only
+    // `{ id, fullId }`) with the `Scenario` node that carries
+    // `ownbookings`/`parent`.
     const project = this.project() as unknown as {
       scenario(idx: number,): {
         readonly fullId: string;
@@ -949,7 +1046,7 @@ export class TaskScenario extends ScenarioData {
   }
 
   /**
-   * Reseta as flags deadEndFlags para [false, false, false, false].
+   * Resets the deadEndFlags to [false, false, false, false].
    *
    * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:resetLoopFlags
    */
@@ -958,7 +1055,7 @@ export class TaskScenario extends ScenarioData {
   }
 
   /**
-   * Verifica se a tarefa tem dependências em determinado end.
+   * Checks whether the task has dependencies on a given end.
    *
    * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:hasDependencies
    */
@@ -968,7 +1065,7 @@ export class TaskScenario extends ScenarioData {
   }
 
   /**
-   * Verifica se a tarefa tem dependências fortes em determinado end.
+   * Checks whether the task has strong dependencies on a given end.
    *
    * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:hasStrongDeps?
    */
@@ -980,7 +1077,7 @@ export class TaskScenario extends ScenarioData {
   }
 
   /**
-   * Marca a tarefa como runaway (fora do intervalo do projeto).
+   * Marks the task as runaway (outside the project interval).
    *
    * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:markAsRunaway
    */
@@ -1011,7 +1108,7 @@ export class TaskScenario extends ScenarioData {
   }
 
   /**
-   * Verifica se a tarefa está pronta para ser agendada.
+   * Checks whether the task is ready to be scheduled.
    *
    * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:readyForScheduling?
    */
@@ -1029,14 +1126,14 @@ export class TaskScenario extends ScenarioData {
   }
 
   /**
-   * Realiza verificações de consistência antes do agendamento.
+   * Runs consistency checks before scheduling.
    *
    * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:preScheduleCheck
    */
   preScheduleCheck(): void {
     // Ruby: `@chargeset.each do |chargeset| chargeset.each do |account, share|`.
-    // No port, `chargeset` é `ChargeSet[]` (ChargeSetListAttribute) e cada
-    // `ChargeSet` expõe `.each(cb)` sobre um `Map<Account, number>` interno.
+    // In the port, `chargeset` is `ChargeSet[]` (ChargeSetListAttribute) and each
+    // `ChargeSet` exposes `.each(cb)` over an internal `Map<Account, number>`.
     const chargeset = this.a("chargeset",) as {
       each(fn: (account: Account, share: number | null,) => void,): void;
     }[];
@@ -1235,7 +1332,7 @@ export class TaskScenario extends ScenarioData {
   }
 
   /**
-   * Verifica se há loops de dependência.
+   * Checks for dependency loops.
    *
    * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:checkForLoops
    */
@@ -1245,11 +1342,11 @@ export class TaskScenario extends ScenarioData {
     fromOutside: boolean,
     forward: boolean,
   ): void {
-    // RUBY-COMPAT-FIX: `path.include?([@property, atEnd])` do Ruby compara
-    // **estruturalmente** (`Array#==`); `Array#includes` do JS compara por
-    // referência e uma tupla recém-criada nunca é `===` à do `path`, então o
-    // laço nunca era detectado e o port morria em silêncio (exit 1 sem
-    // mensagem). Golden CLI (24.7): `tj3` emite `loop_detected` + `Aborting`.
+    // RUBY-COMPAT-FIX: Ruby's `path.include?([@property, atEnd])` compares
+    // **structurally** (`Array#==`); JS `Array#includes` compares by reference
+    // and a freshly created tuple is never `===` to the one in `path`, so the
+    // loop was never detected and the port died silently (exit 1 with no
+    // message). CLI golden (24.7): `tj3` emits `loop_detected` + `Aborting`.
     if (
       path.some(([task, end,],) => task === this.getProperty() && end === atEnd)
     ) {
@@ -1268,7 +1365,7 @@ export class TaskScenario extends ScenarioData {
         if (!skip) {
           this.info(
             `loop_at_${e ? "end" : "start"}`,
-            // `ctnd.` é o texto do Ruby (`TaskScenario.rb:642`), abreviado lá.
+            // `ctnd.` is Ruby's text (`TaskScenario.rb:642`), abbreviated there.
             `Loop ctnd. at ${e ? "end" : "start"} of task ${t.fullId}`,
             t.sourceFileInfo as unknown as SourceFileInfo | null,
           );
@@ -1367,7 +1464,7 @@ export class TaskScenario extends ScenarioData {
   }
 
   /**
-   * Calcula a criticalness da tarefa.
+   * Computes the criticalness of the task.
    *
    * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:calcCriticalness
    */
@@ -1399,7 +1496,7 @@ export class TaskScenario extends ScenarioData {
   }
 
   /**
-   * Calcula a path criticalness.
+   * Computes the path criticalness.
    *
    * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:calcPathCriticalness
    */
@@ -1452,7 +1549,7 @@ export class TaskScenario extends ScenarioData {
   }
 
   /**
-   * Calcula a path criticalness para os sucessores do end.
+   * Computes the path criticalness for the end successors.
    *
    * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:calcPathCriticalnessEndSuccs
    */
@@ -1576,7 +1673,8 @@ export class TaskScenario extends ScenarioData {
   }
 
   /**
-   * Conta as alocações de recursos e adiciona o esforço médio a cada recurso.
+   * Counts the resource allocations and adds the average effort to each
+   * resource.
    *
    * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:countResourceAllocations
    */
@@ -1603,7 +1701,7 @@ export class TaskScenario extends ScenarioData {
   }
 
   /**
-   * Retorna a lista de recursos candidatos (folha) alocados a esta tarefa.
+   * Returns the list of candidate (leaf) resources allocated to this task.
    *
    * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:candidates
    */
@@ -1632,10 +1730,22 @@ export class TaskScenario extends ScenarioData {
     return candidates;
   }
 
+  /**
+   * Which attribute decides the task's duration.
+   *
+   * One of `effortTask`, `lengthTask`, `durationTask` or `startEndTask`, fixed
+   * by `prepareScheduling()` and read by the scheduler and the reports.
+   */
   durationType(): string {
     return this._durationType;
   }
 
+  /**
+   * Whether the task is allowed to run in the scoreboard slot `sbIdx`.
+   *
+   * Falls back to the project working calendar when the task has no shift
+   * assignments of its own.
+   */
   onShift(sbIdx: number,): boolean {
     const shifts = this._shifts;
     if (shifts && shifts.assigned?.(sbIdx,)) {
@@ -1645,26 +1755,30 @@ export class TaskScenario extends ScenarioData {
     }
   }
 
+  /** `true` when the task declared `duration`, `length` or `effort`. */
   hasDurationSpec(): boolean {
     return this._hasDurationSpec;
   }
 
+  /** Project this task belongs to (structural view used by scheduling). */
   project(): ProjectLike {
     return (this.getProperty() as Task).project as ProjectLike;
   }
 
+  /** The owning task, narrowed from {@link ScenarioData}. */
   override getProperty(): Task {
     return super.getProperty() as Task;
   }
 
+  /** Index of the scenario this state belongs to. */
   override getScenarioIdx(): number {
     return this.scenarioIdx;
   }
 
   /**
-   * Verdadeiro se `resource` está alocado a esta task (ou a qualquer filha)
-   * no intervalo dado. Proxy de `PropertyTreeNode` → `Resource#allocated?`
-   * como no Ruby (a chamada no Kids loop usa a proxy do filho).
+   * True when `resource` is allocated to this task (or to any child) in the
+   * given interval. Proxy of `PropertyTreeNode` → `Resource#allocated?` as in
+   * Ruby (the call in the kids loop uses the child proxy).
    *
    * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:hasResourceAllocated?
    */
@@ -1683,29 +1797,32 @@ export class TaskScenario extends ScenarioData {
     return false;
   }
 
+  /** Reads a scenario attribute through the property bag. */
   override a(attr: string,): unknown {
     return super.a(attr,);
   }
 
+  /** `true` when the task is flagged as a milestone. */
   milestone(): boolean {
     return this.a("milestone",) as boolean;
   }
 
+  /** Effort already consumed by the scheduler (not the user's `effortdone`). */
   getEffectiveWork(): number {
     return this._doneEffort;
   }
 
   /**
-   * Tempo total (em dias) alocado pelos recursos designados a esta tarefa
-   * entre `startIdx` e `endIdx`. Com `resource`, considera apenas a alocação
-   * desse recurso; containers somam os filhos (fiel ao Ruby).
+   * Total time (in days) allocated by the resources assigned to this task
+   * between `startIdx` and `endIdx`. With `resource`, only that resource's
+   * allocation counts; containers sum the children (faithful to Ruby).
    *
-   * Port fiel de `TaskScenario.rb#getAllocatedTime` (1562–1588). O Ruby
-   * cacheia via `@dCache.cached(self, :TaskScenarioAllocatedTime, ...)`; este
-   * port omite o cache em linha com `ResourceScenario.getAllocatedTime`
-   * (resource-scenario.ts:592 — whose `treeSum` carrega apenas o `cacheTag`
-   * nominal): o flush do `DataCache` ainda é stub neste projeto
-   * (`project.ts:508`), então não há ponto de invalidação dos valores.
+   * Faithful port of `TaskScenario.rb#getAllocatedTime` (1562–1588). Ruby
+   * caches it via `@dCache.cached(self, :TaskScenarioAllocatedTime, ...)`; this
+   * port omits the cache in line with `ResourceScenario.getAllocatedTime`
+   * (resource-scenario.ts:592 — whose `treeSum` carries only the nominal
+   * `cacheTag`): the `DataCache` flush is still a stub in this project
+   * (`project.ts:508`), so there is no invalidation point for the values.
    *
    * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb#getAllocatedTime
    */
@@ -1716,7 +1833,7 @@ export class TaskScenario extends ScenarioData {
   ): number {
     const task = this.getProperty() as Task;
     const assigned = (this.a("assignedresources",) as Resource[]) ?? [];
-    // Normaliza proxy → nó real (mesma guard de ResourceScenario#
+    // Normalises proxy → real node (same guard as ResourceScenario#
     // getEffectiveWork:549-552).
     const res = (resource ? (resource.ptn?.() ?? resource) : null) as
       | Resource
@@ -1731,10 +1848,10 @@ export class TaskScenario extends ScenarioData {
     let allocatedTime = 0.0;
     if (task.container()) {
       // Ruby: task.getAllocatedTime(@scenarioIdx, startIdx, endIdx, resource)
-      // — here the child Task exposes its TaskScenario directly. Filtra por
-      // classe (review (e)): `kids()` é tipado como PropertyTreeNode[]; um
-      // filho não-Task jamais deveria existir, mas o cast cego exploding na
-      // primeira exceção — ignorar não-tasks é o comportamento seguro.
+      // — here the child Task exposes its TaskScenario directly. Filter by
+      // class (review (e)): `kids()` is typed as PropertyTreeNode[]; a non-Task
+      // child should never exist, but a blind cast explodes on the first
+      // exception — ignoring non-tasks is the safe behaviour.
       for (const kid of task.kids()) {
         if (!(kid instanceof Task)) continue;
         allocatedTime += kid.scenarioData(scIdx,).getAllocatedTime(
@@ -1762,14 +1879,17 @@ export class TaskScenario extends ScenarioData {
     return allocatedTime;
   }
 
+  /** `true` once the scheduler marked the task as running away. */
   isRunAway(): boolean {
     return this._isRunAway;
   }
 
+  /** Marks the task as run away, so scheduling stops trying to fit it. */
   runAway(): void {
     this._isRunAway = true;
   }
 
+  /** `true` when this task appears in the `depends`/`precedes` of `task`. */
   isDependencyOf(task: Task,): boolean {
     const scIdx = this.getScenarioIdx();
     const depends = task.scenarioData(scIdx,).a("depends",) as TaskDependency[];
@@ -1789,81 +1909,102 @@ export class TaskScenario extends ScenarioData {
     return false;
   }
 
+  /**
+   * Shift assignments for this task in `scIdx`.
+   *
+   * Returns a fresh, empty {@link ShiftAssignments} when the task declares
+   * shifts at all, and `null` when it does not.
+   */
   shiftAssignments(scIdx: number,): ShiftAssignments | null {
     const shifts = this.a("shifts",) as ShiftAssignments[];
     if (!shifts || shifts.length === 0) return null;
     return new ShiftAssignments();
   }
 
+  /** `true` when the task declares at least one `shifts` entry. */
   shifts(): boolean {
     const shifts = this.a("shifts",) as ShiftAssignments[];
     return !!(shifts && shifts.length > 0);
   }
 
+  /** Tasks this one depends on, with the flag telling which end is tied. */
   startpreds(): [Task | null, boolean,][] {
     return this._startpreds;
   }
 
+  /** Tasks that depend on this one through its start end. */
   startsuccs(): [Task | null, boolean,][] {
     return this._startsuccs;
   }
 
+  /** Tasks this one depends on through its end end. */
   endpreds(): [Task | null, boolean,][] {
     return this._endpreds;
   }
 
+  /** Tasks that depend on this one through its end end. */
   endsuccs(): [Task | null, boolean,][] {
     return this._endsuccs;
   }
 
+  /** `true` when the task is scheduled forward from its start. */
   forward(): boolean {
     return this.a("forward",) as boolean;
   }
 
+  /** Slot currently being reserved by the scheduler, or `null` before one. */
   currentSlotIdx(): number | null {
     return this._currentSlotIdx;
   }
 
+  /** Duration already elapsed, in working units. */
   doneDuration(): number {
     return this._doneDuration;
   }
 
+  /** Length already elapsed, in calendar units. */
   doneLength(): number {
     return this._doneLength;
   }
 
   /**
-   * Esforço já concluído pelo scheduler (1 unidade por slot reservado, com
-   * eficiência do recurso). O Ruby usa a variável de instância `@doneEffort`
-   * (TaskScenario.rb:1761-1762, 1944), NÃO o atributo `effortdone` — que é
-   * entrada do usuário via tracking cuts (TaskScenario.rb:2020-2026).
-   * Ler `a("effortdone")` retornava sempre 0 e impedia o encerramento de
-   * effortTasks (nunca propagavam `end`).
+   * Effort already completed by the scheduler (one unit per reserved slot, with
+   * the resource efficiency). Ruby uses the instance variable `@doneEffort`
+   * (TaskScenario.rb:1761-1762, 1944), NOT the `effortdone` attribute — which is
+   * user input through tracking cuts (TaskScenario.rb:2020-2026). Reading
+   * `a("effortdone")` always returned 0 and prevented effortTasks from
+   * finishing (they never propagated `end`).
    */
   doneEffort(): number {
     return this._doneEffort;
   }
 
+  /** Index of the `now` slot cached for this scheduling pass. */
   nowIdx(): number {
     return this._nowIdx;
   }
 
+  /** `true`/`false` once the start was decided, `null` while unknown. */
   startIsDetermed(): boolean | null {
     return this._startIsDetermed;
   }
 
+  /** `true`/`false` once the end was decided, `null` while unknown. */
   endIsDetermed(): boolean | null {
     return this._endIsDetermed;
   }
 
+  /** `true` once the start date has been propagated to dependencies. */
   startPropagated(): boolean {
     return this._startPropagated;
   }
 
+  /** `true` once the end date has been propagated to dependencies. */
   endPropagated(): boolean {
     return this._endPropagated;
   }
 
+  /** Limits attached to this task in this scenario. */
   allLimits(): unknown[] {
     return this._allLimits;
   }
@@ -1881,38 +2022,59 @@ export class TaskScenario extends ScenarioData {
     }
   }
 
+  /** Contention map: resource → number of slots it is fought over. */
   contendedResources(): Map<Task, Map<Resource, number>> {
     return this._contendedResources;
   }
 
+  /** Mandatory allocations (the ones that cannot be substituted). */
   mandatories(): Allocation[] {
     return this._mandatories;
   }
 
+  /**
+   * Dead-end flags for the start and end, in both directions.
+   *
+   * Index order is `[start-fwd, start-bwd, end-fwd, end-bwd]`; the scheduler
+   * sets them while looking for a slot that does not violate a constraint.
+   */
   deadEndFlags(): boolean[] {
     return this._deadEndFlags;
   }
 
+  /** Criticalness of this task within its dependency graph. */
   criticalness(): number {
     return this._criticalness;
   }
 
+  /** Criticalness along the whole path to the project end, or `null`. */
   pathcriticalness(): number | null {
     return this._pathcriticalness;
   }
 
+  /** Completion ratio in percent, or `null` before it was calculated. */
   complete(): number | null {
     return this._complete;
   }
 
+  /** Computed status symbol (`BLOCKED`, `WAITING`, …) or `""` before one. */
   status(): string {
     return this._status;
   }
 
+  /** Gauge symbol (`green`, `yellow`, `red`, …) or `null` when unset. */
   gauge(): string | null {
     return this._gauge;
   }
 
+  /**
+   * Reports an error through the handler and bumps the per-scenario counter.
+   *
+   * @param id Stable message id.
+   * @param text Human-readable description.
+   * @param sfi Source location or file name, when known.
+   * @param property Property the message belongs to, when known.
+   */
   override error(
     id: string,
     text: string,
@@ -1923,6 +2085,7 @@ export class TaskScenario extends ScenarioData {
     this._errors++;
   }
 
+  /** Number of errors recorded against this task in this scenario. */
   errors(): number {
     return this._errors;
   }
@@ -1936,11 +2099,11 @@ export class TaskScenario extends ScenarioData {
     // Check if the task has already been scheduled e.g. by propagateDate()
     if (this._scheduled) return true;
 
-    // RUBY-COMPAT-FIX: `prepareScheduling` roda **uma vez** por cenário, em
+    // RUBY-COMPAT-FIX: `prepareScheduling` runs **once** per scenario, in
     // `Project#prepareScenario` (Project.rb:1096) — `TaskScenario#schedule`
-    // (TaskScenario.rb:931) não a chama. Chamá-la aqui zerava as listas
-    // `startsuccs`/`endsuccs` já resolvidas pelo `Xref` da tarefa, e o Gantt
-    // perdia as dependências que saem dela (setas faltando).
+    // (TaskScenario.rb:931) does not call it. Calling it here cleared the
+    // `startsuccs`/`endsuccs` lists already resolved by the task `Xref`, and the
+    // Gantt lost the dependencies that leave it (missing arrows).
 
     // Compute the date of the next slot this task wants to have scheduled.
     if (this.forward()) {
@@ -1995,9 +2158,9 @@ export class TaskScenario extends ScenarioData {
    * Schedule a single slot. Returns false if the task has been completely scheduled.
    */
   scheduleSlot(): boolean {
-    // Ruby nunca chama `scheduleSlot` de uma tarefa já agendada: `schedule`
-    // retorna antes (`TaskScenario.rb:932`). O guard existe para chamadas
-    // diretas (APIs/testes) e evita operar com `currentSlotIdx` nulo.
+    // Ruby never calls `scheduleSlot` on an already scheduled task: `schedule`
+    // returns earlier (`TaskScenario.rb:932`). The guard exists for direct calls
+    // (APIs/tests) and avoids operating with a null `currentSlotIdx`.
     if (this._scheduled) return false;
     switch (this.durationType()) {
       case "effortTask":
@@ -2581,34 +2744,34 @@ export class TaskScenario extends ScenarioData {
     const task = this.getProperty() as Task;
     const scIdx = this.getScenarioIdx();
 
-    // Ruby TaskScenario.rb:410-430 — o passe de finish desce nos filhos
-    // primeiro (bottom-up) e mescla os `assignedresources` desta tarefa em
-    // cada pai imediato, com dedupe. Idempotente pela flag `_finishDone`
-    // (a recursão abaixo só corre uma vez por tarefa).
+    // Ruby TaskScenario.rb:410-430 — the finish pass descends into the children
+    // first (bottom-up) and merges this task's `assignedresources` into every
+    // immediate parent, with de-duplication. Idempotent through the `_finishDone`
+    // flag (the recursion below runs only once per task).
     if (!this._finishDone) {
-      // l.411-414: como os filhos terminam antes, a união já chega mesclada
-      // a este container e sobe um nível a cada chamada até a raiz.
+      // l.411-414: since the children finish first, the union already arrives
+      // merged into this container and climbs one level per call up to the root.
       for (const child of task.kids()) {
         if (!(child instanceof Task)) continue;
         child.scenarioData(scIdx,).finishScheduling();
       }
 
-      // l.416-423: mescla os recursos designados desta tarefa na lista
-      // `assignedresources` de cada pai imediato (dedupe). Como os filhos já
-      // terminaram, `this.a("assignedresources")` já embute a união dos
-      // descendentes. Fecha a divergência 14C.12.4.
-      // Obs.: o nullify de `@candidates/@mandatories/@allLimits` (Ruby
-      // l.427-429) é só liberação de memória / detector de uso acidental;
-      // `limitsOk()` lê `allocation.candidates`, então não os anulamos aqui
-      // (sem diferença de resultado).
+      // l.416-423: merges this task's assigned resources into the
+      // `assignedresources` list of every immediate parent (de-duplicated).
+      // Since the children already finished, `this.a("assignedresources")`
+      // already embeds the union of the descendants. Closes divergence 14C.12.4.
+      // Note: the nullify of `@candidates/@mandatories/@allLimits` (Ruby
+      // l.427-429) is only memory release / an accidental-use detector;
+      // `limitsOk()` reads `allocation.candidates`, so we do not null them here
+      // (no difference in the result).
       const assigned = (this.a("assignedresources",) as Resource[]) ?? [];
       if (assigned.length > 0) {
         for (const pTask of task.parents()) {
-          // `getForScenario` devolve `null` quando o pai (container) ainda não
-          // tem `assignedresources` gravado — o default de lista não é
-          // materializado. Coleta, mescla com dedupe e **grava de volta** via
-          // `forceForScenario` (escrita de runtime, um único cenário, sem a
-          // iteração cross-scenario de `setForScenario` no modo 0).
+          // `getForScenario` returns `null` when the parent (container) has no
+          // `assignedresources` stored yet — the list default is not
+          // materialised. Collect, merge with de-duplication and **write back**
+          // via `forceForScenario` (runtime write, a single scenario, without
+          // the cross-scenario iteration of `setForScenario` in mode 0).
           const parentList = (pTask.getForScenario(
             "assignedresources",
             scIdx,
@@ -2628,9 +2791,9 @@ export class TaskScenario extends ScenarioData {
       this._finishDone = true;
     }
 
-    // Housekeeping de conclusão (guard pré-existente): mantém a semântica
-    // original — corre uma única vez e apenas para tarefas ainda não marcadas
-    // como agendadas (containers nunca passam por `markAsScheduled`).
+    // Completion housekeeping (pre-existing guard): keeps the original
+    // semantics — runs only once and only for tasks not yet marked as scheduled
+    // (containers never go through `markAsScheduled`).
     if (this._scheduled) return;
     this.calcCompletion();
     this.calcStatus();
@@ -3003,12 +3166,12 @@ export class TaskScenario extends ScenarioData {
   /**
    * Compute completion percentage.
    *
-   * Usa o atributo de usuário `effortdone` (tracking cuts), NÃO o contador
-   * interno `_doneEffort` do scheduler. O Ruby faz o mesmo em
-   * `calcTaskCompletion` via `query_effortdone` / `@effortdone`
-   * (TaskScenario.rb:1347-1349, 2425-2437). O port ainda não implementa o
-   * cálculo por scoreboard (`getEffectiveWork(startIdx, endIdx)`), então
-   * mantém a aproximação direta pelo atributo.
+   * Uses the user attribute `effortdone` (tracking cuts), NOT the scheduler's
+   * internal `_doneEffort` counter. Ruby does the same in `calcTaskCompletion`
+   * via `query_effortdone` / `@effortdone` (TaskScenario.rb:1347-1349,
+   * 2425-2437). The port does not implement the scoreboard calculation
+   * (`getEffectiveWork(startIdx, endIdx)`) yet, so it keeps the direct
+   * approximation through the attribute.
    */
   calcCompletion(): void {
     const effort = this.a("effort",) as number;
@@ -3050,22 +3213,22 @@ export class TaskScenario extends ScenarioData {
   }
 
   /**
-   * Propaga data para tarefa dependente (versão fiel de 2 argumentos,
-   * `TaskScenario.rb#propagateDateToDep`, 2373-2398). Chamada pela cadeia
-   * de `propagateDate` sobre as listas de dependências já resolvidas.
+   * Propagates a date to a dependent task (faithful two-argument version,
+   * `TaskScenario.rb#propagateDateToDep`, 2373-2398). Called by the
+   * `propagateDate` chain over the already resolved dependency lists.
    *
    * @see docs/taskjuggler/lib/taskjuggler/TaskScenario.rb:propagateDateToDep
    */
   propagateDateToDep(task: Task, atEnd: boolean,): void;
   /**
-   * Variante sem argumentos que percorre `depends` e reinicia scheduling
-   * de dependentes já agendados (uso interno legado).
+   * Argument-less variant that walks `depends` and restarts the scheduling of
+   * already scheduled dependents (legacy internal use).
    *
-   * 14C.12.3: no Ruby este caminho só roda com `@start`/`@end` já definidos
-   * (a variante sem argumentos não existe em `TaskScenario.rb`); aqui a data
-   * própria pode estar indefinida (tarefa nunca agendada), então a ausência
-   * é tratada como "nada a comparar" em vez de estourar `TypeError` em
-   * `toSeconds()` de `null`.
+   * 14C.12.3: in Ruby this path only runs with `@start`/`@end` already defined
+   * (the argument-less variant does not exist in `TaskScenario.rb`); here the
+   * own date may be undefined (task never scheduled), so the absence is treated
+   * as "nothing to compare" instead of throwing `TypeError` in `toSeconds()` of
+   * `null`.
    */
   propagateDateToDep(): void;
   propagateDateToDep(task?: Task, atEnd?: boolean,): void {
@@ -3104,20 +3267,28 @@ export class TaskScenario extends ScenarioData {
     }
   }
 
+  /**
+   * Hands a decisive date to a dependent task.
+   *
+   * The dependent is skipped when it is already scheduled, is a container, or
+   * already knows the date of that end; otherwise the date enters its
+   * dependency set and may unlock it for scheduling.
+   */
   private propagateDateToDepInternal(task: Task, atEnd: boolean,): void {
     const dep = task.scenarioData(this.getScenarioIdx(),) as TaskScenario;
-    // Não propaga se a tarefa já está completamente agendada ou é container.
+    // Does not propagate when the task is already fully scheduled or is a
+    // container.
     if (dep._scheduled || (task.container?.() ?? false)) return;
 
-    // Não propaga se a tarefa já tem data para aquele end.
+    // Does not propagate when the task already has a date for that end.
     if (dep.a(atEnd ? "end" : "start",) !== null) return;
 
-    // Não propaga se a tarefa tem duration spec e o end a definir está na
-    // direção do scheduling.
+    // Does not propagate when the task has a duration spec and the end to set
+    // lies in the scheduling direction.
     if (dep.hasDurationSpec() && !(atEnd !== dep.forward())) return;
 
-    // Usa a data mais tardia/cedo possível apenas quando todas as demais
-    // dependências daquele end já foram determinadas.
+    // Uses the latest/earliest possible date only when every other dependency
+    // of that end has already been determined.
     const nDate = atEnd ? dep.latestEnd() : dep.earliestStart();
     if (nDate === null) return;
 
@@ -3125,18 +3296,18 @@ export class TaskScenario extends ScenarioData {
   }
 
   // ==================================================================
-  // Onda B2 — query_* portáveis (TaskScenario.rb:1290-1557) + helpers.
+  // Wave B2 — portable query_* (TaskScenario.rb:1290-1557) + helpers.
   //
-  // Os acessores de base já existem (turnover, getAllocatedTime,
-  // complete/status/gauge, preds/succs, assignedResources por cenário) ou são
-  // portados abaixo. O dispatch de `Query.process` alcança estes métodos na
-  // etapa i (`data[scIdx].query_X`).
+  // The base accessors already exist (turnover, getAllocatedTime,
+  // complete/status/gauge, preds/succs, assignedResources per scenario) or are
+  // ported below. The `Query.process` dispatch reaches these methods in
+  // stage i (`data[scIdx].query_X`).
   // ==================================================================
 
   /**
-   * Work efetivo por período (port fiel de `TaskScenario#getEffectiveWork
-   * (startIdx, endIdx, resource)` — Ruby l.1592-1619). Distingue-se de
-   * `getAllocatedTime` por somar o *effective work* dos recursos.
+   * Effective work per period (faithful port of `TaskScenario#getEffectiveWork
+   * (startIdx, endIdx, resource)` — Ruby l.1592-1619). Differs from
+   * `getAllocatedTime` by summing the *effective work* of the resources.
    */
   effWorkInPeriod(
     startIdx: number,
@@ -3185,15 +3356,15 @@ export class TaskScenario extends ScenarioData {
   }
 
   /**
-   * Intervalos de tempo fora (off-duty/leave) comuns aos recursos da tarefa.
+   * Time-off intervals (off-duty/leave) shared by the task's resources.
    *
-   * Uma folha herda os intervalos dos recursos designados (intersecção) ou,
-   * sem recursos, os leaves globais do projeto. Um container intersecta os
-   * intervalos dos filhos. O resultado sempre começa restrito ao intervalo
-   * `[project['start'], project['end']]`.
+   * A leaf inherits the intervals of the assigned resources (intersection) or,
+   * without resources, the project global leaves. A container intersects the
+   * children intervals. The result always starts restricted to the
+   * `[project['start'], project['end']]` interval.
    *
-   * Port fiel de `TaskScenario.rb#collectTimeOffIntervals` (l.1623-1649);
-   * omite o `@dCache` como em `getAllocatedTime`.
+   * Port faithful to `TaskScenario.rb#collectTimeOffIntervals` (l.1623-1649);
+   * omits the `@dCache` as in `getAllocatedTime`.
    */
   collectTimeOffIntervals(
     iv: TimeInterval,
@@ -3213,7 +3384,7 @@ export class TaskScenario extends ScenarioData {
     if (task.leaf()) {
       const resources = (this.a("assignedresources",) as Resource[]) ?? [];
       if (resources.length > 0) {
-        // Tarefa com recursos: usa os intervalos comuns a eles.
+        // Task with resources: uses the intervals common to all of them.
         for (const resource of resources) {
           il = il.intersect(
             resource.scenarioData(scIdx,).collectTimeOffIntervals(
@@ -3223,7 +3394,7 @@ export class TaskScenario extends ScenarioData {
           );
         }
       } else {
-        // Sem recursos designados: usa os leaves globais.
+        // No assigned resources: uses the global leaves.
         il = il.intersect(
           project.collectTimeOffIntervals?.(iv, minDuration,) ??
             new IntervalList<TimeInterval>(),
@@ -3243,8 +3414,8 @@ export class TaskScenario extends ScenarioData {
   }
 
   /**
-   * Recursos alocados no intervalo (port fiel de `assignedResources`,
-   * Ruby l.1731-1749), filtrando por `Resource#allocated?`.
+   * Resources allocated in the interval (port faithful to `assignedResources`,
+   * Ruby l.1731-1749), filtered by `Resource#allocated?`.
    */
   private taskAssignedResources(interval: TimeInterval | null,): Resource[] {
     const scIdx = this.getScenarioIdx();
@@ -3274,7 +3445,7 @@ export class TaskScenario extends ScenarioData {
     return list;
   }
 
-  /** Projeto com os helpers além de `ProjectLike` (dateToIdx force, carga). */
+  /** Project with the helpers beyond `ProjectLike` (dateToIdx force, load). */
   private projExt(): {
     dateToIdx(date: TjTime, forceIntoProject?: boolean,): number;
     convertToDailyLoad(seconds: number,): number;
@@ -3289,14 +3460,14 @@ export class TaskScenario extends ScenarioData {
     };
   }
 
-  /** Handlers RTF para o ramo `listItem` das listas de query. */
+  /** RTF handlers for the `listItem` branch of the query lists. */
   private rtfHandlers(): ReturnType<typeof RTFHandlers.create> {
     return RTFHandlers.create(
       this.project() as unknown as Parameters<typeof RTFHandlers.create>[0],
     );
   }
 
-  /** Renderiza um item de lista RichText (ramo `query.listItem`). */
+  /** Renders a RichText list item (the `query.listItem` branch). */
   private renderListItem(
     query: TaskScenarioQuery,
     property: PropertyTreeNode,
@@ -3313,7 +3484,7 @@ export class TaskScenario extends ScenarioData {
     return `<nowiki>${(rti as unknown as { to_s(): string }).to_s()}</nowiki>`;
   }
 
-  /** Pré/sucessor com data (port `generateDepencyListItem`, Ruby l.2712). */
+  /** Pre/successor with a date (port `generateDepencyListItem`, Ruby l.2712). */
   private generateDepencyListItem(
     query: TaskScenarioQuery,
     task: Task,
@@ -3328,7 +3499,7 @@ export class TaskScenario extends ScenarioData {
       `<nowiki>${task.name} (${task.fullId}) ${dep} ${date}</nowiki>`;
   }
 
-  /** Lista de tarefas com start (port `generateTaskList`, Ruby l.2727). */
+  /** List of tasks that have a start (port `generateTaskList`, Ruby l.2727). */
   private generateTaskList(
     taskList: Task[],
     query: TaskScenarioQuery,
@@ -3361,7 +3532,7 @@ export class TaskScenario extends ScenarioData {
     }
   }
 
-  /** Sobrepõe a janela da query? (prefixo comum de active/closed/open). */
+  /** Overlaps the query window? (common prefix of active/closed/open). */
   private overlapsQuery(query: TaskScenarioQuery,): boolean {
     const start = this.a("start",) as TjTime | null;
     const end = this.a("end",) as TjTime | null;
@@ -3371,7 +3542,7 @@ export class TaskScenario extends ScenarioData {
     );
   }
 
-  /** Tarefas ativas no período (port `activeTasks`, Ruby l.2534). */
+  /** Active tasks in the period (port `activeTasks`, Ruby l.2534). */
   private activeTasks(query: TaskScenarioQuery,): number {
     if (!this.overlapsQuery(query,)) return 0;
     const task = this.getProperty() as Task;
@@ -3393,7 +3564,7 @@ export class TaskScenario extends ScenarioData {
     return cnt;
   }
 
-  /** Tarefas fechadas no período (port `closedTasks`, Ruby l.2550). */
+  /** Closed tasks in the period (port `closedTasks`, Ruby l.2550). */
   private closedTasks(query: TaskScenarioQuery,): number {
     if (!this.overlapsQuery(query,)) return 0;
     const task = this.getProperty() as Task;
@@ -3411,7 +3582,7 @@ export class TaskScenario extends ScenarioData {
     return cnt;
   }
 
-  /** Tarefas abertas no período (port `openTasks`, Ruby l.2565). */
+  /** Open tasks in the period (port `openTasks`, Ruby l.2565). */
   private openTasks(query: TaskScenarioQuery,): number {
     if (!this.overlapsQuery(query,)) return 0;
     const task = this.getProperty() as Task;
@@ -3429,7 +3600,7 @@ export class TaskScenario extends ScenarioData {
     return cnt;
   }
 
-  /** Alguma predecessância própria ou de ancestrais (Ruby l.2216). */
+  /** Any predecessor on the task itself or on its ancestors (Ruby l.2216). */
   private hasPredecessors(): boolean {
     let t = this.getProperty() as Task | null;
     const scIdx = this.getScenarioIdx();
@@ -3440,7 +3611,7 @@ export class TaskScenario extends ScenarioData {
     return false;
   }
 
-  /** Alguma sucessância própria ou de ancestrais (Ruby l.2228). */
+  /** Any successor on the task itself or on its ancestors (Ruby l.2228). */
   private hasSuccessors(): boolean {
     let t = this.getProperty() as Task | null;
     const scIdx = this.getScenarioIdx();
@@ -3451,7 +3622,7 @@ export class TaskScenario extends ScenarioData {
     return false;
   }
 
-  /** Entrada (milestone sem pred), recursivo (Ruby l.2582). */
+  /** Input (milestone without pred), recursive (Ruby l.2582). */
   private collectInputs(
     foundInputs: Task[],
     includeChildren: boolean,
@@ -3487,7 +3658,7 @@ export class TaskScenario extends ScenarioData {
     }
   }
 
-  /** Saída (milestone sem succ), recursivo (Ruby l.2617). */
+  /** Output (milestone without succ), recursive (Ruby l.2617). */
   private collectTargets(
     foundTargets: Task[],
     includeChildren: boolean,
@@ -3525,7 +3696,7 @@ export class TaskScenario extends ScenarioData {
     }
   }
 
-  /** Ordena por start asc, desempate por seqno desc (Ruby setSorting). */
+  /** Sorts by start asc, tie-broken by seqno desc (Ruby setSorting). */
   private sortTaskList(list: Task[],): void {
     const scIdx = this.getScenarioIdx();
     list.sort((a, b,) => {
@@ -3539,30 +3710,39 @@ export class TaskScenario extends ScenarioData {
 
   // ---- os 24 query_* ----
 
+  /** `activetasks` column: number of active tasks under this one. */
   query_activetasks(query: TaskScenarioQuery,): void {
     const count = this.activeTasks(query,);
     query.sortable = query.numerical = count;
     query.string = `${Math.trunc(count,)}`;
   }
 
+  /** `closedtasks` column: number of closed tasks under this one. */
   query_closedtasks(query: TaskScenarioQuery,): void {
     const count = this.closedTasks(query,);
     query.sortable = query.numerical = count;
     query.string = `${Math.trunc(count,)}`;
   }
 
+  /** `competitors` column: number of tasks competing for the allocations. */
   query_competitorcount(query: TaskScenarioQuery,): void {
     const n = this._competitors.length;
     query.sortable = query.numerical = n;
     query.string = `${n}`;
   }
 
+  /**
+   * `complete` column: completion percentage.
+   *
+   * A value written by the tracking scenario wins; otherwise the ratio is
+   * recalculated on demand.
+   */
   query_complete(query: TaskScenarioQuery,): void {
-    // Ruby unifica o atributo de cenário `complete` com `@complete`: um valor
-    // gravado por `setForScenario` (ex.: trilha de tracking) é o que a consulta
-    // devolve; só quando não há valor declarado é que se recalcula via
-    // `calcCompletion`. Sem isto, relatórios que escrevem `complete` direto
-    // (iCal PERCENT-COMPLETE) deixariam de refletir a fonte gravada.
+    // Ruby unifies the scenario attribute `complete` with `@complete`: a value
+    // stored by `setForScenario` (e.g. a tracking trail) is what the query
+    // returns; only when there is no declared value does it recalculate via
+    // `calcCompletion`. Without this, reports that write `complete` directly
+    // (iCal PERCENT-COMPLETE) would stop reflecting the stored source.
     const declared = this.a("complete",) as number | null;
     let val = typeof declared === "number" ? declared : null;
     if (val === null) {
@@ -3577,6 +3757,7 @@ export class TaskScenario extends ScenarioData {
     query.string = `${Math.trunc(val,)}%`;
   }
 
+  /** `cost` column: turnover billed to `query.costAccount` in the interval. */
   query_cost(query: TaskScenarioQuery,): void {
     const account = query.costAccount
       ? (this.projExt().accounts.get(query.costAccount,) as Account | null)
@@ -3597,6 +3778,7 @@ export class TaskScenario extends ScenarioData {
     }
   }
 
+  /** `duration` column: `end - start` in days, scaled for display. */
   query_duration(query: TaskScenarioQuery,): void {
     const start = this.a("start",) as TjTime | null;
     const end = this.a("end",) as TjTime | null;
@@ -3607,6 +3789,12 @@ export class TaskScenario extends ScenarioData {
     query.string = query.scaleDuration(duration,);
   }
 
+  /**
+   * `effortdone` column: effort consumed so far.
+   *
+   * Uses the declared `effortdone` attribute when present, otherwise the work
+   * reported between project start and `now`.
+   */
   query_effortdone(query: TaskScenarioQuery,): void {
     const effortdone = this.a("effortdone",) as number | null;
     let effort: number;
@@ -3626,6 +3814,7 @@ export class TaskScenario extends ScenarioData {
     query.string = query.scaleLoad(effort,);
   }
 
+  /** `effortleft` column: work reported between `now` and project end. */
   query_effortleft(query: TaskScenarioQuery,): void {
     const p = this.projExt();
     const effort = this.effWorkInPeriod(
@@ -3637,6 +3826,7 @@ export class TaskScenario extends ScenarioData {
     query.string = query.scaleLoad(effort,);
   }
 
+  /** `effort` column: effective work in the query interval. */
   query_effort(query: TaskScenarioQuery,): void {
     const work = this.effWorkInPeriod(
       query.startIdx ?? 0,
@@ -3647,6 +3837,7 @@ export class TaskScenario extends ScenarioData {
     query.string = query.scaleLoad(work,);
   }
 
+  /** `followers` column: successor tasks with their dependency glyphs. */
   query_followers(query: TaskScenarioQuery,): void {
     const scIdx = this.getScenarioIdx();
     const tf = query.timeFormat ?? undefined;
@@ -3674,11 +3865,13 @@ export class TaskScenario extends ScenarioData {
     query.assignList(list,);
   }
 
+  /** `gauge` column: traffic-light symbol, calculated on demand. */
   query_gauge(query: TaskScenarioQuery,): void {
     if (this.gauge() === null || this.gauge() === undefined) this.calcGauge();
     query.string = this.gauge() ?? "";
   }
 
+  /** `headcount` column: summed efficiency of the assigned resources. */
   query_headcount(query: TaskScenarioQuery,): void {
     let headcount = 0;
     const scIdx = this.getScenarioIdx();
@@ -3696,6 +3889,7 @@ export class TaskScenario extends ScenarioData {
       : String(headcount,);
   }
 
+  /** `inputs` column: task list of everything this task depends on. */
   query_inputs(query: TaskScenarioQuery,): void {
     const found: Task[] = [];
     this.collectInputs(found, true, new Set(),);
@@ -3705,28 +3899,34 @@ export class TaskScenario extends ScenarioData {
     query.assignList(this.generateTaskList(list, query,),);
   }
 
+  /** `maxend` column: latest allowed end, or the empty marker. */
   query_maxend(query: TaskScenarioQuery,): void {
     this.queryDateLimit(query, this.a("maxend",) as TjTime | null,);
   }
 
+  /** `maxstart` column: latest allowed start, or the empty marker. */
   query_maxstart(query: TaskScenarioQuery,): void {
     this.queryDateLimit(query, this.a("maxstart",) as TjTime | null,);
   }
 
+  /** `minend` column: earliest allowed end, or the empty marker. */
   query_minend(query: TaskScenarioQuery,): void {
     this.queryDateLimit(query, this.a("minend",) as TjTime | null,);
   }
 
+  /** `minstart` column: earliest allowed start, or the empty marker. */
   query_minstart(query: TaskScenarioQuery,): void {
     this.queryDateLimit(query, this.a("minstart",) as TjTime | null,);
   }
 
+  /** `opentasks` column: number of open tasks under this one. */
   query_opentasks(query: TaskScenarioQuery,): void {
     const count = this.openTasks(query,);
     query.sortable = query.numerical = count;
     query.string = `${Math.trunc(count,)}`;
   }
 
+  /** `precursors` column: predecessor tasks with their dependency glyphs. */
   query_precursors(query: TaskScenarioQuery,): void {
     const scIdx = this.getScenarioIdx();
     const tf = query.timeFormat ?? undefined;
@@ -3754,6 +3954,7 @@ export class TaskScenario extends ScenarioData {
     query.assignList(list,);
   }
 
+  /** `resources` column: assigned resources actually allocated in the interval. */
   query_resources(query: TaskScenarioQuery,): void {
     const scIdx = this.getScenarioIdx();
     const task = this.getProperty() as Task;
@@ -3774,6 +3975,7 @@ export class TaskScenario extends ScenarioData {
     query.assignList(list,);
   }
 
+  /** `revenue` column: turnover credited to `query.revenueAccount`. */
   query_revenue(query: TaskScenarioQuery,): void {
     const account = query.revenueAccount
       ? (this.projExt().accounts.get(query.revenueAccount,) as Account | null)
@@ -3794,17 +3996,20 @@ export class TaskScenario extends ScenarioData {
     }
   }
 
+  /** `scheduling` column: `ASAP` for leaf tasks, empty for containers. */
   query_scheduling(query: TaskScenarioQuery,): void {
-    // Ruby: `query.string = 'ASAP' if @property.leaf?` (containers ficam sem
-    // string). Mantido fiel.
+    // Ruby: `query.string = 'ASAP' if @property.leaf?` (containers stay
+    // without a string). Kept faithful.
     if ((this.getProperty() as Task).leaf()) query.string = "ASAP";
   }
 
+  /** `status` column: status symbol, calculated on demand. */
   query_status(query: TaskScenarioQuery,): void {
     if (this.status() === "") this.calcStatus();
     query.string = this.status();
   }
 
+  /** `targets` column: task list of the milestones this task feeds. */
   query_targets(query: TaskScenarioQuery,): void {
     const found: Task[] = [];
     this.collectTargets(found, true, new Set(),);

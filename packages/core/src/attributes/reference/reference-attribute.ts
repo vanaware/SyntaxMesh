@@ -1,5 +1,5 @@
 /**
- * Atributo de referência (URL + label opcional).
+ * Reference attribute (URL + optional label).
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ReferenceAttribute
  */
@@ -11,19 +11,19 @@ import { AttributeBase, } from "../attribute-base.ts";
 import { RichText, } from "../../richtext/rich-text.ts";
 
 /**
- * Atributo de referência (URL + label opcional).
+ * Reference attribute (URL + optional label).
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ReferenceAttribute
  */
 export class ReferenceAttribute
   extends AttributeBase<{ url: string; label?: string }> {
   /**
-   * ID do tipo de atributo para ReferenceAttribute.
+   * Attribute type ID for ReferenceAttribute.
    */
   static readonly tjpId = "reference";
 
   /**
-   * Converte o valor para string.
+   * Converts the value to a string.
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ReferenceAttribute#to_s
    */
@@ -33,11 +33,11 @@ export class ReferenceAttribute
   }
 
   /**
-   * Converte o valor para RTI (Rich Text Intermediate).
+   * Converts the value to an RTI (Rich Text Intermediate).
    *
-   * Ruby: um link RichText `[url label]` (label opcional); valor vazio →
-   * `nil`. Sem function handlers (Ruby: `RichText.new(...)` default).
-   * Consumido pelos relatórios via `Query#to_rti` (14C.9).
+   * Ruby: a RichText link `[url label]` (label optional); empty value →
+   * `nil`. No function handlers (Ruby: default `RichText.new(...)`).
+   * Consumed by the reports via `Query#to_rti` (14C.9).
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ReferenceAttribute#to_rti
    */
@@ -50,7 +50,7 @@ export class ReferenceAttribute
   }
 
   /**
-   * Converte o valor para TJP (formato TaskJuggler).
+   * Converts the value to TJP (TaskJuggler format).
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ReferenceAttribute#to_tjp
    */
@@ -63,7 +63,7 @@ export class ReferenceAttribute
   }
 
   /**
-   * Obtém a URL do valor.
+   * Gets the URL of the value.
    */
   url(): string | null {
     const val = this.get();
@@ -71,7 +71,7 @@ export class ReferenceAttribute
   }
 
   /**
-   * Obtém o label do valor.
+   * Gets the label of the value.
    */
   label(): string | null {
     const val = this.get();

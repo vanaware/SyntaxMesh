@@ -1,12 +1,12 @@
 /**
- * TimeSheet — a folha de ponto de um recurso para um período.
+ * TimeSheet — the timesheet of one resource for one period.
  *
- * Port de `docs/taskjuggler/lib/taskjuggler/TimeSheets.rb` — classe
- * `TimeSheet` (l.244-386).
+ * Port of `docs/taskjuggler/lib/taskjuggler/TimeSheets.rb` — the `TimeSheet`
+ * class (l.244-386).
  *
- * Cada folha pertence a um `Resource` existente e cobre um `TimeInterval`.
- * Os registros (um por tarefa) são criados pelo parser e entram na folha pelo
- * próprio construtor de `TimeSheetRecord`.
+ * Each sheet belongs to an existing `Resource` and covers a `TimeInterval`. The
+ * records (one per task) are created by the parser and join the sheet through
+ * the `TimeSheetRecord` constructor itself.
  *
  * @see docs/syntaxmesh/fases/fase-18-time-status-sheets.md (18.3)
  */
@@ -17,22 +17,38 @@ import { MessageHandlerInstance, } from "../message-handler.ts";
 import type { TimeSheetRecord, } from "./time-sheet-record.ts";
 import type { ProjectTiming, } from "./project-timing.ts";
 
+/**
+ * Timesheet of a resource over one reporting period.
+ */
 export class TimeSheet {
+  /** Resource the sheet is filed by. */
   readonly resource: Resource;
+  /** Period covered by the sheet. */
   readonly interval: TimeInterval;
+  /** Index of the scenario the sheet is reported against. */
   readonly scenarioIdx: number;
+  /** Source location of the sheet in the project file, when known. */
   sourceFileInfo: SourceFileInfo | null = null;
-  /** True se ao menos um registro foi reportado como percentual. */
+  /** `true` when at least one record was reported as a percentage. */
   percentageUsed = false;
-  /** Registros da folha (um por tarefa). */
+  /** Records of the sheet (one per task). */
   readonly records: TimeSheetRecord[] = [];
 
+  /**
+   * Creates a timesheet.
+   *
+   * @param resource Resource the sheet is filed by.
+   * @param interval Period covered by the sheet.
+   * @param scenarioIdx Index of the scenario the sheet is reported against.
+   * @throws Error When the resource is invalid, the interval is missing or the
+   * scenario index is undefined.
+   */
   constructor(
     resource: Resource,
     interval: TimeInterval,
     scenarioIdx: number,
   ) {
-    // Ruby levanta `Illegal resource` / `Interval undefined` /
+    // Ruby raises `Illegal resource` / `Interval undefined` /
     // `Sceneario index undefined` (l.250-255).
     if (!(resource instanceof Resource)) {
       throw new Error("Illegal resource",);
@@ -49,8 +65,10 @@ export class TimeSheet {
   }
 
   /**
-   * Ruby `TimeSheet#<<(record)` (l.266-274): rejeita registros duplicados
-   * para a mesma tarefa.
+   * Ruby `TimeSheet#<<(record)` (l.266-274): rejects duplicate records for the
+   * same task and then appends the record.
+   *
+   * @param record Record to append.
    */
   appendRecord(record: TimeSheetRecord,): void {
     for (const r of this.records) {
@@ -65,18 +83,18 @@ export class TimeSheet {
   }
 
   /**
-   * Consistência da folha (Ruby `TimeSheet#check`, l.277-312).
+   * Sheet consistency check (Ruby `TimeSheet#check`, l.277-312).
    *
-   * Além de checar cada registro, o total reportado precisa bater com os
-   * slots realmente trabalháveis do período (`totalNetWorkingSlots`), com
-   * tolerância de 1 slot para arredondamento.
+   * Besides checking every record, the reported total must match the working
+   * slots actually available in the period (`totalNetWorkingSlots`), with a
+   * tolerance of one slot for rounding.
    */
   check(): void {
     let totalSlots = 0;
     for (const record of this.records) {
       record.check();
-      // Extensão 18.17.2: a quantidade reportada de um material não é tempo,
-      // então fica fora do total que é comparado com os slots do período.
+      // Extension 18.17.2: the reported quantity of a material is not time, so
+      // it stays out of the total compared with the period slots.
       if (record.material === null) totalSlots += record.work ?? 0;
     }
 
@@ -101,7 +119,7 @@ export class TimeSheet {
     );
     if (efficiency > 0.0) {
       const targetSlots = this.totalNetWorkingSlots();
-      // Erro de arredondamento aceitável no total reportado.
+      // Acceptable rounding error in the reported total.
       const delta = 1;
       if (totalSlots < targetSlots - delta) {
         this.error(
@@ -127,12 +145,19 @@ export class TimeSheet {
     }
   }
 
-  /** Registros cujo alvo é um material (extensão 18.17.1). */
+  /**
+   * Records whose target is a material (extension 18.17.1).
+   *
+   * @returns The subset of `records` that target a material.
+   */
   get materialRecords(): TimeSheetRecord[] {
     return this.records.filter((record,) => record.material !== null);
   }
 
-  /** Delega o delta de cada registro (Ruby `TimeSheet#warnOnDelta`, l.314). */
+  /**
+   * Delegates the delta check of every record (Ruby `TimeSheet#warnOnDelta`,
+   * l.314).
+   */
   warnOnDelta(): void {
     const project = this.resource.project as unknown as ProjectTiming;
     const startIdx = project.dateToIdx(this.interval.start,);
@@ -144,12 +169,14 @@ export class TimeSheet {
   }
 
   /**
-   * Total de slots potencialmente trabalháveis no período — independe do
-   * recurso (Ruby `TimeSheet#totalGrossWorkingSlots`, l.326-333).
+   * Slots potentially workable in the period, regardless of the resource (Ruby
+   * `TimeSheet#totalGrossWorkingSlots`, l.326-333).
+   *
+   * @returns The gross number of working slots.
    */
   totalGrossWorkingSlots(): number {
     const project = this.resource.project as unknown as ProjectTiming;
-    // Número de semanas no período reportado.
+    // Number of weeks in the reported period.
     const weeksToReport = (this.interval.end.toSeconds() -
       this.interval.start.toSeconds()) / (60 * 60 * 24 * 7);
     return this.daysToSlots(
@@ -158,8 +185,10 @@ export class TimeSheet {
   }
 
   /**
-   * Slots realmente trabalháveis do recurso no período: alocados + livres
+   * Slots actually workable by the resource in the period: allocated + free
    * (Ruby `TimeSheet#totalNetWorkingSlots`, l.337-343).
+   *
+   * @returns The net number of working slots.
    */
   totalNetWorkingSlots(): number {
     const project = this.resource.project as unknown as ProjectTiming;
@@ -171,26 +200,44 @@ export class TimeSheet {
   }
 
   /**
-   * Converte percentual de alocação em slots (Ruby `TimeSheet#percentToSlots`,
-   * l.346-349) e marca `percentageUsed` — o que muda a unidade das mensagens
-   * de total.
+   * Converts an allocation percentage into slots (Ruby
+   * `TimeSheet#percentToSlots`, l.346-349) and sets `percentageUsed`, which
+   * changes the unit of the total messages.
+   *
+   * @param value Percentage to convert.
+   * @returns The equivalent number of slots.
    */
   percentToSlots(value: number,): number {
     this.percentageUsed = true;
     return Math.trunc(this.totalGrossWorkingSlots() * value,);
   }
 
-  /** Fração (0.0-1.0) que `slots` representa do total bruto. */
+  /**
+   * Fraction (0.0-1.0) that `slots` represents of the gross total.
+   *
+   * @param slots Number of slots.
+   * @returns The fraction of the gross total.
+   */
   slotsToPercent(slots: number,): number {
     return slots / this.totalGrossWorkingSlots();
   }
 
-  /** Converte slots em dias de trabalho. */
+  /**
+   * Converts slots into working days.
+   *
+   * @param slots Number of slots.
+   * @returns The equivalent number of working days.
+   */
   slotsToDays(slots: number,): number {
     return this.resource.project.slotsToDays(slots,);
   }
 
-  /** Converte dias de trabalho em slots. */
+  /**
+   * Converts working days into slots.
+   *
+   * @param days Number of working days.
+   * @returns The equivalent number of slots.
+   */
   daysToSlots(days: number,): number {
     const project = this.resource.project as unknown as ProjectTiming;
     const daily = project.dailyWorkingHours();
@@ -198,7 +245,14 @@ export class TimeSheet {
     return Math.trunc((days * 60 * 60 * daily) / granularity,);
   }
 
-  /** Erro associado ao recurso da folha (Ruby `TimeSheet#error`, l.367). */
+  /**
+   * Reports an error attached to the resource of the sheet (Ruby
+   * `TimeSheet#error`, l.367).
+   *
+   * @param id Message identifier.
+   * @param text Message text.
+   * @param sourceFileInfo Source location, defaulting to the sheet's own.
+   */
   error(
     id: string,
     text: string,
@@ -214,7 +268,14 @@ export class TimeSheet {
     );
   }
 
-  /** Aviso associado ao recurso da folha (Ruby `TimeSheet#warning`, l.372). */
+  /**
+   * Reports a warning attached to the resource of the sheet (Ruby
+   * `TimeSheet#warning`, l.372).
+   *
+   * @param id Message identifier.
+   * @param text Message text.
+   * @param sourceFileInfo Source location of the warning.
+   */
   warning(
     id: string,
     text: string,
@@ -231,8 +292,11 @@ export class TimeSheet {
   }
 
   /**
-   * Formata um total em slots na unidade usada pela folha — `%` quando algum
-   * registro foi percentual, dias caso contrário (Ruby `#workWithUnit`).
+   * Formats a total in slots using the unit of the sheet — `%` when some record
+   * was a percentage, days otherwise (Ruby `#workWithUnit`).
+   *
+   * @param slots Number of slots to format.
+   * @returns The formatted total.
    */
   private workWithUnit(slots: number,): string {
     if (this.percentageUsed) {

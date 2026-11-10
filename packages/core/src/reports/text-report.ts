@@ -1,12 +1,12 @@
 /**
- * TextReport (Fase 14.17) — o tipo mais básico de relatório.
+ * TextReport (phase 14.17) — the most basic kind of report.
  *
- * Porta fiel de `docs/taskjuggler/lib/taskjuggler/reports/TextReport.rb`.
- * Cinco blocos de RichText (header, left, center, right, footer); as
- * larguras/padding das colunas laterais são calculados conforme a presença
- * de cada bloco. Não tem conversão para CSV (avisa `text_report_no_csv`).
+ * Faithful port of `docs/taskjuggler/lib/taskjuggler/reports/TextReport.rb`.
+ * Five RichText blocks (header, left, center, right, footer); the widths and
+ * paddings of the side columns are computed from the presence of each block.
+ * It has no CSV conversion (it emits the `text_report_no_csv` warning).
  *
- * O conteúdo é registrado na fábrica de conteúdo (14.11) sob `textreport`.
+ * The content is registered in the content factory (14.11) under `textreport`.
  *
  * @see docs/syntaxmesh/fases/fase-14-relatorios-tarefas.md (14.17)
  */
@@ -18,26 +18,36 @@ import { ReportBase, } from "./report-base.ts";
 import { markdownSections, } from "./markdown.ts";
 import { registerContentFactory, } from "../model/report-content.ts";
 
+/** Renders the `textreport` page with its RichText blocks. */
 export class TextReport extends ReportBase {
-  /** Larguras (%) das colunas esquerda/centro/direita (0 = flexível). */
+  /** Width (%) of the left column (`0` means flexible). */
   private lWidth = 0;
+  /** Width (%) of the center column (`0` means flexible). */
   private cWidth = 0;
+  /** Width (%) of the right column (`0` means flexible). */
   private rWidth = 0;
-  /** Paddings (%) à direita de cada coluna. */
+  /** Right padding (%) of the left column. */
   private lPadding = 0;
+  /** Right padding (%) of the center column. */
   private cPadding = 0;
+  /** Right padding (%) of the right column. */
   private rPadding = 0;
 
+  /**
+   * Creates the text report generator.
+   *
+   * @param report Report node the generator renders.
+   */
   constructor(report: Report,) {
     super(report,);
   }
 
-  /** Calcula as larguras conforme a presença das seções (sem `a('center')`). */
+  /** Computes the widths from the presence of the sections (no `a('center')`). */
   override generateIntermediateFormat(): void {
-    // Propaga o Query corrente aos blocos de RichText (ReportBase).
+    // Propagates the current Query to the RichText blocks (ReportBase).
     super.generateIntermediateFormat();
 
-    // A width of 0 means, the columns flexible.
+    // A width of 0 means the column is flexible.
     if (this.a("center",)) {
       if (this.a("left",) && this.a("right",)) {
         this.lWidth = this.rWidth = 20;
@@ -64,7 +74,7 @@ export class TextReport extends ReportBase {
     }
   }
 
-  /** Header, tabela de colunas (se houver blocos laterais) e footer. */
+  /** Header, column table (when there are side blocks) and footer. */
   to_html(): XMLElementLike[] {
     const html: XMLElementLike[] = [];
 
@@ -108,7 +118,7 @@ export class TextReport extends ReportBase {
     return html;
   }
 
-  /** Um textreport não pode ser convertido em CSV (fiel a Ruby). */
+  /** A `textreport` cannot be converted into CSV (faithful to Ruby). */
   to_csv(): null {
     MessageHandlerInstance.instance.warning(
       "text_report_no_csv",
@@ -123,9 +133,10 @@ export class TextReport extends ReportBase {
   }
 
   /**
-   * Documento Markdown (extensão SyntaxMesh — adendo §10): header, as colunas
-   * left/center/right viram seções e o footer fecha. O texto puro do
-   * TaskJuggler não tem equivalente — aqui a ordem de leitura é preservada.
+   * Markdown document (SyntaxMesh extension — addendum §10): the header, the
+   * left/center/right columns become sections and the footer closes the page.
+   * TaskJuggler's plain text has no equivalent — here the reading order is
+   * preserved.
    */
   to_markdown(): string {
     return markdownSections([
@@ -138,7 +149,7 @@ export class TextReport extends ReportBase {
   }
 }
 
-// Registra o conteúdo de `textreport` na fábrica (14.11).
+// Registers the `textreport` content in the factory (14.11).
 registerContentFactory(
   "textreport",
   (report: unknown,): TextReport => new TextReport(report as Report,),

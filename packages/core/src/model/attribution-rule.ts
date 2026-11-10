@@ -1,7 +1,7 @@
 /**
- * Regra de atribuição de custo.
+ * Cost attribution rule.
  *
- * Define como um custo é associado a uma conta.
+ * Defines how a cost is associated with an account.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Charge.rb
  */

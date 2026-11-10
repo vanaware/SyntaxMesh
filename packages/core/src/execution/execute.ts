@@ -1,17 +1,17 @@
 /**
- * `execute` — ponto único de entrada das chamadas de linha de comando
- * (Fase 24 — ADR 034, adendo v2.1 §3.1/§3.4).
+ * `execute` — the single entry point for command-line calls (phase 24 —
+ * ADR 034, appendix v2.1 §3.1/§3.4).
  *
- * Porta o fluxo de `apps/Tj3.rb#appMain` (l.171-228) **sem** argv, sem FS, sem
- * `exit`: recebe o conteúdo dos arquivos inline, resolve `include` por *lookup*
- * em memória, roda parse → gates → schedule → relatórios e devolve o envelope
- * com `exitCode` como **dado**.
+ * Ports the flow of `apps/Tj3.rb#appMain` (l.171-228) **without** argv, without a
+ * filesystem and without `exit`: it takes the file contents inline, resolves
+ * `include` by in-memory *lookup*, runs parse → gates → schedule → reports and
+ * returns the envelope with the `exitCode` as **data**.
  *
- * Isolamento por chamada (requisito do uso em servidor — adendo §3.6):
- * `MessageHandlerInstance` é singleton de processo, então cada `execute` repõe
- * o handler (`reset`) e usa uma instância `TaskJuggler` própria; o `DataCache`
- * é limpo ao final. Chamadas concorrentes no mesmo processo não compartilham
- * projeto nem mensagens.
+ * Per-call isolation (a requirement for server use — appendix §3.6):
+ * `MessageHandlerInstance` is a process singleton, so every `execute` resets the
+ * handler and uses its own `TaskJuggler` instance; the `DataCache` is flushed at
+ * the end. Concurrent calls in the same process share neither project nor
+ * messages.
  *
  * @see docs/taskjuggler/lib/taskjuggler/apps/Tj3.rb
  * @see docs/syntaxmesh/fases/fase-24-cli.md §5.2/§5.3/§5.5
@@ -47,10 +47,10 @@ import type {
 import type { Project, } from "../model/project.ts";
 
 /**
- * Monta o provedor de conteúdo que faz *lookup* da lista do request.
+ * Builds the content provider that does the *lookup* into the request list.
  *
- * Sem disco e sem provedor externo: um `include` ausente vira erro de arquivo
- * (`bad_include`, fiel ao `tj3`), nunca exceção de FS.
+ * No disk and no external provider: a missing `include` becomes a file error
+ * (`bad_include`, faithful to `tj3`), never a filesystem exception.
  */
 function lookupProvider(files: ExecutionRequest["files"],) {
   const byPath = new Map<string, string>();
@@ -67,17 +67,18 @@ function lookupProvider(files: ExecutionRequest["files"],) {
 }
 
 /**
- * Executa o request e devolve o envelope.
+ * Executes the request and returns the envelope.
  *
- * Ordem fiel ao `tj3`: `--version`/`--help` respondem sozinhos (sem projeto),
- * `--check-syntax` e `--list-reports` param antes da agenda, `--no-reports`
- * agenda e para, e o gate de erros pode ser dispensado por `forceReports`.
+ * Order faithful to `tj3`: `--version`/`--help` answer on their own (without a
+ * project), `--check-syntax` and `--list-reports` stop before scheduling,
+ * `--no-reports` schedules and stops, and the error gate can be waived by
+ * `forceReports`.
  *
- * **Serialização por processo:** chamadas concorrentes entram numa fila — o
- * `MessageHandler`/`DataCache` são singletons de processo, então executar duas
- * ao mesmo tempo misturaria mensagens. O adendo §3.6 sanciona exatamente isso
- * ("servidores concorrentes serializam chamadas por instância"); quem precisa
- * de paralelismo real usa uma instância/worker por requisição.
+ * **Per-process serialization:** concurrent calls enter a queue — the
+ * `MessageHandler`/`DataCache` are process singletons, so running two at once
+ * would mix messages. Appendix §3.6 sanctions exactly this ("concurrent servers
+ * serialize calls per instance"); real parallelism needs one instance/worker per
+ * request.
  */
 export function execute(
   request: ExecutionRequest,
@@ -90,29 +91,30 @@ export function execute(
   return result;
 }
 
-/** Fila de execução do processo (ver `execute`). */
+/** Process execution queue (see `execute`). */
 let executeQueue: Promise<unknown> = Promise.resolve();
 
 /**
- * Projeto carregado pela última chamada de {@link execute}.
+ * Project loaded by the latest {@link execute} call.
  *
- * Conveniência **in-process** (plano §5.5 ponto 9), nunca contrato: o envelope
- * é o resultado oficial. A CLI usa isto só para o resumo do projeto (24.4.5) e
- * a PWA pode reaproveitar; consumidores remotos (worker/HTTP) não têm acesso.
+ * An **in-process** convenience (plan §5.5 item 9), never a contract: the
+ * envelope is the official result. The CLI uses it only for the project summary
+ * (24.4.5) and the PWA may reuse it; remote consumers (worker/HTTP) have no
+ * access.
  */
 let lastProject: Project | null = null;
 
-/** Projeto da última `execute` concluída (ou `null`). */
+/** Project of the last completed `execute` (or `null`). */
 export function lastExecutedProject(): Project | null {
   return lastProject;
 }
 
-/** Corpo do `execute`, sempre chamado com a fila livre. */
+/** Body of `execute`, always called with a free queue. */
 async function executeRequest(
   request: ExecutionRequest,
 ): Promise<ExecutionResult> {
   const handler = MessageHandlerInstance.instance;
-  // Isolamento por chamada: o handler é singleton de processo.
+  // Per-call isolation: the handler is a process singleton.
   handler.reset();
   handler.abortOnWarning = request.abortOnWarnings === true;
   lastProject = null;
@@ -120,17 +122,17 @@ async function executeRequest(
   const options = echoOptions(request,);
   const results: ExecutionResults = {};
 
-  // `--version` / `--help` não abrem projeto: no Ruby o `on_tail` do
-  // `Tj3AppBase` imprime e **sai**, mesmo com arquivos na linha de comando.
+  // `--version` / `--help` do not open a project: in Ruby the `on_tail` of
+  // `Tj3AppBase` prints and **exits**, even with files on the command line.
   if (options.version) results.version = versionSection();
   if (options.help) results.help = helpSection();
   if (options.version || options.help) {
     return buildEnvelope(options, handler, results, EXIT_OK,);
   }
 
-  // `syntaxmesh man` (24.9.1–24.9.3): documentação de sintaxe do `doc-core`
-  // (Fase 22). Não abre projeto, não grava nada — devolve texto e, no formato
-  // `html`, o mapa de arquivos do manual. A escrita é da CLI (24.5).
+  // `syntaxmesh man` (24.9.1–24.9.3): `doc-core` syntax documentation (phase
+  // 22). It opens no project and writes nothing — it returns text and, in the
+  // `html` format, the manual's file map. Writing is the CLI's job (24.5).
   if (options.man !== null) {
     const output = generateMan({
       format: options.man.format,
@@ -138,9 +140,9 @@ async function executeRequest(
       color: options.man.color ?? false,
       ignoreOld: options.man.ignoreOld ?? false,
     },);
-    // A consulta de documentação não é um projeto: `--abort-on-warnings` e o
-    // `trapSetup` do parse não valem aqui (o Ruby os trata em `tj3man`, um
-    // programa separado). `critical` registra sem levantar.
+    // The documentation query is not a project: `--abort-on-warnings` and the
+    // parse `trapSetup` do not apply here (Ruby handles them in `tj3man`, a
+    // separate program). `critical` records without raising.
     const abortOnWarning = handler.abortOnWarning;
     handler.abortOnWarning = false;
     try {
@@ -187,16 +189,16 @@ async function executeRequest(
     return buildEnvelope(options, handler, results, EXIT_ERROR,);
   }
 
-  // Conveniência in-process para o resumo da CLI (24.4.5).
+  // In-process convenience for the CLI summary (24.4.5).
   lastProject = tj.project;
 
-  // `--check-syntax`: só o parse conta; sem agenda (Ruby l.190).
+  // `--check-syntax`: only the parse counts; no schedule (Ruby l.190).
   if (options.checkSyntax) {
     results.check = checkSection(true,);
     return buildEnvelope(options, handler, results, EXIT_OK,);
   }
 
-  // `--list-reports` lê a árvore parseada e não precisa de agenda (plano §5.2).
+  // `--list-reports` reads the parsed tree and needs no schedule (plan §5.2).
   if (options.listReports !== null) {
     const project = tj.project!;
     results.listReports = listReportsSection(
@@ -212,20 +214,20 @@ async function executeRequest(
     );
   }
 
-  // Agenda primeiro (Ruby l.192-194): as operações abaixo dependem dela.
+  // Schedule first (Ruby l.192-194): the operations below depend on it.
   let scheduled = false;
   try {
     scheduled = tj.schedule();
   } catch (_error) {
     scheduled = false;
   }
-  // Falha de agenda só é fatal sem `--force-reports`.
+  // A scheduling failure is only fatal without `--force-reports`.
   if (!scheduled && !options.forceReports) {
     return buildEnvelope(options, handler, results, EXIT_ERROR,);
   }
 
-  // Verificação de folha contra o projeto (Ruby l.196-203) — antes do freeze,
-  // como no `tj3`: o `check-ts` só relê o projeto, nunca gera artefato.
+  // Sheet check against the project (Ruby l.196-203) — before the freeze, as in
+  // `tj3`: `check-ts` only re-reads the project and never produces an artifact.
   if (options.app === "check-ts" || options.app === "check-ss") {
     const outcome = checkSheetSection(tj, options.app, request.appOptions,);
     results.sheet = outcome.section;
@@ -238,9 +240,9 @@ async function executeRequest(
     );
   }
 
-  // `--freeze` (Ruby l.205-209): gera header + bookings como **dado**; a
-  // escrita dos dois arquivos é da CLI (24.9.5). O pipeline de relatórios
-  // continua depois, como no Ruby.
+  // `--freeze` (Ruby l.205-209): produces header + bookings as **data**;
+  // writing the two files is the CLI's job (24.9.5). The report pipeline
+  // continues afterwards, as in Ruby.
   if (options.freeze !== null) {
     const frozen = tj.freeze(
       options.freeze.date ?? null,
@@ -252,10 +254,10 @@ async function executeRequest(
     }
   }
 
-  // Apps de email da F18 (24.10.1–24.10.4). No Ruby são programas próprios
-  // (`tj3ts_sender`, `tj3ss_receiver`, …); aqui rodam sobre o
-  // `MemoryFileStore` semeado com os dados do request e a chamada termina ali
-  // (ADR 036/037). O `request` é a fonte: o eco só carrega caminhos.
+  // Phase 18 email apps (24.10.1–24.10.4). In Ruby they are separate programs
+  // (`tj3ts_sender`, `tj3ss_receiver`, …); here they run over the
+  // `MemoryFileStore` seeded with the request data and the call ends there
+  // (ADR 036/037). The `request` is the source: the echo only carries paths.
   if (options.app !== null) {
     const outcome = await runSheetSection(
       tj.project!,
@@ -280,8 +282,8 @@ async function executeRequest(
     );
   }
 
-  // Gate do plano §5.5.3: com erros anteriores não se renderiza, a menos de
-  // `--force-reports` (que a matriz do Ruby usa contra a falha de agenda).
+  // Plan §5.5.3 gate: with earlier errors nothing is rendered, unless
+  // `--force-reports` (which the Ruby matrix uses against the schedule failure).
   if (handler.errors > 0 && !options.forceReports) {
     return buildEnvelope(options, handler, results, EXIT_ERROR,);
   }
@@ -297,7 +299,8 @@ async function executeRequest(
   },);
   results.reports = section;
 
-  // Cache de dados é limpo ao final de cada execução (Ruby `generateReports`).
+  // The data cache is flushed at the end of every execution (Ruby
+  // `generateReports`).
   DataCache.instance.flush();
 
   const failed = !section.ok || handler.errors > 0;

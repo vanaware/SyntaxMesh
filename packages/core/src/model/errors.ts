@@ -1,12 +1,17 @@
 /**
- * Erro de execução — aborta o processamento.
+ * Error raised when processing must abort.
  *
- * Equivalente ao `TjRuntimeError` do Ruby (MessageHandler.rb l.25): é erro
- * de programação / abort imediato. NÃO é pego pelo `catch` de
- * TextParser#parse (que só trata `TjError` ≈ TjException); propaga até o
- * topo, onde o driver o trata como falha do parse.
+ * The equivalent of Ruby's `TjRuntimeError` (MessageHandler.rb l.25): it signals
+ * a programming error or an immediate abort. It is deliberately **not** caught
+ * by `TextParser#parse`, which only handles `TjError` (≈ `TjException`); it
+ * propagates to the top, where the driver reports a failed parse.
  */
 export class TjRuntimeError extends Error {
+  /**
+   * Creates the error.
+   *
+   * @param message Human-readable description.
+   */
   constructor(message: string,) {
     super(message,);
     this.name = "TjRuntimeError";
@@ -14,50 +19,70 @@ export class TjRuntimeError extends Error {
 }
 
 /**
- * Erro base para erros de parse recuperáveis (≈ `TjException` do Ruby):
- * `TextParser#parse` captura e loga como `critical('parse', ...)`.
+ * Base class of recoverable parse errors (≈ Ruby's `TjException`).
+ *
+ * `TextParser#parse` catches these and logs them as `critical('parse', …)`,
+ * which lets the parser continue with the next rule instead of aborting.
  */
 export class TjError extends TjRuntimeError {
+  /**
+   * Creates the error.
+   *
+   * @param message Human-readable description.
+   */
   constructor(message: string,) {
     super(message,);
     this.name = "TjError";
   }
 }
 
-/**
- * Erro de argumento inválido — usado para validação de parâmetros.
- */
+/** Error raised when an argument is invalid or missing. */
 export class TjArgumentError extends TjRuntimeError {
+  /**
+   * Creates the error.
+   *
+   * @param message Human-readable description.
+   */
   constructor(message: string,) {
     super(message,);
     this.name = "TjArgumentError";
   }
 }
 
-/**
- * Erro interno — usado para situações impossíveis.
- */
+/** Error raised for states the implementation considers impossible. */
 export class TjInternalError extends TjRuntimeError {
+  /**
+   * Creates the error.
+   *
+   * @param message Human-readable description.
+   */
   constructor(message: string,) {
     super(message,);
     this.name = "TjInternalError";
   }
 }
 
-/**
- * Erro quando um atributo tenta sobrescrever um valor já definido.
- */
+/** Error raised when an attribute tries to overwrite a value already set. */
 export class AttributeOverwrite extends TjArgumentError {
+  /**
+   * Creates the error.
+   *
+   * @param attributeId Attribute that was written twice.
+   */
   constructor(attributeId: string,) {
     super(`Attribute '${attributeId}' já está definido`,);
     this.name = "AttributeOverwrite";
   }
 }
 
-/**
- * Erro para métodos que dependem de fases futuras.
- */
+/** Error raised by methods that depend on a phase not implemented yet. */
 export class NotYetImplementedError extends TjRuntimeError {
+  /**
+   * Creates the error.
+   *
+   * @param phase Phase that owns the missing behaviour.
+   * @param method Method that was called.
+   */
   constructor(phase: string, method: string,) {
     super(`O método '${method}' depende da Fase ${phase}`,);
     this.name = "NotYetImplementedError";

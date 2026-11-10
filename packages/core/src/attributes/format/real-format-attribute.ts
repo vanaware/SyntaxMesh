@@ -1,5 +1,5 @@
 /**
- * Atributo de formato real.
+ * Real format attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:RealFormatAttribute
  */
@@ -10,18 +10,18 @@ import { type AttributeDefinition, } from "../attribute-definition.ts";
 import { AttributeBase, } from "../attribute-base.ts";
 
 /**
- * Atributo de formato real.
+ * Real format attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:RealFormatAttribute
  */
 export class RealFormatAttribute extends AttributeBase<unknown> {
   /**
-   * ID do tipo de atributo para RealFormatAttribute.
+   * Attribute type ID for RealFormatAttribute.
    */
   static readonly tjpId = "realformat";
 
   /**
-   * Converte o valor para TJP (formato TaskJuggler).
+   * Converts the value to TJP (TaskJuggler format).
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:RealFormatAttribute#to_tjp
    */

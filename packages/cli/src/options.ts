@@ -1,24 +1,27 @@
 /**
- * `options.ts` — tradução pura de `argv` para `ExecutionRequest` (24.3).
+ * `options.ts` — pure translation of `argv` into an `ExecutionRequest` (24.3).
  *
- * Esta camada **não** toca processo, disco ou terminal: recebe a lista de
- * argumentos e devolve dados. A leitura de arquivos (`--config`, master +
- * `include`s) é da {@link ./cli.ts}, com `io.readText`.
+ * This layer does **not** touch the process, the disk or the terminal: it takes
+ * the argument list and returns data. Reading files (`--config`, master plus
+ * `include`s) belongs to {@link ./cli.ts}, through `io.readText`.
  *
- * O mapa de flags é o do plano §5.2. Três famílias ficam **fora** do request:
- *  - `--silent`/`--no-color` são do renderer (24.4), nunca do envelope;
- *  - `--config <FILE>` vira `configFile`, porque ler YAML é I/O;
- *  - `--check-time-sheet`/`--check-status-sheet` e `--from` viram caminhos a
- *    ler (`sheetFile`/`messageFile`), pelo mesmo motivo.
+ * The flag map is the one in plan §5.2. Three families stay **out** of the
+ * request:
+ *  - `--silent`/`--no-color` belong to the renderer (24.4), never to the
+ *    envelope;
+ *  - `--config <FILE>` becomes `configFile`, because reading YAML is I/O;
+ *  - `--check-time-sheet`/`--check-status-sheet` and `--from` become paths to
+ *    read (`sheetFile`/`messageFile`), for the same reason.
  *
- * Os cinco apps de sheet da Fase 18 entram como **subcomandos** (`ts send`,
- * `ts receive`, `ts summary`, `ss send`, `ss receive`): é a forma de juntar
- * num programa só os binários `tj3ts_*`/`tj3ss_*` do Ruby, sem inventar
- * flags que o `tj3` não tem. As flags de cada app (`-r`, `--force`, `--digest`, …)
- * seguem a tabela do `Tj3SheetAppBase` e dos cinco `apps/Tj3{T,S}s*.rb`.
+ * The five sheet apps of phase 18 come in as **subcommands** (`ts send`,
+ * `ts receive`, `ts summary`, `ss send`, `ss receive`): that is how the Ruby
+ * `tj3ts_*`/`tj3ss_*` binaries are merged into a single program without
+ * inventing flags `tj3` does not have. The flags of each app (`-r`, `--force`,
+ * `--digest`, …) follow the `Tj3SheetAppBase` table and the five
+ * `apps/Tj3{T,S}s*.rb` files.
  *
- * Flags adiadas (`--debug*`) **erram** com `not yet available` — nunca são
- * aceitas em silêncio (regra da fase).
+ * Deferred flags (`--debug*`) **fail** with `not yet available` — they are never
+ * accepted silently (phase rule).
  *
  * @see docs/syntaxmesh/fases/fase-24-cli.md §5.2
  * @see docs/syntaxmesh/fases/fase-24-cli-tarefas.md (24.3/24.9.5/24.10.1–4)
@@ -33,58 +36,59 @@ import type {
 } from "@vanaware/syntaxmesh";
 import { OPTION_SPECS, } from "@vanaware/syntaxmesh";
 
-/** Opções do renderer de terminal (24.4) — não atravessam o envelope. */
+/** Terminal renderer options (24.4) — they do not cross the envelope. */
 export interface RendererOptions {
-  /** `--silent`: suprime info/progresso. */
+  /** `--silent`: suppresses info/progress output. */
   silent: boolean;
-  /** `false` quando `--no-color` foi passado. */
+  /** `false` when `--no-color` was given. */
   color: boolean;
 }
 
-/** Resultado da tradução: request + renderer + caminhos a ler. */
+/** Result of the translation: request + renderer + paths to read. */
 export interface ParsedArgs {
-  /** Pedido a enviar ao `execute` (o envelope do core). */
+  /** Request to send to `execute` (the core envelope). */
   request: ExecutionRequest;
-  /** Opções de apresentação da CLI (`--silent`/`--no-color`). */
+  /** Presentation options of the CLI (`--silent`/`--no-color`). */
   renderer: RendererOptions;
   /**
-   * `--config <FILE>`; `null` quando ausente. O **chamador** lê o arquivo e
-   * preenche `request.configContent` — `parseArgs` é puro.
+   * `--config <FILE>`; `null` when absent. The **caller** reads the file and
+   * fills `request.configContent` — `parseArgs` is pure.
    */
   configFile: string | null;
   /**
-   * `--check-time-sheet <FILE>`/`--check-status-sheet <FILE>`; `null` quando
-   * ausente. O chamador lê e passa como `appOptions.sheetContent` (24.2.33).
+   * `--check-time-sheet <FILE>`/`--check-status-sheet <FILE>`; `null` when
+   * absent. The caller reads it and passes it as `appOptions.sheetContent`
+   * (24.2.33).
    */
   sheetFile: string | null;
   /**
-   * `--from <FILE|->` dos receivers; `null` quando ausente. `-` é o stdin — o
-   * chamador lê e passa como `appOptions.rawMessage` (24.10.2).
+   * `--from <FILE|->` of the receivers; `null` when absent. `-` is stdin — the
+   * caller reads it and passes it as `appOptions.rawMessage` (24.10.2).
    */
   messageFile: string | null;
   /**
-   * `-d/--directory <DIR>` dos apps de sheet; `null` quando ausente.
+   * `-d/--directory <DIR>` of the sheet apps; `null` when absent.
    *
-   * É a **raiz de leitura/escrita** do chamador, não o `workingDir` do core: no
-   * caminho de dados o `MemoryFileStore` já é relativo a ela (ADR 037), então
-   * repassá-la prefixaria os caminhos duas vezes.
+   * It is the **read/write root** of the caller, not the core's `workingDir`: on
+   * the data path the `MemoryFileStore` is already relative to it (ADR 037), so
+   * passing it on would prefix the paths twice.
    */
   sheetDir: string | null;
 }
 
 /**
- * Erro de uso (`argv` inválido): sempre exit 1 com mensagem própria em
- * inglês. A CLI traduz isso em `printerr` + `exit(1)`.
+ * Usage error (invalid `argv`): always exit 1 with its own message in English.
+ * The CLI turns this into `printerr` + `exit(1)`.
  */
 export class CliUsageError extends Error {
-  /** `message` já sai em inglês e é impressa como está. */
+  /** `message` already comes in English and is printed as is. */
   constructor(message: string,) {
     super(message,);
     this.name = "CliUsageError";
   }
 }
 
-/** Flags booleanas mapeadas campo a campo para o request. */
+/** Boolean flags mapped field by field to the request. */
 const BOOLEAN_FLAGS: Record<string, keyof ExecutionRequest> = {
   "--abort-on-warnings": "abortOnWarnings",
   "--check-syntax": "checkSyntax",
@@ -94,7 +98,7 @@ const BOOLEAN_FLAGS: Record<string, keyof ExecutionRequest> = {
   "--add-trace": "addTrace",
 };
 
-/** Flags com valor; o nome normalizado é a chave do request. */
+/** Flags with a value; the normalised name is the request key. */
 const VALUE_FLAGS = new Set([
   "--config",
   "--list-reports",
@@ -108,10 +112,10 @@ const VALUE_FLAGS = new Set([
 ],);
 
 /**
- * Formatos de `man --format`.
+ * Formats of `man --format`.
  *
- * O `.smx` é o nome do formato de fonte do SyntaxMesh (o manual original
- * chamava esse recorte de `tjp`); `html` é o manual completo em arquivos.
+ * `.smx` is the name of the SyntaxMesh source format (the original manual called
+ * that slice `tjp`); `html` is the complete manual as files.
  */
 const MAN_FORMATS: Record<string, ExecutionManRequest["format"]> = {
   text: "text",
@@ -120,9 +124,9 @@ const MAN_FORMATS: Record<string, ExecutionManRequest["format"]> = {
 };
 
 /**
- * Valida `man --format`.
+ * Validates `man --format`.
  *
- * @throws {CliUsageError} formato desconhecido.
+ * @throws {CliUsageError} unknown format.
  */
 function manFormatOf(value: string | null,): ExecutionManRequest["format"] {
   if (value === null) return "text";
@@ -136,9 +140,9 @@ function manFormatOf(value: string | null,): ExecutionManRequest["format"] {
 }
 
 /**
- * Flags adiadas conscientemente (plano §5.2), com o motivo **em inglês**
- * (English-first — plano §1.7). As que existem em `OPTION_SPECS` usam o rótulo
- * derivado do `deferred` do core via {@link notAvailableLabel}.
+ * Consciously deferred flags (plan §5.2), with the reason **in English**
+ * (English-first — plan §1.7). The ones present in `OPTION_SPECS` use the label
+ * derived from the core `deferred` via {@link notAvailableLabel}.
  */
 const DEFERRED_REASONS: Record<string, string> = {
   "--debug": "no equivalent in the port",
@@ -147,10 +151,10 @@ const DEFERRED_REASONS: Record<string, string> = {
 };
 
 /**
- * Subcomandos de sheet (24.10.1–24.10.4) → app da seção `sheet`.
+ * Sheet subcommands (24.10.1–24.10.4) → app of the `sheet` section.
  *
- * O `tj3` distribui um binário por app; aqui são subcomandos do programa
- * único, na forma `<protocolo> <ação>` (`ts send`, `ss receive`, …).
+ * `tj3` ships one binary per app; here they are subcommands of the single
+ * program, shaped as `<protocol> <action>` (`ts send`, `ss receive`, …).
  */
 const SHEET_COMMANDS: Record<string, SheetAppName> = {
   "ts send": "ts-send",
@@ -160,11 +164,11 @@ const SHEET_COMMANDS: Record<string, SheetAppName> = {
   "ss receive": "ss-receive",
 };
 
-/** Booleanos dos apps de sheet (`--force`, `--dryrun`).
+/** Booleans of the sheet apps (`--force`, `--dryrun`).
  *
- * `-f` **não** entra aqui: no `tj3` ele é `--force-reports` (`Tj3.rb` l.148-151)
- * e nos apps de sheet é `--force`; quem decide é o subcomando, resolvido depois
- * da varredura (ver `forceRequested`).
+ * `-f` does **not** belong here: in `tj3` it is `--force-reports` (`Tj3.rb`
+ * l.148-151) and in the sheet apps it is `--force`; the subcommand decides,
+ * resolved after the scan (see `forceRequested`).
  */
 const SHEET_BOOLEAN_FLAGS: Record<string, "force" | "dryRun"> = {
   "--force": "force",
@@ -172,7 +176,7 @@ const SHEET_BOOLEAN_FLAGS: Record<string, "force" | "dryRun"> = {
   "--dry-run": "dryRun",
 };
 
-/** Flags com valor dos apps de sheet (`Tj3SheetAppBase` + os cinco apps). */
+/** Flags with a value of the sheet apps (`Tj3SheetAppBase` plus the five apps). */
 const SHEET_VALUE_FLAGS = new Set([
   "-d",
   "--directory",
@@ -190,15 +194,15 @@ const SHEET_VALUE_FLAGS = new Set([
   "--from",
 ],);
 
-/** Subfase citada no `deferred` do core (`Fase 24 — 24.9 (…)` → `24.9`). */
+/** Subphase cited in the core `deferred` (`Fase 24 — 24.9 (…)` → `24.9`). */
 const SUBPHASE = /(\d+\.\d+)/;
 
 /**
- * Rótulo em inglês de uma flag adiada.
+ * English label of a deferred flag.
  *
- * O `deferred` do core é escrito para o leitor do código (português, com a
- * razão completa); a CLI traduz para a única informação estável — a subfase
- * dona — para a ajuda e os erros ficarem só em inglês.
+ * The core `deferred` is written for the code reader (Portuguese, with the full
+ * reason); the CLI reduces it to the only stable information — the owning
+ * subphase — so the help and the errors stay English-only.
  */
 export function notAvailableLabel(spec: OptionSpec,): string {
   const subphase = spec.deferred?.match(SUBPHASE,)?.[1];
@@ -207,7 +211,7 @@ export function notAvailableLabel(spec: OptionSpec,): string {
     : `phase ${subphase}`;
 }
 
-/** Rótulo para o nome da flag: do `OPTION_SPECS` quando houver. */
+/** Label for the flag name: from `OPTION_SPECS` when present. */
 function deferredReason(name: string,): string {
   const plain = name.replace(/^-+/, "",);
   const spec = OPTION_SPECS.find((item,) => item.name === plain);
@@ -215,7 +219,7 @@ function deferredReason(name: string,): string {
   return DEFERRED_REASONS[name] ?? "not available";
 }
 
-/** Separa `--flag=valor` em nome e valor inline. */
+/** Splits `--flag=value` into name and inline value. */
 function splitFlag(arg: string,): [string, string | null,] {
   const eq = arg.indexOf("=",);
   if (!arg.startsWith("--",) || eq < 0) return [arg, null,];
@@ -223,10 +227,10 @@ function splitFlag(arg: string,): [string, string | null,] {
 }
 
 /**
- * Valor de uma flag com argumento: inline (`--flag=valor`) ou o próximo
- * argumento. Devolve também o novo índice do laço.
+ * Value of a flag with an argument: inline (`--flag=value`) or the next argument.
+ * Also returns the new loop index.
  *
- * @throws {CliUsageError} quando não há valor.
+ * @throws {CliUsageError} when there is no value.
  */
 function valueOf(
   argv: readonly string[],
@@ -243,10 +247,10 @@ function valueOf(
 }
 
 /**
- * Converte `argv` em request + renderer.
+ * Converts `argv` into request + renderer.
  *
- * @throws {CliUsageError} flag desconhecida, valor faltando, flag adiada,
- *   app de sheet conflitante ou posicional em excesso.
+ * @throws {CliUsageError} unknown flag, missing value, deferred flag, conflicting
+ *   sheet app or excess positional argument.
  */
 export function parseArgs(argv: readonly string[],): ParsedArgs {
   const request: ExecutionRequest = {};
@@ -257,18 +261,18 @@ export function parseArgs(argv: readonly string[],): ParsedArgs {
   let sheetFile: string | null = null;
   let messageFile: string | null = null;
   let sheetDir: string | null = null;
-  // Primeira flag de app vista: dá nome ao erro de “falta o subcomando”.
+  // First app flag seen: it names the "missing subcommand" error.
   let appFlag: string | null = null;
   let freezeRequested = false;
   let freezeDate: string | null = null;
   let freezeByTask = false;
-  // `-f` acumulado: só o subcomando (ou a ausência dele) diz se é
-  // `--force-reports` do `tj3` ou `--force` dos apps de sheet.
+  // Accumulated `-f`: only the subcommand (or its absence) says whether it is
+  // `tj3`'s `--force-reports` or the sheet apps' `--force`.
   let forceRequested = false;
-  // `man --format <text|html|smx>`: acumulado e só aplicado no subcomando.
+  // `man --format <text|html|smx>`: accumulated and only applied at the subcommand.
   let manFormat: string | null = null;
 
-  /** Um app por execução: dois pedidos diferentes são erro de uso. */
+  /** One app per run: two different requests are a usage error. */
   const setApp = (app: SheetAppName, source: string,): void => {
     if (request.app !== undefined && request.app !== app) {
       throw new CliUsageError(
@@ -324,8 +328,8 @@ export function parseArgs(argv: readonly string[],): ParsedArgs {
       continue;
     }
 
-    // `--freeze` (Ruby `Tj3.rb` l.86-91). A data e o agrupamento são
-    // acumulados e só valem com o pedido explícito de freeze.
+    // `--freeze` (Ruby `Tj3.rb` l.86-91). The date and the grouping are
+    // accumulated and only count with the explicit freeze request.
     if (name === "--freeze") {
       if (inline !== null) {
         throw new CliUsageError(`Option '${name}' does not take a value.`,);
@@ -333,7 +337,7 @@ export function parseArgs(argv: readonly string[],): ParsedArgs {
       freezeRequested = true;
       continue;
     }
-    // `--freezebytask` é a grafia do Ruby; `--freeze-by-task` a do manual.
+    // `--freezebytask` is the Ruby spelling; `--freeze-by-task` the manual one.
     if (name === "--freeze-by-task" || name === "--freezebytask") {
       if (inline !== null) {
         throw new CliUsageError(`Option '${name}' does not take a value.`,);
@@ -346,10 +350,10 @@ export function parseArgs(argv: readonly string[],): ParsedArgs {
       continue;
     }
 
-    // Verificação de folha (Ruby `Tj3.rb` l.196-203). O Ruby acumula
-    // (`@timeSheets << arg`), mas o envelope checa uma por vez: repetir o
-    // **mesmo** tipo é recusado em vez de descartar em silêncio; trocar de
-    // tipo segue para o conflito de app, que explica melhor.
+    // Sheet verification (Ruby `Tj3.rb` l.196-203). Ruby accumulates
+    // (`@timeSheets << arg`), but the envelope checks one at a time: repeating
+    // the **same** kind is refused instead of silently discarded; switching kind
+    // falls through to the app conflict, which explains it better.
     if (name === "--check-time-sheet" || name === "--check-status-sheet") {
       const checkApp: SheetAppName = name === "--check-time-sheet"
         ? "check-ts"
@@ -364,8 +368,8 @@ export function parseArgs(argv: readonly string[],): ParsedArgs {
       continue;
     }
 
-    // `-f` é ambíguo entre o `tj3` (`--force-reports`) e os apps de sheet
-    // (`--force`): acumula e só se decide depois do subcomando.
+    // `-f` is ambiguous between `tj3` (`--force-reports`) and the sheet apps
+    // (`--force`): accumulate and decide only after the subcommand.
     if (name === "-f") {
       if (inline !== null) {
         throw new CliUsageError(`Option '${name}' does not take a value.`,);
@@ -409,7 +413,7 @@ export function parseArgs(argv: readonly string[],): ParsedArgs {
           break;
         case "-t":
         case "--to":
-          // Ruby `Tj3TsSummary.rb` l.52-57: `-t` alimenta as **duas** listas.
+          // Ruby `Tj3TsSummary.rb` l.52-57: `-t` feeds **both** lists.
           (appOptions.sheetRecipients ??= []).push(value,);
           (appOptions.digestRecipients ??= []).push(value,);
           break;
@@ -469,7 +473,7 @@ export function parseArgs(argv: readonly string[],): ParsedArgs {
     };
   }
 
-  // Subcomando de sheet (`ts send`, …) — consome dois posicionais.
+  // Sheet subcommand (`ts send`, …) — consumes two positionals.
   if (positionals.length >= 2) {
     const command = `${positionals[0]} ${positionals[1]}`;
     const app = SHEET_COMMANDS[command];
@@ -479,9 +483,9 @@ export function parseArgs(argv: readonly string[],): ParsedArgs {
     }
   }
 
-  // Subcomando `man` (24.9.1–24.9.3): os posicionais restantes são keywords,
-  // então `syntaxmesh man task resource` documenta as duas. Sem keyword o
-  // documento é completo (lista em `text`, manual em `html`).
+  // `man` subcommand (24.9.1–24.9.3): the remaining positionals are keywords,
+  // so `syntaxmesh man task resource` documents both. Without a keyword the
+  // document is complete (list in `text`, manual in `html`).
   if (positionals[0] === "man") {
     positionals.shift();
     request.man = {
@@ -503,7 +507,7 @@ export function parseArgs(argv: readonly string[],): ParsedArgs {
   }
   if (forceRequested) {
     if (request.app === undefined) {
-      // `tj3 -f`: gerar relatórios apesar dos erros de agenda.
+      // `tj3 -f`: build reports despite scheduling errors.
       request.forceReports = true;
     } else {
       appOptions.force = true;
@@ -520,16 +524,16 @@ export function parseArgs(argv: readonly string[],): ParsedArgs {
   if (Object.keys(appOptions,).length > 0) request.appOptions = appOptions;
 
   if (positionals.length > 0) request.entry = positionals[0];
-  // `--report`/`--reports` aceitam um `<project-id>` posicional (forma do
-  // tj3). Qualquer outro posicional extra é erro de uso.
+  // `--report`/`--reports` accept a positional `<project-id>` (the tj3 form).
+  // Any other extra positional is a usage error.
   const extras = positionals.slice(1,);
   if (extras.length > 0 && request.report === undefined) {
     throw new CliUsageError(
       `Unexpected argument '${extras[0]}'.`,
     );
   }
-  // Sem arquivo só `--help`/`--version` fazem sentido (respondem sem projeto);
-  // `man` também não abre projeto nenhum.
+  // Without a file only `--help`/`--version` make sense (they answer without a
+  // project); `man` does not open any project either.
   if (
     request.entry === undefined && request.man === undefined &&
     request.help !== true &&
@@ -542,11 +546,11 @@ export function parseArgs(argv: readonly string[],): ParsedArgs {
 }
 
 /**
- * `exitCode` da CLI a partir do envelope.
+ * CLI `exitCode` from the envelope.
  *
- * A matriz completa (0/1, `abortOnWarnings`, parse quebrado) é do core
- * (24.2.24); aqui só se projeta em `0 | 1` — qualquer código inesperado
- * vira 1 para não mentir sucesso.
+ * The complete matrix (0/1, `abortOnWarnings`, broken parse) belongs to the core
+ * (24.2.24); here it is only projected onto `0 | 1` — any unexpected code
+ * becomes 1 so as not to pretend success.
  */
 export function resolveExit(
   result: ExecutionResult | null | undefined,

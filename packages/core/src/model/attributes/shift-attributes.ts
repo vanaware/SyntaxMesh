@@ -9,7 +9,7 @@ import { WorkingHoursAttribute, } from "../../attributes/time-interval/working-h
 import { currentTimeZone, } from "../../time/timezone.ts";
 
 /**
- * Registra os atributos específicos de shift (8 atributos).
+ * Registers the shift-specific attributes (8 attributes).
  *
  * @see docs/taskjuggler/lib/taskjuggler/Shift.rb
  */

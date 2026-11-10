@@ -3,13 +3,33 @@ import { IntervalList, } from "./interval-list.ts";
 import { TimeInterval, } from "./time-interval.ts";
 import { compat, rubyRound, } from "../compat.ts";
 
+/**
+ * Scoreboard — array of slots over a time range, one slot per `resolution`
+ * seconds, used by the scheduler and the reports for per-slot bookkeeping.
+ *
+ * Port of `Scoreboard.rb`.
+ */
 export class Scoreboard<T,> {
+  /** First date covered by the board. */
   readonly startDate: Date;
+  /** Last date covered by the board. */
   readonly endDate: Date;
+  /** Length of one slot, in seconds. */
   readonly resolution: number;
+  /** Number of slots in the board. */
   readonly size: number;
   private sb: T[];
 
+  /**
+   * Creates a board covering `[startDate, endDate]`.
+   *
+   * @param startDate First date covered by the board.
+   * @param endDate Last date covered by the board.
+   * @param resolution Length of one slot, in seconds.
+   * @param initVal Value used to fill every slot.
+   * @throws TjArgumentError When an argument is of the wrong type or the range
+   *   is empty.
+   */
   constructor(
     startDate: Date,
     endDate: Date,
@@ -47,13 +67,28 @@ export class Scoreboard<T,> {
     this.sb = Array(this.size,).fill(initVal as T,);
   }
 
+  /**
+   * Resets every slot to `initVal`.
+   *
+   * @param initVal Value used to fill every slot.
+   */
   clear(initVal: T | null = null,): void {
     this.sb = Array(this.size,).fill(initVal as T,);
   }
 
-  // RUBY-COMPAT-FIX: idxToDate typo 'kdx' in Ruby version
-  // Ruby has: return @startDate if kdx < 0 (typo)
-  // Fixed: return this.startDate if idx < 0
+  /**
+   * Converts a slot index to its date.
+   *
+   * Port note (RUBY-COMPAT-FIX): the Ruby version tests a misspelled `kdx`
+   * instead of `idx`, so the negative-index guard never fires; here `idx` is
+   * used.
+   *
+   * @param idx Slot index.
+   * @param forceIntoProject Whether out-of-range indices are clamped instead of
+   *   rejected.
+   * @returns The date of the slot.
+   * @throws TjArgumentError When the index is out of range and clamping is off.
+   */
   idxToDate(idx: number, forceIntoProject: boolean = false,): Date {
     if (forceIntoProject) {
       if (idx < 0) return this.startDate;
@@ -68,6 +103,15 @@ export class Scoreboard<T,> {
     return new Date(this.startDate.getTime() + idx * this.resolution * 1000,);
   }
 
+  /**
+   * Converts a date to its slot index.
+   *
+   * @param date Date to locate.
+   * @param forceIntoProject Whether out-of-range dates are clamped instead of
+   *   rejected.
+   * @returns The index of the slot that holds the date.
+   * @throws TjArgumentError When the date is out of range and clamping is off.
+   */
   dateToIdx(date: Date, forceIntoProject: boolean = true,): number {
     const idx = Math.trunc(
       (date.getTime() - this.startDate.getTime()) / (this.resolution * 1000),
@@ -87,22 +131,53 @@ export class Scoreboard<T,> {
     return idx;
   }
 
+  /**
+   * Reads a slot.
+   *
+   * @param idx Slot index.
+   * @returns The value of the slot.
+   */
   get(idx: number,): T {
     return this.sb[idx]!;
   }
 
+  /**
+   * Writes a slot.
+   *
+   * @param idx Slot index.
+   * @param value Value to store.
+   */
   set(idx: number, value: T,): void {
     this.sb[idx] = value;
   }
 
+  /**
+   * Reads the slot that holds a date.
+   *
+   * @param date Date to locate.
+   * @returns The value of the slot.
+   */
   getByDate(date: Date,): T {
     return this.sb[this.dateToIdx(date,)]!;
   }
 
+  /**
+   * Writes the slot that holds a date.
+   *
+   * @param date Date to locate.
+   * @param value Value to store.
+   */
   setByDate(date: Date, value: T,): void {
     this.sb[this.dateToIdx(date,)] = value;
   }
 
+  /**
+   * Iterates the slot values.
+   *
+   * @param startIdx First slot, inclusive.
+   * @param endIdx Slot after the last one, exclusive.
+   * @yields The value of each slot in the range.
+   */
   *each(
     startIdx: number = 0,
     endIdx: number = this.size,
@@ -118,18 +193,37 @@ export class Scoreboard<T,> {
     }
   }
 
+  /**
+   * Iterates the slot indices.
+   *
+   * @yields Every valid slot index, in order.
+   */
   *each_index(): Generator<number, void, unknown> {
     for (let i = 0; i < this.size; i++) {
       yield i;
     }
   }
 
+  /**
+   * Replaces every slot with the result of `transform`.
+   *
+   * @param transform Function applied to each slot value.
+   */
   collect(transform: (value: T,) => T,): void {
     for (let i = 0; i < this.sb.length; i++) {
       this.sb[i] = transform(this.sb[i]!,);
     }
   }
 
+  /**
+   * Collects the runs of slots inside `iv` that satisfy `predicate` and last at
+   * least `minDuration`.
+   *
+   * @param iv Interval that bounds the scan.
+   * @param minDuration Minimum length of a run, in seconds.
+   * @param predicate Test applied to every slot value.
+   * @returns The list of intervals found.
+   */
   collectIntervals(
     iv: TimeInterval,
     minDuration: number,
@@ -137,13 +231,13 @@ export class Scoreboard<T,> {
   ): IntervalList<TimeInterval> {
     // RUBY-COMPAT-FIX (task 5.11.R.3): the original Ruby implementation
     // does not guard the sentinel slot-zero logic with compat.keepRubyBugs.
-    // This is a Category B bug — guarded by compat.keepRubyBugs flag.
+    // This is a Category B bug — guarded by the compat.keepRubyBugs flag.
     if (!compat.keepRubyBugs) {
-      // RUBY-COMPAT-FIX (Fase 15.12): `Scoreboard.rb:125-126` chama
-      // `dateToIdx(iv.start)` com o default `forceIntoProject = true`, ou seja
-      // **clampa** em vez de lançar. O período do chart Gantt costuma começar
-      // antes do projeto (alinhamento na escala), então lançar aqui quebrava
-      // qualquer relatório com coluna `chart`.
+      // RUBY-COMPAT-FIX (phase 15.12): `Scoreboard.rb:125-126` calls
+      // `dateToIdx(iv.start)` with the default `forceIntoProject = true`, i.e.
+      // it **clamps** instead of throwing. The Gantt chart period usually
+      // starts before the project (scale alignment), so throwing here broke
+      // any report with a `chart` column.
       let startIdx = this.dateToIdx(iv.start.toDate(),);
       let endIdx = this.dateToIdx(iv.end.toDate(),);
 
@@ -186,7 +280,7 @@ export class Scoreboard<T,> {
       return intervals;
     }
 
-    // Original implementation with sentinel slot-zero guard
+    // Original implementation with the sentinel slot-zero guard
     let startIdx = this.dateToIdx(iv.start.toDate(),);
     let endIdx = this.dateToIdx(iv.end.toDate(),);
 
@@ -229,6 +323,11 @@ export class Scoreboard<T,> {
     return intervals;
   }
 
+  /**
+   * Dumps the board as `date: value` lines.
+   *
+   * @returns One line per slot.
+   */
   inspect(): string {
     let s = "";
     for (let i = 0; i < this.sb.length; i++) {

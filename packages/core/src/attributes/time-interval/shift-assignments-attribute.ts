@@ -1,5 +1,5 @@
 /**
- * Atributo de atribuições de turnos.
+ * Shift assignment attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ShiftAssignmentsAttribute
  */
@@ -19,18 +19,18 @@ interface ShiftAssignmentsValue {
 }
 
 /**
- * Atributo de atribuições de turnos.
+ * Shift assignment attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ShiftAssignmentsAttribute
  */
 export class ShiftAssignmentsAttribute extends AttributeBase<unknown> {
   /**
-   * ID do tipo de atributo para ShiftAssignmentsAttribute.
+   * Attribute type ID for ShiftAssignmentsAttribute.
    */
   static readonly tjpId = "shifts";
 
   /**
-   * Converte o valor para string.
+   * Converts the value to a string.
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ShiftAssignmentsAttribute#to_s
    */
@@ -47,7 +47,7 @@ export class ShiftAssignmentsAttribute extends AttributeBase<unknown> {
   }
 
   /**
-   * Converte o valor para TJP (formato TaskJuggler).
+   * Converts the value to TJP (TaskJuggler format).
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ShiftAssignmentsAttribute#to_tjp
    */

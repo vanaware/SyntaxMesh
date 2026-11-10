@@ -1,16 +1,17 @@
 /**
- * RichText — entrada/saída do subsistema de markup MediaWiki (Fase 12.18).
+ * RichText — input/output of the MediaWiki markup subsystem (phase 12.18).
  *
- * Envolve o texto bruto e os {@link RichTextFunctionHandler} e, ao chamar
- * {@link RichText.generateIntermediateFormat}, monta um {@link RichTextIntermediate}
- * com a árvore de {@link RichTextElement} já construída pelo {@link RichTextParser}.
- * O parser é um singleton compartilhado entre instâncias (Ruby `@@parser`),
- * reposicionado a cada chamada via {@link RichTextParser.reuse}.
+ * Wraps the raw text and the {@link RichTextFunctionHandler}s and, on calling
+ * {@link RichText.generateIntermediateFormat}, builds a
+ * {@link RichTextIntermediate} with the {@link RichTextElement} tree already
+ * built by the {@link RichTextParser}. The parser is a singleton shared across
+ * instances (Ruby `@@parser`), repositioned on every call through
+ * {@link RichTextParser.reuse}.
  *
- * Port fiel de `RichText.rb:74-135`.
+ * Faithful port of `RichText.rb:74-135`.
  *
  * @see docs/taskjuggler/lib/taskjuggler/RichText.rb
- * @see ADR 025 (RichText e function handlers)
+ * @see ADR 025 (RichText and function handlers)
  */
 
 import { RichTextParser, } from "./rich-text-parser.ts";
@@ -19,11 +20,11 @@ import { RichTextElement, } from "./rich-text-element.ts";
 import type { RichTextFunctionHandler, } from "./handlers/function-handler.ts";
 
 export class RichText {
-  /** Texto de entrada com markup. */
+  /** Input text with markup. */
   readonly inputText: string;
-  /** Handlers de função fornecidos (copiados ao RTI no processamento). */
+  /** Supplied function handlers (copied into the RTI while processing). */
   private readonly functionHandlers: RichTextFunctionHandler[];
-  /** Parser compartilhado entre todas as instâncias (Ruby `@@parser`). */
+  /** Parser shared across all instances (Ruby `@@parser`). */
   private static parser: RichTextParser | null = null;
 
   constructor(
@@ -35,23 +36,23 @@ export class RichText {
   }
 
   /**
-   * Converte {@link inputText} na representação intermediária. Retorna `null`
-   * quando o parser falha (equivalente ao `== false` do Ruby).
+   * Converts {@link inputText} into the intermediate representation. Returns
+   * `null` when the parser fails (equivalent to Ruby's `== false`).
    *
-   * @param sectionCounter contadores iniciais de seção (Ruby `[0, 0, 0]`)
-   * @param tokenSet subconjunto de tokens a aceitar (ou `null` = todos)
+   * @param sectionCounter initial section counters (Ruby `[0, 0, 0]`)
+   * @param tokenSet subset of tokens to accept (or `null` = all)
    */
   generateIntermediateFormat(
     sectionCounter: number[] = [0, 0, 0,],
     tokenSet: string[] | null = null,
   ): RichTextIntermediate | null {
     const rti = new RichTextIntermediate(this,);
-    // Copia os handlers de função (o RTI duplica cada um, como no Ruby).
+    // Copies the function handlers (the RTI duplicates each one, as in Ruby).
     for (const h of this.functionHandlers) {
       rti.registerFunctionHandler(h,);
     }
 
-    // Reusa o parser singleton quando já existe; senão cria um.
+    // Reuses the singleton parser when it already exists; otherwise creates one.
     if (RichText.parser) {
       RichText.parser.reuse(rti, sectionCounter, tokenSet,);
     } else {
@@ -72,8 +73,8 @@ export class RichText {
   }
 
   /**
-   * Retorna o handler da função `name`; `block` distingue função de bloco de
-   * função inline (RichText.rb:125-131).
+   * Returns the handler of the `name` function; `block` distinguishes a block
+   * function from an inline function (RichText.rb:125-131).
    */
   functionHandler(
     name: string,

@@ -1,8 +1,8 @@
 /**
- * TimeSheetSender — sender concreto de templates de time sheet (18.8).
+ * TimeSheetSender — concrete sender of time sheet templates (18.8).
  *
- * Port de `docs/taskjuggler/lib/taskjuggler/TimeSheetSender.rb`. O Ruby só
- * ajusta configuração; toda a lógica continua no `SheetSender` (18.6).
+ * Port of `docs/taskjuggler/lib/taskjuggler/TimeSheetSender.rb`. Ruby only
+ * adjusts configuration; all the logic stays in `SheetSender` (18.6).
  *
  * @see docs/taskjuggler/lib/taskjuggler/TimeSheetSender.rb
  * @see docs/syntaxmesh/fases/fase-18-time-status-sheets.md (18.8)
@@ -10,7 +10,7 @@
 
 import { SheetSender, } from "./sheet-sender.ts";
 
-/** Texto de introdução do email (Ruby `@introText`). */
+/** Introductory text of the email (Ruby `@introText`). */
 export const TIME_SHEET_INTRO_TEXT =
   `Please find enclosed your weekly report template. Please fill out
 the form and send it back to the sender of this email. You can either
@@ -22,11 +22,19 @@ date must be in a single line that starts at the beginning of the line.
 
 `;
 
+/**
+ * Sender that prepares time sheet templates.
+ */
 export class TimeSheetSender extends SheetSender {
+  /**
+   * Creates the sender with the time sheet defaults.
+   *
+   * @param appName Name that signs the email (`X-TaskJuggler`) and the log.
+   */
   constructor(appName: string,) {
     super(appName, "time",);
 
-    // Expressão lógica que esconde recursos do template.
+    // Logical expression that hides resources from the template.
     this.hideResource = "0";
     this.templateDir = "TimeSheetTemplates";
     this.signatureFile = `${this.templateDir}/acceptable_intervals`;

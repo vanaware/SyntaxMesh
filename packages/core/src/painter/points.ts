@@ -1,19 +1,20 @@
 /**
- * 17.7.2 — `Points`: lista de coordenadas para SVG (`Painter/Points.rb`).
+ * 17.7.2 — `Points`: coordinate list for SVG (`Painter/Points.rb`).
  *
- * Porta `TaskJuggler::Painter::Points`: guarda pares `[x, y]` depois de
- * validar cada elemento e serializa no formato `points` do SVG.
+ * Ports `TaskJuggler::Painter::Points`: it holds `[x, y]` pairs after validating
+ * each element and serializes them in the SVG `points` format.
  *
- * Particularidades (oráculo Ruby, 2026-11-04):
- * - **O `to_s` termina com espaço**: cada ponto é concatenado como
- *   `"#{x},#{y} "`, então `[[1,2],[3,4]]` vira `"1,2 3,4 "` (com o espaço
- *   final). O plano sugeria `"x,y x,y"` sem espaço; o Ruby manda.
- * - Lista vazia → string vazia.
- * - A validação aceita qualquer `Array` de 2 elementos (não verifica se são
- *   numéricos): `[[nil, nil]]` passa e serializa `", "` (`nil.to_s`). Aqui o
- *   `null`/`undefined` também serializa vazio, com `?? ""`.
- * - Ruby guarda a referência recebida (`@points = arr`), sem copiar — o port
- *   faz o mesmo para não mudar o comportamento de apelões que mutam a lista.
+ * Particularities (Ruby oracle, 2026-11-04):
+ * - **`to_s` ends with a space**: each point is concatenated as
+ *   `"#{x},#{y} "`, so `[[1,2],[3,4]]` becomes `"1,2 3,4 "` (with the trailing
+ *   space). The plan suggested `"x,y x,y"` without a space; the Ruby behaviour
+ *   wins.
+ * - Empty list → empty string.
+ * - The validation accepts any 2-element `Array` (it does not check for
+ *   numbers): `[[nil, nil]]` passes and serializes `", "` (`nil.to_s`). Here
+ *   `null`/`undefined` also serialize empty, through `?? ""`.
+ * - Ruby stores the received reference (`@points = arr`) without copying — the
+ *   port does the same, to keep the behaviour for callers that mutate the list.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Painter/Points.rb
  * @see docs/syntaxmesh/fases/fase-17-html-xml-tarefas.md (17.7.2)
@@ -21,13 +22,19 @@
 
 import { TjArgumentError, } from "../model/errors.ts";
 
-/** Par `[x, y]` (números no port; o Ruby só exige um Array de 2 elementos). */
+/** `[x, y]` pair (numbers in the port; Ruby only requires a 2-element Array). */
 export type Point = [number, number,];
 
+/** Ordered list of `[x, y]` pairs rendered as the SVG `points` attribute. */
 export class Points {
   private readonly points: Point[];
 
-  /** Ruby `initialize(arr)` — rejeita qualquer elemento que não seja par. */
+  /**
+   * Ruby `initialize(arr)` — rejects any element that is not a pair.
+   *
+   * @param arr Points of the list; stored by reference.
+   * @throws TjArgumentError When an element is not a 2-coordinate Array.
+   */
   constructor(arr: Point[],) {
     for (const point of arr) {
       if (!Array.isArray(point,) || point.length !== 2) {
@@ -39,7 +46,11 @@ export class Points {
     this.points = arr;
   }
 
-  /** `"x,y x,y "` — SVG `points`, com espaço depois de cada par (como Ruby). */
+  /**
+   * `"x,y x,y "` — SVG `points`, with a space after each pair (as in Ruby).
+   *
+   * @returns The serialized coordinate list.
+   */
   to_s(): string {
     let str = "";
     for (const point of this.points) {

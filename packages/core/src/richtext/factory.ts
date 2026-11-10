@@ -1,13 +1,13 @@
 /**
- * RichTextFactory — costura de injeção entre o parser TJP (Fase 10) e o
- * RichText real (Fase 12.18).
+ * RichTextFactory — dependency-injection seam between the TJP parser (Phase 10)
+ * and the real RichText (Phase 12.18).
  *
- * A Fase 10 mantinha `ProjectFileParser.newRichText` como um stub ancorado;
- * ela passa a delegar a criação do `RichTextIntermediate` a um
- * {@link RichTextFactory}. A implementação {@link RichTextFactoryImpl} monta um
- * {@link RichText} com os handlers padrão ({@link RTFHandlers}) e gera a
- * representação intermediária — espelhando o corpo de `newRichText` em
- * `ProjectFileParser.rb:221-233`.
+ * Phase 10 kept `ProjectFileParser.newRichText` as an anchored stub; it now
+ * delegates the creation of the `RichTextIntermediate` to a
+ * {@link RichTextFactory}. The {@link RichTextFactoryImpl} implementation builds
+ * a {@link RichText} with the default handlers ({@link RTFHandlers}) and
+ * generates the intermediate representation — mirroring the body of
+ * `newRichText` in `ProjectFileParser.rb:221-233`.
  *
  * @see docs/taskjuggler/lib/taskjuggler/ProjectFileParser.rb
  * @see ADR 025 (RichText e function handlers)
@@ -20,18 +20,34 @@ import type { SourceFileInfo, } from "../source-file-info.ts";
 import type { Project, } from "../model/project.ts";
 import { TjArgumentError, } from "../time/tj-time.ts";
 
-/** Fábrica de `RichTextIntermediate` usada pelo parser de arquivos TJP. */
+/** Factory of `RichTextIntermediate` used by the TJP file parser. */
 export interface RichTextFactory {
+  /**
+   * Parses the text and returns its intermediate representation.
+   *
+   * @param text RichText source text (TJP markup).
+   * @param tokenSet Optional token substitutions already resolved by the caller.
+   * @returns The intermediate representation of the parsed text.
+   */
   create(
     text: string,
     tokenSet?: string[] | null,
   ): RichTextIntermediate;
 }
 
+/**
+ * Default {@link RichTextFactory}, bound to a project and a source file.
+ */
 export class RichTextFactoryImpl implements RichTextFactory {
   private readonly project: Project | null;
   private readonly sourceFileInfo: SourceFileInfo | null;
 
+  /**
+   * Creates the factory.
+   *
+   * @param project Project the generated reports will query, if any.
+   * @param sourceFileInfo Origin of the text, used in error messages.
+   */
   constructor(
     project: Project | null,
     sourceFileInfo: SourceFileInfo | null = null,
@@ -41,9 +57,14 @@ export class RichTextFactoryImpl implements RichTextFactory {
   }
 
   /**
-   * Cria um {@link RichText} com os handlers padrão e gera sua representação
-   * intermediária. Lança `TjArgumentError` se o parser não produzir árvore
-   * (equivalente ao retorno `null` do Ruby, tornado falha explícita aqui).
+   * Creates a {@link RichText} with the default handlers and generates its
+   * intermediate representation. Throws `TjArgumentError` when the parser
+   * produces no tree (equivalent to Ruby returning `null`, turned into an
+   * explicit failure here).
+   *
+   * @param text RichText source text (TJP markup).
+   * @param tokenSet Optional token substitutions already resolved by the caller.
+   * @returns The intermediate representation of the parsed text.
    */
   create(
     text: string,

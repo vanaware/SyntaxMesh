@@ -1,19 +1,19 @@
 /**
- * RTFQuery — handler da função `[[query:…]]` (Fase 12.14).
+ * RTFQuery — handler of the `[[query:…]]` function (phase 12.14).
  *
- * Resolve o valor de um atributo de projeto/propriedade montando um {@link Query}
- * a partir do modelo registrado pelo contexto (`setQuery`) e dos argumentos
- * passados no markup. É o único handler "real" da Fase 12; `RTFReport`,
- * `RTFReportLink` e `RTFNavigator` ficam stubs para a Fase 14.
+ * Resolves the value of a project/property attribute by building a {@link Query}
+ * from the model registered by the context (`setQuery`) and from the arguments
+ * passed in the markup. It is the only "real" handler of phase 12; `RTFReport`,
+ * `RTFReportLink` and `RTFNavigator` stay stubs until phase 14.
  *
- * Port fiel de `RichText/RTFQuery.rb` (arquivo inteiro). Divergência controlada:
- * no Ruby `query.numberFormat = <string>` atribui a String bruta (upstream usa
- * duck-typing); aqui o campo é tipado como `RealFormat`, então convertemos o
- * spec em 5 campos separados por espaço (formato da diretiva TJP) e ignoramos
- * specs malformados em vez de corromper a query.
+ * Faithful port of `RichText/RTFQuery.rb` (whole file). Controlled divergence:
+ * in Ruby `query.numberFormat = <string>` assigns the raw String (upstream uses
+ * duck typing); here the field is typed as `RealFormat`, so the spec is
+ * converted into 5 space-separated fields (the TJP directive format) and
+ * malformed specs are ignored instead of corrupting the query.
  *
  * @see docs/taskjuggler/lib/taskjuggler/RichText/RTFQuery.rb
- * @see ADR 025 (RichText e function handlers)
+ * @see ADR 025 (RichText and function handlers)
  */
 
 import { RTFWithQuerySupport, } from "./rtf-with-query-support.ts";
@@ -28,7 +28,7 @@ import { TjTime, } from "../../time/tj-time.ts";
 import { RealFormat, } from "../../format/real-format.ts";
 import type { RichTextIntermediate, } from "../rich-text-intermediate.ts";
 
-/** Parâmetros aceitos por `[[query:…]]` (RTFQuery.rb:76-78). */
+/** Parameters accepted by `[[query:…]]` (RTFQuery.rb:76-78). */
 const VALID_ARGS = [
   "attribute",
   "currencyformat",
@@ -83,7 +83,7 @@ const VALID_JOURNAL_ATTRS = [
   "timesheet",
 ];
 
-/** Cast controlado de `unknown` (RTI) para um objeto com `to_html`. */
+/** Controlled cast of `unknown` (RTI) to an object with `to_html`. */
 function hasToHtml(value: unknown,): value is RichTextIntermediate & {
   to_html(): XMLElementLike | null;
 } {
@@ -103,7 +103,7 @@ export class RTFQuery extends RTFWithQuerySupport {
     this.blockFunction = false;
   }
 
-  /** Resultado da consulta em texto puro. */
+  /** Result of the query as plain text. */
   override to_s(args: RichTextFunctionArgs,): string {
     const query = this.prepareQuery(args,);
     if (!query) return "";
@@ -117,7 +117,7 @@ export class RTFQuery extends RTFWithQuerySupport {
     return "Query Error: " + query.errorMessage;
   }
 
-  /** Árvore HTML do resultado (ou `<span>` com o texto, ou erro em vermelho). */
+  /** HTML tree of the result (either a `<span>` with the text, or a red error). */
   override to_html(args: RichTextFunctionArgs,): XMLElementLike | null {
     const query = this.prepareQuery(args,);
     if (!query) return null;
@@ -141,14 +141,14 @@ export class RTFQuery extends RTFWithQuerySupport {
     return font;
   }
 
-  /** Não suportado para esta função. */
+  /** Not supported for this function. */
   override to_tagged(_args: RichTextFunctionArgs,): string | null {
     return null;
   }
 
   /**
-   * Monta e processa a query a partir do modelo + argumentos. Retorna `null`
-   * quando um argumento é inválido (RTFQuery.rb:68-133).
+   * Builds and runs the query from the model + arguments. Returns `null`
+   * when an argument is invalid (RTFQuery.rb:68-133).
    */
   private prepareQuery(args: RichTextFunctionArgs,): Query | null {
     if (!this.query) {
@@ -156,7 +156,7 @@ export class RTFQuery extends RTFWithQuerySupport {
     }
     const query = this.query.dup();
 
-    // Valida e expande cada argumento.
+    // Validates and expands each argument.
     const expandedArgs: Record<string, string> = {};
     for (const [arg, value,] of Object.entries(args,)) {
       if (!VALID_ARGS.includes(arg,)) {
@@ -228,7 +228,7 @@ export class RTFQuery extends RTFWithQuerySupport {
     return query;
   }
 
-  /** Regenera o texto original da query a partir dos argumentos. */
+  /** Regenerates the original query text from the arguments. */
   private recreateQuerySyntax(args: RichTextFunctionArgs,): string {
     let queryText = "\n<-query";
     for (const [a, v,] of Object.entries(args,)) {
@@ -276,7 +276,7 @@ export class RTFQuery extends RTFWithQuerySupport {
       }
       query.scenarioIdx = scenarioIdx ?? 0;
     }
-    // Default para 0 caso nenhum cenário seja fornecido.
+    // Defaults to 0 when no scenario is supplied.
     if (query.scenarioIdx === undefined) query.scenarioIdx = 0;
   }
 
@@ -325,9 +325,9 @@ export class RTFQuery extends RTFWithQuerySupport {
   }
 
   /**
-   * Converte um spec de formato (5 campos separados por espaço — o mesmo
-   * padrão da diretiva TJP `numberformat`) em {@link RealFormat}. Spec
-   * malformado é ignorado (retorna `null`) em vez de corromper a query.
+   * Converts a format spec (5 space-separated fields — the same pattern as
+   * the TJP `numberformat` directive) into {@link RealFormat}. A malformed spec
+   * is ignored (returns `null`) instead of corrupting the query.
    */
   private static parseFormat(spec: string,): RealFormat | null {
     const parts = spec.split(/\s+/,).filter((p,) => p.length > 0);

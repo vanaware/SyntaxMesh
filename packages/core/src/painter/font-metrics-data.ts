@@ -1,59 +1,77 @@
 /**
  * 17.11.1 — `FontMetricsData` (`Painter/FontMetricsData.rb`).
  *
- * Porta `TaskJuggler::Painter::FontMetricsData`: guarda as métricas pré-
- * calculadas de uma fonte (largura por glifo + deltas de kerning) e as
- * expõe. O conjunto de glifos é US-ASCII (índices 32–126).
+ * Ports `TaskJuggler::Painter::FontMetricsData`: holds the pre-computed metrics
+ * of a font (per-glyph width plus kerning deltas) and exposes them. The glyph
+ * set is US-ASCII (indices 32–126).
  *
- * **Modo de operação do port**: no Ruby o construtor tem dois modos — ou recebe
- * todos os dados (usado em runtime, via `FontData.rb`), ou só o nome da fonte e
- * usa a gem `prawn` para **gerar** as métricas (`generateMetrics`, `GeneratorMode
- * = false` em produção). O navegador não tem `prawn` nem filesystem (ADR 027 /
- * 038), então o port só implementa o **modo de dados**; `generateMetrics` não é
- * portado. `toRuby()` permanece (é só texto, usado por um gerador offline).
+ * **Port operation mode**: in Ruby the constructor has two modes — either it
+ * receives all the data (used at runtime, through `FontData.rb`), or it gets
+ * only the font name and uses the `prawn` gem to **generate** the metrics
+ * (`generateMetrics`, `GeneratorMode = false` in production). The browser has
+ * neither `prawn` nor a filesystem (ADR 027 / 038), so the port implements only
+ * the **data mode**; `generateMetrics` is not ported. `toRuby()` remains (it is
+ * plain text, used by an offline generator).
  *
- * Particularidades do oráculo (2026-11-04, `.tmp/fontmetrics_probe.rb`):
- * - `averageWidth` devolve **0** quando o objeto é montado a partir de dados
- *   (o Ruby só preenche `@averageWidth` em `generateMetrics`; no construtor é
- *   inicializado com `0.0`). `(0.0 * 3/4).to_i == 0`. É o valor real usado por
- *   `FontMetrics#width` como fallback de glifo ausente.
- * - `glyphWidth(c)` devolve `nil` (aqui `null`) para caractere fora do set.
- * - `charWidth` tem **95** entradas (32–126) e `kerningDelta` ~96 no normal.
+ * Oracle particularities (2026-11-04, `.tmp/fontmetrics_probe.rb`):
+ * - `averageWidth` returns **0** when the object is built from data (Ruby only
+ *   fills `@averageWidth` in `generateMetrics`; in the constructor it is
+ *   initialized with `0.0`). `(0.0 * 3/4).to_i == 0`. This is the real value
+ *   used by `FontMetrics#width` as the fallback for a missing glyph.
+ * - `glyphWidth(c)` returns `nil` (here `null`) for a character outside the
+ *   set.
+ * - `charWidth` has **95** entries (32–126) and `kerningDelta` about 96 in the
+ *   normal case.
  * - `MIN_GLYPH_INDEX = 32`, `MAX_GLYPH_INDEX = 126`.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Painter/FontMetricsData.rb
  * @see docs/syntaxmesh/fases/fase-17-html-xml-tarefas.md (17.11.1)
  */
 
-/** Índice do primeiro glifo (espaço) suportado. */
+/** Index of the first supported glyph (space). */
 export const MIN_GLYPH_INDEX = 32;
-/** Índice do último glifo (`~`) suportado. */
+/** Index of the last supported glyph (`~`). */
 export const MAX_GLYPH_INDEX = 126;
 
-/** Estilos de fonte (símbolos `:normal`… do Ruby viram strings). */
+/** Font styles (Ruby `:normal`… symbols become strings). */
 export type FontType = "normal" | "italic" | "bold" | "bold_italic";
 
-/** Largura por glifo e delta por par de glifos (chaves do Ruby). */
+/** Width of each glyph, keyed by the character (Ruby hash keys). */
 export type GlyphWidths = Record<string, number>;
+/** Kerning delta of each glyph pair, keyed as in Ruby. */
 export type KerningDeltas = Record<string, number>;
 
+/** Pre-computed metrics of a font: glyph widths and kerning deltas. */
 export class FontMetricsData {
+  /** Name of the font, as reported to the SVG consumer. */
   readonly fontName: string;
+  /** Style of the font (normal, italic, bold or bold italic). */
   readonly type: FontType;
+  /** Size of the font, in points. */
   readonly ptSize: number;
+  /** Height of the font line, in points. */
   readonly height: number;
+  /** Width of each glyph, keyed by character. */
   readonly charWidth: GlyphWidths;
+  /** Kerning delta of each glyph pair. */
   readonly kerningDelta: KerningDeltas;
 
   /**
-   * Ruby `@averageWidth`: preenchido só por `generateMetrics`. No modo de
-   * dados fica `0.0` — replicado como campo privado sem setter.
+   * Ruby `@averageWidth`: filled only by `generateMetrics`. In data mode it
+   * stays `0.0` — replicated as a private field without a setter.
    */
   private readonly averageWidthRaw = 0.0;
 
   /**
-   * Ruby `initialize(fontName, type, ptSize, height, wData, kData)` — modo de
-   * dados (o único suportado no navegador).
+   * Ruby `initialize(fontName, type, ptSize, height, wData, kData)` — data
+   * mode (the only one supported in the browser).
+   *
+   * @param fontName Name of the font.
+   * @param type Style of the font.
+   * @param ptSize Size of the font, in points.
+   * @param height Height of the font line, in points.
+   * @param charWidth Width of each glyph, keyed by character.
+   * @param kerningDelta Kerning delta of each glyph pair.
    */
   constructor(
     fontName: string,
@@ -71,21 +89,32 @@ export class FontMetricsData {
     this.kerningDelta = kerningDelta;
   }
 
-  /** Ruby `glyphWidth(c)` — `null` quando o glifo não existe no set. */
+  /**
+   * Ruby `glyphWidth(c)` — `null` when the glyph is not in the set.
+   *
+   * @param c Character whose width is requested.
+   * @returns The glyph width, or `null` for an unsupported character.
+   */
   glyphWidth(c: string,): number | null {
     const w = this.charWidth[c];
     return w === undefined ? null : w;
   }
 
-  /** Ruby `averageWidth` — `(raw * 3/4).to_i`; sempre 0 no modo de dados. */
+  /**
+   * Ruby `averageWidth` — `(raw * 3/4).to_i`; always 0 in data mode.
+   *
+   * @returns The average glyph width, in the same unit as `points`.
+   */
   averageWidth(): number {
     return Math.trunc(this.averageWidthRaw * (3.0 / 4.0),);
   }
 
   /**
-   * Ruby `to_ruby`: emite a fonte Ruby que (re)cria este objeto. Usado só por
-   * um gerador offline (com `prawn`); no port é texto morto em runtime, mas é
-   * implementado para fidelidade e cobertura de teste.
+   * Ruby `to_ruby`: emits the Ruby source that (re)creates this object. Used
+   * only by an offline generator (with `prawn`); in the port it is dead text at
+   * runtime, but it is implemented for fidelity and test coverage.
+   *
+   * @returns The Ruby snippet that rebuilds these metrics.
    */
   toRuby(): string {
     const indent = " ".repeat(6,);
@@ -102,7 +131,14 @@ export class FontMetricsData {
     return s;
   }
 
-  /** Formata um hash de entradas em 4 por linha, como o Ruby. */
+  /**
+   * Formats a hash of entries four per line, as Ruby does.
+   *
+   * @param pairs Key/value pairs to format.
+   * @param indent Indentation of the enclosing block.
+   * @param escape Whether the keys must be escaped for a single-quoted string.
+   * @returns The formatted entries, starting with a newline.
+   */
   private entries(
     pairs: [string, number,][],
     indent: string,
@@ -117,7 +153,12 @@ export class FontMetricsData {
     return s;
   }
 
-  /** Ruby `escapedChars`: backslash e aspas simples escapados p/ `'…'`. */
+  /**
+   * Ruby `escapedChars`: escapes backslashes and single quotes for `'…'`.
+   *
+   * @param c Text to escape.
+   * @returns The escaped text.
+   */
   private escapeRubyChars(c: string,): string {
     return c.replace(/\\/g, "\\\\",).replace(/'/g, "\\'",);
   }

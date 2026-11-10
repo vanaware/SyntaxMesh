@@ -1,19 +1,19 @@
 /**
- * TjpSyntaxRules — bloco material (Fase 10 Complemento C3.1).
+ * TjpSyntaxRules — material block (phase 10 complement C3.1).
  *
- * `Material` é uma extensão SyntaxMesh (sem equivalente no TJ Ruby); a
- * forma das regras espelha `account.ts`/`shift.ts`. Aceita `unit`,
- * `unitprice`, `chargeset`, `flags`, `note`, `journalentry` no corpo e
- * registra a entidade em `project.materials`. A alocação de
- * material numa tarefa (`material <id> <quantidade> <modificador?>
- * <unitprice?>`, alias `use`) produz um `MaterialAllocation` no atributo de
- * cenário `materialallocations`; o `booking` (consumo realizado) produz um
- * `MaterialBooking` no atributo `materialbookings` da tarefa.
+ * `Material` is a SyntaxMesh extension (no equivalent in TJ Ruby); the rule
+ * shape mirrors `account.ts`/`shift.ts`. Accepts `unit`, `unitprice`,
+ * `chargeset`, `flags`, `note` and `journalentry` in the body and registers
+ * the entity in `project.materials`. Allocating material to a task
+ * (`material <id> <quantity> <modifier?> <unitprice?>`, alias `use`) produces a
+ * `MaterialAllocation` in the scenario attribute `materialallocations`;
+ * `booking` (actual consumption) produces a `MaterialBooking` in the task's
+ * `materialbookings` attribute.
  *
- * `totalquantity` foi **removido** na 14C.11.9/14C.11.10: a quantidade de um
- * material é derivada das alocações (Σ `MaterialAllocation.quantity`).
+ * `totalquantity` was **removed** in 14C.11.9/14C.11.10: the quantity of a
+ * material is derived from the allocations (Σ `MaterialAllocation.quantity`).
  *
- * @see docs/syntaxmesh/fases/fase-10-complemento-tarefas.md (Bloco C3.1)
+ * @see docs/syntaxmesh/fases/fase-10-complemento-tarefas.md (block C3.1)
  * @see docs/syntaxmesh/fases/fase-14-relatorios-complemento.md §11.4
  */
 import { Material, } from "../../model/material.ts";
@@ -33,7 +33,7 @@ const asProp = (parser: ProjectFileParser,): NonNullable<
   ProjectFileParser["property"]
 > => parser.property!;
 
-/** Lê uma lista de cenário (materialallocations etc.) com fallback []. */
+/** Reads a scenario list (materialallocations etc.) with a `[]` fallback. */
 function scList(parser: ProjectFileParser, attrId: string,): unknown[] {
   const prop = parser.property;
   if (!prop) return [];
@@ -45,22 +45,22 @@ function scList(parser: ProjectFileParser, attrId: string,): unknown[] {
   }
 }
 
-/** Registra o bloco de regras de material. */
+/** Registers the material rule block. */
 export function registerMaterialRules(p: ProjectFileParser,): void {
   // ------------------------------------------------------------------
   // material / header / body / attributes
   // ------------------------------------------------------------------
   // ------------------------------------------------------------------
-  // Regra funil `material` (Adendo Extra §12.2, 14C.14.3).
+  // `material` funnel rule (extra addendum §12.2, 14C.14.3).
   //
-  // `material <id> "<nome>" { ... }` declara um material (aninhado ou não) e
-  // `material <referencia> <quantidade>` declara um **componente de composição**
-  // (preço de unidade calculado). As duas formas partilham o prefixo `_material
-  // <id|nome>` e só divergem no token seguinte — `{`/`"<nome>"` contra um número.
-  // Como a FSM só admite uma transição por token em cada estado
-  // (`state.ts:139-157`), as duas ramificações vivem dentro desta única regra:
-  // `materialNameRef` consome o identificador uma vez e `materialStatementTail`
-  // decide pelo token seguinte.
+  // `material <id> "<name>" { ... }` declares a material (nested or not) and
+  // `material <reference> <quantity>` declares a **composition component**
+  // (computed unit price). Both forms share the `_material <id|name>` prefix
+  // and differ only on the next token — `{`/`"<name>"` against a number.
+  // Since the FSM allows a single transition per token in each state
+  // (`state.ts:139-157`), both branches live inside this single rule:
+  // `materialNameRef` consumes the identifier once and `materialStatementTail`
+  // decides by the next token.
   // ------------------------------------------------------------------
   rule(p, "material", () => {
     p.pattern(["_material", "!materialNameRef", "!materialStatementTail",],);
@@ -77,8 +77,8 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
     p.repeatable();
     p.optional();
 
-    // `!material` cobre tanto a declaração aninhada quanto a composição: o
-    // prefixo compartilhado é resolvido dentro da regra funil (14C.14.3).
+    // `!material` covers both the nested declaration and the composition: the
+    // shared prefix is resolved inside the funnel rule (14C.14.3).
     p.pattern(["!material",],);
     p.pattern(["!materialScenarioAttributes",],);
     p.pattern(
@@ -88,16 +88,17 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
         return null;
       },
     );
-    // Outros atributos são adicionados automaticamente.
+    // Other attributes are added automatically.
   },);
 
   rule(p, "materialBody", () => {
     p.optionsRule("materialAttributes",);
   },);
 
-  // Identificador logo após `material`: ID ou nome citado. Empurrado para
-  // `pendingMaterialRef` — é o novo ID na declaração, a referência existente na
-  // composição. A FSM consome um único token aqui e ramifica adiante.
+  // Identifier right after `material`: an ID or a quoted name. Pushed to
+  // `pendingMaterialRef` — it is the new ID in a declaration and the existing
+  // reference in a composition. The FSM consumes a single token here and
+  // branches further down.
   rule(p, "materialNameRef", () => {
     p.pattern(["$ID",], function (this: ProjectFileParser,): unknown {
       this.pendingMaterialRef = String(this.val[0],);
@@ -110,11 +111,11 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
     p.arg(0, "material", "The ID or name of the material or component.",);
   },);
 
-  // Ramificação pelo token seguinte ao identificador: número → composição;
-  // nome + corpo → declaração. `{` (corpo) nunca aparece sem um nome entre
-  // colchetes, então as transições (NUMBER/FLOAT vs STRING) não colidem.
+  // Branching by the token after the identifier: number → composition;
+  // name + body → declaration. `{` (body) never appears without a quoted name
+  // in between, so the transitions (NUMBER/FLOAT vs STRING) do not collide.
   rule(p, "materialStatementTail", () => {
-    // Composição: `material <referencia> <quantidade>`.
+    // Composition: `material <reference> <quantity>`.
     p.pattern(["!number",], addMaterialComponent,);
     p.arg(0, "quantity", "Quantity of the component needed for one unit.",);
     p.doc(
@@ -124,8 +125,9 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
         "their unit price and cannot declare `unitprice`.",
     );
 
-    // Declaração: `material <id> "<nome>" { ... }`. O material é criado em
-    // `materialDeclName` (antes do corpo) e a conta/validação roda no fecho.
+    // Declaration: `material <id> "<name>" { ... }`. The material is created
+    // in `materialDeclName` (before the body) and the accounting/validation
+    // runs at the close.
     p.pattern(
       ["!materialDeclName", "!materialBody",],
       function (this: ProjectFileParser,): unknown {
@@ -137,8 +139,8 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
     );
   },);
 
-  // Consome o `"<nome>"` da declaração e cria o Material (equivalente ao antigo
-  // `materialHeader`), para que o corpo seguinte se anexe a ele.
+  // Consumes the declaration `"<name>"` and creates the Material (equivalent
+  // to the old `materialHeader`), so that the following body attaches to it.
   rule(p, "materialDeclName", () => {
     p.pattern(["$STRING",], function (this: ProjectFileParser,): unknown {
       createMaterial(this, this.pendingMaterialRef!, String(this.val[0],),);
@@ -148,14 +150,14 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
   },);
 
   // ------------------------------------------------------------------
-  // ID de material (referência em `supplement material` e alocações)
+  // material ID (reference in `supplement material` and allocations)
   // ------------------------------------------------------------------
   rule(p, "materialId", () => {
     p.pattern(["$ID",], function (this: ProjectFileParser,): unknown {
       const id = String(this.val[0],);
-      // Composição e alocações referenciam materiais **globais** por ID; a
-      // declaração de sub-material aninhada saiu do corpo (Adendo Extra §12.2,
-      // 14C.14.3), então não prefixamos mais o ID do pai.
+      // Composition and allocations reference **global** materials by ID; the
+      // nested sub-material declaration left the body (extra addendum §12.2,
+      // 14C.14.3), so we no longer prefix the parent ID.
       const material = this.project!.material(id,);
       if (!material) {
         this.error(
@@ -166,8 +168,8 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
       }
       return material;
     },);
-    // Nome citado (`material "Steel" 500`, adendo §10): resolve por ID e, se
-    // não houver, pelo nome do material.
+    // Quoted name (`material "Steel" 500`, addendum §10): resolved by ID and,
+    // when absent, by the material name.
     p.pattern(["$STRING",], function (this: ProjectFileParser,): unknown {
       const ref = String(this.val[0],);
       const material = findMaterial(this, ref,);
@@ -184,7 +186,7 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
   },);
 
   // ------------------------------------------------------------------
-  // Atributos (não-cenário e de cenário) do material
+  // Material attributes (both non-scenario and scenario)
   // ------------------------------------------------------------------
   rule(p, "materialScenarioAttributes", () => {
     p.pattern(
@@ -200,9 +202,9 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
     p.pattern(
       ["_unitprice", "!number",],
       function (this: ProjectFileParser,): unknown {
-        // `unitprice` é proibido em material composto, qualquer que seja a
-        // ordem (14C.14.5) — aqui pega o caso `unitprice` **antes** dos
-        // componentes.
+        // `unitprice` is forbidden in a composed material, whatever the order
+        // (14C.14.5) — here we catch the `unitprice` **before** the components
+        // case.
         const material = asProp(this,) as unknown as Material;
         if (scList(this, "materialcomponents",).length > 0) {
           this.error(
@@ -220,9 +222,9 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
     p.doc("unitprice", "Price per unit of the material.",);
     p.arg(1, "price", "Price per unit.",);
 
-    // `totalquantity` foi removido (14C.11.9): a quantidade é derivada das
-    // alocações. O token continua reservado na gramática só para dar um erro
-    // explícito em vez de `unexpctd_token`.
+    // `totalquantity` was removed (14C.11.9): the quantity is derived from the
+    // allocations. The token stays reserved in the grammar only to raise an
+    // explicit error instead of `unexpctd_token`.
     p.pattern(
       ["_totalquantity", "!number",],
       function (this: ProjectFileParser,): unknown {
@@ -241,11 +243,11 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
       "Removed: the material quantity is derived from its allocations.",
     );
 
-    // Consumo realizado e movimento de estoque a partir do bloco do material,
-    // além de `booking charge` (14C.15.7). Todos partilham o prefixo `_booking`
-    // — a FSM só admite uma transição por token em cada estado
-    // (`state.ts:139-157`), então as formas ramificam dentro da regra
-    // `materialBookingBody` (padrão idêntico ao de task/resource).
+    // Actual consumption and stock movement from the material block, plus
+    // `booking charge` (14C.15.7). They all share the `_booking` prefix — the
+    // FSM allows a single transition per token in each state
+    // (`state.ts:139-157`), so the forms branch inside the `materialBookingBody`
+    // rule (pattern identical to task/resource).
     p.pattern(["_booking", "!materialBookingBody",],);
     p.doc(
       "booking.material",
@@ -258,10 +260,11 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
 
     p.pattern(["!chargeset",],);
 
-    // LF.5a (Complemento Fase 11, 2ª onda §6.5): `flags` em material — antes
-    // o parse produzia `unexpctd_token` (provado por exercício ao vivo). O
-    // atributo já estava declarado em material-attributes (LF.1); falta só o
-    // aceite gramatical, no padrão de resource.ts:219 / account.ts:193.
+    // LF.5a (phase 11 complement, 2nd wave §6.5): `flags` in material — before,
+    // the parse produced `unexpctd_token` (proven by a live exercise). The
+    // attribute was already declared in material-attributes (LF.1); only the
+    // grammatical acceptance was missing, following resource.ts:219 /
+    // account.ts:193.
     p.pattern(["!flags",],);
     p.doc("flags.material", "Flags assigned to the material.",);
 
@@ -281,17 +284,17 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
     p.doc("note.material", "Attach a note to the material.",);
 
     p.pattern(["!journalEntry",],);
-    // Outros atributos são adicionados automaticamente.
+    // Other attributes are added automatically.
   },);
 
   // ------------------------------------------------------------------
-  // Alocação de material numa tarefa
+  // Material allocation to a task
   // (`material <id> <q> ([unitprice <p>] <modifier> | <modifier> [unitprice <p>])`)
-  // Onda D4 (D-g): o `unitprice` também pode vir **antes** do modificador.
-  // A ordem fica na sub-regra `materialAllocationTail` — dois padrões na
-  // mesma regra com os mesmos tokens iniciais violam o FSM (`Ambiguous
-  // transition`); na tail os tokens de entrada dos dois padrões são
-  // disjuntos (literais do modifier vs `_unitprice`).
+  // Wave D4 (D-g): the `unitprice` may also come **before** the modifier.
+  // The order lives in the `materialAllocationTail` sub-rule — two patterns in
+  // the same rule with identical leading tokens violate the FSM (`Ambiguous
+  // transition`); in the tail the entry tokens of both patterns are disjoint
+  // (modifier literals vs `_unitprice`).
   // ------------------------------------------------------------------
   rule(p, "materialAllocation", () => {
     p.pattern(
@@ -312,7 +315,7 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
     p.arg(2, "quantity", "The quantity of material to consume.",);
   },);
 
-  // Preço unitário próprio da alocação (`unitprice <n>`, 14C.11.2).
+  // Allocation's own unit price (`unitprice <n>`, 14C.11.2).
   rule(p, "materialAllocationUnitPrice", () => {
     p.optional();
     p.pattern(["_unitprice", "!number",], function (
@@ -323,7 +326,7 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
     p.arg(1, "price", "Price per unit for this allocation.",);
   },);
 
-  // Preço unitário próprio do booking (`unitprice <n>`, 14C.11.3).
+  // Booking's own unit price (`unitprice <n>`, 14C.11.3).
   rule(p, "materialBookingUnitPrice", () => {
     p.optional();
     p.pattern(["_unitprice", "!number",], function (
@@ -366,15 +369,15 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
   },);
 
   // ------------------------------------------------------------------
-  // Corpo do `booking` no bloco do material (Adendo Extra §12.1/§12.3).
-  // A FSM só admite uma transição por token em cada estado, então as duas
-  // formas (`booking [quantity] ...` de consumo/estoque e `booking charge ...`)
-  // ramificam pelo segundo token: `!materialBookingTaskRef` (opcional, resolve
-  // para `$ID`/`$STRING` ou para os literais seguintes) versus `_charge`.
+  // `booking` body in the material block (extra addendum §12.1/§12.3).
+  // The FSM allows a single transition per token in each state, so the two
+  // forms (`booking [quantity] ...` for consumption/stock and `booking charge ...`)
+  // branch on the second token: `!materialBookingTaskRef` (optional, resolves
+  // to `$ID`/`$STRING` or to the following literals) versus `_charge`.
   // ------------------------------------------------------------------
   rule(p, "materialBookingBody", () => {
-    // Consumo por tarefa (referência futura → `pendingBookings`) ou movimento
-    // de estoque (sem referência), com quantidade assinada (estorno).
+    // Consumption by task (future reference → `pendingBookings`) or stock
+    // movement (no reference), with a signed quantity (reversal).
     p.pattern(
       [
         "!materialBookingTaskRef",
@@ -408,7 +411,7 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
     p.arg(2, "quantity", "The quantity consumed or moved.",);
     p.arg(4, "period", "`on <date>` or `<modifier> <interval>[, …]` (D3).",);
 
-    // 14C.15.7: `booking charge <tarefa> [value] <montante> on <data>`.
+    // 14C.15.7: `booking charge <task> [value] <amount> on <date>`.
     p.pattern(["!materialChargeBookingHeader",],);
     p.doc(
       "booking.charge.material",
@@ -417,19 +420,19 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
   },);
 
   /**
-   * A keyword `quantity` passa a ser **opcional** em booking de material
-   * (Adendo Extra §12.3, 14C.15.3): `booking material "Aço" 2100 on ...` é
-   * a forma curta canônica. O literal não colide com o `$ID`/`$STRING` da
-   * referência de tarefa porque `State#transition` prefere o literal.
+   * The `quantity` keyword becomes **optional** in material booking (extra
+   * addendum §12.3, 14C.15.3): `booking material "Steel" 2100 on ...` is the
+   * canonical short form. The literal does not collide with the `$ID`/`$STRING`
+   * of the task reference because `State#transition` prefers the literal.
    */
   rule(p, "bookingQuantity", () => {
     p.optional();
     p.pattern(["_quantity",], () => "quantity",);
   },);
 
-  // Referência de tarefa no booking do corpo do material. Aceita ID ou nome;
-  // a resolução pode ser futura (a tarefa pode vir depois do material).
-  // **Opcional** (14C.13.4): ausente, o booking é um movimento de estoque.
+  // Task reference in the booking of the material body. Accepts ID or name; the
+  // resolution may be future (the task may come after the material).
+  // **Optional** (14C.13.4): when absent, the booking is a stock movement.
   rule(p, "materialBookingTaskRef", () => {
     p.optional();
     p.pattern(["$ID",], function (this: ProjectFileParser,): unknown {
@@ -450,7 +453,7 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
     },);
   },);
 
-  /** Núcleo obrigatório dos literais de modifier (Onda D4, tail). */
+  /** Mandatory core of the modifier literals (wave D4, tail). */
   rule(p, "materialAllocationModifierKeyword", () => {
     p.pattern(["_onstart",], () => "onstart",);
     p.descr("Consume the whole quantity on starting the task.",);
@@ -469,11 +472,11 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
   },);
 
   /**
-   * Cauda da alocação, nas duas ordens (Onda D4, D-g): `<modifier>
-   * [unitprice]` ou `unitprice <p> [modifier]`. Retorna
-   * `{ modifier, unitPrice }` (ou null quando ausente — modifier default
-   * `distributed` fica com `addMaterialAllocation`). Os padrões têm tokens
-   * de entrada disjuntos para não violar o FSM.
+   * Allocation tail, in both orders (wave D4, D-g): `<modifier> [unitprice]` or
+   * `unitprice <p> [modifier]`. Returns `{ modifier, unitPrice }` (or null when
+   * absent — the default `distributed` modifier stays with
+   * `addMaterialAllocation`). The patterns have disjoint entry tokens so as not
+   * to violate the FSM.
    */
   rule(p, "materialAllocationTail", () => {
     p.optional();
@@ -499,13 +502,13 @@ export function registerMaterialRules(p: ProjectFileParser,): void {
 }
 
 /**
- * Action compartilhada pelas formas `material`/`use`: constrói um
- * `MaterialAllocation` (com o `unitprice` opcional da alocação) e anexa-o à
- * lista de cenário `materialallocations`.
+ * Action shared by the `material`/`use` forms: builds a `MaterialAllocation`
+ * (with the allocation's optional `unitprice`) and appends it to the
+ * `materialallocations` scenario list.
  *
- * O slot 3 é o objeto `{ modifier, unitPrice }` de
- * `materialAllocationTail` (Onda D4, D-g — aceita as duas ordens); ausente
- * ⇒ modifier `distributed` e preço do material.
+ * Slot 3 is the `{ modifier, unitPrice }` object of `materialAllocationTail`
+ * (wave D4, D-g — accepts both orders); when absent ⇒ modifier `distributed`
+ * and the material price.
  */
 function addMaterialAllocation(
   this: ProjectFileParser,
@@ -533,9 +536,9 @@ function addMaterialAllocation(
 }
 
 /**
- * Cria um `MaterialBooking` e o anexa à tarefa dona (quando já declarada) ou
- * à fila de pendências do projeto (referência futura, 14C.11.5). A tarefa é
- * procurada por ID e depois por nome, como nos demais IDs do parser.
+ * Creates a `MaterialBooking` and appends it to the owning task (when already
+ * declared) or to the project pending queue (future reference, 14C.11.5). The
+ * task is looked up by ID and then by name, like the other parser IDs.
  */
 function addMaterialBooking(
   parser: ProjectFileParser,
@@ -567,7 +570,7 @@ function addMaterialBooking(
   }
 }
 
-/** Anexa `booking` ao atributo de cenário `materialbookings` de `task`. */
+/** Appends `booking` to the `materialbookings` scenario attribute of `task`. */
 export function appendBooking(
   parser: ProjectFileParser,
   task: Task,
@@ -585,9 +588,9 @@ export function appendBooking(
 }
 
 /**
- * Booking de estoque (Adendo Extra §12.1, 14C.13.4): movimento de material
- * sem tarefa dona — entrada (positiva) ou saída/estorno (negativa). Vai para
- * o atributo de cenário `stockbookings` do próprio material.
+ * Stock booking (extra addendum §12.1, 14C.13.4): material movement without an
+ * owning task — incoming (positive) or outgoing/reversal (negative). It goes to
+ * the `stockbookings` scenario attribute of the material itself.
  */
 function addStockBooking(
   parser: ProjectFileParser,
@@ -614,12 +617,12 @@ function addStockBooking(
 }
 
 /**
- * O booking de estoque só tem efeito contábil se houver conta para receber o
- * valor: o `chargeset` do material (regra 2 de `resolveAccount`) ou a conta
- * default do projeto para material (regra 4). Sem nenhum dos dois, o custo se
- * perderia — o Adendo Extra §12.1 exige o chargeset, então isso é **erro**
- * (14C.13.5). Roda no fim do bloco porque o `chargeset` pode vir depois do
- * `booking`.
+ * A stock booking only has an accounting effect when there is an account to
+ * receive the value: the material `chargeset` (rule 2 of `resolveAccount`) or
+ * the project default account for material (rule 4). Without either, the cost
+ * would be lost — extra addendum §12.1 requires the chargeset, so this is an
+ * **error** (14C.13.5). Runs at the end of the block because the `chargeset`
+ * may come after the `booking`.
  */
 function validateStockBookings(parser: ProjectFileParser,): void {
   const material = parser.property;
@@ -645,11 +648,12 @@ function validateStockBookings(parser: ProjectFileParser,): void {
 }
 
 /**
- * Cria o Material de uma declaração `material <id> "<nome>" { ... }` (equivalente
- * ao antigo `materialHeader`), com o bloco externo como pai. Roda ANTES do corpo
- * para que os atributos aninhados se anexem ao material recém-criado. O
- * identificador endereço o material (fica como `id`), e o `"<nome>"` citado passa
- * a ser o `name` base do material (rótulo legível) — fecha a pendência 14C.1.14.
+ * Creates the Material of a `material <id> "<name>" { ... }` declaration
+ * (equivalent to the old `materialHeader`), with the outer block as parent. It
+ * runs BEFORE the body so that the nested attributes attach to the freshly
+ * created material. The identifier addresses the material (kept as `id`), and
+ * the quoted `"<name>"` becomes the material's base `name` (readable label) —
+ * closes pending item 14C.1.14.
  */
 function createMaterial(
   parser: ProjectFileParser,
@@ -657,8 +661,8 @@ function createMaterial(
   name: string,
 ): void {
   const project = parser.project!;
-  // Materiais precisam de ID endereçável (alocações os referenciam). O ID é o
-  // identificador; o `name` citado vira o rótulo (`label`) do material.
+  // Materials need an addressable ID (allocations reference them). The ID is the
+  // identifier; the quoted `name` becomes the material `label`.
   if (project.material(id,)) {
     parser.error(
       "material_exists",
@@ -682,10 +686,11 @@ function createMaterial(
 }
 
 /**
- * Anexa o componente de composição (14C.14.3) ao atributo de cenário
- * `materialcomponents` do material dono do bloco, rejeitando ciclo antes de
- * anexar (14C.14.6). A referência vem de `pendingMaterialRef` (ID ou nome) e
- * precisa apontar para um material já declarado; a quantidade é `val[0]`.
+ * Appends the composition component (14C.14.3) to the `materialcomponents`
+ * scenario attribute of the material owning the block, rejecting a cycle before
+ * attaching (14C.14.6). The reference comes from `pendingMaterialRef` (ID or
+ * name) and must point to an already declared material; the quantity is
+ * `val[0]`.
  */
 function addMaterialComponent(this: ProjectFileParser,): unknown {
   this.checkContainer("material",);
@@ -725,10 +730,11 @@ function addMaterialComponent(this: ProjectFileParser,): unknown {
 }
 
 /**
- * `unitprice` e composição são mutuamente exclusivos (Adendo Extra §12.2).
- * O caso `unitprice` **depois** dos componentes é pego direto na regra;
- * este passe pega o inverso (`unitprice` antes dos componentes), quando o
- * `cost` já foi gravado mas o bloco acabou tendo componentes (14C.14.5).
+ * `unitprice` and composition are mutually exclusive (extra addendum §12.2).
+ * The `unitprice` **after** the components case is caught directly in the rule;
+ * this pass catches the inverse (`unitprice` before the components), when
+ * `cost` was already written but the block ended up having components
+ * (14C.14.5).
  */
 function validateUnitPriceDeclaration(parser: ProjectFileParser,): void {
   const material = parser.property;
@@ -744,7 +750,7 @@ function validateUnitPriceDeclaration(parser: ProjectFileParser,): void {
   );
 }
 
-/** Resolve um ID ou nome de tarefa (pode falhar: referência futura). */
+/** Resolves a task ID or name (may fail: future reference). */
 function findTask(parser: ProjectFileParser, ref: string,): Task | null {
   const project = parser.project!;
   const byId = project.task(ref,);
@@ -757,7 +763,7 @@ function findTask(parser: ProjectFileParser, ref: string,): Task | null {
   return found;
 }
 
-/** Resolve um material por ID e, na falta dele, pelo nome. */
+/** Resolves a material by ID and, failing that, by name. */
 function findMaterial(
   parser: ProjectFileParser,
   ref: string,

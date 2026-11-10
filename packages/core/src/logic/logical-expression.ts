@@ -1,10 +1,10 @@
 /**
- * LogicalExpression — raiz da árvore de uma expressão lógica (Fase 11.4).
+ * LogicalExpression — root of a logical expression tree (phase 11.4).
  *
- * Port fiel de `LogicalExpression.rb`. Envolve uma `LogicalOperation` e o
- * contexto de avaliação (`query`). A avaliação retorna sempre um booleano:
- * `true`/`false`/string passam conforme a regra do Ruby; números usam
- * `!== 0` (em TJP 'não-zero' é … comparado a zero).
+ * Faithful port of `LogicalExpression.rb`. Wraps a `LogicalOperation` and the
+ * evaluation context (`query`). Evaluation always returns a boolean: `true`,
+ * `false` and strings pass through the Ruby rule; numbers use `!== 0` (in TJP
+ * 'non-zero' is compared against zero).
  *
  * @see docs/taskjuggler/lib/taskjuggler/LogicalExpression.rb
  */
@@ -13,13 +13,21 @@ import type { SourceFileInfo, } from "../source-file-info.ts";
 import type { Query, } from "../query/query.ts";
 import type { LogicalOperation, } from "./logical-operation.ts";
 
-/** Expressão lógica: raiz de uma árvore de `LogicalOperation`. */
+/** Logical expression: root of a `LogicalOperation` tree. */
 export class LogicalExpression {
+  /** Root operation of the tree. */
   readonly operation: LogicalOperation;
+  /** Source location where the expression was read, when known. */
   readonly sourceFileInfo: SourceFileInfo | null;
-  /** Contexto de avaliação; preenchido por `eval`. */
+  /** Evaluation context; filled in by `eval`. */
   query: Query | null = null;
 
+  /**
+   * Creates the expression around its root operation.
+   *
+   * @param op Root operation of the tree.
+   * @param sourceFileInfo Source location where the expression was read.
+   */
   constructor(
     op: LogicalOperation,
     sourceFileInfo: SourceFileInfo | null = null,
@@ -28,17 +36,28 @@ export class LogicalExpression {
     this.sourceFileInfo = sourceFileInfo;
   }
 
-  /** Avalia a expressão contra `query`, normalizando o resultado para booleano. */
+  /**
+   * Evaluates the expression against `query`, normalizing the result to a
+   * boolean.
+   *
+   * @param query Evaluation context.
+   * @returns The boolean result of the expression.
+   */
   eval(query: Query,): boolean {
     this.query = query;
     const res = this.operation.eval(this,);
     if (typeof res === "boolean") return res;
     if (typeof res === "string") return res.length > 0;
-    // Números/null: em TJP só 0 (e false) significam "falso".
+    // Numbers and null: in TJP only 0 (and false) mean 'false'.
     return (res as unknown) !== 0;
   }
 
-  /** Dump textual. Com `query` mostra valores; sem, mostra nomes. */
+  /**
+   * Renders the expression as text.
+   *
+   * @param query When given, shows the resolved values instead of the names.
+   * @returns The textual form of the expression.
+   */
   to_s(query: Query | null = null,): string {
     const body = this.operation.to_s(query,);
     return this.sourceFileInfo === null
@@ -46,11 +65,22 @@ export class LogicalExpression {
       : `${this.sourceFileInfo.to_s()} ${body}`;
   }
 
+  /**
+   * Default string conversion (name-based) required by the JS runtime.
+   *
+   * @returns The textual form of the root operation.
+   */
   toString(): string {
     return this.operation.toString();
   }
 
-  /** Erro interno chamado pelas `LogicalOperation` durante a avaliação. */
+  /**
+   * Internal error raised by `LogicalOperation` implementations during
+   * evaluation.
+   *
+   * @param text Description of the problem.
+   * @throws TjError Always, prefixed with the textual form of the expression.
+   */
   error(text: string,): never {
     throw new TjError(
       `${this.to_s()}\nLogical expression error: ${text}`,

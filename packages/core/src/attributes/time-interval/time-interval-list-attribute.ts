@@ -1,5 +1,5 @@
 /**
- * Atributo de lista de intervalos de tempo.
+ * Time interval list attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:TimeIntervalListAttribute
  */
@@ -10,19 +10,19 @@ import { type AttributeDefinition, } from "../attribute-definition.ts";
 import { ListAttributeBase, } from "../list-attribute-base.ts";
 
 /**
- * Atributo de lista de intervalos de tempo.
+ * Time interval list attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:TimeIntervalListAttribute
  */
 export class TimeIntervalListAttribute
   extends ListAttributeBase<{ to_s(): string }> {
   /**
-   * ID do tipo de atributo para TimeIntervalListAttribute.
+   * Attribute type ID for TimeIntervalListAttribute.
    */
   static readonly tjpId = "intervallist";
 
   /**
-   * Converte o valor para string.
+   * Converts the value to a string.
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:TimeIntervalListAttribute#to_s
    */
@@ -38,7 +38,7 @@ export class TimeIntervalListAttribute
   }
 
   /**
-   * Converte o valor para TJP (formato TaskJuggler).
+   * Converts the value to TJP (TaskJuggler format).
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:TimeIntervalListAttribute#to_tjp
    */

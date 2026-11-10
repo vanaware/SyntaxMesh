@@ -1,5 +1,5 @@
 /**
- * Atributo de referência à propriedade.
+ * Property reference attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:PropertyAttribute
  */
@@ -10,13 +10,13 @@ import { type AttributeDefinition, } from "../attribute-definition.ts";
 import { AttributeBase, } from "../attribute-base.ts";
 
 /**
- * Atributo de referência à propriedade.
+ * Property reference attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:PropertyAttribute
  */
 export class PropertyAttribute extends AttributeBase<PropertyLike> {
   /**
-   * ID do tipo de atributo para PropertyAttribute.
+   * Attribute type ID for PropertyAttribute.
    */
   static readonly tjpId = "property";
 }

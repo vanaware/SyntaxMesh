@@ -1,5 +1,5 @@
 /**
- * Atributo de lista de ordenação de diários.
+ * Journal sort list attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:JournalSortListAttribute
  */
@@ -10,18 +10,18 @@ import { type AttributeDefinition, } from "../attribute-definition.ts";
 import { ListAttributeBase, } from "../list-attribute-base.ts";
 
 /**
- * Atributo de lista de ordenação de diários.
+ * Journal sort list attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:JournalSortListAttribute
  */
 export class JournalSortListAttribute extends ListAttributeBase<unknown> {
   /**
-   * ID do tipo de atributo para JournalSortListAttribute.
+   * Attribute type ID for JournalSortListAttribute.
    */
   static readonly tjpId = "journalsorting";
 
   /**
-   * Converte o valor para string.
+   * Converts the value to a string.
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:JournalSortListAttribute#to_s
    */

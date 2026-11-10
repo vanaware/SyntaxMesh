@@ -1,19 +1,19 @@
 /**
- * Normalização de caminhos da fronteira de execução (Fase 24 — ADR 034).
+ * Path normalization of the execution boundary (phase 24 — ADR 034).
  *
- * Puro: não consulta o filesystem. O `include` do TJP é resolvido pelo scanner
- * concatenando `dirname(arquivo-pai) + "/" + nome`, o que produz formas como
- * `./a/b.tji` ou `a/../b.tji`; o *lookup* contra a lista de arquivos do request
- * precisa da forma canônica (`a/b.tji`).
+ * Pure: it does not touch the filesystem. The TJP `include` is resolved by the
+ * scanner by concatenating `dirname(parent-file) + "/" + name`, which produces
+ * shapes like `./a/b.tji` or `a/../b.tji`; the lookup against the request file
+ * list needs the canonical form (`a/b.tji`).
  */
 
 /**
- * Canoniza um caminho posix relativo ou absoluto, sem tocar no disco.
+ * Canonicalizes a relative or absolute posix path, without touching the disk.
  *
- * - remove `.` e segmentos vazios (barras duplicadas, barra final);
- * - resolve `..` textualmente (mantém `..` à esquerda em caminho relativo);
- * - preserva a raiz `/` de caminhos absolutos;
- * - `""` e `"."` normalizam para `"."`.
+ * - removes `.` and empty segments (duplicated slashes, trailing slash);
+ * - resolves `..` textually (keeps a leading `..` in a relative path);
+ * - preserves the `/` root of absolute paths;
+ * - `""` and `"."` normalize to `"."`.
  */
 export function normalizeInputPath(path: string,): string {
   const absolute = path.startsWith("/",);
@@ -37,9 +37,10 @@ export function normalizeInputPath(path: string,): string {
 }
 
 /**
- * Diretório-pai posix de um caminho canônico (`"."` na raiz relativa).
+ * Posix parent directory of a canonical path (`"."` at the relative root).
  *
- * Puro como o resto do módulo: `a/b.tji` → `a`, `b.tji` → `.`, `/x` → `/`.
+ * Pure like the rest of the module: `a/b.tji` → `a`, `b.tji` → `.`, `/x` →
+ * `/`.
  */
 export function dirnameOf(path: string,): string {
   const index = path.lastIndexOf("/",);
@@ -49,10 +50,10 @@ export function dirnameOf(path: string,): string {
 }
 
 /**
- * Remove a extensão final (`master.tjp` → `master`).
+ * Removes the trailing extension (`master.tjp` → `master`).
  *
- * Só corta o último ponto do **basename**: `a.b/master` e `master` ficam
- * intactos, como o `File.basename(f, ext)` implícito do freeze no Ruby.
+ * It only cuts the last dot of the **basename**: `a.b/master` and `master` stay
+ * untouched, like the implicit `File.basename(f, ext)` of the Ruby freeze.
  */
 export function stripExtension(path: string,): string {
   const slash = path.lastIndexOf("/",);

@@ -1,9 +1,9 @@
 /**
- * Seções de resultado do envelope (Fase 24 — adendo v2.1 §3.4).
+ * Result sections of the envelope (phase 24 — appendix v2.1 §3.4).
  *
- * Cada construtor devolve **dados** (nada de chamar `exit`, imprimir ou gravar)
- * e só é invocado quando o request pede a seção correspondente. O contrato é
- * o do adendo: seção ausente = não pedida.
+ * Every builder returns **data** (no `exit`, no printing, no writing) and is
+ * only invoked when the request asks for the corresponding section. The
+ * contract is the appendix's: an absent section means it was not requested.
  *
  * @see docs/syntaxmesh/fases/fase-24-cli-adendo.md §3.3/§3.4
  */
@@ -26,6 +26,7 @@ import type { ManOutput, } from "../docgen/man.ts";
 import {
   renderReports,
   type RenderReportsOptions,
+  type ReportsJson,
 } from "../reports/reports-json.ts";
 import type {
   ExecutionManRequest,
@@ -41,10 +42,11 @@ import type {
 } from "./types.ts";
 
 /**
- * Especificação das opções de execução v1 (plano §5.2).
+ * Specification of the v1 execution options (plan §5.2).
  *
- * **Fonte única**: alimenta a seção `help` do envelope e a definição do comando
- * Cliffy na CLI (24.3). Manter aqui evita duas listas divergentes.
+ * **Single source**: feeds the `help` section of the envelope and the Cliffy
+ * command definition in the CLI (24.3). Keeping it here avoids two diverging
+ * lists.
  */
 export const OPTION_SPECS: readonly OptionSpec[] = [
   {
@@ -120,8 +122,8 @@ export const OPTION_SPECS: readonly OptionSpec[] = [
   },
   {
     name: "force-reports",
-    // `Tj3.rb` l.148-151: `-f, --force-reports`. Nos apps de sheet o mesmo
-    // `-f` é `--force` (quem decide é o subcomando — ver `parseArgs`).
+    // `Tj3.rb` l.148-151: `-f, --force-reports`. In the sheet apps the same
+    // `-f` is `--force` (the subcommand decides — see `parseArgs`).
     short: "f",
     type: "boolean",
     argument: null,
@@ -192,12 +194,12 @@ export const OPTION_SPECS: readonly OptionSpec[] = [
   },
 ];
 
-/** Seção `check` — parse sem agenda (fonte do exit do `--check-syntax`). */
+/** `check` section — parse without scheduling (exit source of `--check-syntax`). */
 export function checkSection(valid: boolean,): { valid: boolean } {
   return { valid, };
 }
 
-/** Compara por id canônico (`report.id`), igual ao resto do modelo. */
+/** Compares by canonical id (`report.id`), like the rest of the model. */
 function matches(report: Report, pattern: string, isRegex: boolean,): boolean {
   if (!isRegex) return report.id === pattern || report.fullId === pattern;
   try {
@@ -208,9 +210,9 @@ function matches(report: Report, pattern: string, isRegex: boolean,): boolean {
 }
 
 /**
- * Seção `listReports` — `[{ name, type }]` na ordem de declaração.
+ * `listReports` section — `[{ name, type }]` in declaration order.
  *
- * Não usa `Project#listReports`, que imprime no console (caminho legado).
+ * Does not use `Project#listReports`, which prints to the console (legacy path).
  */
 export function listReportsSection(
   project: Project,
@@ -230,20 +232,20 @@ export function listReportsSection(
   return entries;
 }
 
-/** Seção `reports` — delega o contrato a `renderReports` (24.2.15). */
+/** `reports` section — delegates the contract to `renderReports` (24.2.15). */
 export function reportsSection(
   project: Project,
   options: RenderReportsOptions = {},
-) {
+): ReportsJson {
   return renderReports(project, options,);
 }
 
-/** Seção `help` — especificação estruturada das opções de execução. */
+/** `help` section — structured specification of the execution options. */
 export function helpSection(): OptionSpec[] {
   return OPTION_SPECS.map((spec,) => ({ ...spec, }));
 }
 
-/** Seção `version` — `AppConfig` é a fonte (preenchida no build). */
+/** `version` section — `AppConfig` is the source (filled at build time). */
 export function versionSection(): { name: string; version: string } {
   return {
     name: AppConfig.softwareName,
@@ -252,21 +254,21 @@ export function versionSection(): { name: string; version: string } {
 }
 
 /**
- * Seção `freeze` (24.9.4) — artefatos do freeze como **dados**.
+ * `freeze` section (24.9.4) — freeze artifacts as **data**.
  *
- * O núcleo da geração está em `TaskJuggler.freeze` (header + export dos
- * bookings); quem grava é o consumidor.
+ * The generation core lives in `TaskJuggler.freeze` (header + export of the
+ * bookings); the consumer writes them.
  */
 export function freezeSection(files: FreezeFile[],): FreezeSection {
   return { files, };
 }
 
 /**
- * Seção `man` (24.9.1–24.9.3) — documentação de sintaxe como **dado**.
+ * `man` section (24.9.1–24.9.3) — syntax documentation as **data**.
  *
- * O conteúdo vem do `doc-core` da Fase 22 (`generateMan`): texto pronto em
- * `content` e, no formato `html`, o mapa `nome → conteúdo` do manual em
- * `files`. Gravar em disco é da política de saída da CLI (24.5).
+ * The content comes from the phase 22 `doc-core` (`generateMan`): the finished
+ * text in `content` and, in the `html` format, the `name → content` map of the
+ * manual in `files`. Writing to disk belongs to the CLI output policy (24.5).
  */
 export function manSection(
   request: ExecutionManRequest,
@@ -280,7 +282,7 @@ export function manSection(
   };
 }
 
-/** Seção `sheet` (24.2.26) — apps da F18 devolvem dados, nunca gravam. */
+/** `sheet` section (24.2.26) — phase 18 apps return data, they never write. */
 export function sheetSection(
   app: SheetAppName,
   data: Omit<SheetSection, "app"> = {},
@@ -289,26 +291,42 @@ export function sheetSection(
 }
 
 /**
- * Saída da seção `sheet`: a seção em si mais o `exitCode` a propagar.
+ * Outcome of a `sheet`-family section: the section data plus the exit code to
+ * propagate.
  *
- * A seção não carrega o `MessageHandler` — quem decide o código final combina
- * este valor com os erros acumulados (matriz do plano §5.3).
+ * The section carries no {@link MessageHandlerInstance} — whoever computes the
+ * final status combines this value with the accumulated error count.
  */
 export interface SheetSectionOutcome {
+  /** Data produced by the sheet app; never `null`, even on failure. */
   section: SheetSection;
+  /** `0` when the app succeeded, `1` when it reported an error. */
   exitCode: number;
 }
 
 /**
- * Mínimo que a seção `sheet` precisa do `TaskJuggler` (24.2.33).
+ * The smallest slice of `TaskJuggler` the `sheet` section needs (24.2.33).
  *
- * Estrutural de propósito: evita o ciclo `execute → sections → taskjuggler`.
+ * Structural on purpose: it avoids the import cycle
+ * `execute → sections → taskjuggler`.
  */
 export interface SheetChecker {
+  /**
+   * Parses a time-sheet resource as text and returns the journal it produces.
+   *
+   * @param content Time sheet source, already read from disk by the caller.
+   * @param fileName Name used in diagnostics when `content` has no location.
+   */
   checkTimeSheetContent(
     content: string,
     fileName?: string,
   ): SheetCheckResult;
+  /**
+   * Parses a status-sheet resource as text and returns the journal it produces.
+   *
+   * @param content Status sheet source, already read from disk by the caller.
+   * @param fileName Name used in diagnostics when `content` has no location.
+   */
   checkStatusSheetContent(
     content: string,
     fileName?: string,
@@ -316,11 +334,11 @@ export interface SheetChecker {
 }
 
 /**
- * Checa `check-ts`/`check-ss` sobre o **conteúdo** do request (24.2.33).
+ * Checks `check-ts`/`check-ss` against the **content** of the request (24.2.33).
  *
- * O journal compilado sai em `section.reportText` — é a substituição do campo
- * mutável `lastSheetReport` na via envelope. Sem conteúdo o app falha com
- * mensagem própria (nada de ler disco para “adivinhar” a folha).
+ * The compiled journal comes out in `section.reportText` — it replaces the
+ * mutable `lastSheetReport` field on the envelope path. Without content the app
+ * fails with its own message (never reads the disk to "guess" the sheet).
  */
 export function checkSheetSection(
   checker: SheetChecker,
@@ -356,11 +374,11 @@ export function checkSheetSection(
 }
 
 /**
- * Constrói o app de sheet correspondente ao nome do request (24.10.1–4).
+ * Builds the sheet app matching the request name (24.10.1–4).
  *
- * As opções chegam já tipadas do consumidor; o core só escolhe a classe. O
- * ramo `check-ts`/`check-ss` **não** passa por aqui — é verificação de folha
- * contra o projeto, não um app de email (§3.4 do adendo).
+ * The options arrive already typed from the consumer; the core only picks the
+ * class. The `check-ts`/`check-ss` branch does **not** go through here — that is
+ * a sheet check against the project, not an email app (appendix §3.4).
  */
 function buildSheetApp(
   app: Exclude<SheetAppName, "check-ts" | "check-ss">,
@@ -402,7 +420,7 @@ function buildSheetApp(
   }
 }
 
-/** Mensagens do app como dado estruturado (`raw` é o RFC 822 completo). */
+/** App messages as structured data (`raw` is the complete RFC 822). */
 function sheetEmails(emails: EmailMessage[],): SheetEmail[] {
   return emails.map((email,) => ({
     to: email.to,
@@ -412,11 +430,12 @@ function sheetEmails(emails: EmailMessage[],): SheetEmail[] {
 }
 
 /**
- * Texto do resumo do `ts summary` (24.10.3).
+ * Text of the `ts summary` digest (24.10.3).
  *
- * O app envia o resumo aos `digestRecipients` e, depois, os lembretes — por
- * isso não basta pegar a última mensagem. A lista efetiva de destinatários vem
- * do handler (config + opções), e o último email para ela é o resumo.
+ * The app sends the digest to the `digestRecipients` and then the reminders — so
+ * taking the last message is not enough. The effective recipient list comes from
+ * the handler (config + options), and the last email addressed to it is the
+ * digest.
  */
 function digestText(
   app: SheetAppBase,
@@ -431,10 +450,10 @@ function digestText(
 }
 
 /**
- * Arquivos que o app **criou ou alterou** no store efêmero.
+ * Files the app **created or changed** in the ephemeral store.
  *
- * O delta contra a semente evita reescrever templates/folhas que o app apenas
- * leu: só o que o pipeline produziu chega ao consumidor.
+ * The delta against the seed avoids rewriting templates/sheets the app merely
+ * read: only what the pipeline produced reaches the consumer.
  */
 function createdFiles(
   seed: readonly { path: string; content: string }[],
@@ -454,11 +473,12 @@ function createdFiles(
 }
 
 /**
- * Seção `sheet` para os apps de email da Fase 18 (24.10.1–24.10.4).
+ * `sheet` section for the phase 18 email apps (24.10.1–24.10.4).
  *
- * Roda o app sobre um `MemoryFileStore` semeado com `appOptions.files` e
- * devolve o resultado como dado: emails completos, anexos, resumo e os
- * arquivos gerados. Nada é lido de disco nem enviado por SMTP (ADR 036/037).
+ * Runs the app over a `MemoryFileStore` seeded with `appOptions.files` and
+ * returns the result as data: complete emails, attachments, digest and the
+ * generated files. Nothing is read from the disk nor sent over SMTP
+ * (ADR 036/037).
  */
 export async function runSheetSection(
   project: Project,

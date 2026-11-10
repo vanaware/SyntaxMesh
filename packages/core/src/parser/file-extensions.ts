@@ -1,26 +1,26 @@
 /**
- * Extensões de arquivo aceitas pelo parser (Fase 24, 24.2.36).
+ * File extensions accepted by the parser (phase 24, 24.2.36).
  *
- * Decisão de 2026-11-07 (plano §1.6): o SyntaxMesh adota **`.smx`** como
- * extensão nativa de projetos e folhas. As formas do TaskJuggler (`.tjp`,
- * `.tji`) continuam aceitas por compatibilidade — `.tjp`/`.tji` em material
- * novo são permitidos só como legado, nunca gerados.
+ * Decision of 2026-11-07 (plan §1.6): SyntaxMesh adopts **`.smx`** as the
+ * native extension for projects and sheets. The TaskJuggler forms (`.tjp`,
+ * `.tji`) remain accepted for compatibility — `.tjp`/`.tji` in new material
+ * are allowed as legacy only, never generated.
  *
- * Este módulo fica fora de `project-file-parser.ts` porque as regras de
- * gramática (`rules/project.ts`) também precisam dos mesmos nomes, e importar
- * o parser a partir das regras criaria ciclo (`parser → rules → parser`).
+ * This module lives outside `project-file-parser.ts` because the grammar rules
+ * (`rules/project.ts`) also need the same names, and importing the parser from
+ * the rules would create a cycle (`parser → rules → parser`).
  *
- * ⚠️ Desvio **validado** da regra zero (ADR 011): o Ruby exigia `.tjp` e
- * `.tji`. O aditamento do ADR 037 registra a decisão (24.2.35).
+ * ⚠️ **Validated** deviation from rule zero (ADR 011): Ruby required `.tjp`
+ * and `.tji`. The ADR 037 addendum records the decision (24.2.35).
  */
 
-/** Extensões aceitas para o arquivo **mestre** do projeto. */
+/** Extensions accepted for the project **master** file. */
 export const PROJECT_FILE_EXTENSIONS = [".tjp", ".smx",] as const;
 
-/** Extensões aceitas para um arquivo **incluído** (`include "…"`). */
+/** Extensions accepted for an **included** file (`include "…"`). */
 export const INCLUDE_FILE_EXTENSIONS = [".tji", ".smx",] as const;
 
-/** `true` quando o nome termina com uma das extensões informadas. */
+/** `true` when the name ends with one of the given extensions. */
 function hasExtension(
   fileName: string,
   extensions: readonly string[],
@@ -28,17 +28,17 @@ function hasExtension(
   return extensions.some((ext,) => fileName.endsWith(ext,));
 }
 
-/** `true` quando o nome tem uma das extensões de arquivo mestre. */
+/** `true` when the name has one of the master-file extensions. */
 export function isProjectFileName(fileName: string,): boolean {
   return hasExtension(fileName, PROJECT_FILE_EXTENSIONS,);
 }
 
-/** `true` quando o nome tem uma das extensões de arquivo incluído. */
+/** `true` when the name has one of the include-file extensions. */
 export function isIncludeFileName(fileName: string,): boolean {
   return hasExtension(fileName, INCLUDE_FILE_EXTENSIONS,);
 }
 
-/** Lista humana das extensões (`'.tjp' or '.smx'`). */
+/** Human-readable list of the extensions (`'.tjp' or '.smx'`). */
 export function formatExtensionList(extensions: readonly string[],): string {
   return extensions.map((ext,) => `'${ext}'`).join(" or ",);
 }

@@ -1,8 +1,8 @@
 /**
- * Folhas de ponto (time sheets) — Fase 18.
+ * Time sheets — Phase 18.
  *
- * Barrel do módulo `timesheet/`: `TimeSheetRecord`, `TimeSheet`,
- * `TimeSheets` e o tipo `ProjectTiming`.
+ * Barrel of the `timesheet/` module: `TimeSheetRecord`, `TimeSheet`,
+ * `TimeSheets` and the `ProjectTiming` type.
  *
  * @see docs/taskjuggler/lib/taskjuggler/TimeSheets.rb
  */

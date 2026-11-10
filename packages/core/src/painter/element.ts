@@ -1,24 +1,25 @@
 /**
- * 17.8.1 — `Element`: base de todo elemento desenhável (`Painter/Element.rb`).
+ * 17.8.1 — `Element`: base of every drawable element (`Painter/Element.rb`).
  *
- * Porta `TaskJuggler::Painter::Element`: guarda o tipo da tag, a lista de
- * atributos aceitos, os valores fornecidos e um texto opcional; `to_svg()`
- * produz a árvore `XMLElement` já em sintaxe SVG.
+ * Ports `TaskJuggler::Painter::Element`: it holds the tag type, the list of
+ * accepted attributes, the given values and an optional text; `to_svg()`
+ * produces the `XMLElement` tree already in SVG syntax.
  *
- * Observações do oráculo Ruby (2026-11-04, `.tmp/element_ruby_check.rb`):
+ * Notes from the Ruby oracle (2026-11-04, `.tmp/element_ruby_check.rb`):
  * - `Element.new('foo', [:a, :b], {a: 1, b: 2}).to_svg.to_s` ==
- *   `"<foo a=\"1\" b=\"2\"></foo>"` — o Ruby **não** fecha a tag em `<foo/>`
- *   (`selfClosing` fica `false`), e os atributos saem **ordenados** (regra do
- *   17.1), não na ordem do hash de origem.
- * - Atributo desconhecido → `ArgumentError: Unsupported attribute c`.
- * - `@text = ''` **é** truthy no Ruby (`if @text`), então `XMLText.new('')`
- *   entra como filho e serializa vazio: `<foo></foo>`. O port usa
- *   `text !== null`, não `if (text)`, para preservar isso.
- * - **Divergência do plano**: o plano pede `abstract class Element`, mas o
- *   Ruby instancia `Element` diretamente (não há `private_class_method new`),
- *   e os testes desta fase usam instâncias nuas. Mantida classe concreta.
- * - `values` é tipado como `SVGValues` (não `Record<string, unknown>`): os
- *   valores do Painter são sempre número, string ou objeto com `to_s()`.
+ *   `"<foo a=\"1\" b=\"2\"></foo>"` — Ruby does **not** collapse the tag into
+ *   `<foo/>` (`selfClosing` stays `false`), and the attributes come out
+ *   **sorted** (17.1 rule), not in the order of the source hash.
+ * - Unknown attribute → `ArgumentError: Unsupported attribute c`.
+ * - `@text = ''` **is** truthy in Ruby (`if @text`), so `XMLText.new('')` is
+ *   appended as a child and serializes empty: `<foo></foo>`. The port uses
+ *   `text !== null`, not `if (text)`, to preserve that.
+ * - **Divergence from the plan**: the plan asks for `abstract class Element`,
+ *   but Ruby instantiates `Element` directly (there is no
+ *   `private_class_method new`) and the tests of this phase use bare instances.
+ *   It stays a concrete class.
+ * - `values` is typed as `SVGValues` (not `Record<string, unknown>`): the Painter
+ *   values are always a number, a string or an object with `to_s()`.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Painter/Element.rb
  * @see docs/syntaxmesh/fases/fase-17-html-xml-tarefas.md (17.8)
@@ -29,26 +30,38 @@ import { XMLElement, XMLText, } from "../xml/xml-element.ts";
 import { type SVGValues, valuesToSVG, } from "./svg-support.ts";
 
 /**
- * Contrato de tudo que o Painter sabe aninhar: `Element` e `Group` (no Ruby a
- * lista `@elements` é dinâmica — um `Group` aceita outro `Group` dentro).
+ * Contract of everything the Painter knows how to nest: `Element` and `Group`
+ * (in Ruby the `@elements` list is dynamic — a `Group` accepts another `Group`
+ * inside).
  */
 export interface Drawable {
+  /**
+   * Converts the drawable into an SVG element tree.
+   *
+   * @returns The element in SVG syntax.
+   */
   to_svg(): XMLElement;
 }
 
+/** Base drawable element of the SVG painter. */
 export class Element {
-  /** Nome da tag SVG (`@type` do Ruby): `line`, `rect`, `text`, … */
+  /** Name of the SVG tag (Ruby `@type`): `line`, `rect`, `text`, … */
   protected type: string;
-  /** Chaves aceitas por este elemento (`@attributes`). */
+  /** Keys accepted by this element (`@attributes`). */
   protected attributes: string[];
-  /** Atributos efetivamente fornecidos (`@values`). */
+  /** Attributes actually supplied (`@values`). */
   protected values: SVGValues;
-  /** Texto do elemento (`@text`); `null` = sem texto (Ruby `nil`). */
+  /** Element text (`@text`); `null` means no text (Ruby `nil`). */
   protected text: string | null;
 
   /**
-   * Ruby `initialize(type, attrs, values)` — cada chave de `values` precisa
-   * estar em `attrs`, ou o elemento levanta `ArgumentError`.
+   * Ruby `initialize(type, attrs, values)` — every key of `values` must be in
+   * `attrs`, otherwise the element raises `ArgumentError`.
+   *
+   * @param type Name of the SVG tag.
+   * @param attrs Attribute names the element accepts.
+   * @param values Attribute values to set.
+   * @throws TjArgumentError When a value key is not an accepted attribute.
    */
   constructor(type: string, attrs: string[], values: SVGValues,) {
     this.type = type;
@@ -64,10 +77,14 @@ export class Element {
     }
   }
 
-  /** Converte o elemento em `XMLElement` com sintaxe SVG. */
+  /**
+   * Converts the element into an `XMLElement` in SVG syntax.
+   *
+   * @returns The SVG element, with its text child when there is one.
+   */
   to_svg(): XMLElement {
     const el = new XMLElement(this.type, valuesToSVG(this.values,),);
-    // Ruby `if @text`: '' é truthy, só nil fica de fora.
+    // Ruby `if @text`: '' is truthy, only nil is left out.
     if (this.text !== null && this.text !== undefined) {
       el.append(new XMLText(this.text,),);
     }

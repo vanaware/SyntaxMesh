@@ -1,5 +1,5 @@
 /**
- * Atributo de horas de trabalho.
+ * Working hours attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:WorkingHoursAttribute
  */
@@ -14,18 +14,18 @@ interface WorkingHoursValue {
 }
 
 /**
- * Atributo de horas de trabalho.
+ * Working hours attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:WorkingHoursAttribute
  */
 export class WorkingHoursAttribute extends AttributeBase<unknown> {
   /**
-   * ID do tipo de atributo para WorkingHoursAttribute.
+   * Attribute type ID for WorkingHoursAttribute.
    */
   static readonly tjpId = "workinghours";
 
   /**
-   * Converte o valor para TJP (formato TaskJuggler).
+   * Converts the value to TJP (TaskJuggler format).
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:WorkingHoursAttribute#to_tjp
    */
@@ -62,7 +62,7 @@ export class WorkingHoursAttribute extends AttributeBase<unknown> {
   }
 
   /**
-   * Converte o valor para string.
+   * Converts the value to a string.
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:WorkingHoursAttribute#to_s
    */

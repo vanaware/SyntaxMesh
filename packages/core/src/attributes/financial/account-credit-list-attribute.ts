@@ -1,5 +1,5 @@
 /**
- * Atributo de lista de créditos de conta.
+ * Account credit list attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:AccountCreditListAttribute
  */
@@ -10,19 +10,19 @@ import { type AttributeDefinition, } from "../attribute-definition.ts";
 import { ListAttributeBase, } from "../list-attribute-base.ts";
 
 /**
- * Atributo de lista de créditos de conta.
+ * Account credit list attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:AccountCreditListAttribute
  */
 export class AccountCreditListAttribute
   extends ListAttributeBase<{ amount: number }> {
   /**
-   * ID do tipo de atributo para AccountCreditListAttribute.
+   * Attribute type ID for AccountCreditListAttribute.
    */
   static readonly tjpId = "credits";
 
   /**
-   * Converte o valor para string.
+   * Converts the value to a string.
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:AccountCreditListAttribute#to_s
    */
@@ -38,7 +38,7 @@ export class AccountCreditListAttribute
   }
 
   /**
-   * Converte o valor para TJP (formato TaskJuggler).
+   * Converts the value to TJP (TaskJuggler format).
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:AccountCreditListAttribute#to_tjp
    */

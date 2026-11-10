@@ -1,18 +1,18 @@
 /**
- * ProjectFileScanner — especialização do Scanner para a sintaxe TJP.
+ * ProjectFileScanner — specialisation of the `Scanner` for the TJP syntax.
  *
- * Port de `ProjectFileScanner.rb` (arquivo inteiro). Registra os ~30
- * padrões com seus modos (:tjp, :dqString, :sqString, :szrString(1),
- * :macroCall, :macroDef, :cppComment) e os pós-processadores de token.
+ * Port of `ProjectFileScanner.rb` (whole file). Registers the ~30 patterns with
+ * their modes (:tjp, :dqString, :sqString, :szrString(1), :macroCall,
+ * :macroDef, :cppComment) and the token post-processors.
  *
- * Extensão SyntaxMesh (ADR 023): quando `language !== 'en'`, tokens `ID`
- * são normalizados para o keyword canônico via `LanguageRegistry.resolve`,
- * MANTENDO o tipo "ID" — o FSM casa literais pelo texto do token ID
- * (State#transition tenta transição literal antes do fallback :ID).
+ * SyntaxMesh extension (ADR 023): when `language !== 'en'`, `ID` tokens are
+ * normalized to the canonical keyword through `LanguageRegistry.resolve`,
+ * KEEPING the "ID" type — the FSM matches literals by the text of the ID token
+ * (State#transition tries the literal transition before the :ID fallback).
  *
- * Nota de port: os padrões de ID do Ruby são ASCII-only
- * (`[a-zA-Z_]` seguido de `\w`); aqui usamos classe Unicode (`\p{L}` e
- * `\p{N}`) para permitir keywords acentuados ('esforço', 'duración').
+ * Port note: the Ruby ID patterns are ASCII-only (`[a-zA-Z_]` followed by
+ * `\w`); here we use the Unicode class (`\p{L}` and `\p{N}`) to allow accented
+ * keywords ('esforço', 'duración').
  *
  * @see docs/taskjuggler/lib/taskjuggler/ProjectFileScanner.rb
  */
@@ -26,7 +26,7 @@ import {
   type TokenPostProcessor,
 } from "./scanner.ts";
 
-/** Modos do scanner de arquivos TJP (Ruby Symbols → strings ':'-prefix). */
+/** Scanner modes of the TJP file reader (Ruby Symbols → ':'-prefixed strings). */
 export const TJP_MODES = {
   tjp: ":tjp",
   dqString: ":dqString",
@@ -38,7 +38,7 @@ export const TJP_MODES = {
   cppComment: ":cppComment",
 } as const;
 
-/** Unidade canônica → literal curto usado pela gramática TJP. */
+/** Canonical unit → short literal used by the TJP grammar. */
 const UNIT_TO_LITERAL: Record<CanonicalUnit, string> = {
   minute: "min",
   hour: "h",
@@ -49,35 +49,39 @@ const UNIT_TO_LITERAL: Record<CanonicalUnit, string> = {
   year: "y",
 };
 
+/**
+ * Scanner of TJP project files: registers the full TJP pattern table and turns
+ * its matches into typed tokens, including the language normalisation of IDs.
+ */
 export class ProjectFileScanner extends Scanner {
-  /** Idioma do arquivo para normalização de keywords (ADR 023). */
+  /** Language of the file used to normalize keywords (ADR 023). */
   readonly language: string;
-  /** Registro de idiomas injetável (testes usam instâncias isoladas). */
+  /** Injectable language registry (tests use isolated instances). */
   protected registry: LanguageRegistry;
 
-  /** Acumulador de strings multi-linha (Ruby @string). */
+  /** Accumulator of the multi-line strings (Ruby @string). */
   private string = "";
-  /** Indentação da primeira linha de uma string szr (Ruby @indent). */
+  /** Indentation of the first line of a szr string (Ruby @indent). */
   private indent = "";
-  /** Texto da chamada de macro em montagem (Ruby @macroCall). */
+  /** Text of the macro call being assembled (Ruby @macroCall). */
   private macroCall = "";
-  /** Modo a restaurar no fim da chamada de macro (Ruby @macroCallPreviousMode). */
+  /** Mode to restore at the end of the macro call (Ruby @macroCallPreviousMode). */
   private macroCallPreviousMode = ":tjp";
-  /** Texto da definição de macro em montagem (Ruby @macroDef). */
+  /** Text of the macro definition being assembled (Ruby @macroDef). */
   private macroDef = "";
   /**
-   * true quando a definição `[ ... ]` em montagem é de um **template**
-   * (extensão TS-only, Fase 23): o `]` pode ser seguido de `( params )` na
-   * mesma linha. Detecção em `startMacroDef`/`definitionLine` — nos dois
-   * casos o corpo é coletado pelo MESMO mecanismo da macro.
+   * true when the `[ ... ]` definition being assembled is a **template**
+   * (TS-only extension, phase 23): the `]` may be followed by `( params )` on
+   * the same line. Detected in `startMacroDef`/`definitionLine` — in both cases
+   * the body is collected by the SAME mechanism used for macros.
    */
   private templateBody = false;
-  /** Texto cru da lista de parâmetros da última definição de template. */
+  /** Raw text of the parameter list of the last template definition. */
   private lastTemplateParams: string | null = null;
 
   /**
-   * Provedor de variáveis de ambiente (Ruby `ENV[name]`).
-   * Browser: substituído pela UI; padrão: `Deno.env` quando existir.
+   * Environment-variable provider (Ruby `ENV[name]`).
+   * Browser: replaced by the UI; default: `Deno.env` when it exists.
    */
   static envProvider: (name: string,) => string | null = (name,) => {
     const g = globalThis as unknown as {
@@ -86,51 +90,59 @@ export class ProjectFileScanner extends Scanner {
     return g.Deno?.env?.get?.(name,) ?? null;
   };
 
+  /**
+   * Creates the TJP scanner over the master file.
+   *
+   * @param masterFile File name (or literal text, for a buffer).
+   * @param log Log used for progress and diagnostics.
+   * @param language Language of the file, for the keyword normalisation.
+   * @param registry Registry used to canonicalize keywords and units.
+   */
   constructor(
     masterFile: string,
     log: LogLike,
     language = "en",
     registry: LanguageRegistry = globalRegistry,
   ) {
-    // Padrões registrados após super(): `this` indisponível nos argumentos.
+    // Patterns registered after super(): `this` is unavailable in the arguments.
     super(masterFile, log, [], TJP_MODES.tjp,);
     this.language = language;
     this.registry = registry;
     this.registerPatterns();
-    // Reavalia activePatterns agora que ':tjp' existe.
+    // Re-evaluates activePatterns now that ':tjp' exists.
     this.mode = TJP_MODES.tjp;
   }
 
-  /** Registra todos os padrões na ordem exata do Ruby (ordem é crítica). */
+  /** Registers every pattern in the exact Ruby order (order is critical). */
   private registerPatterns(): void {
     const post = (fn: TokenPostProcessor,): TokenPostProcessor => fn;
     const patterns: TokenPattern[] = [
-      // Quaisquer espaços em branco.
+      // Any whitespace.
       [null, /\s+/, ":tjp", post(() => this.newPos()),],
 
-      // Comentários de linha única iniciados por #.
+      // Single-line comments starting with #.
       [null, /#.*\n?/, ":tjp", post(() => this.newPos()),],
 
-      // Comentários de linha única estilo C++ iniciados por //.
+      // C++-style single-line comments starting with //.
       [null, /\/\/.*\n?/, ":tjp", post(() => this.newPos()),],
 
-      // Comentários estilo C de linha única /* .. */.
+      // C-style single-line comments /* .. */.
       [null, /\/\*.*\*\//, ":tjp", post(() => this.newPos()),],
 
-      // Comentários estilo C multi-linha: início (muda para :cppComment).
+      // Multi-line C-style comments: start (switches to :cppComment).
       [null, /\/\*([^*]*[^/]|.*)\n/, ":tjp", post(() => this.startComment()),],
-      // Fim do comentário multi-linha (volta para :tjp).
+      // End of the multi-line comment (back to :tjp).
       [null, /.*\*\//, ":cppComment", post(() => this.endComment()),],
-      // Linhas que não contêm nem início nem fim do comentário.
+      // Lines that contain neither the start nor the end of the comment.
       [null, /.*\n/, ":cppComment", null,],
 
-      // Chamada de template com argumentos nomeados — extensão Fase 23
-      // (`${NOME k=v …}`). Precisa vir ANTES do padrão genérico de macro: o
-      // fechamento genérico só entende strings posicionais, então o `k=v`
-      // sobraria como `junk_at_eom`. Uma chamada com `ident=` nunca é uma
-      // macro válida, logo a ordem não altera o caminho congelado.
-      // Listas/objetos literais (`[a, b]`, `{ k: v }`) entram como valor; um
-      // `}` de objeto não encerra a chamada (§4.2).
+      // Template call with named arguments — phase 23 extension
+      // (`${NAME k=v …}`). Must come BEFORE the generic macro pattern: the
+      // generic closing only understands positional strings, so `k=v` would be
+      // left over as `junk_at_eom`. A call with `ident=` is never a valid macro,
+      // so the order does not change the frozen path.
+      // Literal lists/objects (`[a, b]`, `{ k: v }`) enter as a value; a `}` of
+      // an object does not close the call (§4.2).
       [
         null,
         /\$\{\s*(\??[A-Za-z_]\w*)\s+[A-Za-z_]\w*=(?:[^}\n{]|\{[^}\n]*\}|\[[^\]\n]*\])*\}/,
@@ -138,15 +150,15 @@ export class ProjectFileScanner extends Scanner {
         post((_, match,) => this.namedCall(match,)),
       ],
 
-      // Chamada de macro: o prefixo (número/identificador/parte de string)
-      // é preservado e re-injetado junto com o texto expandido.
+      // Macro call: the prefix (number/identifier/string part) is preserved and
+      // re-injected together with the expanded text.
       [
         null,
         /([-a-zA-Z_0-9>:.+]*|"(\\"|[^"])*?|'(\\'|[^'])*?)?\$\{\s*(\??[a-zA-Z_]\w*)(\s*"(\\"|[^"])*")*/,
         ":tjp",
         post((_, match,) => this.startMacroCall(match,)),
       ],
-      // Idem, ativo dentro de strings multi-linha de aspas duplas.
+      // Idem, active inside multi-line double-quoted strings.
       [
         null,
         /(\\"|[^"])*?\$\{\s*(\??[a-zA-Z_]\w*)(\s*"(\\"|[^"])*")*/,
@@ -159,14 +171,14 @@ export class ProjectFileScanner extends Scanner {
         ":sqString",
         post((_, match,) => this.startMacroCall(match,)),
       ],
-      // Fim da chamada: injeta prefixo + macro expandida; restaura o modo.
+      // End of the call: injects prefix + expanded macro; restores the mode.
       [
         null,
         /(\s*"(\\"|[^"])*")*\s*\}/,
         ":macroCall",
         post((_, match,) => this.endMacroCall(match,)),
       ],
-      // Argumentos em linhas sem início nem fim da chamada.
+      // Arguments on lines with neither the start nor the end of the call.
       [
         null,
         /.*\n/,
@@ -174,7 +186,7 @@ export class ProjectFileScanner extends Scanner {
         post((_, match,) => this.midMacroCall(match,)),
       ],
 
-      // Referência a variável de ambiente: não pode ultrapassar a linha.
+      // Environment-variable reference: cannot cross the line.
       [
         null,
         /([-a-zA-Z_0-9>:.+]*|"(\\"|[^"])*?|'(\\'|[^'])*?)?\$\([A-Z_][A-Z_0-9]*\)/,
@@ -182,7 +194,7 @@ export class ProjectFileScanner extends Scanner {
         post((_, match,) => this.environmentVariable(match,)),
       ],
 
-      // ID com sufixo de dois-pontos: foo:
+      // ID with a trailing colon: foo:
       [
         "ID_WITH_COLON",
         /[A-Za-z_\p{L}][\p{L}\p{N}_]*:/u,
@@ -190,7 +202,7 @@ export class ProjectFileScanner extends Scanner {
         post((type, match,) => this.chop(type, match,)),
       ],
 
-      // ID absoluto: a.b.c
+      // Absolute ID: a.b.c
       [
         "ABSOLUTE_ID",
         /[A-Za-z_\p{L}][\p{L}\p{N}_]*(\.[A-Za-z_\p{L}][\p{L}\p{N}_]*)+/u,
@@ -198,7 +210,7 @@ export class ProjectFileScanner extends Scanner {
         null,
       ],
 
-      // ID comum: bar (com normalização i18n quando idioma ≠ en).
+      // Plain ID: bar (with i18n normalization when the language is not en).
       [
         "ID",
         /[A-Za-z_\p{L}][\p{L}\p{N}_]*/u,
@@ -206,7 +218,7 @@ export class ProjectFileScanner extends Scanner {
         post((type, match,) => this.i18nId(type, match,)),
       ],
 
-      // Uma data.
+      // A date.
       [
         "DATE",
         /\d{4}-\d{1,2}-\d{1,2}(-\d{1,2}:\d{1,2}(:\d{1,2})?(-[-+]?\d{4})?)?/,
@@ -214,7 +226,7 @@ export class ProjectFileScanner extends Scanner {
         post((type, match,) => this.toDate(type, match,)),
       ],
 
-      // Hora do dia.
+      // Time of day.
       [
         "TIME",
         /\d{1,2}:\d{2}/,
@@ -222,7 +234,7 @@ export class ProjectFileScanner extends Scanner {
         post((type, match,) => this.toTime(type, match,)),
       ],
 
-      // Número de ponto flutuante (ex.: 3.143).
+      // Floating-point number (e.g. 3.143).
       [
         "FLOAT",
         /\d*\.\d+/,
@@ -230,7 +242,7 @@ export class ProjectFileScanner extends Scanner {
         post((type, match,) => [type, Number.parseFloat(match,),]),
       ],
 
-      // Número inteiro.
+      // Integer number.
       [
         "INTEGER",
         /\d+/,
@@ -238,21 +250,21 @@ export class ProjectFileScanner extends Scanner {
         post((type, match,) => [type, Number.parseInt(match, 10,),]),
       ],
 
-      // String multi-linha entre aspas duplas: início (muda para :dqString).
+      // Multi-line double-quoted string: start (switches to :dqString).
       [
         null,
         /"(\\"|[^"])*/,
         ":tjp",
         post((_, match,) => this.startStringDQ(match,)),
       ],
-      // Qualquer linha sem início nem fim.
+      // Any line with neither the start nor the end.
       [
         null,
         /(\\"|[^"])*\n/,
         ":dqString",
         post((_, match,) => this.midStringDQ(match,)),
       ],
-      // Fim da string (volta para :tjp).
+      // End of the string (back to :tjp).
       [
         "STRING",
         /(\\"|[^"])*"/,
@@ -260,7 +272,7 @@ export class ProjectFileScanner extends Scanner {
         post((_, match,) => this.endStringDQ(match,)),
       ],
 
-      // String multi-linha entre aspas simples.
+      // Multi-line single-quoted string.
       [
         null,
         /'(\\'|[^'])*/,
@@ -280,15 +292,15 @@ export class ProjectFileScanner extends Scanner {
         post((_, match,) => this.endStringSQ(match,)),
       ],
 
-      // String tesoura -8<- ... ->8-: a marca de abertura deve ser o último
-      // item da linha. A indentação da 1ª linha vale para todas as demais.
+      // Scissors string -8<- ... ->8-: the opening mark must be the last item
+      // of the line. The indentation of the 1st line applies to all the others.
       [
         null,
         /-8<-.*\n/,
         ":tjp",
         post((_, match,) => this.startStringSZR(match,)),
       ],
-      // O fim pode estar na primeira linha (string vazia): ambos os modos.
+      // The end may be on the first line (empty string): both modes.
       [
         "STRING",
         /\s*->8-/,
@@ -301,14 +313,14 @@ export class ProjectFileScanner extends Scanner {
         ":szrString",
         post((type, match,) => this.endStringSZR(type, match,)),
       ],
-      // Macros dentro de strings tesoura.
+      // Macros inside scissors strings.
       [
         null,
         /.*?\$\{\s*(\??[a-zA-Z_]\w*)(\s*"(\\"|[^"])*")*/,
         [":szrString", ":szrString1",],
         post((_, match,) => this.startMacroCall(match,)),
       ],
-      // Qualquer linha sem início nem fim.
+      // Any line with neither the start nor the end.
       [
         null,
         /.*\n/,
@@ -322,10 +334,10 @@ export class ProjectFileScanner extends Scanner {
         post((_, match,) => this.midStringSZR(match,)),
       ],
 
-      // Definição de template de linha única com parâmetros
-      // (`template T [ corpo ] (a, b)` — extensão TS-only, ADR 033). Precisa
-      // vir ANTES dos padrões de macro: se a linha não for uma definição de
-      // template, o pós-processador reproduz exatamente o caminho do Ruby.
+      // Single-line template definition with parameters
+      // (`template T [ body ] (a, b)` — TS-only extension, ADR 033). Must come
+      // BEFORE the macro patterns: if the line is not a template definition, the
+      // post-processor reproduces the Ruby path exactly.
       [
         null,
         /\[.*\][ \t]*\([^)\n]*\)[ \t]*\n/,
@@ -333,7 +345,7 @@ export class ProjectFileScanner extends Scanner {
         post((_, match,) => this.definitionLine(match,)),
       ],
 
-      // Definição de macro de linha única.
+      // Single-line macro definition.
       [
         "MACRO",
         /\[.*\]\n/,
@@ -341,30 +353,30 @@ export class ProjectFileScanner extends Scanner {
         post((type, match,) => this.definitionEndSingle(type, match,)),
       ],
 
-      // Definição de macro multi-linha: início (muda para :macroDef).
+      // Multi-line macro definition: start (switches to :macroDef).
       [
         null,
         /\[.*\n/,
         ":tjp",
         post((_, match,) => this.startMacroDef(match,)),
       ],
-      // Fechamento de template com parâmetros: `] ( a, b )` no fim da linha
-      // (extensão TS-only). Em corpo de macro o pós-processador mantém o
-      // comportamento do Ruby (`]` só fecha no fim da linha).
+      // Template close with parameters: `] ( a, b )` at the end of the line
+      // (TS-only extension). In a macro body the post-processor keeps the Ruby
+      // behaviour (`]` only closes at the end of the line).
       [
         null,
         /.*\][ \t]*\([^)\n]*\)[ \t]*\n/,
         ":macroDef",
         post((type, match,) => this.definitionClose(type, match,)),
       ],
-      // Fim: ']' seguido imediatamente de quebra de linha (volta p/ :tjp).
+      // End: ']' immediately followed by a line break (back to :tjp).
       [
         "MACRO",
         /.*\]\n/,
         ":macroDef",
         post((type, match,) => this.definitionEnd(type, match,)),
       ],
-      // Qualquer linha sem início nem fim.
+      // Any line with neither the start nor the end.
       [
         null,
         /.*\n/,
@@ -372,12 +384,12 @@ export class ProjectFileScanner extends Scanner {
         post((_, match,) => this.midMacroDef(match,)),
       ],
 
-      // Literais de múltiplos caracteres.
+      // Multi-character literals.
       ["LITERAL", /<=?/, undefined, null,],
       ["LITERAL", />=?/, undefined, null,],
       ["LITERAL", /!=?/, undefined, null,],
 
-      // O restante é devolvido como literal de caractere único.
+      // Everything else is returned as a single-character literal.
       ["LITERAL", /./, undefined, null,],
     ];
 
@@ -387,85 +399,95 @@ export class ProjectFileScanner extends Scanner {
   }
 
   // ---------------------------------------------------------------------------
-  // Pós-processadores (ordem privada do Ruby)
+  // Post-processors (private order of Ruby)
   // ---------------------------------------------------------------------------
 
-  /** Marca o início de token após ignorar texto; devolve token vazio. */
+  /** Marks the start of a token after skipping text; returns an empty token. */
   private newPos(): [null, "",] {
     this.startOfToken = this.sourceFileInfo();
     return [null, "",];
   }
 
+  /** Drops the trailing colon of an `ID_WITH_COLON` token. */
   private chop(type: string | null, match: string,): [string | null, string,] {
-    // Remove o último caractere.
+    // Removes the last character.
     return [type, match.slice(0, -1,),];
   }
 
-  /** Remove o primeiro e o último caractere. */
+  /** Removes the first and the last character. */
   private chop2(type: string | null, match: string,): [string | null, string,] {
     return [type, match.slice(1, -1,),];
   }
 
-  /** Remove o primeiro, o último caractere e o \n final (se houver). */
+  /** Removes the first character, the last character and the trailing \n. */
   private chop2nl(
     type: string | null,
     match: string,
   ): [string | null, string,] {
     if (match.endsWith("\n",)) {
-      // Ruby match[1..-3]: remove '[', ']' e '\n'.
+      // Ruby match[1..-3]: drops '[', ']' and '\n'.
       return [type, match.slice(1, -2,),];
     }
     return [type, match.slice(1, -1,),];
   }
 
+  /** Enters a C-style multi-line comment. */
   private startComment(): [null, "",] {
     this.mode = TJP_MODES.cppComment;
     return [null, "",];
   }
 
+  /** Leaves a C-style multi-line comment. */
   private endComment(): [null, "",] {
     this.mode = TJP_MODES.tjp;
     return [null, "",];
   }
 
+  /** Starts a double-quoted string; collects its first chunk. */
   private startStringDQ(match: string,): [null, "",] {
     this.mode = TJP_MODES.dqString;
-    // Remove a " inicial e as barras de escape das " escapadas.
+    // Drops the opening " and the escape backslashes of escaped ".
     this.string = match.slice(1,).replaceAll('\\"', '"',);
     return [null, "",];
   }
 
+  /** Appends a middle chunk of a double-quoted string. */
   private midStringDQ(match: string,): [null, "",] {
     this.string += match.replaceAll('\\"', '"',);
     return [null, "",];
   }
 
+  /** Closes a double-quoted string and emits the `STRING` token. */
   private endStringDQ(match: string,): ["STRING", string,] {
     this.mode = TJP_MODES.tjp;
     this.string += match.slice(0, -1,).replaceAll('\\"', '"',);
     return ["STRING", this.string,];
   }
 
+  /** Starts a single-quoted string; collects its first chunk. */
   private startStringSQ(match: string,): [null, "",] {
     this.mode = TJP_MODES.sqString;
     this.string = match.slice(1,).replaceAll("\\'", "'",);
     return [null, "",];
   }
 
+  /** Appends a middle chunk of a single-quoted string. */
   private midStringSQ(match: string,): [null, "",] {
     this.string += match.replaceAll("\\'", "'",);
     return [null, "",];
   }
 
+  /** Closes a single-quoted string and emits the `STRING` token. */
   private endStringSQ(match: string,): ["STRING", string,] {
     this.mode = TJP_MODES.tjp;
     this.string += match.slice(0, -1,).replaceAll("\\'", "'",);
     return ["STRING", this.string,];
   }
 
+  /** Starts a scissors string (`-8<-`) and validates the opening mark. */
   private startStringSZR(match: string,): [null, "",] {
-    // Deve haver quebra de linha após a marca; permitimos espaços entre
-    // a marca e a quebra.
+    // There must be a line break after the mark; spaces between the mark and the
+    // line break are allowed.
     if (
       match.length !== 5 &&
       !/-8<-\s*\n$/.test(match,)
@@ -482,23 +504,26 @@ export class ProjectFileScanner extends Scanner {
     return [null, "",];
   }
 
+  /** Records the indentation of the first scissors-string line. */
   private firstStringSZR(match: string,): [null, "",] {
     this.mode = TJP_MODES.szrString;
-    // Separa a indentação líder do restante da string.
+    // Separates the leading indentation from the rest of the string.
     const m = /(\s*)(.*\n)/.exec(match,);
     this.indent = m ? m[1]! : "";
     this.string = m ? m[2]! : "";
     return [null, "",];
   }
 
+  /** Appends a scissors-string line, dropping the common indentation. */
   private midStringSZR(match: string,): [null, "",] {
-    // Ignora do início de match os caracteres iguais a @indent.
+    // Skips, from the start of the match, the characters equal to @indent.
     let i = 0;
     while (i < this.indent.length && this.indent[i] === match[i]) i++;
     this.string += match.slice(i,);
     return [null, "",];
   }
 
+  /** Closes a scissors string and emits the accumulated `STRING` token. */
   private endStringSZR(
     type: string | null,
     _match: string,
@@ -507,9 +532,9 @@ export class ProjectFileScanner extends Scanner {
     return [type, this.string,];
   }
 
-  /** Referência `$(VAR)`: injeta o valor da variável de ambiente. */
+  /** `$(VAR)` reference: injects the value of the environment variable. */
   private environmentVariable(match: string,): [null, "",] {
-    // Caracteres antes de $( viram prefixo e são re-injetados.
+    // Characters before $( become a prefix and are re-injected.
     let prefix = "";
     let envRef = match;
     const start = match.indexOf("$(",);
@@ -517,7 +542,7 @@ export class ProjectFileScanner extends Scanner {
       prefix = match.slice(0, start,);
       envRef = match.slice(start,);
     }
-    // Remove '$(' e ')'.
+    // Drops '$(' and ')'.
     const varName = envRef.slice(2, -1,);
 
     const value = ProjectFileScanner.envProvider(varName,);
@@ -532,28 +557,31 @@ export class ProjectFileScanner extends Scanner {
     return [null, "",];
   }
 
+  /** Starts a multi-line macro definition (switches to :macroDef). */
   private startMacroDef(match: string,): [null, string,] {
     this.mode = TJP_MODES.macroDef;
-    // Remove o '[' inicial.
+    // Drops the opening '['.
     this.macroDef = match.slice(1,);
-    // Extensão Fase 23: um corpo `[ ]` precedido de `template NOME` é um
-    // template, não uma macro. O restante do mecanismo (acumulação por linha
-    // e reentrada) é o mesmo da macro.
+    // Phase 23 extension: a `[ ]` body preceded by `template NAME` is a
+    // template, not a macro. The rest of the mechanism (per-line accumulation
+    // and re-entry) is the same as the macro one.
     this.templateBody = this.isTemplateDefinition();
     return [null, "",];
   }
 
+  /** Appends a middle line of a multi-line macro definition. */
   private midMacroDef(match: string,): [null, "",] {
     this.macroDef += match;
     return [null, "",];
   }
 
+  /** Closes a multi-line macro definition and emits the `MACRO` token. */
   private endMacroDef(
     type: string | null,
     match: string,
   ): [string | null, string,] {
     this.mode = TJP_MODES.tjp;
-    // Remove "](\n|$)".
+    // Drops "](\n|$)".
     if (match.endsWith("\n",)) {
       this.macroDef += match.slice(0, -2,);
     } else {
@@ -563,16 +591,16 @@ export class ProjectFileScanner extends Scanner {
   }
 
   // ---------------------------------------------------------------------------
-  // Definição de `template` (extensão TS-only, Fase 23; ADR 033)
+  // Definition of `template` (TS-only extension, phase 23; ADR 033)
   // ---------------------------------------------------------------------------
 
   /**
-   * true quando o `[` corrente abre o corpo de um **template**: o texto da
-   * linha imediatamente antes do colchete é `<keyword-template> <nome>`.
+   * true when the current `[` opens the body of a **template**: the text of the
+   * line immediately before the bracket is `<template-keyword> <name>`.
    *
-   * A leitura usa `preMatch()` (texto já consumido da linha) em vez de um
-   * histórico de tokens: o keyword pode estar traduzido (`modelo`,
-   * `plantilla`), e é o `LanguageRegistry` que o traz para `template`.
+   * The reading uses `preMatch()` (text already consumed from the line) instead
+   * of a token history: the keyword may be translated (`modelo`, `plantilla`),
+   * and it is the `LanguageRegistry` that brings it back to `template`.
    */
   private isTemplateDefinition(): boolean {
     const scanner = this.cf?.scanner;
@@ -585,11 +613,13 @@ export class ProjectFileScanner extends Scanner {
   }
 
   /**
-   * Parâmetros declarados na última definição de template.
+   * Parameters declared in the last template definition.
    *
-   * O token `TEMPLATE` carrega apenas o corpo (como `MACRO`); a lista de
-   * parâmetros sai por aqui, consumida pela action `template` da FSM.
-   * Devolve `[]` quando a lista foi omitida.
+   * The `TEMPLATE` token carries only the body (like `MACRO`); the parameter
+   * list comes out through here, consumed by the `template` action of the FSM.
+   * Returns `[]` when the list was omitted.
+   *
+   * @returns The declared parameter names, in declaration order.
    */
   takeTemplateParams(): string[] {
     const raw = this.lastTemplateParams;
@@ -602,10 +632,10 @@ export class ProjectFileScanner extends Scanner {
   }
 
   /**
-   * Definição de uma linha só: `template NOME [ corpo ] ( params )`.
+   * Single-line definition: `template NAME [ body ] ( params )`.
    *
-   * Quando a linha não é de template, delega ao caminho congelado do Ruby
-   * (`startMacroDef`), que deixa a linha como corpo de macro em montagem.
+   * When the line is not a template one, delegates to the frozen Ruby path
+   * (`startMacroDef`), which leaves the line as a macro body being assembled.
    */
   private definitionLine(match: string,): [string | null, string,] {
     if (!this.isTemplateDefinition()) return this.startMacroDef(match,);
@@ -616,30 +646,30 @@ export class ProjectFileScanner extends Scanner {
   }
 
   /**
-   * Definição de linha única **sem** parâmetros (`[ corpo ]\n`): só vira
-   * `TEMPLATE` se o `[` foi aberto por um template; senão mantém o
-   * `chop2nl` do Ruby.
+   * Single-line definition **without** parameters (`[ body ]\n`): it only
+   * becomes `TEMPLATE` when the `[` was opened by a template; otherwise it keeps
+   * the Ruby `chop2nl`.
    */
   private definitionEndSingle(
     type: string | null,
     match: string,
   ): [string | null, string,] {
-    // `templateBody` só é preenchido no caminho multi-linha; nesta linha o
-    // `[` é o próprio match, então a detecção vem do texto anterior a ele.
+    // `templateBody` is only filled by the multi-line path; on this line the
+    // `[` is the match itself, so the detection comes from the text before it.
     if (!this.templateBody && !this.isTemplateDefinition()) {
       return this.chop2nl(type, match,);
     }
     this.templateBody = false;
     this.lastTemplateParams = null;
-    // Mesma remoção do `chop2nl`: '[' e ']\n'.
+    // Same removal as `chop2nl`: '[' and ']\n'.
     return ["TEMPLATE", match.slice(1, -2,),];
   }
 
   /**
-   * Fechamento de corpo multi-linha com `] ( params )` no fim da linha.
+   * Close of a multi-line body with `] ( params )` at the end of the line.
    *
-   * Em corpo de macro o `]` não está no fim da linha, então o Ruby acumula a
-   * linha inteira (`midMacroDef`); a delegação preserva isso byte a byte.
+   * In a macro body the `]` is not at the end of the line, so Ruby accumulates
+   * the whole line (`midMacroDef`); the delegation preserves that byte by byte.
    */
   private definitionClose(
     type: string | null,
@@ -656,8 +686,8 @@ export class ProjectFileScanner extends Scanner {
   }
 
   /**
-   * Fechamento `]\n` (sem parâmetros). Mantém `endMacroDef` do Ruby quando
-   * não é template; quando é, só troca o tipo do token.
+   * Close `]\n` (without parameters). Keeps the Ruby `endMacroDef` when it is
+   * not a template; when it is, only the token type changes.
    */
   private definitionEnd(
     type: string | null,
@@ -669,6 +699,10 @@ export class ProjectFileScanner extends Scanner {
     return this.endMacroDef("TEMPLATE", match,);
   }
 
+  /**
+   * Starts a macro call: remembers the mode to restore and switches to
+   * `:macroCall`.
+   */
   private startMacroCall(match: string,): [null, "",] {
     this.macroCallPreviousMode = this.scannerMode;
     this.mode = TJP_MODES.macroCall;
@@ -677,13 +711,13 @@ export class ProjectFileScanner extends Scanner {
   }
 
   /**
-   * Chamada `${NOME k=v …}`: decide **antes** da divisão de strings do Ruby.
+   * Named-argument call `${NAME k=v …}`: decides **before** the Ruby string
+   * split.
    *
-   * Uma chamada com `nome=valor` é **forma de template** — macro nenhuma aceita
-   * isso —, então o nome desconhecido pode ser reportado como "não definido"
-   * (§5) sem tocar no caminho de macro. Se o nome existir como macro, o
-   * caminho congelado do Ruby roda igual (e reporta `junk_at_eom`, como
-   * sempre fez).
+   * A call with `name=value` is a **template form** — no macro accepts it —, so
+   * an unknown name can be reported as "not defined" (§5) without touching the
+   * macro path. If the name exists as a macro, the frozen Ruby path runs the
+   * same way (and reports `junk_at_eom`, as it always did).
    */
   private namedCall(match: string,): [null, "",] {
     const inner = match.slice(2, -1,).replace(/^\s+/, "",);
@@ -696,8 +730,8 @@ export class ProjectFileScanner extends Scanner {
     } else if (
       target.optional && !this.macroTable.includes(name.slice(1,),)
     ) {
-      // `${?NOME k=v}` com nome inexistente: vazio silencioso (§4.5.4),
-      // a mesma semântica da macro opcional do Ruby.
+      // `${?NAME k=v}` with a missing name: silent no-op (§4.5.4), the same
+      // semantics as the optional macro of Ruby.
     } else if (
       this.macroTable.includes(name.slice(target.optional ? 1 : 0,),)
     ) {
@@ -714,16 +748,21 @@ export class ProjectFileScanner extends Scanner {
     return [null, "",];
   }
 
+  /** Appends a middle line of a macro call. */
   private midMacroCall(match: string,): [null, "",] {
     this.macroCall += match;
     return [null, "",];
   }
 
+  /**
+   * Closes a macro call: re-injects the prefix plus the expansion and restores
+   * the previous mode. Template calls are routed before the Ruby split.
+   */
   private endMacroCall(match: string,): [null, "",] {
     this.mode = this.macroCallPreviousMode;
     this.macroCall += match;
 
-    // Caracteres antes de ${ viram prefixo e são re-injetados.
+    // Characters before ${ become a prefix and are re-injected.
     let prefix = "";
     const macroStart = this.macroCall.indexOf("${",);
     if (macroStart > 0) {
@@ -732,14 +771,14 @@ export class ProjectFileScanner extends Scanner {
     }
 
     const macroCallLength = this.macroCall.length;
-    // Remove '${' e '}' e espaços nas bordas.
+    // Drops '${' and '}' and the surrounding spaces.
     const argsStr = this.macroCall
       .slice(2, -1,)
       .replace(/^[ \t\n]*(.*?)[ \t\n]*$/ms, "$1",);
 
-    // Extensão Fase 23: o template recebe os argumentos **crus** (nomeados),
-    // então o lookup precisa acontecer antes da divisão de strings do Ruby.
-    // O caminho de macro abaixo permanece exatamente o da Fase 10.
+    // Phase 23 extension: the template receives the **raw** (named) arguments,
+    // so the lookup has to happen before the Ruby string split. The macro path
+    // below stays exactly the phase 10 one.
     const callSpace = argsStr.indexOf(" ",);
     const callName = callSpace < 0 ? argsStr : argsStr.slice(0, callSpace,);
     if (this.templateCallTarget(callName,).template) {
@@ -759,9 +798,16 @@ export class ProjectFileScanner extends Scanner {
   }
 
   // ---------------------------------------------------------------------------
-  // Conversões numéricas e temporais
+  // Numeric and temporal conversions
   // ---------------------------------------------------------------------------
 
+  /**
+   * Turns a `DATE` token into a `TjTime`.
+   *
+   * @param type Token type assigned by the pattern.
+   * @param match Text matched by the pattern.
+   * @returns The type and the parsed date, or an ignored token on failure.
+   */
   private toDate(
     type: string | null,
     match: string,
@@ -770,11 +816,18 @@ export class ProjectFileScanner extends Scanner {
       return [type, TjTime.fromString(match,),];
     } catch (msg) {
       this.error("time_error", (msg as Error).message,);
-      // Ruby: resumo do método devolve nil → token engolido (ignorado).
+      // Ruby: the method summary returns nil → token swallowed (ignored).
       return [null, "",];
     }
   }
 
+  /**
+   * Turns a `TIME` token into seconds since midnight, validating the ranges.
+   *
+   * @param type Token type assigned by the pattern.
+   * @param match Text matched by the pattern (`hh:mm`).
+   * @returns The type and the time in seconds.
+   */
   private toTime(
     type: string | null,
     match: string,
@@ -798,13 +851,17 @@ export class ProjectFileScanner extends Scanner {
   }
 
   // ---------------------------------------------------------------------------
-  // i18n (extensão SyntaxMesh — ADR 023)
+  // i18n (SyntaxMesh extension — ADR 023)
   // ---------------------------------------------------------------------------
 
   /**
-   * Normaliza tokens `ID`: se o texto for um sinônimo do idioma ativo,
-   * devolve o keyword canônico Mantendo o tipo "ID" (o FSM casa literais
-   * pelo texto em tokens ID — ver State#transition).
+   * Normalizes `ID` tokens: when the text is a synonym of the active language,
+   * returns the canonical keyword while KEEPING the "ID" type (the FSM matches
+   * literals by the text of ID tokens — see State#transition).
+   *
+   * @param type Token type assigned by the pattern.
+   * @param match Text matched by the pattern.
+   * @returns The (possibly normalized) type and text.
    */
   private i18nId(
     type: string | null,
@@ -815,10 +872,10 @@ export class ProjectFileScanner extends Scanner {
       if (canonical !== null) {
         return ["ID", canonical,];
       }
-      // Unidades de duração locais ('dias' → 'd', 'años' → 'y') — a gramática
-      // casa os literais curtos en (rule_durationUnit). Só traduz sinônimos
-      // próprios do idioma: 'days' em `loadunit days` (arquivo pt-BR) é
-      // literal inglês válido do FSM e não pode virar 'd'.
+      // Local duration units ('dias' → 'd', 'años' → 'y') — the grammar matches
+      // the short English literals (rule_durationUnit). Only the language's own
+      // synonyms are translated: 'days' in `loadunit days` (pt-BR file) is a
+      // valid English literal of the FSM and must not become 'd'.
       if (this.registry.hasUnitInLanguage(match, this.language,)) {
         const unit = this.registry.resolveUnit(match, this.language,);
         if (unit !== null) {

@@ -1,24 +1,24 @@
 /**
- * Interface de porta para RichText Intermediate.
+ * Port interface for RichText Intermediate.
  *
- * Usada para compatibilidade com a fase de RichText (Fase 12).
+ * Used for compatibility with the RichText phase (phase 12).
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:RichTextAttribute
  */
 
 /**
- * Interface que representa o formato intermediário de texto rico.
+ * Interface representing the intermediate format of rich text.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:RichTextAttribute
  */
 export interface RichTextIntermediate {
-  /** Texto de entrada rico. */
+  /** Rich input text. */
   richText: {
     inputText: string;
   };
 
   /**
-   * Converte para string.
+   * Converts to a string.
    */
   to_s(): string;
 }

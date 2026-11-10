@@ -1,15 +1,16 @@
 /**
- * Navigator + NavigatorElement (Fase 14.21) — barra de navegação de relatórios.
+ * Navigator + NavigatorElement (phase 14.21) — report navigation bar.
  *
- * Porta fiel de `docs/taskjuggler/lib/taskjuggler/reports/Navigator.rb`. O
- * parser (Fase 10) cria `Navigator` objects ao processar `navigator "id"`; a
- * geração da barra (via `[[navigator:id=…]]`) é feita por `RTFNavigator`
- * chamando `to_html()` aqui. Nenhuma escrita a disco (ADR 027); `to_html`
- * retorna `XMLElementLike`.
+ * Faithful port of
+ * `docs/taskjuggler/lib/taskjuggler/reports/Navigator.rb`. The parser (phase 10)
+ * creates `Navigator` objects while processing `navigator "id"`; the bar itself
+ * is generated (through `[[navigator:id=…]]`) by `RTFNavigator` calling
+ * `to_html()` here. Nothing is written to disk (ADR 027); `to_html` returns an
+ * `XMLElementLike`.
  *
- * A heurística de `normalizeURL` e `findReportURL` preserva a semântica do
- * Ruby: URLs relativos cortados pelo último diretório em comum com o relatório
- * atual, e URLs interativas usam o esquema `taskjuggler?project=…;report=…`.
+ * The heuristics of `normalizeURL` and `findReportURL` preserve the Ruby
+ * semantics: relative URLs are cut at the last directory shared with the current
+ * report, and interactive URLs use the `taskjuggler?project=…;report=…` scheme.
  *
  * @see docs/syntaxmesh/fases/fase-14-relatorios-tarefas.md (14.21)
  */
@@ -24,16 +25,29 @@ import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 import { MessageHandlerInstance, } from "../message-handler.ts";
 
 /**
- * Nó da árvore de navegação. Cada entrada guarda label/URL, elementos filhos e
- * um flag `current` marcando o ramo que contém o relatório sendo renderizado.
+ * Node of the navigation tree. Every entry stores a label/URL, its child
+ * elements and a `current` flag marking the branch that holds the report being
+ * rendered.
  */
 export class NavigatorElement {
+  /** Parent element, or `null` for the root of the tree. */
   readonly parent: NavigatorElement | null;
+  /** Label shown in the bar, or `null` for none. */
   readonly label: string | null;
+  /** Target URL of the entry, or `null` when it is not a link. */
   url: string | null;
+  /** Child elements of the entry. */
   elements: NavigatorElement[];
+  /** Whether this branch contains the report being rendered. */
   current: boolean;
 
+  /**
+   * Creates a navigation element.
+   *
+   * @param parent Parent element, or `null` for the root.
+   * @param label Label shown in the bar.
+   * @param url Target URL of the entry.
+   */
   constructor(
     parent: NavigatorElement | null,
     label: string | null = null,
@@ -47,11 +61,15 @@ export class NavigatorElement {
   }
 
   /**
-   * Renderiza HTML da barra. Sem container: cria `div.navbar_container`,
-   * `<hr class="navbar_topruler">` e `<hr class="navbar_bottomruler">` (raiz).
-   * Cada submenu é um `div.navbar` com spans `navbar_current`/`navbar_other`
-   * separados por `|`. O ramo `current` é recursado abaixo de `<hr class=
-   * "navbar_midruler">` quando não é o primeiro item.
+   * Renders the bar as HTML. Without a container it creates
+   * `div.navbar_container`, `<hr class="navbar_topruler">` and
+   * `<hr class="navbar_bottomruler">` (root). Every submenu is a `div.navbar`
+   * with `navbar_current`/`navbar_other` spans separated by `|`. The `current`
+   * branch is recursed below `<hr class="navbar_midruler">` when it is not the
+   * first item.
+   *
+   * @param html Container to append to, or `null` to create the root one.
+   * @returns The container holding the rendered bar.
    */
   to_html(html: XMLElementLike | null = null,): XMLElementLike {
     let first = true;
@@ -90,7 +108,7 @@ export class NavigatorElement {
       }
     }
 
-    // Sub-menu do ramo current (uma linha abaixo de <hr class=navbar_midruler>).
+    // Sub-menu of the current branch (one line below <hr class=navbar_midruler>).
     for (const element of this.elements) {
       if (element.current && element.elements.length > 0) {
         if (!first) {
@@ -111,7 +129,7 @@ export class NavigatorElement {
     return container;
   }
 
-  /** Dump textual (debug): imprime árvore com indentação e marca `<label>` current. */
+  /** Text dump (debug): prints the tree with indentation, marking `<label>` as current. */
   to_s(indent: number = 0,): string {
     const lines: string[] = [];
     const pad = " ".repeat(indent,);
@@ -130,25 +148,40 @@ export class NavigatorElement {
 }
 
 /**
- * Barra de navegação de relatórios. Instanciado pelo parser via diretiva
- * `navigator "id"`; consumido por `RTFNavigator.to_html`.
+ * Report navigation bar. Instantiated by the parser through the
+ * `navigator "id"` directive; consumed by `RTFNavigator.to_html`.
  */
 export class Navigator {
+  /** Id of the navigator as declared. */
   readonly id: string;
+  /** Project the navigator belongs to. */
   readonly project: Project;
+  /** Expression deciding which reports are hidden from the bar. */
   hideReport: LogicalExpression;
 
+  /**
+   * Creates a navigator.
+   *
+   * @param id Id of the navigator as declared.
+   * @param project Project the navigator belongs to.
+   */
   constructor(id: string, project: Project,) {
     this.id = id;
     this.project = project;
-    // Padrão: expressão false (equivalente a `LogicalOperation.new(0)` do Ruby).
+    // Default: a false expression (the equivalent of Ruby's
+    // `LogicalOperation.new(0)`).
     this.hideReport = new LogicalExpression(new LogicalOperation(0,),);
   }
 
   /**
-   * Constrói a árvore de `NavigatorElement` para os relatórios informados.
-   * `parentElement` recebe as entradas de topo; recursa para os `kids` do
-   * relatório que contém `reportDef`.
+   * Builds the `NavigatorElement` tree for the given reports. `parentElement`
+   * receives the top-level entries; the recursion descends into the `kids` of
+   * the report that contains `reportDef`.
+   *
+   * @param allReports Every report of the project.
+   * @param currentReports Reports of the level being rendered.
+   * @param reportDef Report being rendered.
+   * @param parentElement Element receiving the new entries.
    */
   generate(
     allReports: PropertyList<Report>,
@@ -163,7 +196,8 @@ export class Navigator {
     for (const report of currentReports) {
       const formats = (report.get("formats",) as string[] | null) ?? [];
       const hasURL = formats.includes("html",);
-      // Só gera entrada para container reports ou leaf reports com formato html.
+      // Only container reports, or leaf reports with the html format, get an
+      // entry.
       if ((report.leaf() && !hasURL) || !allReports.includes(report,)) {
         continue;
       }
@@ -193,9 +227,14 @@ export class Navigator {
   }
 
   /**
-   * Renderiza a barra de navegação. `reportDef` é o relatório do contexto
-   * atual. Sem relatórios filtrados → `null`; contexto sem o relatório atual
-   * → warning + `null`.
+   * Renders the navigation bar. `reportDef` is the report of the current
+   * context. No filtered reports → `null`; a context without the current report
+   * → a warning plus `null`.
+   *
+   * @param reportDefArg Report being rendered; defaults to the one of the last
+   *   report context.
+   * @returns The rendered bar, or `null` when there is nothing to render.
+   * @throws Error When no report definition can be resolved at all.
    */
   to_html(reportDefArg?: Report,): XMLElementLike | null {
     const contexts = this.project.reportContexts;
@@ -218,7 +257,7 @@ export class Navigator {
       return null;
     }
 
-    // Relatórios de topo: sobe até o pai raiz e usa os `kids` dele.
+    // Top-level reports: climb to the root parent and use its `kids`.
     let topLevelReports: Report[] = [reportDef,];
     let cursor: Report | null = reportDef;
     while (cursor && cursor.parent) {
@@ -232,8 +271,8 @@ export class Navigator {
   }
 
   /**
-   * Lista ordenada de `Report` a incluir na barra, removendo os ocultados por
-   * `hideReport`. Equivalente ao `filterReports` do Ruby.
+   * Ordered list of the `Report`s to include in the bar, dropping those hidden
+   * by `hideReport`. Equivalent to Ruby's `filterReports`.
    */
   private filterReports(): PropertyList<Report> {
     const list = new PropertyList<Report>(this.project.reports,);
@@ -253,9 +292,15 @@ export class Navigator {
   }
 
   /**
-   * Corta de `url1` o prefixo idêntico a `url2` até o último `/` em comum.
-   * Ruby: itera `url1.length` comparando caractere a caractere. Sem match na
-   * posição `i`, retorna `url1.substring(cut)`; caso contrário devolve `url1`.
+   * Cuts from `url1` the prefix shared with `url2` up to the last `/`.
+   *
+   * Ruby iterates `url1.length`, comparing character by character. With no match
+   * at position `i` it returns `url1.substring(cut)`; otherwise it returns
+   * `url1` unchanged.
+   *
+   * @param url1 URL being normalized.
+   * @param url2 URL it is compared against.
+   * @returns The relative URL, or `url1` when it is entirely shared.
    */
   private normalizeURL(url1: string, url2: string,): string {
     let cut = 0;
@@ -269,9 +314,15 @@ export class Navigator {
   }
 
   /**
-   * Acha a URL do menu entry. Se `report` tem formato HTML → devolve a URL
-   * (interativa: `taskjuggler?...`; senão: `report.name + '.html'` cortado
-   * contra o `reportDef`). Containers sem HTML recursam nos `kids`.
+   * Finds the URL of the menu entry. When `report` has the HTML format the URL
+   * is returned (interactive: `taskjuggler?...`; otherwise
+   * `report.name + '.html'` cut against `reportDef`). Containers without HTML
+   * recurse into their `kids`.
+   *
+   * @param report Report whose entry URL is being resolved.
+   * @param allReports Every report of the project.
+   * @param reportDef Report being rendered.
+   * @returns The target URL, or `null` when none can be derived.
    */
   private findReportURL(
     report: Report,
@@ -294,7 +345,7 @@ export class Navigator {
       const url = report.name + ".html";
       return this.normalizeURL(url, reportDef.name,);
     }
-    // Container sem HTML: herda a URL do primeiro kid com URL.
+    // Container without HTML: inherits the URL of the first kid that has one.
     for (const kid of report.kids() as Report[]) {
       const url = this.findReportURL(kid, allReports, reportDef,);
       if (url) return url;

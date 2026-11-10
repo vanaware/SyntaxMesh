@@ -1,11 +1,11 @@
 /**
- * Bloco D da Fase 17 — Painter (SVG): utilitários geométricos e de cor.
+ * Phase 17 block D — Painter (SVG): geometric and color utilities.
  *
- * `Element`, `Group`, `Primitives`, `BasicShapes`, `Text`, `Painter` e as
- * métricas de fonte chegaram em 17.8–17.11. Em 17.15 o mínimo
- * `src/painter-min.ts` foi apagado e `ChartPlotter` migrou para este Painter
- * real (ADR 038); os nomes daqui não colidem com nada, então o re-export no
- * `src/mod.ts` top-level está ativo desde a 17.7.
+ * `Element`, `Group`, `Primitives`, `BasicShapes`, `Text`, `Painter` and the
+ * font metrics arrived in 17.8–17.11. In 17.15 the minimal
+ * `src/painter-min.ts` was deleted and `ChartPlotter` migrated to this real
+ * Painter (ADR 038); the names here do not collide with anything, so the
+ * re-export in the top-level `src/mod.ts` has been active since 17.7.
  *
  * @see docs/syntaxmesh/decisoes/038-substituicao-xml.md
  */

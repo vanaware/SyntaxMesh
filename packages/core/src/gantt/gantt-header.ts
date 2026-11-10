@@ -1,19 +1,20 @@
 /**
- * GanttHeader (Fase 15.9) — cabeçalho de 2 linhas do Gantt.
+ * GanttHeader (phase 15.9) — the two-row header of the Gantt chart.
  *
- * Port fiel de `docs/taskjuggler/lib/taskjuggler/reports/GanttHeader.rb`.
+ * Faithful port of `docs/taskjuggler/lib/taskjuggler/reports/GanttHeader.rb`.
  *
- * A linha de cima mostra a escala grande (mês/ano, ano…) e a de baixo a
- * escala pequena (dia, semana…). O cabeçalho também fornece ao chart as
- * posições das linhas de grade (`gridLines`), as datas de início de cada
- * célula pequena (`cellStartDates`) e as linhas `now`/`markdate`.
+ * The top row shows the large scale (month/year, year…) and the bottom row the
+ * small scale (day, week…). The header also gives the chart the positions of the
+ * grid lines (`gridLines`), the start dates of each small cell
+ * (`cellStartDates`) and the `now`/`markdate` lines.
  *
- * ## Comportamento estranho do Ruby (cheat sheet §12, Categoria B)
+ * ## Odd Ruby behaviour (cheat sheet §12, Category B)
  *
- * `genHeaderScale` testa `scale == @largeScale`; em Ruby `Array#==` compara
- * **conteúdo**, não identidade. Na escala `year` (em que a escala grande fica
- * vazia) o primeiro item cai no ramo "grande": a data vai para `gridLines` em
- * vez de `cellStartDates`. Replicado sob `compat.keepRubyBugs`.
+ * `genHeaderScale` tests `scale == @largeScale`; in Ruby `Array#==` compares
+ * **content**, not identity. On the `year` scale (where the large scale stays
+ * empty) the first item falls into the "large" branch: its date goes to
+ * `gridLines` instead of `cellStartDates`. Replicated under
+ * `compat.keepRubyBugs`.
  *
  * @see docs/syntaxmesh/decisoes/028-gantt-html-css.md (ADR 028)
  * @see docs/syntaxmesh/fases/fase-15-gantt.md (15.9)
@@ -25,55 +26,76 @@ import { XMLElement, } from "../xml/xml-element.ts";
 import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 import { GanttHeaderScaleItem, } from "./gantt-header-scale-item.ts";
 
-/** Visão mínima do chart consumida pelo cabeçalho. */
+/** Minimal view of the chart consumed by the header. */
 export interface GanttHeaderChart {
+  /** First date of the reported period. */
   readonly start: TjTime;
+  /** Last date of the reported period. */
   readonly end: TjTime;
+  /** Date considered "today" (the `nowline`). */
   readonly now: TjTime;
+  /** Reference date of the `markdateline`, or `null`. */
   readonly markdate: TjTime | null;
+  /** Whether the weeks start on Monday. */
   readonly weekStartsMonday: boolean;
+  /** Width of the chart, in pixels. */
   readonly width: number;
+  /** Current scale; only its name is needed here. */
   readonly scale: { readonly name: string };
   /**
-   * X do chart para `date` (Ruby `GanttChart#dateToX`).
+   * X coordinate of the chart for `date` (Ruby `GanttChart#dateToX`).
    *
-   * O Ruby nunca retorna `nil` aqui: a fórmula é linear
-   * (`((width / (end - start)) * (date - start)).to_i`). Datas fora do
-   * período apenas produzem X negativo ou maior que a largura.
+   * Ruby never returns `nil` here: the formula is linear
+   * (`((width / (end - start)) * (date - start)).to_i`). Dates outside the
+   * period merely produce a negative or greater-than-width X.
+   *
+   * @param date Date to map onto the X axis.
+   * @returns The X coordinate, in pixels.
    */
   dateToX(date: TjTime,): number;
 }
 
-/** Função de ancoragem do início de uma célula (Ruby `beginOfFunc`). */
+/** Anchoring function of the start of a cell (Ruby `beginOfFunc`). */
 type BeginOfFunc = (t: TjTime,) => TjTime;
-/** Função que avança uma célula (Ruby `sameTimeNextFunc`). */
+/** Function that advances one cell (Ruby `sameTimeNextFunc`). */
 type SameTimeNextFunc = (t: TjTime,) => TjTime;
 
-/** Cabeçalho do chart: escalas, grades e linhas de referência. */
+/** Chart header: scales, grid lines and reference lines. */
 export class GanttHeader {
   private readonly columnDef: TableColumnDefinition;
   private readonly chart: GanttHeaderChart;
   private readonly largeScale: GanttHeaderScaleItem[] = [];
   private readonly smallScale: GanttHeaderScaleItem[] = [];
 
-  /** X das linhas verticais que marcam a escala grande. */
+  /** X of the vertical lines marking the large scale. */
   readonly gridLines: number[] = [];
-  /** X da linha "now"; `null` se estiver fora do chart. */
+  /** X of the "now" line; `null` when outside the chart. */
   nowLineX: number | null = null;
-  /** X da linha `markdate`; `null` se estiver fora do chart. */
+  /** X of the `markdate` line; `null` when outside the chart. */
   markdateLineX: number | null = null;
-  /** Datas de início das células da escala pequena (+ fim da última). */
+  /** Start dates of the small-scale cells (plus the end of the last one). */
   readonly cellStartDates: TjTime[] = [];
-  /** Altura do cabeçalho em pixels (mutável: o chart ajusta após criar). */
+  /** Height of the header in pixels (mutable: the chart adjusts it later). */
   height = 39;
 
+  /**
+   * Builds the header scales for the chart.
+   *
+   * @param columnDef Column definition providing `timeformat1`/`timeformat2`.
+   * @param chart Chart whose period, scale and width are used.
+   * @throws Error When the chart scale is not a known one.
+   */
   constructor(columnDef: TableColumnDefinition, chart: GanttHeaderChart,) {
     this.columnDef = columnDef;
     this.chart = chart;
     this.generate();
   }
 
-  /** Converte o cabeçalho em `<div class="tabback">` (Ruby `to_html`). */
+  /**
+   * Converts the header into `<div class="tabback">` (Ruby `to_html`).
+   *
+   * @returns The header element with both scale rows.
+   */
   to_html(): XMLElementLike {
     const div = new XMLElement("div", {
       class: "tabback",
@@ -87,9 +109,9 @@ export class GanttHeader {
     return div;
   }
 
-  /** Escolhe as escalas conforme `chart.scale.name` (Ruby `generate`). */
+  /** Picks the scales from `chart.scale.name` (Ruby `generate`). */
   private generate(): void {
-    // As 2 linhas do cabeçalho são separadas por uma borda de 1px.
+    // The two header rows are separated by a 1px border.
     const h = Math.trunc((this.height - 1) / 2,);
     const fmt1 = (fallback: string,): string =>
       this.columnDef.timeformat1 ?? fallback;
@@ -188,7 +210,7 @@ export class GanttHeader {
         );
         break;
       case "year":
-        // Só a escala pequena; a grande fica vazia (ver nota Categoria B).
+        // Small scale only; the large one stays empty (see the Category B note).
         this.genHeaderScale(
           this.smallScale,
           h + 1,
@@ -209,7 +231,16 @@ export class GanttHeader {
     }
   }
 
-  /** Gera as células de uma escala (Ruby `genHeaderScale`). */
+  /**
+   * Generates the cells of one scale (Ruby `genHeaderScale`).
+   *
+   * @param scale Row receiving the cells.
+   * @param y Top offset of the row, in pixels.
+   * @param h Height of the row, in pixels.
+   * @param beginOf Function anchoring the start of the first cell.
+   * @param sameTimeNext Function advancing one cell.
+   * @param timeformat Format used for the cell label.
+   */
   private genHeaderScale(
     scale: GanttHeaderScaleItem[],
     y: number,
@@ -221,11 +252,11 @@ export class GanttHeader {
     let t = beginOf(this.chart.start,);
     while (t.lessThan(this.chart.end,)) {
       const nextT = sameTimeNext(t,);
-      // Fim da célula, guardando 1px para a borda.
+      // End of the cell, keeping 1px for the border.
       const xR = this.xOf(nextT,) - 1;
       const x = this.xOf(t,);
       const w = xR - x;
-      // Posições da escala grande viram linhas de grade do chart.
+      // Positions of the large scale become grid lines of the chart.
       if (this.isLargeScale(scale,)) {
         this.gridLines.push(xR,);
       } else {
@@ -234,13 +265,16 @@ export class GanttHeader {
       scale.push(new GanttHeaderScaleItem(t.to_s(timeformat,), x, y, w, h,),);
       t = nextT;
     }
-    // Fecha a lista de células com a data final da última.
+    // Closes the cell list with the end date of the last one.
     if (this.isSmallScale(scale,)) this.cellStartDates.push(t,);
   }
 
   /**
-   * `true` se `scale` é a escala grande. Em Ruby a comparação é `==`
-   * (conteúdo); ver nota de Categoria B no topo do arquivo.
+   * `true` when `scale` is the large scale. In Ruby the comparison is `==`
+   * (content); see the Category B note at the top of the file.
+   *
+   * @param scale Row to identify.
+   * @returns Whether the row is the large scale.
    */
   private isLargeScale(scale: GanttHeaderScaleItem[],): boolean {
     return compat.keepRubyBugs
@@ -248,20 +282,30 @@ export class GanttHeader {
       : scale === this.largeScale;
   }
 
-  /** `true` se `scale` é a escala pequena (mesma regra de comparação). */
+  /**
+   * `true` when `scale` is the small scale (same comparison rule).
+   *
+   * @param scale Row to identify.
+   * @returns Whether the row is the small scale.
+   */
   private isSmallScale(scale: GanttHeaderScaleItem[],): boolean {
     return compat.keepRubyBugs
       ? sameItems(scale, this.smallScale,)
       : scale === this.smallScale;
   }
 
-  /** Trunca `dateToX(t)` como o `to_i` do Ruby. */
+  /**
+   * Truncates `dateToX(t)` like Ruby's `to_i`.
+   *
+   * @param t Date to map onto the X axis.
+   * @returns The truncated X coordinate, in pixels.
+   */
   private xOf(t: TjTime,): number {
     return Math.trunc(this.chart.dateToX(t,),);
   }
 }
 
-/** `Array#==` do Ruby: compara conteúdo com identidade dos elementos. */
+/** Ruby `Array#==`: compares content with the identity of the elements. */
 function sameItems<T,>(a: readonly T[], b: readonly T[],): boolean {
   if (a.length !== b.length) return false;
   for (let i = 0; i < a.length; i++) {

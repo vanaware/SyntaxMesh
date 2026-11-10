@@ -1,8 +1,9 @@
 /**
- * TjpSyntaxRules — bloco account (subfase 10.12).
+ * TjpSyntaxRules — account block (sub-phase 10.12).
  *
- * Port das regras `account*` de `TjpSyntaxRules.rb`. `supplementAccount`
- * já vive em common.ts; `flags` e `accountId` vêm de scenario.ts / daqui.
+ * Port of the `account*` rules of `TjpSyntaxRules.rb`. `supplementAccount`
+ * already lives in common.ts; `flags` and `accountId` come from scenario.ts /
+ * from here.
  *
  * @see docs/taskjuggler/lib/taskjuggler/TjpSyntaxRules.rb
  */
@@ -16,7 +17,7 @@ const asProp = (parser: ProjectFileParser,): NonNullable<
   ProjectFileParser["property"]
 > => parser.property!;
 
-/** Registra o bloco de regras de contas. */
+/** Registers the account rule block. */
 export function registerAccountRules(p: ProjectFileParser,): void {
   // ------------------------------------------------------------------
   // account / header / body / attributes
@@ -69,7 +70,7 @@ export function registerAccountRules(p: ProjectFileParser,): void {
         return null;
       },
     );
-    // Outros atributos são adicionados automaticamente.
+    // Other attributes are added automatically.
   },);
 
   rule(p, "accountBody", () => {
@@ -156,7 +157,7 @@ export function registerAccountRules(p: ProjectFileParser,): void {
   },);
 
   // ------------------------------------------------------------------
-  // Atributos de cenário da conta
+  // Scenario attributes of the account
   // ------------------------------------------------------------------
   rule(p, "accountScenarioAttributes", () => {
     p.pattern(
@@ -192,6 +193,6 @@ export function registerAccountRules(p: ProjectFileParser,): void {
 
     p.pattern(["!flags",],);
     p.doc("flags.account", "Flags assigned to the account.",);
-    // Outros atributos são adicionados automaticamente.
+    // Other attributes are added automatically.
   },);
 }

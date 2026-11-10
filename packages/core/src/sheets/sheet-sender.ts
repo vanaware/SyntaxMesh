@@ -1,15 +1,15 @@
 /**
- * SheetSender — gera e "envia" os templates de time/status sheet.
+ * SheetSender — generates and "sends" the time/status sheet templates.
  *
- * Port de `docs/taskjuggler/lib/taskjuggler/SheetSender.rb`, com duas
- * adaptações obrigatórias desta fase:
- *  - **ADR 036** — não há processo `tj3client`, SMTP nem SCM. A geração do
- *    relatório acontece **in-process** (`ProjectFileParser` + `Project`), e a
- *    "entrega" é uma `EmailMessage` devolvida/gravada em `outbox/`.
- *  - **ADR 037** — todo I/O passa pelo `FileStore` injetado; por isso o
- *    pipeline inteiro é `async`.
+ * Port of `docs/taskjuggler/lib/taskjuggler/SheetSender.rb`, with two mandatory
+ * adaptations of this phase:
+ *  - **ADR 036** — there is no `tj3client` process, no SMTP and no SCM. Report
+ *    generation happens **in-process** (`ProjectFileParser` + `Project`), and
+ *    "delivery" is an `EmailMessage` returned/saved under `outbox/`.
+ *  - **ADR 037** — all I/O goes through the injected `FileStore`, which is why
+ *    the whole pipeline is `async`.
  *
- * O fluxo permanece o do Ruby: `sendTemplates` → `setWorkingDir` →
+ * The flow remains Ruby's: `sendTemplates` → `setWorkingDir` →
  * `createDirectories` → `genResourceList` → `genTemplates` →
  * `sendReportTemplates`.
  *
@@ -25,8 +25,8 @@ import type { Project, } from "../model/project.ts";
 import type { Report, } from "../model/report.ts";
 import { ProjectFileParser, } from "../parser/project-file-parser.ts";
 import { CSVFile, } from "../reports/csv-file.ts";
-// Efeito colateral: registra as fábricas de conteúdo dos relatórios
-// (`resourcereport`, `timesheetreport`, `statussheetreport`, …) usadas abaixo.
+// Side effect: registers the report content factories
+// (`resourcereport`, `timesheetreport`, `statussheetreport`, ...) used below.
 import "../reports/mod.ts";
 import {
   SheetHandlerBase,
@@ -36,15 +36,15 @@ import {
 } from "./sheet-handler-base.ts";
 import { SHEET_EXTENSION, } from "./sheet-extensions.ts";
 
-/** Id fixo do `resourcereport` interno (Ruby `rl_21497214`). */
+/** Fixed ID of the internal `resourcereport` (Ruby `rl_21497214`). */
 export const RESOURCE_LIST_REPORT_ID = "rl_21497214";
 
-/** Mensagem de um `catch` desconhecido (`$!` do Ruby). */
+/** Message of an unknown `catch` (Ruby's `$!`). */
 function errorText(error: unknown,): string {
   return error instanceof Error ? error.message : String(error,);
 }
 
-/** `YYYY-MM-DD` em hora **local** (Ruby `Time#strftime('%Y-%m-%d')`). */
+/** `YYYY-MM-DD` in **local** time (Ruby `Time#strftime('%Y-%m-%d')`). */
 export function localDate(date: Date,): string {
   const year = String(date.getFullYear(),).padStart(4, "0",);
   const month = String(date.getMonth() + 1,).padStart(2, "0",);
@@ -52,7 +52,7 @@ export function localDate(date: Date,): string {
   return `${year}-${month}-${day}`;
 }
 
-/** Número de uma célula CSV (`null`/texto → 0). */
+/** Number of a CSV cell (`null`/text → 0). */
 function numberOf(value: unknown,): number {
   if (typeof value === "number") return value;
   if (value === null || value === undefined) return 0;
@@ -61,80 +61,87 @@ function numberOf(value: unknown,): number {
 }
 
 /**
- * Base dos senders de sheet (18.6).
+ * Base of the sheet senders (18.6).
  *
- * Subclasses (`TimeSheetSender`, `StatusSheetSender` — 18.8/18.10) só definem
- * `hideResource`, `templateDir`, `signatureFile`, `signatureFilter`,
- * `introText` e `mailSubject`.
+ * Subclasses (`TimeSheetSender`, `StatusSheetSender` — 18.8/18.10) only define
+ * `hideResource`, `templateDir`, `signatureFile`, `signatureFilter`, `introText`
+ * and `mailSubject`.
  *
- * Os helpers do pipeline são `protected` (e não `private` como no Ruby) para
- * que subclasses e testes possam chamá-los sem `send`.
+ * The pipeline helpers are `protected` (rather than `private` as in Ruby) so
+ * that subclasses and tests can call them without going through `send`.
  */
 export class SheetSender extends SheetHandlerBase {
-  /** `'time'` ou `'status'` — vira o prefixo do `*sheetreport`. */
+  /** `'time'` or `'status'` — becomes the prefix of the `*sheetreport`. */
   protected readonly sheetType: SheetType;
 
   /**
-   * Expressão lógica que esconde recursos do template (Ruby `'0'`).
+   * Logical expression that hides resources from the template (Ruby `'0'`).
    *
-   * Público como o `attr_accessor :hideResource` do `StatusSheetSender`.
+   * Public, mirroring the `attr_accessor :hideResource` of `StatusSheetSender`.
    */
-  hideResource = "0";
+  hideResource: string = "0";
 
-  /** Arquivo de intervalos aceitos pelo receiver (`acceptable_intervals`). */
-  protected signatureFile = "";
+  /** File of intervals accepted by the receiver (`acceptable_intervals`). */
+  protected signatureFile: string = "";
 
   /**
-   * Diretório base dos templates. **É mutado** por `createDirectories` para
-   * incluir a data (como no Ruby), por isso `templateRoot` guarda a base.
+   * Base directory of the templates. **Mutated** by `createDirectories` to
+   * include the date (as in Ruby), which is why `templateRoot` keeps the base.
    */
   protected templateDir = "";
 
-  /** Regenera templates já existentes e os reenvia. */
-  force = false;
+  /** Regenerates existing templates and resends them. */
+  force: boolean = false;
 
   /**
-   * Atributos dinâmicos aplicados ao relatório do template (o `-A` do `tj3`).
+   * Dynamic attributes applied to the template report (`-A` of `tj3`).
    *
-   * O Ruby não tinha este caminho: o template saía sempre do `reportDef`
-   * fixo. O adendo 18.19.4 fala em "colunas do template", mas
-   * `timesheetreport`/`statussheetreport` ignoram `columns` (o corpo da folha
-   * é fixo), então o gancho é genérico, como o `-A` da CLI: serve para
-   * `hideresource`, `sorttasks`, `journalattributes`, etc. O
-   * `Project#generateReport` restaura os atributos ao final (18.19.3).
+   * Ruby had no such path: the template always came from the fixed `reportDef`.
+   * Addendum 18.19.4 mentions "template columns", but
+   * `timesheetreport`/`statussheetreport` ignore `columns` (the sheet body is
+   * fixed), so the hook is generic, like the CLI's `-A`: it serves
+   * `hideresource`, `sorttasks`, `journalattributes`, etc. `Project#generateReport`
+   * restores the attributes at the end (18.19.3).
    */
   templateAttributes: string | null = null;
 
-  /** Extrai a assinatura (intervalo) do cabeçalho do sheet. */
+  /** Extracts the signature (interval) from the sheet header. */
   protected signatureFilter: RegExp = /^$/u;
 
-  /** Assunto do email (`%s` = data do período). */
-  protected mailSubject = "";
+  /** Email subject (`%s` = period date). */
+  protected mailSubject: string = "";
 
-  /** Texto de introdução do email. */
-  protected introText = "";
+  /** Introductory text of the email. */
+  protected introText: string = "";
 
-  /** Data do período reportado (`YYYY-MM-DD`), congelada na construção. */
+  /** Date of the reported period (`YYYY-MM-DD`), frozen at construction. */
   date: string;
 
-  /** Duração do período reportado (sintaxe de intervalo do TJP). */
-  intervalDuration = "1w";
+  /** Duration of the reported period (TJP interval syntax). */
+  intervalDuration: string = "1w";
 
-  /** Instante da construção — usado para detectar templates antigos. */
+  /** Construction instant — used to detect old templates. */
   protected timeStamp: Date;
 
   /**
-   * Projeto já parseado/agendado. No Ruby o acesso era via `tj3client`; aqui
-   * o sender recebe o `Project` e gera os relatórios in-process.
+   * Project already parsed/scheduled. In Ruby access went through `tj3client`;
+   * here the sender receives the `Project` and generates the reports
+   * in-process.
    */
   project: Project | null = null;
 
-  /** Diretório base, imune à mutação de `templateDir` (idempotência). */
+  /** Base directory, immune to the mutation of `templateDir` (idempotency). */
   private templateRoot: string | null = null;
 
-  /** Instante de escrita de cada arquivo gerado (`File#mtime` não existe). */
-  private readonly writtenAt = new Map<string, number>();
+  /** Write instant of each generated file (`File#mtime` does not exist). */
+  private readonly writtenAt: Map<string, number> = new Map<string, number>();
 
+  /**
+   * Creates the sender.
+   *
+   * @param appName Application name used in logs and in the CLI.
+   * @param type Sheet kind, which selects the `*sheetreport` used.
+   */
   constructor(appName: string, type: SheetType,) {
     super(appName,);
     this.sheetType = type;
@@ -143,16 +150,17 @@ export class SheetSender extends SheetHandlerBase {
     this.timeStamp = now;
   }
 
-  /** Injeta o projeto alvo da geração de relatórios. */
+  /** Injects the project targeted by report generation. */
   setProject(project: Project,): void {
     this.project = project;
   }
 
   /**
-   * Pipeline completo: prepara o diretório de trabalho, cria as pastas, monta
-   * a lista de recursos, gera os templates e os envia (Ruby `sendTemplates`).
+   * Full pipeline: prepares the working directory, creates the folders, builds
+   * the resource list, generates the templates and sends them (Ruby
+   * `sendTemplates`).
    *
-   * @param resourceList IDs de recursos a considerar; vazio = todos.
+   * @param resourceList IDs of the resources to consider; empty = all.
    */
   async sendTemplates(resourceList: string[],): Promise<void> {
     await this.setWorkingDir();
@@ -164,11 +172,12 @@ export class SheetSender extends SheetHandlerBase {
   }
 
   /**
-   * Cria `<templateDir>` e `<templateDir>/<date>` (Ruby `createDirectories`).
+   * Creates `<templateDir>` and `<templateDir>/<date>` (Ruby
+   * `createDirectories`).
    *
-   * Divergência deliberada: a base fica em `templateRoot`, então chamar o
-   * pipeline duas vezes no mesmo processo não empilha datas no caminho (o Ruby
-   * mutava `@templateDir` e, na segunda vez, criava `…/<date>/<date>`).
+   * Deliberate divergence: the base lives in `templateRoot`, so calling the
+   * pipeline twice in the same process does not stack dates in the path (Ruby
+   * mutated `@templateDir` and, on the second run, created `…/<date>/<date>`).
    */
   protected async createDirectories(): Promise<void> {
     const store = this.requireFileStore("createDirectories",);
@@ -186,11 +195,11 @@ export class SheetSender extends SheetHandlerBase {
   }
 
   /**
-   * Monta a lista de recursos com email e horas, via um `resourcereport`
-   * interno em CSV (Ruby `genResourceList`, l.87-147).
+   * Builds the resource list with email and hours through an internal CSV
+   * `resourcereport` (Ruby `genResourceList`, l.87-147).
    *
-   * O CSV é gravado em `<templateDir>/resources.json` para o receiver
-   * (`getResourceList`, 18.7.22) — o Ruby usava `resources.yml`.
+   * The CSV is written to `<templateDir>/resources.json` for the receiver
+   * (`getResourceList`, 18.7.22) — Ruby used `resources.yml`.
    */
   protected async genResourceList(
     resourceList: string[],
@@ -199,8 +208,8 @@ export class SheetSender extends SheetHandlerBase {
     let list: SheetResourceInfo[] = [];
     this.info("Retrieving resource list...",);
 
-    // O Ruby usava YAML/CSV como transporte porque chamava um subprocesso; aqui
-    // o relatório é gerado in-process, mas a definição continua idêntica.
+    // Ruby used YAML/CSV as transport because it spawned a subprocess; here the
+    // report is generated in-process, but the definition stays identical.
     const reportDef = `resourcereport ${RESOURCE_LIST_REPORT_ID} '.' {
   formats csv
   columns id, name, email, effort, freework, efficiency
@@ -214,10 +223,10 @@ export class SheetSender extends SheetHandlerBase {
       RESOURCE_LIST_REPORT_ID,
       reportDef,
     );
-    // Parse do CSV em Array-de-Arrays (Ruby `CSVFile#parse`).
+    // Parse the CSV into an array of arrays (Ruby `CSVFile#parse`).
     const csv = new CSVFile(null, ";",).parse(report,);
 
-    // Descarta a linha de título das colunas.
+    // Drop the column title row.
     csv.shift();
 
     for (const row of csv) {
@@ -230,13 +239,13 @@ export class SheetSender extends SheetHandlerBase {
       const freeWork = numberOf(row[4],);
       const efficiency = numberOf(row[5],);
 
-      // `'<Error>'` é o marcador do report para atributo ausente (não é um
-      // email); tratá-lo como vazio preserva a intenção do Ruby de abortar.
+      // `<Error>` is the report marker for a missing attribute (not an email);
+      // treating it as empty preserves Ruby's intent to abort.
       if (email === "" || email === "<Error>") {
         this.error(`Resource '${id}' must have a valid email address`,);
       }
 
-      // Recursos de férias no período inteiro não recebem template.
+      // Resources on leave for the whole period do not get a template.
       if (effort === 0 && freeWork === 0 && efficiency !== 0) {
         this.info(`Resource '${id}' was on leave the whole period`,);
         continue;
@@ -245,7 +254,7 @@ export class SheetSender extends SheetHandlerBase {
       list.push({ id, name, email, effort, freeWork, },);
     }
 
-    // Guarda a lista para o receiver (Ruby gravava `resources.yml`).
+    // Store the list for the receiver (Ruby wrote `resources.yml`).
     const fileName = `${this.templateDir}/resources.json`;
     try {
       await store.write(fileName, `${JSON.stringify(list, null, 2,)}\n`,);
@@ -254,7 +263,8 @@ export class SheetSender extends SheetHandlerBase {
     }
 
     if (resourceList.length > 0) {
-      // Lista explícita: só os recursos pedidos (e não escondidos pelo filtro).
+      // Explicit list: only the requested resources (and not hidden by the
+      // filter).
       list = list.filter((item,) => resourceList.includes(item.id,));
     }
 
@@ -265,10 +275,11 @@ export class SheetSender extends SheetHandlerBase {
   }
 
   /**
-   * Gera um `.smx` por recurso e habilita a assinatura (Ruby `genTemplates`).
+   * Generates one `.smx` per resource and enables the signature (Ruby
+   * `genTemplates`).
    *
-   * Templates legados (`.tji`) continuam sendo reaproveitados quando `force`
-   * não é pedido (24.2.36).
+   * Legacy templates (`.tji`) are still reused when `force` is not requested
+   * (24.2.36).
    */
   protected async genTemplates(
     resources: SheetResourceInfo[],
@@ -283,14 +294,14 @@ export class SheetSender extends SheetHandlerBase {
       const templateFile = `${this.templateDir}/${res}_${this.date}`;
       const nativeFile = `${templateFile}${SHEET_EXTENSION}`;
 
-      // Não regenera templates existentes sem `force`.
+      // Does not regenerate existing templates without `force`.
       const existing = await this.findSheetFile(
         this.templateDir,
         `${res}_${this.date}`,
       );
       const fileName = this.force || existing === null ? nativeFile : existing;
-      // O primeiro template define o intervalo da folha — mesmo quando é a
-      // forma legada que já estava na pasta (24.2.36).
+      // The first template defines the sheet interval — even when it is the
+      // legacy form already present in the folder (24.2.36).
       if (firstTemplateFile === null) firstTemplateFile = fileName;
       if (!this.force && existing !== null) {
         this.info(`Skipping already existing ${existing}.`,);
@@ -322,7 +333,7 @@ export class SheetSender extends SheetHandlerBase {
   }
 
   /**
-   * Envia um email por recurso com o `.smx` em anexo (Ruby
+   * Sends one email per resource with the `.smx` attached (Ruby
    * `sendReportTemplates`, l.181-199).
    */
   protected async sendReportTemplates(
@@ -343,8 +354,8 @@ export class SheetSender extends SheetHandlerBase {
             "not found",
         );
       }
-      // Não reenvia templates antigos. `timeStamp` tem resolução maior que o
-      // mtime; somamos 1s para evitar erro de truncamento (Ruby l.188-193).
+      // Does not resend old templates. `timeStamp` has coarser resolution than
+      // mtime; we add 1s to avoid truncation error (Ruby l.188-193).
       const written = this.writtenAt.get(attachment,);
       if (written === undefined || written + 1000 < this.timeStamp.getTime()) {
         this.info(`Old template ${attachment} found. Not sending it out.`,);
@@ -363,11 +374,12 @@ export class SheetSender extends SheetHandlerBase {
   }
 
   /**
-   * Extrai a assinatura do primeiro template e a registra em
+   * Extracts the signature from the first template and records it in
    * `signatureFile` (Ruby `enableSignatureForReporting`, l.201-249).
    *
-   * O Ruby repetia a leitura 100 vezes com 300ms de espera porque o arquivo era
-   * escrito por outro processo; in-process o arquivo já está no `FileStore`.
+   * Ruby retried the read 100 times with a 300ms wait because the file was
+   * written by another process; in-process the file is already in the
+   * `FileStore`.
    */
   protected async enableSignatureForReporting(
     templateFile: string,
@@ -400,7 +412,7 @@ export class SheetSender extends SheetHandlerBase {
     }
 
     if (!acceptedSignatures.includes(signature,)) {
-      // Acrescenta a nova assinatura e reescreve o arquivo.
+      // Append the new signature and rewrite the file.
       this.info(`Adding ${signature} to ${this.signatureFile}`,);
       acceptedSignatures.push(signature,);
       await this.ensureParentDirectory(this.signatureFile,);
@@ -416,16 +428,17 @@ export class SheetSender extends SheetHandlerBase {
   }
 
   /**
-   * Aplica `reportDef` ao projeto e devolve a saída do relatório (Ruby
+   * Applies `reportDef` to the project and returns the report output (Ruby
    * `generateReport`, l.251-271).
    *
-   * O Ruby mandava a definição para um `tj3client report prj <id> = .` e lia o
-   * stdout. Aqui o mesmo caminho é feito in-process: `parseReportList` (que é o
-   * `reportPropertiesFile` do `ReportServer`) + `Project#generateReport`.
+   * Ruby sent the definition to a `tj3client report prj <id> = .` and read
+   * stdout. Here the same path runs in-process: `parseReportList` (which is the
+   * `ReportServer`'s `reportPropertiesFile`) + `Project#generateReport`.
    *
-   * A assinatura é `Promise` para manter o contrato do pipeline (18.6.20); a
-   * geração em si é síncrona, mas falhas viram **rejeições** (nunca `throw`
-   * síncrono), para que `await`/`assertRejects` funcionem como no Ruby.
+   * The signature is `Promise` to keep the pipeline contract (18.6.20); the
+   * generation itself is synchronous, but failures become **rejections** (never
+   * a synchronous `throw`), so `await`/`assertRejects` work as they did in
+   * Ruby.
    */
   protected generateReport(
     id: string,
@@ -441,7 +454,7 @@ export class SheetSender extends SheetHandlerBase {
     }
   }
 
-  /** Corpo síncrono de {@link generateReport}. */
+  /** Synchronous body of {@link generateReport}. */
   private generateReportOutput(
     id: string,
     reportDef: string,
@@ -457,8 +470,8 @@ export class SheetSender extends SheetHandlerBase {
 
     let output: string | unknown[][] | null = null;
     try {
-      // Uma nova definição substitui a anterior (o Ruby sempre falava com um
-      // processo novo, então nunca colidia).
+      // A new definition replaces the previous one (Ruby always talked to a new
+      // process, so it never collided).
       const existing = project.report(id,);
       if (existing) project.reports.removeProperty(existing,);
 
@@ -478,15 +491,15 @@ export class SheetSender extends SheetHandlerBase {
     if (output === null) {
       this.error(`generateReport: report ${id} produced no output`,);
     }
-    // CSV sai como Array-de-Arrays (ADR 027); o resto já é texto.
+    // CSV comes out as an array of arrays (ADR 027); the rest is already text.
     return typeof output === "string"
       ? output
       : new CSVFile(output as unknown[][], ";",).to_s();
   }
 
   /**
-   * Resolve um diretório-pai inexistente antes de escrever (o `FileStore` não
-   * cria ancestrais em `write`, como `File.open`).
+   * Resolves a missing parent directory before writing (`FileStore` does not
+   * create ancestors in `write`, unlike `File.open`).
    */
   private async ensureParentDirectory(fileName: string,): Promise<void> {
     const store = this.requireFileStore("ensureParentDirectory",);
@@ -498,7 +511,7 @@ export class SheetSender extends SheetHandlerBase {
     await store.mkdir(dir,);
   }
 
-  /** O `FileStore` injetado ou erro fatal (ADR 037). */
+  /** The injected `FileStore`, or a fatal error (ADR 037). */
   protected requireFileStore(method: string,): FileStore {
     const store = this.fileStore;
     if (store === null) {

@@ -1,19 +1,21 @@
 /**
- * RTFReportLink — handler da função `[[reportlink:…]]` (Fase 12.16 / 14.24).
+ * RTFReportLink — handler of the `[[reportlink:…]]` function (phase 12.16 /
+ * 14.24).
  *
- * Gera um link para outro relatório: estático (`Nome.html`) ou interativo
- * (`taskjuggler?project=…;report=…[;attributes=…]`, com expansão de query via
- * `SimpleQueryExpander` e `URLParameter.encode`). Desancorado em 14.24.6.
+ * Builds a link to another report: static (`Name.html`) or interactive
+ * (`taskjuggler?project=…;report=…[;attributes=…]`, with query expansion
+ * through `SimpleQueryExpander` and `URLParameter.encode`). Unanchored in
+ * 14.24.6.
  *
- * Divergência documentada: no Ruby, `attributes` sem `@query` resolvida
- * crashes (nil.dup no expander); aqui a expansão é pulada se o handler ainda
- * não recebeu `setQuery` — o link permanece válido.
+ * Documented divergence: in Ruby, `attributes` without a resolved `@query`
+ * crashes (nil.dup in the expander); here the expansion is skipped when the
+ * handler has not received `setQuery` yet — the link stays valid.
  *
- * Port de `RichText/RTFReportLink.rb`.
+ * Port of `RichText/RTFReportLink.rb`.
  *
  * @see docs/taskjuggler/lib/taskjuggler/RichText/RTFReportLink.rb
- * @see ADR 025 (RichText e function handlers)
- * @see ADR 027 (reports retornam strings, browser)
+ * @see ADR 025 (RichText and function handlers)
+ * @see ADR 027 (reports return strings, browser)
  */
 
 import { RTFWithQuerySupport, } from "./rtf-with-query-support.ts";
@@ -39,12 +41,13 @@ export class RTFReportLink extends RTFWithQuerySupport {
   }
 
   override to_s(args: RichTextFunctionArgs,): string {
-    // Ruby: checkArgs → report.name (com project nil o erro já abortou).
+    // Ruby: checkArgs → report.name (with a nil project the error already
+    // aborted).
     const report = this.checkArgs(args,);
     return report ? String(report.name,) : "";
   }
 
-  /** Não suportado para esta função. */
+  /** Not supported for this function. */
   override to_tagged(_args: RichTextFunctionArgs,): string | null {
     return null;
   }
@@ -56,8 +59,8 @@ export class RTFReportLink extends RTFWithQuerySupport {
 
     let url: string;
     if (report["interactive?"]()) {
-      // Relatório interativo: projeto + id vão como query; `attributes`
-      // expande placeholders da query e vai codificado (deflate+Base64).
+      // Interactive report: project + id go as the query; `attributes`
+      // expands the query placeholders and goes encoded (deflate+Base64).
       const pid = String(this.project?.get("projectid",) ?? "",);
       url = `taskjuggler?project=${pid};report=${report.fullId}`;
       const attributes = args?.["attributes"];
@@ -70,7 +73,7 @@ export class RTFReportLink extends RTFWithQuerySupport {
         url += ";attributes=" + URLParameter.encode(qEx.expand(),);
       }
     } else {
-      // Estático: o nome do relatório ganha extensão '.html'.
+      // Static: the report name gets the '.html' extension.
       url = `${report.name}.html`;
     }
     const a = new XMLElement("a", { href: url, },);
@@ -78,7 +81,7 @@ export class RTFReportLink extends RTFWithQuerySupport {
     return a;
   }
 
-  /** Resolve o relatório do argumento `id`, com erros do Ruby (l.71-83). */
+  /** Resolves the report of the `id` argument, with the Ruby errors (l.71-83). */
   private checkArgs(args: RichTextFunctionArgs,): Report | null {
     if (
       args === null || args === undefined || args["id"] === undefined ||

@@ -1,5 +1,5 @@
 /**
- * Atributo de lista de nós.
+ * Node list attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:NodeListAttribute
  */
@@ -10,14 +10,14 @@ import { type AttributeDefinition, } from "../attribute-definition.ts";
 import { ListAttributeBase, } from "../list-attribute-base.ts";
 
 /**
- * Atributo de lista de nós.
+ * Node list attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:NodeListAttribute
  */
 export class NodeListAttribute
   extends ListAttributeBase<{ id: string; name: string }> {
   /**
-   * Converte o valor para string.
+   * Converts the value to a string.
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:NodeListAttribute#to_s
    */

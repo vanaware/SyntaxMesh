@@ -25,9 +25,9 @@ import { defaultAlertLevels, } from "./alert-levels.ts";
 import { ReportContext, } from "../reports/report-context.ts";
 import { Report, } from "./report.ts";
 import { ReportType, } from "./report-type.ts";
-// Deliberado (Ruby `Project#generateReport` cria o parser): o ciclo
-// model → parser só é resolvido em runtime, pois a referência é usada dentro
-// do método, nunca na avaliação dos módulos.
+// Deliberate (Ruby `Project#generateReport` creates the parser): the cycle
+// model → parser only resolves at runtime, since the reference is used inside
+// the method, never during module evaluation.
 import { ProjectFileParser, } from "../parser/project-file-parser.ts";
 import { Task, } from "./task.ts";
 import { Resource, } from "./resource.ts";
@@ -54,71 +54,102 @@ import type { MaterialBooking, } from "./material-booking.ts";
 import type { ChargeBooking, } from "./charge-booking.ts";
 
 /**
- * Booking aguardando a declaração da tarefa dona. O `booking` declarado no
- * corpo do material ou do recurso pode preceder o `task` que ele referencia;
- * guardamos também o cenário em que surgiu (14C.11.5) e o atributo da tarefa
- * onde deve entrar — `materialbookings` ou `chargebookings` (14C.15.7).
+ * Booking awaiting the declaration of its owning task. A `booking` declared in
+ * the material or resource body may precede the `task` it references; we also
+ * keep the scenario it appeared in (14C.11.5) and the task attribute it must
+ * land in — `materialbookings` or `chargebookings` (14C.15.7).
  */
 export interface PendingMaterialBooking {
+  /** Material or charge booking still waiting for its owning task. */
   booking: MaterialBooking | ChargeBooking;
+  /** Scenario the booking was declared in. */
   scenarioIdx: number;
-  /** Atributo de cenário da tarefa que recebe o booking resolvido. */
+  /** Scenario attribute of the task that receives the resolved booking. */
   attrId?: string;
 }
 
+/**
+ * Root of the model: the parsed project and every collection inside it.
+ *
+ * A project owns the property sets (tasks, resources, accounts, …), the
+ * scenario list, the working-hour calendar, the scoreboards used while
+ * scheduling and the diagnostics produced by the last run. It is the object the
+ * parser builds, the scheduler walks and the reports query.
+ */
 export class Project implements ProjectLike {
+  /** Project id (`project <id> "name" …`). */
   readonly id: string;
+  /** Human-readable project name. */
   readonly name: string;
+  /** Version string reported in headers and generated documents. */
   readonly version: string;
   private attributes: Map<string, unknown>;
+  /** Declared scenarios (at least one: the plain project). */
   readonly scenarios: PropertySet;
+  /** Shift definitions usable by resources and tasks. */
   readonly shifts: PropertySet;
+  /** Chart of accounts. */
   readonly accounts: PropertySet;
+  /** Resource hierarchy (groups and leaves). */
   readonly resources: PropertySet;
+  /** Task hierarchy (containers and leaves). */
   readonly tasks: PropertySet;
+  /** Report definitions. */
   readonly reports: PropertySet;
+  /** Material catalog. */
   readonly materials: PropertySet;
   /**
-   * Navigators definidos via diretiva `navigator "id"` (Ruby:
-   * `@project['navigators']`). Copiados pelo parser durante o parse; o
-   * `RTFNavigator` consulta este mapa para renderizar a barra.
+   * Navigators defined through the `navigator "id"` directive (Ruby:
+   * `@project['navigators']`). Copied by the parser during the parse; the
+   * `RTFNavigator` reads this map to render the bar.
    */
   readonly navigators: Map<string, unknown>;
+  /** Files the project was parsed from, in the order they were opened. */
   readonly inputFiles: string[];
+  /** Time sheets declared in the project or injected by the sheets apps. */
   readonly timeSheets: TimeSheets;
+  /** Report contexts, one per report being generated concurrently. */
   readonly reportContexts: ReportContext[];
+  /** Directory report files are written to; empty for in-memory use. */
   outputDir: string;
+  /** When `true`, scheduling warns about deviations in time-sheet bookings. */
   warnTsDeltas: boolean;
+  /** Availability/limit scoreboard of the running scheduling pass. */
   scoreboard: Scoreboard<number | null> | null;
+  /** Scoreboard variant that ignores container tasks. */
   scoreboardNoLeaves: Scoreboard<number | null> | null;
+  /** Per-slot availability of every resource, built before scheduling. */
   resourceAvailability: Scoreboard<boolean> | null;
+  /** Auditable cost events accumulated by the financial layer. */
   readonly costEvents: CostEvent[];
+  /** Scenario used to record actuals, or `null` when the project has none. */
   readonly trackingScenario: string | null;
   /**
-   * ID da conta default universal (`defaultaccount <id>`, adendo §10 / 14C.9).
-   * É a regra 4 de `resolveAccount` quando não há conta explícita, chargeset
-   * da origem nem chargeset da tarefa. Guardado como **ID** porque o bloco
-   * `project` vem antes das declarações de `account` (referência futura).
+   * ID of the universal default account (`defaultaccount <id>`, appendix §10
+   * / 14C.9). It is rule 4 of `resolveAccount` when there is no explicit
+   * account, no source chargeset and no task chargeset. Stored as an **ID**
+   * because the `project` block comes before the `account` declarations
+   * (forward reference).
    */
   defaultAccountId: string | null;
   /**
-   * IDs das contas default por tipo (`defaultaccount material|resource|charge
-   * <id>`). Uma variante presente **precede** a universal no seu tipo. O tipo
-   * `charge` mapeia para `CostType` `task`.
+   * IDs of the per-type default accounts (`defaultaccount material|resource|
+   * charge <id>`). A present variant **precedes** the universal one for its
+   * type. The `charge` type maps to the `CostType` `task`.
    */
   readonly defaultAccountIds: Map<CostType, string>;
   /**
-   * Bookings de material (ou charge) lidos antes da declaração da tarefa dona
-   * (referência futura). Esvaziada por `flushPendingBookings()` ao final do
-   * parse.
+   * Material (or charge) bookings read before the declaration of the owning
+   * task (forward reference). Emptied by `flushPendingBookings()` at the end of
+   * the parse.
    */
   readonly pendingBookings: PendingMaterialBooking[] = [];
 
   /**
-   * Liga os bookings pendentes às suas tarefas e anexa cada um ao atributo de
-   * cenário da tarefa (`materialbookings` ou `chargebookings`, 14C.15.7).
-   * Idempotente: o que continua sem tarefa permanece na fila para uma chamada
-   * futura. Devolve quantos foram resolvidos nesta passada.
+   * Binds the pending bookings to their tasks and appends each one to the
+   * task's scenario attribute (`materialbookings` or `chargebookings`,
+   * 14C.15.7). Idempotent: whatever is still without a task stays in the queue
+   * for a future call. Returns how many were resolved in this pass.
    */
   flushPendingBookings(): number {
     if (this.pendingBookings.length === 0) return 0;
@@ -153,9 +184,10 @@ export class Project implements ProjectLike {
   }
 
   /**
-   * Conta default para um tipo de custo: variante do tipo → universal →
-   * `null`. Resolve o ID no PropertySet de contas a cada chamada (o parser
-   * aceita referência futura). `type` nulo resolve só a universal.
+   * Default account for a cost type: type variant → universal → `null`.
+   * Resolves the ID in the accounts PropertySet on every call (the parser
+   * accepts forward references). A `null` `type` resolves the universal one
+   * only.
    */
   defaultAccountFor(type: CostType | null,): Account | null {
     const id = (type ? this.defaultAccountIds.get(type,) : undefined) ??
@@ -163,13 +195,24 @@ export class Project implements ProjectLike {
     return id === null || id === undefined ? null : this.account(id,);
   }
 
+  /** `true` when any task in the project declares a booking. */
   hasBookings(_scIdx: number,): boolean {
     return false;
   }
+  /** `true` when the project is scheduled in projection mode. */
   isProjectionMode(_scIdx: number,): boolean {
     return false;
   }
 
+  /**
+   * Attribute object of the project, resolved per scenario.
+   *
+   * Scenario-specific attributes win; attributes that only exist at project
+   * level (`name`, `id`, `seqno`, …) come from the `plan` scenario.
+   *
+   * @param scIdx Scenario whose value is wanted.
+   * @param id Attribute name.
+   */
   getScenarioAttribute(
     scIdx: number,
     id: string,
@@ -234,10 +277,24 @@ export class Project implements ProjectLike {
     return null as unknown as AttributeBase<unknown>;
   }
 
+  /**
+   * Looks up the definition of the attribute `id` in this project.
+   *
+   * @param id Attribute name as written in the project file.
+   * @returns The definition, or `undefined` when the attribute is unknown.
+   */
   attributeDefinition(id: string,): AttributeDefinition<unknown> | undefined {
     return this.scenarios.attributeDefinition(id,);
   }
 
+  /**
+   * Creates a project and registers the attribute dictionary of every type.
+   *
+   * @param id Project id.
+   * @param name Human-readable name.
+   * @param version Version string reported in headers.
+   * @param _flatNamespace Accepted for API parity; unused.
+   */
   constructor(
     id: string,
     name: string,
@@ -267,18 +324,19 @@ export class Project implements ProjectLike {
     // Default project attributes (Ruby defaults from Project.rb)
     this.attributes.set("dailyworkinghours", 8.0,);
     this.attributes.set("yearlyworkingdays", 260.714,);
-    // Identidade no mapa de atributos: o `@data` do Ruby traz `'name'`,
-    // `'projectid'` e `'version'` desde o construtor (Project.rb l.88-118) e
-    // vários pontos do port leem `project.get('name')` — o `<title>` do HTML
-    // (Report.rb `generateHTML`), o cabeçalho `Project: …` do niku/mspxml.
+    // Identity in the attribute map: Ruby's `@data` carries `'name'`,
+    // `'projectid'` and `'version'` from the constructor (Project.rb l.88-118)
+    // and several places in the port read `project.get('name')` — the HTML
+    // `<title>` (Report.rb `generateHTML`), the `Project: …` header of
+    // niku/mspxml.
     this.attributes.set("name", name,);
     this.attributes.set("projectid", id,);
     this.attributes.set("version", version,);
     this.attributes.set("projectids", [id,],);
 
-    // Formatos default do Ruby (Project.rb l.89-92): sem eles as células
-    // numéricas caem no fallback de 2 casas do `Query#scaleValue` e o CSV sai
-    // `4.33`/`5` onde o `tj3` escreve `4.3`/`5.0` (golden CLI, 24.7.6).
+    // Ruby default formats (Project.rb l.89-92): without them the numeric
+    // cells fall back to the 2-decimal `Query#scaleValue` and the CSV prints
+    // `4.33`/`5` where `tj3` writes `4.3`/`5.0` (CLI golden, 24.7.6).
     this.attributes.set(
       "numberFormat",
       new RealFormat(["-", "", "", ".", 1,],),
@@ -290,17 +348,17 @@ export class Project implements ProjectLike {
     this.attributes.set("timeFormat", "%Y-%m-%d",);
     this.attributes.set("shortTimeFormat", "%H:%M",);
 
-    // PropertySets: Ruby Project.rb fixa o namespace por conjunto —
-    // scenarios/shifts/accounts/resources são flat (IDs curtos globais);
-    // tasks/reports são hierárquicos (fullId pontuado). O parâmetro do
-    // construtor não tem correspondência no TJ original.
+    // PropertySets: Ruby Project.rb fixes the namespace per collection —
+    // scenarios/shifts/accounts/resources are flat (short global IDs);
+    // tasks/reports are hierarchical (dotted fullId). The constructor
+    // parameter has no counterpart in the original TJ.
     this.scenarios = new PropertySet(this, true,);
     this.shifts = new PropertySet(this, true,);
     this.accounts = new PropertySet(this, true,);
     this.resources = new PropertySet(this, true,);
     this.tasks = new PropertySet(this, false,);
     this.reports = new PropertySet(this, false,);
-    // Materials: IDs hierárquicos como tasks (rollup de allocations C1).
+    // Materials: hierarchical IDs like tasks (allocation rollup, C1).
     this.materials = new PropertySet(this, false,);
     this.navigators = new Map();
     this.attributes.set("scheduleGranularity", 3600,);
@@ -310,14 +368,14 @@ export class Project implements ProjectLike {
     this.attributes.set("currency", "EUR",);
     this.attributes.set("priority", 500,);
     this.attributes.set("rate", 0.0,);
-    // timebasis default global (Fase 10 Complemento C2.2, #6): `duration`
-    // preserva a semântica TJ de dias corridos para distribuição de custo.
+    // Global default timebasis (phase 10 complement C2.2, #6): `duration`
+    // preserves the TJ semantics of calendar days for cost distribution.
     this.attributes.set("timebasis", "duration",);
     this.attributes.set("now", TjTime.now().align(3600,),);
 
-    // Alert levels padrão (Ruby AlertLevelDefinitions#initialize; módulo
-    // trazido forward em 14C.0.7). Objetos {id, name, color}; podem ser
-    // substituídos pela diretiva `alertlevels` no bloco project.
+    // Default alert levels (Ruby AlertLevelDefinitions#initialize; module
+    // brought forward in 14C.0.7). Objects {id, name, color}; they can be
+    // replaced by the `alertlevels` directive in the project block.
     this.attributes.set("alertLevels", defaultAlertLevels(),);
 
     // Register attributes synchronously
@@ -336,13 +394,14 @@ export class Project implements ProjectLike {
     // So no additional action needed here
   }
 
+  /** Number of declared scenarios. */
   get scenarioCount(): number {
     return this.scenarios.items;
   }
 
   /**
-   * Sobrescreve deep_clone para que referências ao projeto não levem a
-   * uma cópia profunda do projeto inteiro (Ruby: Project#deep_clone).
+   * Overrides `deepClone` so that references to the project do not drag a deep
+   * copy of the whole project along (Ruby: `Project#deep_clone`).
    *
    * @see docs/taskjuggler/lib/taskjuggler/Project.rb#deep_clone
    */
@@ -350,6 +409,12 @@ export class Project implements ProjectLike {
     return this;
   }
 
+  /**
+   * Resolves a scenario by index or id.
+   *
+   * @param arg Position (`0`-based) or scenario id.
+   * @returns The scenario, or `null` when neither matches.
+   */
   scenario(arg: number | string,): Scenario | null {
     if (typeof arg === "number") {
       let seqNo = 1;
@@ -366,6 +431,12 @@ export class Project implements ProjectLike {
     }
   }
 
+  /**
+   * Position of a scenario in the project.
+   *
+   * @param sc Scenario object or id.
+   * @returns `0`-based index, or `undefined` when the id is unknown.
+   */
   scenarioIdx(sc: Scenario | string,): number | undefined {
     if (typeof sc === "string") {
       const scenario = this.scenarios.get(sc,);
@@ -374,39 +445,46 @@ export class Project implements ProjectLike {
     return sc.sequenceNo - 1;
   }
 
+  /** Shift with the given id, or `null` when undeclared. */
   shift(id: string,): Shift | null {
     const prop = this.shifts.get(id,);
     return prop ? (prop as Shift) : null;
   }
 
+  /** Account with the given id, or `null` when undeclared. */
   account(id: string,): Account | null {
     const prop = this.accounts.get(id,);
     return prop ? (prop as Account) : null;
   }
 
+  /** Task with the given id, or `null` when undeclared. */
   task(id: string,): Task | null {
     const prop = this.tasks.get(id,);
     return prop ? (prop as Task) : null;
   }
 
-  /** Journal do projeto (Ruby Project.rb `self['journal']`). */
+  /** Project journal (Ruby Project.rb `self['journal']`). */
   readonly journal: Journal = new Journal();
 
+  /** Resource with the given id, or `null` when undeclared. */
   resource(id: string,): Resource | null {
     const prop = this.resources.get(id,);
     return prop ? (prop as Resource) : null;
   }
 
+  /** Material with the given id, or `null` when undeclared. */
   material(id: string,): import("./material.ts").Material | null {
     const prop = this.materials.get(id,);
     return prop ? (prop as import("./material.ts").Material) : null;
   }
 
+  /** Report with the given id, or `null` when undeclared. */
   report(id: string,): Report | null {
     const prop = this.reports.get(id,);
     return prop ? (prop as Report) : null;
   }
 
+  /** Report with the given name, or `null` when undeclared. */
   reportByName(name: string,): Report | null {
     for (const prop of this.reports.toArray()) {
       if (prop.name === name) {
@@ -416,10 +494,17 @@ export class Project implements ProjectLike {
     return null;
   }
 
+  /** Reads a project attribute (`project` block or defaults). */
   get(name: string,): unknown {
     return this.attributes.get(name,);
   }
 
+  /**
+   * Writes a project attribute and re-derives the calendar when needed.
+   *
+   * Changing `start`, `end`, `scheduleGranularity` or `timezone` invalidates
+   * the working hours, so {@link reinitializeWorkingHours} runs afterwards.
+   */
   set(name: string, value: unknown,): void {
     this.attributes.set(name, value,);
 
@@ -431,6 +516,12 @@ export class Project implements ProjectLike {
     }
   }
 
+  /**
+   * Rebuilds the `WorkingHours` calendar from `start`, `end` and `timezone`.
+   *
+   * Bails out while either end is not a real {@link TjTime}: like the Ruby
+   * original, raw strings stored in the attribute map are ignored.
+   */
   private reinitializeWorkingHours(): void {
     // Reinitialize working hours based on new start/end/timezone
     // This matches Ruby Project.rb:522-525 — only create WorkingHours
@@ -457,6 +548,14 @@ export class Project implements ProjectLike {
     this.attributes.set("workinghours", workinghours,);
   }
 
+  /**
+   * Reports an error through the process-wide handler.
+   *
+   * @param id Stable message id.
+   * @param text Human-readable description.
+   * @param sfi Source location, when known.
+   * @param property Property the message belongs to; accepted for API parity.
+   */
   error(
     id: string,
     text: string,
@@ -466,6 +565,14 @@ export class Project implements ProjectLike {
     MessageHandlerInstance.instance.error(id, text, sfi, null, null, null,);
   }
 
+  /**
+   * Reports a warning through the process-wide handler.
+   *
+   * @param id Stable message id.
+   * @param text Human-readable description.
+   * @param sfi Source location, when known.
+   * @param property Property the message belongs to; accepted for API parity.
+   */
   warning(
     id: string,
     text: string,
@@ -475,10 +582,12 @@ export class Project implements ProjectLike {
     MessageHandlerInstance.instance.warning(id, text, sfi, null, null, null,);
   }
 
+  /** Working hours of one day (`dailyworkinghours`, default 8). */
   dailyWorkingHours(): number {
     return Number(this.get("dailyworkinghours",) ?? 8.0,);
   }
 
+  /** Working days of a week, derived from the weekly working hours. */
   weeklyWorkingDays(): number {
     const workingHours = this.get("workinghours",) as unknown;
     const daily = this.dailyWorkingHours();
@@ -489,10 +598,12 @@ export class Project implements ProjectLike {
       .weeklyWorkingHours() / daily;
   }
 
+  /** Working days of a month (`yearlyworkingdays / 12`). */
   monthlyWorkingDays(): number {
     return Number(this.get("yearlyworkingdays",) ?? 260.714,) / 12.0;
   }
 
+  /** Working days of a year (`yearlyworkingdays`, default 260.714). */
   yearlyWorkingDays(): number {
     return Number(this.get("yearlyworkingdays",) ?? 260.714,);
   }
@@ -503,11 +614,13 @@ export class Project implements ProjectLike {
     return slots * granularity / (3600 * daily);
   }
 
+  /** Converts a duration in seconds into daily load units. */
   convertToDailyLoad(seconds: number,): number {
     const daily = this.dailyWorkingHours();
     return seconds / (daily * 3600);
   }
 
+  /** Number of slots in the current scoreboard, or `0` before one exists. */
   scoreboardSize(): number {
     return this.scoreboard?.size || 0;
   }
@@ -525,10 +638,10 @@ export class Project implements ProjectLike {
   }
 
   /**
-   * Ruby Project.rb:961 — `forceIntoProject` clampa aos limites do plano
-   * (antes → 0, depois → último slot); sem clamp, data fora do intervalo
-   * é erro. O port ignorava o parâmetro (índices negativos/estourados
-   * vazavam para as chamadas); corrigido na 2ª onda do Complemento 11.
+   * Ruby Project.rb:961 — `forceIntoProject` clamps to the plan limits (before
+   * → 0, after → last slot); without the clamp, a date outside the range is an
+   * error. The port ignored the parameter (negative/overflowing indices leaked
+   * into the calls); fixed in the 2nd wave of Complement 11.
    */
   dateToIdx(date: TjTime, forceIntoProject: boolean = true,): number {
     const start = this.get("start",) as TjTime | undefined;
@@ -568,10 +681,12 @@ export class Project implements ProjectLike {
     return this.scoreboard.get(sbIdx,) === null;
   }
 
+  /** `true` when the scoreboard marks slot `sbIdx` as working time. */
   hasWorkingTime(sbIdx: number,): boolean {
     return this.isWorkingTime(sbIdx,);
   }
 
+  /** Number of working days inside the interval (slot indices, inclusive). */
   workingDays(interval: { start: number; end: number },): number {
     let workingDays = 0;
     for (let idx = interval.start; idx <= interval.end; idx++) {
@@ -582,6 +697,7 @@ export class Project implements ProjectLike {
     return workingDays;
   }
 
+  /** Number of working slots between `startIdx` and `endIdx`. */
   getWorkSlots(startIdx: number, endIdx: number,): number {
     let workSlots = 0;
     for (let idx = startIdx; idx <= endIdx; idx++) {
@@ -597,12 +713,12 @@ export class Project implements ProjectLike {
   }
 
   /**
-   * Intervalos de tempo fora (off-duty/leave) globais do projeto.
+   * Global project time-off (off-duty/leave) intervals.
    *
-   * Port fiel de `Project.rb#collectTimeOffIntervals` (l.976-981): filtra o
-   * scoreboard do projeto por slots cujo bit de fora-de-expediente/leave
-   * (máscara `0x3E`) está ligado. Sem scoreboard (projeto ainda não
-   * agendado) não há como saber os leaves → lista vazia.
+   * Faithful port of `Project.rb#collectTimeOffIntervals` (l.976-981): filters
+   * the project scoreboard by the slots whose off-duty/leave bit (mask `0x3E`)
+   * is set. Without a scoreboard (project not yet scheduled) the leaves cannot
+   * be known → empty list.
    */
   collectTimeOffIntervals(
     iv: TimeInterval,
@@ -617,40 +733,60 @@ export class Project implements ProjectLike {
   }
 
   /**
-   * Nome de exibição de um atributo de tarefa ou de recurso.
+   * Display name of a task or resource attribute.
    *
-   * Porta de `Project#attributeName` (Ruby l.1038): o Ruby consulta o
-   * dicionário de tarefas e, se não achar, o de recursos — nunca o dicionário
-   * do próprio projeto. A versão anterior olhava `scenarios`, que só conhece
-   * atributos de projeto, e por isso os cabeçalhos de coluna como `start`,
-   * `end` e `effort` saíam vazios nos relatórios.
+   * Port of `Project#attributeName` (Ruby l.1038): Ruby looks the id up in the
+   * task dictionary and, failing that, in the resource dictionary — never in the
+   * project's own dictionary. The previous version looked at `scenarios`, which
+   * only knows project attributes, which is why column headers such as `start`,
+   * `end` and `effort` came out empty in reports.
+   *
+   * @param id Attribute id to translate.
+   * @returns The display name, or `undefined` when the attribute is unknown.
    */
   attributeName(id: string,): string | undefined {
     return this.tasks.attributeName(id,) ?? this.resources.attributeName(id,);
   }
 
+  /**
+   * Short single-line description of the project.
+   *
+   * @returns `Project(id=…, name=…, version=…)`.
+   */
   to_s(): string {
     return `Project(id=${this.id}, name=${this.name}, version=${this.version})`;
   }
 
+  /** Adds a scenario (parity hook; the constructor registers itself). */
   addScenario(_s: Scenario,): void {
     // Scenario is already registered via PropertyTreeNode constructor
     // This matches the pattern of addTask/addResource/addAccount/addShift/addReport
     // which are all no-ops since their constructors auto-register
   }
 
+  /** Adds a shift (parity hook; the parser fills the set). */
   addShift(_s: unknown,): void {}
 
+  /** Adds an account (parity hook; the parser fills the set). */
   addAccount(_a: unknown,): void {}
 
+  /** Adds a task (parity hook; the parser fills the set). */
   addTask(_t: unknown,): void {}
 
+  /** Adds a resource (parity hook; the parser fills the set). */
   addResource(_r: unknown,): void {}
 
+  /** Adds a report (parity hook; the parser fills the set). */
   addReport(_r: unknown,): void {}
 
+  /** Adds a material (parity hook; the parser fills the set). */
   addMaterial(_m: unknown,): void {}
 
+  /**
+   * Detaches an account from the project.
+   *
+   * @param account Node to remove; non-node values are ignored.
+   */
   removeAccount(account: unknown,): void {
     if (account instanceof PropertyTreeNode) {
       this.accounts.removeProperty(account,);
@@ -658,6 +794,15 @@ export class Project implements ProjectLike {
   }
 
   // 9.8 — Project.generateReports + generateReport + listReports
+  /**
+   * Generates every report that declares at least one `formats` entry.
+   *
+   * Runs one {@link ReportContext} per report on the main thread (`maxCpuCores`
+   * is accepted for API parity but unused in the browser) and flushes the data
+   * cache afterwards, as the Ruby original does.
+   *
+   * @param maxCpuCores Worker budget; ignored by this port.
+   */
   generateReports(maxCpuCores: number,): void {
     // Ignorar maxCpuCores (browser)
     this.reports.index();
@@ -672,12 +817,24 @@ export class Project implements ProjectLike {
       this.reportContexts.pop();
       Log.stopProgressMeter();
     }
-    // Ruby `Project#generateReports` limpa o cache de dados ao final.
-    // (`data-cache.ts` já implementa `flush()` — o antigo `// stub` era resíduo.
-    //  xray §5.4, corrigido 2026-11-03.)
+    // Ruby `Project#generateReports` flushes the data cache at the end.
+    // (`data-cache.ts` already implements `flush()` — the old `// stub` was a
+    // leftover. xray §5.4, fixed 2026-11-03.)
     DataCache.instance.flush();
   }
 
+  /**
+   * Generates one report, or every report matching a pattern.
+   *
+   * `dynamicAttributes` injects extra attribute definitions for this run only;
+   * each generated report still runs inside its own {@link ReportContext}.
+   *
+   * @param reportId Report id, or a regular expression when `regExpMode` is set.
+   * @param regExpMode Treat `reportId` as a pattern.
+   * @param formats Output formats to force, or `null`/`undefined` for the
+   *   report's own `formats` attribute.
+   * @param dynamicAttributes Snippet with attribute definitions to inject.
+   */
   generateReport(
     reportId: string,
     regExpMode: boolean,
@@ -707,11 +864,12 @@ export class Project implements ProjectLike {
         }
       }
       this.reportContexts.push(new ReportContext(this, report as Report,),);
-      // Ruby l.795-811: com `dynamicAttributes` o relatório tem os atributos
-      // salvos, as colunas injetadas e depois restaurados — o `interactive`
-      // marca a geração como "veio do editor" (troca o nome do arquivo).
-      // O backup/restore só acontece com snippet **não vazio**: com `""` o
-      // Ruby só marca `interactive` e o atributo permanece depois da geração.
+      // Ruby l.795-811: with `dynamicAttributes` the report has its attributes
+      // saved, the columns injected and then restored — `interactive` marks the
+      // generation as "came from the editor" (changes the file name). The
+      // backup/restore only happens with a **non-empty** snippet: with `""`
+      // Ruby only sets `interactive` and the attribute remains after
+      // generation.
       const attributes = dynamicAttributes ?? null;
       const backup = attributes !== null && attributes !== ""
         ? report.backupAttributes()
@@ -730,6 +888,7 @@ export class Project implements ProjectLike {
     }
   }
 
+  /** Logs the id, formats and name of every matching report. */
   listReports(reportId: string, regExpMode: boolean,): void {
     let reportList: string[];
     if (regExpMode) {
@@ -749,6 +908,7 @@ export class Project implements ProjectLike {
     }
   }
 
+  /** Warns about the project-level conditions that would silence output. */
   checkReports(): void {
     if (this.reports.items === 0) {
       this.warning(
@@ -784,6 +944,11 @@ export class Project implements ProjectLike {
     }
   }
 
+  /**
+   * Adds or removes the `csv` format on every trace report.
+   *
+   * @param enable `true` to append `csv`, `false` to drop it.
+   */
   enableTraceReports(enable: boolean,): void {
     for (const report of this.reports.toArray()) {
       if ((report as Report).typeSpec !== ReportType.TraceReport) continue;
@@ -805,6 +970,16 @@ export class Project implements ProjectLike {
     }
   }
 
+  /**
+   * Ids of the reports whose full id matches `reportId` as a regular
+   * expression.
+   *
+   * Used by the `report` directive, which accepts a regex instead of a single
+   * literal id. An invalid pattern matches nothing.
+   *
+   * @param reportId Regular expression to test against every report full id.
+   * @returns Full ids of the matching reports, in registration order.
+   */
   matchingReports(reportId: string,): string[] {
     const list: string[] = [];
     let regex: RegExp;
@@ -823,9 +998,10 @@ export class Project implements ProjectLike {
     return list;
   }
 
+  /** Biggest scheduling granularity the local time zone allows, in seconds. */
   static maxScheduleGranularity(): number {
-    // Ruby: Time.gm(2000, 1, 1).getlocal.min — os minutos do relógio local
-    // no fuso ativo (TjTime.setTimeZone atualiza o fuso global).
+    // Ruby: Time.gm(2000, 1, 1).getlocal.min — the minutes of the local clock in
+    // the active time zone (TjTime.setTimeZone updates the global zone).
     const offsetSec = getOffsetSeconds(
       Date.UTC(2000, 0, 1,) / 1000,
       TjTime.getTimeZone(),
@@ -837,6 +1013,18 @@ export class Project implements ProjectLike {
     throw new TjInternalError(`Unknown Time zone alignment ${min}`,);
   }
 
+  /**
+   * Schedules every active scenario, then runs the post-schedule checks.
+   *
+   * The pass is: index the property sets, propagate inherited attributes in
+   * mode 1 (`prepareScenario`), schedule in mode 2 so computed values are marked
+   * as such (`scheduleScenario`), and finally complete the data sets and check
+   * the result (`finishScenario`). Failed/warning tasks and resources are
+   * collected once the last scenario is done.
+   *
+   * @returns `true` when the schedule completed; failed tasks are reported
+   *   through the message handler rather than by a `false` return.
+   */
   schedule(): boolean {
     this.initScoreboards();
 
@@ -895,10 +1083,12 @@ export class Project implements ProjectLike {
   }
 
   // 9.8.3.2 — checkTimeSheets
+  /** Runs the checks of every declared time sheet. */
   checkTimeSheets(): void {
     this.timeSheets.check();
   }
 
+  /** Allocates both scoreboards, one slot per granularity step. */
   private initScoreboards(): void {
     // Create scoreboard and mark all slots as unavailable
     const start = this.get("start",) as TjTime;
@@ -960,6 +1150,12 @@ export class Project implements ProjectLike {
     }
   }
 
+  /**
+   * Marks the slots where each resource used in the scenario is available.
+   *
+   * @param scIdx Scenario being prepared.
+   * @param usedResources Resources that appear in at least one allocation.
+   */
   private computeResourceAvailabilities(
     scIdx: number,
     usedResources: Resource[],
@@ -984,6 +1180,12 @@ export class Project implements ProjectLike {
     }
   }
 
+  /**
+   * Resets the scenario state before scheduling: dependencies, tracking
+   * values, limits and the working-time scoreboard.
+   *
+   * @param scIdx Scenario to prepare.
+   */
   private prepareScenario(scIdx: number,): void {
     const resources = new PropertyList(this.resources,);
     const tasks = new PropertyList(this.tasks,);
@@ -1075,6 +1277,12 @@ export class Project implements ProjectLike {
     this.timeSheets.check();
   }
 
+  /**
+   * Runs the scheduling loop for one scenario until no task can advance.
+   *
+   * @param scIdx Scenario to schedule.
+   * @returns `true` when a fatal scheduling condition stopped the pass.
+   */
   private scheduleScenario(scIdx: number,): boolean {
     const tasks = new PropertyList(this.tasks,);
     // Only care about leaf tasks that are not milestones and aren't
@@ -1128,12 +1336,12 @@ export class Project implements ProjectLike {
       // There should always be a task to be removed. If not, the scheduler
       // has found a set of tasks that deadlock each other.
       //
-      // RUBY-COMPAT-FIX: os três caminhos de `Project.rb:1225-1239` precisam
-      // terminar o laço. Sem o `else` final, um projeto em que a primeira
-      // falha de agendamento aconteceu **e** depois nenhuma tarefa ficou
-      // pronta (ex.: `Syntax/Correct/AccountReport.tjp`) girava para sempre —
-      // o `tj3` encerra com "Some tasks did not fit into the project time
-      // frame". Golden CLI (24.7).
+      // RUBY-COMPAT-FIX: the three paths of `Project.rb:1225-1239` must end the
+      // loop. Without the final `else`, a project in which the first scheduling
+      // failure happened **and** afterwards no task became ready (e.g.
+      // `Syntax/Correct/AccountReport.tjp`) spun forever — `tj3` terminates
+      // with "Some tasks did not fit into the project time frame". CLI golden
+      // (24.7).
       if (taskToRemove) {
         const taskIndex = tasks.itemIndex(taskToRemove,);
         tasks.delete(taskIndex,);
@@ -1179,6 +1387,11 @@ export class Project implements ProjectLike {
     return true;
   }
 
+  /**
+   * Runs the bottom-up finishing pass of one scenario.
+   *
+   * @param scIdx Scenario being finished.
+   */
   private finishScenario(scIdx: number,): void {
     for (const task of this.tasks.toArray()) {
       // Recursively traverse the top-level tasks to finish all tasks.

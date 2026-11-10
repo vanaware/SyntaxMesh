@@ -6,9 +6,9 @@ export * from "./allocation.ts";
 export * from "./booking.ts";
 
 /**
- * Tipos de especificação de duração para tarefas.
+ * Duration specification types for tasks.
  *
- * Correspondem aos tipos de duração do Ruby:
+ * They correspond to the Ruby duration types:
  * - :effortTask   → Effort
  * - :lengthTask   → Length
  * - :durationTask → Duration

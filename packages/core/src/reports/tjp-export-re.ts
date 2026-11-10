@@ -1,15 +1,17 @@
 /**
- * TjpExportRE (Fase 14.18.2) — exporta os dados do projeto em sintaxe TJP.
+ * TjpExportRE (phase 14.18.2) — exports the project data as TJP syntax.
  *
- * Porta fiel de `docs/taskjuggler/lib/taskjuggler/reports/TjpExportRE.rb`.
- * Gera um texto `.tjp`/`.tji` com `project`, declarações de `flags`,
- * `projectids`, `shifts`, listas de `resource`/`task` e `supplement`s com os
- * atributos suportados (booking/depends/flags/… e atributos de usuário).
+ * Faithful port of
+ * `docs/taskjuggler/lib/taskjuggler/reports/TjpExportRE.rb`. Emits a
+ * `.tjp`/`.tji` text with `project`, `flags` declarations, `projectids`,
+ * `shifts`, `resource`/`task` lists and `supplement`s carrying the supported
+ * attributes (booking/depends/flags/… plus the user-defined ones).
  *
- * ⚠️ Browser (ADR 027): `to_tjp()` retorna a string; nenhuma escrita a disco.
- * O caso `booking` depende do scoreboard do scheduler (Fase 7); sem bookings,
- * a trilha não é exercida. `alertLevels` não é serializado (o `Project` do port
- * guarda valores crus, sem `AttributeBase#modified?`/`to_tjp` acessível).
+ * ⚠️ Browser (ADR 027): `to_tjp()` returns the string; nothing is written to
+ * disk. The `booking` case depends on the scheduler scoreboard (phase 7); with
+ * no bookings the branch is not exercised. `alertLevels` is not serialized (the
+ * ported `Project` keeps raw values, without an accessible
+ * `AttributeBase#modified?`/`to_tjp`).
  *
  * @see docs/syntaxmesh/fases/fase-14-relatorios-tarefas.md (14.18.2)
  */
@@ -31,10 +33,18 @@ import { TimeInterval, } from "../time/time-interval.ts";
 import { Log, } from "../log.ts";
 import { ReportBase, } from "./report-base.ts";
 
-/** Par `[recurso, booking]` usado na ordenação estável de bookings por tarefa. */
+/** `[resource, booking]` pair used for the stable ordering of bookings per task. */
 type ResourceBooking = [Resource, Booking,];
 
+/**
+ * The TJP exporter.
+ *
+ * Walks the resource/task lists and the materials and rebuilds a TJP document
+ * from the parsed model, so `parse → export → parse` is lossless for the
+ * supported attributes.
+ */
 export class TjpExportRE extends ReportBase {
+  /** Task attributes the exporter knows how to serialize. */
   private readonly supportedTaskAttrs = new Set<string>([
     "booking",
     "complete",
@@ -49,6 +59,7 @@ export class TjpExportRE extends ReportBase {
     "projectid",
     "responsible",
   ],);
+  /** Resource attributes the exporter knows how to serialize. */
   private readonly supportedResourceAttrs = new Set<string>([
     "booking",
     "flags",
@@ -57,23 +68,32 @@ export class TjpExportRE extends ReportBase {
     "workinghours",
   ],);
 
+  /** Resources to export, already filtered and sorted. */
   private resourceList!: PropertyList<Resource>;
+  /** Tasks to export, already filtered and sorted. */
   private taskList!: PropertyList<Task>;
+  /** Bookings indexed by scenario, then task, then resource. */
   private bookings: Map<number, Map<Task, Map<Resource, Booking>>> = new Map();
+  /** Text being assembled by the current `to_tjp()` call. */
   private file = "";
 
+  /**
+   * Creates the TJP exporter of a report.
+   *
+   * @param report Report node the exporter renders.
+   */
   constructor(report: Report,) {
     super(report,);
   }
 
-  /** Não há formato intermediário para o exportador TJP. */
+  /** There is no intermediate format for the TJP exporter. */
   override generateIntermediateFormat(): void {
     super.generateIntermediateFormat();
   }
 
-  /** Retorna os dados do projeto em sintaxe TJP. */
+  /** Returns the project data as TJP syntax. */
   to_tjp(): string {
-    // Prepara a lista de recursos.
+    // Prepares the resource list.
     this.resourceList = new PropertyList<Resource>(this.project.resources,);
     this.resourceList.setSorting(
       this.a("sortResources",) as Array<[string, boolean, number,]>,
@@ -87,7 +107,7 @@ export class TjpExportRE extends ReportBase {
     );
     this.resourceList.sort();
 
-    // Prepara a lista de tarefas.
+    // Prepares the task list.
     this.taskList = new PropertyList<Task>(this.project.tasks,);
     this.taskList.setSorting(
       this.a("sortTasks",) as Array<[string, boolean, number,]>,
@@ -124,15 +144,19 @@ export class TjpExportRE extends ReportBase {
   }
 
   // ------------------------------------------------------------------
-  // Seções do projeto
+  // Project sections
   // ------------------------------------------------------------------
 
+  /**
+   * Emits the `project` block: ids, granularity, timezone, custom attribute
+   * declarations and the root scenario.
+   */
   private generateProjectProperty(): void {
     const p = this.project;
-    // Ruby lê `@project['projectid'/'name'/'version']` (são atributos no TJ);
-    // no port esses três vivem como campos do `Project` e só entram no mapa
-    // de atributos quando declarados por `projectid`/`project`. O fallback
-    // mantém o round-trip (parse → export → parse) possível — C5.7/ADR 039.
+    // Ruby reads `@project['projectid'/'name'/'version']` (these are attributes
+    // in TJ); in the port they live as fields of `Project` and only enter the
+    // attribute map when declared by `projectid`/`project`. The fallback keeps
+    // the round-trip (parse → export → parse) possible — C5.7/ADR 039.
     const pid = p.get("projectid",) ?? p.id;
     const pname = p.get("name",) ?? p.name;
     const pver = p.get("version",) ?? p.version;
@@ -161,6 +185,13 @@ export class TjpExportRE extends ReportBase {
     this.file += "}\n\n";
   }
 
+  /**
+   * Emits one `scenario <id> "<name>" { … }` block, nested for the scenario
+   * hierarchy and closed by its `active` flag.
+   *
+   * @param scenario Scenario to emit.
+   * @param indent Indentation level in spaces.
+   */
   private generateScenarioDefinition(
     scenario: Scenario,
     indent: number,
@@ -175,6 +206,14 @@ export class TjpExportRE extends ReportBase {
     this.file += `${" ".repeat(indent,)}}\n`;
   }
 
+  /**
+   * Emits the `extend <tag> { … }` block declaring the user-defined attributes
+   * of a property set.
+   *
+   * @param tag Property type the attributes belong to (`task`, `resource`).
+   * @param propertySet Property set whose definitions are inspected.
+   * @param attributes Attribute ids the report asked to export.
+   */
   private generateCustomAttributeDeclarations(
     tag: string,
     propertySet: {
@@ -207,10 +246,11 @@ export class TjpExportRE extends ReportBase {
     this.file += "  }\n";
   }
 
+  /** Emits the `flags` declaration with every flag used in the project. */
   private generateFlagDeclaration(): void {
     const flags: string[] = [];
-    // Materiais são uma extensão SyntaxMesh; suas flags também precisam ser
-    // declaradas (14C.1.13).
+    // Materials are a SyntaxMesh extension, so their flags must be declared as
+    // well (14C.1.13).
     const properties: PropertyTreeNode[] = [
       ...this.resourceList.toArray(),
       ...this.taskList.toArray(),
@@ -229,6 +269,7 @@ export class TjpExportRE extends ReportBase {
     if (flags.length > 0) this.file += `flags ${flags.join(", ",)}\n\n`;
   }
 
+  /** Emits the `projectids` declaration with every id used by a task. */
   private generateProjectIDs(): void {
     const projectIDs: string[] = [];
     for (const scenarioIdx of this.scenarioList()) {
@@ -247,15 +288,22 @@ export class TjpExportRE extends ReportBase {
   }
 
   // ------------------------------------------------------------------
-  // Shifts / recursos / tarefas (definições estruturais)
+  // Shifts / resources / tasks (structural definitions)
   // ------------------------------------------------------------------
 
+  /** Emits one `shift` block per root shift. */
   private generateShiftList(): void {
     for (const shift of this.project.shifts.toArray() as Shift[]) {
       if (!shift.parent) this.generateShift(shift, 0,);
     }
   }
 
+  /**
+   * Emits one `shift <id> "<name>" { … }` block, recursively for the sub-shifts.
+   *
+   * @param shift Shift to emit.
+   * @param indent Indentation level in spaces.
+   */
   private generateShift(shift: Shift, indent: number,): void {
     this.file += " ".repeat(indent,) + `shift ${shift.id} ` +
       `${quotedString(shift.name,)} {\n`;
@@ -268,6 +316,7 @@ export class TjpExportRE extends ReportBase {
     this.file += " ".repeat(indent,) + "}\n";
   }
 
+  /** Emits one `resource` block per root resource of the filtered list. */
   private generateResourceList(): void {
     for (const resource of this.resourceList.toArray()) {
       if (resource.parent === null) this.generateResource(resource, 0,);
@@ -275,6 +324,13 @@ export class TjpExportRE extends ReportBase {
     this.file += "\n";
   }
 
+  /**
+   * Emits one `resource <id> "<name>" { … }` block, recursively nesting the
+   * sub-resources that survived the filters.
+   *
+   * @param resource Resource to emit.
+   * @param indent Indentation level in spaces.
+   */
   private generateResource(resource: Resource, indent: number,): void {
     if (resource.sequenceNo % 100 === 0) Log.activity();
     this.file += " ".repeat(indent,) + `resource ${resource.id} ` +
@@ -291,6 +347,7 @@ export class TjpExportRE extends ReportBase {
     }
   }
 
+  /** Emits one `task` block per root task of the filtered list. */
   private generateTaskList(): void {
     for (const task of this.taskList.toArray()) {
       if (task.parent === null) this.generateTask(task, 0,);
@@ -298,17 +355,18 @@ export class TjpExportRE extends ReportBase {
   }
 
   // ------------------------------------------------------------------
-  // Materiais (extensão SyntaxMesh — ver 14C.1.13)
+  // Materials (SyntaxMesh extension — see 14C.1.13)
   // ------------------------------------------------------------------
 
   /**
-   * Emite as declarações `material <id> "<nome>" { ... }`, aninhando
-   * sub-materiais como em `resource`/`task`.
+   * Emits the `material <id> "<name>" { … }` declarations, nesting sub-materials
+   * as `resource`/`task` do.
    *
-   * Extensão SyntaxMesh: o `TjpExportRE` do TJ 3.8.4 não conhece materiais.
-   * `hidematerial` (14C.6.8) omite o material da exportação e das alocações
-   * das tarefas. `rollupmaterial` não altera o arquivo: a exportação é a
-   * própria fonte TJP e reescrever a árvore quebraria o round-trip.
+   * SyntaxMesh extension: TJ 3.8.4's `TjpExportRE` knows nothing about
+   * materials. `hidematerial` (14C.6.8) omits the material from the export and
+   * from the task allocations. `rollupmaterial` does not change the file: the
+   * export is the TJP source itself and rewriting the tree would break the
+   * round-trip.
    */
   private generateMaterialList(): void {
     const materials = (this.project.materials.toArray() as Material[])
@@ -319,13 +377,20 @@ export class TjpExportRE extends ReportBase {
     if (materials.length > 0) this.file += "\n";
   }
 
+  /**
+   * Emits one `material` block: unit, unit price, stock bookings, flags, note
+   * and the nested sub-materials.
+   *
+   * @param material Material to emit.
+   * @param indent Indentation level in spaces.
+   */
   private generateMaterial(material: Material, indent: number,): void {
     this.file += " ".repeat(indent,) + `material ${material.id} ` +
       `${quotedString(material.name,)} {\n`;
 
-    // `unit`/`cost` são atributos não-cenário; o parser usa a palavra-chave
-    // `unitprice` para o atributo `cost`. `totalquantity` foi removido na
-    // 14C.11.10 — a quantidade é derivada das alocações.
+    // `unit`/`cost` are non-scenario attributes; the parser uses the keyword
+    // `unitprice` for the `cost` attribute. `totalquantity` was removed in
+    // 14C.11.10 — the quantity is derived from the allocations.
     const unit = material.get("unit",);
     if (typeof unit === "string" && unit !== "" && unit !== "{}") {
       this.generateAttributeText(
@@ -337,9 +402,9 @@ export class TjpExportRE extends ReportBase {
     if (typeof unitPrice === "number" && unitPrice !== 0) {
       this.generateAttributeText(`unitprice ${unitPrice}`, indent + 2,);
     }
-    // Bookings de estoque (Adendo Extra §12.1 / 14C.13.8): saem na forma do
-    // corpo do material, `booking quantity <n> [unitprice <p>] on <data>` —
-    // sem referência de tarefa, com o sinal preservado (estorno negativo).
+    // Stock bookings (addendum §12.1 / 14C.13.8): emitted in the form of the
+    // material body, `booking quantity <n> [unitprice <p>] on <date>` — no task
+    // reference, keeping the sign (a negative value is a reversal).
     for (const scenarioIdx of this.scenarioList()) {
       this.generateStockBookings(material, indent + 2, scenarioIdx,);
     }
@@ -355,6 +420,13 @@ export class TjpExportRE extends ReportBase {
     this.file += " ".repeat(indent,) + "}\n";
   }
 
+  /**
+   * Emits one `task` block with its dependencies, material allocations and
+   * bookings, and with the scheduling attributes of a leaf task.
+   *
+   * @param task Task to emit.
+   * @param indent Indentation level in spaces.
+   */
   private generateTask(task: Task, indent: number,): void {
     if (task.sequenceNo % 100 === 0) Log.activity();
     this.file += " ".repeat(indent,) + `task ${task.subId} ` +
@@ -416,6 +488,15 @@ export class TjpExportRE extends ReportBase {
     this.file += " ".repeat(indent,) + "}\n";
   }
 
+  /**
+   * Emits the `depends`/`precedes` line of a task, skipping the dependencies
+   * that already come from the parent.
+   *
+   * @param scenarioIdx Scenario the dependencies are read from.
+   * @param task Task owning the dependencies.
+   * @param tag Either `depends` or `precedes`.
+   * @param indent Indentation level in spaces.
+   */
   private generateTaskDependency(
     scenarioIdx: number,
     task: Task,
@@ -449,11 +530,11 @@ export class TjpExportRE extends ReportBase {
   }
 
   /**
-   * Emite as alocações de material da tarefa no cenário dado.
+   * Emits the material allocations of the task in the given scenario.
    *
-   * A forma `material <id> <quantidade> [modificador]` é a canônica aceita
-   * pelo parser (`materialAllocation`); o modificador padrão `distributed` é
-   * omitido para preservar o round-trip mínimo.
+   * The `material <id> <quantity> [modifier]` form is the canonical one accepted
+   * by the parser (`materialAllocation`); the default `distributed` modifier is
+   * omitted to keep the round-trip minimal.
    */
   private generateMaterialAllocations(
     task: Task,
@@ -469,8 +550,8 @@ export class TjpExportRE extends ReportBase {
           allocation.modifier !== "distributed"
         ? ` ${allocation.modifier}`
         : "";
-      // Preço unitário próprio da alocação (14C.11.2/11.8): só sai quando
-      // declarado, para o round-trip não inventar `unitprice` no material.
+      // The allocation's own unit price (14C.11.2/11.8): only emitted when
+      // declared, so the round-trip does not invent a `unitprice` on the material.
       const unitPrice = allocation.unitPrice !== undefined
         ? ` unitprice ${allocation.unitPrice}`
         : "";
@@ -484,13 +565,14 @@ export class TjpExportRE extends ReportBase {
   }
 
   /**
-   * Cauda temporal de um booking (Onda D3, round-trip): legado `on <data>`;
-   * temporal `<modifier> <i1>, <i2>`. O intervalo de um dia vira data única;
-   * os demais voltam como `start - end` com o **fim cru tal como o parser o
-   * guardou** (`B 00:00`, fim exclusivo) — `String` de uma meia-noite imprime
-   * só a data, então `A - B` re-importa no mesmo `TimeInterval`. `onstart` de
-   * um só intervalo vira `on <data>`: como o valor de `onstart` só depende do
-   * primeiro dia coberto, é equivalente para a contabilização.
+   * Temporal tail of a booking (wave D3, round-trip): the legacy `on <date>` form
+   * or the temporal `<modifier> <i1>, <i2>`. A one-day interval becomes a single
+   * date; the others come back as `start - end` with the **raw end as the parser
+   * stored it** (`B 00:00`, exclusive end) — the `String` of a midnight prints
+   * only the date, so `A - B` re-imports into the same `TimeInterval`. The
+   * `onstart` of a single interval becomes `on <date>`: as the value of
+   * `onstart` only depends on the first covered day, that is equivalent for
+   * accounting.
    */
   private bookingTailText(booking: {
     isTemporal(): boolean;
@@ -511,10 +593,10 @@ export class TjpExportRE extends ReportBase {
   }
 
   /**
-   * Emite os bookings de material da tarefa (14C.11.4/11.8) na forma do
-   * corpo da tarefa: `booking material <id> quantity <q> [unitprice <p>]`
-   * seguido da cauda temporal (`on <data>` legado ou `<modifier> <intervalos>`,
-   * Onda D3). formato aceito pelo parser nos dois casos.
+   * Emits the material bookings of the task (14C.11.4/11.8) in the body form of
+   * the task: `booking material <id> quantity <q> [unitprice <p>]` followed by
+   * the temporal tail (legacy `on <date>` or `<modifier> <intervals>`, wave D3).
+   * Both forms are accepted by the parser.
    */
   private generateMaterialBookings(
     task: Task,
@@ -538,9 +620,9 @@ export class TjpExportRE extends ReportBase {
   }
 
   /**
-   * Emite os movimentos de estoque do próprio material (14C.13.8):
-   * `booking quantity <n> [unitprice <p>]` + cauda temporal (legado ou
-   * Onda D3), com a quantidade assinada (negativa = estorno).
+   * Emits the stock movements of the material itself (14C.13.8):
+   * `booking quantity <n> [unitprice <p>]` plus the temporal tail (legacy or
+   * wave D3), with the signed quantity (negative means a reversal).
    */
   private generateStockBookings(
     material: Material,
@@ -566,9 +648,10 @@ export class TjpExportRE extends ReportBase {
   }
 
   // ------------------------------------------------------------------
-  // Supplements (atributos)
+  // Supplements (attributes)
   // ------------------------------------------------------------------
 
+  /** Emits one `supplement resource` block per exported resource. */
   private generateResourceAttributes(): void {
     const resourceAttributes = (this.a("resourceAttributes",) as string[]) ??
       [];
@@ -593,8 +676,8 @@ export class TjpExportRE extends ReportBase {
         }
       },);
 
-      // 'booking' é um atributo de tarefa; no contexto de recurso tratamos à
-      // parte (Ruby: mesma observação).
+      // 'booking' is a task attribute; in the resource context it is handled
+      // separately (Ruby: same remark).
       if (
         resourceAttributes.includes("booking",) &&
         resourceAttributes[0] !== "*"
@@ -607,6 +690,7 @@ export class TjpExportRE extends ReportBase {
     }
   }
 
+  /** Emits one `supplement task` block per exported task. */
   private generateTaskAttributes(): void {
     const taskAttributes = (this.a("taskAttributes",) as string[]) ?? [];
     for (const task of this.taskList.toArray()) {
@@ -635,7 +719,7 @@ export class TjpExportRE extends ReportBase {
           for (const scenarioIdx of this.scenarioList()) {
             switch (id) {
               case "depends":
-                break; // já tratado em generateTask
+                break; // already handled in generateTask
               case "booking":
                 this.generateBookingsByTask(task, 2, scenarioIdx,);
                 break;
@@ -651,6 +735,16 @@ export class TjpExportRE extends ReportBase {
     }
   }
 
+  /**
+   * Emits one attribute of a property in TJP form, skipping empty values and
+   * values inherited from the parent scenario.
+   *
+   * @param property Property the attribute belongs to.
+   * @param attrId Attribute id to emit.
+   * @param indent Indentation level in spaces.
+   * @param scenarioIdx Scenario the value is read from, or `null` for a
+   *   non-scenario attribute.
+   */
   private generateAttribute(
     property: PropertyTreeNode,
     attrId: string,
@@ -674,6 +768,15 @@ export class TjpExportRE extends ReportBase {
     );
   }
 
+  /**
+   * Appends an indented line, prefixing the scenario tag when the attribute
+   * belongs to a non-default scenario.
+   *
+   * @param text Line to append (may span several lines; they are re-indented).
+   * @param indent Indentation level in spaces.
+   * @param scenarioIdx Scenario the line belongs to, or `null` for a
+   *   scenario-independent line.
+   */
   private generateAttributeText(
     text: string,
     indent: number,
@@ -693,7 +796,7 @@ export class TjpExportRE extends ReportBase {
   // Bookings
   // ------------------------------------------------------------------
 
-  /** Coleta os bookings por cenário, tarefa e recurso. */
+  /** Collects the bookings by scenario, task and resource. */
   private collectBookings(): void {
     this.bookings = new Map();
     const taskAttributes = (this.a("taskAttributes",) as string[]) ?? [];
@@ -730,6 +833,13 @@ export class TjpExportRE extends ReportBase {
     }
   }
 
+  /**
+   * Emits the `booking` lines of a task, ordered by resource full id.
+   *
+   * @param task Task whose bookings are emitted.
+   * @param indent Indentation level in spaces.
+   * @param scenarioIdx Scenario the bookings are read from.
+   */
   private generateBookingsByTask(
     task: Task,
     indent: number,
@@ -754,6 +864,13 @@ export class TjpExportRE extends ReportBase {
     }
   }
 
+  /**
+   * Emits the `booking` lines of a resource in the report window.
+   *
+   * @param resource Resource whose bookings are emitted.
+   * @param indent Indentation level in spaces.
+   * @param scenarioIdx Scenario the bookings are read from.
+   */
   private generateBookingsByResource(
     resource: Resource,
     indent: number,
@@ -774,12 +891,12 @@ export class TjpExportRE extends ReportBase {
     }
   }
 
-  /**cenários reportados. */
+  /** Scenarios reported by this export. */
   private scenarioList(): number[] {
     return (this.a("scenarios",) as number[]) ?? [];
   }
 
-  /** Retorna true se o valor de `attrId` pode ser herdado do cenário pai. */
+  /** Whether the value of `attrId` can be inherited from the parent scenario. */
   private inheritable(
     property: PropertyTreeNode,
     attrId: string,
@@ -799,7 +916,7 @@ export class TjpExportRE extends ReportBase {
   }
 }
 
-/** Embrulha uma string para TJP: aspas ou heredoc `-8<-`. */
+/** Wraps a string for TJP: quoted, or as a `-8<-` heredoc when it has newlines. */
 function quotedString(str: string,): string {
   if (str.includes("\n",)) {
     return `-8<-\n${str}\n->8-`;
@@ -809,8 +926,8 @@ function quotedString(str: string,): string {
 }
 
 /**
- * Indenta blocos de múltiplas linhas: todas menos a primeira linha recebem o
- * recuo adicional após a primeira palavra. (Fiél a `TjpExportRE#indentBlock`.)
+ * Indents multi-line blocks: every line after the first receives the extra
+ * indentation after the first word. (Faithful to `TjpExportRE#indentBlock`.)
  */
 function indentBlock(text: string, indent: number,): string {
   let out = "";

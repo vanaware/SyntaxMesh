@@ -29,13 +29,13 @@ import { RTFHandlers, } from "../richtext/handlers/rtf-handlers.ts";
 import { NotYetImplementedError, } from "./errors.ts";
 
 /**
- * Índice canônico de um tipo de licença (`Leave::Types[type]` do Ruby).
+ * Canonical index of a leave type (`Leave::Types[type]` in Ruby).
  *
- * RUBY-COMPAT-FIX (16.17): antes do port de `Leave::Types` esta camada usava
- * uma tabela legada (`unavailable:0, on_leave:1, sick_leave:2, vacation:3,
- * unemployed:4`) que não casa com o bit-encoding do scoreboard — ele grava
- * `leave.typeIdx() << 2` com os índices 1–7. Com a tabela antiga toda consulta
- * de licença por nome devolvia 0 slots.
+ * RUBY-COMPAT-FIX (16.17): before the port of `Leave::Types`, this layer used a
+ * legacy table (`unavailable:0, on_leave:1, sick_leave:2, vacation:3,
+ * unemployed:4`) that does not match the scoreboard's bit encoding — it stores
+ * `leave.typeIdx() << 2` with indices 1–7. With the old table every
+ * leave-by-name query returned 0 slots.
  */
 function leaveTypeIdx(type: number | string,): number {
   if (typeof type === "number") return type;
@@ -46,10 +46,10 @@ function leaveTypeIdx(type: number | string,): number {
 }
 
 /**
- * Índice de slot de uma borda de `Leave.interval`.
+ * Slot index of one edge of `Leave.interval`.
  *
- * O parser só cria `TimeInterval`, mas `LeaveInterval` também aceita
- * `ScoreboardInterval` (borda já em índice de slot) — aceitamos as duas.
+ * The parser only creates `TimeInterval`, but `LeaveInterval` also accepts
+ * `ScoreboardInterval` (the edge is already a slot index) — both are accepted.
  */
 function leaveBoundIdx(
   scoreboard: Scoreboard<unknown>,
@@ -63,8 +63,9 @@ function leaveBoundIdx(
 }
 
 /**
- * Lista exata de atributos pré-carregados pelo ResourceScenario do Ruby
- * (ResourceScenario.rb, linhas 42–56).
+ * Attributes pre-loaded by the Ruby ResourceScenario (ResourceScenario.rb, lines
+ * 42–56). Keeping the list in the same order lets `preloadAttributes` create
+ * the attribute objects exactly once, up front, instead of on first use.
  */
 export const RESOURCE_SCENARIO_ATTRS: string[] = [
   "alloctdeffort",
@@ -85,36 +86,70 @@ export const RESOURCE_SCENARIO_ATTRS: string[] = [
 ];
 
 /**
- * Subconjunto estrutural de `Query` consumido pelos `query_*` de
- * ResourceScenario (Onda B3). Mesma filosofia de `account-scenario.ts`:
- * o modelo não importa a camada de queries (evita ciclo); o objeto real
- * do `Query.process` satisfaz esta forma.
+ * Structural subset of `Query` consumed by the ResourceScenario `query_*`
+ * handlers (wave B3).
+ *
+ * Same approach as `account-scenario.ts`: the model layer does not import the
+ * query layer (that would create a cycle), so the handlers are typed against
+ * this shape. The real `Query` object built by `Query.process` satisfies it, so
+ * the two can be passed to each other without a cast at the call site.
  */
 export interface ResourceScenarioQuery {
+  /** Interval start. */
   readonly start: TjTime | null;
+  /** Interval end. */
   readonly end: TjTime | null;
+  /** Interval start as a scoreboard slot index. */
   readonly startIdx: number | null;
+  /** Interval end as a scoreboard slot index. */
   readonly endIdx: number | null;
+  /** Scenario the query is evaluated in. */
   scenarioIdx?: number | undefined;
+  /** Enumerated item the query is currently applied to. */
   property?: PropertyTreeNode | null;
+  /** Item that scopes the aggregation (a container task, usually). */
   scopeProperty?: PropertyTreeNode | null;
+  /** Account whose cost side is reported by `query_cost`. */
   costAccount?: string | null;
+  /** Account whose revenue side is reported by `query_revenue`. */
   revenueAccount?: string | null;
+  /** Format applied to the string column of duration values. */
   timeFormat?: string | null;
+  /** Rich text template used when a list column is rendered. */
   listItem?: string | null;
+  /** Formatter for the string column of plain numbers. */
   readonly numberFormat: { format(value: number,): string } | null;
+  /** Formatter for the string column of money values. */
   readonly currencyFormat: { format(value: number,): string } | null;
+  /** Value used when the column is sorted. */
   sortable: unknown;
+  /** Numeric value of the column, kept for arithmetic aggregations. */
   numerical: unknown;
+  /** Text value of the column. */
   string: string | null;
+  /** Rich text value of the column. */
   rti: unknown;
+  /** Formats a duration for the string column. */
   scaleDuration(value: number,): string;
+  /** Formats a load (effort) for the string column. */
   scaleLoad(value: number,): string;
+  /** Stores a list column as rich text. */
   assignList(items: string[],): void;
+  /** Copy of the query, used when delegating to a child property. */
   dup(): ResourceScenarioQuery;
 }
 
+/**
+ * Scheduling, availability and accounting state of one resource in one
+ * scenario.
+ *
+ * This is the resource counterpart of `TaskScenario`: it owns the allocation
+ * scoreboard (one slot per scheduling slot, holding the task that occupies it),
+ * the booked effort and the first/last booked slot bookkeeping used to clamp
+ * intervals, and it answers the resource `query_*` columns.
+ */
 export class ResourceScenario extends ScenarioData {
+  /** Slot-to-task allocation map for this resource, when scheduling ran. */
   public scoreboard: Scoreboard<number | null | Task> | null = null;
   private effort: number = 0;
   private firstBookedSlot: number | null = null;
@@ -124,6 +159,14 @@ export class ResourceScenario extends ScenarioData {
   private minslot: number | null = null;
   private maxslot: number | null = null;
 
+  /**
+   * Creates the scenario state and pre-loads the attributes Ruby also
+   * instantiates in `ResourceScenario#initialize`.
+   *
+   * @param property Resource this scenario belongs to.
+   * @param scIdx Scenario index.
+   * @param attributes Scenario attribute map of the resource.
+   */
   constructor(
     property: PropertyLike,
     scIdx: number,
@@ -133,19 +176,21 @@ export class ResourceScenario extends ScenarioData {
     this.preloadAttributes(RESOURCE_SCENARIO_ATTRS,);
   }
 
+  /** Project owning the resource. */
   project(): ProjectLike {
     return (this.getProperty() as Resource).project as ProjectLike;
   }
 
   /**
-   * Tarefas do recurso (Ruby `@duties`).
+   * Tasks of the resource (Ruby `@duties`).
    *
-   * RUBY-COMPAT-FIX: no Ruby `@duties` **é** o valor do atributo `duties`
-   * (instanciado em `ResourceScenario#initialize`), não uma lista paralela.
-   * Aqui o acesso passa pelo mesmo armazenamento do atributo; do contrário o
-   * `finishScheduling` — que grava os ancestrais das tarefas no atributo —
-   * escreveria numa lista que `getEffectiveWork`/`getAllocatedSlots` não leem,
-   * e toda alocação com escopo de tarefa-pai (container) sairia como 0.
+   * RUBY-COMPAT-FIX: in Ruby `@duties` **is** the value of the `duties`
+   * attribute (instantiated in `ResourceScenario#initialize`), not a parallel
+   * list. Here the access goes through the same storage as the attribute;
+   * otherwise `finishScheduling` — which writes the ancestor tasks into the
+   * attribute — would write to a list that `getEffectiveWork`/
+   * `getAllocatedSlots` never read, and every allocation scoped to a parent
+   * (container) task would come out as 0.
    *
    * @see docs/taskjuggler/lib/taskjuggler/ResourceScenario.rb:finishScheduling
    */
@@ -161,6 +206,7 @@ export class ResourceScenario extends ScenarioData {
     return created;
   }
 
+  /** Typed access to the owning resource. */
   override getProperty(): Resource {
     return super.getProperty() as Resource;
   }
@@ -561,9 +607,11 @@ export class ResourceScenario extends ScenarioData {
   }
 
   /**
-   * @effort only tracks the already allocated effort for leaf resources. It's
-   * too expensive to propagate this to the group resources on every booking.
-   * If a value for a group effort is needed, it's computed here.
+   * Booked effort of the resource, aggregating downwards for containers.
+   *
+   * `@effort` only tracks the already allocated effort for leaf resources; it
+   * is too expensive to propagate to group resources on every booking, so the
+   * value for a group is computed here by summing its children.
    *
    * @see docs/taskjuggler/lib/taskjuggler/ResourceScenario.rb:bookedEffort
    */
@@ -709,10 +757,11 @@ export class ResourceScenario extends ScenarioData {
   }
 
   /**
-   * Intervalos do scoreboard com duração mínima `minDuration` que contêm
-   * apenas slots fora de serviço/leave (máscara `0x3E`).
+   * Scoreboard intervals of at least `minDuration` that contain only
+   * off-duty/leave slots (mask `0x3E`).
    *
-   * Só recursos folha têm tempo fora relevante: grupos caem nas horas globais.
+   * Only leaf resources have relevant time off: groups fall back to the global
+   * working hours.
    *
    * @see docs/taskjuggler/lib/taskjuggler/ResourceScenario.rb#collectTimeOffIntervals
    */
@@ -732,17 +781,18 @@ export class ResourceScenario extends ScenarioData {
   }
 
   /**
-   * Intervalos do scoreboard tomados por licenças do `type` informado, com
-   * duração mínima de uma hora (Ruby `collectLeaveIntervals`, l.748-758).
+   * Scoreboard intervals taken by leaves of the given `type`, with a minimum
+   * duration of one hour (Ruby `collectLeaveIntervals`, l.748-758).
    *
-   * O casamento é por igualdade do tipo (`(val & 0x3E) === typeIdx << 2`),
-   * não por “qualquer licença” como em {@link collectTimeOffIntervals}.
+   * The match is by type equality (`(val & 0x3E) === typeIdx << 2`), not by
+   * "any leave" as in {@link collectTimeOffIntervals}.
    */
   collectLeaveIntervals(
     iv: TimeInterval,
     type: number | string,
   ): IntervalList<TimeInterval> {
-    // Licenças só são úteis para recursos folha: grupos caem nas horas globais.
+    // Leaves are only useful for leaf resources: groups fall back to the
+    // global working hours.
     if (!(this.getProperty() as PropertyTreeNode).leaf()) {
       return new IntervalList<TimeInterval>();
     }
@@ -797,8 +847,8 @@ export class ResourceScenario extends ScenarioData {
   }
 
   /**
-   * Alocado? Verdadeiro se `task` tem slots de agenda dentro de `iv` neste
-   * recurso (ou nos seus filhos).
+   * Allocated? True when `task` has scoreboard slots inside `iv` in this
+   * resource (or in its children).
    *
    * @see docs/taskjuggler/lib/taskjuggler/ResourceScenario.rb:allocated?
    */
@@ -813,8 +863,8 @@ export class ResourceScenario extends ScenarioData {
   }
 
   /**
-   * Varre o scoreboard: em contêineres, qualquer filho alocado; em folhas,
-   * algum slot igual a `task`.
+   * Scans the scoreboard: for containers, any allocated child; for leaves, any
+   * slot equal to `task`.
    *
    * @see docs/taskjuggler/lib/taskjuggler/ResourceScenario.rb:allocatedSub
    */
@@ -874,11 +924,11 @@ export class ResourceScenario extends ScenarioData {
     }
 
     const appendInterval = (booking: Booking, from: number, to: number,) => {
-      // Ruby (ResourceScenario.rb:705): os intervalos reconstruídos são
-      // `TimeInterval`s de datas — não `ScoreboardInterval` (que carrega
-      // índices). `Booking#to_tjp` e o scheduling esperam datas.
-      // `Scoreboard#idxToDate` devolve `Date`; `TimeInterval` só aceita
-      // `TjTime`, então a conversão é explícita (como em `Project#idxToDate`).
+      // Ruby (ResourceScenario.rb:705): the rebuilt intervals are date-based
+      // `TimeInterval`s — not `ScoreboardInterval` (which carries indices).
+      // `Booking#to_tjp` and the scheduler expect dates. `Scoreboard#idxToDate`
+      // returns `Date` while `TimeInterval` only accepts `TjTime`, so the
+      // conversion is explicit (as in `Project#idxToDate`).
       booking.intervals.push(
         new TimeInterval(
           TjTime.fromDate(sb.idxToDate(from,),),
@@ -1171,6 +1221,16 @@ export class ResourceScenario extends ScenarioData {
     return this.treeSumR(cacheTag, startIdx, endIdx, arg, block,);
   }
 
+  /**
+   * Recursive worker behind `treeSum`: walks down to the leaves and sums the
+   * block result, passing the cache tag through unchanged.
+   *
+   * @param cacheTag Tag used by the Ruby memoisation; carried for parity.
+   * @param startIdx First slot of the interval.
+   * @param endIdx Last slot of the interval.
+   * @param arg Argument forwarded to the block.
+   * @param block Callback evaluated at each leaf.
+   */
   private treeSumR<T,>(
     cacheTag: string,
     startIdx: number,
@@ -1295,16 +1355,16 @@ export class ResourceScenario extends ScenarioData {
       }
     }
 
-    // Bloco I: Integração com motor de atribuição (attribution engine)
-    // Calcula linhas de custo e emite CostEvents para auditoria
+    // Block I: integration with the attribution engine.
+    // Computes cost lines and emits `CostEvent`s for auditing.
     const resource = this.getProperty() as Resource;
     const scIdx = this.getScenarioIdx();
     const project = resource.project as ProjectLike;
 
-    // Determinar se há chargeset disponível para atribuição
+    // Whether there is a chargeset available for attribution.
     const hasChargeset = this.a("chargeset",) as ChargeSet[];
 
-    // 1. Linhas de custo de recursos (resource_effort)
+    // 1. Resource cost lines (resource_effort).
     if (!task && hasChargeset && hasChargeset.length > 0) {
       const resourceCost = this.cost(startIdx, endIdx,);
       if (resourceCost > 0) {
@@ -1312,21 +1372,22 @@ export class ResourceScenario extends ScenarioData {
           type: "resource_effort",
           amount: resourceCost,
           resource: resource,
-          // Regra 4 (`defaultaccount`, 14C.9): o projeto fornece a conta
-          // default quando não há chargeset da origem nem da tarefa.
+          // Rule 4 (`defaultaccount`, 14C.9): the project supplies the default
+          // account when neither the source nor the task provides a chargeset.
           project: project,
         };
         const attribution = resolveAccount(line,);
-        // Emitir CostEvent
+        // Emit the `CostEvent`.
         const costEvent = createCostEvent(
           line,
           attribution.account,
           attribution.rule,
           scIdx,
-          "planned", // modo planejado por default
+          "planned", // planned mode is the default
         );
         project.costEvents.push(costEvent,);
-        // Se a conta resolvida corresponde à conta solicitada, adicionar ao total
+        // When the resolved account matches the requested account, add it to
+        // the total.
         if (
           attribution.account &&
           (attribution.account === account ||
@@ -1370,13 +1431,13 @@ export class ResourceScenario extends ScenarioData {
   }
 
   // ==================================================================
-  // Onda B3 — query_* portáveis de ResourceScenario (Ruby l.315-463).
+  // Wave B3 — `query_*` portable from ResourceScenario (Ruby l.315-463).
   //
-  // Subconjunto central apoiado em bookings/scoreboard/finance já portados.
-  // Os `query_*` de leave/fte/dashboard ficam ancorados na Onda B4.
+  // Core subset supported by the already ported bookings/scoreboard/finance.
+  // The leave/fte/dashboard `query_*` stay anchored to wave B4.
   // ==================================================================
 
-  /** Projeto com helpers além de `ProjectLike` (para dateToIdx force). */
+  /** Project with helpers beyond `ProjectLike` (to force `dateToIdx`). */
   private projExt(): {
     dateToIdx(date: TjTime, forceIntoProject?: boolean,): number;
     get(name: string,): unknown;
@@ -1389,13 +1450,14 @@ export class ResourceScenario extends ScenarioData {
     };
   }
 
-  /** Handlers RTF para o ramo `listItem` de `query_duties`. */
+  /** Rich text handlers used by the `listItem` branch of `query_duties`. */
   private rtfHandlers(): ReturnType<typeof RTFHandlers.create> {
     return RTFHandlers.create(
       this.project() as unknown as Parameters<typeof RTFHandlers.create>[0],
     );
   }
 
+  /** `cost` column: cost booked on `query.costAccount` in the interval. */
   query_cost(query: ResourceScenarioQuery,): void {
     const account = query.costAccount
       ? (this.projExt().accounts.get(query.costAccount,) as Account | null)
@@ -1417,6 +1479,7 @@ export class ResourceScenario extends ScenarioData {
     }
   }
 
+  /** `duties` column: tasks the resource is allocated to in the interval. */
   query_duties(query: ResourceScenarioQuery,): void {
     const list: string[] = [];
     const iv = new TimeInterval(query.start as TjTime, query.end as TjTime,);
@@ -1444,6 +1507,7 @@ export class ResourceScenario extends ScenarioData {
     query.assignList(list,);
   }
 
+  /** `effort` column: effective work in the interval. */
   query_effort(query: ResourceScenarioQuery,): void {
     const effort = this.getEffectiveWork(
       query.startIdx ?? 0,
@@ -1454,6 +1518,7 @@ export class ResourceScenario extends ScenarioData {
     query.string = query.scaleLoad(effort,);
   }
 
+  /** `effortdone` column: effective work between project start and now. */
   query_effortdone(query: ResourceScenarioQuery,): void {
     const p = this.projExt();
     const effort = this.getEffectiveWork(
@@ -1465,6 +1530,7 @@ export class ResourceScenario extends ScenarioData {
     query.string = query.scaleLoad(effort,);
   }
 
+  /** `effortleft` column: effective work between now and project end. */
   query_effortleft(query: ResourceScenarioQuery,): void {
     const p = this.projExt();
     const effort = this.getEffectiveWork(
@@ -1476,6 +1542,7 @@ export class ResourceScenario extends ScenarioData {
     query.string = query.scaleLoad(effort,);
   }
 
+  /** `freetime` column: unallocated time in the interval. */
   query_freetime(query: ResourceScenarioQuery,): void {
     const time =
       this.getEffectiveFreeTime(query.startIdx ?? 0, query.endIdx ?? 0,) /
@@ -1484,6 +1551,7 @@ export class ResourceScenario extends ScenarioData {
     query.string = query.scaleDuration(time,);
   }
 
+  /** `freework` column: unallocated working time in the interval. */
   query_freework(query: ResourceScenarioQuery,): void {
     const work = this.getEffectiveFreeWork(
       query.startIdx ?? 0,
@@ -1493,6 +1561,10 @@ export class ResourceScenario extends ScenarioData {
     query.string = query.scaleLoad(work,);
   }
 
+  /**
+   * `headcount` column: for a container, the sum of the children's headcount;
+   * for a leaf, its efficiency when employed at the interval start.
+   */
   query_headcount(query: ResourceScenarioQuery,): void {
     let headcount = 0;
     const property = this.getProperty();
@@ -1516,6 +1588,7 @@ export class ResourceScenario extends ScenarioData {
       : String(headcount,);
   }
 
+  /** `rate` column: the resource's daily rate. */
   query_rate(query: ResourceScenarioQuery,): void {
     const r = this.rate();
     query.sortable = query.numerical = r;
@@ -1524,6 +1597,7 @@ export class ResourceScenario extends ScenarioData {
       : String(r,);
   }
 
+  /** `revenue` column: revenue booked on `query.revenueAccount`. */
   query_revenue(query: ResourceScenarioQuery,): void {
     const account = query.revenueAccount
       ? (this.projExt().accounts.get(query.revenueAccount,) as Account | null)
@@ -1545,14 +1619,14 @@ export class ResourceScenario extends ScenarioData {
   }
 
   // ==================================================================
-  // Onda B4 — query_* ancorados.
+  // Wave B4 — anchored `query_*`.
   //
-  // 16.17: as consultas de licença (leave/férias) deixaram de ser stubs —
-  // dependiam de `Leave`/`LeaveAllowanceList` (16.4) e do encoding `typeIdx`
-  // do scoreboard. `query_fte` continua ancorado na Fase 18.
+  // 16.17: the leave queries (leave/vacation) are no longer stubs — they
+  // depended on `Leave`/`LeaveAllowanceList` (16.4) and on the scoreboard
+  // `typeIdx` encoding. `query_fte` remains anchored to phase 18.
   // ==================================================================
 
-  /** Dias de férias no período da query (Ruby `query_annualleave`). */
+  /** Annual leave days in the query period (Ruby `query_annualleave`). */
   query_annualleave(query: ResourceScenarioQuery,): void {
     const val = this.getLeave(
       query.startIdx ?? 0,
@@ -1564,7 +1638,7 @@ export class ResourceScenario extends ScenarioData {
   }
 
   /**
-   * Lista de dias de férias: `data (fração do dia)` por intervalo
+   * List of leave days: `date (fraction of the day)` per interval
    * (Ruby `query_annualleavelist`, l.286-298).
    */
   query_annualleavelist(query: ResourceScenarioQuery,): void {
@@ -1580,8 +1654,8 @@ export class ResourceScenario extends ScenarioData {
     );
     const list: string[] = [];
     for (const iv of ivList) {
-      // O intervalo é de no máximo um dia útil: listamos a data do dia e
-      // quanto dele foi tomado (1.0 = dia inteiro, 0.5 = meio dia).
+      // The interval spans at most one working day: we list the date of the
+      // day and how much of it was taken (1.0 = whole day, 0.5 = half day).
       const day = iv.start.to_s(timeFormat,);
       const days = iv.duration() / (60 * 60 * dailyWorkingHours);
       list.push(`${day} (${days.toFixed(1,)})`,);
@@ -1590,8 +1664,8 @@ export class ResourceScenario extends ScenarioData {
   }
 
   /**
-   * Saldo de férias: provisões menos dias tomados (Ruby
-   * `query_annualleavebalance`, l.300-309). Só faz sentido para folha.
+   * Leave balance: allowances minus days taken (Ruby
+   * `query_annualleavebalance`, l.300-309). Only meaningful for leaves.
    */
   query_annualleavebalance(query: ResourceScenarioQuery,): void {
     if (!(this.getProperty() as PropertyTreeNode).leaf()) return;
@@ -1613,14 +1687,14 @@ export class ResourceScenario extends ScenarioData {
     query.string = query.scaleLoad(val,);
   }
 
-  /** Dias de licença médica no período (Ruby `query_sickleave`). */
+  /** Sick leave days in the period (Ruby `query_sickleave`). */
   query_sickleave(query: ResourceScenarioQuery,): void {
     const val = this.getLeave(query.startIdx ?? 0, query.endIdx ?? 0, "sick",);
     query.sortable = query.numerical = val;
     query.string = query.scaleLoad(val,);
   }
 
-  /** Dias de licença especial no período (Ruby `query_specialleave`). */
+  /** Special leave days in the period (Ruby `query_specialleave`). */
   query_specialleave(query: ResourceScenarioQuery,): void {
     const val = this.getLeave(
       query.startIdx ?? 0,
@@ -1632,8 +1706,8 @@ export class ResourceScenario extends ScenarioData {
   }
 
   /**
-   * Dias úteis bloqueados por licenças no período (Ruby
-   * `query_timeoffdays`) — soma de todos os tipos, ponderada pela eficiência.
+   * Working days blocked by leaves in the period (Ruby `query_timeoffdays`) —
+   * the sum of every type, weighted by efficiency.
    */
   query_timeoffdays(query: ResourceScenarioQuery,): void {
     const time = this.getTimeOffDays(query.startIdx ?? 0, query.endIdx ?? 0,);
@@ -1641,7 +1715,7 @@ export class ResourceScenario extends ScenarioData {
     query.string = query.scaleLoad(time,);
   }
 
-  /** Dias de licença não remunerada no período (Ruby `query_unpaidleave`). */
+  /** Unpaid leave days in the period (Ruby `query_unpaidleave`). */
   query_unpaidleave(query: ResourceScenarioQuery,): void {
     const val = this.getLeave(
       query.startIdx ?? 0,
@@ -1652,7 +1726,15 @@ export class ResourceScenario extends ScenarioData {
     query.string = query.scaleLoad(val,);
   }
 
-  // Ancorado: Fase 18 — FTE exige horas de contrato/calendário não portadas.
+  /**
+   * `fte` column: full-time equivalent of the resource.
+   *
+   * Not implemented yet — FTE needs contract and calendar hours that the port
+   * does not carry.
+   *
+   * @throws {NotYetImplementedError} Always.
+   */
+  // Ancorado: Fase 18 — FTE needs contract/calendar hours that are not ported.
   query_fte(_query: ResourceScenarioQuery,): void {
     throw new NotYetImplementedError("18", "ResourceScenario#query_fte",);
   }

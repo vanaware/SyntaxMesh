@@ -1,30 +1,30 @@
 /**
- * template-arguments — leitura e tipagem dos argumentos nomeados de uma
- * chamada de template (Fase 23, subfase 23.4; ADR 033).
+ * template-arguments — reading and typing of the named arguments of a template
+ * call (phase 23, subphase 23.4; ADR 033).
  *
- * Gramática aceita (§4.2 do plano):
+ * Accepted grammar (plan §4.2):
  *
  * ```
  * args  := ( ws ident ws "=" ws value )*
  * value := string | number | boolean | "!" ident | list | object | call | expr
  * list  := "[" ( value ( "," value )* )? "]"
  * object:= "{" ( ident ":" value ( "," … )* )? "}"
- * call  := ident "(" … ")"        → avaliador opcional da Fase 11
- * expr  := aritmética com números e nomes de argumentos já lidos
+ * call  := ident "(" … ")"        → optional evaluator of phase 11
+ * expr  := arithmetic with numbers and already-read argument names
  * ```
  *
- * **Sem `eval`**: expressões aritméticas são resolvidas por um parser
- * recursivo pequeno e explícito; expressões lógicas só são avaliadas quando o
- * chamador injeta um avaliador (motor da Fase 11). Nada aqui conhece Vento.
+ * **No `eval`**: arithmetic expressions are resolved by a small, explicit
+ * recursive parser; logical expressions are only evaluated when the caller
+ * injects an evaluator (the phase 11 engine). Nothing here knows about Vento.
  *
- * O corte entre um argumento e o próximo é feito por *profundidade*: um
- * `nome=` só inicia novo par quando está fora de strings, `[]`, `{}` e `()`.
+ * The split between one argument and the next is done by *depth*: a `name=`
+ * only starts a new pair when it is outside strings, `[]`, `{}` and `()`.
  *
  * @see docs/syntaxmesh/fases/fase-23-template.md §4.2, §4.5, §5
  * @see docs/syntaxmesh/fases/fase-23-template-tarefas.md §23.4
  */
 
-/** Valor aceito por um parâmetro de template. */
+/** Value accepted by a template parameter. */
 export type TemplateArgumentValue =
   | string
   | number
@@ -32,32 +32,35 @@ export type TemplateArgumentValue =
   | TemplateArgumentValue[]
   | { [key: string]: TemplateArgumentValue };
 
-/** Resultado da avaliação de uma expressão lógica externa (Fase 11). */
+/** Result of evaluating an external logical expression (phase 11). */
 export interface ExpressionEvaluation {
+  /** Whether the expression could be evaluated. */
   ok: boolean;
+  /** Value produced by the evaluator, when `ok` is true. */
   value?: unknown;
 }
 
-/** Dependências externas do parser de argumentos. */
+/** External dependencies of the argument parser. */
 export interface ArgumentParseContext {
   /**
-   * Avaliador opcional de expressão lógica (`isMilestone(!m1)`). Sem ele, a
-   * chamada permanece texto.
+   * Optional logical-expression evaluator (`isMilestone(!m1)`). Without it, the
+   * call stays as text.
    */
   evaluateExpression?: (text: string,) => ExpressionEvaluation;
 }
 
-/** Motivo de recusa ao ler a lista de argumentos. */
+/** Reason for refusing to read the argument list. */
 export type ArgumentParseFailure =
-  /** Texto não é `nome=valor` (ex.: dois-pontos, vírgula solta). */
+  /** The text is not `name=value` (e.g. a colon, a stray comma). */
   | { reason: "invalid_pair"; at: string }
-  /** `nome=` sem valor. */
+  /** `name=` without a value. */
   | { reason: "missing_value"; key: string }
-  /** String entre aspas não fechou. */
+  /** A quoted string was not closed. */
   | { reason: "unterminated_string"; key: string }
-  /** `[`/`{`/`(` não fecharam. */
+  /** `[`/`{`/`(` were not closed. */
   | { reason: "unbalanced"; key: string };
 
+/** Outcome of reading the whole argument list. */
 export type ArgumentsParseResult =
   | { ok: true; args: Record<string, TemplateArgumentValue> }
   | (ArgumentParseFailure & { ok: false });
@@ -67,8 +70,8 @@ const NUMBER = /^[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?$/;
 const CALL = /^([A-Za-z_]\w*)\s*\(([^]*)\)$/;
 
 /**
- * Divide `raw` em pares `nome=valor` respeitando strings e delimitadores
- * balanceados. Devolve a lista na ordem do texto.
+ * Splits `raw` into `name=value` pairs, respecting strings and balanced
+ * delimiters. Returns the list in text order.
  */
 function splitPairs(
   raw: string,
@@ -116,7 +119,7 @@ function splitPairs(
       else if (ch === "]" || ch === "}" || ch === ")") depth--;
       if (depth < 0) return { reason: "unbalanced", key, };
       if (depth === 0) {
-        // Fim do valor: `ident=` no nível 0 inicia o próximo par.
+        // End of the value: an `ident=` at level 0 starts the next pair.
         if (/\s/.test(ch,)) {
           const rest = raw.slice(i,);
           const next = /^\s+([A-Za-z_]\w*)\s*=/.exec(rest,);
@@ -139,7 +142,7 @@ function splitPairs(
   return pairs;
 }
 
-/** Divide uma lista/objeto por vírgulas de nível 0. */
+/** Splits a list/object on level-0 commas. */
 function splitTopLevel(body: string,): string[] {
   const parts: string[] = [];
   let depth = 0;
@@ -171,7 +174,7 @@ function splitTopLevel(body: string,): string[] {
   return parts.map((p,) => p.trim()).filter((p,) => p !== "");
 }
 
-/** Remove as aspas de uma string e desescapa `\"` / `\\`. */
+/** Removes the quotes of a string and unescapes `\"` / `\\`. */
 function unquote(text: string,): string {
   const quote = text[0]!;
   let out = "";
@@ -192,12 +195,17 @@ function unquote(text: string,): string {
 }
 
 /**
- * Avalia uma expressão aritmética simples (`1 + 2`, `esforco * 2`, `(1+2)/3`).
+ * Evaluates a simple arithmetic expression (`1 + 2`, `effort * 2`, `(1+2)/3`).
  *
- * Nomes são resolvidos em _scope_ (valores numéricos já lidos). Devolve `null`
- * quando o texto não é aritmética válida — o chamador mantém o texto cru.
- * Gramática: `expr := term (("+"|"-") term)*`, `term := unary (("*"|"/"|"%") unary)*`,
- * `unary := ("-"|"+")? primary`, `primary := number | ident | "(" expr ")"`.
+ * Names are resolved in _scope_ (numeric values already read). Returns `null`
+ * when the text is not valid arithmetic — the caller keeps the raw text.
+ * Grammar: `expr := term (("+"|"-") term)*`,
+ * `term := unary (("*"|"/"|"%") unary)*`, `unary := ("-"|"+")? primary`,
+ * `primary := number | ident | "(" expr ")"`.
+ *
+ * @param text Expression to evaluate.
+ * @param scope Numeric values of the names already read.
+ * @returns The result, or `null` when the text is not arithmetic.
  */
 export function evaluateArithmetic(
   text: string,
@@ -295,8 +303,14 @@ export function evaluateArithmetic(
 }
 
 /**
- * Classifica o texto cru de um valor (§4.2). `scope` tem os argumentos já
- * lidos (para aritmética) e `ctx.evaluateExpression` liga o motor da Fase 11.
+ * Classifies the raw text of a value (§4.2). `scope` holds the arguments already
+ * read (for arithmetic) and `ctx.evaluateExpression` enables the phase 11
+ * engine.
+ *
+ * @param raw Raw text of the value.
+ * @param scope Values of the arguments already read.
+ * @param ctx Optional external evaluator.
+ * @returns The typed value.
  */
 export function parseArgumentValue(
   raw: string,
@@ -305,7 +319,7 @@ export function parseArgumentValue(
 ): TemplateArgumentValue {
   const text = raw.trim();
 
-  // String entre aspas duplas ou simples.
+  // String between double or single quotes.
   if (
     text.length >= 2 && (text[0] === '"' || text[0] === "'") &&
     text[text.length - 1] === text[0]
@@ -315,15 +329,15 @@ export function parseArgumentValue(
   if (text === "true") return true;
   if (text === "false") return false;
   if (NUMBER.test(text,)) return Number(text,);
-  // Referência nativa do TaskJuggler: preservada como texto.
+  // Native TaskJuggler reference: preserved as text.
   if (text.startsWith("!",)) return text;
-  // Lista.
+  // List.
   if (text.startsWith("[",) && text.endsWith("]",)) {
     return splitTopLevel(text.slice(1, -1,),).map((item,) =>
       parseArgumentValue(item, scope, ctx,)
     );
   }
-  // Objeto literal `{ k: v }`.
+  // Object literal `{ k: v }`.
   if (text.startsWith("{",) && text.endsWith("}",)) {
     const obj: { [key: string]: TemplateArgumentValue } = {};
     for (const part of splitTopLevel(text.slice(1, -1,),)) {
@@ -333,28 +347,32 @@ export function parseArgumentValue(
     }
     return obj;
   }
-  // Chamada de função → motor da Fase 11, quando injetado.
+  // Function call → phase 11 engine, when injected.
   if (CALL.test(text,)) {
     const evaluated = ctx.evaluateExpression?.(text,);
     if (evaluated?.ok) return normalizeEvaluated(evaluated.value,);
     return text;
   }
-  // Aritmética com números e argumentos já lidos.
+  // Arithmetic with numbers and arguments already read.
   const numeric = evaluateArithmetic(text, scope as Record<string, unknown>,);
   if (numeric !== null) return numeric;
 
   return text;
 }
 
-/** Booleano → booleano; número finito → número; resto → texto. */
+/** Boolean → boolean; finite number → number; anything else → text. */
 function normalizeEvaluated(value: unknown,): TemplateArgumentValue {
   if (typeof value === "boolean" || typeof value === "number") return value;
   return String(value ?? "",);
 }
 
 /**
- * Lê a lista completa de argumentos nomeados, tipando cada valor e
- * resolvendo referências a argumentos anteriores.
+ * Reads the whole list of named arguments, typing each value and resolving
+ * references to previous arguments.
+ *
+ * @param raw Raw text of the argument list.
+ * @param ctx Optional external evaluator.
+ * @returns The typed arguments, or the reason of the failure.
  */
 export function parseTemplateArguments(
   raw: string,

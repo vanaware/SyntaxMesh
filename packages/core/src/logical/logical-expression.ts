@@ -1,8 +1,8 @@
 /**
- * Shim de compatibilidade — as classes lógicas vivem agora em `src/logic/`
- * (Fase 11). Este módulo re-exporta as implementações completas para que o
- * parser (Fase 10) e os reports continuem importando o mesmo caminho, e para
- * que o parser construa exatamente os objetos que a Fase 11 avalia.
+ * Compatibility shim — the logical classes now live in `src/logic/` (phase 11).
+ * This module re-exports the full implementations so that the parser (phase 10)
+ * and the reports keep importing the same path, and so that the parser builds
+ * exactly the objects that phase 11 evaluates.
  *
  * @see packages/core/src/logic/
  */

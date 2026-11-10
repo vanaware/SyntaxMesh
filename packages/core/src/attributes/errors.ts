@@ -1,7 +1,7 @@
 /**
- * Erros do sistema de atributos — re-exporta de model/errors.ts (Fase 9).
+ * Attribute system errors — re-exported from model/errors.ts (phase 9).
  *
- * Mantém compatibilidade com imports existentes de Fase 3-8.
+ * Keeps compatibility with the imports that existed in phases 3-8.
  *
  * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb (raise ArgumentError, RuntimeError)
  */

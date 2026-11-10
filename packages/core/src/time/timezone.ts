@@ -1,9 +1,14 @@
+/**
+ * Time zone currently used to render dates — the `timezone` attribute of the
+ * project, or `"UTC"` until it is set.
+ */
 export let currentTimeZone: string = "UTC";
 
 /**
- * Set the current timezone
- * @param zone - Timezone string to set
- * @returns Previous timezone string
+ * Sets the current time zone.
+ *
+ * @param zone Time zone string to set.
+ * @returns The previous time zone string.
  */
 export function setCurrentTimeZone(zone: string,): string {
   const old = currentTimeZone;
@@ -12,13 +17,14 @@ export function setCurrentTimeZone(zone: string,): string {
 }
 
 /**
- * Check if a timezone string is valid
- * @param zone - Timezone string to validate
- * @returns true if timezone is valid, false otherwise
+ * Tells whether a time zone string is accepted by the runtime.
+ *
+ * @param zone Time zone string to validate.
+ * @returns `true` when the zone is valid.
  */
 export function isValidTimeZone(zone: string,): boolean {
   try {
-    // Try to create a formatter for the timezone
+    // Creating a formatter for the zone is the validation itself.
     new Intl.DateTimeFormat("en-US", { timeZone: zone, },);
     return true;
   } catch {
@@ -27,15 +33,16 @@ export function isValidTimeZone(zone: string,): boolean {
 }
 
 /**
- * Get offset in seconds for a given epoch and timezone
- * @param epochSecs - Epoch seconds (UTC)
- * @param timeZone - Timezone string (e.g., 'America/Sao_Paulo')
- * @returns Offset in seconds
+ * Offset of a time zone for a given instant.
+ *
+ * @param epochSecs Instant, in epoch seconds (UTC).
+ * @param timeZone Time zone string (e.g. `'America/Sao_Paulo'`).
+ * @returns The offset in seconds.
  */
 export function getOffsetSeconds(epochSecs: number, timeZone: string,): number {
   try {
     const date = new Date(epochSecs * 1000,);
-    // Use shortOffset to get format like "GMT-03:00" instead of "BRT"
+    // `shortOffset` yields "GMT-03:00" instead of the "BRT" abbreviation.
     const formatter = new Intl.DateTimeFormat("en-US", {
       timeZoneName: "shortOffset",
       timeZone,
@@ -44,7 +51,7 @@ export function getOffsetSeconds(epochSecs: number, timeZone: string,): number {
     const offsetPart = parts.find((part,) => part.type === "timeZoneName");
     if (!offsetPart) return 0;
 
-    // Extract offset from timezone name (e.g., "GMT-03:00" or "GMT-3" -> -10800)
+    // Extracts the offset from the name ("GMT-03:00" or "GMT-3" → -10800).
     const match = offsetPart.value.match(/GMT?([+-])(\d{1,2})(?::(\d{2}))?/,);
     if (!match) return 0;
 
@@ -58,13 +65,16 @@ export function getOffsetSeconds(epochSecs: number, timeZone: string,): number {
 }
 
 /**
- * Format UTC offset in Ruby strftime %z format: +HHMM / -HHMM (no colon).
- * O formato sem dois-pontos é exigido pelo regex DATE do scanner do TJ
- * (`(-[-+]?\d{4})?`) — com dois-pontos, o `to_s` de um TjTime não é
- * reconhecido como DATE ao voltar pelo parser (macros de data).
- * @param epochSecs - Epoch seconds (UTC)
- * @param timeZone - Timezone string
- * @returns Offset string like "+0000" or "-0300"
+ * Formats the UTC offset in the Ruby `strftime %z` form: `+HHMM` / `-HHMM`,
+ * without a colon.
+ *
+ * The colon-free form is required by the `DATE` regex of the TJ scanner
+ * (`(-[-+]?\d{4})?`): with a colon, the `to_s` of a `TjTime` is not recognized
+ * as a `DATE` when it comes back through the parser (date macros).
+ *
+ * @param epochSecs Instant, in epoch seconds (UTC).
+ * @param timeZone Time zone string.
+ * @returns The offset as `"+0000"` or `"-0300"`.
  */
 export function formatTimezoneOffset(
   epochSecs: number,
@@ -78,22 +88,25 @@ export function formatTimezoneOffset(
   return `${sign}${hours}${mins}`;
 }
 
+/** Calendar fields of an instant, expressed in a given time zone. */
 export interface LocalParts {
+  /** Calendar year. */
   year: number;
+  /** Month, 1-based. */
   month: number;
+  /** Day of the month, 1-based. */
   day: number;
+  /** Hour of the day, 0–23. */
   hour: number;
+  /** Minute of the hour, 0–59. */
   minute: number;
+  /** Second of the minute, 0–59. */
   second: number;
+  /** Day of the week, 0 = Sunday. */
   weekday: number;
 }
 
-/**
- * Get local parts (year, month, day, hour, minute, second, weekday) for given epoch and timezone
- * @param epochSecs - Epoch seconds (UTC)
- * @param timeZone - Timezone string
- * @returns Object with local parts
- */
+/** Weekday names as `Intl` renders them, indexed like JS `Date#getDay`. */
 const weekdayNames = [
   "Sunday",
   "Monday",
@@ -104,17 +117,22 @@ const weekdayNames = [
   "Saturday",
 ];
 
+/**
+ * Decomposes an instant into the calendar fields of a time zone.
+ *
+ * @param epochSecs Instant, in epoch seconds (UTC).
+ * @param timeZone Time zone string.
+ * @returns The local calendar fields, or all zeros when the zone is invalid.
+ */
 export function getLocalParts(
   epochSecs: number,
   timeZone: string,
 ): LocalParts {
   try {
-    // Create a formatter for the target timezone
-    //
-    // `hourCycle: "h23"` (e **não** `hour12: false`): o ICU do Node mapeia
-    // `hour12: false` para o ciclo `h24`, em que a meia-noite é **24** —
-    // `TjTime.fromParts` rejeita 24 e a CLI quebrava sob Node/bundle. `h23`
-    // devolve 0 em todos os runtimes (Deno, Node, Bun).
+    // `hourCycle: "h23"` (and **not** `hour12: false`): the Node ICU maps
+    // `hour12: false` to the `h24` cycle, where midnight is **24** —
+    // `TjTime.fromParts` rejects 24 and the CLI broke under Node/bundle. `h23`
+    // returns 0 on every runtime (Deno, Node, Bun).
     const formatter = new Intl.DateTimeFormat("en-US", {
       timeZone: timeZone,
       year: "numeric",
@@ -127,10 +145,10 @@ export function getLocalParts(
       weekday: "long",
     },);
 
-    // Use formatToParts to get the parts directly
+    // `formatToParts` exposes the fields directly.
     const parts = formatter.formatToParts(new Date(epochSecs * 1000,),);
 
-    // Extract the values from the parts
+    // Collects the values from the parts.
     const result: LocalParts = {
       year: 0,
       month: 0,
@@ -153,7 +171,7 @@ export function getLocalParts(
           result.day = parseInt(part.value, 10,);
           break;
         case "hour":
-          // Cinto e suspensório: nenhum runtime deve devolver 24 (ver h23).
+          // Belt and braces: no runtime should return 24 (see h23 above).
           result.hour = parseInt(part.value, 10,) % 24;
           break;
         case "minute":

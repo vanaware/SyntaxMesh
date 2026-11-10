@@ -1,18 +1,18 @@
 /**
- * ReportTableCell + PlaceHolderCell (Fase 14.9).
+ * ReportTableCell + PlaceHolderCell (phase 14.9).
  *
- * Porta fiel de `docs/taskjuggler/lib/taskjuggler/reports/ReportTableCell.rb`.
- * Uma célula é a representação independente de formato de uma célula de tabela:
- * texto sobre fundo colorido, com ícone, tooltip, indentação e alinhamento.
- * Via `special`, pode delegar a renderização a um objeto externo (tabelas
- * aninhadas — ColumnTable, Fase 14.13).
+ * Faithful port of `docs/taskjuggler/lib/taskjuggler/reports/ReportTableCell.rb`.
+ * A cell is the format-independent representation of a table cell: text on a
+ * colored background, with icon, tooltip, indentation and alignment. Through
+ * `special` it can delegate rendering to an external object (nested tables —
+ * `ColumnTable`, phase 14.13).
  *
- * ⚠️ Browser (ADR 027): `to_html` constrói uma árvore `XMLElementLike`; o
- * tooltip usa `TagToTip(...)` como no Ruby. Nenhuma escrita a disco.
+ * ⚠️ Browser (ADR 027): `to_html` builds an `XMLElementLike` tree; the tooltip
+ * uses `TagToTip(...)` as in Ruby. Nothing is written to disk.
  *
- * Interfaces estruturais (`TableCellLine`/`TableCellTable`/`SpecialCell`)
- * quebram o ciclo com ReportTable/ReportTableLine, permitindo construir a
- * folha primeiro.
+ * The structural interfaces (`TableCellLine`/`TableCellTable`/`SpecialCell`)
+ * break the cycle with ReportTable/ReportTableLine, allowing the leaf to be
+ * built first.
  *
  * @see docs/syntaxmesh/fases/fase-14-relatorios-tarefas.md (14.9)
  */
@@ -22,40 +22,68 @@ import type { RichTextIntermediate, } from "../richtext/rich-text-intermediate.t
 import type { Query, } from "../query/query.ts";
 import { CSVFile, } from "./csv-file.ts";
 
+/** Horizontal alignment of a table cell. */
 export type CellAlignment = "left" | "center" | "right";
 
-/** Subconjunto de ReportTable usado pela célula (evita ciclo de import). */
+/** Subset of `ReportTable` used by the cell (avoids an import cycle). */
 export interface TableCellTable {
+  /** Deepest indentation level in the table, used to right-align cells. */
   maxIndent: number;
+  /** When `true`, every row is forced to the same height. */
   equiLines: boolean;
+  /** When `true`, icons and tooltips are inlined instead of linked. */
   selfcontained: boolean;
+  /** Directory prefix for auxiliary files (icons, scripts, css). */
   auxDir: string;
 }
 
-/** Subconjunto de ReportTableLine usado pela célula. */
+/** Subset of `ReportTableLine` used by the cell. */
 export interface TableCellLine {
+  /**
+   * Registers a cell in this line.
+   *
+   * @param cell Cell to append.
+   */
   addCell(cell: ReportTableCell | PlaceHolderCell,): void;
+  /** Height of the line in pixels. */
   height: number;
+  /** Table the line belongs to. */
   table: TableCellTable;
 }
 
-/** Objeto `special`: delegação de renderização (tabelas aninhadas). */
+/** The `special` object: render delegation (nested tables). */
 export interface SpecialCell {
+  /** Renders the nested content as HTML, or `null` when there is none. */
   to_html(): XMLElementLike | null;
+  /**
+   * Writes the nested content into the CSV grid.
+   *
+   * @param csv Grid being filled.
+   * @param startColumn Column index the nested table starts at.
+   * @returns Number of columns consumed.
+   */
   to_csv(csv: unknown[][], startColumn: number,): number;
 }
 
-/** Linha embutida referenciada por uma `PlaceHolderCell`. */
+/** Embedded line referenced by a `PlaceHolderCell`. */
 export interface EmbeddedLine {
+  /**
+   * Writes the embedded line into the CSV grid.
+   *
+   * @param csv Grid being filled.
+   * @param columnIdx Column the line starts at.
+   * @param lineIdx Row index of the line.
+   * @returns Number of columns consumed.
+   */
   to_csv(csv: unknown[][], columnIdx: number, lineIdx: number,): number;
 }
 
-/** Objeto de texto da célula: string ou RichText. */
-type CellText = string | RichTextIntermediate;
+/** Text object of the cell: a plain string or a `RichTextIntermediate`. */
+export type CellText = string | RichTextIntermediate;
 
 let idCounter = 0;
 const idMap = new WeakMap<object, number>();
-/** Id único estável por objeto (equivalente ao `object_id` do Ruby). */
+/** Unique, stable id per object (the equivalent of Ruby's `object_id`). */
 function objectId(obj: object,): number {
   let id = idMap.get(obj,);
   if (id === undefined) {
@@ -65,7 +93,7 @@ function objectId(obj: object,): number {
   return id;
 }
 
-/** `nil? || empty?` do Ruby sobre string ou RichText. */
+/** Ruby's `nil? || empty?` over a string or a rich text. */
 function isEmptyText(value: unknown,): boolean {
   if (value === null || value === undefined) return true;
   if (typeof value === "string") return value.length === 0;
@@ -73,34 +101,77 @@ function isEmptyText(value: unknown,): boolean {
   return s === undefined ? false : s.length === 0;
 }
 
+/**
+ * One cell of a report table.
+ *
+ * The cell holds presentation state only; the value it displays comes from
+ * `text` (a string or a rich text) and, for cells bound to a query, from the
+ * `query` it keeps a private copy of.
+ */
 export class ReportTableCell {
+  /** Line the cell was appended to, when it has one. */
   readonly line: TableCellLine | null;
+  /** Whether this is a header cell (changes the CSS class and truncation). */
   readonly headerCell: boolean;
+  /** Private copy of the query behind the cell, or `null` for literal cells. */
   readonly query: Query | null;
+  /** Content of the cell. */
   text: CellText;
+  /** Tooltip shown next to the cell, or `null` for none. */
   tooltip: CellText | null = null;
+  /** Whether to render the small tooltip icon. */
   showTooltipHint = true;
+  /** Raw value behind the cell, when it differs from `text`. */
   data: unknown = null;
+  /** CSS class override. */
   category: string | null = null;
+  /** When `true`, the cell is not rendered at all. */
   hidden = false;
+  /** Horizontal alignment. */
   alignment: CellAlignment = "center";
+  /** Horizontal padding in pixels. */
   padding = 3;
+  /** Keeps the value as text even when it looks numeric (CSV output). */
   force_string = false;
+  /** Indentation level, or `null` when the cell is not in tree mode. */
   indent: number | null = null;
+  /** Icon name (file stem under `icons/`), or `null` for none. */
   icon: string | null = null;
+  /** Tooltip attached to the icon. */
   iconTooltip: CellText | null = null;
+  /** Font size override in pixels. */
   fontSize: number | null = null;
+  /** Background color. */
   cellColor: string | null = null;
+  /** Font color. */
   fontColor: string | null = null;
+  /** Whether the content is rendered in bold. */
   bold = false;
+  /** Fixed width in pixels, or `null` for auto sizing. */
   width: number | null = null;
+  /** Number of rows spanned. */
   rows = 1;
+  /** Number of columns spanned. */
   columns = 1;
+  /** Delegated renderer (nested tables), or `null`. */
   special: SpecialCell | null = null;
 
+  /** Width of the left indentation padding, in pixels. */
   protected leftIndent = 0;
+  /** Width of the right indentation padding, in pixels. */
   protected rightIndent = 0;
 
+  /**
+   * Creates a cell.
+   *
+   * Creating a cell appends it to `line` and takes a private copy of `query`, so
+   * later reuse of the caller's query does not disturb the cell.
+   *
+   * @param line Line to append the cell to, or `null` for a detached cell.
+   * @param query Query the cell reads from, or `null` for a literal cell.
+   * @param text Initial content.
+   * @param headerCell Whether the cell is part of the table header.
+   */
   constructor(
     line: TableCellLine | null,
     query: Query | null,
@@ -114,7 +185,7 @@ export class ReportTableCell {
     this.text = text ?? "";
   }
 
-  /** Duas células são mescláveis quando texto/estética coincidem. */
+  /** Two cells may be merged when text and styling match. */
   equals(c: ReportTableCell,): boolean {
     return (
       this.text === c.text &&
@@ -127,7 +198,7 @@ export class ReportTableCell {
     );
   }
 
-  /** Converte a célula em árvore HTML; `null` se oculta. */
+  /** Converts the cell into an HTML tree; `null` when hidden. */
   to_html(): XMLElementLike | null {
     if (this.hidden) return null;
     if (this.special) return this.special.to_html();
@@ -152,7 +223,7 @@ export class ReportTableCell {
 
     this.calculateIndentation();
 
-    // Célula de padding para a indentação esquerda.
+    // Padding cell for the left indentation.
     if (this.leftIndent > 0) {
       row.append(
         new XMLElement("td", { style: `width:${this.leftIndent}px; `, },),
@@ -164,7 +235,7 @@ export class ReportTableCell {
     const [labelDiv, rawTooltip,] = this.cellLabel();
     if (labelDiv) row.append(labelDiv,);
 
-    // Sobrescreve o tooltip se o usuário forneceu um customizado.
+    // Overrides the tooltip when the user supplied a custom one.
     const tooltip = this.tooltip ?? rawTooltip;
     if (tooltip && !isEmptyText(tooltip,) && !this.selfcontained()) {
       if (this.showTooltipHint) {
@@ -182,7 +253,7 @@ export class ReportTableCell {
       }
     }
 
-    // Célula de padding para a indentação direita.
+    // Padding cell for the right indentation.
     if (this.rightIndent > 0) {
       row.append(
         new XMLElement("td", {
@@ -194,9 +265,16 @@ export class ReportTableCell {
     return cell;
   }
 
-  /** Anexa o texto da célula à forma Array-de-Arrays da tabela. */
+  /**
+   * Appends the cell text to the array-of-arrays form of the table.
+   *
+   * @param csv Grid being filled.
+   * @param columnIdx Column index of the cell.
+   * @param lineIdx Row index of the cell.
+   * @returns Number of columns consumed.
+   */
   to_csv(csv: unknown[][], columnIdx: number, lineIdx: number,): number {
-    // Só a indentação esquerda é suportada em CSV.
+    // Only the left indentation is supported in CSV.
     const indent = this.indent !== null && this.alignment === "left"
       ? "  ".repeat(this.indent,)
       : "";
@@ -216,7 +294,7 @@ export class ReportTableCell {
           (this.text as RichTextIntermediate).setQuery(this.query!,);
         }
         let str = this.text.toString();
-        // Remove quebras de linha finais (sem sentido em CSV).
+        // Drops trailing line breaks (meaningless in CSV).
         while (str.endsWith("\n",)) str = str.slice(0, -1,);
         cell = str;
       } else {
@@ -232,10 +310,10 @@ export class ReportTableCell {
     return columns;
   }
 
-  /** Descritor JSON da célula (extensão SyntaxMesh — 14C.0.3). */
+  /** JSON descriptor of the cell (SyntaxMesh extension — 14C.0.3). */
   toJSON(): unknown {
     if (this.hidden) return null;
-    // Células especiais (calendários ColumnTable) viram descritor fixo.
+    // Special cells (ColumnTable calendars) become a fixed descriptor.
     if (this.special) return { type: "calendar", };
     let text: string;
     if (typeof this.text === "string") {
@@ -251,17 +329,19 @@ export class ReportTableCell {
     };
   }
 
+  /** Whether the owning table requests self-contained output. */
   private selfcontained(): boolean {
     return !!this.line?.table.selfcontained;
   }
 
+  /** Directory prefix for auxiliary files (icons, scripts, css). */
   private auxDir(): string {
     return this.line ? this.line.table.auxDir : "";
   }
 
   /**
-   * Em modo árvore, células à esquerda/direita recebem indentação via células
-   * de padding, conforme o alinhamento.
+   * In tree mode, left/right cells get their indentation from padding cells,
+   * following the alignment.
    */
   protected calculateIndentation(): void {
     this.leftIndent = 0;
@@ -276,6 +356,7 @@ export class ReportTableCell {
     }
   }
 
+  /** Inline CSS of the outer `<td>` of the cell. */
   protected cellStyle(): string {
     let style = `text-align:${this.alignment}; `;
     if (this.line && this.line.table.equiLines) {
@@ -284,6 +365,11 @@ export class ReportTableCell {
     return style;
   }
 
+  /**
+   * Icon column of the cell, or `null` when there is no icon to show.
+   *
+   * @param cell Cell the tooltip hook is attached to.
+   */
   protected cellIcon(cell: XMLElementLike,): XMLElementLike | null {
     if (this.icon && !this.selfcontained()) {
       const td = new XMLElement("td", { class: "tj_table_cell_icon", },);
@@ -299,7 +385,7 @@ export class ReportTableCell {
     return null;
   }
 
-  /** Monta a célula de rótulo e retorna [td, tooltip]. */
+  /** Builds the label cell and returns `[td, tooltip]`. */
   protected cellLabel(): [XMLElementLike | null, CellText | null,] {
     const fixedHeight = !!(this.line && this.line.table.equiLines);
     const fixedWidth = this.width !== null;
@@ -346,7 +432,7 @@ export class ReportTableCell {
       this.line && this.line.table.equiLines && (!singleLine || this.width) &&
       !this.headerCell
     ) {
-      // Célula com limite de tamanho: texto curto + conteúdo completo em tooltip.
+      // Size-limited cell: short text plus the full content in the tooltip.
       if (shortText !== textAsString) tooltip = this.text;
       tl = shortText;
     } else {
@@ -368,10 +454,16 @@ export class ReportTableCell {
     return [td, tooltip,];
   }
 
+  /**
+   * Whether the value is a rich text (it can render itself as HTML).
+   *
+   * @param value Text object to test.
+   */
   private isRichText(value: CellText,): boolean {
     return typeof (value as RichTextIntermediate).to_html === "function";
   }
 
+  /** Plain-text form of the cell content, or `null` when there is none. */
   private textToString(): string | null {
     if (typeof this.text === "string") return this.text;
     if (
@@ -382,7 +474,13 @@ export class ReportTableCell {
     return (this.text as RichTextIntermediate).to_s();
   }
 
-  /** Versão de uma linha, truncada à largura, com reticências se cortada. */
+  /**
+   * Single-line version, truncated to the width with an ellipsis when cut.
+   *
+   * @param itext Text to shorten.
+   * @param width Available width in pixels, or `null` for no limit.
+   * @returns The shortened text and whether it stayed on a single line.
+   */
   protected shortVersion(
     itext: string,
     width: number | null,
@@ -408,6 +506,14 @@ export class ReportTableCell {
     return [text, singleLine,];
   }
 
+  /**
+   * Turns `trigger` into a `TagToTip` tooltip anchor and appends the tooltip
+   * box to `hook`.
+   *
+   * @param tooltip Content of the tooltip, or `null` for none.
+   * @param trigger Element that shows the tooltip when clicked.
+   * @param hook Element that receives the tooltip box; defaults to `trigger`.
+   */
   protected addHtmlTooltip(
     tooltip: CellText | null,
     trigger: XMLElement,
@@ -447,26 +553,44 @@ export class ReportTableCell {
   }
 }
 
-/** Célula-placeholder: representa uma linha de uma ReportTable embutida. */
+/** Placeholder cell: stands for one line of an embedded `ReportTable`. */
 export class PlaceHolderCell {
+  /** Line the placeholder was appended to, when it has one. */
   readonly line: TableCellLine | null;
+  /** Embedded line this placeholder delegates to. */
   readonly embeddedLine: EmbeddedLine;
 
+  /**
+   * Creates a placeholder cell for an embedded line.
+   *
+   * @param line Line to append the placeholder to, or `null` for a detached
+   *   cell.
+   * @param embeddedLine Line whose content is rendered in its place.
+   */
   constructor(line: TableCellLine | null, embeddedLine: EmbeddedLine,) {
     this.line = line;
     if (line) line.addCell(this,);
     this.embeddedLine = embeddedLine;
   }
 
+  /**
+   * Writes the embedded line into the CSV grid.
+   *
+   * @param csv Grid being filled.
+   * @param columnIdx Column the line starts at.
+   * @param lineIdx Row index of the line.
+   * @returns Number of columns consumed.
+   */
   to_csv(csv: unknown[][], columnIdx: number, lineIdx: number,): number {
     return this.embeddedLine.to_csv(csv, columnIdx, lineIdx,);
   }
 
+  /** A placeholder renders nothing on its own; the embedded line does. */
   to_html(): null {
     return null;
   }
 
-  /** Descritor JSON: linha embutida (calendário) vira tipo + células. */
+  /** JSON descriptor: an embedded (calendar) line becomes type + cells. */
   toJSON(): unknown {
     const line = this.embeddedLine as unknown as {
       indentation: number;
@@ -480,5 +604,5 @@ export class PlaceHolderCell {
   }
 }
 
-/** Tipo union das duas variantes de célula usadas pelas linhas da tabela. */
+/** Union type of the two cell variants used by the table lines. */
 export type AnyTableCell = ReportTableCell | PlaceHolderCell;

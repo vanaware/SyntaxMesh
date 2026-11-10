@@ -1,24 +1,25 @@
 /**
  * TjpSyntaxRules — `booking charge` (Adendo Extra §12.3, 14C.15.4–15.7).
  *
- * Formas aceitas, nas três origens (tarefa, recurso e material). A
- * `<descrição>` é um texto livre opcional e `value` é opcional (C15):
+ * Accepted forms, in the three origins (task, resource and material). The
+ * `<description>` is optional free text and `value` is optional (C15):
  *
  * ```tjp
- * task t "T" { booking charge ["<descrição>"] [value] <montante> on <data> }
- * resource r "R" { booking charge <tarefa> ["<descrição>"] [value] <montante> on <data> }
- * material m "M" { booking charge <tarefa> ["<descrição>"] [value] <montante> on <data> }
+ * task t "T" { booking charge ["<description>"] [value] <amount> on <date> }
+ * resource r "R" { booking charge <task> ["<description>"] [value] <amount> on <date> }
+ * material m "M" { booking charge <task> ["<description>"] [value] <amount> on <date> }
  * ```
  *
- * No corpo da tarefa **não** há referência de recurso (revisão 2026-11-02): o
- * booking de charge não consome esforço — a outra ponta da relação é a própria
- * tarefa dona do bloco. Recurso só é referência obrigatória no booking de
- * effort (`booking <recurso> <intervalo>`, TjpSyntaxRules.rb:6001).
+ * In the task body there is **no** resource reference (revision 2026-11-02): a
+ * charge booking consumes no effort — the other end of the relation is the task
+ * that owns the block. A resource is only mandatory in the effort booking
+ * (`booking <resource> <interval>`, TjpSyntaxRules.rb:6001).
  *
- * O montante entra no atributo de cenário `chargebookings` da **tarefa** dona
- * do gasto — quem declara é apenas a outra ponta da relação. A referência de
- * tarefa pode ser futura (a tarefa vem depois do bloco): vai para a fila
- * `Project.pendingBookings`, a mesma dos bookings de material (14C.11.5).
+ * The amount goes into the `chargebookings` scenario attribute of the **task**
+ * that owns the expense — the declaring side is merely the other end of the
+ * relation. The task reference may be a forward reference (the task comes after
+ * the block): it goes into the `Project.pendingBookings` queue, the same one
+ * used by material bookings (14C.11.5).
  *
  * @see docs/syntaxmesh/fases/fase-14-relatorios-complemento.md §13.3
  */
@@ -41,7 +42,7 @@ const asProp = (parser: ProjectFileParser,): NonNullable<
   ProjectFileParser["property"]
 > => parser.property!;
 
-/** Anexa o booking ao atributo de cenário `chargebookings` da tarefa. */
+/** Appends the booking to the task's `chargebookings` scenario attribute. */
 export function appendChargeBooking(
   parser: ProjectFileParser,
   task: Task,
@@ -58,7 +59,7 @@ export function appendChargeBooking(
   );
 }
 
-/** Resolve uma referência de tarefa por ID e depois pelo nome. */
+/** Resolves a task reference by ID and then by name. */
 export function resolveTaskRef(
   project: Project,
   ref: string,
@@ -74,18 +75,19 @@ export function resolveTaskRef(
 }
 
 /**
- * Registra as regras de `booking charge`: referência de tarefa (ID ou nome,
- * com referência futura), descrição opcional ($STRING) e os três cabeçalhos,
- * um por origem. O `value` é opcional (Adendo Extra §12.3) e o montante aceita
- * sinal (estorno), como o booking de estoque de material.
+ * Registers the `booking charge` rules: task reference (ID or name, with
+ * forward reference), optional description ($STRING) and the three headers, one
+ * per origin. `value` is optional (Adendo Extra §12.3) and the amount accepts a
+ * sign (reversal), as in the material stock booking.
  *
- * Onda D3: a ponta temporal é a regra compartilhada `bookingPeriodTail` —
- * `on <data>` (legado, ponto único) ou `<modifier> <intervalos>` / `<intervalos>`
- * (distribuição calendar-based). Usada também pelos bookings de material/estoque.
+ * Wave D3: the temporal end is the shared `bookingPeriodTail` rule —
+ * `on <date>` (legacy, single point) or `<modifier> <intervals>` /
+ * `<intervals>` (calendar-based distribution). Also used by the material/stock
+ * bookings.
  */
 export function registerBookingRules(p: ProjectFileParser,): void {
-  // Modificadores de distribuição do booking: mesmos literais da alocação de
-  // material (`materialAllocationModifierKeyword`), vocabulário único (Onda D).
+  // Booking distribution modifiers: same literals as the material allocation
+  // (`materialAllocationModifierKeyword`), a single vocabulary (wave D).
   rule(p, "bookingModifierKeyword", () => {
     p.pattern(["_onstart",], () => "onstart",);
     p.descr("Book the whole amount on the first day of the interval.",);
@@ -105,13 +107,13 @@ export function registerBookingRules(p: ProjectFileParser,): void {
   },);
 
   /**
-   * Cauda temporal de um booking (Onda D3). Três formas, com tokens iniciais
-   * disjointos (exigência da FSM):
+   * Temporal tail of a booking (wave D3). Three forms, with disjoint initial
+   * tokens (an FSM requirement):
    *
-   * - `on <data>` — legado: tail degenerado de um dia (`onstart`),
-   *   `isTemporal() === false`, consumidores mantêm o caminho antigo.
-   * - `<modifier> <intervalos>` — distribuição explícita.
-   * - `<intervalos>` — sem modifier: `distributed` (default da alocação).
+   * - `on <date>` — legacy: one-day degenerate tail (`onstart`),
+   *   `isTemporal() === false`, consumers keep the old path.
+   * - `<modifier> <intervals>` — explicit distribution.
+   * - `<intervals>` — no modifier: `distributed` (the allocation default).
    */
   rule(p, "bookingPeriodTail", () => {
     p.pattern(["_on", "!date",], function (this: ProjectFileParser,): unknown {
@@ -150,9 +152,9 @@ export function registerBookingRules(p: ProjectFileParser,): void {
   },);
 
   /**
-   * Descrição opcional do gasto (`$STRING`). No corpo da tarefa é o único
-   * argumento textual; nas origens recurso/material vem **depois** da
-   * referência de tarefa (Adendo Extra §12.3, revisão 2026-11-02).
+   * Optional description of the expense (`$STRING`). In the task body it is the
+   * only textual argument; in the resource/material origins it comes **after**
+   * the task reference (Adendo Extra §12.3, revision 2026-11-02).
    */
   rule(p, "chargeBookingDescription", () => {
     p.optional();
@@ -161,8 +163,8 @@ export function registerBookingRules(p: ProjectFileParser,): void {
     },);
   },);
 
-  // `booking charge ["<descrição>"] [value] <montante> <cauda-temporal>` — corpo
-  // da tarefa: sem referência de recurso (o dono do gasto é a própria tarefa).
+  // `booking charge ["<description>"] [value] <amount> <temporal-tail>` — task
+  // body: no resource reference (the owner of the expense is the task itself).
   rule(p, "taskChargeBookingHeader", () => {
     p.pattern(
       [
@@ -189,15 +191,15 @@ export function registerBookingRules(p: ProjectFileParser,): void {
       "booking.charge",
       "Book a real expense (or, with a negative amount, a reversal) against " +
         "the task. The description and the `value` keyword are optional. The " +
-        "period is `on <date>` or `<modifier> <interval>[, …]` (Onda D3).",
+        "period is `on <date>` or `<modifier> <interval>[, …]` (wave D3).",
     );
     p.arg(1, "description", "Free-text label for the charge.",);
     p.arg(3, "value", "The amount booked (negative reverses).",);
     p.arg(4, "period", "When the charge falls (point or distributed).",);
   },);
 
-  // `booking charge <tarefa> ["<descrição>"] [value] <montante> <cauda>` —
-  // corpo do recurso.
+  // `booking charge <task> ["<description>"] [value] <amount> <tail>` —
+  // resource body.
   rule(p, "resourceChargeBookingHeader", () => {
     p.pattern(
       [
@@ -214,7 +216,7 @@ export function registerBookingRules(p: ProjectFileParser,): void {
     p.arg(2, "description", "Free-text label for the charge.",);
   },);
 
-  // Idem no corpo do material (14C.15.7).
+  // Same in the material body (14C.15.7).
   rule(p, "materialChargeBookingHeader", () => {
     p.pattern(
       [
@@ -233,10 +235,10 @@ export function registerBookingRules(p: ProjectFileParser,): void {
 }
 
 /**
- * Ação compartilhada pelos cabeçalhos de `booking charge` declarados por um
- * recurso ou um material: a referência é a **tarefa** e pode ser futura
- * (fila de pendências do projeto, 14C.15.7); o dono do bloco é o `owner`. A
- * descrição (índice 2) é opcional; a cauda temporal é o índice 5 (Onda D3).
+ * Action shared by the `booking charge` headers declared by a resource or a
+ * material: the reference is the **task** and may be a forward reference (the
+ * project's pending queue, 14C.15.7); the block owner is `owner`. The
+ * description (index 2) is optional; the temporal tail is index 5 (wave D3).
  */
 function chargeBookingFromOrigin(this: ProjectFileParser,): unknown {
   const owner = asProp(this,) as unknown as Resource | Material;
@@ -262,11 +264,11 @@ function chargeBookingFromOrigin(this: ProjectFileParser,): unknown {
 }
 
 /**
- * Cria o `ChargeBooking` e o anexa à tarefa dona (quando já declarada) ou à
- * fila de referências futuras do projeto (14C.15.7). `taskRef` é o ID/nome
- * quando a referência ainda não resolveu; `task` quando já resolveu. A
- * `tail` (Onda D3) é o período com modifier; sem tail o construtor degenera
- * o ponto legado a partir do início do primeiro intervalo.
+ * Creates the `ChargeBooking` and appends it to the owning task (when already
+ * declared) or to the project's forward-reference queue (14C.15.7). `taskRef`
+ * is the ID/name while the reference is still unresolved; `task` once it is.
+ * The `tail` (wave D3) is the period with a modifier; without a tail the
+ * constructor degenerates the legacy point from the start of the first interval.
  */
 export function addChargeBooking(
   parser: ProjectFileParser,

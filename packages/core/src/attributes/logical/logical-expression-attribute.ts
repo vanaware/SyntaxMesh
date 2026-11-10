@@ -1,5 +1,5 @@
 /**
- * Atributo de expressão lógica.
+ * Logical expression attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:LogicalExpressionAttribute
  */
@@ -10,25 +10,33 @@ import { type AttributeDefinition, } from "../attribute-definition.ts";
 import { AttributeBase, } from "../attribute-base.ts";
 
 /**
- * Atributo de expressão lógica.
+ * Logical expression attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:LogicalExpressionAttribute
  */
 export class LogicalExpressionAttribute extends AttributeBase<unknown> {
   /**
-   * ID do tipo de atributo para LogicalExpressionAttribute.
+   * Attribute type id for LogicalExpressionAttribute.
    */
   static readonly tjpId = "logicalexpressions";
 
+  /**
+   * Converts the stored expression to text.
+   *
+   * @returns The expression rendered with `String()`.
+   */
   override to_s(): string {
     return String(this.get(),);
   }
 
   /**
-   * Ruby `LogicalExpressionAttribute` não sobrepõe `to_tjp`; herda
-   * `AttributeBase#to_tjp` = `@type.id + " " + get.to_s` (AttributeBase.rb:169).
-   * Como `to_s` já é `get.to_s`, o despejo TJP é o id do tipo seguido do
-   * dump da expressão (ex.: `logicalexpressions <op>`).
+   * Ruby `LogicalExpressionAttribute` does not override `to_tjp`; it inherits
+   * `AttributeBase#to_tjp` = `@type.id + " " + get.to_s`
+   * (AttributeBase.rb:169). Since `to_s` already is `get.to_s`, the TJP dump is
+   * the type id followed by the expression dump (e.g. `logicalexpressions
+   * <op>`).
+   *
+   * @returns The expression serialized as TJP.
    */
   override to_tjp(): string {
     return `${this.tjpId} ${this.to_s()}`;

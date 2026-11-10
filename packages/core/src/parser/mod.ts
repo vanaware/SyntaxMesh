@@ -1,5 +1,5 @@
 /**
- * Barrel do módulo parser (Fase 10 — port de TextParser/*).
+ * Barrel of the parser module (phase 10 — port of TextParser/*).
  *
  * @see docs/taskjuggler/lib/taskjuggler/TextParser/
  */

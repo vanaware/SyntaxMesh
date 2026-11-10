@@ -1,11 +1,11 @@
 /**
- * ReportTable (Fase 14.6) — formato intermediário de todas as tabelas de
- * relatório.
+ * ReportTable (phase 14.6) — the intermediate format of every report table.
  *
- * Porta fiel de `docs/taskjuggler/lib/taskjuggler/reports/ReportTable.rb`.
- * Colunas e linhas se auto-registram aqui via seus construtores. `to_html`
- * aplica a regra de cabeçalho: se **todas** as colunas têm `cell1.rows === 2`
- * (ou `special`), funde em um único cabeçalho; caso contrário, gera dois.
+ * Faithful port of
+ * `docs/taskjuggler/lib/taskjuggler/reports/ReportTable.rb`. Columns and lines
+ * register themselves here through their constructors. `to_html` applies the
+ * header rule: when **all** columns have `cell1.rows === 2` (or a `special`),
+ * they are merged into a single header; otherwise two header rows are emitted.
  *
  * @see docs/syntaxmesh/fases/fase-14-relatorios-tarefas.md (14.6)
  */
@@ -15,47 +15,65 @@ import { markdownTable, markdownText, } from "./markdown.ts";
 import type { ReportTableColumn, } from "./report-table-column.ts";
 import type { ReportTableLine, } from "./report-table-line.ts";
 
+/** The intermediate representation of a report table. */
 export class ReportTable {
-  /** Altura (px) de uma barra de rolagem horizontal em HTML. */
+  /** Height (px) of a horizontal scrollbar in HTML. */
   static readonly SCROLLBARHEIGHT = 20;
 
+  /** Height (px) of a header line. */
   readonly headerLineHeight = 19;
+  /** Font size (px) of the header text. */
   headerFontSize = 15;
+  /** Deepest indentation level among the lines (tree reports). */
   maxIndent = 0;
+  /** When `true`, every line is forced to the same height. */
   equiLines = false;
+  /** When `true`, the table is rendered inside a cell of another table. */
   embedded = false;
+  /** When `true`, icons and tooltips are inlined instead of linked. */
   selfcontained = false;
+  /** Directory prefix for auxiliary files (icons, scripts, css). */
   auxDir = "";
 
+  /** Columns of the table, in insertion order. */
   protected columns: ReportTableColumn[] = [];
+  /** Lines of the table, in insertion order. */
   protected lines: ReportTableLine[] = [];
 
-  /** Deve ser chamado apenas pelo construtor de ReportTableColumn. */
+  /**
+   * Registers a column; only the `ReportTableColumn` constructor should call it.
+   *
+   * @param col Column to register.
+   */
   addColumn(col: ReportTableColumn,): void {
     this.columns.push(col,);
   }
 
-  /** Deve ser chamado apenas pelo construtor de ReportTableLine. */
+  /**
+   * Registers a line; only the `ReportTableLine` constructor should call it.
+   *
+   * @param line Line to register.
+   */
   addLine(line: ReportTableLine,): void {
     this.lines.push(line,);
   }
 
-  /** Número de linhas registradas. */
+  /** Number of registered lines. */
   linesCount(): number {
     return this.lines.length;
   }
 
-  /** Colunas registradas (leitura). */
+  /** Registered columns (read access). */
   getColumns(): ReportTableColumn[] {
     return this.columns;
   }
 
-  /** Linhas registradas (leitura). */
+  /** Registered lines (read access). */
   getLines(): ReportTableLine[] {
     return this.lines;
   }
 
-  /** Largura mínima exigida; sempre ≥ 1. */
+  /** Minimum width required by the table; always >= 1. */
   minWidth(): number {
     let width = 1;
     for (const column of this.columns) {
@@ -65,7 +83,7 @@ export class ReportTable {
     return width;
   }
 
-  /** Tabela em HTML. */
+  /** Renders the table as HTML. */
   to_html(): XMLElementLike {
     this.determineMaxIndents();
 
@@ -78,7 +96,7 @@ export class ReportTable {
     const tbody = new XMLElement("tbody",);
     table.append(tbody,);
 
-    // Regra de cabeçalho: todas as colunas têm 2 linhas (ou special)?
+    // Header rule: do all columns have 2 rows (or a special)?
     let allCellsHave2Rows = true;
     let lineHeight = this.headerLineHeight;
     for (const col of this.columns) {
@@ -115,10 +133,10 @@ export class ReportTable {
       }
     }
 
-    // Restante da tabela.
+    // Remaining rows of the table.
     for (const line of this.lines) tbody.append(line.to_html(),);
 
-    // Linha extra para colunas sem barra de rolagem.
+    // Extra row for the columns without a scrollbar.
     if (this.hasScrollbar()) {
       const tr = new XMLElement("tr", {
         style: `height:${ReportTable.SCROLLBARHEIGHT}px`,
@@ -132,9 +150,16 @@ export class ReportTable {
     return table;
   }
 
-  /** Tabela em Array-of-Arrays. Retorna `csv` ou contagem de colunas (embed). */
+  /**
+   * Renders the table as an array of arrays. Returns `csv` or, when embedded,
+   * the number of columns consumed.
+   *
+   * @param csv Grid being filled.
+   * @param startColumn Column the table starts at.
+   * @returns The filled grid, or the column count when the table is embedded.
+   */
   to_csv(csv: unknown[][] = [[],], startColumn = 0,): unknown[][] | number {
-    // Linha de cabeçalho.
+    // Header row.
     let columnIdx = startColumn;
     for (const col of this.columns) {
       columnIdx += col.to_csv(csv, columnIdx,);
@@ -144,7 +169,7 @@ export class ReportTable {
       return columnIdx - startColumn;
     }
 
-    // Conteúdo de tabelas embutidas é inserido ao gerar a Linha respectiva.
+    // The content of embedded tables is inserted when the line is generated.
     let lineIdx = 1;
     for (const line of this.lines) {
       csv[lineIdx] = [];
@@ -154,7 +179,7 @@ export class ReportTable {
     return csv;
   }
 
-  /** Forma JSON intermediária (extensão SyntaxMesh — 14C.0.3): colunas + linhas. */
+  /** Intermediate JSON form (SyntaxMesh extension — 14C.0.3): columns plus lines. */
   toJSON(): { columns: unknown[]; lines: unknown[] } {
     return {
       columns: this.columns.map((col,) => col.toJSON()),
@@ -163,12 +188,11 @@ export class ReportTable {
   }
 
   /**
-   * Tabela em Markdown (GFM) — extensão SyntaxMesh (adendo §10).
+   * Markdown (GFM) table — SyntaxMesh extension (addendum §10).
    *
-   * O cabeçalho de uma coluna tem até duas células; como o Markdown só aceita
-   * uma linha de cabeçalho, elas são unidas (`celula1 celula2`). A grade de
-   * dados é a mesma do CSV (`to_csv`), que já resolve `colspan`/tabelas
-   * embutidas.
+   * A column header has up to two cells; as Markdown accepts a single header row
+   * they are joined (`cell1 cell2`). The data grid is the same as the CSV one
+   * (`to_csv`), which already resolves `colspan` and embedded tables.
    */
   to_markdown(): string {
     const headers = this.columns.map((col,) => {
@@ -183,7 +207,7 @@ export class ReportTable {
     return markdownTable(headers, rows,);
   }
 
-  /** Maior indentação entre todas as linhas (modo árvore). */
+  /** Deepest indentation among the lines (tree mode). */
   protected determineMaxIndents(): void {
     this.maxIndent = 0;
     for (const line of this.lines) {
@@ -191,7 +215,7 @@ export class ReportTable {
     }
   }
 
-  /** Alguma coluna possui barra de rolagem? */
+  /** Does any column carry a scrollbar? */
   protected hasScrollbar(): boolean {
     for (const col of this.columns) {
       if (col.scrollbar) return true;

@@ -1,18 +1,18 @@
 /**
- * `keyword-documentation.ts` — documentação de uma keyword extraída das regras
- * do parser (22.1b.3).
+ * `keyword-documentation.ts` — documentation of a keyword extracted from the
+ * parser rules (22.1b.3).
  *
- * Port fiel de `KeywordDocumentation.rb` (764 linhas). Cada instância guarda o
- * `Pattern` documentado, a sintaxe expandida (`Pattern#to_syntax`), os
- * `TokenDoc` dos argumentos e o conjunto de **atributos opcionais** (patterns
- * de regras referenciadas pelo bloco `{ … }`). Duas passadas do
- * `SyntaxReference` completam os dados: `crossReference` (nomes, contextos,
- * `seeAlso`) e `computeInheritance` (herança de valores globais/pai).
+ * Faithful port of `KeywordDocumentation.rb` (764 lines). Each instance holds
+ * the documented `Pattern`, the expanded syntax (`Pattern#to_syntax`), the
+ * argument `TokenDoc`s and the set of **optional attributes** (patterns of
+ * rules referenced by the `{ … }` block). Two `SyntaxReference` passes complete
+ * the data: `crossReference` (names, contexts, `seeAlso`) and
+ * `computeInheritance` (global/parent value inheritance).
  *
- * Saídas, ambas como **dado** (o `doc-core` não escreve em disco):
- * - {@link KeywordDocumentation.toText} — o `to_s` do Ruby (relatório de
- *   terminal, com ANSI opcional);
- * - {@link KeywordDocumentation.toHTML} — a página `<keyword>.html` do manual.
+ * Outputs, both as **data** (`doc-core` does not write to disk):
+ * - {@link KeywordDocumentation.toText} — the Ruby `to_s` (terminal report,
+ *   with optional ANSI);
+ * - {@link KeywordDocumentation.toHTML} — the manual `<keyword>.html` page.
  *
  * @see docs/taskjuggler/lib/taskjuggler/KeywordDocumentation.rb
  * @see docs/syntaxmesh/fases/fase-22-vscode-extension-tarefas.md §Bloco E
@@ -46,15 +46,15 @@ import type { PropertySet, } from "../model/property-set.ts";
 import { blue, bold, cyan, red, } from "./ansi.ts";
 import type { ManualPageContext, } from "./manual-context.ts";
 
-/** Largura da coluna de rótulos do `to_s` (`KeywordDocumentation.rb:188`). */
+/** Width of the `to_s` label column (`KeywordDocumentation.rb:188`). */
 const TAG_WIDTH = 13;
 /** Largura total do texto do `to_s` (`KeywordDocumentation.rb:189`). */
 const TEXT_WIDTH = 79;
 
 /**
- * Keywords de relatório que o Ruby lista à mão em `isProperty?`
- * (`KeywordDocumentation.rb:88-90`): elas não se incluem como atributo de si
- * mesmas, então a detecção automática não as pega.
+ * Report keywords the Ruby lists by hand in `isProperty?`
+ * (`KeywordDocumentation.rb:88-90`): they do not include themselves as an
+ * attribute of their own, so the automatic detection does not catch them.
  */
 const REPORT_PROPERTY_KEYWORDS = new Set([
   "accountreport",
@@ -81,10 +81,10 @@ const PROPERTY_CONTEXTS = new Set([
 ],);
 
 /**
- * Projeto vazio usado só para consultar os `PropertySet` de atributos
- * (`findPropertySet`). Criado uma vez por processo: o construtor de `Project`
- * registra todas as definições de atributo, que é justamente o que as
- * consultas de herança/lista precisam.
+ * Empty project used only to look up the attribute `PropertySet`s
+ * (`findPropertySet`). Created once per process: the `Project` constructor
+ * registers every attribute definition, which is exactly what the
+ * inheritance/list queries need.
  */
 let syntaxProjectCache: Project | null = null;
 
@@ -94,54 +94,54 @@ function syntaxProject(): Project {
 }
 
 /**
- * Documentação de uma keyword: sintaxe, argumentos, contexto, atributos
- * opcionais e vizinhos na ordem alfabética.
+ * Documentation of a keyword: syntax, arguments, context, optional attributes
+ * and neighbour in alphabetical order.
  */
 export class KeywordDocumentation {
-  /** Identificador único (`<scope>.<nome>` quando ambíguo). */
+  /** Unique identifier (`<scope>.<name>` when ambiguous). */
   readonly keyword: string;
-  /** Regularidade em que o pattern foi declarado. */
+  /** Regularity with which the pattern was declared. */
   readonly rule: Rule;
-  /** Pattern documentado. */
+  /** Documented pattern. */
   readonly pattern: Pattern;
-  /** Sintaxe expandida (`Pattern#to_syntax`). */
+  /** Expanded syntax (`Pattern#to_syntax`). */
   readonly syntax: string;
-  /** Documentação dos argumentos, na ordem do pattern. */
+  /** Argument documentation, in pattern order. */
   readonly args: TokenDoc[];
-  /** Patterns de atributos opcionais → `true` quando são de cenário. */
+  /** Optional attribute patterns → `true` when they are scenario-specific. */
   readonly optAttrPatterns: Map<Pattern, boolean>;
 
-  /** Nomes curtos (sem escopo) dos tokens terminais do pattern. */
+  /** Short (unscoped) names of the terminal tokens of the pattern. */
   names: string[] = [];
-  /** Documentação dos atributos opcionais (preenchida por `crossReference`). */
+  /** Optional attribute documentation (filled by `crossReference`). */
   optionalAttributes: KeywordDocumentation[] = [];
-  /** `true` quando o valor é específico de cenário. */
+  /** `true` when the value is scenario-specific. */
   scenarioSpecific = false;
-  /** `true` quando o valor pode ser herdado do escopo global. */
+  /** `true` when the value can be inherited from the global scope. */
   inheritedFromProject = false;
-  /** `true` quando o valor pode ser herdado da propriedade-pai. */
+  /** `true` when the value can be inherited from the parent property. */
   inheritedFromParent = false;
-  /** Keywords em que esta aparece como argumento/atributo. */
+  /** Keywords in which this one appears as an argument/attribute. */
   contexts: KeywordDocumentation[] = [];
-  /** Referências cruzadas declaradas com `seeAlso`. */
+  /** Cross references declared with `seeAlso`. */
   seeAlso: KeywordDocumentation[] = [];
-  /** Vizinho anterior na ordem alfabética (barra de navegação). */
+  /** Previous neighbour in alphabetical order (navigation bar). */
   predecessor: KeywordDocumentation | null = null;
-  /** Vizinho seguinte na ordem alfabética (barra de navegação). */
+  /** Next neighbour in alphabetical order (navigation bar). */
   successor: KeywordDocumentation | null = null;
-  /** Referências internas (`[[x]]`) encontradas no texto do manual. */
+  /** Internal references (`[[x]]`) found in the manual text. */
   references: string[] = [];
 
   private propertySetCache: PropertySet | null | undefined = undefined;
 
   /**
-   * Monta a documentação a partir do pattern já resolvido.
+   * Builds the documentation from the already resolved pattern.
    *
-   * @param rule regularidade que declarou o pattern.
-   * @param pattern pattern documentado (`doc`/`args` vêm dele).
-   * @param syntax sintaxe expandida (`Pattern#to_syntax`).
-   * @param args documentação dos argumentos, na ordem do pattern.
-   * @param optAttrPatterns atributos opcionais e se são de cenário.
+   * @param rule rule that declared the pattern.
+   * @param pattern documented pattern (`doc`/`args` come from it).
+   * @param syntax expanded syntax (`Pattern#to_syntax`).
+   * @param args argument documentation, in pattern order.
+   * @param optAttrPatterns optional attributes and their scenario-specificity.
    */
   constructor(
     rule: Rule,
@@ -158,25 +158,25 @@ export class KeywordDocumentation {
     this.optAttrPatterns = optAttrPatterns;
   }
 
-  /** Nome legível: `foo.bar` vira `foo (bar)`. */
+  /** Legible name: `foo.bar` becomes `foo (bar)`. */
   title(): string {
     const tokens = this.keyword.split(".",);
     return tokens.length === 1 ? this.keyword : `${tokens[0]} (${tokens[1]})`;
   }
 
-  /** `true` quando a keyword declara uma propriedade aninhável (task, …). */
+  /** `true` when the keyword declares a nestable property (task, …). */
   isProperty(): boolean {
     if (REPORT_PROPERTY_KEYWORDS.has(this.keyword,)) return true;
     return this.optionalAttributes.includes(this,);
   }
 
-  /** `true` quando a keyword pode aparecer fora de qualquer contexto. */
+  /** `true` when the keyword may appear outside of any context. */
   globalScope(): boolean {
     if (this.contexts.length === 0) return true;
     return this.contexts.some((context,) => context.keyword === "properties");
   }
 
-  /** `true` quando o atributo é do tipo lista. */
+  /** `true` when the attribute is of list type. */
   listAttribute(): boolean {
     const propertySet = this.findPropertySet();
     if (propertySet === null) return false;
@@ -186,7 +186,7 @@ export class KeywordDocumentation {
     return propertySet.listAttribute?.(keyword,) ?? false;
   }
 
-  /** Define as flags de herança a partir do `PropertySet` do contexto. */
+  /** Sets the inheritance flags from the context `PropertySet`. */
   computeInheritance(): void {
     const propertySet = this.findPropertySet();
     if (propertySet === null) return;
@@ -200,10 +200,10 @@ export class KeywordDocumentation {
   }
 
   /**
-   * Segunda passada: nomes curtos, contextos, atributos opcionais e `seeAlso`.
+   * Second pass: short names, contexts, optional attributes and `seeAlso`.
    *
-   * `warnings` recebe os mesmos avisos que o Ruby escreve em `$stderr`
-   * (atributo opcional não documentado) para o consumidor decidir o destino.
+   * `warnings` receives the same warnings the Ruby writes to `$stderr`
+   * (undocumented optional attribute) so the consumer decides the destination.
    */
   crossReference(
     keywords: Map<string, KeywordDocumentation>,
@@ -249,10 +249,10 @@ export class KeywordDocumentation {
     for (const also of [...this.pattern.seeAlso,].sort()) {
       const kwd = keywords.get(also,);
       if (kwd === undefined) {
-        // Divergência consciente: o Ruby levanta aqui. O port da gramática
-        // (Fase 10) declara `seeAlso` para keywords que não foram
-        // documentadas, então o aviso substitui a exceção — mesmo critério da
-        // keyword duplicada em `SyntaxReference`.
+        // Deliberate divergence: Ruby raises here. The grammar port (phase 10)
+        // declares `seeAlso` for keywords that were not documented, so the
+        // warning replaces the exception — same criterion as the duplicated
+        // keyword in `SyntaxReference`.
         warnings.push(
           `See also reference ${also} of ${this.pattern.keyword} is unknown`,
         );
@@ -263,9 +263,9 @@ export class KeywordDocumentation {
   }
 
   /**
-   * Documentação em texto puro (o `to_s` do Ruby).
+   * Plain-text documentation (the Ruby `to_s`).
    *
-   * @param color pinta os rótulos com ANSI (`--no-color` desliga).
+   * @param color paints the labels with ANSI (`--no-color` turns it off).
    */
   toText(color = false,): string {
     let str = `${blue("Keyword:", color,)}     ${bold(this.keyword, color,)}${
@@ -288,7 +288,7 @@ export class KeywordDocumentation {
       );
     }
 
-    // Keyword removida: nada além do aviso (Ruby l.215).
+    // Removed keyword: nothing beyond the warning (Ruby l.215).
     if (this.pattern.supportLevel === "removed") return str;
 
     str += `${blue("Purpose:", color,)}     ${
@@ -356,9 +356,9 @@ export class KeywordDocumentation {
   }
 
   /**
-   * Página HTML desta keyword (`<keyword>.html`), como string.
+   * HTML page of this keyword (`<keyword>.html`), as a string.
    *
-   * @param manual documento que fornece cabeçalho/rodapé/navegação/estilos.
+   * @param manual document that provides the header/footer/navigation/styles.
    */
   toHTML(manual: ManualPageContext,): string {
     const html = new HTMLDocument();
@@ -401,13 +401,13 @@ export class KeywordDocumentation {
 
   // --- Texto puro -----------------------------------------------------------
 
-  /** Propósito em texto puro (o `Purpose` do `to_s`, sem rótulo). */
+  /** Plain-text purpose (the `to_s` `Purpose`, without a label). */
   purposeText(): string {
     if (this.pattern.doc === null) return "";
     return this.newRichText(this.pattern.doc,).to_s();
   }
 
-  /** Linhas da seção `Arguments:` já indentadas pelo nome do argumento. */
+  /** Lines of the `Arguments:` section, already indented by the argument name. */
   private argumentsText(): string {
     let out = "";
     for (const arg of this.args) {
@@ -434,7 +434,7 @@ export class KeywordDocumentation {
     return out;
   }
 
-  /** Lista de atributos com as marcas `[sc]`/`[ig]`/`[ip]`. */
+  /** List of attributes with the `[sc]`/`[ig]`/`[ip]` markers. */
   private attributesText(
     color: boolean,
   ): { text: string; showLegend: boolean } {
@@ -485,7 +485,7 @@ export class KeywordDocumentation {
     return new TextFormatter(80, width,).indent(str,).slice(width,);
   }
 
-  /** Texto do aviso de nível de suporte (`KeywordDocumentation.rb:698-717`). */
+  /** Text of the support-level warning (`KeywordDocumentation.rb:698-717`). */
   private supportLevelMessage(): string {
     switch (this.pattern.supportLevel) {
       case "experimental":
@@ -511,7 +511,7 @@ export class KeywordDocumentation {
 
   // --- HTML -----------------------------------------------------------------
 
-  /** Barra de navegação desta página (predecessor/sucessor). */
+  /** Navigation bar of this page (predecessor/successor). */
   private navigationBar(
     manual: ManualPageContext,
   ): XMLElementLike {
@@ -523,7 +523,7 @@ export class KeywordDocumentation {
     );
   }
 
-  /** Caixa com o nome da keyword (e a marca de list attribute). */
+  /** Box with the keyword name (and the list attribute marker). */
   private keywordBox(): XMLElement {
     return new P({}, () => [
       new TABLE({ align: "center", class: "table", }, () => [
@@ -543,7 +543,7 @@ export class KeywordDocumentation {
     ],);
   }
 
-  /** Aviso de nível de suporte (ou `null` quando `supported`). */
+  /** Support-level warning (or `null` when `supported`). */
   private supportLevelBox(): XMLElement[] | null {
     if (this.pattern.supportLevel === "supported") return null;
     const message = this.newRichText(
@@ -609,7 +609,7 @@ export class KeywordDocumentation {
     ],);
   }
 
-  /** Linhas de `Arguments` (o `rowspan` é do primeiro argumento). */
+  /** `Arguments` lines (the `rowspan` belongs to the first argument). */
   private argumentsLine(): XMLElement[] {
     if (this.syntax === "[{ <attributes> }]") return [];
     if (this.args.length === 0) {
@@ -648,7 +648,7 @@ export class KeywordDocumentation {
     return rows;
   }
 
-  /** Linha de `Context` (ou `Global scope` com link para a introdução). */
+  /** `Context` row (or `Global scope` with a link to the introduction). */
   private contextLine(): XMLElement {
     const parts: Array<XMLElement | string> = [];
     for (const context of this.contexts) {
@@ -673,7 +673,7 @@ export class KeywordDocumentation {
     return this.tableLine("Context", description,);
   }
 
-  /** Linha de `See also` (omitida quando não há referências). */
+  /** `See also` row (omitted when there are no references). */
   private alsoLine(): XMLElement | null {
     if (this.seeAlso.length === 0) return null;
     const parts: Array<XMLElement | string> = [];
@@ -692,7 +692,7 @@ export class KeywordDocumentation {
     return this.tableLine("See also", parts,);
   }
 
-  /** Caixa de atributos opcionais (lista simples ou tabela com marcas). */
+  /** Box of optional attributes (plain list or table with markers). */
   private optionalAttributesBox(): XMLElement | null {
     if (this.pattern.supportLevel === "removed") return null;
     if (this.optionalAttributes.length === 0) return null;
@@ -792,7 +792,7 @@ export class KeywordDocumentation {
     ],);
   }
 
-  /** Caixa `<pre class="code">` com o exemplo anotado da keyword. */
+  /** `<pre class="code">` box with the annotated example of the keyword. */
   private exampleBox(
     manual: ManualPageContext,
   ): XMLElement | null {
@@ -809,7 +809,7 @@ export class KeywordDocumentation {
     );
   }
 
-  /** Uma linha `tag`/`descr` da tabela de descrição. */
+  /** One `tag`/`descr` row of the description table. */
   private tableLine(
     column1: string | null,
     column2: XMLElement | string | Array<XMLElement | string> | null,
@@ -833,7 +833,10 @@ export class KeywordDocumentation {
 
   // --- Auxiliares -----------------------------------------------------------
 
-  /** `RichText` sem handlers de função, como no Ruby (`RichText.new(text, [])`). */
+  /**
+   * `RichText` without function handlers, as in Ruby
+   * (`RichText.new(text, [])`).
+   */
   private newRichText(text: string,): RichTextIntermediate {
     const richText = new RichText(text, [],);
     const intermediate = richText.generateIntermediateFormat();
@@ -844,7 +847,7 @@ export class KeywordDocumentation {
     return intermediate;
   }
 
-  /** Reescreve uma referência não documentada (só avisa e devolve `false`). */
+  /** Rewrites an undocumented reference (only warns and returns `false`). */
   private checkReference(pattern: Pattern, warnings: string[],): boolean {
     if (pattern.keyword === null) {
       warnings.push(

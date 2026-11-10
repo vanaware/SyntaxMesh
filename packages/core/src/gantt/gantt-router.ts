@@ -1,23 +1,23 @@
 /**
- * GanttRouter (Fase 15.3) — roteia as linhas de dependência do Gantt.
+ * GanttRouter (phase 15.3) — routes the dependency lines of the Gantt chart.
  *
- * Port fiel de `docs/taskjuggler/lib/taskjuggler/reports/GanttRouter.rb`.
+ * Faithful port of `docs/taskjuggler/lib/taskjuggler/reports/GanttRouter.rb`.
  *
- * O chart é uma área retangular `width` × `height`. Cada elemento gráfico
- * registra "don't-cross-zones" (`addZone`) que bloqueiam linhas horizontais,
- * verticais ou ambas. `route()` devolve um caminho ortogonal (nunca diagonal)
- * de `[x, y]` pontos, começando no início e terminando no fim.
+ * The chart is a rectangular `width` × `height` area. Each graphic element
+ * registers "don't-cross-zones" (`addZone`) that block horizontal lines,
+ * vertical lines or both. `route()` returns an orthogonal path (never diagonal)
+ * of `[x, y]` points, starting at the source and ending at the target.
  *
- * ## Comportamentos estranhos do Ruby (cheat sheet §12)
+ * ## Odd Ruby behaviours (cheat sheet §12)
  *
- * - **Categoria A** — `Math.asin(PI/2 - sinus)` no ramo `adjLeg < 0` sai do
- *   domínio de `asin` e levanta `Math::DomainError` no Ruby. Corrigido com
- *   clamp do argumento: idêntico a todos os casos em que o Ruby funciona.
- * - **Categoria A** — os `raise "Routing failed" unless ySeg|x1|x2` são
- *   inalcançáveis: `placeLine` sempre devolve um inteiro.
- * - **Categoria B** — no ramo horizontal de `addLineTo` o Ruby testa
- *   `x1 >= @height` (provável typo de `y1 >= @height`), o que descarta zonas
- *   legítimas. Replicado sob `compat.keepRubyBugs`.
+ * - **Category A** — `Math.asin(PI/2 - sinus)` in the `adjLeg < 0` branch leaves
+ *   the domain of `asin` and raises `Math::DomainError` in Ruby. Fixed by
+ *   clamping the argument: identical to every case where Ruby works.
+ * - **Category A** — the `raise "Routing failed" unless ySeg|x1|x2` guards are
+ *   unreachable: `placeLine` always returns an integer.
+ * - **Category B** — in the horizontal branch of `addLineTo` Ruby tests
+ *   `x1 >= @height` (likely a typo for `y1 >= @height`), which discards
+ *   legitimate zones. Replicated under `compat.keepRubyBugs`.
  *
  * @see docs/syntaxmesh/decisoes/028-gantt-html-css.md (ADR 028)
  * @see docs/syntaxmesh/fases/fase-15-gantt.md (15.3)
@@ -26,18 +26,18 @@ import { compat, } from "../compat.ts";
 import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 import { CollisionDetector, type LineSegment, } from "./collision-detector.ts";
 
-/** Distância mínima entre o ponto inicial e a primeira curva. */
+/** Minimum distance between the start point and the first bend. */
 export const MinStartGap = 5;
-/** Distância mínima entre a última curva e a ponta da seta. */
+/** Minimum distance between the last bend and the arrow tip. */
 export const MinEndGap = 10;
 
-/** Ponto do caminho roteado. */
+/** One point of a routed path. */
 export type RoutePoint = [number, number,];
 
-/** Tupla `[startX, startY, endX, endY, id?]` aceita por `routeLines`. */
+/** `[startX, startY, endX, endY, id?]` tuple accepted by `routeLines`. */
 export type FromToPoint = [number, number, number, number, number?,];
 
-/** Rota em processamento (equivalente ao Hash do Ruby). */
+/** Route being processed (equivalent to the Ruby Hash). */
 interface RouteDef {
   readonly startX: number;
   readonly startY: number;
@@ -49,10 +49,20 @@ interface RouteDef {
 }
 
 /**
- * Contrato mínimo consumido pelos elementos do Gantt. Em Ruby eles recebem o
- * `GanttRouter` e chamam apenas `addZone`.
+ * Minimal contract consumed by the Gantt elements. In Ruby they receive the
+ * `GanttRouter` and call only `addZone`.
  */
 export interface ZoneRouter {
+  /**
+   * Registers an area the routed lines must not cross.
+   *
+   * @param x Left offset of the area, in pixels.
+   * @param y Top offset of the area, in pixels.
+   * @param w Width of the area, in pixels.
+   * @param h Height of the area, in pixels.
+   * @param horiz Whether horizontal lines are blocked.
+   * @param vert Whether vertical lines are blocked.
+   */
   addZone(
     x: number,
     y: number,
@@ -63,19 +73,34 @@ export interface ZoneRouter {
   ): void;
 }
 
-/** Roteador de linhas de dependência sobre uma área `width` × `height`. */
+/** Router of dependency lines over a `width` × `height` area. */
 export class GanttRouter implements ZoneRouter {
   private readonly width: number;
   private readonly height: number;
   private readonly detector: CollisionDetector;
 
+  /**
+   * Creates a router for a chart of the given size.
+   *
+   * @param width Width of the routed area, in pixels.
+   * @param height Height of the routed area, in pixels.
+   */
   constructor(width: number, height: number,) {
     this.width = Math.trunc(width,);
     this.height = Math.trunc(height,);
     this.detector = new CollisionDetector(this.width, this.height,);
   }
 
-  /** Registra uma área que as linhas não podem cruzar (Ruby `addZone`). */
+  /**
+   * Registers an area the lines must not cross (Ruby `addZone`).
+   *
+   * @param x Left offset of the area, in pixels.
+   * @param y Top offset of the area, in pixels.
+   * @param w Width of the area, in pixels.
+   * @param h Height of the area, in pixels.
+   * @param horiz Whether horizontal lines are blocked.
+   * @param vert Whether vertical lines are blocked.
+   */
   addZone(
     x: number,
     y: number,
@@ -88,9 +113,13 @@ export class GanttRouter implements ZoneRouter {
   }
 
   /**
-   * Roteia um lote de setas. A ordem é determinística: ângulo decrescente em
-   * buckets de 5 graus e, dentro do bucket, distância decrescente (Ruby
+   * Routes a batch of arrows. The order is deterministic: decreasing angle in
+   * buckets of 5 degrees and, inside a bucket, decreasing distance (Ruby
    * `routeLines`).
+   *
+   * @param fromToPoints Arrows to route, as `[startX, startY, endX, endY, id?]`.
+   * @returns One orthogonal path of `[x, y]` points per arrow, in the same
+   * order as the input after sorting.
    */
   routeLines(fromToPoints: readonly FromToPoint[],): RoutePoint[][] {
     const routes: RouteDef[] = fromToPoints.map((t,) => ({
@@ -107,13 +136,13 @@ export class GanttRouter implements ZoneRouter {
       const adjLeg = (r.endX - MinEndGap) - (r.startX + MinStartGap);
       const oppLeg = Math.abs(r.startY - r.endY,);
       r.distance = Math.sqrt(adjLeg ** 2 + oppLeg ** 2,);
-      // Seno do ângulo entre a vertical pelo fim da tarefa e a reta
-      // início→fim; convertido para graus (0–90).
+      // Sine of the angle between the vertical through the task end and the
+      // start→end line; converted to degrees (0–90).
       const sinus = Math.abs(oppLeg,) / r.distance;
       if (adjLeg < 0) {
-        // RUBY-COMPAT-FIX: o Ruby usa asin(PI/2 - sinus), cujo argumento sai
-        // de [-1, 1] e levanta Math::DomainError. O clamp mantém o mesmo
-        // resultado em todos os casos em que o Ruby não quebra.
+        // RUBY-COMPAT-FIX: Ruby uses asin(PI/2 - sinus), whose argument leaves
+        // [-1, 1] and raises Math::DomainError. The clamp keeps the same result
+        // in every case where Ruby does not break.
         const arg = Math.min(1, Math.max(-1, Math.PI / 2 - sinus,),);
         r.angle = (Math.PI / 2 + Math.asin(arg,)) / (Math.PI / (2 * 90));
       } else {
@@ -122,7 +151,7 @@ export class GanttRouter implements ZoneRouter {
     }
 
     routes.sort((r1, r2,) => {
-      // Ruby: -(r1 <=> r2) → ordem decrescente nos dois critérios.
+      // Ruby: -(r1 <=> r2) → descending order on both criteria.
       if (Math.trunc(r1.angle / 5,) === Math.trunc(r2.angle / 5,)) {
         return r2.distance - r1.distance;
       }
@@ -133,9 +162,15 @@ export class GanttRouter implements ZoneRouter {
   }
 
   /**
-   * Caminho ortogonal de `(startX, startY)` a `(endX, endY)`. Tenta uma rota
-   * direta em 3 pontos; se o corredor não couber ou estiver bloqueado, usa a
-   * rota em 6 pontos (Ruby `route`).
+   * Orthogonal path from `(startX, startY)` to `(endX, endY)`. It tries a
+   * direct 3-point route; when the corridor does not fit or is blocked, it
+   * falls back to the 6-point route (Ruby `route`).
+   *
+   * @param startX X coordinate the path starts at.
+   * @param startY Y coordinate the path starts at.
+   * @param endX X coordinate the path ends at.
+   * @param endY Y coordinate the path ends at.
+   * @returns The waypoints of the orthogonal path, first point first.
    */
   route(
     startX: number,
@@ -152,8 +187,8 @@ export class GanttRouter implements ZoneRouter {
         startX + MinStartGap,
         1,
       );
-      // Ruby: `if xSeg && xSeg < endX - endGap`. `placeLine` nunca devolve
-      // nil e 0 é truthy no Ruby, então resta apenas a comparação.
+      // Ruby: `if xSeg && xSeg < endX - endGap`. `placeLine` never returns nil
+      // and 0 is truthy in Ruby, so only the comparison remains.
       if (xSeg < endX - MinEndGap) {
         this.addLineTo(points, xSeg, startY,);
         this.addLineTo(points, xSeg, endY,);
@@ -162,8 +197,8 @@ export class GanttRouter implements ZoneRouter {
       }
     }
 
-    // Rota complexa: desce/sobe até uma linha livre, anda na horizontal e
-    // desce/sobe até o destino.
+    // Complex route: walk up/down to a free line, move horizontally and then
+    // walk down/up to the target.
     const deltaY = startY < endY ? 1 : -1;
     const ySeg = this.placeLine(
       [0, this.width - 1,],
@@ -171,8 +206,8 @@ export class GanttRouter implements ZoneRouter {
       startY + 2 * deltaY,
       deltaY,
     );
-    // RUBY-COMPAT-DOC: os `raise "Routing failed"` do Ruby são inalcançáveis
-    // porque `placeLine` sempre devolve um inteiro.
+    // RUBY-COMPAT-DOC: the Ruby `raise "Routing failed"` guards are unreachable
+    // because `placeLine` always returns an integer.
     const x1 = this.placeLine(
       [startY + deltaY, ySeg,],
       false,
@@ -197,15 +232,26 @@ export class GanttRouter implements ZoneRouter {
     return points;
   }
 
-  /** Bloqueios verticais serializados como linhas brancas (debug). */
+  /**
+   * Serializes the vertical blocks as white lines (debug).
+   *
+   * @returns The white lines representing the vertical blocks.
+   */
   to_html(): XMLElementLike[] {
     return this.detector.to_html();
   }
 
   /**
-   * Primeira coordenada livre para `segment` na linha/coluna `start`, andando
-   * por `delta`. Devolve a borda da área se nada estiver livre (Ruby
+   * First free coordinate for `segment` on line/column `start`, walking by
+   * `delta`. Returns the border of the area when nothing is free (Ruby
    * `placeLine`).
+   *
+   * @param segment Segment that would be drawn.
+   * @param horizontal Whether the line is horizontal.
+   * @param start Coordinate to start the search from.
+   * @param delta Step applied on each try (must not be 0).
+   * @returns The first free coordinate, or the border of the area.
+   * @throws Error When `delta` is 0.
    */
   private placeLine(
     segment: LineSegment,
@@ -220,7 +266,7 @@ export class GanttRouter implements ZoneRouter {
     const max = (horizontal ? this.height : this.width) - 1;
     if (pos > max) pos = max;
 
-    // Ruby `segment.sort!` — o segmento precisa estar em ordem crescente.
+    // Ruby `segment.sort!` — the segment must be in ascending order.
     segment.sort((a, b,) => a - b);
 
     while (this.detector.collision(pos, segment, horizontal,)) {
@@ -235,8 +281,13 @@ export class GanttRouter implements ZoneRouter {
   }
 
   /**
-   * Anexa um waypoint e marca uma zona de 2px de cada lado do segmento, para
-   * evitar linhas paralelas coladas (Ruby `addLineTo`).
+   * Appends a waypoint and marks a 2px zone on each side of the segment, so
+   * that parallel lines do not stick together (Ruby `addLineTo`).
+   *
+   * @param points Waypoints collected so far.
+   * @param x2 X coordinate of the new waypoint.
+   * @param y2 Y coordinate of the new waypoint.
+   * @throws Error When `points` is empty.
    */
   private addLineTo(points: RoutePoint[], x2: number, y2: number,): void {
     if (points.length === 0) {
@@ -247,15 +298,15 @@ export class GanttRouter implements ZoneRouter {
     points.push([x2, y2,],);
 
     if (x1 === x2) {
-      // Linha vertical.
+      // Vertical line.
       if (x1 < 0 || x1 >= this.width) return;
       const [x, y, w, h,] = justify(x1 - 2, y1, 5, y2 - y1 + 1,);
       this.addZone(x, y, w, h, false, true,);
     } else {
-      // Linha horizontal.
+      // Horizontal line.
       if (compat.keepRubyBugs) {
-        // RUBY-COMPAT: o Ruby testa `x1 >= @height` (typo de `y1 >= @height`),
-        // descartando zonas horizontais legítimas e alterando o roteamento.
+        // RUBY-COMPAT: Ruby tests `x1 >= @height` (typo for `y1 >= @height`),
+        // discarding legitimate horizontal zones and changing the routing.
         if (y1 < 0 || x1 >= this.height) return;
       } else {
         if (y1 < 0 || y1 >= this.height) return;
@@ -267,8 +318,14 @@ export class GanttRouter implements ZoneRouter {
 }
 
 /**
- * Normaliza um retângulo para coordenadas positivas (Ruby `justify`). Note
- * que `x` usa o `w` já positivado.
+ * Normalizes a rectangle to positive coordinates (Ruby `justify`). Note that
+ * `x` uses the already positive `w`.
+ *
+ * @param x Left offset of the rectangle.
+ * @param y Top offset of the rectangle.
+ * @param w Width; a negative value flips the rectangle horizontally.
+ * @param h Height; a negative value flips the rectangle vertically.
+ * @returns The normalized `[x, y, w, h]` tuple with non-negative sizes.
  */
 export function justify(
   x: number,

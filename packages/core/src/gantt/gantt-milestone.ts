@@ -1,7 +1,7 @@
 /**
- * GanttMilestone (Fase 15.5) — losango de um marco.
+ * GanttMilestone (phase 15.5) — the diamond of a milestone.
  *
- * Port fiel de `docs/taskjuggler/lib/taskjuggler/reports/GanttMilestone.rb`.
+ * Faithful port of `docs/taskjuggler/lib/taskjuggler/reports/GanttMilestone.rb`.
  *
  * @see docs/syntaxmesh/decisoes/028-gantt-html-css.md (ADR 028)
  * @see docs/syntaxmesh/fases/fase-15-gantt.md (15.5)
@@ -10,54 +10,78 @@ import { diamondToHTML, rectToHTML, } from "./html-graphics.ts";
 import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 import type { ZoneRouter, } from "./gantt-router.ts";
 
-/** Meia-largura/altura do losango, em pixels. */
+/** Half width/height of the diamond, in pixels. */
 const SIZE = 6;
 
-/** Marco (milestone) no Gantt. */
+/** A milestone on the Gantt chart. */
 export class GanttMilestone {
-  /** Ruby `@@size`: distância do centro às pontas do losango. */
-  static readonly SIZE = SIZE;
+  /** Ruby `@@size`: distance from the centre to the tips of the diamond. */
+  static readonly SIZE: number = SIZE;
 
   private readonly lineHeight: number;
   private readonly x: number;
   private readonly y: number;
 
+  /**
+   * Creates a milestone marker.
+   *
+   * @param lineHeight Height of the chart line the marker sits in, in pixels.
+   * @param x Horizontal centre of the diamond, in pixels.
+   * @param y Top offset of the chart line, in pixels.
+   */
   constructor(lineHeight: number, x: number, y: number,) {
     this.lineHeight = lineHeight;
     this.x = x;
     this.y = y;
   }
 
-  /** Ponto onde as linhas de dependência que **saem** do início nascem. */
+  /**
+   * Where dependency lines leaving the start of the milestone begin.
+   *
+   * @returns The `[x, y]` anchor point of the arrows.
+   */
   startDepLineStart(): [number, number,] {
     return [this.x + SIZE, this.y + Math.trunc(this.lineHeight / 2,),];
   }
 
-  /** Ponto onde as linhas de dependência que **chegam** ao início terminam. */
+  /**
+   * Where dependency lines arriving at the start of the milestone end.
+   *
+   * @returns The `[x, y]` anchor point of the arrows.
+   */
   startDepLineEnd(): [number, number,] {
     return [this.x - SIZE, this.y + Math.trunc(this.lineHeight / 2,),];
   }
 
-  /** Ponto onde as linhas de dependência que **saem** do fim nascem. */
+  /**
+   * Where dependency lines leaving the end of the milestone begin.
+   *
+   * @returns The `[x, y]` anchor point of the arrows.
+   */
   endDepLineStart(): [number, number,] {
     return [this.x + SIZE, this.y + Math.trunc(this.lineHeight / 2,),];
   }
 
   /**
-   * Ponto onde as linhas de dependência que **chegam** ao fim terminam.
+   * Where dependency lines arriving at the end of the milestone end.
    *
-   * RUBY-COMPAT-DOC: o Ruby usa `@x + @@size` (mesma ponta direita do
-   * losango que `startDepLineStart`), não `@x - @@size`. Mantido para
-   * paridade de output.
+   * RUBY-COMPAT-DOC: Ruby uses `@x + @@size` (the same right tip of the diamond
+   * as `startDepLineStart`), not `@x - @@size`. Kept for output parity.
+   *
+   * @returns The `[x, y]` anchor point of the arrows.
    */
   endDepLineEnd(): [number, number,] {
     return [this.x + SIZE, this.y + Math.trunc(this.lineHeight / 2,),];
   }
 
-  /** Marca as zonas que o roteador não pode cruzar (Ruby `addBlockedZones`). */
+  /**
+   * Marks the zones the router cannot cross (Ruby `addBlockedZones`).
+   *
+   * @param router Router receiving the blocked rectangles.
+   */
   addBlockedZones(router: ZoneRouter,): void {
     const centerY = this.y + Math.trunc(this.lineHeight / 2,);
-    // Área do losango.
+    // Area of the diamond.
     router.addZone(
       this.x - SIZE - 2,
       centerY - SIZE - 2,
@@ -66,15 +90,19 @@ export class GanttMilestone {
       true,
       true,
     );
-    // Bloqueio da ponta da seta.
+    // Blocks the arrow tip.
     router.addZone(this.x - SIZE - 9, centerY - 7, 10, 15, true, true,);
   }
 
-  /** Converte o marco abstrato em `<div>`s (Ruby `to_html`). */
+  /**
+   * Converts the abstract milestone into `<div>`s (Ruby `to_html`).
+   *
+   * @returns The invisible frame that triggers the tooltip, plus the diamond.
+   */
   to_html(): XMLElementLike[] {
     const html: XMLElementLike[] = [];
 
-    // Moldura invisível que dispara os tooltips.
+    // Invisible frame that triggers the tooltips.
     const half = Math.trunc(this.lineHeight / 2,);
     html.push(
       rectToHTML(
@@ -86,7 +114,7 @@ export class GanttMilestone {
       ),
     );
 
-    // Losango (dois `<div>` sobrepostos).
+    // Diamond (two overlapping `<div>`s).
     html.push(...diamondToHTML(this.x, half,),);
 
     return html;

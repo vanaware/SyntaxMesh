@@ -1,15 +1,17 @@
 /**
- * richTextToMarkdown — conversor one-way de RichText (MediaWiki) para Markdown
- * (Fase 13.10).
+ * richTextToMarkdown — one-way converter from RichText (MediaWiki) to Markdown
+ * (phase 13.10).
  *
- * Recebe markup RichText como string, cria um `RichTextIntermediate` via a
- * fábrica da Fase 12, e chama `to_markdown()` na árvore resultante. O output é
- * Markdown com extensões preservadas (`<fcol:…>`, `[[func:…]]`, `<-…->`).
+ * Receives RichText markup as a string, creates a `RichTextIntermediate` via the
+ * phase 12 factory, and calls `to_markdown()` on the resulting tree. The output
+ * is Markdown with the extensions preserved (`<fcol:…>`, `[[func:…]]`,
+ * `<-…->`).
  *
- * Não é round-trip garantido: RichText tem constructs sem equivalente
- * Markdown direto (ex.: `__NOEDITSECTION__`). A conversão é melhor-esforço.
+ * Round-trip is not guaranteed: RichText has constructs without a direct
+ * Markdown equivalent (e.g. `__NOEDITSECTION__`). The conversion is
+ * best-effort.
  *
- * @see ADR 026 (Markdown como formato going-forward)
+ * @see ADR 026 (Markdown as the going-forward format)
  * @see docs/syntaxmesh/fases/fase-13-markdown.md (13.10)
  */
 
@@ -17,15 +19,15 @@ import { RichText, } from "../richtext/rich-text.ts";
 import { RTFHandlers, } from "../richtext/handlers/rtf-handlers.ts";
 import type { RichTextIntermediate, } from "../richtext/rich-text-intermediate.ts";
 
-/** Regex: 3+ quebras de linha consecutivas. */
+/** Regex: 3+ consecutive line breaks. */
 const MULTI_NL = new RegExp("\\n{3,}", "g",);
 
 /**
- * Converte markup RichText para Markdown.
+ * Converts RichText markup to Markdown.
  *
- * @param richText markup MediaWiki/TaskJuggler (string).
- * @param header se `true`, prefixa `<!-- converted from RichText -->`.
- * @returns Markdown com extensões preservadas.
+ * @param richText MediaWiki/TaskJuggler markup (string).
+ * @param header if `true`, prefixes `<!-- converted from RichText -->`.
+ * @returns Markdown with the extensions preserved.
  */
 export function richTextToMarkdown(
   richText: string,

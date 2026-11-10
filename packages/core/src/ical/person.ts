@@ -1,15 +1,23 @@
 /**
- * Person — port de `ICalendar::Person` (Fase 17.5).
+ * Person — port of `ICalendar::Person` (Phase 17.5).
  *
- * No Ruby é um `Struct.new(:name, :email)`: um simples par nome/email usado
- * nos campos ORGANIZER e ATTENDEE dos componentes.
+ * In Ruby it is a `Struct.new(:name, :email)`: a simple name/email pair used in
+ * the ORGANIZER and ATTENDEE fields of the components.
  *
  * @see docs/taskjuggler/lib/taskjuggler/ICalendar.rb:28
  */
 export class Person {
+  /** Display name of the person. */
   readonly name: string;
+  /** Email address of the person. */
   readonly email: string;
 
+  /**
+   * Creates a person.
+   *
+   * @param name Display name.
+   * @param email Email address.
+   */
   constructor(name: string, email: string,) {
     this.name = name;
     this.email = email;

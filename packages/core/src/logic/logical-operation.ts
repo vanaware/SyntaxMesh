@@ -1,16 +1,16 @@
 /**
- * LogicalOperation — nó de avaliação de expressões lógicas (Fase 11.1).
+ * LogicalOperation — evaluation node of logical expressions (phase 11.1).
  *
- * Port fiel de `LogicalOperation.rb`. É o bloco de construção das
- * `LogicalExpression`: tem um `operand1`, um `operator` opcional e um
- * `operand2` opcional. Os operandos podem ser outros `LogicalOperation`,
- * folhas (`LogicalAttribute`/`LogicalFlag`/`LogicalFunction`) ou valores
- * primitivos (`TjTime`/number/string) embrulhados numa operação sem operador.
+ * Faithful port of `LogicalOperation.rb`. It is the building block of
+ * `LogicalExpression`: it holds an `operand1`, an optional `operator` and an
+ * optional `operand2`. Operands may be other `LogicalOperation` nodes, leaves
+ * (`LogicalAttribute`/`LogicalFlag`/`LogicalFunction`) or primitive values
+ * (`TjTime`/number/string) wrapped in a node without an operator.
  *
- * Convenções (ADR 024):
- *  - Sem precedência: a árvore é associativa à esquerda.
- *  - `&` e `|` são lazy (short-circuit) — usamos `&&`/`||` do TS.
- *  - Coerção de comparação binária é feita pelo tipo do `operand1`.
+ * Conventions (ADR 024):
+ *  - No precedence: the tree is left-associative.
+ *  - `&` and `|` are lazy (short-circuit) — implemented with `&&`/`||`.
+ *  - The coercion of a binary comparison is driven by the type of `operand1`.
  *
  * @see docs/taskjuggler/lib/taskjuggler/LogicalOperation.rb
  */
@@ -19,15 +19,26 @@ import type { RichTextIntermediate, } from "../attributes/rich/rich-text-port.ts
 import type { Query, } from "../query/query.ts";
 import type { LogicalExpression, } from "./logical-expression.ts";
 
-/** Valor resultante da coerção para comparação binária ordenável. */
+/** Result of the coercion used by ordered binary comparisons. */
 type Ordered = number | string | TjTime;
 
-/** Folhas/ramos que sabem se auto-avaliar dentro de uma expressão. */
+/** Leaves and branches able to evaluate themselves inside an expression. */
 interface Evaluable {
+  /**
+   * Evaluates the node inside the given expression context.
+   *
+   * @param expr Expression that owns the evaluation context.
+   * @returns The evaluated value.
+   */
   eval(expr: LogicalExpression,): unknown;
 }
 
-/** Node é avaliável quando expõe um método `eval`. */
+/**
+ * Tells whether a value is evaluable, i.e. exposes an `eval` method.
+ *
+ * @param x Value to test.
+ * @returns `true` when `x` exposes `eval`.
+ */
 function isEvaluable(x: unknown,): x is Evaluable {
   return (
     typeof x === "object" &&
@@ -36,7 +47,12 @@ function isEvaluable(x: unknown,): x is Evaluable {
   );
 }
 
-/** Objeto com `to_s()` e `richText` — detecta RichTextIntermediate duck-typed. */
+/**
+ * Detects a `RichTextIntermediate` by duck typing (`to_s()` plus `richText`).
+ *
+ * @param x Value to test.
+ * @returns `true` when `x` looks like a rich text intermediate.
+ */
 function isRichTextIntermediate(x: unknown,): x is RichTextIntermediate {
   return (
     typeof x === "object" &&
@@ -46,7 +62,14 @@ function isRichTextIntermediate(x: unknown,): x is RichTextIntermediate {
   );
 }
 
-/** Comparação de três vias para os tipos ordenáveis suportados. */
+/**
+ * Three-way comparison of the supported ordered types.
+ *
+ * @param a Left value.
+ * @param b Right value.
+ * @returns `-1`, `0` or `1` when `a` is lower than, equal to or greater
+ *   than `b`.
+ */
 function compareOrdered(a: Ordered, b: Ordered,): -1 | 0 | 1 {
   if (a instanceof TjTime && b instanceof TjTime) {
     return a.compareTo(b,);
@@ -59,12 +82,22 @@ function compareOrdered(a: Ordered, b: Ordered,): -1 | 0 | 1 {
   return as < bs ? -1 : as > bs ? 1 : 0;
 }
 
-/** Nó de operação de uma expressão lógica. */
+/** Operation node of a logical expression. */
 export class LogicalOperation {
+  /** First operand — a node, a leaf or a primitive value. */
   readonly operand1: unknown;
+  /** Second operand of a binary operation, or `null`. */
   operand2: unknown | null;
+  /** Comparison or logical operator, or `null` for a bare operand. */
   operator: string | null;
 
+  /**
+   * Creates the operation node.
+   *
+   * @param opnd1 First operand.
+   * @param operator Operator joining the operands, or `null`.
+   * @param opnd2 Second operand of a binary operation.
+   */
   constructor(
     opnd1: unknown,
     operator: string | null = null,
@@ -75,11 +108,17 @@ export class LogicalOperation {
     this.operand2 = opnd2;
   }
 
-  /** Auto-avaliação (sobrescrita pelas subclasses-folha). */
+  /**
+   * Evaluates the node (overridden by the leaf subclasses).
+   *
+   * @param expr Expression that owns the evaluation context.
+   * @returns The evaluated value.
+   * @throws TjError Through `expr.error` on unsupported operators or operands.
+   */
   eval(expr: LogicalExpression,): unknown {
     switch (this.operator) {
       case null: {
-        // Operando solto: nó se auto-avalia; primitivo passa direto.
+        // Bare operand: a node evaluates itself, a primitive passes through.
         return isEvaluable(this.operand1,)
           ? this.operand1.eval(expr,)
           : this.operand1;
@@ -131,14 +170,14 @@ export class LogicalOperation {
         }
       }
       case "&": {
-        // Lazy: segundo operando só é avaliado se o primeiro for true.
+        // Lazy: the second operand is only evaluated when the first is true.
         return (
           this.coerceBoolean(this.evalNode(this.operand1, expr,), expr,) &&
           this.coerceBoolean(this.evalNode(this.operand2, expr,), expr,)
         );
       }
       case "|": {
-        // Lazy: segundo operando só é avaliado se o primeiro for false.
+        // Lazy: the second operand is only evaluated when the first is false.
         return (
           this.coerceBoolean(this.evalNode(this.operand1, expr,), expr,) ||
           this.coerceBoolean(this.evalNode(this.operand2, expr,), expr,)
@@ -152,7 +191,13 @@ export class LogicalOperation {
     }
   }
 
-  /** Representação textual. Sem `query`, mostra nomes; com, mostra valores. */
+  /**
+   * Renders the operation as text.
+   *
+   * @param query Without a query it shows the names; with one it shows the
+   *   evaluated values.
+   * @returns The textual form of the operation.
+   */
   to_s(query: Query | null,): string {
     if (this.operator === null) {
       return this.operandToS(this.operand1, query,);
@@ -164,6 +209,11 @@ export class LogicalOperation {
     })`;
   }
 
+  /**
+   * Default string conversion (name-based) required by the JS runtime.
+   *
+   * @returns The textual form of the operation.
+   */
   toString(): string {
     if (this.operator === null) return String(this.operand1,);
     if (this.operator === "~") return `~${String(this.operand1,)}`;
@@ -172,12 +222,24 @@ export class LogicalOperation {
     }`;
   }
 
-  /** Avalia um operando (nó com `eval`) ou devolve o valor primitivo. */
+  /**
+   * Evaluates an operand, or returns the primitive value untouched.
+   *
+   * @param node Operand to evaluate.
+   * @param expr Expression that owns the evaluation context.
+   * @returns The evaluated value, or the primitive itself.
+   */
   private evalNode(node: unknown, expr: LogicalExpression,): unknown {
     return isEvaluable(node,) ? node.eval(expr,) : node;
   }
 
-  /** Converte um operando para texto no `to_s`. */
+  /**
+   * Converts an operand to text for `to_s`.
+   *
+   * @param operand Operand to render.
+   * @param query Optional evaluation context.
+   * @returns The textual form of the operand.
+   */
   private operandToS(operand: unknown, query: Query | null,): string {
     if (operand instanceof LogicalOperation) {
       return operand.to_s(query,);
@@ -192,7 +254,16 @@ export class LogicalOperation {
     return String(operand,);
   }
 
-  /** Avaliação de operador binário com coerção fornecida pelo chamador. */
+  /**
+   * Evaluates a binary comparison, coercing both operands with `coerce`.
+   *
+   * @param opnd1 Left operand.
+   * @param operator Comparison operator.
+   * @param opnd2 Right operand.
+   * @param coerce Coercion applied to both operands.
+   * @returns The boolean result of the comparison.
+   * @throws Error When the operator is not a comparison operator.
+   */
   private evalBinaryOperation(
     opnd1: unknown,
     operator: string | null,
@@ -220,7 +291,13 @@ export class LogicalOperation {
     }
   }
 
-  /** Força um valor para booleano (ADR 024 / 11.1.3.7). */
+  /**
+   * Forces a value to a boolean (ADR 024 / 11.1.3.7).
+   *
+   * @param val Value to coerce.
+   * @param expr Expression used to report errors.
+   * @returns The boolean value of `val`.
+   */
   private coerceBoolean(val: unknown, expr: LogicalExpression,): boolean {
     if (val === null || val === undefined) return false;
     if (typeof val === "boolean") return val;
@@ -230,7 +307,13 @@ export class LogicalOperation {
     return expr.error(`Operand ${String(val,)} can't be evaluated to boolean`,);
   }
 
-  /** Força um valor para número (11.1.3.8). */
+  /**
+   * Forces a value to a number (11.1.3.8).
+   *
+   * @param val Value to coerce.
+   * @param expr Expression used to report errors.
+   * @returns The numeric value of `val`.
+   */
   private coerceNumber(val: unknown, expr: LogicalExpression,): number {
     if (val === null || val === undefined) return 0;
     if (typeof val === "number") return val;
@@ -248,7 +331,13 @@ export class LogicalOperation {
     );
   }
 
-  /** Força um valor para string (11.1.3.9). */
+  /**
+   * Forces a value to a string (11.1.3.9).
+   *
+   * @param val Value to coerce.
+   * @param expr Expression used to report errors.
+   * @returns The string value of `val`.
+   */
   private coerceString(val: unknown, expr: LogicalExpression,): string {
     if (val === null || val === undefined) return "";
     if (typeof val === "string") return val;
@@ -266,7 +355,13 @@ export class LogicalOperation {
     );
   }
 
-  /** Força um valor para TjTime (11.1.3.10). */
+  /**
+   * Forces a value to a `TjTime` (11.1.3.10).
+   *
+   * @param val Value to coerce.
+   * @param expr Expression used to report errors.
+   * @returns The date value of `val`.
+   */
   private coerceTime(val: unknown, expr: LogicalExpression,): TjTime {
     if (val instanceof TjTime) return val;
     if (typeof val === "string") {

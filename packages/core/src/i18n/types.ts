@@ -1,15 +1,15 @@
 /**
- * Tipos do registro de idiomas (extensão SyntaxMesh — ADR 023).
+ * Types of the language registry (SyntaxMesh extension — ADR 023).
  *
- * O Core só conhece keywords canônicos (inglês). Cada idioma fornece
- * sinônimos locais; o scanner normaliza sinônimo → canônico ANTES do FSM,
- * mantendo o tipo de token inalterado ("ID").
+ * The core only knows canonical keywords (English). Each language supplies
+ * local synonyms; the scanner normalizes synonym → canonical BEFORE the FSM,
+ * keeping the token type unchanged ("ID").
  *
  * @see docs/syntaxmesh/04-linguagem-multilingue.md
  */
 import type { CanonicalKeyword, } from "./canonical.ts";
 
-/** Unidades canônicas de duração usadas em resoluções i18n. */
+/** Canonical duration units used in i18n resolutions. */
 export type CanonicalUnit =
   | "minute"
   | "hour"
@@ -19,14 +19,14 @@ export type CanonicalUnit =
   | "quarter"
   | "year";
 
-/** Definição completa de um idioma da linguagem TJP. */
+/** Full definition of a language of the TJP language. */
 export interface LanguageDefinition {
-  /** Identificador do idioma (ex.: 'en', 'pt-BR', 'es'). */
+  /** Identifier of the language (e.g. 'en', 'pt-BR', 'es'). */
   id: string;
-  /** Nome legível do idioma. */
+  /** Human-readable name of the language. */
   name: string;
-  /** canonical → sinônimos locais (incluindo o próprio canônico quando igual). */
+  /** canonical → local synonyms (including the canonical itself when equal). */
   keywords: Partial<Record<CanonicalKeyword, string[]>>;
-  /** unidade canônica → sinônimos (ex.: day → ['d', 'dia', 'dias']). */
+  /** canonical unit → synonyms (e.g. day → ['d', 'dia', 'dias']). */
   units: Partial<Record<CanonicalUnit, string[]>>;
 }

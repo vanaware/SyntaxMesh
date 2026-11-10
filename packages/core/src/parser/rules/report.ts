@@ -1,17 +1,16 @@
 /**
- * TjpSyntaxRules — bloco 3: reports (subfase 10.13).
+ * TjpSyntaxRules — block 3: reports (sub-phase 10.13).
  *
- * Port do bloco `report*` / `*Report*` / `column*` / `export` / `iCal` /
- * `niku` / `tagfile` / `statusSheet` / `timeSheet` de `TjpSyntaxRules.rb`.
+ * Port of the `report*` / `*Report*` / `column*` / `export` / `iCal` /
+ * `niku` / `tagfile` / `statusSheet` / `timeSheet` block of `TjpSyntaxRules.rb`.
  *
- * Notas de port (Fase 10):
- * - As defaults de cabeçalho de relatório usam `newReport(..., defaultAttrs)`;
- *   `this.property` já aponta para o novo Report dentro do callback.
- * - Os atributos de RichText (caption/header/footer/...) guardam o
- *   `RichTextIntermediate` produzido por `newRichText` (Fase 12.18), como no
- *   Ruby.
- * - `!logicalExpression`, `!flagLogicalExpression` e `!nodeIdList` são regras
- *   do bloco 4 (10.14); aqui ficam como placeholders resolvidos por
+ * Port notes (phase 10):
+ * - The report header defaults use `newReport(..., defaultAttrs)`;
+ *   `this.property` already points to the new Report inside the callback.
+ * - The RichText attributes (caption/header/footer/...) hold the
+ *   `RichTextIntermediate` produced by `newRichText` (phase 12.18), as in Ruby.
+ * - `!logicalExpression`, `!flagLogicalExpression` and `!nodeIdList` are rules
+ *   of block 4 (10.14); here they stay as placeholders resolved by
  *   `ensurePlaceholders`.
  *
  * @see docs/taskjuggler/lib/taskjuggler/TjpSyntaxRules.rb
@@ -36,14 +35,14 @@ import {
 import type { ProjectFileParser, } from "../project-file-parser.ts";
 import { rule, } from "./helpers.ts";
 
-/** Propriedade corrente do parser, com certeza um `Report` neste bloco. */
+/** Current property of the parser, certainly a `Report` in this block. */
 const asProp = (parser: ProjectFileParser,): Report =>
   parser.property as Report;
 
 /**
- * Títulos das colunas exclusivas do `materialreport` (14C.1.5). Elas não são
- * atributos do projeto, então `columnTitle` devolveria `undefined` e o
- * cabeçalho das colunas padrão sairia vazio (CSV com `null`). Espelham
+ * Column titles exclusive to `materialreport` (14C.1.5). They are not project
+ * attributes, so `columnTitle` would return `undefined` and the standard column
+ * header would come out empty (CSV with `null`). They mirror
  * `TableReport.materialPropertiesById`.
  */
 const MATERIAL_COLUMN_TITLES: Record<string, string> = {
@@ -56,16 +55,16 @@ const MATERIAL_COLUMN_TITLES: Record<string, string> = {
 };
 
 /**
- * Atributos de RichText: `newRichText` como em TjpSyntaxRules.rb (Fase 12.18).
- * Guarda o `RichTextIntermediate` — não a String bruta — para que os reports
- * (`ReportBase#generateIntermediateFormat`, `TableReport`) possam chamar
- * `setQuery`/`to_html` sobre ele.
+ * RichText attributes: `newRichText` as in TjpSyntaxRules.rb (phase 12.18).
+ * Stores the `RichTextIntermediate` — not the raw String — so that the reports
+ * (`ReportBase#generateIntermediateFormat`, `TableReport`) can call
+ * `setQuery`/`to_html` on it.
  *
- * O dialeto vem de `format` no relatório (14C.5.1): `richtext` (default) ou
- * `markdown`. A fonte bruta fica registrada em `Report.richTextSources` para
- * que `applyReportFormat` possa reconstruir o RTI caso `format` apareça depois
- * do texto. `attrId` é `null` para RichText que não é atributo do relatório
- * (ex.: `listItem` de coluna), que só aproveita o dialeto.
+ * The dialect comes from `format` in the report (14C.5.1): `richtext` (default)
+ * or `markdown`. The raw source is recorded in `Report.richTextSources` so that
+ * `applyReportFormat` can rebuild the RTI when `format` appears after the text.
+ * `attrId` is `null` for RichText that is not a report attribute (e.g. a column
+ * `listItem`), which only uses the dialect.
  */
 const richText = (
   parser: ProjectFileParser,
@@ -80,12 +79,12 @@ const richText = (
 };
 
 /**
- * Aplica `format <dialeto>` a um relatório (14C.5.1).
+ * Applies `format <dialect>` to a report (14C.5.1).
  *
- * Além de gravar o atributo, reconstrói os atributos RichText já lidos
- * (`header`, `footer`, `caption`, `headline`, `center`, `left`, `right`,
- * `prolog`, `epilog`) com o pipeline do dialeto escolhido: em TJP a ordem dos
- * atributos não deve importar.
+ * Besides writing the attribute, it rebuilds the RichText attributes already
+ * read (`header`, `footer`, `caption`, `headline`, `center`, `left`, `right`,
+ * `prolog`, `epilog`) with the chosen dialect pipeline: in TJP the order of the
+ * attributes must not matter.
  */
 export function applyReportFormat(
   parser: ProjectFileParser,
@@ -94,8 +93,8 @@ export function applyReportFormat(
 ): void {
   report.set("format", format,);
   for (const [attrId, src,] of report.richTextSources) {
-    // `force`: os atributos RichText já foram gravados pelo parser; `set`
-    // dispararia `AttributeOverwrite` (guarda de redefinição de atributo).
+    // `force`: the RichText attributes were already written by the parser;
+    // `set` would raise `AttributeOverwrite` (attribute redefinition guard).
     report.force(attrId, parser.newRichText(src.text, src.sfi, null, format,),);
   }
 }
@@ -105,10 +104,10 @@ const logicOp = (op: number,): LogicalExpression =>
   new LogicalExpression(new LogicalOperation(op,),);
 
 /**
- * Envolve os defaults de um `<tipo>report` para o alias `md<tipo>report`
- * (adendo §10 / 14C.8): mesmo bloco, com `formats markdown` como default
- * herdado. Um `formats` explícito no corpo continua vencendo — o parser grava o
- * atributo em modo definido, sobrescrevendo o default herdado.
+ * Wraps the defaults of a `<type>report` for the `md<type>report` alias
+ * (addendum §10 / 14C.8): same block, with `formats markdown` as the inherited
+ * default. An explicit `formats` in the body still wins — the parser writes the
+ * attribute in defined mode, overriding the inherited default.
  */
 function markdownReportDefaults(
   defaults: (this: ProjectFileParser,) => void,
@@ -122,12 +121,12 @@ function markdownReportDefaults(
   };
 }
 
-/** Lista de critérios de ordenação padrão (Ruby `[ [ 'x', bool, n ] ]`). */
+/** Standard sort criteria list (Ruby `[ [ 'x', bool, n ] ]`). */
 type SortCriterion = [string, boolean, number,];
 
 const JOURNAL_SORT_ATTRS = ["alert", "date", "seqno",];
 
-/** Registra o bloco de regras de relatórios. */
+/** Registers the report rule block. */
 export function registerReportRules(p: ProjectFileParser,): void {
   // ------------------------------------------------------------------
   // 10.13.1 — reports (agregador) + headers de tabela
@@ -145,9 +144,9 @@ export function registerReportRules(p: ProjectFileParser,): void {
   },);
 
   // ------------------------------------------------------------------
-  // Adendo §10 / 14C.8 — aliases `md<tipo>report`: o mesmo bloco de tabela,
-  // com `formats markdown` por default. O valor devolvido diz ao header se o
-  // relatório foi declarado com o prefixo `md`.
+  // Addendum §10 / 14C.8 — `md<type>report` aliases: the same table block,
+  // with `formats markdown` as default. The returned value tells the header
+  // whether the report was declared with the `md` prefix.
   // ------------------------------------------------------------------
   rule(p, "taskReportKeyword", () => {
     p.pattern(["_taskreport",], () => false,);
@@ -170,9 +169,9 @@ export function registerReportRules(p: ProjectFileParser,): void {
   },);
 
   // ------------------------------------------------------------------
-  // Fase 10 Complemento C3.5 — breakdownreport (extensão SyntaxMesh).
-  // Cabeçalho análogo a accountReport; corpo reutiliza `reportBody`
-  // (formats/period/hide*/columns) + `groupby` (account|task).
+  // Phase 10 complement C3.5 — breakdownreport (SyntaxMesh extension).
+  // Header analogous to accountReport; the body reuses `reportBody`
+  // (formats/period/hide*/columns) plus `groupby` (account|task).
   // ------------------------------------------------------------------
   rule(p, "breakdownReport", () => {
     p.pattern(["!breakdownReportHeader", "!reportBody",], function (
@@ -203,8 +202,8 @@ export function registerReportRules(p: ProjectFileParser,): void {
   },);
 
   // ------------------------------------------------------------------
-  // Fase 10 Complemento C3.6 — rdoreport (extensão SyntaxMesh).
-  // `period` é obrigatório (validado no reduce → rdo_period_required).
+  // Phase 10 complement C3.6 — rdoreport (SyntaxMesh extension).
+  // `period` is mandatory (validated in the reduce → rdo_period_required).
   // ------------------------------------------------------------------
   rule(p, "rdoReport", () => {
     p.pattern(["!rdoReportHeader", "!reportBody",], function (
@@ -381,9 +380,9 @@ export function registerReportRules(p: ProjectFileParser,): void {
   },);
 
   // ------------------------------------------------------------------
-  // Fase 14 Complemento C1.2 — materialreport (extensão SyntaxMesh).
-  // Agregador análogo a `resourceReport`: lista de materiais com as
-  // variantes de coluna do `MaterialListRE` (C1.4–C1.7). O corpo reutiliza
+  // Phase 14 complement C1.2 — materialreport (SyntaxMesh extension).
+  // Aggregator analogous to `resourceReport`: a material list with the
+  // column variants of `MaterialListRE` (C1.4–C1.7). The body reuses
   // `reportBody` (columns / formats html|csv|json / hidetask / hideresource
   // / sortby / period / hidejournalentry).
   // ------------------------------------------------------------------
@@ -649,11 +648,11 @@ export function registerReportRules(p: ProjectFileParser,): void {
   },);
 
   /**
-   * Modificador opcional `stdout` dos cabeçalhos de relatório (Fase 24 —
-   * extensão SyntaxMesh, sem equivalente Ruby). Posiciona-se após o nome e
-   * antes das chaves (`taskreport "T" stdout { ... }`); devolve `true` quando
-   * presente. A intenção é gravada em `Report#stdout` por `newReport`, que
-   * consome `parser.stdoutRequested` — o core nunca imprime.
+   * Optional `stdout` modifier of the report headers (phase 24 — SyntaxMesh
+   * extension, no Ruby equivalent). It sits after the name and before the
+   * braces (`taskreport "T" stdout { ... }`); returns `true` when present. The
+   * intent is written to `Report#stdout` by `newReport`, which consumes
+   * `parser.stdoutRequested` — the core never prints.
    *
    * @see docs/syntaxmesh/fases/fase-24-cli-adendo.md §2
    */
@@ -791,11 +790,11 @@ export function registerReportRules(p: ProjectFileParser,): void {
       function (this: ProjectFileParser,): unknown {
         const columns = [this.val[1],];
         if (this.val[2]) columns.push(...(this.val[2] as unknown[]),);
-        // Depois de um erro de sintaxe (`columns id, naoExiste`) o FSM ainda
-        // reduz o padrão com `null` no lugar da coluna inválida. O Ruby não
-        // reduz e deixa o atributo intacto, então descartamos os nulos e não
-        // gravamos uma lista vazia (uma coluna `null` estouraria em
-        // `TableReport#adjustColumnPeriod` na geração seguinte).
+        // After a syntax error (`columns id, doesNotExist`) the FSM still
+        // reduces the pattern with `null` in place of the invalid column. Ruby
+        // does not reduce and leaves the attribute untouched, so we discard the
+        // nulls and do not write an empty list (a `null` column would blow up in
+        // `TableReport#adjustColumnPeriod` on the next generation).
         const valid = columns.filter((column,) =>
           column !== null && column !== undefined
         );
@@ -832,7 +831,7 @@ export function registerReportRules(p: ProjectFileParser,): void {
     p.example("textreport",);
     p.also(["epilog", "header", "prolog",],);
 
-    // 14C.5.1 — dialeto dos atributos RichText do relatório (default richtext).
+    // 14C.5.1 — dialect of the report RichText attributes (default richtext).
     p.pattern(["!format",],);
 
     p.pattern(["!formats",],);
@@ -975,7 +974,7 @@ export function registerReportRules(p: ProjectFileParser,): void {
     p.pattern(["!sortJournalEntries",],);
     p.pattern(["!sortResources",],);
     p.pattern(["!sortTasks",],);
-    // Fase 14 Complemento C1.2 — ordenação dos relatórios de extensão.
+    // Phase 14 complement C1.2 — sorting of the extension reports.
     p.pattern(["!sortBy",],);
 
     p.pattern(["!reportStart",],);
@@ -1043,7 +1042,7 @@ export function registerReportRules(p: ProjectFileParser,): void {
   },);
 
   // ------------------------------------------------------------------
-  // 10.13.2.2/3 — hide / rollup (task já vive em task.ts)
+  // 10.13.2.2/3 — hide / rollup (task already lives in task.ts)
   // ------------------------------------------------------------------
   rule(p, "hideresource", () => {
     p.pattern(["_hideresource", "!logicalExpression",], function (
@@ -1065,8 +1064,9 @@ export function registerReportRules(p: ProjectFileParser,): void {
     p.also(["sortaccounts",],);
   },);
 
-  // Fase 10 Complemento C3.7.2 — hidejournalentry <expr> (extensão SyntaxMesh).
-  // A avaliação da expressão é Fase 11; aqui só acceptamos na gramática.
+  // Phase 10 complement C3.7.2 — hidejournalentry <expr> (SyntaxMesh extension).
+  // Expression evaluation belongs to phase 11; here we only accept it in the
+  // grammar.
   rule(p, "hidejournalentry", () => {
     p.pattern(["_hidejournalentry", "!logicalExpression",], function (
       this: ProjectFileParser,
@@ -1076,7 +1076,7 @@ export function registerReportRules(p: ProjectFileParser,): void {
     },);
   },);
 
-  // 14C.6.2 — hideMaterial <expr> (extensão SyntaxMesh, ver ADR 027).
+  // 14C.6.2 — hideMaterial <expr> (SyntaxMesh extension, see ADR 027).
   rule(p, "hidematerial", () => {
     p.pattern(["_hidematerial", "!logicalExpression",], function (
       this: ProjectFileParser,
@@ -1086,7 +1086,7 @@ export function registerReportRules(p: ProjectFileParser,): void {
     },);
   },);
 
-  // 14C.6.3 — hidePicture <expr> (extensão SyntaxMesh, ver ADR 027).
+  // 14C.6.3 — hidePicture <expr> (SyntaxMesh extension, see ADR 027).
   rule(p, "hidepicture", () => {
     p.pattern(["_hidepicture", "!logicalExpression",], function (
       this: ProjectFileParser,
@@ -1106,7 +1106,8 @@ export function registerReportRules(p: ProjectFileParser,): void {
     p.example("RollupResource",);
   },);
 
-  // 14C.6.4 — rollupMaterial <expr> (extensão SyntaxMesh, par de rollupresource).
+  // 14C.6.4 — rollupMaterial <expr> (SyntaxMesh extension, pair of
+  // rollupresource).
   rule(p, "rollupmaterial", () => {
     p.pattern(["_rollupmaterial", "!logicalExpression",], function (
       this: ProjectFileParser,
@@ -1126,7 +1127,7 @@ export function registerReportRules(p: ProjectFileParser,): void {
   },);
 
   // ------------------------------------------------------------------
-  // 10.13.2.4 — ordenação
+  // 10.13.2.4 — sorting
   // ------------------------------------------------------------------
   rule(p, "sortResources", () => {
     p.pattern(["!sortResourcesKeyword", "!sortCriteria",], function (
@@ -1290,11 +1291,11 @@ export function registerReportRules(p: ProjectFileParser,): void {
   },);
 
   // ------------------------------------------------------------------
-  // Fase 14 Complemento C1.2 — `sortby` (extensão SyntaxMesh).
-  // Ordenação genérica dos relatórios de extensão (materialreport,
-  // breakdownreport, rdoreport). Diferente de `sorttasks`/`sortresources`, os
-  // critérios NÃO são validados contra um PropertySet: aplicam-se às linhas do
-  // próprio relatório (colunas do MaterialListRE/BreakdownReport).
+  // Phase 14 complement C1.2 — `sortby` (SyntaxMesh extension).
+  // Generic sorting of the extension reports (materialreport, breakdownreport,
+  // rdoreport). Unlike `sorttasks`/`sortresources`, the criteria are NOT
+  // validated against a PropertySet: they apply to the rows of the report
+  // itself (columns of MaterialListRE/BreakdownReport).
   // ------------------------------------------------------------------
   rule(p, "sortBy", () => {
     p.pattern(["_sortby", "!sortByCriteria",], function (
@@ -1342,8 +1343,8 @@ export function registerReportRules(p: ProjectFileParser,): void {
       }
       return [attribute, direction, -1,] as SortCriterion;
     },);
-    // Extensão SyntaxMesh: aceita também o atributo sem direção (`.up`/
-    // `.down` é opcional aqui, diferente de `sorttasks`/`sortresources`).
+    // SyntaxMesh extension: also accepts the attribute without a direction
+    // (`.up`/`.down` is optional here, unlike `sorttasks`/`sortresources`).
     p.pattern(["$ID",], function (this: ProjectFileParser,): unknown {
       return [String(this.val[0],), false, -1,] as SortCriterion;
     },);
@@ -1351,7 +1352,7 @@ export function registerReportRules(p: ProjectFileParser,): void {
   },);
 
   // ------------------------------------------------------------------
-  // 10.13.2.5 — ordenação de journal entries
+  // 10.13.2.5 — journal entry sorting
   // ------------------------------------------------------------------
   rule(p, "sortJournalEntries", () => {
     p.pattern(["_sortjournalentries", "!journalSortCriteria",], function (
@@ -1467,10 +1468,10 @@ export function registerReportRules(p: ProjectFileParser,): void {
     p.pattern(["_csv",], () => "csv",);
     p.pattern(["_html",], () => "html",);
     p.descr("Generate a web page (HTML file)",);
-    // Extensão SyntaxMesh (14C.0.2): JSON de primeira classe.
+    // SyntaxMesh extension (14C.0.2): JSON as a first-class format.
     p.pattern(["_json",], () => "json",);
     p.descr("Generate a JSON file (SyntaxMesh extension)",);
-    // Extensão SyntaxMesh (adendo §10 / 14C.8): saída Markdown (`.md`).
+    // SyntaxMesh extension (addendum §10 / 14C.8): Markdown output (`.md`).
     p.pattern(["_markdown",], () => "markdown",);
     p.descr("Generate a Markdown file (SyntaxMesh extension)",);
     p.pattern(["_niku",], () => "niku",);
@@ -1548,7 +1549,7 @@ export function registerReportRules(p: ProjectFileParser,): void {
         return [cost, rev,];
       },
     );
-    // Uma '-' limpa um balance previamente definido.
+    // A '-' clears a previously defined balance.
     p.pattern(["_-",], () => [null, null,],);
   },);
 
@@ -1629,8 +1630,8 @@ export function registerReportRules(p: ProjectFileParser,): void {
       projecids: "Include project IDs",
       tasks: "Include task definitions",
       resources: "Include resource definitions",
-      // Fase 14 Complemento C1.13 — extensão SyntaxMesh (o TJ 3.8.4 não
-      // exporta materiais).
+      // Phase 14 complement C1.13 — SyntaxMesh extension (TJ 3.8.4 does not
+      // export materials).
       materials: "Include material definitions",
     },);
 
@@ -1642,13 +1643,13 @@ export function registerReportRules(p: ProjectFileParser,): void {
     },);
     p.level("beta",);
 
-    // baseline (extensão SyntaxMesh — adendo §10 / 14C.10): cenário que
-    // fornece as datas/custos da linha de base do export MSPDI.
+    // baseline (SyntaxMesh extension — addendum §10 / 14C.10): the scenario
+    // that provides the baseline dates/costs of the MSPDI export.
     p.pattern(["_baseline", "!scenarioId",], function (
       this: ProjectFileParser,
     ): unknown {
       const sc = this.val[1] as number | undefined;
-      // `!scenarioId` já reportou `unknown_scenario_id`: não gravar lixo.
+      // `!scenarioId` already reported `unknown_scenario_id`: write no garbage.
       if (typeof sc !== "number") return null;
       if (!this.project!.scenario(sc,)?.get("active",)) {
         this.warning(
@@ -1717,7 +1718,8 @@ export function registerReportRules(p: ProjectFileParser,): void {
       complete: "Include completion values",
       depends: "Include dependencies",
       flags: "Include flags",
-      // Fase 14 Complemento C1.13 — alocações `material <id> <qtd>` da tarefa.
+      // Phase 14 complement C1.13 — `material <id> <qty>` allocations of the
+      // task.
       materialallocations: "Include material allocations",
       maxend: "Include maximum end dates",
       maxstart: "Include maximum start dates",
@@ -2078,7 +2080,7 @@ export function registerReportRules(p: ProjectFileParser,): void {
           function (this: ProjectFileParser,): void {
             const rep = asProp(this,);
             rep.set("formats", ["tjp",],);
-            // Ruby `unless @project['trackingScenarioIdx']` — idx 0 é truthy.
+            // Ruby `unless @project['trackingScenarioIdx']` — index 0 is truthy.
             if (this.project!.get("trackingScenarioIdx",) == null) {
               this.error(
                 "ss_no_tracking_scenario",
@@ -2189,7 +2191,7 @@ export function registerReportRules(p: ProjectFileParser,): void {
             const rep = asProp(this,);
             rep.set("formats", ["tjp",],);
             const scenarioIdx = this.project!.get("trackingScenarioIdx",);
-            // Ruby `unless (scenarioIdx = ...)` — idx 0 é truthy em Ruby.
+            // Ruby `unless (scenarioIdx = ...)` — index 0 is truthy in Ruby.
             if (scenarioIdx == null) {
               this.error(
                 "ts_no_tracking_scenario",
@@ -2459,7 +2461,7 @@ export function registerReportRules(p: ProjectFileParser,): void {
   },);
 
   // ------------------------------------------------------------------
-  // 10.13.2.9 — reportProperties (ponte para o bloco de propriedades)
+  // 10.13.2.9 — reportProperties (bridge to the property block)
   // ------------------------------------------------------------------
   rule(p, "reportProperties", () => {
     p.pattern(["!iCalReport",],);
@@ -2475,8 +2477,8 @@ export function registerReportRules(p: ProjectFileParser,): void {
     p.repeatable();
 
     p.pattern(["!macro",],);
-    // Extensão Fase 23 (ADR 033): mesmo lugar da macro nos arquivos de
-    // propriedades de relatório — o namespace macro/template é único.
+    // Phase 23 extension (ADR 033): same place as the macro in the report
+    // property files — the macro/template namespace is unique.
     p.pattern(["!template",],);
     p.pattern(["!reportProperties",],);
   },);
@@ -2633,15 +2635,15 @@ export function registerReportRules(p: ProjectFileParser,): void {
     p.descr("A group of columns with one column for each week",);
     p.singlePattern("_yearly",);
     p.descr("A group of columns with one column for each year",);
-    // Fase 10 Complemento C3.7.1 — colunas novas (extensão SyntaxMesh).
-    // Parser só aceita o nome; a execução é Fase 14.
+    // Phase 10 complement C3.7.1 — new columns (SyntaxMesh extension).
+    // The parser only accepts the name; execution belongs to phase 14.
     p.singlePattern("_materials",);
     p.singlePattern("_charges",);
     p.singlePattern("_pictures",);
     p.singlePattern("_timebasis",);
-    // Fase 14 Complemento C18 (Adendo Extra §13.7) — colunas de estoque do
-    // `materialreport` (extensão SyntaxMesh): Σ dos bookings de estoque
-    // (movimentos sem tarefa) recortados pelo período do relatório.
+    // Phase 14 complement C18 (extra addendum §13.7) — stock columns of the
+    // `materialreport` (SyntaxMesh extension): Σ of the stock bookings
+    // (movements without a task) clipped to the report period.
     p.singlePattern("_stockquantity",);
     p.descr(
       "Net stock quantity (stock bookings without a task) in the period",

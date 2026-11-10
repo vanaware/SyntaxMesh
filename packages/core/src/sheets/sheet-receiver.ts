@@ -1,27 +1,29 @@
 /**
- * SheetReceiver — recebe, valida e arquiva time/status sheets.
+ * SheetReceiver — receives, validates and archives time/status sheets.
  *
- * Port de `docs/taskjuggler/lib/taskjuggler/SheetReceiver.rb`, com as mesmas
- * duas adaptações da Fase 18:
- *  - **ADR 036** — não há mailbox nem `tj3client`: o texto RFC 822 chega como
- *    `string` (o app da 18.18 lê de arquivo/stdin) e a validação roda
- *    in-process (`ProjectFileParser` + `Project#checkTimeSheets`).
- *  - **ADR 037** — todo I/O passa pelo `FileStore` injetado; o fluxo é
+ * Port of `docs/taskjuggler/lib/taskjuggler/SheetReceiver.rb`, with the same two
+ * adaptations as Phase 18:
+ *  - **ADR 036** — there is no mailbox and no `tj3client`: the RFC 822 text
+ *    arrives as a `string` (the 18.18 app reads it from a file/stdin) and
+ *    validation runs in-process (`ProjectFileParser` +
+ *    `Project#checkTimeSheets`).
+ *  - **ADR 037** — all I/O goes through the injected `FileStore`; the flow is
  *    `async`.
  *
- * Fluxo do Ruby preservado: `processEmail` → `createDirectories` →
- * `processSheet` (anexos de folha — `.smx` ou o legado `.tji` —, depois o
- * corpo) → `checkSignature` → `checkSheet` → `fileSheet` (arquiva + `all.smx`
- * + email de confirmação).
+ * Ruby flow preserved: `processEmail` → `createDirectories` → `processSheet`
+ * (sheet attachments — `.smx` or the legacy `.tji` — then the body) →
+ * `checkSignature` → `checkSheet` → `fileSheet` (archive + `all.smx` +
+ * confirmation email).
  *
- * Divergências deliberadas (todas documentadas no método):
- *  - `Digest::MD5` não existe no Deno: {@link emailDigest} gera 32 caracteres
- *    hexadecimais determinísticos — é só nome de arquivo, não segurança.
- *  - `@report` do Ruby é o stdout do tj3client (folha "pretty printed"); aqui
- *    é a própria folha aceita.
- *  - `error`/`fatal` do Ruby mandam email (síncrono) antes de levantar; como
- *    `sendEmail` é `async`, a resposta é enfileirada e entregue no `finally`
- *    de `processEmail`.
+ * Deliberate divergences (all documented on the method):
+ *  - `Digest::MD5` does not exist in Deno: {@link emailDigest} produces 32
+ *    deterministic hexadecimal characters — it is only a file name, not
+ *    security.
+ *  - Ruby's `@report` is the stdout of tj3client (the "pretty printed" sheet);
+ *    here it is the accepted sheet itself.
+ *  - Ruby's `error`/`fatal` send an email (synchronously) before raising; since
+ *    `sendEmail` is `async`, the reply is queued and delivered in the `finally`
+ *    of `processEmail`.
  *
  * @see docs/taskjuggler/lib/taskjuggler/SheetReceiver.rb
  * @see docs/taskjuggler/lib/taskjuggler/TimeSheetReceiver.rb
@@ -48,10 +50,10 @@ import {
 } from "./sheet-handler-base.ts";
 
 /**
- * As extensões de folha (`.smx` nativa, `.tji` legada) vivem em
- * `sheet-extensions.ts` — fonte única compartilhada com sender e summary
- * (decisão 2026-11-07, plano §1.6; tarefa 24.2.36). Reexportadas aqui para
- * manter a API histórica do módulo.
+ * The sheet extensions (native `.smx`, legacy `.tji`) live in
+ * `sheet-extensions.ts` — single source shared with the sender and the summary
+ * (decision 2026-11-07, plan §1.6; task 24.2.36). Re-exported here to keep the
+ * module's historical API.
  */
 export * from "./sheet-extensions.ts";
 import {
@@ -62,12 +64,12 @@ import {
   SHEET_EXTENSION,
 } from "./sheet-extensions.ts";
 
-/** Lista de recursos gravada pelo `SheetSender` (18.6). */
+/** Resource list written by `SheetSender` (18.6). */
 export const RESOURCE_LIST_FILE = "resources.json";
 
 /**
- * Corpo do email de falha de infraestrutura (Ruby `fatal`, l.352-357) — é o
- * mesmo texto para time e status sheets.
+ * Body of the infrastructure failure email (Ruby `fatal`, l.352-357) — the same
+ * text for time and status sheets.
  */
 const TEMP_SERVER_ERROR =
   `We are sorry! The ${"%s"} sheet server detected a configuration
@@ -76,14 +78,14 @@ has been notified and will try to rectify the situation as
 soon as possible. Please re-submit your ${"%s"} sheet later!
 `;
 
-/** Mensagem de um `catch` desconhecido (`$!` do Ruby). */
+/** Message of an unknown `catch` (Ruby's `$!`). */
 function errorText(error: unknown,): string {
   return error instanceof Error ? error.message : String(error,);
 }
 
 /**
- * Extrai o `From:` cru de uma mensagem que o parser não conseguiu ler — sem
- * isso não haveria como responder ao remetente (Ruby l.94-107).
+ * Extracts the raw `From:` of a message the parser could not read — without it
+ * there would be no way to reply to the sender (Ruby l.94-107).
  */
 function firstFromHeader(raw: string,): string | null {
   const match = /^From:[ \t]*(.*)$/mu.exec(raw,);
@@ -92,12 +94,12 @@ function firstFromHeader(raw: string,): string | null {
 }
 
 /**
- * Identificador de 32 caracteres hexadecimais para a mensagem recebida.
+ * 32-character hexadecimal identifier for the received message.
  *
- * O Ruby usa `Digest::MD5.hexdigest(messageId)` (l.115). O Deno não traz MD5
- * (`crypto.subtle` não o suporta) e o valor serve **apenas** de nome de arquivo
- * em `failedMailsDir`, então quatro acumuladores FNV-1a de 32 bits dão o mesmo
- * formato de 128 bits sem depender de criptografia.
+ * Ruby uses `Digest::MD5.hexdigest(messageId)` (l.115). Deno has no MD5
+ * (`crypto.subtle` does not support it) and the value serves **only** as a file
+ * name in `failedMailsDir`, so four 32-bit FNV-1a accumulators yield the same
+ * 128-bit format without depending on cryptography.
  */
 export function emailDigest(text: string,): string {
   let h1 = 0x811c9dc5;
@@ -117,102 +119,111 @@ export function emailDigest(text: string,): string {
 }
 
 /**
- * Base dos receivers de sheet (18.7).
+ * Base of the sheet receivers (18.7).
  *
- * Subclasses (`TimeSheetReceiver`, `StatusSheetReceiver` — 18.9/18.10) só
- * definem `tj3clientOption`, `sheetDir`, `templateDir`, `failedMailsDir`,
- * `failedSheetsDir`, `signatureFile`, `emailSubject`, `sheetHeader` e
+ * Subclasses (`TimeSheetReceiver`, `StatusSheetReceiver` — 18.9/18.10) only
+ * define `tj3clientOption`, `sheetDir`, `templateDir`, `failedMailsDir`,
+ * `failedSheetsDir`, `signatureFile`, `emailSubject`, `sheetHeader` and
  * `signatureFilter`.
  *
- * Os helpers são `protected` (e não `private` como no Ruby) para que
- * subclasses e testes possam chamá-los sem `send`.
+ * The helpers are `protected` (rather than `private` as in Ruby) so that
+ * subclasses and tests can call them without going through `send`.
  */
 export class SheetReceiver extends SheetHandlerBase {
-  /** `'time'`, `'status'` ou `'summary'` — entra nas mensagens e escolhe a regra. */
+  /**
+   * `'time'`, `'status'` or `'summary'` — used in the messages and selects the
+   * rule.
+   */
   protected readonly sheetType: SheetReceiverType;
 
   /**
-   * Opção equivalente do `tj3client` (`check-ts`/`check-ss`).
+   * Equivalent `tj3client` option (`check-ts`/`check-ss`).
    *
-   * Puramente documental aqui: a checagem roda in-process, mas manter o campo
-   * preserva o contrato das subclasses e o log de diagnóstico.
+   * Purely documentary here: the check runs in-process, but keeping the field
+   * preserves the subclass contract and the diagnostic log.
    */
-  protected tj3clientOption = "";
+  protected tj3clientOption: string = "";
 
-  /** Diretório base das folhas aceitas (`TimeSheets`). */
-  protected sheetDir = "";
-  /** Diretório dos templates do sender (`TimeSheetTemplates`). */
-  protected templateDir = "";
-  /** Mensagens cruas não processadas (para reprocessar depois). */
-  protected failedMailsDir = "";
-  /** Cópias das folhas que falharam na checagem. */
-  protected failedSheetsDir = "";
-  /** Arquivo com os intervalos aceitos (`acceptable_intervals`). */
-  protected signatureFile = "";
-  /** Assunto do email de confirmação (`%s` = recurso, `%s` = data). */
-  protected emailSubject = "";
+  /** Base directory of the accepted sheets (`TimeSheets`). */
+  protected sheetDir: string = "";
+  /** Directory of the sender templates (`TimeSheetTemplates`). */
+  protected templateDir: string = "";
+  /** Raw messages that were not processed (to be reprocessed later). */
+  protected failedMailsDir: string = "";
+  /** Copies of the sheets that failed the check. */
+  protected failedSheetsDir: string = "";
+  /** File with the accepted intervals (`acceptable_intervals`). */
+  protected signatureFile: string = "";
+  /** Subject of the confirmation email (`%s` = resource, `%s` = date). */
+  protected emailSubject: string = "";
 
-  /** Identifica o cabeçalho de um sheet válido; grupo 1 = recurso, 2 = data. */
+  /** Matches the header of a valid sheet; group 1 = resource, 2 = date. */
   protected sheetHeader: RegExp = /^$/u;
-  /** Extrai a assinatura (intervalo) do cabeçalho; grupo 1 = intervalo. */
+  /** Extracts the signature (interval) from the header; group 1 = interval. */
   protected signatureFilter: RegExp = /^$/u;
 
-  /** Endereço que receberá as respostas (o do cadastro, após `processSheet`). */
+  /** Address that receives replies (the registered one, after `processSheet`). */
   protected submitter: string | null = null;
-  /** Recurso que enviou a folha. */
+  /** Resource that submitted the sheet. */
   protected resourceId: string | null = null;
   /**
-   * Fim do período reportado (`YYYY-MM-DD`).
+   * End of the reported period (`YYYY-MM-DD`).
    *
-   * Público porque o `TimeSheetSummary` (18.11) o recebe do app — no Ruby a
-   * classe do resumo declara `attr_accessor :date`.
+   * Public because `TimeSheetSummary` (18.11) receives it from the app — in
+   * Ruby the summary class declares `attr_accessor :date`.
    */
   date: string | null = null;
-  /** Texto da folha já recortado por `cutOut`. */
+  /** Sheet text already trimmed by `cutOut`. */
   protected sheet: string | null = null;
-  /** `false` quando a folha veio no corpo do email. */
-  protected sheetWasAttached = true;
-  /** `Message-ID` da mensagem (ou `"unknown"`). */
+  /** `false` when the sheet came in the email body. */
+  protected sheetWasAttached: boolean = true;
+  /** `Message-ID` of the message (or `"unknown"`). */
   protected messageId: string | null = null;
-  /** Resumo aceito da folha (Ruby: stdout do tj3client, já em RichText). */
+  /** Accepted summary of the sheet (Ruby: tj3client stdout, already RichText). */
   protected report: string | null = null;
-  /** Avisos emitidos na checagem (Ruby: stderr do tj3client). */
+  /** Warnings emitted during the check (Ruby: tj3client stderr). */
   protected warnings: string | null = null;
-  /** Nome do arquivo da mensagem em `failedMailsDir`. */
-  protected idDigest = "";
+  /** Name of the message file in `failedMailsDir`. */
+  protected idDigest: string = "";
 
-  /** Projeto alvo da checagem (o `tj3client check-*` do Ruby). */
+  /** Target project of the check (Ruby's `tj3client check-*`). */
   project: Project | null = null;
 
-  /** Cache de `resources.json` — refeito quando `date` muda. */
+  /** Cache of `resources.json` — rebuilt when `date` changes. */
   private resourceList: SheetResourceInfo[] | null = null;
-  /** Data a que `resourceList` se refere. */
+  /** Date that `resourceList` refers to. */
   private resourceListDate: string | null = null;
-  /** Respostas pendentes (`error`/`fatal` não podem `await`). */
+  /** Pending replies (`error`/`fatal` cannot `await`). */
   private pendingReplies: Promise<void>[] = [];
-  /** Evita que uma falha ao enviar a resposta enfileire outra resposta. */
-  private replyInFlight = false;
+  /** Prevents a failure while replying from queueing another reply. */
+  private replyInFlight: boolean = false;
 
+  /**
+   * Creates the receiver.
+   *
+   * @param appName Application name used in logs and in the CLI.
+   * @param type Sheet kind, which selects the validation rule.
+   */
   constructor(appName: string, type: SheetReceiverType,) {
     super(appName,);
     this.sheetType = type;
   }
 
-  /** Injeta o projeto usado para validar as folhas. */
+  /** Injects the project used to validate the sheets. */
   setProject(project: Project,): void {
     this.project = project;
   }
 
   /**
-   * Processa uma mensagem completa (RFC 822).
+   * Processes a complete (RFC 822) message.
    *
-   * Procura primeiro anexos de folha (`.smx` ou `.tji` legado) e, se nenhum
-   * servir, o corpo. A mensagem crua é guardada em `failedMailsDir` até ser
-   * aceita — é o que permite reprocessar uma submissão recusada (Ruby
-   * l.119-122).
+   * It looks for sheet attachments first (`.smx` or legacy `.tji`) and, if none
+   * works, the body. The raw message is kept in `failedMailsDir` until it is
+   * accepted — that is what allows a rejected submission to be reprocessed
+   * (Ruby l.119-122).
    *
-   * @param rawMail mensagem completa (cabeçalhos + corpo).
-   * @returns `true` se a folha foi aceita; erro em qualquer outro desfecho.
+   * @param rawMail complete message (headers + body).
+   * @returns `true` if the sheet was accepted; an error on any other outcome.
    */
   async processEmail(rawMail: string,): Promise<boolean> {
     try {
@@ -223,8 +234,8 @@ export class SheetReceiver extends SheetHandlerBase {
       try {
         mail = parseEmailMessage(rawMail,);
       } catch (error) {
-        // Sem a mensagem parseada, resta achar o `From:` na mão para ao menos
-        // avisar o remetente (Ruby l.90-108).
+        // Without the parsed message, all that is left is finding the `From:`
+        // by hand so the sender can at least be warned (Ruby l.90-108).
         this.submitter = firstFromHeader(rawMail,);
         this.error(
           `Incoming mail could not be processed: ${errorText(error,)}`,
@@ -243,14 +254,14 @@ export class SheetReceiver extends SheetHandlerBase {
       const mailFile = `${this.failedMailsDir}/${this.idDigest}`;
       await store.write(mailFile, rawMail,);
 
-      // Primeiro os anexos...
+      // Attachments first...
       for (const attachment of mail.attachments) {
         if (!isSheetFileName(attachment.fileName ?? "",)) continue;
         this.sheetWasAttached = true;
         if (await this.processSheet(attachment.content,)) return true;
       }
 
-      // ...e só depois o corpo.
+      // ...and only then the body.
       this.sheetWasAttached = false;
       if (await this.processSheet(mail.content,)) return true;
 
@@ -262,20 +273,20 @@ export class SheetReceiver extends SheetHandlerBase {
           "'.tji' extension to be found.",
       );
     } finally {
-      // `error`/`fatal` enfileiram a resposta e levantam: entregar aqui é o
-      // equivalente ao `sendEmail` síncrono do Ruby.
+      // `error`/`fatal` queue the reply and raise: delivering it here is the
+      // equivalent of Ruby's synchronous `sendEmail`.
       await this.flushReplies();
     }
   }
 
   /**
-   * Isola e valida o texto de uma folha candidata (Ruby `processSheet`).
+   * Isolates and validates the text of a candidate sheet (Ruby `processSheet`).
    *
-   * @returns `true` quando a folha é aceita e arquivada; `false` quando ela
-   *   não tem o cabeçalho esperado (o chamador tenta a próxima origem).
+   * @returns `true` when the sheet is accepted and archived; `false` when it
+   *   lacks the expected header (the caller tries the next source).
    */
   protected async processSheet(sheet: string,): Promise<boolean> {
-    // Com marcadores `8<`, só o trecho entre eles conta.
+    // With `8<` markers, only the excerpt between them counts.
     this.sheet = this.cutOut(sheet,);
 
     const match = this.sheetHeader.exec(this.sheet,);
@@ -285,7 +296,7 @@ export class SheetReceiver extends SheetHandlerBase {
 
     this.resourceId = match[1] ?? null;
     this.date = match[2] ?? null;
-    // Respostas só vão para o endereço cadastrado (Ruby l.166-167).
+    // Replies only go to the registered address (Ruby l.166-167).
     this.submitter = await this.getResourceEmail(this.resourceId,);
     this.info(
       `Found ${this.sheetWasAttached ? "attached " : ""}sheet for ` +
@@ -301,8 +312,8 @@ export class SheetReceiver extends SheetHandlerBase {
   }
 
   /**
-   * Confere a assinatura da folha contra `acceptable_intervals`
-   * (Ruby `checkSignature`, l.290-316).
+   * Checks the sheet signature against `acceptable_intervals` (Ruby
+   * `checkSignature`, l.290-316).
    */
   protected async checkSignature(sheet: string,): Promise<void> {
     const match = this.signatureFilter.exec(sheet,);
@@ -330,12 +341,12 @@ export class SheetReceiver extends SheetHandlerBase {
   }
 
   /**
-   * Valida o conteúdo da folha (Ruby `checkSheet`, l.182-210).
+   * Validates the sheet content (Ruby `checkSheet`, l.182-210).
    *
-   * O Ruby gravava a folha em `failedSheetsDir` e chamava
-   * `tj3client --silent check-ts`; aqui o mesmo conteúdo é aplicado ao projeto
-   * in-process e o resultado vem do `MessageHandler` (erros que o processo
-   * filho devolveria em stderr e no código de saída).
+   * Ruby wrote the sheet to `failedSheetsDir` and called
+   * `tj3client --silent check-ts`; here the same content is applied to the
+   * project in-process and the result comes from the `MessageHandler` (errors
+   * the child process would return on stderr and in the exit code).
    */
   protected async checkSheet(sheet: string,): Promise<boolean> {
     const store = this.requireFileStore("checkSheet",);
@@ -358,7 +369,7 @@ export class SheetReceiver extends SheetHandlerBase {
       .filter((message,) => message.type !== "info" && message.type !== "debug")
       .map((message,) => message.to_log())
       .join("\n",);
-    // Divergência: o Ruby usava o stdout do tj3client (folha reformatada).
+    // Divergence: Ruby used the tj3client stdout (reformatted sheet).
     this.report = sheet;
 
     if (handler.errors === errorCount) {
@@ -374,8 +385,9 @@ export class SheetReceiver extends SheetHandlerBase {
   }
 
   /**
-   * Arquiva a folha aceita em `sheetDir/<date>/<recurso>_<date>.smx`, atualiza
-   * o `all.smx` da pasta e responde ao remetente (Ruby `fileSheet`, l.212-267).
+   * Archives the accepted sheet in `sheetDir/<date>/<resource>_<date>.smx`,
+   * updates the folder's `all.smx` and replies to the sender (Ruby `fileSheet`,
+   * l.212-267).
    */
   protected async fileSheet(sheet: string,): Promise<void> {
     const store = this.requireFileStore("fileSheet",);
@@ -406,9 +418,9 @@ export class SheetReceiver extends SheetHandlerBase {
     await this.generateInclusionFile(dir,);
 
     if (newDir) {
-      // O `all.smx` do topo encadeia as pastas de cada período. Uma pasta
-      // gerada por versão antiga pode só ter `all.tji`: o encadeamento
-      // anterior é preservado na leitura (compatibilidade em trânsito).
+      // The top-level `all.smx` chains the folders of each period. A folder
+      // created by an older version may only have `all.tji`: the previous
+      // chain is preserved when reading (transition compatibility).
       const allFile = `${this.sheetDir}/${INCLUSION_FILE}`;
       const previous = await this.readInclusionFile(allFile,) ??
         await this.readInclusionFile(
@@ -430,9 +442,9 @@ export class SheetReceiver extends SheetHandlerBase {
         "to fix or address with\nyour manager or project manager:\n\n" +
         `<nowiki>${this.warnings}</nowiki>\n\n----\n`;
     }
-    // Divergência: o Ruby anexava o stdout do tj3client, que já vinha em
-    // RichText. A folha daqui é TJP cru — vai como texto literal para que os
-    // marcadores `-8<-` e as linhas `#` não sejam interpretados como markup.
+    // Divergence: Ruby appended the tj3client stdout, which already came as
+    // RichText. The sheet here is raw TJP — it goes in as literal text so that
+    // the `-8<-` markers and the `#` lines are not parsed as markup.
     if (this.report !== null && this.report !== "") {
       text += `<nowiki>${this.report}</nowiki>`;
     }
@@ -448,11 +460,11 @@ export class SheetReceiver extends SheetHandlerBase {
   }
 
   /**
-   * Reescreve `<dir>/all.smx` com um `include` por folha da pasta
-   * (Ruby `generateInclusionFile`, l.272-288).
+   * Rewrites `<dir>/all.smx` with one `include` per sheet in the folder (Ruby
+   * `generateInclusionFile`, l.272-288).
    *
-   * Folhas legadas (`.tji`) e o `all.tji` antigo continuam sendo reconhecidos
-   * na leitura, mas o arquivo gerado é sempre o nativo (24.2.36).
+   * Legacy sheets (`.tji`) and an old `all.tji` are still recognized on read,
+   * but the generated file is always the native one (24.2.36).
    */
   protected async generateInclusionFile(dir: string,): Promise<void> {
     const store = this.requireFileStore("generateInclusionFile",);
@@ -475,7 +487,7 @@ export class SheetReceiver extends SheetHandlerBase {
     );
   }
 
-  /** Cria `sheetDir`, `failedMailsDir` e `failedSheetsDir` (Ruby l.318-325). */
+  /** Creates `sheetDir`, `failedMailsDir` and `failedSheetsDir` (Ruby l.318-325). */
   protected async createDirectories(): Promise<void> {
     const store = this.requireFileStore("createDirectories",);
     for (
@@ -493,9 +505,9 @@ export class SheetReceiver extends SheetHandlerBase {
   }
 
   /**
-   * Lê `<templateDir>/<date>/resources.json` (Ruby `getResourceList`).
+   * Reads `<templateDir>/<date>/resources.json` (Ruby `getResourceList`).
    *
-   * O Ruby usava YAML; o sender desta fase grava JSON (18.6).
+   * Ruby used YAML; the sender of this phase writes JSON (18.6).
    */
   protected async getResourceList(): Promise<SheetResourceInfo[]> {
     if (this.date === null) this.fatal("@date not set",);
@@ -522,7 +534,7 @@ export class SheetReceiver extends SheetHandlerBase {
     return list;
   }
 
-  /** Email cadastrado do recurso (Ruby `getResourceEmail`, l.379-386). */
+  /** Registered email of the resource (Ruby `getResourceEmail`, l.379-386). */
   protected async getResourceEmail(
     id: string | null = this.resourceId,
   ): Promise<string> {
@@ -534,7 +546,7 @@ export class SheetReceiver extends SheetHandlerBase {
     return resource.email;
   }
 
-  /** Nome do recurso (Ruby `getResourceName`, l.388-395). */
+  /** Name of the resource (Ruby `getResourceName`, l.388-395). */
   protected async getResourceName(
     id: string | null = this.resourceId,
   ): Promise<string> {
@@ -547,11 +559,11 @@ export class SheetReceiver extends SheetHandlerBase {
   }
 
   /**
-   * Erro de submissão (Ruby `SheetReceiver#error`, l.327-344).
+   * Submission error (Ruby `SheetReceiver#error`, l.327-344).
    *
-   * Enfileira o "Your <tipo> sheet submission failed!" (anexando a folha
-   * quando ela veio no corpo, para o usuário poder reenviá-la), depois delega
-   * ao `error` da base — que loga e levanta `TjRuntimeError`.
+   * Queues "Your <type> sheet submission failed!" (attaching the sheet when it
+   * came in the body, so the user can resubmit it) and then delegates to the
+   * base `error` — which logs and raises `TjRuntimeError`.
    */
   override error(message: string,): never {
     let text = message;
@@ -566,10 +578,10 @@ export class SheetReceiver extends SheetHandlerBase {
   }
 
   /**
-   * Falha de configuração (Ruby `SheetReceiver#fatal`, l.346-360).
+   * Configuration failure (Ruby `SheetReceiver#fatal`, l.346-360).
    *
-   * Só o texto fixo vai no email; a mensagem real (com a folha, se houver) vai
-   * para o log.
+   * Only the fixed text goes in the email; the real message (with the sheet, if
+   * any) goes to the log.
    */
   protected fatal(message: string,): never {
     this.log("FATAL", message,);
@@ -581,11 +593,11 @@ export class SheetReceiver extends SheetHandlerBase {
   }
 
   /**
-   * Aplica o `.tji` ao projeto já parseado, como o `tj3client check-*` fazia
-   * com um processo novo.
+   * Applies the sheet to the already parsed project, as `tj3client check-*`
+   * did with a fresh process.
    *
-   * O resumo (18.11) usa o mesmo caminho: só o `status` diverge da gramática
-   * do time sheet.
+   * The summary (18.11) uses the same path: only `status` differs from the time
+   * sheet grammar.
    */
   protected applySheet(sheet: string,): unknown {
     const project = this.project;
@@ -603,14 +615,14 @@ export class SheetReceiver extends SheetHandlerBase {
       this.sheetType === "status" ? "statusSheetFile" : "timeSheetFile",
     );
 
-    // O `check-ts` também valida os totais da folha (Ruby `TimeSheets#check`).
+    // `check-ts` also validates the sheet totals (Ruby `TimeSheets#check`).
     if (this.sheetType !== "status") project.checkTimeSheets();
-    // O `TimeSheet`/`StatusSheet` parseado fica disponível ao chamador — o
-    // resumo (18.11/18.17.5) agrega os status de material por esta folha.
+    // The parsed `TimeSheet`/`StatusSheet` is made available to the caller —
+    // the summary (18.11/18.17.5) aggregates the material statuses from it.
     return parsed;
   }
 
-  /** Remove a cópia da mensagem em `failedMailsDir` (Ruby l.175). */
+  /** Removes the copy of the message in `failedMailsDir` (Ruby l.175). */
   private async deleteFailedMail(): Promise<void> {
     const store = this.fileStore;
     if (store === null || this.idDigest === "") return;
@@ -618,10 +630,10 @@ export class SheetReceiver extends SheetHandlerBase {
     if (await store.exists(fileName,)) await store.delete(fileName,);
   }
 
-  /** Enfileira a resposta ao remetente — `error`/`fatal` não podem `await`. */
+  /** Queues the reply to the sender — `error`/`fatal` cannot `await`. */
   private queueReply(subject: string, text: string,): void {
-    // Enquanto uma resposta está em voo, não encadeia outra: uma falha do
-    // próprio `sendEmail` chamaria `error` de novo, recursivamente.
+    // While a reply is in flight, do not chain another: a failure of
+    // `sendEmail` itself would call `error` again, recursively.
     if (this.replyInFlight) return;
     const to = this.submitter;
     if (to === null || to === "") {
@@ -644,7 +656,7 @@ export class SheetReceiver extends SheetHandlerBase {
     );
   }
 
-  /** Entrega as respostas enfileiradas por `error`/`fatal`. */
+  /** Delivers the replies queued by `error`/`fatal`. */
   private async flushReplies(): Promise<void> {
     while (this.pendingReplies.length > 0) {
       const replies = this.pendingReplies.splice(
@@ -656,10 +668,10 @@ export class SheetReceiver extends SheetHandlerBase {
   }
 
   /**
-   * Conteúdo de um arquivo de inclusão, ou `null` quando ele não existe.
+   * Content of an inclusion file, or `null` when it does not exist.
    *
-   * Usado para herdar o encadeamento de pastas de versões antigas
-   * (`all.tji`), sem transformar a ausência em erro (24.2.36).
+   * Used to inherit the folder chain of older versions (`all.tji`), without
+   * turning the absence into an error (24.2.36).
    */
   private async readInclusionFile(fileName: string,): Promise<string | null> {
     const store = this.requireFileStore("readInclusionFile",);
@@ -671,7 +683,7 @@ export class SheetReceiver extends SheetHandlerBase {
     }
   }
 
-  /** O `FileStore` injetado ou erro fatal (ADR 037). */
+  /** The injected `FileStore`, or a fatal error (ADR 037). */
   protected requireFileStore(method: string,): FileStore {
     const store = this.fileStore;
     if (store === null) {

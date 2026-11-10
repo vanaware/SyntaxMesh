@@ -1,20 +1,20 @@
 /**
- * TraceReport (Fase 14.20.2) — instantâneo periódico de atributos em CSV.
+ * TraceReport (phase 14.20.2) — periodic snapshot of attributes as CSV.
  *
- * Porta fiel de `docs/taskjuggler/lib/taskjuggler/reports/TraceReport.rb`.
- * A cada execução monta um cabeçalho `[Date, ...colunas de contas/recursos/
- * tarefas]`, reaproveita a tabela anterior (reordenando colunas via
- * `TableColumnSorter` se os cabeçalhos mudaram) e acrescenta/atualiza a linha
- * correspondente à data atual (`project['now'].midnight()`).
+ * Faithful port of `docs/taskjuggler/lib/taskjuggler/reports/TraceReport.rb`.
+ * On every run it builds a `[Date, ...account/resource/task columns]` header,
+ * reuses the previous table (reordering columns through `TableColumnSorter`
+ * when the headers changed) and appends or updates the row of the current date
+ * (`project['now'].midnight()`).
  *
- * ⚠️ Browser (ADR 027): a variante Ruby lê o CSV anterior do disco via
- * `File.exist?(@fileName) && CSVFile.new(...).read(...)`. Aqui não tocamos no
- * filesystem; a tabela anterior é injetada por `previousTableSource` (default
- * `null` → primeira execução). O chamador (UI/Fase 19 — Storage) é o
- * responsável por persistir/carregar o CSV entre execuções.
+ * ⚠️ Browser (ADR 027): the Ruby variant reads the previous CSV from disk via
+ * `File.exist?(@fileName) && CSVFile.new(...).read(...)`. Here the filesystem is
+ * never touched; the previous table is injected through `previousTableSource`
+ * (default `null` → first run). The caller (UI/phase 19 — Storage) is
+ * responsible for persisting and reloading the CSV between runs.
  *
- * `to_html()` renderiza o gráfico SVG via `ChartPlotter` (Fase 14.22); erros de
- * dados do gráfico viram aviso, fiel ao `rescue ChartPlotterError` do Ruby.
+ * `to_html()` renders the SVG chart through `ChartPlotter` (phase 14.22); chart
+ * data errors become warnings, mirroring Ruby's `rescue ChartPlotterError`.
  *
  * @see docs/syntaxmesh/fases/fase-14-relatorios-tarefas.md (14.20.2)
  */
@@ -40,46 +40,55 @@ import { XMLBlob, } from "../xml/xml-element.ts";
 import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 import { registerContentFactory, } from "../model/report-content.ts";
 
-/** Data em formato ISO curto (`YYYY-MM-DD`) usada para round-trip do CSV. */
+/** Short ISO date form (`YYYY-MM-DD`) used for the CSV round-trip. */
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
- * Snapshot de tabela carregado de uma execução anterior. Cada linha é um array
- * de células; a primeira linha contém os cabeçalhos. Células podem ser
- * `string` (formato cru do CSV) — o relatório as converterá para `TjTime`/`null`
- * durante `generateIntermediateFormat`.
+ * Table snapshot loaded from a previous run. Every row is an array of cells and
+ * the first row holds the headers. Cells may be `string` (the raw CSV form) —
+ * the report converts them to `TjTime`/`null` during
+ * `generateIntermediateFormat`.
  */
 export type TraceTable = unknown[][];
 
+/**
+ * The `tracereport` generator: one CSV row per traced date, with the attributes
+ * requested by the report columns.
+ */
 export class TraceReport extends ReportBase {
-  /** Tabela intermediária (cabeçalho + uma linha por data rastreada). */
+  /** Intermediate table (header plus one row per traced date). */
   private table: TraceTable | null = null;
   /**
-   * Fonte opcional da tabela anterior (equivalente ao CSV em disco do Ruby).
-   * Retorna `null` quando não há histórico — primeira execução.
+   * Optional source of the previous table (the Ruby equivalent of the CSV on
+   * disk). Returns `null` when there is no history — the first run.
    */
   previousTableSource: (() => TraceTable | null) | null = null;
 
+  /**
+   * Creates a trace report.
+   *
+   * @param report Report definition being rendered.
+   */
   constructor(report: Report,) {
     super(report,);
   }
 
-  /** Tabela após `generateIntermediateFormat` (para inspeção/testes). */
+  /** Table after `generateIntermediateFormat` (for inspection and tests). */
   getTable(): TraceTable | null {
     return this.table;
   }
 
-  /** Monta a tabela intermediária: cabeçalhos + merge do histórico + linha atual. */
+  /** Builds the intermediate table: headers, history merge and current row. */
   override generateIntermediateFormat(): void {
     super.generateIntermediateFormat();
 
-    // Query compartilhada por todas as células (carga/formatos/journal/contas).
+    // Query shared by every cell (load unit, formats, journal and accounts).
     const queryAttrs = {
       project: this.project,
       scopeProperty: null,
       loadUnit: this.a("loadUnit",) as string | null,
       numberFormat: this.a("numberFormat",) as never,
-      // TraceReport sempre usa %Y-%m-%d hard-coded para datas.
+      // TraceReport always uses the hard-coded %Y-%m-%d for dates.
       timeFormat: "%Y-%m-%d",
       currencyFormat: this.a("currencyFormat",) as never,
       start: this.a("start",) as TjTime,
@@ -93,7 +102,7 @@ export class TraceReport extends ReportBase {
     };
     const query = new Query(queryAttrs,);
 
-    // Lista de contas ordenada e filtrada.
+    // Sorted and filtered account list.
     let accountList = new PropertyList<Account>(this.project.accounts,);
     accountList.setSorting(
       (this.a("sortAccounts",) as Array<[string, boolean, number,]>) ?? [],
@@ -107,8 +116,8 @@ export class TraceReport extends ReportBase {
     );
     accountList.sort();
 
-    // Lista de recursos (a variante Ruby usa `filterTaskList` por engano;
-    // usamos `filterResourceList` — semanticamente equivalente e correto).
+    // Resource list (the Ruby variant calls `filterTaskList` by mistake; we use
+    // `filterResourceList` — semantically equivalent and correct).
     let resourceList = new PropertyList<Resource>(this.project.resources,);
     resourceList.setSorting(
       (this.a("sortResources",) as Array<[string, boolean, number,]>) ?? [],
@@ -123,7 +132,7 @@ export class TraceReport extends ReportBase {
     );
     resourceList.sort();
 
-    // Lista de tarefas inclui adotadas e é filtrada como em TaskListRE.
+    // Task list including adopted tasks, filtered as in TaskListRE.
     let taskList = new PropertyList<Task>(this.project.tasks,);
     taskList.includeAdopted();
     taskList.setSorting(
@@ -139,14 +148,14 @@ export class TraceReport extends ReportBase {
     );
     taskList.sort();
 
-    // Materiais (extensão SyntaxMesh — 14C.1.14). `Query.process` já resolve
-    // atributos de material (14C.1.20), então as colunas `<-%...%->`
-    // funcionam; sem materiais a lista é vazia e o cabeçalho não muda.
-    // Os filtros `hidematerial`/`rollupmaterial` chegam em 14C.6.
+    // Materials (SyntaxMesh extension — 14C.1.14). `Query.process` already
+    // resolves material attributes (14C.1.20), so the `<-%...%->` columns work;
+    // without materials the list is empty and the header does not change. The
+    // `hidematerial`/`rollupmaterial` filters arrive in 14C.6.
     const materialList = new PropertyList<Material>(this.project.materials,);
     materialList.query = query;
 
-    // Cabeçalho: coluna Date + colunas de contas/recursos/tarefas/materiais.
+    // Header: the Date column plus the account/resource/task/material columns.
     const headers: string[] = [
       "Date",
       ...this.generatePropertyListHeader(accountList, query,),
@@ -163,7 +172,7 @@ export class TraceReport extends ReportBase {
       this.table = previous;
       const oldHeaders = this.table[0] as unknown[];
       if (!headersEqual(oldHeaders, headers,)) {
-        // Colunas mudaram: reordena e move as descontinuadas para o fim.
+        // Columns changed: reorder and move the discontinued ones to the end.
         const sorter = new TableColumnSorter(this.table,);
         this.table = sorter.sort(headers,);
         discontinuedColumns = sorter.discontinuedColumns ?? 0;
@@ -172,7 +181,7 @@ export class TraceReport extends ReportBase {
       this.table = [[...headers,],];
     }
 
-    // Normaliza células do histórico: "" → null; `YYYY-MM-DD` → TjTime.
+    // Normalizes history cells: "" → null; `YYYY-MM-DD` → TjTime.
     for (const line of this.table) {
       for (let i = 0; i < line.length; i++) {
         const cell = line[i];
@@ -184,7 +193,7 @@ export class TraceReport extends ReportBase {
       }
     }
 
-    // Linha da data atual — substitui se já existir, adiciona caso contrário.
+    // Row of the current date — replaces an existing one, appends otherwise.
     const ctxQuery = this.currentQuery().dup();
     const dateTag = (this.project.get("now",) as TjTime).midnight();
 
@@ -198,7 +207,7 @@ export class TraceReport extends ReportBase {
       : [];
 
     if (idx >= 0) {
-      // Data já rastreada: preserva valores antigos das colunas descontinuadas.
+      // Date already traced: preserves the old values of discontinued columns.
       if (discontinuedColumns > 0) {
         discColumnValues = (this.table[idx] as unknown[]).slice(
           headers.length,
@@ -216,10 +225,10 @@ export class TraceReport extends ReportBase {
     this.generatePropertyListValues(idx, taskList, ctxQuery,);
     this.generatePropertyListValues(idx, materialList, ctxQuery,);
 
-    // Preenche colunas descontinuadas com valores antigos ou null.
+    // Fills the discontinued columns with the old values or null.
     (this.table[idx] as unknown[]).push(...discColumnValues,);
 
-    // Ordena por data ascendente, mantendo o cabeçalho (string) no topo.
+    // Sorts by ascending date, keeping the (string) header on top.
     this.table.sort((l1, l2,) => {
       const a = l1[0];
       const b = l2[0];
@@ -233,8 +242,8 @@ export class TraceReport extends ReportBase {
   }
 
   /**
-   * HTML do gráfico (Fase 14.22 — ChartPlotter). Desenha o SVG sobre a tabela
-   * de trace; erros de dados viram aviso (fiel ao `rescue ChartPlotterError`).
+   * Chart HTML (phase 14.22 — ChartPlotter). Draws the SVG over the trace table;
+   * data errors become warnings (mirroring `rescue ChartPlotterError`).
    */
   to_html(): XMLElementLike[] {
     if (!this.table) this.generateIntermediateFormat();
@@ -265,7 +274,7 @@ export class TraceReport extends ReportBase {
     return html;
   }
 
-  /** Tabela em CSV: `TjTime` → `YYYY-MM-DD`, `null` → `''`. */
+  /** Table as CSV: `TjTime` → `YYYY-MM-DD`, `null` → `''`. */
   to_csv(): unknown[][] {
     if (!this.table) this.generateIntermediateFormat();
     const out: unknown[][] = [];
@@ -285,7 +294,7 @@ export class TraceReport extends ReportBase {
     return out;
   }
 
-  /** Constrói cabeçalhos de uma lista de propriedades via `SimpleQueryExpander`. */
+  /** Builds the headers of a property list through `SimpleQueryExpander`. */
   private generatePropertyListHeader<T extends PropertyTreeNode,>(
     propertyList: PropertyList<T>,
     query: Query,
@@ -321,7 +330,7 @@ export class TraceReport extends ReportBase {
     return headers;
   }
 
-  /** Preenche a linha `idx` com os valores da lista de propriedades. */
+  /** Fills row `idx` with the values of the property list. */
   private generatePropertyListValues<T extends PropertyTreeNode,>(
     idx: number,
     propertyList: PropertyList<T>,
@@ -346,7 +355,7 @@ export class TraceReport extends ReportBase {
   }
 }
 
-/** `true` se o array de cabeçalhos antigos equivale ao novo (célula a célula). */
+/** `true` when the old header array matches the new one (cell by cell). */
 function headersEqual(oldHeaders: unknown[], newHeaders: string[],): boolean {
   if (oldHeaders.length !== newHeaders.length) return false;
   for (let i = 0; i < newHeaders.length; i++) {
@@ -355,7 +364,7 @@ function headersEqual(oldHeaders: unknown[], newHeaders: string[],): boolean {
   return true;
 }
 
-// Registra o conteúdo de `tracereport` na fábrica (14.11).
+// Registers the `tracereport` content in the factory (14.11).
 registerContentFactory(
   "tracereport",
   (report: unknown,): TraceReport => new TraceReport(report as Report,),

@@ -2,23 +2,60 @@ import { TjArgumentError, TjTime, } from "../time/tj-time.ts";
 import { Scoreboard, } from "../time/scoreboard.ts";
 import { TimeInterval, } from "../time/time-interval.ts";
 
+/**
+ * Weekly working hours of a resource or of the project.
+ *
+ * Port of `WorkingHours.rb`. Holds one list of intervals per weekday (index 0 =
+ * Sunday .. 6 = Saturday), each interval expressed in seconds from midnight,
+ * plus the slot grid used to materialise those intervals into a boolean
+ * `Scoreboard`. The scoreboard is built lazily and invalidated whenever the
+ * hours or the time zone change.
+ */
 export class WorkingHours {
+  /**
+   * Working intervals per weekday, in seconds from midnight.
+   * Index 0 is Sunday; an empty array means the day is off.
+   */
   readonly days: Array<Array<[number, number,]>>;
+  /** First moment covered by the generated scoreboard. */
   readonly startDate: Date;
+  /** Last moment covered by the generated scoreboard. */
   readonly endDate: Date;
+  /** Length of one scoreboard slot, in seconds. */
   readonly slotDuration: number;
+  /** Time zone used to map absolute instants to weekdays, or `null` for UTC. */
   private _timezone: string | null;
+  /** Cached on-shift scoreboard, or `null` when it must be regenerated. */
   scoreboard: Scoreboard<boolean> | null;
 
+  /**
+   * Time zone used to resolve weekdays.
+   *
+   * @returns The IANA zone name, or `null` for UTC.
+   */
   get timezone(): string | null {
     return this._timezone;
   }
 
+  /**
+   * Changes the time zone, invalidating the cached scoreboard.
+   *
+   * @param zone IANA zone name.
+   */
   set timezone(zone: string,) {
     this.scoreboard = null;
     this._timezone = zone;
   }
 
+  /**
+   * Creates working hours from a copy of another instance, or from scratch.
+   *
+   * @param arg1 Source `WorkingHours` to copy, or the slot duration in seconds.
+   * @param startDate First moment covered by the scoreboard.
+   * @param endDate Last moment covered by the scoreboard.
+   * @param timeZone IANA zone name used to resolve weekdays.
+   * @throws TjArgumentError When `arg1` is a duration and the dates are missing.
+   */
   constructor(
     arg1?: WorkingHours | number,
     startDate?: Date,
@@ -73,10 +110,23 @@ export class WorkingHours {
     }
   }
 
+  /**
+   * Creates an independent copy of these working hours.
+   *
+   * @returns A new instance sharing no mutable state.
+   */
   deepClone(): WorkingHours {
     return new WorkingHours(this,);
   }
 
+  /**
+   * Replaces the working intervals of one weekday.
+   *
+   * @param dayOfWeek Weekday index (0 = Sunday .. 6 = Saturday).
+   * @param intervals Intervals in seconds from midnight, `[from, to)`.
+   * @throws TjArgumentError When the weekday is out of range, an interval falls
+   * outside a single day or an interval is empty or inverted.
+   */
   setWorkingHours(
     dayOfWeek: number,
     intervals: Array<[number, number,]>,
@@ -102,10 +152,22 @@ export class WorkingHours {
     this.days[dayOfWeek] = intervals;
   }
 
+  /**
+   * Reads the working intervals of one weekday.
+   *
+   * @param dayOfWeek Weekday index (0 = Sunday .. 6 = Saturday).
+   * @returns The intervals in seconds from midnight; empty when the day is off.
+   */
   getWorkingHours(dayOfWeek: number,): Array<[number, number,]> {
     return this.days[dayOfWeek] || [];
   }
 
+  /**
+   * Tells whether a moment falls inside the working hours.
+   *
+   * @param arg Instant to test, as a date or as a scoreboard slot index.
+   * @returns `true` when the moment is on shift.
+   */
   onShift(arg: TjTime | number,): boolean {
     this.initScoreboard();
     if (arg instanceof TjTime) {
@@ -114,6 +176,12 @@ export class WorkingHours {
     return this.scoreboard!.get(arg,);
   }
 
+  /**
+   * Tells whether an interval is entirely outside the working hours.
+   *
+   * @param interval Interval to test.
+   * @returns `true` when no slot of the interval is on shift.
+   */
   timeOff(interval: TimeInterval,): boolean {
     this.initScoreboard();
     const startIdx = this.scoreboard!.dateToIdx(interval.start.toDate(),);
@@ -126,6 +194,11 @@ export class WorkingHours {
     return true;
   }
 
+  /**
+   * Sums the working hours of a whole week.
+   *
+   * @returns The total number of working hours per week.
+   */
   weeklyWorkingHours(): number {
     let seconds = 0;
     for (const day of this.days) {
@@ -136,6 +209,11 @@ export class WorkingHours {
     return seconds / (60 * 60);
   }
 
+  /**
+   * Renders the weekly hours as one line per weekday.
+   *
+   * @returns A human-readable summary (`"Mon: 9:00 - 17:00"`, ...).
+   */
   to_s(): string {
     const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat",];
     let str = "";
@@ -161,6 +239,12 @@ export class WorkingHours {
     return str;
   }
 
+  /**
+   * Compares these working hours with another instance.
+   *
+   * @param other Instance to compare against.
+   * @returns `true` when the time zone, the grid and every weekday match.
+   */
   equals(other: WorkingHours,): boolean {
     if (
       other === null || this.timezone !== other.timezone ||
@@ -186,11 +270,23 @@ export class WorkingHours {
     return true;
   }
 
+  /**
+   * Formats a second-of-day offset as `H:MM`.
+   *
+   * @param t Offset in seconds from midnight.
+   * @returns The formatted time; `"24:00"` when `t` reaches the end of the day.
+   */
   private timeToS(t: number,): string {
     if (t >= 24 * 60 * 60) return "24:00";
     return `${Math.floor(t / 3600,)}:${t % 3600}`;
   }
 
+  /**
+   * Builds the on-shift scoreboard when it is missing.
+   *
+   * The computation temporarily swaps the global time zone, so weekday and
+   * second-of-day are resolved in the zone configured on this instance.
+   */
   private initScoreboard(): void {
     if (this.scoreboard) {
       return;

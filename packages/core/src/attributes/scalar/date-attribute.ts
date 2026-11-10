@@ -1,5 +1,5 @@
 /**
- * Atributo escalar data.
+ * Date scalar attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:DateAttribute
  */
@@ -11,25 +11,25 @@ import { AttributeBase, } from "../attribute-base.ts";
 import { TjTime, } from "../../time/tj-time.ts";
 
 /**
- * Atributo escalar data.
+ * Date scalar attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:DateAttribute
  */
 export class DateAttribute extends AttributeBase<string> {
   /**
-   * ID do tipo de atributo para DateAttribute.
+   * Attribute type ID for DateAttribute.
    */
   static readonly tjpId = "date";
 
   /**
-   * Converte o valor para string.
+   * Converts the value to a string.
    *
-   * Ruby: `v.to_s(query ? query.timeFormat : '%Y-%m-%d')`. O `to_s()` do
-   * port não recebe `query` — a formatação por `query.timeFormat` já é
-   * feita no pipeline do Query (`query.ts:345`, que chama
-   * `TjTime#to_s(timeFormat)` diretamente). Aqui, no dump independente de
-   * query, aplicamos o default do Ruby (`%Y-%m-%d`) quando o valor é um
-   * `TjTime`; strings ISO já estocadas pelo parser são devolvidas verbatim.
+   * Ruby: `v.to_s(query ? query.timeFormat : '%Y-%m-%d')`. The port's `to_s()`
+   * does not receive `query` — the `query.timeFormat` formatting already
+   * happens in the Query pipeline (`query.ts:345`, which calls
+   * `TjTime#to_s(timeFormat)` directly). Here, in the dump independent of the
+   * query, we apply the Ruby default (`%Y-%m-%d`) when the value is a
+   * `TjTime`; ISO strings already stored by the parser are returned verbatim.
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:DateAttribute#to_s
    */
@@ -45,7 +45,7 @@ export class DateAttribute extends AttributeBase<string> {
   }
 
   /**
-   * Converte o valor para TJP (formato TaskJuggler).
+   * Converts the value to TJP (TaskJuggler format).
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:DateAttribute#to_tjp
    */

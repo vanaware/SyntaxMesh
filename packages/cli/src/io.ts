@@ -1,14 +1,15 @@
 /**
- * `io.ts` — fronteira única de runtime da CLI (ADR 034 §3).
+ * `io.ts` — single runtime boundary of the CLI (ADR 034 §3).
  *
- * Regras desta camada:
- *  - **Todo** acesso a filesystem, processo, `argv` e terminal passa por aqui.
- *  - **Zero** ramificação de runtime para arquivos: `node:fs/promises` é
- *    suportado nativamente por Deno, Node e Bun.
- *  - A única ramificação restante é `args`/`exit` (uma linha cada), mantida
- *    para permitir injeção nos testes.
- *  - Sem `any`: o acesso ao global usa a interface tipada {@link RuntimeGlobals}
- *    (mesma convenção do lexer do core).
+ * Rules of this layer:
+ *  - **Every** access to the file system, process, `argv` and terminal goes
+ *    through here.
+ *  - **Zero** runtime branching for files: `node:fs/promises` is natively
+ *    supported by Deno, Node and Bun.
+ *  - The only branching left is `args`/`exit` (one line each), kept so tests can
+ *    inject their own implementation.
+ *  - No `any`: global access uses the typed interface {@link RuntimeGlobals}
+ *    (same convention as the core lexer).
  *
  * @see docs/syntaxmesh/decisoes/034-cli-multiruntime.md
  */
@@ -26,28 +27,28 @@ import { tmpdir, } from "node:os";
 import { join, resolve, } from "node:path";
 import { fileURLToPath, pathToFileURL, } from "node:url";
 
-// Reexport de Cliffy na mesma fronteira: os demais módulos do pacote nunca
-// importam de `@cliffy/*` diretamente (24.1.8).
+// Cliffy re-exported at the same boundary: the other modules of the package
+// never import from `@cliffy/*` directly (24.1.8).
 export { Command, } from "@cliffy/command";
 
-/** Nome do runtime em execução. */
+/** Name of the runtime in execution. */
 export type RuntimeName = "deno" | "bun" | "node";
 
 /**
- * Shape mínimo dos globais de runtime lidos pela CLI. Tipado para evitar
- * `any` em `src/` — estende-se aqui quando um novo global for necessário.
+ * Minimal shape of the runtime globals read by the CLI. Typed to avoid `any` in
+ * `src/` — extend it here when a new global becomes necessary.
  */
 export interface RuntimeGlobals {
-  /** Globais do Deno (runtime de referência do port). */
+  /** Deno globals (reference runtime of the port). */
   Deno?: {
     args: string[];
     mainModule?: string;
     exit: (code?: number,) => never;
     stdout?: { isTerminal?: () => boolean };
   };
-  /** Globais do Bun (bundle alternativo do ADR 034). */
+  /** Bun globals (alternative bundle of ADR 034). */
   Bun?: Record<string, unknown>;
-  /** Globais do Node (bundle alternativo do ADR 034). */
+  /** Node globals (alternative bundle of ADR 034). */
   process?: {
     argv: string[];
     exit: (code?: number,) => never;
@@ -56,7 +57,7 @@ export interface RuntimeGlobals {
   };
 }
 
-/** Detecta o runtime a partir dos globais. */
+/** Detects the runtime from the globals. */
 export function detectRuntime(g: RuntimeGlobals,): RuntimeName {
   if (g.Deno) return "deno";
   if (g.Bun) return "bun";
@@ -64,10 +65,10 @@ export function detectRuntime(g: RuntimeGlobals,): RuntimeName {
 }
 
 /**
- * Normaliza `argv` para o runtime corrente.
+ * Normalises `argv` for the current runtime.
  *
- * É a **única** ramificação de entrada do pacote: mantida por testabilidade
- * (os testes passam um objeto de globais fake em vez de um processo real).
+ * It is the **only** entry branching of the package: kept for testability (tests
+ * pass a fake globals object instead of a real process).
  */
 export function resolveArgs(g: RuntimeGlobals,): string[] {
   if (g.Deno) return [...g.Deno.args,];
@@ -76,11 +77,11 @@ export function resolveArgs(g: RuntimeGlobals,): string[] {
 }
 
 /**
- * Responde se o módulo de `metaUrl` é o ponto de entrada do processo.
+ * Tells whether the module at `metaUrl` is the entry point of the process.
  *
- * `import.meta.main` só existe no Deno/Bun; em Node e nos bundles o teste é
- * feito comparando o `argv[1]` com a URL do módulo. Uma única função para os
- * três runtimes evita um segundo entrypoint (ADR 034 §2).
+ * `import.meta.main` only exists in Deno/Bun; in Node and in the bundles the
+ * test compares `argv[1]` with the module URL. A single function for the three
+ * runtimes avoids a second entrypoint (ADR 034 §2).
  */
 export function isEntrypoint(
   metaUrl: string,
@@ -92,53 +93,53 @@ export function isEntrypoint(
   return pathToFileURL(resolve(entry,),).href === metaUrl;
 }
 
-/** Globais do processo corrente, sem `any`. */
+/** Globals of the current process, without `any`. */
 export const globals: RuntimeGlobals = globalThis as unknown as RuntimeGlobals;
 
 /**
- * Caminho de disco relativo ao módulo (`import.meta.url`).
+ * Disk path relative to the module (`import.meta.url`).
  *
- * `new URL(…).pathname` percent-encoda espaços e acentos (`/com%20espaco/`) e
- * no Windows começa com `/C:/…`, então um asset ao lado do módulo nunca seria
- * encontrado. `fileURLToPath` resolve os dois casos.
+ * `new URL(…).pathname` percent-encodes spaces and accents (`/com%20espaco/`)
+ * and on Windows starts with `/C:/…`, so an asset next to the module would never
+ * be found. `fileURLToPath` handles both cases.
  */
 export function modulePath(metaUrl: string, relative = ".",): string {
   return fileURLToPath(new URL(relative, metaUrl,),);
 }
 
 /**
- * `stdout` é um terminal?
+ * Is `stdout` a terminal?
  *
- * Em pipe/redirecionamento o reporter **não** emite ANSI (24.4.2). Deno e Node
- * expõem a mesma informação por nomes diferentes; a sonda é a última
- * ramificação de runtime além de `args`/`exit`.
+ * On a pipe/redirection the reporter does **not** emit ANSI (24.4.2). Deno and
+ * Node expose the same information under different names; this probe is the last
+ * runtime branching besides `args`/`exit`.
  */
 export function isTty(g: RuntimeGlobals = globals,): boolean {
   if (g.Deno) return g.Deno.stdout?.isTerminal?.() ?? false;
   return g.process?.stdout?.isTTY === true;
 }
 
-/** Runtime em execução (diagnóstico/log). */
+/** Runtime in execution (for diagnostics/logging). */
 export const runtime: RuntimeName = detectRuntime(globals,);
 
-/** Argumentos da linha de comando, normalizados. */
+/** Command-line arguments, normalised. */
 export const args: string[] = resolveArgs(globals,);
 
 // ---------------------------------------------------------------------------
-// Arquivos e diretórios — sempre `node:fs/promises`, sem ramificação.
+// Files and directories — always `node:fs/promises`, no branching.
 // ---------------------------------------------------------------------------
 
-/** Lê um arquivo como UTF-8. */
+/** Reads a file as UTF-8. */
 export const readText = (path: string,): Promise<string> =>
   readFile(path, "utf8",);
 
 /**
- * Lê o `stdin` inteiro como UTF-8 (`--from -` dos receivers — 24.10.2).
+ * Reads the whole `stdin` as UTF-8 (`--from -` of the receivers — 24.10.2).
  *
- * O stream vem do shim de `node:process`, presente nos três runtimes e já
- * ligado ao descritor 0; a iteração assíncrona evita depender de `Deno.stdin`
- * e de um caminho `-` especial. Sem `stdin` disponível a leitura devolve
- * texto vazio — o consumidor (receiver) reporta a mensagem ausente.
+ * The stream comes from the `node:process` shim, present on all three runtimes
+ * and already bound to descriptor 0; async iteration avoids depending on
+ * `Deno.stdin` and on a special `-` path. With no `stdin` available the read
+ * returns empty text — the consumer (receiver) reports the missing message.
  */
 export async function readStdin(g: RuntimeGlobals = globals,): Promise<string> {
   const stdin = g.process?.stdin;
@@ -151,31 +152,31 @@ export async function readStdin(g: RuntimeGlobals = globals,): Promise<string> {
   return text + decoder.decode();
 }
 
-/** Escreve um arquivo UTF-8 (sobrescreve). */
+/** Writes a UTF-8 file (overwrites). */
 export const writeText = (path: string, data: string,): Promise<void> =>
   writeFile(path, data, "utf8",);
 
 /**
- * Lê um arquivo binário (imagens de relatório, anexos).
+ * Reads a binary file (report images, attachments).
  *
- * Normaliza para `Uint8Array`: o `readFile` do Node/Deno devolve `Buffer`,
- * subtipo que não compara por igualdade profunda com `Uint8Array` — a
- * superfície da CLI fica estável nos três runtimes.
+ * Normalises to `Uint8Array`: Node/Deno `readFile` returns `Buffer`, a subtype
+ * that does not deep-compare equal to `Uint8Array` — the CLI surface stays
+ * stable across the three runtimes.
  */
 export async function readBytes(path: string,): Promise<Uint8Array> {
   return new Uint8Array(await readFile(path,),);
 }
 
-/** Copia um arquivo, preservando os bytes. */
+/** Copies a file, preserving the bytes. */
 export const copy = (from: string, to: string,): Promise<void> =>
   copyFile(from, to,);
 
 /**
- * `exists` — true quando o caminho existe (arquivo ou diretório).
+ * `exists` — true when the path exists (file or directory).
  *
- * Implementado com `stat` e **não** com `access`: no shim `node:fs` do Deno,
- * `access()` resolve o `uid` do processo e passa a exigir `--allow-sys`, o que
- * quebraria a CLI sob as permissões mínimas de `deno task cli`.
+ * Implemented with `stat` and **not** with `access`: in Deno's `node:fs` shim,
+ * `access()` resolves the process `uid` and then requires `--allow-sys`, which
+ * would break the CLI under the minimal permissions of `deno task cli`.
  */
 export async function exists(path: string,): Promise<boolean> {
   try {
@@ -191,19 +192,19 @@ export async function mkpath(path: string,): Promise<void> {
   await mkdir(path, { recursive: true, },);
 }
 
-/** Diretório temporário único com prefixo. */
+/** Unique temporary directory with a prefix. */
 export const mktemp = (prefix: string,): Promise<string> =>
   mkdtemp(join(tmpdir(), prefix,),);
 
-/** Lista um diretório (nomes simples). */
+/** Lists a directory (plain names). */
 export const listDir = (path: string,): Promise<string[]> => readdir(path,);
 
 /**
- * `true` quando o caminho existe e é diretório.
+ * `true` when the path exists and is a directory.
  *
- * `readdir` num arquivo lança `ENOTDIR` (e, no shim do Deno, chega a exigir
- * `--allow-sys`), então a distinção arquivo/diretório precisa de um `stat`
- * explícito na fronteira — nunca de tratamento de exceção no consumidor.
+ * `readdir` on a file throws `ENOTDIR` (and in Deno's shim may even require
+ * `--allow-sys`), so telling file from directory needs an explicit `stat` at the
+ * boundary — never exception handling in the consumer.
  */
 export async function isDir(path: string,): Promise<boolean> {
   try {
@@ -214,29 +215,29 @@ export async function isDir(path: string,): Promise<boolean> {
 }
 
 // ---------------------------------------------------------------------------
-// Terminal — `console` existe nativamente nos três runtimes.
+// Terminal — `console` exists natively on all three runtimes.
 // ---------------------------------------------------------------------------
 
-/** Escreve uma linha em `stdout`. */
+/** Writes a line to `stdout`. */
 export function print(text: string,): void {
   console.log(text,);
 }
 
-/** Escreve uma linha em `stderr`. */
+/** Writes a line to `stderr`. */
 export function printerr(text: string,): void {
   console.error(text,);
 }
 
 // ---------------------------------------------------------------------------
-// Processo
+// Process
 // ---------------------------------------------------------------------------
 
 /**
- * Encerra o processo com o código dado.
+ * Terminates the process with the given code.
  *
- * A CLI chama isto com o `exitCode` do envelope de `execute` — o core nunca
- * encerra processo (ADR 034 §7). O parâmetro de globais é injetável apenas
- * para teste (um `exit` real mata o runner).
+ * The CLI calls this with the `exitCode` of the `execute` envelope — the core
+ * never terminates a process (ADR 034 §7). The globals parameter is injectable
+ * only for tests (a real `exit` kills the runner).
  */
 export function exit(code = 0, g: RuntimeGlobals = globals,): never {
   if (g.Deno) g.Deno.exit(code,);

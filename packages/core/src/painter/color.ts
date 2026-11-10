@@ -1,32 +1,34 @@
 /**
- * 17.7.1 — `Color`: cor do Painter (`Painter/Color.rb`).
+ * 17.7.1 — `Color`: colour of the Painter (`Painter/Color.rb`).
  *
- * Porta `TaskJuggler::Painter::Color`: um triple RGB 0-255 com nomes
- * conhecidos, conversão HSV e serialização `#rrggbb` para SVG/HTML.
+ * Ports `TaskJuggler::Painter::Color`: an RGB triple in 0-255 with known
+ * names, HSV conversion and `#rrggbb` serialization for SVG/HTML.
  *
- * Divergências e particularidades (conferidas contra o oráculo Ruby em
+ * Divergences and particularities (checked against the Ruby oracle on
  * 2026-11-04, `.tmp/painter_ruby_check.rb`):
- * - **Categoria A**: no Ruby `NamedColors` é indexado por Symbol, então
- *   `Color.new('red')` LEVANTA `RuntimeError: Unknown color name red` — só
- *   `Color.new(:red)` funciona. Em TS a tabela tem chaves string, que é o
- *   formato canônico do port (`new Color("red")`). Os nomes permanecem
- *   minúsculos e exatos (147 entradas, não as 155 estimadas no plano).
- * - **Categoria C**: `hsvToRgb` NÃO trunca o componente `v` na tabela final
- *   (`[[v, t, p], ...]`), apenas `p`, `q` e `t` passam por `.to_i`. Assim
- *   `new Color(40, 200, 240.5, "hsv").to_rgb()` devolve `[240.5, 177, 51]`.
- *   `to_s` continua truncando, como `format("%02x", 240.5)` → `f0`.
- * - **Categoria C**: o 4º argumento do construtor HSV é ignorado por `Color`
- *   (`ChartPlotter` chama `Color.new(h, s, v, :hsv)` — o `:hsv` é apenas um
- *   marcador do chamador). Não é validado de forma alguma.
- * - **Categoria C**: limites assimétricos — RGB aceita `v >= 0 && v < 256`
- *   (255.5 passa), já HSV exige `s <= 255` e `v <= 255`, e hue `h < 360`.
- * - Aridade inválida → `ArgumentError` sem mensagem (no Ruby `e.message` é o
- *   nome da classe). Reproduzido como `TjArgumentError("ArgumentError")`.
- * - `raise "Unknown color name …"` é `RuntimeError` puro no Ruby; aqui é
- *   `Error` simples, como nos demais `raise "string"` do port.
- * - Nota TS: os ramos numéricos verificam `typeof === "number"`; um valor
- *   não numérico levantaria `TypeError` no Ruby e aqui levanta
- *   `TjArgumentError` com a mesma mensagem de faixa.
+ * - **Category A**: in Ruby `NamedColors` is keyed by Symbol, so
+ *   `Color.new('red')` RAISES `RuntimeError: Unknown color name red` — only
+ *   `Color.new(:red)` works. In TS the table has string keys, which is the
+ *   canonical format of the port (`new Color("red")`). The names stay
+ *   lowercase and exact (147 entries, not the 155 guessed in the plan).
+ * - **Category C**: `hsvToRgb` does NOT truncate the `v` component in the
+ *   final table (`[[v, t, p], ...]`); only `p`, `q` and `t` go through
+ *   `.to_i`. Hence `new Color(40, 200, 240.5, "hsv").to_rgb()` returns
+ *   `[240.5, 177, 51]`. `to_s` still truncates, like
+ *   `format("%02x", 240.5)` → `f0`.
+ * - **Category C**: the 4th argument of the HSV constructor is ignored by
+ *   `Color` (`ChartPlotter` calls `Color.new(h, s, v, :hsv)` — the `:hsv` is
+ *   just a marker for the caller). It is not validated in any way.
+ * - **Category C**: asymmetric limits — RGB accepts `v >= 0 && v < 256`
+ *   (255.5 passes), while HSV requires `s <= 255` and `v <= 255`, and hue
+ *   `h < 360`.
+ * - Invalid arity → `ArgumentError` with no message (in Ruby `e.message` is
+ *   the class name). Reproduced as `TjArgumentError("ArgumentError")`.
+ * - `raise "Unknown color name …"` is a plain `RuntimeError` in Ruby; here it
+ *   is a plain `Error`, like the other `raise "string"` calls of the port.
+ * - TS note: the numeric branches check `typeof === "number"`; a non-numeric
+ *   value would raise `TypeError` in Ruby and raises `TjArgumentError` here
+ *   with the same range message.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Painter/Color.rb
  * @see docs/syntaxmesh/fases/fase-17-html-xml-tarefas.md (17.7.1)
@@ -34,15 +36,16 @@
 
 import { TjArgumentError, } from "../model/errors.ts";
 
-/** Triple de números: RGB ou HSV, dependendo do método. */
+/** Triple of numbers: RGB or HSV, depending on the method. */
 export type ColorTriple = [number, number, number,];
 
-/** Argumentos aceitos pelo construtor variádico (Ruby `initialize(*args)`). */
+/** Arguments accepted by the variadic constructor (Ruby `initialize(*args)`). */
 export type ColorArg = string | number;
 
 /**
- * Cores nomeadas (`Color::NamedColors`). Mesma ordem do Ruby; as chaves são
- * strings porque não há tabela Symbol-keyed idiomática em TS (Categoria A).
+ * Named colours (`Color::NamedColors`). Same order as Ruby; the keys are
+ * strings because there is no idiomatic Symbol-keyed table in TS
+ * (Category A).
  */
 export const NamedColors: Record<string, ColorTriple> = {
   aliceblue: [240, 248, 255,],
@@ -194,17 +197,18 @@ export const NamedColors: Record<string, ColorTriple> = {
   yellowgreen: [154, 205, 50,],
 };
 
+/** Immutable RGB colour with named lookup and HSV conversion. */
 export class Color {
-  /** Equivalente ao `Color::NamedColors` do Ruby, acessível como estático. */
-  static readonly NamedColors = NamedColors;
+  /** Equivalent of Ruby's `Color::NamedColors`, exposed as a static. */
+  static readonly NamedColors: Record<string, ColorTriple> = NamedColors;
 
   private readonly r: number;
   private readonly g: number;
   private readonly b: number;
 
   /**
-   * Ruby `initialize(*args)`: 1 argumento = nome; 3 = RGB; 4 = HSV (o 4º
-   * argumento é ignorado); qualquer outra aridade levanta `ArgumentError`.
+   * Ruby `initialize(*args)`: 1 argument = name; 3 = RGB; 4 = HSV (the 4th
+   * argument is ignored); any other arity raises `ArgumentError`.
    */
   constructor(...args: ColorArg[]) {
     let rgb: ColorTriple;
@@ -251,22 +255,41 @@ export class Color {
     [this.r, this.g, this.b,] = rgb;
   }
 
-  /** Triple RGB `[r, g, b]` (valores preservados, inclusive fracionários). */
+  /**
+   * RGB triple `[r, g, b]` (values preserved, including fractional ones).
+   *
+   * @returns The red, green and blue channels.
+   */
   to_rgb(): ColorTriple {
     return [this.r, this.g, this.b,];
   }
 
-  /** Triple HSV `[h, s, v]` com `h` em graus e `s`/`v` em 0-255. */
+  /**
+   * HSV triple `[h, s, v]` with `h` in degrees and `s`/`v` in 0-255.
+   *
+   * @returns The hue, saturation and value channels.
+   */
   to_hsv(): ColorTriple {
     return this.rgbToHsv(this.r, this.g, this.b,);
   }
 
-  /** Formato HTML/SVG `#rrggbb` (minúsculas, truncamento como `%02x`). */
+  /**
+   * HTML/SVG format `#rrggbb` (lowercase, truncating like `%02x`).
+   *
+   * @returns The colour as a CSS hex string.
+   */
   to_s(): string {
     return `#${hex(this.r,)}${hex(this.g,)}${hex(this.b,)}`;
   }
 
-  /** Ruby `hsvToRgb` — `hi` pelo sextante e a tabela `[v, t, p] … [v, p, q]`. */
+  /**
+   * Ruby `hsvToRgb` — `hi` by sextant and the table `[v, t, p] … [v, p, q]`.
+   *
+   * @param h Hue, in degrees.
+   * @param s Saturation, in 0-255.
+   * @param v Value, in 0-255.
+   * @returns The equivalent RGB triple.
+   */
   private hsvToRgb(h: number, s: number, v: number,): ColorTriple {
     const hi = Math.floor(h / 60.0,) % 6;
     const f = h / 60.0 - Math.floor(h / 60.0,);
@@ -283,7 +306,14 @@ export class Color {
     ][hi] as ColorTriple;
   }
 
-  /** Ruby `rgbToHsv` — truncamento em `.to_i` (não arredondamento). */
+  /**
+   * Ruby `rgbToHsv` — truncation through `.to_i` (not rounding).
+   *
+   * @param r Red channel, in 0-255.
+   * @param g Green channel, in 0-255.
+   * @param b Blue channel, in 0-255.
+   * @returns The equivalent HSV triple.
+   */
   private rgbToHsv(r: number, g: number, b: number,): ColorTriple {
     const rgb = [r, g, b,];
     const max = Math.max(...rgb,);
@@ -309,7 +339,7 @@ export class Color {
   }
 }
 
-/** Ruby `format("%02x", value)`: trunca em direção a zero e completa com `0`. */
+/** Ruby `format("%02x", value)`: truncates toward zero and pads with `0`. */
 function hex(value: number,): string {
   return Math.trunc(value,).toString(16,).padStart(2, "0",);
 }

@@ -1,26 +1,26 @@
 /**
- * TernarySearchTree — árvore de busca ternária sobre strings (22.1b.1).
+ * TernarySearchTree — a ternary search tree over strings (22.1b.1).
  *
- * Port fiel de `docs/taskjuggler/lib/taskjuggler/TernarySearchTree.rb` (206
- * linhas). Elementos com prefixos comuns compartilham nós, o que a torna
- * eficiente para listas grandes de identificadores; `find(str, true)` devolve
- * **todos** os elementos que começam com `str`.
+ * Faithful port of `docs/taskjuggler/lib/taskjuggler/TernarySearchTree.rb` (206
+ * lines). Elements sharing a prefix share nodes, which makes it efficient for
+ * large identifier lists; `find(str, true)` returns **every** element starting
+ * with `str`.
  *
- * Consumidores: `syntaxmesh man` usa `find(prefix, true)` para a busca por
- * prefixo de keyword (`Tj3Man.rb:30,76`) e o `doc-core` usa `all()`
- * ordenado para a barra de navegação do manual.
+ * Consumers: `syntaxmesh man` uses `find(prefix, true)` for the keyword prefix
+ * search (`Tj3Man.rb:30,76`) and `doc-core` uses the ordered `all()` for the
+ * manual's navigation bar.
  *
- * Divergências conscientes (o runtime não permite o original):
- * - `inspect()` do Ruby é debug-only (`puts` na árvore) e **não** foi portado.
- * - `find` numa árvore vazia devolve `null` em vez de estourar: no Ruby a
- *   comparação `str[0] < nil` levanta `NoMethodError`.
- * - `sortForBalancedTree` usa `Array#sort` do JS (code units UTF-16); para as
- *   keywords ASCII equivale ao `String#<=>` do Ruby.
+ * Deliberate divergences (the runtime does not allow the original):
+ * - Ruby's `inspect()` is debug-only (`puts` on the tree) and was **not** ported.
+ * - `find` on an empty tree returns `null` instead of blowing up: in Ruby the
+ *   `str[0] < nil` comparison raises `NoMethodError`.
+ * - `sortForBalancedTree` uses JS `Array#sort` (UTF-16 code units); for the ASCII
+ *   keywords that is equivalent to Ruby's `String#<=>`.
  *
  * @see docs/syntaxmesh/fases/fase-22-vscode-extension-tarefas.md §Bloco C
  */
 
-/** Erro equivalente ao `ArgumentError` do Ruby (nome preservado). */
+/** Error equivalent to Ruby's `ArgumentError` (name preserved). */
 function argumentError(message: string,): Error {
   const error = new Error(message,);
   error.name = "ArgumentError";
@@ -28,27 +28,27 @@ function argumentError(message: string,): Error {
 }
 
 /**
- * Árvore de busca ternária clássica.
+ * Classic ternary search tree.
  *
- * Cada nó guarda **um caractere** (`value`) e três filhos: `smaller`/`larger`
- * para os caracteres menores/maiores no mesmo índice e `equal` para os nós do
- * índice seguinte. `last` marca o fim de uma palavra armazenada.
+ * Each node keeps **one character** (`value`) and three children: `smaller`/
+ * `larger` for the lower/higher characters at the same index and `equal` for
+ * the nodes of the next index. `last` marks the end of a stored word.
  */
 export class TernarySearchTree<T extends string = string,> {
-  /** Caractere deste nó; `null` numa árvore vazia. */
+  /** Character of this node; `null` in an empty tree. */
   value: string | null = null;
-  /** Filho com caractere menor no mesmo índice. */
+  /** Child holding a lower character at the same index. */
   smaller: TernarySearchTree<T> | null = null;
-  /** Filho do índice seguinte (quando o caractere casa). */
+  /** Child of the next index (when the character matches). */
   equal: TernarySearchTree<T> | null = null;
-  /** Filho com caractere maior no mesmo índice. */
+  /** Child holding a higher character at the same index. */
   larger: TernarySearchTree<T> | null = null;
-  /** `true` quando uma palavra termina neste nó. */
+  /** `true` when a word ends at this node. */
   last = false;
 
   /**
-   * Cria a árvore. `arg` pode ser uma palavra, uma lista de palavras ou
-   * `null` (árvore vazia). Listas são inseridas em ordem de árvore balanceada.
+   * Creates the tree. `arg` may be a word, a list of words or `null` (empty
+   * tree). Lists are inserted in balanced-tree order.
    */
   constructor(arg: T | readonly T[] | null = null,) {
     if (arg === null) return;
@@ -62,9 +62,9 @@ export class TernarySearchTree<T extends string = string,> {
   }
 
   /**
-   * Armazena `str` na árvore. `index` é de uso interno (recursão).
+   * Stores `str` in the tree. `index` is internal (recursion).
    *
-   * @throws {Error} `ArgumentError` para `null`/vazio e índice fora de faixa.
+   * @throws {Error} `ArgumentError` for `null`/empty and an out-of-range index.
    */
   insert(str: T, index = 0,): void {
     if (str === null || str === undefined || str.length === 0) {
@@ -92,20 +92,20 @@ export class TernarySearchTree<T extends string = string,> {
     }
   }
 
-  /** Alias de {@link insert} (o `<<` do Ruby). */
+  /** Alias of {@link insert} (Ruby's `<<`). */
   add(str: T, index = 0,): void {
     this.insert(str, index,);
   }
 
-  /** Insere todos os elementos de `list`. */
+  /** Inserts every element of `list`. */
   insertList(list: readonly T[],): void {
     for (const value of list) this.insert(value,);
   }
 
   /**
-   * Busca `str`. Com `partialMatch`, devolve **todos** os elementos que
-   * começam com `str` (ordem alfabética); senão, `str` quando ele é uma
-   * palavra completa. `null` quando não há correspondência.
+   * Searches `str`. With `partialMatch`, returns **every** element starting with
+   * `str` (alphabetical order); otherwise returns `str` when it is a complete
+   * word. `null` when there is no match.
    */
   find(
     str: string,
@@ -125,7 +125,7 @@ export class TernarySearchTree<T extends string = string,> {
     }
     if (index === maxIdx) {
       if (partialMatch) {
-        // `str[0..-2]` do Ruby — tudo menos o último caractere.
+        // Ruby's `str[0..-2]` — everything but the last character.
         const prefix = str.slice(0, -1,);
         return this.collect(null, (value,) => prefix + value,) as T[];
       }
@@ -135,8 +135,8 @@ export class TernarySearchTree<T extends string = string,> {
   }
 
   /**
-   * Invoca `fn` para cada palavra da subárvore, em ordem alfabética
-   * (`smaller` → `equal` → `larger`), acumulando `prefix`.
+   * Invokes `fn` for every word of the subtree, in alphabetical order
+   * (`smaller` → `equal` → `larger`), accumulating `prefix`.
    */
   collect<U,>(prefix: string | null, fn: (value: string,) => U,): U[] {
     const result: U[] = [];
@@ -157,7 +157,7 @@ export class TernarySearchTree<T extends string = string,> {
     return result;
   }
 
-  /** Número de elementos armazenados. */
+  /** Number of stored elements. */
   length(): number {
     let result = 0;
     if (this.smaller) result += this.smaller.length();
@@ -167,7 +167,7 @@ export class TernarySearchTree<T extends string = string,> {
     return result;
   }
 
-  /** Profundidade máxima da árvore (0 na árvore vazia). */
+  /** Maximum depth of the tree (0 in an empty tree). */
   maxDepth(depth = 0,): number {
     const next = depth + 1;
     const depths: number[] = [];
@@ -178,24 +178,24 @@ export class TernarySearchTree<T extends string = string,> {
     return depths.length === 0 ? 0 : Math.max(...depths,);
   }
 
-  /** Todos os elementos, em ordem alfabética. */
+  /** Every element, in alphabetical order. */
   toArray(): T[] {
     return this.collect(null, (value,) => value,) as T[];
   }
 
-  /** Reescreve a árvore balanceada (o `balance!` do Ruby). */
+  /** Rewrites the tree in balanced form (Ruby's `balance!`). */
   balance(): void {
     const list = this.sortForBalancedTree(this.toArray(),);
     this.clear();
     for (const value of list) this.insert(value,);
   }
 
-  /** Devolve uma árvore nova, balanceada, com os mesmos elementos. */
+  /** Returns a new, balanced tree with the same elements. */
   balanced(): TernarySearchTree<T> {
     return new TernarySearchTree<T>(this.toArray(),);
   }
 
-  /** Esvazia o nó (usado pela construção e por `balance`). */
+  /** Empties the node (used by construction and by `balance`). */
   private clear(): void {
     this.value = null;
     this.smaller = null;
@@ -205,10 +205,10 @@ export class TernarySearchTree<T extends string = string,> {
   }
 
   /**
-   * Separa o primeiro elemento do resto (`TernarySearchTree.rb:174-180`).
+   * Splits the first element from the rest (`TernarySearchTree.rb:174-180`).
    *
-   * Sem chamadores no Ruby atual — mantido por fidelidade ao port (regra zero,
-   * ADR 011) e coberto por teste próprio.
+   * No callers in the current Ruby — kept for fidelity to the port (rule zero,
+   * ADR 011) and covered by its own test.
    */
   private split(str: string,): [string, string | null,] {
     if (str === null || str === undefined || str.length === 0) {
@@ -218,8 +218,8 @@ export class TernarySearchTree<T extends string = string,> {
   }
 
   /**
-   * Reordena os elementos para que a inserção da frente para trás produza uma
-   * árvore balanceada: pivô central em camadas (`TernarySearchTree.rb:184-201`).
+   * Reorders the elements so that front-to-back insertion produces a balanced
+   * tree: central pivot, layer by layer (`TernarySearchTree.rb:184-201`).
    */
   private sortForBalancedTree(list: readonly T[],): T[] {
     let lists: T[][] = [[...list,].sort(),];

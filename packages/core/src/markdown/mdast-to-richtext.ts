@@ -1,13 +1,14 @@
 /**
- * MdastToRichText — converte AST `mdast` para `RichTextElement[]` (Fase 13.2).
+ * MdastToRichText — converts an `mdast` AST into `RichTextElement[]`
+ * (phase 13.2).
  *
- * Recebe a raiz `mdast` (já pós-processada pelas extensões) e produz elementos
- * `RichTextElement` compatíveis com o pipeline da Fase 12. Cada tipo de nó
- * (`heading`, `paragraph`, `emphasis`, `list`, …) mapeia para uma categoria
- * `RichTextElement`. Nós de extensão (`richtextExtension`) são traduzidos para
- * `fontCol`/`inlinefunc`/`blockfunc`.
+ * It takes the `mdast` root (already post-processed by the extensions) and
+ * produces `RichTextElement` nodes compatible with the phase 12 pipeline. Each
+ * node type (`heading`, `paragraph`, `emphasis`, `list`, …) maps to a
+ * `RichTextElement` category. Extension nodes (`richtextExtension`) are
+ * translated into `fontCol`/`inlinefunc`/`blockfunc`.
  *
- * @see ADR 026 (Markdown como formato going-forward)
+ * @see ADR 026 (Markdown as the going-forward format)
  * @see docs/syntaxmesh/fases/fase-13-markdown.md (13.2)
  */
 
@@ -43,26 +44,42 @@ import type {
 } from "../richtext/rich-text-element.ts";
 import { sanitizeHtml, } from "./extensions/html-sanitizer.ts";
 
-/** Profundidade máxima suportada para listas (1-4). */
+/** Maximum nesting depth supported for lists (1-4). */
 const MAX_LIST_DEPTH = 4;
 
+/** Converts a post-processed `mdast` tree into rich text elements. */
 export class MdastToRichText {
   private readonly rti: RichTextIntermediate;
-  /** Contador de seções para títulos (13.2.2). */
+  /** Section counters for the headings (13.2.2). */
   private sectionCounter: number[] = [0, 0, 0, 0,];
-  /** Contadores por nível para listas numeradas. */
+  /** Per-level counters for the ordered lists. */
   private numberListCounter: number[] = [0, 0, 0, 0,];
 
+  /**
+   * Creates a converter bound to the target intermediate representation.
+   *
+   * @param rti Intermediate representation the elements belong to.
+   */
   constructor(rti: RichTextIntermediate,) {
     this.rti = rti;
   }
 
-  /** Converte a raiz `mdast` em array de `RichTextElement` (13.2.3). */
+  /**
+   * Converts the `mdast` root into an array of `RichTextElement` (13.2.3).
+   *
+   * @param root Post-processed Markdown AST.
+   * @returns The rich text elements of the document body.
+   */
   convert(root: MdastRoot,): RichTextElement[] {
     return this.convertBlockChildren(root.children,);
   }
 
-  /** Converte um array de nós de bloco. */
+  /**
+   * Converts an array of block nodes.
+   *
+   * @param nodes Block nodes to convert.
+   * @returns The rich text elements produced by the nodes.
+   */
   private convertBlockChildren(
     nodes: RootContent[],
   ): RichTextElement[] {
@@ -73,7 +90,13 @@ export class MdastToRichText {
     return out;
   }
 
-  /** Despacha um nó de bloco para o handler adequado. */
+  /**
+   * Dispatches a block node to the matching handler.
+   *
+   * @param node Block node to convert.
+   * @param listDepth Current list nesting depth.
+   * @returns The rich text elements produced by the node.
+   */
   private convertBlock(
     node: RootContent,
     listDepth: number,
@@ -96,16 +119,22 @@ export class MdastToRichText {
       case "table":
         return this.handleTable(node,);
       default:
-        // Nós desconhecidos ou sintéticos: tenta converter children.
+        // Unknown or synthetic nodes: try to convert their children.
         return this.fallbackBlock(node,);
     }
   }
 
   // ─── Heading (13.2.4–13.2.7) ─────────────────────────────────────────────────
 
+  /**
+   * Converts a heading into a `title1`…`title4` element numbered by section.
+   *
+   * @param node Heading node to convert.
+   * @returns A single-element array with the heading element.
+   */
   private handleHeading(node: Heading,): RichTextElement[] {
     const level = Math.min(node.depth, 4,) as 1 | 2 | 3 | 4;
-    // Incrementa o contador e reseta os níveis inferiores (13.2.17).
+    // Bumps the counter and resets the lower levels (13.2.17).
     this.sectionCounter[level - 1]! += 1;
     for (let i = level; i < 4; i++) this.sectionCounter[i] = 0;
 
@@ -118,6 +147,12 @@ export class MdastToRichText {
 
   // ─── Paragraph (13.2.8) ──────────────────────────────────────────────────────
 
+  /**
+   * Converts a paragraph, dropping it when it has no content.
+   *
+   * @param node Paragraph node to convert.
+   * @returns The paragraph element, or an empty array.
+   */
   private handleParagraph(node: Paragraph,): RichTextElement[] {
     const children = this.convertInlineChildren(node.children,);
     if (children.length === 0) return [];
@@ -126,12 +161,25 @@ export class MdastToRichText {
 
   // ─── Code block (13.2.10) ────────────────────────────────────────────────────
 
+  /**
+   * Converts a fenced code block into a `pre` element.
+   *
+   * @param node Code block node to convert.
+   * @returns A single-element array with the `pre` element.
+   */
   private handleCodeBlock(node: Code,): RichTextElement[] {
     return [new RichTextElement(this.rti, "pre", node.value,),];
   }
 
   // ─── Lists (13.2.11) ─────────────────────────────────────────────────────────
 
+  /**
+   * Converts a list into a `bulletlistN`/`numberlistN` element.
+   *
+   * @param node List node to convert.
+   * @param listDepth Depth of the enclosing list (0 at top level).
+   * @returns A single-element array with the list element.
+   */
   private handleList(node: List, listDepth: number,): RichTextElement[] {
     const depth = Math.min(listDepth + 1, MAX_LIST_DEPTH,);
     const isOrdered = !!node.ordered;
@@ -139,7 +187,7 @@ export class MdastToRichText {
       isOrdered ? "numberlist" : "bulletlist"
     }${depth}` as RichTextCategory;
 
-    // Reseta o contador numerado no início de cada lista.
+    // Resets the ordered counter at the start of each list.
     if (isOrdered) this.numberListCounter[depth - 1] = 0;
 
     const items: RichTextElement[] = [];
@@ -151,6 +199,14 @@ export class MdastToRichText {
     return [new RichTextElement(this.rti, listCategory, items,),];
   }
 
+  /**
+   * Converts one list item, appending its nested sub-lists.
+   *
+   * @param node List item node to convert.
+   * @param depth Depth of the list the item belongs to.
+   * @param isOrdered Whether the enclosing list is ordered.
+   * @returns The item element followed by the elements of its sub-lists.
+   */
   private handleListItem(
     node: ListItem,
     depth: number,
@@ -160,7 +216,7 @@ export class MdastToRichText {
       isOrdered ? "numberitem" : "bulletitem"
     }${depth}` as RichTextCategory;
 
-    // Separa conteúdo inline de sub- listas.
+    // Splits inline content from nested sub-lists.
     const inlineChildren: PhrasingContent[] = [];
     const subBlocks: BlockContent[] = [];
     for (const child of node.children) {
@@ -179,7 +235,7 @@ export class MdastToRichText {
     }
 
     const out: RichTextElement[] = [el,];
-    // Sub-listas aninhadas:
+    // Nested sub-lists:
     for (const sub of subBlocks) {
       if (sub.type === "list") {
         out.push(...this.handleList(sub as List, depth,),);
@@ -190,8 +246,14 @@ export class MdastToRichText {
 
   // ─── Blockquote (13.2.12) ────────────────────────────────────────────────────
 
+  /**
+   * Converts a blockquote into a paragraph prefixed with `"> "`.
+   *
+   * @param node Blockquote node to convert.
+   * @returns A single-element array with the paragraph.
+   */
   private handleBlockquote(node: Blockquote,): RichTextElement[] {
-    // Markdown blockquote → paragraph com prefixo "> ".
+    // Markdown blockquote → paragraph with the "> " prefix.
     const inner: RichTextElement[] = [];
     for (const child of node.children) {
       inner.push(...this.convertBlock(child as BlockContent, 0,),);
@@ -204,12 +266,24 @@ export class MdastToRichText {
 
   // ─── ThematicBreak (13.2.14) ─────────────────────────────────────────────────
 
+  /**
+   * Converts a thematic break into an `hline` element.
+   *
+   * @param _node Thematic break node; its value is not used.
+   * @returns A single-element array with the `hline` element.
+   */
   private handleThematicBreak(_node: ThematicBreak,): RichTextElement[] {
     return [new RichTextElement(this.rti, "hline",),];
   }
 
   // ─── HTML (13.2.15) ──────────────────────────────────────────────────────────
 
+  /**
+   * Converts a raw HTML fragment into a sanitized `htmlblob`.
+   *
+   * @param node Raw HTML node to convert.
+   * @returns The blob element, or an empty array when sanitizing strips it all.
+   */
   private handleHtml(node: Html,): RichTextElement[] {
     const sanitized = sanitizeHtml(node.value,);
     if (sanitized === "") return [];
@@ -218,9 +292,15 @@ export class MdastToRichText {
 
   // ─── Table fallback (13.2.16) ────────────────────────────────────────────────
 
+  /**
+   * Converts a table into one paragraph per row, cells joined by `" | "`.
+   *
+   * @param node Table node to convert.
+   * @returns One paragraph element per row of the table.
+   */
   private handleTable(node: Table,): RichTextElement[] {
-    // Tabelas não têm representação nativa em RichText. Fallback: cada
-    // tableRow vira um paragraph com cells separadas por " | ".
+    // Tables have no native RichText representation. Fallback: each
+    // tableRow becomes a paragraph with the cells separated by " | ".
     const out: RichTextElement[] = [];
     for (const row of node.children) {
       const cells: Array<RichTextElement | string> = [];
@@ -238,6 +318,12 @@ export class MdastToRichText {
 
   // ─── Inline content ──────────────────────────────────────────────────────────
 
+  /**
+   * Converts an array of inline nodes.
+   *
+   * @param nodes Inline nodes to convert.
+   * @returns The rich text elements produced by the nodes.
+   */
   private convertInlineChildren(nodes: PhrasingContent[],): RichTextElement[] {
     const out: RichTextElement[] = [];
     for (const node of nodes) {
@@ -246,6 +332,12 @@ export class MdastToRichText {
     return out;
   }
 
+  /**
+   * Dispatches an inline node to the matching handler.
+   *
+   * @param node Inline node to convert.
+   * @returns The rich text elements produced by the node.
+   */
   private convertInline(node: PhrasingContent,): RichTextElement[] {
     switch (node.type) {
       case "text":
@@ -273,30 +365,61 @@ export class MdastToRichText {
     }
   }
 
+  /**
+   * Converts a plain text run into a `text` element.
+   *
+   * @param node Text node to convert.
+   * @returns A single-element array with the `text` element.
+   */
   private handleInlineText(node: Text,): RichTextElement[] {
     return [new RichTextElement(this.rti, "text", node.value,),];
   }
 
+  /**
+   * Converts emphasis (`*x*`) into an `italic` element.
+   *
+   * @param node Emphasis node to convert.
+   * @returns A single-element array with the `italic` element.
+   */
   private handleEmphasis(node: Emphasis,): RichTextElement[] {
     const children = this.convertInlineChildren(node.children,);
     return [new RichTextElement(this.rti, "italic", children,),];
   }
 
+  /**
+   * Converts strong emphasis (`**x**`) into a `bold` element.
+   *
+   * @param node Strong node to convert.
+   * @returns A single-element array with the `bold` element.
+   */
   private handleStrong(node: Strong,): RichTextElement[] {
     const children = this.convertInlineChildren(node.children,);
     return [new RichTextElement(this.rti, "bold", children,),];
   }
 
+  /**
+   * Converts inline code into a `code` element.
+   *
+   * @param node Inline code node to convert.
+   * @returns A single-element array with the `code` element.
+   */
   private handleInlineCode(node: InlineCode,): RichTextElement[] {
     return [new RichTextElement(this.rti, "code", node.value,),];
   }
 
   // ─── Link → href (13.2.13) ───────────────────────────────────────────────────
 
+  /**
+   * Converts a link into an `href` element whose `data` holds the URL.
+   *
+   * @param node Link node to convert.
+   * @returns A single-element array with the `href` element.
+   */
   private handleLink(node: Link,): RichTextElement[] {
     const children = this.convertInlineChildren(node.children,);
     const el = new RichTextElement(this.rti, "href", children,);
-    // `data` de `href` é um RichTextElement(richtext) com o URL (Fase 12 rules).
+    // `href`'s `data` is a RichTextElement(richtext) holding the URL
+    // (phase 12 rules).
     el.data = new RichTextElement(this.rti, "richtext", [
       new RichTextElement(this.rti, "text", node.url,),
     ],);
@@ -305,6 +428,12 @@ export class MdastToRichText {
 
   // ─── Image → img (13.2.13) ───────────────────────────────────────────────────
 
+  /**
+   * Converts an image into an `img` element whose `data` holds the image.
+   *
+   * @param node Image node to convert.
+   * @returns A single-element array with the `img` element.
+   */
   private handleImage(node: Image,): RichTextElement[] {
     const img = new RichTextImage(node.url,);
     if (node.alt) img.altText = node.alt;
@@ -315,16 +444,28 @@ export class MdastToRichText {
 
   // ─── Break (13.2.14) ─────────────────────────────────────────────────────────
 
+  /**
+   * Converts a hard line break into a `text` element holding `"\n"`.
+   *
+   * @param _node Break node; its value is not used.
+   * @returns A single-element array with the line break text.
+   */
   private handleBreak(_node: Break,): RichTextElement[] {
-    // LINEBREAK representado como text com \n.
+    // LINEBREAK represented as text with \n.
     return [new RichTextElement(this.rti, "text", "\n",),];
   }
 
   // ─── Strikethrough / Delete ──────────────────────────────────────────────────
 
+  /**
+   * Converts a strikethrough run into plain text surrounded by `~~` markers.
+   *
+   * @param node Delete node to convert.
+   * @returns The opening marker, the content and the closing marker.
+   */
   private handleDelete(node: Delete,): RichTextElement[] {
-    // Não há categoria nativa strikethrough em RichText. Fallback: bold+italic
-    // não é fiel; mantemos texto puro com ~~ marcador inline.
+    // RichText has no native strikethrough category. Fallback: bold+italic is
+    // not faithful; the text is kept plain with inline ~~ markers.
     const children = this.convertInlineChildren(node.children,);
     const open = new RichTextElement(this.rti, "text", "~~",);
     const close = new RichTextElement(this.rti, "text", "~~",);
@@ -333,6 +474,12 @@ export class MdastToRichText {
 
   // ─── richtextExtension (fontCol/inlinefunc/blockfunc) ────────────────────────
 
+  /**
+   * Converts a Markdown extension node into its rich text counterpart.
+   *
+   * @param node Extension node produced by the extraction pipeline.
+   * @returns The `fontCol`, `inlinefunc` or `blockfunc` element.
+   */
   private handleExtension(node: MdastExtension,): RichTextElement[] {
     const category = node.category as RichTextCategory;
     if (category === "fontCol") {
@@ -352,6 +499,12 @@ export class MdastToRichText {
 
   // ─── Fallback ────────────────────────────────────────────────────────────────
 
+  /**
+   * Converts a text node into a paragraph holding that text.
+   *
+   * @param node Text node to convert.
+   * @returns A single-element array with the wrapping paragraph.
+   */
   private handleTextBlock(node: Text,): RichTextElement[] {
     return [
       new RichTextElement(this.rti, "paragraph", [
@@ -360,8 +513,14 @@ export class MdastToRichText {
     ];
   }
 
+  /**
+   * Converts an unknown node by treating its children as inline content.
+   *
+   * @param node Node with an optional `children` array.
+   * @returns A paragraph with the converted children, or an empty array.
+   */
   private fallbackBlock(node: unknown,): RichTextElement[] {
-    // Nó desconhecido: tenta extrair children como inline.
+    // Unknown node: try to extract the children as inline content.
     const n = node as { children?: PhrasingContent[] };
     if (n.children && Array.isArray(n.children,)) {
       const children = this.convertInlineChildren(n.children,);

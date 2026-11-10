@@ -8,7 +8,7 @@ import { FlagListAttribute, } from "../../attributes/list/flag-list-attribute.ts
 import { AccountCreditListAttribute, } from "../../attributes/financial/account-credit-list-attribute.ts";
 
 /**
- * Registra os atributos específicos de account (6 atributos).
+ * Registers the account-specific attributes (6 attributes).
  *
  * @see docs/taskjuggler/lib/taskjuggler/Account.rb
  */
@@ -127,8 +127,9 @@ export function registerAccountAttributes(propertySet: PropertySet,): void {
   );
 
   // note: Note (RichTextAttribute, inheritedFromParent=false, inheritedFromProject=false, isScenarioAttribute=false, default=nil)
-  // Extensão Fase 10 Complemento (#1 nota estática) — espelha task-attributes.ts.
-  // O diário (`journalentry`) não é atributo: usa o journal global com property=account.
+  // Phase 10, complement extension (#1 static note) — mirrors
+  // task-attributes.ts. The journal (`journalentry`) is not an attribute: it
+  // uses the global journal with property=account.
   propertySet.addAttributeType(
     new AttributeDefinition(
       "note",

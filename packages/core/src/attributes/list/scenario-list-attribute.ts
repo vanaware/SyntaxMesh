@@ -1,5 +1,5 @@
 /**
- * Atributo de lista de cenários.
+ * Scenario list attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ScenarioListAttribute
  */
@@ -10,18 +10,18 @@ import { type AttributeDefinition, } from "../attribute-definition.ts";
 import { ListAttributeBase, } from "../list-attribute-base.ts";
 
 /**
- * Atributo de lista de cenários.
+ * Scenario list attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ScenarioListAttribute
  */
 export class ScenarioListAttribute extends ListAttributeBase<string> {
   /**
-   * ID do tipo de atributo para ScenarioListAttribute.
+   * Attribute type ID for ScenarioListAttribute.
    */
   static readonly tjpId = "scenarios";
 
   /**
-   * Converte o valor para string.
+   * Converts the value to a string.
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ScenarioListAttribute#to_s
    */
@@ -31,7 +31,7 @@ export class ScenarioListAttribute extends ListAttributeBase<string> {
   }
 
   /**
-   * Converte o valor para TJP (formato TaskJuggler).
+   * Converts the value to TJP (TaskJuggler format).
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ScenarioListAttribute#to_tjp
    */

@@ -1,5 +1,5 @@
 /**
- * Módulo de modelo do TaskJuggler.
+ * TaskJuggler model module.
  *
  * @see docs/taskjuggler/lib/taskjuggler/PropertyTreeNode.rb
  */
@@ -29,7 +29,7 @@ export * from "./material.ts";
 export * from "./material-allocation.ts";
 export * from "./extended-charge.ts";
 export * from "./tracking-scenario.ts";
-// Fase 16 — apoio: journal (ADR 029), níveis de alerta e licenças.
+// Phase 16 — support: journal (ADR 029), alert levels and leaves.
 export * from "./journal.ts";
 export * from "./journal-entry-list.ts";
 export * from "./alert-levels.ts";

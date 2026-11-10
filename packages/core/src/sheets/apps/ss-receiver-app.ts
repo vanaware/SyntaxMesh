@@ -1,34 +1,53 @@
 /**
- * SsReceiverApp — app `tj3ss_receiver`: aceita as folhas de status devolvidas.
+ * SsReceiverApp — the `tj3ss_receiver` app: accepts the returned status sheets.
  *
- * Port de `docs/taskjuggler/lib/taskjuggler/apps/Tj3SsReceiver.rb`. Mesmo fluxo
- * do `TsReceiverApp`, com o `StatusSheetReceiver` (18.10) e a seção
- * `statussheets` do config.
+ * Port of `docs/taskjuggler/lib/taskjuggler/apps/Tj3SsReceiver.rb`. Same flow as
+ * `TsReceiverApp`, with `StatusSheetReceiver` (18.10) and the `statussheets`
+ * section of the config.
  *
  * @see docs/taskjuggler/lib/taskjuggler/apps/Tj3SsReceiver.rb
  * @see docs/syntaxmesh/fases/fase-18-time-status-sheets-tarefas.md (18.18.6)
  */
 
 import { StatusSheetReceiver, } from "../status-sheet-receiver.ts";
+import type { EmailMessage, } from "../email-message.ts";
 import {
   SheetAppBase,
   type SheetAppContext,
   type SheetAppOptions,
 } from "./app-base.ts";
 
+/**
+ * App that ingests status sheets returned by resources.
+ */
 export class SsReceiverApp extends SheetAppBase {
+  /** Receiver that parses and applies the incoming status sheets. */
   readonly handler: StatusSheetReceiver;
 
+  /**
+   * Creates the app.
+   *
+   * @param options Typed options produced by the CLI layer.
+   */
   constructor(options: SheetAppOptions = {},) {
     super("tj3ss_receiver", 1, options,);
     this.handler = new StatusSheetReceiver(this.appName,);
   }
 
-  /** Emails de resposta enfileirados (aceite, recusa, erro — ADR 036). */
-  get messages() {
+  /**
+   * Reply emails queued during the run (acceptance, rejection, error — ADR 036).
+   *
+   * @returns The emails produced by the receiver, in send order.
+   */
+  get messages(): EmailMessage[] {
     return this.handler.sentMessages;
   }
 
+  /**
+   * Parses the received status sheet email and applies it to the project.
+   *
+   * @param context Project, file store and raw RFC 822 email.
+   */
   protected async appMain(context: SheetAppContext,): Promise<void> {
     this.prepare(this.handler, "statussheets", "receiver",);
     this.attach(this.handler, context,);

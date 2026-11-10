@@ -1,27 +1,27 @@
 /**
- * `XMLElementLike` — interface mínima de elemento XML/HTML (Fase 12).
+ * `XMLElementLike` — minimal XML/HTML element interface (phase 12).
  *
- * Nascimento: `src/richtext/xml-like.ts` (Fase 12.1), quando o RichText
- * precisou retornar uma **árvore** de elementos em vez de string e o
- * `XMLElement` real ainda não existia. Na **Fase 17.12** (ADR 038) a
- * implementação mínima `XMLElement` é apagada e `XMLElement` passa a
- * cumprir o contrato — a interface então **mora aqui**, no bloco XML, e o
- * RichText passa a importar daqui.
+ * Origin: `src/richtext/xml-like.ts` (phase 12.1), when RichText needed to
+ * return a **tree** of elements instead of a string and the real `XMLElement`
+ * did not exist yet. In **phase 17.12** (ADR 038) the minimal `XMLElement`
+ * implementation is deleted and `XMLElement` starts fulfilling the contract —
+ * the interface then **lives here**, in the XML block, and RichText imports it
+ * from here.
  *
  * @see docs/syntaxmesh/decisoes/038-substituicao-xml.md
  * @see docs/syntaxmesh/fases/fase-17-html-xml-tarefas.md (17.12.1)
  */
 
-/** Interface de nó XML/HTML usada pelo RichText e pelo Gantt. */
+/** XML/HTML node interface used by RichText and by Gantt. */
 export interface XMLElementLike {
-  /** Nome da tag (ex.: `div`). `null` = fragmento (sem tag própria). */
+  /** Tag name (e.g. `div`). `null` = fragment (no tag of its own). */
   readonly tag: string | null;
-  /** Atributos chave→valor. */
+  /** Key→value attributes. */
   readonly attrs: Record<string, string>;
-  /** Filhos: nós XML (texto já é `XMLElement` — `XMLText`). */
+  /** Children: XML nodes (text is already an `XMLElement` — `XMLText`). */
   readonly children: Array<XMLElementLike | string>;
-  /** Anexa um filho (nó ou texto). */
+  /** Appends a child (node or text). */
   append(child: XMLElementLike | string,): void;
-  /** Serializa para HTML sem indentação (alias de `to_s(0)`). */
+  /** Serializes to HTML without indentation (alias of `to_s(0)`). */
   toHTML(): string;
 }

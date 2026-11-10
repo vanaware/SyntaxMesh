@@ -1,14 +1,14 @@
 /**
- * DataCache — cache de dados global do TaskJuggler.
+ * DataCache — global data cache for TaskJuggler.
  *
- * Classe singleton que armazena e recupera valores indexados por uma chave.
- * O cache tem capacidade limitada. Quando a capacidade máxima é atingida,
- * uma certa porcentagem das entradas menos acessadas é removida.
+ * Singleton class that stores and retrieves values indexed by a key. The cache
+ * has a bounded capacity: once the maximum is reached, a percentage of the
+ * least-accessed entries is dropped.
  *
- * Propósito principal: armazenar valores caros de computar que podem ser
- * necessários em várias ocasiões durante a execução do programa.
+ * Main purpose: hold expensive-to-compute values that may be needed several
+ * times while the program runs.
  *
- * Fonte Ruby: `docs/taskjuggler/lib/taskjuggler/DataCache.rb`
+ * Ruby source: `docs/taskjuggler/lib/taskjuggler/DataCache.rb`
  *
  * @see {@link https://docs.taskjuggler.org/en/latest/scheduler.html#data-cache}
  */
@@ -29,7 +29,9 @@ export class DataCache {
   }
 
   /**
-   * Retorna a instância singleton do DataCache.
+   * Returns the singleton `DataCache` instance.
+   *
+   * @returns The shared cache, created on first access.
    */
   static get instance(): DataCache {
     if (!DataCache._instance) {
@@ -39,9 +41,9 @@ export class DataCache {
   }
 
   /**
-   * Redimensiona o cache.
+   * Resizes the cache.
    *
-   * @param size — capacidade máxima do cache (padrão: 100000).
+   * @param size Maximum cache capacity (default: 100000).
    */
   resize(size: number = 100000,): void {
     this.highWaterMark = size;
@@ -49,19 +51,20 @@ export class DataCache {
   }
 
   /**
-   * Limpa completamente o cache. Os contadores de estatísticas permanecem
-   * intactos, mas todos os valores de dados são perdidos.
+   * Empties the cache completely.
+   *
+   * The statistics counters are untouched, but every stored value is lost.
    */
   flush(): void {
     this.entries.clear();
   }
 
   /**
-   * Retorna ou computa um valor armazenado no cache.
+   * Returns a cached value, computing and storing it when it is missing.
    *
-   * @param args — argumentos que identificam unambiguamente a entrada de dados.
-   * @param fn — função que computa o valor se não estiver no cache.
-   * @returns O valor armazenado ou computado.
+   * @param args Arguments that unambiguously identify the data entry.
+   * @param fn Function that computes the value on a cache miss.
+   * @returns The cached or freshly computed value.
    */
   cached<T,>(args: unknown[], fn: () => T,): T {
     const keyJson = this.argsToJson(args,);
@@ -69,8 +72,8 @@ export class DataCache {
     if (this.entries.has(key,)) {
       const entry = this.entries.get(key,)!;
       if (entry.jsonKey !== keyJson) {
-        // Duas args diferentes produzem a mesma chave hash. Isso deve ser
-        // um evento muito raro!
+        // Two different args produced the same hash key. This should be a
+        // very rare event!
         this.collisions += 1;
         return fn();
       }
@@ -82,9 +85,9 @@ export class DataCache {
   }
 
   /**
-   * Reseta o cache e todos os contadores de estatísticas.
+   * Clears the cache and resets every statistics counter.
    *
-   * Útil para isolar testes unitários, já que o DataCache é um singleton.
+   * Useful to isolate unit tests, since the `DataCache` is a singleton.
    */
   reset(): void {
     this.entries.clear();
@@ -95,7 +98,9 @@ export class DataCache {
   }
 
   /**
-   * Retorna as estatísticas do cache como string.
+   * Renders the cache statistics as a string.
+   *
+   * @returns Entry, store, hit, miss and collision counters with the hit rate.
    */
   toString(): string {
     return `Entries: ${this.entries.size}   Stores: ${this.stores}   Collisions: ${this.collisions}
@@ -104,33 +109,47 @@ Hit Rate: ${this.hits * 100.0 / (this.hits + this.misses)}%`;
   }
 
   /**
-   * Retorna o número de entradas no cache.
+   * Number of entries currently held by the cache.
+   *
+   * @returns The current entry count.
    */
   get entryCount(): number {
     return this.entries.size;
   }
 
   /**
-   * Retorna o número de hits no cache.
+   * Number of cache hits so far.
+   *
+   * @returns The hit counter.
    */
   get hitCount(): number {
     return this.hits;
   }
 
   /**
-   * Retorna o número de misses no cache.
+   * Number of cache misses so far.
+   *
+   * @returns The miss counter.
    */
   get missCount(): number {
     return this.misses;
   }
 
   /**
-   * Retorna o número de colisões no cache.
+   * Number of hash collisions so far.
+   *
+   * @returns The collision counter.
    */
   get collisionCount(): number {
     return this.collisions;
   }
 
+  /**
+   * Serialises the cache arguments, falling back to strings for bigints.
+   *
+   * @param args Arguments that identify the entry.
+   * @returns The canonical JSON key.
+   */
   private argsToJson(args: unknown[],): string {
     return JSON.stringify(
       args,
@@ -138,16 +157,32 @@ Hit Rate: ${this.hits * 100.0 / (this.hits + this.misses)}%`;
     );
   }
 
+  /**
+   * Hashes a JSON key with the classic djb2-style 32-bit accumulator.
+   *
+   * @param json Canonical JSON key.
+   * @returns A signed 32-bit hash.
+   */
   private hashFromJson(json: string,): number {
     let hash = 0;
     for (let i = 0; i < json.length; i++) {
       const char = json.charCodeAt(i,);
       hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // converte para int32
+      hash = hash & hash; // convert to int32
     }
     return hash;
   }
 
+  /**
+   * Stores a value under the given key, evicting cold entries when the cache is
+   * at the high water mark.
+   *
+   * @param value Value to store.
+   * @param unhashedKey Original arguments of the entry.
+   * @param jsonKey Canonical JSON key of the entry.
+   * @param key Hashed key used as the map index.
+   * @returns The stored value.
+   */
   private store(
     value: unknown,
     unhashedKey: unknown[],
@@ -157,12 +192,12 @@ Hit Rate: ${this.hits * 100.0 / (this.hits + this.misses)}%`;
     this.stores += 1;
 
     if (this.entries.size >= this.highWaterMark) {
-      // Quantas entradas precisamos excluir para chegar ao low watermark?
+      // How many entries must be evicted to reach the low watermark?
       const toDelete = this.entries.size - this.lowWaterMark;
       let deleted = 0;
       const keysToDelete: number[] = [];
       for (const [k, entry,] of this.entries) {
-        // Contagens de hits envelhecem com cada limpeza.
+        // Hit counts age with every cleanup.
         entry.hits -= 1;
         if (entry.hits <= 0 && deleted < toDelete) {
           keysToDelete.push(k,);
@@ -180,8 +215,8 @@ Hit Rate: ${this.hits * 100.0 / (this.hits + this.misses)}%`;
 }
 
 /**
- * Entrada do DataCache. Armazena um valor e um contador de acessos.
- * O contador pode ser lido e escrito externamente.
+ * Entry of the `DataCache`. Holds a value and an access counter.
+ * The counter can be read and written externally.
  */
 class DataCacheEntry {
   readonly unhashedKey: unknown[];
@@ -195,12 +230,14 @@ class DataCacheEntry {
   ) {
     this.unhashedKey = unhashedKey;
     this.jsonKey = jsonKey;
-    // O contador de acessos é definido como 1 para aumentar a chance de que
-    // não seja removido imediatamente.
+    // The access counter starts at 1 to reduce the chance of an immediate
+    // eviction.
   }
 
   /**
-   * Retorna o valor e aumenta o contador de acessos em 1.
+   * Returns the value and increments the access counter by one.
+   *
+   * @returns The stored value.
    */
   value(): unknown {
     if (this.hits <= 0) {

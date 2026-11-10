@@ -1,9 +1,9 @@
 /**
- * GanttContainer (Fase 15.6) — barra de uma tarefa container (com sub-tarefas).
+ * GanttContainer (phase 15.6) — the bar of a container task (with subtasks).
  *
- * Port fiel de `docs/taskjuggler/lib/taskjuggler/reports/GanttContainer.rb`.
- * A barra é desenhada com "jags" (colchetes) nas pontas, por isso se estende
- * `SIZE` pixels além de `start`/`end`.
+ * Faithful port of `docs/taskjuggler/lib/taskjuggler/reports/GanttContainer.rb`.
+ * The bar is drawn with "jags" (brackets) at both ends, which is why it extends
+ * `SIZE` pixels beyond `start`/`end`.
  *
  * @see docs/syntaxmesh/decisoes/028-gantt-html-css.md (ADR 028)
  * @see docs/syntaxmesh/fases/fase-15-gantt.md (15.6)
@@ -12,19 +12,27 @@ import { jagToHTML, rectToHTML, } from "./html-graphics.ts";
 import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 import type { ZoneRouter, } from "./gantt-router.ts";
 
-/** Meia-altura da barra, em pixels. */
+/** Half height of the bar, in pixels. */
 const SIZE = 5;
 
-/** Barra de tarefa container no Gantt. */
+/** Container task bar on the Gantt chart. */
 export class GanttContainer {
-  /** Ruby `@@size`: meia-altura da barra (centro → topo/base). */
-  static readonly SIZE = SIZE;
+  /** Ruby `@@size`: half height of the bar (centre → top/bottom). */
+  static readonly SIZE: number = SIZE;
 
   private readonly lineHeight: number;
   private readonly start: number;
   private readonly end: number;
   private readonly y: number;
 
+  /**
+   * Creates a container bar.
+   *
+   * @param lineHeight Height of the chart line the bar sits in, in pixels.
+   * @param xStart Left end of the bar, in pixels.
+   * @param xEnd Right end of the bar, in pixels.
+   * @param y Top offset of the chart line, in pixels.
+   */
   constructor(lineHeight: number, xStart: number, xEnd: number, y: number,) {
     this.lineHeight = lineHeight;
     this.start = xStart;
@@ -32,30 +40,50 @@ export class GanttContainer {
     this.y = y;
   }
 
-  /** Ponto onde as linhas de dependência que **saem** do início nascem. */
+  /**
+   * Where dependency lines leaving the start of the bar begin.
+   *
+   * @returns The `[x, y]` anchor point of the arrows.
+   */
   startDepLineStart(): [number, number,] {
     return [this.start, this.y + Math.trunc(this.lineHeight / 2,),];
   }
 
-  /** Ponto onde as linhas de dependência que **chegam** ao início terminam. */
+  /**
+   * Where dependency lines arriving at the start of the bar end.
+   *
+   * @returns The `[x, y]` anchor point of the arrows.
+   */
   startDepLineEnd(): [number, number,] {
     return [this.start - SIZE, this.y + Math.trunc(this.lineHeight / 2,),];
   }
 
-  /** Ponto onde as linhas de dependência que **saem** do fim nascem. */
+  /**
+   * Where dependency lines leaving the end of the bar begin.
+   *
+   * @returns The `[x, y]` anchor point of the arrows.
+   */
   endDepLineStart(): [number, number,] {
     return [this.end + SIZE, this.y + Math.trunc(this.lineHeight / 2,),];
   }
 
-  /** Ponto onde as linhas de dependência que **chegam** ao fim terminam. */
+  /**
+   * Where dependency lines arriving at the end of the bar end.
+   *
+   * @returns The `[x, y]` anchor point of the arrows.
+   */
   endDepLineEnd(): [number, number,] {
     return [this.end, this.y + Math.trunc(this.lineHeight / 2,),];
   }
 
-  /** Marca as zonas que o roteador não pode cruzar (Ruby `addBlockedZones`). */
+  /**
+   * Marks the zones the router cannot cross (Ruby `addBlockedZones`).
+   *
+   * @param router Router receiving the blocked rectangles.
+   */
   addBlockedZones(router: ZoneRouter,): void {
     const centerY = this.y + Math.trunc(this.lineHeight / 2,);
-    // Bloqueio horizontal da barra (incluindo os jags).
+    // Horizontal block of the bar (jags included).
     router.addZone(
       this.start - SIZE,
       centerY - SIZE - 2,
@@ -64,9 +92,9 @@ export class GanttContainer {
       true,
       false,
     );
-    // Bloqueio da ponta da seta.
+    // Blocks the arrow tip.
     router.addZone(this.start - SIZE - 9, centerY - 7, 10, 15, true, true,);
-    // Bloqueio vertical das bordas.
+    // Vertical block of the edges.
     router.addZone(
       this.start - SIZE - 2,
       this.y,
@@ -85,7 +113,11 @@ export class GanttContainer {
     );
   }
 
-  /** Converte o container abstrato em `<div>`s (Ruby `to_html`). */
+  /**
+   * Converts the abstract container into `<div>`s (Ruby `to_html`).
+   *
+   * @returns The invisible frame, the bar and its two jags.
+   */
   to_html(): XMLElementLike[] {
     const xStart = Math.trunc(this.start,);
     const yCenter = Math.trunc(this.lineHeight / 2,);
@@ -93,7 +125,7 @@ export class GanttContainer {
 
     const html: XMLElementLike[] = [];
 
-    // Moldura invisível que dispara os tooltips.
+    // Invisible frame that triggers the tooltips.
     html.push(
       rectToHTML(
         xStart - SIZE,
@@ -104,7 +136,7 @@ export class GanttContainer {
       ),
     );
 
-    // A barra.
+    // The bar.
     html.push(
       rectToHTML(
         xStart - SIZE,
@@ -114,9 +146,9 @@ export class GanttContainer {
         "containerbar",
       ),
     );
-    // Jag esquerdo.
+    // Left jag.
     html.push(jagToHTML(xStart, yCenter,),);
-    // Jag direito.
+    // Right jag.
     html.push(jagToHTML(xStart + width, yCenter,),);
 
     return html;

@@ -1,16 +1,16 @@
 /**
  * AlertLevelDefinition + AlertLevelDefinitions.
  *
- * Port de `docs/taskjuggler/lib/taskjuggler/AlertLevelDefinitions.rb`. A
- * paleta default é a do TJ (verde → amarelo → vermelho, em severidade
- * ascendente) e o nível de alerta de uma `JournalEntry` é o **índice** na
- * lista do projeto (Ruby `rule_alertLevel` devolve `indexById`), exatamente
- * como `Journal.rb` e os filtros `alerts_*` dos relatórios esperam.
+ * Port of `docs/taskjuggler/lib/taskjuggler/AlertLevelDefinitions.rb`. The
+ * default palette is the TJ one (green → yellow → red, in ascending severity)
+ * and the alert level of a `JournalEntry` is the **index** in the project list
+ * (Ruby `rule_alertLevel` returns `indexById`), exactly as `Journal.rb` and the
+ * `alerts_*` report filters expect.
  *
- * A configuração pela diretiva `alertlevels` fica no parser
- * (`parser/rules/project.ts`), que valida unicidade e reporta erro de
- * sintaxe com `SourceFileInfo`; esta classe é o modelo (add/clear/modified/
- * to_tjp) que o `Project` guarda em `project['alertLevels']`.
+ * Configuration through the `alertlevels` directive lives in the parser
+ * (`parser/rules/project.ts`), which validates uniqueness and reports a syntax
+ * error with `SourceFileInfo`; this class is the model
+ * (add/clear/modified/to_tjp) that `Project` keeps in `project['alertLevels']`.
  *
  * @see docs/taskjuggler/lib/taskjuggler/AlertLevelDefinitions.rb
  * @see docs/syntaxmesh/decisoes/029-journal-alertlevel.md
@@ -19,38 +19,48 @@
 import { TjError, } from "./errors.ts";
 
 /**
- * Um nível de alerta: id único, nome único e cor HTML (#RGB/#RRGGBB).
+ * One alert level: a unique id, a unique name and an HTML color
+ * (#RGB/#RRGGBB).
  *
- * Ruby: `class AlertLevelDefinition < Struct.new(:id, :name, :color)` com
- * `to_s` próprio.
+ * Ruby: `class AlertLevelDefinition < Struct.new(:id, :name, :color)` with its
+ * own `to_s`.
  */
 export class AlertLevelDefinition {
+  /**
+   * Creates an alert level.
+   *
+   * @param id Unique machine id.
+   * @param name Unique human-readable name.
+   * @param color HTML color used by the reports.
+   */
   constructor(
     readonly id: string,
     readonly name: string,
     readonly color: string,
   ) {}
 
-  /** Representação para `AlertLevelDefinitions#to_tjp` (Ruby l.23-25). */
+  /** Representation used by `AlertLevelDefinitions#to_tjp` (Ruby l.23-25). */
   to_s(): string {
     return `${this.id} '${this.name}' '${this.color}'`;
   }
 
-  /** Alias idiomático de {@link to_s} (`join`/template string). */
+  /** Idiomatic alias of {@link to_s} (used by `join` and template strings). */
   toString(): string {
     return this.to_s();
   }
 
   /**
-   * Nível de alerta é imutável (`readonly`): a cópia devolve `this`
-   * (16.13.2), preservando a identidade usada por `indexById`/`indexByName`.
+   * An alert level is immutable (`readonly`): the copy returns `this` (16.13.2),
+   * preserving the identity used by `indexById`/`indexByName`.
    */
   deepClone(): this {
     return this;
   }
 }
 
-/** Defaults do Ruby (`AlertLevelDefinitions#initialize`), severidade ascendente. */
+/**
+ * Ruby defaults (`AlertLevelDefinitions#initialize`), in ascending severity.
+ */
 export const DEFAULT_ALERT_LEVELS: AlertLevelDefinition[] = [
   new AlertLevelDefinition("green", "Green", "#008000",),
   new AlertLevelDefinition("yellow", "Yellow", "#BEA800",),
@@ -58,41 +68,46 @@ export const DEFAULT_ALERT_LEVELS: AlertLevelDefinition[] = [
 ];
 
 /**
- * Lista ordenada de níveis de alerta (Ruby `AlertLevelDefinitions`).
+ * Ordered list of alert levels (Ruby `AlertLevelDefinitions`).
  *
- * Nasce com os três defaults; `modified` indica se a diretiva `alertlevels`
- * já substituiu a paleta padrão.
+ * It starts with the three defaults; `modified` tells whether the `alertlevels`
+ * directive has already replaced the default palette.
  */
 export class AlertLevelDefinitions {
   private levels: AlertLevelDefinition[] = [];
   private _modified = false;
 
+  /** Creates the list pre-filled with the default palette. */
   constructor() {
-    // Ruby l.34-43: adiciona os defaults e reseta o flag `modified`.
+    // Ruby l.34-43: adds the defaults and resets the `modified` flag.
     for (const level of DEFAULT_ALERT_LEVELS) {
       this.add(new AlertLevelDefinition(level.id, level.name, level.color,),);
     }
     this._modified = false;
   }
 
-  /** Remove todos os níveis e marca a lista como modificada (Ruby l.46). */
+  /** Removes every level and marks the list as modified (Ruby l.46). */
   clear(): void {
     this.levels = [];
     this._modified = true;
   }
 
   /**
-   * Adiciona um nível; id **e** nome precisam ser únicos (Ruby l.52-60).
+   * Adds a level; both the id **and** the name must be unique (Ruby l.52-60).
    *
-   * Ruby lança `ArgumentError`; aqui `TjError` para o parser tratar como erro
-   * recuperável de diretiva.
+   * Ruby raises `ArgumentError`; here it is a `TjError` so the parser treats it
+   * as a recoverable directive error.
+   *
+   * @param level Level to append.
+   * @throws {TjError} When `level` is not an `AlertLevelDefinition`, or when its
+   *   id or name is already taken.
    */
   add(level: AlertLevelDefinition,): void {
     if (!(level instanceof AlertLevelDefinition)) {
       throw new TjError("AlertLevelDefinition expected",);
     }
-    // Ruby: `if indexById(level.id) || indexByName(level.name)` — o índice 0 é
-    // truthy em Ruby (nil é o "não achei"); por isso a comparação é `!== null`.
+    // Ruby: `if indexById(level.id) || indexByName(level.name)` — index 0 is
+    // truthy in Ruby (nil means "not found"), hence the `!== null` comparison.
     if (
       this.indexById(level.id,) !== null ||
       this.indexByName(level.name,) !== null
@@ -103,41 +118,61 @@ export class AlertLevelDefinitions {
     this._modified = true;
   }
 
-  /** `true` quando a lista não é mais a default (Ruby `modified?`). */
+  /** `true` when the list is no longer the default one (Ruby `modified?`). */
   get modified(): boolean {
     return this._modified;
   }
 
-  /** Índice do nível com `id`; `null` se desconhecido (Ruby `indexById`). */
+  /**
+   * Index of the level with `id`; `null` when unknown (Ruby `indexById`).
+   *
+   * @param id Machine id to look for.
+   */
   indexById(id: string,): number | null {
     const i = this.levels.findIndex((l,) => l.id === id);
     return i < 0 ? null : i;
   }
 
-  /** Índice do nível com `name`; `null` se desconhecido. */
+  /**
+   * Index of the level with `name`; `null` when unknown.
+   *
+   * @param name Name to look for.
+   */
   indexByName(name: string,): number | null {
     const i = this.levels.findIndex((l,) => l.name === name);
     return i < 0 ? null : i;
   }
 
-  /** Índice do nível com `color`; `null` se desconhecido. */
+  /**
+   * Index of the level with `color`; `null` when unknown.
+   *
+   * @param color HTML color to look for.
+   */
   indexByColor(color: string,): number | null {
     const i = this.levels.findIndex((l,) => l.color === color);
     return i < 0 ? null : i;
   }
 
-  /** Nível no índice `index`; `null` quando fora de faixa (Ruby `[]`). */
+  /**
+   * Level at `index`; `null` when out of range (Ruby `[]`).
+   *
+   * @param index Position in severity order.
+   */
   get(index: number,): AlertLevelDefinition | null {
     return this.levels[index] ?? null;
   }
 
-  /** Mapeia os níveis (Ruby `map`). */
+  /**
+   * Maps the levels (Ruby `map`).
+   *
+   * @param fn Callback applied to each level.
+   */
   map<T,>(fn: (level: AlertLevelDefinition, index: number,) => T,): T[] {
     return this.levels.map(fn,);
   }
 
   /**
-   * Definição em sintaxe TJP (Ruby l.98-100):
+   * Definition in TJP syntax (Ruby l.98-100):
    * `alertlevels green 'Green' '#008000',
    * yellow 'Yellow' '#BEA800',
    * red 'Red' '#C00000'`.
@@ -146,30 +181,35 @@ export class AlertLevelDefinitions {
     return `alertlevels ${this.levels.join(",\n",)}`;
   }
 
-  /** Cópia rasa da lista interna (sem expor o array mutável). */
+  /** Shallow copy of the internal list (without exposing the mutable array). */
   toArray(): AlertLevelDefinition[] {
     return this.levels.slice();
   }
 
-  /** Número de níveis definidos. */
+  /** Number of defined levels. */
   get length(): number {
     return this.levels.length;
   }
 
-  /** Iterador sobre os níveis (ordem de severidade ascendente). */
+  /** Iterator over the levels (in ascending severity order). */
   [Symbol.iterator](): IterableIterator<AlertLevelDefinition> {
     return this.levels[Symbol.iterator]();
   }
 }
 
-/** Cópia dos defaults (o `Project` guarda sua própria lista mutável). */
+/** Copy of the defaults (the `Project` keeps its own mutable list). */
 export function defaultAlertLevels(): AlertLevelDefinition[] {
   return DEFAULT_ALERT_LEVELS.map((l,) =>
     new AlertLevelDefinition(l.id, l.name, l.color,)
   );
 }
 
-/** Índice do nível por id (`indexById` do Ruby); `null` se desconhecido. */
+/**
+ * Index of the level with `id` (Ruby `indexById`); `null` when unknown.
+ *
+ * @param levels Levels to search.
+ * @param id Machine id to look for.
+ */
 export function alertLevelIndexById(
   levels: AlertLevelDefinition[],
   id: string,
@@ -178,7 +218,12 @@ export function alertLevelIndexById(
   return i < 0 ? null : i;
 }
 
-/** Índice do nível por nome (`indexByName` do Ruby); `null` se desconhecido. */
+/**
+ * Index of the level with `name` (Ruby `indexByName`); `null` when unknown.
+ *
+ * @param levels Levels to search.
+ * @param name Name to look for.
+ */
 export function alertLevelIndexByName(
   levels: AlertLevelDefinition[],
   name: string,
@@ -187,7 +232,11 @@ export function alertLevelIndexByName(
   return i < 0 ? null : i;
 }
 
-/** Lista de ids para mensagens de erro (`Must be one of ...`, Ruby l.203). */
+/**
+ * List of ids for error messages (`Must be one of ...`, Ruby l.203).
+ *
+ * @param levels Levels to list.
+ */
 export function alertLevelIds(levels: AlertLevelDefinition[],): string[] {
   return levels.map((l,) => l.id);
 }

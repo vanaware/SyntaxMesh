@@ -1,5 +1,5 @@
 /**
- * Atributo de lista de recursos.
+ * Resource list attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ResourceListAttribute
  */
@@ -10,7 +10,7 @@ import { type AttributeDefinition, } from "../attribute-definition.ts";
 import { ListAttributeBase, } from "../list-attribute-base.ts";
 
 /**
- * Atributo de lista de recursos.
+ * Resource list attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ResourceListAttribute
  */
@@ -18,12 +18,12 @@ export class ResourceListAttribute extends ListAttributeBase<
   { id: string; name: string; project: unknown; fullId?: string }
 > {
   /**
-   * ID do tipo de atributo para ResourceListAttribute.
+   * Attribute type ID for ResourceListAttribute.
    */
   static readonly tjpId = "resourcelist";
 
   /**
-   * Converte o valor para string.
+   * Converts the value to a string.
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ResourceListAttribute#to_s
    */
@@ -33,7 +33,7 @@ export class ResourceListAttribute extends ListAttributeBase<
   }
 
   /**
-   * Converte o valor para TJP (formato TaskJuggler).
+   * Converts the value to TJP (TaskJuggler format).
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:ResourceListAttribute#to_tjp
    */

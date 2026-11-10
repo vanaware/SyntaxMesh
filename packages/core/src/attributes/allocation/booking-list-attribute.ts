@@ -1,5 +1,5 @@
 /**
- * Atributo de lista de bookings.
+ * Booking list attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:BookingListAttribute
  */
@@ -10,19 +10,19 @@ import { type AttributeDefinition, } from "../attribute-definition.ts";
 import { ListAttributeBase, } from "../list-attribute-base.ts";
 
 /**
- * Atributo de lista de bookings.
+ * Booking list attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:BookingListAttribute
  */
 export class BookingListAttribute
   extends ListAttributeBase<{ to_s(): string }> {
   /**
-   * ID do tipo de atributo para BookingListAttribute.
+   * Attribute type ID for BookingListAttribute.
    */
   static readonly tjpId = "bookinglist";
 
   /**
-   * Converte o valor para string.
+   * Converts the value to a string.
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:BookingListAttribute#to_s
    */
@@ -33,7 +33,7 @@ export class BookingListAttribute
   }
 
   /**
-   * Converte o valor para TJP (formato TaskJuggler).
+   * Converts the value to TJP (TaskJuggler format).
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:BookingListAttribute#to_tjp
    */

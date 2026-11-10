@@ -1,14 +1,14 @@
 /**
- * Formata duração em segundos para o formato TaskJuggler.
+ * Formats a duration in seconds into the TaskJuggler format.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:DurationAttribute
  */
 
 /**
- * Converte uma duração em segundos para uma string legível.
+ * Converts a duration in seconds into a readable string.
  *
- * Formato: `<n>h` para horas inteiras, `<n>m` para minutos, `<n>s` para
- * segundos, ou combinações como `1h30m`. Valor zero retorna `0s`.
+ * Format: `<n>h` for whole hours, `<n>m` for minutes, `<n>s` for seconds, or
+ * combinations such as `1h30m`. A zero value returns `0s`.
  */
 export function formatDuration(seconds: number,): string {
   if (!Number.isFinite(seconds,)) {

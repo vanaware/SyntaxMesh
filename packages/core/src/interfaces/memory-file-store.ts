@@ -1,75 +1,83 @@
 /**
- * `MemoryFileStore` — implementação de `FileStore` em memória (ADR 037).
+ * `MemoryFileStore` — an in-memory implementation of `FileStore` (ADR 037).
  *
- * Existe para o **caminho de dados** da Fase 24 (grupo 5, 24.2.32): os apps de
- * sheet e as checagens de folha continuam a usar a interface `FileStore`
- * (rebaixada, não revogada), mas o `execute` injeta esta implementação semeada
- * com `request.files` — nada toca disco nem terminal, e o resultado sai como
- * **dado** (`snapshot()`).
+ * It exists for the phase 24 **data path** (group 5, 24.2.32): the sheet apps
+ * and the sheet checks keep using the `FileStore` interface (demoted, not
+ * revoked), but `execute` injects this implementation seeded with
+ * `request.files` — nothing touches the disk or the terminal, and the result
+ * comes out as **data** (`snapshot()`).
  *
- * A semântica espelha o que os handlers esperam de um disco (a mesma do
- * `fakeOpfs()` dos testes da Fase 18), com uma diferença deliberada: `write`
- * **cria os diretórios-pai ausentes**, porque aqui não existe permissão de SO a
- * validar e o único efeito de rejeitar seria ruído no caminho de dados.
- * - `mkdir` é idempotente e cria os ancestrais;
- * - `list` devolve os **basenames** das entradas (arquivos e subdiretórios);
- * - `delete` rejeita quando o arquivo não existe.
+ * The semantics mirror what the handlers expect from a disk (the same as the
+ * `fakeOpfs()` of the phase 18 tests), with one deliberate difference: `write`
+ * **creates missing parent directories**, because here there is no OS permission
+ * to validate and the only effect of rejecting would be noise on the data path.
+ * - `mkdir` is idempotent and creates the ancestors;
+ * - `list` returns the **basenames** of the entries (files and subdirectories);
+ * - `delete` rejects when the file does not exist.
  *
- * Não é o armazenamento da PWA: a Fase 19 (ADR 030) traz o provedor
- * persistente (`@vanaware/workerdb`). Este store é efêmero por definição.
+ * This is not the PWA storage: phase 19 (ADR 030) brings the persistent provider
+ * (`@vanaware/workerdb`). This store is ephemeral by definition.
  *
  * @see docs/syntaxmesh/decisoes/037-filestore-injection.md
  * @see docs/syntaxmesh/fases/fase-24-cli-adendo.md §3.5
  */
 import type { FileStore, } from "./file-store.ts";
 
-/** Arquivo de entrada do store (mesma forma de `request.files`). */
+/** Prompt file of the store (same shape as `request.files`). */
 export interface MemoryStoreFile {
+  /** Normalized path of the file inside the store. */
   path: string;
+  /** Full content seeded into the store. */
   content: string;
 }
 
 /**
- * Semente do store: mapa `caminho → conteúdo`. Chaves terminadas em `/` criam
- * o diretório vazio (a pasta de folhas de um período, por exemplo).
+ * Seed of the store: a `path → content` map. Keys ending in `/` create the empty
+ * directory (the sheet folder of a period, for example).
  */
 export type MemoryStoreSeed = Record<string, string>;
 
-/** Normaliza um caminho relativo (sem `./`, sem barra final, sem `//`). */
+/** Normalises a relative path (no `./`, no trailing slash, no `//`). */
 export function normalizeStorePath(path: string,): string {
   const trimmed = path.replace(/^\.\//u, "",).replace(/\/+$/u, "",);
   return trimmed.replace(/\/{2,}/gu, "/",);
 }
 
-/** Diretório-pai de um caminho (`""` no nível raiz). */
+/** Parent directory of a path (`""` at the root level). */
 function parentOf(path: string,): string {
   const idx = path.lastIndexOf("/",);
   return idx < 0 ? "" : path.slice(0, idx,);
 }
 
-/** Primeiro segmento de um caminho relativo — a entrada direta do diretório. */
+/** First segment of a relative path — the direct entry of the directory. */
 function firstSegment(path: string,): string {
   const idx = path.indexOf("/",);
   return idx < 0 ? path : path.slice(0, idx,);
 }
 
 /**
- * Store em memória compatível com `FileStore`.
+ * In-memory store compatible with `FileStore`.
  *
- * Uso típico no caminho de dados:
+ * Typical use on the data path:
  *
  * ```ts
  * const store = new MemoryFileStore({ "templates/x.tji": template, });
  * await app.run({ project, fileStore: store, rawEmail, },);
- * const files = store.toFiles(); // dado, não disco
+ * const files = store.toFiles(); // data, not disk
  * ```
  */
 export class MemoryFileStore implements FileStore {
-  /** Conteúdo por caminho normalizado. */
+  /** Content by normalised path. */
   private readonly files = new Map<string, string>();
-  /** Diretórios existentes (inclui a raiz `""`). */
+  /** Existing directories (includes the `""` root). */
   private readonly dirs = new Set<string>(["",],);
 
+  /**
+   * Builds the store from a seed (map or list of files).
+   *
+   * @param seed Initial paths and contents; a trailing `/` creates an empty
+   *   directory.
+   */
   constructor(seed: MemoryStoreSeed | MemoryStoreFile[] = {},) {
     const entries: [string, string,][] = Array.isArray(seed,)
       ? seed.map((file,) => [file.path, file.content,] as [string, string,])
@@ -83,8 +91,8 @@ export class MemoryFileStore implements FileStore {
     }
   }
 
-  /** Conteúdo UTF-8 do arquivo; rejeita se ele não existir. */
-  // Síncrono por dentro: o `async` casa a assinatura de `FileStore` (ADR 037).
+  /** UTF-8 content of the file; rejects when it does not exist. */
+  // Synchronous inside: the `async` matches the `FileStore` signature (ADR 037).
   // deno-lint-ignore require-await
   async read(path: string,): Promise<string> {
     const key = normalizeStorePath(path,);
@@ -95,13 +103,13 @@ export class MemoryFileStore implements FileStore {
     return content;
   }
 
-  /** Grava (cria ou sobrescreve) o arquivo, criando os ancestrais. */
+  /** Writes (creates or overwrites) the file, creating the ancestors. */
   // deno-lint-ignore require-await
   async write(path: string, content: string,): Promise<void> {
     this.writeSync(path, content,);
   }
 
-  /** Remove o arquivo; rejeita se ele não existir. */
+  /** Removes the file; rejects when it does not exist. */
   // deno-lint-ignore require-await
   async delete(path: string,): Promise<void> {
     const key = normalizeStorePath(path,);
@@ -110,7 +118,7 @@ export class MemoryFileStore implements FileStore {
     }
   }
 
-  /** Basenames das entradas do diretório (arquivos e subdiretórios). */
+  /** Basenames of the directory entries (files and subdirectories). */
   // deno-lint-ignore require-await
   async list(dir: string,): Promise<string[]> {
     const key = normalizeStorePath(dir,);
@@ -130,32 +138,32 @@ export class MemoryFileStore implements FileStore {
     return [...names,].sort();
   }
 
-  /** `true` se o caminho existir (arquivo ou diretório). */
+  /** `true` when the path exists (file or directory). */
   // deno-lint-ignore require-await
   async exists(path: string,): Promise<boolean> {
     const key = normalizeStorePath(path,);
     return this.files.has(key,) || this.dirs.has(key,);
   }
 
-  /** Cria o diretório (idempotente, com os ancestrais). */
+  /** Creates the directory (idempotent, with the ancestors). */
   // deno-lint-ignore require-await
   async mkdir(path: string,): Promise<void> {
     this.mkdirSync(path,);
   }
 
-  /** Cópia dos arquivos como lista ordenada — a saída **dado** do store. */
+  /** Copy of the files as an ordered list — the **data** output of the store. */
   toFiles(): MemoryStoreFile[] {
     return [...this.files.entries(),]
       .sort(([a,], [b,],) => a < b ? -1 : a > b ? 1 : 0)
       .map(([path, content,],) => ({ path, content, }));
   }
 
-  /** Snapshot `caminho → conteúdo` (dado puro, sem instâncias). */
+  /** `path → content` snapshot (pure data, no instances). */
   snapshot(): MemoryStoreSeed {
     return Object.fromEntries(this.files,);
   }
 
-  /** Grava criando os diretórios-pai (usado pela semente). */
+  /** Writes creating the parent directories (used by the seed). */
   private writeSync(path: string, content: string,): void {
     const key = normalizeStorePath(path,);
     const parent = parentOf(key,);
@@ -163,7 +171,7 @@ export class MemoryFileStore implements FileStore {
     this.files.set(key, content,);
   }
 
-  /** Cria o diretório e todos os ancestrais. */
+  /** Creates the directory and all its ancestors. */
   private mkdirSync(path: string,): void {
     const key = normalizeStorePath(path,);
     if (key === "") return;

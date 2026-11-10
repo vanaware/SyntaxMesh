@@ -1,16 +1,16 @@
 /**
- * `chapters-syntax.ts` — capítulos sobre a gramática e o dialeto de texto
+ * `chapters-syntax.ts` — chapters about the grammar and the text dialect
  * (22.1b.5).
  *
- * Mesmo contrato de {@link ./chapters-basics.ts}: texto-fonte RichText em
- * inglês, sem E/S, apenas a extensão `.smx`.
+ * Same contract as {@link ./chapters-basics.ts}: RichText source text in
+ * English, no I/O, only the `.smx` extension.
  *
  * @see ./chapters.ts
  */
 
 import type { ManualChapter, } from "./chapters-basics.ts";
 
-/** Gramática, marcação de texto e atributos de lista. */
+/** Grammar, text markup and list attributes. */
 export const SYNTAX_CHAPTERS: readonly ManualChapter[] = [
   {
     name: "The_Syntax",

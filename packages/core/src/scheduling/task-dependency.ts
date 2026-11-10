@@ -2,21 +2,33 @@ import { type ProjectLike, } from "../model/project-like.ts";
 import { type Task, } from "../model/task.ts";
 
 /**
- * Representa uma dependência entre tarefas.
+ * Dependency between two tasks.
  *
- * Uma `TaskDependency` armazena um `taskId` (string, resolvido tardiamente),
- * `onEnd` (se a dependência é relativa ao início ou fim da tarefa),
- * `gapDuration` (calendário, segundos), e `gapLength` (working time, slots).
+ * A `TaskDependency` stores a `taskId` (a string, resolved lazily), `onEnd`
+ * (whether the dependency refers to the start or the end of the task),
+ * `gapDuration` (calendar time, in seconds) and `gapLength` (working time, in
+ * slots).
  *
- * Fonte Ruby: `docs/taskjuggler/lib/taskjuggler/TaskDependency.rb`
+ * Ruby source: `docs/taskjuggler/lib/taskjuggler/TaskDependency.rb`
  */
 export class TaskDependency {
+  /** Identifier of the predecessor task, resolved on `resolve()`. */
   readonly taskId: string;
+  /** Resolved predecessor task, or `null` until `resolve()` runs. */
   task: Task | null;
+  /** `true` when the dependency hangs off the end of the predecessor. */
   onEnd: boolean;
+  /** Gap before the successor, measured in calendar seconds. */
   gapDuration: number;
+  /** Gap before the successor, measured in working-time slots. */
   gapLength: number;
 
+  /**
+   * Creates an unresolved dependency.
+   *
+   * @param taskId Identifier of the predecessor task.
+   * @param onEnd `true` when the dependency refers to the end of the task.
+   */
   constructor(taskId: string, onEnd: boolean,) {
     this.taskId = taskId;
     this.task = null;
@@ -26,10 +38,13 @@ export class TaskDependency {
   }
 
   /**
-   * Verifica se esta dependência é igual a outra.
+   * Compares this dependency with another one.
    *
-   * Duas dependências são iguais se tiverem o mesmo `taskId`, `task`, `onEnd`,
-   * `gapDuration` e `gapLength`.
+   * Two dependencies are equal when `taskId`, `task`, `onEnd`, `gapDuration`
+   * and `gapLength` all match.
+   *
+   * @param other Dependency to compare against.
+   * @returns `true` when every field is identical.
    */
   equals(other: TaskDependency,): boolean {
     return (
@@ -42,10 +57,10 @@ export class TaskDependency {
   }
 
   /**
-   * Resolve o `taskId` para um objeto `Task` usando o projeto fornecido.
+   * Resolves `taskId` into a `Task` using the supplied project.
    *
-   * @param project — objeto ProjectLike que deve implementar `task(id: string): Task | null`
-   * @returns O objeto Task resolvido, ou null se não existir.
+   * @param project Object that implements `task(id: string): Task | null`.
+   * @returns The resolved task, or `null` when it does not exist.
    */
   resolve(project: ProjectLike,): Task | null {
     this.task = project.task(this.taskId,);

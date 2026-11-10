@@ -1,27 +1,27 @@
 /**
- * LogicalFunction — folha de operando que é uma chamada de função
- * (Fase 11.3).
+ * LogicalFunction — leaf operand that is a function call (phase 11.3).
  *
- * Port de `LogicalFunction.rb`. Modela `nome(args...)` dentro de uma
- * `LogicalExpression`. Convenções:
- *  - Sufixo `_` inverte `property`/`scopeProperty` (11.3.1.4).
- *  - `&`/`|` e coerções são tratadas pelo `LogicalOperation`.
- *  - `hasalert` usa `Journal.currentEntries` (16.18 — Fase 16).
+ * Port of `LogicalFunction.rb`. Models `name(args...)` inside a
+ * `LogicalExpression`. Conventions:
+ *  - A trailing `_` inverts `property`/`scopeProperty` (11.3.1.4).
+ *  - `&`/`|` and the coercions are handled by `LogicalOperation`.
+ *  - `hasalert` uses `Journal.currentEntries` (16.18 — phase 16).
  *
- * Complemento Fase 11 (`fase-11-logical-complemento.md`): além das 14 funções
- * fiéis ao Ruby 3.8.4 (`FUNCTIONS_RUBY`), registramos **extensões SyntaxMesh**
- * (`FUNCTIONS_EXT`) pedidas na documentação. As viáveis hoje (checagens de tipo
- * e de árvore, sem scheduling) são implementadas; as que dependem de
- * scheduling/financeiro (Fases 7/8) ficam **registradas** (nome + aridade +
- * `to_s`) e **lançam `NotYetImplementedError`** ao avaliar — a avaliação real
- * pertence à fase que construir o pré-requisito. Não há mudança no parser: ele
- * aceita qualquer `$ID` + `argumentList` como função.
+ * Phase 11 complement (`fase-11-logical-complemento.md`): besides the 14
+ * functions faithful to Ruby 3.8.4 (`FUNCTIONS_RUBY`), **SyntaxMesh
+ * extensions** requested by the documentation are registered (`FUNCTIONS_EXT`).
+ * The ones feasible today (type and tree checks, no scheduling) are
+ * implemented; the ones that depend on scheduling/finance (phases 7/8) stay
+ * **registered** (name + arity + `to_s`) and **throw `NotYetImplementedError`**
+ * when evaluated — the real evaluation belongs to the phase that builds the
+ * prerequisite. The parser needs no change: it accepts any `$ID` plus an
+ * `argumentList` as a function.
  *
- * Onde o modelo portado ainda não expõe um método (ex.: `isDependencyOf`/
- * `isFeatureOf` com a assinatura Ruby), o dispatch é feito por duck-typing e
- * retorna `false` na ausência — mantendo o port fiel sem quebrar a
- * compilação. `TaskScenario#getAllocatedTime` foi portado na 2ª onda do
- * Complemento (§6.1) e `isactive` usa agora o caminho tipado.
+ * Where the ported model does not expose a method yet (e.g. `isDependencyOf`/
+ * `isFeatureOf` with the Ruby signature), dispatch goes through duck typing and
+ * returns `false` when it is missing — keeping the port faithful without
+ * breaking the build. `TaskScenario#getAllocatedTime` was ported in the 2nd wave
+ * of the complement (§6.1) and `isactive` now uses the typed path.
  *
  * @see docs/taskjuggler/lib/taskjuggler/LogicalFunction.rb
  */
@@ -40,8 +40,8 @@ import type { LogicalExpression, } from "./logical-expression.ts";
 import { LogicalOperation, } from "./logical-operation.ts";
 
 /**
- * Funções fiéis ao TaskJuggler 3.8.4 (`LogicalFunction.rb::@@functions`).
- * Nome → número de argumentos obrigatórios.
+ * Functions faithful to TaskJuggler 3.8.4 (`LogicalFunction.rb::@@functions`).
+ * Name mapped to the number of required arguments.
  */
 export const FUNCTIONS_RUBY: Map<string, number> = new Map([
   ["hasalert", 1,],
@@ -60,29 +60,30 @@ export const FUNCTIONS_RUBY: Map<string, number> = new Map([
   ["treelevel", 0,],
 ],);
 
-/** Categoria de uma extensão: implementável hoje ou bloqueada por fase. */
-type ExtKind = "feasible" | "blocked";
+/** Category of an extension: implementable today or blocked by a phase. */
+export type ExtKind = "feasible" | "blocked";
 
 /**
- * Extensões SyntaxMesh além do port fiel (Complemento Fase 11). Cada entrada:
- * `nome → [aridade, fase_pré_requisito, kind]`. `blocked` lança
- * `NotYetImplementedError(fase)` ao avaliar; `feasible` tem método próprio.
- * Nomes sem tradução 0-arg seguem o padrão de `istask`/`isresource` (o parser
- * os resolve por `$ID`, sem keyword i18n obrigatório).
+ * SyntaxMesh extensions beyond the faithful port (phase 11 complement). Each
+ * entry is `name -> [arity, prerequisite_phase, kind]`. `blocked` throws
+ * `NotYetImplementedError(phase)` when evaluated; `feasible` has its own
+ * method. Names without a 0-arg translation follow the `istask`/`isresource`
+ * pattern (the parser resolves them as `$ID`, so no i18n keyword is required).
  */
 export const FUNCTIONS_EXT: Map<string, [number, string, ExtKind,]> = new Map(
   [
-    // Viáveis hoje: checagens de tipo e de árvore.
+    // Feasible today: type and tree checks.
     ["isparentof", [1, "", "feasible",],],
     ["isanaccount", [0, "", "feasible",],],
     ["isaccount", [1, "", "feasible",],],
     ["isanmaterial", [0, "", "feasible",],],
     ["ismaterial", [1, "", "feasible",],],
     ["istaskofproject", [1, "", "feasible",],],
-    // Bloqueadas na 1ª onda; implementadas na 2ª onda (§6.1–§6.3) porque as
-    // Fases 7/8.1 foram concluídas: `TaskScenario#getAllocatedTime` portado,
-    // datas `start`/`end` são atributos de cenário, `materialallocations` e
-    // `CostEvent` "material_usage" existem. Fase de origem preservada no tag.
+    // Blocked in the 1st wave; implemented in the 2nd wave (§6.1–§6.3) because
+    // phases 7/8.1 were completed: `TaskScenario#getAllocatedTime` is ported,
+    // the `start`/`end` dates are scenario attributes, and `materialallocations`
+    // plus the `CostEvent` "material_usage" exist. The origin phase is kept in
+    // the tag.
     ["hasassignment", [3, "7", "feasible",],],
     ["isallocated", [3, "7", "feasible",],],
     ["isallocatedtoproject", [4, "7", "feasible",],],
@@ -93,16 +94,19 @@ export const FUNCTIONS_EXT: Map<string, [number, string, ExtKind,]> = new Map(
     ["isusedat", [2, "8.1", "feasible",],],
     ["isused", [3, "8.1", "feasible",],],
     ["isusedatproject", [4, "8.1", "feasible",],],
-    // Permanentemente bloqueadas (G6 §6.6): o pré-requisito não existe no modelo.
-    // `isoncriticalpath` exige slack/float (inexistente até no Ruby 3.8.4
-    // vendorizado) → Fase 14/15; `istaskstatus` exige enum de status derivado
-    // de tracking → Fase 18.
+    // Permanently blocked (G6 §6.6): the prerequisite does not exist in the
+    // model. `isoncriticalpath` needs slack/float (missing even in the vendored
+    // Ruby 3.8.4) → phases 14/15; `istaskstatus` needs a derived status enum
+    // from tracking → phase 18.
     ["isoncriticalpath", [1, "14", "blocked",],],
     ["istaskstatus", [2, "18", "blocked",],],
   ],
 );
 
-/** Nome → aridade, unificando fiéis + extensões (validação de argumentos). */
+/**
+ * Name mapped to arity, unifying the faithful functions and the extensions
+ * (used for argument validation).
+ */
 export const FUNCTIONS: Map<string, number> = new Map([
   ...FUNCTIONS_RUBY,
   ...[...FUNCTIONS_EXT,].map(
@@ -110,7 +114,13 @@ export const FUNCTIONS: Map<string, number> = new Map([
   ),
 ],);
 
-/** Membro de objeto como função (respond_to? equivalente). */
+/**
+ * Reads a member of an object as a function (equivalent to `respond_to?`).
+ *
+ * @param obj Object to inspect.
+ * @param key Name of the member.
+ * @returns The member as a function, or `undefined`.
+ */
 function method(
   obj: unknown,
   key: string,
@@ -121,12 +131,21 @@ function method(
     : undefined;
 }
 
-/** Chamada de função dentro de uma expressão lógica. */
+/** Function call inside a logical expression. */
 export class LogicalFunction {
+  /** Name of the function (without the inverting `_` suffix). */
   readonly name: string;
+  /** Whether the `_` suffix inverts `property` and `scopeProperty`. */
   readonly invertProperties: boolean;
+  /** Arguments of the call, in source order. */
   arguments: unknown[] = [];
 
+  /**
+   * Creates the call node.
+   *
+   * @param opnd Name of the function, with a trailing `_` when the properties
+   *   must be inverted.
+   */
   constructor(opnd: string,) {
     if (opnd.endsWith("_",)) {
       this.name = opnd.slice(0, -1,);
@@ -137,14 +156,20 @@ export class LogicalFunction {
     }
   }
 
-  /** Registra argumentos sem validação (usado pelo parser). */
+  /**
+   * Stores the arguments without validation (used by the parser).
+   *
+   * @param args Arguments of the call.
+   */
   setArguments(args: unknown[],): void {
     this.arguments = args;
   }
 
   /**
-   * Registra argumentos validando nome e aridade (11.3.1.5).
-   * Retorna `[id, mensagem]` em erro; `null` quando ok.
+   * Stores the arguments after validating the name and the arity (11.3.1.5).
+   *
+   * @param args Arguments of the call.
+   * @returns `[id, message]` on error, or `null` when the call is valid.
    */
   setArgumentsAndCheck(args: unknown[],): [string, string,] | null {
     if (!FUNCTIONS.has(this.name,)) {
@@ -164,14 +189,23 @@ export class LogicalFunction {
     return null;
   }
 
+  /**
+   * Evaluates the function call.
+   *
+   * @param expr Expression that owns the evaluation context.
+   * @returns The result of the function.
+   * @throws NotYetImplementedError When the function is an anchored extension
+   *   whose prerequisite phase is still missing.
+   */
   eval(expr: LogicalExpression,): unknown {
-    // Extensões bloqueadas: registradas (nome/aridade/to_s) mas avaliadas só
-    // pela fase que construir o pré-requisito (Fases 7/8/8.1). `ext` é
-    // [aridade, fase, kind].
+    // Blocked extensions: registered (name/arity/to_s) but only evaluated by
+    // the phase that builds the prerequisite (phases 7/8/8.1). `ext` is
+    // [arity, phase, kind].
     const ext = FUNCTIONS_EXT.get(this.name,);
     if (ext && ext[2] === "blocked") {
-      // Ancorado: Fase dinâmica — `ext[1]` carrega a fase da função bloqueada
-      // (ver tabela FUNCTIONS_EXT); cada extensão é liberada pela fase âncora.
+      // Ancorado: Fase dinâmica — `ext[1]` carries the phase of the blocked
+      // function (see the FUNCTIONS_EXT table); each extension is released by
+      // its anchor phase.
       throw new NotYetImplementedError(ext[1], this.name,);
     }
     switch (this.name) {
@@ -203,7 +237,7 @@ export class LogicalFunction {
         return this.isvalid(expr,);
       case "treelevel":
         return this.treelevel(expr,);
-      // Extensões viáveis hoje (Complemento Fase 11).
+      // Extensions feasible today (phase 11 complement).
       case "isparentof":
         return this.isparentof(expr,);
       case "isanaccount":
@@ -216,7 +250,7 @@ export class LogicalFunction {
         return this.ismaterial(expr,);
       case "istaskofproject":
         return this.istaskofproject(expr,);
-      // 2ª onda (§6.1–§6.3): datas agendadas + alocações + material.
+      // 2nd wave (§6.1–§6.3): scheduled dates + allocations + material.
       case "startsafter":
         return this.dateBound(expr, "start", "gt",);
       case "startsbefore":
@@ -242,18 +276,34 @@ export class LogicalFunction {
     }
   }
 
+  /**
+   * Renders the call as text.
+   *
+   * @returns The `name(arg, ...)` form.
+   */
   to_s(): string {
     return `${this.name}(${this.arguments.join(", ",)})`;
   }
 
+  /**
+   * Default string conversion required by the JS runtime.
+   *
+   * @returns The `name(arg, ...)` form.
+   */
   toString(): string {
     return this.to_s();
   }
 
   // --------------------------------------------------
-  // Helpers de contexto
+  // Context helpers
   // --------------------------------------------------
 
+  /**
+   * Returns the evaluation context, requiring a `Query`.
+   *
+   * @param expr Expression that owns the evaluation context.
+   * @returns The `Query` of the context.
+   */
   private query(expr: LogicalExpression,): Query {
     if (!expr.query) {
       expr.error(`Function ${this.name}() requires a Query context`,);
@@ -261,7 +311,12 @@ export class LogicalFunction {
     return expr.query as Query;
   }
 
-  /** [property, scopeProperty] conforme `invertProperties` (11.3.2.2). */
+  /**
+   * `[property, scopeProperty]` following `invertProperties` (11.3.2.2).
+   *
+   * @param expr Expression that owns the evaluation context.
+   * @returns The property and the scope property used by the call.
+   */
   private properties(
     expr: LogicalExpression,
   ): [PropertyTreeNode | null, PropertyTreeNode | null,] {
@@ -272,6 +327,14 @@ export class LogicalFunction {
     return [q.property, q.scopeProperty,];
   }
 
+  /**
+   * Index of the scenario named by argument _id_, or an error.
+   *
+   * @param expr Expression that owns the evaluation context.
+   * @param project Project that owns the scenario.
+   * @param id Scenario identifier given as an argument.
+   * @returns The index of the scenario.
+   */
   private scenarioIdxOrError(
     expr: LogicalExpression,
     project: Project,
@@ -288,16 +351,23 @@ export class LogicalFunction {
   }
 
   // --------------------------------------------------
-  // As 14 funções
+  // The 14 faithful functions
   // --------------------------------------------------
 
+  /**
+   * `hasalert(level)` — whether the journal holds entries at or above the
+   * given alert level for the property, inside the query interval.
+   *
+   * @param expr Expression that owns the evaluation context.
+   * @returns `true` when at least one matching journal entry exists.
+   */
   private hasalert(expr: LogicalExpression,): boolean {
     const [property,] = this.properties(expr,);
     if (!property) return false;
     const query = this.query(expr,);
     const project = property.project as Project;
     // Ruby: `currentEntries(query.end, property, args[0], query.start,
-    // query.hideJournalEntry)` — `args[0]` é o nível mínimo de alerta.
+    // query.hideJournalEntry)` — `args[0]` is the minimum alert level.
     const minLevel = Number(this.arguments[0] ?? 0,);
     const entries = project.journal.currentEntries(
       query.end,
@@ -309,6 +379,13 @@ export class LogicalFunction {
     return entries.length > 0;
   }
 
+  /**
+   * `isactive(scenario)` — whether the task or resource has allocated time in
+   * the scenario, inside the query interval.
+   *
+   * @param expr Expression that owns the evaluation context.
+   * @returns `true` when the allocated time is non-zero.
+   */
   private isactive(expr: LogicalExpression,): boolean {
     const [property, scopeProperty,] = this.properties(expr,);
     if (!(property instanceof Task || property instanceof Resource)) {
@@ -321,9 +398,9 @@ export class LogicalFunction {
       this.arguments[0],
     );
     const q = this.query(expr,);
-    // Caminho tipado (G1.3, 2ª onda §6.1): `TaskScenario#getAllocatedTime`
-    // foi portado do Ruby — não há mais `return false` silencioso por
-    // duck-typing ausente.
+    // Typed path (G1.3, 2nd wave §6.1): `TaskScenario#getAllocatedTime` was
+    // ported from Ruby — the silent `return false` for missing duck typing is
+    // gone.
     const startIdx = q.startIdx ?? 0;
     const endIdx = q.endIdx ?? 0;
     if (property instanceof Task) {
@@ -342,6 +419,12 @@ export class LogicalFunction {
     ) > 0.0;
   }
 
+  /**
+   * `ischildof(id)` — whether the property is a descendant of `id`.
+   *
+   * @param expr Expression that owns the evaluation context.
+   * @returns `true` when the property is a child of the resolved parent.
+   */
   private ischildof(expr: LogicalExpression,): boolean {
     const [property,] = this.properties(expr,);
     if (!property) return false;
@@ -359,6 +442,13 @@ export class LogicalFunction {
     return property.isChildOf(parent,);
   }
 
+  /**
+   * `isdependencyof(id, scenario, resolved)` — whether the task depends on the
+   * task `id` in the given scenario.
+   *
+   * @param expr Expression that owns the evaluation context.
+   * @returns `true` when the dependency exists.
+   */
   private isdependencyof(expr: LogicalExpression,): boolean {
     const [property,] = this.properties(expr,);
     if (!(property instanceof Task)) return false;
@@ -374,6 +464,13 @@ export class LogicalFunction {
     return fn.call(property, task,) as boolean;
   }
 
+  /**
+   * `isdutyof(resource, scenario)` — whether the task lists the resource in
+   * `assignedresources` for the scenario.
+   *
+   * @param expr Expression that owns the evaluation context.
+   * @returns `true` when the resource is assigned to the task.
+   */
   private isdutyof(expr: LogicalExpression,): boolean {
     const [property,] = this.properties(expr,);
     if (!(property instanceof Task)) return false;
@@ -390,6 +487,13 @@ export class LogicalFunction {
     return assigned.includes(resource,);
   }
 
+  /**
+   * `isfeatureof(task, scenario)` — whether the task is a feature of the task
+   * `id` in the given scenario.
+   *
+   * @param expr Expression that owns the evaluation context.
+   * @returns `true` when the feature relation holds.
+   */
   private isfeatureof(expr: LogicalExpression,): boolean {
     const [property,] = this.properties(expr,);
     if (!(property instanceof Task)) return false;
@@ -403,12 +507,24 @@ export class LogicalFunction {
     return fn.call(property, scenarioIdx, task,) as boolean;
   }
 
+  /**
+   * `isleaf()` — whether the property has no children.
+   *
+   * @param expr Expression that owns the evaluation context.
+   * @returns `true` when the property is a leaf.
+   */
   private isleaf(expr: LogicalExpression,): boolean {
     const [property,] = this.properties(expr,);
     if (!property) return false;
     return property.leaf();
   }
 
+  /**
+   * `ismilestone(scenario)` — whether the task is a milestone in the scenario.
+   *
+   * @param expr Expression that owns the evaluation context.
+   * @returns `true` when the `milestone` attribute is set.
+   */
   private ismilestone(expr: LogicalExpression,): boolean {
     const [property,] = this.properties(expr,);
     if (!property) return false;
@@ -419,6 +535,14 @@ export class LogicalFunction {
       Boolean(property.getForScenario("milestone", scenarioIdx,),);
   }
 
+  /**
+   * `isongoing(scenario)` — whether the task interval overlaps the query
+   * interval.
+   *
+   * @param expr Expression that owns the evaluation context.
+   * @returns `true` when the intervals overlap (a task without scheduled dates
+   *   counts as ongoing, which surfaces scheduling errors).
+   */
   private isongoing(expr: LogicalExpression,): boolean {
     const [property,] = this.properties(expr,);
     if (!(property instanceof Task)) return false;
@@ -433,18 +557,31 @@ export class LogicalFunction {
     const iv1 = new TimeInterval(q.start, q.end,);
     const tStart = task.getForScenario("start", scenarioIdx,) as TjTime | null;
     const tEnd = task.getForScenario("end", scenarioIdx,) as TjTime | null;
-    // Ajuda a mostrar tarefas com erro de scheduling.
+    // Helps to surface tasks whose scheduling failed.
     if (!tStart || !tEnd) return true;
     const iv2 = new TimeInterval(tStart, tEnd,);
     return iv1.overlaps(iv2,);
   }
 
+  /**
+   * `isresource()` — whether the property is a resource.
+   *
+   * @param expr Expression that owns the evaluation context.
+   * @returns `true` when the property is a `Resource`.
+   */
   private isresource(expr: LogicalExpression,): boolean {
     const [property,] = this.properties(expr,);
     if (!property) return false;
     return property instanceof Resource;
   }
 
+  /**
+   * `isresponsibilityof(resource, scenario)` — whether the task lists the
+   * resource in `responsible` for the scenario.
+   *
+   * @param expr Expression that owns the evaluation context.
+   * @returns `true` when the resource is responsible for the task.
+   */
   private isresponsibilityof(expr: LogicalExpression,): boolean {
     const [property,] = this.properties(expr,);
     if (!(property instanceof Task)) return false;
@@ -461,12 +598,26 @@ export class LogicalFunction {
     return responsible.includes(resource,);
   }
 
+  /**
+   * `istask()` — whether the property is a task.
+   *
+   * @param expr Expression that owns the evaluation context.
+   * @returns `true` when the property is a `Task`.
+   */
   private istask(expr: LogicalExpression,): boolean {
     const [property,] = this.properties(expr,);
     if (!property) return false;
     return property instanceof Task;
   }
 
+  /**
+   * `isvalid([scenario.]attribute)` — whether the property defines the given
+   * attribute (in the given scenario, when the attribute is scenario
+   * specific).
+   *
+   * @param expr Expression that owns the evaluation context.
+   * @returns `true` when the attribute holds a value.
+   */
   private isvalid(expr: LogicalExpression,): boolean {
     const [property,] = this.properties(expr,);
     if (!property) return false;
@@ -508,6 +659,12 @@ export class LogicalFunction {
     return property.get(attr,) !== null;
   }
 
+  /**
+   * `treelevel()` — one-based depth of the property in the tree.
+   *
+   * @param expr Expression that owns the evaluation context.
+   * @returns The depth of the property, or `0` when it cannot be resolved.
+   */
   private treelevel(expr: LogicalExpression,): number {
     const [property,] = this.properties(expr,);
     if (!property) return 0;
@@ -515,17 +672,17 @@ export class LogicalFunction {
   }
 
   // --------------------------------------------------
-  // Extensões viáveis hoje (Complemento Fase 11)
+  // Extensions feasible today (phase 11 complement)
   // --------------------------------------------------
 
-  /** `isparentof(id)` — inverso de `ischildof`: `property` é ancestral de `id`. */
+  /** `isparentof(id)` — inverse of `ischildof`: `property` is an ancestor of `id`. */
   private isparentof(expr: LogicalExpression,): boolean {
     const [property,] = this.properties(expr,);
     if (!property) return false;
     const targetId = String(this.arguments[0],);
-    // Busca recursiva na subárvore de `property` por subId ou id completo.
-    // Extensão SyntaxMesh (não existe no Ruby): o `propertySet.get(arg)` só
-    // resolve por fullId, então um short id como "c1" exige varredura local.
+    // Recursive search in the subtree of `property`, by sub-id or full id.
+    // SyntaxMesh extension (absent from Ruby): `propertySet.get(arg)` only
+    // resolves full ids, so a short id such as "c1" needs a local scan.
     const find = (node: PropertyTreeNode,): PropertyTreeNode | null => {
       for (const child of node.children) {
         if (child.subId === targetId || child.id === targetId) return child;
@@ -539,12 +696,18 @@ export class LogicalFunction {
     return child.isChildOf(property,);
   }
 
+  /**
+   * `isanaccount()` — whether the property is an account.
+   *
+   * @param expr Expression that owns the evaluation context.
+   * @returns `true` when the property is an `Account`.
+   */
   private isanaccount(expr: LogicalExpression,): boolean {
     const [property,] = this.properties(expr,);
     return property instanceof Account;
   }
 
-  /** `isaccount(id)` — é uma `Account` e casa com a conta de `id`. */
+  /** `isaccount(id)` — is an `Account` and matches the account of `id`. */
   private isaccount(expr: LogicalExpression,): boolean {
     const [property,] = this.properties(expr,);
     if (!(property instanceof Account)) return false;
@@ -552,12 +715,18 @@ export class LogicalFunction {
     return project.account(String(this.arguments[0],),) === property;
   }
 
+  /**
+   * `isanmaterial()` — whether the property is a material.
+   *
+   * @param expr Expression that owns the evaluation context.
+   * @returns `true` when the property is a `Material`.
+   */
   private isanmaterial(expr: LogicalExpression,): boolean {
     const [property,] = this.properties(expr,);
     return property instanceof Material;
   }
 
-  /** `ismaterial(id)` — é um `Material` e casa com o material de `id`. */
+  /** `ismaterial(id)` — is a `Material` and matches the material of `id`. */
   private ismaterial(expr: LogicalExpression,): boolean {
     const [property,] = this.properties(expr,);
     if (!(property instanceof Material)) return false;
@@ -565,7 +734,7 @@ export class LogicalFunction {
     return project.material(String(this.arguments[0],),) === property;
   }
 
-  /** `istaskofproject(id)` — a tarefa pertence ao projeto com esse id. */
+  /** `istaskofproject(id)` — the task belongs to the project with that id. */
   private istaskofproject(expr: LogicalExpression,): boolean {
     const [property,] = this.properties(expr,);
     if (!(property instanceof Task)) return false;
@@ -574,19 +743,25 @@ export class LogicalFunction {
   }
 
   // --------------------------------------------------
-  // 2ª onda — Complemento Fase 11 §6.1–§6.3 (datas/alocações/material)
+  // 2nd wave — phase 11 complement §6.1–§6.3 (dates/allocations/material)
   //
-  // Semânticas documentadas (extensões SyntaxMesh, não existem no Ruby):
-  //  - Intervalos `[d1, d2]` são comparados INCLUSIVE (mesma divergência
-  //    conhecida de `perday` em known-divergences.json).
-  //  - Funções sem argumento de cenário usam o cenário da Query
-  //    (`q.scenarioIdx ?? 0`); com argumento `scn`, valida por nome.
-  //  - Sem datas agendadas (`start`/`end` ausentes): a alocação em si conta
-  //    como presença no intervalo — evita falsos negativos antes do
-  //    agendamento (G1.4 popula as datas nos testes de integração).
+  // Documented semantics (SyntaxMesh extensions, absent from Ruby):
+  //  - Intervals `[d1, d2]` are compared INCLUSIVE (the same known divergence
+  //    as `perday` in known-divergences.json).
+  //  - Functions without a scenario argument use the scenario of the Query
+  //    (`q.scenarioIdx ?? 0`); with a `scn` argument it is validated by name.
+  //  - Without scheduled dates (`start`/`end` missing) the allocation itself
+  //    counts as presence in the interval — this avoids false negatives before
+  //    scheduling (G1.4 populates the dates in the integration tests).
   // --------------------------------------------------
 
-  /** Aridade defensiva: o parser chama `setArguments` sem validar (10.14). */
+  /**
+   * Defensive arity check: the parser calls `setArguments` without validating
+   * (10.14).
+   *
+   * @param n Expected number of arguments.
+   * @param expr Expression used to report the error.
+   */
   private arityCheck(n: number, expr: LogicalExpression,): void {
     if (this.arguments.length !== n) {
       expr.error(
@@ -597,9 +772,13 @@ export class LogicalFunction {
   }
 
   /**
-   * G1.2: argumento-data. O parser (`!date` em logic.ts:145) já entrega
-   * `TjTime` alinhado à granularidade; strings `"YYYY-MM-DD"` são aceitas
-   * por conveniência de expressões construídas programaticamente.
+   * G1.2: date argument. The parser (`!date` in logic.ts:145) already delivers
+   * a `TjTime` aligned to the granularity; `"YYYY-MM-DD"` strings are accepted
+   * for convenience of programmatically built expressions.
+   *
+   * @param expr Expression used to report the error.
+   * @param raw Raw argument value.
+   * @returns The argument as a `TjTime`.
    */
   private dateArg(expr: LogicalExpression, raw: unknown,): TjTime {
     if (raw instanceof TjTime) return raw;
@@ -609,9 +788,9 @@ export class LogicalFunction {
     } catch {
       t = null;
     }
-    // `fromString` não lança para palavras qualquer (ex.: "nao-eh-data"):
-    // produz TjTime com segundos NaN. Validamos explicitamente. (2026-13-99
-    // lança dentro de fromParts → pego pelo catch acima.)
+    // `fromString` does not throw for arbitrary words (e.g. "not-a-date"): it
+    // yields a TjTime with NaN seconds, so the result is validated explicitly.
+    // (2026-13-99 throws inside fromParts → caught above.)
     if (t === null || !Number.isFinite(t.toSeconds(),)) {
       return expr.error(
         `Invalid date '${String(raw,)}' used for function ${this.name}()`,
@@ -621,9 +800,14 @@ export class LogicalFunction {
   }
 
   /**
-   * Índice de slot para uma data. `Project#dateToIdx` clampa aos limites do
-   * plano (fiel ao Ruby — `forceIntoProject = true`): data anterior a
-   * `start` → slot 0; posterior a `end` → último slot. Nunca lança.
+   * Slot index of a date. `Project#dateToIdx` clamps to the plan bounds
+   * (faithful to Ruby — `forceIntoProject = true`): a date before `start` →
+   * slot 0; after `end` → the last slot. Never throws.
+   *
+   * @param expr Expression used to report errors.
+   * @param project Project that owns the schedule.
+   * @param raw Date argument.
+   * @returns The slot index of the date.
    */
   private slotIdxFor(
     expr: LogicalExpression,
@@ -633,17 +817,26 @@ export class LogicalFunction {
     return project.dateToIdx(this.dateArg(expr, raw,),);
   }
 
-  /** Cenário da Query (`?? 0`) para funções que não recebem `scn`. */
+  /**
+   * Scenario of the Query (`?? 0`) for functions that take no `scn` argument.
+   *
+   * @param expr Expression that owns the evaluation context.
+   * @returns The scenario index of the query, defaulting to 0.
+   */
   private scenarioFromQuery(expr: LogicalExpression,): number {
     const q = this.query(expr,);
     return q.scenarioIdx === undefined ? 0 : q.scenarioIdx;
   }
 
   /**
-   * Review (a): `getAllocatedTime` é `granularity * slots / (dwh * 3600)` com
-   * `slots` inteiro, então zero é **exato** por construção — sem ruído de
-   * ponto flutuante possível no estado atual. O limiar de meio slot protege
-   * contra mudanças futuras (frações de slot) e torna a intenção legível.
+   * Review (a): `getAllocatedTime` is `granularity * slots / (dwh * 3600)`
+   * with an integer `slots`, so zero is **exact** by construction — no
+   * floating-point noise is possible. The half-slot threshold guards against
+   * future fractional slots and makes the intent readable.
+   *
+   * @param project Project that owns the working-hours configuration.
+   * @param seconds Allocated time, in seconds.
+   * @returns `true` when more than half a slot is allocated.
    */
   private hasAllocatedTime(
     project: Project,
@@ -656,9 +849,14 @@ export class LogicalFunction {
   }
 
   /**
-   * Review (c): alvo das funções por id. Extensão sem equivalente Ruby, onde
-   * `LogicalFunction.rb` é estrito: id que não resolve em nenhuma PropertySet
-   * é erro do usuário (typos não podem silenciar para a propriedade atual).
+   * Review (c): target of the functions that take an id. Extension without a
+   * Ruby equivalent — `LogicalFunction.rb` is strict there: an id that does not
+   * resolve in any PropertySet is a user error (typos must not silently fall
+   * back to the current property).
+   *
+   * @param expr Expression used to report the error.
+   * @param project Project searched for the id.
+   * @returns The entity with that id.
    */
   private targetForId(
     expr: LogicalExpression,
@@ -674,7 +872,13 @@ export class LogicalFunction {
     return target;
   }
 
-  /** Resolve entidade por id em qualquer PropertySet do projeto. */
+  /**
+   * Resolves an entity by id in any PropertySet of the project.
+   *
+   * @param project Project searched for the id.
+   * @param id Identifier to resolve.
+   * @returns The entity, or `null` when the id is unknown.
+   */
   private resolveById(
     project: Project,
     id: string,
@@ -684,10 +888,15 @@ export class LogicalFunction {
   }
 
   /**
-   * `startsafter/startsbefore/endsafter/endsbefore(id, d)` — datas `start`/
-   * `end` (atributos de cenário populados pelo scheduler, Fase 7) da
-   * entidade `id` (ou da propriedade atual se o id não resolver) versus `d`.
-   * Comparação estrita: `>` para *after, `<` para *before.
+   * `startsafter/startsbefore/endsafter/endsbefore(id, d)` — the `start`/`end`
+   * dates (scenario attributes populated by the scheduler, phase 7) of the
+   * entity `id` (or of the current property when the id does not resolve)
+   * against `d`. Strict comparison: `>` for *after, `<` for *before.
+   *
+   * @param expr Expression that owns the evaluation context.
+   * @param attr Scenario attribute to read.
+   * @param cmp Direction of the strict comparison.
+   * @returns The result of the comparison.
    */
   private dateBound(
     expr: LogicalExpression,
@@ -700,8 +909,8 @@ export class LogicalFunction {
     const project = property.project as Project;
     const target = this.targetForId(expr, project,);
     const scIdx = this.scenarioFromQuery(expr,);
-    // Valida a data ANTES do early-return: argumento inválido é erro do
-    // usuário, não `false` silencioso (G1.2).
+    // The date is validated BEFORE the early return: an invalid argument is a
+    // user error, not a silent `false` (G1.2).
     const d = this.dateArg(expr, this.arguments[1],);
     const t = target.getForScenario(attr, scIdx,) as TjTime | null;
     if (!t) return false;
@@ -709,7 +918,14 @@ export class LogicalFunction {
     return cmp === "gt" ? c > 0 : c < 0;
   }
 
-  /** Tarefa tem `material` alocado no cenário (lista MaterialAllocation). */
+  /**
+   * `MaterialAllocation` list of the task for the given material and scenario.
+   *
+   * @param task Task whose allocations are read.
+   * @param material Material to filter by.
+   * @param scIdx Scenario index.
+   * @returns The allocations of that material, possibly empty.
+   */
   private materialAllocations(
     task: Task,
     material: Material,
@@ -722,7 +938,16 @@ export class LogicalFunction {
     return allocs.filter((a,) => a.material === material);
   }
 
-  /** Uso de material no intervalo: distribuição anexada > 0 ou datas overlap. */
+  /**
+   * Material usage inside the interval: attached distribution > 0, or the
+   * task dates overlap it.
+   *
+   * @param task Task that owns the allocations.
+   * @param mine Allocations of the material in the task.
+   * @param scIdx Scenario index.
+   * @param iv Interval being tested.
+   * @returns `true` when the material is used inside `iv`.
+   */
   private materialUsedIn(
     task: Task,
     mine: MaterialAllocation[],
@@ -732,15 +957,21 @@ export class LogicalFunction {
     if (mine.some((a,) => a.quantityIn(iv,) > 0)) return true;
     const tStart = task.getForScenario("start", scIdx,) as TjTime | null;
     const tEnd = task.getForScenario("end", scIdx,) as TjTime | null;
-    // Review (b): só a ausência **completa** de agenda faz a alocação contar
-    // por si; agenda parcial não pode superavaliar uso em qualquer intervalo.
+    // Review (b): only the **complete** absence of a schedule lets the
+    // allocation count by itself; a partial schedule must not overestimate
+    // usage in any interval.
     if (!tStart && !tEnd) return true;
     return iv.overlaps(this.taskInterval(tStart, tEnd,),);
   }
 
   /**
-   * Intervalo das datas de cenário de uma tarefa com agenda parcial: uma
-   * das duas ausentes vira ponto no limite conhecido (degenerate interval).
+   * Interval of the scenario dates of a task with a partial schedule: when one
+   * of the two is missing it becomes a point on the known bound (degenerate
+   * interval).
+   *
+   * @param tStart Scheduled start, when known.
+   * @param tEnd Scheduled end, when known.
+   * @returns The interval spanning the known dates.
    */
   private taskInterval(
     tStart: TjTime | null,
@@ -750,9 +981,12 @@ export class LogicalFunction {
   }
 
   /**
-   * `isallocated(id, d1, d2)` — a tarefa (propriedade) tem tempo alocado do
-   * recurso `id` no intervalo de datas, via `TaskScenario#getAllocatedTime`
-   * (port G1.1) convertido por `Project#dateToIdx`.
+   * `isallocated(id, d1, d2)` — the task (property) has time allocated from the
+   * resource `id` in the date interval, via `TaskScenario#getAllocatedTime`
+   * (port G1.1) converted by `Project#dateToIdx`.
+   *
+   * @param expr Expression that owns the evaluation context.
+   * @returns `true` when the resource has allocated time on the task.
    */
   private isallocated(expr: LogicalExpression,): boolean {
     this.arityCheck(3, expr,);
@@ -771,9 +1005,12 @@ export class LogicalFunction {
   }
 
   /**
-   * `isallocatedtoproject(prj, scn, d1, d2)` — a propriedade (tarefa ou
-   * recurso) tem alocação agregada > 0 no projeto `prj` e cenário `scn`.
-   * SyntaxMesh é single-project: `prj` precisa casar `project.id`.
+   * `isallocatedtoproject(prj, scn, d1, d2)` — the property (task or resource)
+   * has aggregate allocation > 0 in the project `prj` and scenario `scn`.
+   * SyntaxMesh is single-project: `prj` must match `project.id`.
+   *
+   * @param expr Expression that owns the evaluation context.
+   * @returns `true` when the property has allocated time in the interval.
    */
   private isallocatedtoproject(expr: LogicalExpression,): boolean {
     this.arityCheck(4, expr,);
@@ -803,10 +1040,14 @@ export class LogicalFunction {
   }
 
   /**
-   * `hasassignment(id, d1, d2)` — recurso **ou material** `id` está
-   * designado/alocado à tarefa (propriedade) e há booking/uso no intervalo
-   * (ou datas da tarefa o cruzam; sem agenda, a designação basta).
-   * Detecção de tipo pelo id: `project.resource` → `project.material`.
+   * `hasassignment(id, d1, d2)` — the resource **or material** `id` is
+   * assigned/allocated to the task (property) and there is a booking/usage
+   * inside the interval (or the task dates cross it; without a schedule the
+   * assignment alone is enough). The type is detected from the id:
+   * `project.resource` first, then `project.material`.
+   *
+   * @param expr Expression that owns the evaluation context.
+   * @returns `true` when the entity is assigned and used in the interval.
    */
   private hasassignment(expr: LogicalExpression,): boolean {
     this.arityCheck(3, expr,);
@@ -815,8 +1056,8 @@ export class LogicalFunction {
     const project = property.project as Project;
     const id = String(this.arguments[0],);
     const scIdx = this.scenarioFromQuery(expr,);
-    // Review (d): datas convertidas uma única vez — o TimeInterval e os
-    // índices de slot compartilham a mesma conversão (G1.2/f).
+    // Review (d): the dates are converted only once — the TimeInterval and the
+    // slot indices share the same conversion (G1.2/f).
     const d1 = this.dateArg(expr, this.arguments[1],);
     const d2 = this.dateArg(expr, this.arguments[2],);
     const iv = new TimeInterval(d1, d2,);
@@ -845,13 +1086,19 @@ export class LogicalFunction {
       if (mine.length === 0) return false;
       return this.materialUsedIn(property, mine, scIdx, iv,);
     }
-    return false; // id não é recurso nem material
+    return false; // the id is neither a resource nor a material
   }
 
   /**
-   * Overlap das datas agendadas da tarefa com `iv`. Review (b): apenas a
-   * ausência **completa** de agenda (nem `start` nem `end`) faz a designação
-   * contar por si — agenda parcial não superavalia presença.
+   * Overlap between the scheduled dates of the task and `iv`. Review (b): only
+   * the **complete** absence of a schedule (neither `start` nor `end`) lets the
+   * assignment count by itself — a partial schedule must not overestimate
+   * presence.
+   *
+   * @param task Task whose dates are compared.
+   * @param scIdx Scenario index.
+   * @param iv Interval being tested.
+   * @returns `true` when the task overlaps `iv`, or has no dates at all.
    */
   private usedNoAgenda(
     task: Task,
@@ -865,9 +1112,13 @@ export class LogicalFunction {
   }
 
   /**
-   * `isusedat(id, scn)` — material `id` é usado na propriedade atual
-   * (tarefa ou recurso) no cenário `scn`: lista `materialallocations` da
-   * tarefa (parser, Fase 8.1) ou `CostEvent` `"material_usage"` agendado.
+   * `isusedat(id, scn)` — the material `id` is used by the current property
+   * (task or resource) in the scenario `scn`: the `materialallocations` list of
+   * the task (parser, phase 8.1) or a scheduled `CostEvent` of type
+   * `"material_usage"`.
+   *
+   * @param expr Expression that owns the evaluation context.
+   * @returns `true` when the material is used by the property.
    */
   private isusedat(expr: LogicalExpression,): boolean {
     this.arityCheck(2, expr,);
@@ -896,9 +1147,12 @@ export class LogicalFunction {
   }
 
   /**
-   * `isused(id, d1, d2)` — material `id` é consumido pela propriedade atual
-   * (tarefa) ou — quando a propriedade é o próprio material — por qualquer
-   * tarefa do projeto, com uso dentro de `[d1, d2]`.
+   * `isused(id, d1, d2)` — the material `id` is consumed by the current
+   * property (a task) or — when the property is the material itself — by any
+   * task of the project, with usage inside `[d1, d2]`.
+   *
+   * @param expr Expression that owns the evaluation context.
+   * @returns `true` when the material is used inside the interval.
    */
   private isused(expr: LogicalExpression,): boolean {
     this.arityCheck(3, expr,);
@@ -933,9 +1187,12 @@ export class LogicalFunction {
   }
 
   /**
-   * `isusedatproject(prj, scn, d1, d2)` — material usado em qualquer tarefa
-   * do projeto `prj` no cenário `scn` dentro de `[d1, d2]`. Single-project
-   * hoje: `prj` precisa casar `project.id` (multi-projeto é Fase 21).
+   * `isusedatproject(prj, scn, d1, d2)` — the material is used by any task of
+   * the project `prj` in the scenario `scn` inside `[d1, d2]`. Single-project
+   * today: `prj` must match `project.id` (multi-project lands in phase 21).
+   *
+   * @param expr Expression that owns the evaluation context.
+   * @returns `true` when the material is used inside the interval.
    */
   private isusedatproject(expr: LogicalExpression,): boolean {
     this.arityCheck(4, expr,);

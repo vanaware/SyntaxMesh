@@ -1,45 +1,66 @@
 /**
- * TsReceiverApp — app `tj3ts_receiver`: aceita as folhas devolvidas por email.
+ * TsReceiverApp — the `tj3ts_receiver` app: accepts the sheets returned by
+ * email.
  *
- * Port de `docs/taskjuggler/lib/taskjuggler/apps/Tj3TsReceiver.rb`. O Ruby lia a
- * mensagem do STDIN; aqui ela chega em {@link SheetAppContext.rawEmail} (o
- * wrapper da F24 lê arquivo/stdin) e o resto do fluxo é o `SheetReceiver`
- * (18.7) — `cutOut` + `processEmail`.
+ * Port of `docs/taskjuggler/lib/taskjuggler/apps/Tj3TsReceiver.rb`. Ruby read
+ * the message from STDIN; here it arrives in {@link SheetAppContext.rawEmail}
+ * (the Phase 24 wrapper reads file/stdin) and the rest of the flow is
+ * `SheetReceiver` (18.7) — `cutOut` + `processEmail`.
  *
- * `endDate` é aceito por simetria com os demais apps, mas **não** é usado: o
- * Ruby não expõe `-e` aqui e o período vem do cabeçalho da folha.
+ * `endDate` is accepted for symmetry with the other apps but **is not used**:
+ * Ruby does not expose `-e` here and the period comes from the sheet header.
  *
  * @see docs/taskjuggler/lib/taskjuggler/apps/Tj3TsReceiver.rb
  * @see docs/syntaxmesh/fases/fase-18-time-status-sheets-tarefas.md (18.18.4)
  */
 
 import { TimeSheetReceiver, } from "../time-sheet-receiver.ts";
+import type { EmailMessage, } from "../email-message.ts";
 import {
   SheetAppBase,
   type SheetAppContext,
   type SheetAppOptions,
 } from "./app-base.ts";
 
+/**
+ * App that ingests time sheets returned by resources.
+ */
 export class TsReceiverApp extends SheetAppBase {
+  /** Receiver that parses and applies the incoming time sheets. */
   readonly handler: TimeSheetReceiver;
 
+  /**
+   * Creates the app.
+   *
+   * @param options Typed options produced by the CLI layer.
+   */
   constructor(options: SheetAppOptions = {},) {
     super("tj3ts_receiver", 1, options,);
     this.handler = new TimeSheetReceiver(this.appName,);
   }
 
-  /** Emails de resposta enfileirados (aceite, recusa, erro — ADR 036). */
-  get messages() {
+  /**
+   * Reply emails queued during the run (acceptance, rejection, error — ADR 036).
+   *
+   * @returns The emails produced by the receiver, in send order.
+   */
+  get messages(): EmailMessage[] {
     return this.handler.sentMessages;
   }
 
+  /**
+   * Parses the received time sheet email and applies it to the project.
+   *
+   * @param context Project, file store and raw RFC 822 email.
+   */
   protected async appMain(context: SheetAppContext,): Promise<void> {
     this.prepare(this.handler, "timesheets", "receiver",);
     this.attach(this.handler, context,);
 
     const rawEmail = context.rawEmail ?? null;
     if (rawEmail === null || rawEmail === "") {
-      // O Ruby lia STDIN e falhava no parse; sem mensagem, falhamos antes.
+      // Ruby read STDIN and failed during parsing; without a message we fail
+      // earlier.
       this.handler.error("No email text provided on the input",);
     }
 

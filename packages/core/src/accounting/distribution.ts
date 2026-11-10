@@ -1,27 +1,28 @@
 /**
- * Distribuição temporal unificada de custos (#6a) e resolução de
- * `timebasis` (#6) — Fase 10 Complemento, Bloco C2.
+ * Unified temporal distribution of costs (#6a) and `timebasis` resolution
+ * (#6) — phase 10 complement, block C2.
  *
- * Este módulo é a fonte única da regra transversal que conecta `timebasis`
- * aos cálculos de `charge` e `material`: define se a distribuição temporal
- * conta dias corridos (`duration`) ou dias úteis (`length`).
+ * This module is the single source of the cross-cutting rule that connects
+ * `timebasis` to the `charge` and `material` calculations: it defines whether
+ * the temporal distribution counts calendar days (`duration`) or working days
+ * (`length`).
  *
- * `timebasis` **não** altera agendamento — é exclusivo para cálculo de
- * custo (complemento2 §1.2 princípio 1).
+ * `timebasis` does **not** change scheduling — it is exclusive to cost
+ * calculation (complement2 §1.2 principle 1).
  *
  * @see docs/syntaxmesh/fases/fase-10-complemento2.md (§2–§5)
- * @see docs/syntaxmesh/fases/fase-10-complemento-tarefas.md (Bloco C2)
+ * @see docs/syntaxmesh/fases/fase-10-complemento-tarefas.md (block C2)
  */
 import { type Task, } from "../model/task.ts";
 import { type ProjectLike, } from "../model/project-like.ts";
 
-/** Valor canônico de timebasis (complemento2 §2.2). */
+/** Canonical timebasis value (complement2 §2.2). */
 export type Timebasis = "duration" | "length";
 
 /**
- * Normaliza um valor de timebasis (pode ser alias) para o canônico.
- * `calendar` → `duration`; `working` → `length`. Valores desconhecidos
- * ou nulos retornam null (o parser reporta `illegal_timebasis`, C3.4.3).
+ * Normalises a timebasis value (which may be an alias) to the canonical one.
+ * `calendar` → `duration`; `working` → `length`. Unknown or null values return
+ * null (the parser reports `illegal_timebasis`, C3.4.3).
  */
 export function normalizeTimebasis(
   v: string | null | undefined,
@@ -39,14 +40,14 @@ export function normalizeTimebasis(
 }
 
 /**
- * Regra de resolução do `timebasis` efetivo (complemento2 §2.4), aplicada
- * por tarefa, em ordem:
+ * Resolution rule for the effective `timebasis` (complement2 §2.4), applied per
+ * task, in order:
  *
- * 1. `length` da tarefa > 0 → `length` (implícito, ganha de tudo).
- * 2. `duration` da tarefa > 0 → `duration` (implícito).
- * 3. `timebasis` explícito da tarefa → valor explícito (normalizado).
- * 4. `timebasis` do projeto → valor do projeto.
- * 5. Nenhum dos acima → default `duration` (compatibilidade TJ).
+ * 1. task `length` > 0 → `length` (implicit, beats everything).
+ * 2. task `duration` > 0 → `duration` (implicit).
+ * 3. explicit task `timebasis` → the explicit value (normalised).
+ * 4. project `timebasis` → the project value.
+ * 5. none of the above → default `duration` (TJ compatibility).
  */
 export function resolveTimebasis(
   task: Task,
@@ -68,35 +69,35 @@ export function resolveTimebasis(
 }
 
 /**
- * Contexto para os cálculos de distribuição (§3.3–§3.4). As fontes de
- * `isWorkingCalendarDay` e `leaves` são o shift da tarefa, se houver,
- * senão o projeto (complemento2 §2.7) — leaves de RECURSO nunca entram
- * (propriedade 5: charge/material são task-centric).
+ * Context for the distribution calculations (§3.3–§3.4). The sources of
+ * `isWorkingCalendarDay` and `leaves` are the task shift when present, or else
+ * the project (complement2 §2.7) — RESOURCE leaves never enter (property 5:
+ * charge/material are task-centric).
  */
 export interface DistributionContext {
-  /** timebasis resolvido da tarefa (resolvedTimebasis). */
+  /** Resolved timebasis of the task (resolvedTimebasis). */
   timebasis: Timebasis;
-  /** Dia útil do calendário (workinghours do shift/projeto, sem leaves). */
+  /** Calendar working day (shift/project workinghours, no leaves). */
   isWorkingCalendarDay: (day: Date,) => boolean;
-  /** Intervalos de leave [start, end] fechados (shift/projeto). */
+  /** Closed leave intervals [start, end] (shift/project). */
   leaves: Array<{ start: Date; end: Date }>;
-  /** project.weekStartsMonday — define o início da semana (perweek). */
+  /** project.weekStartsMonday — defines the start of the week (perweek). */
   weekStartsMonday: boolean;
-  /** Horas úteis por dia (project.dailyworkinghours) — para perhour. */
+  /** Working hours per day (project.dailyworkinghours) — for perhour. */
   workingHoursPerDay: number;
 }
 
-/** Modificadores dependentes de período (§3.2). */
+/** Period-dependent modifiers (§3.2). */
 export type PeriodModifier = "perhour" | "perday" | "perweek" | "permonth";
 
 const MS_DAY = 86400000;
 
-/** Meia-noite UTC de um Date (aritmética de dias fechada em UTC). */
+/** UTC midnight of a Date (day arithmetic closed in UTC). */
 function dayStart(d: Date,): number {
   return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(),);
 }
 
-/** Dias fechados entre start e end (inclusive), em passos de 1 dia UTC. */
+/** Closed days between start and end (inclusive), in 1-day UTC steps. */
 function* eachDay(start: Date, end: Date,): Generator<number> {
   const s = dayStart(start,);
   const e = dayStart(end,);
@@ -107,7 +108,7 @@ function dayFromDate(ms: number,): Date {
   return new Date(ms,);
 }
 
-/** Dia coberto por algum leave (intervalos fechados). */
+/** Day covered by some leave (closed intervals). */
 export function inLeaves(
   ms: number,
   leaves: Array<{ start: Date; end: Date }>,
@@ -119,9 +120,9 @@ export function inLeaves(
 }
 
 /**
- * Dias elegíveis cobertos pelo intervalo (§5, definições formais):
- * `duration`: qualquer dia; `length`: dia útil do calendário E não
- * coberto por leave.
+ * Eligible days covered by the interval (§5, formal definitions):
+ * `duration`: any day; `length`: a calendar working day AND not covered by a
+ * leave.
  */
 export function countEligibleDays(
   start: Date,
@@ -142,9 +143,9 @@ export function countEligibleDays(
 }
 
 /**
- * Horas úteis cobertas (§3.4.2): dias úteis do calendário menos leaves,
- * × horas úteis por dia. `perhour` é sempre horas úteis, independente de
- * timebasis (propriedade 8).
+ * Covered working hours (§3.4.2): calendar working days minus leaves, times the
+ * working hours per day. `perhour` is always working hours, regardless of
+ * timebasis (property 8).
  */
 export function countWorkingHours(
   start: Date,
@@ -161,7 +162,7 @@ export function countWorkingHours(
   return n;
 }
 
-/** Início da semana (UTC ms) que contém `ms`, segundo weekStartsMonday. */
+/** Week start (UTC ms) containing `ms`, according to weekStartsMonday. */
 function weekStartMs(ms: number, weekStartsMonday: boolean,): number {
   const d = new Date(ms,);
   const wd = d.getUTCDay(); // 0=dom
@@ -169,24 +170,24 @@ function weekStartMs(ms: number, weekStartsMonday: boolean,): number {
   return ms - offset * MS_DAY;
 }
 
-/** Primeiro dia do mês de `ms` (UTC). */
+/** First day of the month of `ms` (UTC). */
 function monthStartMs(ms: number,): number {
   const d = new Date(ms,);
   return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1,);
 }
 
-/** Último dia do mês de `ms` (UTC, ms do dia). */
+/** Last day of the month of `ms` (UTC, ms of the day). */
 function monthEndMs(ms: number,): number {
   const d = new Date(monthStartMs(ms,),);
   return Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0,);
 }
 
 /**
- * Fórmula unificada (§3.4/§3.6): para cada período P (semana ou mês) que
- * intersecta o intervalo, `amount × (numerador(P) / denominador(P))`, com
- * denominador = dias corridos (`duration`) ou dias úteis do calendário sem
- * leaves (`length`); numerador = dias do período cobertos pela tarefa
- * (`duration`) ou dias elegíveis cobertos (`length`).
+ * Unified formula (§3.4/§3.6): for each period P (week or month) that
+ * intersects the interval, `amount × (numerator(P) / denominator(P))`, with
+ * denominator = calendar days (`duration`) or calendar working days without
+ * leaves (`length`); numerator = days of the period covered by the task
+ * (`duration`) or eligible days covered (`length`).
  */
 function perPeriodFormula(
   amount: number,
@@ -203,7 +204,7 @@ function perPeriodFormula(
     if (seen.has(p,)) continue;
     seen.add(p,);
     const pEnd = periodEnd(p,);
-    // Numerador e denominador do período P.
+    // Numerator and denominator of period P.
     let num = 0;
     let den = 0;
     for (let t = p; t <= pEnd; t += MS_DAY) {
@@ -225,9 +226,9 @@ function perPeriodFormula(
 }
 
 /**
- * Valor total de um modificador de período sobre o intervalo da tarefa.
- * `perhour` não depende de timebasis; `perday` é contagem direta; `perweek`
- * e `permonth` usam a fórmula proporcional por período (§3.4.3/§3.4.4).
+ * Total value of a period modifier over the task interval. `perhour` does not
+ * depend on timebasis; `perday` is a direct count; `perweek` and `permonth` use
+ * the proportional formula per period (§3.4.3/§3.4.4).
  */
 export function perPeriod(
   modifier: PeriodModifier,
@@ -269,9 +270,9 @@ export function perPeriod(
 }
 
 /**
- * `distributed` (§3.4.5): divide o total igualmente pelos dias elegíveis
- * cobertos. O total distribuído é sempre `total` (propriedade 9); o último
- * dia absorve o resto de arredondamento para fechar exatamente.
+ * `distributed` (§3.4.5): splits the total evenly across the covered eligible
+ * days. The distributed total is always `total` (property 9); the last day
+ * absorbs the rounding remainder so the sum closes exactly.
  */
 export function distributeDays(
   total: number,
@@ -289,19 +290,19 @@ export function distributeDays(
   if (days.length === 0) return [];
   const per = total / days.length;
   const out = days.map(() => per);
-  // Último dia absorve o resto (decisão §10.1).
+  // The last day absorbs the remainder (decision §10.1).
   const sum = out.reduce((a, b,) => a + b, 0,);
   out[out.length - 1]! += total - sum;
   return out;
 }
 
 /**
- * `distribution { frações }` (§3.4.6): divide os dias elegíveis cobertos em
- * N blocos consecutivos (N = frações) e aplica `fração × total` por bloco,
- * igualmente pelos dias do bloco. Dias não divisíveis: o RESTO vai para o
- * último bloco (decisão §10.1 — absorvido pela última parte).
- * A soma dos valores é sempre `total` (propriedade 9; soma das frações = 1.0
- * validada na Fase 8.1).
+ * `distribution { fractions }` (§3.4.6): splits the covered eligible days into
+ * N consecutive blocks (N = fractions) and applies `fraction × total` per
+ * block, evenly across the days of the block. Non-divisible days: the
+ * REMAINDER goes to the last block (decision §10.1 — absorbed by the last
+ * part). The sum of the values is always `total` (property 9; sum of the
+ * fractions = 1.0 validated in phase 8.1).
  */
 export function distributeFractions(
   total: number,
@@ -320,7 +321,7 @@ export function distributeFractions(
   const n = fractions.length;
   if (eligible.length === 0 || n === 0) return [];
   const base = Math.floor(eligible.length / n,);
-  // Blocos: n-1 de tamanho `base`; último absorve o resto.
+  // Blocks: n-1 of size `base`; the last one absorbs the remainder.
   const out: number[] = [];
   for (let b = 0; b < n; b++) {
     const size = b === n - 1 ? eligible.length - base * (n - 1) : base;
@@ -328,7 +329,7 @@ export function distributeFractions(
     const perDay = size > 0 ? blockTotal / size : 0;
     for (let i = 0; i < size; i++) out.push(perDay,);
   }
-  // Fecha arredondamento: último dia absorve a diferença.
+  // Closes the rounding: the last day absorbs the difference.
   const sum = out.reduce((a, b,) => a + b, 0,);
   out[out.length - 1]! += total - sum;
   return out;

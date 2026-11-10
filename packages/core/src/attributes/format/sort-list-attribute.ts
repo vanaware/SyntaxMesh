@@ -1,5 +1,5 @@
 /**
- * Atributo de lista de ordenação.
+ * Sort list attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:SortListAttribute
  */
@@ -10,18 +10,18 @@ import { type AttributeDefinition, } from "../attribute-definition.ts";
 import { ListAttributeBase, } from "../list-attribute-base.ts";
 
 /**
- * Atributo de lista de ordenação.
+ * Sort list attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:SortListAttribute
  */
 export class SortListAttribute extends ListAttributeBase<unknown> {
   /**
-   * ID do tipo de atributo para SortListAttribute.
+   * Attribute type ID for SortListAttribute.
    */
   static readonly tjpId = "sorting";
 
   /**
-   * Converte o valor para string.
+   * Converts the value to a string.
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:SortListAttribute#to_s
    */

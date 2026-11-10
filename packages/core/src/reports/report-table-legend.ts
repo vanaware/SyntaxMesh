@@ -1,25 +1,27 @@
 /**
- * ReportTableLegend (Fase 14.10) — legenda independente de formato para o
- * ReportTable, listando símbolos gráficos usados na tabela.
+ * ReportTableLegend (phase 14.10) — format-independent legend for `ReportTable`,
+ * listing the graphical symbols used by the table.
  *
- * Porta fiel de `docs/taskjuggler/lib/taskjuggler/reports/ReportTableLegend.rb`.
- * Os símbolos fixos de Gantt (`showGanttItems`) são placeholders até a Fase
- * 14.22 (ChartPlotter/Painter); a estrutura HTML já é a definitiva.
+ * Faithful port of
+ * `docs/taskjuggler/lib/taskjuggler/reports/ReportTableLegend.rb`. The fixed
+ * Gantt symbols (`showGanttItems`) are placeholders until phase 14.22
+ * (ChartPlotter/Painter); the HTML structure is already final.
  *
  * @see docs/syntaxmesh/fases/fase-14-relatorios-tarefas.md (14.10)
  */
 import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 import { XMLElement, } from "../xml/xml-element.ts";
 
-/** Par [texto, cor] armazenado para itens de Gantt/calendário. */
-type LegendItem = [string, string,];
+/** `[text, color]` pair stored for Gantt/calendar items. */
+export type LegendItem = [string, string,];
 
-/** Símbolo fixo de Gantt; fornece sua representação HTML. */
-interface LegendSymbol {
+/** Fixed Gantt symbol; provides its HTML representation. */
+export interface LegendSymbol {
+  /** Renders the symbol as an HTML fragment reference. */
   to_html(): XMLElementLike;
 }
 
-/** Anexa cada nó (ou array de nós) pulando `null`. */
+/** Appends each node (or array of nodes), skipping `null`. */
 function appendNodes(
   parent: XMLElementLike,
   nodes: XMLElementLike | XMLElementLike[] | null,
@@ -32,26 +34,45 @@ function appendNodes(
   }
 }
 
+/**
+ * The symbol legend shown under a report table.
+ *
+ * Gantt items are the fixed symbols of the chart, calendar items are the
+ * `[text, color]` pairs collected while the table is built.
+ */
 export class ReportTableLegend {
+  /** Shows the three fixed Gantt symbols (container, task bar, milestone). */
   showGanttItems = false;
+  /** Gantt symbols collected by the report. */
   protected ganttItems: LegendItem[] = [];
+  /** Calendar symbols collected by the report. */
   protected calendarItems: LegendItem[] = [];
 
-  /** Adiciona um item de Gantt, sem duplicatas. */
+  /**
+   * Adds a Gantt item, ignoring duplicates.
+   *
+   * @param text Label shown next to the symbol.
+   * @param color CSS class of the colored box.
+   */
   addGanttItem(text: string, color: string,): void {
     if (!this.ganttItems.some(([t, c,],) => t === text && c === color)) {
       this.ganttItems.push([text, color,],);
     }
   }
 
-  /** Adiciona um item de calendário, sem duplicatas. */
+  /**
+   * Adds a calendar item, ignoring duplicates.
+   *
+   * @param text Label shown next to the symbol.
+   * @param color CSS class of the colored box.
+   */
   addCalendarItem(text: string, color: string,): void {
     if (!this.calendarItems.some(([t, c,],) => t === text && c === color)) {
       this.calendarItems.push([text, color,],);
     }
   }
 
-  /** Converte a descrição abstrata em elementos HTML; `null` se vazia. */
+  /** Renders the abstract description as HTML; `null` when it is empty. */
   to_html(): XMLElementLike | null {
     if (
       !this.showGanttItems && this.ganttItems.length === 0 &&
@@ -110,8 +131,10 @@ export class ReportTableLegend {
   }
 
   /**
-   * Headline só quando Gantt e calendário coexistem (mesmas cores, significados
-   * diferentes). Caso contrário, `null`.
+   * Headline emitted only when Gantt and calendar items coexist (same colors,
+   * different meanings). Otherwise `null`.
+   *
+   * @param text Headline text.
    */
   protected headlineToHTML(text: string,): XMLElementLike | null {
     if (this.calendarItems.length === 0 || this.ganttItems.length === 0) {
@@ -124,7 +147,7 @@ export class ReportTableLegend {
     return tr;
   }
 
-  /** Símbolo fixo de Gantt → células [espaçador, símbolo, rótulo]. */
+  /** Fixed Gantt symbol → cells [spacer, symbol, label]. */
   protected ganttItemToHTML(
     itemRef: LegendSymbol,
     name: string,
@@ -151,7 +174,7 @@ export class ReportTableLegend {
     return cells;
   }
 
-  /** Item colorido [texto, cor] → células [espaçador, símbolo, rótulo]. */
+  /** Colored item [text, color] → cells [spacer, symbol, label]. */
   protected itemToHTML(itemRef: LegendItem,): XMLElementLike[] {
     const cells: XMLElementLike[] = [];
     cells.push(new XMLElement("td", { class: "tj_legend_spacer", },),);
@@ -185,7 +208,7 @@ export class ReportTableLegend {
     return cells;
   }
 
-  /** Organiza itens em linhas de no máximo 3 colunas. */
+  /** Arranges items into rows of at most 3 columns. */
   protected itemsToHTML(items: LegendItem[],): XMLElementLike[] {
     const rows: XMLElementLike[] = [];
     let row: XMLElementLike | null = null;
@@ -218,7 +241,7 @@ export class ReportTableLegend {
   }
 }
 
-/** Símbolo placeholder (substituído pelo Painter na Fase 14.22). */
+/** Placeholder symbol (replaced by the Painter in phase 14.22). */
 function placeholderSymbol(cls: string,): LegendSymbol {
   return { to_html: () => new XMLElement("div", { class: cls, },), };
 }

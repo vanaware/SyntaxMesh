@@ -1,15 +1,16 @@
 /**
- * StatusSheetReport — gerador de templates de status sheet em sintaxe TJP.
+ * StatusSheetReport — generator of status sheet templates in TJP syntax.
  *
- * Port de `docs/taskjuggler/lib/taskjuggler/reports/StatusSheetReport.rb`.
+ * Port of `docs/taskjuggler/lib/taskjuggler/reports/StatusSheetReport.rb`.
  *
- * O relatório é o espelho do `TimeSheetReport`: em vez de coletar trabalho
- * planejado por recurso, ele coleta as **responsabilidades** de cada gerente
- * (tarefas de topo pelas quais o recurso é `responsible`) e as últimas entradas
- * de journal de cada uma — inclusive as que vieram de time sheets, via
- * `JournalEntry#timeSheetRecord` (Fase 18).
+ * The report mirrors `TimeSheetReport`: instead of collecting planned work per
+ * resource, it collects the **responsibilities** of every manager (the top-level
+ * tasks a resource is `responsible` for) and the latest journal entries of each
+ * one — including the entries that came from time sheets, through
+ * `JournalEntry#timeSheetRecord` (phase 18).
  *
- * ⚠️ Browser (ADR 027): nada é escrito em disco; o texto sai em `to_tjp()`.
+ * ⚠️ Browser (ADR 027): nothing is written to disk; the text leaves through
+ * `to_tjp()`.
  *
  * @see docs/taskjuggler/lib/taskjuggler/reports/StatusSheetReport.rb
  * @see docs/syntaxmesh/fases/fase-18-time-status-sheets.md (18.8/18.17)
@@ -31,18 +32,30 @@ import type { TimeSheetRecord, } from "../timesheet/time-sheet-record.ts";
 import type { TjTime, } from "../time/tj-time.ts";
 import { ReportBase, } from "./report-base.ts";
 
-/** Tarefas pelas quais um gerente responde (Ruby `ManagerResponsibilities`). */
+/** Tasks a manager is responsible for (Ruby `ManagerResponsibilities`). */
 export class ManagerResponsibilities {
+  /** Top-level task the manager answers for. */
   readonly task: Task;
+  /** Journal entries reported for that task and its subtasks. */
   readonly journalEntries: JournalEntry[];
 
+  /**
+   * Creates a responsibility.
+   *
+   * @param task Top-level task the manager answers for.
+   * @param journalEntries Journal entries of the task and its subtasks.
+   */
   constructor(task: Task, journalEntries: JournalEntry[],) {
     this.task = task;
-    // Ruby `journalEntries.dup` — a lista do journal não é mutada.
+    // Ruby `journalEntries.dup` — the journal list is not mutated.
     this.journalEntries = [...journalEntries,];
   }
 
-  /** Ordena as entradas pela ordem da `taskList` original (Ruby `sort!`). */
+  /**
+   * Sorts the entries by the order of the original `taskList` (Ruby `sort!`).
+   *
+   * @param taskList Task list defining the order.
+   */
   sort(taskList: PropertyList<Task>,): void {
     this.journalEntries.sort((e1, e2,) =>
       taskList.itemIndex(e1.property as Task,) -
@@ -51,16 +64,27 @@ export class ManagerResponsibilities {
   }
 }
 
-/** Um gerente e suas responsabilidades (Ruby `ManagerStatusRecord`). */
+/** A manager and its responsibilities (Ruby `ManagerStatusRecord`). */
 export class ManagerStatusRecord {
+  /** Manager the record belongs to. */
   readonly resource: Resource;
+  /** Top-level tasks the manager is responsible for. */
   readonly responsibilities: ManagerResponsibilities[] = [];
 
+  /**
+   * Creates a manager record.
+   *
+   * @param resource Manager the record belongs to.
+   */
   constructor(resource: Resource,) {
     this.resource = resource;
   }
 
-  /** Ordena responsabilidades e entradas (Ruby `sort!`). */
+  /**
+   * Sorts the responsibilities and their entries (Ruby `sort!`).
+   *
+   * @param taskList Task list defining the order.
+   */
   sort(taskList: PropertyList<Task>,): void {
     this.responsibilities.sort((r1, r2,) =>
       taskList.itemIndex(r1.task,) - taskList.itemIndex(r2.task,)
@@ -72,21 +96,27 @@ export class ManagerStatusRecord {
 }
 
 /**
- * Gerador de templates de status sheet (Ruby `StatusSheetReport`).
+ * Generator of status sheet templates (Ruby `StatusSheetReport`).
  */
 export class StatusSheetReport extends ReportBase {
   private managers: ManagerStatusRecord[] = [];
 
+  /**
+   * Creates a status sheet report.
+   *
+   * @param report Report definition being rendered.
+   */
   constructor(report: Report,) {
     super(report,);
   }
 
+  /** Collects the responsibilities and the status lines of every manager. */
   override generateIntermediateFormat(): void {
     super.generateIntermediateFormat();
     this.managers = [];
     const project = this.project;
 
-    // Recursos visíveis, na ordem pedida pelo relatório.
+    // Visible resources, in the order requested by the report.
     let resourceList = new PropertyList<Resource>(project.resources,);
     resourceList.setSorting(
       this.a("sortResources",) as Array<[string, boolean, number,]>,
@@ -99,7 +129,7 @@ export class StatusSheetReport extends ReportBase {
       null,
     );
 
-    // Modelo da Query usada para consultar todo mundo.
+    // Template of the Query used to inspect every property.
     const scenarioIdx = ((this.a("scenarios",) as number[]) ?? [0,])[0] ?? 0;
     const queryAttrs = {
       project,
@@ -120,7 +150,7 @@ export class StatusSheetReport extends ReportBase {
     resourceList.query = new Query(queryAttrs as never,);
     resourceList.sort();
 
-    // Tarefas visíveis, na ordem pedida pelo relatório.
+    // Visible tasks, in the order requested by the report.
     let taskList = new PropertyList<Task>(project.tasks,);
     taskList.setSorting(
       this.a("sortTasks",) as Array<[string, boolean, number,]>,
@@ -138,11 +168,11 @@ export class StatusSheetReport extends ReportBase {
     const end = this.a("end",) as TjTime;
 
     for (const resource of resourceList.toArray()) {
-      // Sheets de status só fazem sentido para recursos folha.
+      // Status sheets only make sense for leaf resources.
       if (!resource.leaf()) continue;
 
-      // Tarefas pelas quais o recurso é responsável e cujo pai ele **não** é
-      // responsável (as de topo da hierarquia dele).
+      // Tasks the resource is responsible for whose parent it is **not**
+      // responsible for (the top level of its hierarchy).
       const topLevelTasks: Task[] = [];
       for (const task of taskList.toArray()) {
         if (!this.responsibleOf(task, scenarioIdx,).includes(resource,)) {
@@ -162,7 +192,7 @@ export class StatusSheetReport extends ReportBase {
       this.managers.push(manager,);
 
       for (const task of topLevelTasks) {
-        // Entradas de journal correntes da tarefa e das sub-tarefas.
+        // Current journal entries of the task and its subtasks.
         const entries = project.journal.currentEntriesR(
           end,
           task,
@@ -175,12 +205,12 @@ export class StatusSheetReport extends ReportBase {
           new ManagerResponsibilities(task, entries,),
         );
       }
-      // Ordena as responsabilidades pela taskList original.
+      // Sorts the responsibilities by the original taskList.
       manager.sort(taskList,);
     }
   }
 
-  /** Templates em sintaxe TJP, um bloco `statussheet` por gerente. */
+  /** Templates in TJP syntax, one `statussheet` block per manager. */
   to_tjp(): string {
     const levels = this.project.get("alertLevels",) as AlertLevelDefinition[];
     const timeFormat = (this.a("timeFormat",) as string | null) ?? "%Y-%m-%d";
@@ -200,8 +230,8 @@ export class StatusSheetReport extends ReportBase {
         for (const responsibility of manager.responsibilities) {
           file += `  # Task: ${responsibility.task.name}\n`;
 
-          // Extensão 18.17.8: cada tarefa listada uma única vez (as entradas
-          // de journal podem repetir a mesma tarefa).
+          // Extension 18.17.8: each task is listed only once (the journal
+          // entries may repeat the same task).
           const tasksShown = new Set<Task>();
           for (const entry of responsibility.journalEntries) {
             const task = entry.property as Task;
@@ -246,7 +276,7 @@ export class StatusSheetReport extends ReportBase {
                 indentBlock(4, entry.details,) +
                 "    #   ->8-\n";
             }
-            // Materiais da tarefa entram no bloco, uma vez por tarefa.
+            // Materials of the task enter the block, once per task.
             if (!tasksShown.has(task,)) {
               tasksShown.add(task,);
               file += this.materialLines(task,);
@@ -261,18 +291,22 @@ export class StatusSheetReport extends ReportBase {
   }
 
   /**
-   * Linhas comentadas com as alocações de material da tarefa e os
-   * `effortdone`/`effortleft` do cenário de tracking (extensão 18.17.8).
+   * Commented lines with the material allocations of the task and the
+   * `effortdone`/`effortleft` of the tracking scenario (extension 18.17.8).
    *
-   * Mesmo formato do esqueleto do `TimeSheetReport`, então o que o gerente
-   * descomenta volta pelo parser do status sheet.
+   * Same format as the `TimeSheetReport` skeleton, so whatever the manager
+   * uncomments comes back through the status sheet parser.
+   *
+   * @param task Task whose materials are listed.
+   * @returns One commented `material` block per allocated material.
    */
   private materialLines(task: Task,): string {
     const scenarioIdx = ((this.a("scenarios",) as number[]) ?? [0,])[0] ?? 0;
     const allocations =
       (task.getForScenario("materialallocations", scenarioIdx,) ??
         []) as MaterialAllocation[];
-    // O realizado vive no cenário de tracking: é ele que a planilha mostra.
+    // The actual figures live in the tracking scenario: that is what the sheet
+    // shows.
     const trackIdx = (this.project.get("trackingScenarioIdx",) as
       | number
       | null) ?? scenarioIdx;
@@ -294,7 +328,7 @@ export class StatusSheetReport extends ReportBase {
     return out;
   }
 
-  /** `task['responsible', scenarioIdx]`, tolerando `null`. */
+  /** `task['responsible', scenarioIdx]`, tolerating `null`. */
   private responsibleOf(
     task: Task,
     scenarioIdx: number,
@@ -305,9 +339,9 @@ export class StatusSheetReport extends ReportBase {
 }
 
 /**
- * Indenta um bloco multi-linha com `' '.repeat(indent) + '#   '`,
- * reaplicando o prefixo após cada quebra (Ruby `indentBlock`, l.214-228).
- * Garante uma quebra final.
+ * Indents a multi-line block with `' '.repeat(indent) + '#   '`, reapplying the
+ * prefix after every line break (Ruby `indentBlock`, l.214-228). Guarantees a
+ * trailing line break.
  */
 export function indentBlock(indent: number, text: string,): string {
   const indentation = " ".repeat(indent,) + "#   ";
@@ -325,18 +359,18 @@ export function indentBlock(indent: number, text: string,): string {
   return out;
 }
 
-/** Comparação de `TjTime | null` (Ruby `==`). */
+/** Compares `TjTime | null` (Ruby `==`). */
 function sameTime(a: TjTime | null, b: TjTime | null,): boolean {
   if (a === null || b === null) return a === b;
   return a.equals(b,);
 }
 
-/** `Float#to_s` do Ruby: inteiros ganham `.0` (`20.0`, não `20`). */
+/** Ruby `Float#to_s`: integers gain `.0` (`20.0`, not `20`). */
 function rubyFloat(value: number,): string {
   return Number.isInteger(value,) ? `${value}.0` : String(value,);
 }
 
-// Registra o conteúdo de `statussheet` na fábrica (14.11).
+// Registers the `statussheet` content in the factory (14.11).
 registerContentFactory(
   "statussheet",
   (report: unknown,): StatusSheetReport =>

@@ -1,20 +1,22 @@
 /**
- * `output-policy.ts` — despacho das seções do envelope (Fase 24 — 24.5).
+ * `output-policy.ts` — dispatching of the envelope sections (phase 24 — 24.5).
  *
- * Única dona da decisão de **destino** (adendo §4): um relatório com
- * `stdout: true` é impresso no terminal com delimitador
- * `--- <name> [<format>] ---`; sem `stdout` vira arquivo `{name}.{ext}` no
- * `outputDir` ecoado. As demais seções (`check`, `listReports`, `version`,
- * `help`, `freeze`, `man`, `sheet`) também são despachadas aqui para que a
- * política viva num só lugar (plano §11 ponto 9).
+ * Sole owner of the **destination** decision (addendum §4): a report with
+ * `stdout: true` is printed in the terminal with the delimiter
+ * `--- <name> [<format>] ---`; without `stdout` it becomes the file
+ * `{name}.{ext}` in the echoed `outputDir`. The other sections (`check`,
+ * `listReports`, `version`, `help`, `freeze`, `man`, `sheet`) are dispatched here
+ * too, so the policy lives in a single place (plan §11 point 9).
  *
- * O core nunca decide destino, não sanitiza nome e não toca em disco (adendo
- * §3.5): tudo o que este módulo consome é dado do envelope. A E/S entra por
- * injeção (`OutputPolicyIo`), então não há disco, `Deno` nem `process` aqui.
+ * The core never decides the destination, never sanitises a name and never
+ * touches the disk (addendum §3.5): everything this module consumes is envelope
+ * data. I/O comes in by injection (`OutputPolicyIo`), so there is no disk, no
+ * `Deno` and no `process` here.
  *
- * Política de erro (adendo §4.4): `reports[].errors` não-vazio — ou `ok: false`
- * — **aborta** o despacho inteiro. Nada é impresso nem gravado parcialmente; o
- * `exitCode` do envelope já carrega o 1 e o consumidor só reporta.
+ * Error policy (addendum §4.4): a non-empty `reports[].errors` — or `ok: false` —
+ * **aborts** the whole dispatch. Nothing is printed or partially written; the
+ * `exitCode` of the envelope already carries the 1 and the consumer only
+ * reports it.
  *
  * @see docs/syntaxmesh/fases/fase-24-cli-adendo.md §4
  * @see docs/syntaxmesh/fases/fase-24-cli-tarefas.md (24.5)
@@ -27,73 +29,74 @@ import type {
 } from "@vanaware/syntaxmesh";
 import { imageRefs, } from "./images.ts";
 
-/** E/S da política — subconjunto injetável de `io.ts`. */
+/** I/O of the policy — injectable subset of `io.ts`. */
 export interface OutputPolicyIo {
-  /** Escreve uma linha em `stdout`. */
+  /** Writes a line to `stdout`. */
   print: (text: string,) => void;
-  /** Grava conteúdo UTF-8 (sobrescreve). */
+  /** Writes UTF-8 content (overwrites). */
   write: (path: string, content: string,) => Promise<void>;
-  /** Cria diretório recursivamente. */
+  /** Creates a directory recursively. */
   mkpath: (dir: string,) => Promise<void>;
-  /** Copia um arquivo (assets do HTML). */
+  /** Copies a file (HTML assets). */
   copy: (from: string, to: string,) => Promise<void>;
-  /** Lista nomes de um diretório (vazio quando é arquivo). */
+  /** Lists the names of a directory (empty when it is a file). */
   listDir: (path: string,) => Promise<string[]>;
-  /** `true` quando o caminho é diretório (arquivo/ausente ⇒ `false`). */
+  /** `true` when the path is a directory (file/missing ⇒ `false`). */
   isDir: (path: string,) => Promise<boolean>;
-  /** Existência de arquivo ou diretório. */
+  /** Existence of a file or directory. */
   exists: (path: string,) => Promise<boolean>;
 }
 
-/** Assets auxiliares que o HTML não-selfcontained referencia. */
+/** Auxiliary assets referenced by non-selfcontained HTML. */
 export interface AssetOptions {
-  /** Raiz onde vivem os subdiretórios/arquivos declarados. */
+  /** Root where the declared subdirectories/files live. */
   root: string;
-  /** Subdiretórios a copiar (default: `css/` e `icons/`). */
+  /** Subdirectories to copy (default: `css/` and `icons/`). */
   dirs?: string[];
-  /** Arquivos isolados a copiar (default: `scripts/wz_tooltip.js`). */
+  /** Standalone files to copy (default: `scripts/wz_tooltip.js`). */
   files?: string[];
 }
 
-/** Opções do despacho. */
+/** Dispatch options. */
 export interface OutputPolicyOptions {
-  /** E/S injetada. */
+  /** Injected I/O. */
   io: OutputPolicyIo;
-  /** Assets do HTML; ausente desliga a cópia (24.5.16). */
+  /** HTML assets; absent turns the copy off (24.5.16). */
   assets?: AssetOptions | null;
   /**
-   * Raiz dos caminhos relativos da seção `sheet` (o `-d/--directory` do app,
-   * `""` = diretório corrente). Os nomes do envelope são relativos a ela.
+   * Root of the relative paths of the `sheet` section (the app's
+   * `-d/--directory`, `""` = current directory). The names in the envelope are
+   * relative to it.
    */
   sheetBaseDir?: string;
   /**
-   * Raiz onde os caminhos relativos de imagem são **lidos** (default `""` = o
-   * diretório de trabalho do processo, de onde o master foi lido). A imagem é
-   * copiada para ao lado da saída preservando a referência; o texto do
-   * relatório nunca é reescrito (24.10.8).
+   * Root where the relative image paths are **read** from (default `""` = the
+   * working directory of the process, from where the master was read). The image
+   * is copied next to the output preserving the reference; the report text is
+   * never rewritten (24.10.8).
    */
   imageDir?: string;
-  /** Reporta um erro de relatório (reporter da CLI). */
+  /** Reports a report error (CLI reporter). */
   onError?: ((text: string,) => void) | null;
 }
 
-/** Resultado do despacho. */
+/** Outcome of the dispatch. */
 export interface OutputPolicyOutcome {
-  /** Relatórios impressos no terminal. */
+  /** Reports printed in the terminal. */
   printed: number;
-  /** Caminhos gravados, na ordem de produção. */
+  /** Paths written, in production order. */
   written: string[];
-  /** Assets copiados (destino). */
+  /** Assets copied (destination). */
   assets: string[];
-  /** `true` quando a política abortou por erro (nada foi produzido). */
+  /** `true` when the policy aborted on error (nothing was produced). */
   aborted: boolean;
 }
 
 /**
- * Sufixo por formato — espelha a tabela do plano §5.5 ponto 1.
+ * Suffix per format — mirrors the table of plan §5.5 point 1.
  *
- * Só entram os formatos cujo sufixo difere do id; os demais usam o próprio id.
- * `ctags` não tem sufixo (o core grava o nome puro).
+ * Only formats whose suffix differs from the id are listed; the others use the
+ * id itself. `ctags` has no suffix (the core writes the plain name).
  */
 const FORMAT_EXTENSIONS: Record<string, string> = {
   csv: "csv",
@@ -107,15 +110,15 @@ const FORMAT_EXTENSIONS: Record<string, string> = {
   ctags: "",
 };
 
-/** Subdiretórios de assets referenciados pelo HTML (24.5.16). */
+/** Asset subdirectories referenced by the HTML (24.5.16). */
 const DEFAULT_ASSET_DIRS = ["css", "icons",];
-/** Arquivos isolados referenciados pelo HTML (24.5.16). */
+/** Standalone files referenced by the HTML (24.5.16). */
 const DEFAULT_ASSET_FILES = ["scripts/wz_tooltip.js",];
 
-/** Caracteres inválidos em nome de arquivo (adendo §4.3). */
+/** Characters that are invalid in a file name (addendum §4.3). */
 const INVALID_NAME_CHARS = /[\\?%*:|"<>]/g;
 
-/** Extensão de arquivo de um formato. */
+/** File extension of a format. */
 export function extensionOf(format: string,): string {
   return Object.hasOwn(FORMAT_EXTENSIONS, format,)
     ? FORMAT_EXTENSIONS[format]!
@@ -123,10 +126,10 @@ export function extensionOf(format: string,): string {
 }
 
 /**
- * Sanitiza o nome do relatório para uso como arquivo.
+ * Sanitises the report name for use as a file name.
  *
- * Descarta componentes de caminho (defesa simples contra `../`), substitui os
- * caracteres inválidos por `_` e apara as pontas. Nome vazio cai em `report`.
+ * Drops path components (a simple defence against `../`), replaces the invalid
+ * characters with `_` and trims the edges. An empty name falls back to `report`.
  */
 export function sanitizeFileName(name: string,): string {
   const segments = name.split("/",).filter((part,) =>
@@ -137,43 +140,43 @@ export function sanitizeFileName(name: string,): string {
   return trimmed === "" ? "report" : trimmed;
 }
 
-/** `{name}.{ext}` — nome puro quando o formato não tem sufixo. */
+/** `{name}.{ext}` — plain name when the format has no suffix. */
 export function fileNameFor(name: string, format: string,): string {
   const base = sanitizeFileName(name,);
   const ext = extensionOf(format,);
   return ext === "" ? base : `${base}.${ext}`;
 }
 
-/** Delimitador de impressão (`--- <name> [<format>] ---`). */
+/** Print delimiter (`--- <name> [<format>] ---`). */
 export function delimiterFor(name: string, format: string,): string {
   return `--- ${name} [${format}] ---`;
 }
 
-/** Diretório de um caminho já normalizado com `/` (ou `""` na raiz). */
+/** Directory of a path already normalised with `/` (or `""` at the root). */
 function dirOf(path: string,): string {
   const index = path.lastIndexOf("/",);
   if (index < 0) return "";
   return index === 0 ? "/" : path.slice(0, index,);
 }
 
-/** Junta diretório e nome sem barra dupla (só `/`, como o envelope). */
+/** Joins directory and name without a double slash (`/` only, as in the envelope). */
 function joinPath(dir: string, name: string,): string {
   if (dir === "" || dir === ".") return name;
   if (dir === "/") return `/${name}`;
   return `${dir.replace(/\/+$/, "",)}/${name}`;
 }
 
-/** Conteúdo sem a quebra de linha final dupla na impressão. */
+/** Content without the doubled trailing newline on printing. */
 function trimTrailingNewline(content: string,): string {
   return content.endsWith("\n",) ? content.slice(0, -1,) : content;
 }
 
-/** `stdout` explícito ou nome `.` (convenção do `tj3`: imprime no terminal). */
+/** Explicit `stdout` or name `.` (`tj3` convention: print in the terminal). */
 function goesToStdout(entry: ReportJsonEntry,): boolean {
   return entry.stdout || entry.name === ".";
 }
 
-/** Erros da seção, já com o nome do relatório no prefixo. */
+/** Errors of the section, already prefixed with the report name. */
 function reportErrors(section: ReportsJson,): string[] {
   const errors: string[] = [];
   for (const entry of section.reports) {
@@ -182,7 +185,7 @@ function reportErrors(section: ReportsJson,): string[] {
   return errors;
 }
 
-/** Copia recursivamente um diretório de assets para o destino. */
+/** Copies an asset directory recursively to the destination. */
 async function copyTree(
   io: OutputPolicyIo,
   from: string,
@@ -192,7 +195,7 @@ async function copyTree(
 ): Promise<void> {
   if (!(await io.exists(from,))) return;
   if (!(await io.isDir(from,))) {
-    // Folha: arquivo. O diretório de destino é criado uma vez só.
+    // Leaf: a file. The destination directory is created only once.
     const dir = dirOf(to,);
     if (dir !== "" && !created.has(dir,)) {
       await io.mkpath(dir,);
@@ -214,13 +217,13 @@ async function copyTree(
 }
 
 /**
- * Copia para ao lado do relatório as imagens relativas que ele cita (24.10.8).
+ * Copies, next to the report, the relative images it cites (24.10.8).
  *
- * O `src` do HTML/Markdown já é o caminho relativo correto em relação ao
- * arquivo de saída; o que falta é o arquivo existir ali. Referências externas
- * (`http(s)://`, `data:`), caminhos absolutos e caminhos com segmento `..` ficam
- * de fora — nenhuma leitura fora da raiz de imagens (adendo §4.3). Origem igual
- * ao destino é ignorada.
+ * The `src` of the HTML/Markdown already is the correct relative path with
+ * respect to the output file; what is missing is the file existing there.
+ * External references (`http(s)://`, `data:`), absolute paths and paths with a
+ * `..` segment are left out — no reading outside the image root (addendum
+ * §4.3). A source equal to the destination is skipped.
  */
 async function copyReportImages(
   io: OutputPolicyIo,
@@ -249,10 +252,10 @@ async function copyReportImages(
 }
 
 /**
- * Despacha a seção `reports` (adendo §4.2/§4.3).
+ * Dispatches the `reports` section (addendum §4.2/§4.3).
  *
- * Com qualquer erro de relatório a função **aborta antes de produzir** — sem
- * saída parcial (adendo §4.4) — e devolve `aborted: true`.
+ * With any report error the function **aborts before producing** — no partial
+ * output (addendum §4.4) — and returns `aborted: true`.
  */
 export async function dispatchReports(
   section: ReportsJson,
@@ -317,8 +320,8 @@ export async function dispatchReports(
       const to = joinPath(baseDir, name,);
       await copyTree(io, from, to, created, outcome.assets,);
     }
-    // Arquivos isolados (o `scripts/` do repo guarda ferramentas de build,
-    // não só o `wz_tooltip.js` que o HTML carrega).
+    // Standalone files (the repo's `scripts/` holds build tools, not only the
+    // `wz_tooltip.js` the HTML loads).
     for (const name of assets.files ?? DEFAULT_ASSET_FILES) {
       const from = joinPath(assets.root, name,);
       if (!(await io.exists(from,))) continue;
@@ -336,7 +339,7 @@ export async function dispatchReports(
   return outcome;
 }
 
-/** Imprime a representação estruturada de uma seção simples. */
+/** Prints the structured representation of a simple section. */
 function printSection(
   io: OutputPolicyIo,
   result: ExecutionResult,
@@ -358,14 +361,14 @@ function printSection(
     printed++;
   }
   if (sections.man !== undefined && sections.man.content !== "") {
-    // O conteúdo do `man` termina em `\n`; `print` já fecha a linha.
+    // The `man` content ends with `\n`; `print` already closes the line.
     io.print(trimTrailingNewline(sections.man.content,),);
     printed++;
   }
   return printed;
 }
 
-/** Grava um caminho criando o diretório-pai uma única vez por despacho. */
+/** Writes a path, creating the parent directory only once per dispatch. */
 async function writeWithDir(
   io: OutputPolicyIo,
   created: Set<string>,
@@ -381,13 +384,13 @@ async function writeWithDir(
 }
 
 /**
- * Despacha a seção `freeze` (24.9.4/24.9.5).
+ * Dispatches the `freeze` section (24.9.4/24.9.5).
  *
- * O core devolve os dois artefatos (`-header.tji` e `-bookings.tji`) com o
- * nome derivado do master; gravar é desta política, como no `tj3`. O Ruby
- * trunca os dois arquivos (`File.open(…, 'w')`), então um `-bookings.tji`
- * vazio **é** gravado — pular o artefato vazio deixaria em disco o conteúdo de
- * um freeze anterior.
+ * The core returns both artefacts (`-header.tji` and `-bookings.tji`) with the
+ * name derived from the master; writing them is this policy's job, as in `tj3`.
+ * Ruby truncates both files (`File.open(…, 'w')`), so an empty `-bookings.tji`
+ * **is** written — skipping the empty artefact would leave the content of a
+ * previous freeze on disk.
  */
 async function dispatchFreeze(
   result: ExecutionResult,
@@ -404,15 +407,15 @@ async function dispatchFreeze(
 }
 
 /**
- * Despacha a seção `man` no formato `html` (24.9.1–24.9.3).
+ * Dispatches the `man` section in the `html` format (24.9.1–24.9.3).
  *
- * O core devolve o manual inteiro como mapa `nome → conteúdo` (capítulos,
- * uma página por keyword, `toc.html`, `alphabet.html`, `navbar.html`,
- * `index.html` e a folha de estilos). Gravar é desta política: tudo vai para
- * o `--output-dir` (default: diretório corrente, como o `-d` do `tj3man`).
+ * The core returns the whole manual as a `name → content` map (chapters, one
+ * page per keyword, `toc.html`, `alphabet.html`, `navbar.html`, `index.html` and
+ * the stylesheet). Writing them is this policy's job: everything goes to
+ * `--output-dir` (default: current directory, like `tj3man`'s `-d`).
  *
- * No formato `text`/`smx` não há arquivo nenhum — `content` já foi impresso por
- * {@link printSection}.
+ * In the `text`/`smx` formats there is no file at all — `content` was already
+ * printed by {@link printSection}.
  */
 async function dispatchMan(
   result: ExecutionResult,
@@ -430,20 +433,20 @@ async function dispatchMan(
   }
 }
 
-/** Nome do `outbox/*.eml` de uma mensagem (`001-dev@example.com.eml`). */
+/** Name of the `outbox/*.eml` of a message (`001-dev@example.com.eml`). */
 function emlName(index: number, to: string,): string {
   const seq = String(index + 1,).padStart(3, "0",);
   return `outbox/${seq}-${sanitizeFileName(to,)}.eml`;
 }
 
 /**
- * Despacha a seção `sheet` (24.10.1–24.10.4).
+ * Dispatches the `sheet` section (24.10.1–24.10.4).
  *
- * Sem SMTP (ADR 036), a entrega vira dado: o texto de diagnóstico/resumo vai
- * para o terminal, cada mensagem vira `outbox/*.eml` e os arquivos que o app
- * criou (templates, folhas) são gravados sob o diretório de trabalho. Anexos
- * já estão entre esses arquivos — são **dados recebidos**, não um segundo
- * destino.
+ * Without SMTP (ADR 036), delivery becomes data: the diagnostic/summary text
+ * goes to the terminal, each message becomes `outbox/*.eml` and the files the
+ * app created (templates, sheets) are written under the working directory.
+ * Attachments are already among those files — they are **received data**, not a
+ * second destination.
  */
 async function dispatchSheet(
   section: SheetSection,
@@ -475,12 +478,12 @@ async function dispatchSheet(
 }
 
 /**
- * Despacha **todas** as seções do envelope na ordem do adendo §4.1.
+ * Dispatches **every** envelope section in the order of addendum §4.1.
  *
- * `freeze` grava os dois artefatos que o core devolveu (24.9); `sheet` é a
- * saída dos apps da F18 (24.10) e só é produzida quando a execução deu certo
- * (adendo §4.4: nada de saída parcial em nome de uma execução que falhou).
- * Os relatórios seguem a mesma regra dentro de `dispatchReports`.
+ * `freeze` writes the two artefacts the core returned (24.9); `sheet` is the
+ * output of the F18 apps (24.10) and is only produced when the execution
+ * succeeded (addendum §4.4: no partial output in the name of an execution that
+ * failed). Reports follow the same rule inside `dispatchReports`.
  */
 export async function dispatchSections(
   result: ExecutionResult,
@@ -496,7 +499,7 @@ export async function dispatchSections(
 
   outcome.printed += printSection(io, result,);
 
-  // Diretórios já criados neste despacho (freeze, man e sheet compartilham).
+  // Directories already created in this dispatch (freeze, man and sheet share).
   const created = new Set<string>();
   await dispatchFreeze(result, io, outcome, created,);
   await dispatchMan(result, io, outcome, created,);
@@ -506,7 +509,7 @@ export async function dispatchSections(
     if (result.ok) {
       await dispatchSheet(sheet, options, outcome, created,);
     } else {
-      // Diagnóstico já foi do reporter; um app que falhou não entrega email.
+      // The diagnostic already went to the reporter; a failed app sends no email.
       outcome.aborted = true;
     }
   }
@@ -517,8 +520,8 @@ export async function dispatchSections(
     outcome.printed += dispatched.printed;
     outcome.written.push(...dispatched.written,);
     outcome.assets.push(...dispatched.assets,);
-    // Monotônico: um aborto anterior (sheet com falha) não é "desabortado"
-    // por um despacho de relatórios que correu bem.
+    // Monotonic: an earlier abort (sheet with failure) is not "un-aborted" by
+    // a report dispatch that went well.
     outcome.aborted = outcome.aborted || dispatched.aborted;
   }
 

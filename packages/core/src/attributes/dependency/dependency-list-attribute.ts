@@ -1,5 +1,5 @@
 /**
- * Atributo de lista de dependências.
+ * Dependency list attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:DependencyListAttribute
  */
@@ -10,19 +10,19 @@ import { type AttributeDefinition, } from "../attribute-definition.ts";
 import { ListAttributeBase, } from "../list-attribute-base.ts";
 
 /**
- * Atributo de lista de dependências.
+ * Dependency list attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:DependencyListAttribute
  */
 export class DependencyListAttribute
   extends ListAttributeBase<{ task: { fullId: string } }> {
   /**
-   * ID do tipo de atributo para DependencyListAttribute.
+   * Attribute type ID for DependencyListAttribute.
    */
   static readonly tjpId = "dependencylist";
 
   /**
-   * Converte o valor para string.
+   * Converts the value to a string.
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:DependencyListAttribute#to_s
    */
@@ -40,7 +40,7 @@ export class DependencyListAttribute
   }
 
   /**
-   * Converte o valor para TJP (formato TaskJuggler).
+   * Converts the value to TJP (TaskJuggler format).
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:DependencyListAttribute#to_tjp
    */

@@ -1,15 +1,15 @@
 /**
- * TimeSheetReport — gerador de templates de time sheet em sintaxe TJP.
+ * TimeSheetReport — generator of time sheet templates in TJP syntax.
  *
- * Port de `docs/taskjuggler/lib/taskjuggler/reports/TimeSheetReport.rb`.
+ * Port of `docs/taskjuggler/lib/taskjuggler/reports/TimeSheetReport.rb`.
  *
- * O relatório não produz tabela: ele emite um **formulário** `.tji` por recurso,
- * com o trabalho planejado do período pré-preenchido e comentários explicando
- * como preencher. O `SheetSender` (18.6) o usa para gerar os templates e o
- * `SheetReceiver` (18.7) faz o caminho inverso.
+ * The report produces no table: it emits one `.tji` **form** per resource, with
+ * the planned work of the period pre-filled and comments explaining how to fill
+ * it in. `SheetSender` (18.6) uses it to generate the templates and
+ * `SheetReceiver` (18.7) walks the other way.
  *
- * ⚠️ Browser (ADR 027): nada é escrito em disco; o texto sai em `to_tjp()` e o
- * chamador decide onde guardá-lo (`FileStore`).
+ * ⚠️ Browser (ADR 027): nothing is written to disk; the text leaves through
+ * `to_tjp()` and the caller decides where to keep it (`FileStore`).
  *
  * @see docs/taskjuggler/lib/taskjuggler/reports/TimeSheetReport.rb
  * @see docs/syntaxmesh/fases/fase-18-time-status-sheets.md (18.6)
@@ -27,33 +27,38 @@ import { ReportBase, } from "./report-base.ts";
 import { TimeInterval, } from "../time/time-interval.ts";
 import type { TjTime, } from "../time/tj-time.ts";
 
-/** Agregado por recurso no formato intermediário (Ruby `TSResourceRecord`). */
+/** Aggregate per resource in the intermediate format (Ruby `TSResourceRecord`). */
 export interface TSResourceRecord {
+  /** Resource this aggregate belongs to. */
   resource: Resource;
-  /** Total de horas de folga do período, já formatado (Ruby `query.to_s`). */
+  /** Total off-hours of the period, already formatted (Ruby `query.to_s`). */
   vacationHours: string;
-  /** Percentual de folga sobre os dias úteis do período. */
+  /** Off percentage over the working days of the period. */
   vacationPercent: number;
+  /** Tasks the resource is allocated to in the period. */
   tasks: TSTaskRecord[];
 }
 
-/** Uma tarefa alocada ao recurso no período (Ruby `TSTaskRecord`). */
+/** One task allocated to the resource in the period (Ruby `TSTaskRecord`). */
 export interface TSTaskRecord {
+  /** Task the record was collected for. */
   task: Task;
+  /** Working days booked on the task in the period. */
   workDays: number;
+  /** Working days as a percentage of the period. */
   workPercent: number;
-  /** Esforço restante em dias (tarefa de esforço), ou `null`. */
+  /** Remaining effort in days (effort task), or `null`. */
   remaining: string | null;
-  /** Fim planejado (tarefa de duração), ou `null`. */
+  /** Planned end (duration task), or `null`. */
   endDate: TjTime | null;
   /**
-   * Materiais alocados à tarefa (extensão 18.17.4): viram um esqueleto
-   * comentado `material <id> { work/unitprice }` no formulário.
+   * Materials allocated to the task (extension 18.17.4): they become a commented
+   * `material <id> { work/unitprice }` skeleton in the form.
    */
   materials: MaterialAllocation[];
 }
 
-/** Cabeçalho fixo do formulário (Ruby `to_tjp` l.77-87). */
+/** Fixed header of the form (Ruby `to_tjp` l.77-87). */
 const HEADER =
   `# The status headline should be no more than 60 characters and may
 # not be empty! The status summary is optional and should be no
@@ -66,7 +71,7 @@ const HEADER =
 # --------8<--------8<--------
 `;
 
-/** Bloco de ajuda fixo ao fim de cada folha (Ruby `to_tjp` l.129-155). */
+/** Fixed help block at the end of each sheet (Ruby `to_tjp` l.129-155). */
 const NEW_TASK_HELP =
   `  # If you had unplanned tasks, uncomment and fill out the
   # following lines:
@@ -95,7 +100,7 @@ const NEW_TASK_HELP =
   # }
 `;
 
-/** Cabeçalho da lista de tarefas futuras (Ruby `to_tjp` l.158-164). */
+/** Header of the upcoming-tasks list (Ruby `to_tjp` l.158-164). */
 const FUTURE_HELP = `  #
   # Your upcoming tasks for the next period
   # Please check them carefully and discuss any necessary
@@ -104,40 +109,46 @@ const FUTURE_HELP = `  #
 `;
 
 /**
- * Formata um número como o `Float#to_s` do Ruby: inteiros ganham `.0`
- * (o Ruby imprime `50.0`, não `50`).
+ * Formats a number like Ruby's `Float#to_s`: integers gain `.0` (Ruby prints
+ * `50.0`, not `50`).
  */
 function rubyFloat(value: number,): string {
   return Number.isInteger(value,) ? `${value}.0` : String(value,);
 }
 
 /**
- * Gerador de templates de time sheet (Ruby `TimeSheetReport < ReportBase`).
+ * Generator of time sheet templates (Ruby `TimeSheetReport < ReportBase`).
  */
 export class TimeSheetReport extends ReportBase {
-  /** Registros do período reportado. */
+  /** Records of the reported period. */
   private current: TSResourceRecord[] = [];
-  /** Registros do período seguinte (tarefas futuras). */
+  /** Records of the following period (upcoming tasks). */
   private future: TSResourceRecord[] = [];
 
+  /**
+   * Creates a time sheet report.
+   *
+   * @param report Report definition being rendered.
+   */
   constructor(report: Report,) {
     super(report,);
   }
 
+  /** Builds the records of both the reported and the future period. */
   override generateIntermediateFormat(): void {
     super.generateIntermediateFormat();
     const from = this.a("start",) as TjTime;
     const to = this.a("end",) as TjTime;
     this.current = this.collectRecords(from, to,);
-    // Ruby (l.69-71): o `newEnd` é calculado e **descartado** — resíduo.
-    // O período futuro usa a mesma duração do período reportado.
+    // Ruby (l.69-71): `newEnd` is computed and **discarded** — dead residue.
+    // The future period uses the same length as the reported period.
     this.future = this.collectRecords(
       to,
       to.addSeconds(to.toSeconds() - from.toSeconds(),),
     );
   }
 
-  /** Templates em sintaxe TJP, um bloco `timesheet` por recurso. */
+  /** Templates in TJP syntax, one `timesheet` block per resource. */
   to_tjp(): string {
     let file = HEADER;
     const start = this.a("start",) as TjTime;
@@ -177,16 +188,16 @@ export class TimeSheetReport extends ReportBase {
             "    #  ->8-\n" +
             "    #  flags ...\n" +
             `    ${comment}}\n`;
-          // Extensão 18.17.4: materiais alocados à tarefa entram no formulário
-          // como esqueleto comentado — o executor descomenta e preenche a
-          // quantidade realmente consumida.
+          // Extension 18.17.4: materials allocated to the task enter the form as
+          // a commented skeleton — the executor uncomments it and fills in the
+          // quantity actually consumed.
           for (const allocation of taskRecord.materials) {
             file += `    # Material: ${allocation.material.name}\n`;
             file += `    # material ${allocation.material.fullId} {\n`;
             file += `    #   work ${rubyFloat(allocation.quantity,)}` +
               "\n";
-            // 18.17.10: `unitprice` só é reemitido quando a alocação declara
-            // um preço próprio — folhas sem preço continuam idênticas.
+            // 18.17.10: `unitprice` is only re-emitted when the allocation
+            // declares a price of its own — sheets without a price stay identical.
             if (allocation.unitPrice !== undefined) {
               file += `    #   unitprice ${rubyFloat(allocation.unitPrice,)}` +
                 "\n";
@@ -216,10 +227,14 @@ export class TimeSheetReport extends ReportBase {
   }
 
   /**
-   * Monta os registros do período `[from, to)` (Ruby `collectRecords`).
+   * Builds the records of the period `[from, to)` (Ruby `collectRecords`).
    *
-   * Percorre os recursos visíveis (folhas apenas), consulta `timeoffdays` e,
-   * para cada tarefa alocada que cruza o período, o `effort` do intervalo.
+   * It walks the visible resources (leaves only), queries `timeoffdays` and,
+   * for every allocated task crossing the period, the `effort` of the interval.
+   *
+   * @param from First instant of the period.
+   * @param to Last instant of the period (exclusive).
+   * @returns One record per visible leaf resource.
    */
   private collectRecords(
     from: TjTime,
@@ -227,7 +242,7 @@ export class TimeSheetReport extends ReportBase {
   ): TSResourceRecord[] {
     const project = this.project;
 
-    // Recursos visíveis, na ordem pedida pelo relatório.
+    // Visible resources, in the order requested by the report.
     let resourceList = new PropertyList<Resource>(project.resources,);
     resourceList.setSorting(
       this.a("sortResources",) as Array<[string, boolean, number,]>,
@@ -240,7 +255,7 @@ export class TimeSheetReport extends ReportBase {
       null,
     );
 
-    // Modelo da Query usada para consultar todo mundo.
+    // Template of the Query used to inspect every property.
     const scenarioIdx = ((this.a("scenarios",) as number[]) ?? [0,])[0] ?? 0;
     const queryAttrs = {
       project,
@@ -260,7 +275,7 @@ export class TimeSheetReport extends ReportBase {
     resourceList.query = new Query(queryAttrs as never,);
     resourceList.sort();
 
-    // Tarefas visíveis, na ordem pedida pelo relatório.
+    // Visible tasks, in the order requested by the report.
     let taskList = new PropertyList<Task>(project.tasks,);
     taskList.setSorting(
       this.a("sortTasks",) as Array<[string, boolean, number,]>,
@@ -279,7 +294,7 @@ export class TimeSheetReport extends ReportBase {
 
     const records: TSResourceRecord[] = [];
     for (const resource of resourceList.toArray()) {
-      // Folhas de ponto só fazem sentido para recursos folha que trabalham.
+      // Time sheets only make sense for leaf resources that actually work.
       if (!resource.leaf()) continue;
 
       const record: TSResourceRecord = {
@@ -290,7 +305,7 @@ export class TimeSheetReport extends ReportBase {
       };
       records.push(record,);
 
-      // Dias de folga do período → horas e percentual.
+      // Off days of the period → hours and percentage.
       const vacationQuery = new Query(queryAttrs as never,);
       vacationQuery.property = resource;
       vacationQuery.attributeId = "timeoffdays";
@@ -299,7 +314,7 @@ export class TimeSheetReport extends ReportBase {
       record.vacationPercent = ((vacationQuery.to_num() ?? 0) /
         (weeksToReport * weeklyWorkingDays)) * 100.0;
 
-      // Tarefas às quais o recurso está alocado no período.
+      // Tasks the resource is allocated to in the period.
       const assignedTaskList = this.filterTaskList(
         taskList,
         resource,
@@ -331,7 +346,7 @@ export class TimeSheetReport extends ReportBase {
         query.start = from;
         query.end = to;
         query.process();
-        // `Query#to_num` de um esforço devolve sempre dias.
+        // `Query#to_num` of an effort always returns days.
         const workDays = query.to_num() ?? 0;
         const workPercent = (workDays / (weeksToReport * weeklyWorkingDays)) *
           100.0;
@@ -341,14 +356,14 @@ export class TimeSheetReport extends ReportBase {
         if (
           ((task.getForScenario("effort", scenarioIdx,) as number) ?? 0) > 0
         ) {
-          // Tarefa de esforço: esforço restante após o período.
+          // Effort task: remaining effort after the period.
           query.start = to;
           query.end = taskEnd ?? to;
           query.loadUnit = "days";
           query.process();
           remaining = query.to_s();
         } else {
-          // Tarefa de duração: fim planejado.
+          // Duration task: planned end.
           endDate = taskEnd;
         }
 
@@ -358,8 +373,8 @@ export class TimeSheetReport extends ReportBase {
           workPercent,
           remaining,
           endDate,
-          // Extensão 18.17.4: alocações de material da tarefa (o formulário
-          // mostra um esqueleto para o executor preencher).
+          // Extension 18.17.4: material allocations of the task (the form shows
+          // a skeleton for the executor to fill in).
           materials:
             (task.getForScenario("materialallocations", scenarioIdx,) ??
               []) as MaterialAllocation[],
@@ -371,7 +386,7 @@ export class TimeSheetReport extends ReportBase {
   }
 }
 
-// Registra o conteúdo de `timesheetreport` na fábrica (14.11).
+// Registers the `timesheet` content in the factory (14.11).
 registerContentFactory(
   "timesheet",
   (report: unknown,): TimeSheetReport => new TimeSheetReport(report as Report,),

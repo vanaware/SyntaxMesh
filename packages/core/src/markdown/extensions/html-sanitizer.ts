@@ -1,19 +1,20 @@
 /**
- * Sanitização de HTML inline (Fase 13.5).
+ * Inline HTML sanitization (phase 13.5).
  *
- * Markdown/GFM aceita HTML cru. O SyntaxMesh permite só tags de formatação:
- * as da **allow-list** passam com os atributos seguros; as da **block-list**
- * (`script`, `style`, `iframe`, `object`, `embed`) têm tag **e conteúdo**
- * removidos; tags desconhecidas perdem a tag e mantêm o conteúdo. Atributos de
- * evento (`on*`) e URLs `javascript:`/`vbscript:`/`data:` são descartados.
+ * Markdown/GFM accepts raw HTML. SyntaxMesh allows formatting tags only: the
+ * ones in the **allow-list** pass with the safe attributes; the ones in the
+ * **block-list** (`script`, `style`, `iframe`, `object`, `embed`) have both tag
+ * **and content** removed; unknown tags lose the tag and keep the content.
+ * Event attributes (`on*`) and `javascript:`/`vbscript:`/`data:` URLs are
+ * dropped.
  *
- * Não há referência TaskJuggler: é segurança do próprio SyntaxMesh
- * (conteúdo Markdown renderiza em página HTML da PWA).
+ * There is no TaskJuggler reference here: this is SyntaxMesh's own security
+ * (Markdown content renders inside the PWA HTML page).
  *
- * @see ADR 026 (Markdown como formato going-forward)
+ * @see ADR 026 (Markdown as the going-forward format)
  */
 
-/** Tags preservadas (13.5.2). */
+/** Preserved tags (13.5.2). */
 export const ALLOWED_TAGS = [
   "span",
   "div",
@@ -33,7 +34,7 @@ export const ALLOWED_TAGS = [
   "blockquote",
 ];
 
-/** Tags cuja presença elimina o elemento inteiro, conteúdo incluído (13.5.3). */
+/** Tags whose presence removes the whole element, content included (13.5.3). */
 export const BLOCKED_TAGS = [
   "script",
   "iframe",
@@ -44,7 +45,7 @@ export const BLOCKED_TAGS = [
   "meta",
 ];
 
-/** Atributos preservados (13.5.5). */
+/** Preserved attributes (13.5.5). */
 export const ALLOWED_ATTRS = [
   "class",
   "id",
@@ -54,43 +55,43 @@ export const ALLOWED_ATTRS = [
   "style",
 ];
 
-/** URL com esquema perigoso (OWASP: `javascript:`, `data:`, `vbscript:`). */
+/** URL with a dangerous scheme (OWASP: `javascript:`, `data:`, `vbscript:`). */
 const DANGEROUS_URL_RE = /^\s*(javascript|vbscript|data|file)\s*:/i;
 
-/** `style` com função/vetor conhecido de XSS. */
+/** `style` with a known XSS function/vector. */
 const DANGEROUS_STYLE_RE = /(expression|url\s*\(|@import|javascript:|<)/i;
 
-/** Tag de abertura, fechamento, self-closing ou comentário. */
+/** Opening, closing or self-closing tag, or comment. */
 const TAG_RE =
   /<!--[\s\S]*?(-->|$)|<(\/)([a-zA-Z][\w:.-]*)\s*>|<([a-zA-Z][\w:.-]*)((?:\s+[^<>]*?)?)(\/)?>/g;
 
-/** Par de atributo (`nome`, `nome="valor"`, `nome='valor'`, `nome=valor`). */
+/** Attribute pair (`name`, `name="value"`, `name='value'`, `name=value`). */
 const ATTR_RE =
   /([a-zA-Z_:][\w:.-]*)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'`=<>]+)))?/g;
 
-/** Nome de tag em lower case (`fcol:red` preserva o `:` para não romper markup). */
+/** Lower-cased tag name (`fcol:red` keeps the `:` so markup is not broken). */
 function tagName(raw: string,): string {
   return raw.toLowerCase();
 }
 
-/** Verdadeiro se `tag` está na allow-list. */
+/** True when `tag` is in the allow-list. */
 export function isAllowedTag(tag: string,): boolean {
   return ALLOWED_TAGS.includes(tagName(tag,),);
 }
 
-/** Verdadeiro se `tag` está na block-list. */
+/** True when `tag` is in the block-list. */
 export function isBlockedTag(tag: string,): boolean {
   return BLOCKED_TAGS.includes(tagName(tag,),);
 }
 
-/** Filtra os atributos de um tag, mantendo só os seguros (13.5.5, 13.5.6). */
+/** Filters a tag's attributes, keeping only the safe ones (13.5.5, 13.5.6). */
 function sanitizeAttributes(raw: string,): string {
   const kept: string[] = [];
   for (const match of raw.matchAll(ATTR_RE,)) {
     const name = (match[1] ?? "").toLowerCase();
     if (name === "") continue;
     const value = match[2] ?? match[3] ?? match[4] ?? "";
-    if (!ALLOWED_ATTRS.includes(name,)) continue; // inclui on*, src, onerror…
+    if (!ALLOWED_ATTRS.includes(name,)) continue; // covers on*, src, onerror…
     if (name.startsWith("on",)) continue;
     if (name === "href" && DANGEROUS_URL_RE.test(value,)) continue;
     if (name === "style" && DANGEROUS_STYLE_RE.test(value,)) continue;
@@ -100,17 +101,17 @@ function sanitizeAttributes(raw: string,): string {
 }
 
 /**
- * Sanitiza um fragmento de HTML (13.5.4).
+ * Sanitizes an HTML fragment (13.5.4).
  *
  * ```ts
  * sanitizeHtml('<script>alert(1)</script>');            // ''
  * sanitizeHtml('<a href="x" onclick="y">z</a>');        // '<a href="x">z</a>'
- * sanitizeHtml('<blink>oi</blink>');                    // 'oi'
+ * sanitizeHtml('<blink>hi</blink>');                    // 'hi'
  * ```
  */
 export function sanitizeHtml(html: string,): string {
   let out = "";
-  // Nome do elemento bloqueado cujo conteúdo estamos descartando, ou `null`.
+  // Name of the blocked element whose content is being dropped, or `null`.
   let skipping: string | null = null;
   let cursor = 0;
 
@@ -122,7 +123,7 @@ export function sanitizeHtml(html: string,): string {
     cursor = index + full.length;
 
     if (skipping) {
-      // Dentro de <script>/<style>/…: só procuramos o fechamento do próprio tag.
+      // Inside <script>/<style>/…: only look for the closing tag of that tag.
       if (closingName && tagName(closingName,) === skipping) skipping = null;
       continue;
     }
@@ -134,13 +135,13 @@ export function sanitizeHtml(html: string,): string {
       continue;
     }
     if (!openingName) {
-      // Comentário `<!-- … -->` ou entrada truncada: some inteiro.
+      // Comment `<!-- … -->` or truncated input: disappears entirely.
       out += text;
       continue;
     }
     const tag = tagName(openingName,);
     if (isBlockedTag(tag,)) {
-      // Tags void (`link`, `meta`) só somem; as outras também levam o conteúdo.
+      // Void tags (`link`, `meta`) just vanish; the others take the content.
       out += text;
       if (!selfClose && !VOID_TAGS.includes(tag,)) skipping = tag;
       continue;
@@ -149,12 +150,12 @@ export function sanitizeHtml(html: string,): string {
     if (isAllowedTag(tag,)) {
       out += `<${tag}${sanitizeAttributes(attrs,)}${selfClose ? " /" : ""}>`;
     }
-    // Tag desconhecida: conteúdo preservado no próximo trecho, tag descartada.
+    // Unknown tag: content preserved in the next excerpt, tag discarded.
   }
 
   out += skipping ? "" : html.slice(cursor,);
   return out;
 }
 
-/** Tags que nunca têm conteúdo (HTML void elements). */
+/** Tags that never have content (HTML void elements). */
 const VOID_TAGS = ["br", "hr", "img", "input", "meta", "link",];

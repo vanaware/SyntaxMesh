@@ -1,26 +1,26 @@
 /**
- * `example-snippet.ts` — extração dos exemplos anotados de sintaxe (22.1b.4).
+ * `example-snippet.ts` — extraction of the annotated syntax examples (22.1b.4).
  *
- * Port fiel de `TjpExample.rb` (123 linhas). O corpus de exemplos são arquivos
- * de projeto anotados: qualquer linha começando com `# *** EXAMPLE: <tag> +`
- * abre um trecho e `# *** EXAMPLE: <tag> -` fecha. Sem tag, `text()` devolve o
- * arquivo inteiro **sem** as linhas de anotação.
+ * Faithful port of `TjpExample.rb` (123 lines). The example corpus consists of
+ * annotated project files: any line starting with `# *** EXAMPLE: <tag> +`
+ * opens a snippet and `# *** EXAMPLE: <tag> -` closes it. Without a tag,
+ * `text()` returns the whole file **without** the annotation lines.
  *
- * O Ruby lê do disco (`File.open`); aqui o conteúdo entra por `parse(text)` —
- * `doc-core` não faz E/S. Quem lê o arquivo é o chamador (a CLI, quando o
- * corpus é distribuído como asset).
+ * Ruby reads from disk (`File.open`); here the content comes in through
+ * `parse(text)` — `doc-core` performs no I/O. The caller reads the file (the
+ * CLI, when the corpus is distributed as an asset).
  *
  * @see docs/taskjuggler/lib/taskjuggler/TjpExample.rb
  */
 
-/** Marca das linhas de anotação (`TjpExample.rb:71`). */
+/** Marker of the annotation lines (`TjpExample.rb:71`). */
 const MARK = "# *** EXAMPLE: ";
 
 /**
- * Arquivo de exemplo anotado, com os trechos (`snips`) indexados por tag.
+ * Annotated example file, with the snippets (`snips`) indexed by tag.
  */
 export class ExampleSnippet {
-  /** Linhas de cada trecho; `"full text"` guarda o arquivo inteiro. */
+  /** Lines of each snippet; `"full text"` holds the whole file. */
   private readonly snippets: Map<string, string[]> = new Map();
 
   constructor() {
@@ -28,10 +28,10 @@ export class ExampleSnippet {
   }
 
   /**
-   * Processa o texto de um arquivo anotado.
+   * Processes the text of an annotated file.
    *
-   * @throws {Error} tag repetida, tag fechada sem abrir, ou indicador
-   *   diferente de `+`/`-` — como as mensagens do Ruby.
+   * @throws {Error} Repeated tag, tag closed without opening, or indicator
+   *   other than `+`/`-` — like the Ruby messages.
    */
   parse(text: string,): void {
     const state = new Map<string, boolean>();
@@ -80,10 +80,10 @@ export class ExampleSnippet {
   }
 
   /**
-   * Conteúdo do trecho `tag` (ou do arquivo inteiro quando `null`).
+   * Content of the `tag` snippet (or of the whole file when `null`).
    *
-   * @returns `null` quando a tag não existe — o Ruby devolve `nil` e o
-   *   chamador transforma em erro (`KeywordDocumentation.rb:687-689`).
+   * @returns `null` when the tag does not exist — Ruby returns `nil` and the
+   *   caller turns it into an error (`KeywordDocumentation.rb:687-689`).
    */
   text(tag: string | null = null,): string | null {
     const key = tag ?? "full text";
@@ -93,10 +93,10 @@ export class ExampleSnippet {
 }
 
 /**
- * Quebra o texto em linhas **mantendo** o `\n` de cada uma.
+ * Splits the text into lines **keeping** the `\n` of each one.
  *
- * `each_line` do Ruby preserva o terminador; `split("\n")` não. O último
- * fragmento sem `\n` também entra (arquivo sem newline final).
+ * Ruby's `each_line` preserves the terminator; `split("\n")` does not. The
+ * last fragment without `\n` also comes in (file without a trailing newline).
  */
 function splitLines(text: string,): string[] {
   const lines: string[] = [];

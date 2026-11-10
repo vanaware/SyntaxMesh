@@ -1,13 +1,14 @@
 /**
- * Tipos compartilhados do subsistema Markdown (Fase 13).
+ * Shared types of the Markdown subsystem (phase 13).
  *
- * O parser base é `micromark` + `mdast-util-from-markdown` (+ GFM), que produz
- * uma AST `mdast`. Como Markdown não cobre `<fcol:…>`, `[[func:…]]` e `<-…->`,
- * as extensões **pré/pós-processam** o texto e injetam um nó sintético na AST
- * (`richtextExtension`) — é por isso que aumentamos os mapas de conteúdo do
- * módulo `mdast` aqui, em vez de criar um tipo paralelo.
+ * The base parser is `micromark` + `mdast-util-from-markdown` (plus GFM), which
+ * produces an `mdast` AST. Markdown does not cover `<fcol:…>`, `[[func:…]]` and
+ * `<-…->`, so the extensions **pre/post-process** the text and inject a
+ * synthetic node into the AST (`richtextExtension`) — that is why the content
+ * maps of the `mdast` module are augmented here instead of declaring a parallel
+ * type.
  *
- * @see ADR 026 (Markdown como formato going-forward)
+ * @see ADR 026 (Markdown as the going-forward format)
  * @see docs/syntaxmesh/fases/fase-13-markdown.md §4.2
  */
 
@@ -15,20 +16,20 @@ import type { PhrasingContent, Root, } from "mdast";
 
 declare module "mdast" {
   /**
-   * Nó sintético criado pelas extensões Markdown (13.4–13.8). Não existe no
-   * vocabulário `mdast`; carrega a categoria do elemento `RichTextElement`
-   * equivalente e o seu `payload`.
+   * Synthetic node created by the Markdown extensions (13.4–13.8). It does not
+   * exist in the `mdast` vocabulary; it carries the category of the equivalent
+   * `RichTextElement` and its `payload`.
    */
   interface RichTextExtensionNode {
     type: "richtextExtension";
-    /** Categoria do elemento RichText que será construído (13.2). */
+    /** Category of the RichText element that will be built (13.2). */
     category: "fontCol" | "inlinefunc" | "blockfunc";
     /**
-     * `data` do elemento RichText: string (cor) para `fontCol`, ou
-     * `[nome, args]` para `inlinefunc`/`blockfunc`.
+     * `data` of the RichText element: a string (colour) for `fontCol`, or
+     * `[name, args]` for `inlinefunc`/`blockfunc`.
      */
     payload: string | [string, Record<string, string>,];
-    /** Conteúdo interno (só `fontCol` tem filhos). */
+    /** Inner content (only `fontCol` has children). */
     children: PhrasingContent[];
   }
 
@@ -41,51 +42,54 @@ declare module "mdast" {
   }
 }
 
-/** Raiz da AST `mdast` produzida por {@link parseMdast}. */
+/** Root of the `mdast` AST produced by {@link parseMdast}. */
 export type MdastRoot = Root;
 
-/** Qualquer nó `mdast` que percorremos (raiz, blocos e inline). */
-export type MdastNode = Root | Root["children"][number] | PhrasingContent;
+/** Block-level nodes (children of the root: paragraph, list, table, …). */
+export type MdastBlock = MdastRoot["children"][number];
 
-/** Nós inline (filhos de parágrafo, título, link, …). */
+/** Any `mdast` node we walk (root, blocks and inline). */
+export type MdastNode = MdastRoot | MdastBlock | MdastInline;
+
+/** Inline nodes (children of a paragraph, heading, link, …). */
 export type MdastInline = PhrasingContent;
 
-/** Nó sintético das extensões (re-export para conveniência). */
+/** Synthetic node of the extensions (re-exported for convenience). */
 export type MdastExtension = import("mdast").RichTextExtensionNode;
 
-/** Categorias RichText que as extensões markdown produzem. */
+/** RichText categories that the markdown extensions produce. */
 export type ExtensionCategory = "fontCol" | "inlinefunc" | "blockfunc";
 
-/** Extração genérica registrada pelo pipeline (13.8.2). */
+/** Generic extraction registered by the pipeline (13.8.2). */
 export interface Extraction {
-  /** Placeholder único deixado no texto (`§COLOR_0§`). */
+  /** Unique placeholder left in the text (`§COLOR_0§`). */
   placeholder: string;
-  /** Categoria do elemento RichText resultante. */
+  /** Category of the resulting RichText element. */
   category: ExtensionCategory;
-  /** `data` do elemento (`color` ou `[nome, args]`). */
+  /** `data` of the element (`color` or `[name, args]`). */
   payload: string | [string, Record<string, string>,];
-  /** Texto original capturado (inclui a markup da extensão). */
+  /** Original text captured (includes the markup of the extension). */
   source: string;
-  /** Conteúdo interno a reprocessar (só `<fcol:…>…</fcol>`). */
+  /** Inner content to reprocess (only `<fcol:…>…</fcol>`). */
   content?: string;
 }
 
-/** Resultado de um `preprocess*` de extensão (13.4.3, 13.6.3, 13.7.2). */
+/** Result of an extension `preprocess*` (13.4.3, 13.6.3, 13.7.2). */
 export interface PreprocessResult<T,> {
-  /** Texto com os placeholders no lugar das extensões. */
+  /** Text with placeholders in place of the extensions. */
   text: string;
-  /** Extrações registradas nesta passada. */
+  /** Extractions registered in this pass. */
   extractions: T[];
 }
 
 /**
- * Funções que, sozinhas num parágrafo, viram `blockfunc` (13.6.8).
- * Espelha `blockFunction = true` dos handlers da Fase 12 (`RTFReport`,
+ * Functions that, alone in a paragraph, become `blockfunc` (13.6.8).
+ * Mirrors `blockFunction = true` of the phase 12 handlers (`RTFReport`,
  * `RTFNavigator`).
  */
 export const DEFAULT_BLOCK_FUNCTIONS = ["report", "navigator",];
 
-/** Nome da função `[[name:…]]`/`<-[name …]->` reconhecidos pela Fase 12. */
+/** Name of the `[[name:…]]`/`<-[name …]->` functions recognised by phase 12. */
 export const DEFAULT_KNOWN_FUNCTIONS = [
   "query",
   "report",

@@ -1,9 +1,9 @@
 /**
- * Fronteira de execução da Fase 24 (ADR 034).
+ * Execution boundary of phase 24 (ADR 034).
  *
- * Exporta o contrato público do envelope (`ExecutionRequest`/
- * `ExecutionResult`), o ponto único de entrada `execute` e as peças que o
- * consumidor pode reaproveitar (spec de opções da seção `help`).
+ * Exports the public envelope contract (`ExecutionRequest`/
+ * `ExecutionResult`), the single entry point `execute` and the pieces the
+ * consumer may reuse (options spec of the `help` section).
  *
  * @see docs/syntaxmesh/fases/fase-24-cli-adendo.md §3.6
  */
@@ -30,6 +30,7 @@ export {
   sheetSection,
   versionSection,
 } from "./sections.ts";
+export type { SheetChecker, SheetSectionOutcome, } from "./sections.ts";
 export type {
   ExecutionFreezeRequest,
   ExecutionInputFile,
@@ -40,6 +41,7 @@ export type {
   ExecutionResult,
   ExecutionResults,
   ExecutionSheetAppOptions,
+  ExecutionSheetAppOptionsEcho,
   FreezeFile,
   FreezeSection,
   ListReportsEntry,

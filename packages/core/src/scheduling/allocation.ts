@@ -3,45 +3,68 @@ import { ShiftAssignments, } from "./shift-assignments.ts";
 import { Resource, } from "../model/resource.ts";
 
 /**
- * Modos de seleção de candidatos para alocação de recursos.
+ * Candidate selection modes used when allocating resources.
  *
- * Corresponde aos modos de seleção do Ruby `Allocation#setSelectionMode`:
- * 0 : 'order'        — seleciona na ordem da lista
- * 1 : 'minallocated' — seleciona o candidato com menor probabilidade de alocação
- * 2 : 'minloaded'    — seleciona o candidato com menor carga alocada
- * 3 : 'maxloaded'    — seleciona o candidato com maior carga alocada
- * 4 : 'random'       — seleciona um candidato aleatório
+ * Mirrors Ruby's `Allocation#setSelectionMode`:
+ * 0 : 'order'        — selects in list order
+ * 1 : 'minallocated' — selects the candidate least likely to be allocated
+ * 2 : 'minloaded'    — selects the candidate with the lowest allocated load
+ * 3 : 'maxloaded'    — selects the candidate with the highest allocated load
+ * 4 : 'random'       — selects a random candidate
  *
- * Fonte Ruby: `docs/taskjuggler/lib/taskjuggler/Allocation.rb`
+ * Ruby source: `docs/taskjuggler/lib/taskjuggler/Allocation.rb`
  */
 export enum SelectionMode {
+  /** Selects candidates in declaration order. */
   Order = 0,
+  /** Selects the candidate least likely to be allocated. */
   MinAllocated = 1,
+  /** Selects the candidate with the lowest allocated load. */
   MinLoaded = 2,
+  /** Selects the candidate with the highest allocated load. */
   MaxLoaded = 3,
+  /** Selects a random candidate. */
   Random = 4,
 }
 
 /**
- * Representa como recursos são alocados a uma tarefa.
+ * Describes how resources are allocated to a task.
  *
- * Cada `Allocation` contém uma lista não vazia de recursos candidatos. Para
- * cada slot de tempo, um candidato será selecionado se algum estiver
- * disponível. Um `selectionMode` controla a ordem em que os recursos são
- * verificados quanto à disponibilidade. O primeiro disponível é selecionado.
+ * Each `Allocation` holds a non-empty list of candidate resources. For every
+ * time slot, a candidate is selected when one is available. `selectionMode`
+ * controls the order in which resources are checked for availability; the first
+ * available one wins.
  *
- * Fonte Ruby: `docs/taskjuggler/lib/taskjuggler/Allocation.rb`
+ * Ruby source: `docs/taskjuggler/lib/taskjuggler/Allocation.rb`
  */
 export class Allocation {
+  /** Resources eligible for this allocation, in declaration order. */
   readonly candidates: Resource[];
+  /** Strategy used to order the candidates on every slot. */
   selectionMode: SelectionMode;
+  /** `true` when every candidate must be allocated at once. */
   atomic: boolean;
+  /** `true` when the chosen candidate stays locked for later slots. */
   persistent: boolean;
+  /** `true` when the allocation must always produce a booking. */
   mandatory: boolean;
+  /** Shifts the allocation is restricted to, or `null` for any shift. */
   shifts: ShiftAssignments | null;
+  /** Candidate locked by a previous `persistent` selection. */
   lockedResource: Resource | null;
+  /** Cached candidate order, valid while `MinAllocated` is not persistent. */
   protected staticCandidates: Resource[] | null;
 
+  /**
+   * Creates an allocation.
+   *
+   * @param candidates Non-empty list of eligible resources.
+   * @param selectionMode Strategy used to order the candidates.
+   * @param persistent `true` to keep the chosen candidate locked.
+   * @param mandatory `true` to require a booking on every slot.
+   * @param atomic `true` to allocate every candidate at once.
+   * @throws TjArgumentError When `candidates` is empty.
+   */
   constructor(
     candidates: Resource[],
     selectionMode: SelectionMode = SelectionMode.MinAllocated,
@@ -65,10 +88,11 @@ export class Allocation {
   }
 
   /**
-   * Define o modo de seleção pelo nome.
+   * Sets the selection mode by name.
    *
-   * @param str — um dos nomes: `order`, `minallocated`, `minloaded`, `maxloaded`, `random`.
-   * @throws TjArgumentError se o modo não for reconhecido.
+   * @param str One of `order`, `minallocated`, `minloaded`, `maxloaded`,
+   * `random`.
+   * @throws TjArgumentError When the mode is not recognised.
    */
   setSelectionMode(str: string,): void {
     const modes = [
@@ -86,15 +110,20 @@ export class Allocation {
   }
 
   /**
-   * Adiciona outro candidato à lista de candidatos.
+   * Appends another candidate to the candidate list.
+   *
+   * @param candidate Resource to add.
    */
   addCandidate(candidate: Resource,): void {
     this.candidates.push(candidate,);
   }
 
   /**
-   * Retorna true se não houver shifts definidos ou se os shifts definidos
-   * estiverem ativos no índice do scoreboard dado.
+   * Tells whether the allocation is usable at a scoreboard index.
+   *
+   * @param sbIdx Scoreboard slot index.
+   * @returns `true` when no shifts are defined or the defined shifts are active
+   * at `sbIdx`.
    */
   onShift(sbIdx: number,): boolean {
     if (this.shifts) {
@@ -104,47 +133,52 @@ export class Allocation {
   }
 
   /**
-   * Retorna a lista de candidatos ordenada de acordo com o `selectionMode`.
+   * Returns the candidate list ordered according to `selectionMode`.
    *
-   * Para `MinAllocated` e `!persistent`, a lista ordenada é cacheada em
-   * `staticCandidates` para eficiência.
+   * For `MinAllocated` with `!persistent` the ordered list is cached in
+   * `staticCandidates`.
+   *
+   * @param scenarioIdx Index of the scenario used to read `criticalness` and
+   * `bookedEffort`.
+   * @returns The candidates in the order they must be tried.
+   * @throws TjArgumentError When the selection mode is unknown.
    */
   candidatesList(scenarioIdx: number = 0,): Resource[] {
-    // Se já temos a lista estática cacheada, retorna ela.
+    // Return the cached static list when it already exists.
     if (this.staticCandidates) {
       return this.staticCandidates;
     }
 
-    // Ordem de declaração ou scenarioIdx undefined: retorna como está.
+    // Declaration order or undefined scenarioIdx: return as is.
     if (this.selectionMode === SelectionMode.Order) {
       return this.candidates;
     }
 
-    // Random: embaralha com Math.random.
+    // Random: shuffle with Math.random.
     if (this.selectionMode === SelectionMode.Random) {
       const shuffled = [...this.candidates,];
       shuffled.sort(() => Math.random() - 0.5);
       return shuffled;
     }
 
-    // Minallocated / MinLoaded / MaxLoaded: ordena por criticalness ou bookedEffort.
+    // Minallocated / MinLoaded / MaxLoaded: sort by criticalness or bookedEffort.
     const list = [...this.candidates,].sort((x, y,) => {
       if (this.selectionMode === SelectionMode.MinAllocated) {
         if (this.persistent) {
-          // Para recursos persistentes, usa bookedEffort como critério primário.
+          // For persistent resources, bookedEffort is the primary criterion.
           const cmp = x.bookedEffort(scenarioIdx,) -
             y.bookedEffort(scenarioIdx,);
           if (cmp !== 0) {
             return cmp;
           }
-          // Em caso de empate, usa criticalness.
+          // Break ties with criticalness.
           const xCrit =
             x.scenarioData(scenarioIdx,).a("criticalness",) as number ?? 0;
           const yCrit =
             y.scenarioData(scenarioIdx,).a("criticalness",) as number ?? 0;
           return xCrit - yCrit;
         }
-        // Para recursos não persistentes, usa criticalness.
+        // For non-persistent resources, use criticalness.
         const xCrit =
           x.scenarioData(scenarioIdx,).a("criticalness",) as number ?? 0;
         const yCrit =
@@ -162,7 +196,7 @@ export class Allocation {
       );
     },);
 
-    // Cacheia apenas para MinAllocated && !persistent.
+    // Cache only for MinAllocated && !persistent.
     if (this.selectionMode === SelectionMode.MinAllocated && !this.persistent) {
       this.staticCandidates = list;
     }

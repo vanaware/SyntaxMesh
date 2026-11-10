@@ -1,5 +1,5 @@
 /**
- * Atributo de lista de tarefas.
+ * Task list attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:TaskListAttribute
  */
@@ -10,19 +10,19 @@ import { type AttributeDefinition, } from "../attribute-definition.ts";
 import { ListAttributeBase, } from "../list-attribute-base.ts";
 
 /**
- * Atributo de lista de tarefas.
+ * Task list attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:TaskListAttribute
  */
 export class TaskListAttribute
   extends ListAttributeBase<{ id: string; name: string; fullId?: string }> {
   /**
-   * ID do tipo de atributo para TaskListAttribute.
+   * Attribute type ID for TaskListAttribute.
    */
   static readonly tjpId = "tasklist";
 
   /**
-   * Converte o valor para string.
+   * Converts the value to a string.
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:TaskListAttribute#to_s
    */
@@ -32,7 +32,7 @@ export class TaskListAttribute
   }
 
   /**
-   * Converte o valor para TJP (formato TaskJuggler).
+   * Converts the value to TJP (TaskJuggler format).
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:TaskListAttribute#to_tjp
    */

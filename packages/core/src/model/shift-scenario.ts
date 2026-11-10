@@ -7,7 +7,21 @@ import { type PropertyTreeNode, } from "./property-tree-node.ts";
 import { type PropertyLike, } from "./property-like.ts";
 import { type AttributeBase, } from "../attributes/attribute-base.ts";
 
+/**
+ * Scenario data of a {@link Shift}.
+ *
+ * Holds the working-hours definition, the `replace` flag and the leaves that
+ * belong to the shift in one scenario. The properties it reads are preloaded in
+ * the constructor so the accessors below stay allocation-free.
+ */
 export class ShiftScenario extends ScenarioData {
+  /**
+   * Creates the scenario data of a shift.
+   *
+   * @param shift Shift that owns this scenario data.
+   * @param scIdx Scenario index.
+   * @param attributes Attribute dictionary of the owning property set.
+   */
   constructor(
     shift: unknown,
     scIdx: number,
@@ -17,19 +31,32 @@ export class ShiftScenario extends ScenarioData {
     this.preloadAttributes(["workinghours", "replace", "leaves",],);
   }
 
-  /** Acesso público ao project do cenário (evita acessar `property` privado de ScenarioData). */
+  /**
+   * Project of the scenario.
+   *
+   * Public accessor that avoids reaching into the private `property` of
+   * `ScenarioData`.
+   */
   get project(): ProjectLike {
     return (this.getProperty() as PropertyTreeNode).project;
   }
 
-  /** Acesso público ao scenarioIdx (evita acessar o campo privado de ScenarioData). */
+  /**
+   * Scenario index.
+   *
+   * Public accessor that avoids reaching into the private field of
+   * `ScenarioData`.
+   */
   get scenarioIndex(): number {
     return this.getScenarioIdx();
   }
 
   /**
-   * Retorna true se o shift tem tempo de trabalho definido para a data.
+   * Whether the shift has working time defined for the date.
    *
+   * A shift without `workinghours` counts as on-shift all the time.
+   *
+   * @param date Date to test.
    * @see docs/taskjuggler/lib/taskjuggler/ShiftScenario.rb:onShift?
    */
   onShift(date: TjTime,): boolean {
@@ -41,7 +68,7 @@ export class ShiftScenario extends ScenarioData {
   }
 
   /**
-   * Retorna true se o shift é um dia de substituição.
+   * Whether the shift is a replacement day.
    *
    * @see docs/taskjuggler/lib/taskjuggler/ShiftScenario.rb:replace?
    */
@@ -50,8 +77,9 @@ export class ShiftScenario extends ScenarioData {
   }
 
   /**
-   * Retorna true se o shift tem férias definidas para a data.
+   * Whether the shift has a leave covering the date.
    *
+   * @param date Date to test.
    * @see docs/taskjuggler/lib/taskjuggler/ShiftScenario.rb:onLeave?
    */
   onLeave(date: TjTime,): boolean {

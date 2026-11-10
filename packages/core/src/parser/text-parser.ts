@@ -13,24 +13,27 @@ import {
 } from "./state.ts";
 
 /**
- * ParserToken — token entregue pelo scanner ao FSM.
- * [type, name, sourceFileInfo], espelhando o Ruby `[type, name, sfi]`.
- * Elemento 1 é `unknown` porque o Scanner converte valores (DATE → TjTime,
- * INTEGER/FLOAT → number, TIME → segundos), como no Ruby.
+ * ParserToken — token handed by the scanner to the FSM.
+ * `[type, name, sourceFileInfo]`, mirroring the Ruby `[type, name, sfi]`.
+ * Element 1 is `unknown` because the Scanner converts values (DATE → TjTime,
+ * INTEGER/FLOAT → number, TIME → seconds), as in Ruby.
  */
 export type ParserToken = [string, unknown, SourceFileInfo | null,];
 
 /**
- * Host mínimo que uma action de Pattern recebe ao ser chamada.
- * Em Ruby a action roda via instance_eval no TextParser e lê @val/@sourceFileInfo;
- * aqui recebe o próprio parser tipado estruturalmente (evita import circular).
+ * Minimal host a Pattern action receives when it is called.
+ * In Ruby the action runs through instance_eval on the TextParser and reads
+ * @val/@sourceFileInfo; here it receives the parser itself, typed structurally
+ * (which avoids a circular import).
  */
 export interface ParserActionHost {
+  /** Results of the pattern tokens collected so far. */
   readonly val: unknown[];
+  /** Source location of each collected token. */
   readonly sourceFileInfo: Array<SourceFileInfo | null>;
 }
 
-/** Ordem canônica dos tipos de token do scanner (referência: Scanner.rb). */
+/** Canonical order of the scanner token types (reference: Scanner.rb). */
 const SCANNER_TOKEN_TYPES: string[] = [
   "scope",
   "time",
@@ -50,57 +53,62 @@ const SCANNER_TOKEN_TYPES: string[] = [
 ];
 
 /**
- * Converte o nome de um tipo de token em inteiro estável.
- * Retorno sempre >= 0 para tipos conhecidos; -1 para desconhecidos.
+ * Converts the name of a token type into a stable integer.
+ * The result is always >= 0 for known types and -1 for unknown ones.
+ *
+ * @param type Name of the token type.
+ * @returns The index of the type in the canonical list.
  */
 export function tokenTypeToInt(type: string,): number {
   return SCANNER_TOKEN_TYPES.indexOf(type,);
 }
 
 /**
- * TextParser — autômato finito (FSM) com gramática compilada em runtime.
+ * TextParser — finite-state automaton (FSM) with a grammar compiled at runtime.
  *
- * Port linha-a-linha de TextParser.rb. Classe abstrata: subclasses implementam
- * o conjunto de regras (`rule_*` via `initRules`) e `nextToken`/`returnToken`.
- * Ações de Pattern são callbacks comuns (sem arrow) que recebem o parser como
- * `this`/argumento e leem `parser.val` / `parser.sourceFileInfo`.
+ * Line-by-line port of TextParser.rb. Abstract class: subclasses implement the
+ * rule set (`rule_*` through `initRules`) and `nextToken`/`returnToken`.
+ * Pattern actions are plain callbacks (no arrow) that receive the parser as
+ * `this`/argument and read `parser.val` / `parser.sourceFileInfo`.
  *
  * @see docs/taskjuggler/lib/taskjuggler/TextParser.rb
- * @see ADR 022 (FSM compilada em runtime)
+ * @see ADR 022 (FSM compiled at runtime)
  */
 export abstract class TextParser {
-  /** Conjunto de regras do parser (Ruby @rules, Symbol → string). */
+  /** Rule set of the parser (Ruby @rules, Symbol → string). */
   readonly rules: Map<string, Rule> = new Map();
-  /** Tipos de token que o scanner pode retornar (Ruby @variables). */
+  /** Token types the scanner may return (Ruby @variables). */
   variables: string[] = [];
-  /** Nome da regra corrente (Ruby @cr). */
+  /** Name of the current rule (Ruby @cr). */
   cr: Rule | null = null;
-  /** Estados do FSM: chave de identidade → State (Ruby @states). */
+  /** FSM states: identity key → State (Ruby @states). */
   states: Map<string, State> = new Map();
-  /** Pilha do FSM (Ruby @stack). */
+  /** Stack of the FSM (Ruby @stack). */
   stack: StackElement[] | null = null;
-  /** Resultados dos tokens do padrão em processamento (Ruby @val). */
+  /** Results of the tokens of the pattern being processed (Ruby @val). */
   val: unknown[] = [];
-  /** SourceFileInfo dos tokens do padrão em processamento (Ruby @sourceFileInfo). */
+  /** SourceFileInfo of the tokens of the pattern being processed (Ruby @sourceFileInfo). */
   sourceFileInfo: Array<SourceFileInfo | null> = [];
-  /** Scanner delegado (TextScanner, Fase 10.10). */
+  /** Delegated scanner (TextScanner, phase 10.10). */
   protected scanner: unknown | null = null;
-  /** Mapa de identidade para chaves de estado (substitui states[[rule, pat, i]]). */
+  /** Identity map for the state keys (replaces `states[[rule, pat, i]]`). */
   private _stateKeys: StateKeys = new Map();
-  /** Tokens bloqueados por limitTokenSet (Ruby @blockedVariables). */
+  /** Tokens blocked by `limitTokenSet` (Ruby @blockedVariables). */
   private _blockedVariables: Map<string, boolean> = new Map();
-  /** Lista explícita de métodos `rule_*` (reflection não portável). */
+  /** Explicit list of `rule_*` methods (reflection is not portable). */
   ruleMethods: string[] = [];
 
   /**
-   * Restringe os tokens aceitos pelo scanner ao subconjunto _tokenSet_.
-   * Port de limitTokenSet (TextParser.rb l.98-110).
+   * Restricts the tokens accepted by the scanner to the subset _tokenSet_.
+   * Port of limitTokenSet (TextParser.rb l.98-110).
+   *
+   * @param tokenSet Tokens allowed in the next parse, or `null` for no limit.
    */
   limitTokenSet(tokenSet: string[] | null,): void {
     if (!tokenSet) {
       return;
     }
-    // Copia de todos os suportados, remove os do conjunto limitado.
+    // Copy of all supported tokens, minus the ones of the limited set.
     const blockedVariables = [...this.variables,];
     for (const token of tokenSet) {
       const idx = blockedVariables.indexOf(token,);
@@ -115,18 +123,18 @@ export abstract class TextParser {
   }
 
   /**
-   * Limpa o conjunto de tokens bloqueados (Ruby `@blockedVariables = {}` no
-   * `RichTextParser#reuse`). Protegido: só subclasses que reusam o singleton
-   * precisam deste reset explícito entre parses.
+   * Clears the set of blocked tokens (Ruby `@blockedVariables = {}` in
+   * `RichTextParser#reuse`). Protected: only subclasses that reuse the singleton
+   * need this explicit reset between parses.
    */
   protected clearBlockedVariables(): void {
     this._blockedVariables = new Map();
   }
 
   /**
-   * Chama todos os métodos `rule_*` para inicializar as regras.
-   * Em Ruby usa reflection (methods.grep(/^rule_/)); em TS a lista é
-   * explícita via `ruleMethods` (cheat-sheet §12 Category B).
+   * Calls every `rule_*` method to initialise the rules.
+   * Ruby uses reflection (`methods.grep(/^rule_/)`); in TS the list is explicit
+   * through `ruleMethods` (cheat-sheet §12 Category B).
    */
   initRules(): void {
     for (const m of this.ruleMethods) {
@@ -137,17 +145,20 @@ export abstract class TextParser {
       if (typeof fn !== "function") {
         throw new Error(`Rule method not found: ${m}`,);
       }
-      // Cria a regra com o sufixo do nome da função como nome.
+      // Creates the rule with the suffix of the function name as its name.
       this.newRule(m.slice(5,),);
       fn.call(this,);
     }
   }
 
   /**
-   * Adiciona uma nova regra ao rule set e a torna a regra corrente.
-   * Port de newRule (TextParser.rb l.124-142). Diferença intencional: se a
-   * regra já existe (registro via initRules), reutiliza-a — Ruby não tem o
-   * equivalente de `ruleMethods` e por isso lançava nesse caso.
+   * Adds a new rule to the rule set and makes it the current rule.
+   * Port of newRule (TextParser.rb l.124-142). Intentional difference: when the
+   * rule already exists (registration through `initRules`), it is reused — Ruby
+   * has no equivalent of `ruleMethods` and therefore raised in that case.
+   *
+   * @param name Name of the rule.
+   * @param block Body that declares the patterns of the rule.
    */
   newRule(name: string, block?: (() => void) | null,): void {
     const rule = this.rules.get(name,) ?? new Rule(name,);
@@ -163,8 +174,11 @@ export abstract class TextParser {
   }
 
   /**
-   * Adiciona um padrão à regra mais recentemente adicionada.
-   * Port de pattern (TextParser.rb l.144-157).
+   * Adds a pattern to the most recently added rule.
+   * Port of pattern (TextParser.rb l.144-157).
+   *
+   * @param tokens Tokens of the pattern, prefixed with `!`, `$`, `_` or `.`.
+   * @param func Interpreter hook, when the pattern reduces to a value.
    */
   pattern(tokens: string[], func: (() => unknown) | null = null,): void {
     if (!this.cr) {
@@ -173,7 +187,7 @@ export abstract class TextParser {
     this.cr.addPattern(new Pattern(tokens, func,),);
   }
 
-  /** Marca os padrões da regra corrente como opcionais. */
+  /** Marks the patterns of the current rule as optional. */
   optional(): void {
     if (!this.cr) {
       throw new Error("No current rule. Call newRule() first.",);
@@ -181,7 +195,7 @@ export abstract class TextParser {
     this.cr.setOptional();
   }
 
-  /** Marca os padrões da regra corrente como repetíveis. */
+  /** Marks the patterns of the current rule as repeatable. */
   repeatable(): void {
     if (!this.cr) {
       throw new Error("No current rule. Call newRule() first.",);
@@ -190,17 +204,17 @@ export abstract class TextParser {
   }
 
   /**
-   * Re-compila o FSM após mudanças no rule set (extend, novas regras).
-   * Port de updateParserTables (TextParser.rb l.171-192).
+   * Re-compiles the FSM after changes to the rule set (extend, new rules).
+   * Port of updateParserTables (TextParser.rb l.171-192).
    */
   updateParserTables(): void {
     this.saveFsmStack();
-    // Invalida dados em cache.
+    // Invalidates the cached data.
     for (const rule of this.rules.values()) {
       rule.flushCache();
     }
     this.states = new Map();
-    // Gera os estados de todos os padrões de todas as regras.
+    // Generates the states of every pattern of every rule.
     for (const rule of this.rules.values()) {
       for (const s of rule.generateStates(this.rules,)) {
         this.states.set(
@@ -210,7 +224,7 @@ export abstract class TextParser {
       }
       this.checkRule(rule,);
     }
-    // Calcula as transições entre os estados gerados.
+    // Computes the transitions between the generated states.
     for (const state of this.states.values()) {
       state.addTransitions(this.states, this.rules, this._stateKeys,);
     }
@@ -218,8 +232,11 @@ export abstract class TextParser {
   }
 
   /**
-   * Executa o parse da regra _ruleName_. Retorna o resultado da action de
-   * topo, ou false em caso de erro. Port de parse (TextParser.rb l.194-211).
+   * Parses the rule _ruleName_. Returns the result of the top action, or false
+   * on error. Port of parse (TextParser.rb l.194-211).
+   *
+   * @param ruleName Name of the rule to parse.
+   * @returns The parse result, or `false` when the parse failed.
    */
   parse(ruleName: string,): unknown {
     this.stack = [];
@@ -245,8 +262,10 @@ export abstract class TextParser {
   }
 
   /**
-   * SourceFileInfo do início da regra atualmente processada.
-   * Port de sourceFileInfo (TextParser.rb l.213-219).
+   * SourceFileInfo of the start of the rule currently being processed.
+   * Port of sourceFileInfo (TextParser.rb l.213-219).
+   *
+   * @returns Location of the start of the current rule, or `null`.
    */
   getSourceFileInfo(): SourceFileInfo | null {
     if (this.stack === null || this.stack.length <= 1) {
@@ -258,7 +277,7 @@ export abstract class TextParser {
       if (!scanner) {
         return null;
       }
-      // Scanner real expõe método; fakes de teste podem expor propriedade.
+      // The real scanner exposes a method; test fakes may expose a property.
       return typeof scanner.sourceFileInfo === "function"
         ? scanner.sourceFileInfo()
         : scanner.sourceFileInfo;
@@ -267,8 +286,13 @@ export abstract class TextParser {
   }
 
   /**
-   * Registra um erro. Com scanner, delega (tem mais contexto); sem scanner,
-   * loga no MessageHandler — Ruby recursava (bug real, l.221-230).
+   * Records an error. With a scanner, delegates (it has more context); without
+   * one, logs into the MessageHandler — Ruby recursed (real bug, l.221-230).
+   *
+   * @param id Message id used for deduplication.
+   * @param text Error text.
+   * @param sfi Location of the error, when known.
+   * @param data Extra payload handed to the handler.
    */
   error(
     id: string,
@@ -300,7 +324,12 @@ export abstract class TextParser {
   }
 
   /**
-   * Registra um warning. Mesma delegação de error (TextParser.rb l.232-241).
+   * Records a warning. Same delegation as `error` (TextParser.rb l.232-241).
+   *
+   * @param id Message id used for deduplication.
+   * @param text Warning text.
+   * @param sfi Location of the warning, when known.
+   * @param data Extra payload handed to the handler.
    */
   warning(
     id: string,
@@ -331,7 +360,7 @@ export abstract class TextParser {
     }
   }
 
-  /** Log direto no MessageHandler (equivalente a MessageHandler#error Ruby, que não lança). */
+  /** Direct log into the MessageHandler (equivalent to Ruby's MessageHandler#error, which does not throw). */
   private logMessage(
     type: "error" | "warning",
     id: string,
@@ -347,8 +376,8 @@ export abstract class TextParser {
   }
 
   /**
-   * Valida uma regra: padrões não-vazios, tokens conhecidos, referências válidas.
-   * Port de checkRule (TextParser.rb l.245-265).
+   * Validates a rule: non-empty patterns, known tokens, valid references.
+   * Port of checkRule (TextParser.rb l.245-265).
    */
   private checkRule(rule: Rule,): void {
     if (rule.patterns.length === 0) {
@@ -376,8 +405,11 @@ export abstract class TextParser {
   }
 
   /**
-   * Loop SHIFT/REDUCE do FSM. Port de parseFSM (TextParser.rb l.267-356).
-   * Nenhuma arrow function aqui — ações executam com `this` = parser.
+   * SHIFT/REDUCE loop of the FSM. Port of parseFSM (TextParser.rb l.267-356).
+   * No arrow functions here — the actions run with `this` = parser.
+   *
+   * @param rule Rule whose starting state begins the parse.
+   * @returns The value produced by the top-level action.
    */
   private parseFSM(rule: Rule | null,): unknown {
     const state = rule
@@ -388,8 +420,8 @@ export abstract class TextParser {
         "no_start_state",
         `No start state for rule ${rule === null ? "<nil>" : rule.name} found`,
       );
-      // Ruby prosseguia com state=nil (MessageHandler#error não lançava); em
-      // TS não há como continuar sem state — saímos com false.
+      // Ruby carried on with state=nil (MessageHandler#error did not throw); in
+      // TS there is no way to continue without a state — we return false.
       return false;
     }
     this.stack = [new StackElement(null, state,),];
@@ -399,8 +431,8 @@ export abstract class TextParser {
       let transition: StateTransition | null = null;
       let token: ParserToken | null = null;
       if (currentState.transitions.size === 0) {
-        // Estados finais de cada padrão não têm transições pré-compiladas.
-        // Para tal estado, não precisamos pegar um novo token.
+        // Final states of each pattern have no pre-compiled transitions. For
+        // such a state we do not need to fetch a new token.
       } else {
         token = this.getNextToken();
         transition = currentState.transition(
@@ -408,8 +440,8 @@ export abstract class TextParser {
         );
       }
 
-      // Se fizemos loop-back, precisamos terminar o padrão primeiro.
-      // Tokens finais de regras repetíveis têm transições!
+      // On loop-back we need to finish the pattern first. Final tokens of
+      // repeatable rules do have transitions!
       if (transition && transition.loopBack) {
         this.finishPattern(token,);
         token = this.getNextToken();
@@ -419,26 +451,26 @@ export abstract class TextParser {
       }
 
       if (transition) {
-        // SHIFT: transição normal — próximo token do mesmo padrão ou início
-        // de um novo padrão. A transição diz qual estado processar a seguir.
+        // SHIFT: normal transition — next token of the same pattern or start of
+        // a new pattern. The transition says which state to process next.
         currentState = transition.state;
 
-        // Transições que entram em regras geram estados onde precisamos
-        // retornar quando a regra terminar. Empilhamos essa lista em @stack.
+        // Transitions that enter rules create states we must return to when the
+        // rule finishes. We push that list onto @stack.
         const stackElement = this.stack[this.stack.length - 1]!;
         let first = true;
         for (const s of transition.stateStack) {
           this.checkForOldSyntax(s, token!,);
-          // `stackElement.state` pode ser tupla [rule, pattern, index] —
-          // resolve como State antes de comparar o padrão (fiel a Ruby,
-          // que lê stackElement.state.pattern a cada iteração).
+          // `stackElement.state` may be a [rule, pattern, index] tuple —
+          // resolved as a State before comparing the pattern (faithful to Ruby,
+          // which reads stackElement.state.pattern on every iteration).
           if (first && s.pattern === this.stateOf(stackElement,)?.pattern) {
-            // O primeiro estado da lista pode ser apenas outro estado do
-            // padrão corrente — o StackElement já está na pilha.
+            // The first state of the list may just be another state of the
+            // current pattern — the StackElement is already on the stack.
             stackElement.state = s;
           } else {
-            // Guardamos [rule, pattern, index] (equivalente Ruby) para que
-            // save/restoreFsmStack operem sobre a mesma representação.
+            // We keep [rule, pattern, index] (Ruby equivalent) so that
+            // save/restoreFsmStack operate on the same representation.
             this.stack.push(
               new StackElement(null, [s.rule, s.pattern, s.index,],),
             );
@@ -447,8 +479,8 @@ export abstract class TextParser {
         }
 
         if (currentState.index === 0) {
-          // Começamos um novo padrão (ou loop-back): empurra novo StackEntry,
-          // que guarda o resultado do padrão e o estado de retorno.
+          // We start a new pattern (or loop-back): push a new StackEntry, which
+          // holds the pattern result and the return state.
           this.checkForOldSyntax(currentState, token!,);
           this.stack.push(
             new StackElement(
@@ -458,7 +490,7 @@ export abstract class TextParser {
           );
         }
 
-        // Guarda o valor do token no Array de resultados.
+        // Stores the token value in the results array.
         this.stack[this.stack.length - 1]?.insert(
           currentState.index,
           token ? token[1] : null,
@@ -466,12 +498,12 @@ export abstract class TextParser {
           false,
         );
       } else {
-        // REDUCE: chegamos ao fim de uma regra. Não há transição
-        // pré-compilada; o token atual, se houver, não nos serve aqui —
-        // finishPattern o devolve ao scanner.
+        // REDUCE: we reached the end of a rule. There is no pre-compiled
+        // transition; the current token, if any, is of no use here —
+        // finishPattern hands it back to the scanner.
         if (currentState.noReduce) {
-          // Só estados que fecham uma regra podem disparar reduce. Estados
-          // com noReduce encontrado aqui indicam token não suportado.
+          // Only states that close a rule may trigger a reduce. States with
+          // noReduce reached here indicate an unsupported token.
           const top = this.stack[this.stack.length - 1];
           const topState = top ? this.stateOf(top,) : null;
           const expected = topState ? topState.expectedTokens() : [];
@@ -485,15 +517,15 @@ export abstract class TextParser {
           );
         }
         if (this.finishPattern(token,)) {
-          // ACCEPT: terminamos o parse.
+          // ACCEPT: we finished the parse.
           break;
         }
         const next = this.stateOf(
           this.stack[this.stack.length - 1],
         );
         if (!next) {
-          // Ruby continuaria com state=nil e crasharia no TypeError; em TS
-          // encerramos após o erro ter sido registrado.
+          // Ruby would continue with state=nil and crash with a TypeError; in
+          // TS we stop after the error has been recorded.
           break;
         }
         currentState = next;
@@ -503,7 +535,7 @@ export abstract class TextParser {
     return this.stack && this.stack.length > 0 ? this.stack[0]!.val[0] : null;
   }
 
-  /** Resolve o State de um StackElement (State puro ou tupla [rule, pattern, index]). */
+  /** Resolves the State of a StackElement (plain State or [rule, pattern, index] tuple). */
   private stateOf(entry: StackElement | undefined,): State | null {
     const st = entry?.state;
     if (st instanceof State) {
@@ -519,28 +551,31 @@ export abstract class TextParser {
   }
 
   /**
-   * Termina o padrão no topo da pilha: pop, chama a action, insere o
-   * resultado no nível inferior. Port de finishPattern (TextParser.rb l.358-410).
+   * Finishes the pattern on top of the stack: pop, call the action, insert the
+   * result at the lower level. Port of finishPattern (TextParser.rb l.358-410).
+   *
+   * @param token Token read for the next state, handed back to the scanner.
+   * @returns `true` when the whole parse is accepted.
    */
   private finishPattern(token: ParserToken | null,): boolean {
-    // A action deste padrão pode incluir outro arquivo ou mudar as regras;
-    // devolvemos o token ao scanner antes de qualquer coisa.
+    // The action of this pattern may include another file or change the rules;
+    // we hand the token back to the scanner before anything else.
     if (token) {
       this.returnToken(token,);
     }
 
-    // Para terminar um padrão, pop do StackElement com os valores dos tokens.
+    // To finish a pattern, pop the StackElement that holds the token values.
     const stackEntry = this.stack!.pop();
     if (stackEntry === undefined || this.stack!.length === 0) {
-      // Chegamos ao fundo da pilha.
+      // We reached the bottom of the stack.
       const t = this.getNextToken();
       if (t[0] === "endOfText") {
-        // Fim do arquivo de topo: guardamos o StackEntry de volta (contém o
-        // resultado global do parse) e sinalizamos ACCEPT.
+        // End of the top-level file: we push the StackEntry back (it holds the
+        // overall parse result) and signal ACCEPT.
         this.stack!.push(stackEntry!,);
         return true;
       }
-      // Token que viola as regras de sintaxe.
+      // Token that violates the syntax rules.
       const expected = stackEntry
         ? (this.stateOf(stackEntry,)?.expectedTokens() ?? []).join(", ",)
         : "";
@@ -551,20 +586,21 @@ export abstract class TextParser {
       );
     }
 
-    // Memoriza se a regra deste padrão era repetível; o resultado vira Array.
+    // Remembers whether the rule of this pattern was repeatable; the result
+    // becomes an Array.
     const state = stackEntry === undefined ? null : this.stateOf(stackEntry,) ??
       (stackEntry.state instanceof State ? stackEntry.state : null);
     if (!state) {
-      // Ruby: stackEntry nil → NoMethodError. Em TS: encerra o padrão.
+      // Ruby: stackEntry nil → NoMethodError. In TS: ends the pattern.
       return false;
     }
     const ruleIsRepeatable = state.rule.repeatable;
     let result: unknown = null;
     if (state.pattern && state.pattern.function) {
-      // Disponibiliza os valores dos tokens e seus SourceFileInfo à action.
-      // Ruby: `@val` é um Array onde índices de tokens opcionais não
-      // preenchidos leem `nil`. Em TS, buracos viram `undefined` — os
-      // índices do padrão são normalizados para null antes da action.
+      // Makes the token values and their SourceFileInfo available to the
+      // action. Ruby: `@val` is an Array where indices of unfilled optional
+      // tokens read `nil`. In TS holes become `undefined` — the pattern indices
+      // are normalized to null before the action.
       const vals = stackEntry!.val;
       for (let i = 0; i < state.pattern.tokens.length; i++) {
         if (vals[i] === undefined) vals[i] = null;
@@ -572,7 +608,7 @@ export abstract class TextParser {
       this.val = vals;
       this.sourceFileInfo = stackEntry!.sourceFileInfo;
       try {
-        // A action roda como callback comum (sem arrow): `this` = parser.
+        // The action runs as a plain callback (no arrow): `this` = parser.
         result =
           (state.pattern.function as (host: ParserActionHost,) => unknown)
             .call(this, this,);
@@ -585,9 +621,9 @@ export abstract class TextParser {
       }
     }
 
-    // Usamos o SourceFileInfo do primeiro token do padrão para o resultado.
+    // We use the SourceFileInfo of the pattern's first token for the result.
     const firstSourceFileInfo = stackEntry!.firstSourceFileInfo;
-    // Armazena o resultado na posição correta do nível inferior da pilha.
+    // Stores the result at the right position of the lower stack level.
     const lowerEntry = this.stack![this.stack!.length - 1];
     const lowerState = lowerEntry ? this.stateOf(lowerEntry,) : null;
     if (lowerEntry && lowerState) {
@@ -602,7 +638,9 @@ export abstract class TextParser {
   }
 
   /**
-   * Imprime a pilha do FSM (debug). Port de dumpStack (TextParser.rb l.412-434).
+   * Prints the FSM stack (debug). Port of dumpStack (TextParser.rb l.412-434).
+   *
+   * @returns The textual dump of every stack level.
    */
   protected dumpStack(): string {
     if (!this.stack) {
@@ -629,8 +667,8 @@ export abstract class TextParser {
   }
 
   /**
-   * Detecta sintaxe deprecada/removida no token corrente.
-   * Port de checkForOldSyntax (TextParser.rb l.436-449).
+   * Detects deprecated/removed syntax on the current token.
+   * Port of checkForOldSyntax (TextParser.rb l.436-449).
    */
   private checkForOldSyntax(state: State, token: ParserToken,): void {
     if (!state.pattern) {
@@ -655,8 +693,8 @@ export abstract class TextParser {
   }
 
   /**
-   * Converte os State objects da pilha em [rule, pattern, index] para
-   * sobreviverem à re-compilação do FSM. Port de saveFsmStack (l.451-460).
+   * Converts the State objects of the stack into [rule, pattern, index] so they
+   * survive the re-compilation of the FSM. Port of saveFsmStack (l.451-460).
    */
   private saveFsmStack(): void {
     if (!this.stack) {
@@ -671,8 +709,8 @@ export abstract class TextParser {
   }
 
   /**
-   * Converte os [rule, pattern, index] da pilha de volta para State objects.
-   * Port de restoreFsmStack (l.462-472).
+   * Converts the [rule, pattern, index] of the stack back into State objects.
+   * Port of restoreFsmStack (l.462-472).
    */
   private restoreFsmStack(): void {
     if (!this.stack) {
@@ -694,8 +732,10 @@ export abstract class TextParser {
   }
 
   /**
-   * Pega o próximo token do scanner e aplica o conjunto bloqueado.
-   * Port de getNextToken (TextParser.rb l.474-483).
+   * Fetches the next token from the scanner and applies the blocked set.
+   * Port of getNextToken (TextParser.rb l.474-483).
+   *
+   * @returns The next token, already validated against `limitTokenSet`.
    */
   protected getNextToken(): ParserToken {
     const token = this.nextToken();
@@ -709,9 +749,9 @@ export abstract class TextParser {
     return token;
   }
 
-  /** Entrega o token de volta ao scanner (push-back). Abstrata. */
+  /** Hands the token back to the scanner (push-back). Abstract. */
   protected abstract returnToken(token: ParserToken | null,): void;
 
-  /** Próximo token do scanner. Abstrata. */
+  /** Next token of the scanner. Abstract. */
   protected abstract nextToken(): ParserToken;
 }

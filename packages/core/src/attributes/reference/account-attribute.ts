@@ -1,5 +1,5 @@
 /**
- * Atributo de referência à conta.
+ * Account reference attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:AccountAttribute
  */
@@ -10,18 +10,18 @@ import { type AttributeDefinition, } from "../attribute-definition.ts";
 import { AttributeBase, } from "../attribute-base.ts";
 
 /**
- * Atributo de referência à conta.
+ * Account reference attribute.
  *
  * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:AccountAttribute
  */
 export class AccountAttribute extends AttributeBase<{ id: string }> {
   /**
-   * ID do tipo de atributo para AccountAttribute.
+   * Attribute type ID for AccountAttribute.
    */
   static readonly tjpId = "account";
 
   /**
-   * Converte o valor para string.
+   * Converts the value to a string.
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:AccountAttribute#to_s
    */
@@ -31,7 +31,7 @@ export class AccountAttribute extends AttributeBase<{ id: string }> {
   }
 
   /**
-   * Converte o valor para TJP (formato TaskJuggler).
+   * Converts the value to TJP (TaskJuggler format).
    *
    * @see docs/taskjuggler/lib/taskjuggler/Attributes.rb:AccountAttribute#to_tjp
    */

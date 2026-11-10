@@ -1,28 +1,29 @@
 /**
- * RichTextScanner — lexer do markup MediaWiki (dialeto TaskJuggler).
+ * RichTextScanner — lexer for MediaWiki markup (TaskJuggler dialect).
  *
- * Port fiel de `RichText/Scanner.rb` (TaskJuggler 3.8.4, 258 linhas).
- * Especializa `TextParser::Scanner` (Fase 10) para a gramática RichText.
+ * Faithful port of `RichText/Scanner.rb` (TaskJuggler 3.8.4, 258 lines).
+ * Specializes `TextParser::Scanner` (phase 10) for the RichText grammar.
  *
- * Modos suportados (Ruby `@scannerMode`, ver Scanner.rb l.20-32):
- *   - `bop`   : begin of paragraph (início de parágrafo)
- *   - `bol`   : begin of line (início de linha, dentro de parágrafo)
- *   - `inline`: em uma linha (o default depois de qualquer token inline)
- *   - `nowiki`: ignora tokens especiais até `</nowiki>`
- *   - `html`  : consome tudo até `</html>` como HTMLBLOB
- *   - `ref`   : dentro de `[[ ... ]]`
- *   - `href`  : dentro de `[ ... ]`
- *   - `func`  : dentro de `<[ ... ]>` (block) ou `<- ... ->` (inline)
+ * Supported modes (Ruby `@scannerMode`, see Scanner.rb l.20-32):
+ *   - `bop`   : begin of paragraph
+ *   - `bol`   : begin of line (inside a paragraph)
+ *   - `inline`: inside a line (the default after any inline token)
+ *   - `nowiki`: skips special tokens up to `</nowiki>`
+ *   - `html`  : consumes everything up to `</html>` as HTMLBLOB
+ *   - `ref`   : inside `[[ ... ]]`
+ *   - `href`  : inside `[ ... ]`
+ *   - `func`  : inside `<[ ... ]>` (block) or `<- ... ->` (inline)
  *
- * Divergência controlada vs Ruby:
- *   - `HTMLBLOB /(.|\n)*<\/html>/` é linha-a-linha aqui, pois nosso
- *     `StreamHandle.scan()` opera por linha (mesma semântica do strscan em
- *     `@cf` quando Ruby também está num `StringScanner` por linha — o
- *     `(.|\n)*` nunca casa além do buffer da linha no Scanner.rb real pois
- *     `@cf` é recriado a cada `gets`). O parser junta os fragmentos.
+ * Controlled divergence vs Ruby:
+ *   - `HTMLBLOB /(.|\n)*<\/html>/` is line-by-line here, because our
+ *     `StreamHandle.scan()` works per line (same semantics as strscan on
+ *     `@cf` when Ruby is also in a per-line `StringScanner` — the
+ *     `(.|\n)*` never matches beyond the line buffer in the real Scanner.rb
+ *     because `@cf` is recreated on every `gets`). The parser joins the
+ *     fragments.
  *
  * @see docs/taskjuggler/lib/taskjuggler/RichText/Scanner.rb
- * @see ADR 025 (RichText e function handlers)
+ * @see ADR 025 (RichText and function handlers)
  */
 import {
   Scanner,
@@ -32,7 +33,7 @@ import {
 } from "../lexer/scanner.ts";
 import type { LogLike, } from "../lexer/stream-handle.ts";
 
-/** Cores nomeadas aceitas por `<fcol:...>` (Scanner.rb l.155-156). */
+/** Named colors accepted by `<fcol:...>` (Scanner.rb l.155-156). */
 const VALID_COLORS = [
   "black",
   "maroon",
@@ -52,7 +53,7 @@ const VALID_COLORS = [
   "white",
 ];
 
-/** Índice de `quotes` (Ruby l.173): 2→ITALIC 3→BOLD 4→CODE 5→BOLDITALIC. */
+/** Index of `quotes` (Ruby l.173): 2→ITALIC 3→BOLD 4→CODE 5→BOLDITALIC. */
 const QUOTE_TYPES: Array<string | null> = [
   null,
   null,
@@ -63,9 +64,9 @@ const QUOTE_TYPES: Array<string | null> = [
 ];
 
 /**
- * Modo default (Ruby `super(masterFile, log, tokenPatterns, :bop)`).
- * Usamos strings puras (sem `:`) por consistência com o resto do
- * TypeScript; não há código externo dependendo deste nome.
+ * Default mode (Ruby `super(masterFile, log, tokenPatterns, :bop)`).
+ * Plain strings are used here (no `:`) for consistency with the rest of
+ * the TypeScript code; no external code depends on this name.
  */
 const RT_MODES = {
   bop: "bop",
@@ -79,14 +80,14 @@ const RT_MODES = {
 } as const;
 
 export class RichTextScanner extends Scanner {
-  /** Modo anterior à entrada em `:func` (Ruby `@funcLastMode`). */
+  /** Mode before entering `:func` (Ruby `@funcLastMode`). */
   private funcLastMode: string | null = null;
-  /** Modo anterior à entrada em `:href` (Ruby `@hrefLastMode`). */
+  /** Mode before entering `:href` (Ruby `@hrefLastMode`). */
   private hrefLastMode: string | null = null;
 
   constructor(masterFile: string, log: LogLike,) {
-    // Registraremos os padrões depois de `super()` porque as setas `this.*`
-    // exigem a instância construída (idêmpotentemente ao ProjectFileScanner).
+    // Patterns are registered after `super()` because the `this.*` arrows
+    // need the constructed instance (idempotent with ProjectFileScanner).
     super(masterFile, log, [], RT_MODES.bop,);
 
     const patterns: TokenPattern[] = [
@@ -113,7 +114,7 @@ export class RichTextScanner extends Scanner {
         RT_MODES.inline,
         (t, m,) => this.space(t, m,),
       ],
-      // :bop e :bol (e :inline para INLINEFUNCSTART)
+      // :bop and :bol (and :inline for INLINEFUNCSTART)
       [
         "INLINEFUNCSTART",
         /<-/,
@@ -216,15 +217,15 @@ export class RichTextScanner extends Scanner {
       ["SPACE", /[ \t]+/, RT_MODES.nowiki, null,],
       ["LINEBREAK", /\s*\n/, RT_MODES.nowiki, null,],
       // :html
-      // Ruby `(.|\n)*<\/html>` + `match[0..-8]`: o blob para exatamente antes
-      // de `</html>` e o tag nunca entra no valor. Linha-a-linha:
-      //   (a) `</html>` com mais algo após o tag na mesma linha (nada a
-      //       cortar além do próprio tag);
-      //   (b) `</html>` seguido de `\n` ou EOL — corta os 7 chars do tag;
-      //   (c) fração intermediária de blobs multi-linha (Ruby junta os
-      //       fragmentos num só HTMLBLOB via buffer multi-linha; aqui o
-      //       parser guarda cada linha como fragmento e o `htmlblob` join
-      //       refaz o valor completo).
+      // Ruby `(.|\n)*<\/html>` + `match[0..-8]`: the blob ends right before
+      // `</html>` and the tag never enters the value. Line by line:
+      //   (a) `</html>` with something else after the tag on the same line
+      //       (nothing to cut beyond the tag itself);
+      //   (b) `</html>` followed by `\n` or EOL — cuts the 7 tag chars;
+      //   (c) intermediate fraction of multi-line blobs (Ruby joins the
+      //       fragments into a single HTMLBLOB via a multi-line buffer; here
+      //       the parser keeps each line as a fragment and the `htmlblob`
+      //       join rebuilds the full value).
       [
         "HTMLBLOB",
         /.*<\/html>(?=[^\n])/,
@@ -237,7 +238,7 @@ export class RichTextScanner extends Scanner {
         RT_MODES.html,
         (t, m,) => this.htmlEnd(t, m,),
       ],
-      // Ruby `/.*\n/` — a linha inteira, incluindo `\n`.
+      // Ruby `/.*\n/` — the whole line, including `\n`.
       ["HTMLBLOB", /.*\n/, RT_MODES.html, null,],
       // :ref
       [
@@ -307,15 +308,15 @@ export class RichTextScanner extends Scanner {
     for (const pat of patterns) {
       this.addPattern(pat[0], pat[1], pat[2]!, pat[3],);
     }
-    // Reavalia activePatterns agora que os modos existem.
+    // Re-evaluate activePatterns now that the modes exist.
     this.mode = RT_MODES.bop;
   }
 
   // ------------------------------------------------------------------ //
-  // Pós-processadores (privados, fiéis a Scanner.rb l.107-254)         //
+  // Post-processors (private, faithful to Scanner.rb l.107-254)        //
   // ------------------------------------------------------------------ //
 
-  /** SPACE com `\n` avança para :bol e devolve texto esvaziado. */
+  /** SPACE with `\n` moves to :bol and returns the emptied text. */
   private space(
     type: string | null,
     match: string,
@@ -343,7 +344,7 @@ export class RichTextScanner extends Scanner {
     return [type, match,];
   }
 
-  /** `== T ==` → TITLE1..TITLE4 conforme o comprimento (Ruby: `.length - 1`). */
+  /** `== T ==` → TITLE1..TITLE4 by length (Ruby: `.length - 1`). */
   private titleStart(
     _type: string | null,
     match: string,
@@ -377,13 +378,13 @@ export class RichTextScanner extends Scanner {
     return [`NUMBER${hashes}`, match,];
   }
 
-  /** `<fcol:red>` → FCOLSTART com `red` extraído; valida cor. */
+  /** `<fcol:red>` → FCOLSTART with `red` extracted; validates the color. */
   private fontColorStart(
     _type: string | null,
     match: string,
   ): ReturnType<TokenPostProcessor> {
     this.mode = RT_MODES.inline;
-    // Ruby: `match[6..-2]` remove `<fcol:` (6) e `>` (1 final).
+    // Ruby: `match[6..-2]` strips `<fcol:` (6) and the final `>` (1).
     const colName = match.slice(6, -1,);
     if (!/#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})/.test(colName,)) {
       if (!VALID_COLORS.includes(colName,)) {
@@ -423,7 +424,7 @@ export class RichTextScanner extends Scanner {
     return [type, match,];
   }
 
-  /** Remove `</html>` (7 chars) do fim do último HTMLBLOB. */
+  /** Strips `</html>` (7 chars) from the end of the last HTMLBLOB. */
   private htmlEnd(
     type: string | null,
     match: string,
@@ -448,7 +449,7 @@ export class RichTextScanner extends Scanner {
     return [type, match,];
   }
 
-  /** `<[` ou `<-`: lembra o modo de retorno e entra em `:func`. */
+  /** `<[` or `<-`: remembers the return mode and enters `:func`. */
   private functionStart(
     type: string | null,
     match: string,
@@ -470,7 +471,7 @@ export class RichTextScanner extends Scanner {
     return [type, match,];
   }
 
-  /** PRE remove o primeiro espaço (Ruby `match[1..-1]`). */
+  /** PRE strips the first space (Ruby `match[1..-1]`). */
   private pre(
     type: string | null,
     match: string,
@@ -478,7 +479,7 @@ export class RichTextScanner extends Scanner {
     return [type, match.slice(1,),];
   }
 
-  /** dqString: remove aspas e desescapa `\"`. */
+  /** dqString: strips the quotes and unescapes `\"`. */
   private dqString(
     type: string | null,
     match: string,
@@ -487,7 +488,7 @@ export class RichTextScanner extends Scanner {
     return [type, inner,];
   }
 
-  /** sqString: remove aspas e desescapa `\'`. */
+  /** sqString: strips the quotes and unescapes `\'`. */
   private sqString(
     type: string | null,
     match: string,
@@ -496,7 +497,7 @@ export class RichTextScanner extends Scanner {
     return [type, inner,];
   }
 
-  /** QUERY remove `<-` e `->` (Ruby `match[2..-3]`). */
+  /** QUERY strips `<-` and `->` (Ruby `match[2..-3]`). */
   private query(
     type: string | null,
     match: string,
@@ -542,5 +543,5 @@ export class RichTextScanner extends Scanner {
   }
 }
 
-// Re-exporta o tipo para conveniência dos consumidores (parser + testes).
+// Re-exports the type for the convenience of consumers (parser + tests).
 export type { ScannerToken, };

@@ -1,5 +1,5 @@
 /**
- * Barrel do diretório `interfaces/` — contratos de I/O injetáveis do core.
+ * Barrel of the `interfaces/` directory — injectable I/O contracts of the core.
  *
  * @see docs/syntaxmesh/decisoes/037-filestore-injection.md
  */

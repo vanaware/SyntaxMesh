@@ -1,7 +1,7 @@
 /**
- * Classe base abstrata para todos os atributos do TaskJuggler.
+ * Abstract base class for every TaskJuggler attribute.
  *
- * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb (arquivo inteiro)
+ * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb (whole file)
  */
 
 import { type PropertyLike, } from "../model/property-like.ts";
@@ -11,29 +11,36 @@ import { deepClone, } from "../utils/deep-clone.ts";
 import { AttributeOverwrite, NotYetImplementedError, } from "./errors.ts";
 
 /**
- * Modos globais para o comportamento de `set()` e `inherit()`.
+ * Global modes for the behaviour of `set()` and `inherit()`.
  *
  * @see 014-attribute-mode-global.md
  */
 export type AttributeMode = 0 | 1 | 2;
 
 /**
- * Classe base abstrata para todos os atributos.
+ * Abstract base class for all attributes.
  *
  * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb
  */
 export abstract class AttributeBase<T,> {
   /**
-   * Modo global que influencia `set()` e `inherit()`.
+   * Global mode that influences `set()` and `inherit()`.
    *
    * @see 014-attribute-mode-global.md
    */
   private static _mode: AttributeMode = 0;
 
+  /** Current global attribute mode. */
   static get mode(): AttributeMode {
     return AttributeBase._mode;
   }
 
+  /**
+   * Replaces the global attribute mode.
+   *
+   * @param mode New mode: 0 = provided, 1 = inherited, 2 = computed.
+   * @throws Error When the mode is not 0, 1 or 2.
+   */
   static setMode(mode: AttributeMode,): void {
     if (mode !== 0 && mode !== 1 && mode !== 2) {
       throw new Error(`Modo inválido: ${mode}. Deve ser 0, 1 ou 2.`,);
@@ -42,35 +49,42 @@ export abstract class AttributeBase<T,> {
   }
 
   /**
-   * Propriedade que contém este atributo.
+   * Property that contains this attribute.
    */
   protected readonly property: PropertyLike;
 
   /**
-   * Definição do tipo deste atributo (contém id, name, default, etc.).
+   * Type definition of this attribute (holds id, name, default, etc.).
    */
   protected readonly type: AttributeDefinition<T>;
 
   /**
-   * Container que armazena o valor deste atributo.
+   * Container that stores the value of this attribute.
    */
   protected readonly container: AttributeContainer;
 
   /**
-   * Se `true`, o valor foi fornecido explicitamente (usuário).
+   * If `true`, the value was provided explicitly (by the user).
    */
   public provided: boolean = false;
 
   /**
-   * Se `true`, o valor foi herdado (pai/projeto).
+   * If `true`, the value was inherited (parent/project).
    */
   public inherited: boolean = false;
 
   /**
-   * Valor armazenado localmente (para evitar recursão).
+   * Value stored locally (avoids recursion).
    */
   protected _value: T | null = null;
 
+  /**
+   * Ruby `initialize(property, type, container)`.
+   *
+   * @param property Property that owns the attribute.
+   * @param type Type definition of the attribute.
+   * @param container Container that stores the value.
+   */
   constructor(
     property: PropertyLike,
     type: AttributeDefinition<T>,
@@ -83,7 +97,7 @@ export abstract class AttributeBase<T,> {
   }
 
   /**
-   * Reseta o atributo ao seu estado padrão.
+   * Resets the attribute to its default state.
    *
    * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:reset
    */
@@ -98,8 +112,9 @@ export abstract class AttributeBase<T,> {
   }
 
   /**
-   * Herda um valor do pai ou projeto.
+   * Inherits a value from the parent or the project.
    *
+   * @param value Value to inherit.
    * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:inherit
    */
   inherit(value: T,): void {
@@ -109,8 +124,9 @@ export abstract class AttributeBase<T,> {
   }
 
   /**
-   * Define um valor para o atributo.
+   * Sets a value for the attribute.
    *
+   * @param value Value to store.
    * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:set
    */
   set(value: T,): void {
@@ -122,7 +138,7 @@ export abstract class AttributeBase<T,> {
         this.inherited = true;
         break;
       case 2: // computed
-        // nenhuma flag é marcada
+        // no flag is marked
         break;
     }
     this._value = value;
@@ -130,46 +146,49 @@ export abstract class AttributeBase<T,> {
   }
 
   /**
-   * Obtém o valor atual do atributo.
+   * Gets the current value of the attribute.
+   *
+   * @returns The stored value, or `null` when unset.
    */
   get(): T | null {
     return this.container.getStoredValue(this.type.id,) as T | null;
   }
 
   /**
-   * Obtém o valor como `unknown` (para serialização).
+   * Gets the value as `unknown` (for serialization).
    */
   get value(): unknown {
     return this.container.getStoredValue(this.type.id,);
   }
 
   /**
-   * ID do tipo de atributo para serialização TJP.
+   * Attribute type id for TJP serialization.
    *
-   * Subclasses definem `static readonly tjpId`. Este getter permite
-   * acessá-lo via instância sem repetir o nome da classe.
+   * Subclasses define `static readonly tjpId`. This getter exposes it through
+   * the instance without repeating the class name.
    */
   protected get tjpId(): string {
     return (this.constructor as unknown as { tjpId: string }).tjpId;
   }
 
   /**
-   * Obtém o ID do atributo.
+   * Gets the attribute id.
    */
   get id(): string {
     return this.type.id;
   }
 
   /**
-   * Obtém o nome do atributo.
+   * Gets the attribute name.
    */
   get name(): string {
     return this.type.name;
   }
 
   /**
-   * Verifica se o atributo é nil (null, undefined ou array vazio).
+   * Checks whether the attribute is nil (null, undefined or empty array).
    *
+   * @returns Whether the value is considered nil.
    * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:nil?
    */
   isNil(): boolean {
@@ -179,8 +198,9 @@ export abstract class AttributeBase<T,> {
   }
 
   /**
-   * Verifica se o atributo é uma lista.
+   * Checks whether the attribute is a list.
    *
+   * @returns Always `false` in the base class.
    * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:isList?
    */
   isList(): boolean {
@@ -188,15 +208,17 @@ export abstract class AttributeBase<T,> {
   }
 
   /**
-   * Converte o valor para string.
+   * Converts the value to a string.
    *
-   * Ruby: `get.to_s` (AttributeBase.rb l.134-136). O texto depende do **tipo
-   * do valor guardado no Ruby**, não do atributo: uma duração de `5d` vira
-   * `Float` de slots e sai `144000.0`, enquanto `3600` inteiro sai `3600`
-   * (`attributes.golden.json`). O `Number` do JS não carrega essa distinção,
-   * então o port mantém o texto numérico simples — a formatação de relatório
-   * vem de `Query#scaleDuration`/`scaleLoad` (com `numberFormat`).
+   * Ruby: `get.to_s` (AttributeBase.rb l.134-136). The text depends on the
+   * **type of the value stored in Ruby**, not on the attribute: a `5d` duration
+   * becomes a `Float` of slots and comes out as `144000.0`, while an integer
+   * `3600` comes out as `3600` (`attributes.golden.json`). JS `Number` does not
+   * carry that distinction, so the port keeps the plain numeric text — report
+   * formatting comes from `Query#scaleDuration`/`scaleLoad` (with
+   * `numberFormat`).
    *
+   * @returns The value as text, or an empty string when unset.
    * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:to_s
    */
   to_s(): string {
@@ -205,8 +227,9 @@ export abstract class AttributeBase<T,> {
   }
 
   /**
-   * Converte o valor para número.
+   * Converts the value to a number.
    *
+   * @returns The numeric value, or 0 when unset.
    * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:to_num
    */
   to_num(): number {
@@ -218,8 +241,9 @@ export abstract class AttributeBase<T,> {
   }
 
   /**
-   * Converte o valor para string de ordenação.
+   * Converts the value to a sorting string.
    *
+   * @returns The value as text, or an empty string when unset.
    * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:to_sort
    */
   to_sort(): string {
@@ -231,36 +255,43 @@ export abstract class AttributeBase<T,> {
   }
 
   /**
-   * Converte o valor para RTI (Rich Text Intermediate).
+   * Converts the value to RTI (Rich Text Intermediate).
    *
-   * Fiel a Ruby: apenas valores rich-text são RTI; os demais retornam `null`
-   * (o chamador — `Query.to_rti`, usado pelos relatórios — cai em `to_s`).
+   * Faithful to Ruby: only rich-text values are RTI; the others return `null`
+   * (the caller — `Query.to_rti`, used by the reports — falls back to `to_s`).
    *
+   * @param _query Query context (unused; kept for the Ruby signature).
+   * @returns The RTI value, or `null` for non-rich-text values.
    * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:to_rti
    */
   to_rti(_query?: unknown,): unknown {
     const val = this.get();
-    // Duck-typing fiel ao `is_a?(RichTextIntermediate)` de Ruby: o RTI porta
-    // a marca `richText` (mesma detecção usada em RichTextAttribute).
+    // Duck-typing faithful to Ruby's `is_a?(RichTextIntermediate)`: the RTI
+    // carries the `richText` marker (same detection used in RichTextAttribute).
     return typeof val === "object" && val !== null && "richText" in val
       ? val
       : null;
   }
 
   /**
-   * Converte o valor para TJP (formato TaskJuggler).
+   * Converts the value to TJP (TaskJuggler format).
    *
+   * @returns The value serialized as TJP.
    * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:to_tjp
    */
   to_tjp(): string {
-    // Ancorado: Fase 13/14 — to_tjp de atributos rich-text exige round-trip
-    // RTI→markup (Markdown/Fase 13) consumido pelos relatórios (Fase 14).
+    // Ancorado: Fase 13/14 — the to_tjp of rich-text attributes requires a
+    // round-trip RTI→markup (Markdown/phase 13) consumed by the reports
+    // (phase 14).
     throw new NotYetImplementedError("12", "to_tjp",);
   }
 
   /**
-   * Retorna uma representação string escapada.
+   * Returns an escaped string representation.
    *
+   * @param str Text to quote; defaults to `to_s()`.
+   * @returns The quoted text, using the `-8<-`/`->8-` block form when it spans
+   *   several lines.
    * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:quotedString
    */
   quotedString(str?: string,): string {

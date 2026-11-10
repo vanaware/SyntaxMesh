@@ -1,17 +1,18 @@
 /**
- * GanttChart (Fase 15.11) — chart abstrato de uma coluna `chart`.
+ * GanttChart (phase 15.11) — abstract chart of a `chart` column.
  *
- * Port fiel de `docs/taskjuggler/lib/taskjuggler/reports/GanttChart.rb`.
+ * Faithful port of `docs/taskjuggler/lib/taskjuggler/reports/GanttChart.rb`.
  *
- * O chart é gerado em duas etapas, como no Ruby:
- * 1. `generateByScale(start, end, scale)` define período, escala e largura e
- *    cria o `GanttHeader`;
- * 2. as `GanttLine`s são criadas por quem consome o chart (`TableReport`,
- *    15.12) e registradas via `addLine`/`addTask`;
- * 3. `to_html()` chama `completeChart()` (lazy) — calcula a altura, roteia as
- *    linhas de dependência e deduplica as pontas de seta — e devolve o `<td>`.
+ * The chart is generated in two steps, as in Ruby:
+ * 1. `generateByScale(start, end, scale)` sets the period, the scale and the
+ *    width and creates the `GanttHeader`;
+ * 2. the `GanttLine`s are created by whoever consumes the chart (`TableReport`,
+ *    15.12) and registered through `addLine`/`addTask`;
+ * 3. `to_html()` calls `completeChart()` (lazy) — it computes the height, routes
+ *    the dependency lines and deduplicates the arrow heads — and returns the
+ *    `<td>`.
  *
- * Saída é HTML+CSS puro (ADR 028).
+ * The output is plain HTML+CSS (ADR 028).
  *
  * @see docs/syntaxmesh/decisoes/028-gantt-html-css.md
  * @see docs/syntaxmesh/fases/fase-15-gantt.md (15.11)
@@ -38,7 +39,7 @@ import type {
 import { GanttRouter, } from "./gantt-router.ts";
 import type { FromToPoint, RoutePoint, } from "./gantt-router.ts";
 
-/** Método de `TjTime` que conta os passos entre duas datas (Ruby `:sym`). */
+/** `TjTime` method that counts the steps between two dates (Ruby `:sym`). */
 export type StepsToFunc =
   | "hoursTo"
   | "daysTo"
@@ -47,42 +48,44 @@ export type StepsToFunc =
   | "quartersTo"
   | "yearsTo";
 
-/** Uma escala horizontal do chart (Ruby hash de `@@scales`). */
+/** One horizontal scale of the chart (Ruby hash of `@@scales`). */
 export interface GanttScale {
+  /** Scale name as written in the report column (`hour`, `day`, …). */
   readonly name: string;
-  /** Largura de um passo da escala em pixels. */
+  /** Width of one step of the scale, in pixels. */
   readonly stepSize: number;
-  /** `TjTime` que conta os passos entre o início e o fim do período. */
+  /** `TjTime` method that counts the steps between period start and end. */
   readonly stepsToFunc: StepsToFunc;
   /**
-   * Duração mínima (segundos) de um intervalo de folga para ser desenhado.
-   * `<= 0` desativa as zonas nesta escala (`GanttLine#generateTimeOffZones`).
+   * Minimum duration (seconds) of an off-time interval to be drawn. `<= 0`
+   * disables the zones on this scale (`GanttLine#generateTimeOffZones`).
    */
   readonly minTimeOff: number;
 }
 
-/** O `TableReport` visto pelo chart (só a legenda é usada aqui). */
+/** The `TableReport` as seen by the chart (only the legend is used here). */
 export interface GanttChartTable {
+  /** Legend where the chart symbols are collected. */
   readonly legend: GanttLineLegend;
 }
 
 /**
- * Chart do Gantt: uma coluna inteira da tabela de relatório.
+ * Gantt chart: one whole column of the report table.
  *
- * Implementa `SpecialCell` (Fase 14) para ser plugado como célula especial.
- * Depois de `generateByScale` ele satisfaz estruturalmente `GanttHeaderChart`
- * (15.9) e `GanttLineChart` (15.10); antes disso `start`/`end`/`scale`/`header`
- * são `null`, exatamente como os `nil` do Ruby.
+ * It implements `SpecialCell` (phase 14) so it can be plugged in as a special
+ * cell. After `generateByScale` it structurally satisfies `GanttHeaderChart`
+ * (15.9) and `GanttLineChart` (15.10); before that, `start`/`end`/`scale`/
+ * `header` are `null`, exactly like the `nil`s in Ruby.
  */
 export class GanttChart implements SpecialCell {
-  /** Altura de uma barra de rolagem horizontal no HTML. */
+  /** Height of a horizontal scrollbar in the HTML. */
   static readonly SCROLLBARHEIGHT = 20;
 
   /**
-   * Escalas possíveis, da mais fina para a mais grossa (Ruby `@@scales`).
+   * Possible scales, from the finest to the coarsest (Ruby `@@scales`).
    *
-   * `stepSize` é a largura de um passo em pixels; `stepsToFunc` o método de
-   * `TjTime` que conta os passos; `minTimeOff` a folga mínima visível.
+   * `stepSize` is the width of one step in pixels; `stepsToFunc` the `TjTime`
+   * method that counts the steps; `minTimeOff` the smallest visible off-time.
    */
   static readonly SCALES: readonly GanttScale[] = [
     { name: "hour", stepSize: 20, stepsToFunc: "hoursTo", minTimeOff: 5 * 60, },
@@ -113,51 +116,54 @@ export class GanttChart implements SpecialCell {
     { name: "year", stepSize: 20, stepsToFunc: "yearsTo", minTimeOff: -1, },
   ];
 
-  /** Início do período reportado (`null` antes de gerar). */
+  /** Start of the reported period (`null` before generating). */
   start: TjTime | null = null;
-  /** Fim do período reportado (`null` antes de gerar). */
+  /** End of the reported period (`null` before generating). */
   end: TjTime | null = null;
-  /** Data usada como "hoje" (linha vertical `nowline`). */
+  /** Date used as "today" (the `nowline` vertical line). */
   readonly now: TjTime;
-  /** `true` se as semanas começam na segunda-feira. */
+  /** `true` when weeks start on Monday. */
   readonly weekStartsMonday: boolean;
-  /** Cabeçalho do chart (criado por `generateByScale`). */
+  /** Header of the chart (created by `generateByScale`). */
   header: GanttHeader | null = null;
-  /** Largura do chart em pixels. */
+  /** Width of the chart, in pixels. */
   width = 0;
-  /** Escala corrente (`null` antes de gerar, como no Ruby). */
+  /** Current scale (`null` before generating, as in Ruby). */
   scale: GanttScale | null = null;
-  /** `TableReport` dono do chart (para a legenda). */
+  /** `TableReport` owning the chart (used for the legend). */
   table: GanttChartTable | null = null;
-  /** Data de referência da linha `markdateline` (opcional). */
+  /** Reference date of the `markdateline` line (optional). */
   readonly markdate: TjTime | null;
-  /** Largura visível; menor que `width` → scrollbar. */
+  /** Visible width; smaller than `width` → scrollbar. */
   viewWidth: number | null = null;
 
   private readonly columnDef: TableColumnDefinition;
-  /** Altura do chart (sem o cabeçalho), calculada em `completeChart`. */
+  /** Height of the chart (without the header), computed in `completeChart`. */
   private height = 0;
-  /** Largura de um passo da escala corrente. */
+  /** Width of one step of the current scale. */
   private stepSize = 0;
-  /** Linhas do chart, na ordem de criação. */
+  /** Chart lines, in creation order. */
   private lines: GanttLine[] = [];
-  /** Roteador das linhas de dependência (criado em `completeChart`). */
+  /** Router of the dependency lines (created in `completeChart`). */
   private router: GanttRouter | null = null;
-  /** Linhas primárias de tarefa, indexadas pela `Task` (Ruby `@tasks`). */
+  /** Primary task lines, indexed by `Task` (Ruby `@tasks`). */
   private tasks = new Map<PropertyTreeNode, GanttLine[]>();
-  /** Caminhos roteados das dependências (pares de pontos). */
+  /** Routed dependency paths (pairs of points). */
   private depArrows: RoutePoint[][] = [];
-  /** Pontas das setas, deduplicadas por coordenada. */
+  /** Arrow heads, deduplicated by coordinate. */
   private arrowHeads: RoutePoint[] = [];
-  /** Guard de idempotência de `completeChart`. */
+  /** Idempotency guard of `completeChart`. */
   private completed = false;
 
   /**
-   * Cria o chart sem gerá-lo: ainda faltam período e escala.
+   * Creates the chart without generating it: period and scale are still
+   * missing.
    *
-   * `now` é a data considerada "hoje"; `weekStartsMonday` decide o início das
-   * semanas; `table` é o `TableReport` dono (opcional); `markdate` a data da
-   * linha de referência (opcional).
+   * @param now Date considered "today".
+   * @param weekStartsMonday Whether the weeks start on Monday.
+   * @param columnDef Column definition this chart renders.
+   * @param table `TableReport` owning the chart, or `null`.
+   * @param markdate Date of the reference line, or `null`.
    */
   constructor(
     now: TjTime,
@@ -173,14 +179,21 @@ export class GanttChart implements SpecialCell {
     this.weekStartsMonday = weekStartsMonday;
   }
 
-  /** Escalas disponíveis (Ruby `attr_reader :scales`). */
+  /**
+   * Available scales (Ruby `attr_reader :scales`).
+   *
+   * @returns The static list of scales.
+   */
   get scales(): readonly GanttScale[] {
     return GanttChart.SCALES;
   }
 
   /**
-   * Registra uma linha primária de tarefa (Ruby `addTask`). Relatórios
-   * multi-cenário produzem várias linhas para a mesma `Task`.
+   * Registers a primary task line (Ruby `addTask`). Multi-scenario reports
+   * produce several lines for the same `Task`.
+   *
+   * @param task Task the line belongs to.
+   * @param line Chart line to register.
    */
   addTask(task: PropertyTreeNode, line: GanttLine,): void {
     const lines = this.tasks.get(task,);
@@ -192,8 +205,12 @@ export class GanttChart implements SpecialCell {
   }
 
   /**
-   * Geração por largura (Ruby `generateByWidth`). No Ruby é apenas um TODO:
-   * define período e largura, sem escala nem cabeçalho.
+   * Generation by width (Ruby `generateByWidth`). In Ruby this is only a TODO:
+   * it sets the period and the width, without scale or header.
+   *
+   * @param periodStart First date of the reported period.
+   * @param periodEnd Last date of the reported period.
+   * @param width Width of the chart, in pixels.
    */
   generateByWidth(
     periodStart: TjTime,
@@ -203,12 +220,17 @@ export class GanttChart implements SpecialCell {
     this.start = periodStart;
     this.end = periodEnd;
     this.width = width;
-    // Fiel ao Ruby: aqui **não** se define escala nem se cria o `GanttHeader`.
+    // Faithful to Ruby: here neither the scale nor the `GanttHeader` is set.
   }
 
   /**
-   * Gera o chart a partir do período e do nome da escala (Ruby
-   * `generateByScale`). Deve ser chamado **antes** de criar `GanttLine`s.
+   * Generates the chart from the period and the scale name (Ruby
+   * `generateByScale`). Must be called **before** creating the `GanttLine`s.
+   *
+   * @param periodStart First date of the reported period.
+   * @param periodEnd Last date of the reported period.
+   * @param scaleName Name of the scale (`hour`, `day`, `week`, …).
+   * @throws Error When `scaleName` is not one of the known scales.
    */
   generateByScale(
     periodStart: TjTime,
@@ -222,27 +244,33 @@ export class GanttChart implements SpecialCell {
     const steps = periodStart[this.scale.stepsToFunc](periodEnd,);
     this.width = this.stepSize * steps;
 
-    // `this` só satisfaz `GanttHeaderChart` depois de `scale` estar definida;
-    // o cast documenta essa pré-condição (o Ruby depende dela em runtime).
+    // `this` only satisfies `GanttHeaderChart` once `scale` is set; the cast
+    // documents that precondition (Ruby relies on it at runtime).
     this.header = new GanttHeader(
       this.columnDef,
       this as unknown as GanttHeaderChart,
     );
   }
 
-  /** Converte o chart em `<td>` com as duas `div`s aninhadas (Ruby `to_html`). */
+  /**
+   * Converts the chart into a `<td>` with the two nested `div`s (Ruby
+   * `to_html`).
+   *
+   * @returns The table cell holding the whole chart.
+   */
   to_html(): XMLElementLike {
     this.completeChart();
 
     const scrollbar = this.hasScrollbar();
-    // A célula cobre toda a altura da tabela: uma linha por linha do chart,
-    // mais a do cabeçalho, mais a linha da barra de rolagem (se houver).
+    // The cell covers the whole height of the table: one row per chart line,
+    // plus the header row, plus the scrollbar row (when present).
     const td = new XMLElement("td", {
       rowspan: `${Math.trunc(2 + this.lines.length + (scrollbar ? 1 : 0),)}`,
       style: "padding:0px; vertical-align:top;",
     },);
 
-    // `div` externa: a "view". Ganha `SCROLLBARHEIGHT` px quando há scrollbar.
+    // Outer `div`: the "view". It gains `SCROLLBARHEIGHT` px when there is a
+    // scrollbar.
     const scrollDiv = new XMLElement("div", {
       class: "tabback",
       style: "position:relative; overflow:auto; " +
@@ -252,7 +280,7 @@ export class GanttChart implements SpecialCell {
         }px;`,
     },);
     td.append(scrollDiv,);
-    // `div` interna: o chart em si, com coordenadas absolutas.
+    // Inner `div`: the chart itself, in absolute coordinates.
     const div = new XMLElement("div", {
       style: "margin:0px; padding:0px; position:absolute; overflow:hidden; " +
         "top:0px; left:0px; " +
@@ -262,12 +290,12 @@ export class GanttChart implements SpecialCell {
     },);
     scrollDiv.append(div,);
 
-    // Cabeçalho e linhas.
+    // Header and lines.
     const header = this.header;
     if (header !== null) div.append(header.to_html(),);
     for (const line of this.lines) div.append(line.to_html(),);
 
-    // Linhas de dependência: cada par consecutivo do caminho vira um `depline`.
+    // Dependency lines: each consecutive pair of the path becomes a `depline`.
     for (const arrow of this.depArrows) {
       let xx: number | null = null;
       let yy = 0;
@@ -281,7 +309,7 @@ export class GanttChart implements SpecialCell {
         yy = y;
       }
     }
-    // E as pontas correspondentes.
+    // And the matching arrow heads.
     for (const [x, y,] of this.arrowHeads) {
       div.append(arrowHeadToHTML(x, y,),);
     }
@@ -289,14 +317,24 @@ export class GanttChart implements SpecialCell {
     return td;
   }
 
-  /** O Gantt não vai para CSV (Ruby `to_csv` devolve 0). */
+  /**
+   * The Gantt is never exported to CSV (Ruby `to_csv` returns 0).
+   *
+   * @param _csv Destination table; unused.
+   * @param _startColumn First column of the cell; unused.
+   * @returns Always 0, meaning no column was written.
+   */
   to_csv(_csv: unknown[][], _startColumn: number,): number {
     return 0;
   }
 
   /**
-   * Converte uma data em X do chart (Ruby `dateToX`):
+   * Converts a date into an X coordinate of the chart (Ruby `dateToX`):
    * `((width / (end - start)) * (date - start)).to_i`.
+   *
+   * @param date Date to map onto the X axis.
+   * @returns The X coordinate, in pixels.
+   * @throws Error When the chart has not been generated yet.
    */
   dateToX(date: TjTime,): number {
     const start = this.start;
@@ -311,7 +349,12 @@ export class GanttChart implements SpecialCell {
     );
   }
 
-  /** Registra uma linha no chart (Ruby `addLine`). */
+  /**
+   * Registers a line in the chart (Ruby `addLine`).
+   *
+   * @param line Chart line to register.
+   * @throws Error When the chart has not been generated yet.
+   */
   addLine(line: GanttLine,): void {
     if (this.scale === null) {
       throw new Error(
@@ -322,12 +365,15 @@ export class GanttChart implements SpecialCell {
   }
 
   /**
-   * Visão estrutural do chart para os consumidores (`GanttLineChart`, 15.10).
+   * Structural view of the chart for the consumers (`GanttLineChart`, 15.10).
    *
-   * O Ruby dispensa isto: `GanttChart` já satisfaz o contrato em runtime. Em TS
-   * os campos são anuláveis antes de `generateByScale`, então a pré-condição
-   * ("chart já gerado") fica verificada num único ponto em vez de espalhada
-   * em casts pelos chamadores.
+   * Ruby does not need this: `GanttChart` already satisfies the contract at
+   * runtime. In TS the fields are nullable before `generateByScale`, so the
+   * precondition ("chart already generated") is checked in a single place
+   * instead of being spread over casts in the callers.
+   *
+   * @returns This chart, narrowed to the `GanttLineChart` contract.
+   * @throws Error When the chart has not been generated yet.
    */
   asLineChart(): GanttLineChart {
     if (
@@ -341,12 +387,22 @@ export class GanttChart implements SpecialCell {
     return this as unknown as GanttLineChart;
   }
 
-  /** `true` quando a `view` é mais estreita que o chart (Ruby `hasScrollbar?`). */
+  /**
+   * `true` when the `view` is narrower than the chart (Ruby `hasScrollbar?`).
+   *
+   * @returns Whether the chart needs a horizontal scrollbar.
+   */
   hasScrollbar(): boolean {
     return this.viewWidth !== null && this.viewWidth < this.width;
   }
 
-  /** Procura a escala pelo nome (Ruby `scaleByName`). */
+  /**
+   * Looks up a scale by name (Ruby `scaleByName`).
+   *
+   * @param name Name of the scale.
+   * @returns The matching scale.
+   * @throws Error When no scale has that name.
+   */
   private scaleByName(name: string,): GanttScale {
     for (const scale of GanttChart.SCALES) {
       if (scale.name === name) return scale;
@@ -355,11 +411,12 @@ export class GanttChart implements SpecialCell {
   }
 
   /**
-   * Calcula a altura, cria o router, bloqueia as zonas proibidas e gera as
-   * setas de dependência (Ruby `completeChart`).
+   * Computes the height, creates the router, blocks the forbidden zones and
+   * generates the dependency arrows (Ruby `completeChart`).
    *
-   * Ruby roda isto em toda chamada de `to_html`; o guard `completed` evita
-   * duplicar `depArrows`/`arrowHeads` (o chart é imutável depois da 1ª saída).
+   * Ruby runs this on every `to_html` call; the `completed` guard avoids
+   * duplicating `depArrows`/`arrowHeads` (the chart is immutable after the
+   * first output).
    */
   private completeChart(): void {
     if (this.completed) return;
@@ -369,35 +426,35 @@ export class GanttChart implements SpecialCell {
       if (bottom > this.height) this.height = bottom;
     }
 
-    // As linhas de dependência são roteadas por um `GanttRouter` que recebe
-    // apenas os pontos inicial e final de cada seta.
+    // Dependency lines are routed by a `GanttRouter` that only receives the
+    // start and end points of each arrow.
     const router = new GanttRouter(this.width, this.height,);
     this.router = router;
 
-    // Barras não devem ser cruzadas por linhas horizontais; marcos não devem
-    // ser cruzados em nenhuma direção.
+    // Bars must not be crossed by horizontal lines; milestones must not be
+    // crossed in any direction.
     for (const line of this.lines) line.addBlockedZones(router,);
 
-    // Protege a linha "now" de outras linhas verticais.
+    // Protects the "now" line from other vertical lines.
     const header = this.header;
     const nowLineX = header?.nowLineX ?? null;
     if (nowLineX !== null) {
       router.addZone(nowLineX - 1, 0, 3, this.height - 1, false, true,);
     }
 
-    // Idem para a data de referência (`markdate`).
+    // Same for the reference date (`markdate`).
     const markdateLineX = header?.markdateLineX ?? null;
     if (markdateLineX !== null) {
       router.addZone(markdateLineX - 1, 0, 3, this.height - 1, false, true,);
     }
 
-    // Setas de dependência de todas as tarefas visíveis.
+    // Dependency arrows of every visible task.
     for (const [task, lines,] of this.tasks) {
       this.generateDepLines(task as Task, lines,);
     }
 
-    // Uma única ponta de seta por ponto final, mesmo que várias linhas cheguem
-    // ao mesmo ponto (`Array#include?` compara por valor).
+    // A single arrow head per end point, even when several lines reach the
+    // same point (`Array#include?` compares by value).
     for (const line of this.depArrows) {
       const endPoint = line[line.length - 1];
       if (!endPoint) continue;
@@ -410,8 +467,11 @@ export class GanttChart implements SpecialCell {
   }
 
   /**
-   * Gera as setas de dependência de uma tarefa (Ruby `generateDepLines`).
-   * Relatórios multi-cenário têm uma linha por cenário.
+   * Generates the dependency arrows of one task (Ruby `generateDepLines`).
+   * Multi-scenario reports have one line per scenario.
+   *
+   * @param task Task whose successors are drawn.
+   * @param lines Chart lines of the task, one per scenario.
    */
   private generateDepLines(task: Task, lines: GanttLine[],): void {
     for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
@@ -419,11 +479,11 @@ export class GanttChart implements SpecialCell {
       if (!line) continue;
       const scenarioIdx = line.query.scenarioIdx ?? 0;
       const content = depLineContent(line,);
-      // O Ruby assume `line.getTask` não-nil (só linhas de tarefa entram em
-      // `@tasks`); em TS o retorno é anulável.
+      // Ruby assumes `line.getTask` is non-nil (only task lines enter `@tasks`);
+      // in TS the return value is nullable.
       if (content === null) continue;
 
-      // Dependências na entrada da tarefa...
+      // Dependencies on the task start…
       this.generateTaskDepLines(
         "startsuccs",
         task,
@@ -431,7 +491,7 @@ export class GanttChart implements SpecialCell {
         lineIndex,
         content.startDepLineStart(),
       );
-      // ...e na saída.
+      // ...and on its end.
       this.generateTaskDepLines(
         "endsuccs",
         task,
@@ -443,8 +503,14 @@ export class GanttChart implements SpecialCell {
   }
 
   /**
-   * Gera as setas de dependências do início (`startsuccs`) ou do fim
-   * (`endsuccs`) de `task` (Ruby `generateTaskDepLines`).
+   * Generates the arrows of the dependencies at the start (`startsuccs`) or at
+   * the end (`endsuccs`) of `task` (Ruby `generateTaskDepLines`).
+   *
+   * @param kind Which dependency list of the task is drawn.
+   * @param task Task whose successors are drawn.
+   * @param scenarioIdx Scenario the dependency list is read from.
+   * @param lineIndex Index of the line to anchor the arrows to.
+   * @param anchor `[x, y]` point the arrows start at.
    */
   private generateTaskDepLines(
     kind: "startsuccs" | "endsuccs",
@@ -461,8 +527,8 @@ export class GanttChart implements SpecialCell {
 
     for (const [successor, onEnd,] of successors) {
       if (successor === null) continue;
-      // Ignora dependências herdadas e tarefas fora do chart. O teste de
-      // herança consulta o cenário da tarefa **corrente** (`task`).
+      // Ignores inherited dependencies and tasks outside the chart. The
+      // inheritance test looks at the scenario of the **current** task (`task`).
       const parent = successor.parent as Task | null;
       if (
         (parent !== null &&
@@ -489,12 +555,12 @@ export class GanttChart implements SpecialCell {
   }
 }
 
-/** Compara duas coordenadas por valor (Ruby `Array#==`). */
+/** Compares two coordinates by value (Ruby `Array#==`). */
 function samePoint(a: RoutePoint, b: RoutePoint,): boolean {
   return a[0] === b[0] && a[1] === b[1];
 }
 
-/** Conteúdo da linha como fonte de âncoras de dependência. */
+/** Line content as a source of dependency anchors. */
 function depLineContent(line: GanttLine,): DepLineContent | null {
   return line.getTask() as DepLineContent | null;
 }

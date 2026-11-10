@@ -1,29 +1,31 @@
 /**
- * Onda D3 — booking temporal (fase-14-c-onda-d-booking-sintaxe-nomenclatura.md §3.D3).
+ * Wave D3 — temporal booking
+ * (fase-14-c-onda-d-booking-sintaxe-nomenclatura.md §3.D3).
  *
- * Um booking de **charge** ou de **material** (inclusive estoque) deixa de ser
- * preso a uma data pontual e passa a carregar um **período** (lista de
- * intervalos) com um **modifier** que distribui o valor no período — o mesmo
- * vocabulário da alocação/planejamento (`onstart`/`onend`/`perhour`/`perday`/
- * `perweek`/`permonth`/`distributed`).
+ * A **charge** or **material** booking (stock included) is no longer pinned to a
+ * single date and instead carries a **period** (a list of intervals) plus a
+ * **modifier** that spreads the value over that period — the same vocabulary
+ * used by allocation/planning
+ * (`onstart`/`onend`/`perhour`/`perday`/`perweek`/`permonth`/`distributed`).
  *
- * Diferença deliberada em relação a `ExtendedCharge`/`distribution.ts`: o
- * booking é um fato **real** (dinheiro gasto / material movimentado em datas
- * do calendário), não uma previsão sobre a agenda de trabalho da tarefa. A
- * distribuição é calendar-based (dias de calendário cobertos pelos intervalos,
- * com fim exclusivo como no parser), sem `DistributionContext`. O parser de
- * *gramática* é compartilhado (mesmos
- * literais de modifier); a matemática vive aqui, fonte única para charge,
- * material e estoque.
+ * Deliberate difference from `ExtendedCharge`/`distribution.ts`: a booking is a
+ * **real** fact (money spent / material moved on calendar dates), not a forecast
+ * over the task working schedule. The distribution is calendar-based (calendar
+ * days covered by the intervals, with an exclusive end as in the parser),
+ * without a `DistributionContext`. The *grammar* parser is shared (same
+ * modifier literals); the math lives here, as the single source for charge,
+ * material and stock.
  *
- * Compatibilidade: `on <data>` vira um intervalo degenerado de 1 dia com
- * modifier `onstart` (`.isTemporal() === false`), e os consumidores tratam o
- * booking legado exatamente como antes (mesmo filtro de data, valor cheio).
+ * Compatibility: `on <date>` becomes a degenerate one-day interval with the
+ * `onstart` modifier (`.isTemporal() === false`), and the consumers treat the
+ * legacy booking exactly as before (same date filter, full value).
  */
 import { TjTime, } from "../time/tj-time.ts";
 import { TimeInterval, } from "../time/time-interval.ts";
 
-/** Vocabulário de distribuição do booking (mesmos literais da alocação). */
+/**
+ * Distribution vocabulary of a booking (the same literals used by allocation).
+ */
 export type BookingModifier =
   | "onstart"
   | "onend"
@@ -33,27 +35,32 @@ export type BookingModifier =
   | "permonth"
   | "distributed";
 
-/** Período + modifier de um booking (charge ou material/estoque). */
+/** Period + modifier of a booking (charge or material/stock). */
 export interface BookingTail {
+  /** How the value is spread over `intervals`. */
   modifier: BookingModifier;
+  /** Periods the booking covers. */
   intervals: TimeInterval[];
 }
 
 const DAY_SECONDS = 86400;
 
 /**
- * Índice do dia de calendário (meia-noite UTC) que cobre um instante. Toda a
- * aritmética de dias trabalha com esses índices inteiros — a mesma base da
- * iteração dia-a-dia de `distribution.ts`.
+ * Calendar day index (UTC midnight) covering an instant.
+ *
+ * All day arithmetic uses these integer indices — the same basis as the
+ * day-by-day iteration of `distribution.ts`.
  */
 function dayIdx(t: TjTime,): number {
   return Math.floor(t.toSeconds() / DAY_SECONDS,);
 }
 
 /**
- * Tail legado a partir de `on <data>`: intervalo de um dia com modifier
- * `onstart` — `isTemporalTail` devolve `false` e os consumidores mantêm o
- * caminho antigo (mesmo ponto, valor cheio).
+ * Legacy tail built from `on <date>`: a one-day interval with the `onstart`
+ * modifier — `isTemporalTail` returns `false` and the consumers keep the old
+ * path (same point, full value).
+ *
+ * @param date Date of the legacy `on` clause.
  */
 export function legacyTail(date: TjTime,): BookingTail {
   return {
@@ -63,10 +70,10 @@ export function legacyTail(date: TjTime,): BookingTail {
 }
 
 /**
- * Faixa de dias cobertos por um intervalo na convenção do parser: fim
- * **exclusivo** (`[start, end)`). Assim `d + 24h` (data despida) cobre 1 dia e
- * `A - B` (fim em `B 00:00`) cobre de A até B−1 — a mesma leitura que a
- * exportação usa ao reemitir `end − 1s`.
+ * Day range covered by an interval under the parser convention: end
+ * **exclusive** (`[start, end)`). This way `d + 24h` (naked date) covers 1 day
+ * and `A - B` (end at `B 00:00`) covers A through B−1 — the same reading the
+ * export uses when it re-emits `end − 1s`.
  */
 function ivDayRange(interval: TimeInterval,): [number, number,] {
   const lo = Math.floor(interval.start.toSeconds() / DAY_SECONDS,);
@@ -74,17 +81,23 @@ function ivDayRange(interval: TimeInterval,): [number, number,] {
   return [lo, hi,];
 }
 
-/** Dias cobertos pelo intervalo (0 se vazio). */
+/** Days covered by the interval (0 when empty). */
 function daysOf(interval: TimeInterval,): number {
   const [lo, hi,] = ivDayRange(interval,);
   return hi >= lo ? hi - lo + 1 : 0;
 }
 
 /**
- * Dias de sobreposição entre `intervals` (fim exclusivo) e o período fechado
- * `[start, end]` (inclusivo em ambas as pontas). Metade ausente do período não
- * corta o intervalo: sem `start` o piso é o próprio início; sem `end` o teto é
- * o fim do intervalo.
+ * Days of overlap between `intervals` (exclusive end) and the closed period
+ * `[start, end]` (inclusive on both ends).
+ *
+ * A missing half of the period does not clip the interval: without `start` the
+ * floor is the interval start itself; without `end` the ceiling is the interval
+ * end.
+ *
+ * @param intervals Periods of the booking.
+ * @param start Period start, or `null` for no lower bound.
+ * @param end Period end, or `null` for no upper bound.
  */
 export function overlapDays(
   intervals: TimeInterval[],
@@ -103,7 +116,13 @@ export function overlapDays(
   return days;
 }
 
-/** Algum intervalo cruza o período fechado `[start, end]`? */
+/**
+ * Whether any interval crosses the closed period `[start, end]`.
+ *
+ * @param tail Booking period.
+ * @param start Period start, or `null` for no lower bound.
+ * @param end Period end, or `null` for no upper bound.
+ */
 export function tailOverlaps(
   tail: BookingTail,
   start: TjTime | null,
@@ -113,8 +132,12 @@ export function tailOverlaps(
 }
 
 /**
- * O tail expressa algo além do ponto legado (`on <data>` ≡ onstart pontual)?
- * Consumidores usam isto para manter o caminho antigo intacto.
+ * Whether the tail expresses anything beyond the legacy point
+ * (`on <date>` ≡ a punctual onstart).
+ *
+ * Consumers use this to keep the old path untouched.
+ *
+ * @param tail Booking period.
  */
 export function isTemporalTail(tail: BookingTail,): boolean {
   if (tail.modifier !== "onstart") return true;
@@ -122,9 +145,17 @@ export function isTemporalTail(tail: BookingTail,): boolean {
 }
 
 /**
- * Parte do `value` que cai no período fechado `[start, end]` sob o modifier.
- * Sem período ⇒ valor cheio. Booking legado (onstart pontual) ⇒ valor cheio
- * quando o ponto está no período, 0 fora — coerente com o filtro antigo.
+ * Part of `value` that falls inside the closed period `[start, end]` under the
+ * modifier.
+ *
+ * Without a period the full value is returned. A legacy booking (punctual
+ * onstart) returns the full value when the point is inside the period and 0
+ * outside — consistent with the old filter.
+ *
+ * @param value Amount booked.
+ * @param tail Booking period.
+ * @param start Period start, or `null` for the full value.
+ * @param end Period end, or `null` for the full value.
  */
 export function valueInPeriod(
   value: number,
@@ -139,8 +170,8 @@ export function valueInPeriod(
   const pHi = dayIdx(end,);
   switch (tail.modifier) {
     case "onstart": {
-      // Valor integral se o primeiro dia coberto de algum intervalo cai no
-      // período.
+      // Full value if the first covered day of any interval falls in the
+      // period.
       const hit = tail.intervals.some((iv,) => {
         const [lo,] = ivDayRange(iv,);
         return lo >= pLo && lo <= pHi;
@@ -148,8 +179,8 @@ export function valueInPeriod(
       return hit ? value : 0;
     }
     case "onend": {
-      // Valor integral se o último dia coberto de algum intervalo cai no
-      // período (fim exclusivo ⇒ o dia coberto é `end − 1s`).
+      // Full value if the last covered day of any interval falls in the
+      // period (exclusive end ⇒ the covered day is `end − 1s`).
       const hit = tail.intervals.some((iv,) => {
         const [, hi,] = ivDayRange(iv,);
         return hi >= pLo && hi <= pHi;

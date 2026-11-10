@@ -1,17 +1,18 @@
 /**
- * SheetHandlerBase — base comum de senders e receivers de time/status sheets.
+ * SheetHandlerBase — shared base of the time/status sheet senders and
+ * receivers.
  *
- * Port de `docs/taskjuggler/lib/taskjuggler/SheetHandlerBase.rb`, adaptado ao
- * browser por dois ADRs desta fase:
- *  - **ADR 036** — não há SMTP nem mailbox: `sendEmail` **devolve** a mensagem
- *    (`EmailMessage`) e `log` vive em memória; `addToScm` é no-op (subprocesso
- *    não existe no browser).
- *  - **ADR 037** — todo acesso a arquivo passa pelo `FileStore` injetado; os
- *    métodos que o tocam são assíncronos.
+ * Port of `docs/taskjuggler/lib/taskjuggler/SheetHandlerBase.rb`, adapted to the
+ * browser by two ADRs of this phase:
+ *  - **ADR 036** — there is no SMTP or mailbox: `sendEmail` **returns** the
+ *    message (`EmailMessage`) and `log` lives in memory; `addToScm` is a no-op
+ *    (subprocesses do not exist in the browser).
+ *  - **ADR 037** — every file access goes through the injected `FileStore`; the
+ *    methods that touch it are asynchronous.
  *
- * O que permanece fiel: `cutOut` (extração de seção marcada, com remoção de
- * quotes de email), as validações de configuração de `setWorkingDir` e a
- * composição do corpo HTML do email.
+ * What stays faithful: `cutOut` (extraction of the marked section, removing the
+ * email quote prefixes), the config validations of `setWorkingDir` and the
+ * composition of the HTML email body.
  *
  * @see docs/taskjuggler/lib/taskjuggler/SheetHandlerBase.rb
  * @see docs/syntaxmesh/decisoes/036-sheets-sem-smtp.md
@@ -39,36 +40,36 @@ import {
 } from "./email-message.ts";
 import { SHEET_EXTENSIONS, } from "./sheet-extensions.ts";
 
-/** Como o email sairia do processo (inerte no browser — ADR 036). */
+/** How the email would leave the process (inert in the browser — ADR 036). */
 export type EmailDeliveryMethod = "smtp" | "sendmail";
 
-/** Tipo de sheet: define o substantivo dos `*sheetreport`/`*sheetreceiver`. */
+/** Sheet kind: defines the noun of the `*sheetreport`/`*sheetreceiver`. */
 export type SheetType = "time" | "status";
 
 /**
- * Tipo aceito por um `SheetReceiver`: os dois sheets de entrada mais o
- * `summary` do `TimeSheetSummary` (18.11), que só lê folhas já arquivadas.
+ * Kind accepted by a `SheetReceiver`: the two inbound sheets plus the `summary`
+ * of `TimeSheetSummary` (18.11), which only reads already archived sheets.
  */
 export type SheetReceiverType = SheetType | "summary";
 
 /**
- * Linha da lista de recursos — contrato entre `SheetSender` (18.6) e
- * `SheetReceiver` (18.7), persistido em `<templateDir>/<date>/resources.json`.
+ * Row of the resource list — the contract between `SheetSender` (18.6) and
+ * `SheetReceiver` (18.7), persisted in `<templateDir>/<date>/resources.json`.
  */
 export type SheetResourceInfo = {
   id: string;
   name: string;
   email: string;
-  /** Horas de trabalho no período (`effort`). */
+  /** Working hours in the period (`effort`). */
   effort: number;
-  /** Horas livres no período (`freework`). */
+  /** Free hours in the period (`freework`). */
   freeWork: number;
 };
 
 /**
- * `sprintf(format, a, b, …)` — verbos `%s` e `%d`, consumidos em ordem.
+ * `sprintf(format, a, b, ...)` — `%s` and `%d` verbs, consumed in order.
  *
- * Valores sobrando são ignorados; um verbo sem valor vira `""`, como no Ruby.
+ * Extra values are ignored; a verb without a value becomes `""`, as in Ruby.
  */
 export function sprintf(
   format: string,
@@ -78,19 +79,20 @@ export function sprintf(
   return format.replace(/%[sd]/gu, () => String(values[index++] ?? "",),);
 }
 
-/** Diretório onde as mensagens são depositadas para o usuário baixar. */
+/** Directory where messages are dropped for the user to download. */
 export const OUTBOX_DIR = "outbox";
 
-/** Entrada do log em memória (o Ruby escrevia em `@logFile`). */
+/** In-memory log entry (Ruby wrote to `@logFile`). */
 export interface SheetLogEntry {
-  /** ISO 8601 do momento do registro. */
+  /** ISO 8601 of the moment of the record. */
   timestamp: string;
-  /** `INFO` | `WARN` | `ERROR` (mesmos rótulos do Ruby). */
+  /** `INFO` | `WARN` | `ERROR` (the same labels as Ruby). */
   type: string;
+  /** Text of the record. */
   message: string;
 }
 
-/** Folha de estilo embutida nos emails HTML (o bundle não traz `tjreport.css`). */
+/** Stylesheet embedded in the HTML emails (the bundle has no `tjreport.css`). */
 const MAIL_CSS =
   `body { font-family: Helvetica, Arial, sans-serif; font-size: 12px;
        color: #1a1a1a; margin: 1em 2em; }
@@ -103,88 +105,110 @@ pre, tt { font-family: "Courier New", monospace; font-size: 12px; }
 .err { color: #9f0000; }
 `;
 
-/** Divide o texto em linhas **preservando** o `\n` final (≈ `String#each_line`). */
+/** Splits the text into lines **preserving** the trailing `\n` (≈ `String#each_line`). */
 function eachLine(text: string,): string[] {
   return text.split(/(?<=\n)/u,).filter((line,) => line.length > 0);
 }
 
-/** Mensagem de um `catch` desconhecido (`$!` do Ruby). */
+/** Message of an unknown `catch` (Ruby's `$!`). */
 function errorText(error: unknown,): string {
   return error instanceof Error ? error.message : String(error,);
 }
 
 /**
- * Base de `SheetSender`/`SheetReceiver` (18.6/18.7).
+ * Base of `SheetSender`/`SheetReceiver` (18.6/18.7).
  *
- * Não é abstrata de propósito: o próprio plano a instancia nos testes
- * (`new SheetHandlerBase("test")`), e ela já é funcional sozinha.
+ * Deliberately not abstract: the plan itself instantiates it in the tests
+ * (`new SheetHandlerBase("test")`) and it is already functional on its own.
  */
 export class SheetHandlerBase {
-  /** Nome do app que assina o email (`X-TaskJuggler`) e o log. */
+  /** Name of the app that signs the email (`X-TaskJuggler`) and the log. */
   readonly appName: string;
 
-  // --- Configuração do usuário (compatibilidade com o `tj3Config`) ---------
+  // --- User configuration (compatible with `tj3Config`) --------------------
+  /** How the email would be delivered (inert in the browser — ADR 036). */
   emailDeliveryMethod: EmailDeliveryMethod = "smtp";
+  /** SMTP server host; unused without a transport (ADR 036). */
   smtpServer: string | null = null;
+  /** Address used in the `From` header of every email. */
   senderEmail: string | null = null;
+  /** Working directory of the app (`-d/--directory`). */
   workingDir: string | null = null;
+  /** SCM command of the Ruby version; inert in the browser (ADR 036). */
   scmCommand: string | null = null;
-  /** Id do projeto usado pelos apps de linha de comando. */
+  /** Project id used by the command-line apps. */
   projectId = "prj";
 
-  // --- Verbosidade ---------------------------------------------------------
-  /** 0 (nada) … 3 (tudo) para a saída de terminal. */
+  // --- Verbosity -----------------------------------------------------------
+  /** 0 (nothing) ... 3 (everything) for the terminal output. */
   outputLevel = 2;
-  /** 0 (nada) … 3 (tudo) para o log. */
+  /** 0 (nothing) ... 3 (everything) for the log. */
   logLevel = 3;
-  /** Não grava `outbox/`: só devolve a mensagem (e a loga). */
+  /** Writes no `outbox/`: only returns the message (and logs it). */
   dryRun = false;
-  /** Nome do log no Ruby; aqui é só rótulo (não há arquivo — ADR 036). */
+  /** Log name in Ruby; here it is just a label (there is no file — ADR 036). */
   logFile = "timesheets.log";
-  /** true após a primeira falha de processamento/entrega de email. */
+  /** `true` after the first email processing/delivery failure. */
   emailFailure = false;
 
-  /** Relógio injetável: mantém `Date` e o nome do `.eml` determinísticos. */
+  /** Injectable clock: keeps `Date` and the `.eml` file name deterministic. */
   clock: () => Date = () => new Date();
 
-  /** Log em memória — o Ruby escrevia em `@logFile` (ADR 036 §4.7). */
+  /** In-memory log — Ruby wrote to `@logFile` (ADR 036 §4.7). */
   readonly logEntries: SheetLogEntry[] = [];
 
   /**
-   * Toda mensagem passada a {@link sendEmail}, na ordem de emissão.
+   * Every message passed to {@link sendEmail}, in emission order.
    *
-   * O Ruby entregava por SMTP e não guardava cópia; sem transporte (ADR 036)
-   * a mensagem é **dado**, e os apps da 18.18 a devolvem por aqui.
+   * Ruby delivered over SMTP and kept no copy; without a transport (ADR 036)
+   * the message is **data**, and the Phase 18.18 apps return it from here.
    */
   readonly sentMessages: EmailMessage[] = [];
 
-  /** Sistema de arquivos injetado (ADR 037); `null` até `setFileStore`. */
+  /** Injected file system (ADR 037); `null` until `setFileStore`. */
   protected fileStore: FileStore | null = null;
 
-  /** Evita repetir o aviso `no_filestore` a cada mensagem. */
+  /** Avoids repeating the `no_filestore` warning for every message. */
   private warnedNoFileStore = false;
 
+  /**
+   * Creates the handler.
+   *
+   * @param appName Name that signs the email (`X-TaskJuggler`) and the log.
+   */
   constructor(appName: string,) {
     this.appName = appName;
   }
 
-  /** Injeta o `FileStore` (ADR 037) — encadeável não é necessário aqui. */
+  /**
+   * Injects the `FileStore` (ADR 037).
+   *
+   * @param fileStore File system used by the handler.
+   */
   setFileStore(fileStore: FileStore,): void {
     this.fileStore = fileStore;
   }
 
-  /** O `FileStore` injetado, ou `null`. */
+  /**
+   * Returns the injected `FileStore`.
+   *
+   * @returns The file system, or `null` when none was injected.
+   */
   getFileStore(): FileStore | null {
     return this.fileStore;
   }
 
   /**
-   * Primeiro arquivo de folha existente para `dir`/`base`, nativo antes do
-   * legado (`.smx`, depois `.tji`).
+   * First existing sheet file for `dir`/`base`, native before legacy (`.smx`,
+   * then `.tji`).
    *
-   * Decisão 2026-11-07 (24.2.36): o SyntaxMesh grava `.smx`, mas pastas e
-   * templates gerados pelo TaskJuggler continuam válidos — a leitura aceita as
-   * duas formas e devolve o nome que existe (ou `null`).
+   * Decision 2026-11-07 (24.2.36): SyntaxMesh writes `.smx`, but folders and
+   * templates generated by TaskJuggler remain valid — reading accepts both
+   * forms and returns the name that exists (or `null`).
+   *
+   * @param dir Directory that holds the sheet.
+   * @param base Base file name, without extension.
+   * @returns The existing file name, or `null` when none exists.
    */
   protected async findSheetFile(
     dir: string,
@@ -200,11 +224,14 @@ export class SheetHandlerBase {
   }
 
   /**
-   * Extrai o texto entre os marcadores `# --------8<--------` e remove os
-   * prefixos de quote (`> `) de cada linha (Ruby `cutOut`, l.63-98).
+   * Extracts the text between the `# --------8<--------` markers and removes the
+   * quote prefixes (`> `) from every line (Ruby `cutOut`, l.63-98).
    *
-   * Sem marcadores devolve o texto original — o email pode ter sido enviado
-   * com o sheet inteiro no corpo, sem delimitadores.
+   * Without markers the original text is returned — the email may have been sent
+   * with the whole sheet in the body, without delimiters.
+   *
+   * @param text Email body to scan.
+   * @returns The section between the markers, dedented.
    */
   cutOut(text: string,): string {
     const mark1 = /(.*)# --------8<--------8<--------/u;
@@ -220,7 +247,7 @@ export class SheetHandlerBase {
         if (!match) continue;
         quoteMarks = match[1] ?? "";
         quoteLen = quoteMarks.length;
-        // Caso especial das linhas vazias citadas sem espaço à direita.
+        // Special case of quoted empty lines without a trailing space.
         emptyLine = quoteMarks.replace(/\n$/u, "",).replace(/ $/u, "",) + "\n";
         cutOutText = line.slice(quoteLen,);
         continue;
@@ -239,12 +266,12 @@ export class SheetHandlerBase {
   }
 
   /**
-   * Valida a configuração de email e prepara o diretório de trabalho.
+   * Validates the email configuration and prepares the working directory.
    *
-   * Divergência deliberada do Ruby (ADR 036): `smtp` sem `smtpServer` **avisa**
-   * em vez de abortar — o transporte de email não existe no browser, então a
-   * configuração é inerte; `senderEmail` continua obrigatório porque compõe o
-   * cabeçalho `From`.
+   * Deliberate divergence from Ruby (ADR 036): `smtp` without `smtpServer`
+   * **warns** instead of aborting — the email transport does not exist in the
+   * browser, so the setting is inert; `senderEmail` stays mandatory because it
+   * composes the `From` header.
    */
   async setWorkingDir(): Promise<void> {
     if (this.emailDeliveryMethod === "smtp") {
@@ -270,9 +297,12 @@ export class SheetHandlerBase {
   }
 
   /**
-   * Ruby `addToScm` (l.100-122) — rodava `@scmCommand` com `%m`/`%f`
-   * substituídos. Subprocesso não existe no browser (ADR 036): sem comando é
-   * no-op; com comando definido, avisa e **não executa nada**.
+   * Ruby `addToScm` (l.100-122) — it ran `@scmCommand` with `%m`/`%f`
+   * substituted. Subprocesses do not exist in the browser (ADR 036): without a
+   * command it is a no-op; with a command set it warns and **runs nothing**.
+   *
+   * @param message Commit message that would be used.
+   * @param fileName File that would be committed.
    */
   addToScm(message: string, fileName: string,): void {
     if (this.scmCommand === null) return;
@@ -282,7 +312,11 @@ export class SheetHandlerBase {
     );
   }
 
-  /** Mensagem informativa (Ruby `info`, l.124-127). */
+  /**
+   * Informational message (Ruby `info`, l.124-127).
+   *
+   * @param message Text to report.
+   */
   info(message: string,): void {
     if (this.outputLevel >= 3) {
       MessageHandlerInstance.instance.info("sheet_info", message,);
@@ -290,7 +324,11 @@ export class SheetHandlerBase {
     if (this.logLevel >= 3) this.log("INFO", message,);
   }
 
-  /** Aviso (Ruby `warning`, l.129-132). */
+  /**
+   * Warning (Ruby `warning`, l.129-132).
+   *
+   * @param message Text to report.
+   */
   warning(message: string,): void {
     if (this.outputLevel >= 2) {
       MessageHandlerInstance.instance.warning("sheet_warning", message,);
@@ -299,8 +337,11 @@ export class SheetHandlerBase {
   }
 
   /**
-   * Erro fatal (Ruby `error`, l.134-138): registra, loga e **levanta**
-   * `TjRuntimeError` — o Ruby fazia o mesmo, sem tolerância a erro.
+   * Fatal error (Ruby `error`, l.134-138): records, logs and **throws**
+   * `TjRuntimeError` — Ruby did the same, with no tolerance for errors.
+   *
+   * @param message Text to report.
+   * @throws TjRuntimeError Always.
    */
   error(message: string,): never {
     if (this.outputLevel >= 1) {
@@ -311,9 +352,12 @@ export class SheetHandlerBase {
   }
 
   /**
-   * Registra no log em memória (Ruby `log`, l.140-146, escrevia em `@logFile`).
+   * Appends to the in-memory log (Ruby `log`, l.140-146, wrote to `@logFile`).
    *
-   * Sem disco, sem `console.log`: a UI/CLI lê `logEntries` quando quiser.
+   * No disk, no `console.log`: the UI/CLI reads `logEntries` when it wants to.
+   *
+   * @param type Level label (`INFO`, `WARN`, `ERROR`).
+   * @param message Text to record.
    */
   log(type: string, message: string,): void {
     this.logEntries.push({
@@ -324,8 +368,16 @@ export class SheetHandlerBase {
   }
 
   /**
-   * Igual a {@link sendEmail}, mas interpreta `message` como markup RichText e
-   * gera também a parte `text/html` (Ruby `sendRichTextEmail`, l.148-166).
+   * Same as {@link sendEmail}, but interprets `message` as RichText markup and
+   * also generates the `text/html` part (Ruby `sendRichTextEmail`, l.148-166).
+   *
+   * @param to Recipient address.
+   * @param subject Subject of the email.
+   * @param message RichText markup of the body.
+   * @param attachment Optional attachment, as a path or in-memory content.
+   * @param from Sender address, defaulting to `senderEmail`.
+   * @param inReplyTo `Message-ID` this email replies to, when any.
+   * @returns The generated message.
    */
   async sendRichTextEmail(
     to: string,
@@ -358,11 +410,20 @@ export class SheetHandlerBase {
   }
 
   /**
-   * Monta a mensagem e a entrega ao usuário (Ruby `sendEmail`, l.168-241).
+   * Builds the message and delivers it to the user (Ruby `sendEmail`,
+   * l.168-241).
    *
-   * `dryRun` não grava nada; fora dele, com `FileStore`, a mensagem é
-   * depositada em `outbox/<to>_<YYYY-MM-DD>.eml` para download (ADR 036).
-   * Sem `FileStore`, avisa uma única vez e devolve a mensagem em memória.
+   * `dryRun` writes nothing; outside it, with a `FileStore`, the message is
+   * dropped into `outbox/<to>_<YYYY-MM-DD>.eml` for download (ADR 036). Without
+   * a `FileStore` it warns once and returns the message in memory.
+   *
+   * @param to Recipient address.
+   * @param subject Subject of the email.
+   * @param message Plain text or intermediate RichText of the body.
+   * @param attachment Optional attachment, as a path or in-memory content.
+   * @param from Sender address, defaulting to `senderEmail`.
+   * @param inReplyTo `Message-ID` this email replies to, when any.
+   * @returns The generated message.
    */
   async sendEmail(
     to: string,
@@ -393,7 +454,8 @@ export class SheetHandlerBase {
       ...partial,
       raw: formatEmailMessage(partial,),
     };
-    // A cópia fica retida mesmo em `dryRun`: é o que o app devolve ao chamador.
+    // The copy is kept even under `dryRun`: it is what the app returns to the
+    // caller.
     this.sentMessages.push(email,);
 
     if (this.dryRun) {
@@ -419,13 +481,18 @@ export class SheetHandlerBase {
   }
 
   /**
-   * Corpo HTML do email: documento completo com a folha de estilo embutida
-   * (Ruby `htmlMailBody`, l.243-268 — lá a CSS vinha de `data/css/tjreport.css`).
+   * HTML body of the email: a complete document with the embedded stylesheet
+   * (Ruby `htmlMailBody`, l.243-268 — there the CSS came from
+   * `data/css/tjreport.css`).
+   *
+   * @param message Intermediate RichText to render.
+   * @returns The full HTML document as a string.
    */
   htmlMailBody(message: RichTextIntermediate,): string {
     const doc = new HTMLDocument();
-    // O Ruby interpola `@name`, que nunca é definido nesta classe (saída
-    // "TaskJuggler Report - "); aqui usamos o `appName`, que é o que se espera.
+    // Ruby interpolates `@name`, which is never set in this class (output
+    // "TaskJuggler Report - "); here `appName` is used, which is what is
+    // expected.
     const html = doc.generateHead(
       `${AppConfig.softwareName} Report - ${this.appName}`,
       {
@@ -451,7 +518,9 @@ export class SheetHandlerBase {
     return doc.to_s();
   }
 
-  /** Aviso de `FileStore` ausente, emitido uma vez por handler. */
+  /**
+   * Warning for a missing `FileStore`, emitted once per handler.
+   */
   private warnNoFileStore(): void {
     if (this.warnedNoFileStore) return;
     this.warnedNoFileStore = true;
@@ -461,8 +530,11 @@ export class SheetHandlerBase {
   }
 
   /**
-   * Materializa o anexo: caminho (`string`, lido do `FileStore` — fidelidade ao
-   * Ruby) ou conteúdo já em memória.
+   * Materialises the attachment: a path (`string`, read from the `FileStore` —
+   * faithful to Ruby) or content already in memory.
+   *
+   * @param attachment Path or content of the attachment.
+   * @returns The resolved attachment, or `null` when it cannot be read.
    */
   private async resolveAttachment(
     attachment: EmailAttachmentInput,

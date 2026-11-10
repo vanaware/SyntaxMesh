@@ -1,22 +1,23 @@
 /**
- * `manual-css.ts` — folha de estilos do manual (22.1b.5.2).
+ * `manual-css.ts` — stylesheet of the manual (22.1b.5.2).
  *
- * O Ruby copia `data/css/tjmanual.css` para o diretório de saída
- * (`UserManual#generate` → `FileUtils.cp_r`). O `doc-core` não lê disco, então
- * o conteúdo entra **como dado** e é devolvido junto com as páginas: quem grava
- * `css/tjmanual.css` é a CLI, junto com o resto do manual.
+ * Ruby copies `data/css/tjmanual.css` to the output directory
+ * (`UserManual#generate` → `FileUtils.cp_r`). `doc-core` does not read the
+ * disk, so the content comes in **as data** and is returned along with the
+ * pages: whoever writes `css/tjmanual.css` is the CLI, together with the rest
+ * of the manual.
  *
- * Conteúdo idêntico ao asset `assets/css/tjmanual.css` da raiz do repositório
- * — mudanças nas duas cópias precisam ser sincronizadas (o teste
- * `user_manual_test.ts` compara os dois para evitar deriva).
+ * Content identical to the `assets/css/tjmanual.css` asset at the repository
+ * root — changes to either copy must be synchronized (the
+ * `user_manual_test.ts` test compares both to prevent drift).
  *
  * @see assets/css/tjmanual.css
  */
 
-/** Nome do arquivo dentro do diretório de saída do manual. */
+/** File name inside the output directory of the manual. */
 export const MANUAL_STYLESHEET_NAME = "css/tjmanual.css";
 
-/** Folha de estilos do manual, byte a byte igual ao asset da raiz. */
+/** Stylesheet of the manual, byte for byte equal to the root asset. */
 export const MANUAL_STYLESHEET = `pre {
   font-size:16px;
   font-family: Courier;

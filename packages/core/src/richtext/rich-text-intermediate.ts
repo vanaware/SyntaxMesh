@@ -1,15 +1,15 @@
 /**
- * RichTextIntermediate — recipiente da representação intermediária do RichText
- * (Fase 12.4).
+ * RichTextIntermediate — holder of the intermediate RichText representation
+ * (Phase 12.4).
  *
- * Guarda a raiz da árvore de {@link RichTextElement} (`tree`) e todos os
- * parâmetros de formatação que os elementos consultam ao serializar (`indent`,
- * `lineWidth`, `sectionNumbers`, …). Os handlers de função registrados aqui são
- * consultados por `RichTextElement` para `blockfunc`/`inlinefunc`.
+ * Holds the root of the `RichTextElement` tree (`tree`) and all the formatting
+ * parameters the elements consult while serializing (`indent`, `lineWidth`,
+ * `sectionNumbers`, ...). The function handlers registered here are consulted by
+ * `RichTextElement` for `blockfunc`/`inlinefunc`.
  *
- * Port fiel de `RichText.rb:141-233` + reopen `RTFWithQuerySupport.rb:35-45`
- * (`setQuery`). O `registerFunctionHandler` guarda `handler.dup()` como no Ruby
- * (`RichText.rb:186`), usando o `dup()` da base (12.11.5).
+ * Faithful port of `RichText.rb:141-233` + the `RTFWithQuerySupport.rb:35-45`
+ * reopen (`setQuery`). `registerFunctionHandler` keeps `handler.dup()` as in
+ * Ruby (`RichText.rb:186`), using the base `dup()` (12.11.5).
  *
  * @see docs/taskjuggler/lib/taskjuggler/RichText.rb
  * @see docs/taskjuggler/lib/taskjuggler/RichText/RTFWithQuerySupport.rb
@@ -23,51 +23,60 @@ import type { RichTextFunctionHandler, } from "./handlers/function-handler.ts";
 import type { Query, } from "../query/query.ts";
 import type { TableOfContents, } from "./table-of-contents.ts";
 
+/**
+ * Intermediate representation of a RichText source: a parsed tree plus the
+ * formatting and function-handler configuration used to serialize it.
+ */
 export class RichTextIntermediate {
-  /** De volta ao `RichText` de origem (opaco nesta fase). */
+  /** Back-reference to the originating `RichText` (opaque in this phase). */
   readonly richText: unknown;
-  /** Raiz da árvore intermediária; `null` até o parser popular. */
+  /** Root of the intermediate tree; `null` until the parser fills it in. */
   tree: RichTextElement | null = null;
-  /** Bloco (default) vs. linha. */
-  blockMode = true;
-  /** Numeração automática de seções. */
-  sectionNumbers = true;
-  /** Largura máxima do texto puro. */
-  lineWidth = 80;
-  /** Indentação base de toda a saída textual. */
-  indent = 0;
-  /** Indentação extra para títulos. */
-  titleIndent = 0;
-  /** Indentação extra para parágrafos. */
-  parIndent = 0;
-  /** Indentação extra para listas. */
-  listIndent = 1;
-  /** Indentação extra para seções `<pre>`. */
-  preIndent = 0;
-  /** `target` dos links de hipertexto. */
+  /** Block (default) vs. line mode. */
+  blockMode: boolean = true;
+  /** Automatic section numbering. */
+  sectionNumbers: boolean = true;
+  /** Maximum width of the plain text. */
+  lineWidth: number = 80;
+  /** Base indentation of the whole textual output. */
+  indent: number = 0;
+  /** Extra indentation for titles. */
+  titleIndent: number = 0;
+  /** Extra indentation for paragraphs. */
+  parIndent: number = 0;
+  /** Extra indentation for lists. */
+  listIndent: number = 1;
+  /** Extra indentation for `<pre>` sections. */
+  preIndent: number = 0;
+  /** `target` of the hypertext links. */
   linkTarget: string | null = null;
-  /** Classe CSS aplicada a alguns elementos HTML. */
+  /** CSS class applied to some HTML elements. */
   cssClass: string | null = null;
-  /** Handlers de função por nome. */
+  /** Function handlers by name. */
   readonly functionHandlers: Map<string, RichTextFunctionHandler> = new Map();
 
+  /**
+   * Creates an empty intermediate representation.
+   *
+   * @param richText The originating `RichText` (kept as an opaque reference).
+   */
   constructor(richText: unknown,) {
     this.richText = richText;
   }
 
-  /** Registra um handler de função pelo seu nome (copia via `dup`). */
+  /** Registers a function handler by its name (copied via `dup`). */
   registerFunctionHandler(handler: RichTextFunctionHandler,): void {
     if (!handler) throw new Error("Bad function handler",);
     this.functionHandlers.set(handler.function, handler.dup(),);
   }
 
-  /** Retorna o handler da função `name`, ou `null`. */
+  /** Returns the handler of the `name` function, or `null`. */
   functionHandler(name: string,): RichTextFunctionHandler | null {
     return this.functionHandlers.get(name,) ?? null;
   }
 
   /**
-   * Propaga o `Query` aos handlers que suportam `setQuery`
+   * Propagates the `Query` to the handlers that support `setQuery`
    * (RTFWithQuerySupport.rb:37-43).
    */
   setQuery(query: Query,): void {
@@ -79,39 +88,39 @@ export class RichTextIntermediate {
     }
   }
 
-  /** Verdadeiro se a árvore está vazia. */
+  /** True when the tree is empty. */
   empty(): boolean {
     return !this.tree || this.tree.empty();
   }
 
-  /** Extrai os títulos e monta o `toc` (delegado à árvore). */
+  /** Extracts the titles and builds the `toc` (delegated to the tree). */
   tableOfContents(toc: TableOfContents, fileName: string,): void {
     this.tree?.tableOfContents(toc, fileName,);
   }
 
-  /** Referências internas coletadas pela árvore. */
+  /** Internal references collected by the tree. */
   internalReferences(): string[] {
     return this.tree ? this.tree.internalReferences() : [];
   }
 
-  /** Texto puro; remove as quebras de linha finais (Ruby `chomp!` loop). */
+  /** Plain text; strips the trailing line breaks (Ruby `chomp!` loop). */
   to_s(): string {
     let str = this.tree ? this.tree.to_s() : "";
     while (str.endsWith("\n",)) str = str.slice(0, -1,);
     return str;
   }
 
-  /** Árvore HTML (elemento raiz), `<span>` vazio sem árvore, ou `null`. */
+  /** HTML tree (root element), an empty `<span>` without a tree, or `null`. */
   to_html(): XMLElementLike | null {
     return this.tree ? this.tree.to_html() : new XMLElement("span", {},);
   }
 
-  /** Saída marcada para testes. */
+  /** Tagged output for tests. */
   to_tagged(): string {
     return this.tree ? this.tree.to_tagged() : "";
   }
 
-  /** Serializa a árvore para Markdown (Fase 13.9). */
+  /** Serializes the tree to Markdown (Phase 13.9). */
   to_markdown(): string {
     return this.tree ? this.tree.to_markdown() : "";
   }
