@@ -128,13 +128,11 @@ describe("LogicalFunction — extensões (Complemento Fase 11)", () => {
   });
 
   describe("funções bloqueadas: registro + stub (G6 §6.6, 2ª onda)", () => {
-    // Apenas as duas com pré-requisito realmente inexistente no modelo:
-    // slack/float (isoncriticalpath) e enum de status (istaskstatus). As
-    // demais foram implementadas na 2ª onda (§6.2/§6.3) e têm testes
-    // próprios em logical-function-second-wave_test.ts.
+    // Apenas a permanentemente bloqueada (slack/float inexistente no Ruby
+    // 3.8.4). `istaskstatus` saiu desta lista na Fase 21 1ª onda (2026-11-10)
+    // ao ser liberada por `TaskScenario#calcStatus` fiel a Ruby.
     const blocked: Array<[string, unknown[], string,]> = [
       ["isoncriticalpath", ["x",], "14",],
-      ["istaskstatus", ["x", "late",], "18",],
     ];
     for (const [name, args, fase,] of blocked) {
       it(`${name} lança NotYetImplementedError (Fase ${fase})`, () => {
@@ -151,6 +149,69 @@ describe("LogicalFunction — extensões (Complemento Fase 11)", () => {
       const fn = new LogicalFunction("isallocated",);
       fn.setArguments(["x", "d1", "d2",],);
       assertEquals(fn.to_s(), "isallocated(x, d1, d2)",);
+    });
+  });
+
+  describe("istaskstatus (F21 1ª onda — 2026-11-10)", () => {
+    // Vocabulário fiel a Ruby `TaskScenario.rb:2477-2496`: not started /
+    // not reached (milestone) / in progress / done / unknown.
+    it("not_started quando effortdone = 0 e sem agenda", () => {
+      task.setForScenario("effort", 100, 0,);
+      task.setForScenario("effortdone", 0, 0,);
+      const fn = new LogicalFunction("istaskstatus",);
+      fn.setArguments(["t1", "not_started",],);
+      assertEquals(evalFn(fn, project, task,), true,);
+    });
+    it("in_progress quando 0 < effortdone < effort", () => {
+      task.setForScenario("effort", 100, 0,);
+      task.setForScenario("effortdone", 40, 0,);
+      const fn = new LogicalFunction("istaskstatus",);
+      fn.setArguments(["t1", "in_progress",],);
+      assertEquals(evalFn(fn, project, task,), true,);
+    });
+    it("done quando effortdone >= effort (complete >= 100)", () => {
+      task.setForScenario("effort", 100, 0,);
+      task.setForScenario("effortdone", 100, 0,);
+      const fn = new LogicalFunction("istaskstatus",);
+      fn.setArguments(["t1", "done",],);
+      assertEquals(evalFn(fn, project, task,), true,);
+    });
+    it("not_reached quando milestone com complete = 0", () => {
+      task.setForScenario("milestone", true, 0,);
+      task.setForScenario("effort", 100, 0,);
+      task.setForScenario("effortdone", 0, 0,);
+      const fn = new LogicalFunction("istaskstatus",);
+      fn.setArguments(["t1", "not_reached",],);
+      assertEquals(evalFn(fn, project, task,), true,);
+    });
+    it("aceita variantes do label: 'Not Started', 'notstarted'", () => {
+      task.setForScenario("effort", 100, 0,);
+      task.setForScenario("effortdone", 0, 0,);
+      for (const label of ["Not Started", "notstarted", "NOT-STARTED",]) {
+        const fn = new LogicalFunction("istaskstatus",);
+        fn.setArguments(["t1", label,],);
+        assertEquals(evalFn(fn, project, task,), true, `${label}`,);
+      }
+    });
+    it("false para label que não bate", () => {
+      task.setForScenario("effort", 100, 0,);
+      task.setForScenario("effortdone", 40, 0,);
+      const fn = new LogicalFunction("istaskstatus",);
+      fn.setArguments(["t1", "done",],);
+      assertEquals(evalFn(fn, project, task,), false,);
+    });
+    it("false quando o id não resolve a uma Task", () => {
+      const fn = new LogicalFunction("istaskstatus",);
+      fn.setArguments(["nope", "not_started",],);
+      assertEquals(evalFn(fn, project, task,), false,);
+    });
+    it("false quando a propriedade é outro tipo (Account)", () => {
+      // `istaskstatus` só faz sentido para Task; o gate `instanceof Task`
+      // rejeita qualquer outra propriedade resolveível pelo id.
+      const account = new Account(project, "ac1", "Account 1", null,);
+      const fn = new LogicalFunction("istaskstatus",);
+      fn.setArguments(["ac1", "not_started",],);
+      assertEquals(evalFn(fn, project, account,), false,);
     });
   });
 

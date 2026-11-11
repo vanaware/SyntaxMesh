@@ -498,10 +498,92 @@ i18n (10.15+) em `packages/core/src/i18n/`.
   arquivos / 6863 passos / 0 falhas** (97m46s) · `check:all` · `lint` (779
   arquivos) · `fmt:check` (831 arquivos) · `check:doccore` · `check:stubs`, todos
   exit 0.
-- **Fase 21 — Compatibilidade e Qualidade ⬜ — reescopada em 3 ondas**
-  (`fase-21-compatibilidade-qualidade.md` §0): 1ª valida o **motor** via CLI da
-  24 (antes da 22); 2ª adapta o suite à **extensão VS Code** (depois da 22);
-  3ª adapta à **PWA + UI** (depois da 20) e fecha o release.
+- **Fase 21 — Compatibilidade e Qualidade 🟨 1ª onda iniciada (2026-11-10)** —
+  tarefas **26.22.9/26.22.10/26.22.11 ✅**: `completude-matrix.md` regenerada a
+  partir das âncoras do código + Seções C/D consolidando realocações xray e
+  pendências F13–F24 hoje só em `CURRENT.md`; cadeia de ADRs **033–037
+  reconciliada** (Seção E; 035 segue reservado para a F22; `decisoes/README.md`
+  atualizado). **Código âncora pré-F22 endereçado nesta mesma 1ª onda** —
+  auditoria e entrega de tudo o que estava ancorado antes da Fase 22 na
+  sequência do cronograma (16 → 17 → 18 → 23 → 24 → 21¹):
+  - **A1 · `AttributeBase#to_tjp`** (`packages/core/src/attributes/attribute-base.ts`):
+    base volta a ser fiel a Ruby (`@type.id + " " + get.to_s`); subclasses
+    ricas mantêm overrides próprios. `Ancorado: Fase 12` removido; teste novo
+    em `tests/attributes/attribute-base_test.ts`.
+  - **A2 · `ResourceScenario#query_fte`** (`packages/core/src/model/resource-scenario.ts`):
+    porta `ResourceScenario.rb:403-423` — containers recursam em `kids`,
+    folhas usam `workSlots / globalWorkSlots × efficiency`; helper privado
+    `getWorkSlots(startIdx, endIdx)` conta slots livres + alocados a `Task`.
+    `projExt()` estendido. Verificado em `tests/logic/query-resources_14c_test.ts`.
+  - **A5 · dispatch `report.ts`** (`packages/core/src/model/report.ts`): os
+    conteúdos `timesheet`/`statussheet` já têm `registerContentFactory`
+    (F18); a branch "Ancorado: Fase 18" era código morto. Substituída por
+    `Error("Known report type ... no registered content factory")` como
+    sentinela de inconsistência interna. `EXTENSION_TYPE_BLOCKS` segue
+    cobrindo extensões 14-C não registradas (A4). Teste atualizado em
+    `tests/model/report-generate_test.ts`.
+  - **D9 · F14-C §13.7 · carga contábil de `booking charge`**
+    (`packages/core/src/model/account-scenario.ts`): novo método privado
+    `addChargeBookings(task, project, startIdx, endIdx)` chamado no ramo
+    `aggregate === "charges" | "tasks"` de `turnover`; resolve conta via
+    `resolveAccount` (regra 3 chargeset da tarefa · regra 4 `defaultaccount`),
+    respeita janela `[start, end)`, trata estornos (amount negativo),
+    verifica pertence (self ou child-of), emite `CostEvent` `task_charge`/
+    `actual` idempotente via `Task#chargeBookingEmitted`/
+    `markChargeBookingEmitted`. Bucket acumulado só pelo Block I (evita
+    dupla contagem). Suite nova em
+    `tests/model/account-scenario-charge-booking_test.ts` (6 passos).
+  - **A6 (`FUNCTIONS_EXT` · `isoncriticalpath`, `istaskstatus`) e D5
+    (`--config` 24.3.11)** permanecem ancorados: A6 é trabalho real das
+    Fases 14/18 ainda não abertas (slack/float inexistente no Ruby 3.8.4 ·
+    enum derived status de tracking); D5 exige reabrir F24 ad-hoc, o que
+    violaria a ordem do cronograma. Comentários no código atualizados
+    apontando para matriz §B/A6 e §D/D5.
+  **Update 2ª rodada da 1ª onda (2026-11-10, mesma data):**
+  - **A6 · `istaskstatus` liberado** (`packages/core/src/logic/logical-function.ts`):
+    `FUNCTIONS_EXT.istaskstatus` saiu de `blocked` para `feasible`. Nova
+    instância privada `istaskstatus(expr)` chama `Task#scenarioData(scIdx)`
+    → `TaskScenario#calcStatus()` (já fiel a `TaskScenario.rb:2477-2496`
+    desde a F5) e compara contra o argumento `$ID` normalizado
+    (`toLowerCase() + strip [^a-z0-9]`): aceita `not_started`, `notstarted`,
+    `Not Started`, `NOT-STARTED` contra `not started`/`not reached`/`in
+    progress`/`done`/`unknown`. `isoncriticalpath` continua `blocked`
+    (permanente — slack/float inexistente mesmo no Ruby 3.8.4). Suite nova
+    com 8 passos em
+    `packages/core/tests/logic/logical-function-complemento_test.ts`.
+  - **D5 · aplicação de `--config` YAML** (F24 24.3.11): novo módulo
+    `packages/core/src/runtime-config.ts` porta `RuntimeConfig.rb` —
+    `sectionNode(config, "global.log")` caminha chaves prefixadas com `_`,
+    `configureFromSection(target, config, section)` copia apenas chaves já
+    existentes no target (Ruby `instance_variables.each`) e converte `Date`
+    → `YYYY-MM-DD`. `ExecutionRequest.configObject?: ConfigTree` propaga o
+    YAML parseado da CLI até `executeRequest` (aplicado logo após
+    `handler.reset()`, espelhando `Tj3Daemon#initialize`). `applyConfig`
+    em `packages/cli/src/cli.ts` deixa de emitir o `Warning: ... not
+    applied yet` e passa a preencher `request.configObject`; o branch
+    sheet-app (SMTP) continua entregando em `appOptions.config`. Testes:
+    `packages/core/tests/runtime-config_test.ts` (14 passos cobrindo
+    `sectionNode`/`configureFromSection`/integração com
+    `MessageHandlerInstance`) e assertion reescrita em
+    `packages/cli/tests/cli_test.ts::--config aplica _global / _global._log`.
+    README do CLI atualizado (linha `--config` + limitações conhecidas).
+  - **Fix gate não-planejado**: `packages/blog/src/cli.ts:96-105` tinha 5×
+    `TS18048 'post' is possibly 'undefined'` sob `noUncheckedIndexedAccess`
+    (pré-existente em HEAD, travava `deno task check:all`). Loop indexado
+    `for (let i = 0; i < posts.length; i++)` trocado por
+    `for (const [i, post] of posts.entries())` — `post` agora é `BatchPost`
+    em vez de `BatchPost | undefined`.
+  **Contagem de âncoras vivas:** 6 → 2 (A3 · CSVFile.read F19; A4 ·
+  EXTENSION_TYPE_BLOCKS sentinela). `isoncriticalpath` é a única
+  extensão `blocked` restante e é permanente (sem slack/float no Ruby
+  3.8.4). Gates desta sessão: `check:stubs` OK · `gaps:audit` OK ·
+  `deno task tests` full + goldens (ver §Verificações abaixo).
+  **Demais tarefas da 1ª onda** (26.0–26.14, 26.26–26.28) continuam em
+  aberto — corpus, runners e2e, AST-equivalence ampliada, snapshots,
+  benchmarks, segurança, CSP, `known-divergences` e matriz de cobertura
+  #1–#6a. **Próximo passo oficial após fechar a 26.0–26.14: abrir a Fase
+  22** (kickoff da extensão VS Code, Bloco H do `doc-core` e pontes
+  `lsp-core` 7.5–7.7).
 - **Fase 22 — Extensão VS Code** 🟨 **`doc-core` entregue (2026-11-08)**, extensão
   não iniciada — plano `fase-22-vscode-extension.md` + tarefas
   `fase-22-vscode-extension-tarefas.md` (só a **subfase 22.1b** está detalhada —

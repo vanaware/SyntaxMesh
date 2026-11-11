@@ -42,25 +42,25 @@ No `--allow-sys` is required: the CLI avoids `fs.access()` (in Deno's
 
 ## Flags
 
-| Flag                       | Meaning                                                                                              |
-| -------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `--check-syntax`           | Parse only; prints `Syntax check passed.` and exits before scheduling                                |
-| `--list-reports <regex>`   | Lists the matching reports (`<name> (<type>)`) and exits                                             |
-| `--reports <regex>`        | Generates only the reports whose **id** matches (`report1`, `report2`… when the file declares no id) |
-| `--no-reports`             | Schedules without generating or printing anything                                                    |
-| `--force-reports`          | Generates reports even when the scheduler reported errors (exit code still reflects the errors)      |
-| `-f`                       | `tj3` short form of `--force-reports`; inside a sheet app it means `--force`                         |
-| `--output-dir <dir>`       | Directory for written reports (default: current directory)                                           |
-| `--freeze`                 | Writes the frozen project (`<master>-header.tji` + `<master>-bookings.tji`) next to the master       |
-| `--freezedate <date>`      | Cut-off date for the bookings exported by `--freeze` (default: `now`)                                |
-| `--freeze-by-task`         | Groups the frozen bookings by task instead of by resource (`--freezebytask` also accepted)           |
-| `--check-time-sheet <f>`   | Validates a time sheet against the project and exits (one sheet per run)                             |
-| `--check-status-sheet <f>` | Validates a status sheet against the project and exits (one sheet per run)                           |
-| `--config <file>`          | Legacy `tj3` YAML config (applied to the sheet apps; a stub for the project pipeline)                |
-| `--silent`                 | Hides `info`/`debug` messages (warnings, errors and the counters line stay)                          |
-| `--no-color`               | Disables ANSI colors (also automatic when stdout is not a TTY)                                       |
-| `--version`                | Prints `SyntaxMesh <version>` and exits before reading any file                                      |
-| `--help`                   | Prints the help text                                                                                 |
+| Flag                       | Meaning                                                                                                                                                                                               |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--check-syntax`           | Parse only; prints `Syntax check passed.` and exits before scheduling                                                                                                                                 |
+| `--list-reports <regex>`   | Lists the matching reports (`<name> (<type>)`) and exits                                                                                                                                              |
+| `--reports <regex>`        | Generates only the reports whose **id** matches (`report1`, `report2`… when the file declares no id)                                                                                                  |
+| `--no-reports`             | Schedules without generating or printing anything                                                                                                                                                     |
+| `--force-reports`          | Generates reports even when the scheduler reported errors (exit code still reflects the errors)                                                                                                       |
+| `-f`                       | `tj3` short form of `--force-reports`; inside a sheet app it means `--force`                                                                                                                          |
+| `--output-dir <dir>`       | Directory for written reports (default: current directory)                                                                                                                                            |
+| `--freeze`                 | Writes the frozen project (`<master>-header.tji` + `<master>-bookings.tji`) next to the master                                                                                                        |
+| `--freezedate <date>`      | Cut-off date for the bookings exported by `--freeze` (default: `now`)                                                                                                                                 |
+| `--freeze-by-task`         | Groups the frozen bookings by task instead of by resource (`--freezebytask` also accepted)                                                                                                            |
+| `--check-time-sheet <f>`   | Validates a time sheet against the project and exits (one sheet per run)                                                                                                                              |
+| `--check-status-sheet <f>` | Validates a status sheet against the project and exits (one sheet per run)                                                                                                                            |
+| `--config <file>`          | `tj3` YAML config: applied to the sheet apps (`appOptions.config`) and, for the plain CLI, to the `MessageHandlerInstance` sinks through the shared `RuntimeConfig` seam (`_global` / `_global._log`) |
+| `--silent`                 | Hides `info`/`debug` messages (warnings, errors and the counters line stay)                                                                                                                           |
+| `--no-color`               | Disables ANSI colors (also automatic when stdout is not a TTY)                                                                                                                                        |
+| `--version`                | Prints `SyntaxMesh <version>` and exits before reading any file                                                                                                                                       |
+| `--help`                   | Prints the help text                                                                                                                                                                                  |
 
 Exit codes: `0` success, `1` any error (parse, schedule, report). The code is
 always taken from the envelope — the CLI never invents success.
@@ -169,9 +169,12 @@ warnings` line is printed when there is at least one of either.
   `--node-modules-dir=none`, and 114 MB when compiled from an isolated tree
   (the CLI's own graph has only six npm packages). Shrinking it is a packaging
   task, not a runtime one.
-- `--config` is applied to the sheet apps (`ts`/`ss`), which read it; the
-  project pipeline still only parses it and emits a `not applied yet` warning
-  (`Tj3Config` is a stub).
+- `--config` is applied to the sheet apps (`ts`/`ss`) through the parsed
+  `appOptions.config` and to the plain CLI via the shared `RuntimeConfig`
+  seam (`_global` / `_global._log` configure `MessageHandlerInstance`:
+  `outputLevel`, `logLevel`, `logFile`, `abortOnWarning`, `hideScenario`).
+  Any other section in the YAML is preserved in `request.configContent` for
+  future consumers.
 - `man` is still missing: it needs the documentation core shipped by phase 22.
   The envelope section and its printing are already in place, so the command
   will only have to fill it.

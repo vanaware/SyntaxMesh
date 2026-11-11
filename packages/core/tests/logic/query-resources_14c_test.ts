@@ -1,7 +1,11 @@
 /**
  * Onda B (bt) — query_* portáveis de `ResourceScenario` (ResourceScenario.rb:315-463)
- * via dispatch do `Query.process` (etapa i), sobre um projeto agendado real, e
- * o `query_fte` ainda ancorado na Fase 18 (`NotYetImplementedError`).
+ * via dispatch do `Query.process` (etapa i), sobre um projeto agendado real.
+ *
+ * `query_fte` estava ancorado na Fase 18; o audit da Fase 21 1ª onda
+ * (2026-11-10) confirmou que `WorkingHours` (F2) + `Project#getWorkSlots` já
+ * entregam a base que o port precisa, e a implementação fiel ao Ruby foi
+ * religada (ver `completude-matrix.md` §B/A2).
  *
  * As consultas de licença deixaram de ser stubs na 16.17 (Fase 16).
  *
@@ -87,20 +91,19 @@ describe("query_* ResourceScenario (Onda B3/B4)", () => {
     );
   });
 
-  it("query_fte fica ancorado (process falha com ok=false)", () => {
+  it("query_fte entrega FTE do recurso agendado (F21 1ª onda)", () => {
     const { project, resource, } = scheduledFixture();
-    for (const attr of ["fte",]) {
-      const q = rq(project, resource, attr,);
-      // `NotYetImplementedError extends TjRuntimeError` e `Query.process()` o
-      // captura (query.ts:429-434): em vez de propagar, marca `ok = false`,
-      // grava `errorMessage` e devolve `false` — a âncora é observável assim.
-      assertEquals(q.process(), false, `${attr} deveria falhar (ancorado)`,);
-      assertEquals(q.ok, false, `${attr} deveria ter ok=false`,);
-      assert(
-        (q.errorMessage ?? "").length > 0,
-        `${attr} sem errorMessage de âncora`,
-      );
-    }
+    const q = rq(project, resource, "fte",);
+    // `query_fte` é a razão `workSlots / globalWorkSlots × efficiency` fiel a
+    // Ruby (ResourceScenario.rb:403-423). A âncora antiga devolvia
+    // `ok=false`; agora o processo conclui e produz um número finito ≥ 0.
+    // A magnitude depende da calibração entre a janela do recurso e a do
+    // projeto (granularidade horária × calendário global), então só exigimos
+    // que seja um número válido e não-negativo.
+    assert(q.process(), `fte: ${q.errorMessage ?? ""}`,);
+    const fte = q.to_num();
+    assert(typeof fte === "number", `fte não-numérico: ${fte}`,);
+    assert(Number.isFinite(fte,) && fte >= 0, `fte inválido: ${fte}`,);
   });
 
   it("consultas de licença portadas devolvem número (16.17)", () => {

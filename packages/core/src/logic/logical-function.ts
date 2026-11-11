@@ -96,10 +96,20 @@ export const FUNCTIONS_EXT: Map<string, [number, string, ExtKind,]> = new Map(
     ["isusedatproject", [4, "8.1", "feasible",],],
     // Permanently blocked (G6 §6.6): the prerequisite does not exist in the
     // model. `isoncriticalpath` needs slack/float (missing even in the vendored
-    // Ruby 3.8.4) → phases 14/15; `istaskstatus` needs a derived status enum
-    // from tracking → phase 18.
+    // Ruby 3.8.4) — no consumer in the port today, so it stays `blocked` with
+    // its origin-phase tag; revisit only if a future slack/float pass lands.
+    //
+    // `istaskstatus` was released from `blocked` in the F21 1ª onda (2026-11-10):
+    // `TaskScenario#calcStatus` (port of `TaskScenario.rb:2477-2496`) already
+    // populates the Ruby-derived status vocabulary (`not started` / `not
+    // reached` / `in progress` / `done` / `unknown`) and `TaskScenario#status()`
+    // exposes it. The comparison here normalizes the `$ID` argument
+    // (e.g. `not_started`, `notstarted`, `Not Started`) so users can write the
+    // label closest to their source. The gauge vocabulary (on schedule / behind
+    // schedule / ahead of schedule) still lives in `calcGauge()`, which the
+    // port keeps simplified; that comparison is a future extension.
     ["isoncriticalpath", [1, "14", "blocked",],],
-    ["istaskstatus", [2, "18", "blocked",],],
+    ["istaskstatus", [2, "18", "feasible",],],
   ],
 );
 
@@ -271,6 +281,11 @@ export class LogicalFunction {
         return this.isused(expr,);
       case "isusedatproject":
         return this.isusedatproject(expr,);
+      // F21 1ª onda (2026-11-10): released from `blocked` once `TaskScenario#
+      // calcStatus` became faithful to Ruby. SyntaxMesh extension — the raw
+      // string label is compared against the task's derived status.
+      case "istaskstatus":
+        return this.istaskstatus(expr,);
       default:
         return expr.error(`Unknown function ${this.name}`,);
     }
@@ -1219,4 +1234,54 @@ export class LogicalFunction {
     },);
     return used;
   }
+
+  /**
+   * `istaskstatus(id, status)` — the derived status of task `id` (scenario of
+   * the Query) equals the supplied label. Faithful to Ruby's status
+   * vocabulary (`TaskScenario.rb:2477-2496`): `not started`, `not reached`
+   * (milestone with `complete == 0`), `in progress`, `done`, `unknown`.
+   *
+   * The `$ID` argument is compared after stripping non-alphanumerics and
+   * lowercasing, so `not_started`, `notstarted`, `Not Started` and
+   * `Not-Started` all match `"not started"` on the target. When the task has
+   * not been scheduled yet, we call `calcStatus()` first so `_status` reflects
+   * the current derived state (Ruby's `finishScheduling` does the same).
+   *
+   * SyntaxMesh extension — no Ruby equivalent. Gauge comparison
+   * (`on schedule`, `behind schedule`, `ahead of schedule`) is intentionally
+   * **not** handled here: `calcGauge()` is still a simplified port; extending
+   * this function after the gauge port lands is the natural follow-up.
+   *
+   * @param expr Expression that owns the evaluation context.
+   * @returns `true` when the task exists and its normalized status matches
+   *   the normalized argument.
+   */
+  private istaskstatus(expr: LogicalExpression,): boolean {
+    this.arityCheck(2, expr,);
+    const [property,] = this.properties(expr,);
+    if (!property) return false;
+    const project = property.project as Project;
+    const target = this.resolveById(project, String(this.arguments[0],),);
+    if (!(target instanceof Task)) return false;
+    const scIdx = this.scenarioFromQuery(expr,);
+    const scenario = target.scenarioData(scIdx,);
+    // Ensures `_status` reflects the latest `complete` even if the caller
+    // evaluates before `markAsScheduled` runs.
+    scenario.calcStatus();
+    const rawStatus = scenario.status() || "unknown";
+    return normalizeStatus(rawStatus,) ===
+      normalizeStatus(String(this.arguments[1],),);
+  }
+}
+
+/**
+ * Normalizes a status label: lowercase and drop non-alphanumerics so
+ * `not_started`, `Not Started`, `notstarted` and `NOT-STARTED` all collapse to
+ * `notstarted`. Used exclusively by `istaskstatus`.
+ *
+ * @param value Raw label (target status or user-supplied argument).
+ * @returns The canonical form used for comparison.
+ */
+function normalizeStatus(value: string,): string {
+  return value.toLowerCase().replace(/[^a-z0-9]/gu, "",);
 }

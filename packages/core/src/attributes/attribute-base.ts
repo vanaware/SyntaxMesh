@@ -8,7 +8,7 @@ import { type PropertyLike, } from "../model/property-like.ts";
 import { type AttributeContainer, } from "./attribute-container.ts";
 import { type AttributeDefinition, } from "./attribute-definition.ts";
 import { deepClone, } from "../utils/deep-clone.ts";
-import { AttributeOverwrite, NotYetImplementedError, } from "./errors.ts";
+import { AttributeOverwrite, } from "./errors.ts";
 
 /**
  * Global modes for the behaviour of `set()` and `inherit()`.
@@ -276,14 +276,20 @@ export abstract class AttributeBase<T,> {
   /**
    * Converts the value to TJP (TaskJuggler format).
    *
+   * Faithful port of Ruby `AttributeBase#to_tjp` (`@type.id + " " + get.to_s`).
+   * Subclasses with non-scalar payloads (lists, allocations, rich text, time
+   * intervals, formats, references, bookings) override to render their own
+   * syntax; the base is the fallback for scalar attributes whose value already
+   * stringifies through `to_s()`.
+   *
    * @returns The value serialized as TJP.
    * @see docs/taskjuggler/lib/taskjuggler/AttributeBase.rb:to_tjp
    */
   to_tjp(): string {
-    // Ancorado: Fase 13/14 — the to_tjp of rich-text attributes requires a
-    // round-trip RTI→markup (Markdown/phase 13) consumed by the reports
-    // (phase 14).
-    throw new NotYetImplementedError("12", "to_tjp",);
+    const value = this.get();
+    return `${this.type.id} ${
+      value === null || value === undefined ? "" : String(value,)
+    }`;
   }
 
   /**

@@ -502,11 +502,20 @@ _Verificação._ `deno test -P -A packages/cli/tests` → 14 testes / 61 passos;
 _Pendências conscientes._ (a) 24.3.11: a leitura do YAML entra, mas a
 **aplicação** depende do porte completo de `Tj3Config` (hoje só valores fixos
 em `initTj3Config`) — a CLI avisa em `stderr` (`not applied yet`) e o conteúdo
-viaja em `configContent`; (b) a apresentação de mensagens é provisória
-(`cli.ts`, 24.4 substitui por `reporter.ts`) e `reports`/`freeze`/`sheet`/`man`
-não são despachados (24.5/24.9/24.10); (c) 24.3.15 (smoke Bun/Node) fica
-pendente — `bun` não está instalado no ambiente; o caminho de runtime já é
-único (`io.ts`, `node:fs/promises`).
+viaja em `configContent`; **(update F21 1ª onda 2ª rodada, 2026-11-10 —
+fechada):** novo módulo `packages/core/src/runtime-config.ts` porta
+`RuntimeConfig.rb` (`sectionNode` + `configureFromSection`);
+`ExecutionRequest.configObject` propaga o YAML parseado até `executeRequest`,
+que aplica `_global`/`_global._log` em `MessageHandlerInstance` **após**
+`handler.reset()` (mesmo seam que Ruby usa em `Tj3Daemon#initialize`);
+sheet apps SMTP seguem recebendo via `appOptions.config`. O `Warning: ...
+not applied yet` foi removido. Testes:
+`packages/core/tests/runtime-config_test.ts` (14 passos) e
+`packages/cli/tests/cli_test.ts::--config`. (b) a apresentação de mensagens
+é provisória (`cli.ts`, 24.4 substitui por `reporter.ts`) e
+`reports`/`freeze`/`sheet`/`man` não são despachados (24.5/24.9/24.10);
+(c) 24.3.15 (smoke Bun/Node) fica pendente — `bun` não está instalado no
+ambiente; o caminho de runtime já é único (`io.ts`, `node:fs/promises`).
 
 ---
 

@@ -363,11 +363,24 @@ function isEmailSheetApp(app: SheetAppName | undefined,): boolean {
 /**
  * Reads the YAML of `--config` (24.3.11).
  *
- * The sheet apps need the configuration **already parsed** (`appOptions.config`,
- * Ruby's `RuntimeConfig` — ADR 037), so for them the YAML enters the request as
- * an object. In the rest of the pipeline the **application** remains anchored to
- * 24.3.11: the text travels in the request and an explicit warning on `stderr`
- * keeps the user from assuming the configuration took effect.
+ * Ruby builds a `RuntimeConfig` at CLI boot and lets each app opt into
+ * sections through `@rc.configure(target, 'global' | 'global.log' | …)`
+ * (`Tj3AppBase.rb:157`; `Tj3Daemon.rb:88-91` for the log seam). SyntaxMesh
+ * keeps the same contract via the shared helper `configureFromSection`:
+ *
+ *  - The **email sheet apps** get the parsed YAML handed over through
+ *    `appOptions.config` (ADR 037); each concrete app then walks
+ *    `global` / `timesheets` / `timesheets.sender` … exactly like Ruby.
+ *  - The **plain CLI** (and the `check-ts`/`check-ss` sheet apps, which do not
+ *    consume SMTP-shaped config) stashes the parsed root on
+ *    `request.configObject`. `execute()` then applies `_global` and
+ *    `_global._log` to `MessageHandlerInstance` **after** its per-call reset
+ *    (mirroring Ruby's `Tj3Daemon#initialize` order — the reset here plays
+ *    the same role as Ruby's fresh-handler construction). Unknown keys are
+ *    silently dropped, faithful to Ruby's `instance_variables.each`.
+ *
+ * Anything else in the file is left in `request.configContent` so a future
+ * core consumer can still read the raw text — no data is lost.
  */
 async function applyConfig(
   configFile: string | null,
@@ -384,22 +397,25 @@ async function applyConfig(
   }
   request.configContent = content;
 
+  let config: Record<string, unknown>;
+  try {
+    config = (parseYaml(content,) ?? {}) as Record<string, unknown>;
+  } catch {
+    io.printerr(`Cannot parse configuration file '${configFile}'.`,);
+    return 1;
+  }
+
   if (isEmailSheetApp(request.app,)) {
-    let config: Record<string, unknown>;
-    try {
-      config = (parseYaml(content,) ?? {}) as Record<string, unknown>;
-    } catch {
-      io.printerr(`Cannot parse configuration file '${configFile}'.`,);
-      return 1;
-    }
     request.appOptions = { ...(request.appOptions ?? {}), config, };
     return null;
   }
 
-  io.printerr(
-    "Warning: the YAML configuration is read but not applied yet " +
-      "(phase 24 — task 24.3.11).",
-  );
+  // Plain CLI / check-ts / check-ss: Ruby `Tj3Daemon` pattern. We stash the
+  // parsed root on the request and let `execute()` apply `_global` and
+  // `_global._log` to `MessageHandlerInstance` **after** its per-call reset
+  // (`packages/core/src/execution/execute.ts`). Applying here would be
+  // silently overwritten by that reset.
+  request.configObject = config;
   return null;
 }
 

@@ -70,6 +70,16 @@ export {
   MessageHandlerInstance,
 } from "./message-handler.ts";
 
+// Phase 24 (24.3.11) — RuntimeConfig helper: applies parsed YAML sections to
+// existing instance members of a target (Ruby `RuntimeConfig#configure`). The
+// CLI reads + parses the file; this module is pure (ADR 034 — the core does
+// not touch disk).
+export {
+  type ConfigTree,
+  configureFromSection,
+  sectionNode,
+} from "./runtime-config.ts";
+
 // Phase 10 — lexer and parser (port of TextParser/*)
 export * from "./lexer/mod.ts";
 export * from "./parser/mod.ts";

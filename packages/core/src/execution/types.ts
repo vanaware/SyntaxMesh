@@ -146,6 +146,14 @@ export interface ExecutionRequest {
   entry?: string;
   /** YAML configuration already read by the consumer (no FS in the core). */
   configContent?: string;
+  /**
+   * Parsed YAML root of `configContent` (RuntimeConfig's dotted-section walk).
+   * When present, `execute` applies the `_global` and `_global._log` sections
+   * onto `MessageHandlerInstance` after the per-call reset (F24 24.3.11 —
+   * faithful to Ruby's `Tj3Daemon#initialize`). The CLI fills this; PWA/HTTP
+   * consumers may pass `null` when they don't have a YAML config.
+   */
+  configObject?: Record<string, unknown> | null;
   /** `--check-syntax`: parse only, do not schedule. */
   checkSyntax?: boolean;
   /** `--list-reports <RE>`: report id or regular expression. */

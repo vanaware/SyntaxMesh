@@ -837,6 +837,16 @@ comportamento.
 - Carga contábil de `booking charge` e cálculo de *remaining* (planned −
   booking) a partir de bookings — **Fase 18** (tracking/timesheet), onde o
   tracking scenario consome os bookings.
+  **Carga contábil do `booking charge` entregue na Fase 21 1ª onda
+  (2026-11-10)**: `AccountScenario#addChargeBookings` consome
+  `task.chargeBookings` no ramo `aggregate === "charges" | "tasks"`,
+  emite `CostEvent` `task_charge`/`actual` idempotente e resolve a conta
+  via `resolveAccount` (regra 3 chargeset da tarefa / regra 4
+  `defaultaccount`). Verificado por
+  `packages/core/tests/model/account-scenario-charge-booking_test.ts`
+  (6 passos). Matriz: §D/D9. O cálculo de *remaining* por bookings
+  (tracking scenario) permanece na F18/Futuro — nada a ver com a carga
+  contábil propriamente dita.
 - `ExtendedBooking` (Fase 8.1) continua sem uso: a 14C.15 introduziu
   `ChargeBooking` próprio; uma futura limpeza deve apagar ou unir os dois.
   **Resolvido em 2026-11-02 — `ExtendedBooking` apagado** (órfão genérico

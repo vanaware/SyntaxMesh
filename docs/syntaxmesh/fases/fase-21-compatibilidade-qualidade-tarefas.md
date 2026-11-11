@@ -2,9 +2,10 @@
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-21-tarefas.md`
 > **Plano:** `docs/syntaxmesh/fases/fase-21-compatibilidade-qualidade.md`
-> **Status:** ⬜ Não iniciada
+> **Status:** 🟨 Em andamento (1ª onda iniciada 2026-11-10 — 26.22.9/10/11
+> ✅: matriz de completude regenerada + ADRs 033–037 reconciliados)
 > **Total:** ~143 tarefas
-> **Concluídas:** 0
+> **Concluídas:** 3
 > **Foco:** Golden tests, i18n, performance, segurança, cross-browser, release
 
 > **📌 Âncora — Complemento Fase 11 (2ª onda, §6.7 de `fase-11-logical-complemento.md`):**
@@ -103,7 +104,7 @@
 [ ] 26.19 Build de produção                         —   0/6
 [ ] 26.20 CHANGELOG e release notes                 —   0/4
 [ ] 26.21 Versionamento                             —   0/4
-[ ] 26.22 Documentação final + matriz de completude  —   0/11
+[ ] 26.22 Documentação final + matriz de completude  — 3/11
 [ ] 26.23 Templates de issues                       —   0/4
 [ ] 26.24 CI/CD final                               —   0/8
 [ ] 26.25 Verificação final                         —   0/8
@@ -439,9 +440,9 @@ TOTAL: ~143
 
 | # | Tarefa | Arquivos | Verificação |
 |---|---|---|---|
-| 26.22.9 | **Regenerar `completude-matrix.md` a partir do código**: varrer as âncoras `// Ancorado: Fase N — razão` (mesma fonte de `scripts/check-stubs.ts`) e produzir uma linha por stub com fase dona | `docs/syntaxmesh/fases/completude-matrix.md` + script auxiliar em `scripts/gaps/` | matriz cobre F2–F20; `deno task gaps:audit` verde |
-| 26.22.10 | Conciliar a matriz com as realocações da varredura xray (F16 16.9/16.10/16.14–16.15, F18 18.18–18.20, F22 22.1b, F24 24.9/24.10) e com os gaps hoje só em `CURRENT.md` (F13/F14/F14-C/F15) | idem | nenhuma linha `pendente` sem dono |
-| 26.22.11 | Reconciliar a cadeia de ADR **033–037** (reservados) com os arquivos realmente criados nas Fases 22/23/24/18; atualizar `decisoes/README.md` | `decisoes/README.md` | tabela sem números duplicados nem vagos |
+| 26.22.9 | **Regenerar `completude-matrix.md` a partir do código**: varrer as âncoras `// Ancorado: Fase N — razão` (mesma fonte de `scripts/check-stubs.ts`) e produzir uma linha por stub com fase dona | `docs/syntaxmesh/fases/completude-matrix.md` + script auxiliar em `scripts/gaps/` | matriz cobre F2–F20; `deno task gaps:audit` verde **[x 2026-11-10]** |
+| 26.22.10 | Conciliar a matriz com as realocações da varredura xray (F16 16.9/16.10/16.14–16.15, F18 18.18–18.20, F22 22.1b, F24 24.9/24.10) e com os gaps hoje só em `CURRENT.md` (F13/F14/F14-C/F15) | idem | nenhuma linha `pendente` sem dono **[x 2026-11-10 — Seções C/D]** |
+| 26.22.11 | Reconciliar a cadeia de ADR **033–037** (reservados) com os arquivos realmente criados nas Fases 22/23/24/18; atualizar `decisoes/README.md` | `decisoes/README.md` | tabela sem números duplicados nem vagos **[x 2026-11-10 — Seção E; 035 permanece reservado para F22]** |
 
 ---
 

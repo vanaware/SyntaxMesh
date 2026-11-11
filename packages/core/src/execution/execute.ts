@@ -18,6 +18,7 @@
  */
 import { DataCache, } from "../scheduling/data-cache.ts";
 import { MessageHandlerInstance, } from "../message-handler.ts";
+import { configureFromSection, } from "../runtime-config.ts";
 import { TaskJuggler, } from "../taskjuggler.ts";
 import { generateMan, } from "../docgen/man.ts";
 import {
@@ -117,6 +118,15 @@ async function executeRequest(
   // Per-call isolation: the handler is a process singleton.
   handler.reset();
   handler.abortOnWarning = request.abortOnWarnings === true;
+  // Ruby `Tj3Daemon#initialize` reads the YAML and configures the handler
+  // through `RuntimeConfig#configure`. F24 24.3.11 delivers the same seam:
+  // the CLI parses the file and hands us the root via `request.configObject`;
+  // we apply `_global` and `_global._log` after the reset so nothing else
+  // in the pipeline clobbers the user's settings.
+  if (request.configObject) {
+    configureFromSection(handler, request.configObject, "global",);
+    configureFromSection(handler, request.configObject, "global.log",);
+  }
   lastProject = null;
 
   const options = echoOptions(request,);

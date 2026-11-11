@@ -7,7 +7,6 @@ import {
 import { AttributeDefinition, } from "../../src/attributes/attribute-definition.ts";
 import { AttributeType, } from "../../src/attributes/attribute-type.ts";
 import { MockContainer, } from "./mock-container.ts";
-import { NotYetImplementedError, } from "../../src/attributes/errors.ts";
 
 class TestAttribute extends AttributeBase<string> {
   constructor(
@@ -176,11 +175,16 @@ describe("AttributeBase", () => {
     assertEquals(attr.to_rti(), null,);
   });
 
-  it("to_tjp lança NotYetImplementedError", () => {
-    assertThrows(
-      () => attr.to_tjp(),
-      NotYetImplementedError,
-    );
+  it("to_tjp retorna '<type.id> <valor>' (fiel a Ruby, F21 1ª onda)", () => {
+    // Ruby `AttributeBase#to_tjp` é `@type.id + " " + get.to_s`; as
+    // subclasses ricas (listas, alocacoes, rich text, formatos, referencias,
+    // bookings) sobrescrevem com a sintaxe propria. A base deixa de lancar
+    // `NotYetImplementedError` com o audit da Fase 21 1ª onda (2026-11-10) —
+    // ver `completude-matrix.md` §B/A1.
+    container.setStoredValue("test.attr", "valor",);
+    assertEquals(attr.to_tjp(), "test.attr valor",);
+    container.setStoredValue("test.attr", null,);
+    assertEquals(attr.to_tjp(), "test.attr ",);
   });
 
   it("quotedString com string simples", () => {

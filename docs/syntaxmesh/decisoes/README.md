@@ -119,8 +119,10 @@ O que foi decidido? Seja específico e acionável.
 > fechar ponta a ponta.
 > **Nunca renumerar ADRs existentes** — os arquivos 027/028
 > já commitados são referência histórica; ao criar um ADR, conferir antes esta
-> tabela e usar o próximo número livre. A cadeia 034–037 deve ser **reconciliada na
-> Fase 21** (se alguém precisar de número antes, usa o próximo livre e atualiza esta
-> tabela).
+> tabela e usar o próximo número livre. A cadeia 034–037 foi **reconciliada na
+> 1ª onda da Fase 21 (2026-11-10)** — ver
+> `docs/syntaxmesh/fases/completude-matrix.md` §Seção E. **035 permanece
+> reservado** para a Fase 22 (abertura pendente); se alguém precisar de número
+> antes, usa o próximo livre e atualiza esta tabela.
 
 > **Nota:** Manter esta tabela atualizada manualmente ou via script ao adicionar novos ADRs.

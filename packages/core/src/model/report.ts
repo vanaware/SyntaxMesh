@@ -273,16 +273,21 @@ export class Report extends PropertyTreeNode {
       throw new Error("Unknown report type",);
     }
     if (!factory) {
-      // The phase 14 contents are registered (reports/mod.ts); the known types
-      // without a remaining factory are the sheets.
-      // The phase 14 Complemento extensions have their own anchor (C1/C2/C3).
+      // Every KNOWN_TYPE_SPECS has a registered factory (reports/mod.ts
+      // side-effects load the content modules, including the Fase 18 sheets
+      // `TimeSheetReport` and `StatusSheetReport`). Reaching this branch
+      // means a type was added to KNOWN_TYPE_SPECS without a matching
+      // `registerContentFactory` call — an internal inconsistency, not a
+      // phase-owned gap. EXTENSION_TYPE_BLOCKS remains as a sentinel for
+      // future 14C-style blocks; the map is empty since 14C.3.1.
       const block = EXTENSION_TYPE_BLOCKS.get(key!,);
       if (block) {
         // Ancorado: Fase 14C — complement content not registered yet.
         throw new NotYetImplementedError(block.id, `Report content '${type}'`,);
       }
-      // Ancorado: Fase 18 — timesheet/statussheet contents not ported.
-      throw new NotYetImplementedError("18", `Report content '${type}'`,);
+      throw new Error(
+        `Known report type '${type}' has no registered content factory`,
+      );
     }
     this.content = factory(this,);
 

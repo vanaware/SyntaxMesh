@@ -9,7 +9,8 @@
 > (D-3/LC-A.6 resolvido: `istask`/`isresource`/`isleaf`/`isan*` resolvem por
 > `$ID` — coberto em `logical-function_test.ts`). O que resta está **ancorado**
 > nas fases donas: scheduler (G1.4)→Fase 7; `isoncriticalpath`/`freeze`/hide-rollup→F14/15;
-> `hasalert`/`Journal`/LF.2-3→F16; `istaskstatus`→F18; fachada `parse*`→F19;
+> `hasalert`/`Journal`/LF.2-3→F16; ~~`istaskstatus`→F18~~ **entregue na F21
+> 1ª onda 2ª rodada (2026-11-10)** — ver §6.6 abaixo; fachada `parse*`→F19;
 > golden/i18n round-trip de extensões→F21.
 > **Fonte Ruby:** `docs/taskjuggler/lib/taskjuggler/LogicalFunction.rb`, `LogicalOperation.rb`, `TjpSyntaxRules.rb`, `i18n/*`
 > **ADRs:** 011 (port fiel), 023 (i18n de keywords), 024 (expressões sem precedência)
@@ -105,7 +106,7 @@ extensão nova que exige o pré-requisito da Fase indicada.
 | endsAfter(ID,D)      | endsafter     | 2    | **Bloqueada**    | Fase 7 (end agend.) |
 | endsBefore(ID,D)     | endsbefore    | 2    | **Bloqueada**    | Fase 7             |
 | isOnCriticalPath(ID) | isoncriticalpath | 1 | **Bloqueada**   | Fase 7 (caminho crítico) |
-| isTaskStatus(ID,ST)  | istaskstatus  | 2    | **Bloqueada**    | Fase 7/14 (status) |
+| isTaskStatus(ID,ST)  | istaskstatus  | 2    | **Entregue (F21 1ª onda 2ª rodada, 2026-11-10)** | `TaskScenario#calcStatus` (Ruby 3.8.4 fiel, F5) |
 
 ### 1.2 Decisões pendentes (devem ser resolvidas antes/durante a execução)
 
@@ -163,7 +164,7 @@ extensão nova que exige o pré-requisito da Fase indicada.
 | LC-D.3 | `startsafter/startsbefore(id,d)` stubs | Fase 7 | 2 testes |
 | LC-D.4 | `endsafter/endsbefore(id,d)` stubs | Fase 7 | 2 testes |
 | LC-D.5 | `isoncriticalpath(id)` stub | Fase 7 | 1 teste |
-| LC-D.6 | `istaskstatus(id,status)` stub (+ validação do enum de status quando real) | Fase 7/14 | 1 teste |
+| LC-D.6 | `istaskstatus(id,status)` stub (+ validação do enum de status quando real) | Fase 7/14 → **F21 1ª onda 2ª rodada (2026-11-10) — liberado** | 1 teste → 8 testes em `logical-function-complemento_test.ts` |
 | LC-D.7 | `hasassignment(id,d,d)` (task/resource) stub | Fase 7 | 1 teste |
 
 ### 1.7 Tarefas — Bloco LC-E: testes e golden
@@ -251,7 +252,7 @@ custos (valores), materiais, accounts e journal entries**.
 |---------------|------|----------|
 | Alocação + datas agendadas (`start`/`end`/`getAllocatedTime` em TaskScenario; `allocations`) | Fase 7 (scheduler, em andamento) | hasassignment, isallocated(ToProject), starts*/ends*, isused(At/AtProject), isactive-real |
 | Caminho crítico | Fase 7 | isoncriticalpath |
-| Status de tarefa (notstarted…finished) | Fase 7/14 | istaskstatus |
+| Status de tarefa (notstarted…finished) | Fase 7/14 → **F21 1ª onda 2ª rodada (2026-11-10)** | istaskstatus (liberado sobre `TaskScenario#calcStatus`, fiel a Ruby F5) |
 | Financeiro/charge/booking estendidos | Fase 8/8.1 | flags-custos, atributos de valor de cenário |
 | Journal | Fase 16 | hasalert, LogicalFlag (Journal), flags-journalentry |
 | RichText/RTI | Fase 12 | (assignList/relatórios, fora deste escopo) |
@@ -436,7 +437,7 @@ análise (grep/probe no código vivo):
 | Função | Pré-requisito ausente | Fase dona |
 |---|---|---|
 | `isoncriticalpath(id)` | slack/float **não existe nem no Ruby 3.8.4 vendorizado** — extensão pura; precisa de cálculo de float no scheduler + expor p/ queries | Fase 14/15 (relatórios/Gantt) |
-| `istaskstatus(id, status)` | enum de status derivado de tracking (notstarted/inprogress/finished…) | Fase 18 (status sheets) |
+| `istaskstatus(id, status)` | enum de status derivado de tracking (notstarted/inprogress/finished…) | **F21 1ª onda 2ª rodada (2026-11-10) — liberado**: `TaskScenario#calcStatus` (F5, fiel a `TaskScenario.rb:2477-2496`) já expõe o vocabulário Ruby; `LogicalFunction#istaskstatus` compara via normalização `$ID` |
 | `hasalert` (já stub) | alertas no Journal | Fase 16 |
 | `LogicalFlag` ramo Journal | idem | Fase 16 |
 
@@ -454,7 +455,7 @@ análise (grep/probe no código vivo):
 |---|---|---|
 | F14 §14.26 | `fase-14-relatorios-tarefas.md` (adendo já criado) + linha no plano canônico ao iniciar Fase 14 | hidematerial/rollupmaterial/hidepicture + verificação hide/rollup |
 | LF.3 / ramo Journal | `fase-16-apoio-tarefas.md` | flags em journalentry + LogicalFlag-Journal + hasalert |
-| G6 status | `fase-18-*.md` | istaskstatus sobre status sheets |
+| G6 status | `fase-18-*.md` | istaskstatus sobre status sheets (**entregue na F21 1ª onda 2ª rodada, 2026-11-10** — ver §6.6 acima) |
 | G7 | `fase-21-*.md` | golden extensões + round-trip i18n |
 
 **Ordem de execução proposta**: G1 → G2 → G3 → G4 → G5(LF.5a/LF.4/LF.6) → âncoras G8.
@@ -469,7 +470,7 @@ são independentes e podem intercalar. Cada grupo termina com
 | G1.1 | ✅ | `TaskScenario.getAllocatedTime(startIdx, endIdx, resource?)` portado fiel de TaskScenario.rb:1562–1588 (guards de milestone/assignedresources, recursão em container). Cache `@dCache` omitido em linha com `ResourceScenario.getAllocatedTime` (flush do DataCache ainda é stub, `project.ts:508`) — divergência documentada no JSDoc. 4 testes em `tests/model/task-scenario-allocated-time_test.ts` usando `ResourceScenario#book` (primitivo do scheduler) em vez do scheduler completo (fechamento real de G1.4 com o scheduler: ver §6.10). |
 | G1.2 | ✅ | `dateArg()`/`slotIdxFor()` em `logical-function.ts`: parser já entrega `TjTime` via `!date` (logic.ts:145); strings `YYYY-MM-DD` aceitas; **descoberta**: `TjTime.fromString("nao-eh-data")` NÃO lança (produz segundos NaN) → validação explícita `Number.isFinite(toSeconds())`. `arityCheck()` defensivo na avaliação (parser usa `setArguments` sem validar). |
 | G1.3 | ✅ | `isactive` passou do duck-typing (`method(scData, "getAllocatedTime")` + `return false` silencioso) para o caminho tipado Task/Resource com `q.startIdx ?? 0`. |
-| G2 | ✅ | `startsafter/startsbefore/endsafter/endsbefore` (via `dateBound()`, datas = atributos de cenário `start`/`end`, comparação estrita, cenário `q.scenarioIdx ?? 0`), `isallocated(id,d1,d2)` e `isallocatedtoproject(prj,scn,d1,d2)` via `getAllocatedTime` + `Project#dateToIdx`. FUNCTIONS_EXT: 10 entries `blocked → feasible` (fase de origem mantida como tag); `isoncriticalpath` rebloqueado para Fase 14 e `istaskstatus` para Fase 18 (G6). |
+| G2 | ✅ | `startsafter/startsbefore/endsafter/endsbefore` (via `dateBound()`, datas = atributos de cenário `start`/`end`, comparação estrita, cenário `q.scenarioIdx ?? 0`), `isallocated(id,d1,d2)` e `isallocatedtoproject(prj,scn,d1,d2)` via `getAllocatedTime` + `Project#dateToIdx`. FUNCTIONS_EXT: 10 entries `blocked → feasible` (fase de origem mantida como tag); `isoncriticalpath` rebloqueado para Fase 14 e `istaskstatus` para Fase 18 (G6) — **`istaskstatus` liberado na F21 1ª onda 2ª rodada (2026-11-10), ver §6.6/§1.1**. |
 | G3 | ✅ | `hasassignment(id,d1,d2)` (recurso **ou** material, detecção pelo id), `isusedat(id,scn)`, `isused(id,d1,d2)` (propriedade Task **ou** o próprio Material varrendo o projeto), `isusedatproject(prj,scn,d1,d2)`. Fontes: `materialallocations` (parser/Fase 8.1) + `MaterialAllocation#quantityIn` quando anexado + `CostEvent "material_usage"` + overlap das datas de cenário. Sem agenda: a existência da alocação conta (regra documentada no cabeçalho da seção). Smoke `.tjp` end-to-end no arquivo de testes. |
 | G4 | ✅ | Auditoria LA.1/LA.2 (tabelas abaixo) + testes LA.3/LA.4 (LogicalAttribute e `isvalid` sobre material). `logical-attribute.ts` **não mudou**, conforme plano. |
 | G5 | ✅ | **LF.5a**: `p.pattern(["!flags",],)` + `p.doc("flags.material")` em `materialScenarioAttributes` (`src/parser/rules/material.ts`) — parse de `flags` em material, antes `unexpctd_token`, agora limpo (teste dedicado; nota: `unit` exige string citada `unit "kg"` — sintaxe já coberta por `rules_material_test.ts`). LF.4 genérico nos 4 portadores ✅. LF.6 `undecl_flag` no material ✅. **LF.2 confirmado como redefinido**: flags vivem nas entidades PTN portadoras de charges; `ExtendedCharge`/`CostEvent` não são PTN (sem onde registrar sem redesenhar accounting — escalar só na Fase 8.x se o modelo migrar). LF.3/LF.5b permanecem ancorados (Fase 16 / round-trip i18n na 21; keyword `flags` é idêntico em en/pt-BR/es — `i18n/*.ts:66` —, então o caso material usa a mesma palavra). |
@@ -562,7 +563,8 @@ o Ruby (`docs/taskjuggler/lib/taskjuggler/`).
 |---|---|---|
 | `to_rti` ×4 (task/resource/account/report) + `query` rti | **12 (RichText)** | novo bloco em `fase-12-richtext-tarefas.md` |
 | `isoncriticalpath` (sem slack/float nem no Ruby) · `freeze` (escreve arquivo) · `project.defaultAccount` (regra 4) | **14 (Relatórios)** / **8.2** | `fase-14-relatorios-tarefas.md` (isoncriticalpath + freeze) · `fase-8.2-tarefas.md` (defaultAccount) |
-| `checkTimeSheet`/`checkStatusSheet`/`istaskstatus` | **18** | já ancorado (verificado) |
+| `checkTimeSheet`/`checkStatusSheet` | **18** | já ancorado (verificado) — **entregue F18 2026-11-05** |
+| `istaskstatus` | **18 → F21 1ª onda 2ª rodada (2026-11-10)** | liberado sobre `TaskScenario#calcStatus` (fiel a Ruby F5); `LogicalFunction#istaskstatus` + 8 testes em `logical-function-complemento_test.ts` |
 | `hasalert`/`Journal`/leave-allowance | **16** | já ancorado (verificado) |
 | Fachada `TaskJuggler.parse/parseFile/parseContent` (transporte de arquivo) | **19 (Storage)** | novo bloco em `fase-19-storage-tarefas.md` — o motor de parse (Fase 10) já está pronto/testado via `ProjectFileParser` em buffer |
 

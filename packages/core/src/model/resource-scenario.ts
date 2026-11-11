@@ -26,7 +26,6 @@ import { CostLine, resolveAccount, } from "../accounting/attribution.ts";
 import { CostEvent, createCostEvent, } from "../accounting/cost-event.ts";
 import { RichText, } from "../richtext/rich-text.ts";
 import { RTFHandlers, } from "../richtext/handlers/rtf-handlers.ts";
-import { NotYetImplementedError, } from "./errors.ts";
 
 /**
  * Canonical index of a leave type (`Leave::Types[type]` in Ruby).
@@ -1442,11 +1441,13 @@ export class ResourceScenario extends ScenarioData {
     dateToIdx(date: TjTime, forceIntoProject?: boolean,): number;
     get(name: string,): unknown;
     accounts: { get(id: string,): unknown };
+    getWorkSlots(startIdx: number, endIdx: number,): number;
   } {
     return this.project() as unknown as {
       dateToIdx(date: TjTime, forceIntoProject?: boolean,): number;
       get(name: string,): unknown;
       accounts: { get(id: string,): unknown };
+      getWorkSlots(startIdx: number, endIdx: number,): number;
     };
   }
 
@@ -1727,15 +1728,57 @@ export class ResourceScenario extends ScenarioData {
   }
 
   /**
-   * `fte` column: full-time equivalent of the resource.
+   * Count slots that could be used for work between `startIdx` and `endIdx`:
+   * free slots and slots already assigned to a task (port of Ruby
+   * `ResourceScenario#getWorkSlots`).
    *
-   * Not implemented yet — FTE needs contract and calendar hours that the port
-   * does not carry.
-   *
-   * @throws {NotYetImplementedError} Always.
+   * @see docs/taskjuggler/lib/taskjuggler/ResourceScenario.rb#getWorkSlots
    */
-  // Ancorado: Fase 18 — FTE needs contract/calendar hours that are not ported.
-  query_fte(_query: ResourceScenarioQuery,): void {
-    throw new NotYetImplementedError("18", "ResourceScenario#query_fte",);
+  getWorkSlots(startIdx: number, endIdx: number,): number {
+    return this.countSlots(
+      startIdx,
+      endIdx,
+      (val,) => val === null || val instanceof Task,
+    );
+  }
+
+  /**
+   * `fte` column: full-time equivalent of the resource (or group) over the
+   * query interval. Faithful port of Ruby `ResourceScenario#query_fte`:
+   * for a container, the sum of the children's FTE; for a leaf, the ratio
+   * between the resource's work slots and the project's global work slots,
+   * multiplied by the resource's efficiency.
+   *
+   * The anchor previously deferred this to Fase 18 asking for contract /
+   * calendar hours that the port already carries via `WorkingHours` (Fase 2)
+   * and `Project#getWorkSlots`. Re-enabled on the Fase 21 1ª onda audit
+   * (2026-11-10) — see `completude-matrix.md` §B/A2.
+   *
+   * @see docs/taskjuggler/lib/taskjuggler/ResourceScenario.rb#query_fte
+   */
+  query_fte(query: ResourceScenarioQuery,): void {
+    let fte = 0.0;
+    const property = this.getProperty() as PropertyTreeNode;
+    if (property.container?.()) {
+      // Accumulate the FTEs of all sub-resources.
+      for (const child of property.kids()) {
+        const q = query.dup();
+        (child as Resource).scenarioData(this.getScenarioIdx(),).query_fte(q,);
+        fte += typeof q.numerical === "number" ? q.numerical : 0;
+      }
+    } else {
+      const startIdx = query.startIdx ?? 0;
+      const endIdx = query.endIdx ?? 0;
+      const globalWorkSlots = this.projExt().getWorkSlots(startIdx, endIdx,);
+      const workSlots = this.getWorkSlots(startIdx, endIdx,);
+      const efficiency = (this.a("efficiency",) as number) ?? 1;
+      if (globalWorkSlots > 0) {
+        fte = (workSlots / globalWorkSlots) * efficiency;
+      }
+    }
+    query.sortable = query.numerical = fte;
+    query.string = query.numberFormat
+      ? query.numberFormat.format(fte,)
+      : String(fte,);
   }
 }

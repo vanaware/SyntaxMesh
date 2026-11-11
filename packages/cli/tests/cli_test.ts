@@ -9,7 +9,7 @@
  */
 import { assert, assertEquals, } from "@std/assert";
 import { describe, it, } from "@std/testing/bdd";
-import { VERSION, } from "@vanaware/syntaxmesh";
+import { MessageHandlerInstance, VERSION, } from "@vanaware/syntaxmesh";
 import {
   type CliIo,
   collectInputFiles,
@@ -300,16 +300,33 @@ describe("main — fluxo único (24.3.6)", () => {
     ],);
   });
 
-  it("--config lê o YAML e avisa que a aplicação está pendente (24.3.11)", async () => {
-    const result = await run(
-      ["proj.smx", "--check-syntax", "--config", "tj3.conf",],
-      {
-        "proj.smx": `${HEADER}}\n${BODY}`,
-        "tj3.conf": "reports:\n  - plan\n",
-      },
-    );
-    assertEquals(result.exit, 0,);
-    assert(result.err.some((line,) => line.includes("not applied yet",)),);
+  it("--config aplica _global / _global._log ao MessageHandlerInstance (24.3.11)", async () => {
+    // Ruby `Tj3Daemon` lê o YAML e configura `MessageHandlerInstance` com as
+    // seções `_global` e `_global._log`. Antes da F21 1ª onda isto era um stub
+    // que emitia `Warning: ... not applied yet`; a CLI agora faz o apply real.
+    const mhi = MessageHandlerInstance.instance;
+    mhi.reset();
+    try {
+      const result = await run(
+        ["proj.smx", "--check-syntax", "--config", "tj3.conf",],
+        {
+          "proj.smx": `${HEADER}}\n${BODY}`,
+          "tj3.conf":
+            "_global:\n  hideScenario: true\n  _log:\n    logFile: /tmp/tj.conf.log\n",
+        },
+      );
+      assertEquals(result.exit, 0,);
+      // Nenhum aviso de pendência na stderr.
+      assertEquals(
+        result.err.some((line,) => line.includes("not applied yet",)),
+        false,
+      );
+      // O YAML foi realmente aplicado no handler compartilhado.
+      assertEquals(mhi.hideScenario, true,);
+      assertEquals(mhi.logFile, "/tmp/tj.conf.log",);
+    } finally {
+      mhi.reset();
+    }
   });
 
   it("--silent esconde info e resumo, mantendo erros (24.3.12/24.4.7)", async () => {

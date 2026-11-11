@@ -20,7 +20,6 @@ import {
   registerContentFactory,
   type ReportContent,
 } from "../../src/model/report-content.ts";
-import { NotYetImplementedError, } from "../../src/model/errors.ts";
 import { XMLElement, } from "../../src/xml/xml-element.ts";
 
 /** Conteúdo falso: marca quantas vezes `generateIntermediateFormat` rodou. */
@@ -88,12 +87,20 @@ describe("Report geração (14.11)", () => {
       assertThrows(() => r.generateIntermediateFormat(), Error, "Unknown",);
     });
 
-    it("type conhecido sem fábrica → NotYetImplementedError", () => {
+    it("type conhecido sem fábrica → Error (inconsistência interna)", () => {
+      // Após `afterEach` limpar `contentFactories`, um type ainda presente em
+      // `KNOWN_TYPE_SPECS` sem fábrica registrada é uma inconsistência
+      // interna (o registro deveria ter acontecido no import do conteúdo), não
+      // uma âncora de fase. Era `NotYetImplementedError("18", ...)` antes da
+      // auditoria da Fase 21 1ª onda (2026-11-10) — os conteúdos de
+      // timesheet/statussheet agora têm fábrica, então essa branch virou
+      // sentinela. Ver `completude-matrix.md` §B/A5.
       const r = newReport();
       r.typeSpec = "accountreport" as never;
       assertThrows(
         () => r.generateIntermediateFormat(),
-        NotYetImplementedError,
+        Error,
+        "no registered content factory",
       );
     });
   });

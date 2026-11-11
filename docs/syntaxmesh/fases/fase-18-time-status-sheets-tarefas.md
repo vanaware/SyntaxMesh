@@ -12,6 +12,20 @@
 > (`NotYetImplementedError("7")`) até existir o enum de status derivado de
 > tracking (notstarted/inprogress/finished/…). Implementar junto das status
 > sheets e reclassificar `FUNCTIONS_EXT` (feasible) + testes.
+>
+> **✅ Update F21 1ª onda 2ª rodada (2026-11-10):** âncora levantada. O
+> enum Ruby (`TaskScenario.rb:2477-2496`: `not started` / `not reached` /
+> `in progress` / `done` / `unknown`) já está fielmente portado em
+> `TaskScenario#calcStatus` desde a F5. `LogicalFunction#istaskstatus` foi
+> implementado em `packages/core/src/logic/logical-function.ts`, reclassi-
+> ficado para `feasible` em `FUNCTIONS_EXT`, com comparação normalizada
+> (aceita `not_started`, `notstarted`, `Not Started`, `NOT-STARTED`). 8
+> passos em
+> `packages/core/tests/logic/logical-function-complemento_test.ts`.
+> O **gauge** (`on schedule` / `behind schedule` / `ahead of schedule`)
+> continua simplificado em `TaskScenario#calcGauge` — a extensão de
+> `istaskstatus` para cobrir gauge fica como follow-up natural quando
+> `calcGauge` for enriquecido (não bloqueia consumidores atuais).
 
 ---
 

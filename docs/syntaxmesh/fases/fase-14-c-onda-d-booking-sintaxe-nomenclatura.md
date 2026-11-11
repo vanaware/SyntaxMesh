@@ -257,9 +257,14 @@ e o caminho de cálculo de material já portado (`Material#*InPeriod`).
     `onstart`/1-dia, `isTemporal()===false`); a decisão "migrar" do §3.D3.2 foi
     substituída por **retro-compatibilidade preservada** — garantia de zero
     drift de golden.
-  - **Charge é parse-only**: `ChargeBooking` guarda o tail mas ainda não tem
-    consumer contábil (carga no turnover) — fica a cargo da Fase 18, como
-    registrado no §13.7 da Fase 14 Complemento.
+  - **Charge é parse-only** *(status 2026-11-08)*: `ChargeBooking` guarda o
+    tail mas ainda não tinha consumer contábil (carga no turnover) — ficava a
+    cargo da Fase 18, como registrado no §13.7 da Fase 14 Complemento.
+    **Consumer entregue na Fase 21 1ª onda (2026-11-10)**:
+    `AccountScenario#addChargeBookings` chamado do ramo
+    `aggregate === "charges" | "tasks"` de `turnover`, emitindo
+    `CostEvent task_charge`/`actual` idempotente. Ver matriz §D/D9 e
+    `packages/core/tests/model/account-scenario-charge-booking_test.ts`.
 - Relação com ondas já entregues: D3 reusa a **fonte única** de cálculo de
   material da Onda C (`Material#*InPeriod`), adicionando-lhes o gate
   `isTemporal()` (path legado intacto + path temporal via `booking-period.ts`).

@@ -91,8 +91,7 @@ const command = new Command()
 
     print(`Generating ${posts.length} blog posts from ${options.input}`,);
 
-    for (let i = 0; i < posts.length; i++) {
-      const post = posts[i];
+    for (const [i, post,] of posts.entries()) {
       const filename = post.filename || `post-${i + 1}.md`;
       const filepath = options.outputDir
         ? `${options.outputDir}/${filename}`

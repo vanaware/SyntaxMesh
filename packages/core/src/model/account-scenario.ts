@@ -9,6 +9,8 @@ import { PropertyTreeNode, } from "./property-tree-node.ts";
 import { TjInternalError, } from "./errors.ts";
 import { Material, } from "./material.ts";
 import type { MaterialBooking, } from "./material-booking.ts";
+import { Task, } from "./task.ts";
+import type { ChargeBooking, } from "./charge-booking.ts";
 import { type CostLine, resolveAccount, } from "../accounting/attribution.ts";
 import { createCostEvent, } from "../accounting/cost-event.ts";
 
@@ -208,6 +210,21 @@ export class AccountScenario extends ScenarioData {
           amount += taskAmount;
           this.buckets.charge += taskAmount;
         },);
+        // 14C.15.4 / plan §13.7 (`booking charge …`): realized expenses
+        // declared on a task (or via a resource/material pointing back to a
+        // task). Each booking resolves to an account via `resolveAccount`
+        // (rule 3: task chargeset; rule 4: project `defaultaccount`) and, when
+        // the resolved account is this leaf or a descendant, contributes its
+        // in-window amount. The emission is idempotent (`Task.emittedChargeBookings`).
+        for (const node of project.tasks.toArray()) {
+          if (!(node instanceof Task)) continue;
+          amount += this.addChargeBookings(
+            node,
+            project,
+            startIdx,
+            endIdx,
+          );
+        }
       } else if (aggregate === "resources") {
         project.resources.each((resource,) => {
           if (resource.leaf?.()) {
@@ -369,6 +386,72 @@ export class AccountScenario extends ScenarioData {
         material.markStockBookingEmitted(booking,);
       }
       this.buckets.material += value;
+      added += value;
+    }
+    return added;
+  }
+
+  /**
+   * Sums the charge bookings of `task` (14C.15.4 / plan §13.7) that resolve to
+   * **this account** (or a descendant) and whose value falls inside
+   * `[start, end]`. Each booking also emits a `task_charge` `CostEvent` in
+   * `actual` mode so auditable reports (`breakdownreport`, RDO) can trace it
+   * back to the source. Emission is idempotent via
+   * `Task#chargeBookingEmitted`/`markChargeBookingEmitted`.
+   *
+   * The destination follows `resolveAccount` — rule 3 (task chargeset) when the
+   * task carries one, rule 4 (`defaultaccount`) otherwise. Symmetric to
+   * {@link addStockBookings} for material stock bookings.
+   *
+   * @param task Task that owns the `chargebookings` scenario attribute.
+   * @param project Project providing `idxToDate` and `costEvents`.
+   * @param startIdx Turnover-window start (scoreboard index, inclusive).
+   * @param endIdx Turnover-window end (scoreboard index, exclusive).
+   * @returns The value to add (positive = outgoing, negative = reversal).
+   */
+  private addChargeBookings(
+    task: Task,
+    project: ProjectLike,
+    startIdx: number,
+    endIdx: number,
+  ): number {
+    const account = this.property as unknown as Account;
+    const scIdx = this.scenarioIdx;
+    const startDate = project.idxToDate(startIdx,);
+    const endDate = project.idxToDate(endIdx,);
+
+    let added = 0;
+    for (const booking of task.chargeBookings(scIdx,) as ChargeBooking[]) {
+      const value = booking.amountInPeriod(startDate, endDate,);
+      if (value === 0) continue;
+
+      const line: CostLine = {
+        type: "task_charge",
+        amount: value,
+        task,
+        project,
+      };
+      const attribution = resolveAccount(line,);
+      const destination = attribution.account as Account | null;
+      if (!destination) continue;
+      const isMine = destination === account ||
+        destination.isChildOf(account as unknown as PropertyTreeNode,);
+      if (!isMine) continue;
+
+      if (!task.chargeBookingEmitted(booking,)) {
+        project.costEvents.push(
+          createCostEvent(
+            line,
+            attribution.account,
+            attribution.rule,
+            scIdx,
+            "actual",
+          ),
+        );
+        task.markChargeBookingEmitted(booking,);
+      }
+      // Bucket accumulation happens in Block I below (leaf-account CostEvent
+      // scan) — adding here too would double-count `this.buckets.charge`.
       added += value;
     }
     return added;
