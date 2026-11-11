@@ -1,15 +1,192 @@
 # Fase 22 — Extensão VS Code (`lsp-core` + tooling de edição)
 
-> **Arquivo:** `docs/syntaxmesh/fases/fase-22-vscode-extension.md` **Tarefas:**
-> `docs/syntaxmesh/fases/fase-22-vscode-extension-tarefas.md` (a criar no
-> kickoff) **Status:** ⬜ Não iniciada **Duração estimada:** 10–14 dias
-> **Depende de:** Fases 2–14 (motor completo: parser, i18n, queries,
-> relatórios). **Não depende** das Fases 15–21. **Bloqueia:** nada — tooling
-> externo ao runtime PWA **Posicionamento (ordem oficial 2026-11-03):**
-> executada **após a 1ª onda da Fase 21** (que valida o motor via CLI da 24) e
-> **antes** das Fases 19 (Storage), 20 (PWA + UI) e das 2ª/3ª ondas da 21 — a
-> 2ª onda da 21 adapta o suite para testar esta extensão **Natureza:**
-> tooling externo (extensão VS Code + `lsp-core` + servidor LSP CLI)
+> **File:** `docs/syntaxmesh/fases/fase-22-vscode-extension.md`
+> **Tasks:** [Atomic task document](fase-22-vscode-extension-tarefas.md)
+> **Status:** `PAR` — CLI-facing `doc-core` delivered; editor extension not started.
+> **Planning:** seven major blocks P1–P7, with subblocks in §0; original IDs
+> 22.0–22.11 and existing task blocks C–J remain unchanged.
+> **Recorded progress:** 86/108 tasks in 22.1b; this is not a whole-phase count.
+> **Original duration estimate:** 10–14 days; reassess when detailing each block.
+> **Technical prerequisites:** existing engine, documentation, template, and F24
+> execution API. Storage/PWA phases 19/20 are not prerequisites.
+> **Scheduling gate:** finish F21 wave 1 before starting the remaining F22 work.
+> **Official order:** 23 → 24 → 21¹ → 22 → 21² → 19 → 20 → 21³.
+> **Handoff:** F21 wave 2 validates the editor extension.
+> **Scope:** pure `doc-core`/`lsp-core`, VS Code Desktop/Web adapters, standalone LSP.
+
+---
+
+## 0. Major blocks and subblocks
+
+This is the execution-oriented organization of the existing specification.
+Sections §1–§15 remain stable technical references; §13 maps original subphase
+IDs to these blocks. No scope is added and no delivered task is reopened by
+this reorganization.
+
+`P1`–`P7` identify planning groups, not new task prefixes. The letters C–J
+continue to identify the existing 22.1b atomic task blocks. Status codes:
+`OK` = delivered/verified scope, `PAR` = partial, `PLA` = planned/not started.
+A detailed task list alone does not mean its implementation is complete.
+
+| Block | Subject | Original subphases | References | Current implementation |
+|---|---|---|---|---|
+| [P1](#p1-scope-and-architecture) | Scope and architecture | 22.0 | §1–§3 overview, §12, §14 | `PLA` — ADR 035 reserved |
+| [P2](#p2-shared-language-and-documentation-cores) | Shared language and documentation cores | 22.1, 22.1b | §4 core, §5; task blocks C–J | `PAR` — rename and CLI docs delivered; LSP pending |
+| [P3](#p3-editor-foundation-and-language-tooling) | Editor foundation and language tooling | 22.2–22.4 | §3.1, §4 extension, §6, §7 | `PLA` |
+| [P4](#p4-project-execution-reports-and-editor-ux) | Project execution, reports, and editor UX | 22.5–22.7 | §3.2–§3.3, §8 | `PLA` |
+| [P5](#p5-web-host-and-storage-adaptation) | Web host and storage adaptation | 22.8 | §9; Web transport in §7 | `PLA` |
+| [P6](#p6-standalone-lsp-adapter) | Standalone LSP adapter | 22.9 | §4 LSP adapter, §7 stdio, §10 LSP build | `PLA` |
+| [P7](#p7-packaging-acceptance-and-handoff) | Packaging, acceptance, and handoff | 22.10–22.11 | §10 extension build, §11, §13 closure | `PLA` |
+
+### P1. Scope and architecture
+
+**Purpose:** establish the common boundaries before detailing implementation.
+
+- **P1.1 — Baseline and scope:** record delivered engine/template/CLI inputs,
+  English-only v1 output, `.smx` plus `.tjp`/`.tji` input compatibility, and
+  the F21¹ scheduling gate (§1–§2).
+- **P1.2 — Layer boundaries:** separate mutable editing analysis, explicitly
+  refreshed stable project models, and report presentation (§3).
+- **P1.3 — Architecture record:** complete 22.0/ADR 035 using §14; preserve
+  Deno dependency management and pure-core/thin-adapter rules (§12).
+
+**Exit:** architecture and exclusions recorded; no automatic daemon reload,
+no duplicate parser/LSP intelligence in adapters, and no parallel execution
+API. This planning update does not create or approve the ADR itself.
+
+### P2. Shared language and documentation cores
+
+**Purpose:** build reusable services without VS Code or transport dependencies.
+
+- **P2.1 — Workspace and exports (22.1):** verify the already delivered core
+  rename, then plan only remaining workspace wiring and `./lsp-core` export
+  work (§4.2). Keep `./doc-core` as a separate existing entry point.
+- **P2.2 — Documentation model and rendering (22.1b C–G):** preserve search,
+  syntax references, keyword data/text/HTML, examples, and manual sources.
+  Existing subblocks E.1/E.2/E.3 and G.1/G.2 remain intact. Close the recorded
+  missing `checkKeyword`, Markdown projection, and Ruby-oracle tests; retain
+  the delivered name `ExampleSnippet` and recorded manual adaptations.
+- **P2.3 — Shared syntax/highlight data (22.1b H):** classifications, token
+  rules, regions, indentation, and consumer exports. Final Kate XML/Vim file
+  generators (22.1b.6.9) remain optional and outside v1 acceptance.
+- **P2.4 — Editing analysis and pure LSP services (22.1):** `DocumentStore`,
+  locale detection, analysis, diagnostics, hover, completion, navigation,
+  semantic tokens, symbols, capabilities, and structural server registration
+  (§5). Output remains English; input locale detection does not translate UX.
+- **P2.5 — Consumer bridges and verification (22.1b I–J):** help/manual and
+  completion bridges 7.5–7.7, exports/purity, smoke/cache, pending goldens,
+  and coverage. Preserve the already delivered F24 `generateMan` consumer.
+
+**Dependency rule:** establish P2.1 and the document/analysis foundation of
+P2.4 before connecting P2.5. P2.2/P2.3 provide documentation and syntax data
+for those bridges. This replaces the apparent cycle "all of 22.1 before
+22.1b, but all of 22.1b before help in 22.1" with explicit readiness steps;
+it does not change task IDs.
+
+**Exit:** pure public contracts and docs/highlight bridges verified, core
+coverage at least 80%, and remaining in-v1 22.1b tasks closed with evidence.
+The recorded 86/108 completions stay historical progress, not fresh claims.
+
+### P3. Editor foundation and language tooling
+
+**Purpose:** deliver editing support independently of scheduling/report commands.
+
+- **P3.1 — Extension shell (22.2):** manifest, language registration, dual
+  entry points, package/workspace scaffolding, and activation lifecycle.
+- **P3.2 — TextMate and snippets (22.3):** English grammar, include grammar,
+  brackets/comments/folding, and snippets; consume P2 syntax data and the
+  existing `template` reference (§6).
+- **P3.3 — Client/server integration (22.4):** Desktop IPC and Web
+  Worker/MessagePort bootstraps, selectors, incremental synchronization,
+  diagnostics, debounce/cancellation, and shared `registerLspServer` (§7).
+
+**Entry:** P1; P2 contracts and syntax data ready for their consumers.
+**Exit:** editing integration and grammar snapshots green; incomplete buffer
+states never refresh the daemon. Web transport belongs here; complete Web
+runtime/storage behavior belongs to P5.
+
+### P4. Project execution, reports, and editor UX
+
+**Purpose:** connect deliberate user actions to stable project execution.
+
+- **P4.1 — Execution-contract audit (start of 22.5):** check F24 `execute`
+  against load/reload/list and cached-model reporting. Record any required
+  delta in the F24 addendum before implementation; preserve the existing
+  stepwise-facade alternative. This block organization chooses neither path.
+- **P4.2 — Project daemon (22.5):** add/remove/list/reload, buffer versus
+  workspace input, include closure, multi-project cache, invalidation, and
+  Desktop persistence (§3.2).
+- **P4.3 — Report output policy (22.6):** list/select/generate, HTML Webviews
+  with assets, CSV/XML/text workspace saves, and shared envelope consumption
+  (§3.3). Cached-model reporting is gated by P4.1, not assumed available.
+- **P4.4 — Commands and presentation (22.7):** export/input-language/help, Project Explorer,
+  Status Bar, settings, and Workspace Trust (§8). Treat multilingual command
+  variants as the already deferred post-v1 addendum, consistent with §1.
+
+**Entry:** P3 integration; resolve P4.1 before daemon/report implementation.
+**Exit:** explicit execution, stale-cache behavior, report formats, and trust
+checks tested; no save/change watcher feeds the daemon.
+
+### P5. Web host and storage adaptation
+
+**Purpose:** finish vscode.dev behavior without depending on F19 storage.
+
+- **P5.1 — Browser dependency graph:** complete the Web entry point and
+  verify absence of Node/process dependencies (§9.1–§9.2).
+- **P5.2 — User-triggered workspace writes:** validate permissions and the
+  existing write fallback for report/export commands (§9.2).
+- **P5.3 — Storage capability fallbacks:** small state through VS Code APIs,
+  in-memory daemon when storage URIs are absent, Desktop cache versioning,
+  and no direct IndexedDB/OPFS reliance (§9.3).
+
+**Entry:** P3 Web transport and P4 commands.
+**Exit:** Web editing/execution/report scenarios verified, including missing
+storage and denied writes; transport/core logic is not duplicated.
+
+### P6. Standalone LSP adapter
+
+**Purpose:** expose the same language server to non-VS Code editors.
+
+- **P6.1 — Stdio bootstrap:** independent `packages/lsp` adapter creates the
+  connection and calls the shared server registration; no extension import.
+- **P6.2 — Executable and protocol smoke:** build `syntaxmesh-lsp --stdio`,
+  verify initialize/document/handler flow, and keep logs off JSON-RPC stdout.
+
+**Entry:** P2 server contract verified through P3 integration.
+**Exit:** external-editor protocol smoke green. This block does not deliver
+socket daemons, SMTP services, or another engine runner. It may be developed
+independently of P4/P5 once its entry conditions hold; §13 retains the default
+serial sequence.
+
+### P7. Packaging, acceptance, and handoff
+
+**Purpose:** close distributable artifacts and phase-level evidence.
+
+- **P7.1 — Desktop/Web builds (22.10):** bundles, external `vscode` API,
+  included assets, exclusions, and `.vsix` below 5 MB (§10).
+- **P7.2 — Acceptance matrix (22.10–22.11):** clean installation, grammar,
+  LSP, daemon/report/export/input-language/help commands, trust, Web, and stdio
+  scenarios (§11).
+- **P7.3 — Closure and handoff (22.11):** full quality gate, coverage
+  thresholds (80% core, 70% extension), ADR/status/link reconciliation, and
+  input artifacts for F21 wave 2. Validation work stays in its original
+  owning task; this block collects evidence rather than duplicating tasks.
+
+**Entry:** P2–P6 accepted, excluding explicitly out-of-v1 items.
+**Exit:** installable verified `.vsix`, verified standalone server, coherent
+planning evidence, and handoff to F21². Packaging is not Marketplace publishing
+or deployment authorization.
+
+### Detailing and execution protocol
+
+1. Use the P-block as the scope boundary and the original 22.x ID as task owner.
+2. Before starting each unfinished subphase, expand its atomic tasks in the
+   existing task document: one deliverable, at most two hours, tests first.
+3. Keep existing C–J IDs/completion records; add dependencies and consumer
+   links rather than copying tasks into a second list.
+4. Record entry/exit evidence and run the relevant tests plus `deno task tests`.
+5. Update the task progress, this plan's §13, `CURRENT.md`, and the canonical
+   `plano.md` without moving the official phase order.
 
 ---
 
@@ -23,9 +200,11 @@ sintaxe de planejamento — highlight, autocomplete, diagnósticos, hover,
 navegação, **help e manual** — além da integração com o motor (agendamento,
 geração de relatórios).
 
-A fase é executada **antes** das Fases 19–21 porque consome o core diretamente
-(parse/schedule/reports) e não precisa de Storage (19), UI PWA (20) nem do
-corpus multilíngue certificado (21).
+The remaining F22 work starts **after F21 wave 1** and hands off to **F21
+wave 2**, before Storage (19) and PWA/UI (20). Engine availability is a technical
+prerequisite, not authorization to bypass that scheduling gate. The CLI-facing
+part of 22.1b was delivered early to unblock F24 `man`; its remaining editor
+consumers are organized in P2.
 
 O design segue o modelo do TaskJuggler original (**tj3d / tj3client /
 tj3webd**): separar **edição** (LSP, análise incremental do buffer) de **modelo
@@ -93,9 +272,9 @@ e o `doc-core`/help do `lsp-core` devem cobri-lo em v1 (`en`, keyword
 
 Ao final desta fase:
 
-- Renomear o pacote core para `@vanaware/syntaxmesh` (pacote principal), com
-  exports `"."` e `"./lsp-core"`; ajustar o `name` do `deno.jsonc` raiz
-  (colisão) e os imports de `server`/`ui`/`service-worker`.
+- Preserve the delivered `@vanaware/syntaxmesh` core identity, existing
+  `"."`/`"./doc-core"` exports, and consumer imports; finish only the remaining
+  workspace wiring and `"./lsp-core"` export (P2.1).
 - `lsp-core` exportado pelo core (`@vanaware/syntaxmesh/lsp-core`) com handlers
   puros: diagnostics, hover, completion, definition/references, semantic tokens,
   document/workspace symbols, **help/manual** (referência de keywords e
@@ -243,7 +422,7 @@ Arquivo .tjp
 packages/
 ├── core/                    # Pacote principal: análise, planejamento, relatórios, LSP, help/manual
 │   ├── deno.jsonc           # name: @vanaware/syntaxmesh
-│   │                        # exports: { ".": "./mod.ts", "./lsp-core": "./src/lsp/mod.ts" }
+│   │                        # exports: existing "." / "./doc-core"; planned "./lsp-core"
 │   ├── mod.ts               # Exporta análise/planejamento/relatórios
 │   └── src/
 │       ├── parser/ …        # (existente) engine já implementada nas Fases 2–14
@@ -303,7 +482,9 @@ packages/
   **e toda a lógica LSP**.
 - **Dependências:** nenhuma dependência de runtime (compatível com browser
   bundle). **Não importa** `vscode` nem `vscode-languageserver`.
-- **Dois pontos de entrada:**
+- **Entry points:** existing `"."` and `"./doc-core"`; planned `"./lsp-core"`.
+  `"./doc-core"` → `src/docgen/mod.ts` remains separate from the root export and
+  supplies P2 documentation/highlight data to CLI and editor consumers.
   - `"."` → `mod.ts`: análise/planejamento/relatório (I/O injetado pelo
     chamador), incluindo listagem de relatórios definidos no `.tjp`.
   - `"./lsp-core"` → `src/lsp/mod.ts`: contrato LSP puro — `capabilities`,
@@ -340,17 +521,16 @@ packages/
 
 ### 4.2 Workspace `deno.jsonc` (raiz) — renome e junção
 
-Tarefas preliminares do bloco 22.1:
+P2.1 / original owner 22.1:
 
-1. **Renomear** o pacote core de `@syntaxmesh/core` para `@vanaware/syntaxmesh`
-   — pacote principal do projeto. O `deno.jsonc` **raiz** hoje carrega esse
-   mesmo `name`: removê-lo (ou renomeá-lo, ex.: `@vanaware/syntaxmesh-dev`) para
-   evitar colisão de nomes no workspace Deno.
-2. Atualizar os imports de `server`, `ui` e `service-worker` (`@syntaxmesh/core`
-   → `@vanaware/syntaxmesh`) e as referências em docs.
-3. Adicionar `"./packages/vsextension"` e `"./packages/lsp"` ao array
-   `workspace`.
-4. Criar os exports `"."` + `"./lsp-core"` no core e as tarefas agregadas:
+1. **Delivered baseline:** the core is already `@vanaware/syntaxmesh`; the root
+   no longer has the conflicting package name. Verify, do not repeat the rename.
+2. **Delivered baseline:** consumer imports use the core identity. Preserve them
+   and the separate `"./doc-core"` export delivered for F24.
+3. **Pending:** add `"./packages/vsextension"` and `"./packages/lsp"` to
+   `workspace` when their scaffolding is created.
+4. **Pending:** add `"./lsp-core"` and aggregate build tasks; retain the existing
+   `"."` and `"./doc-core"` entry points:
 
 ```jsonc
 {
@@ -458,6 +638,11 @@ Regras:
 
 ### 8.2 Comandos
 
+P4.4 owns this command inventory. The labels below are historical descriptions,
+not v1 UI strings: emitted command titles are English. Switching the input-file
+`language` directive is distinct from translating the UI; preserve that planned
+command and its tests. Translated UX variants remain the post-v1 addendum in §1.
+
 | Comando                                   | Camada     | Descrição                                                       |
 | ----------------------------------------- | ---------- | --------------------------------------------------------------- |
 | `SyntaxMesh: Adicionar Projeto ao Daemon` | Daemon     | Seleciona `.tjp`, analisa+agenda, cacheia                       |
@@ -559,7 +744,7 @@ recarregamentos.
 | Integração LSP       | initialize + didOpen/didChange + publishDiagnostics + hover + completion + definition + references + semanticTokens + symbols | **VS Code Test Runner**                     | —                                         |
 | Integração comandos  | add/reload daemon, gerar relatório HTML/CSV, export, switch-language                                                          | VS Code Test Runner                         | —                                         |
 | Smoke `.vsix`        | instalar em VS Code limpo, abrir `.tjp`, ver highlight + diagnósticos + hover + completion                                    | manual + teste automatizado quando possível | 1 cenário                                 |
-| Workspace            | `lsp-core` não quebra `deno check` do workspace                                                                               | `deno task check-all`                       | exit 0                                    |
+| Workspace | `lsp-core` preserves workspace integrity | `deno task check:all` and full `deno task tests` | exit 0 |
 
 Convenções: BDD (`@std/testing/bdd` + `@std/assert`); sem `any` em `src/`; TDD
 para handlers novos; fixtures de entrada: MWEs (`docs/Learning/mwe001–009`) e
@@ -605,53 +790,55 @@ para handlers novos; fixtures de entrada: MWEs (`docs/Learning/mwe001–009`) e
 
 ## 13. Subfases (índice para o arquivo de tarefas)
 
-O detalhamento atômico vive em `fase-22-vscode-extension-tarefas.md`. Nesta
-passagem **apenas a subfase 22.1b (`doc-core`) foi expandida** em tarefas
-atômicas (Blocos C–J do arquivo de tarefas, 108 tarefas com testes unitários e
-marcação de consumidor F24 × `lsp-core`); os demais blocos são detalhados no
-kickoff de cada subfase, no padrão dos blocos A–K das fases anteriores:
+The [task document](fase-22-vscode-extension-tarefas.md) remains the only atomic
+execution list. Its 22.1b blocks C–J contain 108 tasks, with 86 recorded complete.
+All other unfinished subphases still need atomic detailing at their kickoff.
+The P-block mapping below reorganizes scope without renumbering tasks.
 
-| #     | Subfase                 | Entrega                                                                                                              | Pré-requisito |
-| ----- | ----------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------- |
-| 22.0  | ADR da fase             | `decisoes/0NN-extensao-vscode.md` (035 na cadeia oficial) + linha no README                                            | —             |
-| 22.1  | Renome + `lsp-core`     | Core renomeado `@vanaware/syntaxmesh` (§4.2) + `core/src/lsp/` completo (§5, v1 EN), exports, testes unitários ≥ 80% | —             |
-| 22.1b | `doc-core`              | `core/src/docgen/` (`@vanaware/syntaxmesh/doc-core`): port fiel de `SyntaxReference`, `KeywordDocumentation`, `TjpExample`, `UserManual` + `TernarySearchTree` (16.9 movido) + `SyntaxCore`/highlight (16.14 movido); alimenta help/manual do LSP e o `man` da CLI (F24). **Detalhado** em `fase-22-vscode-extension-tarefas.md`: C=TernarySearchTree (12), D=SyntaxReference (15), E=KeywordDocumentation (29), F=TjpExample (10), G=UserManual+fontes (14), H=SyntaxCore (10), I=integração (10), J=verificação (8) | 22.1          |
-| 22.2  | Scaffolding             | `packages/vsextension/` + `package.json` manifesto + entradas node/web vazias + tasks                                | 22.0          |
-| 22.3  | Language contribution   | Grammar EN (v1) + language-configuration + snippets + snapshots                                                      | 22.2          |
-| 22.4  | Cliente + servidor LSP  | `registerLspServer` no core + `client/` e bootstrap `server/mod.ts`; transporte desktop e Web; integração LSP verde  | 22.1, 22.2    |
-| 22.5  | Daemon                  | `daemon/` add/remove/list/reload **via `core.execute` (F24)** — auditoria de compatibilidade + ampliação ao adendo F24 se necessária (modelo persistente/load-unload-list); cache memória + `storageUri` (Node); trust gate                                    | 22.4          |
-| 22.6  | Relatórios              | `reports/` + `webview/`; listagem/seleção/geração **pelo `execute`** (seções `listReports`/`reports`), HTML com recursos, salvar CSV/XML                                        | 22.5          |
-| 22.7  | Comandos, config, views | comando export/switch-language/ajuda; settings; project tree + status bar                                            | 22.5          |
-| 22.8  | Web extension           | `extension.web.ts` sem `node:*`; fallback stub de escrita; testes vscode.dev                                         | 22.4–22.7     |
-| 22.9  | CLI `packages/lsp`      | `mod.ts` `--stdio` via `lsp-core` direto (`createConnection` + `registerLspServer`); build do executável             | 22.4          |
-| 22.10 | Empacotamento           | `scripts/build.ts`, `.vscodeignore`, task `package`, `.vsix` < 5 MB testado                                          | 22.8          |
-| 22.11 | Verificação final       | `check-all` + testes unit/integração + ADR + `CURRENT.md` + `plano.md`                                               | todas         |
+| ID | Planning block / subblock | Deliverable | Entry condition | Recorded status |
+|---|---|---|---|---|
+| 22.0 | P1.1–P1.3 | ADR 035 (`decisoes/035-extensao-vscode.md`) and index entry; architecture/exclusions | F21¹ gate | `PLA` — ADR reserved |
+| 22.1 | P2.1, P2.4 | Remaining workspace wiring, `./lsp-core`, pure §5 services and server registration, unit coverage ≥ 80% | P1; documentation bridges depend on 22.1b | `PAR` — rename delivered; language core pending |
+| 22.1b | P2.2, P2.3, P2.5 | Shared docs/search/examples/manual/highlight; editor bridges and oracle verification | Existing engine for C–H; P2.4 foundation for I 7.5–7.7 | `PAR` — 86/108, CLI consumer delivered |
+| 22.2 | P3.1 | `packages/vsextension`, manifest, Desktop/Web shells and lifecycle | 22.0; P2 export readiness | `PLA` |
+| 22.3 | P3.2 | English TextMate grammar, language configuration, snippets and snapshots | 22.2; P2.3 syntax data | `PLA` |
+| 22.4 | P3.3 | Thin client/server bootstraps, Desktop IPC and Web Worker/port, LSP integration | 22.1, 22.2; 22.1b editor bridges | `PLA` |
+| 22.5 | P4.1, P4.2 | F24 execution-contract audit first; explicit daemon add/remove/list/reload, input/include closure, cache and trust | 22.4; resolve P4.1 before daemon implementation | `PLA` |
+| 22.6 | P4.3 | Report selection/output policy: cached-model contract, HTML/assets Webview, CSV/XML/text saves | 22.5 and its contract decision | `PLA` |
+| 22.7 | P4.4 | Export/input-language/help commands, settings, Project Explorer and Status Bar; translated UX deferred | 22.5; report UI consumes 22.6 | `PLA` |
+| 22.8 | P5.1–P5.3 | Browser-safe Web entry, user-triggered writes and storage fallbacks, vscode.dev tests | 22.4–22.7 | `PLA` |
+| 22.9 | P6.1–P6.2 | Independent `packages/lsp` stdio bootstrap, executable build and protocol smoke | 22.4; shared P2 server contract | `PLA` |
+| 22.10 | P7.1, P7.2 | Desktop/Web bundles, exclusions, `.vsix` < 5 MB, clean-install acceptance | 22.8; collect 22.9 artifact in acceptance | `PLA` |
+| 22.11 | P7.2, P7.3 | Full `deno task tests`, coverage/integration evidence, ADR and documentation closure, F21² handoff | All in-v1 deliverables accepted | `PLA` |
 
-Ordem de execução: 22.0 → 22.1 → 22.1b → 22.2 → 22.3 → 22.4 → 22.5 → 22.6 → 22.7 → 22.8
-→ 22.9 → 22.10 → 22.11. **22.1 (`lsp-core`) é pré-requisito de 22.4** — não
-avançar sem ele verde. **22.1b (`doc-core`) é pré-requisito do help/manual do
-LSP (22.1/22.4) e do `man` da Fase 24** — decisão 2026-11-03: o núcleo de
-docs/sintaxe inteiro (inclusive `TernarySearchTree` 16.9 e `SyntaxCore` 16.14)
-foi **movido da Fase 16 para esta fase**; a F16 mantém apenas os utilitários
-que ela já possuía (FileList, URLParameter, StdIoWrapper, UTF8String).
+Default block order: **P1 → P2 → P3 → P4 → P5 → P6 → P7**. P6 can proceed
+independently of P4/P5 after 22.4 is accepted. Within P2, use foundation
+readiness rather than a whole-subphase cycle: existing engine → docs/highlight;
+workspace/document analysis → help/completion bridges → final `lsp-core`
+acceptance. The CLI-facing `doc-core` work already delivered is not repeated.
 
-Como a fase depende apenas das Fases 2–14, ela pode ser executada
-**imediatamente após a Fase 14**, antes das Fases 15–18
-(Gantt/apoio/XML/sheets), 19 (Storage), 20 (PWA + UI) e 21 (Compatibilidade e
-Qualidade). Os relatórios gerados pela camada 3 usam o pipeline da Fase 14;
-formatos das Fases 15–18 ficam para um adendo. Registrar o reposicionamento em
-`plano.md` ao iniciar a fase.
+The original IDs remain 22.0 → 22.1/22.1b readiness steps → 22.2 → 22.3 → 22.4
+→ 22.5 → 22.6 → 22.7 → 22.8 → 22.9 → 22.10 → 22.11. The official phase order
+remains **23 → 24 → 21¹ → 22 → 21² → 19 → 20 → 21³**; the older suggestion
+of starting directly after F14 is superseded. Available F15–F18 engine/report
+capabilities are inputs, not a reason to move F22 or reopen those phases.
 
-Commits por subfase: `feat(lsp-core): …`, `feat(vscode): scaffold`,
-`feat(vscode): lsp-client`, `feat(vscode): daemon`, `feat(vscode): reports`,
-`feat(lsp): cli`, `chore(vscode): package`.
+The documentation/syntax relocation from F16 is unchanged: `TernarySearchTree`
+and shared Kate/Vim data belong to 22.1b; the optional final generators remain
+outside v1. C–J task ranges, consumer annotations, delivery adaptations, and
+progress evidence stay in the task document.
+
+Suggested commit scopes remain `feat(lsp-core)`, `feat(vscode)`, `feat(lsp)`,
+and `chore(vscode)` per original subphase. This planning update creates no commits.
 
 ---
 
 ## 14. ADR da fase (035) — Extensão VS Code + `lsp-core`
 
-Criar `docs/syntaxmesh/decisoes/0NN-extensao-vscode.md` em 22.0 (0NN =
-próximo livre; **035** se a cadeia oficial foi seguida) com:
+P1.3 / 22.0 will create the reserved
+`docs/syntaxmesh/decisoes/035-extensao-vscode.md` and update the ADR index.
+ADR 035 remains planned; this documentation reorganization does not create it.
+Its existing outline is:
 
 - **Contexto:** tooling complementar pós-engine; reuso de
   Vim/Emacs/Kate/`taskjuggler-lsp`; inspiração tj3d/tj3client/tj3webd.
@@ -665,8 +852,8 @@ próximo livre; **035** se a cadeia oficial foi seguida) com:
   relatórios — o *tj3d/tj3webd simulado* consome a mesma API da CLI, sem fork;
   ampliação necessária vira adendo à F24 (nota 2026-11-07)**; entradas duplas
   node/web; `package.json` como manifesto; build via `@vsce/bundler`; **v1
-  monolíngue EN** (PT/ES como adendo pós-Fase 21); fase executada antes das
-  Fases 19–21.
+  monolíngue EN** (PT/ES como adendo pós-Fase 21); scheduled after F21¹,
+  before F21² and phases 19/20.
 - **Alternativas rejeitadas:** pacote `lsp-core` separado; LSP-only em Worker
   sem suporte desktop stdio; Monaco standalone; reutilizar `taskjuggler-lsp` C
   diretamente.

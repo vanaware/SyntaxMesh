@@ -1,6 +1,8 @@
 # Fases — Guia
 
-Este diretório contém o planejamento do projeto dividido em **21 fases**. Cada fase tem **até 3 arquivos** com propósitos distintos.
+This directory contains the **21 canonical phases plus complementary phases
+22–24**. Each phase separates its specification, atomic tasks, and any later
+review/addendum documents. The official execution order is in [plano.md](plano.md).
 
 ## Convenção de nomes
 
@@ -249,6 +251,20 @@ deno task audit:phase N
 
 > **Nota:** atualizar esta tabela manualmente ao concluir uma fase (mover `⬜` → `🟡` → `✅`).
 
+## Complementary-phase navigation
+
+| Phase | Plan | Tasks | Planning note |
+|---|---|---|---|
+| 22 | [VS Code extension: P1–P7](fase-22-vscode-extension.md#0-major-blocks-and-subblocks) | [Original task owners and progress](fase-22-vscode-extension-tarefas.md) | `PAR` — CLI-facing `doc-core` delivered; editor extension not started. 22.1b records 86/108 completions. |
+| 23 | [Templates](fase-23-template.md) | [Atomic tasks](fase-23-template-tarefas.md) | Existing template reference is an input to F22 grammar/help. |
+| 24 | [CLI](fase-24-cli.md) and [execution API addendum](fase-24-cli-adendo.md) | [Atomic tasks](fase-24-cli-tarefas.md) | Shared execution contract and CLI `man` consumer reused by F22. |
+
+Phase 22's P1–P7 groups organize architecture, shared cores, editor tooling,
+execution/reports/UX, Web/storage, standalone LSP, and packaging/handoff. They
+do not replace the original 22.x task IDs or the existing C–J blocks. Unfinished
+subphases are detailed in the existing task document before implementation.
+The scheduling gate remains **23 → 24 → 21¹ → 22 → 21² → 19 → 20 → 21³**.
+
 ## Referências cruzadas
 
 - `docs/syntaxmesh/decisoes/` — ADRs 001–031 (existentes até 023 + 030/031; numeração futura reservada nos arquivos de fases: 024 RichText, 025 Markdown, 026 Reports, 028 Apoio).
@@ -260,4 +276,5 @@ deno task audit:phase N
 
 ---
 
-**Última atualização:** 2026-10-26
+**Last navigation update:** 2026-11-11 (Phase 22 block organization only;
+other historical phase entries are unchanged).

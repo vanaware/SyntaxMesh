@@ -1,7 +1,11 @@
 # Fase 22 — Tarefas atômicas
 
 > **Fase:** 22 — Extensão VS Code (`lsp-core` + `doc-core` + tooling de edição)
-> **Plano:** `fase-22-vscode-extension.md` (subfases 22.0–22.11 no §13)
+> **Plan:** [Major blocks P1–P7](fase-22-vscode-extension.md#0-major-blocks-and-subblocks)
+> and original subphases 22.0–22.11 in §13.
+> **Status:** `PAR` — CLI-facing `doc-core` delivered; editor extension not started.
+> **Recorded progress:** 86/108 tasks in 22.1b only; not a phase-wide total.
+> **Scope of this update:** planning organization, no implementation or reopened tasks.
 > **Decisão de escopo:** varredura `docs/syntaxmesh/xray.md` §3.2/§8 — decisão do
 > usuário em **2026-11-03**: todo o núcleo de documentação e sintaxe sai da
 > Fase 16 e passa a viver **nesta fase**, na subfase **22.1b `doc-core`**
@@ -11,24 +15,62 @@
 
 ## Escopo deste arquivo
 
-Este arquivo está **parcial por construção**: nesta passagem só o detalhamento
-atômico da **subfase 22.1b (`doc-core`)** foi expandido (Blocos C–H abaixo, mais a
-integração I e a verificação J). Os demais blocos são preenchidos no kickoff de
-cada subfase, mantendo o índice do §13 do plano como fonte:
+This is a **partially detailed** task document: only 22.1b has atomic tasks
+(C–H, integration I, verification J). The major planning blocks are navigation
+and dependency boundaries, not a second execution list. All original task IDs,
+consumer annotations, and the historical progress section below remain intact.
 
-| Bloco | Subfase | Conteúdo | Estado |
+### Major-block navigation
+
+| Planning block | Subblocks | Original owners | Atomic detail |
 |---|---|---|---|
-| A | 22.0 | ADR 035 + linha no `decisoes/README.md` | ⬜ a detalhar no kickoff |
-| B | 22.1 | Renome do core + `core/src/lsp/` (`lsp-core`) | ⬜ a detalhar no kickoff |
-| **C** | **22.1b** | **`TernarySearchTree`** | ✅ detalhado aqui |
-| **D** | **22.1b** | **`SyntaxReference`** | ✅ detalhado aqui |
-| **E** | **22.1b** | **`KeywordDocumentation`** | ✅ detalhado aqui |
-| **F** | **22.1b** | **`TjpExample`** | ✅ detalhado aqui |
-| **G** | **22.1b** | **`UserManual`** + fontes do manual | ✅ detalhado aqui |
-| **H** | **22.1b** | **`SyntaxCore`** (núcleo de highlight Kate/Vim) | ✅ detalhado aqui |
-| I | 22.1b | Integração `doc-core` (exports, `lsp-core`, CLI F24) | ✅ detalhado aqui |
-| J | 22.1b | Verificação da subfase | ✅ detalhado aqui |
-| K–S | 22.2–22.11 | Scaffolding, grammar, LSP, daemon, relatórios, web, CLI `lsp`, empacotamento — **daemon/relatórios via `execute` da F24 (nota abaixo)** | ⬜ a detalhar no kickoff |
+| [P1 — Scope and architecture](fase-22-vscode-extension.md#p1-scope-and-architecture) | P1.1 baseline; P1.2 layers; P1.3 ADR | 22.0 (A) | Pending |
+| [P2 — Shared language/documentation cores](fase-22-vscode-extension.md#p2-shared-language-and-documentation-cores) | P2.1 workspace; P2.2 docs; P2.3 highlight; P2.4 pure LSP; P2.5 bridges/verification | 22.1 (B), 22.1b (C–J) | 22.1b detailed; remaining 22.1 pending |
+| [P3 — Editor foundation](fase-22-vscode-extension.md#p3-editor-foundation-and-language-tooling) | P3.1 shell; P3.2 grammar/snippets; P3.3 transport integration | 22.2–22.4 | Pending |
+| [P4 — Execution, reports and UX](fase-22-vscode-extension.md#p4-project-execution-reports-and-editor-ux) | P4.1 API audit; P4.2 daemon; P4.3 reports; P4.4 commands/views/trust | 22.5–22.7 | Pending |
+| [P5 — Web and storage](fase-22-vscode-extension.md#p5-web-host-and-storage-adaptation) | P5.1 browser graph; P5.2 writes; P5.3 storage fallbacks | 22.8 | Pending |
+| [P6 — Standalone LSP](fase-22-vscode-extension.md#p6-standalone-lsp-adapter) | P6.1 stdio bootstrap; P6.2 build/protocol smoke | 22.9 | Pending |
+| [P7 — Packaging and handoff](fase-22-vscode-extension.md#p7-packaging-acceptance-and-handoff) | P7.1 builds; P7.2 acceptance; P7.3 closure/F21² | 22.10–22.11 | Pending |
+
+### Original task owners and recorded implementation
+
+`OK` = delivered, `PAR` = partial, `PLA` = planned/not implemented. Detail and
+implementation are separate: a written task table is not a completed deliverable.
+Counts below mirror the historical 22.1b progress table, not a new verification.
+
+| Task block | Subphase | P-subblock | Subject | Detail | Recorded implementation |
+|---|---|---|---|---|---|
+| A | 22.0 | P1.1–P1.3 | ADR 035 and index entry | Pending | `PLA` |
+| B | 22.1 | P2.1, P2.4 | Existing rename; remaining workspace and pure `lsp-core` | Pending | `PAR` — rename delivered |
+| C | 22.1b | P2.2 | `TernarySearchTree` | Detailed below | `PAR` — 11/12 |
+| D | 22.1b | P2.2 | `SyntaxReference` | Detailed below | `PAR` — 12/15 |
+| E | 22.1b | P2.2 | `KeywordDocumentation` (E.1 data, E.2 text, E.3 HTML) | Detailed below | `PAR` — 27/29 |
+| F | 22.1b | P2.2 | Examples (`TjpExample`, delivered as `ExampleSnippet`) | Detailed below | `OK` — 10/10 |
+| G | 22.1b | P2.2 | `UserManual` (G.1 sources, G.2 class) | Detailed below | `OK` — 14/14, recorded adaptations retained |
+| H | 22.1b | P2.3 | `SyntaxCore` shared highlight data | Detailed below | `PLA` — 0/10; 6.9 outside v1 |
+| I | 22.1b | P2.5 | Exports/purity, editor bridges, CLI, smoke/cache | Detailed below | `PAR` — 7/10 |
+| J | 22.1b | P2.5 | Oracle/gates/coverage/documentation | Detailed below | `PAR` — 5/8 |
+| To assign at detailing | 22.2 | P3.1 | Extension shell | Pending | `PLA` |
+| To assign at detailing | 22.3 | P3.2 | Grammar, snippets, snapshots | Pending | `PLA` |
+| To assign at detailing | 22.4 | P3.3 | Desktop/Web LSP integration | Pending | `PLA` |
+| To assign at detailing | 22.5 | P4.1–P4.2 | F24 API audit, then explicit daemon/cache | Pending | `PLA` |
+| To assign at detailing | 22.6 | P4.3 | Shared execution contract and report output policy | Pending | `PLA` |
+| To assign at detailing | 22.7 | P4.4 | Export/input-language/help, config, views and trust | Pending | `PLA` |
+| To assign at detailing | 22.8 | P5.1–P5.3 | Web runtime, writes and storage fallbacks | Pending | `PLA` |
+| To assign at detailing | 22.9 | P6.1–P6.2 | Standalone stdio server/build | Pending | `PLA` |
+| To assign at detailing | 22.10 | P7.1–P7.2 | Packaging and clean-install acceptance | Pending | `PLA` |
+| To assign at detailing | 22.11 | P7.2–P7.3 | Final verification and F21² handoff | Pending | `PLA` |
+
+The old `K–S` range was an undetailed placeholder, not assigned task IDs; it
+compressed ten subphases into nine letters. Use the explicit 22.2–22.11 owners
+above until each is detailed, without renumbering A–J or any 22.1b task.
+
+Before execution, detail one original subphase at a time (≤ 2h per task, tests
+first). In P2, docs/highlight can use the existing engine; I 7.5–7.7 requires
+P2.4's analysis foundation and the corresponding docs APIs. In P4, audit the
+F24 contract before deciding the daemon/report model seam. F21¹ remains the
+kickoff gate; P6 may proceed after 22.4 independently of P4/P5. Follow the
+entry/exit criteria in plan §0 and the original-ID dependency map in §13.
 
 ## Convenções
 
@@ -60,8 +102,8 @@ As camadas **daemon** (22.5 — *tj3d/tj3client simulado*) e **relatórios**
 `core.execute(request)` → envelope JSON (`fase-24-cli-adendo.md`, v2/v2.1 —
 entrada `request.files` de `{ path, content }` com o fechamento de `include`s,
 sem provedor; conteúdos não voltam no envelope; `messages`/`exitCode` como
-dados). **Não existe fork de API para a extensão.** Os blocos K–S, ao serem
-detalhados no kickoff, devem incluir como tarefas:
+dados). **Não existe fork de API para a extensão.** P4.1–P4.3 (original owners
+22.5/22.6), when detailed at kickoff, must include these tasks:
 
 - **Auditoria de compatibilidade** do contrato atual com os conceitos
   `tj3d`/`tj3client`/`tj3webd` (alimentar `request.files` com buffer
@@ -403,3 +445,26 @@ consegue ser servido **só** por `@vanaware/syntaxmesh/doc-core` sem tocar em
   `''''kw''''` (código), e o texto de `p.doc` deixou de nomear o projeto de origem
   (`alertlevels`, `now`, `markdate`, `aggregate`) ou a extensão antiga
   (`include`).
+
+## Planning organization evidence (2026-11-11)
+
+This update organizes the existing phase, not its implementation. It does not
+increment the 86/108 recorded completions, close remaining 22.x tasks, or create
+ADR 035. The older implementation and adaptation notes above remain unchanged.
+
+| Planning action | Evidence | Verification |
+|---|---|---|
+| Group existing scope into P1–P7 and 23 subblocks | Plan §0: purposes, boundaries, entry/exit criteria and detailing protocol | Every original subphase 22.0–22.11 mapped in §13 |
+| Align atomic-task navigation | Navigation/owner tables at the start of this file | C–J IDs and historical progress preserved; undetailed 22.2–22.11 listed explicitly |
+| Preserve scheduling and architecture | Plan §§0/1/13/14; P2 foundation/bridge order; P4.1 F24 API audit | F21¹ gate retained; no execution API or phase-order change |
+| Propagate planning references | `CURRENT.md`, `plano.md`, phase `README.md`, `AGENTS.md` F22 entry | References point to the existing plan/task files |
+
+Validation: `git diff --check` passed; navigation targets and all 13 original
+subphase owners (22.0–22.11, including 22.1b) were checked. The C–J atomic task
+bodies and historical 86/108 progress were preserved. Full `deno task tests`
+passed with exit 0: 839 passed (6902 steps), 0 failed, 2 ignored steps. This
+includes `check:all`, `lint`, `fmt:check`, `lint:doc:all`, `check:doccore`, and
+`check:stubs`. No code or new tests were added for this planning-only update.
+
+Future implementation evidence remains attached to the original atomic task
+IDs, not new P-block task IDs.

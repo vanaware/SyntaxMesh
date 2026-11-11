@@ -584,11 +584,17 @@ i18n (10.15+) em `packages/core/src/i18n/`.
   #1–#6a. **Próximo passo oficial após fechar a 26.0–26.14: abrir a Fase
   22** (kickoff da extensão VS Code, Bloco H do `doc-core` e pontes
   `lsp-core` 7.5–7.7).
-- **Fase 22 — Extensão VS Code** 🟨 **`doc-core` entregue (2026-11-08)**, extensão
-  não iniciada — plano `fase-22-vscode-extension.md` + tarefas
-  `fase-22-vscode-extension-tarefas.md` (só a **subfase 22.1b** está detalhada —
-  Blocos C–J, 108 tarefas; demais blocos a criar no kickoff).
-  Após a 21¹, antes das Fases 19/20; v1 EN.
+- **Phase 22 — VS Code extension** `PAR` — CLI-facing `doc-core` delivered
+  (2026-11-08); editor extension not started.
+  [Plan: major blocks P1–P7](docs/syntaxmesh/fases/fase-22-vscode-extension.md#0-major-blocks-and-subblocks)
+  and [original task owners](docs/syntaxmesh/fases/fase-22-vscode-extension-tarefas.md).
+  Planning update (2026-11-11): P1 architecture; P2 shared language/docs cores;
+  P3 editor/LSP; P4 execution/reports/UX; P5 Web/storage; P6 standalone LSP;
+  P7 packaging/acceptance/handoff. Each block has subblocks and entry/exit
+  criteria. Original IDs and delivery records are preserved; only 22.1b has
+  atomic detail (C–J, 86/108 recorded complete). Other unfinished subphases
+  are detailed at kickoff. No implementation started by this update.
+  After F21¹, before F21² and phases 19/20; v1 output remains English.
   **Entregue:** o `doc-core` (subfase 22.1b) com `TernarySearchTree`,
   `SyntaxReference`, `KeywordDocumentation`, `ExampleSnippet` (`TjpExample`),
   `UserManual` + capítulos em inglês, `ansi` e a fachada `generateMan`, em
