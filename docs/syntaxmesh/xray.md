@@ -135,23 +135,42 @@
 
 | Ruby | SyntaxMesh | Status | Observação |
 |---|---|---|---|
-| `SyntaxReference.rb` | — | PLA | **✅ dono definido 2026-11-03 (§8): F22 `doc-core` (22.1b)** — o pointer "pré-requisito da Fase 14" era falso e foi corrigido em 16.14 |
-| `KeywordDocumentation.rb` | — | PLA | idem — **F22 22.1b** (consumida pela CLI `syntaxmesh man` da F24) |
-| `TjpExample.rb` | — | PLA | **F22 22.1b** (§8) |
-| `UserManual.rb` | — | PLA | **F22 22.1b** (§8); saída HTML via `syntaxmesh man --format html` na F24 |
-| `TernarySearchTree.rb` | — | PLA | **MOVIDO 16.9 → F22 22.1b** (o core de busca vive no `doc-core`; F24 consome) |
-| `KateSyntax.rb` / `VimSyntax.rb` | — | PLA | **MOVIDOS 16.14/16.15 → F22 22.1b**: núcleo de highlight (`docgen/`) no core — **só os dados** (`categories`/`tokenRules`/`optionBlockRegions`, tarefa 22.1b.6); os geradores de arquivo (`.xml` do Kate, `.vim` do Vim) seguem cancelados, reativáveis como função pura se aparecer consumidor |
+| `SyntaxReference.rb` | `docgen/syntax-reference.ts` | OK | **entregue 22.1b (Bloco D, 2026-11-08 + goldens 2026-11-11)** — subset reescrito em inglês (170 × 266 keywords); dono definido 2026-11-03 (§8); o pointer "pré-requisito da Fase 14" era falso e foi corrigido em 16.14 |
+| `KeywordDocumentation.rb` | `docgen/keyword-documentation.ts` + `keyword-markdown.ts` | OK | **entregue 22.1b (Bloco E)** — `toText`/`generateHTML` + `toMarkdown` novo (LSP); consumida pela CLI `syntaxmesh man` da F24 (24.9 ✅) e pelo hover do `lsp-core` |
+| `TjpExample.rb` | `docgen/example-snippet.ts` (classe `ExampleSnippet`) | OK | **entregue 22.1b (Bloco F)** — §8 |
+| `UserManual.rb` | `docgen/user-manual.ts` + `manual-pages.ts` + `manual/` | OK | **entregue 22.1b (Bloco G)** — capítulos novos em inglês; `getManualToc`/`getManualPage` (5.13/5.14) p/ o painel Manual da extensão; saída HTML via `syntaxmesh man --format html` na F24 (24.9 ✅) |
+| `TernarySearchTree.rb` | `docgen/ternary-search-tree.ts` | OK | **entregue 22.1b (Bloco C)** — MOVIDO 16.9 → F22; golden vs oracle Ruby (1.11); F24 consome (`man <parcial>`) + completion do `lsp-core` |
+| `KateSyntax.rb` / `VimSyntax.rb` | `docgen/syntax-core.ts` (só dados) | OK | **entregue 22.1b (Bloco H 6.1–6.8, 2026-11-11)** — MOVIDOS 16.14/16.15: `categories`/`tokenRules`/`optionBlockRegions`/`indentSettings`; os geradores de arquivo (`.xml` do Kate, `.vim` do Vim) seguem cancelados (6.9 fora do v1), reativáveis como função pura se aparecer consumidor |
 | `AlgorithmDiff.rb` | — | **CANCELADO** | DEAD no upstream — **port cancelado e registrado na tarefa 16.10** (§8); nada a portar |
 | `FileList.rb` | — | PLA | núcleo **16.7** (F16); consumidores declarados: **F24** (rastreio de inputs) e F19 |
 | `StdIoWrapper.rb` | — | PLA | núcleo **16.11** (F16); consumidores: **F18** (`TimeSheetSummary`) e **F24** |
 | `UTF8String.rb` | — | PLA | núcleo **16.12** (F16, em grande parte no-op em TS); consumidor: **F24** |
+
+#### 1.7.1 Confronto com o `tj3man` real (22.1b.8.2, 2026-11-11)
+
+Confronto do `SyntaxReference.toText(kw, false)` do port com a saída do
+`tj3man` real (Ruby 3.8.4, gem no PATH) para as 12 keywords do golden
+`scripts/golden/syntax-reference.rb` (`project task resource account scenario
+shift depends allocate effort duration length priority`). Todas com exit 0 e
+sem ANSI quando pipeado. Probe: `.tmp/probe-tj3man.ts`.
+
+| Aspecto | `tj3man` real | Port (doc-core) | Classificação |
+|---|---|---|---|
+| Estrutura de seções | Keyword/Purpose/Syntax/Arguments/Context/Attributes nas 12 | idêntica | ✅ paridade |
+| Banner do CLI | `TaskJuggler v3.8.4 - A Project Management Software` antes do texto | ausente | divergência intencional — o banner é do app (`Tj3Man.rb`), não do `SyntaxReference#to_s`; o oracle golden usa a lib direta |
+| `See also:` | presente em shift/effort/duration/length (ex.: `shifts.resource, shifts.task`) | ausente em todas | adaptação registrada — textos reescritos sem referências `[[kw]]` (`internalReferences` vazio; D 2.15 / E 3.22) |
+| Cabeçalho `(List Attribute)` | `depends (List Attribute)`, `allocate (List Attribute)` | sem o sufixo | adaptação registrada (E 3.22) — o port não marca list attributes |
+| Conteúdo/tamanho | 36–61 linhas por keyword | 14–33 linhas | divergência intencional — subset reescrito em inglês (D 2.15); paridade estrutural pinada pelo golden E 3.22 |
+
+**Conclusão:** nenhuma divergência inesperada — todas recaem em adaptações já
+registradas (D 2.15 / E 3.22) ou na fronteira app × biblioteca.
 
 ### 1.8 Apps e daemon (`apps/`, `daemon/`, `lib/tj3*.rb`)
 
 | Ruby | SyntaxMesh | Status | Observação |
 |---|---|---|---|
 | `apps/Tj3.rb` + `Tj3AppBase.rb` + `lib/tj3.rb` | planejado **F24** (CLI `packages/cli`, mapa de opções §5.2 do plano) | PLA | ADR 034 reservada |
-| `apps/Tj3Man.rb` + `lib/tj3man.rb` | **F22 `doc-core` (22.1b)** + comando `syntaxmesh man` na **F24 (24.9)** | PLA | §3.2 resolvido (§8) |
+| `apps/Tj3Man.rb` + `lib/tj3man.rb` | **F22 `doc-core` (22.1b)** + comando `syntaxmesh man` na **F24 (24.9)** | OK | §3.2 resolvido (§8); ambos entregues (doc-core 2026-11-08/11, `man` 2026-11-08); confronto com o `tj3man` real em §1.7.1 |
 | `apps/Tj3Client.rb` + `lib/tj3client.rb` | equivalente funcional na **F22** (comandos de gerenciamento do servidor da extensão, §3.2 do plano da fase) | NA | "algo parecido com tj3client/tj3daemon/tj3webd" — decisão 2026-11-03 (§8) |
 | `apps/Tj3Daemon.rb`, `apps/Tj3WebD.rb`, `daemon/*` (9 arquivos), `lib/tj3d.rb`, `lib/tj3webd.rb` | equivalente funcional na **F22** (lsp-core + cache de projeto residente + camada de relatórios §3.3) | NA | §3.1 resolvido (§8); sockets/SMTP/processos fora de escopo |
 | `apps/Tj3SsSender/Receiver`, `Tj3TsSender/Receiver/Summary`, `Tj3SheetAppBase.rb`, `lib/tj3ss_*.rb`/`tj3ts_*.rb` | núcleo no core **F18 (18.18)**; subcomandos `syntaxmesh ts/ss …` na **F24 (24.10)** | PLA | §3.3 resolvido (§8); ADR **036** |
@@ -290,7 +309,7 @@ python3 .tmp/xray-diff2.py   # richtext/textparser/report-tables
 
 | Achado | Dono / decisão | Onde ficou registrado |
 |---|---|---|
-| §3.2 tj3man + cadeia de documentação | **Fase 22 — `doc-core`** (subfase **22.1b**): `SyntaxReference`, `KeywordDocumentation`, `TjpExample`, `UserManual`, `TernarySearchTree` e o **núcleo de highlight Kate/Vim** (`docgen/`). A CLI da **Fase 24** consome esse core como `syntaxmesh man` (24.9) — o equivalente do `tj3man` | `fase-22-vscode-extension.md` §2/22.1b; **`fase-22-vscode-extension-tarefas.md` — subfase expandida em 108 tarefas atômicas (Blocos C–J, 2026-11-03) com marcação de consumidor 【24】/【LSP】**; `fase-24-cli.md` §2/§5.4 + 24.9 (24.9.1–24.9.3 apontando para 22.1b.x); `fase-16-apoio.md` (16.9/16.14/16.15 MOVIDOS) |
+| §3.2 tj3man + cadeia de documentação | **Fase 22 — `doc-core`** (subfase **22.1b**): `SyntaxReference`, `KeywordDocumentation`, `TjpExample`, `UserManual`, `TernarySearchTree` e o **núcleo de highlight Kate/Vim** (`docgen/`). A CLI da **Fase 24** consome esse core como `syntaxmesh man` (24.9) — o equivalente do `tj3man`. **Resultado (2026-11-11):** 22.1b fechada — 106/108 tarefas verificadas (H 6.9/6.10 fora do v1), `lsp-core` puro entregue no P2 (serviços + `registerLspServer`), confronto com o `tj3man` real em §1.7.1 | `fase-22-vscode-extension.md` §2/22.1b; **`fase-22-vscode-extension-tarefas.md` — subfase expandida em 108 tarefas atômicas (Blocos C–J, 2026-11-03) com marcação de consumidor 【24】/【LSP】**; `fase-24-cli.md` §2/§5.4 + 24.9 (24.9.1–24.9.3 apontando para 22.1b.x); `fase-16-apoio.md` (16.9/16.14/16.15 MOVIDOS; entrega cruzada registrada em `-tarefas.md`) |
 | §3.1 daemon/webd/client | **Fase 22** entrega "algo parecido com tj3client/tj3daemon/tj3webd" (lsp-core + servidor da extensão + camada de relatórios) — mesma entrega, outra funcionalidade; sockets/SMTP/processos ficam fora | `fase-22-vscode-extension.md` §3.2/§3.3 |
 | §3.3 apps de sheets | Núcleo no **core da Fase 18 (18.18)**: `Tj3SheetAppBase` + sender/receiver/summary de TS e SS como classes puras. Empacotamento CLI na **Fase 24 (24.10)**. **Sem SMTP**: sender devolve o **texto do email**; receiver consome **texto de mensagem** (arquivo/stdin) — **ADR 036** | `fase-18-time-status-sheets.md` §18.18 + `-tarefas.md` Bloco H; `fase-24-cli.md` §5.4; `decisoes/README.md` |
 | §3.4 `dynamicAttributes` + `parseReportAttributes` | Núcleo na **Fase 18 (18.19)**; uso na **Fase 24** (`--report … --attr`, 24.10.5). `backupAttributes`/`restoreAttributes` já existem em `property-tree-node.ts` — tarefa é ligar as chamadas | `fase-18-…​.md` §18.19 + `-tarefas.md`; âncoras `// Ancorado: Fase 18` em `model/project.ts` |

@@ -3,6 +3,7 @@ import {
   formatTimezoneOffset,
   getLocalParts,
   getOffsetSeconds,
+  getTimeZoneAbbr,
   isValidTimeZone,
   setCurrentTimeZone,
 } from "./timezone.ts";
@@ -1033,14 +1034,8 @@ export class TjTime {
     // Get local parts for the given timezone
     const parts = getLocalParts(this.seconds, timeZone,);
 
-    // Get timezone abbreviation
-    const formatter = new Intl.DateTimeFormat("en-US", {
-      timeZone: timeZone,
-      timeZoneName: "short",
-    },);
-    const tzParts = formatter.formatToParts(this.toDate(),);
-    const tzAbbr = tzParts.find((p,) => p.type === "timeZoneName")?.value ||
-      timeZone;
+    // Get timezone abbreviation (shared formatter; zone validated above)
+    const tzAbbr = getTimeZoneAbbr(this.seconds, timeZone,);
 
     // Day of week names
     const dayNames = [
@@ -1282,8 +1277,7 @@ export class TjTime {
     try {
       if (zone === "UTC") return true;
       if (!zone.includes("/",)) return false;
-      new Intl.DateTimeFormat("en-US", { timeZone: zone, },);
-      return true;
+      return isValidTimeZone(zone,);
     } catch {
       return false;
     }

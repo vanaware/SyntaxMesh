@@ -137,12 +137,12 @@ Esta fase **completa stubs** das Fases 5, 11 e 14. A ordem importa:
 [x] 16.6  TextFormatter                             —  10/10  ✅ ANTECIPADA na Fase 12 (2026-10-28): dependência pura de `RichTextElement#to_s`; port fiel de `TextFormatter.rb:21-184` (`indent`/`format` FSM/`appendWord`, code points UTF-8), expectations conferidas contra o Ruby real; 15 testes em `tests/utils/text-formatter_test.ts`; exportado via `utils/mod.ts`
 [ ] 16.7  FileList + FileRecord                     —   0/8   (consumidor: Fase 24 — §5.4)
 [ ] 16.8  URLParameter                              —   0/6
-[x] 16.9  TernarySearchTree (MOVIDO → F22 22.1b)    —   n/a   — decisão 2026-11-03 (xray §3.2): o núcleo de docs/sintaxe inteiro vive na Fase 22
+[x] 16.9  TernarySearchTree (MOVIDO → F22 22.1b)    —   n/a   — decisão 2026-11-03 (xray §3.2): o núcleo de docs/sintaxe inteiro vive na Fase 22; **entregue em 22.1b.1.1–1.12** (2026-11-08 + golden/barrel 2026-11-11)
 [x] 16.10 AlgorithmDiff (CANCELADO — DEAD)          —   n/a   — decisão 2026-11-03 (xray §2.2): zero chamadores no upstream; ver §16.10
 [ ] 16.11 StdIoWrapper                              —   0/6   (consumidores: Fase 18 + Fase 24)
 [ ] 16.12 UTF8String (no-op)                        —   0/8   (consumidor: Fase 24)
 [ ] 16.13 deepClone (revisar)                       —   0/4
-[x] 16.14 SyntaxCore (MOVIDO → F22 22.1b)           —   n/a   — decisão 2026-11-03; 16.15 permanece CANCELADO
+[x] 16.14 SyntaxCore (MOVIDO → F22 22.1b)           —   n/a   — decisão 2026-11-03; 16.15 permanece CANCELADO; **entregue em 22.1b.6.1–6.8** (2026-11-11; 6.9/6.10 fora do v1)
 [x] 16.15 VimSyntax (CANCELADO → geradores finais)  —   n/a
 [ ] 16.16 Completar TaskScenario query_* (8)        —   0/20
 [x] 16.17 Completar ResourceScenario query_dashboard —  0/6   (dono único: F16; âncora em `resource.ts` reancorada de 15→16)
@@ -465,6 +465,12 @@ e **029** está reservado a Journal e AlertLevel no `decisoes/README.md`. Aqui u
 > junto com `SyntaxReference`/`KeywordDocumentation`/`TjpExample`/`UserManual`
 > e o `SyntaxCore`. As 12 tarefas abaixo movem-se com a subfase (referência
 > histórica mantida).
+>
+> **ENTREGUE (22.1b.1.1–1.12):** as 12 tarefas correspondem 1:1 aos IDs
+> `22.1b.1.x` (`fase-22-vscode-extension-tarefas.md`, Bloco C). Núcleo entregue
+> em 2026-11-08; golden vs oracle Ruby (1.11) + re-export no barril doc-core
+> (1.12 — **não** no `mod.ts` raiz, conforme 22.1b.7.2) em 2026-11-11.
+> Arquivo final: `packages/core/src/docgen/ternary-search-tree.ts`.
 
 **⚠️ RUBY: `TernarySearchTree.rb` (~180 linhas)**
 **🔎 CHEAT: §3 recursão, §12 Categoria B (partial match)**
@@ -567,6 +573,15 @@ e **029** está reservado a Journal e AlertLevel no `decisoes/README.md`. Aqui u
 > integra-se ao **`doc-core` da Fase 22 (22.1b)**, que passa a possuir também
 > `SyntaxReference`, `KeywordDocumentation`, `TjpExample` e `UserManual`.
 > As tarefas abaixo executam sob a F22 (referência histórica mantida na F16).
+>
+> **ENTREGUE (22.1b.6.1–6.8, 2026-11-11):** correspondência 16.14.1–3 → 6.1
+> (classe/campos/constructor), 16.14.4 → 6.2 (`keywordList`), 16.14.5 → 6.3
+> (`categories`), 16.14.6 → 6.4–6.6 (`contexts` expandido em `tokenRules` +
+> `optionBlockRegions` + `indentSettings`, dados p/ Kate **e** Vim), 16.14.7 →
+> 6.8 (paridade estrutural), 16.14.8 → 7.1 (barril **doc-core**, não o
+> `mod.ts` raiz). Arquivo final: `packages/core/src/docgen/syntax-core.ts`
+> (não `dev-tools/`). 6.9 (geradores `.xml`/`.vim`) fora do v1; 6.10 nota de
+> plano — consumidores reais: `src/lsp/completion.ts` + blocos 22.3/22.4.
 
 **⚠️ RUBY: `KateSyntax.rb` (constructor `initialize` + `keywords`) e `VimSyntax.rb` (`prepareSyntax`) — só a lógica de coleta, NÃO a escrita de arquivo**
 **🔎 CHEAT: §3 `Hash#each_value` → `for...of`; §12 Categoria B (filtragem de keywords)**

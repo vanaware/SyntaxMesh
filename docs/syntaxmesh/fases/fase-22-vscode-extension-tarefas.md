@@ -3,9 +3,19 @@
 > **Fase:** 22 — Extensão VS Code (`lsp-core` + `doc-core` + tooling de edição)
 > **Plan:** [Major blocks P1–P7](fase-22-vscode-extension.md#0-major-blocks-and-subblocks)
 > and original subphases 22.0–22.11 in §13.
-> **Status:** `PAR` — CLI-facing `doc-core` delivered; editor extension not started.
-> **Recorded progress:** 86/108 tasks in 22.1b only; not a phase-wide total.
-> **Scope of this update:** planning organization, no implementation or reopened tasks.
+> **Status:** `PAR` — P1 (22.0) accepted 2026-11-11 (ADR 035); **P2 completed
+> 2026-11-11** (subfase 22.1b fechada + `lsp-core` puro entregue).
+> Editor extension (P3) not started.
+> **Recorded progress:** 86/108 tasks in 22.1b recorded (2026-11-08);
+> **99/108 verified** after the 2026-11-11 audit + P2 deliveries (Blocos B/H/I;
+> I 7.9 reaberta — o smoke registrado não existia no código);
+> **102/108 verified** após G 5.13/5.14 + I 7.6 (P2.5, 2026-11-11);
+> **103/108 verified** após I 7.9 (smoke recriado com limiares adaptados);
+> **106/108 verified** após J 8.1–8.8 (2026-11-11) — **subfase 22.1b fechada**
+> (H 6.9/6.10 fora do v1, únicas não verificadas).
+> Not a phase-wide total.
+> **Scope of this update:** kickoff of P1/P2 (user-authorized 2026-11-11,
+> ahead of the remaining F21¹ tasks — see Bloco A); P1 + P2 delivered.
 > **Decisão de escopo:** varredura `docs/syntaxmesh/xray.md` §3.2/§8 — decisão do
 > usuário em **2026-11-03**: todo o núcleo de documentação e sintaxe sai da
 > Fase 16 e passa a viver **nesta fase**, na subfase **22.1b `doc-core`**
@@ -24,8 +34,8 @@ consumer annotations, and the historical progress section below remain intact.
 
 | Planning block | Subblocks | Original owners | Atomic detail |
 |---|---|---|---|
-| [P1 — Scope and architecture](fase-22-vscode-extension.md#p1-scope-and-architecture) | P1.1 baseline; P1.2 layers; P1.3 ADR | 22.0 (A) | Pending |
-| [P2 — Shared language/documentation cores](fase-22-vscode-extension.md#p2-shared-language-and-documentation-cores) | P2.1 workspace; P2.2 docs; P2.3 highlight; P2.4 pure LSP; P2.5 bridges/verification | 22.1 (B), 22.1b (C–J) | 22.1b detailed; remaining 22.1 pending |
+| [P1 — Scope and architecture](fase-22-vscode-extension.md#p1-scope-and-architecture) | P1.1 baseline; P1.2 layers; P1.3 ADR | 22.0 (A) | Detailed below (Bloco A) |
+| [P2 — Shared language/documentation cores](fase-22-vscode-extension.md#p2-shared-language-and-documentation-cores) | P2.1 workspace; P2.2 docs; P2.3 highlight; P2.4 pure LSP; P2.5 bridges/verification | 22.1 (B), 22.1b (C–J) | Detailed below (Bloco B + C–J) |
 | [P3 — Editor foundation](fase-22-vscode-extension.md#p3-editor-foundation-and-language-tooling) | P3.1 shell; P3.2 grammar/snippets; P3.3 transport integration | 22.2–22.4 | Pending |
 | [P4 — Execution, reports and UX](fase-22-vscode-extension.md#p4-project-execution-reports-and-editor-ux) | P4.1 API audit; P4.2 daemon; P4.3 reports; P4.4 commands/views/trust | 22.5–22.7 | Pending |
 | [P5 — Web and storage](fase-22-vscode-extension.md#p5-web-host-and-storage-adaptation) | P5.1 browser graph; P5.2 writes; P5.3 storage fallbacks | 22.8 | Pending |
@@ -40,16 +50,16 @@ Counts below mirror the historical 22.1b progress table, not a new verification.
 
 | Task block | Subphase | P-subblock | Subject | Detail | Recorded implementation |
 |---|---|---|---|---|---|
-| A | 22.0 | P1.1–P1.3 | ADR 035 and index entry | Pending | `PLA` |
-| B | 22.1 | P2.1, P2.4 | Existing rename; remaining workspace and pure `lsp-core` | Pending | `PAR` — rename delivered |
-| C | 22.1b | P2.2 | `TernarySearchTree` | Detailed below | `PAR` — 11/12 |
-| D | 22.1b | P2.2 | `SyntaxReference` | Detailed below | `PAR` — 12/15 |
-| E | 22.1b | P2.2 | `KeywordDocumentation` (E.1 data, E.2 text, E.3 HTML) | Detailed below | `PAR` — 27/29 |
+| A | 22.0 | P1.1–P1.3 | ADR 035 and index entry; baseline/layers record | Detailed below | `OK` — 5/5 (2026-11-11) |
+| B | 22.1 | P2.1, P2.4 | Existing rename; remaining workspace and pure `lsp-core` | Detailed below (Bloco B) | `OK` — rename + P2.1 (22.1.1–22.1.4) + P2.4 completo (22.1.5–22.1.16) delivered 2026-11-11; cobertura 96,6% linhas + smoke sem VS Code |
+| C | 22.1b | P2.2 | `TernarySearchTree` | Detailed below | `OK` — 12/12 verified (2026-11-11: golden + barrel) |
+| D | 22.1b | P2.2 | `SyntaxReference` | Detailed below | `OK` — 15/15 verified (2026-11-11: checkKeyword + goldens) |
+| E | 22.1b | P2.2 | `KeywordDocumentation` (E.1 data, E.2 text, E.3 HTML) | Detailed below | `OK` — 29/29 verified (2026-11-11: toMarkdown + golden) |
 | F | 22.1b | P2.2 | Examples (`TjpExample`, delivered as `ExampleSnippet`) | Detailed below | `OK` — 10/10 |
-| G | 22.1b | P2.2 | `UserManual` (G.1 sources, G.2 class) | Detailed below | `OK` — 14/14, recorded adaptations retained |
-| H | 22.1b | P2.3 | `SyntaxCore` shared highlight data | Detailed below | `PLA` — 0/10; 6.9 outside v1 |
-| I | 22.1b | P2.5 | Exports/purity, editor bridges, CLI, smoke/cache | Detailed below | `PAR` — 7/10 |
-| J | 22.1b | P2.5 | Oracle/gates/coverage/documentation | Detailed below | `PAR` — 5/8 |
+| G | 22.1b | P2.2 | `UserManual` (G.1 sources, G.2 class) | Detailed below | `OK` — 14/14 verified (2026-11-11: 5.13/5.14 delivered); recorded adaptations retained |
+| H | 22.1b | P2.3 | `SyntaxCore` shared highlight data | Detailed below | `OK` — 8/10 verified (2026-11-11); 6.9 outside v1, 6.10 plan note |
+| I | 22.1b | P2.5 | Exports/purity, editor bridges, CLI, smoke/cache | Detailed below | `OK` — 10/10 (7.5 + 7.6 + 7.7 + 7.9 delivered 2026-11-11) |
+| J | 22.1b | P2.5 | Oracle/gates/coverage/documentation | Detailed below | `OK` — 8/8 verified (2026-11-11: golden determinístico, confronto tj3man, gate completo 840 passed, cobertura docgen 97,0%, docs fechados) |
 | To assign at detailing | 22.2 | P3.1 | Extension shell | Pending | `PLA` |
 | To assign at detailing | 22.3 | P3.2 | Grammar, snippets, snapshots | Pending | `PLA` |
 | To assign at detailing | 22.4 | P3.3 | Desktop/Web LSP integration | Pending | `PLA` |
@@ -143,6 +153,148 @@ dados). **Não existe fork de API para a extensão.** P4.1–P4.3 (original owne
 `richtext/{rich-text-document,toc-entry,table-of-contents,html-shell}.ts` e
 `richtext/handlers/function-example.ts` (`RichTextFunctionExample`). Nada novo
 nessas camadas além do §I.1 abaixo.
+
+---
+
+## Bloco A — 22.0 Escopo e arquitetura (P1)
+
+**Kickoff (2026-11-11):** detalhado e executado conforme o protocolo do plano
+§0 (uma entrega por tarefa, ≤ 2h, evidência registrada). São entregas de
+documentação/arquitetura — a verificação é coerência documental + gate, não
+teste unitário.
+
+**Gate de agendamento:** o plano registra F21¹ como gate de kickoff da F22; a
+1ª onda da F21 está parcial (26.0–26.14/26.26–26.28 em aberto). O kickoff
+antecipado de **P1/P2** foi **autorizado pelo usuário em 2026-11-11**
+(instrução direta; precedente: entrega antecipada do `doc-core` para a F24 em
+2026-11-08). P1/P2 não têm dependência técnica das tarefas restantes da 1ª
+onda; a ordem oficial **23 → 24 → 21¹ → 22 → 21² → 19 → 20 → 21³** não muda.
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 22.0.1 | P1.1 — Registrar baseline e escopo: insumos entregues, inglês-only v1, `.smx` + `.tjp`/`.tji`, estado do gate F21¹ e kickoff antecipado autorizado | este arquivo (§Baseline P1.1) | tabela de evidência + gate baseline verde |
+| 22.0.2 | P1.2 — Registrar fronteiras de camada e exclusões (três camadas; proibições grep-verificáveis do `lsp-core`; pureza do `doc-core`; anti-padrões) | este arquivo (§Fronteiras P1.2) | revisão cruzada com plano §3/§5.1/§12 |
+| 22.0.3 | P1.3 — Criar o ADR 035 seguindo o outline do plano §14 (Contexto/Decisões/Alternativas rejeitadas/Consequências) | `docs/syntaxmesh/decisoes/035-extensao-vscode.md` | outline completo; formato do README de ADRs |
+| 22.0.4 | P1.3 — Atualizar o índice de ADRs: linha 035 `Reservado` → `Aceito` + nota de reserva reconciliada | `docs/syntaxmesh/decisoes/README.md` | tabela coerente com o arquivo criado |
+| 22.0.5 | Registrar evidência de entrada/saída do P1: `CURRENT.md`, linha F22 do `plano.md`, status §13 do plano e tabelas deste arquivo | `CURRENT.md`, `plano.md`, plano §13, este arquivo | docs coerentes; `deno task tests` verde |
+
+### Baseline P1.1 (22.0.1) — insumos entregues e escopo v1
+
+| Insumo | Estado | Evidência |
+|---|---|---|
+| Engine (F2–F14): parser multilíngue, scheduler, financeiro, relatórios | ✅ | `packages/core/src/`; goldens das fases |
+| Gantt (F15), apoio (F16), HTML/XML (F17), sheets (F18) | ✅ | `CURRENT.md` |
+| `template` (F23, ADR 033) + referência normativa | ✅ | `docs/syntaxmesh/11-referencia-template.md` |
+| CLI + API `execute` (F24, ADR 034; adendo v2/v2.1) | ✅ | `packages/cli/`; `src/execution/execute.ts` |
+| `doc-core` CLI-facing (22.1b C–G + I parcial) | `PAR` 86/108 | §Progresso deste arquivo |
+| Rename `@vanaware/syntaxmesh` + exports `"."`/`"./doc-core"` | ✅ | `packages/core/deno.jsonc` |
+| Ruby 3.8.4 + `tj3` no PATH (oracles dos goldens) | ✅ | `scripts/golden/*.rb` + `generate_golden.ts` |
+| Gate baseline `deno task tests` (pré-P1/P2) | ✅ | ver §Evidência P1 abaixo |
+
+**Escopo v1 (inalterado):** saída só em inglês (grammar, snippets,
+completions, mensagens, help/manual); i18n vale apenas para o **parsing** de
+entrada — pt-BR/es são experimentais e ficam como piso de compatibilidade.
+Extensão nativa `.smx`; `.tjp`/`.tji` aceitos por compatibilidade.
+`resolveLocale` existe no contrato §5, mas a UX v1 fixa `en`.
+
+### Fronteiras P1.2 (22.0.2) — três camadas e exclusões
+
+Três camadas (plano §3), sem atalhos entre elas:
+
+1. **Edição (LSP):** análise incremental do buffer; **nunca alimenta o
+   daemon** — estados incompletos não entram no modelo estável.
+2. **Daemon:** atualização **explícita** do usuário (add/remove/list/reload);
+   entrada do engine = `core.execute(request)` da F24 (sem fork de API;
+   ampliação necessária vira adendo à F24, auditada em P4.1).
+3. **Relatórios:** consomem o modelo em cache via o mesmo `execute`
+   (`listReports`/`reports`); apresentação/salvamento é política do adaptador.
+
+Proibições verificáveis por grep (plano §5.1) — valem para `src/lsp/`:
+
+- ❌ importar `vscode-languageserver`/`vscode-languageclient` (só
+  `npm:vscode-languageserver-types@^3`);
+- ❌ importar `vscode`, `node:*`, `Deno.stdin`/`Deno.stdout`;
+- ❌ abrir conexões/transports no core — `registerLspServer` recebe a conexão
+  por **interface estrutural**; bootstrap pertence aos adaptadores.
+
+O `doc-core` mantém o gate de pureza existente (`deno task check:doccore`:
+nenhum `Deno.*`/`node:`/`process.*`). O gate equivalente do `lsp-core` entra
+com a criação do export `./lsp-core` (Bloco B / P2.1). Anti-padrões do plano
+§12 permanecem vinculantes (sem parser/semântica nos adaptadores; sem
+`scheduleOnSave`; sem `console.log` no canal LSP; `language "..."` do arquivo
+é soberano).
+
+### Evidência P1 (22.0.5) — gate baseline e propagação
+
+| Item | Evidência |
+|---|---|
+| Gate baseline `deno task tests` | ✅ exit 0 — **839 passed (6902 steps), 0 failed**, 2 ignored steps (23m34s); log `.tmp/f22-baseline-gate.log`. Inclui `check:all`, `lint`, `fmt:check`, `lint:doc:all`, `check:doccore` ("o doc-core não toca o ambiente"), `check:stubs` ("todos os stubs anotados") e `test`. A execução sobrepôs o início do P2: o golden TST (C 1.11) já entrou na contagem; os goldens de docgen (D 2.14/2.15, E 3.22) foram criados depois da fase de testes e são cobertos pelo gate de fechamento do P2 (`.tmp/f22-p2-gate.log`) |
+| ADR 035 criado e aceito | `docs/syntaxmesh/decisoes/035-extensao-vscode.md` (Aceito, 2026-11-11); índice `decisoes/README.md` linha 035 `Aceito` + notas de reserva reconciliadas |
+| Propagação de status | `CURRENT.md` (entrada Fase 22 + seção ADRs), `plano.md` (linha F22: P1 aceito, P2 em andamento), plano §0/§13/§14, este arquivo (nav/owner/header/Bloco A) |
+| Kickoff antecipado | Autorização do usuário registrada em 2026-11-11 (Bloco A, §Gate de agendamento); ordem oficial de fases inalterada |
+
+---
+
+## Bloco B — 22.1 Workspace + `lsp-core` puro (P2.1 + P2.4)
+
+**Kickoff (2026-11-11):** detalhado conforme o protocolo do plano §0. Ordem de
+execução dentro do P2 (regra de dependência do plano §0): P2.2/P2.3 (docs +
+highlight) → **22.1.2–22.1.4** (export/gates) → P2.4 (serviços) → P2.5
+(pontes I 7.5–7.7 + verificação J). O `help.ts` (`getKeywordHelp`/
+`getManualToc`/`getManualPage`) **não** é duplicado aqui: é entregue pelas
+tarefas existentes **I 7.5/7.6** no P2.5. As entradas de workspace
+`./packages/vsextension` e `./packages/lsp` ficam para o scaffolding de
+P3/P6 (plano §4.2 item 3) — não entram neste bloco.
+
+### Auditoria P2 (2026-11-11) — divergências registro × código
+
+Varredura do código antes de executar (disciplina de kickoff: não confiar
+cegamente no registro de progresso):
+
+| Tarefa | Registro 2026-11-08 | Código em 2026-11-11 | Ação |
+|---|---|---|---|
+| C 1.12 (re-export TST no barril `docgen/mod.ts`) | concluída | **ausente** — `TernarySearchTree` não está no barril | reaberta; executar no P2.2 |
+| G 5.13 (`getManualToc`) | concluída | **ausente** — 0 ocorrências em `src/` | reaberta; **completa em 2026-11-11** (P2.5, `UserManual.getManualToc` + `ManualTocEntry`) |
+| G 5.14 (`getManualPage` + `manual-pages.ts`) | concluída | **ausente** — arquivo não existe | reaberta; **completa em 2026-11-11** (P2.5, `manual-pages.ts` + `RichTextSnip.toText`) |
+| I 7.1 (barril completo) | concluída | parcial — falta TST (C 1.12) e `SyntaxCore` (vem com H) | **completa em 2026-11-11** com C 1.12 + H 6.1–6.8 |
+| I 7.9 (smoke `docgen-smoke_test.ts`) | concluída | **ausente** — arquivo não existe; nenhum teste exige ≥ 200 keywords / ≥ 250 páginas (achado em 2026-11-11, durante o P2.4) | reaberta; **completa em 2026-11-11** (P2.5; limiares adaptados ao subset: ≥ 150 keywords / ≥ 180 páginas — ver evidência) |
+
+Total verificado: **83/108** (registro histórico 86/108 mantido; as 3 tarefas
+acima voltam a pendentes). Nenhuma outra divergência encontrada em C–G/I/J.
+
+### P2.1 — Workspace e exports
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 22.1.1 | Verificar o baseline do rename já entregue: nome `@vanaware/syntaxmesh`, exports `"."`/`"./doc-core"`, imports dos consumidores (cli/server/ui) — **não repetir o rename**; registrar evidência | `packages/core/deno.jsonc` + grep dos consumidores | `deno check` + tabela de evidência |
+| 22.1.2 | Adicionar `npm:vscode-languageserver-types@^3` (só tipos) aos imports do core; criar `src/lsp/mod.ts` e o export `"./lsp-core": "./src/lsp/mod.ts"` | `packages/core/deno.jsonc`, `src/lsp/mod.ts` | `deno check` + teste de import do subpath |
+| 22.1.3 | Adicionar `src/lsp/mod.ts` às entradas `lint:doc`/`lint:doc:update` do core (ratchet ADR 041); JSDoc inglês completo em todo símbolo público novo | `packages/core/deno.jsonc` | `deno task lint:doc:all` verde |
+| 22.1.4 | Gate de pureza do `src/lsp/` (plano §5.1: sem `vscode-languageserver`/`vscode-languageclient`, `vscode`, `node:*`, `Deno.stdin/stdout`), no padrão do `check:doccore`, dentro do composite `deno task tests` | `scripts/check-lspcore.ts`, `deno.jsonc` (raiz) | gate verde + caso negativo (arquivo proibido falha) |
+
+### P2.4 — Serviços LSP puros (contrato §5 do plano)
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 22.1.5 | `DocumentStore`: `Map<uri, {text, version}>` com `open`/`change` (full **e** incremental por range)/`close`/`get` | `src/lsp/documents.ts` | 5 testes (open, full sync, range edit, multi-edit, close) |
+| 22.1.6 | `resolveLocale(uri, text): "pt-br" \| "en" \| "es"` sobre `detectLanguage` do parser; default `"en"`; diretiva do arquivo soberana | `src/lsp/locale.ts` | 4 testes (sem diretiva, en, pt-BR, es) |
+| 22.1.7 | `analyzeDocument(uri, text, opts): AnalysisResult` — `TaskJuggler.parseContent` + isolamento do `MessageHandlerInstance` (reset + snapshot por chamada, padrão do `execute`); resultado com `project`, `messages`, `version`, `locale`; gancho `previous` para reuso incremental | `src/lsp/analyze.ts` | 4 testes (projeto válido, erro de sintaxe, isolamento entre chamadas, version) |
+| 22.1.8 | `toDiagnostics(analysis): Diagnostic[]` — `Message[]` → severidade LSP (error/warning), posições 0-based a partir de `sourceFileInfo` (1-based), `source: "syntaxmesh"`; mensagens em inglês (v1) | `src/lsp/diagnostics.ts` | 4 testes (error, warning, conversão de posição, sem sourceFileInfo) |
+| 22.1.9 | `capabilities`: objeto puro `ServerCapabilities` (sync incremental, hover, completion, definition, references, semantic tokens com legend, document/workspace symbols) | `src/lsp/capabilities.ts` | 2 testes (shape, legend estável) |
+| 22.1.10 | `getHover(analysis, position): Hover \| null` — nó sob a posição → Markdown (tipo/atributos/localização); keyword → projeção do `doc-core` (junção com I 7.5) | `src/lsp/hover.ts` | 4 testes (keyword, identificador, posição vazia, null) |
+| 22.1.11 | `getCompletions(analysis, position, locale): CompletionItem[]` — keywords via `SyntaxCore.categories()` + TST por prefixo (junção = **I 7.7**) + nomes definidos (tasks/resources/accounts); kinds `Keyword`/`Reference`/`Property` | `src/lsp/completion.ts` | 4 testes (prefixo, nomes definidos, kinds, locale en) |
+| 22.1.12 | `getDefinition`/`getReferences` — declaração via `sourceFileInfo` dos nós do modelo; referências por varredura de ids; cross-file quando ASTs agregadas | `src/lsp/navigation.ts` | 4 testes (definição, referências, símbolo inexistente, cross-file) |
+| 22.1.13 | `getSemanticTokens(analysis): number[]` + `legend` estável — tokens do lexer (`ScannerToken`) → encoding delta LSP (keyword, identificador, string, número, data, comentário) | `src/lsp/semantic-tokens.ts` | 4 testes (legend, encoding, fixture, ordenação) |
+| 22.1.14 | `getDocumentSymbols(analysis): DocumentSymbol[]` (árvore project → task → subtask, resources/accounts/shifts/reports) + `getWorkspaceSymbols(asts, query)` case-insensitive | `src/lsp/symbols.ts` | 4 testes (hierarquia, ranges, busca, query vazia) |
+| 22.1.15 | `registerLspServer(connection)` — interface estrutural mínima `ServerConnection` (sem importar a lib): `initialize` → capabilities; `didOpen/didChange/didClose` → DocumentStore + analyze + `publishDiagnostics`; todos os handlers do §5 | `src/lsp/server.ts` | 5 testes com mock de conexão (initialize, sync, diagnostics, hover, completion) |
+| 22.1.16 | Cobertura ≥ 80% em `src/lsp/` + smoke sem VS Code; registrar evidência de saída do P2.4 | `tests/lsp/` | relatório de cobertura + gate verde |
+
+> **Nota de fronteira:** `src/lsp/` importa apenas o próprio core e o
+> `doc-core` (via caminho relativo `../docgen/`). Os shapes do protocolo são
+> próprios (`src/lsp/types.ts`, adaptação registrada em 22.1.5/22.1.9 — o
+> `npm:vscode-languageserver-types` permitido pelo gate não exporta
+> `ServerCapabilities`/`TextDocumentContentChangeEvent`). Nenhuma
+> reimplementação de doc-core: help/manual/completion de keywords são
+> **projeções** (I 7.5–7.7).
 
 ---
 
@@ -398,28 +550,47 @@ grammar TextMate, folding). A CLI **não** consome este bloco.
 > Os capítulos do manual (G.1) não são os assets originais: são textos novos em
 > inglês, sem menção ao projeto de origem e citando apenas `.smx`.
 
+> **Auditoria 2026-11-11 (Bloco B):** C 1.12 e G 5.13/5.14 estavam registradas
+> como concluídas mas **não existiam no código** — reabertas. C 1.12 foi
+> entregue no mesmo dia (re-export no barril); G 5.13/5.14 + I 7.6 entregues
+> em 2026-11-11 no P2.5 (projeções do manual + pontes em `help.ts`). O registro
+> histórico 86/108 permanece acima como snapshot de 2026-11-08; a tabela abaixo
+> reflete o estado **verificado** (102/108 após C 1.11/1.12 + D 2.11/2.14/2.15 +
+> E 3.21/3.22 + H 6.1–6.8 + I 7.1/7.5/7.6/7.7 + G 5.13/5.14, menos I 7.9
+> reaberta por ausência no código).
+
+> **Fechamento 2026-11-11 (P2.5/J):** I 7.9 recriada (limiares adaptados ao
+> subset), J 8.1–8.8 verificadas — subfase **22.1b fechada em 106/108**
+> (H 6.9/6.10 fora do v1). Gate completo `deno task tests` EXIT=0
+> (**840 passed / 7023 steps / 0 failed**); `gaps:audit` OK após normalizar o
+> status desatualizado do G9 na `completude-matrix.md` (entregue desde a
+> F18/F21, fora do vocabulário do audit). Coberturas: `src/lsp/` **96,6%**
+> linhas (22.1.16), `src/docgen/` **97,0%** linhas (8.6). Docs coerentes:
+> `CURRENT.md`, `plano.md`, `xray.md` §1.7/§1.8/§8, revisão cruzada F16
+> (16.9/16.14 marcadas como entregues em 22.1b.x). Próximo bloco: **P3**.
+
 | Bloco | Tarefas | Concluídas | Observação |
 |---|---|---|---|
-| C — `TernarySearchTree` | 12 | 11 | falta só 1.11 (golden vs oracle Ruby) |
-| D — `SyntaxReference` | 15 | 12 | faltam 2.11 (`checkKeyword`) e 2.14/2.15 (golden) |
-| E — `KeywordDocumentation` | 29 | 27 | faltam 3.21 (`toMarkdown`, LSP) e 3.22 (golden) |
+| C — `TernarySearchTree` | 12 | 12 | 1.11 (golden vs oracle Ruby) + 1.12 (re-export no barril) entregues em 2026-11-11 |
+| D — `SyntaxReference` | 15 | 15 | 2.11 (`checkKeyword`/`stderrLines`) + 2.14/2.15 (golden vs oracle Ruby) entregues em 2026-11-11 |
+| E — `KeywordDocumentation` | 29 | 29 | 3.21 (`toMarkdown`, LSP) + 3.22 (golden estrutural vs oracle Ruby) entregues em 2026-11-11 |
 | F — `TjpExample` | 10 | 10 | classe renomeada `ExampleSnippet` |
-| G — `UserManual` + fontes | 14 | 14 | capítulos em inglês (sem `.tjp`/`.tji`) + `manual-css.ts` |
-| H — `SyntaxCore` (highlight) | 10 | 0 | exclusivo da extensão; não bloqueia a F24 |
-| I — Integração | 10 | 7 | faltam 7.5–7.7 (pontes `lsp-core`) |
-| J — Verificação | 8 | 5 | 8.3–8.5 verdes; 8.1/8.2/8.6 pendentes |
-| **Total 22.1b** | **108** | **86** | |
+| G — `UserManual` + fontes | 14 | 14 | capítulos em inglês (sem `.tjp`/`.tji`) + `manual-css.ts`; 5.13/5.14 entregues em 2026-11-11 (projeções LSP `getManualToc`/`getManualPage`) |
+| H — `SyntaxCore` (highlight) | 10 | 8 | 6.1–6.8 entregues em 2026-11-11 (dados p/ LSP; geradores `.xml`/`.vim` seguem cancelados); 6.9 fora do v1; 6.10 nota de plano |
+| I — Integração | 10 | 10 | 7.5 (`getKeywordHelp`) + 7.6 (manual) + 7.7 (completion) + 7.9 (smoke, limiares adaptados ao subset) entregues em 2026-11-11 |
+| J — Verificação | 8 | 8 | 8.1–8.8 verificadas em 2026-11-11 (golden determinístico, tj3man §1.7.1, gate 840 passed, stubs+gaps OK, docgen 97,0%, docs + revisão F16) |
+| **Total 22.1b** | **108** | **106** | **subfase fechada em 2026-11-11** (registro histórico: 86; correção: I 7.9 não existia no código e saiu da contagem; H 6.9/6.10 fora do v1 — únicas não verificadas) |
 
 Checklist de conclusão da subfase:
 
-- [~] 22.1b.1 `TernarySearchTree` (C) — 11/12
-- [~] 22.1b.2 `SyntaxReference` (D) — 12/15
-- [~] 22.1b.3 `KeywordDocumentation` (E) — 27/29
+- [x] 22.1b.1 `TernarySearchTree` (C) — 12/12
+- [x] 22.1b.2 `SyntaxReference` (D) — 15/15
+- [x] 22.1b.3 `KeywordDocumentation` (E) — 29/29
 - [x] 22.1b.4 `TjpExample` (F) — 10/10
 - [x] 22.1b.5 `UserManual` + fontes (G) — 14/14
-- [ ] 22.1b.6 `SyntaxCore` (H) — 0/10
-- [~] 22.1b.7 Integração (I) — 7/10
-- [~] 22.1b.8 Verificação (J) — 5/8
+- [~] 22.1b.6 `SyntaxCore` (H) — 8/10 (6.9 fora do v1; 6.10 nota de plano)
+- [x] 22.1b.7 Integração (I) — 10/10
+- [x] 22.1b.8 Verificação (J) — 8/8
 
 **Critério de aceite da subfase:** `deno task tests` verde; o golden
 `syntax-reference` igual ao oracle Ruby; `syntaxmesh man <keyword>` (F24, quando existir)
@@ -468,3 +639,72 @@ includes `check:all`, `lint`, `fmt:check`, `lint:doc:all`, `check:doccore`, and
 
 Future implementation evidence remains attached to the original atomic task
 IDs, not new P-block task IDs.
+
+## P2 implementation evidence (2026-11-11)
+
+Entregas do P2 (P2.1 workspace/exports, P2.2 docs core, P2.3 highlight) no
+kickoff antecipado autorizado. Evidência anexada aos IDs atômicos originais,
+conforme a convenção acima.
+
+| Tarefa | Entrega | Verificação |
+|---|---|---|
+| 22.1b.8.1 | Golden `syntax-reference` re-verificado no fechamento do J: o oracle `scripts/golden/syntax-reference.rb` (Ruby real, ANSI off) executado **2×** com stdout capturado em `.tmp/j81-run1.json`/`.tmp/j81-run2.json` — sem tocar na fixture commitada | `diff -q` run1×run2 → idênticos (**determinístico**); `diff -q` run1×`tests/docgen/fixtures/syntax-reference.golden.json` → **byte a byte igual** ao commitado; ruby exit 0 nas duas execuções |
+| 22.1b.8.2 | Confronto das 12 keywords do golden com o `tj3man` real (gem no PATH, Ruby 3.8.4) via probe `.tmp/probe-tj3man.ts` (`toText(false)` do port × stdout do CLI, ANSI off quando pipeado); tabela de divergências registrada em **`xray.md` §1.7.1** (banner do CLI, cabeçalho ` (List Attribute)`, contextos `properties`, conteúdo/tamanho do subset) | todas as divergências classificadas como **intencionais** (adaptações já registradas em D 2.15/E 3.22); nenhuma inesperada; o oracle golden usa a lib direta (`SyntaxReference#to_s`), não o app `Tj3Man.rb` |
+| 22.1b.8.6 | Cobertura do `src/docgen/` medida no fechamento: `deno test --coverage=.tmp/cov-docgen-j86 -P --no-check packages/core/tests/docgen/` + `deno coverage --include='src/docgen/'` | **97,0% linhas / 100% branches / 90,2% funções** (gate ≥ 80% atendido; menores: `user-manual.ts` 83,3% e `syntax-reference.ts` 89,4% linhas — ramos de erro/IO do `generate()`); relatório lcov+html em `.tmp/cov-docgen-j86/` |
+| 22.1b.8.3 | `check:all` + `lint` + `fmt` nos arquivos novos do P2 — rodados dentro do gate completo de fechamento (8.4). Fix no caminho: `ban-untagged-todo` em `manual-pages_test.ts` — falso positivo do comentário PT "Todos os ids…" (prefixo lido como TODO) → reescrito "Cada id é não-vazio…" | `deno task check:all` → 830 arquivos, exit 0; `deno task lint` exit 0; `deno task fmt:check` limpo |
+| 22.1b.8.4 | Gate completo `deno task tests` no fechamento do P2 (composite: `check:all` + `lint` + `fmt:check` + `lint:doc:all` + `check:doccore` + `check:lspcore` + `check:stubs` + `test`) | **EXIT=0 — 840 passed (7023 steps), 0 failed**, 2 ignored steps (3m22s); log em `.tmp/j-gate-full2.log` |
+| 22.1b.8.5 | `deno task check:stubs` + `deno task gaps:audit`. Fix no caminho: o `gaps:audit` falhava no G9 da `completude-matrix.md` — status `entregue (parcialmente ancorado ainda)` fora do vocabulário do audit e **desatualizado** (F18 entregou tudo; `istaskstatus` liberado na F21 2026-11-10; zero âncoras F18 restantes no core, conferido por grep) → status normalizado para `verificado` com o histórico preservado na célula + nota da Seção A | `check:stubs OK — todos os stubs anotados`; `gaps:audit OK — 21 gaps, todos fechados/verificados/ancorados` |
+| 22.1b.8.7 | Docs de fechamento: `CURRENT.md` (entrada Phase 22 → P2 completed, 106/108, lsp-core + verificações), `plano.md` (linha 22 → P2 concluído), `xray.md` §1.7 (6 linhas doc-core `PLA` → `OK` com os arquivos reais), §1.8 (`Tj3Man` → OK), §8 (resultado na linha §3.2); §1.7.1 já tinha a tabela do 8.2 | leitura cruzada dos 4 docs coerente com esta tabela de progresso |
+| 22.1b.8.8 | Revisão cruzada F16: linhas 16.9/16.14 do progresso de `fase-16-apoio-tarefas.md` marcadas "**entregue em 22.1b.1.1–1.12**" / "**entregue em 22.1b.6.1–6.8**"; notas ENTREGUE nas seções de detalhe com o mapa 16.14.x → 22.1b.6.x (incl. adaptação `dev-tools/` → `docgen/` e barril doc-core em vez do `mod.ts` raiz) | conferido contra os IDs atômicos desta tabela (C 1.1–1.12, H 6.1–6.8, I 7.1) |
+| 22.1.1 | Baseline do rename verificado (não repetido): nome `@vanaware/syntaxmesh` em `packages/core/deno.jsonc`; exports `"."` → `src/mod.ts`, `"./version"`, `"./doc-core"`; shim raiz `packages/core/mod.ts` re-exporta `src/mod.ts`; consumidores: cli (`@vanaware/syntaxmesh` → `../../packages/core/mod.ts`, uso em `cli.ts:36`) e service-worker (idem + `/version`); server/ui não importam o core diretamente (bundle esbuild / estáticos) | grep dos consumidores + `deno task check` (core) exit 0 |
+| 22.1.2 | `npm:vscode-languageserver-types@^3` (só tipos; resolvido 3.18.5, lock atualizado) nos imports do core; `src/lsp/mod.ts` criado (barril doc-only — os serviços entram no P2.4; re-export wholesale da lib evitado de propósito para o ratchet ADR 041 medir só a superfície própria); export `"./lsp-core": "./src/lsp/mod.ts"` | `deno test -P --no-check packages/core/tests/lsp/lsp-core_test.ts` → 2 passed (11 steps), 0 failed — inclui import do subpath via self-reference do workspace e ausência de vazamento no barril raiz; `deno task check` (core) exit 0 |
+| 22.1.3 | `src/lsp/mod.ts` adicionado às entradas `lint:doc`/`lint:doc:update` do core; JSDoc inglês completo no módulo | `deno task lint:doc` (core) exit 0 com a entrada nova (a tentativa inicial de `export type * as LspTypes` gerou 225 missing-jsdoc da lib externa e foi removida — registrada no cabeçalho do barril) |
+| 22.1.4 | `scripts/check-lspcore.ts` no padrão do `check:doccore`: proíbe runtime `vscode-languageserver`/`vscode-languageclient` (tipos `-types` permitidos), API `vscode`, `node:*`, `Deno.stdin/stdout` — inclusive import dinâmico; detecção em função pura exportada (`findLspViolations`) + guarda `import.meta.main`; task `check:lspcore` no root e dentro do composite `deno task tests` | `deno task check:lspcore` exit 0; caso negativo testado sem escrever arquivo proibido (7 testes: cada família + comentário ignorado + dinâmico); `deno check scripts/check-lspcore.ts` exit 0; `deno lint`/`fmt` limpos |
+| 22.1.5 | `src/lsp/documents.ts` — `DocumentStore` (`Map<uri, {text, version}>`) com `open`/`change`/`close`/`get`/`size`; sync full **e** incremental (range edits sequenciais sobre o estado intermediário, clamp defensivo de posições, CRLF tratado); 6 testes em `tests/lsp/documents_test.ts`. ⚠️ ADAPTAÇÃO: `TextDocumentContentChangeEvent` não existe em `vscode-languageserver-types@3.18.5` (mora no `-protocol`) → tipo estrutural próprio `ContentChange` em `src/lsp/types.ts` | `deno test -P --no-check packages/core/tests/lsp/` → 7 passed (32 steps), 0 failed (inclui o `lsp-core_test` pré-existente); `deno task check` (core) exit 0 |
+| 22.1.6 | `src/lsp/locale.ts` — `resolveLocale(uri, text): Locale` sobre `detectLanguage` do parser; normalização `pt*` → `"pt-br"`, `es*` → `"es"`, resto `"en"`; diretiva do arquivo soberana, default `"en"`; 5 testes em `tests/lsp/locale_test.ts` | mesma suite → verde; `lint:doc` (core) exit 0 |
+| 22.1.7 | `src/lsp/analyze.ts` — `analyzeDocument(uri, text, opts): AnalysisResult` com isolamento do singleton (`handler.reset()` + snapshot por chamada, padrão do `execute`), `parseContent` em try/catch, gancho `previous` (texto idêntico → reuso com version nova); 4 testes em `tests/lsp/analyze_test.ts` | mesma suite → verde; projeto válido monta `project.id === "prj"`; erro de sintaxe devolve `ok: false` + mensagens localizadas |
+| 22.1.8 | `src/lsp/diagnostics.ts` — `toDiagnostics(analysis): Diagnostic[]`: fatal/error → severidade 1, warning → 2, info/debug fora; posição 1-based → 0-based com clamp (`columnNo` 0 não vira -1); zero-width range; `source: "syntaxmesh"`, `code: message.id`; 4 testes em `tests/lsp/diagnostics_test.ts` | mesma suite → verde; literais numéricos mantêm o módulo livre de runtime |
+| 22.1.9 | `src/lsp/capabilities.ts` — objeto puro `capabilities` (sync incremental = 2, hover/definition/references/document+workspace symbols, completion, semantic tokens `full` com legend estável `["keyword","identifier","string","number","date","comment"]`, modificadores `[]`); 2 testes em `tests/lsp/capabilities_test.ts`. ⚠️ ADAPTAÇÃO: `ServerCapabilities` também não existe no `-types` → shapes próprios em `src/lsp/types.ts` (`Position`/`Range`/`Diagnostic`/`SemanticTokensLegend`/`ServerCapabilities`/`ContentChange` etc., estruturalmente idênticos ao protocolo); o `private-type-ref` do `deno doc --lint` (medido por entrada) exigiu re-export dos tipos referenciados no barril (`Project`/`Message`/`FileContentProvider` + os de `types.ts`) — re-export de lib externa arrastaria a superfície não documentada dela para o ratchet | mesma suite → verde; `deno task check` (core) exit 0; `lint:doc` (core) exit 0 **sem diagnósticos**; `check:lspcore` exit 0; `deno lint` + `deno fmt` limpos (13 arquivos) |
+| 22.1.13 | `src/lsp/semantic-tokens.ts` — `tokenize(text)` + `encodeSemanticTokens(tokens)` + `getSemanticTokens(analysis): number[]` (encoding delta LSP de 5 inteiros, modificadores 0); classificação keyword × identifier via `CANONICAL_KEYWORDS` do i18n; legend reusa `SEMANTIC_TOKEN_TYPES` do capabilities; 6 testes em `tests/lsp/semantic-tokens_test.ts` (legend, encoding, fixture, ordenação/round-trip, tolerância, spans exatos). ⚠️ ADAPTAÇÃO: o enunciado dizia "tokens do lexer (`ScannerToken`)", mas o scanner reporta posição só de linha (`columnNo()` sempre 0), descarta comentários, expande macros (texto ≠ fonte) e aborta no primeiro caractere não reconhecido — incompatível com editor. O módulo usa um tokenizer tolerante de passada única sobre o texto bruto, espelhando as famílias do `ProjectFileScanner` (ID/ABSOLUTE_ID, DATE, TIME, FLOAT/INTEGER, STRING, comentários `#`/`//`/`/* */`/scissors), com spans exatos e sem lançar em texto incompleto | `deno test -P --no-check packages/core/tests/lsp/` → 8 passed (38 steps), 0 failed; `deno task check` (core) exit 0; `lint:doc` (core) exit 0 sem diagnósticos; `check:lspcore` exit 0; `deno lint` + `deno fmt` limpos |
+| 22.1.12 | `src/lsp/navigation.ts` — `symbolAt(text, position)` (identifier sob o cursor via `tokenize`), `getDefinition(analysis, position, workspace?)` (declaração via `sourceFileInfo` dos nós, lookup id/subId/último-segmento nos 7 property sets, span refinado na linha reportada) e `getReferences(analysis, position, workspace?)` (**varredura de ids** sobre tokens identifier, match exato + variantes dotted, spans exatos); cross-file por análises agregadas; tipo `Location` adicionado a `types.ts`; 6 testes em `tests/lsp/navigation_test.ts` (definição task, definição resource, referências, inexistente, cross-file, symbolAt) | `deno test -P --no-check packages/core/tests/lsp/navigation_test.ts` → 1 passed (6 steps), 0 failed; `deno task check` (core) exit 0; `lint:doc` (core) exit 0 sem diagnósticos; `check:lspcore` exit 0; `deno lint` + `deno fmt` limpos. Nota: referências apontam para o token exato no texto (não para a linha do nó referente), pois `sourceFileInfo` é só de linha |
+| 22.1.14 | `src/lsp/symbols.ts` — `getDocumentSymbols(analysis): DocumentSymbol[]` (raiz project kind Module; filhos tasks/resources/accounts/shifts/reports/materials com kinds Class/Variable/Enum/Constant/Function/Object; subtasks aninhadas via `children`; `range` da linha de declaração até a linha mais profunda da subárvore, `selectionRange` no span exato do id via `tokenize`) + `getWorkspaceSymbols(analyses, query): SymbolInformation[]` (flatten dos nós, substring case-insensitive em id **e** nome humano, query vazia = todos, `containerName` = pai); tipos `DocumentSymbol`/`SymbolInformation` adicionados a `types.ts` e re-exportados no barril (exigência do `private-type-ref`); 4 testes em `tests/lsp/symbols_test.ts` (hierarquia, ranges, busca, query vazia/sem projeto) | `deno test -P --no-check packages/core/tests/lsp/` → 10 passed (48 steps), 0 failed; `deno task check` (core) exit 0; `lint:doc` (core) exit 0 sem diagnósticos; `check:lspcore` exit 0; `deno lint` + `deno fmt` limpos |
+| 22.1.10 | `src/lsp/hover.ts` — `getHover(analysis, position): Hover \| null`: keyword → `getKeywordHelp` (junção I 7.5); identifier → `findSymbolNode` (novo export de `navigation.ts`, com kind label; `findNode` privado refatorado) + Markdown `**kind** \`id\` — name` / `Declared at file:line` / `Attributes: …`; atributos extraídos do **bloco fonte** do nó (brace-matching sobre texto com strings/comentários mascarados via `tokenize`, depth 1 exclui subtasks/option blocks, keyword colada a dígito = unidade de duração `5d` ignorada, declaração sem bloco detectada por keyword de nova declaração). ⚠️ ADAPTAÇÃO: o flag `provided` do modelo não serve — o engine marca valores derivados (duration/projectid/…) como provided; o texto fonte é o registro fiel. Tipos `Hover`/`MarkupContent` em `types.ts`; `tokenAt(text, position)` novo em `semantic-tokens.ts` (`symbolAt` refatorado para usá-lo); 6 testes em `tests/lsp/hover_test.ts` (keyword, identificador, posição vazia, literais/comentário, desconhecido/sem parse, aninhamento+mascaramento) | `deno test -P --no-check packages/core/tests/lsp/` → 12 passed (58 steps), 0 failed; `deno task check` (core) exit 0; `lint:doc` (core) exit 0 sem diagnósticos; `check:lspcore` exit 0; `deno lint` + `deno fmt` limpos |
+| 22.1.11 | `src/lsp/completion.ts` — `getCompletions(analysis, position, locale = "en"): CompletionItem[]` (**junção I 7.7**): universo de keywords = união de `SyntaxCore.categories()` (keywords/builtin/types) indexada uma vez em `TernarySearchTree` (memoizada, via barril doc-core); prefixo sob o cursor com fallback de fim-exclusivo (cursor após o último caractere digitado); prefixo vazio = todas; dentro de string/número/data/comentário = `[]`; kinds Property(10) p/ builtin, Keyword(14) p/ o resto, Reference(18) p/ nomes definidos (tasks/resources/accounts, label = `subId`, detail = "task name" etc.); tipo `CompletionItem` em `types.ts`; locale ignorado no v1; 5 testes em `tests/lsp/completion_test.ts` (prefixo TST, nomes definidos, kinds, locale, vazio/string) — fixture com prefixo como alvo de `depends` (documento parseável enquanto digita) | `deno test -P --no-check packages/core/tests/lsp/` → 13 passed (63 steps), 0 failed; `deno task check` (core) exit 0; `lint:doc` (core) exit 0 sem diagnósticos; `check:lspcore` exit 0; `deno lint` + `deno fmt` limpos |
+| 22.1.15 | `src/lsp/server.ts` — `registerLspServer(connection)` sobre a interface estrutural `ServerConnection` (sem importar `vscode-languageserver`; o `Connection` real a satisfaz, `sendDiagnostics` = notificação publish): `initialize` → `capabilities`; `didOpen/didChange` → `DocumentStore` + `analyzeDocument` (com `previous`) + publish de `toDiagnostics`; `didClose` → esquece o documento e zera diagnostics; handlers de request projetam a última análise por URI (hover/completion/definition/references/documentSymbol/workspaceSymbol/semanticTokens), navigation e symbols agregam o workspace; `onSemanticTokens` **opcional** (o `Connection` real expõe como `languages.semanticTokens.on`, adaptado pelo bootstrap); shapes de parâmetro (`DidOpenParams`/`DidChangeParams`/`DidCloseParams`/`TextDocumentPositionParams`/`WorkspaceSymbolParams`/`PublishDiagnosticsParams`/`InitializeResult`/`SemanticTokensResult`/`TextDocumentIdentifier`) em `server.ts` + barril; 5 testes com mock tipado (`Map<string, unknown>` + `call<T>` genérico, sem `any`): initialize, sync incremental + diagnostics + ghost-uri, didClose, hover/completion, definition/references/symbols/tokens | `deno test -P --no-check packages/core/tests/lsp/` → 14 passed (68 steps), 0 failed; `deno task check` (core) exit 0; `lint:doc` (core) exit 0 sem diagnósticos; `check:lspcore` exit 0; `deno lint` + `deno fmt` limpos (27 arquivos). Fix registrado: TS2305 — o teste importava `SemanticTokensResult` de `types.ts`, mas o tipo mora em `server.ts` |
+| 22.1.16 | Cobertura medida com `deno test --coverage=.tmp/cov-lsp` sobre `tests/lsp/` + `deno coverage --include='src/lsp/'`: **96,6% linhas / 90,9% branches / 100% funções** (todos os 13 módulos ≥ 92% linhas; menor branch: `server.ts` 77,3% — o gate é o agregado ≥ 80%). Smoke sem VS Code: `tests/lsp/lsp-smoke_test.ts` importa **só o barril público** `@vanaware/syntaxmesh/lsp-core` e exercita a sessão completa (initialize → didOpen → hover/completion/definition/documentSymbol/workspaceSymbol/semanticTokens → didChange incremental com erro → didClose) + serviços puros standalone (analyze/diagnostics/hover/tokens/symbols/locale) + documento inválido tolerado; 3 testes | `deno test -P --no-check packages/core/tests/lsp/` → 15 passed (71 steps), 0 failed; `deno task check` (core) exit 0; `lint:doc` (core) exit 0 sem diagnósticos; `check:lspcore` exit 0; `deno lint` + `deno fmt` limpos. **Saída do P2.4 registrada** — 22.1.5–22.1.16 completos |
+| 22.1b.5.13 | `UserManual.getManualToc(): ManualTocEntry[]` (`{ id, title, level }`, tipo novo em `user-manual.ts` + barris doc-core/lsp-core) — projeta a TOC sem renderizar HTML: monta capítulos + `tableOfContents()` + apêndice `A` quando ainda não existem (mesmo prelúdio do `generate()`, idempotente — após `generate()` projeta a TOC já construída); `id` = `file` ou `file#tag` (convenção das âncoras HTML), `level` = profundidade do número da seção; 2 testes em `tests/docgen/manual-pages_test.ts` (ordem: 10 capítulos na ordem canônica + apêndice por último, keywords level 1; ids estáveis entre chamadas e entre instâncias) | `deno test -P --no-check packages/core/tests/docgen/manual-pages_test.ts` → 2 passed (6 steps), 0 failed; `deno task check` (core) exit 0; `lint:doc` (core) exit 0 sem diagnósticos; `check:doccore` + `check:lspcore` exit 0; `deno lint` + `deno fmt` limpos; regressão richtext verde (21 passed, 271 steps) |
+| 22.1b.5.14 | `src/docgen/manual-pages.ts` — `getManualPage(id): string \| null` (capítulo via `RichTextSnip.toText()` — novo accessor público que delega ao `to_s` do formato intermediário, sem HTML; keyword via `toMarkdown()`; `#tag` tolerado serve o capítulo inteiro; inexistente/vazio → `null`) + `getManualToc()` module-level + `resetManualPageCache()` (manual memoizado por processo, padrão do `resetSyntaxReferenceCache`); re-exports no barril doc-core; 4 testes (capítulo válido, keyword, inexistente, sem HTML cru **fora das cercas** — placeholders `<id>`/`<name>` da sintaxe TJP dentro de ```tjp não são HTML). ⚠️ ADAPTAÇÃO: o Ruby `Snip` não tem `to_s` — a projeção usa o `RichTextIntermediate#to_s` já portado (F12) | mesma verificação de 5.13 (suite conjunta) |
+| 22.1b.7.6 | Pontes do manual em `src/lsp/help.ts`: re-export puro de `getManualToc`/`getManualPage`/`resetManualPageCache` + tipo `ManualTocEntry` do doc-core (5.13/5.14), sem reimplementação — o manual memoizado vive no doc-core, compartilhado; barril `lsp-core` atualizado; 3 testes appended em `tests/lsp/help_test.ts` (TOC ≡ doc-core com capítulos + apêndice, página de capítulo/keyword ≡ doc-core, inexistente → null) | `deno test -P --no-check packages/core/tests/docgen/ packages/core/tests/lsp/` → 30 passed (209 steps), 0 failed; `deno task check` (core) exit 0; `lint:doc` (core) exit 0 sem diagnósticos; `check:doccore` + `check:lspcore` exit 0; `deno lint` + `deno fmt` limpos |
+| 22.1b.7.9 | `tests/docgen/docgen-smoke_test.ts` criado (estava ausente — auditoria 2026-11-11): monta `SyntaxReference` + `UserManual` e exige os limiares de completude. ⚠️ ADAPTAÇÃO: os limiares originais (≥ 200 keywords / ≥ 250 páginas) derivam da gramática Ruby completa (266 keywords); a portada é o subset reescrito de D 2.15 (**170 keywords / 184 páginas** hoje) → limiares ajustados para **≥ 150 / ≥ 180** com folga, registrados no cabeçalho do teste; a integridade estrutural é exigida em absoluto: sem duplicatas, toda keyword com `toText` não-vazio, `ignoreOld` ⊂ universo, uma página HTML por keyword + 9 capítulos + 4 especiais + css (contagem exata), nenhuma página vazia, `index.html` com frameset, TOC projetada cobre todas as keywords; 2 testes | `deno test -P --no-check packages/core/tests/docgen/docgen-smoke_test.ts` → 1 passed (2 steps), 0 failed; `deno task check` (core) exit 0; `lint:doc` (core) exit 0; `check:doccore` exit 0; `deno lint` + `deno fmt` limpos |
+| 22.1b.7.7 | Mesma entrega de 22.1.11 (a ponte **é** o `completion.ts`): `SyntaxCore.categories()` + `TernarySearchTree.find(prefix, true)` sobre o barril doc-core, sem reimplementação; os 3 testes exigidos (prefixo, kinds, universo) estão cobertos pelos 5 testes de `completion_test.ts` | mesma verificação de 22.1.11 |
+| 22.1b.7.5 | `src/lsp/help.ts` — `getKeywordHelp(keyword, locale = "en"): MarkdownString \| null` (**projeção**, não reimplementação): lookup exato em `syntaxReference(null, true).keywords` (mesmo universo do SyntaxCore) + `KeywordDocumentation.toMarkdown()`; cache memoizado por keyword (inclusive `null` de inexistente) com `clearKeywordHelpCache()` + `keywordHelpCacheSize()` (introspecção p/ teste); tipo `MarkdownString` (alias de `string`) adicionado a `types.ts` conforme nome do contrato §5; locale aceito e ignorado no v1; 4 testes em `tests/lsp/help_test.ts` (conhecida, inexistente, cache, locale) | `deno test -P --no-check packages/core/tests/lsp/help_test.ts` → 1 passed (4 steps), 0 failed; `deno task check` (core) exit 0; `lint:doc` (core) exit 0 sem diagnósticos; `check:lspcore` exit 0; `deno lint` + `deno fmt` limpos |
+| 22.1b.1.11 | Oracle `scripts/golden/tst.rb` (30 keywords TJP; inserção sequencial + construtor de array; `find` exato/parcial; `to_a`/`length`/`maxDepth`; `balanced`/`balance!`) registrado em `tests/golden/generate_golden.ts`; fixture `tests/docgen/fixtures/tst-cases.golden.json`; 6 testes golden appended em `tests/utils/ternary_search_tree_test.ts` | `deno test -P --no-check packages/core/tests/utils/ternary_search_tree_test.ts` → 7 passed (32 steps), 0 failed; `maxDepth` de árvore vazia fica fora do golden (Ruby `nil` × port `0`, adaptação registrada) |
+| 22.1b.1.12 | Re-export `TernarySearchTree` em `src/docgen/mod.ts` (não no `mod.ts` raiz, conforme 22.1b.7.2) | `deno task check:doccore` exit 0; import do barril OK; `lint:doc` (core) exit 0 — classe inteiramente JSDoc'd |
+| 22.1b.2.11 | `checkKeyword(keyword: string \| null): boolean` + `stderrLines(): string[]` em `src/docgen/syntax-reference.ts` (⚠️ ADAPTAÇÃO: chunks de `$stderr` bufferizados, drenáveis; lista top-level = `contexts` vazio ou único == self, ordem de inserção); 6 testes em `tests/docgen/syntax-reference_test.ts` | `deno test -P --no-check packages/core/tests/docgen/syntax-reference_test.ts` → 1 passed (6 steps), 0 failed; `lint:doc` (core) exit 0; `check:doccore` exit 0. Nota: `task`/`resource` ficam fora da lista top-level (contexts `[self, supplement.*]` na gramática portada — mesmo critério do Ruby) |
+| 22.1b.2.14 | Oracle `scripts/golden/syntax-reference.rb` (`SyntaxReference.new` real, `Term::ANSIColor.coloring = false`; `all` + `to_s` de 12 keywords + `internalReferences`) registrado em `generate_golden.ts`; fixture `tests/docgen/fixtures/syntax-reference.golden.json` (266 keywords Ruby, 12 textos, stderr limpo) | ruby exit 0 sem stderr; fixture normalizado no estilo do harness (`JSON.stringify(…, null, 2)`) |
+| 22.1b.2.15 | `tests/docgen/syntax-reference_golden_test.ts` — ⚠️ ADAPTAÇÃO: a gramática portada é um **subset reescrito** (170 × 266 keywords; textos novos em inglês), então o golden compara **projeção do subset**: `all()` ordenado/sem duplicatas, interseção pinada (139), `internalReferences` ⊆ oracle (port vazio hoje — textos reescritos sem `[[kw]]`) | `deno test -P --no-check …/syntax-reference_golden_test.ts …/keyword-documentation_golden_test.ts` → 2 passed (52 steps), 0 failed |
+| 22.1b.3.22 | `tests/docgen/keyword-documentation_golden_test.ts` — ⚠️ ADAPTAÇÃO: paridade **estrutural** do `toText(false)` vs `to_s` Ruby (12 keywords × 3 testes): seções/ordem (única omissão tolerada: `See also:`), cabeçalho (salvo ` (List Attribute)` de `depends`/`allocate`), contextos (salvo `properties`, exclusivo do Ruby); + 1 teste ANSI-off | mesmo comando acima → verde; conteúdo reescrito de `Purpose:`/`Syntax:` fica fora da comparação (registrado no cabeçalho do teste e do oracle) |
+| 22.1b.3.21 | `src/docgen/keyword-markdown.ts` — `keywordToMarkdown(doc)`  【novo — LSP-only, sem contraparte Ruby】 + método `toMarkdown()` em `KeywordDocumentation`; helpers públicos `argumentTexts()` e `supportLevelMessage()` (conteúdo compartilhado com o `toText`); título `### keyword`, negrito nos rótulos, cerca ```tjp, sem ANSI e sem legenda; `removed` para no aviso; re-export no barril doc-core; 7 testes em `tests/docgen/keyword-markdown_test.ts` (keyword, arguments, context, seeAlso, removed sintético, attributes, barril ≡ método) | `deno test -P --no-check packages/core/tests/docgen/` → 11 passed (95 steps), 0 failed; `check:doccore` exit 0; `lint:doc` (core) exit 0; `deno check` do barril + teste exit 0 |
+| 22.1b.6.1 | `src/docgen/syntax-core.ts` — `class SyntaxCore` com `private reference` + coleções `properties`/`attributes`/`optionBlocks`; constructor `(reference = new SyntaxReference(null, true))` separando por `isProperty()` e `optionalAttributes.length > 0` (fiel a `KateSyntax.rb:31-37` + `VimSyntax.rb:32-41`); 3 testes | `deno test -P --no-check packages/core/tests/docgen/syntax-core_test.ts` → 1 passed (34 steps), 0 failed (suite completa 6.1–6.8); gramática real: 8 propriedades, 156 atributos, 24 option blocks |
+| 22.1b.6.2 | `keywordList(): string[]` — união sem duplicatas com os filtros dos dois geradores (supplement ignorado nas propriedades; reports pulados; break nos STOP_NAMES); 5 testes. ⚠️ ADAPTAÇÃO: multi-nome, STOP_NAME no meio da caminhada e os três reports não ocorrem na gramática portada (reports são `REPORT_PROPERTY_KEYWORDS` nos dois lados) — regras exercitadas com fixtures sintéticas (subclasse com `isProperty()` override para o filtro defensivo) | mesma suite → verde; pin de 127 nomes na gramática real |
+| 22.1b.6.3 | `categories(): { keywords, builtin, types }` — as três `<list>` do Kate; ⚠️ ADAPTAÇÃO: o quinteto duplicado `macro project supplement include supplement` do Kate é normalizado para o trio do Vim (documentado no cabeçalho do módulo); 3 testes | mesma suite → verde; builtin contém task/resource/account, sem supplement; types sem reports/include |
+| 22.1b.6.4 | `tokenRules(): TokenRule[]` — os 20 detectores do context `Normal` do Kate como dados (regexp/keywords/char/number/string/comment), na ordem original, sem XML; ⚠️ ADAPTAÇÃO: typo `\d{1-2}` do Time corrigido para `\d{1,2}` (documentado); 4 testes (contagem+ordem, famílias) | mesma suite → verde |
+| 22.1b.6.5 | `optionBlockRegions(): Region[]` — fiel a `VimSyntax#regions`: id normalizado, sufixo `_name` em multi-nome (vale para todos os nomes), tag `supplement` com `.`→espaço, fold de propriedades + FOLDABLE, `contains` com `tjpblk_` para opcionais aninhados, `contained` por `!globalScope()`; 6 testes. ⚠️ ADAPTAÇÃO: multi-nome via fixture sintética; `task.timesheet` não existe na gramática portada (fold de propriedades cobre o caminho) | mesma suite → verde; 24 regiões na gramática real |
+| 22.1b.6.6 | `indentSettings(): IndentSettings` — o `setlocal` do Vim como dados; `cinwords` = nomes dos option blocks, únicos e ordenados; 3 testes (ordem, unicidade+união, valores literais) | mesma suite → verde; 21 cinwords |
+| 22.1b.6.7 | `normalize(str)` exportado (`.`→`_`); 2 testes | mesma suite → verde |
+| 22.1b.6.8 | Teste de paridade estrutural em `tests/docgen/syntax-core_test.ts`: builtin contém task/resource/account; types sem resourcereport; exatamente 1 regra de comentário de linha com `#` | mesma suite → verde |
+| 22.1b.7.1 | Barril `src/docgen/mod.ts` completo: `SyntaxCore` + `normalize` + tipos `TokenRule`/`Region`/`IndentSettings` adicionados (TST já viera com C 1.12); todos os símbolos do enunciado presentes (`ExampleSnippet` no lugar de `TjpExample`, fontes do manual via `MANUAL_CHAPTERS`/`EXAMPLE_CORPUS`/`MANUAL_STYLESHEET`) | `deno task check` (core) exit 0; `check:doccore` exit 0; `lint:doc` (core) exit 0 após JSDoc dos 6 campos de `IndentSettings`; `deno lint` + `deno fmt` limpos; diretório docgen inteiro → 12 passed (129 steps), 0 failed |
+
+> **Bloco H — notas de escopo:** 6.9 (geradores puros `.xml`/`.vim`) permanece
+> **fora do v1** — não iniciar sem consumidor real (16.15/ADR 035 cancelam os
+> geradores de arquivo). 6.10 (junção com TextMate/semantic-tokens/completion)
+> será registrado quando P2.4/P3 forem detalhados; os consumidores do v1 são
+> `src/lsp/completion.ts` (I 7.7) e os blocos 22.3/22.4.
+
+> **Nota sobre o critério de aceite:** o "golden `syntax-reference` igual ao
+> oracle Ruby" foi adaptado para **projeção do subset** porque a gramática
+> portada é reescrita por decisão de escopo (22.1b, entrega 2026-11-08):
+> igualdade byte a byte exigiria reverter os textos novos em inglês. As três
+> projeções (seções, cabeçalho, contextos) + os pins de vocabulário são o
+> contrato de regressão; qualquer alargamento do subset deve atualizar os pins
+> com evidência.

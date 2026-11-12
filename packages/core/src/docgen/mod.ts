@@ -17,6 +17,7 @@
 export { blue, bold, cyan, paint, red, } from "./ansi.ts";
 export { ExampleSnippet, } from "./example-snippet.ts";
 export { KeywordDocumentation, } from "./keyword-documentation.ts";
+export { keywordToMarkdown, } from "./keyword-markdown.ts";
 export { generateMan, } from "./man.ts";
 export type {
   ManFile,
@@ -27,12 +28,20 @@ export type {
 } from "./man.ts";
 export type { ManualPageContext, } from "./manual-context.ts";
 export {
+  getManualPage,
+  getManualToc,
+  resetManualPageCache,
+} from "./manual-pages.ts";
+export {
   resetSyntaxReferenceCache,
   SyntaxReference,
   syntaxReference,
 } from "./syntax-reference.ts";
+export { normalize, SyntaxCore, } from "./syntax-core.ts";
+export type { IndentSettings, Region, TokenRule, } from "./syntax-core.ts";
+export { TernarySearchTree, } from "../utils/ternary-search-tree.ts";
 export { UserManual, } from "./user-manual.ts";
-export type { UserManualOptions, } from "./user-manual.ts";
+export type { ManualTocEntry, UserManualOptions, } from "./user-manual.ts";
 export { MANUAL_CHAPTER_NAMES, MANUAL_CHAPTERS, } from "./manual/chapters.ts";
 export type { ManualChapter, } from "./manual/chapters.ts";
 export { EXAMPLE_CORPUS, } from "./manual/example-corpus.ts";

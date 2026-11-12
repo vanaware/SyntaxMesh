@@ -22,7 +22,11 @@
     "mdast-util-gfm": "npm:mdast-util-gfm@^3",
     "mdast": "npm:@types/mdast@^4",
     "vento": "npm:ventojs@2.4.2",
-    "fflate": "npm:fflate@^0.8"
+    "fflate": "npm:fflate@^0.8",
+    // Só tipos do protocolo LSP (Fase 22, 22.1.2): o `lsp-core` é puro e
+    // nunca importa o runtime `vscode-languageserver`/`vscode-languageclient`
+    // (`deno task check:lspcore`).
+    "vscode-languageserver-types": "npm:vscode-languageserver-types@^3"
   },
   "tasks": {
     "test": "deno test --allow-env --allow-net --allow-read --allow-write tests/",
@@ -31,8 +35,8 @@
     // `deno doc --lint` em ratchet (ADR 041): o teto está em
     // `scripts/lint-doc-baseline.json`; entrada nova do mapa `exports` entra
     // aqui para o gate medir a superfície publicada.
-    "lint:doc": "deno run --allow-read --allow-run --allow-write --allow-env ../../scripts/lint-doc.ts src/mod.ts src/docgen/mod.ts src/version.ts",
-    "lint:doc:update": "deno run --allow-read --allow-run --allow-write --allow-env ../../scripts/lint-doc.ts --update src/mod.ts src/docgen/mod.ts src/version.ts"
+    "lint:doc": "deno run --allow-read --allow-run --allow-write --allow-env ../../scripts/lint-doc.ts src/mod.ts src/docgen/mod.ts src/lsp/mod.ts src/version.ts",
+    "lint:doc:update": "deno run --allow-read --allow-run --allow-write --allow-env ../../scripts/lint-doc.ts --update src/mod.ts src/docgen/mod.ts src/lsp/mod.ts src/version.ts"
   },
   "exports": {
     ".": "./src/mod.ts",
@@ -44,6 +48,11 @@
     // `generateMan` do `syntaxmesh man`. Puro: sem `Deno.*` nem FS
     // (`deno task check:doccore`). Fora do barril para a extensão/PWA
     // carregarem só ele.
-    "./doc-core": "./src/docgen/mod.ts"
+    "./doc-core": "./src/docgen/mod.ts",
+    // `lsp-core` (Fase 22, 22.1): serviços LSP **puros** (analyze, hover,
+    // completion, diagnostics, …) sobre o core + doc-core, sem transporte.
+    // Só tipos de `vscode-languageserver-types`; o gate `check:lspcore`
+    // proíbe o runtime `vscode-languageserver`/`vscode-languageclient`.
+    "./lsp-core": "./src/lsp/mod.ts"
   }
 }

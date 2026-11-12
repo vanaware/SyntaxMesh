@@ -581,19 +581,28 @@ i18n (10.15+) em `packages/core/src/i18n/`.
   **Demais tarefas da 1ª onda** (26.0–26.14, 26.26–26.28) continuam em
   aberto — corpus, runners e2e, AST-equivalence ampliada, snapshots,
   benchmarks, segurança, CSP, `known-divergences` e matriz de cobertura
-  #1–#6a. **Próximo passo oficial após fechar a 26.0–26.14: abrir a Fase
-  22** (kickoff da extensão VS Code, Bloco H do `doc-core` e pontes
-  `lsp-core` 7.5–7.7).
-- **Phase 22 — VS Code extension** `PAR` — CLI-facing `doc-core` delivered
-  (2026-11-08); editor extension not started.
+  #1–#6a. **Fase 22:** P1/P2 já executados antecipadamente com autorização
+  do usuário (2026-11-11 — `doc-core` fechado em 106/108 + `lsp-core` puro);
+  o restante da Fase 22 (P3 em diante) segue após a 1ª onda da 21.
+- **Phase 22 — VS Code extension** `PAR` — **P1 (22.0) accepted 2026-11-11:
+  ADR 035** (`decisoes/035-extensao-vscode.md`) created and indexed; baseline
+  and layer boundaries recorded (Bloco A in the task document). **P2 completed
+  2026-11-11** (shared language/documentation cores): subphase 22.1b closed at
+  **106/108 verified** (H 6.9/6.10 outside v1) and the pure `lsp-core` (22.1)
+  delivered — 13 service modules + `registerLspServer` over a structural
+  connection, coverage **96.6% lines**. Kickoff of P1/P2 was
+  **user-authorized early** while F21¹ wave 1 is still partial (26.0–26.14/
+  26.26–26.28 open) — no technical dependency; official order unchanged
+  (precedent: early `doc-core` delivery for F24). Editor extension (P3) not
+  started.
   [Plan: major blocks P1–P7](docs/syntaxmesh/fases/fase-22-vscode-extension.md#0-major-blocks-and-subblocks)
   and [original task owners](docs/syntaxmesh/fases/fase-22-vscode-extension-tarefas.md).
   Planning update (2026-11-11): P1 architecture; P2 shared language/docs cores;
   P3 editor/LSP; P4 execution/reports/UX; P5 Web/storage; P6 standalone LSP;
   P7 packaging/acceptance/handoff. Each block has subblocks and entry/exit
-  criteria. Original IDs and delivery records are preserved; only 22.1b has
-  atomic detail (C–J, 86/108 recorded complete). Other unfinished subphases
-  are detailed at kickoff. No implementation started by this update.
+  criteria. Original IDs and delivery records are preserved; 22.1b has
+  atomic detail (C–J); 22.0 detailed as Bloco A.
+  Other unfinished subphases are detailed at kickoff.
   After F21¹, before F21² and phases 19/20; v1 output remains English.
   **Entregue:** o `doc-core` (subfase 22.1b) com `TernarySearchTree`,
   `SyntaxReference`, `KeywordDocumentation`, `ExampleSnippet` (`TjpExample`),
@@ -601,12 +610,21 @@ i18n (10.15+) em `packages/core/src/i18n/`.
   `packages/core/src/docgen/`, exportado como `./doc-core` (subpath) e **não**
   pelo `mod.ts` raiz. Gate de pureza próprio: `deno task check:doccore`
   (nenhum `Deno.*`/`node:`/`process.*`), dentro do composite `deno task tests`.
-  Consumidores: CLI da F24 (24.9 ✅) e o `lsp-core` da própria 22 (ainda por
-  fazer). O doc-core **não escreve em disco**: devolve
-  `string`/`Record<nome, conteúdo>`. **Pendente na subfase:** bloco H
-  (`SyntaxCore` de highlight Kate/Vim), pontes `lsp-core` (7.5–7.7) e os
-  goldens Ruby (1.11, 2.14/2.15, 3.22) — progresso em
-  `fase-22-vscode-extension-tarefas.md` §Progresso.
+  Consumidores: CLI da F24 (24.9 ✅) e o `lsp-core` da própria 22 (✅ P2).
+  O doc-core **não escreve em disco**: devolve
+  `string`/`Record<nome, conteúdo>`. **Entregue no P2 (2026-11-11):** goldens
+  Ruby (TST 1.11, syntax-reference 2.14/2.15, keyword 3.22 — projeção do
+  subset reescrito), `checkKeyword`/`stderrLines` (2.11), `toMarkdown` (3.21),
+  bloco H `SyntaxCore` (6.1–6.8, dados de highlight Kate/Vim; geradores
+  `.xml`/`.vim` seguem cancelados), projeções do manual G 5.13/5.14
+  (`getManualToc`/`getManualPage`), pontes `lsp-core` I 7.5–7.7 + smoke 7.9,
+  serviços puros 22.1.5–22.1.16 (`DocumentStore` incremental, locale, analyze,
+  diagnostics, capabilities, hover, completion, navigation, semantic tokens,
+  symbols, `registerLspServer` + smoke sem VS Code) e verificação J completa
+  (golden determinístico e byte-idêntico, confronto `tj3man` real em
+  `xray.md` §1.7.1, cobertura docgen **97,0% linhas**, gate completo verde).
+  Evidência por tarefa atômica em `fase-22-vscode-extension-tarefas.md`
+  §Progresso/P2 evidence. **Próximo:** P3 (editor/LSP — shell da extensão).
 - Fase 15 — Gantt ✅ Concluída (2026-11-03)
 - Fase 16 — Apoio ✅ Concluída (2026-11-03, 16.0–16.20; escopo xray: 16.10
   cancelado; 16.9/16.14/16.15 movidos p/ a 22; dono de `query_dashboard`)
@@ -636,7 +654,7 @@ Cada fase tem um arquivo de tarefas atômicas separado:
 
 ## Decisões arquitetônicas (ADR)
 
-Todas as decisões arquitetônicas importantes estão documentadas em `docs/syntaxmesh/decisoes/` (ADRs 001–039, sendo 034–037 **reservados**). Consulte `docs/syntaxmesh/decisoes/README.md` para a lista completa. Cadeia reservada pela ordem oficial de execução: **034 = CLI (Fase 24), 035 = extensão VS Code (Fase 22)**; reservados em 2026-11-03 pela varredura xray: **036 = sheets sem SMTP (email → texto), Fase 18** e **037 = injeção de provedor de conteúdo/`FileStore`, Fases 18/24**. **029** (Journal/AlertLevel) pertence à Fase 16 e foi entregue em `decisoes/029-journal-alertlevel.md` (16.0); **033** (elemento `template`) foi entregue em `decisoes/033-elemento-template.md` (Fase 23, 23.0); **038** (XML/HTML/ical/painter) na F17 e **039** (`extend` tipo `markdown`) na F10 Complemento. Nunca renumerar ADRs já commitados; a cadeia 034–037 é reconciliada na Fase 21 (conferir o README antes de criar).
+Todas as decisões arquitetônicas importantes estão documentadas em `docs/syntaxmesh/decisoes/` (ADRs 001–041). Consulte `docs/syntaxmesh/decisoes/README.md` para a lista completa. Cadeia criada pela ordem oficial de execução: **034 = CLI (Fase 24), 035 = extensão VS Code (Fase 22, aceito 2026-11-11)**; reservados em 2026-11-03 pela varredura xray e já entregues: **036 = sheets sem SMTP (email → texto), Fase 18** e **037 = injeção de provedor de conteúdo/`FileStore`, Fases 18/24**. **029** (Journal/AlertLevel) pertence à Fase 16 e foi entregue em `decisoes/029-journal-alertlevel.md` (16.0); **033** (elemento `template`) foi entregue em `decisoes/033-elemento-template.md` (Fase 23, 23.0); **038** (XML/HTML/ical/painter) na F17 e **039** (`extend` tipo `markdown`) na F10 Complemento. Nunca renumerar ADRs já commitados; a cadeia 034–037 é reconciliada na Fase 21 (conferir o README antes de criar).
 
 ## Regras de ouro para IA
 

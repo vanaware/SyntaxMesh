@@ -46,6 +46,7 @@
     "npm:micromark@4": "4.0.3",
     "npm:ventojs@*": "2.4.2",
     "npm:ventojs@2.4.2": "2.4.2",
+    "npm:vscode-languageserver-types@3": "3.18.5",
     "npm:wrangler@*": "4.149.0_@cloudflare+workers-types@5.20260830.1"
   },
   "jsr": {
@@ -1311,6 +1312,9 @@
     "ventojs@2.4.2": {
       "integrity": "sha512-8s/OVgVTiw8njyJRd98qVVcLKmZ7VHLw8zeBDji8TiC6k+myEBHok2QvZcRnKEmlF6BbFlc2887XAWaBY5Ep7Q=="
     },
+    "vscode-languageserver-types@3.18.5": {
+      "integrity": "sha512-kPd6+JQNz3HMJvjKlqUxERSlZHAntl/aGpsk7ImwIh0ewDKDcjgAEyVSYciPiOJD3ftbK9IrfiqUeTZLSbCizw=="
+    },
     "workerd@1.20261006.1": {
       "integrity": "sha512-8MadBuffZ5NdpLwZjUmsqT5QlaKXq4gjgT6wzcKeynZTICNXyePhc+5QVoKiK7+MMhFTLNrRO2KXLlpk8Q6BkA==",
       "optionalDependencies": [
@@ -1416,7 +1420,8 @@
           "npm:mdast-util-gfm@3",
           "npm:micromark-extension-gfm@3",
           "npm:micromark@4",
-          "npm:ventojs@2.4.2"
+          "npm:ventojs@2.4.2",
+          "npm:vscode-languageserver-types@3"
         ]
       },
       "packages/server": {

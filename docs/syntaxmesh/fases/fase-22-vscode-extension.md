@@ -2,14 +2,19 @@
 
 > **File:** `docs/syntaxmesh/fases/fase-22-vscode-extension.md`
 > **Tasks:** [Atomic task document](fase-22-vscode-extension-tarefas.md)
-> **Status:** `PAR` — CLI-facing `doc-core` delivered; editor extension not started.
+> **Status:** `PAR` — P1 (22.0) accepted 2026-11-11 (ADR 035); **P2 completed
+> 2026-11-11** (22.1b closed at 106/108 verified + pure `lsp-core` delivered).
+> Editor extension (P3) not started.
 > **Planning:** seven major blocks P1–P7, with subblocks in §0; original IDs
 > 22.0–22.11 and existing task blocks C–J remain unchanged.
-> **Recorded progress:** 86/108 tasks in 22.1b; this is not a whole-phase count.
+> **Recorded progress:** 106/108 tasks in 22.1b verified (H 6.9/6.10 outside
+> v1); this is not a whole-phase count.
 > **Original duration estimate:** 10–14 days; reassess when detailing each block.
 > **Technical prerequisites:** existing engine, documentation, template, and F24
 > execution API. Storage/PWA phases 19/20 are not prerequisites.
 > **Scheduling gate:** finish F21 wave 1 before starting the remaining F22 work.
+> P1/P2 kickoff was user-authorized early on 2026-11-11 (no technical dependency
+> on the remaining F21¹ tasks); the official order is unchanged.
 > **Official order:** 23 → 24 → 21¹ → 22 → 21² → 19 → 20 → 21³.
 > **Handoff:** F21 wave 2 validates the editor extension.
 > **Scope:** pure `doc-core`/`lsp-core`, VS Code Desktop/Web adapters, standalone LSP.
@@ -30,7 +35,7 @@ A detailed task list alone does not mean its implementation is complete.
 
 | Block | Subject | Original subphases | References | Current implementation |
 |---|---|---|---|---|
-| [P1](#p1-scope-and-architecture) | Scope and architecture | 22.0 | §1–§3 overview, §12, §14 | `PLA` — ADR 035 reserved |
+| [P1](#p1-scope-and-architecture) | Scope and architecture | 22.0 | §1–§3 overview, §12, §14 | `OK` — ADR 035 accepted (2026-11-11) |
 | [P2](#p2-shared-language-and-documentation-cores) | Shared language and documentation cores | 22.1, 22.1b | §4 core, §5; task blocks C–J | `PAR` — rename and CLI docs delivered; LSP pending |
 | [P3](#p3-editor-foundation-and-language-tooling) | Editor foundation and language tooling | 22.2–22.4 | §3.1, §4 extension, §6, §7 | `PLA` |
 | [P4](#p4-project-execution-reports-and-editor-ux) | Project execution, reports, and editor UX | 22.5–22.7 | §3.2–§3.3, §8 | `PLA` |
@@ -52,7 +57,8 @@ A detailed task list alone does not mean its implementation is complete.
 
 **Exit:** architecture and exclusions recorded; no automatic daemon reload,
 no duplicate parser/LSP intelligence in adapters, and no parallel execution
-API. This planning update does not create or approve the ADR itself.
+API. **Met 2026-11-11:** ADR 035 created and accepted; baseline/layers recorded
+in the task document (Bloco A); index row flipped to Aceito.
 
 ### P2. Shared language and documentation cores
 
@@ -86,6 +92,9 @@ it does not change task IDs.
 **Exit:** pure public contracts and docs/highlight bridges verified, core
 coverage at least 80%, and remaining in-v1 22.1b tasks closed with evidence.
 The recorded 86/108 completions stay historical progress, not fresh claims.
+**Met 2026-11-11:** 22.1b closed at 106/108 (H 6.9/6.10 outside v1); coverage
+`src/lsp/` 96.6% / `src/docgen/` 97.0% lines; full `deno task tests` green
+(840 passed / 7023 steps); evidence per atomic ID in the task document.
 
 ### P3. Editor foundation and language tooling
 
@@ -792,12 +801,13 @@ para handlers novos; fixtures de entrada: MWEs (`docs/Learning/mwe001–009`) e
 
 The [task document](fase-22-vscode-extension-tarefas.md) remains the only atomic
 execution list. Its 22.1b blocks C–J contain 108 tasks, with 86 recorded complete.
-All other unfinished subphases still need atomic detailing at their kickoff.
+22.0 (Bloco A) was detailed and delivered at kickoff (2026-11-11); the other
+unfinished subphases still need atomic detailing at their kickoff.
 The P-block mapping below reorganizes scope without renumbering tasks.
 
 | ID | Planning block / subblock | Deliverable | Entry condition | Recorded status |
 |---|---|---|---|---|
-| 22.0 | P1.1–P1.3 | ADR 035 (`decisoes/035-extensao-vscode.md`) and index entry; architecture/exclusions | F21¹ gate | `PLA` — ADR reserved |
+| 22.0 | P1.1–P1.3 | ADR 035 (`decisoes/035-extensao-vscode.md`) and index entry; architecture/exclusions | F21¹ gate (P1/P2 early kickoff user-authorized 2026-11-11) | `OK` — ADR 035 accepted; baseline/layers recorded (2026-11-11) |
 | 22.1 | P2.1, P2.4 | Remaining workspace wiring, `./lsp-core`, pure §5 services and server registration, unit coverage ≥ 80% | P1; documentation bridges depend on 22.1b | `PAR` — rename delivered; language core pending |
 | 22.1b | P2.2, P2.3, P2.5 | Shared docs/search/examples/manual/highlight; editor bridges and oracle verification | Existing engine for C–H; P2.4 foundation for I 7.5–7.7 | `PAR` — 86/108, CLI consumer delivered |
 | 22.2 | P3.1 | `packages/vsextension`, manifest, Desktop/Web shells and lifecycle | 22.0; P2 export readiness | `PLA` |
@@ -835,10 +845,10 @@ and `chore(vscode)` per original subphase. This planning update creates no commi
 
 ## 14. ADR da fase (035) — Extensão VS Code + `lsp-core`
 
-P1.3 / 22.0 will create the reserved
-`docs/syntaxmesh/decisoes/035-extensao-vscode.md` and update the ADR index.
-ADR 035 remains planned; this documentation reorganization does not create it.
-Its existing outline is:
+P1.3 / 22.0 created the reserved
+`docs/syntaxmesh/decisoes/035-extensao-vscode.md` and updated the ADR index
+on **2026-11-11** (status Aceito). The outline below is the one the delivered
+ADR follows:
 
 - **Contexto:** tooling complementar pós-engine; reuso de
   Vim/Emacs/Kate/`taskjuggler-lsp`; inspiração tj3d/tj3client/tj3webd.

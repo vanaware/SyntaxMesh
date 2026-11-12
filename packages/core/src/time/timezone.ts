@@ -17,6 +17,37 @@ export function setCurrentTimeZone(zone: string,): string {
 }
 
 /**
+ * Shared `Intl.DateTimeFormat` instances, keyed by profile and zone.
+ *
+ * Constructing a formatter costs tens of microseconds, and the scheduler
+ * and the working-hours scoreboards request the same handful of profiles
+ * thousands of times per project. Instances are immutable and resolve the
+ * offset per formatted date, so reuse never freezes a DST offset. The map
+ * is bounded (FIFO eviction) because zone names come from user input; only
+ * successfully constructed formatters are cached.
+ */
+const formatterCache = new Map<string, Intl.DateTimeFormat>();
+const MAX_CACHED_FORMATTERS = 64;
+
+function sharedFormatter(
+  kind: string,
+  timeZone: string,
+  options: Intl.DateTimeFormatOptions,
+): Intl.DateTimeFormat {
+  const key = `${kind}|${timeZone}`;
+  let formatter = formatterCache.get(key,);
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat("en-US", { timeZone, ...options, },);
+    if (formatterCache.size >= MAX_CACHED_FORMATTERS) {
+      const oldest = formatterCache.keys().next().value;
+      if (oldest !== undefined) formatterCache.delete(oldest,);
+    }
+    formatterCache.set(key, formatter,);
+  }
+  return formatter;
+}
+
+/**
  * Tells whether a time zone string is accepted by the runtime.
  *
  * @param zone Time zone string to validate.
@@ -25,7 +56,7 @@ export function setCurrentTimeZone(zone: string,): string {
 export function isValidTimeZone(zone: string,): boolean {
   try {
     // Creating a formatter for the zone is the validation itself.
-    new Intl.DateTimeFormat("en-US", { timeZone: zone, },);
+    sharedFormatter("validate", zone, {},);
     return true;
   } catch {
     return false;
@@ -43,9 +74,8 @@ export function getOffsetSeconds(epochSecs: number, timeZone: string,): number {
   try {
     const date = new Date(epochSecs * 1000,);
     // `shortOffset` yields "GMT-03:00" instead of the "BRT" abbreviation.
-    const formatter = new Intl.DateTimeFormat("en-US", {
+    const formatter = sharedFormatter("offset", timeZone, {
       timeZoneName: "shortOffset",
-      timeZone,
     },);
     const parts = formatter.formatToParts(date,);
     const offsetPart = parts.find((part,) => part.type === "timeZoneName");
@@ -133,8 +163,7 @@ export function getLocalParts(
     // `hour12: false` to the `h24` cycle, where midnight is **24** —
     // `TjTime.fromParts` rejects 24 and the CLI broke under Node/bundle. `h23`
     // returns 0 on every runtime (Deno, Node, Bun).
-    const formatter = new Intl.DateTimeFormat("en-US", {
-      timeZone: timeZone,
+    const formatter = sharedFormatter("parts", timeZone, {
       year: "numeric",
       month: "numeric",
       day: "numeric",
@@ -200,4 +229,22 @@ export function getLocalParts(
       weekday: 0,
     };
   }
+}
+
+/**
+ * Short time zone abbreviation of an instant (e.g. `"UTC"`, `"EST"`), as
+ * rendered for `strftime("%Z")`.
+ *
+ * @param epochSecs Instant, in epoch seconds (UTC).
+ * @param timeZone Time zone string.
+ * @returns The abbreviation, or the zone name when ICU yields none.
+ * @throws RangeError When the zone is invalid — same contract as the
+ * previous inline formatter in `TjTime.strftime`.
+ */
+export function getTimeZoneAbbr(epochSecs: number, timeZone: string,): string {
+  const formatter = sharedFormatter("abbr", timeZone, {
+    timeZoneName: "short",
+  },);
+  const parts = formatter.formatToParts(new Date(epochSecs * 1000,),);
+  return parts.find((p,) => p.type === "timeZoneName")?.value || timeZone;
 }

@@ -19,7 +19,7 @@ import {
   type AstSnap,
   normalizeAST,
   snapshotAST,
-} from "./ast-equivalence_test.ts";
+} from "./helpers/ast-snapshot.ts";
 import type { Project, } from "../src/model/project.ts";
 
 function readFixture(lang: string,): string {

@@ -92,7 +92,7 @@ O que foi decidido? Seja específico e acionável.
 | 032 | Gate de saída para Fase 13 e política de stubs | Aceito | 2026-10-28 |
 | 033 | Elemento `template` (Vento) como extensão de linguagem | Aceito | 2026-11-06 |
 | 034 | CLI multi-runtime (`packages/cli`) + API de execução `execute` | Aceito | 2026-11-07 |
-| 035 | Reservado — Extensão VS Code + lsp-core, Fase 22 | Reservado | — |
+| 035 | Extensão VS Code + lsp-core (Fase 22) | Aceito | 2026-11-11 |
 | 036 | Sheets sem SMTP: sender devolve o **texto do email**, receiver consome **texto de mensagem** | Aceito | 2026-11-05 |
 | 037 | Injeção de `FileStore`/`KeyValueStore` no core | Aceito | 2026-11-05 |
 | 038 | Substituição de XML/HTML/ICalendar/Painter mínimos (Fase 17) | Aceito | 2026-11-04 |
@@ -104,7 +104,8 @@ O que foi decidido? Seja específico e acionável.
 > 029–032 existem (`029-journal-alertlevel.md`, entregue na Fase 16 em
 > 2026-11-03). **033** (`033-elemento-template.md`) foi entregue na Fase 23
 > (2026-11-06); **034** (`034-cli-multiruntime.md`) foi entregue na Fase 24
-> (2026-11-07); **035** segue reservado para a extensão VS Code (Fase 22).
+> (2026-11-07); **035** (`035-extensao-vscode.md`) foi entregue na Fase 22
+> (2026-11-11, kickoff antecipado de P1/P2 autorizado pelo usuário).
 > **036** (`036-sheets-sem-smtp.md`) e **037**
 > (`037-filestore-injection.md`) foram entregues na Fase 18 (2026-11-05).
 > **038** (`038-substituicao-xml.md`) foi entregue na Fase 17 (2026-11-04).
@@ -121,8 +122,9 @@ O que foi decidido? Seja específico e acionável.
 > já commitados são referência histórica; ao criar um ADR, conferir antes esta
 > tabela e usar o próximo número livre. A cadeia 034–037 foi **reconciliada na
 > 1ª onda da Fase 21 (2026-11-10)** — ver
-> `docs/syntaxmesh/fases/completude-matrix.md` §Seção E. **035 permanece
-> reservado** para a Fase 22 (abertura pendente); se alguém precisar de número
-> antes, usa o próximo livre e atualiza esta tabela.
+> `docs/syntaxmesh/fases/completude-matrix.md` §Seção E. **035 foi aberto em
+> 2026-11-11** (Fase 22, kickoff antecipado de P1/P2 autorizado pelo usuário);
+> se alguém precisar de número antes, usa o próximo livre e atualiza esta
+> tabela.
 
 > **Nota:** Manter esta tabela atualizada manualmente ou via script ao adicionar novos ADRs.

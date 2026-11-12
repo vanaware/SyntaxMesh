@@ -17,7 +17,7 @@
 import { assert, assertEquals, } from "@std/assert";
 import { describe, it, } from "@std/testing/bdd";
 import { parseProject, } from "../parser/parse-helper.ts";
-import { normalizeAST, snapshotAST, } from "../ast-equivalence_test.ts";
+import { normalizeAST, snapshotAST, } from "../helpers/ast-snapshot.ts";
 import type { Project, } from "../../src/model/project.ts";
 import type { PropertyTreeNode, } from "../../src/model/property-tree-node.ts";
 import type { Task, } from "../../src/model/task.ts";

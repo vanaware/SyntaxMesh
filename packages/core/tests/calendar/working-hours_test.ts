@@ -330,4 +330,55 @@ describe("WorkingHours", () => {
       assertEquals(wh.scoreboard, null,);
     });
   });
+
+  describe("onShift? across DST (Europe/Berlin)", () => {
+    it("keeps the 9-17 local grid across the spring-forward day", () => {
+      // 2026-03-29 (Sunday): Berlin jumps 02:00 → 03:00 local.
+      const start = new Date("2026-03-27T00:00:00Z",);
+      const end = new Date("2026-03-31T00:00:00Z",);
+      const wh = new WorkingHours(3600, start, end, "Europe/Berlin",);
+      // Friday 2026-03-27 09:00 local = 08:00Z (CET, +01:00).
+      assertEquals(
+        wh.onShift(TjTime.fromDate(new Date("2026-03-27T08:00:00Z",),),),
+        true,
+      );
+      // The transition day is a Sunday: off regardless of the hour.
+      assertEquals(
+        wh.onShift(TjTime.fromDate(new Date("2026-03-29T08:00:00Z",),),),
+        false,
+      );
+      // Monday 2026-03-30 09:00 local = 07:00Z (CEST, +02:00).
+      assertEquals(
+        wh.onShift(TjTime.fromDate(new Date("2026-03-30T07:00:00Z",),),),
+        true,
+      );
+      // Monday 08:00 local = 06:00Z is still before the shift.
+      assertEquals(
+        wh.onShift(TjTime.fromDate(new Date("2026-03-30T06:00:00Z",),),),
+        false,
+      );
+    });
+
+    it("keeps the 9-17 local grid across the fall-back day", () => {
+      // 2026-10-25 (Sunday): Berlin repeats 02:00 local (03:00 → 02:00).
+      const start = new Date("2026-10-23T00:00:00Z",);
+      const end = new Date("2026-10-27T00:00:00Z",);
+      const wh = new WorkingHours(3600, start, end, "Europe/Berlin",);
+      // Friday 2026-10-23 09:00 local = 07:00Z (CEST, +02:00).
+      assertEquals(
+        wh.onShift(TjTime.fromDate(new Date("2026-10-23T07:00:00Z",),),),
+        true,
+      );
+      // Monday 2026-10-26 09:00 local = 08:00Z (CET, +01:00).
+      assertEquals(
+        wh.onShift(TjTime.fromDate(new Date("2026-10-26T08:00:00Z",),),),
+        true,
+      );
+      // Monday 08:00 local = 07:00Z is still before the shift.
+      assertEquals(
+        wh.onShift(TjTime.fromDate(new Date("2026-10-26T07:00:00Z",),),),
+        false,
+      );
+    });
+  });
 });

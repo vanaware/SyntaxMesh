@@ -44,6 +44,7 @@ import type { XMLElementLike, } from "../xml/xml-element-like.ts";
 import { Project, } from "../model/project.ts";
 import type { PropertySet, } from "../model/property-set.ts";
 import { blue, bold, cyan, red, } from "./ansi.ts";
+import { keywordToMarkdown, } from "./keyword-markdown.ts";
 import type { ManualPageContext, } from "./manual-context.ts";
 
 /** Width of the `to_s` label column (`KeywordDocumentation.rb:188`). */
@@ -356,6 +357,16 @@ export class KeywordDocumentation {
   }
 
   /**
+   * Markdown projection of this documentation (LSP hover/help, 22.1b.3.21).
+   * Delegates to {@link keywordToMarkdown}; no ANSI, no column legend.
+   *
+   * @returns the Markdown page, terminated by a newline.
+   */
+  toMarkdown(): string {
+    return keywordToMarkdown(this,);
+  }
+
+  /**
    * HTML page of this keyword (`<keyword>.html`), as a string.
    *
    * @param manual document that provides the header/footer/navigation/styles.
@@ -405,6 +416,29 @@ export class KeywordDocumentation {
   purposeText(): string {
     if (this.pattern.doc === null) return "";
     return this.newRichText(this.pattern.doc,).to_s();
+  }
+
+  /**
+   * Argument labels and rendered texts, in pattern order (the `Arguments:`
+   * content of {@link toText}, without the terminal column layout). Shared
+   * with the Markdown projection (`keyword-markdown.ts`, 22.1b.3.21).
+   *
+   * @returns one `{ label, text }` per argument; `label` carries the
+   * `[typeSpec]` bracket when the argument is not a plain `<name>`.
+   */
+  argumentTexts(): Array<{ label: string; text: string }> {
+    return this.args.map((arg,) => {
+      const name = arg.name ?? "";
+      const text = this.newRichText(
+        arg.text ?? `See '${name}' for details.`,
+      ).to_s();
+      const typeSpec = arg.typeSpec;
+      const label =
+        typeSpec === null || typeSpec === undefined || typeSpec === `<${name}>`
+          ? name
+          : `${name} [${typeSpec.slice(1, -1,)}]`;
+      return { label, text, };
+    },);
   }
 
   /** Lines of the `Arguments:` section, already indented by the argument name. */
@@ -485,8 +519,11 @@ export class KeywordDocumentation {
     return new TextFormatter(80, width,).indent(str,).slice(width,);
   }
 
-  /** Text of the support-level warning (`KeywordDocumentation.rb:698-717`). */
-  private supportLevelMessage(): string {
+  /**
+   * Text of the support-level warning (`KeywordDocumentation.rb:698-717`).
+   * Shared with the Markdown projection (`keyword-markdown.ts`, 22.1b.3.21).
+   */
+  supportLevelMessage(): string {
     switch (this.pattern.supportLevel) {
       case "experimental":
         return "This keyword is currently in an experimental state. " +

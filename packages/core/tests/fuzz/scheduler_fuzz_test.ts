@@ -25,10 +25,7 @@ import { Allocation, } from "../../src/scheduling/allocation.ts";
 import { TaskDependency, } from "../../src/scheduling/task-dependency.ts";
 import { TjTime, } from "../../src/time/tj-time.ts";
 import { MessageHandlerInstance, } from "../../src/message-handler.ts";
-import {
-  checkInvariants,
-  isoDate,
-} from "../invariants/scheduler_invariants_test.ts";
+import { checkInvariants, isoDate, } from "../helpers/scheduler-invariants.ts";
 import type { Project, } from "../../src/model/project.ts";
 
 /** Mulberry32 — PRNG determinística, 32-bit state. */

@@ -305,8 +305,11 @@ export class WorkingHours {
     let date = this.startDate;
     this.scoreboard.collect!((slot: boolean,) => {
       const tjDate = TjTime.fromDate(date,);
-      const weekday = tjDate.wday();
-      const secondsOfDay = tjDate.secondsOfDay();
+      // One calendar decomposition per slot: wday() + secondsOfDay() would
+      // each format the same instant through Intl.
+      const parts = tjDate.to_a();
+      const weekday = parts[6]!;
+      const secondsOfDay = parts[3]! * 3600 + parts[4]! * 60 + parts[5]!;
 
       let result = false;
       const dayHours = this.days[weekday] || [];

@@ -69,6 +69,22 @@ export interface UserManualOptions {
 }
 
 /**
+ * One entry of the manual TOC projected for the `lsp-core` (22.1b.5.13).
+ *
+ * The `id` is the stable page anchor: the chapter/keyword file name, with
+ * `#<tag>` when the entry points inside a chapter — the same convention as
+ * the HTML anchors. `manual-pages.ts` resolves these ids (`getManualPage`).
+ */
+export interface ManualTocEntry {
+  /** Stable page id (`<file>` or `<file>#<tag>`). */
+  id: string;
+  /** Section or keyword title. */
+  title: string;
+  /** Depth of the section number (`1` → 0, `1.2` → 1, `A.5` → 1). */
+  level: number;
+}
+
+/**
  * User manual: RichText chapters + syntax reference.
  *
  * Implements {@link ManualPageContext}, so it serves as the context for the
@@ -138,6 +154,40 @@ export class UserManual extends RichTextDocument implements ManualPageContext {
 
     pages[MANUAL_STYLESHEET_NAME] = MANUAL_STYLESHEET;
     return pages;
+  }
+
+  /**
+   * Projects the manual table of contents for the `lsp-core` (22.1b.5.13,
+   * LSP-only — no Ruby counterpart): chapters in manual order followed by
+   * appendix `A` (one entry per keyword), each as `{ id, title, level }`.
+   *
+   * Assembles the chapters and the TOC when they do not exist yet (same
+   * prelude as {@link generate}, without rendering any HTML); after
+   * `generate()` it projects the TOC already built.
+   */
+  getManualToc(): ManualTocEntry[] {
+    if (this.toc === null) {
+      for (const chapter of MANUAL_CHAPTERS) {
+        const snip = this.addSnip(chapter.name, chapter.text,);
+        snip.setCssClass("manual",);
+      }
+      this.tableOfContents();
+      if (this.toc !== null) {
+        this.reference.tableOfContents(this.toc, "A",);
+      }
+    }
+    const entries: ManualTocEntry[] = [];
+    if (this.toc === null) return entries;
+    for (const entry of this.toc) {
+      let level = 0;
+      for (const c of entry.number) if (c === ".") level += 1;
+      entries.push({
+        id: entry.tag === null ? entry.file : `${entry.file}#${entry.tag}`,
+        title: entry.title,
+        level,
+      },);
+    }
+    return entries;
   }
 
   /**

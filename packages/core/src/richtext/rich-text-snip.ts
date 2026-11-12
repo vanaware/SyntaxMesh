@@ -97,6 +97,15 @@ export class RichTextSnip {
   }
 
   /**
+   * Plain-text rendering of the snip (the intermediate format's `to_s`):
+   * titles, paragraphs and lists without any HTML. LSP-only projection
+   * (22.1b.5.14) — Ruby's `Snip` only generates HTML.
+   */
+  toText(): string {
+    return this.richText.to_s();
+  }
+
+  /**
    * Generates the HTML version of the snip. In Ruby the result was written to
    * `directory + name + '.html'`; here the serialized string (doctype + full
    * document) is returned — same structure: head + stylesheet, header, navbar,

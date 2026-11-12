@@ -98,6 +98,33 @@ const scripts: Array<{ name: string; rubyScript: URL; outputPath: URL }> = [
     ),
     outputPath: new URL("./leaves.golden.json", import.meta.url,),
   },
+  // 22.1b.1.11: TernarySearchTree contra o Ruby real — insert/find parcial
+  // sobre ~30 keywords. Consumido por tests/utils/ternary_search_tree_test.ts.
+  {
+    name: "tst",
+    rubyScript: new URL(
+      "../../../../scripts/golden/tst.rb",
+      import.meta.url,
+    ),
+    outputPath: new URL(
+      "../docgen/fixtures/tst-cases.golden.json",
+      import.meta.url,
+    ),
+  },
+  // 22.1b.2.14/2.15 + 22.1b.3.22: SyntaxReference real — `all`, `to_s` (ANSI
+  // off) de 12 keywords e `internalReferences`. A gramática portada é um subset
+  // reescrito; o teste TS projeta o subset (ver cabeçalho do oracle).
+  {
+    name: "syntax-reference",
+    rubyScript: new URL(
+      "../../../../scripts/golden/syntax-reference.rb",
+      import.meta.url,
+    ),
+    outputPath: new URL(
+      "../docgen/fixtures/syntax-reference.golden.json",
+      import.meta.url,
+    ),
+  },
   // 17.16: serialização XML/HTML (XMLElement..HTMLDocument) e iCalendar
   // (ICalendar/Component + foldLines). DTSTAMP é normalizado no teste TS.
   {

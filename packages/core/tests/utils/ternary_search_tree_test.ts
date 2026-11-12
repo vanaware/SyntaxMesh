@@ -204,3 +204,82 @@ describe("TernarySearchTree — balanceamento (22.1b.1.8/1.9)", () => {
     assertEquals(tree.toArray(), ["a", "b", "c", "d", "e", "f", "g",],);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Golden vs oracle Ruby (22.1b.1.11): `scripts/golden/tst.rb` insere ~30
+// keywords no `TernarySearchTree.rb` real e serializa insert/find/balance.
+// ---------------------------------------------------------------------------
+
+interface TstSnapshot {
+  toArray: string[];
+  length: number;
+  maxDepth: number;
+}
+
+interface TstGolden {
+  version: number;
+  keywords: string[];
+  sequential: TstSnapshot;
+  arrayConstructor: TstSnapshot;
+  exactFind: Array<{ query: string; result: string | null }>;
+  partialFind: Array<{ query: string; result: string[] | null }>;
+  balanced: { toArray: string[]; maxDepth: number };
+  balanceInPlace: TstSnapshot;
+}
+
+function loadTstGolden(): TstGolden {
+  const path = new URL(
+    "../docgen/fixtures/tst-cases.golden.json",
+    import.meta.url,
+  );
+  return JSON.parse(Deno.readTextFileSync(path,),) as TstGolden;
+}
+
+describe("TernarySearchTree — golden vs oracle Ruby (22.1b.1.11)", () => {
+  const golden = loadTstGolden();
+
+  it("inserção sequencial bate em to_a/length/maxDepth", () => {
+    const tree = new TernarySearchTree();
+    tree.insertList(golden.keywords,);
+    assertEquals(tree.toArray(), golden.sequential.toArray,);
+    assertEquals(tree.length(), golden.sequential.length,);
+    assertEquals(tree.maxDepth(), golden.sequential.maxDepth,);
+  });
+
+  it("construtor com array (balanceado) bate em to_a/length/maxDepth", () => {
+    const tree = new TernarySearchTree(golden.keywords,);
+    assertEquals(tree.toArray(), golden.arrayConstructor.toArray,);
+    assertEquals(tree.length(), golden.arrayConstructor.length,);
+    assertEquals(tree.maxDepth(), golden.arrayConstructor.maxDepth,);
+  });
+
+  it("find exato bate para todas as queries (incluindo ausentes)", () => {
+    const tree = new TernarySearchTree(golden.keywords,);
+    for (const { query, result, } of golden.exactFind) {
+      assertEquals(tree.find(query,), result, `query=${query}`,);
+    }
+  });
+
+  it("find por prefixo bate para todos os prefixos (ordem alfabética)", () => {
+    const tree = new TernarySearchTree(golden.keywords,);
+    for (const { query, result, } of golden.partialFind) {
+      assertEquals(tree.find(query, true,), result, `query=${query}`,);
+    }
+  });
+
+  it("balanced devolve a mesma árvore do oracle", () => {
+    const tree = new TernarySearchTree(golden.keywords,);
+    const balanced = tree.balanced();
+    assertEquals(balanced.toArray(), golden.balanced.toArray,);
+    assertEquals(balanced.maxDepth(), golden.balanced.maxDepth,);
+  });
+
+  it("balance in-place bate em to_a/maxDepth", () => {
+    const tree = new TernarySearchTree();
+    tree.insertList(golden.keywords,);
+    tree.balance();
+    assertEquals(tree.toArray(), golden.balanceInPlace.toArray,);
+    assertEquals(tree.length(), golden.balanceInPlace.length,);
+    assertEquals(tree.maxDepth(), golden.balanceInPlace.maxDepth,);
+  });
+});

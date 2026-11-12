@@ -1,0 +1,793 @@
+{
+  "version": 1,
+  "keywords": [
+    "account",
+    "accountreport",
+    "allocate",
+    "balance",
+    "booking",
+    "chargeset",
+    "chart",
+    "currency",
+    "depends",
+    "duration",
+    "effort",
+    "end",
+    "export",
+    "extend",
+    "format",
+    "include",
+    "journal",
+    "length",
+    "limits",
+    "macro",
+    "material",
+    "milestone",
+    "note",
+    "priority",
+    "project",
+    "purge",
+    "report",
+    "resource",
+    "resourcereport",
+    "scenario"
+  ],
+  "sequential": {
+    "toArray": [
+      "account",
+      "accountreport",
+      "allocate",
+      "balance",
+      "booking",
+      "chargeset",
+      "chart",
+      "currency",
+      "depends",
+      "duration",
+      "effort",
+      "end",
+      "export",
+      "extend",
+      "format",
+      "include",
+      "journal",
+      "length",
+      "limits",
+      "macro",
+      "material",
+      "milestone",
+      "note",
+      "priority",
+      "project",
+      "purge",
+      "report",
+      "resource",
+      "resourcereport",
+      "scenario"
+    ],
+    "length": 30,
+    "maxDepth": 27
+  },
+  "arrayConstructor": {
+    "toArray": [
+      "account",
+      "accountreport",
+      "allocate",
+      "balance",
+      "booking",
+      "chargeset",
+      "chart",
+      "currency",
+      "depends",
+      "duration",
+      "effort",
+      "end",
+      "export",
+      "extend",
+      "format",
+      "include",
+      "journal",
+      "length",
+      "limits",
+      "macro",
+      "material",
+      "milestone",
+      "note",
+      "priority",
+      "project",
+      "purge",
+      "report",
+      "resource",
+      "resourcereport",
+      "scenario"
+    ],
+    "length": 30,
+    "maxDepth": 16
+  },
+  "exactFind": [
+    {
+      "query": "account",
+      "result": "account"
+    },
+    {
+      "query": "accountreport",
+      "result": "accountreport"
+    },
+    {
+      "query": "allocate",
+      "result": "allocate"
+    },
+    {
+      "query": "balance",
+      "result": "balance"
+    },
+    {
+      "query": "booking",
+      "result": "booking"
+    },
+    {
+      "query": "chargeset",
+      "result": "chargeset"
+    },
+    {
+      "query": "chart",
+      "result": "chart"
+    },
+    {
+      "query": "currency",
+      "result": "currency"
+    },
+    {
+      "query": "depends",
+      "result": "depends"
+    },
+    {
+      "query": "duration",
+      "result": "duration"
+    },
+    {
+      "query": "effort",
+      "result": "effort"
+    },
+    {
+      "query": "end",
+      "result": "end"
+    },
+    {
+      "query": "export",
+      "result": "export"
+    },
+    {
+      "query": "extend",
+      "result": "extend"
+    },
+    {
+      "query": "format",
+      "result": "format"
+    },
+    {
+      "query": "include",
+      "result": "include"
+    },
+    {
+      "query": "journal",
+      "result": "journal"
+    },
+    {
+      "query": "length",
+      "result": "length"
+    },
+    {
+      "query": "limits",
+      "result": "limits"
+    },
+    {
+      "query": "macro",
+      "result": "macro"
+    },
+    {
+      "query": "material",
+      "result": "material"
+    },
+    {
+      "query": "milestone",
+      "result": "milestone"
+    },
+    {
+      "query": "note",
+      "result": "note"
+    },
+    {
+      "query": "priority",
+      "result": "priority"
+    },
+    {
+      "query": "project",
+      "result": "project"
+    },
+    {
+      "query": "purge",
+      "result": "purge"
+    },
+    {
+      "query": "report",
+      "result": "report"
+    },
+    {
+      "query": "resource",
+      "result": "resource"
+    },
+    {
+      "query": "resourcereport",
+      "result": "resourcereport"
+    },
+    {
+      "query": "scenario",
+      "result": "scenario"
+    },
+    {
+      "query": "zzz",
+      "result": null
+    },
+    {
+      "query": "tas",
+      "result": null
+    },
+    {
+      "query": "accountreports",
+      "result": null
+    }
+  ],
+  "partialFind": [
+    {
+      "query": "a",
+      "result": [
+        "account",
+        "accountreport",
+        "allocate"
+      ]
+    },
+    {
+      "query": "ac",
+      "result": [
+        "account",
+        "accountreport",
+        "allocate"
+      ]
+    },
+    {
+      "query": "account",
+      "result": [
+        "account",
+        "accountreport"
+      ]
+    },
+    {
+      "query": "accountreport",
+      "result": [
+        "accountreport"
+      ]
+    },
+    {
+      "query": "b",
+      "result": [
+        "account",
+        "accountreport",
+        "allocate",
+        "balance",
+        "booking"
+      ]
+    },
+    {
+      "query": "bo",
+      "result": [
+        "booking"
+      ]
+    },
+    {
+      "query": "c",
+      "result": [
+        "account",
+        "accountreport",
+        "allocate",
+        "balance",
+        "booking",
+        "chargeset",
+        "chart",
+        "currency",
+        "depends",
+        "duration",
+        "effort",
+        "end",
+        "export",
+        "extend",
+        "format"
+      ]
+    },
+    {
+      "query": "ch",
+      "result": [
+        "chargeset",
+        "chart"
+      ]
+    },
+    {
+      "query": "char",
+      "result": [
+        "chargeset",
+        "chart"
+      ]
+    },
+    {
+      "query": "currency",
+      "result": [
+        "currency"
+      ]
+    },
+    {
+      "query": "d",
+      "result": [
+        "depends",
+        "duration"
+      ]
+    },
+    {
+      "query": "de",
+      "result": [
+        "depends"
+      ]
+    },
+    {
+      "query": "du",
+      "result": [
+        "depends",
+        "duration"
+      ]
+    },
+    {
+      "query": "e",
+      "result": [
+        "depends",
+        "duration",
+        "effort",
+        "end",
+        "export",
+        "extend",
+        "format"
+      ]
+    },
+    {
+      "query": "ef",
+      "result": [
+        "effort"
+      ]
+    },
+    {
+      "query": "eff",
+      "result": [
+        "effort"
+      ]
+    },
+    {
+      "query": "end",
+      "result": [
+        "end"
+      ]
+    },
+    {
+      "query": "ex",
+      "result": [
+        "export",
+        "extend"
+      ]
+    },
+    {
+      "query": "exp",
+      "result": [
+        "export"
+      ]
+    },
+    {
+      "query": "export",
+      "result": [
+        "export"
+      ]
+    },
+    {
+      "query": "extend",
+      "result": [
+        "extend"
+      ]
+    },
+    {
+      "query": "f",
+      "result": [
+        "format"
+      ]
+    },
+    {
+      "query": "fo",
+      "result": [
+        "format"
+      ]
+    },
+    {
+      "query": "format",
+      "result": [
+        "format"
+      ]
+    },
+    {
+      "query": "i",
+      "result": [
+        "account",
+        "accountreport",
+        "allocate",
+        "balance",
+        "booking",
+        "chargeset",
+        "chart",
+        "currency",
+        "depends",
+        "duration",
+        "effort",
+        "end",
+        "export",
+        "extend",
+        "format",
+        "include",
+        "journal",
+        "length",
+        "limits",
+        "macro",
+        "material",
+        "milestone",
+        "note",
+        "priority",
+        "project",
+        "purge",
+        "report",
+        "resource",
+        "resourcereport",
+        "scenario"
+      ]
+    },
+    {
+      "query": "in",
+      "result": [
+        "include"
+      ]
+    },
+    {
+      "query": "include",
+      "result": [
+        "include"
+      ]
+    },
+    {
+      "query": "j",
+      "result": [
+        "journal"
+      ]
+    },
+    {
+      "query": "jo",
+      "result": [
+        "journal"
+      ]
+    },
+    {
+      "query": "journal",
+      "result": [
+        "journal"
+      ]
+    },
+    {
+      "query": "l",
+      "result": [
+        "journal",
+        "length",
+        "limits"
+      ]
+    },
+    {
+      "query": "le",
+      "result": [
+        "length",
+        "limits"
+      ]
+    },
+    {
+      "query": "len",
+      "result": [
+        "length"
+      ]
+    },
+    {
+      "query": "length",
+      "result": [
+        "length"
+      ]
+    },
+    {
+      "query": "limits",
+      "result": [
+        "limits"
+      ]
+    },
+    {
+      "query": "m",
+      "result": [
+        "journal",
+        "length",
+        "limits",
+        "macro",
+        "material",
+        "milestone",
+        "note"
+      ]
+    },
+    {
+      "query": "ma",
+      "result": [
+        "macro",
+        "material",
+        "milestone"
+      ]
+    },
+    {
+      "query": "mac",
+      "result": [
+        "macro",
+        "material"
+      ]
+    },
+    {
+      "query": "macro",
+      "result": [
+        "macro"
+      ]
+    },
+    {
+      "query": "mat",
+      "result": [
+        "material"
+      ]
+    },
+    {
+      "query": "material",
+      "result": [
+        "material"
+      ]
+    },
+    {
+      "query": "milestone",
+      "result": [
+        "milestone"
+      ]
+    },
+    {
+      "query": "n",
+      "result": [
+        "note"
+      ]
+    },
+    {
+      "query": "no",
+      "result": [
+        "note"
+      ]
+    },
+    {
+      "query": "note",
+      "result": [
+        "note"
+      ]
+    },
+    {
+      "query": "p",
+      "result": [
+        "journal",
+        "length",
+        "limits",
+        "macro",
+        "material",
+        "milestone",
+        "note",
+        "priority",
+        "project",
+        "purge",
+        "report",
+        "resource",
+        "resourcereport",
+        "scenario"
+      ]
+    },
+    {
+      "query": "pr",
+      "result": [
+        "priority",
+        "project",
+        "purge"
+      ]
+    },
+    {
+      "query": "pri",
+      "result": [
+        "priority",
+        "project"
+      ]
+    },
+    {
+      "query": "priority",
+      "result": [
+        "priority"
+      ]
+    },
+    {
+      "query": "pro",
+      "result": [
+        "project"
+      ]
+    },
+    {
+      "query": "project",
+      "result": [
+        "project"
+      ]
+    },
+    {
+      "query": "purge",
+      "result": [
+        "purge"
+      ]
+    },
+    {
+      "query": "r",
+      "result": [
+        "report",
+        "resource",
+        "resourcereport",
+        "scenario"
+      ]
+    },
+    {
+      "query": "re",
+      "result": [
+        "report",
+        "resource",
+        "resourcereport"
+      ]
+    },
+    {
+      "query": "rep",
+      "result": [
+        "report"
+      ]
+    },
+    {
+      "query": "report",
+      "result": [
+        "report"
+      ]
+    },
+    {
+      "query": "res",
+      "result": [
+        "report",
+        "resource",
+        "resourcereport"
+      ]
+    },
+    {
+      "query": "resource",
+      "result": [
+        "resource",
+        "resourcereport"
+      ]
+    },
+    {
+      "query": "resourcereport",
+      "result": [
+        "resourcereport"
+      ]
+    },
+    {
+      "query": "s",
+      "result": [
+        "scenario"
+      ]
+    },
+    {
+      "query": "sc",
+      "result": [
+        "scenario"
+      ]
+    },
+    {
+      "query": "scenario",
+      "result": [
+        "scenario"
+      ]
+    },
+    {
+      "query": "z",
+      "result": null
+    },
+    {
+      "query": "zz",
+      "result": null
+    }
+  ],
+  "balanced": {
+    "toArray": [
+      "account",
+      "accountreport",
+      "allocate",
+      "balance",
+      "booking",
+      "chargeset",
+      "chart",
+      "currency",
+      "depends",
+      "duration",
+      "effort",
+      "end",
+      "export",
+      "extend",
+      "format",
+      "include",
+      "journal",
+      "length",
+      "limits",
+      "macro",
+      "material",
+      "milestone",
+      "note",
+      "priority",
+      "project",
+      "purge",
+      "report",
+      "resource",
+      "resourcereport",
+      "scenario"
+    ],
+    "maxDepth": 16
+  },
+  "balanceInPlace": {
+    "toArray": [
+      "account",
+      "accountreport",
+      "allocate",
+      "balance",
+      "booking",
+      "chargeset",
+      "chart",
+      "currency",
+      "depends",
+      "duration",
+      "effort",
+      "end",
+      "export",
+      "extend",
+      "format",
+      "include",
+      "journal",
+      "length",
+      "limits",
+      "macro",
+      "material",
+      "milestone",
+      "note",
+      "priority",
+      "project",
+      "purge",
+      "report",
+      "resource",
+      "resourcereport",
+      "scenario"
+    ],
+    "length": 30,
+    "maxDepth": 16
+  }
+}

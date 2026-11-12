@@ -160,6 +160,59 @@ export class SyntaxReference {
     return documentation === undefined ? "" : documentation.toText(color,);
   }
 
+  /**
+   * Buffered `$stderr` chunks of {@link checkKeyword} (⚠️ ADAPTAÇÃO: the
+   * doc-core never writes to the real stderr; the consumer drains them).
+   */
+  private stderrBuffer: string[] = [];
+
+  /**
+   * Checks that `keyword` is documented (`SyntaxReference.rb:274-295`).
+   *
+   * ⚠️ ADAPTAÇÃO: Ruby writes the error and the top-level keyword list to
+   * `$stderr`; here the chunks are buffered and exposed by
+   * {@link stderrLines} so the consumer decides the destination.
+   *
+   * @param keyword keyword to validate; `null` skips the error line.
+   * @returns `true` when the keyword exists; `false` otherwise.
+   */
+  checkKeyword(keyword: string | null,): boolean {
+    if (keyword !== null && this.keywords.has(keyword,)) return true;
+    if (keyword !== null) {
+      this.stderrBuffer.push(`ERROR: ${keyword} is not a known keyword.\n\n`,);
+    }
+    // Top-level keywords: no context, or only themselves (insertion order).
+    const names: string[] = [];
+    for (const kwd of this.keywords.values()) {
+      if (
+        kwd.contexts.length === 0 ||
+        (kwd.contexts.length === 1 && kwd.contexts[0] === kwd)
+      ) {
+        names.push(kwd.keyword,);
+      }
+    }
+    this.stderrBuffer.push(
+      "Try one of the following keywords as argument to this program:\n",
+      names.join(", ",) + "\n",
+    );
+    return false;
+  }
+
+  /**
+   * Drains the buffered `$stderr` chunks of {@link checkKeyword}.
+   *
+   * Each entry is one Ruby `puts`: the error and hint chunks keep their
+   * embedded newlines and the keyword list carries the terminating newline,
+   * so joining the entries with `""` reproduces the original stderr bytes.
+   *
+   * @returns the pending chunks in emission order; the buffer is reset.
+   */
+  stderrLines(): string[] {
+    const lines = this.stderrBuffer;
+    this.stderrBuffer = [];
+    return lines;
+  }
+
   /** HTML page of one keyword (or `""` when unknown). */
   generateHTMLreference(
     keyword: string,
