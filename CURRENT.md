@@ -627,7 +627,11 @@ i18n (10.15+) em `packages/core/src/i18n/`.
   §Progresso/P2 evidence. **Próximo:** P3 (editor/LSP — shell da extensão).
 - Fase 15 — Gantt ✅ Concluída (2026-11-03)
 - Fase 16 — Apoio ✅ Concluída (2026-11-03, 16.0–16.20; escopo xray: 16.10
-  cancelado; 16.9/16.14/16.15 movidos p/ a 22; dono de `query_dashboard`)
+  cancelado; 16.9/16.14/16.15 movidos p/ a 22; dono de `query_dashboard`).
+  Adendo **16.21** ✅ (2026-11-12): Journal aceita `Material`/`Account` como
+  folha nos modos `status_*`/`alerts_*` + `pictures`/`format` propagados no RTI
+  (corpo por `format` via `MarkdownFactory`/MediaWiki; `inputText` preservado);
+  `journal-addendum-1621_test.ts` (16 steps) + suíte 843/7039/0.
 - Fase 17 — HTML/XML ✅ Concluída (2026-11-04, 17.0–17.17; ADR 038 —
   substituição dos 5 mínimos; goldens html-xml+ical; smoke F17)
 - Fase 18 — Time/Status Sheets ✅ Concluída (2026-11-05, 18.0–18.20 + adendos)

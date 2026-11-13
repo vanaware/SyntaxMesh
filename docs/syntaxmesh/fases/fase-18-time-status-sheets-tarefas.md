@@ -2,9 +2,9 @@
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-18-time-status-sheets-tarefas.md`
 > **Plano:** `docs/syntaxmesh/fases/fase-18-time-status-sheets.md`
-> **Status:** ⬜ Não iniciada
-> **Total:** ~185 tarefas
-> **Concluídas:** 0
+> **Status:** 🟢 Concluída (2026-11-05, 18.0–18.20 + adendos 18.17/18.18/18.19/18.20; ADRs 036 sheets-sem-SMTP / 037 `FileStore` injetado)
+> **Total:** ~206 tarefas
+> **Concluídas:** 20 subfases (18.0–18.20) — ver §Progresso e as notas "Entregue" por subfase
 > **Fonte Ruby:** `docs/taskjuggler/lib/taskjuggler/{TimeSheets,TimeSheetSender,TimeSheetReceiver,TimeSheetSummary,StatusSheetSender,StatusSheetReceiver,SheetHandlerBase,SheetSender,SheetReceiver}.rb`
 
 > **📌 Âncora — Complemento Fase 11 (2ª onda, §6.6 de `fase-11-logical-complemento.md`):**
@@ -139,9 +139,9 @@ A ordem **dentro** da fase importa:
 [x] 18.15 Golden tests (timesheets)                      —   8/8
 [x] 18.17 Adendo F10-C: material + picture em sheets     —  10/10
 [x] 18.18 Núcleo dos apps de sheet (xray §3.3)           —   9/9
-[ ] 18.16 Verificação final                              —   0/10
-[ ] 18.19 Pipeline dynamicAttributes (xray §3.4)         —   0/8
-[ ] 18.20 MessageHandler#checkLevel (xray §3.4.1)        —   0/4
+[x] 18.16 Verificação final                              —  10/10
+[x] 18.19 Pipeline dynamicAttributes (xray §3.4)         —   8/8
+[x] 18.20 MessageHandler#checkLevel (xray §3.4.1)        —   4/4
 ─────────────────────────────────────────────────────────
 TOTAL: ~206
 ```

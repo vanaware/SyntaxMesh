@@ -21,7 +21,9 @@ import { Material, } from "./material.ts";
 import { type Picture, } from "./picture.ts";
 import { RichText, } from "../richtext/rich-text.ts";
 import { RTFHandlers, } from "../richtext/handlers/rtf-handlers.ts";
-import type { RichTextIntermediate, } from "../richtext/rich-text-intermediate.ts";
+import { RichTextIntermediate, } from "../richtext/rich-text-intermediate.ts";
+import { RichTextElement, } from "../richtext/rich-text-element.ts";
+import { MarkdownFactory, } from "../markdown/factory.ts";
 import {
   JournalEntryList,
   type JournalSorting,
@@ -184,14 +186,15 @@ export class JournalEntry {
   }
 
   /**
-   * Renders the entry as MediaWiki markup (port of `JournalEntry#to_rText`).
+   * MediaWiki markup of the entry frame: alert, property, headline, date,
+   * author and flags (first half of `JournalEntry#to_rText`).
    *
-   * Each part (alert, property, headline, date, author, flags, summary,
-   * details) is emitted only when `query.journalAttributes` asks for it, and the
-   * result is converted to rich text by {@link Journal.to_rti}. Timesheet parts
-   * belong to phase 18.
+   * Each part is emitted only when `query.journalAttributes` asks for it. The
+   * body (summary/details) and the pictures are appended separately so that
+   * {@link Journal.to_rti} can parse the body in the entry's own `format`
+   * (16.21.6). Timesheet parts belong to phase 18.
    */
-  to_rText(query: JournalQueryLike,): string {
+  frameMarkup(query: JournalQueryLike,): string {
     let alertName = "";
     if (hasJournalAttribute(query, "alert",)) {
       const level = alertLevelOf(query, this.alertLevel,);
@@ -250,12 +253,48 @@ export class JournalEntry {
     if (hasJournalAttribute(query, "flags",) && this.flags.length > 0) {
       rText += `''Flags:'' ${this.flags.join(", ",)}\n\n`;
     }
+    return rText;
+  }
+
+  /**
+   * MediaWiki markup of the entry pictures (16.21.6).
+   *
+   * Each picture becomes a `[[File:…|alt=…]]` image (plus an italic caption),
+   * which the RichText parser turns into an `img` node of the intermediate
+   * format. In `selfContained` mode the image is replaced by a textual marker,
+   * mirroring the alert flag. Width/align are report-level concerns rendered by
+   * `Picture#to_html` (14C.0.8), not by the lightweight RTI image.
+   */
+  picturesMarkup(query: JournalQueryLike,): string {
+    if (this.pictures.length === 0) return "";
+    let out = "";
+    for (const pic of this.pictures) {
+      if (query.selfContained) {
+        out += `<nowiki>[image: ${pic.path}]</nowiki>\n\n`;
+        continue;
+      }
+      out += `[[File:${pic.path}|alt=${pic.alt ?? ""}]]\n\n`;
+      if (pic.caption) out += `''${pic.caption}''\n\n`;
+    }
+    return out;
+  }
+
+  /**
+   * Renders the entry as MediaWiki markup (port of `JournalEntry#to_rText`).
+   *
+   * Frame + body (summary/details, raw) + pictures. Kept as the MediaWiki
+   * serialization of the entry; {@link Journal.to_rti} uses {@link frameMarkup}
+   * plus a format-aware body instead (16.21.6).
+   */
+  to_rText(query: JournalQueryLike,): string {
+    let rText = this.frameMarkup(query,);
     if (hasJournalAttribute(query, "summary",) && this.summary) {
       rText += this.summary + "\n\n";
     }
     if (hasJournalAttribute(query, "details",) && this.details) {
       rText += this.details + "\n\n";
     }
+    rText += this.picturesMarkup(query,);
     return rText;
   }
 
@@ -494,11 +533,14 @@ export class Journal {
         break;
       case "journal_sub":
         // Property + descendants. Ruby only handles `Task` here; the port
-        // extends the recursion to resource/account (14C.1.7) — material,
-        // being a leaf, takes the same path and returns only its own entries
-        // (equivalent to `journal`).
+        // extends the recursion to resource/account (14C.1.7). Material is a
+        // leaf: `journal_sub` collapses to `journal` (16.21.5).
         if (property) {
-          entries.add(this.entriesByTaskR(property, start, end, logExp,),);
+          if (property instanceof Material) {
+            entries.add(this.entriesByLeaf(property, start, end, logExp,),);
+          } else {
+            entries.add(this.entriesByTaskR(property, start, end, logExp,),);
+          }
         }
         break;
       case "status_up":
@@ -545,17 +587,113 @@ export class Journal {
     }
     entries.sort();
 
+    // 16.21.6: each entry is parsed in its own `format` (markdown body via the
+    // MarkdownFactory, richtext body via MediaWiki) with its pictures appended;
+    // the per-entry trees are merged into the journal RTI. The joined MediaWiki
+    // markup (`to_rText`) is kept as the RTI's `inputText` back-reference, which
+    // the `query_journal(...).richText.inputText` consumers (lastSheetReport /
+    // query_dashboard) print — as in the Ruby.
     let markup = "";
     for (const entry of entries) markup += entry.to_rText(query,);
-
-    const rti = new RichText(
-      markup,
-      RTFHandlers.create(query.project ?? null,),
-    ).generateIntermediateFormat();
-    if (!rti) return;
+    const handlers = RTFHandlers.create(query.project ?? null,);
+    const rti = new RichTextIntermediate(new RichText(markup, handlers,),);
+    for (const handler of handlers) rti.registerFunctionHandler(handler,);
+    const children: Array<RichTextElement | string> = [];
+    for (const entry of entries) {
+      const entryRti = this.assembleEntryRti(
+        entry.frameMarkup(query,),
+        entry,
+        query,
+        hasJournalAttribute(query, "summary",),
+        hasJournalAttribute(query, "details",),
+      );
+      if (entryRti?.tree) children.push(...entryRti.tree.children,);
+    }
+    rti.tree = new RichTextElement(rti, "richtext", children,);
     rti.sectionNumbers = false;
     rti.cssClass = "tj_journal";
     query.rti = rti;
+  }
+
+  /**
+   * Builds the RTI of one entry: the MediaWiki `frameMarkup`, the body parsed in
+   * the entry's `format` (16.21.6) and the pictures, merged into a single tree.
+   *
+   * @param frameMarkup MediaWiki markup of the frame (headline, date, …).
+   * @param entry Entry being rendered.
+   * @param query Active query.
+   * @param includeSummary Whether the summary is part of the body.
+   * @param includeDetails Whether the details are part of the body.
+   */
+  private assembleEntryRti(
+    frameMarkup: string,
+    entry: JournalEntry,
+    query: JournalQueryLike,
+    includeSummary: boolean,
+    includeDetails: boolean,
+  ): RichTextIntermediate | null {
+    const handlers = RTFHandlers.create(query.project ?? null,);
+    const rti = this.tagJournal(
+      new RichText(frameMarkup, handlers,).generateIntermediateFormat(),
+    );
+    if (!rti || !rti.tree) return rti;
+    const body = this.entryBodyRti(
+      entry,
+      query,
+      includeSummary,
+      includeDetails,
+    );
+    if (body?.tree) rti.tree.children.push(...body.tree.children,);
+    const pictures = entry.picturesMarkup(query,);
+    if (pictures !== "") {
+      const picRti = this.tagJournal(
+        new RichText(pictures, handlers,).generateIntermediateFormat(),
+      );
+      if (picRti?.tree) rti.tree.children.push(...picRti.tree.children,);
+    }
+    return rti;
+  }
+
+  /**
+   * RTI of the entry body (summary/details) in the entry's `format`: markdown
+   * goes through the {@link MarkdownFactory} (16.21.6), richtext through the
+   * MediaWiki parser. Returns `null` when there is no body to render.
+   */
+  private entryBodyRti(
+    entry: JournalEntry,
+    query: JournalQueryLike,
+    includeSummary: boolean,
+    includeDetails: boolean,
+  ): RichTextIntermediate | null {
+    const parts: string[] = [];
+    if (includeSummary && entry.summary) parts.push(entry.summary,);
+    if (includeDetails && entry.details) parts.push(entry.details,);
+    if (parts.length === 0) return null;
+    const body = parts.join("\n\n",) + "\n\n";
+    if (entry.format === "markdown") {
+      return this.tagJournal(
+        new MarkdownFactory(query.project ?? null,).create(body,),
+      );
+    }
+    return this.tagJournal(
+      new RichText(body, RTFHandlers.create(query.project ?? null,),)
+        .generateIntermediateFormat(),
+    );
+  }
+
+  /**
+   * Tags an RTI as journal output: no section numbers and the `tj_journal` CSS
+   * class. Each per-entry RTI must carry these itself, because the merged tree
+   * keeps the elements pointing at their originating RTI (16.21.6).
+   */
+  private tagJournal(
+    rti: RichTextIntermediate | null,
+  ): RichTextIntermediate | null {
+    if (rti) {
+      rti.sectionNumbers = false;
+      rti.cssClass = "tj_journal";
+    }
+    return rti;
   }
 
   /**
@@ -568,7 +706,17 @@ export class Journal {
     query: JournalQueryLike,
     kind: typeof Task,
   ): PropertyTreeNode[] {
-    if (property) return property instanceof kind ? [property,] : [];
+    if (property) {
+      // 16.21.5: material/account enter the status/alerts modes as leaves;
+      // resource keeps the Ruby behaviour (it is not a status root).
+      if (
+        property instanceof kind || property instanceof Material ||
+        property instanceof Account
+      ) {
+        return [property,];
+      }
+      return [];
+    }
     const project = query.project ?? null;
     if (!project) return [];
     return (project.tasks.toArray() as unknown as PropertyTreeNode[])
@@ -587,28 +735,40 @@ export class Journal {
     query: JournalQueryLike,
     longVersion: boolean,
   ): RichTextIntermediate | null {
+    const handlers = RTFHandlers.create(query.project ?? null,);
     let markup = "";
+    const children: Array<RichTextElement | string> = [];
     for (const entry of entries) {
-      markup += `==== <nowiki>${entry.headline}</nowiki> ====\n`;
-      markup += `''Reported on ${
+      let frame = `==== <nowiki>${entry.headline}</nowiki> ====\n`;
+      frame += `''Reported on ${
         entry.date.to_s(query.timeFormat ?? undefined,)
       }'' `;
       if (entry.author) {
         const author = entry.author as { name?: string };
-        markup += `''by <nowiki>${author.name ?? ""}</nowiki>''`;
+        frame += `''by <nowiki>${author.name ?? ""}</nowiki>''`;
       }
-      markup += "\n\n";
+      frame += "\n\n";
       if (entry.flags.length > 0) {
-        markup += `''Flags:'' ${entry.flags.join(", ",)}\n\n`;
+        frame += `''Flags:'' ${entry.flags.join(", ",)}\n\n`;
       }
+      // `inputText` back-reference: the original raw markup (frame + body), as
+      // the `query_journalmessages(...).richText.inputText` consumers expect.
+      markup += frame;
       if (entry.summary) markup += entry.summary + "\n\n";
       if (longVersion && entry.details) markup += entry.details + "\n\n";
+      // 16.21.6: body in the entry's format + pictures, as in `to_rti`.
+      const entryRti = this.assembleEntryRti(
+        frame,
+        entry,
+        query,
+        true,
+        longVersion,
+      );
+      if (entryRti?.tree) children.push(...entryRti.tree.children,);
     }
-    const rti = new RichText(
-      markup,
-      RTFHandlers.create(query.project ?? null,),
-    ).generateIntermediateFormat();
-    if (!rti) return null;
+    const rti = new RichTextIntermediate(new RichText(markup, handlers,),);
+    for (const handler of handlers) rti.registerFunctionHandler(handler,);
+    rti.tree = new RichTextElement(rti, "richtext", children,);
     rti.sectionNumbers = false;
     rti.cssClass = "tj_journal";
     return rti;

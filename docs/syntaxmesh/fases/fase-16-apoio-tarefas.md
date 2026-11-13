@@ -2,9 +2,9 @@
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-16-tarefas.md`
 > **Plano:** `docs/syntaxmesh/fases/fase-16-apoio.md`
-> **Status:** 🟢 Concluída (2026-11-03; escopo ajustado pela varredura xray: 16.10 cancelada, 16.9/16.14/16.15 movidas para a Fase 22)
-> **Total:** ~191 tarefas
-> **Concluídas:** 16 subfases (16.0–16.8, 16.11–16.13, 16.17–16.20) + 16.6 e 16.16 herdadas prontas
+> **Status:** 🟢 Concluída (2026-11-03; escopo ajustado pela varredura xray: 16.10 cancelada, 16.9/16.14/16.15 movidas para a Fase 22). Adendo **16.21** concluído em 2026-11-12.
+> **Total:** ~191 tarefas (+7 do adendo 16.21)
+> **Concluídas:** 16 subfases (16.0–16.8, 16.11–16.13, 16.17–16.20) + 16.6 e 16.16 herdadas prontas + adendo 16.21 (16.21.1–16.21.7)
 > **Fonte Ruby:** `docs/taskjuggler/lib/taskjuggler/{Journal,AlertLevelDefinitions,LeaveList,TernarySearchTree,AlgorithmDiff,TextFormatter,FileList,URLParameter,StdIoWrapper,UTF8String,KateSyntax,VimSyntax}.rb`
 
 > **📌 Âncora — Complemento Fase 11 (2ª onda, §6.5/§6.6 de `fase-11-logical-complemento.md`):**
@@ -42,6 +42,7 @@
 | 16.18 — `LogicalFlag` (journal) + `hasalert` | ✅ 2026-11-03 | `logic/logical-flag.ts`: ramo de journal implementado por duck-typing (`expr.query.flags` — o `LogicalExpression` recebe a `JournalEntry` em `journal.hideJournalEntry`), `to_s` idem; `NotYetImplementedError` removido. `logic/logical-function.ts`: `hasalert` usa `project.journal.currentEntries(query.end, property, Number(args[0]), query.start, query.hideJournalEntry)` e devolve `length > 0`. **5 passed (44 steps)** em `tests/logic/logical-attribute-flag_test.ts` + `logical-function_test.ts` (inclui `LogicalFlag` ocultando entrada real via `journal.rangeEntries`) |
 | 16.19 — Golden tests (journal + leaves) | ✅ 2026-11-03 | `scripts/golden/journal.rb` (oracle: `Project` mínimo + 6 `JournalEntry`, `to_rti` por `journalMode`, texto plano do RTI) → `tests/golden/journal.golden.json` (**17 casos**, cobre os 7 modos, `selfContained`, `hideJournalEntry` e atributos compactos); `scripts/golden/leaves.rb` → `tests/golden/leaves.golden.json` (**19 casos**: 7 `typeIdx`, 3 `to_s`, ordem da `LeaveList`, 7 `balance`, 2 erros de tipo); registrados em `generate_golden.ts` (task `golden:generate`); `tests/golden/journal_golden_test.ts` compara texto plano com whitespace colapsado (tolerância 12.19.8) e `leaves_golden_test.ts` fixa UTC em `beforeAll`/`afterAll`. **2 passed (40 steps)**; **36 casos** no total (≥ 25 exigidos). README dos goldens ganhou as seções 16.19 |
 | 16.20 — Verificação final | ✅ 2026-11-03 | `deno task check:all` exit 0 · `deno fmt --check` (642 arquivos) · `deno lint` (600 arquivos, 0 problemas) · `check:stubs` OK · **suíte 559 testes / 5542 passos / 0 falhas**. `NotYetImplementedError`: 0 em `model/journal.ts` — **não existe `src/journal/`** (desvio de caminho já registrado no topo) — e 0 em `task-scenario.ts`. ADR 029 commitada. Exports de `packages/core/mod.ts` verificados por `deno check`; duas colisões resolvidas no caminho: o `Journal` de `reports/i-calendar.ts` virou **`ICalJournal`** (o `Journal` do topo é o modelo da ADR 029) e o predicado numérico de `time/scoreboard-bits.ts` virou **`isScoreboardLeaveType`** (convive com `model/leave.ts#isLeaveType`). `StdIoWrapper` **não** existe como classe no port: o Ruby é módulo, então saem `stdIoWrapper` + `Results<T>` (16.20.6 atendido com esse nome). Smoke `tests/integration/smoke_after_phase_16_test.ts` — **3 passos**: entrada indexada + `alertLevel` 2 + nível default `red`; `TaskScenario.query_journal` devolve RTI `tj_journal` com `sectionNumbers=false` e o texto da entrada (16.20.10); Gantt da Fase 15 intacto (tabela + `taskbar`, sem SVG/Canvas). Auditoria 16.20.8: 16.0–16.19 têm seção correspondente no plano e a 16.20 só existe aqui. 16.20.9: `fase-16-apoio.md` já usa `### 16.X` e `ADR 029`. `deno task golden:generate` idempotente (12 goldens + extensões). **Dois flakes herdados corrigidos na verificação:** (a) `attribute-definitions` passou a comparar `LeaveList`/`LeaveAllowanceList` (subclasses de `Array` da 16.4) com o `[]` do Ruby via visão plana (`plainValue`); (b) **G10 da Fase 15** — `header.nowLineX` do golden de Gantt era o relógio da máquina (`TjTime.now().align(3600)`) e `depArrows` falhava sozinho horas após a geração; `gantt-common.rb` agora fixa `FROZEN_NOW = '2026-01-01'` (`report.set('now', …)`) e o teste reaplica o mesmo valor. `src/reports/rdo-report.ts` formatado e o alias `LeaveTypeLike` ajustado para `string & Record<never, never>` (regra `ban-types` do `deno lint`) |
+| 16.21 — Adendo F10-C (Journal `Material`/`Account` + `pictures`/`format`) | ✅ 2026-11-12 | 16.21.1–16.21.3 já entregues (união `property` + `entriesByMaterial`/`entriesByAccount` → `entriesByLeaf`). **16.21.4:** `currentEntries`/`currentEntriesR`/`alertLevel`/`alertEntries` já eram genéricos sobre `PropertyTreeNode` — cobertos por 5 testes novos. **16.21.5:** `rootProperties` alargado para `Material`/`Account` nos modos `status_*`/`alerts_*` (resource mantém o comportamento Ruby); `journal_sub` de material → `entriesByLeaf`. **16.21.6:** montagem de RTI por entrada (`assembleEntryRti`/`entryBodyRti`/`tagJournal`) — corpo no `format` da entrada (`markdown` via `MarkdownFactory`, `richtext` via MediaWiki) + `picturesMarkup`; `inputText` (back-reference `richText.inputText`) preservado para `lastSheetReport`/`query_dashboard`; `sectionNumbers=false`/`cssClass=tj_journal` por RTI de entrada (corrige numeração de seção no merge). **16.21.7:** regressão verde — `tests/model/journal-addendum-1621_test.ts` (**3 describes / 16 steps**) + golden journal (17 casos) + suíte completa **843 passed / 7039 steps / 0 failed** |
 
 ---
 
@@ -128,29 +129,30 @@ Esta fase **completa stubs** das Fases 5, 11 e 14. A ordem importa:
 ## Progresso
 
 ```
-[ ] 16.0  ADR 029 (Journal e AlertLevel)            —   0/5
-[ ] 16.1  AlertLevelDefinition + AlertLevelDefinitions — 0/14
-[ ] 16.2  JournalEntry + JournalEntryList           —   0/16
-[ ] 16.3  Journal (core + queries)                  —   0/28
-[ ] 16.4  Leave + LeaveList + LeaveAllowance        —   0/18
-[ ] 16.5  Substituir stubs de LeaveList (Fase 5)    —   0/6
+[x] 16.0  ADR 029 (Journal e AlertLevel)            —   5/5
+[x] 16.1  AlertLevelDefinition + AlertLevelDefinitions — 14/14
+[x] 16.2  JournalEntry + JournalEntryList           —  16/16
+[x] 16.3  Journal (core + queries)                  —  28/28
+[x] 16.4  Leave + LeaveList + LeaveAllowance        —  18/18
+[x] 16.5  Substituir stubs de LeaveList (Fase 5)    —   6/6
 [x] 16.6  TextFormatter                             —  10/10  ✅ ANTECIPADA na Fase 12 (2026-10-28): dependência pura de `RichTextElement#to_s`; port fiel de `TextFormatter.rb:21-184` (`indent`/`format` FSM/`appendWord`, code points UTF-8), expectations conferidas contra o Ruby real; 15 testes em `tests/utils/text-formatter_test.ts`; exportado via `utils/mod.ts`
-[ ] 16.7  FileList + FileRecord                     —   0/8   (consumidor: Fase 24 — §5.4)
-[ ] 16.8  URLParameter                              —   0/6
+[x] 16.7  FileList + FileRecord                     —   8/8   (consumidor: Fase 24 — §5.4)
+[x] 16.8  URLParameter                              —   6/6
 [x] 16.9  TernarySearchTree (MOVIDO → F22 22.1b)    —   n/a   — decisão 2026-11-03 (xray §3.2): o núcleo de docs/sintaxe inteiro vive na Fase 22; **entregue em 22.1b.1.1–1.12** (2026-11-08 + golden/barrel 2026-11-11)
 [x] 16.10 AlgorithmDiff (CANCELADO — DEAD)          —   n/a   — decisão 2026-11-03 (xray §2.2): zero chamadores no upstream; ver §16.10
-[ ] 16.11 StdIoWrapper                              —   0/6   (consumidores: Fase 18 + Fase 24)
-[ ] 16.12 UTF8String (no-op)                        —   0/8   (consumidor: Fase 24)
-[ ] 16.13 deepClone (revisar)                       —   0/4
+[x] 16.11 StdIoWrapper                              —   6/6   (consumidores: Fase 18 + Fase 24)
+[x] 16.12 UTF8String (no-op)                        —   8/8   (consumidor: Fase 24)
+[x] 16.13 deepClone (revisar)                       —   4/4
 [x] 16.14 SyntaxCore (MOVIDO → F22 22.1b)           —   n/a   — decisão 2026-11-03; 16.15 permanece CANCELADO; **entregue em 22.1b.6.1–6.8** (2026-11-11; 6.9/6.10 fora do v1)
 [x] 16.15 VimSyntax (CANCELADO → geradores finais)  —   n/a
-[ ] 16.16 Completar TaskScenario query_* (8)        —   0/20
-[x] 16.17 Completar ResourceScenario query_dashboard —  0/6   (dono único: F16; âncora em `resource.ts` reancorada de 15→16)
-[x] 16.18 Completar LogicalFlag + hasalert          —   0/8
-[x] 16.19 Golden tests (Journal + Leaves)           —   0/10
-[x] 16.20 Verificação final                         —   0/10
+[x] 16.16 Completar TaskScenario query_* (8)        —  20/20  ✅ herdada (`property-tree-node.ts`)
+[x] 16.17 Completar ResourceScenario query_dashboard —   6/6   (dono único: F16; âncora em `resource.ts` reancorada de 15→16)
+[x] 16.18 Completar LogicalFlag + hasalert          —   8/8
+[x] 16.19 Golden tests (Journal + Leaves)           —  10/10
+[x] 16.20 Verificação final                         —  10/10
+[x] 16.21 Adendo F10-C: Journal Material/Account + pictures/format — 7/7  ✅ 2026-11-12 (ver tabela do adendo ao final)
 ─────────────────────────────────────────────────────────
-TOTAL: ~191
+TOTAL: ~191 (+7 do adendo 16.21)
 ```
 
 ---
@@ -873,6 +875,18 @@ da própria subfase 22.1b (`doc-core`).
 | 16.21.7 | **Regressão:** journal em `task`/`resource`/`project` idêntico ao comportamento atual | testes existentes | verde |
 
 **Critério de aceite do adendo:** `entriesByMaterial`/`entriesByAccount` funcionam com filtros de data/alerta; `alertLevel` agrega account/material; nenhum teste existente de journal quebra.
+
+**Estado: ✅ concluído (2026-11-12).** Evidência por tarefa (caminho real `packages/core/src/model/journal.ts`, não `journal/`):
+
+| # | Estado | Evidência |
+|---|---|---|
+| 16.21.1 | ✅ herdada | `JournalEntry.property` já aceita `Task \| Resource \| Material \| Account \| null` (união aberta no Bloco C1/C0) |
+| 16.21.2 | ✅ herdada | `Journal.entriesByMaterial` → `entriesByLeaf` (filtros data/alerta); coberto em `journal-index_14c_test.ts` |
+| 16.21.3 | ✅ herdada | `Journal.entriesByAccount` → `entriesByLeaf`; coberto em `journal-index_14c_test.ts` |
+| 16.21.4 | ✅ 2026-11-12 | `currentEntries`/`currentEntriesR`/`alertLevel`/`alertEntries` genéricos sobre `PropertyTreeNode`; **5 testes** em `journal-addendum-1621_test.ts` (material + conta pai agregando subconta) |
+| 16.21.5 | ✅ 2026-11-12 | `rootProperties` aceita `Material`/`Account` em `status_up`/`status_down`/`alerts_*`; `journal_sub` de material → `entriesByLeaf`; **6 testes** (inclui regressão resource vazio) |
+| 16.21.6 | ✅ 2026-11-12 | RTI por entrada: `frameMarkup` + corpo no `format` (`MarkdownFactory`/MediaWiki) + `picturesMarkup`; `assembleEntryRti`/`entryBodyRti`/`tagJournal`; `inputText` preservado; **5 testes** (pictures→`![alt](path)`, markdown/richtext→`<b>`, selfContained) |
+| 16.21.7 | ✅ 2026-11-12 | Regressão: golden journal (17 casos) + `journal-queries_16`/`journal-index_14c`/`journal-entry-list`/`journal-column_14c`/`rules_journal_picture` + suíte completa **843 passed / 7039 steps / 0 failed** |
 
 ---
 

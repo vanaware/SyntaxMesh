@@ -226,6 +226,15 @@ reconciliada na Fase 21" está **satisfeita** com esta seção.
   Verificado por `packages/core/tests/model/account-scenario-charge-booking_test.ts`
   (6 steps: chargeset rule 3 · janela · estorno · idempotência · defaultaccount
   rule 4 · irmã isolada).
+- **Adendo 16.21 (F10-C → Journal) fechado em 2026-11-12:** `Journal.to_rti`
+  aceita `Material`/`Account` como folha nos modos `status_*`/`alerts_*`
+  (`rootProperties` alargado; `journal_sub` de material → `entriesByLeaf`) e
+  propaga `pictures`/`format` no RTI (corpo por `format` via `MarkdownFactory`/
+  MediaWiki + `picturesMarkup`; `inputText` back-reference preservado para
+  `lastSheetReport`/`query_dashboard`). Não era gap G/C/D rastreado — pendência
+  do adendo F10-C na F16. Evidência: `fase-16-apoio-tarefas.md` §16.21 +
+  `packages/core/tests/model/journal-addendum-1621_test.ts` (16 steps); suíte
+  completa 843 passed / 7039 steps / 0 failed.
 
 ## Como atualizar
 
