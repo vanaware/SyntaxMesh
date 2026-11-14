@@ -1,0 +1,85 @@
+{
+  "name": "syntaxmesh-vscode",
+  "displayName": "SyntaxMesh",
+  "description": "SyntaxMesh language support: highlight, diagnostics, hover, completion and navigation for .smx (native) and TaskJuggler-compatible .tjp/.tji.",
+  "version": "0.0.2",
+  "publisher": "vanaware",
+  "license": "GPL-2.0-only",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets",
+    "Linters"
+  ],
+  "keywords": [
+    "syntaxmesh",
+    "taskjuggler",
+    "project management",
+    "tjp",
+    "smx"
+  ],
+  "main": "./dist/extension.node.js",
+  "browser": "./dist/extension.web.js",
+  "activationEvents": [
+    "onLanguage:syntaxmesh"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "syntaxmesh",
+        "aliases": [
+          "SyntaxMesh",
+          "syntaxmesh"
+        ],
+        "extensions": [
+          ".smx",
+          ".tjp",
+          ".tji"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "syntaxmesh",
+        "scopeName": "source.syntaxmesh",
+        "path": "./syntaxes/syntaxmesh.tmLanguage.json"
+      },
+      {
+        "language": "syntaxmesh",
+        "scopeName": "source.syntaxmesh.tji",
+        "path": "./syntaxes/syntaxmesh-tji.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "syntaxmesh",
+        "path": "./snippets/syntaxmesh.json"
+      }
+    ],
+    "configuration": {
+      "title": "SyntaxMesh",
+      "properties": {
+        "syntaxmesh.trace.server": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Trace the communication between VS Code and the SyntaxMesh language server."
+        },
+        "syntaxmesh.maxNumberOfProblems": {
+          "type": "number",
+          "default": 100,
+          "minimum": 1,
+          "maximum": 1000,
+          "description": "Maximum number of diagnostics reported per document."
+        }
+      }
+    }
+  }
+}

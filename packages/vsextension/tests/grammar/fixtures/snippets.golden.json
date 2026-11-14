@@ -1,0 +1,61 @@
+{
+  "project": {
+    "prefix": "project",
+    "body": [
+      "project ${1:prj} \"${2:Project Name}\" \"${3:1.0}\" ${4:2026-01-01} - ${5:2026-12-31} {",
+      "  timeformat \"%Y-%m-%d\"",
+      "  $0",
+      "}"
+    ],
+    "description": "Project header with id, name, version and timeframe"
+  },
+  "task": {
+    "prefix": "task",
+    "body": [
+      "task ${1:tsk} \"${2:Task Name}\" {",
+      "  effort ${3:1d}",
+      "  allocate ${4:dev}",
+      "  $0",
+      "}"
+    ],
+    "description": "Task with an effort estimate and allocation"
+  },
+  "resource": {
+    "prefix": "resource",
+    "body": [
+      "resource ${1:dev} \"${2:Resource Name}\" {",
+      "  $0",
+      "}"
+    ],
+    "description": "Resource declaration"
+  },
+  "account": {
+    "prefix": "account",
+    "body": [
+      "account ${1:acc} \"${2:Account Name}\" {",
+      "  $0",
+      "}"
+    ],
+    "description": "Account declaration for cost tracking"
+  },
+  "report": {
+    "prefix": "report",
+    "body": [
+      "${1|taskreport,resourcereport,textreport|} \"${2:Report Name}\" {",
+      "  formats ${3:html}",
+      "  headline \"${4:Report Headline}\"",
+      "  $0",
+      "}"
+    ],
+    "description": "Report (task/resource/text) with an HTML format"
+  },
+  "material": {
+    "prefix": "material",
+    "body": [
+      "material ${1:mat} \"${2:Material Name}\" {",
+      "  $0",
+      "}"
+    ],
+    "description": "Material declaration (Fase 8.1 cost model)"
+  }
+}

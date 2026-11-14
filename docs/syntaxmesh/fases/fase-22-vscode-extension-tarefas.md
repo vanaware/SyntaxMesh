@@ -4,8 +4,10 @@
 > **Plan:** [Major blocks P1–P7](fase-22-vscode-extension.md#0-major-blocks-and-subblocks)
 > and original subphases 22.0–22.11 in §13.
 > **Status:** `PAR` — P1 (22.0) accepted 2026-11-11 (ADR 035); **P2 completed
-> 2026-11-11** (subfase 22.1b fechada + `lsp-core` puro entregue).
-> Editor extension (P3) not started.
+> 2026-11-11** (subfase 22.1b fechada + `lsp-core` puro entregue);
+> **P3 completed 2026-11-12** (editor foundation: shell 22.2 + grammar 22.3 +
+> transporte 22.4; cobertura lógica pura 99,2% linhas; bundles Web sem `node:`).
+> Próximo bloco: P4 (execução/relatórios/UX).
 > **Recorded progress:** 86/108 tasks in 22.1b recorded (2026-11-08);
 > **99/108 verified** after the 2026-11-11 audit + P2 deliveries (Blocos B/H/I;
 > I 7.9 reaberta — o smoke registrado não existia no código);
@@ -36,8 +38,8 @@ consumer annotations, and the historical progress section below remain intact.
 |---|---|---|---|
 | [P1 — Scope and architecture](fase-22-vscode-extension.md#p1-scope-and-architecture) | P1.1 baseline; P1.2 layers; P1.3 ADR | 22.0 (A) | Detailed below (Bloco A) |
 | [P2 — Shared language/documentation cores](fase-22-vscode-extension.md#p2-shared-language-and-documentation-cores) | P2.1 workspace; P2.2 docs; P2.3 highlight; P2.4 pure LSP; P2.5 bridges/verification | 22.1 (B), 22.1b (C–J) | Detailed below (Bloco B + C–J) |
-| [P3 — Editor foundation](fase-22-vscode-extension.md#p3-editor-foundation-and-language-tooling) | P3.1 shell; P3.2 grammar/snippets; P3.3 transport integration | 22.2–22.4 | Pending |
-| [P4 — Execution, reports and UX](fase-22-vscode-extension.md#p4-project-execution-reports-and-editor-ux) | P4.1 API audit; P4.2 daemon; P4.3 reports; P4.4 commands/views/trust | 22.5–22.7 | Pending |
+| [P3 — Editor foundation](fase-22-vscode-extension.md#p3-editor-foundation-and-language-tooling) | P3.1 shell; P3.2 grammar/snippets; P3.3 transport integration | 22.2–22.4 | Detailed below (P3 — 22.2/22.3/22.4) |
+| [P4 — Execution, reports and UX](fase-22-vscode-extension.md#p4-project-execution-reports-and-editor-ux) | P4.1 API audit; P4.2 daemon; P4.3 reports; P4.4 commands/views/trust | 22.5–22.7 | Detailed below (P4 — 22.5/22.6/22.7) |
 | [P5 — Web and storage](fase-22-vscode-extension.md#p5-web-host-and-storage-adaptation) | P5.1 browser graph; P5.2 writes; P5.3 storage fallbacks | 22.8 | Pending |
 | [P6 — Standalone LSP](fase-22-vscode-extension.md#p6-standalone-lsp-adapter) | P6.1 stdio bootstrap; P6.2 build/protocol smoke | 22.9 | Pending |
 | [P7 — Packaging and handoff](fase-22-vscode-extension.md#p7-packaging-acceptance-and-handoff) | P7.1 builds; P7.2 acceptance; P7.3 closure/F21² | 22.10–22.11 | Pending |
@@ -60,12 +62,12 @@ Counts below mirror the historical 22.1b progress table, not a new verification.
 | H | 22.1b | P2.3 | `SyntaxCore` shared highlight data | Detailed below | `OK` — 8/10 verified (2026-11-11); 6.9 outside v1, 6.10 plan note |
 | I | 22.1b | P2.5 | Exports/purity, editor bridges, CLI, smoke/cache | Detailed below | `OK` — 10/10 (7.5 + 7.6 + 7.7 + 7.9 delivered 2026-11-11) |
 | J | 22.1b | P2.5 | Oracle/gates/coverage/documentation | Detailed below | `OK` — 8/8 verified (2026-11-11: golden determinístico, confronto tj3man, gate completo 840 passed, cobertura docgen 97,0%, docs fechados) |
-| To assign at detailing | 22.2 | P3.1 | Extension shell | Pending | `PLA` |
-| To assign at detailing | 22.3 | P3.2 | Grammar, snippets, snapshots | Pending | `PLA` |
-| To assign at detailing | 22.4 | P3.3 | Desktop/Web LSP integration | Pending | `PLA` |
-| To assign at detailing | 22.5 | P4.1–P4.2 | F24 API audit, then explicit daemon/cache | Pending | `PLA` |
-| To assign at detailing | 22.6 | P4.3 | Shared execution contract and report output policy | Pending | `PLA` |
-| To assign at detailing | 22.7 | P4.4 | Export/input-language/help, config, views and trust | Pending | `PLA` |
+| P3 (22.2) | 22.2 | P3.1 | Extension shell | Detailed below (P3) | `OK` — 22.2.1–22.2.5 delivered 2026-11-12 (scaffold + manifest + config + `.vscodeignore` + dual entries `extension.node.ts`/`extension.web.ts`) |
+| P3 (22.3) | 22.3 | P3.2 | Grammar, snippets, snapshots | Detailed below (P3) | `OK` — 22.3.1–22.3.6 delivered 2026-11-12 (geradores textmate/tji/language-config/snippets + 4 assets JSON + goldens determinísticos) |
+| P3 (22.4) | 22.4 | P3.3 | Desktop/Web LSP integration | Detailed below (P3) | `OK` — 22.4.1–22.4.9 delivered 2026-11-12 (adapter/options/debounce + bootstraps node/web + build 4 bundles Web sem `node:` + wiring smoke; cobertura lógica pura 99,2%) |
+| P4 (22.5) | 22.5 | P4.1–P4.2 | F24 API audit, then explicit daemon/cache | Detailed below (P4) | `PAR` — P4.1 audit done (2026-11-12, execute-based sem delta no core); daemon implementation pending |
+| P4 (22.6) | 22.6 | P4.3 | Shared execution contract and report output policy | Detailed below (P4) | `PLA` |
+| P4 (22.7) | 22.7 | P4.4 | Export/input-language/help, config, views and trust | Detailed below (P4) | `PLA` |
 | To assign at detailing | 22.8 | P5.1–P5.3 | Web runtime, writes and storage fallbacks | Pending | `PLA` |
 | To assign at detailing | 22.9 | P6.1–P6.2 | Standalone stdio server/build | Pending | `PLA` |
 | To assign at detailing | 22.10 | P7.1–P7.2 | Packaging and clean-install acceptance | Pending | `PLA` |
@@ -517,6 +519,155 @@ grammar TextMate, folding). A CLI **não** consome este bloco.
 
 ---
 
+## P3 — Editor foundation (22.2–22.4)
+
+**Kickoff (2026-11-12):** detalhado conforme o protocolo do plano §0 (uma
+entrega por tarefa, ≤ 2h, teste primeiro). P3 entrega o tooling de edição
+independente de scheduling/relatórios (P4). Ordem de execução por dependência:
+22.2.1–22.2.4 (scaffold) → 22.3 (grammar) → 22.4.1–22.4.6 (transporte) →
+22.2.5 (entries) → 22.4.7–22.4.9 (build + gate). Os IDs permanecem agrupados
+por owner original (22.2/22.3/22.4), sem renomear A–J nem usar o placeholder
+K–S.
+
+### Decisões de arquitetura P3 (registradas no kickoff)
+
+| Decisão | Escolha | Fundamento |
+|---|---|---|
+| Build | `deno bundle` via `scripts/build.ts` local (`Deno.Command`, padrão `bundle-node.ts` do CLI) | ⚠️ ADAPTAÇÃO: o plano §10 cita esbuild/@vsce/bundler, mas só o `deno bundle` resolve o import map do workspace (core + `npm:`) nativamente **e** suporta `--external vscode` (probe EXIT=0: 150 módulos, `require("vscode")` preservado); esbuild exigiria loader plugin. ADR 034/CLI já estabelecem o precedente do Deno bundler |
+| Bundles | 4: `dist/extension.node.js` + `dist/server.node.js` (`--platform=deno --format=cjs`), `dist/extension.web.js` + `dist/server.web.js` (`--platform=browser --format=esm`); todos `--external vscode` | §7: servidor embutido por host — IPC desktop exige módulo de servidor separado; Web exige Worker; `--platform=deno` roda em Node via `node:` builtins (precedente CLI) |
+| Import map | `vscode` → `npm:@types/vscode@^1.90` (só tipos; runtime external); subpaths `vscode-languageclient/{node,browser}` e `vscode-languageserver/{node,browser}` → `npm:@^9.0.1`; `@vanaware/syntaxmesh/{lsp-core,doc-core}` → relativo ao core | probe `.tmp/p3probe` EXIT=0 (`deno check`); deps resolvidas do registry real (`registry.npmjs.org`) |
+| Lógica pura | grammar generators, server adapter, client options, debounce, config reader extraídos para módulos sem `vscode`/lib runtime → testáveis em Deno puro | §11 (≥ 70% extensão); ADR 035 (inteligência no core, bootstrap fino) |
+| Aceite VS Code | Test Runner de integração + smoke `.vsix` em VS Code limpo **adiados para P7** (sem VS Code neste ambiente); aqui: unit Deno + snapshots de grammar + contrato do adapter com mock + build | §11; ambiente sem VS Code |
+| v1 | inglês-only (grammar/snippets); `.smx` nativa + `.tjp`/`.tji` por compatibilidade | ADR 035 §8; plano §6 |
+
+> **Fronteira:** o bootstrap da extensão importa `vscode-languageserver`/
+> `vscode-languageclient`/`vscode` livremente — o gate `check:lspcore` varre
+> **só** `packages/core/src/lsp/`. A inteligência LSP permanece no core
+> (`registerLspServer`); a extensão só cria a conexão e a adapta ao
+> `ServerConnection` estrutural (22.1.15). O `doc-core` já exporta `SyntaxCore`
+> + `TokenRule`/`Region`/`IndentSettings` — a grammar consome esses dados sem
+> nenhuma dependência nova do core.
+
+### 22.2 — Extension shell (P3.1)
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 22.2.1 | Criar o pacote `packages/vsextension/deno.jsonc` (name `@vanaware/syntaxmesh-vscode`, exports `"."`→`src/extension.node.ts`, imports do import map acima, tasks `check`/`test`/`build`/`generate`/`lint:doc`/`lint:doc:update`); adicionar `./packages/vsextension` ao `workspace` raiz + tasks `build:vsext`/`generate:vsext` | `packages/vsextension/deno.jsonc`, `deno.jsonc` (raiz) | `deno task check` (vsext) exit 0; workspace coerente |
+| 22.2.2 | Criar `package.json` **manifesto VS Code** (sem deps): `main`/`browser`, `engines.vscode ^1.90`, `contributes.languages` (`syntaxmesh` `.smx`/`.tjp`/`.tji` + configuration), `grammars` (`source.syntaxmesh` + `source.syntaxmesh.tji`), `snippets`, `configuration` (`syntaxmesh.trace.server`, `syntaxmesh.maxNumberOfProblems`), `activationEvents` | `packages/vsextension/package.json` | JSON válido; contributes aponta para arquivos gerados (22.3) |
+| 22.2.3 | Leitor puro de settings `src/config/settings.ts` — `readSettings(config: WorkspaceConfigLike): SyntaxMeshSettings` sobre interface estrutural (sem `vscode`), `DEFAULT_SETTINGS`, clamp/enum de `trace.server` | `src/config/settings.ts`, `tests/config/settings_test.ts` | 4 testes (defaults, override, enum trace, clamp) |
+| 22.2.4 | `.vscodeignore` (exclui `src/`, `tests/`, `scripts/`, `deno.json*`, `node_modules`), `exclude` do pacote + `dist/` no `.gitignore` raiz | `.vscodeignore`, `deno.jsonc`, `.gitignore` | gate verde; listagem `.vsix` dry-run fica para P7 |
+| 22.2.5 | Entradas duplas `src/extension.node.ts` + `src/extension.web.ts` (`activate`/`deactivate` delegando ao start/stop do cliente; JSDoc inglês) — **depende de 22.4.6** | `src/extension.node.ts`, `src/extension.web.ts` | `deno check` exit 0 |
+
+### 22.3 — TextMate grammar + snippets (P3.2)
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 22.3.1 | Gerador puro `src/grammar/textmate.ts` — `generateGrammar(core?): TextMateGrammar` (`scopeName source.syntaxmesh`) projetando `categories()` + `tokenRules()`: keywords→`keyword.control`, builtin→`storage.type`, types→`keyword.other`, date/time/duration→`constant`, strings/comments/numbers/braces/include; tipos em `src/grammar/types.ts` | `src/grammar/textmate.ts`, `src/grammar/types.ts`, `tests/grammar/textmate_test.ts` | 5 testes (scope, scopes de keyword, famílias de literais, repository, determinismo) |
+| 22.3.2 | Gerador puro `src/grammar/tji.ts` — `generateTjiGrammar(core?): TextMateGrammar` (`scopeName source.syntaxmesh.tji`) que inclui `source.syntaxmesh` + diretiva `include` | `src/grammar/tji.ts`, `tests/grammar/tji_test.ts` | 3 testes (scope, include, referência à grammar principal) |
+| 22.3.3 | Gerador puro `src/grammar/language-config.ts` — `generateLanguageConfiguration(core?): LanguageConfiguration` de `indentSettings()`: brackets `{}[]`, autoClosingPairs, comentários (`#`/`//` linha, `/* */` bloco), folding, indentationRules, wordPattern | `src/grammar/language-config.ts`, `tests/grammar/language-config_test.ts` | 4 testes (brackets, comentários, folding, indentação) |
+| 22.3.4 | Snippets puros `src/grammar/snippets.ts` — `SNIPPETS: Record<string, Snippet>` EN (`project`/`task`/`resource`/`account`/`report`/`material`) com prefix/body/description; tipo `Snippet` | `src/grammar/snippets.ts`, `tests/grammar/snippets_test.ts` | 4 testes (6 snippets, prefixes, placeholders, descriptions EN) |
+| 22.3.5 | Script `scripts/generate-grammar.ts` (`deno task generate`) escreve `syntaxes/syntaxmesh.tmLanguage.json`, `syntaxes/syntaxmesh-tji.tmLanguage.json`, `language-configuration.json`, `snippets/syntaxmesh.json` a partir dos geradores puros | `scripts/generate-grammar.ts`, `syntaxes/*`, `language-configuration.json`, `snippets/syntaxmesh.json` | 2 execuções byte a byte iguais; 4 JSON válidos |
+| 22.3.6 | Snapshots golden EN `tests/grammar/fixtures/*.golden.json` + testes de snapshot comparando a saída dos geradores aos fixtures commitados | `tests/grammar/fixtures/*`, `tests/grammar/snapshot_test.ts` | snapshots verdes (EN); regeneração determinística |
+
+### 22.4 — Client/server transport integration (P3.3)
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 22.4.1 | Adapter puro `src/server/adapter.ts` — `adaptConnection(conn: ConnectionLike): ServerConnection` mapeando `onInitialize`/`onDidOpen`/`onDidChange`/`onDidClose`/`onHover`/`onCompletion`/`onDefinition`/`onReferences`/`onDocumentSymbol`/`onWorkspaceSymbol`/`sendDiagnostics` 1:1 e `onSemanticTokens` ← `languages.semanticTokens.on`; tipo estrutural `ConnectionLike` (sem importar a lib) | `src/server/adapter.ts`, `tests/server/adapter_test.ts` | 5 testes com mock (initialize, sync, semanticTokens adaptado, sendDiagnostics, todos os métodos) |
+| 22.4.2 | Opções puras do cliente `src/client/options.ts` — `DOCUMENT_SELECTOR` (`syntaxmesh` `.smx`/`.tjp`/`.tji`), `buildClientOptions(settings)` (synchronize.fileEvents watcher, initializationOptions, trace), `CLIENT_ID`/`SERVER_ID` | `src/client/options.ts`, `tests/client/options_test.ts` | 4 testes (selector, fileEvents, trace, shape) |
+| 22.4.3 | Debounce puro `src/client/debounce.ts` — `createDebouncer(delayMs, fn)` (setTimeout, `cancel`/`flush`/`pending`) para reanálise; cancelamento de request anterior | `src/client/debounce.ts`, `tests/client/debounce_test.ts` | 4 testes (coalesce, cancel, fire-after-delay, flush) |
+| 22.4.4 | Bootstrap do servidor Node `src/server/node.ts` — `createConnection` (`vscode-languageserver/node`) + `adaptConnection` + `registerLspServer` + `listen`; **sem `console.log`** (usar `connection.console`) | `src/server/node.ts` | `deno check` exit 0; grep sem `console.log` |
+| 22.4.5 | Bootstrap do servidor Web `src/server/browser.ts` — `createConnection` (`vscode-languageserver/browser`) + `adaptConnection` + `registerLspServer` + `listen` (Worker) | `src/server/browser.ts` | `deno check` exit 0 |
+| 22.4.6 | Bootstraps do cliente `src/client/node.ts` (LanguageClient node, `serverOptions.module`→`dist/server.node.js`, IPC) + `src/client/browser.ts` (LanguageClient browser, Worker→`dist/server.web.js`); start/stop | `src/client/node.ts`, `src/client/browser.ts` | `deno check` exit 0 |
+| 22.4.7 | Script de build `scripts/build.ts` (`deno task build`) — `deno bundle` produz os 4 bundles (decisões de 22.2), `--external vscode`, sourcemap; web **sem `node:*`** | `scripts/build.ts`, `dist/*.js` | `dist/*.js` gerados; grep web sem `node:`; node cjs / web esm |
+| 22.4.8 | Smoke de wiring `tests/server/wiring_test.ts` — sessão completa `registerLspServer(adaptConnection(mock))`: initialize → didOpen → publishDiagnostics → hover/completion → didChange incremental → didClose (sem VS Code) | `tests/server/wiring_test.ts` | green (contrato do adapter + core) |
+| 22.4.9 | Cobertura ≥ 70% na lógica pura da extensão + gate completo `deno task tests` + evidência P3 + docs (`CURRENT.md`, `plano.md`, `AGENTS.md`, progresso/nav deste arquivo, plano §13) | `tests/`, docs | gate EXIT=0; relatório de cobertura; docs coerentes |
+
+> **Nota de escopo P3:** o daemon (22.5), relatórios (22.6), comandos/views
+> (22.7) e o runtime Web completo/storage (22.8) são **P4/P5** — não entram
+> aqui. O critério de saída "buffer incompleto nunca alimenta o daemon" é
+> trivialmente satisfeito em P3 (ainda não há daemon). A integração LSP no
+> **VS Code Test Runner** e o smoke `.vsix` em instalação limpa são **P7**
+> (22.10/22.11), fora deste ambiente sem VS Code.
+
+---
+
+## P4 — Execution, reports and editor UX (22.5–22.7)
+
+**Kickoff (2026-11-12):** detalhado conforme o protocolo do plano §0 (uma
+entrega por tarefa, ≤ 2h, teste primeiro). P4 conecta ações deliberadas do
+usuário à execução estável de projetos (daemon) + relatórios + UX do editor.
+**Depende de P3** (transporte/entries). Ordem: 22.5.1 (auditoria P4.1) →
+22.5.2–22.5.7 (daemon puro) → 22.5.8–22.5.9 (host/comandos) → 22.6 (relatórios)
+→ 22.7 (comandos/views/trust) → gate. IDs agrupados por owner original
+(22.5/22.6/22.7), sem renomear A–J nem usar placeholder K–S.
+
+### Decisão P4.1 — auditoria do contrato de execução (22.5.1, 2026-11-12)
+
+| Aspecto | Decisão | Fundamento |
+|---|---|---|
+| Arquitetura do daemon | **execute-based, sem delta no core** (confirmada pelo usuário) | `execute` é one-shot stateless (re-parse + re-schedule por chamada, fila serializada); o cache multi-projeto vive na extensão. Adendo F24 §5.1 pré-autoriza o delta; v1 não o exercita |
+| `ProjectModel` | fechamento de arquivos (`files[]`) + último envelope (`listReports`/`reports`/`messages`/`exitCode`) + metadados (uri/entry/status/timestamps) | O core não guarda estado entre chamadas; a extensão guarda os **dados** do último envelope, não uma instância de `Project` |
+| Relatório sem re-parse | **adiado** como delta futuro do adendo F24 (modelo persistente, semântica `tj3client` load/unload/list-projects) | Plano §3.3 "gated by P4.1, not assumed available"; geração v1 re-parseia + reagenda via `execute` com o closure cacheado |
+| Listagem de relatórios | seção `listReports` do último envelope (add/reload) | `execute` com `request.listReports` já devolve `[{name,type}]` |
+| Fachada passo-a-passo | preservada como alternativa (UI/PWA F20), não usada no daemon v1 | Adendo F24 §5.1; evita duplicar lógica de transporte/core |
+| Política de saída | extensão (simétrica à `output-policy.ts` da CLI): HTML→Webview + assets; CSV/XML/texto→`workspace.fs.writeFile` | Plano §3.3; o core devolve conteúdo como dado |
+| Lógica pura | cache/closure/request-builder/output-policy/selector/tree/status/trust/input-language extraídos para módulos sem `vscode` runtime → testáveis em Deno | §11 (≥ 70%); padrão P3 (bootstrap fino, inteligência pura) |
+| Aceite VS Code | Webview/comandos/views/trust runtime + smoke `.vsix` **adiados para P7** | ambiente sem VS Code; aqui: unit Deno + type-check dos bootstraps |
+
+> **Fronteira:** o daemon importa `@vanaware/syntaxmesh` (`execute` + tipos
+> `ExecutionRequest`/`ExecutionResult`) — o **core completo**, não só o
+> `lsp-core`. O gate `check:lspcore` varre só `packages/core/src/lsp/`; o
+> daemon da extensão pode usar `execute` livremente (é o consumidor previsto
+> no adendo F24). O `execute` continua puro (sem FS/argv/exit); a extensão
+> faz a leitura (`workspace.fs`/buffer) e a escrita (Webview/save).
+
+### 22.5 — Project daemon (P4.2)
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 22.5.1 | Auditoria P4.1 do contrato `execute` (load/reload/list + cached-model) + decisão registrada no adendo F24 §5.1 + plano §3.2/§3.3 | `fase-24-cli-adendo.md`, `fase-22-vscode-extension.md` | decisão execute-based sem delta; cached-model adiado como delta futuro |
+| 22.5.2 | Tipos puros `src/daemon/types.ts` — `ProjectModel` (uri/entry/files/envelope/status/addedAt/reloadedAt), `DaemonStatus`, `ProjectSummary`; sem `vscode` | `src/daemon/types.ts` | `deno check` exit 0 |
+| 22.5.3 | Cache puro `src/daemon/project-cache.ts` — `ProjectCache` (`Map<uri, ProjectModel>`): set/get/remove/list/has/clear/size + invalidação; testes | `src/daemon/project-cache.ts`, `tests/daemon/project-cache_test.ts` | 5 testes (add/get, remove, list ordenado, overwrite, clear) |
+| 22.5.4 | Closure puro `src/daemon/include-closure.ts` — `extractIncludes(text): string[]` (diretivas `include` do master) + `buildClosure(master, read)` com `read` injetado (lookup por caminho, sem FS); testes | `src/daemon/include-closure.ts`, `tests/daemon/include-closure_test.ts` | 4 testes (extração, closure transitivo, ausente→erro, ciclo guard) |
+| 22.5.5 | Request builder puro `src/daemon/request-builder.ts` — `buildExecuteRequest(closure, opts)` → `ExecutionRequest` (entry/files/listReports/report/reportsIsRegex/outputDir); testes | `src/daemon/request-builder.ts`, `tests/daemon/request-builder_test.ts` | 4 testes (add, listReports, generate, outputDir) |
+| 22.5.6 | Daemon core puro `src/daemon/daemon-core.ts` — `DaemonCore` (cache + `execute` injetado): addProject/reloadProject/removeProject/listProjects/listReports/generateReport; projeta status/messages do envelope; testes com `execute` fake | `src/daemon/daemon-core.ts`, `tests/daemon/daemon-core_test.ts` | 6 testes (add→cache, reload, remove, list, listReports, generate) |
+| 22.5.7 | Persistência pura `src/daemon/persistence.ts` — `serializeCache`/`deserializeCache` (JSON com version tag; só dados, sem instâncias); testes | `src/daemon/persistence.ts`, `tests/daemon/persistence_test.ts` | 3 testes (round-trip, version mismatch, vazio) |
+| 22.5.8 | Bootstrap host `src/daemon/host.ts` — leitura `workspace.fs`/buffer `getText` + montagem do closure + persistência em `context.storageUri` (Desktop) / memória (Web); type-check only | `src/daemon/host.ts` | `deno check` exit 0 |
+| 22.5.9 | Comandos do daemon `src/commands/daemon.ts` — add/remove/list/reload sobre `DaemonCore` + gate de trust; registro no `activate`; type-check only | `src/commands/daemon.ts`, `src/extension.node.ts`/`web.ts` | `deno check` exit 0; grep sem watcher automático |
+
+### 22.6 — Report output policy (P4.3)
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 22.6.1 | Política pura `src/reports/output-policy.ts` — `destinationFor(format)` (html→webview, csv/xml/text→save) + `reportFileName(name, format)` (sanitização + tabela de extensões markdown→md/iCal→ics, simétrica à CLI); testes | `src/reports/output-policy.ts`, `tests/reports/output-policy_test.ts` | 5 testes (branch por formato, sanitização, extensões, nome vazio) |
+| 22.6.2 | Seletor puro `src/reports/report-selector.ts` — `quickPickItems(listReports)` + `chooseFormat(report, defaultFormat)`; testes | `src/reports/report-selector.ts`, `tests/reports/report-selector_test.ts` | 3 testes (items, formato default, formato único) |
+| 22.6.3 | Webview HTML puro `src/reports/webview-html.ts` — `renderWebviewHtml(content, assets, cspSource)` (URIs `vscode-webview-resource`, CSP, botão salvar); testes estruturais | `src/reports/webview-html.ts`, `tests/reports/webview-html_test.ts` | 3 testes (CSP, asset URIs, conteúdo) |
+| 22.6.4 | Bootstrap relatórios `src/reports/host.ts` — criação do Webview panel + `workspace.fs.writeFile` (save); type-check only | `src/reports/host.ts` | `deno check` exit 0 |
+| 22.6.5 | Comando Gerar Relatório `src/commands/reports.ts` — list→select→generate→branch (Webview/save) sobre DaemonCore + output-policy; type-check only | `src/commands/reports.ts` | `deno check` exit 0 |
+
+### 22.7 — Commands, views and trust (P4.4)
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 22.7.1 | Settings puros (extensão) `src/config/settings.ts` — `syntaxmesh.locale` (auto/en/pt-BR/es; diretiva do arquivo soberana) + `syntaxmesh.report.defaultFormat`; testes | `src/config/settings.ts`, `tests/config/settings_test.ts` | +3 testes (locale default, override, defaultFormat) |
+| 22.7.2 | Projeção pura `src/views/project-tree.ts` — `treeChildren(model)`/`treeItem(node)` (tasks/resources/accounts/shifts/reports; ícone/collapsibleState como dados); testes | `src/views/project-tree.ts`, `tests/views/project-tree_test.ts` | 4 testes (raiz, filhos, ícones, vazio) |
+| 22.7.3 | Status bar puro `src/views/status-bar.ts` — `statusText(state)` (parser/daemon, locale, última execução); testes | `src/views/status-bar.ts`, `tests/views/status-bar_test.ts` | 3 testes (idle, ok, erro) |
+| 22.7.4 | Input-language puro `src/commands/input-language.ts` — `rewriteLanguageDirective(text, locale)` (reescreve/insere `language "..."`; preserva o resto); testes | `src/commands/input-language.ts`, `tests/commands/input-language_test.ts` | 4 testes (replace, insert, preserve, idempotente) |
+| 22.7.5 | Trust puro `src/trust.ts` — `canRun(isTrusted)` / `assertTrusted(isTrusted)` (gate de comandos daemon/relatórios); testes | `src/trust.ts`, `tests/trust_test.ts` | 2 testes (trusted, untrusted) |
+| 22.7.6 | Comandos restantes `src/commands/misc.ts` — export/switch-language/show-tree/open-manual + wiring das views (TreeDataProvider/StatusBar); type-check only | `src/commands/misc.ts`, `src/views/*` | `deno check` exit 0 |
+| 22.7.7 | Manifesto `package.json` — `contributes.commands`/`views`/`configuration` (locale/report.defaultFormat) + activation; títulos English | `packages/vsextension/package.json` | JSON válido; comandos/views apontam para o código |
+| 22.7.8 | Cobertura ≥ 70% lógica pura P4 + gate completo `deno task tests` + evidência P4 + docs (CURRENT/plano/AGENTS/este arquivo/plano §13) | `tests/`, docs | gate EXIT=0; cobertura; docs coerentes |
+
+> **Nota de escopo P4:** o runtime Web completo/storage (22.8) é **P5**; o
+> standalone LSP (22.9) é **P6**; o empacotamento `.vsix` + aceite no VS Code
+> Test Runner são **P7**. O daemon v1 **não** escuta `onDidChange`/`onDidSave`
+> (atualização manual explícita, §3.2); o gate de trust bloqueia execução em
+> workspaces não confiáveis (§8.4). Títulos de comando emitidos em **inglês**
+> (§8.2); variantes multilíngues são adendo pós-v1 (§1).
+
+---
+
 ## Resumo de quem consome o quê
 
 | Entrega 22.1b | Fase 24 (`syntaxmesh man`, 24.9) | `lsp-core` / extensão (22.1–22.9) |
@@ -708,3 +859,54 @@ conforme a convenção acima.
 > projeções (seções, cabeçalho, contextos) + os pins de vocabulário são o
 > contrato de regressão; qualquer alargamento do subset deve atualizar os pins
 > com evidência.
+
+## P3 implementation evidence (2026-11-12)
+
+Entregas do P3 (editor foundation: 22.2 shell, 22.3 grammar/snippets, 22.4
+transporte) no kickoff antecipado autorizado. Evidência anexada aos IDs
+atômicos originais (22.2/22.3/22.4), conforme a convenção acima. A inteligência
+LSP permanece no core (`registerLspServer`); a extensão só cria a conexão e a
+adapta ao `ServerConnection` estrutural (ADR 035).
+
+| Tarefa | Entrega | Verificação |
+|---|---|---|
+| 22.2.1 | Pacote `packages/vsextension/deno.jsonc` (`@vanaware/syntaxmesh-vscode`, exports `"."`→`src/extension.node.ts`; import map `vscode`→`npm:@types/vscode@^1.90` + subpaths client/server node/browser `@^9.0.1` + `lsp-core`/`doc-core` relativos; tasks check/test/tests/generate/generate:snapshots/build/lint:doc/lint:doc:update; lib `dom`+`webworker`+`esnext`+`deno.ns`/`deno.unstable`); `./packages/vsextension` no workspace raiz + tasks `build:vsext`/`generate:vsext` | `deno task check` (vsext) exit 0; workspace coerente (`check:all` verde no gate) |
+| 22.2.2 | `package.json` manifesto VS Code (sem deps): `main`/`browser`→`dist/extension.{node,web}.js`, `engines.vscode ^1.90`, `contributes.languages` (`syntaxmesh` `.smx`/`.tjp`/`.tji`), `grammars` (`source.syntaxmesh` + `source.syntaxmesh.tji`), `snippets`, `configuration` (`syntaxmesh.trace.server`/`syntaxmesh.maxNumberOfProblems`), `activationEvents` | JSON válido; contributes aponta para os assets gerados (22.3.5) |
+| 22.2.3 | `src/config/settings.ts` — `readSettings(config: WorkspaceConfigLike): SyntaxMeshSettings` estrutural (sem `vscode`), `DEFAULT_SETTINGS`, clamp 1..1000 + enum `trace.server` (off/messages/verbose); 4 testes | `tests/config/settings_test.ts` → 4 steps verdes (defaults, override, enum trace, clamp) |
+| 22.2.4 | `.vscodeignore` (exclui src/tests/scripts/deno.json*/node_modules), `exclude: ["dist/"]` do pacote + `dist/` no `.gitignore` raiz | gate verde; listagem `.vsix` dry-run adiada para P7 |
+| 22.2.5 | Entradas duplas `src/extension.node.ts` + `src/extension.web.ts` (`activate`/`deactivate` delegando ao start/stop do cliente; JSDoc inglês completo) | `deno check` exit 0; `lint:doc` (vsext) exit 0 — piso zero, sem diagnósticos |
+| 22.3.1 | `src/grammar/textmate.ts` — `generateGrammar(core?)` projeta `categories()`+`tokenRules()` (keywords→keyword.control, builtin→storage.type, types→keyword.other, literais→constant, strings/comments/numbers/braces/include); `src/grammar/types.ts`; `pattern-utils.ts` (escapeRegExp/alternation longest-first); 5 testes | `tests/grammar/textmate_test.ts` → 5 steps verdes (scope, categorias, famílias de literais com regex válidas, ordem do repository, determinismo) |
+| 22.3.2 | `src/grammar/tji.ts` — `generateTjiGrammar(core?)` (`source.syntaxmesh.tji`) inclui `source.syntaxmesh` + diretiva `include`; 3 testes | `tests/grammar/tji_test.ts` → 3 steps verdes |
+| 22.3.3 | `src/grammar/language-config.ts` — `generateLanguageConfiguration(core?)` de `indentSettings()`: brackets {}[], autoClosingPairs, comentários (#///linha, /* */bloco), folding (cinwords), indentationRules, wordPattern; 4 testes | `tests/grammar/language-config_test.ts` → 4 steps verdes |
+| 22.3.4 | `src/grammar/snippets.ts` — `SNIPPETS` EN (project/task/resource/account/report/material) com prefix/body (tab stops + $0)/description ASCII; 4 testes | `tests/grammar/snippets_test.ts` → 4 steps verdes (6 snippets, prefixes, placeholders, descriptions EN) |
+| 22.3.5 | `scripts/generate-grammar.ts` (`deno task generate`) escreve os 4 assets: `syntaxes/syntaxmesh.tmLanguage.json`, `syntaxes/syntaxmesh-tji.tmLanguage.json`, `language-configuration.json`, `snippets/syntaxmesh.json` | 2 execuções byte a byte iguais (determinístico); 4 JSON válidos |
+| 22.3.6 | `scripts/generate-snapshots.ts` (`deno task generate:snapshots`) + fixtures `tests/grammar/fixtures/*.golden.json` + `snapshot_test.ts`; 4 testes | `tests/grammar/snapshot_test.ts` → 4 steps verdes (main/tji/language-config/snippets ≡ fixtures commitados) |
+| 22.4.1 | `src/server/adapter.ts` — `adaptConnection(conn: ConnectionLike): ServerConnection` 1:1 (onInitialize/sync/hover/completion/definition/references/document+workspace symbols/sendDiagnostics) + `onSemanticTokens`←`languages.semanticTokens.on`; `ConnectionLike` estrutural (sem importar a lib); `asConnectionLike(conn: unknown)` isola a única asserção na fronteira lib/core (divergência `number`×enum, runtime-idêntica); 5 testes mock | `tests/server/adapter_test.ts` → 5 steps verdes (initialize, sync, semanticTokens, sendDiagnostics, todos os métodos) |
+| 22.4.2 | `src/client/options.ts` — `DOCUMENT_SELECTOR` (language `syntaxmesh`), `buildClientOptions(settings)` (synchronize.fileEvents glob `**/*.{smx,tjp,tji}`, initializationOptions.maxNumberOfProblems, trace), `CLIENT_ID`/`SERVER_ID`; `DocumentFilter` fiel ao protocolo (união "ao menos um campo"); 4 testes | `tests/client/options_test.ts` → 4 steps verdes |
+| 22.4.3 | `src/client/debounce.ts` — `createDebouncer(delayMs, fn)` (setTimeout, cancel/flush/pending); 4 testes com `FakeTime` | `tests/client/debounce_test.ts` → 4 steps verdes (coalesce, cancel, fire-after-delay, flush) |
+| 22.4.4 | `src/server/node.ts` — `createConnection(ProposedFeatures.all)` (vscode-languageserver/node) + `adaptConnection(asConnectionLike(...))` + `registerLspServer` + `listen`; sem `console.log` | `deno check` exit 0; grep sem `console.log` |
+| 22.4.5 | `src/server/browser.ts` — `createConnection(BrowserMessageReader/Writer(worker))` (vscode-languageserver/browser) + adapt + register + listen; `self as unknown as DedicatedWorkerGlobalScope` (única asserção; lib `webworker` adicionada ao pacote) | `deno check` exit 0 (dom+webworker coexistem nesta versão TS) |
+| 22.4.6 | `src/client/node.ts` (LanguageClient node, serverOptions.module→`dist/server.node.js`, IPC) + `src/client/browser.ts` (LanguageClient browser, Worker→`dist/server.web.js`); start/stop; `Trace.fromString` + `setTrace` | `deno check` exit 0 (documentSelector estrutural atribuível ao tipo da lib após o fix da união) |
+| 22.4.7 | `scripts/build.ts` (`deno task build`, padrão `bundle-node.ts` do CLI) — `deno bundle` produz os 4 artefatos: extension/server.node.js (`--platform=deno --format=cjs`), extension/server.web.js (`--platform=browser --format=esm`); todos `--external vscode` | 4 bundles gerados (exit 0); node CJS com `require("vscode")` preservado; web ESM com `export { activate, deactivate }`; **web sem `node:`** (grep) |
+| 22.4.8 | `tests/server/wiring_test.ts` — sessão completa `registerLspServer(adaptConnection(mock))`: initialize → didOpen → publishDiagnostics → hover/completion → didChange incremental → didClose + navigation/symbols/semanticTokens (sem VS Code) | 2 steps verdes (contrato do adapter + core juntos) |
+| 22.4.9 | Cobertura da lógica pura + gate completo + evidência + docs | **99,2% linhas / 98,4% branches / 96,9% funções** (9 módulos puros; bootstraps type-check-only, não instrumentados — testes não importam o runtime vscode); relatório `.tmp/cov-vsext-p3/`; gate `deno task tests` **EXIT=0 — 853 passed (7078 steps), 0 failed**, 2 ignored steps (log `.tmp/p3-gate.log`); docs coerentes (CURRENT/plano/AGENTS/este arquivo/plano §13) |
+
+> **Fix habilitador no core (22.4.7):** o bundle Web do servidor puxava
+> `node:fs/path/process/url` via `FileLoader` estático do `ventojs/mod.js`
+> (importado por `core/src/template/template-engine.ts`). Como a fronteira
+> `lsp-core` proíbe `node:*` (gate `check:lspcore`) e o subset síncrono de
+> templates nunca usa file loading, o `template-engine.ts` passou a construir
+> o Vento a partir das partes browser-safe (`Environment` + `MemoryLoader` +
+> plugins, subpaths no import map do core), replicando os defaults do `mod.js`
+> menos o file loader. **12 testes de template verdes** (saída byte-idêntica +
+> `include`→`async_tag` rejeitado); suíte lexer do core verde (25 passed/266
+> steps) — sem regressão. Os bundles Web ficaram completamente `node:`-free.
+> ⚠️ ADAPTAÇÃO registrada: o plano §10 cita esbuild/@vsce; só o `deno bundle`
+> resolve o import map do workspace nativamente **e** suporta `--external
+> vscode` (decisão P3, precedente ADR 034/CLI).
+
+> **Nota de aceite P3:** a integração no **VS Code Test Runner** e o smoke
+> `.vsix` em instalação limpa são **P7** (22.10/22.11) — fora deste ambiente
+> sem VS Code. Aqui o aceite é: unit Deno (10 arquivos/39 steps) + snapshots
+> de grammar determinísticos + contrato do adapter com mock + wiring smoke +
+> build dos 4 artefatos (web `node:`-free) + gate completo verde.

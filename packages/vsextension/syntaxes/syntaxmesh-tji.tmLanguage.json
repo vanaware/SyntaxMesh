@@ -1,0 +1,22 @@
+{
+  "name": "SyntaxMesh Include",
+  "scopeName": "source.syntaxmesh.tji",
+  "patterns": [
+    {
+      "include": "#include"
+    },
+    {
+      "include": "source.syntaxmesh"
+    }
+  ],
+  "repository": {
+    "include": {
+      "patterns": [
+        {
+          "name": "keyword.control.include.syntaxmesh",
+          "match": "\\binclude\\b.*$"
+        }
+      ]
+    }
+  }
+}

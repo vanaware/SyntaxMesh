@@ -10,7 +10,8 @@
     "./packages/server",
     "./packages/ui",
     "./packages/service-worker",
-    "./packages/blog"
+    "./packages/blog",
+    "./packages/vsextension"
   ],
   // ⚙️ Configurações Rigorosas do Compilador TypeScript (FASE 4)
   "compilerOptions": {
@@ -57,6 +58,8 @@
     "cli": "deno run --allow-read --allow-write --allow-env packages/cli/src/cli.ts",
     "cli:test": "deno task --cwd packages/cli test",
     "cli:compile": "deno task --cwd packages/cli compile",
+    "build:vsext": "deno task --cwd packages/vsextension build",
+    "generate:vsext": "deno task --cwd packages/vsextension generate",
     "golden:generate": "deno task golden:generate:ruby && deno task golden:generate:extensions && deno task golden:generate:template",
     "golden:generate:ruby": "deno run --allow-read --allow-write --allow-run ./packages/core/tests/golden/generate_golden.ts",
     "golden:generate:extensions": "deno run --allow-read --allow-write ./packages/core/tests/golden/generate_extension_golden.ts",

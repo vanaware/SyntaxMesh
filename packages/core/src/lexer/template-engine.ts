@@ -25,14 +25,19 @@
  * @see docs/syntaxmesh/fases/fase-23-template.md (§4.3, §4.7, §4.8)
  * @see docs/syntaxmesh/decisoes/033-elemento-template.md
  */
-import vento from "vento";
+import { Environment, } from "vento/core/environment.js";
+import { MemoryLoader, } from "vento/loaders/memory.js";
+import defaultPlugins from "vento/plugins/mod.js";
 
 /**
- * Type of the Vento `Environment`. The library does not re-export the class in
- * `mod.js` (only the default `vento(options)`), so we derive it from the factory
- * itself.
+ * Type of the Vento `Environment`. Built directly from the browser-safe
+ * `core/environment.js` (not the `vento` `mod.js` factory, whose static
+ * `FileLoader` import drags `node:*` into browser bundles — the `lsp-core`
+ * boundary forbids `node:*`, Fase 22 P3). The synchronous template subset
+ * never loads files, so an empty {@link MemoryLoader} replaces the file loader
+ * with no behavior change (`include`/`layout` stay `async_tag` failures).
  */
-type VentoEnvironment = ReturnType<typeof vento>;
+type VentoEnvironment = Environment;
 
 /** Data injected into the template context (params + global keys). */
 export type TemplateData = Record<string, unknown>;
@@ -115,7 +120,17 @@ export class TemplateEngine {
   private readonly cache = new Map<string, CompiledTemplate>();
 
   constructor() {
-    this.env = vento({ autoescape: false, },);
+    // Mirrors the `vento()` factory defaults (mod.js) minus the FileLoader:
+    // an empty MemoryLoader keeps the engine browser-safe (no `node:*`).
+    this.env = new Environment({
+      loader: new MemoryLoader({},),
+      dataVarname: "it",
+      autoescape: false,
+      autoDataVarname: true,
+      strict: false,
+      maxRenderConcurrency: 10_000,
+    },);
+    this.env.use(defaultPlugins(),);
   }
 
   /**

@@ -593,8 +593,19 @@ i18n (10.15+) em `packages/core/src/i18n/`.
   connection, coverage **96.6% lines**. Kickoff of P1/P2 was
   **user-authorized early** while F21¹ wave 1 is still partial (26.0–26.14/
   26.26–26.28 open) — no technical dependency; official order unchanged
-  (precedent: early `doc-core` delivery for F24). Editor extension (P3) not
-  started.
+  (precedent: early `doc-core` delivery for F24). **P3 completed 2026-11-12**
+  (editor foundation): shell 22.2 (scaffold + manifest + config + dual
+  entries `extension.node.ts`/`extension.web.ts`), grammar 22.3 (TextMate/
+  tji/language-config/snippets generators + 4 JSON assets + deterministic
+  goldens), transport 22.4 (pure adapter/options/debounce + node/web server
+  & client bootstraps + `deno bundle` build of 4 artifacts, Web bundles
+  `node:`-free + full-session wiring smoke). Pure-logic coverage **99.2%
+  lines**; full gate `deno task tests` EXIT=0 — **853 passed (7078 steps),
+  0 failed**. Enabling core fix: `template-engine.ts` now constructs Vento
+  from the browser-safe `Environment` + memory loader (no `node:` leak into
+  the Web bundle; 12 template tests green). VS Code Test Runner + `.vsix`
+  smoke deferred to P7 (no VS Code in this environment). Next block: P4
+  (execution/reports/UX).
   [Plan: major blocks P1–P7](docs/syntaxmesh/fases/fase-22-vscode-extension.md#0-major-blocks-and-subblocks)
   and [original task owners](docs/syntaxmesh/fases/fase-22-vscode-extension-tarefas.md).
   Planning update (2026-11-11): P1 architecture; P2 shared language/docs cores;

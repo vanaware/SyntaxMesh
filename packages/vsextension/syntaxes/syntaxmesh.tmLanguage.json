@@ -1,0 +1,149 @@
+{
+  "name": "SyntaxMesh",
+  "scopeName": "source.syntaxmesh",
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#include"
+    },
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#constants"
+    },
+    {
+      "include": "#numbers"
+    },
+    {
+      "include": "#punctuation"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.number-sign.syntaxmesh",
+          "match": "#.*$"
+        },
+        {
+          "name": "comment.line.double-slash.syntaxmesh",
+          "match": "//.*$"
+        },
+        {
+          "name": "comment.block.syntaxmesh",
+          "begin": "/\\*",
+          "end": "\\*/"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.single.syntaxmesh",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            {
+              "name": "constant.character.escape.syntaxmesh",
+              "match": "\\\\."
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.double.syntaxmesh",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.syntaxmesh",
+              "match": "\\\\."
+            }
+          ]
+        },
+        {
+          "name": "string.unquoted.scissors.syntaxmesh",
+          "begin": "-8<-",
+          "end": "->8-"
+        }
+      ]
+    },
+    "include": {
+      "patterns": [
+        {
+          "name": "keyword.control.include.syntaxmesh",
+          "match": "\\binclude\\b.*$"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.syntaxmesh",
+          "match": "\\b(?:supplement|project|macro)\\b"
+        },
+        {
+          "name": "storage.type.syntaxmesh",
+          "match": "\\b(?:resource|scenario|account|limits|shift|task)\\b"
+        },
+        {
+          "name": "keyword.other.syntaxmesh",
+          "match": "\\b(?:dailyworkinghours|yearlyworkingdays|scenariospecific|timingresolution|trackingscenario|weekstartsmonday|weekstartssunday|leaveallowances|shorttimeformat|currencyformat|defaultaccount|resourceprefix|schedulingmode|accountprefix|totalquantity|journalentry|numberformat|reportprefix|workinghours|workinghours|alertlevels|alternative|gapduration|responsible|startcredit|efficiency|effortdone|effortleft|monthlymax|monthlymin|persistent|projectids|rolluptask|scheduling|taskprefix|timeformat|aggregate|chargeset|copyright|endcredit|gaplength|mandatory|milestone|opennodes|outputdir|projectid|projectid|resources|scheduled|sorttasks|timebasis|unitprice|weeklymax|allocate|baseline|complete|currency|dailymax|dailymin|duration|hidetask|language|managers|markdate|material|maxstart|minstart|overtime|precedes|priority|template|timezone|timezone|timezone|vacation|vacation|vacation|account|balance|booking|booking|booking|caption|credits|depends|formats|inherit|maximum|minimum|onstart|picture|replace|timeoff|active|author|auxdir|center|charge|charge|charge|effort|extend|format|leaves|length|limits|limits|maxend|minend|period|period|select|shifts|shifts|shifts|sloppy|adopt|alert|align|email|flags|flags|flags|flags|flags|onend|purge|right|shift|shift|start|width|fail|left|note|note|note|note|rate|unit|warn|alt|end|now|use|\\|)\\b"
+        }
+      ]
+    },
+    "constants": {
+      "patterns": [
+        {
+          "name": "constant.other.date.syntaxmesh",
+          "match": "\\d{4}-\\d{2}-\\d{2}\\S*"
+        },
+        {
+          "name": "constant.other.time.syntaxmesh",
+          "match": "\\d{1,2}:\\d{2}(:\\d{2}|)"
+        },
+        {
+          "name": "constant.numeric.duration.syntaxmesh",
+          "match": "\\d(min|h|d|w|m|y)"
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.float.syntaxmesh",
+          "match": "(?:\\b\\d+\\.\\d+(?:[eE][+-]?\\d+)?|\\B\\.\\d+(?:[eE][+-]?\\d+)?|\\b\\d+[eE][+-]?\\d+)(?:F|f)?\\b"
+        },
+        {
+          "name": "constant.numeric.integer.syntaxmesh",
+          "match": "\\b\\d+(?:LLU|LUL|ULL|LL|LU|UL|L|U)?\\b"
+        }
+      ]
+    },
+    "punctuation": {
+      "patterns": [
+        {
+          "name": "punctuation.section.block.begin.syntaxmesh",
+          "match": "\\{"
+        },
+        {
+          "name": "punctuation.section.block.end.syntaxmesh",
+          "match": "\\}"
+        },
+        {
+          "name": "punctuation.section.brackets.begin.syntaxmesh",
+          "match": "\\["
+        },
+        {
+          "name": "punctuation.section.brackets.end.syntaxmesh",
+          "match": "\\]"
+        }
+      ]
+    }
+  }
+}

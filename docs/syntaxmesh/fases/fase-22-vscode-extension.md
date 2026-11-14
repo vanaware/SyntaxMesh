@@ -4,7 +4,9 @@
 > **Tasks:** [Atomic task document](fase-22-vscode-extension-tarefas.md)
 > **Status:** `PAR` — P1 (22.0) accepted 2026-11-11 (ADR 035); **P2 completed
 > 2026-11-11** (22.1b closed at 106/108 verified + pure `lsp-core` delivered).
-> Editor extension (P3) not started.
+> **P3 completed 2026-11-12** (editor foundation: shell 22.2 + grammar 22.3 +
+> transport 22.4; pure-logic coverage 99.2% lines; Web bundles `node:`-free;
+> full gate 853 passed). Next block: P4 (execution/reports/UX).
 > **Planning:** seven major blocks P1–P7, with subblocks in §0; original IDs
 > 22.0–22.11 and existing task blocks C–J remain unchanged.
 > **Recorded progress:** 106/108 tasks in 22.1b verified (H 6.9/6.10 outside
@@ -37,7 +39,7 @@ A detailed task list alone does not mean its implementation is complete.
 |---|---|---|---|---|
 | [P1](#p1-scope-and-architecture) | Scope and architecture | 22.0 | §1–§3 overview, §12, §14 | `OK` — ADR 035 accepted (2026-11-11) |
 | [P2](#p2-shared-language-and-documentation-cores) | Shared language and documentation cores | 22.1, 22.1b | §4 core, §5; task blocks C–J | `PAR` — rename and CLI docs delivered; LSP pending |
-| [P3](#p3-editor-foundation-and-language-tooling) | Editor foundation and language tooling | 22.2–22.4 | §3.1, §4 extension, §6, §7 | `PLA` |
+| [P3](#p3-editor-foundation-and-language-tooling) | Editor foundation and language tooling | 22.2–22.4 | §3.1, §4 extension, §6, §7 | `OK` |
 | [P4](#p4-project-execution-reports-and-editor-ux) | Project execution, reports, and editor UX | 22.5–22.7 | §3.2–§3.3, §8 | `PLA` |
 | [P5](#p5-web-host-and-storage-adaptation) | Web host and storage adaptation | 22.8 | §9; Web transport in §7 | `PLA` |
 | [P6](#p6-standalone-lsp-adapter) | Standalone LSP adapter | 22.9 | §4 LSP adapter, §7 stdio, §10 LSP build | `PLA` |
@@ -113,6 +115,18 @@ The recorded 86/108 completions stay historical progress, not fresh claims.
 **Exit:** editing integration and grammar snapshots green; incomplete buffer
 states never refresh the daemon. Web transport belongs here; complete Web
 runtime/storage behavior belongs to P5.
+
+**Delivered (2026-11-12):** `packages/vsextension` shell + dual entries
+(22.2); pure grammar/language-config/snippets generators consuming the
+`doc-core` `SyntaxCore`, four generated assets and golden snapshots (22.3);
+pure adapter/client-options/debounce, Node + Web server/client bootstraps over
+`registerLspServer`, and a `deno bundle` build of the four artifacts (Desktop
+CJS / Web ESM, `--external vscode`, Web bundles verified `node:`-free) plus a
+full-session wiring smoke (22.4). Pure-logic coverage **99.2% lines**. Enabling
+core fix: `template-engine.ts` now builds Vento from the browser-safe
+`Environment` + `MemoryLoader` + plugins (no `mod.js` `FileLoader`), honoring
+the `lsp-core` "no `node:*`" boundary. VS Code Test Runner / `.vsix` acceptance
+remains P7. Evidence per atomic task in the task document §P3.
 
 ### P4. Project execution, reports, and editor UX
 
@@ -399,6 +413,17 @@ Arquivo .tjp
   fachada passo-a-passo (`parse`/`parseContent` com provedor → `schedule` →
   `generateReports`/`renderReports`), compartilhada com o caminho UI/PWA
   (Fase 20).
+
+> **Decisão P4.1 (auditoria 2026-11-12, confirmada pelo usuário):** o daemon v1
+> é **execute-based, sem delta no core**. O cache `Map<uri, ProjectModel>` vive
+> na extensão e guarda o **fechamento de arquivos** + o **último envelope**
+> (`listReports`/`reports`/`messages`/`exitCode`); add/reload/list/generate são
+> chamadas `execute` com `request.files` remontado do estado atual. A geração
+> de relatório **re-parseia + reagenda** (one-shot); a listagem usa a seção
+> `listReports` do último envelope. O **relatório sem re-parse** (modelo
+> persistente no core) fica **adiado como delta futuro do adendo F24**
+> (source of truth), com a fachada passo-a-passo preservada como alternativa.
+> Registrado em `fase-24-cli-adendo.md` §5.1 e nas tarefas 22.5.
 
 ### 3.3 Camada de relatórios (análogo ao tj3webd)
 
@@ -810,9 +835,9 @@ The P-block mapping below reorganizes scope without renumbering tasks.
 | 22.0 | P1.1–P1.3 | ADR 035 (`decisoes/035-extensao-vscode.md`) and index entry; architecture/exclusions | F21¹ gate (P1/P2 early kickoff user-authorized 2026-11-11) | `OK` — ADR 035 accepted; baseline/layers recorded (2026-11-11) |
 | 22.1 | P2.1, P2.4 | Remaining workspace wiring, `./lsp-core`, pure §5 services and server registration, unit coverage ≥ 80% | P1; documentation bridges depend on 22.1b | `PAR` — rename delivered; language core pending |
 | 22.1b | P2.2, P2.3, P2.5 | Shared docs/search/examples/manual/highlight; editor bridges and oracle verification | Existing engine for C–H; P2.4 foundation for I 7.5–7.7 | `PAR` — 86/108, CLI consumer delivered |
-| 22.2 | P3.1 | `packages/vsextension`, manifest, Desktop/Web shells and lifecycle | 22.0; P2 export readiness | `PLA` |
-| 22.3 | P3.2 | English TextMate grammar, language configuration, snippets and snapshots | 22.2; P2.3 syntax data | `PLA` |
-| 22.4 | P3.3 | Thin client/server bootstraps, Desktop IPC and Web Worker/port, LSP integration | 22.1, 22.2; 22.1b editor bridges | `PLA` |
+| 22.2 | P3.1 | `packages/vsextension`, manifest, Desktop/Web shells and lifecycle | 22.0; P2 export readiness | `OK` — shell + dual entries delivered (2026-11-12, P3) |
+| 22.3 | P3.2 | English TextMate grammar, language configuration, snippets and snapshots | 22.2; P2.3 syntax data | `OK` — generators + 4 assets + golden snapshots (2026-11-12, P3) |
+| 22.4 | P3.3 | Thin client/server bootstraps, Desktop IPC and Web Worker/port, LSP integration | 22.1, 22.2; 22.1b editor bridges | `OK` — adapter/options/debounce + 4 bootstraps + `deno bundle` (web `node:`-free) + wiring smoke; pure-logic coverage 99.2% lines (2026-11-12, P3) |
 | 22.5 | P4.1, P4.2 | F24 execution-contract audit first; explicit daemon add/remove/list/reload, input/include closure, cache and trust | 22.4; resolve P4.1 before daemon implementation | `PLA` |
 | 22.6 | P4.3 | Report selection/output policy: cached-model contract, HTML/assets Webview, CSV/XML/text saves | 22.5 and its contract decision | `PLA` |
 | 22.7 | P4.4 | Export/input-language/help commands, settings, Project Explorer and Status Bar; translated UX deferred | 22.5; report UI consumes 22.6 | `PLA` |

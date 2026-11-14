@@ -1,0 +1,72 @@
+{
+  "comments": {
+    "lineComment": "#",
+    "blockComment": [
+      "/*",
+      "*/"
+    ]
+  },
+  "brackets": [
+    {
+      "open": "{",
+      "close": "}"
+    },
+    {
+      "open": "[",
+      "close": "]"
+    }
+  ],
+  "autoClosingPairs": [
+    {
+      "open": "{",
+      "close": "}"
+    },
+    {
+      "open": "[",
+      "close": "]"
+    },
+    {
+      "open": "'",
+      "close": "'",
+      "notIn": [
+        "string",
+        "comment"
+      ]
+    },
+    {
+      "open": "\"",
+      "close": "\"",
+      "notIn": [
+        "string",
+        "comment"
+      ]
+    }
+  ],
+  "surroundingPairs": [
+    {
+      "open": "{",
+      "close": "}"
+    },
+    {
+      "open": "[",
+      "close": "]"
+    },
+    {
+      "open": "'",
+      "close": "'"
+    },
+    {
+      "open": "\"",
+      "close": "\""
+    }
+  ],
+  "folding": {
+    "start": "^\\s*(?:journalentry|monthlymax|monthlymin|supplement|weeklymax|allocate|dailymax|dailymin|precedes|resource|scenario|account|depends|include|maximum|minimum|picture|project|limits|shift|task)\\b.*\\{\\s*$",
+    "end": "^\\s*\\}\\s*$"
+  },
+  "indentationRules": {
+    "increaseIndentPattern": "\\{\\s*$",
+    "decreaseIndentPattern": "^\\s*\\}"
+  },
+  "wordPattern": "[A-Za-z_][A-Za-z0-9_]*"
+}

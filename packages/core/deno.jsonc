@@ -22,6 +22,12 @@
     "mdast-util-gfm": "npm:mdast-util-gfm@^3",
     "mdast": "npm:@types/mdast@^4",
     "vento": "npm:ventojs@2.4.2",
+    // Subpaths browser-safe do Vento (Fase 22 P3): o `template-engine` monta o
+    // Environment a partir de `core/environment.js` + `loaders/memory.js` +
+    // `plugins/mod.js`, sem o `mod.js` (que importa o FileLoader `node:*`).
+    "vento/core/environment.js": "npm:ventojs@2.4.2/core/environment.js",
+    "vento/loaders/memory.js": "npm:ventojs@2.4.2/loaders/memory.js",
+    "vento/plugins/mod.js": "npm:ventojs@2.4.2/plugins/mod.js",
     "fflate": "npm:fflate@^0.8",
     // Só tipos do protocolo LSP (Fase 22, 22.1.2): o `lsp-core` é puro e
     // nunca importa o runtime `vscode-languageserver`/`vscode-languageclient`
