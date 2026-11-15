@@ -649,6 +649,38 @@ suite para a extensão VS Code (após a 22); 3ª adapta para a PWA + UI (após a
 **Runner (era "Opcional"):** o runner `tj3-ts` das golden tests é a CLI
 `syntaxmesh` da **Fase 24** — não será construído runner próprio na Fase 21.
 
+**Matriz de cobertura das extensões #1–#6a × camadas (26.28.1, F21¹ — 2026-11-15):**
+
+> Legenda: `OK` = coberto por testes/goldens na 1ª onda (motor); `—` = não
+> aplicável à extensão; `F19`/`F20` = adiado para a **3ª onda** (storage e
+> PWA+UI ainda não iniciados). A 1ª onda valida o **motor**; storage/app entram
+> na 3ª onda (plano §0). Camadas entregues: modelo (F8.1/8.2 + C2), parser
+> (F10-C, Blocos C0–C4), journal (F16, ADR 029), markdown (F13/14-C), reports
+> (F14-C, C0–C18).
+
+| Extensão | modelo | parser | journal | sheets | markdown | reports | storage | app |
+|---|---|---|---|---|---|---|---|---|
+| #1 journalentry em material | OK | OK | OK | — | — | OK | F19 | F20 |
+| #2 note em resource/material | OK | OK | OK | — | — | OK | F19 | F20 |
+| #3 journal/note/supplement em account | OK | OK | OK | — | — | OK | F19 | F20 |
+| #4 breakdownreport | OK | OK | — | — | — | OK | F19 | F20 |
+| #5 RDO (picture/format/rdoreport) | OK | OK | OK | — | OK | OK | F19 | F20 |
+| #6 timebasis | OK | OK | — | — | — | OK | F19 | F20 |
+| #6a distribuição temporal | OK | OK | — | — | — | OK | F19 | F20 |
+
+> Evidência da 1ª onda (26.26–26.28): AST-equivalence das keywords em
+> en/pt-BR/es + presença não-vacua (26.26.2, `ast-equivalence-complemento_test.ts`);
+> corpus e2e byte-idêntico ao tj3 (26.26.1, 395 fixtures + goldens
+> parser/reports/gantt + snapshots de regressão 26.9); throughput do parser
+> baselines em `bench/` (26.26.3, `parse_100`/`parse_1000`, gate `bench:compare`);
+> paridade `timebasis`/`charge` default `duration` vs tj3 (26.27,
+> `timebasis-parity_golden_test.ts` + `known-divergences.json` + goldens
+> `finance-mwe004`/`finance-variations`). Gate de release da 1ª onda (26.28.2):
+> `check:all` + golden + corpus verdes (`deno task tests`, **935 passed, 7700
+> steps, 0 failed**);
+> **Lighthouse + tela de RDO adiados para a 3ª onda** (F20 UI não iniciada —
+> âncora explícita, sem `it.ignore` silencioso).
+
 ---
 
 ## Resumo executivo
@@ -680,7 +712,7 @@ suite para a extensão VS Code (após a 22); 3ª adapta para a PWA + UI (após a
 | 18 | core (sheets) | TimeSheets, Sheet*, Tj3SheetAppBase + apps de sheets | **Média** | ⬜ Não iniciada (adendos **18.17** e, pós-xray 2026-11-03, **18.18** núcleo dos apps de sheet, **18.19** `dynamicAttributes`/`parseReportAttributes`, **18.20** `MessageHandler#checkLevel`; ADRs **036**/037) |
 | 19 | storage | — | **Alta** | ⬜ Não iniciada (adendo 24.14–24.16) |
 | 20 | ui + service-worker | — | **Média** | ⬜ Não iniciada (adendo 25.30–25.31) |
-| 21 | tests/ | MWEs, TestSuite | **Crítica** | 🟨 Em andamento — **3 ondas** (após 24, após 22, após 20); harness = CLI da Fase 24 (adendo 26.26–26.28); **1ª onda iniciada 2026-11-10**: matriz de completude **regenerada** a partir das âncoras do código (26.22.9 ✅) + reconciliação ADRs 033–037 (26.22.11 ✅ — `completude-matrix.md` §E; `decisoes/README.md` atualizado). Demais tarefas 26.0–26.14 pendentes nesta 1ª onda (xray §5.5) |
+| 21 | tests/ | MWEs, TestSuite | **Crítica** | 🟨 Em andamento — **3 ondas** (após 24, após 22, após 20); harness = CLI da Fase 24 (adendo 26.26–26.28); **1ª onda CONCLUÍDA 2026-11-15** (iniciada 2026-11-10): matriz de completude **regenerada** (26.22.9 ✅) + ADRs 033–037 reconciliados (26.22.11 ✅ — `completude-matrix.md` §E) + **remainder 26.0–26.11 + 26.14 + 26.26–26.28 ✅** (ADR 042; corpus 395 fixtures/10 grupos; harness e2e CLI×tj3 byte-idêntico; AST-equivalence ≥30×3; snapshots regressão; coverage ≥85% `coverage.md`; benchmarks + `baseline.json` + gate `bench:compare` >20%; otimização top-3 `performance.md` gantt 3.9×/booking 8.5×; matriz #1–#6a×camadas; `known-divergences` timebasis perweek/length). Gate `deno task tests` **935 passed (7700 steps), 0 failed**. **Fronteira:** 26.12/26.13 (segurança/CSP) + 26.15–26.25 (cross-browser/a11y/release) → ondas 2/3; Lighthouse + tela de RDO → 3ª onda (F20 UI não iniciada) |
 | 22 | tooling (vsextension + `lsp-core` + **`doc-core`** no core) | apps/Tj3Man.rb, UserManual, SyntaxReference, KeywordDocumentation, TjpExample, TernarySearchTree, KateSyntax/VimSyntax | Média | `OK` — **P1 (22.0) aceito 2026-11-11 (ADR 035)**; **P2 concluído 2026-11-11** (kickoff antecipado de P1/P2 autorizado pelo usuário; F21¹ parcial): subfase 22.1b fechada em **106/108 verificadas** (H 6.9/6.10 fora do v1) + `lsp-core` puro entregue (13 módulos de serviço + `registerLspServer` estrutural; cobertura 96,6% linhas; gate `check:lspcore`). **P3 concluído 2026-11-12** (editor foundation: shell 22.2 + grammar 22.3 + transporte 22.4; cobertura lógica pura 99,2% linhas; bundles Web sem `node:`; gate completo 853 passed). **P4 concluído 2026-11-14** (execução/relatórios/UX: daemon 22.5 **execute-based sem delta no core** + reports 22.6 + commands/views/trust 22.7; cobertura lógica pura 98,8% linhas; gate completo 867 passed). **P5 concluído 2026-11-14** (Web/storage: pureza do grafo + escrita disparada pelo usuário `direct`/`stub-first` + resolver de storage + small state em Memento + cenários Web; daemon roteia file/memory pelo resolver reusando o fallback em memória + versionamento do P4; sem IndexedDB/OPFS direto; cobertura lógica pura P5 100% linhas; gate completo 873 passed). **P6 concluído 2026-11-14** (standalone LSP: adapter de transporte movido para o `lsp-core` + pacote independente `packages/lsp` — args puros, bootstrap stdio, bundle executável `dist/syntaxmesh-lsp.js` e smoke de protocolo real JSON-RPC framed; nada importado da extensão; cobertura `packages/lsp/src` 100%; gate completo 876 passed). **P7 concluído 2026-11-14** (packaging/acceptance/handoff — **Fase 22 fechada, P1–P7 OK**): `--version`/`-V` puros no lsp + injeção de versão no build (prepend de `const __APP_VERSION__`, versão do `deno.jsonc` raiz) + shebang executável; `.vsix` via **vsce sob Deno** (`deno task package:vsext`) — `syntaxmesh-vscode-0.0.2.vsix` **2,19 MB < 5 MB**, zip válido + vsixmanifest + inventário limpo; regressão de coerência do manifesto + matriz de aceite §11; cobertura de fechamento `core/src/lsp` 96,4% linhas (≥ 80%) / `vsextension/src` 99,3% (≥ 70%) / `lsp/src` 100%; gate completo **880 passed (7189 steps)**; handoff F21² registrado. Aceite runtime (instalação limpa, Test Runner, vscode.dev) diferido para a **F21²** com âncora explícita (sem VS Code no ambiente). [Plan organized into P1–P7](fase-22-vscode-extension.md#0-major-blocks-and-subblocks): architecture; shared cores; editor/LSP; execution/reports/UX; Web/storage; standalone LSP; packaging/handoff. [Task document](fase-22-vscode-extension-tarefas.md): 22.0 detailed as Bloco A (5/5); 22.1b C–J closed (evidência por tarefa atômica); other unfinished subphases detailed at kickoff. Original IDs and official order unchanged (after 21¹, before 21²/19/20). Daemon/reports reuse F24 `execute`; required contract delta is audited and planned in the F24 addendum, not forked. |
 | 23 | core (lexer/parser — extensão TS-only `template`) | — (engine Vento) | Alta | ✅ Concluída (2026-11-06, 23.0–23.8; plano `fase-23-template.md`, ADR 033, referência em `11-referencia-template.md`; 23.7.7 fechada em 2026-11-08 pelo smoke da CLI da F24) |
 | 24 | cli (novo pacote `packages/cli`) | apps/Tj3.rb, man/tj3.1 + `apps/Tj3Man.rb` (`syntaxmesh man`) + apps de sheets | **Alta** | 🟨 Em andamento — **1ª onda ✅ (24.0–24.8, 2026-11-08)**; adendos 24.9/24.10 pendentes (após 23, antes de 21¹; plano `fase-24-cli.md`; **nomenclatura própria + extensão única `.smx` e English-first em toda saída da ferramenta — decisões 2026-11-07**, clones de comportamento do tj3 via API `execute`/JSON, `fase-24-cli.md` §1.6/§1.7; **adendos 24.9/24.10** — `syntaxmesh man`, `--freeze*`, `syntaxmesh ts/ss send·receive·summary`, `--report --attr`, consumidores de `FileList`/`StdIoWrapper`/`UTF8String`, imagens 13.14.3 e regressão `format richtext`; âncoras `Fase 24` já no core para `parse/parseFile/parseContent/freeze`; **grupo 5 (nota 2026-11-07)** — refatoramento retroativo das costuras de `FileStore` injetado entregues pela F18/ADR 037 (sheets, `checkTimeSheet`/`checkStatusSheet`) para dados-como-dados na fronteira do `execute`, + relaxação de extensões para `.smx` (24.2.36)) |

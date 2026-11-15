@@ -17,7 +17,8 @@
  *
  * Covers the three forms of the grammar: `prologInclude` (before the header),
  * `projectBodyInclude` (inside the header, with attributes) and `includeFile`
- * (`include "file"` in the body) — all of them start with `include "name"`.
+ * (`include "file"` in the body) — all of them start with `include` followed by
+ * a quoted name (double or single quotes).
  *
  * @see docs/syntaxmesh/fases/fase-24-cli.md §5.1
  * @see packages/core/src/parser/rules/project.ts (`include*` rules)
@@ -41,22 +42,27 @@ export function includeKeywords(
   return [...words,];
 }
 
-/** Removes a `#` comment that is outside a string. */
+/** Removes a `#` comment that is outside a string (single or double quotes). */
 function stripComment(line: string,): string {
-  let quoted = false;
+  let quote: string | null = null;
   for (let i = 0; i < line.length; i++) {
     const char = line[i]!;
-    if (char === '"') {
-      quoted = !quoted;
-    } else if (char === "#" && !quoted) {
+    if (quote !== null) {
+      if (char === quote) quote = null;
+    } else if (char === '"' || char === "'") {
+      quote = char;
+    } else if (char === "#") {
       return line.slice(0, i,);
     }
   }
   return line;
 }
 
-/** Identifier in the first column followed by a string: `include "x"`. */
-const INCLUDE_LINE = /^\s*([A-Za-z_][\w-]*)\s+"([^"]*)"/;
+/**
+ * Identifier in the first column followed by a string: `include "x"` or
+ * `include 'x'` (both quote styles are valid TJP, F21 26.5).
+ */
+const INCLUDE_LINE = /^\s*([A-Za-z_][\w-]*)\s+(?:"([^"]*)"|'([^']*)')/;
 
 /**
  * Paths referenced by `include` in the text, in order of appearance.
@@ -74,7 +80,7 @@ export function scanIncludeReferences(
     const match = stripComment(raw,).match(INCLUDE_LINE,);
     if (match === null) continue;
     if (!known.has(match[1]!,)) continue;
-    references.push(match[2]!,);
+    references.push(match[2] ?? match[3]!,);
   }
   return references;
 }

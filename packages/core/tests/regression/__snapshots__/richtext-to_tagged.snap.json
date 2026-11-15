@@ -1,0 +1,10 @@
+{
+  "bold-italic": "<div><b>[bold]</b> [and] <i>[italic]</i> [and] <b><i>[both]</i></b></div>",
+  "headings": "<div><p>[=] [H1] [=]</p>\n\n<h1>1 [H2]</h1>\n\n<h2>1.1 [H3]</h2>\n\n</div>",
+  "hr-mixed": "<div><hr>----</hr>\n<p>[line] [one][<br>line] [two]</p>\n\n</div>",
+  "links": "<div><ref data=\"Internal\">[Internal]</ref> [and] <a href=\"http://example.com\" >[external]</a> [and] <ref data=\"Page\">[label]</ref></div>",
+  "lists": "<div><ul><li>* [item] [1]</li>\n<li>* [item] [2]</li>\n<ul><li> * [nested]</li>\n</ul></ul><ol><li>1 [ordered]</li>\n<li>2 [second]</li>\n</ol></div>",
+  "nowiki": "<div>['''not] [bold'''] [and] [preformatted] [line]</div>",
+  "plain": "<div>[Hello] [world]</div>",
+  "table": "<div>[{|] [!] [H1] [!!] [H2] [|-] [|] [a] [||] [b] [|}]</div>"
+}

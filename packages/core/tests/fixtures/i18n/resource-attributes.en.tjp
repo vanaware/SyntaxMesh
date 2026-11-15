@@ -1,0 +1,26 @@
+# 26.8 (F21¹) — fixture de equivalência de AST (ADR 023).
+# Tradução mecânica: apenas keywords variam entre idiomas; ids, strings,
+# datas e literais são idênticos. Gerado por .tmp/gen-i18n-fixtures.ts.
+language "en"
+
+project ra "Resource Attributes" "1.0" 2026-01-01 - 2026-02-28 {
+  timezone "UTC"
+  now 2026-01-01
+}
+resource company "The Company" {
+  resource ceo "Big Boss"
+  managers ceo
+  resource team "Team" {
+    purge managers
+    resource dev "Dev" {
+      rate 250
+      efficiency 1.2
+      email "dev@example.com"
+    }
+  }
+}
+task t "T" {
+  start 2026-01-05
+  effort 2d
+  allocate dev
+}

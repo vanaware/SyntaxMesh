@@ -534,6 +534,11 @@ export class Scanner implements ScannerHostLike {
       : false;
     if (!injected) {
       this.error("macro_stack_overflow", "Too many nested macro calls.",);
+      // Ruby aborta no primeiro erro (trapSetup/exit). Sem trap, o
+      // `MessageHandler#error` apenas acumula — mas `injectText` já re-injetou
+      // o corpo com a mesma chamada, que seria re-expandida para sempre (OOM).
+      // Lançar preserva as mensagens já registradas e encerra o parse (F21 26.5).
+      throw new TjError("",);
     }
   }
 
@@ -1143,7 +1148,8 @@ export class Scanner implements ScannerHostLike {
           this.lineDelta = -(this.startOfToken!.lineNo - 1);
           this.error(
             "runaway_token",
-            `Unterminated token starting at line ${this.startOfToken}`,
+            // Ruby fidelity: `@startOfToken` interpolates via to_s → `file:line:`.
+            `Unterminated token starting at line ${this.startOfToken!.to_s()}`,
           );
         }
         // End of the input file: special token.

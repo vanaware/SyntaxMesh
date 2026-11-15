@@ -1,0 +1,21 @@
+# 26.8 (F21¹) — fixture de equivalência de AST (ADR 023).
+# Tradução mecânica: apenas keywords variam entre idiomas; ids, strings,
+# datas e literais são idênticos. Gerado por .tmp/gen-i18n-fixtures.ts.
+language "es"
+
+proyecto tx "Text Report" "1.0" 2026-01-01 - 2026-02-28 {
+  zonahoraria "UTC"
+  ahora 2026-01-01
+}
+tarea foo "Foo" {
+  inicio 2026-01-05
+}
+infotexto frame "Frame" {
+  infotarea r1 ""
+  formatos html
+  cabecera "This is the header"
+  izquierda "Left"
+  centro "Center"
+  derecha "Right"
+  pie "This is the footer"
+}

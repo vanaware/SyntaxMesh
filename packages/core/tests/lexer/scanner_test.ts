@@ -510,4 +510,33 @@ describe("Scanner — macros (10.8.6)", () => {
     assert(msgs.some((m,) => m.id === "macro_stack"),);
     assert(msgs.some((m,) => m.id === "algum_erro"),);
   });
+
+  it("macro auto-recursiva aborta com macro_stack_overflow (F21 26.5)", () => {
+    const hostRef: { s?: Scanner } = {};
+    const macroCall = (
+      type: string | null,
+      text: string,
+    ): [string | null, string,] => {
+      const args = text.slice(2, -1,).trim().split(/\s+/,);
+      hostRef.s!.expandMacro("", args, text.length,);
+      return [null, text,];
+    };
+    const patterns: TokenPattern[] = [
+      [null, /\s+/, ":tjp", null,],
+      ["ID", /[a-z]+/, ":tjp", null,],
+      [null, /\$\{[^}]*\}/, ":tjp", macroCall,],
+    ];
+    const s = new Scanner("${foo}", Log, patterns, ":tjp",);
+    hostRef.s = s;
+    s.addMacro(new Macro("foo", "x ${foo}", new SourceFileInfo("f", 1, 1,),),);
+    s.open(true,);
+    // Ruby aborta no primeiro erro (trapSetup/exit). Sem trap o port precisa
+    // lançar após o overflow, senão `injectText` re-injeta `${foo}` para sempre.
+    assertThrows(() => {
+      for (let i = 0; i < 1000; i++) s.nextToken();
+    }, TjError,);
+    const msgs = MessageHandlerInstance.instance.messages;
+    assert(msgs.some((m,) => m.id === "macro_stack_overflow"),);
+    assert(msgs.some((m,) => m.id === "macro_stack"),);
+  });
 });

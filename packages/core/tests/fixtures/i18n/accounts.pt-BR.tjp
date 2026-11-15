@@ -1,0 +1,30 @@
+# 26.8 (F21¹) — fixture de equivalência de AST (ADR 023).
+# Tradução mecânica: apenas keywords variam entre idiomas; ids, strings,
+# datas e literais são idênticos. Gerado por .tmp/gen-i18n-fixtures.ts.
+language "pt-BR"
+
+projeto acc "Accounts" "1.0" 2026-01-01 - 2026-03-31 {
+  fusohorario "UTC"
+  agora 2026-01-15
+}
+conta costs "Project Costs"
+conta payments "Customer Payments" {
+  créditos 2026-01-01 "Down payment" 500.0
+}
+saldo costs payments
+recurso tux "Tux" { taxa 300 }
+tarefa items "Work" {
+  início 2026-01-06
+  definirconta costs
+  tarefa plan "Plan" {
+    valor 500.0 noinicio
+    comprimento 2d
+  }
+  tarefa exec "Execute" {
+    esforço 5d
+    alocar tux
+    depende !plan
+    definirconta payments
+    valor 2000.0 nofim
+  }
+}

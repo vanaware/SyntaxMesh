@@ -1,7 +1,7 @@
 # Fase 21 — Compatibilidade e Qualidade
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-21-compatibilidade-qualidade.md`
-> **Status:** ⬜ Não iniciada
+> **Status:** 🟨 Em andamento — **1ª onda CONCLUÍDA (2026-11-15)**: 26.0–26.11 + 26.14 + adendo 26.26–26.28 ✅ (gate `deno task tests` 935 passed, 7700 steps, 0 failed); ondas 2/3 pendentes
 > **Duração estimada:** 12–15 dias (somada das 3 ondas)
 > **Depende de:** execução em **3 ondas** — 1ª: Fases 15–18 + 23 + 24 concluídas; 2ª: Fase 22; 3ª: Fases 19–20
 > **Bloqueia:** release (ao fim da 3ª onda)
@@ -16,7 +16,7 @@ validação que acompanha os consumidores do motor**. Ordem oficial
 
 | Onda | Gatilho | Escopo | Subfases atuais (`-tarefas`) |
 |---|---|---|---|
-| **1ª** | após a Fase 24 | Fidelidade do **motor** contra o `tj3` real, rodando as fixtures **através da CLI `syntaxmesh`** (runner `tj3-ts` = CLI da 24; nada de runner próprio); corpus, AST-equivalence, snapshots, benchmarks de engine, divergências | 26.0–26.11, 26.14 |
+| **1ª** | após a Fase 24 | Fidelidade do **motor** contra o `tj3` real, rodando as fixtures **através da CLI `syntaxmesh`** (runner `tj3-ts` = CLI da 24; nada de runner próprio); corpus, AST-equivalence, snapshots, benchmarks de engine, divergências | 26.0–26.11, 26.14 + adendo 26.26–26.28 — **✅ concluída 2026-11-15** (gate 935 passed) |
 | **2ª** | após a Fase 22 | Suite **adaptado à extensão VS Code**: testes de integração LSP (`registerLspServer`/handlers), grammar sobre o corpus, performance de `lsp-core` (diagnósticos em arquivo grande), ajuda/manual EN, empacotamento `.vsix` | novas (adendo 21² no `-tarefas` no kickoff da 22) |
 | **3ª** | após a Fase 20 | Suite **adaptado à PWA + UI** e fecho: cross-browser (Playwright), acessibilidade, Lighthouse, CSP, segurança, build de produção, CHANGELOG, SemVer, CI/CD final | 26.12–26.13, 26.15–26.25 |
 

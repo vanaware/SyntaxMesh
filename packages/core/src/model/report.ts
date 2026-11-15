@@ -108,8 +108,10 @@ export class Report extends PropertyTreeNode {
       // `sourceFileInfo` is still nil in the constructor → null line in golden.
       MessageHandlerInstance.instance.error(
         "invalid_file_name",
+        // Ruby fidelity: single-quoted '\?%*:|\"<>' keeps the backslash before
+        // the quote (only \\ and \' are escapes in Ruby single quotes).
         "File names may not contain any of the following characters: " +
-          '\\?%*:|"<>',
+          '\\?%*:|\\"<>',
         null,
         null,
         null,

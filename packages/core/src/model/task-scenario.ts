@@ -1262,9 +1262,10 @@ export class TaskScenario extends ScenarioData {
       ) {
         this.error(
           "task_underspecified",
+          // Ruby fidelity: "specifations" is the verbatim typo (TaskScenario.rb).
           `Task ${
             (this.getProperty() as Task).fullId
-          } has too few specifications to be scheduled.`,
+          } has too few specifations to be scheduled.`,
         );
       }
 
@@ -2627,9 +2628,10 @@ export class TaskScenario extends ScenarioData {
     ) {
       this.error(
         "impossible_start_dep",
+        // Ruby appends the conflicting end date (TaskScenario.rb:1221). F21 26.5.
         `Task ${
           (this.getProperty() as Task).fullId
-        } has start date dependencies that conflict with the end date.`,
+        } has start date dependencies that conflict with the end date ${taskEnd.to_s()}.`,
       );
     }
 
@@ -2726,9 +2728,10 @@ export class TaskScenario extends ScenarioData {
     ) {
       this.error(
         "impossible_end_dep",
+        // Ruby appends the conflicting start date (TaskScenario.rb:1278). F21 26.5.
         `Task ${
           (this.getProperty() as Task).fullId
-        } has end date dependencies that conflict with the start date.`,
+        } has end date dependencies that conflict with the start date ${taskStart.to_s()}.`,
       );
     }
 

@@ -15,6 +15,17 @@
       "test_ref": "packages/core/tests/golden/timebasis-parity_golden_test.ts"
     },
     {
+      "id": "perweek_inclusive_semantics",
+      "modifier": "perweek",
+      "timebasis": "duration",
+      "expected": "sintaxe-mesh: amount × (dias corridos TOCADOS pela tarefa, inclusive ambas as pontas) / 7",
+      "tj3": "mapeia perweek X → perDiem X/7 (TjpSyntaxRules.rb:6292-6311); usa elapsed_seconds / 86400 (half-open) × X/7",
+      "delta": "razão inclusive/half-open: Mon-Fri → SM 5/7 × amount, tj3 4/7 × amount (razão 5/4)",
+      "justification": "§3.4.1 — mesma semântica inclusive do perday aplicada à razão semanal /7. Para uma tarefa Mon-Fri o usuário espera 5 dias de rate semanal, não 4.",
+      "spec_ref": "docs/syntaxmesh/fases/fase-10-complemento2.md#341",
+      "test_ref": "packages/core/tests/golden/timebasis-parity_golden_test.ts"
+    },
+    {
       "id": "permonth_extension",
       "modifier": "permonth",
       "timebasis": "duration",

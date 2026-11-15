@@ -1,0 +1,25 @@
+# 26.8 (F21¹) — fixture de equivalência de AST (ADR 023).
+# Tradução mecânica: apenas keywords variam entre idiomas; ids, strings,
+# datas e literais são idênticos. Gerado por .tmp/gen-i18n-fixtures.ts.
+language "pt-BR"
+
+projeto sh "Shifts" "1.0" 2026-01-01 - 2026-02-28 {
+  fusohorario "UTC"
+  agora 2026-01-01
+}
+turno s1 "Weekdays" {
+  horastrabalho seg - sex 9:00 - 12:00, 13:00 - 17:00
+  horastrabalho ter, qui 9:00 - 12:00
+}
+turno s2 "No weekends" {
+  horastrabalho seg - sex 8:00 - 16:00
+}
+recurso r1 "R1" {
+  turnos s1 2026-01-01 - 2026-01-15,
+         s2 2026-01-16 - 2026-02-28
+}
+tarefa t "T" {
+  início 2026-01-05
+  esforço 3d
+  alocar r1
+}

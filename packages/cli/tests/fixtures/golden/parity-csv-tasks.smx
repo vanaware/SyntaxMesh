@@ -2,7 +2,7 @@
 #
 # Comparado com o `tj3` real: o script `scripts/golden/cli-tj3.rb` copia este
 # arquivo para um temporário com extensão `.tjp` (o `tj3` recusa `.smx`) e
-# guarda o CSV gerado; `golden_cli_test.ts` roda a CLI sobre o `.smx` original
+# guarda o CSV gerado; `e2e_parity_test.ts` roda a CLI sobre o `.smx` original
 # e compara os bytes. Sem timestamps, sem `include`, sem Gantt: só o que os
 # dois lados devem escrever igual.
 project prj "Parity Tasks" "1.0" 2026-01-05 - 2026-02-15 {

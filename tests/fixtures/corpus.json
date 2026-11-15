@@ -1,0 +1,1655 @@
+{
+  "groups": [
+    {
+      "id": "mwe",
+      "dir": "docs/Learning",
+      "count": 9,
+      "fixtures": [
+        {
+          "id": "mwe/mwe001",
+          "path": "docs/Learning/mwe001/tutorial.tjp"
+        },
+        {
+          "id": "mwe/mwe002",
+          "path": "docs/Learning/mwe002/tutorial.tjp"
+        },
+        {
+          "id": "mwe/mwe003",
+          "path": "docs/Learning/mwe003/tutorial.tjp"
+        },
+        {
+          "id": "mwe/mwe004",
+          "path": "docs/Learning/mwe004/tutorial.tjp"
+        },
+        {
+          "id": "mwe/mwe005",
+          "path": "docs/Learning/mwe005/tutorial.tjp"
+        },
+        {
+          "id": "mwe/mwe006",
+          "path": "docs/Learning/mwe006/tutorial.tjp"
+        },
+        {
+          "id": "mwe/mwe007",
+          "path": "docs/Learning/mwe007/tutorial.tjp"
+        },
+        {
+          "id": "mwe/mwe008",
+          "path": "docs/Learning/mwe008/tutorial.tjp"
+        },
+        {
+          "id": "mwe/mwe009",
+          "path": "docs/Learning/mwe009/tutorial.tjp"
+        }
+      ]
+    },
+    {
+      "id": "syntax-correct",
+      "dir": "docs/taskjuggler/test/TestSuite/Syntax/Correct",
+      "count": 75,
+      "fixtures": [
+        {
+          "id": "syntax-correct/Account",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Account.tjp"
+        },
+        {
+          "id": "syntax-correct/AccountReport",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/AccountReport.tjp"
+        },
+        {
+          "id": "syntax-correct/AdoptedTasks",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/AdoptedTasks.tjp"
+        },
+        {
+          "id": "syntax-correct/AlertLevels",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/AlertLevels.tjp"
+        },
+        {
+          "id": "syntax-correct/Allocate-1",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Allocate-1.tjp"
+        },
+        {
+          "id": "syntax-correct/Alternative",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Alternative.tjp"
+        },
+        {
+          "id": "syntax-correct/AutoID",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/AutoID.tjp"
+        },
+        {
+          "id": "syntax-correct/AutoMacros",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/AutoMacros.tjp"
+        },
+        {
+          "id": "syntax-correct/Booking",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Booking.tjp"
+        },
+        {
+          "id": "syntax-correct/Caption",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Caption.tjp"
+        },
+        {
+          "id": "syntax-correct/Celltext",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Celltext.tjp"
+        },
+        {
+          "id": "syntax-correct/Comments",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Comments.tjp"
+        },
+        {
+          "id": "syntax-correct/Complete",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Complete.tjp"
+        },
+        {
+          "id": "syntax-correct/Currencyformat",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Currencyformat.tjp"
+        },
+        {
+          "id": "syntax-correct/CustomAttributes",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/CustomAttributes.tjp"
+        },
+        {
+          "id": "syntax-correct/Depends1",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Depends1.tjp"
+        },
+        {
+          "id": "syntax-correct/Durations",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Durations.tjp"
+        },
+        {
+          "id": "syntax-correct/Efficiency",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Efficiency.tjp"
+        },
+        {
+          "id": "syntax-correct/EnvVar",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/EnvVar.tjp"
+        },
+        {
+          "id": "syntax-correct/Export",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Export.tjp"
+        },
+        {
+          "id": "syntax-correct/Flags",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Flags.tjp"
+        },
+        {
+          "id": "syntax-correct/Freeze",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Freeze.tjp"
+        },
+        {
+          "id": "syntax-correct/Gap",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Gap.tjp"
+        },
+        {
+          "id": "syntax-correct/HtmlTaskReport",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/HtmlTaskReport.tjp"
+        },
+        {
+          "id": "syntax-correct/Include",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Include.tjp"
+        },
+        {
+          "id": "syntax-correct/Journal",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Journal.tjp"
+        },
+        {
+          "id": "syntax-correct/Leave",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Leave.tjp"
+        },
+        {
+          "id": "syntax-correct/Limits-1",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Limits-1.tjp"
+        },
+        {
+          "id": "syntax-correct/ListAttributes",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/ListAttributes.tjp"
+        },
+        {
+          "id": "syntax-correct/LoadUnits",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/LoadUnits.tjp"
+        },
+        {
+          "id": "syntax-correct/LogicalExpression",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/LogicalExpression.tjp"
+        },
+        {
+          "id": "syntax-correct/LogicalFunction",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/LogicalFunction.tjp"
+        },
+        {
+          "id": "syntax-correct/Macro-1",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Macro-1.tjp"
+        },
+        {
+          "id": "syntax-correct/Macro-2",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Macro-2.tjp"
+        },
+        {
+          "id": "syntax-correct/Macro-3",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Macro-3.tjp"
+        },
+        {
+          "id": "syntax-correct/Macro-4",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Macro-4.tjp"
+        },
+        {
+          "id": "syntax-correct/Manager",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Manager.tjp"
+        },
+        {
+          "id": "syntax-correct/Mandatory",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Mandatory.tjp"
+        },
+        {
+          "id": "syntax-correct/Milestone",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Milestone.tjp"
+        },
+        {
+          "id": "syntax-correct/MinMax",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/MinMax.tjp"
+        },
+        {
+          "id": "syntax-correct/Niku",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Niku.tjp"
+        },
+        {
+          "id": "syntax-correct/Numberformat",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Numberformat.tjp"
+        },
+        {
+          "id": "syntax-correct/Period",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Period.tjp"
+        },
+        {
+          "id": "syntax-correct/Persistent",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Persistent.tjp"
+        },
+        {
+          "id": "syntax-correct/Precedes1",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Precedes1.tjp"
+        },
+        {
+          "id": "syntax-correct/Priority",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Priority.tjp"
+        },
+        {
+          "id": "syntax-correct/Project",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Project.tjp"
+        },
+        {
+          "id": "syntax-correct/ProjectIDs",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/ProjectIDs.tjp"
+        },
+        {
+          "id": "syntax-correct/Query",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Query.tjp"
+        },
+        {
+          "id": "syntax-correct/Reports",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Reports.tjp"
+        },
+        {
+          "id": "syntax-correct/Resource",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Resource.tjp"
+        },
+        {
+          "id": "syntax-correct/ResourcePrefix",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/ResourcePrefix.tjp"
+        },
+        {
+          "id": "syntax-correct/ResourceRoot",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/ResourceRoot.tjp"
+        },
+        {
+          "id": "syntax-correct/Responsible",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Responsible.tjp"
+        },
+        {
+          "id": "syntax-correct/RollupResource",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/RollupResource.tjp"
+        },
+        {
+          "id": "syntax-correct/Scenario",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Scenario.tjp"
+        },
+        {
+          "id": "syntax-correct/Scheduling",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Scheduling.tjp"
+        },
+        {
+          "id": "syntax-correct/Select",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Select.tjp"
+        },
+        {
+          "id": "syntax-correct/Shift",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Shift.tjp"
+        },
+        {
+          "id": "syntax-correct/Simple",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Simple.tjp"
+        },
+        {
+          "id": "syntax-correct/StatusSheet",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/StatusSheet.tjp"
+        },
+        {
+          "id": "syntax-correct/String",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/String.tjp"
+        },
+        {
+          "id": "syntax-correct/Supplement",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Supplement.tjp"
+        },
+        {
+          "id": "syntax-correct/TaskPrefix",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/TaskPrefix.tjp"
+        },
+        {
+          "id": "syntax-correct/TaskRoot",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/TaskRoot.tjp"
+        },
+        {
+          "id": "syntax-correct/TimeFrame",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/TimeFrame.tjp"
+        },
+        {
+          "id": "syntax-correct/TimeSheet1",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/TimeSheet1.tjp"
+        },
+        {
+          "id": "syntax-correct/Timezone",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Timezone.tjp"
+        },
+        {
+          "id": "syntax-correct/Timezone2",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Timezone2.tjp"
+        },
+        {
+          "id": "syntax-correct/TraceReport",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/TraceReport.tjp"
+        },
+        {
+          "id": "syntax-correct/Vacation",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/Vacation.tjp"
+        },
+        {
+          "id": "syntax-correct/navigator",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/navigator.tjp"
+        },
+        {
+          "id": "syntax-correct/template",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/template.tjp"
+        },
+        {
+          "id": "syntax-correct/textreport",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/textreport.tjp"
+        },
+        {
+          "id": "syntax-correct/tutorial",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Correct/tutorial.tjp"
+        }
+      ]
+    },
+    {
+      "id": "syntax-errors",
+      "dir": "docs/taskjuggler/test/TestSuite/Syntax/Errors",
+      "count": 94,
+      "fixtures": [
+        {
+          "id": "syntax-errors/adopt_duplicate_child-1",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/adopt_duplicate_child-1.tjp"
+        },
+        {
+          "id": "syntax-errors/adopt_duplicate_child-2",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/adopt_duplicate_child-2.tjp"
+        },
+        {
+          "id": "syntax-errors/adopt_duplicate_child-3",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/adopt_duplicate_child-3.tjp"
+        },
+        {
+          "id": "syntax-errors/adopt_self",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/adopt_self.tjp"
+        },
+        {
+          "id": "syntax-errors/alert_level_redef",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/alert_level_redef.tjp"
+        },
+        {
+          "id": "syntax-errors/alert_name_redef",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/alert_name_redef.tjp"
+        },
+        {
+          "id": "syntax-errors/bad_include",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/bad_include.tjp"
+        },
+        {
+          "id": "syntax-errors/bad_time_zone",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/bad_time_zone.tjp"
+        },
+        {
+          "id": "syntax-errors/bad_timing_res",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/bad_timing_res.tjp"
+        },
+        {
+          "id": "syntax-errors/booking_group",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/booking_group.tjp"
+        },
+        {
+          "id": "syntax-errors/booking_milestone",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/booking_milestone.tjp"
+        },
+        {
+          "id": "syntax-errors/booking_no_leaf",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/booking_no_leaf.tjp"
+        },
+        {
+          "id": "syntax-errors/chargeset",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/chargeset.tjp"
+        },
+        {
+          "id": "syntax-errors/chargeset_master",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/chargeset_master.tjp"
+        },
+        {
+          "id": "syntax-errors/container_attribute",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/container_attribute.tjp"
+        },
+        {
+          "id": "syntax-errors/cost_acct_no_top",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/cost_acct_no_top.tjp"
+        },
+        {
+          "id": "syntax-errors/cost_rev_same",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/cost_rev_same.tjp"
+        },
+        {
+          "id": "syntax-errors/date_in_range",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/date_in_range.tjp"
+        },
+        {
+          "id": "syntax-errors/effort_zero",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/effort_zero.tjp"
+        },
+        {
+          "id": "syntax-errors/empty",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/empty.tjp"
+        },
+        {
+          "id": "syntax-errors/extend_id_cap",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/extend_id_cap.tjp"
+        },
+        {
+          "id": "syntax-errors/include_before_project",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/include_before_project.tjp"
+        },
+        {
+          "id": "syntax-errors/include_recursion",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/include_recursion.tjp"
+        },
+        {
+          "id": "syntax-errors/interval_end_in_range",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/interval_end_in_range.tjp"
+        },
+        {
+          "id": "syntax-errors/interval_start_in_range",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/interval_start_in_range.tjp"
+        },
+        {
+          "id": "syntax-errors/invalid_file_name",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/invalid_file_name.tjp"
+        },
+        {
+          "id": "syntax-errors/junk_after_cut",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/junk_after_cut.tjp"
+        },
+        {
+          "id": "syntax-errors/leaf_resource_id_expected",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/leaf_resource_id_expected.tjp"
+        },
+        {
+          "id": "syntax-errors/macro_stack_overflow",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/macro_stack_overflow.tjp"
+        },
+        {
+          "id": "syntax-errors/misaligned_date",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/misaligned_date.tjp"
+        },
+        {
+          "id": "syntax-errors/multiple_durations",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/multiple_durations.tjp"
+        },
+        {
+          "id": "syntax-errors/navigator_exists",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/navigator_exists.tjp"
+        },
+        {
+          "id": "syntax-errors/no_own_resource_booking",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/no_own_resource_booking.tjp"
+        },
+        {
+          "id": "syntax-errors/no_own_task_booking",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/no_own_task_booking.tjp"
+        },
+        {
+          "id": "syntax-errors/no_reduce",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/no_reduce.tjp"
+        },
+        {
+          "id": "syntax-errors/no_token_match1",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/no_token_match1.tjp"
+        },
+        {
+          "id": "syntax-errors/no_token_match2",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/no_token_match2.tjp"
+        },
+        {
+          "id": "syntax-errors/no_token_match3",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/no_token_match3.tjp"
+        },
+        {
+          "id": "syntax-errors/no_token_match4",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/no_token_match4.tjp"
+        },
+        {
+          "id": "syntax-errors/no_token_match5",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/no_token_match5.tjp"
+        },
+        {
+          "id": "syntax-errors/operand_attribute",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/operand_attribute.tjp"
+        },
+        {
+          "id": "syntax-errors/operand_unkn_flag",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/operand_unkn_flag.tjp"
+        },
+        {
+          "id": "syntax-errors/operand_unkn_scen",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/operand_unkn_scen.tjp"
+        },
+        {
+          "id": "syntax-errors/overtime_range",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/overtime_range.tjp"
+        },
+        {
+          "id": "syntax-errors/purge_unknown_id",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/purge_unknown_id.tjp"
+        },
+        {
+          "id": "syntax-errors/report_end",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/report_end.tjp"
+        },
+        {
+          "id": "syntax-errors/report_exists",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/report_exists.tjp"
+        },
+        {
+          "id": "syntax-errors/report_start",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/report_start.tjp"
+        },
+        {
+          "id": "syntax-errors/resource_exists",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/resource_exists.tjp"
+        },
+        {
+          "id": "syntax-errors/resource_id_expected",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/resource_id_expected.tjp"
+        },
+        {
+          "id": "syntax-errors/resourceroot_leaf",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/resourceroot_leaf.tjp"
+        },
+        {
+          "id": "syntax-errors/rev_acct_no_top",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/rev_acct_no_top.tjp"
+        },
+        {
+          "id": "syntax-errors/runaway_token",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/runaway_token.tjp"
+        },
+        {
+          "id": "syntax-errors/scenario_after_tracking",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/scenario_after_tracking.tjp"
+        },
+        {
+          "id": "syntax-errors/scenario_exists",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/scenario_exists.tjp"
+        },
+        {
+          "id": "syntax-errors/shift_assignment_overlap",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/shift_assignment_overlap.tjp"
+        },
+        {
+          "id": "syntax-errors/shift_exists",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/shift_exists.tjp"
+        },
+        {
+          "id": "syntax-errors/shift_id_expected",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/shift_id_expected.tjp"
+        },
+        {
+          "id": "syntax-errors/sloppy_range",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/sloppy_range.tjp"
+        },
+        {
+          "id": "syntax-errors/sort_direction",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/sort_direction.tjp"
+        },
+        {
+          "id": "syntax-errors/sort_unknown_scen",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/sort_unknown_scen.tjp"
+        },
+        {
+          "id": "syntax-errors/sorting_bsi",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/sorting_bsi.tjp"
+        },
+        {
+          "id": "syntax-errors/sorting_crit_exptd1",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/sorting_crit_exptd1.tjp"
+        },
+        {
+          "id": "syntax-errors/sorting_crit_exptd2",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/sorting_crit_exptd2.tjp"
+        },
+        {
+          "id": "syntax-errors/ss_no_tracking_scenario",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/ss_no_tracking_scenario.tjp"
+        },
+        {
+          "id": "syntax-errors/start_before_end1",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/start_before_end1.tjp"
+        },
+        {
+          "id": "syntax-errors/start_before_end2",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/start_before_end2.tjp"
+        },
+        {
+          "id": "syntax-errors/task_complete",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/task_complete.tjp"
+        },
+        {
+          "id": "syntax-errors/task_exists",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/task_exists.tjp"
+        },
+        {
+          "id": "syntax-errors/task_priority",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/task_priority.tjp"
+        },
+        {
+          "id": "syntax-errors/task_without_chargeset",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/task_without_chargeset.tjp"
+        },
+        {
+          "id": "syntax-errors/taskroot_leaf",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/taskroot_leaf.tjp"
+        },
+        {
+          "id": "syntax-errors/time_error",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/time_error.tjp"
+        },
+        {
+          "id": "syntax-errors/time_interval",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/time_interval.tjp"
+        },
+        {
+          "id": "syntax-errors/too_few_alert_levels",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/too_few_alert_levels.tjp"
+        },
+        {
+          "id": "syntax-errors/too_large_timing_res",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/too_large_timing_res.tjp"
+        },
+        {
+          "id": "syntax-errors/too_many_bangs",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/too_many_bangs.tjp"
+        },
+        {
+          "id": "syntax-errors/ts_bad_priority",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/ts_bad_priority.tjp"
+        },
+        {
+          "id": "syntax-errors/ts_default_details",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/ts_default_details.tjp"
+        },
+        {
+          "id": "syntax-errors/ts_default_summary",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/ts_default_summary.tjp"
+        },
+        {
+          "id": "syntax-errors/ts_duplicate_task",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/ts_duplicate_task.tjp"
+        },
+        {
+          "id": "syntax-errors/ts_end_too_early",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/ts_end_too_early.tjp"
+        },
+        {
+          "id": "syntax-errors/ts_headline_too_long",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/ts_headline_too_long.tjp"
+        },
+        {
+          "id": "syntax-errors/ts_no_headline2",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/ts_no_headline2.tjp"
+        },
+        {
+          "id": "syntax-errors/ts_no_tracking_scenario",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/ts_no_tracking_scenario.tjp"
+        },
+        {
+          "id": "syntax-errors/ts_summary_too_long",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/ts_summary_too_long.tjp"
+        },
+        {
+          "id": "syntax-errors/undecl_flag",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/undecl_flag.tjp"
+        },
+        {
+          "id": "syntax-errors/unknown_env_var",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/unknown_env_var.tjp"
+        },
+        {
+          "id": "syntax-errors/unknown_projectid",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/unknown_projectid.tjp"
+        },
+        {
+          "id": "syntax-errors/unknown_scenario_id",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/unknown_scenario_id.tjp"
+        },
+        {
+          "id": "syntax-errors/unknown_scenario_idx",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/unknown_scenario_idx.tjp"
+        },
+        {
+          "id": "syntax-errors/unknown_task",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/unknown_task.tjp"
+        },
+        {
+          "id": "syntax-errors/unsupported_token",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/unsupported_token.tjp"
+        },
+        {
+          "id": "syntax-errors/working_duration_too_small",
+          "path": "docs/taskjuggler/test/TestSuite/Syntax/Errors/working_duration_too_small.tjp"
+        }
+      ]
+    },
+    {
+      "id": "scheduler-correct",
+      "dir": "docs/taskjuggler/test/TestSuite/Scheduler/Correct",
+      "count": 35,
+      "fixtures": [
+        {
+          "id": "scheduler-correct/Allocate",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Correct/Allocate.tjp"
+        },
+        {
+          "id": "scheduler-correct/AutomaticMilestones",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Correct/AutomaticMilestones.tjp"
+        },
+        {
+          "id": "scheduler-correct/Booking",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Correct/Booking.tjp"
+        },
+        {
+          "id": "scheduler-correct/Booking2",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Correct/Booking2.tjp"
+        },
+        {
+          "id": "scheduler-correct/Booking3",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Correct/Booking3.tjp"
+        },
+        {
+          "id": "scheduler-correct/Container",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Correct/Container.tjp"
+        },
+        {
+          "id": "scheduler-correct/Container-2",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Correct/Container-2.tjp"
+        },
+        {
+          "id": "scheduler-correct/DateAndDep",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Correct/DateAndDep.tjp"
+        },
+        {
+          "id": "scheduler-correct/Depends",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Correct/Depends.tjp"
+        },
+        {
+          "id": "scheduler-correct/Duration",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Correct/Duration.tjp"
+        },
+        {
+          "id": "scheduler-correct/InheritStartEnd",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Correct/InheritStartEnd.tjp"
+        },
+        {
+          "id": "scheduler-correct/InheritedAttributes",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Correct/InheritedAttributes.tjp"
+        },
+        {
+          "id": "scheduler-correct/Leaves",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Correct/Leaves.tjp"
+        },
+        {
+          "id": "scheduler-correct/Limits",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Correct/Limits.tjp"
+        },
+        {
+          "id": "scheduler-correct/Manager",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Correct/Manager.tjp"
+        },
+        {
+          "id": "scheduler-correct/Mandatory",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Correct/Mandatory.tjp"
+        },
+        {
+          "id": "scheduler-correct/MultipleMandatories",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Correct/MultipleMandatories.tjp"
+        },
+        {
+          "id": "scheduler-correct/Optimize-1",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Correct/Optimize-1.tjp"
+        },
+        {
+          "id": "scheduler-correct/Optimize-2",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Correct/Optimize-2.tjp"
+        },
+        {
+          "id": "scheduler-correct/Optimize-3",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Correct/Optimize-3.tjp"
+        },
+        {
+          "id": "scheduler-correct/Optimize-4",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Correct/Optimize-4.tjp"
+        },
+        {
+          "id": "scheduler-correct/Optimize-5",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Correct/Optimize-5.tjp"
+        },
+        {
+          "id": "scheduler-correct/PersistentResources",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Correct/PersistentResources.tjp"
+        },
+        {
+          "id": "scheduler-correct/PersistentResources-2",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Correct/PersistentResources-2.tjp"
+        },
+        {
+          "id": "scheduler-correct/Precedes",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Correct/Precedes.tjp"
+        },
+        {
+          "id": "scheduler-correct/PriorityInversion",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Correct/PriorityInversion.tjp"
+        },
+        {
+          "id": "scheduler-correct/Scenarios",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Correct/Scenarios.tjp"
+        },
+        {
+          "id": "scheduler-correct/Scheduled",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Correct/Scheduled.tjp"
+        },
+        {
+          "id": "scheduler-correct/SchedulingMode",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Correct/SchedulingMode.tjp"
+        },
+        {
+          "id": "scheduler-correct/Shift",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Correct/Shift.tjp"
+        },
+        {
+          "id": "scheduler-correct/Shift2",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Correct/Shift2.tjp"
+        },
+        {
+          "id": "scheduler-correct/TimeSheet2",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Correct/TimeSheet2.tjp"
+        },
+        {
+          "id": "scheduler-correct/WeakDeps",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Correct/WeakDeps.tjp"
+        },
+        {
+          "id": "scheduler-correct/hammock",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Correct/hammock.tjp"
+        },
+        {
+          "id": "scheduler-correct/purge",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Correct/purge.tjp"
+        }
+      ]
+    },
+    {
+      "id": "scheduler-errors",
+      "dir": "docs/taskjuggler/test/TestSuite/Scheduler/Errors",
+      "count": 70,
+      "fixtures": [
+        {
+          "id": "scheduler-errors/account_no_leaf",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/account_no_leaf.tjp"
+        },
+        {
+          "id": "scheduler-errors/allocate_no_assigned",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/allocate_no_assigned.tjp"
+        },
+        {
+          "id": "scheduler-errors/booking_conflict",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/booking_conflict.tjp"
+        },
+        {
+          "id": "scheduler-errors/booking_no_duty",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/booking_no_duty.tjp"
+        },
+        {
+          "id": "scheduler-errors/booking_on_vacation",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/booking_on_vacation.tjp"
+        },
+        {
+          "id": "scheduler-errors/container_booking",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/container_booking.tjp"
+        },
+        {
+          "id": "scheduler-errors/container_duration",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/container_duration.tjp"
+        },
+        {
+          "id": "scheduler-errors/container_milestone",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/container_milestone.tjp"
+        },
+        {
+          "id": "scheduler-errors/effort_no_allocations",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/effort_no_allocations.tjp"
+        },
+        {
+          "id": "scheduler-errors/impossible_end_dep",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/impossible_end_dep.tjp"
+        },
+        {
+          "id": "scheduler-errors/impossible_start_dep",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/impossible_start_dep.tjp"
+        },
+        {
+          "id": "scheduler-errors/loop_detected_1",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/loop_detected_1.tjp"
+        },
+        {
+          "id": "scheduler-errors/loop_detected_10",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/loop_detected_10.tjp"
+        },
+        {
+          "id": "scheduler-errors/loop_detected_11",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/loop_detected_11.tjp"
+        },
+        {
+          "id": "scheduler-errors/loop_detected_12",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/loop_detected_12.tjp"
+        },
+        {
+          "id": "scheduler-errors/loop_detected_13",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/loop_detected_13.tjp"
+        },
+        {
+          "id": "scheduler-errors/loop_detected_14",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/loop_detected_14.tjp"
+        },
+        {
+          "id": "scheduler-errors/loop_detected_2",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/loop_detected_2.tjp"
+        },
+        {
+          "id": "scheduler-errors/loop_detected_3",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/loop_detected_3.tjp"
+        },
+        {
+          "id": "scheduler-errors/loop_detected_4",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/loop_detected_4.tjp"
+        },
+        {
+          "id": "scheduler-errors/loop_detected_5",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/loop_detected_5.tjp"
+        },
+        {
+          "id": "scheduler-errors/loop_detected_6",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/loop_detected_6.tjp"
+        },
+        {
+          "id": "scheduler-errors/loop_detected_9",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/loop_detected_9.tjp"
+        },
+        {
+          "id": "scheduler-errors/manager_is_group",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/manager_is_group.tjp"
+        },
+        {
+          "id": "scheduler-errors/manager_is_self",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/manager_is_self.tjp"
+        },
+        {
+          "id": "scheduler-errors/maxend",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/maxend.tjp"
+        },
+        {
+          "id": "scheduler-errors/maxstart",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/maxstart.tjp"
+        },
+        {
+          "id": "scheduler-errors/milestone_booking",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/milestone_booking.tjp"
+        },
+        {
+          "id": "scheduler-errors/milestone_start_end",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/milestone_start_end.tjp"
+        },
+        {
+          "id": "scheduler-errors/minend",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/minend.tjp"
+        },
+        {
+          "id": "scheduler-errors/minstart",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/minstart.tjp"
+        },
+        {
+          "id": "scheduler-errors/no_tasks",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/no_tasks.tjp"
+        },
+        {
+          "id": "scheduler-errors/not_scheduled",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/not_scheduled.tjp"
+        },
+        {
+          "id": "scheduler-errors/onend_wrong_direction",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/onend_wrong_direction.tjp"
+        },
+        {
+          "id": "scheduler-errors/onstart_wrong_direction",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/onstart_wrong_direction.tjp"
+        },
+        {
+          "id": "scheduler-errors/overbooked_duration",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/overbooked_duration.tjp"
+        },
+        {
+          "id": "scheduler-errors/overbooked_effort",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/overbooked_effort.tjp"
+        },
+        {
+          "id": "scheduler-errors/overbooked_length",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/overbooked_length.tjp"
+        },
+        {
+          "id": "scheduler-errors/resource_fail_check",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/resource_fail_check.tjp"
+        },
+        {
+          "id": "scheduler-errors/resource_warn_check",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/resource_warn_check.tjp"
+        },
+        {
+          "id": "scheduler-errors/sched_runaway",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/sched_runaway.tjp"
+        },
+        {
+          "id": "scheduler-errors/task_depend_child",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/task_depend_child.tjp"
+        },
+        {
+          "id": "scheduler-errors/task_depend_multi",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/task_depend_multi.tjp"
+        },
+        {
+          "id": "scheduler-errors/task_depend_parent",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/task_depend_parent.tjp"
+        },
+        {
+          "id": "scheduler-errors/task_depend_self",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/task_depend_self.tjp"
+        },
+        {
+          "id": "scheduler-errors/task_depend_unknown",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/task_depend_unknown.tjp"
+        },
+        {
+          "id": "scheduler-errors/task_fail_check",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/task_fail_check.tjp"
+        },
+        {
+          "id": "scheduler-errors/task_overspecified_1",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/task_overspecified_1.tjp"
+        },
+        {
+          "id": "scheduler-errors/task_overspecified_2",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/task_overspecified_2.tjp"
+        },
+        {
+          "id": "scheduler-errors/task_overspecified_3",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/task_overspecified_3.tjp"
+        },
+        {
+          "id": "scheduler-errors/task_pred_before",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/task_pred_before.tjp"
+        },
+        {
+          "id": "scheduler-errors/task_pred_before_1",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/task_pred_before_1.tjp"
+        },
+        {
+          "id": "scheduler-errors/task_pred_before_2",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/task_pred_before_2.tjp"
+        },
+        {
+          "id": "scheduler-errors/task_succ_after",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/task_succ_after.tjp"
+        },
+        {
+          "id": "scheduler-errors/task_succ_after_1",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/task_succ_after_1.tjp"
+        },
+        {
+          "id": "scheduler-errors/task_succ_after_2",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/task_succ_after_2.tjp"
+        },
+        {
+          "id": "scheduler-errors/task_underspecified_1",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/task_underspecified_1.tjp"
+        },
+        {
+          "id": "scheduler-errors/task_underspecified_3",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/task_underspecified_3.tjp"
+        },
+        {
+          "id": "scheduler-errors/task_warn_check",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/task_warn_check.tjp"
+        },
+        {
+          "id": "scheduler-errors/ts_alert1_more_details",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/ts_alert1_more_details.tjp"
+        },
+        {
+          "id": "scheduler-errors/ts_alert2_more_details",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/ts_alert2_more_details.tjp"
+        },
+        {
+          "id": "scheduler-errors/ts_no_expected_end",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/ts_no_expected_end.tjp"
+        },
+        {
+          "id": "scheduler-errors/ts_no_headline1",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/ts_no_headline1.tjp"
+        },
+        {
+          "id": "scheduler-errors/ts_no_rem_or_end",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/ts_no_rem_or_end.tjp"
+        },
+        {
+          "id": "scheduler-errors/ts_no_remaining",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/ts_no_remaining.tjp"
+        },
+        {
+          "id": "scheduler-errors/ts_no_status_work",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/ts_no_status_work.tjp"
+        },
+        {
+          "id": "scheduler-errors/ts_no_work",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/ts_no_work.tjp"
+        },
+        {
+          "id": "scheduler-errors/ts_res_new_task",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/ts_res_new_task.tjp"
+        },
+        {
+          "id": "scheduler-errors/ts_work_too_high",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/ts_work_too_high.tjp"
+        },
+        {
+          "id": "scheduler-errors/ts_work_too_low",
+          "path": "docs/taskjuggler/test/TestSuite/Scheduler/Errors/ts_work_too_low.tjp"
+        }
+      ]
+    },
+    {
+      "id": "report-generator",
+      "dir": "docs/taskjuggler/test/TestSuite/ReportGenerator/Correct",
+      "count": 9,
+      "fixtures": [
+        {
+          "id": "report-generator/Alerts",
+          "path": "docs/taskjuggler/test/TestSuite/ReportGenerator/Correct/Alerts.tjp"
+        },
+        {
+          "id": "report-generator/FTE",
+          "path": "docs/taskjuggler/test/TestSuite/ReportGenerator/Correct/FTE.tjp"
+        },
+        {
+          "id": "report-generator/Journal",
+          "path": "docs/taskjuggler/test/TestSuite/ReportGenerator/Correct/Journal.tjp"
+        },
+        {
+          "id": "report-generator/JournalMode",
+          "path": "docs/taskjuggler/test/TestSuite/ReportGenerator/Correct/JournalMode.tjp"
+        },
+        {
+          "id": "report-generator/LogicalFunctions1",
+          "path": "docs/taskjuggler/test/TestSuite/ReportGenerator/Correct/LogicalFunctions1.tjp"
+        },
+        {
+          "id": "report-generator/LogicalFunctions2",
+          "path": "docs/taskjuggler/test/TestSuite/ReportGenerator/Correct/LogicalFunctions2.tjp"
+        },
+        {
+          "id": "report-generator/LogicalFunctions3",
+          "path": "docs/taskjuggler/test/TestSuite/ReportGenerator/Correct/LogicalFunctions3.tjp"
+        },
+        {
+          "id": "report-generator/LogicalFunctions4",
+          "path": "docs/taskjuggler/test/TestSuite/ReportGenerator/Correct/LogicalFunctions4.tjp"
+        },
+        {
+          "id": "report-generator/Macros",
+          "path": "docs/taskjuggler/test/TestSuite/ReportGenerator/Correct/Macros.tjp"
+        }
+      ]
+    },
+    {
+      "id": "html-reports",
+      "dir": "docs/taskjuggler/test/TestSuite/HTML-Reports",
+      "count": 13,
+      "fixtures": [
+        {
+          "id": "html-reports/Alerts",
+          "path": "docs/taskjuggler/test/TestSuite/HTML-Reports/Alerts.tjp"
+        },
+        {
+          "id": "html-reports/Alerts-2",
+          "path": "docs/taskjuggler/test/TestSuite/HTML-Reports/Alerts-2.tjp"
+        },
+        {
+          "id": "html-reports/Calendars",
+          "path": "docs/taskjuggler/test/TestSuite/HTML-Reports/Calendars.tjp"
+        },
+        {
+          "id": "html-reports/CellText",
+          "path": "docs/taskjuggler/test/TestSuite/HTML-Reports/CellText.tjp"
+        },
+        {
+          "id": "html-reports/ColumnPeriods",
+          "path": "docs/taskjuggler/test/TestSuite/HTML-Reports/ColumnPeriods.tjp"
+        },
+        {
+          "id": "html-reports/IsOngoing",
+          "path": "docs/taskjuggler/test/TestSuite/HTML-Reports/IsOngoing.tjp"
+        },
+        {
+          "id": "html-reports/Navigator",
+          "path": "docs/taskjuggler/test/TestSuite/HTML-Reports/Navigator.tjp"
+        },
+        {
+          "id": "html-reports/Query",
+          "path": "docs/taskjuggler/test/TestSuite/HTML-Reports/Query.tjp"
+        },
+        {
+          "id": "html-reports/Sorting",
+          "path": "docs/taskjuggler/test/TestSuite/HTML-Reports/Sorting.tjp"
+        },
+        {
+          "id": "html-reports/TimeSheet",
+          "path": "docs/taskjuggler/test/TestSuite/HTML-Reports/TimeSheet.tjp"
+        },
+        {
+          "id": "html-reports/UDAQuery",
+          "path": "docs/taskjuggler/test/TestSuite/HTML-Reports/UDAQuery.tjp"
+        },
+        {
+          "id": "html-reports/depArrows",
+          "path": "docs/taskjuggler/test/TestSuite/HTML-Reports/depArrows.tjp"
+        },
+        {
+          "id": "html-reports/reference",
+          "path": "docs/taskjuggler/test/TestSuite/HTML-Reports/reference.tjp"
+        }
+      ]
+    },
+    {
+      "id": "csv-reports",
+      "dir": "docs/taskjuggler/test/TestSuite/CSV-Reports",
+      "count": 18,
+      "fixtures": [
+        {
+          "id": "csv-reports/Leave",
+          "path": "docs/taskjuggler/test/TestSuite/CSV-Reports/Leave.tjp"
+        },
+        {
+          "id": "csv-reports/alert",
+          "path": "docs/taskjuggler/test/TestSuite/CSV-Reports/alert.tjp"
+        },
+        {
+          "id": "csv-reports/celltext",
+          "path": "docs/taskjuggler/test/TestSuite/CSV-Reports/celltext.tjp"
+        },
+        {
+          "id": "csv-reports/efficiency",
+          "path": "docs/taskjuggler/test/TestSuite/CSV-Reports/efficiency.tjp"
+        },
+        {
+          "id": "csv-reports/headcount",
+          "path": "docs/taskjuggler/test/TestSuite/CSV-Reports/headcount.tjp"
+        },
+        {
+          "id": "csv-reports/inputs",
+          "path": "docs/taskjuggler/test/TestSuite/CSV-Reports/inputs.tjp"
+        },
+        {
+          "id": "csv-reports/niku",
+          "path": "docs/taskjuggler/test/TestSuite/CSV-Reports/niku.tjp"
+        },
+        {
+          "id": "csv-reports/quotes",
+          "path": "docs/taskjuggler/test/TestSuite/CSV-Reports/quotes.tjp"
+        },
+        {
+          "id": "csv-reports/resourcereport",
+          "path": "docs/taskjuggler/test/TestSuite/CSV-Reports/resourcereport.tjp"
+        },
+        {
+          "id": "csv-reports/resourcereport_with_tasks",
+          "path": "docs/taskjuggler/test/TestSuite/CSV-Reports/resourcereport_with_tasks.tjp"
+        },
+        {
+          "id": "csv-reports/sortByTree",
+          "path": "docs/taskjuggler/test/TestSuite/CSV-Reports/sortByTree.tjp"
+        },
+        {
+          "id": "csv-reports/sortBy_duration.down",
+          "path": "docs/taskjuggler/test/TestSuite/CSV-Reports/sortBy_duration.down.tjp"
+        },
+        {
+          "id": "csv-reports/sortBy_effort.up",
+          "path": "docs/taskjuggler/test/TestSuite/CSV-Reports/sortBy_effort.up.tjp"
+        },
+        {
+          "id": "csv-reports/sortBy_plan.start.down",
+          "path": "docs/taskjuggler/test/TestSuite/CSV-Reports/sortBy_plan.start.down.tjp"
+        },
+        {
+          "id": "csv-reports/targets",
+          "path": "docs/taskjuggler/test/TestSuite/CSV-Reports/targets.tjp"
+        },
+        {
+          "id": "csv-reports/taskreport",
+          "path": "docs/taskjuggler/test/TestSuite/CSV-Reports/taskreport.tjp"
+        },
+        {
+          "id": "csv-reports/taskreport_with_resources",
+          "path": "docs/taskjuggler/test/TestSuite/CSV-Reports/taskreport_with_resources.tjp"
+        },
+        {
+          "id": "csv-reports/weekly",
+          "path": "docs/taskjuggler/test/TestSuite/CSV-Reports/weekly.tjp"
+        }
+      ]
+    },
+    {
+      "id": "export-refs",
+      "dir": "docs/taskjuggler/test/TestSuite/Export-Reports/refs",
+      "count": 68,
+      "fixtures": [
+        {
+          "id": "export-refs/Account",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Account.tjp"
+        },
+        {
+          "id": "export-refs/AccountReport",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/AccountReport.tjp"
+        },
+        {
+          "id": "export-refs/AdoptedTasks",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/AdoptedTasks.tjp"
+        },
+        {
+          "id": "export-refs/AlertLevels",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/AlertLevels.tjp"
+        },
+        {
+          "id": "export-refs/Allocate-1",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Allocate-1.tjp"
+        },
+        {
+          "id": "export-refs/Alternative",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Alternative.tjp"
+        },
+        {
+          "id": "export-refs/AutoID",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/AutoID.tjp"
+        },
+        {
+          "id": "export-refs/AutoMacros",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/AutoMacros.tjp"
+        },
+        {
+          "id": "export-refs/Booking",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Booking.tjp"
+        },
+        {
+          "id": "export-refs/Caption",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Caption.tjp"
+        },
+        {
+          "id": "export-refs/Celltext",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Celltext.tjp"
+        },
+        {
+          "id": "export-refs/Comments",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Comments.tjp"
+        },
+        {
+          "id": "export-refs/Complete",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Complete.tjp"
+        },
+        {
+          "id": "export-refs/Currencyformat",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Currencyformat.tjp"
+        },
+        {
+          "id": "export-refs/CustomAttributes",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/CustomAttributes.tjp"
+        },
+        {
+          "id": "export-refs/Depends1",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Depends1.tjp"
+        },
+        {
+          "id": "export-refs/Durations",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Durations.tjp"
+        },
+        {
+          "id": "export-refs/Efficiency",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Efficiency.tjp"
+        },
+        {
+          "id": "export-refs/EnvVar",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/EnvVar.tjp"
+        },
+        {
+          "id": "export-refs/Flags",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Flags.tjp"
+        },
+        {
+          "id": "export-refs/Gap",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Gap.tjp"
+        },
+        {
+          "id": "export-refs/HtmlTaskReport",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/HtmlTaskReport.tjp"
+        },
+        {
+          "id": "export-refs/Include",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Include.tjp"
+        },
+        {
+          "id": "export-refs/Journal",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Journal.tjp"
+        },
+        {
+          "id": "export-refs/Limits-1",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Limits-1.tjp"
+        },
+        {
+          "id": "export-refs/LoadUnits",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/LoadUnits.tjp"
+        },
+        {
+          "id": "export-refs/LogicalExpression",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/LogicalExpression.tjp"
+        },
+        {
+          "id": "export-refs/LogicalFunction",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/LogicalFunction.tjp"
+        },
+        {
+          "id": "export-refs/Macro-1",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Macro-1.tjp"
+        },
+        {
+          "id": "export-refs/Macro-2",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Macro-2.tjp"
+        },
+        {
+          "id": "export-refs/Macro-3",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Macro-3.tjp"
+        },
+        {
+          "id": "export-refs/Manager",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Manager.tjp"
+        },
+        {
+          "id": "export-refs/Mandatory",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Mandatory.tjp"
+        },
+        {
+          "id": "export-refs/Milestone",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Milestone.tjp"
+        },
+        {
+          "id": "export-refs/MinMax",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/MinMax.tjp"
+        },
+        {
+          "id": "export-refs/Niku",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Niku.tjp"
+        },
+        {
+          "id": "export-refs/Numberformat",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Numberformat.tjp"
+        },
+        {
+          "id": "export-refs/Period",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Period.tjp"
+        },
+        {
+          "id": "export-refs/Persistent",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Persistent.tjp"
+        },
+        {
+          "id": "export-refs/Precedes1",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Precedes1.tjp"
+        },
+        {
+          "id": "export-refs/Priority",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Priority.tjp"
+        },
+        {
+          "id": "export-refs/Project",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Project.tjp"
+        },
+        {
+          "id": "export-refs/ProjectIDs",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/ProjectIDs.tjp"
+        },
+        {
+          "id": "export-refs/Query",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Query.tjp"
+        },
+        {
+          "id": "export-refs/Reports",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Reports.tjp"
+        },
+        {
+          "id": "export-refs/Resource",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Resource.tjp"
+        },
+        {
+          "id": "export-refs/ResourcePrefix",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/ResourcePrefix.tjp"
+        },
+        {
+          "id": "export-refs/ResourceRoot",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/ResourceRoot.tjp"
+        },
+        {
+          "id": "export-refs/Responsible",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Responsible.tjp"
+        },
+        {
+          "id": "export-refs/RollupResource",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/RollupResource.tjp"
+        },
+        {
+          "id": "export-refs/Scenario",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Scenario.tjp"
+        },
+        {
+          "id": "export-refs/Scheduling",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Scheduling.tjp"
+        },
+        {
+          "id": "export-refs/Select",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Select.tjp"
+        },
+        {
+          "id": "export-refs/Shift",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Shift.tjp"
+        },
+        {
+          "id": "export-refs/Simple",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Simple.tjp"
+        },
+        {
+          "id": "export-refs/StatusSheet",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/StatusSheet.tjp"
+        },
+        {
+          "id": "export-refs/String",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/String.tjp"
+        },
+        {
+          "id": "export-refs/Supplement",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Supplement.tjp"
+        },
+        {
+          "id": "export-refs/TaskPrefix",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/TaskPrefix.tjp"
+        },
+        {
+          "id": "export-refs/TaskRoot",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/TaskRoot.tjp"
+        },
+        {
+          "id": "export-refs/TimeFrame",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/TimeFrame.tjp"
+        },
+        {
+          "id": "export-refs/TimeSheet1",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/TimeSheet1.tjp"
+        },
+        {
+          "id": "export-refs/Timezone",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Timezone.tjp"
+        },
+        {
+          "id": "export-refs/Vacation",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/Vacation.tjp"
+        },
+        {
+          "id": "export-refs/navigator",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/navigator.tjp"
+        },
+        {
+          "id": "export-refs/template",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/template.tjp"
+        },
+        {
+          "id": "export-refs/textreport",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/textreport.tjp"
+        },
+        {
+          "id": "export-refs/tutorial",
+          "path": "docs/taskjuggler/test/TestSuite/Export-Reports/refs/tutorial.tjp"
+        }
+      ]
+    },
+    {
+      "id": "parity",
+      "dir": "packages/cli/tests/fixtures/golden",
+      "count": 4,
+      "fixtures": [
+        {
+          "id": "parity/parity-csv-accounts",
+          "path": "packages/cli/tests/fixtures/golden/parity-csv-accounts.smx"
+        },
+        {
+          "id": "parity/parity-csv-balance",
+          "path": "packages/cli/tests/fixtures/golden/parity-csv-balance.smx"
+        },
+        {
+          "id": "parity/parity-csv-tasks",
+          "path": "packages/cli/tests/fixtures/golden/parity-csv-tasks.smx"
+        },
+        {
+          "id": "parity/parity-html",
+          "path": "packages/cli/tests/fixtures/golden/parity-html.smx"
+        }
+      ]
+    }
+  ],
+  "total": 395
+}

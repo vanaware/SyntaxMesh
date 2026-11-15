@@ -35,7 +35,7 @@ paritária.
 | `timesheets.rb`                                                                 | 18   | `timesheets.golden.json`          | `timesheets_golden_test.ts`          |
 | `dynamic-attributes.rb`                                                         | 18   | `dynamic-attributes.golden.json`  | `dynamic-attributes_golden_test.ts`  |
 | `packages/core/tests/golden/generate_extension_golden.ts` (TS puro, sem oracle) | 14C  | `reports-extensions.golden.json`  | `reports-extensions_golden_test.ts`  |
-| `cli-tj3.rb`                                                                    | 24   | `packages/cli/tests/golden/cli-tj3.golden.json` | `cli/tests/golden_cli_test.ts` |
+| `cli-tj3.rb`                                                                    | 24+21¹ | `packages/cli/tests/golden/cli-tj3.golden.json` | `cli/tests/e2e_<grupo>_test.ts` |
 
 ## Fluxo de trabalho
 
@@ -669,39 +669,54 @@ Cada bloco C1–C7 deve estender `buildExtensionSnapshot()` com novos probes
 (materialreport html/csv/json, breakdown, RDO, markdown) em vez de criar
 outro mecanismo de comparação.
 
-## Golden CLI × tj3 (Fase 24.7)
+## Golden CLI × tj3 (Fase 24.7 + 26.2–26.5 da F21¹)
 
 Fidelidade **ponta a ponta da CLI**: não um método do core, mas o que o
 usuário vê — código de saída, arquivos gravados, mensagens e stdout. O oracle
-roda o `tj3` real sobre um **subset** de fixtures; o teste roda a CLI de
-verdade (subprocesso) sobre os mesmos fixtures.
+roda o `tj3` real sobre o **corpus inteiro** (`tests/fixtures/corpus.json`,
+ADR 042); os testes rodam a CLI de verdade (subprocesso) sobre os mesmos
+fixtures, um arquivo por grupo (paralelismo nativo do Deno).
 
 ### Arquivos
 
-- `cli-tj3.rb` — roda `tj3 -o <tmp> <fixture>` por caso e grava
-  `{ id, path, kind, compare, exit, artifacts, messages, firstMessage,
-  stdout, stderr, outputs? }` em
-  `packages/cli/tests/golden/cli-tj3.golden.json` (34 casos).
-- `packages/cli/tests/golden_cli_test.ts` — um `it` por caso (24.7.4).
+- `cli-tj3.rb` — lê o manifesto + o registro de divergências, roda
+  `tj3 -o <tmp> <fixture>` por caso (timeout de 60s) e grava
+  `{ id, path, group, kind, compare, exit, artifacts, messages,
+  firstMessage, stdout, stderr, outputs?, excluded? }` em
+  `packages/cli/tests/golden/cli-tj3.golden.json` (395 casos).
+- `packages/cli/tests/golden/e2e-harness.ts` — harness compartilhado:
+  spawn da CLI, normalização, comparação e `registerGroup(grupo)`.
+- `packages/cli/tests/e2e_<grupo>_test.ts` — um arquivo por grupo do
+  corpus (10 arquivos, um `it` por caso); casos `excluded` assertam a
+  âncora do registro em vez de rodar.
 - `packages/cli/tests/golden/canonical-dom.ts` — DOM canônico do HTML
   (24.7.7) + `canonical_dom_test.ts` (unitários do canonicalizador).
-- `packages/cli/tests/golden/known_divergences.md` — divergências aceitas,
-  com âncora (24.7.5).
+- `packages/cli/tests/golden/known-divergences.json` — registro
+  **máquina** de divergências (26.6): `exclude`/`compare-artifacts`/`none`,
+  validado por `divergences.ts` + `divergences_test.ts`.
+- `packages/cli/tests/golden/known_divergences.md` — verbetes humanos
+  das divergências aceitas, com âncora (24.7.5).
 - `packages/cli/tests/fixtures/golden/*.smx` — fixtures de paridade
   escritas para este golden.
 
-### O subset (24.7.1)
+### O corpus (26.1)
 
 | Grupo | Quantos | Critério |
 | --- | --- | --- |
-| Projetos (`docs/Learning/mwe00{1,2,3,5,6,7,8,9}`) | 8 | exit + inventário de artefatos |
-| Projetos (`TestSuite/Syntax/Correct`) | 15 | idem (`Account`, `Booking`, `Celltext`, `Complete`, `Durations`, `Flags`, `Gap`, `Include`, `Limits-1`, `LoadUnits`, `Macro-1`, `Milestone`, `Period`, `Query`, `textreport`) |
-| Erros (`TestSuite/Syntax/Errors`) | 7 | idem + primeira mensagem com `file:line` (24.7.8) |
-| Paridade (`*.smx`) | 4 | exit + artefatos + **conteúdo** (2 CSV byte a byte, 1 DOM, 1 só inventário) |
+| `mwe` (`docs/Learning/mwe001..009`) | 9 | exit + inventário de artefatos |
+| `syntax-correct` (`TestSuite/Syntax/Correct`) | 75 | idem |
+| `syntax-errors` (`TestSuite/Syntax/Errors`) | 94 | idem + primeira mensagem com `file:line` (24.7.8) |
+| `scheduler-correct` (`TestSuite/Scheduler/Correct`) | 35 | exit + inventário |
+| `scheduler-errors` (`TestSuite/Scheduler/Errors`) | 70 | idem + primeira mensagem |
+| `report-generator` (`TestSuite/ReportGenerator/Correct`) | 9 | exit + inventário |
+| `html-reports` (`TestSuite/HTML-Reports`) | 13 | idem |
+| `csv-reports` (`TestSuite/CSV-Reports`) | 18 | idem |
+| `export-refs` (`TestSuite/Export-Reports/refs`) | 68 | idem |
+| `parity` (`*.smx`) | 4 | exit + artefatos + **conteúdo** (2 CSV byte a byte, 1 DOM, 1 só inventário) |
 
-Um fixture novo entra no subset se, e só se, `exit`, inventário e stdout
-resíduo baterem hoje; divergência conhecida do **core** fica **fora** e é
-registrada em `known_divergences.md` (nunca `it.ignore` escondido).
+Divergência conhecida do **core** fica **fora** via `exclude` no registro
+(`known-divergences.json`) e é registrada com âncora (nunca `it.ignore`
+escondido). O manifesto é gerado por `deno task corpus:generate`.
 
 ### O que é comparado, e como
 
@@ -739,11 +754,13 @@ localização. E só `docs/`/`packages/` entram na classe — `css/`, `icons/` e
 3. **Nunca editar `cli-tj3.golden.json` à mão** — regerer com
    `deno task golden:generate:ruby`.
 4. **Divergência nova não vira `it.ignore`**: entra em
-   `known_divergences.md` com âncora (D1, D2, …) ou o caso sai do subset com a
-   justificativa no próprio `.rb`.
+   `known-divergences.json` (máquina) + `known_divergences.md` (verbete)
+   com âncora (D1, D2, …); o efeito `exclude` tira o caso da comparação e
+   o teste passa a assertar a âncora do registro.
 
 ```bash
-ruby scripts/golden/cli-tj3.rb                  # inspecionar o JSON (~15s)
+ruby scripts/golden/cli-tj3.rb                  # inspecionar o JSON (~4min)
 deno task golden:generate:ruby                  # regerar o commitado
-deno task cli:test                              # rodar a comparação (~25s)
+deno test --no-check -P packages/cli/tests/e2e_mwe_test.ts   # um grupo
+deno task test                                  # comparação completa
 ```

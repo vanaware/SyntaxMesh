@@ -62,4 +62,30 @@ describe("scanIncludeReferences (24.3.6)", () => {
   it("não confunde um identificador parecido com include", () => {
     assertEquals(scanIncludeReferences('includes "x.tji"\n',), [],);
   });
+
+  it("aceita aspas simples no caminho (F21 26.5)", () => {
+    assertEquals(
+      scanIncludeReferences("include 'common.tji'\n",),
+      ["common.tji",],
+    );
+  });
+
+  it("aspas simples com indentação e sinônimo localizado", () => {
+    assertEquals(
+      scanIncludeReferences("  incluir 'sub/extra.tji'\n",),
+      ["sub/extra.tji",],
+    );
+  });
+
+  it("# dentro de aspas simples não é comentário", () => {
+    assertEquals(
+      scanIncludeReferences("include 'a#b.tji'\n",),
+      ["a#b.tji",],
+    );
+  });
+
+  it("mistura aspas duplas e simples na ordem de aparição", () => {
+    const text = "include \"a.tji\"\ninclude 'b.tji'\n";
+    assertEquals(scanIncludeReferences(text,), ["a.tji", "b.tji",],);
+  });
 });

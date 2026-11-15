@@ -1,0 +1,22 @@
+# 26.8 (F21¹) — fixture de equivalência de AST (ADR 023).
+# Tradução mecânica: apenas keywords variam entre idiomas; ids, strings,
+# datas e literais são idênticos. Gerado por .tmp/gen-i18n-fixtures.ts.
+language "pt-BR"
+
+projeto lv "Leaves" "1.0" 2026-01-01 - 2026-12-31 {
+  fusohorario "UTC"
+  agora 2026-07-01
+}
+licenças holiday "New Year" 2026-01-01 +1d
+recurso team "Team" {
+  abonos annual 2026-01-01 20d
+  licenças holiday 2026-01-06
+  recurso r1 "R1" {
+    licenças annual 2026-06-01 +3w
+  }
+}
+tarefa t "T" {
+  início 2026-01-05
+  esforço 2d
+  alocar r1
+}

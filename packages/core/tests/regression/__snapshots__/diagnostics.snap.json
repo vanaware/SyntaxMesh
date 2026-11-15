@@ -1,0 +1,1120 @@
+{
+  "syntax-errors/adopt_duplicate_child-1": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "adopt_duplicate_child",
+        "text": "The task 't1.t2' has already been adopted by property 't3' or any of its sub-properties."
+      }
+    ]
+  },
+  "syntax-errors/adopt_duplicate_child-2": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "adopt_duplicate_child",
+        "text": "The task 't1.t2' has already been adopted by property 't1' or any of its sub-properties."
+      }
+    ]
+  },
+  "syntax-errors/adopt_duplicate_child-3": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "adopt_duplicate_child",
+        "text": "The task 't1.t2' has already been adopted by property 't3' or any of its sub-properties."
+      }
+    ]
+  },
+  "syntax-errors/adopt_self": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "adopt_self",
+        "text": "A property cannot adopt itself"
+      },
+      {
+        "id": "adopt_duplicate_child",
+        "text": "The task 't1' has already been adopted by property 't1' or any of its sub-properties."
+      }
+    ]
+  },
+  "syntax-errors/alert_level_redef": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "alert_level_redef",
+        "text": "Alert level 'foo' has been defined multiple times."
+      }
+    ]
+  },
+  "syntax-errors/alert_name_redef": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "alert_name_redef",
+        "text": "Alert level name 'Foo' has been defined multiple times."
+      }
+    ]
+  },
+  "syntax-errors/bad_include": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "bad_include",
+        "text": "Cannot open include file foo.tji"
+      },
+      {
+        "id": "no_reduce",
+        "text": "Unexpected token 'bar' found. Expecting one of 'account', 'auxdir', 'copyright', 'balance', 'flags', 'include', 'leaves', 'limits', 'macro', 'template', 'material', 'navigator', 'projectid', 'projectids', 'rate', 'icalreport', 'nikureport', 'accountreport', 'mdaccountreport', 'breakdownreport', 'export', 'materialreport', 'mdmaterialreport', 'rdoreport', 'resourcereport', 'mdresourcereport', 'taskreport', 'mdtaskreport', 'textreport', 'tracereport', 'tagfile', 'statussheetreport', 'timesheetreport', 'resource', 'shift', 'statussheet', 'supplement', 'task', 'timesheet', 'vacation', 'eof'"
+      },
+      {
+        "id": "no_reduce",
+        "text": "Unexpected token 'bar' found. Expecting 'eof'"
+      },
+      {
+        "id": "unexpctd_token",
+        "text": "Unexpected token 'bar' found. Expecting one of 'language', 'include', 'macro', 'template', 'project'"
+      }
+    ]
+  },
+  "syntax-errors/bad_time_zone": {
+    "threw": "TjArgumentError",
+    "messages": [
+      {
+        "id": "bad_time_zone",
+        "text": "foo/bar is not a known time zone"
+      }
+    ]
+  },
+  "syntax-errors/bad_timing_res": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "bad_timing_res",
+        "text": "Timing resolution must be one of 5, 10, 15, 20, 30, 60 min."
+      }
+    ]
+  },
+  "syntax-errors/booking_group": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "booking_group",
+        "text": "You cannot book a group resource"
+      }
+    ]
+  },
+  "syntax-errors/booking_milestone": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "booking_milestone",
+        "text": "You cannot add bookings to a milestone"
+      }
+    ]
+  },
+  "syntax-errors/booking_no_leaf": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "booking_no_leaf",
+        "text": "t is not a leaf task"
+      }
+    ]
+  },
+  "syntax-errors/chargeset": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "chargeset",
+        "text": "Total share of this set is 89.99999999999999 instead of 100%."
+      }
+    ]
+  },
+  "syntax-errors/chargeset_master": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "chargeset_master",
+        "text": "All charge sets for this property must have different top-level accounts."
+      }
+    ]
+  },
+  "syntax-errors/container_attribute": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "container_attribute",
+        "text": "The attribute depends may not be used for this property after sub properties have been added."
+      }
+    ]
+  },
+  "syntax-errors/cost_acct_no_top": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "cost_acct_no_top",
+        "text": "The cost account g1 is not a top-level account."
+      }
+    ]
+  },
+  "syntax-errors/cost_rev_same": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "cost_rev_same",
+        "text": "The cost and revenue accounts may not be the same."
+      }
+    ]
+  },
+  "syntax-errors/date_in_range": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "date_in_range",
+        "text": "Date 2007-08-18-00:00-+0000 must be within the project time frame 2007-08-19-00:00-+0000  - 2007-10-18-20:00-+0000"
+      }
+    ]
+  },
+  "syntax-errors/effort_zero": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "effort_zero",
+        "text": "Effort value must at least as large as the timing resolution (60min)."
+      }
+    ]
+  },
+  "syntax-errors/empty": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "unexpctd_token",
+        "text": "Unexpected token '<END>' found. Expecting one of 'language', 'include', 'macro', 'template', 'project'"
+      }
+    ]
+  },
+  "syntax-errors/extend_id_cap": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "extend_id_cap",
+        "text": "User defined attributes IDs must start with a capital letter"
+      },
+      {
+        "id": "no_reduce",
+        "text": "Unexpected token '}' found. Expecting 'STRING'"
+      }
+    ]
+  },
+  "syntax-errors/include_before_project": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "include_before_project",
+        "text": "You must declare the project header before you include other files."
+      },
+      {
+        "id": "no_reduce",
+        "text": "Unexpected token '<EOT>' found. Expecting 'project'"
+      }
+    ]
+  },
+  "syntax-errors/include_recursion": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "bad_include",
+        "text": "Cannot open include file include_recursion.tji"
+      },
+      {
+        "id": "no_reduce",
+        "text": "Unexpected token 'Foo' found. Expecting one of 'account', 'auxdir', 'copyright', 'balance', 'flags', 'include', 'leaves', 'limits', 'macro', 'template', 'material', 'navigator', 'projectid', 'projectids', 'rate', 'icalreport', 'nikureport', 'accountreport', 'mdaccountreport', 'breakdownreport', 'export', 'materialreport', 'mdmaterialreport', 'rdoreport', 'resourcereport', 'mdresourcereport', 'taskreport', 'mdtaskreport', 'textreport', 'tracereport', 'tagfile', 'statussheetreport', 'timesheetreport', 'resource', 'shift', 'statussheet', 'supplement', 'task', 'timesheet', 'vacation', 'eof'"
+      },
+      {
+        "id": "no_reduce",
+        "text": "Unexpected token 'Foo' found. Expecting 'eof'"
+      },
+      {
+        "id": "unexpctd_token",
+        "text": "Unexpected token 'Foo' found. Expecting one of 'language', 'include', 'macro', 'template', 'project'"
+      }
+    ]
+  },
+  "syntax-errors/interval_end_in_range": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "interval_end_in_range",
+        "text": "End date 2007-11-13-20:00-+0000 must be within the project time frame (2007-08-19-00:00-+0000 - 2007-10-18-20:00-+0000)"
+      }
+    ]
+  },
+  "syntax-errors/interval_start_in_range": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "interval_start_in_range",
+        "text": "Start date 2007-08-18-00:00-+0000 must be within the project time frame (2007-08-19-00:00-+0000 - 2007-10-18-20:00-+0000)"
+      }
+    ]
+  },
+  "syntax-errors/invalid_file_name": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "invalid_file_name",
+        "text": "File names may not contain any of the following characters: \\?%*:|\\\"<>"
+      }
+    ]
+  },
+  "syntax-errors/junk_after_cut": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "junk_after_cut",
+        "text": "The cut mark -8<- must be immediately followed by a line break."
+      },
+      {
+        "id": "runaway_token",
+        "text": "Unterminated token starting at line :4:"
+      },
+      {
+        "id": "no_reduce",
+        "text": "Unexpected token '<END>' found. Expecting 'STRING'"
+      }
+    ]
+  },
+  "syntax-errors/leaf_resource_id_expected": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "leaf_resource_id_expected",
+        "text": "team is not a leaf resource."
+      }
+    ]
+  },
+  "syntax-errors/macro_stack_overflow": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "macro_stack",
+        "text": "Macro call history:"
+      },
+      {
+        "id": "macro_stack",
+        "text": "  ${foo}"
+      },
+      {
+        "id": "macro_stack",
+        "text": "  ${foo}"
+      },
+      {
+        "id": "macro_stack",
+        "text": "  ${foo}"
+      },
+      {
+        "id": "macro_stack",
+        "text": "  ${foo}"
+      },
+      {
+        "id": "macro_stack",
+        "text": "  ${foo}"
+      },
+      {
+        "id": "macro_stack",
+        "text": "  ${foo}"
+      },
+      {
+        "id": "macro_stack",
+        "text": "  ${foo}"
+      },
+      {
+        "id": "macro_stack",
+        "text": "  ${foo}"
+      },
+      {
+        "id": "macro_stack",
+        "text": "  ${foo}"
+      },
+      {
+        "id": "macro_stack",
+        "text": "  ${foo}"
+      },
+      {
+        "id": "macro_stack",
+        "text": "  ${foo}"
+      },
+      {
+        "id": "macro_stack",
+        "text": "  ${foo}"
+      },
+      {
+        "id": "macro_stack",
+        "text": "  ${foo}"
+      },
+      {
+        "id": "macro_stack",
+        "text": "  ${foo}"
+      },
+      {
+        "id": "macro_stack",
+        "text": "  ${foo}"
+      },
+      {
+        "id": "macro_stack",
+        "text": "  ${foo}"
+      },
+      {
+        "id": "macro_stack",
+        "text": "  ${foo}"
+      },
+      {
+        "id": "macro_stack",
+        "text": "  ${foo}"
+      },
+      {
+        "id": "macro_stack",
+        "text": "  ${foo}"
+      },
+      {
+        "id": "macro_stack",
+        "text": "  ${foo}"
+      },
+      {
+        "id": "macro_stack",
+        "text": "  ${foo}"
+      },
+      {
+        "id": "macro_stack_overflow",
+        "text": "Too many nested macro calls."
+      }
+    ]
+  },
+  "syntax-errors/misaligned_date": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "misaligned_date",
+        "text": "The date must be aligned to the timing resolution (20 min) of the project."
+      }
+    ]
+  },
+  "syntax-errors/multiple_durations": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "multiple_durations",
+        "text": "This duration criteria is overwriting a previously provided criteria (duration, effort, length or milestone)."
+      },
+      {
+        "id": "attr_overwrite",
+        "text": "Attribute 'milestone' já está definido"
+      }
+    ]
+  },
+  "syntax-errors/navigator_exists": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "navigator_exists",
+        "text": "The navigator foo has already been defined."
+      }
+    ]
+  },
+  "syntax-errors/no_own_resource_booking": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "no_own_resource_booking",
+        "text": "The scenario s2 inherits its bookings from the tracking scenario. You cannot specificy additional bookings for it."
+      }
+    ]
+  },
+  "syntax-errors/no_own_task_booking": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "no_own_task_booking",
+        "text": "The scenario s2 inherits its bookings from the tracking scenario. You cannot specificy additional bookings for it."
+      }
+    ]
+  },
+  "syntax-errors/no_reduce": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "no_reduce",
+        "text": "Unexpected token 'dd' found. Expecting one of 'min', 'h', 'd', 'w', 'm', 'y'"
+      },
+      {
+        "id": "effort_zero",
+        "text": "Effort value must at least as large as the timing resolution (60min)."
+      },
+      {
+        "id": "no_reduce",
+        "text": "Unexpected token 'dd' found. Expecting '}'"
+      },
+      {
+        "id": "no_reduce",
+        "text": "Unexpected token 'dd' found. Expecting 'eof'"
+      },
+      {
+        "id": "unexpctd_token",
+        "text": "Unexpected token 'dd' found. Expecting one of 'language', 'include', 'macro', 'template', 'project'"
+      }
+    ]
+  },
+  "syntax-errors/no_token_match1": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "no_token_match",
+        "text": "Unexpected characters found: '    ...'"
+      }
+    ]
+  },
+  "syntax-errors/no_token_match2": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "no_token_match",
+        "text": "Unexpected characters found: '  foo...'"
+      }
+    ]
+  },
+  "syntax-errors/no_token_match3": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "no_token_match",
+        "text": "Unexpected characters found: '  -...'"
+      }
+    ]
+  },
+  "syntax-errors/no_token_match4": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "no_token_match",
+        "text": "Unexpected characters found: '  ->...'"
+      }
+    ]
+  },
+  "syntax-errors/no_token_match5": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "no_token_match",
+        "text": "Unexpected characters found: '  ->8...'"
+      }
+    ]
+  },
+  "syntax-errors/operand_attribute": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "operand_attribute",
+        "text": "Attributes must be specified as <scenarioID>.<attribute>"
+      },
+      {
+        "id": "operand_unkn_scen",
+        "text": "Unknown scenario ID t"
+      }
+    ]
+  },
+  "syntax-errors/operand_unkn_flag": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "operand_unkn_flag",
+        "text": "Undeclared flag 'foo'"
+      }
+    ]
+  },
+  "syntax-errors/operand_unkn_scen": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "operand_unkn_scen",
+        "text": "Unknown scenario ID foo"
+      }
+    ]
+  },
+  "syntax-errors/overtime_range": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "overtime_range",
+        "text": "Overtime value 3 out of range (0 - 2)."
+      }
+    ]
+  },
+  "syntax-errors/purge_unknown_id": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "purge_unknown_id",
+        "text": "foo is not a known attribute for this property"
+      }
+    ]
+  },
+  "syntax-errors/report_end": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "report_end",
+        "text": "End date must be before start date 2007-11-16"
+      }
+    ]
+  },
+  "syntax-errors/report_exists": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "report_exists",
+        "text": "report report has already been defined."
+      }
+    ]
+  },
+  "syntax-errors/report_start": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "report_start",
+        "text": "Start date must be before end date 2008-01-15"
+      }
+    ]
+  },
+  "syntax-errors/resource_exists": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "resource_exists",
+        "text": "Resource r has already been defined."
+      }
+    ]
+  },
+  "syntax-errors/resource_id_expected": {
+    "threw": "TypeError",
+    "messages": [
+      {
+        "id": "resource_id_expected",
+        "text": "foo is not a defined resource."
+      }
+    ]
+  },
+  "syntax-errors/resourceroot_leaf": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "resourceroot_leaf",
+        "text": "r is not a group resource"
+      }
+    ]
+  },
+  "syntax-errors/rev_acct_no_top": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "rev_acct_no_top",
+        "text": "The revenue account g5 is not a top-level account."
+      }
+    ]
+  },
+  "syntax-errors/runaway_token": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "runaway_token",
+        "text": "Unterminated token starting at line :6:"
+      },
+      {
+        "id": "no_reduce",
+        "text": "Unexpected token '<END>' found. Expecting 'STRING'"
+      },
+      {
+        "id": "no_reduce",
+        "text": "Unexpected token '<END>' found. Expecting '}'"
+      }
+    ]
+  },
+  "syntax-errors/scenario_after_tracking": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "scenario_after_tracking",
+        "text": "Scenarios must be defined before a tracking scenario is set."
+      }
+    ]
+  },
+  "syntax-errors/scenario_exists": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "scenario_exists",
+        "text": "Scenario s has already been defined."
+      },
+      {
+        "id": "no_reduce",
+        "text": "Unexpected token '<END>' found. Expecting '}'"
+      }
+    ]
+  },
+  "syntax-errors/shift_assignment_overlap": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "shift_assignment_overlap",
+        "text": "Shifts may not overlap each other."
+      }
+    ]
+  },
+  "syntax-errors/shift_exists": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "shift_exists",
+        "text": "Shift s has already been defined."
+      }
+    ]
+  },
+  "syntax-errors/shift_id_expected": {
+    "threw": "TypeError",
+    "messages": [
+      {
+        "id": "shift_id_expected",
+        "text": "foo is not a defined shift."
+      }
+    ]
+  },
+  "syntax-errors/sloppy_range": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "sloppy_range",
+        "text": "Sloppyness value 4 out of range (0 - 2)."
+      }
+    ]
+  },
+  "syntax-errors/sort_direction": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "sort_direction",
+        "text": "Sorting direction must be 'up' or 'down'"
+      }
+    ]
+  },
+  "syntax-errors/sort_unknown_scen": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "sort_unknown_scen",
+        "text": "Unknown scenario foo in sorting criterium"
+      }
+    ]
+  },
+  "syntax-errors/sorting_bsi": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "sorting_bsi",
+        "text": "Sorting by bsi is not supported. Please use 'tree' (without appended .up or .down) instead."
+      }
+    ]
+  },
+  "syntax-errors/sorting_crit_exptd1": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "sorting_crit_exptd1",
+        "text": "Sorting criterium expected (e.g. tree, start.up or plan.end.down)."
+      },
+      {
+        "id": "sorting_unknown_attr",
+        "text": "Sorting criterium ' is not a known attribute."
+      }
+    ]
+  },
+  "syntax-errors/sorting_crit_exptd2": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "sorting_crit_exptd2",
+        "text": "Sorting criterium expected (e.g. tree, start.up or plan.end.down)."
+      }
+    ]
+  },
+  "syntax-errors/ss_no_tracking_scenario": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "ss_no_tracking_scenario",
+        "text": "No trackingscenario defined."
+      },
+      {
+        "id": "no_reduce",
+        "text": "Unexpected token 'work' found. Expecting one of 'status', 'task', 'material', '}'"
+      },
+      {
+        "id": "no_reduce",
+        "text": "Unexpected token 'work' found. Expecting '}'"
+      },
+      {
+        "id": "no_reduce",
+        "text": "Unexpected token 'work' found. Expecting 'eof'"
+      },
+      {
+        "id": "unexpctd_token",
+        "text": "Unexpected token 'work' found. Expecting one of 'language', 'include', 'macro', 'template', 'project'"
+      }
+    ]
+  },
+  "syntax-errors/start_before_end1": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "start_before_end",
+        "text": "The end date (2008-02-23-00:00-+0100) must be after the start date (2009-02-24-00:00-+0100)."
+      }
+    ]
+  },
+  "syntax-errors/start_before_end2": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "start_before_end",
+        "text": "The end date (2008-02-23-00:00-+0100) must be after the start date (2009-02-24-00:00-+0100)."
+      },
+      {
+        "id": "interval_end_in_range",
+        "text": "End date 2008-02-23-00:00-+0100 must be within the project time frame (2009-02-22-00:00-+0100 - 2009-05-24-08:00-+0200)"
+      }
+    ]
+  },
+  "syntax-errors/task_complete": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "task_complete",
+        "text": "Complete value must be between 0 and 100"
+      }
+    ]
+  },
+  "syntax-errors/task_exists": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "task_exists",
+        "text": "Task t has already been defined."
+      }
+    ]
+  },
+  "syntax-errors/task_priority": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "task_priority",
+        "text": "Priority must have a value between 0 and 1000"
+      }
+    ]
+  },
+  "syntax-errors/task_without_chargeset": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "task_without_chargeset",
+        "text": "The task does not have a chargeset defined."
+      }
+    ]
+  },
+  "syntax-errors/taskroot_leaf": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "taskroot_leaf",
+        "text": "t is not a container task"
+      }
+    ]
+  },
+  "syntax-errors/time_error": {
+    "threw": "TypeError",
+    "messages": [
+      {
+        "id": "time_error",
+        "text": "Time zone adjustment out of range (-1200 - +1400} but is +1401)"
+      },
+      {
+        "id": "no_reduce",
+        "text": "Unexpected token '{' found. Expecting one of 'DATE', '%'"
+      }
+    ]
+  },
+  "syntax-errors/time_interval": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "time_interval",
+        "text": "End time of interval must be larger than start time"
+      },
+      {
+        "id": "bad_workinghours",
+        "text": "Interval end time must be larger than start time"
+      }
+    ]
+  },
+  "syntax-errors/too_few_alert_levels": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "too_few_alert_levels",
+        "text": "You must specify at least 2 different alert levels."
+      }
+    ]
+  },
+  "syntax-errors/too_large_timing_res": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "too_large_timing_res",
+        "text": "The maximum allowed timing resolution for the timezone is 30 minutes."
+      }
+    ]
+  },
+  "syntax-errors/too_many_bangs": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "misaligned_date",
+        "text": "The date must be aligned to the timing resolution (60 min) of the project."
+      },
+      {
+        "id": "too_many_bangs",
+        "text": "Too many '!' for relative task in this context."
+      }
+    ]
+  },
+  "syntax-errors/ts_bad_priority": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "misaligned_date",
+        "text": "The date must be aligned to the timing resolution (60 min) of the project."
+      },
+      {
+        "id": "ts_bad_priority",
+        "text": "Priority value 1001 must be between 1 and 1000."
+      },
+      {
+        "id": "misaligned_date",
+        "text": "The date must be aligned to the timing resolution (60 min) of the project."
+      }
+    ]
+  },
+  "syntax-errors/ts_default_details": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "misaligned_date",
+        "text": "The date must be aligned to the timing resolution (60 min) of the project."
+      },
+      {
+        "id": "ts_default_details",
+        "text": "'Some more details' is not a valid value"
+      }
+    ]
+  },
+  "syntax-errors/ts_default_summary": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "misaligned_date",
+        "text": "The date must be aligned to the timing resolution (60 min) of the project."
+      },
+      {
+        "id": "ts_default_summary",
+        "text": "'A summary text' is not a valid summary"
+      }
+    ]
+  },
+  "syntax-errors/ts_duplicate_task": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "misaligned_date",
+        "text": "The date must be aligned to the timing resolution (60 min) of the project."
+      },
+      {
+        "id": "ts_duplicate_task",
+        "text": "Duplicate records for task t1"
+      }
+    ]
+  },
+  "syntax-errors/ts_end_too_early": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "misaligned_date",
+        "text": "The date must be aligned to the timing resolution (60 min) of the project."
+      },
+      {
+        "id": "misaligned_date",
+        "text": "The date must be aligned to the timing resolution (60 min) of the project."
+      },
+      {
+        "id": "ts_end_too_early",
+        "text": "The expected task end date must be after the start date of this time sheet report."
+      }
+    ]
+  },
+  "syntax-errors/ts_headline_too_long": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "misaligned_date",
+        "text": "The date must be aligned to the timing resolution (60 min) of the project."
+      },
+      {
+        "id": "ts_headline_too_long",
+        "text": "The headline must be 120 or less characters long. This one has 121 characters."
+      }
+    ]
+  },
+  "syntax-errors/ts_no_headline2": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "misaligned_date",
+        "text": "The date must be aligned to the timing resolution (60 min) of the project."
+      },
+      {
+        "id": "ts_no_headline",
+        "text": "'Your headline here!' is not a valid headline"
+      }
+    ]
+  },
+  "syntax-errors/ts_no_tracking_scenario": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "misaligned_date",
+        "text": "The date must be aligned to the timing resolution (60 min) of the project."
+      },
+      {
+        "id": "ts_no_tracking_scenario",
+        "text": "No trackingscenario defined."
+      },
+      {
+        "id": "ts_bad_priority",
+        "text": "Priority value 1001 must be between 1 and 1000."
+      },
+      {
+        "id": "misaligned_date",
+        "text": "The date must be aligned to the timing resolution (60 min) of the project."
+      }
+    ]
+  },
+  "syntax-errors/ts_summary_too_long": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "misaligned_date",
+        "text": "The date must be aligned to the timing resolution (60 min) of the project."
+      },
+      {
+        "id": "ts_summary_too_long",
+        "text": "The summary text must be 480 characters long or shorter. This text has 488 characters."
+      }
+    ]
+  },
+  "syntax-errors/undecl_flag": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "undecl_flag",
+        "text": "Undeclared flag 'foo'"
+      }
+    ]
+  },
+  "syntax-errors/unknown_env_var": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "unknown_env_var",
+        "text": "Unknown environment variable 'UNSET_VAR'"
+      },
+      {
+        "id": "no_reduce",
+        "text": "Unexpected token '}' found. Expecting 'STRING'"
+      }
+    ]
+  },
+  "syntax-errors/unknown_projectid": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "unknown_projectid",
+        "text": "Unknown project ID foo"
+      },
+      {
+        "id": "misaligned_date",
+        "text": "The date must be aligned to the timing resolution (60 min) of the project."
+      }
+    ]
+  },
+  "syntax-errors/unknown_scenario_id": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "unknown_scenario_id",
+        "text": "Unknown scenario: foo"
+      }
+    ]
+  },
+  "syntax-errors/unknown_scenario_idx": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "misaligned_date",
+        "text": "The date must be aligned to the timing resolution (60 min) of the project."
+      },
+      {
+        "id": "unknown_scenario_idx",
+        "text": "Unknown scenario foo"
+      }
+    ]
+  },
+  "syntax-errors/unknown_task": {
+    "threw": "TypeError",
+    "messages": [
+      {
+        "id": "misaligned_date",
+        "text": "The date must be aligned to the timing resolution (60 min) of the project."
+      },
+      {
+        "id": "unknown_task",
+        "text": "Unknown task foo"
+      }
+    ]
+  },
+  "syntax-errors/unsupported_token": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "misaligned_date",
+        "text": "The date must be aligned to the timing resolution (60 min) of the project."
+      }
+    ]
+  },
+  "syntax-errors/working_duration_too_small": {
+    "threw": null,
+    "messages": [
+      {
+        "id": "working_duration_too_small",
+        "text": "Duration values must be at least 60 minutes (your timingresolution) long."
+      }
+    ]
+  }
+}

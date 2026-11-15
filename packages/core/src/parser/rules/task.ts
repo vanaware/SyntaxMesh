@@ -671,8 +671,9 @@ export function registerTaskRules(p: ProjectFileParser,): void {
         if (!scenario?.get("ownbookings",)) {
           this.error(
             "no_own_task_booking",
+            // Ruby fidelity: "specificy" is the verbatim typo (TjpSyntaxRules.rb).
             `The scenario ${scenario?.fullId} inherits its bookings from ` +
-              "the tracking scenario. You cannot specify additional " +
+              "the tracking scenario. You cannot specificy additional " +
               "bookings for it.",
           );
         }

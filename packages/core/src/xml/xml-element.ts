@@ -249,17 +249,25 @@ export class XMLElement implements XMLElementLike {
       return out + "/>";
     }
     out += ">";
+    // Fast path (26.14): `out.endsWith(">")` relia a corda acumulada inteira a
+    // cada filho (O(n²) no Gantt). No início de cada iteração `out` termina com
+    // o último caractere do filho anterior (ou ">" antes do primeiro), então
+    // rastreamos `prevEndsWithGt` a partir de `childStr` — O(n) total, semântica
+    // idêntica à concatenação original.
+    let prevEndsWithGt = true;
     for (const child of this.children) {
       // Ruby: only inserts a newline for multiple children and after `>`.
       if (
         this.children.length > 1 && !(child instanceof XMLText) &&
-        out.endsWith(">",)
+        prevEndsWithGt
       ) {
         out += "\n" + this.indentation(indent + 1,);
       }
-      out += child.to_s(indent + 1,);
+      const childStr = child.to_s(indent + 1,);
+      out += childStr;
+      prevEndsWithGt = childStr.endsWith(">",);
     }
-    if (this.children.length > 1 && out.endsWith(">",)) {
+    if (this.children.length > 1 && prevEndsWithGt) {
       out += "\n" + this.indentation(indent,);
     }
     return out + "</" + this.name + ">";
@@ -277,6 +285,10 @@ export class XMLElement implements XMLElementLike {
    */
   protected escape(str: string, quotes = false,): string {
     void quotes; // Faithful signature; Ruby never uses the parameter.
+    // Fast path (26.14): sem `&` nem `"` o texto sai intacto — evita o loop
+    // por code point (`eachUtf8Char` + concatenação char a char), quente no
+    // `to_s` de reports/Gantt. Idêntico ao loop: nenhum caractere escapável.
+    if (!str.includes("&",) && !str.includes('"',)) return str;
     let out = "";
     for (const char of eachUtf8Char(str,)) {
       if (char === "&") out += "&amp;";
@@ -323,6 +335,9 @@ export class XMLText extends XMLElement {
    * @returns The escaped text.
    */
   override to_s(_indent = 0,): string {
+    // Fast path (26.14): sem `<`, `>` nem `&` o texto sai intacto — evita o
+    // loop por code point, que dominava o `to_s` do Gantt (~65% do profile).
+    if (!/[<>&]/.test(this.textValue,)) return this.textValue;
     let out = "";
     for (const char of eachUtf8Char(this.textValue,)) {
       if (char === "<") out += "&lt;";

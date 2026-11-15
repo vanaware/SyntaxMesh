@@ -1,5 +1,8 @@
 language "pt-BR"
-projeto prj "Test" "1.0" 2026-01-01 - 2026-12-31
+projeto prj "Test" "1.0" 2026-01-01 - 2026-12-31 {
+  fusohorario "UTC"
+  agora 2026-01-15
+}
 material steel "Steel" {
   unit "kg"
   unitprice 2

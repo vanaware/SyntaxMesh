@@ -73,3 +73,47 @@ describe("C3.9.3 AST equivalence (complemento keywords)", () => {
     assertEquals(es, en, "es ≠ en",);
   });
 });
+
+/**
+ * 26.26.2 — A equivalência acima só é significativa se as keywords de extensão
+ * estiverem de fato no AST. Estes testes tornam a equivalência **não-vacua**:
+ * garantem que `material`, `timebasis`, `breakdownreport` e `rdoreport` aparecem
+ * estruturalmente no AST do `en` (e, por equivalência, no pt-BR/es). `picture` e
+ * `format` vivem dentro do `journalentry` (fora dos mapas de atributo do
+ * snapshot) — sua presença é garantida pela integridade da fixture + o parse
+ * sem mensagens acima.
+ */
+describe("26.26.2 presença das keywords de extensão no AST", () => {
+  const snap = parseAndSnap(readFixture("en",),).snap;
+
+  it("material: entidade Material 'steel' presente", () => {
+    const materials = snap.sets.materials ?? [];
+    assert(
+      materials.some((m,) => m.kind === "Material" && m.fullId === "steel"),
+      "material steel ausente do AST",
+    );
+  });
+
+  it("timebasis: atributo de cenário da tarefa t1", () => {
+    const t1 = (snap.sets.tasks ?? []).find((t,) => t.fullId === "t1");
+    assert(t1, "tarefa t1 ausente do AST",);
+    assert(
+      t1.scenarioAttrs.some((sa,) => "timebasis" in sa),
+      "timebasis ausente dos atributos de cenário de t1",
+    );
+  });
+
+  it("breakdownreport + rdoreport: reports br/rdo com attrs distintivos", () => {
+    const reports = snap.sets.reports ?? [];
+    const br = reports.find((r,) => r.fullId === "br");
+    const rdo = reports.find((r,) => r.fullId === "rdo");
+    assert(br && "hideJournalEntry" in br.attrs, "breakdownreport br ausente",);
+    assert(rdo && "maxpictures" in rdo.attrs, "rdoreport rdo ausente",);
+  });
+
+  it("picture + format: exercitados no journalentry (fixture íntegra)", () => {
+    const text = readFixture("en",);
+    assert(text.includes('picture "a.png"',), "keyword picture ausente",);
+    assert(text.includes("format markdown",), "keyword format ausente",);
+  });
+});

@@ -1,0 +1,21 @@
+# 26.8 (F21¹) — fixture de equivalência de AST (ADR 023).
+# Tradução mecânica: apenas keywords variam entre idiomas; ids, strings,
+# datas e literais são idênticos. Gerado por .tmp/gen-i18n-fixtures.ts.
+language "pt-BR"
+
+projeto jn "Journal" "1.0" 2026-01-01 - 2026-02-28 {
+  fusohorario "UTC"
+  agora 2026-01-01
+  lançamento 2026-01-05 "The project started."
+  lançamento 2026-01-10 "Progress." {
+    resumo "All jobs have been assigned."
+    detalhes "Let's hope we keep the good spirit."
+  }
+}
+recurso tux "Tux" {
+  lançamento 2026-01-07 "A note about Tux."
+}
+tarefa t1 "Task1" {
+  início 2026-01-05
+  lançamento 2026-01-08 "Probably done sooner."
+}

@@ -1,0 +1,249 @@
+{
+  "version": 1,
+  "runtime": "Deno/2.9.8 x86_64-unknown-linux-gnu",
+  "cpu": "Intel(R) Core(TM) i7-10610U CPU @ 1.80GHz",
+  "benches": [
+    {
+      "origin": "file:///home/aarvati/github/syntaxmesh/bench/gantt_bench.ts",
+      "group": "gantt",
+      "name": "gantt_500_html",
+      "baseline": false,
+      "results": [
+        {
+          "ok": {
+            "n": 12,
+            "min": 455299596.0,
+            "max": 670656934.0,
+            "avg": 498828194.0,
+            "p75": 503634287.0,
+            "p99": 670656934.0,
+            "p995": 670656934.0,
+            "p999": 670656934.0,
+            "highPrecision": true,
+            "usedExplicitTimers": false
+          }
+        }
+      ]
+    },
+    {
+      "origin": "file:///home/aarvati/github/syntaxmesh/bench/parse_bench.ts",
+      "group": "parse",
+      "name": "parse_100",
+      "baseline": false,
+      "results": [
+        {
+          "ok": {
+            "n": 22,
+            "min": 33358970.0,
+            "max": 57241085.0,
+            "avg": 42938253.0,
+            "p75": 48009414.0,
+            "p99": 57241085.0,
+            "p995": 57241085.0,
+            "p999": 57241085.0,
+            "highPrecision": true,
+            "usedExplicitTimers": false
+          }
+        }
+      ]
+    },
+    {
+      "origin": "file:///home/aarvati/github/syntaxmesh/bench/parse_bench.ts",
+      "group": "parse",
+      "name": "parse_1000",
+      "baseline": false,
+      "results": [
+        {
+          "ok": {
+            "n": 15,
+            "min": 92412399.0,
+            "max": 153630449.0,
+            "avg": 104177815.0,
+            "p75": 105520599.0,
+            "p99": 153630449.0,
+            "p995": 153630449.0,
+            "p999": 153630449.0,
+            "highPrecision": true,
+            "usedExplicitTimers": false
+          }
+        }
+      ]
+    },
+    {
+      "origin": "file:///home/aarvati/github/syntaxmesh/bench/query_bench.ts",
+      "group": "query",
+      "name": "query_10k_effort",
+      "baseline": false,
+      "results": [
+        {
+          "ok": {
+            "n": 78,
+            "min": 6895676.0,
+            "max": 11087433.0,
+            "avg": 7452349.0,
+            "p75": 7515390.0,
+            "p99": 11087433.0,
+            "p995": 11087433.0,
+            "p999": 11087433.0,
+            "highPrecision": true,
+            "usedExplicitTimers": false
+          }
+        }
+      ]
+    },
+    {
+      "origin": "file:///home/aarvati/github/syntaxmesh/bench/report_bench.ts",
+      "group": "report",
+      "name": "report_10_html",
+      "baseline": false,
+      "results": [
+        {
+          "ok": {
+            "n": 19,
+            "min": 49099168.0,
+            "max": 62303623.0,
+            "avg": 54776114.0,
+            "p75": 56503423.0,
+            "p99": 62303623.0,
+            "p995": 62303623.0,
+            "p999": 62303623.0,
+            "highPrecision": true,
+            "usedExplicitTimers": false
+          }
+        }
+      ]
+    },
+    {
+      "origin": "file:///home/aarvati/github/syntaxmesh/bench/rich_text_bench.ts",
+      "group": "richtext",
+      "name": "richtext_to_s",
+      "baseline": false,
+      "results": [
+        {
+          "ok": {
+            "n": 2181,
+            "min": 175017.0,
+            "max": 2672321.0,
+            "avg": 230153.0,
+            "p75": 219714.0,
+            "p99": 961718.0,
+            "p995": 1056931.0,
+            "p999": 1738796.0,
+            "highPrecision": true,
+            "usedExplicitTimers": false
+          }
+        }
+      ]
+    },
+    {
+      "origin": "file:///home/aarvati/github/syntaxmesh/bench/rich_text_bench.ts",
+      "group": "richtext",
+      "name": "richtext_to_html",
+      "baseline": false,
+      "results": [
+        {
+          "ok": {
+            "n": 2226,
+            "min": 181268.0,
+            "max": 2310931.0,
+            "avg": 225820.0,
+            "p75": 212917.0,
+            "p99": 970753.0,
+            "p995": 1136167.0,
+            "p999": 1461366.0,
+            "highPrecision": true,
+            "usedExplicitTimers": false
+          }
+        }
+      ]
+    },
+    {
+      "origin": "file:///home/aarvati/github/syntaxmesh/bench/rich_text_bench.ts",
+      "group": "richtext",
+      "name": "richtext_to_tagged",
+      "baseline": false,
+      "results": [
+        {
+          "ok": {
+            "n": 2520,
+            "min": 164831.0,
+            "max": 1872536.0,
+            "avg": 199272.0,
+            "p75": 185291.0,
+            "p99": 1073485.0,
+            "p995": 1199082.0,
+            "p999": 1547838.0,
+            "highPrecision": true,
+            "usedExplicitTimers": false
+          }
+        }
+      ]
+    },
+    {
+      "origin": "file:///home/aarvati/github/syntaxmesh/bench/schedule_bench.ts",
+      "group": "schedule",
+      "name": "schedule_100",
+      "baseline": false,
+      "results": [
+        {
+          "ok": {
+            "n": 12,
+            "min": 273553772.0,
+            "max": 427621062.0,
+            "avg": 312075434.0,
+            "p75": 328732827.0,
+            "p99": 427621062.0,
+            "p995": 427621062.0,
+            "p999": 427621062.0,
+            "highPrecision": true,
+            "usedExplicitTimers": false
+          }
+        }
+      ]
+    },
+    {
+      "origin": "file:///home/aarvati/github/syntaxmesh/bench/schedule_bench.ts",
+      "group": "schedule",
+      "name": "schedule_1000",
+      "baseline": false,
+      "results": [
+        {
+          "ok": {
+            "n": 11,
+            "min": 2237219191.0,
+            "max": 2558346508.0,
+            "avg": 2388433036.0,
+            "p75": 2481720514.0,
+            "p99": 2558346508.0,
+            "p995": 2558346508.0,
+            "p999": 2558346508.0,
+            "highPrecision": true,
+            "usedExplicitTimers": false
+          }
+        }
+      ]
+    },
+    {
+      "origin": "file:///home/aarvati/github/syntaxmesh/bench/schedule_bench.ts",
+      "group": "schedule",
+      "name": "schedule_booking_100",
+      "baseline": false,
+      "results": [
+        {
+          "ok": {
+            "n": 13,
+            "min": 182095259.0,
+            "max": 209032656.0,
+            "avg": 193796207.0,
+            "p75": 199004101.0,
+            "p99": 209032656.0,
+            "p995": 209032656.0,
+            "p999": 209032656.0,
+            "highPrecision": true,
+            "usedExplicitTimers": false
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -299,8 +299,9 @@ export function registerCommonRules(p: ProjectFileParser,): void {
         ) {
           this.error(
             "date_in_range",
+            // Ruby fidelity: two spaces before the dash (TjpSyntaxRules.rb:7509).
             `Date ${t.to_s()} must be within the project time frame ` +
-              `${start.to_s()} - ${end.to_s()}`,
+              `${start.to_s()}  - ${end.to_s()}`,
             this.sourceFileInfo[0] ?? null,
           );
         }
@@ -592,9 +593,14 @@ export function registerCommonRules(p: ProjectFileParser,): void {
   ): number | undefined => {
     const idx = parser.project?.scenarioIdx(String(id,),);
     if (idx === undefined) {
+      // Ruby: `unknown_scenario_id` keeps the colon (TjpSyntaxRules.rb:3110),
+      // `unknown_scenario_idx` drops it (TjpSyntaxRules.rb:5228). F21 26.5.
+      const msg = errId === "unknown_scenario_idx"
+        ? `Unknown scenario ${String(id,)}`
+        : `Unknown scenario: ${String(id,)}`;
       parser.error(
         errId,
-        `Unknown scenario: ${String(id,)}`,
+        msg,
         parser.sourceFileInfo[0] ?? null,
       );
     }

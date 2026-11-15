@@ -1,0 +1,10 @@
+{
+  "bold-italic": "bold and italic and both",
+  "headings": "= H1 =\n\n1) H2\n\n1.1) H3",
+  "hr-mixed": "--------------------------------------------------------------------------------\nline one<br>line two",
+  "links": "Internal and external and label",
+  "lists": " * item 1\n\n * item 2\n\n  * nested\n\n 1. ordered\n\n 2. second",
+  "nowiki": "'''not bold''' and preformatted line",
+  "plain": "Hello world",
+  "table": "{| ! H1 !! H2 |- | a || b |}"
+}

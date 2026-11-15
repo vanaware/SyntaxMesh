@@ -14,7 +14,9 @@ import type { Project, } from "../../src/model/project.ts";
 // Serialização determinística de valores de atributo
 // ---------------------------------------------------------------------------
 
-const SKIP_KEYS = new Set(["lineNo", "columnNo",],);
+// lineNo/columnNo: offsets de tradução. hashKeyCache: memoização interna
+// de ShiftAssignments (contador global — varia com a ordem dos parses).
+const SKIP_KEYS = new Set(["lineNo", "columnNo", "hashKeyCache",],);
 
 function isAttributeLike(v: unknown,): v is { value: unknown } {
   const c = v as Record<string, unknown>;

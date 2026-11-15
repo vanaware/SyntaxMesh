@@ -4,7 +4,7 @@
 > **Origem:** Fase 11-Gaps (Bloco A.4 / Bloco G.3); **regenerada na 1ª onda da
 > Fase 21** (tarefa 26.22.9 — decisão 2026-11-03, `docs/syntaxmesh/xray.md`
 > §5.5).
-> **Atual:** 2026-11-10 (Fase 21, 1ª onda)
+> **Atual:** 2026-11-15 (Fase 21, 1ª onda concluída — remainder 26.0–26.11 + 26.14 + 26.26–26.28; gate 935 passed)
 >
 > Esta matriz é a **fonte única** do status de cada gap do port. Consolida:
 > (a) o inventário histórico G1–G21 das Fases 2–12, agora com estados revisados
@@ -12,7 +12,7 @@
 > `scripts/check-stubs.ts` varre (seção B); (c) as **realocações** da varredura
 > xray 2026-11-03 (seção C); (d) as **pendências atuais** das Fases 13–24 que
 > só viviam em `CURRENT.md` (seção D); (e) a **reconciliação da cadeia de ADRs
-> 033–041** (seção E, tarefa 26.22.11).
+> 033–042** (seção E, tarefa 26.22.11; 035/042 atualizados no remainder 2026-11-15).
 >
 > O gate `deno task gaps:audit` continua lendo apenas as linhas `| G<n> |` da
 > seção A — as demais seções são documentais.
@@ -173,26 +173,28 @@ trabalho corrente desta 1ª onda.
 
 ---
 
-## Seção E — Cadeia de ADRs 033–041 reconciliada (tarefa 26.22.11)
+## Seção E — Cadeia de ADRs 033–042 reconciliada (tarefa 26.22.11; 035/042 atualizados 2026-11-15)
 
-Estado 2026-11-10, conferido contra `docs/syntaxmesh/decisoes/`:
+Estado 2026-11-15, conferido contra `docs/syntaxmesh/decisoes/`:
 
 | ADR | Título | Arquivo | Status | Criada/entregue por | Observação |
 |---|---|---|---|---|---|
 | 033 | Elemento `template` (Vento) | `033-elemento-template.md` | Aceito | Fase 23 (2026-11-06) | coerente |
 | 034 | CLI multi-runtime + API `execute` | `034-cli-multiruntime.md` | Aceito | Fase 24 (2026-11-07) | coerente |
-| 035 | Extensão VS Code + `lsp-core` | **não existe** | **Reservado** | Fase 22 ( kickoff em aberto ) | **Manter reservado** — a F22 abre na sequência desta onda |
+| 035 | Extensão VS Code + `lsp-core` | `035-extensao-vscode.md` | Aceito | Fase 22 (2026-11-11) | coerente — F22 P1–P7 concluída (2026-11-14); aceite runtime diferido p/ F21² |
 | 036 | Sheets sem SMTP (sender/receiver em texto) | `036-sheets-sem-smtp.md` | Aceito | Fase 18 (2026-11-05) | coerente |
 | 037 | Injeção de `FileStore`/`KeyValueStore` | `037-filestore-injection.md` | Aceito | Fase 18 (2026-11-05) | coerente; aditamento v2.1 (F24 24.10 — `.smx`) registrado no próprio arquivo |
 | 038 | Substituição XML/HTML/ical/painter mínimos | `038-substituicao-xml.md` | Aceito | Fase 17 (2026-11-04) | fora da cadeia 033–037; registrado aqui por completude |
 | 039 | Tipo `markdown` em `extend` | `039-extend-markdown.md` | Aceito | Fase 10 Complemento 3 (2026-11-06) | idem |
 | 040 | Versão única via `version.ts` | `040-versao-unica.md` | Aceito | Fase 24 (2026-11-08) | idem |
 | 041 | Gate `lint:doc` como ratchet | `041-gate-lint-doc.md` | Aceito | Fase 24 (2026-11-08) | idem |
+| 042 | Estratégia de validação (F21 — 3 ondas) | `042-estrategia-validacao.md` | Aceito | Fase 21 1ª onda (2026-11-15, 26.0) | o "033" previsto no plano original da F21 foi ocupado pelo template (F23); 042 = próximo livre |
 
-**Resultado:** a cadeia 033–037 está coerente com os arquivos em disco.
-`decisoes/README.md` **não precisa de mudança** (a nota de reserva já indica
-035 para a F22). Nenhum ADR novo foi aberto nesta 1ª onda; se a F22 criar o
-ADR 035 na sua abertura, só precisa preencher o arquivo mantendo o número.
+**Resultado:** a cadeia 033–042 está coerente com os arquivos em disco.
+**035** foi criado/aceito pela F22 (2026-11-11; P1–P7 concluída 2026-11-14) e
+**042** pela 1ª onda da F21 (2026-11-15, tarefa 26.0 — estratégia de validação);
+`decisoes/README.md` já indexa ambos. A nota de reserva original de 035 foi
+preenchida mantendo o número (nunca renumerar ADRs commitados).
 
 **Regra permanente (já no README):** nunca renumerar ADRs existentes; ao criar,
 conferir a tabela e usar o próximo livre. A cláusula "cadeia 034–037 é

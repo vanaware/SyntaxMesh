@@ -498,7 +498,7 @@ i18n (10.15+) em `packages/core/src/i18n/`.
   arquivos / 6863 passos / 0 falhas** (97m46s) · `check:all` · `lint` (779
   arquivos) · `fmt:check` (831 arquivos) · `check:doccore` · `check:stubs`, todos
   exit 0.
-- **Fase 21 — Compatibilidade e Qualidade 🟨 1ª onda iniciada (2026-11-10)** —
+- **Fase 21 — Compatibilidade e Qualidade 🟨 1ª onda CONCLUÍDA (2026-11-15; iniciada 2026-11-10)** —
   tarefas **26.22.9/26.22.10/26.22.11 ✅**: `completude-matrix.md` regenerada a
   partir das âncoras do código + Seções C/D consolidando realocações xray e
   pendências F13–F24 hoje só em `CURRENT.md`; cadeia de ADRs **033–037
@@ -578,10 +578,22 @@ i18n (10.15+) em `packages/core/src/i18n/`.
   extensão `blocked` restante e é permanente (sem slack/float no Ruby
   3.8.4). Gates desta sessão: `check:stubs` OK · `gaps:audit` OK ·
   `deno task tests` full + goldens (ver §Verificações abaixo).
-  **Demais tarefas da 1ª onda** (26.0–26.14, 26.26–26.28) continuam em
-  aberto — corpus, runners e2e, AST-equivalence ampliada, snapshots,
-  benchmarks, segurança, CSP, `known-divergences` e matriz de cobertura
-  #1–#6a. **Fase 22:** executada antecipadamente com autorização do usuário
+  **Remainder da 1ª onda CONCLUÍDO (2026-11-15):** 26.0–26.11 + 26.14 +
+  adendo 26.26–26.28 ✅ — ADR 042, corpus 395 fixtures/10 grupos (manifesto
+  `tests/fixtures/corpus.json`), harness e2e reusado da F24.7 (CLI × tj3:
+  exit/inventário/stdout + paridade CSV byte-a-byte/HTML DOM canônico),
+  triagem `known-divergences.json`, relatório de conformidade, AST-equivalence
+  ≥30 × 3 idiomas, snapshots de regressão (ast/diagnostics/richtext/reports),
+  coverage ≥85% (`coverage.md`), benchmarks + `baseline.json` + gate
+  `bench:compare` >20%, otimização final top-3 (`performance.md`: gantt 3.9×,
+  booking 8.5×), matriz de cobertura #1–#6a × camadas (`plano.md`) e
+  `known-divergences` timebasis (perweek/length). Gate `deno task tests`
+  **935 passed (7700 steps), 0 failed (4m19s)**. **Fronteira corrigida:**
+  26.12 (segurança) + 26.13 (CSP) são da **3ª onda** (a menção "26.0–26.14"
+  era arredondamento); 26.15–26.25 (Playwright/cross-browser/a11y/Lighthouse/
+  release) ficam para as ondas 2/3. **Lighthouse + tela de RDO** adiados à
+  3ª onda (F20 PWA+UI não iniciada — âncora explícita, sem `it.ignore`).
+  **Fase 22:** executada antecipadamente com autorização do usuário
   (2026-11-11 a 2026-11-14 — **P1–P7 completos**, gate 880 passed); o handoff
   da F22 (artefatos + matriz de aceite) alimenta a 2ª onda da 21.
 - **Phase 22 — VS Code extension** `OK` — **P1 (22.0) accepted 2026-11-11:
@@ -675,8 +687,8 @@ i18n (10.15+) em `packages/core/src/i18n/`.
   `xray.md` §1.7.1, cobertura docgen **97,0% linhas**, gate completo verde).
   Evidência por tarefa atômica em `fase-22-vscode-extension-tarefas.md`
   §Progresso/P2–P7 evidence + Handoff F21². **Fase 22 concluída (P1–P7);
-  próximo:** restante da 1ª onda da F21 e ordem oficial (21² → 19 → 20 →
-  21³) — a 21² recebe o handoff da F22 para a validação runtime.
+  F21¹ remainder concluído (2026-11-15); próximo:** ordem oficial (21² →
+  19 → 20 → 21³) — a 21² recebe o handoff da F22 para a validação runtime.
 - Fase 15 — Gantt ✅ Concluída (2026-11-03)
 - Fase 16 — Apoio ✅ Concluída (2026-11-03, 16.0–16.20; escopo xray: 16.10
   cancelado; 16.9/16.14/16.15 movidos p/ a 22; dono de `query_dashboard`).
@@ -710,7 +722,7 @@ Cada fase tem um arquivo de tarefas atômicas separado:
 
 ## Decisões arquitetônicas (ADR)
 
-Todas as decisões arquitetônicas importantes estão documentadas em `docs/syntaxmesh/decisoes/` (ADRs 001–041). Consulte `docs/syntaxmesh/decisoes/README.md` para a lista completa. Cadeia criada pela ordem oficial de execução: **034 = CLI (Fase 24), 035 = extensão VS Code (Fase 22, aceito 2026-11-11)**; reservados em 2026-11-03 pela varredura xray e já entregues: **036 = sheets sem SMTP (email → texto), Fase 18** e **037 = injeção de provedor de conteúdo/`FileStore`, Fases 18/24**. **029** (Journal/AlertLevel) pertence à Fase 16 e foi entregue em `decisoes/029-journal-alertlevel.md` (16.0); **033** (elemento `template`) foi entregue em `decisoes/033-elemento-template.md` (Fase 23, 23.0); **038** (XML/HTML/ical/painter) na F17 e **039** (`extend` tipo `markdown`) na F10 Complemento. Nunca renumerar ADRs já commitados; a cadeia 034–037 é reconciliada na Fase 21 (conferir o README antes de criar).
+Todas as decisões arquitetônicas importantes estão documentadas em `docs/syntaxmesh/decisoes/` (ADRs 001–042). Consulte `docs/syntaxmesh/decisoes/README.md` para a lista completa. Cadeia criada pela ordem oficial de execução: **034 = CLI (Fase 24), 035 = extensão VS Code (Fase 22, aceito 2026-11-11)**; reservados em 2026-11-03 pela varredura xray e já entregues: **036 = sheets sem SMTP (email → texto), Fase 18** e **037 = injeção de provedor de conteúdo/`FileStore`, Fases 18/24**. **029** (Journal/AlertLevel) pertence à Fase 16 e foi entregue em `decisoes/029-journal-alertlevel.md` (16.0); **033** (elemento `template`) foi entregue em `decisoes/033-elemento-template.md` (Fase 23, 23.0); **038** (XML/HTML/ical/painter) na F17 e **039** (`extend` tipo `markdown`) na F10 Complemento; **042** = estratégia de validação (Fase 21, 1ª onda, 2026-11-15). Nunca renumerar ADRs já commitados; a cadeia 034–037 é reconciliada na Fase 21 (conferir o README antes de criar).
 
 ## Regras de ouro para IA
 

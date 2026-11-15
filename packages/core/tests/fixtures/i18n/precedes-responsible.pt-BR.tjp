@@ -1,0 +1,23 @@
+# 26.8 (F21¹) — fixture de equivalência de AST (ADR 023).
+# Tradução mecânica: apenas keywords variam entre idiomas; ids, strings,
+# datas e literais são idênticos. Gerado por .tmp/gen-i18n-fixtures.ts.
+language "pt-BR"
+
+projeto pr "Precedes" "1.0" 2026-01-01 - 2026-03-31 {
+  fusohorario "UTC"
+  agora 2026-01-01
+}
+recurso tux "Tux"
+recurso boss "Boss"
+tarefa items "Breakdown" {
+  tarefa ta "A" {
+    esforço 2d
+    alocar tux
+    responsável boss
+  }
+  tarefa tb "B" {
+    esforço 3d
+    alocar tux
+    precede !ta
+  }
+}

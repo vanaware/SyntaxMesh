@@ -13,6 +13,75 @@ import { compat, } from "../compat.ts";
 export { TjArgumentError, };
 
 /**
+ * Constantes de formatação do `strftime` (26.14). Hoisted para o módulo para
+ * não realocar os arrays a cada chamada — o scheduler/reports formatam
+ * milhões de datas por projeto e estes arrays eram recriados por invocação.
+ */
+const STRFTIME_DAY_NAMES = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+const STRFTIME_DAY_ABBR = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat",];
+const STRFTIME_MONTH_NAMES = [
+  "",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+const STRFTIME_MONTH_ABBR = [
+  "",
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+const STRFTIME_MAX_DAYS = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31,];
+const STRFTIME_VALID_SPECIFIERS = [
+  "Y",
+  "y",
+  "m",
+  "d",
+  "H",
+  "M",
+  "S",
+  "A",
+  "a",
+  "B",
+  "b",
+  "z",
+  "Q",
+  "Z",
+  "p",
+  "I",
+  "j",
+  "W",
+  "x",
+  "X",
+];
+
+/**
  * Ruby `String#split(sep, limit)` semantics with a positive limit: performs at
  * most `limit - 1` splits and keeps the remainder in the last field.
  * (JS `split(sep, limit)` truncates the array, losing unconsumed tails.)
@@ -261,7 +330,8 @@ export class TjTime {
       // Validate range
       if (offsetSeconds < -12 * 3600 || offsetSeconds > 14 * 3600) {
         throw new TjArgumentError(
-          `Time zone adjustment out of range (-1200 - +1400} but is ${tzPart}`,
+          // Ruby fidelity: the closing `}` typo and trailing `)` are verbatim.
+          `Time zone adjustment out of range (-1200 - +1400} but is ${tzPart})`,
         );
       }
 
@@ -1034,56 +1104,14 @@ export class TjTime {
     // Get local parts for the given timezone
     const parts = getLocalParts(this.seconds, timeZone,);
 
-    // Get timezone abbreviation (shared formatter; zone validated above)
-    const tzAbbr = getTimeZoneAbbr(this.seconds, timeZone,);
-
-    // Day of week names
-    const dayNames = [
-      "Sunday",
-      "Monday",
-      "Tuesday",
-      "Wednesday",
-      "Thursday",
-      "Friday",
-      "Saturday",
-    ];
-    const dayAbbr = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat",];
-
-    // Month names
-    const monthNames = [
-      "",
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
-    ];
-    const monthAbbr = [
-      "",
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ];
-
     // Replace %% with a placeholder first to protect it from validation
     const PLACEHOLDER = "\x00";
     let result = format.replace(/%%/g, PLACEHOLDER,);
+
+    // Abreviação do fuso só é calculada quando o formato usa %Z (26.14).
+    const tzAbbr = result.includes("%Z",)
+      ? getTimeZoneAbbr(this.seconds, timeZone,)
+      : "";
 
     // Replace format specifiers
     result = result.replace("%Y", String(parts.year,).padStart(4, "0",),);
@@ -1093,15 +1121,30 @@ export class TjTime {
     result = result.replace("%H", String(parts.hour,).padStart(2, "0",),);
     result = result.replace("%M", String(parts.minute,).padStart(2, "0",),);
     result = result.replace("%S", String(parts.second,).padStart(2, "0",),);
-    result = result.replace("%A", dayNames[parts.weekday] ?? "Unknown",);
-    result = result.replace("%a", dayAbbr[parts.weekday] ?? "Unknown",);
-    result = result.replace("%B", monthNames[parts.month] ?? "Unknown",);
-    result = result.replace("%b", monthAbbr[parts.month] ?? "Unknown",);
-    // %z: UTC offset in Ruby strftime format: +HHMM / -HHMM (no colon)
     result = result.replace(
-      "%z",
-      formatTimezoneOffset(this.seconds, timeZone,),
+      "%A",
+      STRFTIME_DAY_NAMES[parts.weekday] ?? "Unknown",
     );
+    result = result.replace(
+      "%a",
+      STRFTIME_DAY_ABBR[parts.weekday] ?? "Unknown",
+    );
+    result = result.replace(
+      "%B",
+      STRFTIME_MONTH_NAMES[parts.month] ?? "Unknown",
+    );
+    result = result.replace(
+      "%b",
+      STRFTIME_MONTH_ABBR[parts.month] ?? "Unknown",
+    );
+    // %z: UTC offset in Ruby strftime format: +HHMM / -HHMM (no colon).
+    // Só calcula o offset quando o formato usa %z (26.14).
+    if (result.includes("%z",)) {
+      result = result.replace(
+        "%z",
+        formatTimezoneOffset(this.seconds, timeZone,),
+      );
+    }
     result = result.replace(
       "%Q",
       String(Math.floor((parts.month - 1) / 3,) + 1,),
@@ -1114,25 +1157,26 @@ export class TjTime {
     // %I: 12-hour hour (1-12)
     const hour12 = parts.hour % 12 || 12;
     result = result.replace("%I", String(hour12,).padStart(2, "0",),);
-    // %j: day of year (001-366)
-    let dayOfYear = 0;
-    for (let i = 1; i < parts.month; i++) {
-      const maxDays = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31,];
-      let monMax = maxDays[i]!;
-      if (i === 2 && TjTime.isLeapYear(parts.year,)) {
-        monMax = 29;
+    // %j (dia do ano) e %W (número da semana) compartilham o cálculo de
+    // dayOfYear; só computa quando o formato usa algum deles (26.14). O
+    // default do `to_s` (%Y-%m-%d %H:%M:%S %z) não usa %j nem %W.
+    if (result.includes("%j",) || result.includes("%W",)) {
+      let dayOfYear = 0;
+      for (let i = 1; i < parts.month; i++) {
+        let monMax = STRFTIME_MAX_DAYS[i]!;
+        if (i === 2 && TjTime.isLeapYear(parts.year,)) {
+          monMax = 29;
+        }
+        dayOfYear += monMax;
       }
-      dayOfYear += monMax;
+      dayOfYear += parts.day;
+      result = result.replace("%j", String(dayOfYear,).padStart(3, "0",),);
+      // %W: week number (00-53, Monday as first day of week)
+      const daysSinceMonday = parts.weekday === 0 ? 6 : parts.weekday - 1;
+      const dayOfYearForWeek = dayOfYear - 1;
+      const weekNumber = Math.floor((dayOfYearForWeek + daysSinceMonday) / 7,);
+      result = result.replace("%W", String(weekNumber,).padStart(2, "0",),);
     }
-    dayOfYear += parts.day;
-    result = result.replace("%j", String(dayOfYear,).padStart(3, "0",),);
-    // %W: week number (00-53, Monday as first day of week)
-    const firstDayOfYear = TjTime.fromParts(parts.year, 1, 1, 0, 0, 0, tz,);
-    const firstWeekday = firstDayOfYear.wday(); // 0=Sunday, 1=Monday, etc.
-    const daysSinceMonday = parts.weekday === 0 ? 6 : parts.weekday - 1;
-    const dayOfYearForWeek = dayOfYear - 1;
-    const weekNumber = Math.floor((dayOfYearForWeek + daysSinceMonday) / 7,);
-    result = result.replace("%W", String(weekNumber,).padStart(2, "0",),);
     // %x: date format (MM/DD/YY)
     const monthStr = String(parts.month,).padStart(2, "0",);
     const dayStr = String(parts.day,).padStart(2, "0",);
@@ -1155,30 +1199,11 @@ export class TjTime {
     const unsupportedMatch = result.match(/%(?!%)(.)/,);
     if (unsupportedMatch) {
       const specifier = unsupportedMatch[0]; // Full match like %c, %x, etc.
-      const validSpecifiers = [
-        "Y",
-        "y",
-        "m",
-        "d",
-        "H",
-        "M",
-        "S",
-        "A",
-        "a",
-        "B",
-        "b",
-        "z",
-        "Q",
-        "Z",
-        "p",
-        "I",
-        "j",
-        "W",
-        "x",
-        "X",
-      ];
       const specifierChar = unsupportedMatch[1]; // Just the letter after %
-      if (specifierChar && !validSpecifiers.includes(specifierChar,)) {
+      if (
+        specifierChar &&
+        !STRFTIME_VALID_SPECIFIERS.includes(specifierChar,)
+      ) {
         throw new TjArgumentError(`Invalid format specifier: ${specifier}`,);
       }
     }

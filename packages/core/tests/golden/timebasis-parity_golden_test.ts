@@ -134,8 +134,10 @@ describe("C2.12 divergências registradas em known-divergences.json", () => {
       assert(raw.version, "version present",);
       const ids = raw.divergences.map((d,) => d.id);
       assert(ids.includes("perday_inclusive_semantics",),);
+      assert(ids.includes("perweek_inclusive_semantics",),); // 26.27.1
       assert(ids.includes("permonth_extension",),);
       assert(ids.includes("perhour_working_vs_elapsed",),);
+      assert(ids.includes("length_mode_task_only",),); // 26.27.1 (timebasis length)
     },
   );
 });

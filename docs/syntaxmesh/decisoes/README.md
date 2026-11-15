@@ -99,6 +99,7 @@ O que foi decidido? Seja específico e acionável.
 | 039 | Tipo `markdown` em `extend` (extensão SyntaxMesh — 10-C Bloco C5 / 14C.19) | Aceito | 2026-11-06 |
 | 040 | Versão única: `version.ts` gerado pelo buildit, `VERSION` no barril do pacote | Aceito | 2026-11-08 |
 | 041 | Gate de documentação (`lint:doc`) de `deno doc --lint` como ratchet | Aceito | 2026-11-08 |
+| 042 | Estratégia de validação (Fase 21 — 3 ondas; goldens tj3 × CLI, corpus, divergências) | Aceito | 2026-11-15 |
 
 > **Reserva de números (decisão 2026-11-03 — `docs/syntaxmesh/xray.md` §5.3):**
 > 029–032 existem (`029-journal-alertlevel.md`, entregue na Fase 16 em
@@ -118,6 +119,9 @@ O que foi decidido? Seja específico e acionável.
 > a medir `deno doc --lint` das entradas publicadas, com teto por pacote em
 > `scripts/lint-doc-baseline.json`; é o que faz o composite `deno task tests`
 > fechar ponta a ponta.
+> **042** (`042-estrategia-validacao.md`) aceita em 2026-11-15 (Fase 21, 1ª
+> onda): o "ADR 033" previsto no plano original da Fase 21 foi ocupado pelo
+> template (F23); a estratégia de validação assume o próximo livre.
 > **Nunca renumerar ADRs existentes** — os arquivos 027/028
 > já commitados são referência histórica; ao criar um ADR, conferir antes esta
 > tabela e usar o próximo número livre. A cadeia 034–037 foi **reconciliada na

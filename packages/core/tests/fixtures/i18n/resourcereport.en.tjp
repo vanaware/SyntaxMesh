@@ -1,0 +1,22 @@
+# 26.8 (F21¹) — fixture de equivalência de AST (ADR 023).
+# Tradução mecânica: apenas keywords variam entre idiomas; ids, strings,
+# datas e literais são idênticos. Gerado por .tmp/gen-i18n-fixtures.ts.
+language "en"
+
+project rr "Resource Report" "1.0" 2026-01-01 - 2026-03-31 {
+  timezone "UTC"
+  now 2026-01-01
+}
+resource tux "Tux" { rate 300 }
+resource konqui "Konqui" { rate 200 }
+task t "T" {
+  start 2026-01-05
+  effort 2d
+  allocate tux, konqui
+}
+resourcereport usage "Usage" {
+  formats csv
+  columns name, effort
+  hideresource ~isleaf()
+  sortresources name.up
+}

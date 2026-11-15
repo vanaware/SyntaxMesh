@@ -1,0 +1,20 @@
+# 26.8 (F21¹) — fixture de equivalência de AST (ADR 023).
+# Tradução mecânica: apenas keywords variam entre idiomas; ids, strings,
+# datas e literais são idênticos. Gerado por .tmp/gen-i18n-fixtures.ts.
+language "es"
+
+proyecto vac "Vacation" "1.0" 2026-01-01 - 2026-12-31 {
+  zonahoraria "UTC"
+  ahora 2026-01-01
+}
+vacaciones "Holiday" 2026-09-07
+vacaciones "Christmas" 2026-12-25 - 2026-12-27
+recurso team "A team" {
+  vacaciones 2026-10-07 +2d
+  recurso r1 "R1" {
+    vacaciones 2026-08-10
+  }
+}
+tarea t "T" {
+  inicio 2026-01-05
+}

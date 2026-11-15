@@ -48,6 +48,20 @@
   // 🛠️ Scripts de Automação
   "tasks": {
     "test": "deno test --no-check -P",
+    // 26.10 — runner consolidado: packages/*/tests/** + tests/unit/**
+    // (glob de include da seção `test` abaixo).
+    "test:all": "deno test --no-check -P",
+    // 26.10.3 — cobertura de linhas do core a partir dos testes unitários.
+    // Escopo restrito a core/tests + tests/unit: o harness e2e do CLI gera
+    // subprocessos `deno` que herdariam DENO_COVERAGE_DIR e explodiriam o
+    // diretório de coverage (centenas de milhares de arquivos). O único
+    // subprocesso do core é ruby/tj3 (não escreve coverage deno).
+    "coverage:core": "deno test --no-check -P --coverage=.tmp/cov --clean --ignore=packages/core/tests/golden packages/core/tests/ tests/unit/ && deno coverage .tmp/cov --lcov --include=packages/core/src/ --output=.tmp/core.lcov",
+    // 26.11 — benchmarks do motor (bench/**/*_bench.ts, seção `bench` abaixo).
+    // baseline.json é commitado; bench:compare falha com regressão > 20%.
+    "bench:run": "deno bench --no-check -A",
+    "bench:baseline": "deno bench --no-check -A --json > bench/baseline.json",
+    "bench:compare": "deno run --no-check -A bench/compare-run.ts",
     "lint": "deno lint",
     "fmt": "deno fmt",
     "check:all": "deno task --members check && deno check scripts/**/*.ts debug/**/*.ts",
@@ -64,6 +78,9 @@
     "build:lsp": "deno task --cwd packages/lsp build",
     "generate:vsext": "deno task --cwd packages/vsextension generate",
     "golden:generate": "deno task golden:generate:ruby && deno task golden:generate:extensions && deno task golden:generate:template",
+    "corpus:generate": "deno run --allow-read --allow-write ./scripts/golden/corpus.ts",
+    "conformance:report": "deno run --allow-read --allow-write --allow-run ./scripts/golden/generate-report.ts",
+    "snapshots:update": "UPDATE_SNAPSHOTS=1 deno test --no-check -A packages/core/tests/regression/",
     "golden:generate:ruby": "deno run --allow-read --allow-write --allow-run ./packages/core/tests/golden/generate_golden.ts",
     "golden:generate:extensions": "deno run --allow-read --allow-write ./packages/core/tests/golden/generate_extension_golden.ts",
     "golden:generate:template": "deno run --allow-read --allow-write ./packages/core/tests/golden/generate_template_expansion_golden.ts",
@@ -105,7 +122,9 @@
       "scripts/**/*.ts",
       "debug/**/*.ts",
       "packages/**/src/**/*.{ts,tsx}",
-      "packages/**/tests/**/*test.ts"
+      "packages/**/tests/**/*test.ts",
+      "tests/unit/**/*test.ts",
+      "bench/**/*.ts"
     ],
     "exclude": [
       // Cópia vendorizada do `wz_tooltip.js` (asset dos goldens de relatório,
@@ -125,12 +144,31 @@
       "import": true
     },
     "include": [
-      "packages/**/tests/**/*test.ts"
+      "packages/**/tests/**/*test.ts",
+      "tests/unit/**/*test.ts",
+      "bench/**/*test.ts"
     ],
     "exclude": [
       "packages/server/build/",
       "scripts/**/*.{ts,tsx}",
       "packages/**/src/**/*.{ts,tsx}"
+    ]
+  },
+  // 26.11 — benches do motor. Só os *_bench.ts são medidos; compare.ts,
+  // compare-run.ts, workloads.ts e bench_test.ts ficam de fora.
+  "bench": {
+    "permissions": {
+      "read": true,
+      "write": true,
+      "net": true,
+      "env": true,
+      "sys": true,
+      "run": true,
+      "ffi": true,
+      "import": true
+    },
+    "include": [
+      "bench/**/*_bench.ts"
     ]
   },
   "fmt": {
@@ -151,7 +189,9 @@
       "scripts/**/*.ts",
       "debug/**/*.ts",
       "packages/**/src/**/*.{ts,tsx}",
-      "packages/**/tests/**/*test.ts"
+      "packages/**/tests/**/*test.ts",
+      "tests/unit/**/*test.ts",
+      "bench/**/*.ts"
     ],
     "exclude": [
       "packages/server/build/"

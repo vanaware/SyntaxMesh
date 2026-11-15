@@ -562,11 +562,13 @@ export class ResourceScenario extends ScenarioData {
       if (this.booked(sbIdx,)) {
         this.error(
           "booking_conflict",
+          // Ruby fidelity: the previous slot holds a Task; report its fullId
+          // (ResourceScenario.rb:229), not the raw slot object.
           `Resource ${
             (this.getProperty() as PropertyTreeNode).fullId
           } has multiple conflicting ` +
             `bookings for ${sb.idxToDate(sbIdx,)}. The ` +
-            `conflicting tasks are ${sb.get(sbIdx,)} and ` +
+            `conflicting tasks are ${(sb.get(sbIdx,) as Task).fullId} and ` +
             `${booking.task.fullId}.`,
           booking.sourceFileInfo,
         );

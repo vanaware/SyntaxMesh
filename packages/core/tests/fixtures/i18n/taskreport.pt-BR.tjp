@@ -1,0 +1,21 @@
+# 26.8 (F21¹) — fixture de equivalência de AST (ADR 023).
+# Tradução mecânica: apenas keywords variam entre idiomas; ids, strings,
+# datas e literais são idênticos. Gerado por .tmp/gen-i18n-fixtures.ts.
+language "pt-BR"
+
+projeto tr "Task Report" "1.0" 2026-01-01 - 2026-03-31 {
+  fusohorario "UTC"
+  agora 2026-01-01
+}
+tarefa items "Breakdown" {
+  início 2026-01-05
+  tarefa plan "Plan" { comprimento 3d }
+  tarefa exec "Execute" { comprimento 5d depende !plan }
+}
+relatoriotarefa plan "My Tasks" {
+  formatos html
+  manchete "Project Plan"
+  colunas bsi { título "WBS" }, name, início, fim
+  ocultartarefa ~isleaf()
+  ordenartarefas name.up
+}

@@ -1,0 +1,10 @@
+{
+  "bold-italic": "<div>\n <b>bold</b> and <i>italic</i> and <b><i>both</i></b>\n</div>",
+  "headings": "<div>\n <p>= H1 =</p>\n <h1 id=\"H2\">1 H2</h1>\n <h2 id=\"H3\">1.1 H3</h2>\n</div>",
+  "hr-mixed": "<div>\n <hr/>\n <p>line one&lt;br&gt;line two</p>\n</div>",
+  "links": "<div>\n <a href=\"Internal.html\">Internal</a> and <a href=\"http://example.com\">external</a> and <a href=\"Page.html\">label</a>\n</div>",
+  "lists": "<div>\n <ul>\n  <li>item 1</li>\n  <li>item 2</li>\n  <ul><li>nested</li></ul>\n </ul>\n <ol>\n  <li>ordered</li>\n  <li>second</li>\n </ol>\n</div>",
+  "nowiki": "<div>'''not bold''' and preformatted line</div>",
+  "plain": "<div>Hello world</div>",
+  "table": "<div>{| ! H1 !! H2 |- | a || b |}</div>"
+}

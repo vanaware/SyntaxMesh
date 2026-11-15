@@ -1,0 +1,19 @@
+# 26.8 (F21¹) — fixture de equivalência de AST (ADR 023).
+# Tradução mecânica: apenas keywords variam entre idiomas; ids, strings,
+# datas e literais são idênticos. Gerado por .tmp/gen-i18n-fixtures.ts.
+language "en"
+
+project gap "Gap" "1.0" 2026-01-01 - 2026-03-31 {
+  timezone "UTC"
+  now 2026-01-01
+}
+task t1 "Task 1" {
+  start 2026-01-05
+  effort 2d
+}
+task t2 "Task 2" {
+  depends !t1 { gapduration 5d }
+}
+task t3 "Task 3" {
+  depends !t1 { gaplength 5d }
+}

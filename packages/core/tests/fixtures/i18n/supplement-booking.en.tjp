@@ -1,0 +1,21 @@
+# 26.8 (F21¹) — fixture de equivalência de AST (ADR 023).
+# Tradução mecânica: apenas keywords variam entre idiomas; ids, strings,
+# datas e literais são idênticos. Gerado por .tmp/gen-i18n-fixtures.ts.
+language "en"
+
+project bk "Booking" "1.0" 2026-01-01 - 2026-02-28 {
+  timezone "UTC"
+  now 2026-01-15
+}
+resource tux "Tux"
+task test "Testing" {
+  start 2026-01-05
+  effort 10d
+  allocate tux
+}
+supplement resource tux {
+  booking test 2026-01-06-9:00 +9h { sloppy 1 }
+  booking test 2026-01-08-13:00 +4h,
+               2026-01-09-13:00 +4h
+  booking test 2026-01-12-20:00 +2h { overtime 1 }
+}
