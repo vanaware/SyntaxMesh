@@ -27,7 +27,8 @@ import { registerMiscCommands, } from "./commands/misc.ts";
  * Starts the browser language client and its Worker server, then the project
  * daemon (22.5, in-memory cache on the Web) and its commands, the report
  * presenter and its Generate Report command (22.6), then the views (tree +
- * status bar) and the remaining commands (22.7). Invoked by VS Code per the
+ * status bar) and the remaining commands (22.7). User-triggered writes use the
+ * `stub-first` strategy (22.8.3, plan §9.2). Invoked by VS Code per the
  * `onLanguage:syntaxmesh` activation event.
  *
  * @param context the extension context provided by VS Code.
@@ -36,10 +37,10 @@ export async function activate(context: ExtensionContext,): Promise<void> {
   await startClient(context,);
   const host = await startDaemon(context,);
   registerDaemonCommands(context, host,);
-  const presenter = new ReportPresenter(context,);
+  const presenter = new ReportPresenter(context, "stub-first",);
   registerReportCommands(context, host, presenter,);
   startViews(context, host,);
-  registerMiscCommands(context, host,);
+  registerMiscCommands(context, host, "stub-first",);
 }
 
 /**

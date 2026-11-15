@@ -9,7 +9,11 @@
 > transporte 22.4; cobertura lógica pura 99,2% linhas; bundles Web sem `node:`);
 > **P4 completed 2026-11-14** (execução/relatórios/UX: daemon 22.5 + reports
 > 22.6 + commands/views/trust 22.7; cobertura lógica pura 98,8% linhas; gate
-> completo 867 passed). Próximo bloco: P5 (Web/storage).
+> completo 867 passed).
+> **P5 completed 2026-11-14** (Web/storage: pureza do grafo 22.8.1 + escrita
+> disparada pelo usuário 22.8.2–22.8.3 + fallbacks de storage 22.8.4–22.8.6 +
+> cenários Web 22.8.7; cobertura lógica pura P5 100% linhas / 96,8% branches;
+> gate completo 873 passed). Próximo bloco: P6 (standalone LSP).
 > **Recorded progress:** 86/108 tasks in 22.1b recorded (2026-11-08);
 > **99/108 verified** after the 2026-11-11 audit + P2 deliveries (Blocos B/H/I;
 > I 7.9 reaberta — o smoke registrado não existia no código);
@@ -42,7 +46,7 @@ consumer annotations, and the historical progress section below remain intact.
 | [P2 — Shared language/documentation cores](fase-22-vscode-extension.md#p2-shared-language-and-documentation-cores) | P2.1 workspace; P2.2 docs; P2.3 highlight; P2.4 pure LSP; P2.5 bridges/verification | 22.1 (B), 22.1b (C–J) | Detailed below (Bloco B + C–J) |
 | [P3 — Editor foundation](fase-22-vscode-extension.md#p3-editor-foundation-and-language-tooling) | P3.1 shell; P3.2 grammar/snippets; P3.3 transport integration | 22.2–22.4 | Detailed below (P3 — 22.2/22.3/22.4) |
 | [P4 — Execution, reports and UX](fase-22-vscode-extension.md#p4-project-execution-reports-and-editor-ux) | P4.1 API audit; P4.2 daemon; P4.3 reports; P4.4 commands/views/trust | 22.5–22.7 | Detailed below (P4 — 22.5/22.6/22.7) |
-| [P5 — Web and storage](fase-22-vscode-extension.md#p5-web-host-and-storage-adaptation) | P5.1 browser graph; P5.2 writes; P5.3 storage fallbacks | 22.8 | Pending |
+| [P5 — Web and storage](fase-22-vscode-extension.md#p5-web-host-and-storage-adaptation) | P5.1 browser graph; P5.2 writes; P5.3 storage fallbacks | 22.8 | Detailed below (P5 — 22.8) |
 | [P6 — Standalone LSP](fase-22-vscode-extension.md#p6-standalone-lsp-adapter) | P6.1 stdio bootstrap; P6.2 build/protocol smoke | 22.9 | Pending |
 | [P7 — Packaging and handoff](fase-22-vscode-extension.md#p7-packaging-acceptance-and-handoff) | P7.1 builds; P7.2 acceptance; P7.3 closure/F21² | 22.10–22.11 | Pending |
 
@@ -70,7 +74,7 @@ Counts below mirror the historical 22.1b progress table, not a new verification.
 | P4 (22.5) | 22.5 | P4.1–P4.2 | F24 API audit, then explicit daemon/cache | Detailed below (P4) | `OK` — 22.5.1–22.5.9 delivered 2026-11-14 (P4.1 execute-based sem delta no core + daemon puro types/cache/closure/request-builder/core/persistence + host/comandos; cobertura lógica pura 98,8%) |
 | P4 (22.6) | 22.6 | P4.3 | Shared execution contract and report output policy | Detailed below (P4) | `OK` — 22.6.1–22.6.5 delivered 2026-11-14 (output-policy/selector/webview-html puros + host/comando Gerar Relatório; Webview/save) |
 | P4 (22.7) | 22.7 | P4.4 | Export/input-language/help, config, views and trust | Detailed below (P4) | `OK` — 22.7.1–22.7.8 delivered 2026-11-14 (settings/locale + project-tree/status-bar + input-language + trust + misc/views host + manifesto 9 comandos; gate 867 passed) |
-| To assign at detailing | 22.8 | P5.1–P5.3 | Web runtime, writes and storage fallbacks | Pending | `PLA` |
+| P5 (22.8) | 22.8 | P5.1–P5.3 | Web runtime, writes and storage fallbacks | Detailed below (P5) | `OK` — 22.8.1–22.8.8 delivered 2026-11-14 (purity/write-fallback/storage-capabilities/small-state puros + wiring reports/misc/daemon/entries + cenários Web; cobertura 100% linhas; gate 873 passed) |
 | To assign at detailing | 22.9 | P6.1–P6.2 | Standalone stdio server/build | Pending | `PLA` |
 | To assign at detailing | 22.10 | P7.1–P7.2 | Packaging and clean-install acceptance | Pending | `PLA` |
 | To assign at detailing | 22.11 | P7.2–P7.3 | Final verification and F21² handoff | Pending | `PLA` |
@@ -670,6 +674,48 @@ usuário à execução estável de projetos (daemon) + relatórios + UX do edito
 
 ---
 
+## P5 — Web host and storage adaptation (22.8)
+
+**Kickoff (2026-11-14):** detalhado conforme o protocolo do plano §0 (uma
+entrega por tarefa, ≤ 2h, teste primeiro). P5 fecha o comportamento vscode.dev
+**sem depender do storage da F19** (§9). **Depende de P3** (transporte Web) e
+**P4** (comandos/daemon). Ordem: 22.8.1 (pureza do grafo Web) → 22.8.2–22.8.3
+(escrita disparada pelo usuário) → 22.8.4–22.8.6 (fallbacks de storage) →
+22.8.7 (cenários Web) → gate. IDs agrupados pelo owner original 22.8.
+
+### Decisão P5 — abordagem (2026-11-14)
+
+| Aspecto | Decisão | Fundamento |
+|---|---|---|
+| Pureza do grafo Web | teste BDD de regressão que varre o fonte alcançável a partir de `extension.web.ts` (todo `src/` menos os bootstraps Node) por `node:`/`process.*`/`Deno.*`; entra no `deno test` (gate) | §9.2; espelha `check:doccore`/`check:lspcore`, mas como teste puro (sem alterar o composite raiz); o build já guarda os bundles Web `node:`-free (P3/P4) |
+| Escrita no workspace | helper puro `writeUserFile` sobre `WorkspaceFsLike` estrutural: estratégia `direct` (Desktop) ou `stub-first` (Web — arquivo vazio imediato na janela de permissão, depois sobrescreve); erro vira resultado, nunca exceção | §9.2 (escrita só por interação do usuário + fallback stub); lógica pura testável sem VS Code |
+| Fallbacks de storage | resolver puro `resolveStorageCapabilities` (daemon cache `file`/`memory`; small state `workspaceState`/`globalState`/`memory`; relatórios grandes `file`/`ondemand`) + `SmallStateStore` sobre `MementoLike` | §9.3; dados pequenos → Memento; cache do daemon → memória + `storageUri` no Desktop |
+| Reuso do P4 | o fallback em memória do daemon e o **versionamento do cache** (`CACHE_VERSION`, invalida em mismatch) já vieram no P4 (22.5.7/22.5.8); P5 apenas roteia a escolha pelo resolver e adiciona small state | §3.2; sem duplicar lógica de transporte/core |
+| Sem IndexedDB/OPFS | nenhum acesso direto a IndexedDB/OPFS no fonte da extensão (garantido pelo teste de pureza 22.8.1) | §9.2/§9.3 (origem instável no Web Worker Host) |
+| Aceite VS Code | cenários Web (edição/execução/relatório, storage ausente, escrita negada) verificados como **testes puros** sem VS Code; aceite runtime no vscode.dev diferido para **P7** | ambiente sem VS Code; padrão P3/P4 (bootstrap fino, inteligência pura) |
+
+### 22.8 — Web host and storage (P5.1–P5.3)
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 22.8.1 | Pureza pura `src/web/purity.ts` — `scanBrowserSource(text): Violation[]` (por linha, ignora comentários; proíbe import `node:`, `process.*`, `Deno.*`) + `NODE_ONLY_BOOTSTRAPS`; teste BDD unitário + regressão que varre o grafo Web real (`src/` menos bootstraps Node) | `src/web/purity.ts`, `tests/web/purity_test.ts` | testes verdes (clean, node:, process, Deno, comentário); grafo Web real sem violações |
+| 22.8.2 | Escrita pura `src/web/write-fallback.ts` — `writeUserFile(fs, target, content, strategy)` sobre `WorkspaceFsLike` (`direct`/`stub-first`); devolve `{ok}` ou `{ok:false,error}` (nunca lança); testes com fs fake | `src/web/write-fallback.ts`, `tests/web/write-fallback_test.ts` | testes verdes (direct, stub-first ordem vazio→conteúdo, negação→erro amigável, conteúdo vazio) |
+| 22.8.3 | Wiring escrita `src/reports/host.ts` (save) + `src/commands/misc.ts` (exportTjp) via `writeUserFile` + mensagem amigável em negação (`window.showErrorMessage`); type-check only | `src/reports/host.ts`, `src/commands/misc.ts` | `deno check` exit 0 |
+| 22.8.4 | Capacidades puras `src/web/storage-capabilities.ts` — `resolveStorageCapabilities(caps)` → `{daemonCache, smallState, largeReports}` a partir de `{storageUri?, globalStorageUri?, hasWorkspaceState, hasGlobalState}`; testes | `src/web/storage-capabilities.ts`, `tests/web/storage-capabilities_test.ts` | testes verdes (Desktop completo, Web sem URIs, parcial) |
+| 22.8.5 | Small state puro `src/web/small-state.ts` — `SmallStateStore` sobre `MementoLike` (`get`/`update`): acessores tipados (ex. `recentProjects`, `lastReportFormat`); testes | `src/web/small-state.ts`, `tests/web/small-state_test.ts` | testes verdes (default, round-trip, update) |
+| 22.8.6 | Wiring storage `src/daemon/host.ts` (escolha file/memory via resolver) + small state na entry; type-check only; sem watcher; sem IndexedDB/OPFS | `src/daemon/host.ts`, `src/extension.web.ts`/`node.ts` | `deno check` exit 0; grep sem watcher/IndexedDB/OPFS |
+| 22.8.7 | Cenários Web puros `tests/web/web-scenarios_test.ts` — storage ausente→daemon em memória; escrita negada→erro amigável; small state round-trip; pureza do grafo verde (sem VS Code) | `tests/web/web-scenarios_test.ts` | testes verdes (critério de saída P5: missing storage + denied writes) |
+| 22.8.8 | Cobertura ≥ 70% lógica pura P5 + gate completo `deno task tests` + evidência P5 + docs (CURRENT/plano/AGENTS/este arquivo/plano §13) | `tests/`, docs | gate EXIT=0; cobertura; docs coerentes |
+
+> **Nota de escopo P5:** o standalone LSP (22.9) é **P6**; o empacotamento
+> `.vsix` + aceite no VS Code Test Runner / vscode.dev são **P7**. P5 **não**
+> introduz dependência do storage da F19 nem acesso direto a IndexedDB/OPFS;
+> o daemon continua **sem** escuta automática (`onDidChange`/`onDidSave`,
+> §3.2). A lógica de transporte/core não é duplicada — P5 só adiciona política
+> de escrita/storage da extensão sobre a API VS Code (ADR 035).
+
+---
+
 ## Resumo de quem consome o quê
 
 | Entrega 22.1b | Fase 24 (`syntaxmesh man`, 24.9) | `lsp-core` / extensão (22.1–22.9) |
@@ -972,3 +1018,40 @@ no VS Code diferido para P7).
 > **P7** (22.10/22.11) — fora deste ambiente sem VS Code. Aqui o aceite é:
 > unit Deno da lógica pura (22 arquivos/24 testes/90 steps) + type-check dos
 > bootstraps + build dos 4 artefatos (web `node:`-free) + gate completo verde.
+
+## P5 implementation evidence (2026-11-14)
+
+Entregas do P5 (Web host and storage adaptation: 22.8) no kickoff antecipado
+autorizado. Evidência anexada aos IDs atômicos 22.8.1–22.8.8. A inteligência
+pura (pureza do grafo, escrita disparada pelo usuário, resolver de storage,
+small state) vive em `src/web/` e é unit-testada em Deno sem o runtime
+`vscode` (ADR 035); os bootstraps (`reports/host`, `commands/misc`,
+`daemon/host`, entries) são type-check-only, com aceite runtime no vscode.dev
+diferido para **P7**. P5 **reusa** o fallback em memória e o versionamento do
+cache já entregues no P4 (22.5.7/22.5.8) — apenas roteia a escolha pelo
+resolver e adiciona small state; **sem** dependência do storage da F19 e
+**sem** acesso direto a IndexedDB/OPFS (§9).
+
+| Tarefa | Entrega | Verificação |
+|---|---|---|
+| 22.8.1 | `src/web/purity.ts` — `scanBrowserSource(text): PurityViolation[]` (por linha, ignora comentários; proíbe import/require `node:`, `process.*`, `Deno.*`) + `NODE_ONLY_BOOTSTRAPS`; 7 testes | `tests/web/purity_test.ts` → 7 steps verdes (clean, `node:` import, `node:` require, process/Deno, comentário, lista de bootstraps, regressão do grafo Web real sem violações) |
+| 22.8.2 | `src/web/write-fallback.ts` — `writeUserFile(fs, target, content, strategy)` sobre `WorkspaceFsLike` estrutural (`direct`/`stub-first`); devolve `{ok:true}`/`{ok:false,error}` (nunca lança); 6 testes | `tests/web/write-fallback_test.ts` → 6 steps verdes (direct, stub-first ordem vazio→conteúdo, default direct, negação→erro amigável, negação do overwrite, conteúdo vazio) |
+| 22.8.3 | Wiring escrita `src/reports/host.ts` (save) + `src/commands/misc.ts` (exportTjp) via `writeUserFile` + `window.showErrorMessage` em negação; estratégia `direct` (Desktop, default) / `stub-first` (Web, passada na entry); type-check only | `deno check` exit 0 |
+| 22.8.4 | `src/web/storage-capabilities.ts` — `resolveStorageCapabilities(caps)` → `{daemonCache, smallState, largeReports}` a partir de `{storageUri?, globalStorageUri?, hasWorkspaceState, hasGlobalState}`; 5 testes | `tests/web/storage-capabilities_test.ts` → 5 steps verdes (Desktop completo, Web sem storage, só Mementos, fallback global Memento, global URI alone) |
+| 22.8.5 | `src/web/small-state.ts` — `SmallStateStore` sobre `MementoLike` + `MemoryMemento` + `STATE_KEYS`/`MAX_RECENT_PROJECTS`; acessores `recentProjects`/`addRecentProject`/`lastReportFormat`/`setLastReportFormat`; 9 testes | `tests/web/small-state_test.ts` → 9 steps verdes (MemoryMemento default/round-trip; recent default/ordem/dedup/cap; format default/round-trip; chaves owned) |
+| 22.8.6 | Wiring storage `src/daemon/host.ts` (roteamento file/memory via resolver + `SmallStateStore` sobre o Memento do contexto + recent projects em add/reload) + `src/extension.web.ts` (`stub-first`); type-check only; sem watcher; sem IndexedDB/OPFS | `deno check` exit 0; grep sem watcher/IndexedDB/OPFS |
+| 22.8.7 | `tests/web/web-scenarios_test.ts` — cenários Web puros (storage ausente→memória; só Mementos→workspaceState; escrita negada→erro amigável + stub; stub-first sucesso; small state round-trip em reactivation; pureza dos módulos P5); 6 testes | `tests/web/web-scenarios_test.ts` → 6 steps verdes (critério de saída P5: missing storage + denied writes) |
+| 22.8.8 | Cobertura da lógica pura P5 + gate completo + evidência + docs | **100% linhas / 96,8% branches / 100% funções** (4 módulos puros `src/web/`; bootstraps type-check-only, não instrumentados); relatório `.tmp/cov-vsext-p5/`; testes do pacote **30 passed (123 steps), 0 failed** (27 arquivos); testes Web 5 arquivos/33 steps; gate `deno task tests` **EXIT=0 — 873 passed (7162 steps), 0 failed**, 0 ignored (2 steps) (log `.tmp/p5-gate2.log`); docs coerentes (CURRENT/plano/AGENTS/este arquivo/plano §13) |
+
+> **Nota de naming P5:** o tipo `SmallStateStore` (união de backends em
+> `storage-capabilities.ts`) e a classe `SmallStateStore` (acessores em
+> `small-state.ts`) homônimos **não** são co-importados num mesmo módulo — o
+> `daemon/host.ts` importa a classe + `resolveStorageCapabilities`/`StorageStrategy`,
+> sem colisão. Se um futuro módulo precisar de ambos, aliasar um deles.
+
+> **Nota de aceite P5:** o aceite runtime no **vscode.dev** (edição/execução/
+> relatório com storage ausente e escrita negada) é **P7** (22.10/22.11) —
+> fora deste ambiente sem VS Code. Aqui o aceite é: unit Deno da lógica pura
+> (5 arquivos Web/33 steps) + cenários Web puros + type-check dos bootstraps +
+> regressão de pureza do grafo Web (sem `node:`/`process`/`Deno`/IndexedDB/
+> OPFS) + gate completo verde.

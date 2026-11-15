@@ -8,8 +8,10 @@
 > transport 22.4; pure-logic coverage 99.2% lines; Web bundles `node:`-free;
 > full gate 853 passed). **P4 completed 2026-11-14** (execution/reports/UX:
 > daemon 22.5 execute-based no core delta + reports 22.6 + commands/views/trust
-> 22.7; pure-logic coverage 98.8% lines; full gate 867 passed). Next block: P5
-> (Web/storage).
+> 22.7; pure-logic coverage 98.8% lines; full gate 867 passed). **P5 completed
+> 2026-11-14** (Web/storage: browser-graph purity + user-triggered write
+> fallback + storage resolver + Memento small-state + Web scenarios; pure-logic
+> coverage 100% lines; full gate 873 passed). Next block: P6 (standalone LSP).
 > **Planning:** seven major blocks P1–P7, with subblocks in §0; original IDs
 > 22.0–22.11 and existing task blocks C–J remain unchanged.
 > **Recorded progress:** 106/108 tasks in 22.1b verified (H 6.9/6.10 outside
@@ -41,10 +43,10 @@ A detailed task list alone does not mean its implementation is complete.
 | Block | Subject | Original subphases | References | Current implementation |
 |---|---|---|---|---|
 | [P1](#p1-scope-and-architecture) | Scope and architecture | 22.0 | §1–§3 overview, §12, §14 | `OK` — ADR 035 accepted (2026-11-11) |
-| [P2](#p2-shared-language-and-documentation-cores) | Shared language and documentation cores | 22.1, 22.1b | §4 core, §5; task blocks C–J | `PAR` — rename and CLI docs delivered; LSP pending |
+| [P2](#p2-shared-language-and-documentation-cores) | Shared language and documentation cores | 22.1, 22.1b | §4 core, §5; task blocks C–J | `OK` — 22.1b closed 106/108 (H 6.9/6.10 outside v1) + pure `lsp-core` delivered (2026-11-11) |
 | [P3](#p3-editor-foundation-and-language-tooling) | Editor foundation and language tooling | 22.2–22.4 | §3.1, §4 extension, §6, §7 | `OK` |
 | [P4](#p4-project-execution-reports-and-editor-ux) | Project execution, reports, and editor UX | 22.5–22.7 | §3.2–§3.3, §8 | `OK` |
-| [P5](#p5-web-host-and-storage-adaptation) | Web host and storage adaptation | 22.8 | §9; Web transport in §7 | `PLA` |
+| [P5](#p5-web-host-and-storage-adaptation) | Web host and storage adaptation | 22.8 | §9; Web transport in §7 | `OK` |
 | [P6](#p6-standalone-lsp-adapter) | Standalone LSP adapter | 22.9 | §4 LSP adapter, §7 stdio, §10 LSP build | `PLA` |
 | [P7](#p7-packaging-acceptance-and-handoff) | Packaging, acceptance, and handoff | 22.10–22.11 | §10 extension build, §11, §13 closure | `PLA` |
 
@@ -176,6 +178,15 @@ atomic task in the task document §P4.
 **Entry:** P3 Web transport and P4 commands.
 **Exit:** Web editing/execution/report scenarios verified, including missing
 storage and denied writes; transport/core logic is not duplicated.
+**Met 2026-11-14:** pure browser-graph purity scanner + regression (22.8.1),
+user-triggered write fallback `direct`/`stub-first` (22.8.2–22.8.3), pure
+storage capability resolver + Memento small-state store (22.8.4–22.8.6), and
+pure Web scenarios (22.8.7) unit-tested without VS Code (pure-logic coverage
+100% lines / 96.8% branches); daemon routes file/memory via the resolver and
+reuses the P4 in-memory fallback + cache versioning; no direct IndexedDB/OPFS;
+no save/change watcher; full `deno task tests` green (873 passed / 7162 steps).
+vscode.dev runtime acceptance deferred to P7. Evidence per atomic task in the
+task document §P5.
 
 ### P6. Standalone LSP adapter
 
@@ -844,15 +855,15 @@ The P-block mapping below reorganizes scope without renumbering tasks.
 | ID | Planning block / subblock | Deliverable | Entry condition | Recorded status |
 |---|---|---|---|---|
 | 22.0 | P1.1–P1.3 | ADR 035 (`decisoes/035-extensao-vscode.md`) and index entry; architecture/exclusions | F21¹ gate (P1/P2 early kickoff user-authorized 2026-11-11) | `OK` — ADR 035 accepted; baseline/layers recorded (2026-11-11) |
-| 22.1 | P2.1, P2.4 | Remaining workspace wiring, `./lsp-core`, pure §5 services and server registration, unit coverage ≥ 80% | P1; documentation bridges depend on 22.1b | `PAR` — rename delivered; language core pending |
-| 22.1b | P2.2, P2.3, P2.5 | Shared docs/search/examples/manual/highlight; editor bridges and oracle verification | Existing engine for C–H; P2.4 foundation for I 7.5–7.7 | `PAR` — 86/108, CLI consumer delivered |
+| 22.1 | P2.1, P2.4 | Remaining workspace wiring, `./lsp-core`, pure §5 services and server registration, unit coverage ≥ 80% | P1; documentation bridges depend on 22.1b | `OK` — workspace wiring + pure `lsp-core` (13 services + `registerLspServer`); coverage 96.6% lines (2026-11-11, P2) |
+| 22.1b | P2.2, P2.3, P2.5 | Shared docs/search/examples/manual/highlight; editor bridges and oracle verification | Existing engine for C–H; P2.4 foundation for I 7.5–7.7 | `OK` — 106/108 verified (H 6.9/6.10 outside v1); doc-core + editor bridges + oracle goldens (2026-11-11, P2) |
 | 22.2 | P3.1 | `packages/vsextension`, manifest, Desktop/Web shells and lifecycle | 22.0; P2 export readiness | `OK` — shell + dual entries delivered (2026-11-12, P3) |
 | 22.3 | P3.2 | English TextMate grammar, language configuration, snippets and snapshots | 22.2; P2.3 syntax data | `OK` — generators + 4 assets + golden snapshots (2026-11-12, P3) |
 | 22.4 | P3.3 | Thin client/server bootstraps, Desktop IPC and Web Worker/port, LSP integration | 22.1, 22.2; 22.1b editor bridges | `OK` — adapter/options/debounce + 4 bootstraps + `deno bundle` (web `node:`-free) + wiring smoke; pure-logic coverage 99.2% lines (2026-11-12, P3) |
 | 22.5 | P4.1, P4.2 | F24 execution-contract audit first; explicit daemon add/remove/list/reload, input/include closure, cache and trust | 22.4; resolve P4.1 before daemon implementation | `OK` — P4.1 execute-based (no core delta) + pure daemon types/cache/closure/request-builder/core/persistence + host/commands (2026-11-14, P4) |
 | 22.6 | P4.3 | Report selection/output policy: cached-model contract, HTML/assets Webview, CSV/XML/text saves | 22.5 and its contract decision | `OK` — pure output-policy/selector/webview-html + `ReportPresenter` Webview/save (2026-11-14, P4) |
 | 22.7 | P4.4 | Export/input-language/help commands, settings, Project Explorer and Status Bar; translated UX deferred | 22.5; report UI consumes 22.6 | `OK` — settings/locale + project-tree/status-bar + input-language + trust + misc/views host + 9-command manifest; pure-logic coverage 98.8% lines (2026-11-14, P4) |
-| 22.8 | P5.1–P5.3 | Browser-safe Web entry, user-triggered writes and storage fallbacks, vscode.dev tests | 22.4–22.7 | `PLA` |
+| 22.8 | P5.1–P5.3 | Browser-safe Web entry, user-triggered writes and storage fallbacks, vscode.dev tests | 22.4–22.7 | `OK` — pure purity/write-fallback/storage-capabilities/small-state + wiring reports/misc/daemon/entries + Web scenarios; pure-logic coverage 100% lines (2026-11-14, P5) |
 | 22.9 | P6.1–P6.2 | Independent `packages/lsp` stdio bootstrap, executable build and protocol smoke | 22.4; shared P2 server contract | `PLA` |
 | 22.10 | P7.1, P7.2 | Desktop/Web bundles, exclusions, `.vsix` < 5 MB, clean-install acceptance | 22.8; collect 22.9 artifact in acceptance | `PLA` |
 | 22.11 | P7.2, P7.3 | Full `deno task tests`, coverage/integration evidence, ADR and documentation closure, F21² handoff | All in-v1 deliverables accepted | `PLA` |

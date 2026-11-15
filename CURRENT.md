@@ -612,7 +612,15 @@ i18n (10.15+) em `packages/core/src/i18n/`.
   report.defaultFormat settings, Project Explorer + Status Bar reusing LSP
   symbols, input-language, export/manual, trust gate, 9-command manifest).
   Pure-logic coverage **98.8% lines**; full gate `deno task tests` EXIT=0 —
-  **867 passed (7129 steps), 0 failed**. Next block: P5 (Web/storage).
+  **867 passed (7129 steps), 0 failed**. **P5 completed 2026-11-14**
+    (Web/storage): pure browser-graph purity scanner + regression, user-triggered
+    write fallback (`direct`/`stub-first`), storage capability resolver + Memento
+    small-state store, and pure Web scenarios; the daemon routes file/memory via
+    the resolver (reusing the P4 in-memory fallback + cache versioning); no
+    direct IndexedDB/OPFS, no save/change watcher. Pure-logic coverage **100%
+    lines / 96.8% branches**; full gate `deno task tests` EXIT=0 — **873 passed
+    (7162 steps), 0 failed**. vscode.dev runtime acceptance deferred to P7. Next
+    block: P6 (standalone LSP).
   [Plan: major blocks P1–P7](docs/syntaxmesh/fases/fase-22-vscode-extension.md#0-major-blocks-and-subblocks)
   and [original task owners](docs/syntaxmesh/fases/fase-22-vscode-extension-tarefas.md).
   Planning update (2026-11-11): P1 architecture; P2 shared language/docs cores;
@@ -642,7 +650,7 @@ i18n (10.15+) em `packages/core/src/i18n/`.
   (golden determinístico e byte-idêntico, confronto `tj3man` real em
   `xray.md` §1.7.1, cobertura docgen **97,0% linhas**, gate completo verde).
   Evidência por tarefa atômica em `fase-22-vscode-extension-tarefas.md`
-  §Progresso/P2 evidence. **Próximo:** P5 (Web/storage — runtime Web + fallbacks).
+  §Progresso/P2 evidence. **Próximo:** P6 (standalone LSP).
 - Fase 15 — Gantt ✅ Concluída (2026-11-03)
 - Fase 16 — Apoio ✅ Concluída (2026-11-03, 16.0–16.20; escopo xray: 16.10
   cancelado; 16.9/16.14/16.15 movidos p/ a 22; dono de `query_dashboard`).

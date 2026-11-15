@@ -3,9 +3,11 @@
  *
  * Materializes the runtime pieces the pure daemon core (22.5.6) injects: the
  * real `execute` from `@vanaware/syntaxmesh`, a file reader backed by
- * `workspace.fs`/open buffers, and persistence to `context.storageUri`
- * (Desktop) or an in-memory string (Web, where `storageUri` is absent). All
- * orchestration lives in {@link DaemonCore}; this file only wires I/O (ADR 035).
+ * `workspace.fs`/open buffers, and persistence routed by the pure storage
+ * resolver (22.8.6) to `context.storageUri` (Desktop) or an in-memory string
+ * (Web, where `storageUri` is absent). Small key-value state (recent projects)
+ * lives in a VS Code Memento via {@link SmallStateStore}. All orchestration
+ * lives in {@link DaemonCore}; this file only wires I/O (ADR 035).
  *
  * It imports the `vscode`/core runtime, so it is type-checked here and exercised
  * inside VS Code (acceptance deferred to P7); the pure modules it consumes are
@@ -14,6 +16,7 @@
  *
  * @see docs/syntaxmesh/fases/fase-22-vscode-extension.md §3.2 (daemon)
  * @see docs/syntaxmesh/fases/fase-22-vscode-extension-tarefas.md §22.5.8
+ * @see docs/syntaxmesh/fases/fase-22-vscode-extension-tarefas.md §22.8.6
  */
 import { execute, } from "@vanaware/syntaxmesh";
 import { Uri, workspace, } from "vscode";
@@ -22,6 +25,9 @@ import { DaemonCore, } from "./daemon-core.ts";
 import { buildClosure, } from "./include-closure.ts";
 import { deserializeCache, serializeCache, } from "./persistence.ts";
 import type { ProjectModel, } from "./types.ts";
+import { resolveStorageCapabilities, } from "../web/storage-capabilities.ts";
+import type { StorageStrategy, } from "../web/storage-capabilities.ts";
+import { MemoryMemento, SmallStateStore, } from "../web/small-state.ts";
 
 /** Name of the persisted cache file under `storageUri`. */
 const CACHE_FILE = "daemon-cache.json";
@@ -40,16 +46,32 @@ function basename(uri: Uri,): string {
 export class DaemonHost {
   /** The pure orchestration core (real `execute` injected). */
   readonly core: DaemonCore;
+  /** Small key-value state (recent projects) over the host Memento. */
+  readonly state: SmallStateStore;
   private readonly context: ExtensionContext;
-  /** Web fallback store when `storageUri` is absent. */
+  private readonly strategy: StorageStrategy;
+  /** Web fallback store when the resolver picks memory. */
   private memoryStore: string | null = null;
 
   /**
-   * @param context the extension context (provides `storageUri` on Desktop).
+   * @param context the extension context (provides `storageUri` on Desktop and
+   * the `workspaceState`/`globalState` Mementos).
    */
   constructor(context: ExtensionContext,) {
     this.context = context;
     this.core = new DaemonCore(execute,);
+    this.strategy = resolveStorageCapabilities({
+      storageUri: context.storageUri?.toString(),
+      globalStorageUri: context.globalStorageUri?.toString(),
+      hasWorkspaceState: true,
+      hasGlobalState: true,
+    },);
+    const memento = this.strategy.smallState === "workspaceState"
+      ? context.workspaceState
+      : this.strategy.smallState === "globalState"
+      ? context.globalState
+      : new MemoryMemento();
+    this.state = new SmallStateStore(memento,);
   }
 
   /**
@@ -83,6 +105,7 @@ export class DaemonHost {
       this.readerFor(masterUri,),
     );
     const model = await this.core.addProject(masterUri.toString(), closure,);
+    await this.state.addRecentProject(masterUri.toString(),);
     await this.persist();
     return model;
   }
@@ -99,6 +122,7 @@ export class DaemonHost {
       this.readerFor(masterUri,),
     );
     const model = await this.core.reloadProject(masterUri.toString(), closure,);
+    await this.state.addRecentProject(masterUri.toString(),);
     await this.persist();
     return model;
   }
@@ -118,7 +142,9 @@ export class DaemonHost {
   /** Reads the stored payload, or `null` when absent/unreadable. */
   private async readStore(): Promise<string | null> {
     const base = this.context.storageUri;
-    if (base === undefined) return this.memoryStore;
+    if (this.strategy.daemonCache === "memory" || base === undefined) {
+      return this.memoryStore;
+    }
     try {
       const bytes = await workspace.fs.readFile(
         Uri.joinPath(base, CACHE_FILE,),
@@ -132,7 +158,7 @@ export class DaemonHost {
   /** Writes the payload, creating the storage directory on Desktop. */
   private async writeStore(json: string,): Promise<void> {
     const base = this.context.storageUri;
-    if (base === undefined) {
+    if (this.strategy.daemonCache === "memory" || base === undefined) {
       this.memoryStore = json;
       return;
     }

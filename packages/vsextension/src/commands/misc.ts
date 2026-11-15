@@ -33,6 +33,8 @@ import type { DaemonHost, } from "../daemon/host.ts";
 import { getViews, } from "../views/host.ts";
 import { rewriteLanguageDirective, } from "./input-language.ts";
 import { activeMasterUri, guarded, } from "./shared.ts";
+import { writeUserFile, } from "../web/write-fallback.ts";
+import type { WriteStrategy, } from "../web/write-fallback.ts";
 
 /** Escapes the HTML special characters of a manual page body/title. */
 function escapeHtml(text: string,): string {
@@ -63,10 +65,13 @@ function manualPageHtml(title: string, text: string,): string {
  *
  * @param context the extension context (owns the command disposables).
  * @param host the started daemon host.
+ * @param writeStrategy the user-write strategy for the export: `direct` on
+ * Desktop, `stub-first` on the Web (plan §9.2).
  */
 export function registerMiscCommands(
   context: ExtensionContext,
   host: DaemonHost,
+  writeStrategy: WriteStrategy = "direct",
 ): void {
   context.subscriptions.push(
     commands.registerCommand(
@@ -96,10 +101,16 @@ export function registerMiscCommands(
             saveLabel: "Export",
           },);
           if (target === undefined) return;
-          await workspace.fs.writeFile(
+          const result = await writeUserFile(
+            workspace.fs,
             target,
-            new TextEncoder().encode(master.content,),
+            master.content,
+            writeStrategy,
           );
+          if (!result.ok) {
+            window.showErrorMessage(result.error,);
+            return;
+          }
           window.showInformationMessage(
             `SyntaxMesh: exported ${model.entry}.`,
           );

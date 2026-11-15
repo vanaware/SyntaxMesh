@@ -1,0 +1,1 @@
+# Specify files or folders to ignore during indexing. The same as .gitignore rules, glob patterns like *.log，my-security/ are supported.

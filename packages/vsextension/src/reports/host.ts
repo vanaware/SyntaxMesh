@@ -4,8 +4,9 @@
  * Materializes the output policy (22.6.1) over the VS Code API: HTML reports
  * open in a Webview panel (assets served as `vscode-webview-resource:` URIs,
  * strict CSP, a Save button that posts back here), every other format is
- * written next to the master with `workspace.fs.writeFile`. All decisions live
- * in the pure policy/selector/renderer; this file only wires I/O (ADR 035).
+ * written next to the master through the user-write fallback (22.8.3). All
+ * decisions live in the pure policy/selector/renderer; this file only wires
+ * I/O (ADR 035).
  *
  * Imports the `vscode` runtime, so it is type-checked here and exercised inside
  * VS Code (acceptance deferred to P7). The bundled `assets/` tree (css/scripts/
@@ -13,12 +14,15 @@
  *
  * @see docs/syntaxmesh/fases/fase-22-vscode-extension.md §3.3 (reports)
  * @see docs/syntaxmesh/fases/fase-22-vscode-extension-tarefas.md §22.6.4
+ * @see docs/syntaxmesh/fases/fase-22-vscode-extension-tarefas.md §22.8.3
  */
 import { Uri, ViewColumn, window, workspace, } from "vscode";
 import type { ExtensionContext, Webview, } from "vscode";
 import type { ReportJsonEntry, } from "@vanaware/syntaxmesh";
 import { destinationFor, reportFileName, } from "./output-policy.ts";
 import { renderWebviewHtml, } from "./webview-html.ts";
+import { writeUserFile, } from "../web/write-fallback.ts";
+import type { WriteStrategy, } from "../web/write-fallback.ts";
 
 /** Asset paths an HTML report may reference (relative to `assets/`). */
 const ASSET_PATHS = [
@@ -38,12 +42,20 @@ function nonce(): string {
  */
 export class ReportPresenter {
   private readonly context: ExtensionContext;
+  private readonly writeStrategy: WriteStrategy;
 
   /**
    * @param context the extension context (resolves the bundled `assets/`).
+   * @param writeStrategy the user-write strategy: `direct` on Desktop,
+   * `stub-first` on the Web (empty file in the permission window, then the
+   * content — plan §9.2).
    */
-  constructor(context: ExtensionContext,) {
+  constructor(
+    context: ExtensionContext,
+    writeStrategy: WriteStrategy = "direct",
+  ) {
     this.context = context;
+    this.writeStrategy = writeStrategy;
   }
 
   /**
@@ -111,7 +123,16 @@ export class ReportPresenter {
   ): Promise<void> {
     const fileName = reportFileName(name, format,);
     const target = Uri.joinPath(masterUri, "..", fileName,);
-    await workspace.fs.writeFile(target, new TextEncoder().encode(content,),);
+    const result = await writeUserFile(
+      workspace.fs,
+      target,
+      content,
+      this.writeStrategy,
+    );
+    if (!result.ok) {
+      window.showErrorMessage(result.error,);
+      return;
+    }
     window.showInformationMessage(`SyntaxMesh: saved ${fileName}.`,);
   }
 }
