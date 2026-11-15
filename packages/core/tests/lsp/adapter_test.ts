@@ -1,7 +1,9 @@
 /**
- * Unit tests of the pure transport adapter (22.4.1). BDD + `@std/assert`,
- * no `vscode`/library runtime — a structural mock stands in for the real
- * `vscode-languageserver` connection.
+ * Unit tests of the pure transport adapter (22.4.1, relocated into the
+ * lsp-core by 22.9.1). BDD + `@std/assert`, no `vscode`/library runtime — a
+ * structural mock stands in for the real `vscode-languageserver` connection.
+ *
+ * @see docs/syntaxmesh/fases/fase-22-vscode-extension-tarefas.md §22.9.1
  */
 import { describe, it, } from "@std/testing/bdd";
 import { assert, assertEquals, } from "@std/assert";
@@ -11,11 +13,11 @@ import {
   type PublishDiagnosticsParams,
   type SemanticTokensResult,
   type TextDocumentIdentifier,
-} from "@vanaware/syntaxmesh/lsp-core";
+} from "../../src/lsp/mod.ts";
 import {
   adaptConnection,
   type ConnectionLike,
-} from "../../src/server/adapter.ts";
+} from "../../src/lsp/adapter.ts";
 
 /** Observable state recorded by the mock connection. */
 interface MockState {

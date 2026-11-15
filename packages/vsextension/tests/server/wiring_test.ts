@@ -14,8 +14,10 @@
 import { assert, assertEquals, } from "@std/assert";
 import { describe, it, } from "@std/testing/bdd";
 import {
+  adaptConnection,
   capabilities,
   type CompletionItem,
+  type ConnectionLike,
   type DidChangeParams,
   type DidCloseParams,
   type DidOpenParams,
@@ -30,10 +32,6 @@ import {
   type TextDocumentPositionParams,
   type WorkspaceSymbolParams,
 } from "@vanaware/syntaxmesh/lsp-core";
-import {
-  adaptConnection,
-  type ConnectionLike,
-} from "../../src/server/adapter.ts";
 
 /** A mock `ConnectionLike` that captures handlers and published diagnostics. */
 function mockConnection(): {

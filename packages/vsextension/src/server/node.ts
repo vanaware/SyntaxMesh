@@ -18,8 +18,11 @@ import {
   createConnection,
   ProposedFeatures,
 } from "vscode-languageserver/node";
-import { registerLspServer, } from "@vanaware/syntaxmesh/lsp-core";
-import { adaptConnection, asConnectionLike, } from "./adapter.ts";
+import {
+  adaptConnection,
+  asConnectionLike,
+  registerLspServer,
+} from "@vanaware/syntaxmesh/lsp-core";
 
 const connection = createConnection(ProposedFeatures.all,);
 registerLspServer(adaptConnection(asConnectionLike(connection,),),);

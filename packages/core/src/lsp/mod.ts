@@ -6,7 +6,9 @@
  * navigation, semantic tokens, symbols) built on the core and the doc-core.
  * There is no transport here — `registerLspServer` takes a structural
  * connection, so the same code serves the desktop extension, the web worker
- * and the standalone stdio server.
+ * and the standalone stdio server. The pure transport adapter
+ * (`adaptConnection`/`asConnectionLike`) also lives here so every host shares
+ * it without importing the extension (22.9.1, plan §4.1).
  *
  * Boundary constraint (enforced by `deno task check:lspcore`): no
  * `vscode-languageserver`/`vscode-languageclient` runtime, no `vscode` API,
@@ -28,6 +30,8 @@
  * @see docs/syntaxmesh/fases/fase-22-vscode-extension-tarefas.md §Bloco B
  */
 
+export { adaptConnection, asConnectionLike, } from "./adapter.ts";
+export type { ConnectionLike, } from "./adapter.ts";
 export { analyzeDocument, } from "./analyze.ts";
 export type { AnalysisResult, AnalyzeOptions, } from "./analyze.ts";
 export {

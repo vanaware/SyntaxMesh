@@ -1,0 +1,50 @@
+{
+  "name": "@vanaware/syntaxmesh-lsp",
+  "version": "0.0.2",
+  "description": "SyntaxMesh standalone LSP server — stdio transport for external editors (ADR 035, Fase 22 P6)",
+  "compilerOptions": {
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "dom.asynciterable",
+      "webworker",
+      "esnext",
+      "deno.ns",
+      "deno.unstable"
+    ],
+    "strict": true,
+    "noImplicitAny": true,
+    "noUncheckedIndexedAccess": true
+  },
+  "imports": {
+    "@std/assert": "jsr:@std/assert@^1",
+    "@std/testing/bdd": "jsr:@std/testing@^1/bdd",
+    // Núcleo puro do core (workspace, caminho relativo como no CLI/vsext):
+    // serviços LSP + registerLspServer + adapter de transporte (22.9.1).
+    // Nada é importado da extensão — só o core (plano §4.1).
+    "@vanaware/syntaxmesh/lsp-core": "../core/src/lsp/mod.ts",
+    // Subcaminho só-version do core (22.10.1): o banner `--version` usa a
+    // mesma constante do CLI (`APP_VERSION`, injetada no build) sem arrastar
+    // o barril inteiro.
+    "@vanaware/syntaxmesh/version": "../core/src/version.ts",
+    // Transporte stdio apenas; a inteligência LSP mora no lsp-core (ADR 035).
+    // `.js` explícito: o pacote não tem `exports` map, e o runtime ESM do
+    // Deno exige a extensão no subpath (o type-check aceita sem ela).
+    "vscode-languageserver/node": "npm:vscode-languageserver@^9.0.1/node.js"
+  },
+  "tasks": {
+    "check": "deno check src/**/*.ts tests/**/*.ts scripts/**/*.ts",
+    "test": "deno test --allow-read --allow-run --allow-env tests/",
+    "tests": "deno task check && deno task test",
+    // Bundle do artefato executável via `deno bundle` (22.9.4; ADR 034).
+    "build": "deno run --allow-read --allow-write --allow-run --allow-env scripts/build.ts",
+    // `deno doc --lint` em ratchet (ADR 041): pacote novo = piso zero
+    // (JSDoc inglês completo, sem dívida).
+    "lint:doc": "deno run --allow-read --allow-run --allow-write --allow-env ../../scripts/lint-doc.ts src/mod.ts",
+    "lint:doc:update": "deno run --allow-read --allow-run --allow-write --allow-env ../../scripts/lint-doc.ts --update src/mod.ts"
+  },
+  "exports": {
+    ".": "./src/mod.ts"
+  },
+  "exclude": ["dist/"]
+}

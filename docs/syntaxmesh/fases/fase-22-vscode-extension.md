@@ -2,7 +2,7 @@
 
 > **File:** `docs/syntaxmesh/fases/fase-22-vscode-extension.md`
 > **Tasks:** [Atomic task document](fase-22-vscode-extension-tarefas.md)
-> **Status:** `PAR` — P1 (22.0) accepted 2026-11-11 (ADR 035); **P2 completed
+> **Status:** `OK` — P1 (22.0) accepted 2026-11-11 (ADR 035); **P2 completed
 > 2026-11-11** (22.1b closed at 106/108 verified + pure `lsp-core` delivered).
 > **P3 completed 2026-11-12** (editor foundation: shell 22.2 + grammar 22.3 +
 > transport 22.4; pure-logic coverage 99.2% lines; Web bundles `node:`-free;
@@ -11,7 +11,18 @@
 > 22.7; pure-logic coverage 98.8% lines; full gate 867 passed). **P5 completed
 > 2026-11-14** (Web/storage: browser-graph purity + user-triggered write
 > fallback + storage resolver + Memento small-state + Web scenarios; pure-logic
-> coverage 100% lines; full gate 873 passed). Next block: P6 (standalone LSP).
+> coverage 100% lines; full gate 873 passed). **P6 completed 2026-11-14**
+> (standalone LSP: transport adapter moved into the lsp-core + independent
+> `packages/lsp` with pure args, stdio bootstrap, executable bundle and a
+> real framed JSON-RPC protocol smoke; `packages/lsp/src` coverage 100%
+> lines/branches/functions; full gate 876 passed). **P7 completed 2026-11-14**
+> (packaging/acceptance/handoff — **phase closed, P1–P7 OK**): pure lsp
+> `--version` + build-injected version/shebang, `.vsix` packaged with vsce
+> under Deno (2.19 MB < 5 MB, valid zip + vsixmanifest + clean inventory),
+> manifest-consistency regression + §11 acceptance matrix, closure coverage
+> (lsp-core 96.4% / vsextension 99.3% / lsp 100% lines), full gate 880 passed
+> and F21² handoff. VS Code runtime acceptance (clean install, Test Runner,
+> vscode.dev) deferred to F21² with explicit anchors.
 > **Planning:** seven major blocks P1–P7, with subblocks in §0; original IDs
 > 22.0–22.11 and existing task blocks C–J remain unchanged.
 > **Recorded progress:** 106/108 tasks in 22.1b verified (H 6.9/6.10 outside
@@ -47,8 +58,8 @@ A detailed task list alone does not mean its implementation is complete.
 | [P3](#p3-editor-foundation-and-language-tooling) | Editor foundation and language tooling | 22.2–22.4 | §3.1, §4 extension, §6, §7 | `OK` |
 | [P4](#p4-project-execution-reports-and-editor-ux) | Project execution, reports, and editor UX | 22.5–22.7 | §3.2–§3.3, §8 | `OK` |
 | [P5](#p5-web-host-and-storage-adaptation) | Web host and storage adaptation | 22.8 | §9; Web transport in §7 | `OK` |
-| [P6](#p6-standalone-lsp-adapter) | Standalone LSP adapter | 22.9 | §4 LSP adapter, §7 stdio, §10 LSP build | `PLA` |
-| [P7](#p7-packaging-acceptance-and-handoff) | Packaging, acceptance, and handoff | 22.10–22.11 | §10 extension build, §11, §13 closure | `PLA` |
+| [P6](#p6-standalone-lsp-adapter) | Standalone LSP adapter | 22.9 | §4 LSP adapter, §7 stdio, §10 LSP build | `OK` |
+| [P7](#p7-packaging-acceptance-and-handoff) | Packaging, acceptance, and handoff | 22.10–22.11 | §10 extension build, §11, §13 closure | `OK` |
 
 ### P1. Scope and architecture
 
@@ -202,6 +213,16 @@ task document §P5.
 socket daemons, SMTP services, or another engine runner. It may be developed
 independently of P4/P5 once its entry conditions hold; §13 retains the default
 serial sequence.
+**Met 2026-11-14:** the pure transport adapter moved into the `lsp-core`
+(22.9.1) and the independent `packages/lsp` delivers pure CLI args (22.9.2),
+the stdio bootstrap over `registerLspServer` with logs only on stderr
+(22.9.3), the executable bundle `dist/syntaxmesh-lsp.js` (22.9.4) and a real
+framed JSON-RPC protocol smoke — initialize → capabilities, didOpen →
+publishDiagnostics, hover, shutdown/exit code 0, stdout purity (22.9.5).
+Nothing is imported from the extension; `packages/lsp/src` coverage 100%
+lines/branches/functions; full `deno task tests` green (876 passed / 7174
+steps). `--version` deferred to P7 (build-injected version). Evidence per
+atomic task in the task document §P6.
 
 ### P7. Packaging, acceptance, and handoff
 
@@ -221,6 +242,22 @@ serial sequence.
 **Exit:** installable verified `.vsix`, verified standalone server, coherent
 planning evidence, and handoff to F21². Packaging is not Marketplace publishing
 or deployment authorization.
+**Met 2026-11-14:** pure lsp `--version`/`-V` with the banner from the core
+`./version` subpath (22.10.1); build-time version injection by prepending
+`const __APP_VERSION__` (root `deno.jsonc` version; `deno bundle` has no
+`--define`) + executable shebang (22.10.2); `.vsix` packaged with **vsce
+running under Deno** (`deno task package:vsext`) —
+`syntaxmesh-vscode-0.0.2.vsix`, **2.19 MB < 5 MB**, 13 files, valid zip +
+vsixmanifest + inventory without src/tests/scripts/deno configs (22.10.3);
+manifest-consistency regression + §11 acceptance matrix with F21² anchors
+(22.10.4); closure coverage `core/src/lsp` **96.4% lines** (≥ 80%),
+`vsextension/src` **99.3%** (≥ 70%), `lsp/src` **100%** (22.11.1); full
+`deno task tests` green (**880 passed / 7189 steps**) + ADR reconciliation +
+F21² handoff (22.11.2). The "installable verified .vsix" exit is met
+structurally; clean install / Test Runner / vscode.dev runtime acceptance is
+deferred to **F21²** (no VS Code in this environment) — anchors in the task
+document §P7 matrix + handoff. Evidence per atomic task in the task document
+§P7.
 
 ### Detailing and execution protocol
 
@@ -864,9 +901,9 @@ The P-block mapping below reorganizes scope without renumbering tasks.
 | 22.6 | P4.3 | Report selection/output policy: cached-model contract, HTML/assets Webview, CSV/XML/text saves | 22.5 and its contract decision | `OK` — pure output-policy/selector/webview-html + `ReportPresenter` Webview/save (2026-11-14, P4) |
 | 22.7 | P4.4 | Export/input-language/help commands, settings, Project Explorer and Status Bar; translated UX deferred | 22.5; report UI consumes 22.6 | `OK` — settings/locale + project-tree/status-bar + input-language + trust + misc/views host + 9-command manifest; pure-logic coverage 98.8% lines (2026-11-14, P4) |
 | 22.8 | P5.1–P5.3 | Browser-safe Web entry, user-triggered writes and storage fallbacks, vscode.dev tests | 22.4–22.7 | `OK` — pure purity/write-fallback/storage-capabilities/small-state + wiring reports/misc/daemon/entries + Web scenarios; pure-logic coverage 100% lines (2026-11-14, P5) |
-| 22.9 | P6.1–P6.2 | Independent `packages/lsp` stdio bootstrap, executable build and protocol smoke | 22.4; shared P2 server contract | `PLA` |
-| 22.10 | P7.1, P7.2 | Desktop/Web bundles, exclusions, `.vsix` < 5 MB, clean-install acceptance | 22.8; collect 22.9 artifact in acceptance | `PLA` |
-| 22.11 | P7.2, P7.3 | Full `deno task tests`, coverage/integration evidence, ADR and documentation closure, F21² handoff | All in-v1 deliverables accepted | `PLA` |
+| 22.9 | P6.1–P6.2 | Independent `packages/lsp` stdio bootstrap, executable build and protocol smoke | 22.4; shared P2 server contract | `OK` — adapter moved into lsp-core + `packages/lsp` (pure args, stdio bootstrap, `dist/syntaxmesh-lsp.js` bundle) + real framed JSON-RPC smoke (initialize/didOpen/hover/shutdown, stdout purity); coverage 100% (2026-11-14, P6) |
+| 22.10 | P7.1, P7.2 | Desktop/Web bundles, exclusions, `.vsix` < 5 MB, clean-install acceptance | 22.8; collect 22.9 artifact in acceptance | `OK` — lsp `--version` + build-injected version/shebang + `.vsix` 2.19 MB (vsce under Deno, valid zip + vsixmanifest + clean inventory) + manifest-consistency regression + §11 acceptance matrix; clean-install runtime deferred to F21² (2026-11-14, P7) |
+| 22.11 | P7.2, P7.3 | Full `deno task tests`, coverage/integration evidence, ADR and documentation closure, F21² handoff | All in-v1 deliverables accepted | `OK` — gate 880 passed (7189 steps); coverage lsp-core 96.4% / vsextension 99.3% / lsp 100% lines; ADR 035 reconciled (runtime validation belongs to F21²); handoff artifacts registered (2026-11-14, P7) |
 
 Default block order: **P1 → P2 → P3 → P4 → P5 → P6 → P7**. P6 can proceed
 independently of P4/P5 after 22.4 is accepted. Within P2, use foundation

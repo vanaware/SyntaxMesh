@@ -50,6 +50,10 @@
     "generate:snapshots": "deno run --allow-read --allow-write scripts/generate-snapshots.ts",
     // Bundle dos 4 artefatos via `deno bundle` (22.4.7; ADR 034/CLI precedent).
     "build": "deno run --allow-read --allow-write --allow-run --allow-env scripts/build.ts",
+    // Empacotamento `.vsix` (22.10.3; plano §10): build + vsce via Deno.
+    // `--allow-missing-repository`: o manifesto não declara `repository`
+    // (publicação no Marketplace está fora do escopo da Fase 22).
+    "package": "deno task build && deno run -A npm:@vscode/vsce package --allow-missing-repository",
     // `deno doc --lint` em ratchet (ADR 041): a entrada é o `exports` deste
     // pacote. Pacote novo = piso zero (JSDoc inglês completo, sem dívida).
     "lint:doc": "deno run --allow-read --allow-run --allow-write --allow-env ../../scripts/lint-doc.ts src/extension.node.ts",

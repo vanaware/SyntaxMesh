@@ -1,5 +1,6 @@
 /**
- * `server/adapter.ts` — pure transport adapter (22.4.1).
+ * `adapter.ts` — pure transport adapter shared by every LSP host (22.4.1,
+ * moved into the `lsp-core` by 22.9.1).
  *
  * Bridges the real `vscode-languageserver` `Connection` to the **structural**
  * {@link ServerConnection} that `registerLspServer` consumes. Every method maps
@@ -9,18 +10,21 @@
  *
  * No library import: {@link ConnectionLike} is a structural type derived from
  * `ServerConnection`, so this module is pure and testable with a mock in Deno.
- * The bootstraps (22.4.4/22.4.5) create the real connection and pass it here;
- * the intelligence stays in the core (`registerLspServer`).
+ * The bootstraps (extension node/browser and the standalone `packages/lsp`
+ * stdio server) create the real connection and pass it here; the intelligence
+ * stays in the core (`registerLspServer`). It lives in the `lsp-core` so the
+ * standalone server shares it without importing the extension (plan §4.1).
  *
  * @see docs/syntaxmesh/fases/fase-22-vscode-extension.md §5/§7
  * @see docs/syntaxmesh/fases/fase-22-vscode-extension-tarefas.md §22.4.1
+ * @see docs/syntaxmesh/fases/fase-22-vscode-extension-tarefas.md §22.9.1
  */
 
 import type {
   SemanticTokensResult,
   ServerConnection,
   TextDocumentIdentifier,
-} from "@vanaware/syntaxmesh/lsp-core";
+} from "./server.ts";
 
 /**
  * Structural shape of the real connection the adapter needs: every
@@ -82,7 +86,8 @@ export function adaptConnection(conn: ConnectionLike,): ServerConnection {
  * lib/core boundary in one place; the bootstraps call it instead of scattering
  * casts. The mock in the tests satisfies `ConnectionLike` without it.
  *
- * @param conn the real connection created by `createConnection` (node/browser).
+ * @param conn the real connection created by `createConnection` (node/browser/
+ * stdio).
  * @returns the same connection viewed as the structural {@link ConnectionLike}.
  */
 export function asConnectionLike(conn: unknown,): ConnectionLike {

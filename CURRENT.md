@@ -581,10 +581,10 @@ i18n (10.15+) em `packages/core/src/i18n/`.
   **Demais tarefas da 1ª onda** (26.0–26.14, 26.26–26.28) continuam em
   aberto — corpus, runners e2e, AST-equivalence ampliada, snapshots,
   benchmarks, segurança, CSP, `known-divergences` e matriz de cobertura
-  #1–#6a. **Fase 22:** P1/P2 já executados antecipadamente com autorização
-  do usuário (2026-11-11 — `doc-core` fechado em 106/108 + `lsp-core` puro);
-  o restante da Fase 22 (P3 em diante) segue após a 1ª onda da 21.
-- **Phase 22 — VS Code extension** `PAR` — **P1 (22.0) accepted 2026-11-11:
+  #1–#6a. **Fase 22:** executada antecipadamente com autorização do usuário
+  (2026-11-11 a 2026-11-14 — **P1–P7 completos**, gate 880 passed); o handoff
+  da F22 (artefatos + matriz de aceite) alimenta a 2ª onda da 21.
+- **Phase 22 — VS Code extension** `OK` — **P1 (22.0) accepted 2026-11-11:
   ADR 035** (`decisoes/035-extensao-vscode.md`) created and indexed; baseline
   and layer boundaries recorded (Bloco A in the task document). **P2 completed
   2026-11-11** (shared language/documentation cores): subphase 22.1b closed at
@@ -619,8 +619,32 @@ i18n (10.15+) em `packages/core/src/i18n/`.
     the resolver (reusing the P4 in-memory fallback + cache versioning); no
     direct IndexedDB/OPFS, no save/change watcher. Pure-logic coverage **100%
     lines / 96.8% branches**; full gate `deno task tests` EXIT=0 — **873 passed
-    (7162 steps), 0 failed**. vscode.dev runtime acceptance deferred to P7. Next
-    block: P6 (standalone LSP).
+    (7162 steps), 0 failed**. vscode.dev runtime acceptance deferred to P7.
+    **P6 completed 2026-11-14** (standalone LSP): the pure transport adapter
+    moved into the `lsp-core` (22.9.1) and the independent `packages/lsp`
+    delivers pure CLI args, the stdio bootstrap (`registerLspServer` via the
+    shared adapter, logs only on stderr), the executable bundle
+    `dist/syntaxmesh-lsp.js` (`deno bundle`, deno/esm) and a real framed
+    JSON-RPC protocol smoke (initialize → capabilities, didOpen →
+    publishDiagnostics, hover, shutdown/exit code 0, stdout purity). Nothing
+    is imported from the extension — only the core (plan §4.1). Coverage of
+    `packages/lsp/src`: **100% lines / branches / functions**; full gate
+    `deno task tests` EXIT=0 — **876 passed (7174 steps), 0 failed**.
+    **P7 completed 2026-11-14** (packaging/acceptance/handoff — **Fase 22
+    fechada, P1–P7 OK**): lsp `--version`/`-V` puros + banner com
+    `APP_VERSION` do subpath `@vanaware/syntaxmesh/version` (22.10.1);
+    injeção de versão no build por prepend de `const __APP_VERSION__`
+    (`deno bundle` não tem `--define`) + shebang executável, versão lida do
+    `deno.jsonc` raiz (22.10.2); `.vsix` via **vsce rodando sob Deno**
+    (`deno task package:vsext`) — `syntaxmesh-vscode-0.0.2.vsix`,
+    **2,19 MB < 5 MB**, 13 arquivos, zip válido + vsixmanifest + inventário
+    sem src/tests/scripts (22.10.3); regressão de coerência do manifesto +
+    matriz de aceite §11 com âncoras (22.10.4); cobertura de fechamento
+    `core/src/lsp` **96,4% linhas** (≥ 80%), `vsextension/src` **99,3%**
+    (≥ 70%), `lsp/src` **100%** (22.11.1); gate `deno task tests` EXIT=0 —
+    **880 passed (7189 steps), 0 failed** + handoff F21² (22.11.2). Aceite
+    runtime (instalação limpa, Test Runner, vscode.dev) diferido para a
+    **F21²** com âncora explícita — sem VS Code neste ambiente.
   [Plan: major blocks P1–P7](docs/syntaxmesh/fases/fase-22-vscode-extension.md#0-major-blocks-and-subblocks)
   and [original task owners](docs/syntaxmesh/fases/fase-22-vscode-extension-tarefas.md).
   Planning update (2026-11-11): P1 architecture; P2 shared language/docs cores;
@@ -650,7 +674,9 @@ i18n (10.15+) em `packages/core/src/i18n/`.
   (golden determinístico e byte-idêntico, confronto `tj3man` real em
   `xray.md` §1.7.1, cobertura docgen **97,0% linhas**, gate completo verde).
   Evidência por tarefa atômica em `fase-22-vscode-extension-tarefas.md`
-  §Progresso/P2 evidence. **Próximo:** P6 (standalone LSP).
+  §Progresso/P2–P7 evidence + Handoff F21². **Fase 22 concluída (P1–P7);
+  próximo:** restante da 1ª onda da F21 e ordem oficial (21² → 19 → 20 →
+  21³) — a 21² recebe o handoff da F22 para a validação runtime.
 - Fase 15 — Gantt ✅ Concluída (2026-11-03)
 - Fase 16 — Apoio ✅ Concluída (2026-11-03, 16.0–16.20; escopo xray: 16.10
   cancelado; 16.9/16.14/16.15 movidos p/ a 22; dono de `query_dashboard`).

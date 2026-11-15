@@ -1,6 +1,10 @@
 {
   "enabledPlugins": {
     "frontend-design@qoder-marketplace": true,
-    "superpowers@qoder-marketplace": true
+    "superpowers@qoder-marketplace": true,
+    "architecture-visualization@qoder-marketplace": true,
+    "ui-ux-pro-max-skill@qoder-marketplace": true,
+    "design-review@qoder-marketplace": true,
+    "code-simplifier@qoder-marketplace": true
   }
 }

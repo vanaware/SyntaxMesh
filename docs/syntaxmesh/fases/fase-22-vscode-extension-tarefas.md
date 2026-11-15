@@ -3,7 +3,7 @@
 > **Fase:** 22 — Extensão VS Code (`lsp-core` + `doc-core` + tooling de edição)
 > **Plan:** [Major blocks P1–P7](fase-22-vscode-extension.md#0-major-blocks-and-subblocks)
 > and original subphases 22.0–22.11 in §13.
-> **Status:** `PAR` — P1 (22.0) accepted 2026-11-11 (ADR 035); **P2 completed
+> **Status:** `OK` — P1 (22.0) accepted 2026-11-11 (ADR 035); **P2 completed
 > 2026-11-11** (subfase 22.1b fechada + `lsp-core` puro entregue);
 > **P3 completed 2026-11-12** (editor foundation: shell 22.2 + grammar 22.3 +
 > transporte 22.4; cobertura lógica pura 99,2% linhas; bundles Web sem `node:`);
@@ -13,7 +13,20 @@
 > **P5 completed 2026-11-14** (Web/storage: pureza do grafo 22.8.1 + escrita
 > disparada pelo usuário 22.8.2–22.8.3 + fallbacks de storage 22.8.4–22.8.6 +
 > cenários Web 22.8.7; cobertura lógica pura P5 100% linhas / 96,8% branches;
-> gate completo 873 passed). Próximo bloco: P6 (standalone LSP).
+> gate completo 873 passed).
+> **P6 completed 2026-11-14** (standalone LSP: adapter movido para o lsp-core
+> 22.9.1 + pacote `packages/lsp` com args puros 22.9.2 + bootstrap stdio
+> 22.9.3 + bundle executável 22.9.4 + smoke de protocolo real 22.9.5;
+> cobertura `packages/lsp/src` 100% linhas/branches/funções; gate completo
+> 876 passed).
+> **P7 completed 2026-11-14** (packaging/aceite/fechamento: `--version` puro
+> 22.10.1 + injeção de versão/shebang no build 22.10.2 + `.vsix` via vsce sob
+> Deno 22.10.3 (2,19 MB < 5 MB, verificação estrutural) + matriz de aceite e
+> regressão de manifesto 22.10.4 + cobertura de fechamento 22.11.1 (lsp-core
+> 96,4% / vsext 99,3% / lsp 100% linhas) + gate completo **880 passed (7189
+> steps)** + evidência e handoff F21² 22.11.2; aceite runtime VS Code diferido
+> para a F21² com âncora explícita).
+> **Fase 22 fechada (P1–P7).**
 > **Recorded progress:** 86/108 tasks in 22.1b recorded (2026-11-08);
 > **99/108 verified** after the 2026-11-11 audit + P2 deliveries (Blocos B/H/I;
 > I 7.9 reaberta — o smoke registrado não existia no código);
@@ -47,8 +60,8 @@ consumer annotations, and the historical progress section below remain intact.
 | [P3 — Editor foundation](fase-22-vscode-extension.md#p3-editor-foundation-and-language-tooling) | P3.1 shell; P3.2 grammar/snippets; P3.3 transport integration | 22.2–22.4 | Detailed below (P3 — 22.2/22.3/22.4) |
 | [P4 — Execution, reports and UX](fase-22-vscode-extension.md#p4-project-execution-reports-and-editor-ux) | P4.1 API audit; P4.2 daemon; P4.3 reports; P4.4 commands/views/trust | 22.5–22.7 | Detailed below (P4 — 22.5/22.6/22.7) |
 | [P5 — Web and storage](fase-22-vscode-extension.md#p5-web-host-and-storage-adaptation) | P5.1 browser graph; P5.2 writes; P5.3 storage fallbacks | 22.8 | Detailed below (P5 — 22.8) |
-| [P6 — Standalone LSP](fase-22-vscode-extension.md#p6-standalone-lsp-adapter) | P6.1 stdio bootstrap; P6.2 build/protocol smoke | 22.9 | Pending |
-| [P7 — Packaging and handoff](fase-22-vscode-extension.md#p7-packaging-acceptance-and-handoff) | P7.1 builds; P7.2 acceptance; P7.3 closure/F21² | 22.10–22.11 | Pending |
+| [P6 — Standalone LSP](fase-22-vscode-extension.md#p6-standalone-lsp-adapter) | P6.1 stdio bootstrap; P6.2 build/protocol smoke | 22.9 | Detailed below (P6 — 22.9) |
+| [P7 — Packaging and handoff](fase-22-vscode-extension.md#p7-packaging-acceptance-and-handoff) | P7.1 builds; P7.2 acceptance; P7.3 closure/F21² | 22.10–22.11 | Detailed below (P7 — 22.10/22.11) |
 
 ### Original task owners and recorded implementation
 
@@ -75,9 +88,9 @@ Counts below mirror the historical 22.1b progress table, not a new verification.
 | P4 (22.6) | 22.6 | P4.3 | Shared execution contract and report output policy | Detailed below (P4) | `OK` — 22.6.1–22.6.5 delivered 2026-11-14 (output-policy/selector/webview-html puros + host/comando Gerar Relatório; Webview/save) |
 | P4 (22.7) | 22.7 | P4.4 | Export/input-language/help, config, views and trust | Detailed below (P4) | `OK` — 22.7.1–22.7.8 delivered 2026-11-14 (settings/locale + project-tree/status-bar + input-language + trust + misc/views host + manifesto 9 comandos; gate 867 passed) |
 | P5 (22.8) | 22.8 | P5.1–P5.3 | Web runtime, writes and storage fallbacks | Detailed below (P5) | `OK` — 22.8.1–22.8.8 delivered 2026-11-14 (purity/write-fallback/storage-capabilities/small-state puros + wiring reports/misc/daemon/entries + cenários Web; cobertura 100% linhas; gate 873 passed) |
-| To assign at detailing | 22.9 | P6.1–P6.2 | Standalone stdio server/build | Pending | `PLA` |
-| To assign at detailing | 22.10 | P7.1–P7.2 | Packaging and clean-install acceptance | Pending | `PLA` |
-| To assign at detailing | 22.11 | P7.2–P7.3 | Final verification and F21² handoff | Pending | `PLA` |
+| P6 (22.9) | 22.9 | P6.1–P6.2 | Standalone stdio server/build | Detailed below (P6) | `OK` — 22.9.1–22.9.6 delivered 2026-11-14 (adapter no lsp-core + `packages/lsp` args/bootstrap/build + smoke de protocolo real; cobertura 100%; gate 876 passed) |
+| P7 (22.10) | 22.10 | P7.1–P7.2 | Packaging and clean-install acceptance | Detailed below (P7) | `OK` — 22.10.1–22.10.4 delivered 2026-11-14 (`--version` puro + injeção de versão/shebang no build + `.vsix` 2,19 MB via vsce sob Deno + matriz de aceite com regressão de manifesto; aceite runtime VS Code diferido F21²; gate 880 passed) |
+| P7 (22.11) | 22.11 | P7.2–P7.3 | Final verification and F21² handoff | Detailed below (P7) | `OK` — 22.11.1–22.11.2 delivered 2026-11-14 (cobertura lsp-core 96,4%/vsext 99,3%/lsp 100% linhas; gate 880 passed (7189 steps); evidência P7 + handoff F21²; docs coerentes) |
 
 The old `K–S` range was an undetailed placeholder, not assigned task IDs; it
 compressed ten subphases into nine letters. Use the explicit 22.2–22.11 owners
@@ -716,6 +729,119 @@ entrega por tarefa, ≤ 2h, teste primeiro). P5 fecha o comportamento vscode.dev
 
 ---
 
+## P6 — Standalone LSP adapter (22.9)
+
+**Kickoff (2026-11-14):** detalhado conforme o protocolo do plano §0 (uma
+entrega por tarefa, ≤ 2h, teste primeiro). P6 expõe o **mesmo** servidor LSP a
+editores externos (Neovim/Helix) via `--stdio`, num pacote independente
+`packages/lsp` que **nada importa da extensão** — só o `lsp-core` (§4.1).
+**Entry:** contrato do servidor P2 verificado pela integração P3 (já satisfeito).
+Ordem: 22.9.1 (adapter compartilhado no core) → 22.9.2 (scaffold + args puros) →
+22.9.3 (bootstrap stdio) → 22.9.4 (build executável) → 22.9.5 (smoke de
+protocolo real) → gate. IDs agrupados pelo owner original 22.9.
+
+### Decisão P6 — abordagem (2026-11-14)
+
+| Aspecto | Decisão | Fundamento |
+|---|---|---|
+| Adapter compartilhado | o adapter puro de transporte (`adaptConnection`/`asConnectionLike`/`ConnectionLike`, hoje `vsextension/src/server/adapter.ts`) **move para o `lsp-core`** (`core/src/lsp/adapter.ts`, export no `mod.ts`); extensão e `packages/lsp` o consomem do core | §4.1 ("nada é compartilhado com a extensão além do próprio core"); o adapter é puro (só tipos) e passa no `check:lspcore`; evita duplicar a ponte semantic-tokens/enum |
+| Pacote `packages/lsp` | `deno.jsonc` name `@vanaware/syntaxmesh-lsp`; imports `@vanaware/syntaxmesh/lsp-core` (relativo) + `vscode-languageserver/node` (só transporte stdio); entra no `workspace` raiz + task `build:lsp` | §4.1/§4.2; mesmo padrão de imports relativos do CLI/vsextension |
+| Bootstrap fino | `src/mod.ts` cria a conexão (`createConnection(ProposedFeatures.all)`) e chama `registerLspServer(adaptConnection(asConnectionLike(conn)))` + `listen()`; **nenhum** handler/regra de protocolo fora do core; logs só em **stderr** (stdout é o canal JSON-RPC) | §3.1/§7; ADR 035; P6.2 (logs off stdout) |
+| CLI mínima v1 | `--stdio` (default) + `--help`/`-h`; flag desconhecida → erro em stderr + exit 1; `--version` **adiado** (depende da injeção `__APP_VERSION__` do buildit, P7) | plano só exige `--stdio`; sem versão hardcoded (regra de teste) |
+| Build executável | `scripts/build.ts` → `dist/syntaxmesh-lsp.js` via `deno bundle --platform=deno --format=esm` (precedente do vsextension/CLI, ADR 034); rodável com `deno run dist/syntaxmesh-lsp.js --stdio` | §10 (Deno bundler, shebang/stdio); `deno bundle` resolve o import map do workspace |
+| Smoke de protocolo | teste de integração real que **spawn** o servidor (`deno run src/mod.ts --stdio`) e fala JSON-RPC framed (Content-Length): initialize→capabilities, didOpen→publishDiagnostics, hover, shutdown/exit; afirma que stdout só carrega JSON-RPC | P6.2 (exit: protocol smoke green); sem VS Code; `--allow-run` já no test config raiz |
+
+### 22.9 — Standalone LSP (P6.1–P6.2)
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 22.9.1 | Adapter puro de transporte movido para o `lsp-core`: `core/src/lsp/adapter.ts` (imports type-only de `./server.ts`) + export `adaptConnection`/`asConnectionLike`/`ConnectionLike` no `mod.ts`; realoca `adapter_test.ts` → `core/tests/lsp/`; atualiza `server/node.ts`/`server/browser.ts`/`wiring_test.ts` da extensão para importar do core; remove os arquivos antigos da extensão | `core/src/lsp/adapter.ts`, `core/src/lsp/mod.ts`, `core/tests/lsp/adapter_test.ts`, `vsextension/src/server/{node,browser}.ts`, `vsextension/tests/server/wiring_test.ts` | `check:lspcore` verde; testes core + vsext verdes |
+| 22.9.2 | Scaffold `packages/lsp` (`deno.jsonc` + membro do `workspace` raiz + task `build:lsp`) + args puros `src/args.ts` (`parseArgs(args)` → `{mode: stdio/help/error, message?}`); testes BDD | `packages/lsp/deno.jsonc`, `deno.jsonc` (raiz), `packages/lsp/src/args.ts`, `packages/lsp/tests/args_test.ts` | testes verdes (default stdio, --stdio, --help/-h, flag desconhecida→error) |
+| 22.9.3 | Bootstrap stdio `src/mod.ts` — `createConnection` + `registerLspServer` via adapter do core + `listen()`; `--help`/erro; logs só em stderr; type-check + run manual | `packages/lsp/src/mod.ts` | `deno check` exit 0; `--help` imprime uso; servidor sobe em stdio |
+| 22.9.4 | Build `scripts/build.ts` → `dist/syntaxmesh-lsp.js` (`deno bundle --platform=deno --format=esm`); task `build`; artefato rodável | `packages/lsp/scripts/build.ts`, `packages/lsp/deno.jsonc` | `deno task build` exit 0; `dist/syntaxmesh-lsp.js` presente e responde a initialize |
+| 22.9.5 | Smoke de protocolo real `tests/protocol_test.ts` — spawn do servidor + JSON-RPC framed: initialize→capabilities, didOpen→publishDiagnostics, hover, shutdown/exit; stdout só JSON-RPC | `packages/lsp/tests/protocol_test.ts` | teste verde (critério de saída P6: external-editor protocol smoke) |
+| 22.9.6 | Cobertura ≥ 70% lógica pura P6 + gate completo `deno task tests` + evidência P6 + docs (CURRENT/plano/AGENTS/este arquivo/plano §13) | `tests/`, docs | gate EXIT=0; cobertura; docs coerentes |
+
+> **Nota de escopo P6:** o empacotamento `.vsix` + aceite no VS Code Test
+> Runner / vscode.dev são **P7**. P6 **não** entrega socket daemon, SMTP nem
+> outro runner do motor (§P6 exit); o `--version` fica para P7 (injeção de
+> versão do buildit). A inteligência LSP permanece no `lsp-core` — o pacote
+> `lsp` é só bootstrap de transporte (ADR 035).
+
+---
+
+## P7 — Packaging, acceptance, and handoff (22.10–22.11)
+
+**Kickoff (2026-11-14):** detalhado conforme o protocolo do plano §0 (uma
+entrega por tarefa, ≤ 2h, teste primeiro). P7 fecha os artefatos distribuíveis
+(`.vsix` + bundle standalone com versão) e a evidência de fase. **Entry:**
+P2–P6 aceitos (gate 876 passed). Sem VS Code neste ambiente: o aceite
+**runtime** (instalação limpa, Test Runner, vscode.dev) é diferido com âncora
+explícita (padrão P3–P5); o que é verificável sem VS Code (estrutura do
+`.vsix`, tamanho, protocolo stdio, cenários puros) é entregue aqui. Ordem:
+22.10.1 (`--version` puro) → 22.10.2 (injeção de versão + shebang no build) →
+22.10.3 (`.vsix`) → 22.10.4 (matriz de aceite) → 22.11.1 (cobertura) →
+22.11.2 (fechamento + handoff F21²).
+
+### Decisão P7 — abordagem (2026-11-14)
+
+| Aspecto | Decisão | Fundamento |
+|---|---|---|
+| `--version` do lsp | `parseArgs` ganha modo `version` (`--version`/`-V`); bootstrap imprime `SyntaxMesh language server ${APP_VERSION}` com `APP_VERSION` do `core/src/version.ts` (mesma fonte do CLI `SyntaxMesh ${VERSION}`); a partir do fonte vale `""` — sem versão hardcoded; testes comparam contra o `APP_VERSION` importado | precedente CLI (`.version(AppConfig.version)`); P6 deixou o gancho explícito |
+| Injeção de versão no build | `deno bundle` **não tem `--define`** (probe `--help`) → helper puro prepende `const __APP_VERSION__ = "<versão>";` ao bundle ESM (o identificador livre do `version.ts` bundlado liga-se ao escopo do módulo); `scripts/build.ts` lê `"version"` do `deno.jsonc` **raiz** (mesma fonte que o buildit consome — precedente dos oracles 24.6.6); shebang `#!/usr/bin/env -S deno run --allow-read --allow-env` + chmod 755 | §10 ("Shebang, `--stdio`"); goldens ical/html-xml documentam a fonte da versão |
+| Empacotamento `.vsix` | tentativa 1: `deno run -A npm:@vscode/vsce package` (§10); se o vsce falhar sob Deno → fallback puro (zip + manifesto OPC mínimos, script testável). `dist/` dos 4 artefatos construído antes; `.vscodeignore` já exclui `src/`/`tests/`/`scripts/`/`deno.json*`/maps; afirmação **< 5 MB** + inventário (manifesto, 4 bundles, syntaxes, snippets, language-configuration, images; nada de fonte/testes) | §10; §P7.1 exit; sem `npm install`/`node_modules` |
+| Aceite runtime VS Code | instalação limpa (`code --install-extension`), Test Runner de integração e vscode.dev **diferidos com âncora** (sem VS Code no ambiente); a matriz de aceite mapeia cada cenário §11 para evidência existente (snapshots grammar P1, unit lsp-core P2, comandos puros P4, cenários Web P5, smoke stdio P6) ou para o adiamento | padrão P3–P5; §11; ambiente sem VS Code |
+| Cobertura de fechamento | `deno coverage` sobre `core/src/lsp` (≥ 80%), `vsextension/src` (≥ 70%) e `lsp/src` (manter 100%); números registrados na evidência | §11/§P7.3 |
+| Fechamento | gate completo `deno task tests`; reconciliação ADR/status/links; artefatos de entrada para a F21² (2ª onda); sincronização dos 5 docs; `.vsix` ignorado pelo git | §P7.3; protocolo §0 |
+
+### 22.10 — Packaging and acceptance (P7.1–P7.2)
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 22.10.1 | `--version`/`-V` puros no lsp: modo `version` em `parseArgs` + `USAGE` atualizado; `mod.ts` imprime o banner com `APP_VERSION` (import do core) antes de qualquer conexão; testes BDD (args + protocolo CLI) | `packages/lsp/src/args.ts`, `src/mod.ts`, `tests/args_test.ts`, `tests/protocol_test.ts` | testes verdes (version vence stdio; banner = `SyntaxMesh language server ${APP_VERSION}`; exit 0; stdout limpo) |
+| 22.10.2 | Injeção de versão + shebang no build: helper puro `scripts/inject.ts` (prepend `const __APP_VERSION__` + shebang) com testes; `build.ts` lê a versão do `deno.jsonc` raiz, injeta e chmod 755; probe do bundle | `packages/lsp/scripts/inject.ts`, `scripts/build.ts`, `tests/inject_test.ts` | testes verdes; `deno task build:lsp` exit 0; `./dist/syntaxmesh-lsp.js --version` imprime a versão raiz; initialize ainda responde |
+| 22.10.3 | `.vsix`: build dos 4 artefatos + empacotamento (vsce via Deno; fallback puro se necessário) + task `package`; README mínimo da extensão se exigido; afirmação < 5 MB + inventário do zip; `*.vsix` no `.gitignore` | `packages/vsextension/` (dist, README?, task package), `.gitignore`, artefato `.vsix` | `.vsix` gerado; < 5 MB; inventário contém manifesto + 4 bundles + assets e nada de src/tests/scripts/deno.json* |
+| 22.10.4 | Matriz de aceite §11: tabela cenário → evidência (teste/probe existente) ou âncora de adiamento (VS Code runtime); verificação de coerência manifesto ↔ comandos registrados | docs (este arquivo, §P7 evidência) | matriz completa; nenhum cenário sem evidência ou âncora |
+
+### 22.11 — Closure and handoff (P7.2–P7.3)
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 22.11.1 | Cobertura de fechamento: `deno coverage` em `core/src/lsp` (≥ 80%), `vsextension/src` (≥ 70%), `lsp/src` (100%); números na evidência | relatórios `.tmp/cov/`, docs | thresholds atingidos e registrados |
+| 22.11.2 | Fechamento da fase: gate completo `deno task tests` + reconciliação ADR/status/links + handoff F21² (artefatos de entrada da 2ª onda) + evidência P7 + docs (CURRENT/plano/AGENTS/este arquivo/plano §0/§13) | docs | gate EXIT=0; docs coerentes; adiamentos ancorados |
+
+> **Nota de escopo P7:** packaging **não** é publicação no Marketplace nem
+> autorização de deploy (§P7 exit). O aceite runtime em VS Code limpo/Test
+> Runner/vscode.dev permanece diferido (sem VS Code no ambiente) — a saída
+> "installable verified .vsix" é satisfeita na parte estrutural (zip válido,
+> manifesto, tamanho, inventário) e o restante fica ancorado para a F21².
+> A validação permanece nas tarefas donas originais; P7 coleta evidência,
+> não duplica tarefas.
+
+### Matriz de aceite §11 (22.10.4, 2026-11-14)
+
+Cada cenário do §11 mapeado para evidência existente (sem duplicar tarefas)
+ou para âncora explícita de adiamento. **Âncora runtime:** VS Code desktop
+(Test Runner + instalação limpa) e vscode.dev não existem neste ambiente; o
+aceite runtime fica diferido para a **F21² (2ª onda)**, com artefato de
+entrada `syntaxmesh-vscode-0.0.2.vsix` (22.10.3) + bundle standalone
+`dist/syntaxmesh-lsp.js` com versão injetada (22.10.2).
+
+| Cenário §11 | Evidência sem VS Code | Status runtime |
+|---|---|---|
+| Unitários lsp-core ≥ 80% (analyze/diagnostics/hover/completion/navigation/semantic-tokens/symbols/locale/documents/help-manual) | `core/tests/lsp/*` (P2; 17 testes / 79 steps) + cobertura 22.11.1 | OK (Deno) |
+| Unitários extensão ≥ 70% (commands/config/daemon/cache) | `vsextension/tests/*` (30 testes / 121 steps, incl. manifesto 22.10.4) + cobertura 22.11.1 | OK (Deno) |
+| Grammar TextMate EN + snippets | `tests/grammar/*` snapshots golden (22.3.6) | OK |
+| Integração LSP (initialize…symbols) | smoke stdio real: initialize/didOpen/hover/shutdown (22.9.5); todos os handlers cobertos pelos unitários lsp-core | **Diferido** — VS Code Test Runner (F21²) |
+| Integração comandos (daemon/relatório/export/idioma) | unitários puros P4 + coerência manifesto ↔ registros (22.10.4) | **Diferido** — VS Code Test Runner (F21²) |
+| Smoke `.vsix` (instalação limpa + abrir `.tjp`) | estrutural: zip válido, 2,19 MB < 5 MB, inventário + vsixmanifest (22.10.3) | **Diferido** — `code --install-extension` (F21²) |
+| Web (vscode.dev): edição/execução/relatório, storage ausente, escrita negada | cenários puros P5 (22.8.7) + pureza do grafo (22.8.1) | **Diferido** — runtime vscode.dev (F21²) |
+| Trust (workspace não confiável) | `tests/trust_test.ts` (P4) | **Diferido** — runtime com Test Runner (F21²) |
+| Stdio editor externo | smoke de protocolo (22.9.5) + `--version` (22.10.1/22.10.2) | OK |
+| Integridade do workspace | `deno task check:all` + gate completo (22.11.2) | OK |
+
+---
+
 ## Resumo de quem consome o quê
 
 | Entrega 22.1b | Fase 24 (`syntaxmesh man`, 24.9) | `lsp-core` / extensão (22.1–22.9) |
@@ -1055,3 +1181,93 @@ resolver e adiciona small state; **sem** dependência do storage da F19 e
 > (5 arquivos Web/33 steps) + cenários Web puros + type-check dos bootstraps +
 > regressão de pureza do grafo Web (sem `node:`/`process`/`Deno`/IndexedDB/
 > OPFS) + gate completo verde.
+
+## P6 implementation evidence (2026-11-14)
+
+Entregas do P6 (standalone LSP adapter: 22.9). O **mesmo** servidor LSP da
+extensão agora atende editores externos (Neovim/Helix) via `--stdio`, num
+pacote independente `packages/lsp` que **nada importa da extensão** — só o
+`lsp-core` (§4.1). O adapter puro de transporte foi **movido** para o
+`lsp-core` (22.9.1) em vez de duplicado; a inteligência permanece em
+`registerLspServer` (ADR 035). O aceite é um **smoke de protocolo real**:
+spawn do servidor + JSON-RPC framed sem VS Code (22.9.5).
+
+| Tarefa | Entrega | Verificação |
+|---|---|---|
+| 22.9.1 | `core/src/lsp/adapter.ts` — adapter movido da extensão (imports type-only de `./server.ts`; `ConnectionLike`/`adaptConnection`/`asConnectionLike`) + export no `mod.ts`; teste realocado para `core/tests/lsp/adapter_test.ts` (5 testes); `server/node.ts`/`server/browser.ts`/`wiring_test.ts` da extensão importam do `@vanaware/syntaxmesh/lsp-core`; arquivos antigos da extensão removidos | `check:lspcore` OK; core lsp **17 passed (79 steps)**; vsextension **29 passed (118 steps)** |
+| 22.9.2 | Scaffold `packages/lsp` (`@vanaware/syntaxmesh-lsp`; imports relativos do `lsp-core` + `vscode-languageserver/node`; membro do `workspace` raiz + task `build:lsp`) + `src/args.ts` puro (`parseArgs` → `{mode: stdio/help/error, message?}` + `USAGE`); TDD red→green | `tests/args_test.ts` → **9 steps verdes** (default stdio, --stdio, --help/-h, help vence, flag desconhecida, posicional, primeiro ofensor, USAGE) |
+| 22.9.3 | `src/mod.ts` — bootstrap fino: `createConnection(ProposedFeatures.all)` + `registerLspServer(adaptConnection(asConnectionLike(conn)))` + `listen()`; help em stdout antes da conexão; erro em stderr + exit 1; re-export da superfície pura para o ratchet ADR 041 | `deno check` exit 0; `--help` exit 0 com uso; `--bogus` exit 1 em stderr; probe manual initialize → capabilities; `lint:doc — lsp` zero diagnósticos |
+| 22.9.4 | `scripts/build.ts` — `deno bundle --platform=deno --format=esm --sourcemap=external --no-check` → `dist/syntaxmesh-lsp.js` (sem `--external vscode`); task `build` + `build:lsp` raiz | `deno task build:lsp` exit 0 — **2,49 MB, 580 módulos**; bundle `--help` exit 0; bundle responde a initialize com as capabilities |
+| 22.9.5 | `tests/protocol_test.ts` — cliente JSON-RPC framed mínimo (Content-Length, parser estrito, timeouts, cleanup do child) sobre spawn real de `deno run src/mod.ts --stdio`; 3 testes | **3 steps verdes**: `--help` CLI (exit 0 + uso); flag desconhecida (exit 1, stdout vazio, stderr com a flag); sessão completa initialize→capabilities (`textDocumentSync: 2`, hover/definition/semanticTokens), didOpen→`publishDiagnostics` `[]`, hover→markdown, shutdown→null, exit→**code 0**, drain de stdout vazio (pureza do canal) |
+| 22.9.6 | Cobertura P6 + gate completo + evidência + docs | **100% linhas / 100% branches / 100% funções** em `packages/lsp/src` (`args.ts` + `mod.ts`; relatório `.tmp/cov/lsp/`); testes do pacote **3 passed (12 steps), 0 failed** (2 arquivos); gate `deno task tests` **EXIT=0 — 876 passed (7174 steps), 0 failed**, 0 ignored (2 steps) (log `.tmp/p6-gate.log`); docs coerentes (CURRENT/plano/AGENTS/este arquivo/plano §13) |
+
+> **Nota de runtime P6 (descobertas do probe):** (1) o subpath
+> `npm:vscode-languageserver@^9.0.1/node` **não resolve em runtime** no Deno
+> (o pacote não tem `exports` map; o type-check aceita, o ESM não) — o import
+> map do `packages/lsp` aponta o valor para `…/node.js` (a chave consumida
+> pelo código permanece `vscode-languageserver/node`); os bundles da
+> extensão não são afetados (o bundler resolve o subpath). (2) O transporte
+> lê variáveis de ambiente — o comando de execução é
+> `deno run --allow-read --allow-env … --stdio`. (3) O `--version` fica para
+> **P7**: `APP_VERSION` é injetado pelo build (`__APP_VERSION__`) e vale `""`
+> a partir do fonte — sem versão hardcoded.
+
+> **Nota de aceite P6:** o critério de saída (external-editor protocol
+> smoke) é satisfeito pelo teste real de stdio (22.9.5) — sem VS Code. O
+> empacotamento `.vsix`, o aceite no VS Code Test Runner/vscode.dev e a
+> coleta do artefato standalone no aceite limpo são **P7** (22.10/22.11).
+> P6 não entrega socket daemon, SMTP nem outro runner do motor.
+
+## P7 implementation evidence (2026-11-14)
+
+Entregas do P7 (packaging, acceptance, and handoff: 22.10–22.11). O `.vsix`
+foi gerado com o **vsce rodando sob Deno** (tentativa 1 do plano §10 — sem
+necessidade do fallback puro); o bundle standalone ganhou `--version` com
+versão **injetada no build** (prepend de `const __APP_VERSION__`, já que o
+`deno bundle` não tem `--define`) e shebang executável. O aceite runtime em
+VS Code permanece diferido para a F21² com âncora explícita (matriz §11 +
+handoff abaixo) — padrão P3–P5.
+
+| Tarefa | Entrega | Verificação |
+|---|---|---|
+| 22.10.1 | `args.ts` — modo `version` (`--version`/`-V`; help vence version; erro ainda curto-circuita) + `USAGE` atualizado; `mod.ts` imprime `SyntaxMesh language server ${APP_VERSION}` via subpath `@vanaware/syntaxmesh/version` (mesma fonte do CLI); TDD red→green | `args_test` **13 steps** + `protocol_test` **4 steps** verdes (banner = `APP_VERSION` importado, exit 0, stderr vazio); pacote lsp **6 passed (24 steps)** com type-check |
+| 22.10.2 | `scripts/inject.ts` puro (`readVersion` — regex dos oracles 24.6.6; `injectVersion` — JSON-escape; `withShebang`) + 7 steps; `build.ts` lê a versão do `deno.jsonc` raiz, prepende, chmod 755 | `deno task build:lsp` exit 0 — **2551 kB, v0.0.2-mtvrt8od, executable**; `./dist/syntaxmesh-lsp.js --version` → `SyntaxMesh language server 0.0.2-mtvrt8od`; initialize → capabilities (frame de 374 bytes, contrato intacto) |
+| 22.10.3 | vsce via Deno: task `package` (vsext) + `package:vsext` (raiz) = build + `deno run -A npm:@vscode/vsce package --allow-missing-repository`; `LICENSE` (GPL-2.0) copiado da raiz para o pacote; `*.vsix` no `.gitignore` | `syntaxmesh-vscode-0.0.2.vsix` — **13 arquivos, 2.291.147 bytes (2,19 MB < 5 MB)**; `unzip -t` sem erros; vsixmanifest `Identity Id=syntaxmesh-vscode Version=0.0.2 Publisher=vanaware`, engine `^1.90.0`, tag `__web_extension`; inventário: manifesto + 4 bundles + syntaxes×2 + snippets + language-configuration + icon + LICENSE; **zero** src/tests/scripts/deno.json*/maps |
+| 22.10.4 | `tests/manifest_test.ts` — regressão de coerência (comandos declarados ↔ registrados no fonte; assets contribuídos existem; contrato de linguagem `.smx`/`.tjp`/`.tji`) + matriz de aceite §11 com âncoras F21² | vsextension **30 passed (121 steps)**; matriz completa (10 cenários: 5 OK sem VS Code, 5 diferidos com âncora) |
+| 22.11.1 | Cobertura de fechamento (relatórios `.tmp/cov/p7-core-lsp/`, `.tmp/cov/p7-vsext/`, `.tmp/cov/p7-lsp/`) | `core/src/lsp` **96,4% linhas** (859/891) / 90,9% branches / 98,4% funções — ≥ 80% ✓; `vsextension/src` **99,3%** (863/869) / 93,8% / 100% — ≥ 70% ✓; `lsp/src` **100% / 100% / 100%** ✓ |
+| 22.11.2 | Gate completo + reconciliação ADR (035 já atribui a validação runtime à F21²; adaptação do bundler registrada no P3) + handoff F21² + docs | gate `deno task tests` **EXIT=0 — 880 passed (7189 steps), 0 failed**, 0 ignored (2 steps) (log `.tmp/p7-gate.log`, 2m58s); docs coerentes (CURRENT/plano/AGENTS/este arquivo/plano §0/§13) |
+
+> **Nota de runtime P7 (descobertas do probe):** (1) o **vsce roda sob
+> Deno** (`deno run -A npm:@vscode/vsce package`) — o fallback puro previsto
+> na decisão não foi necessário; o aviso "LICENSE not found" foi resolvido
+> copiando o `LICENSE` raiz (GPL-2.0, coerente com o manifesto). (2) O
+> `deno bundle` **não tem `--define`**: a injeção por prepend de
+> `const __APP_VERSION__` liga o identificador livre do `version.ts`
+> bundlado ao escopo do módulo (probe: `--version` imprime a versão raiz).
+> (3) O shebang `#!/usr/bin/env -S deno run --allow-read --allow-env` torna
+> o artefato diretamente executável; `deno run dist/…` continua válido.
+
+> **Nota de aceite P7:** a saída "installable verified .vsix" é satisfeita
+> na parte **estrutural** (zip válido + vsixmanifest + tamanho + inventário);
+> instalação limpa, Test Runner e vscode.dev ficam diferidos para a **F21²**
+> (matriz §11 + handoff). Packaging não é publicação no Marketplace.
+> **Fase 22 fechada: P1–P7 OK.**
+
+## Handoff F21² — artefatos de entrada da 2ª onda (22.11.2)
+
+A Fase 22 entrega os artefatos e a evidência de aceitação; a **validação
+runtime da extensão pertence à 2ª onda da Fase 21** (ADR 035, Neutras). Itens
+de entrada para a F21²:
+
+| Artefato / evidência | Como reproduzir | Uso na F21² |
+|---|---|---|
+| `packages/vsextension/syntaxmesh-vscode-0.0.2.vsix` (2,19 MB, 13 arquivos; zip válido + vsixmanifest OK) | `deno task package:vsext` (build dos 4 artefatos + vsce via Deno) | instalação limpa (`code --install-extension`) + smoke abrir `.tjp` (highlight/diagnósticos/hover/completion) |
+| `packages/lsp/dist/syntaxmesh-lsp.js` (executável, shebang + versão injetada do `deno.jsonc` raiz) | `deno task build:lsp` | cenário stdio em editor externo (Neovim/Helix); `--version`/`--help`/`--stdio` |
+| Matriz de aceite §11 (seção P7 deste arquivo) | — | linhas **Diferido** são o roteiro de aceite runtime: Test Runner (LSP + comandos + trust), instalação limpa, vscode.dev |
+| Harness do VS Code Test Runner | **não existe** — a F22 não entrega runner (§11: integração no Test Runner) | a F21² cria o harness de integração antes de rodar os cenários diferidos |
+| Cobertura de referência (22.11.1) | `deno test -P --coverage=…` + `deno coverage` | baselines: `core/src/lsp` 96,4% linhas / 90,9% branches; `vsextension/src` 99,3% / 93,8%; `lsp/src` 100% / 100% |
+| Gate de integridade | `deno task tests` | baseline P7 registrado na evidência abaixo; qualquer regressão bloqueia a 2ª onda |
+
+> **Nota:** o `.vsix` e o bundle são artefatos de build (git-ignored:
+> `dist/`, `*.vsix`) — a F21² regenera antes de validar. Publicação no
+> Marketplace **não** está autorizada por este handoff (§P7 exit).

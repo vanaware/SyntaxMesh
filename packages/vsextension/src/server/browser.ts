@@ -20,8 +20,11 @@ import {
   BrowserMessageWriter,
   createConnection,
 } from "vscode-languageserver/browser";
-import { registerLspServer, } from "@vanaware/syntaxmesh/lsp-core";
-import { adaptConnection, asConnectionLike, } from "./adapter.ts";
+import {
+  adaptConnection,
+  asConnectionLike,
+  registerLspServer,
+} from "@vanaware/syntaxmesh/lsp-core";
 
 const worker = self as unknown as DedicatedWorkerGlobalScope;
 const connection = createConnection(
