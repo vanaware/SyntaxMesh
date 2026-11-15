@@ -32,7 +32,7 @@ describe("buildClientOptions", () => {
 
   it("carries the trace level and problem cap from the settings", () => {
     const options = buildClientOptions(
-      { traceServer: "verbose", maxNumberOfProblems: 42, },
+      { ...DEFAULT_SETTINGS, traceServer: "verbose", maxNumberOfProblems: 42, },
     );
     assertEquals(options.trace, "verbose",);
     assertEquals(options.initializationOptions, { maxNumberOfProblems: 42, },);

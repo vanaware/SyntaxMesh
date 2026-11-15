@@ -6,7 +6,10 @@
 > 2026-11-11** (22.1b closed at 106/108 verified + pure `lsp-core` delivered).
 > **P3 completed 2026-11-12** (editor foundation: shell 22.2 + grammar 22.3 +
 > transport 22.4; pure-logic coverage 99.2% lines; Web bundles `node:`-free;
-> full gate 853 passed). Next block: P4 (execution/reports/UX).
+> full gate 853 passed). **P4 completed 2026-11-14** (execution/reports/UX:
+> daemon 22.5 execute-based no core delta + reports 22.6 + commands/views/trust
+> 22.7; pure-logic coverage 98.8% lines; full gate 867 passed). Next block: P5
+> (Web/storage).
 > **Planning:** seven major blocks P1–P7, with subblocks in §0; original IDs
 > 22.0–22.11 and existing task blocks C–J remain unchanged.
 > **Recorded progress:** 106/108 tasks in 22.1b verified (H 6.9/6.10 outside
@@ -40,7 +43,7 @@ A detailed task list alone does not mean its implementation is complete.
 | [P1](#p1-scope-and-architecture) | Scope and architecture | 22.0 | §1–§3 overview, §12, §14 | `OK` — ADR 035 accepted (2026-11-11) |
 | [P2](#p2-shared-language-and-documentation-cores) | Shared language and documentation cores | 22.1, 22.1b | §4 core, §5; task blocks C–J | `PAR` — rename and CLI docs delivered; LSP pending |
 | [P3](#p3-editor-foundation-and-language-tooling) | Editor foundation and language tooling | 22.2–22.4 | §3.1, §4 extension, §6, §7 | `OK` |
-| [P4](#p4-project-execution-reports-and-editor-ux) | Project execution, reports, and editor UX | 22.5–22.7 | §3.2–§3.3, §8 | `PLA` |
+| [P4](#p4-project-execution-reports-and-editor-ux) | Project execution, reports, and editor UX | 22.5–22.7 | §3.2–§3.3, §8 | `OK` |
 | [P5](#p5-web-host-and-storage-adaptation) | Web host and storage adaptation | 22.8 | §9; Web transport in §7 | `PLA` |
 | [P6](#p6-standalone-lsp-adapter) | Standalone LSP adapter | 22.9 | §4 LSP adapter, §7 stdio, §10 LSP build | `PLA` |
 | [P7](#p7-packaging-acceptance-and-handoff) | Packaging, acceptance, and handoff | 22.10–22.11 | §10 extension build, §11, §13 closure | `PLA` |
@@ -149,6 +152,14 @@ remains P7. Evidence per atomic task in the task document §P3.
 **Entry:** P3 integration; resolve P4.1 before daemon/report implementation.
 **Exit:** explicit execution, stale-cache behavior, report formats, and trust
 checks tested; no save/change watcher feeds the daemon.
+**Met 2026-11-14:** P4.1 resolved **execute-based, no core delta** (cached-model
+reporting deferred as a future F24 addendum delta); pure daemon
+(cache/closure/request-builder/core/persistence) + report
+(output-policy/selector/webview-html) + tree/status/input-language/trust modules
+unit-tested (pure-logic coverage 98.8% lines); no save/change watcher; full
+`deno task tests` green (867 passed / 7129 steps). VS Code runtime acceptance
+(Webview/commands/views/trust + `.vsix` smoke) deferred to P7. Evidence per
+atomic task in the task document §P4.
 
 ### P5. Web host and storage adaptation
 
@@ -838,9 +849,9 @@ The P-block mapping below reorganizes scope without renumbering tasks.
 | 22.2 | P3.1 | `packages/vsextension`, manifest, Desktop/Web shells and lifecycle | 22.0; P2 export readiness | `OK` — shell + dual entries delivered (2026-11-12, P3) |
 | 22.3 | P3.2 | English TextMate grammar, language configuration, snippets and snapshots | 22.2; P2.3 syntax data | `OK` — generators + 4 assets + golden snapshots (2026-11-12, P3) |
 | 22.4 | P3.3 | Thin client/server bootstraps, Desktop IPC and Web Worker/port, LSP integration | 22.1, 22.2; 22.1b editor bridges | `OK` — adapter/options/debounce + 4 bootstraps + `deno bundle` (web `node:`-free) + wiring smoke; pure-logic coverage 99.2% lines (2026-11-12, P3) |
-| 22.5 | P4.1, P4.2 | F24 execution-contract audit first; explicit daemon add/remove/list/reload, input/include closure, cache and trust | 22.4; resolve P4.1 before daemon implementation | `PLA` |
-| 22.6 | P4.3 | Report selection/output policy: cached-model contract, HTML/assets Webview, CSV/XML/text saves | 22.5 and its contract decision | `PLA` |
-| 22.7 | P4.4 | Export/input-language/help commands, settings, Project Explorer and Status Bar; translated UX deferred | 22.5; report UI consumes 22.6 | `PLA` |
+| 22.5 | P4.1, P4.2 | F24 execution-contract audit first; explicit daemon add/remove/list/reload, input/include closure, cache and trust | 22.4; resolve P4.1 before daemon implementation | `OK` — P4.1 execute-based (no core delta) + pure daemon types/cache/closure/request-builder/core/persistence + host/commands (2026-11-14, P4) |
+| 22.6 | P4.3 | Report selection/output policy: cached-model contract, HTML/assets Webview, CSV/XML/text saves | 22.5 and its contract decision | `OK` — pure output-policy/selector/webview-html + `ReportPresenter` Webview/save (2026-11-14, P4) |
+| 22.7 | P4.4 | Export/input-language/help commands, settings, Project Explorer and Status Bar; translated UX deferred | 22.5; report UI consumes 22.6 | `OK` — settings/locale + project-tree/status-bar + input-language + trust + misc/views host + 9-command manifest; pure-logic coverage 98.8% lines (2026-11-14, P4) |
 | 22.8 | P5.1–P5.3 | Browser-safe Web entry, user-triggered writes and storage fallbacks, vscode.dev tests | 22.4–22.7 | `PLA` |
 | 22.9 | P6.1–P6.2 | Independent `packages/lsp` stdio bootstrap, executable build and protocol smoke | 22.4; shared P2 server contract | `PLA` |
 | 22.10 | P7.1, P7.2 | Desktop/Web bundles, exclusions, `.vsix` < 5 MB, clean-install acceptance | 22.8; collect 22.9 artifact in acceptance | `PLA` |

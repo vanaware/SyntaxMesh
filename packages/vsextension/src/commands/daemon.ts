@@ -17,6 +17,7 @@
 import { commands, window, } from "vscode";
 import type { ExtensionContext, } from "vscode";
 import type { DaemonHost, } from "../daemon/host.ts";
+import { getViews, } from "../views/host.ts";
 import { activeMasterUri, guarded, } from "./shared.ts";
 
 /**
@@ -42,6 +43,7 @@ export function registerDaemonCommands(
             return;
           }
           const model = await host.addProject(uri,);
+          getViews()?.refresh();
           window.showInformationMessage(
             `SyntaxMesh: loaded ${model.entry} (${model.status}).`,
           );
@@ -59,6 +61,7 @@ export function registerDaemonCommands(
             return;
           }
           const model = await host.reloadProject(uri,);
+          getViews()?.refresh();
           window.showInformationMessage(
             `SyntaxMesh: reloaded ${model.entry} (${model.status}).`,
           );
@@ -84,6 +87,7 @@ export function registerDaemonCommands(
           if (pick === undefined) return;
           host.core.removeProject(pick.uri,);
           await host.persist();
+          getViews()?.refresh();
           window.showInformationMessage(`SyntaxMesh: removed ${pick.label}.`,);
         },),
     ),

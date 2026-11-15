@@ -23,7 +23,8 @@
   "main": "./dist/extension.node.js",
   "browser": "./dist/extension.web.js",
   "activationEvents": [
-    "onLanguage:syntaxmesh"
+    "onLanguage:syntaxmesh",
+    "onView:syntaxmesh.projectTree"
   ],
   "contributes": {
     "languages": [
@@ -59,6 +60,70 @@
         "path": "./snippets/syntaxmesh.json"
       }
     ],
+    "commands": [
+      {
+        "command": "syntaxmesh.addProject",
+        "title": "Add Project to Daemon",
+        "category": "SyntaxMesh"
+      },
+      {
+        "command": "syntaxmesh.reloadProject",
+        "title": "Reload Project",
+        "category": "SyntaxMesh"
+      },
+      {
+        "command": "syntaxmesh.removeProject",
+        "title": "Remove Project from Daemon",
+        "category": "SyntaxMesh"
+      },
+      {
+        "command": "syntaxmesh.listProjects",
+        "title": "List Projects",
+        "category": "SyntaxMesh"
+      },
+      {
+        "command": "syntaxmesh.generateReport",
+        "title": "Generate Report",
+        "category": "SyntaxMesh"
+      },
+      {
+        "command": "syntaxmesh.exportTjp",
+        "title": "Export .tjp",
+        "category": "SyntaxMesh"
+      },
+      {
+        "command": "syntaxmesh.switchLanguage",
+        "title": "Switch Language",
+        "category": "SyntaxMesh"
+      },
+      {
+        "command": "syntaxmesh.showProjectTree",
+        "title": "Show Project Tree",
+        "category": "SyntaxMesh"
+      },
+      {
+        "command": "syntaxmesh.openManual",
+        "title": "Open Manual",
+        "category": "SyntaxMesh"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "syntaxmesh",
+          "title": "SyntaxMesh",
+          "icon": "images/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "syntaxmesh": [
+        {
+          "id": "syntaxmesh.projectTree",
+          "name": "Project Explorer"
+        }
+      ]
+    },
     "configuration": {
       "title": "SyntaxMesh",
       "properties": {
@@ -78,6 +143,22 @@
           "minimum": 1,
           "maximum": 1000,
           "description": "Maximum number of diagnostics reported per document."
+        },
+        "syntaxmesh.locale": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "en",
+            "pt-BR",
+            "es"
+          ],
+          "default": "auto",
+          "description": "Default input language when the file has no 'language' directive. The file directive always takes precedence."
+        },
+        "syntaxmesh.report.defaultFormat": {
+          "type": "string",
+          "default": "html",
+          "description": "Preferred report format in the Generate Report command."
         }
       }
     }

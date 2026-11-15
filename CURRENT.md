@@ -604,8 +604,15 @@ i18n (10.15+) em `packages/core/src/i18n/`.
   0 failed**. Enabling core fix: `template-engine.ts` now constructs Vento
   from the browser-safe `Environment` + memory loader (no `node:` leak into
   the Web bundle; 12 template tests green). VS Code Test Runner + `.vsix`
-  smoke deferred to P7 (no VS Code in this environment). Next block: P4
-  (execution/reports/UX).
+  smoke deferred to P7 (no VS Code in this environment). **P4 completed
+  2026-11-14** (execution/reports/UX): daemon 22.5 (**execute-based, no core
+  delta** — pure types/cache/include-closure/request-builder/core/persistence
+  + host/commands), reports 22.6 (pure output-policy/selector/webview-html +
+  `ReportPresenter` Webview/save), commands/views/trust 22.7 (locale +
+  report.defaultFormat settings, Project Explorer + Status Bar reusing LSP
+  symbols, input-language, export/manual, trust gate, 9-command manifest).
+  Pure-logic coverage **98.8% lines**; full gate `deno task tests` EXIT=0 —
+  **867 passed (7129 steps), 0 failed**. Next block: P5 (Web/storage).
   [Plan: major blocks P1–P7](docs/syntaxmesh/fases/fase-22-vscode-extension.md#0-major-blocks-and-subblocks)
   and [original task owners](docs/syntaxmesh/fases/fase-22-vscode-extension-tarefas.md).
   Planning update (2026-11-11): P1 architecture; P2 shared language/docs cores;
@@ -635,7 +642,7 @@ i18n (10.15+) em `packages/core/src/i18n/`.
   (golden determinístico e byte-idêntico, confronto `tj3man` real em
   `xray.md` §1.7.1, cobertura docgen **97,0% linhas**, gate completo verde).
   Evidência por tarefa atômica em `fase-22-vscode-extension-tarefas.md`
-  §Progresso/P2 evidence. **Próximo:** P3 (editor/LSP — shell da extensão).
+  §Progresso/P2 evidence. **Próximo:** P5 (Web/storage — runtime Web + fallbacks).
 - Fase 15 — Gantt ✅ Concluída (2026-11-03)
 - Fase 16 — Apoio ✅ Concluída (2026-11-03, 16.0–16.20; escopo xray: 16.10
   cancelado; 16.9/16.14/16.15 movidos p/ a 22; dono de `query_dashboard`).

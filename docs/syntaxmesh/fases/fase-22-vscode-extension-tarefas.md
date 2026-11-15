@@ -6,8 +6,10 @@
 > **Status:** `PAR` — P1 (22.0) accepted 2026-11-11 (ADR 035); **P2 completed
 > 2026-11-11** (subfase 22.1b fechada + `lsp-core` puro entregue);
 > **P3 completed 2026-11-12** (editor foundation: shell 22.2 + grammar 22.3 +
-> transporte 22.4; cobertura lógica pura 99,2% linhas; bundles Web sem `node:`).
-> Próximo bloco: P4 (execução/relatórios/UX).
+> transporte 22.4; cobertura lógica pura 99,2% linhas; bundles Web sem `node:`);
+> **P4 completed 2026-11-14** (execução/relatórios/UX: daemon 22.5 + reports
+> 22.6 + commands/views/trust 22.7; cobertura lógica pura 98,8% linhas; gate
+> completo 867 passed). Próximo bloco: P5 (Web/storage).
 > **Recorded progress:** 86/108 tasks in 22.1b recorded (2026-11-08);
 > **99/108 verified** after the 2026-11-11 audit + P2 deliveries (Blocos B/H/I;
 > I 7.9 reaberta — o smoke registrado não existia no código);
@@ -65,9 +67,9 @@ Counts below mirror the historical 22.1b progress table, not a new verification.
 | P3 (22.2) | 22.2 | P3.1 | Extension shell | Detailed below (P3) | `OK` — 22.2.1–22.2.5 delivered 2026-11-12 (scaffold + manifest + config + `.vscodeignore` + dual entries `extension.node.ts`/`extension.web.ts`) |
 | P3 (22.3) | 22.3 | P3.2 | Grammar, snippets, snapshots | Detailed below (P3) | `OK` — 22.3.1–22.3.6 delivered 2026-11-12 (geradores textmate/tji/language-config/snippets + 4 assets JSON + goldens determinísticos) |
 | P3 (22.4) | 22.4 | P3.3 | Desktop/Web LSP integration | Detailed below (P3) | `OK` — 22.4.1–22.4.9 delivered 2026-11-12 (adapter/options/debounce + bootstraps node/web + build 4 bundles Web sem `node:` + wiring smoke; cobertura lógica pura 99,2%) |
-| P4 (22.5) | 22.5 | P4.1–P4.2 | F24 API audit, then explicit daemon/cache | Detailed below (P4) | `PAR` — P4.1 audit done (2026-11-12, execute-based sem delta no core); daemon implementation pending |
-| P4 (22.6) | 22.6 | P4.3 | Shared execution contract and report output policy | Detailed below (P4) | `PLA` |
-| P4 (22.7) | 22.7 | P4.4 | Export/input-language/help, config, views and trust | Detailed below (P4) | `PLA` |
+| P4 (22.5) | 22.5 | P4.1–P4.2 | F24 API audit, then explicit daemon/cache | Detailed below (P4) | `OK` — 22.5.1–22.5.9 delivered 2026-11-14 (P4.1 execute-based sem delta no core + daemon puro types/cache/closure/request-builder/core/persistence + host/comandos; cobertura lógica pura 98,8%) |
+| P4 (22.6) | 22.6 | P4.3 | Shared execution contract and report output policy | Detailed below (P4) | `OK` — 22.6.1–22.6.5 delivered 2026-11-14 (output-policy/selector/webview-html puros + host/comando Gerar Relatório; Webview/save) |
+| P4 (22.7) | 22.7 | P4.4 | Export/input-language/help, config, views and trust | Detailed below (P4) | `OK` — 22.7.1–22.7.8 delivered 2026-11-14 (settings/locale + project-tree/status-bar + input-language + trust + misc/views host + manifesto 9 comandos; gate 867 passed) |
 | To assign at detailing | 22.8 | P5.1–P5.3 | Web runtime, writes and storage fallbacks | Pending | `PLA` |
 | To assign at detailing | 22.9 | P6.1–P6.2 | Standalone stdio server/build | Pending | `PLA` |
 | To assign at detailing | 22.10 | P7.1–P7.2 | Packaging and clean-install acceptance | Pending | `PLA` |
@@ -910,3 +912,63 @@ adapta ao `ServerConnection` estrutural (ADR 035).
 > sem VS Code. Aqui o aceite é: unit Deno (10 arquivos/39 steps) + snapshots
 > de grammar determinísticos + contrato do adapter com mock + wiring smoke +
 > build dos 4 artefatos (web `node:`-free) + gate completo verde.
+
+## P4 implementation evidence (2026-11-14)
+
+Entregas do P4 (execução/relatórios/UX: 22.5 daemon, 22.6 reports, 22.7
+commands/views/trust) no kickoff antecipado autorizado. Evidência anexada aos
+IDs atômicos originais (22.5/22.6/22.7), conforme a convenção acima. Decisão
+**P4.1 execute-based, sem delta no core** (confirmada pelo usuário): o daemon
+cacheia o fechamento de arquivos + o último envelope na extensão; cada geração
+chama `execute` (re-parse + re-schedule); reporting sobre modelo persistente
+fica adiado como delta futuro do adendo F24. A inteligência pura vive fora dos
+bootstraps `vscode` (ADR 035); bootstraps são type-check-only (aceite runtime
+no VS Code diferido para P7).
+
+| Tarefa | Entrega | Verificação |
+|---|---|---|
+| 22.5.1 | Auditoria P4.1 do contrato `execute` — decisão **execute-based sem delta no core** registrada no adendo F24 §5.1 + plano §3.2/§3.3; `results.check` é só `{valid}` (sem árvore de entidades); `listReports`/`options.files` são os campos estruturais; cached-model reporting adiado | decisão registrada (tabela P4.1 acima); `@vanaware/syntaxmesh` adicionado ao import map do vsextension |
+| 22.5.2 | `src/daemon/types.ts` — `ProjectModel` (uri/entry/files/envelope/status/addedAt/reloadedAt), `DaemonStatus`, `ProjectSummary`; sem `vscode` | `deno check` exit 0 |
+| 22.5.3 | `src/daemon/project-cache.ts` — `ProjectCache` (`Map<uri, ProjectModel>`): set/get/remove/list/has/clear/size + invalidação; 5 testes | `tests/daemon/project-cache_test.ts` → 5 steps verdes (add/get, remove, list ordenado, overwrite, clear) |
+| 22.5.4 | `src/daemon/include-closure.ts` — `extractIncludes(text)` + `buildClosure(master, read)` com `read` injetado (lookup por caminho, sem FS; ciclo guard); 4 testes | `tests/daemon/include-closure_test.ts` → 4 steps verdes (extração, closure transitivo, ausente→erro, ciclo) |
+| 22.5.5 | `src/daemon/request-builder.ts` — `buildExecuteRequest(closure, opts)` → `ExecutionRequest` (entry/files/listReports/report/reportsIsRegex/outputDir); 4 testes | `tests/daemon/request-builder_test.ts` → 4 steps verdes (add, listReports, generate, outputDir) |
+| 22.5.6 | `src/daemon/daemon-core.ts` — `DaemonCore` (cache + `execute`/clock injetados): addProject/reloadProject/removeProject/listProjects/listReports/generateReport; projeta status/messages do envelope; 6 testes com `execute` fake | `tests/daemon/daemon-core_test.ts` → 6 steps verdes (add→cache, reload, remove, list, listReports, generate) |
+| 22.5.7 | `src/daemon/persistence.ts` — `serializeCache`/`deserializeCache` (JSON com version tag; só dados, sem instâncias); 3 testes | `tests/daemon/persistence_test.ts` → 3 steps verdes (round-trip, version mismatch, vazio) |
+| 22.5.8 | `src/daemon/host.ts` — leitura `workspace.fs`/buffer `getText` + montagem do closure + persistência em `context.storageUri` (Desktop) / memória (Web); type-check only | `deno check` exit 0 |
+| 22.5.9 | `src/commands/daemon.ts` — add/remove/list/reload sobre `DaemonCore` + gate de trust + `getViews()?.refresh()`; registro no `activate`; type-check only | `deno check` exit 0; grep sem watcher automático (`onDidChange`/`onDidSave`) |
+| 22.6.1 | `src/reports/output-policy.ts` — `destinationFor(format)` (html→webview, csv/xml/text→save) + `reportFileName(name, format)` (sanitização + extensões markdown→md/iCal→ics, simétrica à CLI); 5 testes | `tests/reports/output-policy_test.ts` → 5 steps verdes (branch por formato, sanitização, extensões, nome vazio) |
+| 22.6.2 | `src/reports/report-selector.ts` — `quickPickItems(listReports)` + `chooseFormat(report, defaultFormat)`; 3 testes | `tests/reports/report-selector_test.ts` → 3 steps verdes (items, formato default, formato único) |
+| 22.6.3 | `src/reports/webview-html.ts` — `renderWebviewHtml(content, assets, cspSource)` (URIs `vscode-webview-resource`, CSP, botão salvar); 3 testes estruturais | `tests/reports/webview-html_test.ts` → 3 steps verdes (CSP, asset URIs, conteúdo) |
+| 22.6.4 | `src/reports/host.ts` — `ReportPresenter`: criação do Webview panel + `workspace.fs.writeFile` (save); type-check only | `deno check` exit 0 |
+| 22.6.5 | `src/commands/reports.ts` — list→select→generate→branch (Webview/save) sobre `DaemonCore` + output-policy + trust gate; registro no `activate`; type-check only | `deno check` exit 0 |
+| 22.7.1 | `src/config/settings.ts` (extensão) — `LocaleSetting` (auto/en/pt-BR/es; diretiva do arquivo soberana) + `syntaxmesh.locale` + `syntaxmesh.report.defaultFormat`; +3 testes | `tests/config/settings_test.ts` → +3 steps verdes (locale default, override, defaultFormat); literal de `options_test.ts` ajustado com spread de `DEFAULT_SETTINGS` |
+| 22.7.2 | `src/views/project-tree.ts` — `treeChildren(model)`/`treeItem(node)` (tasks/resources/accounts/shifts/reports; ícone/collapsibleState como dados); reusa `analyzeDocument`+`getDocumentSymbols` do `lsp-core` sobre o closure cacheado (o envelope `check` não traz a árvore); 4 testes | `tests/views/project-tree_test.ts` → 4 steps verdes (raiz, filhos, ícones, vazio) |
+| 22.7.3 | `src/views/status-bar.ts` — `statusText(state)` (idle/ok/error, locale, contagem de relatórios da última execução); 3 testes | `tests/views/status-bar_test.ts` → 3 steps verdes (idle, ok, erro) |
+| 22.7.4 | `src/commands/input-language.ts` — `rewriteLanguageDirective(text, locale)` (reescreve/insere `language "..."` no prólogo, antes da declaração `project`; preserva o resto; idempotente); 4 testes | `tests/commands/input-language_test.ts` → 4 steps verdes (replace, insert, preserve, idempotente) |
+| 22.7.5 | `src/trust.ts` — `canRun(isTrusted)` / `assertTrusted(isTrusted)` (gate de comandos daemon/relatórios); 2 testes | `tests/trust_test.ts` → 2 steps verdes (trusted, untrusted) |
+| 22.7.6 | `src/commands/misc.ts` — exportTjp/switchLanguage/showProjectTree/openManual (+ `escapeHtml`/`manualPageHtml` CSP sem scripts) + `src/views/host.ts` (`ProjectTreeProvider` TreeDataProvider + `ViewsHost` StatusBar + ciclo de vida); wiring nas entries; type-check only | `deno check` exit 0 |
+| 22.7.7 | `package.json` — `contributes.commands` (9, títulos English) + `viewsContainers.activitybar` + `views.syntaxmesh` (`syntaxmesh.projectTree`) + `configuration` (`syntaxmesh.locale`/`syntaxmesh.report.defaultFormat`) + `activationEvents` `onView`; `images/icon.svg` | JSON válido; 9 comandos + id da view conferidos contra o código |
+| 22.7.8 | Cobertura da lógica pura P4 + gate completo + evidência + docs | **98,8% linhas / 93,3% branches / 98,7% funções** (21 módulos puros; bootstraps type-check-only, não instrumentados); relatório `.tmp/cov-vsext-p4/`; testes do pacote **24 passed (90 steps), 0 failed**; gate `deno task tests` **EXIT=0 — 867 passed (7129 steps), 0 failed**, 0 ignored (2 steps) (log `.tmp/p4-gate.log`); build 4 bundles (web sem `node:`); docs coerentes (CURRENT/plano/AGENTS/este arquivo/plano §13) |
+
+> **Nota de projeção da árvore (22.7.2):** o envelope `execute` devolve
+> `results.check` apenas como `{valid:boolean}` — **não** carrega a árvore de
+> entidades. A projeção pura da Project Explorer reusa a inteligência de
+> símbolos do `lsp-core` (`analyzeDocument` + `getDocumentSymbols`) sobre o
+> conteúdo master cacheado em `model.files`, sem delta no core e sem
+> reimplementação (ADR 035). SymbolKind: task=5, resource=13, account=10,
+> shift=14, report=12.
+
+> **Nota de escopo P4:** o `exportTjp` v1 exporta o **fonte cacheado** (a
+> re-serialização canônica via core fica como delta futuro do adendo F24); o
+> daemon **não** escuta `onDidChange`/`onDidSave` (refresh manual explícito,
+> §3.2); o gate de trust bloqueia execução em workspaces não confiáveis (§8.4);
+> títulos de comando em **inglês** (§8.2), variantes multilíngues são adendo
+> pós-v1 (§1). O runtime Web completo/storage (22.8) é **P5**; o standalone LSP
+> (22.9) é **P6**; o empacotamento `.vsix` + aceite no VS Code Test Runner são
+> **P7**.
+
+> **Nota de aceite P4:** a integração no **VS Code Test Runner** (Webview,
+> comandos, views, trust runtime) e o smoke `.vsix` em instalação limpa são
+> **P7** (22.10/22.11) — fora deste ambiente sem VS Code. Aqui o aceite é:
+> unit Deno da lógica pura (22 arquivos/24 testes/90 steps) + type-check dos
+> bootstraps + build dos 4 artefatos (web `node:`-free) + gate completo verde.
