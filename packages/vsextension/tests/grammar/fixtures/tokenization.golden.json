@@ -1,0 +1,1061 @@
+[
+  [
+    {
+      "text": "/*",
+      "scopes": [
+        "source.syntaxmesh",
+        "comment.block.syntaxmesh"
+      ]
+    },
+    {
+      "text": " 1. Project Header: ID, Name, Version, and Timeframe ",
+      "scopes": [
+        "source.syntaxmesh",
+        "comment.block.syntaxmesh"
+      ]
+    },
+    {
+      "text": "*/",
+      "scopes": [
+        "source.syntaxmesh",
+        "comment.block.syntaxmesh"
+      ]
+    }
+  ],
+  [
+    {
+      "text": "project",
+      "scopes": [
+        "source.syntaxmesh",
+        "keyword.control.syntaxmesh"
+      ]
+    },
+    {
+      "text": " prj ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "\"",
+      "scopes": [
+        "source.syntaxmesh",
+        "string.quoted.double.syntaxmesh"
+      ]
+    },
+    {
+      "text": "My First Project",
+      "scopes": [
+        "source.syntaxmesh",
+        "string.quoted.double.syntaxmesh"
+      ]
+    },
+    {
+      "text": "\"",
+      "scopes": [
+        "source.syntaxmesh",
+        "string.quoted.double.syntaxmesh"
+      ]
+    },
+    {
+      "text": " ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "\"",
+      "scopes": [
+        "source.syntaxmesh",
+        "string.quoted.double.syntaxmesh"
+      ]
+    },
+    {
+      "text": "1.0",
+      "scopes": [
+        "source.syntaxmesh",
+        "string.quoted.double.syntaxmesh"
+      ]
+    },
+    {
+      "text": "\"",
+      "scopes": [
+        "source.syntaxmesh",
+        "string.quoted.double.syntaxmesh"
+      ]
+    },
+    {
+      "text": " ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "2024-06-01",
+      "scopes": [
+        "source.syntaxmesh",
+        "constant.other.date.syntaxmesh"
+      ]
+    },
+    {
+      "text": " - ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "2024-06-30",
+      "scopes": [
+        "source.syntaxmesh",
+        "constant.other.date.syntaxmesh"
+      ]
+    },
+    {
+      "text": " ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "{",
+      "scopes": [
+        "source.syntaxmesh",
+        "punctuation.section.block.begin.syntaxmesh"
+      ]
+    }
+  ],
+  [
+    {
+      "text": "  ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "timeformat",
+      "scopes": [
+        "source.syntaxmesh",
+        "keyword.other.syntaxmesh"
+      ]
+    },
+    {
+      "text": " ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "\"",
+      "scopes": [
+        "source.syntaxmesh",
+        "string.quoted.double.syntaxmesh"
+      ]
+    },
+    {
+      "text": "%Y-%m-%d",
+      "scopes": [
+        "source.syntaxmesh",
+        "string.quoted.double.syntaxmesh"
+      ]
+    },
+    {
+      "text": "\"",
+      "scopes": [
+        "source.syntaxmesh",
+        "string.quoted.double.syntaxmesh"
+      ]
+    }
+  ],
+  [
+    {
+      "text": "  ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "now",
+      "scopes": [
+        "source.syntaxmesh",
+        "keyword.other.syntaxmesh"
+      ]
+    },
+    {
+      "text": " ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "2024-06-01",
+      "scopes": [
+        "source.syntaxmesh",
+        "constant.other.date.syntaxmesh"
+      ]
+    }
+  ],
+  [
+    {
+      "text": "}",
+      "scopes": [
+        "source.syntaxmesh",
+        "punctuation.section.block.end.syntaxmesh"
+      ]
+    }
+  ],
+  [
+    {
+      "text": "",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    }
+  ],
+  [
+    {
+      "text": "/*",
+      "scopes": [
+        "source.syntaxmesh",
+        "comment.block.syntaxmesh"
+      ]
+    },
+    {
+      "text": " 2. Resources: Who is doing the work? ",
+      "scopes": [
+        "source.syntaxmesh",
+        "comment.block.syntaxmesh"
+      ]
+    },
+    {
+      "text": "*/",
+      "scopes": [
+        "source.syntaxmesh",
+        "comment.block.syntaxmesh"
+      ]
+    }
+  ],
+  [
+    {
+      "text": "resource",
+      "scopes": [
+        "source.syntaxmesh",
+        "storage.type.syntaxmesh"
+      ]
+    },
+    {
+      "text": " dev ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "\"",
+      "scopes": [
+        "source.syntaxmesh",
+        "string.quoted.double.syntaxmesh"
+      ]
+    },
+    {
+      "text": "Foad",
+      "scopes": [
+        "source.syntaxmesh",
+        "string.quoted.double.syntaxmesh"
+      ]
+    },
+    {
+      "text": "\"",
+      "scopes": [
+        "source.syntaxmesh",
+        "string.quoted.double.syntaxmesh"
+      ]
+    }
+  ],
+  [
+    {
+      "text": "",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    }
+  ],
+  [
+    {
+      "text": "/*",
+      "scopes": [
+        "source.syntaxmesh",
+        "comment.block.syntaxmesh"
+      ]
+    },
+    {
+      "text": " 3. Tasks: What needs to be done? ",
+      "scopes": [
+        "source.syntaxmesh",
+        "comment.block.syntaxmesh"
+      ]
+    },
+    {
+      "text": "*/",
+      "scopes": [
+        "source.syntaxmesh",
+        "comment.block.syntaxmesh"
+      ]
+    }
+  ],
+  [
+    {
+      "text": "task",
+      "scopes": [
+        "source.syntaxmesh",
+        "storage.type.syntaxmesh"
+      ]
+    },
+    {
+      "text": " main ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "\"",
+      "scopes": [
+        "source.syntaxmesh",
+        "string.quoted.double.syntaxmesh"
+      ]
+    },
+    {
+      "text": "Main Project",
+      "scopes": [
+        "source.syntaxmesh",
+        "string.quoted.double.syntaxmesh"
+      ]
+    },
+    {
+      "text": "\"",
+      "scopes": [
+        "source.syntaxmesh",
+        "string.quoted.double.syntaxmesh"
+      ]
+    },
+    {
+      "text": " ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "{",
+      "scopes": [
+        "source.syntaxmesh",
+        "punctuation.section.block.begin.syntaxmesh"
+      ]
+    }
+  ],
+  [
+    {
+      "text": "  ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    }
+  ],
+  [
+    {
+      "text": "  ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "task",
+      "scopes": [
+        "source.syntaxmesh",
+        "storage.type.syntaxmesh"
+      ]
+    },
+    {
+      "text": " t1 ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "\"",
+      "scopes": [
+        "source.syntaxmesh",
+        "string.quoted.double.syntaxmesh"
+      ]
+    },
+    {
+      "text": "Design Phase",
+      "scopes": [
+        "source.syntaxmesh",
+        "string.quoted.double.syntaxmesh"
+      ]
+    },
+    {
+      "text": "\"",
+      "scopes": [
+        "source.syntaxmesh",
+        "string.quoted.double.syntaxmesh"
+      ]
+    },
+    {
+      "text": " ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "{",
+      "scopes": [
+        "source.syntaxmesh",
+        "punctuation.section.block.begin.syntaxmesh"
+      ]
+    }
+  ],
+  [
+    {
+      "text": "    ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "effort",
+      "scopes": [
+        "source.syntaxmesh",
+        "keyword.other.syntaxmesh"
+      ]
+    },
+    {
+      "text": " ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "2d",
+      "scopes": [
+        "source.syntaxmesh",
+        "constant.numeric.duration.syntaxmesh"
+      ]
+    },
+    {
+      "text": "       ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "# Takes 2 days of work",
+      "scopes": [
+        "source.syntaxmesh",
+        "comment.line.number-sign.syntaxmesh"
+      ]
+    }
+  ],
+  [
+    {
+      "text": "    ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "allocate",
+      "scopes": [
+        "source.syntaxmesh",
+        "keyword.other.syntaxmesh"
+      ]
+    },
+    {
+      "text": " dev    ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "# Assigned to Foad",
+      "scopes": [
+        "source.syntaxmesh",
+        "comment.line.number-sign.syntaxmesh"
+      ]
+    }
+  ],
+  [
+    {
+      "text": "  ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "}",
+      "scopes": [
+        "source.syntaxmesh",
+        "punctuation.section.block.end.syntaxmesh"
+      ]
+    }
+  ],
+  [
+    {
+      "text": "",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    }
+  ],
+  [
+    {
+      "text": "  ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "task",
+      "scopes": [
+        "source.syntaxmesh",
+        "storage.type.syntaxmesh"
+      ]
+    },
+    {
+      "text": " t2 ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "\"",
+      "scopes": [
+        "source.syntaxmesh",
+        "string.quoted.double.syntaxmesh"
+      ]
+    },
+    {
+      "text": "Implementation",
+      "scopes": [
+        "source.syntaxmesh",
+        "string.quoted.double.syntaxmesh"
+      ]
+    },
+    {
+      "text": "\"",
+      "scopes": [
+        "source.syntaxmesh",
+        "string.quoted.double.syntaxmesh"
+      ]
+    },
+    {
+      "text": " ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "{",
+      "scopes": [
+        "source.syntaxmesh",
+        "punctuation.section.block.begin.syntaxmesh"
+      ]
+    }
+  ],
+  [
+    {
+      "text": "    ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "effort",
+      "scopes": [
+        "source.syntaxmesh",
+        "keyword.other.syntaxmesh"
+      ]
+    },
+    {
+      "text": " ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "3d",
+      "scopes": [
+        "source.syntaxmesh",
+        "constant.numeric.duration.syntaxmesh"
+      ]
+    }
+  ],
+  [
+    {
+      "text": "    ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "allocate",
+      "scopes": [
+        "source.syntaxmesh",
+        "keyword.other.syntaxmesh"
+      ]
+    },
+    {
+      "text": " dev",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    }
+  ],
+  [
+    {
+      "text": "    ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "depends",
+      "scopes": [
+        "source.syntaxmesh",
+        "keyword.other.syntaxmesh"
+      ]
+    },
+    {
+      "text": " !t1     ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "# Cannot start until t1 is finished",
+      "scopes": [
+        "source.syntaxmesh",
+        "comment.line.number-sign.syntaxmesh"
+      ]
+    }
+  ],
+  [
+    {
+      "text": "  ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "}",
+      "scopes": [
+        "source.syntaxmesh",
+        "punctuation.section.block.end.syntaxmesh"
+      ]
+    }
+  ],
+  [
+    {
+      "text": "",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    }
+  ],
+  [
+    {
+      "text": "  ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "task",
+      "scopes": [
+        "source.syntaxmesh",
+        "storage.type.syntaxmesh"
+      ]
+    },
+    {
+      "text": " t3 ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "\"",
+      "scopes": [
+        "source.syntaxmesh",
+        "string.quoted.double.syntaxmesh"
+      ]
+    },
+    {
+      "text": "Testing",
+      "scopes": [
+        "source.syntaxmesh",
+        "string.quoted.double.syntaxmesh"
+      ]
+    },
+    {
+      "text": "\"",
+      "scopes": [
+        "source.syntaxmesh",
+        "string.quoted.double.syntaxmesh"
+      ]
+    },
+    {
+      "text": " ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "{",
+      "scopes": [
+        "source.syntaxmesh",
+        "punctuation.section.block.begin.syntaxmesh"
+      ]
+    }
+  ],
+  [
+    {
+      "text": "    ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "effort",
+      "scopes": [
+        "source.syntaxmesh",
+        "keyword.other.syntaxmesh"
+      ]
+    },
+    {
+      "text": " ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "1d",
+      "scopes": [
+        "source.syntaxmesh",
+        "constant.numeric.duration.syntaxmesh"
+      ]
+    }
+  ],
+  [
+    {
+      "text": "    ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "allocate",
+      "scopes": [
+        "source.syntaxmesh",
+        "keyword.other.syntaxmesh"
+      ]
+    },
+    {
+      "text": " dev",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    }
+  ],
+  [
+    {
+      "text": "    ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "depends",
+      "scopes": [
+        "source.syntaxmesh",
+        "keyword.other.syntaxmesh"
+      ]
+    },
+    {
+      "text": " !t2     ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "# Cannot start until t2 is finished",
+      "scopes": [
+        "source.syntaxmesh",
+        "comment.line.number-sign.syntaxmesh"
+      ]
+    }
+  ],
+  [
+    {
+      "text": "  ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "}",
+      "scopes": [
+        "source.syntaxmesh",
+        "punctuation.section.block.end.syntaxmesh"
+      ]
+    }
+  ],
+  [
+    {
+      "text": "}",
+      "scopes": [
+        "source.syntaxmesh",
+        "punctuation.section.block.end.syntaxmesh"
+      ]
+    }
+  ],
+  [
+    {
+      "text": "",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    }
+  ],
+  [
+    {
+      "text": "/*",
+      "scopes": [
+        "source.syntaxmesh",
+        "comment.block.syntaxmesh"
+      ]
+    },
+    {
+      "text": " 4. Reports: Define what you want to see ",
+      "scopes": [
+        "source.syntaxmesh",
+        "comment.block.syntaxmesh"
+      ]
+    },
+    {
+      "text": "*/",
+      "scopes": [
+        "source.syntaxmesh",
+        "comment.block.syntaxmesh"
+      ]
+    }
+  ],
+  [
+    {
+      "text": "taskreport ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "\"",
+      "scopes": [
+        "source.syntaxmesh",
+        "string.quoted.double.syntaxmesh"
+      ]
+    },
+    {
+      "text": "Plan",
+      "scopes": [
+        "source.syntaxmesh",
+        "string.quoted.double.syntaxmesh"
+      ]
+    },
+    {
+      "text": "\"",
+      "scopes": [
+        "source.syntaxmesh",
+        "string.quoted.double.syntaxmesh"
+      ]
+    },
+    {
+      "text": " ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "{",
+      "scopes": [
+        "source.syntaxmesh",
+        "punctuation.section.block.begin.syntaxmesh"
+      ]
+    }
+  ],
+  [
+    {
+      "text": "  ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "formats",
+      "scopes": [
+        "source.syntaxmesh",
+        "keyword.other.syntaxmesh"
+      ]
+    },
+    {
+      "text": " html",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    }
+  ],
+  [
+    {
+      "text": "  headline ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "\"",
+      "scopes": [
+        "source.syntaxmesh",
+        "string.quoted.double.syntaxmesh"
+      ]
+    },
+    {
+      "text": "My Project Gantt Chart",
+      "scopes": [
+        "source.syntaxmesh",
+        "string.quoted.double.syntaxmesh"
+      ]
+    },
+    {
+      "text": "\"",
+      "scopes": [
+        "source.syntaxmesh",
+        "string.quoted.double.syntaxmesh"
+      ]
+    }
+  ],
+  [
+    {
+      "text": "  ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    }
+  ],
+  [
+    {
+      "text": "  ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "# The 'chart' column generates the visual Gantt bars",
+      "scopes": [
+        "source.syntaxmesh",
+        "comment.line.number-sign.syntaxmesh"
+      ]
+    }
+  ],
+  [
+    {
+      "text": "  columns bsi ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "{",
+      "scopes": [
+        "source.syntaxmesh",
+        "punctuation.section.block.begin.syntaxmesh"
+      ]
+    },
+    {
+      "text": " title ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "'",
+      "scopes": [
+        "source.syntaxmesh",
+        "string.quoted.single.syntaxmesh"
+      ]
+    },
+    {
+      "text": "WBS",
+      "scopes": [
+        "source.syntaxmesh",
+        "string.quoted.single.syntaxmesh"
+      ]
+    },
+    {
+      "text": "'",
+      "scopes": [
+        "source.syntaxmesh",
+        "string.quoted.single.syntaxmesh"
+      ]
+    },
+    {
+      "text": " ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "}",
+      "scopes": [
+        "source.syntaxmesh",
+        "punctuation.section.block.end.syntaxmesh"
+      ]
+    },
+    {
+      "text": ", name, ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "start",
+      "scopes": [
+        "source.syntaxmesh",
+        "keyword.other.syntaxmesh"
+      ]
+    },
+    {
+      "text": ", ",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    },
+    {
+      "text": "end",
+      "scopes": [
+        "source.syntaxmesh",
+        "keyword.other.syntaxmesh"
+      ]
+    },
+    {
+      "text": ", chart",
+      "scopes": [
+        "source.syntaxmesh"
+      ]
+    }
+  ],
+  [
+    {
+      "text": "}",
+      "scopes": [
+        "source.syntaxmesh",
+        "punctuation.section.block.end.syntaxmesh"
+      ]
+    }
+  ]
+]

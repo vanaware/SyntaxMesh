@@ -244,6 +244,50 @@
           }
         }
       ]
+    },
+    {
+      "origin": "file:///home/aarvati/github/syntaxmesh/bench/lsp_bench.ts",
+      "group": "lsp",
+      "name": "lsp_diagnostics_100",
+      "baseline": false,
+      "results": [
+        {
+          "ok": {
+            "n": 22,
+            "min": 33072701.0,
+            "max": 71532944.0,
+            "avg": 38946088.0,
+            "p75": 38593398.0,
+            "p99": 71532944.0,
+            "p995": 71532944.0,
+            "p999": 71532944.0,
+            "highPrecision": true,
+            "usedExplicitTimers": false
+          }
+        }
+      ]
+    },
+    {
+      "origin": "file:///home/aarvati/github/syntaxmesh/bench/lsp_bench.ts",
+      "group": "lsp",
+      "name": "lsp_diagnostics_1000",
+      "baseline": false,
+      "results": [
+        {
+          "ok": {
+            "n": 16,
+            "min": 92180413.0,
+            "max": 105794195.0,
+            "avg": 97281098.0,
+            "p75": 99839467.0,
+            "p99": 105794195.0,
+            "p995": 105794195.0,
+            "p999": 105794195.0,
+            "highPrecision": true,
+            "usedExplicitTimers": false
+          }
+        }
+      ]
     }
   ]
 }

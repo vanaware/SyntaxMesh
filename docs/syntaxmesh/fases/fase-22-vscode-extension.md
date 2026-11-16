@@ -839,6 +839,21 @@ recarregamentos.
 | Smoke `.vsix`        | instalar em VS Code limpo, abrir `.tjp`, ver highlight + diagnósticos + hover + completion                                    | manual + teste automatizado quando possível | 1 cenário                                 |
 | Workspace | `lsp-core` preserves workspace integrity | `deno task check:all` and full `deno task tests` | exit 0 |
 
+**Atualização F21² (2ª onda, 2026-11-15):** a estratégia *headless-first*
+adaptou este §11 ao ambiente sem VS Code. A **integração LSP** (superfície §5
+completa: didOpen/didChange full+incremental/didClose, completion, definition,
+references single+cross-file, documentSymbol/workspaceSymbol/semanticTokens,
+diagnósticos de fixture de erro do corpus, pureza de stdout) é provada sobre
+stdio JSON-RPC real (`packages/lsp/tests/`, 26.29); a **grammar** é tokenizada
+headless sobre o corpus EN (26.30); os **diagnósticos lsp-core** em arquivo
+grande têm benchmark com baseline (26.31); **manual/help EN** + **`.vsix`
+estrutural** + smoke do bundle construído são revalidados (26.32). O aceite
+**runtime** VS Code — Test Runner de comandos/trust, instalação limpa
+(`code --install-extension`) e vscode.dev — permanece **Diferido com âncora
+explícita** para uma execução equipada com VS Code (sem `it.ignore`
+silencioso). Matriz completa: `fase-21-compatibilidade-qualidade-tarefas.md`
+(adendo 2ª onda, 26.33.1); estratégia: ADR 042 (adendo 2ª onda).
+
 Convenções: BDD (`@std/testing/bdd` + `@std/assert`); sem `any` em `src/`; TDD
 para handlers novos; fixtures de entrada: MWEs (`docs/Learning/mwe001–009`) e
 `docs/taskjuggler/test/TestSuite/` em inglês — já versionados no repositório;

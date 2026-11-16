@@ -498,7 +498,7 @@ i18n (10.15+) em `packages/core/src/i18n/`.
   arquivos / 6863 passos / 0 falhas** (97m46s) · `check:all` · `lint` (779
   arquivos) · `fmt:check` (831 arquivos) · `check:doccore` · `check:stubs`, todos
   exit 0.
-- **Fase 21 — Compatibilidade e Qualidade 🟨 1ª onda CONCLUÍDA (2026-11-15; iniciada 2026-11-10)** —
+- **Fase 21 — Compatibilidade e Qualidade 🟨 1ª+2ª ondas CONCLUÍDAS (2026-11-15; iniciada 2026-11-10)** —
   tarefas **26.22.9/26.22.10/26.22.11 ✅**: `completude-matrix.md` regenerada a
   partir das âncoras do código + Seções C/D consolidando realocações xray e
   pendências F13–F24 hoje só em `CURRENT.md`; cadeia de ADRs **033–037
@@ -596,6 +596,28 @@ i18n (10.15+) em `packages/core/src/i18n/`.
   **Fase 22:** executada antecipadamente com autorização do usuário
   (2026-11-11 a 2026-11-14 — **P1–P7 completos**, gate 880 passed); o handoff
   da F22 (artefatos + matriz de aceite) alimenta a 2ª onda da 21.
+  **2ª onda (21²) CONCLUÍDA (2026-11-15):** adendo **26.29–26.33** ✅ — suite
+  *headless-first* adaptado à extensão VS Code (handoff da F22 consumido), sem
+  VS Code no ambiente. **26.29** integração LSP sobre stdio JSON-RPC real
+  (harness `StdioClient` extraído de `protocol_test.ts`; superfície §5 completa:
+  capabilities, didChange full/incremental, didClose, completion/definition/
+  references single+cross-file, documentSymbol/workspaceSymbol/semanticTokens,
+  diagnósticos de fixture de erro do corpus, pureza de stdout). **26.30**
+  tokenizer TextMate headless (`npm:vscode-textmate` + `npm:vscode-oniguruma`
+  WASM, **test-only**, fora de todo bundle) sobre 84 fixtures EN do corpus, 20
+  escopos, não-EN cai no raiz (limitação EN-only v1), golden + expansão de
+  snippets. **26.31** `bench/lsp_bench.ts` (`analyzeDocument` sobre
+  `buildSource(100/1000)`) + baseline best-case (13 benches, `bench:compare`
+  EXIT=0). **26.32** regressão manual/help EN (164 keywords documentadas + 40 do
+  corpus) + `.vsix` estrutural (13 arquivos, 2.18 MB < 5 MB, vsixmanifest,
+  pureza web `node:`-free, injeção de versão) + smoke do bundle construído sobre
+  stdio (driver de evidência `smoke-bundle.ts`). **26.33** matriz de aceite
+  F21² + F22 §11/§P7 atualizados + adendo à ADR 042. Gate `deno task tests`
+  **943 passed (7719 steps), 0 failed (4m22s)**; Concluídas 96 → 110.
+  **Fronteira:** aceite runtime VS Code (Test Runner de comandos/trust,
+  `code --install-extension`, vscode.dev) **Diferido com âncora explícita** —
+  handoff para execução equipada com VS Code (não forçado para a 3ª onda);
+  nenhum `it.ignore` silencioso.
 - **Phase 22 — VS Code extension** `OK` — **P1 (22.0) accepted 2026-11-11:
   ADR 035** (`decisoes/035-extensao-vscode.md`) created and indexed; baseline
   and layer boundaries recorded (Bloco A in the task document). **P2 completed

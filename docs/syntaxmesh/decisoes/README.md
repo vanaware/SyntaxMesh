@@ -121,7 +121,9 @@ O que foi decidido? Seja específico e acionável.
 > fechar ponta a ponta.
 > **042** (`042-estrategia-validacao.md`) aceita em 2026-11-15 (Fase 21, 1ª
 > onda): o "ADR 033" previsto no plano original da Fase 21 foi ocupado pelo
-> template (F23); a estratégia de validação assume o próximo livre.
+> template (F23); a estratégia de validação assume o próximo livre. **Adendo
+> 2ª onda (2026-11-15, 26.33.1):** estratégia *headless-first* + política de
+> âncora para o aceite runtime VS Code (sem número novo).
 > **Nunca renumerar ADRs existentes** — os arquivos 027/028
 > já commitados são referência histórica; ao criar um ADR, conferir antes esta
 > tabela e usar o próximo número livre. A cadeia 034–037 foi **reconciliada na

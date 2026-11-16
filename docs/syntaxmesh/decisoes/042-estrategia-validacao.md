@@ -140,6 +140,43 @@ fixtures) sem construir um terceiro mecanismo paralelo.
   em 2026-11-15, após o fechamento da Fase 22.
 - 26.12 (segurança) e 26.13 (CSP) pertencem à 3ª onda (plano §0), não à 1ª.
 
+## Adendo — 2ª onda (21², 2026-11-15)
+
+A 2ª onda (26.29–26.33) adaptou a suite à extensão VS Code (handoff da F22),
+consumindo a decisão 7 ("ondas 2/3 herdam a estratégia"). O ambiente não tem
+VS Code desktop nem vscode.dev, então a onda é **headless-first + âncora**
+(escolha do usuário, 2026-11-15):
+
+1. **Tudo o que é provável em Deno puro é entregue e gatado.** A integração
+   LSP roda sobre o transporte **stdio JSON-RPC real** (`registerLspServer`,
+   sem editor): o harness `StdioClient` (26.29.1) cobre a superfície §5
+   completa — capabilities, didChange full/incremental, didClose, completion,
+   definition, references single+cross-file, documentSymbol/workspaceSymbol/
+   semanticTokens, diagnósticos de fixture de erro do corpus e pureza de
+   stdout. A grammar TextMate é tokenizada **headless** via
+   `npm:vscode-textmate` + `npm:vscode-oniguruma` (WASM), imports **test-only**
+   que não entram em bundle nenhum (fronteira `lsp-core` intacta); a v1 é
+   EN-only, então a tokenização alvo nas fixtures EN do corpus e keywords
+   não-EN caem no escopo raiz (limitação documentada, não falha). Os
+   diagnósticos lsp-core em arquivo grande têm benchmark com baseline
+   (`bench/lsp_bench.ts`, grupo `lsp`). Manual/help EN e o `.vsix` estrutural
+   (+ pureza web, injeção de versão, smoke do bundle construído sobre stdio)
+   são revalidados.
+
+2. **O aceite runtime VS Code fica diferido com âncora explícita.** Test
+   Runner de comandos/trust, instalação limpa (`code --install-extension`) e
+   vscode.dev exigem um Extension Host vivo — ausente aqui. Permanecem como
+   **handoff para uma execução equipada com VS Code**, não forçados para a 3ª
+   onda (PWA/UI/release). **Nenhum `it.ignore` silencioso** (decisão 3): a
+   evidência headless correspondente está entregue e gatada; só o runtime
+   fica pendente, registrado na matriz de aceite F21² (26.33.1) + F22 §11/§P7.
+
+3. **Sem número novo de ADR.** Este adendo estende a 042 (já o ADR de
+   estratégia das 3 ondas); a política de divergência/âncora (decisão 3) e a
+   herança de estratégia (decisão 7) aplicam-se sem alteração. O smoke do
+   bundle construído é **evidência** (driver `tests/smoke-bundle.ts`, não
+   `*test.ts`), para não impor dependência de pré-build ao gate.
+
 ---
 
 **Status:** Aceito

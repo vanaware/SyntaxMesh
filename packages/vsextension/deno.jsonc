@@ -37,7 +37,12 @@
     "vscode-languageclient/node": "npm:vscode-languageclient@^9.0.1/node",
     "vscode-languageclient/browser": "npm:vscode-languageclient@^9.0.1/browser",
     "vscode-languageserver/node": "npm:vscode-languageserver@^9.0.1/node",
-    "vscode-languageserver/browser": "npm:vscode-languageserver@^9.0.1/browser"
+    "vscode-languageserver/browser": "npm:vscode-languageserver@^9.0.1/browser",
+    // Tokenização TextMate headless (F21², 26.30): APENAS teste — a grammar
+    // gerada é tokenizada sobre o corpus sem VS Code. Não entram no bundle
+    // (o runtime de highlight do editor é o do VS Code; aqui só validação).
+    "vscode-textmate": "npm:vscode-textmate@^9.0.0",
+    "vscode-oniguruma": "npm:vscode-oniguruma@^2.0.0"
   },
   "tasks": {
     "check": "deno check src/**/*.ts tests/**/*.ts scripts/**/*.ts",

@@ -53,6 +53,8 @@
     "npm:vscode-languageclient@^9.0.1": "9.0.1",
     "npm:vscode-languageserver-types@3": "3.17.5",
     "npm:vscode-languageserver@^9.0.1": "9.0.1",
+    "npm:vscode-oniguruma@2": "2.0.1",
+    "npm:vscode-textmate@9": "9.3.2",
     "npm:wrangler@*": "4.149.0_@cloudflare+workers-types@5.20260830.1"
   },
   "jsr": {
@@ -2092,6 +2094,12 @@
       ],
       "bin": true
     },
+    "vscode-oniguruma@2.0.1": {
+      "integrity": "sha512-poJU8iHIWnC3vgphJnrLZyI3YdqRlR27xzqDmpPXYzA93R4Gk8z7T6oqDzDoHjoikA2aS82crdXFkjELCdJsjQ=="
+    },
+    "vscode-textmate@9.3.2": {
+      "integrity": "sha512-n2uGbUcrjhUEBH16uGA0TvUfhWwliFZ1e3+pTjrkim1Mt7ydB41lV08aUvsi70OlzDWp6X7Bx3w/x3fAXIsN0Q=="
+    },
     "workerd@1.20261006.1": {
       "integrity": "sha512-8MadBuffZ5NdpLwZjUmsqT5QlaKXq4gjgT6wzcKeynZTICNXyePhc+5QVoKiK7+MMhFTLNrRO2KXLlpk8Q6BkA==",
       "optionalDependencies": [
@@ -2269,7 +2277,9 @@
           "jsr:@std/testing@1",
           "npm:@types/vscode@^1.90.0",
           "npm:vscode-languageclient@^9.0.1",
-          "npm:vscode-languageserver@^9.0.1"
+          "npm:vscode-languageserver@^9.0.1",
+          "npm:vscode-oniguruma@2",
+          "npm:vscode-textmate@9"
         ]
       }
     }

@@ -6,10 +6,15 @@
 > ✅: matriz de completude regenerada + ADRs 033–037 reconciliados;
 > **remainder da 1ª onda CONCLUÍDO 2026-11-15** — 26.0–26.11 + 26.14 +
 > 26.26–26.28 ✅, gate `deno task tests` **935 passed (7700 steps), 0 failed**;
-> 26.12/26.13 segurança+CSP e 26.15–26.25 cross-browser/a11y/release ficam
-> para as ondas 2/3 — ver seção de kickoff abaixo)
+> **2ª onda (21²) CONCLUÍDA 2026-11-15** — adendo 26.29–26.33 ✅ (suite
+> headless adaptado à extensão VS Code: integração LSP stdio, grammar sobre o
+> corpus EN, perf lsp-core, manual/help EN, `.vsix` estrutural + smoke do
+> bundle; gate `deno task tests` **943 passed (7719 steps), 0 failed**; aceite
+> runtime VS Code — Test Runner/clean install/vscode.dev — **Diferido com
+> âncora**, sem VS Code no ambiente); 26.12/26.13 segurança+CSP e 26.15–26.25
+> cross-browser/a11y/release ficam para a 3ª onda — ver kickoff abaixo)
 > **Total:** ~143 tarefas
-> **Concluídas:** 96
+> **Concluídas:** 110
 > **Foco:** Golden tests, i18n, performance, segurança, cross-browser, release
 
 > **📌 Âncora — Complemento Fase 11 (2ª onda, §6.7 de `fase-11-logical-complemento.md`):**
@@ -792,6 +797,114 @@ Criado como subfase 26.0. Conteúdo esperado:
 >   de RDO ficam ancorados para a 3ª onda** (F20 PWA+UI não iniciada; sem
 >   `it.ignore` silencioso — a matriz e este bloco registram o adiamento).
 >   +1 teste/+4 steps sobre os 934 da 26.14 = o describe de presença 26.26.2.
+
+---
+
+## 2ª onda (21²) — kickoff e adendo: suite adaptado à extensão VS Code (26.29–26.33)
+
+> **Autorização:** usuário ("vamos fazer a proxima onda do 21", 2026-11-15),
+> após o fecho da 1ª onda (gate 935 passed) e da Fase 22 (P1–P7, gate 880
+> passed). Ordem oficial: `… 24 → 21¹ → 22 → 21² → 19 → 20 → 21³`. Escopo
+> autoritativo: plano §0, linha da 2ª onda — integração LSP
+> (`registerLspServer`/handlers), grammar sobre o corpus, performance de
+> `lsp-core` (diagnósticos em arquivo grande), ajuda/manual EN, empacotamento
+> `.vsix`. O handoff da F22 (§11 + §P7) alimenta esta onda.
+
+### Decisões do kickoff (2026-11-15)
+
+| Aspecto | Decisão | Fundamento |
+|---|---|---|
+| Runtime VS Code | **Headless-first + âncora** (escolha do usuário): tudo o que é provável em Deno puro é entregue e gatado; o aceite que exige VS Code vivo (Test Runner de comandos/trust, `code --install-extension`, vscode.dev) fica **diferido com âncora explícita** — sem `it.ignore` silencioso | ambiente sem VS Code (memória de ambiente); F22 §11 já diferiu esses itens à F21²; precedente da 1ª onda (Lighthouse → 3ª onda) |
+| Integração LSP | estende o harness stdio JSON-RPC real (`packages/lsp/tests/protocol_test.ts`, 22.9.5) à superfície §5 completa (didChange/didClose/completion/definition/references/documentSymbol/workspaceSymbol/semanticTokens); o sujeito é o servidor standalone `packages/lsp/src/mod.ts --stdio` | `registerLspServer` (core/src/lsp/server.ts) agrega todo documento aberto; o transporte stdio não precisa do editor |
+| Tokenizer da grammar | **`npm:vscode-textmate` + `npm:vscode-oniguruma`** (WASM), imports **test-only** em `packages/vsextension/deno.jsonc`; tokenização fiel headless da grammar gerada (`generateGrammar`); não entra em bundle nenhum; fronteira do `lsp-core` intacta | grammar é dado puro projetado de `SyntaxCore`; TextMate exige oniguruma; deps de teste não violam o pure-Deno do bundle |
+| Idioma da grammar | v1 **EN-only**: tokenização alvo nas fixtures EN (MWEs + syntax-correct EN); keywords não-EN caem no escopo raiz (limitação documentada, não falha); PT/ES = adendo pós-F21 | F22 §12 convenção 4; plano §0 |
+| Numeração | continua o esquema `26.x` (1ª onda terminou em 26.28): **26.29–26.33**, 14 tarefas atômicas; bloco "Adendo — 2ª onda (21²)" | xray §5.6 (não renumerar); mapa 26.N ↔ 21.N |
+| ADR | **adendo à 042** (`042-estrategia-validacao.md`) registrando a estratégia headless + política de âncora; sem número novo | 042 já é o ADR de estratégia de validação das 3 ondas |
+| Performance | novo `bench/lsp_bench.ts` (`analyzeDocument` sobre `buildSource(1000)`), grupo `lsp`; baseline commitado; `bench:compare` falha com regressão > 20% | infra de bench da 1ª onda (26.11); `analyzeDocument` exportado pelo `lsp-core` |
+
+**Ordem de execução:** 26.29 (integração LSP stdio) → 26.30 (grammar sobre o
+corpus) → 26.31 (perf lsp-core) → 26.32 (manual EN + .vsix estrutural) →
+26.33 (âncoras runtime + fecho) → gate + evidência + docs.
+
+### Progresso (adendo 2ª onda)
+
+```
+[x] 26.29  Integração LSP headless (stdio)        —  5/5
+[x] 26.30  Grammar TextMate sobre o corpus        —  3/3
+[x] 26.31  Performance lsp-core                   —  2/2
+[x] 26.32  Manual EN + .vsix estrutural           —  2/2
+[x] 26.33  Âncoras runtime + fecho da 2ª onda     —  2/2
+```
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 26.29.1 | Extrair `StdioClient` + helpers de framing de `protocol_test.ts` para helper reutilizável; refactor sem mudança de comportamento; contrato completo de capabilities no `initialize` | `packages/lsp/tests/stdio-client.ts`, `protocol_test.ts` | helper `stdio-client.ts` (StdioClient + openSession/didOpen/nextDiagnostics/shutdown); `protocol_test.ts` refactorado; capabilities §5 completas (sync=2, hover/completion/definition/references/documentSymbol/workspaceSymbol/semanticTokens + legend); lsp `deno task tests` **10 passed (29 steps)** **[x 2026-11-15]** |
+| 26.29.2 | `didChange` (full + incremental range) → `publishDiagnostics` atualiza; `didClose` → limpa diagnósticos | `packages/lsp/tests/integration_test.ts` | sessão framed real: incremental insere `bogusattr` → diagnostics source `syntaxmesh`; full restaura → `[]`; didClose → `[]` + hover `null` **[x 2026-11-15]** |
+| 26.29.3 | `completion` + `definition` + `references` sobre stdio, single-doc e workspace cross-file (2 documentos abertos) | idem | completion `build` kind 18; definition `dev`→linha 2; cross-file B→A (uri A, linha 2) + references agregam os 2 uris **[x 2026-11-15]** |
+| 26.29.4 | `documentSymbol` + `workspace/symbol` + `semanticTokens` (legend + `data` delta de 5 inteiros) sobre stdio | idem | documentSymbol raiz `prj` + 3 children; workspace/symbol `bu`→`build`; semanticTokens/full `data.length % 5 == 0` **[x 2026-11-15]** |
+| 26.29.5 | Diagnósticos sobre fixture de erro real do corpus (syntax-errors) → `Diagnostic[]` não-vazio com range/severity/message; pureza de stdout | idem + `tests/fixtures/corpus.json` | 1ª fixture syntax-errors (`adopt_duplicate_child-1`) lida do manifesto → diagnostics severity 1/2 + source/message/range; `remaining()` 0 bytes após exit **[x 2026-11-15]** |
+| 26.30.1 | Harness headless de tokenização TextMate: `vscode-textmate` + `vscode-oniguruma` (WASM) test-only; `Registry` sobre `generateGrammar()`; helper `tokenize(text)` | `packages/vsextension/deno.jsonc`, `tests/grammar/tokenizer.ts`, `tokenizer_test.ts` | WASM carrega em Deno (pacotes CJS: API via default export, tipos via type-only); grammar registrada; `tokenizer_test.ts` cobre control/storage/other, string/date/duration, int/float, comment line+block com estado cross-line **1 passed (5 steps)** **[x 2026-11-15]** |
+| 26.30.2 | Cobertura de escopos sobre fixtures EN do corpus (MWEs + syntax-correct EN): keywords/literals/comments/strings nos escopos `*.syntaxmesh`; não-EN cai no raiz (limitação EN-only) | `packages/vsextension/tests/grammar/corpus_test.ts` | 84 fixtures EN (9 MWE + 75 syntax-correct) tokenizam sem quebrar regex (raiz ativo em todo token); os 20 escopos declarados pela grammar são exercitados; não-EN (`projeto`/`tarefa`/`recurso`) cai no raiz (limitação EN-only, contrastado com EN) **1 passed (3 steps)** **[x 2026-11-15]** |
+| 26.30.3 | Golden snapshot de tokenização sobre fixtures EN representativas + regressão de expansão de snippets | `tests/grammar/tokenization_test.ts`, `generate-tokenization.ts`, `fixtures/tokenization.golden.json` | golden `tokenization.golden.json` (mwe001, 38 linhas/149 tokens) byte-a-byte; expansão dos 6 snippets de `snippets.golden.json` (tab stops→placeholder) → keywords EN nos escopos; `tokenization_test.ts` **1 passed (2 steps)**; dir grammar **8 passed (30 steps)**; pacote vsextension **33 passed (131 steps)** **[x 2026-11-15]** |
+| 26.31.1 | `bench/lsp_bench.ts`: `analyzeDocument(uri, buildSource(1000), {})` (source fora do loop), grupo `lsp`, nome `lsp_diagnostics_1000` | `bench/lsp_bench.ts` | `analyzeDocument` (lsp-core) sobre `buildSource(100/1000)`, source fora do loop, grupo `lsp`, nomes `lsp_diagnostics_100`/`lsp_diagnostics_1000`; auto-descoberto pelo `bench:compare`; `deno check` verde **[x 2026-11-15]** |
+| 26.31.2 | Entrada estável no `bench/baseline.json` (melhor-caso em execuções isoladas); `bench:compare` EXIT=0; `bench_test.ts` verde | `bench/baseline.json` | 11→13 benches (splice best-case de 3 execuções isoladas: lsp_100 38.9ms, lsp_1000 97.3ms; 44 inserções/0 deleções, entradas existentes preservadas byte-a-byte); `bench_test.ts` **2 passed (3 steps)**; `bench:compare` **EXIT=0** (13 benches; lsp_100 -2.9%, lsp_1000 -1.9%) **[x 2026-11-15]** |
+| 26.32.1 | Regressão manual/help EN: `getManualToc`/`getManualPage` + `UserManual.generate` golden; cobertura `getKeywordHelp` (markdown) sobre keywords EN do corpus | `packages/core/tests/lsp/help-coverage_test.ts` | 164 keywords EN documentadas (`reference.all` ignoreOld=true) → `getKeywordHelp` markdown (`###` título, sem ANSI) + `getManualPage` + `getManualToc` + `UserManual.generate` (página por keyword, não só amostras); 40 keywords dos MWEs do corpus resolvem (0 falhas); reusa doc-core (22.1b), verificação não rebuild **1 passed (4 steps)** **[x 2026-11-15]** |
+| 26.32.2 | Regressão estrutural `.vsix`: inventário + `vsixmanifest` + coerência de manifesto (22.10.4) + tamanho < 5 MB; pureza web `node:`-free + injeção de versão; smoke do bundle construído sobre stdio (evidência) | `packages/lsp/tests/smoke-bundle.ts` (novo, evidência), `packages/vsextension/tests/` + `packages/lsp/tests/` (reuso) | gates re-executados: vsextension manifest (22.10.4) + purity (22.8.1) **2 passed (10 steps)**, lsp inject (22.10.2) + args **5 passed (20 steps)**; `.vsix` 13 arquivos, `vsixmanifest` Identity `syntaxmesh-vscode` v0.0.2 publisher `vanaware`/Engine `^1.90.0`/ExtensionKind `workspace,web`, `[Content_Types].xml`, **2291147 bytes (2.18 MB) < 5 MB**; rebuild `dist/syntaxmesh-lsp.js` (2552 kB, 580 módulos) shebang + `__APP_VERSION__="0.0.2-mtvrt8od"`, banner `--version` confere; web bundles `node:`-free (0) e 4 bundles + lsp sem `textmate`/`oniguruma` (0 leak — deps test-only fora do bundle); smoke `smoke-bundle.ts` (driver de evidência, não `*test.ts`, type-checked) initialize→didOpen→hover→shutdown: sync=2/hover=true (8 caps), hover `### task` markdown, 0 diagnostics, exit 0, stdout puro **[x 2026-11-15]** |
+| 26.33.1 | Matriz de aceite: F22 §11 + matriz F21² neste arquivo — itens headless OK (26.29–26.32); Test Runner/clean install/vscode.dev **Diferido** com âncora; adendo à ADR 042 | `fase-22-vscode-extension.md` §11, `fase-22-vscode-extension-tarefas.md` §P7, este arquivo, `decisoes/042-estrategia-validacao.md` | matriz de aceite F21² (9 itens: 5 headless OK 26.29–26.32 + 4 runtime **Diferido** com âncora explícita); F22 §11 (plano) + §P7 (tarefas) atualizados 2026-11-15 com evidência headless e runtime re-ancorado (pós-F21², sem `it.ignore`); adendo à ADR 042 (estratégia headless-first + política de âncora, sem número novo) **[x 2026-11-15]** |
+| 26.33.2 | Gate de fecho `deno task tests` EXIT=0 + sync de docs (CURRENT/plano/este arquivo/plano §0/AGENTS/completude-matrix/ADR 042); Concluídas 96 → 110 | docs | gate `deno task tests` **EXIT=0 — 943 passed (7719 steps), 0 failed, 0 ignored (2 steps) (4m22s)** (1ª onda 935→943, +8 testes/+19 steps; sem `it.ignore` novo); `bench:compare` EXIT=0 (13 benches); docs sincronizados: CURRENT/plano (linha F21 + §0)/este arquivo (Concluídas 110 + Status + Progresso 2/2)/plano §0 (linha 2ª onda concluída)/AGENTS (linha F21)/completude-matrix §E (042 adendo + 035 re-âncora)/ADR 042 (adendo 2ª onda) + decisoes/README **[x 2026-11-15]** |
+
+### Matriz de aceite F21² (26.33.1, 2026-11-15)
+
+Escopo headless entregue e gatado (Deno puro, sem VS Code); o aceite runtime
+VS Code permanece **Diferido com âncora explícita** (ambiente sem VS Code —
+handoff para uma execução equipada; sem `it.ignore` silencioso). A matriz
+consome o handoff da F22 (§11 + §P7, atualizados 2026-11-15) e o estende.
+
+| Item de aceite | Evidência headless (Deno) | Status |
+|---|---|---|
+| Integração LSP §5 completa sobre stdio (capabilities, didChange full/incremental, didClose, completion/definition/references single+cross-file, documentSymbol/workspaceSymbol/semanticTokens, diagnósticos de erro do corpus, pureza stdout) | `packages/lsp/tests/stdio-client.ts` + `integration_test.ts` + `protocol_test.ts` (26.29.1–.5) | OK |
+| Grammar TextMate sobre o corpus EN (tokenizer headless, 84 fixtures, 20 escopos, não-EN cai no raiz, golden + expansão de snippets) | `packages/vsextension/tests/grammar/` `tokenizer.ts`/`corpus_test.ts`/`tokenization_test.ts` (26.30.1–.3) | OK |
+| Performance lsp-core: diagnósticos em arquivo grande (benchmark + baseline) | `bench/lsp_bench.ts` + `bench/baseline.json` (26.31.1–.2); `bench:compare` EXIT=0 | OK |
+| Manual/help EN (`getManualToc`/`getManualPage`/`UserManual.generate` + `getKeywordHelp` sobre keywords do corpus) | `packages/core/tests/lsp/help-coverage_test.ts` (26.32.1) | OK |
+| `.vsix` estrutural + pureza web `node:`-free + injeção de versão + smoke do bundle construído | gates manifest/purity/inject re-executados + `packages/lsp/tests/smoke-bundle.ts` (26.32.2, evidência) | OK |
+| VS Code Test Runner — integração de comandos (daemon/relatório/export/idioma) | unitários puros P4 + coerência manifesto ↔ registros (22.10.4); runtime exige Extension Host | **Diferido** — âncora: execução com VS Code (Test Runner) |
+| VS Code Test Runner — trust (workspace não confiável) | `tests/trust_test.ts` (P4, lógica pura); runtime exige API `vscode` | **Diferido** — âncora: execução com VS Code (Test Runner) |
+| Instalação limpa (`code --install-extension` + abrir `.tjp`) | `.vsix` estrutural válido (22.10.3 + revalidação 26.32.2); runtime exige VS Code desktop | **Diferido** — âncora: `code --install-extension` em VS Code limpo |
+| vscode.dev (Web Extension Host runtime) | cenários Web puros P5 (22.8.7) + pureza do grafo (22.8.1); runtime exige vscode.dev | **Diferido** — âncora: runtime vscode.dev |
+
+> **Âncora runtime (política):** os quatro itens **Diferido** não são
+> fecháveis neste ambiente (sem VS Code desktop nem vscode.dev). Permanecem
+> como handoff explícito para uma execução equipada com VS Code — não são
+> forçados para a 3ª onda (que é PWA/UI/release). Nenhum `it.ignore`
+> silencioso: a evidência headless correspondente está entregue e gatada
+> acima; só o aceite runtime fica pendente. Registro: ADR 042 (adendo 2ª
+> onda) + F22 §11/§P7 (atualizados 2026-11-15).
+
+> **Abordagem (26.29–26.33, F21² — 2026-11-15):** *headless-first + âncora*
+> (escolha do usuário). Tudo o que é provável em Deno puro foi entregue e
+> gatado: (26.29) o harness `StdioClient` (extraído de `protocol_test.ts`)
+> dirige o servidor standalone real sobre stdio JSON-RPC framed, cobrindo a
+> superfície §5 completa — capabilities, didChange full/incremental, didClose,
+> completion/definition/references single+cross-file, documentSymbol/
+> workspaceSymbol/semanticTokens, diagnósticos de fixture de erro do corpus e
+> pureza de stdout; (26.30) tokenizer TextMate headless (`npm:vscode-textmate`
+> + `npm:vscode-oniguruma` WASM, **test-only**, fora de todo bundle; pacotes
+> CJS exigem default import para valores + type-only para tipos) sobre 84
+> fixtures EN do corpus, 20 escopos, não-EN cai no raiz (limitação EN-only v1),
+> golden de tokenização + expansão de snippets; (26.31) `bench/lsp_bench.ts`
+> (`analyzeDocument` sobre `buildSource(100/1000)`, grupo `lsp`) + baseline
+> best-case commitado (13 benches, `bench:compare` EXIT=0); (26.32) regressão
+> manual/help EN (164 keywords documentadas + 40 do corpus) e `.vsix`
+> estrutural (13 arquivos, 2.18 MB < 5 MB, vsixmanifest, pureza web
+> `node:`-free, injeção de versão) + smoke do bundle construído sobre stdio
+> (driver de evidência `smoke-bundle.ts`, não gatado para não impor pré-build);
+> (26.33) matriz de aceite F21² + F22 §11/§P7 atualizados + adendo à ADR 042.
+> **Fronteira:** o aceite runtime VS Code (Test Runner de comandos/trust,
+> `code --install-extension`, vscode.dev) permanece **Diferido com âncora
+> explícita** — sem VS Code no ambiente, handoff para execução equipada (não
+> forçado para a 3ª onda); nenhum `it.ignore` silencioso. Gate de fecho
+> `deno task tests` **943 passed (7719 steps), 0 failed (4m22s)**; Concluídas
+> 96 → 110.
 
 ---
 
