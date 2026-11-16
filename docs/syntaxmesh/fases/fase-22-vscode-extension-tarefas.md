@@ -818,29 +818,32 @@ explícita (padrão P3–P5); o que é verificável sem VS Code (estrutura do
 > A validação permanece nas tarefas donas originais; P7 coleta evidência,
 > não duplica tarefas.
 
-### Matriz de aceite §11 (22.10.4, 2026-11-14; atualizada F21² 2026-11-15)
+### Matriz de aceite §11 (22.10.4, 2026-11-14; atualizada F21² 2026-11-15; runtime desktop resolvido F21 26.34)
 
 Cada cenário do §11 mapeado para evidência existente (sem duplicar tarefas)
 ou para âncora explícita de adiamento. **Âncora runtime:** VS Code desktop
-(Test Runner + instalação limpa) e vscode.dev não existem neste ambiente. A
-**F21² (2ª onda, 26.29–26.33)** consumiu o handoff e entregou toda a evidência
-**headless** (Deno puro); o aceite **runtime** VS Code permanece **Diferido
-com âncora explícita** para uma execução equipada com VS Code (sem `it.ignore`
-silencioso). Artefatos de entrada `syntaxmesh-vscode-0.0.2.vsix` (22.10.3) +
-bundle standalone `dist/syntaxmesh-lsp.js` com versão injetada (22.10.2),
+(Test Runner + instalação limpa) e vscode.dev não existiam no ambiente
+original. A **F21² (2ª onda, 26.29–26.33)** consumiu o handoff e entregou
+toda a evidência **headless** (Deno puro); o aceite **runtime** VS Code
+ficou **Diferido com âncora explícita** (sem `it.ignore` silencioso). O
+**adendo F21 26.34 (2026-11-15)**, com VS Code Insiders 1.147 disponível,
+resolveu as âncoras desktop (Test Runner de LSP/comandos/trust + instalação
+limpa, driver de evidência `test:runtime`); **vscode.dev segue ancorado**.
+Artefatos de entrada `syntaxmesh-vscode-0.0.2.vsix` (22.10.3) + bundle
+standalone `dist/syntaxmesh-lsp.js` com versão injetada (22.10.2),
 revalidados em 26.32.2. Matriz F21² completa:
-`fase-21-compatibilidade-qualidade-tarefas.md` (26.33.1).
+`fase-21-compatibilidade-qualidade-tarefas.md` (26.33.1 + 26.34).
 
 | Cenário §11 | Evidência sem VS Code | Status runtime |
 |---|---|---|
 | Unitários lsp-core ≥ 80% (analyze/diagnostics/hover/completion/navigation/semantic-tokens/symbols/locale/documents/help-manual) | `core/tests/lsp/*` (P2; 17 testes / 79 steps) + cobertura 22.11.1 + manual/help EN F21² 26.32.1 | OK (Deno) |
 | Unitários extensão ≥ 70% (commands/config/daemon/cache) | `vsextension/tests/*` (30 testes / 121 steps, incl. manifesto 22.10.4) + cobertura 22.11.1 | OK (Deno) |
 | Grammar TextMate EN + snippets | `tests/grammar/*` snapshots golden (22.3.6) + tokenização headless sobre o corpus EN F21² 26.30 (84 fixtures, 20 escopos, golden + expansão de snippets) | OK (Deno) |
-| Integração LSP (initialize…symbols) | smoke stdio real (22.9.5) + integração headless completa F21² 26.29.1–.5 (didChange full/incremental, didClose, completion/definition/references single+cross-file, documentSymbol/workspaceSymbol/semanticTokens, fixture de erro do corpus, pureza stdout) | **Diferido** — VS Code Test Runner (runtime; headless OK) |
-| Integração comandos (daemon/relatório/export/idioma) | unitários puros P4 + coerência manifesto ↔ registros (22.10.4) | **Diferido** — VS Code Test Runner (runtime) |
-| Smoke `.vsix` (instalação limpa + abrir `.tjp`) | estrutural: zip válido, 2,19 MB < 5 MB, inventário + vsixmanifest (22.10.3) + revalidação F21² 26.32.2 (13 arquivos, 2.18 MB < 5 MB, pureza web `node:`-free, injeção de versão, smoke do bundle construído sobre stdio) | **Diferido** — `code --install-extension` (runtime; estrutural OK) |
-| Web (vscode.dev): edição/execução/relatório, storage ausente, escrita negada | cenários puros P5 (22.8.7) + pureza do grafo (22.8.1) | **Diferido** — runtime vscode.dev |
-| Trust (workspace não confiável) | `tests/trust_test.ts` (P4) | **Diferido** — runtime com Test Runner |
+| Integração LSP (initialize…symbols) | smoke stdio real (22.9.5) + integração headless completa F21² 26.29.1–.5 (didChange full/incremental, didClose, completion/definition/references single+cross-file, documentSymbol/workspaceSymbol/semanticTokens, fixture de erro do corpus, pureza stdout) | **OK** — LSP in-host Insiders 1.147 (F21 26.34.1/.4): diagnostics/hover/completion no Extension Host real, dev + artefato instalado |
+| Integração comandos (daemon/relatório/export/idioma) | unitários puros P4 + coerência manifesto ↔ registros (22.10.4) | **OK** — runtime Insiders 1.147 (F21 26.34.2): full mode 17 passed, os 9 comandos via API real |
+| Smoke `.vsix` (instalação limpa + abrir `.tjp`) | estrutural: zip válido, 2,19 MB < 5 MB, inventário + vsixmanifest (22.10.3) + revalidação F21² 26.32.2 (13 arquivos, 2.18 MB < 5 MB, pureza web `node:`-free, injeção de versão, smoke do bundle construído sobre stdio) | **OK** — runtime Insiders 1.147 (F21 26.34.4): `--install-extension` em dirs isolados + suite sobre o artefato instalado 8 passed |
+| Web (vscode.dev): edição/execução/relatório, storage ausente, escrita negada | cenários puros P5 (22.8.7) + pureza do grafo (22.8.1) | **Diferido** — runtime vscode.dev (âncora mantida, F21 26.34) |
+| Trust (workspace não confiável) | `tests/trust_test.ts` (P4) | **OK** — runtime Insiders 1.147 (F21 26.34.3): untrusted → extensão desabilitada; grant → ativa + executa (2 fases) |
 | Stdio editor externo | smoke de protocolo (22.9.5) + `--version` (22.10.1/22.10.2) + smoke do bundle construído F21² 26.32.2 | OK |
 | Integridade do workspace | `deno task check:all` + gate completo (22.11.2) | OK |
 

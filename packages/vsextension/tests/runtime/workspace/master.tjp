@@ -1,0 +1,27 @@
+project prj "Runtime Fixture" "1.0" 2026-01-01 - 2026-12-31 {
+  timeformat "%Y-%m-%d"
+  numberformat "-" "" "," "." 1
+  currencyformat "(" ")" "," "." 0
+}
+
+resource dev "Developer" {
+  email "dev@example.com"
+}
+
+task build "Build" {
+  effort 5d
+  allocate dev
+}
+
+task ship "Ship" {
+  depends build
+  effort 2d
+  allocate dev
+}
+
+taskreport overview "overview" {
+  formats html, csv
+  columns bsi, name, start, end, effort
+  sorttasks tree
+  headline "Runtime fixture tasks"
+}

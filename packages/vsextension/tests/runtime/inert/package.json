@@ -1,0 +1,10 @@
+{
+  "name": "syntaxmesh-runtime-inert",
+  "publisher": "vanaware",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Inert development-path placeholder for the clean-install run (26.34.4): the VS Code test runner requires BOTH extensionDevelopmentPath and extensionTestsPath, but the extension under test must come from the installed .vsix only. No main, no activationEvents — this extension never activates. Harness only, never packaged.",
+  "engines": {
+    "vscode": "^1.90.0"
+  }
+}

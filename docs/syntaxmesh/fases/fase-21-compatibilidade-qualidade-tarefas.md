@@ -11,10 +11,13 @@
 > corpus EN, perf lsp-core, manual/help EN, `.vsix` estrutural + smoke do
 > bundle; gate `deno task tests` **943 passed (7719 steps), 0 failed**; aceite
 > runtime VS Code — Test Runner/clean install/vscode.dev — **Diferido com
-> âncora**, sem VS Code no ambiente); 26.12/26.13 segurança+CSP e 26.15–26.25
+> âncora**, sem VS Code no ambiente); **adendo 26.34 CONCLUÍDO 2026-11-15** —
+> 3 âncoras runtime desktop resolvidas com Insiders 1.147 (Test Runner de
+> comandos/trust + instalação limpa, driver de evidência `test:runtime`;
+> vscode.dev segue ancorado); 26.12/26.13 segurança+CSP e 26.15–26.25
 > cross-browser/a11y/release ficam para a 3ª onda — ver kickoff abaixo)
 > **Total:** ~143 tarefas
-> **Concluídas:** 110
+> **Concluídas:** 114
 > **Foco:** Golden tests, i18n, performance, segurança, cross-browser, release
 
 > **📌 Âncora — Complemento Fase 11 (2ª onda, §6.7 de `fase-11-logical-complemento.md`):**
@@ -853,12 +856,15 @@ corpus) → 26.31 (perf lsp-core) → 26.32 (manual EN + .vsix estrutural) →
 | 26.33.1 | Matriz de aceite: F22 §11 + matriz F21² neste arquivo — itens headless OK (26.29–26.32); Test Runner/clean install/vscode.dev **Diferido** com âncora; adendo à ADR 042 | `fase-22-vscode-extension.md` §11, `fase-22-vscode-extension-tarefas.md` §P7, este arquivo, `decisoes/042-estrategia-validacao.md` | matriz de aceite F21² (9 itens: 5 headless OK 26.29–26.32 + 4 runtime **Diferido** com âncora explícita); F22 §11 (plano) + §P7 (tarefas) atualizados 2026-11-15 com evidência headless e runtime re-ancorado (pós-F21², sem `it.ignore`); adendo à ADR 042 (estratégia headless-first + política de âncora, sem número novo) **[x 2026-11-15]** |
 | 26.33.2 | Gate de fecho `deno task tests` EXIT=0 + sync de docs (CURRENT/plano/este arquivo/plano §0/AGENTS/completude-matrix/ADR 042); Concluídas 96 → 110 | docs | gate `deno task tests` **EXIT=0 — 943 passed (7719 steps), 0 failed, 0 ignored (2 steps) (4m22s)** (1ª onda 935→943, +8 testes/+19 steps; sem `it.ignore` novo); `bench:compare` EXIT=0 (13 benches); docs sincronizados: CURRENT/plano (linha F21 + §0)/este arquivo (Concluídas 110 + Status + Progresso 2/2)/plano §0 (linha 2ª onda concluída)/AGENTS (linha F21)/completude-matrix §E (042 adendo + 035 re-âncora)/ADR 042 (adendo 2ª onda) + decisoes/README **[x 2026-11-15]** |
 
-### Matriz de aceite F21² (26.33.1, 2026-11-15)
+### Matriz de aceite F21² (26.33.1, 2026-11-15; atualizada pelo adendo 26.34)
 
-Escopo headless entregue e gatado (Deno puro, sem VS Code); o aceite runtime
-VS Code permanece **Diferido com âncora explícita** (ambiente sem VS Code —
-handoff para uma execução equipada; sem `it.ignore` silencioso). A matriz
-consome o handoff da F22 (§11 + §P7, atualizados 2026-11-15) e o estende.
+Escopo headless entregue e gatado (Deno puro, sem VS Code). O aceite runtime
+VS Code foi registrado como **Diferido com âncora explícita** (ambiente sem
+VS Code — handoff para uma execução equipada; sem `it.ignore` silencioso);
+com o VS Code Insiders disponível na máquina, o adendo **26.34** resolveu as
+**3 âncoras desktop** (Test Runner de comandos/trust + instalação limpa) —
+vscode.dev permanece ancorado. A matriz consome o handoff da F22 (§11 + §P7,
+atualizados 2026-11-15) e o estende.
 
 | Item de aceite | Evidência headless (Deno) | Status |
 |---|---|---|
@@ -867,18 +873,21 @@ consome o handoff da F22 (§11 + §P7, atualizados 2026-11-15) e o estende.
 | Performance lsp-core: diagnósticos em arquivo grande (benchmark + baseline) | `bench/lsp_bench.ts` + `bench/baseline.json` (26.31.1–.2); `bench:compare` EXIT=0 | OK |
 | Manual/help EN (`getManualToc`/`getManualPage`/`UserManual.generate` + `getKeywordHelp` sobre keywords do corpus) | `packages/core/tests/lsp/help-coverage_test.ts` (26.32.1) | OK |
 | `.vsix` estrutural + pureza web `node:`-free + injeção de versão + smoke do bundle construído | gates manifest/purity/inject re-executados + `packages/lsp/tests/smoke-bundle.ts` (26.32.2, evidência) | OK |
-| VS Code Test Runner — integração de comandos (daemon/relatório/export/idioma) | unitários puros P4 + coerência manifesto ↔ registros (22.10.4); runtime exige Extension Host | **Diferido** — âncora: execução com VS Code (Test Runner) |
-| VS Code Test Runner — trust (workspace não confiável) | `tests/trust_test.ts` (P4, lógica pura); runtime exige API `vscode` | **Diferido** — âncora: execução com VS Code (Test Runner) |
-| Instalação limpa (`code --install-extension` + abrir `.tjp`) | `.vsix` estrutural válido (22.10.3 + revalidação 26.32.2); runtime exige VS Code desktop | **Diferido** — âncora: `code --install-extension` em VS Code limpo |
+| VS Code Test Runner — integração de comandos (daemon/relatório/export/idioma) | unitários puros P4 + coerência manifesto ↔ registros (22.10.4); runtime exige Extension Host | **OK** — runtime Insiders 1.147 (26.34.1–.2): full mode **17 passed, 0 failed**, os 9 comandos via API real (stubs de UI no mesmo host) |
+| VS Code Test Runner — trust (workspace não confiável) | `tests/trust_test.ts` (P4, lógica pura); runtime exige API `vscode` | **OK** — runtime Insiders 1.147 (26.34.3): untrusted → extensão desabilitada (2 passed); grant persistido → ativa + executa (sonda, 3 passed) |
+| Instalação limpa (`code --install-extension` + abrir `.tjp`) | `.vsix` estrutural válido (22.10.3 + revalidação 26.32.2); runtime exige VS Code desktop | **OK** — runtime Insiders 1.147 (26.34.4): `.vsix` 0.0.2 instalado em `--extensions-dir` isolado + suite sobre o artefato instalado **8 passed, 0 failed** |
 | vscode.dev (Web Extension Host runtime) | cenários Web puros P5 (22.8.7) + pureza do grafo (22.8.1); runtime exige vscode.dev | **Diferido** — âncora: runtime vscode.dev |
 
-> **Âncora runtime (política):** os quatro itens **Diferido** não são
-> fecháveis neste ambiente (sem VS Code desktop nem vscode.dev). Permanecem
-> como handoff explícito para uma execução equipada com VS Code — não são
-> forçados para a 3ª onda (que é PWA/UI/release). Nenhum `it.ignore`
+> **Âncora runtime (política):** os quatro itens runtime foram registrados
+> como **Diferido** por não serem fecháveis no ambiente original (sem VS Code
+> desktop nem vscode.dev) — handoff explícito para uma execução equipada,
+> não forçados para a 3ª onda (que é PWA/UI/release). Nenhum `it.ignore`
 > silencioso: a evidência headless correspondente está entregue e gatada
-> acima; só o aceite runtime fica pendente. Registro: ADR 042 (adendo 2ª
-> onda) + F22 §11/§P7 (atualizados 2026-11-15).
+> acima. **Atualização 26.34 (2026-11-15):** com o Insiders instalado, as 3
+> âncoras desktop foram resolvidas por driver de evidência (`test:runtime`,
+> fora do gate — precedente `smoke-bundle.ts`); **vscode.dev segue Diferido
+> com âncora** (exige sessão de navegador). Registro: ADR 042 (adendos 2ª
+> onda + 26.34) + F22 §11/§P7 (atualizados 2026-11-15).
 
 > **Abordagem (26.29–26.33, F21² — 2026-11-15):** *headless-first + âncora*
 > (escolha do usuário). Tudo o que é provável em Deno puro foi entregue e
@@ -905,6 +914,83 @@ consome o handoff da F22 (§11 + §P7, atualizados 2026-11-15) e o estende.
 > forçado para a 3ª onda); nenhum `it.ignore` silencioso. Gate de fecho
 > `deno task tests` **943 passed (7719 steps), 0 failed (4m22s)**; Concluídas
 > 96 → 110.
+
+---
+
+## Adendo — resolução das âncoras runtime desktop (26.34)
+
+> **Autorização:** usuário informou VS Code Insiders instalado na máquina
+> (2026-11-15; `code-insiders` 1.147.0-insider, display `:0` ativo) e escolheu
+> o escopo **3 âncoras desktop** (Test Runner de comandos/trust + instalação
+> limpa) com harness **Deno npm:** (`@vscode/test-electron`); vscode.dev
+> permanece ancorado. Resolve os itens **Diferido** da matriz F21² (26.33.1)
+> que dependem de VS Code desktop — sem alterar o escopo da 3ª onda.
+
+### Decisões do kickoff (2026-11-15)
+
+| Aspecto | Decisão | Fundamento |
+|---|---|---|
+| Ambiente | VS Code Insiders 1.147.0-insider (`/usr/bin/code-insiders`), engines `^1.90.0` satisfeito; display `:0`/Wayland ativo; Node v20 via nvm existe mas **não é usado** | verificação direta (`--version`, `which`); memória de ambiente atualizada |
+| Harness | `npm:@vscode/test-electron@^2.5.2` via compatibilidade npm do Deno (sem `npm install`/`node_modules`), apontando `vscodeExecutablePath` para o Insiders instalado (sem download de VS Code) | precedente `npm:@vscode/vsce` (task `package`) + deps test-only da 2ª onda; regra pure-Deno do repo |
+| Suite in-host | `tests/runtime/suite.ts` em bundle CJS (`--external vscode`) carregado pelo Node Extension Host; `@std/assert` + coletor sequencial `check(name, fn)` — **exceção BDD documentada** (`Deno.test` não roda no host do VS Code) | `extensionTestsPath` é carregado via `require` pelo host Node; mesmo pipeline de bundle dos artefatos (22.4.7) |
+| Instrumentação de UI | stubs no mesmo Extension Host: `showQuickPick` (1º item), `showSaveDialog` (`defaultUri`), captura de `show*Message`; webviews assertados via `window.tabGroups.all` | comandos são UI-wiring sobre lógica pura já gatada; o aceite runtime prova o wiring real |
+| Isolamento | 3 execuções com `--user-data-dir` temporário fresco (dev/untrusted/clean); clean usa também `--extensions-dir` temporário + `.vsix` instalado; workspace fixture copiado para tmp (escritas nunca tocam o repo) | instalação limpa real; sem estado residual entre cenários |
+| Política de gate | driver de **evidência**, não teste de gate (task `test:runtime` separada; suite/driver não são `*test.ts`, não coletados por `deno test`); gate completo permanece verde e sem dependência de VS Code/pré-build | precedente `smoke-bundle.ts` (26.32.2) |
+| Numeração | continua `26.x`: **26.34.1–.4**, 4 tarefas atômicas; Concluídas 110 → 114 | xray §5.6 (não renumerar) |
+| ADR | adendo à **042** (âncoras desktop resolvidas; vscode.dev segue ancorado); sem número novo | 042 é o ADR de estratégia de validação |
+
+**Ordem de execução:** 26.34.1 (harness + LSP in-host, dev run) → 26.34.2
+(comandos, full mode) → 26.34.3 (trust, untrusted run) → 26.34.4 (instalação
+limpa + matriz + ADR + docs + gate).
+
+### Progresso (adendo 26.34)
+
+```
+[x] 26.34  Âncoras runtime desktop (Insiders)     —  4/4
+```
+
+| # | Tarefa | Arquivos | Verificação |
+|---|---|---|---|
+| 26.34.1 | Harness runtime: import test-only `@vscode/test-electron`; driver Deno (`run.ts`) + suite in-host (`suite.ts`, CJS `--external vscode`) + fixtures workspace; dev run: ativação + LSP no Extension Host real (diagnostics/hover/completion) | `packages/vsextension/deno.jsonc`, `tests/runtime/` | import `npm:@vscode/test-electron@^2.5.2` test-only + task `test:runtime` (fora do gate); driver resolve os 2 entry points do Insiders (wrapper `/usr/bin/code-insiders` para CLI `--version`/install/list — ele encaminha janelas e sai 0; binário Electron `/usr/share/code-insiders/code-insiders` para janelas — trava em flags CLI puras), bundle CJS `--external vscode`, fixtures copiados para tmp, `--user-data-dir` fresco, timeout 6 min com timer limpo no settle; suite = exceção BDD documentada (`@std/assert` + coletor `check`); dev run `deno task test:runtime`: **6 checks LSP ok** (ativação `vanaware.syntaxmesh-vscode`, languageId `syntaxmesh`, diagnostics de `error.tjp` com message/range/severity, master `[]`, hover markdown `task`, completion `build` após `depends`), Exit code 0; `deno check tests/runtime/run.ts tests/runtime/suite.ts` verde **[x 2026-11-15]** |
+| 26.34.2 | Integração de comandos (full mode): os 9 comandos do manifesto exercitados via API real — daemon add/reload/list/remove, relatório HTML (webview) + CSV (arquivo), export, switch-language, manual, tree | `tests/runtime/suite.ts` | dev run full: **RUNTIME SUITE full: 17 passed, 0 failed** (6 LSP + 11 comandos), Exit code 0 — addProject `loaded master.tjp (ok).`; reloadProject `reloaded master.tjp (ok).`; listProjects quick-pick 1 item label `master.tjp` description `1 reports`; removeProject `removed master.tjp.` + re-add; generateReport HTML aba `SyntaxMesh: overview` via `tabGroups.all`; CSV via `ConfigurationTarget.Workspace` → `overview.csv` stat > 0 + `saved overview.csv.` + restore; exportTjp `exported.tjp` bytes == documento + `exported master.tjp.`; switchLanguage insere `language "pt-BR"` + mensagem, volta `en` in-place; openManual aba `SyntaxMesh Manual:`; showProjectTree resolve; os 9 comandos do manifesto exercitados **[x 2026-11-15]** |
+| 26.34.3 | Trust (untrusted run, 2 fases): workspace não confiável mantém a extensão desabilitada (sem capability `untrustedWorkspaces`, 1ª camada; gate `assertTrusted` é a 2ª, P4); grant de trust habilita ativação + execução | `tests/runtime/suite.ts`, `run.ts`, `tests/runtime/probe/` | `deno task test:runtime -- --mode untrusted` **DRIVER_EXIT=0**: fase A (janela de teste, perfil fresco sem grant) **2 passed** — `isTrusted === false`, extensão presente mas `isActive === false`, comandos `addProject`/`generateReport` ausentes de `getCommands(true)` (VS Code desabilita a extensão em modo restrito — o bloqueio observado é anterior ao `UNTRUSTED_MESSAGE` do gate in-command, coberto em P4); grant persistido no perfil (`content.trust.model.key` em `state.vscdb`, mesma entrada do botão "Trust" da UI — Insiders 1.147 não expõe comando de grant programático e janelas de teste usam storage em memória, fallback documentado no kickoff); fase B (janela NORMAL + extensão sonda `probe/`, sem `extensionTestsPath`) **RUNTIME PROBE trusted=true: 3 passed** — workspace confiável, extensão ativa após abrir `.tjp`, `addProject` executa com `loaded master.tjp (ok).` **[x 2026-11-15]** |
+| 26.34.4 | Instalação limpa do `.vsix` em dirs isolados + suite sobre o artefato instalado; matriz F21² (3 itens Diferido → OK; vscode.dev segue ancorado); ADR 042 + sync de docs + gate de fecho | `run.ts`, `tests/runtime/inert/`, docs | `deno task test:runtime -- --mode clean` **DRIVER_EXIT=0**: `--install-extension syntaxmesh-vscode-0.0.2.vsix --extensions-dir <tmp>` → "successfully installed"; `--list-extensions --show-versions` → `vanaware.syntaxmesh-vscode@0.0.2`; suite sobre o artefato INSTALADO (sem dev path da extensão): **RUNTIME SUITE clean: 8 passed, 0 failed** (6 LSP + addProject + relatório HTML webview), `--user-data-dir` fresco; achados do harness registrados: o test runner in-host exige AMBOS os paths (`_doHandleExtensionTests`) → placeholder inerte `tests/runtime/inert/` (sem main/activationEvents, nunca ativa); o objeto de API `vscode` é chaveado pelo path da extensão que contém o módulo (`findSubstr`) → bundle da suite copiado para dentro do dir instalado (stubs de UI alcançam a extensão); matriz F21²: 3 linhas Diferido → OK (vscode.dev segue ancorado); ADR 042 adendo 26.34; gate de fecho registrado na nota de fecho do adendo abaixo **[x 2026-11-15]** |
+
+### Nota de fecho (adendo 26.34, 2026-11-15)
+
+**Evidência runtime** (driver `deno task test:runtime`, fora do gate; logs
+`/tmp/runtime-*-final2.log`): full mode **17 passed, 0 failed** (6 LSP + 11
+comandos — os 9 do manifesto); untrusted **2 passed** (fase A) + **RUNTIME
+PROBE trusted=true: 3 passed** (fase B); clean **8 passed, 0 failed** sobre o
+`.vsix` 0.0.2 instalado — todos com **DRIVER_EXIT=0**.
+
+**Gate de fecho:** `deno task tests` **EXIT=0 — 943 passed (7719 steps),
+0 failed, 0 ignored (2 steps) (4m22s)** — contagem inalterada da 2ª onda (a
+suite runtime não é coletada: `suite.ts`/`run.ts`/`probe.ts` não são
+`*test.ts`; type-check cobertos pelo `check` do vsextension).
+`deno task bench:compare` **EXIT=0** — 13 benches, sem regressões > 20%
+(delta máximo +1,0% em `gantt_500_html`); baseline intocado. `deno fmt
+--check` limpo (1033 arquivos). Nenhum `it.ignore` novo;
+`@vscode/test-electron` restrito ao driver + import map (não entra em nenhum
+dos 4 bundles da extensão nem no bundle lsp); pureza do `lsp-core` intacta
+(`check:lspcore` verde no gate).
+
+**Desvios/fallbacks registrados** (autorizados pelo plano): trust em 2 fases
+com grant persistido + sonda em janela normal (Insiders 1.147 não expõe
+comando de grant programático; janelas de teste usam storage em memória);
+placeholder inerte como dev path no clean mode (o runner in-host exige ambos
+os paths); bundle da suite copiado para o dir instalado (afinidade do objeto
+de API `vscode` por path da extensão). Higiene do harness: `.vscode-test/`
+(resíduo do test-electron) adicionado ao `.gitignore`; `deno fmt` deve ser
+rodado da raiz (fmt por arquivo resolve `probe/package.json` como config e
+ignora o workspace).
+
+**Sync de docs:** matriz F21² (3 linhas Diferido → OK; vscode.dev segue
+ancorado) + nota de política de âncora; ADR 042 (adendo 26.34, sem número
+novo); plano F21 §0 + Status; F22 §11 + §P7; `plano.md` (nota da 2ª onda +
+linhas F21/F22); `CURRENT.md`; `AGENTS.md`; `completude-matrix.md` §E
+035/042; `decisoes/README.md`. **Concluídas 110 → 114.** Sem commits (não
+solicitados).
 
 ---
 

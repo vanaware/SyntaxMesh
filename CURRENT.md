@@ -614,10 +614,19 @@ i18n (10.15+) em `packages/core/src/i18n/`.
   stdio (driver de evidência `smoke-bundle.ts`). **26.33** matriz de aceite
   F21² + F22 §11/§P7 atualizados + adendo à ADR 042. Gate `deno task tests`
   **943 passed (7719 steps), 0 failed (4m22s)**; Concluídas 96 → 110.
-  **Fronteira:** aceite runtime VS Code (Test Runner de comandos/trust,
-  `code --install-extension`, vscode.dev) **Diferido com âncora explícita** —
-  handoff para execução equipada com VS Code (não forçado para a 3ª onda);
-  nenhum `it.ignore` silencioso.
+  **Adendo 26.34 ✅ (2026-11-15):** com VS Code Insiders 1.147 instalado na
+  máquina, as **3 âncoras runtime desktop** resolvidas por driver de evidência
+  (`deno task test:runtime`, `@vscode/test-electron` via Deno npm:, fora do
+  gate — precedente `smoke-bundle.ts`): **26.34.1/.2** Test Runner in-host
+  (LSP real + os 9 comandos do manifesto, full mode **17 passed**);
+  **26.34.3** trust em 2 fases (untrusted → extensão desabilitada pelo VS Code;
+  grant persistido → janela normal com probe: ativa + executa, **2 + 3
+  passed**); **26.34.4** clean install do `.vsix` 0.0.2 em dirs isolados
+  (suite sobre o artefato instalado, **8 passed**). Gate de fecho `deno task
+  tests` **943 passed (7719 steps), 0 failed**; Concluídas 110 → 114.
+  **Fronteira:** **vscode.dev segue Diferido com âncora explícita** (exige
+  sessão de navegador; não forçado para a 3ª onda); nenhum `it.ignore`
+  silencioso.
 - **Phase 22 — VS Code extension** `OK` — **P1 (22.0) accepted 2026-11-11:
   ADR 035** (`decisoes/035-extensao-vscode.md`) created and indexed; baseline
   and layer boundaries recorded (Bloco A in the task document). **P2 completed

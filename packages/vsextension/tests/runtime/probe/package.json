@@ -1,0 +1,19 @@
+{
+  "name": "syntaxmesh-runtime-probe",
+  "publisher": "vanaware",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Runtime acceptance probe (26.34.3 phase B) — test harness only, never packaged.",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "main": "../../../dist/runtime-probe.cjs",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": true
+    }
+  }
+}

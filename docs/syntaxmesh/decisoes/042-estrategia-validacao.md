@@ -177,6 +177,40 @@ VS Code desktop nem vscode.dev, então a onda é **headless-first + âncora**
    bundle construído é **evidência** (driver `tests/smoke-bundle.ts`, não
    `*test.ts`), para não impor dependência de pré-build ao gate.
 
+## Adendo — âncoras runtime desktop resolvidas (26.34, 2026-11-15)
+
+O ambiente mudou: o usuário informou VS Code Insiders instalado na máquina
+(1.147.0-insider, display `:0` ativo) e escolheu resolver as **3 âncoras
+desktop** da matriz F21² (Test Runner de comandos/trust + instalação limpa),
+mantendo **vscode.dev ancorado**. O adendo 26.34 (4 tarefas atômicas,
+Concluídas 110 → 114) estende o item 2 do adendo da 2ª onda:
+
+1. **Harness Deno npm:** `@vscode/test-electron` via compatibilidade npm do
+   Deno (sem `npm install`/`node_modules`), `vscodeExecutablePath` apontando
+   para o Insiders instalado (sem download de VS Code). Driver de
+   **evidência** (`deno task test:runtime`, fora do gate — mesmo precedente
+   do `smoke-bundle.ts`): o gate completo não depende de VS Code, display ou
+   pré-build. A suite in-host é **exceção BDD documentada** (`@std/assert` +
+   coletor sequencial `check`; `Deno.test` não roda no Node Extension Host
+   que carrega o `extensionTestsPath`).
+
+2. **Evidência runtime (2026-11-15):** full mode **17 passed, 0 failed**
+   (ativação + LSP in-host — diagnostics/hover/completion — + os 9 comandos
+   do manifesto via API real, com stubs de UI no mesmo host); trust em
+   **2 fases** — untrusted: extensão desabilitada pelo próprio VS Code (sem
+   capability `untrustedWorkspaces`, 1ª camada; o gate in-command
+   `assertTrusted` é a 2ª, P4), grant persistido no perfil → ativa + executa
+   (sonda em janela NORMAL: janelas de teste usam storage em memória e o
+   Insiders 1.147 não expõe comando de grant programático — fallback
+   documentado no kickoff); instalação limpa do `.vsix` 0.0.2 em
+   `--extensions-dir`/`--user-data-dir` isolados + suite sobre o artefato
+   instalado **8 passed, 0 failed**.
+
+3. **vscode.dev permanece Diferido com âncora** (o runtime do Web Extension
+   Host exige sessão de navegador; fora do escopo escolhido). A política de
+   âncora (decisão 3) segue válida para esse item — nenhum `it.ignore`
+   silencioso. **Sem número novo de ADR.**
+
 ---
 
 **Status:** Aceito

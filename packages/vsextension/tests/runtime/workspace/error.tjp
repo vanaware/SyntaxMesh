@@ -1,0 +1,6 @@
+project prj "Error Fixture" "1.0" 2026-01-01 - 2026-12-31 {
+}
+
+task broken "Broken" {
+  bogusattr 5d
+}

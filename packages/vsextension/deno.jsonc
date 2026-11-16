@@ -42,7 +42,11 @@
     // gerada é tokenizada sobre o corpus sem VS Code. Não entram no bundle
     // (o runtime de highlight do editor é o do VS Code; aqui só validação).
     "vscode-textmate": "npm:vscode-textmate@^9.0.0",
-    "vscode-oniguruma": "npm:vscode-oniguruma@^2.0.0"
+    "vscode-oniguruma": "npm:vscode-oniguruma@^2.0.0",
+    // Test Runner do VS Code (F21, 26.34): APENAS runtime/evidência — dirige
+    // o Insiders instalado (`vscodeExecutablePath`) sobre a suite in-host.
+    // Não entra em bundle nenhum (mesma política das deps da 2ª onda).
+    "@vscode/test-electron": "npm:@vscode/test-electron@^2.5.2"
   },
   "tasks": {
     "check": "deno check src/**/*.ts tests/**/*.ts scripts/**/*.ts",
@@ -59,6 +63,10 @@
     // `--allow-missing-repository`: o manifesto não declara `repository`
     // (publicação no Marketplace está fora do escopo da Fase 22).
     "package": "deno task build && deno run -A npm:@vscode/vsce package --allow-missing-repository",
+    // Aceite runtime desktop (26.34): driver de evidência, FORA do gate
+    // `deno task tests` (exige VS Code Insiders + display + artefatos buildados).
+    // Modos: full (padrão) | untrusted | clean — ver tests/runtime/run.ts.
+    "test:runtime": "deno run --allow-read --allow-write --allow-run --allow-env --allow-net tests/runtime/run.ts",
     // `deno doc --lint` em ratchet (ADR 041): a entrada é o `exports` deste
     // pacote. Pacote novo = piso zero (JSDoc inglês completo, sem dívida).
     "lint:doc": "deno run --allow-read --allow-run --allow-write --allow-env ../../scripts/lint-doc.ts src/extension.node.ts",

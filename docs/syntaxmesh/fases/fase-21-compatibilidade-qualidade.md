@@ -1,7 +1,7 @@
 # Fase 21 — Compatibilidade e Qualidade
 
 > **Arquivo:** `docs/syntaxmesh/fases/fase-21-compatibilidade-qualidade.md`
-> **Status:** 🟨 Em andamento — **1ª onda CONCLUÍDA (2026-11-15)**: 26.0–26.11 + 26.14 + adendo 26.26–26.28 ✅ (gate `deno task tests` 935 passed, 7700 steps, 0 failed); **2ª onda (21²) CONCLUÍDA (2026-11-15)**: adendo 26.29–26.33 ✅ — suite headless adaptado à extensão VS Code (gate `deno task tests` 943 passed, 7719 steps, 0 failed); aceite runtime VS Code **Diferido com âncora**; 3ª onda pendente
+> **Status:** 🟨 Em andamento — **1ª onda CONCLUÍDA (2026-11-15)**: 26.0–26.11 + 26.14 + adendo 26.26–26.28 ✅ (gate `deno task tests` 935 passed, 7700 steps, 0 failed); **2ª onda (21²) CONCLUÍDA (2026-11-15)**: adendo 26.29–26.33 ✅ — suite headless adaptado à extensão VS Code (gate `deno task tests` 943 passed, 7719 steps, 0 failed); aceite runtime VS Code **Diferido com âncora**; **adendo 26.34 CONCLUÍDO (2026-11-15)**: 3 âncoras runtime desktop resolvidas com Insiders 1.147 (vscode.dev segue ancorado); 3ª onda pendente
 > **Duração estimada:** 12–15 dias (somada das 3 ondas)
 > **Depende de:** execução em **3 ondas** — 1ª: Fases 15–18 + 23 + 24 concluídas; 2ª: Fase 22; 3ª: Fases 19–20
 > **Bloqueia:** release (ao fim da 3ª onda)
@@ -17,7 +17,7 @@ validação que acompanha os consumidores do motor**. Ordem oficial
 | Onda | Gatilho | Escopo | Subfases atuais (`-tarefas`) |
 |---|---|---|---|
 | **1ª** | após a Fase 24 | Fidelidade do **motor** contra o `tj3` real, rodando as fixtures **através da CLI `syntaxmesh`** (runner `tj3-ts` = CLI da 24; nada de runner próprio); corpus, AST-equivalence, snapshots, benchmarks de engine, divergências | 26.0–26.11, 26.14 + adendo 26.26–26.28 — **✅ concluída 2026-11-15** (gate 935 passed) |
-| **2ª** | após a Fase 22 | Suite **adaptado à extensão VS Code**: testes de integração LSP (`registerLspServer`/handlers), grammar sobre o corpus, performance de `lsp-core` (diagnósticos em arquivo grande), ajuda/manual EN, empacotamento `.vsix` | 26.29–26.33 — **✅ concluída 2026-11-15** (gate 943 passed); runtime VS Code (Test Runner/clean install/vscode.dev) **Diferido com âncora** |
+| **2ª** | após a Fase 22 | Suite **adaptado à extensão VS Code**: testes de integração LSP (`registerLspServer`/handlers), grammar sobre o corpus, performance de `lsp-core` (diagnósticos em arquivo grande), ajuda/manual EN, empacotamento `.vsix` | 26.29–26.33 — **✅ concluída 2026-11-15** (gate 943 passed); runtime VS Code **Diferido com âncora** → **adendo 26.34 ✅ (2026-11-15)**: 3 âncoras desktop resolvidas com Insiders 1.147 (Test Runner comandos/trust + clean install); vscode.dev segue ancorado |
 | **3ª** | após a Fase 20 | Suite **adaptado à PWA + UI** e fecho: cross-browser (Playwright), acessibilidade, Lighthouse, CSP, segurança, build de produção, CHANGELOG, SemVer, CI/CD final | 26.12–26.13, 26.15–26.25 |
 
 **Consequências práticas:**

@@ -854,6 +854,16 @@ explícita** para uma execução equipada com VS Code (sem `it.ignore`
 silencioso). Matriz completa: `fase-21-compatibilidade-qualidade-tarefas.md`
 (adendo 2ª onda, 26.33.1); estratégia: ADR 042 (adendo 2ª onda).
 
+**Atualização F21 26.34 (2026-11-15):** com VS Code Insiders 1.147 instalado
+na máquina, as **3 âncoras desktop** foram resolvidas por driver de evidência
+(`deno task test:runtime`, fora do gate): Test Runner de LSP/comandos
+(full mode 17 passed — os 9 comandos do manifesto via API real), trust em
+2 fases (untrusted → extensão desabilitada; grant → ativa + executa) e
+instalação limpa do `.vsix` 0.0.2 em dirs isolados (suite sobre o artefato
+instalado, 8 passed). **vscode.dev segue Diferido com âncora** (exige sessão
+de navegador). Matriz: `fase-21-compatibilidade-qualidade-tarefas.md`
+(adendo 26.34) + §P7 das tarefas F22; estratégia: ADR 042 (adendo 26.34).
+
 Convenções: BDD (`@std/testing/bdd` + `@std/assert`); sem `any` em `src/`; TDD
 para handlers novos; fixtures de entrada: MWEs (`docs/Learning/mwe001–009`) e
 `docs/taskjuggler/test/TestSuite/` em inglês — já versionados no repositório;
