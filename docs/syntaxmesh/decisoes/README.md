@@ -101,6 +101,10 @@ O que foi decidido? Seja específico e acionável.
 | 041 | Gate de documentação (`lint:doc`) de `deno doc --lint` como ratchet | Aceito | 2026-11-08 |
 | 042 | Estratégia de validação (Fase 21 — 3 ondas; goldens tj3 × CLI, corpus, divergências) | Aceito | 2026-11-15 |
 
+> **Reserva 043 (2026-11-28):** ADR 043 — Temporal API Migration, vinculada à
+> Fase 25. O arquivo será criado antes da implementação e registrará runtime,
+> tipos públicos, política DST, compatibilidade e corte de `TjTime`.
+
 > **Reserva de números (decisão 2026-11-03 — `docs/syntaxmesh/xray.md` §5.3):**
 > 029–032 existem (`029-journal-alertlevel.md`, entregue na Fase 16 em
 > 2026-11-03). **033** (`033-elemento-template.md`) foi entregue na Fase 23

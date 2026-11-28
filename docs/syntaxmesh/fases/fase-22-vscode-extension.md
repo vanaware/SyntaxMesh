@@ -33,8 +33,9 @@
 > execution API. Storage/PWA phases 19/20 are not prerequisites.
 > **Scheduling gate:** finish F21 wave 1 before starting the remaining F22 work.
 > P1/P2 kickoff was user-authorized early on 2026-11-11 (no technical dependency
-> on the remaining F21¹ tasks); the official order is unchanged.
-> **Official order:** 23 → 24 → 21¹ → 22 → 21² → 19 → 20 → 21³.
+> on the remaining F21¹ tasks); Phase 25 was registered later, and the early
+> delivery remains recorded as an execution exception.
+> **Official order:** 23 → 24 → 25 → 21¹ → 22 → 21² → 19 → 20 → 21³.
 > **Handoff:** F21 wave 2 validates the editor extension.
 > **Scope:** pure `doc-core`/`lsp-core`, VS Code Desktop/Web adapters, standalone LSP.
 
@@ -958,7 +959,7 @@ acceptance. The CLI-facing `doc-core` work already delivered is not repeated.
 
 The original IDs remain 22.0 → 22.1/22.1b readiness steps → 22.2 → 22.3 → 22.4
 → 22.5 → 22.6 → 22.7 → 22.8 → 22.9 → 22.10 → 22.11. The official phase order
-remains **23 → 24 → 21¹ → 22 → 21² → 19 → 20 → 21³**; the older suggestion
+is **23 → 24 → 25 → 21¹ → 22 → 21² → 19 → 20 → 21³**; the older suggestion
 of starting directly after F14 is superseded. Available F15–F18 engine/report
 capabilities are inputs, not a reason to move F22 or reopen those phases.
 

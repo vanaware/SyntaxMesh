@@ -1,7 +1,7 @@
 # Fases — Guia
 
 This directory contains the **21 canonical phases plus complementary phases
-22–24**. Each phase separates its specification, atomic tasks, and any later
+22–25**. Each phase separates its specification, atomic tasks, and any later
 review/addendum documents. The official execution order is in [plano.md](plano.md).
 
 ## Convenção de nomes
@@ -255,19 +255,21 @@ deno task audit:phase N
 
 | Phase | Plan | Tasks | Planning note |
 |---|---|---|---|
-| 22 | [VS Code extension: P1–P7](fase-22-vscode-extension.md#0-major-blocks-and-subblocks) | [Original task owners and progress](fase-22-vscode-extension-tarefas.md) | `PAR` — CLI-facing `doc-core` delivered; editor extension not started. 22.1b records 86/108 completions. |
+| 22 | [VS Code extension: P1–P7](fase-22-vscode-extension.md#0-major-blocks-and-subblocks) | [Original task owners and progress](fase-22-vscode-extension-tarefas.md) | `OK` — P1–P7 delivered; F21² runtime validation recorded. |
 | 23 | [Templates](fase-23-template.md) | [Atomic tasks](fase-23-template-tarefas.md) | Existing template reference is an input to F22 grammar/help. |
 | 24 | [CLI](fase-24-cli.md) and [execution API addendum](fase-24-cli-adendo.md) | [Atomic tasks](fase-24-cli-tarefas.md) | Shared execution contract and CLI `man` consumer reused by F22. |
+| 25 | [Temporal API migration](fase-25-temporal-api.md) | [Implementation plan: 96 atomic tasks](fase-25-temporal-api-tarefas.md) | `PLANNED` — native Temporal plus polyfill fallback; corrected behavior; public Temporal cutover. |
 
 Phase 22's P1–P7 groups organize architecture, shared cores, editor tooling,
 execution/reports/UX, Web/storage, standalone LSP, and packaging/handoff. They
 do not replace the original 22.x task IDs or the existing C–J blocks. Unfinished
 subphases are detailed in the existing task document before implementation.
-The scheduling gate remains **23 → 24 → 21¹ → 22 → 21² → 19 → 20 → 21³**.
+The scheduling gate is **23 → 24 → 25 → 21¹ → 22 → 21² → 19 → 20 → 21³**.
+F21 waves 1–2 and F22 were delivered early; Phase 25 is the next pending phase.
 
 ## Referências cruzadas
 
-- `docs/syntaxmesh/decisoes/` — ADRs 001–031 (existentes até 023 + 030/031; numeração futura reservada nos arquivos de fases: 024 RichText, 025 Markdown, 026 Reports, 028 Apoio).
+- `docs/syntaxmesh/decisoes/` — ADRs 001–042 aceitos/propostos; ADR 043 reservado para a Fase 25 (Temporal API).
 - `docs/syntaxmesh/cheat-sheet-ruby-ts.md` — mapeamento Ruby→TS + bugs.
 - `docs/syntaxmesh/06-testes-e-processo.md` — protocolo TDD.
 - `docs/syntaxmesh/fases/plano.md` — **plano canônico consolidado das 21 fases** (este diretório é a fonte da verdade do escopo e andamento).
@@ -276,5 +278,5 @@ The scheduling gate remains **23 → 24 → 21¹ → 22 → 21² → 19 → 20 �
 
 ---
 
-**Last navigation update:** 2026-11-11 (Phase 22 block organization only;
-other historical phase entries are unchanged).
+**Last navigation update:** 2026-11-28 (Phase 25 Temporal API registration);
+other historical phase entries are unchanged.

@@ -1,19 +1,23 @@
-## Ordem de execução (diretriz do usuário — 2026-11-03)
+## Ordem de execução (diretriz do usuário — 2026-11-03; atualizada em 2026-11-28)
 
 Após a Fase 15 (✅ — Gantt HTML+CSS, 2026-11-03), as fases pendentes
 executam nesta ordem:
 
 ```
-16 → 17 → 18 → 23 → 24 → 21 (1ª onda) → 22 → 21 (2ª onda) → 19 → 20 → 21 (3ª onda)
+16 → 17 → 18 → 23 → 24 → 25 → 21 (1ª onda) → 22 → 21 (2ª onda) → 19 → 20 → 21 (3ª onda)
 ```
 
 - **Fase 23 (template)** antes da 24 e da 22: a keyword `template` já nasce
   coberta pela CLI e pela grammar da extensão.
 - **Fase 24 (CLI)** antes da 21: a CLI `syntaxmesh` vira o **harness** dos
   testes de compatibilidade — a 21 não constrói runner próprio.
+- **Fase 25 (Temporal API)** depois da 24 e antes da 21¹: migra o domínio de
+  `Date`/`TjTime` para tipos Temporal antes do congelamento definitivo dos
+  resultados de compatibilidade. A 21¹ e a F22 foram entregues antecipadamente;
+  após a 25, os goldens, snapshots e benchmarks afetados devem ser revalidados.
 - **Fase 21 executa em 3 ondas** (reescopo; detalhes em
   `fase-21-compatibilidade-qualidade.md` §0):
-  - **1ª onda (após a 24, antes da 22):** golden de fidelidade ao `tj3` real
+  - **1ª onda (após as Fases 24 e 25, antes da 22):** golden de fidelidade ao `tj3` real
     do **motor** rodando as fixtures **através da CLI da Fase 24**; corpus, AST-
     equivalence i18n, snapshots, benchmarks e divergências conhecidas.
   - **2ª onda (após a 22):** o suite é adaptado para testar a **extensão VS
@@ -634,7 +638,7 @@ casos); smoke `tests/integration/smoke_after_phase_16_test.ts`.
 
 **Objetivo:** Golden tests, corpus multilíngue, performance, release.
 **Reescopo (2026-11-03):** executa em **3 ondas** — 1ª valida o motor
-**usando a CLI da Fase 24 como runner** (após a 24, antes da 22); 2ª adapta o
+**usando a CLI da Fase 24 como runner** (após as Fases 24 e 25, antes da 22); 2ª adapta o
 suite para a extensão VS Code (após a 22); 3ª adapta para a PWA + UI (após a
 20) e fecha o release. Ver Ordem de execução no topo deste arquivo e §0 de
 `fase-21-compatibilidade-qualidade.md`.
@@ -688,6 +692,39 @@ suite para a extensão VS Code (após a 22); 3ª adapta para a PWA + UI (após a
 
 ---
 
+### FASE 25 — Temporal API Migration
+
+**Objetivo:** substituir `Date`/`TjTime` no domínio por tipos Temporal explícitos,
+com tempo absoluto em `Instant`, valores zonados em `ZonedDateTime`, calendário em
+`PlainDate`, horário de trabalho em `PlainTime` e esforço em `Duration`.
+
+**Especificação:** `fase-25-temporal-api.md`.
+**Tarefas:** `fase-25-temporal-api-tarefas.md` — 96 tarefas atômicas, TDD e
+registro de evidências por tarefa.
+**Decisão de arquitetura:** ADR 043, criada antes da implementação.
+
+**Subfases:**
+- 25.0 — Baseline e prova de runtime nativo/fallback.
+- 25.1 — Adapter Temporal único e primitivas.
+- 25.2 — Substituição de `TjTime` e dos internals de timezone.
+- 25.3 — Calendário, intervalos meio-abertos e scoreboard.
+- 25.4 — Scheduler e modelo de domínio.
+- 25.5 — Contabilidade e finanças.
+- 25.6 — Relatórios, sheets, Gantt e formatação.
+- 25.7 — Parser, envelope JSON e integrações.
+- 25.8 — Corte público, remoção de `TjTime` e fechamento.
+
+**Política:** comportamento Temporal corrigido é o único suportado; `.tjp` e o
+envelope JSON `execute()` permanecem estáveis. Não haverá fachada pública legada
+nem guia público de migração. Goldens corrigidos exigem expectativas revisadas e
+não podem ser gerados a partir do Ruby.
+
+**Critério de aceite:** `deno task tests`, `deno task bench:compare` e
+`deno task check:web-bundle` passam; smoke da Fase 25 e evidências de fechamento
+registradas.
+
+---
+
 ## Resumo executivo
 
 | Fase | Pacote | Referências Ruby | Prioridade | Status |
@@ -721,6 +758,7 @@ suite para a extensão VS Code (após a 22); 3ª adapta para a PWA + UI (após a
 | 22 | tooling (vsextension + `lsp-core` + **`doc-core`** no core) | apps/Tj3Man.rb, UserManual, SyntaxReference, KeywordDocumentation, TjpExample, TernarySearchTree, KateSyntax/VimSyntax | Média | `OK` — **P1 (22.0) aceito 2026-11-11 (ADR 035)**; **P2 concluído 2026-11-11** (kickoff antecipado de P1/P2 autorizado pelo usuário; F21¹ parcial): subfase 22.1b fechada em **106/108 verificadas** (H 6.9/6.10 fora do v1) + `lsp-core` puro entregue (13 módulos de serviço + `registerLspServer` estrutural; cobertura 96,6% linhas; gate `check:lspcore`). **P3 concluído 2026-11-12** (editor foundation: shell 22.2 + grammar 22.3 + transporte 22.4; cobertura lógica pura 99,2% linhas; bundles Web sem `node:`; gate completo 853 passed). **P4 concluído 2026-11-14** (execução/relatórios/UX: daemon 22.5 **execute-based sem delta no core** + reports 22.6 + commands/views/trust 22.7; cobertura lógica pura 98,8% linhas; gate completo 867 passed). **P5 concluído 2026-11-14** (Web/storage: pureza do grafo + escrita disparada pelo usuário `direct`/`stub-first` + resolver de storage + small state em Memento + cenários Web; daemon roteia file/memory pelo resolver reusando o fallback em memória + versionamento do P4; sem IndexedDB/OPFS direto; cobertura lógica pura P5 100% linhas; gate completo 873 passed). **P6 concluído 2026-11-14** (standalone LSP: adapter de transporte movido para o `lsp-core` + pacote independente `packages/lsp` — args puros, bootstrap stdio, bundle executável `dist/syntaxmesh-lsp.js` e smoke de protocolo real JSON-RPC framed; nada importado da extensão; cobertura `packages/lsp/src` 100%; gate completo 876 passed). **P7 concluído 2026-11-14** (packaging/acceptance/handoff — **Fase 22 fechada, P1–P7 OK**): `--version`/`-V` puros no lsp + injeção de versão no build (prepend de `const __APP_VERSION__`, versão do `deno.jsonc` raiz) + shebang executável; `.vsix` via **vsce sob Deno** (`deno task package:vsext`) — `syntaxmesh-vscode-0.0.2.vsix` **2,19 MB < 5 MB**, zip válido + vsixmanifest + inventário limpo; regressão de coerência do manifesto + matriz de aceite §11; cobertura de fechamento `core/src/lsp` 96,4% linhas (≥ 80%) / `vsextension/src` 99,3% (≥ 70%) / `lsp/src` 100%; gate completo **880 passed (7189 steps)**; handoff F21² registrado. Aceite runtime (instalação limpa, Test Runner, vscode.dev) diferido para a **F21²** com âncora explícita (sem VS Code no ambiente); **âncoras desktop resolvidas no adendo F21 26.34 (2026-11-15)** com Insiders 1.147 — vscode.dev segue ancorado. [Plan organized into P1–P7](fase-22-vscode-extension.md#0-major-blocks-and-subblocks): architecture; shared cores; editor/LSP; execution/reports/UX; Web/storage; standalone LSP; packaging/handoff. [Task document](fase-22-vscode-extension-tarefas.md): 22.0 detailed as Bloco A (5/5); 22.1b C–J closed (evidência por tarefa atômica); other unfinished subphases detailed at kickoff. Original IDs and official order unchanged (after 21¹, before 21²/19/20). Daemon/reports reuse F24 `execute`; required contract delta is audited and planned in the F24 addendum, not forked. |
 | 23 | core (lexer/parser — extensão TS-only `template`) | — (engine Vento) | Alta | ✅ Concluída (2026-11-06, 23.0–23.8; plano `fase-23-template.md`, ADR 033, referência em `11-referencia-template.md`; 23.7.7 fechada em 2026-11-08 pelo smoke da CLI da F24) |
 | 24 | cli (novo pacote `packages/cli`) | apps/Tj3.rb, man/tj3.1 + `apps/Tj3Man.rb` (`syntaxmesh man`) + apps de sheets | **Alta** | 🟨 Em andamento — **1ª onda ✅ (24.0–24.8, 2026-11-08)**; adendos 24.9/24.10 pendentes (após 23, antes de 21¹; plano `fase-24-cli.md`; **nomenclatura própria + extensão única `.smx` e English-first em toda saída da ferramenta — decisões 2026-11-07**, clones de comportamento do tj3 via API `execute`/JSON, `fase-24-cli.md` §1.6/§1.7; **adendos 24.9/24.10** — `syntaxmesh man`, `--freeze*`, `syntaxmesh ts/ss send·receive·summary`, `--report --attr`, consumidores de `FileList`/`StdIoWrapper`/`UTF8String`, imagens 13.14.3 e regressão `format richtext`; âncoras `Fase 24` já no core para `parse/parseFile/parseContent/freeze`; **grupo 5 (nota 2026-11-07)** — refatoramento retroativo das costuras de `FileStore` injetado entregues pela F18/ADR 037 (sheets, `checkTimeSheet`/`checkStatusSheet`) para dados-como-dados na fronteira do `execute`, + relaxação de extensões para `.smx` (24.2.36)) |
+| 25 | core + cli + vsextension | Temporal API; ADR 043 | **Crítica** | ⬜ Planejada — especificação aprovada e **96 tarefas atômicas**; `fase-25-temporal-api.md` + `fase-25-temporal-api-tarefas.md` |
 
 > **Pacotes (ADR 030):** todo o código de fases vive em `packages/core` (parser, i18n, richtext, markdown, report, sheets, journal, storage de nível lógico). `packages/server`, `packages/ui`, `packages/service-worker` são suporte. A coluna "Pacote" acima indica a camada lógica histórica, não um package físico.
 

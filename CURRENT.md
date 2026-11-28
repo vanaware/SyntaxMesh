@@ -2,7 +2,7 @@
 
 Leia os arquivos:
 
-- docs/syntaxmesh/fases/plano.md (plano canônico de 21 fases + complementares 22–24 — fonte da verdade de escopo, andamento e **ordem de execução**)
+- docs/syntaxmesh/fases/plano.md (plano canônico de 21 fases + complementares 22–25 — fonte da verdade de escopo, andamento e **ordem de execução**)
 - docs/syntaxmesh/fases/README.md (convenções de arquivos, protocolo TDD, mapa de fases)
 - docs/syntaxmesh/09-regras-para-ia.md (regras de ouro)
 
@@ -11,11 +11,21 @@ Reuna dicas e analise-as do arquivo: docs/syntaxmesh/cheat-sheet-ruby-ts.md
 
 Desenvolvimento atual (docs/syntaxmesh/fases/):
 
+- **Fase 25 — Temporal API Migration ⬜ PLANEJADA (2026-11-28)**:
+  `fase-25-temporal-api.md` (especificação aprovada) +
+  `fase-25-temporal-api-tarefas.md` (**96 tarefas atômicas, 0 concluídas**).
+  Substitui `Date`/`TjTime` no domínio por `Instant`, `ZonedDateTime`,
+  `PlainDate`, `PlainTime` e `Duration`, com comportamento Temporal corrigido,
+  Temporal nativo + fallback e quebra da API pública aceita. A ordem canônica é
+  `24 → 25 → 21¹`; como 21¹/21² e F22 já foram entregues antecipadamente, a Fase
+  25 é a próxima pendente e deve revalidar os resultados afetados. Nenhum código
+  de produção foi alterado pelo planejamento.
+
 - **Fase 23 — Template (Vento) ✅ CONCLUÍDA (2026-11-06, fecho estendido 2026-11-07)**:
   `fase-23-template.md` (plano) + `fase-23-template-tarefas.md` (23.0–23.10) +
   ADR 033 + referência normativa `docs/syntaxmesh/11-referencia-template.md`.
-  Próxima da ordem oficial: **Fase 24 (CLI)** — plano `fase-24-cli.md` +
-  `fase-24-cli-tarefas.md`. Única pendência que restava da 23 era **23.7.7**
+  Na ordem então vigente, a próxima era a **Fase 24 (CLI)** — plano
+  `fase-24-cli.md` + `fase-24-cli-tarefas.md`. Única pendência que restava da 23 era **23.7.7**
   (smoke `syntaxmesh template-fixture.tjp`), **fechada em 2026-11-08** pela
   24.8 — a fixture usada é `templates/reports.tjp` (a `basic.tjp` tem `effort`
   sem `allocate` e o scheduler erra de propósito).
@@ -217,7 +227,7 @@ i18n (10.15+) em `packages/core/src/i18n/`.
   `smoke_after_phase_18_test.ts`.
 - **Ordem de execução oficial (diretriz do usuário, 2026-11-03; seção
   "Ordem de execução" do `plano.md`):**
-  `16 → 17 → 18 → 23 → 24 → 21 (1ª onda) → 22 → 21 (2ª onda) → 19 → 20 → 21 (3ª onda)`
+  `16 → 17 → 18 → 23 → 24 → 25 → 21 (1ª onda) → 22 → 21 (2ª onda) → 19 → 20 → 21 (3ª onda)`
 - **Fase 23 — Template (Vento)** ✅ Concluída (2026-11-06, 23.0–23.8): keyword
   `template` (`en`/`pt-BR` `modelo`/`es` `plantilla`) com corpo `[ ]` **cru** e
   params `( )`, registrada no **namespace único** macro/template do `MacroTable`
@@ -718,8 +728,8 @@ i18n (10.15+) em `packages/core/src/i18n/`.
   `xray.md` §1.7.1, cobertura docgen **97,0% linhas**, gate completo verde).
   Evidência por tarefa atômica em `fase-22-vscode-extension-tarefas.md`
   §Progresso/P2–P7 evidence + Handoff F21². **Fase 22 concluída (P1–P7);
-  F21¹ remainder concluído (2026-11-15); próximo:** ordem oficial (21² →
-  19 → 20 → 21³) — a 21² recebe o handoff da F22 para a validação runtime.
+  F21¹ remainder concluído (2026-11-15); próximo naquele fecho:** 21² → 19 → 20 →
+  21³. **Estado atual (2026-11-28):** Fase 25 planejada; 21² já concluída.
 - Fase 15 — Gantt ✅ Concluída (2026-11-03)
 - Fase 16 — Apoio ✅ Concluída (2026-11-03, 16.0–16.20; escopo xray: 16.10
   cancelado; 16.9/16.14/16.15 movidos p/ a 22; dono de `query_dashboard`).

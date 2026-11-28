@@ -6,8 +6,8 @@
 > **Status:** ⬜ Não iniciada
 > **Duração estimada:** 5–8 dias
 > **Depende de:** Fases 2–14 (motor completo: parser, i18n, scheduler, financeiro, relatórios). **Não depende** das Fases 15–23.
-> **Bloqueia:** nada — mas **deve ser executada após a Fase 23 e antes** das Fases 21 (1ª onda), 22 (VS Code), 19 (Storage) e 20 (PWA + UI)
-> **Posicionamento:** ordem oficial em `plano.md` (2026-11-03): `… 23 → 24 → 21¹ → …`; serve de banco de provas headless do motor — a **1ª onda da Fase 21 usa esta CLI como runner** dos golden tests contra o `tj3` real — e valida a injeção de I/O no core antes da UI e da extensão
+> **Bloqueia:** nada — mas **deve ser executada após a Fase 23 e antes** das Fases 25 (Temporal API), 21 (1ª onda), 22 (VS Code), 19 (Storage) e 20 (PWA + UI)
+> **Posicionamento:** ordem oficial em `plano.md` (2026-11-03; atualizada em 2026-11-28): `… 23 → 24 → 25 → 21¹ → …`; serve de banco de provas headless do motor — a **1ª onda da Fase 21 usa esta CLI como runner** dos golden tests contra o `tj3` real — e valida a injeção de I/O no core antes da UI e da extensão
 > **Natureza:** tooling (novo pacote `packages/cli` no workspace)
 
 ---

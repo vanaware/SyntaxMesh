@@ -7,6 +7,10 @@
 > **Concluídas:** 0
 > **Stack:** Preact + Signals + BeerCSS + Service Worker + Web Worker
 
+> **Nota de numeração (2026-11-28):** os IDs `25.x` deste arquivo são históricos
+> da Fase 20. A nova Fase 25 — Temporal API usa IDs `25.x` no arquivo
+> `fase-25-temporal-api-tarefas.md`; sempre qualificar a fase ao citar uma tarefa.
+
 ---
 
 ## ⚠️ PREÂMBULO — Leia antes de começar
@@ -41,6 +45,9 @@
 - **ADR 002** — Parser isolado da lógica de UI.
 - **ADR 005** — TypeScript + Deno + Browser only.
 - **ADR 032** — PWA + UI stack (**criado nesta fase**).
+- **ADR 043** — Temporal API (Fase 25): a inicialização no navegador/Worker deve
+  consumir o adapter do core; nunca atribuir `globalThis.Temporal` nem importar o
+  polyfill diretamente na UI.
 
 ### Convenções
 
