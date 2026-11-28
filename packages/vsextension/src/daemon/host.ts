@@ -23,7 +23,7 @@ import { Uri, workspace, } from "vscode";
 import type { ExtensionContext, } from "vscode";
 import { DaemonCore, } from "./daemon-core.ts";
 import { buildClosure, } from "./include-closure.ts";
-import { deserializeCache, serializeCache, } from "./persistence.ts";
+import { restoreCache, serializeCache, } from "./persistence.ts";
 import type { ProjectModel, } from "./types.ts";
 import { resolveStorageCapabilities, } from "../web/storage-capabilities.ts";
 import type { StorageStrategy, } from "../web/storage-capabilities.ts";
@@ -37,6 +37,11 @@ function basename(uri: Uri,): string {
   const path = uri.path;
   const index = path.lastIndexOf("/",);
   return index < 0 ? path : path.slice(index + 1,);
+}
+
+/** Normalizes string-URI service callers while retaining existing `Uri` callers. */
+function asUri(uri: Uri | string,): Uri {
+  return typeof uri === "string" ? Uri.parse(uri,) : uri;
 }
 
 /**
@@ -96,16 +101,15 @@ export class DaemonHost {
   /**
    * Reads the closure of a master document and adds it to the daemon.
    *
-   * @param masterUri URI of the master `.smx`/`.tjp` document.
+   * @param masterUri URI or string URI of the master `.smx`/`.tjp` document.
    * @returns the cached model (status projected from the load envelope).
    */
-  async addProject(masterUri: Uri,): Promise<ProjectModel> {
-    const closure = await buildClosure(
-      basename(masterUri,),
-      this.readerFor(masterUri,),
-    );
-    const model = await this.core.addProject(masterUri.toString(), closure,);
-    await this.state.addRecentProject(masterUri.toString(),);
+  async addProject(masterUri: Uri | string,): Promise<ProjectModel> {
+    const uri = asUri(masterUri,);
+    const key = uri.toString();
+    const closure = await buildClosure(basename(uri,), this.readerFor(uri,),);
+    const model = await this.core.addProject(key, closure,);
+    await this.state.addRecentProject(key,);
     await this.persist();
     return model;
   }
@@ -113,30 +117,66 @@ export class DaemonHost {
   /**
    * Re-reads the closure of a master document and reloads it.
    *
-   * @param masterUri URI of the master document.
+   * @param masterUri URI or string URI of the master document.
    * @returns the refreshed cached model.
    */
-  async reloadProject(masterUri: Uri,): Promise<ProjectModel> {
-    const closure = await buildClosure(
-      basename(masterUri,),
-      this.readerFor(masterUri,),
-    );
-    const model = await this.core.reloadProject(masterUri.toString(), closure,);
-    await this.state.addRecentProject(masterUri.toString(),);
+  async reloadProject(masterUri: Uri | string,): Promise<ProjectModel> {
+    const uri = asUri(masterUri,);
+    const key = uri.toString();
+    const closure = await buildClosure(basename(uri,), this.readerFor(uri,),);
+    const model = await this.core.reloadProject(key, closure,);
+    await this.state.addRecentProject(key,);
     await this.persist();
     return model;
+  }
+
+  /**
+   * Removes a cached project and persists the resulting active selection.
+   *
+   * @param masterUri URI or string URI of the master document.
+   * @returns `true` when a project was removed.
+   */
+  async removeProject(masterUri: Uri | string,): Promise<boolean> {
+    const removed = this.core.removeProject(asUri(masterUri,).toString(),);
+    if (removed) await this.persist();
+    return removed;
+  }
+
+  /**
+   * Selects a cached project and persists an actual selection change.
+   *
+   * @param masterUri URI or string URI of the master document.
+   * @returns the selected model, or `undefined` when the URI is not cached.
+   */
+  async setActiveProject(
+    masterUri: Uri | string,
+  ): Promise<ProjectModel | undefined> {
+    const key = asUri(masterUri,).toString();
+    const previous = this.core.activeProject()?.uri;
+    const model = this.core.setActiveProject(key,);
+    if (model !== undefined && previous !== key) await this.persist();
+    return model;
+  }
+
+  /** @returns the explicitly active cached project, if any. */
+  activeProject(): ProjectModel | undefined {
+    return this.core.activeProject();
   }
 
   /** Restores the persisted cache into the core (no-op when absent/stale). */
   async restore(): Promise<void> {
     const json = await this.readStore();
     if (json === null) return;
-    for (const model of deserializeCache(json,)) this.core.cache.set(model,);
+    const restored = restoreCache(json,);
+    this.core.restore(restored.projects, restored.activeUri,);
   }
 
-  /** Persists the current cache (Desktop file / Web memory). */
+  /** Persists the current cache and active selection (Desktop file / Web memory). */
   async persist(): Promise<void> {
-    await this.writeStore(serializeCache(this.core.cache.list(),),);
+    await this.writeStore(serializeCache(
+      this.core.cache.list(),
+      this.core.cache.active(),
+    ),);
   }
 
   /** Reads the stored payload, or `null` when absent/unreadable. */

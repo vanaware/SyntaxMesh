@@ -9,6 +9,7 @@ location: "#/articles/index.md"
 tags:
   - "doc"
 pages:
+  - "vscode-extension-manual.md"
   - "static-site-installation.md"
   - "frontmatter-guide.md"
   - "islands.md"
@@ -24,6 +25,7 @@ Welcome to ...
 
 Browse the guides and technical documentation available:
 
+- **[SyntaxMesh VS Code Extension Manual](./vscode-extension-manual.md)**: Complete guide to commands, Project Explorer, LSP, Desktop and Web consoles, reports, sheets, settings, and troubleshooting.
 - **[📦 How to Install mdBlog on Your Static Site](./static-site-installation.md)**: Required files, directory layout, `mdblog.js` bundle, and BeerCSS CDN setup.
 - **[📝 Comprehensive Frontmatter & index.md Guide](./frontmatter-guide.md)**: Supported fields, hierarchical navigation trees, and site title/icon branding.
 - **[🏝️ Islands Guide](./islands.md)**: Manual on-demand client-side selective hydration.

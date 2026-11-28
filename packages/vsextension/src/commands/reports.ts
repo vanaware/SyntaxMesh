@@ -1,86 +1,123 @@
 /**
- * `commands/reports.ts` — Generate Report command bootstrap (22.6.5).
+ * Canonical report command group shared by Desktop and Web (22.12.19).
  *
- * Wires the report flow over the daemon and the presenter: pick the active
- * project (adding it on demand), list its reports, let the user choose one,
- * generate it (re-parse + re-schedule via `execute`), then branch on the output
- * policy — HTML to a Webview, other formats saved (22.6.4). All selection and
- * policy logic is pure (22.6.1/22.6.2); this file only wires VS Code UI.
- *
- * Imports the `vscode` runtime, so it is type-checked here and exercised inside
- * VS Code (acceptance deferred to P7). Gated by Workspace Trust via the shared
- * {@link guarded} helper (plan §8.4).
- *
- * @see docs/syntaxmesh/fases/fase-22-vscode-extension.md §3.3/§8.2
- * @see docs/syntaxmesh/fases/fase-22-vscode-extension-tarefas.md §22.6.5
+ * The group adapts VS Code prompts and the HTML presenter to the shared project
+ * service and output host. Legacy Generate Report routing lives only in the
+ * compatibility registrar; every public handler returns a structured result.
  */
-import { commands, window, workspace, } from "vscode";
-import type { ExtensionContext, } from "vscode";
-import type { DaemonHost, } from "../daemon/host.ts";
-import type { ReportPresenter, } from "../reports/host.ts";
-import { chooseFormat, quickPickItems, } from "../reports/report-selector.ts";
-import { activeMasterUri, guarded, } from "./shared.ts";
+import { Uri, window, workspace, } from "vscode";
+import { withBusy, } from "../views/host.ts";
+import type { CommandResult, } from "./contracts.ts";
+import {
+  commandResultOrFailure,
+  guardedCommand,
+} from "./execution-actions.ts";
+import type { CanonicalCommandDependencies, } from "./register.ts";
+import type { CommandRegistry, } from "./registry.ts";
+import {
+  exportReportCommand,
+  listReportsCommand,
+  openReportCommand,
+  renderReportsCommand,
+  type ReportCommandDependencies,
+} from "./report-actions.ts";
 
-/**
- * Registers the Generate Report command on the extension context.
- *
- * @param context the extension context (owns the command disposable).
- * @param host the started daemon host.
- * @param presenter the report presenter (Webview/save).
- */
-export function registerReportCommands(
-  context: ExtensionContext,
-  host: DaemonHost,
-  presenter: ReportPresenter,
+/** Registers the four canonical report commands against the shared registry. */
+export function registerReportGroup(
+  registry: CommandRegistry,
+  dependencies: CanonicalCommandDependencies,
 ): void {
-  context.subscriptions.push(
-    commands.registerCommand(
-      "syntaxmesh.generateReport",
-      () =>
-        guarded(async () => {
-          const uri = activeMasterUri();
-          if (uri === undefined) {
-            window.showWarningMessage(
-              "SyntaxMesh: open a project file first.",
-            );
-            return;
-          }
-          const key = uri.toString();
-          if (!host.core.cache.has(key,)) await host.addProject(uri,);
+  const actions: ReportCommandDependencies = {
+    service: dependencies.service,
+    projectUri: dependencies.resolveProject,
+    openHtml: (entry, masterUri,) =>
+      dependencies.presenter.openHtml(entry, Uri.parse(masterUri,),),
+    output: dependencies.output,
+    ui: {
+      showErrorMessage: (message,) => {
+        window.showErrorMessage(message,);
+      },
+      showInformationMessage: (message,) => {
+        window.showInformationMessage(message,);
+      },
+      showQuickPick: (items, options,) =>
+        Promise.resolve(window.showQuickPick(items, options,),),
+      showFormatPick: (formats,) =>
+        Promise.resolve(window.showQuickPick(formats, {
+          placeHolder: "Select report format",
+        },),),
+      showSaveDialog: (options,) =>
+        Promise.resolve(
+          window.showSaveDialog({
+            defaultUri: Uri.parse(options.defaultUri,),
+            saveLabel: "Export Report",
+          },),
+        ).then((selected,) => selected?.toString()),
+    },
+  };
+  const withResult = <T,>(
+    action: () => Promise<CommandResult<T> | undefined>,
+  ): Promise<CommandResult<T>> =>
+    guardedCommand(
+      workspace.isTrusted,
+      async () =>
+        commandResultOrFailure(
+          await withBusy(action,),
+          "report command cancelled",
+        ),
+      (message,) => window.showErrorMessage(message,),
+    );
 
-          const reports = host.core.listReports(key,);
-          if (reports.length === 0) {
-            window.showInformationMessage("SyntaxMesh: no reports declared.",);
-            return;
-          }
-          const pick = await window.showQuickPick(quickPickItems(reports,), {
-            placeHolder: "Select a report to generate",
-          },);
-          if (pick === undefined) return;
-
-          const envelope = await host.core.generateReport(key, pick.report,);
-          const section = envelope.results.reports;
-          const entry = section?.reports[0];
-          if (!envelope.ok || entry === undefined) {
-            const errors = section?.reports.flatMap((r,) => r.errors) ?? [];
-            window.showErrorMessage(
-              `SyntaxMesh: report failed. ${errors.join(" ",)}`.trim(),
-            );
-            return;
-          }
-          if (entry.errors.length > 0) {
-            window.showErrorMessage(`SyntaxMesh: ${entry.errors.join(" ",)}`,);
-            return;
-          }
-
-          const defaultFormat = workspace.getConfiguration("syntaxmesh",)
-            .get<string>("report.defaultFormat", "html",);
-          const format = chooseFormat(entry, defaultFormat,);
-          const content = entry.formats.find((f,) =>
-            f.format === format
-          )?.content ?? "";
-          await presenter.present(entry, format, content, uri,);
-        },),
-    ),
+  registry.register(
+    "syntaxmesh.report.list",
+    (project?: string, pattern?: string,) =>
+      withResult(() => listReportsCommand(project, pattern, actions,)),
+  );
+  registry.register(
+    "syntaxmesh.report.render",
+    (
+      project?: string,
+      report?: string,
+      reportsIsRegex?: boolean,
+      dynamicAttributes?: string,
+    ) =>
+      withResult(() =>
+        renderReportsCommand(
+          project,
+          report,
+          reportsIsRegex,
+          dynamicAttributes,
+          actions,
+        )
+      ),
+  );
+  registry.register(
+    "syntaxmesh.report.open",
+    (project?: string, reportId?: string, dynamicAttributes?: string,) =>
+      withResult(() =>
+        openReportCommand(project, reportId, dynamicAttributes, actions,)
+      ),
+  );
+  registry.register(
+    "syntaxmesh.report.export",
+    (
+      project?: string,
+      reportId?: string,
+      format?: string,
+      dynamicAttributes?: string,
+      targetRootUri?: string,
+      fileName?: string,
+    ) =>
+      withResult(() =>
+        exportReportCommand(
+          project,
+          reportId,
+          format,
+          dynamicAttributes,
+          targetRootUri,
+          fileName,
+          actions,
+        )
+      ),
   );
 }

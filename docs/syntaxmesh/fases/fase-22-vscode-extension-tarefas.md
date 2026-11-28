@@ -26,7 +26,8 @@
 > 96,4% / vsext 99,3% / lsp 100% linhas) + gate completo **880 passed (7189
 > steps)** + evidência e handoff F21² 22.11.2; aceite runtime VS Code diferido
 > para a F21² com âncora explícita).
-> **Fase 22 fechada (P1–P7).**
+> **Baseline Fase 22 fechada (P1–P7); complemento P8 em implementação em
+> 22.12.1–22.12.25 (21/25 concluídas).**
 > **Recorded progress:** 86/108 tasks in 22.1b recorded (2026-11-08);
 > **99/108 verified** after the 2026-11-11 audit + P2 deliveries (Blocos B/H/I;
 > I 7.9 reaberta — o smoke registrado não existia no código);
@@ -46,10 +47,11 @@
 
 ## Escopo deste arquivo
 
-This is a **partially detailed** task document: only 22.1b has atomic tasks
-(C–H, integration I, verification J). The major planning blocks are navigation
-and dependency boundaries, not a second execution list. All original task IDs,
-consumer annotations, and the historical progress section below remain intact.
+This is a **partially detailed** task document: 22.1b has atomic tasks (C–H,
+integration I, verification J), and the P8 complement has atomic tasks
+22.12.1–22.12.25. The major planning blocks remain navigation and dependency
+boundaries, not a second execution list. All original task IDs, consumer
+annotations, and the historical progress section below remain intact.
 
 ### Major-block navigation
 
@@ -62,6 +64,7 @@ consumer annotations, and the historical progress section below remain intact.
 | [P5 — Web and storage](fase-22-vscode-extension.md#p5-web-host-and-storage-adaptation) | P5.1 browser graph; P5.2 writes; P5.3 storage fallbacks | 22.8 | Detailed below (P5 — 22.8) |
 | [P6 — Standalone LSP](fase-22-vscode-extension.md#p6-standalone-lsp-adapter) | P6.1 stdio bootstrap; P6.2 build/protocol smoke | 22.9 | Detailed below (P6 — 22.9) |
 | [P7 — Packaging and handoff](fase-22-vscode-extension.md#p7-packaging-acceptance-and-handoff) | P7.1 builds; P7.2 acceptance; P7.3 closure/F21² | 22.10–22.11 | Detailed below (P7 — 22.10/22.11) |
+| [P8 — Command-first complement](fase-22-vscode-extension.md#p8-audit-result) | P8.1–P8.7 command API, CLI parity, multi-project UX and Web hardening | 22.12.1–22.12.25 | Detailed below (P8) |
 
 ### Original task owners and recorded implementation
 
@@ -91,13 +94,16 @@ Counts below mirror the historical 22.1b progress table, not a new verification.
 | P6 (22.9) | 22.9 | P6.1–P6.2 | Standalone stdio server/build | Detailed below (P6) | `OK` — 22.9.1–22.9.6 delivered 2026-11-14 (adapter no lsp-core + `packages/lsp` args/bootstrap/build + smoke de protocolo real; cobertura 100%; gate 876 passed) |
 | P7 (22.10) | 22.10 | P7.1–P7.2 | Packaging and clean-install acceptance | Detailed below (P7) | `OK` — 22.10.1–22.10.4 delivered 2026-11-14 (`--version` puro + injeção de versão/shebang no build + `.vsix` 2,19 MB via vsce sob Deno + matriz de aceite com regressão de manifesto; aceite runtime VS Code diferido F21²; gate 880 passed) |
 | P7 (22.11) | 22.11 | P7.2–P7.3 | Final verification and F21² handoff | Detailed below (P7) | `OK` — 22.11.1–22.11.2 delivered 2026-11-14 (cobertura lsp-core 96,4%/vsext 99,3%/lsp 100% linhas; gate 880 passed (7189 steps); evidência P7 + handoff F21²; docs coerentes) |
+| P8 (22.12) | 22.12 | P8.1–P8.7 | Command-first API, F24 CLI parity, multi-project UX and Web runtime hardening | Detailed below (P8) | `PAR` — 21/25 atomic tasks verified; implementation in progress |
 
 The old `K–S` range was an undetailed placeholder, not assigned task IDs; it
 compressed ten subphases into nine letters. Use the explicit 22.2–22.11 owners
-above until each is detailed, without renumbering A–J or any 22.1b task.
+for the original scope and 22.12 for P8, without renumbering A–J or any 22.1b
+task.
 
-Before execution, detail one original subphase at a time (≤ 2h per task, tests
-first). In P2, docs/highlight can use the existing engine; I 7.5–7.7 requires
+Before executing an undetailed original subphase, detail it one subphase at a
+time (≤ 2h per task, tests first). P8 already has its atomic plan below. In P2,
+docs/highlight can use the existing engine; I 7.5–7.7 requires
 P2.4's analysis foundation and the corresponding docs APIs. In P4, audit the
 F24 contract before deciding the daemon/report model seam. F21¹ remains the
 kickoff gate; P6 may proceed after 22.4 independently of P4/P5. Follow the
@@ -1278,3 +1284,1718 @@ de entrada para a F21²:
 > **Nota:** o `.vsix` e o bundle são artefatos de build (git-ignored:
 > `dist/`, `*.vsix`) — a F21² regenera antes de validar. Publicação no
 > Marketplace **não** está autorizada por este handoff (§P7 exit).
+
+---
+
+# P8 Complement Implementation Plan — Command-First API and Web Runtime Hardening
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use
+> superpowers:subagent-driven-development (recommended) or
+> superpowers:executing-plans to implement this plan task-by-task. Steps use
+> checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Deliver the approved P8 command API, complete F24 CLI-compatible
+in-process runner, multi-project views, safe artifact output, and verifiable
+Desktop/Web runtime behavior without reopening P1–P7.
+
+**Architecture:** F24 `execute(request)` remains the only engine entry point.
+UI-free services own project resolution, execution, report selection and CLI
+compatibility. VS Code commands, tree items, status bar and console are thin
+adapters. The runner reuses pure F24 CLI modules and injects host I/O; it never
+imports `cli.ts`, `io.ts`, Node filesystem modules or child-process APIs into the
+Web graph.
+
+**Tech Stack:** Deno, TypeScript, VS Code Extension API, `@std/testing/bdd`,
+`@std/assert`, `@std/yaml`, Deno bundler, `@vscode/test-electron` and
+`@vscode/test-web`.
+
+**Spec:** `docs/syntaxmesh/fases/fase-22-vscode-extension.md` P8.1–P8.7 and its
+acceptance checklist; ADR 035; Fase 24 CLI plan/addendum; F24 execution contract.
+
+## Global Constraints
+
+- Deno only; no local `npm install`, Node dependency tree or Node-only API in the
+  Web extension graph.
+- `syntaxmesh.run` is the only public tj3-compatible command. Console `run` is
+  canonical; `smx` and `tj3` are equivalent aliases.
+- `parseArgs(argv)` is called exactly once per `syntaxmesh.run` invocation.
+- `--silent` and `--no-color` are renderer options and never enter
+  `ExecutionRequest`. `man.color` is derived from the run renderer context.
+- `.smx` is the native master; `.tjp` is accepted for compatibility; `.tji` and
+  `.tjs` are not project roots.
+- Workspace Trust gates every execution and write. The manifest keeps no
+  `untrustedWorkspaces` capability: VS Code disables the extension and registers
+  no commands in a restricted workspace, while the in-command gate remains the
+  second layer if trust is lost after activation. Refresh remains manual; no
+  save/change watcher feeds the daemon.
+- LSP retains editor diagnostics and semantic tokens. Execution diagnostics use
+  the separate `syntaxmesh.execution` collection.
+- Render/list/open operations return data in memory. Only explicit export,
+  freeze, manual, sheet and run output writes files.
+- Existing destinations are collected in one preflight and confirmed once. A
+  denied confirmation performs no real write or copy.
+- Sheet apps return email text and file deltas; no SMTP or external CLI process.
+- Help/version/man are project-free. Sheet apps remain project-backed: semantic
+  commands resolve an explicit, active or single loaded project, while
+  `syntaxmesh.run` and its `run`/`smx`/`tj3` console prefixes retain the F24
+  positional `.smx`/`.tjp` master requirement. P8 adds no parser or
+  execution-semantics delta; its only core change is the injected logging
+  portability capability in 22.12.20.
+- Current repeated `--report` overwrite semantics remain unchanged; multiple
+  selection uses `--reports <RE>`.
+- All new Deno tests use BDD and `@std/assert`. In-host runtime suites retain the
+  documented sequential `check()` collector exception.
+- P1–P7 task IDs and evidence remain historical and are not renumbered.
+
+## Execution Order and Dependencies
+
+| Wave | Tasks | Rationale |
+|---|---|---|
+| A | 22.12.1, 22.12.2, 22.12.8, 22.12.20 | Independent foundations: pure CLI reuse, registry, assets and browser-safe logging. |
+| B | 22.12.3 → 22.12.4 → 22.12.5 → 22.12.6 | Canonical project service, full request mapping, execution commands and diagnostics. |
+| C | 22.12.7 → 22.12.9 → 22.12.10 | Report data services, shared confirmed output host, explicit export/freeze. |
+| D | 22.12.11 → 22.12.12 → 22.12.13 → 22.12.14 | Help/version, manual, sheet apps and full `syntaxmesh.run`. |
+| E | 22.12.15 → 22.12.16 → 22.12.17 → 22.12.18 → 22.12.19 | Console core/hosts, multi-project tree, status bar and final command bootstrap. |
+| F | 22.12.21 → 22.12.22 / 22.12.23 → 22.12.24 → 22.12.25 | Bundle gate, real Desktop/Web acceptance, parity matrix and closure evidence. |
+
+Tasks in the same wave may run in parallel only when their listed dependencies
+are already complete. Every task ends with its focused verification and updates
+its own status in this document; task 22.12.25 records aggregate evidence.
+
+## Task Checklist
+
+- [x] 22.12.1 Publish pure F24 CLI contracts and extract sheet-file collection.
+- [x] 22.12.2 Add explicit active-project selection and persistence.
+- [x] 22.12.3 Add canonical command contracts and project service.
+- [x] 22.12.4 Map the complete F24 request and add daemon execution intents.
+- [x] 22.12.5 Add config hydration and semantic execution commands.
+- [x] 22.12.6 Add isolated execution diagnostics.
+- [x] 22.12.7 Add report list/render/open data services.
+- [x] 22.12.8 Package report assets deterministically.
+- [x] 22.12.9 Add host output, overwrite preflight and artifact classification.
+- [x] 22.12.10 Add explicit report export and freeze output.
+- [x] 22.12.11 Add pure help rendering and help/version commands.
+- [x] 22.12.12 Add the manual command for text/html/smx.
+- [x] 22.12.13 Add all five sheet-app commands without SMTP.
+- [x] 22.12.14 Add the full in-process `syntaxmesh.run` adapter.
+- [x] 22.12.15 Add console parser, formatters and allowlisted dispatch.
+- [x] 22.12.16 Add Desktop PTY and Web input-console adapters.
+- [x] 22.12.17 Add multi-project tree roots and context menus.
+- [x] 22.12.18 Add aggregate/busy status-bar state.
+- [x] 22.12.19 Wire canonical commands and legacy runtime aliases.
+- [x] 22.12.20 Remove unbound runtime globals from core logging.
+- [x] 22.12.21 Add generated Web-bundle scanning to the quality gate.
+- [ ] 22.12.22 Extend real Desktop runtime acceptance.
+- [ ] 22.12.23 Add real browser runtime acceptance.
+- [ ] 22.12.24 Add the complete F24-to-extension parity matrix.
+- [ ] 22.12.25 Reconcile docs, package and record full-gate evidence.
+
+---
+
+### 22.12.1 — Publish pure F24 CLI contracts and extract sheet files (P8.7)
+
+**Depends on:** none. **Produces:** browser-safe CLI modules reusable by the
+extension without importing the process entry point.
+
+**Files:**
+- Create: `packages/cli/src/sheet-files.ts`
+- Create: `packages/cli/tests/sheet-files_test.ts`
+- Modify: `packages/cli/src/cli.ts`
+- Modify: `packages/cli/deno.jsonc`
+- Modify: `packages/vsextension/deno.jsonc`
+
+**Interfaces:**
+```ts
+export interface SheetFileIo {
+  read(path: string): Promise<string>;
+  listDir(path: string): Promise<string[]>;
+  isDir(path: string): Promise<boolean>;
+}
+
+export function collectSheetFiles(
+  root: string,
+  io: SheetFileIo,
+): Promise<ExecutionInputFile[]>;
+```
+
+- [x] **Step 1: Write failing fake-I/O tests.** Cover all four sheet trees,
+  nested directories, duplicate-free relative paths, unreadable files and
+  missing roots; assert no runtime global is needed.
+- [x] **Step 2: Run the focused test and verify red.**
+  `deno test --allow-read --allow-write --allow-env packages/cli/tests/sheet-files_test.ts`
+- [x] **Step 3: Move `SHEET_TREES`, `collectTree` and `collectSheetFiles` out of
+  `cli.ts`.** Inject `read`, `listDir` and `isDir`; keep discovery order and
+  relative path keys unchanged. Re-export the helper from `cli.ts` for existing
+  consumers.
+- [x] **Step 4: Add package exports and extension imports.** Publish `./options`,
+  `./reporter`, `./output-policy`, `./images` and `./sheet-files`; include every
+  published source in `lint:doc` and `lint:doc:update`. Map those five subpaths to
+  `../cli/src/*.ts` in `packages/vsextension/deno.jsonc`; do not map the CLI root,
+  `io.ts` or `cli.ts`.
+- [x] **Step 5: Verify CLI compatibility.**
+  `deno task --cwd packages/cli tests`
+
+**Acceptance:** existing CLI tests remain green; the new helper passes with fake
+I/O; the extension can import all five pure subpaths without reaching `cli.ts`
+or `io.ts`.
+
+### 22.12.2 — Add explicit active-project selection and persistence (P8.1)
+
+**Depends on:** none. **Produces:** deterministic active selection shared by
+commands, tree and status bar.
+
+**Files:**
+- Modify: `packages/vsextension/src/daemon/types.ts`
+- Modify: `packages/vsextension/src/daemon/project-cache.ts`
+- Modify: `packages/vsextension/src/daemon/persistence.ts`
+- Modify: `packages/vsextension/src/daemon/daemon-core.ts`
+- Modify: `packages/vsextension/src/daemon/host.ts`
+- Test: `packages/vsextension/tests/daemon/project-cache_test.ts`
+- Test: `packages/vsextension/tests/daemon/persistence_test.ts`
+- Test: `packages/vsextension/tests/daemon/daemon-core_test.ts`
+
+**Interfaces:**
+```ts
+export type ProjectIntent =
+  | "inventory"
+  | "checkSyntax"
+  | "scheduleOnly"
+  | "compile"
+  | "freeze"
+  | "checkTimeSheet"
+  | "checkStatusSheet"
+  | "report"
+  | "man"
+  | "sheet"
+  | "run";
+
+export interface ProjectExecutionState {
+  intent: ProjectIntent;
+  startedAt: number;
+  finishedAt?: number;
+  errorCount: number;
+}
+
+export interface RestoredCache {
+  projects: ProjectModel[];
+  activeUri: string | null;
+}
+
+export interface ProjectSummary {
+  uri: string;
+  entry: string;
+  status: DaemonStatus;
+  reportCount: number;
+  addedAt: number;
+  reloadedAt: number;
+  active: boolean;
+  lastIntent: ProjectIntent;
+}
+
+setActive(uri: string): boolean;
+active(): string | null;
+```
+
+- [x] **Step 1: Add failing registry tests.** First insert becomes active;
+  explicit selection wins; removing active selects the first URI in sorted
+  order; `clear()` resets to `null`; missing `lastExecution` summarizes as
+  `inventory`.
+- [x] **Step 2: Extend models and cache.** Add optional `lastExecution`, required
+  summary `active`/`lastIntent`, `activeUri`, `setActive` and `active`.
+- [x] **Step 3: Add failing persistence tests.** Version-1 payloads without
+  `activeUri` restore as `null`; new payloads round-trip selection; corrupt or
+  stale payloads still restore an empty cache.
+- [x] **Step 4: Implement `restoreCache`.** Keep `CACHE_VERSION = 1`,
+  `serializeCache(models, activeUri?)` and compatibility
+  `deserializeCache(json)`; restore models first, then apply a persisted active
+  URI only when it exists.
+- [x] **Step 5: Wire host/core selection and persistence.** Add string-URI
+  `setActiveProject`/`activeProject`; persist after selection changes. Preserve
+  existing `Uri` callers through normalization wrappers.
+- [x] **Step 6: Verify the daemon package tests.**
+  `deno task --cwd packages/vsextension tests`
+
+**Acceptance:** active selection is explicit, deterministic and persistent on
+Desktop; Web starts from the same deterministic fallback; inventory envelopes
+remain intact.
+
+### 22.12.3 — Add canonical command contracts and project service (P8.1)
+
+**Depends on:** 22.12.2. **Produces:** the UI-free service used by all later
+adapters.
+
+**Files:**
+- Create: `packages/vsextension/src/commands/contracts.ts`
+- Create: `packages/vsextension/src/commands/project-ref.ts`
+- Create: `packages/vsextension/src/commands/service.ts`
+- Create: `packages/vsextension/tests/commands/project-ref_test.ts`
+- Create: `packages/vsextension/tests/commands/service_test.ts`
+- Modify: `packages/vsextension/src/commands/shared.ts`
+- Modify: `packages/vsextension/package.json`
+- Modify: `packages/vsextension/tests/manifest_test.ts`
+
+**Interfaces:**
+```ts
+export type CommandResult<T> =
+  | { ok: true; value: T; messages: ExecutionMessage[] }
+  | { ok: false; error: string; messages: ExecutionMessage[] };
+
+export interface ProjectCommandPort {
+  addProject(uri: string): Promise<ProjectModel>;
+  refreshProject(uri: string): Promise<ProjectModel>;
+  removeProject(uri: string): Promise<boolean>;
+  listProjects(): ProjectSummary[];
+  setActiveProject(uri: string): ProjectModel | undefined;
+  activeProject(): ProjectModel | undefined;
+}
+
+export interface ProjectCommandService {
+  addProject(uri: string): Promise<CommandResult<ProjectModel>>;
+  refreshProject(uri: string): Promise<CommandResult<ProjectModel>>;
+  removeProject(uri: string): Promise<CommandResult<null>>;
+  listProjects(): Promise<CommandResult<ProjectSummary[]>>;
+  setActiveProject(uri: string): Promise<CommandResult<ProjectModel>>;
+}
+
+export interface ProjectDocumentRef {
+  uri: string;
+  languageId: string;
+}
+
+export type ArtifactKind =
+  | "report" | "freeze" | "manual" | "sheet"
+  | "email" | "asset" | "image";
+
+export interface ArtifactResult {
+  uri: string;
+  fileName: string;
+  kind: ArtifactKind;
+}
+
+export function resolveProjectUri(input: {
+  explicit?: string;
+  activeRegistry?: string;
+  activeDocument?: ProjectDocumentRef;
+  projects: string[];
+}): CommandResult<string>;
+```
+
+- [x] **Step 1: Add failing resolution tests.** Explicit URI wins over registry
+  and editor; `.smx`/`.tjp` are accepted; `.tji`/`.tjs`, wrong language IDs and
+  ambiguous/no-project cases return structured errors.
+- [x] **Step 2: Implement `contracts.ts`.** Define `CommandResult`, re-export
+  `ProjectIntent` from `daemon/types.ts`, and define `ArtifactKind`,
+  `ArtifactResult`, `PUBLIC_COMMAND_IDS`, `RUNTIME_ONLY_COMMAND_IDS` and
+  `LEGACY_COMMAND_IDS`. Seed public IDs with the
+  four existing utility commands plus the five project commands; seed legacy
+  IDs with the five old project/report commands.
+- [x] **Step 3: Implement project resolution and service.** Priority: explicit,
+  active registry, valid active master editor, single loaded project. Service
+  methods return `CommandResult`, never raw exceptions, and contain no VS Code
+  imports.
+- [x] **Step 4: Replace `activeMasterUri()` internals.** Preserve the adapter
+  signature if useful, but validate master extension and language ID before
+  returning a URI.
+- [x] **Step 5: Update manifest regression.** Compare contributed commands with
+  `PUBLIC_COMMAND_IDS`; assert legacy/runtime-only IDs are not contributed.
+  Actual `getCommands(true)` verification moves to in-host runtime acceptance.
+- [x] **Step 6: Run focused service tests, then package tests.**
+  `deno test --allow-read --allow-write --allow-env packages/vsextension/tests/commands/project-ref_test.ts packages/vsextension/tests/commands/service_test.ts`
+  `deno task --cwd packages/vsextension tests`
+
+**Acceptance:** project commands are reusable with explicit string URIs and all
+failure paths are structured; manifest/public/runtime-only sets cannot drift.
+
+### 22.12.4 — Map the complete F24 request and daemon intents (P8.2/P8.7)
+
+**Depends on:** 22.12.3. **Produces:** one complete request builder and general
+execution over cached closures.
+
+**Files:**
+- Modify: `packages/vsextension/src/daemon/request-builder.ts`
+- Modify: `packages/vsextension/src/daemon/daemon-core.ts`
+- Test: `packages/vsextension/tests/daemon/request-builder_test.ts`
+- Test: `packages/vsextension/tests/daemon/daemon-core_test.ts`
+
+**Interfaces:**
+```ts
+export interface BuildRequestOptions {
+  entry?: string;
+  configContent?: string;
+  configObject?: Record<string, unknown> | null;
+  listReports?: string;
+  listReportsIsRegex?: boolean;
+  report?: string;
+  reportsIsRegex?: boolean;
+  outputDir?: string;
+  dynamicAttributes?: string;
+  forceReports?: boolean;
+  abortOnWarnings?: boolean;
+  warnTsDeltas?: boolean;
+  addTrace?: boolean;
+  checkSyntax?: boolean;
+  noReports?: boolean;
+  freeze?: ExecutionFreezeRequest;
+  help?: boolean;
+  version?: boolean;
+  man?: ExecutionManRequest;
+  app?: SheetAppName;
+  appOptions?: ExecutionSheetAppOptions;
+}
+
+executeProject(
+  uri: string,
+  options: BuildRequestOptions,
+): Promise<ExecutionResult>;
+```
+
+- [x] **Step 1: Add failing mapping tests.** Cover every field, explicit false
+  values where meaningful, empty closures for help/version/man, all sheet apps,
+  and absence of `silent`/`noColor` from requests.
+- [x] **Step 2: Extend `buildExecuteRequest`.** Copy only defined fields and
+  preserve the existing minimal request and defaults.
+- [x] **Step 3: Add failing daemon execution tests.** Assert cached closure use,
+  inventory-envelope preservation, status updates, timestamps, error counts and
+  intent precedence: `checkSyntax`, `noReports`, `freeze`, sheet, report,
+  otherwise compile; record `man` for manual execution.
+- [x] **Step 4: Implement `DaemonCore.executeProject`.** Add/reload record
+  `inventory`; help/version use a project-free execution path in the service;
+  project-backed run execution may record `run` at the adapter boundary.
+- [x] **Step 5: Verify daemon tests and package tests.**
+  `deno test --allow-read --allow-write --allow-env packages/vsextension/tests/daemon/request-builder_test.ts packages/vsextension/tests/daemon/daemon-core_test.ts`
+  `deno task --cwd packages/vsextension tests`
+
+**Acceptance:** every current F24 request field maps without a core delta;
+execution never mutates the cached inventory envelope; intent/status tracking is
+deterministic.
+
+### 22.12.5 — Add config hydration and semantic execution commands (P8.2)
+
+**Depends on:** 22.12.4. **Produces:** compile/check/schedule/freeze/sheet-check
+commands over the shared service.
+
+**Files:**
+- Create: `packages/vsextension/src/commands/config.ts`
+- Create: `packages/vsextension/src/commands/execution.ts`
+- Create: `packages/vsextension/tests/commands/config_test.ts`
+- Create: `packages/vsextension/tests/commands/execution_test.ts`
+- Modify: `packages/vsextension/src/commands/service.ts`
+- Modify: `packages/vsextension/src/commands/contracts.ts`
+- Modify: `packages/vsextension/src/extension.node.ts`
+- Modify: `packages/vsextension/src/extension.web.ts`
+- Modify: `packages/vsextension/deno.jsonc`
+- Modify: `packages/vsextension/package.json`
+
+**Interfaces:**
+```ts
+export interface ExecutionCommandOptions {
+  configUri?: string;
+  outputDir?: string;
+  report?: string;
+  reportsIsRegex?: boolean;
+  dynamicAttributes?: string;
+  forceReports?: boolean;
+  abortOnWarnings?: boolean;
+  warnTsDeltas?: boolean;
+  addTrace?: boolean;
+}
+
+export interface ExecutionCommandPort extends ProjectCommandPort {
+  executeProject(
+    uri: string,
+    options: BuildRequestOptions,
+  ): Promise<ExecutionResult>;
+}
+
+export interface LoadedConfig {
+  configContent: string;
+  configObject: Record<string, unknown>;
+}
+
+export function loadConfig(
+  uri: string,
+  readFile: (path: string) => Promise<string>,
+): Promise<CommandResult<LoadedConfig>>;
+```
+
+- [x] **Step 1: Add failing config tests.** Valid YAML returns both
+  `configContent` and `configObject`; invalid YAML, unreadable files and
+  non-object roots return structured errors.
+- [x] **Step 2: Implement `loadConfig(uri, readFile)`.** Use `@std/yaml`; keep all
+  parsing in this UI-free module and add the package import.
+- [x] **Step 3: Add failing execution-service tests.** Compile returns all
+  reports by default; check sets only `checkSyntax`; schedule sets only
+  `noReports`; freeze sets `freeze`; sheet checks set `app` plus inline
+  `sheetContent`/`sheetFile`; config/report/boolean options forward exactly.
+- [x] **Step 4: Implement service methods and thin command handlers.** Resolve
+  explicit project arguments first; hydrate config through Step 2; read sheet
+  data through the host; return `CommandResult` with envelope messages. Task
+  22.12.6 owns publishing those messages to the execution diagnostic collection.
+- [x] **Step 5: Contribute the six execution commands.** Add `compile`,
+  `checkSyntax`, `scheduleOnly`, `freeze`, `checkTimeSheet` and
+  `checkStatusSheet` to constants and manifest.
+- [x] **Step 6: Verify focused and package tests.**
+  `deno test --allow-read --allow-write --allow-env packages/vsextension/tests/commands/config_test.ts packages/vsextension/tests/commands/execution_test.ts`
+  `deno task --cwd packages/vsextension tests`
+
+**Acceptance:** parse-only never schedules; schedule-only never renders; compile
+returns report data in memory; freeze and sheet checks match the F24 envelope;
+all six commands accept explicit arguments.
+
+### 22.12.6 — Add isolated execution diagnostics (P8.2)
+
+**Depends on:** 22.12.5. **Produces:** execution diagnostics without interfering
+with LSP-owned editor diagnostics.
+
+**Files:**
+- Create: `packages/vsextension/src/diagnostics/execution.ts`
+- Create: `packages/vsextension/src/diagnostics/host.ts`
+- Create: `packages/vsextension/tests/diagnostics/execution_test.ts`
+- Modify: `packages/vsextension/src/commands/execution.ts`
+- Modify: `packages/vsextension/src/commands/daemon.ts`
+- Modify: `packages/vsextension/src/extension.node.ts`
+- Modify: `packages/vsextension/src/extension.web.ts`
+
+**Interfaces:**
+```ts
+export interface ExecutionDiagnostic {
+  file: string | null;
+  line: number | null;
+  severity: "error" | "warning" | "information" | "hint";
+  message: string;
+  code: string;
+}
+
+export function projectExecutionDiagnostics(
+  messages: ExecutionMessage[],
+): ExecutionDiagnostic[];
+
+export interface ExecutionDiagnosticRange {
+  startLine: number;
+  startCharacter: number;
+  endLine: number;
+  endCharacter: number;
+}
+
+export function resolveExecutionDiagnosticUri(
+  masterUri: string,
+  file: string | null,
+): string;
+
+export function executionDiagnosticRange(
+  line: number | null,
+): ExecutionDiagnosticRange;
+```
+
+- [x] **Step 1: Add failing projection tests.** Map fatal/error, warning, info
+  and debug; preserve file/line/id/text; do not invent a line when absent.
+- [x] **Step 2: Implement the pure projection.**
+- [x] **Step 3: Add the VS Code collection host.** Name it
+  `syntaxmesh.execution`; resolve master and include paths relative to the
+  master directory; convert 1-based lines to zero-based ranges; dispose with
+  the extension context.
+- [x] **Step 4: Publish after execution.** Clear only this collection on project
+  removal/reload; never clear or replace the LSP collection.
+- [x] **Step 5: Verify unit tests, then add the in-host assertion in 22.12.22.**
+  `deno test --allow-read --allow-write --allow-env packages/vsextension/tests/diagnostics/execution_test.ts`
+  `deno task --cwd packages/vsextension tests`
+
+**Acceptance:** execution errors are visible in their own collection with
+correct severities and locations; LSP diagnostics remain independently present.
+
+### 22.12.7 — Add report list/render/open data services (P8.3)
+
+**Depends on:** 22.12.4. **Produces:** independently callable report operations
+with no implicit writes.
+
+**Files:**
+- Create: `packages/vsextension/tests/commands/reports_test.ts`
+- Create: `packages/vsextension/src/commands/report-actions.ts`
+- Modify: `packages/vsextension/src/commands/service.ts`
+- Modify: `packages/vsextension/src/commands/contracts.ts`
+- Modify: `packages/vsextension/src/commands/execution.ts`
+- Modify: `packages/vsextension/src/commands/reports.ts`
+- Modify: `packages/vsextension/src/reports/report-selector.ts`
+- Modify: `packages/vsextension/src/reports/host.ts`
+- Modify: `packages/vsextension/package.json`
+- Modify: `packages/vsextension/tests/commands/service_test.ts`
+- Modify: `packages/vsextension/tests/commands/execution_test.ts`
+
+**Interfaces:**
+```ts
+export interface ReportSelection {
+  report?: string;
+  reportsIsRegex?: boolean;
+  dynamicAttributes?: string;
+}
+
+listReports(uri: string, pattern?: string): Promise<
+  CommandResult<ListReportsEntry[]>
+>;
+
+renderReports(uri: string, selection: ReportSelection): Promise<
+  CommandResult<ExecutionResult>
+>;
+
+renderReport(
+  uri: string,
+  reportId: string,
+  dynamicAttributes?: string,
+): Promise<CommandResult<ReportJsonEntry>>;
+
+openHtml(
+  entry: ReportJsonEntry,
+  masterUri: Uri,
+): Promise<CommandResult<null>>;
+```
+
+- [x] **Step 1: Add failing service tests.** No-pattern list uses cached
+  inventory without scheduling; regex list handles invalid patterns; exact and
+  regex render map correctly; empty selection renders all; `-A` forwards; no
+  service method opens a Webview or writes a file.
+- [x] **Step 2: Implement list/render service methods.**
+- [x] **Step 3: Expose `ReportPresenter.openHtml(entry, masterUri)`.** Require an
+  HTML format, preserve strict CSP/nonce/asset URI mapping and return
+  `{ ok: true, value: null, messages: [] }` after opening the panel. When HTML is
+  absent, return `{ ok: false, error, messages: [] }`, where `error` names the
+  report and lists its available formats in declaration order (`none` when the
+  list is empty). Refactor `present()` to await this method and surface only its
+  structured error for the HTML branch.
+- [x] **Step 4: Add thin `report.list`, `report.render` and `report.open`
+  handlers.** Explicit project/report arguments precede prompts; contribute all
+  three commands.
+- [x] **Step 5: Verify report and package tests.**
+  `deno test --allow-read --allow-write --allow-env packages/vsextension/tests/commands/reports_test.ts`
+  `deno task --cwd packages/vsextension tests`
+
+**Acceptance:** list/render/open are independently callable; render returns data
+only; open is HTML-only and preserves the existing secure Webview behavior.
+
+### 22.12.8 — Package report assets deterministically (P8.3/P8.7)
+
+**Depends on:** none; must finish before 22.12.9 output acceptance.
+**Produces:** the HTML asset tree inside development and installed packages.
+
+**Files:**
+- Create: `packages/vsextension/scripts/copy-assets.ts`
+- Create: `packages/vsextension/tests/assets_test.ts`
+- Modify: `packages/vsextension/scripts/build.ts`
+- Modify: `packages/vsextension/package.json`
+- Modify: `deno.jsonc`
+
+**Interfaces:**
+```ts
+export async function copyReportAssets(
+  sourceRoot: string,
+  packageRoot: string,
+): Promise<string[]>;
+```
+
+- [x] **Step 1: Add failing asset tests.** Copy the repository asset tree and
+  assert the exact 14-file inventory, including `css/`, `icons/` and
+  `scripts/wz_tooltip.js`; assert the packaged vendor assets are excluded from
+  repository lint and formatting.
+- [x] **Step 2: Implement the build-only copy helper.** Preserve relative paths;
+  replace stale package assets deterministically; do not add this helper to the
+  browser graph.
+- [x] **Step 3: Call it from `build.ts` before bundling.** Resolve the repository
+  `assets/` root from the script URL, not the process working directory.
+- [x] **Step 4: Verify copied assets, quality exclusions and bundles.**
+  `deno test --allow-read --allow-write --allow-env packages/vsextension/tests/assets_test.ts`
+  `deno lint`
+  `deno task fmt:check`
+  `deno task build:vsext`
+
+**Acceptance:** `context.asAbsolutePath("assets")` resolves in development and
+`.vsix`; the final package inventory in 22.12.25 includes the complete tree.
+
+### 22.12.9 — Add host output, overwrite preflight and artifacts (P8.3/P8.7)
+
+**Depends on:** 22.12.1, 22.12.3, 22.12.8. **Produces:** one safe output path
+shared by export, freeze, manual, sheets and `syntaxmesh.run`.
+
+**Files:**
+- Create: `packages/vsextension/src/cli/artifacts.ts`
+- Create: `packages/vsextension/src/cli/output-host.ts`
+- Create: `packages/vsextension/src/cli/host.ts`
+- Create: `packages/vsextension/tests/cli/artifacts_test.ts`
+- Create: `packages/vsextension/tests/cli/output-host_test.ts`
+
+**Interfaces:**
+```ts
+export interface Tj3HostIo extends OutputPolicyIo {
+  /** Resolves a policy path against root, or the adapter's configured URI root. */
+  resolve(path: string, root?: string): string;
+}
+
+export interface ConfirmedOutputOptions {
+  /** URI string; defaults to the first workspace folder in the VS Code adapter. */
+  cwd?: string;
+  /** URI strings, not OS paths. */
+  assetsRoot?: string;
+  sheetBaseDir?: string;
+  imageDir?: string;
+  confirmOverwrite?: (paths: string[]) => Promise<boolean>;
+}
+
+export interface ConfirmedWrite {
+  /** Path relative to approvedRoot; absolute and escaping paths are rejected. */
+  path: string;
+  content: string;
+  kind: ArtifactKind;
+}
+
+export interface ConfirmedDispatchResult extends OutputPolicyOutcome {
+  /** Printed lines joined with `\n`, with one final newline when non-empty. */
+  stdout: string;
+  artifacts: ArtifactResult[];
+}
+
+export interface ConfirmedDispatchOptions
+  extends Omit<OutputPolicyOptions, "io"> {
+  /** Per-invocation URI root; overrides the OutputHost default. */
+  cwd?: string;
+  /** Per-invocation callback; overrides the OutputHost default. */
+  confirmOverwrite?: (paths: string[]) => Promise<boolean>;
+}
+
+export interface ConfirmedWriteOptions {
+  confirmOverwrite?: (paths: string[]) => Promise<boolean>;
+}
+
+export interface ConfirmedOutputHost {
+  dispatch(
+    result: ExecutionResult,
+    policy?: ConfirmedDispatchOptions,
+  ): Promise<CommandResult<ConfirmedDispatchResult>>;
+  writeAll(
+    files: readonly ConfirmedWrite[],
+    approvedRoot: string,
+    options?: ConfirmedWriteOptions,
+  ): Promise<CommandResult<ArtifactResult[]>>;
+}
+
+export class OutputHost implements ConfirmedOutputHost {
+  constructor(
+    io: Tj3HostIo,
+    options?: ConfirmedOutputOptions,
+  );
+}
+
+/** VS Code adapter only; output-host.ts remains free of the vscode runtime. */
+export function createTj3HostIo(options?: {
+  cwd?: string;
+  writeStrategy?: "direct" | "stub-first";
+}): Tj3HostIo;
+
+export interface ArtifactCopy {
+  /** Source URI string captured from the real copy operation. */
+  from: string;
+  /** Destination URI string captured from the real copy operation. */
+  to: string;
+}
+
+export function classifyArtifacts(
+  execution: ExecutionResult,
+  /** Destination URI strings already resolved by OutputHost. */
+  written: string[],
+  /** Real copy operations, preserving source/destination for asset vs image. */
+  copies: ArtifactCopy[],
+  options: { outputDir?: string; assetsRoot?: string; imageDir?: string },
+): ArtifactResult[];
+```
+
+- [ ] **Step 1: Add failing artifact tests.** Classify report, freeze, manual,
+  sheet, `.eml`, copied HTML asset and report image paths; include a report image
+  under `icons/` to prove source roots, not destination names, decide the kind.
+  Return URI, basename and kind only, never host objects.
+- [ ] **Step 2: Implement pure artifact classification.** Match explicit freeze,
+  manual and sheet destinations first; recognize `outbox/*.eml`; classify a copy
+  whose source is under `assetsRoot` as `asset` and one under `imageDir` as
+  `image`; remaining report destinations are `report`.
+- [ ] **Step 3: Add failing preflight tests.** Record-only `write`/`copy` collect
+  every destination; `mkpath`, `print`, real writes/copies and `policy.onError`
+  have no side effects. One confirmation receives the deduplicated existing URI
+  strings in production order. Denial writes nothing; a missing callback fails
+  only when existing destinations require confirmation; an aborted preview calls
+  no callback and writes nothing; absolute/traversal destinations outside the
+  approved root fail before confirmation.
+- [ ] **Step 4: Implement the pure `OutputHost`.** Keep `output-host.ts` free of
+  `vscode` and Node imports. `dispatch` runs `dispatchSections` once with a
+  record-only I/O wrapper and `onError: null`; an aborted preview returns
+  `{ ok: false, error: "SyntaxMesh: output policy aborted; no files were written.",
+  messages: result.messages }`. Call-level `cwd`/`confirmOverwrite` override the
+  constructor defaults. Build a local envelope copy whose report/manual
+  `outputDir`, freeze file names and sheet file names are resolved URI strings:
+  report/freeze/manual paths use `cwd`, sheet paths use `sheetBaseDir`, and an
+  explicit output directory is its own approved root. Resolve `assetsRoot` and
+  `imageDir` as read-only source roots. The constructor `assetsRoot` is the
+  default; a call-level `assets` option overrides it, and classification uses the
+  effective `assets.root`. Run both dispatches against that copy, confirm once
+  when needed, and use the caller's `onError` only for the real pass.
+  Capture only real `print` calls as stdout. Record each real copy as an
+  `ArtifactCopy`, pass the already-resolved `written` destinations and those copies
+  to `classifyArtifacts`, and return no artifact claims if the real dispatch aborts.
+- [ ] **Step 5: Implement `writeAll` with the same confirmation helper.** Resolve
+  every relative path against `approvedRoot`, reject escapes, collect existing
+  destinations, and let `options.confirmOverwrite` override the default callback.
+  Confirm once and only then create parent directories/write in input order.
+  Return the matching plain-data artifacts only when every write succeeds;
+  otherwise return a structured failure and no artifacts.
+- [ ] **Step 6: Implement the VS Code adapter in `host.ts`.** `createTj3HostIo`
+  defaults `cwd` to the first workspace-folder URI, converts URI strings with
+  `Uri.parse`, and adapts `workspace.fs`, `TextEncoder`/`TextDecoder`,
+  `writeUserFile`, directory listing and copy to `Tj3HostIo`. Desktop passes
+  `direct`; Web passes `stub-first`. With no workspace root, only explicit
+  absolute URI destinations are valid. This module is type-checked and exercised
+  in the real hosts; Deno unit tests target the injected pure `OutputHost`.
+- [ ] **Step 7: Verify focused tests and package tests.**
+  `deno test --allow-read --allow-write --allow-env packages/vsextension/tests/cli/artifacts_test.ts packages/vsextension/tests/cli/output-host_test.ts`
+  `deno task --cwd packages/vsextension tests`
+
+**Acceptance:** every destination is known before the first write; overwrite
+denial is atomic; Desktop and Web use the same policy with only the write
+strategy differing.
+
+### 22.12.10 — Add explicit report export and freeze output (P8.3)
+
+**Depends on:** 22.12.5, 22.12.7, 22.12.9. **Produces:** independent
+export/freeze commands with explicit destinations and confirmation.
+
+**Files:**
+- Create: `packages/vsextension/src/commands/freeze-output.ts`
+- Create: `packages/vsextension/tests/commands/freeze-output_test.ts`
+- Modify: `packages/vsextension/src/commands/reports.ts`
+- Modify: `packages/vsextension/tests/commands/reports_test.ts`
+- Modify: `packages/vsextension/src/commands/service.ts`
+- Modify: `packages/vsextension/src/reports/host.ts`
+- Modify: `packages/vsextension/src/commands/contracts.ts`
+- Modify: `packages/vsextension/package.json`
+
+**Interfaces:**
+```ts
+export interface FreezeCommandResult {
+  execution: ExecutionResult;
+  artifacts: ArtifactResult[];
+}
+
+export interface ReportExportResult {
+  execution: ExecutionResult;
+  artifact: ArtifactResult;
+}
+
+export interface ReportExportOptions {
+  projectUri: string;
+  reportId: string;
+  format: string;
+  dynamicAttributes?: string;
+  /** Directory URI selected by the command handler. */
+  targetRootUri: string;
+  /** Basename only; the output host rejects separators and traversal. */
+  fileName: string;
+}
+
+export interface ReportExportPort {
+  renderReports(
+    uri: string,
+    selection: ReportSelection,
+  ): Promise<CommandResult<ExecutionResult>>;
+  output: ConfirmedOutputHost;
+}
+
+export function exportReport(
+  options: ReportExportOptions,
+  port: ReportExportPort,
+): Promise<CommandResult<ReportExportResult>>;
+```
+
+- [ ] **Step 1: Add failing export tests.** Explicit target wins; absent target
+  uses a save dialog suggested with `reportFileName(reportId, format)` beside the
+  master; the selected file URI is split into `targetRootUri`/`fileName`. Format
+  and dynamic attributes forward; missing formats/report errors fail without
+  writes; existing targets require confirmation; denial leaves bytes unchanged.
+- [ ] **Step 2: Implement `exportReport` and the thin `syntaxmesh.report.export`
+  handler.** The pure function renders one report through the service, selects
+  the requested format, calls `ConfirmedOutputHost.writeAll` with one `report`
+  write and returns its artifact. Only the VS Code handler prompts for project,
+  report, format or destination. Desktop uses `direct`; Web uses `stub-first`.
+- [ ] **Step 3: Add failing freeze tests.** Accept both core files; reject empty,
+  absolute or traversal names; default beside the master; preserve header and
+  bookings order, including an empty bookings file; confirm once; report write
+  failures as `CommandResult` errors.
+- [ ] **Step 4: Implement `freeze-output.ts` and `syntaxmesh.freeze` output.**
+  Submit both files, in header/bookings order, as one `ConfirmedOutputHost.writeAll`
+  batch rooted beside the master; return the execution envelope plus two plain-data
+  `freeze` artifacts only after successful writes.
+- [ ] **Step 5: Keep `syntaxmesh.generateReport` runtime-only.** Its legacy flow
+  may prompt, but delegates to `report.open` or `report.export`; it must not
+  duplicate scheduling or output policy.
+- [ ] **Step 6: Verify focused and package tests.**
+  `deno test --allow-read --allow-write --allow-env packages/vsextension/tests/commands/freeze-output_test.ts packages/vsextension/tests/commands/reports_test.ts`
+  `deno task --cwd packages/vsextension tests`
+
+**Acceptance:** export and freeze are independently callable, never overwrite
+silently, and return accurate artifacts only after successful output.
+
+### 22.12.11 — Add pure help rendering and help/version commands (P8.7)
+
+**Depends on:** 22.12.1, 22.12.4. **Produces:** project-free metadata commands and
+help text without importing Cliffy or `cli.ts`.
+
+**Files:**
+- Create: `packages/vsextension/src/commands/help-text.ts`
+- Create: `packages/vsextension/src/commands/meta.ts`
+- Create: `packages/vsextension/tests/commands/meta_test.ts`
+- Modify: `packages/vsextension/src/commands/contracts.ts`
+- Modify: `packages/vsextension/src/daemon/daemon-core.ts`
+- Modify: `packages/vsextension/src/extension.node.ts`
+- Modify: `packages/vsextension/src/extension.web.ts`
+- Modify: `packages/vsextension/package.json`
+
+**Interfaces:**
+```ts
+export function formatHelp(specs: OptionSpec[]): string;
+
+export interface MetaExecutionPort {
+  execute(request: ExecutionRequest): Promise<ExecutionResult>;
+}
+```
+
+- [x] **Step 1: Add failing formatter tests.** Render usage, `run`/`smx`/`tj3`
+  aliases, every `OptionSpec`, short/long flags, argument placeholders,
+  descriptions and deferred reasons; omit ANSI sequences.
+- [x] **Step 2: Implement `formatHelp`.** Treat `ExecutionResult.results.help`
+  as the single option source; do not import `cli.ts` or Cliffy.
+- [x] **Step 3: Add failing command tests.** Help/version call `execute` once
+  with only their flag, need no active project, open no files and return the
+  envelope.
+- [x] **Step 4: Implement project-free execution and handlers.** Add
+  `DaemonCore.executeRequest(request)` as a thin injected-engine call; register
+  `syntaxmesh.help` and `syntaxmesh.version`; contribute both commands.
+- [x] **Step 5: Verify focused and package tests.**
+  `deno test --allow-read --allow-write --allow-env packages/vsextension/tests/commands/meta_test.ts`
+  `deno task --cwd packages/vsextension tests`
+
+**Acceptance:** help/version work in an empty workspace; structured help remains
+the source of truth; the Web graph contains no CLI process entry.
+
+### 22.12.12 — Add the manual command for text/html/smx (P8.7)
+
+**Depends on:** 22.12.9, 22.12.11. **Produces:** `syntaxmesh.man` with current
+F24 formats and explicit output.
+
+**Files:**
+- Create: `packages/vsextension/src/commands/manual.ts`
+- Create: `packages/vsextension/tests/commands/manual_test.ts`
+- Modify: `packages/vsextension/src/commands/service.ts`
+- Modify: `packages/vsextension/src/commands/contracts.ts`
+- Modify: `packages/vsextension/src/extension.node.ts`
+- Modify: `packages/vsextension/src/extension.web.ts`
+- Modify: `packages/vsextension/package.json`
+
+**Interfaces:**
+```ts
+export interface ManCommandOptions {
+  format?: "text" | "html" | "smx";
+  keywords?: string[];
+  targetUri?: string;
+  color?: boolean;
+}
+
+export interface ManCommandResult {
+  execution: ExecutionResult;
+  artifacts: ArtifactResult[];
+  stdout: string;
+}
+
+export interface ManCommandPort extends MetaExecutionPort {
+  output: ConfirmedOutputHost;
+}
+
+export function executeMan(
+  options: ManCommandOptions,
+  port: ManCommandPort,
+): Promise<CommandResult<ManCommandResult>>;
+```
+
+- [x] **Step 1: Add failing tests.** Default text, each valid format, keyword
+  forwarding, `color`, stale `tjp` rejection and project-free execution.
+- [x] **Step 2: Implement text/smx stdout behavior.** `syntaxmesh.run` keeps F24
+  stdout behavior. Semantic `syntaxmesh.man` defaults to stdout; when an explicit
+  file target is supplied, split it into directory URI/basename and call
+  `ConfirmedOutputHost.writeAll` with `results.man.content`, returning one
+  `manual` artifact after the confirmed write.
+- [x] **Step 3: Implement HTML output.** Treat `targetUri` as a directory, set it
+  as request `outputDir`, dispatch the manual file map through the shared output
+  host, and return one `manual` artifact per written file. The semantic command
+  handler prompts for a directory when HTML has no target; `syntaxmesh.run`
+  retains F24's current-directory default through its run context.
+- [x] **Step 4: Register and contribute `syntaxmesh.man`.** Keep the existing
+  `syntaxmesh.openManual` utility unchanged as a compatibility/public UI
+  command.
+- [x] **Step 5: Verify focused and package tests.**
+  `deno test --allow-read --allow-write --allow-env packages/vsextension/tests/commands/manual_test.ts`
+  `deno task --cwd packages/vsextension tests`
+
+**Acceptance:** only `text`, `html` and `smx` are accepted; manual generation
+uses F24 and never opens a project; explicit file output is confirmed.
+
+### 22.12.13 — Add all five sheet-app commands without SMTP (P8.7)
+
+**Depends on:** 22.12.1, 22.12.4, 22.12.5, 22.12.9. **Produces:** semantic sheet
+commands with host-read input and file/email output.
+
+**Files:**
+- Create: `packages/vsextension/src/commands/sheets.ts`
+- Create: `packages/vsextension/tests/commands/sheets_test.ts`
+- Modify: `packages/vsextension/src/commands/service.ts`
+- Modify: `packages/vsextension/src/commands/contracts.ts`
+- Modify: `packages/vsextension/src/extension.node.ts`
+- Modify: `packages/vsextension/src/extension.web.ts`
+- Modify: `packages/vsextension/package.json`
+
+**Interfaces:**
+```ts
+export interface SheetCommandOptions {
+  directoryUri?: string;
+  endDate?: string;
+  resources?: string[];
+  force?: boolean;
+  hideResource?: string;
+  intervalDuration?: string;
+  to?: string[];
+  sheetRecipients?: string[];
+  digestRecipients?: string[];
+  dryRun?: boolean;
+  configUri?: string;
+  fromUri?: string;
+}
+
+export interface SheetCommandResult {
+  execution: ExecutionResult;
+  artifacts: ArtifactResult[];
+  stdout: string;
+  stderr: string;
+}
+
+export type SheetEmailAppName =
+  | "ts-send"
+  | "ts-receive"
+  | "ts-summary"
+  | "ss-send"
+  | "ss-receive";
+
+export interface SheetCommandPort {
+  resolveProject(explicit?: string): CommandResult<string>;
+  executeProject(
+    uri: string,
+    options: BuildRequestOptions,
+  ): Promise<ExecutionResult>;
+  read(uri: string): Promise<string>;
+  listDir(uri: string): Promise<string[]>;
+  isDir(uri: string): Promise<boolean>;
+  output: ConfirmedOutputHost;
+}
+
+export function executeSheetApp(
+  app: SheetEmailAppName,
+  projectUri: string | undefined,
+  options: SheetCommandOptions,
+  port: SheetCommandPort,
+  stdin?: string,
+): Promise<CommandResult<SheetCommandResult>>;
+```
+
+- [x] **Step 1: Add failing mapping tests.** Cover `ts-send`, `ts-receive`,
+  `ts-summary`, `ss-send` and `ss-receive`; every typed option; `-f` as sheet
+  force; config parsing; `--to` appended to both recipient lists; `--sheet` and
+  `--digest` appended only to their own lists; dry-run; explicit/active/single-
+  project resolution; ambiguous/no-project errors; and missing-message errors.
+- [x] **Step 2: Resolve the project and implement host hydration.** Call
+  `resolveProject(projectUri)` before building any request and use the returned
+  URI for `executeProject`; never pass an empty closure to a sheet app. Resolve
+  directory/config/message URIs, read open buffers before `workspace.fs`, parse
+  YAML through `loadConfig`, and seed the four trees with `collectSheetFiles`.
+- [x] **Step 3: Implement the five service methods.** Pass the resolved project
+  URI and plain-data `appOptions` to `executeProject`; merge `to` into both
+  recipient arrays before execution; receivers require `rawMessage`; `--from -`
+  is supplied by the run/console context rather than read from a host stdin API.
+- [x] **Step 4: Dispatch output through `OutputHost`.** Print report/summary/email
+  text, write sheet deltas and `outbox/*.eml`, classify sheet/email artifacts,
+  and never invoke SMTP.
+- [x] **Step 5: Register and contribute all five commands.** Add exactly
+  `syntaxmesh.sheet.time.send`, `syntaxmesh.sheet.time.receive`,
+  `syntaxmesh.sheet.time.summary`, `syntaxmesh.sheet.status.send` and
+  `syntaxmesh.sheet.status.receive`; each handler delegates to `executeSheetApp`.
+- [x] **Step 6: Verify focused and package tests.**
+  `deno test --allow-read --allow-write --allow-env packages/vsextension/tests/commands/sheets_test.ts`
+  `deno task --cwd packages/vsextension tests`
+
+**Acceptance:** all five apps match F24 data contracts and execute over a
+resolved project; stdin is injected; dry-run produces no files; no network mail
+delivery exists.
+
+### 22.12.14 — Add the full in-process `syntaxmesh.run` adapter (P8.7)
+
+**Depends on:** 22.12.5, 22.12.7, 22.12.9–22.12.13.
+**Produces:** complete CLI-compatible execution for `.smx` and `.tjp`.
+
+**Files:**
+- Create: `packages/vsextension/src/commands/run.ts`
+- Create: `packages/vsextension/tests/commands/run_test.ts`
+- Modify: `packages/vsextension/src/commands/service.ts`
+- Modify: `packages/vsextension/src/commands/contracts.ts`
+- Modify: `packages/vsextension/src/extension.node.ts`
+- Modify: `packages/vsextension/src/extension.web.ts`
+- Modify: `packages/vsextension/package.json`
+
+**Interfaces:**
+```ts
+import type { ParsedArgs } from "@vanaware/syntaxmesh-cli/options";
+
+export interface Tj3RunContext {
+  /** URI string used to resolve argv paths and relative output. */
+  cwd?: string;
+  stdin?: string;
+  confirmOverwrite?: (paths: string[]) => Promise<boolean>;
+  renderer?: { silent?: boolean; color?: boolean };
+}
+
+export interface Tj3RunResult {
+  execution: ExecutionResult;
+  artifacts: ArtifactResult[];
+  stdout: string;
+  stderr: string;
+}
+
+export interface Tj3RunPort {
+  parseArgs(argv: readonly string[]): ParsedArgs;
+  resolve(path: string): string;
+  read(path: string): Promise<string>;
+  loadConfig(uri: string): Promise<CommandResult<LoadedConfig>>;
+  hasProject(uri: string): boolean;
+  addProject(uri: string): Promise<CommandResult<ProjectModel>>;
+  refreshProject(uri: string): Promise<CommandResult<ProjectModel>>;
+  executeProject(
+    uri: string,
+    options: BuildRequestOptions,
+  ): Promise<CommandResult<ExecutionResult>>;
+  executeRequest(request: ExecutionRequest): Promise<ExecutionResult>;
+  executeMan(
+    options: ManCommandOptions,
+  ): Promise<CommandResult<ManCommandResult>>;
+  executeSheetApp(
+    app: SheetEmailAppName,
+    projectUri: string | undefined,
+    options: SheetCommandOptions,
+    stdin?: string,
+  ): Promise<CommandResult<SheetCommandResult>>;
+  output: ConfirmedOutputHost;
+}
+
+export function runTj3(
+  argv: readonly string[],
+  context: Tj3RunContext,
+  port: Tj3RunPort,
+): Promise<CommandResult<Tj3RunResult>>;
+```
+
+- [x] **Step 1: Add failing parser-adapter tests.** Inject a spy for the shared
+  `parseArgs` through `Tj3RunPort` and assert exactly one call; cover
+  help/version/man without a project, all five sheet apps with their required
+  positional master, rejection of prefixed sheet invocations without a master,
+  `.smx`/`.tjp` roots, invalid/debug flags, config/sheet/message reads,
+  `--from -`, output roots and renderer separation.
+- [x] **Step 2: Resolve and hydrate parsed input.** Resolve positional master,
+  config, sheet, message and output paths against `cwd` or master directory;
+  add a new master or refresh an existing cached master; preserve unsaved open
+  buffers. For parsed `ts`/`ss` forms, require `request.entry` and pass its
+  resolved URI to the sheet service.
+- [x] **Step 3: Route through semantic services.** Help/version/man use their
+  project-free services; sheet apps use the project-backed semantic sheet service
+  with the positional master; check/schedule/freeze/report selections use the
+  corresponding execution/report services; compile retains all-report default
+  behavior. Do not construct a second engine request pipeline.
+- [x] **Step 4: Apply renderer policy.** Resolve effective renderer values as
+  `silent = parsed.renderer.silent || context.renderer?.silent === true` and
+  `color = parsed.renderer.color && context.renderer?.color !== false`; inject
+  stdout/stderr collectors into `Reporter`. Set `request.man.color` to that
+  effective color; never add `silent`/`noColor` to `ExecutionRequest`.
+- [x] **Step 5: Dispatch envelope output once per branch.** Project/help/version
+  envelopes use the confirmed `OutputHost` for stdout reports, freeze files,
+  assets and images, passing `context.cwd` and `context.confirmOverwrite` as
+  per-call overrides; add pure help text to stdout because `dispatchSections` does
+  not print `results.help`. Manual and sheet-app branches reuse their semantic
+  service result and must not dispatch the same envelope again.
+- [x] **Step 6: Register and contribute only `syntaxmesh.run`.** Return
+  `CommandResult<Tj3RunResult>`; usage errors become structured command errors.
+  Do not contribute a separate tj3 command.
+- [x] **Step 7: Verify focused, package and Web-purity tests.**
+  `deno test --allow-read --allow-write --allow-env packages/vsextension/tests/commands/run_test.ts`
+  `deno task --cwd packages/vsextension tests`
+
+**Acceptance:** one shared parse, one F24 execution path per request, full
+artifact behavior, exact/regex report semantics, positional masters for prefixed
+sheet invocations, no external process and no renderer fields in execution data.
+
+### 22.12.15 — Add console parser, formatters and allowlisted dispatch (P8.5)
+
+**Depends on:** 22.12.3, 22.12.14. **Produces:** one pure console core shared by
+Desktop and Web.
+
+**Files:**
+- Create: `packages/vsextension/src/console/parser.ts`
+- Create: `packages/vsextension/src/console/formatter.ts`
+- Create: `packages/vsextension/src/console/commands.ts`
+- Create: `packages/vsextension/tests/console/parser_test.ts`
+- Create: `packages/vsextension/tests/console/formatter_test.ts`
+- Create: `packages/vsextension/tests/console/commands_test.ts`
+
+**Interfaces:**
+```ts
+export type ConsoleRequest =
+  | { kind: "project"; action: "add" | "remove" | "list" | "setActive" | "refresh"; project?: string }
+  | { kind: "execute"; action: "compile" | "checkSyntax" | "scheduleOnly" | "freeze"; project?: string; freezeDate?: string; byTask?: boolean; options?: ExecutionCommandOptions }
+  | { kind: "sheet"; action: "checkTimeSheet" | "checkStatusSheet" | "timeSend" | "timeReceive" | "timeSummary" | "statusSend" | "statusReceive"; project?: string; sheet?: string; options?: SheetCommandOptions }
+  | { kind: "report"; action: "list" | "render" | "open" | "export"; project?: string; report?: string; pattern?: string; reportsIsRegex?: boolean; dynamicAttributes?: string; format?: string; target?: string }
+  | { kind: "run"; argv: string[]; stdin?: string }
+  | { kind: "clear" }
+  | { kind: "help" }
+  | { kind: "version" }
+  | { kind: "exit" };
+
+export interface ConsoleCommandExecutor {
+  execute<T>(id: string, ...args: unknown[]): Promise<T>;
+}
+```
+
+- [x] **Step 1: Add failing parser tests.** Cover every family, quoted paths,
+  optional project fallback, semantic flags, `man`/`ts`/`ss`, `--from -`, all
+  three run prefixes, missing values, unknown verbs, deferred debug flags and
+  attempts to execute arbitrary `syntaxmesh.*` IDs.
+- [x] **Step 2: Implement a quote-aware tokenizer without a shell.** Preserve
+  empty quoted arguments and reject unterminated quotes. Normalize bare
+  `man`/`ts`/`ss` forms; `run`, `smx` and `tj3` all return `{ kind: "run", argv }`.
+- [x] **Step 3: Add failing formatter tests.** Cover project/report lists,
+  execution status/intent/messages, manual/sheet/run stdout/stderr, artifact
+  names and email text; assert no VS Code imports.
+- [x] **Step 4: Implement pure formatters.** Export `formatProjectList`,
+  `formatReportList`, `formatExecutionResult`, `formatManResult`,
+  `formatSheetResult` and `formatRunResult`; reuse `formatHelp` for help.
+- [x] **Step 5: Add failing dispatch tests with a fake executor.** Assert an
+  exact allowlist mapping; every run prefix dispatches only `syntaxmesh.run`;
+  untrusted input never becomes a command ID; `CommandResult` failures render
+  as errors.
+- [x] **Step 6: Implement the pure dispatcher.** Inject `ConsoleCommandExecutor`;
+  keep the VS Code executor wrapper in the host adapters.
+- [x] **Step 7: Verify console tests.**
+  `deno test --allow-read --allow-write --allow-env packages/vsextension/tests/console/parser_test.ts packages/vsextension/tests/console/formatter_test.ts packages/vsextension/tests/console/commands_test.ts`
+
+**Acceptance:** parser/dispatch/formatter behavior is host-independent and
+completely covered before terminal UI wiring.
+
+### 22.12.16 — Add Desktop PTY and Web input-console adapters (P8.5)
+
+**Depends on:** 22.12.15. **Produces:** `syntaxmesh.console.open` on both hosts
+without claiming unsupported Web PTY behavior.
+
+**Files:**
+- Create: `packages/vsextension/src/console/pty.ts`
+- Create: `packages/vsextension/src/console/input-console.ts`
+- Create: `packages/vsextension/tests/console/pty_test.ts`
+- Create: `packages/vsextension/tests/console/input-console_test.ts`
+- Modify: `packages/vsextension/src/extension.node.ts`
+- Modify: `packages/vsextension/src/extension.web.ts`
+- Modify: `packages/vsextension/src/web/purity.ts`
+- Modify: `packages/vsextension/src/commands/contracts.ts`
+- Modify: `packages/vsextension/package.json`
+
+**Interfaces:**
+```ts
+export interface ConsoleAdapter {
+  open(): Promise<void>;
+  clear(): void;
+  dispose(): void;
+}
+```
+
+- [x] **Step 1: Add failing PTY state tests.** Line buffer, enter completion,
+  prompt/help text, `clear`, `exit`, sequential dispatch and Ctrl+D stdin
+  collection behave deterministically with fake emitter/executor ports.
+- [x] **Step 2: Implement `pty.ts`.** Own the line buffer and
+  `EventEmitter<string>`; document equivalent `run`/`smx`/`tj3` prefixes; collect
+  multiline stdin until Ctrl+D; close on `exit`; register all disposables.
+- [x] **Step 3: Add failing Web adapter tests.** OutputChannel plus sequential
+  `showInputBox`; `clear` clears the channel; `--from -` opens an untitled
+  document and passes its text; no terminal or Node import is required.
+- [x] **Step 4: Implement `input-console.ts`.**
+- [x] **Step 5: Register shared public commands.** Add only `console.open` to
+  public constants/manifest (`run` already landed in 22.12.14); register
+  `console.clear` runtime-only. Node imports `pty.ts`; Web imports only
+  `input-console.ts`.
+- [x] **Step 6: Mark `console/pty.ts` Node-only in the source scanner.**
+- [x] **Step 7: Verify adapter and package tests.**
+  `deno test --allow-read --allow-write --allow-env packages/vsextension/tests/console/pty_test.ts packages/vsextension/tests/console/input-console_test.ts`
+  `deno task --cwd packages/vsextension tests`
+
+**Acceptance:** both hosts share parser/dispatch/formatters; Desktop has a real
+PTY; Web has an honest input-console fallback and no Node dependency.
+
+### 22.12.17 — Add multi-project tree roots and context menus (P8.4)
+
+**Depends on:** 22.12.3, 22.12.7. **Produces:** the tree as a thin client over
+all loaded projects.
+
+**Files:**
+- Modify: `packages/vsextension/src/views/project-tree.ts`
+- Modify: `packages/vsextension/src/views/host.ts`
+- Modify: `packages/vsextension/tests/views/project-tree_test.ts`
+- Modify: `packages/vsextension/package.json`
+
+**Interfaces:**
+```ts
+export interface TreeNode extends TreeItemData {
+  id: string;
+  kind: "project" | "category" | "entity" | "report";
+  projectUri: string;
+  reportId?: string;
+  contextValue: "project" | "category" | "entity" | "report";
+  command?: string;
+  commandArgs?: unknown[];
+  children: TreeNode[];
+}
+
+export function treeChildren(
+  models: ProjectModel[],
+  activeUri: string | null,
+): TreeNode[];
+```
+
+- [x] **Step 1: Add failing tree tests.** Two projects produce two roots; IDs
+  are globally unique; active root is marked; report leaves carry
+  `syntaxmesh.report.open` and `[projectUri, reportId]`; category/entity nodes do
+  not become project commands.
+- [x] **Step 2: Implement project roots.** Root ID `project:${projectUri}`;
+  prefix every child ID; retain five categories; use status icons and last
+  intent in descriptions; source report leaves from cached report inventory.
+- [x] **Step 3: Wire `getTreeItem`.** Root click executes
+  `syntaxmesh.project.setActive`; report click executes `syntaxmesh.report.open`;
+  set `contextValue`; refresh after service state changes without replacing an
+  explicit selection.
+- [x] **Step 4: Add manifest menus.** Add tree-title add/refresh and project
+  remove/compile plus report export context actions using the exact `when`
+  clauses from P8.4.
+- [x] **Step 5: Verify tree and package tests.**
+  `deno test --allow-read --allow-write --allow-env packages/vsextension/tests/views/project-tree_test.ts`
+  `deno task --cwd packages/vsextension tests`
+
+**Acceptance:** every loaded project is navigable; explicit selection is
+visible and stable; tree actions call only canonical commands.
+
+### 22.12.18 — Add aggregate/busy status-bar state (P8.4)
+
+**Depends on:** 22.12.5, 22.12.10, 22.12.12–22.12.14, 22.12.16, 22.12.17.
+**Produces:** useful aggregate and execution feedback.
+
+**Files:**
+- Modify: `packages/vsextension/src/views/status-bar.ts`
+- Modify: `packages/vsextension/src/views/host.ts`
+- Modify: `packages/vsextension/tests/views/status-bar_test.ts`
+- Modify: command adapters from 22.12.5/22.12.10/22.12.12–22.12.14
+
+**Interfaces:**
+```ts
+export interface StatusBarState {
+  status: "idle" | "ok" | "error";
+  locale?: string;
+  reportCount?: number;
+  projectCount: number;
+  activeUri: string | null;
+  busy: boolean;
+  lastIntent: ProjectIntent;
+  errorCount: number;
+}
+```
+
+- [x] **Step 1: Add failing projection tests.** Aggregate project/error counts,
+  active intent, busy state and console action are represented without losing
+  locale/report information.
+- [x] **Step 2: Extend `statusText` and host state.** Read explicit active
+  registry state; derive error count from `lastExecution`; use `inventory` and
+  zero errors when no execution exists; show aggregate counts even when no single
+  project is active.
+- [x] **Step 3: Add busy notifications.** The host keeps a pending-execution
+  count; thin adapters increment before awaiting and decrement in `finally`, so
+  overlapping runs remain busy until the last one settles. Service failures still
+  refresh final state.
+- [x] **Step 4: Change the status-bar command to `syntaxmesh.console.open`.**
+- [x] **Step 5: Verify status and package tests.**
+  `deno test --allow-read --allow-write --allow-env packages/vsextension/tests/views/status-bar_test.ts`
+  `deno task --cwd packages/vsextension tests`
+
+**Acceptance:** long executions are visible; aggregate state is correct for
+multiple projects; clicking the status bar opens the console.
+
+### 22.12.19 — Wire canonical commands and legacy aliases (P8.1–P8.7)
+
+**Depends on:** 22.12.3, 22.12.5, 22.12.7, 22.12.10–22.12.18.
+**Produces:** one registration path for Desktop and Web with no duplicate
+business logic.
+
+**Files:**
+- Create: `packages/vsextension/src/commands/register.ts`
+- Modify: `packages/vsextension/src/extension.node.ts`
+- Modify: `packages/vsextension/src/extension.web.ts`
+- Modify: `packages/vsextension/src/commands/daemon.ts`
+- Modify: `packages/vsextension/src/commands/reports.ts`
+- Modify: `packages/vsextension/src/commands/misc.ts`
+- Modify: `packages/vsextension/src/commands/contracts.ts`
+- Modify: `packages/vsextension/package.json`
+- Modify: `packages/vsextension/tests/manifest_test.ts`
+
+**Interfaces:**
+```ts
+export interface CommandRegistrationOptions {
+  host: DaemonHost;
+  presenter: ReportPresenter;
+  output: ConfirmedOutputHost;
+  writeStrategy: "direct" | "stub-first";
+  console: ConsoleAdapter;
+}
+
+export function registerCanonicalCommands(
+  context: ExtensionContext,
+  options: CommandRegistrationOptions,
+): void;
+```
+
+- [x] **Step 1: Add failing manifest tests.** `contributes.commands` exactly
+  equals `PUBLIC_COMMAND_IDS`; all legacy IDs plus `console.clear` are absent;
+  every menu command is public; no `syntaxmesh.tj3.run` exists.
+- [x] **Step 2: Implement shared registration.** Each entry builds one
+  `Tj3HostIo`/`OutputHost` per activation and passes it as `options.output`. The
+  registrar creates one UI-free service over that host, registers every public
+  command exactly once, and keeps adapter differences limited to write strategy
+  and console host.
+- [x] **Step 3: Register runtime-only compatibility aliases.** `addProject`,
+  `reloadProject`, `removeProject`, `listProjects` and `generateReport` forward
+  to canonical IDs; `console.clear` forwards to the active adapter. No legacy
+  handler retains scheduling/output logic.
+- [x] **Step 4: Simplify Node/Web activation.** Both call the same registrar;
+  preserve LSP startup, daemon lifecycle, views and utility commands.
+- [x] **Step 5: Verify package tests and both bundles.**
+  `deno task --cwd packages/vsextension tests`
+  `deno task build:vsext`
+
+**Acceptance:** public/runtime-only sets match the manifest; both entries expose
+the same API; legacy IDs remain usable but are not contributed.
+
+### 22.12.20 — Remove unbound runtime globals from core logging (P8.6)
+
+**Depends on:** none; may run in Wave A. **Produces:** browser-safe progress
+paths with injected capabilities.
+
+**Files:**
+- Modify: `packages/core/src/log.ts`
+- Create: `packages/core/tests/log-runtime_test.ts`
+
+**Interfaces:**
+```ts
+export interface LogRuntime {
+  isTerminal?: () => boolean;
+  write?: (text: string) => void;
+}
+
+static runtime: LogRuntime = detectLogRuntime();
+```
+
+- [x] **Step 1: Add a failing browser-like test.** Save `Log.runtime`, set it to
+  `{}`, and assert `startProgressMeter`, `activity` and `progress` neither throw
+  nor write; restore it after each test.
+- [x] **Step 2: Add capability tests.** A fake terminal runtime receives progress
+  text; silent mode suppresses activity; non-terminal mode writes nothing;
+  `reset()` does not replace the injected runtime.
+- [x] **Step 3: Implement `detectLogRuntime`.** Probe optional capabilities
+  through `globalThis`; route writes through `Log.runtime.write`; remove every
+  unbound `Deno` reference from `log.ts`.
+- [x] **Step 4: Verify focused and core tests.**
+  `deno test --allow-env --allow-read --allow-write packages/core/tests/log-runtime_test.ts`
+  `deno task --cwd packages/core tests`
+
+**Acceptance:** browser-like execution cannot throw `ReferenceError`; Deno
+terminal behavior remains available through the default capability probe.
+
+### 22.12.21 — Add generated Web-bundle scanning to the quality gate (P8.6)
+
+**Depends on:** 22.12.20; final clean result also depends on 22.12.19.
+**Produces:** deterministic protection for the actual browser artifacts.
+
+**Files:**
+- Create: `packages/vsextension/src/web/bundle-purity.ts`
+- Create: `packages/vsextension/scripts/check-web-bundle.ts`
+- Create: `packages/vsextension/tests/web/bundle-purity_test.ts`
+- Modify: `packages/vsextension/src/web/purity.ts`
+- Modify: `packages/vsextension/deno.jsonc`
+- Modify: `deno.jsonc`
+- Modify: `docs/syntaxmesh/fases/fase-22-vscode-extension.md` §9.2/§11/§12
+
+**Interfaces:**
+```ts
+export interface BundleViolation {
+  file: string;
+  line: number;
+  snippet: string;
+  reason: string;
+}
+
+export function scanBrowserBundle(
+  file: string,
+  text: string,
+): BundleViolation[];
+```
+
+- [x] **Step 1: Add failing scanner tests.** Flag unbound `Deno.`/`Deno?.`,
+  `node:` imports/requires and unsafe `process.env/argv/exit/cwd`; allow only
+  the known guarded minimatch `process.platform === "win32"` capability check;
+  ignore comments and source-map payloads.
+- [x] **Step 2: Implement the scanner.** Preserve file/line/snippet/reason and
+  avoid matching forbidden words inside comments or `sourcesContent`.
+- [x] **Step 3: Implement `check-web-bundle.ts`.** Scan both
+  `dist/extension.web.js` and `dist/server.web.js`, print every violation and
+  exit non-zero when any are found.
+- [x] **Step 4: Add deterministic tasks.** Add package
+  `check:web-bundle`, `build:web-tests` and `test:web-runtime`; add root
+  `check:web-bundle`; insert it after `check:lspcore` in root `tests`. Browser
+  runtime remains outside the default gate.
+- [x] **Step 5: Update source-purity wording.** Replace absolute “no `Deno.*`”
+  claims with “no unbound runtime-specific globals”; include `console/pty.ts` in
+  Node-only bootstraps and scan CLI modules reached by the Web graph.
+- [x] **Step 6: Verify scanner, build and bundle gate.**
+  `deno test --allow-read --allow-write --allow-env packages/vsextension/tests/web/bundle-purity_test.ts`
+  `deno task check:web-bundle`
+
+**Acceptance:** both generated Web bundles have zero violations and the root
+quality gate fails deterministically if a runtime-only global is reintroduced.
+
+### 22.12.22 — Extend real Desktop runtime acceptance (P8.5/P8.6/P8.7)
+
+**Depends on:** 22.12.19, 22.12.21. **Produces:** in-host evidence for canonical
+commands, diagnostics, console and CLI-compatible output.
+
+**Files:**
+- Modify: `packages/vsextension/tests/runtime/suite.ts`
+- Modify: `packages/vsextension/tests/runtime/run.ts`
+- Modify: `packages/vsextension/tests/manifest_test.ts`
+- Create: `packages/vsextension/tests/runtime/workspace/master.smx`
+- Create: `packages/vsextension/tests/runtime/workspace/stdout.smx`
+- Create: `packages/vsextension/tests/runtime/workspace/large.smx`
+- Create: `packages/vsextension/tests/runtime/workspace/sheet.yaml`
+- Create: `packages/vsextension/tests/runtime/workspace/TimeSheetTemplates/week.tji`
+- Create: `packages/vsextension/tests/runtime/workspace/TimeSheets/2026-05-18/dev.tji`
+- Create: `packages/vsextension/tests/runtime/workspace/StatusSheetTemplates/week.tji`
+- Create: `packages/vsextension/tests/runtime/workspace/StatusSheets/2026-05-18/dev.tji`
+
+**Interfaces:** retain the existing sequential `check(name, fn)` collector and
+`full|untrusted|clean` driver modes.
+
+- [ ] **Step 1: Add registration and trust checks.** In full mode,
+  `getCommands(true)` contains every `PUBLIC_COMMAND_IDS` entry and every
+  runtime-only alias exactly once. Assert the manifest still declares no
+  `untrustedWorkspaces` capability. In untrusted mode, assert the extension is
+  inactive and every public/runtime-only command ID is absent; retain the existing
+  phase-B probe proving activation and execution after trust is granted.
+- [ ] **Step 2: Copy nested fixtures recursively.** Replace the top-level-only
+  fixture loop in `copyWorkspace()` with a recursive copy that creates destination
+  directories and preserves all four sheet trees; add a driver assertion that
+  `TimeSheets/2026-05-18/dev.tji` exists before launching VS Code.
+- [ ] **Step 3: Add canonical project/execution checks.** Exercise explicit
+  `.smx` and `.tjp` add/list/setActive/refresh/remove, `.tji` rejection,
+  check-syntax, schedule-only, compile, freeze and both sheet checks.
+- [ ] **Step 4: Add diagnostics checks.** A syntax failure appears in
+  `syntaxmesh.execution` while LSP diagnostics remain present and unchanged.
+- [ ] **Step 5: Add report/output checks.** List/render/open/export, overwrite
+  denial and approval, freeze header/bookings, HTML assets, stdout reports and TJP
+  report export from both `.smx` and `.tjp` masters are observed through real
+  files/Webviews.
+- [ ] **Step 6: Add console checks.** Open the Desktop terminal; verify
+  `project list`, `check-syntax`, `run master.smx --no-reports`,
+  `smx master.smx --list-reports 'cost|task'`, `tj3 man task`,
+  `run ts summary master.smx --dry-run`,
+  `smx ss send master.tjp --dry-run`, `clear` and `exit`; verify all prefixes
+  reach the same command and stdout reports print. Also verify bare semantic
+  `man` and `ts summary` use the project-free/active-project paths, while a
+  prefixed sheet invocation without a master is rejected exactly as F24 rejects
+  it.
+- [ ] **Step 7: Add progress-path acceptance.** Run a TJP export with more than
+  100 tasks to exercise `Log` progress paths in the Node host.
+- [ ] **Step 8: Run all Desktop modes over fresh artifacts.**
+  `deno task build:vsext`
+  `deno task --cwd packages/vsextension test:runtime -- --mode full`
+  `deno task --cwd packages/vsextension test:runtime -- --mode untrusted`
+  `deno task package:vsext`
+  `deno task --cwd packages/vsextension test:runtime -- --mode clean`
+
+**Acceptance:** all three driver modes exit zero with fresh output; command,
+diagnostic, artifact, console and trust behavior is observed in the real host,
+including full disablement before trust and activation after the persisted grant.
+
+### 22.12.23 — Add real browser runtime acceptance (P8.6/P8.7)
+
+**Depends on:** 22.12.19, 22.12.21, 22.12.14. **Produces:** actual browser
+evidence rather than mocked Web scenarios.
+
+**Files:**
+- Create: `packages/vsextension/tests/runtime/web-suite.ts`
+- Modify: `packages/vsextension/tests/runtime/workspace/` fixtures as needed
+- Modify: `packages/vsextension/deno.jsonc`
+- Modify: `docs/syntaxmesh/fases/fase-22-vscode-extension.md` §11/§12
+
+**Interfaces:** export `run()` and use the same sequential `check()` collector;
+use `@vscode/test-web` with the runtime workspace as a virtual filesystem.
+
+- [ ] **Step 1: Add the browser suite.** Verify browser entry activation, Worker
+  LSP initialize, `.smx` diagnostics/hover, project add/list/setActive,
+  parse-only, schedule-only and HTML report open.
+- [ ] **Step 2: Add browser output checks.** Exercise a user-triggered virtual
+  filesystem export, overwrite denial/approval, stdout report and a TJP export
+  with more than 100 tasks.
+- [ ] **Step 3: Add Web console checks.** Stub sequential input boxes; verify
+  open/clear, `project list`, `run master.smx --no-reports`, and equivalent
+  `run`/`smx`/`tj3` list-reports/manual aliases without terminal or Node APIs.
+- [ ] **Step 4: Wire the pinned driver.** Use `@vscode/test-web@0.0.81`, Chromium,
+  headless mode, `dist/web-tests.js` and `tests/runtime/workspace`; keep it
+  outside `deno task tests` because it downloads/launches a browser.
+- [ ] **Step 5: Run real browser acceptance.**
+  `deno task --cwd packages/vsextension test:web-runtime`
+- [ ] **Step 6: Record exact evidence.** Browser version, VS Code Web build,
+  checks passed/failed and artifacts; keep `vscode.dev` explicitly deferred
+  unless separately exercised.
+
+**Acceptance:** the real browser suite exits zero; skipped/mocked checks do not
+count; until this runs, Web status remains “runtime verification pending”.
+
+### 22.12.24 — Add the complete F24-to-extension parity matrix (P8.7)
+
+**Depends on:** 22.12.14, 22.12.19. **Produces:** exhaustive regression coverage
+for every current CLI flag and subcommand.
+
+**Files:**
+- Create: `packages/vsextension/tests/commands/parity_test.ts`
+- Modify: `packages/vsextension/tests/commands/run_test.ts`
+- Modify: `packages/vsextension/tests/console/parser_test.ts`
+
+**Interfaces:**
+```ts
+import type { RendererOptions } from "@vanaware/syntaxmesh-cli/options";
+
+interface ParityCase {
+  argv: string[];
+  expected: ExecutionRequest;
+  renderer?: RendererOptions;
+}
+```
+
+- [ ] **Step 1: Add a table-driven parity test.** For every F24 mapping row,
+  compare the parser request with the builder after removing only host-hydrated
+  `files`/`entry`; the empty closure otherwise makes the builder add `files: []`
+  and `entry: ""`. Assert renderer flags stay separate.
+
+  ```ts
+  const parsed = parseArgs(argv,);
+  const expected = structuredClone(parsed.request,);
+  const actual = buildExecuteRequest({ files: [], missing: [] }, parsed.request,);
+  delete expected.files;
+  delete expected.entry;
+  delete actual.files;
+  delete actual.entry;
+  assertEquals(actual, expected,);
+  assertEquals(parsed.renderer, renderer,);
+  ```
+- [ ] **Step 2: Cover root execution.** Exact/regex reports, repeated `--report`,
+  `-A`, output directory, force, abort-on-warnings, TS deltas, trace, freeze
+  flags, both sheet checks, help/version and invalid/debug flags.
+- [ ] **Step 3: Cover subcommands.** `man` text/html/smx and stale `tjp`; all five
+  `ts`/`ss` apps; recipients; dry-run; config; directory; message file/stdin;
+  missing-message errors.
+- [ ] **Step 4: Cover output behavior.** Stdout reports, freeze files, HTML
+  manual/assets/images, sheet files/emails, overwrite confirmation and no
+  partial output after denial.
+- [ ] **Step 5: Cover master/prefix behavior.** `.smx`, `.tjp`, invalid roots and
+  equivalent `run`/`smx`/`tj3` console forms.
+- [ ] **Step 6: Run parity and package tests.**
+  `deno test --allow-read --allow-write --allow-env packages/vsextension/tests/commands/parity_test.ts`
+  `deno task --cwd packages/vsextension tests`
+
+**Acceptance:** every current F24 surface row has an explicit passing case or an
+explicit expected rejection; no undocumented divergence remains.
+
+### 22.12.25 — Reconcile docs, package and record full-gate evidence
+
+**Depends on:** 22.12.1–22.12.24. **Produces:** auditable P8 closure without
+rewriting P1–P7 history.
+
+**Files:**
+- Modify: `docs/syntaxmesh/fases/fase-22-vscode-extension-tarefas.md`
+- Modify: `docs/syntaxmesh/fases/fase-22-vscode-extension.md`
+- Modify: `CURRENT.md`
+- Modify: `AGENTS.md` only if phase status changes
+- Modify: `packages/vsextension/package.json` only if packaging evidence requires
+  a metadata correction
+
+**Interfaces:** record actual commands, exit codes, counts and artifact paths;
+do not infer success from prior runs.
+
+- [ ] **Step 1: Self-review coverage.** Map every P8.1–P8.7 requirement and every
+  acceptance checkbox to a completed task; scan for placeholders, contradictory
+  formats, missing dependencies and type-name drift.
+- [ ] **Step 2: Run focused CLI/extension checks and the full project gate.**
+  `deno task --cwd packages/cli tests`
+  `deno task --cwd packages/vsextension tests`
+  `deno task tests`
+- [ ] **Step 3: Rebuild and inspect packaging.**
+  `deno task build:vsext`
+  `deno task package:vsext`
+  Verify zip integrity, identity/version/engine, four bundles and the complete
+  14-file report asset tree; record exact inventory and size.
+- [ ] **Step 4: Attach runtime evidence.** Record fresh full/untrusted/clean
+  Desktop results and the real browser result from 22.12.22/22.12.23; any
+  unavailable environment remains an explicit blocker, not a passing item.
+- [ ] **Step 5: Update task status and plan acceptance.** Fill the evidence table
+  below, check completed task boxes, update P8 acceptance only for proven items
+  and retain all non-goals.
+- [ ] **Step 6: Verify documentation and diff hygiene.**
+  `git diff --check`
+  `deno task lint:doc:all`
+
+**Acceptance:** full gate and packaging pass with fresh evidence; Desktop and
+browser acceptance are recorded honestly; P1–P7 remain unchanged.
+
+## P8 Execution Evidence
+
+| Task | Status | Focused evidence | Aggregate/runtime evidence |
+|---|---|---|---|
+| 22.12.1 | Complete | Collector 1 passed (4 steps, including trailing-slash red→green regression); CLI 67 passed (661 steps); vsext 33 passed (131 steps); pure import smoke 5/5; `lint:doc` private-type-ref debt 5→0 | Pre-P8 baseline: 943 passed (7719 steps), 0 failed; aggregate closure owned by 22.12.25 |
+| 22.12.2 | Complete | Registry/restore/persistence focused: 4 passed (24 steps); vsext 33 passed (139 steps); legacy selection, stale URI, sorted fallback and Web purity covered | Desktop persistence wired through `DaemonHost`; real in-host persistence acceptance belongs to 22.12.22 |
+| 22.12.3 | Complete | Resolver 1 passed (11 steps, including invalid-explicit rejection and invalid-editor fallback red→green); service 1 passed (13 steps); manifest focused 1 passed (3 steps); vsext 36 passed (167 steps) with type checking; targeted fmt/lint and extension doc lint clean | Full `deno task tests` exited 0 after the task update; UI-free port boundary verified; `DaemonHost` naming/async adaptation and canonical registration remain owned by 22.12.19; aggregate counts belong to 22.12.25 |
+| 22.12.4 | Complete | Red: missing `executeProject` and incomplete `BuildRequestOptions` (17 type errors); green: request-builder/daemon focused 2 passed (21 steps); vsext 36 passed (176 steps) with type checking; targeted fmt/lint clean; full `deno task tests` exited 0 | Cached closure reuse, inventory-envelope identity, status/timestamp/error metadata and intent precedence covered; semantic host wiring completed in 22.12.5, while project-free help/version remain owned by 22.12.11 |
+| 22.12.5 | Complete | Red: missing config module, missing execution contracts/methods (36 type errors), and missing six manifest IDs; green: config/execution/service/manifest focused 4 passed (39 steps); vsext 38 passed (198 steps) with type checking; targeted fmt/lint clean; full `deno task tests` exit 0, CLI 67 passed (661 steps) | YAML hydration, exact option forwarding, inline sheet reads, six semantic commands and shared Desktop/Web handlers covered; execution diagnostics delivered in 22.12.6; full CLI output is still owned by later waves |
+| 22.12.6 | Complete | Red: missing projection module, then missing URI/range exports; green: diagnostics focused 3 passed (8 steps); vsext 41 passed (206 steps) with type checking; targeted fmt/lint clean; all 4 extension bundles rebuilt; full `deno task tests` exit 0, CLI 67 passed (661 steps) | `syntaxmesh.execution` publishes envelope messages with per-project clearing and leaves LSP diagnostics untouched; real in-host isolation acceptance remains owned by 22.12.22 |
+| 22.12.7 | Complete | Red: missing report API (20 type errors), then missing action module/HTML-open export (2 type errors); green: report focused 4 passed (30 steps); vsext 45 passed (237 steps) with type checking; targeted fmt/lint and extension doc lint clean; all 4 bundles rebuilt | Full `deno task tests` exit 0: 957 passed (7835 steps), 0 failed; cached listing, in-memory render and HTML-only open are covered; real Desktop/Web invocation remains owned by 22.12.22/22.12.23 |
+| 22.12.8 | Complete | Asset copier 1 passed (4 steps; exact 14-file tree, byte equality, stale replacement, repeatability and lint/fmt exclusions); vsext 45 passed (237 steps); `build:vsext` copied 14 assets and built all 4 bundles; repository lint checked 976 files and formatting checked 1052 files | Vendored CSS/JS remain byte-identical and outside lint/fmt scope; full gate 957 passed (7835 steps); package manifest allowlist includes `assets/**`; final installed inventory remains owned by 22.12.25 |
+| 22.12.9 | Complete | Focused artifacts/output-host: 3 passed (18 steps); vsext package gate: 48 passed (255 steps) with type checking | Atomic overwrite preflight, record-only preview, stdout/copy capture, artifact classification and pure injected host are covered; real Desktop/Web host acceptance remains owned by 22.12.22/22.12.23 |
+| 22.12.10 | Complete | Red: missing export/freeze APIs and UI/output contracts (11 type errors); green: focused 7 passed (43 steps); vsext 51 passed (268 steps) with type checking; targeted fmt/lint clean; all 4 bundles rebuilt | Full `deno task tests` exit 0: 963 passed (7866 steps), 0 failed; explicit/prompted export, atomic overwrite denial, freeze ordering/empty bookings and legacy delegation are covered; real host acceptance remains owned by 22.12.22/22.12.23 |
+| 22.12.11 | Complete | Red: missing `help-text.ts`/`meta.ts` (2 type errors); green: focused 2 passed (5 steps); vsext package gate 53 passed (273 steps) with type checking; targeted fmt/lint clean; all 4 bundles rebuilt | Full `deno task tests` exit 0; ANSI-free structured help, exact one-call flag-only requests, empty-cache operation and public command contributions are covered; real in-host invocation remains owned by 22.12.22/22.12.23 |
+| 22.12.12 | Complete | Red: missing `manual.ts`; green: focused 1 passed (9 steps); vsext package gate 54 passed (282 steps) with type checking; targeted fmt/lint and `git diff --check` clean; all 4 bundles rebuilt | Full `deno task tests` exit 0: 966 passed (7880 steps), 0 failed; text/SMX stdout and confirmed file output, HTML directory dispatch, stale `tjp` rejection, project-free execution and trust-gated shared Desktop/Web registration are covered; real in-host invocation remains owned by 22.12.22/22.12.23 |
+| 22.12.13 | Complete | Red: resolver-priority regressions failed on eager lower-priority registry reads; green: focused 5 passed (58 steps); vsext 58 passed (327 steps); targeted fmt/lint and diff check clean; full `deno task tests` exit 0, CLI 67 passed (661 steps); all 4 bundles rebuilt | All five sheet apps, four-tree hydration, config/recipient/stdin semantics, dry-run zero writes, output artifacts and shared trust-gated Desktop/Web handlers are covered; dry-run and recipient mutations were caught and restored; real in-host invocation remains owned by 22.12.22/22.12.23 |
+| 22.12.14 | Complete | Red: six missing-`cwd` path regressions failed on workspace-root resolution; green: adapter 1 passed (35 steps); manifest/run/execution focused 3 passed (55 steps); vsext 59 passed (364 steps) with type checking; targeted fmt/lint clean | Full `deno task tests` exit 0: 971 passed (7962 steps), 0 failed; all 4 bundles rebuilt (3147/2551/3023/2479 kB); shared trust-gated registration and master-directory fallback covered; real host acceptance remains owned by 22.12.22/22.12.23 |
+| 22.12.15 | Complete | Red: missing formatter/dispatcher modules and parser type regressions; green: console 11 passed (64 steps); vsext 70 passed (428 steps) with type checking; targeted fmt/lint and `git diff --check` clean | Full `deno task tests` exit 0, CLI 67 passed (661 steps); all 4 bundles rebuilt; quote-aware parsing, exact allowlisted dispatch, structured failures and pure result formatting are covered; real host acceptance remains owned by 22.12.22/22.12.23 |
+| 22.12.16 | Complete | Red: missing adapters/registrar, public command/purity classification, real `TextDocument` shape and partial Ctrl+D stdin; green: focused 5 passed (35 steps); vsext package gate 73 passed (450 steps) with type checking and Web purity; targeted fmt/lint and `git diff --check` clean | Full `deno task tests` exit 0: 985 passed (8048 steps), 0 failed; all 4 bundles rebuilt (3180/2551/3052/2479 kB), Web bundle free of PTY/`node:events`; Desktop PTY, Web editable untitled-document stdin and shared public/runtime-only command registration covered; real host acceptance remains owned by 22.12.22/22.12.23 |
+| 22.12.17 | Complete | Red: missing multi-project node contract and manifest menus; green: focused 2 passed (15 steps); vsext package gate 73 passed (454 steps) with type checking and Web purity; targeted fmt/lint and `git diff --check` clean; all 4 bundles rebuilt (3182/2551/3054/2479 kB) | Full `deno task tests` exit 0, CLI 67 passed (661 steps); every cached project has a prefixed root/category/entity/report tree, explicit active intent/status presentation, cached report leaves and canonical command metadata; canonical project runtime registration/refresh remains owned by 22.12.19 and real host acceptance by 22.12.22/22.12.23 |
+| 22.12.18 | Complete | Red: missing aggregate/activity/command exports; green: focused 1 passed (8 steps); vsext package gate 73 passed (459 steps) with type checking and Web purity; targeted fmt/lint and `git diff --check` clean; all 4 bundles rebuilt (3184/2551/3056/2479 kB) | Full `deno task tests` exit 0, CLI 67 passed (661 steps); aggregate project/error counts, active locale/reports/intent, overlap-safe busy tracking and failure cleanup are covered; clicking the status bar uses `syntaxmesh.console.open` |
+| 22.12.19 | Complete | Canonical wiring regression 1 passed (8 steps); resolver/output-policy regressions 4 passed (74 steps); vsext package gate 80 passed (489 steps) with type checking; lint 129 files; fmt 136 files; `git diff --check` clean | Fresh full `deno task tests` exit 0 (992 passed, 8087 steps); all 4 bundles rebuilt (3194/2551/3066/2479 kB); generated Web bundles contain zero Node/PTY matches. Both review findings fixed: sheet commands use the shared async project resolver, and per-run overwrite policy reaches manual/sheet output. All 29 public IDs register exactly once before five forwarding legacy aliases and runtime-only `console.clear`; real Desktop/Web acceptance remains owned by 22.12.22/22.12.23 |
+| 22.12.20 | Complete | Runtime 1 passed (6 steps; absent `Deno`, injected terminal, silent/non-terminal and reset preservation); core 831 passed (6893 steps); targeted fmt/lint clean; all 4 extension bundles rebuilt | Generated-bundle scanning and real browser execution remain owned by 22.12.21/22.12.23 |
+| 22.12.21 | Complete | Focused Web scanner/source/scenarios: 3 passed (26 steps); vsext package gate: 81 passed (502 steps) with type checking; root `check:web-bundle` rebuilt all 4 bundles (3194/2551/3066/2479 kB) and found zero violations in both Web artifacts | Intentional `Deno.readTextFileSync` injection made the checker exit 1 with exactly one file/line/snippet/reason diagnostic; the line was restored and the fresh checker passed. Source purity now shares the executable-token scanner and permits bound host probes. Full `deno task tests` exit 0 with `check:web-bundle` after `check:lspcore`; real browser execution remains owned by 22.12.23 |
+| 22.12.22 | Pending | — | — |
+| 22.12.23 | Pending | — | — |
+| 22.12.24 | Pending | — | — |
+| 22.12.25 | Pending | — | — |

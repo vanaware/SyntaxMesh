@@ -29,6 +29,31 @@ import type {
 } from "@vanaware/syntaxmesh";
 import { imageRefs, } from "./images.ts";
 
+export type {
+  ExecutionFreezeRequest,
+  ExecutionInputFile,
+  ExecutionManRequest,
+  ExecutionMessage,
+  ExecutionOptionsEcho,
+  ExecutionRequest,
+  ExecutionResult,
+  ExecutionResults,
+  ExecutionSheetAppOptions,
+  ExecutionSheetAppOptionsEcho,
+  FormatContent,
+  FreezeFile,
+  FreezeSection,
+  ListReportsEntry,
+  ManSection,
+  MessageType,
+  OptionSpec,
+  ReportJsonEntry,
+  ReportsJson,
+  SheetAppName,
+  SheetEmail,
+  SheetSection,
+} from "@vanaware/syntaxmesh";
+
 /** I/O of the policy — injectable subset of `io.ts`. */
 export interface OutputPolicyIo {
   /** Writes a line to `stdout`. */

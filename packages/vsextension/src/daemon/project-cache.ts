@@ -18,6 +18,7 @@ import type { ProjectModel, ProjectSummary, } from "./types.ts";
  */
 export class ProjectCache {
   private readonly models = new Map<string, ProjectModel>();
+  private activeUri: string | null = null;
 
   /** Number of cached projects. */
   get size(): number {
@@ -31,7 +32,26 @@ export class ProjectCache {
    * @param model the project model to cache.
    */
   set(model: ProjectModel,): void {
+    const first = this.models.size === 0;
     this.models.set(model.uri, model,);
+    if (first) this.activeUri = model.uri;
+  }
+
+  /**
+   * Selects a cached project explicitly.
+   *
+   * @param uri the master document URI.
+   * @returns `true` when selected; `false` leaves the current selection unchanged.
+   */
+  setActive(uri: string,): boolean {
+    if (!this.models.has(uri,)) return false;
+    this.activeUri = uri;
+    return true;
+  }
+
+  /** @returns the active master URI, or `null` when the cache is empty. */
+  active(): string | null {
+    return this.activeUri;
   }
 
   /**
@@ -61,12 +81,15 @@ export class ProjectCache {
    * @returns `false` when the URI was not cached.
    */
   remove(uri: string,): boolean {
-    return this.models.delete(uri,);
+    if (!this.models.delete(uri,)) return false;
+    if (this.activeUri === uri) this.activeUri = this.list()[0]?.uri ?? null;
+    return true;
   }
 
-  /** Drops every cached project (cache invalidation). */
+  /** Drops every cached project and resets active selection. */
   clear(): void {
     this.models.clear();
+    this.activeUri = null;
   }
 
   /**
@@ -88,9 +111,13 @@ export class ProjectCache {
  * a project that has not run yet (or listed no reports) reports `0`.
  *
  * @param model the cached project.
+ * @param activeUri the registry's active URI, if any.
  * @returns the summary used by lists and the project tree.
  */
-export function summarize(model: ProjectModel,): ProjectSummary {
+export function summarize(
+  model: ProjectModel,
+  activeUri: string | null = null,
+): ProjectSummary {
   return {
     uri: model.uri,
     entry: model.entry,
@@ -98,5 +125,7 @@ export function summarize(model: ProjectModel,): ProjectSummary {
     reportCount: model.envelope?.results.listReports?.length ?? 0,
     addedAt: model.addedAt,
     reloadedAt: model.reloadedAt,
+    active: model.uri === activeUri,
+    lastIntent: model.lastExecution?.intent ?? "inventory",
   };
 }

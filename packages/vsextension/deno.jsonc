@@ -20,6 +20,7 @@
     "@std/assert": "jsr:@std/assert@^1",
     "@std/testing/bdd": "jsr:@std/testing@^1/bdd",
     "@std/testing/time": "jsr:@std/testing@^1/time",
+    "@std/yaml": "jsr:@std/yaml@^1",
     // Núcleos puros do core (workspace, caminho relativo como no CLI):
     // `lsp-core` = serviços LSP + registerLspServer; `doc-core` = SyntaxCore
     // (dados de highlight consumidos pela grammar TextMate).
@@ -29,6 +30,12 @@
     // (`ExecutionRequest`/`ExecutionResult`) + `scanIncludeReferences`/
     // `normalizeInputPath`. Mesmo caminho relativo do CLI (ADR 034/035).
     "@vanaware/syntaxmesh": "../core/mod.ts",
+    // CLI puro (F24): apenas módulos sem `cli.ts`, `io.ts` ou `node:*`.
+    "@vanaware/syntaxmesh-cli/options": "../cli/src/options.ts",
+    "@vanaware/syntaxmesh-cli/reporter": "../cli/src/reporter.ts",
+    "@vanaware/syntaxmesh-cli/output-policy": "../cli/src/output-policy.ts",
+    "@vanaware/syntaxmesh-cli/images": "../cli/src/images.ts",
+    "@vanaware/syntaxmesh-cli/sheet-files": "../cli/src/sheet-files.ts",
     // API `vscode`: só tipos (`@types/vscode`); o runtime é provido pelo
     // Extension Host e fica `--external vscode` no bundle (22.4.7).
     "vscode": "npm:@types/vscode@^1.90.0",
@@ -59,6 +66,11 @@
     "generate:snapshots": "deno run --allow-read --allow-write scripts/generate-snapshots.ts",
     // Bundle dos 4 artefatos via `deno bundle` (22.4.7; ADR 034/CLI precedent).
     "build": "deno run --allow-read --allow-write --allow-run --allow-env scripts/build.ts",
+    // Pureza dos artefatos Web gerados (22.12.21): build determinístico + scan.
+    "check:web-bundle": "deno task build && deno run --allow-read scripts/check-web-bundle.ts",
+    // Aceite runtime Web (22.12.23), fora do gate padrão por exigir navegador.
+    "build:web-tests": "deno bundle --platform=browser --format=esm --external=vscode tests/runtime/web-suite.ts --output=dist/web-tests.js",
+    "test:web-runtime": "deno task build:web-tests && deno run -A npm:@vscode/test-web@0.0.81 --extensionDevelopmentPath=. --extensionTestsPath=dist/web-tests.js --headless=true",
     // Empacotamento `.vsix` (22.10.3; plano §10): build + vsce via Deno.
     // `--allow-missing-repository`: o manifesto não declara `repository`
     // (publicação no Marketplace está fora do escopo da Fase 22).

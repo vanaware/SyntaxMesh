@@ -64,6 +64,37 @@ describe("TjpExportRE (14.18.2)", () => {
     assert(tjp.includes("task t1 " + '"T1"',), "tarefa exportada",);
   });
 
+  it("expande definitions '*' nas seções estruturais", () => {
+    new Resource(project, "r1", "R1", null,);
+    new Task(project, "t1", "T1", null,);
+    report.set("definitions", ["*",],);
+    const tjp = exportTjp();
+
+    assert(tjp.startsWith("project ",), "cabeçalho project",);
+    assert(tjp.includes('resource r1 "R1"',), "recurso exportado",);
+    assert(tjp.includes('task t1 "T1"',), "tarefa exportada",);
+  });
+
+  it("expande taskattributes/resourceattributes '*' nos supplements", () => {
+    const resource = new Resource(project, "r1", "R1", null,);
+    const task = new Task(project, "t1", "T1", null,);
+    resource.setForScenario("flags", ["critical",], 0,);
+    task.setForScenario("flags", ["critical",], 0,);
+    report.set("definitions", ["flags", "resources", "tasks",],);
+    report.set("resourceAttributes", ["*",],);
+    report.set("taskAttributes", ["*",],);
+    const tjp = exportTjp();
+
+    assert(
+      tjp.includes("supplement resource r1 {\n  flags critical",),
+      "atributo de recurso exportado",
+    );
+    assert(
+      tjp.includes("supplement task t1 {\n  flags critical",),
+      "atributo de tarefa exportado",
+    );
+  });
+
   it("declara flags usadas pelas tarefas (14.18.2.6)", () => {
     const task = new Task(project, "t1", "T1", null,);
     task.setForScenario("flags", ["critical",], 0,);

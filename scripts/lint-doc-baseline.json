@@ -3,8 +3,7 @@
     "missing-jsdoc": 16
   },
   "cli": {
-    "missing-return-type": 1,
-    "private-type-ref": 5
+    "missing-return-type": 1
   },
   "core": {},
   "server": {},

@@ -2431,6 +2431,7 @@
         "dependencies": [
           "jsr:@std/assert@1",
           "jsr:@std/testing@1",
+          "jsr:@std/yaml@1",
           "npm:@types/vscode@^1.90.0",
           "npm:@vscode/test-electron@^2.5.2",
           "npm:vscode-languageclient@^9.0.1",

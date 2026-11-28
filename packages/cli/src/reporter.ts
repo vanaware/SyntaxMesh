@@ -15,6 +15,8 @@
  */
 import type { ExecutionMessage, } from "@vanaware/syntaxmesh";
 
+export type { ExecutionMessage, MessageType, } from "@vanaware/syntaxmesh";
+
 /** Writes a line; injectable so tests need no global mock. */
 export type WriteLine = (text: string,) => void;
 
@@ -32,7 +34,9 @@ export interface ReporterOptions {
 
 /** Final count derived from the envelope. */
 export interface MessageCounts {
+  /** Fatal and error messages. */
   errors: number;
+  /** Warning messages. */
   warnings: number;
 }
 
@@ -89,6 +93,7 @@ export class Reporter {
   private readonly out: WriteLine;
   private readonly err: WriteLine;
 
+  /** Creates a reporter with injectable output and renderer options. */
   constructor(options: ReporterOptions = {},) {
     this.silent = options.silent === true;
     this.color = options.color === true;

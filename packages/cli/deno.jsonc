@@ -32,12 +32,16 @@
     "build": "deno task compile && deno task build:node",
     // `deno doc --lint` em ratchet (ADR 041): as três entradas são o mapa
     // `exports` deste pacote.
-    "lint:doc": "deno run --allow-read --allow-run --allow-write --allow-env ../../scripts/lint-doc.ts src/cli.ts src/io.ts src/options.ts",
-    "lint:doc:update": "deno run --allow-read --allow-run --allow-write --allow-env ../../scripts/lint-doc.ts --update src/cli.ts src/io.ts src/options.ts"
+    "lint:doc": "deno run --allow-read --allow-run --allow-write --allow-env ../../scripts/lint-doc.ts src/cli.ts src/io.ts src/options.ts src/reporter.ts src/output-policy.ts src/images.ts src/sheet-files.ts",
+    "lint:doc:update": "deno run --allow-read --allow-run --allow-write --allow-env ../../scripts/lint-doc.ts --update src/cli.ts src/io.ts src/options.ts src/reporter.ts src/output-policy.ts src/images.ts src/sheet-files.ts"
   },
   "exports": {
     ".": "./src/cli.ts",
     "./io": "./src/io.ts",
-    "./options": "./src/options.ts"
+    "./options": "./src/options.ts",
+    "./reporter": "./src/reporter.ts",
+    "./output-policy": "./src/output-policy.ts",
+    "./images": "./src/images.ts",
+    "./sheet-files": "./src/sheet-files.ts"
   }
 }

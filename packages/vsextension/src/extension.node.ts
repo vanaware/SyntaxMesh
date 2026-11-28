@@ -11,33 +11,47 @@
  * @see docs/syntaxmesh/fases/fase-22-vscode-extension-tarefas.md §22.2.5
  */
 
+import { commands, window, } from "vscode";
 import type { ExtensionContext, } from "vscode";
 import { startClient, stopClient, } from "./client/node.ts";
+import { registerCanonicalCommands, } from "./commands/register.ts";
 import { startDaemon, stopDaemon, } from "./daemon/host.ts";
-import { registerDaemonCommands, } from "./commands/daemon.ts";
-import { ReportPresenter, } from "./reports/host.ts";
-import { registerReportCommands, } from "./commands/reports.ts";
+import { PtyConsoleAdapter, } from "./console/pty.ts";
+import { createConfirmedOutputHost, ReportPresenter, } from "./reports/host.ts";
 import { startViews, stopViews, } from "./views/host.ts";
-import { registerMiscCommands, } from "./commands/misc.ts";
 
 /**
  * Activates the extension on the Desktop extension host.
  *
  * Starts the Node language client and its embedded server, then the project
- * daemon (22.5) and its commands, the report presenter and its Generate Report
- * command (22.6), then the views (tree + status bar) and the remaining commands
- * (22.7). Invoked by VS Code per the `onLanguage:syntaxmesh` activation event.
+ * daemon, one confirmed output host/presenter, the views and the Desktop
+ * pseudo-terminal console. Both Desktop and Web register commands through the
+ * same canonical registrar.
  *
  * @param context the extension context provided by VS Code.
  */
 export async function activate(context: ExtensionContext,): Promise<void> {
   await startClient(context,);
   const host = await startDaemon(context,);
-  registerDaemonCommands(context, host,);
-  const presenter = new ReportPresenter(context,);
-  registerReportCommands(context, host, presenter,);
+  const output = createConfirmedOutputHost(context, "direct",);
+  const presenter = new ReportPresenter(context, output,);
   startViews(context, host,);
-  registerMiscCommands(context, host,);
+  const consoleAdapter = new PtyConsoleAdapter({
+    executor: {
+      async execute<T,>(id: string, ...args: unknown[]): Promise<T> {
+        return await commands.executeCommand<T>(id, ...args,);
+      },
+    },
+    createTerminal: (pty,) =>
+      window.createTerminal({ name: "SyntaxMesh Console", pty, },),
+  },);
+  registerCanonicalCommands(context, {
+    host,
+    presenter,
+    output,
+    writeStrategy: "direct",
+    console: consoleAdapter,
+  },);
 }
 
 /**

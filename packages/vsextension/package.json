@@ -22,6 +22,15 @@
   ],
   "main": "./dist/extension.node.js",
   "browser": "./dist/extension.web.js",
+  "files": [
+    "assets/**",
+    "dist/**",
+    "images/**",
+    "language-configuration.json",
+    "snippets/**",
+    "syntaxes/**",
+    "LICENSE"
+  ],
   "activationEvents": [
     "onLanguage:syntaxmesh",
     "onView:syntaxmesh.projectTree"
@@ -62,28 +71,128 @@
     ],
     "commands": [
       {
-        "command": "syntaxmesh.addProject",
-        "title": "Add Project to Daemon",
+        "command": "syntaxmesh.project.add",
+        "title": "Add Project",
         "category": "SyntaxMesh"
       },
       {
-        "command": "syntaxmesh.reloadProject",
-        "title": "Reload Project",
+        "command": "syntaxmesh.project.remove",
+        "title": "Remove Project",
         "category": "SyntaxMesh"
       },
       {
-        "command": "syntaxmesh.removeProject",
-        "title": "Remove Project from Daemon",
-        "category": "SyntaxMesh"
-      },
-      {
-        "command": "syntaxmesh.listProjects",
+        "command": "syntaxmesh.project.list",
         "title": "List Projects",
         "category": "SyntaxMesh"
       },
       {
-        "command": "syntaxmesh.generateReport",
-        "title": "Generate Report",
+        "command": "syntaxmesh.project.setActive",
+        "title": "Set Active Project",
+        "category": "SyntaxMesh"
+      },
+      {
+        "command": "syntaxmesh.project.refresh",
+        "title": "Refresh Project",
+        "category": "SyntaxMesh"
+      },
+      {
+        "command": "syntaxmesh.compile",
+        "title": "Compile Project",
+        "category": "SyntaxMesh"
+      },
+      {
+        "command": "syntaxmesh.checkSyntax",
+        "title": "Check Syntax",
+        "category": "SyntaxMesh"
+      },
+      {
+        "command": "syntaxmesh.scheduleOnly",
+        "title": "Schedule Only",
+        "category": "SyntaxMesh"
+      },
+      {
+        "command": "syntaxmesh.freeze",
+        "title": "Freeze Project",
+        "category": "SyntaxMesh"
+      },
+      {
+        "command": "syntaxmesh.checkTimeSheet",
+        "title": "Check Time Sheet",
+        "category": "SyntaxMesh"
+      },
+      {
+        "command": "syntaxmesh.checkStatusSheet",
+        "title": "Check Status Sheet",
+        "category": "SyntaxMesh"
+      },
+      {
+        "command": "syntaxmesh.run",
+        "title": "Run CLI Command",
+        "category": "SyntaxMesh"
+      },
+      {
+        "command": "syntaxmesh.console.open",
+        "title": "Open Console",
+        "category": "SyntaxMesh"
+      },
+      {
+        "command": "syntaxmesh.sheet.time.send",
+        "title": "Send Time Sheets",
+        "category": "SyntaxMesh"
+      },
+      {
+        "command": "syntaxmesh.sheet.time.receive",
+        "title": "Receive Time Sheet",
+        "category": "SyntaxMesh"
+      },
+      {
+        "command": "syntaxmesh.sheet.time.summary",
+        "title": "Summarize Time Sheets",
+        "category": "SyntaxMesh"
+      },
+      {
+        "command": "syntaxmesh.sheet.status.send",
+        "title": "Send Status Sheets",
+        "category": "SyntaxMesh"
+      },
+      {
+        "command": "syntaxmesh.sheet.status.receive",
+        "title": "Receive Status Sheet",
+        "category": "SyntaxMesh"
+      },
+      {
+        "command": "syntaxmesh.report.list",
+        "title": "List Reports",
+        "category": "SyntaxMesh"
+      },
+      {
+        "command": "syntaxmesh.report.render",
+        "title": "Render Reports",
+        "category": "SyntaxMesh"
+      },
+      {
+        "command": "syntaxmesh.report.open",
+        "title": "Open Report",
+        "category": "SyntaxMesh"
+      },
+      {
+        "command": "syntaxmesh.report.export",
+        "title": "Export Report",
+        "category": "SyntaxMesh"
+      },
+      {
+        "command": "syntaxmesh.help",
+        "title": "Show Help",
+        "category": "SyntaxMesh"
+      },
+      {
+        "command": "syntaxmesh.version",
+        "title": "Show Version",
+        "category": "SyntaxMesh"
+      },
+      {
+        "command": "syntaxmesh.man",
+        "title": "Open Manual Command",
         "category": "SyntaxMesh"
       },
       {
@@ -121,6 +230,37 @@
         {
           "id": "syntaxmesh.projectTree",
           "name": "Project Explorer"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "syntaxmesh.project.add",
+          "when": "view == syntaxmesh.projectTree",
+          "group": "navigation"
+        },
+        {
+          "command": "syntaxmesh.project.refresh",
+          "when": "view == syntaxmesh.projectTree",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "syntaxmesh.project.remove",
+          "when": "view == syntaxmesh.projectTree && viewItem == project",
+          "group": "project"
+        },
+        {
+          "command": "syntaxmesh.compile",
+          "when": "view == syntaxmesh.projectTree && viewItem == project",
+          "group": "project"
+        },
+        {
+          "command": "syntaxmesh.report.export",
+          "when": "view == syntaxmesh.projectTree && viewItem == report",
+          "group": "report"
         }
       ]
     },

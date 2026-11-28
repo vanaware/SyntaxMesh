@@ -275,7 +275,9 @@ export interface ExecutionOptionsEcho {
 
 /** `results.listReports[]`. */
 export interface ListReportsEntry {
-  /** Report id as declared in the project. */
+  /** Canonical report id; absent only in envelopes persisted by older versions. */
+  id?: string;
+  /** Unique report display name declared in the project. */
   name: string;
   /** Report type (`taskreport`, `resourcereport`, `export`, …). */
   type: string;

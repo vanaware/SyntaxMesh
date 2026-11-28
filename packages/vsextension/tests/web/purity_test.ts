@@ -54,20 +54,36 @@ describe("web purity scanner", () => {
     );
   });
 
+  it("allows host capabilities probed through a bound global object", () => {
+    const text = [
+      "const g = globalThis;",
+      "if (g.Deno?.readTextFileSync) g.Deno.readTextFileSync(file);",
+      'const isWindows = typeof process === "object" && process && process.platform === "win32";',
+    ].join("\n",);
+    assertEquals(scanBrowserSource(text,), [],);
+  });
+
   it("skips comment lines that only mention the patterns", () => {
     const text = [
       '// never import from "node:fs" here',
+      "/**",
       " * Deno.readTextFileSync is forbidden",
+      " */",
       "/* process.env is unavailable */",
       "export const ok = true;",
     ].join("\n",);
     assertEquals(scanBrowserSource(text,), [],);
   });
 
-  it("lists the three Node-only bootstraps", () => {
+  it("lists the four Node-only source modules", () => {
     assertEquals(
       [...NODE_ONLY_BOOTSTRAPS,].sort(),
-      ["client/node.ts", "extension.node.ts", "server/node.ts",],
+      [
+        "client/node.ts",
+        "console/pty.ts",
+        "extension.node.ts",
+        "server/node.ts",
+      ],
     );
   });
 

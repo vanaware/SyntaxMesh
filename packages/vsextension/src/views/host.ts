@@ -4,9 +4,9 @@
  * Materializes the pure projections of 22.7.2/22.7.3: a `TreeDataProvider`
  * whose `getChildren`/`getTreeItem` delegate to {@link treeChildren}/
  * {@link treeItem}, and a status-bar item whose text comes from
- * {@link statusText}. The tree follows the active editor's cached project
- * (falling back to the first loaded one); the status bar summarizes the
- * daemon state, the detected locale and the last load's report count. All
+ * {@link statusText}. The tree follows the registry's explicit active project;
+ * the status bar summarizes the daemon state, the detected locale and the last
+ * load's report count. All
  * decisions live in the pure modules; this file only wires VS Code (ADR 035).
  *
  * Imports the `vscode` runtime, so it is type-checked here and exercised inside
@@ -30,7 +30,6 @@ import type {
   StatusBarItem,
   TreeDataProvider,
 } from "vscode";
-import { resolveLocale, } from "@vanaware/syntaxmesh/lsp-core";
 import type { DaemonHost, } from "../daemon/host.ts";
 import type { ProjectModel, } from "../daemon/types.ts";
 import {
@@ -40,8 +39,10 @@ import {
   type TreeNode,
 } from "./project-tree.ts";
 import {
+  ExecutionActivity,
+  projectStatusState,
+  STATUS_BAR_COMMAND,
   type StatusBarState,
-  type StatusBarStatus,
   statusText,
 } from "./status-bar.ts";
 
@@ -60,9 +61,10 @@ function toVscodeState(state: CollapsibleState,): TreeItemCollapsibleState {
   }
 }
 
-/** Codicon shown in the status bar for each daemon state. */
-function statusIcon(status: StatusBarStatus,): string {
-  switch (status) {
+/** Codicon shown in the status bar for aggregate state and pending work. */
+function statusIcon(state: StatusBarState,): string {
+  if (state.busy) return "loading~spin";
+  switch (state.status) {
     case "ok":
       return "check";
     case "error":
@@ -73,8 +75,8 @@ function statusIcon(status: StatusBarStatus,): string {
 }
 
 /**
- * `TreeDataProvider` over the daemon model. The root children are the pure
- * category projection; nested children are the node's own subtree.
+ * `TreeDataProvider` over every cached daemon project. Root children are project
+ * nodes; nested children are each projected node's own category/entity subtree.
  */
 export class ProjectTreeProvider implements TreeDataProvider<TreeNode> {
   private readonly daemon: DaemonHost;
@@ -89,23 +91,17 @@ export class ProjectTreeProvider implements TreeDataProvider<TreeNode> {
     this.daemon = daemon;
   }
 
-  /**
-   * The project the tree/status bar follow: the active editor's cached model,
-   * or the first loaded project when the active file is not cached.
-   */
+  /** @returns the registry's explicit active project for tree and status bar. */
   activeModel(): ProjectModel | undefined {
-    const uri = window.activeTextEditor?.document.uri.toString();
-    if (uri !== undefined) {
-      const model = this.daemon.core.cache.get(uri,);
-      if (model !== undefined) return model;
-    }
-    return this.daemon.core.cache.list()[0];
+    return this.daemon.activeProject();
   }
 
   getChildren(element?: TreeNode,): TreeNode[] {
     if (element !== undefined) return element.children;
-    const model = this.activeModel();
-    return model === undefined ? [] : treeChildren(model,);
+    return treeChildren(
+      this.daemon.core.cache.list(),
+      this.daemon.core.cache.active(),
+    );
   }
 
   getTreeItem(node: TreeNode,): TreeItem {
@@ -117,6 +113,14 @@ export class ProjectTreeProvider implements TreeDataProvider<TreeNode> {
     if (data.description !== undefined) item.description = data.description;
     item.iconPath = new ThemeIcon(data.icon,);
     item.id = node.id;
+    item.contextValue = node.contextValue;
+    if (node.command !== undefined) {
+      item.command = {
+        command: node.command,
+        title: data.label,
+        arguments: node.commandArgs,
+      };
+    }
     return item;
   }
 
@@ -138,6 +142,8 @@ export class ProjectTreeProvider implements TreeDataProvider<TreeNode> {
 export class ViewsHost {
   /** The tree provider (exposed so commands can refresh it). */
   readonly provider: ProjectTreeProvider;
+  private readonly daemon: DaemonHost;
+  private readonly activity = new ExecutionActivity();
   private readonly statusBar: StatusBarItem;
 
   /**
@@ -145,9 +151,10 @@ export class ViewsHost {
    * @param daemon the started daemon host.
    */
   constructor(context: ExtensionContext, daemon: DaemonHost,) {
+    this.daemon = daemon;
     this.provider = new ProjectTreeProvider(daemon,);
     this.statusBar = window.createStatusBarItem(StatusBarAlignment.Left, 100,);
-    this.statusBar.command = "syntaxmesh.showProjectTree";
+    this.statusBar.command = STATUS_BAR_COMMAND;
     context.subscriptions.push(
       window.registerTreeDataProvider(TREE_VIEW_ID, this.provider,),
       this.statusBar,
@@ -162,27 +169,23 @@ export class ViewsHost {
     this.updateStatusBar();
   }
 
-  /** Projects the active model into the status-bar state and renders it. */
-  private updateStatusBar(): void {
-    const state = this.stateOf(this.provider.activeModel(),);
-    this.statusBar.text = `$(${statusIcon(state.status,)}) ${
-      statusText(state,)
-    }`;
-    this.statusBar.show();
+  /**
+   * Tracks one asynchronous execution, refreshing views before and after it.
+   * Overlapping calls share the same pending count.
+   */
+  async runBusy<T,>(action: () => Promise<T>,): Promise<T> {
+    return await this.activity.run(action, () => this.refresh(),);
   }
 
-  /** Builds the pure status-bar state from a cached model (idle when none). */
-  private stateOf(model: ProjectModel | undefined,): StatusBarState {
-    if (model === undefined) return { status: "idle", };
-    const master = model.files.find((f,) => f.path === model.entry) ??
-      model.files[0];
-    return {
-      status: model.status === "error" ? "error" : "ok",
-      locale: master === undefined
-        ? undefined
-        : resolveLocale(model.uri, master.content,),
-      reportCount: model.envelope?.results.listReports?.length ?? 0,
-    };
+  /** Projects aggregate cached state into the status-bar item and renders it. */
+  private updateStatusBar(): void {
+    const state = projectStatusState(
+      this.daemon.core.cache.list(),
+      this.daemon.core.cache.active(),
+      this.activity.busy,
+    );
+    this.statusBar.text = `$(${statusIcon(state,)}) ${statusText(state,)}`;
+    this.statusBar.show();
   }
 
   /** Releases the provider emitter (view/status disposed via the context). */
@@ -213,6 +216,14 @@ export function startViews(
 /** The running views host, or `undefined` when not started. */
 export function getViews(): ViewsHost | undefined {
   return views;
+}
+
+/** Runs an action through the active views host's busy tracker when available. */
+export async function withBusy<T,>(action: () => Promise<T>,): Promise<T> {
+  const current = getViews();
+  return current === undefined
+    ? await action()
+    : await current.runBusy(action,);
 }
 
 /** Releases the running views host (no-op when already stopped). */

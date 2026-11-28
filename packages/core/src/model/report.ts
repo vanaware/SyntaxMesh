@@ -96,6 +96,22 @@ export class Report extends PropertyTreeNode {
   >();
 
   /**
+   * Tests a keyword-list report attribute using TaskJuggler's `*` shortcut.
+   *
+   * Ruby stores the shortcut as a `KeywordArray` whose first `*` entry makes
+   * `include?` true for every keyword. SyntaxMesh stores the same value as a
+   * plain array, so consumers must preserve that behavior explicitly.
+   *
+   * @param attribute Report attribute holding the keyword list.
+   * @param keyword Keyword to test.
+   * @returns Whether the list contains the keyword or selects every keyword.
+   */
+  includesKeyword(attribute: string, keyword: string,): boolean {
+    const list = this.get(attribute,) as string[] | null;
+    return list?.[0] === "*" || list?.includes(keyword,) === true;
+  }
+
+  /**
    * Rejects file names containing invalid characters.
    *
    * @param name File name to validate.
@@ -490,9 +506,8 @@ export class Report extends PropertyTreeNode {
       return null;
     }
     const tjp = this.content.to_tjp();
-    const definitions = (this.get("definitions",) as string[] | null) ?? [];
     this.outputFileName = this.name === "." ? "." : this.name +
-      (definitions.includes("project",) ? ".tjp" : ".tji");
+      (this.includesKeyword("definitions", "project",) ? ".tjp" : ".tji");
     this.output = tjp;
     return tjp;
   }

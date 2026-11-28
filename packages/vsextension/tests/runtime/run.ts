@@ -152,17 +152,24 @@ async function bundle(entry: string, output: string,): Promise<void> {
   ],);
 }
 
+/** Recursively copies one fixture tree, creating every destination directory. */
+async function copyFixtureTree(
+  source: string,
+  destination: string,
+): Promise<void> {
+  await Deno.mkdir(destination, { recursive: true, },);
+  for await (const entry of Deno.readDir(source,)) {
+    const from = join(source, entry.name,);
+    const to = join(destination, entry.name,);
+    if (entry.isDirectory) await copyFixtureTree(from, to,);
+    else if (entry.isFile) await Deno.copyFile(from, to,);
+  }
+}
+
 /** Copies the static workspace fixtures into a fresh temp directory. */
 async function copyWorkspace(): Promise<string> {
   const dir = await Deno.makeTempDir({ prefix: "smx-runtime-ws-", },);
-  for await (const entry of Deno.readDir(WORKSPACE_FIXTURES,)) {
-    if (entry.isFile) {
-      await Deno.copyFile(
-        join(WORKSPACE_FIXTURES, entry.name,),
-        join(dir, entry.name,),
-      );
-    }
-  }
+  await copyFixtureTree(WORKSPACE_FIXTURES, dir,);
   return dir;
 }
 
@@ -352,6 +359,17 @@ if (import.meta.main) {
     ? await Deno.makeTempDir({ prefix: "smx-runtime-ext-", },)
     : null;
   try {
+    const nestedSheet = join(
+      workspaceDir,
+      "TimeSheets",
+      "2026-05-18",
+      "dev.tji",
+    );
+    const nestedSheetStat = await Deno.stat(nestedSheet,);
+    if (!nestedSheetStat.isFile) {
+      throw new Error(`nested sheet fixture is not a file: ${nestedSheet}`,);
+    }
+    console.log(`nested sheet fixture verified: ${nestedSheet}`,);
     if (mode === "clean" && extDir !== null) {
       await cleanInstall(insiders.cli, extDir, version,);
     }

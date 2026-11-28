@@ -70,6 +70,18 @@ describe("ProjectCache", () => {
     assertEquals(cache.get("file:///a.tjp",), a,);
     assertEquals(cache.get("file:///missing.tjp",), undefined,);
     assertEquals(cache.has("file:///missing.tjp",), false,);
+    assertEquals(cache.active(), "file:///a.tjp",);
+  });
+
+  it("selects a project explicitly and rejects unknown URIs", () => {
+    const cache = new ProjectCache();
+    cache.set(model("file:///a.tjp",),);
+    cache.set(model("file:///b.tjp",),);
+    assertEquals(cache.active(), "file:///a.tjp",);
+    assertEquals(cache.setActive("file:///b.tjp",), true,);
+    assertEquals(cache.active(), "file:///b.tjp",);
+    assertEquals(cache.setActive("file:///missing.tjp",), false,);
+    assertEquals(cache.active(), "file:///b.tjp",);
   });
 
   it("removes a project and reports whether it existed", () => {
@@ -79,6 +91,18 @@ describe("ProjectCache", () => {
     assertEquals(cache.size, 0,);
     assertEquals(cache.has("file:///a.tjp",), false,);
     assertEquals(cache.remove("file:///a.tjp",), false,);
+  });
+
+  it("selects the first sorted URI when the active project is removed", () => {
+    const cache = new ProjectCache();
+    cache.set(model("file:///c.tjp",),);
+    cache.set(model("file:///a.tjp",),);
+    cache.set(model("file:///b.tjp",),);
+    cache.setActive("file:///c.tjp",);
+    assertEquals(cache.remove("file:///c.tjp",), true,);
+    assertEquals(cache.active(), "file:///a.tjp",);
+    assertEquals(cache.remove("file:///b.tjp",), true,);
+    assertEquals(cache.active(), "file:///a.tjp",);
   });
 
   it("lists projects sorted by URI regardless of insertion order", () => {
@@ -108,6 +132,7 @@ describe("ProjectCache", () => {
     cache.clear();
     assertEquals(cache.size, 0,);
     assertEquals(cache.list(), [],);
+    assertEquals(cache.active(), null,);
   });
 });
 
@@ -117,6 +142,24 @@ describe("summarize", () => {
     assertEquals(summary.reportCount, 0,);
     assertEquals(summary.status, "loading",);
     assertEquals(summary.uri, "file:///a.tjp",);
+    assertEquals(summary.active, false,);
+    assertEquals(summary.lastIntent, "inventory",);
+  });
+
+  it("projects explicit selection and the last execution intent", () => {
+    const summary = summarize(
+      model("file:///a.tjp", {
+        lastExecution: {
+          intent: "compile",
+          startedAt: 10,
+          finishedAt: 20,
+          errorCount: 0,
+        },
+      },),
+      "file:///a.tjp",
+    );
+    assertEquals(summary.active, true,);
+    assertEquals(summary.lastIntent, "compile",);
   });
 
   it("counts the reports of the last envelope", () => {

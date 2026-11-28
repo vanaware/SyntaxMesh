@@ -239,6 +239,26 @@ describe("parseArgs — apps de sheet (24.10.1–24.10.4)", () => {
     assertEquals(request.entry, "ts",);
   });
 
+  it("allows a missing sheet master only when explicitly permitted", () => {
+    assertEquals(
+      usageMessage(["ts", "summary", "--dry-run",],),
+      "No input file given.",
+    );
+
+    const parsed = parseArgs(["ts", "summary", "--dry-run",], {
+      allowMissingSheetEntry: true,
+    },);
+    assertEquals(parsed.request.app, "ts-summary",);
+    assertEquals(parsed.request.entry, undefined,);
+    assertEquals(parsed.request.appOptions, { dryRun: true, },);
+
+    const error = assertThrows(
+      () => parseArgs(["--no-reports",], { allowMissingSheetEntry: true, },),
+      CliUsageError,
+    );
+    assertEquals(error.message, "No input file given.",);
+  });
+
   it("flags do sender viram appOptions (forma do Ruby)", () => {
     const { request, } = parseArgs([
       "ts",

@@ -1,0 +1,36 @@
+project runtime "Runtime SMX" "1.0" 2026-01-01 - 2026-12-31 {
+  timezone "UTC"
+  now 2026-05-18
+  scenario plan "Plan" {
+  }
+  trackingscenario plan
+}
+
+resource dev "Developer" {
+  email "dev@example.com"
+}
+
+task build "Build" {
+  effort 5d
+  allocate dev
+}
+
+task ship "Ship" {
+  depends build
+  effort 2d
+  allocate dev
+}
+
+taskreport task "Tasks" {
+  formats csv
+  columns name
+}
+
+resourcereport cost "Cost" {
+  formats csv
+  columns name
+}
+
+export full "Project TJP" {
+  definitions *
+}

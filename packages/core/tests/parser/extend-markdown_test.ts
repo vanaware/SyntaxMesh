@@ -251,6 +251,23 @@ describe("C5.7 — round-trip TJP-export (parse → export → parse)", () => {
     );
   });
 
+  it("taskattributes '*' declara e preserva atributos de usuário", () => {
+    const project = mustParse(SOURCE,);
+    const tjp = new TjpExportRE(
+      exportReport(project, ["*",],),
+    ).to_tjp();
+
+    assert(
+      tjp.includes('markdown Claim "Claim"',),
+      `sem declaração markdown: ${tjp}`,
+    );
+    assert(
+      tjp.includes('richtext Intro "Intro"',),
+      `sem declaração richtext: ${tjp}`,
+    );
+    assert(tjp.includes('Claim "**Efetivo:** 15"',), `sem valor: ${tjp}`,);
+  });
+
   it("round-trip do richtext preserva o texto de origem", () => {
     const project = mustParse(SOURCE,);
     const tjp = new TjpExportRE(

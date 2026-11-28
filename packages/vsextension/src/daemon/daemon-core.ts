@@ -10,13 +10,13 @@
  * Lifecycle (plan §3.2/§3.3):
  * - **add/reload** run `execute` with `listReports: ""` — the core parses and
  *   lists every report (no schedule); the envelope's `ok` becomes the status;
- * - **generate** re-parses + re-schedules + renders one report and returns the
- *   envelope to the host. It does **not** overwrite the cached load envelope,
- *   so the report listing stays available for the next pick (v1 has no
- *   cached-model reporting — that is a deferred F24 delta).
+ * - **executeProject** maps any project-backed F24 request over the cached
+ *   closure and returns the fresh envelope to the host. It updates status and
+ *   execution metadata but never overwrites the cached inventory envelope, so
+ *   the report listing stays available for the next pick.
  *
  * @see docs/syntaxmesh/fases/fase-22-vscode-extension.md §3.2/§3.3
- * @see docs/syntaxmesh/fases/fase-22-vscode-extension-tarefas.md §22.5.6
+ * @see docs/syntaxmesh/fases/fase-22-vscode-extension-tarefas.md §22.5.6/§22.12.4
  * @see docs/syntaxmesh/fases/fase-24-cli-adendo.md §5.1 (P4.1 decision)
  */
 import type {
@@ -25,9 +25,18 @@ import type {
   ListReportsEntry,
 } from "@vanaware/syntaxmesh";
 import { ProjectCache, summarize, } from "./project-cache.ts";
-import { buildExecuteRequest, } from "./request-builder.ts";
+import {
+  buildExecuteRequest,
+  type BuildRequestOptions,
+} from "./request-builder.ts";
 import type { InputClosure, } from "./include-closure.ts";
-import type { DaemonStatus, ProjectModel, ProjectSummary, } from "./types.ts";
+import type {
+  DaemonStatus,
+  ProjectExecutionState,
+  ProjectIntent,
+  ProjectModel,
+  ProjectSummary,
+} from "./types.ts";
 
 /** The core entry point, injected by the host (real `execute` or a fake). */
 export type ExecuteFn = (
@@ -40,6 +49,35 @@ export type Clock = () => number;
 /** Projects the daemon status from an envelope's `ok` flag. */
 function statusFromEnvelope(envelope: ExecutionResult,): DaemonStatus {
   return envelope.ok ? "ok" : "error";
+}
+
+/** Counts error-severity messages in one execution envelope. */
+function errorCount(envelope: ExecutionResult,): number {
+  return envelope.messages.filter((message,) => message.severity === "error")
+    .length;
+}
+
+/** Projects the semantic intent using the deterministic P8 precedence. */
+function intentFromOptions(options: BuildRequestOptions,): ProjectIntent {
+  if (options.man !== undefined) return "man";
+  if (options.checkSyntax === true) return "checkSyntax";
+  if (options.noReports === true) return "scheduleOnly";
+  if (options.freeze !== undefined) return "freeze";
+  if (options.app === "check-ts") return "checkTimeSheet";
+  if (options.app === "check-ss") return "checkStatusSheet";
+  if (options.app !== undefined) return "sheet";
+  if (options.report !== undefined) return "report";
+  return "compile";
+}
+
+/** Builds immutable execution metadata for a completed envelope. */
+function executionState(
+  intent: ProjectIntent,
+  envelope: ExecutionResult,
+  startedAt: number,
+  finishedAt: number,
+): ProjectExecutionState {
+  return { intent, startedAt, finishedAt, errorCount: errorCount(envelope,), };
 }
 
 /**
@@ -62,6 +100,34 @@ export class DaemonCore {
   }
 
   /**
+   * Executes one project-free request through the injected engine.
+   *
+   * No project is resolved, no files are read and the cache is left untouched.
+   *
+   * @param request the complete plain-data execution request.
+   * @returns the unmodified execution envelope.
+   */
+  executeRequest(request: ExecutionRequest,): Promise<ExecutionResult> {
+    return this.execute(request,);
+  }
+
+  /**
+   * Replaces the cache with persisted models and restores valid selection.
+   *
+   * Legacy payloads and stale active URIs use the first URI in sorted order.
+   *
+   * @param projects the persisted project models.
+   * @param activeUri the persisted active master URI, if any.
+   */
+  restore(projects: ProjectModel[], activeUri: string | null,): void {
+    this.cache.clear();
+    for (const model of projects) this.cache.set(model,);
+    if (activeUri !== null && this.cache.setActive(activeUri,)) return;
+    const first = this.cache.list()[0];
+    if (first !== undefined) this.cache.setActive(first.uri,);
+  }
+
+  /**
    * Adds a project: closes over the given files, lists its reports and caches
    * the resulting model. Re-adding a URI replaces the previous model.
    *
@@ -81,6 +147,7 @@ export class DaemonCore {
       status: statusFromEnvelope(envelope,),
       addedAt: now,
       reloadedAt: now,
+      lastExecution: executionState("inventory", envelope, now, now,),
     };
     this.cache.set(model,);
     return model;
@@ -110,6 +177,7 @@ export class DaemonCore {
       status: statusFromEnvelope(envelope,),
       addedAt: previous?.addedAt ?? now,
       reloadedAt: now,
+      lastExecution: executionState("inventory", envelope, now, now,),
     };
     this.cache.set(model,);
     return model;
@@ -131,7 +199,24 @@ export class DaemonCore {
    * @returns the summaries used by the list command and the project tree.
    */
   listProjects(): ProjectSummary[] {
-    return this.cache.list().map(summarize,);
+    const activeUri = this.cache.active();
+    return this.cache.list().map((model,) => summarize(model, activeUri,));
+  }
+
+  /**
+   * Selects a cached project explicitly.
+   *
+   * @param uri the master document URI.
+   * @returns the selected model, or `undefined` when the URI is not cached.
+   */
+  setActiveProject(uri: string,): ProjectModel | undefined {
+    return this.cache.setActive(uri,) ? this.cache.get(uri,) : undefined;
+  }
+
+  /** @returns the explicitly active cached project, if any. */
+  activeProject(): ProjectModel | undefined {
+    const uri = this.cache.active();
+    return uri === null ? undefined : this.cache.get(uri,);
   }
 
   /**
@@ -142,6 +227,45 @@ export class DaemonCore {
    */
   listReports(uri: string,): ListReportsEntry[] {
     return this.cache.get(uri,)?.envelope?.results.listReports ?? [];
+  }
+
+  /**
+   * Executes any project-backed F24 request over the cached closure.
+   *
+   * The fresh envelope is returned to the caller, while the cache keeps the
+   * original inventory envelope and updates only status/execution metadata.
+   *
+   * @param uri the cached master document URI.
+   * @param options the complete F24 request options.
+   * @returns the fresh execution envelope.
+   * @throws when the project was not added.
+   */
+  async executeProject(
+    uri: string,
+    options: BuildRequestOptions,
+  ): Promise<ExecutionResult> {
+    const model = this.cache.get(uri,);
+    if (model === undefined) {
+      throw new Error(`project not loaded: ${uri}`,);
+    }
+    const startedAt = this.clock();
+    const request = buildExecuteRequest(
+      { files: model.files, missing: [], },
+      { ...options, entry: model.entry, },
+    );
+    const envelope = await this.execute(request,);
+    const finishedAt = this.clock();
+    this.cache.set({
+      ...model,
+      status: statusFromEnvelope(envelope,),
+      lastExecution: executionState(
+        intentFromOptions(options,),
+        envelope,
+        startedAt,
+        finishedAt,
+      ),
+    },);
+    return envelope;
   }
 
   /**
@@ -161,14 +285,10 @@ export class DaemonCore {
     report: string,
     outputDir?: string,
   ): Promise<ExecutionResult> {
-    const model = this.cache.get(uri,);
-    if (model === undefined) {
-      throw new Error(`project not loaded: ${uri}`,);
-    }
-    const request = buildExecuteRequest(
-      { files: model.files, missing: [], },
-      { entry: model.entry, report, reportsIsRegex: false, outputDir, },
-    );
-    return await this.execute(request,);
+    return await this.executeProject(uri, {
+      report,
+      reportsIsRegex: false,
+      outputDir,
+    },);
   }
 }

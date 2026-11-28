@@ -1,7 +1,7 @@
 # VS Code extension packaging exclusions (22.2.4).
-# The .vsix ships only the manifest, the bundled dist/*.js and the language
-# assets (syntaxes/, snippets/, language-configuration.json). Source, tests,
-# build scripts and Deno config stay out (ADR 035 §7; plan §10).
+# The .vsix ships only the manifest, the bundled dist/*.js, language assets
+# (syntaxes/, snippets/, language-configuration.json) and report assets/. Source,
+# tests, build scripts and Deno config stay out (ADR 035 §7; plan §10).
 .vscode/**
 .tmp/**
 src/**

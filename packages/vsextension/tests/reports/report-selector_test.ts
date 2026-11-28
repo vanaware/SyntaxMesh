@@ -4,7 +4,7 @@
  */
 import { describe, it, } from "@std/testing/bdd";
 import { assertEquals, } from "@std/assert";
-import type { ReportJsonEntry, } from "@vanaware/syntaxmesh";
+import type { ListReportsEntry, ReportJsonEntry, } from "@vanaware/syntaxmesh";
 import {
   chooseFormat,
   quickPickItems,
@@ -30,6 +30,16 @@ describe("report selector", () => {
     assertEquals(items, [
       { label: "overview", description: "taskreport", report: "overview", },
       { label: "gantt", description: "taskreport", report: "gantt", },
+    ],);
+  });
+
+  it("keeps the display name separate from the canonical report id", () => {
+    const listed: Array<ListReportsEntry & { id: string }> = [
+      { id: "full", name: "Project TJP", type: "export", },
+    ];
+
+    assertEquals(quickPickItems(listed,), [
+      { label: "Project TJP", description: "export", report: "full", },
     ],);
   });
 

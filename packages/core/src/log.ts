@@ -1,4 +1,38 @@
+/** Optional terminal capabilities used by progress output. */
+export interface LogRuntime {
+  /** Whether progress output should be emitted. */
+  isTerminal?: () => boolean;
+  /** Writes progress text to the host's output stream. */
+  write?: (text: string,) => void;
+}
+
+/** Minimal Deno shape needed by the default logging capability probe. */
+interface DenoLogCapabilities {
+  stderr?: { isTerminal?: () => boolean };
+  stdout?: { writeSync?: (bytes: Uint8Array,) => number };
+}
+
+/** Detects optional progress capabilities without binding a runtime global. */
+function detectLogRuntime(): LogRuntime {
+  const host = globalThis as unknown as { Deno?: DenoLogCapabilities };
+  const stderr = host.Deno?.stderr;
+  const stdout = host.Deno?.stdout;
+  const isTerminal = typeof stderr?.isTerminal === "function"
+    ? stderr.isTerminal.bind(stderr,)
+    : undefined;
+  const writeSync = typeof stdout?.writeSync === "function"
+    ? stdout.writeSync.bind(stdout,)
+    : undefined;
+  return {
+    isTerminal,
+    write: writeSync === undefined ? undefined : (text: string,) => {
+      writeSync(new TextEncoder().encode(text,),);
+    },
+  };
+}
+
 export class Log {
+  static runtime: LogRuntime = detectLogRuntime();
   static level: number = 0;
   static stack: string[] = [];
   static segments: string[] = [];
@@ -45,16 +79,18 @@ export class Log {
   }
 
   static startProgressMeter(text: string,): void {
-    if (!this.silent && Deno?.stderr?.isTerminal()) {
+    if (!this.silent && this.runtime.isTerminal?.() === true) {
       this.progressMeter = text;
-      console.error(this.formatMessage(`[${text}]`,),);
+      this.runtime.write?.(
+        `${this.formatMessage(`[${text}]`,)}\n`,
+      );
     }
   }
 
   static stopProgressMeter(): void {
     if (this.progressMeter) {
-      console.error(
-        this.formatMessage(`[${this.progressMeter}] - concluído`,),
+      this.runtime.write?.(
+        `${this.formatMessage(`[${this.progressMeter}] - concluído`,)}\n`,
       );
       this.progressMeter = "";
     }
@@ -63,19 +99,15 @@ export class Log {
   static activity(): void {
     if (this.silent) return;
     this.progressPct = (this.progressPct + 1) % 100;
-    if (Deno?.stderr?.isTerminal()) {
-      Deno.stdout.writeSync(
-        new TextEncoder().encode(`\rProgress: ${this.progressPct}%`,),
-      );
+    if (this.runtime.isTerminal?.() === true) {
+      this.runtime.write?.(`\rProgress: ${this.progressPct}%`,);
     }
   }
 
   static progress(percent: number,): void {
     this.progressPct = Math.max(0, Math.min(100, percent,),);
-    if (Deno?.stderr?.isTerminal()) {
-      Deno.stdout.writeSync(
-        new TextEncoder().encode(`\rProgress: ${this.progressPct}%`,),
-      );
+    if (this.runtime.isTerminal?.() === true) {
+      this.runtime.write?.(`\rProgress: ${this.progressPct}%`,);
     }
   }
 

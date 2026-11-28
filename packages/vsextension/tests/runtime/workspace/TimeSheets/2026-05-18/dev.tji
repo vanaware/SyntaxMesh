@@ -1,0 +1,7 @@
+timesheet dev 2026-05-18 - 2026-05-22 {
+  task build {
+    work 4d
+    remaining 0d
+    status green "Build complete"
+  }
+}

@@ -23,9 +23,12 @@
  */
 
 import { join, } from "node:path";
+import { copyReportAssets, } from "./copy-assets.ts";
 
 /** Package root (the parent of `scripts/`). */
 const ROOT = new URL("../", import.meta.url,).pathname;
+/** Canonical repository report assets, resolved independently of the cwd. */
+const REPORT_ASSETS = new URL("../../../assets/", import.meta.url,).pathname;
 /** Distribution directory of the bundled artifacts. */
 const DIST = join(ROOT, "dist",);
 
@@ -104,6 +107,8 @@ async function bundle(target: Target,): Promise<void> {
 }
 
 if (import.meta.main) {
+  const assets = await copyReportAssets(REPORT_ASSETS, ROOT,);
+  console.log(`assets/ — ${assets.length} files copied`,);
   await Deno.mkdir(DIST, { recursive: true, },);
   for (const target of TARGETS) {
     await bundle(target,);

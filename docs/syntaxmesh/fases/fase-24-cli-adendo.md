@@ -189,7 +189,7 @@ Seções:
 | Seção | Conteúdo |
 |---|---|
 | `results.check` | `{ valid: boolean }` — parse sem agenda (fonte do exit do `--check-syntax`). |
-| `results.listReports` | `[{ name, type }]` na ordem de declaração. |
+| `results.listReports` | `[{ id, name, type }]` na ordem de declaração; `id` é o identificador canônico e `name` o nome de exibição único. |
 | `results.reports` | objeto com `outputDir` (**presente apenas se `outputDir` foi passado no request**) + `reports[]` com o contrato da v1: `name` (único; duplicata é erro de validação), `stdout` (reflete o modificador na DSL), `formats[]` (`{ format, content }`, conteúdo já renderizado como string, na ordem declarada), `errors[]` por relatório (ex.: filtro inválido, formato não suportado). Relatórios pedidos com `dynamicAttributes` já saem **processados pelo core** (pipeline 18.19 interno). |
 | `results.freeze` | `{ fileName, contents }` — o novo conteúdo do master file reescrito; **a gravação é do consumidor** (via escrita injetada/`io.writeText`). |
 | `results.sheet` | `{ app, exitCode?, emailText?, attachments?: [{ name, contents }], summaryText?, reportText? }` — apps de sheet (senders devolvem o **texto do email** e anexos como dados; receivers recebem o texto da mensagem por `appOptions.rawMessage`, sem SMTP nem FS). |

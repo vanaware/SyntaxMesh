@@ -44,6 +44,12 @@ export interface RendererOptions {
   color: boolean;
 }
 
+/** Optional host-only relaxations; CLI callers keep the strict defaults. */
+export interface ParseArgsOptions {
+  /** Allows a sheet email app to omit its positional project master. */
+  allowMissingSheetEntry?: boolean;
+}
+
 /** Result of the translation: request + renderer + paths to read. */
 export interface ParsedArgs {
   /** Request to send to `execute` (the core envelope). */
@@ -252,7 +258,10 @@ function valueOf(
  * @throws {CliUsageError} unknown flag, missing value, deferred flag, conflicting
  *   sheet app or excess positional argument.
  */
-export function parseArgs(argv: readonly string[],): ParsedArgs {
+export function parseArgs(
+  argv: readonly string[],
+  options: ParseArgsOptions = {},
+): ParsedArgs {
   const request: ExecutionRequest = {};
   const renderer: RendererOptions = { silent: false, color: true, };
   const appOptions: ExecutionSheetAppOptions = {};
@@ -534,10 +543,13 @@ export function parseArgs(argv: readonly string[],): ParsedArgs {
   }
   // Without a file only `--help`/`--version` make sense (they answer without a
   // project); `man` does not open any project either.
+  const sheetEntryOptional = options.allowMissingSheetEntry === true &&
+    request.app !== undefined &&
+    Object.values(SHEET_COMMANDS,).includes(request.app,);
   if (
     request.entry === undefined && request.man === undefined &&
     request.help !== true &&
-    request.version !== true
+    request.version !== true && !sheetEntryOptional
   ) {
     throw new CliUsageError("No input file given.",);
   }

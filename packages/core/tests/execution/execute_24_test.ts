@@ -197,12 +197,12 @@ describe("execute — seções sob demanda (24.2.25)", () => {
     assertEquals(none.exitCode, 0,);
   });
 
-  it("--list-reports devolve nome e tipo na ordem de declaração", async () => {
+  it("--list-reports devolve id, nome e tipo na ordem de declaração", async () => {
     const result = await run(request({ listReports: ".", },),);
     assertEquals(result.exitCode, 0,);
     assertEquals(result.results.listReports, [
-      { name: "Tarefas", type: "taskreport", },
-      { name: "Recursos", type: "taskreport", },
+      { id: "first", name: "Tarefas", type: "taskreport", },
+      { id: "second", name: "Recursos", type: "taskreport", },
     ],);
   });
 

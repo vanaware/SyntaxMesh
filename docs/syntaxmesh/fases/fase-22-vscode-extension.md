@@ -23,8 +23,9 @@
 > (lsp-core 96.4% / vsextension 99.3% / lsp 100% lines), full gate 880 passed
 > and F21² handoff. VS Code runtime acceptance (clean install, Test Runner,
 > vscode.dev) deferred to F21² with explicit anchors.
-> **Planning:** seven major blocks P1–P7, with subblocks in §0; original IDs
-> 22.0–22.11 and existing task blocks C–J remain unchanged.
+> **Planning:** seven delivered major blocks P1–P7, with subblocks in §0; original
+> IDs 22.0–22.11 and existing task blocks C–J remain unchanged. The P8 complement
+> is detailed as tasks 22.12.1–22.12.25 and awaits implementation approval.
 > **Recorded progress:** 106/108 tasks in 22.1b verified (H 6.9/6.10 outside
 > v1); this is not a whole-phase count.
 > **Original duration estimate:** 10–14 days; reassess when detailing each block.
@@ -781,6 +782,10 @@ command and its tests. Translated UX variants remain the post-v1 addendum in §1
 
 - **Sem `node:*`** em `extension.web.ts` e suas dependências (o core já é
   browser-compatível).
+- **Sem globais de runtime não vinculados** no grafo Web: capabilities opcionais
+  são sondadas via `globalThis` ou portas injetadas. `deno task check:web-bundle`
+  reconstrói e escaneia `extension.web.js` e `server.web.js`, incluindo módulos
+  CLI alcançados pelo bundle.
 - **`storageUri`/`globalStorageUri` podem ser `undefined`**.
 - **Operações Git indisponíveis** (sem `child_process`): desabilitar ou exibir
   mensagem amigável na entrada Web.
@@ -864,6 +869,18 @@ instalado, 8 passed). **vscode.dev segue Diferido com âncora** (exige sessão
 de navegador). Matriz: `fase-21-compatibilidade-qualidade-tarefas.md`
 (adendo 26.34) + §P7 das tarefas F22; estratégia: ADR 042 (adendo 26.34).
 
+**Atualização P8.6 (2026-11-24):** o scanner de bundles gerados cobre comentários,
+strings, templates, source maps, imports/requires `node:*`, `Deno` não vinculado e
+`process` inseguro; a única exceção é a capability check minimatch
+`process.platform === "win32"` devidamente guardada. Os testes focados passaram
+(3 testes, 26 steps), o pacote passou 81 testes (502 steps) e
+`deno task check:web-bundle` reconstrói os quatro artefatos e encontra zero
+violações nos dois bundles Web. Uma injeção intencional de `Deno.readTextFileSync`
+no bundle gerado provocou exatamente um diagnóstico e exit 1; após restaurar a
+linha, o checker passou novamente. O gate completo `deno task tests` também passou
+com a nova etapa; aceite real de navegador continua sob responsabilidade de
+22.12.23.
+
 Convenções: BDD (`@std/testing/bdd` + `@std/assert`); sem `any` em `src/`; TDD
 para handlers novos; fixtures de entrada: MWEs (`docs/Learning/mwe001–009`) e
 `docs/taskjuggler/test/TestSuite/` em inglês — já versionados no repositório;
@@ -896,6 +913,9 @@ para handlers novos; fixtures de entrada: MWEs (`docs/Learning/mwe001–009`) e
 - ❌ Importar `vscode-languageserver` (fora do bootstrap de transporte
   vscode/CLI), `vscode`, `node:*` ou `Deno.stdin/stdout` dentro do
   core/`lsp-core`.
+- ❌ Deixar globais de runtime não vinculados no grafo Web; capabilities opcionais
+  usam `globalThis` ou portas injetadas e os artefatos gerados passam por
+  `check:web-bundle`.
 - ❌ Usar `node_modules` ou `npm install`.
 - ❌ `console.log` no canal do servidor LSP.
 - ❌ sobrescrever `language "..."` do arquivo via configuração.
@@ -1062,7 +1082,16 @@ proposed follow-up work, not a rewrite of their acceptance records.
   falling back to registry selection or the active master editor.
 - `.smx` and `.tjp` are master files; `.tji`/`.tjs` fragments and sheets are not
   valid project roots.
-- Workspace Trust still gates every execution and write path.
+- Workspace Trust still gates every execution and write path. The manifest keeps
+  no `untrustedWorkspaces` capability, so VS Code disables the extension and
+  registers no commands in a restricted workspace; the in-command gate remains
+  the second layer if trust is lost after activation.
+- Help/version/man are project-free. Sheet apps remain project-backed: semantic
+  commands resolve an explicit, active or single loaded project, while
+  `syntaxmesh.run` and its `run`/`smx`/`tj3` console prefixes retain the F24
+  positional `.smx`/`.tjp` master requirement. P8 adds no parser or
+  execution-semantics delta; its only core change is the injected logging
+  portability capability in task 22.12.20.
 - No save/change watcher feeds the daemon; refresh remains explicit.
 - LSP remains responsible for editor diagnostics and semantic tokens. Execution
   diagnostics use a separate collection and never replace LSP diagnostics.
@@ -1132,14 +1161,17 @@ path is safe.
   navigation.
 - §13 records 22.8 as delivered with Web scenarios. Those scenarios are pure or
   mocked tests; they do not replace the still-deferred real browser acceptance
-  in §11. P8.6 closes that evidence gap explicitly.
+  in §11. P8.6 closes the generated-bundle evidence gap; browser execution remains
+  in 22.12.23.
+- The historical “no `Deno.*`” wording meant no unbound runtime-specific globals.
+  Optional capabilities reached through `globalThis` or injected ports are valid;
+  source and generated-bundle scanners now enforce that distinction.
 
 ### Risk priority
 
-- **P0:** unbound `Deno` in `Log.startProgressMeter`, `activity` and `progress`.
-  Optional chaining does not make an undeclared identifier safe; those paths can
-  throw `ReferenceError` in a browser. TJP export and other progress paths make
-  this reachable even though normal parser logging uses `NULL_LOG`.
+- **P0 resolved in 22.12.20/22.12.21:** unbound `Deno` progress calls were removed
+  from `Log`, and `check:web-bundle` now rejects their reintroduction in either
+  generated Web artifact. Real browser execution remains separately unverified.
 - **P0:** no real Web extension-host/browser acceptance. Source scans and Deno
   browser bundles cannot prove activation, Worker startup, virtual-filesystem
   writes or console behavior.
@@ -1177,8 +1209,8 @@ masters use `.smx`, and `.tjp` is accepted as a compatibility input.
 | `syntaxmesh.checkStatusSheet` | `[projectUri?, sheetUri?, options?: ExecutionCommandOptions]` | `ExecutionResult` with `results.sheet` | Palette, console, run |
 | `syntaxmesh.report.list` | `[projectUri?, pattern?]` | `ListReportsEntry[]` | Palette, tree expansion, console, run |
 | `syntaxmesh.report.render` | `[projectUri?, report?, reportsIsRegex?, dynamicAttributes?]` | `ExecutionResult` with selected reports | Palette, console, run |
-| `syntaxmesh.report.open` | `[projectUri?, reportId?, dynamicAttributes?]` | `ReportJsonEntry` HTML content | Tree report, palette, console |
-| `syntaxmesh.report.export` | `[projectUri?, reportId?, format?, targetUri?, dynamicAttributes?]` | `ArtifactResult` | Palette, tree context, console |
+| `syntaxmesh.report.open` | `[projectUri?, reportId?, dynamicAttributes?]` | `null` after opening the HTML Webview | Tree report, palette, console |
+| `syntaxmesh.report.export` | `[projectUri?, reportId?, format?, targetUri?, dynamicAttributes?]` | `ReportExportResult` | Palette, tree context, console |
 | `syntaxmesh.man` | `[format?, keywords?, targetUri?]` | `ManCommandResult` | Palette, console, run |
 | `syntaxmesh.sheet.time.send` | `[projectUri?, options?: SheetCommandOptions]` | `SheetCommandResult` | Palette, console, run |
 | `syntaxmesh.sheet.time.receive` | `[projectUri?, messageUri?, options?: SheetCommandOptions]` | `SheetCommandResult` | Palette, console, run |
@@ -1588,21 +1620,32 @@ deno task --cwd packages/vsextension tests
 ## P8.3 — Report Selection, Commands and Explicit Artifact Output
 
 **Priority:** P2. **Depends on:** P8.1/P8.2. **Produces:** reusable list/render/open/
-export commands, F24 report selection semantics and safe freeze output.
+export commands, F24 report selection semantics, safe freeze output and the shared
+confirmed-output foundation (tasks 22.12.8–22.12.9) consumed by P8.7.
 
 **Files:**
+- Modify: `packages/vsextension/src/commands/contracts.ts`
 - Modify: `packages/vsextension/src/commands/service.ts`
 - Modify: `packages/vsextension/src/commands/reports.ts`
 - Modify: `packages/vsextension/src/reports/host.ts`
+- Modify: `packages/vsextension/scripts/build.ts`
 - Modify: `packages/vsextension/package.json`
+- Create: `packages/vsextension/scripts/copy-assets.ts`
+- Create: `packages/vsextension/src/cli/artifacts.ts`
+- Create: `packages/vsextension/src/cli/output-host.ts`
+- Create: `packages/vsextension/src/cli/host.ts`
 - Create: `packages/vsextension/src/commands/freeze-output.ts`
+- Test: `packages/vsextension/tests/assets_test.ts`
 - Test: `packages/vsextension/tests/commands/reports_test.ts`
+- Test: `packages/vsextension/tests/commands/freeze-output_test.ts`
+- Test: `packages/vsextension/tests/cli/artifacts_test.ts`
+- Test: `packages/vsextension/tests/cli/output-host_test.ts`
 - Test: `packages/vsextension/tests/reports/output-policy_test.ts`
 
 **Interfaces:**
 
 ```ts
-listReports(uri: string, pattern = ""): Promise<
+listReports(uri: string, pattern?: string): Promise<
   CommandResult<ListReportsEntry[]>
 >;
 
@@ -1621,6 +1664,38 @@ renderReport(
   reportId: string,
   dynamicAttributes?: string,
 ): Promise<CommandResult<ReportJsonEntry>>;
+
+openHtml(
+  entry: ReportJsonEntry,
+  masterUri: Uri,
+): Promise<CommandResult<null>>;
+
+export interface ReportExportOptions {
+  projectUri: string;
+  reportId: string;
+  format: string;
+  dynamicAttributes?: string;
+  targetRootUri: string;
+  fileName: string;
+}
+
+export interface ReportExportResult {
+  execution: ExecutionResult;
+  artifact: ArtifactResult;
+}
+
+export interface ReportExportPort {
+  renderReports(
+    uri: string,
+    selection: ReportSelection,
+  ): Promise<CommandResult<ExecutionResult>>;
+  output: ConfirmedOutputHost;
+}
+
+export function exportReport(
+  options: ReportExportOptions,
+  port: ReportExportPort,
+): Promise<CommandResult<ReportExportResult>>;
 
 export interface FreezeCommandResult {
   execution: ExecutionResult;
@@ -1641,31 +1716,39 @@ export interface FreezeCommandResult {
   no selection to the core default of all reports. Return the execution envelope
   and selected report data without opening or writing a Webview/artifact.
 - [ ] **Step 4: Implement `syntaxmesh.report.open`.** Resolve/prompt project and
-  report, call `renderReport` with optional dynamic attributes, require an HTML
-  format, and call a public `ReportPresenter.openHtml(...)`. If HTML is unavailable,
-  return the available format ids in the error. Keep the existing strict CSP,
+  report, call `renderReport` with optional dynamic attributes, and call
+  `ReportPresenter.openHtml(entry, masterUri)`. The presenter returns
+  `CommandResult<null>`; a missing HTML format produces a structured error listing
+  the available format ids in declaration order. Keep the existing strict CSP,
   nonce, asset URI mapping and Save message.
 - [ ] **Step 5: Implement `syntaxmesh.report.export`.** Resolve/prompt report and
-  format, call `showSaveDialog` when no target argument is supplied, default to
-  the sanitized filename beside the master, and write through `workspace.fs`/
-  `writeUserFile`. Desktop uses `direct`; Web uses `stub-first`. Confirm before
-  replacing an existing target and return an `ArtifactResult` containing the
-  final URI string, basename and `kind: "report"`. Forward `dynamicAttributes` to
-  the execution request. Extend `PUBLIC_COMMAND_IDS` and `contributes.commands` with
-  `report.list`, `report.render`, `report.open` and `report.export`.
+  format, call `showSaveDialog` when no target argument is supplied, and suggest
+  `reportFileName(reportId, format)` beside the master. Split the selected file URI
+  into `ReportExportOptions.targetRootUri`/`fileName`, then call the pure
+  `exportReport` function. It renders through the shared service and writes one
+  `report` artifact through `ConfirmedOutputHost.writeAll`; Desktop uses `direct`
+  and Web uses `stub-first`. Confirm before replacing an existing target and return
+  the final URI string, basename and `kind: "report"`. Forward `dynamicAttributes`
+  to the execution request. Extend `PUBLIC_COMMAND_IDS` and `contributes.commands`
+  with `report.list`, `report.render`, `report.open` and `report.export`.
 - [ ] **Step 6: Make freeze output explicit.** Validate each core-provided
   `FreezeFile.fileName` as a basename, reject path traversal, default both files
-  beside the master, confirm overwrites, write header before bookings, and return
-  `FreezeCommandResult` with the execution envelope and plain-data artifacts whose
-  `kind` is `"freeze"`. A failed write returns `CommandResult` failure and does not
-  claim success.
+  beside the master, and submit header/bookings as one `ConfirmedOutputHost.writeAll`
+  batch. Return `FreezeCommandResult` with the execution envelope and plain-data
+  `freeze` artifacts only after every write succeeds; a failed write returns
+  `CommandResult` failure and does not claim success.
 - [ ] **Step 7: Keep `syntaxmesh.generateReport` as a runtime-only alias.** It may
   prompt for the old combined flow, but must delegate actual work to
   `report.open` or `report.export`; no duplicate scheduling or output policy.
-- [ ] **Step 8: Run report and package tests.**
+- [ ] **Step 8: Package report assets deterministically.** Add the build-only
+  `copyReportAssets` helper, call it before bundling, and test the exact 14-file
+  inventory under `css/`, `icons/` and `scripts/wz_tooltip.js`. Resolve the source
+  tree from the script URL and replace stale package assets.
+- [ ] **Step 9: Run report, asset, package and build verification.**
 
 ```bash
 deno task --cwd packages/vsextension tests
+deno task build:vsext
 ```
 
 ---
@@ -1686,7 +1769,7 @@ action. **Produces:** the tree as a thin client of the canonical API.
 **Interfaces:**
 
 ```ts
-export interface TreeNode {
+export interface TreeNode extends TreeItemData {
   id: string;
   kind: "project" | "category" | "entity" | "report";
   projectUri: string;
@@ -1694,7 +1777,7 @@ export interface TreeNode {
   contextValue: "project" | "category" | "entity" | "report";
   command?: string;
   commandArgs?: unknown[];
-  // existing label/description/icon/collapsibleState/children fields
+  children: TreeNode[];
 }
 
 export function treeChildren(
@@ -1875,12 +1958,15 @@ export function parseConsoleLine(line: string):
   do not import `pty.ts` from the browser entry. If browser testing later proves
   PTY support, replace the adapter without changing the command API.
 - [ ] **Step 7: Add in-host acceptance.** Desktop: run `project list`,
-  `check-syntax <uri>`, `run sample.smx --check-syntax`,
-  `smx sample.tjp --list-reports 'cost|task'`, `tj3 man task`, `run ts summary`,
-  `smx ss send --dry-run` and `clear`; verify all three prefixes are equivalent,
-  `.smx` and `.tjp` masters both work, and stdout reports print. Web: run
-  `project list` and `run sample.smx --no-reports`; verify no terminal or Node API
-  is required.
+  `check-syntax <uri>`, `run master.smx --check-syntax`,
+  `smx master.tjp --list-reports 'cost|task'`, `tj3 man task`,
+  `run ts summary master.smx --dry-run`,
+  `smx ss send master.tjp --dry-run` and `clear`; verify all three prefixes are
+  equivalent, `.smx` and `.tjp` masters both work, and stdout reports print.
+  Bare semantic `man` stays project-free and bare `ts`/`ss` forms may resolve the
+  active project, but prefixed `run`/`smx`/`tj3` sheet forms keep their positional
+  master. Web: run `project list` and `run master.smx --no-reports`; verify no
+  terminal or Node API is required.
 - [ ] **Step 8: Run console and package tests.**
 
 ```bash
@@ -1932,23 +2018,23 @@ export function scanBrowserBundle(
 ): BundleViolation[];
 ```
 
-- [ ] **Step 1: Add a failing core runtime test.** Set `Log.runtime = {}` and
+- [x] **Step 1: Add a failing core runtime test.** Set `Log.runtime = {}` and
   assert `startProgressMeter`, `activity` and `progress` do not throw or write.
   Restore the original runtime after each test.
-- [ ] **Step 2: Remove unbound `Deno` from `Log`.** Detect optional terminal
+- [x] **Step 2: Remove unbound `Deno` from `Log`.** Detect optional terminal
   capabilities through `globalThis`, route progress output through
   `Log.runtime.write`, and leave `reset()` responsible only for message/progress
   state. Keep `stream-handle.ts` capability probes guarded through `globalThis`.
-- [ ] **Step 3: Add bundle-scanner unit tests.** Exercise `scanBrowserBundle`
+- [x] **Step 3: Add bundle-scanner unit tests.** Exercise `scanBrowserBundle`
   with inline fixtures. Flag unbound `Deno.`/`Deno?.`, `node:` imports/requires and
   unsafe `process.env/argv/exit/cwd`. Allow the known guarded minimatch
   `typeof process === "object" && process && process.platform === "win32"`
   capability check; do not allow arbitrary `process.platform` use.
-- [ ] **Step 4: Implement `check-web-bundle.ts`.** Import `scanBrowserBundle`,
+- [x] **Step 4: Implement `check-web-bundle.ts`.** Import `scanBrowserBundle`,
   scan both generated Web bundles, print file/line/snippet/reason for every
   violation, and exit non-zero. Ignore comments and source-map payloads; never
   scan only the entry source.
-- [ ] **Step 5: Add deterministic tasks.** In `packages/vsextension/deno.jsonc`:
+- [x] **Step 5: Add deterministic tasks.** In `packages/vsextension/deno.jsonc`:
 
 ```json
 "check:web-bundle": "deno task build && deno run --allow-read scripts/check-web-bundle.ts",
@@ -1978,7 +2064,7 @@ deno task --cwd packages/vsextension test:web-runtime
 Expected: zero bundle violations and every browser check passing. A skipped or
 mocked browser test does not close the Web acceptance item.
 
-- [ ] **Step 8: Reconcile documentation claims.** Replace the absolute "no
+- [x] **Step 8: Reconcile documentation claims.** Replace the absolute "no
   `Deno.*`" wording with "no unbound runtime-specific globals; optional host
   capabilities are probed through `globalThis` or injected ports". Record the
   exact browser/runtime evidence in §11 and keep `vscode.dev` deferred until it is
@@ -2001,7 +2087,6 @@ help/version commands and a full CLI-compatible `syntaxmesh.run` adapter for
 - Modify: `packages/vsextension/src/commands/service.ts`
 - Modify: `packages/vsextension/src/daemon/request-builder.ts`
 - Modify: `packages/vsextension/src/daemon/daemon-core.ts`
-- Create: `packages/vsextension/src/cli/host.ts`
 - Create: `packages/vsextension/src/commands/meta.ts`
 - Create: `packages/vsextension/src/commands/manual.ts`
 - Create: `packages/vsextension/src/commands/sheets.ts`
@@ -2009,7 +2094,6 @@ help/version commands and a full CLI-compatible `syntaxmesh.run` adapter for
 - Modify: `packages/vsextension/src/extension.node.ts`
 - Modify: `packages/vsextension/src/extension.web.ts`
 - Modify: `packages/vsextension/package.json`
-- Test: `packages/vsextension/tests/cli/host_test.ts`
 - Test: `packages/vsextension/tests/commands/meta_test.ts`
 - Test: `packages/vsextension/tests/commands/manual_test.ts`
 - Test: `packages/vsextension/tests/commands/sheets_test.ts`
@@ -2020,6 +2104,7 @@ help/version commands and a full CLI-compatible `syntaxmesh.run` adapter for
 
 ```ts
 export interface Tj3RunContext {
+  /** URI string used to resolve argv paths and relative output. */
   cwd?: string;
   stdin?: string;
   confirmOverwrite?: (paths: string[]) => Promise<boolean>;
@@ -2040,6 +2125,7 @@ export interface SheetCommandOptions {
   force?: boolean;
   hideResource?: string;
   intervalDuration?: string;
+  to?: string[];
   sheetRecipients?: string[];
   digestRecipients?: string[];
   dryRun?: boolean;
@@ -2061,7 +2147,8 @@ export interface ManCommandResult {
 }
 
 export interface Tj3HostIo extends OutputPolicyIo {
-  resolve(path: string): string;
+  /** Resolves a policy path against root, or the adapter's configured URI root. */
+  resolve(path: string, root?: string): string;
 }
 ```
 
@@ -2104,41 +2191,50 @@ Run: `deno task --cwd packages/vsextension tests`. Expected: FAIL until Step 3.
   and `man` only when defined; keep `appOptions` plain data. `DaemonCore` records
   `sheet` for sheet apps and `man` for manual execution. Help/version do not require
   a cached project. A project-backed CLI-compatible run may record intent `run`.
-- [ ] **Step 4: Implement the injected output host.** `cli/host.ts` adapts
-  `workspace.fs` plus the existing Desktop `direct`/Web `stub-first` write policy to
-  `OutputPolicyIo`. Resolve relative paths against `Tj3RunContext.cwd` or the master
-  directory. Before real output, run `dispatchSections` with record-only
-  `write`/`copy` and suppressed `print` to collect every destination; confirm all
-  existing destinations in one `confirmOverwrite` call, then perform the real
-  dispatch. Reject when confirmation is required but no callback exists. Capture
-  real `print` into stdout. Resolve the `assets` root from the extension
-  installation so HTML asset copies work on Desktop and Web. Map
-  `OutputPolicyOutcome.written` to report/freeze/manual/sheet/email artifacts and
-  `assets` to asset artifacts; never return host objects.
+- [ ] **Step 4: Implement the injected output host.** Keep `cli/output-host.ts`
+  pure over `Tj3HostIo`; `cli/host.ts` is the VS Code adapter for `workspace.fs`,
+  URI resolution and Desktop `direct`/Web `stub-first` writes. Resolve relative
+  paths against `Tj3RunContext.cwd`, the master directory or the sheet root. Run
+  `dispatchSections` once in record-only mode with no-op `print`/`mkpath`, no real
+  `write`/`copy` and `onError: null`; an aborted preview writes nothing. Confirm
+  all deduplicated existing destinations in one `confirmOverwrite` call, rejecting
+  a missing callback only when confirmation is required, then perform the real
+  dispatch. Capture only real `print` calls as stdout and each real copy as an
+  `ArtifactCopy`. Resolve the `assets` root from the extension installation and
+  classify report/freeze/manual/sheet/email plus asset/image destinations by the
+  copy source root, not by destination names; never return host objects.
 - [ ] **Step 5: Implement help and version commands.** Register
   `syntaxmesh.help` and `syntaxmesh.version`; each calls `execute` with only its
   flag and returns the envelope. Add manifest/constants tests proving they need no
   active project and do not open files.
 - [ ] **Step 6: Implement the manual command.** `syntaxmesh.man` accepts only
   `text`, `html` and `smx`, forwards keywords, and calls `execute` with
-  `request.man`. Text returns as stdout; HTML/SMX use the shared output policy and
-  optional `targetUri`. Add tests for each format, keyword forwarding and rejection
-  of the stale `tjp` format.
+  `request.man`. Text/SMX return as stdout by default; an explicit file target is
+  split into directory URI/basename and written through
+  `ConfirmedOutputHost.writeAll`. HTML treats `targetUri` as a directory, sets it
+  as request `outputDir`, and dispatches the manual file map through the shared
+  output host. Add tests for each format, keyword forwarding and rejection of the
+  stale `tjp` format.
 - [ ] **Step 7: Implement the five sheet-app commands.** Map `time.send`,
   `time.receive`, `time.summary`, `status.send` and `status.receive` to the F24 app
-  names. Hydrate `--directory`, `--config`, `--from`, recipients and sheet trees
-  through host ports; call `collectSheetFiles` for send/receive/summary as F24
+  names. Resolve an explicit, active or single loaded project before building the
+  request; never pass an empty project closure to a sheet app. Hydrate
+  `--directory`, `--config`, `--from`, recipients and sheet trees through host
+  ports; map `--to` to both recipient lists and `--sheet`/`--digest` to their
+  respective lists; call `collectSheetFiles` for send/receive/summary as F24
   does. Use `dispatchSections` for file deltas, email text and `outbox/*.eml`; do
-  not send SMTP. Add tests for every app, `--dry-run`, stdin message input and
-  missing-message errors.
+  not send SMTP. Add tests for every app, `--dry-run`, stdin message input, project
+  resolution and missing-message errors.
 - [ ] **Step 8: Implement `syntaxmesh.run`.** Call the shared `parseArgs(argv)`
   exactly once. Resolve the positional `.smx`/`.tjp` master, config/sheet/message
   paths and output directory through the host. Add/refresh the explicit project
-  when a master is present; dispatch help/version/man/sheet apps without a project.
-  For project execution, call the same service methods as the semantic commands.
-  Format envelope messages with `Reporter`, then invoke the host's confirmed
-  `dispatchSections(execution, { io, assets, sheetBaseDir, imageDir, onError })`
-  wrapper only when the envelope permits output. Capture stdout/stderr and return
+  when a master is present. Help/version/man are project-free; parsed `ts`/`ss`
+  invocations retain the F24 positional-master requirement and pass that resolved
+  project to the semantic sheet service. For project execution, call the same
+  service methods as the semantic commands. Format envelope messages with
+  `Reporter`, then invoke
+  `OutputHost.dispatch(execution, { cwd, confirmOverwrite, sheetBaseDir, imageDir, onError })`
+  only when the envelope permits output. Capture stdout/stderr and return
   `Tj3RunResult`. Repeated `--report` follows current `parseArgs` overwrite
   semantics; multiple selection uses
   `--reports <RE>` until a future core delta says otherwise.
@@ -2183,11 +2279,14 @@ bundles generated, and zero Web bundle violations.
 - [ ] Every F24 root flag, subcommand and addendum behavior has a typed mapping or
   an explicit rejection, including renderer-only `--silent`/`--no-color`.
 - [ ] `man`, all five `ts`/`ss` apps, help and version are callable without
-  duplicating engine logic; sheet apps return files/email data and never use SMTP.
+  duplicating engine logic; semantic sheet commands resolve a project, sheet apps
+  return files/email data and never use SMTP.
 - [ ] `syntaxmesh.run` accepts explicit `.smx` and `.tjp` files, shares F24
   `parseArgs`, and reproduces stdout reports, freeze/manual/sheet artifacts,
   assets/images and overwrite confirmation. Console `run`, `smx` and `tj3` are
-  equivalent prefixes for project, `man`, `ts` and `ss` forms.
+  equivalent prefixes for project, `man`, `ts` and `ss` forms; prefixed `ts`/`ss`
+  forms retain the positional master while bare semantic forms may use the active
+  project.
 - [ ] Execution diagnostics are separate from LSP diagnostics and are cleared per
   project.
 - [ ] Report list/render/open/export are independently callable; exports, run file

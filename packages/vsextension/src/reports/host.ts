@@ -19,10 +19,13 @@
 import { Uri, ViewColumn, window, workspace, } from "vscode";
 import type { ExtensionContext, Webview, } from "vscode";
 import type { ReportJsonEntry, } from "@vanaware/syntaxmesh";
+import type { CommandResult, } from "../commands/contracts.ts";
 import { destinationFor, reportFileName, } from "./output-policy.ts";
+import { openHtmlReport, } from "./report-selector.ts";
 import { renderWebviewHtml, } from "./webview-html.ts";
-import { writeUserFile, } from "../web/write-fallback.ts";
 import type { WriteStrategy, } from "../web/write-fallback.ts";
+import { createTj3HostIo, } from "../cli/host.ts";
+import { type ConfirmedOutputHost, OutputHost, } from "../cli/output-host.ts";
 
 /** Asset paths an HTML report may reference (relative to `assets/`). */
 const ASSET_PATHS = [
@@ -36,26 +39,46 @@ function nonce(): string {
   return crypto.randomUUID().replace(/-/g, "",);
 }
 
+/** Creates the shared output host used by report, freeze and later CLI commands. */
+export function createConfirmedOutputHost(
+  context: ExtensionContext,
+  writeStrategy: WriteStrategy = "direct",
+): ConfirmedOutputHost {
+  return new OutputHost(createTj3HostIo({ writeStrategy, },), {
+    cwd: workspace.workspaceFolders?.[0]?.uri.toString(),
+    assetsRoot: Uri.file(context.asAbsolutePath("assets",),).toString(),
+    confirmOverwrite: (paths,) =>
+      Promise.resolve(
+        window.showWarningMessage(
+          `SyntaxMesh: ${paths.length} file${
+            paths.length === 1 ? "" : "s"
+          } already exist. Overwrite?`,
+          "Overwrite",
+          "Cancel",
+        ),
+      ).then((choice,) => choice === "Overwrite"),
+  },);
+}
+
 /**
  * Presents generated reports: HTML in a Webview, other formats saved to disk.
  * One instance per extension activation (holds the asset root).
  */
 export class ReportPresenter {
   private readonly context: ExtensionContext;
-  private readonly writeStrategy: WriteStrategy;
+  /** Shared preflighted output host for explicit report and freeze destinations. */
+  readonly output: ConfirmedOutputHost;
 
   /**
    * @param context the extension context (resolves the bundled `assets/`).
-   * @param writeStrategy the user-write strategy: `direct` on Desktop,
-   * `stub-first` on the Web (empty file in the permission window, then the
-   * content — plan §9.2).
+   * @param output the confirmed output host created once by the activation entry.
    */
   constructor(
     context: ExtensionContext,
-    writeStrategy: WriteStrategy = "direct",
+    output: ConfirmedOutputHost,
   ) {
     this.context = context;
-    this.writeStrategy = writeStrategy;
+    this.output = output;
   }
 
   /**
@@ -73,10 +96,29 @@ export class ReportPresenter {
     masterUri: Uri,
   ): Promise<void> {
     if (destinationFor(format,) === "webview") {
-      this.showWebview(entry.name, content, masterUri,);
+      const result = await this.openHtml(entry, masterUri,);
+      if (!result.ok) window.showErrorMessage(`SyntaxMesh: ${result.error}`,);
       return;
     }
     await this.save(entry.name, format, content, masterUri,);
+  }
+
+  /**
+   * Opens one report's HTML format in a Webview panel.
+   *
+   * @param entry the rendered report entry containing its HTML content.
+   * @param masterUri URI of the master document used by the Save action.
+   * @returns a structured result after opening, or when HTML is unavailable.
+   */
+  openHtml(
+    entry: ReportJsonEntry,
+    masterUri: Uri,
+  ): Promise<CommandResult<null>> {
+    return Promise.resolve().then(() =>
+      openHtmlReport(entry, (content,) => {
+        this.showWebview(entry.name, content, masterUri,);
+      },)
+    );
   }
 
   /** Opens the HTML report in a Webview panel beside the editor. */
@@ -122,13 +164,11 @@ export class ReportPresenter {
     masterUri: Uri,
   ): Promise<void> {
     const fileName = reportFileName(name, format,);
-    const target = Uri.joinPath(masterUri, "..", fileName,);
-    const result = await writeUserFile(
-      workspace.fs,
-      target,
+    const result = await this.output.writeAll([{
+      path: fileName,
       content,
-      this.writeStrategy,
-    );
+      kind: "report",
+    },], Uri.joinPath(masterUri, "..",).toString(),);
     if (!result.ok) {
       window.showErrorMessage(result.error,);
       return;

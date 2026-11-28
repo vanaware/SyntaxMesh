@@ -12,35 +12,64 @@
  * @see docs/syntaxmesh/fases/fase-22-vscode-extension-tarefas.md §22.2.5
  */
 
+import { commands, ViewColumn, window, workspace, } from "vscode";
 import type { ExtensionContext, } from "vscode";
 import { startClient, stopClient, } from "./client/browser.ts";
+import { registerCanonicalCommands, } from "./commands/register.ts";
 import { startDaemon, stopDaemon, } from "./daemon/host.ts";
-import { registerDaemonCommands, } from "./commands/daemon.ts";
-import { ReportPresenter, } from "./reports/host.ts";
-import { registerReportCommands, } from "./commands/reports.ts";
+import { InputConsoleAdapter, } from "./console/input-console.ts";
+import { createConfirmedOutputHost, ReportPresenter, } from "./reports/host.ts";
 import { startViews, stopViews, } from "./views/host.ts";
-import { registerMiscCommands, } from "./commands/misc.ts";
 
 /**
  * Activates the extension on the Web extension host.
  *
  * Starts the browser language client and its Worker server, then the project
- * daemon (22.5, in-memory cache on the Web) and its commands, the report
- * presenter and its Generate Report command (22.6), then the views (tree +
- * status bar) and the remaining commands (22.7). User-triggered writes use the
- * `stub-first` strategy (22.8.3, plan §9.2). Invoked by VS Code per the
- * `onLanguage:syntaxmesh` activation event.
+ * daemon, one confirmed output host/presenter, the views and the Web input
+ * console. Both Desktop and Web register commands through the same canonical
+ * registrar; user-triggered writes use the `stub-first` strategy (22.8.3).
  *
  * @param context the extension context provided by VS Code.
  */
 export async function activate(context: ExtensionContext,): Promise<void> {
   await startClient(context,);
   const host = await startDaemon(context,);
-  registerDaemonCommands(context, host,);
-  const presenter = new ReportPresenter(context, "stub-first",);
-  registerReportCommands(context, host, presenter,);
+  const output = createConfirmedOutputHost(context, "stub-first",);
+  const presenter = new ReportPresenter(context, output,);
   startViews(context, host,);
-  registerMiscCommands(context, host, "stub-first",);
+  const consoleAdapter = new InputConsoleAdapter({
+    executor: {
+      async execute<T,>(id: string, ...args: unknown[]): Promise<T> {
+        return await commands.executeCommand<T>(id, ...args,);
+      },
+    },
+    port: {
+      createOutputChannel: () =>
+        window.createOutputChannel("SyntaxMesh Console",),
+      showInputBox: async (options,) => await window.showInputBox(options,),
+      openStdinDocument: async () => {
+        const document = await workspace.openTextDocument({
+          language: "syntaxmesh",
+          content: "",
+        },);
+        await window.showTextDocument(document, ViewColumn.Beside, false,);
+        const action = await window.showInformationMessage(
+          "Enter stdin in the untitled SyntaxMesh document, then choose Use Stdin.",
+          { modal: true, },
+          "Use Stdin",
+          "Cancel",
+        );
+        return action === "Use Stdin" ? document : undefined;
+      },
+    },
+  },);
+  registerCanonicalCommands(context, {
+    host,
+    presenter,
+    output,
+    writeStrategy: "stub-first",
+    console: consoleAdapter,
+  },);
 }
 
 /**

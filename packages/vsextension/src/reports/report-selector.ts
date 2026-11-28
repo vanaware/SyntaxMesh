@@ -9,7 +9,12 @@
  * @see docs/syntaxmesh/fases/fase-22-vscode-extension.md §3.3 (reports)
  * @see docs/syntaxmesh/fases/fase-22-vscode-extension-tarefas.md §22.6.2
  */
-import type { ListReportsEntry, ReportJsonEntry, } from "@vanaware/syntaxmesh";
+import type {
+  FormatContent,
+  ListReportsEntry,
+  ReportJsonEntry,
+} from "@vanaware/syntaxmesh";
+import type { CommandResult, } from "../commands/contracts.ts";
 
 /**
  * One report quick-pick item. Structurally a `vscode.QuickPickItem` (`label` +
@@ -20,7 +25,7 @@ export interface ReportPickItem {
   label: string;
   /** Displayed report type (`taskreport`, `export`, …). */
   description: string;
-  /** Report id passed to `generateReport`. */
+  /** Report id passed to the render pipeline. */
   report: string;
 }
 
@@ -36,7 +41,7 @@ export function quickPickItems(
   return listReports.map((entry,) => ({
     label: entry.name,
     description: entry.type,
-    report: entry.name,
+    report: entry.id ?? entry.name,
   }));
 }
 
@@ -58,4 +63,33 @@ export function chooseFormat(
   const formats = report.formats.map((f,) => f.format);
   if (formats.includes(defaultFormat,)) return defaultFormat;
   return formats[0] ?? defaultFormat;
+}
+
+/** Selects HTML content or describes the formats a report actually produced. */
+export function selectHtmlFormat(
+  report: ReportJsonEntry,
+): CommandResult<FormatContent> {
+  const html = report.formats.find((format,) => format.format === "html");
+  if (html !== undefined) {
+    return { ok: true, value: html, messages: [], };
+  }
+  const formats = report.formats.map((format,) => format.format).join(", ",);
+  return {
+    ok: false,
+    error: `report ${report.name} has no HTML format; available formats: ${
+      formats === "" ? "none" : formats
+    }`,
+    messages: [],
+  };
+}
+
+/** Opens selected HTML content through an injected presenter callback. */
+export function openHtmlReport(
+  report: ReportJsonEntry,
+  open: (content: string,) => void,
+): CommandResult<null> {
+  const selected = selectHtmlFormat(report,);
+  if (!selected.ok) return selected;
+  open(selected.value.content,);
+  return { ok: true, value: null, messages: [], };
 }

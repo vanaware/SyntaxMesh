@@ -1,0 +1,17 @@
+project stdout "Stdout Report" "1.0" 2026-01-01 - 2026-12-31 {
+  timezone "UTC"
+  now 2026-05-18
+}
+
+resource dev "Developer" {
+}
+
+task visible "Visible stdout task" {
+  effort 1d
+  allocate dev
+}
+
+taskreport console "Console tasks" stdout {
+  formats csv
+  columns name
+}

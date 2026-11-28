@@ -94,7 +94,7 @@ describe("Web host scenarios (P5 exit)", () => {
     assertEquals(second.lastReportFormat("html",), "csv",);
   });
 
-  it("keeps the P5 browser modules pure (no node:/process/Deno/IndexedDB/OPFS)", async () => {
+  it("keeps the P5 browser modules free of unbound runtime globals", async () => {
     const modules = [
       "purity.ts",
       "write-fallback.ts",

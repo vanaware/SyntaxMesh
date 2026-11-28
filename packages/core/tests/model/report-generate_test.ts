@@ -166,6 +166,18 @@ describe("Report geração (14.11)", () => {
       assertEquals(r.output, "task x {}",);
     });
 
+    it("tjp usa .tjp quando definitions inclui '*'", () => {
+      registerContentFactory("export", () =>
+        fakeContent({
+          to_tjp: () => "task x {}",
+        },),);
+      const r = newReport("out",);
+      r.typeSpec = "export" as never;
+      r.set("definitions", ["*",],);
+      r.generate(["tjp",],);
+      assert(r.outputFileName.endsWith(".tjp",), r.outputFileName,);
+    });
+
     it("tjp usa .tji quando definitions não inclui project", () => {
       registerContentFactory("export", () =>
         fakeContent({

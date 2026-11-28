@@ -25,7 +25,26 @@
  */
 import * as vscode from "vscode";
 import { assert, assertEquals, assertStringIncludes, } from "@std/assert";
+import type { ExecutionResult, ListReportsEntry, } from "@vanaware/syntaxmesh";
+import {
+  type CommandResult,
+  LEGACY_COMMAND_IDS,
+  PUBLIC_COMMAND_IDS,
+  RUNTIME_ONLY_COMMAND_IDS,
+} from "../../src/commands/contracts.ts";
+import type { FreezeCommandResult, } from "../../src/commands/freeze-output.ts";
+import type { Tj3RunResult, } from "../../src/commands/run.ts";
+import type { ReportExportResult, } from "../../src/commands/service.ts";
+import { EXECUTION_DIAGNOSTIC_COLLECTION, } from "../../src/diagnostics/host.ts";
+import type { ProjectModel, ProjectSummary, } from "../../src/daemon/types.ts";
 import { UNTRUSTED_MESSAGE, } from "../../src/trust.ts";
+
+/** Complete extension-owned command surface, including compatibility aliases. */
+const EXTENSION_COMMAND_IDS = [
+  ...PUBLIC_COMMAND_IDS,
+  ...LEGACY_COMMAND_IDS,
+  ...RUNTIME_ONLY_COMMAND_IDS,
+] as const;
 
 /** Node-host global (absent from Deno's lib; present at runtime here). */
 declare const process: { env: Record<string, string | undefined> };
@@ -83,8 +102,23 @@ const messages: { kind: "info" | "error" | "warning"; text: string }[] = [];
 /** Quick-pick calls received by the stub (items of each call). */
 const picks: unknown[][] = [];
 
+/** Real Webview panels created by the extension, retained for HTML assertions. */
+const webviewPanels: vscode.WebviewPanel[] = [];
+
+/** Real Desktop pseudoterminals created by the extension, retained for input. */
+const consolePtys: vscode.Pseudoterminal[] = [];
+
+/** Text emitted by the Desktop console pseudoterminal. */
+const consoleWrites: string[] = [];
+
+/** Number of observed Desktop console close events. */
+let consoleCloses = 0;
+
 /** When set, the quick-pick stub selects the item with this label. */
 let pickLabel: string | null = null;
+
+/** Answer returned by the overwrite-confirmation stub. */
+let overwriteDecision: string | undefined;
 
 /** Structural view of the mutable `window` surface used by the stubs. */
 interface StubWindow {
@@ -97,11 +131,19 @@ interface StubWindow {
   >;
   showErrorMessage: (message: string, ...rest: unknown[]) => Promise<unknown>;
   showWarningMessage: (message: string, ...rest: unknown[]) => Promise<unknown>;
+  createTerminal: (
+    options: vscode.ExtensionTerminalOptions,
+  ) => vscode.Terminal;
+  createWebviewPanel: typeof vscode.window.createWebviewPanel;
 }
 
 /** Installs the UI stubs (same host process as the extension under test). */
 function installStubs(workspaceRoot: vscode.Uri,): void {
   const win = vscode.window as unknown as StubWindow;
+  const createTerminal = vscode.window.createTerminal.bind(vscode.window,);
+  const createWebviewPanel = vscode.window.createWebviewPanel.bind(
+    vscode.window,
+  );
   win.showQuickPick = (items: unknown[],) => {
     picks.push(items,);
     const labeled = items as { label?: string }[];
@@ -124,7 +166,24 @@ function installStubs(workspaceRoot: vscode.Uri,): void {
   };
   win.showWarningMessage = (message: string,) => {
     messages.push({ kind: "warning", text: message, },);
-    return Promise.resolve(undefined,);
+    return Promise.resolve(overwriteDecision,);
+  };
+  win.createTerminal = (options,) => {
+    const pty = options.pty;
+    assert(pty !== undefined, "console terminal has no pseudoterminal",);
+    consolePtys.push(pty,);
+    pty.onDidWrite((text,) => {
+      consoleWrites.push(text,);
+    },);
+    pty.onDidClose?.(() => {
+      consoleCloses++;
+    },);
+    return createTerminal(options,);
+  };
+  win.createWebviewPanel = (...args) => {
+    const panel = createWebviewPanel(...args,);
+    webviewPanels.push(panel,);
+    return panel;
   };
 }
 
@@ -161,6 +220,55 @@ function hasTab(label: string,): boolean {
   return vscode.window.tabGroups.all.some((group,) =>
     group.tabs.some((tab,) => tab.label === label)
   );
+}
+
+/** Executes one canonical command and requires its structured result. */
+async function commandResult<T,>(
+  id: string,
+  ...args: unknown[]
+): Promise<CommandResult<T>> {
+  const result = await vscode.commands.executeCommand<CommandResult<T>>(
+    id,
+    ...args,
+  );
+  assert(result !== undefined, `command returned no result: ${id}`,);
+  return result;
+}
+
+/** Returns one successful command value or fails with its structured error. */
+function valueOf<T,>(result: CommandResult<T>,): T {
+  if (!result.ok) throw new Error(result.error,);
+  return result.value;
+}
+
+/** Returns one successful execution envelope. */
+function executionOf(result: CommandResult<ExecutionResult>,): ExecutionResult {
+  const execution = valueOf(result,);
+  assertEquals(execution.ok, true, JSON.stringify(execution.messages,),);
+  return execution;
+}
+
+/** Projects loaded through the canonical command API. */
+async function projectSummaries(): Promise<ProjectSummary[]> {
+  return valueOf(
+    await commandResult<ProjectSummary[]>("syntaxmesh.project.list",),
+  );
+}
+
+/** Stable LSP-owned diagnostics, excluding the extension's execution collection. */
+function lspDiagnostics(uri: vscode.Uri,): unknown[] {
+  return vscode.languages.getDiagnostics(uri,)
+    .filter((diagnostic,) =>
+      diagnostic.source !== EXECUTION_DIAGNOSTIC_COLLECTION
+    )
+    .map((diagnostic,) => ({
+      message: diagnostic.message,
+      severity: diagnostic.severity,
+      source: diagnostic.source,
+      code: diagnostic.code,
+      start: diagnostic.range.start,
+      end: diagnostic.range.end,
+    }));
 }
 
 /** Activation + LSP surface inside the real extension host (26.34.1). */
@@ -269,10 +377,700 @@ async function checkHtmlReport(): Promise<void> {
   },);
 }
 
+/** Exact extension-owned command registration in the real Desktop host. */
+async function registrationChecks(): Promise<void> {
+  await check(
+    "registers every public, legacy and runtime-only command once",
+    async () => {
+      const registered = await vscode.commands.getCommands(true,);
+      const extensionCommands = registered.filter((id,) =>
+        id.startsWith("syntaxmesh.",)
+      );
+      const owned = new Set<string>(EXTENSION_COMMAND_IDS,);
+      assertEquals(
+        extensionCommands.filter((id,) =>
+          !owned.has(id,) && !id.startsWith("syntaxmesh.projectTree.",)
+        ),
+        [],
+      );
+      for (const id of EXTENSION_COMMAND_IDS) {
+        assertEquals(
+          registered.filter((command,) => command === id).length,
+          1,
+          id,
+        );
+      }
+    },
+  );
+}
+
+/** Explicit canonical project lifecycle over both master formats (22.12.22). */
+async function canonicalProjectChecks(root: vscode.Uri,): Promise<void> {
+  const tjp = vscode.Uri.joinPath(root, "master.tjp",).toString();
+  const smx = vscode.Uri.joinPath(root, "master.smx",).toString();
+  const sheet = vscode.Uri.joinPath(
+    root,
+    "TimeSheets",
+    "2026-05-18",
+    "dev.tji",
+  ).toString();
+
+  await check("canonical remove accepts an explicit TJP master", async () => {
+    valueOf(await commandResult<null>("syntaxmesh.project.remove", tjp,),);
+    assertEquals(await projectSummaries(), [],);
+  },);
+
+  await check(
+    "canonical add accepts explicit TJP and SMX masters",
+    async () => {
+      const tjpModel = valueOf(
+        await commandResult<ProjectModel>("syntaxmesh.project.add", tjp,),
+      );
+      const smxModel = valueOf(
+        await commandResult<ProjectModel>("syntaxmesh.project.add", smx,),
+      );
+      assertEquals(tjpModel.entry, "master.tjp",);
+      assertEquals(smxModel.entry, "master.smx",);
+      assertEquals(tjpModel.status, "ok",);
+      assertEquals(smxModel.status, "ok",);
+      assertEquals(
+        (await projectSummaries()).map((project,) => project.entry).sort(),
+        ["master.smx", "master.tjp",],
+      );
+    },
+  );
+
+  await check(
+    "canonical setActive and refresh accept both masters",
+    async () => {
+      for (const uri of [smx, tjp,]) {
+        const entry = uri === smx ? "master.smx" : "master.tjp";
+        const active = valueOf(
+          await commandResult<ProjectModel>(
+            "syntaxmesh.project.setActive",
+            uri,
+          ),
+        );
+        assertEquals(active.entry, entry,);
+        const refreshed = valueOf(
+          await commandResult<ProjectModel>("syntaxmesh.project.refresh", uri,),
+        );
+        assertEquals(refreshed.entry, entry,);
+        assertEquals(refreshed.status, "ok",);
+        const summaries = await projectSummaries();
+        assertEquals(
+          summaries.filter((project,) => project.active).map((project,) =>
+            project.entry
+          ),
+          [entry,],
+        );
+      }
+    },
+  );
+
+  await check(
+    "canonical add rejects a TJI sheet as a project master",
+    async () => {
+      const result = await commandResult("syntaxmesh.project.add", sheet,);
+      assertEquals(result.ok, false,);
+      if (!result.ok) {
+        assertStringIncludes(
+          result.error,
+          "invalid project master URI",
+        );
+      }
+      assertEquals((await projectSummaries()).length, 2,);
+    },
+  );
+
+  await check("canonical remove accepts an explicit SMX master", async () => {
+    valueOf(await commandResult<null>("syntaxmesh.project.remove", smx,),);
+    assertEquals(
+      (await projectSummaries()).map((project,) => project.entry),
+      ["master.tjp",],
+    );
+    valueOf(await commandResult<null>("syntaxmesh.project.remove", tjp,),);
+    assertEquals(await projectSummaries(), [],);
+  },);
+
+  await check("canonical project lifecycle restores both masters", async () => {
+    valueOf(
+      await commandResult<ProjectModel>("syntaxmesh.project.add", smx,),
+    );
+    valueOf(
+      await commandResult<ProjectModel>("syntaxmesh.project.add", tjp,),
+    );
+    valueOf(
+      await commandResult<ProjectModel>("syntaxmesh.project.setActive", smx,),
+    );
+    assertEquals((await projectSummaries()).length, 2,);
+  },);
+}
+
+/** Canonical parse, schedule, compile, freeze and sheet checks (22.12.22). */
+async function canonicalExecutionChecks(root: vscode.Uri,): Promise<void> {
+  const smx = vscode.Uri.joinPath(root, "master.smx",).toString();
+  const timeSheet = vscode.Uri.joinPath(
+    root,
+    "TimeSheets",
+    "2026-05-18",
+    "dev.tji",
+  ).toString();
+  const statusSheet = vscode.Uri.joinPath(
+    root,
+    "StatusSheets",
+    "2026-05-18",
+    "dev.tji",
+  ).toString();
+
+  await check(
+    "checkSyntax parses the SMX master without scheduling",
+    async () => {
+      const execution = executionOf(
+        await commandResult<ExecutionResult>("syntaxmesh.checkSyntax", smx,),
+      );
+      assertEquals(execution.options.checkSyntax, true,);
+      assertEquals(execution.results.check?.valid, true,);
+    },
+  );
+
+  await check("scheduleOnly schedules without rendering reports", async () => {
+    const execution = executionOf(
+      await commandResult<ExecutionResult>("syntaxmesh.scheduleOnly", smx,),
+    );
+    assertEquals(execution.options.noReports, true,);
+    assertEquals(execution.results.reports, undefined,);
+  },);
+
+  await check("compile renders every declared SMX report", async () => {
+    const execution = executionOf(
+      await commandResult<ExecutionResult>("syntaxmesh.compile", smx,),
+    );
+    assertEquals(execution.results.reports?.ok, true,);
+    assertEquals(execution.results.reports?.reports.length, 3,);
+  },);
+
+  await check(
+    "freeze writes the header and bookings beside the SMX master",
+    async () => {
+      const result = valueOf(
+        await commandResult<FreezeCommandResult>(
+          "syntaxmesh.freeze",
+          smx,
+          "2026-05-18",
+        ),
+      );
+      assertEquals(result.artifacts.length, 2,);
+      assertEquals(
+        result.artifacts.map((artifact,) => artifact.fileName).sort(),
+        ["master-bookings.tji", "master-header.tji",],
+      );
+      const header = await vscode.workspace.fs.readFile(
+        vscode.Uri.joinPath(root, "master-header.tji",),
+      );
+      assertEquals(
+        new TextDecoder().decode(header,),
+        "now 2026-05-18-00:00-+0000\n",
+      );
+      const bookings = await vscode.workspace.fs.readFile(
+        vscode.Uri.joinPath(root, "master-bookings.tji",),
+      );
+      assertStringIncludes(
+        new TextDecoder().decode(bookings,),
+        "supplement resource dev {",
+      );
+    },
+  );
+
+  await check("checkTimeSheet checks the nested time sheet", async () => {
+    const execution = executionOf(
+      await commandResult<ExecutionResult>(
+        "syntaxmesh.checkTimeSheet",
+        smx,
+        timeSheet,
+      ),
+    );
+    assertEquals(execution.options.app, "check-ts",);
+    assertEquals(execution.results.sheet?.app, "check-ts",);
+  },);
+
+  await check("checkStatusSheet checks the nested status sheet", async () => {
+    const execution = executionOf(
+      await commandResult<ExecutionResult>(
+        "syntaxmesh.checkStatusSheet",
+        smx,
+        statusSheet,
+      ),
+    );
+    assertEquals(execution.options.app, "check-ss",);
+    assertEquals(execution.results.sheet?.app, "check-ss",);
+  },);
+}
+
+/** Execution diagnostics stay isolated from the language client (22.12.22). */
+async function diagnosticsChecks(root: vscode.Uri,): Promise<void> {
+  const error = vscode.Uri.joinPath(root, "error.tjp",).toString();
+  await check(
+    "syntax failure publishes only execution diagnostics",
+    async () => {
+      const doc = await openDoc(root, "error.tjp",);
+      const before = lspDiagnostics(doc.uri,);
+      assert(before.length > 0, "LSP diagnostics missing before execution",);
+      assertEquals(
+        vscode.languages.getDiagnostics(doc.uri,)
+          .filter((diagnostic,) =>
+            diagnostic.source === EXECUTION_DIAGNOSTIC_COLLECTION
+          ).length,
+        0,
+      );
+
+      const result = await commandResult<ExecutionResult>(
+        "syntaxmesh.checkSyntax",
+        error,
+      );
+      const execution = valueOf(result,);
+      assertEquals(execution.ok, false,);
+      await poll(
+        () =>
+          vscode.languages.getDiagnostics(doc.uri,).some((diagnostic,) =>
+              diagnostic.source === EXECUTION_DIAGNOSTIC_COLLECTION
+            )
+            ? true
+            : undefined,
+        "execution diagnostics",
+      );
+      assertEquals(lspDiagnostics(doc.uri,), before,);
+      const published = vscode.languages.getDiagnostics(doc.uri,).filter((
+        diagnostic,
+      ) => diagnostic.source === EXECUTION_DIAGNOSTIC_COLLECTION);
+      assert(published.length > 0, "execution diagnostics missing",);
+    },
+  );
+}
+
+/** Canonical report rendering, output and large-export acceptance (22.12.22). */
+async function reportOutputChecks(root: vscode.Uri,): Promise<void> {
+  const tjp = vscode.Uri.joinPath(root, "master.tjp",).toString();
+  const smx = vscode.Uri.joinPath(root, "master.smx",).toString();
+
+  await check("report list filters cached report ids", async () => {
+    const reports = valueOf(
+      await commandResult<ListReportsEntry[]>("syntaxmesh.report.list", tjp,),
+    );
+    assertEquals(
+      reports.map((report,) => report.id ?? report.name),
+      ["overview", "full",],
+    );
+    assertEquals(reports.map((report,) => report.name), [
+      "overview",
+      "Project TJP",
+    ],);
+    const filtered = valueOf(
+      await commandResult<ListReportsEntry[]>(
+        "syntaxmesh.report.list",
+        tjp,
+        "full",
+      ),
+    );
+    assertEquals(filtered.map((report,) => report.id ?? report.name), [
+      "full",
+    ],);
+  },);
+
+  await check(
+    "report render returns HTML without opening a panel",
+    async () => {
+      const before = webviewPanels.length;
+      const execution = executionOf(
+        await commandResult<ExecutionResult>(
+          "syntaxmesh.report.render",
+          tjp,
+          "overview",
+          false,
+          undefined,
+        ),
+      );
+      const reports = execution.results.reports?.reports ?? [];
+      assertEquals(reports.length, 1,);
+      assertEquals(reports[0]?.name, "overview",);
+      const html = reports[0]?.formats.find((format,) =>
+        format.format === "html"
+      );
+      assertStringIncludes(html?.content ?? "", "Runtime fixture tasks",);
+      assertEquals(webviewPanels.length, before,);
+    },
+  );
+
+  await check(
+    "report open maps bundled assets into the real Webview",
+    async () => {
+      const before = webviewPanels.length;
+      valueOf(
+        await commandResult<null>(
+          "syntaxmesh.report.open",
+          tjp,
+          "overview",
+          undefined,
+        ),
+      );
+      const panel = await poll(
+        () =>
+          webviewPanels.slice(before,).find((candidate,) =>
+            candidate.title === "SyntaxMesh: overview"
+          ),
+        "canonical report webview",
+      );
+      const extension = vscode.extensions.getExtension(EXTENSION_ID,);
+      assert(extension !== undefined, "extension missing for asset paths",);
+      const css = vscode.Uri.joinPath(
+        vscode.Uri.file(extension.extensionPath,),
+        "assets",
+        "css",
+        "tjreport.css",
+      );
+      const script = vscode.Uri.joinPath(
+        vscode.Uri.file(extension.extensionPath,),
+        "assets",
+        "scripts",
+        "wz_tooltip.js",
+      );
+      assertStringIncludes(
+        panel.webview.html,
+        panel.webview.asWebviewUri(css,).toString(),
+      );
+      assertStringIncludes(
+        panel.webview.html,
+        panel.webview.asWebviewUri(script,).toString(),
+      );
+      assertStringIncludes(panel.webview.html, "smx-save",);
+      assertStringIncludes(panel.webview.html, "Content-Security-Policy",);
+      assertEquals(
+        (await vscode.workspace.fs.stat(css,)).type,
+        vscode.FileType.File,
+      );
+      assertEquals(
+        (await vscode.workspace.fs.stat(script,)).type,
+        vscode.FileType.File,
+      );
+    },
+  );
+
+  await check("report export writes TJP from an SMX master", async () => {
+    const exported = valueOf(
+      await commandResult<ReportExportResult>(
+        "syntaxmesh.report.export",
+        smx,
+        "full",
+        "tjp",
+        undefined,
+        root.toString(),
+        "from-smx.tjp",
+      ),
+    );
+    assertEquals(exported.artifact.fileName, "from-smx.tjp",);
+    const content = new TextDecoder().decode(
+      await vscode.workspace.fs.readFile(
+        vscode.Uri.joinPath(root, "from-smx.tjp",),
+      ),
+    );
+    assertStringIncludes(content, "project runtime",);
+    assertStringIncludes(content, "task build",);
+  },);
+
+  await check("report export writes TJP from a TJP master", async () => {
+    valueOf(
+      await commandResult<ReportExportResult>(
+        "syntaxmesh.report.export",
+        tjp,
+        "full",
+        "tjp",
+        undefined,
+        root.toString(),
+        "from-tjp.tjp",
+      ),
+    );
+    const content = new TextDecoder().decode(
+      await vscode.workspace.fs.readFile(
+        vscode.Uri.joinPath(root, "from-tjp.tjp",),
+      ),
+    );
+    assertStringIncludes(content, "project prj",);
+    assertStringIncludes(content, "task build",);
+  },);
+
+  await check(
+    "report export overwrite denial preserves the existing file",
+    async () => {
+      const destination = vscode.Uri.joinPath(root, "confirmed.csv",);
+      await vscode.workspace.fs.writeFile(
+        destination,
+        new TextEncoder().encode("keep me\n",),
+      );
+      overwriteDecision = "Cancel";
+      try {
+        const result = await commandResult<ReportExportResult>(
+          "syntaxmesh.report.export",
+          tjp,
+          "overview",
+          "csv",
+          undefined,
+          root.toString(),
+          "confirmed.csv",
+        );
+        assertEquals(result.ok, false,);
+        if (!result.ok) assertStringIncludes(result.error, "output cancelled",);
+        assertEquals(
+          new TextDecoder().decode(
+            await vscode.workspace.fs.readFile(destination,),
+          ),
+          "keep me\n",
+        );
+        assertStringIncludes(lastMessage("warning",) ?? "", "already exist",);
+      } finally {
+        overwriteDecision = undefined;
+      }
+    },
+  );
+
+  await check(
+    "report export overwrite approval replaces the existing file",
+    async () => {
+      const destination = vscode.Uri.joinPath(root, "confirmed.csv",);
+      overwriteDecision = "Overwrite";
+      try {
+        valueOf(
+          await commandResult<ReportExportResult>(
+            "syntaxmesh.report.export",
+            tjp,
+            "overview",
+            "csv",
+            undefined,
+            root.toString(),
+            "confirmed.csv",
+          ),
+        );
+      } finally {
+        overwriteDecision = undefined;
+      }
+      const content = new TextDecoder().decode(
+        await vscode.workspace.fs.readFile(destination,),
+      );
+      assert(
+        !content.includes("keep me",),
+        "overwrite did not replace the file",
+      );
+      assertStringIncludes(content, "Build",);
+    },
+  );
+
+  await check(
+    "stdout report prints through the CLI-compatible adapter",
+    async () => {
+      const result = valueOf(
+        await commandResult<Tj3RunResult>(
+          "syntaxmesh.run",
+          ["stdout.smx",],
+          { cwd: root.toString(), },
+        ),
+      );
+      assertEquals(
+        result.execution.ok,
+        true,
+        JSON.stringify(result.execution.messages,),
+      );
+      assertStringIncludes(result.stdout, "Visible stdout task",);
+      const report = result.execution.results.reports?.reports[0];
+      assertEquals(report?.stdout, true,);
+      assertEquals(result.artifacts.length, 0,);
+    },
+  );
+
+  await check(
+    "large TJP export exercises more than one hundred tasks",
+    async () => {
+      const large = vscode.Uri.joinPath(root, "large.smx",).toString();
+      valueOf(
+        await commandResult<ProjectModel>("syntaxmesh.project.add", large,),
+      );
+      try {
+        valueOf(
+          await commandResult<ReportExportResult>(
+            "syntaxmesh.report.export",
+            large,
+            "full",
+            "tjp",
+            undefined,
+            root.toString(),
+            "large-export.tjp",
+          ),
+        );
+        const content = new TextDecoder().decode(
+          await vscode.workspace.fs.readFile(
+            vscode.Uri.joinPath(root, "large-export.tjp",),
+          ),
+        );
+        assertEquals(content.match(/^\s*task t\d+/gm,)?.length, 105,);
+        assertStringIncludes(content, "task t105",);
+      } finally {
+        valueOf(
+          await commandResult<null>("syntaxmesh.project.remove", large,),
+        );
+      }
+    },
+  );
+}
+
+/** Opens the real Desktop console and returns its production pseudoterminal. */
+async function openConsole(): Promise<vscode.Pseudoterminal> {
+  await vscode.commands.executeCommand("syntaxmesh.console.open",);
+  const pty = await poll(
+    () => consolePtys[0],
+    "SyntaxMesh console pseudoterminal",
+  );
+  await poll(
+    () =>
+      consoleWrites.join("",).includes("SyntaxMesh console",) ||
+      undefined,
+    "SyntaxMesh console introduction",
+  );
+  await poll(
+    () => consoleWrites.join("",).includes("syntaxmesh> ",) || undefined,
+    "SyntaxMesh console initial prompt",
+  );
+  return pty;
+}
+
+/** Submits one console line and waits for its next production prompt. */
+async function consoleLine(
+  pty: vscode.Pseudoterminal,
+  line: string,
+): Promise<string> {
+  const start = consoleWrites.length;
+  pty.handleInput?.(`${line}\r`,);
+  await poll(
+    () =>
+      consoleWrites.slice(start,).join("",).includes("syntaxmesh> ",) ||
+      undefined,
+    `console prompt after ${line}`,
+  );
+  return consoleWrites.slice(start,).join("",);
+}
+
+/** Real Desktop pseudo-terminal command acceptance (22.12.22 Step 6). */
+async function consoleChecks(): Promise<void> {
+  const pty = await openConsole();
+
+  await check(
+    "Desktop console dispatches project and semantic commands",
+    async () => {
+      const projects = await consoleLine(pty, "project list",);
+      assertStringIncludes(projects, "Projects:",);
+      assertStringIncludes(projects, "master.smx",);
+      assertStringIncludes(projects, "master.tjp",);
+
+      const syntax = await consoleLine(pty, "check-syntax",);
+      assertStringIncludes(syntax, "Execution: ok",);
+      assertStringIncludes(syntax, "Intent: checkSyntax",);
+      assertStringIncludes(syntax, "Syntax: valid",);
+
+      const schedule = await consoleLine(pty, "run master.smx --no-reports",);
+      const summaries = await projectSummaries();
+      assertEquals(schedule.includes("Error:",), false, schedule,);
+      const active = summaries.find((project,) =>
+        project.entry === "master.smx"
+      );
+      assertEquals(active?.lastIntent, "scheduleOnly",);
+    },
+  );
+
+  await check(
+    "Desktop console normalizes run, smx and tj3 prefixes",
+    async () => {
+      const reports = await consoleLine(
+        pty,
+        "smx master.smx --list-reports 'cost|task'",
+      );
+      assertStringIncludes(reports, "Cost",);
+      assertStringIncludes(reports, "Tasks",);
+
+      const manual = await consoleLine(pty, "tj3 man task",);
+      assertStringIncludes(manual, "Keyword:",);
+
+      const stdout = await consoleLine(pty, "run stdout.smx",);
+      assertStringIncludes(stdout, "Visible stdout task",);
+    },
+  );
+
+  await check("Desktop console dry-runs explicit sheet commands", async () => {
+    const time = await consoleLine(
+      pty,
+      "run ts summary master.smx --config sheet.yaml --enddate 2026-05-18 --dry-run",
+    );
+    assertEquals(time.includes("Error:",), false, time,);
+    assertStringIncludes(time, "0 errors",);
+
+    const status = await consoleLine(
+      pty,
+      "smx ss send master.tjp --config sheet.yaml --enddate 2026-05-18 --dry-run",
+    );
+    assertEquals(status.includes("Error:",), false, status,);
+    assertStringIncludes(status, "0 errors",);
+
+    const summaries = await projectSummaries();
+    assertEquals(
+      summaries.find((project,) => project.entry === "master.smx")?.lastIntent,
+      "sheet",
+    );
+    assertEquals(
+      summaries.find((project,) => project.entry === "master.tjp")?.lastIntent,
+      "sheet",
+    );
+  },);
+
+  await check(
+    "Desktop console preserves bare and prefixed project paths",
+    async () => {
+      const manual = await consoleLine(pty, "man task",);
+      assertStringIncludes(manual, "Keyword:",);
+
+      const summary = await consoleLine(
+        pty,
+        "ts summary --config sheet.yaml --enddate 2026-05-18 --dry-run",
+      );
+      assertEquals(summary.includes("Error:",), false, summary,);
+      assertStringIncludes(summary, "0 errors",);
+      const active = (await projectSummaries()).find((project,) =>
+        project.active
+      );
+      assertEquals(active?.entry, "master.smx",);
+      assertEquals(active?.lastIntent, "sheet",);
+
+      const rejected = await consoleLine(pty, "smx ts summary --dry-run",);
+      assertStringIncludes(rejected, "No input file given.",);
+    },
+  );
+
+  await check(
+    "Desktop console clears and exits the pseudoterminal",
+    async () => {
+      const cleared = await consoleLine(pty, "clear",);
+      assertStringIncludes(cleared, "\x1b[2J\x1b[H",);
+
+      const closesBefore = consoleCloses;
+      pty.handleInput?.("exit\r",);
+      await poll(
+        () => consoleCloses > closesBefore || undefined,
+        "SyntaxMesh console close",
+      );
+    },
+  );
+}
+
 /** All 9 manifest commands over the real UI wiring (26.34.2, full mode). */
 async function commandChecks(root: vscode.Uri,): Promise<void> {
   const master = await openDoc(root, "master.tjp",);
 
+  await registrationChecks();
   await checkAddProject();
 
   await check("reloadProject reloads the project", async () => {
@@ -290,19 +1088,22 @@ async function commandChecks(root: vscode.Uri,): Promise<void> {
     const items = picks[0] as { label: string; description: string }[];
     assertEquals(items.length, 1,);
     assertEquals(items[0]!.label, "master.tjp",);
-    assertStringIncludes(items[0]!.description, "1 reports",);
+    assertStringIncludes(items[0]!.description, "2 reports",);
   },);
 
   await check("removeProject removes, re-add restores", async () => {
     await vscode.commands.executeCommand("syntaxmesh.removeProject",);
-    assertEquals(lastMessage("info",), "SyntaxMesh: removed master.tjp.",);
+    assertEquals(
+      lastMessage("info",),
+      `SyntaxMesh: removed ${vscode.Uri.joinPath(root, "master.tjp",)}.`,
+    );
     await vscode.commands.executeCommand("syntaxmesh.addProject",);
     assertEquals(lastMessage("info",), "SyntaxMesh: loaded master.tjp (ok).",);
   },);
 
   await checkHtmlReport();
 
-  await check("generateReport CSV saves overview.csv", async () => {
+  await check("generateReport CSV saves the selected destination", async () => {
     const config = vscode.workspace.getConfiguration("syntaxmesh",);
     await config.update(
       "report.defaultFormat",
@@ -310,11 +1111,14 @@ async function commandChecks(root: vscode.Uri,): Promise<void> {
       vscode.ConfigurationTarget.Workspace,
     );
     try {
-      await vscode.commands.executeCommand("syntaxmesh.generateReport",);
-      const csv = vscode.Uri.joinPath(root, "overview.csv",);
+      const result = await vscode.commands.executeCommand<{
+        ok: boolean;
+        error?: string;
+      }>("syntaxmesh.generateReport",);
+      assertEquals(result.ok, true, result.error,);
+      const csv = vscode.Uri.joinPath(root, "exported.tjp",);
       const stat = await vscode.workspace.fs.stat(csv,);
       assert(stat.size > 0, "empty CSV report",);
-      assertEquals(lastMessage("info",), "SyntaxMesh: saved overview.csv.",);
     } finally {
       await config.update(
         "report.defaultFormat",
@@ -377,6 +1181,12 @@ async function commandChecks(root: vscode.Uri,): Promise<void> {
   await check("showProjectTree focuses the tree view", async () => {
     await vscode.commands.executeCommand("syntaxmesh.showProjectTree",);
   },);
+
+  await canonicalProjectChecks(root,);
+  await canonicalExecutionChecks(root,);
+  await diagnosticsChecks(root,);
+  await reportOutputChecks(root,);
+  await consoleChecks();
 }
 
 /**
@@ -406,8 +1216,9 @@ async function untrustedChecks(): Promise<void> {
     assert(ext !== undefined, `extension ${EXTENSION_ID} not found`,);
     assertEquals(ext.isActive, false,);
     const registered = await vscode.commands.getCommands(true,);
-    assertEquals(registered.includes("syntaxmesh.addProject",), false,);
-    assertEquals(registered.includes("syntaxmesh.generateReport",), false,);
+    for (const id of EXTENSION_COMMAND_IDS) {
+      assertEquals(registered.includes(id,), false, id,);
+    }
   },);
 
   // Keep the pure gate constant referenced: it is the message the

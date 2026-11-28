@@ -2,6 +2,9 @@ project prj "Runtime Fixture" "1.0" 2026-01-01 - 2026-12-31 {
   timeformat "%Y-%m-%d"
   numberformat "-" "" "," "." 1
   currencyformat "(" ")" "," "." 0
+  scenario plan "Plan" {
+  }
+  trackingscenario plan
 }
 
 resource dev "Developer" {
@@ -24,4 +27,8 @@ taskreport overview "overview" {
   columns bsi, name, start, end, effort
   sorttasks tree
   headline "Runtime fixture tasks"
+}
+
+export full "Project TJP" {
+  definitions *
 }

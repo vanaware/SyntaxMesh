@@ -63,6 +63,7 @@ import {
 import { parse as parseYaml, } from "@std/yaml";
 import { dispatchSections, type OutputPolicyIo, } from "./output-policy.ts";
 import { Reporter, } from "./reporter.ts";
+import { collectSheetFiles as collectPureSheetFiles, } from "./sheet-files.ts";
 import { lastSummaryLines, } from "./summary.ts";
 
 /** CLI I/O — injectable in tests (no global mock). */
@@ -228,69 +229,20 @@ export async function collectInputFiles(
 // ---------------------------------------------------------------------------
 
 /**
- * Trees of the working directory that the sheet apps read (phase 18).
+ * Compatibility entry point for the pure sheet-file collector.
  *
- * Only these are scanned: the whole root may be the repository, and the app never
- * opens anything outside the templates and the sheets it writes itself.
+ * CLI callers may omit directory operations; the process boundary supplies them.
+ * Browser consumers import `./sheet-files` directly and provide all three methods.
  */
-const SHEET_TREES = [
-  "TimeSheetTemplates",
-  "TimeSheets",
-  "StatusSheetTemplates",
-  "StatusSheets",
-];
-
-/** Joins directory and name without a double slash (`.` and `""` are the root). */
-function joinDisk(dir: string, name: string,): string {
-  if (dir === "" || dir === ".") return name;
-  return `${dir.replace(/\/+$/u, "",)}/${name}`;
-}
-
-/**
- * Reads a sheet tree recursively as **data** (24.10).
- *
- * The `path` of the result is relative to the root
- * (`TimeSheets/2026-05-18/dev.tji`), the same key as the `MemoryFileStore` — the
- * core never sees a disk path. Whatever cannot be read stays out of the seed:
- * the app reports the missing sheet.
- */
-async function collectTree(
-  diskDir: string,
-  relDir: string,
-  files: ExecutionInputFile[],
-  io: CliIo,
-): Promise<void> {
-  let names: string[];
-  try {
-    names = await (io.listDir ?? listDir)(diskDir,);
-  } catch {
-    return;
-  }
-  for (const name of names) {
-    const disk = joinDisk(diskDir, name,);
-    const rel = relDir === "" ? name : `${relDir}/${name}`;
-    if (await (io.isDir ?? isDir)(disk,)) {
-      await collectTree(disk, rel, files, io,);
-      continue;
-    }
-    try {
-      files.push({ path: rel, content: await io.read(disk,), },);
-    } catch {
-      // Unreadable file (binary/permission): out of the seed, inventing no data.
-    }
-  }
-}
-
-/** Read closure of the sheet apps from the working directory. */
 export async function collectSheetFiles(
   root: string,
   io: CliIo = defaultIo,
 ): Promise<ExecutionInputFile[]> {
-  const files: ExecutionInputFile[] = [];
-  for (const tree of SHEET_TREES) {
-    await collectTree(joinDisk(root, tree,), tree, files, io,);
-  }
-  return files;
+  return await collectPureSheetFiles(root, {
+    read: io.read,
+    listDir: io.listDir ?? listDir,
+    isDir: io.isDir ?? isDir,
+  },);
 }
 
 /** Outcome of the reads requested by the argv. */

@@ -706,7 +706,10 @@
     "alibabaStandard": {
       "version": "eb53d39c7be9f3c3ca90c14d53d77cfb62386a817dc8bb366ae21b755b2d47f7",
       "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
-      "ignoredVersion": "b6f371042a8ece774d1d2c2cfbbc41d8bcbfe89b979bb1a1cd31c514e3ced777"
+      "ignoredVersion": "48df7d6a5890c959c76e42dd7334eb3d43c055ebb8b60c36e5891c4808467bb3",
+      "postponedVersion": "",
+      "postponedServedModels": [],
+      "retainedModels": []
     },
     "openrouter": {
       "version": "6ac6b64cdf1c6eab3ad7b69d0a718a5cae0d3e4eb8d11f74471f49c929a9a702",

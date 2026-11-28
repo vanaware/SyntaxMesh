@@ -7,6 +7,7 @@ import { assertEquals, } from "@std/assert";
 import {
   CACHE_VERSION,
   deserializeCache,
+  restoreCache,
   serializeCache,
 } from "../../src/daemon/persistence.ts";
 import type { ProjectModel, } from "../../src/daemon/types.ts";
@@ -56,21 +57,67 @@ describe("cache persistence", () => {
     assertEquals(deserializeCache(json,), [model,],);
   });
 
+  it("round-trips the explicit active URI with the models", () => {
+    const other: ProjectModel = {
+      ...model,
+      uri: "file:///b.tjp",
+      entry: "b.tjp",
+    };
+    const json = serializeCache([model, other,], other.uri,);
+    assertEquals(restoreCache(json,), {
+      projects: [model, other,],
+      activeUri: other.uri,
+    },);
+    assertEquals(deserializeCache(json,), [model, other,],);
+  });
+
+  it("restores version-1 payloads without selection as inactive", () => {
+    const json = JSON.stringify({
+      version: CACHE_VERSION,
+      projects: [model,],
+    },);
+    assertEquals(restoreCache(json,), {
+      projects: [model,],
+      activeUri: null,
+    },);
+  });
+
+  it("ignores a persisted active URI that is not cached", () => {
+    const json = serializeCache([model,], "file:///missing.tjp",);
+    assertEquals(restoreCache(json,), {
+      projects: [model,],
+      activeUri: null,
+    },);
+  });
+
   it("discards payloads with a mismatched version or invalid JSON", () => {
     const stale = JSON.stringify({
       version: CACHE_VERSION + 1,
       projects: [model,],
     },);
     assertEquals(deserializeCache(stale,), [],);
+    assertEquals(restoreCache(stale,), { projects: [], activeUri: null, },);
     assertEquals(deserializeCache("not json",), [],);
+    assertEquals(restoreCache("not json",), {
+      projects: [],
+      activeUri: null,
+    },);
     assertEquals(deserializeCache("null",), [],);
     assertEquals(
       deserializeCache(JSON.stringify({ version: CACHE_VERSION, },),),
       [],
     );
+    assertEquals(
+      restoreCache(JSON.stringify({ version: CACHE_VERSION, },),),
+      { projects: [], activeUri: null, },
+    );
   });
 
   it("round-trips an empty cache", () => {
     assertEquals(deserializeCache(serializeCache([],),), [],);
+    assertEquals(restoreCache(serializeCache([],),), {
+      projects: [],
+      activeUri: null,
+    },);
   });
 });

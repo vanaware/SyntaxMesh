@@ -17,6 +17,32 @@ import type {
   ExecutionResult,
 } from "@vanaware/syntaxmesh";
 
+/** Semantic operation most recently requested for a project. */
+export type ProjectIntent =
+  | "inventory"
+  | "checkSyntax"
+  | "scheduleOnly"
+  | "compile"
+  | "freeze"
+  | "checkTimeSheet"
+  | "checkStatusSheet"
+  | "report"
+  | "man"
+  | "sheet"
+  | "run";
+
+/** Execution metadata projected into project summaries and status views. */
+export interface ProjectExecutionState {
+  /** Semantic operation performed by the execution. */
+  intent: ProjectIntent;
+  /** Epoch milliseconds when execution started. */
+  startedAt: number;
+  /** Epoch milliseconds when execution finished, when complete. */
+  finishedAt?: number;
+  /** Number of error-severity messages in the execution envelope. */
+  errorCount: number;
+}
+
 /**
  * Lifecycle status of a cached project, projected from the last envelope.
  *
@@ -49,6 +75,8 @@ export interface ProjectModel {
   addedAt: number;
   /** Epoch milliseconds of the last reload (equals `addedAt` until reloaded). */
   reloadedAt: number;
+  /** Last semantic execution, absent until execution metadata is recorded. */
+  lastExecution?: ProjectExecutionState;
 }
 
 /**
@@ -70,4 +98,8 @@ export interface ProjectSummary {
   addedAt: number;
   /** Epoch milliseconds of the last reload. */
   reloadedAt: number;
+  /** Whether this project is the registry's explicit active selection. */
+  active: boolean;
+  /** Last semantic intent, defaulting to `inventory` before execution metadata. */
+  lastIntent: ProjectIntent;
 }

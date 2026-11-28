@@ -227,7 +227,11 @@ export function listReportsSection(
     ) {
       continue;
     }
-    entries.push({ name: report.name, type: report.typeSpec ?? "", },);
+    entries.push({
+      id: report.id,
+      name: report.name,
+      type: report.typeSpec ?? "",
+    },);
   }
   return entries;
 }

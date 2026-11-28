@@ -11,10 +11,23 @@
 import { window, workspace, } from "vscode";
 import type { Uri, } from "vscode";
 import { assertTrusted, } from "../trust.ts";
+import { resolveProjectUri, } from "./project-ref.ts";
 
-/** URI of the active editor's document, or `undefined` when none is open. */
+/**
+ * URI of the active editor when it is a SyntaxMesh `.smx`/`.tjp` master.
+ * Fragments, other languages and unrelated editors return `undefined`.
+ */
 export function activeMasterUri(): Uri | undefined {
-  return window.activeTextEditor?.document.uri;
+  const document = window.activeTextEditor?.document;
+  if (document === undefined) return undefined;
+  const resolved = resolveProjectUri({
+    activeDocument: {
+      uri: document.uri.toString(),
+      languageId: document.languageId,
+    },
+    projects: [],
+  },);
+  return resolved.ok ? document.uri : undefined;
 }
 
 /**

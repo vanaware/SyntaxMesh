@@ -1,0 +1,9 @@
+[
+  {
+    "id": "dev",
+    "name": "Developer",
+    "email": "dev@example.com",
+    "effort": 5,
+    "freeWork": 0
+  }
+]

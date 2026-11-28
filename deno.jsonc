@@ -69,11 +69,12 @@
     "lint:fix": "deno lint --fix",
     "lint:doc:all": "deno task --members lint:doc",
     "lint:doc:update:all": "deno task --members lint:doc:update",
-    "tests": "deno task check:all && deno task lint && deno task fmt:check && deno task lint:doc:all && deno task check:doccore && deno task check:lspcore && deno task check:stubs && deno task test",
+    "tests": "deno task check:all && deno task lint && deno task fmt:check && deno task lint:doc:all && deno task check:doccore && deno task check:lspcore && deno task check:web-bundle && deno task check:stubs && deno task test",
     "cli": "deno run --allow-read --allow-write --allow-env packages/cli/src/cli.ts",
     "cli:test": "deno task --cwd packages/cli test",
     "cli:compile": "deno task --cwd packages/cli compile",
     "build:vsext": "deno task --cwd packages/vsextension build",
+    "check:web-bundle": "deno task --cwd packages/vsextension check:web-bundle",
     "package:vsext": "deno task --cwd packages/vsextension package",
     "build:lsp": "deno task --cwd packages/lsp build",
     "generate:vsext": "deno task --cwd packages/vsextension generate",
@@ -127,9 +128,10 @@
       "bench/**/*.ts"
     ],
     "exclude": [
-      // Cópia vendorizada do `wz_tooltip.js` (asset dos goldens de relatório,
+      // Cópias vendorizadas do `wz_tooltip.js` (assets dos goldens e da extensão,
       // `var` em todo o arquivo) — não é código nosso e não é editável.
-      "packages/core/tests/golden/scripts/"
+      "packages/core/tests/golden/scripts/",
+      "packages/vsextension/assets/scripts/"
     ]
   },
   "test": {
@@ -194,7 +196,9 @@
       "bench/**/*.ts"
     ],
     "exclude": [
-      "packages/server/build/"
+      "packages/server/build/",
+      // Assets vendorizados copiados para a extensão; bytes permanecem idênticos.
+      "packages/vsextension/assets/"
     ]
   },
   "unstable": ["bundle"],

@@ -124,15 +124,28 @@ export class TjpExportRE extends ReportBase {
     this.collectBookings();
 
     this.file = "";
-    const definitions = (this.a("definitions",) as string[]) ?? [];
 
-    if (definitions.includes("project",)) this.generateProjectProperty();
-    if (definitions.includes("flags",)) this.generateFlagDeclaration();
-    if (definitions.includes("projectids",)) this.generateProjectIDs();
-    if (definitions.includes("shifts",)) this.generateShiftList();
-    if (definitions.includes("resources",)) this.generateResourceList();
-    if (definitions.includes("materials",)) this.generateMaterialList();
-    if (definitions.includes("tasks",)) this.generateTaskList();
+    if (this.report.includesKeyword("definitions", "project",)) {
+      this.generateProjectProperty();
+    }
+    if (this.report.includesKeyword("definitions", "flags",)) {
+      this.generateFlagDeclaration();
+    }
+    if (this.report.includesKeyword("definitions", "projectids",)) {
+      this.generateProjectIDs();
+    }
+    if (this.report.includesKeyword("definitions", "shifts",)) {
+      this.generateShiftList();
+    }
+    if (this.report.includesKeyword("definitions", "resources",)) {
+      this.generateResourceList();
+    }
+    if (this.report.includesKeyword("definitions", "materials",)) {
+      this.generateMaterialList();
+    }
+    if (this.report.includesKeyword("definitions", "tasks",)) {
+      this.generateTaskList();
+    }
 
     const taskAttributes = (this.a("taskAttributes",) as string[]) ?? [];
     const resourceAttributes = (this.a("resourceAttributes",) as string[]) ??
@@ -173,12 +186,12 @@ export class TjpExportRE extends ReportBase {
     this.generateCustomAttributeDeclarations(
       "resource",
       this.project.resources,
-      (this.a("resourceAttributes",) as string[]) ?? [],
+      "resourceAttributes",
     );
     this.generateCustomAttributeDeclarations(
       "task",
       this.project.tasks,
-      (this.a("taskAttributes",) as string[]) ?? [],
+      "taskAttributes",
     );
     const scenario = this.project.scenario(0,);
     if (scenario) this.generateScenarioDefinition(scenario, 2,);
@@ -212,7 +225,7 @@ export class TjpExportRE extends ReportBase {
    *
    * @param tag Property type the attributes belong to (`task`, `resource`).
    * @param propertySet Property set whose definitions are inspected.
-   * @param attributes Attribute ids the report asked to export.
+   * @param attribute Report attribute selecting the exported definitions.
    */
   private generateCustomAttributeDeclarations(
     tag: string,
@@ -221,7 +234,7 @@ export class TjpExportRE extends ReportBase {
         cb: (ad: AttributeDefinition<unknown>,) => void,
       ): void;
     },
-    attributes: string[],
+    attribute: string,
   ): void {
     let customAttributes = 0;
     propertySet.eachAttributeDefinition((ad,) => {
@@ -231,7 +244,11 @@ export class TjpExportRE extends ReportBase {
 
     this.file += "  extend " + tag + " {\n";
     propertySet.eachAttributeDefinition((ad,) => {
-      if (!(ad.userDefined && attributes.includes(ad.id,))) return;
+      if (
+        !(ad.userDefined && this.report.includesKeyword(attribute, ad.id,))
+      ) {
+        return;
+      }
       const tjpId = (ad.objClass as unknown as { tjpId?: string }).tjpId ??
         ad.id;
       this.file += `    ${tjpId} ${ad.id} ${quotedString(ad.name,)}`;
@@ -432,19 +449,18 @@ export class TjpExportRE extends ReportBase {
     this.file += " ".repeat(indent,) + `task ${task.subId} ` +
       `${quotedString(task.name,)} {\n`;
 
-    const taskAttributes = (this.a("taskAttributes",) as string[]) ?? [];
-    if (taskAttributes.includes("depends",)) {
+    if (this.report.includesKeyword("taskAttributes", "depends",)) {
       for (const scenarioIdx of this.scenarioList()) {
         this.generateTaskDependency(scenarioIdx, task, "depends", indent + 2,);
         this.generateTaskDependency(scenarioIdx, task, "precedes", indent + 2,);
       }
     }
-    if (taskAttributes.includes("materialallocations",)) {
+    if (this.report.includesKeyword("taskAttributes", "materialallocations",)) {
       for (const scenarioIdx of this.scenarioList()) {
         this.generateMaterialAllocations(task, indent + 2, scenarioIdx,);
       }
     }
-    if (taskAttributes.includes("materialbookings",)) {
+    if (this.report.includesKeyword("taskAttributes", "materialbookings",)) {
       for (const scenarioIdx of this.scenarioList()) {
         this.generateMaterialBookings(task, indent + 2, scenarioIdx,);
       }
@@ -503,8 +519,7 @@ export class TjpExportRE extends ReportBase {
     tag: string,
     indent: number,
   ): void {
-    const taskAttributes = (this.a("taskAttributes",) as string[]) ?? [];
-    if (!taskAttributes.includes("depends",)) return;
+    if (!this.report.includesKeyword("taskAttributes", "depends",)) return;
 
     const taskDeps = (task.getForScenario(tag, scenarioIdx,) ?? []) as Array<
       { task: Task }
@@ -662,7 +677,7 @@ export class TjpExportRE extends ReportBase {
         const id = attrDef.id;
         if (
           (!this.supportedResourceAttrs.has(id,) && !attrDef.userDefined) ||
-          !resourceAttributes.includes(id,)
+          !this.report.includesKeyword("resourceAttributes", id,)
         ) {
           return;
         }
@@ -679,7 +694,7 @@ export class TjpExportRE extends ReportBase {
       // 'booking' is a task attribute; in the resource context it is handled
       // separately (Ruby: same remark).
       if (
-        resourceAttributes.includes("booking",) &&
+        this.report.includesKeyword("resourceAttributes", "booking",) &&
         resourceAttributes[0] !== "*"
       ) {
         for (const scenarioIdx of this.scenarioList()) {
@@ -692,7 +707,6 @@ export class TjpExportRE extends ReportBase {
 
   /** Emits one `supplement task` block per exported task. */
   private generateTaskAttributes(): void {
-    const taskAttributes = (this.a("taskAttributes",) as string[]) ?? [];
     for (const task of this.taskList.toArray()) {
       if (task.sequenceNo % 100 === 0) Log.activity();
       this.file += `supplement task ${task.fullId} {\n`;
@@ -711,7 +725,7 @@ export class TjpExportRE extends ReportBase {
         const id = attrDef.id;
         if (
           (!this.supportedTaskAttrs.has(id,) && !attrDef.userDefined) ||
-          !taskAttributes.includes(id,)
+          !this.report.includesKeyword("taskAttributes", id,)
         ) {
           return;
         }
@@ -799,13 +813,10 @@ export class TjpExportRE extends ReportBase {
   /** Collects the bookings by scenario, task and resource. */
   private collectBookings(): void {
     this.bookings = new Map();
-    const taskAttributes = (this.a("taskAttributes",) as string[]) ?? [];
-    const resourceAttributes = (this.a("resourceAttributes",) as string[]) ??
-      [];
     if (
       !(
-        taskAttributes.includes("booking",) ||
-        resourceAttributes.includes("booking",)
+        this.report.includesKeyword("taskAttributes", "booking",) ||
+        this.report.includesKeyword("resourceAttributes", "booking",)
       )
     ) {
       return;

@@ -1,113 +1,196 @@
 /**
- * `commands/daemon.ts` — daemon command bootstraps (22.5.9).
+ * Canonical project command group shared by Desktop and Web (22.12.19).
  *
- * Registers the four daemon commands (add/remove/list/reload) over the
- * {@link DaemonHost}, each gated by Workspace Trust (plan §8.4) through the
- * pure {@link assertTrusted}. The handlers only wire VS Code UI (active editor,
- * quick picks, messages) to the host; all logic lives in the pure daemon core.
- * Command titles are English (plan §8.2); the manifest declares them (22.7.7).
- *
- * Imports the `vscode` runtime, so it is type-checked here and exercised inside
- * VS Code (acceptance deferred to P7). No automatic watcher feeds the daemon —
- * reload is an explicit user action (plan §3.2).
- *
- * @see docs/syntaxmesh/fases/fase-22-vscode-extension.md §3.2/§8.2/§8.4
- * @see docs/syntaxmesh/fases/fase-22-vscode-extension-tarefas.md §22.5.9
+ * The group only adapts VS Code prompts and messages to the shared project
+ * service. Compatibility ids are registered separately as runtime aliases.
  */
-import { commands, window, } from "vscode";
-import type { ExtensionContext, } from "vscode";
-import type { DaemonHost, } from "../daemon/host.ts";
-import { getViews, } from "../views/host.ts";
-import { activeMasterUri, guarded, } from "./shared.ts";
+import { window, workspace, } from "vscode";
+import { getViews, withBusy, } from "../views/host.ts";
+import type { CommandResult, } from "./contracts.ts";
+import { guardedCommand, } from "./execution-actions.ts";
+import type { CommandRegistry, } from "./registry.ts";
+import type { CanonicalCommandDependencies, } from "./register.ts";
+import { activeMasterUri, } from "./shared.ts";
 
-/**
- * Registers the daemon commands on the extension context.
- *
- * @param context the extension context (owns the command disposables).
- * @param host the started daemon host.
- */
-export function registerDaemonCommands(
-  context: ExtensionContext,
-  host: DaemonHost,
+/** Builds one structured cancellation or selection failure. */
+function failure(message: string,): CommandResult<never> {
+  return { ok: false, error: message, messages: [], };
+}
+
+/** Surfaces one service failure without changing the value returned to callers. */
+function showFailure(result: { error: string },): void {
+  window.showErrorMessage(`SyntaxMesh: ${result.error}`,);
+}
+
+/** Registers the five canonical project commands against the shared registry. */
+export function registerProjectGroup(
+  registry: CommandRegistry,
+  dependencies: CanonicalCommandDependencies,
 ): void {
-  context.subscriptions.push(
-    commands.registerCommand(
-      "syntaxmesh.addProject",
-      () =>
-        guarded(async () => {
-          const uri = activeMasterUri();
-          if (uri === undefined) {
-            window.showWarningMessage(
-              "SyntaxMesh: open a project file first.",
-            );
-            return;
+  const { diagnostics, service, } = dependencies;
+  const trusted = <T,>(
+    action: () => Promise<CommandResult<T>>,
+  ): Promise<CommandResult<T>> =>
+    guardedCommand(
+      workspace.isTrusted,
+      action,
+      (message,) => window.showErrorMessage(message,),
+    );
+  const requireProject = (explicit?: string,): string | undefined => {
+    const uri = explicit ?? activeMasterUri()?.toString();
+    if (uri === undefined) {
+      window.showWarningMessage("SyntaxMesh: open a project file first.",);
+    }
+    return uri;
+  };
+
+  registry.register(
+    "syntaxmesh.project.add",
+    (project?: string,) =>
+      trusted(async () => {
+        const uri = requireProject(project,);
+        if (uri === undefined) return failure("open a project file first.",);
+        const result = await withBusy(() => service.addProject(uri,));
+        if (!result.ok) {
+          showFailure(result,);
+          return result;
+        }
+        diagnostics.clearProject(uri,);
+        getViews()?.refresh();
+        window.showInformationMessage(
+          `SyntaxMesh: loaded ${result.value.entry} (${result.value.status}).`,
+        );
+        return result;
+      },),
+  );
+
+  registry.register(
+    "syntaxmesh.project.refresh",
+    (project?: string,) =>
+      trusted(async () => {
+        const uri = requireProject(project,);
+        if (uri === undefined) return failure("open a project file first.",);
+        const result = await withBusy(() => service.refreshProject(uri,));
+        if (!result.ok) {
+          showFailure(result,);
+          return result;
+        }
+        diagnostics.clearProject(uri,);
+        getViews()?.refresh();
+        window.showInformationMessage(
+          `SyntaxMesh: reloaded ${result.value.entry} (${result.value.status}).`,
+        );
+        return result;
+      },),
+  );
+
+  registry.register(
+    "syntaxmesh.project.remove",
+    (project?: string,) =>
+      trusted(async () => {
+        let uri = project;
+        if (uri === undefined) {
+          const listed = await service.listProjects();
+          if (!listed.ok) {
+            showFailure(listed,);
+            return listed;
           }
-          const model = await host.addProject(uri,);
-          getViews()?.refresh();
-          window.showInformationMessage(
-            `SyntaxMesh: loaded ${model.entry} (${model.status}).`,
-          );
-        },),
-    ),
-    commands.registerCommand(
-      "syntaxmesh.reloadProject",
-      () =>
-        guarded(async () => {
-          const uri = activeMasterUri();
-          if (uri === undefined) {
-            window.showWarningMessage(
-              "SyntaxMesh: open a project file first.",
-            );
-            return;
-          }
-          const model = await host.reloadProject(uri,);
-          getViews()?.refresh();
-          window.showInformationMessage(
-            `SyntaxMesh: reloaded ${model.entry} (${model.status}).`,
-          );
-        },),
-    ),
-    commands.registerCommand(
-      "syntaxmesh.removeProject",
-      () =>
-        guarded(async () => {
-          const summaries = host.core.listProjects();
-          if (summaries.length === 0) {
+          if (listed.value.length === 0) {
             window.showInformationMessage("SyntaxMesh: no projects loaded.",);
-            return;
+            return failure("no projects loaded",);
           }
           const pick = await window.showQuickPick(
-            summaries.map((s,) => ({
-              label: s.entry,
-              description: s.status,
-              uri: s.uri,
+            listed.value.map((summary,) => ({
+              label: summary.entry,
+              description: summary.status,
+              uri: summary.uri,
             })),
             { placeHolder: "Select a project to remove", },
           );
-          if (pick === undefined) return;
-          host.core.removeProject(pick.uri,);
-          await host.persist();
-          getViews()?.refresh();
-          window.showInformationMessage(`SyntaxMesh: removed ${pick.label}.`,);
-        },),
-    ),
-    commands.registerCommand(
-      "syntaxmesh.listProjects",
-      () =>
-        guarded(async () => {
-          const summaries = host.core.listProjects();
-          if (summaries.length === 0) {
-            window.showInformationMessage("SyntaxMesh: no projects loaded.",);
-            return;
+          if (pick === undefined) {
+            return failure("project selection cancelled",);
           }
-          await window.showQuickPick(
-            summaries.map((s,) => ({
-              label: s.entry,
-              description: `${s.status} · ${s.reportCount} reports`,
-            })),
-            { placeHolder: "Loaded projects", },
+          uri = pick.uri;
+        }
+
+        const result = await withBusy(() => service.removeProject(uri,));
+        if (!result.ok) {
+          showFailure(result,);
+          return result;
+        }
+        diagnostics.clearProject(uri,);
+        getViews()?.refresh();
+        window.showInformationMessage(`SyntaxMesh: removed ${uri}.`,);
+        return result;
+      },),
+  );
+
+  registry.register("syntaxmesh.project.list", () =>
+    trusted(async () => {
+      const result = await service.listProjects();
+      if (!result.ok) {
+        showFailure(result,);
+        return result;
+      }
+      if (result.value.length === 0) {
+        window.showInformationMessage("SyntaxMesh: no projects loaded.",);
+        return result;
+      }
+      await window.showQuickPick(
+        result.value.map((summary,) => ({
+          label: summary.entry,
+          description: `${summary.status} · ${summary.reportCount} reports`,
+        })),
+        { placeHolder: "Loaded projects", },
+      );
+      return result;
+    },),);
+
+  registry.register(
+    "syntaxmesh.project.setActive",
+    (project?: string,) =>
+      trusted(async () => {
+        let uri = project;
+        if (uri === undefined) {
+          const listed = await service.listProjects();
+          if (!listed.ok) {
+            showFailure(listed,);
+            return listed;
+          }
+          if (listed.value.length === 0) {
+            window.showInformationMessage("SyntaxMesh: no projects loaded.",);
+            return failure("no projects loaded",);
+          }
+          const active = activeMasterUri()?.toString();
+          const current = listed.value.find((summary,) =>
+            summary.uri === active
           );
-        },),
-    ),
+          uri = current?.uri ??
+            (listed.value.length === 1 ? listed.value[0]?.uri : undefined);
+          if (uri === undefined) {
+            const pick = await window.showQuickPick(
+              listed.value.map((summary,) => ({
+                label: summary.entry,
+                description: summary.status,
+                uri: summary.uri,
+              })),
+              { placeHolder: "Select the active project", },
+            );
+            uri = pick?.uri;
+          }
+          if (uri === undefined) return failure("project selection cancelled",);
+        }
+
+        const result = await withBusy(() => service.setActiveProject(uri,));
+        if (!result.ok) {
+          showFailure(result,);
+          return result;
+        }
+        getViews()?.refresh();
+        window.showInformationMessage(
+          `SyntaxMesh: active project set to ${result.value.entry}.`,
+        );
+        return result;
+      },),
   );
 }
